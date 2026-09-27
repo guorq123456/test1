@@ -15,9 +15,13 @@ const SLOT_KEYS = ['W', 'L', 'M', 'R'];
 const emptySlots = () => ({ W: null, L: null, M: null, R: null });
 const CH_NO = ['一', '二', '三', '四', '五', '六', '七', '八'];
 // 缺口卡角上的状态
-const HOLE_FLAG = { fillable: '可填', frontier: '前沿', unfillable: '补不上', filled: '已填' };
+// retyped：结果换了一种东西（ℤ 里做 mod 12 得到时钟），不是这个世界缺的部分，不能填
+const HOLE_FLAG = { fillable: '可填', frontier: '前沿', unfillable: '补不上', filled: '已填', retyped: '换了类型' };
+// 数太大的缺口也不查找目标（状态 unfillable），但它不是"补不上"，是游戏的边界
+const holeFlag = (h, st) => (st === 'unfillable' && h.v.tooLarge ? '边界' : HOLE_FLAG[st]);
 // 填的结果：徽章文字
-const GRADE = { auto: '自动填', exact: '恰到好处', over: '多了一块', frontier: '首次发现 · 发明者' };
+// tighter：候选合规，但比图鉴目标还小或者和它不可比，和「首次发现」一样算发明（res.firstFill）
+const GRADE = { auto: '自动填', exact: '恰到好处', over: '多了一块', tighter: '比图鉴更紧', frontier: '首次发现 · 发明者' };
 
 const S = {};
 const app = document.getElementById('app');
@@ -39,6 +43,8 @@ function freshState() {
     fillWith: {},
     inventor: [],
     active: null,
+    // 一行临时提示（比如缺口放不进底板），下一次点击就消失，不存档
+    tip: null,
     tab: 'card',
     last: null,
     sheet: null,
@@ -69,12 +75,11 @@ const chapterOf = id => CHAPTERS.find(ch => ch.id === id);
 const isCallable = it => it?.kind === 'card' && !!TYPES.get(typeOf(it.v))?.call;
 const holeCount = () => S.order.reduce((n, id) => n + (S.items.get(id).kind === 'hole' ? 1 : 0), 0);
 
-// 缺口现在的状态：本局填过，或者手里已经有它能填成的卡组，都算"已填"
+// 缺口现在的状态：只有本局真的填过（记在 S.filled 里）才算"已填"。
+// 手里已经有目标世界不算：那张缺口还是"可填"，按「填」也算完成（旧存档迁移上来的玩家靠这个过任务）
 function holeState(h) {
   const target = h.v.targetId ? `d:${h.v.targetId}` : null;
   if (S.filled.includes(h.id)) return { status: 'filled', withId: S.fillWith[h.id] ?? target };
-  if (h.v.status === 'filled') return { status: 'filled', withId: target };
-  if (h.v.status === 'fillable' && target && has(target)) return { status: 'filled', withId: target };
   return { status: h.v.status, withId: null };
 }
 
@@ -156,7 +161,13 @@ function place(id) {
   if (!it) return;
   const sl = S.slots;
   let target = S.active;
-  // 底板只收卡组：选中底板时点了别的卡，就照平常的规则落位
+  // 底板只收卡组。缺口卡最像卡组、最容易放错：不落位，底板保持选中，提示一句
+  if (target === 'W' && it.kind === 'hole') {
+    S.tip = '缺口不能当底板，请选一个卡组';
+    render();
+    return;
+  }
+  // 选中底板时点了单卡或算子，就照平常的规则落位
   if (target === 'W' && it.kind !== 'deck') target = null;
   if (!target) {
     const mid = itemOf(sl.M);
@@ -334,6 +345,7 @@ const catShort = id => {
   const c = CATALOG.find(x => x.id === id);
   return c ? (c.short !== c.name ? `${c.short}（${c.name}）` : c.name) : id;
 };
+const catSym = id => CATALOG.find(x => x.id === id)?.short ?? id;
 const nameOfId = id => {
   const it = itemOf(id);
   if (it?.cat) return catShort(it.cat.id);
@@ -371,16 +383,17 @@ function cardHTML(it, { act = 'place', slot = '', still = false } = {}) {
   // card-main 是 flex 容器：公式包在一层 span 里，<i>x</i> 和旁边的文字才会连成一行，空格也不会丢
   // "新"标记放进小字那一行，不盖住小字
   const fresh = !still && !slot && S.fresh.has(it.id) ? '<span class="card-new">新</span>' : '';
-  // 缺口卡角上标出状态：可填 / 前沿 / 补不上 / 已填
+  // 缺口卡角上标出状态：可填 / 前沿 / 补不上 / 已填 / 换了类型；数太大的写「边界」
   const st = it.kind === 'hole' ? holeState(it).status : null;
-  const flag = st ? `<span class="card-flag">${HOLE_FLAG[st]}</span>` : '';
+  const flagText = st ? holeFlag(it, st) : '';
+  const flag = st ? `<span class="card-flag">${flagText}</span>` : '';
   const cls = `card k-${it.kind}${st ? ` st-${st}` : ''}`;
   const inner = `
     <span class="card-type">${KIND[it.kind]}</span>${flag}
     <span class="card-main sz-${size}"><span>${math(keepRows(main))}</span></span>
     <span class="card-sub">${fresh}${math(subText(it))}</span>`;
   if (still) return `<div class="${cls}">${inner}</div>`;
-  const what = st ? `${KIND[it.kind]}（${HOLE_FLAG[st]}）` : KIND[it.kind];
+  const what = st ? `${KIND[it.kind]}（${flagText}）` : KIND[it.kind];
   const aria = slot ? `移除${what} ${main}` : `${what} ${main}`;
   return `<button type="button" class="${cls}" data-act="${act}" data-id="${esc(it.id)}"${
     slot ? ` data-slot="${slot}"` : ''
@@ -607,7 +620,9 @@ function handHTML() {
       )
       .join('');
   }
-  return `<section class="hand" aria-label="手牌"><div class="hand-tabs" role="tablist">${tabs}</div>${body}</section>`;
+  // 临时提示放在手牌里、刚点的卡上方：点卡时合成台常常已经滚出屏幕
+  const tip = S.tip ? `<p class="hand-tip" role="status">${esc(S.tip)}</p>` : '';
+  return `<section class="hand" aria-label="手牌"><div class="hand-tabs" role="tablist">${tabs}</div>${tip}${body}</section>`;
 }
 
 const refCache = new Map();
@@ -671,20 +686,47 @@ function deckDetailHTML(it) {
   return html;
 }
 
-// 缺口详情：类别、法、出发世界、缺了什么、状态与说明
+// 值级的缺口：左右两格是单卡（或空着）、中间是算子，出发的只有一两张卡。
+// 返回"这一步"的算式（√2、1/0、2 − 3）；卡组级的缺口返回 null。
+// 引擎给了 expr 就用它（没有定义 / 表示不了）；越出世界的值级缺口没有 expr，从 desc 里的原卡拼出来
+function holeStep(h) {
+  if (h.v.expr) return h.v.expr;
+  const [l, m, r] = h.desc?.from ?? [];
+  if (!m || m.k === 'meta' || ![l, r].every(d => !d || d.k === 'card')) return null;
+  const card = d => (d ? itemOf(`c:${d.x}`) : null);
+  const a = card(l);
+  const b = card(r);
+  if (m.k === 'bin' && a && b && BIN[m.id]) return `${fmtR(a.v)} ${BIN[m.id].sym} ${fmtR(b.v)}`;
+  const x = a ?? b;
+  if (m.k !== 'bin' && x && h.v.law?.t === 'un') return fmtU(h.v.law.f, fmtR(x.v));
+  return h.v.inputName ?? h.v.sourceName ?? '';
+}
+
+// 缺口详情：类别、法、出发世界（值级叫「这一步」）、缺了什么 / 卡在哪些输入上、状态与说明
 function holeDetailHTML(h) {
   const v = h.v;
   const { status, withId } = holeState(h);
   const row = (k, val) => `<div><dt>${k}</dt><dd>${val}</dd></div>`;
-  const miss = v.name
-    ? `<span class="fact-name">${math(v.name)}</span> <span class="muted">${math(previewDeck(v.where))}</span>`
-    : math(previewDeck(v.where));
+  const step = holeStep(h);
+  // 越出世界：where 是跑出去的结果，就是缺的东西（换了类型的除外：那不是这个世界缺的）。
+  // 没有定义 / 表示不了：where 是走不通的输入。
+  // 值级缺口的名字就是那个式子（√2），已经写在「这一步」里，这一行只列输入
+  const outside = v.kind === 'outside';
+  const whereLabel = !outside ? '卡在这些输入上' : status === 'retyped' ? '跑出去的结果' : '缺了什么';
+  const where = math(previewDeck(v.where));
+  const miss =
+    v.name && (outside || step === null)
+      ? `<span class="fact-name">${math(v.name)}</span> <span class="muted">${where}</span>`
+      : where;
   const facts = [
     row('类别', esc(v.kindText ?? '')),
     row('法', `<span class="fact-math">${math(v.lawText ?? '')}</span>`),
-    row('出发世界', `<span class="fact-math">${math(v.sourceName ?? '')}</span>`),
+    // 越出世界的缺口：sourceName 是底板世界，真正的输入在 inputName 里
+    step === null
+      ? row('出发世界', `<span class="fact-math">${math(v.inputName ?? v.sourceName ?? '')}</span>`)
+      : row('这一步', `<span class="fact-math">${math(step)}</span>`),
     v.world ? row('在……里', `<span class="fact-math">${math(v.world.name ?? previewDeck(v.world))}</span>`) : '',
-    row('缺了什么', miss),
+    row(whereLabel, miss),
   ].join('');
   let note;
   switch (status) {
@@ -695,7 +737,16 @@ function holeDetailHTML(h) {
       note = `可以填成 ${math(catShort(v.targetId))}`;
       break;
     case 'frontier':
-      note = '前沿：还没有人填过。用现有的卡凑一个世界，放在合成台另一边手填，奖励更高';
+      // 越出世界的前沿真能手填；表示不了的前沿，出发世界里的输入本身就算不出有理数，现有的卡都填不上
+      note =
+        v.kind === 'unrepresentable'
+          ? '前沿：现在的数还写不出这些结果（比如 √2）。这类缺口要等新的数出现，现在的卡填不上'
+          : '前沿：图鉴里还没有装得下它的世界。用现有的卡凑一个来手填，奖励更高';
+      break;
+    case 'retyped':
+      note = `结果换了一种东西，不是这个世界缺的部分；拿掉底板再做一次，就能直接得到${
+        v.targetId ? ` ${math(catShort(v.targetId))}` : '它'
+      }`;
       break;
     default:
       note = v.tooLarge ? '游戏的边界：数太大' : '补不上：这条法在这里没有定义';
@@ -738,11 +789,15 @@ function itemSheetHTML(it, back) {
   const id = esc(it.id);
   let actions;
   if (it.kind === 'hole') {
-    // 可填的缺口：「填」等于合成台上的 [缺口] [填] [空]；「放上合成台」放到左格，用来手填或当卡组用
-    const canFill = holeState(it).status === 'fillable' && has('m:fill');
+    // 可填的缺口：「填」等于合成台上的 [缺口] [填] [空]；「放上合成台」放到左格，用来手填或当卡组用。
+    // 按钮看缺口自己的状态和本局的填过记录，不看手里有没有目标世界：已经有了，填一下也算完成
+    const canFill = it.v.status === 'fillable' && !S.filled.includes(it.id) && has('m:fill');
+    const owned = canFill && it.v.targetId && has(`d:${it.v.targetId}`);
     actions = `${canFill ? `<button type="button" class="btn btn-primary" data-act="fill" data-id="${id}">填</button>` : ''}<button type="button" class="btn${
       canFill ? '' : ' btn-primary'
-    }" data-act="place-close" data-id="${id}" data-slot="L">放上合成台</button>`;
+    }" data-act="place-close" data-id="${id}" data-slot="L">放上合成台</button>${
+      owned ? `<p class="act-note">你已经有 ${math(catSym(it.v.targetId))} 了，填一下也算完成</p>` : ''
+    }`;
   } else {
     actions = `<button type="button" class="btn btn-primary" data-act="place-close" data-id="${id}">放上合成台</button>${
       isCallable(it) ? `<button type="button" class="btn" data-act="place-close" data-id="${id}" data-slot="M">放到中间</button>` : ''
@@ -889,6 +944,8 @@ document.addEventListener('click', e => {
   if (!el) return;
   const act = el.dataset.act;
   if (act === 'close-bg' && e.target !== el) return;
+  // 临时提示只管一次点击
+  S.tip = null;
   switch (act) {
     case 'place':
       place(el.dataset.id);

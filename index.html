@@ -279,7 +279,7 @@
   .k-hole { --k: var(--c-hole); background: var(--hole-bg); border: 1.5px dashed var(--c-hole); }
   .k-hole.st-filled { border-style: solid; }
   .k-hole .card-main { color: var(--c-hole); }
-  /* 角标：可填 / 前沿 / 补不上 / 已填，放在类型条下面的左上角（右上角留给 i 和 ×） */
+  /* 角标：可填 / 前沿 / 补不上 / 已填 / 换了类型，放在类型条下面的左上角（右上角留给 i 和 ×） */
   .card-flag {
     position: absolute;
     top: 21px;
@@ -297,6 +297,7 @@
   .st-frontier .card-flag { background: var(--c-meta); color: var(--on-k); }
   .st-unfillable .card-flag { background: var(--card-bg); color: var(--ink-3); border: 1px solid var(--line-strong); }
   .st-filled .card-flag { background: var(--c-deck); color: var(--on-k); }
+  .st-retyped .card-flag { background: var(--card-bg); color: var(--c-un); border: 1px solid var(--c-un); }
   .k-hole .card-main { padding-top: 14px; }
   .card-type {
     display: block;
@@ -397,6 +398,8 @@
   .g-exact { background: var(--c-deck); border-color: var(--c-deck); color: var(--on-k); }
   .g-over { color: var(--c-un); }
   .g-frontier { background: var(--c-meta); border-color: var(--c-meta); color: var(--on-k); }
+  /* 比图鉴更紧：和首次发现同一类奖励，同色描边以示区别 */
+  .g-tighter { color: var(--c-meta); background: var(--focus-bg); }
   .result.is-fail { display: block; background: var(--warn-bg); color: var(--warn-ink); border-color: transparent; }
   .result.is-fail strong { display: block; margin-bottom: 2px; }
   .result-idle { color: var(--ink-3); font-size: 14px; padding-inline: 2px; }
@@ -432,6 +435,8 @@
   .tab[aria-selected="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
   .tab-n { font-family: var(--f-math); font-variant-numeric: tabular-nums; opacity: 0.8; }
   .dot { position: absolute; top: 3px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--c-deck); }
+  /* 一行临时提示：缺口放不进底板之类 */
+  .hand-tip { padding: 7px 12px; border-radius: 10px; background: var(--warn-bg); color: var(--warn-ink); font-size: 14px; font-weight: 600; }
   .group { display: grid; gap: 8px; }
   .group + .group { margin-top: 8px; }
   .group-title { margin: 0; font-size: 13px; letter-spacing: 0.1em; color: var(--ink-2); font-weight: 600; }
@@ -534,12 +539,14 @@
   .tile-meta { font-size: 12px; color: var(--ink-3); }
   .reset { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding-top: 8px; border-top: 1px solid var(--line); }
   .sheet-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .act-note { flex: 1 1 100%; font-size: 13px; color: var(--ink-2); }
   .badge-inventor { border-color: var(--c-meta); background: var(--c-meta); color: var(--on-k); font-weight: 700; }
   .tile-name .badge { margin: 0 0 0 4px; font-size: 11px; padding: 0 6px; vertical-align: 1px; }
   .tile.is-self { border-top-color: var(--ink-3); }
   /* 缺口详情 */
-  .facts { margin: 0; display: grid; gap: 6px; }
-  .facts > div { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 10px; align-items: baseline; }
+  /* 标题列按最长的那一行取宽（「卡在这些输入上」有七个字），各行对齐 */
+  .facts { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 12px; align-items: baseline; }
+  .facts > div { display: contents; }
   .facts dt { font-size: 13px; color: var(--ink-3); }
   .facts dd { margin: 0; overflow-wrap: anywhere; }
   .fact-math, .fact-name { font-family: var(--f-math); font-size: 17px; }
@@ -548,6 +555,7 @@
   .hole-note.st-frontier { border-left-color: var(--c-meta); }
   .hole-note.st-unfillable { border-left-color: var(--ink-3); background: var(--mat); color: var(--ink-2); }
   .hole-note.st-filled { border-left-color: var(--c-deck); }
+  .hole-note.st-retyped { border-left-color: var(--c-un); background: var(--mat); color: var(--ink-2); }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
