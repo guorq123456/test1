@@ -251,15 +251,25 @@ test('视野与探针', () => {
   const keys = new Set(WINDOW_Q.map(vkey));
   assert.equal(keys.size, WINDOW_Q.length, '视野里有重复');
   for (const v of WINDOW_Q) {
-    assert.ok(isQty(v) && v.v.n > 0, vkey(v));
+    assert.ok(isQty(v), vkey(v));
     assert.deepEqual(parseVKey(vkey(v)), v);
   }
   for (const c of CATALOG) {
-    assert.ok(WINDOW_Q.filter(c.has).length >= 10, `${c.name} 在视野里的值太少`);
+    const inWin = WINDOW_Q.filter(c.has);
+    assert.ok(inWin.length >= 10, `${c.name} 在视野里的值太少`);
+    // 量纲类带符号：视野里有 0 和负值，两两运算、封闭才算得出它们
+    const d = inWin[0].dim;
+    for (const s of ['0', '-1', '-2']) assert.ok(keys.has(vkey(qty(k(s), d))), `${c.name} 的视野里应该有 ${s} ${fmtUnit(d)}`);
     const small = PROBES_SMALL_Q.filter(c.has);
     assert.ok(small.length >= 3, `${c.name} 的小探针太少`);
     for (const p of small) assert.ok(sizeV(p) <= SIZE_CAP, `${c.name} 的探针 ${fmtV(p)} 太大（${sizeV(p)}），两两运算会把它丢掉`);
-    assert.ok(PROBES_Q.filter(c.has).length > small.length, `${c.name} 应该有几个大探针`);
+    // 小探针是正值加一个 0（近似卡组只比对它们）；大探针里还有 −1，精确卡组才分得出 ℚ⁺·步 和 ℚ·步
+    for (const p of small) assert.ok(p.v.n >= 0, `小探针 ${fmtV(p)} 不应该是负的`);
+    assert.ok(small.some(p => p.v.n === 0), `${c.name} 的小探针里应该有 0`);
+    const big = PROBES_Q.filter(c.has);
+    assert.ok(big.length > small.length, `${c.name} 应该有几个大探针`);
+    assert.ok(big.some(p => p.v.n === 0), `${c.name} 的大探针里应该有 0`);
+    assert.ok(big.some(p => p.v.n < 0), `${c.name} 的大探针里应该有负值`);
   }
   for (const p of PROBES_Q) assert.ok(PROBES_Q.filter(x => vkey(x) === vkey(p)).length === 1, `探针 ${vkey(p)} 重复`);
   // 大小：值的高度加上指数
@@ -309,8 +319,13 @@ test('合成台上的用法与文字', () => {
   // 做法文字
   assert.equal(recipeText(['d:Len', 'b:mul', 'd:Len']), '长度 × 长度');
   assert.equal(recipeText(['d:Time', 'u:recip', null]), '时间 经 1/x');
-  assert.equal(recipeText(['d:Qp', 'b:mul', 'c:q:1|1,0,0']), 'ℚ⁺ × 1 步');
+  assert.equal(recipeText(['d:Q', 'b:mul', 'c:q:1|1,0,0']), 'ℚ × 1 步');
   assert.equal(recipeText(['d:Len', 'u:sq', null]), '长度 经 x²');
+  // 长度 经 x² 只有平方数，不是整个面积；ℚ⁺ ÷ 时间 没有 0，不是整个频率
+  assert.ok(combine(c('d:Len'), c('u:sq'), null).item.id.startsWith('d:~'));
+  assert.ok(combine(c('d:Len'), c('u:cube'), null).item.id.startsWith('d:~'));
+  assert.ok(combine(c('d:Qp'), c('b:div'), c('d:Time')).item.id.startsWith('d:~'));
+  assert.equal(combine(c('d:Q'), c('b:div'), c('d:Time')).item.id, 'd:Freq');
   // 存档描述可以重建
   const card = c('c:q:3/2|1,-1,0');
   assert.equal(itemFromDesc(JSON.parse(JSON.stringify(card.desc))).id, card.id);
@@ -330,13 +345,14 @@ test('另外几种自然的做法也能被认出来；不该认的不认', () =>
     assert.ok(r.item.id.startsWith('d:~'), `${recipe.join(' ')} 得到了 ${r.item.id}，不该在图鉴里`);
     return r.item.v;
   };
-  ok(['d:Len', 'b:pow', 'c:2'], 'd:Area');
-  ok(['d:Len', 'b:pow', 'c:3'], 'd:Vol');
+  // 长度平方只有平方数（凑不出 2 步²），立方只有立方数：都不是整个面积、体积
+  unnamed(['d:Len', 'b:pow', 'c:2']);
+  unnamed(['d:Len', 'b:pow', 'c:3']);
+  // 体积开立方：负数也开得出，恰好是整个长度
   ok(['d:Vol', 'b:pow', 'c:1/3'], 'd:Len');
   ok(['d:Len', 'b:mul', 'c:2'], 'd:Len');
   ok(['d:Len', 'b:add', 'c:q:1|1,0,0'], 'd:Len');
   ok(['d:Len', 'b:div', 'c:q:1|0,1,0'], 'd:Vel');
-  ok(['c:q:1|1,0,0', 'b:div', 'd:Time'], 'd:Vel');
   ok(['d:Len', 'b:mul', 'c:q:1|1,0,0'], 'd:Area');
   ok(['d:Len', 'b:mul', 'c:q:300|1,0,0'], 'd:Area');
   ok(['d:Mass', 'b:mul', 'c:q:1|1,-2,0'], 'd:Force');
@@ -345,16 +361,33 @@ test('另外几种自然的做法也能被认出来；不该认的不认', () =>
   ok(['d:Len', 'm:closure', 'b:sub'], 'd:Len');
   ok(['d:Force', 'b:mul', 'd:Vel'], 'd:Power');
   ok(['d:Vel', 'b:mul', 'd:Len'], 'd:~' + run(['d:Vel', 'b:mul', 'd:Len']).item.id.slice(3)); // 步²/息 不在图鉴里
-  ok(['d:Area', 'u:sqrt', null], 'd:Len');
-  ok(['d:Time', 'b:pow', 'c:-1'], 'd:Freq');
-  // 彩蛋：长度 ÷ 长度 回到 ℚ⁺
-  ok(['d:Len', 'b:div', 'd:Len'], 'd:Qp');
-  ok(['d:Time', 'b:div', 'd:Time'], 'd:Qp');
-  ok(['d:Force', 'b:div', 'd:Force'], 'd:Qp');
+  ok(['d:Q', 'b:div', 'd:Time'], 'd:Freq');
+  ok(['d:Acc', 'b:div', 'd:Vel'], 'd:Freq');
+  ok(['d:Len', 'u:neg', null], 'd:Len');
+  // 彩蛋：长度 ÷ 1 步 回到 ℚ
+  ok(['d:Len', 'b:div', 'c:q:1|1,0,0'], 'd:Q');
+  ok(['d:Time', 'b:div', 'c:q:1|0,1,0'], 'd:Q');
   // 不该认的
   const n = unnamed(['d:N', 'b:mul', 'c:q:1|1,0,0']); // ℕ 步：没有 1/2 步
-  assert.equal(n.has(Q(1, 2, 1, 0, 0)), false);
+  assert.equal(n.has(Q('1/2', 1, 0, 0)), false);
   assert.equal(n.has(Q(3, 1, 0, 0)), true);
+  // √面积 只有不往回走的长度：有 0 步、1/2 步，没有 −1 步
+  const root = unnamed(['d:Area', 'u:sqrt', null]);
+  assert.equal(root.has(Q(0, 1, 0, 0)), true);
+  assert.equal(root.has(Q('1/2', 1, 0, 0)), true);
+  assert.equal(root.has(Q(-1, 1, 0, 0)), false);
+  // 时间倒过来少了 0/息（0 息倒不过来），不是整个频率
+  for (const rec of [['d:Time', 'u:recip', null], ['d:Time', 'b:pow', 'c:-1']]) {
+    const inv = unnamed(rec);
+    assert.equal(inv.has(Q(0, 0, -1, 0)), false, recipeText(rec));
+    assert.equal(inv.has(Q(-2, 0, -1, 0)), true, recipeText(rec));
+  }
+  assert.equal(unnamed(['d:Freq', 'u:recip', null]).has(Q(0, 0, 1, 0)), false);
+  // 1 步 ÷ 时间 同样得不到 0 步/息，不是整个速度
+  const perT = unnamed(['c:q:1|1,0,0', 'b:div', 'd:Time']);
+  assert.equal(perT.has(Q(0, 1, -1, 0)), false);
+  assert.equal(perT.has(Q(-1, 1, -1, 0)), true);
+  assert.equal(perT.has(Q(2, 1, -1, 0)), true);
   unnamed(['d:Len', 'u:recip', null]); // 1/步
   unnamed(['d:Len', 'b:pow', 'c:1/2']); // 步^(1/2)
   unnamed(['d:Len', 'm:closure', 'b:mul']); // 步、步²、步³……
@@ -378,29 +411,99 @@ test('另外几种自然的做法也能被认出来；不该认的不认', () =>
   );
 });
 
+test('量纲类带符号：ℚ·步 是长度，ℚ⁺·步 不是；除回去不会自相矛盾', () => {
+  const r = (...rec) => {
+    const res = run(rec);
+    assert.ok(res.ok, `${rec.join(' ')}：${res.msg}`);
+    return res;
+  };
+  const STEP_REF = 'c:q:1|1,0,0';
+  // ℚ × 1 步 = 长度，里面有 0 步和往回走的 −3 步
+  const len = r('d:Q', 'b:mul', STEP_REF);
+  assert.equal(len.item.id, 'd:Len');
+  assert.equal(len.item.v.has(Q(-3, 1, 0, 0)), true);
+  assert.equal(len.item.v.has(Q(0, 1, 0, 0)), true);
+  // ℚ⁺ × 1 步 只有往前走的长度：自造卡组，不是长度
+  const pos = r('d:Qp', 'b:mul', STEP_REF);
+  assert.ok(pos.item.id.startsWith('d:~'), `ℚ⁺ × 1 步 得到了 ${pos.item.id}`);
+  assert.equal(pos.item.v.has(Q(3, 1, 0, 0)), true);
+  assert.equal(pos.item.v.has(Q('1/2', 1, 0, 0)), true);
+  assert.equal(pos.item.v.has(Q(0, 1, 0, 0)), false);
+  assert.equal(pos.item.v.has(Q(-3, 1, 0, 0)), false);
+  // 除回去：(ℚ⁺ × 1 步) ÷ 1 步 = ℚ⁺，长度 ÷ 1 步 = ℚ
+  assert.equal(combine(pos.item, resolveRef('b:div'), resolveRef(STEP_REF)).item.id, 'd:Qp');
+  assert.equal(r('d:Len', 'b:div', STEP_REF).item.id, 'd:Q');
+  // 长度 ÷ 长度 不再是 ℚ⁺。视野里每个量纲类只有 −1、−2 两个负值，凑不出 −4/3、−7/5 这样的负探针，
+  // 所以得到的是在视野里算出来的 ℚ 的近似子卡组：有 0、有负数、ℚ⁺ 的小探针都在
+  const ll = r('d:Len', 'b:div', 'd:Len');
+  assert.notEqual(ll.item.id, 'd:Qp');
+  if (ll.item.id !== 'd:Q') {
+    const D = ll.item.v;
+    assert.ok(ll.item.id.startsWith('d:~') && D.approx, ll.item.id);
+    assert.ok(D.elems.every(isR));
+    for (const s of ['0', '-1', '-2', '-12', '-1/2', '-1/12', '1', '12', '1/6', '5/6', '7/5', '12/11']) {
+      assert.equal(D.has(k(s)), true, `长度 ÷ 长度 应该有 ${s}`);
+    }
+  }
+  // 时间 ÷ 时间、力 ÷ 力 得到同一个卡组
+  assert.equal(r('d:Time', 'b:div', 'd:Time').item.id, ll.item.id);
+  assert.equal(r('d:Force', 'b:div', 'd:Force').item.id, ll.item.id);
+  // −3 步 ÷ 1 步 = −3
+  const m3 = r('c:q:-3|1,0,0', 'b:div', STEP_REF);
+  assert.equal(m3.item.id, 'c:-3');
+  assert.equal(m3.text, '−3 步 ÷ 1 步 = −3');
+  // ℤ、ℕ⁺、ℕ × 1 步，ℚ⁺ × 1 步，√面积：各不相同，都不是长度
+  const Zs = r('d:Z', 'b:mul', STEP_REF);
+  const Nps = r('d:Np', 'b:mul', STEP_REF);
+  const Ns = r('d:N', 'b:mul', STEP_REF);
+  const root = r('d:Area', 'u:sqrt', null);
+  const ids = [Zs, Nps, Ns, pos, root].map(x => x.item.id);
+  for (const id of ids) assert.ok(id.startsWith('d:~'), id);
+  assert.equal(new Set(ids).size, ids.length, ids.join(' '));
+  assert.equal(Zs.item.v.has(Q(-1, 1, 0, 0)), true);
+  assert.equal(Nps.item.v.has(Q(-1, 1, 0, 0)), false);
+  assert.equal(Nps.item.v.has(Q(0, 1, 0, 0)), false);
+  assert.equal(Ns.item.v.has(Q(0, 1, 0, 0)), true);
+  // 同一个卡组第二次合成得到同一个 id
+  assert.equal(r('d:Np', 'b:mul', STEP_REF).item.id, Nps.item.id);
+});
+
 test('合成速度：两两运算、像、封闭都在 200ms 内', () => {
   const c = ref => resolveRef(ref);
   const cases = [
     () => combine(c('d:Len'), c('b:mul'), c('d:Len')),
     () => combine(c('d:Len'), c('b:div'), c('d:Len')),
-    () => combine(c('d:Qp'), c('b:div'), c('d:Freq')),
-    () => combine(c('d:Qp'), c('b:mul'), c('c:q:1|1,0,0')),
+    () => combine(c('d:Q'), c('b:div'), c('d:Freq')),
+    () => combine(c('d:Q'), c('b:div'), c('d:Time')),
+    () => combine(c('d:Q'), c('b:mul'), c('c:q:1|1,0,0')),
     () => combine(c('d:Len'), c('u:sq'), null),
     () => combine(c('d:Len'), c('m:closure'), c('b:add')),
     () => combine(c('d:Len'), c('m:closure'), c('b:mul')),
-    () => combine(c('d:Len'), c('m:closure'), c('b:div')),
-    () => combine(c('d:Time'), c('m:closure'), c('b:div')),
     () => combine(c('d:Force'), c('m:closure'), c('b:div')),
     () => combine(c('c:q:1|1,0,0'), c('m:extend'), combine(null, c('b:mul'), c('c:q:1|1,0,0')).item),
   ];
   // 第一次跑会带上 JIT 预热，先热一下
   combine(c('d:Vel'), c('m:closure'), c('b:div'));
-  combine(c('d:Len'), c('m:closure'), c('b:div'));
   for (const f of cases) {
     const t0 = performance.now();
     const r = f();
     const dt = performance.now() - t0;
     assert.ok(r.ok, r.msg);
     assert.ok(dt < 200, `用了 ${dt.toFixed(0)}ms`);
+  }
+});
+
+// 长度、时间 在 ÷ 下封闭是最慢的用例，不放进上面的速度测试：量纲类带符号以后，大小上限内能算出的卡
+// 多了一倍（约 1200 张），封闭会一直算到引擎的运算预算用完才停（单独跑约 500ms）。这里只检查它们能算完、
+// 结果标成被截断的近似卡组，时间不失控
+test('长度、时间 在 ÷ 下封闭：能算完，停在引擎的运算预算上', () => {
+  const c = ref => resolveRef(ref);
+  for (const id of ['d:Len', 'd:Time']) {
+    const t0 = performance.now();
+    const r = combine(c(id), c('m:closure'), c('b:div'));
+    const dt = performance.now() - t0;
+    assert.ok(r.ok, r.msg);
+    assert.ok(r.item.v.approx && r.item.v.truncated, id);
+    assert.ok(dt < 2000, `${id} 在 ÷ 下封闭用了 ${dt.toFixed(0)}ms`);
   }
 });

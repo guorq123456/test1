@@ -203,10 +203,12 @@ function qtyBin(op, x, y) {
 
 // ───────────────────────── 视野与探针 ─────────────────────────
 
-// 每个量纲类在视野里的值。1～12 和 1/2～1/6 都有，这样 长度 ÷ 长度 能凑出 ℚ⁺ 的每一个小探针
-const VALS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '1/2', '1/3', '1/4', '1/5', '1/6'].map(parseQKey);
-// 图鉴外的量纲只放几个值，让自造的卡组也能预览
-const VALS_SMALL = ['1', '2', '3', '1/2'].map(parseQKey);
+// 每个量纲类都带符号：0 步是原地不动，−3 步是往回走 3 步，(长度, +) 才是群。
+// 视野里每个量纲类放 1～12 和 1/2～1/6，这样 长度 ÷ 长度 能凑出 ℚ⁺ 的每一个小探针；
+// 再放 0、−1、−2，两两运算、封闭才会算出 0 和负数（长度 × 长度 里有 −2 步²，长度 ÷ 长度 里有 0 和负数）
+const VALS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '1/2', '1/3', '1/4', '1/5', '1/6', '0', '-1', '-2'].map(parseQKey);
+// 图鉴外的量纲只放几个值，让自造的卡组也能预览；同样带上 0 和一个负数
+const VALS_SMALL = ['1', '2', '3', '1/2', '0', '-1'].map(parseQKey);
 const EXTRA_DIMS = [
   dim(1, -1, 1), // 动量
   dim(-3, 0, 1), // 密度
@@ -225,11 +227,15 @@ export const WINDOW_Q = [
   ...EXTRA_DIMS.flatMap(d => VALS_SMALL.map(v => qty(v, d))),
 ];
 
-// 探针：每个量纲类三个值。面积用平方数、体积用立方数，这样 长度 经 x²、长度 经 x³ 也认得出来
-const PROBE_VALS = { Area: ['1', '4', '1/4'], Vol: ['1', '8', '1/8'] };
-export const PROBES_SMALL_Q = DIMS.flatMap(x => (PROBE_VALS[x.id] ?? ['1', '2', '1/2']).map(s => qty(parseQKey(s), x.d)));
+// 小探针：每个量纲类几个值，近似卡组（两两运算、封闭）只比对这些。
+// 都带上 0：ℚ⁺ ÷ 时间 这种没有 0 的结果就不会被当成整个「频率」。
+// 面积、体积里放一个不是平方数/立方数的值：长度 经 x² 只有平方数，不是整个「面积」
+const PROBE_VALS = { Area: ['1', '4', '1/4', '2'], Vol: ['1', '8', '1/8', '2'] };
+export const PROBES_SMALL_Q = DIMS.flatMap(x => ['0', ...(PROBE_VALS[x.id] ?? ['1', '2', '1/2'])].map(s => qty(parseQKey(s), x.d)));
 
-// 大探针：精确卡组再多比对几个视野外的值。面积只放平方数、体积只放立方数；
+// 大探针：精确卡组（像、并、交）再多比对几个值。每个量纲类都有 0 和 −1：
+// 这样 ℚ⁺ × 1 步（只有往前走的长度）不会被当成整个「长度」，ℤ × 1 步、ℕ⁺ × 1 步、ℕ × 1 步 也分得开。
+// 面积只放平方数、体积只放立方数（−1 是立方数）；
 // 长度的值立方之后也不能超过一千万，不然 体积 经 ∛x 这种做法会在探针上溢出
 const PROBE_MORE = {
   Len: ['100', '1/5', '1/12', '210'],
@@ -244,11 +250,16 @@ const PROBE_MORE = {
   Energy: ['3', '9'],
   Power: ['3', '1/3'],
 };
-export const PROBES_Q = [...PROBES_SMALL_Q, ...DIMS.flatMap(x => (PROBE_MORE[x.id] ?? []).map(s => qty(parseQKey(s), x.d)))];
+const PROBE_SIGNED = ['-1']; // 0 已经在小探针里
+export const PROBES_Q = [
+  ...PROBES_SMALL_Q,
+  ...DIMS.flatMap(x => [...PROBE_SIGNED, ...(PROBE_MORE[x.id] ?? [])].map(s => qty(parseQKey(s), x.d))),
+];
 
 // 大小 = 值的高度 + 2 × 指数绝对值之和。指数也算进去，封闭时量纲才不会一直长。
 // 上限 14：8 步³（体积的探针）是 8 + 6，2 捧·步²/息³（功率的探针）是 2 + 12，刚好都留得下；
-// 再大，"长度 在 ÷ 下封闭" 这种会算出几千张卡，慢
+// 再大，"长度 在 ÷ 下封闭" 这种会算出几千张卡，慢。量纲类带符号以后，它在上限 14 内也有约 1200 张卡，
+// 会一直算到引擎的运算预算用完才停（约 500ms）
 const absExp = e => (e.d === 1 ? (e.n < 0 ? -e.n : e.n) : Math.abs(e.n / e.d));
 const totalExp = d => absExp(d[0]) + absExp(d[1]) + absExp(d[2]);
 export const sizeQty = v => height(v.v) + 2 * totalExp(v.dim);
@@ -282,6 +293,8 @@ registerType({
   probes: PROBES_Q,
   probesSmall: PROBES_SMALL_Q,
   sizeCap: SIZE_CAP,
+  // 量纲类带符号以后，"长度 在 ÷ 下封闭"在大小上限内有上千张卡；预算调小，早点停下来标成截断
+  opBudget: 200_000,
   bin: qtyBin,
 });
 
@@ -300,12 +313,12 @@ export const CHAPTER = {
     '还没有尺子的时候，人就用自己量世界。走多远，数步子；等多久，数呼吸；有多少，看双手能捧几回。步、息、捧，是从身体里长出来的单位。' +
     '后来有人把一块田的长和宽都走了一遍，把两个步数乘起来，发现得到的东西不再是步数：它是田的大小。步数除以呼吸数，是快慢。' +
     '长度乘长度，是另一种东西。人们给这"另一种东西"记账，就有了量纲。' +
-    '这一章的卡都带着单位。加减只能在同类之间做，乘除却会变出新的种类。有一个彩蛋：步 ÷ 步 回到没有单位的数，长度 ÷ 长度 就是 ℚ⁺。',
+    '这一章的卡都带着单位。加减只能在同类之间做，乘除却会变出新的种类。有一个彩蛋：步 ÷ 步 回到没有单位的数，长度 ÷ 1 步 就是 ℚ。',
   unlock: {
     when: 'd:Qp',
     gives: [c(STEP), c(BREATH), c(HANDFUL), ...NAMED_VALUES.map(x => c(x.key))],
     note:
-      '有了正有理数，就能给数配上单位。赠卡里除了 1 步、1 息、1 捧，还有几个老单位：1/5 步是拃（张开手掌的宽），2 步是庹（两臂平伸），300 步是里；200 息是刻，20000 息是日（一日百刻）；120 捧是石。数值是这个游戏里定的，古人各地各有各的算法。',
+      '有了正有理数，就能给数配上单位。赠卡里除了 1 步、1 息、1 捧，还有几个老单位：1/5 步是拃（张开手掌，拇指尖到中指尖），2 步是庹（两臂平伸），300 步是里；200 息是刻，20000 息是日（一日百刻）；120 捧是石。数值是这个游戏里定的，古人各地各有各的算法。',
   },
 };
 
@@ -313,11 +326,11 @@ export const NAMED_UN = [];
 
 export const BIN_INFO = {};
 
-// 一个量纲类的图鉴条目
+// 一个量纲类的图鉴条目。量纲类带符号：有 0，也有负值，所以 (X, +) 是群
 function entry(id, extra) {
   const x = DIMS.find(d => d.id === id);
   const key = dimKey(x.d);
-  const few = ['1/2', '1', '2', '3'].map(s => fmtQty(qty(parseQKey(s), x.d)));
+  const few = ['-1', '0', '1/2', '1', '2'].map(s => fmtQty(qty(parseQKey(s), x.d)));
   return {
     id,
     short: x.name,
@@ -336,53 +349,49 @@ function entry(id, extra) {
 export const CATALOG = [
   entry('Len', {
     note: '(长度, +) 是群：步数加步数还是步数，0 步是单位元，3 步的逆元是往回走的 −3 步。对 × 不封闭：步 × 步 = 步²，跑到面积去了。',
-    desc: '所有能用步子量出来的量：3 步、1/2 步、300 步。',
-    hint: '把正有理数 ℚ⁺ 里的每个数都乘上 1 步。',
+    desc: '所有能用步子量出来的量：3 步、1/2 步、300 步，还有原地不动的 0 步、往回走的 −3 步。',
+    hint: '把有理数 ℚ 里的每个数都乘上 1 步。只用 ℚ⁺ 的话，得到的只有往前走的长度，没有 0 步和 −3 步。',
     recipes: [
-      ['d:Qp', 'b:mul', c(STEP)],
+      ['d:Q', 'b:mul', c(STEP)],
       ['d:Vel', 'b:mul', 'd:Time'],
-      ['d:Area', 'u:sqrt', null],
       ['d:Vol', 'b:div', 'd:Area'],
     ],
   }),
   entry('Time', {
-    note: '(时间, +) 是群：等了 3 息再等 2 息就是 5 息，0 息是单位元。时间 × 时间 是 息²，那不是时间。',
+    note: '(时间, +) 是群：等了 3 息再等 2 息就是 5 息，0 息是单位元，−3 息 是 3 息之前。时间 × 时间 是 息²，那不是时间。',
     desc: '用呼吸数出来的量：1 息、200 息（一刻）、20000 息（一日）。',
-    hint: '把 ℚ⁺ 乘上 1 息；或者把频率倒过来。',
+    hint: '把 ℚ 乘上 1 息；或者用长度 ÷ 速度。',
     recipes: [
-      ['d:Qp', 'b:mul', c(BREATH)],
+      ['d:Q', 'b:mul', c(BREATH)],
       ['d:Len', 'b:div', 'd:Vel'],
-      ['d:Freq', 'u:recip', null],
-      ['d:Qp', 'b:div', 'd:Freq'],
+      ['d:Q', 'b:div', 'd:Freq'],
     ],
   }),
   entry('Mass', {
-    note: '(质量, +) 是群：两捧加一捧是三捧，0 捧是单位元。质量 × 质量 是 捧²，没人见过那种东西。',
+    note: '(质量, +) 是群：两捧加一捧是三捧，0 捧是单位元，拿走两捧就是 −2 捧。质量 × 质量 是 捧²，没人见过那种东西。',
     desc: '用双手捧出来的量：1 捧、120 捧（一石）。',
-    hint: '把 ℚ⁺ 乘上 1 捧；或者用力 ÷ 加速度。',
+    hint: '把 ℚ 乘上 1 捧；或者用力 ÷ 加速度。',
     recipes: [
-      ['d:Qp', 'b:mul', c(HANDFUL)],
+      ['d:Q', 'b:mul', c(HANDFUL)],
       ['d:Force', 'b:div', 'd:Acc'],
-      [c(HANDFUL), 'b:mul', 'd:Qp'],
+      [c(HANDFUL), 'b:mul', 'd:Q'],
     ],
   }),
   entry('Area', {
     note: '(面积, +) 是群：两块田拼在一起还是田，0 步² 是单位元。它是长度 × 长度，单位是 步²。',
     desc: '一块田有多大：长的步数乘宽的步数。',
-    hint: '长度 × 长度，或者让长度里每张卡都做平方。',
+    hint: '长度 × 长度。（让长度里每张卡都做平方只能得到 1、4、9 步² 这样的平方数，凑不出 2 步²。）',
     recipes: [
       ['d:Len', 'b:mul', 'd:Len'],
-      ['d:Len', 'u:sq', null],
       ['d:Vol', 'b:div', 'd:Len'],
     ],
   }),
   entry('Vol', {
     note: '(体积, +) 是群，单位是 步³。面积再乘一个长度就到了这里。',
     desc: '一个坑有多深多大：面积再乘高。',
-    hint: '面积 × 长度，或者让长度里每张卡都做立方。',
+    hint: '面积 × 长度。',
     recipes: [
       ['d:Area', 'b:mul', 'd:Len'],
-      ['d:Len', 'u:cube', null],
       ['d:Len', 'b:mul', 'd:Area'],
     ],
   }),
@@ -407,13 +416,13 @@ export const CATALOG = [
     ],
   }),
   entry('Freq', {
-    note: '(频率, +) 是群，单位是 1/息。时间倒过来就是它：一息里发生几次。',
+    note: '(频率, +) 是群，单位是 1/息，0/息 是单位元。数 ÷ 时间 就是它：一息里发生几次。只把时间倒过来还差一点：0 息倒不过来，时间 经 1/x 得到的频率里没有 0/息。',
     desc: '心跳一息几下：每次呼吸里发生的次数。',
-    hint: '让时间里每张卡都做 1/x。',
+    hint: 'ℚ ÷ 时间；或者速度 ÷ 长度。',
     recipes: [
-      ['d:Time', 'u:recip', null],
-      ['d:Qp', 'b:div', 'd:Time'],
+      ['d:Q', 'b:div', 'd:Time'],
       ['d:Vel', 'b:div', 'd:Len'],
+      ['d:Acc', 'b:div', 'd:Vel'],
     ],
   }),
   entry('Force', {
@@ -455,7 +464,7 @@ export const QUESTS = [
   {
     id: 'qty2',
     title: '长度乘长度',
-    text: '先把 ℚ⁺ 乘上 1 步，得到「长度」。再让长度 × 长度，看看得到的是什么。',
+    text: '先把 ℚ 乘上 1 步，得到「长度」。再让长度 × 长度，看看得到的是什么。',
     done: has => has('d:Area'),
   },
   {
@@ -470,14 +479,14 @@ export const QUESTS = [
 export const WALKTHROUGH = [
   [c('q:300|1,0,0'), 'b:div', c(STEP), 'c:300'],
   [c(STEP), 'b:mul', c(STEP), c('q:1|2,0,0')],
-  ['d:Qp', 'b:mul', c(STEP), 'd:Len'],
-  ['d:Qp', 'b:mul', c(BREATH), 'd:Time'],
-  ['d:Qp', 'b:mul', c(HANDFUL), 'd:Mass'],
+  ['d:Q', 'b:mul', c(STEP), 'd:Len'],
+  ['d:Q', 'b:mul', c(BREATH), 'd:Time'],
+  ['d:Q', 'b:mul', c(HANDFUL), 'd:Mass'],
   ['d:Len', 'b:mul', 'd:Len', 'd:Area'],
   ['d:Area', 'b:mul', 'd:Len', 'd:Vol'],
   ['d:Len', 'b:div', 'd:Time', 'd:Vel'],
   ['d:Vel', 'b:div', 'd:Time', 'd:Acc'],
-  ['d:Time', 'u:pow(-1)', null, 'd:Freq'],
+  ['d:Q', 'b:div', 'd:Time', 'd:Freq'],
   ['d:Mass', 'b:mul', 'd:Acc', 'd:Force'],
   ['d:Force', 'b:mul', 'd:Len', 'd:Energy'],
   ['d:Energy', 'b:div', 'd:Time', 'd:Power'],

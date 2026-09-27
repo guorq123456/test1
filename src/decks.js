@@ -22,6 +22,7 @@ import {
   WINDOW,
   WIN_H,
   sizeCapFor,
+  opBudgetFor,
   eqV,
   TYPES,
   baseType,
@@ -284,13 +285,12 @@ export function orbitDeck(c, f, name) {
   return mkDeck('orbit', y => seen.has(vkey(y)), { ...extra, approx: open, elems: seq });
 }
 
-const OP_BUDGET = 1_500_000;
-
 // 封闭：从 D 出发，用 b 反复组合（在视野里算）
 export function closureDeck(D, b, name) {
   const fin = !!D.list;
   const seeds = sampleOf(D);
   const cap = sizeCapFor(D.type);
+  const budget = opBudgetFor(D.type);
   const hmax = fin ? Math.min(2000, Math.max(cap, 2 * Math.max(1, ...seeds.map(sizeV)))) : cap;
   const all = new Map(seeds.map(x => [vkey(x), x]));
   let frontier = [...all.values()];
@@ -325,7 +325,7 @@ export function closureDeck(D, b, name) {
         if (!b.comm) tryAdd(binV(b.id, y, x));
       }
       ops += cur.length * 2;
-      if (ops > OP_BUDGET || all.size > 4000) {
+      if (ops > budget || all.size > 4000) {
         dropped = true;
         stop = true;
         break;

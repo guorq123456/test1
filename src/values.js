@@ -114,6 +114,12 @@ export function sizeCapFor(type) {
   return d?.sizeCap ?? WIN_H;
 }
 
+// 封闭最多做多少次运算。运算贵的类型（矩阵、量）可以在类型定义里用 opBudget 调小
+export function opBudgetFor(type) {
+  const d = TYPES.get(baseType(type));
+  return d?.opBudget ?? 1_500_000;
+}
+
 // ───────────────────────── 二元运算 ─────────────────────────
 
 export const BIN = {
