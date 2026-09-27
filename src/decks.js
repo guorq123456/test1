@@ -23,6 +23,8 @@ import {
   WIN_H,
   sizeCapFor,
   eqV,
+  TYPES,
+  baseType,
 } from './values.js';
 import { applyU, preU, invertU, isQStructural } from './unary.js';
 
@@ -70,16 +72,18 @@ export function finiteDeck(xs, name) {
   return mkDeck('finite', x => keys.has(vkey(x)), { list, name, type });
 }
 
+// 视野里算出来的卡组。如果结果类型的视野就是全部成员（比如模 12 的余数只有 12 个），那它其实是精确的有限卡组。
 function approxDeck(elems, name, type) {
-  const m = new Map();
-  for (const x of elems) if (isV(x)) m.set(vkey(x), x);
-  const list = [...m.values()];
-  return mkDeck('approx', x => m.has(vkey(x)), {
-    name,
-    approx: true,
-    elems: list,
-    type: type ?? (list.length ? sameType(list) : 'set'),
-  });
+  const list = uniqV(elems).sort(cmpV);
+  const t = type ?? (list.length ? sameType(list) : 'set');
+  if (list.length && t !== 'set' && exhaustiveType(t)) return finiteDeck(list, name);
+  const m = new Map(list.map(x => [vkey(x), x]));
+  return mkDeck('approx', x => m.has(vkey(x)), { name, approx: true, elems: list, type: t });
+}
+
+function exhaustiveType(sub) {
+  const d = TYPES.get(baseType(sub));
+  return !!(d && d.exhaustive && d.exhaustive(sub));
 }
 
 // 卡组的代表性成员：有限卡组是全部，其他的是视野里的成员
@@ -108,8 +112,13 @@ export function imageDeck(D, f, name) {
     );
   }
   const sample = sampleOf(D);
-  const outs = uniqV(sample.map(x => applyU(f, x)));
-  if (!outs.length) return finiteDeck([], name);
+  const raw = sample.map(x => applyU(f, x));
+  const outs = uniqV(raw);
+  if (!outs.length) {
+    const E = finiteDeck([], name);
+    E.err = firstErr(raw);
+    return E;
+  }
   const type = sameType(outs);
   // f 可逆时可以精确判断：y 在像里 ⇔ f⁻¹(y) 在 D 里
   const g = invertU(f);
@@ -127,10 +136,16 @@ export function imageDeck(D, f, name) {
         const x = applyU(g, y);
         return isV(x) && eqV(applyU(f, x), y) ? D.has(x) : false;
       },
-      { name, type },
+      { name, type, sample: () => uniqV(sampleOf(D).map(x => applyU(f, x))) },
     );
   }
   return approxDeck(outs, name, type);
+}
+
+// 一批运算结果里第一条带解释的错误
+function firstErr(results) {
+  for (const r of results) if (r && typeof r === 'object' && r.err) return r.err;
+  return null;
 }
 
 export function unionDeck(A, B, name) {
@@ -277,19 +292,32 @@ export function pairwiseDeck(A, b, B, name) {
   const sb = sampleOf(B);
   const out = new Map();
   let cap = null;
+  let err = null;
+  let dropped = 0;
   for (const x of sa) {
     for (const y of sb) {
       const z = binV(b.id, x, y);
-      if (!isV(z)) continue;
+      if (!isV(z)) {
+        if (!err && z && typeof z === 'object' && z.err) err = z.err;
+        continue;
+      }
       if (!fin) {
         if (cap === null) cap = sizeCapFor(subtypeOf(z));
-        if (sizeV(z) > cap) continue;
+        if (sizeV(z) > cap) {
+          dropped++;
+          continue;
+        }
       }
       out.set(vkey(z), z);
     }
   }
-  if (fin) return finiteDeck([...out.values()], name);
-  return approxDeck([...out.values()], name);
+  const D = fin ? finiteDeck([...out.values()], name) : approxDeck([...out.values()], name);
+  if (!out.size) {
+    // 一张都没留下：要么全都算不出（带解释），要么算得出但都超出了视野的大小
+    D.err = err;
+    D.dropped = dropped > 0;
+  }
+  return D;
 }
 
 export function sigOf(D, probes) {
@@ -306,7 +334,7 @@ export function previewDeck(D, max = 6) {
   }
   if (D.seq && D.seq.length >= 2) return `{${D.seq.slice(0, 5).map(fmtV).join(', ')}, …}`;
   if (D.type !== 'q') {
-    const pool = D.elems ?? [...windowFor(D.type)].sort((x, y) => sizeV(x) - sizeV(y) || cmpV(x, y));
+    const pool = D.elems ?? (D.sample ? uniqV(D.sample()) : [...windowFor(D.type)]).sort((x, y) => sizeV(x) - sizeV(y) || cmpV(x, y));
     const members = [];
     let more = false;
     for (const x of pool) {

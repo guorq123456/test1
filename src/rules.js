@@ -10,6 +10,7 @@ import {
   fmtV,
   parseVKey,
   defOf,
+  subtypeOf,
   typeLabel,
   probesFor,
   smallProbesFor,
@@ -59,9 +60,11 @@ const catCache = new Map();
 export function catItem(id) {
   if (!catCache.has(id)) {
     const c = CAT_BY_ID[id];
+    const type = c.type ?? 'q';
+    // 图鉴的 has 只需要处理本类型的值，别的类型在这里就挡掉
     const D = c.list
       ? finiteDeck(c.list.map(parseVKey), c.short)
-      : mkDeck('cat', c.has, { name: c.short, type: c.type ?? 'q' });
+      : mkDeck('cat', x => subtypeOf(x) === type && c.has(x), { name: c.short, type });
     D.catId = id;
     catCache.set(id, { kind: 'deck', v: D, id: `d:${id}`, desc: { k: 'deck', cat: id }, cat: c });
   }
@@ -82,7 +85,20 @@ export function label(it) {
   }
 }
 
-const nest = s => (/\s/.test(s) ? `(${s})` : s);
+// 已经被一对括号整个包住的文字（向量 "(1, 0)"、矩阵 "[0 1; 1 0]"）不用再加括号
+function bracketed(s) {
+  const pairs = { '(': ')', '[': ']', '{': '}' };
+  const close = pairs[s[0]];
+  if (!close || s[s.length - 1] !== close) return false;
+  let depth = 0;
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === s[0]) depth++;
+    else if (s[i] === close) depth--;
+    if (depth === 0 && i < s.length - 1) return false;
+  }
+  return true;
+}
+const nest = s => (/\s/.test(s) && !bracketed(s) ? `(${s})` : s);
 const lab = it => nest(label(it));
 
 // 按引用取卡（测试和图鉴用）：c:1  c:[3]12  b:add  m:extend  u:succ  d:N
@@ -178,11 +194,17 @@ function deckResult(D, from, text, recipe) {
     id: `d:~${fingerprint(D)}`,
     desc: { k: 'deck', from: from.map(x => (x ? x.desc : null)) },
   };
-  const note = D.approx ? '（这个卡组只在一个小范围里算过，内容是近似的。）' : '';
+  const note = D.dropped
+    ? '（结果都超出了视野的大小，这个卡组暂时看不到具体内容。）'
+    : D.approx
+      ? '（这个卡组只在一个小范围里算过，内容是近似的。）'
+      : '';
   return ok(item, `${text}。${note}`, { recipe });
 }
 
 const asDeck = it => (it.kind === 'deck' ? it.v : finiteDeck([it.v], fmtV(it.v)));
+// 有限卡组没有成员，或者近似卡组在视野里一张都没算出来（算得出但超出视野大小的不算）
+const isEmpty = D => !D.dropped && (D.list ? D.list.length === 0 : D.elems ? D.elems.length === 0 : false);
 const isSetLike = it => it && (it.kind === 'card' || it.kind === 'deck');
 
 // 在左右两格里找一对 [A, B]，A 的种类在 kindsA 里，B 的种类是 kindB，顺序不限
@@ -232,19 +254,21 @@ function withBin(L, M, Rt) {
       const r = bindRight(b, Rt.v);
       if (r.err) return fail(r.err);
       const D = imageDeck(L.v, r.f, `{ ${fmtU(r.f)} | x ∈ ${lab(L)} }`);
+      if (isEmpty(D) && !isEmpty(L.v)) return fail(D.err ?? `${lab(L)} 里没有一张卡能做 ${fmtU(r.f)}。`);
       return deckResult(D, [L, M, Rt], `${lab(L)} 里的每张卡都做 ${fmtU(r.f)}`, `${lab(L)} ${b.sym} ${fmtV(Rt.v)}`);
     }
     case 'card|deck': {
       const r = bindLeft(L.v, b);
       if (r.err) return fail(r.err);
       const D = imageDeck(Rt.v, r.f, `{ ${fmtU(r.f)} | x ∈ ${lab(Rt)} }`);
+      if (isEmpty(D) && !isEmpty(Rt.v)) return fail(D.err ?? `${lab(Rt)} 里没有一张卡能做 ${fmtU(r.f)}。`);
       return deckResult(D, [L, M, Rt], `${lab(Rt)} 里的每张卡 x 都变成 ${fmtU(r.f)}`, `${fmtV(L.v)} ${b.sym} ${lab(Rt)}`);
     }
     case 'deck|deck': {
       const name = `${lab(L)} ${b.sym} ${lab(Rt)}`;
       const D = pairwiseDeck(L.v, b, Rt.v, name);
-      if (D.list && D.list.length === 0 && !(L.v.list && L.v.list.length === 0) && !(Rt.v.list && Rt.v.list.length === 0)) {
-        return fail(`${lab(L)} 和 ${lab(Rt)} 里的卡两两做 ${b.sym} 都算不出结果。`);
+      if (isEmpty(D) && !isEmpty(L.v) && !isEmpty(Rt.v)) {
+        return fail(D.err ?? `${lab(L)} 和 ${lab(Rt)} 里的卡两两做 ${b.sym} 都算不出结果。`);
       }
       return deckResult(D, [L, M, Rt], `从 ${lab(L)} 和 ${lab(Rt)} 里各取一张做 ${b.sym}，收集所有结果`, name);
     }
@@ -273,9 +297,7 @@ function withUn(L, M, Rt) {
   }
   if (X.kind === 'deck') {
     const D = imageDeck(X.v, f, `{ ${fmtU(f)} | x ∈ ${lab(X)} }`);
-    if (D.list && D.list.length === 0 && !(X.v.list && X.v.list.length === 0)) {
-      return fail(`${lab(X)} 里没有一张卡能做 ${fmtU(f)}。`);
-    }
+    if (isEmpty(D) && !isEmpty(X.v)) return fail(D.err ?? `${lab(X)} 里没有一张卡能做 ${fmtU(f)}。`);
     return deckResult(D, [L, M, Rt], `${lab(X)} 里的每张卡都做 ${fmtU(f)}`, `${lab(X)} 经 ${fmtU(f)}`);
   }
   return fail('一元算子的输入要是单卡或卡组。想改造算子，请用紫色的构造算子，比如「复合」「逆」。');

@@ -34,6 +34,8 @@ registerType({
   probesFor: sub => [...],        // 同上（可选）
   probesSmall: [...],             // 小探针（可选）：近似卡组只比对这些。默认等于 probes
   sizeCap: 20,                    // 两两运算结果的大小上限（可选，默认 20）
+  exhaustive: sub => true,        // 可选：这个（子）类型的视野就是全部成员（如模 n 的 n 个余数），
+                                  // 视野里算出的结果会被当成精确的有限卡组而不是近似卡组
   bin(op, x, y) { ... },          // 二元运算，见下
   call(v, x) { ... },             // 可选：把这张卡当函数用（多项式代入）。有它，这张卡就能放在合成台中间
   fmtCall(v, s) { ... },          // 可选：当函数用时的公式，s 是输入的写法（通常是 'x'）
@@ -62,14 +64,18 @@ registerType({
 
 ```js
 registerNamed({
-  id: 'D',                       // 唯一 id
-  name: '求导',
-  fmt: s => `d/dx(${s})`,        // 公式写法，s 是输入的写法
+  id: 'INT',                     // 唯一 id
+  name: '积分',
+  fmt: s => `∫₀ˣ ${s} dx`,       // 公式写法，s 是输入的写法
   apply: x => ...,               // 输入一个值，返回 值 | OVER | null | {err}
-  inverse: 'INT',                // 可选：逆算子的 id（互为逆时两边都写）
+  inverse: 'D',                  // 可选：能把我撤销的算子（先做我再做它 = 恒等）
   desc: '……',                    // 可选：说明文字
 });
 ```
+
+`inverse` 是单向的：写 `inverse: 'D'` 表示"先做 INT 再做 D 会回到原样"，引擎会据此把这个复合化简成恒等，也让「逆」作用在 INT 上得到 D。**只在单射的那一边声明**：求导 D 不是单射（x 和 x + 1 求导都是 1），所以 D 不能写 `inverse: 'INT'`，否则 复合(D, INT) 会被错误地化简成恒等。像转置这种自己是自己的逆，写 `inverse: 'TR'` 即可。
+
+手牌里具名算子的 id 是 `u:named(<id>)`（比如 `u:named(TR)`），而引用写 `u:TR`；测试里用 `resolveRef('u:TR').id` 取 id。
 
 ## 导出
 
@@ -92,7 +98,7 @@ export const CATALOG = [ /* 图鉴卡组，见下 */ ];
 
 export const QUESTS = [            // 本章任务（可选，1～3 个）。done(has) 里 has(id) 查玩家有没有这张卡
   { id: 'mod1', title: '……', text: '……', done: has => has('d:Z12') },
-];
+];                                 // content.js 会自动给每个任务加上 ch（章节号），解锁前不显示
 
 export const WALKTHROUGH = [       // 从"集齐初等篇 + 本章赠卡"出发，集齐本章所有卡组的一条路线
   ['d:Z', 'b:mod', 'c:12', 'd:Z12'],   // [左, 中, 右, 期望得到的 id]；空格子写 null
@@ -116,7 +122,7 @@ export const WALKTHROUGH = [       // 从"集齐初等篇 + 本章赠卡"出发�
   note: '为什么是群 / 不是群',
   desc: '一句话介绍',
   hint: '给玩家的提示',
-  has: v => ...,                   // 成员判断。只会收到本类型的值
+  has: v => ...,                   // 成员判断。引擎保证只把本（子）类型的值送进来
   recipes: [                       // 至少两种做法，至少一种用到别的卡组（d:xxx，不能是自己）
     ['d:Z', 'b:mod', 'c:12'],      // [左, 中, 右]，空格子写 null
     ['c:[1]12', 'm:closure', 'b:add'],

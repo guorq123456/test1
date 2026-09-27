@@ -25,7 +25,7 @@
 
 import { R, isR, rkey, fmtR, height, cmp, gcd, add, sub, mul, div, rpow, parseQKey, Q_KEY_RE, OVER } from './math.js';
 
-export const MSG_OVER = '数字太大了（分子或分母超过了一千万），换小一点的数试试。';
+export const MSG_OVER = '结果太大了（数字超过了一千万，或者次数太高），换小一点的试试。';
 
 export const TYPES = new Map();
 

@@ -1,7 +1,7 @@
 // 游戏界面：合成台、手牌、图鉴。所有规则都在 rules.js 里，这里只负责显示和点击。
 
 import { CATALOG_ALL as CATALOG, CHAPTERS_ALL as CHAPTERS, GIFTS, META, QUESTS_ALL as QUESTS, START } from './content.js';
-import { combine, itemFromDesc, recipeText, resolveRef } from './rules.js';
+import { combine, itemFromDesc, label, recipeText, resolveRef } from './rules.js';
 import { toNum, isR } from './math.js';
 import { BIN, TYPES, fmtV as fmtR, typeOf, typeLabel } from './values.js';
 import { fmtU } from './unary.js';
