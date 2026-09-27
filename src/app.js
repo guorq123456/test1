@@ -8,9 +8,16 @@ import { fmtU } from './unary.js';
 import { groupInfo, previewDeck } from './decks.js';
 
 const SAVE_KEY = 'suanzi-gongfang/v1';
-const KIND = { card: '单卡', bin: '二元算子', un: '一元算子', meta: '构造算子', deck: '卡组' };
-const TAB_OF = { card: 'card', bin: 'op', un: 'op', meta: 'op', deck: 'deck' };
+const KIND = { card: '单卡', bin: '二元算子', un: '一元算子', meta: '构造算子', deck: '卡组', hole: '缺口' };
+const TAB_OF = { card: 'card', bin: 'op', un: 'op', meta: 'op', deck: 'deck', hole: 'hole' };
+const TABS = ['card', 'op', 'deck', 'hole'];
+const SLOT_KEYS = ['W', 'L', 'M', 'R'];
+const emptySlots = () => ({ W: null, L: null, M: null, R: null });
 const CH_NO = ['一', '二', '三', '四', '五', '六', '七', '八'];
+// 缺口卡角上的状态
+const HOLE_FLAG = { fillable: '可填', frontier: '前沿', unfillable: '补不上', filled: '已填' };
+// 填的结果：徽章文字
+const GRADE = { auto: '自动填', exact: '恰到好处', over: '多了一块', frontier: '首次发现 · 发明者' };
 
 const S = {};
 const app = document.getElementById('app');
@@ -25,7 +32,12 @@ function freshState() {
     fresh: new Set(),
     recipes: {},
     hints: {},
-    slots: { L: null, M: null, R: null },
+    // W 是底板「在……里」，只放卡组
+    slots: emptySlots(),
+    // 填过的缺口 id（任务用它的长度）；fillWith：缺口 id → 填成的卡组 id；inventor：首次发现的卡组 id
+    filled: [],
+    fillWith: {},
+    inventor: [],
     active: null,
     tab: 'card',
     last: null,
@@ -55,6 +67,16 @@ const chapterOpen = ch => !ch.unlock || has(ch.unlock.when);
 const chapterOf = id => CHAPTERS.find(ch => ch.id === id);
 // 能放在中间当算子用的单卡（多项式）
 const isCallable = it => it?.kind === 'card' && !!TYPES.get(typeOf(it.v))?.call;
+const holeCount = () => S.order.reduce((n, id) => n + (S.items.get(id).kind === 'hole' ? 1 : 0), 0);
+
+// 缺口现在的状态：本局填过，或者手里已经有它能填成的卡组，都算"已填"
+function holeState(h) {
+  const target = h.v.targetId ? `d:${h.v.targetId}` : null;
+  if (S.filled.includes(h.id)) return { status: 'filled', withId: S.fillWith[h.id] ?? target };
+  if (h.v.status === 'filled') return { status: 'filled', withId: target };
+  if (h.v.status === 'fillable' && target && has(target)) return { status: 'filled', withId: target };
+  return { status: h.v.status, withId: null };
+}
 
 function snapshot() {
   return {
@@ -64,6 +86,9 @@ function snapshot() {
     recipes: S.recipes,
     hints: S.hints,
     slots: S.slots,
+    filled: S.filled,
+    fillWith: S.fillWith,
+    inventor: S.inventor,
     tab: S.tab,
   };
 }
@@ -89,18 +114,38 @@ function restore(data) {
   freshState();
   if (!data || data.v !== 1) return false;
   const memo = new Map();
+  const saved = new Set();
   for (const d of data.items || []) {
-    const it = itemFromDesc(d, memo);
-    if (it) addItem(it, false);
+    // 缺口卡的 desc 要重放一次合成；万一重放出错，跳过这一张，别让整个存档读不出来
+    let it = null;
+    try {
+      it = itemFromDesc(d, memo);
+    } catch (e) {
+      console.warn('读档时有一张卡重建失败', d, e);
+    }
+    if (!it) continue;
+    saved.add(it.id);
+    addItem(it, false);
   }
   for (const id of data.fresh || []) if (has(id)) S.fresh.add(id);
-  S.recipes = data.recipes && typeof data.recipes === 'object' ? data.recipes : {};
-  S.hints = data.hints && typeof data.hints === 'object' ? data.hints : {};
-  for (const k of ['L', 'M', 'R']) {
-    const id = data.slots?.[k];
-    S.slots[k] = id && has(id) ? id : null;
+  // 旧存档里没有的开局卡（后来才加进开局手牌的构造算子，比如「反推」「填」）标成新卡
+  for (const ref of START) {
+    const id = resolveRef(ref).id;
+    if (!saved.has(id)) S.fresh.add(id);
   }
-  if (['card', 'op', 'deck'].includes(data.tab)) S.tab = data.tab;
+  const obj = x => (x && typeof x === 'object' && !Array.isArray(x) ? x : {});
+  const ids = x => (Array.isArray(x) ? x.filter(s => typeof s === 'string') : []);
+  S.recipes = obj(data.recipes);
+  S.hints = obj(data.hints);
+  // 旧存档没有底板 W、没有填过的记录：补默认值
+  for (const k of SLOT_KEYS) {
+    const id = data.slots?.[k];
+    S.slots[k] = id && has(id) && (k !== 'W' || itemOf(id).kind === 'deck') ? id : null;
+  }
+  S.filled = ids(data.filled);
+  S.fillWith = obj(data.fillWith);
+  S.inventor = ids(data.inventor);
+  if (TABS.includes(data.tab)) S.tab = data.tab;
   return true;
 }
 
@@ -111,6 +156,8 @@ function place(id) {
   if (!it) return;
   const sl = S.slots;
   let target = S.active;
+  // 底板只收卡组：选中底板时点了别的卡，就照平常的规则落位
+  if (target === 'W' && it.kind !== 'deck') target = null;
   if (!target) {
     const mid = itemOf(sl.M);
     const isOp = it.kind === 'bin' || it.kind === 'un' || it.kind === 'meta';
@@ -145,40 +192,73 @@ function tapSlot(k) {
   render();
 }
 
-function doCombine() {
+// parts：[L, M, R, W] 四张卡；不给就用合成台上的。缺口详情里的「填」直接给 [缺口, 填, 空, 空]，不动合成台。
+function doCombine(parts = null) {
   if (S.busy) return;
   S.busy = true;
   render();
   // 让"计算中"先显示出来，再做可能要算一会儿的合成
   setTimeout(() => {
-    const res = combine(itemOf(S.slots.L), itemOf(S.slots.M), itemOf(S.slots.R));
+    const [L, M, R, W] = parts ?? ['L', 'M', 'R', 'W'].map(k => itemOf(S.slots[k]));
+    let res;
+    try {
+      res = combine(L, M, R, W);
+    } catch (e) {
+      console.error(e);
+      res = { ok: false, msg: '这一步算的时候出了错，换一种放法试试。' };
+    }
     S.busy = false;
     if (!res.ok) {
       S.last = { ok: false, msg: res.msg };
       render();
       return;
     }
-    const gifts = [];
-    const isNew = addItem(res.item, true, gifts);
-    let recipeNew = false;
-    if (res.item.kind === 'deck' && res.recipe) {
-      const list = (S.recipes[res.item.id] ||= []);
-      if (!list.includes(res.recipe)) {
-        list.push(res.recipe);
-        recipeNew = !isNew;
-      }
+    takeResult(res);
+    // 合成成功后清空合成台（连同底板），下一步从空台开始；想接着用结果，按「放到左边继续」
+    if (!parts) {
+      S.slots = emptySlots();
+      S.active = null;
     }
-    // 一张卡可能同时解锁好几章（ℚ 解锁第六、七章），每一章都要报出来
-    const got = new Set([res.item.id, ...gifts]);
-    const unlocked = isNew ? CHAPTERS.filter(ch => ch.unlock && got.has(ch.unlock.when)).map(ch => ch.id) : [];
-    S.last = { ok: true, text: res.text, id: res.item.id, isNew, recipeNew, gifts, unlocked };
-    // 合成成功后清空合成台，下一步从空台开始；想接着用结果，按「放到左边继续」
-    S.slots = { L: null, M: null, R: null };
-    S.active = null;
-    if (isNew) S.tab = TAB_OF[res.item.kind];
     save();
     render();
   }, 30);
+}
+
+// 收下合成的结果：得到的卡（可能没有）、缺口卡（零到多张）、填的记录
+function takeResult(res) {
+  const it = res.item ?? null;
+  const gifts = [];
+  const isNew = it ? addItem(it, true, gifts) : false;
+  let recipeNew = false;
+  if (it?.kind === 'deck' && res.recipe) {
+    const list = (S.recipes[it.id] ||= []);
+    if (!list.includes(res.recipe)) {
+      list.push(res.recipe);
+      recipeNew = !isNew;
+    }
+  }
+  const holes = (res.holes ?? []).map(h => ({ id: h.id, isNew: addItem(h, true) }));
+  if (res.filled) {
+    if (!S.filled.includes(res.filled)) S.filled.push(res.filled);
+    if (it) S.fillWith[res.filled] = it.id;
+  }
+  if (res.firstFill && it && !S.inventor.includes(it.id)) S.inventor.push(it.id);
+  // 一张卡可能同时解锁好几章（ℚ 解锁第六、七章），每一章都要报出来
+  const got = new Set([it?.id, ...gifts].filter(Boolean));
+  const unlocked = isNew ? CHAPTERS.filter(ch => ch.unlock && got.has(ch.unlock.when)).map(ch => ch.id) : [];
+  S.last = { ok: true, text: res.text, id: it?.id ?? null, isNew, recipeNew, gifts, unlocked, holes, grade: res.grade ?? null };
+  if (isNew) S.tab = TAB_OF[it.kind];
+  else if (holes.some(h => h.isNew)) S.tab = 'hole';
+}
+
+// 缺口详情里的「填」：等于在合成台上放 [缺口] [填] [空]
+function autoFill(holeId) {
+  const H = itemOf(holeId);
+  const F = itemOf('m:fill');
+  if (!H || !F) return;
+  S.sheet = null;
+  S.fresh.delete(holeId);
+  doCombine([H, F, null, null]);
 }
 
 function switchTab(tab) {
@@ -208,8 +288,10 @@ function closeSheet() {
 
 const esc = s =>
   String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
-// 数学文字：变量 x 用斜体，换行（矩阵）变成 <br>
-const math = s => esc(s).replace(/x/g, '<i>x</i>').replace(/\n/g, '<br>');
+// 数学文字：变量 x 用斜体，换行（矩阵）变成 <br>。
+// 只认单独的 x（前后不是拉丁字母），缺口名字、说明里夹着的英文词不会被拆开；
+// 先转义再替换，转义出来的实体里没有 x。结果是 HTML，不要再套一次 math。
+const math = s => esc(s).replace(/(?<![A-Za-z])x(?![A-Za-z])/g, '<i>x</i>').replace(/\n/g, '<br>');
 // 卡面上的矩阵 [a b; c d] 只在分号处换行（一行一行断开），不从一行中间断开
 const keepRows = s => s.replace(/\[[^[\]]*;[^[\]]*\]/g, m => m.replace(/(?<!;) /g, '\u00a0'));
 const decimal = x => String(+toNum(x).toFixed(3)).replace('-', '−');
@@ -239,10 +321,25 @@ function mainText(it) {
       return fmtU(it.v);
     case 'deck':
       return it.v.name;
+    case 'hole':
+      return holeName(it);
     default:
       return it.v.sym;
   }
 }
+
+// 缺口卡的名字：缺的那部分被认成图鉴卡组时用它的名字，否则列出前几张
+const holeName = h => h.v.name ?? previewDeck(h.v.where, 3);
+const catShort = id => {
+  const c = CATALOG.find(x => x.id === id);
+  return c ? (c.short !== c.name ? `${c.short}（${c.name}）` : c.name) : id;
+};
+const nameOfId = id => {
+  const it = itemOf(id);
+  if (it?.cat) return catShort(it.cat.id);
+  if (it) return label(it);
+  return id?.startsWith('d:') ? catShort(id.slice(2)) : '';
+};
 
 function subText(it) {
   switch (it.kind) {
@@ -256,7 +353,10 @@ function subText(it) {
       return it.name ?? '';
     case 'deck':
       if (it.cat) return it.cat.short !== it.cat.name ? it.cat.name : structText(it.cat);
+      if (S.inventor.includes(it.id)) return '自造 · 发明者';
       return it.v.approx ? '自造 · 近似' : '自造卡组';
+    case 'hole':
+      return it.v.kindText ?? '';
   }
   return '';
 }
@@ -271,13 +371,18 @@ function cardHTML(it, { act = 'place', slot = '', still = false } = {}) {
   // card-main 是 flex 容器：公式包在一层 span 里，<i>x</i> 和旁边的文字才会连成一行，空格也不会丢
   // "新"标记放进小字那一行，不盖住小字
   const fresh = !still && !slot && S.fresh.has(it.id) ? '<span class="card-new">新</span>' : '';
+  // 缺口卡角上标出状态：可填 / 前沿 / 补不上 / 已填
+  const st = it.kind === 'hole' ? holeState(it).status : null;
+  const flag = st ? `<span class="card-flag">${HOLE_FLAG[st]}</span>` : '';
+  const cls = `card k-${it.kind}${st ? ` st-${st}` : ''}`;
   const inner = `
-    <span class="card-type">${KIND[it.kind]}</span>
+    <span class="card-type">${KIND[it.kind]}</span>${flag}
     <span class="card-main sz-${size}"><span>${math(keepRows(main))}</span></span>
     <span class="card-sub">${fresh}${math(subText(it))}</span>`;
-  if (still) return `<div class="card k-${it.kind}">${inner}</div>`;
-  const aria = slot ? `移除${KIND[it.kind]} ${main}` : `${KIND[it.kind]} ${main}`;
-  return `<button type="button" class="card k-${it.kind}" data-act="${act}" data-id="${esc(it.id)}"${
+  if (still) return `<div class="${cls}">${inner}</div>`;
+  const what = st ? `${KIND[it.kind]}（${HOLE_FLAG[st]}）` : KIND[it.kind];
+  const aria = slot ? `移除${what} ${main}` : `${what} ${main}`;
+  return `<button type="button" class="${cls}" data-act="${act}" data-id="${esc(it.id)}"${
     slot ? ` data-slot="${slot}"` : ''
   } aria-label="${esc(aria)}">${inner}</button>`;
 }
@@ -295,7 +400,9 @@ function gridHTML(items) {
 function questHTML() {
   // 只显示已解锁章节的任务
   const open = QUESTS.filter(q => !q.ch || chapterOpen(chapterOf(q.ch)));
-  const idx = open.findIndex(q => !q.done(has));
+  // 缺口相关的任务要看手里有几张缺口卡、填过几个缺口
+  const ctx = { holes: holeCount(), filled: S.filled.length };
+  const idx = open.findIndex(q => !q.done(has, ctx));
   if (idx < 0) {
     const locked = CHAPTERS.filter(ch => !chapterOpen(ch));
     const next = locked.length
@@ -330,9 +437,25 @@ function slotHTML(k) {
   }</div>`;
 }
 
+// 底板「在……里」：可选，只放卡组。合成会限制在这个世界里，跑出去的部分成为缺口。
+function floorHTML() {
+  const it = itemOf(S.slots.W);
+  const active = S.active === 'W';
+  const inner = it
+    ? `<span class="floor-name">${math(mainText(it))}</span><span class="floor-sub">${math(subText(it))}</span><span class="floor-x" aria-hidden="true">×</span>`
+    : `<span class="floor-blank">${active ? '下一张卡组放这里' : '点这里，再点一个卡组'}</span>`;
+  const aria = it ? `移除底板上的卡组 ${mainText(it)}` : active ? '底板已选中，下一张卡组放这里' : '选中底板：在某个卡组里做运算';
+  return `<div class="floor${active ? ' is-active' : ''}${it ? ' is-set' : ''}">
+    <span class="floor-word">在</span>
+    <button type="button" class="floor-slot" data-act="slot" data-slot="W" aria-pressed="${active}" aria-label="${esc(aria)}">${inner}</button>
+    <span class="floor-word">里<small>（可选）</small></span>
+  </div>`;
+}
+
 function benchHTML() {
   return `<section class="bench" aria-label="合成台">
     <div class="bench-title"><h2>合成台</h2><span>点卡放上来，点格子里的卡移除</span></div>
+    ${floorHTML()}
     <div class="slots">${slotHTML('L')}${slotHTML('M')}${slotHTML('R')}</div>
     <div class="bench-actions">
       <button type="button" class="btn btn-primary" data-act="combine"${S.busy ? ' disabled' : ''}>${
@@ -347,13 +470,36 @@ function benchHTML() {
 function resultHTML() {
   const L = S.last;
   if (!L) {
-    return `<p class="result-idle">左右两格放单卡或卡组，中间放算子。左右格空着时，那个位置就代表变量 <i>x</i>。</p>`;
+    return `<p class="result-idle">左右两格放单卡或卡组，中间放算子。左右格空着时，那个位置就代表变量 <i>x</i>。上面的「在……里」可以放一个卡组：合成就在这个世界里做，跑出去的部分成为缺口。</p>`;
   }
   if (!L.ok) {
     return `<div class="result is-fail" role="status"><strong>合不成</strong><p>${math(L.msg)}</p></div>`;
   }
-  const it = itemOf(L.id);
-  const tag = L.isNew ? (it.kind === 'deck' ? '新卡组' : `新${KIND[it.kind]}`) : L.recipeNew ? '新做法' : '已经有了';
+  const it = L.id ? itemOf(L.id) : null;
+  const holes = (L.holes ?? []).map(h => itemOf(h.id)).filter(Boolean);
+  const newHoles = (L.holes ?? []).filter(h => h.isNew).length;
+  const tags = [];
+  if (it) {
+    const tag = L.isNew ? (it.kind === 'deck' ? '新卡组' : `新${KIND[it.kind]}`) : L.recipeNew ? '新做法' : '已经有了';
+    tags.push(`<span class="tag${L.isNew || L.recipeNew ? ' tag-new' : ''}">${tag}</span>`);
+  }
+  if (newHoles) tags.push(`<span class="tag tag-hole">新缺口${newHoles > 1 ? ` ${newHoles} 张` : ''}</span>`);
+  else if (holes.length) tags.push('<span class="tag">缺口已经有了</span>');
+  if (L.grade && GRADE[L.grade]) tags.push(`<span class="grade g-${L.grade}">${GRADE[L.grade]}</span>`);
+  // 两栏：得到（可能为空）｜缺口卡（零到多张）
+  const gotCol = `<div class="res-col res-got"><span class="res-h">得到</span>${
+    it ? cardHTML(it, { act: 'info' }) : '<div class="res-empty">成立的部分一张都没有</div>'
+  }</div>`;
+  const holeCol = holes.length
+    ? `<div class="res-col res-holes"><span class="res-h">缺口 <span class="tab-n">${holes.length}</span></span><div class="res-hole-cards">${holes
+        .map(h => cardHTML(h, { act: 'info' }))
+        .join('')}</div></div>`
+    : '';
+  const actions = [
+    it ? '<button type="button" class="btn" data-act="reuse">放到左边继续</button>' : '',
+    it ? `<button type="button" class="btn" data-act="info" data-id="${esc(it.id)}">详情</button>` : '',
+    holes.length ? `<button type="button" class="btn" data-act="info" data-id="${esc(holes[0].id)}">缺口详情</button>` : '',
+  ].join('');
   // 每解锁一章写一段，只列这一章自己的赠卡
   const unlock = [].concat(L.unlocked ?? [])
     .map(chapterOf)
@@ -366,15 +512,13 @@ function resultHTML() {
       }。${esc(ch.unlock.note ?? '')}</p>`;
     })
     .join('');
-  return `<div class="result${L.isNew ? ' is-new' : ''}" role="status">
-    <div class="result-card">${cardHTML(it, { act: 'info' })}</div>
+  const pop = L.isNew || newHoles ? ' is-new' : '';
+  return `<div class="result${holes.length ? ' has-holes' : ''}${pop}" role="status">
+    ${gotCol}${holeCol}
     <div class="result-body">
-      <span class="tag${L.isNew || L.recipeNew ? ' tag-new' : ''}">${tag}</span>
+      <div class="tags">${tags.join('')}</div>
       <p>${math(L.text)}</p>${unlock}
-      <div class="result-actions">
-        <button type="button" class="btn" data-act="reuse">放到左边继续</button>
-        <button type="button" class="btn" data-act="info" data-id="${esc(it.id)}">详情</button>
-      </div>
+      <div class="result-actions">${actions}</div>
     </div>
   </div>`;
 }
@@ -406,17 +550,24 @@ function handGroups() {
     uns: all.filter(i => i.kind === 'un'),
     metas: META.map(m => itemOf(`m:${m.id}`)).filter(Boolean),
     decks: [...CATALOG.map(c => itemOf(`d:${c.id}`)).filter(Boolean), ...all.filter(i => i.kind === 'deck' && !i.cat)],
+    holes: all.filter(i => i.kind === 'hole'),
   };
 }
 
 function handHTML() {
   const g = handGroups();
-  const counts = { card: g.cards.length, op: g.bins.length + g.uns.length + g.metas.length, deck: g.decks.length };
+  const counts = {
+    card: g.cards.length,
+    op: g.bins.length + g.uns.length + g.metas.length,
+    deck: g.decks.length,
+    hole: g.holes.length,
+  };
   const freshIn = tab => [...S.fresh].some(id => TAB_OF[itemOf(id)?.kind] === tab);
   const tabs = [
     ['card', '单卡'],
     ['op', '算子'],
     ['deck', '卡组'],
+    ['hole', '缺口'],
   ]
     .map(
       ([k, t]) =>
@@ -436,6 +587,12 @@ function handHTML() {
     body = g.decks.length
       ? gridHTML(g.decks)
       : '<p class="muted small">还没有卡组。跟着上面的任务，从 0 出发造出第一个卡组。</p>';
+  } else if (S.tab === 'hole') {
+    body = g.holes.length
+      ? `<p class="muted small">缺口是走不通的地方：没有定义、表示不了，或者跑出了「在……里」的世界。点开看它能不能填；缺口卡也能当卡组用，等于缺的那一部分。</p>${gridHTML(
+          g.holes,
+        )}`
+      : '<p class="muted small">还没有缺口。把一个卡组放进合成台上方的「在……里」，再在里面做运算：跑出去的部分就是缺口。除以 0 这种没有定义的运算也会留下缺口。</p>';
   } else {
     body = [
       ['二元算子', g.bins, '两个输入的运算。只在一边放数，就变成一元算子。'],
@@ -502,6 +659,9 @@ function deckDetailHTML(it) {
     const gt = groupText(it.v);
     if (gt) html += `<p>${math(gt)}</p>`;
   }
+  if (S.inventor.includes(it.id)) {
+    html += `<p><span class="badge badge-inventor">发明者</span>这个世界填上了一个以前没有人填过的缺口，是你首先发现的。</p>`;
+  }
   html += `<h3 class="sub-title">你找到的做法</h3>${
     found.length
       ? `<ul class="recipes">${found.map(r => `<li>${math(r)}</li>`).join('')}</ul>`
@@ -509,6 +669,38 @@ function deckDetailHTML(it) {
   }`;
   if (c) html += refListHTML(c);
   return html;
+}
+
+// 缺口详情：类别、法、出发世界、缺了什么、状态与说明
+function holeDetailHTML(h) {
+  const v = h.v;
+  const { status, withId } = holeState(h);
+  const row = (k, val) => `<div><dt>${k}</dt><dd>${val}</dd></div>`;
+  const miss = v.name
+    ? `<span class="fact-name">${math(v.name)}</span> <span class="muted">${math(previewDeck(v.where))}</span>`
+    : math(previewDeck(v.where));
+  const facts = [
+    row('类别', esc(v.kindText ?? '')),
+    row('法', `<span class="fact-math">${math(v.lawText ?? '')}</span>`),
+    row('出发世界', `<span class="fact-math">${math(v.sourceName ?? '')}</span>`),
+    v.world ? row('在……里', `<span class="fact-math">${math(v.world.name ?? previewDeck(v.world))}</span>`) : '',
+    row('缺了什么', miss),
+  ].join('');
+  let note;
+  switch (status) {
+    case 'filled':
+      note = `已填成 ${math(nameOfId(withId) || '一个新世界')}`;
+      break;
+    case 'fillable':
+      note = `可以填成 ${math(catShort(v.targetId))}`;
+      break;
+    case 'frontier':
+      note = '前沿：还没有人填过。用现有的卡凑一个世界，放在合成台另一边手填，奖励更高';
+      break;
+    default:
+      note = v.tooLarge ? '游戏的边界：数太大' : '补不上：这条法在这里没有定义';
+  }
+  return `<dl class="facts">${facts}</dl><p class="hole-note st-${status}">${note}</p>`;
 }
 
 function itemSheetHTML(it, back) {
@@ -528,7 +720,10 @@ function itemSheetHTML(it, back) {
         <p class="muted">两边放单卡，算出新单卡；只放一边，得到一元算子；卡组配单卡，卡组里每张卡都做这个运算；两个卡组，两两运算收集结果。</p>`;
       break;
     case 'meta':
-      rows = `<p>${esc(it.v.desc)}</p><p class="muted">用法：${math(it.v.usage)}</p>`;
+      rows = `<p>${math(it.v.desc)}</p><p class="muted">用法：${math(it.v.usage)}</p>`;
+      break;
+    case 'hole':
+      rows = holeDetailHTML(it);
       break;
     case 'un':
       rows = `<p class="formula">${math(`f(x) = ${fmtU(it.v)}`)}</p>
@@ -539,18 +734,26 @@ function itemSheetHTML(it, back) {
       break;
   }
   const title = it.kind === 'deck' && it.cat ? it.cat.name : it.kind === 'un' && it.name ? it.name : mainText(it);
+  const eyebrow = it.kind === 'hole' ? `缺口 · ${it.v.kindText ?? ''}` : KIND[it.kind];
+  const id = esc(it.id);
+  let actions;
+  if (it.kind === 'hole') {
+    // 可填的缺口：「填」等于合成台上的 [缺口] [填] [空]；「放上合成台」放到左格，用来手填或当卡组用
+    const canFill = holeState(it).status === 'fillable' && has('m:fill');
+    actions = `${canFill ? `<button type="button" class="btn btn-primary" data-act="fill" data-id="${id}">填</button>` : ''}<button type="button" class="btn${
+      canFill ? '' : ' btn-primary'
+    }" data-act="place-close" data-id="${id}" data-slot="L">放上合成台</button>`;
+  } else {
+    actions = `<button type="button" class="btn btn-primary" data-act="place-close" data-id="${id}">放上合成台</button>${
+      isCallable(it) ? `<button type="button" class="btn" data-act="place-close" data-id="${id}" data-slot="M">放到中间</button>` : ''
+    }${it.kind === 'deck' ? `<button type="button" class="btn" data-act="place-close" data-id="${id}" data-slot="W">放进「在……里」</button>` : ''}`;
+  }
   return sheetFrame(
-    `<div class="detail"><div>${cardHTML(it, { still: true })}</div><div><p class="eyebrow">${
-      KIND[it.kind]
-    }</p><h2 id="sheet-title">${math(title)}</h2></div></div>
+    `<div class="detail"><div>${cardHTML(it, { still: true })}</div><div><p class="eyebrow">${esc(
+      eyebrow,
+    )}</p><h2 id="sheet-title">${math(title)}</h2></div></div>
     ${rows}
-    <div class="sheet-actions"><button type="button" class="btn btn-primary" data-act="place-close" data-id="${esc(
-      it.id,
-    )}">放上合成台</button>${
-      isCallable(it)
-        ? `<button type="button" class="btn" data-act="place-close" data-id="${esc(it.id)}" data-slot="M">放到中间</button>`
-        : ''
-    }</div>`,
+    <div class="sheet-actions">${actions}</div>`,
     back,
   );
 }
@@ -572,7 +775,7 @@ function tileHTML(c) {
     const n = (S.recipes[id] || []).length;
     return `<button type="button" class="tile is-got" data-act="info" data-id="${id}" data-back="codex">
       <span class="tile-sym">${math(c.short)}</span>
-      <span class="tile-name">${esc(c.name)}</span>
+      <span class="tile-name">${esc(c.name)}${inventorBadge(id)}</span>
       <span class="tile-prev">${math(c.preview)}</span>
       <span class="tile-meta">${structText(c)} · 找到 ${n} 种做法</span>
     </button>`;
@@ -583,6 +786,29 @@ function tileHTML(c) {
     <span class="tile-prev">${esc(c.hint)}</span>
     <span class="tile-meta">未发现</span>
   </button>`;
+}
+
+const inventorBadge = id => (S.inventor.includes(id) ? ' <span class="badge badge-inventor">发明者</span>' : '');
+
+// 图鉴末尾的「自造」区：图鉴以外、玩家自己造出来的卡组
+function selfMadeHTML() {
+  const mine = S.order.map(itemOf).filter(it => it.kind === 'deck' && !it.cat);
+  if (!mine.length) return '';
+  const tiles = mine
+    .map(it => {
+      const n = (S.recipes[it.id] || []).length;
+      return `<button type="button" class="tile is-got is-self" data-act="info" data-id="${esc(it.id)}" data-back="codex">
+      <span class="tile-sym">${math(it.v.name)}</span>
+      <span class="tile-name">${it.v.approx ? '自造 · 近似' : '自造卡组'}${inventorBadge(it.id)}</span>
+      <span class="tile-prev">${math(previewDeck(it.v))}</span>
+      <span class="tile-meta">找到 ${n} 种做法</span>
+    </button>`;
+    })
+    .join('');
+  return `<section class="chapter"><h3><span class="ch-no">自造</span>图鉴以外的卡组 <span class="ch-count">${mine.length}</span></h3>
+    <p class="muted small">你自己造出来、图鉴里没有的卡组。填上一个没人填过的缺口，就是它的发明者。</p>
+    <div class="codex-grid">${tiles}</div>
+  </section>`;
 }
 
 function chapterHTML(ch) {
@@ -613,6 +839,7 @@ function codexHTML() {
     <h2 id="sheet-title">图鉴 <span class="muted">${got}/${CATALOG.length}</span></h2>
     <p class="muted small">每个卡组都至少有两种做法，而且都能用别的卡组组合出来。点开没发现的卡组看提示。拿到关键的卡会解锁新章节。</p>
     ${chapters}
+    ${selfMadeHTML()}
     <div class="reset">${reset}</div>`);
 }
 
@@ -678,14 +905,17 @@ document.addEventListener('click', e => {
       render();
       break;
     case 'clear':
-      S.slots = { L: null, M: null, R: null };
+      S.slots = emptySlots();
       S.active = null;
       save();
       render();
       break;
+    case 'fill':
+      autoFill(el.dataset.id);
+      break;
     case 'reuse':
-      if (S.last?.id) {
-        S.slots = { L: S.last.id, M: null, R: null };
+      if (S.last?.id && has(S.last.id)) {
+        S.slots = { ...emptySlots(), L: S.last.id };
         S.active = null;
         save();
         render();
@@ -736,7 +966,7 @@ document.addEventListener('click', e => {
         // 忽略
       }
       freshState();
-      S.slots = { L: 'c:1', M: 'b:add', R: 'c:1' };
+      S.slots = { ...emptySlots(), L: 'c:1', M: 'b:add', R: 'c:1' };
       save();
       render();
       break;
@@ -753,7 +983,7 @@ function start(data) {
   const saved = data?.save ?? readLocal();
   if (!restore(saved)) {
     // 第一次玩：合成台上先摆好 1 + 1
-    S.slots = { L: 'c:1', M: 'b:add', R: 'c:1' };
+    S.slots = { ...emptySlots(), L: 'c:1', M: 'b:add', R: 'c:1' };
   }
   render();
 }

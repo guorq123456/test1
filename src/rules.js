@@ -251,6 +251,8 @@ function findTarget(spec) {
 
 // spec: { kind, law, lawText, source, sourceName, where, world, tooLarge? }
 function holeItem(spec, from, W, idx) {
+  // 越出世界的缺口，出发世界就是底板上的那个世界
+  if (spec.kind === 'outside' && spec.world) spec = { ...spec, source: spec.world, sourceName: spec.world.name };
   const c = spec.where.catId ? CAT_BY_ID[spec.where.catId] : matchCatalog(spec.where);
   const where = c ? catItem(c.id).v : spec.where;
   const target = findTarget({ ...spec, where });

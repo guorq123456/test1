@@ -21,6 +21,8 @@
     --c-un: #8f6200;
     --c-meta: #7a3e9d;
     --c-deck: #0f7b65;
+    --c-hole: #97263b;
+    --hole-bg: #fbf0f1;
     --on-k: #ffffff;
     --focus: #2b59c3;
     --focus-bg: rgba(43, 89, 195, 0.08);
@@ -48,6 +50,8 @@
       --c-un: #e8bd4f;
       --c-meta: #c99eeb;
       --c-deck: #4fcca8;
+      --c-hole: #f28b9a;
+      --hole-bg: #2a1e24;
       --on-k: #12161c;
       --focus: #8aa9ff;
       --focus-bg: rgba(138, 169, 255, 0.1);
@@ -73,6 +77,8 @@
     --c-un: #e8bd4f;
     --c-meta: #c99eeb;
     --c-deck: #4fcca8;
+    --c-hole: #f28b9a;
+    --hole-bg: #2a1e24;
     --on-k: #12161c;
     --focus: #8aa9ff;
     --focus-bg: rgba(138, 169, 255, 0.1);
@@ -185,6 +191,42 @@
   }
   .bench-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
+  /* 底板「在……里」：三个格子上方，一整行 */
+  .floor { display: flex; align-items: center; gap: 8px; }
+  .floor-word { font-family: var(--f-display); font-size: 16px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+  .floor-word small { font-family: var(--f-ui); font-size: 11px; font-weight: 400; color: var(--ink-3); }
+  .floor-slot {
+    flex: 1;
+    min-width: 0;
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 4px 10px;
+    border: 1.5px dashed var(--line-strong);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--ink-3);
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .floor.is-active .floor-slot { border-color: var(--focus); color: var(--focus); background: var(--focus-bg); }
+  .floor.is-active .floor-word { color: var(--focus); }
+  .floor.is-set .floor-slot {
+    position: relative;
+    justify-content: flex-start;
+    border: 1px solid var(--line);
+    border-left: 5px solid var(--c-deck);
+    background: var(--card-bg);
+    box-shadow: var(--shadow);
+    color: var(--ink);
+    padding-right: 26px;
+  }
+  .floor-name { font-family: var(--f-math); font-size: 20px; line-height: 1.2; overflow-wrap: anywhere; }
+  .floor-sub { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .floor-x { position: absolute; top: 2px; right: 8px; font-size: 13px; color: var(--ink-3); }
+
   .btn {
     padding: 9px 16px;
     border-radius: 999px;
@@ -233,6 +275,29 @@
     /* 卡组画成一小叠卡 */
     box-shadow: 3px 3px 0 -1px var(--card-bg), 3px 3px 0 0 var(--line-strong), 6px 6px 0 -1px var(--card-bg), 6px 6px 0 0 var(--line), var(--shadow);
   }
+  /* 缺口卡：虚线边、淡红底，像是牌堆里缺了一张 */
+  .k-hole { --k: var(--c-hole); background: var(--hole-bg); border: 1.5px dashed var(--c-hole); }
+  .k-hole.st-filled { border-style: solid; }
+  .k-hole .card-main { color: var(--c-hole); }
+  /* 角标：可填 / 前沿 / 补不上 / 已填，放在类型条下面的左上角（右上角留给 i 和 ×） */
+  .card-flag {
+    position: absolute;
+    top: 21px;
+    left: 5px;
+    z-index: 1;
+    font-size: 9.5px;
+    line-height: 1.5;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 0 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .st-fillable .card-flag { background: var(--c-hole); color: var(--on-k); }
+  .st-frontier .card-flag { background: var(--c-meta); color: var(--on-k); }
+  .st-unfillable .card-flag { background: var(--card-bg); color: var(--ink-3); border: 1px solid var(--line-strong); }
+  .st-filled .card-flag { background: var(--c-deck); color: var(--on-k); }
+  .k-hole .card-main { padding-top: 14px; }
   .card-type {
     display: block;
     background: var(--k);
@@ -300,7 +365,38 @@
     border-radius: 14px;
     padding: 14px;
   }
-  .result-body { display: grid; gap: 8px; }
+  .result-body { display: grid; gap: 8px; min-width: 0; }
+  /* 两栏：得到｜缺口；有缺口时说明文字排到下面整行 */
+  .result.has-holes .result-body { grid-column: 1 / -1; }
+  .res-col { display: grid; gap: 4px; align-content: start; min-width: 0; }
+  .res-h { font-size: 11px; letter-spacing: 0.14em; color: var(--ink-3); }
+  .res-holes .res-h { color: var(--c-hole); font-weight: 600; }
+  .res-hole-cards { display: grid; grid-template-columns: repeat(auto-fill, 92px); gap: 10px; }
+  .res-empty {
+    aspect-ratio: 4 / 5;
+    display: grid;
+    place-items: center;
+    padding: 8px;
+    border: 1.5px dashed var(--line-strong);
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--ink-3);
+    text-align: center;
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .tag.tag-hole { background: var(--c-hole); color: var(--on-k); font-weight: 700; }
+  .grade {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 1px 9px;
+    border-radius: 999px;
+    border: 1.5px solid currentColor;
+  }
+  .g-auto { color: var(--c-deck); }
+  .g-exact { background: var(--c-deck); border-color: var(--c-deck); color: var(--on-k); }
+  .g-over { color: var(--c-un); }
+  .g-frontier { background: var(--c-meta); border-color: var(--c-meta); color: var(--on-k); }
   .result.is-fail { display: block; background: var(--warn-bg); color: var(--warn-ink); border-color: transparent; }
   .result.is-fail strong { display: block; margin-bottom: 2px; }
   .result-idle { color: var(--ink-3); font-size: 14px; padding-inline: 2px; }
@@ -315,7 +411,7 @@
   .tag-new { background: var(--c-deck); color: var(--on-k); font-weight: 700; }
   .result-actions { display: flex; gap: 8px; flex-wrap: wrap; }
   .result-actions .btn { padding: 6px 12px; font-size: 13px; }
-  .is-new .result-card .card { animation: pop 0.55s ease-out; }
+  .is-new .res-col .card { animation: pop 0.55s ease-out; }
   @keyframes pop {
     0% { transform: scale(0.8) rotate(-5deg); }
     60% { transform: scale(1.06) rotate(1.5deg); }
@@ -437,7 +533,21 @@
   .tile.is-got .tile-prev { font-family: var(--f-math); font-size: 14px; }
   .tile-meta { font-size: 12px; color: var(--ink-3); }
   .reset { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding-top: 8px; border-top: 1px solid var(--line); }
-  .sheet-actions { display: flex; gap: 8px; }
+  .sheet-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .badge-inventor { border-color: var(--c-meta); background: var(--c-meta); color: var(--on-k); font-weight: 700; }
+  .tile-name .badge { margin: 0 0 0 4px; font-size: 11px; padding: 0 6px; vertical-align: 1px; }
+  .tile.is-self { border-top-color: var(--ink-3); }
+  /* 缺口详情 */
+  .facts { margin: 0; display: grid; gap: 6px; }
+  .facts > div { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 10px; align-items: baseline; }
+  .facts dt { font-size: 13px; color: var(--ink-3); }
+  .facts dd { margin: 0; overflow-wrap: anywhere; }
+  .fact-math, .fact-name { font-family: var(--f-math); font-size: 17px; }
+  .fact-name { font-weight: 600; }
+  .hole-note { padding: 10px 12px; border-radius: 10px; border-left: 4px solid var(--c-hole); background: var(--hole-bg); font-weight: 600; }
+  .hole-note.st-frontier { border-left-color: var(--c-meta); }
+  .hole-note.st-unfillable { border-left-color: var(--ink-3); background: var(--mat); color: var(--ink-2); }
+  .hole-note.st-filled { border-left-color: var(--c-deck); }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
