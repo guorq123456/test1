@@ -253,7 +253,8 @@ function takeResult(res) {
     if (!S.filled.includes(res.filled)) S.filled.push(res.filled);
     if (it) S.fillWith[res.filled] = it.id;
   }
-  if (res.firstFill && it && !S.inventor.includes(it.id)) S.inventor.push(it.id);
+  // 发明者只给自造的世界：图鉴里本来就有的世界不算"以前没人填过"
+  if (res.firstFill && it && !it.cat && !S.inventor.includes(it.id)) S.inventor.push(it.id);
   // 一张卡可能同时解锁好几章（ℚ 解锁第六、七章），每一章都要报出来
   const got = new Set([it?.id, ...gifts].filter(Boolean));
   const unlocked = isNew ? CHAPTERS.filter(ch => ch.unlock && got.has(ch.unlock.when)).map(ch => ch.id) : [];
@@ -331,7 +332,8 @@ function mainText(it) {
     case 'un':
       return fmtU(it.v);
     case 'deck':
-      return it.v.name;
+      // 没起名字的卡组（拿缺口当候选手填出来的）用它的内容当名字，别让页面渲染时崩掉
+      return it.v.name ?? previewDeck(it.v);
     case 'hole':
       return holeName(it);
     default:
@@ -744,9 +746,13 @@ function holeDetailHTML(h) {
           : '前沿：图鉴里还没有装得下它的世界。用现有的卡凑一个来手填，奖励更高';
       break;
     case 'retyped':
-      note = `结果换了一种东西，不是这个世界缺的部分；拿掉底板再做一次，就能直接得到${
-        v.targetId ? ` ${math(catShort(v.targetId))}` : '它'
-      }`;
+      // 并、交不会"把结果变成别的东西"：另一种东西是另一边放进来的
+      note =
+        v.law?.t === 'meta'
+          ? `${v.name ? math(v.name) : '这部分'}是另一边放进来的另一种东西，不是这个世界缺的部分；拿掉底板再做一次，两边就都留下`
+          : `结果换了一种东西，不是这个世界缺的部分；拿掉底板再做一次，就能直接得到${
+              v.targetId ? ` ${math(catShort(v.targetId))}` : '它'
+            }`;
       break;
     default:
       note = v.tooLarge ? '游戏的边界：数太大' : '补不上：这条法在这里没有定义';

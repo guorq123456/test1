@@ -365,8 +365,8 @@ test('第二轮审查的回归：目标查找、手填分档、缺口命名', ()
   // [21]/[31] 值级缺口：出发世界是卡组，算式另放在 expr
   const d0 = holeOf(C(rr('c:1'), rr('b:div'), rr('c:0')), 'undefined');
   assert.equal(d0.v.sourceName, '{0, 1}');
-  assert.equal(d0.v.expr, '1/0');
-  assert.match(C(d0, rr('m:fill'), null).msg, /1\/0 没有定义/);
+  assert.equal(d0.v.expr, '1 ÷ 0');
+  assert.match(C(d0, rr('m:fill'), null).msg, /1 ÷ 0 没有定义/);
   // [27] 带底板时的说明不说"这就是"
   assert.match(C(N, rr('b:sub'), N, N).text, /留在 ℕ 里的结果就是/);
   // [29] 换了类型的越出不是缺口，也不是前沿：不能填，手填也不给首次发现
@@ -382,6 +382,106 @@ test('第二轮审查的回归：目标查找、手填分档、缺口命名', ()
   // [37] 余数除以 2：有逆元就算得出，没有就没有定义
   assert.equal(C(rr('c:[1]7'), rr('u:half'), null).item.id, 'c:[4]7');
   assert.equal(holeOf(C(rr('c:[1]12'), rr('u:half'), null), 'undefined').v.status, 'unfillable');
+});
+
+test('第三轮复查的回归：取样、分档、换了类型、命名', () => {
+  const N = rr('d:N');
+  const Z = rr('d:Z');
+  const Q = rr('d:Q');
+  const U = (a, b) => C(a, rr('m:union'), b).item;
+  const F = (h, k = null) => C(h, rr('m:fill'), k);
+  // 没有定义 / 表示不了的缺口和底板无关：出发世界是真正的输入，world 为 null
+  const e2 = holeOf(C(Q, rr('u:exp2'), null, rr('d:Np')), 'unrepresentable');
+  assert.equal(e2.v.status, 'frontier');
+  assert.equal(e2.v.world, null);
+  assert.equal(F(holeOf(C(N, rr('u:sqrt'), null, Z), 'unrepresentable'), N).ok, false);
+  const F01 = U(rr('c:0'), rr('c:1'));
+  assert.equal(F(holeOf(C(N, rr('u:sqrt'), null, F01), 'unrepresentable'), F01).ok, false);
+  // 包含检查看整段样本：0 排在越出部分的中间也要算
+  const hq = holeOf(C(Q, rr('b:mul'), Q, rr('d:Qp')), 'outside');
+  assert.equal(hq.v.targetId, 'Q');
+  assert.equal(F(hq, rr('d:Qnz')).ok, false);
+  // 候选自己的样本不会被缺口里的值挤掉：ℤ 在 ^ 下不封闭
+  const hp = holeOf(C(N, rr('b:pow'), N, rr('d:Sq')), 'outside');
+  assert.equal(F(hp, Z).item, null);
+  assert.equal(F(hp, Q).ok, false);
+  assert.equal(holeOf(C(rr('d:Np'), rr('b:pow'), rr('d:Np'), rr('d:Odd')), 'outside').v.status, 'frontier');
+  const hN = holeOf(C(N, rr('b:sub'), N, N), 'outside');
+  const Zp3 = C(Z, rr('b:add'), rr('c:1/3')).item;
+  for (const K of [U(Z, Zp3), U(Zp3, Z)]) assert.equal(F(hN, K).item, null, 'ℤ ∪ (ℤ + 1/3) 关不住 −');
+  // 一元法查候选的全部样本：ℚ∖{0} 在 x − 1、x + 7 下不封闭
+  assert.equal(C(rr('c:1/3'), rr('u:pred'), null, rr('d:Odd')).holes[0].v.targetId, 'Q');
+  assert.equal(F(C(rr('d:Sign'), rr('b:add'), rr('c:7'), rr('d:NegZ')).holes[0], rr('d:Qnz')).item, null);
+  // 有限来源、像卡组的来源、样本末尾都查
+  let Fb = F01;
+  for (let i = 0; i < 7; i++) Fb = C(Fb, rr('b:add'), Fb).item;
+  assert.equal(F(C(F01, rr('u:succ'), null, F01).holes[0], Fb).item, null, '{0..128} 关不住 x + 1');
+  assert.equal(F(hN, C(U(Z, rr('c:3/2')), rr('b:sub'), rr('c:1')).item).item, null, '(ℤ ∪ 3/2) − 1 关不住 −');
+  // 近似候选：视野外的"没有"不可信，视野内的越出照样算
+  const hm = C(rr('d:Mono'), rr('b:mul'), rr('c:p:-4,0'), rr('d:Q2')).holes[0];
+  assert.equal(F(hm, U(rr('d:Q2'), hm)).item, null);
+  // 近似候选只在视野里比：½ℤ 是多了一块，ℤ × 2ᶻ 填 x/2 的缺口是比图鉴更紧
+  assert.equal(F(hN, C(rr('c:1/2'), rr('m:closure'), rr('b:sub')).item).grade, 'over');
+  const hh = holeOf(C(Z, rr('u:half'), null, Z), 'outside');
+  assert.equal(F(hh, C(Z, rr('b:mul'), rr('d:P2z')).item).grade, 'tighter');
+  // 两两运算的表示不了缺口要装得下两边：ℕ⁺ ^ ℚ⁺ 是前沿
+  const hu = holeOf(C(rr('d:Np'), rr('b:pow'), rr('d:Qp')), 'unrepresentable');
+  assert.equal(hu.v.status, 'frontier');
+  assert.equal(F(hu, rr('d:Np')).ok, false);
+  // 反推在视野里没碰到解不算空集
+  const r7 = C(rr('c:1/7'), rr('m:reverse'), rr('u:D'));
+  assert.notEqual(r7.item.id, 'd:Empty');
+  assert.equal(r7.item.v.has(resolveRef('c:p:1/7,0').v), true);
+  assert.equal(C(rr('c:p:1,0'), rr('m:reverse'), rr('u:D')).item.v.has(resolveRef('c:p:1/2,0,0').v), true);
+  assert.notEqual(r7.item.id, C(rr('c:13'), rr('m:reverse'), rr('u:D')).item.id);
+  // 拿缺口当候选，结果有名字
+  const B = C(C(Z, rr('u:half'), null).item, rr('b:div'), rr('c:0')).holes[0];
+  assert.ok(F(hN, B).item.v.name);
+  // 模 n 的像凑满一整圈才精确
+  assert.equal(C(N, rr('b:mod'), rr('c:23')).item.v.list.length, 23);
+  assert.equal(C(Z, rr('b:mod'), rr('c:50')).item.v.list.length, 50);
+  // 图鉴里另一个极小世界也是恰到好处，不算发明者
+  assert.equal(F(C(rr('d:Sign'), rr('u:dbl'), null, rr('d:Sign')).holes[0], rr('d:Qnz')).grade, 'exact');
+  // 换了类型：按族逐值比，不看并集顺序，常数算 0 次多项式；认成别的类型的图鉴世界才算
+  assert.equal(holeOf(C(N, rr('b:sub'), N, U(N, rr('c:[1]12'))), 'outside').v.status, 'frontier');
+  const s2 = rr('c:q:1|2,0,0');
+  assert.equal(C(s2, rr('b:add'), s2, U(rr('d:Len'), s2)).holes[0].v.status, 'frontier');
+  assert.equal(C(s2, rr('b:add'), s2, U(s2, rr('d:Len'))).holes[0].v.status, 'frontier');
+  assert.equal(holeOf(C(rr('d:Q2'), rr('b:add'), rr('d:Q2'), rr('d:Q2')), 'outside').v.status, 'frontier');
+  assert.equal(holeOf(C(Z, rr('u:half'), null, U(Z, rr('c:p:1,0'))), 'outside').v.status, 'frontier');
+  assert.equal(holeOf(C(rr('d:Prop'), rr('u:D'), null, rr('d:Prop')), 'outside').v.status, 'retyped');
+  assert.equal(holeOf(C(Z, rr('b:mod'), rr('c:12'), Z), 'outside').v.status, 'retyped');
+  // inputName 是真正的输入
+  assert.equal(C(rr('d:NegZ'), rr('m:union'), N, N).holes[0].v.inputName, '负整数 ∪ ℕ');
+  assert.equal(F(hN, U(Z, rr('c:1/2'))).holes[0].v.inputName, '(ℤ ∪ 1/2)');
+  // 混合原像 ∩ ℚ 认成 ℚ；同一张缺口放两边时右边当候选
+  assert.equal(C(Z, rr('m:reverse'), rr('u:D'), Q).item.id, 'd:Q');
+  assert.equal(F(hN, hN).ok, false);
+  // 缺口指纹按内容：偶数 − 偶数 和 ⟨偶数 | −⟩ 在 ℕ 里是同一张
+  assert.equal(C(rr('d:Even'), rr('b:sub'), rr('d:Even'), N).holes[0].id, C(rr('d:Even'), rr('m:closure'), rr('b:sub'), N).holes[0].id);
+  // 并集只有一边跑出去：缺口就是那一边，认得出 ℤ₁₂
+  assert.equal(C(N, rr('m:union'), rr('d:Z12'), N).holes[0].v.targetId, 'Z12');
+  // 命名
+  assert.equal(C(rr('d:Odd'), rr('b:sub'), rr('d:Odd'), N).item.v.name, '(奇数 − 奇数) ∩ ℕ');
+  assert.equal(C(rr('c:2'), rr('m:extend'), rr('u:sqrt')).holes[0].v.name, '√2');
+  assert.equal(previewDeck(C(rr('c:0'), rr('b:div'), Z).item.v), '{0}');
+  assert.equal(C(Z, rr('m:reverse'), C(null, rr('b:mul'), rr('c:p:1,1')).item).item.v.name, '{ □ | □ × (x + 1) ∈ ℤ }');
+  // 视野外的成员也要包住：{1, 101, 201, …} 的缺口填不成 2ⁿ
+  const W = C(rr('c:1'), rr('m:extend'), C(null, rr('b:add'), rr('c:100')).item).item;
+  assert.equal(F(C(W, rr('u:dbl'), null, W).holes[0], rr('d:P2')).ok, false);
+  // 近似底板视野外的值不算越出
+  assert.equal(C(Z, rr('u:succ'), null, C(rr('c:1/2'), rr('m:closure'), rr('b:sub')).item).holes.length, 0);
+  // 常数捷径只对数成立；0 ^ x、x ^ 0 逐值算
+  assert.equal(previewDeck(C(rr('d:Z12'), rr('b:mul'), rr('c:0')).item.v), '{[0]₁₂}');
+  assert.equal(C(rr('d:Len'), rr('b:mul'), rr('c:0'), rr('d:Len')).holes.length, 0);
+  assert.equal(previewDeck(C(rr('d:Rot4'), rr('b:pow'), rr('c:0')).item.v), '{[1 0; 0 1]}');
+  assert.ok(holeOf(C(rr('c:0'), rr('b:pow'), Z), 'undefined'));
+  // 另一边是别种卡：法带着它，ℤ² × ℚ 在 ℤ² 里填成 ℚ²，和单卡的左右顺序无关
+  const hv = holeOf(C(rr('d:Lattice'), rr('b:mul'), Q, rr('d:Lattice')), 'outside');
+  assert.equal(hv.v.targetId, 'Plane');
+  assert.equal(F(hv, rr('d:Plane')).grade, 'exact');
+  assert.equal(F(hv, U(rr('d:Plane'), Q)).grade, 'over');
+  assert.equal(holeOf(C(rr('c:v:1,0'), rr('b:mul'), rr('c:1/2'), rr('d:Lattice')), 'outside').v.targetId, 'Plane');
 });
 
 test('缺口卡和带底板的卡组能存档重建', () => {

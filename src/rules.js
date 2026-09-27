@@ -18,10 +18,14 @@ import {
   sizeV,
   sizeCapFor,
   classify,
+  uniqV,
+  windowFor,
 } from './values.js';
 import { applyU, bindLeft, bindRight, bindU, compose, fmtU, fnU, invertU, parseU, serU, ukey } from './unary.js';
 import {
+  bracketed,
   closurePartition,
+  diffDeck,
   finiteDeck,
   hash,
   imagePartition,
@@ -29,8 +33,10 @@ import {
   isBlank,
   lawClosedOn,
   mkDeck,
+  nest,
   orbitPartition,
   pairwisePartition,
+  pick,
   preimageDeck,
   previewDeck,
   restrictToWorld,
@@ -97,21 +103,9 @@ export function label(it) {
   }
 }
 
-// 已经被一对括号整个包住的文字（向量 "(1, 0)"、矩阵 "[0 1; 1 0]"）不用再加括号
-function bracketed(s) {
-  const pairs = { '(': ')', '[': ']', '{': '}' };
-  const close = pairs[s[0]];
-  if (!close || s[s.length - 1] !== close) return false;
-  let depth = 0;
-  for (let i = 0; i < s.length; i++) {
-    if (s[i] === s[0]) depth++;
-    else if (s[i] === close) depth--;
-    if (depth === 0 && i < s.length - 1) return false;
-  }
-  return true;
-}
-const nest = s => (/\s/.test(s) && !bracketed(s) ? `(${s})` : s);
+// 卡在式子里的写法：名字有空格、又没被一对括号整个包住时加括号（bracketed / nest 在 decks.js 里）
 const lab = it => nest(label(it));
+void bracketed;
 
 // 按引用取卡（测试和图鉴用）：c:1  c:[3]12  b:add  m:extend  u:succ  d:N
 export function resolveRef(ref) {
@@ -219,31 +213,65 @@ function errText(r) {
 
 const fpDeck = D => (D.catId ? `cat:${D.catId}` : fingerprint(D));
 // 法：{ t:'un', f } 一元 | { t:'bin', b } 二元 | { t:'meta', id } 并/交 | { t:'pre', f, target } 反推
+// 二元法可以带 other / side：另一边是不属于底板世界的另一种卡（ℤ² × ℚ 在 ℤ² 里），封闭检查只查 K 和它的配对
 const lawKeyOf = law =>
-  law.t === 'un' ? ukey(law.f) : law.t === 'bin' ? `bin:${law.b.id}` : law.t === 'pre' ? `pre:${ukey(law.f)}:${fpDeck(law.target)}` : `meta:${law.id}`;
+  law.t === 'un'
+    ? ukey(law.f)
+    : law.t === 'bin'
+      ? `bin:${law.b.id}${law.other ? `:${law.side}:${fpDeck(law.other)}` : ''}`
+      : law.t === 'pre'
+        ? `pre:${ukey(law.f)}:${fpDeck(law.target)}`
+        : `meta:${law.id}`;
 const catTitle = c => (c.short === c.name || /[一-鿿]/.test(c.short) ? `「${c.name}」` : `「${c.name} ${c.short}」`);
 
 // ───────────────────────── 缺口卡 ─────────────────────────
 
-// 跑出去的部分是不是"另一种东西"：类型不同（数 → 余数），或者族全都不同（长度 → 面积）
+// 卡组的成员：整段样本、见证值（轨道走到视野外的那些步）、探针里属于它的（样本是排好序的，0 这种可能排在后面）
+const membersOf = D => uniqV([...sampleOf(D), ...witnessesOf(D), ...probesFor(D.type)].filter(x => D.has(x) === true));
+
+// 跑出去的部分是不是"另一种东西"：跑出去的每个值的族（类型；量按量纲）都不在出发世界里出现过。
+// 出发世界是混合的（ℕ ∪ ℤ₁₂）就看它每一个来源；常数算 0 次多项式
 function retyped(base, where) {
-  if (where.type !== base.type) return true;
-  const fam = D => new Set(sampleOf(D).slice(0, 12).map(familyOf));
-  const a = fam(base);
-  const b = fam(where);
-  return b.size > 0 && [...b].every(f => !a.has(f));
+  const bs = uniqV([...sampleOf(base), ...witnessesOf(base)]).filter(x => base.has(x) === true);
+  const ws = sampleOf(where).slice(0, 60);
+  if (!bs.length || !ws.length) return false;
+  // 跑出去的部分被认成了另一种类型的图鉴世界（ℤ mod 12 → 时钟、ax 经 x′ → ℚ∖{0}）
+  if (base.type !== 'set' && where.catId && (CAT_BY_ID[where.catId]?.type ?? 'q') !== base.type) return true;
+  const fams = new Set(bs.map(familyOf));
+  const fam = x => {
+    const f = familyOf(x);
+    return f === 'q' && fams.has('poly') ? 'poly' : f;
+  };
+  return ws.every(x => !fams.has(fam(x)));
 }
 
-// 这个缺口能填成图鉴里的哪个世界：{ status: 'fillable' | 'frontier' | 'unfillable' | 'retyped', id }
+// 缺口要求候选包住的成员（need），以及封闭检查必查的值（extra）
+// spec/h: { kind, law, source, where, operands? }。越出世界的缺口，source 已经是底板上的世界
+function holeNeed(h) {
+  const escaped = h.kind === 'outside' ? membersOf(h.where) : [];
+  const ops = h.operands ? h.operands.flatMap(D => sampleOf(D).slice(0, 40)) : [];
+  // 越出世界的缺口要包住的是底板和跑出去的部分；没有定义 / 表示不了的缺口要包住走不通的输入（和两边的操作数）
+  const stuck = h.kind === 'outside' ? [] : membersOf(h.where);
+  const need = uniqV([...membersOf(h.source), ...escaped, ...stuck, ...(h.kind === 'outside' ? [] : ops)]);
+  // 一元运算便宜，全部必查；二元运算把跑出去的值、走不通的输入、两边的操作数和出发世界的一部分交给封闭检查
+  const extra = h.law.t === 'un' ? need : uniqV([...escaped, ...stuck, ...ops, ...pick(sampleOf(h.source), 16)]);
+  return { need, extra };
+}
+
+// 这个缺口能填成图鉴里的哪个世界：{ status: 'fillable' | 'frontier' | 'unfillable' | 'retyped', id, minimal }
+// minimal 是所有极小的候选（可能不止一个：ℤ 和 ℚ∖{0} 互不包含）
 function findTarget(spec) {
-  if (spec.kind === 'undefined' || spec.tooLarge) return { status: 'unfillable', id: null };
-  const base = spec.world ?? spec.source;
+  const none = status => ({ status, id: null, minimal: [] });
+  if (spec.kind === 'undefined' || spec.tooLarge) return none('unfillable');
+  const base = spec.source;
   const type = base.type;
   // 结果换了一种东西：这不是这个世界的缺口，拿掉底板就能直接得到它
-  if (spec.kind === 'outside' && retyped(base, spec.where)) return { status: 'retyped', id: spec.where.catId ?? null };
-  if (type === 'set') return { status: 'frontier', id: null };
-  const escaped = spec.kind === 'outside' ? sampleOf(spec.where).slice(0, 40) : [];
-  const need = [...sampleOf(base).slice(0, 40), ...escaped];
+  if (spec.kind === 'outside' && retyped(base, spec.where)) return { status: 'retyped', id: spec.where.catId ?? null, minimal: [] };
+  if (type === 'set') return none('frontier');
+  // 没有定义 / 表示不了的两两缺口：目标要装得下两边的操作数，两边类型不同就没有这样的图鉴世界
+  // （越出世界的缺口不受此限：ℤ² × ℚ 在 ℤ² 里，另一边的 ℚ 记在法里，目标只要装得下 ℤ² 和跑出去的向量）
+  if (spec.kind !== 'outside' && spec.operands && spec.operands.some(D => D.type !== type)) return none('frontier');
+  const { need, extra } = holeNeed(spec);
   const probes = probesFor(type);
   const cands = [];
   for (const c of CATALOG_ALL) {
@@ -251,37 +279,54 @@ function findTarget(spec) {
     if (base.catId === c.id) continue;
     const C = catItem(c.id).v;
     if (!need.every(x => C.has(x) === true)) continue;
-    // 封闭：结果都在候选里或者没有定义；写不出来的结果也算没关住（缺口里的值必查）
-    const r = lawClosedOn(C, spec.law, 40, escaped);
+    // 封闭：结果都在候选里或者没有定义；写不出来的结果也算没关住
+    const r = lawClosedOn(C, spec.law, 40, extra);
     if (r.escaped.length || r.unrep) continue;
     cands.push(c);
   }
-  if (!cands.length) return { status: 'frontier', id: null };
+  if (!cands.length) return none('frontier');
   // 最小：不真包含别的候选；再按探针里的成员数取最少的
   const has = (c, x) => catItem(c.id).v.has(x) === true;
   const contains = (a, b) => probes.every(x => !has(b, x) || has(a, x));
   const minimal = cands.filter(a => !cands.some(b => b !== a && contains(a, b) && !contains(b, a)));
   minimal.sort((a, b) => probes.filter(x => has(a, x)).length - probes.filter(x => has(b, x)).length);
-  return { status: 'fillable', id: minimal[0].id };
+  return { status: 'fillable', id: minimal[0].id, minimal: minimal.map(c => c.id) };
 }
 
-// spec: { kind, law, lawText, source, sourceName, where, world, tooLarge?, name?, expr? }
+// 缺口"卡在哪里"的指纹：按内容算（视野里的成员 + 小探针），不看它是怎么拼出来的，
+// 这样 偶数 − 偶数 和 ⟨偶数 | −⟩ 在 ℕ 里得到的是同一张缺口卡
+function fpWhere(D) {
+  if (D.catId) return `cat:${D.catId}`;
+  if (D.list) return fingerprint(D);
+  const win = D.type === 'set' ? sampleOf(D) : windowFor(D.type);
+  const members = win.filter(x => D.has(x) === true).map(vkey).sort().join(',');
+  return `w${hash(`${D.type}|${sigOf(D, smallProbesFor(D.type))}|${members}`)}`;
+}
+
+// 只有一个走不通的输入时，缺口就叫那个式子（√2、1/0），不管它是从单卡、延展还是单张卡组来的
+const oneExpr = spec =>
+  spec.kind !== 'outside' && spec.law.t === 'un' && spec.where.list?.length === 1 ? fmtU(spec.law.f, fmtV(spec.where.list[0])) : null;
+
+// spec: { kind, law, lawText, source, sourceName, where, world, tooLarge?, name?, expr?, operands?, operandsName? }
 function holeItem(spec, from, W, idx) {
-  // 越出世界的缺口，出发世界就是底板上的那个世界；真正的输入另记在 inputName 里
+  // 越出世界的缺口，出发世界就是底板上的那个世界；真正的输入另记在 inputName 里。
+  // 没有定义、表示不了的缺口和底板无关（同一张缺口有没有底板都一样）
   if (spec.kind === 'outside' && spec.world) spec = { ...spec, inputName: spec.sourceName, source: spec.world, sourceName: spec.world.name };
+  else if (spec.world) spec = { ...spec, world: null };
   const c = spec.where.catId ? CAT_BY_ID[spec.where.catId] : matchCatalog(spec.where);
   const where = c ? catItem(c.id).v : spec.where;
   const target = findTarget({ ...spec, where });
   const v = {
     ...spec,
     where,
-    name: c ? c.name : (spec.name ?? null),
+    name: c ? c.name : (spec.name ?? oneExpr(spec) ?? null),
     lawKey: lawKeyOf(spec.law),
     kindText: HOLE_KIND[spec.kind],
     status: target.status,
     targetId: target.id,
+    minimalIds: target.minimal,
   };
-  const id = `h:${hash([spec.kind, v.lawKey, fpDeck(spec.source), fpDeck(where)].join('|'))}`;
+  const id = `h:${hash([spec.kind, v.lawKey, fpDeck(spec.source), fpWhere(where)].join('|'))}`;
   return {
     kind: 'hole',
     v,
@@ -311,11 +356,13 @@ export function holeLabel(h) {
 // ───────────────────────── 结果 ─────────────────────────
 
 function selfItem(D, from, W) {
-  if (D.list && D.list.length <= 6) D.name = previewDeck(D);
+  if ((D.list && D.list.length <= 6) || !D.name) D.name = previewDeck(D);
+  // 样本为空的卡组（原像在视野里一个解都没碰到）指纹分不开，把名字算进去
+  const fp = fingerprint(D);
   return {
     kind: 'deck',
     v: D,
-    id: `d:~${fingerprint(D)}`,
+    id: sampleOf(D).length ? `d:~${fp}` : `d:~${fp}-${hash(D.name)}`,
     desc: { k: 'deck', from: from.map(x => (x ? x.desc : null)), w: W ? W.desc : null },
   };
 }
@@ -359,8 +406,8 @@ function cardResult(r, from, W, law, lawText, input, text, src = {}) {
     return ok(cardItem(r), text);
   }
   if (k === 'type') return fail(errText(r));
-  // 值级的缺口用"写不出来的那个式子"当名字：√2、1/0、2^(1/2)
-  const expr = law.t === 'un' ? fmtU(law.f, fmtV(input)) : (src.name ?? sourceName);
+  // 值级的缺口用"写不出来的那个式子"当名字：卡对卡就是玩家做的算式（1 ÷ 0），一元就是代入后的式子（√2、log₂3）
+  const expr = src.name ?? (law.t === 'un' ? fmtU(law.f, fmtV(input)) : sourceName);
   const spec = {
     kind: k,
     law,
@@ -422,12 +469,16 @@ function withBin(L, M, Rt, W) {
   switch (k) {
     case 'card|card': {
       const r = binV(b.id, L.v, Rt.v);
-      const eqn = `${fmtV(L.v)} ${b.sym} ${fmtV(Rt.v)}`;
+      // 负数、分数指数加括号：2 − (−1)、2 ^ (1/2)，别写成 2 − −1、2 ^ 1/2
+      const opnd = x => (isR(x) && (x.n < 0 || (b.id === 'pow' && x.d !== 1)) ? `(${fmtV(x)})` : fmtV(x));
+      const eqn = `${opnd(L.v)} ${b.sym} ${opnd(Rt.v)}`;
       // 多项式 x + 1 算出来还是写成 x + 1，不用再写一遍等号
       const text = isV(r) ? (fmtV(r) === eqn ? `${eqn}：得到新卡 ${fmtV(r)}` : `${eqn} = ${fmtV(r)}`) : eqn;
-      const bound = bindLeft(L.v, b);
+      // 有底板时，把"不在底板里的那张卡"绑进法里：(1, 0) × 1/2 在 ℤ² 里，法是 x × 1/2，不是 (1, 0) × x
+      const useRight = W && W.v.has(L.v) === true && W.v.has(Rt.v) !== true;
+      const bound = useRight ? bindRight(b, Rt.v) : bindLeft(L.v, b);
       const law = bound.f ? { t: 'un', f: bound.f } : { t: 'bin', b };
-      return cardResult(r, from, W, law, bound.f ? fmtU(bound.f) : b.sym, Rt.v, text, { inputs: [L.v, Rt.v], name: eqn });
+      return cardResult(r, from, W, law, bound.f ? fmtU(bound.f) : b.sym, useRight ? L.v : Rt.v, text, { inputs: [L.v, Rt.v], name: eqn });
     }
     case '空|card': {
       const r = bindRight(b, Rt.v);
@@ -444,10 +495,13 @@ function withBin(L, M, Rt, W) {
       // x ÷ 0、x ^ (1/13) 这种绑不成简式的，逐值算：结果分成得到和缺口，不当用法错误
       if (r.err && isR(Rt.v) && (b.id === 'div' || b.id === 'pow')) r = { f: bindU(b.id, 'r', Rt.v) };
       if (r.err) return fail(r.err);
-      return imageResult(L, r.f, from, W, `${lab(L)} ${b.sym} ${fmtV(Rt.v)}`);
+      const cs = isR(Rt.v) && (Rt.v.d !== 1 || Rt.v.n < 0) && (b.id === 'pow' || b.id === 'div') ? `(${fmtV(Rt.v)})` : fmtV(Rt.v);
+      return imageResult(L, r.f, from, W, `${lab(L)} ${b.sym} ${cs}`);
     }
     case 'card|deck': {
-      const r = bindLeft(L.v, b);
+      let r = bindLeft(L.v, b);
+      // 0 ^ x 绑不成简式：逐值算，0 ^ 2 = 0 成立，0 ^ 0、0 ^ (−1) 是缺口
+      if (r.err && isR(L.v) && b.id === 'pow') r = { f: bindU(b.id, 'l', L.v) };
       if (r.err) return fail(r.err);
       return imageResult(Rt, r.f, from, W, `${fmtV(L.v)} ${b.sym} ${lab(Rt)}`);
     }
@@ -459,12 +513,27 @@ function withBin(L, M, Rt, W) {
       if (isBlank(got) && !holes.length && !got.dropped && !isBlank(A) && !isBlank(B)) {
         return fail(got.err ?? `${lab(L)} 和 ${lab(Rt)} 里的卡两两做 ${b.sym} 都算不出结果。`);
       }
+      // 有底板、而且只有一边和底板不是同一种卡（ℤ² × ℚ 在 ℤ² 里）：法记成"和那一边配对"，
+      // 填的世界只要和那一边配对时封闭，不用自己和自己封闭（ℚ² 和 ℚ² 的 × 是点积，另一条法）
+      const Wt = W?.v?.type ?? null;
+      const oth =
+        Wt && A.type !== B.type
+          ? A.type !== Wt && B.type === Wt
+            ? { other: A, side: 'l' }
+            : B.type !== Wt && A.type === Wt
+              ? { other: B, side: 'r' }
+              : null
+          : null;
+      const law = oth ? { t: 'bin', b, other: oth.other, side: oth.side } : { t: 'bin', b };
+      // 没有定义 / 表示不了的缺口记在惹事的那一边，但填它的世界要装得下两边的操作数（ℕ⁺ ^ ℚ⁺ 的 √2）
       const specs = holes.map(h => ({
         ...h,
-        law: { t: 'bin', b },
+        law,
         lawText: b.sym,
         source: h.side === 'l' ? A : h.side === 'r' ? B : A,
         sourceName: h.side === 'l' ? lab(L) : h.side === 'r' ? lab(Rt) : name,
+        operands: [A, B],
+        operandsName: `${lab(L)} 和 ${lab(Rt)}`,
         world: W?.v ?? null,
       }));
       return deckResult(got, from, `从 ${lab(L)} 和 ${lab(Rt)} 里各取一张做「${b.name}」（${b.sym}），收集结果`, name, {
@@ -484,7 +553,7 @@ function withBin(L, M, Rt, W) {
 // 卡组 X 里的每张卡做 f
 function imageResult(X, f, from, W, recipe, verb = null) {
   const D = asDeck(X);
-  const { got, holes } = imagePartition(D, f, `{ ${fmtU(f)} | x ∈ ${lab(X)} }`, W?.v ?? null);
+  const { got, holes } = imagePartition(D, f, `{ ${fmtU(f)} |${varName(f)} ∈ ${lab(X)} }`, W?.v ?? null);
   if (isBlank(got) && !holes.length && !isBlank(D)) return fail(got.err ?? `${lab(X)} 里没有一张卡能做 ${fmtU(f)}。`);
   const specs = holes.map(h => ({ ...h, law: { t: 'un', f }, lawText: fmtU(f), source: D, sourceName: lab(X), world: W?.v ?? null }));
   const text = verb === '代入' ? `${lab(X)} 里的每张卡都代入 ${fmtU(f)}` : `${lab(X)} 里的每张卡都做 ${fmtU(f)}`;
@@ -534,6 +603,8 @@ function withMeta(L, M, Rt, W) {
         const [c, u] = p;
         const name = `${fmtV(c.v)} ⟳ ${nest(fmtU(u.v))}`;
         const { got, holes } = orbitPartition(c.v, u.v, name, Wd);
+        // 在底板里走出去过：结果只是底板里的那一段，名字带上底板，别和没有底板的轨道同名
+        if (Wd && holes.some(h => h.kind === 'outside')) got.name = `${nest(name)} ∩ ${nest(Wd.name ?? '')}`;
         const specs = holes.map(h => ({
           ...h,
           law: { t: 'un', f: u.v },
@@ -567,6 +638,7 @@ function withMeta(L, M, Rt, W) {
       const [X, b] = p;
       const D = asDeck(X);
       const { got, holes } = closurePartition(D, b.v, `⟨${label(X)} | ${b.v.sym}⟩`, Wd);
+      if (Wd && holes.some(h => h.kind === 'outside')) got.name = `⟨${label(X)} | ${b.v.sym}⟩ ∩ ${nest(Wd.name ?? '')}`;
       const specs = holes.map(h => ({ ...h, law: { t: 'bin', b: b.v }, lawText: b.v.sym, source: D, sourceName: lab(X), world: Wd }));
       const how = got.truncated ? '反复组合（更大的结果超出了能显示的范围，没有算进来）' : '反复组合，直到得不到新卡';
       return deckResult(got, from, `从 ${lab(X)} 出发，用 ${b.v.sym} ${how}`, `${lab(X)} 在 ${b.v.sym} 下封闭`, { W, holes: specs, keepEmpty: true });
@@ -613,7 +685,16 @@ function withMeta(L, M, Rt, W) {
       const name = `${lab(L)} ${m.sym} ${lab(Rt)}`;
       const D = m.id === 'union' ? unionDeck(A, B, name) : interDeck(A, B, name);
       const { got, outside } = restrictToWorld(D, Wd, name);
-      const specs = outside ? [{ kind: 'outside', where: outside, law: { t: 'meta', id: m.id }, lawText: m.sym, source: A, sourceName: lab(L), world: Wd }] : [];
+      let where = outside;
+      // 并集只有一边跑出去时，缺口就是那一边跑出去的部分，保留它自己的类型（ℕ ∪ ℤ₁₂ 在 ℕ 里跑出去的就是 ℤ₁₂）
+      if (outside && m.id === 'union') {
+        const live = X => !isBlank(X) || probesFor(X.type).some(x => X.has(x) === true);
+        const oa = diffDeck(A, Wd, `${lab(L)} ∖ ${nest(Wd.name ?? '')}`);
+        const ob = diffDeck(B, Wd, `${lab(Rt)} ∖ ${nest(Wd.name ?? '')}`);
+        if (!live(oa) && live(ob)) where = ob;
+        else if (live(oa) && !live(ob)) where = oa;
+      }
+      const specs = where ? [{ kind: 'outside', where, law: { t: 'meta', id: m.id }, lawText: m.sym, source: D, sourceName: name, world: Wd }] : [];
       const text = m.id === 'union' ? `把 ${lab(L)} 和 ${lab(Rt)} 合在一起` : `只留下 ${lab(L)} 和 ${lab(Rt)} 都有的卡`;
       return deckResult(got, from, text, name, { W, holes: specs, keepEmpty: m.id === 'inter' });
     }
@@ -624,7 +705,8 @@ function withMeta(L, M, Rt, W) {
       const T = asDeck(X);
       const isCard = X.kind === 'card';
       // 和像的写法 { f(x) | x ∈ X } 对称：{ x | f(x) ∈ X }
-      const D = preimageDeck(u.v, T, isCard ? `{ x | ${fmtU(u.v)} = ${lab(X)} }` : `{ x | ${fmtU(u.v)} ∈ ${lab(X)} }`);
+      const xv = varName(u.v).trim();
+      const D = preimageDeck(u.v, T, isCard ? `{ ${xv} | ${fmtU(u.v)} = ${lab(X)} }` : `{ ${xv} | ${fmtU(u.v)} ∈ ${lab(X)} }`);
       const { got, outside } = restrictToWorld(D, Wd, D.name);
       // 反推的缺口是"解跑出了底板"，不是底板做不了 f：法记成 pre，填的时候只要装得下
       const specs = outside
@@ -656,15 +738,25 @@ function fillCond(h) {
   return `包含 ${need}、又能做 ${h.lawText} 的最小世界`;
 }
 
+// 候选合规时做到了什么：一元 / 二元法是"关住了"，并、交是装得下缺的部分，反推是装得下全部解
+function fitText(h) {
+  if (h.law.t === 'meta') return `装得下 ${h.kind === 'outside' ? `${h.sourceName} 和 ${h.name ?? previewDeck(h.where, 3)}` : h.sourceName}`;
+  if (h.law.t === 'pre') return `装得下 ${h.lawText} 的全部解`;
+  return `关住了 ${h.lawText}`;
+}
+
 function withFill(L, M, Rt, W) {
   const H = [L, Rt].find(x => x?.kind === 'hole');
-  // 两边都是缺口时，左边那张被填，右边那张当候选（等于它缺的那部分）
-  const other = [L, Rt].find(x => x && x !== H);
   if (!H) return fail('「填」的用法：一边放一张缺口卡。另一边空着就自动填；放一个卡组，就用它来填（手填）。');
+  // 两边都是缺口时，左边那张被填，右边那张当候选（等于它缺的那部分）；同一张放两边也一样
+  const other = H === L ? Rt : L;
   const h = H.v;
   const from = [L, M, Rt];
   const whereText = h.name ?? previewDeck(h.where);
   if (h.status === 'retyped') {
+    if (h.law.t === 'meta') {
+      return fail(`这不是这个世界的缺口：${whereText} 是另一边放进来的另一种东西，不是 ${h.sourceName} 缺的部分。拿掉底板再做一次，两边就都留下。`);
+    }
     return fail(`这不是这个世界的缺口：${h.lawText} 把 ${h.sourceName} 变成了别的东西${h.name ? `（${h.name}）` : ''}。拿掉底板再做一次，就能直接得到它。`);
   }
   if (h.status === 'unfillable') return fail(unfillableMsg(h));
@@ -673,23 +765,34 @@ function withFill(L, M, Rt, W) {
       const c = CAT_BY_ID[h.targetId];
       return ok(catItem(c.id), `这个缺口填成了${catTitle(c)}：图鉴里${fillCond(h)}`, { grade: 'auto', filled: H.id, catId: c.id });
     }
-    if (h.expr) return fail(`这个缺口还没有人填过：${h.expr} 现在还写不出来。可以用现有的卡凑一个世界，放在另一边来填。`);
+    // 表示不了的前沿：现有的卡里没有 √2 这样的数，谁也填不上，要等新的数出现
+    if (h.kind === 'unrepresentable') {
+      return fail(
+        h.expr
+          ? `这个缺口是前沿：${h.expr} 现在的数还写不出来。现在的卡填不上，要等新的数出现。`
+          : `这个缺口是前沿：${h.lawText} 在 ${h.sourceName} 上卡在 ${whereText}，现在的数还写不出这些结果。现在的卡填不上，要等新的数出现。`,
+      );
+    }
+    if (h.kind === 'outside') {
+      return fail(`这个缺口还没有人填过：${h.lawText} 的${h.law.t === 'pre' ? '解' : '结果'} ${whereText} 跑出了 ${h.sourceName}。可以用现有的卡凑一个世界，放在另一边来填。`);
+    }
     return fail(`这个缺口还没有人填过：${h.lawText} 在 ${h.sourceName} 上卡在 ${whereText}。可以用现有的卡凑一个世界，放在另一边来填。`);
   }
   if (!isDeckLike(other)) return fail('用来填的要是一个卡组（或另一张缺口）。');
   const K = asDeck(other);
-  // (a) 包含出发世界（和越出的部分）
-  const base = h.world ?? h.source;
-  const escaped = h.kind === 'outside' ? sampleOf(h.where).slice(0, 40) : [];
-  const need = [...sampleOf(base).slice(0, 40), ...escaped];
-  const missing = need.filter(x => K.has(x) !== true);
+  if (!K.name) K.name = previewDeck(K);
+  const { need, extra } = holeNeed(h);
+  // (a) 包含出发世界（和越出的部分、两边的操作数）。近似候选只在它算过的大小范围内说得准，范围外的不算缺
+  const cap = K.approx ? sizeCapFor(K.type) : Infinity;
+  const missing = need.filter(x => K.has(x) !== true && !(K.approx && subtypeOf(x) === K.type && sizeV(x) > cap));
   if (missing.length) {
-    return fail(`${lab(other)} 没有包住 ${h.sourceName}${h.kind === 'outside' ? ' 和缺的那部分' : ''}：比如 ${missing.slice(0, 3).map(fmtV).join('、')} 不在里面。`);
+    const what = h.kind === 'outside' ? `${h.sourceName} 和缺的那部分` : (h.operandsName ?? h.sourceName);
+    return fail(`${lab(other)} 没有包住 ${what}：比如 ${missing.slice(0, 3).map(fmtV).join('、')} 不在里面。`);
   }
-  // (b) 这条法在候选上封闭：缺口里的值必查，写不出来的结果也算没关住
-  const r = lawClosedOn(K, h.law, 40, escaped);
+  // (b) 这条法在候选上封闭：缺口里的值、出发世界的成员必查，写不出来的结果也算没关住
+  const r = lawClosedOn(K, h.law, 40, extra);
   if (r.escaped.length) {
-    const spec = { kind: 'outside', law: h.law, lawText: h.lawText, source: base, sourceName: h.sourceName, where: finiteDeck(r.escaped, ''), world: K };
+    const spec = { kind: 'outside', law: h.law, lawText: h.lawText, source: K, sourceName: lab(other), where: finiteDeck(r.escaped, ''), world: K };
     const holes = holesFrom([spec], from, W);
     return ok(null, `${lab(other)} 还是关不住 ${h.lawText}：${holeSummary(holes)}。`, { holes });
   }
@@ -702,13 +805,20 @@ function withFill(L, M, Rt, W) {
     if (c && c.id === t.id) {
       return ok(item, `恰到好处：${lab(other)} 正好是图鉴里${fillCond(h)}，${catTitle(t)}`, { grade: 'exact', filled: H.id, catId: c.id });
     }
-    // 包住了图鉴目标才叫"多了一块"；更小或者不可比的候选，是比图鉴更紧的答案
-    const T = catItem(t.id).v;
-    const covers = probesFor(T.type ?? 'q').every(x => T.has(x) !== true || K.has(x) === true);
-    if (covers) {
-      return ok(item, `填上了，但多了一块：${lab(other)} 关住了 ${h.lawText}，不过图鉴里最小的世界是${catTitle(t)}`, { grade: 'over', filled: H.id, catId: c?.id });
+    // 图鉴里另一个同样极小的世界（ℤ 和 ℚ∖{0} 互不包含）也算恰到好处
+    if (c && (h.minimalIds ?? []).includes(c.id)) {
+      return ok(item, `恰到好处：${lab(other)} 也是图鉴里${fillCond(h)}之一（另一个是${catTitle(t)}）`, { grade: 'exact', filled: H.id, catId: c.id });
     }
-    return ok(item, `比图鉴更紧：${lab(other)} 关住了 ${h.lawText}，而且比图鉴里的${catTitle(t)}还小（或者和它不一样）`, {
+    // 包住了图鉴目标才叫"多了一块"；更小或者不可比的自造候选，是比图鉴更紧的答案。
+    // 近似候选（只在视野里算过）只在视野范围内比
+    const T = catItem(t.id).v;
+    const covers = probesFor(T.type ?? 'q')
+      .filter(x => sizeV(x) <= cap)
+      .every(x => T.has(x) !== true || K.has(x) === true);
+    if (covers || c) {
+      return ok(item, `填上了，但多了一块：${lab(other)} ${fitText(h)}，不过图鉴里最小的世界是${catTitle(t)}`, { grade: 'over', filled: H.id, catId: c?.id });
+    }
+    return ok(item, `比图鉴更紧：${lab(other)} ${fitText(h)}，而且比图鉴里的${catTitle(t)}还小（或者和它不一样）`, {
       grade: 'tighter',
       filled: H.id,
       catId: c?.id,
@@ -716,7 +826,7 @@ function withFill(L, M, Rt, W) {
     });
   }
   if (h.status === 'frontier') {
-    return ok(item, `首次发现：${lab(other)} 关住了 ${h.lawText}，这个缺口以前没有人填过`, { grade: 'frontier', filled: H.id, catId: c?.id, firstFill: true });
+    return ok(item, `首次发现：${lab(other)} ${fitText(h)}，这个缺口以前没有人填过`, { grade: 'frontier', filled: H.id, catId: c?.id, firstFill: !c });
   }
   return fail('这个缺口现在不能手填。');
 }

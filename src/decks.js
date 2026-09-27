@@ -29,12 +29,29 @@ import {
   MSG_OVER,
   classify,
   probesFor,
+  smallProbesFor,
 } from './values.js';
 import { applyU, preU, invertU, isQStructural } from './unary.js';
 
 // 三值逻辑的"或"和"且"：null 表示不知道
 const or3 = (a, b) => (a === true || b === true ? true : a === null || b === null ? null : false);
 const and3 = (a, b) => (a === false || b === false ? false : a === null || b === null ? null : true);
+
+// 已经被一对括号整个包住的文字（向量 "(1, 0)"、矩阵 "[0 1; 1 0]"）不用再加括号
+export function bracketed(s) {
+  const pairs = { '(': ')', '[': ']', '{': '}' };
+  const close = pairs[s[0]];
+  if (!close || s[s.length - 1] !== close) return false;
+  let depth = 0;
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === s[0]) depth++;
+    else if (s[i] === close) depth--;
+    if (depth === 0 && i < s.length - 1) return false;
+  }
+  return true;
+}
+// 名字里有空格、又没被一对括号整个包住时加括号，写进更长的式子里才不会读错
+export const nest = s => (/\s/.test(s) && !bracketed(s) ? `(${s})` : s);
 
 // 展示有理数卡组内容时从这里挑"最简单"的几个数
 const DISPLAY_POOL = (() => {
@@ -80,14 +97,15 @@ export function finiteDeck(xs, name) {
 function approxDeck(elems, name, type) {
   const list = uniqV(elems).sort(cmpV);
   const t = type ?? (list.length ? sameType(list) : 'set');
-  if (list.length && t !== 'set' && exhaustiveType(t)) return finiteDeck(list, name);
+  if (list.length && t !== 'set' && exhaustiveType(t, list)) return finiteDeck(list, name);
   const m = new Map(list.map(x => [vkey(x), x]));
   return mkDeck('approx', x => m.has(vkey(x)), { name, approx: true, elems: list, type: t });
 }
 
-function exhaustiveType(sub) {
+// 这批成员是不是这个类型的全部（模 n 的余数要正好凑满 n 个）
+function exhaustiveType(sub, list) {
   const d = TYPES.get(baseType(sub));
-  return !!(d && d.exhaustive && d.exhaustive(sub));
+  return !!(d && d.exhaustive && d.exhaustive(sub, list));
 }
 
 // 卡组的代表性成员：有限卡组是全部，其他的是视野里的成员
@@ -103,12 +121,14 @@ export function imageDeck(D, f, name) {
   if (D.list) {
     const raw = D.list.map(x => applyU(f, x));
     const outs = raw.filter(isV);
-    if (!raw.some(y => y === OVER)) return finiteDeck(outs, name);
+    const over = raw.some(y => y === OVER);
     if (!outs.length) {
+      // 一张都算不出：带上解释（余数开方不是单值的），太大的另说
       const E = finiteDeck([], name);
-      E.err = MSG_OVER;
+      E.err = firstErr(raw) ?? (over ? MSG_OVER : null);
       return E;
     }
+    if (!over) return finiteDeck(outs, name);
     // 有成员算出来太大表示不了：只能当近似卡组，而且比看到的更多（incomplete）
     const P = approxDeck(outs, name);
     P.incomplete = true;
@@ -142,6 +162,27 @@ export function imageDeck(D, f, name) {
     return E;
   }
   const type = sameType(outs);
+  // 0 ÷ x：只要输入里有非零成员，像就恰好是 {0}（0 本身另算作"没有定义"的缺口）
+  if (f.t === 'bind' && f.op === 'div' && f.side === 'l' && isV(f.c) && outs.length === 1 && eqV(outs[0], f.c)) return finiteDeck(outs, name);
+  // 数 → 余数（x mod n、x + [0]ₙ）：数的视野只有 −20…20，可能凑不满一整圈余数；
+  // 在几段连续的整数区间上补查，凑满 n 个才算精确的有限卡组，否则保持近似
+  if (D.type === 'q' && baseType(type) === 'mod' && type.includes(':')) {
+    const n = Number(type.slice(type.indexOf(':') + 1));
+    const ints = sample.filter(x => isR(x) && isInt(x)).map(x => x.n);
+    const lo = ints.length ? Math.min(...ints) : 0;
+    const hi = ints.length ? Math.max(...ints) : 0;
+    const more = [];
+    for (const [a, b] of [[-n, n - 1], [lo, lo + n - 1], [hi - n + 1, hi]]) {
+      for (let k = a; k <= b; k++) {
+        const x = R(k);
+        if (D.has(x) !== true) continue;
+        const y = applyU(f, x);
+        if (isV(y)) more.push(y);
+      }
+    }
+    const full = uniqV([...outs, ...more]);
+    return full.length >= n ? finiteDeck(full, name) : approxDeck(full, name, type);
+  }
   // f 可逆时可以精确判断：y 在像里 ⇔ f⁻¹(y) 在 D 里
   const g = invertU(f);
   const roundTrips =
@@ -211,7 +252,8 @@ export function interDeck(A, B, name) {
   if (B.list) return finiteDeck(B.list.filter(x => A.has(x) === true), name);
   // 两个不同类型的卡组（数和余数、长度和时间……）没有共同的卡
   if (A.type !== B.type && A.type !== 'set' && B.type !== 'set') return finiteDeck([], name);
-  const type = A.type === B.type ? A.type : 'set';
+  // 一边混合、一边单一类型：交集一定落在单一的那边（反推的混合原像 ∩ ℚ 就是 ℚ 的一部分，能认成图鉴）
+  const type = A.type === B.type ? A.type : A.type === 'set' ? B.type : B.type === 'set' ? A.type : 'set';
   return mkDeck('inter', x => and3(A.has(x), B.has(x)), {
     name,
     type,
@@ -537,9 +579,17 @@ export function diffDeck(A, B, name) {
       if (a === false) return false;
       const b = B.has(x);
       if (b === true) return false;
+      // 近似的 B（只在视野里算过）在视野外说"没有"不可信：不知道
+      if (b === false && B.approx && !trustFalse(B, x)) return null;
       return a === null || b === null ? null : true;
     },
-    { name, type: A.type, approx: A.approx || B.approx, src: [A, B], sample: () => sampleOf(A).filter(x => B.has(x) === false) },
+    {
+      name,
+      type: A.type,
+      approx: A.approx || B.approx,
+      src: [A, B],
+      sample: () => sampleOf(A).filter(x => B.has(x) === false && (!B.approx || trustFalse(B, x))),
+    },
   );
 }
 
@@ -554,10 +604,10 @@ export function isBlank(D) {
 // 视野里的样本可能碰巧全在 W 里（向量的视野只有整数和一半），所以再用探针查一遍有没有跑出去的。
 export function restrictToWorld(D, W, name) {
   if (!W) return { got: D, outside: null };
-  const got = interDeck(D, W, `${name} ∩ ${W.name}`);
+  const got = interDeck(D, W, `${nest(name)} ∩ ${nest(W.name ?? '')}`);
   got.truncated = D.truncated;
   got.lost = D.lost;
-  const outside = diffDeck(D, W, `${name} ∖ ${W.name}`);
+  const outside = diffDeck(D, W, `${nest(name)} ∖ ${nest(W.name ?? '')}`);
   const extra = D.list ? [] : probesFor(D.type).filter(x => outside.has(x) === true);
   if (extra.length) {
     const base = outside.sample;
@@ -571,7 +621,8 @@ function whereDeck(vals, D) {
   if (D.list) return finiteDeck(vals, '');
   const m = new Map(vals.map(x => [vkey(x), x]));
   const list = [...m.values()].sort(cmpV);
-  return mkDeck('hole', x => m.has(vkey(x)), { approx: true, elems: list, type: D.type });
+  // 类型按这些值自己算：ℤ ⟨mod⟩ 在 ℤ 里跑出去的是余数，不是数
+  return mkDeck('hole', x => m.has(vkey(x)), { approx: true, elems: list, type: list.length ? sameType(list) : D.type });
 }
 
 // 卡组 D 里的每张卡做 f
@@ -597,11 +648,13 @@ export function imagePartition(D, f, name, W = null) {
             const r = applyU(f, x);
             return r !== OVER && classify(r) === k;
           },
-          { type: D.type, approx: D.approx, sample: () => bad[k] },
+          // src 记着出发卡组：它被拿去当候选时，封闭检查能看到出发卡组里有限来源的成员
+          { type: D.type, approx: D.approx, src: D, sample: () => bad[k] },
         );
     holes.push({ kind: k, where });
   }
   const { got, outside } = restrictToWorld(got0, W, name);
+  got.err = got0.err;
   if (outside) holes.push({ kind: 'outside', where: outside });
   return { got, holes };
 }
@@ -682,25 +735,31 @@ export function orbitPartition(c, f, name, W = null) {
 // 原像落在哪些类型里：在各类型的视野里试 f，结果落进 T 的类型都算（求导反推 ℤ：数和多项式都有）
 function domainTypeOf(f, T) {
   const hint = T.type;
-  const hits = t => windowFor(t).slice(0, 80).filter(x => T.has(applyU(f, x)) === true).length;
-  const types = [];
-  let best = hint;
-  let bestN = hits(hint);
-  if (bestN > 0) types.push(hint);
-  for (const t of TYPES.keys()) {
-    if (t === baseType(hint)) continue;
-    const n = hits(t);
-    if (n > 0) types.push(t);
-    if (n > bestN) {
-      best = t;
-      bestN = n;
+  const scan = (t, n) => (n ? windowFor(t).slice(0, n) : windowFor(t)).filter(x => T.has(applyU(f, x)) === true).length;
+  const run = n => {
+    const types = [];
+    let best = hint;
+    let bestN = scan(hint, n);
+    if (bestN > 0) types.push(hint);
+    for (const t of TYPES.keys()) {
+      if (t === baseType(hint)) continue;
+      const k = scan(t, n);
+      if (k > 0) types.push(t);
+      if (k > bestN) {
+        best = t;
+        bestN = k;
+      }
     }
-  }
-  return { type: best, types, any: bestN > 0 };
+    return { type: best, types, any: bestN > 0 };
+  };
+  // 先在各类型视野的开头试；一个都没打中再扫整个视野（x/7 的导数才是 1/7）
+  const quick = run(80);
+  return quick.any ? quick : run(0);
 }
 
 // 反推：{ x | f(x) ∈ T }
 export function preimageDeck(f, T, name) {
+  if (T.list && !T.list.length) return finiteDeck([], name);
   // 有理数上的结构化算子、有限目标：用原像公式算出精确的有限卡组
   if (T.list && T.type === 'q' && isQStructural(f)) {
     const xs = [];
@@ -716,9 +775,9 @@ export function preimageDeck(f, T, name) {
     if (!pred) return finiteDeck(xs, name);
   }
   const { type, types, any } = domainTypeOf(f, T);
-  if (!any && T.list) return finiteDeck([], name);
-  // 原像跨了几种类型时（数和多项式），它不等于任何单一类型的图鉴卡组
-  const mixed = types.length > 1;
+  // 原像跨了几种类型时（数和多项式），它不等于任何单一类型的图鉴卡组；
+  // 视野里一个解都没碰到时也不能断言是空集（det(x) = 7 的解只是不在视野里），同样不和图鉴比对
+  const mixed = types.length > 1 || !any;
   const D = mkDeck(
     'preimage',
     x => {
@@ -730,70 +789,129 @@ export function preimageDeck(f, T, name) {
       name,
       type: mixed ? 'set' : type,
       mixed,
-      approx: T.approx,
+      unknown: !any,
+      approx: T.approx || !any,
       sample: () => (mixed ? types : [type]).flatMap(t => windowFor(t)).filter(x => D.has(x) === true),
     },
   );
   return D;
 }
 
-// 封闭检查用的样本：并集这类由几个来源拼起来的卡组，每个来源都要看到，
-// 有限的来源全部放进去（ℤ ∪ {1/2} 里的 1/2 不能因为排在后面就漏掉）
-function closureSample(K, limit) {
+// 均匀取样，两端都取到
+export function pick(arr, n) {
+  if (arr.length <= n) return arr;
+  if (n <= 1) return [arr[0]];
+  return Array.from({ length: n }, (_, i) => arr[Math.round((i * (arr.length - 1)) / (n - 1))]);
+}
+
+// D 的树里来自有限来源的成员：并集的有限一侧，像卡组的有限来源经 f 映射过去
+function finiteMembers(D, depth = 0) {
+  if (D.list) return D.list;
+  if (D.elems) return D.elems;
+  if (depth >= 4 || !D.src) return [];
+  const srcs = Array.isArray(D.src) ? D.src : [D.src];
+  const base = srcs.flatMap(S => finiteMembers(S, depth + 1));
+  return D.f ? base.map(x => applyU(D.f, x)).filter(isV) : base;
+}
+
+// 封闭检查用的样本：{ must: 必查的成员（有限来源、见证值）, merged: 各来源交错起来的整段样本 }
+// 并集这类由几个来源拼起来的卡组，每个来源都要看到（ℤ ∪ {1/2} 里的 1/2 不能因为排在后面就漏掉），
+// 像卡组要往它的来源里看（(ℤ ∪ {1/2}) + 1 里的 3/2），见证值也算
+function closureSample(K) {
   const must = new Map();
+  const add = x => {
+    if (must.size < 256 && K.has(x) === true) must.set(vkey(x), x);
+  };
   const streams = [];
   const walk = (D, depth) => {
     if (depth < 4 && Array.isArray(D.src)) {
       for (const S of D.src) walk(S, depth + 1);
       return;
     }
-    const s = sampleOf(D);
     if (D.list || D.elems) {
-      for (const x of s) if (must.size < 64) must.set(vkey(x), x);
-    } else {
-      streams.push(s);
+      sampleOf(D).forEach(add);
+      return;
     }
+    finiteMembers(D).forEach(add);
+    streams.push(sampleOf(D));
   };
   walk(K, 0);
-  if (!streams.length && !must.size) streams.push(sampleOf(K));
-  // 各来源交错取样，再在整段里均匀取，避免只看开头
+  witnessesOf(K).forEach(add);
+  if (!streams.length) streams.push(sampleOf(K));
   const merged = [];
   const maxLen = Math.max(0, ...streams.map(s => s.length));
   for (let i = 0; i < maxLen; i++) for (const s of streams) if (i < s.length) merged.push(s[i]);
-  const pick = (arr, n) => (arr.length <= n ? arr : Array.from({ length: n }, (_, i) => arr[Math.floor((i * arr.length) / n)]));
-  const rest = uniqV([...pick(merged, limit), ...must.values()]).filter(x => K.has(x) === true);
-  return { must: [...must.values()].filter(x => K.has(x) === true), all: rest };
+  return { must: [...must.values()], merged: uniqV(merged).filter(x => K.has(x) === true) };
+}
+
+// K.has(z) === false 可不可信：精确卡组一定可信；近似卡组（只在视野里算过）只在它算过的大小范围内可信。
+// 并集要每一边都可信地说"没有"，交集有一边可信地说"没有"就够
+function trustFalse(K, z, depth = 0) {
+  if (!K.approx) return true;
+  if (depth < 4 && Array.isArray(K.src)) {
+    if (K.kind === 'union') return K.src.every(S => trustFalse(S, z, depth + 1));
+    if (K.kind === 'inter') return K.src.some(S => S.has(z) === false && trustFalse(S, z, depth + 1));
+    if (K.kind === 'diff') return K.src[1].has(z) === true || trustFalse(K.src[0], z, depth + 1);
+  }
+  const lim = K.elems?.length ? Math.max(sizeCapFor(K.type), ...K.elems.map(sizeV)) : sizeCapFor(K.type);
+  return sizeV(z) <= lim;
 }
 
 // 法在卡组 K 上封不封闭：law = { t: 'un', f } | { t: 'bin', b } | { t: 'meta' } | { t: 'pre' }
 // 返回 { escaped: 跑出 K 的结果, unrep: 有写不出来的结果 }。
-// 并、交、反推没有"再算一次"的封闭条件，只要装得下就算封闭。extra 是额外必查的值（比如缺口里的）。
+// 并、交、反推没有"再算一次"的封闭条件，只要装得下就算封闭。extra 是额外必查的值（缺口里的、出发世界的）。
 export function lawClosedOn(K, law, limit = 40, extra = []) {
   if (law.t !== 'un' && law.t !== 'bin') return { escaped: [], unrep: false };
-  const { must, all } = closureSample(K, limit);
-  const s = uniqV([...extra.filter(x => K.has(x) === true), ...all]);
+  const inK = x => K.has(x) === true;
+  const { must, merged } = closureSample(K);
+  const ex = uniqV(extra.filter(inK));
+  const small = smallProbesFor(K.type).filter(inK);
   const escaped = new Map();
   let unrep = false;
-  const cap = K.approx ? sizeCapFor(K.type) : Infinity;
   const check = z => {
     const c = classify(z);
     if (c === 'unrepresentable' && z !== OVER) unrep = true;
-    if (c === 'ok' && sizeV(z) <= cap && K.has(z) === false && escaped.size < 64) escaped.set(vkey(z), z);
+    if (c === 'ok' && K.has(z) === false && trustFalse(K, z) && escaped.size < 64) escaped.set(vkey(z), z);
   };
-  if (law.t === 'un') for (const x of s) check(applyU(law.f, x));
-  else {
-    const s2 = s.slice(0, 24);
-    const focus = uniqV([...must, ...extra]).slice(0, 24);
-    for (const x of s2) for (const y of s2) check(binV(law.b.id, x, y));
-    // 有限来源和缺口里的值，要和整段样本正反各配一次
-    for (const x of focus) {
-      for (const y of s2) {
-        check(binV(law.b.id, x, y));
-        check(binV(law.b.id, y, x));
+  const done = () => ({ escaped: [...escaped.values()], unrep });
+  if (law.t === 'un') {
+    // 一元运算便宜：必查值、候选的整段样本、小探针全查
+    for (const x of uniqV([...ex, ...must, ...merged, ...small])) check(applyU(law.f, x));
+    return done();
+  }
+  const op = law.b.id;
+  // 法带着"另一边"（ℤ² × ℚ 在 ℤ² 里）：只查 K 里的卡和另一边的卡配对，不做 K × K
+  if (law.other) {
+    const O = law.other;
+    const ys = uniqV([...pick(sampleOf(O), 24), ...smallProbesFor(O.type).filter(y => O.has(y) === true)]).slice(0, 32);
+    const xs = uniqV([...ex, ...must, ...pick(merged, limit), ...small]).slice(0, 96);
+    for (const x of xs) for (const y of ys) check(law.side === 'r' ? binV(op, x, y) : binV(op, y, x));
+    return done();
+  }
+  const sq = xs => {
+    for (const x of xs) for (const y of xs) check(binV(op, x, y));
+  };
+  const cross = (xs, ys) => {
+    for (const x of xs) {
+      for (const y of ys) {
+        check(binV(op, x, y));
+        check(binV(op, y, x));
       }
     }
+  };
+  // 不太大的有限卡组：全部成员两两都查
+  if (K.list && K.list.length <= 160) {
+    sq(uniqV([...K.list, ...ex]));
+    return done();
   }
-  return { escaped: [...escaped.values()], unrep };
+  // 候选自己的样本（均匀取，加上小探针）两两查；必查值（缺口里的、有限来源的、见证值）
+  // 和它正反各配一次，必查值之间也配一次。必查值不能挤掉候选自己的样本，反过来也一样
+  const s2 = uniqV([...pick(merged, limit), ...small.slice(0, 16)]);
+  const focus = uniqV([...ex.slice(0, 48), ...must, ...ex.slice(48)]).slice(0, 128);
+  sq(s2);
+  cross(focus, s2);
+  cross(focus, focus.length <= 48 ? focus : pick(focus, 32));
+  return done();
 }
 
 // 简单的字符串哈希，用来给未命名卡组起编号

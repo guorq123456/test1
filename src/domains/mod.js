@@ -71,13 +71,15 @@ function toMod(v, n) {
 }
 
 // 模数不是不小于 2 的整数：对 0 取余和除以 0 一样没有定义；对 1、负数、分数取余数学上有结果
-// （ℤ₁、ℤ/3ℤ、ℚ/½ℤ），只是钟面写不出来
+// （ℤ₁、ℤ/3ℤ、ℚ/½ℤ），只是钟面写不出来。余数的输入要先确认结果不依赖代表元（见 modBin 的 mod 分支）
 const badModulus = y => (y.n === 0 ? 'undefined' : 'unrepresentable');
 
-const ERR_NO_INV = (b, g) =>
-  b.r === 0
-    ? `不能除以 ${fmtMod(b)}：它和 0 一样，没有倒数。`
-    : `${fmtMod(b)} 没有逆元：${b.r} 和 ${b.n} 的最大公约数是 ${g}，不是 1，所以除不动。`;
+// b 没有逆元时的解释。y 是玩家写的除数：它和 b 的写法不同时（2/5 在模 12 下是 [10]₁₂），先说清楚是怎么变成 b 的
+const ERR_NO_INV = (b, g, y) => {
+  const pre = y ? `${fmtR(y)} 在模 ${b.n} 下是 ${fmtMod(b)}，` : '';
+  if (b.r === 0) return `${pre}不能除以${pre ? '它' : ` ${fmtMod(b)}`}：它和 0 一样，没有倒数。`;
+  return `${pre}${pre ? '它' : `${fmtMod(b)} `}没有逆元：${b.r} 和 ${b.n} 的最大公约数是 ${g}，不是 1，所以除不动。`;
+};
 
 function modBin(op, x, y) {
   const xm = isMod(x);
@@ -91,13 +93,15 @@ function modBin(op, x, y) {
   if (op === 'mod') {
     if (xm && ym) return { err: `${fmtMod(x)} 已经是余数了，不能再对余数取余。`, reason: 'type' };
     if (!xm) return { err: `取余的模数要是普通的整数，${fmtMod(y)} 是余数，不行。`, reason: 'type' };
-    if (!isInt(y) || y.n < 2) return { err: `取余的模数要是不小于 2 的整数，${fmtR(y)} 不行。`, reason: badModulus(y) };
-    if (x.n % y.n !== 0) {
+    // [r]n 说不清是 r 还是 r + n，只有 n 是 y 的整数倍时对 y 取余的结果才不依赖选哪个。
+    // y 是既约分数 p/q，n/y = nq/p 是整数 ⇔ p 整除 n（负数、分数模数也一样：mod −5 和 mod 5 一样说不清）
+    if (y.n !== 0 && x.n % Math.abs(y.n) !== 0) {
       return {
-        err: `模 ${x.n} 的余数只能再对 ${x.n} 的约数取余：${fmtMod(x)} 说不清是 ${x.r} 还是 ${x.r + x.n}，对 ${y.n} 取余会得到不同的结果。`,
+        err: `模 ${x.n} 的余数只能再对 ${x.n} 的约数取余：${fmtMod(x)} 说不清是 ${x.r} 还是 ${x.r + x.n}，对 ${fmtR(y)} 取余会得到不同的结果。`,
         reason: 'undefined',
       };
     }
+    if (!isInt(y) || y.n < 2) return { err: `取余的模数要是不小于 2 的整数，${fmtR(y)} 不行。`, reason: badModulus(y) };
     return M(y.n, x.r);
   }
 
@@ -139,7 +143,9 @@ function modBin(op, x, y) {
       return M(n, a.r * b.r);
     case 'div': {
       const inv = modInv(b.r, n);
-      if (inv === null) return { err: ERR_NO_INV(b, gcd(b.r, n)), reason: 'undefined' };
+      // 除数的写法和它的余数不同（2/5、−2、22、12）时，文案先说它在模 n 下是哪张卡
+      const lit = !ym && (!isInt(y) || y.n !== b.r) ? y : undefined;
+      if (inv === null) return { err: ERR_NO_INV(b, gcd(b.r, n), lit), reason: 'undefined' };
       return M(n, a.r * inv);
     }
   }
@@ -150,8 +156,9 @@ registerType({
   t: 'mod',
   name: '余数',
   label: v => `模 ${v.n}`,
-  // 模 n 的余数只有 n 个，视野就是全部：在视野里算出来的结果是精确的
-  exhaustive: () => true,
+  // 模 n 的余数只有 n 个：只有算出来的成员正好凑满一整圈（n 个）时，视野里算出来的结果才是精确的有限卡组；
+  // 少了余数就可能只是样本不够（ℕ mod 23 的样本凑不满 23 个），不能当成精确的
+  exhaustive: (sub, list) => !list || list.length === nOfSub(sub),
   key: v => `[${v.r}]${v.n}`,
   parseKey(s) {
     const m = /^\[(\d+)\](\d+)$/.exec(s);

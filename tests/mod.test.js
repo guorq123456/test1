@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { CATALOG, WALKTHROUGH, CHAPTER, M, modInv } from '../src/domains/mod.js';
-import { binV, vkey, fmtV, parseVKey, subtypeOf, typeLabel, windowFor, probesFor } from '../src/values.js';
-import { applyU, powU, aff, bindU, fmtU } from '../src/unary.js';
+import { binV, vkey, fmtV, parseVKey, subtypeOf, typeLabel, windowFor, probesFor, TYPES } from '../src/values.js';
+import { applyU, powU, aff, bindU, fmtU, compose } from '../src/unary.js';
 import { groupInfo } from '../src/decks.js';
-import { R, NEG1, TWO } from '../src/math.js';
+import { R, ONE, ZERO, NEG1, TWO } from '../src/math.js';
 import { combine, resolveRef, recipeText } from '../src/rules.js';
 import { checkCatalog, elementaryHand, run } from './helpers.js';
 
@@ -140,6 +140,17 @@ test('逆元与除法', () => {
   const zero = binV('div', k('[1]12'), k('[0]12'));
   assert.ok(isErr(zero));
   assert.match(zero.err, /不能除以/);
+  // 除数的写法和它的余数不同（2/5、−2、12）时，先说它在模 n 下是哪张卡，不凭空冒出 [10]₁₂
+  assert.match(binV('div', k('[1]12'), R(2, 5)).err, /^2\/5 在模 12 下是 \[10\]₁₂，它没有逆元：10 和 12 的最大公约数是 2/);
+  assert.match(binV('div', k('[1]12'), R(-2)).err, /^−2 在模 12 下是 \[10\]₁₂，它没有逆元/);
+  assert.match(binV('div', k('[1]12'), R(22)).err, /^22 在模 12 下是 \[10\]₁₂/);
+  assert.match(binV('div', k('[1]12'), R(12)).err, /^12 在模 12 下是 \[0\]₁₂，不能除以它/);
+  assert.match(binV('div', k('[1]12'), R(12, 5)).err, /^12\/5 在模 12 下是 \[0\]₁₂/);
+  assert.equal(binV('div', k('[1]12'), R(2, 5)).reason, 'undefined');
+  // 写法和余数一样就不重复说
+  assert.match(binV('div', k('[1]12'), R(2)).err, /^\[2\]₁₂ 没有逆元/);
+  assert.match(binV('div', k('[1]12'), k('[4]12')).err, /^\[4\]₁₂ 没有逆元/);
+  assert.match(binV('div', k('[1]12'), k('[0]12')).err, /^不能除以 \[0\]₁₂/);
   // 1/x 当一元算子：没有逆元的卡算不出
   const recip = powU(NEG1);
   assert.equal(vkey(applyU(recip, k('[5]12'))), '[5]12');
@@ -212,6 +223,18 @@ test('余数再取余：只有模数整除时才行', () => {
   assert.ok(isErr(binV('mod', k('[7]12'), R(1))));
   assert.ok(isErr(binV('mod', k('[7]12'), k('[2]12'))));
   assert.ok(isErr(binV('mod', R(7), k('[2]12'))));
+  // 负数、分数模数也一样：[3]₁₂ 说不清是 3 还是 15，mod −5 和 mod 5 一样没有定义，不是"表示不了"
+  for (const y of [R(5), R(-5), R(24), R(-24), R(5, 2), R(-5, 2)]) {
+    const r = binV('mod', k('[3]12'), y);
+    assert.equal(r.reason, 'undefined', `[3]₁₂ mod ${fmtV(y)}`);
+    assert.match(r.err, /说不清是 3 还是 15/, `[3]₁₂ mod ${fmtV(y)}`);
+  }
+  assert.match(binV('mod', k('[3]12'), R(-5)).err, /对 −5 取余/);
+  // 结果不依赖选哪个、只是钟面写不出来的（ℤ/3ℤ、ℚ/⅕ℤ）还是表示不了；对 0 取余没有定义
+  for (const y of [R(-3), R(-1), R(1), R(1, 5), R(-12), R(1, 9999999)]) {
+    assert.equal(binV('mod', k('[3]12'), y).reason, 'unrepresentable', `[3]₁₂ mod ${fmtV(y)}`);
+  }
+  assert.equal(binV('mod', k('[3]12'), R(0)).reason, 'undefined');
   // 拼接不归本类型管
   assert.ok(isErr(binV('cat', k('[1]12'), k('[2]12'))));
 });
@@ -260,6 +283,12 @@ test('视野与探针：全部 n 个余数', () => {
   assert.equal(probesFor('mod:7').length, 7);
   assert.equal(windowFor('mod:2').length, 2);
   assert.ok(windowFor('mod:100000').length <= 200, '模数太大时视野要截断');
+  // 只有凑满一整圈才算精确的有限卡组：少了余数可能只是样本不够
+  const ex = TYPES.get('mod').exhaustive;
+  assert.equal(ex('mod:12', windowFor('mod:12')), true);
+  assert.equal(ex('mod:12', windowFor('mod:12').slice(1)), false);
+  assert.equal(ex('mod:23', windowFor('mod:23')), true);
+  assert.equal(ex('mod:23', windowFor('mod:23').slice(0, 20)), false);
 });
 
 test('图鉴里写「群」的卡组都真的是群，运算符号也对', () => {
@@ -324,6 +353,30 @@ test('合成台上的用法与文字', () => {
   // 不同模数的卡组两两运算，一张都算不出
   const mixed = combine(c('d:Z12'), c('b:add'), c('d:Z7'));
   assert.equal(mixed.ok, false);
+  // 复合的化简不放过没有定义的地方：x/2 在 ℤ₁₂ 上没有定义（2 没有逆元），所以 x/2 接 2x 不能化成 x
+  const half = aff(R(1, 2), ZERO);
+  const dbl = aff(TWO, ZERO);
+  const hd = compose(half, dbl);
+  assert.equal(hd.t, 'chain');
+  assert.equal(fmtU(hd), '2(x/2)');
+  assert.equal(fmtU(compose(dbl, half)), '(2x)/2', '两种顺序写法分得开');
+  assert.equal(applyU(hd, k('[1]12')).reason, 'undefined');
+  assert.equal(applyU(compose(dbl, half), k('[1]12')).reason, 'undefined');
+  assert.equal(vkey(applyU(hd, k('[1]7'))), '[1]7', '2 在模 7 下有逆元，照样回到原来的数');
+  assert.equal(vkey(applyU(hd, R(3))), '3');
+  assert.equal(applyU(compose(aff(ONE, R(1, 2)), dbl), k('[1]12')).reason, 'undefined', 'x + 1/2 接 2x 不能化成 2x + 1');
+  assert.equal(applyU(compose(half, aff(ZERO, R(5))), k('[1]12')).reason, 'undefined', 'x/2 接常数 5 不能化成 5');
+  assert.equal(fmtU(compose(half, aff(R(1, 3), ZERO))), 'x/6', '分母的素因子都还在，照样化简');
+  assert.equal(fmtU(compose(dbl, aff(ONE, ONE))), '2x + 1');
+  // 合成台上：[1]₁₂ 经「x/2 接 2x」是没有定义的缺口；ℤ₁₂ 经「2x 接 x/2」不是时钟；ℤ、[1]₇ 照旧
+  const hg = combine(c('u:half'), c('m:compose'), c('u:dbl'));
+  assert.ok(hg.ok);
+  const h1 = combine(c('c:[1]12'), hg.item, null);
+  assert.ok(h1.ok && h1.item === null && h1.holes[0].v.kind === 'undefined', h1.msg);
+  const h2 = combine(c('d:Z12'), combine(c('u:dbl'), c('m:compose'), c('u:half')).item, null);
+  assert.notEqual(h2.item?.id, 'd:Z12');
+  assert.equal(combine(c('c:[1]7'), hg.item, null).item.id, 'c:[1]7');
+  assert.equal(combine(c('d:Z'), hg.item, null).item.id, 'd:Z');
 });
 
 test('另外几种自然的做法也能被认出来', () => {
@@ -369,4 +422,26 @@ test('合成速度：两两运算和封闭都在 200ms 内', () => {
 test('绑定算子的显示', () => {
   assert.equal(fmtU(bindU('mul', 'r', k('[3]12'))), 'x × [3]₁₂');
   assert.equal(fmtU(bindU('div', 'l', k('[1]12'))), '[1]₁₂ ÷ x');
+  // 分数、负数常数加括号；x ^ c 和 x^(1/5) 一样写，不写 x ^ 1/13（会读成 x¹/13）
+  assert.equal(fmtU(bindU('pow', 'r', R(1, 13))), 'x^(1/13)');
+  assert.equal(fmtU(bindU('pow', 'r', R(-1, 13))), 'x^(−1/13)');
+  assert.equal(fmtU(bindU('mod', 'r', R(-5))), 'x mod (−5)');
+  assert.equal(fmtU(bindU('mul', 'r', R(1, 13))), 'x × (1/13)');
+  assert.equal(fmtU(bindU('mod', 'r', R(12))), 'x mod 12');
+  // 负号开头的输入加括号：(−3) mod 12、−(−3)、2·(−3)，不写 −−3
+  assert.equal(fmtU(bindU('mod', 'r', R(12)), '−3'), '(−3) mod 12');
+  assert.equal(fmtU(aff(NEG1, ZERO), '−3'), '−(−3)');
+  assert.equal(fmtU(aff(NEG1, ONE), '−3'), '1 − (−3)');
+  assert.equal(fmtU(aff(TWO, ZERO), '−3'), '2·(−3)');
+  // c ÷ x 写成 2/(3x)，不写 2/x/3；1/x 接 2x、x 接 1/x 的写法也不含糊
+  const d23 = combine(resolveRef('c:2/3'), resolveRef('b:div'), null).item.v;
+  assert.equal(fmtU(d23), '2/(3x)');
+  assert.equal(fmtU(d23, '0'), '2/(3·0)');
+  assert.equal(fmtU(compose(powU(NEG1), aff(R(1, 3), ZERO))), '1/(3x)');
+  assert.equal(fmtU(compose(aff(TWO, ZERO), powU(NEG1))), '1/(2x)');
+  // 0 代进 1/x、2/(3x)：说"不能除以 0"，不说"0 的负数次方"
+  assert.deepEqual(applyU(powU(NEG1), ZERO), { err: '不能除以 0。', reason: 'undefined' });
+  assert.deepEqual(applyU(d23, ZERO), { err: '不能除以 0。', reason: 'undefined' });
+  assert.deepEqual(applyU(powU(R(-2)), ZERO), { err: '不能除以 0。', reason: 'undefined' });
+  assert.match(applyU(powU(R(-2, 3)), ZERO).err, /0 的 0 次方、0 的负数次方/, '分数次方照旧');
 });

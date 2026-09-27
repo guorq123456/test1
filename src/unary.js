@@ -25,6 +25,7 @@ import {
   neg,
   div,
   rkey,
+  gcd,
   fmtR,
   rpow,
   rlog,
@@ -82,7 +83,8 @@ export function applyU(f, x) {
   switch (f.t) {
     case 'aff': {
       if (isId(f)) return x;
-      if (isConst(f)) return f.b;
+      // 常数捷径只对数成立：余数、长度、向量乘 0 要得到带类型的零（[0]₁₂、0 步、(0, 0)），走下面的 binV
+      if (isConst(f) && isR(x)) return f.b;
       if (isR(x)) {
         const ax = mul(f.a, x);
         return isR(ax) ? add(ax, f.b) : ax;
@@ -92,6 +94,8 @@ export function applyU(f, x) {
       return f.b.n === 0 ? ax : binV('add', ax, f.b);
     }
     case 'pow':
+      // 负整数次方写成 1/x、1/x²，0 代进去是除以 0，不说成"0 的负数次方"
+      if (isR(x) && x.n === 0 && isInt(f.n) && f.n.n < 0) return { err: '不能除以 0。', reason: 'undefined' };
       return isR(x) ? powQ(x, f.n) : binV('pow', x, f.n);
     case 'exp':
       return isR(x) ? powQ(f.c, x) : { err: `${fmtV(x)} 不是数，不能当指数。`, reason: 'type' };
@@ -141,14 +145,21 @@ export function ukey(f) {
   return '?';
 }
 
+// d 的素因子都整除 m（反复约掉公因数，约不动时看剩下的是不是 1）
+function primesDivide(d, m) {
+  for (let g = gcd(d, m); g > 1; g = gcd(d, m)) d /= g;
+  return d === 1;
+}
+
 // 尝试把"先 f 后 g"化简成一个算子；化简不了返回 undefined。
 // 只在化简后的算子"凡是 f∘g 算不出的地方它也算不出"时才化简：
 // 比如 log₂x 接 2ˣ 不能化成 x，因为 3 代入 log₂x 就算不出，化成 x 就把 3 放过去了。
 function merge(f, g) {
   if (isId(f)) return g;
   if (isId(g)) return f;
-  // a·x + b 对任何数都有定义，所以只有 f 是它时，接一个常数才能直接变成常数
-  if (isConst(g)) return f.t === 'aff' ? g : undefined;
+  // 整系数的 a·x + b 对任何数都有定义，所以只有 f 是它时，接一个常数才能直接变成常数。
+  // 分数系数不行：x/2 在 ℤ₁₂ 上没有定义（2 没有逆元），x/2 接 5 不能化成 5
+  if (isConst(g)) return f.t === 'aff' && isInt(f.a) && isInt(f.b) ? g : undefined;
   if (isConst(f)) {
     const v = applyU(g, f.b);
     return isR(v) ? aff(ZERO, v) : undefined;
@@ -158,7 +169,13 @@ function merge(f, g) {
     const ab = mul(g.a, f.b);
     if (!isR(a) || !isR(ab)) return undefined;
     const b = add(ab, g.b);
-    return isR(b) ? aff(a, b) : undefined;
+    if (!isR(b)) return undefined;
+    // 在 ℤₙ 上 a·x + b 有定义 ⇔ n 的素因子都不整除 a、b 的分母。合并后分母的素因子只会变少，
+    // 所以要原来四个系数分母的素因子都还在，化简才不会把没有定义的地方放过去：
+    // x/2 接 2x 不能化成 x（[1]₁₂ 一步步做在 x/2 就没有定义），x/2 接 x/3 可以化成 x/6
+    const D = a.d * b.d;
+    if (![f.a, f.b, g.a, g.b].every(c => primesDivide(c.d, D))) return undefined;
+    return aff(a, b);
   }
   if (f.t === 'pow' && g.t === 'pow' && isInt(f.n) && isInt(g.n)) {
     // 两个负指数相接会得到正指数，把 0 放过去；不化简
@@ -305,15 +322,34 @@ export function preU(f, y) {
 // 不用加括号的输入写法：变量 x，或者一个非负整数（√2、10⁹）
 const isAtom = s => s === 'x' || /^\d+$/.test(s);
 const isTight = s => !/\s/.test(s);
+// 只留最外层（括号里的内容去掉），用来判断 / 和空格是不是在最外层
+function outer(s) {
+  let depth = 0;
+  let o = '';
+  for (const ch of s) {
+    if (ch === '(' || ch === '[') depth++;
+    else if (ch === ')' || ch === ']') depth--;
+    else if (depth === 0) o += ch;
+  }
+  return o;
+}
+// 系数乘式子（2x、2·3、2√x、2(x/2)）：放在分数线前面要加括号，写成 (2x)/2，免得和 2(x/2) 分不清
+const isProduct = s => /^\d+[^\d⁰¹²³⁴⁵⁶⁷⁸⁹ˣ^]/.test(s);
+// 1/t，t 是一整项（1/x、1/x²、1/(x + 1)、1/0），不是 1/x + 1 这种
+const isRecip = s => s.startsWith('1/') && !/[\s/]/.test(outer(s.slice(2)));
 // 放在分数线前面时需要括号的情况
-const tightDiv = s => (!isTight(s) || s.includes('/') ? `(${s})` : s);
-const wrap = s => (isTight(s) ? s : `(${s})`);
+const tightDiv = s => (!isTight(s) || s.includes('/') || s.startsWith('−') || isProduct(s) ? `(${s})` : s);
+// 负号开头的也要括号：−(−3)、(−3) mod 12，不写 −−3
+const wrap = s => (isTight(s) && !s.startsWith('−') ? s : `(${s})`);
 
 // 系数 k（字符串）乘以式子 s
 function scale(k, s) {
-  if (s.startsWith('1/')) return `${k}/${s.slice(2)}`;
+  if (isRecip(s)) return `${k}/${s.slice(2)}`;
+  if (s.startsWith('−')) return `${k}·(${s})`;
   if (!isTight(s)) return `${k}(${s})`;
-  if (/^[0-9(−]/.test(s)) return `${k}·${s}`;
+  // 最外层有分数线：2(x/2)，不写 2x/2（和 (2x)/2 分不清）
+  if (outer(s).includes('/')) return /^[0-9]/.test(s) ? `${k}·(${s})` : `${k}(${s})`;
+  if (/^[0-9(]/.test(s)) return `${k}·${s}`;
   return `${k}${s}`;
 }
 
@@ -326,7 +362,11 @@ function fmtAff(a, b, s) {
   let lead;
   if (eq(a, ONE)) lead = s;
   else if (a.d === 1) lead = scale(fmtR(a), s);
-  else {
+  else if (isRecip(s)) {
+    // (k/d)·(1/t) 写成 k/(d·t)：2/(3x)、1/(2·0)，不写 2/x/3
+    const t = s.slice(2);
+    lead = `${fmtR(R(a.n))}/(${a.d}${/^[0-9−]/.test(t) ? '·' : ''}${t})`;
+  } else {
     const top = a.n === 1 ? tightDiv(s) : a.n === -1 ? `−${tightDiv(s)}` : scale(fmtR(R(a.n)), s);
     lead = `${top}/${a.d}`;
   }
@@ -337,6 +377,7 @@ function fmtAff(a, b, s) {
 function fmtPow(n, s) {
   const base = isAtom(s) ? s : `(${s})`;
   if (isInt(n)) {
+    if (n.n === 0) return `${base}⁰`;
     if (n.n > 0) return `${base}${sup(n.n)}`;
     if (n.n === -1) return `1/${tightDiv(s)}`;
     return `1/${base}${sup(-n.n)}`;
@@ -367,9 +408,12 @@ function fmtBind(f, s) {
     const r = d.fmtBind(f.op, f.side, f.c, s);
     if (r) return r;
   }
+  // x ^ c 的 c 是数时和 x^(1/5) 一样写：x^(1/13)，不写 x ^ 1/13（会读成 x¹/13）
+  if (f.op === 'pow' && f.side === 'r' && isR(f.c)) return fmtPow(f.c, s);
   const sym = BIN[f.op].sym;
   const cs = fmtV(f.c);
-  const ct = /\s/.test(cs) ? `(${cs})` : cs;
+  // 分数、负数常数加括号；带单位的量（3/息）只看空格，不看 /
+  const ct = /\s/.test(cs) || (isR(f.c) && (f.c.d !== 1 || f.c.n < 0)) ? `(${cs})` : cs;
   return f.side === 'r' ? `${wrap(s)} ${sym} ${ct}` : `${ct} ${sym} ${wrap(s)}`;
 }
 
@@ -493,6 +537,8 @@ export function bindRight(b, c) {
     case 'div':
       return c.n === 0 ? { err: '不能除以 0，所以 x ÷ 0 没有意义。' } : { f: aff(inv(c), ZERO) };
     case 'pow':
+      // x ^ 0 不是常数 1：0 ^ 0 没有定义，矩阵、量的 0 次方也不是数 1，逐值算
+      if (c.n === 0) return { f: bindU('pow', 'r', c) };
       return c.d > 12 ? { err: '指数的分母太大了。' } : { f: powU(c) };
   }
   return { err: '这个算子不能绑定数字。' };
