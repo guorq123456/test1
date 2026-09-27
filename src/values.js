@@ -146,7 +146,7 @@ export function binV(op, x, y) {
     const r = h(op, x, y);
     if (r !== undefined) return r;
   }
-  return { err: `${typeLabel(x)}和${typeLabel(y)}之间没有「${BIN[op].name}」这种运算。` };
+  return { err: `${typeLabel(x)} 和 ${typeLabel(y)} 之间没有「${BIN[op].name}」这种运算。` };
 }
 
 // ───────────────────────── 有理数类型 ─────────────────────────
@@ -195,7 +195,8 @@ registerType({
       case 'pow': {
         const v = rpow(x, y);
         if (v !== null) return v;
-        if (x.n === 0) return { err: '0 的 0 次方、0 的负数次方都没有定义。' };
+        if (x.n === 0 && y.n <= 0) return { err: '0 的 0 次方、0 的负数次方都没有定义。' };
+        if (y.d > 12) return { err: `指数 ${fmtR(y)} 的分母太大了，这个游戏只开到 12 次方根。` };
         return { err: `${fmtR(x)} 的 ${fmtR(y)} 次方不是有理数，初等篇里还造不出来。` };
       }
     }

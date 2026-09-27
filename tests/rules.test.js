@@ -108,3 +108,91 @@ test('做法文字', () => {
   assert.equal(recipeText(['d:N', 'm:union', 'd:NegZ']), 'ℕ ∪ 负整数');
   assert.equal(recipeText(['d:Z', 'u:sq', null]), 'ℤ 经 x²');
 });
+
+// ───────────── 审查回归：探针之外的差别、定义域、溢出 ─────────────
+
+const C = (a, b, c) => combine(a, b, c);
+const rr = resolveRef;
+const isUnnamed = res => res.ok && res.item.id.startsWith('d:~');
+
+test('形状相似但不同的卡组不会被认成图鉴卡组', () => {
+  const x1 = C(null, rr('b:add'), rr('c:1')).item;
+  const x2 = C(null, rr('b:add'), rr('c:2')).item;
+  assert.ok(isUnnamed(C(rr('c:-1025'), rr('m:extend'), x1)), '−1025 ⟳ x+1 不是 ℤ');
+  assert.ok(isUnnamed(C(rr('c:-5000'), rr('m:extend'), x2)), '−5000 ⟳ x+2 不是偶数');
+  assert.equal(C(rr('c:0'), rr('m:extend'), x1).item.id, 'd:N');
+  assert.ok(isUnnamed(C(rr('d:Z'), rr('b:add'), rr('c:1/13'))), 'ℤ + 1/13 不是空集');
+  assert.ok(isUnnamed(C(rr('c:7/11'), rr('m:extend'), x1)), '7/11 ⟳ x+1 不是空集');
+  assert.ok(isUnnamed(C(rr('d:N'), rr('m:union'), rr('c:-5000'))), 'ℕ ∪ {−5000} 不是 ℕ');
+  assert.ok(isUnnamed(C(rr('d:Z'), rr('m:union'), rr('c:1/13'))), 'ℤ ∪ {1/13} 不是 ℤ');
+  const A = C(rr('c:0'), rr('m:union'), rr('c:1/21')).item;
+  assert.ok(isUnnamed(C(A, rr('b:add'), rr('d:Z'))), '{0, 1/21} + ℤ 不是 ℤ');
+  assert.equal(C(rr('d:N'), rr('b:add'), rr('d:Z')).item.id, 'd:Z');
+  // 混合类型的自造卡组各有各的 id；不同类型的交是空集
+  const u1 = C(rr('d:N'), rr('m:union'), rr('d:Len')).item.id;
+  const u2 = C(rr('d:Z'), rr('m:union'), rr('d:Z12')).item.id;
+  assert.notEqual(u1, u2);
+  assert.equal(C(rr('d:Qp'), rr('m:inter'), rr('d:Len')).item.id, 'd:Empty');
+});
+
+test('数学上相同的卡组能被认出来：偶数 ÷ 偶数 = ℚ，含空集的两两运算是空集', () => {
+  assert.equal(C(rr('d:Even'), rr('b:div'), rr('d:Even')).item.id, 'd:Q');
+  assert.equal(C(rr('d:N'), rr('b:div'), rr('d:Even')).item.id, 'd:Q');
+  assert.equal(C(rr('d:Even'), rr('m:closure'), rr('b:div')).item.id, 'd:Q');
+  assert.equal(C(rr('d:Z'), rr('b:add'), rr('d:Empty')).item.id, 'd:Empty');
+  assert.equal(C(rr('d:Empty'), rr('b:mul'), rr('d:Q')).item.id, 'd:Empty');
+});
+
+test('复合的化简不放过定义域外的输入', () => {
+  const lg = C(rr('u:log2'), rr('m:compose'), rr('u:exp2'));
+  assert.ok(lg.ok);
+  assert.notEqual(lg.item.id, 'u:aff(1,0)');
+  assert.equal(C(rr('d:Z'), lg.item, null).item.id, 'd:P2', 'ℤ 经 2^(log₂x) 是 2ⁿ');
+  assert.equal(C(rr('c:3'), lg.item, null).ok, false);
+  const inv2 = C(rr('u:recip'), rr('m:compose'), rr('u:recip')).item;
+  assert.equal(C(rr('c:0'), inv2, null).ok, false, '1/(1/0) 没有定义');
+});
+
+test('视野外的卡组做常数算子、(−1)ˣ 不会被认成空集', () => {
+  const x1 = C(null, rr('b:add'), rr('c:1')).item;
+  const far = C(rr('c:1000'), rr('m:extend'), x1).item;
+  const times0 = C(null, rr('b:mul'), rr('c:0')).item;
+  const z = C(far, times0, null);
+  assert.ok(z.ok && z.item.id !== 'd:Empty' && z.item.v.has(R(0)) === true);
+  assert.equal(C(far, rr('u:sign'), null).item.id, 'd:Sign');
+  assert.equal(C(rr('d:Z'), rr('u:sign'), null).item.id, 'd:Sign');
+});
+
+test('绑定算子的逆：不可逆的 c 没有逆，矩阵的 c ÷ x 不是自己的逆', () => {
+  assert.equal(C(C(null, rr('b:mul'), rr('c:[2]12')).item, rr('m:inverse'), null).ok, false);
+  const shear = C(C(rr('c:m:1,1,0,1'), rr('b:div'), null).item, rr('m:inverse'), null);
+  assert.ok(shear.ok && shear.item.id !== 'u:bind(div,l,m:1,1,0,1)');
+  assert.equal(C(C(rr('c:[5]12'), rr('b:div'), null).item, rr('m:inverse'), null).item.id, 'u:bind(div,l,[5]12)');
+  assert.equal(C(C(null, rr('b:mul'), rr('c:m:1,2,3,4')).item, rr('m:inverse'), null).item.id, 'u:bind(div,r,m:1,2,3,4)');
+});
+
+test('溢出与边界：溢出的成员不会被悄悄丢掉；轨道末尾、大分母指数', () => {
+  const big = C(rr('d:Sign'), rr('m:union'), rr('c:5000000')).item;
+  assert.ok(isUnnamed(C(big, rr('u:cube'), null)), '{±1, 5000000} 经 x³ 不是 {±1}');
+  const dbl = C(null, rr('b:mul'), rr('c:2')).item;
+  assert.equal(C(rr('c:1/2'), rr('m:extend'), dbl).item.v.has(R(8388608)), true);
+  assert.equal(C(rr('c:1'), rr('b:pow'), rr('c:1/13')).item.id, 'c:1');
+  assert.equal(C(rr('c:0'), rr('b:pow'), rr('c:1/13')).item.id, 'c:0');
+  const r13 = C(rr('c:8192'), rr('b:pow'), rr('c:1/13'));
+  assert.equal(r13.ok, false);
+  assert.match(r13.msg, /分母/);
+  const m8 = C(rr('c:-8'), rr('b:pow'), null).item;
+  assert.equal(C(rr('d:Unit'), m8, null).item.v.has(R(-2)), true, '(−8)^(1/3) = −2 在像里');
+});
+
+test('多项式当算子用的卡组能存档重建；预览和提示', () => {
+  const fdeck = C(rr('d:Even'), rr('c:p:1,0,0'), null);
+  assert.ok(fdeck.ok);
+  assert.equal(itemFromDesc(JSON.parse(JSON.stringify(fdeck.item.desc)))?.id, fdeck.item.id);
+  assert.match(previewDeck(C(rr('d:Z'), rr('u:recip'), null).item.v), /…/);
+  const cl = C(rr('c:300'), rr('m:closure'), rr('b:mul'));
+  assert.match(previewDeck(cl.item.v), /…/);
+  assert.match(cl.text, /超出/);
+  assert.match(C(rr('c:[3]12'), rr('b:add'), rr('c:q:1|1,0,0')).msg, /模 12 和 长度/);
+  assert.match(C(null, rr('b:mod'), rr('c:1/2')).msg, /不小于 2 的整数/);
+});

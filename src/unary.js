@@ -35,7 +35,10 @@ import {
   sup,
   subscript,
 } from './math.js';
-import { BIN, binV, isV, vkey, fmtV, parseVKey, TYPES, defOf, eqV } from './values.js';
+import { BIN, binV, isV, vkey, fmtV, parseVKey, TYPES, defOf, eqV, typeOf } from './values.js';
+
+// 乘法可交换的类型（矩阵不在里面）
+const COMMUTATIVE = new Set(['q', 'mod', 'poly', 'qty']);
 
 export const aff = (a, b) => ({ t: 'aff', a, b });
 export const ID = aff(ONE, ZERO);
@@ -138,11 +141,14 @@ export function ukey(f) {
   return '?';
 }
 
-// 尝试把"先 f 后 g"化简成一个算子；化简不了返回 undefined
+// 尝试把"先 f 后 g"化简成一个算子；化简不了返回 undefined。
+// 只在化简后的算子"凡是 f∘g 算不出的地方它也算不出"时才化简：
+// 比如 log₂x 接 2ˣ 不能化成 x，因为 3 代入 log₂x 就算不出，化成 x 就把 3 放过去了。
 function merge(f, g) {
   if (isId(f)) return g;
   if (isId(g)) return f;
-  if (isConst(g)) return g;
+  // a·x + b 对任何数都有定义，所以只有 f 是它时，接一个常数才能直接变成常数
+  if (isConst(g)) return f.t === 'aff' ? g : undefined;
   if (isConst(f)) {
     const v = applyU(g, f.b);
     return isR(v) ? aff(ZERO, v) : undefined;
@@ -155,11 +161,11 @@ function merge(f, g) {
     return isR(b) ? aff(a, b) : undefined;
   }
   if (f.t === 'pow' && g.t === 'pow' && isInt(f.n) && isInt(g.n)) {
+    // 两个负指数相接会得到正指数，把 0 放过去；不化简
+    if (f.n.n < 0 && g.n.n < 0) return undefined;
     const n = mul(f.n, g.n);
     return isR(n) ? powU(n) : undefined;
   }
-  if (f.t === 'exp' && g.t === 'log' && eq(f.c, g.c)) return ID;
-  if (f.t === 'log' && g.t === 'exp' && eq(f.c, g.c)) return ID;
   if (f.t === 'named' && g.t === 'named') {
     const d = NAMED.get(f.id);
     if (d && d.inverse === g.id) return ID;
@@ -205,12 +211,18 @@ export function invertU(f) {
       const { op, side, c } = f;
       if (op === 'add') return bindU('sub', 'r', c);
       if (op === 'sub') return side === 'r' ? bindU('add', 'r', c) : f;
+      const ci = op === 'mul' || op === 'div' ? binV('pow', c, NEG1) : null;
       if (op === 'mul') {
-        if (side === 'r') return bindU('div', 'r', c);
-        const ci = binV('pow', c, NEG1);
-        return isV(ci) ? bindU('mul', 'l', ci) : null;
+        // c 没有倒数（[2]₁₂、奇异矩阵）时，乘以 c 不是一一对应，没有逆
+        if (!isV(ci)) return null;
+        return side === 'r' ? bindU('div', 'r', c) : bindU('mul', 'l', ci);
       }
-      if (op === 'div') return side === 'r' ? bindU('mul', 'r', c) : f;
+      if (op === 'div') {
+        if (side === 'r') return bindU('mul', 'r', c);
+        // c ÷ x：乘法可交换时它是自己的逆；矩阵不可交换，逆是 y ↦ y⁻¹ · c
+        if (!isV(ci)) return null;
+        return COMMUTATIVE.has(typeOf(c)) ? f : compose(powU(NEG1), bindU('mul', 'r', c));
+      }
       return null;
     }
     case 'named': {
@@ -254,11 +266,13 @@ export function preU(f, y) {
       return verify(isR(r) ? [r, neg(r)] : [r]);
     }
     case 'exp': {
-      if (eq(f.c, NEG1)) return { pred: x => eqR(applyU(f, x), y) };
+      // (−1)ˣ 只会得到 ±1：别的 y 一定没有原像，±1 的原像有无穷多个
+      if (eq(f.c, NEG1)) return y.d === 1 && Math.abs(y.n) === 1 ? { pred: x => eqR(applyU(f, x), y) } : { list: [] };
       if (f.c.n < 0) {
+        // |c| ≠ 1，所以 |c|^e = |y| 的有理数 e 唯一；符号和定义域交给 verify 检查
         if (y.n === 0) return { list: [] };
-        const k = Math.round(Math.log(Math.abs(toNum(y))) / Math.log(Math.abs(toNum(f.c))));
-        return verify(Number.isFinite(k) ? [R(k)] : []);
+        const e = rlog(neg(f.c), y.n < 0 ? neg(y) : y);
+        return verify(e ? [e] : []);
       }
       const e = rlog(f.c, y);
       return verify(e ? [e] : []);
@@ -449,13 +463,18 @@ export function parseU(o) {
 
 const Q_OPS = new Set(['add', 'sub', 'mul', 'div', 'pow']);
 
-// 检查绑定出来的算子至少对某些输入算得出来
+// 检查绑定出来的算子至少对某些输入算得出来；都算不出时带上第一条解释
 function genericBind(b, side, c) {
   const f = bindU(b.id, side, c);
   const trial = [c, ...[...TYPES.values()].flatMap(t => t.window.slice(0, 8))];
-  if (trial.some(x => isV(applyU(f, x)))) return { f };
+  let why = null;
+  for (const x of trial) {
+    const r = applyU(f, x);
+    if (isV(r)) return { f };
+    if (!why && r && typeof r === 'object' && r.err) why = r.err;
+  }
   const s = side === 'r' ? `x ${b.sym} ${fmtV(c)}` : `${fmtV(c)} ${b.sym} x`;
-  return { err: `${s} 对任何输入都算不出结果。` };
+  return { err: why ? `${s} 对任何输入都算不出结果：${why}` : `${s} 对任何输入都算不出结果。` };
 }
 
 // 右边绑定一个值：x ∘ c

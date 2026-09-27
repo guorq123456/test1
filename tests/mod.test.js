@@ -160,6 +160,45 @@ test('乘方：正指数反复相乘，负指数用逆元，指数必须是整�
   assert.equal(vkey(applyU(aff(TWO, R(1)), k('[5]12'))), '[11]12');
 });
 
+test('余数和别的类型（量、向量、矩阵、多项式）：交给别的类型，不说成"不是整数"', () => {
+  const others = ['q:1|1,0,0', 'v:1,0', 'm:1,0,0,1', 'p:1,0'];
+  for (const s of others) {
+    const o = k(s);
+    assert.ok(o, s);
+    for (const op of ['add', 'sub', 'mul', 'div', 'pow', 'mod']) {
+      for (const [x, y] of [
+        [k('[3]12'), o],
+        [o, k('[3]12')],
+      ]) {
+        const r = binV(op, x, y);
+        const what = `${fmtV(x)} ${op} ${fmtV(y)}`;
+        assert.ok(isErr(r), `${what} 应该报错，得到 ${JSON.stringify(r)}`);
+        assert.doesNotMatch(r.err, /NaN|undefined/, `${what}：${r.err}`);
+        assert.doesNotMatch(r.err, /不是整数/, `${what}：${r.err}`);
+        assert.match(r.err, /模 12/, `${what}：${r.err}`);
+      }
+    }
+  }
+  // 合成台上：[3]₁₂ + 1 步，两种顺序都说的是类型，不是"1 步 不是整数"
+  for (const [l, r] of [
+    ['c:[3]12', 'c:q:1|1,0,0'],
+    ['c:q:1|1,0,0', 'c:[3]12'],
+  ]) {
+    const res = combine(resolveRef(l), resolveRef('b:add'), resolveRef(r));
+    assert.equal(res.ok, false);
+    assert.doesNotMatch(res.msg, /NaN|undefined|不是整数/, res.msg);
+    assert.match(res.msg, /模 12/);
+    assert.match(res.msg, /长度/);
+  }
+  const vm = combine(resolveRef('c:[3]12'), resolveRef('b:mul'), resolveRef('c:v:1,0'));
+  assert.equal(vm.ok, false);
+  assert.doesNotMatch(vm.msg, /NaN|undefined|不是整数/, vm.msg);
+  assert.match(vm.msg, /向量/);
+  // 有理数照旧：整数化成余数，分数说"不是整数"
+  assert.equal(vkey(binV('add', k('[3]12'), R(10))), '[1]12');
+  assert.match(binV('mul', R(1, 2), k('[3]12')).err, /1\/2 不是整数/);
+});
+
 test('余数再取余：只有模数整除时才行', () => {
   assert.equal(vkey(binV('mod', k('[7]12'), R(2))), '[1]2');
   assert.equal(vkey(binV('mod', k('[7]12'), R(4))), '[3]4');

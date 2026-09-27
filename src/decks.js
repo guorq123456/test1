@@ -25,6 +25,7 @@ import {
   eqV,
   TYPES,
   baseType,
+  MSG_OVER,
 } from './values.js';
 import { applyU, preU, invertU, isQStructural } from './unary.js';
 
@@ -96,19 +97,37 @@ export function sampleOf(D) {
 
 // 对卡组里的每张卡做一元算子 f
 export function imageDeck(D, f, name) {
-  if (D.list) return finiteDeck(D.list.map(x => applyU(f, x)).filter(isV), name);
+  if (D.list) {
+    const raw = D.list.map(x => applyU(f, x));
+    const outs = raw.filter(isV);
+    if (!raw.some(y => y === OVER)) return finiteDeck(outs, name);
+    if (!outs.length) {
+      const E = finiteDeck([], name);
+      E.err = MSG_OVER;
+      return E;
+    }
+    // 有成员算出来太大表示不了：只能当近似卡组，而且比看到的更多（incomplete）
+    const P = approxDeck(outs, name);
+    P.incomplete = true;
+    return P;
+  }
   if (D.type === 'q' && isQStructural(f)) {
+    // 常数算子、(−1)ˣ 这类原像无穷多的情况，在原卡组的代表成员和视野里找一个原像；找不到只能说"不知道"
+    let cands = null;
     return mkDeck(
       'image',
       y => {
         if (!isR(y)) return false;
         const p = preU(f, y);
-        if (p.pred) return WINDOW.some(x => p.pred(x) && D.has(x) === true);
+        if (p.pred) {
+          if (!cands) cands = uniqV([...(D.seq ?? []), ...sampleOf(D), ...WINDOW]);
+          return cands.some(x => p.pred(x) && D.has(x) === true) ? true : null;
+        }
         const hits = p.list.map(x => D.has(x));
         if (hits.includes(true)) return true;
         return p.unknown || hits.includes(null) ? null : false;
       },
-      { name, type: 'q', approx: D.approx },
+      { name, type: 'q', approx: D.approx, src: D, f, sample: () => uniqV(sampleOf(D).map(x => applyU(f, x))) },
     );
   }
   const sample = sampleOf(D);
@@ -125,7 +144,7 @@ export function imageDeck(D, f, name) {
   const roundTrips =
     g &&
     !D.approx &&
-    sample.slice(0, 16).every(x => {
+    sample.every(x => {
       const y = applyU(f, x);
       return !isV(y) || eqV(applyU(g, y), x);
     });
@@ -136,10 +155,34 @@ export function imageDeck(D, f, name) {
         const x = applyU(g, y);
         return isV(x) && eqV(applyU(f, x), y) ? D.has(x) : false;
       },
-      { name, type, sample: () => uniqV(sampleOf(D).map(x => applyU(f, x))) },
+      { name, type, src: D, f, sample: () => uniqV(sampleOf(D).map(x => applyU(f, x))) },
     );
   }
   return approxDeck(outs, name, type);
+}
+
+// 见证值：这个卡组"边界"上的值。图鉴比对除了固定探针，还会在这些值上比对，
+// 这样从 −1025 出发的轨道就不会被当成 ℤ，ℤ + 1/13 也不会被当成空集。
+export function witnessesOf(D, depth = 0) {
+  if (D.wit) return D.wit;
+  let w = [];
+  if (D.list) w = D.list;
+  else if (D.elems) w = D.elems;
+  else if (D.orbit) {
+    // 起点、开头几步，以及起点的前一步（它不在轨道里）
+    w = [...(D.seq ?? [])];
+    const g = invertU(D.orbit.f);
+    if (g) {
+      const p = applyU(g, D.orbit.c);
+      if (isV(p)) w.push(p);
+    }
+  } else if (D.src) {
+    const srcs = Array.isArray(D.src) ? D.src : [D.src];
+    const base = srcs.flatMap(S => [...(depth < 3 ? witnessesOf(S, depth + 1) : []), ...sampleOf(S).slice(0, 40)]);
+    w = D.f ? base.map(x => applyU(D.f, x)).filter(isV) : base;
+  }
+  D.wit = uniqV(w).slice(0, 200);
+  return D.wit;
 }
 
 // 一批运算结果里第一条带解释的错误
@@ -155,6 +198,7 @@ export function unionDeck(A, B, name) {
     name,
     type,
     approx: A.approx || B.approx,
+    src: [A, B],
     sample: () => uniqV([...sampleOf(A), ...sampleOf(B)]),
   });
 }
@@ -162,11 +206,14 @@ export function unionDeck(A, B, name) {
 export function interDeck(A, B, name) {
   if (A.list) return finiteDeck(A.list.filter(x => B.has(x) === true), name);
   if (B.list) return finiteDeck(B.list.filter(x => A.has(x) === true), name);
+  // 两个不同类型的卡组（数和余数、长度和时间……）没有共同的卡
+  if (A.type !== B.type && A.type !== 'set' && B.type !== 'set') return finiteDeck([], name);
   const type = A.type === B.type ? A.type : 'set';
   return mkDeck('inter', x => and3(A.has(x), B.has(x)), {
     name,
     type,
     approx: A.approx || B.approx,
+    src: [A, B],
     sample: () => sampleOf(A).filter(x => B.has(x) === true),
   });
 }
@@ -227,8 +274,12 @@ export function orbitDeck(c, f, name) {
   // 走进了循环，或者走到没有定义的地方停下：有限卡组
   if (!open && !overflow) return finiteDeck(seq, name);
   const type = sameType(seq);
-  const extra = { name, seq: seq.slice(0, 6), type };
-  if (isR(c) && f.t === 'aff' && type === 'q') return mkDeck('orbit', y => affOrbitHas(c, f, y), extra);
+  const extra = { name, seq: seq.slice(0, 6), type, orbit: { c, f } };
+  if (isR(c) && f.t === 'aff' && type === 'q') {
+    // 因为太大而停下的轨道，能表示的成员都已经走过了，直接查表，免得公式里的中间量先溢出
+    if (overflow) return mkDeck('orbit', y => isR(y) && seen.has(vkey(y)), extra);
+    return mkDeck('orbit', y => affOrbitHas(c, f, y), extra);
+  }
   // 其他算子：记下走过的每一步。走满步数还没停就标成近似。
   return mkDeck('orbit', y => seen.has(vkey(y)), { ...extra, approx: open, elems: seq });
 }
@@ -244,6 +295,7 @@ export function closureDeck(D, b, name) {
   const all = new Map(seeds.map(x => [vkey(x), x]));
   let frontier = [...all.values()];
   let dropped = false;
+  const lost = []; // 算得出但太大、没收进来的结果，比对图鉴时要看一眼
   let ops = 0;
   let rounds = 0;
   let stop = false;
@@ -258,6 +310,7 @@ export function closureDeck(D, b, name) {
       }
       if (sizeV(z) > hmax) {
         dropped = true;
+        if (lost.length < 64) lost.push(z);
         return;
       }
       const k = vkey(z);
@@ -282,39 +335,53 @@ export function closureDeck(D, b, name) {
   }
   if (frontier.length) dropped = true;
   if (fin && !dropped) return finiteDeck([...all.values()], name);
-  return approxDeck([...all.values()], name);
+  const out = approxDeck([...all.values()], name);
+  if (dropped) {
+    out.truncated = true; // 有些结果因为太大没算进来，"直到得不到新卡"并不成立
+    if (lost.length) out.lost = lost;
+  }
+  return out;
 }
 
 // 两个卡组两两运算：{a ∘ b | a ∈ A, b ∈ B}
 export function pairwiseDeck(A, b, B, name) {
+  // 有一边是空集，结果一定是空集
+  if ((A.list && !A.list.length) || (B.list && !B.list.length)) return finiteDeck([], name);
   const fin = !!(A.list && B.list);
   const sa = sampleOf(A);
   const sb = sampleOf(B);
   const out = new Map();
+  const lost = [];
   let cap = null;
   let err = null;
+  let over = false;
   let dropped = 0;
   for (const x of sa) {
     for (const y of sb) {
       const z = binV(b.id, x, y);
       if (!isV(z)) {
-        if (!err && z && typeof z === 'object' && z.err) err = z.err;
+        if (z === OVER) over = true;
+        else if (!err && z && typeof z === 'object' && z.err) err = z.err;
         continue;
       }
       if (!fin) {
         if (cap === null) cap = sizeCapFor(subtypeOf(z));
         if (sizeV(z) > cap) {
           dropped++;
+          if (lost.length < 64) lost.push(z);
           continue;
         }
       }
       out.set(vkey(z), z);
     }
   }
-  const D = fin ? finiteDeck([...out.values()], name) : approxDeck([...out.values()], name);
+  // 有结果太大表示不了时，即使两边都有限，也只能当近似卡组
+  const D = fin && !over ? finiteDeck([...out.values()], name) : approxDeck([...out.values()], name);
+  if (over) D.incomplete = true;
+  if (lost.length) D.lost = lost;
   if (!out.size) {
     // 一张都没留下：要么全都算不出（带解释），要么算得出但都超出了视野的大小
-    D.err = err;
+    D.err = err ?? (over ? MSG_OVER : null);
     D.dropped = dropped > 0;
   }
   return D;
@@ -346,10 +413,13 @@ export function previewDeck(D, max = 6) {
       members.push(x);
     }
     if (!members.length) return D.approx ? '{ …（视野外） }' : '{ }';
-    return `{${members.map(fmtV).join(', ')}${more ? ', …' : ''}}`;
+    return `{${members.map(fmtV).join(', ')}${more || D.truncated ? ', …' : ''}}`;
   }
+  // 候选：常见的数，再加上这个卡组自己的代表成员（像 ℤ + 1/13 这种，成员多半不在常见数里）
+  const own = D.sample ? D.sample().filter(isR) : [];
+  const pool = own.length ? uniqR([...DISPLAY_POOL, ...own]).sort((x, y) => height(x) - height(y) || cmp(x, y)) : DISPLAY_POOL;
   const members = [];
-  for (const x of DISPLAY_POOL) {
+  for (const x of pool) {
     if (D.has(x)) {
       members.push(x);
       if (members.length >= max) break;
@@ -359,9 +429,15 @@ export function previewDeck(D, max = 6) {
   members.sort(cmp);
   const lo = members[0];
   const hi = members[members.length - 1];
-  const moreLo = DISPLAY_POOL.some(x => cmp(x, lo) < 0 && D.has(x));
-  const moreHi = DISPLAY_POOL.some(x => cmp(x, hi) > 0 && D.has(x));
-  return `{${moreLo ? '…, ' : ''}${members.map(fmtV).join(', ')}${moreHi ? ', …' : ''}}`;
+  const moreLo = pool.some(x => cmp(x, lo) < 0 && D.has(x));
+  const moreHi = D.truncated || pool.some(x => cmp(x, hi) > 0 && D.has(x));
+  // 相邻两个成员之间还有没显示的成员时，在中间加省略号（比如 ℤ 经 1/x）
+  const parts = [];
+  members.forEach((x, i) => {
+    if (i > 0 && pool.some(y => cmp(y, members[i - 1]) > 0 && cmp(y, x) < 0 && D.has(y))) parts.push('…');
+    parts.push(fmtV(x));
+  });
+  return `{${moreLo ? '…, ' : ''}${parts.join(', ')}${moreHi ? ', …' : ''}}`;
 }
 
 // 有限卡组在 + 和 × 下是不是群（封闭、单位元、逆元）。太大或无限时返回 null。

@@ -10,10 +10,11 @@
 //   余数 ÷ 余数    → 乘以逆元；没有逆元就报错
 //   余数 ^ 整数    → 反复相乘；负指数先取逆元
 //   余数 和 整数 混合 → 整数先化成同一个 n 的余数
+//   余数 和 别的类型（量、向量、多项式……）→ 本类型不处理（返回 undefined），交给别的类型
 //   余数 mod m     → 只有 m 整除 n 时才有意义：[r]n → [r mod m]m
 
 import { isR, isInt, gcd, fmtR, subscript } from '../math.js';
-import { registerType, registerBin, fmtV } from '../values.js';
+import { registerType, registerBin } from '../values.js';
 
 // ───────────────────────── 余数类 ─────────────────────────
 
@@ -56,10 +57,9 @@ function modPow(a, k, n) {
 
 const fmtMod = v => `[${v.r}]${subscript(v.n)}`;
 
-// 把一个操作数化成模 n 的余数；化不了就返回 {err}
+// 把一个操作数（余数或有理数，modBin 已经排除了别的类型）化成模 n 的余数；化不了就返回 {err}
 function toMod(v, n) {
   if (isMod(v)) return v;
-  if (!isR(v)) return { err: `${fmtV(v)} 不是整数，没法化成模 ${n} 的余数。` };
   if (!isInt(v)) return { err: `${fmtR(v)} 不是整数，没法化成模 ${n} 的余数。` };
   return M(n, v.n);
 }
@@ -74,6 +74,9 @@ function modBin(op, x, y) {
   const ym = isMod(y);
   if (!xm && !ym) return undefined;
   if (op === 'cat') return undefined;
+  // 另一边既不是余数也不是有理数（量、向量、多项式……）：交给别的类型处理，
+  // 不要把它说成"不是整数"
+  if (!(xm || isR(x)) || !(ym || isR(y))) return undefined;
 
   if (op === 'mod') {
     if (xm && ym) return { err: `${fmtMod(x)} 已经是余数了，不能再对余数取余。` };
@@ -168,7 +171,7 @@ export const CHAPTER = {
   unlock: {
     when: 'd:Z',
     gives: ['b:mod', 'c:12', 'c:7'],
-    note: '有了整数，就可以对它取余了。取余也能由减法「延展」得到：反复减去同一个数，剩下的就是余数。',
+    note: '有了整数，就可以对它取余了。取余也能由减法「延展」得到：反复减去（负数就反复加上）同一个数，直到落在 0 到它减 1 之间，剩下的就是余数。',
   },
 };
 
@@ -176,7 +179,7 @@ export const NAMED_UN = [];
 
 export const BIN_INFO = {
   mod: {
-    desc: '反复减去同一个数，直到减不动为止，剩下的就是余数：17 mod 5 = 2。整数 mod n 得到"模 n 的余数"，同一个 n 的余数可以互相加减乘。',
+    desc: '反复减去（负数就反复加上）同一个数，直到落在 0 到它减 1 之间，剩下的就是余数：17 mod 5 = 2，−17 mod 5 = 3。整数 mod n 得到"模 n 的余数"，同一个 n 的余数可以互相加减乘。',
   },
 };
 
@@ -329,7 +332,7 @@ export const CATALOG = [
   {
     id: 'QR7',
     short: '(ℤ₇ˣ)²',
-    name: '模 7 的平方数',
+    name: '模 7 的非零平方数',
     ch: 5,
     type: 'mod:7',
     preview: '{[1]₇, [2]₇, [4]₇}',
@@ -337,8 +340,8 @@ export const CATALOG = [
     struct: '群',
     groupOp: '×',
     note: '((ℤ₇ˣ)², ×) 是群，是 ℤ₇ˣ 的子群：平方乘平方还是平方，[1] 是单位元，[2] 和 [4] 互为逆元。ℤ₇ˣ 的 6 张卡里恰好一半是平方数。',
-    desc: '在模 7 的世界里，1、2、4 都是平方数：3² = 9 = [2]，2² = [4]。',
-    hint: '让 ℤ₇ˣ 里每张卡都做平方。',
+    desc: '在模 7 的世界里，除了 [0]（0² = 0），1、2、4 也都是平方数：3² = 9 = [2]，2² = [4]。这里只收 ℤ₇ˣ 里的非零平方数，[0] 不算。',
+    hint: '让 ℤ₇ˣ（不含 [0]）里每张卡都做平方；ℤ₇ 整个平方会多出 [0]。',
     has: inSet(7, [1, 2, 4]),
     recipes: [
       ['d:U7', 'u:sq', null],

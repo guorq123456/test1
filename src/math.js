@@ -99,6 +99,10 @@ export function iroot(n, q) {
 export function rpow(x, e) {
   if (!isR(x) || !isR(e)) return null;
   if (e.d === 1) return ipow(x, e.n);
+  // 0、1、−1 的分数次方不用开方也知道
+  if (x.n === 0) return e.n > 0 ? ZERO : null;
+  if (x.d === 1 && x.n === 1) return ONE;
+  if (x.d === 1 && x.n === -1 && e.d % 2 === 1) return e.n % 2 === 0 ? ONE : NEG1;
   if (e.d > 12) return null;
   const rn = iroot(x.n, e.d);
   const rd = iroot(x.d, e.d);

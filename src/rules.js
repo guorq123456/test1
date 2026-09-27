@@ -1,6 +1,6 @@
 // 合成规则：合成台上 [左] [算子] [右] 三个格子，放进去的东西决定会得到什么。
 
-import { OVER } from './math.js';
+import { OVER, isR } from './math.js';
 import {
   BIN,
   MSG_OVER,
@@ -14,6 +14,8 @@ import {
   typeLabel,
   probesFor,
   smallProbesFor,
+  sizeV,
+  sizeCapFor,
 } from './values.js';
 import { applyU, bindLeft, bindRight, compose, fmtU, fnU, invertU, parseU, serU, ukey } from './unary.js';
 import {
@@ -26,8 +28,10 @@ import {
   orbitDeck,
   pairwiseDeck,
   previewDeck,
+  sampleOf,
   sigOf,
   unionDeck,
+  witnessesOf,
 } from './decks.js';
 import { BIN_INFO, CATALOG_ALL, META, NAMED_UN_ALL } from './content.js';
 
@@ -141,14 +145,21 @@ export function matchCatalog(D) {
       continue;
     }
     if (D.kind === 'approx') {
+      // 因为太大没收进来的结果，如果明显不在 C 里，就不是 C
+      if (D.lost && !D.lost.every(x => C.has(x) !== false)) continue;
       // 算出来的每张卡都得在 C 里，C 在小探针范围内的卡也都得算出来
       if (C.list) {
+        // 有成员大到表示不了的卡组，肯定比算出来的多，不会等于一个有限的图鉴卡组
+        if (D.incomplete) continue;
         const elems = [...D.elems].sort((x, y) => (vkey(x) < vkey(y) ? -1 : 1));
         const cl = [...C.list].sort((x, y) => (vkey(x) < vkey(y) ? -1 : 1));
         if (sameList(elems, cl)) return c;
         continue;
       }
-      if (D.elems.every(x => C.has(x)) && smallProbesFor(type).every(x => !C.has(x) || D.has(x))) return c;
+      // 有理数视野只到 20，两两运算凑不出 11 这样的素数分子，所以只要求覆盖大小一半以内的探针
+      const small = smallProbesFor(type);
+      const cover = type === 'q' ? small.filter(x => 2 * sizeV(x) <= sizeCapFor(type)) : small;
+      if (D.elems.every(x => C.has(x)) && cover.every(x => !C.has(x) || D.has(x))) return c;
       continue;
     }
     // 小探针必须都判断得出来；大数探针如果超出范围（null）就跳过
@@ -159,7 +170,13 @@ export function matchCatalog(D) {
       const d = D.has(x);
       return d === null ? !smallKeys.has(vkey(x)) : d === C.has(x);
     };
-    if (probes.every(same)) return c;
+    if (!probes.every(same)) continue;
+    // 再在这个卡组自己的"边界值"上比对，防止探针之外的差别被漏掉
+    const sameW = x => {
+      const d = D.has(x);
+      return d === null || d === C.has(x);
+    };
+    if (witnessesOf(D).every(sameW)) return c;
   }
   return null;
 }
@@ -167,7 +184,14 @@ export function matchCatalog(D) {
 function fingerprint(D) {
   if (D.list) return `f${hash(D.list.map(vkey).join(','))}`;
   if (D.kind === 'approx') return `a${hash(D.elems.map(vkey).sort().join(','))}`;
-  return `e${hash(D.type + ':' + sigOf(D, D.approx ? smallProbesFor(D.type) : probesFor(D.type)))}`;
+  // 混合类型的卡组按成员的各个类型分别取探针
+  const types = D.type === 'set' ? [...new Set(sampleOf(D).map(subtypeOf))].sort() : [D.type];
+  const probes = types.flatMap(t => (D.approx ? smallProbesFor(t) : probesFor(t)));
+  const wit = witnessesOf(D)
+    .map(x => `${vkey(x)}=${D.has(x)}`)
+    .sort()
+    .join(',');
+  return `e${hash(types.join('|') + ':' + sigOf(D, probes) + ':' + wit)}`;
 }
 
 // ───────────────────────── 合成 ─────────────────────────
@@ -184,7 +208,8 @@ function errText(r) {
 function deckResult(D, from, text, recipe) {
   const c = matchCatalog(D);
   if (c) {
-    const title = c.short === c.name ? `「${c.name}」` : `「${c.name} ${c.short}」`;
+    // 简称是符号时一起显示（整数 ℤ），是中文时只显示全名（四个方向）
+    const title = c.short === c.name || /[一-鿿]/.test(c.short) ? `「${c.name}」` : `「${c.name} ${c.short}」`;
     return ok(catItem(c.id), `${text}。这就是${title}！`, { recipe, catId: c.id });
   }
   if (D.list && D.list.length <= 6) D.name = previewDeck(D);
@@ -218,12 +243,17 @@ function pairOf(L, Rt, kindsA, kindB) {
 
 const single = (L, Rt) => (L && !Rt ? L : Rt && !L ? Rt : null);
 
+const isFnCard = it => it?.kind === 'card' && !!defOf(it.v).call;
+
 export function combine(L, M, Rt) {
-  if (!M) return fail('中间的「算子」格还空着。放一个算子进去：橙色、黄色或紫色的卡。');
+  if (!M) {
+    const hint = isFnCard(L) || isFnCard(Rt) ? '多项式也能当算子：先点中间的空格，再点这张多项式。' : '';
+    return fail(`中间的「算子」格还空着。放一个算子进去：橙色、黄色或紫色的卡。${hint}`);
+  }
   if (M.kind === 'card') {
-    // 多项式这种可以当函数用的单卡，放在中间就是一元算子
-    if (defOf(M.v).call) return withUn(L, { kind: 'un', v: fnU(M.v) }, Rt);
-    return fail('中间的格子只能放算子。单卡和卡组请放在左右两边。');
+    // 多项式这种可以当函数用的单卡，放在中间就是一元算子（desc 保留原卡，存档才能重建）
+    if (defOf(M.v).call) return withUn(L, { kind: 'un', v: fnU(M.v), desc: M.desc }, Rt, '代入');
+    return fail('中间的格子只能放算子。单卡和卡组请放在左右两边。多项式可以放中间当算子用。');
   }
   if (M.kind === 'deck') return fail('中间的格子只能放算子。单卡和卡组请放在左右两边。');
   if (M.kind === 'bin') return withBin(L, M, Rt);
@@ -238,7 +268,9 @@ function withBin(L, M, Rt) {
     case 'card|card': {
       const r = binV(b.id, L.v, Rt.v);
       if (!isV(r)) return fail(errText(r));
-      return ok(cardItem(r), `${fmtV(L.v)} ${b.sym} ${fmtV(Rt.v)} = ${fmtV(r)}`);
+      const eqn = `${fmtV(L.v)} ${b.sym} ${fmtV(Rt.v)}`;
+      // 多项式 x + 1 算出来还是写成 x + 1，不用再写一遍等号
+      return ok(cardItem(r), fmtV(r) === eqn ? `${eqn}：得到新卡 ${fmtV(r)}` : `${eqn} = ${fmtV(r)}`);
     }
     case '空|card': {
       const r = bindRight(b, Rt.v);
@@ -270,7 +302,7 @@ function withBin(L, M, Rt) {
       if (isEmpty(D) && !isEmpty(L.v) && !isEmpty(Rt.v)) {
         return fail(D.err ?? `${lab(L)} 和 ${lab(Rt)} 里的卡两两做 ${b.sym} 都算不出结果。`);
       }
-      return deckResult(D, [L, M, Rt], `从 ${lab(L)} 和 ${lab(Rt)} 里各取一张做 ${b.sym}，收集所有结果`, name);
+      return deckResult(D, [L, M, Rt], `从 ${lab(L)} 和 ${lab(Rt)} 里各取一张做「${b.name}」（${b.sym}），收集所有结果`, name);
     }
     case '空|空':
       return fail(`「${b.name}」需要输入：两边都放单卡，算出一张新单卡；只放一边，得到一元算子。`);
@@ -281,7 +313,7 @@ function withBin(L, M, Rt) {
   return fail(`「${b.name}」两边要放单卡或卡组。想改造算子本身，请用紫色的构造算子。`);
 }
 
-function withUn(L, M, Rt) {
+function withUn(L, M, Rt, verb = '经') {
   const f = M.v;
   const ins = [L, Rt].filter(Boolean);
   if (ins.length === 0) return fail(`一元算子 ${fmtU(f)} 需要一个输入：在左边或右边放一张单卡或一个卡组。`);
@@ -291,14 +323,15 @@ function withUn(L, M, Rt) {
     const y = applyU(f, X.v);
     if (!isV(y)) {
       if (y === OVER || (y && y.err)) return fail(errText(y));
-      return fail(`把 x = ${fmtV(X.v)} 代入 ${fmtU(f)} 算不出结果（没有定义，或者不是有理数）。`);
+      const why = isR(X.v) ? '（没有定义，或者不是有理数）' : '（这个算子对这种卡没有定义）';
+      return fail(`把 x = ${fmtV(X.v)} 代入 ${fmtU(f)} 算不出结果${why}。`);
     }
     return ok(cardItem(y), `把 x = ${fmtV(X.v)} 代入 ${fmtU(f)}，得到 ${fmtV(y)}`);
   }
   if (X.kind === 'deck') {
     const D = imageDeck(X.v, f, `{ ${fmtU(f)} | x ∈ ${lab(X)} }`);
     if (isEmpty(D) && !isEmpty(X.v)) return fail(D.err ?? `${lab(X)} 里没有一张卡能做 ${fmtU(f)}。`);
-    return deckResult(D, [L, M, Rt], `${lab(X)} 里的每张卡都做 ${fmtU(f)}`, `${lab(X)} 经 ${fmtU(f)}`);
+    return deckResult(D, [L, M, Rt], `${lab(X)} 里的每张卡都做 ${fmtU(f)}`, `${lab(X)} ${verb} ${fmtU(f)}`);
   }
   return fail('一元算子的输入要是单卡或卡组。想改造算子，请用紫色的构造算子，比如「复合」「逆」。');
 }
@@ -306,7 +339,7 @@ function withUn(L, M, Rt) {
 const EXTEND = {
   add: { to: 'mul', text: '反复做加法就是乘法：3 × 4 = 4 + 4 + 4' },
   mul: { to: 'pow', text: '反复做乘法就是乘方：2⁴ = 2 × 2 × 2 × 2' },
-  sub: { to: 'mod', text: '反复减去同一个数，直到减不动为止，剩下的就是余数：17 mod 5 = 2' },
+  sub: { to: 'mod', text: '反复减去（负数就反复加上）同一个数，直到落在 0 到它减 1 之间，剩下的就是余数：17 mod 5 = 2，−17 mod 5 = 3' },
 };
 const INVERSE = {
   add: { to: 'sub', text: '加法倒过来做就是减法：a + b = c，那么 c − b = a' },
@@ -345,12 +378,8 @@ function withMeta(L, M, Rt) {
       if (!p) return fail('「封闭」的用法：一边放单卡或卡组作为起点，另一边放二元算子作为组合方式。');
       const [X, b] = p;
       const D = closureDeck(asDeck(X), b.v, `⟨${label(X)} | ${b.v.sym}⟩`);
-      return deckResult(
-        D,
-        [L, M, Rt],
-        `从 ${lab(X)} 出发，用 ${b.v.sym} 反复组合，直到得不到新卡`,
-        `${lab(X)} 在 ${b.v.sym} 下封闭`,
-      );
+      const how = D.truncated ? '反复组合（更大的结果超出了能显示的范围，没有算进来）' : '反复组合，直到得不到新卡';
+      return deckResult(D, [L, M, Rt], `从 ${lab(X)} 出发，用 ${b.v.sym} ${how}`, `${lab(X)} 在 ${b.v.sym} 下封闭`);
     }
     case 'inverse': {
       const one = single(L, Rt);
