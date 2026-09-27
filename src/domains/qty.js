@@ -297,6 +297,8 @@ registerType({
   key: keyQty,
   parseKey: parseQtyKey,
   fmt: fmtQty,
+  // 长度和面积都是量，但不是同一种东西：在长度里做 × 跑到面积去，算"换了类型"，不算这个世界的缺口
+  family: v => `qty:${dimKey(v.dim)}`,
   size: sizeQty,
   cmp: cmpQty,
   window: WINDOW_Q,

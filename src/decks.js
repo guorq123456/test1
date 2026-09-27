@@ -28,6 +28,7 @@ import {
   baseType,
   MSG_OVER,
   classify,
+  probesFor,
 } from './values.js';
 import { applyU, preU, invertU, isQStructural } from './unary.js';
 
@@ -549,14 +550,20 @@ export function isBlank(D) {
   return sampleOf(D).length === 0;
 }
 
-// 把结果限制在底板世界里：{ got: D ∩ W, outside: D ∖ W }；没有底板就原样返回
+// 把结果限制在底板世界里：{ got: D ∩ W, outside: D ∖ W }；没有底板就原样返回。
+// 视野里的样本可能碰巧全在 W 里（向量的视野只有整数和一半），所以再用探针查一遍有没有跑出去的。
 export function restrictToWorld(D, W, name) {
   if (!W) return { got: D, outside: null };
-  const got = interDeck(D, W, name);
+  const got = interDeck(D, W, `${name} ∩ ${W.name}`);
   got.truncated = D.truncated;
   got.lost = D.lost;
   const outside = diffDeck(D, W, `${name} ∖ ${W.name}`);
-  return { got, outside: isBlank(outside) ? null : outside };
+  const extra = D.list ? [] : probesFor(D.type).filter(x => outside.has(x) === true);
+  if (extra.length) {
+    const base = outside.sample;
+    outside.sample = () => uniqV([...base(), ...extra]);
+  }
+  return { got, outside: isBlank(outside) && !extra.length ? null : outside };
 }
 
 // 一批走不通的输入做成"卡在哪里"的卡组
@@ -606,12 +613,20 @@ function collectFails() {
     bad[k].l.set(vkey(x), x);
     bad[k].r.set(vkey(y), y);
   };
+  // 记在"惹事"的那一边：如果一边的所有样本都出过错、另一边只有一部分，那一部分才是原因
+  // （ℤ₁₂ˣ ÷ ℤ₁₂：每个被除数都遇到过不可逆的除数，问题在除数那边的非单位）
+  const full = (m, D) => {
+    const s = sampleOf(D);
+    return s.length > 0 && s.every(x => m.has(vkey(x)));
+  };
   const holesOf = (A, B) => {
     const holes = [];
     for (const k of ['undefined', 'unrepresentable']) {
       const { l, r } = bad[k];
       if (!l.size) continue;
-      const side = r.size <= l.size ? 'r' : 'l';
+      const fl = full(l, A);
+      const fr = full(r, B);
+      const side = fl && !fr ? 'r' : fr && !fl ? 'l' : r.size <= l.size ? 'r' : 'l';
       const vals = [...(side === 'r' ? r : l).values()];
       holes.push({ kind: k, where: whereDeck(vals, side === 'r' ? B : A), side });
     }
@@ -627,6 +642,18 @@ export function pairwisePartition(A, b, B, name, W = null) {
   const holes = holesOf(A, B);
   const { got, outside } = restrictToWorld(got0, W, name);
   if (outside) holes.push({ kind: 'outside', where: outside });
+  // 因为太大没收进来的结果，如果明显不在底板里，也是跑出去了（力 × 力 在 力 里）
+  if (W && got0.lost?.length) {
+    const esc = got0.lost.filter(z => W.has(z) === false);
+    if (esc.length) {
+      const keep = got0.lost.filter(z => W.has(z) !== false);
+      got.lost = keep.length ? keep : undefined;
+      if (!keep.length) got0.dropped = false;
+      const prev = holes.find(h => h.kind === 'outside');
+      if (prev) prev.where = unionDeck(prev.where, whereDeck(esc, got0), prev.where.name);
+      else holes.push({ kind: 'outside', where: whereDeck(esc, got0) });
+    }
+  }
   got.err = got0.err;
   got.dropped = got0.dropped;
   return { got, holes };
@@ -652,21 +679,24 @@ export function orbitPartition(c, f, name, W = null) {
 
 // ───────────────────────── 反推与封闭性 ─────────────────────────
 
-// 原像落在哪个类型里：在各类型的视野里试 f，结果落进 T 最多的那个类型（相同时优先 T 的类型）
+// 原像落在哪些类型里：在各类型的视野里试 f，结果落进 T 的类型都算（求导反推 ℤ：数和多项式都有）
 function domainTypeOf(f, T) {
   const hint = T.type;
   const hits = t => windowFor(t).slice(0, 80).filter(x => T.has(applyU(f, x)) === true).length;
+  const types = [];
   let best = hint;
   let bestN = hits(hint);
+  if (bestN > 0) types.push(hint);
   for (const t of TYPES.keys()) {
     if (t === baseType(hint)) continue;
     const n = hits(t);
+    if (n > 0) types.push(t);
     if (n > bestN) {
       best = t;
       bestN = n;
     }
   }
-  return { type: best, any: bestN > 0 };
+  return { type: best, types, any: bestN > 0 };
 }
 
 // 反推：{ x | f(x) ∈ T }
@@ -685,8 +715,10 @@ export function preimageDeck(f, T, name) {
     }
     if (!pred) return finiteDeck(xs, name);
   }
-  const { type, any } = domainTypeOf(f, T);
+  const { type, types, any } = domainTypeOf(f, T);
   if (!any && T.list) return finiteDeck([], name);
+  // 原像跨了几种类型时（数和多项式），它不等于任何单一类型的图鉴卡组
+  const mixed = types.length > 1;
   const D = mkDeck(
     'preimage',
     x => {
@@ -694,15 +726,52 @@ export function preimageDeck(f, T, name) {
       if (y === OVER) return null; // 太大算不出，不知道
       return isV(y) ? T.has(y) : false;
     },
-    { name, type, approx: T.approx, sample: () => windowFor(type).filter(x => D.has(x) === true) },
+    {
+      name,
+      type: mixed ? 'set' : type,
+      mixed,
+      approx: T.approx,
+      sample: () => (mixed ? types : [type]).flatMap(t => windowFor(t)).filter(x => D.has(x) === true),
+    },
   );
   return D;
 }
 
-// 法在卡组 K 上封不封闭：law = { t: 'un', f } 或 { t: 'bin', b }
-// 返回 { escaped: 跑出 K 的结果, unrep: 有写不出来的结果 }
-export function lawClosedOn(K, law, limit = 40) {
-  const s = sampleOf(K).slice(0, limit);
+// 封闭检查用的样本：并集这类由几个来源拼起来的卡组，每个来源都要看到，
+// 有限的来源全部放进去（ℤ ∪ {1/2} 里的 1/2 不能因为排在后面就漏掉）
+function closureSample(K, limit) {
+  const must = new Map();
+  const streams = [];
+  const walk = (D, depth) => {
+    if (depth < 4 && Array.isArray(D.src)) {
+      for (const S of D.src) walk(S, depth + 1);
+      return;
+    }
+    const s = sampleOf(D);
+    if (D.list || D.elems) {
+      for (const x of s) if (must.size < 64) must.set(vkey(x), x);
+    } else {
+      streams.push(s);
+    }
+  };
+  walk(K, 0);
+  if (!streams.length && !must.size) streams.push(sampleOf(K));
+  // 各来源交错取样，再在整段里均匀取，避免只看开头
+  const merged = [];
+  const maxLen = Math.max(0, ...streams.map(s => s.length));
+  for (let i = 0; i < maxLen; i++) for (const s of streams) if (i < s.length) merged.push(s[i]);
+  const pick = (arr, n) => (arr.length <= n ? arr : Array.from({ length: n }, (_, i) => arr[Math.floor((i * arr.length) / n)]));
+  const rest = uniqV([...pick(merged, limit), ...must.values()]).filter(x => K.has(x) === true);
+  return { must: [...must.values()].filter(x => K.has(x) === true), all: rest };
+}
+
+// 法在卡组 K 上封不封闭：law = { t: 'un', f } | { t: 'bin', b } | { t: 'meta' } | { t: 'pre' }
+// 返回 { escaped: 跑出 K 的结果, unrep: 有写不出来的结果 }。
+// 并、交、反推没有"再算一次"的封闭条件，只要装得下就算封闭。extra 是额外必查的值（比如缺口里的）。
+export function lawClosedOn(K, law, limit = 40, extra = []) {
+  if (law.t !== 'un' && law.t !== 'bin') return { escaped: [], unrep: false };
+  const { must, all } = closureSample(K, limit);
+  const s = uniqV([...extra.filter(x => K.has(x) === true), ...all]);
   const escaped = new Map();
   let unrep = false;
   const cap = K.approx ? sizeCapFor(K.type) : Infinity;
@@ -714,7 +783,15 @@ export function lawClosedOn(K, law, limit = 40) {
   if (law.t === 'un') for (const x of s) check(applyU(law.f, x));
   else {
     const s2 = s.slice(0, 24);
+    const focus = uniqV([...must, ...extra]).slice(0, 24);
     for (const x of s2) for (const y of s2) check(binV(law.b.id, x, y));
+    // 有限来源和缺口里的值，要和整段样本正反各配一次
+    for (const x of focus) {
+      for (const y of s2) {
+        check(binV(law.b.id, x, y));
+        check(binV(law.b.id, y, x));
+      }
+    }
   }
   return { escaped: [...escaped.values()], unrep };
 }

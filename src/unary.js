@@ -358,7 +358,7 @@ function fmtExp(c, s) {
 
 function fmtLog(c, s) {
   const base = c.d === 1 ? `log${subscript(c.n)}` : `log_(${fmtR(c)})`;
-  return isAtom(s) ? `${base}x` : `${base}(${s})`;
+  return isAtom(s) ? `${base}${s}` : `${base}(${s})`;
 }
 
 function fmtBind(f, s) {
@@ -509,7 +509,8 @@ export function bindLeft(c, b) {
     case 'mul':
       return { f: aff(c, ZERO) };
     case 'div':
-      return { f: c.n === 0 ? aff(ZERO, ZERO) : compose(powU(NEG1), aff(c, ZERO)) };
+      // 0 ÷ x 不是常数 0：x = 0 时没有定义，所以走逐值计算的通用绑定
+      return { f: c.n === 0 ? bindU('div', 'l', c) : compose(powU(NEG1), aff(c, ZERO)) };
     case 'pow':
       return c.n === 0 ? { err: '0ˣ 在初等篇里先不讨论，换一个底数吧。' } : { f: expU(c) };
   }

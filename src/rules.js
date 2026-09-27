@@ -12,13 +12,14 @@ import {
   defOf,
   subtypeOf,
   typeLabel,
+  familyOf,
   probesFor,
   smallProbesFor,
   sizeV,
   sizeCapFor,
   classify,
 } from './values.js';
-import { applyU, bindLeft, bindRight, compose, fmtU, fnU, invertU, parseU, serU, ukey } from './unary.js';
+import { applyU, bindLeft, bindRight, bindU, compose, fmtU, fnU, invertU, parseU, serU, ukey } from './unary.js';
 import {
   closurePartition,
   finiteDeck,
@@ -217,18 +218,32 @@ function errText(r) {
 }
 
 const fpDeck = D => (D.catId ? `cat:${D.catId}` : fingerprint(D));
-const lawKeyOf = law => (law.t === 'un' ? ukey(law.f) : law.t === 'bin' ? `bin:${law.b.id}` : `meta:${law.id}`);
+// 法：{ t:'un', f } 一元 | { t:'bin', b } 二元 | { t:'meta', id } 并/交 | { t:'pre', f, target } 反推
+const lawKeyOf = law =>
+  law.t === 'un' ? ukey(law.f) : law.t === 'bin' ? `bin:${law.b.id}` : law.t === 'pre' ? `pre:${ukey(law.f)}:${fpDeck(law.target)}` : `meta:${law.id}`;
 const catTitle = c => (c.short === c.name || /[一-鿿]/.test(c.short) ? `「${c.name}」` : `「${c.name} ${c.short}」`);
 
 // ───────────────────────── 缺口卡 ─────────────────────────
 
-// 这个缺口能填成图鉴里的哪个世界：{ status: 'fillable' | 'frontier' | 'unfillable', id }
+// 跑出去的部分是不是"另一种东西"：类型不同（数 → 余数），或者族全都不同（长度 → 面积）
+function retyped(base, where) {
+  if (where.type !== base.type) return true;
+  const fam = D => new Set(sampleOf(D).slice(0, 12).map(familyOf));
+  const a = fam(base);
+  const b = fam(where);
+  return b.size > 0 && [...b].every(f => !a.has(f));
+}
+
+// 这个缺口能填成图鉴里的哪个世界：{ status: 'fillable' | 'frontier' | 'unfillable' | 'retyped', id }
 function findTarget(spec) {
   if (spec.kind === 'undefined' || spec.tooLarge) return { status: 'unfillable', id: null };
   const base = spec.world ?? spec.source;
   const type = base.type;
+  // 结果换了一种东西：这不是这个世界的缺口，拿掉底板就能直接得到它
+  if (spec.kind === 'outside' && retyped(base, spec.where)) return { status: 'retyped', id: spec.where.catId ?? null };
   if (type === 'set') return { status: 'frontier', id: null };
-  const need = [...sampleOf(base).slice(0, 40), ...(spec.kind === 'outside' ? sampleOf(spec.where).slice(0, 40) : [])];
+  const escaped = spec.kind === 'outside' ? sampleOf(spec.where).slice(0, 40) : [];
+  const need = [...sampleOf(base).slice(0, 40), ...escaped];
   const probes = probesFor(type);
   const cands = [];
   for (const c of CATALOG_ALL) {
@@ -236,8 +251,9 @@ function findTarget(spec) {
     if (base.catId === c.id) continue;
     const C = catItem(c.id).v;
     if (!need.every(x => C.has(x) === true)) continue;
-    const r = lawClosedOn(C, spec.law);
-    if (r.escaped.length || (spec.kind === 'unrepresentable' && r.unrep)) continue;
+    // 封闭：结果都在候选里或者没有定义；写不出来的结果也算没关住（缺口里的值必查）
+    const r = lawClosedOn(C, spec.law, 40, escaped);
+    if (r.escaped.length || r.unrep) continue;
     cands.push(c);
   }
   if (!cands.length) return { status: 'frontier', id: null };
@@ -249,10 +265,10 @@ function findTarget(spec) {
   return { status: 'fillable', id: minimal[0].id };
 }
 
-// spec: { kind, law, lawText, source, sourceName, where, world, tooLarge? }
+// spec: { kind, law, lawText, source, sourceName, where, world, tooLarge?, name?, expr? }
 function holeItem(spec, from, W, idx) {
-  // 越出世界的缺口，出发世界就是底板上的那个世界
-  if (spec.kind === 'outside' && spec.world) spec = { ...spec, source: spec.world, sourceName: spec.world.name };
+  // 越出世界的缺口，出发世界就是底板上的那个世界；真正的输入另记在 inputName 里
+  if (spec.kind === 'outside' && spec.world) spec = { ...spec, inputName: spec.sourceName, source: spec.world, sourceName: spec.world.name };
   const c = spec.where.catId ? CAT_BY_ID[spec.where.catId] : matchCatalog(spec.where);
   const where = c ? catItem(c.id).v : spec.where;
   const target = findTarget({ ...spec, where });
@@ -314,7 +330,9 @@ function deckResult(D, from, text, recipe, opts = {}) {
     return ok(null, `${text}。成立的部分一张都没有。${tail}`, { holes, recipe: rec });
   }
   const c = matchCatalog(D);
-  if (c) return ok(catItem(c.id), `${text}。这就是${catTitle(c)}！${tail}`, { recipe: rec, catId: c.id, holes });
+  // 有缺口时，认出来的只是成立的那部分，别说成"全部结果就是"
+  const lead = holes.length ? (W ? `留在 ${W.v.name} 里的结果就是` : '算得出来的结果就是') : '这就是';
+  if (c) return ok(catItem(c.id), `${text}。${lead}${catTitle(c)}！${tail}`, { recipe: rec, catId: c.id, holes });
   const item = selfItem(D, from, W);
   const note = D.dropped
     ? '（结果都超出了视野的大小，这个卡组暂时看不到具体内容。）'
@@ -327,8 +345,10 @@ function deckResult(D, from, text, recipe, opts = {}) {
 // 值结果：可能没有定义、表示不了，或者不在底板世界里
 function cardResult(r, from, W, law, lawText, input, text, src = {}) {
   const inputs = src.inputs ?? [input];
-  const sourceName = src.name ?? fmtV(input);
-  const source = finiteDeck(inputs, sourceName);
+  // 出发世界写成只含这几张卡的卡组（{1, 0}），算式（1 ÷ 0）另记在 expr 里
+  const source = finiteDeck(inputs, '');
+  const sourceName = previewDeck(source);
+  source.name = sourceName;
   const k = classify(r);
   if (k === 'ok') {
     if (W && W.v.has(r) === false) {
@@ -340,7 +360,7 @@ function cardResult(r, from, W, law, lawText, input, text, src = {}) {
   }
   if (k === 'type') return fail(errText(r));
   // 值级的缺口用"写不出来的那个式子"当名字：√2、1/0、2^(1/2)
-  const exprName = law.t === 'un' ? fmtU(law.f, fmtV(input)) : `${sourceName}`;
+  const expr = law.t === 'un' ? fmtU(law.f, fmtV(input)) : (src.name ?? sourceName);
   const spec = {
     kind: k,
     law,
@@ -350,7 +370,8 @@ function cardResult(r, from, W, law, lawText, input, text, src = {}) {
     where: finiteDeck([input], fmtV(input)),
     world: null,
     tooLarge: r === OVER,
-    name: exprName,
+    name: expr,
+    expr,
   };
   const holes = holesFrom([spec], from, W);
   return ok(null, `${errText(r)}${holeSummary(holes)}。`, { holes });
@@ -419,7 +440,9 @@ function withBin(L, M, Rt, W) {
       return ok(unItem(r.f), `右边空着，就是变量${varName(r.f)}。得到一元算子 ${fmtU(r.f)}`);
     }
     case 'deck|card': {
-      const r = bindRight(b, Rt.v);
+      let r = bindRight(b, Rt.v);
+      // x ÷ 0、x ^ (1/13) 这种绑不成简式的，逐值算：结果分成得到和缺口，不当用法错误
+      if (r.err && isR(Rt.v) && (b.id === 'div' || b.id === 'pow')) r = { f: bindU(b.id, 'r', Rt.v) };
       if (r.err) return fail(r.err);
       return imageResult(L, r.f, from, W, `${lab(L)} ${b.sym} ${fmtV(Rt.v)}`);
     }
@@ -444,7 +467,7 @@ function withBin(L, M, Rt, W) {
         sourceName: h.side === 'l' ? lab(L) : h.side === 'r' ? lab(Rt) : name,
         world: W?.v ?? null,
       }));
-      return deckResult(got, from, `从 ${lab(L)} 和 ${lab(Rt)} 里各取一张做「${b.name}」（${b.sym}），收集所有结果`, name, {
+      return deckResult(got, from, `从 ${lab(L)} 和 ${lab(Rt)} 里各取一张做「${b.name}」（${b.sym}），收集结果`, name, {
         W,
         holes: specs,
       });
@@ -599,10 +622,16 @@ function withMeta(L, M, Rt, W) {
       if (!p) return fail('「反推」的用法：一边放一元算子，另一边放一张单卡或卡组，得到所有能算到它的输入。');
       const [X, u] = p;
       const T = asDeck(X);
-      const D = preimageDeck(u.v, T, `${fmtU(u.v)} ← ${lab(X)}`);
+      const isCard = X.kind === 'card';
+      // 和像的写法 { f(x) | x ∈ X } 对称：{ x | f(x) ∈ X }
+      const D = preimageDeck(u.v, T, isCard ? `{ x | ${fmtU(u.v)} = ${lab(X)} }` : `{ x | ${fmtU(u.v)} ∈ ${lab(X)} }`);
       const { got, outside } = restrictToWorld(D, Wd, D.name);
-      const specs = outside ? [{ kind: 'outside', where: outside, law: { t: 'un', f: u.v }, lawText: fmtU(u.v), source: T, sourceName: lab(X), world: Wd }] : [];
-      return deckResult(got, from, `所有代入 ${fmtU(u.v)} 会得到 ${lab(X)} 的输入`, `${lab(X)} 反推 ${fmtU(u.v)}`, { W, holes: specs, keepEmpty: true });
+      // 反推的缺口是"解跑出了底板"，不是底板做不了 f：法记成 pre，填的时候只要装得下
+      const specs = outside
+        ? [{ kind: 'outside', where: outside, law: { t: 'pre', f: u.v, target: T }, lawText: `反推 ${fmtU(u.v)}`, source: T, sourceName: lab(X), world: Wd }]
+        : [];
+      const text = isCard ? `所有代入 ${fmtU(u.v)} 会得到 ${lab(X)} 的输入` : `代入 ${fmtU(u.v)} 以后落进 ${lab(X)} 的所有输入`;
+      return deckResult(got, from, text, `${lab(X)} 反推 ${fmtU(u.v)}`, { W, holes: specs, keepEmpty: true });
     }
     case 'fill':
       return withFill(L, M, Rt, W);
@@ -612,52 +641,84 @@ function withMeta(L, M, Rt, W) {
 
 // ───────────────────────── 填与手填 ─────────────────────────
 
+// 补不上的缺口：自动填和手填共用同一句解释
+function unfillableMsg(h) {
+  if (h.tooLarge) return `这个缺口是游戏的边界：${h.name ?? previewDeck(h.where)} 太大，现在的数写不下。`;
+  if (h.expr) return `这个缺口补不上：${h.expr} 没有定义，换到任何世界都一样。`;
+  return `这个缺口补不上：${h.lawText} 在 ${previewDeck(h.where)} 上没有定义，换到任何世界都一样。`;
+}
+
+// 填的目标要满足的条件，写成人话："包含 ℕ 和 负整数、又能做 − 的最小世界"
+function fillCond(h) {
+  const need = h.kind === 'outside' ? `${h.sourceName} 和 ${h.name ?? previewDeck(h.where, 3)}` : h.sourceName;
+  if (h.law.t === 'pre') return `包含 ${need}、又装得下 ${h.lawText} 的全部解的最小世界`;
+  if (h.law.t === 'meta') return `包含 ${need} 的最小世界`;
+  return `包含 ${need}、又能做 ${h.lawText} 的最小世界`;
+}
+
 function withFill(L, M, Rt, W) {
   const H = [L, Rt].find(x => x?.kind === 'hole');
-  const other = [L, Rt].find(x => x && x.kind !== 'hole');
+  // 两边都是缺口时，左边那张被填，右边那张当候选（等于它缺的那部分）
+  const other = [L, Rt].find(x => x && x !== H);
   if (!H) return fail('「填」的用法：一边放一张缺口卡。另一边空着就自动填；放一个卡组，就用它来填（手填）。');
   const h = H.v;
   const from = [L, M, Rt];
   const whereText = h.name ?? previewDeck(h.where);
+  if (h.status === 'retyped') {
+    return fail(`这不是这个世界的缺口：${h.lawText} 把 ${h.sourceName} 变成了别的东西${h.name ? `（${h.name}）` : ''}。拿掉底板再做一次，就能直接得到它。`);
+  }
+  if (h.status === 'unfillable') return fail(unfillableMsg(h));
   if (!other) {
     if (h.status === 'fillable') {
       const c = CAT_BY_ID[h.targetId];
-      return ok(catItem(c.id), `你发明了${catTitle(c)}：包含 ${h.sourceName}、又能做 ${h.lawText} 的最小世界`, { grade: 'auto', filled: H.id, catId: c.id });
+      return ok(catItem(c.id), `这个缺口填成了${catTitle(c)}：图鉴里${fillCond(h)}`, { grade: 'auto', filled: H.id, catId: c.id });
     }
-    if (h.status === 'frontier') {
-      return fail(`这个缺口还没有人填过：${h.lawText} 在 ${h.sourceName} 上卡在 ${whereText}。可以用现有的卡凑一个世界，放在另一边来填。`);
-    }
-    if (h.tooLarge) return fail(`这个缺口是游戏的边界：${whereText} 太大，现在的数写不下。`);
-    return fail(`这个缺口补不上：${h.lawText} 在 ${whereText} 上没有定义，换到任何世界都一样。`);
+    if (h.expr) return fail(`这个缺口还没有人填过：${h.expr} 现在还写不出来。可以用现有的卡凑一个世界，放在另一边来填。`);
+    return fail(`这个缺口还没有人填过：${h.lawText} 在 ${h.sourceName} 上卡在 ${whereText}。可以用现有的卡凑一个世界，放在另一边来填。`);
   }
   if (!isDeckLike(other)) return fail('用来填的要是一个卡组（或另一张缺口）。');
   const K = asDeck(other);
   // (a) 包含出发世界（和越出的部分）
   const base = h.world ?? h.source;
-  const need = [...sampleOf(base).slice(0, 40), ...(h.kind === 'outside' ? sampleOf(h.where).slice(0, 40) : [])];
+  const escaped = h.kind === 'outside' ? sampleOf(h.where).slice(0, 40) : [];
+  const need = [...sampleOf(base).slice(0, 40), ...escaped];
   const missing = need.filter(x => K.has(x) !== true);
   if (missing.length) {
     return fail(`${lab(other)} 没有包住 ${h.sourceName}${h.kind === 'outside' ? ' 和缺的那部分' : ''}：比如 ${missing.slice(0, 3).map(fmtV).join('、')} 不在里面。`);
   }
-  // (b) 这条法在候选上封闭
-  const r = lawClosedOn(K, h.law);
+  // (b) 这条法在候选上封闭：缺口里的值必查，写不出来的结果也算没关住
+  const r = lawClosedOn(K, h.law, 40, escaped);
   if (r.escaped.length) {
     const spec = { kind: 'outside', law: h.law, lawText: h.lawText, source: base, sourceName: h.sourceName, where: finiteDeck(r.escaped, ''), world: K };
     const holes = holesFrom([spec], from, W);
     return ok(null, `${lab(other)} 还是关不住 ${h.lawText}：${holeSummary(holes)}。`, { holes });
   }
-  if (h.kind === 'unrepresentable' && r.unrep) return fail(`${lab(other)} 里做 ${h.lawText} 还是有写不出来的结果。`);
+  if (r.unrep) return fail(`${lab(other)} 里做 ${h.lawText} 还是有写不出来的结果。`);
   // 分档
   const c = matchCatalog(K);
   const item = c ? catItem(c.id) : selfItem(K, from, W);
   if (h.status === 'fillable') {
     const t = CAT_BY_ID[h.targetId];
     if (c && c.id === t.id) {
-      return ok(item, `恰到好处：${lab(other)} 正好是包含 ${h.sourceName}、又能做 ${h.lawText} 的最小世界，${catTitle(t)}`, { grade: 'exact', filled: H.id, catId: c.id });
+      return ok(item, `恰到好处：${lab(other)} 正好是图鉴里${fillCond(h)}，${catTitle(t)}`, { grade: 'exact', filled: H.id, catId: c.id });
     }
-    return ok(item, `填上了，但多了一块：${lab(other)} 关住了 ${h.lawText}，不过最小的世界其实是${catTitle(t)}`, { grade: 'over', filled: H.id, catId: c?.id });
+    // 包住了图鉴目标才叫"多了一块"；更小或者不可比的候选，是比图鉴更紧的答案
+    const T = catItem(t.id).v;
+    const covers = probesFor(T.type ?? 'q').every(x => T.has(x) !== true || K.has(x) === true);
+    if (covers) {
+      return ok(item, `填上了，但多了一块：${lab(other)} 关住了 ${h.lawText}，不过图鉴里最小的世界是${catTitle(t)}`, { grade: 'over', filled: H.id, catId: c?.id });
+    }
+    return ok(item, `比图鉴更紧：${lab(other)} 关住了 ${h.lawText}，而且比图鉴里的${catTitle(t)}还小（或者和它不一样）`, {
+      grade: 'tighter',
+      filled: H.id,
+      catId: c?.id,
+      firstFill: true,
+    });
   }
-  return ok(item, `首次发现：${lab(other)} 关住了 ${h.lawText}，这个缺口以前没有人填过`, { grade: 'frontier', filled: H.id, catId: c?.id, firstFill: true });
+  if (h.status === 'frontier') {
+    return ok(item, `首次发现：${lab(other)} 关住了 ${h.lawText}，这个缺口以前没有人填过`, { grade: 'frontier', filled: H.id, catId: c?.id, firstFill: true });
+  }
+  return fail('这个缺口现在不能手填。');
 }
 
 // ───────────────────────── 存档 ─────────────────────────

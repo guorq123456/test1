@@ -57,6 +57,12 @@ export function subtypeOf(v) {
   return d.sub ? d.sub(v) : d.t;
 }
 
+// 值属于哪一"族"世界：默认就是子类型；量按量纲分（长度和面积都是量，却是两种东西）
+export function familyOf(v) {
+  const d = defOf(v);
+  return d.family ? d.family(v) : subtypeOf(v);
+}
+
 export function typeLabel(v) {
   const d = defOf(v);
   return d.label ? d.label(v) : d.name;

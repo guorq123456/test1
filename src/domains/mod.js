@@ -60,12 +60,14 @@ function modPow(a, k, n) {
 const fmtMod = v => `[${v.r}]${subscript(v.n)}`;
 
 // 把一个操作数（余数或有理数，modBin 已经排除了别的类型）化成模 n 的余数；化不了就返回 {err}。
-// 分数化不成余数算"表示不了"：余数和整数之间有这条法，只是分数走不通；更大的世界
-// （比如有理数的钟面 ℚ/nℤ）里 [3]₁₂ + 1/2 是有结果的
+// 分数 p/q 就是 p 乘 q 的逆元：[1]₇ ÷ 2 = [4]₇，所以 1/2 在模 7 下就是 [4]₇；
+// q 没有逆元（比如模 12 下的 1/2）时和"除不动"一样，没有定义
 function toMod(v, n) {
   if (isMod(v)) return v;
-  if (!isInt(v)) return { err: `${fmtR(v)} 不是整数，没法化成模 ${n} 的余数。`, reason: 'unrepresentable' };
-  return M(n, v.n);
+  if (isInt(v)) return M(n, v.n);
+  const inv = modInv(v.d, n);
+  if (inv === null) return { err: `${fmtR(v)} 在模 ${n} 下不存在：${v.d} 没有逆元。`, reason: 'undefined' };
+  return M(n, ((v.n % n) + n) * inv);
 }
 
 // 模数不是不小于 2 的整数：对 0 取余和除以 0 一样没有定义；对 1、负数、分数取余数学上有结果
@@ -106,7 +108,10 @@ function modBin(op, x, y) {
         reason: 'type',
       };
     }
-    if (!isInt(y)) return { err: `余数的指数要是整数，${fmtR(y)} 不行。`, reason: 'unrepresentable' };
+    if (!isInt(y)) {
+      // 余数开方不是单值的（3² 和 4² 模 7 都是 2），这里没有这条法
+      return { err: `余数的指数要是整数，${fmtR(y)} 不行：余数开方不是单值的（比如 3² 和 4² 模 7 都是 2）。`, reason: 'type' };
+    }
     const k = y.n;
     if (k >= 0) return M(x.n, modPow(x.r, k, x.n));
     const inv = modInv(x.r, x.n);

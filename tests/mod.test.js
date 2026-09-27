@@ -82,6 +82,9 @@ test('整数 mod 整数 → 余数；模数、被除数不合法时有解释', (
   }
   assert.match(binV('mod', R(5), R(1)).err, /不小于 2/);
   assert.match(binV('mod', R(1, 2), R(5)).err, /不是整数/);
+  // 余数和分数一起算：分数 p/q 就是 p 乘 q 的逆元；q 没有逆元就没有定义
+  assert.equal(vkey(binV('add', k('[0]5'), R(1, 2))), '[3]5');
+  assert.equal(binV('add', k('[0]12'), R(1, 2)).reason, 'undefined');
 });
 
 test('同一个钟面上的加减乘', () => {
@@ -98,10 +101,12 @@ test('同一个钟面上的加减乘', () => {
   assert.equal(vkey(binV('mul', R(3), k('[5]12'))), '[3]12');
   assert.equal(vkey(binV('sub', R(0), k('[5]12'))), '[7]12');
   assert.equal(vkey(binV('mul', R(-1), k('[5]7'))), '[2]7');
-  // 分数不能化成余数
+  // 分数：分母有逆元就化成余数（[1]₇ + 1/2 = [1]₇ + [4]₇ = [5]₇），没有逆元就没有定义
   const r = binV('add', a, R(1, 2));
   assert.ok(isErr(r));
-  assert.match(r.err, /不是整数/);
+  assert.equal(r.reason, 'undefined');
+  assert.match(r.err, /没有逆元/);
+  assert.equal(vkey(binV('add', k('[1]7'), R(1, 2))), '[5]7');
 });
 
 test('不同模数不能相加', () => {
@@ -194,9 +199,9 @@ test('余数和别的类型（量、向量、矩阵、多项式）：交给别�
   assert.equal(vm.ok, false);
   assert.doesNotMatch(vm.msg, /NaN|undefined|不是整数/, vm.msg);
   assert.match(vm.msg, /向量/);
-  // 有理数照旧：整数化成余数，分数说"不是整数"
+  // 有理数照旧：整数化成余数，分母没有逆元的分数说"没有逆元"
   assert.equal(vkey(binV('add', k('[3]12'), R(10))), '[1]12');
-  assert.match(binV('mul', R(1, 2), k('[3]12')).err, /1\/2 不是整数/);
+  assert.match(binV('mul', R(1, 2), k('[3]12')).err, /1\/2 在模 12 下不存在/);
 });
 
 test('余数再取余：只有模数整除时才行', () => {
@@ -232,7 +237,7 @@ test('错误都带 reason：没有这条法是 type，没有定义是 undefined�
     ['mod', R(5), R(1)],
     ['mod', R(5), R(-3)],
     ['mod', R(5), R(1, 2)],
-    ['mod', R(1, 2), R(5)], // 分数取余
+    ['mod', R(1, 2), R(12)], // 分数取余：2 在模 12 下没有逆元
   ];
   for (const [op, x, y] of cases) {
     const r = binV(op, x, y);
@@ -245,7 +250,7 @@ test('错误都带 reason：没有这条法是 type，没有定义是 undefined�
   // 具体的类别
   assert.equal(binV('div', k('[1]12'), k('[4]12')).reason, 'undefined', '[4]₁₂ 没有逆元');
   assert.equal(binV('add', k('[1]12'), k('[1]7')).reason, 'type', '不同模数');
-  assert.equal(binV('pow', k('[2]12'), R(1, 2)).reason, 'unrepresentable', '余数的分数次方');
+  assert.equal(binV('pow', k('[2]12'), R(1, 2)).reason, 'type', '余数开方不是单值的，没有这条法');
 });
 
 test('视野与探针：全部 n 个余数', () => {
