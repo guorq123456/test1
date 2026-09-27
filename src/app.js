@@ -255,7 +255,9 @@ function subText(it) {
 function cardHTML(it, { act = 'place', slot = '', still = false } = {}) {
   const main = mainText(it);
   const lines = main.split('\n');
-  const len = Math.max(...lines.map(l => [...l].length)) + (lines.length > 1 ? 3 : 0);
+  // 按视觉宽度选字号：一个汉字约等于两个数字的宽度
+  const width = l => [...l].reduce((n, ch) => n + (/[　-鿿＀-￯]/.test(ch) ? 2.2 : 1), 0);
+  const len = Math.max(...lines.map(width)) + (lines.length > 1 ? 3 : 0);
   const size = len <= 3 ? 'l' : len <= 6 ? 'm' : len <= 11 ? 's' : 'xs';
   const inner = `
     <span class="card-type">${KIND[it.kind]}</span>
