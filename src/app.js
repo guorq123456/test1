@@ -1,8 +1,11 @@
 // 游戏界面：合成台、手牌、图鉴。所有规则都在 rules.js 里，这里只负责显示和点击。
 
-import { CATALOG, CHAPTERS, META, QUESTS, START } from './catalog.js';
+import { CATALOG_ALL as CATALOG, CHAPTERS_ALL as CHAPTERS, META, QUESTS_ALL as QUESTS, START } from './content.js';
 import { combine, itemFromDesc, recipeText, resolveRef } from './rules.js';
-import { BIN, fmtR, fmtU, previewDeck, toNum } from './math.js';
+import { toNum, isR } from './math.js';
+import { BIN, fmtV as fmtR } from './values.js';
+import { fmtU } from './unary.js';
+import { previewDeck } from './decks.js';
 
 const SAVE_KEY = 'suanzi-gongfang/v1';
 const KIND = { card: '单卡', bin: '二元算子', un: '一元算子', meta: '构造算子', deck: '卡组' };
@@ -210,7 +213,7 @@ function mainText(it) {
 function subText(it) {
   switch (it.kind) {
     case 'card':
-      return it.v.d === 1 ? '' : `≈ ${decimal(it.v)}`;
+      return !isR(it.v) || it.v.d === 1 ? '' : `≈ ${decimal(it.v)}`;
     case 'bin':
     case 'meta':
       return it.v.name;
@@ -312,7 +315,7 @@ function resultHTML() {
 function handGroups() {
   const all = S.order.map(itemOf);
   return {
-    cards: all.filter(i => i.kind === 'card').sort((a, b) => toNum(a.v) - toNum(b.v)),
+    cards: all.filter(i => i.kind === 'card').sort((a, b) => (isR(a.v) && isR(b.v) ? toNum(a.v) - toNum(b.v) : 0)),
     bins: Object.keys(BIN).map(k => itemOf(`b:${k}`)).filter(Boolean),
     uns: all.filter(i => i.kind === 'un'),
     metas: META.map(m => itemOf(`m:${m.id}`)).filter(Boolean),
@@ -420,7 +423,7 @@ function itemSheetHTML(it, back) {
   let rows = '';
   switch (it.kind) {
     case 'card':
-      rows = `<p>${it.v.d === 1 ? '一个整数。' : `一个分数，约等于 ${decimal(it.v)}。`}</p>
+      rows = `<p>${!isR(it.v) ? '' : it.v.d === 1 ? '一个整数。' : `一个分数，约等于 ${decimal(it.v)}。`}</p>
         <p class="muted">单卡放在合成台左右两边，和中间的算子一起算出新卡。</p>`;
       break;
     case 'bin':

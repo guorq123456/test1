@@ -1,7 +1,9 @@
-// 游戏内容：开局手牌、构造算子、有名字的一元算子、入门卡组图鉴、新手任务。
+// 初等篇内容：开局手牌、构造算子、有名字的一元算子、入门卡组图鉴、新手任务。
 // 想加新卡组，就在 CATALOG 里加一项，并至少写两种做法（其中一种要用到别的卡组）。
+// 高等篇的内容在 src/domains/ 里，由 src/content.js 汇总。
 
-import { R, aff, powU, expU, logU, isInt, ONE, NEG1, ZERO, TWO } from './math.js';
+import { R, isInt, ONE, NEG1, ZERO, TWO } from './math.js';
+import { aff, powU, expU, logU } from './unary.js';
 
 const isPow2 = n => n >= 1 && (n & (n - 1)) === 0;
 const isSquare = n => n >= 0 && Number.isInteger(Math.sqrt(n));
@@ -61,6 +63,8 @@ export const BIN_INFO = {
   mul: { desc: '反复做加法：3 × 4 = 4 + 4 + 4。' },
   div: { desc: '乘法倒过来做：a × b = c，那么 c ÷ b = a。' },
   pow: { desc: '反复做乘法：2⁴ = 2 × 2 × 2 × 2。' },
+  mod: { desc: '反复减去同一个数，直到减不动为止，剩下的就是余数：17 mod 5 = 2。' },
+  cat: { desc: '把两个向量并排放在一起，拼成一个矩阵。' },
 };
 
 // 有名字的一元算子（其他一元算子直接用公式当名字）
@@ -89,7 +93,7 @@ export const CHAPTERS = [
 ];
 
 // 入门卡组。recipes 里每一项是 [左, 中, 右]：
-//   c:数字  b:二元算子  u:有名字的一元算子  m:构造算子  d:卡组
+//   c:值  b:二元算子  u:有名字的一元算子  m:构造算子  d:卡组
 export const CATALOG = [
   {
     id: 'N',

@@ -1,49 +1,45 @@
 // 合成规则：合成台上 [左] [算子] [右] 三个格子，放进去的东西决定会得到什么。
 
+import { OVER } from './math.js';
 import {
   BIN,
   MSG_OVER,
-  OVER,
-  PROBES,
-  PROBE_SMALL,
-  applyU,
-  binCard,
-  bindLeft,
-  bindRight,
+  binV,
+  isV,
+  vkey,
+  fmtV,
+  parseVKey,
+  defOf,
+  typeLabel,
+  probesFor,
+  smallProbesFor,
+} from './values.js';
+import { applyU, bindLeft, bindRight, compose, fmtU, fnU, invertU, parseU, serU, ukey } from './unary.js';
+import {
   closureDeck,
-  compose,
   finiteDeck,
-  fmtR,
-  fmtU,
   hash,
   imageDeck,
   interDeck,
-  invertU,
-  isR,
   mkDeck,
   orbitDeck,
   pairwiseDeck,
-  parseKey,
-  parseU,
   previewDeck,
-  rkey,
-  serU,
   sigOf,
-  ukey,
   unionDeck,
-} from './math.js';
-import { BIN_INFO, CATALOG, META, NAMED_UN } from './catalog.js';
+} from './decks.js';
+import { BIN_INFO, CATALOG_ALL, META, NAMED_UN_ALL } from './content.js';
 
-export const CAT_BY_ID = Object.fromEntries(CATALOG.map(c => [c.id, c]));
+export const CAT_BY_ID = Object.fromEntries(CATALOG_ALL.map(c => [c.id, c]));
 export const META_BY_ID = Object.fromEntries(META.map(m => [m.id, m]));
-const NAMED_BY_KEY = new Map(NAMED_UN.map(u => [ukey(u.f), u]));
-const NAMED_BY_ID = Object.fromEntries(NAMED_UN.map(u => [u.id, u]));
+const NAMED_BY_KEY = new Map(NAMED_UN_ALL.map(u => [ukey(u.f), u]));
+const NAMED_BY_ID = Object.fromEntries(NAMED_UN_ALL.map(u => [u.id, u]));
 
 // ───────────────────────── 卡牌（item） ─────────────────────────
 // 每张卡：{ kind, v, id, desc }。desc 是存档用的描述，可以用它重新造出这张卡。
 
 export function cardItem(x) {
-  return { kind: 'card', v: x, id: `c:${rkey(x)}`, desc: { k: 'card', x: rkey(x) } };
+  return { kind: 'card', v: x, id: `c:${vkey(x)}`, desc: { k: 'card', x: vkey(x) } };
 }
 
 export function binItem(b) {
@@ -63,7 +59,9 @@ const catCache = new Map();
 export function catItem(id) {
   if (!catCache.has(id)) {
     const c = CAT_BY_ID[id];
-    const D = c.list ? finiteDeck(c.list.map(parseKey), c.short) : mkDeck('cat', c.has, { name: c.short });
+    const D = c.list
+      ? finiteDeck(c.list.map(parseVKey), c.short)
+      : mkDeck('cat', c.has, { name: c.short, type: c.type ?? 'q' });
     D.catId = id;
     catCache.set(id, { kind: 'deck', v: D, id: `d:${id}`, desc: { k: 'deck', cat: id }, cat: c });
   }
@@ -74,7 +72,7 @@ export function catItem(id) {
 export function label(it) {
   switch (it.kind) {
     case 'card':
-      return fmtR(it.v);
+      return fmtV(it.v);
     case 'deck':
       return it.v.name;
     case 'un':
@@ -87,14 +85,18 @@ export function label(it) {
 const nest = s => (/\s/.test(s) ? `(${s})` : s);
 const lab = it => nest(label(it));
 
-// 按引用取卡（测试和图鉴用）：c:1  b:add  m:extend  u:succ  d:N
+// 按引用取卡（测试和图鉴用）：c:1  c:[3]12  b:add  m:extend  u:succ  d:N
 export function resolveRef(ref) {
   const [k, v] = [ref.slice(0, 1), ref.slice(2)];
-  if (k === 'c') return cardItem(parseKey(v));
-  if (k === 'b') return binItem(BIN[v]);
-  if (k === 'm') return metaItem(META_BY_ID[v]);
-  if (k === 'u') return unItem(NAMED_BY_ID[v].f);
-  if (k === 'd') return catItem(v);
+  if (k === 'c') {
+    const x = parseVKey(v);
+    if (!x) throw new Error(`无法解析的单卡 ${ref}`);
+    return cardItem(x);
+  }
+  if (k === 'b' && BIN[v]) return binItem(BIN[v]);
+  if (k === 'm' && META_BY_ID[v]) return metaItem(META_BY_ID[v]);
+  if (k === 'u' && NAMED_BY_ID[v]) return unItem(NAMED_BY_ID[v].f);
+  if (k === 'd' && CAT_BY_ID[v]) return catItem(v);
   throw new Error(`未知引用 ${ref}`);
 }
 
@@ -107,50 +109,61 @@ export function recipeText(recipe) {
 // ───────────────────────── 认出图鉴里的卡组 ─────────────────────────
 
 function sameList(a, b) {
-  return a.length === b.length && a.every((x, i) => rkey(x) === rkey(b[i]));
+  return a.length === b.length && a.every((x, i) => vkey(x) === vkey(b[i]));
 }
 
 export function matchCatalog(D) {
   if (D.catId) return CAT_BY_ID[D.catId];
-  for (const c of CATALOG) {
+  const type = D.type;
+  const emptyFinite = D.list && D.list.length === 0;
+  for (const c of CATALOG_ALL) {
+    const ctype = c.type ?? 'q';
+    if (ctype !== type && !emptyFinite) continue;
     const C = catItem(c.id).v;
     if (D.list) {
       if (C.list && sameList(D.list, C.list)) return c;
       continue;
     }
     if (D.kind === 'approx') {
-      // 算出来的每张卡都得在 C 里，C 在探针范围内的卡也都得算出来
+      // 算出来的每张卡都得在 C 里，C 在小探针范围内的卡也都得算出来
       if (C.list) {
-        const elems = [...D.elems].sort((x, y) => x.n * y.d - y.n * x.d);
-        if (sameList(elems, C.list)) return c;
+        const elems = [...D.elems].sort((x, y) => (vkey(x) < vkey(y) ? -1 : 1));
+        const cl = [...C.list].sort((x, y) => (vkey(x) < vkey(y) ? -1 : 1));
+        if (sameList(elems, cl)) return c;
         continue;
       }
-      if (D.elems.every(x => C.has(x)) && PROBE_SMALL.every(x => !C.has(x) || D.has(x))) return c;
+      if (D.elems.every(x => C.has(x)) && smallProbesFor(type).every(x => !C.has(x) || D.has(x))) return c;
       continue;
     }
     // 小探针必须都判断得出来；大数探针如果超出范围（null）就跳过
-    const probes = D.approx ? PROBE_SMALL : PROBES;
+    const small = smallProbesFor(type);
+    const smallKeys = new Set(small.map(vkey));
+    const probes = D.approx ? small : probesFor(type);
     const same = x => {
       const d = D.has(x);
-      return d === null ? !SMALL_KEYS.has(rkey(x)) : d === C.has(x);
+      return d === null ? !smallKeys.has(vkey(x)) : d === C.has(x);
     };
     if (probes.every(same)) return c;
   }
   return null;
 }
 
-const SMALL_KEYS = new Set(PROBE_SMALL.map(rkey));
-
 function fingerprint(D) {
-  if (D.list) return `f${hash(D.list.map(rkey).join(','))}`;
-  if (D.kind === 'approx') return `a${hash(D.elems.map(rkey).sort().join(','))}`;
-  return `e${hash(sigOf(D, D.approx ? PROBE_SMALL : PROBES))}`;
+  if (D.list) return `f${hash(D.list.map(vkey).join(','))}`;
+  if (D.kind === 'approx') return `a${hash(D.elems.map(vkey).sort().join(','))}`;
+  return `e${hash(D.type + ':' + sigOf(D, D.approx ? smallProbesFor(D.type) : probesFor(D.type)))}`;
 }
 
 // ───────────────────────── 合成 ─────────────────────────
 
 const fail = msg => ({ ok: false, msg });
 const ok = (item, text, extra = {}) => ({ ok: true, item, text, ...extra });
+
+function errText(r) {
+  if (r === OVER) return MSG_OVER;
+  if (r && typeof r === 'object' && r.err) return r.err;
+  return '这一步算不出结果。';
+}
 
 function deckResult(D, from, text, recipe) {
   const c = matchCatalog(D);
@@ -169,7 +182,7 @@ function deckResult(D, from, text, recipe) {
   return ok(item, `${text}。${note}`, { recipe });
 }
 
-const asDeck = it => (it.kind === 'deck' ? it.v : finiteDeck([it.v], fmtR(it.v)));
+const asDeck = it => (it.kind === 'deck' ? it.v : finiteDeck([it.v], fmtV(it.v)));
 const isSetLike = it => it && (it.kind === 'card' || it.kind === 'deck');
 
 // 在左右两格里找一对 [A, B]，A 的种类在 kindsA 里，B 的种类是 kindB，顺序不限
@@ -185,7 +198,12 @@ const single = (L, Rt) => (L && !Rt ? L : Rt && !L ? Rt : null);
 
 export function combine(L, M, Rt) {
   if (!M) return fail('中间的「算子」格还空着。放一个算子进去：橙色、黄色或紫色的卡。');
-  if (M.kind === 'card' || M.kind === 'deck') return fail('中间的格子只能放算子。单卡和卡组请放在左右两边。');
+  if (M.kind === 'card') {
+    // 多项式这种可以当函数用的单卡，放在中间就是一元算子
+    if (defOf(M.v).call) return withUn(L, { kind: 'un', v: fnU(M.v) }, Rt);
+    return fail('中间的格子只能放算子。单卡和卡组请放在左右两边。');
+  }
+  if (M.kind === 'deck') return fail('中间的格子只能放算子。单卡和卡组请放在左右两边。');
   if (M.kind === 'bin') return withBin(L, M, Rt);
   if (M.kind === 'un') return withUn(L, M, Rt);
   return withMeta(L, M, Rt);
@@ -196,35 +214,38 @@ function withBin(L, M, Rt) {
   const k = `${L?.kind ?? '空'}|${Rt?.kind ?? '空'}`;
   switch (k) {
     case 'card|card': {
-      const r = binCard(b, L.v, Rt.v);
-      if (r.err) return fail(r.err);
-      return ok(cardItem(r.v), `${fmtR(L.v)} ${b.sym} ${fmtR(Rt.v)} = ${fmtR(r.v)}`);
+      const r = binV(b.id, L.v, Rt.v);
+      if (!isV(r)) return fail(errText(r));
+      return ok(cardItem(r), `${fmtV(L.v)} ${b.sym} ${fmtV(Rt.v)} = ${fmtV(r)}`);
     }
     case '空|card': {
       const r = bindRight(b, Rt.v);
       if (r.err) return fail(r.err);
-      return ok(unItem(r.f), `左边空着，就是变量 x。x ${b.sym} ${fmtR(Rt.v)} 成了一元算子 ${fmtU(r.f)}`);
+      return ok(unItem(r.f), `左边空着，就是变量 x。x ${b.sym} ${fmtV(Rt.v)} 成了一元算子 ${fmtU(r.f)}`);
     }
     case 'card|空': {
       const r = bindLeft(L.v, b);
       if (r.err) return fail(r.err);
-      return ok(unItem(r.f), `右边空着，就是变量 x。${fmtR(L.v)} ${b.sym} x 成了一元算子 ${fmtU(r.f)}`);
+      return ok(unItem(r.f), `右边空着，就是变量 x。${fmtV(L.v)} ${b.sym} x 成了一元算子 ${fmtU(r.f)}`);
     }
     case 'deck|card': {
       const r = bindRight(b, Rt.v);
       if (r.err) return fail(r.err);
       const D = imageDeck(L.v, r.f, `{ ${fmtU(r.f)} | x ∈ ${lab(L)} }`);
-      return deckResult(D, [L, M, Rt], `${lab(L)} 里的每张卡都做 ${fmtU(r.f)}`, `${lab(L)} ${b.sym} ${fmtR(Rt.v)}`);
+      return deckResult(D, [L, M, Rt], `${lab(L)} 里的每张卡都做 ${fmtU(r.f)}`, `${lab(L)} ${b.sym} ${fmtV(Rt.v)}`);
     }
     case 'card|deck': {
       const r = bindLeft(L.v, b);
       if (r.err) return fail(r.err);
       const D = imageDeck(Rt.v, r.f, `{ ${fmtU(r.f)} | x ∈ ${lab(Rt)} }`);
-      return deckResult(D, [L, M, Rt], `${lab(Rt)} 里的每张卡 x 都变成 ${fmtU(r.f)}`, `${fmtR(L.v)} ${b.sym} ${lab(Rt)}`);
+      return deckResult(D, [L, M, Rt], `${lab(Rt)} 里的每张卡 x 都变成 ${fmtU(r.f)}`, `${fmtV(L.v)} ${b.sym} ${lab(Rt)}`);
     }
     case 'deck|deck': {
       const name = `${lab(L)} ${b.sym} ${lab(Rt)}`;
       const D = pairwiseDeck(L.v, b, Rt.v, name);
+      if (D.list && D.list.length === 0 && !(L.v.list && L.v.list.length === 0) && !(Rt.v.list && Rt.v.list.length === 0)) {
+        return fail(`${lab(L)} 和 ${lab(Rt)} 里的卡两两做 ${b.sym} 都算不出结果。`);
+      }
       return deckResult(D, [L, M, Rt], `从 ${lab(L)} 和 ${lab(Rt)} 里各取一张做 ${b.sym}，收集所有结果`, name);
     }
     case '空|空':
@@ -244,14 +265,17 @@ function withUn(L, M, Rt) {
   const X = ins[0];
   if (X.kind === 'card') {
     const y = applyU(f, X.v);
-    if (!isR(y)) {
-      if (y === OVER) return fail(MSG_OVER);
-      return fail(`把 x = ${fmtR(X.v)} 代入 ${fmtU(f)} 算不出有理数结果（没有定义，或者是像 √2 这样的数）。`);
+    if (!isV(y)) {
+      if (y === OVER || (y && y.err)) return fail(errText(y));
+      return fail(`把 x = ${fmtV(X.v)} 代入 ${fmtU(f)} 算不出结果（没有定义，或者不是有理数）。`);
     }
-    return ok(cardItem(y), `把 x = ${fmtR(X.v)} 代入 ${fmtU(f)}，得到 ${fmtR(y)}`);
+    return ok(cardItem(y), `把 x = ${fmtV(X.v)} 代入 ${fmtU(f)}，得到 ${fmtV(y)}`);
   }
   if (X.kind === 'deck') {
     const D = imageDeck(X.v, f, `{ ${fmtU(f)} | x ∈ ${lab(X)} }`);
+    if (D.list && D.list.length === 0 && !(X.v.list && X.v.list.length === 0)) {
+      return fail(`${lab(X)} 里没有一张卡能做 ${fmtU(f)}。`);
+    }
     return deckResult(D, [L, M, Rt], `${lab(X)} 里的每张卡都做 ${fmtU(f)}`, `${lab(X)} 经 ${fmtU(f)}`);
   }
   return fail('一元算子的输入要是单卡或卡组。想改造算子，请用紫色的构造算子，比如「复合」「逆」。');
@@ -260,6 +284,7 @@ function withUn(L, M, Rt) {
 const EXTEND = {
   add: { to: 'mul', text: '反复做加法就是乘法：3 × 4 = 4 + 4 + 4' },
   mul: { to: 'pow', text: '反复做乘法就是乘方：2⁴ = 2 × 2 × 2 × 2' },
+  sub: { to: 'mod', text: '反复减去同一个数，直到减不动为止，剩下的就是余数：17 mod 5 = 2' },
 };
 const INVERSE = {
   add: { to: 'sub', text: '加法倒过来做就是减法：a + b = c，那么 c − b = a' },
@@ -275,17 +300,17 @@ function withMeta(L, M, Rt) {
       const p = pairOf(L, Rt, ['card'], 'un');
       if (p) {
         const [c, u] = p;
-        const name = `${fmtR(c.v)} ⟳ ${nest(fmtU(u.v))}`;
+        const name = `${fmtV(c.v)} ⟳ ${nest(fmtU(u.v))}`;
         const D = orbitDeck(c.v, u.v, name);
         const steps = previewDeck(D);
-        return deckResult(D, [L, M, Rt], `从 ${fmtR(c.v)} 出发，一直做 ${fmtU(u.v)}：${steps}`, `${fmtR(c.v)} 延展 ${fmtU(u.v)}`);
+        return deckResult(D, [L, M, Rt], `从 ${fmtV(c.v)} 出发，一直做 ${fmtU(u.v)}：${steps}`, `${fmtV(c.v)} 延展 ${fmtU(u.v)}`);
       }
       const one = single(L, Rt);
       if (one?.kind === 'bin') {
         const e = EXTEND[one.v.id];
         if (!e) {
-          if (one.v.id === 'pow') return fail('反复做乘方叫「迭代幂」，已经超出初等数学啦。');
-          return fail('「延展」只能升级加法（得到乘法）和乘法（得到乘方）。');
+          if (one.v.id === 'pow') return fail('反复做乘方叫「迭代幂」，已经超出这个游戏的范围啦。');
+          return fail('「延展」只能升级加法（得到乘法）、乘法（得到乘方）和减法（得到取余）。');
         }
         return ok(binItem(BIN[e.to]), e.text);
       }
@@ -311,9 +336,12 @@ function withMeta(L, M, Rt) {
       if (one.kind === 'bin') {
         const e = INVERSE[one.v.id];
         if (!e) {
-          return fail(
-            '乘方倒过来有两种：已知指数求底数是开方，已知底数求指数是对数。先给乘方绑定一个数（比如 x² 或 2ˣ），再对它用「逆」。',
-          );
+          if (one.v.id === 'pow') {
+            return fail(
+              '乘方倒过来有两种：已知指数求底数是开方，已知底数求指数是对数。先给乘方绑定一个数（比如 x² 或 2ˣ），再对它用「逆」。',
+            );
+          }
+          return fail(`「${one.v.name}」会丢掉信息，没法倒过来做。`);
         }
         return ok(binItem(BIN[e.to]), e.text);
       }
@@ -359,8 +387,8 @@ export function itemFromDesc(d, memo = new Map()) {
   let it = null;
   switch (d.k) {
     case 'card': {
-      const x = parseKey(d.x);
-      it = isR(x) ? cardItem(x) : null;
+      const x = parseVKey(d.x);
+      it = x ? cardItem(x) : null;
       break;
     }
     case 'bin':
@@ -392,3 +420,5 @@ export function itemFromDesc(d, memo = new Map()) {
 }
 
 export const startItems = START_REFS => START_REFS.map(resolveRef);
+
+export { typeLabel };

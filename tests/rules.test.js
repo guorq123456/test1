@@ -2,73 +2,41 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { CATALOG, START } from '../src/catalog.js';
+import { CATALOG_ALL, CHAPTERS_ALL, WALKTHROUGHS } from '../src/content.js';
 import { combine, itemFromDesc, resolveRef, recipeText } from '../src/rules.js';
-import { R, fmtU, compose, invertU, aff, powU, ONE, TWO, ZERO, NEG1, previewDeck } from '../src/math.js';
+import { R, ONE, TWO, ZERO, NEG1 } from '../src/math.js';
+import { fmtU, compose, invertU, aff, powU } from '../src/unary.js';
+import { previewDeck, groupInfo } from '../src/decks.js';
+import { checkCatalog, elementaryHand, makeHand, ELEM_STEPS } from './helpers.js';
 
-const run = recipe => {
-  const [L, M, Rt] = recipe.map(r => (r ? resolveRef(r) : null));
-  return combine(L, M, Rt);
-};
-
-test('图鉴里每一种做法都能真的合成出对应的卡组', () => {
-  for (const c of CATALOG) {
-    for (const recipe of c.recipes) {
-      const r = run(recipe);
-      assert.ok(r.ok, `${c.name}: ${recipe.join(' ')} 失败：${r.msg}`);
-      assert.equal(r.item.id, `d:${c.id}`, `${c.name}: ${recipe.join(' ')} 得到了 ${r.item.id}（${r.item.v.name}）`);
-    }
-  }
+test('图鉴里每一种做法都能真的合成出对应的卡组；每个卡组至少两种做法，至少一种用到别的卡组', () => {
+  checkCatalog(CATALOG_ALL);
 });
 
-test('每个卡组至少有两种做法，并且至少一种用到了别的卡组', () => {
-  for (const c of CATALOG) {
-    assert.ok(c.recipes.length >= 2, `${c.name} 只有 ${c.recipes.length} 种做法`);
-    const usesOther = c.recipes.some(rec => rec.some(ref => ref && ref.startsWith('d:') && ref !== `d:${c.id}`));
-    assert.ok(usesOther, `${c.name} 没有用别的卡组组成的做法`);
+test('图鉴条目的 id 不重复，章节都存在', () => {
+  const ids = new Set();
+  const chapters = new Set(CHAPTERS_ALL.map(c => c.id));
+  for (const c of CATALOG_ALL) {
+    assert.ok(!ids.has(c.id), `重复的卡组 id ${c.id}`);
+    ids.add(c.id);
+    assert.ok(chapters.has(c.ch), `${c.name} 的章节 ${c.ch} 不存在`);
   }
 });
 
 test('从开局手牌出发，只用已经拿到的卡，就能集齐全部入门卡组', () => {
-  const owned = new Map(START.map(ref => [resolveRef(ref).id, resolveRef(ref)]));
-  const get = id => {
-    assert.ok(owned.has(id), `还没有 ${id}`);
-    return owned.get(id);
-  };
-  const step = (l, m, r) => {
-    const res = combine(l && get(l), get(m), r && get(r));
-    assert.ok(res.ok, `${l} ${m} ${r}：${res.msg}`);
-    owned.set(res.item.id, res.item);
-    return res.item.id;
-  };
+  const hand = makeHand(START).walk(ELEM_STEPS);
+  for (const c of CATALOG) assert.ok(hand.has(`d:${c.id}`), `没有集齐 ${c.name}`);
+});
 
-  assert.equal(step('c:1', 'b:add', 'c:1'), 'c:2');
-  assert.equal(step('b:add', 'm:inverse', null), 'b:sub');
-  assert.equal(step('c:0', 'b:sub', 'c:1'), 'c:-1');
-  const succ = step(null, 'b:add', 'c:1');
-  assert.equal(succ, 'u:aff(1,1)');
-  assert.equal(step('c:0', 'm:extend', succ), 'd:N');
-  assert.equal(step('c:1', 'm:extend', succ), 'd:Np');
-  assert.equal(step('b:add', 'm:extend', null), 'b:mul');
-  assert.equal(step('b:mul', 'm:extend', null), 'b:pow');
-  assert.equal(step('b:mul', 'm:inverse', null), 'b:div');
-  const sq = step(null, 'b:pow', 'c:2');
-  assert.equal(step('d:N', sq, null), 'd:Sq');
-  const dbl = step(null, 'b:mul', 'c:2');
-  assert.equal(step('c:1', 'm:extend', dbl), 'd:P2');
-  const neg = step('c:0', 'b:sub', null);
-  assert.equal(step('d:Np', neg, null), 'd:NegZ');
-  assert.equal(step('d:N', 'm:union', 'd:NegZ'), 'd:Z');
-  assert.equal(step('c:1', 'm:extend', neg), 'd:Sign');
-  assert.equal(step('d:Z', dbl, null), 'd:Even');
-  assert.equal(step('d:Even', 'b:add', 'c:1'), 'd:Odd');
-  assert.equal(step('d:Even', 'm:inter', 'd:Odd'), 'd:Empty');
-  const recip = step('c:1', 'b:div', null);
-  assert.equal(step('d:Np', recip, null), 'd:Unit');
-  assert.equal(step('d:Np', 'b:div', 'd:Np'), 'd:Qp');
-  assert.equal(step('c:2', 'm:closure', 'b:div'), 'd:P2z');
-  assert.equal(step('d:Z', 'b:div', 'd:Np'), 'd:Q');
-
-  for (const c of CATALOG) assert.ok(owned.has(`d:${c.id}`), `没有集齐 ${c.name}`);
+test('集齐初等篇之后，按各章路线能集齐全部高等篇卡组', () => {
+  const hand = elementaryHand();
+  for (const { chapter, steps } of WALKTHROUGHS) {
+    if (chapter.unlock) assert.ok(hand.has(chapter.unlock.when), `第 ${chapter.id} 章的解锁条件 ${chapter.unlock.when} 还没满足`);
+    hand.walk(steps);
+    for (const c of CATALOG_ALL.filter(c => c.ch === chapter.id)) {
+      assert.ok(hand.has(`d:${c.id}`), `第 ${chapter.id} 章路线没有集齐 ${c.name}`);
+    }
+  }
 });
 
 test('算子能化简、求逆，公式显示正确', () => {
@@ -115,6 +83,15 @@ test('图鉴外的卡组会成为未命名卡组，并且不会被误认', () =>
   // 两张单卡取并：有限卡组，名字就是元素
   const pair = combine(resolveRef('c:1'), resolveRef('m:union'), resolveRef('c:3'));
   assert.equal(pair.item.v.name, '{1, 3}');
+});
+
+test('有限卡组能自动判断是不是群', () => {
+  const sign = resolveRef('d:Sign').v;
+  const g = groupInfo(sign);
+  assert.equal(g.mul.group, true);
+  assert.equal(g.add.group, false);
+  const pair = combine(resolveRef('c:1'), resolveRef('m:union'), resolveRef('c:3')).item.v;
+  assert.equal(groupInfo(pair).add.closed, false);
 });
 
 test('存档描述可以重建出同一张卡', () => {
