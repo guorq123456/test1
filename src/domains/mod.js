@@ -12,6 +12,8 @@
 //   余数 和 整数 混合 → 整数先化成同一个 n 的余数
 //   余数 和 别的类型（量、向量、多项式……）→ 本类型不处理（返回 undefined），交给别的类型
 //   余数 mod m     → 只有 m 整除 n 时才有意义：[r]n → [r mod m]m
+//
+// 出错时返回 { err, reason }，reason 的三类见 docs/v03-step1.md 第 2 节。
 
 import { isR, isInt, gcd, fmtR, subscript } from '../math.js';
 import { registerType, registerBin } from '../values.js';
@@ -57,12 +59,18 @@ function modPow(a, k, n) {
 
 const fmtMod = v => `[${v.r}]${subscript(v.n)}`;
 
-// 把一个操作数（余数或有理数，modBin 已经排除了别的类型）化成模 n 的余数；化不了就返回 {err}
+// 把一个操作数（余数或有理数，modBin 已经排除了别的类型）化成模 n 的余数；化不了就返回 {err}。
+// 分数化不成余数算"表示不了"：余数和整数之间有这条法，只是分数走不通；更大的世界
+// （比如有理数的钟面 ℚ/nℤ）里 [3]₁₂ + 1/2 是有结果的
 function toMod(v, n) {
   if (isMod(v)) return v;
-  if (!isInt(v)) return { err: `${fmtR(v)} 不是整数，没法化成模 ${n} 的余数。` };
+  if (!isInt(v)) return { err: `${fmtR(v)} 不是整数，没法化成模 ${n} 的余数。`, reason: 'unrepresentable' };
   return M(n, v.n);
 }
+
+// 模数不是不小于 2 的整数：对 0 取余和除以 0 一样没有定义；对 1、负数、分数取余数学上有结果
+// （ℤ₁、ℤ/3ℤ、ℚ/½ℤ），只是钟面写不出来
+const badModulus = y => (y.n === 0 ? 'undefined' : 'unrepresentable');
 
 const ERR_NO_INV = (b, g) =>
   b.r === 0
@@ -79,12 +87,13 @@ function modBin(op, x, y) {
   if (!(xm || isR(x)) || !(ym || isR(y))) return undefined;
 
   if (op === 'mod') {
-    if (xm && ym) return { err: `${fmtMod(x)} 已经是余数了，不能再对余数取余。` };
-    if (!xm) return { err: `取余的模数要是普通的整数，${fmtMod(y)} 是余数，不行。` };
-    if (!isInt(y) || y.n < 2) return { err: `取余的模数要是不小于 2 的整数，${fmtR(y)} 不行。` };
+    if (xm && ym) return { err: `${fmtMod(x)} 已经是余数了，不能再对余数取余。`, reason: 'type' };
+    if (!xm) return { err: `取余的模数要是普通的整数，${fmtMod(y)} 是余数，不行。`, reason: 'type' };
+    if (!isInt(y) || y.n < 2) return { err: `取余的模数要是不小于 2 的整数，${fmtR(y)} 不行。`, reason: badModulus(y) };
     if (x.n % y.n !== 0) {
       return {
         err: `模 ${x.n} 的余数只能再对 ${x.n} 的约数取余：${fmtMod(x)} 说不清是 ${x.r} 还是 ${x.r + x.n}，对 ${y.n} 取余会得到不同的结果。`,
+        reason: 'undefined',
       };
     }
     return M(y.n, x.r);
@@ -92,18 +101,24 @@ function modBin(op, x, y) {
 
   if (op === 'pow') {
     if (ym) {
-      return { err: `指数要是普通的整数：${fmtMod(y)} 说不清是 ${y.r} 次、${y.r + y.n} 次还是 ${y.r + 2 * y.n} 次。` };
+      return {
+        err: `指数要是普通的整数：${fmtMod(y)} 说不清是 ${y.r} 次、${y.r + y.n} 次还是 ${y.r + 2 * y.n} 次。`,
+        reason: 'type',
+      };
     }
-    if (!isInt(y)) return { err: `余数的指数要是整数，${fmtR(y)} 不行。` };
+    if (!isInt(y)) return { err: `余数的指数要是整数，${fmtR(y)} 不行。`, reason: 'unrepresentable' };
     const k = y.n;
     if (k >= 0) return M(x.n, modPow(x.r, k, x.n));
     const inv = modInv(x.r, x.n);
-    if (inv === null) return { err: ERR_NO_INV(x, gcd(x.r, x.n)) };
+    if (inv === null) return { err: ERR_NO_INV(x, gcd(x.r, x.n)), reason: 'undefined' };
     return M(x.n, modPow(inv, -k, x.n));
   }
 
   if (xm && ym && x.n !== y.n) {
-    return { err: `${fmtMod(x)} 和 ${fmtMod(y)} 不在同一个钟面上（一个模 ${x.n}，一个模 ${y.n}），不能一起算。` };
+    return {
+      err: `${fmtMod(x)} 和 ${fmtMod(y)} 不在同一个钟面上（一个模 ${x.n}，一个模 ${y.n}），不能一起算。`,
+      reason: 'type',
+    };
   }
   const n = xm ? x.n : y.n;
   const a = toMod(x, n);
@@ -119,7 +134,7 @@ function modBin(op, x, y) {
       return M(n, a.r * b.r);
     case 'div': {
       const inv = modInv(b.r, n);
-      if (inv === null) return { err: ERR_NO_INV(b, gcd(b.r, n)) };
+      if (inv === null) return { err: ERR_NO_INV(b, gcd(b.r, n)), reason: 'undefined' };
       return M(n, a.r * inv);
     }
   }
@@ -155,8 +170,9 @@ registerType({
 // 整数 mod 整数 → 余数。两边都是有理数时，'q' 类型不处理 mod，这里接手。
 registerBin((op, x, y) => {
   if (op !== 'mod' || !isR(x) || !isR(y)) return undefined;
-  if (!isInt(y) || y.n < 2) return { err: `取余的模数要是不小于 2 的整数，${fmtR(y)} 不行。` };
-  if (!isInt(x)) return { err: `${fmtR(x)} 不是整数，取余只对整数做。` };
+  if (!isInt(y) || y.n < 2) return { err: `取余的模数要是不小于 2 的整数，${fmtR(y)} 不行。`, reason: badModulus(y) };
+  // 分数取余：更大的世界（ℚ/nℤ）里 1/2 mod 5 = 1/2，只是钟面写不出来
+  if (!isInt(x)) return { err: `${fmtR(x)} 不是整数，取余只对整数做。`, reason: 'unrepresentable' };
   return M(y.n, x.n);
 });
 

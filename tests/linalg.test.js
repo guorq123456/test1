@@ -229,9 +229,58 @@ test('逆矩阵、除法、乘方', () => {
   bad('div', k('m:1,0,0,1'), k('v:1,0'));
   bad('mod', k('m:1,0,0,1'), R(2));
   bad('cat', k('m:1,0,0,1'), k('v:1,0'));
+  // 奇异矩阵求逆"没有定义"：不是合成失败，而是分岔出缺口，得到为空
   const res = combine(resolveRef('c:m:1,2,2,4'), resolveRef('u:recip'), null);
-  assert.equal(res.ok, false);
-  assert.match(res.msg, /行列式是 0/);
+  assert.ok(
+    res.ok === true && res.item === null && res.holes?.length >= 1 && res.holes[0].v.kind === 'undefined',
+    `奇异矩阵经 1/x：${res.msg ?? res.text}`,
+  );
+});
+
+test('错误都带 reason：没有这条法是 type，没有定义是 undefined，表示不了是 unrepresentable', () => {
+  const REASONS = ['type', 'undefined', 'unrepresentable'];
+  const S = k('m:1,2,2,4'); // 奇异矩阵
+  const cases = [
+    ['add', k('v:1,2'), R(1)], // 向量 + 数
+    ['add', k('m:1,0,0,1'), R(2)],
+    ['add', k('v:1,2'), k('m:1,0,0,1')],
+    ['mul', k('v:1,2'), k('m:1,0,0,1')], // 向量放在矩阵左边
+    ['div', k('v:1,2'), k('v:3,4')],
+    ['div', R(1), k('v:1,2')],
+    ['div', k('v:1,2'), k('m:1,0,0,1')],
+    ['div', k('v:1,2'), R(0)], // 除以 0
+    ['div', k('m:1,0,0,1'), R(0)],
+    ['div', k('m:1,1,0,1'), S], // 除以奇异矩阵
+    ['div', R(2), S],
+    ['pow', k('v:1,2'), R(2)], // 向量 ^ 2
+    ['pow', k('m:1,1,1,-1'), R(1, 2)], // 矩阵开方
+    ['pow', S, NEG1], // 奇异矩阵的负数次方
+    ['pow', k('m:1,1,1,-1'), k('m:1,0,0,1')],
+    ['pow', R(2), k('m:1,0,0,1')],
+    ['mod', k('m:1,0,0,1'), R(2)],
+    ['cat', k('m:1,0,0,1'), k('m:1,0,0,1')], // 矩阵 | 矩阵
+    ['cat', k('v:1,2'), R(1)],
+  ];
+  for (const [op, x, y] of cases) {
+    const r = binV(op, x, y);
+    const what = `${fmtV(x)} ${op} ${fmtV(y)}`;
+    assert.ok(isErr(r), `${what} 应该报错`);
+    assert.ok(REASONS.includes(r.reason), `${what} 的 reason 是 ${r.reason}`);
+  }
+  // 具名算子、当一元算子用
+  for (const [f, x] of [
+    ['TR', k('v:1,2')],
+    ['DET', R(3)],
+    ['TRACE', k('[3]12')],
+  ]) {
+    const r = applyU(namedU(f), x);
+    assert.ok(isErr(r) && REASONS.includes(r.reason), `${f}(${fmtV(x)}) 的 reason 是 ${r?.reason}`);
+  }
+  assert.ok(REASONS.includes(applyU(powU(NEG1), S).reason));
+  // 具体的类别
+  assert.equal(binV('div', k('m:1,1,0,1'), S).reason, 'undefined', '除以奇异矩阵');
+  assert.equal(binV('pow', k('v:1,2'), R(2)).reason, 'type', '向量 ^ 2');
+  assert.equal(binV('pow', k('m:1,1,1,-1'), R(1, 2)).reason, 'unrepresentable', '矩阵的分数次方');
 });
 
 test('转置、行列式、迹', () => {

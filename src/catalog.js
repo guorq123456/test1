@@ -9,7 +9,7 @@ const isPow2 = n => n >= 1 && (n & (n - 1)) === 0;
 const isSquare = n => n >= 0 && Number.isInteger(Math.sqrt(n));
 
 // 开局手牌
-export const START = ['c:0', 'c:1', 'b:add', 'm:extend', 'm:closure', 'm:inverse', 'm:compose', 'm:union', 'm:inter'];
+export const START = ['c:0', 'c:1', 'b:add', 'm:extend', 'm:closure', 'm:inverse', 'm:compose', 'm:union', 'm:inter', 'm:reverse', 'm:fill'];
 
 // 构造算子：作用在算子或卡组上的"高阶"算子
 export const META = [
@@ -54,6 +54,20 @@ export const META = [
     sym: '∩',
     usage: '左右各放一个卡组（或单卡）',
     desc: '只留下两个卡组都有的卡。',
+  },
+  {
+    id: 'reverse',
+    name: '反推',
+    sym: '↤',
+    usage: '一边放一元算子，另一边放单卡或卡组',
+    desc: '找出所有代入这个算子后会得到那张卡（或落进那个卡组）的输入。算子没有逆的时候，反推照样能用，只是得到的是一个卡组：x² 反推 4 得到 {−2, 2}。',
+  },
+  {
+    id: 'fill',
+    name: '填',
+    sym: '⊞',
+    usage: '一边放缺口卡；另一边空着就自动填，放卡组就手填',
+    desc: '把一个缺口填成新世界：找到包含原来的世界、又能让那条法走通的最小世界。自己用现有的卡凑一个世界来填，奖励更高；没人填过的缺口叫"前沿"。',
   },
 ];
 
@@ -370,6 +384,24 @@ export const QUESTS = [
     title: '第一个卡组',
     text: '左边放 0，中间放「延展」，右边放 x + 1。从 0 出发一直 +1，会得到什么？',
     done: has => has('d:N'),
+  },
+  {
+    id: 'q4b',
+    title: '第一个缺口',
+    text: '把 ℕ 放进上面的「在……里」，左右都放 ℕ，中间放减法，合成。在 ℕ 里做减法，有一部分结果会跑出去：跑出去的就是缺口。',
+    done: (has, ctx) => (ctx?.holes ?? 0) > 0,
+  },
+  {
+    id: 'q4c',
+    title: '填上它',
+    text: '点开那张缺口卡，按「填」。包含 ℕ、又能做减法的最小世界，就是你发明的。也可以自己凑一个卡组放在「填」的另一边手填，奖励更高。',
+    done: (has, ctx) => (ctx?.filled ?? 0) > 0,
+  },
+  {
+    id: 'q4d',
+    title: '反过来想',
+    text: '中间放「反推」，一边放 x + 1，另一边放偶数：哪些数加 1 以后会变成偶数？没有逆的算子也能反推，得到的是一个卡组。',
+    done: has => has('d:Odd'),
   },
   {
     id: 'q5',

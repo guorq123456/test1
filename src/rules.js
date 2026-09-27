@@ -16,18 +16,23 @@ import {
   smallProbesFor,
   sizeV,
   sizeCapFor,
+  classify,
 } from './values.js';
 import { applyU, bindLeft, bindRight, compose, fmtU, fnU, invertU, parseU, serU, ukey } from './unary.js';
 import {
-  closureDeck,
+  closurePartition,
   finiteDeck,
   hash,
-  imageDeck,
+  imagePartition,
   interDeck,
+  isBlank,
+  lawClosedOn,
   mkDeck,
-  orbitDeck,
-  pairwiseDeck,
+  orbitPartition,
+  pairwisePartition,
+  preimageDeck,
   previewDeck,
+  restrictToWorld,
   sampleOf,
   sigOf,
   unionDeck,
@@ -84,6 +89,8 @@ export function label(it) {
       return it.v.name;
     case 'un':
       return fmtU(it.v);
+    case 'hole':
+      return holeLabel(it);
     default:
       return it.v.sym;
   }
@@ -195,9 +202,13 @@ function fingerprint(D) {
 }
 
 // ───────────────────────── 合成 ─────────────────────────
+// 结果的形状见 docs/v03-step1.md：永远是 { ok: true, item, holes, text }，
+// 只有"用法提示"才是 { ok: false, msg }。
 
 const fail = msg => ({ ok: false, msg });
-const ok = (item, text, extra = {}) => ({ ok: true, item, text, ...extra });
+const ok = (item, text, extra = {}) => ({ ok: true, item, holes: [], text, ...extra });
+
+const HOLE_KIND = { undefined: '没有定义', unrepresentable: '表示不了', outside: '越出世界' };
 
 function errText(r) {
   if (r === OVER) return MSG_OVER;
@@ -205,32 +216,147 @@ function errText(r) {
   return '这一步算不出结果。';
 }
 
-function deckResult(D, from, text, recipe) {
-  const c = matchCatalog(D);
-  if (c) {
-    // 简称是符号时一起显示（整数 ℤ），是中文时只显示全名（四个方向）
-    const title = c.short === c.name || /[一-鿿]/.test(c.short) ? `「${c.name}」` : `「${c.name} ${c.short}」`;
-    return ok(catItem(c.id), `${text}。这就是${title}！`, { recipe, catId: c.id });
+const fpDeck = D => (D.catId ? `cat:${D.catId}` : fingerprint(D));
+const lawKeyOf = law => (law.t === 'un' ? ukey(law.f) : law.t === 'bin' ? `bin:${law.b.id}` : `meta:${law.id}`);
+const catTitle = c => (c.short === c.name || /[一-鿿]/.test(c.short) ? `「${c.name}」` : `「${c.name} ${c.short}」`);
+
+// ───────────────────────── 缺口卡 ─────────────────────────
+
+// 这个缺口能填成图鉴里的哪个世界：{ status: 'fillable' | 'frontier' | 'unfillable', id }
+function findTarget(spec) {
+  if (spec.kind === 'undefined' || spec.tooLarge) return { status: 'unfillable', id: null };
+  const base = spec.world ?? spec.source;
+  const type = base.type;
+  if (type === 'set') return { status: 'frontier', id: null };
+  const need = [...sampleOf(base).slice(0, 40), ...(spec.kind === 'outside' ? sampleOf(spec.where).slice(0, 40) : [])];
+  const probes = probesFor(type);
+  const cands = [];
+  for (const c of CATALOG_ALL) {
+    if ((c.type ?? 'q') !== type) continue;
+    if (base.catId === c.id) continue;
+    const C = catItem(c.id).v;
+    if (!need.every(x => C.has(x) === true)) continue;
+    const r = lawClosedOn(C, spec.law);
+    if (r.escaped.length || (spec.kind === 'unrepresentable' && r.unrep)) continue;
+    cands.push(c);
   }
+  if (!cands.length) return { status: 'frontier', id: null };
+  // 最小：不真包含别的候选；再按探针里的成员数取最少的
+  const has = (c, x) => catItem(c.id).v.has(x) === true;
+  const contains = (a, b) => probes.every(x => !has(b, x) || has(a, x));
+  const minimal = cands.filter(a => !cands.some(b => b !== a && contains(a, b) && !contains(b, a)));
+  minimal.sort((a, b) => probes.filter(x => has(a, x)).length - probes.filter(x => has(b, x)).length);
+  return { status: 'fillable', id: minimal[0].id };
+}
+
+// spec: { kind, law, lawText, source, sourceName, where, world, tooLarge? }
+function holeItem(spec, from, W, idx) {
+  const c = spec.where.catId ? CAT_BY_ID[spec.where.catId] : matchCatalog(spec.where);
+  const where = c ? catItem(c.id).v : spec.where;
+  const target = findTarget({ ...spec, where });
+  const v = {
+    ...spec,
+    where,
+    name: c ? c.name : (spec.name ?? null),
+    lawKey: lawKeyOf(spec.law),
+    kindText: HOLE_KIND[spec.kind],
+    status: target.status,
+    targetId: target.id,
+  };
+  const id = `h:${hash([spec.kind, v.lawKey, fpDeck(spec.source), fpDeck(where)].join('|'))}`;
+  return {
+    kind: 'hole',
+    v,
+    id,
+    desc: { k: 'hole', from: from.map(x => (x ? x.desc : null)), w: W ? W.desc : null, kind: spec.kind, idx },
+  };
+}
+
+// 把 *Partition 的 holes 做成缺口卡
+function holesFrom(specs, from, W) {
+  const count = {};
+  return specs.map(s => {
+    const idx = count[s.kind] ?? 0;
+    count[s.kind] = idx + 1;
+    return holeItem(s, from, W, idx);
+  });
+}
+
+const holeSummary = holes =>
+  holes.map(h => `缺口（${h.v.kindText}）：${h.v.name ?? previewDeck(h.v.where)}`).join('；');
+
+// 缺口卡在式子里的写法
+export function holeLabel(h) {
+  return `缺口(${h.v.name ?? previewDeck(h.v.where, 3)})`;
+}
+
+// ───────────────────────── 结果 ─────────────────────────
+
+function selfItem(D, from, W) {
   if (D.list && D.list.length <= 6) D.name = previewDeck(D);
-  const item = {
+  return {
     kind: 'deck',
     v: D,
     id: `d:~${fingerprint(D)}`,
-    desc: { k: 'deck', from: from.map(x => (x ? x.desc : null)) },
+    desc: { k: 'deck', from: from.map(x => (x ? x.desc : null)), w: W ? W.desc : null },
   };
+}
+
+// 卡组结果：认图鉴、起名字、带上缺口
+function deckResult(D, from, text, recipe, opts = {}) {
+  const W = opts.W ?? null;
+  const holes = holesFrom(opts.holes ?? [], from, W);
+  const tail = holes.length ? `${holeSummary(holes)}。` : '';
+  const rec = W ? `${recipe}（在 ${W.v.name} 里）` : recipe;
+  if (isBlank(D) && holes.length && !opts.keepEmpty) {
+    return ok(null, `${text}。成立的部分一张都没有。${tail}`, { holes, recipe: rec });
+  }
+  const c = matchCatalog(D);
+  if (c) return ok(catItem(c.id), `${text}。这就是${catTitle(c)}！${tail}`, { recipe: rec, catId: c.id, holes });
+  const item = selfItem(D, from, W);
   const note = D.dropped
     ? '（结果都超出了视野的大小，这个卡组暂时看不到具体内容。）'
     : D.approx
       ? '（这个卡组只在一个小范围里算过，内容是近似的。）'
       : '';
-  return ok(item, `${text}。${note}`, { recipe });
+  return ok(item, `${text}。${note}${tail}`, { recipe: rec, holes });
 }
 
-const asDeck = it => (it.kind === 'deck' ? it.v : finiteDeck([it.v], fmtV(it.v)));
-// 有限卡组没有成员，或者近似卡组在视野里一张都没算出来（算得出但超出视野大小的不算）
-const isEmpty = D => !D.dropped && (D.list ? D.list.length === 0 : D.elems ? D.elems.length === 0 : false);
-const isSetLike = it => it && (it.kind === 'card' || it.kind === 'deck');
+// 值结果：可能没有定义、表示不了，或者不在底板世界里
+function cardResult(r, from, W, law, lawText, input, text, src = {}) {
+  const inputs = src.inputs ?? [input];
+  const sourceName = src.name ?? fmtV(input);
+  const source = finiteDeck(inputs, sourceName);
+  const k = classify(r);
+  if (k === 'ok') {
+    if (W && W.v.has(r) === false) {
+      const spec = { kind: 'outside', law, lawText, source, sourceName, where: finiteDeck([r], fmtV(r)), world: W.v };
+      const holes = holesFrom([spec], from, W);
+      return ok(null, `${text}，但 ${fmtV(r)} 不在 ${W.v.name} 里。${holeSummary(holes)}。`, { holes });
+    }
+    return ok(cardItem(r), text);
+  }
+  if (k === 'type') return fail(errText(r));
+  // 值级的缺口用"写不出来的那个式子"当名字：√2、1/0、2^(1/2)
+  const exprName = law.t === 'un' ? fmtU(law.f, fmtV(input)) : `${sourceName}`;
+  const spec = {
+    kind: k,
+    law,
+    lawText,
+    source,
+    sourceName,
+    where: finiteDeck([input], fmtV(input)),
+    world: null,
+    tooLarge: r === OVER,
+    name: exprName,
+  };
+  const holes = holesFrom([spec], from, W);
+  return ok(null, `${errText(r)}${holeSummary(holes)}。`, { holes });
+}
+
+const asDeck = it => (it.kind === 'deck' ? it.v : it.kind === 'hole' ? it.v.where : finiteDeck([it.v], fmtV(it.v)));
+const isSetLike = it => it && (it.kind === 'card' || it.kind === 'deck' || it.kind === 'hole');
+const isDeckLike = it => it && (it.kind === 'deck' || it.kind === 'hole');
 
 // 在左右两格里找一对 [A, B]，A 的种类在 kindsA 里，B 的种类是 kindB，顺序不限
 function pairOf(L, Rt, kindsA, kindB) {
@@ -247,32 +373,38 @@ const isFnCard = it => it?.kind === 'card' && !!defOf(it.v).call;
 // 算子公式里含多项式时，输入写成 □ 而不是 x（免得和多项式的 x 混淆）
 const varName = f => (fmtU(f).includes('□') ? ' □' : ' x');
 
-export function combine(L, M, Rt) {
+// L、M、Rt 是三个格子；W 是底板上的世界（卡组卡），可以为空
+export function combine(L, M, Rt, W = null) {
+  if (W && W.kind !== 'deck') return fail('底板上只能放卡组：合成会限制在这个世界里进行。');
   if (!M) {
     const hint = isFnCard(L) || isFnCard(Rt) ? '多项式也能当算子：先点中间的空格，再点这张多项式。' : '';
     return fail(`中间的「算子」格还空着。放一个算子进去：橙色、黄色或紫色的卡。${hint}`);
   }
   if (M.kind === 'card') {
     // 多项式这种可以当函数用的单卡，放在中间就是一元算子（desc 保留原卡，存档才能重建）
-    if (defOf(M.v).call) return withUn(L, { kind: 'un', v: fnU(M.v), desc: M.desc }, Rt, '代入');
+    if (defOf(M.v).call) return withUn(L, { kind: 'un', v: fnU(M.v), desc: M.desc }, Rt, W, '代入');
     return fail('中间的格子只能放算子。单卡和卡组请放在左右两边。多项式可以放中间当算子用。');
   }
-  if (M.kind === 'deck') return fail('中间的格子只能放算子。单卡和卡组请放在左右两边。');
-  if (M.kind === 'bin') return withBin(L, M, Rt);
-  if (M.kind === 'un') return withUn(L, M, Rt);
-  return withMeta(L, M, Rt);
+  if (M.kind === 'deck' || M.kind === 'hole') return fail('中间的格子只能放算子。单卡、卡组和缺口请放在左右两边。');
+  if (M.kind === 'bin') return withBin(L, M, Rt, W);
+  if (M.kind === 'un') return withUn(L, M, Rt, W);
+  return withMeta(L, M, Rt, W);
 }
 
-function withBin(L, M, Rt) {
+function withBin(L, M, Rt, W) {
   const b = M.v;
-  const k = `${L?.kind ?? '空'}|${Rt?.kind ?? '空'}`;
+  const kindOf = it => (!it ? '空' : it.kind === 'hole' ? 'deck' : it.kind);
+  const k = `${kindOf(L)}|${kindOf(Rt)}`;
+  const from = [L, M, Rt];
   switch (k) {
     case 'card|card': {
       const r = binV(b.id, L.v, Rt.v);
-      if (!isV(r)) return fail(errText(r));
       const eqn = `${fmtV(L.v)} ${b.sym} ${fmtV(Rt.v)}`;
       // 多项式 x + 1 算出来还是写成 x + 1，不用再写一遍等号
-      return ok(cardItem(r), fmtV(r) === eqn ? `${eqn}：得到新卡 ${fmtV(r)}` : `${eqn} = ${fmtV(r)}`);
+      const text = isV(r) ? (fmtV(r) === eqn ? `${eqn}：得到新卡 ${fmtV(r)}` : `${eqn} = ${fmtV(r)}`) : eqn;
+      const bound = bindLeft(L.v, b);
+      const law = bound.f ? { t: 'un', f: bound.f } : { t: 'bin', b };
+      return cardResult(r, from, W, law, bound.f ? fmtU(bound.f) : b.sym, Rt.v, text, { inputs: [L.v, Rt.v], name: eqn });
     }
     case '空|card': {
       const r = bindRight(b, Rt.v);
@@ -287,24 +419,33 @@ function withBin(L, M, Rt) {
     case 'deck|card': {
       const r = bindRight(b, Rt.v);
       if (r.err) return fail(r.err);
-      const D = imageDeck(L.v, r.f, `{ ${fmtU(r.f)} | x ∈ ${lab(L)} }`);
-      if (isEmpty(D) && !isEmpty(L.v)) return fail(D.err ?? `${lab(L)} 里没有一张卡能做 ${fmtU(r.f)}。`);
-      return deckResult(D, [L, M, Rt], `${lab(L)} 里的每张卡都做 ${fmtU(r.f)}`, `${lab(L)} ${b.sym} ${fmtV(Rt.v)}`);
+      return imageResult(L, r.f, from, W, `${lab(L)} ${b.sym} ${fmtV(Rt.v)}`);
     }
     case 'card|deck': {
       const r = bindLeft(L.v, b);
       if (r.err) return fail(r.err);
-      const D = imageDeck(Rt.v, r.f, `{ ${fmtU(r.f)} | x ∈ ${lab(Rt)} }`);
-      if (isEmpty(D) && !isEmpty(Rt.v)) return fail(D.err ?? `${lab(Rt)} 里没有一张卡能做 ${fmtU(r.f)}。`);
-      return deckResult(D, [L, M, Rt], `${lab(Rt)} 里的每张卡 x 都变成 ${fmtU(r.f)}`, `${fmtV(L.v)} ${b.sym} ${lab(Rt)}`);
+      return imageResult(Rt, r.f, from, W, `${fmtV(L.v)} ${b.sym} ${lab(Rt)}`);
     }
     case 'deck|deck': {
       const name = `${lab(L)} ${b.sym} ${lab(Rt)}`;
-      const D = pairwiseDeck(L.v, b, Rt.v, name);
-      if (isEmpty(D) && !isEmpty(L.v) && !isEmpty(Rt.v)) {
-        return fail(D.err ?? `${lab(L)} 和 ${lab(Rt)} 里的卡两两做 ${b.sym} 都算不出结果。`);
+      const A = asDeck(L);
+      const B = asDeck(Rt);
+      const { got, holes } = pairwisePartition(A, b, B, name, W?.v ?? null);
+      if (isBlank(got) && !holes.length && !got.dropped && !isBlank(A) && !isBlank(B)) {
+        return fail(got.err ?? `${lab(L)} 和 ${lab(Rt)} 里的卡两两做 ${b.sym} 都算不出结果。`);
       }
-      return deckResult(D, [L, M, Rt], `从 ${lab(L)} 和 ${lab(Rt)} 里各取一张做「${b.name}」（${b.sym}），收集所有结果`, name);
+      const specs = holes.map(h => ({
+        ...h,
+        law: { t: 'bin', b },
+        lawText: b.sym,
+        source: h.side === 'l' ? A : h.side === 'r' ? B : A,
+        sourceName: h.side === 'l' ? lab(L) : h.side === 'r' ? lab(Rt) : name,
+        world: W?.v ?? null,
+      }));
+      return deckResult(got, from, `从 ${lab(L)} 和 ${lab(Rt)} 里各取一张做「${b.name}」（${b.sym}），收集所有结果`, name, {
+        W,
+        holes: specs,
+      });
     }
     case '空|空':
       return fail(`「${b.name}」需要输入：两边都放单卡，算出一张新单卡；只放一边，得到一元算子。`);
@@ -315,26 +456,33 @@ function withBin(L, M, Rt) {
   return fail(`「${b.name}」两边要放单卡或卡组。想改造算子本身，请用紫色的构造算子。`);
 }
 
-function withUn(L, M, Rt, verb = '经') {
+// 卡组 X 里的每张卡做 f
+function imageResult(X, f, from, W, recipe, verb = null) {
+  const D = asDeck(X);
+  const { got, holes } = imagePartition(D, f, `{ ${fmtU(f)} | x ∈ ${lab(X)} }`, W?.v ?? null);
+  if (isBlank(got) && !holes.length && !isBlank(D)) return fail(got.err ?? `${lab(X)} 里没有一张卡能做 ${fmtU(f)}。`);
+  const specs = holes.map(h => ({ ...h, law: { t: 'un', f }, lawText: fmtU(f), source: D, sourceName: lab(X), world: W?.v ?? null }));
+  const text = verb === '代入' ? `${lab(X)} 里的每张卡都代入 ${fmtU(f)}` : `${lab(X)} 里的每张卡都做 ${fmtU(f)}`;
+  return deckResult(got, from, text, recipe, { W, holes: specs });
+}
+
+function withUn(L, M, Rt, W, verb = '经') {
   const f = M.v;
   const ins = [L, Rt].filter(Boolean);
   if (ins.length === 0) return fail(`一元算子 ${fmtU(f)} 需要一个输入：在左边或右边放一张单卡或一个卡组。`);
   if (ins.length === 2) return fail('一元算子只吃一个输入，请把另一边清空。想把两个一元算子接起来，用构造算子「复合」。');
   const X = ins[0];
+  const from = [L, M, Rt];
   if (X.kind === 'card') {
     const y = applyU(f, X.v);
-    if (!isV(y)) {
-      if (y === OVER || (y && y.err)) return fail(errText(y));
+    const text = isV(y) ? `把${varName(f)} = ${fmtV(X.v)} 代入 ${fmtU(f)}，得到 ${fmtV(y)}` : `把${varName(f)} = ${fmtV(X.v)} 代入 ${fmtU(f)}`;
+    if (!isV(y) && classify(y) === 'type') {
       const why = isR(X.v) ? '（没有定义，或者不是有理数）' : '（这个算子对这种卡没有定义）';
-      return fail(`把${varName(f)} = ${fmtV(X.v)} 代入 ${fmtU(f)} 算不出结果${why}。`);
+      return fail(y && y.err ? y.err : `${text} 算不出结果${why}。`);
     }
-    return ok(cardItem(y), `把${varName(f)} = ${fmtV(X.v)} 代入 ${fmtU(f)}，得到 ${fmtV(y)}`);
+    return cardResult(y, from, W, { t: 'un', f }, fmtU(f), X.v, text);
   }
-  if (X.kind === 'deck') {
-    const D = imageDeck(X.v, f, `{ ${fmtU(f)} | x ∈ ${lab(X)} }`);
-    if (isEmpty(D) && !isEmpty(X.v)) return fail(D.err ?? `${lab(X)} 里没有一张卡能做 ${fmtU(f)}。`);
-    return deckResult(D, [L, M, Rt], `${lab(X)} 里的每张卡都做 ${fmtU(f)}`, `${lab(X)} ${verb} ${fmtU(f)}`);
-  }
+  if (isDeckLike(X)) return imageResult(X, f, from, W, `${lab(X)} ${verb} ${fmtU(f)}`, verb);
   return fail('一元算子的输入要是单卡或卡组。想改造算子，请用紫色的构造算子，比如「复合」「逆」。');
 }
 
@@ -350,17 +498,30 @@ const INVERSE = {
   div: { to: 'mul', text: '除法倒过来做就是乘法' },
 };
 
-function withMeta(L, M, Rt) {
+function withMeta(L, M, Rt, W) {
   const m = M.v;
+  const from = [L, M, Rt];
+  const Wd = W?.v ?? null;
   switch (m.id) {
     case 'extend': {
       const p = pairOf(L, Rt, ['card'], 'un');
       if (p) {
         const [c, u] = p;
         const name = `${fmtV(c.v)} ⟳ ${nest(fmtU(u.v))}`;
-        const D = orbitDeck(c.v, u.v, name);
-        const steps = previewDeck(D);
-        return deckResult(D, [L, M, Rt], `从 ${fmtV(c.v)} 出发，一直做 ${fmtU(u.v)}：${steps}`, `${fmtV(c.v)} 延展 ${fmtU(u.v)}`);
+        const { got, holes } = orbitPartition(c.v, u.v, name, Wd);
+        const specs = holes.map(h => ({
+          ...h,
+          law: { t: 'un', f: u.v },
+          lawText: fmtU(u.v),
+          source: got,
+          sourceName: name,
+          world: Wd,
+        }));
+        const steps = isBlank(got) ? '一步都走不了' : previewDeck(got);
+        return deckResult(got, from, `从 ${fmtV(c.v)} 出发，一直做 ${fmtU(u.v)}：${steps}`, `${fmtV(c.v)} 延展 ${fmtU(u.v)}`, {
+          W,
+          holes: specs,
+        });
       }
       const one = single(L, Rt);
       if (one?.kind === 'bin') {
@@ -376,12 +537,14 @@ function withMeta(L, M, Rt) {
       return fail('「延展」的用法：单卡 ＋ 一元算子 → 卡组；或者只放一个二元算子，把它升级。');
     }
     case 'closure': {
-      const p = pairOf(L, Rt, ['card', 'deck'], 'bin');
+      const p = pairOf(L, Rt, ['card', 'deck', 'hole'], 'bin');
       if (!p) return fail('「封闭」的用法：一边放单卡或卡组作为起点，另一边放二元算子作为组合方式。');
       const [X, b] = p;
-      const D = closureDeck(asDeck(X), b.v, `⟨${label(X)} | ${b.v.sym}⟩`);
-      const how = D.truncated ? '反复组合（更大的结果超出了能显示的范围，没有算进来）' : '反复组合，直到得不到新卡';
-      return deckResult(D, [L, M, Rt], `从 ${lab(X)} 出发，用 ${b.v.sym} ${how}`, `${lab(X)} 在 ${b.v.sym} 下封闭`);
+      const D = asDeck(X);
+      const { got, holes } = closurePartition(D, b.v, `⟨${label(X)} | ${b.v.sym}⟩`, Wd);
+      const specs = holes.map(h => ({ ...h, law: { t: 'bin', b: b.v }, lawText: b.v.sym, source: D, sourceName: lab(X), world: Wd }));
+      const how = got.truncated ? '反复组合（更大的结果超出了能显示的范围，没有算进来）' : '反复组合，直到得不到新卡';
+      return deckResult(got, from, `从 ${lab(X)} 出发，用 ${b.v.sym} ${how}`, `${lab(X)} 在 ${b.v.sym} 下封闭`, { W, holes: specs, keepEmpty: true });
     }
     case 'inverse': {
       const one = single(L, Rt);
@@ -401,7 +564,7 @@ function withMeta(L, M, Rt) {
       if (one.kind === 'un') {
         const g = invertU(one.v);
         if (!g) {
-          return fail(`${fmtU(one.v)} 没有逆：不同的输入会得到同一个结果，没法倒推回去。`);
+          return fail(`${fmtU(one.v)} 没有逆：不同的输入会得到同一个结果，没法倒推回去。想知道哪些输入能得到某个结果，用「反推」。`);
         }
         const note = one.v.t === 'pow' && one.v.n.d === 1 && one.v.n.n % 2 === 0 ? '（只取正的那个根）' : '';
         return ok(unItem(g), `${fmtU(one.v)} 的逆是 ${fmtU(g)}${note}：先做一个再做另一个，就回到原来的数`);
@@ -418,17 +581,81 @@ function withMeta(L, M, Rt) {
     case 'union':
     case 'inter': {
       if (!isSetLike(L) || !isSetLike(Rt)) {
-        return fail(`「${m.name}」的两边都要放卡组。单卡会被当成只有一张卡的卡组。`);
+        return fail(`「${m.name}」的两边都要放卡组。单卡会被当成只有一张卡的卡组，缺口卡当成缺的那部分。`);
       }
       const A = asDeck(L);
       const B = asDeck(Rt);
       const name = `${lab(L)} ${m.sym} ${lab(Rt)}`;
       const D = m.id === 'union' ? unionDeck(A, B, name) : interDeck(A, B, name);
+      const { got, outside } = restrictToWorld(D, Wd, name);
+      const specs = outside ? [{ kind: 'outside', where: outside, law: { t: 'meta', id: m.id }, lawText: m.sym, source: A, sourceName: lab(L), world: Wd }] : [];
       const text = m.id === 'union' ? `把 ${lab(L)} 和 ${lab(Rt)} 合在一起` : `只留下 ${lab(L)} 和 ${lab(Rt)} 都有的卡`;
-      return deckResult(D, [L, M, Rt], text, name);
+      return deckResult(got, from, text, name, { W, holes: specs, keepEmpty: m.id === 'inter' });
     }
+    case 'reverse': {
+      const p = pairOf(L, Rt, ['card', 'deck', 'hole'], 'un');
+      if (!p) return fail('「反推」的用法：一边放一元算子，另一边放一张单卡或卡组，得到所有能算到它的输入。');
+      const [X, u] = p;
+      const T = asDeck(X);
+      const D = preimageDeck(u.v, T, `${fmtU(u.v)} ← ${lab(X)}`);
+      const { got, outside } = restrictToWorld(D, Wd, D.name);
+      const specs = outside ? [{ kind: 'outside', where: outside, law: { t: 'un', f: u.v }, lawText: fmtU(u.v), source: T, sourceName: lab(X), world: Wd }] : [];
+      return deckResult(got, from, `所有代入 ${fmtU(u.v)} 会得到 ${lab(X)} 的输入`, `${lab(X)} 反推 ${fmtU(u.v)}`, { W, holes: specs, keepEmpty: true });
+    }
+    case 'fill':
+      return withFill(L, M, Rt, W);
   }
   return fail('这个构造算子还不会用。');
+}
+
+// ───────────────────────── 填与手填 ─────────────────────────
+
+function withFill(L, M, Rt, W) {
+  const H = [L, Rt].find(x => x?.kind === 'hole');
+  const other = [L, Rt].find(x => x && x.kind !== 'hole');
+  if (!H) return fail('「填」的用法：一边放一张缺口卡。另一边空着就自动填；放一个卡组，就用它来填（手填）。');
+  const h = H.v;
+  const from = [L, M, Rt];
+  const whereText = h.name ?? previewDeck(h.where);
+  if (!other) {
+    if (h.status === 'fillable') {
+      const c = CAT_BY_ID[h.targetId];
+      return ok(catItem(c.id), `你发明了${catTitle(c)}：包含 ${h.sourceName}、又能做 ${h.lawText} 的最小世界`, { grade: 'auto', filled: H.id, catId: c.id });
+    }
+    if (h.status === 'frontier') {
+      return fail(`这个缺口还没有人填过：${h.lawText} 在 ${h.sourceName} 上卡在 ${whereText}。可以用现有的卡凑一个世界，放在另一边来填。`);
+    }
+    if (h.tooLarge) return fail(`这个缺口是游戏的边界：${whereText} 太大，现在的数写不下。`);
+    return fail(`这个缺口补不上：${h.lawText} 在 ${whereText} 上没有定义，换到任何世界都一样。`);
+  }
+  if (!isDeckLike(other)) return fail('用来填的要是一个卡组（或另一张缺口）。');
+  const K = asDeck(other);
+  // (a) 包含出发世界（和越出的部分）
+  const base = h.world ?? h.source;
+  const need = [...sampleOf(base).slice(0, 40), ...(h.kind === 'outside' ? sampleOf(h.where).slice(0, 40) : [])];
+  const missing = need.filter(x => K.has(x) !== true);
+  if (missing.length) {
+    return fail(`${lab(other)} 没有包住 ${h.sourceName}${h.kind === 'outside' ? ' 和缺的那部分' : ''}：比如 ${missing.slice(0, 3).map(fmtV).join('、')} 不在里面。`);
+  }
+  // (b) 这条法在候选上封闭
+  const r = lawClosedOn(K, h.law);
+  if (r.escaped.length) {
+    const spec = { kind: 'outside', law: h.law, lawText: h.lawText, source: base, sourceName: h.sourceName, where: finiteDeck(r.escaped, ''), world: K };
+    const holes = holesFrom([spec], from, W);
+    return ok(null, `${lab(other)} 还是关不住 ${h.lawText}：${holeSummary(holes)}。`, { holes });
+  }
+  if (h.kind === 'unrepresentable' && r.unrep) return fail(`${lab(other)} 里做 ${h.lawText} 还是有写不出来的结果。`);
+  // 分档
+  const c = matchCatalog(K);
+  const item = c ? catItem(c.id) : selfItem(K, from, W);
+  if (h.status === 'fillable') {
+    const t = CAT_BY_ID[h.targetId];
+    if (c && c.id === t.id) {
+      return ok(item, `恰到好处：${lab(other)} 正好是包含 ${h.sourceName}、又能做 ${h.lawText} 的最小世界，${catTitle(t)}`, { grade: 'exact', filled: H.id, catId: c.id });
+    }
+    return ok(item, `填上了，但多了一块：${lab(other)} 关住了 ${h.lawText}，不过最小的世界其实是${catTitle(t)}`, { grade: 'over', filled: H.id, catId: c?.id });
+  }
+  return ok(item, `首次发现：${lab(other)} 关住了 ${h.lawText}，这个缺口以前没有人填过`, { grade: 'frontier', filled: H.id, catId: c?.id, firstFill: true });
 }
 
 // ───────────────────────── 存档 ─────────────────────────
@@ -455,7 +682,8 @@ export function itemFromDesc(d, memo = new Map()) {
       it = f ? unItem(f) : null;
       break;
     }
-    case 'deck': {
+    case 'deck':
+    case 'hole': {
       if (d.cat) {
         it = CAT_BY_ID[d.cat] ? catItem(d.cat) : null;
         break;
@@ -463,8 +691,12 @@ export function itemFromDesc(d, memo = new Map()) {
       if (!Array.isArray(d.from) || d.from.length !== 3) break;
       const parts = d.from.map(x => (x ? itemFromDesc(x, memo) : null));
       if (d.from.some((x, i) => x && !parts[i])) break;
-      const r = combine(parts[0], parts[1], parts[2]);
-      it = r.ok && r.item.kind === 'deck' ? r.item : null;
+      const W = d.w ? itemFromDesc(d.w, memo) : null;
+      if (d.w && !W) break;
+      const r = combine(parts[0], parts[1], parts[2], W);
+      if (!r.ok) break;
+      if (d.k === 'deck') it = r.item && r.item.kind === 'deck' ? r.item : null;
+      else it = r.holes.filter(h => h.v.kind === d.kind)[d.idx] ?? null;
       break;
     }
   }
@@ -474,4 +706,4 @@ export function itemFromDesc(d, memo = new Map()) {
 
 export const startItems = START_REFS => START_REFS.map(resolveRef);
 
-export { typeLabel };
+export { typeLabel, HOLE_KIND };

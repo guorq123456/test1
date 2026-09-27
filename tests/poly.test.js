@@ -184,13 +184,43 @@ test('没有定义的运算给出解释', () => {
   assert.match(err(binV('pow', X, R(-1))), /分式/);
   assert.match(err(binV('mod', X, R(2))), /带余除法/);
   assert.match(err(binV('cat', X, X)), /拼接/);
-  // 通过合成台看到的文字
+  // 合成台上：x ^ x 这个算子对任何输入都算不出来，绑定时就是用法提示
   const c = ref => resolveRef(ref);
-  const r = combine(c('c:p:1,0'), c('b:div'), c('c:p:1,1'));
-  assert.equal(r.ok, false);
-  assert.match(r.msg, /分式/);
-  assert.equal(combine(c('c:p:1,0'), c('b:pow'), c('c:13')).ok, false);
   assert.equal(combine(null, c('b:pow'), c('c:p:1,0')).ok, false, 'x ^ x 对任何输入都算不出来');
+  // 分式、次数太高（OVER）是"表示不了"：不是合成失败，而是分岔出缺口，得到为空
+  const isHole = (res, kind) => res.ok === true && res.item === null && res.holes?.length >= 1 && res.holes[0].v.kind === kind;
+  const r = combine(c('c:p:1,0'), c('b:div'), c('c:p:1,1'));
+  assert.ok(isHole(r, 'unrepresentable'), `x ÷ (x + 1)：${r.msg ?? r.text}`);
+  const r13 = combine(c('c:p:1,0'), c('b:pow'), c('c:13'));
+  assert.ok(isHole(r13, 'unrepresentable'), `x ^ 13：${r13.msg ?? r13.text}`);
+});
+
+test('错误都带 reason：没有这条法是 type，没有定义是 undefined，表示不了是 unrepresentable', () => {
+  const REASONS = ['type', 'undefined', 'unrepresentable'];
+  const vec = parseVKey('v:1,0');
+  const res = parseVKey('[3]12');
+  const cases = [
+    ['x ÷ (x + 1)', binV('div', X, P(1, 1))], // 分式
+    ['1 ÷ x', binV('div', ONE, X)],
+    ['x ÷ 0', binV('div', X, ZERO)],
+    ['2 ^ x', binV('pow', R(2), X)], // 指数上有 x
+    ['x ^ x', binV('pow', X, X)],
+    ['x ^ 1/2', binV('pow', X, R(1, 2))],
+    ['x ^ −1', binV('pow', X, R(-1))],
+    ['x mod 2', binV('mod', X, R(2))],
+    ['2 mod x', binV('mod', R(2), X)],
+    ['(1, 0)′', applyU(D, vec)], // 具名算子
+    ['∫ [3]₁₂', applyU(INT, res)],
+    ['x² + 1 代入 (1, 0)', applyU(fnU(P(1, 0, 1)), vec)], // 当函数用
+  ];
+  for (const [what, r] of cases) {
+    assert.ok(r && typeof r.err === 'string', `${what} 应该报错`);
+    assert.ok(REASONS.includes(r.reason), `${what} 的 reason 是 ${r.reason}`);
+  }
+  // 具体的类别
+  assert.equal(binV('div', X, P(1, 1)).reason, 'unrepresentable', '多项式 ÷ 多项式得到分式');
+  assert.equal(binV('div', X, ZERO).reason, 'undefined', '除以 0');
+  assert.equal(binV('mod', X, R(2)).reason, 'type', '取余用在多项式上');
 });
 
 // ───────────────────────── 求导与积分 ─────────────────────────

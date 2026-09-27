@@ -190,13 +190,14 @@ const nameOf = { q: '数', vec: '向量', mat: '矩阵' };
 const MSG_SINGULAR = m => `${fmtMat(m)} 的行列式是 0，没有逆矩阵。`;
 const MSG_VEC_MAT = '列向量不能放在矩阵左边。要变换一个向量，请把矩阵放左边：矩阵 × 向量。';
 
+// 出错时返回 { err, reason }，reason 的三类见 docs/v03-step1.md 第 2 节
 function linBin(op, x, y) {
   const kx = kindOf(x);
   const ky = kindOf(y);
   // 另一边是别的领域的类型：交给它们处理
   if (kx === null || ky === null) return undefined;
   const k = `${kx}|${ky}`;
-  const noOp = why => ({ err: `${nameOf[kx]}和${nameOf[ky]}之间没有「${BIN[op].name}」：${why}` });
+  const noOp = why => ({ err: `${nameOf[kx]}和${nameOf[ky]}之间没有「${BIN[op].name}」：${why}`, reason: 'type' });
 
   switch (op) {
     case 'add':
@@ -221,17 +222,17 @@ function linBin(op, x, y) {
       if (k === 'mat|q') return scaleM(y, x);
       if (k === 'mat|mat') return mulM(x, y);
       if (k === 'mat|vec') return mulMV(x, y);
-      return { err: MSG_VEC_MAT };
+      return { err: MSG_VEC_MAT, reason: 'type' };
     }
     case 'div': {
       if (ky === 'q') {
-        if (y.n === 0) return { err: '不能除以 0。' };
+        if (y.n === 0) return { err: '不能除以 0。', reason: 'undefined' };
         return kx === 'vec' ? scaleV(inv(y), x) : scaleM(inv(y), x);
       }
       if (ky === 'mat') {
-        if (kx === 'vec') return { err: '向量不能除以矩阵。想"撤销"一个变换，用它的逆矩阵去乘：M⁻¹ × 向量。' };
+        if (kx === 'vec') return { err: '向量不能除以矩阵。想"撤销"一个变换，用它的逆矩阵去乘：M⁻¹ × 向量。', reason: 'type' };
         const yi = invM(y);
-        if (yi === null) return { err: MSG_SINGULAR(y) };
+        if (yi === null) return { err: MSG_SINGULAR(y), reason: 'undefined' };
         if (!isMat(yi)) return yi;
         return kx === 'q' ? scaleM(x, yi) : mulM(x, yi);
       }
@@ -241,10 +242,11 @@ function linBin(op, x, y) {
     }
     case 'pow': {
       if (k === 'mat|q') {
-        if (!isInt(y)) return { err: `矩阵只能做整数次方，${fmtR(y)} 次方算不了。` };
+        // 分数次方（矩阵开方）在更大的世界里可能有结果，只是这里写不出来
+        if (!isInt(y)) return { err: `矩阵只能做整数次方，${fmtR(y)} 次方算不了。`, reason: 'unrepresentable' };
         if (Math.abs(y.n) > 1e6) return OVER;
         const r = powM(x, y.n);
-        if (r === null) return { err: `${MSG_SINGULAR(x)}所以它的负数次方也没有。` };
+        if (r === null) return { err: `${MSG_SINGULAR(x)}所以它的负数次方也没有。`, reason: 'undefined' };
         return r;
       }
       if (kx === 'vec') return noOp('向量乘向量是点积，得到的是数，再往下就乘不动了。');
@@ -348,9 +350,9 @@ registerType({
 
 const onlyMat = (what, f, whyNotVec) => x => {
   if (isMat(x)) return f(x);
-  if (isVec(x)) return { err: `${what}只对矩阵有定义。${whyNotVec}` };
-  if (isR(x)) return { err: `${what}只对矩阵有定义，数没有${what}。` };
-  return { err: `${what}只对矩阵有定义。` };
+  if (isVec(x)) return { err: `${what}只对矩阵有定义。${whyNotVec}`, reason: 'type' };
+  if (isR(x)) return { err: `${what}只对矩阵有定义，数没有${what}。`, reason: 'type' };
+  return { err: `${what}只对矩阵有定义。`, reason: 'type' };
 };
 
 registerNamed({

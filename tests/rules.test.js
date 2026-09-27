@@ -61,9 +61,11 @@ test('单卡运算', () => {
   assert.equal(combine(c('c:1'), c('b:div'), c('c:3')).item.id, 'c:1/3');
   assert.equal(combine(c('c:4'), c('b:pow'), c('c:1/2')).item.id, 'c:2');
   assert.equal(combine(c('c:2'), c('b:pow'), c('c:-2')).item.id, 'c:1/4');
-  assert.equal(combine(c('c:1'), c('b:div'), c('c:0')).ok, false);
-  assert.equal(combine(c('c:2'), c('b:pow'), c('c:1/2')).ok, false);
-  assert.equal(combine(c('c:10'), c('b:pow'), c('c:9')).ok, false);
+  // 算不出的值不再是失败，而是分岔：得到为空，带一张缺口
+  const hole = (res, kind) => res.ok && res.item === null && res.holes.length === 1 && res.holes[0].v.kind === kind;
+  assert.ok(hole(combine(c('c:1'), c('b:div'), c('c:0')), 'undefined'));
+  assert.ok(hole(combine(c('c:2'), c('b:pow'), c('c:1/2')), 'unrepresentable'));
+  assert.ok(hole(combine(c('c:10'), c('b:pow'), c('c:9')), 'unrepresentable'));
 });
 
 test('图鉴外的卡组会成为未命名卡组，并且不会被误认', () => {
@@ -111,7 +113,7 @@ test('做法文字', () => {
 
 // ───────────── 审查回归：探针之外的差别、定义域、溢出 ─────────────
 
-const C = (a, b, c) => combine(a, b, c);
+const C = (a, b, c, w = null) => combine(a, b, c, w);
 const rr = resolveRef;
 const isUnnamed = res => res.ok && res.item.id.startsWith('d:~');
 
@@ -148,9 +150,11 @@ test('复合的化简不放过定义域外的输入', () => {
   assert.ok(lg.ok);
   assert.notEqual(lg.item.id, 'u:aff(1,0)');
   assert.equal(C(rr('d:Z'), lg.item, null).item.id, 'd:P2', 'ℤ 经 2^(log₂x) 是 2ⁿ');
-  assert.equal(C(rr('c:3'), lg.item, null).ok, false);
+  const r3 = C(rr('c:3'), lg.item, null);
+  assert.ok(r3.ok && r3.item === null && r3.holes[0].v.kind === 'unrepresentable');
   const inv2 = C(rr('u:recip'), rr('m:compose'), rr('u:recip')).item;
-  assert.equal(C(rr('c:0'), inv2, null).ok, false, '1/(1/0) 没有定义');
+  const r0 = C(rr('c:0'), inv2, null);
+  assert.ok(r0.ok && r0.item === null && r0.holes[0].v.kind === 'undefined', '1/(1/0) 没有定义');
 });
 
 test('视野外的卡组做常数算子、(−1)ˣ 不会被认成空集', () => {
@@ -179,8 +183,8 @@ test('溢出与边界：溢出的成员不会被悄悄丢掉；轨道末尾、�
   assert.equal(C(rr('c:1'), rr('b:pow'), rr('c:1/13')).item.id, 'c:1');
   assert.equal(C(rr('c:0'), rr('b:pow'), rr('c:1/13')).item.id, 'c:0');
   const r13 = C(rr('c:8192'), rr('b:pow'), rr('c:1/13'));
-  assert.equal(r13.ok, false);
-  assert.match(r13.msg, /分母/);
+  assert.ok(r13.ok && r13.item === null && r13.holes[0].v.kind === 'unrepresentable');
+  assert.match(r13.text, /分母/);
   const m8 = C(rr('c:-8'), rr('b:pow'), null).item;
   assert.equal(C(rr('d:Unit'), m8, null).item.v.has(R(-2)), true, '(−8)^(1/3) = −2 在像里');
 });
@@ -195,4 +199,105 @@ test('多项式当算子用的卡组能存档重建；预览和提示', () => {
   assert.match(cl.text, /超出/);
   assert.match(C(rr('c:[3]12'), rr('b:add'), rr('c:q:1|1,0,0')).msg, /模 12 和 长度/);
   assert.match(C(null, rr('b:mod'), rr('c:1/2')).msg, /不小于 2 的整数/);
+});
+
+// ───────────── v0.3 第 1 步：缺口、分岔、填、反推 ─────────────
+
+const holeOf = (res, kind) => res.holes.find(h => h.v.kind === kind);
+
+test('分岔：得到 + 缺口，没有底板时所有做法不变', () => {
+  const N = rr('d:N');
+  // 没有底板：ℕ − ℕ 就是 ℤ，和以前一样
+  assert.equal(C(N, rr('b:sub'), N).item.id, 'd:Z');
+  // 有底板：得到 ℕ，缺口是负整数，可以填成 ℤ
+  const r = C(N, rr('b:sub'), N, N);
+  assert.ok(r.ok);
+  assert.equal(r.item.id, 'd:N');
+  const h = holeOf(r, 'outside');
+  assert.ok(h, '应该有越出世界的缺口');
+  assert.equal(h.v.name, '负整数');
+  assert.equal(h.v.status, 'fillable');
+  assert.equal(h.v.targetId, 'Z');
+  // 守恒：越出的部分和底板不相交
+  for (const x of [R(-1), R(-5), R(-20)]) assert.equal(h.v.where.has(x), true);
+  for (const x of [R(0), R(3)]) assert.equal(h.v.where.has(x), false);
+  // 值级：1 − 2 在 ℕ 里
+  const v = C(rr('c:1'), rr('b:sub'), rr('c:2'), N);
+  assert.ok(v.ok && v.item === null && holeOf(v, 'outside').v.targetId === 'Z');
+  // 没有定义 / 表示不了
+  const zero = C(rr('d:Z'), rr('u:recip'), null);
+  assert.ok(zero.item.id.startsWith('d:~'));
+  assert.equal(holeOf(zero, 'undefined').v.status, 'unfillable');
+  const root = C(N, rr('u:sqrt'), null);
+  assert.equal(root.item.id, 'd:N', '完全平方数开方正好得到 ℕ');
+  assert.equal(holeOf(root, 'unrepresentable').v.status, 'frontier');
+  // ℤ ÷ ℤ 在 ℤ 里：两种缺口同时出现
+  const dv = C(rr('d:Z'), rr('b:div'), rr('d:Z'), rr('d:Z'));
+  assert.equal(dv.item.id, 'd:Z');
+  assert.equal(holeOf(dv, 'undefined').v.status, 'unfillable');
+  assert.equal(holeOf(dv, 'outside').v.targetId, 'Q');
+  // 延展和封闭也会分岔
+  const orb = C(rr('c:3'), rr('m:extend'), rr('u:pred'), N);
+  assert.equal(previewDeck(orb.item.v), '{0, 1, 2, 3}');
+  assert.equal(holeOf(orb, 'outside').v.targetId, 'Z');
+  const cl = C(rr('c:2'), rr('m:closure'), rr('b:div'), rr('d:Z'));
+  assert.equal(holeOf(cl, 'outside').v.targetId, 'Q');
+});
+
+test('缺口卡当材料；填与手填的三档', () => {
+  const N = rr('d:N');
+  const h = holeOf(C(N, rr('b:sub'), N, N), 'outside');
+  assert.equal(C(N, rr('m:union'), h).item.id, 'd:Z', 'ℕ ∪ 缺口(负整数) = ℤ');
+  const auto = C(h, rr('m:fill'), null);
+  assert.equal(auto.item.id, 'd:Z');
+  assert.equal(auto.grade, 'auto');
+  assert.equal(auto.filled, h.id);
+  const exact = C(h, rr('m:fill'), C(N, rr('m:union'), rr('d:NegZ')).item);
+  assert.equal(exact.grade, 'exact');
+  assert.equal(exact.item.id, 'd:Z');
+  const over = C(h, rr('m:fill'), rr('d:Q'));
+  assert.equal(over.grade, 'over');
+  assert.equal(C(h, rr('m:fill'), C(N, rr('m:union'), rr('c:-1')).item).ok, false, '没包住缺的部分');
+  assert.equal(C(h, rr('m:fill'), rr('d:Even')).ok, false, '没包住出发世界');
+  // 前沿：√ 的缺口没有目标；用 ℚ 手填不合规
+  const root = holeOf(C(N, rr('u:sqrt'), null), 'unrepresentable');
+  assert.equal(C(root, rr('m:fill'), null).ok, false);
+  assert.equal(C(root, rr('m:fill'), rr('d:Q')).ok, false);
+  // 补不上：除以 0
+  const zero = holeOf(C(rr('d:Z'), rr('u:recip'), null), 'undefined');
+  assert.equal(C(zero, rr('m:fill'), null).ok, false);
+  // 手填时候选包住了缺的部分、却关不住法：给出新的缺口而不是失败
+  const cl = holeOf(C(rr('c:2'), rr('m:closure'), rr('b:div'), rr('d:Z')), 'outside');
+  assert.equal(previewDeck(cl.v.where), '{1/2}');
+  const half = C(rr('d:Z'), rr('m:union'), rr('c:1/2')).item;
+  const again = C(cl, rr('m:fill'), half);
+  assert.ok(again.ok && again.item === null && holeOf(again, 'outside'), '1/2 ÷ 2 = 1/4 又跑出去了');
+  // 手填时没包住缺的部分：直接提示
+  const dv = holeOf(C(rr('d:Z'), rr('b:div'), rr('d:Z'), rr('d:Z')), 'outside');
+  assert.equal(C(dv, rr('m:fill'), half).ok, false);
+});
+
+test('反推', () => {
+  assert.equal(previewDeck(C(rr('c:4'), rr('m:reverse'), rr('u:sq')).item.v), '{−2, 2}');
+  assert.equal(C(rr('d:Even'), rr('m:reverse'), rr('u:succ')).item.id, 'd:Odd');
+  assert.equal(C(rr('d:N'), rr('m:reverse'), rr('u:sq')).item.id, 'd:Z');
+  assert.equal(previewDeck(C(rr('c:8'), rr('m:reverse'), rr('u:exp2')).item.v), '{3}');
+  const dd = C(rr('c:1'), rr('m:reverse'), rr('u:D'));
+  assert.ok(dd.ok && dd.item.v.has(resolveRef('c:p:1,5').v) === true, '求导得 1 的多项式包括 x + 5');
+  assert.equal(C(rr('c:1'), rr('m:reverse'), rr('u:DET')).item.v.has(resolveRef('c:m:1,0,0,1').v), true);
+  // 有底板时反推也限制在世界里
+  const rv = C(rr('c:4'), rr('m:reverse'), rr('u:sq'), rr('d:N'));
+  assert.equal(previewDeck(rv.item.v), '{2}');
+  assert.ok(holeOf(rv, 'outside'));
+});
+
+test('缺口卡和带底板的卡组能存档重建', () => {
+  const N = rr('d:N');
+  const r = C(N, rr('b:sub'), N, N);
+  const h = holeOf(r, 'outside');
+  assert.equal(itemFromDesc(JSON.parse(JSON.stringify(h.desc)))?.id, h.id);
+  const orb = C(rr('c:3'), rr('m:extend'), rr('u:pred'), N).item;
+  assert.equal(itemFromDesc(JSON.parse(JSON.stringify(orb.desc)))?.id, orb.id);
+  // 同一个缺口每次是同一张卡
+  assert.equal(holeOf(C(N, rr('b:sub'), N, N), 'outside').id, h.id);
 });

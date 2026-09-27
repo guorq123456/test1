@@ -35,7 +35,7 @@ import {
   sup,
   subscript,
 } from './math.js';
-import { BIN, binV, isV, vkey, fmtV, parseVKey, TYPES, defOf, eqV, typeOf } from './values.js';
+import { BIN, binV, isV, vkey, fmtV, parseVKey, TYPES, defOf, eqV, typeOf, powQ, logQ } from './values.js';
 
 // 乘法可交换的类型（矩阵不在里面）
 const COMMUTATIVE = new Set(['q', 'mod', 'poly', 'qty']);
@@ -92,11 +92,11 @@ export function applyU(f, x) {
       return f.b.n === 0 ? ax : binV('add', ax, f.b);
     }
     case 'pow':
-      return isR(x) ? rpow(x, f.n) : binV('pow', x, f.n);
+      return isR(x) ? powQ(x, f.n) : binV('pow', x, f.n);
     case 'exp':
-      return isR(x) ? rpow(f.c, x) : null;
+      return isR(x) ? powQ(f.c, x) : { err: `${fmtV(x)} 不是数，不能当指数。`, reason: 'type' };
     case 'log':
-      return isR(x) ? rlog(f.c, x) : null;
+      return isR(x) ? logQ(f.c, x) : { err: `${fmtV(x)} 不是数，不能取对数。`, reason: 'type' };
     case 'bind':
       return f.side === 'r' ? binV(f.op, x, f.c) : binV(f.op, f.c, x);
     case 'named': {
@@ -302,7 +302,8 @@ export function preU(f, y) {
 
 // ───────────────────────── 公式显示 ─────────────────────────
 
-const isAtom = s => s === 'x';
+// 不用加括号的输入写法：变量 x，或者一个非负整数（√2、10⁹）
+const isAtom = s => s === 'x' || /^\d+$/.test(s);
 const isTight = s => !/\s/.test(s);
 // 放在分数线前面时需要括号的情况
 const tightDiv = s => (!isTight(s) || s.includes('/') ? `(${s})` : s);
@@ -350,7 +351,9 @@ function fmtPow(n, s) {
 
 function fmtExp(c, s) {
   const base = c.n > 0 && c.d === 1 ? fmtR(c) : `(${fmtR(c)})`;
-  return isAtom(s) ? `${base}ˣ` : `${base}^(${s})`;
+  if (s === 'x') return `${base}ˣ`;
+  if (/^\d+$/.test(s)) return `${base}${sup(s)}`;
+  return `${base}^(${s})`;
 }
 
 function fmtLog(c, s) {

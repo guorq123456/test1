@@ -27,6 +27,7 @@ import {
   TYPES,
   baseType,
   MSG_OVER,
+  classify,
 } from './values.js';
 import { applyU, preU, invertU, isQStructural } from './unary.js';
 
@@ -250,17 +251,32 @@ function affOrbitHas(c, f, y) {
 const ORBIT_STEPS = 400;
 
 // 延展：从 c 出发反复做 f
-export function orbitDeck(c, f, name) {
+// W 是底板上的世界（可选）：走出 W 就停下，跑出去的那一步记在 escaped 里
+export function orbitDeck(c, f, name, W = null) {
+  if (W && W.has(c) === false) {
+    const E = finiteDeck([], name);
+    E.escaped = [c];
+    return E;
+  }
   const seq = [c];
   const seen = new Set([vkey(c)]);
   let x = c;
   let open = true;
   let overflow = false;
+  let fail = null; // 走到没有定义 / 表示不了的地方：{ kind, x }
+  let escaped = null;
   for (let i = 0; i < ORBIT_STEPS; i++) {
     const y = applyU(f, x);
     if (!isV(y)) {
       open = false;
       overflow = y === OVER;
+      const kind = classify(y);
+      if (!overflow && (kind === 'undefined' || kind === 'unrepresentable')) fail = { kind, x };
+      break;
+    }
+    if (W && W.has(y) === false) {
+      open = false;
+      escaped = [y];
       break;
     }
     const k = vkey(y);
@@ -273,7 +289,12 @@ export function orbitDeck(c, f, name) {
     x = y;
   }
   // 走进了循环，或者走到没有定义的地方停下：有限卡组
-  if (!open && !overflow) return finiteDeck(seq, name);
+  if (!open && !overflow) {
+    const F = finiteDeck(seq, name);
+    if (fail) F.fail = fail;
+    if (escaped) F.escaped = escaped;
+    return F;
+  }
   const type = sameType(seq);
   const extra = { name, seq: seq.slice(0, 6), type, orbit: { c, f } };
   if (isR(c) && f.t === 'aff' && type === 'q') {
@@ -285,10 +306,16 @@ export function orbitDeck(c, f, name) {
   return mkDeck('orbit', y => seen.has(vkey(y)), { ...extra, approx: open, elems: seq });
 }
 
-// 封闭：从 D 出发，用 b 反复组合（在视野里算）
-export function closureDeck(D, b, name) {
+// 封闭：从 D 出发，用 b 反复组合（在视野里算）。
+// opts.world：底板上的世界，跑出去的结果不参与组合，记在 escaped 里；
+// opts.onFail(kind, x, y)：某一对算不出（没有定义 / 表示不了）时回调
+export function closureDeck(D, b, name, opts = {}) {
+  const W = opts.world ?? null;
   const fin = !!D.list;
-  const seeds = sampleOf(D);
+  const seeds0 = sampleOf(D);
+  const escaped = new Map();
+  const seeds = W ? seeds0.filter(x => W.has(x) !== false) : seeds0;
+  if (W) for (const x of seeds0) if (W.has(x) === false && escaped.size < 64) escaped.set(vkey(x), x);
   const cap = sizeCapFor(D.type);
   const budget = opBudgetFor(D.type);
   const hmax = fin ? Math.min(2000, Math.max(cap, 2 * Math.max(1, ...seeds.map(sizeV)))) : cap;
@@ -303,9 +330,17 @@ export function closureDeck(D, b, name) {
     rounds++;
     const cur = [...all.values()];
     const fresh = [];
-    const tryAdd = z => {
+    const tryAdd = (z, x, y) => {
       if (!isV(z)) {
         if (z === OVER) dropped = true;
+        else if (opts.onFail) {
+          const kind = classify(z);
+          if (kind === 'undefined' || kind === 'unrepresentable') opts.onFail(kind, x, y);
+        }
+        return;
+      }
+      if (W && W.has(z) === false) {
+        if (escaped.size < 64) escaped.set(vkey(z), z);
         return;
       }
       if (sizeV(z) > hmax) {
@@ -321,8 +356,8 @@ export function closureDeck(D, b, name) {
     };
     for (const x of frontier) {
       for (const y of cur) {
-        tryAdd(binV(b.id, x, y));
-        if (!b.comm) tryAdd(binV(b.id, y, x));
+        tryAdd(binV(b.id, x, y), x, y);
+        if (!b.comm) tryAdd(binV(b.id, y, x), y, x);
       }
       ops += cur.length * 2;
       if (ops > budget || all.size > 4000) {
@@ -334,17 +369,21 @@ export function closureDeck(D, b, name) {
     frontier = fresh;
   }
   if (frontier.length) dropped = true;
-  if (fin && !dropped) return finiteDeck([...all.values()], name);
-  const out = approxDeck([...all.values()], name);
-  if (dropped) {
-    out.truncated = true; // 有些结果因为太大没算进来，"直到得不到新卡"并不成立
-    if (lost.length) out.lost = lost;
+  let out;
+  if (fin && !dropped) out = finiteDeck([...all.values()], name);
+  else {
+    out = approxDeck([...all.values()], name);
+    if (dropped) {
+      out.truncated = true; // 有些结果因为太大没算进来，"直到得不到新卡"并不成立
+      if (lost.length) out.lost = lost;
+    }
   }
+  if (escaped.size) out.escaped = [...escaped.values()];
   return out;
 }
 
-// 两个卡组两两运算：{a ∘ b | a ∈ A, b ∈ B}
-export function pairwiseDeck(A, b, B, name) {
+// 两个卡组两两运算：{a ∘ b | a ∈ A, b ∈ B}。onFail(kind, x, y) 在某一对算不出时回调
+export function pairwiseDeck(A, b, B, name, onFail = null) {
   // 有一边是空集，结果一定是空集
   if ((A.list && !A.list.length) || (B.list && !B.list.length)) return finiteDeck([], name);
   const fin = !!(A.list && B.list);
@@ -361,7 +400,13 @@ export function pairwiseDeck(A, b, B, name) {
       const z = binV(b.id, x, y);
       if (!isV(z)) {
         if (z === OVER) over = true;
-        else if (!err && z && typeof z === 'object' && z.err) err = z.err;
+        else {
+          if (!err && z && typeof z === 'object' && z.err) err = z.err;
+          if (onFail) {
+            const kind = classify(z);
+            if (kind === 'undefined' || kind === 'unrepresentable') onFail(kind, x, y);
+          }
+        }
         continue;
       }
       if (!fin) {
@@ -474,6 +519,204 @@ export function groupInfo(D, ops = ['add', 'mul']) {
     out[op] = { closed, identity, inverses, group: closed && !!identity && inverses };
   }
   return out;
+}
+
+// ───────────────────────── 分岔：得到 + 缺口 ─────────────────────────
+// 每个 *Partition 返回 { got, holes }：got 是成立的那部分（卡组），
+// holes 是 [{ kind, where, side? }]，kind ∈ 'undefined' | 'unrepresentable' | 'outside'，where 是卡组。
+// 太大（OVER）不算缺口，仍走原来的 incomplete / truncated 提示。
+
+// A ∖ B
+export function diffDeck(A, B, name) {
+  if (A.list) return finiteDeck(A.list.filter(x => B.has(x) === false), name);
+  return mkDeck(
+    'diff',
+    x => {
+      const a = A.has(x);
+      if (a === false) return false;
+      const b = B.has(x);
+      if (b === true) return false;
+      return a === null || b === null ? null : true;
+    },
+    { name, type: A.type, approx: A.approx || B.approx, src: [A, B], sample: () => sampleOf(A).filter(x => B.has(x) === false) },
+  );
+}
+
+// 看起来一张卡都没有（有限且空，或者代表成员为空）
+export function isBlank(D) {
+  if (D.list) return D.list.length === 0;
+  if (D.elems) return D.elems.length === 0;
+  return sampleOf(D).length === 0;
+}
+
+// 把结果限制在底板世界里：{ got: D ∩ W, outside: D ∖ W }；没有底板就原样返回
+export function restrictToWorld(D, W, name) {
+  if (!W) return { got: D, outside: null };
+  const got = interDeck(D, W, name);
+  got.truncated = D.truncated;
+  got.lost = D.lost;
+  const outside = diffDeck(D, W, `${name} ∖ ${W.name}`);
+  return { got, outside: isBlank(outside) ? null : outside };
+}
+
+// 一批走不通的输入做成"卡在哪里"的卡组
+function whereDeck(vals, D) {
+  if (D.list) return finiteDeck(vals, '');
+  const m = new Map(vals.map(x => [vkey(x), x]));
+  const list = [...m.values()].sort(cmpV);
+  return mkDeck('hole', x => m.has(vkey(x)), { approx: true, elems: list, type: D.type });
+}
+
+// 卡组 D 里的每张卡做 f
+export function imagePartition(D, f, name, W = null) {
+  const got0 = imageDeck(D, f, name);
+  const bad = { undefined: [], unrepresentable: [] };
+  for (const x of sampleOf(D)) {
+    const r = applyU(f, x);
+    if (r === OVER) continue;
+    const k = classify(r);
+    if (k === 'undefined' || k === 'unrepresentable') bad[k].push(x);
+  }
+  const holes = [];
+  for (const k of ['undefined', 'unrepresentable']) {
+    if (!bad[k].length) continue;
+    const where = D.list
+      ? finiteDeck(bad[k], '')
+      : mkDeck(
+          'hole',
+          x => {
+            const h = D.has(x);
+            if (h !== true) return h;
+            const r = applyU(f, x);
+            return r !== OVER && classify(r) === k;
+          },
+          { type: D.type, approx: D.approx, sample: () => bad[k] },
+        );
+    holes.push({ kind: k, where });
+  }
+  const { got, outside } = restrictToWorld(got0, W, name);
+  if (outside) holes.push({ kind: 'outside', where: outside });
+  return { got, holes };
+}
+
+// 收集两两运算里算不出的那些对：记在失败值更集中的那一边
+function collectFails() {
+  const bad = { undefined: { l: new Map(), r: new Map() }, unrepresentable: { l: new Map(), r: new Map() } };
+  const onFail = (k, x, y) => {
+    bad[k].l.set(vkey(x), x);
+    bad[k].r.set(vkey(y), y);
+  };
+  const holesOf = (A, B) => {
+    const holes = [];
+    for (const k of ['undefined', 'unrepresentable']) {
+      const { l, r } = bad[k];
+      if (!l.size) continue;
+      const side = r.size <= l.size ? 'r' : 'l';
+      const vals = [...(side === 'r' ? r : l).values()];
+      holes.push({ kind: k, where: whereDeck(vals, side === 'r' ? B : A), side });
+    }
+    return holes;
+  };
+  return { onFail, holesOf };
+}
+
+// A 和 B 两两做 b
+export function pairwisePartition(A, b, B, name, W = null) {
+  const { onFail, holesOf } = collectFails();
+  const got0 = pairwiseDeck(A, b, B, name, onFail);
+  const holes = holesOf(A, B);
+  const { got, outside } = restrictToWorld(got0, W, name);
+  if (outside) holes.push({ kind: 'outside', where: outside });
+  got.err = got0.err;
+  got.dropped = got0.dropped;
+  return { got, holes };
+}
+
+// 从 D 出发在 b 下封闭（有底板时在底板里进行）
+export function closurePartition(D, b, name, W = null) {
+  const { onFail, holesOf } = collectFails();
+  const got = closureDeck(D, b, name, { world: W, onFail });
+  const holes = holesOf(D, D);
+  if (got.escaped?.length) holes.push({ kind: 'outside', where: whereDeck(got.escaped, D) });
+  return { got, holes };
+}
+
+// 从 c 出发反复做 f（有底板时走出底板就停）
+export function orbitPartition(c, f, name, W = null) {
+  const got = orbitDeck(c, f, name, W);
+  const holes = [];
+  if (got.fail) holes.push({ kind: got.fail.kind, where: finiteDeck([got.fail.x], '') });
+  if (got.escaped?.length) holes.push({ kind: 'outside', where: finiteDeck(got.escaped, '') });
+  return { got, holes };
+}
+
+// ───────────────────────── 反推与封闭性 ─────────────────────────
+
+// 原像落在哪个类型里：在各类型的视野里试 f，结果落进 T 最多的那个类型（相同时优先 T 的类型）
+function domainTypeOf(f, T) {
+  const hint = T.type;
+  const hits = t => windowFor(t).slice(0, 80).filter(x => T.has(applyU(f, x)) === true).length;
+  let best = hint;
+  let bestN = hits(hint);
+  for (const t of TYPES.keys()) {
+    if (t === baseType(hint)) continue;
+    const n = hits(t);
+    if (n > bestN) {
+      best = t;
+      bestN = n;
+    }
+  }
+  return { type: best, any: bestN > 0 };
+}
+
+// 反推：{ x | f(x) ∈ T }
+export function preimageDeck(f, T, name) {
+  // 有理数上的结构化算子、有限目标：用原像公式算出精确的有限卡组
+  if (T.list && T.type === 'q' && isQStructural(f)) {
+    const xs = [];
+    let pred = false;
+    for (const y of T.list) {
+      const p = preU(f, y);
+      if (p.pred) {
+        pred = true;
+        break;
+      }
+      xs.push(...p.list);
+    }
+    if (!pred) return finiteDeck(xs, name);
+  }
+  const { type, any } = domainTypeOf(f, T);
+  if (!any && T.list) return finiteDeck([], name);
+  const D = mkDeck(
+    'preimage',
+    x => {
+      const y = applyU(f, x);
+      if (y === OVER) return null; // 太大算不出，不知道
+      return isV(y) ? T.has(y) : false;
+    },
+    { name, type, approx: T.approx, sample: () => windowFor(type).filter(x => D.has(x) === true) },
+  );
+  return D;
+}
+
+// 法在卡组 K 上封不封闭：law = { t: 'un', f } 或 { t: 'bin', b }
+// 返回 { escaped: 跑出 K 的结果, unrep: 有写不出来的结果 }
+export function lawClosedOn(K, law, limit = 40) {
+  const s = sampleOf(K).slice(0, limit);
+  const escaped = new Map();
+  let unrep = false;
+  const cap = K.approx ? sizeCapFor(K.type) : Infinity;
+  const check = z => {
+    const c = classify(z);
+    if (c === 'unrepresentable' && z !== OVER) unrep = true;
+    if (c === 'ok' && sizeV(z) <= cap && K.has(z) === false && escaped.size < 64) escaped.set(vkey(z), z);
+  };
+  if (law.t === 'un') for (const x of s) check(applyU(law.f, x));
+  else {
+    const s2 = s.slice(0, 24);
+    for (const x of s2) for (const y of s2) check(binV(law.b.id, x, y));
+  }
+  return { escaped: [...escaped.values()], unrep };
 }
 
 // 简单的字符串哈希，用来给未命名卡组起编号

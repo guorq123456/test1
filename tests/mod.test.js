@@ -211,6 +211,43 @@ test('余数再取余：只有模数整除时才行', () => {
   assert.ok(isErr(binV('cat', k('[1]12'), k('[2]12'))));
 });
 
+test('错误都带 reason：没有这条法是 type，没有定义是 undefined，表示不了是 unrepresentable', () => {
+  const REASONS = ['type', 'undefined', 'unrepresentable'];
+  const cases = [
+    ['add', k('[1]12'), k('[1]7')], // 不同模数
+    ['mul', k('[1]12'), k('[1]7')],
+    ['div', k('[1]12'), k('[4]12')], // 没有逆元
+    ['div', k('[1]12'), k('[0]12')], // 除以 [0]
+    ['pow', k('[2]12'), R(-1)], // 负指数要用逆元
+    ['pow', k('[2]12'), R(1, 2)], // 分数指数
+    ['pow', k('[2]12'), k('[3]12')], // 指数是余数
+    ['pow', R(2), k('[3]12')],
+    ['add', k('[3]12'), R(1, 2)], // 分数化不成余数
+    ['mul', R(1, 2), k('[3]12')],
+    ['mod', k('[7]12'), R(5)], // 5 不整除 12
+    ['mod', k('[7]12'), R(1)],
+    ['mod', k('[7]12'), k('[2]12')], // 对余数取余
+    ['mod', R(7), k('[2]12')],
+    ['mod', R(5), R(0)], // 模数不合法
+    ['mod', R(5), R(1)],
+    ['mod', R(5), R(-3)],
+    ['mod', R(5), R(1, 2)],
+    ['mod', R(1, 2), R(5)], // 分数取余
+  ];
+  for (const [op, x, y] of cases) {
+    const r = binV(op, x, y);
+    const what = `${fmtV(x)} ${op} ${fmtV(y)}`;
+    assert.ok(isErr(r), `${what} 应该报错`);
+    assert.ok(REASONS.includes(r.reason), `${what} 的 reason 是 ${r.reason}`);
+  }
+  // 当一元算子用时 reason 也带出来
+  assert.ok(REASONS.includes(applyU(powU(NEG1), k('[2]12')).reason));
+  // 具体的类别
+  assert.equal(binV('div', k('[1]12'), k('[4]12')).reason, 'undefined', '[4]₁₂ 没有逆元');
+  assert.equal(binV('add', k('[1]12'), k('[1]7')).reason, 'type', '不同模数');
+  assert.equal(binV('pow', k('[2]12'), R(1, 2)).reason, 'unrepresentable', '余数的分数次方');
+});
+
 test('视野与探针：全部 n 个余数', () => {
   const w = windowFor('mod:12');
   assert.equal(w.length, 12);
@@ -264,6 +301,7 @@ test('合成台上的用法与文字', () => {
   assert.equal(z5.item.v.list.length, 5);
   const big = combine(c('d:Z'), c('b:mod'), c('c:1000'));
   assert.ok(big.ok);
+  // ℤ mod 1 在绑定 x mod 1 时就被拦下了（核心的 bindRight：对任何输入都算不出），还没走到分岔
   assert.equal(combine(c('d:Z'), c('b:mod'), c('c:1')).ok, false);
   // 单卡 mod 卡组：每张卡都算不出（模数不能是余数），引擎给出解释而不是空集
   const none = combine(c('c:5'), c('b:mod'), c('d:Z12'));

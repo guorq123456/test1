@@ -244,6 +244,7 @@ registerType({
   probes: PROBES_P,
   probesSmall: PROBES_SMALL_P,
   sizeCap: SIZE_CAP,
+  // 出错时返回 { err, reason }，reason 的三类见 docs/v03-step1.md 第 2 节
   bin(op, x, y) {
     const px = isP(x);
     const py = isP(y);
@@ -258,16 +259,22 @@ registerType({
       case 'mul':
         return mulP(x, y);
       case 'div':
-        if (py) return { err: MSG_DIV };
-        if (y.n === 0) return { err: '不能除以 0。' };
+        if (py) return { err: MSG_DIV, reason: 'unrepresentable' };
+        if (y.n === 0) return { err: '不能除以 0。', reason: 'undefined' };
         return scaleP(x, inv(y));
       case 'pow':
-        if (py) return { err: `指数得是一个数。像 ${fmtV(x)} 的 ${fmtV(y)} 次方这样把 x 放在指数上，得到的不是多项式。` };
-        if (!isInt(y)) return { err: `多项式只能做整数次方：${fmtV(x)} 的 ${fmtR(y)} 次方一般开不出来。` };
-        if (y.n < 0) return { err: '多项式的负数次方会得到分式（比如 1/x），不是多项式。' };
+        // 2ˣ、xˣ 和分式一样：结果是函数，只是不是多项式，所以算"表示不了"
+        if (py) {
+          return {
+            err: `指数得是一个数。像 ${fmtV(x)} 的 ${fmtV(y)} 次方这样把 x 放在指数上，得到的不是多项式。`,
+            reason: 'unrepresentable',
+          };
+        }
+        if (!isInt(y)) return { err: `多项式只能做整数次方：${fmtV(x)} 的 ${fmtR(y)} 次方一般开不出来。`, reason: 'unrepresentable' };
+        if (y.n < 0) return { err: '多项式的负数次方会得到分式（比如 1/x），不是多项式。', reason: 'unrepresentable' };
         return powP(x, y.n);
       case 'mod':
-        return { err: '多项式的带余除法这个游戏里先不做。' };
+        return { err: '多项式的带余除法这个游戏里先不做。', reason: 'type' };
     }
     return undefined;
   },
@@ -294,7 +301,7 @@ registerType({
       }
       return r;
     }
-    return { err: '只能把数或多项式代入多项式。' };
+    return { err: '只能把数或多项式代入多项式。', reason: 'type' };
   },
   // s 里的 x 全是输入（或者输入已经写成 □），代进去不会和多项式的 x 混淆，见上面 SLOT 的说明
   fmtCall: (v, s) => (s === 'x' ? fmtPoly(v.c) : fmtPoly(v.c, `(${s})`)),
@@ -318,13 +325,13 @@ registerType({
 
 export function derive(x) {
   if (isR(x)) return ZERO;
-  if (!isP(x)) return { err: '只有数和多项式能求导。' };
+  if (!isP(x)) return { err: '只有数和多项式能求导。', reason: 'type' };
   return poly(x.c.slice(1).map((a, i) => mul(a, R(i + 1))));
 }
 
 export function integrate(x) {
   if (isR(x)) return poly([ZERO, x]);
-  if (!isP(x)) return { err: '只有数和多项式能积分。' };
+  if (!isP(x)) return { err: '只有数和多项式能积分。', reason: 'type' };
   if (degOf(x) + 1 > MAX_DEG) return OVER;
   return poly([ZERO, ...x.c.map((a, i) => mul(a, R(1, i + 1)))]);
 }

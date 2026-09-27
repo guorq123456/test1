@@ -152,6 +152,7 @@ export function parseQtyKey(s) {
 
 const VERB = { add: '相加', sub: '相减' };
 
+// 出错时返回 { err, reason }，reason 的三类见 docs/v03-step1.md 第 2 节
 function qtyBin(op, x, y) {
   const qx = isQty(x);
   const qy = isQty(y);
@@ -163,10 +164,16 @@ function qtyBin(op, x, y) {
     case 'sub': {
       if (!qx || !qy) {
         const [q, r] = qx ? [x, y] : [y, x];
-        return { err: `${fmtQty(q)} 是${describe(q)}，${fmtR(r)} 只是一个数，没有单位，两者不能${VERB[op]}。` };
+        return {
+          err: `${fmtQty(q)} 是${describe(q)}，${fmtR(r)} 只是一个数，没有单位，两者不能${VERB[op]}。`,
+          reason: 'type',
+        };
       }
       if (!sameDim(x.dim, y.dim)) {
-        return { err: `${describe(x)}和${describe(y)}不能${VERB[op]}：${fmtQty(x)} 和 ${fmtQty(y)} 的单位不一样，合不到一起。` };
+        return {
+          err: `${describe(x)}和${describe(y)}不能${VERB[op]}：${fmtQty(x)} 和 ${fmtQty(y)} 的单位不一样，合不到一起。`,
+          reason: 'type',
+        };
       }
       return qty((op === 'add' ? add : sub)(x.v, y.v), x.dim);
     }
@@ -179,24 +186,27 @@ function qtyBin(op, x, y) {
     }
     case 'div': {
       const vy = qy ? y.v : y;
-      if (vy.n === 0) return { err: '不能除以 0。' };
+      if (vy.n === 0) return { err: '不能除以 0。', reason: 'undefined' };
       if (!qy) return qty(div(x.v, y), x.dim);
       const d = dimOp(-1, qx ? x.dim : ZERO_DIM, y.dim);
       return d ? qty(div(qx ? x.v : x, vy), d) : null;
     }
     case 'pow': {
-      if (qy) return { err: `指数不能带单位：${fmtQty(y)} 次方没有意义。指数得是一个数。` };
+      if (qy) return { err: `指数不能带单位：${fmtQty(y)} 次方没有意义。指数得是一个数。`, reason: 'type' };
       const e = y;
-      if (e.d > 12) return { err: '指数的分母太大了。' };
+      if (e.d > 12) return { err: '指数的分母太大了。', reason: 'unrepresentable' };
       const v = rpow(x.v, e);
       if (v === null) {
-        if (x.v.n === 0) return { err: '0 的 0 次方、0 的负数次方都没有定义。' };
-        return { err: `${fmtQty(x)} 的 ${fmtR(e)} 次方开不出来：${fmtR(x.v)} 的 ${e.d} 次方根不是有理数。` };
+        if (x.v.n === 0) return { err: '0 的 0 次方、0 的负数次方都没有定义。', reason: 'undefined' };
+        return {
+          err: `${fmtQty(x)} 的 ${fmtR(e)} 次方开不出来：${fmtR(x.v)} 的 ${e.d} 次方根不是有理数。`,
+          reason: 'unrepresentable',
+        };
       }
       return qty(v, x.dim.map(d => mul(d, e)));
     }
     case 'mod':
-      return { err: `取余只对整数做，${fmtQty(qx ? x : y)} 带着单位，做不了。` };
+      return { err: `取余只对整数做，${fmtQty(qx ? x : y)} 带着单位，做不了。`, reason: 'type' };
   }
   return undefined;
 }

@@ -23,7 +23,7 @@
 //   call(v, x)?     把这张卡当作函数用（多项式代入）；fmtCall(v, s)? 它的公式写法
 //   fmtBind(op, side, c, s)?  自定义 "x op c" 的公式写法（可选）
 
-import { R, isR, rkey, fmtR, height, cmp, gcd, add, sub, mul, div, rpow, parseQKey, Q_KEY_RE, OVER } from './math.js';
+import { R, isR, rkey, fmtR, height, cmp, gcd, add, sub, mul, div, rpow, rlog, parseQKey, Q_KEY_RE, OVER } from './math.js';
 
 export const MSG_OVER = '结果太大了（数字超过了一千万，或者次数太高），换小一点的试试。';
 
@@ -152,10 +152,39 @@ export function binV(op, x, y) {
     const r = h(op, x, y);
     if (r !== undefined) return r;
   }
-  return { err: `${typeLabel(x)} 和 ${typeLabel(y)} 之间没有「${BIN[op].name}」这种运算。` };
+  return { err: `${typeLabel(x)} 和 ${typeLabel(y)} 之间没有「${BIN[op].name}」这种运算。`, reason: 'type' };
+}
+
+// 一次运算的结果属于哪一类（见 docs/v03-step1.md 第 2 节）：
+//   'ok'              算出来了
+//   'type'            这两种卡之间没有这条法（用法提示，不是分岔）
+//   'undefined'       法适用，但这个输入没有定义，任何世界都补不上（除以 0）
+//   'unrepresentable' 数学上有结果，引擎写不出来（√2、太大的数、分式）
+export function classify(r) {
+  if (isV(r)) return 'ok';
+  if (r === OVER) return 'unrepresentable';
+  if (r === null || r === undefined) return 'undefined';
+  if (typeof r === 'object' && r.err) return r.reason ?? 'type';
+  return 'undefined';
 }
 
 // ───────────────────────── 有理数类型 ─────────────────────────
+
+// 有理数乘方、对数：算不出时带上类别（一元算子和二元运算共用）
+export function powQ(x, y) {
+  const v = rpow(x, y);
+  if (v !== null) return v;
+  if (x.n === 0 && y.n <= 0) return { err: '0 的 0 次方、0 的负数次方都没有定义。', reason: 'undefined' };
+  if (y.d > 12) return { err: `指数 ${fmtR(y)} 的分母太大了，这个游戏只开到 12 次方根。`, reason: 'unrepresentable' };
+  return { err: `${fmtR(x)} 的 ${fmtR(y)} 次方不是有理数，现在的数还写不出它。`, reason: 'unrepresentable' };
+}
+
+export function logQ(c, y) {
+  if (c.n <= 0 || (c.n === 1 && c.d === 1)) return { err: '对数的底数要是正数，而且不能是 1。', reason: 'undefined' };
+  if (y.n <= 0) return { err: `对数只对正数有定义，${fmtR(y)} 不行。`, reason: 'undefined' };
+  const e = rlog(c, y);
+  return e ?? { err: `以 ${fmtR(c)} 为底 ${fmtR(y)} 的对数不是有理数，现在的数还写不出它。`, reason: 'unrepresentable' };
+}
 
 export const WIN_H = 20; // 视野：分子、分母都不超过 20 的有理数
 
@@ -197,14 +226,9 @@ registerType({
       case 'mul':
         return mul(x, y);
       case 'div':
-        return y.n === 0 ? { err: '不能除以 0。' } : div(x, y);
-      case 'pow': {
-        const v = rpow(x, y);
-        if (v !== null) return v;
-        if (x.n === 0 && y.n <= 0) return { err: '0 的 0 次方、0 的负数次方都没有定义。' };
-        if (y.d > 12) return { err: `指数 ${fmtR(y)} 的分母太大了，这个游戏只开到 12 次方根。` };
-        return { err: `${fmtR(x)} 的 ${fmtR(y)} 次方不是有理数，初等篇里还造不出来。` };
-      }
+        return y.n === 0 ? { err: '不能除以 0。', reason: 'undefined' } : div(x, y);
+      case 'pow':
+        return powQ(x, y);
     }
     return undefined;
   },

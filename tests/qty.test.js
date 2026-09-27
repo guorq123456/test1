@@ -210,6 +210,41 @@ test('乘方与分数指数', () => {
   assert.equal(vkey(applyU(bindU('div', 'l', STEP), Q(2, 0, 1, 0))), 'q:1/2|1,-1,0');
 });
 
+test('错误都带 reason：没有这条法是 type，没有定义是 undefined，表示不了是 unrepresentable', () => {
+  const REASONS = ['type', 'undefined', 'unrepresentable'];
+  const cases = [
+    ['add', STEP, BREATH], // 不同量纲
+    ['sub', STEP, HANDFUL],
+    ['add', STEP, ONE], // 量 + 数
+    ['sub', R(1, 2), BREATH],
+    ['div', STEP, ZERO], // 除以 0
+    ['div', STEP, Q(0, 1, 0, 0)],
+    ['div', ONE, Q(0, 0, 1, 0)],
+    ['pow', STEP, BREATH], // 指数带单位
+    ['pow', TWO, STEP],
+    ['pow', STEP, R(1, 13)], // 指数分母太大
+    ['pow', Q(2, 1, 0, 0), R(1, 2)], // 开方开不出
+    ['pow', Q(-4, 2, 0, 0), R(1, 2)],
+    ['pow', Q(0, 1, 0, 0), ZERO], // 0 的 0 次方
+    ['pow', Q(0, 1, 0, 0), NEG1],
+    ['mod', Q(7, 1, 0, 0), R(2)],
+    ['mod', R(7), Q(2, 1, 0, 0)],
+  ];
+  for (const [op, x, y] of cases) {
+    const r = binV(op, x, y);
+    const what = `${fmtV(x)} ${op} ${fmtV(y)}`;
+    assert.ok(isErr(r), `${what} 应该报错`);
+    assert.ok(REASONS.includes(r.reason), `${what} 的 reason 是 ${r.reason}`);
+  }
+  // 当一元算子用时 reason 也带出来：x + 1、√x
+  assert.ok(REASONS.includes(applyU(aff(ONE, ONE), STEP).reason));
+  assert.ok(REASONS.includes(applyU(powU(R(1, 2)), Q(2, 1, 0, 0)).reason));
+  // 具体的类别
+  assert.equal(binV('add', STEP, BREATH).reason, 'type', '不同量纲相加');
+  assert.equal(binV('div', STEP, ZERO).reason, 'undefined', '量除以 0');
+  assert.equal(binV('pow', Q(2, 1, 0, 0), R(1, 2)).reason, 'unrepresentable', '量开方开不出');
+});
+
 test('固定值换算', () => {
   for (const x of NAMED_VALUES) {
     const v = parseVKey(x.key);
