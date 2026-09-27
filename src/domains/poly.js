@@ -7,7 +7,7 @@
 // key："p:" + 系数从高次到低次用逗号连接：x² + 2x + 1 → "p:1,2,1"，x/2 − 1 → "p:1/2,-1"。
 
 import { R, isR, ZERO, ONE, eq, isInt, add, mul, div, inv, neg, rkey, fmtR, height, cmp, parseQKey, OVER, sup, iroot } from '../math.js';
-import { registerType, fmtV, PROBE_SMALL } from '../values.js';
+import { registerType, fmtV, PROBE_SMALL, BIN } from '../values.js';
 import { registerNamed, namedU, bindU, aff } from '../unary.js';
 
 // 次数上限。超过它的结果算作"太大"（返回 OVER），和数字溢出一样处理。
@@ -108,6 +108,20 @@ export function fmtPoly(c, xs = 'x') {
   }
   return s === '' ? '0' : s;
 }
+
+// 算子公式里的输入。平时输入写成 x（"x + 1"、"x²"、"x′"）。可多项式的变量也叫 x：算子里一旦出现了
+// 多项式的 x（绑定的常量是多项式，比如「乘以 x」；积分的上限 x），输入再写成 x 就会和它混在一起，
+// 乘以 x 会写成 "x × x"，看起来像平方。这时输入统一写成填空的方格 □：□ × x、x^□、∫₀ˣ □ dt。
+// （不用 "(·)"：游戏里 · 是乘号，"捧·步"、"a·x"。）
+//
+// 多项式当函数用（fmtCall）不用改：代入会把多项式里的每个 x 都换成输入，公式里剩下的 x 全是输入，
+// 而且把 x 代入 p 得到的就是 p 自己，所以 "x²" 这样写不会误导。
+export const SLOT = '□';
+const LATIN_X = /(?<![A-Za-z])x(?![A-Za-z])/g;
+// s 是输入的写法。已经含 □ 的，说明前面的步骤里已经出现过多项式的 x、输入早就改写成了 □，
+// 这时 s 里的 x 都是多项式的变量，原样保留；否则 s 里的 x 都是输入，换成 □
+export const slotted = s => (s.includes(SLOT) ? s : s.replace(LATIN_X, SLOT));
+const wrapS = s => (/\s/.test(s) ? `(${s})` : s);
 
 const KEY_RE = /^p:(-?\d+(\/\d+)?)(,-?\d+(\/\d+)?)+$/;
 
@@ -282,6 +296,7 @@ registerType({
     }
     return { err: '只能把数或多项式代入多项式。' };
   },
+  // s 里的 x 全是输入（或者输入已经写成 □），代进去不会和多项式的 x 混淆，见上面 SLOT 的说明
   fmtCall: (v, s) => (s === 'x' ? fmtPoly(v.c) : fmtPoly(v.c, `(${s})`)),
   // 一次式 ax + b 当函数用时可以倒推：x = (y − b)/a
   invertFn(v) {
@@ -289,12 +304,13 @@ registerType({
     const [b, a] = v.c;
     return aff(inv(a), neg(div(b, a)));
   },
+  // 绑定的常量 c 是多项式，里面有多项式的 x，所以输入写成 □：乘以 x 是 "□ × x"，不是 "x × x"
   fmtBind(op, side, c, s) {
-    if (op === 'pow' && side === 'l') {
-      const base = /\s/.test(fmtV(c)) ? `(${fmtV(c)})` : fmtV(c);
-      return `${base}^(${s})`;
-    }
-    return null;
+    const t = slotted(s);
+    const ct = wrapS(fmtV(c));
+    if (op === 'pow' && side === 'l') return t === SLOT ? `${ct}^${SLOT}` : `${ct}^(${t})`;
+    const sym = BIN[op].sym;
+    return side === 'r' ? `${wrapS(t)} ${sym} ${ct}` : `${ct} ${sym} ${wrapS(t)}`;
   },
 });
 
@@ -326,7 +342,13 @@ registerNamed({
 registerNamed({
   id: 'INT',
   name: '积分',
-  fmt: s => `∫₀ˣ ${s === 'x' ? s : `(${s})`} dx`,
+  // 上限 x 是多项式的变量，所以输入写成 □，积分变量写成 t：∫₀ˣ □ dt（数 3 填进去是 ∫₀ˣ 3 dt = 3x）。
+  // 前面的步骤里已经出现了多项式的 x 时（输入已经是 □），积分号里的 x 要改名成积分变量 t：
+  // 先乘以 x 再积分是 ∫₀ˣ (□ × t) dt
+  fmt: s => {
+    const body = s.includes(SLOT) ? s.replace(LATIN_X, 't') : slotted(s);
+    return `∫₀ˣ ${body === SLOT ? SLOT : `(${body})`} dt`;
+  },
   apply: integrate,
   inverse: 'D',
   desc: '求导倒过来做：每一项 a·xⁿ 变成 a·xⁿ⁺¹/(n + 1)，常数项取 0（也就是从 0 积到 x）。数 c 积分得到 c·x。',
@@ -343,7 +365,7 @@ export const CHAPTER = {
   unlock: {
     when: 'd:Q',
     gives: ['c:p:1,0', 'u:D', 'u:INT'],
-    note: '集齐有理数 ℚ 之后，你拿到了未知数 x、求导和积分。试试把 x 放在中间：多项式也能当算子用。',
+    note: '集齐有理数 ℚ 之后，你拿到了未知数 x、求导和积分。多项式也能当算子用，试试把 x 放在中间：先点合成台中间的空格，再点 x。',
   },
 };
 
@@ -482,11 +504,15 @@ export const CATALOG = [
     struct: '集合',
     note: '两个完全平方式相加一般不是完全平方式：x² + (x + 1)² = 2x² + 2x + 1。不是群。',
     desc: '一次式的平方。展开后 x² 的系数是一个数的平方，而且 b² = 4ac。',
-    hint: '让每个一次式都做「平方」。多项式也能放在中间当算子用，试试把 x² 放在中间。',
+    hint: '让每个一次式都做「平方」。多项式也能当算子用，试试把 x² 放在中间：先点合成台中间的空格，再点 x²。',
     has: v => {
       if (!isP(v) || degOf(v) !== 2) return false;
       const [c, b, a] = v.c;
-      return isSquareR(a) && eq(mul(b, b), mul(R(4), mul(a, c)));
+      if (!isSquareR(a)) return false;
+      // b² = 4ac。系数很大时 b²、4ac 会超出有理数的上限（mul 返回 OVER，再交给 eq 就崩溃），
+      // 所以交叉相乘后用 BigInt 精确比较：b.n²·a.d·c.d = 4·a.n·c.n·b.d²。不会溢出，总能判断
+      const B = BigInt;
+      return B(b.n) * B(b.n) * B(a.d) * B(c.d) === 4n * B(a.n) * B(c.n) * B(b.d) * B(b.d);
     },
     recipes: [
       ['d:L1', 'u:sq', null],
@@ -526,8 +552,9 @@ export const QUESTS = [
     id: 'p2',
     ch: 6,
     title: '多项式当算子',
-    text: '中间放 x（多项式可以当算子用），右边也放 x，合成。再试试中间放 x + 1，右边放 x + 1。',
-    done: has => has('c:p:1,0,0') || has('c:p:1,2'),
+    text: '多项式可以当算子用：先点合成台中间的空格，再点 x + 1，把它放在中间；再点一次 x + 1，放在旁边当输入，合成。把 x + 1 代入 x + 1，得到 x + 2。再试试中间放 x：把任何多项式代入 x，得到的还是它自己。',
+    // 只认 x + 2：它是照着任务做出来的。x² 用乘法就能做出来，不能说明会把多项式当算子用
+    done: has => has('c:p:1,2'),
   },
   {
     id: 'p3',

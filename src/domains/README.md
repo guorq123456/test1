@@ -66,7 +66,7 @@ registerType({
 registerNamed({
   id: 'INT',                     // 唯一 id
   name: '积分',
-  fmt: s => `∫₀ˣ ${s} dx`,       // 公式写法，s 是输入的写法
+  fmt: s => `∫₀ˣ ${s === 'x' ? '□' : `(${s})`} dt`,  // 公式写法，s 是输入的写法；含多项式 x 时输入写成 □
   apply: x => ...,               // 输入一个值，返回 值 | OVER | null | {err}
   inverse: 'D',                  // 可选：能把我撤销的算子（先做我再做它 = 恒等）
   desc: '……',                    // 可选：说明文字

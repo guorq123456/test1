@@ -473,7 +473,7 @@ function genericBind(b, side, c) {
     if (isV(r)) return { f };
     if (!why && r && typeof r === 'object' && r.err) why = r.err;
   }
-  const s = side === 'r' ? `x ${b.sym} ${fmtV(c)}` : `${fmtV(c)} ${b.sym} x`;
+  const s = fmtU(f);
   return { err: why ? `${s} 对任何输入都算不出结果：${why}` : `${s} 对任何输入都算不出结果。` };
 }
 

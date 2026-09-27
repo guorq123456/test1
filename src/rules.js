@@ -244,6 +244,8 @@ function pairOf(L, Rt, kindsA, kindB) {
 const single = (L, Rt) => (L && !Rt ? L : Rt && !L ? Rt : null);
 
 const isFnCard = it => it?.kind === 'card' && !!defOf(it.v).call;
+// 算子公式里含多项式时，输入写成 □ 而不是 x（免得和多项式的 x 混淆）
+const varName = f => (fmtU(f).includes('□') ? ' □' : ' x');
 
 export function combine(L, M, Rt) {
   if (!M) {
@@ -275,12 +277,12 @@ function withBin(L, M, Rt) {
     case '空|card': {
       const r = bindRight(b, Rt.v);
       if (r.err) return fail(r.err);
-      return ok(unItem(r.f), `左边空着，就是变量 x。x ${b.sym} ${fmtV(Rt.v)} 成了一元算子 ${fmtU(r.f)}`);
+      return ok(unItem(r.f), `左边空着，就是变量${varName(r.f)}。得到一元算子 ${fmtU(r.f)}`);
     }
     case 'card|空': {
       const r = bindLeft(L.v, b);
       if (r.err) return fail(r.err);
-      return ok(unItem(r.f), `右边空着，就是变量 x。${fmtV(L.v)} ${b.sym} x 成了一元算子 ${fmtU(r.f)}`);
+      return ok(unItem(r.f), `右边空着，就是变量${varName(r.f)}。得到一元算子 ${fmtU(r.f)}`);
     }
     case 'deck|card': {
       const r = bindRight(b, Rt.v);
@@ -324,9 +326,9 @@ function withUn(L, M, Rt, verb = '经') {
     if (!isV(y)) {
       if (y === OVER || (y && y.err)) return fail(errText(y));
       const why = isR(X.v) ? '（没有定义，或者不是有理数）' : '（这个算子对这种卡没有定义）';
-      return fail(`把 x = ${fmtV(X.v)} 代入 ${fmtU(f)} 算不出结果${why}。`);
+      return fail(`把${varName(f)} = ${fmtV(X.v)} 代入 ${fmtU(f)} 算不出结果${why}。`);
     }
-    return ok(cardItem(y), `把 x = ${fmtV(X.v)} 代入 ${fmtU(f)}，得到 ${fmtV(y)}`);
+    return ok(cardItem(y), `把${varName(f)} = ${fmtV(X.v)} 代入 ${fmtU(f)}，得到 ${fmtV(y)}`);
   }
   if (X.kind === 'deck') {
     const D = imageDeck(X.v, f, `{ ${fmtU(f)} | x ∈ ${lab(X)} }`);

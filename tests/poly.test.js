@@ -222,16 +222,17 @@ test('先积分再求导回到原样；先求导再积分会丢掉常数项（�
   // 所以：积分有逆（求导），求导没有逆
   assert.equal(ukey(invertU(INT)), 'named(D)');
   assert.equal(invertU(D), null);
-  // 复合：先积分再求导化简成恒等；先求导再积分不能化简，算出来确实丢常数项
+  // 复合：先积分再求导化简成恒等（具名算子声明了 inverse）；先求导再积分不能化简，算出来确实丢常数项
   assert.ok(isId(compose(INT, D)));
+  assert.equal(ukey(compose(compose(aff(ONE, ONE), INT), D)), 'aff(1,1)', '链条中间的「积分再求导」也消掉');
   const DI = compose(D, INT);
   assert.equal(DI.t, 'chain');
   assert.equal(k(applyU(DI, P(1, 1))), 'p:1,0');
-  assert.equal(fmtU(DI), '∫₀ˣ (x′) dx');
+  assert.equal(fmtU(DI), '∫₀ˣ (□′) dt');
   assert.equal(fmtU(D), 'x′');
   assert.equal(fmtU(compose(aff(ONE, ONE), D)), '(x + 1)′');
-  assert.equal(fmtU(INT), '∫₀ˣ x dx');
-  assert.equal(fmtU(compose(aff(ONE, ONE), INT)), '∫₀ˣ (x + 1) dx');
+  assert.equal(fmtU(INT), '∫₀ˣ □ dt');
+  assert.equal(fmtU(compose(aff(ONE, ONE), INT)), '∫₀ˣ (□ + 1) dt');
   // 合成台上「逆」的反应
   const c = ref => resolveRef(ref);
   const inv = combine(c('u:D'), c('m:inverse'), null);
@@ -263,6 +264,99 @@ test('代入求值、复合、公式、逆', () => {
   assert.equal(combine(null, c('c:p:1,1'), c('c:p:1,1')).item.id, 'c:p:1,2');
   assert.equal(combine(c('d:L1'), c('c:p:2,1'), null).item.id, 'd:L1', '一次式代进一次式还是一次式');
   assert.equal(applyU(fnU(p), { t: 'nope' }), null, '不是卡的东西代不进去');
+});
+
+test('公式里多项式的 x 和算子的输入分开写：算子里出现多项式的 x 时，输入写成 □', () => {
+  const c = ref => resolveRef(ref);
+  const mulx = c('u:mulx').v;
+  // 乘以 x：以前写成 "x × x"，像平方
+  const r = combine(null, c('b:mul'), c('c:p:1,0'));
+  assert.equal(r.item.id, 'u:bind(mul,r,p:1,0)');
+  assert.equal(fmtU(r.item.v), '□ × x');
+  assert.equal(fmtU(mulx), '□ × x');
+  assert.match(combine(c('c:3'), c('u:mulx'), null).text, /代入 □ × x，得到 3x$/);
+  assert.match(run(['c:p:1,0', 'm:extend', 'u:mulx']).text, /一直做 □ × x：\{x, x², x³/);
+  // 别的绑定多项式的写法
+  const bind = (l, m, rt) => combine(l && c(l), c(m), rt && c(rt)).item.v;
+  assert.equal(fmtU(bind(null, 'b:add', 'c:p:1,0')), '□ + x');
+  assert.equal(fmtU(bind('c:p:1,0', 'b:add', null)), 'x + □');
+  assert.equal(fmtU(bind('c:p:1,1', 'b:sub', null)), '(x + 1) − □');
+  assert.equal(fmtU(bind(null, 'b:sub', 'c:p:1,0,0')), '□ − x²');
+  assert.equal(fmtU(bind('c:p:1,0', 'b:pow', null)), 'x^□');
+  assert.equal(fmtU(bind('c:p:1,1', 'b:pow', null)), '(x + 1)^□');
+  assert.equal(fmtU(bind('c:p:1,0', 'b:div', null)), 'x ÷ □');
+  assert.equal(k(applyU(bind(null, 'b:add', 'c:p:1,0'), R(3))), 'p:1,3');
+  assert.equal(k(applyU(bind('c:p:1,0', 'b:pow', null), R(3))), 'p:1,0,0,0');
+  // 积分的上限 x 是多项式的变量：输入写成 □，积分变量写成 t
+  assert.equal(fmtU(INT), '∫₀ˣ □ dt');
+  assert.match(combine(c('c:3'), c('u:INT'), null).text, /代入 ∫₀ˣ □ dt，得到 3x$/);
+  // 复合：前面的步骤里输入还是 x 的，换成 □；已经是 □ 的，里面的 x 是多项式的变量，保留
+  assert.equal(fmtU(compose(aff(ONE, ONE), mulx)), '(□ + 1) × x');
+  assert.equal(fmtU(compose(fnU(P(1, 1)), mulx)), '(□ + 1) × x');
+  assert.equal(fmtU(compose(mulx, mulx)), '(□ × x) × x');
+  assert.equal(fmtU(compose(mulx, fnU(P(1, 0, 1)))), '(□ × x)² + 1');
+  assert.equal(fmtU(compose(INT, mulx)), '(∫₀ˣ □ dt) × x');
+  // 先乘以 x 再积分：积分号里的 x 改名成积分变量 t。3 ↦ 3x ↦ 3x²/2
+  const mi = compose(mulx, INT);
+  assert.equal(fmtU(mi), '∫₀ˣ (□ × t) dt');
+  assert.equal(k(applyU(mi, R(3))), 'p:3/2,0,0');
+  // 不含多项式常量的算子照旧用 x；多项式当函数用也照旧（把 x 代入 p 就是 p 自己）
+  assert.equal(fmtU(aff(ONE, ONE)), 'x + 1');
+  assert.equal(fmtU(D), 'x′');
+  assert.equal(fmtU(fnU(P(1, 0, 0))), 'x²');
+  assert.equal(fmtU(compose(aff(ONE, ONE), fnU(P(1, 0, 0)))), '(x + 1)²');
+});
+
+test('完全平方式：系数很大也能判断，不会崩溃', () => {
+  const perf = CATALOG.find(c => c.id === 'PerfSq');
+  assert.equal(perf.has(P(1, 2, 1)), true);
+  assert.equal(perf.has(P(4, -4, 1)), true);
+  assert.equal(perf.has(P('1/9', '2/3', 1)), true, '(x/3 + 1)²');
+  assert.equal(perf.has(P(1, 0, 0)), true);
+  assert.equal(perf.has(P(1, 1, 1)), false);
+  assert.equal(perf.has(P(2, 4, 2)), false, '2(x + 1)²：x² 的系数不是平方数');
+  assert.equal(perf.has(P(-1, 2, -1)), false);
+  // b² 或 4ac 超出有理数的上限：以前 mul 返回 OVER，再交给 eq 就抛 TypeError
+  assert.equal(perf.has(P(9e6, 6e6, 1e6)), true, '(3000x + 1000)²，b² = 3.6×10¹³');
+  assert.equal(perf.has(P(1, 1e7, 1)), false, 'b² = 10¹⁴');
+  assert.equal(perf.has(P(1, 0, 1e7)), false, '4ac = 4×10⁷');
+  assert.equal(perf.has(P(1, 2e3, 1e6)), true, '(x + 1000)²，4ac = 4×10⁶');
+  // 合成台上：2000000 不是平方数，得到自造卡组；10000 = 100²，还是完全平方式
+  for (const rec of [
+    ['c:2000000', 'b:mul', 'd:PerfSq'],
+    ['d:PerfSq', 'b:mul', 'c:2000000'],
+  ]) {
+    const r = run(rec);
+    assert.ok(r.ok, rec.join(' '));
+    assert.ok(r.item.id.startsWith('d:~'), `${rec.join(' ')} 得到了 ${r.item.id}`);
+  }
+  for (const n of ['c:4', 'c:10000', 'c:1000000']) assert.equal(run([n, 'b:mul', 'd:PerfSq']).item.id, 'd:PerfSq', n);
+});
+
+test('任务「多项式当算子」：照着文字做就能完成，文字说了怎样把多项式放到中间', () => {
+  const p2 = QUESTS.find(q => q.id === 'p2');
+  const HOW = '先点合成台中间的空格，再点';
+  assert.ok(p2.text.includes(`${HOW} x + 1`), p2.text);
+  assert.ok(CHAPTER.unlock.note.includes(`${HOW} x`), CHAPTER.unlock.note);
+  assert.ok(CATALOG.find(c => c.id === 'PerfSq').hint.includes(`${HOW} x²`));
+  // 只放在两边、中间空着时，提示多项式也能放中间
+  const c = ref => resolveRef(ref);
+  const miss = combine(c('c:p:1,0'), null, c('c:p:1,0'));
+  assert.equal(miss.ok, false);
+  assert.match(miss.msg, /多项式/);
+  // 照着任务做：p1 做出 x + 1，再把 x + 1 放在中间、旁边也放 x + 1，得到 x + 2
+  const hand = elementaryHand();
+  assert.equal(p2.done(id => hand.has(id)), false);
+  hand.walk([
+    ['c:p:1,0', 'b:add', 'c:1', 'c:p:1,1'],
+    [null, 'c:p:1,1', 'c:p:1,1', 'c:p:1,2'],
+  ]);
+  assert.ok(p2.done(id => hand.has(id)));
+  assert.equal(hand.step('c:p:1,1', 'c:p:1,1', null), 'c:p:1,2', '放在左边当输入也一样');
+  // x² 不算：它用乘法就能做出来，和「多项式当算子」无关
+  assert.equal(p2.done(id => id === 'c:p:1,0,0'), false);
+  // 文字的最后一句：中间放 x，右边放任何多项式，得到的还是它自己
+  for (const key of ['c:p:1,1', 'c:p:1,2,1', 'c:p:3,0,-1,0']) assert.equal(combine(null, c('c:p:1,0'), c(key)).item.id, key);
 });
 
 // ───────────────────────── 视野与探针 ─────────────────────────
@@ -354,10 +448,21 @@ test('不该被认成图鉴卡组的不会被认错', () => {
 });
 
 test('做法文字与预览', () => {
-  assert.equal(recipeText(['d:Qnz', 'u:INT', null]), 'ℚ∖{0} 经 ∫₀ˣ x dx');
+  assert.equal(recipeText(['d:Qnz', 'u:INT', null]), 'ℚ∖{0} 经 ∫₀ˣ □ dt');
   assert.equal(recipeText(['d:Prop', 'b:add', 'd:Q']), 'ax + ℚ');
-  assert.equal(recipeText(['c:p:1,0', 'm:extend', 'u:mulx']), 'x 延展 x × x');
-  assert.equal(recipeText(['d:L1', 'c:p:1,0,0', null]), '(ax + b) 经 x²');
+  assert.equal(recipeText(['c:p:1,0', 'm:extend', 'u:mulx']), 'x 延展 □ × x');
+  assert.equal(recipeText(['d:L1', 'c:p:1,0,0', null]), '(ax + b) 代入 x²');
+  assert.equal(recipeText(['d:L1', 'u:sq', null]), '(ax + b) 经 x²');
+  // 同一个卡组的几种做法写出来要互不相同（玩家的"新做法"按文字去重）。完全平方式的「平方」和
+  // 「把 x² 放在中间」以前都写成 (ax + b) 经 x²
+  const perf = CATALOG.find(c => c.id === 'PerfSq').recipes.map(recipeText);
+  assert.deepEqual(perf, ['(ax + b) 经 x²', '(ax + b) 代入 x²', '(ax + b) ^ 2']);
+  assert.equal(new Set(perf).size, perf.length, '完全平方式的几种做法两两不同');
+  for (const c of CATALOG) {
+    const texts = c.recipes.map(recipeText);
+    assert.ok(!texts.includes('?'), `${c.name}：${texts.join(' / ')}`);
+    assert.equal(new Set(texts).size, texts.length, `${c.name} 有两种做法写出来一样：${texts.join(' / ')}`);
+  }
   assert.equal(previewDeck(resolveRef('d:Mono').v, 4), '{x, x², x³, x⁴, …}');
   assert.equal(previewDeck(resolveRef('d:L1').v, 3), '{x, −x, x + 1, …}');
   const one = run(['c:p:1,1', 'm:extend', 'u:mulx']);
