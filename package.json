@@ -1,0 +1,11 @@
+{
+  "name": "suanzi-gongfang",
+  "version": "0.1.0",
+  "private": true,
+  "description": "算子工坊：用单卡、算子和卡组合成新卡的单机卡牌游戏（初等数学篇 Demo）",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "start": "python3 -m http.server 8000"
+  }
+}

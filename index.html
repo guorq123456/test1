@@ -1,0 +1,435 @@
+<title>算子工坊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+  :root {
+    --paper: #edf0ea;
+    --paper-grid: rgba(43, 89, 195, 0.07);
+    --panel: #f7f8f4;
+    --mat: #e0e5dc;
+    --ink: #18202e;
+    --ink-2: #4a5465;
+    --ink-3: #6f7989;
+    --line: rgba(24, 32, 46, 0.14);
+    --line-strong: rgba(24, 32, 46, 0.32);
+    --card-bg: #ffffff;
+    --shadow: 0 1px 0 rgba(24, 32, 46, 0.08), 0 3px 10px rgba(24, 32, 46, 0.06);
+    --scrim: rgba(12, 16, 22, 0.45);
+    --c-card: #2b59c3;
+    --c-bin: #c0501d;
+    --c-un: #8f6200;
+    --c-meta: #7a3e9d;
+    --c-deck: #0f7b65;
+    --on-k: #ffffff;
+    --focus: #2b59c3;
+    --focus-bg: rgba(43, 89, 195, 0.08);
+    --warn-bg: #fbe9e1;
+    --warn-ink: #7f2f0f;
+    --f-display: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", serif;
+    --f-math: "STIX Two Text", "Cambria Math", "Times New Roman", "Noto Serif SC", "Songti SC", serif;
+    --f-ui: system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #12161c;
+      --paper-grid: rgba(134, 166, 255, 0.06);
+      --panel: #181d25;
+      --mat: #1f252f;
+      --ink: #e6eaf0;
+      --ink-2: #b0b9c6;
+      --ink-3: #8a94a3;
+      --line: rgba(230, 234, 240, 0.14);
+      --line-strong: rgba(230, 234, 240, 0.34);
+      --card-bg: #212833;
+      --shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 3px 10px rgba(0, 0, 0, 0.3);
+      --c-card: #8aa9ff;
+      --c-bin: #ff9466;
+      --c-un: #e8bd4f;
+      --c-meta: #c99eeb;
+      --c-deck: #4fcca8;
+      --on-k: #12161c;
+      --focus: #8aa9ff;
+      --focus-bg: rgba(138, 169, 255, 0.1);
+      --warn-bg: #3a2219;
+      --warn-ink: #ffbe9f;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #12161c;
+    --paper-grid: rgba(134, 166, 255, 0.06);
+    --panel: #181d25;
+    --mat: #1f252f;
+    --ink: #e6eaf0;
+    --ink-2: #b0b9c6;
+    --ink-3: #8a94a3;
+    --line: rgba(230, 234, 240, 0.14);
+    --line-strong: rgba(230, 234, 240, 0.34);
+    --card-bg: #212833;
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 3px 10px rgba(0, 0, 0, 0.3);
+    --c-card: #8aa9ff;
+    --c-bin: #ff9466;
+    --c-un: #e8bd4f;
+    --c-meta: #c99eeb;
+    --c-deck: #4fcca8;
+    --on-k: #12161c;
+    --focus: #8aa9ff;
+    --focus-bg: rgba(138, 169, 255, 0.1);
+    --warn-bg: #3a2219;
+    --warn-ink: #ffbe9f;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { background: var(--paper); }
+  body {
+    color: var(--ink);
+    font-family: var(--f-ui);
+    font-size: 15px;
+    line-height: 1.55;
+    background-image:
+      linear-gradient(var(--paper-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--paper-grid) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  body.has-sheet { overflow: hidden; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  h1, h2, h3 { text-wrap: balance; }
+  i { font-family: var(--f-math); font-style: italic; }
+  p { margin: 0; }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding-inline: 16px;
+    padding-block: 18px 56px;
+    display: grid;
+    gap: 16px;
+  }
+
+  /* 顶栏 */
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .brand { display: grid; gap: 2px; }
+  .brand h1 {
+    margin: 0;
+    font-family: var(--f-display);
+    font-weight: 900;
+    font-size: 30px;
+    line-height: 1.1;
+    letter-spacing: 0.06em;
+  }
+  .edition { font-size: 12px; letter-spacing: 0.14em; color: var(--ink-3); }
+  .codex-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: var(--panel);
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .codex-btn .count { font-family: var(--f-math); font-variant-numeric: tabular-nums; color: var(--c-deck); }
+
+  /* 任务 */
+  .quest {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: grid;
+    gap: 4px;
+  }
+  .quest-step { font-size: 12px; letter-spacing: 0.08em; color: var(--c-deck); font-weight: 600; }
+
+  /* 合成台 */
+  .bench {
+    background: var(--mat);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px;
+    display: grid;
+    gap: 12px;
+  }
+  .bench-title { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .bench-title h2 { margin: 0; font-family: var(--f-display); font-size: 17px; font-weight: 600; letter-spacing: 0.08em; }
+  .bench-title span { font-size: 12px; color: var(--ink-3); }
+  .slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .slot { display: grid; gap: 6px; align-content: start; }
+  .slot-label { font-size: 11px; letter-spacing: 0.14em; color: var(--ink-3); text-align: center; }
+  .slot.is-active .slot-label { color: var(--focus); font-weight: 600; }
+  .slot-empty {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    border: 1.5px dashed var(--line-strong);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--ink-3);
+    font-size: 12px;
+    padding: 6px;
+    cursor: pointer;
+  }
+  .slot.is-active .slot-empty { border-color: var(--focus); color: var(--focus); background: var(--focus-bg); }
+  .slot .card::after {
+    content: "×";
+    position: absolute;
+    top: 1px;
+    right: 6px;
+    font-size: 13px;
+    line-height: 1.3;
+    color: var(--on-k);
+  }
+  .bench-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .btn {
+    padding: 9px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: var(--panel);
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    flex: 1 1 140px;
+  }
+  .btn-primary[disabled] { opacity: 0.6; cursor: progress; }
+  .btn-danger { background: var(--warn-ink); color: var(--paper); border-color: var(--warn-ink); }
+  .btn-quiet { border-color: var(--line); color: var(--ink-3); }
+
+  /* 卡牌 */
+  .card {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--card-bg);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.12s ease;
+  }
+  button.card:active { transform: translateY(1px) scale(0.98); }
+  div.card { cursor: default; }
+  .k-card { --k: var(--c-card); }
+  .k-bin { --k: var(--c-bin); }
+  .k-un { --k: var(--c-un); }
+  .k-meta { --k: var(--c-meta); }
+  .k-deck {
+    --k: var(--c-deck);
+    /* 卡组画成一小叠卡 */
+    box-shadow: 3px 3px 0 -1px var(--card-bg), 3px 3px 0 0 var(--line-strong), 6px 6px 0 -1px var(--card-bg), 6px 6px 0 0 var(--line), var(--shadow);
+  }
+  .card-type {
+    display: block;
+    background: var(--k);
+    color: var(--on-k);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    padding: 3px 7px;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .card-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 6px;
+    font-family: var(--f-math);
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+    color: var(--ink);
+  }
+  .k-bin .card-main, .k-meta .card-main { color: var(--k); }
+  .sz-l { font-size: 32px; }
+  .sz-m { font-size: 21px; }
+  .sz-s { font-size: 15px; }
+  .sz-xs { font-size: 12px; }
+  .card-sub {
+    font-size: 11px;
+    color: var(--ink-3);
+    padding: 0 6px 7px;
+    min-height: 2.2em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-new {
+    position: absolute;
+    left: 6px;
+    bottom: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--c-deck);
+    color: var(--on-k);
+  }
+
+  /* 结果 */
+  .result {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px;
+  }
+  .result-body { display: grid; gap: 8px; }
+  .result.is-fail { display: block; background: var(--warn-bg); color: var(--warn-ink); border-color: transparent; }
+  .result.is-fail strong { display: block; margin-bottom: 2px; }
+  .result-idle { color: var(--ink-3); font-size: 14px; padding-inline: 2px; }
+  .tag {
+    justify-self: start;
+    font-size: 12px;
+    padding: 1px 9px;
+    border-radius: 999px;
+    background: var(--mat);
+    color: var(--ink-2);
+  }
+  .tag-new { background: var(--c-deck); color: var(--on-k); font-weight: 700; }
+  .result-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .result-actions .btn { padding: 6px 12px; font-size: 13px; }
+  .is-new .result-card .card { animation: pop 0.55s ease-out; }
+  @keyframes pop {
+    0% { transform: scale(0.8) rotate(-5deg); }
+    60% { transform: scale(1.06) rotate(1.5deg); }
+    100% { transform: none; }
+  }
+
+  /* 手牌 */
+  .hand { display: grid; gap: 12px; }
+  .hand-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tab {
+    position: relative;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: var(--panel);
+    cursor: pointer;
+  }
+  .tab[aria-selected="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .tab-n { font-family: var(--f-math); font-variant-numeric: tabular-nums; opacity: 0.8; }
+  .dot { position: absolute; top: 3px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--c-deck); }
+  .group { display: grid; gap: 8px; }
+  .group + .group { margin-top: 8px; }
+  .group-title { margin: 0; font-size: 13px; letter-spacing: 0.1em; color: var(--ink-2); font-weight: 600; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 14px 12px; }
+  .cell { position: relative; }
+  .info {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 30px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+  }
+  .info span {
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    color: var(--ink-2);
+    font: italic 600 12px/17px var(--f-math);
+    text-align: center;
+  }
+  .muted { color: var(--ink-3); }
+  .small { font-size: 13px; }
+
+  /* 底部弹层 */
+  .sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    background: var(--scrim);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .sheet-panel {
+    width: min(760px, 100%);
+    max-height: 88%;
+    overflow-y: auto;
+    background: var(--paper);
+    border-radius: 18px 18px 0 0;
+    padding: 16px 16px calc(28px + env(safe-area-inset-bottom, 0px));
+    display: grid;
+    gap: 14px;
+    align-content: start;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.2);
+  }
+  .sheet-panel:focus { outline: none; }
+  .sheet-bar { display: flex; justify-content: space-between; gap: 8px; }
+  .sheet-bar .btn { padding: 6px 12px; font-size: 13px; }
+  .sheet-panel h2 { margin: 0; font-family: var(--f-display); font-size: 24px; font-weight: 900; letter-spacing: 0.04em; }
+  .eyebrow { font-size: 12px; letter-spacing: 0.12em; color: var(--ink-3); }
+  .sub-title { margin: 4px 0 0; font-size: 14px; font-weight: 600; color: var(--ink-2); letter-spacing: 0.06em; }
+  .detail { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; align-items: center; }
+  .preview, .formula { font-family: var(--f-math); font-size: 20px; overflow-wrap: anywhere; }
+  .badge {
+    display: inline-block;
+    font-size: 12px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    color: var(--ink-2);
+    margin-right: 4px;
+  }
+  .badge-group { border-color: var(--c-deck); color: var(--c-deck); font-weight: 600; }
+  .recipes { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; font-family: var(--f-math); font-size: 17px; }
+  .chapter { display: grid; gap: 8px; }
+  .chapter h3 { margin: 6px 0 0; font-family: var(--f-display); font-size: 18px; font-weight: 600; }
+  .ch-no { color: var(--c-deck); margin-right: 6px; }
+  .codex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .tile {
+    display: grid;
+    gap: 2px;
+    align-content: start;
+    text-align: left;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1.5px dashed var(--line-strong);
+    background: transparent;
+    cursor: pointer;
+    min-width: 0;
+  }
+  .tile.is-got { border: 1px solid var(--line); border-top: 4px solid var(--c-deck); background: var(--card-bg); box-shadow: var(--shadow); }
+  .tile-sym { font-family: var(--f-math); font-size: 24px; line-height: 1.2; }
+  .tile:not(.is-got) .tile-sym { color: var(--ink-3); }
+  .tile-name { font-weight: 600; }
+  .tile-prev { font-size: 13px; color: var(--ink-2); overflow-wrap: anywhere; }
+  .tile.is-got .tile-prev { font-family: var(--f-math); font-size: 14px; }
+  .tile-meta { font-size: 12px; color: var(--ink-3); }
+  .reset { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding-top: 8px; border-top: 1px solid var(--line); }
+  .sheet-actions { display: flex; gap: 8px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div id="app" class="wrap">
+  <p class="muted">正在摆好卡牌……</p>
+</div>
+<div id="sheet-root"></div>
+<script type="module" src="src/app.js"></script>
