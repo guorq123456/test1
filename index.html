@@ -173,6 +173,7 @@
     cursor: pointer;
   }
   .slot.is-active .slot-empty { border-color: var(--focus); color: var(--focus); background: var(--focus-bg); }
+  .slot-tip { display: block; margin-top: 6px; font-size: 10.5px; line-height: 1.35; opacity: 0.85; }
   .slot .card::after {
     content: "×";
     position: absolute;
@@ -253,24 +254,33 @@
     overflow-wrap: anywhere;
     color: var(--ink);
   }
+  /* 公式包在一层 span 里：flex 只居中这一整块，里面的 <i>x</i> 和文字照常排成一行 */
+  .card-main > span { min-width: 0; max-width: 100%; text-align: center; }
   .k-bin .card-main, .k-meta .card-main { color: var(--k); }
   .sz-l { font-size: 32px; }
   .sz-m { font-size: 21px; }
   .sz-s { font-size: 15px; }
   .sz-xs { font-size: 12px; }
+  /* 小字最多两行，单位名、卡组全名不再被省略号吃掉 */
   .card-sub {
     font-size: 11px;
+    line-height: 1.2;
     color: var(--ink-3);
     padding: 0 6px 7px;
     min-height: 2.2em;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
     overflow: hidden;
-    text-overflow: ellipsis;
   }
+  /* "新"标记排在小字前面，不再盖住文字 */
   .card-new {
-    position: absolute;
-    left: 6px;
-    bottom: 6px;
+    display: inline-block;
+    margin-right: 3px;
+    vertical-align: 1px;
+    line-height: 1.35;
     font-size: 10px;
     font-weight: 700;
     padding: 0 6px;

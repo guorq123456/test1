@@ -3,7 +3,7 @@
 import { CATALOG_ALL as CATALOG, CHAPTERS_ALL as CHAPTERS, GIFTS, META, QUESTS_ALL as QUESTS, START } from './content.js';
 import { combine, itemFromDesc, label, recipeText, resolveRef } from './rules.js';
 import { toNum, isR } from './math.js';
-import { BIN, TYPES, fmtV as fmtR, typeOf, typeLabel } from './values.js';
+import { BIN, TYPES, cmpV, fmtV as fmtR, typeOf, typeLabel } from './values.js';
 import { fmtU } from './unary.js';
 import { groupInfo, previewDeck } from './decks.js';
 
@@ -53,6 +53,8 @@ const has = id => S.items.has(id);
 const itemOf = id => (id ? S.items.get(id) ?? null : null);
 const chapterOpen = ch => !ch.unlock || has(ch.unlock.when);
 const chapterOf = id => CHAPTERS.find(ch => ch.id === id);
+// 能放在中间当算子用的单卡（多项式）
+const isCallable = it => it?.kind === 'card' && !!TYPES.get(typeOf(it.v))?.call;
 
 function snapshot() {
   return {
@@ -166,8 +168,13 @@ function doCombine() {
         recipeNew = !isNew;
       }
     }
-    const unlocked = isNew ? CHAPTERS.find(ch => ch.unlock?.when === res.item.id) : null;
-    S.last = { ok: true, text: res.text, id: res.item.id, isNew, recipeNew, gifts, unlocked: unlocked?.id ?? null };
+    // 一张卡可能同时解锁好几章（ℚ 解锁第六、七章），每一章都要报出来
+    const got = new Set([res.item.id, ...gifts]);
+    const unlocked = isNew ? CHAPTERS.filter(ch => ch.unlock && got.has(ch.unlock.when)).map(ch => ch.id) : [];
+    S.last = { ok: true, text: res.text, id: res.item.id, isNew, recipeNew, gifts, unlocked };
+    // 合成成功后清空合成台，下一步从空台开始；想接着用结果，按「放到左边继续」
+    S.slots = { L: null, M: null, R: null };
+    S.active = null;
     if (isNew) S.tab = TAB_OF[res.item.kind];
     save();
     render();
@@ -203,6 +210,8 @@ const esc = s =>
   String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
 // 数学文字：变量 x 用斜体，换行（矩阵）变成 <br>
 const math = s => esc(s).replace(/x/g, '<i>x</i>').replace(/\n/g, '<br>');
+// 卡面上的矩阵 [a b; c d] 只在分号处换行（一行一行断开），不从一行中间断开
+const keepRows = s => s.replace(/\[[^[\]]*;[^[\]]*\]/g, m => m.replace(/(?<!;) /g, '\u00a0'));
 const decimal = x => String(+toNum(x).toFixed(3)).replace('-', '−');
 const structText = c => (c.struct === '群' ? `群（${c.groupOp}）` : '集合');
 const OP_SYM = { add: '+', mul: '×' };
@@ -259,11 +268,13 @@ function cardHTML(it, { act = 'place', slot = '', still = false } = {}) {
   const width = l => [...l].reduce((n, ch) => n + (/[　-鿿＀-￯]/.test(ch) ? 2.2 : 1), 0);
   const len = Math.max(...lines.map(width)) + (lines.length > 1 ? 3 : 0);
   const size = len <= 3 ? 'l' : len <= 6 ? 'm' : len <= 11 ? 's' : 'xs';
+  // card-main 是 flex 容器：公式包在一层 span 里，<i>x</i> 和旁边的文字才会连成一行，空格也不会丢
+  // "新"标记放进小字那一行，不盖住小字
+  const fresh = !still && !slot && S.fresh.has(it.id) ? '<span class="card-new">新</span>' : '';
   const inner = `
     <span class="card-type">${KIND[it.kind]}</span>
-    <span class="card-main sz-${size}">${math(main)}</span>
-    <span class="card-sub">${math(subText(it))}</span>
-    ${!still && !slot && S.fresh.has(it.id) ? '<span class="card-new">新</span>' : ''}`;
+    <span class="card-main sz-${size}"><span>${math(keepRows(main))}</span></span>
+    <span class="card-sub">${fresh}${math(subText(it))}</span>`;
   if (still) return `<div class="card k-${it.kind}">${inner}</div>`;
   const aria = slot ? `移除${KIND[it.kind]} ${main}` : `${KIND[it.kind]} ${main}`;
   return `<button type="button" class="card k-${it.kind}" data-act="${act}" data-id="${esc(it.id)}"${
@@ -295,7 +306,9 @@ function questHTML() {
   const q = open[idx];
   const ch = q.ch ? chapterOf(q.ch) : null;
   const where = ch ? `第${CH_NO[ch.id - 1]}章` : '入门';
-  return `<section class="quest" aria-label="当前任务"><span class="quest-step">${where} · 任务 ${idx + 1}/${open.length} · ${esc(
+  // 任务编号按章计：入门是一组，每一章各是一组
+  const group = open.filter(x => x.ch === q.ch);
+  return `<section class="quest" aria-label="当前任务"><span class="quest-step">${where} · 任务 ${group.indexOf(q) + 1}/${group.length} · ${esc(
     q.title,
   )}</span><p>${math(q.text)}</p></section>`;
 }
@@ -304,7 +317,12 @@ function slotHTML(k) {
   const label = { L: '左', M: '算子', R: '右' }[k];
   const it = itemOf(S.slots[k]);
   const active = S.active === k;
-  const empty = active ? '下一张放这里' : k === 'M' ? '放一个算子' : '空位';
+  // 点卡时多项式会放到左右两边；要放到中间，得先点中间的空格
+  const polyTip =
+    k === 'M' && [...S.items.values()].some(isCallable)
+      ? '<span class="slot-tip">多项式：先点这里，再点那张卡</span>'
+      : '';
+  const empty = active ? '下一张放这里' : k === 'M' ? `放一个算子${polyTip}` : '空位';
   return `<div class="slot${active ? ' is-active' : ''}"><span class="slot-label">${label}</span>${
     it
       ? cardHTML(it, { act: 'slot', slot: k })
@@ -336,14 +354,18 @@ function resultHTML() {
   }
   const it = itemOf(L.id);
   const tag = L.isNew ? (it.kind === 'deck' ? '新卡组' : `新${KIND[it.kind]}`) : L.recipeNew ? '新做法' : '已经有了';
-  let unlock = '';
-  if (L.unlocked) {
-    const ch = chapterOf(L.unlocked);
-    const names = (L.gifts ?? []).map(id => itemOf(id)).filter(Boolean).map(label);
-    unlock = `<p class="unlock"><strong>解锁第${CH_NO[ch.id - 1]}章「${esc(ch.title)}」</strong>${
-      names.length ? `，获得新卡：${math(names.join('、'))}` : ''
-    }。${esc(ch.unlock.note ?? '')}</p>`;
-  }
+  // 每解锁一章写一段，只列这一章自己的赠卡
+  const unlock = [].concat(L.unlocked ?? [])
+    .map(chapterOf)
+    .filter(Boolean)
+    .map(ch => {
+      const own = new Set(ch.unlock.gives.map(r => resolveRef(r).id));
+      const names = (L.gifts ?? []).filter(id => own.has(id)).map(itemOf).filter(Boolean).map(label);
+      return `<p class="unlock"><strong>解锁第${CH_NO[ch.id - 1]}章「${esc(ch.title)}」</strong>${
+        names.length ? `，获得新卡：${math(names.join('、'))}` : ''
+      }。${esc(ch.unlock.note ?? '')}</p>`;
+    })
+    .join('');
   return `<div class="result${L.isNew ? ' is-new' : ''}" role="status">
     <div class="result-card">${cardHTML(it, { act: 'info' })}</div>
     <div class="result-body">
@@ -369,8 +391,8 @@ function cardGroups(cards) {
   for (const [t, def] of TYPES) {
     const xs = byType.get(t);
     if (!xs) continue;
-    if (t === 'q') xs.sort((a, b) => toNum(a.v) - toNum(b.v));
-    else xs.sort((a, b) => (a.id < b.id ? -1 : 1));
+    // 按类型自己的比较函数排序（量：先按量纲分组再按大小），没有就按 key
+    xs.sort((a, b) => cmpV(a.v, b.v));
     out.push([def.name, xs]);
   }
   return out;
@@ -494,7 +516,9 @@ function itemSheetHTML(it, back) {
   switch (it.kind) {
     case 'card': {
       const what = !isR(it.v) ? `${typeLabel(it.v)}。` : it.v.d === 1 ? '一个整数。' : `一个分数，约等于 ${decimal(it.v)}。`;
-      const asFn = TYPES.get(typeOf(it.v))?.call ? '它也可以放在中间当算子用：旁边放单卡就代入，放卡组就对每张卡都代入。' : '';
+      const asFn = isCallable(it)
+        ? '它也可以放在中间当算子用：旁边放单卡就代入，放卡组就对每张卡都代入。直接点这张卡会放到左右两边；要放到中间，先点合成台中间的空格，再点这张卡，或者按下面的「放到中间」。'
+        : '';
       rows = `<p>${esc(what)}</p>
         <p class="muted">单卡放在合成台左右两边，和中间的算子一起算出新卡。${asFn}</p>`;
       break;
@@ -522,7 +546,11 @@ function itemSheetHTML(it, back) {
     ${rows}
     <div class="sheet-actions"><button type="button" class="btn btn-primary" data-act="place-close" data-id="${esc(
       it.id,
-    )}">放上合成台</button></div>`,
+    )}">放上合成台</button>${
+      isCallable(it)
+        ? `<button type="button" class="btn" data-act="place-close" data-id="${esc(it.id)}" data-slot="M">放到中间</button>`
+        : ''
+    }</div>`,
     back,
   );
 }
@@ -588,6 +616,8 @@ function codexHTML() {
     <div class="reset">${reset}</div>`);
 }
 
+let codexScroll = 0;
+
 function render() {
   const got = CATALOG.filter(c => has(`d:${c.id}`)).length;
   app.innerHTML = `
@@ -601,7 +631,12 @@ function render() {
     ${handHTML()}`;
 
   const oldPanel = sheetRoot.querySelector('.sheet-panel');
-  const keepScroll = oldPanel && S.sheet && oldPanel.dataset.key === sheetKey() ? oldPanel.scrollTop : 0;
+  // 从图鉴点开提示或卡组详情，再按「← 图鉴」回来时，回到原来的滚动位置
+  if (oldPanel?.dataset.key === 'codex:') codexScroll = oldPanel.scrollTop;
+  if (!S.sheet) codexScroll = 0;
+  const key = sheetKey();
+  const keepScroll =
+    !oldPanel || !S.sheet ? 0 : oldPanel.dataset.key === key ? oldPanel.scrollTop : key === 'codex:' ? codexScroll : 0;
   if (!S.sheet) sheetRoot.innerHTML = '';
   else {
     const s = S.sheet;
@@ -612,7 +647,7 @@ function render() {
           ? hintSheetHTML(CATALOG.find(c => c.id === s.cat))
           : itemSheetHTML(itemOf(s.id), s.back);
     const panel = sheetRoot.querySelector('.sheet-panel');
-    panel.dataset.key = sheetKey();
+    panel.dataset.key = key;
     panel.scrollTop = keepScroll;
   }
   document.body.classList.toggle('has-sheet', !!S.sheet);
@@ -678,6 +713,7 @@ document.addEventListener('click', e => {
     case 'place-close': {
       const id = el.dataset.id;
       S.sheet = null;
+      if (el.dataset.slot) S.active = el.dataset.slot;
       place(id);
       break;
     }
