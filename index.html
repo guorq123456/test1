@@ -400,6 +400,12 @@
   .chapter { display: grid; gap: 8px; }
   .chapter h3 { margin: 6px 0 0; font-family: var(--f-display); font-size: 18px; font-weight: 600; }
   .ch-no { color: var(--c-deck); margin-right: 6px; }
+  .ch-count { font-family: var(--f-math); font-variant-numeric: tabular-nums; color: var(--c-deck); margin-left: 4px; }
+  .chapter.is-locked h3 { color: var(--ink-3); }
+  .chapter.is-locked .ch-no { color: var(--ink-3); }
+  .locked-note { font-size: 13px; color: var(--ink-2); padding: 10px 12px; border: 1.5px dashed var(--line-strong); border-radius: 12px; }
+  .intro { font-size: 14px; color: var(--ink-2); line-height: 1.7; padding-left: 12px; border-left: 3px solid var(--c-deck); max-width: 65ch; }
+  .unlock { padding: 8px 12px; border-radius: 10px; background: var(--focus-bg); font-size: 14px; }
   .codex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
   .tile {
     display: grid;

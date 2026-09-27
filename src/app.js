@@ -1,11 +1,11 @@
 // 游戏界面：合成台、手牌、图鉴。所有规则都在 rules.js 里，这里只负责显示和点击。
 
-import { CATALOG_ALL as CATALOG, CHAPTERS_ALL as CHAPTERS, META, QUESTS_ALL as QUESTS, START } from './content.js';
+import { CATALOG_ALL as CATALOG, CHAPTERS_ALL as CHAPTERS, GIFTS, META, QUESTS_ALL as QUESTS, START } from './content.js';
 import { combine, itemFromDesc, recipeText, resolveRef } from './rules.js';
 import { toNum, isR } from './math.js';
-import { BIN, fmtV as fmtR } from './values.js';
+import { BIN, TYPES, fmtV as fmtR, typeOf, typeLabel } from './values.js';
 import { fmtU } from './unary.js';
-import { previewDeck } from './decks.js';
+import { groupInfo, previewDeck } from './decks.js';
 
 const SAVE_KEY = 'suanzi-gongfang/v1';
 const KIND = { card: '单卡', bin: '二元算子', un: '一元算子', meta: '构造算子', deck: '卡组' };
@@ -36,16 +36,23 @@ function freshState() {
   for (const ref of START) addItem(resolveRef(ref), false);
 }
 
-function addItem(it, markFresh = true) {
+// 收下一张卡。拿到某些卡会解锁新章节并附赠几张卡，赠卡的 id 放在 gifts 里返回。
+function addItem(it, markFresh = true, gifts = []) {
   if (S.items.has(it.id)) return false;
   S.items.set(it.id, it);
   S.order.push(it.id);
   if (markFresh) S.fresh.add(it.id);
+  for (const ref of GIFTS[it.id] ?? []) {
+    const g = resolveRef(ref);
+    if (addItem(g, markFresh, gifts)) gifts.push(g.id);
+  }
   return true;
 }
 
 const has = id => S.items.has(id);
 const itemOf = id => (id ? S.items.get(id) ?? null : null);
+const chapterOpen = ch => !ch.unlock || has(ch.unlock.when);
+const chapterOf = id => CHAPTERS.find(ch => ch.id === id);
 
 function snapshot() {
   return {
@@ -149,7 +156,8 @@ function doCombine() {
       render();
       return;
     }
-    const isNew = addItem(res.item);
+    const gifts = [];
+    const isNew = addItem(res.item, true, gifts);
     let recipeNew = false;
     if (res.item.kind === 'deck' && res.recipe) {
       const list = (S.recipes[res.item.id] ||= []);
@@ -158,7 +166,8 @@ function doCombine() {
         recipeNew = !isNew;
       }
     }
-    S.last = { ok: true, text: res.text, id: res.item.id, isNew, recipeNew };
+    const unlocked = isNew ? CHAPTERS.find(ch => ch.unlock?.when === res.item.id) : null;
+    S.last = { ok: true, text: res.text, id: res.item.id, isNew, recipeNew, gifts, unlocked: unlocked?.id ?? null };
     if (isNew) S.tab = TAB_OF[res.item.kind];
     save();
     render();
@@ -192,10 +201,26 @@ function closeSheet() {
 
 const esc = s =>
   String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
-// 数学文字：变量 x 用斜体
-const math = s => esc(s).replace(/x/g, '<i>x</i>');
+// 数学文字：变量 x 用斜体，换行（矩阵）变成 <br>
+const math = s => esc(s).replace(/x/g, '<i>x</i>').replace(/\n/g, '<br>');
 const decimal = x => String(+toNum(x).toFixed(3)).replace('-', '−');
 const structText = c => (c.struct === '群' ? `群（${c.groupOp}）` : '集合');
+const OP_SYM = { add: '+', mul: '×' };
+
+// 自造的有限卡组：自动判断它对 + 和 × 是不是群
+function groupText(D) {
+  const g = groupInfo(D);
+  if (!g) return '';
+  const parts = [];
+  for (const [op, r] of Object.entries(g)) {
+    const sym = OP_SYM[op];
+    if (r.group) parts.push(`对 ${sym} 是群`);
+    else if (!r.closed) parts.push(`对 ${sym} 不封闭`);
+    else if (!r.identity) parts.push(`对 ${sym} 封闭，但没有单位元`);
+    else parts.push(`对 ${sym} 封闭，有单位元 ${fmtR(r.identity)}，但不是每张卡都有逆元`);
+  }
+  return parts.join('；') + '。';
+}
 
 function mainText(it) {
   switch (it.kind) {
@@ -213,7 +238,8 @@ function mainText(it) {
 function subText(it) {
   switch (it.kind) {
     case 'card':
-      return !isR(it.v) || it.v.d === 1 ? '' : `≈ ${decimal(it.v)}`;
+      if (!isR(it.v)) return typeLabel(it.v);
+      return it.v.d === 1 ? '' : `≈ ${decimal(it.v)}`;
     case 'bin':
     case 'meta':
       return it.v.name;
@@ -228,7 +254,8 @@ function subText(it) {
 
 function cardHTML(it, { act = 'place', slot = '', still = false } = {}) {
   const main = mainText(it);
-  const len = [...main].length;
+  const lines = main.split('\n');
+  const len = Math.max(...lines.map(l => [...l].length)) + (lines.length > 1 ? 3 : 0);
   const size = len <= 3 ? 'l' : len <= 6 ? 'm' : len <= 11 ? 's' : 'xs';
   const inner = `
     <span class="card-type">${KIND[it.kind]}</span>
@@ -253,12 +280,20 @@ function gridHTML(items) {
 }
 
 function questHTML() {
-  const idx = QUESTS.findIndex(q => !q.done(has));
+  // 只显示已解锁章节的任务
+  const open = QUESTS.filter(q => !q.ch || chapterOpen(chapterOf(q.ch)));
+  const idx = open.findIndex(q => !q.done(has));
   if (idx < 0) {
-    return `<section class="quest"><span class="quest-step">任务全部完成</span><p>入门卡组集齐了。试着给每个卡组多找几种做法，或者造一些图鉴里没有的卡组。</p></section>`;
+    const locked = CHAPTERS.filter(ch => !chapterOpen(ch));
+    const next = locked.length
+      ? `还有 ${locked.length} 章没有解锁：${locked.map(ch => `「${ch.title}」要先拿到 ${label(resolveRef(ch.unlock.when))}`).join('，')}。`
+      : '所有章节都通关了。试着给每个卡组多找几种做法，或者造一些图鉴里没有的卡组。';
+    return `<section class="quest"><span class="quest-step">当前任务全部完成</span><p>${math(next)}</p></section>`;
   }
-  const q = QUESTS[idx];
-  return `<section class="quest" aria-label="当前任务"><span class="quest-step">任务 ${idx + 1}/${QUESTS.length} · ${esc(
+  const q = open[idx];
+  const ch = q.ch ? chapterOf(q.ch) : null;
+  const where = ch ? `第${CH_NO[ch.id - 1]}章` : '入门';
+  return `<section class="quest" aria-label="当前任务"><span class="quest-step">${where} · 任务 ${idx + 1}/${open.length} · ${esc(
     q.title,
   )}</span><p>${math(q.text)}</p></section>`;
 }
@@ -299,11 +334,19 @@ function resultHTML() {
   }
   const it = itemOf(L.id);
   const tag = L.isNew ? (it.kind === 'deck' ? '新卡组' : `新${KIND[it.kind]}`) : L.recipeNew ? '新做法' : '已经有了';
+  let unlock = '';
+  if (L.unlocked) {
+    const ch = chapterOf(L.unlocked);
+    const names = (L.gifts ?? []).map(id => itemOf(id)).filter(Boolean).map(label);
+    unlock = `<p class="unlock"><strong>解锁第${CH_NO[ch.id - 1]}章「${esc(ch.title)}」</strong>${
+      names.length ? `，获得新卡：${math(names.join('、'))}` : ''
+    }。${esc(ch.unlock.note ?? '')}</p>`;
+  }
   return `<div class="result${L.isNew ? ' is-new' : ''}" role="status">
     <div class="result-card">${cardHTML(it, { act: 'info' })}</div>
     <div class="result-body">
       <span class="tag${L.isNew || L.recipeNew ? ' tag-new' : ''}">${tag}</span>
-      <p>${math(L.text)}</p>
+      <p>${math(L.text)}</p>${unlock}
       <div class="result-actions">
         <button type="button" class="btn" data-act="reuse">放到左边继续</button>
         <button type="button" class="btn" data-act="info" data-id="${esc(it.id)}">详情</button>
@@ -312,10 +355,29 @@ function resultHTML() {
   </div>`;
 }
 
+// 单卡按类型分组：数在最前，其他类型按注册顺序
+function cardGroups(cards) {
+  const byType = new Map();
+  for (const it of cards) {
+    const t = typeOf(it.v);
+    if (!byType.has(t)) byType.set(t, []);
+    byType.get(t).push(it);
+  }
+  const out = [];
+  for (const [t, def] of TYPES) {
+    const xs = byType.get(t);
+    if (!xs) continue;
+    if (t === 'q') xs.sort((a, b) => toNum(a.v) - toNum(b.v));
+    else xs.sort((a, b) => (a.id < b.id ? -1 : 1));
+    out.push([def.name, xs]);
+  }
+  return out;
+}
+
 function handGroups() {
   const all = S.order.map(itemOf);
   return {
-    cards: all.filter(i => i.kind === 'card').sort((a, b) => (isR(a.v) && isR(b.v) ? toNum(a.v) - toNum(b.v) : 0)),
+    cards: all.filter(i => i.kind === 'card'),
     bins: Object.keys(BIN).map(k => itemOf(`b:${k}`)).filter(Boolean),
     uns: all.filter(i => i.kind === 'un'),
     metas: META.map(m => itemOf(`m:${m.id}`)).filter(Boolean),
@@ -341,7 +403,11 @@ function handHTML() {
     .join('');
   let body;
   if (S.tab === 'card') {
-    body = gridHTML(g.cards);
+    const groups = cardGroups(g.cards);
+    body =
+      groups.length <= 1
+        ? gridHTML(g.cards)
+        : groups.map(([title, xs]) => `<div class="group"><h3 class="group-title">${esc(title)}</h3>${gridHTML(xs)}</div>`).join('');
   } else if (S.tab === 'deck') {
     body = g.decks.length
       ? gridHTML(g.decks)
@@ -409,6 +475,8 @@ function deckDetailHTML(it) {
     html += `<p class="muted">图鉴里没有这个卡组，是你自己造出来的。${
       it.v.approx ? '它的内容是在一个小范围里算出来的，是近似结果。' : ''
     }</p>`;
+    const gt = groupText(it.v);
+    if (gt) html += `<p>${math(gt)}</p>`;
   }
   html += `<h3 class="sub-title">你找到的做法</h3>${
     found.length
@@ -422,10 +490,13 @@ function deckDetailHTML(it) {
 function itemSheetHTML(it, back) {
   let rows = '';
   switch (it.kind) {
-    case 'card':
-      rows = `<p>${!isR(it.v) ? '' : it.v.d === 1 ? '一个整数。' : `一个分数，约等于 ${decimal(it.v)}。`}</p>
-        <p class="muted">单卡放在合成台左右两边，和中间的算子一起算出新卡。</p>`;
+    case 'card': {
+      const what = !isR(it.v) ? `${typeLabel(it.v)}。` : it.v.d === 1 ? '一个整数。' : `一个分数，约等于 ${decimal(it.v)}。`;
+      const asFn = TYPES.get(typeOf(it.v))?.call ? '它也可以放在中间当算子用：旁边放单卡就代入，放卡组就对每张卡都代入。' : '';
+      rows = `<p>${esc(what)}</p>
+        <p class="muted">单卡放在合成台左右两边，和中间的算子一起算出新卡。${asFn}</p>`;
       break;
+    }
     case 'bin':
       rows = `<p>${esc(it.info?.desc ?? '')}</p>
         <p class="muted">两边放单卡，算出新单卡；只放一边，得到一元算子；卡组配单卡，卡组里每张卡都做这个运算；两个卡组，两两运算收集结果。</p>`;
@@ -484,21 +555,33 @@ function tileHTML(c) {
   </button>`;
 }
 
+function chapterHTML(ch) {
+  const decks = CATALOG.filter(c => c.ch === ch.id);
+  const head = `<h3><span class="ch-no">第${CH_NO[ch.id - 1]}章</span>${esc(ch.title)}</h3>`;
+  if (!chapterOpen(ch)) {
+    const key = resolveRef(ch.unlock.when);
+    return `<section class="chapter is-locked">${head}
+      <p class="muted small">${esc(ch.desc)}</p>
+      <p class="locked-note">🔒 拿到 ${math(label(key))} 后解锁，共 ${decks.length} 个卡组。</p>
+    </section>`;
+  }
+  const got = decks.filter(c => has(`d:${c.id}`)).length;
+  return `<section class="chapter">${head}
+    <p class="muted small">${esc(ch.desc)} <span class="ch-count">${got}/${decks.length}</span></p>
+    ${ch.intro ? `<p class="intro">${esc(ch.intro)}</p>` : ''}
+    <div class="codex-grid">${decks.map(tileHTML).join('')}</div>
+  </section>`;
+}
+
 function codexHTML() {
   const got = CATALOG.filter(c => has(`d:${c.id}`)).length;
-  const chapters = CHAPTERS.map(
-    ch => `<section class="chapter">
-      <h3><span class="ch-no">第${CH_NO[ch.id - 1]}章</span>${esc(ch.title)}</h3>
-      <p class="muted small">${esc(ch.desc)}</p>
-      <div class="codex-grid">${CATALOG.filter(c => c.ch === ch.id).map(tileHTML).join('')}</div>
-    </section>`,
-  ).join('');
+  const chapters = CHAPTERS.map(chapterHTML).join('');
   const reset = S.resetArmed
     ? `<span>清空所有卡牌和记录，从头开始？</span><button type="button" class="btn btn-danger" data-act="reset-confirm">确认重置</button><button type="button" class="btn" data-act="reset-cancel">取消</button>`
     : `<button type="button" class="btn btn-quiet" data-act="reset">重置进度</button>`;
-  return sheetFrame(`<p class="eyebrow">入门卡组</p>
+  return sheetFrame(`<p class="eyebrow">从数数到丈量世界</p>
     <h2 id="sheet-title">图鉴 <span class="muted">${got}/${CATALOG.length}</span></h2>
-    <p class="muted small">每个卡组都至少有两种做法，而且都能用别的卡组组合出来。点开没发现的卡组看提示。</p>
+    <p class="muted small">每个卡组都至少有两种做法，而且都能用别的卡组组合出来。点开没发现的卡组看提示。拿到关键的卡会解锁新章节。</p>
     ${chapters}
     <div class="reset">${reset}</div>`);
 }
@@ -507,7 +590,7 @@ function render() {
   const got = CATALOG.filter(c => has(`d:${c.id}`)).length;
   app.innerHTML = `
     <header class="top">
-      <div class="brand"><h1>算子工坊</h1><span class="edition">初等数学篇 · DEMO</span></div>
+      <div class="brand"><h1>算子工坊</h1><span class="edition">从数数到丈量世界 · DEMO</span></div>
       <button type="button" class="codex-btn" data-act="codex">图鉴 <span class="count">${got}/${CATALOG.length}</span></button>
     </header>
     ${questHTML()}

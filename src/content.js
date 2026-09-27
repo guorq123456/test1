@@ -24,7 +24,10 @@ export const CATALOG_ALL = [
 
 export const CHAPTERS_ALL = [...ELEM_CHAPTERS, ...DOMAINS.map(d => d.CHAPTER).filter(Boolean)];
 
-export const QUESTS_ALL = [...ELEM_QUESTS, ...DOMAINS.flatMap(d => d.QUESTS ?? [])];
+export const QUESTS_ALL = [
+  ...ELEM_QUESTS,
+  ...DOMAINS.flatMap(d => (d.QUESTS ?? []).map(q => ({ ...q, ch: d.CHAPTER?.id }))),
+];
 
 export const NAMED_UN_ALL = [...ELEM_NAMED_UN, ...DOMAINS.flatMap(d => d.NAMED_UN ?? [])];
 
