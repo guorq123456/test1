@@ -1,0 +1,43 @@
+dev rows    : 30,000
+sealed rows : 116,237
+dev rows per wilderness area: Rawah=13,484, Neota=1,543, Comanche_Peak=13,066, Cache_la_Poudre=1,907
+
+== baselines ==
+logreg_raw   iid_f1=0.530 acc=0.723 transfer_f1=0.291 per_area={'Rawah': 0.235, 'Neota': 0.441, 'Comanche_Peak': 0.229, 'Cache_la_Poudre': 0.259} (26s)
+rf_raw       iid_f1=0.741 acc=0.843 transfer_f1=0.268 per_area={'Rawah': 0.246, 'Neota': 0.411, 'Comanche_Peak': 0.229, 'Cache_la_Poudre': 0.186} (14s)
+hgb_raw      iid_f1=0.691 acc=0.799 transfer_f1=0.252 per_area={'Rawah': 0.249, 'Neota': 0.342, 'Comanche_Peak': 0.209, 'Cache_la_Poudre': 0.207} (21s)
+
+== evolutionary search (searcher sees only transfer F1) ==
+[00] hgb    feats=['aspect_sincos', 'shade_stats'] iid=0.756 transfer=0.273 | best transfer=0.273 (65s)
+[01] hgb    feats=['aspect_sincos', 'euclid_hydro', 'shade_stats'] iid=0.757 transfer=0.282 | best transfer=0.282 (133s)
+[02] hgb    feats=['aspect_sincos', 'shade_stats'] iid=0.759 transfer=0.278 | best transfer=0.282 (202s)
+[03] hgb    feats=['aspect_sincos', 'shade_stats'] iid=0.744 transfer=0.293 | best transfer=0.293 (252s)
+[04] hgb    feats=['aspect_sincos', 'drop_soil', 'shade_stats'] iid=0.735 transfer=0.280 | best transfer=0.293 (382s)
+[05] rf     feats=['aspect_sincos', 'elev_minus_vh', 'shade_stats'] iid=0.747 transfer=0.277 | best transfer=0.293 (666s)
+[06] hgb    feats=['aspect_sincos', 'drop_soil', 'shade_stats'] iid=0.652 transfer=0.272 | best transfer=0.293 (692s)
+[07] rf     feats=['elev_minus_vh', 'road_fire_mix', 'shade_stats'] iid=0.744 transfer=0.270 | best transfer=0.293 (707s)
+[08] logreg feats=['aspect_sincos', 'drop_soil', 'elev_minus_vh', 'shade_stats'] iid=0.472 transfer=0.193 | best transfer=0.293 (737s)
+[09] hgb    feats=['aspect_sincos', 'drop_soil', 'shade_stats'] iid=0.735 transfer=0.281 | best transfer=0.293 (792s)
+[10] rf     feats=['drop_soil', 'road_fire_mix', 'shade_stats'] iid=0.643 transfer=0.229 | best transfer=0.293 (799s)
+[11] hgb    feats=['aspect_sincos', 'drop_soil', 'shade_stats'] iid=0.739 transfer=0.275 | best transfer=0.293 (823s)
+[12] logreg feats=['drop_soil', 'shade_stats'] iid=0.467 transfer=0.262 | best transfer=0.293 (852s)
+[13] hgb    feats=['drop_soil', 'shade_stats'] iid=0.727 transfer=0.236 | best transfer=0.293 (869s)
+
+best dev candidate: {"model": "hgb", "features": ["aspect_sincos", "shade_stats"], "params": {"max_iter": 400, "learning_rate": 0.03, "max_leaf_nodes": 63, "l2": 0.0, "class_weight": "balanced"}, "seed": 0}
+
+== leaderboard (dev, by transfer F1) ==
+ fingerprint  composite  iid_macro_f1  transfer_macro_f1  iid_accuracy  fit_seconds                note
+692e0d1ce41f   0.293125      0.743772           0.293125      0.802700    50.033492            evolve#3
+77b4867c42c7   0.290986      0.529982           0.290986      0.723433    25.756084 baseline:logreg_raw
+96e38d187362   0.281981      0.756545           0.281981      0.821567    67.581414            evolve#1
+8e9cc53bbb2b   0.281091      0.735163           0.281091      0.801000    54.736460            evolve#9
+637d04565676   0.279978      0.735163           0.279978      0.801000    55.267769            evolve#4
+a01896a456e6   0.277642      0.759243           0.277642      0.823267    69.301010            evolve#2
+9ff42723b8fd   0.277442      0.747347           0.277442      0.803833     5.476800            evolve#5
+589aebb07818   0.274993      0.738543           0.274993      0.807600    23.415201           evolve#11
+da1b2a4261ae   0.272658      0.755855           0.272658      0.820700    65.115203            evolve#0
+98a09e0de66e   0.272101      0.652436           0.272101      0.720800    26.786459            evolve#6
+
+== sealed evaluation (1 of 3 budget) ==
+best     sealed macro-F1=0.747 acc=0.794 per_area={'Rawah': 0.759, 'Neota': 0.753, 'Comanche_Peak': 0.718, 'Cache_la_Poudre': 0.634}
+hgb_raw  sealed macro-F1=0.792 acc=0.857 per_area={'Rawah': 0.814, 'Neota': 0.883, 'Comanche_Peak': 0.777, 'Cache_la_Poudre': 0.775}
