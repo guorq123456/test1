@@ -1,0 +1,113 @@
+{
+  "best_config": {
+    "model": "hgb",
+    "features": [
+      "aspect_sincos",
+      "shade_stats"
+    ],
+    "params": {
+      "max_iter": 400,
+      "learning_rate": 0.03,
+      "max_leaf_nodes": 63,
+      "l2": 0.0,
+      "class_weight": "balanced"
+    },
+    "seed": 0
+  },
+  "best_dev": {
+    "fingerprint": "692e0d1ce41f",
+    "mode": "dev",
+    "composite": 0.29312526492051816,
+    "iid_macro_f1": 0.743771826755398,
+    "iid_accuracy": 0.8027000000000001,
+    "transfer_macro_f1": 0.29312526492051816,
+    "transfer_per_area": {
+      "Rawah": 0.2546760132298908,
+      "Neota": 0.4492059899166159,
+      "Comanche_Peak": 0.2297864084210636,
+      "Cache_la_Poudre": 0.23883264811450228
+    },
+    "sealed_macro_f1": null,
+    "sealed_accuracy": null,
+    "fit_seconds": 50.03349184989929,
+    "config": {
+      "model": "hgb",
+      "features": [
+        "aspect_sincos",
+        "shade_stats"
+      ],
+      "params": {
+        "max_iter": 400,
+        "learning_rate": 0.03,
+        "max_leaf_nodes": 63,
+        "l2": 0.0,
+        "class_weight": "balanced"
+      },
+      "seed": 0
+    },
+    "note": "evolve#3"
+  },
+  "best_sealed": {
+    "fingerprint": "692e0d1ce41f",
+    "mode": "sealed",
+    "composite": 0.7470897116288214,
+    "iid_macro_f1": null,
+    "iid_accuracy": null,
+    "transfer_macro_f1": null,
+    "transfer_per_area": {
+      "Rawah": 0.7591561352987264,
+      "Neota": 0.7530398488195212,
+      "Comanche_Peak": 0.718450805452448,
+      "Cache_la_Poudre": 0.633863945349259
+    },
+    "sealed_macro_f1": 0.7470897116288214,
+    "sealed_accuracy": 0.7942307526863219,
+    "fit_seconds": 8.948473930358887,
+    "config": {
+      "model": "hgb",
+      "features": [
+        "aspect_sincos",
+        "shade_stats"
+      ],
+      "params": {
+        "max_iter": 400,
+        "learning_rate": 0.03,
+        "max_leaf_nodes": 63,
+        "l2": 0.0,
+        "class_weight": "balanced"
+      },
+      "seed": 0
+    },
+    "note": "sealed call 1/3. best-by-transfer"
+  },
+  "baseline_sealed": {
+    "fingerprint": "d7f94a505293",
+    "mode": "sealed",
+    "composite": 0.7923071138110533,
+    "iid_macro_f1": null,
+    "iid_accuracy": null,
+    "transfer_macro_f1": null,
+    "transfer_per_area": {
+      "Rawah": 0.8144157085511455,
+      "Neota": 0.8833143726764058,
+      "Comanche_Peak": 0.7769383641262261,
+      "Cache_la_Poudre": 0.7750449339584419
+    },
+    "sealed_macro_f1": 0.7923071138110533,
+    "sealed_accuracy": 0.8570162684859383,
+    "fit_seconds": 8.784493446350098,
+    "config": {
+      "model": "hgb",
+      "features": [],
+      "params": {
+        "max_iter": 200,
+        "learning_rate": 0.1,
+        "max_leaf_nodes": 31,
+        "l2": 0.0,
+        "class_weight": null
+      },
+      "seed": 0
+    },
+    "note": "sealed call 2/3. baseline hgb_raw for reference"
+  }
+}
