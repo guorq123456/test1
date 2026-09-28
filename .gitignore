@@ -1,0 +1,9 @@
+# Python caches
+__pycache__/
+*.pyc
+
+# Downloaded datasets / data caches (do not commit)
+covtype.csv
+*.csv.gz
+data/
+.cache/
