@@ -1,0 +1,77 @@
+{
+ "instances_in_domain": 309455,
+ "instance_errors": 0,
+ "tuples_in_domain": 5600,
+ "tuples_with_any_error": 0,
+ "false_pos(pred unimodal, truth not)": 0,
+ "false_neg(pred not, truth unimodal)": 0,
+ "per_stratum": {
+  "r3_far": {
+   "inst": 64813,
+   "err": 0,
+   "tuples": 900,
+   "tuples_err": 0
+  },
+  "r3_biga": {
+   "inst": 29086,
+   "err": 0,
+   "tuples": 500,
+   "tuples_err": 0
+  },
+  "r2_far": {
+   "inst": 56498,
+   "err": 0,
+   "tuples": 500,
+   "tuples_err": 0
+  },
+  "r456_far": {
+   "inst": 30530,
+   "err": 0,
+   "tuples": 700,
+   "tuples_err": 0
+  },
+  "r456_biga": {
+   "inst": 12938,
+   "err": 0,
+   "tuples": 400,
+   "tuples_err": 0
+  },
+  "big_r": {
+   "inst": 11738,
+   "err": 0,
+   "tuples": 600,
+   "tuples_err": 0
+  },
+  "equal": {
+   "inst": 26207,
+   "err": 0,
+   "tuples": 400,
+   "tuples_err": 0
+  },
+  "two_vals": {
+   "inst": 26259,
+   "err": 0,
+   "tuples": 400,
+   "tuples_err": 0
+  },
+  "ones": {
+   "inst": 4007,
+   "err": 0,
+   "tuples": 300,
+   "tuples_err": 0
+  },
+  "has_mult": {
+   "inst": 23138,
+   "err": 0,
+   "tuples": 500,
+   "tuples_err": 0
+  },
+  "mixed": {
+   "inst": 24241,
+   "err": 0,
+   "tuples": 400,
+   "tuples_err": 0
+  }
+ },
+ "first_mismatches": []
+}

@@ -1,0 +1,169 @@
+THEOREM (sufficiency half of arXiv:2605.12822 Conj. 5.4, all r >= 2, all k >= 1).
+Let r >= 2, k >= 1, a_1,...,a_k >= 1, b >= 1, and put
+     A(q) = [a_1]_q ... [a_k]_q,   D = sum_i (a_i - 1),   M = sum_i floor(a_i / r),
+     P(q) = A(q) [b]_{q^r},        N = deg P = D + r(b-1).
+If  b <= 1 + M  (or if r | a_i for some i), then P is symmetric (P_n = P_{N-n}) and weakly unimodal.
+
+Mechanism: a Lambda-type (centred-chain) decomposition A = U + V obtained by
+"Clebsch-Gordan peeling", where every piece of U contains a factor [c]_q with r | c and
+every piece of V is a single centred chain of length >= rM + 1. No residue-class
+window sums are used.
+
+----------------------------------------------------------------------------
+0. Conventions
+----------------------------------------------------------------------------
+[n]_q = 1 + q + ... + q^{n-1} for n >= 1, and [0]_q = 0.
+For a polynomial F, F_i denotes the coefficient of q^i (F_i = 0 for i < 0 or i > deg F).
+For c in (1/2)Z, SU(c) denotes the set of polynomials F with
+   (S1) F_i >= 0 for all i,
+   (S2) F_i = F_{2c-i} for all integers i            ("symmetric about c"),
+   (S3) F_{i-1} <= F_i for every integer i <= c.
+0 belongs to every SU(c).  A "chain" is a polynomial q^j [L]_q (j >= 0, L >= 1); it is
+symmetric about j + (L-1)/2, which we call its centre.
+
+Lemma 0. Every F in SU(c) is weakly unimodal, with a peak at index m = floor(c).
+Proof. For integers i <= m we have i <= c, so F_{i-1} <= F_i by (S3).
+Now let i >= m be an integer and put i' = 2c - i (an integer, as 2c is an integer).
+By (S2), F_i = F_{i'} and F_{i+1} = F_{2c-i-1} = F_{i'-1}.
+ - If c is an integer (c = m): i' <= c, so by (S3) F_{i+1} = F_{i'-1} <= F_{i'} = F_i.
+ - If c = m + 1/2 and i >= m+1: i' = 2m+1-i <= m <= c, so again F_{i+1} = F_{i'-1} <= F_{i'} = F_i.
+ - If c = m + 1/2 and i = m: i' = m+1 = i+1, so F_{i+1} = F_{i'} = F_i.
+Hence F_0 <= ... <= F_m >= F_{m+1} >= ... : F is weakly unimodal. QED
+
+Lemma 1 (closure).
+ (a) SU(c) is closed under sums and multiplication by nonnegative scalars.
+ (b) q^j SU(c) is contained in SU(c+j).
+ (c) Every chain q^j[L]_q lies in SU(j + (L-1)/2).
+ (d) (Lambda decomposition) If F in SU(c), then
+        F = sum over integers i <= c of (F_i - F_{i-1}) q^i [2c - 2i + 1]_q,
+     a nonnegative combination of chains all centred at c (only 0 <= i <= c contribute,
+     since F_i - F_{i-1} = 0 for i < 0).
+ (e) (Clebsch-Gordan) For m, n >= 1:  [m]_q [n]_q = sum_{d=0}^{min(m,n)-1} q^d [m+n-1-2d]_q.
+ (f) (Peeling) For m, n >= 1 and 0 <= d0 <= min(m,n):
+        [m]_q [n]_q = sum_{d=0}^{d0-1} q^d [m+n-1-2d]_q  +  q^{d0} [m-d0]_q [n-d0]_q.
+ (g) If F in SU(c) and G in SU(c'), then FG in SU(c + c').
+Proof.
+ (a),(b): immediate from the definitions (all three conditions are linear/shift-compatible).
+ (c): coefficients are 0 before index j, 1 on [j, j+L-1], 0 after; symmetric about
+      j+(L-1)/2 and nondecreasing up to it.
+ (d): Note (S1)-(S3) give F_i - F_{i-1} >= 0 for i <= c, and 2c-2i+1 >= 1 for i <= c.
+      The coefficient of q^n on the right is the sum of (F_i - F_{i-1}) over integers i with
+      i <= c and i <= n <= 2c - i, i.e. over i <= min(n, 2c-n) (this bound is <= c).
+      The sum telescopes (F_i = 0 for i < 0) to F_{min(n,2c-n)}, which equals F_n by (S2)
+      (if min(n,2c-n) < 0 the sum is empty and F_n = F_{2c-n} = 0 as one index is negative).
+ (e): The coefficient of q^t on the left is the number of x with 0<=x<=m-1 and 0<=t-x<=n-1,
+      i.e. max(0, min(m-1,t) - max(0,t-n+1) + 1) = max(0, min(m-1, t, n-1, m+n-2-t) + 1),
+      using min(m-1,t) + min(0,n-1-t) = min(m-1, m+n-2-t, t, n-1).
+      The coefficient of q^t on the right is the number of d with 0 <= d <= min(m,n)-1 and
+      d <= t <= m+n-2-d, i.e. of d with 0 <= d <= min(m-1, n-1, t, m+n-2-t); same number.
+ (f): If d0 = min(m,n) then [m-d0][n-d0] = 0 and (f) is (e). Otherwise m-d0, n-d0 >= 1 and by
+      (e), q^{d0}[m-d0][n-d0] = sum_{d'=0}^{min(m,n)-d0-1} q^{d0+d'} [m+n-2d0-1-2d'];
+      substituting d = d0 + d' this is sum_{d=d0}^{min(m,n)-1} q^d[m+n-1-2d], the tail of (e).
+ (g): By (d) write F and G as nonnegative combinations of chains centred at c and c'
+      respectively. A product q^i[m] * q^{i'}[n] of two such chains equals, by (e),
+      sum_d q^{i+i'+d}[m+n-1-2d], whose terms are chains with centre
+      i+i'+d+(m+n-2-2d)/2 = (i+(m-1)/2) + (i'+(n-1)/2) = c + c'. By (c),(b),(a) FG in SU(c+c'). QED
+
+Corollary 1. Any product H = [h_1]_q...[h_t]_q (t >= 0, h_l >= 1) lies in SU(deg H / 2).
+(Each [h] is in SU((h-1)/2) by (c); apply (g).)
+
+----------------------------------------------------------------------------
+1. The two kinds of good pieces
+----------------------------------------------------------------------------
+Lemma 2 (long chain). Let r >= 1, b >= 1, L >= r(b-1) + 1. Then
+   G = [L]_q [b]_{q^r} lies in SU(c),  c = (L - 1 + r(b-1))/2.
+Proof. G_n = #{ y in {0,...,b-1} : 0 <= n - r y <= L-1 } >= 0.
+(S2): the involution (x,y) -> (L-1-x, b-1-y) maps solutions of x + ry = n to solutions of
+x + ry = (L-1) + r(b-1) - n = 2c - n.
+(S3): since L-1 >= r(b-1), we have c <= L-1. For every integer n <= L-1 and every y >= 0, the
+condition n - ry <= L-1 holds automatically, so G_n = #{ y in [0,b-1] : ry <= n }, which is a
+nondecreasing function of n on (-infinity, L-1]. Hence G_{n-1} <= G_n for all n <= c. QED
+
+Lemma 3 (factor divisible by r). Let r >= 1, u >= 1, c = r u, b >= 1, and H in SU(h).
+Then [c]_q H(q) [b]_{q^r} lies in SU( h + (c-1)/2 + r(b-1)/2 ).
+Proof. (i) [c]_q = [r]_q [u]_{q^r}  (both equal (1-q^{ru})/(1-q)).
+(ii) X(x) := [u]_x [b]_x lies in SU_x(g), g = (u-1+b-1)/2, by Corollary 1 in the variable x.
+(iii) By Lemma 1(d) (in x): X = sum_{i <= g} beta_i x^i [2g-2i+1]_x with beta_i >= 0.
+(iv) Substituting x = q^r and multiplying by [r]_q, using [r]_q [m]_{q^r} = [rm]_q (as in (i)):
+     [r]_q X(q^r) = sum_i beta_i q^{ri} [r(2g-2i+1)]_q.
+     Each term is a chain with centre ri + (r(2g-2i+1)-1)/2 = rg + (r-1)/2, so by Lemma 1(c),(b),(a)
+     [r]_q X(q^r) lies in SU(rg + (r-1)/2).
+(v) [c]_q H(q) [b]_{q^r} = H(q) * [r]_q X(q^r) by (i), so by Lemma 1(g) it lies in
+     SU(h + rg + (r-1)/2), and rg + (r-1)/2 = (ru-1)/2 + r(b-1)/2 = (c-1)/2 + r(b-1)/2. QED
+(Lemma 3 with c = a_i, H = prod_{l != i}[a_l] reproves Cor. 4.3 of the paper.)
+
+----------------------------------------------------------------------------
+2. The peeling decomposition
+----------------------------------------------------------------------------
+Lemma 4. Fix r >= 1. For every finite sequence a_1,...,a_k of positive integers (k >= 0) with
+A, D, M as above (empty product A = 1, D = M = 0) there is a decomposition
+      A = U + V
+with
+ (U) U = finite sum, with nonnegative integer coefficients, of polynomials q^e [c]_q H(q) where
+     c >= 1, r | c, H is a product of q-integers, and q^e [c]_q H(q) is symmetric about D/2;
+ (V) V = finite sum, with nonnegative integer coefficients, of chains q^j [L]_q with
+     L >= rM + 1 and centre j + (L-1)/2 = D/2.
+Proof. Induction on k.
+ Base k = 0: A = 1 = q^0[1]_q; take U = 0, V = [1]_q (L = 1 >= r*0 + 1, centre 0 = D/2).
+ Step: assume A = U + V for a_1..a_k and let a' = a_{k+1} = r m' + s' with 0 <= s' <= r-1.
+ New data: A' = A[a'], D' = D + a' - 1, M' = M + m'. Then A' = U[a'] + V[a'].
+ Step 1 (U part). For a term q^e[c]H of U, q^e[c]H [a'] = q^e [c] (H[a']) has the form (U):
+   H[a'] is a product of q-integers, r | c, and it is symmetric about D/2 + (a'-1)/2 = D'/2
+   (product of a polynomial symmetric about D/2 and one symmetric about (a'-1)/2).
+ Step 2 (V part). Take a chain q^j[L] of V. Put
+      e = L - rM - 1 (>= 0 by (V)),   n = min(L, a'),
+      delta = s'   if s' <= e + 1,   delta = e + 1   if s' > e + 1,
+      d0 = min(delta, n).
+   By Lemma 1(f):  q^j[L][a'] = sum_{d=0}^{d0-1} q^{j+d}[L+a'-1-2d]  +  q^{j+d0}[L-d0][a'-d0].
+   2a (top chains go to V'). For 0 <= d <= d0-1 we have d <= delta-1, so
+        L + a' - 1 - 2d >= L + a' + 1 - 2 delta = (rM+1+e) + (rm'+s') + 1 - 2 delta
+                         = rM' + 1 + (e + s' + 1 - 2 delta).
+      If delta = s' <= e+1:   e + s' + 1 - 2 delta = e + 1 - s' >= 0.
+      If delta = e+1 < s':    e + s' + 1 - 2 delta = s' - e - 1 > 0.
+      So each top chain has length >= rM' + 1, and its centre is
+      (j+d) + (L+a'-2-2d)/2 = (j + (L-1)/2) + (a'-1)/2 = D/2 + (a'-1)/2 = D'/2.
+   2b (remainder goes to U'). R = q^{j+d0}[L-d0][a'-d0].
+      If d0 = n, one of the two brackets is [0] = 0 and R = 0.
+      Otherwise d0 = delta < n <= min(L,a'), so both brackets have argument >= 1, and
+        - if delta = s': a' - d0 = a' - s' = r m', so R = q^{j+s'} [r m']_q [L - s']_q, of form (U)
+          with c = r m' (>= 1 because a' - d0 >= 1) and H = [L - s']_q;
+        - if delta = e+1: L - d0 = L - e - 1 = rM, so R = q^{j+e+1} [rM]_q [a'-e-1]_q, of form (U)
+          with c = rM (>= 1 because L - d0 >= 1) and H = [a'-e-1]_q.
+      Centre of R: (j+d0) + ((L-d0-1) + (a'-d0-1))/2 = j + (L-1)/2 + (a'-1)/2 = D'/2.
+   Summing Step 1 and Step 2 over all terms (with their multiplicities) gives A' = U' + V' with
+   U', V' of the required forms for a_1..a_{k+1}. QED
+
+----------------------------------------------------------------------------
+3. Proof of the Theorem
+----------------------------------------------------------------------------
+Assume b - 1 <= M. Take A = U + V from Lemma 4. Then P = U(q)[b]_{q^r} + V(q)[b]_{q^r}.
+ (i) A term T = q^e[c]H of U: H is a product of q-integers, so H in SU(deg H/2) (Cor. 1).
+     By Lemma 3 and Lemma 1(b), T[b]_{q^r} lies in SU(e + deg H/2 + (c-1)/2 + r(b-1)/2).
+     Since T is symmetric about D/2 and T = q^e [c] H with [c]H symmetric about (c-1)/2 + deg H/2,
+     e + (c-1)/2 + deg H/2 = D/2. So T[b]_{q^r} lies in SU(D/2 + r(b-1)/2) = SU(N/2).
+ (ii) A chain q^j[L] of V: L >= rM + 1 >= r(b-1) + 1, so by Lemma 2 and Lemma 1(b),
+     q^j[L][b]_{q^r} lies in SU(j + (L-1)/2 + r(b-1)/2) = SU(D/2 + r(b-1)/2) = SU(N/2).
+ (iii) By Lemma 1(a), P lies in SU(N/2); by Lemma 0, P is weakly unimodal (and symmetric).
+If instead r | a_i for some i: apply Lemma 3 with c = a_i, H = prod_{l != i}[a_l]_q, which lies
+in SU(deg H/2) by Corollary 1; P lies in SU(N/2). QED
+
+----------------------------------------------------------------------------
+4. Remarks
+----------------------------------------------------------------------------
+R1. Nothing in the proof uses r >= 2 except that the statement is about r >= 2; it also holds for
+    r = 1 (trivially). The order in which the factors a_i are fed into Lemma 4 is arbitrary.
+R2. The proof gives slightly more: P is unimodal whenever b - 1 <= floor((L_min - 1)/r), where L_min
+    is the smallest length of a V-chain produced by Lemma 4 (any factor order, any valid choice of
+    delta); L_min >= rM+1 always, and V may even be empty (then P is unimodal for every b).
+    A greedy version (rule_refined.py) was scored on the whole fit box: it certifies NO instance
+    beyond b <= 1+M or r | a_i (score_refined_r*.txt, 'ref_beats_plain' = 0 for r = 2..6).
+R3. Mechanical checks (scripts in /tmp/claude-0/qu/explore/E4/):
+    decomp.py           : for every r in 2..6 and every sorted tuple with k <= 8, a_i <= 12, the exact
+                          identity A = U + V holds, every V chain has length >= rM+1, and every
+                          remainder has a bracket divisible by r (assertion) -- 0 failures in
+                          629,845 (r,a) tuples (125,969 per r) [decomp_out.txt].
+    decomp.py --lemma 4 : for k <= 4 and every b <= min(M+1,60), U[b]_{q^r} and V[b]_{q^r} are each
+                          unimodal -- 0 failures in 60,615 checks [decomp_lemma4_out.txt].
+    run_box.sh/score.py : the ground-truth checker returns 1 on all 7,761,685 fit-box instances with
+                          b <= 1 + M (and on all instances with r | a_i) [score_r*.txt].
+    example.py          : prints the decomposition for a few tuples and checks it symbolically.

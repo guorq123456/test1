@@ -1,0 +1,323 @@
+[
+ {
+  "path_id": "E1: r=3, statistics S,F,b; periodic-window argument",
+  "stayed_on_path": true,
+  "outcome": "PROOF",
+  "candidates_tried_total": 8,
+  "candidates_file": "/tmp/claude-0/qu/explore/E1/candidates.txt",
+  "rules": [
+   {
+    "name": "r3_nondivisible_threshold",
+    "rule_file": "/tmp/claude-0/qu/explore/E1/rule_r3.py",
+    "description_text": "Domain: r = 3 and no a_i divisible by 3. Let F = sum over i of floor(a_i/3) and S = number of i with a_i = 2 mod 3. Then P = [a_1]_q...[a_k]_q [b]_{q^3} is weakly unimodal exactly when b <= 1 + F + 2*floor(S/6). An equivalent form uses D = sum(a_i - 1) = 3F + S: unimodal iff 3(b-1) <= D - (S mod 6). Outside the domain (some a_i divisible by 3), predict returns True by Cor. 4.3 of arXiv:2605.12822; that case is cited, not proved here, and domain() excludes it.",
+    "fit_range": "r=3, k<=8, a_i in {1,2,4,5,7,8,10,11} (a_i<=12, not divisible by 3), b<=60: 772,140 instances",
+    "free_parameters": 0,
+    "fit_errors": 0
+   }
+  ],
+  "numeric_claims": [
+   {
+    "claim": "The prior rule b <= F+1+2*floor(S/6) has 0 errors against the ground-truth checker on all 772,140 box instances with r=3 and no a_i divisible by 3",
+    "script": "/tmp/claude-0/qu/explore/E1/crosscheck.py (also verify_prior.py and candidates_counts.py)",
+    "range": "r=3, k<=8, a_i<=12 not divisible by 3, b<=60"
+   },
+   {
+    "claim": "Used as an iff, the Conjecture 5.4 condition b <= 1+F has 4050 errors on the same 772,140 instances",
+    "script": "/tmp/claude-0/qu/explore/E1/candidates_counts.py",
+    "range": "r=3, k<=8, a_i<=12 not divisible by 3, b<=60"
+   },
+   {
+    "claim": "The reflection identity e_m - e_{D-2-m} = delta(m) has 0 failures, and e_m >= 0 on [0,D-2] has 0 failures, over all 6434 products with a_i in {2,4,5,7,8,10,11}, k<=8 (e = p/(1+q+q^2))",
+    "script": "/tmp/claude-0/qu/explore/E1/explore_e.py",
+    "range": "k<=8, a_i<=12 not divisible by 3"
+   },
+   {
+    "claim": "The cross-class Boundary Lemma (e_z >= e_w for z = w mod 3, z+w in {D-3,D-4}) holds with 0 violations, but has zero slack for every k=1..8, e.g. a=[2,2,2,2,2,2,2,10]",
+    "script": "/tmp/claude-0/qu/explore/E1/boundary.py",
+    "range": "k<=8, a_i<=12 not divisible by 3"
+   },
+   {
+    "claim": "Discarded proof routes: H=(p-rho)/Phi_3 is not unimodal for 574, and the symmetrised e - delta/2 is not unimodal for 536, of 12853 enumerated products (entries equal to 1 removed, duplicates counted)",
+    "script": "/tmp/claude-0/qu/explore/E1/candidates_counts.py",
+    "range": "k<=8, a_i<=12 not divisible by 3"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "Let r=3, k>=0, a_1..a_k>=1 with no a_i divisible by 3, and b>=1. Put F = sum floor(a_i/3) and S = #{a_i = 2 mod 3}. Then [a_1]_q...[a_k]_q [b]_{q^3} is weakly unimodal if and only if b <= 1 + F + 2*floor(S/6). Equivalently 3(b-1) <= D - (S mod 6), where D = sum(a_i - 1). The proof covers both directions for all parameters, with no box restriction.",
+    "proof_file": "/tmp/claude-0/qu/explore/E1/proof.txt"
+   }
+  ],
+  "failure_report": ""
+ },
+ {
+  "path_id": "A1' (E2): probabilistic / Fourier formalization via roots-of-unity filter",
+  "stayed_on_path": true,
+  "outcome": "RULE",
+  "candidates_tried_total": 8,
+  "candidates_file": "/tmp/claude-0/qu/explore/E2/candidates.txt",
+  "rules": [
+   {
+    "name": "E2_exact (Theorem A: exact Fourier criterion, proved)",
+    "rule_file": "/tmp/claude-0/qu/explore/E2/rules/E2_exact.py",
+    "description_text": "Let D = sum(a_i - 1) and K = D + 1 - r(b+1). If r divides some a_i, predict unimodal. Otherwise: (1) compute the coefficients p_m of p(q) = prod [a_i]_q; (2) for u >= 0 set d_u = (p_u - p_{u-1}) + d_{u-r}, with d_u = 0 for u < 0. These are the power-series coefficients of p(q)(1-q)/(1-q^r). (3) Compute the residue imbalance tau_rho for rho = 0..r-1: reduce prod [a_i mod r]_q modulo q^r - 1 to get class sums f_rho, then set tau_rho = f_rho - f_{(rho-1) mod r}. Equivalently, tau_rho = (1/r) sum_{j=1}^{r-1} zeta^{-j rho}(1 - zeta^j) p(zeta^j) with zeta = e^{2 pi i/r}. Extend tau r-periodically to all integers. (4) Let E_u = d_u - tau_u, so E_u = -tau_u for u < 0. Predict unimodal iff E_u >= d_{K-u} for every integer u with K/2 < u <= D+1-r. Because tau is periodic, negative u only need checking for u >= -r. Equivalent form (Theorem A'): write p = [r]_q Q + R and let c = max{c in 0..r-1 : tau_c > 0}. Then P is unimodal iff all three hold: (N) r(b-1) <= D+1-2c; (Q) Q_u >= 0 for u > max(K, K/2); (P) Q_u - Q_{K-u} >= tau_{K-u} for K/2 < u <= K.",
+    "fit_range": "full fit box: r=2..6, k<=8, all multisets with a_i in 1..12, b in 1..60 (37,790,700 instances)",
+    "free_parameters": 0,
+    "fit_errors": 0
+   },
+   {
+    "name": "E2_closed_small (closed form for r<=3 or at most 3 nontrivial factors)",
+    "rule_file": "/tmp/claude-0/qu/explore/E2/rules/E2_closed_small.py",
+    "description_text": "Domain: r <= 3, or at most three a_i are >= 2. Let S = sum floor(a_i/r). Predict unimodal iff r divides some a_i, or one of the following holds. If r = 3: b <= 1 + S + 2*floor(n2/6), where n2 = #{i : a_i = 2 mod 3}. Otherwise (r = 2, or at most three a_i >= 2): b <= 1 + S. The 'only if' direction is proved in every case: Thm B, Cor D1, Cor E and Cor R3. The 'if' direction is proved whenever r(b+1) >= D+1 (Cor S1(a), R3(c)). For r(b+1) < D+1 the 'if' direction is conjectural; it holds throughout the fit box.",
+    "fit_range": "fit box restricted to the domain (15,525,600 instances)",
+    "free_parameters": 0,
+    "fit_errors": 0
+   },
+   {
+    "name": "E2_threshold (explicit y*-threshold; ignores the rare pair obstructions)",
+    "rule_file": "/tmp/claude-0/qu/explore/E2/rules/E2_threshold.py",
+    "description_text": "If r divides some a_i, predict unimodal. Otherwise compute d_u and tau as in E2_exact, and let y* = max{u in Z : d_u < tau_u}; search u in [-r, D+1-r]. Predict unimodal iff r(b+1) + 2y* <= D+1. This is exact whenever r(b+1) >= D+1 (Corollary A1). Its only errors in the box are the 133 instances where condition (P) fails; there the set of unimodal b is not an initial segment.",
+    "fit_range": "full fit box (37,790,700 instances)",
+    "free_parameters": 0,
+    "fit_errors": 133
+   },
+   {
+    "name": "E2_residue (Theorem B Fourier threshold; a proved necessary condition)",
+    "rule_file": "/tmp/claude-0/qu/explore/E2/rules/E2_residue.py",
+    "description_text": "If r divides some a_i, predict unimodal. Otherwise let c = max{c in 0..r-1 : tau_c > 0}. In closed form, tau_c = (2/r) sum_{j=1}^{r-1} sin(pi j/r) A_j sin(pi j (D_pi+1-2c)/r), where A_j = prod_i sin(pi j t_i/r)/sin(pi j/r), t_i = a_i mod r and D_pi = sum(t_i - 1). Predict unimodal iff r(b-1) <= D+1-2c, i.e. b <= 1 + S + floor((D_pi+1-2c)/r). The condition is necessary (proved): there are 0 false negatives. It is exact when the quotient of p by [r]_q has nonnegative coefficients and (P) holds.",
+    "fit_range": "full fit box (37,790,700 instances)",
+    "free_parameters": 0,
+    "fit_errors": 28883
+   }
+  ],
+  "numeric_claims": [
+   {
+    "claim": "E2_exact (Theorem A) has 0 errors on all 37,790,700 fit-box instances. The ground truth gt.txt was cross-checked against tools/uni on 15,000 random instances with 0 mismatches.",
+    "script": "/tmp/claude-0/qu/explore/E2/gt.c (build and run to produce gt.txt), then python3 /tmp/claude-0/qu/explore/E2/eval_more.py E2_exact (output in eval_final.log)",
+    "range": "r=2..6, k<=8, a_i in 1..12, b in 1..60"
+   },
+   {
+    "claim": "The conjecture's own rule (r | a_i or b <= 1+S) has 0 false positives and 64,371 false negatives in the box. So sufficiency holds throughout the box and necessity fails 64,371 times.",
+    "script": "python3 /tmp/claude-0/qu/explore/E2/eval_split.py baseline_conj,E2_residue,E2_threshold",
+    "range": "full fit box"
+   },
+   {
+    "claim": "133 multisets (r,a) in the box, all with r=6 and k in {7,8}, have a set of unimodal b that is not an initial segment. Example: r=6, a=(2,3,3,4,4,4,5) is unimodal at b=1 and b=3 but not at b=2 or b=4. So no rule of the form b <= f(r,a) can be exact.",
+    "script": "python3 /tmp/claude-0/qu/explore/E2/nonmono.py ; printf '6 7 2 3 3 4 4 4 5 B\\n' piped into /tmp/claude-0/qu/tools/uni for B=1..4",
+    "range": "full fit box"
+   },
+   {
+    "claim": "Errors on the full box: E2_threshold 133 (all false positives); E2_residue 28,883 (all false positives, 0 false negatives); discarded E2_harmonic1 31,387 (28,883 false positives, 2,504 false negatives); E2_closed_small 0 on its 15,525,600-instance domain.",
+    "script": "python3 /tmp/claude-0/qu/explore/E2/eval_more.py baseline_conj,E2_exact,E2_threshold,E2_residue,E2_harmonic1,E2_closed_small (eval_final.log); python3 /tmp/claude-0/qu/explore/E2/eval_split.py E2_harmonic1",
+    "range": "full fit box"
+   },
+   {
+    "claim": "For r=3, all 12,869 box multisets with no multiple of 3 have unimodal b-set exactly {1, ..., 1+S+2*floor(n2/6)}. For all 2,025 of them with n2>=6, b0 = S-1+ceil((n2+1)/3) exceeds 1+S and is unimodal.",
+    "script": "python3 /tmp/claude-0/qu/explore/E2/check_r3.py",
+    "range": "r=3, k<=8, a_i<=12, b<=60"
+   },
+   {
+    "claim": "Lemmas F, C, S, D and R3(a) show 0 numerical violations over the 69,207 box multisets that have no a_i=1 and no a_i divisible by r. Sanity check only; they are proved.",
+    "script": "python3 /tmp/claude-0/qu/explore/E2/scan.py ; python3 /tmp/claude-0/qu/explore/E2/verify_lemmas.py",
+    "range": "r=2..6, k<=8, a_i in 2..12 with r not dividing a_i"
+   },
+   {
+    "claim": "The quotient Q = p div [r]_q has a negative coefficient (y* >= 0) for 19,583 of those 69,207 multisets: 2,541 with r=4, 7,279 with r=5, 9,763 with r=6. None has r<=3 or k<=4.",
+    "script": "python3 /tmp/claude-0/qu/explore/E2/stats.py ; python3 /tmp/claude-0/qu/explore/E2/stats2.py",
+    "range": "r=2..6, k<=8, a_i in 2..12, r not dividing a_i"
+   },
+   {
+    "claim": "The first implementation of Theorem A matches ground truth on 105,064 sampled box instances, and the Fourier (complex) and integer-fold computations of tau agree on every tested multiset.",
+    "script": "python3 /tmp/claude-0/qu/explore/E2/check_criterion.py",
+    "range": "r=2..6, k<=4 all multisets (k=3,4 sampled for b), a_i<=12, b<=60"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "Theorem A (exact criterion, all parameters). Let d be the power-series coefficients of p(q)(1-q)/(1-q^r), with d = 0 at negative indices. Let tau be the r-periodic tail of d, given by tau_rho = (1/r) sum_{j=1}^{r-1} zeta^{-j rho}(1-zeta^j) p(zeta^j), which depends only on the a_i mod r. Let E_u = d_u - tau_u and K = D+1-r(b+1). Then P is unimodal iff E_u >= d_{K-u} for all integers u with K/2 < u <= D+1-r. Theorem A' gives the equivalent split into (N), (Q) and (P). The key steps are the identity (1-q)P = (p/[r]_q)(1-q^{rb}) and the reflection d_x = tau_x + d_{D+1-r-x}.",
+    "proof_file": "/tmp/claude-0/qu/explore/E2/proofs/main_proofs.txt"
+   },
+   {
+    "statement": "Theorem B with Lemma F (necessary Fourier threshold). Suppose r divides no a_i, and let c = max{c in 0..r-1 : tau_c > 0}, where tau_c = (2/r) sum_j sin(pi j/r) A_j sin(pi j (D_pi+1-2c)/r) and A_j = prod_i sin(pi j t_i/r)/sin(pi j/r). If P is unimodal then r(b-1) <= D+1-2c, i.e. b <= 1+S+floor((D_pi+1-2c)/r). Lemma C: 2c <= D_pi+1. Lemma S: if p = [r]G + h with G >= 0 and h palindromic unimodal of degree D_h <= 2r-1, then the quotient Q is nonnegative. In that case, whenever r(b+1) >= D+1, the bound is exact.",
+    "proof_file": "/tmp/claude-0/qu/explore/E2/proofs/main_proofs.txt"
+   },
+   {
+    "statement": "Corollary D1 (necessity clause for k<=3, every r). Suppose r divides no a_i and at most three a_i are >= 2. If P is unimodal then b <= 1 + sum floor(a_i/r). The proof shows tau_{t_(2)-1} >= 1, where t_(2) is the median residue.",
+    "proof_file": "/tmp/claude-0/qu/explore/E2/proofs/main_proofs.txt"
+   },
+   {
+    "statement": "Corollary E (r=2, every k). If all a_i are odd and P is unimodal, then b <= 1+S. If moreover 2(b+1) >= D+1, then P is unimodal iff b <= 1+S.",
+    "proof_file": "/tmp/claude-0/qu/explore/E2/proofs/main_proofs.txt"
+   },
+   {
+    "statement": "Corollary R3 (r=3, every k). Suppose no a_i is divisible by 3, and let n2 = #{a_i = 2 mod 3}. (a) If P is unimodal then b <= 1+S+2*floor(n2/6). (b) The quotient of p by [3]_q is nonnegative; the certificate is (1+q)^6 = 1 + [3]_q q(6+9q+5q^2+q^3). (c) If 3(b+1) >= D+1, then P is unimodal iff b <= 1+S+2*floor(n2/6). (d) The necessity clause of Conjecture 5.4 for r=3 holds for a given a iff n2 <= 5. For every a with n2 >= 6, b0 = S-1+ceil((n2+1)/3) >= S+2 gives a unimodal P, an infinite family generalizing (1+q)^6(1+q^3).",
+    "proof_file": "/tmp/claude-0/qu/explore/E2/proofs/main_proofs.txt"
+   },
+   {
+    "statement": "Corollary S1 (sufficiency clause, partial). Suppose r divides no a_i and b <= 1+S. Then (N) and (Q) hold. Hence P is unimodal whenever additionally r(b+1) >= D+1. In general, b <= 1+S implies unimodality iff c_x >= c_{x-1} for rb <= x <= N/2, which is condition (P). NOT proved: (P) for b <= 1+S when r(b+1) < D+1. It holds throughout the fit box, where the baseline rule has 0 false positives.",
+    "proof_file": "/tmp/claude-0/qu/explore/E2/proofs/main_proofs.txt"
+   }
+  ],
+  "failure_report": ""
+ },
+ {
+  "path_id": "A2'/H1'",
+  "stayed_on_path": true,
+  "outcome": "NONEXISTENCE_EVIDENCE",
+  "candidates_tried_total": 15608,
+  "candidates_file": "/tmp/claude-0/qu/explore/E3/candidates.tsv",
+  "rules": [
+   {
+    "name": "fine_table_small_bigres_d",
+    "rule_file": "/tmp/claude-0/qu/explore/E3/rule_fine.py",
+    "description_text": "Drop the trivial factors a_i=1. If r divides some a_i, P is unimodal. Otherwise let F = sum floor(a_i/r) and d = b-1-F. If d<=0, P is unimodal. If d>=1, P is unimodal iff d is in E(r,S,Rb), where S = sorted multiset of the factors with 1<a_i<r and Rb = sorted multiset of (a_i mod r) over the factors a_i>r. E is a lookup table fitted on the full box (embedded in the file). It has 32,206 classes, and each takes one of four values: {} (19,025 classes), {1,2} (12,615), {1,2,3,4} (481) or {2} (85). A class missing from the table means E={}. The key uses only residues and min(a_i,r), so the table covers every a with at most 8 nontrivial factors and r<=6. Outside the box the rule assumes that, once S and Rb are fixed, F matters only through d.",
+    "fit_range": "whole fit box: r in 2..6, k<=8, a_i<=12, b<=60 (37,790,700 instances); domain(r,a): 2<=r<=6 and #(a_i>1)<=8",
+    "free_parameters": 32206,
+    "fit_errors": 0
+   },
+   {
+    "name": "coarse_table_residue_multiset_d",
+    "rule_file": "/tmp/claude-0/qu/explore/E3/rule_coarse.py",
+    "description_text": "Drop the trivial factors a_i=1. If r divides some a_i, P is unimodal. Otherwise let F = sum floor(a_i/r) and d = b-1-F. If d<=0, P is unimodal. If d>=1, P is unimodal iff d is in E(r,R), where R = sorted multiset of a_i mod r over all a_i>1. E is a lookup table fitted on the box by majority vote (embedded). It has 2,001 classes: {} (1,453), {1,2} (516), {1,2,3,4} (29), {2} (3). Missing classes mean E={}. All 24 fit errors fall in the single class r=6, R=(2,2,3,4,4,4,4,4), at d in {1,2}.",
+    "fit_range": "whole fit box: r in 2..6, k<=8, a_i<=12, b<=60; domain(r,a): 2<=r<=6 and #(a_i>1)<=8",
+    "free_parameters": 2001,
+    "fit_errors": 24
+   }
+  ],
+  "numeric_claims": [
+   {
+    "claim": "The enumerator (enum.c: every (r,a) in the box, b=1..60) matches the ground-truth checker uni on 60,000 random box instances with 0 mismatches.",
+    "script": "/tmp/claude-0/qu/explore/E3/validate.py",
+    "range": "fit box sample"
+   },
+   {
+    "claim": "Aggregate key (r,k,b,multiset a_i mod r,F,D): 2,886,000 keys in the box. 43 are inconsistent (they contain both unimodal and non-unimodal instances), all with r=6 and k in {7,8}. 380 instances lie in them, and the best lookup on this key makes 133 errors. Smallest pair: r=6, b=3, a=(3,3,4,4,4,5,7) unimodal vs a=(1,3,3,4,4,4,11) not unimodal.",
+    "script": "/tmp/claude-0/qu/explore/E3/agg_pairs.py ; /tmp/claude-0/qu/explore/E3/fsearch.py (evaluate) via write_candidates.py",
+    "range": "fit box"
+   },
+   {
+    "claim": "Each of the 43 inconsistent aggregate keys has a witness pair, and every pair was re-checked with /tmp/claude-0/qu/tools/uni.",
+    "script": "/tmp/claude-0/qu/explore/E3/verify_pairs.py (pairs listed in collision_pairs.txt)",
+    "range": "fit box"
+   },
+   {
+    "claim": "Recomputing the aggregate key after dropping trivial factors a_i=1 gives 2,502,900 keys, of which 12 are inconsistent (20 errors for the best lookup). All 12 have r=6 with 8 nontrivial factors and residue multiset (2,2,3,4,4,4,4,4). Example: r=6, b=4, a=(2,3,4,4,4,4,4,8) is unimodal and a=(2,2,3,4,4,4,4,10) is not; both have F=1 and D=25. The failure is small: the coefficients 5086, 5085, 5092 sit at indices 17-19.",
+    "script": "/tmp/claude-0/qu/explore/E3/agg_pairs_stats.py ; /tmp/claude-0/qu/explore/E3/agg_nt_conflicts.py ; /tmp/claude-0/qu/explore/E3/show_pair.py",
+    "range": "fit box"
+   },
+   {
+    "claim": "Shape of the unimodal b-set in the box. All 502,151 tuples (r,a) with r|a_i are unimodal for every b=1..60. Of the other tuples, 127,561 have unimodal set exactly {1..B}, with B-(1+F) in {0,2,4} (counts 96,038 / 30,927 / 596). The remaining 133 (all r=6, k' in {7,8}) are unimodal exactly for b<=1+F and b=F+3. No unimodal instance has b>=F+6, and every b<=1+F is unimodal.",
+    "script": "/tmp/claude-0/qu/explore/E3/bshape.py ; /tmp/claude-0/qu/explore/E3/nonint.py",
+    "range": "fit box"
+   },
+   {
+    "claim": "Unimodal instances with b>1+F and no r|a_i (each polynomial counted once, a_i=1 removed) appear first at k'=6 for r=3 (a=(2^6), b=2), at k'=4 for r=4,5,6 (e.g. r=4, a=(3,3,3,3), b=2), and never for r=2. There are none with k'<=3. Counts by r: r=3: 2,970, r=4: 8,340, r=5: 11,796, r=6: 21,301.",
+    "script": "/tmp/claude-0/qu/explore/E3/min_k_excess.py ; /tmp/claude-0/qu/explore/E3/excess_small.py",
+    "range": "fit box"
+   },
+   {
+    "claim": "Feature-subset search with b raw (key = r, b, S), 33-feature library, sizes 0-3, supersets of determining sets pruned: 5,927 subsets evaluated and 83 determine unimodality on the box. The smallest determining sets have 2 features: {res_ms, Fc}, {res_ms_nt, Fc}, {res_ms_nt, S4}. The coarsest is {res_ms_nt, F, small_ms}, equivalently {small_ms, bigres_ms, F}, with 150,099 classes, against 377,910 distinct polynomials.",
+    "script": "/tmp/claude-0/qu/explore/E3/fsearch.py 3 fsearch3.pkl (features.py, build_codes.py)",
+    "range": "fit box"
+   },
+   {
+    "claim": "Search with b replaced by d=b-1-F (key = r, d, S), same library: 5,703 subsets and 98 determining. The coarsest is {res_ms_nt, small_ms}, equivalently {small_ms, bigres_ms} or {res_ms_nt, cap_ms}, with 60,171 classes; F is not needed. {res_ms_nt} alone has 4,995 classes, 2 inconsistent keys and 24 instance errors.",
+    "script": "/tmp/claude-0/qu/explore/E3/fsearch_rel.py 3 fsearch_rel3.pkl",
+    "range": "fit box"
+   },
+   {
+    "claim": "Stage 2: 2,517 subsets of 16 statistics that depend only on residues or counts (including max/min ratio and folding of C(q)=prod[a_i mod r]_q mod q^r-1), with key (r,d,has0,S): none determines. The best residue-only sets reach the floor of 24 errors, e.g. {minres_nz, Cfold_ratio} with 1,453 classes. The single feature Cfold_ratio gives 216 errors with 773 classes.",
+    "script": "/tmp/claude-0/qu/explore/E3/fsearch2.py 4 fsearch2_4.pkl (features2.py, build_codes2.py)",
+    "range": "fit box"
+   },
+   {
+    "claim": "Stage 3: 1,457 subsets that add small-factor features and the low coefficients of A(q): 69 determine. Determining pairs include {Cfold, cap_ms} and {Cfold, Alow_r}, each with 47,998 classes. The coarsest is {minres_nz, Cfold_ratio, small_ms} with 30,348 classes. {minres_nz, Cfold_ratio, mina_nt} has 6,376 classes and 12 errors.",
+    "script": "/tmp/claude-0/qu/explore/E3/fsearch3s.py 3 fsearch3s.pkl (build_codes3.py)",
+    "range": "fit box"
+   },
+   {
+    "claim": "rule_fine.py makes 0 errors and rule_coarse.py makes 24 errors on all 37,790,700 box instances.",
+    "script": "/tmp/claude-0/qu/explore/E3/check_rules.py rule_fine.py rule_coarse.py (tables from build_tables.py, files from make_rules.py)",
+    "range": "fit box"
+   },
+   {
+    "claim": "Translation invariance in F is well exercised: for r=3..6, 44/45, 164/165, 494/495 and 1,278/1,287 residue classes (r,R) contain members with at least 2 distinct F values.",
+    "script": "/tmp/claude-0/qu/explore/E3/fspread.py",
+    "range": "fit box"
+   },
+   {
+    "claim": "E behaves almost like a threshold in rho = max/min of the residue-class sums of C(q) mod q^r-1, but the ranges overlap. For example at r=6: E={} when rho is in [1.018, 10] or infinite; E={1,2} when rho is in [1.00018, 1.0303]; E={1,2,3,4} when rho is in [1.000015, 1.000384].",
+    "script": "/tmp/claude-0/qu/explore/E3/ratio_table.py",
+    "range": "fit box"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "Unimodality of P is not a function of (r, k, b, multiset of a_i mod r, F=sum floor(a_i/r), D=sum(a_i-1)), nor of these statistics computed on the nontrivial factors only. Witness: r=6, b=4, a=(2,3,4,4,4,4,4,8) is unimodal and a'=(2,2,3,4,4,4,4,10) is not, and the two have identical statistics.",
+    "proof_file": "/tmp/claude-0/qu/explore/E3/proof_aggregate_collision.txt"
+   }
+  ],
+  "failure_report": ""
+ },
+ {
+  "path_id": "A3'",
+  "stayed_on_path": true,
+  "outcome": "PROOF",
+  "candidates_tried_total": 7,
+  "candidates_file": "/tmp/claude-0/qu/explore/E4/candidates.txt",
+  "rules": [
+   {
+    "name": "E4-sufficient (proved, one-sided)",
+    "rule_file": "/tmp/claude-0/qu/explore/E4/rule.py",
+    "description_text": "predict(r,a,b) returns True iff b <= 1 + sum_i floor(a_i/r), or r divides some a_i. Otherwise it returns False. A True prediction is a theorem (proof.txt): P is then symmetric and weakly unimodal, for all r>=2, k>=1, a_i>=1, b>=1. A False prediction is NOT a claim: necessity is not asserted and is known to fail, e.g. r=3, a=(2,2,2,2,2,2), b=2. domain(r,a) is True everywhere. All fit-box errors are false negatives; there are zero false positives.",
+    "fit_range": "whole fit box: r in 2..6, k<=8, sorted a_i<=12, b<=60 (37,790,700 instances)",
+    "free_parameters": 0,
+    "fit_errors": 64371
+   }
+  ],
+  "numeric_claims": [
+   {
+    "claim": "Ground-truth checker returns 1 (unimodal) on every fit-box instance with b <= 1 + sum floor(a_i/r): 0 of 7,761,685 instances are non-unimodal. Per r: r=2 2,916,689; r=3 1,831,409; r=4 1,288,769; r=5 978,689; r=6 746,129.",
+    "script": "/tmp/claude-0/qu/explore/E4/run_box.sh 2 3 4 5 6 (uses gen_box.py, score.py, /tmp/claude-0/qu/tools/uni) -> score_r{2..6}.txt fields target_cond, target_cond_and_truth0",
+    "range": "fit box r 2..6, k<=8, a_i<=12, b<=60"
+   },
+   {
+    "claim": "rule.py (b<=1+M or r|a_i) on the whole box: FP = 0. FN = 64,371 in total (r=2: 0; r=3: 4,050; r=4: 12,500; r=5: 16,826; r=6: 30,995).",
+    "script": "/tmp/claude-0/qu/explore/E4/run_box.sh 2 3 4 5 6 -> score_r*.txt fields pred_FP, pred_FN",
+    "range": "fit box, 37,790,700 instances"
+   },
+   {
+    "claim": "The Lemma-4 decomposition A = U + V satisfies three checks on all 629,845 (r,a) tuples, 125,969 per r: the exact identity holds, every V chain has length >= r*M+1, and every remainder has a bracket divisible by r. There are 0 failures.",
+    "script": "python3 /tmp/claude-0/qu/explore/E4/decomp.py -> decomp_out.txt",
+    "range": "r 2..6, k<=8, a_i<=12"
+   },
+   {
+    "claim": "For k<=4 and every b<=min(M+1,60), U(q)[b]_{q^r} and V(q)[b]_{q^r} are each unimodal: 0 failures in 60,615 checks.",
+    "script": "python3 /tmp/claude-0/qu/explore/E4/decomp.py --lemma 4 -> decomp_lemma4_out.txt",
+    "range": "r 2..6, k<=4, a_i<=12, b<=min(M+1,60)"
+   },
+   {
+    "claim": "Candidate C1 (each Lambda chain good on its own) fails on 5,732,481 of 7,761,685 target-domain instances. Candidate C2 (runs plus good singletons, exact z3 feasibility) fails on 0 of 60,615 target-domain instances with k<=4.",
+    "script": "python3 /tmp/claude-0/qu/explore/E4/cand_c1_c2.py 4 -> cand_c1_c2_out.txt",
+    "range": "fit box (C1); k<=4 subset (C2)"
+   },
+   {
+    "claim": "Candidate C0 (one factor [a_i][b]_{q^r} unimodal times the rest) fails on 567,349 of 7,761,685 target-domain instances. Candidate C3 (one-shot transfer identity, k=2) fails on 270 of 1,586.",
+    "script": "python3 /tmp/claude-0/qu/explore/E4/cand_c0_c3.py -> cand_c0_c3_out.txt",
+    "range": "fit box (C0); k=2 subset (C3)"
+   },
+   {
+    "claim": "The greedy refinement rule_refined.py has FP = 0 and certifies 0 instances beyond the plain rule, for every r in 2..6.",
+    "script": "/tmp/claude-0/qu/explore/E4/save_truth.sh 2 3 4 5 6; python3 /tmp/claude-0/qu/explore/E4/score_refined.py r -> score_refined_r{r}.txt (ref_FP, ref_beats_plain)",
+    "range": "whole fit box"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "For all r>=2, k>=1, a_1..a_k>=1, b>=1: if b <= 1 + sum_i floor(a_i/r), or r | a_i for some i, then P(q) = [a_1]_q...[a_k]_q [b]_{q^r} is symmetric and weakly unimodal. This is the full sufficiency half of Conj. 5.4.\n\nMechanism (Lambda / centred-chain decomposition, no residue-window sums): induction over the factors, using Clebsch-Gordan peeling [L][a'] = sum_{d<d0} q^d[L+a'-1-2d] + q^{d0}[L-d0][a'-d0] with d0 = min(s', e+1), where a' = r m' + s' and e = L - rM - 1. This writes A = prod[a_i] = U + V. Every U-piece is q^e[c]H with r | c and H a product of q-integers, all centred at D/2. Every V-piece is a centred chain q^j[L] with L >= r*sum floor(a_i/r) + 1. Each U-piece times [b]_{q^r} is symmetric unimodal: [c][b]_{q^r} = [r]_q([c/r]_x[b]_x)(q^r) and [r]_q[m]_{q^r} = [rm]_q. Each V-chain times [b]_{q^r} is unimodal because L >= r(b-1)+1. All pieces share the centre N/2, so their sum is symmetric unimodal.",
+    "proof_file": "/tmp/claude-0/qu/explore/E4/proof.txt"
+   }
+  ],
+  "failure_report": ""
+ }
+]

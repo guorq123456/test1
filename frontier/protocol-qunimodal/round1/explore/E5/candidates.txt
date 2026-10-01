@@ -1,0 +1,35 @@
+CANDIDATES TRIED (path A4', explorer E5)
+Fit box data: r=2..6, k<=8, 2<=a_i<=12 with r !| a_i (sorted tuples), b=1..60  ->  4,152,420 instances
+(data_r*.txt from enum.c; enum cross-checked vs tools/uni on 12,000 instances, 0 mismatches: verify_enum.py).
+"errors" = number of (r,a,b) instances where predict != truth, over the in-domain instances.
+Extra set (eval_extra.py): 20,560 random box instances incl. a_i=1, a_i divisible by r, all-ones tuples,
+ground truth from tools/uni.
+
+ #  name                      description                                              errors (box)              script
+ 1  conj_iff                  unimodal <=> some r|a_i or b <= 1+sum floor(a_i/r)        44,407 / 4,152,420        evalrule.py rules/rule_conj.py
+                              (extra set: 10 / 20,560)                                                            eval_extra.py
+ 2  floorD                    b <= 1 + floor(D/r)                                       78,531 / 4,152,420        window_J.py
+                              (r3 3465, r4 12612, r5 29043, r6 33411)
+ 3  floorD1                   b <= 1 + floor((D+1)/r)                                   92,679 / 4,152,420        window_J.py
+                              (r3 5590, r4 15756, r5 33902, r6 37431)
+ 4  S-reformulation           S(v) >= S(M-v) for all v (half-class tail sums)           0 / 18,000 sampled        scond.py
+                              (exact identity, superseded by #12)
+ 5  A-bound (F/residue form)  condition (i) on class sums of (1-q)prod[s_i]_q           20,321 / 4,152,420        predF.py, window_J.py (J=0)
+ 6  A-bound (lambda form)     b <= 1+Q+max(0,floor((sigma+2lam+3-2r)/r))               same predictions as #5    lam.py (per-tuple equality 69,207/69,207)
+ 7  A-bound (Gamma/mu form)   b <= 1+floor((D+1-2mu)/r)  [rules/rule_Abound.py]         20,321 / 4,152,420        evalrule.py rules/rule_Abound.py
+                              all errors are false positives (proved upper bound)      (extra: 2 / 20,560)       abound_check.py
+ 8  generic closed form,      b <= 1+Q+max(0,2*floor((sigma+3-r)/(2r)))                21,467 / 4,152,420        window_J.py (generic_all_r)
+    all r                     (r4 3948, r5 7442, r6 10077; r2,r3: 0)
+ 9  generic closed form,      same formula, domain r in {2,3} [rules/rule_generic.py]  0 / 463,200 (extra 0/8,179) evalrule.py, eval_extra.py
+    r<=3                      (r=3: b <= 1+Q+2 floor(n2/6))
+10  window J=1                pairs with M-x < r+1 only                                 4,237 (r5 1010, r6 3227)  window_J.py
+11  window J=2                pairs with M-x < r+2 only                                 245 (r6)                  window_J.py
+12  window J=3 (=r-3 for r=6) pairs with M-x < r+3                                      0                         window_J.py
+13  window full (J=r)         (A)+(B), pairs with M-x < 2r [rules/rule_window.py]       0 / 4,152,420 (extra 0)   evalrule.py, eval_extra.py
+14  truncated F-form of #13   same criterion written with F_s, f_j                      0 / 4,152,420             trunc.py
+15  exact e-criterion         all pairs, proved equivalent [rules/rule_exact_e.py]     0 / 4,152,420 (extra 0)   evalrule.py (eval_rule_exact_e_full.txt)
+16  small-delta closed form   domain max|Gamma_t-Gamma_{t+1}|<=1: b <= B*_A            0 / 1,325,760 in-domain   evalrule.py rules/rule_smalldelta.py
+                              [rules/rule_smalldelta.py]                               (extra 0 / 19,499)
+
+TOTAL candidates tried: 16 (6 and 14 are re-expressions of 5/7 and 13; counted because they were tried separately).
+Free parameters fitted: none in #1-9,13-16. #10-12 have one fitted integer J (window width); not proposed as a rule.

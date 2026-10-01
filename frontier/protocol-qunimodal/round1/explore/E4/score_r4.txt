@@ -1,0 +1,2 @@
+r=4 {'n': 7558140, 'truth1': 6311441, 'suff': 6298941, 'suff_and_truth0': 0, 'pred_err': 12500, 'pred_FP': 0, 'pred_FN': 12500, 'target_cond': 1288769, 'target_cond_and_truth0': 0}
+TOTAL {'n': 7558140, 'truth1': 6311441, 'suff': 6298941, 'suff_and_truth0': 0, 'pred_err': 12500, 'pred_FP': 0, 'pred_FN': 12500, 'target_cond': 1288769, 'target_cond_and_truth0': 0}

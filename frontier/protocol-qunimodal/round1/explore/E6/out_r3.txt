@@ -1,0 +1,55 @@
+r=3 multisets=125969 region_instances=1831409 region_failures=0
+r=3 sanity: unimodal(general)!=firsthalf_nondec: 0 ; Delta identity mismatches: 0
+r=3 CorollaryCheck r|some a_i, b<=60 (until stop): instances=6786000 failures=0
+r=3 contested_instances=1703467 exact_tie_instances(Neg==Pos>0 at some contested j)=170542
+r=3 ratio_hist [uncontested,(0,.1),[.1,.2),...,[.8,1) ,==1, >1]: 127942 168 1154 60767 1729 57562 112777 109510 133540 1055718 170542 0
+r=3 k=1 inst=34 fail=0 ties=0 max_ratio=0.000000 (count 0) max_ratio_at_b=bound=0.000000
+r=3 k=2 inst=364 fail=0 ties=147 max_ratio=1.000000 (count 147) max_ratio_at_b=bound=1.000000
+r=3 k=3 inst=2366 fail=0 ties=565 max_ratio=1.000000 (count 565) max_ratio_at_b=bound=1.000000
+r=3 k=4 inst=11375 fail=0 ties=1896 max_ratio=1.000000 (count 1896) max_ratio_at_b=bound=1.000000
+r=3 k=5 inst=44408 fail=0 ties=5881 max_ratio=1.000000 (count 5881) max_ratio_at_b=bound=1.000000
+r=3 k=6 inst=148512 fail=0 ties=16601 max_ratio=1.000000 (count 16601) max_ratio_at_b=bound=1.000000
+r=3 k=7 inst=440232 fail=0 ties=42845 max_ratio=1.000000 (count 42845) max_ratio_at_b=bound=1.000000
+r=3 k=8 inst=1184118 fail=0 ties=102607 max_ratio=1.000000 (count 102607) max_ratio_at_b=bound=1.000000
+r=3 slack hist (first_fail_b - bound) for multisets with no r|a_i; last bin = no failure up to b=60: [1]:10844 [3]:2025
+r=3 smallest positive Delta at contested position: 1 at k=8 a=1,1,1,1,1,1,4,4, b=3
+r=3 TOP00 ratio=1.000000 k=8 a=1,1,1,1,1,1,2,3, b=2 bound=2 j=2 Pos=1 Neg=1
+r=3 TOP01 ratio=1.000000 k=8 a=1,1,1,1,1,1,2,6, b=3 bound=3 j=5 Pos=1 Neg=1
+r=3 TOP02 ratio=1.000000 k=8 a=1,1,1,1,1,1,2,9, b=4 bound=4 j=8 Pos=1 Neg=1
+r=3 TOP03 ratio=1.000000 k=8 a=1,1,1,1,1,1,2,12, b=5 bound=5 j=11 Pos=1 Neg=1
+r=3 TOP04 ratio=1.000000 k=8 a=1,1,1,1,1,1,3,3, b=2 bound=3 j=2 Pos=1 Neg=1
+r=3 TOP05 ratio=1.000000 k=8 a=1,1,1,1,1,1,3,3, b=3 bound=3 j=2 Pos=1 Neg=1
+r=3 TOP06 ratio=1.000000 k=8 a=1,1,1,1,1,1,3,4, b=2 bound=3 j=3 Pos=1 Neg=1
+r=3 TOP07 ratio=1.000000 k=8 a=1,1,1,1,1,1,3,4, b=3 bound=3 j=3 Pos=1 Neg=1
+r=3 TOP08 ratio=1.000000 k=8 a=1,1,1,1,1,1,3,5, b=3 bound=3 j=4 Pos=1 Neg=1
+r=3 TOP09 ratio=1.000000 k=8 a=1,1,1,1,1,1,3,6, b=3 bound=4 j=5 Pos=1 Neg=1
+r=3 TOP10 ratio=1.000000 k=8 a=1,1,1,1,1,1,3,6, b=4 bound=4 j=5 Pos=1 Neg=1
+r=3 TOP11 ratio=1.000000 k=8 a=1,1,1,1,1,1,3,7, b=3 bound=4 j=6 Pos=1 Neg=1
+r=3 TOP12 ratio=1.000000 k=8 a=1,1,1,1,1,1,3,7, b=4 bound=4 j=6 Pos=1 Neg=1
+r=3 TOP13 ratio=1.000000 k=8 a=1,1,1,1,1,1,3,8, b=4 bound=4 j=7 Pos=1 Neg=1
+r=3 TOP14 ratio=1.000000 k=8 a=1,1,1,1,1,1,3,9, b=4 bound=5 j=8 Pos=1 Neg=1
+r=3 TOP15 ratio=1.000000 k=8 a=1,1,1,1,1,1,3,9, b=5 bound=5 j=8 Pos=1 Neg=1
+r=3 TOP16 ratio=1.000000 k=8 a=1,1,1,1,1,1,3,10, b=4 bound=5 j=9 Pos=1 Neg=1
+r=3 TOP17 ratio=1.000000 k=8 a=1,1,1,1,1,1,3,10, b=5 bound=5 j=9 Pos=1 Neg=1
+r=3 TOP18 ratio=1.000000 k=8 a=1,1,1,1,1,1,3,11, b=5 bound=5 j=10 Pos=1 Neg=1
+r=3 TOP19 ratio=1.000000 k=8 a=1,1,1,1,1,1,3,12, b=5 bound=6 j=11 Pos=1 Neg=1
+r=3 TOP20 ratio=1.000000 k=8 a=1,1,1,1,1,1,3,12, b=6 bound=6 j=11 Pos=1 Neg=1
+r=3 TOP21 ratio=1.000000 k=8 a=1,1,1,1,1,1,4,4, b=2 bound=3 j=3 Pos=1 Neg=1
+r=3 TOP22 ratio=1.000000 k=8 a=1,1,1,1,1,1,4,4, b=3 bound=3 j=3 Pos=1 Neg=1
+r=3 TOP23 ratio=1.000000 k=8 a=1,1,1,1,1,1,4,5, b=2 bound=3 j=4 Pos=1 Neg=1
+r=3 TOP24 ratio=1.000000 k=8 a=1,1,1,1,1,1,4,5, b=3 bound=3 j=4 Pos=1 Neg=1
+r=3 TOP25 ratio=1.000000 k=8 a=1,1,1,1,1,1,4,6, b=3 bound=4 j=6 Pos=1 Neg=1
+r=3 TOP26 ratio=1.000000 k=8 a=1,1,1,1,1,1,4,6, b=4 bound=4 j=6 Pos=1 Neg=1
+r=3 TOP27 ratio=1.000000 k=8 a=1,1,1,1,1,1,4,7, b=3 bound=4 j=6 Pos=1 Neg=1
+r=3 TOP28 ratio=1.000000 k=8 a=1,1,1,1,1,1,4,7, b=4 bound=4 j=6 Pos=1 Neg=1
+r=3 TOP29 ratio=1.000000 k=8 a=1,1,1,1,1,1,4,8, b=3 bound=4 j=7 Pos=1 Neg=1
+r=3 TOP30 ratio=1.000000 k=8 a=1,1,1,1,1,1,4,8, b=4 bound=4 j=7 Pos=1 Neg=1
+r=3 TOP31 ratio=1.000000 k=8 a=1,1,1,1,1,1,4,9, b=4 bound=5 j=9 Pos=1 Neg=1
+r=3 TOP32 ratio=1.000000 k=8 a=1,1,1,1,1,1,4,9, b=5 bound=5 j=9 Pos=1 Neg=1
+r=3 TOP33 ratio=1.000000 k=8 a=1,1,1,1,1,1,4,10, b=4 bound=5 j=9 Pos=1 Neg=1
+r=3 TOP34 ratio=1.000000 k=8 a=1,1,1,1,1,1,4,10, b=5 bound=5 j=9 Pos=1 Neg=1
+r=3 TOP35 ratio=1.000000 k=8 a=1,1,1,1,1,1,4,11, b=4 bound=5 j=10 Pos=1 Neg=1
+r=3 TOP36 ratio=1.000000 k=8 a=1,1,1,1,1,1,4,11, b=5 bound=5 j=10 Pos=1 Neg=1
+r=3 TOP37 ratio=1.000000 k=8 a=1,1,1,1,1,1,4,12, b=5 bound=6 j=12 Pos=1 Neg=1
+r=3 TOP38 ratio=1.000000 k=8 a=1,1,1,1,1,1,4,12, b=6 bound=6 j=12 Pos=1 Neg=1
+r=3 TOP39 ratio=1.000000 k=8 a=1,1,1,1,1,1,5,5, b=2 bound=3 j=4 Pos=1 Neg=1

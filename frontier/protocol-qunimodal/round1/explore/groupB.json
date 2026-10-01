@@ -1,0 +1,373 @@
+[
+ {
+  "path_id": "A4'",
+  "stayed_on_path": true,
+  "outcome": "RULE",
+  "candidates_tried_total": 16,
+  "candidates_file": "/tmp/claude-0/qu/explore/E5/candidates.txt",
+  "rules": [
+   {
+    "name": "window criterion (uniform in r) - main rule",
+    "rule_file": "/tmp/claude-0/qu/explore/E5/rules/rule_window.py",
+    "description_text": "If some a_i is divisible by r, return True (Cor. 4.3). Otherwise let D = sum(a_i - 1) and M = D + 1 - r(b-1). Let Gamma_s (s = 0..r-1) be the number of tuples (x_1..x_k) with 0 <= x_i < a_i and sum x_i = s (mod r), i.e. the residue-class sums of the coefficients of A(q) = prod [a_i]_q (computable by cyclic convolution mod r). Let f_j = A_j - A_{j-1} for j = 0..r-1 (the low coefficients of (1-q)A(q)). Define e(y) = Gamma_{y mod r} for y < r and e(y) = Gamma_{y-r} - f_{y-r} for r <= y < 2r. Predict unimodal iff e(x) >= e(M-x) for every integer x with M - 2r < x < M/2. Written out, this is two conditions. (A) Gamma_{w-1} >= Gamma_w for all integers w with M/2 < w <= r-1 (indices mod r). (B) Gamma_{j-1} - Gamma_j + f_j - f_{M-2r-j} >= 0 for every j in 0..r-1 with 2(r+j) > M, using f_i := 0 for i < 0 and Gamma_{-1} := Gamma_{r-1}. If M >= 4r-1 there is nothing to check and the answer is True. The rule depends on b only through the reflection point M/2. Every False output is proved correct (proofs.txt, Cor. 1'). The True direction is a conjecture: it assumes pairs with M-x >= 2r never fail, which holds throughout the fit box. It may need a wider window for large k when r >= 4, because there |Gamma_t - Gamma_{t+1}| can grow exponentially in k while f_j grows only polynomially.",
+    "fit_range": "r in 2..6, k <= 8, a_i in 2..12 with r not dividing a_i, b in 1..60: 4,152,420 instances, 0 errors. Also 20,560 random box instances including a_i = 1, r | a_i and all-ones tuples: 0 errors.",
+    "free_parameters": 0,
+    "fit_errors": 0
+   },
+   {
+    "name": "exact e-criterion (proved equivalent)",
+    "rule_file": "/tmp/claude-0/qu/explore/E5/rules/rule_exact_e.py",
+    "description_text": "Let A(q) = prod [a_i]_q with degree D, Gamma_s = residue-class sums of the coefficients of A mod r, and H(n) = coefficient of q^n in the power series A(q)/[r]_q = (1-q)A(q)/(1-q^r) (H(n) = 0 for n < 0). Set e(y) = Gamma_{y mod r} - H(y-r) and M = D + 1 - r(b-1). Predict unimodal iff e(x) >= e(M-x) for all integers x < M/2. Theorem 1 gives the identity c_n - c_{n-1} = e(n - r(b-1)) - e(D+1-n) for every n, so this rule is an exact theorem, valid for all parameters. In practice x only needs to run down to one period beyond where both sides become r-periodic. It is fully general but not a closed form.",
+    "fit_range": "same box: 4,152,420 instances, 0 errors; extra 20,560 instances, 0 errors. Proved for all parameters.",
+    "free_parameters": 0,
+    "fit_errors": 0
+   },
+   {
+    "name": "closed form on the flat-residue sub-domain",
+    "rule_file": "/tmp/claude-0/qu/explore/E5/rules/rule_smalldelta.py",
+    "description_text": "Domain: some r | a_i (answer True), or max over t of |Gamma_t - Gamma_{(t+1) mod r}| <= 1. This always holds for r <= 3, and whenever every a_i is congruent to +1 or -1 mod r. Let mu be the least t in 0..r-1 with Gamma_t >= Gamma_{t+1} >= ... >= Gamma_{r-1}. Predict unimodal iff b <= B*_A = 1 + floor((D + 1 - 2 mu)/r), where D = sum(a_i - 1). So the unimodal b form an interval. The upper-bound half is proved (Theorem 2); the claim that every b <= B*_A is unimodal is conjectural.",
+    "fit_range": "box instances inside the domain: 1,325,760, 0 errors; extra 19,499 instances, 0 errors",
+    "free_parameters": 0,
+    "fit_errors": 0
+   },
+   {
+    "name": "explicit closed form for r = 2, 3",
+    "rule_file": "/tmp/claude-0/qu/explore/E5/rules/rule_generic.py",
+    "description_text": "Domain r in {2,3}. If some r | a_i, return True. Otherwise let Q = sum floor(a_i/r) and sigma = sum((a_i mod r) - 1). Predict unimodal iff b <= 1 + Q + max(0, 2*floor((sigma + 3 - r)/(2r))). For r = 2 this is b <= 1 + sum floor(a_i/2). For r = 3 it is b <= 1 + Q + 2*floor(n2/6), where n2 = #{i : a_i = 2 mod 3}. The upper bound is proved for every k (Cor. 2 and Cor. 3); the lower bound (sufficiency) is conjectural and verified in the box.",
+    "fit_range": "r = 2, 3 box instances: 463,200, 0 errors; extra 8,179, 0 errors",
+    "free_parameters": 0,
+    "fit_errors": 0
+   },
+   {
+    "name": "residue upper bound B*_A (proved necessary, not sufficient)",
+    "rule_file": "/tmp/claude-0/qu/explore/E5/rules/rule_Abound.py",
+    "description_text": "If some r | a_i, return True. Otherwise predict unimodal iff b <= 1 + floor((D + 1 - 2 mu)/r), where mu is the least t in 0..r-1 with Gamma_t >= ... >= Gamma_{r-1} and Gamma is the vector of residue-class counts of A mod r (only the residues a_i mod r matter, by Lemma 7). Theorem 2 proves that unimodality implies this inequality, for all r and k, so the rule has no false negatives. It is exact for r = 2, 3 in the box. For r >= 4 it overshoots when |Gamma_t - Gamma_{t+1}| >= 2 and condition (B) of the window rule binds.",
+    "fit_range": "box 4,152,420 instances: 20,321 errors, all false positives (r4 3408, r5 7202, r6 9711)",
+    "free_parameters": 0,
+    "fit_errors": 20321
+   }
+  ],
+  "numeric_claims": [
+   {
+    "claim": "The window rule makes 0 errors on all 4,152,420 box instances (r = 2..6, k <= 8, a_i in 2..12 with r not dividing a_i, b <= 60) and 0 errors on 20,560 extra instances that include a_i = 1 and r | a_i.",
+    "script": "/tmp/claude-0/qu/explore/E5/evalrule.py rules/rule_window.py ; /tmp/claude-0/qu/explore/E5/eval_extra.py rules/rule_window.py",
+    "range": "fit box"
+   },
+   {
+    "claim": "The identity c_n - c_{n-1} = e(n - r(b-1)) - e(D+1-n) holds in all 661,680 coefficient checks, and the symmetry e(y) = e(D+1+r-y) holds in every case tested. The exact e-rule makes 0 errors on 4,152,420 instances.",
+    "script": "/tmp/claude-0/qu/explore/E5/check_e_identity.py ; /tmp/claude-0/qu/explore/E5/evalrule.py rules/rule_exact_e.py 1.0",
+    "range": "fit box"
+   },
+   {
+    "claim": "The excess B* - 1 - sum floor(a_i/r) is always 0, 2 or 4 (always even). Tuple counts by excess: r=2 {0:1286}; r=3 {0:4949, 2:1485}; r=4 {0:8744, 2:4080, 4:45}; r=5 {0:18481, 2:5758, 4:70}; r=6 {0:14026, 2:9873, 4:410}.",
+    "script": "/tmp/claude-0/qu/explore/E5/summary_stats.py",
+    "range": "fit box, 69,207 tuples"
+   },
+   {
+    "claim": "Sufficiency holds in the box: every b <= 1 + sum floor(a_i/r) gives a unimodal P, for every tuple.",
+    "script": "/tmp/claude-0/qu/explore/E5/summary_stats.py",
+    "range": "fit box"
+   },
+   {
+    "claim": "Unimodality is monotone in b (the unimodal b form an interval {1..B*}) for every tuple with r <= 5. For r = 6 it fails for 85 of 24,309 tuples, each with the excess-level pattern pass, fail, pass. Example: r = 6, a = (2,3,3,4,4,4,5) is unimodal exactly for b in {1, 3}, confirmed with tools/uni.",
+    "script": "/tmp/claude-0/qu/explore/E5/summary_stats.py ; /tmp/claude-0/qu/explore/E5/levels.py ; /tmp/claude-0/qu/explore/E5/nonmono_verify.sh",
+    "range": "fit box"
+   },
+   {
+    "claim": "B* = B*_A = 1 + floor((D+1-2mu)/r) for every r = 2, 3 tuple. Tuples with B* < B*_A: r=4 1704/12869, r=5 3601/24309, r=6 4813/24309. B* > B*_A never occurs.",
+    "script": "/tmp/claude-0/qu/explore/E5/summary_stats.py ; /tmp/claude-0/qu/explore/E5/abound_check.py",
+    "range": "fit box"
+   },
+   {
+    "claim": "Whenever max_t |Gamma_t - Gamma_{t+1}| <= 1, B* = B*_A and the unimodal set is {1..B*_A}: 0 errors on 1,325,760 in-domain instances.",
+    "script": "/tmp/claude-0/qu/explore/E5/evalrule.py rules/rule_smalldelta.py ; /tmp/claude-0/qu/explore/E5/smalldelta.py",
+    "range": "fit box"
+   },
+   {
+    "claim": "In the box, the multiset of residues a_i mod r determines B* - 1 - Q, except for 1 residue class out of 1286 for r = 6.",
+    "script": "/tmp/claude-0/qu/explore/E5/summary_stats.py",
+    "range": "fit box"
+   },
+   {
+    "claim": "Minimal window width needed in the box: pairs with M - x < r + J and J = max(0, r-3) give 0 errors. Smaller windows give errors: J=0 gives 20,321, J=1 gives 4,237 (r5 1010, r6 3227), J=2 gives 245 (r6).",
+    "script": "/tmp/claude-0/qu/explore/E5/window_J.py",
+    "range": "fit box"
+   },
+   {
+    "claim": "Reading the conjecture's bound as an iff (b <= 1+Q) gives 44,407 errors out of 4,152,420 (r3 2970, r4 8340, r5 11796, r6 21301). The generic cosine closed form applied to all r gives 21,467 errors (r4 3948, r5 7442, r6 10077), with 0 errors for r = 2, 3.",
+    "script": "/tmp/claude-0/qu/explore/E5/evalrule.py rules/rule_conj.py ; /tmp/claude-0/qu/explore/E5/window_J.py",
+    "range": "fit box"
+   },
+   {
+    "claim": "The k = 3 lemma (Gamma_t - Gamma_{t-1} = s1 - max(0, s1+s3-r) > 0 at t = s2-1, and sigma+1-2mu < r) holds for all 70 residue triples with r <= 6. Every box tuple with k <= 3 has m_A = 0 and excess 0.",
+    "script": "/tmp/claude-0/qu/explore/E5/check_k3.py ; /tmp/claude-0/qu/explore/E5/abound_check.py ; /tmp/claude-0/qu/explore/E5/mink.py",
+    "range": "r <= 6 (lemma itself proved for all r)"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "Theorem 1 / Corollary 1 (exact criterion, all parameters). Define e(y) = Gamma_{y mod r} - H(y-r), with Gamma the residue-class sums of A = prod [a_i]_q and H the coefficients of A(q)/[r]_q. Then c_n - c_{n-1} = e(n - r(b-1)) - e(D+1-n) for all n, so P is unimodal iff e(x) >= e(M-x) for all integers x < M/2, where M = D + 1 - r(b-1). Corollary 1' follows: the window conditions (A) and (B) are necessary.",
+    "proof_file": "/tmp/claude-0/qu/explore/E5/proofs.txt"
+   },
+   {
+    "statement": "Theorem 2 (upper bound, all r and k, no r | a_i). If P is unimodal then b <= 1 + floor((D+1-2mu)/r), where mu is the least t >= 0 with Gamma_t >= Gamma_{t+1} >= ... >= Gamma_{r-1}. By Lemma 7, mu depends only on the residues a_i mod r.",
+    "proof_file": "/tmp/claude-0/qu/explore/E5/proofs.txt"
+   },
+   {
+    "statement": "Corollary 2 (r = 2, every k). If all a_i are odd and P is unimodal, then b <= 1 + sum floor(a_i/2). This proves the necessity clause of Conj. 5.4 for r = 2.",
+    "proof_file": "/tmp/claude-0/qu/explore/E5/proofs.txt"
+   },
+   {
+    "statement": "Corollary 3 (r = 3, every k). If 3 divides no a_i and P is unimodal, then b <= 1 + Q + 2*floor(n2/6), where n2 = #{a_i = 2 mod 3}. So necessity holds for r = 3 whenever n2 <= 5, which covers every k <= 5. When n2 >= 6 it can fail, but by at most 2*floor(n2/6).",
+    "proof_file": "/tmp/claude-0/qu/explore/E5/proofs.txt"
+   },
+   {
+    "statement": "Theorem 3 (k <= 3, every r). If r divides no a_i and P is unimodal, then b <= 1 + sum floor(a_i/r). This proves the necessity clause of Conjecture 5.4 for k <= 3.",
+    "proof_file": "/tmp/claude-0/qu/explore/E5/proofs.txt"
+   }
+  ],
+  "failure_report": ""
+ },
+ {
+  "path_id": "A5'/H4' (E6): adversarial/exhaustive search for counterexamples to sufficiency of b <= 1+sum floor(a_i/r)",
+  "stayed_on_path": true,
+  "outcome": "NONEXISTENCE_EVIDENCE",
+  "candidates_tried_total": 13,
+  "candidates_file": "/tmp/claude-0/qu/explore/E6/candidates.tsv",
+  "rules": [],
+  "numeric_claims": [
+   {
+    "claim": "The fit box's whole sufficiency region was enumerated: r=2..6, k=1..8, every sorted multiset a with 1<=a_i<=12 (125,969 per r), and every b from 1 to min(60, 1+sum floor(a_i/r)). That is 7,761,685 instances (r=2: 2,916,689; r=3: 1,831,409; r=4: 1,288,769; r=5: 978,689; r=6: 746,129). Every one is weakly unimodal, so there are 0 counterexamples to sufficiency in the box. No part of the region was left for hill climbing.",
+    "script": "/tmp/claude-0/qu/explore/E6/exh.c (run: ./exh r > out_r$r.txt; or /tmp/claude-0/qu/explore/E6/run_all.sh)",
+    "range": "r in 2..6, k<=8, a_i<=12, b<=1+S (all <=49<=60)"
+   },
+   {
+    "claim": "As an independent re-check, all 7,761,685 region instances were piped through the ground-truth tool /tmp/claude-0/qu/tools/uni. It reports 0 non-unimodal.",
+    "script": "/tmp/claude-0/qu/explore/E6/check_uni.sh (uses gen_region.py); outputs uni_r*.txt",
+    "range": "same full sufficiency region in box"
+   },
+   {
+    "claim": "The minimal unimodality margin is exactly 0, and it is attained in a non-trivial way. A position j < N/2 is 'contested' when Delta_j = c_{j+1}-c_j = sum_t dA_{j+1-rt} contains a strictly negative term. Exact cancellation there (Pos_j = Neg_j > 0, Delta_j = 0) occurs in 722,633 region instances (r=2: 330,332; r=3: 170,542; r=4: 100,913; r=5: 72,201; r=6: 48,645). It occurs for every r and every k >= 2, including at b = bound. Neg_j > Pos_j never happens.",
+    "script": "/tmp/claude-0/qu/explore/E6/exh.c (out_r*.txt, 'exact_tie_instances' and ratio_hist)",
+    "range": "full sufficiency region in box"
+   },
+   {
+    "claim": "The largest exactly cancelled quantity is Pos=Neg=8,616,042, at r=2, a=12^8, b=45, j=87. In the hard subset (no r|a_i, all a_i>=2, b>=2) it is 4,688,733, at r=2, a=11^8, b=40. The largest non-tie ratio Neg/Pos is 1-1/8,616,042 (Delta=1, at r=2, a=12^8, b=44). This is flatness near the centre, so I set it aside as uninformative.",
+    "script": "/tmp/claude-0/qu/explore/E6/margins.c (./margins r > marg_r$r.txt)",
+    "range": "full sufficiency region in box"
+   },
+   {
+    "claim": "Slack in b: take each multiset with no a_i divisible by r. The first non-unimodal b is always bound+s with s in {1,3,5}; it is never <= bound and never missing up to b=60. Counts: r=2 {1:3002}; r=3 {1:10844, 3:2025}; r=4 {1:18104, 3:6160, 5:45}; r=5 {1:35414, 3:8273, 5:70}; r=6 {1:28807, 3:14469, 5:481}. So for the s=1 multisets, b = bound is the last unimodal b. The data matched uni with 0 mismatches.",
+    "script": "/tmp/claude-0/qu/explore/E6/verify_ff.py (calls ./margins r dump and /tmp/claude-0/qu/tools/uni)",
+    "range": "r in 2..6, k<=8, a_i<=12, b<=60"
+   },
+   {
+    "claim": "For r=2, every multiset with k>=2 and all a_i odd and >=3 (1281 multisets) has an exact contested tie at b = bound, and all 3002 all-odd multisets fail at b = bound+1. For r=3..6, ties at b = bound occur in only part of the hard subset; per-k counts are in marg_r*.txt.",
+    "script": "/tmp/claude-0/qu/explore/E6/margins.c (hard_at_b=bound / of_which_tie lines); /tmp/claude-0/qu/explore/E6/verify_ff.py",
+    "range": "r=2, k<=8, a_i<=12"
+   },
+   {
+    "claim": "Structured adversarial families, recomputed in independent pure-Python code, give 0 failures. F1 (all a_i equal): 3,792 region instances. F2 (two distinct values): 94,248. F3 (ones plus one or two large entries): 11,214. The smallest positive contested Delta found is 1, e.g. r=2, a=(1^6,3,3), b=3.",
+    "script": "/tmp/claude-0/qu/explore/E6/families.py (families_out.txt)",
+    "range": "r in 2..6, k<=8, a_i<=12"
+   },
+   {
+    "claim": "As a check of the code itself, the proven Cor. 4.3 case (r divides some a_i) was run for all b<=60: 30,129,060 instances, 0 failures.",
+    "script": "/tmp/claude-0/qu/explore/E6/exh.c ('CorollaryCheck' lines)",
+    "range": "r in 2..6, k<=8, a_i<=12, b<=60"
+   },
+   {
+    "claim": "The r=2 tie lemma holds numerically: for r=2, all a_i odd, D=sum(a_i-1)>=2, b=bound, c_{D-1}=c_{D-2} in 2994 of 2994 multisets.",
+    "script": "/tmp/claude-0/qu/explore/E6/check_lemma.py",
+    "range": "r=2, k<=8, odd a_i<=11"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "Let r=2, all a_i be odd, D = sum(a_i-1) >= 2 and b = 1+sum floor(a_i/2). Then P = prod[a_i]_q [b]_{q^2} has c_{D-1} = c_{D-2}, a zero difference in the first half (D-2 < N/2 = D). The proof uses the alternating partial sums T_n of A and the fact that A(-1) = 1. If k>=2 and all a_i>=3, this tie is contested: the comb sum contains the negative term dA_{D-1} = A_1 - A_2 < 0. This explains why r=2 has margin exactly 0 at the boundary b = bound.",
+    "proof_file": "/tmp/claude-0/qu/explore/E6/proof_r2_tie.txt"
+   }
+  ],
+  "failure_report": ""
+ },
+ {
+  "path_id": "E7: H2'/H3', where unimodality fails and whether it is monotone in b",
+  "stayed_on_path": true,
+  "outcome": "RULE",
+  "candidates_tried_total": 22,
+  "candidates_file": "/tmp/claude-0/qu/explore/E7/candidates.txt",
+  "rules": [
+   {
+    "name": "EXACT (G-overlap criterion, proven)",
+    "rule_file": "/tmp/claude-0/qu/explore/E7/rules/rule_exact.py",
+    "description_text": "Let p(q)=prod_i [a_i]_q, D=deg p=sum(a_i-1), N=D+r(b-1), h=floor(N/2). Let g_0,g_1,... be the coefficients of the power series G(q)=p(q)(1-q)/(1-q^r)=p(q)/[r]_q, computed by g_i=(p_i-p_{i-1})+g_{i-r}, with p_j=0 outside 0..D and g_j=0 for j<0. Predict unimodal iff g_i >= g_{i-rb} for every 0<=i<=h, using g_{i-rb}=0 when i<rb. Equivalently: (I) g_i>=0 for all i<=h, i.e. h<=X where X+1 is the index of the first negative coefficient of G (X=infinity if r divides some a_i); and (II) g_i>=g_{i-rb} for rb<=i<=h. This is a theorem (proof_criterion.txt, Thm 5, Cor 6), derived from (1-q)P=G(q)(1-q^{rb}) plus palindromy.",
+    "fit_range": "whole fit box: r 2..6, k<=8, a_i<=12 (including 1s and multiples of r), b<=60. 22,674,600 distinct-polynomial instances, 37,790,700 box instances",
+    "free_parameters": 0,
+    "fit_errors": 0
+   },
+   {
+    "name": "THRESH (condition (I) only; monotone in b)",
+    "rule_file": "/tmp/claude-0/qu/explore/E7/rules/rule_threshold.py",
+    "description_text": "With p, D and G=p/[r]_q as in EXACT, let X+1 be the index of the first negative coefficient of G (X=infinity iff r divides some a_i). Predict unimodal iff floor((D+r(b-1))/2) <= X, i.e. b <= B_A := 1+floor((2X+1-D)/r). This condition is proven necessary (Cor 6). It is sufficient whenever D <= r(b+1)-1, because (II) is then vacuous. In the box it is wrong only on the 85 non-monotone r=6 instances, where it gives a false positive at b=B_A-2=F+2. Empirically, in the box X lies in [D-2(r-2), D] (upper bound X<=D-j* is proven) and B_A-1-sum floor(a_i/r) is always in {0,2,4}.",
+    "fit_range": "whole fit box (r 2..6, k<=8, a_i<=12, b<=60)",
+    "free_parameters": 0,
+    "fit_errors": 85
+   },
+   {
+    "name": "TAIL (residue-sum bound), domain r<=3",
+    "rule_file": "/tmp/claude-0/qu/explore/E7/rules/rule_tail.py",
+    "description_text": "If r divides some a_i, predict unimodal. Otherwise let S_t = sum of p_j over j = t mod r (t=0..r-1), and let j* = max{ j in 0..r-1 : S_j > S_{(j-1) mod r} }. Predict unimodal iff r(b-1) <= D+1-2j*. The 'only if' direction is proven for all r (Cor 10). The claim that the bound is sufficient covers only r<=3 (domain). Outside the domain this rule makes 3408, 7202 and 9711 instance errors for r=4, 5, 6 in the box.",
+    "fit_range": "box restricted to r in {2,3}",
+    "free_parameters": 0,
+    "fit_errors": 0
+   },
+   {
+    "name": "R3 closed form",
+    "rule_file": "/tmp/claude-0/qu/explore/E7/rules/rule_r3.py",
+    "description_text": "For r=3: predict unimodal iff 3 divides some a_i, or b <= 1 + sum_i floor(a_i/3) + 2*floor(n2/6), where n2 = #{i : a_i = 2 mod 3}. Necessity is proven (Lemma 12: computing j* with cube roots of unity gives kappa=2*floor(n2/6)). Sufficiency is conjectural and was checked only for n2<=8 (box). This explains the r=3 counterexample (1+q)^6(1+q^3), where n2=6. For n2<=5 it coincides with Conjecture 5.4.",
+    "fit_range": "box restricted to r=3 (n2<=8)",
+    "free_parameters": 0,
+    "fit_errors": 0
+   }
+  ],
+  "numeric_claims": [
+   {
+    "claim": "Unimodality is monotone in b (the unimodal b form an initial segment) for every tuple with r=2..5 in the box. It fails for exactly 85 r=6 tuples (distinct P; 133 box tuples counting padding by 1s). Each of these has unimodal set {1..B} U {B+2} with B=1+sum floor(a_i/6), failing only at b=B+1. The smallest k is 7: a=(2,3,3,4,4,4,5), which fails at b=2 and is unimodal at b=3. With k=8 an example is (3,3,3,3,4,4,4,4).",
+    "script": "/tmp/claude-0/qu/explore/E7/mono.py (output list: /tmp/claude-0/qu/explore/E7/nonmono.txt; data from scan.c)",
+    "range": "fit box, 69,212 tuples (no r|a_i, entries 2..12) x b=1..60"
+   },
+   {
+    "claim": "Every failure is one of two types (Cor 8). Type I: first descent t = X, where X+1 is the first negative coefficient of p/[r]_q; this position does not depend on b. Type II: overlap g_{t+1} < g_{t+1-rb} with g_{t+1} >= 0. In the box, type II occurs on exactly 85 instances, which are exactly the non-monotone ones. They sit at the centre (t+1=h, rb in {h-1,h}), with (g_h, g_{h-rb}) = (0,1) in 60 cases and (4,7) in 25. All 4,152,288 other failures in the scan set are type I.",
+    "script": "/tmp/claude-0/qu/explore/E7/classify_types2.py (writes typeII.txt)",
+    "range": "fit box, 69,212 tuples x b<=60"
+   },
+   {
+    "claim": "At the first failing b (b=B+1), every tuple's coefficient sequence has exactly one strict valley, located at the centre: t in [h-3,h-1] and s in [h,h+2]. For every type-I failure, the number of strict valleys equals b - B_A exactly.",
+    "script": "/tmp/claude-0/qu/explore/E7/firstfail_center.py ; /tmp/claude-0/qu/explore/E7/valleys.py",
+    "range": "fit box: 69,212 first failures; 3,580,272 type-I failing instances in viol.txt"
+   },
+   {
+    "claim": "The type-I location X satisfies D-2(r-2) <= X <= D for all box tuples. The upper bound X <= D-j* <= D is proven; equality X = D-j* holds in 49,629 of 69,212 tuples. The lower bound is empirical, while X >= floor(D/2) is proven.",
+    "script": "/tmp/claude-0/qu/explore/E7/xloc.py ; /tmp/claude-0/qu/explore/E7/jstar.py",
+    "range": "fit box, 69,212 tuples"
+   },
+   {
+    "claim": "True threshold B (largest b with 1..b all unimodal) equals B_A = 1+floor((2X+1-D)/r) for every tuple except the 85 non-monotone ones, where B = B_A-2. B_A-1-sum floor(a_i/r) takes only the values 0, 2, 4, so the first failure always occurs at odd m=b-1-sum floor(a_i/r). Equivalently, (2X+1-D-rF) mod 2r always lies in [1,r-1].",
+    "script": "/tmp/claude-0/qu/explore/E7/ab.py ; /tmp/claude-0/qu/explore/E7/xloc.py ; /tmp/claude-0/qu/explore/E7/mpat.py",
+    "range": "fit box, 69,212 tuples"
+   },
+   {
+    "claim": "Rule error counts, as distinct-P / box-weighted instances: EXACT 0/0; THRESH 85/133 (all r=6); Conjecture-5.4-as-iff 44,407/64,371 (r=2:0, r=3:2970, r=4:8340, r=5:11796, r=6:21301); TAIL 20,321/28,883 (0 for r<=3); the best fitted (r,S)-lookup with 85 parameters still has 10,179 errors. The Conjecture's sufficiency (b<=1+F implies unimodal) has no counterexample in the box.",
+    "script": "/tmp/claude-0/qu/explore/E7/evalbox.c (gcc -O2 -o evalbox evalbox.c && ./evalbox) ; /tmp/claude-0/qu/explore/E7/eval_candidates.py ; /tmp/claude-0/qu/explore/E7/mpat.py",
+    "range": "whole fit box (37,790,700 instances)"
+   },
+   {
+    "claim": "Shift invariance unimodal(r,a,b) = unimodal(r, a with a_i -> a_i+r, b+1) holds for all but 24 of 9,172,317 in-box pairs. All 24 exceptions are r=6, shifting a_i=2 to 8, and turn a non-unimodal instance into a unimodal one.",
+    "script": "/tmp/claude-0/qu/explore/E7/shift.py",
+    "range": "fit box pairs with both members in box"
+   },
+   {
+    "claim": "kappa(r,E) = floor((S+1-2j*)/r) is 0 for all 70 residue patterns with at most 3 entries >= 2 (r<=6). Over all base patterns with up to 8 entries it takes only the values 0, 2, 4. By Cor 10 and Lemma 11 this proves the necessity half of Conjecture 5.4 for r<=6 and k<=3, for all a_i and b.",
+    "script": "/tmp/claude-0/qu/explore/E7/kappa.py ; /tmp/claude-0/qu/explore/E7/ksmall.py",
+    "range": "residue patterns for r=2..6, size<=8 (all realized inside box)"
+   },
+   {
+    "claim": "Validation: the scan agrees with the ground-truth checker on 15,000 random instances. The Python rule files agree with the checker on 20,340 instances (20,000 random draws plus the 85 non-monotone tuples and their neighbouring b): EXACT has 0 mismatches and THRESH exactly 85.",
+    "script": "/tmp/claude-0/qu/explore/E7/validate.py ; /tmp/claude-0/qu/explore/E7/check_rules_py.py",
+    "range": "random samples within fit box"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "Theorem 5 / Cor 6. P is unimodal iff g_i >= g_{i-rb} for all 0<=i<=floor(N/2), where G = prod[a_i]_q/[r]_q. Equivalently (I) floor(N/2) <= X and (II) g_i >= g_{i-rb} for rb<=i<=floor(N/2).",
+    "proof_file": "/tmp/claude-0/qu/explore/E7/proof_criterion.txt"
+   },
+   {
+    "statement": "Cor 7. Condition (I) is monotone in b: it holds exactly for b <= B_A = 1+floor((2X+1-D)/r). Condition (II) is vacuous once D <= r(b+1)-1. So every failure of b-monotonicity comes from an overlap failure (II) at some b' with D >= r(b'+1).",
+    "proof_file": "/tmp/claude-0/qu/explore/E7/proof_criterion.txt"
+   },
+   {
+    "statement": "Cor 8. The first strict descent t of a non-unimodal P satisfies either t = X (type I, g_{t+1}<0, a position independent of b) or t+1 >= rb with g_{t+1} >= 0 (type II).",
+    "proof_file": "/tmp/claude-0/qu/explore/E7/proof_criterion.txt"
+   },
+   {
+    "statement": "Lemma 9. X is infinite iff r divides some a_i. Otherwise floor(D/2) <= X <= D-j*, where j* = max{j : S_j > S_{j-1 mod r}} and S_t are the residue-class sums of p.",
+    "proof_file": "/tmp/claude-0/qu/explore/E7/proof_criterion.txt"
+   },
+   {
+    "statement": "Cor 10 (necessary condition). If no r|a_i and P is unimodal, then r(b-1) <= D+1-2j*, i.e. b <= 1+sum floor(a_i/r)+kappa with kappa = floor((S+1-2j*)/r) and S = sum((a_i mod r)-1). In particular, if S <= r-2 then unimodal implies b <= 1+sum floor(a_i/r).",
+    "proof_file": "/tmp/claude-0/qu/explore/E7/proof_criterion.txt"
+   },
+   {
+    "statement": "Lemma 11 / Lemma 12. kappa depends only on the residues a_i mod r that are >= 2. For r=3, kappa = 2*floor(n2/6) with n2 = #{a_i = 2 mod 3}. Hence for r=3 the necessity of Conjecture 5.4 holds whenever n2 <= 5 (so for all k<=5).",
+    "proof_file": "/tmp/claude-0/qu/explore/E7/proof_criterion.txt"
+   },
+   {
+    "statement": "Cor 13 (computer-assisted, using only fit-box computations). For r<=6, if at most three a_i have a_i mod r outside {0,1} (in particular k<=3), then P unimodal implies r|a_i for some i or b <= 1+sum floor(a_i/r).",
+    "proof_file": "/tmp/claude-0/qu/explore/E7/proof_criterion.txt"
+   }
+  ],
+  "failure_report": ""
+ },
+ {
+  "path_id": "H5' (r=3, no a_i divisible by 3: which statistics the critical b depends on)",
+  "stayed_on_path": true,
+  "outcome": "RULE",
+  "candidates_tried_total": 34,
+  "candidates_file": "/tmp/claude-0/qu/explore/E8/candidates.tsv",
+  "rules": [
+   {
+    "name": "r3_critical_b: b <= 1 + T + 2*floor(n2/6)",
+    "rule_file": "/tmp/claude-0/qu/explore/E8/rule_r3.py",
+    "description_text": "Domain: r = 3 and no a_i is divisible by 3 (a_i = 1 is allowed). Let T = sum_i floor(a_i/3) and n2 = number of a_i congruent to 2 mod 3. Then P = [a_1]_q...[a_k]_q[b]_{q^3} is unimodal if and only if b <= 1 + T + 2*floor(n2/6). Equivalently, with M = sum(a_i - 1) = 3T + n2: 3(b-1) <= M - (n2 mod 6). The unimodal values of b always form the initial segment {1,...,B}, where B = 1 + T + 2*floor(n2/6). B depends on one statistic only, T + 2*floor(n2/6), or equivalently on the pair (M, n2 mod 6). It does not depend on n1, min a_i, the counts of parts equal to 1, 2, 4 or 5, or residues mod 9 beyond what T and n2 carry. Compared with the conjectured bound 1+T, each complete group of six parts that are 2 mod 3 adds 2 to the critical b. The reason is that Q(omega) = (-omega^2)^{n2} has order 6. For r=3 with some 3|a_i, predict() returns True, by Cor. 4.3 of arXiv:2605.12822 (outside this rule's domain). Status: this is a theorem, proved for all parameters in the domain in proof_r3.txt, not just a fit. Inside the fit box, [n2>=6] and floor(n2/6) give identical predictions because n2<=8. The proof shows floor(n2/6) is the correct form.",
+    "fit_range": "r=3; no a_i divisible by 3; k=1..8; a_i<=12; b=1..60 (12869 multisets, 772140 (a,b) pairs)",
+    "free_parameters": 2,
+    "fit_errors": 0
+   }
+  ],
+  "numeric_claims": [
+   {
+    "claim": "For every one of the 12869 multisets in the box, the set of b in [1,60] giving a unimodal P is an initial segment {1..B(a)}. B(a) < 60 always holds, so no value is censored.",
+    "script": "/tmp/claude-0/qu/explore/E8/gen.py then /tmp/claude-0/qu/explore/E8/fit_stats.py (prints 'all instances threshold-type: True')",
+    "range": "r=3, no 3|a_i, k=1..8, a_i<=12, b=1..60"
+   },
+   {
+    "claim": "The generated data agree with the ground-truth checker /tmp/claude-0/qu/tools/uni on 20000 random (a,b) pairs, with 0 mismatches.",
+    "script": "/tmp/claude-0/qu/explore/E8/verify.py",
+    "range": "fit box"
+   },
+   {
+    "claim": "The rule b <= 1+T+2*floor(n2/6) misclassifies 0 of 772140 (a,b) pairs. It also has 0 errors on 20000 independent random pairs checked against the uni binary.",
+    "script": "/tmp/claude-0/qu/explore/E8/rule_check_box.py",
+    "range": "fit box"
+   },
+   {
+    "claim": "The conjectured threshold b <= 1+T misclassifies 4050 pairs. B-(1+T) is 0 for every multiset with n2<=5 and exactly 2 for every multiset with n2>=6. That is 2025 multisets, split by (n1,n2) as: (0,6):84, (0,7):120, (0,8):165, (1,6):336, (1,7):480, (2,6):840. Each contributes 2 pairs, giving 4050.",
+    "script": "/tmp/claude-0/qu/explore/E8/an2.py and /tmp/claude-0/qu/explore/E8/candidates.py",
+    "range": "fit box"
+   },
+   {
+    "claim": "Statistic sufficiency, scored as the best achievable error of any threshold function of the statistic tuple. Insufficient: (T) 4050, (M) 5222, (T,n1) 2416, (T,k) 4050, (T,n2 mod 6) 2490, (T,min a) 4040, (T,#1,#2,#4,#5) 3150, (M,n2 mod 3) 5222. Exact (0 errors): (T,n2), (T,[n2>=6]), (T,floor(n2/6)), (M,n2), (M,n2 mod 6), (T, counts mod 6), (T, counts mod 9).",
+    "script": "/tmp/claude-0/qu/explore/E8/candidates.py (also /tmp/claude-0/qu/explore/E8/suff_stats.py)",
+    "range": "fit box"
+   },
+   {
+    "claim": "The exact criterion of Lemma 5 agrees with ground truth on all 772140 pairs. It states: unimodal iff F_z - F_{K-z} + p_{K-z} >= 0 for all integers z with K/2 < z < (M-4)/2, where F = Q/(1+q+q^2), K = M-3(b-1)-5, and p is the 3-periodic tail of F.",
+    "script": "/tmp/claude-0/qu/explore/E8/crit_check.py",
+    "range": "fit box"
+   },
+   {
+    "claim": "All finite case tables used in the proof are verified: the p-table for each value of n2 mod 6, the necessity witnesses y0, the tail cases (T) for K in {-5,-4,-3}, and the k=2 same-block residue check. Sanity check in the box: all 4639 (multiset, W) instances of proof Case 2 satisfy K <= a_min-4, F_z >= 1 on 0 <= z < (M-4)/2, and F_t = f_k(t) for t < a_min. The reflection identity F_t = F_{M-2-t} + p_t also holds on every box multiset.",
+    "script": "/tmp/claude-0/qu/explore/E8/proof_checks.py (prints ALL CHECKS PASSED)",
+    "range": "residues mod 3/mod 6; fit box for sanity parts"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "Let r=3, k>=1, a_1..a_k>=1 with 3 dividing no a_i, and b>=1. Let T=sum floor(a_i/3), n2=#{i: a_i = 2 mod 3} and M=sum(a_i-1). Then [a_1]_q...[a_k]_q[b]_{q^3} is unimodal iff 3(b-1) <= M-(n2 mod 6), i.e. iff b <= 1+T+2*floor(n2/6). Combined with Cor. 4.3 (3|a_i implies unimodal), this settles r=3 completely. Conjecture 5.4's sufficiency holds for r=3. Its necessity fails exactly when n2>=6, for b in [T+2, T+1+2*floor(n2/6)]. Proof outline: (1) An exact criterion: d_n = F_n - F_{n-3b} with F = Q/(1+q+q^2), together with the reflection identity F_t = F_{M-2-t} + p_t, where p is a 3-periodic sequence fixed by n2 mod 6. (2) Necessity: for 3(b-1) >= W*+3 an explicit index y0 in {M-1,M,M+1} has d_{y0} = -1. (3) Sufficiency: induction on k. Removing one factor reduces to the case where every factor is needed. In that case only indices below min a_i matter, and there F has the closed form [q^t](1-q)^{-(k-1)}(1-q^3)^{-1}.",
+    "proof_file": "/tmp/claude-0/qu/explore/E8/proof_r3.txt"
+   }
+  ],
+  "failure_report": ""
+ }
+]

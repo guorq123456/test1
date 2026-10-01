@@ -1,0 +1,1 @@
+rules/rule_generic.py frac 1.0 in-domain instances 463200 errors 0 out-of-domain 3689220 per r (errors,instances): {2: (0, 77160), 3: (0, 386040), 4: (0, 0), 5: (0, 0), 6: (0, 0)}

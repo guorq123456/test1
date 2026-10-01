@@ -1,0 +1,1 @@
+rules/rule_Abound.py frac 1.0 in-domain instances 4152420 errors 20321 out-of-domain 0 per r (errors,instances): {2: (0, 77160), 3: (0, 386040), 4: (3408, 772140), 5: (7202, 1458540), 6: (9711, 1458540)}

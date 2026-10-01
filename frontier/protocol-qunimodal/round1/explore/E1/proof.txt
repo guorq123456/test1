@@ -1,0 +1,159 @@
+THEOREM (r = 3, no a_i divisible by 3).
+Let k >= 0, a_1..a_k >= 1 with 3 not dividing any a_i, b >= 1, and
+  p(q) = [a_1]_q ... [a_k]_q,  P(q) = p(q) [b]_{q^3}.
+Put F = sum floor(a_i/3), S = #{i : a_i = 2 mod 3}, s = S mod 6,
+D = deg p = sum (a_i - 1), L = 3(b-1), N = deg P = D + L.
+Then P is (weakly) unimodal  <=>  L <= D - s  <=>  b <= 1 + F + 2*floor(S/6).
+
+Equivalence of the two forms: a_i = 3f_i + 1 contributes a_i - 1 = 3f_i to D, a_i = 3f_i + 2
+contributes 3f_i + 1; so D = 3F + S and D - s = 3F + (S - s) = 3F + 6 floor(S/6).
+Hence L <= D - s  <=>  3(b-1) <= 3F + 6 floor(S/6)  <=>  b - 1 <= F + 2 floor(S/6).
+Note L and D - s are both divisible by 3, so "not (L <= D - s)" <=> L >= D - s + 3.
+
+Conventions. Factors with a_i = 1 equal 1 and change none of p, D, F, S; drop them, so all
+a_i >= 2 and k = number of factors. Coefficients: p_j (= 0 for j outside [0,D]), c_t for P,
+d_j = p_j - p_{j-1}. omega = exp(2 pi i/3). "x == y" means congruence mod 3.
+
+--------------------------------------------------------------------------------------------
+F1 (standard). p has positive coefficients on [0,D], p_j = p_{D-j}, and p is unimodal
+(product of symmetric unimodal polynomials with nonnegative coefficients, Stanley 1989
+Prop. 1). Hence d_j >= 0 for every integer j <= D/2.
+
+F2 (palindromic test). P is palindromic of degree N (product of palindromic polynomials).
+A palindromic sequence c_0..c_N is unimodal iff c_u >= c_{u-1} for all integers 1 <= u <= N/2.
+Proof. (<=) c is nondecreasing on [0, floor(N/2)], hence by symmetry nonincreasing on
+[ceil(N/2), N]; if N is odd the two middle terms are equal. (=>) If c_u < c_{u-1} with
+2u <= N, then c_{N-u} = c_u < c_{u-1} = c_{N-u+1}; since u-1 < u <= N-u < N-u+1 this is a
+strict descent followed later by a strict ascent, impossible for a unimodal sequence.
+
+--------------------------------------------------------------------------------------------
+LEMMA 1. Let e(q) = p(q)/(1+q+q^2) as a formal power series, coefficients e_m (e_m = 0 for
+m < 0), and G(n) = sum_{j <= n, j == n} p_j (G(n) = 0 for n < 0). Then
+ (a) e_m = sum_{i>=0} d_{m-3i} = G(m) - G(m-1);
+ (b) Delta c_u := c_u - c_{u-1} = e_u - e_{u-3b} for all integers u.
+Proof. 1/(1+q+q^2) = (1-q)/(1-q^3), so e = (1-q)p * 1/(1-q^3), giving e_m = sum_i d_{m-3i}.
+The generating function of G is p/(1-q^3), and e = (1-q) p/(1-q^3), so e_m = G(m) - G(m-1).
+(b): (1-q)P = (1-q) p (1-q^{3b})/(1-q^3) = (1 - q^{3b}) e.
+
+LEMMA 2 (residue-class totals). R_rho := sum_{j == rho} p_j. Let sigma = (-1)^S and
+eps = 2S mod 3. Then R_eps = (p(1) + 2 sigma)/3 and R_rho = (p(1) - sigma)/3 for rho != eps.
+In particular max R - min R = 1. Also R_rho = R_{D - rho}.
+Proof. R_rho = (1/3) sum_{t=0}^{2} omega^{-t rho} p(omega^t). [a]_omega = (1-omega^a)/(1-omega)
+equals 1 if a == 1 and 1 + omega = -omega^2 if a == 2. So p(omega) = (-omega^2)^S = sigma omega^eps
+and p(omega^2) is its conjugate. Thus R_rho = (p(1) + 2 sigma Re(omega^{eps - rho}))/3, and
+Re(omega^t) = 1 if 3 | t, -1/2 otherwise. The map j -> D - j sends class rho onto class D - rho.
+
+Definition. delta(m) := R_{m mod 3} - R_{(m-1) mod 3}. By Lemma 2:
+  delta(m) = sigma if m == eps;  -sigma if m == eps + 1;  0 if m == eps + 2.
+delta is 3-periodic with values in {-1,0,1}, and delta(D-2-v) = -delta(v) for every v, because
+R_{D-2-v} - R_{D-3-v} = R_{v+2} - R_{v+3} = R_{v-1} - R_v.
+
+LEMMA 3 (reflection identity). For every integer m: e_m = e_{D-2-m} + delta(m).
+In particular e_m = delta(m) for all m >= D - 1.
+Proof. For every integer m, R_m = sum_{j<=m, j==m} p_j + sum_{j>m, j==m} p_j, and by
+p_j = p_{D-j}, sum_{j>m, j==m} p_j = sum_{i < D-m, i == D-m} p_i = G(D-m-3). So
+G(m) = R_m - G(D-m-3) for all integers m (both sides use G(n) = 0 for n < 0). Then by Lemma 1(a)
+e_m = G(m) - G(m-1) = (R_m - R_{m-1}) - (G(D-m-3) - G(D-m-2)) = delta(m) + e_{D-m-2}.
+If m >= D-1 then D-2-m < 0 and e_{D-2-m} = 0.
+
+LEMMA 4 (first negative tail value). Let u0 = min{m >= D-1 : delta(m) = -1}. Then
+u0 = D + 1 - floor(s/2), and delta(m) >= 0 for D-1 <= m < u0.
+Proof. D = 3F + S == S == s (mod 3). sigma and eps depend only on s:
+  s=0: sigma=+1, eps=0, delta=-1 on class 1; D==0; D-1==2, D==0, D+1==1  -> u0 = D+1
+  s=1: sigma=-1, eps=2, delta=-1 on class 2; D==1; D-1==0, D==1, D+1==2  -> u0 = D+1
+  s=2: sigma=+1, eps=1, delta=-1 on class 2; D==2; D-1==1, D==2          -> u0 = D
+  s=3: sigma=-1, eps=0, delta=-1 on class 0; D==0; D-1==2, D==0          -> u0 = D
+  s=4: sigma=+1, eps=2, delta=-1 on class 0; D==1; D-1==0                -> u0 = D-1
+  s=5: sigma=-1, eps=1, delta=-1 on class 1; D==2; D-1==1                -> u0 = D-1
+In each row u0 = D + 1 - floor(s/2), and the listed m in [D-1, u0) have delta(m) in {0,1}.
+
+LEMMA 5 (nonnegativity). e_m >= 0 for 0 <= m <= D-2. Hence G is nondecreasing on [-1, D-2].
+Proof. If m <= D/2, all indices in e_m = sum_i d_{m-3i} are <= D/2, so e_m >= 0 by F1.
+Let D/2 < m <= D-2 and v = D-2-m, so 0 <= v < D/2 - 2. By Lemma 3 and delta(D-2-v) = -delta(v):
+e_m = e_v - delta(v), and e_v >= 0. If e_v >= 1 or delta(v) <= 0 we are done. Suppose e_v = 0.
+Then every term d_{v-3i} (all with index <= v < D/2, hence >= 0) vanishes, in particular
+d_{v mod 3} = 0.
+ * v == 0: d_0 = p_0 = 1, contradiction.
+ * v == 1: d_1 = p_1 - 1 = k - 1 = 0, so k = 1.
+ * v == 2: d_2 = 0. Here p_1 = k and p_2 = C(k,2) + #{i : a_i >= 3}, so d_2 = C(k,2) - k + #{a_i>=3}.
+   k >= 4: d_2 >= k(k-3)/2 > 0, contradiction. k = 3: d_2 = 0 forces p = (1+q)^3, D = 3, but
+   v >= 2 > D/2 - 2, contradiction. k = 2: d_2 = 0 forces {a_1,a_2} = {2, a} with a >= 4, so
+   S in {1,2}. k = 1: possible.
+ Remaining cases: (k = 1, v == 1 or 2) and (k = 2, one factor 2, v == 2).
+ k = 1: S in {0,1}. By the table, s=0 gives delta = (+1,-1,0) on classes (0,1,2) and s=1 gives
+ (+1,0,-1); so delta(v) <= 0 for v == 1, 2.  k = 2 (s in {1,2}): delta on class 2 is -1 for s=1
+ and -1 for s=2. In all cases delta(v) <= 0, so e_m >= 0.
+The monotonicity of G follows from G(m) - G(m-1) = e_m (Lemma 1a), with G(-1) = 0.
+
+LEMMA 6 (one factor). If k = 1, p = [a] (a >= 2, D = a-1), then e_m = [3 | m] for 0 <= m <= D.
+Proof. e = (1-q^a)/(1-q) * (1-q)/(1-q^3) = (1-q^a)/(1-q^3); for m <= a-1 the coefficient is [3|m].
+
+--------------------------------------------------------------------------------------------
+PROOF OF NECESSITY. Assume L >= D - s + 3. Write fl = floor(s/2).
+(i) L >= D + 2 - 2 fl, because s - 3 <= 2 fl - 2 (s <= 2 fl + 1).
+(ii) u0 = D + 1 - fl <= L + 2 = 3b - 1, because L >= D + 2 - 2fl >= D - 1 - fl (fl <= 3).
+(iii) 2 u0 = 2D + 2 - 2fl <= D + L = N, by (i).
+(iv) u0 >= 1: if s <= 1, u0 = D+1 >= 1; if s in {2,3}, u0 = D >= S >= 2; if s in {4,5},
+     u0 = D - 1 >= S - 1 >= 3.
+By Lemma 1(b), Delta c_{u0} = e_{u0} - e_{u0-3b}; u0 - 3b < 0 by (ii), so e_{u0-3b} = 0, and
+e_{u0} = delta(u0) = -1 by Lemma 3 (u0 >= D-1) and the definition of u0. So c_{u0} < c_{u0-1}
+with 2u0 <= N, and P is not unimodal by F2.
+
+PROOF OF SUFFICIENCY. Induction on k. Claim H(k): for every p as above with k factors
+(all >= 2) and every b with L <= D - s, P is unimodal. Assume L <= D - s.
+
+Case 1: L >= D - 5. (This contains k = 0, where D = s = 0 forces L = 0.)
+For 1 <= u <= N/2: N/2 = (D+L)/2 < L + 3 = 3b (as D < L + 6), so e_{u-3b} = 0 and
+Delta c_u = e_u (Lemma 1b). If u <= D-2, e_u >= 0 by Lemma 5. If u >= D-1, then e_u = delta(u)
+(Lemma 3) and u <= N/2 <= (2D - s)/2 = D - s/2 < D + 1 - floor(s/2) = u0, so delta(u) >= 0 by
+Lemma 4. Hence P is unimodal by F2.
+
+Case 2: L <= D - 6 (so D >= 6 and k >= 1).
+Case 2.0: k = 1, p = [a]. For 1 <= u <= N/2 <= D - 3, both u and u-3b are <= D, so by Lemma 6
+Delta c_u = [3|u] - [3|u][u >= 3b] >= 0. Unimodal by F2.
+Case k >= 2: let a = a_k, A = [a_1]...[a_{k-1}] (k-1 >= 1 factors, all >= 2, so D_A >= 1 and
+A has positive coefficients on [0, D_A]). D = D_A + a - 1. Let P^A = A [b]_{q^3} with
+coefficients c^A, degree N_A = D_A + L, and s_A, G^A, R^A the quantities above for A.
+Since P = P^A [a]_q, c_u = sum_{t=0}^{a-1} c^A_{u-t} and Delta c_u = c^A_u - c^A_{u-a}.
+
+ Case 2a: L <= D_A - s_A. By H(k-1), P^A is unimodal; it is palindromic with nonnegative
+ coefficients, and [a]_q is symmetric unimodal; so P = P^A [a]_q is symmetric unimodal
+ (Stanley 1989, Prop. 1).
+
+ Case 2b: L >= D_A - s_A + 3 (>= D_A - 2).
+ (alpha) For 0 <= v <= N_A/2: c^A_v = G^A(v). Indeed c^A_v = sum_{y=0}^{b-1} A_{v-3y}
+   = G^A(v) - G^A(v-3b), and v <= (D_A + L)/2 < L + 3 = 3b because D_A < L + 6.
+ (beta) For v >= D_A - 2: G^A(v) = R^A_{v mod 3} (the next class element after v exceeds D_A).
+   By Lemma 2 for A, every R^A_rho >= max R^A - 1.
+ (gamma) G^A(D_A - 4) = R^A_{(D_A-1) mod 3} - A_{D_A-1} <= R^A_{D_A-1} - 1, since the only class
+   element of D_A - 1 in (D_A - 4, D_A] is D_A - 1 itself and A_{D_A-1} >= 1. (If D_A - 4 < 0
+   the left side is 0 and the identity still holds.)
+ Fix 1 <= u <= N/2 and let m = u - a.
+  - If m < 0: c^A_m = 0 <= c^A_u, so Delta c_u >= 0.
+  - If m >= 0: N = N_A + a - 1 gives m <= N/2 - a = (N_A - a - 1)/2 = (D_A + L - a - 1)/2, and
+    L <= D - 6 = D_A + a - 7 gives m <= D_A - 4. From a <= u <= (N_A + a - 1)/2 we get
+    a <= N_A - 1 and then u <= N_A - 1. Put u' = min(u, N_A - u). By palindromicity of P^A,
+    c^A_u = c^A_{u'}, 0 <= u' <= N_A/2, and u' > m (u > m, and N_A - u >= (N_A - a + 1)/2 > m).
+    By (alpha): c^A_u = G^A(u'), c^A_m = G^A(m).
+      * u' <= D_A - 2: G^A is nondecreasing on [-1, D_A - 2] (Lemma 5 for A), so G^A(u') >= G^A(m).
+      * u' >= D_A - 1: by (beta), (gamma) and Lemma 5 for A (0 <= m <= D_A - 4):
+        G^A(u') = R^A_{u'} >= R^A_{D_A-1} - 1 >= G^A(D_A - 4) >= G^A(m).
+    So Delta c_u >= 0.
+ Hence P is unimodal by F2.
+Cases 2a and 2b are exhaustive because L and D_A - s_A are both divisible by 3.
+This proves H(k) from H(k-1) for k >= 2; H(0) and H(1) are covered by Case 1 and Case 2.0
+(no induction hypothesis is used there). QED.
+
+--------------------------------------------------------------------------------------------
+REMARKS.
+* Where the "periodic window" argument enters: Lemma 3 shows that e is exactly 3-periodic
+  (equal to delta) beyond D-2, i.e. on the plateau where all b shifted copies of p overlap the
+  coefficients are the class totals R_rho, which differ by exactly 1 (Lemma 2). Necessity is the
+  first -1 of that periodic tail falling inside the left half; sufficiency is that it does not
+  (Case 1), plus an induction (Case 2) in which an over-threshold sub-product A has an exactly
+  known plateau that the extra factor [a] absorbs (Case 2b).
+* Consequence: for r = 3 the necessity clause of Conjecture 5.4 fails exactly when S >= 6 and
+  1 + F < b <= 1 + F + 2 floor(S/6) (e.g. a = (2,2,2,2,2,2), b in {2,3}); the sufficiency clause
+  b <= 1 + F holds for r = 3 (it is implied by the theorem).
+* Together with Cor. 4.3 of arXiv:2605.12822 (some a_i divisible by 3 => unimodal), this settles
+  r = 3 completely. That case is cited, not proved here.

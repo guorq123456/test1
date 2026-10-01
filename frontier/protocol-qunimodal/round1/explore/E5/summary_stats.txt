@@ -1,0 +1,5 @@
+r=2: tuples=1286 b-sets non-interval=0 'b<=1+Q not all unimodal'=0 excess(B*-1-Q) dist={0: 1286} B*==B*_A:1286 B*<B*_A:0 B*>B*_A:0 residue-classes=8 ambiguous=0
+r=3: tuples=6434 b-sets non-interval=0 'b<=1+Q not all unimodal'=0 excess(B*-1-Q) dist={0: 4949, 2: 1485} B*==B*_A:6434 B*<B*_A:0 B*>B*_A:0 residue-classes=44 ambiguous=0
+r=4: tuples=12869 b-sets non-interval=0 'b<=1+Q not all unimodal'=0 excess(B*-1-Q) dist={0: 8744, 2: 4080, 4: 45} B*==B*_A:11165 B*<B*_A:1704 B*>B*_A:0 residue-classes=164 ambiguous=0
+r=5: tuples=24309 b-sets non-interval=0 'b<=1+Q not all unimodal'=0 excess(B*-1-Q) dist={0: 18481, 2: 5758, 4: 70} B*==B*_A:20708 B*<B*_A:3601 B*>B*_A:0 residue-classes=494 ambiguous=0
+r=6: tuples=24309 b-sets non-interval=85 'b<=1+Q not all unimodal'=0 excess(B*-1-Q) dist={0: 14026, 2: 9873, 4: 410} B*==B*_A:19496 B*<B*_A:4813 B*>B*_A:0 residue-classes=1286 ambiguous=1

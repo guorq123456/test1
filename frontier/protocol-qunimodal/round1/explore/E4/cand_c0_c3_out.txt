@@ -1,0 +1,6 @@
+r=2 C0: domain=2916689 err=38466 | C3 (k=2): domain=546 err=70
+r=3 C0: domain=1831409 err=102213 | C3 (k=2): domain=364 err=68
+r=4 C0: domain=1288769 err=129580 | C3 (k=2): domain=273 err=54
+r=5 C0: domain=978689 err=180441 | C3 (k=2): domain=221 err=48
+r=6 C0: domain=746129 err=116649 | C3 (k=2): domain=182 err=30
+TOTAL {'domain': 7761685, 'C0_err': 567349} {'domain_k2': 1586, 'C3_err': 270}

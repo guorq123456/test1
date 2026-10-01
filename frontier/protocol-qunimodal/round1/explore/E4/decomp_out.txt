@@ -1,0 +1,6 @@
+r=2 done {'nodes': 125969, 'identity_fail': 0, 'vbound_fail': 0, 'uterms': 5956, 'vchains_max': 1, 'lemma_checks': 0, 'lemma_fail_U': 0, 'lemma_fail_V': 0}
+r=3 done {'nodes': 251938, 'identity_fail': 0, 'vbound_fail': 0, 'uterms': 53528, 'vchains_max': 5, 'lemma_checks': 0, 'lemma_fail_U': 0, 'lemma_fail_V': 0}
+r=4 done {'nodes': 377907, 'identity_fail': 0, 'vbound_fail': 0, 'uterms': 192068, 'vchains_max': 9, 'lemma_checks': 0, 'lemma_fail_U': 0, 'lemma_fail_V': 0}
+r=5 done {'nodes': 503876, 'identity_fail': 0, 'vbound_fail': 0, 'uterms': 437937, 'vchains_max': 13, 'lemma_checks': 0, 'lemma_fail_U': 0, 'lemma_fail_V': 0}
+r=6 done {'nodes': 629845, 'identity_fail': 0, 'vbound_fail': 0, 'uterms': 851036, 'vchains_max': 17, 'lemma_checks': 0, 'lemma_fail_U': 0, 'lemma_fail_V': 0}
+FINAL {'nodes': 629845, 'identity_fail': 0, 'vbound_fail': 0, 'uterms': 851036, 'vchains_max': 17, 'lemma_checks': 0, 'lemma_fail_U': 0, 'lemma_fail_V': 0}

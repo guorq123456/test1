@@ -1,0 +1,1 @@
+r=4 instances=1288769 non_unimodal=0

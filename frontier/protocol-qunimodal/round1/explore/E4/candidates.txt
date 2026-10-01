@@ -1,0 +1,55 @@
+E4 candidates (path A3': sufficiency via Lambda/centred-chain decomposition; no residue-window sums)
+Target domain T = fit-box instances (r in 2..6, k<=8, sorted a_i<=12, b<=60) with b <= 1 + sum floor(a_i/r):
+|T| = 7,761,685  (r=2: 2,916,689; r=3: 1,831,409; r=4: 1,288,769; r=5: 978,689; r=6: 746,129)
+[sources: score_r*.txt 'target_cond', cand_c0_c3_out.txt 'domain'].
+"error" = instance of T that the candidate mechanism fails to certify (for proof mechanisms),
+or disagreement with ground truth (for rules).
+
+C0  Stanley product with a single k=1 factor: certify iff some a_i >= r(b-1) or r | a_i.
+    (Variant "split b-1 = sum(b_i-1) and use prod [a_i][b_i]_{q^r}" discarded by hand, no computation:
+     prod [b_i]_{q^r} = [b]_{q^r} + x[b-2]_x + ... != [b]_{q^r}, so it is a different polynomial.)
+    errors on T: 567,349 / 7,761,685  (r=2: 38,466; r=3: 102,213; r=4: 129,580; r=5: 180,441; r=6: 116,649)
+    script: cand_c0_c3.py -> cand_c0_c3_out.txt.   DISCARDED.
+
+C1  Chain-by-chain: A = sum alpha_j q^j[D+1-2j]; certify iff every chain with alpha_j>0 is
+    individually good with [b]_{q^r} (L >= r(b-1) or r | L).
+    errors on T: 5,732,481 / 7,761,685 (r=2: 1,395,681; r=3: 1,703,467; r=4: 1,161,629;
+    r=5: 851,996; r=6: 619,708)  [cand_c1_c2_out.txt]
+    script: cand_c1_c2.py.   DISCARDED (short chains are the whole difficulty).
+
+C2  Runs + good singletons: alpha = nonneg. integer combination of runs {s..s+t-1} with r|t or
+    r | (L_s - t + 1) (each run equals q^s[c][n] with r|c, good for all b) and individually good
+    singletons. Exact integer feasibility by z3; evaluated only for k <= 4 (cost).
+    errors on T restricted to k<=4: 0 / 60,615 (r=2: 0/21,979; r=3: 0/14,139; r=4: 0/10,219;
+    r=5: 0/7,979; r=6: 0/6,299); z3 was called on the 39,820 of these where C1 fails [cand_c1_c2_out.txt].
+    Not pursued to a proof: no general argument for feasibility; SUPERSEDED by C4
+    (C4's U-pieces q^e[c]H are more general than runs).
+
+C3  One-shot transfer identity (k=2 only): [a1][a2] = [r m1][a2+s1] + q^{r m1}[s1][a2-r m1];
+    certify iff the remainder times [b]_{q^r} is unimodal.
+    errors on T restricted to k=2: 270 / 1,586 (r=2: 70/546; r=3: 68/364; r=4: 54/273; r=5: 48/221; r=6: 30/182)
+    script: cand_c0_c3.py -> cand_c0_c3_out.txt.   DISCARDED (remainder needs b-1 <= m2-m1).
+
+C4  Clebsch-Gordan peeling induction (proof.txt Lemma 4): A = U + V, U-pieces q^e[c]H with r | c,
+    V-pieces centred chains of length >= r*sum floor(a_i/r) + 1, split point
+    d0 = min(s', e+1) (capped at min(L,a')).
+    errors on T: 0 / 7,761,685.
+      - identity A = U + V, V-length bound and r|c assertion: 0 failures on all 629,845 (r,a) tuples
+        (decomp.py -> decomp_out.txt);
+      - lemma-level check U[b]_{q^r}, V[b]_{q^r} unimodal for k<=4, all b<=M+1: 0 failures in 60,615
+        checks (decomp.py --lemma 4 -> decomp_lemma4_out.txt);
+      - ground truth on T: 0 non-unimodal (score_r*.txt 'target_cond_and_truth0' = 0 for every r).
+    ACCEPTED -> proof.txt (full proof, all r>=2, k>=1).
+
+C5  Greedy refinement of C4 (rule_refined.py): smallest admissible d0 = min(L mod r, a' mod r, min(L,a')),
+    chains with r | L moved to U, ascending and descending factor order; predict r(b-1) <= Lmin.
+    Proved one-sided (implies-unimodal) like C4. Scored on the whole box against ground truth:
+    FP = 0; FN identical to the plain rule; gained instances over plain rule = 0
+    (score_refined.py -> score_refined_r*.txt). DISCARDED as a rule (no gain over plain rule).
+
+Rule reported: rule.py (plain sufficient condition, proved). Whole box (37,790,700 instances):
+    FP = 0, FN = 64,371 (r=2: 0; r=3: 4,050; r=4: 12,500; r=5: 16,826; r=6: 30,995) [score_r*.txt].
+    FN are cases where P is unimodal although b > 1 + sum floor(a_i/r) and no r | a_i; the rule makes
+    no claim there (necessity is not asserted).
+
+Total candidates tried: 7 (C0, C0-variant [split b], C1, C2, C3, C4, C5).

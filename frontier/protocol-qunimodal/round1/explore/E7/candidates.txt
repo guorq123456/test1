@@ -1,0 +1,33 @@
+E7 candidates file.  Fit box: r in 2..6, k<=8, a_i<=12, b<=60.
+Error counts are instance-level over the whole box: "distinct" = distinct polynomials (multisets of entries 2..12,
+entries equal to 1 dropped since [1]_q=1) = 22,674,600 instances; "weighted" = all 37,790,700 box instances
+(r, sorted a with k<=8 incl. 1's, b).  Tuples with r|a_i are unimodal (Cor. 4.3) and every rule below predicts that.
+
+PREDICTIVE RULES  (script: evalbox.c for EXACT/THRESH/CONJ_IFF; eval_candidates.py for the rest)
+ #  name          free params  domain     errors distinct / weighted        status
+ 1  CONJ_IFF      0            all        44407 / 64371  (r=2:0, r=3:2970, r=4:8340, r=5:11796, r=6:21301)  discarded
+ 2  DBOUND        0            all        92679 / 160528   b<=1+floor((D+1)/r)  (proven NECESSARY, not sufficient) discarded as rule
+ 3  THRESH        0            all        85 / 133   (all r=6; = condition (I) h<=X)                      kept (rules/rule_threshold.py)
+ 4  EXACT         0            all        0 / 0      (Theorem 5, proven)                                   kept (rules/rule_exact.py)
+ 5  TAIL          0            all        20321 / 28883 (r=2:0, r=3:0, r=4:3408, r=5:7202, r=6:9711)       discarded on r>=4
+ 6  TAIL|r<=3     0            r<=3       0 / 0                                                            kept (rules/rule_tail.py, domain r<=3)
+ 7  R3 closed     0            r=3        0 / 0   b<=1+F+2*floor(n2/6)                                    kept (rules/rule_r3.py)
+ 8  SONLY lookup  85 (fitted)  all        10179 / 17695  best (r,S)->B-F majority table; shows S alone cannot decide  discarded
+
+HYPOTHESES / STRUCTURAL CLAIMS TESTED (counts are exceptions in the box)
+ 9  H3' monotone in b (unimodal at b => at all b'<b)        85 tuples violate (all r=6), each with unimodal set {1..B} U {B+2}, B=1+F   [mono.py, nonmono.txt]  REJECTED
+10  shift invariance: uni(r,a,b) == uni(r,a+r*e_i,b+1)      24 disagreements / 9,172,317 pairs (all r=6, a_i=2 -> 8)   [shift.py]  REJECTED (near-true)
+11  first failure (b=B+1) is a single strict valley at centre  0 exceptions / 69,212 tuples; t in [h-3,h-1], s in [h,h+2]  [firstfail_center.py, loc2.py]  HOLDS in box
+12  case-A reduction: if h<=R+r-1 then uni <=> h<=X          0 / 3,640,211 instances  [lfun.py]   (now a special case of Cor. 6/7b, proven)
+13  B == B_A=1+floor((2X+1-D)/r) except non-monotone tuples  0 exceptions besides the 85   [ab.py]  HOLDS in box
+14  failure types: type I (g_{t+1}<0, t=X) vs type II         type II = exactly the 85 non-monotone instances, all others type I  [classify_types2.py]
+15  parity: B_A-1-F in {0,2,4} (Z=2X+1-D-rF has Z mod 2r in [1,r-1])   0 exceptions / 69,212 tuples  [xloc.py, zstat.py]  HOLDS in box (unproven; proven for r=3 via Lemma 12 only for the bound)
+16  X window: D-2(r-2) <= X <= D                             0 exceptions  [xloc.py]  (upper bound proven, Lemma 9c)
+17  quasi-symmetry g_i - g_{D-r+1-i} = S_{i mod r}-S_{(i-1) mod r}   0 failures / 2,624,504 checks  [zstat.py]  (follows from palindromy)
+18  first negative coeff of G beyond (D-r+1)/2               0 exceptions [xloc.py] (now proven stronger: X>=floor(D/2), Lemma 9b)
+19  X <= D - j*                                              0 violations [jstar.py] (proven, Lemma 9c); equality in 49,629/69,212 tuples
+20  kappa(r,E) depends only on residues >=2                  0 failures / 69,212 [kappa.py] (proven, Lemma 11)
+21  valleys(b) = b - B_A for every type-I failure            0 exceptions / 3,580,272 instances [valleys.py]  HOLDS in box
+22  region classification of t vs D, r(b-1) (loc.py)         descriptive only, superseded by #14/#16
+
+TOTAL candidates tried (rules + hypotheses): 22

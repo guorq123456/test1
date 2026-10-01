@@ -1,0 +1,6 @@
+r=2 {'domain': 2916689, 'C1_fail': 1395681, 'domain_kle': 21979, 'C1_fail_kle': 9774, 'C2_fail_kle': 0}
+r=3 {'domain': 1831409, 'C1_fail': 1703467, 'domain_kle': 14139, 'C1_fail_kle': 11747, 'C2_fail_kle': 0}
+r=4 {'domain': 1288769, 'C1_fail': 1161629, 'domain_kle': 10219, 'C1_fail_kle': 8044, 'C2_fail_kle': 0}
+r=5 {'domain': 978689, 'C1_fail': 851996, 'domain_kle': 7979, 'C1_fail_kle': 5928, 'C2_fail_kle': 0}
+r=6 {'domain': 746129, 'C1_fail': 619708, 'domain_kle': 6299, 'C1_fail_kle': 4327, 'C2_fail_kle': 0}
+TOTAL (k<=4 for C2 columns) {'domain': 7761685, 'C1_fail': 5732481, 'domain_kle': 60615, 'C1_fail_kle': 39820, 'C2_fail_kle': 0}

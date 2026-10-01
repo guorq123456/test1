@@ -1,0 +1,256 @@
+{
+ "instances_in_domain": 309455,
+ "instance_errors": 5390,
+ "tuples_in_domain": 5600,
+ "tuples_with_any_error": 1942,
+ "false_pos(pred unimodal, truth not)": 0,
+ "false_neg(pred not, truth unimodal)": 5390,
+ "per_stratum": {
+  "r3_far": {
+   "inst": 64813,
+   "err": 1408,
+   "tuples": 900,
+   "tuples_err": 666
+  },
+  "r3_biga": {
+   "inst": 29086,
+   "err": 48,
+   "tuples": 500,
+   "tuples_err": 24
+  },
+  "r2_far": {
+   "inst": 56498,
+   "err": 0,
+   "tuples": 500,
+   "tuples_err": 0
+  },
+  "r456_far": {
+   "inst": 30530,
+   "err": 1363,
+   "tuples": 700,
+   "tuples_err": 569
+  },
+  "r456_biga": {
+   "inst": 12938,
+   "err": 70,
+   "tuples": 400,
+   "tuples_err": 34
+  },
+  "big_r": {
+   "inst": 11738,
+   "err": 506,
+   "tuples": 600,
+   "tuples_err": 235
+  },
+  "equal": {
+   "inst": 26207,
+   "err": 1178,
+   "tuples": 400,
+   "tuples_err": 194
+  },
+  "two_vals": {
+   "inst": 26259,
+   "err": 799,
+   "tuples": 400,
+   "tuples_err": 213
+  },
+  "ones": {
+   "inst": 4007,
+   "err": 0,
+   "tuples": 300,
+   "tuples_err": 0
+  },
+  "has_mult": {
+   "inst": 23138,
+   "err": 0,
+   "tuples": 500,
+   "tuples_err": 0
+  },
+  "mixed": {
+   "inst": 24241,
+   "err": 18,
+   "tuples": 400,
+   "tuples_err": 7
+  }
+ },
+ "first_mismatches": [
+  {
+   "r": 3,
+   "a": [
+    4,
+    5,
+    7,
+    8,
+    13,
+    14,
+    16,
+    20,
+    22,
+    23,
+    25,
+    26,
+    28,
+    28
+   ],
+   "b": 75,
+   "truth": true,
+   "pred": false,
+   "stratum": "r3_far"
+  },
+  {
+   "r": 3,
+   "a": [
+    4,
+    5,
+    7,
+    8,
+    13,
+    14,
+    16,
+    20,
+    22,
+    23,
+    25,
+    26,
+    28,
+    28
+   ],
+   "b": 76,
+   "truth": true,
+   "pred": false,
+   "stratum": "r3_far"
+  },
+  {
+   "r": 3,
+   "a": [
+    2,
+    8,
+    8,
+    10,
+    10,
+    14,
+    19,
+    20,
+    25,
+    26,
+    28,
+    29
+   ],
+   "b": 62,
+   "truth": true,
+   "pred": false,
+   "stratum": "r3_far"
+  },
+  {
+   "r": 3,
+   "a": [
+    2,
+    8,
+    8,
+    10,
+    10,
+    14,
+    19,
+    20,
+    25,
+    26,
+    28,
+    29
+   ],
+   "b": 63,
+   "truth": true,
+   "pred": false,
+   "stratum": "r3_far"
+  },
+  {
+   "r": 3,
+   "a": [
+    5,
+    5,
+    7,
+    13,
+    14,
+    14,
+    16,
+    16,
+    17,
+    17,
+    20,
+    22,
+    23,
+    25,
+    28,
+    28
+   ],
+   "b": 84,
+   "truth": true,
+   "pred": false,
+   "stratum": "r3_far"
+  },
+  {
+   "r": 3,
+   "a": [
+    5,
+    5,
+    7,
+    13,
+    14,
+    14,
+    16,
+    16,
+    17,
+    17,
+    20,
+    22,
+    23,
+    25,
+    28,
+    28
+   ],
+   "b": 85,
+   "truth": true,
+   "pred": false,
+   "stratum": "r3_far"
+  },
+  {
+   "r": 3,
+   "a": [
+    2,
+    7,
+    11,
+    16,
+    16,
+    17,
+    20,
+    20,
+    22,
+    23,
+    25
+   ],
+   "b": 56,
+   "truth": true,
+   "pred": false,
+   "stratum": "r3_far"
+  },
+  {
+   "r": 3,
+   "a": [
+    2,
+    7,
+    11,
+    16,
+    16,
+    17,
+    20,
+    20,
+    22,
+    23,
+    25
+   ],
+   "b": 57,
+   "truth": true,
+   "pred": false,
+   "stratum": "r3_far"
+  }
+ ]
+}

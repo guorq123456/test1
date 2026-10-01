@@ -1,0 +1,18 @@
+STATEMENT. There is no function g with: P(r;a;b) unimodal <=> g(r,k,b,{a_i mod r},F,D)=1, where F=sum floor(a_i/r), D=sum(a_i-1).
+The same holds for the statistics computed on the nontrivial factors only (a_i>1), since the witness below has no a_i=1.
+
+Lemma 1. a=(2,3,4,4,4,4,4,8) and a'=(2,2,3,4,4,4,4,10), r=6, have identical statistics: {'k': 8, 'res': [2, 2, 3, 4, 4, 4, 4, 4], 'F': 1, 'D': 25, 'ones': 0} vs {'k': 8, 'res': [2, 2, 3, 4, 4, 4, 4, 4], 'F': 1, 'D': 25, 'ones': 0}.
+  Check: residues of a: 2,3,4,4,4,4,4,(8 mod 6=2) -> {2,2,3,4,4,4,4,4}; of a': 2,2,3,4,4,4,4,(10 mod 6=4) -> {2,2,3,4,4,4,4,4}.
+  F: only 8 and 10 are >=6, each floor 1 -> F=1 for both. D: sum(a)=33 for both, k=8 -> D=25.
+
+Lemma 2. With b=4, P(q)=prod[a_i]_q [4]_(q^6) has degree 43 and coefficients c_0..c_43:
+  1 8 35 111 281 597 1100 1799 2661 3620 4599 5531 6366 7065 7595 7938 8108 8157 8157 8164 8192 8219 8219 8192 8164 8157 8157 8108 7938 7595 7065 6366 5531 4599 3620 2661 1799 1100 597 281 111 35 8 1
+  The sequence is palindromic (c_i=c_{N-i}: True) and c_i<=c_(i+1) for i=0..20: True; hence weakly unimodal with mode at 21.
+
+Lemma 3. With b=4, P'(q)=prod[a'_i]_q [4]_(q^6) has coefficients:
+  1 8 34 103 247 494 853 1305 1809 2323 2824 3311 3788 4240 4626 4900 5044 5086 5085 5092 5120 5147 5147 5120 5092 5085 5086 5044 4900 4626 4240 3788 3311 2824 2323 1809 1305 853 494 247 103 34 8 1
+  c'_17=5086 > c'_18=5085 < c'_19=5092. A strict interior local minimum rules out weak unimodality:
+  if the mode m>=18, then c'_17<=c'_18 is required (false); if m<=17, then c'_18>=c'_19 is required (false).
+
+Conclusion. The two parameter sets share (r,k,b,{a_i mod r},F,D) and also these statistics on nontrivial factors, but differ in unimodality. QED.
+Coefficients are reproducible with /tmp/claude-0/qu/tools/uni_ref.py poly(6,a,4) (exact integer arithmetic); also checked by /tmp/claude-0/qu/tools/uni.

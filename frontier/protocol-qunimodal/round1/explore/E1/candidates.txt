@@ -1,0 +1,28 @@
+Candidates tried by explorer E1 (path: r=3, no a_i divisible by 3; statistics S, F, b; periodic-window argument).
+Fit box used for every count: r=3, k<=8, a_i in {1,2,4,5,7,8,10,11}, b<=60 (772,140 instances; ground truth /tmp/claude-0/qu/tools/uni).
+
+RULE CANDIDATES
+R1  b <= F + 1 + 2*floor(S/6)   (prior rule)            errors: 0 / 772140   [verify_prior.py, crosscheck.py, candidates_counts.py]  KEPT; proved for all parameters (proof.txt)
+R0  b <= 1 + F  (Conj. 5.4 condition used as an iff; reference baseline)
+                                                          errors: 4050 / 772140 [candidates_counts.py]  DISCARDED
+
+PROOF-APPROACH CANDIDATES (no fitted parameters; counts are failures of the intermediate claim)
+A1  Write p = Phi_3*H + rho (deg rho <= 1), P = H[3b]_q + rho[b]_{q^3}, and hope H is unimodal.
+      H not unimodal for 574 of 12853 enumerated products (1-entries removed, duplicates counted) [candidates_counts.py]
+      (e.g. p=[3f+1] gives H = q[f]_{q^3}). DISCARDED.
+A2  "Lemma K": the symmetrised sequence e_m - delta(m)/2 on [0,D-2] is unimodal (would give (B) via Stanley-type argument).
+      Fails for 536 of 12853 [candidates_counts.py] (e.g. [7], [2,7]). DISCARDED.
+A3  Clebsch-Gordan merging of two factors [a1][a2] = sum_j q^j [a1+a2-1-2j] and induction on the pieces.
+      Fails analytically: [2][2] = [3] + q*1 needs b-1 <= T(rest) and loses the +2 from S crossing a multiple of 6. No count. DISCARDED.
+A4  Direct proof of the cross-class inequality ("Claim C" / "Boundary Lemma": e_z >= e_w for z==w mod 3, z+w in {D-3,D-4}).
+      Numerically true in the box (0 violations) [claimC.py, boundary.py], but every reformulation was circular, and
+      zero-slack cases exist for every k=1..8 (e.g. [2,2,2,2,2,2,2,10]) [boundary.py], so a slack argument cannot work. NOT NEEDED / ABANDONED.
+A5  Fourier (roots of unity) rewriting of the central-step inequality as twisted window sums. Analytic only; reduced back to A4. ABANDONED.
+A6  Periodic-tail analysis of e = p/(1+q+q^2) (reflection identity e_m = e_{D-2-m} + delta(m)) + induction on k with
+      the case split "sub-product A within / beyond its own threshold". WORKS: proof.txt.
+      Supporting checks: reflection identity 0 failures, e>=0 on [0,D-2] 0 failures over 6434 products [explore_e.py].
+
+TOTAL candidates tried: 8 (2 rules + 6 approaches).
+
+NOTE: check_proof_steps.py (a numerical step-by-step check of proof.txt inside the box) was run, but I was not
+permitted to read its output, so no claim here relies on it. The coordinator may rerun it (it takes a few minutes).

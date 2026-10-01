@@ -1,0 +1,18 @@
+('b<=1+floor((D+1)/r)', 3) 5590
+('b<=1+floor((D+1)/r)', 4) 15756
+('b<=1+floor((D+1)/r)', 5) 33902
+('b<=1+floor((D+1)/r)', 6) 37431
+('b<=1+floor(D/r)', 3) 3465
+('b<=1+floor(D/r)', 4) 12612
+('b<=1+floor(D/r)', 5) 29043
+('b<=1+floor(D/r)', 6) 33411
+('generic_all_r', 4) 3948
+('generic_all_r', 5) 7442
+('generic_all_r', 6) 10077
+('windowJ', 4, 0) 3408
+('windowJ', 5, 0) 7202
+('windowJ', 5, 1) 1010
+('windowJ', 6, 0) 9711
+('windowJ', 6, 1) 3227
+('windowJ', 6, 2) 245
+total instances 4152420

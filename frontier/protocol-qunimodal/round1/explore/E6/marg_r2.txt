@@ -1,0 +1,35 @@
+r=2 maxStrictRatio idx=1 none
+r=2 maxTieSize idx=1 none
+r=2 maxTieDepth idx=1 none
+r=2 maxStrictRatio k value=0.833333 k=2 a=11,11, b=11 bound=11 j=19 Pos=6 Neg=5 c_j=60
+r=2 maxTieSize k value=6.000000 k=2 a=12,12, b=12 bound=13 j=21 Pos=6 Neg=6 c_j=72
+r=2 maxTieDepth k value=0.500000 k=2 a=2,2, b=2 bound=3 j=1 Pos=1 Neg=1 c_j=2
+r=2 maxStrictRatio k value=0.981481 k=3 a=12,12,12, b=17 bound=19 j=31 Pos=54 Neg=53 c_j=863
+r=2 maxTieSize k value=54.000000 k=3 a=12,12,12, b=18 bound=19 j=32 Pos=54 Neg=54 c_j=864
+r=2 maxTieDepth k value=0.500000 k=3 a=1,2,2, b=2 bound=3 j=1 Pos=1 Neg=1 c_j=2
+r=2 maxStrictRatio k value=0.998270 k=4 a=12,12,12,12, b=22 bound=25 j=42 Pos=578 Neg=577 c_j=10367
+r=2 maxTieSize k value=578.000000 k=4 a=12,12,12,12, b=23 bound=25 j=43 Pos=578 Neg=578 c_j=10368
+r=2 maxTieDepth k value=0.500000 k=4 a=1,1,2,2, b=2 bound=3 j=1 Pos=1 Neg=1 c_j=2
+r=2 maxStrictRatio k value=0.999839 k=5 a=12,12,12,12,12, b=28 bound=31 j=53 Pos=6195 Neg=6194 c_j=124415
+r=2 maxTieSize k value=6240.000000 k=5 a=12,12,12,12,12, b=29 bound=31 j=54 Pos=6240 Neg=6240 c_j=124416
+r=2 maxTieDepth k value=0.500000 k=5 a=1,1,1,2,2, b=2 bound=3 j=1 Pos=1 Neg=1 c_j=2
+r=2 maxStrictRatio k value=0.999985 k=6 a=12,12,12,12,12,12, b=33 bound=37 j=64 Pos=68646 Neg=68645 c_j=1492991
+r=2 maxTieSize k value=68646.000000 k=6 a=12,12,12,12,12,12, b=34 bound=37 j=65 Pos=68646 Neg=68646 c_j=1492992
+r=2 maxTieDepth k value=0.500000 k=6 a=1,1,1,1,2,2, b=2 bound=3 j=1 Pos=1 Neg=1 c_j=2
+r=2 maxStrictRatio k value=0.999999 k=7 a=12,12,12,12,12,12,12, b=39 bound=43 j=75 Pos=766444 Neg=766443 c_j=17915903
+r=2 maxTieSize k value=766444.000000 k=7 a=12,12,12,12,12,12,12, b=41 bound=43 j=77 Pos=766444 Neg=766444 c_j=17915904
+r=2 maxTieDepth k value=0.500000 k=7 a=1,1,1,1,1,2,2, b=2 bound=3 j=1 Pos=1 Neg=1 c_j=2
+r=2 maxStrictRatio k value=1.000000 k=8 a=12,12,12,12,12,12,12,12, b=44 bound=49 j=86 Pos=8616042 Neg=8616041 c_j=214990847
+r=2 maxTieSize k value=8616042.000000 k=8 a=12,12,12,12,12,12,12,12, b=45 bound=49 j=87 Pos=8616042 Neg=8616042 c_j=214990848
+r=2 maxTieDepth k value=0.500000 k=8 a=1,1,1,1,1,1,2,2, b=2 bound=3 j=1 Pos=1 Neg=1 c_j=2
+r=2 maxStrictRatio HARD value=1.000000 k=8 a=11,11,11,11,11,11,11,11, b=41 bound=41 j=79 Pos=4688734 Neg=4688733 c_j=107179440
+r=2 maxTieSize HARD value=4688733.000000 k=8 a=11,11,11,11,11,11,11,11, b=40 bound=41 j=78 Pos=4688733 Neg=4688733 c_j=107179440
+r=2 maxTieDepth HARD value=0.250000 k=2 a=3,3, b=2 bound=3 j=2 Pos=1 Neg=1 c_j=4
+r=2 k=1 hard_instances=15 hard_with_tie=0 hard_at_b=bound=5 of_which_tie=0
+r=2 k=2 hard_instances=90 hard_with_tie=50 hard_at_b=bound=15 of_which_tie=15
+r=2 k=3 hard_instances=315 hard_with_tie=70 hard_at_b=bound=35 of_which_tie=35
+r=2 k=4 hard_instances=840 hard_with_tie=140 hard_at_b=bound=70 of_which_tie=70
+r=2 k=5 hard_instances=1890 hard_with_tie=252 hard_at_b=bound=126 of_which_tie=126
+r=2 k=6 hard_instances=3780 hard_with_tie=420 hard_at_b=bound=210 of_which_tie=210
+r=2 k=7 hard_instances=6930 hard_with_tie=660 hard_at_b=bound=330 of_which_tie=330
+r=2 k=8 hard_instances=11880 hard_with_tie=990 hard_at_b=bound=495 of_which_tie=495

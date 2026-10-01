@@ -1,0 +1,203 @@
+FOURIER / ROOTS-OF-UNITY FORMALIZATION OF THE UNIMODALITY OF  P(q) = [a_1]_q ... [a_k]_q [b]_{q^r}
+(explorer E2, path A1').  All statements below are proved here; nothing relies on computation.
+
+=====================================================================================================
+0. NOTATION AND STANDING FACTS
+=====================================================================================================
+r >= 2, k >= 1, a_i >= 1, b >= 1.  zeta = exp(2 pi i / r).
+p(q) = prod_i [a_i]_q = sum_{m=0}^{D} p_m q^m,   D = sum_i (a_i - 1).   p_m := 0 for m outside [0,D].
+P(q) = p(q) [b]_{q^r} = sum_{x=0}^{N} c_x q^x,  N = D + r(b-1);  c_x = sum_{j=0}^{b-1} p_{x-rj}.  c_x := 0 outside [0,N].
+For any integer-indexed sequence f:  (Delta f)_m = f_m - f_{m-1}.
+t_i = a_i mod r,  s_i = floor(a_i / r),  S = sum s_i,  pi(q) = prod_i [t_i]_q,  D_pi = sum_i (t_i - 1)
+   (used only when no t_i is 0, i.e. when r divides no a_i; then 1 <= t_i <= r-1 and D = rS + D_pi).
+K := D + 1 - r(b+1).
+
+Fact 0.1 (Stanley 1989, Prop. 1).  A product of palindromic unimodal polynomials with nonnegative coefficients
+is palindromic and unimodal.  Hence p is palindromic of degree D (p_m = p_{D-m} for all m in Z) and unimodal,
+p_0 = 1, and so is pi (degree D_pi).  P is palindromic of degree N (product of palindromic polynomials).
+Fact 0.2.  For a palindromic unimodal h of degree D_h with nonnegative coefficients:
+   (Delta h)_m >= 0 for m <= ceil(D_h/2);  (Delta h)_m <= 0 for m >= floor(D_h/2)+1;
+   (Delta h)_m = -(Delta h)_{D_h+1-m} for every integer m.
+ Proof.  Palindromic + unimodal forces h_0 <= ... <= h_{floor(D_h/2)} (a mode can be taken at the centre;
+ if a strict descent occurred before the centre, palindromy would give a strict ascent after it,
+ contradicting unimodality).  If D_h is odd, h_{(D_h+1)/2} = h_{(D_h-1)/2}.  This gives the two sign
+ statements.  Antisymmetry: (Delta h)_{D_h+1-m} = h_{D_h+1-m} - h_{D_h-m} = h_{m-1} - h_m.  []
+
+=====================================================================================================
+1. REDUCTION TO A SEQUENCE d AND ITS PERIODIC (FOURIER) TAIL
+=====================================================================================================
+Lemma 1 (palindromic unimodality).  A palindromic sequence c_0..c_N is (weakly) unimodal iff
+c_{x-1} <= c_x for every 1 <= x <= floor(N/2).
+ Proof.  "If": then c is nondecreasing on [0, floor(N/2)], and by palindromy nonincreasing on
+ [ceil(N/2), N]; if N is odd, c_{(N-1)/2} = c_{(N+1)/2}.  So c is unimodal.  "Only if": suppose
+ c_{x-1} > c_x for some 1 <= x <= floor(N/2).  In a unimodal sequence a strict descent at x forces
+ c_x >= c_{x+1} >= ... >= c_N.  Since N+1-x >= x, c_{N+1-x} <= c_x < c_{x-1} = c_{N+1-x} (palindromy),
+ contradiction.  []
+
+Lemma 2.  Let f(q) = p(q)(1-q)/(1-q^r) = sum_{x>=0} d_x q^x (power series), and d_x := 0 for x < 0.
+ (i)  d_x = sum_{j>=0} (Delta p)_{x-rj} = sum_{m<=x, m = x (mod r)} (Delta p)_m   for every integer x.
+ (ii) c_x - c_{x-1} = d_x - d_{x-rb}  for every integer x.
+ (iii) d_x >= 0 for x <= ceil(D/2), and d_x - d_{x-r} = (Delta p)_x for all x.
+ Proof.  (i) f = ((1-q)p(q)) * sum_j q^{rj}.  (ii) (1-q)P(q) = p(q)(1-q)(1-q^{rb})/(1-q^r) = f(q)(1-q^{rb}).
+ (iii) all indices in the sum of (i) are <= x <= ceil(D/2), so Fact 0.2 applies; the difference is (i).  []
+
+Lemma 3 (periodic tail = roots-of-unity filter).  Define, for rho in Z,
+      tau_rho := sum_{m in Z, m = rho (mod r)} (Delta p)_m      (r-periodic in rho).
+ (i)  d_x = tau_x for every x >= D+1.
+ (ii) tau_rho = (1/r) sum_{j=1}^{r-1} zeta^{-j rho} (1 - zeta^j) p(zeta^j).
+ (iii) p(zeta^j) = prod_i [t_i]_{zeta^j} for j = 1..r-1.  More generally, if h is any polynomial with
+      h(zeta^j) = p(zeta^j) for j = 1..r-1 (equivalently h = p mod [r]_q), then the sequence tau^h defined
+      from Delta h in the same way equals tau.  In particular tau depends only on r and the residues t_i,
+      and tau = tau^pi (when no t_i = 0).
+ (iv) sum_{rho=0}^{r-1} tau_rho = 0, and tau is identically 0 iff r divides some a_i.
+ (v)  tau_x = -tau_{D+1-x} for every integer x.
+ Proof.  (i) Delta p is supported on [0, D+1]; for x >= D+1 every m = x (mod r) in that support has m <= x.
+ (ii) [m = rho (mod r)] = (1/r) sum_{j=0}^{r-1} zeta^{j(m-rho)}; sum against (Delta p)_m and use
+      sum_m (Delta p)_m zeta^{jm} = (1 - zeta^j) p(zeta^j); the j = 0 term vanishes.
+ (iii) For omega = zeta^j != 1, [a]_omega = (1 - omega^a)/(1 - omega) and omega^a = omega^{t} when a = t (mod r).
+      Formula (ii) holds verbatim for any polynomial h in place of p, and only uses the values h(zeta^j), j>=1.
+ (iv) The sum is sum_m (Delta p)_m = 0.  If r | a_i then [a_i]_{zeta^j} = 0 for all j = 1..r-1, so tau = 0.
+      Conversely tau = 0 forces, by inverting the discrete Fourier transform in (ii), (1-zeta^j)p(zeta^j) = 0
+      for j = 1..r-1; for j = 1 (zeta primitive) this gives [a_i]_zeta = 0 for some i, i.e. zeta^{a_i} = 1, r | a_i.
+ (v) By Fact 0.2, (Delta p)_m = -(Delta p)_{D+1-m}; m runs over the class of x iff D+1-m runs over the class of D+1-x.  []
+
+Lemma 4 (reflection).  For every integer x:  d_x = tau_x + d_{D+1-r-x}.
+ Define E_u := d_u - tau_u for u in Z.  Then  d_x = E_{D+1-r-x}  for all x in Z;  E_u = -tau_u for u < 0;
+ E_u = 0 for u > D+1-r.
+ Proof.  tau_x - d_x = sum_{m = x (mod r), m >= x+r} (Delta p)_m = - sum_{m = x, m >= x+r} (Delta p)_{D+1-m}
+   = - sum_{m' = D+1-x (mod r), m' <= D+1-x-r} (Delta p)_{m'} = - d_{D+1-r-x}   (Lemma 2(i)).
+ Put x = D+1-r-u: d_{D+1-r-u} = tau_{D+1-r-u} + d_u = tau_{D+1-u} + d_u = -tau_u + d_u = E_u  (periodicity, Lemma 3(v)).
+ For u < 0, d_u = 0.  For u > D+1-r, E_u = d_{D+1-r-u} = 0 (negative index).  []
+
+Remark 4.1 (E is the quotient).  Write p = [r]_q Q + R with deg R <= r-2 (division by [r]_q).  Then E_u = Q_u for
+ u >= 0 (Q_u := 0 outside [0, D+1-r]).  Proof: f = p/[r]_q = Q + R(1-q)/(1-q^r); R(1-q) has degree <= r-1, so the
+ second summand has r-periodic coefficients from index 0 on; for large x, Q_x = 0 and d_x = tau_x (Lemma 3(i)),
+ so this periodic part is tau.  Hence d_u = Q_u + tau_u for u >= 0.  []
+ Note R is determined by the r-1 values p(zeta^j) (j=1..r-1), the roots of [r]_q (Lagrange interpolation).
+
+=====================================================================================================
+2. THE EXACT CRITERION
+=====================================================================================================
+Theorem A.  P is unimodal  <=>  E_u >= d_{K-u} for every integer u with K/2 < u <= D+1-r.
+ Proof.  By palindromy and Lemma 1, P is unimodal iff c_x - c_{x-1} >= 0 for 0 <= x <= floor(N/2)
+ (x = 0 is automatic: c_0 = 1).  By Lemma 2(ii) and Lemma 4, c_x - c_{x-1} = d_x - d_{x-rb}
+ = E_{D+1-r-x} - d_{x-rb}.  Put u = D+1-r-x; then x - rb = K - u.  As x runs over [0, floor(N/2)],
+ u runs over [D+1-r-floor(N/2), D+1-r], and D+1-r-floor(N/2) = ceil((D+2-r-rb)/2) = ceil((K+1)/2);
+ for integers, u >= ceil((K+1)/2) <=> 2u > K.  []
+
+Theorem A' (decomposed form).  Assume r divides no a_i, and let c := max{ rho in {0,..,r-1} : tau_rho > 0 }
+(it exists by Lemma 3(iv)).  Then P is unimodal iff all three hold:
+ (N) r(b-1) <= D + 1 - 2c;
+ (Q) Q_u >= 0 for every integer u with max(K, K/2) < u   (Q = quotient of p by [r]_q, Remark 4.1);
+ (P) Q_u - Q_{K-u} >= tau_{K-u} for every integer u with K/2 < u <= K.
+ Proof.  Split the u of Theorem A.
+ * u < 0 (and u > K/2): K-u < u < 0, so d_{K-u} = 0 and E_u = -tau_u: the condition is "tau_u <= 0 for all
+   integers u in (K/2, min(-1, D+1-r)]".  The set {u < 0 : tau_u > 0} has maximum c - r (r-periodicity), and
+   c - r <= D+1-r because tau_c > 0 needs some m = c (mod r) with m >= c in the support [0, D+1] of Delta p.
+   So the condition is c - r <= K/2, i.e. 2c - 2r <= D + 1 - rb - r, i.e. (N).
+ * u >= 0 with K - u < 0 (i.e. u > K): d_{K-u} = 0, E_u = Q_u: this is (Q) (for u > D+1-r it is trivial).
+ * u >= 0 with 0 <= K-u (i.e. K/2 < u <= K; then u <= K < D+1-r automatically): d_{K-u} = Q_{K-u} + tau_{K-u}
+   (Remark 4.1), giving (P).  []
+
+Corollary A1.  If K <= 0 (i.e. r(b+1) >= D+1), (P) is vacuous and P is unimodal iff 2y* <= K, where
+ y* := max{u in Z : d_u < tau_u} = max{u : E_u < 0}.  If Q has nonnegative coefficients then y* = c - r and
+ (for K <= 0) P is unimodal iff r(b-1) <= D + 1 - 2c.
+ Proof.  For K <= 0 every u > K/2 has K - u < 0, so Theorem A reads E_u >= 0 for all u > K/2, i.e. y* <= K/2.
+ If Q >= 0 then E_u >= 0 for u >= 0, and on u < 0 the largest u with E_u = -tau_u < 0 is c - r.  []
+
+Theorem B (necessary condition from the Fourier values).  If r divides no a_i and P is unimodal, then
+      r(b-1) <= D + 1 - 2c,  equivalently  b <= 1 + S + floor(e*/r),  e* := D_pi + 1 - 2c.
+ Proof.  (N) of Theorem A'.  Equivalence: D = rS + D_pi.  []
+
+Lemma C.  If r divides no a_i, then 2c <= D_pi + 1 (so e* >= 0).
+ Proof.  By Lemma 3(iii) tau = tau^pi, and for rho in [0, r-1], tau_rho = sum_{j>=0} (Delta pi)_{rho+jr}
+ (Delta pi is supported on [0, D_pi+1]).  If rho >= 1 and 2 rho > D_pi + 1, every index rho + jr exceeds
+ (D_pi+1)/2, hence is >= floor(D_pi/2)+1, where (Delta pi) <= 0 (Fact 0.2 for pi); so tau_rho <= 0.
+ Thus c = 0 or 2c <= D_pi + 1.  []
+
+Lemma S (certificates for the quotient).  Suppose p = [r]_q G + h with G in Z_{>=0}[q] and h palindromic unimodal
+with nonnegative coefficients, of degree D_h.  Then E_u >= 0 (hence Q_u >= 0) for every u >= floor(D_h/2) + 1 - r.
+In particular, if D_h <= 2r - 1 then Q has nonnegative coefficients and y* = c - r.
+ Proof.  As power series p/[r]_q = G + h/[r]_q, so d = G + d^h with d^h_x = sum_{j>=0} (Delta h)_{x-rj}.
+ tau^h = tau (Lemma 3(iii)).  So E_u = G_u + E^h_u with E^h_u := d^h_u - tau_u.  Lemma 4 uses only palindromy,
+ so it applies to h: E^h_u = d^h_{D_h+1-r-u}.  For u >= floor(D_h/2)+1-r the index D_h+1-r-u is <= ceil(D_h/2),
+ where d^h >= 0 (Fact 0.2 for h, as in Lemma 2(iii)).  G_u >= 0.  If D_h <= 2r-1 then floor(D_h/2)+1-r <= 0. []
+
+Lemma S0 (the canonical certificate).  If r divides no a_i, then p = [r]_q G + pi with
+   G = sum_{i=1}^{k} ( prod_{l<i} [t_l]_q ) q^{t_i} [s_i]_{q^r} ( prod_{l>i} [a_l]_q )  in Z_{>=0}[q].
+ Proof.  [a_i]_q = [t_i]_q + q^{t_i}[r s_i]_q = [t_i]_q + [r]_q q^{t_i} [s_i]_{q^r}, and telescoping
+ prod [a_i] - prod [t_i] = sum_i (prod_{l<i}[t_l]) ([a_i]-[t_i]) (prod_{l>i}[a_l]).  []
+
+Corollary S1 (the conjectured sufficient condition, reduced).  Assume r divides no a_i and b <= 1 + S.  Then (N) and (Q)
+hold.  Consequently:
+ (a) if moreover r(b+1) >= D+1, P is unimodal;
+ (b) in general, P is unimodal iff (P) holds, i.e. iff c_x >= c_{x-1} for every x with rb <= x <= N/2
+     (the positions where the whole comb {x, x-r, ..., x-r(b-1)} avoids [0, r-1]).
+ Proof.  (N): r(b-1) <= rS = D - D_pi <= D + 1 - 2c by Lemma C.  (Q): by Lemma S0 + Lemma S with h = pi,
+ E_u >= 0 for u >= floor(D_pi/2)+1-r.  Now K >= D+1-r(S+2) = D_pi + 1 - 2r, so an integer u > K/2 satisfies
+ u > (D_pi+1)/2 - r, hence u >= floor((D_pi+1)/2) + 1 - r >= floor(D_pi/2) + 1 - r.  (a): K <= 0 makes (P) vacuous.
+ (b): (P) corresponds in the proof of Theorem A to u in (K/2, K], i.e. x = D+1-r-u in [rb, floor(N/2)]. []
+
+=====================================================================================================
+3. EXPLICIT FOURIER FORM AND CONSEQUENCES FOR CONJECTURE 5.4 (NECESSITY CLAUSE)
+=====================================================================================================
+Lemma F (sine form).  If r divides no a_i, then for every integer c
+   tau_c = (2/r) sum_{j=1}^{r-1} sin(pi j / r) A_j sin( pi j (D_pi + 1 - 2c) / r ),
+   A_j := prod_i sin(pi j t_i / r) / sin(pi j / r)   (real),   and A_1 > 0.
+ Proof.  For omega = e^{i theta} != 1:  [t]_omega = e^{i theta (t-1)/2} sin(t theta/2)/sin(theta/2).  With theta = 2 pi j/r,
+ p(zeta^j) = pi(zeta^j) = e^{i pi j D_pi / r} A_j.  Also 1 - zeta^j = -2i e^{i pi j/r} sin(pi j/r).  Hence the j-th term
+ of Lemma 3(ii) is (1/r)(-2i) sin(pi j/r) A_j e^{i pi j (D_pi+1-2c)/r}.  tau_c is real, so take real parts termwise:
+ Re(-2i e^{i alpha}) = 2 sin(alpha).  A_1 > 0 since 0 < pi t_i / r < pi.  []
+ (So c, hence the necessary threshold of Theorem B, is read off from the r-1 Fourier amplitudes A_j:
+  e* = min{ e in {D_pi+1-2c : 0<=c<=r-1} : sum_j sin(pi j/r) A_j sin(pi j e/r) > 0 }.)
+
+Lemma D (at most three nontrivial factors).  Suppose r divides no a_i and at most three a_i are >= 2.
+ Discard factors with a_i = 1 and pad with factors a = 1 (t = 1) to get exactly three residues
+ 1 <= t1 <= t2 <= t3 <= r-1 (this changes none of P, D, S, D_pi, tau).  Then tau_{t2-1} >= 1, hence c >= t2 - 1 and
+ e* = D_pi + 1 - 2c <= t1 + t3 - t2 <= r - 1.
+ Proof.  tau is the r-fold of (1-q)pi = (1 - q^{t1}) w with w = [t2]_q [t3]_q, i.e.
+ tau_rho = wbar_rho - wbar_{(rho - t1) mod r}, wbar_sigma := sum_{m = sigma (mod r)} w_m.
+ w_m = m+1 (0<=m<=t2-1), = t2 (t2-1<=m<=t3-1), and w_m = max(0, t2+t3-1-m) for m >= t3-1.  deg w = t2+t3-2 <= 2r-4,
+ so wbar_sigma = w_sigma + w_{sigma+r} for sigma in [0, r-1].
+ wbar_{t2-1} = t2 + max(0, t3 - r) = t2  (index t2-1+r >= t3-1).
+ If t1 < t2: sigma = t2-1-t1 in [0, t2-2]: wbar_sigma = (t2 - t1) + max(0, t1 + t3 - r); tau_{t2-1} = min(t1, r - t3) >= 1.
+ If t1 = t2: sigma = r-1: wbar_{r-1} = max(0, t2 + t3 - r) + w_{2r-1} = max(0, t2+t3-r); tau_{t2-1} = min(t2, r-t3) >= 1.
+ Finally D_pi + 1 - 2c <= (t1+t2+t3-3) + 1 - 2(t2-1) = t1 + t3 - t2 <= t3 <= r-1.  []
+
+Corollary D1 (necessity for k <= 3, every r).  If r divides no a_i, at most three a_i are >= 2, and P is unimodal,
+then b <= 1 + S.
+ Proof.  Theorem B and Lemma D: r(b-1) <= rS + e* <= rS + r - 1, so b - 1 <= S.  []
+
+Corollary E (r = 2, every k).  If r = 2 and all a_i are odd, then t_i = 1, pi = 1, D_pi = 0, tau = (1,-1), c = 0, and:
+ (a) P unimodal => b <= 1 + S  (Theorem B: 2(b-1) <= D + 1 = 2S + 1);
+ (b) Q >= 0 (Lemma S with h = 1, D_h = 0 <= 3), so for 2(b+1) >= D+1, P unimodal <=> b <= 1 + S.  []
+
+Corollary R3 (r = 3, every k).  Let r = 3, no a_i divisible by 3, n2 := #{i : a_i = 2 mod 3}; then D_pi = n2, D = 3S + n2.
+ (a) tau takes values in {-1,0,1}; tau_c > 0 iff (n2 + 1 - 2c) mod 6 in {1,2}; c is the unique such c in {0,1,2};
+     e* = 6 floor(n2/6) + 1 + (n2 mod 2); (N) <=> b <= 1 + S + 2 floor(n2/6).
+ (b) Q has nonnegative coefficients.
+ (c) P unimodal => b <= 1 + S + 2 floor(n2/6); and if 3(b+1) >= D+1, then P unimodal <=> b <= 1 + S + 2 floor(n2/6).
+ (d) The necessity clause of Conjecture 5.4 for r = 3 holds for the multiset a (for all b) iff n2 <= 5.
+     For n2 >= 6, b0 := S - 1 + ceil((n2+1)/3) satisfies b0 >= S + 2 and P(a, b0) is unimodal.
+ Proof.  (a) Lemma F with r = 3: for t = 1 the factor of A_j is 1; for t = 2 it is sin(2 pi j/3)/sin(pi j/3) = 2cos(pi j/3),
+  i.e. 1 (j=1) and -1 (j=2).  So A_1 = 1, A_2 = (-1)^{n2}, and with e = n2+1-2c (so (-1)^{n2} = -(-1)^e):
+  tau_c = (1/sqrt3)[ sin(pi e/3) - (-1)^e sin(2 pi e/3) ].  Tabulating e mod 6 = 0,1,2,3,4,5 gives tau_c = 0,1,1,0,-1,-1.
+  The three values e = n2+1, n2-1, n2-3 have the parity of n2+1 and are distinct mod 6, so exactly one is = 1 or 2 mod 6.
+  Writing n2 = 6m + s (0<=s<=5): s=0: 6m+1 (c=0); s=1: 6m+2 (c=0); s=2: 6m+1 (c=1); s=3: 6m+2 (c=1); s=4: 6m+1 (c=2);
+  s=5: 6m+2 (c=2).  So e* = 6m + 1 + (s mod 2) and floor(e*/3) = 2m; Theorem B gives (N) <=> b - 1 <= S + 2m.
+ (b) Identity (1+q)^6 = 1 + [3]_q * q(6 + 9q + 5q^2 + q^3) (expand: (1+q+q^2)(6q+9q^2+5q^3+q^4) = 6q+15q^2+20q^3+15q^4+6q^5+q^6).
+  Hence (1+q)^{6m} = (1 + [3]_q H)^m = 1 + [3]_q H' with H, H' in Z_{>=0}[q].  With pi = (1+q)^{n2} = (1+q)^s (1+q)^{6m}
+  and Lemma S0: p = [3]_q( G + (1+q)^s H' ) + (1+q)^s.  h = (1+q)^s is palindromic unimodal of degree s <= 5 = 2r-1;
+  apply Lemma S.
+ (c) Theorem A' with (b) ((Q) automatic); for K <= 0, (P) is vacuous.
+ (d) If n2 <= 5 then floor(n2/6) = 0 and (c) gives b <= 1+S.  If n2 = 6m+s with m >= 1: ceil((n2+1)/3) = 2m + ceil((s+1)/3)
+  with ceil((s+1)/3) in {1,2}, so S + 2 <= S + 2m <= b0 <= S + 2m + 1 = 1 + S + 2 floor(n2/6); and
+  K = D + 1 - 3(b0+1) = n2 + 1 - 3 ceil((n2+1)/3) <= 0.  By (c), P(a, b0) is unimodal although b0 > 1 + S.  []
+ Example: n2 = 6, S = 0, a = (2,2,2,2,2,2): b0 = 2, recovering (1+q)^6(1+q^3); also b = 3 is unimodal and b = 4 is not.
+
+Summary of what is PROVED about Conjecture 5.4 (assuming r divides no a_i; the r | a_i case is Cor. 4.3 of the paper):
+ * Necessity "unimodal => b <= 1+S": TRUE for k <= 3 (any r) [D1], TRUE for r = 2 (any k) [E],
+   for r = 3 TRUE iff #{a_i = 2 mod 3} <= 5, FALSE otherwise [R3(d)].
+ * Sufficiency "b <= 1+S => unimodal": TRUE whenever r(b+1) >= D+1 [S1(a)]; in general it is EQUIVALENT to the
+   inequalities c_x >= c_{x-1} for rb <= x <= N/2 only [S1(b)] (not proved here).
+ * Exact criterion for all parameters: Theorem A / A'.  Necessary Fourier threshold: Theorem B + Lemma F.

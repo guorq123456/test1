@@ -1,0 +1,1 @@
+rules/rule_smalldelta.py frac 1.0 in-domain instances 1325760 errors 0 out-of-domain 2826660 per r (errors,instances): {2: (0, 77160), 3: (0, 386040), 4: (0, 386040), 5: (0, 317640), 6: (0, 158880)}

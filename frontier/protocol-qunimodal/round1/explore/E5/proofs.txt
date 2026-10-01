@@ -1,0 +1,146 @@
+PROOFS (path A4': general r directly)
+=====================================
+
+Notation.  r >= 2, k >= 1, a_1..a_k >= 1, b >= 1.
+  A(q) = prod_i [a_i]_q = sum_{j=0}^{D} A_j q^j,      D = sum_i (a_i - 1).
+  P(q) = A(q) [b]_{q^r} = sum_{n=0}^{N} c_n q^n,       N = D + r(b-1).
+  A_j := 0 for j outside [0,D];  c_n := 0 for n outside [0,N].
+  f_j := A_j - A_{j-1}  (j in Z): the coefficients of (1-q)A(q); f_j = 0 unless 0 <= j <= D+1.
+  Gamma_s := sum_{j = s (mod r)} A_j   (s in Z; depends only on s mod r).
+  H(n) := sum_{y>=0} f_{n-ry}  (n in Z): the coefficient of q^n in the power series
+          (1-q)A(q)/(1-q^r) = A(q)/[r]_q.  H(n) = 0 for n < 0.
+  e(y) := Gamma_y - H(y-r)   (y in Z).     NOTE: e depends on r and a only, not on b.
+  M := D + 1 - r(b-1).
+  When no r | a_i:  a_i = r q_i + s_i with 1 <= s_i <= r-1,  Q := sum q_i = sum floor(a_i/r),
+  sigma := sum (s_i - 1),  so D = rQ + sigma.
+
+Lemma 1 (palindromes).  A_j = A_{D-j} for all j, and c_n = c_{N-n} for all n.
+ Proof. [a]_q is palindromic of degree a-1 and [b]_{q^r} is palindromic of degree r(b-1); a product
+ of palindromic polynomials is palindromic of the summed degree.  []
+
+Lemma 2 (unimodality test).  P is weakly unimodal iff c_{n-1} <= c_n for every integer n with
+ 1 <= n and 2n <= N.
+ Proof. (<=) For m with N/2 <= m <= N-1 put n = N-m; then 1 <= n <= N/2 and, by Lemma 1,
+ c_m - c_{m+1} = c_n - c_{n-1} >= 0.  So c is nondecreasing on [0, floor(N/2)] and nonincreasing
+ on [ceil(N/2), N]; if N is odd, c_{(N-1)/2} = c_{(N+1)/2} by Lemma 1.  Hence unimodal.
+ (=>) Let c be unimodal with a peak at p (nondecreasing up to p, nonincreasing after p) and
+ suppose c_{n-1} > c_n with 1 <= n <= N/2.  A strict descent from n-1 to n forces n-1 >= p.
+ Since N-n >= n > n-1 >= p, the step N-n -> N-n+1 lies in the nonincreasing part, so
+ c_{N-n} >= c_{N-n+1}.  But by Lemma 1, c_{N-n} = c_n < c_{n-1} = c_{N-n+1}.  Contradiction.  []
+
+Lemma 3.  For every n in Z:  c_n - c_{n-1} = H(n) - H(n - rb).
+ Proof. As formal power series (1-q)P(q) = (1-q)A(q) (1-q^{rb})/(1-q^r)
+ = (1-q^{rb}) sum_n H(n) q^n.  Compare coefficients of q^n.  []
+
+Lemma 4.  Gamma_s = Gamma_{D-s} for all s in Z.
+ Proof. Reindex j -> D-j in the defining sum and use A_j = A_{D-j} (Lemma 1).  []
+
+Lemma 5.  For every n in Z:  H(n) - H(D+1-r-n) = Gamma_n - Gamma_{n-1}.
+ Proof. By Lemma 1, f_{D+1-j} = A_{D+1-j} - A_{D-j} = A_{j-1} - A_j = -f_j.  Hence
+ H(D+1-r-n) = sum_{y>=0} f_{D+1-(n+r(y+1))} = - sum_{y>=1} f_{n+ry}.  Therefore
+ H(n) - H(D+1-r-n) = sum_{y>=0} f_{n-ry} + sum_{y>=1} f_{n+ry} = sum_{j = n (mod r)} f_j
+ = sum_{j=n} A_j - sum_{j=n} A_{j-1} = Gamma_n - Gamma_{n-1}.  (All sums are finite.)  []
+
+THEOREM 1 (exact identity).  For every n in Z:
+     c_n - c_{n-1} = e(n - r(b-1)) - e(D+1-n).
+ Proof. e(n-r(b-1)) = Gamma_{n-r(b-1)} - H(n-rb) = Gamma_n - H(n-rb).
+ e(D+1-n) = Gamma_{D+1-n} - H(D+1-n-r) = Gamma_{n-1} - H(D+1-r-n)   (Lemma 4 with s = D+1-n).
+ Difference = (Gamma_n - Gamma_{n-1}) + H(D+1-r-n) - H(n-rb) = H(n) - H(n-rb)   (Lemma 5)
+            = c_n - c_{n-1}   (Lemma 3).  []
+
+COROLLARY 1 (exact criterion).  P is unimodal  iff  e(x) >= e(M-x) for every integer x with 2x < M.
+ Proof. Put x = n - r(b-1); then M - x = D+1-n, and 2n <= N  <=>  2x <= M-1  <=>  2x < M.
+ For n <= 0 we have c_n - c_{n-1} in {0,1} (it is 1 at n = 0 and 0 for n < 0), so the extra x
+ with n <= 0 never violate the inequality.  Now apply Lemma 2 and Theorem 1.  []
+ (So the whole b-dependence is the reflection point M/2; e is a fixed sequence attached to (r,a).
+  Also e(y) = Gamma_y for y < r and e(y) = Gamma_y - f_{y-r} for r <= y < 2r, because H(n) = f_n
+  for 0 <= n < r.)  Implemented in rules/rule_exact_e.py.
+
+COROLLARY 1' (window conditions are necessary).  With Gamma_{-1} := Gamma_{r-1} and f_i := 0 for
+ i < 0, if P is unimodal then
+   (A) Gamma_{w-1} >= Gamma_w  for every integer w with M/2 < w <= r-1   (indices mod r);
+   (B) Gamma_{j-1} - Gamma_j + f_j - f_{M-2r-j} >= 0  for every j in {0..r-1} with 2(r+j) > M.
+ Proof. These are the instances w = M - x of Corollary 1 with w < 2r.  For w < r: e(w) = Gamma_w and
+ x = M-w < w < r so e(x) = Gamma_x, and x = M - w = D+1-w (mod r) gives Gamma_x = Gamma_{w-1}
+ (Lemma 4).  For w = r+j: e(w) = Gamma_j - f_j and x = M-r-j; if x < r then e(x) = Gamma_{j-1}
+ (same congruence argument), and if x >= r then (x < w < 2r) e(x) = Gamma_{j-1} - f_{x-r}
+ = Gamma_{j-1} - f_{M-2r-j}.  []
+ (Hence every "False" output of rules/rule_window.py is provably correct.)
+
+Lemma 6.  If r does not divide any a_i then Gamma is not constant mod r.
+ Proof. With w = exp(2 pi i/r): sum_{s=0}^{r-1} Gamma_s w^s = A(w) = prod (1-w^{a_i})/(1-w) != 0
+ because w^{a_i} != 1.  A constant vector c would give c * sum_s w^s = 0.  []
+
+Definition.  mu := least t in {0,...,r-1} with Gamma_t >= Gamma_{t+1} >= ... >= Gamma_{r-1}.
+
+THEOREM 2 (upper bound, all r, all k).  Assume r divides no a_i.  If P is unimodal then
+     2 mu <= M,   i.e.   b <= B*_A := 1 + floor((D + 1 - 2 mu)/r).
+ Proof. Suppose M < 2 mu.
+ Case mu >= 1. By minimality of mu, Gamma_{mu-1} < Gamma_mu.  Take x = M - mu.  Then 2x < M
+  (equivalent to M < 2mu).  Both x < mu <= r-1 and mu < r, so e(x) = Gamma_x and e(M-x) = e(mu)
+  = Gamma_mu.  Since M = D+1 (mod r), x = D+1-mu (mod r) and Gamma_x = Gamma_{D+1-mu}
+  = Gamma_{mu-1} (Lemma 4).  So e(x) - e(M-x) = Gamma_{mu-1} - Gamma_mu < 0: not unimodal
+  (Corollary 1).
+ Case mu = 0. Then M <= -1.  Gamma_0 >= ... >= Gamma_{r-1} and, by Lemma 6, Gamma_0 > Gamma_{r-1}.
+  Take x = M: 2x < M as M < 0; e(x) = Gamma_M = Gamma_{D+1} = Gamma_{-1} = Gamma_{r-1} (Lemma 4),
+  e(M-x) = e(0) = Gamma_0.  So e(x) - e(M-x) < 0: not unimodal.
+ Finally 2mu <= M <=> r(b-1) <= D+1-2mu <=> b <= 1 + floor((D+1-2mu)/r).  []
+
+Lemma 7 (only residues matter for mu).  Let B(q) = prod [s_i]_q (degree sigma).  Then D = rQ + sigma
+ and Gamma_t - Gamma_{t-1} equals the same difference computed for B instead of A.
+ Proof. [a_i]_q = [r q_i]_q + q^{r q_i}[s_i]_q.  Modulo q^r - 1: [r q_i]_q == q_i J with
+ J = 1+q+...+q^{r-1}, q^{r q_i} == 1, and J g(q) == g(1) J.  Hence A == cJ + B (mod q^r - 1) for an
+ integer c, i.e. the class-sum vector of A is that of B plus the constant c.  []
+
+COROLLARY 2 (r = 2, every k).  If all a_i are odd and P is unimodal then b <= 1 + sum floor(a_i/2).
+ Proof. Gamma_0 - Gamma_1 = A(-1) = prod [a_i]_{-1} = 1 (a_i odd), so mu = 0.  D is even, so
+ Theorem 2 gives b <= 1 + D/2 = 1 + sum (a_i-1)/2 = 1 + sum floor(a_i/2).  []
+ (Together with Cor. 4.3 of the paper this is exactly the necessity clause of Conj. 5.4 for r = 2.)
+
+COROLLARY 3 (r = 3, every k).  Let 3 divide no a_i and n2 := #{i : a_i = 2 (mod 3)}.
+ If P is unimodal then  b <= 1 + Q + 2*floor(n2/6).
+ Proof. With w = exp(2 pi i/3): [a]_w = [a mod 3]_w, [1]_w = 1, [2]_w = 1 + w = exp(i pi/3).  So
+ A(w) = exp(i pi n2/3), A(w^2) = conj(A(w)) and
+     Gamma_s = (A(1) + 2 cos(pi (n2 - 2s)/3)) / 3.
+ Let rho = n2 mod 6.  The vector (cos(pi(rho-2s)/3))_{s=0,1,2} is
+   rho=0: (1,-1/2,-1/2)   rho=1: (1/2,1/2,-1)   rho=2: (-1/2,1,-1/2)
+   rho=3: (-1,1/2,1/2)    rho=4: (-1/2,-1/2,1)  rho=5: (1/2,-1,1/2)
+ so mu = 0,0,1,1,2,2 = floor(rho/2).  D = 3Q + n2 (only residue-2 factors contribute to sigma).
+ With n2 = 6t + rho: D + 1 - 2mu = 3Q + 6t + 1 + (rho mod 2) in {3Q+6t+1, 3Q+6t+2}, whose floor
+ after division by 3 is Q + 2t.  Apply Theorem 2.  []
+ In particular, for n2 <= 5 (e.g. every k <= 5) the condition b <= 1+Q of Conj. 5.4 is necessary
+ for r = 3; for n2 >= 6 it can fail (e.g. (1+q)^6(1+q^3)), but by at most 2*floor(n2/6).
+
+THEOREM 3 (k <= 3, every r).  Let k <= 3 and let r divide no a_i.  If P is unimodal then
+     b <= 1 + sum_i floor(a_i/r).
+ (This is the necessity clause of Conjecture 5.4 for k <= 3.)
+ Proof. Appending factors a_i = 1 changes neither P nor sum floor(a_i/r) (r >= 2, residue 1), so
+ assume k = 3 with residues 1 <= s1 <= s2 <= s3 <= r-1.  By Lemma 7 we may compute the differences
+ Gamma_t - Gamma_{t-1} from B = [s1][s2][s3]; sigma = s1+s2+s3-3.  Let p(j) := B_j - B_{j-1}
+ (p = 0 outside [0, sigma+1]); p(sigma+1-j) = -p(j) (B palindromic).
+ Case s2 = 1. Then B = [s3], Gamma^B_t = 1 for 0 <= t < s3 and 0 for s3 <= t <= r-1, so Gamma is
+  nonincreasing on [0,r-1], mu = 0 and D + 1 - 2mu = rQ + s3 with s3 <= r-1; Theorem 2 gives
+  b <= 1 + Q.
+ Case s2 >= 2. Put t = s2 - 1, so 1 <= t <= r-2.
+  (i) p(j) = min(j+1, s1) for 0 <= j <= s2-1: indeed (1-q)B = (1-q^{s1})(1-q^{s2})(1-q^{s3})/(1-q)^2;
+      1/(1-q)^2 has coefficients j+1; multiplying by (1-q^{s1}) gives min(j+1, s1); the remaining
+      factors only change coefficients of index >= s2.  In particular p(t) = s1.
+  (ii) Gamma_t - Gamma_{t-1} = sum_{y in Z} p(t+ry).  Terms y <= -1 vanish (t + ry < 0).  For y >= 1,
+      p(t+ry) = -p(sigma+1-t-ry) = -p(u - r(y-1)) with u := sigma+1-r-t = s1+s3-1-r <= s1-2.
+      Since u < r, the terms with y >= 2 vanish, so Gamma_t - Gamma_{t-1} = p(t) - p(u) = s1 - p(u).
+      If u < 0 then p(u) = 0; if 0 <= u <= s1-2 then p(u) = u+1 = s1+s3-r < s1 by (i).
+      Hence Gamma_t - Gamma_{t-1} = s1 - max(0, s1+s3-r) > 0.
+  (iii) Gamma_{t-1} < Gamma_t forbids any nonincreasing run Gamma_{t'} >= ... >= Gamma_{r-1} with
+      t' <= t-1, so mu >= t = s2-1.  Then D + 1 - 2mu <= rQ + sigma + 1 - 2(s2-1) = rQ + s1 + s3 - s2
+      <= rQ + s3 <= rQ + r - 1, so floor((D+1-2mu)/r) <= Q and Theorem 2 gives b <= 1 + Q.  []
+ Numerical sanity check of (ii) for all residue triples with r <= 6: check_k3.py (0 failures).
+
+WHAT IS NOT PROVED (conjectures, verified only inside the fit box):
+ C-W  (window sufficiency): if (A) and (B) of Corollary 1' hold, P is unimodal.  (rules/rule_window.py;
+      0 errors on 4,152,420 + 20,560 box instances.)  Expected to need a wider window for large k
+      when r >= 4, because max|Gamma_t - Gamma_{t+1}| can grow exponentially in k for r >= 4
+      (|[s]_w| = sin(pi s/r)/sin(pi/r) > 1 for 2 <= s <= r-2) while f_0..f_{r-1} grow polynomially.
+ C-S  if max_t |Gamma_t - Gamma_{t+1}| <= 1 (always for r <= 3, and whenever every a_i = +-1 mod r)
+      then the set of unimodal b is exactly {1, ..., B*_A}.  For r = 3 this reads
+      B* = 1 + Q + 2 floor(n2/6); for r = 2, B* = 1 + Q.   (rules/rule_smalldelta.py, rule_generic.py)
+ Sufficiency of b <= 1 + Q (the paper's open direction) is NOT proved here.

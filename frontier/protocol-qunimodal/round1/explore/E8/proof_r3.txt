@@ -1,0 +1,161 @@
+THEOREM (r = 3, no a_i divisible by 3).
+Let k >= 1, a_1..a_k >= 1 with 3 not dividing any a_i, b >= 1.  Put
+   T  = sum_i floor(a_i/3),
+   n2 = #{i : a_i = 2 (mod 3)},
+   M  = sum_i (a_i - 1)            ( = 3T + n2 ),
+   W  = 3(b-1),
+   W* = M - (n2 mod 6)             ( = 3T + 6*floor(n2/6) ).
+Then P(q) = [a_1]_q ... [a_k]_q [b]_{q^3} is (weakly) unimodal  <=>  W <= W*
+                                                                 <=>  b <= 1 + T + 2*floor(n2/6).
+
+Consequences.  Together with Cor. 4.3 of arXiv:2605.12822 (3 | a_i for some i => unimodal) this decides r = 3
+completely.  For r = 3 the sufficiency part of Conjecture 5.4 (b <= 1 + T => unimodal) holds, and its necessity
+part fails exactly when n2 >= 6: then every b with T+2 <= b <= T+1+2*floor(n2/6) gives a unimodal P
+(e.g. (1+q)^6 (1+q^3) and (1+q)^6 (1+q^3+q^6)).
+
+Mechanical checks of every finite case table below: proof_checks.py (prints ALL CHECKS PASSED).
+These checks only involve residues mod 3 / mod 6 and fit-box instances.
+
+--------------------------------------------------------------------------------------------------
+0. NOTATION AND STANDARD FACTS
+--------------------------------------------------------------------------------------------------
+0.1  Q(q) := prod_i [a_i]_q = sum_t Q_t q^t, Q_t = 0 for t outside [0, M], Q_0 = 1.
+0.2  Each [a]_q is palindromic and unimodal with nonnegative coefficients.  A product of palindromic unimodal
+     polynomials with nonnegative coefficients is palindromic and unimodal (Andrews 1975; Stanley 1989,
+     Prop. 1).  Hence Q_t = Q_{M-t} and Q_{t-1} <= Q_t for 1 <= t <= M/2.
+0.3  D_t := Q_t - Q_{t-1} for all integers t.  Then D_t = 0 unless 0 <= t <= M+1, D_0 = 1,
+     D_t >= 0 for t <= M/2 (by 0.2), and D_{M+1-t} = -D_t (by palindromicity:
+     D_{M+1-t} = Q_{M+1-t} - Q_{M-t} = Q_{t-1} - Q_t).
+0.4  F_t := sum_{j>=0} D_{t-3j} (finite sum).  F_t = 0 for t < 0 and F_t - F_{t-3} = D_t.
+0.5  P(q) = sum_n c_n q^n with c_n = sum_{y=0}^{b-1} Q_{n-3y};  N := deg P = M + W.
+     P is palindromic (product of palindromic polynomials) with nonnegative coefficients.
+
+--------------------------------------------------------------------------------------------------
+1. LEMMAS
+--------------------------------------------------------------------------------------------------
+Lemma 1.  A palindromic sequence c_0..c_N is unimodal iff c_{n-1} <= c_n for all 1 <= n <= floor(N/2).
+Proof.  (<=) the sequence is nondecreasing up to floor(N/2); by symmetry nonincreasing from ceil(N/2) on;
+if N is odd c_{floor(N/2)} = c_{ceil(N/2)}.  (=>) suppose unimodal with a mode m and c_{n-1} > c_n for some
+n <= floor(N/2).  A strict descent n-1 -> n forces n-1 >= m.  By symmetry c_{N-n} < c_{N-n+1}, a strict
+ascent, which forces N-n+1 <= m.  So N-n+1 <= n-1, i.e. n >= N/2 + 1, contradiction.            []
+
+Lemma 2.  d_n := c_n - c_{n-1} = F_n - F_{n-W-3}.
+Proof.  d_n = sum_{y=0}^{b-1} (Q_{n-3y} - Q_{n-3y-1}) = sum_{y=0}^{b-1} D_{n-3y}
+           = sum_{y=0}^{b-1} (F_{n-3y} - F_{n-3y-3}) = F_n - F_{n-3b}, and 3b = W+3.                []
+
+Lemma 3 (periodic tail and reflection).  Define p_c := sum_{t = c (mod 3)} D_t (a finite sum; depends only on
+c mod 3).  Then
+ (a) F_t = p_t for every t >= M-1;
+ (b) F_t = F_{M-2-t} + p_t for every integer t;
+ (c) p_{M+1-c} = -p_c;
+ (d) (p_0, p_1, p_2) depends only on n2 mod 6 and equals
+        n2 mod 6 :  0         1         2         3         4         5
+        (p0,p1,p2): (1,-1,0)  (1,0,-1)  (0,1,-1)  (-1,1,0)  (-1,0,1)  (0,-1,1)
+Proof.  (a) For t >= M+1 every s = t (mod 3) with D_s != 0 satisfies s <= M+1 <= t, so F_t = p_t.  For
+t in {M-1, M} the indices s > t with D_s != 0 lie in {M, M+1}, and none of them is congruent to t mod 3
+(M and M+1 differ from M-1 by 1 and 2; M+1 differs from M by 1); so again F_t = p_t.
+(b) F_t = p_t - sum_{s=t (3), s>t} D_s = p_t + sum_{s=t (3), s>t} D_{M+1-s} (by 0.3).  With s' = M+1-s the
+last sum runs over s' = M+1-t (mod 3), s' < M+1-t, i.e. over s' = M-2-t (mod 3), s' <= M-2-t; it equals
+F_{M-2-t}.
+(c) p_c = sum_{s=c(3)} D_s = -sum_{s=c(3)} D_{M+1-s} = -p_{M+1-c}.
+(d) Let Phi = 1+q+q^2.  Since F_t + F_{t-1} + F_{t-2} = sum_{s<=t} D_s = Q_t, we have Phi * F = Q as formal
+power series (F = sum_{t>=0} F_t q^t).  Divide Q = Phi*A + R in Z[q], deg R <= 1, deg A <= M-2 (A = 0 if
+M < 2).  Then F = A + R/Phi, so for t >= M-1 > deg A, F_t is the coefficient of q^t in
+R/Phi = R(1-q)/(1-q^3), a sequence that is 3-periodic from index 0.  Modulo Phi (where q^3 = 1):
+[3m+1]_q = Phi*[m]_{q^3} + q^{3m} = 1,   [3m+2]_q = Phi*[m]_{q^3} + q^{3m}(1+q) = 1+q,
+(1+q)^2 = Phi + q = q,  (1+q)^3 = q+q^2 = -1,  (1+q)^6 = 1.
+So Q = (1+q)^{n2 mod 6} mod Phi and R = 1, 1+q, q, -1, -1-q, -q for n2 mod 6 = 0..5.  R(1-q) =
+1-q, 1-q^2, q-q^2, -(1-q), -(1-q^2), -(q-q^2), whose quotients by 1-q^3 have the periodic coefficient
+patterns of the table.  By (a) these are p_0, p_1, p_2.  (proof_checks.py part (a).)               []
+
+Lemma 4.  d_n >= 0 for 1 <= n <= M/2.
+Proof.  d_n = sum_{y<b} D_{n-3y}; every index is <= n <= M/2, so every term is >= 0 (0.3).          []
+
+Lemma 5 (exact criterion).  Let K := M - W - 5.  P is unimodal iff
+        Delta(z) := F_z - F_{K-z} + p_{K-z} >= 0   for every integer z with K/2 < z < (M-4)/2.
+Proof.  By Lemmas 1 and 4, P is unimodal iff d_n >= 0 for all integers n with M/2 < n <= floor(N/2).  For such
+n, Lemmas 2 and 3(b) give d_n = F_{M-2-n} + p_n - F_{n-W-3}.  Put z = M-2-n.  Then n-W-3 = K-z, and
+n = K-z (mod 3) because W+3 = 0 (mod 3); hence p_n = p_{K-z} and d_n = Delta(z).  Finally n > M/2 <=>
+z < (M-4)/2, and n <= floor((M+W)/2) <=> 2(M-2-z) <= M+W <=> 2z >= K+1 <=> z > K/2.  So n -> z is a
+bijection between the two index sets.                                                              []
+(Lemma 5 was also checked numerically against the ground truth on all 772140 fit-box pairs: crit_check.py.)
+
+Lemma 6 (base case k = 1).  If a = 3m + rho (rho in {1,2}) then W* = 3m, and W <= 3m implies P unimodal.
+Proof.  M = 3m+rho-1, n2 = [rho=2], so W* = 3m.  Here D = 1 - q^a, so
+d_n = [n = 0 (mod 3), 0 <= n <= W] - [n-a = 0 (mod 3), 0 <= n-a <= W].  For n <= floor(N/2) = floor((a-1+W)/2)
+we get n - a <= (W-a-1)/2 < 0 because W <= 3m < a.  So d_n >= 0 for all such n; apply Lemma 1.
+(This agrees with Prop. 5.3 of arXiv:2605.12822.)                                                 []
+
+Lemma 7 (removing one factor).  For k >= 2 and S = a minus one copy of a_i:
+   W*(a) - W*(S) = 3*mu_i,   mu_i := floor(a_i/3) + 2*[a_i = 2 (mod 3) and n2 = 0 (mod 6)].
+Proof.  If a_i = 1 (mod 3): M decreases by a_i - 1 = 3 floor(a_i/3) and n2 is unchanged.  If a_i = 2 (mod 3):
+M decreases by 3 floor(a_i/3) + 1 and n2 decreases by 1, so n2 mod 6 decreases by 1 unless n2 = 0 (mod 6),
+in which case it becomes 5.  Hence W*(S) = W*(a) - 3 floor(a_i/3) in the first two situations and
+W*(S) = M - 3 floor(a_i/3) - 1 - 5 = W*(a) - 3 floor(a_i/3) - 6 when a_i = 2 (mod 3), n2 = 0 (mod 6).   []
+
+Lemma 8 (multiplying by a factor).  If P_S := prod_{j in S}[a_j]_q [b]_{q^3} is unimodal (S as in Lemma 7),
+then P = [a_i]_q * P_S is unimodal.
+Proof.  P_S is palindromic with nonnegative coefficients (0.5), [a_i]_q is palindromic unimodal; apply the
+product theorem quoted in 0.2.                                                                     []
+
+--------------------------------------------------------------------------------------------------
+2. PROOF OF THE THEOREM
+--------------------------------------------------------------------------------------------------
+Step 1 (necessity: W >= W* + 3 => not unimodal).
+Let y0 be the index in {M-1, M, M+1} given by the table (computed from Lemma 3(d) and M = n2 (mod 3)):
+   n2 mod 6 | M mod 3 | W*   | y0   | p_{y0}       | W >= W*+3 gives
+   0        | 0       | M    | M+1  | p_1 = -1     | W >= M+3
+   1        | 1       | M-1  | M+1  | p_2 = -1     | W >= M+2
+   2        | 2       | M-2  | M    | p_2 = -1     | W >= M+1
+   3        | 0       | M-3  | M    | p_0 = -1     | W >= M
+   4        | 1       | M-4  | M-1  | p_0 = -1     | W >= M-1
+   5        | 2       | M-5  | M-1  | p_1 = -1     | W >= M-2
+In every row: (i) 2*y0 <= M + W, so y0 <= floor(N/2); (ii) y0 - W - 3 <= -2 < 0, so F_{y0-W-3} = 0;
+(iii) y0 >= 1 (rows 0,1: y0 = M+1; rows 2,3: y0 = M >= n2 >= 2; rows 4,5: y0 = M-1 >= n2-1 >= 3, using
+M = 3T + n2 >= n2).  By Lemma 2 and Lemma 3(a), d_{y0} = F_{y0} - 0 = p_{y0} = -1 < 0, so by Lemma 1 P is not
+unimodal.  (proof_checks.py part (b).)
+
+Step 2 (sufficiency: W <= W* => unimodal), by induction on k.  k = 1 is Lemma 6.  Let k >= 2 and assume the
+sufficiency statement for all multisets with k-1 parts (none divisible by 3).  Let 0 <= W <= W* = W*(a).
+
+Case 1: W <= W*(a minus a_i) for some i.  By the induction hypothesis P_{a minus a_i} is unimodal; by Lemma 8,
+P is unimodal.
+
+Case 2: W > W*(a minus a_i) for every i.  By Lemma 7 and since all W's are multiples of 3,
+W >= W* - 3 mu_i + 3 for every i.
+ (C2.1) As W <= W*, mu_i >= 1 for every i.  So every a_i >= 2 (a_i = 1 has mu_i = 0), and if some a_i = 2 then
+        (mu_i = 0 unless n2 = 0 mod 6) n2 = 0 (mod 6), n2 >= 1, hence n2 >= 6 and k >= 6.
+ (C2.2) Let a_min = min_i a_i, attained at i0.  K = M - W - 5 <= M - W* + 3 mu_{i0} - 8
+        = (n2 mod 6) + 3 mu_{i0} - 8 <= a_min - 4.
+        [If n2 != 0 (mod 6): mu_{i0} = floor(a_min/3) <= (a_min-1)/3 and n2 mod 6 <= 5, so K <= a_min - 4.
+         If n2 = 0 (mod 6) and a_min = 1 (mod 3): K <= (a_min - 1) - 8.
+         If n2 = 0 (mod 6) and a_min = 2 (mod 3): mu_{i0} = (a_min-2)/3 + 2, K <= a_min - 2 + 6 - 8 = a_min - 4.]
+ (C2.3) F_t >= 1 for every integer t with 0 <= t < (M-4)/2.
+        [All D_s with s <= t < M/2 are >= 0 (0.3), so F_t >= D_{t mod 3}.  D_0 = 1.  Since all a_i >= 2:
+         Q_1 = k, Q_2 = C(k,2) + #{i: a_i >= 3} = C(k,2) + k - #{i: a_i = 2}; so D_1 = k-1 >= 1 and
+         D_2 = C(k,2) - #{i: a_i = 2}, which is C(k,2) >= 1 if no a_i = 2, and >= C(k,2) - k >= 9 otherwise
+         (k >= 6 by C2.1).]
+ (C2.4) For 0 <= t < a_min:  F_t = f_k(t) := [q^t] (1-q)^{-(k-1)} (1-q^3)^{-1}.
+        [prod_i (1 - q^{a_i}) = 1 mod q^{a_min}, so Q = (1-q)^{-k}, D = (1-q)^{-(k-1)} and
+         F = D/(1-q^3) modulo q^{a_min}.]
+        For k >= 3: f_k(t) - f_k(t-1) = [q^t](1-q)^{-(k-2)}(1-q^3)^{-1} >= [q^t](1-q)^{-(k-2)} >= 1 (t >= 0,
+        f_k(-1) = 0).  For k = 2: f_2(t) = floor(t/3) + 1.
+Now verify Lemma 5: let z be an integer with K/2 < z < (M-4)/2 and x := K - z (so x < z).
+ (T) z < 0.  Then F_z = F_x = 0 and Delta(z) = p_x with K+1 <= x < K/2.  This uses only K >= K* := (n2 mod 6) - 5
+     (equivalent to W <= W*) and K = M+1 = n2+1 (mod 3).  If K >= -2 there is no such x.  The remaining
+     admissible (K, n2 mod 6) with K <= -3 are: (-3, 2): x = -2, p_1 = 1;  (-4, 1): x = -3, p_0 = 1;
+     (-5, 0): x in {-4, -3}, p_2 = 0, p_0 = 1.  [(-3,5), (-4,4), (-5,3) violate K >= K*.]  So Delta(z) >= 0.
+     (proof_checks.py part (c).)
+ (L) x < 0 <= z.  Delta(z) = F_z + p_x >= 1 - 1 = 0 by (C2.3).
+ (P) 0 <= x < z.  Then z <= K <= a_min - 4 by (C2.2), so F_z = f_k(z), F_x = f_k(x) by (C2.4).
+     k >= 3: Delta(z) >= (z - x) - 1 >= 0.
+     k = 2: by (C2.1) a_1, a_2 >= 4 (a part equal to 2 would force k >= 6), so n2 in {0,1,2} and M = n2 (mod 3).
+     If floor(z/3) > floor(x/3), Delta(z) >= 1 - 1 = 0.  Otherwise x = 3j + r1, z = 3j + r2, 0 <= r1 < r2 <= 2,
+     r1 + r2 = x + z = K = n2 + 1 (mod 3), and Delta(z) = p_{r1}:  n2 = 0 -> (r1,r2) = (0,1), p_0 = 1;
+     n2 = 1 -> (0,2), p_0 = 1;  n2 = 2 -> (1,2), p_1 = 1.  So Delta(z) >= 0.  (proof_checks.py part (d).)
+Hence every Delta(z) >= 0 and P is unimodal by Lemma 5.  This completes the induction.                 []
+
+Remark (what the critical b depends on).  The critical value is B = 1 + T + 2 floor(n2/6) = 1 + W*/3, a function
+of the single statistic T + 2 floor(n2/6) (equivalently of (M, n2 mod 6)).  It does not depend on n1, on min a_i,
+on the individual counts of parts equal to 1,2,4,5, or on residues mod 9 beyond what T and n2 carry.  The extra
+"+2 per six parts = 2 mod 3" comes from Q(omega) = (-omega^2)^{n2}, which has order 6.

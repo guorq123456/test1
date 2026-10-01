@@ -1,0 +1,18 @@
+Lemma (exact tie at the boundary for r=2). Let r=2, k>=1, all a_i odd, D = sum (a_i - 1) >= 2, and
+b = 1 + sum floor(a_i/2). Write A(q) = prod [a_i]_q = sum_{m=0}^D A_m q^m and
+P(q) = A(q) [b]_{q^2} = sum_n c_n q^n. Then c_{D-1} = c_{D-2} (a zero difference in the first half,
+j = D-2 < N/2 = D). If moreover k>=2 and all a_i>=3, this zero difference is "contested":
+it is a sum Delta_{D-2} = sum_t dA_{D-1-2t} containing a strictly negative term.
+
+Proof.
+1. a_i odd => floor(a_i/2) = (a_i-1)/2, so b-1 = D/2, hence D is even, 2(b-1) = D and deg P = N = 2D.
+2. c_n = sum_{t=0}^{b-1} A_{n-2t} (A_m := 0 for m<0 or m>D). For n <= D+1 the smallest index n-2(b-1) = n-D <= 1,
+   so the sum runs over ALL m in {0..n} with m = n (mod 2): c_n = sum_{m<=n, m=n mod 2} A_m.
+3. Hence for 1 <= n <= D+1: c_n - c_{n-1} = T_n := sum_{i=0}^{n} (-1)^i A_{n-i}, and T_n = A_n - T_{n-1}.
+4. [a]_{-1} = 1 for odd a, so A(-1) = 1. Since D is even, T_D = sum_m (-1)^{D-m} A_m = A(-1) = 1.
+5. By step 3, T_{D-1} = A_D - T_D = A_D - 1 = 0, because A_D = 1 (leading coefficient of a product of monic polynomials).
+6. Step 3 with n = D-1 (valid since D >= 2) gives c_{D-1} - c_{D-2} = T_{D-1} = 0. As D-2 < D = N/2 this is in the first half.
+7. Contestedness: the comb sum for Delta_{D-2} includes the t=0 term dA_{D-1} = A_{D-1} - A_{D-2} = A_1 - A_2 (symmetry A_m = A_{D-m}).
+   A_1 = #{i: a_i>=2} = k and, if all a_i >= 3 and k >= 2, A_2 = k + C(k,2) > k, so dA_{D-1} < 0.  QED
+Remark (numerical, margins.c, not part of the proof): in the box all 1281 r=2 multisets with k>=2, all a_i odd >= 3
+show an exact tie at b = bound, and (verify_ff.py) every r=2 all-odd multiset fails at b = bound+1.

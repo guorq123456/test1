@@ -1,0 +1,15 @@
+# Candidates tried by explorer E2 (path A1': Fourier / roots-of-unity formalization).
+# Fit box = r in 2..6, k <= 8, a_i in 1..12 (all nondecreasing multisets), b in 1..60  -> 37,790,700 instances.
+# Ground truth: gt.c -> gt.txt (cross-checked against tools/uni on 15,000 random instances, 0 mismatches).
+# Error counts from eval_final.log (script eval_more.py), FP/FN split from eval_split.py.
+#
+# id | name | file | description | instances in domain | errors | status
+1 | criterion (first implementation of Theorem A) | core.py:criterion | E_u >= d_{K-u} for K/2<u<=D+1-r | 105,064 sampled box instances (check_criterion.py) | 0 | superseded by #4 (same logic)
+2 | bmax_formula (y*-threshold, assumes b-set is an initial segment) | ystar.py | b <= floor((D+1-2y*)/r)-1 | sampled box (ystar.py) ; full box = #5 | 2 (r,a) failures in sample; 133 instance errors on full box | superseded by #5 (same logic)
+3 | baseline_conj (reference: Conjecture 5.4 as stated) | rules/baseline_conj.py | r|a_i or b<=1+S | 37,790,700 | 64,371 (FP 0, FN 64,371) | reference only
+4 | E2_exact (Theorem A, proved) | rules/E2_exact.py | exact Fourier criterion | 37,790,700 | 0 | KEPT (main rule)
+5 | E2_threshold (Corollary A1 extended to all K, ignores pair condition (P)) | rules/E2_threshold.py | r(b+1)+2y* <= D+1 | 37,790,700 | 133 (FP 133, FN 0) | kept as explicit approximation
+6 | E2_residue (Theorem B threshold, exact when Q>=0 and (P) holds) | rules/E2_residue.py | r(b-1) <= D+1-2c | 37,790,700 | 28,883 (FP 28,883, FN 0) | kept (necessary condition, proved)
+7 | E2_harmonic1 (first Fourier harmonic only) | rules/E2_harmonic1.py | b <= 1+S+2max(0,floor((Dpi+r+3)/(2r))-1) | 37,790,700 | 31,387 (FP 28,883, FN 2,504) | discarded (not exact; FN show higher harmonics matter)
+8 | E2_closed_small (closed form on r<=3 or k_eff<=3) | rules/E2_closed_small.py | r=3: b<=1+S+2floor(n2/6); else b<=1+S | 15,525,600 (domain) | 0 | KEPT (closed form; 'only if' proved, 'if' proved when r(b+1)>=D+1)
+# total candidates tried: 8 (two of them, #1 and #2, are earlier implementations of #4 and #5)

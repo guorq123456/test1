@@ -1,0 +1,1 @@
+rules/rule_exact_e.py frac 1.0 in-domain instances 4152420 errors 0 out-of-domain 0 per r (errors,instances): {2: (0, 77160), 3: (0, 386040), 4: (0, 772140), 5: (0, 1458540), 6: (0, 1458540)}

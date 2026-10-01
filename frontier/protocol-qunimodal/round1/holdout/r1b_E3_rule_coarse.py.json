@@ -1,0 +1,41 @@
+{
+ "instances_in_domain": 54180,
+ "instance_errors": 0,
+ "tuples_in_domain": 1391,
+ "tuples_with_any_error": 0,
+ "false_pos(pred unimodal, truth not)": 0,
+ "false_neg(pred not, truth unimodal)": 0,
+ "per_stratum": {
+  "r3_biga": {
+   "inst": 29086,
+   "err": 0,
+   "tuples": 500,
+   "tuples_err": 0
+  },
+  "r456_biga": {
+   "inst": 12938,
+   "err": 0,
+   "tuples": 400,
+   "tuples_err": 0
+  },
+  "ones": {
+   "inst": 3473,
+   "err": 0,
+   "tuples": 242,
+   "tuples_err": 0
+  },
+  "has_mult": {
+   "inst": 8271,
+   "err": 0,
+   "tuples": 238,
+   "tuples_err": 0
+  },
+  "mixed": {
+   "inst": 412,
+   "err": 0,
+   "tuples": 11,
+   "tuples_err": 0
+  }
+ },
+ "first_mismatches": []
+}

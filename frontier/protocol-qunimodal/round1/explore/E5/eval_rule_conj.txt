@@ -1,0 +1,1 @@
+rules/rule_conj.py frac 1.0 in-domain instances 4152420 errors 44407 out-of-domain 0 per r (errors,instances): {2: (0, 77160), 3: (2970, 386040), 4: (8340, 772140), 5: (11796, 1458540), 6: (21301, 1458540)}
