@@ -1,0 +1,20 @@
+{
+  "name": "mv-render",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Deterministic frame-by-frame MP4 renderer and QA contact sheets for the Canvas music video (window.MV contract).",
+  "type": "module",
+  "scripts": {
+    "render": "node render.mjs --serve",
+    "render:720": "node render.mjs --serve --scale 720 --out ../out/mv_720p.mp4",
+    "render:chunked": "node render.mjs --serve --chunk 20",
+    "bench": "node render.mjs --serve --bench 30",
+    "sheet": "node sheet.mjs --serve --every 10"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.1"
+  },
+  "engines": {
+    "node": ">=18.17"
+  }
+}
