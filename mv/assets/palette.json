@@ -1,0 +1,120 @@
+{
+  "source": "char_full.png - opaque pixels only (alpha=255, 1,222,286 px); near-white highlights (min channel >= 246, 12,627 px) excluded",
+  "method": "k-means, k=8, in CIELAB (k-means++ init, best of 4), cluster means converted back to sRGB; ordered by pixel share",
+  "dominant": [
+    {
+      "hex": "#F5E6DF",
+      "share_pct": 27.6,
+      "family": "cream",
+      "name": "cream - main dress / blouse fabric"
+    },
+    {
+      "hex": "#CEB1A7",
+      "share_pct": 17.2,
+      "family": "cream",
+      "name": "cream shadow - dusty rose-beige fabric shading"
+    },
+    {
+      "hex": "#241A1B",
+      "share_pct": 16.0,
+      "family": "black",
+      "name": "ink black - corset, black skirt panels, bows, line-art"
+    },
+    {
+      "hex": "#95746B",
+      "share_pct": 10.0,
+      "family": "gold/brown",
+      "name": "taupe brown - mid shadows in fabric folds and pleats"
+    },
+    {
+      "hex": "#CF6740",
+      "share_pct": 9.9,
+      "family": "orange",
+      "name": "orange - hair and orange skirt panel (signature colour)"
+    },
+    {
+      "hex": "#4B261E",
+      "share_pct": 7.0,
+      "family": "gold/brown",
+      "name": "dark chestnut brown - book cover, deep hair shadow"
+    },
+    {
+      "hex": "#93452E",
+      "share_pct": 6.3,
+      "family": "orange",
+      "name": "rust / burnt orange - hair shade side"
+    },
+    {
+      "hex": "#C98265",
+      "share_pct": 6.0,
+      "family": "gold/brown",
+      "name": "copper-gold - tassels, gold trim, hair mid-light"
+    }
+  ],
+  "by_family": {
+    "orange": [
+      "#CF6740",
+      "#93452E"
+    ],
+    "cream": [
+      "#F5E6DF",
+      "#CEB1A7"
+    ],
+    "black": [
+      "#241A1B"
+    ],
+    "gold/brown": [
+      "#95746B",
+      "#4B261E",
+      "#C98265"
+    ]
+  },
+  "imagemagick_colors8": {
+    "note": "cross-check: convert <opaque pixels> -dither None -colors 8 histogram (RGB-space quantisation, averages are muddier, e.g. hair orange -> #B16247)",
+    "colors": [
+      {
+        "hex": "#F4E4DE",
+        "share_pct": 28.0
+      },
+      {
+        "hex": "#261817",
+        "share_pct": 18.6
+      },
+      {
+        "hex": "#B16247",
+        "share_pct": 14.5
+      },
+      {
+        "hex": "#D0B0A5",
+        "share_pct": 10.4
+      },
+      {
+        "hex": "#5F372D",
+        "share_pct": 8.4
+      },
+      {
+        "hex": "#997E81",
+        "share_pct": 7.1
+      },
+      {
+        "hex": "#CA896B",
+        "share_pct": 6.5
+      },
+      {
+        "hex": "#C5A89E",
+        "share_pct": 6.5
+      }
+    ]
+  },
+  "accents": {
+    "hair_orange_median": "#D16740",
+    "hair_orange_bright": "#DE774F",
+    "tassel_gold": "#C99776",
+    "gold_highlight": "#EDBE8E",
+    "book_cover": "#3D211E",
+    "skin": "#EEDEDC",
+    "corset_black": "#1D181C",
+    "ink_black_silhouette": "#1B1512",
+    "mv_background": "#140C08"
+  }
+}
