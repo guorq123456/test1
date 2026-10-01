@@ -1,0 +1,488 @@
+<title>现实前沿簿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+  /* Layout: one 760px column on graph paper, like the 算子工坊 game; results are cards with the game's hole / frontier / filled flags. */
+  :root {
+    --paper: #edf0ea;
+    --grid: rgba(43, 89, 195, 0.07);
+    --panel: #f7f8f4;
+    --card: #ffffff;
+    --ink: #18202e;
+    --ink-2: #4a5465;
+    --ink-3: #6f7989;
+    --line: rgba(24, 32, 46, 0.14);
+    --line-strong: rgba(24, 32, 46, 0.32);
+    --shadow: 0 1px 0 rgba(24, 32, 46, 0.08), 0 3px 10px rgba(24, 32, 46, 0.06);
+    --c-theorem: #2b59c3;
+    --c-refute: #97263b;
+    --c-new: #7a3e9d;
+    --c-partial: #0f7b65;
+    --c-scooped: #6f7989;
+    --hole-bg: #fbf0f1;
+    --on-k: #ffffff;
+    --focus-bg: rgba(43, 89, 195, 0.08);
+    --f-display: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", serif;
+    --f-math: "STIX Two Text", "Cambria Math", "Times New Roman", "Noto Serif SC", serif;
+    --f-ui: system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #12161c;
+      --grid: rgba(134, 166, 255, 0.06);
+      --panel: #181d25;
+      --card: #212833;
+      --ink: #e6eaf0;
+      --ink-2: #b0b9c6;
+      --ink-3: #8a94a3;
+      --line: rgba(230, 234, 240, 0.14);
+      --line-strong: rgba(230, 234, 240, 0.34);
+      --shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 3px 10px rgba(0, 0, 0, 0.3);
+      --c-theorem: #8aa9ff;
+      --c-refute: #f28b9a;
+      --c-new: #c99eeb;
+      --c-partial: #4fcca8;
+      --c-scooped: #8a94a3;
+      --hole-bg: #2a1e24;
+      --on-k: #12161c;
+      --focus-bg: rgba(138, 169, 255, 0.1);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #12161c;
+    --grid: rgba(134, 166, 255, 0.06);
+    --panel: #181d25;
+    --card: #212833;
+    --ink: #e6eaf0;
+    --ink-2: #b0b9c6;
+    --ink-3: #8a94a3;
+    --line: rgba(230, 234, 240, 0.14);
+    --line-strong: rgba(230, 234, 240, 0.34);
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 3px 10px rgba(0, 0, 0, 0.3);
+    --c-theorem: #8aa9ff;
+    --c-refute: #f28b9a;
+    --c-new: #c99eeb;
+    --c-partial: #4fcca8;
+    --c-scooped: #8a94a3;
+    --hole-bg: #2a1e24;
+    --on-k: #12161c;
+    --focus-bg: rgba(138, 169, 255, 0.1);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { background: var(--paper); }
+  body {
+    color: var(--ink);
+    font-family: var(--f-ui);
+    font-size: 15px;
+    line-height: 1.65;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  :focus-visible { outline: 2px solid var(--c-theorem); outline-offset: 2px; }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+  p { margin: 0; }
+  .m { font-family: var(--f-math); }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding-inline: 16px;
+    padding-block: 28px 64px;
+    display: grid;
+    gap: 28px;
+  }
+
+  header { display: grid; gap: 6px; }
+  .edition { font-size: 12px; letter-spacing: 0.14em; color: var(--ink-3); }
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 900;
+    font-size: clamp(30px, 7vw, 40px);
+    line-height: 1.1;
+    letter-spacing: 0.06em;
+  }
+  .lede { max-width: 62ch; color: var(--ink-2); }
+
+  .answer {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 5px solid var(--c-new);
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: grid;
+    gap: 10px;
+  }
+  .answer h2 { font-family: var(--f-display); font-size: 20px; letter-spacing: 0.04em; }
+  .answer p { max-width: 64ch; }
+  .tally { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tally span {
+    font-size: 13px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    border: 1.5px solid currentColor;
+    font-weight: 600;
+  }
+  .t-new { color: var(--c-new); }
+  .t-partial { color: var(--c-partial); }
+  .t-scooped { color: var(--c-scooped); }
+
+  section { display: grid; gap: 12px; }
+  section > h2 {
+    font-family: var(--f-display);
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+  }
+  .section-note { color: var(--ink-2); font-size: 14px; max-width: 64ch; }
+
+  /* 合成路线：像游戏的 [左] [算子] → 结果 */
+  .route { display: grid; gap: 6px; }
+  .route h3 { font-size: 13px; letter-spacing: 0.1em; color: var(--ink-3); font-weight: 600; margin-top: 6px; }
+  .step {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: baseline;
+    padding: 8px 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  .step .what { min-width: 0; }
+  .step .op { font-family: var(--f-math); color: var(--c-new); margin-right: 6px; }
+  .step .count { font-family: var(--f-math); font-size: 19px; font-variant-numeric: tabular-nums; }
+  .step.last { border-style: dashed; border-color: var(--c-refute); background: var(--hole-bg); }
+
+  /* 筛选 */
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font: inherit;
+    font-size: 14px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: var(--panel);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  /* 结果卡 */
+  .cards { display: grid; gap: 14px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: grid;
+    min-width: 0;
+  }
+  .card.is-scooped { background: transparent; box-shadow: none; border: 1.5px dashed var(--line-strong); }
+  .card-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 14px 0; }
+  .kind {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: var(--on-k);
+    font-weight: 700;
+  }
+  .kind-theorem { background: var(--c-theorem); }
+  .kind-refute { background: var(--c-refute); }
+  .flag {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 4px;
+    border: 1.5px solid currentColor;
+  }
+  .flag-new { color: var(--c-new); }
+  .flag-partial { color: var(--c-partial); }
+  .flag-scooped { color: var(--c-scooped); }
+  .src { font-size: 12px; color: var(--ink-3); }
+  .card-body { padding: 8px 14px 14px; display: grid; gap: 8px; min-width: 0; }
+  .card h3 { font-family: var(--f-display); font-size: 18px; font-weight: 600; letter-spacing: 0.03em; }
+  .claim { max-width: 66ch; }
+  .formula {
+    font-family: var(--f-math);
+    font-size: 17px;
+    padding: 8px 12px;
+    background: var(--panel);
+    border-radius: 8px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  dl.facts { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; font-size: 14px; }
+  dl.facts > div { display: contents; }
+  dl.facts dt { color: var(--ink-3); }
+  dl.facts dd { margin: 0; color: var(--ink-2); overflow-wrap: anywhere; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.88em; overflow-wrap: anywhere; }
+
+  /* 反思 */
+  .lessons { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .lessons li {
+    padding: 12px 14px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    max-width: 100%;
+  }
+  .lessons b { color: var(--ink); }
+  .game {
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1.5px dashed var(--c-refute);
+    background: var(--hole-bg);
+    display: grid;
+    gap: 8px;
+  }
+  .game p { max-width: 64ch; }
+  .next { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; max-width: 66ch; }
+  footer { font-size: 13px; color: var(--ink-3); border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 4px; }
+  a { color: var(--c-theorem); }
+
+  @media (min-width: 640px) {
+    .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .card.wide { grid-column: 1 / -1; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="edition">2026 年 10 月 1 日 · OEIS 全库快照 · arXiv 2025–2026</div>
+    <h1>现实前沿簿</h1>
+    <p class="lede">在「算子工坊」里，合成不出来的地方叫缺口，图鉴里没人填过的缺口叫前沿。这本簿子记录的是：把同样的玩法搬到真实的数学里，能不能找到并填上人类还没填过的缺口。</p>
+  </header>
+
+  <div class="answer">
+    <h2>能，找到了，但都是小前沿</h2>
+    <p>九个结果经过证明或计算，又被另一个不看原代码的智能体独立复核，全部成立。查新之后，其中四个检索不到任何先例，五个有新内容但部分已有记载。另有两个反例我们晚了一步，别人已经先公开了。没有一个是著名难题。</p>
+    <div class="tally">
+      <span class="t-new num">首次发现 4</span>
+      <span class="t-partial num">部分已知 5</span>
+      <span class="t-scooped num">别人先填 2</span>
+    </div>
+  </div>
+
+  <section aria-labelledby="route-h">
+    <h2 id="route-h">合成路线</h2>
+    <div class="route">
+      <h3>路线一 · OEIS 跨领域巧合</h3>
+      <div class="step"><span class="what"><span class="op">⟨全库⟩</span>OEIS 收录的整数数列</span><span class="count">399,822</span></div>
+      <div class="step"><span class="what"><span class="op">∩</span>至少 18 项完全一致、信息量足够的数列对</span><span class="count">5,339</span></div>
+      <div class="step"><span class="what"><span class="op">∖</span>去掉已经分叉的</span><span class="count">3,287</span></div>
+      <div class="step"><span class="what"><span class="op">∖</span>去掉两边条目互相提到过的</span><span class="count">331</span></div>
+      <div class="step"><span class="what"><span class="op">↤</span>8 个智能体逐对分诊后，判为「非平凡相等」的</span><span class="count">23</span></div>
+      <div class="step last"><span class="what"><span class="op">⊞</span>深挖：证明、独立复核、查新</span><span class="count">7</span></div>
+      <h3>路线二 · 最新论文里的猜想</h3>
+      <div class="step"><span class="what"><span class="op">⟨读⟩</span>2025 到 2026 年 arXiv 里能用有限计算证伪的猜想</span><span class="count">18</span></div>
+      <div class="step"><span class="what"><span class="op">↤</span>挑出来攻的</span><span class="count">3</span></div>
+      <div class="step last"><span class="what"><span class="op">⊞</span>被推翻的猜想（同一篇论文里有两个）</span><span class="count">4</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="cards-h">
+    <h2 id="cards-h">填上的缺口</h2>
+    <div class="filters" role="group" aria-label="按新颖性筛选">
+      <button class="chip" type="button" id="f-all" data-f="all" aria-pressed="true">全部 11</button>
+      <button class="chip" type="button" id="f-new" data-f="new" aria-pressed="false">首次发现 4</button>
+      <button class="chip" type="button" id="f-partial" data-f="partial" aria-pressed="false">部分已知 5</button>
+      <button class="chip" type="button" id="f-scooped" data-f="scooped" aria-pressed="false">别人先填 2</button>
+    </div>
+
+    <div class="cards" id="cards">
+      <article class="card wide" data-s="new">
+        <div class="card-top"><span class="kind kind-theorem">定理</span><span class="flag flag-new">首次发现</span><span class="src">A386884 · 2025 年的数列</span></div>
+        <div class="card-body">
+          <h3>正方体的四块铺砌</h3>
+          <p class="claim">用四块两两不全等、三条边各不相同的整数长方体铺满 n×n×n 的正方体，形状组合一共有这么多种。它恰好等于一条 2010 年的纯算术数列 A178312 平移四位。</p>
+          <div class="formula">A386884(n) = (n − 4) · T(⌈(n − 4)/2⌉)，&nbsp; T(j) = j(j + 1)/2</div>
+          <dl class="facts">
+            <div><dt>关键一步</dt><dd>三维里，任何用至多 4 块长方体铺成的长方体，都能一刀切成两半。5 块时这句话就不成立了。</dd></div>
+            <div><dt>核验</dt><dd>不依赖任何引理的暴力搜索到 n=20；与 OEIS 全部 49 项一致；复核者用自己写的铺砌枚举器重算。</dd></div>
+            <div><dt>查新</dt><dd>两个条目都没有公式，也互不引用。只有一条 2026 年 7 月的 OEIS 评论不加证明地提到过一刀切引理。</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="card" data-s="new">
+        <div class="card-top"><span class="kind kind-theorem">定理</span><span class="flag flag-new">首次发现</span><span class="src">A253435 · Hardin 2014</span></div>
+        <div class="card-body">
+          <h3>不对称规则下的对称公式</h3>
+          <p class="claim">表格计数满足某种 2×2 子块条件的 0/1 阵列。规则本身不是转置对称的，小尺寸时表格确实不对称，比如 T(4,2)=108 而 T(2,4)=102。尺寸一大，公式就变得对称。</p>
+          <div class="formula">T(n, k) = 9·2ⁿ⁻¹ + 9·2ᵏ⁻¹ + 12 &nbsp;(n ≥ 2, k ≥ 4)</div>
+          <dl class="facts">
+            <div><dt>核验</dt><dd>对所有有效阵列做了完整分类；复核者用暴力计数和转移矩阵重算 1,091 个 b-file 项。</dd></div>
+            <div><dt>查新</dt><dd>这张表及其 14 条行列数列上的公式，全部标着「经验」，此前没有人证明过。</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="card" data-s="new">
+        <div class="card-top"><span class="kind kind-refute">反例</span><span class="flag flag-new">首次发现</span><span class="src">arXiv:2605.12822 · 2026 年 5 月</span></div>
+        <div class="card-body">
+          <h3>q-整数乘积的单峰性</h3>
+          <p class="claim">论文的猜想 5.4 说，当 r ≤ 3 时某个不等式是单峰的必要条件。取 r=3、六个 aᵢ 都等于 2、b=2，不等式不满足，乘积却是单峰的。</p>
+          <div class="formula">(1+q)⁶(1+q³) = 1+6q+15q²+21q³+21q⁴+21q⁵+21q⁶+15q⁷+6q⁸+q⁹</div>
+          <dl class="facts">
+            <div><dt>推广</dt><dd>对所有 k ≥ 6，(1+q)ᵏ(1+q³) 都是单峰的，所以反例有无穷多个。作者只验证到 k ≤ 5。</dd></div>
+            <div><dt>核验</dt><dd>攻坚者和复核者各用三套实现；我又亲自核对了论文原文和这个多项式。</dd></div>
+            <div><dt>查新</dt><dd>论文只有 v1，检索不到任何引用或反驳。</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="card" data-s="new">
+        <div class="card-top"><span class="kind kind-refute">反例</span><span class="flag flag-new">首次发现</span><span class="src">arXiv:2609.03081 · 2026 年 9 月</span></div>
+        <div class="card-body">
+          <h3>填字格上的车</h3>
+          <p class="claim">猜想 3.14 说，n×n 排列格上车摆法最多的，是形状为 (m,1,…,1,m) 的分层排列。n=17 时，形状 (5,3,1,3,5) 胜出约 1%；n=18 时差距扩大到 20.6%。</p>
+          <div class="formula num">104,476,798,194,769 &gt; 103,460,138,813,701</div>
+          <dl class="facts">
+            <div><dt>核验</dt><dd>攻坚者和复核者各用三种方法（行动态规划、Ryser 积和式、通用积和式）得到完全相同的数。</dd></div>
+            <div><dt>查新</dt><dd>同一篇论文的猜想 3.10 已被别人推翻，3.14 检索不到任何先例。最小反例落在 n=14 到 17 之间，还没确定。</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="card wide" data-s="partial">
+        <div class="card-top"><span class="kind kind-theorem">定理</span><span class="flag flag-partial">部分已知</span><span class="src">Hardin 数列族 A2008xx、A2028xx–A2031xx、A2174xx–A2186xx</span></div>
+        <div class="card-body">
+          <h3>腐蚀与膨胀给出的双射</h3>
+          <p class="claim">三个互不知情的分诊智能体，在第 1、5、7 批里分别发现了它。对任意字母表 {0,…,k}，先取补 x ↦ k−x，再做 2 窗最大值滤波（数学形态学里的「膨胀」），就把长度为 N 的无峰词一一映到长度为 N+1、每个非零项都不超过某个邻居的词。逆映射是 2 窗最小值滤波（「腐蚀」）。另一条双射把无峰也无谷的词映到 3 窗最小值滤波的像。</p>
+          <div class="formula">Φ(x)ᵢ = max(k − xᵢ₋₁, k − xᵢ)，&nbsp; Φ⁻¹(y)ⱼ = k − min(yⱼ, yⱼ₊₁)</div>
+          <dl class="facts">
+            <div><dt>连接</dt><dd>图像处理里的数学形态学 ↔ 组合学里的模式回避词</dd></div>
+            <div><dt>战果</dt><dd>连接了 A200880–A200885 与 A202882、A203094、A203184、A203050、A203059、A202909，以及 A200865 与 A217450、A200866 与 A218051 等；证明了 102 条标为「经验」的公式；顺带发现两处 OEIS 勘误。</dd></div>
+            <div><dt>查新</dt><dd>生成函数是 Mansour 和 Shattuck 2010 年的结果，k ≤ 3 的对应关系 OEIS 里有人提过但没证明。双射本身、k ≥ 4 的各对以及第二条双射，检索不到先例。</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="card" data-s="partial">
+        <div class="card-top"><span class="kind kind-theorem">定理</span><span class="flag flag-partial">部分已知</span><span class="src">A228016 ↔ A087125</span></div>
+        <div class="card-body">
+          <h3>调和数与六边形数</h3>
+          <p class="claim">Kimberling 2013 年用调和数 H(k) 的贪心规则定义了 A228016。它恰好是「六边形数 3k(k+1)+1 同时是三角形数」的那些 k，平移一位。</p>
+          <div class="formula">H(eₙ − 1) &lt; 2H(eₙ₋₁) − H(eₙ₋₂) &lt; H(eₙ)</div>
+          <dl class="facts">
+            <div><dt>连接</dt><dd>调和数的渐近展开 ↔ 佩尔方程</dd></div>
+            <div><dt>战果</dt><dd>条目里标为「猜想」的递推和生成函数成为定理；比值的极限是 5+2√6；条目里有三处笔误。</dd></div>
+            <div><dt>查新</dt><dd>这个相等式和那条猜想递推等价，所以猜测早已存在。两者的联系和证明是新的。</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="card" data-s="partial">
+        <div class="card-top"><span class="kind kind-theorem">定理</span><span class="flag flag-partial">部分已知</span><span class="src">A112051 · Karttunen</span></div>
+        <div class="card-body">
+          <h3>一个 1956 年的不等式</h3>
+          <p class="claim">对 n ≥ 4，A112051(n) = (prime(n)² − 1)/2。关键是：除了 3、7、23，每个奇素数 q 的最小二次非剩余都小于 √q。</p>
+          <dl class="facts">
+            <div><dt>连接</dt><dd>OEIS 里 2005 到 2017 年留下的经验评论 ↔ LeVeque 1956 年教科书里的界</dd></div>
+            <div><dt>战果</dt><dd>证明了 A112052 里「似乎是素数的平方」和 A112049 里的评论，并说明 A112060 确实是一个排列。</dd></div>
+            <div><dt>查新</dt><dd>核心不等式是经典结果，Godwin 1965 年还给过初等证明。把它用到这几条数列上，检索不到先例。</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="card" data-s="partial">
+        <div class="card-top"><span class="kind kind-refute">反例</span><span class="flag flag-partial">部分已知</span><span class="src">A282297、A282295 · 2025 年 6 月</span></div>
+        <div class="card-body">
+          <h3>Mathar 的元胞自动机猜想</h3>
+          <p class="claim">两条猜想说，规则 451 和规则 193 的 x 轴读数从 n=2 起永远相同。它们在 n=2 到 25 相同，从 n=26 起一直不同，我们算到了 n=1000。</p>
+          <div class="formula num">A282297(26) = 111100000000000111111111111<br>A279721(26) = 111000000000000111111111111</div>
+          <dl class="facts">
+            <div><dt>核验</dt><dd>我从 OEIS 官方 b-file 直接读出了这两项。</dd></div>
+            <div><dt>查新</dt><dd>反例从 2016 年起就躺在 b-file 里，但没有人指出猜想是错的。</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="card" data-s="partial">
+        <div class="card-top"><span class="kind kind-theorem">定理</span><span class="flag flag-partial">部分已知</span><span class="src">A225034 · Berselli 2013</span></div>
+        <div class="card-body">
+          <h3>避开 101 的二进制词</h3>
+          <p class="claim">条目里标为「猜想」的递推，其实能从同一条目已有的生成函数定理直接推出。另外得到 A225034(n) = A005773(n) + A005773(n+1)，以及 n ≥ 3 时 A163765(n) = A225034(n)。</p>
+          <dl class="facts">
+            <div><dt>查新</dt><dd>生成函数早已有人证明，这是九个结果里新意最少的一个。</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="card is-scooped" data-s="scooped">
+        <div class="card-top"><span class="kind kind-refute">反例</span><span class="flag flag-scooped">别人先填</span><span class="src">arXiv:2601.03293 · 2026 年 1 月</span></div>
+        <div class="card-body">
+          <h3>广义彼得森图的奇偶猜想</h3>
+          <p class="claim">猜想说 k 为偶数时独立多项式只有实根。GP(9,2) 的独立多项式有 7 个根，只有 5 个是实的。</p>
+          <dl class="facts">
+            <div><dt>查新</dt><dd>作者 1 月已在 GitHub 上改稿放弃这个猜想，另有团队 6 月公开了同一个反例。我们新增的只是对 2,030 个情形的精确扫描。</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="card is-scooped" data-s="scooped">
+        <div class="card-top"><span class="kind kind-refute">反例</span><span class="flag flag-scooped">别人先填</span><span class="src">arXiv:2609.03081 · 猜想 3.10</span></div>
+        <div class="card-body">
+          <h3>155 种摆法</h3>
+          <p class="claim">猜想说 4 的倍数加 3 这类数不会成为车摆法的个数。排列 27481635 的格子恰有 155 种摆法，155 除以 4 余 3。</p>
+          <dl class="facts">
+            <div><dt>查新</dt><dd>别人在 2026 年 9 月 26 日公开过，比我们早 5 天。</dd></div>
+          </dl>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section aria-labelledby="lessons-h">
+    <h2 id="lessons-h">回到你的问题</h2>
+    <ul class="lessons">
+      <li><b>推理那一步确实可靠。</b>九个结果都经受住了独立复核，复核者没有推翻任何一个。给定前提往下推，大模型做得又快又稳，这和你在游戏里的观察一致。</li>
+      <li><b>难的是找到值得推的地方，以及确认它是新的。</b>331 对候选里只有 23 对值得深挖；深挖的 7 项里，只有 2 项完全查不到先例。查新花的力气和证明差不多。</li>
+      <li><b>跨领域的缺口真实存在。</b>最典型的是二次非剩余那条：OEIS 里挂了多年的经验评论，接上 1956 年教科书里的一个不等式就解决了。写评论的人和知道那个不等式的人，碰巧没有交集。形态学双射也一样，图像处理和词组合学各自都很成熟，只是没人把它们摆在一起。</li>
+      <li><b>但这些都是小前沿。</b>它们离已知结果只有几步，所以几步推理就能填上。著名难题难，是因为现有的前置条件不够，把已知的东西连起来推不到那里，得先造出新的「卡」。</li>
+      <li><b>这片前沿很拥挤。</b>我们推翻的四个猜想里，有两个已经被别人抢先公开，至少有一个团队也在用 AI 做同样的事。一篇论文挂上 arXiv，几周之内就会有机器去检验它。</li>
+    </ul>
+  </section>
+
+  <div class="game">
+    <h2 style="font-family: var(--f-display); font-size: 17px; letter-spacing: 0.06em;">和游戏的对应</h2>
+    <p>游戏里的「填」，是找一个包含原来的世界、又能让那条法走通的最小世界；现实里对应的是一个证明。游戏里的前沿，是图鉴里没人填过的缺口；现实里，OEIS 那 331 对互不引用的巧合，就是一张现成的缺口清单。我们只填了其中 7 个，剩下的还在那里。</p>
+  </div>
+
+  <section aria-labelledby="next-h">
+    <h2 id="next-h">接下来可以做的</h2>
+    <ol class="next">
+      <li>把公式、交叉引用和勘误提交给 OEIS。这需要你本人的 OEIS 账号，修改清单在仓库的 <code>frontier/OEIS_EDITS.md</code>。</li>
+      <li>给两篇论文的作者写信，附上反例和复现代码，代码在 <code>frontier/conjectures/</code>。</li>
+    </ol>
+    <p class="section-note">我没有替你提交任何东西，也没有联系任何人。</p>
+  </section>
+
+  <footer>
+    <span>证明、代码和复核记录都在仓库 guorq123456/test1 的分支 claude/youthful-goldberg-7v5ux3 下的 <code>frontier/</code> 目录。</span>
+    <a href="https://github.com/guorq123456/test1/tree/claude/youthful-goldberg-7v5ux3/frontier">在 GitHub 上打开</a>
+  </footer>
+</div>
+
+<script>
+  (function () {
+    var chips = document.querySelectorAll('.chip');
+    var cards = document.querySelectorAll('#cards .card');
+    function apply(f) {
+      chips.forEach(function (c) { c.setAttribute('aria-pressed', String(c.dataset.f === f)); });
+      cards.forEach(function (card) { card.hidden = !(f === 'all' || card.dataset.s === f); });
+    }
+    chips.forEach(function (c) { c.addEventListener('click', function () { apply(c.dataset.f); }); });
+  })();
+</script>
