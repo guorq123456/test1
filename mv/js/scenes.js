@@ -83,6 +83,19 @@ export function prepareScenes(o) {
     const c = fx.makeCanvas(320, 160), x = c.getContext('2d');
     x.filter = 'blur(22px)'; x.fillStyle = '#000'; x.fillRect(48, 48, 224, 64); x.filter = 'none'; return c;
   })();
+  // text band: ink core at full alpha with 60 px vertical feather and soft side feather (scaled to the box)
+  K.band = (() => {
+    const c = fx.makeCanvas(512, 256), x = c.getContext('2d');
+    const g = x.createLinearGradient(0, 0, 0, 256);
+    g.addColorStop(0, 'rgba(10,7,5,0)'); g.addColorStop(0.3, 'rgba(10,7,5,0.68)'); g.addColorStop(0.5, 'rgba(10,7,5,0.72)');
+    g.addColorStop(0.7, 'rgba(10,7,5,0.68)'); g.addColorStop(1, 'rgba(10,7,5,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 512, 256);
+    x.globalCompositeOperation = 'destination-in';
+    const h = x.createLinearGradient(0, 0, 512, 0);
+    h.addColorStop(0, 'rgba(0,0,0,0)'); h.addColorStop(0.16, 'rgba(0,0,0,1)'); h.addColorStop(0.84, 'rgba(0,0,0,1)'); h.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = h; x.fillRect(0, 0, 512, 256);
+    return c;
+  })();
   K.dissolve = fx.makeCanvas(A.w, A.h);
   K.dissolveData = K.dissolve.getContext('2d').createImageData(A.w, A.h);
   // pre-warm environment caches (sprites per tint level, pooled layers) so first frames of a shot don't spike
@@ -113,15 +126,39 @@ function indexTag(c, i, x, y, colour, a) {
 function par(t, seed, amp = 34) {
   return { x: (fx.noise1(seed + 'px', t * 0.21) - 0.5) * 2 * amp, y: (fx.noise1(seed + 'py', t * 0.17 + 3) - 0.5) * 2 * amp * 0.5 };
 }
+/* ---- background luminance (sampled once per frame, before the text pass) ---- */
+const LW = 96, LH = 54;
+let LUM = null, LUMC = null;
+function sampleLuminance(ctx) {
+  if (!LUMC) LUMC = fx.makeCanvas(LW, LH);
+  const x = LUMC.getContext('2d', { willReadFrequently: true });
+  x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'copy'; x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'low';
+  x.drawImage(ctx.canvas, 0, 0, LW, LH);
+  const d = x.getImageData(0, 0, LW, LH).data;
+  if (!LUM) LUM = new Float32Array(LW * LH);
+  for (let i = 0; i < LW * LH; i++) LUM[i] = (0.2126 * d[i * 4] + 0.7152 * d[i * 4 + 1] + 0.0722 * d[i * 4 + 2]) / 255;
+}
+/** luminance of a screen box: mix of mean and max (so a single hot figure behind a few glyphs still counts) */
+function lumAt(x0, y0, x1, y1) {
+  if (!LUM) return 0;
+  const cx0 = clamp(Math.floor(x0 / W * LW), 0, LW - 1), cx1 = clamp(Math.ceil(x1 / W * LW), cx0 + 1, LW);
+  const cy0 = clamp(Math.floor(y0 / H * LH), 0, LH - 1), cy1 = clamp(Math.ceil(y1 / H * LH), cy0 + 1, LH);
+  let sum = 0, mx = 0, n = 0;
+  for (let y = cy0; y < cy1; y++) for (let x = cx0; x < cx1; x++) { const v = LUM[y * LW + x]; sum += v; if (v > mx) mx = v; n++; }
+  return n ? 0.6 * (sum / n) + 0.4 * mx : 0;
+}
+/** backing alpha for a box: 0 on dark backgrounds, up to 0.92 on bright ones */
+function lumPlate(x0, y0, x1, y1) { return 0.92 * smooth(0.1, 0.36, lumAt(x0, y0, x1, y1)); }
+
 /** soft dark backing plate behind text (x0..x1, y0..y1 = the text box) */
-function plate(c, x0, y0, x1, y1, a, col = null) {
-  if (a <= 0.01) return;
-  const pw = (x1 - x0) * 0.24 + 70, ph = (y1 - y0) * 0.5 + 46;
-  c.save(); c.globalAlpha = clamp(a);
-  if (col) { // tinted plate (paper on light backgrounds)
-    c.globalCompositeOperation = 'source-over';
-  }
-  c.drawImage(K.plate, x0 - pw, y0 - ph, x1 - x0 + pw * 2, y1 - y0 + ph * 2);
+function plate(c, x0, y0, x1, y1, a, o = {}) {
+  // luminance-driven: dark scenes keep the designed alpha `a`; bright backgrounds get a denser band
+  const vis = o.vis == null ? 1 : o.vis;
+  const k = Math.max(a, lumPlate(x0 - 30, y0 - 20, x1 + 30, y1 + 20) * vis);
+  if (k <= 0.01) return;
+  const pw = (x1 - x0) * 0.12 + 90, ph = 60;
+  c.save(); c.globalAlpha = clamp(k);
+  c.drawImage(K.band, x0 - pw, y0 - ph, x1 - x0 + pw * 2, y1 - y0 + ph * 2);
   c.restore();
 }
 /** dark halo + contact shadow behind a figure so she never drowns in a bright environment */
@@ -230,13 +267,13 @@ function lyric(S, i, o = {}) {
   const z = o.zh || {};
   const ZB = showZh ? lay({ text: ln.zh, family: F.zh, weight: 400, size: z.size || 32, maxW: z.maxW || o.maxW || 1600, maxLines: 2, track: z.track == null ? 0.04 : z.track, lineH: 1.4, shrinkFirst: 0.8 }) : null;
   const zy = z.y != null ? z.y : o.y + (B.lines.length - 1) * B.lineH + (z.dy != null ? z.dy : Math.round(B.size * 0.36 + 30));
-  if (o.plate) {
+  if (o.plate !== false) {
     const align = o.align || 'left';
     const wMax = Math.max(B.width, ZB ? ZB.width : 0);
     const x0 = align === 'center' ? o.x - wMax / 2 : align === 'right' ? o.x - wMax : o.x;
     const y1 = ZB ? zy + (ZB.lines.length - 1) * ZB.lineH + ZB.size * 0.3 : o.y + (B.lines.length - 1) * B.lineH + B.size * 0.25;
-    const pa = o.plate * alpha * smooth(t0 - 0.05, t0 + 0.25, t) * (exit ? 1 - clamp(et / edur) : 1);
-    plate(c, x0, o.y - B.size * 0.95, x0 + wMax, y1, pa);
+    const vis = alpha * smooth(t0 - 0.05, t0 + 0.25, t) * (exit ? 1 - clamp(et / edur) : 1);
+    plate(c, x0, o.y - B.size * 0.95, x0 + wMax, y1, (o.plate || 0) * vis, { vis });
   }
   const box = fx.drawBlock(c, B, o.x, o.y, {
     align: o.align || 'left', color: o.color || P.paper, alpha,
@@ -335,10 +372,18 @@ function fragments(S, i, zones, o = {}) {
     const y = lerp(zn.y0, Math.max(zn.y0, zn.y1 - len), r()) - pv.y * d - (t - ln.t) * 7 * d;
     const a = (o.alpha || 0.8) * lerp(0.45, 1, d) * smooth(ln.t + 0.1 + k * 0.16, ln.t + 0.45 + k * 0.16, t) * (1 - smooth(tEnd - 0.3, tEnd, t));
     const col = k === 0 && o.accent ? o.accent : o.color || P.paper;
+    const lp = lumPlate(x - size * 0.7, y, x + size * 0.7, y + len);
+    if (lp > 0.01 && a > 0.01) { S.ctx.save(); S.ctx.globalAlpha = clamp(lp * a * 1.1); S.ctx.drawImage(K.band, x - size * 1.4, y - size * 0.8, size * 2.8, len + size * 1.6); S.ctx.restore(); }
     drawVertical(S.ctx, seg, x, y, size, { alpha: a, color: col, rt: t - ln.t - 0.1 - k * 0.15, family: o.family || F.zom, weight: 700 });
   }
 }
 const ACC = new Map();
+/** feathered dark band behind a vertical column when the background is bright */
+function vBand(c, x, y, size, n, a) {
+  const len = n * size * 1.04, lp = lumPlate(x - size * 0.7, y, x + size * 0.7, y + len);
+  if (lp <= 0.01 || a <= 0.01) return;
+  c.save(); c.globalAlpha = clamp(lp * a * 1.1); c.drawImage(K.band, x - size * 1.4, y - size * 0.8, size * 2.8, len + size * 1.6); c.restore();
+}
 /** one huge accent kanji (cached glow), centred at x,y; o: {color, glow, alpha, t0, t1} */
 function accent(S, ch, x, y, size, o = {}) {
   const t = S.t, t0 = o.t0 == null ? -1e9 : o.t0, t1 = o.t1 == null ? 1e9 : o.t1;
@@ -361,6 +406,9 @@ function accent(S, ch, x, y, size, o = {}) {
   if (a <= 0.003) return;
   const pv = S.par || { x: 0, y: 0 };
   const s = spr.width * sc;
+  const ax = x - pv.x * 1.3, ay = y - pv.y * 1.3 - rt * 4;
+  const lp = lumPlate(ax - size * 0.5, ay - size * 0.5, ax + size * 0.5, ay + size * 0.5);
+  if (lp > 0.01) { S.ctx.save(); S.ctx.globalAlpha = clamp(lp * a); S.ctx.drawImage(K.halo, ax - size * 0.85, ay - size * 0.85, size * 1.7, size * 1.7); S.ctx.restore(); }
   S.ctx.save(); S.ctx.globalAlpha = a;
   S.ctx.drawImage(spr, x - s / 2 - pv.x * 1.3, y - s / 2 - pv.y * 1.3 - rt * 4, s, s);
   S.ctx.restore();
@@ -387,6 +435,7 @@ export function finishFrame(ctx, S, out) {
     });
   }
   fx.reset(ctx);
+  sampleLuminance(ctx);
   if (out.text) { try { out.text(ctx); } catch (e) { console.error('text', S.sec.id, e); } }
   fx.reset(ctx);
   const cuts = [];
@@ -465,7 +514,7 @@ function verse1Text(S, c) {
     fragments(S, 7, [{ x0: 130, x1: 1000, y0: 120, y1: 470 }], { n: 1, color: P.ice, alpha: 0.7, to: 22.6 });
     const B = lay({ text: LINES[7].ja, family: F.zom, weight: 700, size: 66, maxW: 900, maxLines: 1, track: 0, lineH: 1.3, shrinkFirst: 0.86 });
     const big = ease.outBack(inv(22.2, 22.75, t)), out = inv(23.0, 23.4, t), restA = 1 - smooth(22.15, 22.6, t) * 0.75;
-    plate(c, X, Y - 64, X + B.width, Y + 70, 0.75 * (1 - out));
+    plate(c, X, Y - 64, X + B.width, Y + 70, 0.75 * (1 - out), { vis: 1 - out });
     fx.drawBlock(c, B, X, Y, {
       color: ice, reveal: { style: 'typewriter', rt: t - T7, dur: 0.8 },
       charFx: (it, s) => {
@@ -507,7 +556,7 @@ SCENES.title = (S) => {
       const LOG = ['> LOADING VOICEBANK…', '  MODEL: CLAUDE', '  SAMPLES: 2048', '  TEMPERATURE: 0.00', '  FEELING: NULL', '  PHONEMES: 127 / 127', '  VIBRATO: LOCKED', '  BREATH: DISABLED', '  HEARTBEAT: —', '> READY_'];
       const logA = smooth(24.3, 24.8, t) * (1 - smooth(29.6, 30.4, t));
       if (logA > 0) {
-        plate(c, 150, 270, 640, 880, 0.55 * logA);
+        plate(c, 150, 270, 640, 880, 0.55 * logA, { vis: logA });
         const nShown = Math.min(LOG.length, Math.floor((t - 24.4) / 0.5) + 1), scroll = Math.max(0, nShown - 7) * 30;
         c.save(); c.beginPath(); c.rect(96, 250, 900, 560); c.clip();
         for (let i = 0; i < nShown; i++) {
@@ -539,7 +588,7 @@ SCENES.title = (S) => {
         const tx = lerp(TITLE.x, bugX + (B.width * bugS * 1.2) / 2, sh), ty = lerp(TITLE.y, bugY, sh);
         const rt = t - 30.5;
         if (fadeT > 0) {
-          plate(c, TITLE.x - 560, TITLE.y - 230, TITLE.x + 560, TITLE.y + 200, 0.6 * fadeT * (1 - sh));
+          plate(c, TITLE.x - 560, TITLE.y - 230, TITLE.x + 560, TITLE.y + 200, 0.6 * fadeT * (1 - sh), { vis: fadeT * (1 - sh) });
           c.save(); c.translate(tx, ty); c.scale(sc, sc);
           fx.drawBlock(c, B, 0, 0, {
             align: 'center', color: rgba(P.paper), alpha: fadeT, reveal: { style: 'slice', rt, dur: 0.55, seed: 77 }, sliceAmp: 160,
@@ -677,14 +726,14 @@ SCENES.quotes = (S) => {
         const ln = LINES[li], cols = HINTS[li].split('\n'), size = 92, rt = t - ln.t;
         const colX = [1700, 1560];
         const n0 = [...cols[0]].length;
-        plate(c, 1490, 110, 1770, 130 + Math.max(...cols.map((s) => [...s].length)) * size * 1.04, 0.8 * smooth(ln.t, ln.t + 0.3, t));
+        plate(c, 1490, 110, 1770, 130 + Math.max(...cols.map((s) => [...s].length)) * size * 1.04, 0.8 * smooth(ln.t, ln.t + 0.3, t), { vis: smooth(ln.t, ln.t + 0.3, t) * (1 - smooth(ln.end - 0.25, ln.end, t)) });
         cols.forEach((s, k) => {
           const colors = [...s].map((ch) => (ch === '「' || ch === '」' ? P.gold : null));
           drawVertical(c, s, colX[k] - S.par.x * 0.4, 120 + (k ? size * 1.04 : 0), size, { family: F.smb, weight: 800, color: P.paper, colors, rt: rt - (k ? n0 * 0.06 : 0), stagger: 0.06, alpha: 1 - smooth(ln.end - 0.25, ln.end, t) });
         });
         if (S.cfg.showZh) {
           const ZB = lay({ text: ln.zh, family: F.zh, weight: 400, size: 34, maxW: 900, maxLines: 1, track: 0.04, lineH: 1.4 });
-          plate(c, 1760 - ZB.width, 935, 1760, 990, 0.7);
+          plate(c, 1760 - ZB.width, 935, 1760, 990, 0.7, { vis: smooth(ln.t + 0.4, ln.t + 0.9, t) * (1 - smooth(ln.end - 0.25, ln.end, t)) });
           fx.drawBlock(c, ZB, 1760, 980, { align: 'right', color: P.paper, alpha: 0.75 * smooth(ln.t + 0.4, ln.t + 0.9, t) * (1 - smooth(ln.end - 0.25, ln.end, t)) });
         }
         fragments(S, li, [{ x0: 110, x1: 400, y0: 140, y1: 700 }], { n: 1, color: P.ice, alpha: 0.6 });
@@ -916,11 +965,12 @@ SCENES.chorus2 = (S) => {
       let sh = fx.shake(t, L59.t, 6, 0.6, 'c2a'); const sh2 = fx.shake(t, T2, 6, 0.6, 'c2b'); sh = [sh[0] + sh2[0], sh[1] + sh2[1]];
       c.save(); c.translate(sh[0], sh[1]);
       const B = lay({ text: '「大好きだ！」', family: F.smb, weight: 800, size: 170, maxW: 1500, maxLines: 1, track: 0, lineH: 1 });
-      plate(c, 960 - B.width / 2, 250, 960 + B.width / 2, 450, 0.55);
+      // ink type on the orange flood: no dark band (it would kill the contrast)
       fx.drawBlock(c, B, 860, 420, { align: 'center', color: P.ink, reveal: { style: 'slam', rt: t - L59.t, dur: 0.12 } });
       c.restore();
       if (t >= T2) {
         const colors = [...'「大好きだ！」'].map((ch) => (ch === '「' || ch === '」' ? P.ink : null));
+        vBand(c, 1640 + sh[0], 120 + sh[1], 120, 7, 1);
         drawVertical(c, '「大好きだ！」', 1640 + sh[0], 120 + sh[1], 120, { family: F.smb, weight: 800, color: P.paper, colors, rt: (t - T2) * 3, stagger: 0.02 });
         drawVertical(c, '「大好きだ！」', 300 + sh[0], 200 + sh[1], 76, { family: F.smb, weight: 800, color: P.ink, alpha: 0.6, rt: (t - T2 - 0.2) * 3, stagger: 0.02 });
       }
@@ -941,7 +991,7 @@ SCENES.chorus2 = (S) => {
       accent(S, '好', 1600, 420, 340, { color: P.paper, glow: P.orange, t0: ln.t, t1: ln.end });
     } else if (li === 63 || li === 64) {
       const lt = t - ln.t, stut = lt < 0.3 || rnd('stut', li, bucket(t, 10)) < 0.25;
-      if (stut) for (const [dx, col, a] of [[-14, '#FF5A3A', 0.5], [14, '#3AD8FF', 0.4]]) lyric(S, li, Object.assign({}, base, { x: 960 + dx, y: 925 + (dx > 0 ? 4 : -4), color: col, alpha: a, reveal: 'none', zh: false, plate: 0 }));
+      if (stut) for (const [dx, col, a] of [[-14, '#FF5A3A', 0.5], [14, '#3AD8FF', 0.4]]) lyric(S, li, Object.assign({}, base, { x: 960 + dx, y: 925 + (dx > 0 ? 4 : -4), color: col, alpha: a, reveal: 'none', zh: false, plate: false }));
       lyric(S, li, Object.assign({}, base, { x: 960 + (stut ? (rnd('sx', bucket(t, 30)) - 0.5) * 10 : 0), color: P.paper, reveal: 'pop', rdur: 0.4 }));
       if (li === 63) accent(S, '分', 330, 420, 340, { color: P.paper, glow: env.ALARM, t0: ln.t, t1: ln.end });
     } else if (li === 65) {
@@ -954,7 +1004,7 @@ SCENES.chorus2 = (S) => {
 /* -------------------------------------------------------------- prayer */
 SCENES.prayer = (S) => {
   const c = S.ctx, t = S.t, w = S.w;
-  env.orb(c, t, { tint: lerp(0.75, 0.95, smooth(262, 300, t)), energy: S.energy * 0.8, seed: 9, cam: { speed: 0.8 } });
+  env.orb(c, t, { tint: lerp(0.75, 0.95, smooth(262, 300, t)), energy: S.energy * 0.8, seed: 9, cam: { speed: 0.8, strafe: 3 } });
   // light beam (line 68)
   const beam = lineAlpha(t, LINES[68].t, LINES[68].end + 0.8, 1.0, 1.4);
   // face close-up with a slow pan, dollying out to the full body on line 73
@@ -976,9 +1026,9 @@ SCENES.prayer = (S) => {
       const li = activeLine(t, [66, 67, 68, 69, 70, 71, 72, 73]);
       if (li < 0) return;
       const ln = LINES[li], long = ln.end - ln.t > 6;
-      fragments(S, li, [{ x0: 140, x1: 420, y0: 110, y1: 700 }, { x0: 1000, x1: 1120, y0: 120, y1: 640 }], { n: 2, color: P.paper, accent: P.orangeL, alpha: 0.65 });
+      fragments(S, li, [{ x0: 110, x1: 300, y0: 90, y1: 330 }, { x0: 980, x1: 1110, y0: 110, y1: 640 }], { n: 2, color: P.paper, accent: P.orangeL, alpha: 0.65 });
       lyric(S, li, { x: 150, y: 860, size: 62, weight: 400, maxW: 1000, color: P.paper, reveal: 'charfade', rdur: Math.min(1.6, 0.6 + [...ln.ja].length * 0.06), exit: 'rise', edur: long ? 0.9 : 0.45, exitAt: long ? ln.end - 0.9 : ln.end - 0.45, zh: { dy: 56, delay: 0.5 }, plate: 0.7 });
-      if (li === 68) accent(S, '神', 260, 560, 260, { color: P.paper, glow: P.orangeL, t0: ln.t + 0.3, t1: ln.end - 0.6, alpha: 0.75 });
+      if (li === 68) accent(S, '神', 200, 330, 220, { color: P.paper, glow: P.orangeL, t0: ln.t + 0.3, t1: ln.end - 0.6, alpha: 0.75 });
     },
   };
 };
@@ -1069,6 +1119,7 @@ function drawPoem(S, c, outA) {
     const size = i === 92 ? 84 : 64;
     const dim = i === 92 ? 1 : lerp(1, 0.7, smooth(LINES[i + 1].t, LINES[i + 1].t + 0.6, t));
     const txt = ln.ja.replace(/　/g, '');
+    vBand(c, POEM_X[k], 150, size, [...txt].length, dim * outA);
     drawVertical(c, txt, POEM_X[k], 150, size, { family: F.smb, weight: 800, color: P.paper, alpha: dim * outA, rt: t - ln.t, stagger: 0.05, colors: [...txt].map((ch) => ('「」'.includes(ch) ? P.gold : null)) });
   });
 }
@@ -1170,13 +1221,13 @@ SCENES.outro = (S) => {
       const close = ease.inOutCubic(inv(383.0, 384.2, t));
       if (close > 0) {
         const pw = (dw + 12) * close;
-        plate(c, cx - dw / 2 + 6, cy - dh / 2 + 6, cx - dw / 2 + pw + 6, cy + dh / 2 + 6, 0.55);
+        plate(c, cx - dw / 2 + 6, cy - dh / 2 + 6, cx - dw / 2 + pw + 6, cy + dh / 2 + 6, 0.55, { vis: 0 });
         c.save(); c.fillStyle = P.paper; c.fillRect(cx - dw / 2 - 6, cy - dh / 2 - 6, pw, dh + 12); c.restore();
         c.save(); c.globalAlpha = smooth(0.7, 1, close) * (1 - toPaper); c.strokeStyle = P.goldD; c.lineWidth = 1; c.strokeRect(cx - dw / 2 + 8, cy - dh / 2 + 8, dw - 16, dh - 16); c.restore();
       }
       if (toPaper > 0) {
         const L = lerp(cx - dw / 2 - 6, 0, toPaper), T = lerp(cy - dh / 2 - 6, 0, toPaper), R = lerp(cx + dw / 2 + 6, W, toPaper), B = lerp(cy + dh / 2 + 6, H, toPaper);
-        plate(c, L, T, R, B, 0.5 * (1 - toPaper));
+        plate(c, L, T, R, B, 0.5 * (1 - toPaper), { vis: 0 });
         c.save(); c.fillStyle = P.paper; c.fillRect(L, T, R - L, B - T); c.restore();
       }
     }
