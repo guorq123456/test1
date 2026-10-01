@@ -1,0 +1,6291 @@
+[
+ {
+  "a": "A118237",
+  "b": "A118304",
+  "match": 93,
+  "align": [
+   2,
+   0
+  ],
+  "len_a": 95,
+  "len_b": 95,
+  "diverge": false,
+  "sample": "25,53,36,64,47,75,58,86,69,97,80,9",
+  "name_a": "Start with 14 and repeatedly reverse the digits and add 1 to get the next term.",
+  "name_b": "Start with 25 and repeatedly reverse the digits and add 1 to get the next term.",
+  "kw_a": "base,nonn",
+  "kw_b": "base,nonn",
+  "auth_a": "Luc Stevens (lms022(AT)yahoo.com), May 14 2006",
+  "auth_b": "Luc Stevens (lms022(AT)yahoo.com), May 14 2006"
+ },
+ {
+  "a": "A118296",
+  "b": "A118299",
+  "match": 91,
+  "align": [
+   3,
+   0
+  ],
+  "len_a": 94,
+  "len_b": 94,
+  "diverge": false,
+  "sample": "24,43,35,54,46,65,57,76,68,87,79,98",
+  "name_a": "Start with 21 and repeatedly reverse the digits and add 1 to get the next term.",
+  "name_b": "Start with 24 and repeatedly reverse the digits and add 1 to get the next term.",
+  "kw_a": "base,nonn,easy",
+  "kw_b": "base,nonn",
+  "auth_a": "Luc Stevens (lms022(AT)yahoo.com), May 14 2006",
+  "auth_b": "Luc Stevens (lms022(AT)yahoo.com), May 14 2006"
+ },
+ {
+  "a": "A118297",
+  "b": "A118512",
+  "match": 88,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 93,
+  "len_b": 90,
+  "diverge": false,
+  "sample": "22,23,33,34,44,45,55,56,66,67,77,78",
+  "name_a": "Start with 22 and repeatedly reverse the digits and add 1 to get the next term.",
+  "name_b": "Define sequence S_m by: initial term = m, reverse digits and add 1 to get next term. Entry shows S_11. This reaches a cycle of length 9 in 18 steps.",
+  "kw_a": "base,nonn",
+  "kw_b": "nonn,base,easy",
+  "auth_a": "Luc Stevens (lms022(AT)yahoo.com), May 14 2006",
+  "auth_b": "_N. J. A. Sloane_, May 06 2006"
+ },
+ {
+  "a": "A118298",
+  "b": "A118512",
+  "match": 87,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 94,
+  "len_b": 90,
+  "diverge": false,
+  "sample": "23,33,34,44,45,55,56,66,67,77,78,88",
+  "name_a": "Start with 23 and repeatedly reverse the digits and add 1 to get the next term.",
+  "name_b": "Define sequence S_m by: initial term = m, reverse digits and add 1 to get next term. Entry shows S_11. This reaches a cycle of length 9 in 18 steps.",
+  "kw_a": "base,nonn",
+  "kw_b": "nonn,base,easy",
+  "auth_a": "Luc Stevens (lms022(AT)yahoo.com), May 14 2006",
+  "auth_b": "_N. J. A. Sloane_, May 06 2006"
+ },
+ {
+  "a": "A118299",
+  "b": "A118513",
+  "match": 86,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 94,
+  "len_b": 88,
+  "diverge": false,
+  "sample": "24,43,35,54,46,65,57,76,68,87,79,98",
+  "name_a": "Start with 24 and repeatedly reverse the digits and add 1 to get the next term.",
+  "name_b": "Define sequence S_m by: initial term = m, reverse digits and add 1 to get next term. Entry shows S_13. This reaches a cycle of length 9 in 15 steps.",
+  "kw_a": "base,nonn",
+  "kw_b": "nonn,base,easy",
+  "auth_a": "Luc Stevens (lms022(AT)yahoo.com), May 14 2006",
+  "auth_b": "_N. J. A. Sloane_, May 06 2006"
+ },
+ {
+  "a": "A327451",
+  "b": "A359128",
+  "match": 64,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 65,
+  "len_b": 66,
+  "diverge": false,
+  "sample": "1,2,3,5,8,13,21,4,25,29,6,35",
+  "name_a": "a(1) = 1 and a(2) = 2; thereafter, if a(n) and a(n+1) do not share a digit, then a(n+2) = a(n) + a(n+1), otherwise a(n+2) is the smallest number not yet in the sequence.",
+  "name_b": "The Fibostracci sequence: a(0) = 0, a(1) = 1; thereafter a(n) = a(n-1)+a(n-2) if a(n-1) and a(n-2) do not share a digit, otherwise a(n) is the smallest number not yet in the sequence.",
+  "kw_a": "nonn,base",
+  "kw_b": "nonn,base",
+  "auth_a": "_N. J. A. Sloane_, Sep 22 2019",
+  "auth_b": "_Eric Angelini_, Sep 30 2022 [Submitted on his behalf by _N. J. A. Sloane_, Dec 25 2022]"
+ },
+ {
+  "a": "A064187",
+  "b": "A270830",
+  "match": 60,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 63,
+  "len_b": 63,
+  "diverge": false,
+  "sample": "5,13,7,7,79,37,23,67,89,13,89,131",
+  "name_a": "First of n^2 consecutive odd primes whose sum (=S) is divisible by n and S/n == n (mod 2).",
+  "name_b": "Smallest of n^2 consecutive primes that form an n X n semimagic square with the least magic sum, or 0 if no such magic square exists.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "H. K. Gottlob Maier (1korrago(AT)freenet.de), Sep 20 2001",
+  "auth_b": "_Arkadiusz Wesolowski_, Mar 23 2016"
+ },
+ {
+  "a": "A058937",
+  "b": "A130518",
+  "match": 59,
+  "align": [
+   2,
+   0
+  ],
+  "len_a": 61,
+  "len_b": 60,
+  "diverge": false,
+  "sample": "0,0,0,1,2,3,5,7,9,12,15,18",
+  "name_a": "Maximal exponent of x in all terms of Somos polynomial of order n.",
+  "name_b": "a(n) = Sum_{k=0..n} floor(k/3). (Partial sums of A002264.)",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert G. Wilson v_, Jan 11 2001",
+  "auth_b": "_Hieronymus Fischer_, Jun 01 2007"
+ },
+ {
+  "a": "A066542",
+  "b": "A174090",
+  "match": 59,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 59,
+  "len_b": 62,
+  "diverge": false,
+  "sample": "3,4,5,7,8,11,13,16,17,19,23,29",
+  "name_a": "Nonnegative integers all of whose anti-divisors are either 2 or odd.",
+  "name_b": "Powers of 2 and odd primes; alternatively, numbers that cannot be written as a sum of at least three consecutive positive integers.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_John W. Layman_, Jan 07 2002",
+  "auth_b": "_Vladimir Joseph Stephan Orlovsky_, Mar 07 2010, and _Omar E. Pol_, Feb 24 2014"
+ },
+ {
+  "a": "A086304",
+  "b": "A118538",
+  "match": 58,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 58,
+  "len_b": 70,
+  "diverge": false,
+  "sample": "1,5,7,11,13,17,23,25,31,35,37,41",
+  "name_a": "Numbers n such that n+6 is prime.",
+  "name_b": "a(n) = A000040(n+1) - 6.",
+  "kw_a": "nonn,easy",
+  "kw_b": "sign,less",
+  "auth_a": "_Giovanni Teofilatto_, Aug 29 2003",
+  "auth_b": "_Roger L. Bagula_, May 06 2006"
+ },
+ {
+  "a": "A116974",
+  "b": "A137922",
+  "match": 58,
+  "align": [
+   2,
+   2
+  ],
+  "len_a": 60,
+  "len_b": 61,
+  "diverge": false,
+  "sample": "5,6,7,11,13,17,19,23,29,31,37,41",
+  "name_a": "Numbers n for which the sum of the proper divisors equals the product of the proper divisors.",
+  "name_b": "Numbers having exactly two divisors d such that d+1 is not a divisor.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "Luc Stevens (lms022(AT)yahoo.com), Apr 01 2006",
+  "auth_b": "_Reinhard Zumkeller_, Feb 23 2008"
+ },
+ {
+  "a": "A168101",
+  "b": "A357778",
+  "match": 58,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 62,
+  "len_b": 60,
+  "diverge": false,
+  "sample": "3,6,10,15,20,25,30,35,40,45,50,55",
+  "name_a": "a(n) = sum of natural numbers m such that n - 2 <= m <= n + 2.",
+  "name_b": "Maximum number of edges in a 5-degenerate graph with n vertices.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Jaroslav Krizek_, Nov 18 2009",
+  "auth_b": "_Allan Bickle_, Oct 13 2022"
+ },
+ {
+  "a": "A039832",
+  "b": "A263990",
+  "match": 57,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 60,
+  "len_b": 62,
+  "diverge": false,
+  "sample": "33,34,38,57,85,86,93,94,118,122,133,141",
+  "name_a": "Numbers k such that k and k+1 both have 4 divisors.",
+  "name_b": "Nonsquare numbers k such that k and k+1 are semiprimes.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_N. J. A. Sloane_, _Felice Russo_, _Olivier Gérard_, Dec 11 1999",
+  "auth_b": "_Zak Seidov_, Oct 31 2015"
+ },
+ {
+  "a": "A071904",
+  "b": "A326586",
+  "match": 57,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 57,
+  "len_b": 57,
+  "diverge": false,
+  "sample": "9,15,21,25,27,33,35,39,45,49,51,55",
+  "name_a": "Odd composite numbers.",
+  "name_b": "Odd numbers which do not satisfy Korselt's criterion, complement of A324050.",
+  "kw_a": "nice,nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_Shyam Sunder Gupta_, Jun 12 2002",
+  "auth_b": "_Peter Luschny_, Jul 21 2019"
+ },
+ {
+  "a": "A137922",
+  "b": "A193461",
+  "match": 57,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 61,
+  "len_b": 59,
+  "diverge": false,
+  "sample": "3,4,5,6,7,11,13,17,19,23,29,31",
+  "name_a": "Numbers having exactly two divisors d such that d+1 is not a divisor.",
+  "name_b": "Numbers n such that phi(n) divides 2*(n-1).",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_Reinhard Zumkeller_, Feb 23 2008",
+  "auth_b": "_José María Grau Ribas_, Jul 26 2011"
+ },
+ {
+  "a": "A274170",
+  "b": "A367745",
+  "match": 57,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 57,
+  "len_b": 59,
+  "diverge": false,
+  "sample": "2,4,6,8,14,16,20,26,30,32,62,64",
+  "name_a": "Christoffel words as binary numbers.",
+  "name_b": "Numbers which occur anywhere in A367795, i.e. in lists L(k) where L(1) = [1,0] and L(k+1) is obtained from L(k) by inserting their binary concatenation between elements x,y.",
+  "kw_a": "easy,nonn",
+  "kw_b": "nonn,base",
+  "auth_a": "_Jamie Simpson_, Jun 11 2016",
+  "auth_b": "_Luc Rousseau_, Nov 29 2023"
+ },
+ {
+  "a": "A167136",
+  "b": "A176628",
+  "match": 56,
+  "align": [
+   2,
+   1
+  ],
+  "len_a": 58,
+  "len_b": 57,
+  "diverge": false,
+  "sample": "5,8,11,16,19,24,27,32,39,42,49,54",
+  "name_a": "a(n) = b(n)-th highest positive integer not equal to any a(k), 1 <= k <= n-1, where b(n) = noncomposite numbers = A008578(n).",
+  "name_b": "a(n) = prime(n) - n*(-1)^prime(n).",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Jaroslav Krizek_, Oct 28 2009",
+  "auth_b": "_Juri-Stepan Gerasimov_, Apr 22 2010"
+ },
+ {
+  "a": "A175787",
+  "b": "A335402",
+  "match": 56,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 60,
+  "len_b": 59,
+  "diverge": false,
+  "sample": "4,5,7,11,13,17,19,23,29,31,37,41",
+  "name_a": "Primes together with 4.",
+  "name_b": "Numbers m such that the only normal integer partition of m whose run-lengths are a palindrome is (1)^m.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Michel Lagneau_, Sep 04 2010",
+  "auth_b": "_Gus Wiseman_, Jun 06 2020"
+ },
+ {
+  "a": "A060343",
+  "b": "A118753",
+  "match": 56,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 57,
+  "len_b": 59,
+  "diverge": false,
+  "sample": "13,17,23,29,29,37,37,41,47,53,53,59",
+  "name_a": "Smallest prime which is the sum of n composite numbers.",
+  "name_b": "First prime after 4n. Smallest prime >= 4*n. Bisection of A060264.",
+  "kw_a": "nonn",
+  "kw_b": "easy,nonn",
+  "auth_a": "_Robert G. Wilson v_, Mar 30 2001",
+  "auth_b": "_Jonathan Vos Post_, Apr 29 2006"
+ },
+ {
+  "a": "A157996",
+  "b": "A197636",
+  "match": 56,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 56,
+  "len_b": 101,
+  "diverge": false,
+  "sample": "11,17,19,23,29,31,37,41,43,47,53,59",
+  "name_a": "Primes which are sum of 1 and two nonconsecutive primes p1 and p2, p2 - p1 > 2.",
+  "name_b": "Non-Wilson primes: primes p such that (p-1)! =/= -1 mod p^2.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Vladimir Joseph Stephan Orlovsky_, Mar 11 2009",
+  "auth_b": "_Jonathan Sondow_, Oct 19 2011"
+ },
+ {
+  "a": "A004652",
+  "b": "A181385",
+  "match": 55,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 58,
+  "len_b": 59,
+  "diverge": false,
+  "sample": "3,4,7,9,13,16,21,25,31,36,43,49",
+  "name_a": "Expansion of x*(1+x^2+x^4)/((1-x)*(1-x^2)*(1-x^3)).",
+  "name_b": "Maximal number that can be obtained by reversing n in an integer base.",
+  "kw_a": "nonn,easy",
+  "kw_b": "base,nonn",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_Dylan Hamilton_, Oct 16 2010"
+ },
+ {
+  "a": "A140486",
+  "b": "A140487",
+  "match": 55,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 58,
+  "len_b": 58,
+  "diverge": false,
+  "sample": "14,18,23,26,30,37,40,46,50,54,59,62",
+  "name_a": "Trajectory of 2 under repeated application of the map: n -> n + second-smallest number that does not divide n.",
+  "name_b": "Trajectory of 3 under repeated application of the map: n -> n + second-smallest number that does not divide n.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Eric Angelini_, Jun 25 2008",
+  "auth_b": "_Eric Angelini_, Jun 25 2008"
+ },
+ {
+  "a": "A007777",
+  "b": "A330257",
+  "match": 54,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 57,
+  "len_b": 56,
+  "diverge": false,
+  "sample": "6,10,14,20,24,30,36,44,48,60,60,62",
+  "name_a": "Number of overlap-free binary words of length n.",
+  "name_b": "Number of length-n ternary squarefree words having no occurrences of either 010 or 212.",
+  "kw_a": "nonn,easy,nice",
+  "kw_b": "nonn,look",
+  "auth_a": "Julien Cassaigne (cassaign(AT)clipper.ens.fr)",
+  "auth_b": "_Jeffrey Shallit_, Dec 07 2019"
+ },
+ {
+  "a": "A102040",
+  "b": "A102041",
+  "match": 54,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 57,
+  "len_b": 56,
+  "diverge": false,
+  "sample": "14,18,26,32,34,38,46,52,54,58,66,72",
+  "name_a": "a(n) = a(n-1) + last digit of a(n-1), starting at 3.",
+  "name_b": "a(n) = a(n-1) + last digit of a(n-1), starting at 7.",
+  "kw_a": "easy,nonn,base",
+  "kw_b": "nonn,base,easy",
+  "auth_a": "Samantha Stones (devilsdaughter2000(AT)hotmail.com), Dec 25 2004",
+  "auth_b": "Samantha Stones (devilsdaughter2000(AT)hotmail.com), Dec 25 2004"
+ },
+ {
+  "a": "A187797",
+  "b": "A249628",
+  "match": 54,
+  "align": [
+   1,
+   3
+  ],
+  "len_a": 62,
+  "len_b": 57,
+  "diverge": false,
+  "sample": "16,18,22,24,30,34,36,42,46,48,54,60",
+  "name_a": "Numbers having at least two different ordered partitions p+q and (p+2)+(q-2) where p, q, p+2 and q-2 are all prime.",
+  "name_b": "Sums of two numbers that are the average of a twin prime pair (A014574).",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Bob Gilson_, Aug 30 2013",
+  "auth_b": "_Wesley Ivan Hurt_, Nov 02 2014"
+ },
+ {
+  "a": "A109934",
+  "b": "A164376",
+  "match": 53,
+  "align": [
+   2,
+   2
+  ],
+  "len_a": 55,
+  "len_b": 55,
+  "diverge": false,
+  "sample": "27,35,51,57,65,77,87,93,95,117,119,121",
+  "name_a": "Composite numbers which are not the sum of two distinct primes.",
+  "name_b": "Nonprime numbers that are not a sum of 2 primes.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Amarnath Murthy_, Jul 19 2005",
+  "auth_b": "_Juri-Stepan Gerasimov_, Aug 14 2009"
+ },
+ {
+  "a": "A052147",
+  "b": "A123123",
+  "match": 53,
+  "align": [
+   2,
+   2
+  ],
+  "len_a": 55,
+  "len_b": 59,
+  "diverge": false,
+  "sample": "7,9,13,15,19,21,25,31,33,39,43,45",
+  "name_a": "a(n) = prime(n) + 2.",
+  "name_b": "Numbers m such that m mod k = 2 for only one integer k in 2..m.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "Simon Colton (simonco(AT)cs.york.ac.uk), Jan 24 2000",
+  "auth_b": "Jared B. Ricks (jaredricks(AT)yahoo.com), Sep 24 2006"
+ },
+ {
+  "a": "A051741",
+  "b": "A227388",
+  "match": 53,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 55,
+  "len_b": 55,
+  "diverge": false,
+  "sample": "4,10,14,24,30,36,42,48,54,72,80,88",
+  "name_a": "Associated with a chi-inequality greedy algorithm.",
+  "name_b": "Smallest m such that A226390(m) = n.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Steven Finch_, Dec 07 1999",
+  "auth_b": "_Reinhard Zumkeller_, Jul 10 2013"
+ },
+ {
+  "a": "A053662",
+  "b": "A067241",
+  "match": 53,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 55,
+  "len_b": 56,
+  "diverge": false,
+  "sample": "9,21,23,33,39,51,63,65,81,89,95,99",
+  "name_a": "Numbers k such that 2k+1 divides k!+1.",
+  "name_b": "Numbers k such that gcd((2*k)!+1, k!+1) > 1.",
+  "kw_a": "easy,nonn",
+  "kw_b": "easy,nonn",
+  "auth_a": "_Chris K. Caldwell_, Feb 16 2000",
+  "auth_b": "_Benoit Cloitre_, Feb 20 2002"
+ },
+ {
+  "a": "A066875",
+  "b": "A173891",
+  "match": 53,
+  "align": [
+   0,
+   1
+  ],
+  "len_a": 54,
+  "len_b": 54,
+  "diverge": false,
+  "sample": "3,16,37,40,47,55,56,74,103,108,111,119",
+  "name_a": "Numbers k such that prime(k+1) + prime(k-1) = 2*prime(k).",
+  "name_b": "Numbers n such that the n-th noncomposite number plus the (n+2)nd noncomposite number is an even semiprime.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Benoit Cloitre_, Jan 21 2002",
+  "auth_b": "_Juri-Stepan Gerasimov_, Mar 01 2010"
+ },
+ {
+  "a": "A079251",
+  "b": "A079252",
+  "match": 53,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 56,
+  "len_b": 55,
+  "diverge": false,
+  "sample": "10,12,14,22,24,26,28,30,32,46,48,50",
+  "name_a": "Complement of A079000.",
+  "name_b": "Even numbers not in A079000.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_N. J. A. Sloane_, Feb 04 2003",
+  "auth_b": "_N. J. A. Sloane_, Feb 04 2003"
+ },
+ {
+  "a": "A079346",
+  "b": "A214029",
+  "match": 53,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 61,
+  "len_b": 55,
+  "diverge": false,
+  "sample": "7,11,19,23,31,43,59,67,71,79,83,103",
+  "name_a": "Primes p such that F(p-(p/5)) is the first Fibonacci number that p divides.",
+  "name_b": "The union of the disjoint prime sequences A000057 and A106535.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Jon Perry_, Jan 04 2003",
+  "auth_b": "_Art DuPre_, Jul 09 2012"
+ },
+ {
+  "a": "A132247",
+  "b": "A171688",
+  "match": 53,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 54,
+  "len_b": 55,
+  "diverge": false,
+  "sample": "11,13,17,19,29,31,41,43,59,61,71,73",
+  "name_a": "Twin primes congruent to {1, 11, 13, 17, 19, 29} mod 30.",
+  "name_b": "Twin primes > 3.",
+  "kw_a": "easy,nonn",
+  "kw_b": "nonn,less",
+  "auth_a": "_Omar E. Pol_, Aug 18 2007",
+  "auth_b": "_Juri-Stepan Gerasimov_, Dec 15 2009"
+ },
+ {
+  "a": "A196226",
+  "b": "A362866",
+  "match": 53,
+  "align": [
+   1,
+   0
+  ],
+  "len_a": 54,
+  "len_b": 54,
+  "diverge": false,
+  "sample": "10,14,22,26,34,38,46,58,62,74,82,86",
+  "name_a": "m such that A054024(m) (sum of divisors of m reduced modulo m) is 3 + m/2.",
+  "name_b": "Numbers k with the property that the parts of the symmetric representation of sigma(k) are two octagons.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_John W. Layman_, Sep 29 2011",
+  "auth_b": "_Omar E. Pol_, May 06 2023"
+ },
+ {
+  "a": "A197638",
+  "b": "A362866",
+  "match": 53,
+  "align": [
+   1,
+   1
+  ],
+  "len_a": 54,
+  "len_b": 54,
+  "diverge": false,
+  "sample": "14,22,26,34,38,46,58,62,74,82,86,94",
+  "name_a": "GA1 numbers: composite m with G(m) >= G(m/p) for all prime factors p of m, where G(k) = sigma(k)/(k*log(log(k))) and sigma(k) = sum of divisors of k.",
+  "name_b": "Numbers k with the property that the parts of the symmetric representation of sigma(k) are two octagons.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "Geoffrey Caveney, Jean-Louis Nicolas and _Jonathan Sondow_, Dec 02 2011",
+  "auth_b": "_Omar E. Pol_, May 06 2023"
+ },
+ {
+  "a": "A216740",
+  "b": "A216772",
+  "match": 53,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 53,
+  "len_b": 55,
+  "diverge": false,
+  "sample": "5,7,13,19,23,29,31,37,47,53,61,67",
+  "name_a": "Primes p such that x^18 = -2 has no solution mod p.",
+  "name_b": "Primes p such that x^54 = -2 has no solution mod p.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Vincenzo Librandi_, Sep 15 2012",
+  "auth_b": "_Vincenzo Librandi_, Sep 16 2012"
+ },
+ {
+  "a": "A001749",
+  "b": "A062876",
+  "match": 52,
+  "align": [
+   1,
+   1
+  ],
+  "len_a": 65,
+  "len_b": 53,
+  "diverge": false,
+  "sample": "12,20,28,44,52,68,76,92,116,124,148,164",
+  "name_a": "Primes multiplied by 4.",
+  "name_b": "Numbers of lattice points corresponding to incrementally largest circle radii in A062875.",
+  "kw_a": "nonn,easy",
+  "kw_b": "easy,nonn",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_Eric W. Weisstein_"
+ },
+ {
+  "a": "A006883",
+  "b": "A106849",
+  "match": 52,
+  "align": [
+   2,
+   1
+  ],
+  "len_a": 54,
+  "len_b": 54,
+  "diverge": false,
+  "sample": "17,19,23,29,47,59,61,97,109,113,131,149",
+  "name_a": "Long period primes: the decimal expansion of 1/p has period p-1.",
+  "name_b": "Values of n for which A106848(n) = n-1.",
+  "kw_a": "nonn,nice,easy,base",
+  "kw_b": "base,nonn",
+  "auth_a": "_Robert Munafo_",
+  "auth_b": "Chuck Seggelin (seqfan(AT)plastereddragon.com), May 08 2005"
+ },
+ {
+  "a": "A027916",
+  "b": "A389142",
+  "match": 52,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 53,
+  "len_b": 54,
+  "diverge": false,
+  "sample": "2,5,8,13,19,25,33,42,51,62,74,86",
+  "name_a": "Least k such that 1+2+...+k >= E{1,2,...,n}, where E = 2nd elementary symmetric function.",
+  "name_b": "Lower (1/3)-midsequence of square numbers and triangular numbers; see Comments.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Clark Kimberling_",
+  "auth_b": "_Clark Kimberling_, Sep 24 2025"
+ },
+ {
+  "a": "A032765",
+  "b": "A371154",
+  "match": 52,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 55,
+  "len_b": 56,
+  "diverge": false,
+  "sample": "5,8,11,16,21,26,33,40,47,56,65,74",
+  "name_a": "a(n) = floor(n*(n+1)*(n+2) / (n + n+1 + n+2)) = floor(n*(n+2)/3).",
+  "name_b": "Maximum number of vertices for a given diameter n of a Cayley digraph on the cyclic group with generators s=1 and t>s.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Patrick De Geest_, May 15 1998",
+  "auth_b": "_Miquel A. Fiol_, Mar 13 2024"
+ },
+ {
+  "a": "A058008",
+  "b": "A120624",
+  "match": 52,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 55,
+  "len_b": 53,
+  "diverge": false,
+  "sample": "28,42,45,66,77,91,110,126,140,153,156,170",
+  "name_a": "Numbers k such that (2*k - 1)!/(k!)^2 is an integer.",
+  "name_b": "Numbers n such that the n-th Catalan number C(2n,n)/(n+1) is divisible by 2n.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Labos Elemer_, Nov 13 2000",
+  "auth_b": "_Robert G. Wilson v_, Jun 19 2006"
+ },
+ {
+  "a": "A183086",
+  "b": "A296883",
+  "match": 52,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 60,
+  "len_b": 52,
+  "diverge": false,
+  "sample": "101,102,103,104,105,106,107,108,109,201,202,203",
+  "name_a": "Generalized canyon numbers.",
+  "name_b": "Numbers whose base-10 digits d(m), d(m-1), ..., d(0) have #(pits) > #(peaks); see Comments.",
+  "kw_a": "nonn,base,fini",
+  "kw_b": "nonn,base,easy",
+  "auth_a": "_Omar E. Pol_, Jan 19 2011",
+  "auth_b": "_Clark Kimberling_, Jan 10 2018"
+ },
+ {
+  "a": "A187026",
+  "b": "A202063",
+  "match": 52,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 55,
+  "len_b": 58,
+  "diverge": false,
+  "sample": "8,25,9,11,21,19,69,24,29,46,23,60",
+  "name_a": "Least m such that prime(n) divides (prime(m) + prime(m+1))/2.",
+  "name_b": "Position of first appearance of n-th prime in A071216.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Vladimir Shevelev_, Mar 02 2011",
+  "auth_b": "_Zak Seidov_, Dec 10 2011"
+ },
+ {
+  "a": "A215275",
+  "b": "A215427",
+  "match": 52,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 54,
+  "len_b": 55,
+  "diverge": false,
+  "sample": "13,17,37,59,61,71,79,83,101,103,127,137",
+  "name_a": "Primes congruent to {2, 4, 5, 6} mod 11.",
+  "name_b": "Primes congruent to {0, 2, 4, 5, 6} mod 11.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Vincenzo Librandi_, Aug 07 2012",
+  "auth_b": "_Vincenzo Librandi_, Aug 10 2012"
+ },
+ {
+  "a": "A215276",
+  "b": "A215428",
+  "match": 52,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 54,
+  "len_b": 55,
+  "diverge": false,
+  "sample": "17,19,31,41,43,67,71,83,97,109,149,173",
+  "name_a": "Primes congruent to {2, 4, 5, 6} mod 13.",
+  "name_b": "Primes congruent to {0, 2, 4, 5, 6} mod 13.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Vincenzo Librandi_, Aug 07 2012",
+  "auth_b": "_Vincenzo Librandi_, Aug 10 2012"
+ },
+ {
+  "a": "A294912",
+  "b": "A294993",
+  "match": 51,
+  "align": [
+   1,
+   0
+  ],
+  "len_a": 52,
+  "len_b": 52,
+  "diverge": false,
+  "sample": "11,19,43,59,67,83,107,131,139,163,179,211",
+  "name_a": "Numbers n such that 2^(n-1), (2*n-1)*(2^((n-1)/2)), (4*ceiling((3/4)*n)-2), and (2^((n+1)/2) + floor((1/4)*n)*2^(((n+1)/2)+1)) are all congruent to 1 (mod n).",
+  "name_b": "Numbers n > 1 such that all of 2^(n-1), 3^(n-1), 5^(n-1), (2*n-1)*(2^((n-1)/2)), 4*ceiling((3/4)*n)-2, and (2^((n+1)/2) + floor(n/4)*2^((n+3)/2)) are congruent to 1 (mod n).",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Jonas Kaiser_, Nov 10 2017",
+  "auth_b": "_Jonas Kaiser_, Nov 12 2017"
+ },
+ {
+  "a": "A046075",
+  "b": "A261453",
+  "match": 51,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 51,
+  "len_b": 52,
+  "diverge": false,
+  "sample": "101,121,131,141,151,161,171,181,191,202,212,232",
+  "name_a": "Nontrivial undulants; base 10 numbers >100 which are of the form aba, abab, ababa, ..., where a != b.",
+  "name_b": "Near-repdigit palindromes with an odd number of digits and all digits except the middle digit equal.",
+  "kw_a": "nonn,base",
+  "kw_b": "nonn,base,easy",
+  "auth_a": "_Eric W. Weisstein_",
+  "auth_b": "_Felix Fröhlich_, Aug 25 2015"
+ },
+ {
+  "a": "A124434",
+  "b": "A247396",
+  "match": 51,
+  "align": [
+   1,
+   3
+  ],
+  "len_a": 53,
+  "len_b": 54,
+  "diverge": false,
+  "sample": "8,12,36,24,60,36,84,156,60,204,156,84",
+  "name_a": "LCM (least common multiple) of A001043 (sum of consecutive primes) and A001223 (difference of consecutive primes).",
+  "name_b": "Number of even numbers in classes of classification of the positive numbers defined in comment in A247395.",
+  "kw_a": "nonn,look",
+  "kw_b": "nonn",
+  "auth_a": "Mitch Cervinka (Mitch.Cervinka(AT)eds.com), Dec 15 2006",
+  "auth_b": "_Vladimir Shevelev_, Sep 16 2014"
+ },
+ {
+  "a": "A128288",
+  "b": "A141179",
+  "match": 51,
+  "align": [
+   1,
+   3
+  ],
+  "len_a": 52,
+  "len_b": 56,
+  "diverge": false,
+  "sample": "13,37,43,53,67,83,107,157,163,173,197,227",
+  "name_a": "a(n) = A023163(n)/3 for n > 1.",
+  "name_b": "Primes of the form 3*x^2 + 2*x*y - 3*y^2 (as well as of the form 3*x^2 + 8*x*y + 2*y^2).",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Alexander Adamchuk_, Feb 24 2007",
+  "auth_b": "Laura Caballero Fernandez, Lourdes Calvo Moguer, Maria Josefa Cano Marquez, Oscar Jesus Falcon Ganfornina, and Sergio Garrido Morales (oscfalgan(AT)yahoo.es), Jun 12 2008"
+ },
+ {
+  "a": "A178070",
+  "b": "A278835",
+  "match": 51,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 51,
+  "len_b": 53,
+  "diverge": false,
+  "sample": "11,17,41,73,101,137,251,257,271,353,401,449",
+  "name_a": "Primes dividing repunits R(10^n) for some n.",
+  "name_b": "Prime factors (counting multiplicity) of 10^10^10^10^2 - 1.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,fini",
+  "auth_a": "_Shashank Sharma_, May 19 2010, Aug 04 2010",
+  "auth_b": "_Robert Munafo_ and _Robert G. Wilson v_, Nov 28 2016"
+ },
+ {
+  "a": "A232105",
+  "b": "A269748",
+  "match": 51,
+  "align": [
+   2,
+   2
+  ],
+  "len_a": 53,
+  "len_b": 60,
+  "diverge": false,
+  "sample": "77,83,87,97,101,107,111,125,131,145,149,155",
+  "name_a": "Number of groups of order prime(n)^5.",
+  "name_b": "a(n) = 2*p+61+2*gcd(p-1,3)+gcd(p-1,4), where p = prime(n).",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Eric M. Schmidt_, Nov 21 2013",
+  "auth_b": "_N. J. A. Sloane_, Mar 22 2016"
+ },
+ {
+  "a": "A046616",
+  "b": "A046627",
+  "match": 50,
+  "align": [
+   1,
+   3
+  ],
+  "len_a": 52,
+  "len_b": 53,
+  "diverge": false,
+  "sample": "11,23,16,39,21,17,12,26,29,86,31,63",
+  "name_a": "First numerator and then denominator of the elements to the right of the central elements of the 1/5-Pascal triangle (by row), excluding 1's and 5's.",
+  "name_b": "Distinct numbers in writing first numerator and then denominator of each element to the right of the central elements of the 1/5-Pascal triangle (by row).",
+  "kw_a": "tabf,nonn",
+  "kw_b": "tabf,nonn",
+  "auth_a": "_Mohammad K. Azarian_",
+  "auth_b": "_Mohammad K. Azarian_"
+ },
+ {
+  "a": "A058517",
+  "b": "A081310",
+  "match": 50,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 53,
+  "len_b": 53,
+  "diverge": false,
+  "sample": "78,96,120,126,144,156,162,186,204,210,216,222",
+  "name_a": "Positive even numbers not of the form prime + 3^x.",
+  "name_b": "Numbers having no representation as sum of a prime and an 3-smooth number.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Robert G. Wilson v_, Dec 21 2000",
+  "auth_b": "_Reinhard Zumkeller_, Mar 17 2003"
+ },
+ {
+  "a": "A060328",
+  "b": "A167610",
+  "match": 50,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 51,
+  "len_b": 52,
+  "diverge": false,
+  "sample": "23,31,41,59,67,71,109,113,131,139,157,199",
+  "name_a": "Primes which are the sum of three consecutive composite numbers.",
+  "name_b": "Primes that are the sum of three consecutive nonprimes.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Robert G. Wilson v_, Mar 30 2001",
+  "auth_b": "_Juri-Stepan Gerasimov_, Nov 07 2009"
+ },
+ {
+  "a": "A063220",
+  "b": "A063234",
+  "match": 50,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 50,
+  "len_b": 50,
+  "diverge": false,
+  "sample": "3,10,18,22,30,38,42,50,58,62,70,78",
+  "name_a": "Dimension of the space of weight 2n cuspidal newforms for Gamma_0( 55 ).",
+  "name_b": "Dimension of the space of weight 2n cuspidal newforms for Gamma_0( 82 ).",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_N. J. A. Sloane_, Jul 10 2001",
+  "auth_b": "_N. J. A. Sloane_, Jul 10 2001"
+ },
+ {
+  "a": "A073895",
+  "b": "A088637",
+  "match": 50,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 53,
+  "len_b": 53,
+  "diverge": false,
+  "sample": "10,16,24,33,43,48,60,74,89,96,112,130",
+  "name_a": "a(1)=1. a(n)=a(n-1)+k(n). If a(n-1) is nonprime, k(n) is the smallest composite not in the set {k(i),i<n}. If a(n-1) is prime, k(n) is the smallest prime not in the set {k(i),i<n}.",
+  "name_b": "a(1) = 1, a(n+1) = a(n) + smallest prime not added earlier if a(n) is noncomposite else a(n+1) = a(n) + the smallest composite number not added earlier.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_Amarnath Murthy_, Aug 18 2002",
+  "auth_b": "_Amarnath Murthy_, Oct 26 2003"
+ },
+ {
+  "a": "A131095",
+  "b": "A136318",
+  "match": 50,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 53,
+  "len_b": 53,
+  "diverge": false,
+  "sample": "17,18,20,33,34,36,40,65,66,68,72,80",
+  "name_a": "Triangle where n-th row contains the smallest n positive integers (listed in order) with exactly n nonleading 0's in their binary representations and where the smallest term in the n-th row is > that the largest term in the (n-1)th row.",
+  "name_b": "Integers whose binary representation contains exactly two 1s, the 1s not being adjacent.",
+  "kw_a": "nonn,tabl",
+  "kw_b": "nonn,easy,base",
+  "auth_a": "_Leroy Quet_, Jun 14 2007",
+  "auth_b": "_Gil Broussard_, Mar 24 2008"
+ },
+ {
+  "a": "A215134",
+  "b": "A215378",
+  "match": 50,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 53,
+  "len_b": 53,
+  "diverge": false,
+  "sample": "13,23,47,67,79,89,101,113,157,167,179,199",
+  "name_a": "Primes congruent to {1, 2, 3} mod 11.",
+  "name_b": "Primes congruent to {0, 1, 2, 3} mod 11.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Vincenzo Librandi_, Aug 04 2012",
+  "auth_b": "_Vincenzo Librandi_, Aug 09 2012"
+ },
+ {
+  "a": "A215279",
+  "b": "A215358",
+  "match": 50,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 52,
+  "len_b": 53,
+  "diverge": false,
+  "sample": "13,37,47,59,79,101,103,113,157,167,179,191",
+  "name_a": "Primes congruent to {2, 3, 4} mod 11.",
+  "name_b": "Primes congruent to {0, 2, 3, 4} mod 11.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Vincenzo Librandi_, Aug 08 2012",
+  "auth_b": "_Vincenzo Librandi_, Aug 09 2012"
+ },
+ {
+  "a": "A241199",
+  "b": "A369304",
+  "match": 50,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 50,
+  "len_b": 56,
+  "diverge": false,
+  "sample": "14,19,31,38,54,63,83,94,118,131,159,174",
+  "name_a": "Numbers n such that 4 consecutive terms of binomial(n,k) satisfy a quadratic relation for 0 <= k <= n/2.",
+  "name_b": "Numbers k for which the polynomial (x-1)^3*(x+1)^k has more than one zero coefficient.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_T. D. Noe_, Apr 17 2014",
+  "auth_b": "_Vladimir Petrov Kostov_, Jan 19 2024"
+ },
+ {
+  "a": "A378146",
+  "b": "A385243",
+  "match": 50,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 50,
+  "len_b": 54,
+  "diverge": false,
+  "sample": "2,3,17,23,37,41,53,59,71,97,127,139",
+  "name_a": "Primes p such that 16*p^4 + 1 is prime.",
+  "name_b": "a(0) = 0 and a(1) = 1 followed by primes p such that (2p)^4 + 1 is prime.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Juri-Stepan Gerasimov_, Nov 17 2024",
+  "auth_b": "_M. F. Hasler_, Nov 02 2025"
+ },
+ {
+  "a": "A015913",
+  "b": "A172238",
+  "match": 49,
+  "align": [
+   0,
+   1
+  ],
+  "len_a": 49,
+  "len_b": 53,
+  "diverge": false,
+  "sample": "3,7,13,19,37,43,67,79,97,103,109,127",
+  "name_a": "Numbers k such that sigma(k) + 4 = sigma(k+4).",
+  "name_b": "Primes p such that either p+5/2+-3/2 is prime.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Robert G. Wilson v_",
+  "auth_b": "_Juri-Stepan Gerasimov_, Jan 29 2010"
+ },
+ {
+  "a": "A046132",
+  "b": "A118590",
+  "match": 49,
+  "align": [
+   1,
+   1
+  ],
+  "len_a": 50,
+  "len_b": 52,
+  "diverge": false,
+  "sample": "11,17,23,41,47,71,83,101,107,113,131,167",
+  "name_a": "Larger member p+4 of cousin primes (p, p+4).",
+  "name_b": "Larger of two consecutive primes whose positive difference is a square.",
+  "kw_a": "nonn",
+  "kw_b": "easy,nonn",
+  "auth_a": "_Eric W. Weisstein_",
+  "auth_b": "_Cino Hilliard_, May 07 2006"
+ },
+ {
+  "a": "A063076",
+  "b": "A161846",
+  "match": 49,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 52,
+  "len_b": 53,
+  "diverge": false,
+  "sample": "44,54,76,84,108,122,120,166,182,184,234,192",
+  "name_a": "Differences of A011757 (\"Primes with square indices\").",
+  "name_b": "Numerator of the ratio (prime((n+1)^2) - prime(n^2))/prime(n).",
+  "kw_a": "nonn",
+  "kw_b": "nonn,frac",
+  "auth_a": "_Santi Spadaro_, Aug 04 2001",
+  "auth_b": "_Daniel Tisdale_, Jun 20 2009"
+ },
+ {
+  "a": "A078330",
+  "b": "A104006",
+  "match": 49,
+  "align": [
+   1,
+   1
+  ],
+  "len_a": 50,
+  "len_b": 50,
+  "diverge": false,
+  "sample": "31,43,67,71,79,103,131,139,191,223,239,283",
+  "name_a": "Primes p such that mu(p-1) = -1, where mu is the Moebius function; that is, p-1 is squarefree and has an odd number of prime factors.",
+  "name_b": "Primes of the form 2pq + 1, where p and q are (not necessarily distinct) odd primes.",
+  "kw_a": "easy,nonn",
+  "kw_b": "easy,nonn",
+  "auth_a": "_Shyam Sunder Gupta_, Nov 21 2002",
+  "auth_b": "_Giovanni Teofilatto_, Mar 31 2005"
+ },
+ {
+  "a": "A134612",
+  "b": "A246547",
+  "match": 49,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 49,
+  "len_b": 58,
+  "diverge": false,
+  "sample": "4,8,9,16,25,27,32,49,64,81,121,125",
+  "name_a": "Nonprime numbers such that the root mean cube of their prime factors is a prime (where the root mean cube of c and d is ((c^3+d^3)/2)^(1/3)).",
+  "name_b": "Prime powers p^e where p is a prime and e >= 2 (prime powers without the primes or 1).",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Hieronymus Fischer_, Nov 11 2007",
+  "auth_b": "_Joerg Arndt_, Aug 29 2014"
+ },
+ {
+  "a": "A141545",
+  "b": "A274557",
+  "match": 49,
+  "align": [
+   1,
+   3
+  ],
+  "len_a": 50,
+  "len_b": 52,
+  "diverge": false,
+  "sample": "30,42,54,66,78,102,114,138,174,186,222,246",
+  "name_a": "Numbers k whose abundance is 12: sigma(k) - 2*k = 12.",
+  "name_b": "Numbers k such that sigma(k) == 0 (mod k+6).",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Vladimir Joseph Stephan Orlovsky_, Aug 16 2008",
+  "auth_b": "_Paolo P. Lava_, Jul 05 2016"
+ },
+ {
+  "a": "A008897",
+  "b": "A008898",
+  "match": 48,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 51,
+  "len_b": 52,
+  "diverge": false,
+  "sample": "62,31,92,46,23,68,34,17,50,25,74,37",
+  "name_a": "x->x/2 if x even, x->3x-1 if x odd.",
+  "name_b": "Trajectory of 84 under the map x -> x/2 for x even, x -> 3x - 1 for x odd.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A055939",
+  "b": "A067690",
+  "match": 48,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 51,
+  "len_b": 51,
+  "diverge": false,
+  "sample": "19,43,47,67,79,103,127,131,163,179,191,199",
+  "name_a": "Primes p such that p | ((p-1)/2)! + 1.",
+  "name_b": "gcd((2n)!+1, n!+1) when not equal to 1.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,nice",
+  "auth_a": "_Robert G. Wilson v_, Jul 22 2000",
+  "auth_b": "_Benoit Cloitre_, Feb 04 2002"
+ },
+ {
+  "a": "A093104",
+  "b": "A093105",
+  "match": 48,
+  "align": [
+   1,
+   3
+  ],
+  "len_a": 50,
+  "len_b": 51,
+  "diverge": false,
+  "sample": "8,41,84,90,410,418,420,428,430,438,470,478",
+  "name_a": "An \"L\" digit is a digit \"looking to the Left\" (1,2,3,7,9); an \"R\" digit is a digit \"looking to the Right\" (4,5,6); an \"U\" digit is a digit \"looking at Us\" (0,8). This is the slowest increasing sequence showing the infinite pattern [LUR] (when read digit-by-digit).",
+  "name_b": "An \"L\" digit is a digit \"looking to the Left\" (1,2,3,7,9); an \"R\" digit is a digit \"looking to the Right\" (4,5,6); an \"U\" digit is a digit \"looking at Us\" (0,8). This is the slowest increasing sequence showing the infinite pattern [URL] (when read digit-by-digit).",
+  "kw_a": "nonn,base",
+  "kw_b": "nonn,base",
+  "auth_a": "_Eric Angelini_, May 10 2004",
+  "auth_b": "_Eric Angelini_, May 10 2004"
+ },
+ {
+  "a": "A271004",
+  "b": "A272564",
+  "match": 48,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 51,
+  "len_b": 51,
+  "diverge": false,
+  "sample": "44,13,112,25,208,37,340,49,504,61,700,73",
+  "name_a": "Number of active (ON, black) cells in n-th stage of growth of two-dimensional cellular automaton defined by \"Rule 245\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Number of active (ON, black) cells in n-th stage of growth of two-dimensional cellular automaton defined by \"Rule 501\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Mar 28 2016",
+  "auth_b": "_Robert Price_, May 02 2016"
+ },
+ {
+  "a": "A003124",
+  "b": "A008902",
+  "match": 47,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 54,
+  "len_b": 50,
+  "diverge": false,
+  "sample": "74,37,110,55,164,82,41,122,61,182,91,272",
+  "name_a": "One of the basic cycles in the x->3x-1 (x odd) or x/2 (x even) problem.",
+  "name_b": "x->x/2 if x even, x->3x-1 if x odd.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A008902",
+  "b": "A008903",
+  "match": 47,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 50,
+  "len_b": 50,
+  "diverge": false,
+  "sample": "74,37,110,55,164,82,41,122,61,182,91,272",
+  "name_a": "x->x/2 if x even, x->3x-1 if x odd.",
+  "name_b": "x->x/2 if x even, x->3x-1 if x odd.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A028289",
+  "b": "A307872",
+  "match": 47,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 47,
+  "len_b": 55,
+  "diverge": false,
+  "sample": "1,1,2,4,5,7,11,13,17,23,27,33",
+  "name_a": "Expansion of (1+x^2+x^3+x^5)/((1-x)(1-x^3)(1-x^4)(1-x^6)).",
+  "name_b": "Sum of the smallest parts in the partitions of n into 3 parts.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_Wesley Ivan Hurt_, May 02 2019"
+ },
+ {
+  "a": "A036451",
+  "b": "A346729",
+  "match": 47,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 50,
+  "len_b": 50,
+  "diverge": false,
+  "sample": "4,6,8,12,16,20,24,32,40,48,64,80",
+  "name_a": "Maximal value of d(x) (the number of divisors of x, A000005) if the binary order (see A029837) of x, the value g(x) = n.",
+  "name_b": "Maximum number of divisors among n-bit numbers.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Labos Elemer_",
+  "auth_b": "_Jon E. Schoenfield_, Jul 30 2021"
+ },
+ {
+  "a": "A047876",
+  "b": "A183042",
+  "match": 47,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 51,
+  "len_b": 50,
+  "diverge": false,
+  "sample": "8,12,18,22,28,36,42,52,64,68,82,98",
+  "name_a": "a(n) = Sum{T(i,n-i): i=0,1,...,n}, array T as in A049604.",
+  "name_b": "Least number of knight's moves from (0,0) to the segment of points (0,n), (1,n-1), ..., (n,0) on infinite chessboard.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Clark Kimberling_",
+  "auth_b": "_Clark Kimberling_, Dec 20 2010"
+ },
+ {
+  "a": "A064161",
+  "b": "A138636",
+  "match": 47,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 50,
+  "len_b": 50,
+  "diverge": false,
+  "sample": "42,66,78,102,114,138,174,186,222,246,258,282",
+  "name_a": "Least abundant number divisible by the n-th prime number.",
+  "name_b": "a(n) = 6 * prime(n).",
+  "kw_a": "easy,nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert G. Wilson v_, Sep 15 2001",
+  "auth_b": "_Vladimir Joseph Stephan Orlovsky_, May 14 2008"
+ },
+ {
+  "a": "A214888",
+  "b": "A215374",
+  "match": 47,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 50,
+  "len_b": 50,
+  "diverge": false,
+  "sample": "13,47,79,101,113,157,167,179,211,223,233,277",
+  "name_a": "Primes congruent to {2, 3} mod 11.",
+  "name_b": "Primes congruent to {0, 2, 3} mod 11.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Vincenzo Librandi_, Aug 03 2012",
+  "auth_b": "_Vincenzo Librandi_, Aug 09 2012"
+ },
+ {
+  "a": "A214889",
+  "b": "A215375",
+  "match": 47,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 49,
+  "len_b": 50,
+  "diverge": false,
+  "sample": "29,41,67,107,197,211,223,263,353,367,379,419",
+  "name_a": "Primes congruent to {2, 3} mod 13.",
+  "name_b": "Primes congruent to {0, 2, 3} mod 13.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Vincenzo Librandi_, Aug 03 2012",
+  "auth_b": "_Vincenzo Librandi_, Aug 09 2012"
+ },
+ {
+  "a": "A215154",
+  "b": "A215381",
+  "match": 47,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 49,
+  "len_b": 50,
+  "diverge": false,
+  "sample": "41,59,79,97,173,191,193,211,229,269,307,383",
+  "name_a": "Primes congruent to {1, 2, 3} mod 19.",
+  "name_b": "Primes congruent to {0, 1, 2, 3} mod 19.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Vincenzo Librandi_, Aug 04 2012",
+  "auth_b": "_Vincenzo Librandi_, Aug 09 2012"
+ },
+ {
+  "a": "A008635",
+  "b": "A008641",
+  "match": 46,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 46,
+  "len_b": 47,
+  "diverge": false,
+  "sample": "1,1,2,3,5,7,11,15,22,30,42,56",
+  "name_a": "Molien series for alternating group Alt_12 (or A_12).",
+  "name_b": "Number of partitions of n into at most 12 parts.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A057459",
+  "b": "A267503",
+  "match": 46,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 49,
+  "len_b": 62,
+  "diverge": false,
+  "sample": "7,11,23,31,43,47,67,71,139,211,283,311",
+  "name_a": "a(n+1) = smallest prime p in the range a(n) < p < a(1)*a(2)*...*a(n) such that p-1 divides a(1)*a(2)*...*a(n); or if no such prime p exists, then a(n+1) = smallest prime > a(n).",
+  "name_b": "Primes p such that p-1 is squarefree and all prime divisors of p-1 other than 5 are also in the sequence.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Robert G. Wilson v_, Sep 26 2000",
+  "auth_b": "_José María Grau Ribas_, Jan 16 2016"
+ },
+ {
+  "a": "A215282",
+  "b": "A215361",
+  "match": 46,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 49,
+  "len_b": 49,
+  "diverge": false,
+  "sample": "23,41,59,61,79,97,137,173,193,211,251,269",
+  "name_a": "Primes congruent to {2, 3, 4} mod 19.",
+  "name_b": "Primes congruent to {0, 2, 3, 4} mod 19.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Vincenzo Librandi_, Aug 08 2012",
+  "auth_b": "_Vincenzo Librandi_, Aug 09 2012"
+ },
+ {
+  "a": "A003628",
+  "b": "A216776",
+  "match": 45,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 45,
+  "len_b": 54,
+  "diverge": false,
+  "sample": "5,7,13,23,29,31,37,47,53,61,71,79",
+  "name_a": "Primes congruent to {5, 7} mod 8.",
+  "name_b": "Primes p such that x^62 = -2 has no solution mod p.",
+  "kw_a": "nonn,easy,nice",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_, _Mira Bernstein_",
+  "auth_b": "_Vincenzo Librandi_, Sep 16 2012"
+ },
+ {
+  "a": "A042986",
+  "b": "A045321",
+  "match": 45,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 60,
+  "len_b": 47,
+  "diverge": false,
+  "sample": "7,11,13,17,23,31,37,41,43,47,53,61",
+  "name_a": "Primes congruent to {0, 1, 2, 3} mod 5.",
+  "name_b": "Primes congruent to {1, 2, 3} (mod 5).",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A046386",
+  "b": "A151797",
+  "match": 45,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 45,
+  "len_b": 47,
+  "diverge": false,
+  "sample": "210,330,390,462,510,546,570,690,714,770,798,858",
+  "name_a": "Products of exactly four distinct primes.",
+  "name_b": "Numbers which belong to just one of the two sequences A030229, A161918.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_Patrick De Geest_, Jun 15 1998",
+  "auth_b": "_M. F. Hasler_, Jun 27 2009"
+ },
+ {
+  "a": "A081118",
+  "b": "A086070",
+  "match": 45,
+  "align": [
+   1,
+   2
+  ],
+  "len_a": 54,
+  "len_b": 47,
+  "diverge": false,
+  "sample": "3,5,7,11,13,15,23,27,29,31,47,55",
+  "name_a": "Triangle of first n numbers per row having exactly n 1's in binary representation.",
+  "name_b": "Where records in A086068 occur.",
+  "kw_a": "nonn,tabl",
+  "kw_b": "nonn,fini,full",
+  "auth_a": "_Reinhard Zumkeller_, Mar 06 2003",
+  "auth_b": "_Reinhard Zumkeller_, Jul 08 2003"
+ },
+ {
+  "a": "A174906",
+  "b": "A179682",
+  "match": 45,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 45,
+  "len_b": 47,
+  "diverge": false,
+  "sample": "24,48,80,120,168,224,49,360,440,528,624,728",
+  "name_a": "a(n) is the index of the first triangular number T_i exceeding T_n such that the product of T_i*T_n is a perfect square.",
+  "name_b": "Least integer, k, greater than n such that t(k)*t(n) form a perfect square; t(i) is the i-th triangular number (A000217).",
+  "kw_a": "nonn",
+  "kw_b": "nonn,look",
+  "auth_a": "_Robert G. Wilson v_, Apr 01 2010",
+  "auth_b": "_Robert G. Wilson v_, Jul 24 2010"
+ },
+ {
+  "a": "A178312",
+  "b": "A386884",
+  "match": 45,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 45,
+  "len_b": 49,
+  "diverge": false,
+  "sample": "0,1,2,9,12,30,36,70,80,135,150,231",
+  "name_a": "a(n) = n * T(ceiling(n/2)), where T are the triangular numbers, A000217.",
+  "name_b": "a(n) is the number of distinct four-cuboid combinations that fill an n X n X n cube using only strict cuboids.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_Gary W. Adamson_, Dec 20 2010",
+  "auth_b": "_Janaka Rodrigo_, Aug 06 2025"
+ },
+ {
+  "a": "A214890",
+  "b": "A215376",
+  "match": 45,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 48,
+  "len_b": 48,
+  "diverge": false,
+  "sample": "19,37,53,71,139,173,223,241,257,359,461,479",
+  "name_a": "Primes congruent to {2, 3} mod 17.",
+  "name_b": "Primes congruent to {0, 2, 3} mod 17.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Vincenzo Librandi_, Aug 03 2012",
+  "auth_b": "_Vincenzo Librandi_, Aug 09 2012"
+ },
+ {
+  "a": "A215135",
+  "b": "A215379",
+  "match": 45,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 52,
+  "len_b": 48,
+  "diverge": false,
+  "sample": "29,41,53,67,79,107,131,157,197,211,223,263",
+  "name_a": "Primes congruent to {1, 2, 3} mod 13.",
+  "name_b": "Primes congruent to {0, 1, 2, 3} mod 13.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Vincenzo Librandi_, Aug 04 2012",
+  "auth_b": "_Vincenzo Librandi_, Aug 09 2012"
+ },
+ {
+  "a": "A215153",
+  "b": "A215380",
+  "match": 45,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 47,
+  "len_b": 50,
+  "diverge": false,
+  "sample": "19,37,53,71,103,137,139,173,223,239,241,257",
+  "name_a": "Primes congruent to {1, 2, 3} mod 17.",
+  "name_b": "Primes congruent to {0, 1, 2, 3} mod 17.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Vincenzo Librandi_, Aug 04 2012",
+  "auth_b": "_Vincenzo Librandi_, Aug 09 2012"
+ },
+ {
+  "a": "A215281",
+  "b": "A215360",
+  "match": 45,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 49,
+  "len_b": 48,
+  "diverge": false,
+  "sample": "19,37,53,71,89,139,157,173,191,223,241,257",
+  "name_a": "Primes congruent to {2, 3, 4} mod 17.",
+  "name_b": "Primes congruent to {0, 2, 3, 4} mod 17.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Vincenzo Librandi_, Aug 08 2012",
+  "auth_b": "_Vincenzo Librandi_, Aug 09 2012"
+ },
+ {
+  "a": "A319153",
+  "b": "A325267",
+  "match": 45,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 47,
+  "len_b": 48,
+  "diverge": false,
+  "sample": "1,3,5,7,12,17,24,33,44,57,76,100",
+  "name_a": "Number of integer partitions of n that reduce to 2, meaning their Heinz number maps to 2 under A304464.",
+  "name_b": "Number of integer partitions of n with omicron 2.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Gus Wiseman_, Sep 12 2018",
+  "auth_b": "_Gus Wiseman_, Apr 18 2019"
+ },
+ {
+  "a": "A026041",
+  "b": "A188554",
+  "match": 44,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 52,
+  "len_b": 47,
+  "diverge": false,
+  "sample": "12,20,32,49,72,102,140,187,244,312,392,485",
+  "name_a": "a(n) = d(n)/2, where d = A026040.",
+  "name_b": "Number of 3 X n binary arrays without the pattern 0 1 diagonally, vertically, antidiagonally or horizontally.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Clark Kimberling_",
+  "auth_b": "_R. H. Hardin_, Apr 04 2011"
+ },
+ {
+  "a": "A045322",
+  "b": "A045335",
+  "match": 44,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 47,
+  "len_b": 46,
+  "diverge": false,
+  "sample": "11,13,17,23,31,37,41,53,59,67,73,79",
+  "name_a": "Primes congruent to {0, 2, 3, 4, 6} (mod 7).",
+  "name_b": "Primes congruent to {2, 3, 4, 6} (mod 7).",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045324",
+  "b": "A045337",
+  "match": 44,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 47,
+  "len_b": 46,
+  "diverge": false,
+  "sample": "11,17,23,29,31,37,43,53,59,67,71,73",
+  "name_a": "Primes congruent to {0, 1, 2, 3, 4} (mod 7).",
+  "name_b": "Primes congruent to {1, 2, 3, 4} (mod 7).",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045328",
+  "b": "A045340",
+  "match": 44,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 57,
+  "len_b": 46,
+  "diverge": false,
+  "sample": "13,17,23,29,31,37,41,43,59,71,73,79",
+  "name_a": "Primes congruent to {0, 1, 2, 3, 6} (mod 7).",
+  "name_b": "Primes congruent to {1, 2, 3, 6} mod 7.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045346",
+  "b": "A045360",
+  "match": 44,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 47,
+  "len_b": 47,
+  "diverge": false,
+  "sample": "11,13,19,23,29,37,41,43,47,53,61,67",
+  "name_a": "Primes congruent to {0, 1, 2, 4, 5, 6} mod 7.",
+  "name_b": "Primes congruent to {1, 2, 4, 5, 6} mod 7.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045347",
+  "b": "A045361",
+  "match": 44,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 47,
+  "len_b": 46,
+  "diverge": false,
+  "sample": "11,13,19,23,37,41,47,53,61,67,79,83",
+  "name_a": "Primes congruent to {0, 2, 4, 5, 6} mod 7.",
+  "name_b": "Primes congruent to {2, 4, 5, 6} mod 7.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045350",
+  "b": "A045362",
+  "match": 44,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 47,
+  "len_b": 46,
+  "diverge": false,
+  "sample": "11,19,23,29,37,43,47,53,61,67,71,79",
+  "name_a": "Primes congruent to {0, 1, 2, 4, 5} mod 7.",
+  "name_b": "Primes congruent to {1, 2, 4, 5} mod 7.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045353",
+  "b": "A045364",
+  "match": 44,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 47,
+  "len_b": 46,
+  "diverge": false,
+  "sample": "13,19,23,29,37,41,43,47,61,71,79,83",
+  "name_a": "Primes congruent to {0, 1, 2, 5, 6} mod 7.",
+  "name_b": "Primes congruent to {1, 2, 5, 6} mod 7.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045393",
+  "b": "A045402",
+  "match": 44,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 47,
+  "len_b": 47,
+  "diverge": false,
+  "sample": "11,13,17,19,29,31,41,43,47,53,59,61",
+  "name_a": "Primes congruent to {0, 1, 3, 4, 5, 6} mod 7.",
+  "name_b": "Primes congruent to {1, 3, 4, 5, 6} mod 7.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045394",
+  "b": "A045404",
+  "match": 44,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 47,
+  "len_b": 47,
+  "diverge": false,
+  "sample": "11,13,17,19,31,41,47,53,59,61,67,73",
+  "name_a": "Primes congruent to {0, 3, 4, 5, 6} mod 7.",
+  "name_b": "Primes congruent to {3, 4, 5, 6} mod 7.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045396",
+  "b": "A045408",
+  "match": 44,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 47,
+  "len_b": 46,
+  "diverge": false,
+  "sample": "11,17,19,29,31,43,47,53,59,61,67,71",
+  "name_a": "Primes congruent to {0, 1, 3, 4, 5} mod 7.",
+  "name_b": "Primes congruent to {1, 3, 4, 5} mod 7.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045398",
+  "b": "A045411",
+  "match": 44,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 47,
+  "len_b": 47,
+  "diverge": false,
+  "sample": "13,17,19,29,31,41,43,47,59,61,71,73",
+  "name_a": "Primes congruent to {0, 1, 3, 5, 6} mod 7.",
+  "name_b": "Primes congruent to {1, 3, 5, 6} mod 7.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A273766",
+  "b": "A273780",
+  "match": 44,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 47,
+  "len_b": 47,
+  "diverge": false,
+  "sample": "48,81,121,169,225,289,361,441,529,625,729,841",
+  "name_a": "Number of active (ON, black) cells in n-th stage of growth of two-dimensional cellular automaton defined by \"Rule 913\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Number of active (ON, black) cells in n-th stage of growth of two-dimensional cellular automaton defined by \"Rule 929\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, May 29 2016",
+  "auth_b": "_Robert Price_, May 30 2016"
+ },
+ {
+  "a": "A292705",
+  "b": "A335140",
+  "match": 44,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 45,
+  "len_b": 46,
+  "diverge": false,
+  "sample": "150,294,420,630,660,726,750,780,840,924,990,1014",
+  "name_a": "Nonsquarefree unitary abundant numbers.",
+  "name_b": "Unitary pseudoperfect numbers (A293188) that are nonsquarefree.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Amiram Eldar_, Sep 21 2017",
+  "auth_b": "_Amiram Eldar_, May 25 2020"
+ },
+ {
+  "a": "A000437",
+  "b": "A122699",
+  "match": 43,
+  "align": [
+   0,
+   1
+  ],
+  "len_a": 43,
+  "len_b": 45,
+  "diverge": false,
+  "sample": "0,9,41,81,146,194,306,369,425,594,689,866",
+  "name_a": "Smallest nonnegative number that is the sum of 3 squares in exactly n ways.",
+  "name_b": "Least integer that can be written as a sum of 3 squares in n nontrivial ways (ignoring order and signs).",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_Wouter Meeussen_, Oct 21 2006"
+ },
+ {
+  "a": "A003625",
+  "b": "A045399",
+  "match": 43,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 56,
+  "len_b": 46,
+  "diverge": false,
+  "sample": "13,17,19,31,41,47,59,61,73,83,89,97",
+  "name_a": "Primes congruent to {3, 5, 6} mod 7.",
+  "name_b": "Primes congruent to {0, 3, 5, 6} mod 7.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_, _Mira Bernstein_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045339",
+  "b": "A294912",
+  "match": 43,
+  "align": [
+   1,
+   0
+  ],
+  "len_a": 44,
+  "len_b": 52,
+  "diverge": false,
+  "sample": "3,11,19,43,59,67,83,107,131,139,163,179",
+  "name_a": "Primes congruent to {2, 3} mod 8.",
+  "name_b": "Numbers n such that 2^(n-1), (2*n-1)*(2^((n-1)/2)), (4*ceiling((3/4)*n)-2), and (2^((n+1)/2) + floor((1/4)*n)*2^(((n+1)/2)+1)) are all congruent to 1 (mod n).",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_Jonas Kaiser_, Nov 10 2017"
+ },
+ {
+  "a": "A045366",
+  "b": "A294919",
+  "match": 43,
+  "align": [
+   1,
+   0
+  ],
+  "len_a": 44,
+  "len_b": 52,
+  "diverge": false,
+  "sample": "5,13,29,37,53,61,101,109,149,157,173,181",
+  "name_a": "Primes congruent to {2, 5} mod 8.",
+  "name_b": "Numbers n such that 2^(n-1), (2*n-1)*(2^((n-1)/2)), (4*ceiling((1/4)*n)-2), and (2^((n+1)/2) + floor((3/4)*n)*2^(((n+1)/2)+1)) are all congruent to 1 (mod n).",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_Jonas Kaiser_, Nov 10 2017"
+ },
+ {
+  "a": "A022425",
+  "b": "A324142",
+  "match": 43,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 46,
+  "len_b": 60,
+  "diverge": false,
+  "sample": "9,13,15,18,21,23,26,30,33,36,39,42",
+  "name_a": "Solution a( ) of the complementary equation a(n) = b(n-1) + b(n-2), where a(0) = 1, a(1) = 4; see Comments.",
+  "name_b": "This sequence and A324143 are a pair of complementary sequences studied by Bode, Harborth, and Kimberling (2007).",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Clark Kimberling_",
+  "auth_b": "_N. J. A. Sloane_, Feb 20 2019"
+ },
+ {
+  "a": "A045325",
+  "b": "A045338",
+  "match": 43,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 55,
+  "len_b": 45,
+  "diverge": false,
+  "sample": "11,17,23,31,37,53,59,67,73,79,101,107",
+  "name_a": "Primes congruent to {0, 2, 3, 4} (mod 7).",
+  "name_b": "Primes congruent to {2, 3, 4} mod 7.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045329",
+  "b": "A045341",
+  "match": 43,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 46,
+  "len_b": 46,
+  "diverge": false,
+  "sample": "13,17,23,31,37,41,59,73,79,83,97,101",
+  "name_a": "Primes congruent to {0, 2, 3, 6} (mod 7).",
+  "name_b": "Primes congruent to {2, 3, 6} mod 7.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045332",
+  "b": "A045342",
+  "match": 43,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 46,
+  "len_b": 45,
+  "diverge": false,
+  "sample": "17,23,29,31,37,43,59,71,73,79,101,107",
+  "name_a": "Primes congruent to {0, 1, 2, 3} (mod 7).",
+  "name_b": "Primes congruent to {1, 2, 3} mod 7.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045351",
+  "b": "A045363",
+  "match": 43,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 46,
+  "len_b": 45,
+  "diverge": false,
+  "sample": "11,19,23,37,47,53,61,67,79,89,103,107",
+  "name_a": "Primes congruent to {0, 2, 4, 5} mod 7.",
+  "name_b": "Primes congruent to {2, 4, 5} mod 7.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045354",
+  "b": "A045365",
+  "match": 43,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 46,
+  "len_b": 46,
+  "diverge": false,
+  "sample": "13,19,23,37,41,47,61,79,83,89,97,103",
+  "name_a": "Primes congruent to {0, 2, 5, 6} mod 7.",
+  "name_b": "Primes congruent to {2, 5, 6} mod 7.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045358",
+  "b": "A045367",
+  "match": 43,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 46,
+  "len_b": 45,
+  "diverge": false,
+  "sample": "19,23,29,37,43,47,61,71,79,89,103,107",
+  "name_a": "Primes congruent to {0, 1, 2, 5} mod 7.",
+  "name_b": "Primes congruent to {1, 2, 5} mod 7.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045397",
+  "b": "A045409",
+  "match": 43,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 46,
+  "len_b": 55,
+  "diverge": false,
+  "sample": "11,17,19,31,47,53,59,61,67,73,89,101",
+  "name_a": "Primes congruent to {0, 3, 4, 5} mod 7.",
+  "name_b": "Primes congruent to {3, 4, 5} mod 7.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045400",
+  "b": "A045415",
+  "match": 43,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 46,
+  "len_b": 46,
+  "diverge": false,
+  "sample": "17,19,29,31,43,47,59,61,71,73,89,101",
+  "name_a": "Primes congruent to {0, 1, 3, 5} mod 7.",
+  "name_b": "Primes congruent to {1, 3, 5} mod 7.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A082587",
+  "b": "A090244",
+  "match": 43,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 50,
+  "len_b": 45,
+  "diverge": false,
+  "sample": "3,1,4,3,7,4,11,7,18,11,29,18",
+  "name_a": "G.f.: (3+x+x^2+2*x^3)/(1-x^2-x^4).",
+  "name_b": "a(0) = 1; a(1) = 2; a(n) = { a(n-1) + a(n-2) for n even, a(n-1) - a(n-2) for n odd }.",
+  "kw_a": "nonn,easy",
+  "kw_b": "easy,nonn",
+  "auth_a": "_N. J. A. Sloane_, May 13 2003",
+  "auth_b": "_Felix Tubiana_, Jan 23 2004"
+ },
+ {
+  "a": "A045333",
+  "b": "A045343",
+  "match": 42,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 45,
+  "len_b": 45,
+  "diverge": false,
+  "sample": "17,23,31,37,59,73,79,101,107,149,157,163",
+  "name_a": "Primes congruent to {0, 2, 3} (mod 7).",
+  "name_b": "Primes congruent to {2, 3} mod 7.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045359",
+  "b": "A045368",
+  "match": 42,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 45,
+  "len_b": 45,
+  "diverge": false,
+  "sample": "19,23,37,47,61,79,89,103,107,131,149,163",
+  "name_a": "Primes congruent to {0, 2, 5} mod 7.",
+  "name_b": "Primes congruent to {2, 5} mod 7.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A045401",
+  "b": "A045416",
+  "match": 42,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 45,
+  "len_b": 45,
+  "diverge": false,
+  "sample": "17,19,31,47,59,61,73,89,101,103,131,157",
+  "name_a": "Primes congruent to {0, 3, 5} mod 7.",
+  "name_b": "Primes congruent to {3, 5} mod 7.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A279030",
+  "b": "A282577",
+  "match": 42,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 43,
+  "len_b": 44,
+  "diverge": false,
+  "sample": "1,0,5,0,21,0,85,0,341,0,1365,0",
+  "name_a": "Decimal representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 129\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Decimal representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 553\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Dec 03 2016",
+  "auth_b": "_Robert Price_, Feb 27 2017"
+ },
+ {
+  "a": "A000447",
+  "b": "A156126",
+  "match": 41,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 46,
+  "len_b": 42,
+  "diverge": false,
+  "sample": "35,84,165,286,455,680,969,1330,1771,2300,2925,3654",
+  "name_a": "a(n) = 1^2 + 3^2 + 5^2 + 7^2 + ... + (2*n-1)^2 = n*(4*n^2 - 1)/3.",
+  "name_b": "Sequence related to Hankel transform of super-ballot numbers.",
+  "kw_a": "nonn,nice,easy",
+  "kw_b": "easy,nonn",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_Paul Barry_, Feb 04 2009"
+ },
+ {
+  "a": "A215101",
+  "b": "A215377",
+  "match": 41,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 49,
+  "len_b": 44,
+  "diverge": false,
+  "sample": "41,59,79,97,173,193,211,269,307,383,401,421",
+  "name_a": "Primes congruent to {2, 3} mod 19.",
+  "name_b": "Primes congruent to {0, 2, 3} mod 19.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Vincenzo Librandi_, Aug 04 2012",
+  "auth_b": "_Vincenzo Librandi_, Aug 09 2012"
+ },
+ {
+  "a": "A020745",
+  "b": "A077868",
+  "match": 40,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 41,
+  "len_b": 42,
+  "diverge": false,
+  "sample": "3,5,8,12,18,27,40,59,87,128,188,276",
+  "name_a": "Pisot sequence T(3,5).",
+  "name_b": "Expansion of 1/((1-x)*(1-x-x^3)).",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_David W. Wilson_",
+  "auth_b": "_N. J. A. Sloane_, Nov 17 2002"
+ },
+ {
+  "a": "A066872",
+  "b": "A247395",
+  "match": 40,
+  "align": [
+   1,
+   3
+  ],
+  "len_a": 41,
+  "len_b": 44,
+  "diverge": false,
+  "sample": "10,26,50,122,170,290,362,530,842,962,1370,1682",
+  "name_a": "a(n) = prime(n)^2 + 1.",
+  "name_b": "The smallest numbers of every class in a classification of positive numbers (see comment).",
+  "kw_a": "easy,nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Joseph L. Pe_, Jan 21 2002",
+  "auth_b": "_Vladimir Shevelev_, Sep 16 2014"
+ },
+ {
+  "a": "A112051",
+  "b": "A216244",
+  "match": 40,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 43,
+  "len_b": 45,
+  "diverge": false,
+  "sample": "24,60,84,144,180,264,420,480,684,840,924,1104",
+  "name_a": "a(1)=1, a(n) = first index i (> a(n-1)), where A112046(i) gets a value distinct from any values A112046(1)..A112046(a(n-1)).",
+  "name_b": "a(n) = (prime(n)^2 - 1)/2 for n >= 2.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Antti Karttunen_, Aug 27 2005",
+  "auth_b": "_Richard R. Forberg_, May 28 2013"
+ },
+ {
+  "a": "A270937",
+  "b": "A271094",
+  "match": 40,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 43,
+  "len_b": 43,
+  "diverge": false,
+  "sample": "-35,107,-107,211,-211,347,-347,515,-515,715,-715,947",
+  "name_a": "First differences of number of active (ON, black) cells in n-th stage of growth of two-dimensional cellular automaton defined by \"Rule 221\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "First differences of number of active (ON, black) cells in n-th stage of growth of two-dimensional cellular automaton defined by \"Rule 275\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "sign,easy",
+  "kw_b": "sign,easy",
+  "auth_a": "_Robert Price_, Mar 26 2016",
+  "auth_b": "_Robert Price_, Mar 30 2016"
+ },
+ {
+  "a": "A271007",
+  "b": "A272567",
+  "match": 40,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 43,
+  "len_b": 43,
+  "diverge": false,
+  "sample": "-31,99,-87,183,-171,303,-291,455,-443,639,-627,855",
+  "name_a": "First differences of number of active (ON, black) cells in n-th stage of growth of two-dimensional cellular automaton defined by \"Rule 245\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "First differences of number of active (ON, black) cells in n-th stage of growth of two-dimensional cellular automaton defined by \"Rule 501\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "sign,easy",
+  "kw_b": "sign,easy",
+  "auth_a": "_Robert Price_, Mar 28 2016",
+  "auth_b": "_Robert Price_, May 02 2016"
+ },
+ {
+  "a": "A271053",
+  "b": "A271057",
+  "match": 40,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 43,
+  "len_b": 43,
+  "diverge": false,
+  "sample": "-31,103,-103,207,-207,343,-343,511,-511,711,-711,943",
+  "name_a": "First differences of number of active (ON, black) cells in n-th stage of growth of two-dimensional cellular automaton defined by \"Rule 253\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "First differences of number of active (ON, black) cells in n-th stage of growth of two-dimensional cellular automaton defined by \"Rule 259\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "sign,easy",
+  "kw_b": "sign,easy",
+  "auth_a": "_Robert Price_, Mar 29 2016",
+  "auth_b": "_Robert Price_, Mar 29 2016"
+ },
+ {
+  "a": "A282004",
+  "b": "A287192",
+  "match": 40,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 43,
+  "len_b": 43,
+  "diverge": false,
+  "sample": "14,3,62,3,254,3,1022,3,4094,3,16382,3",
+  "name_a": "Decimal representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 413\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Decimal representation of the diagonal from the corner to the origin of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 253\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Feb 04 2017",
+  "auth_b": "_Robert Price_, May 21 2017"
+ },
+ {
+  "a": "A287131",
+  "b": "A288762",
+  "match": 40,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 43,
+  "len_b": 43,
+  "diverge": false,
+  "sample": "14,3,62,3,252,3,1020,3,4092,3,16380,3",
+  "name_a": "Decimal representation of the diagonal from the corner to the origin of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 245\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Decimal representation of the diagonal from the corner to the origin of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 501\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, May 20 2017",
+  "auth_b": "_Robert Price_, Jun 15 2017"
+ },
+ {
+  "a": "A000204",
+  "b": "A329723",
+  "match": 39,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 39,
+  "len_b": 43,
+  "diverge": false,
+  "sample": "1,3,4,7,11,18,29,47,76,123,199,322",
+  "name_a": "Lucas numbers (beginning with 1): L(n) = L(n-1) + L(n-2) with L(1) = 1, L(2) = 3.",
+  "name_b": "Coefficients of expansion of (1-2x^3)/(1-x-x^2) in powers of x.",
+  "kw_a": "core,easy,nonn,nice",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_Chai Wah Wu_, Nov 19 2019"
+ },
+ {
+  "a": "A014741",
+  "b": "A015942",
+  "match": 39,
+  "align": [
+   2,
+   0
+  ],
+  "len_a": 41,
+  "len_b": 40,
+  "diverge": false,
+  "sample": "6,18,42,54,126,162,294,342,378,486,882,1026",
+  "name_a": "Numbers k such that k divides 2^(k+1) - 2.",
+  "name_b": "Positive integers n such that n | (2^n + n/2 - 1).",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_ and _Olivier Gérard_",
+  "auth_b": "_Robert G. Wilson v_"
+ },
+ {
+  "a": "A020749",
+  "b": "A077868",
+  "match": 39,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 40,
+  "len_b": 42,
+  "diverge": false,
+  "sample": "5,8,12,18,27,40,59,87,128,188,276,405",
+  "name_a": "Pisot sequence T(5,8), a(n) = floor(a(n-1)^2/a(n-2)).",
+  "name_b": "Expansion of 1/((1-x)*(1-x-x^3)).",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_David W. Wilson_",
+  "auth_b": "_N. J. A. Sloane_, Nov 17 2002"
+ },
+ {
+  "a": "A084921",
+  "b": "A112051",
+  "match": 39,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 42,
+  "len_b": 43,
+  "diverge": false,
+  "sample": "24,60,84,144,180,264,420,480,684,840,924,1104",
+  "name_a": "a(n) = lcm(p-1, p+1) where p is the n-th prime.",
+  "name_b": "a(1)=1, a(n) = first index i (> a(n-1)), where A112046(i) gets a value distinct from any values A112046(1)..A112046(a(n-1)).",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Reinhard Zumkeller_, Jun 11 2003",
+  "auth_b": "_Antti Karttunen_, Aug 27 2005"
+ },
+ {
+  "a": "A091915",
+  "b": "A319054",
+  "match": 39,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 42,
+  "len_b": 43,
+  "diverge": false,
+  "sample": "4,6,8,12,18,24,36,54,72,108,162,216",
+  "name_a": "Maximum of even products of partitions of n.",
+  "name_b": "Maximum product of an aperiodic integer partition of n.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Jon Perry_, Feb 12 2004",
+  "auth_b": "_Gus Wiseman_, Sep 09 2018"
+ },
+ {
+  "a": "A147790",
+  "b": "A328262",
+  "match": 39,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 39,
+  "len_b": 43,
+  "diverge": false,
+  "sample": "3,4,6,9,14,21,32,48,72,108,162,243",
+  "name_a": "a(1) = 3, a(n) = round(a(n-1)*3/2) for n > 1, using round-to-even method.",
+  "name_b": "a(n) = a(n-1)*3/2, if noninteger then rounded to the nearest even integer, with a(1) = 1.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Vladimir Joseph Stephan Orlovsky_, Nov 13 2008",
+  "auth_b": "_Jason Atwood_, Oct 09 2019"
+ },
+ {
+  "a": "A076673",
+  "b": "A076676",
+  "match": 38,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 41,
+  "len_b": 40,
+  "diverge": false,
+  "sample": "60,63,84,112,180,189,252,275,660,693,924,1232",
+  "name_a": "Smallest a(n)>a(n-1) such that a(n)^2+a(n-1)^2 is a perfect square, a(1)=7.",
+  "name_b": "Smallest a(n)>a(n-1) such that a(n)^2+a(n-1)^2 is a perfect square, a(1)=11.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Zak Seidov_, Oct 25 2002",
+  "auth_b": "_Zak Seidov_, Oct 25 2002"
+ },
+ {
+  "a": "A076675",
+  "b": "A076676",
+  "match": 38,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 41,
+  "len_b": 40,
+  "diverge": false,
+  "sample": "60,63,84,112,180,189,252,275,660,693,924,1232",
+  "name_a": "Smallest a(n)>a(n-1) such that a(n)^2+a(n-1)^2 is a perfect square, a(1)=10.",
+  "name_b": "Smallest a(n)>a(n-1) such that a(n)^2+a(n-1)^2 is a perfect square, a(1)=11.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Zak Seidov_, Oct 25 2002",
+  "auth_b": "_Zak Seidov_, Oct 25 2002"
+ },
+ {
+  "a": "A077162",
+  "b": "A081966",
+  "match": 38,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 41,
+  "len_b": 41,
+  "diverge": false,
+  "sample": "48,56,144,147,294,358,624,548,1020,978,1576,1685",
+  "name_a": "Sum of terms in n-th rows of triangle in A077159.",
+  "name_b": "Row sums of A081964.",
+  "kw_a": "easy,nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Amarnath Murthy_, Oct 31 2002",
+  "auth_b": "_Amarnath Murthy_, Apr 03 2003"
+ },
+ {
+  "a": "A081441",
+  "b": "A273677",
+  "match": 38,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 41,
+  "len_b": 42,
+  "diverge": false,
+  "sample": "22,55,111,196,316,477,685,946,1266,1651,2107,2640",
+  "name_a": "a(n) = (2*n^3 - n^2 - n + 2)/2.",
+  "name_b": "Partial sums of the number of active (ON, black) cells in n-th stage of growth of two-dimensional cellular automaton defined by \"Rule 833\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Paul Barry_, Mar 21 2003",
+  "auth_b": "_Robert Price_, May 27 2016"
+ },
+ {
+  "a": "A157726",
+  "b": "A169622",
+  "match": 38,
+  "align": [
+   3,
+   0
+  ],
+  "len_a": 41,
+  "len_b": 38,
+  "diverge": false,
+  "sample": "5,6,8,11,16,24,37,58,92,147,236,380",
+  "name_a": "a(n) = Fibonacci(n) + 3.",
+  "name_b": "a(n) = a(n-1) + Fibonacci(n), a(1)=5.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_, Jun 26 2010",
+  "auth_b": "_Geoff Ahiakwo_, Dec 03 2009"
+ },
+ {
+  "a": "A022406",
+  "b": "A355288",
+  "match": 37,
+  "align": [
+   0,
+   1
+  ],
+  "len_a": 37,
+  "len_b": 41,
+  "diverge": false,
+  "sample": "3,7,11,19,31,51,83,135,219,355,575,931",
+  "name_a": "a(0)=3, a(1)=7; thereafter a(n) = a(n-1) + a(n-2) + 1.",
+  "name_b": "a(0)=1, a(1)=3, a(2)=7; thereafter a(n) = a(n-1) + a(n-2) + 1.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_Sumukh Patel_, Jun 27 2022"
+ },
+ {
+  "a": "A046107",
+  "b": "A204845",
+  "match": 37,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 39,
+  "len_b": 40,
+  "diverge": false,
+  "sample": "37,101,41,271,7,13,239,4649,73,137,333667,9091",
+  "name_a": "Triangle of prime numbers in which n-th row lists all primes p such that 1/p has decimal period n, n >= 1.",
+  "name_b": "Irregular triangle read by rows in which row n lists primitive prime factors of the repunit (10^n - 1)/9 (A002275(n)).",
+  "kw_a": "nonn,tabf,base",
+  "kw_b": "nonn,tabf",
+  "auth_a": "_Eric W. Weisstein_",
+  "auth_b": "_N. J. A. Sloane_, Jan 19 2012"
+ },
+ {
+  "a": "A046964",
+  "b": "A079037",
+  "match": 37,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 42,
+  "len_b": 39,
+  "diverge": false,
+  "sample": "5,11,344,1054,1764,2474,3184,3894,4604,5314,6024,6734",
+  "name_a": "Sin(n) decreases monotonically to -1.",
+  "name_b": "a(0)=1; a(n) is the smallest integer > a(n-1) such that sin(a(n)) is closer to an integer (here 0 or -1) than sin(a(n-1)).",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Wouter Meeussen_",
+  "auth_b": "_Benoit Cloitre_, Feb 01 2003"
+ },
+ {
+  "a": "A057925",
+  "b": "A057928",
+  "match": 37,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 39,
+  "len_b": 41,
+  "diverge": false,
+  "sample": "3,6,9,15,27,36,51,87,135,243,315,531",
+  "name_a": "Position of first occurrence of 2^n in A057923.",
+  "name_b": "Position at which 2^n occurs in A057926, or -1 if it does not occur.",
+  "kw_a": "easy,nonn",
+  "kw_b": "easy,sign",
+  "auth_a": "Larry Reeves (larryr(AT)acm.org), Oct 03 2000",
+  "auth_b": "Larry Reeves (larryr(AT)acm.org), Oct 03 2000"
+ },
+ {
+  "a": "A066388",
+  "b": "A221310",
+  "match": 37,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 38,
+  "len_b": 40,
+  "diverge": false,
+  "sample": "6,30,660,810,2130,2550,3330,3390,5850,6270,10530,33180",
+  "name_a": "Numbers j such that j and 2j are both between a pair of twin primes.",
+  "name_b": "Numbers m such that exactly four subsets of {m-1, m, m+1} sum up to a prime number.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Jud McCranie_, Dec 23 2001",
+  "auth_b": "_Reinhard Zumkeller_, Jan 10 2013"
+ },
+ {
+  "a": "A228306",
+  "b": "A239568",
+  "match": 37,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 40,
+  "len_b": 40,
+  "diverge": false,
+  "sample": "75,165,315,546,882,1350,1980,2805,3861,5187,6825,8820",
+  "name_a": "The Wiener index of the Kneser graph K(n,2) (n>=5).",
+  "name_b": "Number of ways to place 2 points on a triangular grid of side n so that they are not adjacent.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Emeric Deutsch_, Aug 20 2013",
+  "auth_b": "_Heinrich Ludwig_, Mar 22 2014"
+ },
+ {
+  "a": "A001060",
+  "b": "A244472",
+  "match": 36,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 38,
+  "len_b": 39,
+  "diverge": false,
+  "sample": "7,12,19,31,50,81,131,212,343,555,898,1453",
+  "name_a": "a(n) = a(n-1) + a(n-2) with a(0)=2, a(1)=5. Sometimes called the Evangelist Sequence.",
+  "name_b": "2nd-largest term in n-th row of Stern's diatomic triangle A002487.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_, Jul 01 2014"
+ },
+ {
+  "a": "A031367",
+  "b": "A378853",
+  "match": 36,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 39,
+  "len_b": 39,
+  "diverge": false,
+  "sample": "4,10,12,28,40,72,110,198,300,520,812,1350",
+  "name_a": "Inflation orbit counts.",
+  "name_b": "Define f(x) = abs(1-1/x) and sequence {b(m)} such that b(m+1) = f(b(m)). a(n) is the number of initial values b(1) such that {b(m)}'s period has length n.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_Yifan Xie_, Dec 09 2024"
+ },
+ {
+  "a": "A043806",
+  "b": "A043824",
+  "match": 36,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 36,
+  "len_b": 36,
+  "diverge": false,
+  "sample": "7381,7382,7386,7387,7390,7391,7392,7394,7428,7430,7431,7432",
+  "name_a": "Numbers n such that number of runs in the base 3 representation of n is congruent to 0 mod 9.",
+  "name_b": "Numbers k such that number of runs in the base 3 representation of k is congruent to 9 mod 10.",
+  "kw_a": "nonn,base",
+  "kw_b": "nonn,base",
+  "auth_a": "_Clark Kimberling_",
+  "auth_b": "_Clark Kimberling_"
+ },
+ {
+  "a": "A194284",
+  "b": "A194426",
+  "match": 36,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 39,
+  "len_b": 43,
+  "diverge": false,
+  "sample": "75,99,153,175,245,261,325,363,369,475,531,539",
+  "name_a": "Entries n of A194234 for which the cototient A051953(n) is a composite number.",
+  "name_b": "Elements n of A194234 for which the cototient(n) is not a prime power (A000961).",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Naohiro Nomoto_, Oct 12 2011",
+  "auth_b": "_Naohiro Nomoto_, Oct 12 2011"
+ },
+ {
+  "a": "A297661",
+  "b": "A297665",
+  "match": 36,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 39,
+  "len_b": 38,
+  "diverge": false,
+  "sample": "10,17,26,37,54,83,132,211,336,535,856,1377",
+  "name_a": "a(n) = n + 2*cos((n*Pi)/3) + Lucas(n).",
+  "name_b": "Number of chordless cycles in the n-web graph.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Eric W. Weisstein_, Jan 02 2018",
+  "auth_b": "_Eric W. Weisstein_, Jan 02 2018"
+ },
+ {
+  "a": "A000537",
+  "b": "A250813",
+  "match": 35,
+  "align": [
+   3,
+   0
+  ],
+  "len_a": 39,
+  "len_b": 35,
+  "diverge": false,
+  "sample": "36,100,225,441,784,1296,2025,3025,4356,6084,8281,11025",
+  "name_a": "Sum of first n cubes; or n-th triangular number squared.",
+  "name_b": "Number of (1+1) X (n+1) 0..2 arrays with nondecreasing x(i,j)-x(i,j-1) in the i direction and nondecreasing min(x(i,j),x(i-1,j)) in the j direction.",
+  "kw_a": "nonn,easy,nice",
+  "kw_b": "nonn",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_R. H. Hardin_, Nov 27 2014"
+ },
+ {
+  "a": "A182522",
+  "b": "A182751",
+  "match": 35,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 38,
+  "len_b": 36,
+  "diverge": false,
+  "sample": "3,6,9,18,27,54,81,162,243,486,729,1458",
+  "name_a": "a(0) = 1; thereafter a(2*n + 1) = 3^n, a(2*n + 2) = 2 * 3^n.",
+  "name_b": "a(1)=1, a(2)=3, a(3)=6; a(n) = 3*a(n-2) for n > 3.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy,less",
+  "auth_a": "_Michael Somos_, May 03 2012",
+  "auth_b": "_Jaroslav Krizek_, Nov 27 2010"
+ },
+ {
+  "a": "A270829",
+  "b": "A342124",
+  "match": 35,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 38,
+  "len_b": 39,
+  "diverge": false,
+  "sample": "124,313,484,797,2016,2211,2862,4507,6188,6325,9660,12669",
+  "name_a": "Smallest magic sum for any n X n semimagic square made from consecutive primes, or 0 if no such magic square exists.",
+  "name_b": "a(n) = smallest potential magic constant for an n X n magic square composed of consecutive primes.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Arkadiusz Wesolowski_, Mar 23 2016",
+  "auth_b": "_A.H.M. Smeets_, Feb 28 2021"
+ },
+ {
+  "a": "A325735",
+  "b": "A325740",
+  "match": 35,
+  "align": [
+   1,
+   1
+  ],
+  "len_a": 36,
+  "len_b": 36,
+  "diverge": false,
+  "sample": "0,0,1,-4,10,-20,36,-64,120,-239,484,-946",
+  "name_a": "First term of n-th difference sequence of (floor(-k*e)), k >= 0.",
+  "name_b": "First term of n-th difference sequence of (floor(2*Pi*k)), k >= 0.",
+  "kw_a": "easy,sign",
+  "kw_b": "easy,sign",
+  "auth_a": "_Clark Kimberling_, May 20 2019",
+  "auth_b": "_Clark Kimberling_, May 23 2019"
+ },
+ {
+  "a": "A048752",
+  "b": "A293376",
+  "match": 34,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 34,
+  "len_b": 37,
+  "diverge": false,
+  "sample": "9,16,9,25,288,49,972,121,41472,169,101250,289",
+  "name_a": "Mean integral divisors associated with A048751.",
+  "name_b": "Corresponding values of pod(n)/tau(n) of numbers n from A120736.",
+  "kw_a": "easy,nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Enoch Haga_",
+  "auth_b": "_Jaroslav Krizek_, Oct 07 2017"
+ },
+ {
+  "a": "A055499",
+  "b": "A073022",
+  "match": 34,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 39,
+  "len_b": 37,
+  "diverge": false,
+  "sample": "5,11,17,29,47,79,127,211,347,563,911,1481",
+  "name_a": "a(0)=0, a(1)=1, a(n) = smallest prime > a(n-1)+a(n-2).",
+  "name_b": "Each term is the smallest prime > the sum of the previous 2 terms.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_N. J. A. Sloane_, Jul 08 2000",
+  "auth_b": "_Phil Carmody_, Aug 15 2002"
+ },
+ {
+  "a": "A055521",
+  "b": "A240768",
+  "match": 34,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 34,
+  "len_b": 38,
+  "diverge": false,
+  "sample": "773,3373,3947,4643,5113,6397,6967,7937,15647,16823,24373,33547",
+  "name_a": "Restricted left truncatable (Henry VIII) primes.",
+  "name_b": "Left-truncatable primes p with property that prepending any single decimal digit to p does not produce a prime.",
+  "kw_a": "nonn,base,fini,full",
+  "kw_b": "nonn,base,fini",
+  "auth_a": "_Eric W. Weisstein_",
+  "auth_b": "_Arkadiusz Wesolowski_, Apr 12 2014"
+ },
+ {
+  "a": "A068131",
+  "b": "A117523",
+  "match": 34,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 35,
+  "len_b": 37,
+  "diverge": false,
+  "sample": "1596,2775,3486,3828,4278,4656,5565,6555,7626,8256,9453,14196",
+  "name_a": "Triangular numbers with sum of digits = 21.",
+  "name_b": "Triangular numbers for which the sum of the digits is an octagonal number.",
+  "kw_a": "base,easy,nonn",
+  "kw_b": "base,nonn",
+  "auth_a": "_Amarnath Murthy_, Feb 21 2002",
+  "auth_b": "Luc Stevens (lms022(AT)yahoo.com), Apr 30 2006"
+ },
+ {
+  "a": "A075823",
+  "b": "A246449",
+  "match": 34,
+  "align": [
+   3,
+   0
+  ],
+  "len_a": 37,
+  "len_b": 61,
+  "diverge": false,
+  "sample": "10,14,15,18,20,22,26,30,34,35,38,40",
+  "name_a": "Numbers that are not the last two digits (leading zeros omitted) of any perfect power.",
+  "name_b": "Numbers k such that no cube can end in k (in the sense of the respective decimal expansions).",
+  "kw_a": "fini,full,easy,nonn,base",
+  "kw_b": "nonn,base",
+  "auth_a": "_Zak Seidov_, Oct 14 2002",
+  "auth_b": "_Derek Orr_, Aug 26 2014"
+ },
+ {
+  "a": "A279879",
+  "b": "A282417",
+  "match": 34,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 37,
+  "len_b": 37,
+  "diverge": false,
+  "sample": "12,7,56,15,240,31,992,63,4032,127,16256,255",
+  "name_a": "Decimal representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 213\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Decimal representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 469\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Dec 21 2016",
+  "auth_b": "_Robert Price_, Feb 14 2017"
+ },
+ {
+  "a": "A279880",
+  "b": "A282418",
+  "match": 34,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 37,
+  "len_b": 37,
+  "diverge": false,
+  "sample": "3,28,7,120,15,496,31,2016,63,8128,127,32640",
+  "name_a": "Decimal representation of the x-axis, from the origin to the right edge, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 213\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Decimal representation of the x-axis, from the origin to the right edge, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 469\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Dec 21 2016",
+  "auth_b": "_Robert Price_, Feb 14 2017"
+ },
+ {
+  "a": "A005586",
+  "b": "A212346",
+  "match": 33,
+  "align": [
+   1,
+   3
+  ],
+  "len_a": 45,
+  "len_b": 36,
+  "diverge": false,
+  "sample": "5,14,28,48,75,110,154,208,273,350,440,544",
+  "name_a": "a(n) = n*(n+4)*(n+5)/6.",
+  "name_b": "Sequence of coefficients of x^0 in marked mesh pattern generating function Q_{n,132}^(0,4,0,0)(x).",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,more",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_, May 09 2012"
+ },
+ {
+  "a": "A023494",
+  "b": "A023499",
+  "match": 33,
+  "align": [
+   1,
+   3
+  ],
+  "len_a": 37,
+  "len_b": 36,
+  "diverge": false,
+  "sample": "10,14,21,30,44,67,102,158,248,393,627,1006",
+  "name_a": "a(n) = b(n) + d(n), where b(n) = (n-th Fibonacci number > 2) and d(n) = (n-th non-Lucas number).",
+  "name_b": "a(n) = b(n) + d(n), where b(n) = ( (n+1)st Fibonacci number) and d(n) = (n-th number that is 1, 2, or 3, or is not a Lucas number).",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Clark Kimberling_",
+  "auth_b": "_Clark Kimberling_"
+ },
+ {
+  "a": "A023496",
+  "b": "A023500",
+  "match": 33,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 35,
+  "len_b": 36,
+  "diverge": false,
+  "sample": "13,19,29,43,65,101,157,247,392,626,1004,1616",
+  "name_a": "a(n) = b(n) + d(n), where b(n) = (n-th Fibonacci number > 2) and d(n) = (n-th number that is 1 or is not a Lucas number).",
+  "name_b": "a(n) = b(n) + d(n), where b(n) = (n-th Fibonacci number > 1) and d(n) = (n-th number that is 1, 2, or 3, or is not a Lucas number).",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Clark Kimberling_",
+  "auth_b": "_Clark Kimberling_"
+ },
+ {
+  "a": "A090129",
+  "b": "A171869",
+  "match": 33,
+  "align": [
+   1,
+   3
+  ],
+  "len_a": 36,
+  "len_b": 36,
+  "diverge": false,
+  "sample": "2,2,4,8,16,32,64,128,256,512,1024,2048",
+  "name_a": "Smallest exponent such that -1 + 3^a(n) is divisible by 2^n.",
+  "name_b": "a(n) is the period of A175555(n) in the sequence {A175555}.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,base",
+  "auth_a": "_Labos Elemer_ and _Ralf Stephan_, Jan 19 2004",
+  "auth_b": "_Michel Lagneau_, Dec 30 2009, Apr 22 2010"
+ },
+ {
+  "a": "A023497",
+  "b": "A023501",
+  "match": 32,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 34,
+  "len_b": 35,
+  "diverge": false,
+  "sample": "16,24,37,56,86,135,212,336,536,859,1381,2226",
+  "name_a": "a(n) = b(n) + d(n), where b(n) = (n-th Lucas number > 3) and d(n) = (n-th number that is 1 or is not a Lucas number).",
+  "name_b": "a(n) = b(n) + d(n), where b(n) = (n-th Lucas number > 1) and d(n) = (n-th number that is 1, 2, or 3, or is not a Lucas number).",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Clark Kimberling_",
+  "auth_b": "_Clark Kimberling_"
+ },
+ {
+  "a": "A051716",
+  "b": "A172083",
+  "match": 32,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 35,
+  "len_b": 35,
+  "diverge": false,
+  "sample": "-1,-1,1,1,-1,-1,1,5,-5,-691,691,7",
+  "name_a": "Numerators of Bernoulli twin numbers C(n).",
+  "name_b": "1, followed by numerators of first differences of Bernoulli numbers (B(i) - B(i-1)).",
+  "kw_a": "sign,easy,nice,frac",
+  "kw_b": "sign",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_Paul Curtz_, Jan 25 2010"
+ },
+ {
+  "a": "A062547",
+  "b": "A072134",
+  "match": 32,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 37,
+  "len_b": 35,
+  "diverge": false,
+  "sample": "7,17,19,53,55,161,163,485,487,1457,1459,4373",
+  "name_a": "a(n) is least odd integer not a partial sum of 1, 3, ..., a(n-1).",
+  "name_b": "Second generation sequence in which each number is skipped that can be written as sum of distinct previous entries. To make the first generation we start with all natural numbers: this gives the powers of 2 (A000079). For the second generation we start with the natural numbers from which are removed the numbers of the first generation.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_Wouter Meeussen_, Jun 26 2001",
+  "auth_b": "_Floor van Lamoen_, Jun 26 2002"
+ },
+ {
+  "a": "A256994",
+  "b": "A347512",
+  "match": 32,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 40,
+  "len_b": 33,
+  "diverge": false,
+  "sample": "7,11,19,35,67,131,259,515,1027,2051,4099,8195",
+  "name_a": "a(n) = n + 1 when n <= 3, otherwise a(n) = 2^(n-2) + 3; also iterates of A005187 starting from a(1) = 2.",
+  "name_b": "Number of minimal dominating sets in the n-book graph.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Antti Karttunen_, Apr 15 2015",
+  "auth_b": "_Eric W. Weisstein_, Sep 04 2021"
+ },
+ {
+  "a": "A069107",
+  "b": "A182504",
+  "match": 32,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 35,
+  "len_b": 37,
+  "diverge": false,
+  "sample": "3827,5777,6479,10877,11663,18407,19043,20999,23407,25877,27323,34943",
+  "name_a": "Composite numbers k that divide Fibonacci(k+1).",
+  "name_b": "Composite numbers k that divide both Fibonacci(k+1) and Fibonacci(2k+1)-1.",
+  "kw_a": "nice,nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Benoit Cloitre_, Apr 06 2002",
+  "auth_b": "_Gary Detlefs_, May 05 2012"
+ },
+ {
+  "a": "A074969",
+  "b": "A336910",
+  "match": 32,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 32,
+  "len_b": 37,
+  "diverge": false,
+  "sample": "30030,39270,43890,46410,51870,53130,60060,62790,66990,67830,71610,72930",
+  "name_a": "Numbers with six distinct prime divisors.",
+  "name_b": "Numbers k > 2 such that omega(k) > log(log(k)) + 2 * sqrt(log(log(k))), where omega(k) is the number of distinct primes dividing k (A001221).",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Zak Seidov_, Oct 04 2002",
+  "auth_b": "_Amiram Eldar_, Aug 07 2020"
+ },
+ {
+  "a": "A083318",
+  "b": "A127904",
+  "match": 32,
+  "align": [
+   0,
+   1
+  ],
+  "len_a": 32,
+  "len_b": 35,
+  "diverge": false,
+  "sample": "1,3,5,9,17,33,65,129,257,513,1025,2049",
+  "name_a": "a(0) = 1; for n>0, a(n) = 2^n + 1.",
+  "name_b": "Smallest m such that A008687(m) = n.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Paul Barry_, Apr 25 2003",
+  "auth_b": "_Reinhard Zumkeller_, Feb 05 2007"
+ },
+ {
+  "a": "A144760",
+  "b": "A144814",
+  "match": 32,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 35,
+  "len_b": 34,
+  "diverge": false,
+  "sample": "6,12,112,11114,1733,270,12223,7128,11122225,33991010,13913661,2107998",
+  "name_a": "Trajectory of 6 under iteration of the map k -> A087712(k).",
+  "name_b": "Trajectory of 10 under iteration of the map k -> A087712(k).",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_N. J. A. Sloane_, Feb 18 2009",
+  "auth_b": "_N. J. A. Sloane_, Feb 18 2009"
+ },
+ {
+  "a": "A285654",
+  "b": "A286733",
+  "match": 32,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 35,
+  "len_b": 35,
+  "diverge": false,
+  "sample": "7,16,31,64,63,384,255,1536,1023,6144,4095,24576",
+  "name_a": "Decimal representation of the diagonal from the origin to the corner of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 81\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Decimal representation of the diagonal from the origin to the corner of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 213\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Apr 23 2017",
+  "auth_b": "_Robert Price_, May 13 2017"
+ },
+ {
+  "a": "A307114",
+  "b": "A392936",
+  "match": 32,
+  "align": [
+   1,
+   3
+  ],
+  "len_a": 33,
+  "len_b": 40,
+  "diverge": false,
+  "sample": "50400,75600,85680,95760,105840,115920,120120,128520,141120,143640,176400,180180",
+  "name_a": "Primitive 4-abundant numbers: Numbers k such that sigma(k) > 4k (A068404) all of whose proper divisors d are 4-deficient numbers (having sigma(d) < 4d).",
+  "name_b": "Primitive terms of A023198: numbers k with the property sigma(k)/k >= 4 that are not divisible by any other number with that property.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Amiram Eldar_, Mar 25 2019",
+  "auth_b": "_Peter Munn_, Jan 27 2026"
+ },
+ {
+  "a": "A000211",
+  "b": "A048162",
+  "match": 31,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 34,
+  "len_b": 37,
+  "diverge": false,
+  "sample": "6,9,13,20,31,49,78,125,201,324,523,845",
+  "name_a": "a(n) = a(n-1) + a(n-2) - 2, a(0) = 4, a(1) = 3.",
+  "name_b": "Expansion of (1 - x + 3*x^3 - 2*x^4 - 3*x^5)/(1 - 2*x + x^3).",
+  "kw_a": "nonn,easy,nice",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A203019",
+  "b": "A292460",
+  "match": 31,
+  "align": [
+   3,
+   0
+  ],
+  "len_a": 34,
+  "len_b": 32,
+  "diverge": false,
+  "sample": "1,1,2,4,8,17,37,82,185,423,978,2283",
+  "name_a": "Number of elevated peakless Motzkin paths.",
+  "name_b": "Expansion of (1 - x - x^2 - sqrt((1 - x - x^2)^2 - 4*x^3))/(2*x^3) in powers of x.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Panayotis Vlamos_ and _Antonios Panayotopoulos_, Dec 27 2011",
+  "auth_b": "_Seiichi Manyama_, Sep 16 2017"
+ },
+ {
+  "a": "A116453",
+  "b": "A397439",
+  "match": 31,
+  "align": [
+   1,
+   2
+  ],
+  "len_a": 34,
+  "len_b": 33,
+  "diverge": false,
+  "sample": "9,18,36,72,144,288,576,1152,2304,4608,9216,18432",
+  "name_a": "Third smallest number with exactly n prime factors.",
+  "name_b": "Growth function of the reflection group of a three-dimensional orthoscheme with distinct edge lengths.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Reinhard Zumkeller_, Feb 16 2006",
+  "auth_b": "_Vico Bonfioli_, Jun 25 2026"
+ },
+ {
+  "a": "A078836",
+  "b": "A131352",
+  "match": 31,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 31,
+  "len_b": 33,
+  "diverge": false,
+  "sample": "6,14,32,72,160,352,768,1664,3584,7680,16384,34816",
+  "name_a": "a(n) = n*2^(n-6).",
+  "name_b": "Row sums of triangle A133935.",
+  "kw_a": "easy,nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "Silvia Heubach (sheubac(AT)calstatela.edu), Jan 17 2003",
+  "auth_b": "_Gary W. Adamson_, Sep 29 2007"
+ },
+ {
+  "a": "A079859",
+  "b": "A129953",
+  "match": 31,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 31,
+  "len_b": 34,
+  "diverge": false,
+  "sample": "4,10,24,56,128,288,640,1408,3072,6656,14336,30720",
+  "name_a": "a(n) = n*2^(n-4).",
+  "name_b": "First differences of A129952.",
+  "kw_a": "easy,nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "Silvia Heubach (sheubac(AT)calstatela.edu), Jan 11 2003",
+  "auth_b": "_Paul Curtz_, Jun 10 2007"
+ },
+ {
+  "a": "A134067",
+  "b": "A307457",
+  "match": 31,
+  "align": [
+   1,
+   1
+  ],
+  "len_a": 33,
+  "len_b": 32,
+  "diverge": false,
+  "sample": "6,14,30,62,126,254,510,1022,2046,4094,8190,16382",
+  "name_a": "Row sums of triangle A134066.",
+  "name_b": "Longest path length in the n-Apollonian network.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Gary W. Adamson_, Oct 06 2007",
+  "auth_b": "_Eric W. Weisstein_, Apr 08 2019"
+ },
+ {
+  "a": "A198633",
+  "b": "A244750",
+  "match": 31,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 31,
+  "len_b": 36,
+  "diverge": false,
+  "sample": "3,4,8,16,32,64,128,256,512,1024,2048,4096",
+  "name_a": "Total number of round trips, each of length 2*n on the graph P_3 (o-o-o).",
+  "name_b": "0-additive sequence: a(n) is the smallest number larger than a(n-1) which is not the sum of any subset of earlier terms, with initial values {0, 2, 3, 4}.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_Wolfdieter Lang_, Nov 02 2011",
+  "auth_b": "_N. J. A. Sloane_ and _Robert G. Wilson v_, Jul 05 2014"
+ },
+ {
+  "a": "A282005",
+  "b": "A287193",
+  "match": 31,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 34,
+  "len_b": 34,
+  "diverge": false,
+  "sample": "7,24,31,96,127,384,511,1536,2047,6144,8191,24576",
+  "name_a": "Decimal representation of the x-axis, from the origin to the right edge, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 413\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Decimal representation of the diagonal from the origin to the corner of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 253\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Feb 04 2017",
+  "auth_b": "_Robert Price_, May 21 2017"
+ },
+ {
+  "a": "A283651",
+  "b": "A290195",
+  "match": 31,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 34,
+  "len_b": 34,
+  "diverge": false,
+  "sample": "11,7,47,31,191,127,767,511,3071,2047,12287,8191",
+  "name_a": "Decimal representation of the x-axis, from the origin to the right edge, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 705\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Decimal representation of the diagonal from the origin to the corner of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 705\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Mar 12 2017",
+  "auth_b": "_Robert Price_, Jul 23 2017"
+ },
+ {
+  "a": "A287132",
+  "b": "A288763",
+  "match": 31,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 34,
+  "len_b": 34,
+  "diverge": false,
+  "sample": "7,24,31,96,63,384,255,1536,1023,6144,4095,24576",
+  "name_a": "Decimal representation of the diagonal from the origin to the corner of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 245\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Decimal representation of the diagonal from the origin to the corner of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 501\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, May 20 2017",
+  "auth_b": "_Robert Price_, Jun 15 2017"
+ },
+ {
+  "a": "A077998",
+  "b": "A373567",
+  "match": 30,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 33,
+  "len_b": 32,
+  "diverge": false,
+  "sample": "6,14,31,70,157,353,793,1782,4004,8997,20216,45425",
+  "name_a": "Expansion of (1-x)/(1-2*x-x^2+x^3).",
+  "name_b": "Expansion of x + 1/(-x - 1/(-x - 1/(-x + 1))).",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_, Nov 17 2002",
+  "auth_b": "_Peter Luschny_, Jun 10 2024"
+ },
+ {
+  "a": "A019424",
+  "b": "A048256",
+  "match": 30,
+  "align": [
+   3,
+   0
+  ],
+  "len_a": 36,
+  "len_b": 30,
+  "diverge": false,
+  "sample": "17490,19410,22578,24610,24910,25466,25910,26554,26818,27285,29342,29733",
+  "name_a": "Numbers whose sum of divisors is a sixth power.",
+  "name_b": "Numbers whose sum of divisors is 6^6 = 46656.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,fini,full",
+  "auth_a": "_David W. Wilson_",
+  "auth_b": "_Labos Elemer_"
+ },
+ {
+  "a": "A026622",
+  "b": "A176448",
+  "match": 30,
+  "align": [
+   2,
+   0
+  ],
+  "len_a": 33,
+  "len_b": 30,
+  "diverge": false,
+  "sample": "5,12,26,54,110,222,446,894,1790,3582,7166,14334",
+  "name_a": "a(n) = Sum_{k=0..n} A026615(n, k).",
+  "name_b": "a(n) = 7*2^n - 2.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Clark Kimberling_",
+  "auth_b": "_Vincenzo Librandi_, Apr 18 2010"
+ },
+ {
+  "a": "A033894",
+  "b": "A033906",
+  "match": 30,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 33,
+  "len_b": 32,
+  "diverge": false,
+  "sample": "22,44,88,176,343,677,1354,2699,5398,8987,16876,33554",
+  "name_a": "Sort then Add, a(1)=5.",
+  "name_b": "Sort then Add, a(1)=20.",
+  "kw_a": "nonn,base,easy",
+  "kw_b": "nonn,base,easy",
+  "auth_a": "_N. J. A. Sloane_, _David W. Wilson_",
+  "auth_b": "_N. J. A. Sloane_, _David W. Wilson_"
+ },
+ {
+  "a": "A077552",
+  "b": "A171497",
+  "match": 30,
+  "align": [
+   1,
+   0
+  ],
+  "len_a": 31,
+  "len_b": 33,
+  "diverge": false,
+  "sample": "3,8,16,32,64,128,256,512,1024,2048,4096,8192",
+  "name_a": "Consider the following triangle in which the n-th row contains n distinct numbers whose product is the smallest and has the least possible number of divisors. 1 is a member of only the first row. Sequence contains the final term of the rows (the leading diagonal).",
+  "name_b": "a(n) = 2*a(n-1) for n > 1; a(0) = 3, a(1) = 8.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Amarnath Murthy_, Nov 10 2002",
+  "auth_b": "_Klaus Brockhaus_, Dec 10 2009"
+ },
+ {
+  "a": "A093419",
+  "b": "A160049",
+  "match": 30,
+  "align": [
+   0,
+   1
+  ],
+  "len_a": 30,
+  "len_b": 31,
+  "diverge": false,
+  "sample": "1,1,3,6,5,10,35,140,126,1260,1155,13860",
+  "name_a": "Denominators of row sums in triangle described in A093412.",
+  "name_b": "Denominator of the Harary number for the path graph P_n.",
+  "kw_a": "nonn,frac",
+  "kw_b": "nonn,frac",
+  "auth_a": "_Amarnath Murthy_, Mar 30 2004",
+  "auth_b": "_Eric W. Weisstein_, Apr 30 2009"
+ },
+ {
+  "a": "A102026",
+  "b": "A218199",
+  "match": 30,
+  "align": [
+   2,
+   2
+  ],
+  "len_a": 32,
+  "len_b": 35,
+  "diverge": false,
+  "sample": "7,13,25,49,97,191,375,737,1449,2849,5601,11011",
+  "name_a": "Number of n-bit strings that contain no more than 4 zeros and no more than 2 leading and 2 trailing zeros.",
+  "name_b": "Hilltop maps: number of n X 1 binary arrays indicating the locations of corresponding elements not exceeded by any horizontal or vertical neighbor in a random 0..2 n X 1 array.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "Raphael Reischuk (raphael(AT)stud.uni-saarland.de), Jun 18 2007",
+  "auth_b": "_R. H. Hardin_, Oct 23 2012"
+ },
+ {
+  "a": "A168604",
+  "b": "A286521",
+  "match": 30,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 33,
+  "len_b": 33,
+  "diverge": false,
+  "sample": "15,31,63,127,255,511,1023,2047,4095,8191,16383,32767",
+  "name_a": "a(n) = 2^(n-2) - 1.",
+  "name_b": "Decimal representation of the diagonal from the origin to the corner (or of the corner to the origin) of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 659\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Martin Griffiths_, Dec 01 2009",
+  "auth_b": "_Robert Price_, Jul 22 2017"
+ },
+ {
+  "a": "A168642",
+  "b": "A283642",
+  "match": 30,
+  "align": [
+   1,
+   2
+  ],
+  "len_a": 31,
+  "len_b": 34,
+  "diverge": false,
+  "sample": "5,11,21,43,85,171,341,683,1365,2731,5461,10923",
+  "name_a": "a(n) = (8*2^n + (-1)^n)/3 for n > 0; a(0) = 1.",
+  "name_b": "Decimal representation of the x-axis, from the origin to the right edge, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 678\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Klaus Brockhaus_, Dec 01 2009",
+  "auth_b": "_Robert Price_, Mar 12 2017"
+ },
+ {
+  "a": "A283523",
+  "b": "A290682",
+  "match": 30,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 33,
+  "len_b": 33,
+  "diverge": false,
+  "sample": "14,31,63,127,255,511,1023,2047,4095,8191,16383,32767",
+  "name_a": "Decimal representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 913\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Decimal representation of the diagonal from the corner to the origin of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 929\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Mar 26 2017",
+  "auth_b": "_Robert Price_, Aug 09 2017"
+ },
+ {
+  "a": "A283650",
+  "b": "A290194",
+  "match": 30,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 33,
+  "len_b": 33,
+  "diverge": false,
+  "sample": "13,28,61,124,253,508,1021,2044,4093,8188,16381,32764",
+  "name_a": "Decimal representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 705\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Decimal representation of the diagonal from the corner to the origin of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 705\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Mar 12 2017",
+  "auth_b": "_Robert Price_, Jul 23 2017"
+ },
+ {
+  "a": "A283709",
+  "b": "A290198",
+  "match": 30,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 33,
+  "len_b": 33,
+  "diverge": false,
+  "sample": "13,30,62,126,254,510,1022,2046,4094,8190,16382,32766",
+  "name_a": "Decimal representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 721\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Decimal representation of the diagonal from the corner to the origin of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 721\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Mar 14 2017",
+  "auth_b": "_Robert Price_, Jul 23 2017"
+ },
+ {
+  "a": "A284405",
+  "b": "A290683",
+  "match": 30,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 33,
+  "len_b": 33,
+  "diverge": false,
+  "sample": "7,31,63,127,255,511,1023,2047,4095,8191,16383,32767",
+  "name_a": "Decimal representation of the x-axis, from the origin to the right edge, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 913\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Decimal representation of the diagonal from the origin to the corner of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 929\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Mar 26 2017",
+  "auth_b": "_Robert Price_, Aug 09 2017"
+ },
+ {
+  "a": "A130102",
+  "b": "A145654",
+  "match": 29,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 32,
+  "len_b": 30,
+  "diverge": false,
+  "sample": "2,8,22,52,114,240,494,1004,2026,4072,8166,16356",
+  "name_a": "E.g.f.: (e^x - x)^2.",
+  "name_b": "Partial sums of A000918, starting from index 1.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Paul Barry_, May 07 2007",
+  "auth_b": "_Vladimir Joseph Stephan Orlovsky_, Oct 16 2008"
+ },
+ {
+  "a": "A048578",
+  "b": "A088039",
+  "match": 29,
+  "align": [
+   2,
+   2
+  ],
+  "len_a": 34,
+  "len_b": 31,
+  "diverge": false,
+  "sample": "9,17,33,65,129,257,513,1025,2049,4097,8193,16385",
+  "name_a": "Pisot sequence L(3,5).",
+  "name_b": "Smallest k such that k^3 == 1 (mod some n-th power), k > 1.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_David W. Wilson_",
+  "auth_b": "_Amarnath Murthy_, Sep 19 2003"
+ },
+ {
+  "a": "A072337",
+  "b": "A203853",
+  "match": 29,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 32,
+  "len_b": 32,
+  "diverge": false,
+  "sample": "5,10,24,50,120,270,640,1500,3600,8610,20880,50700",
+  "name_a": "Inverse EULER transform of A064831 (with its initial 1 omitted).",
+  "name_b": "a(n) = (1/n) * Sum_{d|n} moebius(n/d) * Lucas(d)^2, where Lucas(n) = A000204(n).",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_N. J. A. Sloane_, Jul 16 2002",
+  "auth_b": "_Paul D. Hanna_, Jan 07 2012"
+ },
+ {
+  "a": "A086225",
+  "b": "A267880",
+  "match": 29,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 29,
+  "len_b": 34,
+  "diverge": false,
+  "sample": "10,21,43,87,175,351,703,1407,2815,5631,11263,22527",
+  "name_a": "a(n) = 11*2^n - 1.",
+  "name_b": "Decimal representation of the middle column of the \"Rule 233\" elementary cellular automaton starting with a single ON (black) cell.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Marco Matosic_, Jul 29 2003",
+  "auth_b": "_Robert Price_, Jan 21 2016"
+ },
+ {
+  "a": "A250798",
+  "b": "A316528",
+  "match": 29,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 29,
+  "len_b": 33,
+  "diverge": false,
+  "sample": "10,24,54,118,252,530,1102,2272,4654,9486,19260,38986",
+  "name_a": "Number of (1+1) X (n+1) 0..1 arrays with nondecreasing min(x(i,j),x(i,j-1)) in the i direction and nondecreasing absolute value of x(i,j)-x(i-1,j) in the j direction.",
+  "name_b": "a(n) = 3*a(n-1) - a(n-2) - 2*a(n-3) for n > 2, a(0)=1, a(1)=4, a(2)=10.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_R. H. Hardin_, Nov 27 2014",
+  "auth_b": "_Vincenzo Librandi_, Jul 14 2018"
+ },
+ {
+  "a": "A289521",
+  "b": "A302487",
+  "match": 29,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 29,
+  "len_b": 32,
+  "diverge": false,
+  "sample": "4,7,16,43,124,367,1096,3283,9844,29527,88576,265723",
+  "name_a": "Number of vertices in a planar Apollonian graph at iteration n.",
+  "name_b": "Total domination number of the n-Apollonian network.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Andrew D. Walker_, Jul 07 2017",
+  "auth_b": "_Eric W. Weisstein_, Apr 08 2018"
+ },
+ {
+  "a": "A017271",
+  "b": "A019548",
+  "match": 28,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 31,
+  "len_b": 31,
+  "diverge": false,
+  "sample": "27000,64000,125000,216000,343000,512000,729000,1000000,1331000,1728000,2197000,2744000",
+  "name_a": "a(n) = (10*n)^3.",
+  "name_b": "Cubes formed by concatenating other cubes.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,base",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "R. Muller"
+ },
+ {
+  "a": "A033963",
+  "b": "A037103",
+  "match": 28,
+  "align": [
+   3,
+   0
+  ],
+  "len_a": 31,
+  "len_b": 29,
+  "diverge": false,
+  "sample": "3,34,17,188,94,47,518,259,2850,1425,15676,7838",
+  "name_a": "Trajectory of 1 under map n->11n+1 if n odd, n->n/2 if n even.",
+  "name_b": "Trajectory of 3 under map n->11n+1 if n odd, n->n/2 if n even.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A051049",
+  "b": "A286773",
+  "match": 28,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 31,
+  "len_b": 34,
+  "diverge": false,
+  "sample": "7,16,31,64,127,256,511,1024,2047,4096,8191,16384",
+  "name_a": "Number of moves needed to solve an (n+1)-ring baguenaudier if two simultaneous moves of the two end rings are counted as one.",
+  "name_b": "Decimal representation of the diagonal from the origin to the corner of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 221\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Eric W. Weisstein_",
+  "auth_b": "_Robert Price_, May 14 2017"
+ },
+ {
+  "a": "A126249",
+  "b": "A152916",
+  "match": 28,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 28,
+  "len_b": 30,
+  "diverge": false,
+  "sample": "10,35,286,969,4495,12341,35990,62196,176851,209934,437989,562475",
+  "name_a": "p*(p+1)*(p+2)/6 where (p,p+2) are twin primes.",
+  "name_b": "Tetrahedral numbers k*(k+1)*(k+2)/6 such that exactly two of k, k+1, and k+2 are prime.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Lekraj Beedassy_, Dec 21 2006",
+  "auth_b": "_Juri-Stepan Gerasimov_, Dec 15 2008"
+ },
+ {
+  "a": "A126646",
+  "b": "A286521",
+  "match": 28,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 31,
+  "len_b": 33,
+  "diverge": false,
+  "sample": "15,31,63,127,255,511,1023,2047,4095,8191,16383,32767",
+  "name_a": "a(n) = 2^(n+1) - 1.",
+  "name_b": "Decimal representation of the diagonal from the origin to the corner (or of the corner to the origin) of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 659\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "Aleksandar M. Janjic and _Milan Janjic_, Feb 08 2007, Feb 13 2007",
+  "auth_b": "_Robert Price_, Jul 22 2017"
+ },
+ {
+  "a": "A175161",
+  "b": "A242475",
+  "match": 28,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 32,
+  "len_b": 31,
+  "diverge": false,
+  "sample": "16,24,40,72,136,264,520,1032,2056,4104,8200,16392",
+  "name_a": "a(n) = 8*(2^n + 1).",
+  "name_b": "a(n) = 2^n + 8.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Reinhard Zumkeller_, Feb 28 2010",
+  "auth_b": "_Vincenzo Librandi_, May 20 2014"
+ },
+ {
+  "a": "A213667",
+  "b": "A293004",
+  "match": 28,
+  "align": [
+   1,
+   3
+  ],
+  "len_a": 30,
+  "len_b": 31,
+  "diverge": false,
+  "sample": "6,16,40,98,238,576,1392,3362,8118,19600,47320,114242",
+  "name_a": "Number of dominating subsets with k vertices in all the graphs G(n) (n>=1) obtained by taking n copies of the path P_3 and identifying one of their endpoints (a star with n branches of length 2).",
+  "name_b": "Expansion of 2*x^2 / (x^3 + x^2 - 3x + 1).",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Emeric Deutsch_, Jul 01 2012",
+  "auth_b": "_J. Devillet_, Sep 28 2017"
+ },
+ {
+  "a": "A251889",
+  "b": "A252259",
+  "match": 28,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 31,
+  "len_b": 31,
+  "diverge": false,
+  "sample": "778,1260,1636,2478,3940,5958,9178,14534,22666,35250,55690,88338",
+  "name_a": "Number of (n+2) X (3+2) 0..3 arrays with every 3 X 3 subblock row and column sum not 2 3 6 or 7 and every diagonal and antidiagonal sum 2 3 6 or 7.",
+  "name_b": "Number of (n+2) X (3+2) 0..3 arrays with every 3 X 3 subblock row and column sum not equal to 0 2 3 6 or 7 and every 3 X 3 diagonal and antidiagonal sum equal to 0 2 3 6 or 7.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Dec 10 2014",
+  "auth_b": "_R. H. Hardin_, Dec 16 2014"
+ },
+ {
+  "a": "A093960",
+  "b": "A135064",
+  "match": 27,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 30,
+  "len_b": 30,
+  "diverge": false,
+  "sample": "11,29,76,199,521,1364,3571,9349,24476,64079,167761,439204",
+  "name_a": "a(1) = 1, a(2) = 2, a(n+1) = n*a(1) + (n-1)*a(2) + ... + (n-r)*a(r+1) + ... + a(n).",
+  "name_b": "Numbers n such that the quintic polynomial x^5 - 10*n*x^2 - 24*n has Galois group A_5 over rationals.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_Amarnath Murthy_, May 22 2004",
+  "auth_b": "_Artur Jasinski_, Nov 15 2007"
+ },
+ {
+  "a": "A008889",
+  "b": "A008890",
+  "match": 27,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 36,
+  "len_b": 28,
+  "diverge": false,
+  "sample": "312,528,960,2088,3762,5598,6570,10746,13254,13830,19434,20886",
+  "name_a": "Aliquot sequence starting at 150.",
+  "name_b": "Aliquot sequence starting at 168.",
+  "kw_a": "nonn,fini,full",
+  "kw_b": "nonn,fini,full",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A228403",
+  "b": "A262543",
+  "match": 27,
+  "align": [
+   1,
+   2
+  ],
+  "len_a": 29,
+  "len_b": 29,
+  "diverge": false,
+  "sample": "4,10,28,84,264,858,2860,9724,33592,117572,416024,1485800",
+  "name_a": "The number of boundary twigs for complete binary twigs. A twig is a vertex with one edge on the boundary and only one other descendant.",
+  "name_b": "Number of rooted asymmetrical polyenoids of type U_n* having n edges.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Louis Shapiro_, Aug 21 2013",
+  "auth_b": "_N. J. A. Sloane_, Oct 06 2015"
+ },
+ {
+  "a": "A070198",
+  "b": "A079782",
+  "match": 27,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 31,
+  "len_b": 30,
+  "diverge": false,
+  "sample": "11,59,59,419,839,2519,2519,27719,27719,360359,360359,360359",
+  "name_a": "Smallest nonnegative number m such that m == i (mod i+1) for all 1 <= i <= n.",
+  "name_b": "Final term of n-th row of triangle in A079784.",
+  "kw_a": "easy,nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Benoit Cloitre_, May 06 2002",
+  "auth_b": "_Amarnath Murthy_, Feb 03 2003"
+ },
+ {
+  "a": "A105082",
+  "b": "A221173",
+  "match": 27,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 27,
+  "len_b": 31,
+  "diverge": false,
+  "sample": "5,14,33,80,193,466,1125,2716,6557,15830,38217,92264",
+  "name_a": "Expansion of (5+4x)/(1-2x-x^2).",
+  "name_b": "a(0)=-3, a(1)=4; thereafter a(n) = 2*a(n-1) + a(n-2).",
+  "kw_a": "nonn,easy",
+  "kw_b": "sign,easy",
+  "auth_a": "_Creighton Dement_, Apr 06 2005",
+  "auth_b": "_N. J. A. Sloane_, Jan 04 2013"
+ },
+ {
+  "a": "A200865",
+  "b": "A217450",
+  "match": 27,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 28,
+  "len_b": 30,
+  "diverge": false,
+  "sample": "17,37,77,163,343,723,1523,3209,6761,14245,30013,63235",
+  "name_a": "Number of 0..2 arrays x(0..n+1) of n+2 elements without any interior element greater than both neighbors or less than both neighbors.",
+  "name_b": "Number of n X 1 arrays of the minimum value of corresponding elements and their horizontal and vertical neighbors in a random 0..2 n X 1 array.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Nov 23 2011",
+  "auth_b": "_R. H. Hardin_, Oct 03 2012"
+ },
+ {
+  "a": "A207170",
+  "b": "A303716",
+  "match": 27,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 29,
+  "len_b": 30,
+  "diverge": false,
+  "sample": "36,81,169,361,784,1681,3600,7744,16641,35721,76729,164836",
+  "name_a": "Number of 2 X n 0..1 arrays avoiding 0 0 0 and 1 0 1 horizontally and 0 0 1 and 1 0 1 vertically.",
+  "name_b": "Number of nX5 0..1 arrays with every element unequal to 0, 1 or 5 king-move adjacent elements, with upper left element zero.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Feb 15 2012",
+  "auth_b": "_R. H. Hardin_, Apr 29 2018"
+ },
+ {
+  "a": "A253153",
+  "b": "A253437",
+  "match": 27,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 30,
+  "len_b": 30,
+  "diverge": false,
+  "sample": "120,192,336,624,1200,2352,4656,9264,18480,36912,73776,147504",
+  "name_a": "Number of (n+1) X (2+1) 0..1 arrays with every 2 X 2 subblock diagonal minus antidiagonal sum nondecreasing horizontally and vertically.",
+  "name_b": "Number of (3+1) X (n+1) 0..1 arrays with every 2 X 2 subblock diagonal minus antidiagonal sum nondecreasing horizontally, vertically and ne-to-sw antidiagonally.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Dec 28 2014",
+  "auth_b": "_R. H. Hardin_, Dec 31 2014"
+ },
+ {
+  "a": "A253431",
+  "b": "A253438",
+  "match": 27,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 30,
+  "len_b": 30,
+  "diverge": false,
+  "sample": "156,228,372,660,1236,2388,4692,9300,18516,36948,73812,147540",
+  "name_a": "Number of (n+1) X (4+1) 0..1 arrays with every 2 X 2 subblock diagonal minus antidiagonal sum nondecreasing horizontally, vertically and ne-to-sw antidiagonally.",
+  "name_b": "Number of (4+1) X (n+1) 0..1 arrays with every 2 X 2 subblock diagonal minus antidiagonal sum nondecreasing horizontally, vertically and ne-to-sw antidiagonally.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Dec 31 2014",
+  "auth_b": "_R. H. Hardin_, Dec 31 2014"
+ },
+ {
+  "a": "A253432",
+  "b": "A253439",
+  "match": 27,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 30,
+  "len_b": 30,
+  "diverge": false,
+  "sample": "228,300,444,732,1308,2460,4764,9372,18588,37020,73884,147612",
+  "name_a": "Number of (n+1) X (5+1) 0..1 arrays with every 2 X 2 subblock diagonal minus antidiagonal sum nondecreasing horizontally, vertically and ne-to-sw antidiagonally.",
+  "name_b": "Number of (5+1) X (n+1) 0..1 arrays with every 2 X 2 subblock diagonal minus antidiagonal sum nondecreasing horizontally, vertically and ne-to-sw antidiagonally.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Dec 31 2014",
+  "auth_b": "_R. H. Hardin_, Dec 31 2014"
+ },
+ {
+  "a": "A253433",
+  "b": "A253440",
+  "match": 27,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 30,
+  "len_b": 30,
+  "diverge": false,
+  "sample": "372,444,588,876,1452,2604,4908,9516,18732,37164,74028,147756",
+  "name_a": "Number of (n+1) X (6+1) 0..1 arrays with every 2 X 2 subblock diagonal minus antidiagonal sum nondecreasing horizontally, vertically and ne-to-sw antidiagonally.",
+  "name_b": "Number of (6+1) X (n+1) 0..1 arrays with every 2 X 2 subblock diagonal minus antidiagonal sum nondecreasing horizontally, vertically and ne-to-sw antidiagonally.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Dec 31 2014",
+  "auth_b": "_R. H. Hardin_, Dec 31 2014"
+ },
+ {
+  "a": "A253434",
+  "b": "A253441",
+  "match": 27,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 30,
+  "len_b": 30,
+  "diverge": false,
+  "sample": "660,732,876,1164,1740,2892,5196,9804,19020,37452,74316,148044",
+  "name_a": "Number of (n+1) X (7+1) 0..1 arrays with every 2 X 2 subblock diagonal minus antidiagonal sum nondecreasing horizontally, vertically and ne-to-sw antidiagonally.",
+  "name_b": "Number of (7+1) X (n+1) 0..1 arrays with every 2 X 2 subblock diagonal minus antidiagonal sum nondecreasing horizontally, vertically and ne-to-sw antidiagonally.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Dec 31 2014",
+  "auth_b": "_R. H. Hardin_, Dec 31 2014"
+ },
+ {
+  "a": "A088305",
+  "b": "A237268",
+  "match": 26,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 29,
+  "len_b": 30,
+  "diverge": false,
+  "sample": "8,21,55,144,377,987,2584,6765,17711,46368,121393,317811",
+  "name_a": "a(0) = 1, a(n) = Fibonacci(2*n). It has the property that a(n) = 1*a(n-1) + 2*a(n-2) + 3*a(n-3) + 4*a(n-4) + ...",
+  "name_b": "a(1)=1; for n > 1, a(n) is the smallest F(m) > F(n) such that F(n) divides F(m), where F(k) denotes the k-th Fibonacci number.",
+  "kw_a": "easy,nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Miklos Kristof_, Nov 05 2003",
+  "auth_b": "_Michel Lagneau_, Feb 05 2014"
+ },
+ {
+  "a": "A010740",
+  "b": "A010741",
+  "match": 26,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 26,
+  "len_b": 31,
+  "diverge": false,
+  "sample": "1,1,1,-6,14,-25,32,6,-250,1222,-4380,13059",
+  "name_a": "Shifts 3 places right under binomial transform.",
+  "name_b": "Shifts 3 places left under inverse binomial transform.",
+  "kw_a": "sign,eigen",
+  "kw_b": "sign",
+  "auth_a": "_N. J. A. Sloane_, _Jonas Wallgren_",
+  "auth_b": "_N. J. A. Sloane_, _Jonas Wallgren_"
+ },
+ {
+  "a": "A055819",
+  "b": "A126358",
+  "match": 26,
+  "align": [
+   2,
+   1
+  ],
+  "len_a": 28,
+  "len_b": 29,
+  "diverge": false,
+  "sample": "4,10,26,68,178,466,1220,3194,8362,21892,57314,150050",
+  "name_a": "Row sums of array T in A055818; twice the odd-indexed Fibonacci numbers after initial term.",
+  "name_b": "Number of base 4 n-digit numbers with adjacent digits differing by one or less.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,base,easy",
+  "auth_a": "_Clark Kimberling_, May 28 2000",
+  "auth_b": "_R. H. Hardin_, Dec 26 2006"
+ },
+ {
+  "a": "A163765",
+  "b": "A225034",
+  "match": 26,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 28,
+  "len_b": 30,
+  "diverge": false,
+  "sample": "18,48,131,363,1017,2873,8169,23349,67024,193086,557949,1616501",
+  "name_a": "Inverse binomial transform of A048775 (assuming offset zero in both sequences).",
+  "name_b": "a(n) is the number of binary words containing n 1's and at most n 0's that do not contain the substring 101.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,nice",
+  "auth_a": "_Gary W. Adamson_, Aug 03 2009",
+  "auth_b": "_Elisabetta Grazzini_, May 02 2013"
+ },
+ {
+  "a": "A171390",
+  "b": "A375155",
+  "match": 26,
+  "align": [
+   2,
+   0
+  ],
+  "len_a": 28,
+  "len_b": 30,
+  "diverge": false,
+  "sample": "147,295,591,1183,2367,4735,9471,18943,37887,75775,151551,303103",
+  "name_a": "a(n) = 37*2^(n-1)-1.",
+  "name_b": "a(n) = 2*a(n-1) + 1 for a(n-1) not prime, otherwise a(n) = prime(n) - 1; with a(1) = 147.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_Vincenzo Librandi_, Dec 07 2009",
+  "auth_b": "_Chai Wah Wu_, Aug 01 2024"
+ },
+ {
+  "a": "A200880",
+  "b": "A202882",
+  "match": 26,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 26,
+  "len_b": 29,
+  "diverge": false,
+  "sample": "22,51,121,292,704,1691,4059,9749,23422,56268,135166,324692",
+  "name_a": "Number of 0..2 arrays x(0..n+1) of n+2 elements without any interior element greater than both neighbors.",
+  "name_b": "Number of n X 1 0..2 arrays with every nonzero element less than or equal to some horizontal or vertical neighbor.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Nov 23 2011",
+  "auth_b": "_R. H. Hardin_, Dec 25 2011"
+ },
+ {
+  "a": "A243392",
+  "b": "A303030",
+  "match": 26,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 28,
+  "len_b": 29,
+  "diverge": false,
+  "sample": "4,12,22,68,166,534,1589,5464,18579,68320,255424,1000852",
+  "name_a": "Number of isomorphism classes of connected 3-regular simple graphs of order 2n with loops and semi-edges allowed.",
+  "name_b": "Number of unlabeled connected loopless multigraphs with n nodes of degree 3 or less and with single or double edges.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Nico Van Cleemput_, Jun 04 2014",
+  "auth_b": "_Natan Arie Consigli_, Apr 17 2018"
+ },
+ {
+  "a": "A259290",
+  "b": "A277236",
+  "match": 26,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 26,
+  "len_b": 31,
+  "diverge": false,
+  "sample": "10,26,66,170,434,1114,2850,7306,18706,47930,122754,314474",
+  "name_a": "Number of (n+1) X (1+1) 0..1 arrays with each 2 X 2 subblock having clockwise pattern 0001 0101 or 0111.",
+  "name_b": "Number of strings of length n composed of symbols from the circular list [1,2,3,4] such that adjacent symbols in the string must be adjacent in the list. No runs of length 2 or more are allowed for symbols 1 and 3.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_R. H. Hardin_, Jun 23 2015",
+  "auth_b": "_Stefan Hollos_, Oct 06 2016"
+ },
+ {
+  "a": "A279028",
+  "b": "A282088",
+  "match": 26,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 26,
+  "len_b": 28,
+  "diverge": false,
+  "sample": "1,0,101,0,10101,0,1010101,0,101010101,0,10101010101,0",
+  "name_a": "Binary representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 129\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Binary representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 553\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Dec 03 2016",
+  "auth_b": "_Robert Price_, Feb 27 2017"
+ },
+ {
+  "a": "A300375",
+  "b": "A300677",
+  "match": 26,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 29,
+  "len_b": 29,
+  "diverge": false,
+  "sample": "11,8,58,131,306,936,2435,6683,18093,49663,134666,367314",
+  "name_a": "Number of nX3 0..1 arrays with every element equal to 0, 2 or 3 horizontally, vertically or antidiagonally adjacent elements, with upper left element zero.",
+  "name_b": "Number of nX3 0..1 arrays with every element equal to 0, 2, 3 or 6 horizontally, vertically or antidiagonally adjacent elements, with upper left element zero.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Mar 04 2018",
+  "auth_b": "_R. H. Hardin_, Mar 11 2018"
+ },
+ {
+  "a": "A079782",
+  "b": "A121934",
+  "match": 25,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 30,
+  "len_b": 28,
+  "diverge": false,
+  "sample": "11,59,59,419,839,2519,2519,27719,27719,360359,360359,360359",
+  "name_a": "Final term of n-th row of triangle in A079784.",
+  "name_b": "Smallest positive number m such that m == i (mod i+1) for all 1<=i<=n.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Amarnath Murthy_, Feb 03 2003",
+  "auth_b": "_Zak Seidov_, Sep 03 2006"
+ },
+ {
+  "a": "A090637",
+  "b": "A129150",
+  "match": 25,
+  "align": [
+   1,
+   3
+  ],
+  "len_a": 26,
+  "len_b": 28,
+  "diverge": false,
+  "sample": "32,80,176,368,752,1520,3424,8592,20096,70464,235072,705280",
+  "name_a": "Trajectory of 28 under the map k -> A003415(k) (taking the arithmetic derivative).",
+  "name_b": "The n-th arithmetic derivative of 2^3.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_N. J. A. Sloane_, Dec 14 2003",
+  "auth_b": "_Reinhard Zumkeller_, Apr 01 2007"
+ },
+ {
+  "a": "A096005",
+  "b": "A339061",
+  "match": 25,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 28,
+  "len_b": 28,
+  "diverge": false,
+  "sample": "7,20,52,144,389,1058,2876,7817,21250,57763,157017,426817",
+  "name_a": "For k >= 1, let b(k) = ceiling( Sum_{i=1..k} 1/i ); a(n) = number of b(k) that are equal to n.",
+  "name_b": "Least integer j such that H(k+j)>=n+1, where k is the least integer to satisfy H(k)>=n, and H(k) is the sum of the first k terms of the harmonic series.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_W. Neville Holmes_, Jul 29 2004",
+  "auth_b": "_Matthew J. Bloomfield_, Dec 21 2020"
+ },
+ {
+  "a": "A200866",
+  "b": "A218051",
+  "match": 25,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 28,
+  "len_b": 28,
+  "diverge": false,
+  "sample": "36,94,236,602,1528,3882,9858,25038,63592,161514,410218,1041884",
+  "name_a": "Number of 0..3 arrays x(0..n+1) of n+2 elements without any interior element greater than both neighbors or less than both neighbors.",
+  "name_b": "Number of n X 1 arrays of the minimum value of corresponding elements and their horizontal, vertical, diagonal or antidiagonal neighbors in a random 0..3 n X 1 array.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Nov 23 2011",
+  "auth_b": "_R. H. Hardin_, Oct 19 2012"
+ },
+ {
+  "a": "A277560",
+  "b": "A277926",
+  "match": 25,
+  "align": [
+   2,
+   2
+  ],
+  "len_a": 27,
+  "len_b": 27,
+  "diverge": false,
+  "sample": "0,1111,0,111111,0,11111111,0,1111111111,0,111111111111,0,11111111111111",
+  "name_a": "Binary representation of the x-axis, from the left edge to the origin, or from the origin to the right edge, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 7\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Binary representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 5\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Nov 05 2016",
+  "auth_b": "_Robert Price_, Nov 04 2016"
+ },
+ {
+  "a": "A010738",
+  "b": "A010739",
+  "match": 24,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 24,
+  "len_b": 28,
+  "diverge": false,
+  "sample": "1,1,-2,3,-7,22,-71,231,-794,2945,-11679,48770",
+  "name_a": "Shifts 2 places right under binomial transform.",
+  "name_b": "Shifts 2 places left under inverse binomial transform.",
+  "kw_a": "sign,eigen",
+  "kw_b": "sign,eigen",
+  "auth_a": "_N. J. A. Sloane_, _Jonas Wallgren_",
+  "auth_b": "_N. J. A. Sloane_, _Jonas Wallgren_"
+ },
+ {
+  "a": "A161954",
+  "b": "A162369",
+  "match": 24,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 24,
+  "len_b": 24,
+  "diverge": false,
+  "sample": "1,27,377,3627,27026,166230,878409,4098483,17222607,66165501,235124461,780112671",
+  "name_a": "Number of reduced words of length n in the Weyl group B_27.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_27.",
+  "kw_a": "nonn,fini,full",
+  "kw_b": "nonn,fini,full",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A161956",
+  "b": "A162370",
+  "match": 24,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 24,
+  "len_b": 24,
+  "diverge": false,
+  "sample": "1,28,405,4032,31058,197288,1075697,5174180,22396787,88562288,323686749,1103799420",
+  "name_a": "Number of reduced words of length n in the Weyl group B_28.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_28.",
+  "kw_a": "nonn,fini,full",
+  "kw_b": "nonn,fini,full",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A161972",
+  "b": "A162376",
+  "match": 24,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 24,
+  "len_b": 24,
+  "diverge": false,
+  "sample": "1,29,434,4466,35524,232812,1308509,6482689,28879476,117441764,441128513,1544927933",
+  "name_a": "Number of reduced words of length n in the Weyl group B_29.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_29.",
+  "kw_a": "nonn,fini,full",
+  "kw_b": "nonn,fini,full",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A161976",
+  "b": "A162377",
+  "match": 24,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 24,
+  "len_b": 24,
+  "diverge": false,
+  "sample": "1,30,464,4930,40454,273266,1581775,8064464,36943940,154385704,595514217,2140442150",
+  "name_a": "Number of reduced words of length n in the Weyl group B_30.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_30.",
+  "kw_a": "nonn,fini,full",
+  "kw_b": "nonn,fini,full",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A188825",
+  "b": "A257970",
+  "match": 24,
+  "align": [
+   1,
+   3
+  ],
+  "len_a": 25,
+  "len_b": 29,
+  "diverge": false,
+  "sample": "16,48,144,432,1296,3888,11664,34992,104976,314928,944784,2834352",
+  "name_a": "Number of 3Xn binary arrays without the pattern 0 1 diagonally or antidiagonally.",
+  "name_b": "a(1) = 1, a(2) = 2, a(3) = 5; thereafter a(n) = 2 * Sum_{k=1..n-1} a(k).",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy,less",
+  "auth_a": "_R. H. Hardin_, Apr 11 2011",
+  "auth_b": "_Harry Farrar_, May 15 2015"
+ },
+ {
+  "a": "A286638",
+  "b": "A288357",
+  "match": 24,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 24,
+  "len_b": 24,
+  "diverge": false,
+  "sample": "1,10,1,1100,11,111100,11,11110000,1111,1111110000,1111,111111110000",
+  "name_a": "Binary representation of the diagonal from the corner to the origin of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 193\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Binary representation of the diagonal from the corner to the origin of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 449\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, May 11 2017",
+  "auth_b": "_Robert Price_, Jun 08 2017"
+ },
+ {
+  "a": "A000244",
+  "b": "A027313",
+  "match": 23,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 28,
+  "len_b": 25,
+  "diverge": false,
+  "sample": "27,81,243,729,2187,6561,19683,59049,177147,531441,1594323,4782969",
+  "name_a": "Powers of 3: a(n) = 3^n.",
+  "name_b": "a(n) = Sum_{k=0..2n} (k+1) * A026323(n, 2n-k).",
+  "kw_a": "nonn,nice,easy,core",
+  "kw_b": "nonn",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_Clark Kimberling_"
+ },
+ {
+  "a": "A164908",
+  "b": "A292543",
+  "match": 23,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 26,
+  "len_b": 24,
+  "diverge": false,
+  "sample": "96,384,1536,6144,24576,98304,393216,1572864,6291456,25165824,100663296,402653184",
+  "name_a": "a(n) = (3*4^n - 0^n)/2.",
+  "name_b": "Number of 5-cycles in the n-Sierpinski tetrahedron graph.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Klaus Brockhaus_, Aug 31 2009",
+  "auth_b": "_Eric W. Weisstein_, Sep 18 2017"
+ },
+ {
+  "a": "A025240",
+  "b": "A155069",
+  "match": 23,
+  "align": [
+   1,
+   2
+  ],
+  "len_a": 24,
+  "len_b": 26,
+  "diverge": false,
+  "sample": "2,6,22,90,394,1806,8558,41586,206098,1037718,5293446,27297738",
+  "name_a": "a(n) = a(1)*a(n-1) + a(2)*a(n-2) + ...+ a(n-2)*a(2) for n >= 3.",
+  "name_b": "Expansion of (3 - x - sqrt(1 - 6*x + x^2))/2.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Clark Kimberling_",
+  "auth_b": "_Philippe Deléham_, Nov 02 2009"
+ },
+ {
+  "a": "A033648",
+  "b": "A033656",
+  "match": 23,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 30,
+  "len_b": 24,
+  "diverge": false,
+  "sample": "33,66,132,363,726,1353,4884,9768,18447,92928,175857,934428",
+  "name_a": "Trajectory of 3 under map x->x + (x-with-digits-reversed).",
+  "name_b": "Trajectory of 21 under map x->x + (x-with-digits-reversed).",
+  "kw_a": "nonn,base",
+  "kw_b": "nonn,base",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A200881",
+  "b": "A203094",
+  "match": 23,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 24,
+  "len_b": 26,
+  "diverge": false,
+  "sample": "50,144,422,1268,3823,11472,34350,102896,308419,924532,2771101,8305373",
+  "name_a": "Number of 0..3 arrays x(0..n+1) of n+2 elements without any interior element greater than both neighbors.",
+  "name_b": "Number of nX1 0..3 arrays with every nonzero element less than or equal to some horizontal or vertical neighbor.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Nov 23 2011",
+  "auth_b": "_R. H. Hardin_, Dec 29 2011"
+ },
+ {
+  "a": "A202609",
+  "b": "A207443",
+  "match": 23,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 23,
+  "len_b": 25,
+  "diverge": false,
+  "sample": "108,323,1058,3223,9515,28426,84486,249106,734637,2166526,6380211,18782449",
+  "name_a": "Number of (n+2) X 3 binary arrays avoiding patterns 001 and 010 in rows and columns.",
+  "name_b": "Number of 3Xn 0..1 arrays avoiding 0 0 1 and 0 1 0 horizontally and 0 0 1 and 1 0 0 vertically.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Dec 21 2011",
+  "auth_b": "_R. H. Hardin_, Feb 17 2012"
+ },
+ {
+  "a": "A279721",
+  "b": "A282266",
+  "match": 23,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 23,
+  "len_b": 23,
+  "diverge": false,
+  "sample": "1,0,111,0,11111,0,1111111,0,111111111,0,11111111111,0",
+  "name_a": "Binary representation of the x-axis, from the origin to the right edge, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 193\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Binary representation of the x-axis, from the origin to the right edge, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 449\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Dec 17 2016",
+  "auth_b": "_Robert Price_, Feb 10 2017"
+ },
+ {
+  "a": "A282002",
+  "b": "A287190",
+  "match": 23,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 26,
+  "len_b": 26,
+  "diverge": false,
+  "sample": "1110,11,111110,11,11111110,11,1111111110,11,111111111110,11,11111111111110,11",
+  "name_a": "Binary representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 413\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Binary representation of the diagonal from the corner to the origin of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 253\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Feb 04 2017",
+  "auth_b": "_Robert Price_, May 21 2017"
+ },
+ {
+  "a": "A287129",
+  "b": "A288020",
+  "match": 23,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 26,
+  "len_b": 26,
+  "diverge": false,
+  "sample": "1110,11,111110,11,11111100,11,1111111100,11,111111111100,11,11111111111100,11",
+  "name_a": "Binary representation of the diagonal from the corner to the origin of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 245\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Binary representation of the diagonal from the corner to the origin of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 501\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, May 20 2017",
+  "auth_b": "_Robert Price_, Jun 15 2017"
+ },
+ {
+  "a": "A055841",
+  "b": "A183354",
+  "match": 22,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 31,
+  "len_b": 23,
+  "diverge": false,
+  "sample": "36,144,576,2304,9216,36864,147456,589824,2359296,9437184,37748736,150994944",
+  "name_a": "Number of compositions of n into 3*j-1 kinds of j's for all j >= 1.",
+  "name_b": "One quarter the number of nX2 1..4 arrays with no two neighbors of any element equal to each other.",
+  "kw_a": "easy,nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Barry E. Williams_, May 30 2000",
+  "auth_b": "_R. H. Hardin_, Jan 04 2011"
+ },
+ {
+  "a": "A033650",
+  "b": "A033655",
+  "match": 22,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 29,
+  "len_b": 23,
+  "diverge": false,
+  "sample": "110,121,242,484,968,1837,9218,17347,91718,173437,907808,1716517",
+  "name_a": "Trajectory of 7 under map x --> x + (x-with-digits-reversed).",
+  "name_b": "Trajectory of 19 under map x->x + (x-with-digits-reversed).",
+  "kw_a": "nonn,base",
+  "kw_b": "nonn,base",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A033651",
+  "b": "A033674",
+  "match": 22,
+  "align": [
+   2,
+   0
+  ],
+  "len_a": 28,
+  "len_b": 22,
+  "diverge": false,
+  "sample": "99,198,1089,10890,20691,40293,79497,158994,658845,1207701,2284722,4559544",
+  "name_a": "Trajectory of 9 under map x->x + (x-with-digits-reversed).",
+  "name_b": "Trajectory of 99 under map x->x + (x-with-digits-reversed).",
+  "kw_a": "nonn,base",
+  "kw_b": "nonn,base",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A077209",
+  "b": "A098752",
+  "match": 22,
+  "align": [
+   1,
+   3
+  ],
+  "len_a": 23,
+  "len_b": 29,
+  "diverge": false,
+  "sample": "21,101,102,201,1001,1002,2001,10001,10002,20001,100001,100002",
+  "name_a": "a(1) = 2, then the smallest squarefree number greater than the previous term that begins with the end of the previous term.",
+  "name_b": "a(1) = 1 and a(n+1) is the least number > a(n) that begins with the last digit of a(n) and doesn't end with 0.",
+  "kw_a": "base,nonn",
+  "kw_b": "base,easy,nonn",
+  "auth_a": "_Amarnath Murthy_, Nov 02 2002",
+  "auth_b": "_Eric Angelini_, Oct 01 2004"
+ },
+ {
+  "a": "A178530",
+  "b": "A368416",
+  "match": 22,
+  "align": [
+   3,
+   0
+  ],
+  "len_a": 27,
+  "len_b": 22,
+  "diverge": false,
+  "sample": "101,1233,8833,10100,990100,5882353,94122353,1765038125,2584043776,7416043776,8235038125,116788321168",
+  "name_a": "Numbers k with the property that there exist nonnegative integers a and b such that k = concat(a,b) = a^2+b^2.",
+  "name_b": "Numbers k whose decimal expansion can be split into two parts s and t with k = s^2 + t^2.",
+  "kw_a": "nonn,base",
+  "kw_b": "nonn,base",
+  "auth_a": "_Karsten Meyer_, Dec 23 2010",
+  "auth_b": "_A.H.M. Smeets_, Dec 23 2023"
+ },
+ {
+  "a": "A183355",
+  "b": "A188825",
+  "match": 22,
+  "align": [
+   1,
+   3
+  ],
+  "len_a": 24,
+  "len_b": 25,
+  "diverge": false,
+  "sample": "144,432,1296,3888,11664,34992,104976,314928,944784,2834352,8503056,25509168",
+  "name_a": "One quarter the number of nX3 1..4 arrays with no two neighbors of any element equal to each other.",
+  "name_b": "Number of 3Xn binary arrays without the pattern 0 1 diagonally or antidiagonally.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Jan 04 2011",
+  "auth_b": "_R. H. Hardin_, Apr 11 2011"
+ },
+ {
+  "a": "A200882",
+  "b": "A203184",
+  "match": 22,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 22,
+  "len_b": 27,
+  "diverge": false,
+  "sample": "95,325,1121,3985,14288,50995,181336,644721,2294193,8166441,29066618,103444256",
+  "name_a": "Number of 0..4 arrays x(0..n+1) of n+2 elements without any interior element greater than both neighbors.",
+  "name_b": "Number of n X 1 0..4 arrays with every nonzero element less than or equal to some horizontal or vertical neighbor.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Nov 23 2011",
+  "auth_b": "_R. H. Hardin_, Dec 30 2011"
+ },
+ {
+  "a": "A232107",
+  "b": "A270866",
+  "match": 22,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 25,
+  "len_b": 25,
+  "diverge": false,
+  "sample": "113147,750735,1600573,5546909,9380741,23316851,71271069,98488755,233043067,384847485,485930975,751588475",
+  "name_a": "Number of groups of order prime(n)^7.",
+  "name_b": "a(n) = 3*p^5+12*p^4+44*p^3+170*p^2+707*p+2455 +(4*p^2+44*p+291)*gcd(p-1,3) +(p^2+19*p+135)*gcd(p-1,4) +(3*p+31)*gcd(p-1,5) +4*gcd(p-1,7) +5*gcd(p-1,8) +gcd(p-1,9), where p = prime(n).",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Eric M. Schmidt_, Nov 21 2013",
+  "auth_b": "_Vincenzo Librandi_, Apr 01 2016"
+ },
+ {
+  "a": "A282265",
+  "b": "A282295",
+  "match": 22,
+  "align": [
+   2,
+   2
+  ],
+  "len_a": 24,
+  "len_b": 24,
+  "diverge": false,
+  "sample": "111,0,11111,0,1111111,0,111111111,0,11111111111,0,1111111111111,0",
+  "name_a": "Binary representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 449\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Binary representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 451\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Feb 10 2017",
+  "auth_b": "_Robert Price_, Feb 11 2017"
+ },
+ {
+  "a": "A285651",
+  "b": "A286730",
+  "match": 22,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 25,
+  "len_b": 25,
+  "diverge": false,
+  "sample": "1110,1,111110,1,11111100,11,1111111100,11,111111111100,11,11111111111100,11",
+  "name_a": "Binary representation of the diagonal from the corner to the origin of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 81\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Binary representation of the diagonal from the corner to the origin of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 213\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Apr 23 2017",
+  "auth_b": "_Robert Price_, May 13 2017"
+ },
+ {
+  "a": "A155543",
+  "b": "A347478",
+  "match": 21,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 24,
+  "len_b": 24,
+  "diverge": false,
+  "sample": "64,256,1024,4096,16384,65536,262144,1048576,4194304,16777216,67108864,268435456",
+  "name_a": "a(n) = 2*A081294(n).",
+  "name_b": "Number of total dominating sets in the n-alkane graph.",
+  "kw_a": "nonn,easy,less",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Paul Curtz_, Jan 24 2009",
+  "auth_b": "_Eric W. Weisstein_, Sep 03 2021"
+ },
+ {
+  "a": "A001542",
+  "b": "A117547",
+  "match": 21,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 24,
+  "len_b": 24,
+  "diverge": false,
+  "sample": "12,70,408,2378,13860,80782,470832,2744210,15994428,93222358,543339720,3166815962",
+  "name_a": "a(n) = 6*a(n-1) - a(n-2) for n > 1, a(0)=0 and a(1)=2.",
+  "name_b": "Numbers k such that 2*k^2+1 is a perfect power.",
+  "kw_a": "nonn,easy,nice",
+  "kw_b": "nonn",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_T. D. Noe_, Mar 29 2006"
+ },
+ {
+  "a": "A033657",
+  "b": "A033660",
+  "match": 21,
+  "align": [
+   3,
+   1
+  ],
+  "len_a": 24,
+  "len_b": 22,
+  "diverge": false,
+  "sample": "121,242,484,968,1837,9218,17347,91718,173437,907808,1716517,8872688",
+  "name_a": "Trajectory of 23 under map x->x + (x-with-digits-reversed).",
+  "name_b": "Trajectory of 29 under map x->x + (x-with-digits-reversed).",
+  "kw_a": "nonn,base",
+  "kw_b": "nonn,base",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_N. J. A. Sloane_"
+ },
+ {
+  "a": "A058000",
+  "b": "A084403",
+  "match": 21,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 24,
+  "len_b": 24,
+  "diverge": false,
+  "sample": "23,47,191,383,1151,6911,27647,138239,691199,3455999,34559999,138239999",
+  "name_a": "a(n) is smallest prime such that a(n)+1 is a proper multiple of a(n-1)+1 [with a(1)=1].",
+  "name_b": "Primes arising in A084402. a(n) = n-th partial product of A084402 - 1.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Henry Bottomley_, Nov 02 2000",
+  "auth_b": "_Amarnath Murthy_, May 31 2003"
+ },
+ {
+  "a": "A116124",
+  "b": "A116163",
+  "match": 21,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 21,
+  "len_b": 25,
+  "diverge": false,
+  "sample": "61,65479,84289,106609,225649,275599,453589,1869505,2272555,2738291,3221951,1667833021",
+  "name_a": "Numbers k such that k concatenated with k-5 gives the product of two numbers which differ by 5.",
+  "name_b": "Numbers k such that k concatenated with k+1 gives the product of two numbers which differ by 1.",
+  "kw_a": "nonn,base",
+  "kw_b": "nonn,base",
+  "auth_a": "_Giovanni Resta_, Feb 06 2006",
+  "auth_b": "_Giovanni Resta_, Feb 06 2006"
+ },
+ {
+  "a": "A161977",
+  "b": "A162378",
+  "match": 21,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 21,
+  "len_b": 21,
+  "diverge": false,
+  "sample": "1,31,495,5425,45879,319145,1900920,9965384,46909324,201295028,796809245,2937251395",
+  "name_a": "Number of reduced words of length n in the Weyl group B_31.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_31.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A183877",
+  "b": "A183885",
+  "match": 21,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 24,
+  "len_b": 23,
+  "diverge": false,
+  "sample": "631,2059,6399,19483,58807,176859,531103,1593931,4782519,14348395,43046143,129139515",
+  "name_a": "Number of arrangements of n+2 numbers in 0..2 with each number being the sum mod 3 of two others.",
+  "name_b": "Number of arrangements of n+3 numbers in 0..2 with each number being the sum mod 3 of three others.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Jan 07 2011",
+  "auth_b": "_R. H. Hardin_, Jan 07 2011"
+ },
+ {
+  "a": "A202310",
+  "b": "A207437",
+  "match": 21,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 22,
+  "len_b": 23,
+  "diverge": false,
+  "sample": "108,333,1144,4048,14743,54250,201098,747683,2785178,10383774,38732585,144511028",
+  "name_a": "Number of (n+2) X 3 binary arrays avoiding patterns 001 and 100 in rows and columns.",
+  "name_b": "Number of n X 3 0..1 arrays avoiding 0 0 1 and 0 1 0 horizontally and 0 0 1 and 1 0 0 vertically.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Dec 16 2011",
+  "auth_b": "_R. H. Hardin_, Feb 17 2012"
+ },
+ {
+  "a": "A282266",
+  "b": "A282297",
+  "match": 21,
+  "align": [
+   2,
+   2
+  ],
+  "len_a": 23,
+  "len_b": 23,
+  "diverge": false,
+  "sample": "111,0,11111,0,1111111,0,111111111,0,11111111111,0,1111111111111,0",
+  "name_a": "Binary representation of the x-axis, from the origin to the right edge, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 449\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Binary representation of the x-axis, from the origin to the right edge, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 451\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Feb 10 2017",
+  "auth_b": "_Robert Price_, Feb 11 2017"
+ },
+ {
+  "a": "A155148",
+  "b": "A178500",
+  "match": 20,
+  "align": [
+   2,
+   1
+  ],
+  "len_a": 23,
+  "len_b": 21,
+  "diverge": false,
+  "sample": "10,100,1000,10000,100000,1000000,10000000,100000000,1000000000,10000000000,100000000000,1000000000000",
+  "name_a": "Numbers k such that k^4 has exactly 2 different decimal digits.",
+  "name_b": "a(n) = 10^n * signum(n).",
+  "kw_a": "nonn,base",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Dmitry Kamenetsky_, Jan 21 2009",
+  "auth_b": "_Reinhard Zumkeller_, May 28 2010"
+ },
+ {
+  "a": "A155148",
+  "b": "A178501",
+  "match": 20,
+  "align": [
+   2,
+   2
+  ],
+  "len_a": 23,
+  "len_b": 22,
+  "diverge": false,
+  "sample": "10,100,1000,10000,100000,1000000,10000000,100000000,1000000000,10000000000,100000000000,1000000000000",
+  "name_a": "Numbers k such that k^4 has exactly 2 different decimal digits.",
+  "name_b": "Zero followed by powers of ten.",
+  "kw_a": "nonn,base",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Dmitry Kamenetsky_, Jan 21 2009",
+  "auth_b": "_Reinhard Zumkeller_, May 28 2010"
+ },
+ {
+  "a": "A161987",
+  "b": "A162379",
+  "match": 20,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 20,
+  "len_b": 20,
+  "diverge": false,
+  "sample": "1,32,527,5952,51831,370976,2271896,12237280,59146604,260441632,1057250877,3994502272",
+  "name_a": "Number of reduced words of length n in the Weyl group B_32.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_32.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A161988",
+  "b": "A162380",
+  "match": 20,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 20,
+  "len_b": 20,
+  "diverge": false,
+  "sample": "1,33,560,6512,58343,429319,2701215,14938495,74085099,334526731,1391777608,5386279880",
+  "name_a": "Number of reduced words of length n in the Weyl group B_33.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_33.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A161991",
+  "b": "A162381",
+  "match": 20,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 20,
+  "len_b": 20,
+  "diverge": false,
+  "sample": "1,34,594,7106,65449,494768,3195983,18134478,92219577,426746308,1818523916,7204803796",
+  "name_a": "Number of reduced words of length n in the Weyl group B_34.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_34.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A200883",
+  "b": "A203050",
+  "match": 20,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 20,
+  "len_b": 23,
+  "diverge": false,
+  "sample": "161,636,2507,10213,42182,173606,710976,2908797,11911516,48807427,199987737,819315100",
+  "name_a": "Number of 0..5 arrays x(0..n+1) of n+2 elements without any interior element greater than both neighbors.",
+  "name_b": "Number of nX1 0..5 arrays with every nonzero element less than or equal to some horizontal or vertical neighbor.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Nov 23 2011",
+  "auth_b": "_R. H. Hardin_, Dec 28 2011"
+ },
+ {
+  "a": "A279877",
+  "b": "A282415",
+  "match": 20,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 23,
+  "len_b": 23,
+  "diverge": false,
+  "sample": "1100,111,111000,1111,11110000,11111,1111100000,111111,111111000000,1111111,11111110000000,11111111",
+  "name_a": "Binary representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 213\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Binary representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 469\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Dec 21 2016",
+  "auth_b": "_Robert Price_, Feb 14 2017"
+ },
+ {
+  "a": "A279878",
+  "b": "A282416",
+  "match": 20,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 23,
+  "len_b": 23,
+  "diverge": false,
+  "sample": "11,11100,111,1111000,1111,111110000,11111,11111100000,111111,1111111000000,1111111,111111110000000",
+  "name_a": "Binary representation of the x-axis, from the origin to the right edge, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 213\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Binary representation of the x-axis, from the origin to the right edge, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 469\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Dec 21 2016",
+  "auth_b": "_Robert Price_, Feb 14 2017"
+ },
+ {
+  "a": "A284020",
+  "b": "A284087",
+  "match": 20,
+  "align": [
+   1,
+   0
+  ],
+  "len_a": 21,
+  "len_b": 20,
+  "diverge": false,
+  "sample": "1,11,111,1111,11101,111011,1111111,11111111,111011111,1110111111,11111110111,111111101111",
+  "name_a": "Binary representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 779\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Binary representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 798\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Mar 18 2017",
+  "auth_b": "_Robert Price_, Mar 19 2017"
+ },
+ {
+  "a": "A052560",
+  "b": "A052619",
+  "match": 19,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 22,
+  "len_b": 23,
+  "diverge": false,
+  "sample": "18,72,360,2160,15120,120960,1088640,10886400,119750400,1437004800,18681062400,261534873600",
+  "name_a": "a(n) = 3*n!.",
+  "name_b": "Expansion of e.g.f. 3*x^3/(1-x).",
+  "kw_a": "easy,nonn",
+  "kw_b": "easy,nonn",
+  "auth_a": "_INRIA Encyclopedia of Combinatorial Structures_, Jan 25 2000",
+  "auth_b": "_INRIA Encyclopedia of Combinatorial Structures_, Jan 25 2000"
+ },
+ {
+  "a": "A062397",
+  "b": "A135050",
+  "match": 19,
+  "align": [
+   1,
+   3
+  ],
+  "len_a": 20,
+  "len_b": 22,
+  "diverge": false,
+  "sample": "11,101,1001,10001,100001,1000001,10000001,100000001,1000000001,10000000001,100000000001,1000000000001",
+  "name_a": "a(n) = 10^n + 1.",
+  "name_b": "Numbers k such that sum of digits of k^3 is 8. Multiples of 10 are omitted.",
+  "kw_a": "easy,nonn",
+  "kw_b": "nonn,base",
+  "auth_a": "_Henry Bottomley_, Jun 22 2001",
+  "auth_b": "_Zak Seidov_, Feb 11 2008"
+ },
+ {
+  "a": "A087125",
+  "b": "A228016",
+  "match": 19,
+  "align": [
+   2,
+   0
+  ],
+  "len_a": 22,
+  "len_b": 19,
+  "diverge": false,
+  "sample": "54,539,5340,52865,523314,5180279,51279480,507614525,5024865774,49741043219,492385566420,4874114620985",
+  "name_a": "Indices k of hex numbers H(k) that are also triangular.",
+  "name_b": "a(1) = least k such that 1/1+1/2+1/3+1/4+1/5 < H(k) - H(5); a(2) = least k such that H(a(1)) - H(5) < H(k) -H(a(1)), and for n > 2, a(n) = least k such that H(a(n-1)) - H(a(n-2)) > H(k) - H(a(n-1)), where H = harmonic number.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,frac,easy",
+  "auth_a": "_Eric W. Weisstein_, Aug 14 2003",
+  "auth_b": "_Clark Kimberling_, Aug 02 2013"
+ },
+ {
+  "a": "A093138",
+  "b": "A114307",
+  "match": 19,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 22,
+  "len_b": 21,
+  "diverge": false,
+  "sample": "300,3000,30000,300000,3000000,30000000,300000000,3000000000,30000000000,300000000000,3000000000000,30000000000000",
+  "name_a": "Expansion of (1-7x)/(1-10x).",
+  "name_b": "Length of the cycle for Lucas numbers mod 10^n.",
+  "kw_a": "nonn,easy",
+  "kw_b": "base,easy,nonn",
+  "auth_a": "_Paul Barry_, Mar 24 2004",
+  "auth_b": "Jerzy Podgorski (j.podgorski(AT)pollub.pl), May 14 2006; corrected May 16 2006"
+ },
+ {
+  "a": "A112097",
+  "b": "A130545",
+  "match": 19,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 24,
+  "len_b": 21,
+  "diverge": false,
+  "sample": "43,307,463,10201,24121,88453,1503743,28571327,680271,54761843,156462429,111170677",
+  "name_a": "Numerator of Sum_{i=1..n} 1/C(2*i,i).",
+  "name_b": "Numerators of 2*Sum_{k=1..n} 1/binomial(2*k,k), n >= 1.",
+  "kw_a": "nonn,frac",
+  "kw_b": "nonn,frac,easy",
+  "auth_a": "_N. J. A. Sloane_, Nov 30 2005",
+  "auth_b": "_Wolfdieter Lang_, Jul 13 2007"
+ },
+ {
+  "a": "A115428",
+  "b": "A116131",
+  "match": 19,
+  "align": [
+   2,
+   0
+  ],
+  "len_a": 21,
+  "len_b": 19,
+  "diverge": false,
+  "sample": "20,31,14564,38239,69919,120395,426436,902596,7478020,9090220,6671332084,8114264059",
+  "name_a": "Numbers k such that the concatenation of k with k+5 gives a square.",
+  "name_b": "Numbers k such that k concatenated with k-4 gives the product of two numbers which differ by 6.",
+  "kw_a": "nonn,base",
+  "kw_b": "nonn,base",
+  "auth_a": "_Giovanni Resta_, Feb 06 2006",
+  "auth_b": "_Giovanni Resta_, Feb 06 2006"
+ },
+ {
+  "a": "A116104",
+  "b": "A116121",
+  "match": 19,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 19,
+  "len_b": 19,
+  "diverge": false,
+  "sample": "65,6653,9605,218413,283720,996005,58446925,99960005,6086712229,7385370133,8478948853,9999600005",
+  "name_a": "Numbers k such that k concatenated with k-8 gives the product of two numbers which differ by 4.",
+  "name_b": "Numbers k such that k concatenated with k-5 gives the product of two numbers which differ by 2.",
+  "kw_a": "nonn,base",
+  "kw_b": "nonn,base",
+  "auth_a": "_Giovanni Resta_, Feb 06 2006",
+  "auth_b": "_Giovanni Resta_, Feb 06 2006"
+ },
+ {
+  "a": "A162149",
+  "b": "A162384",
+  "match": 19,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 19,
+  "len_b": 19,
+  "diverge": false,
+  "sample": "1,35,629,7735,73184,567952,3763935,21898413,114117990,540864298,2359388214,9564192010",
+  "name_a": "Number of reduced words of length n in the Weyl group B_35.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_35.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A162150",
+  "b": "A162388",
+  "match": 19,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 19,
+  "len_b": 19,
+  "diverge": false,
+  "sample": "1,36,665,8400,81584,649536,4413471,26311884,140429874,681294172,3040682386,12604874396",
+  "name_a": "Number of reduced words of length n in the Weyl group B_36.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_36.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A162165",
+  "b": "A162389",
+  "match": 19,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 19,
+  "len_b": 19,
+  "diverge": false,
+  "sample": "1,37,702,9102,90686,740222,5153693,31465577,171895451,853189623,3893872009,16498746405",
+  "name_a": "Number of reduced words of length n in the Weyl group B_37.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_37.",
+  "kw_a": "nonn,more",
+  "kw_b": "nonn,more",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A162166",
+  "b": "A162392",
+  "match": 19,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 19,
+  "len_b": 19,
+  "diverge": false,
+  "sample": "1,38,740,9842,100528,840750,5994443,37460020,209355471,1062545094,4956417103,21455163508",
+  "name_a": "Number of reduced words of length n in the Weyl group B_38.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_38.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A162168",
+  "b": "A162399",
+  "match": 19,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 19,
+  "len_b": 19,
+  "diverge": false,
+  "sample": "1,39,779,10621,111149,951899,6946342,44406362,253761833,1316306927,6272724030,27727887538",
+  "name_a": "Number of reduced words of length n in the Weyl group B_39.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_39.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A162176",
+  "b": "A162402",
+  "match": 19,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 19,
+  "len_b": 19,
+  "diverge": false,
+  "sample": "1,40,819,11440,122589,1074488,8020830,52427192,306189025,1622495952,7895219982,35623107520",
+  "name_a": "Number of reduced words of length n in the Weyl group B_40.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_40.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A162178",
+  "b": "A162403",
+  "match": 19,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 19,
+  "len_b": 19,
+  "diverge": false,
+  "sample": "1,41,860,12300,134889,1209377,9230207,61657399,367846424,1990342376,9885562358,45508669878",
+  "name_a": "Number of reduced words of length n in the Weyl group B_41.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_41.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,fini,full",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A162179",
+  "b": "A162411",
+  "match": 19,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 19,
+  "len_b": 19,
+  "diverge": false,
+  "sample": "1,42,902,13202,148091,1357468,10587675,72245074,440091498,2430433874,12315996232,57824666110",
+  "name_a": "Number of reduced words of length n in the Weyl group B_42.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_42.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A162181",
+  "b": "A162412",
+  "match": 19,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 19,
+  "len_b": 19,
+  "diverge": false,
+  "sample": "1,43,945,14147,162238,1519706,12107381,84352455,524443953,2954877827,15270874059,73095540169",
+  "name_a": "Number of reduced words of length n in the Weyl group B_43.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_43.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A162182",
+  "b": "A162413",
+  "match": 19,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 19,
+  "len_b": 19,
+  "diverge": false,
+  "sample": "1,44,989,15136,177374,1697080,13804461,98156916,622600869,3577478696,18848352755,91943892924",
+  "name_a": "Number of reduced words of length n in the Weyl group B_44.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_44.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A162183",
+  "b": "A162418",
+  "match": 19,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 19,
+  "len_b": 19,
+  "diverge": false,
+  "sample": "1,45,1034,16170,193544,1890624,15695085,113852001,736452870,4313931566,23162284321,115106177245",
+  "name_a": "Number of reduced words of length n in the Weyl group B_45.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_45.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A162186",
+  "b": "A162452",
+  "match": 19,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 21,
+  "len_b": 19,
+  "diverge": false,
+  "sample": "1,46,1080,17250,210794,2101418,17796503,131648504,868101374,5182032940,28344317261,143450494506",
+  "name_a": "Number of reduced words of length n in the Weyl group B_46.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_46.",
+  "kw_a": "nonn,fini,full,easy",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A169369",
+  "b": "A169417",
+  "match": 19,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 19,
+  "len_b": 19,
+  "diverge": false,
+  "sample": "1,20,380,7220,137180,2606420,49521980,940917620,17877434780,339671260820,6453753955580,122621325156020",
+  "name_a": "Number of reduced words of length n in Coxeter group on 20 generators S_i with relations (S_i)^2 = (S_i S_j)^31 = I.",
+  "name_b": "Number of reduced words of length n in Coxeter group on 20 generators S_i with relations (S_i)^2 = (S_i S_j)^32 = I.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Dec 03 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 03 2009"
+ },
+ {
+  "a": "A200884",
+  "b": "A203059",
+  "match": 19,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 19,
+  "len_b": 22,
+  "diverge": false,
+  "sample": "252,1127,4977,22736,105813,491533,2269938,10462235,48259083,222798408,1028746629,4749274209",
+  "name_a": "Number of 0..6 arrays x(0..n+1) of n+2 elements without any interior element greater than both neighbors.",
+  "name_b": "Number of nX1 0..6 arrays with every nonzero element less than or equal to some horizontal or vertical neighbor.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Nov 23 2011",
+  "auth_b": "_R. H. Hardin_, Dec 28 2011"
+ },
+ {
+  "a": "A271936",
+  "b": "A302553",
+  "match": 19,
+  "align": [
+   2,
+   0
+  ],
+  "len_a": 21,
+  "len_b": 19,
+  "diverge": false,
+  "sample": "16,27,256,3125,46656,823543,16777216,387420489,10000000000,285311670611,8916100448256,302875106592253",
+  "name_a": "Commutative powers: numbers of the form a^b = b^a.",
+  "name_b": "Hyper-4 powers that are not hyper-5 powers.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_Natan Arie Consigli_, Apr 16 2016",
+  "auth_b": "_Natan Arie Consigli_, Jul 08 2018"
+ },
+ {
+  "a": "A000042",
+  "b": "A283590",
+  "match": 18,
+  "align": [
+   2,
+   3
+  ],
+  "len_a": 20,
+  "len_b": 21,
+  "diverge": false,
+  "sample": "111,1111,11111,111111,1111111,11111111,111111111,1111111111,11111111111,111111111111,1111111111111,11111111111111",
+  "name_a": "Unary representation of natural numbers.",
+  "name_b": "Binary representation of the x-axis, from the origin to the right edge, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 657\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "base,easy,nonn,nice",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_Robert Price_, Mar 11 2017"
+ },
+ {
+  "a": "A002275",
+  "b": "A283590",
+  "match": 18,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 22,
+  "len_b": 21,
+  "diverge": false,
+  "sample": "111,1111,11111,111111,1111111,11111111,111111111,1111111111,11111111111,111111111111,1111111111111,11111111111111",
+  "name_a": "Repunits: (10^n - 1)/9. Often denoted by R_n.",
+  "name_b": "Binary representation of the x-axis, from the origin to the right edge, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 657\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "easy,nonn,nice,core",
+  "kw_b": "nonn,easy",
+  "auth_a": "_N. J. A. Sloane_",
+  "auth_b": "_Robert Price_, Mar 11 2017"
+ },
+ {
+  "a": "A055860",
+  "b": "A152917",
+  "match": 18,
+  "align": [
+   1,
+   2
+  ],
+  "len_a": 20,
+  "len_b": 20,
+  "diverge": false,
+  "sample": "2,9,64,625,7776,117649,2097152,43046721,1000000000,25937424601,743008370688,23298085122481",
+  "name_a": "a(n) = A000169(n+1) if n > 0; a(0) = 0.",
+  "name_b": "A000169 prefixed by an initial 0.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_Wolfdieter Lang_, Jun 20 2000",
+  "auth_b": "ShaoJun Ying (dolphinysj(AT)gmail.com), Dec 15 2008"
+ },
+ {
+  "a": "A056830",
+  "b": "A284235",
+  "match": 18,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 21,
+  "len_b": 21,
+  "diverge": false,
+  "sample": "101,1010,10101,101010,1010101,10101010,101010101,1010101010,10101010101,101010101010,1010101010101,10101010101010",
+  "name_a": "Alternate digits 1 and 0.",
+  "name_b": "Binary representation of the x-axis, from the left edge to the origin, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 833\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,base,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Henry Bottomley_, Aug 30 2000",
+  "auth_b": "_Robert Price_, Mar 23 2017"
+ },
+ {
+  "a": "A078836",
+  "b": "A131769",
+  "match": 18,
+  "align": [
+   3,
+   2
+  ],
+  "len_a": 31,
+  "len_b": 20,
+  "diverge": false,
+  "sample": "72,160,352,768,1664,3584,7680,16384,34816,73728,155648,327680",
+  "name_a": "a(n) = n*2^(n-6).",
+  "name_b": "Number of connected components in the double Bruhat cells for simple Lie groups of type B_n (or C_n).",
+  "kw_a": "easy,nonn",
+  "kw_b": "easy,nonn",
+  "auth_a": "Silvia Heubach (sheubac(AT)calstatela.edu), Jan 17 2003",
+  "auth_b": "_Peter Bala_, Jul 14 2007"
+ },
+ {
+  "a": "A162191",
+  "b": "A162456",
+  "match": 18,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 18,
+  "len_b": 18,
+  "diverge": false,
+  "sample": "1,47,1127,18377,229171,2330589,20127092,151775596,1019876970,6201909910,34546227171,177996721677",
+  "name_a": "Number of reduced words of length n in the Weyl group B_47.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_47.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A162193",
+  "b": "A162461",
+  "match": 18,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 18,
+  "len_b": 18,
+  "diverge": false,
+  "sample": "1,48,1175,19552,248723,2579312,22706404,174482000,1194358970,7396268880,41942496051,219939217728",
+  "name_a": "Number of reduced words of length n in the Weyl group B_48.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_48.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A162204",
+  "b": "A162469",
+  "match": 18,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 21,
+  "len_b": 18,
+  "diverge": false,
+  "sample": "1,49,1224,20776,269499,2848811,25555215,200037215,1394396185,8790665065,50733161116,270672378844",
+  "name_a": "Number of reduced words of length n in the Weyl group B_49.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_49.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A162205",
+  "b": "A162492",
+  "match": 18,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 21,
+  "len_b": 18,
+  "diverge": false,
+  "sample": "1,50,1274,22050,291549,3140360,28695575,228732790,1623128975,10413794040,61146955156,331819334000",
+  "name_a": "Number of reduced words of length n in the Weyl group B_50.",
+  "name_b": "Number of reduced words of length n in the Weyl group D_50.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Nov 30 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 01 2009"
+ },
+ {
+  "a": "A169186",
+  "b": "A170086",
+  "match": 18,
+  "align": [
+   0,
+   0
+  ],
+  "len_a": 18,
+  "len_b": 18,
+  "diverge": false,
+  "sample": "1,29,812,22736,636608,17825024,499100672,13974818816,391294926848,10956257951744,306775222648832,8589706234167296",
+  "name_a": "Number of reduced words of length n in Coxeter group on 29 generators S_i with relations (S_i)^2 = (S_i S_j)^27 = I.",
+  "name_b": "Number of reduced words of length n in Coxeter group on 29 generators S_i with relations (S_i)^2 = (S_i S_j)^37 = I.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_John Cannon_ and _N. J. A. Sloane_, Dec 03 2009",
+  "auth_b": "_John Cannon_ and _N. J. A. Sloane_, Dec 03 2009"
+ },
+ {
+  "a": "A188588",
+  "b": "A357711",
+  "match": 18,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 21,
+  "len_b": 22,
+  "diverge": false,
+  "sample": "12,60,360,2520,20160,181440,1814400,19958400,239500800,3113510400,43589145600,653837184000",
+  "name_a": "Row sums of 1-Euler triangle A188587.",
+  "name_b": "Expansion of e.g.f. cosh( 2 * log(1-x) ).",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn",
+  "auth_a": "_Paul Barry_, Apr 04 2011",
+  "auth_b": "_Seiichi Manyama_, Oct 10 2022"
+ },
+ {
+  "a": "A200885",
+  "b": "A202909",
+  "match": 18,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 19,
+  "len_b": 21,
+  "diverge": false,
+  "sample": "372,1856,9052,45648,235538,1215616,6233356,31868448,163014678,834763824,4276077566,21900661172",
+  "name_a": "Number of 0..7 arrays x(0..n+1) of n+2 elements without any interior element greater than both neighbors.",
+  "name_b": "Number of nX1 0..7 arrays with every nonzero element less than or equal to some horizontal or vertical neighbor.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_R. H. Hardin_, Nov 23 2011",
+  "auth_b": "_R. H. Hardin_, Dec 26 2011"
+ },
+ {
+  "a": "A212834",
+  "b": "A287815",
+  "match": 18,
+  "align": [
+   0,
+   2
+  ],
+  "len_a": 18,
+  "len_b": 22,
+  "diverge": false,
+  "sample": "62,482,3746,29114,226274,1758602,13667858,106226618,825593474,6416514026,49869159026,387583197338",
+  "name_a": "Number of 0..7 arrays of length n+1 with 0 never adjacent to 7.",
+  "name_b": "Number of octonary sequences of length n such that no two consecutive terms have distance 7.",
+  "kw_a": "nonn",
+  "kw_b": "nonn,easy",
+  "auth_a": "_R. H. Hardin_, May 28 2012",
+  "auth_b": "_David Nacin_, Jun 02 2017"
+ },
+ {
+  "a": "A281222",
+  "b": "A374785",
+  "match": 18,
+  "align": [
+   0,
+   3
+  ],
+  "len_a": 20,
+  "len_b": 21,
+  "diverge": false,
+  "sample": "6469693230,6915878970,8254436190,8720021310,9146807670,9592993410,10407767370,10485364890,10555815270,11125544430,11532931410,11797675890",
+  "name_a": "Products of 10 distinct primes (squarefree 10-almost primes).",
+  "name_b": "Numbers whose unitary divisors have a mean unitary abundancy index that is larger than 2.",
+  "kw_a": "nonn",
+  "kw_b": "nonn",
+  "auth_a": "_Rick L. Shepherd_, Jan 17 2017",
+  "auth_b": "_Amiram Eldar_, Jul 20 2024"
+ },
+ {
+  "a": "A283649",
+  "b": "A290193",
+  "match": 18,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 21,
+  "len_b": 21,
+  "diverge": false,
+  "sample": "1011,111,101111,11111,10111111,1111111,1011111111,111111111,101111111111,11111111111,10111111111111,1111111111111",
+  "name_a": "Binary representation of the x-axis, from the origin to the right edge, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 705\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Binary representation of the diagonal from the origin to the corner of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 705\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Mar 12 2017",
+  "auth_b": "_Robert Price_, Jul 23 2017"
+ },
+ {
+  "a": "A283708",
+  "b": "A290197",
+  "match": 18,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 21,
+  "len_b": 21,
+  "diverge": false,
+  "sample": "1011,1111,11111,111111,1111111,11111111,111111111,1111111111,11111111111,111111111111,1111111111111,11111111111111",
+  "name_a": "Binary representation of the x-axis, from the origin to the right edge, of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 721\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Binary representation of the diagonal from the origin to the corner of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 721\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Mar 14 2017",
+  "auth_b": "_Robert Price_, Jul 23 2017"
+ },
+ {
+  "a": "A285652",
+  "b": "A286731",
+  "match": 18,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 21,
+  "len_b": 21,
+  "diverge": false,
+  "sample": "111,10000,11111,1000000,111111,110000000,11111111,11000000000,1111111111,1100000000000,111111111111,110000000000000",
+  "name_a": "Binary representation of the diagonal from the origin to the corner of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 81\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Binary representation of the diagonal from the origin to the corner of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 213\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, Apr 23 2017",
+  "auth_b": "_Robert Price_, May 13 2017"
+ },
+ {
+  "a": "A287130",
+  "b": "A288761",
+  "match": 18,
+  "align": [
+   3,
+   3
+  ],
+  "len_a": 21,
+  "len_b": 21,
+  "diverge": false,
+  "sample": "111,11000,11111,1100000,111111,110000000,11111111,11000000000,1111111111,1100000000000,111111111111,110000000000000",
+  "name_a": "Binary representation of the diagonal from the origin to the corner of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 245\", based on the 5-celled von Neumann neighborhood.",
+  "name_b": "Binary representation of the diagonal from the origin to the corner of the n-th stage of growth of the two-dimensional cellular automaton defined by \"Rule 501\", based on the 5-celled von Neumann neighborhood.",
+  "kw_a": "nonn,easy",
+  "kw_b": "nonn,easy",
+  "auth_a": "_Robert Price_, May 20 2017",
+  "auth_b": "_Robert Price_, Jun 15 2017"
+ }
+]
