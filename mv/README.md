@@ -11,7 +11,9 @@
 | `data/timeline.json` | 93 行歌词（日文 + 中文翻译）、时间戳、16 个段落 |
 | `assets/` | 智械的抠图素材（全身 / 脸部 / 书 / 剪影 / 线稿 / 灰度） |
 | `fonts/` | 所用字体（全部 OFL 开源协议） |
-| `render/` | Playwright + ffmpeg 逐帧渲染脚本 |
+| `render/` | Playwright + ffmpeg 逐帧渲染脚本；`build_dist.py` / `subset_fonts.py` 生成单文件网页版 |
+| `dist/` | 单文件网页版（字体子集内嵌），可直接静态托管或作为 claude.ai Artifact 发布 |
+| `video/` | 已渲染的 720p 无声成片（预览用） |
 | `STORYBOARD.md` | 分镜脚本与设计规范（冷→暖的视觉弧线、配色、字体、每段镜头） |
 | `ref/` | 原版 MV 的参考封面帧 |
 
@@ -25,11 +27,20 @@ cd mv && npx http-server -p 8765      # 或 python3 -m http.server 8765
 
 ## 渲染成视频
 
-见 `render/README.md`。渲染出的是无声视频，之后用 ffmpeg 把音频合进去：
+见 `render/README.md`。完整命令（1080p30，分块可续渲，4 核约 18 分钟）：
+
+```bash
+cd mv/render && node render.mjs --serve --chunk 20 --out ../out/mv_1080p.mp4
+```
+
+CRF 18 的 1080p 原始渲染约 700MB（胶片颗粒导致码率高）；分享用可再压一次，例如 `-crf 25` 约 79MB。
+渲染出的是无声视频，之后用 ffmpeg 把音频合进去：
 
 ```bash
 ffmpeg -i mv.mp4 -i song.mp3 -c:v copy -c:a aac -b:a 256k -shortest mv_with_audio.mp4
 ```
+
+时间轴以流媒体版（6:39）为准，t=0 为音频开头。若你的音频开头有空白，用 `-itsoffset`（见 `render/README.md`）或在网页播放器里按 `[` / `]` 微调。
 
 ## 版权说明
 
