@@ -77,7 +77,7 @@ Symmetry feasibility (SAT-decided, ν or k' = 1..11):
   transition word ΔW of adjacent XORs); colourings invariant under reverse-complement (rc) EXIST; rc-anti-invariant do NOT;
   reverse-invariant only for k ≤ 3.
 - P(ν), ν ≥ 5: h∘rc = 1−h is the ONLY feasible symmetry (rc-anti-invariant). h∘rc = h impossible; h∘NOT = h and h∘NOT = 1−h
-  impossible; h∘rev = ±h impossible. Any closed-form candidate for P(ν) must be rc-ANTI-invariant.
+  impossible; h∘rev = ±h impossible. CORRECTION (panel round): rc-anti-invariance is FEASIBLE but NOT NECESSARY — only 8/16 P(5) and 448/25088 P(7) solutions have it.
 - The complement-invariant unrestricted solutions, written as functions of the ν-bit transition word, coincide exactly with the
   P(ν) solution set for ν = 3, 5 (2 and 16 solutions).
 
