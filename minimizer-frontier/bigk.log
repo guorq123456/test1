@@ -1,0 +1,4 @@
+k'=13 (window bits n=14) restricted=True: 1 solution(s) in 5.1s; bound charged=17480 / 32768
+ charged = 17480
+k'=15 (window bits n=16) restricted=True: 1 solution(s) in 33.0s; bound charged=69392 / 131072
+ charged = 69392
