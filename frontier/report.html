@@ -259,185 +259,186 @@
 
 <div class="wrap">
   <header>
-    <div class="edition">2026 年 10 月 1 日 · OEIS 全库快照 · arXiv 2025–2026</div>
+    <div class="edition">2026 年 10 月 1 日 · OEIS 数据库 + 最近两年的 arXiv 论文</div>
     <h1>现实前沿簿</h1>
-    <p class="lede">在「算子工坊」里，合成不出来的地方叫缺口，图鉴里没人填过的缺口叫前沿。这本簿子记录的是：把同样的玩法搬到真实的数学里，能不能找到并填上人类还没填过的缺口。</p>
+    <p class="lede">你的「算子工坊」里，合成不出来的地方叫缺口，没人填过的缺口叫前沿。这里记的是：把这套玩法搬到真实的数学里，能不能找到人类还没填上的缺口，再把它填上。</p>
   </header>
 
   <div class="answer">
-    <h2>能，找到了，但都是小前沿</h2>
-    <p>九个结果经过证明或计算，又被另一个不看原代码的智能体独立复核，全部成立。查新之后，其中四个检索不到任何先例，五个有新内容但部分已有记载。另有两个反例我们晚了一步，别人已经先公开了。没有一个是著名难题。</p>
+    <h2>能找到，但都是小东西</h2>
+    <p>一共有 9 个结果站得住。每一个都另外派人用自己的代码重新算过、专门挑过毛病，没有一个被推翻。再去查文献：4 个完全查不到前人做过，5 个有新东西但前人知道一部分。另外还有 2 个反例，被别人抢先发出来了。大难题一个也没碰到。</p>
     <div class="tally">
-      <span class="t-new num">首次发现 4</span>
-      <span class="t-partial num">部分已知 5</span>
-      <span class="t-scooped num">别人先填 2</span>
+      <span class="t-new num">全新 4</span>
+      <span class="t-partial num">半新 5</span>
+      <span class="t-scooped num">被抢先 2</span>
     </div>
   </div>
 
   <section aria-labelledby="route-h">
-    <h2 id="route-h">合成路线</h2>
+    <h2 id="route-h">一路筛下来</h2>
     <div class="route">
-      <h3>路线一 · OEIS 跨领域巧合</h3>
-      <div class="step"><span class="what"><span class="op">⟨全库⟩</span>OEIS 收录的整数数列</span><span class="count">399,822</span></div>
-      <div class="step"><span class="what"><span class="op">∩</span>至少 18 项完全一致、信息量足够的数列对</span><span class="count">5,339</span></div>
-      <div class="step"><span class="what"><span class="op">∖</span>去掉已经分叉的</span><span class="count">3,287</span></div>
-      <div class="step"><span class="what"><span class="op">∖</span>去掉两边条目互相提到过的</span><span class="count">331</span></div>
-      <div class="step"><span class="what"><span class="op">↤</span>8 个智能体逐对分诊后，判为「非平凡相等」的</span><span class="count">23</span></div>
-      <div class="step last"><span class="what"><span class="op">⊞</span>深挖：证明、独立复核、查新</span><span class="count">7</span></div>
-      <h3>路线二 · 最新论文里的猜想</h3>
-      <div class="step"><span class="what"><span class="op">⟨读⟩</span>2025 到 2026 年 arXiv 里能用有限计算证伪的猜想</span><span class="count">18</span></div>
-      <div class="step"><span class="what"><span class="op">↤</span>挑出来攻的</span><span class="count">3</span></div>
-      <div class="step last"><span class="what"><span class="op">⊞</span>被推翻的猜想（同一篇论文里有两个）</span><span class="count">4</span></div>
+      <h3>路线一 · 在 OEIS 里找「撞车」的数列</h3>
+      <div class="step"><span class="what"><span class="op">⟨全库⟩</span>OEIS 里所有的整数数列</span><span class="count">399,822</span></div>
+      <div class="step"><span class="what"><span class="op">∩</span>两两比对，前面至少 18 项一模一样的</span><span class="count">5,339</span></div>
+      <div class="step"><span class="what"><span class="op">∖</span>往后算还没分道扬镳的</span><span class="count">3,287</span></div>
+      <div class="step"><span class="what"><span class="op">∖</span>两边作者互相不知道对方的</span><span class="count">331</span></div>
+      <div class="step"><span class="what"><span class="op">↤</span>逐对看过以后，觉得不是巧合、值得证的</span><span class="count">23</span></div>
+      <div class="step last"><span class="what"><span class="op">⊞</span>真正动手去证、复核、查文献的</span><span class="count">7</span></div>
+      <h3>路线二 · 推翻新论文里的猜想</h3>
+      <div class="step"><span class="what"><span class="op">⟨读⟩</span>最近两年论文里，能用电脑验证的猜想</span><span class="count">18</span></div>
+      <div class="step"><span class="what"><span class="op">↤</span>挑出来重点攻的</span><span class="count">3</span></div>
+      <div class="step last"><span class="what"><span class="op">⊞</span>最后被推翻的（有一篇论文倒了两个）</span><span class="count">4</span></div>
     </div>
   </section>
 
   <section aria-labelledby="cards-h">
     <h2 id="cards-h">填上的缺口</h2>
-    <div class="filters" role="group" aria-label="按新颖性筛选">
+    <div class="filters" role="group" aria-label="按新不新筛选">
       <button class="chip" type="button" id="f-all" data-f="all" aria-pressed="true">全部 11</button>
-      <button class="chip" type="button" id="f-new" data-f="new" aria-pressed="false">首次发现 4</button>
-      <button class="chip" type="button" id="f-partial" data-f="partial" aria-pressed="false">部分已知 5</button>
-      <button class="chip" type="button" id="f-scooped" data-f="scooped" aria-pressed="false">别人先填 2</button>
+      <button class="chip" type="button" id="f-new" data-f="new" aria-pressed="false">全新 4</button>
+      <button class="chip" type="button" id="f-partial" data-f="partial" aria-pressed="false">半新 5</button>
+      <button class="chip" type="button" id="f-scooped" data-f="scooped" aria-pressed="false">被抢先 2</button>
     </div>
 
     <div class="cards" id="cards">
       <article class="card wide" data-s="new">
-        <div class="card-top"><span class="kind kind-theorem">定理</span><span class="flag flag-new">首次发现</span><span class="src">A386884 · 2025 年的数列</span></div>
+        <div class="card-top"><span class="kind kind-theorem">证明</span><span class="flag flag-new">全新</span><span class="src">A386884 · 2025 年收录的数列</span></div>
         <div class="card-body">
-          <h3>正方体的四块铺砌</h3>
-          <p class="claim">用四块两两不全等、三条边各不相同的整数长方体铺满 n×n×n 的正方体，形状组合一共有这么多种。它恰好等于一条 2010 年的纯算术数列 A178312 平移四位。</p>
+          <h3>四块长方体拼一个正方体</h3>
+          <p class="claim">拿四块长方体拼出一个 n×n×n 的正方体，要求四块形状各不相同，每块的长宽高也互不相等。问一共有几种形状组合。这个数列去年才收进 OEIS，一直只有数据、没有公式。我们证出了公式，结果它刚好等于另一条 2010 年的、跟几何毫不相干的数列。</p>
           <div class="formula">A386884(n) = (n − 4) · T(⌈(n − 4)/2⌉)，&nbsp; T(j) = j(j + 1)/2</div>
           <dl class="facts">
-            <div><dt>关键一步</dt><dd>三维里，任何用至多 4 块长方体铺成的长方体，都能一刀切成两半。5 块时这句话就不成立了。</dd></div>
-            <div><dt>核验</dt><dd>不依赖任何引理的暴力搜索到 n=20；与 OEIS 全部 49 项一致；复核者用自己写的铺砌枚举器重算。</dd></div>
-            <div><dt>查新</dt><dd>两个条目都没有公式，也互不引用。只有一条 2026 年 7 月的 OEIS 评论不加证明地提到过一刀切引理。</dd></div>
+            <div><dt>窍门</dt><dd>只要不超过四块，拼出来的长方体总能一刀切成两半。到了五块，这就不一定了。</dd></div>
+            <div><dt>怎么确认的</dt><dd>用最笨的办法硬搜到 n=20，和 OEIS 里已有的 49 项全部对上；复核的人自己又写了一套重新数了一遍。</dd></div>
+            <div><dt>新不新</dt><dd>两条数列都没有公式，也互不认识。「一刀切」这一点，今年 7 月有人在 OEIS 评论里随口提过，但没给证明。</dd></div>
           </dl>
         </div>
       </article>
 
       <article class="card" data-s="new">
-        <div class="card-top"><span class="kind kind-theorem">定理</span><span class="flag flag-new">首次发现</span><span class="src">A253435 · Hardin 2014</span></div>
+        <div class="card-top"><span class="kind kind-theorem">证明</span><span class="flag flag-new">全新</span><span class="src">A253435 · Hardin 2014</span></div>
         <div class="card-body">
-          <h3>不对称规则下的对称公式</h3>
-          <p class="claim">表格计数满足某种 2×2 子块条件的 0/1 阵列。规则本身不是转置对称的，小尺寸时表格确实不对称，比如 T(4,2)=108 而 T(2,4)=102。尺寸一大，公式就变得对称。</p>
+          <h3>不对称的规则，对称的答案</h3>
+          <p class="claim">这张表数的是满足某种规则的 0/1 方格。规则本身横竖不对称，格子小的时候表也确实不对称，比如 4×2 是 108，2×4 是 102。可格子一大，答案就神奇地变对称了。</p>
           <div class="formula">T(n, k) = 9·2ⁿ⁻¹ + 9·2ᵏ⁻¹ + 12 &nbsp;(n ≥ 2, k ≥ 4)</div>
           <dl class="facts">
-            <div><dt>核验</dt><dd>对所有有效阵列做了完整分类；复核者用暴力计数和转移矩阵重算 1,091 个 b-file 项。</dd></div>
-            <div><dt>查新</dt><dd>这张表及其 14 条行列数列上的公式，全部标着「经验」，此前没有人证明过。</dd></div>
+            <div><dt>怎么确认的</dt><dd>把所有合格的方格分门别类数清楚；复核的人另外重算了 1,091 项。</dd></div>
+            <div><dt>新不新</dt><dd>这张表和相关的 14 条数列，公式全挂着「看起来是这样」的标签，挂了 12 年，没人证明过。</dd></div>
           </dl>
         </div>
       </article>
 
       <article class="card" data-s="new">
-        <div class="card-top"><span class="kind kind-refute">反例</span><span class="flag flag-new">首次发现</span><span class="src">arXiv:2605.12822 · 2026 年 5 月</span></div>
+        <div class="card-top"><span class="kind kind-refute">反例</span><span class="flag flag-new">全新</span><span class="src">arXiv:2605.12822 · 2026 年 5 月</span></div>
         <div class="card-body">
-          <h3>q-整数乘积的单峰性</h3>
-          <p class="claim">论文的猜想 5.4 说，当 r ≤ 3 时某个不等式是单峰的必要条件。取 r=3、六个 aᵢ 都等于 2、b=2，不等式不满足，乘积却是单峰的。</p>
+          <h3>一个本该「不单峰」的多项式</h3>
+          <p class="claim">论文里有个猜想：满足某些条件时，这类多项式的系数一定不是先升后降的。我们找到一个满足条件、系数却老老实实先升后降的例子，而且只有十项，手算就能验。</p>
           <div class="formula">(1+q)⁶(1+q³) = 1+6q+15q²+21q³+21q⁴+21q⁵+21q⁶+15q⁷+6q⁸+q⁹</div>
           <dl class="facts">
-            <div><dt>推广</dt><dd>对所有 k ≥ 6，(1+q)ᵏ(1+q³) 都是单峰的，所以反例有无穷多个。作者只验证到 k ≤ 5。</dd></div>
-            <div><dt>核验</dt><dd>攻坚者和复核者各用三套实现；我又亲自核对了论文原文和这个多项式。</dd></div>
-            <div><dt>查新</dt><dd>论文只有 v1，检索不到任何引用或反驳。</dd></div>
+            <div><dt>不止一个</dt><dd>把 6 换成任何不小于 6 的数都一样，所以反例有无穷多个。作者只试到了 5。</dd></div>
+            <div><dt>怎么确认的</dt><dd>两边各用三套程序算过；我又亲自翻了论文原文，确认没读错题。</dd></div>
+            <div><dt>新不新</dt><dd>论文没改过版，也没人引用或反驳过它。</dd></div>
           </dl>
         </div>
       </article>
 
       <article class="card" data-s="new">
-        <div class="card-top"><span class="kind kind-refute">反例</span><span class="flag flag-new">首次发现</span><span class="src">arXiv:2609.03081 · 2026 年 9 月</span></div>
+        <div class="card-top"><span class="kind kind-refute">反例</span><span class="flag flag-new">全新</span><span class="src">arXiv:2609.03081 · 2026 年 9 月</span></div>
         <div class="card-body">
-          <h3>填字格上的车</h3>
-          <p class="claim">猜想 3.14 说，n×n 排列格上车摆法最多的，是形状为 (m,1,…,1,m) 的分层排列。n=17 时，形状 (5,3,1,3,5) 胜出约 1%；n=18 时差距扩大到 20.6%。</p>
+          <h3>填字格上摆车</h3>
+          <p class="claim">论文猜某一类排列能让车的摆法最多。我们在 n=17 时找到一个更好的排列，摆法多了大约 1%；到 n=18，多出了两成。</p>
           <div class="formula num">104,476,798,194,769 &gt; 103,460,138,813,701</div>
           <dl class="facts">
-            <div><dt>核验</dt><dd>攻坚者和复核者各用三种方法（行动态规划、Ryser 积和式、通用积和式）得到完全相同的数。</dd></div>
-            <div><dt>查新</dt><dd>同一篇论文的猜想 3.10 已被别人推翻，3.14 检索不到任何先例。最小反例落在 n=14 到 17 之间，还没确定。</dd></div>
+            <div><dt>怎么确认的</dt><dd>两边各用三种完全不同的算法，算出来的数一位不差。</dd></div>
+            <div><dt>新不新</dt><dd>这篇论文的另一个猜想已经被别人推翻了，这一个还没人碰过。最小的反例在 14 到 17 之间，具体是几还没搞清。</dd></div>
           </dl>
         </div>
       </article>
 
       <article class="card wide" data-s="partial">
-        <div class="card-top"><span class="kind kind-theorem">定理</span><span class="flag flag-partial">部分已知</span><span class="src">Hardin 数列族 A2008xx、A2028xx–A2031xx、A2174xx–A2186xx</span></div>
+        <div class="card-top"><span class="kind kind-theorem">证明</span><span class="flag flag-partial">半新</span><span class="src">Hardin 的一大家子数列</span></div>
         <div class="card-body">
-          <h3>腐蚀与膨胀给出的双射</h3>
-          <p class="claim">三个互不知情的分诊智能体，在第 1、5、7 批里分别发现了它。对任意字母表 {0,…,k}，先取补 x ↦ k−x，再做 2 窗最大值滤波（数学形态学里的「膨胀」），就把长度为 N 的无峰词一一映到长度为 N+1、每个非零项都不超过某个邻居的词。逆映射是 2 窗最小值滤波（「腐蚀」）。另一条双射把无峰也无谷的词映到 3 窗最小值滤波的像。</p>
+          <h3>修图的滤镜，变成了数数的工具</h3>
+          <p class="claim">修图软件里有两个常用操作：一个让亮的地方往外扩，叫膨胀；一个让暗的地方往外扩，叫腐蚀。我们发现，把它们用在一串数字上，正好能在两类看起来毫不相干的数字串之间建立一一对应。一类是「没有哪一位比左右两边都大」的串，另一类是「每个非零的数，旁边都有不比它小的邻居」的串。所以两类串的个数永远相等。有意思的是，三个分头干活、互不知情的智能体各自都发现了这件事。</p>
           <div class="formula">Φ(x)ᵢ = max(k − xᵢ₋₁, k − xᵢ)，&nbsp; Φ⁻¹(y)ⱼ = k − min(yⱼ, yⱼ₊₁)</div>
           <dl class="facts">
-            <div><dt>连接</dt><dd>图像处理里的数学形态学 ↔ 组合学里的模式回避词</dd></div>
-            <div><dt>战果</dt><dd>连接了 A200880–A200885 与 A202882、A203094、A203184、A203050、A203059、A202909，以及 A200865 与 A217450、A200866 与 A218051 等；证明了 102 条标为「经验」的公式；顺带发现两处 OEIS 勘误。</dd></div>
-            <div><dt>查新</dt><dd>生成函数是 Mansour 和 Shattuck 2010 年的结果，k ≤ 3 的对应关系 OEIS 里有人提过但没证明。双射本身、k ≥ 4 的各对以及第二条双射，检索不到先例。</dd></div>
+            <div><dt>连起了</dt><dd>图像处理 ↔ 组合数学</dd></div>
+            <div><dt>顺带解决</dt><dd>一口气把十来对数列连了起来，证明了 102 条「看起来是这样」的公式，还挑出了 OEIS 里两处错误。</dd></div>
+            <div><dt>新不新</dt><dd>数个数的公式 2010 年就有人算过，字母少的情况 OEIS 里也有人提过。用滤镜做对应这个思路、字母多的情况，以及另一条类似的对应，都查不到前人。</dd></div>
           </dl>
         </div>
       </article>
 
       <article class="card" data-s="partial">
-        <div class="card-top"><span class="kind kind-theorem">定理</span><span class="flag flag-partial">部分已知</span><span class="src">A228016 ↔ A087125</span></div>
+        <div class="card-top"><span class="kind kind-theorem">证明</span><span class="flag flag-partial">半新</span><span class="src">A228016 ↔ A087125</span></div>
         <div class="card-body">
-          <h3>调和数与六边形数</h3>
-          <p class="claim">Kimberling 2013 年用调和数 H(k) 的贪心规则定义了 A228016。它恰好是「六边形数 3k(k+1)+1 同时是三角形数」的那些 k，平移一位。</p>
+          <h3>调和数和六边形数</h3>
+          <p class="claim">2013 年有人用 1 + 1/2 + 1/3 + … 这种「调和数」，按某个贪心规则造了一条数列，还猜了它的递推公式，但没证出来。我们发现它其实就是另一条老数列，即「既是六边形数、又是三角形数」的那些数的编号。认出这层关系，猜想就成了定理。</p>
           <div class="formula">H(eₙ − 1) &lt; 2H(eₙ₋₁) − H(eₙ₋₂) &lt; H(eₙ)</div>
           <dl class="facts">
-            <div><dt>连接</dt><dd>调和数的渐近展开 ↔ 佩尔方程</dd></div>
-            <div><dt>战果</dt><dd>条目里标为「猜想」的递推和生成函数成为定理；比值的极限是 5+2√6；条目里有三处笔误。</dd></div>
-            <div><dt>查新</dt><dd>这个相等式和那条猜想递推等价，所以猜测早已存在。两者的联系和证明是新的。</dd></div>
+            <div><dt>连起了</dt><dd>调和数的估算 ↔ 一类经典的整数方程</dd></div>
+            <div><dt>顺带解决</dt><dd>证明了那条递推，还挑出了原条目里三处笔误。</dd></div>
+            <div><dt>新不新</dt><dd>那条猜想其实已经暗含了「两条数列相等」，但没人点破，更没人证明。</dd></div>
           </dl>
         </div>
       </article>
 
       <article class="card" data-s="partial">
-        <div class="card-top"><span class="kind kind-theorem">定理</span><span class="flag flag-partial">部分已知</span><span class="src">A112051 · Karttunen</span></div>
+        <div class="card-top"><span class="kind kind-theorem">证明</span><span class="flag flag-partial">半新</span><span class="src">A112051 · Karttunen</span></div>
         <div class="card-body">
-          <h3>一个 1956 年的不等式</h3>
-          <p class="claim">对 n ≥ 4，A112051(n) = (prime(n)² − 1)/2。关键是：除了 3、7、23，每个奇素数 q 的最小二次非剩余都小于 √q。</p>
+          <h3>一本 1956 年的教科书</h3>
+          <p class="claim">OEIS 里有几条评论挂了十几年，大意是「这个规律好像成立，但不会证」。其实用上 1956 年一本数论教科书里的一个现成不等式，几行就证完了。写评论的人，和熟悉那个不等式的人，刚好不是同一拨人。</p>
+          <div class="formula">n ≥ 4 时，A112051(n) = (prime(n)² − 1)/2</div>
           <dl class="facts">
-            <div><dt>连接</dt><dd>OEIS 里 2005 到 2017 年留下的经验评论 ↔ LeVeque 1956 年教科书里的界</dd></div>
-            <div><dt>战果</dt><dd>证明了 A112052 里「似乎是素数的平方」和 A112049 里的评论，并说明 A112060 确实是一个排列。</dd></div>
-            <div><dt>查新</dt><dd>核心不等式是经典结果，Godwin 1965 年还给过初等证明。把它用到这几条数列上，检索不到先例。</dd></div>
+            <div><dt>连起了</dt><dd>OEIS 上的经验观察 ↔ 半个多世纪前的经典结论</dd></div>
+            <div><dt>顺带解决</dt><dd>三条相关数列上「好像是这样」的评论都证明了。</dd></div>
+            <div><dt>新不新</dt><dd>不等式本身是老的；把它用在这里，查不到有人做过。</dd></div>
           </dl>
         </div>
       </article>
 
       <article class="card" data-s="partial">
-        <div class="card-top"><span class="kind kind-refute">反例</span><span class="flag flag-partial">部分已知</span><span class="src">A282297、A282295 · 2025 年 6 月</span></div>
+        <div class="card-top"><span class="kind kind-refute">反例</span><span class="flag flag-partial">半新</span><span class="src">A282297、A282295 · 2025 年 6 月</span></div>
         <div class="card-body">
-          <h3>Mathar 的元胞自动机猜想</h3>
-          <p class="claim">两条猜想说，规则 451 和规则 193 的 x 轴读数从 n=2 起永远相同。它们在 n=2 到 25 相同，从 n=26 起一直不同，我们算到了 n=1000。</p>
-          <div class="formula num">A282297(26) = 111100000000000111111111111<br>A279721(26) = 111000000000000111111111111</div>
+          <h3>两个元胞自动机，并不一样</h3>
+          <p class="claim">去年 6 月有人猜，两个元胞自动机规则画出来的某一行永远相同。前 25 步确实一样，第 26 步开始就分开了，我们一直算到第 1000 步，都没再合上。</p>
+          <div class="formula num">第 26 步：111100000000000111111111111<br>&emsp;&emsp;&emsp;&emsp;&ensp;111000000000000111111111111</div>
           <dl class="facts">
-            <div><dt>核验</dt><dd>我从 OEIS 官方 b-file 直接读出了这两项。</dd></div>
-            <div><dt>查新</dt><dd>反例从 2016 年起就躺在 b-file 里，但没有人指出猜想是错的。</dd></div>
+            <div><dt>怎么确认的</dt><dd>我直接从 OEIS 官方数据里读出了这两项。</dd></div>
+            <div><dt>新不新</dt><dd>反例其实 2016 年就躺在官方数据里了，只是一直没人发现猜想是错的。</dd></div>
           </dl>
         </div>
       </article>
 
       <article class="card" data-s="partial">
-        <div class="card-top"><span class="kind kind-theorem">定理</span><span class="flag flag-partial">部分已知</span><span class="src">A225034 · Berselli 2013</span></div>
+        <div class="card-top"><span class="kind kind-theorem">证明</span><span class="flag flag-partial">半新</span><span class="src">A225034 · Berselli 2013</span></div>
         <div class="card-body">
-          <h3>避开 101 的二进制词</h3>
-          <p class="claim">条目里标为「猜想」的递推，其实能从同一条目已有的生成函数定理直接推出。另外得到 A225034(n) = A005773(n) + A005773(n+1)，以及 n ≥ 3 时 A163765(n) = A225034(n)。</p>
+          <h3>不含 101 的二进制串</h3>
+          <p class="claim">这条数列有一个挂着「猜想」标签的递推式。我们发现它其实能从同一页上已经证明过的公式直接推出来，标签可以摘掉了。顺便还得到了几个更简单的写法。</p>
           <dl class="facts">
-            <div><dt>查新</dt><dd>生成函数早已有人证明，这是九个结果里新意最少的一个。</dd></div>
+            <div><dt>新不新</dt><dd>九个结果里最不新的一个，基本是帮人把最后一步补上。</dd></div>
           </dl>
         </div>
       </article>
 
       <article class="card is-scooped" data-s="scooped">
-        <div class="card-top"><span class="kind kind-refute">反例</span><span class="flag flag-scooped">别人先填</span><span class="src">arXiv:2601.03293 · 2026 年 1 月</span></div>
+        <div class="card-top"><span class="kind kind-refute">反例</span><span class="flag flag-scooped">被抢先</span><span class="src">arXiv:2601.03293 · 2026 年 1 月</span></div>
         <div class="card-body">
-          <h3>广义彼得森图的奇偶猜想</h3>
-          <p class="claim">猜想说 k 为偶数时独立多项式只有实根。GP(9,2) 的独立多项式有 7 个根，只有 5 个是实的。</p>
+          <h3>一张图的奇偶猜想</h3>
+          <p class="claim">论文猜某类图的某个多项式，根全是实数还是不全是，只看一个参数是奇是偶。我们找到一个只有 18 个点的小图，参数是偶数，7 个根里却只有 5 个是实数。</p>
           <dl class="facts">
-            <div><dt>查新</dt><dd>作者 1 月已在 GitHub 上改稿放弃这个猜想，另有团队 6 月公开了同一个反例。我们新增的只是对 2,030 个情形的精确扫描。</dd></div>
+            <div><dt>新不新</dt><dd>作者自己 1 月就悄悄放弃了这个猜想，6 月也有别人发过同样的反例。我们多做的只是把 2,030 种情况都精确算了一遍。</dd></div>
           </dl>
         </div>
       </article>
 
       <article class="card is-scooped" data-s="scooped">
-        <div class="card-top"><span class="kind kind-refute">反例</span><span class="flag flag-scooped">别人先填</span><span class="src">arXiv:2609.03081 · 猜想 3.10</span></div>
+        <div class="card-top"><span class="kind kind-refute">反例</span><span class="flag flag-scooped">被抢先</span><span class="src">arXiv:2609.03081 · 另一个猜想</span></div>
         <div class="card-body">
           <h3>155 种摆法</h3>
-          <p class="claim">猜想说 4 的倍数加 3 这类数不会成为车摆法的个数。排列 27481635 的格子恰有 155 种摆法，155 除以 4 余 3。</p>
+          <p class="claim">还是那篇填字格的论文，它猜除以 4 余 3 的数永远不会是摆法的个数。可有一个格子恰好有 155 种摆法，155 除以 4 正好余 3。</p>
           <dl class="facts">
-            <div><dt>查新</dt><dd>别人在 2026 年 9 月 26 日公开过，比我们早 5 天。</dd></div>
+            <div><dt>新不新</dt><dd>别人 9 月 26 日就发出来了，比我们早 5 天。</dd></div>
           </dl>
         </div>
       </article>
@@ -447,33 +448,34 @@
   <section aria-labelledby="lessons-h">
     <h2 id="lessons-h">回到你的问题</h2>
     <ul class="lessons">
-      <li><b>推理那一步确实可靠。</b>九个结果都经受住了独立复核，复核者没有推翻任何一个。给定前提往下推，大模型做得又快又稳，这和你在游戏里的观察一致。</li>
-      <li><b>难的是找到值得推的地方，以及确认它是新的。</b>331 对候选里只有 23 对值得深挖；深挖的 7 项里，只有 2 项完全查不到先例。查新花的力气和证明差不多。</li>
-      <li><b>跨领域的缺口真实存在。</b>最典型的是二次非剩余那条：OEIS 里挂了多年的经验评论，接上 1956 年教科书里的一个不等式就解决了。写评论的人和知道那个不等式的人，碰巧没有交集。形态学双射也一样，图像处理和词组合学各自都很成熟，只是没人把它们摆在一起。</li>
-      <li><b>但这些都是小前沿。</b>它们离已知结果只有几步，所以几步推理就能填上。著名难题难，是因为现有的前置条件不够，把已知的东西连起来推不到那里，得先造出新的「卡」。</li>
-      <li><b>这片前沿很拥挤。</b>我们推翻的四个猜想里，有两个已经被别人抢先公开，至少有一个团队也在用 AI 做同样的事。一篇论文挂上 arXiv，几周之内就会有机器去检验它。</li>
+      <li><b>往下推这一步，AI 确实靠得住。</b>9 个结果被人专门挑过毛病，一个都没倒。给定前提往下推，又快又稳，跟你在游戏里感觉到的一样。</li>
+      <li><b>真正费劲的是挑题和查新。</b>331 对候选，值得动手的只有 23 对；真动手的 7 对里，完全没人做过的只有 2 对。查「是不是新的」花的工夫，跟证明本身差不多。</li>
+      <li><b>「学不全前置知识」造成的缺口，是真的有。</b>最好的例子就是那本 1956 年的教科书：答案早就有了，只是提问的人和知道答案的人没碰上面。修图滤镜那条也一样，两个领域各自都很成熟，就是没人把它们放在一起看过。</li>
+      <li><b>但这样能填上的，都是小缺口。</b>它们离已知结果只差几步，所以几步就能推到。大难题之所以难，是因为手头的知识根本不够用。光靠把已知的东西串起来推不过去，得先发明新的「卡」。</li>
+      <li><b>这块地方已经有点挤了。</b>我们推翻的 4 个猜想里，有 2 个被别人抢了先，至少有一个团队也在用 AI 干一样的事。新论文一挂上网，几周之内就会有机器去验它。</li>
     </ul>
   </section>
 
   <div class="game">
-    <h2 style="font-family: var(--f-display); font-size: 17px; letter-spacing: 0.06em;">和游戏的对应</h2>
-    <p>游戏里的「填」，是找一个包含原来的世界、又能让那条法走通的最小世界；现实里对应的是一个证明。游戏里的前沿，是图鉴里没人填过的缺口；现实里，OEIS 那 331 对互不引用的巧合，就是一张现成的缺口清单。我们只填了其中 7 个，剩下的还在那里。</p>
+    <h2 style="font-family: var(--f-display); font-size: 17px; letter-spacing: 0.06em;">跟你的游戏怎么对上</h2>
+    <p>游戏里的「填」，是找一个最小的新世界，让原来走不通的法走通；放到现实里，就是写出一个证明。游戏里的「前沿」，是图鉴里没人填过的缺口；放到现实里，那 331 对互不认识的数列，就是一张现成的缺口清单。我们只填了 7 个，剩下的还在那儿等着。</p>
   </div>
 
   <section aria-labelledby="next-h">
-    <h2 id="next-h">接下来可以做的</h2>
+    <h2 id="next-h">接下来你可以做的</h2>
     <ol class="next">
-      <li>把公式、交叉引用和勘误提交给 OEIS。这需要你本人的 OEIS 账号，修改清单在仓库的 <code>frontier/OEIS_EDITS.md</code>。</li>
-      <li>给两篇论文的作者写信，附上反例和复现代码，代码在 <code>frontier/conjectures/</code>。</li>
+      <li>用你自己的 OEIS 账号，把这些公式、关联和勘误提交上去。要改哪些地方，都列在仓库的 <code>frontier/OEIS_EDITS.md</code> 里。</li>
+      <li>给那两篇论文的作者写封信，附上反例和能复现的代码，代码在 <code>frontier/conjectures/</code>。</li>
     </ol>
-    <p class="section-note">我没有替你提交任何东西，也没有联系任何人。</p>
+    <p class="section-note">这些我都还没做，没替你往外提交任何东西，也没联系任何人。</p>
   </section>
 
   <footer>
-    <span>证明、代码和复核记录都在仓库 guorq123456/test1 的分支 claude/youthful-goldberg-7v5ux3 下的 <code>frontier/</code> 目录。</span>
-    <a href="https://github.com/guorq123456/test1/tree/claude/youthful-goldberg-7v5ux3/frontier">在 GitHub 上打开</a>
+    <span>所有证明、代码和复核记录都在仓库 guorq123456/test1 的 claude/youthful-goldberg-7v5ux3 分支里，<code>frontier/</code> 目录下。</span>
+    <a href="https://github.com/guorq123456/test1/tree/claude/youthful-goldberg-7v5ux3/frontier">去 GitHub 上看</a>
   </footer>
 </div>
+
 
 <script>
   (function () {
