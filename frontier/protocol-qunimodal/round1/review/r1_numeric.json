@@ -1,0 +1,157 @@
+{
+ "reviews": [
+  {
+   "id": "N_r3",
+   "kind": "A",
+   "v": {
+    "reproduced": true,
+    "own_numbers": "Own implementation (numpy convolution / incremental shift-add, int64 or Python big-int where needed; weak unimodality = no strict decrease followed by a strict increase). Enumeration that matches the claimed count: multisets of a_i in {1,2,4,5,7,8,10,11} (a_i<=12, not divisible by 3, including a_i=1), k=1..8 -> 12,869 multisets, x b=1..60 = 772,140 instances. Result: 0 errors between predict(b <= 1+F+2*floor(S/6)) and ground truth; 154,199 of 772,140 unimodal. Equivalent form 3(b-1) <= D-(S mod 6) agreed with the primary form on all 772,140. Independent PARI/GP ground truth on 500 boundary-biased cases (300 in-range): 0 mismatches. Runtime 12 s.",
+    "new_instances_tested": "All r=3, a_i not divisible by 3, b swept from 1 to threshold+5..8 so every sweep crosses the predicted boundary on both sides. (1) Exhaustive larger k over same alphabet: k=9 (11,440 multisets, 264,920 inst), k=10 (19,448; 483,064), k=11 (31,824; 843,336), k=12 (50,388; 1,418,830). (2) Exhaustive larger a_i: a_i<=30 k=1..4 (256,535 inst), a_i<=45 k=4 (40,920 multisets, 1,432,200 inst), a_i<=60 k=1..3 (429,520 inst). (3) High-S stress (S up to 24, a_i in residue 2 up to 17): 732 multisets, 24,046 inst. (4) Random k in [9,14], a_i<=60: 4,000 multisets, 467,590 inst. (5) Pure-Python big-int (no numpy) k in [10,20], a_i<=100, b in {thr-1,thr,thr+1,thr+2}: 1,600 inst (coefficients up to 80 bits), exactly 800 unimodal. (6) PARI/GP cross-check: 200 out-of-range boundary cases (k<=12, a_i<=40). Total ~5.6M new in-domain instances: 0 errors. Also: cited out-of-domain claim (some a_i divisible by 3 -> always unimodal) sampled on 62,433 instances, all unimodal. Other r: mechanically applying the r=3 formula to r=2 (11,525 inst) and r=4 (50,025 inst) gives many mismatches, as expected; the claim is r=3-specific so this is not a counterexample.",
+    "new_instances_ok": true,
+    "verdict": "PASS",
+    "reasons": "Reimplemented from the text description alone; the enumeration (multisets over 8 allowed a_i values incl. 1, k=1..8, b=1..60) reproduces the exact claimed instance count 772,140 and the claimed 0 errors. Ground truth was computed three independent ways (numpy incremental shift-add, PARI/GP polynomial arithmetic, pure-Python big-int convolution) and all agree with each other and with the predictor. The equivalent D/S-mod-6 form is algebraically and empirically identical. Roughly 5.6 million new instances well outside the claimed range (k up to 20, a_i up to 100, S up to 24, b straddling the threshold) show no mismatch, and the floor(S/6) term was specifically stressed. The out-of-domain cited behavior (a_i divisible by 3 -> unimodal) also held on 62k sampled instances. No discrepancies found. Work files: /tmp/claude-0/qu/review/r1/N_r3-A/{verify_r3.py,new_instances.py,paricheck.gp,paricheck.py,purepy_extreme.py,*.log}."
+   }
+  },
+  {
+   "id": "N_r3",
+   "kind": "B",
+   "v": {
+    "reproduced": true,
+    "own_numbers": "Full claimed range (r=3, k<=8, a_i in {1,2,4,5,7,8,10,11}, b=1..60): total=772140 instances, errors=0, unimodal=154199 (independently equals the count predicted by the formula). Ground truth implemented twice (pure-Python bigint in gt.py; C with unsigned __int128 in check.c), cross-checked on 14,500 random instances (r=2,3,4, including a_i divisible by 3): 0 disagreements. Unimodality routine validated against the literal 'exists m' definition on 20,000 random sequences: 0 disagreements. Files in /tmp/claude-0/qu/review/r1/N_r3-B/ (full_run.txt, outA..outG.txt).",
+    "new_instances_tested": "All with r=3 and no a_i divisible by 3, compared ground truth vs claim: (A) k=1..12, a_i<=12, b<=60: 7,558,140 instances, 0 errors (k=9..12 are new). (B) k<=6, a_i<=20 (incl. 13,14,16,17,19,20), b<=80: 3,100,720 instances, 0 errors. (C) all a_i = 2 mod 3 from {2,5,8,11,14,17}, k=12..15 (floor(S/6)=2), b up to threshold+12: 2,164,576 instances, 0 errors. (D) [2]^k for k<=30 (floor(S/6) up to 5), [5]^k k<=24, [8]^k k<=20, [11]^k k<=18, all {2,5} mixes k<=18, {1,2} and {2,4} mixes k<=14, b up to threshold+12: 10,790 instances, 0 errors. (E) large a_i in 31..101, all singles and pairs plus 500 random triples/quadruples, b up to threshold+12: 107,686 instances, 0 errors. (F) 4,000 random tuples, k<=24, a_i<=50 (1,000 skewed to residue 2), b up to threshold+12: 436,791 instances, 0 errors. (G) 1,800 random tuples, k=25..40, a_i in {1,2,4,5,7,8} or {2,5} (floor(S/6) up to 6): 86,781 instances, 0 errors. (H) pure-Python bigint check on 40 large tuples (e.g. [2]*18, [11]*10, [101], [100,100], [50]*4, random k=9..16): 2,206 instances, 0 mismatches. In every threshold+12 test the non-unimodal count equals tuples*12 exactly, confirming the threshold is sharp in both directions.",
+    "new_instances_ok": true,
+    "verdict": "PASS",
+    "reasons": "Independent implementation of P's coefficients and weak unimodality (from the problem statement only) reproduces the claimed numbers exactly: 772,140 instances in the stated range, 0 errors against the formula b <= 1 + sum floor(a_i/3) + 2*floor(S/6). Roughly 13.5 million additional instances outside the claimed range (larger k up to 40, larger a_i up to 101, many a_i = 2 mod 3 so that floor(S/6) reaches 6, random mixes) all agree with the claim with 0 mismatches, and the sharpness of the threshold (iff) is confirmed in each test. The checker itself was validated against an exact-arithmetic Python implementation and against the literal unimodality definition. No mismatch of any kind was found."
+   }
+  },
+  {
+   "id": "N_exact",
+   "kind": "A",
+   "v": {
+    "reproduced": true,
+    "own_numbers": "Interpretation (not stated in the text, inferred from structure and from the identity E_u = d_{D+1-r-u}, which makes the stated criterion exactly the unimodality test for this polynomial): P(q) = prod_i [a_i]_q * [b]_{q^r}; instances = multisets {a_1<=...<=a_k}, k=1..8, a_i in 1..12 (125,969 multisets) x b=1..60 x r=2..6 = 37,790,700, matching the claimed count exactly. Independent C implementation (/tmp/claude-0/qu/review/r1/N_exact-A/check.c): brute-force ground truth = direct coefficients of P and a direct nondecreasing-then-nonincreasing test; predictors (A) literal criterion E_u >= d_{K-u} over all K/2 < u <= D+1-r, (B) same with negative u restricted to u >= -r, (C) Theorem A' form (N),(Q),(P) with Q from long division by [r]_q and c = max{c: tau_c>0}; tau computed as class sums of p(q)(1-q) mod q^r-1. Results per r (7,558,140 instances each): r=2 unimodal 7,432,502; r=3 6,940,199; r=4 6,311,441; r=5 5,247,895; r=6 5,166,592; 'r divides some a_i' cases were all unimodal; mismatches A=B=C=0 on all 37,790,700 instances. Independent cross-checks of the C code: sympy-based Python reimplementation (pycheck.py, 600 random small cases, also asserting the class-sum tau from prod [a_i mod r]_q equals the roots-of-unity tau formula) and a pure-integer convolution check sampled from the claimed range (pycheck2.py, 3000 cases, 897 non-unimodal): 0 disagreements with the C truth and 0 predictor errors.",
+    "new_instances_tested": "Six out-of-range batches, all with brute-force ground truth, total ~54.5M new instances: (1) exhaustive r=7..12, k<=4, a_i<=15, b<=40: 930,000 instances (267,206 unimodal); (2) exhaustive r=2..6, k=9,10, a_i<=8, b<=30: 4,633,200 (3,769,816 unimodal); (3) exhaustive r=2..9, k<=3, a_i<=40, b<=80: 7,897,600 (4,302,633 unimodal); (4) random 300,000 (a,r,b) draws with k=9..12, a_i<=30, r=2..12, b<=120, evaluating all b'<=b: 18,143,019 instances (14,988,396 unimodal); (5) random 300,000 draws with k<=8, a_i<=60, r=2..20, b<=150: 22,652,700 instances (10,621,238 unimodal); (6) exhaustive r=13..16, k<=3, a_i<=20, b<=40: 283,200 (48,198 unimodal). Mismatches for predictors A, B and C: 0 in every batch; every 'r divides some a_i' instance was unimodal.",
+    "new_instances_ok": true,
+    "verdict": "PASS",
+    "reasons": "The claimed '0 errors on 37,790,700 instances' reproduces exactly from an independent implementation written solely from the text description (instance count matches, 0 mismatches for the main criterion in both the full-u-range and the u>=-r restricted form, and for the Theorem A' form). The C code was validated against two independent Python implementations (sympy and pure-integer convolution) including both tau formulas. ~54.5M additional out-of-range instances (r up to 20, k up to 12, a_i up to 60, b up to 150) showed no mismatch against brute-force unimodality. Caveat: the description never names P explicitly; the only consistent reading is P = prod[a_i]_q * [b]_{q^r}, for which the stated criterion is an exact (provable) reformulation via E_u = d_{D+1-r-u}, so the '0 errors' result is expected and the nontrivial content lies in the Theorem A' form and the u>=-r reduction, both of which also held with 0 errors."
+   }
+  },
+  {
+   "id": "N_exact",
+   "kind": "B",
+   "v": {
+    "reproduced": true,
+    "own_numbers": "Exhaustive run over r=2..6, k<=8, multisets a_i in 1..12, b in 1..60: instances=37,790,700 (=125,969 multisets x 5 x 60), unimodal=31,098,629, non-unimodal=6,692,071, claim_true=31,098,629, mismatches=0 (3m25s, C program check.c). Independent sympy implementation (xcheck.py) of both ground truth and claim on 400 random cases agreed with the C program case-by-case (0 disagreements, 0 truth-vs-claim mismatches). Hand checks: ([3]_q)^4 [2]_{q^4} unimodal (truth=claim=1, the paper's counterexample to Conj 5.4's inequality); [2]_q[2]_{q^3}, [3]_q[3]_{q^2}, [2]_{q^2} non-unimodal (truth=claim=0).",
+    "new_instances_tested": "(1) Exhaustive r=7..10, k<=4, a_i<=15, b<=40: 620,000 instances, 189,906 unimodal, 0 mismatches. (2) Exhaustive r=2,3, k<=4, a_i<=25, b<=80: 3,800,000 instances, 3,277,483 unimodal, 0 mismatches. (3) Random r=2..12, k<=10, a_i<=20, b<=100 (20,000 random (a,r) sets x 100 b values): 2,000,000 instances, 1,088,285 unimodal, 0 mismatches. (4) 100 random sympy-checked cases with r up to 10, a_i up to 20: 0 mismatches.",
+    "new_instances_ok": true,
+    "verdict": "PASS",
+    "reasons": "The claimed criterion, implemented from its mathematical statement (d_u = coefficients of p(q)(1-q)/(1-q^r), tau r-periodic residue sums of p(q)(1-q), E_u = d_u - tau_u, K = D+1-r(b+1), u ranging over floor(K/2)+1..D+1-r, d_v=0 for v<0), matches the independently computed ground truth on all 37,790,700 claimed instances and on 6.42 million additional out-of-range instances (r up to 12, k up to 10, a_i up to 25, b up to 100), with zero mismatches; two independent implementations (C and sympy) agree. Caveat for the orchestrator: the criterion is correct but is a disguised form of the direct test. Anti-palindromy of p(q)(1-q) gives E_u = d_{D+1-r-u} (verified numerically on all 44M instances, identity_fail=0), so 'E_u >= d_{K-u}' is exactly 'c_v - c_{v-1} = d_v - d_{v-rb} >= 0 for 0<=v<(N+1)/2', i.e. first-half monotonicity of the symmetric coefficient sequence. The 'r | some a_i' disjunct is redundant (cond_true == unimodal count in every run). So Theorem A is a true iff-statement but not a closed-form parameter characterization in the spirit of the paper's floor-sum condition. Files: /tmp/claude-0/qu/review/r1/N_exact-B/check.c, xcheck.py, full_run.log, new_r7to10.log, new_bigA.log, new_random.log."
+   }
+  },
+  {
+   "id": "N_nonmono",
+   "kind": "A",
+   "v": {
+    "reproduced": true,
+    "own_numbers": "P := [a_1]_q...[a_k]_q [b]_{q^r} (Conjecture 5.4 of arXiv:2605.12822, read from the paper text only to learn the definition). Own C enumeration (/tmp/claude-0/qu/review/r1/N_nonmono-A/nonmono.c) over multisets a (sorted, a_i in 1..12, 1<=k<=8), r=2..6, b=1..60: 125969 multisets x 5 r = 629845 tuples; exactly 133 have a non-initial-segment set of unimodal b -- matches the claimed count. All 133 occur at r=6 (k=7: 48, k=8: 85; 48 of the k=8 ones are k=7 tuples with a trivial factor [1]_q prepended; no k<=6 cases). Example rows: r=6 a=(2,3,3,4,4,4,5) unimodal_b={1,3}; r=6 a=(9,9,9,9,10,10,10,10) unimodal_b={1..9,11}; r=6 a=(2,3,3,4,4,4,11) unimodal_b={1,2,4}. The pattern is always {1..B-1} u {B+1}. Note the count depends on allowing a_i=1: with a_i in 2..12 the count is 85. Independent pure-Python ground truth (check.py, naive polynomial multiplication, full coefficient scan) re-verified all 133 listed unimodal-b sets exactly (0 mismatches), plus 4900 random/biased in-box tuples agree on monotone/non-monotone status (0 mismatches). Sanity: Python reproduces Prop 5.3 (k=1 criterion) with 0 mismatches over a<=20,b<=24,r<=6, confirms ([3]_q)^4[2]_{q^4} unimodal, and finds 0 violations of Conj 5.4 sufficiency on k<=4,a_i<=8,b<=12. Extending b to 90 for r=6 gives the identical 133 tuples.",
+    "new_instances_tested": "(1) r=7,8 with k<=8, a_i<=12, b<=60: 251938 tuples, 972 non-initial-segment (r=7: 553, r=8: 419); 150 random listed tuples re-verified in Python (0 mismatches), 600 random tuples checked for status agreement (0 mismatches). (2) k=9,10 with a_i<=12, r=2..6, b<=60: 2603380 tuples, 1803 non-initial-segment (r=5: 690, r=6: 1113 -- note non-monotone behaviour first appears at r=5 once k>=9); 120 random listed tuples re-verified in Python, 150 biased random k=9/10 tuples checked (2 non-mono found, 0 mismatches). (3) a_i<=15 with k<=6, r=2..6, b<=60: 271315 tuples, 0 non-initial-segment, consistent with none at k<=6 in the box. (4) b up to 90 for r=6 in-box: same 133 tuples.",
+    "new_instances_ok": true,
+    "verdict": "PASS",
+    "reasons": "Independent reimplementation (C enumeration with incremental b-update, plus a separate naive Python checker) reproduces the claimed count 133 exactly under the natural reading (a as a multiset with a_i in 1..12, k<=8, r=2..6, b=1..60, P = prod [a_i]_q [b]_{q^r}). The two implementations agree on every tested tuple in-box and out-of-box (r=7,8; k=9,10; a_i<=15; b<=90), and the Python checker also reproduces the paper's Prop 5.3 and the stated [3]^4[2]_{q^4} example. Caveat: the 133 figure requires counting tuples containing a_i=1 (trivial factors); excluding them gives 85. Only the count could be checked since the 'example values above' were not provided to me, but all per-tuple unimodal sets were verified by two independent methods."
+   }
+  },
+  {
+   "id": "N_nonmono",
+   "kind": "B",
+   "v": {
+    "reproduced": true,
+    "own_numbers": "Example r=6, a=(2,3,3,4,4,4,5): b=1 unimodal (symmetric, peak 822); b=2 NOT unimodal (coefficients ...947,946,947...); b=3 unimodal (peak 972); b=4 NOT unimodal (...954,948,954...); b=5,6 also not; unimodal b-set for b<=200 is exactly {1,3}. Full box r=2..6, k<=8, a_i in 1..12, b<=60 (629,845 pairs (r,a) enumerated as multisets): exactly 133 pairs have a non-initial-segment unimodal b-set, all with r=6: 48 with k=7 and 85 with k=8; zero for r=2,3,4,5. (If a_i=1 were excluded the count would be 85 = 48 + 37, so the claimed 133 corresponds to the problem's a_i>=1.) All 133 b-sets re-derived with an independent numpy implementation with 0 mismatches; 300 random unlisted multisets (r=2..6) all gave initial-segment b-sets. Shapes of the 133 b-sets: {1..n, n+2} for n=1..9 (e.g. 29 cases of {1,2,3,4,5,7}, 3 cases of {1,3}).",
+    "new_instances_tested": "(1) r=7, k<=8, a_i<=12, b<=60: 553 non-initial-segment multisets (k=6:22, k=7:129, k=8:402), all 553 b-sets independently re-derived by numpy with 0 mismatches, plus 100 random unlisted r=7 multisets all initial segments. (2) r=8 and r=9, k<=8, a_i<=12, b<=60: 825 non-initial-segment multisets, including an r=9, k=5 case a=(6,6,6,7,7) with b-set {1,3} (numpy-confirmed; b=2 coefficients ...1160,1161,1160,1161,1160...). (3) r=6, k<=9, a_i in 2..12, b<=60: 304 (k=7:48, k=8:37, k=9:219), consistent with the in-box sub-counts. (4) r=6, k<=8, a_i<=14, b<=80: 193 (k=7:72, k=8:121), a superset of the 133. (5) The claimed example checked for b up to 200: b-set still {1,3}.",
+    "new_instances_ok": true,
+    "verdict": "PASS",
+    "reasons": "Implemented the coefficients of P(q)=prod[a_i]_q*[b]_{q^r} and weak unimodality from scratch three ways (sympy, C, numpy). The specific non-monotonicity example reproduces exactly (unimodal for b=1,3; not for b=2,4). The box count reproduces exactly: 133 multisets with non-initial-segment unimodal b-set, all r=6 with k in {7,8} (48 and 85), none for r<=5, with the natural reading a_i in 1..12. All 133 cases independently confirmed by a second implementation. Out-of-range tests (r=7,8,9; k=9; a_i<=14; b<=80; b<=200 for the example) produced no contradictions and behave as expected (phenomenon becomes more common for larger r and k, and appears at smaller k for larger r). No mismatch found anywhere."
+   }
+  },
+  {
+   "id": "N_collision",
+   "kind": "A",
+   "v": {
+    "reproduced": false,
+    "own_numbers": "Own implementation (/tmp/claude-0/qu/review/r1/N_collision-A/collide.py, numpy integer convolution for P=[a1]_q...[ak]_q[b]_{q^r}, unimodality = no positive first difference after the first negative one; sanity-checked: Prop 5.3 iff for k=1 reproduced for r<=7, a,b<30; Conj 5.4 iff for k<=3 or r<=3 gives 0 mismatches for a,b<=12; ([3]_q)^4[2]_{q^4} = [1,4,10,16,20,20,20,20,20,16,10,4,1] unimodal as the paper states). Key = (r,k,b, sorted(a_i mod r), F=sum floor(a_i/r), D=sum(a_i-1)); note D is redundant (D = rF + sum(res) - k). Paper's verification range r=2..6, k=1..5, a_i,b<=15: 1,162,725 instances, 129,945 keys, 0 inconsistent keys (claimed: 43). Alternative key variants in that range (drop F, drop D, residue set instead of multiset, min residue only, nonzero residues only): all 0 inconsistent; only keys dropping b or the residues entirely give collisions (4007 / 7612 / 3588 / 246), none equal 43.",
+    "new_instances_tested": "Out-of-range scans (excluding trivially unimodal cases with r|a_i or b=1 where noted): r=2..6,k<=5,a,b<=20 (5,312,900 inst., 250,360 keys); r=2..8,k<=5,a,b<=15 (1,627,815 inst.); r=2..6,k<=6,a,b<=12 (1,113,780); r=4..6,k=4,5,a<=25,b<=10 (4,176,900); r=4 k=4,5 a<=40 b<=12 (3,510,936); r=5 k=4,5 a<=40 b<=12 (4,722,872); r=6 and r=7 k=4,5 a<=30 b<=12 (1.5M and 1.8M); r=9 k=4,5 a<=30 b<=10 (1,775,844); r=4 k=6 a<=20 b<=10 (348,840); r=5 k=6,7 a<=14 b<=10 (397,800); r=3 k=4..6 a<=25 b<=12 (1,097,877). Total > 27M instances; in every scan the number of keys containing both unimodal and non-unimodal instances was 0.",
+    "new_instances_ok": false,
+    "verdict": "REJECT",
+    "reasons": "The central claimed number (43 inconsistent keys) does not reproduce: with the described key, every instance range tested, including the paper's own verification range (k<=5, r<=6, max(a_i,b)<=15) and many larger ranges in k, a_i, b and r, yields exactly 0 keys that mix unimodal and non-unimodal instances. In other words, empirically (r,k,b, residues mod r, F) determines unimodality, the opposite of what the claimed collision count asserts. No variant of the key I could think of produces 43 either. The 'coefficients as stated' could not be checked because no concrete coefficients were supplied in the task text; the only coefficient data available (paper's ([3]_q)^4[2]_{q^4}) does reproduce. Since the headline number is not reproducible and my own ground-truth routine passes all independent checks against the paper (Prop 5.3, Conj 5.4 in its proven/iff regime), the claim is rejected."
+   }
+  },
+  {
+   "id": "N_collision",
+   "kind": "B",
+   "v": {
+    "reproduced": true,
+    "own_numbers": "Independent implementation (numpy convolution of [a_i]_q factors and [b]_{q^r}, weak unimodality = no ascent after first descent). r=6,b=4: a=(2,3,4,4,4,4,4,8): unimodal=True, coefficients c_15..c_21 = 7938,8108,8157,8157,8164,8192,8219, degree 43, D=sum(a_i-1)=25, residues mod 6 = {2,2,3,4,4,4,4,4}, F=sum floor(a_i/6)=1 (also =#{a_i>=6}=1). a'=(2,2,3,4,4,4,4,10): unimodal=False, c'_17=5086 > c'_18=5085 < c'_19=5092 exactly as claimed; degree 43, D=25, same residues, F=1, k=8. Aggregate key (r,b,k,residue multiset,F,D) inconsistency count: the claim does not specify the box, so I searched natural boxes. Box a_i in [1,12], k<=8, r in 2..6, b in 1..10 gives exactly 43 inconsistent keys, all r=6, 31 with k=8 and 12 with k=7 (per b: b=1:0, b=2:0, b=3:3, b=4..8: 7 each, b=9: 5, b=10: 0; r=2..5 give 0). Same count for all 4 key variants tried (with/without F, with/without D, F=sum floor vs count>=r). The same count 43 also holds for amax 11..14 (max a_i actually used among inconsistent keys is 11). The claimed pair appears as the b=4,k=8 key (6,4,8,(2,2,3,4,4,4,4,4),1,25) together with (2,2,4,4,4,4,4,9) (non-unimodal).",
+    "new_instances_tested": "Outside the claimed range: (1) r=7,8 with a_i<=12, k<=8, b 2..8: 374 inconsistent aggregate keys (so the 'all r=6' statement is a property of the r<=6 box, consistent with the claim's box, and the key is not a unimodality invariant in general); (2) r=2..5, a_i<=12, k<=8, b 1..10: 0 inconsistent keys; (3) b=1 for all r<=6: 0 (product of [a_i]_q is always unimodal); (4) larger boxes a_i<=16 (b<=8: 38 keys with F=sum floor; 91 with F=count>=r) and a_i<=18 (b<=5: 17 / 27), k<=9 with a<=12,b<=4: 26 keys; (5) excluding a_i=1 (a_i>=2 only) gives far fewer keys (2 for a<=10,b<=4; no k=7 keys), showing the claimed k=7 keys arise from a_i=1 trivial factors. All results are consistent with the claim; no mismatch found.",
+    "new_instances_ok": true,
+    "verdict": "PASS",
+    "reasons": "All stated numbers reproduce exactly from an independent implementation: a=(2,3,4,4,4,4,4,8) is weakly unimodal at r=6,b=4; a'=(2,2,3,4,4,4,4,10) is not, with c'_17=5086, c'_18=5085, c'_19=5092; both have k=8, residue multiset {2,2,3,4,4,4,4,4}, F=1, D=25. The claim's 'box' is unspecified, but a natural box (a_i in 1..12, k<=8, r<=6, b<=9 or 10) yields exactly 43 inconsistent aggregate keys, all with r=6 and k in {7,8}, matching the claim; the count is robust to amax in 11..14 and to the exact key variant. Additional tests (r=7,8; r<=5; b=1; larger boxes) show no contradiction. Caveat: the 43 figure depends on the box, which I inferred rather than was given."
+   }
+  },
+  {
+   "id": "N_suff",
+   "kind": "A",
+   "v": {
+    "reproduced": true,
+    "own_numbers": "Own C implementation (/tmp/claude-0/qu/review/r1/N_suff-A/suff.c): enumerating multisets a (k=1..8, 1<=a_i<=12), r=2..6, b=1..min(60, 1+sum floor(a_i/r)) gives exactly 7,761,685 instances (629,845 (r,a) tuples; 125,969 multisets x 5 r values) and 0 non-unimodal P. Independent sympy ground truth (ref.py) agrees: known example r=6,b=4,a=(2,2,3,4,4,4,4,10) gives c17,c18,c19 = 5086,5085,5092 (non-unimodal); 300 random sufficiency-region instances (r<=9,k<=10,a_i<=20) all unimodal; C checker vs sympy on 250 random instances with b up to F+4 (49 non-unimodal): 0 mismatches. The test discriminates: at b=2+F with no a_i divisible by r, 55 of 56 box-like random instances are non-unimodal.",
+    "new_instances_tested": "Exhaustive out-of-box runs (b uncapped, up to 1+sum floor(a_i/r)): r=7..12,k<=6,a_i<=14: 759,690 instances; r=2..6,k<=12,a_i<=8: 7,012,325; r=2..6,k<=4,a_i<=30: 3,947,939; r=2..4,k<=16,a_i<=5: 657,948; r=7..20,k<=4,a_i<=25: 1,150,996; r=2..6,k<=5,a_i<=20: 3,668,495; r=13..30,k<=3,a_i<=40: 598,671; r=2..3,k<=20,a_i<=4: 276,274; r=2..3,k<=6,a_i<=36 (b up to 109): 464,748,282. Plus 809 random big-integer instances (Python, r<=40, k<=30, a_i<=100, b in {1+F, F, random<=1+F}). Total ~483 million new instances; all unimodal.",
+    "new_instances_ok": true,
+    "verdict": "PASS",
+    "reasons": "The problem definition (P = prod [a_i]_q * [b]_{q^r}, box r=2..6, k<=8, a_i<=12, multisets) was taken from the review args file; the instance count 7,761,685 is reproduced exactly from my own enumeration, and 0 non-unimodal instances found, matching the claim. My C unimodality checker was validated against an independent sympy computation including non-unimodal cases. All new instances outside the box (larger k up to 20 exhaustive / 30 random, larger a_i up to 40 exhaustive / 100 random, r up to 30 exhaustive / 40 random, b up to 109 and beyond the 60 cap) are unimodal, so the sufficiency statement shows no mismatch anywhere tested. Code in /tmp/claude-0/qu/review/r1/N_suff-A/ (suff.c, single.c, ref.py, cross.py, bigrand.py)."
+   }
+  },
+  {
+   "id": "N_suff",
+   "kind": "B",
+   "v": {
+    "reproduced": true,
+    "own_numbers": "Box r=2..6, k<=8, multisets a_i in 1..12, b=1..min(60, 1+sum floor(a_i/r)): total instances = 7,761,685 (matches claim exactly; computed two independent ways: pure-Python count and C enumerator), non-unimodal = 0 (matches claim). Ground truth = exact 64-bit integer coefficients of prod [a_i]_q * [b]_{q^r} and a weak-unimodality scan, implemented in C from the problem statement; cross-validated on 66 instances against sympy and a naive pure-Python convolution with 0 mismatches, including known non-unimodal cases ([3][3][4]_{q^2}, [7][6]_{q^9}, etc.) and the paper's non-necessity example [3]^4[2]_{q^4} (unimodal). Sensitivity check: all 32,720 k<=3 instances with b in bound+1..bound+5 and no r|a_i are flagged non-unimodal, so the checker is not vacuously passing.",
+    "new_instances_tested": "Out-of-box sufficiency tests (b <= 1+sum floor(a_i/r), no cap on b): (1) r=7..10, a<=12, k<=8: 1,899,236 instances; (2) a<=20, k<=5, r=2..6 (b up to 1+5*10=51 for r=2 beyond via a>12): 3,668,495; (3) k=9..10, a<=12, r=2..6: 41,234,180; (4) k=6..7, a<=14, r=2..3: 4,189,956; (5) a<=30, k<=3, r=2..12: 507,221; (6) a<=15, k<=6, r=2..6: 3,262,618; (7) 1,154 random instances with k=9..12, a_i<=25, r=2..12, b at/near the bound. Result: 0 non-unimodal in all ~54.8M new instances. Side observation (outside the claim): the \"also necessary when r<=3\" clause of Conj 5.4 fails at r=3,k=6, e.g. [2]^6[2]_{q^3} has coefficients 1,6,15,21,21,21,21,15,6,1 (unimodal, sympy-confirmed) though b=2 > bound=1; 168 such cases for r=3, k<=6, a<=12, b<=bound+3.",
+    "new_instances_ok": true,
+    "verdict": "PASS",
+    "reasons": "Conjecture 5.4 statement confirmed from the arXiv source (sufficiency: r|a_i for some i, or b <= 1+sum floor(a_i/r)). My independent implementation of the ground truth (exact integer coefficients + weak unimodality) reproduces both claimed numbers exactly: 7,761,685 instances (multiset convention, a_i>=1) and 0 non-unimodal. The checker was validated against sympy and a second pure-Python method with zero mismatches and demonstrably detects non-unimodal polynomials. New instances well outside the box (larger r up to 12, a_i up to 30, k up to 12, b uncapped) also show 0 non-unimodal, consistent with the sufficiency direction of the conjecture. No mismatch found. Work files: /tmp/claude-0/qu/review/r1/N_suff-B/{count_box.py,check.c,check2.c,check_one.c,crosscheck.py,src/main.tex}."
+   }
+  },
+  {
+   "id": "N_smalldelta",
+   "kind": "A",
+   "v": {
+    "reproduced": true,
+    "own_numbers": "Interpretation reconstructed from text: sequence = coefficients of F_b(x) = prod_i (1-x^{a_i})/(1-x) * (1-x^{rb})/(1-x^r); Gamma_t = residue-class-t coefficient sum of prod_i [a_i]_x mod r. Ground truth = direct unimodality test of the coefficient vector. Boxes in plausible claimed range: k<=3,a<=12,r<=12,b<=20 (multisets): 62,540 in-domain, 0 errors; k<=4,a<=12,r<=12,b<=20: 201,180, 0 errors; k<=4,a<=15,r<=15,b<=30: 764,010, 0 errors; k<=3,a<=20,r<=20,b<=30: 561,570, 0 errors; k<=5,a<=10,r<=10,b<=20: 247,380, 0 errors; ordered tuples k<=3,a<=12,r<=12,b<=20: 248,720, 0 errors; k<=4,a<=10,r<=10,b<=20: 954,320, 0 errors; k<=4,a<=12,r<=12,b<=30: 3,477,480, 0 errors. Total ~6.5M in-domain instances, 0 mismatches in either direction (b<=B* unimodal; b>B* not unimodal; r|a_i always unimodal). Could not recover the exact box giving 1,325,760 (=2^6*3*5*1381, a filtered count; a search over natural boxes found no match), but every box tried reproduces '0 errors'. mu ranged 0..11 and B* 1..21 in-range, so nontrivial cases were covered.",
+    "new_instances_tested": "Out-of-range: k=6 (a<=8, r<=10, b<=25): 120,425 in-domain, 0 errors; k=7 (a<=6, r<=12, b<=25): 34,875, 0 errors; k<=2 with a<=40, r<=30, b<=45: 1,068,795, 0 errors; k<=3 with a in [1,25], r<=25, b<=40: 1,959,800, 0 errors; k=1 with a<=120, r<=60, b<=70: 491,470, 0 errors; random sampling (400 seeds x 60 draws) k in 1..8, a_i up to 150, r up to 50, all b from 1 to B*+2r+10 (div case b up to 80), coefficient vectors up to length 6119: 668,495 in-domain, 0 errors. Total ~4.3M new in-domain instances, all consistent with the prediction in both directions.",
+    "new_instances_ok": true,
+    "verdict": "PASS",
+    "reasons": "Under the only natural reading of the description (F_b = prod [a_i]_x * [b]_{x^r}, Gamma_t = residue-class sums), the stated formula B* = 1 + floor((D+1-2mu)/r) with mu = least t such that Gamma_t >= ... >= Gamma_{r-1}, together with 'r | a_i => always unimodal', predicts unimodality exactly on >10 million in-domain instances (in-range boxes and far out-of-range: larger k up to 8, a_i up to 150, r up to 60, b well beyond B*), with zero mismatches in either direction. The claimed '0 errors' is reproduced on every box tested, although the specific box yielding exactly 1,325,760 in-domain instances could not be identified (that count is a filtered count, not a product of ranges). The r|a_i branch is also provably unimodal (product of symmetric unimodal polynomials). Caveat: the description does not spell out the object, so the verification rests on my reconstruction, which is strongly corroborated by all stated structural facts matching."
+   }
+  },
+  {
+   "id": "N_smalldelta",
+   "kind": "B",
+   "v": null
+  },
+  {
+   "id": "N_closed_small",
+   "kind": "A",
+   "v": null
+  },
+  {
+   "id": "N_closed_small",
+   "kind": "B",
+   "v": null
+  }
+ ],
+ "passed": [
+  "N_r3",
+  "N_exact",
+  "N_nonmono",
+  "N_suff"
+ ]
+}

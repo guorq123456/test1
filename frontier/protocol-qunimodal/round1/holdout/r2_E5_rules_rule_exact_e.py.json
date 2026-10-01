@@ -1,0 +1,1 @@
+{"tuples": 2000, "inst": 37766, "tuples_err": 0, "per_stratum": {"r23_huge": {"inst": 4389}, "r456_huge": {"inst": 6328}, "bigprime_r": {"inst": 4350}, "r_2p": {"inst": 3502}, "pm1": {"inst": 4039}, "half": {"inst": 4064}, "equal_huge": {"inst": 4494}, "two_huge": {"inst": 4437}, "onebig": {"inst": 2163}}, "first": []}
