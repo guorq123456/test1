@@ -1,0 +1,6 @@
+L=892371480 residues=285120
+squares=751443 fallbacks=0 X=100000000000000 candidates=31950819349 exceptions(>529)=0
+
+real	4m12.437s
+user	10m9.830s
+sys	0m0.525s

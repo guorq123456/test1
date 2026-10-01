@@ -1,0 +1,8 @@
+f(m)^2>m at m=3 f=2
+f(m)^2>m at m=7 f=3
+f(m)^2>m at m=23 f=5
+IMAX=10000000000 nterms=13132 maxval=141413 bigsq=3
+
+real	2m39.414s
+user	6m40.470s
+sys	0m1.297s

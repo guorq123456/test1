@@ -1,0 +1,69 @@
+k=1: Thm1 A(N)=B(N+1) for N<=402: True;  V(N)=A(N): True;  Thm2 C(N)=D(N+1) for 1<=N<=402: True
+k=2: Thm1 A(N)=B(N+1) for N<=402: True;  V(N)=A(N): True;  Thm2 C(N)=D(N+1) for 1<=N<=402: True
+A200880: 210 b-file terms, mismatches 0 []
+A202882: 210 b-file terms, mismatches 0 []
+A200865: 210 b-file terms, mismatches 0 []
+A217450: 210 b-file terms, mismatches 0 []
+k=3: Thm1 A(N)=B(N+1) for N<=402: True;  V(N)=A(N): True;  Thm2 C(N)=D(N+1) for 1<=N<=402: True
+A200881: 210 b-file terms, mismatches 0 []
+A203094: 210 b-file terms, mismatches 0 []
+A200866: 210 b-file terms, mismatches 0 []
+A218051: 210 b-file terms, mismatches 0 []
+k=4: Thm1 A(N)=B(N+1) for N<=402: True;  V(N)=A(N): True;  Thm2 C(N)=D(N+1) for 1<=N<=402: True
+A200882: 210 b-file terms, mismatches 0 []
+A203184: 210 b-file terms, mismatches 0 []
+A200867: 210 b-file terms, mismatches 0 []
+k=5: Thm1 A(N)=B(N+1) for N<=402: True;  V(N)=A(N): True;  Thm2 C(N)=D(N+1) for 1<=N<=402: True
+A200883: 210 b-file terms, mismatches 0 []
+A203050: 210 b-file terms, mismatches 0 []
+A200868: 210 b-file terms, mismatches 0 []
+k=6: Thm1 A(N)=B(N+1) for N<=402: True;  V(N)=A(N): True;  Thm2 C(N)=D(N+1) for 1<=N<=402: True
+A200884: 210 b-file terms, mismatches 0 []
+A203059: 210 b-file terms, mismatches 0 []
+A200869: 210 b-file terms, mismatches 0 []
+k=7: Thm1 A(N)=B(N+1) for N<=402: True;  V(N)=A(N): True;  Thm2 C(N)=D(N+1) for 1<=N<=402: True
+A200885: 210 b-file terms, mismatches 0 []
+A202909: 210 b-file terms, mismatches 0 []
+A200870: 210 b-file terms, mismatches 0 []
+k=8: Thm1 (N<=80) True  Thm2 (N<=80) True
+k=9: Thm1 (N<=80) True  Thm2 (N<=80) True
+k=10: Thm1 (N<=80) True  Thm2 (N<=80) True
+k=11: Thm1 (N<=80) True  Thm2 (N<=80) True
+k=12: Thm1 (N<=80) True  Thm2 (N<=80) True
+k=13: Thm1 (N<=80) True  Thm2 (N<=80) True
+k=14: Thm1 (N<=80) True  Thm2 (N<=80) True
+k=15: Thm1 (N<=80) True  Thm2 (N<=80) True
+k=16: Thm1 (N<=80) True  Thm2 (N<=80) True
+k=17: Thm1 (N<=80) True  Thm2 (N<=80) True
+k=18: Thm1 (N<=80) True  Thm2 (N<=80) True
+k=19: Thm1 (N<=80) True  Thm2 (N<=80) True
+k=20: Thm1 (N<=80) True  Thm2 (N<=80) True
+A200886 (whole table): 9999 b-file terms, mismatches 0 []
+A200886 whole b-file range: T(n,k) = B(n+3,k) (n X 1 0..k nonzero family): True
+A200871 (whole table): 9999 b-file terms, mismatches 0 []
+A200871 b-file range with k<=30 (3783 entries): T(n,k) = D(n+3,k): True
+A200887: 210 b-file terms, mismatches 0 []
+A200872: 210 b-file terms, mismatches 0 []
+  row identity A200887(n) = #(length 5 words over 0..n, nonzero <= some neighbour), n<=210: True
+  row identity A200872(n) = #(clipped 3-min images of length 5 over 0..n), n<=40: True
+A200888: 210 b-file terms, mismatches 0 []
+A200873: 210 b-file terms, mismatches 0 []
+  row identity A200888(n) = #(length 6 words over 0..n, nonzero <= some neighbour), n<=210: True
+  row identity A200873(n) = #(clipped 3-min images of length 6 over 0..n), n<=40: True
+A200889: 210 b-file terms, mismatches 0 []
+A200874: 210 b-file terms, mismatches 0 []
+  row identity A200889(n) = #(length 7 words over 0..n, nonzero <= some neighbour), n<=210: True
+  row identity A200874(n) = #(clipped 3-min images of length 7 over 0..n), n<=40: True
+A200890: 210 b-file terms, mismatches 0 []
+A200875: 210 b-file terms, mismatches 0 []
+  row identity A200890(n) = #(length 8 words over 0..n, nonzero <= some neighbour), n<=210: True
+  row identity A200875(n) = #(clipped 3-min images of length 8 over 0..n), n<=40: True
+A200891: 210 b-file terms, mismatches 0 []
+A200876: 210 b-file terms, mismatches 0 []
+  row identity A200891(n) = #(length 9 words over 0..n, nonzero <= some neighbour), n<=210: True
+  row identity A200876(n) = #(clipped 3-min images of length 9 over 0..n), n<=40: True
+A200892: 210 b-file terms, mismatches 0 []
+A200877: 210 b-file terms, mismatches 0 []
+  row identity A200892(n) = #(length 10 words over 0..n, nonzero <= some neighbour), n<=210: True
+  row identity A200877(n) = #(clipped 3-min images of length 10 over 0..n), n<=40: True
+TOTAL comparisons 53322 failures 0

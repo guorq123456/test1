@@ -1,0 +1,104 @@
+PROVED A200880: recurrence {1: 3, 2: -3, 3: 4, 4: -1, 5: 1} for all n>5 (checked n<=400; Cayley-Hamilton needs n<=11)
+PROVED A200880: g.f. x*(22 - 15*x + 34*x^2 - 6*x^3 + 9*x^4) / (1 - 3*x + 3*x^2 - 4*x^3 + x^4 - x^5)
+PROVED A200881: recurrence {1: 4, 2: -6, 3: 10, 4: -5, 5: 6, 6: -1, 7: 1} for all n>7 (checked n<=400; Cayley-Hamilton needs n<=15)
+PROVED A200881: g.f. x*(50 - 56*x + 146*x^2 - 56*x^3 + 93*x^4 - 12*x^5 + 16*x^6) / (1 - 4*x + 6*x^2 - 10*x^3 + 5*x^4 - 6*x^5 + x^6 - x^7)
+PROVED A200882: recurrence {1: 5, 2: -10, 3: 20, 4: -15, 5: 21, 6: -7, 7: 8, 8: -1, 9: 1} for all n>9 (checked n<=400; Cayley-Hamilton needs n<=19)
+PROVED A200882: g.f. x*(95 - 150*x + 446*x^2 - 270*x^3 + 498*x^4 - 135*x^5 + 196*x^6 - 20*x^7 + 25*x^8) / (1 - 5*x + 10*x^2 - 20*x^3 + 15*x^4 - 21*x^5 + 7*x^6 - 8*x^7 + x^8 - x^9)
+PROVED A200883: recurrence {1: 6, 2: -15, 3: 35, 4: -35, 5: 56, 6: -28, 7: 36, 8: -9, 9: 10, 10: -1, 11: 1} for all n>11 (checked n<=400; Cayley-Hamilton needs n<=23)
+PROVED A200883: g.f. x*(161 - 330*x + 1106*x^2 - 924*x^3 + 1884*x^4 - 792*x^5 + 1252*x^6 - 264*x^7 + 355*x^8 - 30*x^9 + 36*x^10) / (1 - 6*x + 15*x^2 - 35*x^3 + 35*x^4 - 56*x^5 + 28*x^6 - 36*x^7 + 9*x^8 - 10*x^9 + x^10 - x^11)
+PROVED A200884: recurrence {1: 7, 2: -21, 3: 56, 4: -70, 5: 126, 6: -84, 7: 120, 8: -45, 9: 55, 10: -11, 11: 12, 12: -1, 13: 1} for all n>13 (checked n<=400; Cayley-Hamilton needs n<=27)
+PROVED A200884: g.f. x*(252 - 637*x + 2380*x^2 - 2548*x^3 + 5706*x^4 - 3276*x^5 + 5620*x^6 - 1820*x^7 + 2630*x^8 - 455*x^9 + 582*x^10 - 42*x^11 + 49*x^12) / (1 - 7*x + 21*x^2 - 56*x^3 + 70*x^4 - 126*x^5 + 84*x^6 - 120*x^7 + 45*x^8 - 55*x^9 + 11*x^10 - 12*x^11 + x^12 - x^13)
+PROVED A200885: recurrence {1: 8, 2: -28, 3: 84, 4: -126, 5: 252, 6: -210, 7: 330, 8: -165, 9: 220, 10: -66, 11: 78, 12: -13, 13: 14, 14: -1, 15: 1} for all n>15 (checked n<=400; Cayley-Hamilton needs n<=31)
+PROVED A200885: g.f. x*(372 - 1120*x + 4620*x^2 - 6048*x^3 + 14778*x^4 - 10800*x^5 + 20020*x^6 - 8800*x^7 + 13630*x^8 - 3600*x^9 + 4902*x^10 - 720*x^11 + 889*x^12 - 56*x^13 + 64*x^14) / (1 - 8*x + 28*x^2 - 84*x^3 + 126*x^4 - 252*x^5 + 210*x^6 - 330*x^7 + 165*x^8 - 220*x^9 + 66*x^10 - 78*x^11 + 13*x^12 - 14*x^13 + x^14 - x^15)
+PROVED A202882: recurrence {1: 3, 2: -3, 3: 4, 4: -1, 5: 1} for all n>5 (checked n<=400; Cayley-Hamilton needs n<=11)
+PROVED A202882: g.f. -x*(1+3*x^2+x^4)/(-1+3*x-3*x^2+4*x^3-x^4+x^5)
+PROVED A203094: recurrence {1: 4, 2: -6, 3: 10, 4: -5, 5: 6, 6: -1, 7: 1} for all n>7 (checked n<=400; Cayley-Hamilton needs n<=15)
+PROVED A203094: g.f. -x*(1+6*x^2+5*x^4+x^6) / (-1+4*x-6*x^2+10*x^3-5*x^4+6*x^5-x^6+x^7)
+PROVED A203184: recurrence {1: 5, 2: -10, 3: 20, 4: -15, 5: 21, 6: -7, 7: 8, 8: -1, 9: 1} for all n>9 (checked n<=400; Cayley-Hamilton needs n<=19)
+PROVED A203184: g.f. -x*(1+x^2)*(x^6+6*x^4+9*x^2+1) / ( -1+5*x-10*x^2+20*x^3-15*x^4+21*x^5-7*x^6+8*x^7-x^8+x^9 )
+PROVED A203050: recurrence {1: 6, 2: -15, 3: 35, 4: -35, 5: 56, 6: -28, 7: 36, 8: -9, 9: 10, 10: -1, 11: 1} for all n>11 (checked n<=400; Cayley-Hamilton needs n<=23)
+PROVED A203059: recurrence {1: 7, 2: -21, 3: 56, 4: -70, 5: 126, 6: -84, 7: 120, 8: -45, 9: 55, 10: -11, 11: 12, 12: -1, 13: 1} for all n>13 (checked n<=400; Cayley-Hamilton needs n<=27)
+PROVED A202909: recurrence {1: 8, 2: -28, 3: 84, 4: -126, 5: 252, 6: -210, 7: 330, 8: -165, 9: 220, 10: -66, 11: 78, 12: -13, 13: 14, 14: -1, 15: 1} for all n>15 (checked n<=400; Cayley-Hamilton needs n<=31)
+PROVED A200865: recurrence {1: 2, 4: 1} for all n>4 (checked n<=400; Cayley-Hamilton needs n<=13)
+PROVED A200865: g.f. x*(17 + 3*x + 3*x^2 + 9*x^3) / (1 - 2*x - x^4)
+PROVED A200866: recurrence {1: 2, 2: 1, 4: 2, 5: 1} for all n>5 (checked n<=400; Cayley-Hamilton needs n<=17)
+PROVED A200866: g.f. 2*x*(18 + 11*x + 6*x^2 + 18*x^3 + 8*x^4) / (1 - 2*x - x^2 - 2*x^4 - x^5)
+PROVED A200867: recurrence {1: 3, 2: -1, 3: 1, 4: 4, 6: 1, 7: 1} for all n>7 (checked n<=400; Cayley-Hamilton needs n<=22)
+PROVED A200867: g.f. x*(65 + 47*x^2 + 102*x^3 + 10*x^4 + 30*x^5 + 25*x^6) / (1 - 3*x + x^2 - x^3 - 4*x^4 - x^6 - x^7)
+PROVED A200868: recurrence {1: 3, 3: 1, 4: 7, 5: 3, 6: 2, 7: 3, 8: 1} for all n>8 (checked n<=400; Cayley-Hamilton needs n<=26)
+PROVED A200868: g.f. 2*x*(53 + 19*x + 50*x^2 + 138*x^3 + 67*x^4 + 48*x^5 + 57*x^6 + 18*x^7) / (1 - 3*x - x^3 - 7*x^4 - 3*x^5 - 2*x^6 - 3*x^7 - x^8)
+PROVED A200869: recurrence {1: 4, 2: -3, 3: 4, 4: 9, 6: 7, 7: 6, 8: 1, 9: 2, 10: 1} for all n>10 (checked n<=400; Cayley-Hamilton needs n<=31)
+PROVED A200869: g.f. x*(161 - 49*x + 266*x^2 + 462*x^3 + 93*x^4 + 389*x^5 + 310*x^6 + 70*x^7 + 105*x^8 + 49*x^9) / (1 - 4*x + 3*x^2 - 4*x^3 - 9*x^4 - 7*x^6 - 6*x^7 - x^8 - 2*x^9 - x^10)
+PROVED A200870: recurrence {1: 4, 2: -2, 3: 4, 4: 15, 5: 6, 6: 12, 7: 16, 8: 7, 9: 5, 10: 4, 11: 1} for all n>11 (checked n<=400; Cayley-Hamilton needs n<=35)
+PROVED A200870: g.f. 2*x*(116 + 2*x + 220*x^2 + 526*x^3 + 292*x^4 + 473*x^5 + 552*x^6 + 257*x^7 + 180*x^8 + 132*x^9 + 32*x^10) / (1 - 4*x + 2*x^2 - 4*x^3 - 15*x^4 - 6*x^5 - 12*x^6 - 16*x^7 - 7*x^8 - 5*x^9 - 4*x^10 - x^11)
+PROVED A217450: recurrence {1: 2, 4: 1} for all n>4 (checked n<=400; Cayley-Hamilton needs n<=16)
+PROVED A217450: g.f. x*(3 - 3*x + 3*x^2 - x^3) / (1 - 2*x - x^4)
+PROVED A218051: recurrence {1: 2, 2: 1, 4: 2, 5: 1} for all n>5 (checked n<=400; Cayley-Hamilton needs n<=25)
+PROVED A218051: g.f. 2*x*(2 - 2*x + 2*x^2 - x^4) / (1 - 2*x - x^2 - 2*x^4 - x^5)
+PROVED A200886 column k=1: recurrence {1: 2, 2: -1, 3: 1} (checked n<=400; needs n<=7)
+PROVED A200886 column k=2: recurrence {1: 3, 2: -3, 3: 4, 4: -1, 5: 1} (checked n<=400; needs n<=11)
+PROVED A200886 column k=3: recurrence {1: 4, 2: -6, 3: 10, 4: -5, 5: 6, 6: -1, 7: 1} (checked n<=400; needs n<=15)
+PROVED A200886 column k=4: recurrence {1: 5, 2: -10, 3: 20, 4: -15, 5: 21, 6: -7, 7: 8, 8: -1, 9: 1} (checked n<=400; needs n<=19)
+PROVED A200886 column k=5: recurrence {1: 6, 2: -15, 3: 35, 4: -35, 5: 56, 6: -28, 7: 36, 8: -9, 9: 10, 10: -1, 11: 1} (checked n<=400; needs n<=23)
+PROVED A200886 column k=6: recurrence {1: 7, 2: -21, 3: 56, 4: -70, 5: 126, 6: -84, 7: 120, 8: -45, 9: 55, 10: -11, 11: 12, 12: -1, 13: 1} (checked n<=400; needs n<=27)
+PROVED A200886 column k=7: recurrence {1: 8, 2: -28, 3: 84, 4: -126, 5: 252, 6: -210, 7: 330, 8: -165, 9: 220, 10: -66, 11: 78, 12: -13, 13: 14, 14: -1, 15: 1} (checked n<=400; needs n<=31)
+PROVED A200886 row n=1: a(k) = (2/3)*k^3 + (5/2)*k^2 + (17/6)*k + 1  (polynomial of degree <= 3; checked k=0..8)
+PROVED A200886 row n=2: a(k) = (1/3)*k^4 + (7/3)*k^3 + (14/3)*k^2 + (11/3)*k + 1  (polynomial of degree <= 4; checked k=0..9)
+PROVED A200886 row n=3: a(k) = (2/15)*k^5 + (11/6)*k^4 + (35/6)*k^3 + (23/3)*k^2 + (68/15)*k + 1  (polynomial of degree <= 5; checked k=0..10)
+PROVED A200886 row n=4: a(k) = (2/45)*k^6 + (19/15)*k^5 + (217/36)*k^4 + (71/6)*k^3 + (2057/180)*k^2 + (27/5)*k + 1  (polynomial of degree <= 6; checked k=0..11)
+PROVED A200886 row n=5: a(k) = (4/315)*k^7 + (7/9)*k^6 + (241/45)*k^5 + (1067/72)*k^4 + (3757/180)*k^3 + (1145/72)*k^2 + (2629/420)*k + 1  (polynomial of degree <= 7; checked k=0..12)
+PROVED A200886 row n=6: a(k) = (1/315)*k^8 + (134/315)*k^7 + (21/5)*k^6 + (571/36)*k^5 + (1841/60)*k^4 + (6047/180)*k^3 + (26603/1260)*k^2 + (299/42)*k + 1  (polynomial of degree <= 8; checked k=0..13)
+PROVED A200886 row n=7: a(k) = (2/2835)*k^9 + (131/630)*k^8 + (2803/945)*k^7 + (1349/90)*k^6 + (41449/1080)*k^5 + (20423/360)*k^4 + (1149293/22680)*k^3 + (22741/840)*k^2 + (2011/252)*k + 1  (polynomial of degree <= 9; checked k=0..14)
+PROVED A200871 column k=1: recurrence {1: 1, 2: 1} (checked n<=400; needs n<=8)
+PROVED A200871 column k=2: recurrence {1: 2, 4: 1} (checked n<=400; needs n<=13)
+PROVED A200871 column k=3: recurrence {1: 2, 2: 1, 4: 2, 5: 1} (checked n<=400; needs n<=17)
+PROVED A200871 column k=4: recurrence {1: 3, 2: -1, 3: 1, 4: 4, 6: 1, 7: 1} (checked n<=400; needs n<=22)
+PROVED A200871 column k=5: recurrence {1: 3, 3: 1, 4: 7, 5: 3, 6: 2, 7: 3, 8: 1} (checked n<=400; needs n<=26)
+PROVED A200871 column k=6: recurrence {1: 4, 2: -3, 3: 4, 4: 9, 6: 7, 7: 6, 8: 1, 9: 2, 10: 1} (checked n<=400; needs n<=31)
+PROVED A200871 column k=7: recurrence {1: 4, 2: -2, 3: 4, 4: 15, 5: 6, 6: 12, 7: 16, 8: 7, 9: 5, 10: 4, 11: 1} (checked n<=400; needs n<=35)
+PROVED A200871 row n=1: a(k) = (1/3)*k^3 + 2*k^2 + (8/3)*k + 1  (polynomial of degree <= 3; checked k=0..8)
+PROVED A200871 row n=2: a(k) = (1/12)*k^4 + (3/2)*k^3 + (47/12)*k^2 + (7/2)*k + 1  (polynomial of degree <= 4; checked k=0..9)
+PROVED A200871 row n=3: a(k) = (1/60)*k^5 + (3/4)*k^4 + (15/4)*k^3 + (25/4)*k^2 + (127/30)*k + 1  (polynomial of degree <= 5; checked k=0..10)
+PROVED A200871 row n=4: a(k) = (1/360)*k^6 + (7/24)*k^5 + (197/72)*k^4 + (185/24)*k^3 + (1667/180)*k^2 + 5*k + 1  (polynomial of degree <= 6; checked k=0..11)
+PROVED A200871 row n=5: a(k) = (1/2520)*k^7 + (17/180)*k^6 + (281/180)*k^5 + (64/9)*k^4 + (4927/360)*k^3 + (2303/180)*k^2 + (604/105)*k + 1  (polynomial of degree <= 7; checked k=0..12)
+PROVED A200871 row n=6: a(k) = (1/20160)*k^8 + (19/720)*k^7 + (211/288)*k^6 + (1889/360)*k^5 + (44167/2880)*k^4 + (15991/720)*k^3 + (5689/336)*k^2 + (391/60)*k + 1  (polynomial of degree <= 8; checked k=0..13)
+PROVED A200871 row n=7: a(k) = (1/181440)*k^9 + (131/20160)*k^8 + (8893/30240)*k^7 + (4621/1440)*k^6 + (118933/8640)*k^5 + (83957/2880)*k^4 + (763489/22680)*k^3 + (36343/1680)*k^2 + (9169/1260)*k + 1  (polynomial of degree <= 9; checked k=0..14)
+PROVED A200887: a(n) = (1/3)*n^4 + (7/3)*n^3 + (14/3)*n^2 + (11/3)*n + 1  (degree <= 4, checked n=0..9)
+PROVED A200887: g.f. x*(12 - 9*x + 9*x^2 - 5*x^3 + x^4) / (1 - x)^5
+PROVED A200887: a(n) = (1+n)^2 * (3+5*n+n^2) / 3  (degree <= 4, checked n=0..9)
+PROVED A200887: recurrence {1: 5, 2: -10, 3: 10, 4: -5, 5: 1}
+PROVED A200888: a(n) = (2/15)*n^5 + (11/6)*n^4 + (35/6)*n^3 + (23/3)*n^2 + (68/15)*n + 1  (degree <= 5, checked n=0..10)
+PROVED A200888: g.f. x*(21 - 5*x + 11*x^2 - 16*x^3 + 6*x^4 - x^5) / (1 - x)^6
+PROVED A200888: recurrence {1: 6, 2: -15, 3: 20, 4: -15, 5: 6, 6: -1}
+PROVED A200889: a(n) = (2/45)*n^6 + (19/15)*n^5 + (217/36)*n^4 + (71/6)*n^3 + (2057/180)*n^2 + (27/5)*n + 1  (degree <= 6, checked n=0..11)
+PROVED A200889: g.f. x*(37 + 33*x + x^2 - 54*x^3 + 21*x^4 - 7*x^5 + x^6) / (1 - x)^7
+PROVED A200889: recurrence {1: 7, 2: -21, 3: 35, 4: -35, 5: 21, 6: -7, 7: 1}
+PROVED A200890: a(n) = (4/315)*n^7 + (7/9)*n^6 + (241/45)*n^5 + (1067/72)*n^4 + (3757/180)*n^3 + (1145/72)*n^2 + (2629/420)*n + 1  (degree <= 7, checked n=0..12)
+PROVED A200890: g.f. x*(65 + 184*x + 11*x^2 - 224*x^3 + 48*x^4 - 27*x^5 + 8*x^6 - x^7) / (1 - x)^8
+PROVED A200890: recurrence {1: 8, 2: -28, 3: 56, 4: -70, 5: 56, 6: -28, 7: 8, 8: -1}
+PROVED A200891: a(n) = (1/315)*n^8 + (134/315)*n^7 + (21/5)*n^6 + (571/36)*n^5 + (1841/60)*n^4 + (6047/180)*n^3 + (26603/1260)*n^2 + (299/42)*n + 1  (degree <= 8, checked n=0..13)
+PROVED A200891: g.f. x*(114 + 665*x + 357*x^2 - 953*x^3 - 37*x^4 - 47*x^5 + 37*x^6 - 9*x^7 + x^8) / (1 - x)^9
+PROVED A200891: recurrence {1: 9, 2: -36, 3: 84, 4: -126, 5: 126, 6: -84, 7: 36, 8: -9, 9: 1}
+PROVED A200892: a(n) = (2/2835)*n^9 + (131/630)*n^8 + (2803/945)*n^7 + (1349/90)*n^6 + (41449/1080)*n^5 + (20423/360)*n^4 + (1149293/22680)*n^3 + (22741/840)*n^2 + (2011/252)*n + 1  (degree <= 9, checked n=0..14)
+PROVED A200892: g.f. x*(200 + 2059*x + 2760*x^2 - 3509*x^3 - 1714*x^4 + 288*x^5 + 208*x^6 - 45*x^7 + 10*x^8 - x^9) / (1 - x)^10
+PROVED A200892: recurrence {1: 10, 2: -45, 3: 120, 4: -210, 5: 252, 6: -210, 7: 120, 8: -45, 9: 10, 10: -1}
+PROVED A200872: a(n) = (1/12)*n^4 + (3/2)*n^3 + (47/12)*n^2 + (7/2)*n + 1  (degree <= 4, checked n=0..9)
+PROVED A200872: g.f. x*(10 - 13*x + 9*x^2 - 5*x^3 + x^4) / (1 - x)^5
+PROVED A200872: recurrence {1: 5, 2: -10, 3: 10, 4: -5, 5: 1}
+PROVED A200873: a(n) = (1/60)*n^5 + (3/4)*n^4 + (15/4)*n^3 + (25/4)*n^2 + (127/30)*n + 1  (degree <= 5, checked n=0..10)
+PROVED A200873: g.f. x*(16 - 19*x + 14*x^2 - 14*x^3 + 6*x^4 - x^5) / (1 - x)^6
+PROVED A200873: recurrence {1: 6, 2: -15, 3: 20, 4: -15, 5: 6, 6: -1}
+PROVED A200874: a(n) = (1/360)*n^6 + (7/24)*n^5 + (197/72)*n^4 + (185/24)*n^3 + (1667/180)*n^2 + 5*n + 1  (degree <= 6, checked n=0..11)
+PROVED A200874: g.f. x*(26 - 19*x + 7*x^2 - 28*x^3 + 22*x^4 - 7*x^5 + x^6) / (1 - x)^7
+PROVED A200874: recurrence {1: 7, 2: -21, 3: 35, 4: -35, 5: 21, 6: -7, 7: 1}
+PROVED A200875: a(n) = (1/2520)*n^7 + (17/180)*n^6 + (281/180)*n^5 + (64/9)*n^4 + (4927/360)*n^3 + (2303/180)*n^2 + (604/105)*n + 1  (degree <= 7, checked n=0..12)
+PROVED A200875: g.f. x*(42 + 7*x - 40*x^2 - 55*x^3 + 70*x^4 - 29*x^5 + 8*x^6 - x^7) / (1 - x)^8
+PROVED A200875: recurrence {1: 8, 2: -28, 3: 56, 4: -70, 5: 56, 6: -28, 7: 8, 8: -1}
+PROVED A200876: a(n) = (1/20160)*n^8 + (19/720)*n^7 + (211/288)*n^6 + (1889/360)*n^5 + (44167/2880)*n^4 + (15991/720)*n^3 + (5689/336)*n^2 + (391/60)*n + 1  (degree <= 8, checked n=0..13)
+PROVED A200876: g.f. x*(68 + 111*x - 177*x^2 - 167*x^3 + 237*x^4 - 97*x^5 + 35*x^6 - 9*x^7 + x^8) / (1 - x)^9
+PROVED A200876: recurrence {1: 9, 2: -36, 3: 84, 4: -126, 5: 126, 6: -84, 7: 36, 8: -9, 9: 1}
+PROVED A200877: a(n) = (1/181440)*n^9 + (131/20160)*n^8 + (8893/30240)*n^7 + (4621/1440)*n^6 + (118933/8640)*n^5 + (83957/2880)*n^4 + (763489/22680)*n^3 + (36343/1680)*n^2 + (9169/1260)*n + 1  (degree <= 9, checked n=0..14)
+PROVED A200877: g.f. x*(110 + 423*x - 422*x^2 - 766*x^3 + 848*x^4 - 246*x^5 + 90*x^6 - 44*x^7 + 10*x^8 - x^9) / (1 - x)^10
+PROVED A200877: recurrence {1: 10, 2: -45, 3: 120, 4: -210, 5: 252, 6: -210, 7: 120, 8: -45, 9: 10, 10: -1}
+
+formulas proved: 102  failed: 0

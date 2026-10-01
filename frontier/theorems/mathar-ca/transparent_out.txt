@@ -1,0 +1,45 @@
+A282297 transparent sim matches b-file for n<=40: True
+A279721 transparent sim matches b-file for n<=40: True
+A282295 transparent sim (left readout) matches b-file for n<=40: True
+A279720 transparent sim (left readout) matches b-file for n<=40: True
+0 bg 0 0 x-axis equal cells differing: 0
+1 bg 1 1 x-axis DIFFER cells differing: 1
+2 bg 0 0 x-axis equal cells differing: 0
+3 bg 1 1 x-axis equal cells differing: 0
+4 bg 0 0 x-axis equal cells differing: 0
+5 bg 1 1 x-axis equal cells differing: 0
+6 bg 0 0 x-axis equal cells differing: 0
+7 bg 1 1 x-axis equal cells differing: 0
+8 bg 0 0 x-axis equal cells differing: 0
+9 bg 1 1 x-axis equal cells differing: 0
+10 bg 0 0 x-axis equal cells differing: 0
+11 bg 1 1 x-axis equal cells differing: 0
+12 bg 0 0 x-axis equal cells differing: 0
+13 bg 1 1 x-axis equal cells differing: 0
+14 bg 0 0 x-axis equal cells differing: 0
+15 bg 1 1 x-axis equal cells differing: 0
+16 bg 0 0 x-axis equal cells differing: 0
+17 bg 1 1 x-axis equal cells differing: 4
+18 bg 0 0 x-axis equal cells differing: 0
+19 bg 1 1 x-axis equal cells differing: 0
+20 bg 0 0 x-axis equal cells differing: 0
+21 bg 1 1 x-axis equal cells differing: 12
+22 bg 0 0 x-axis equal cells differing: 8
+23 bg 1 1 x-axis equal cells differing: 0
+24 bg 0 0 x-axis equal cells differing: 16
+25 bg 1 1 x-axis equal cells differing: 28
+26 bg 0 0 x-axis DIFFER cells differing: 60
+27 bg 1 1 x-axis DIFFER cells differing: 132
+28 bg 0 0 x-axis DIFFER cells differing: 140
+29 bg 1 1 x-axis DIFFER cells differing: 100
+30 bg 0 0 x-axis DIFFER cells differing: 217
+31 bg 1 1 x-axis DIFFER cells differing: 165
+32 bg 0 0 x-axis DIFFER cells differing: 185
+33 bg 1 1 x-axis DIFFER cells differing: 253
+34 bg 0 0 x-axis DIFFER cells differing: 293
+35 bg 1 1 x-axis DIFFER cells differing: 368
+36 bg 0 0 x-axis DIFFER cells differing: 413
+37 bg 1 1 x-axis DIFFER cells differing: 357
+38 bg 0 0 x-axis DIFFER cells differing: 465
+39 bg 1 1 x-axis DIFFER cells differing: 485
+40 bg 0 0 x-axis DIFFER cells differing: 461

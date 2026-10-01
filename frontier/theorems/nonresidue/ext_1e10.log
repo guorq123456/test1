@@ -1,0 +1,8 @@
+f(m)^2 > m : m=3 f=2
+f(m)^2 > m : m=7 f=3
+f(m)^2 > m : m=23 f=5
+X=10000000000: m with f(m)^2>m: 3 ; distinct values: 9592 ; max value 99991 ; largest value 99991 ; all first occurrences as predicted: YES
+
+real	3m13.186s
+user	3m11.737s
+sys	0m0.191s
