@@ -1,0 +1,541 @@
+{
+ "search_log": [
+  {
+   "query": "id_list=2605.12822 (metadata) + arxiv.org/abs/2605.12822 submission history",
+   "source": "arXiv API + arXiv abs page",
+   "result": "找到",
+   "note": "Connelly-Ito-Martinez-Shevchenko-Yang, 'Unimodality of q-Fibonomial coefficients for small cases', v1 12 May 2026 only (no later version). PDF and TeX source (e-print) downloaded to /tmp/claude-0/qu/lit/paper.txt and /tmp/claude-0/qu/lit/src/main.tex."
+  },
+  {
+   "query": "abs:unimodal AND abs:\"q-analog\" AND abs:product",
+   "source": "arXiv API",
+   "result": "找到",
+   "note": "1 hit: 2605.12822 (the source paper) only."
+  },
+  {
+   "query": "all:\"q-Fibonomial\"",
+   "source": "arXiv API",
+   "result": "找到",
+   "note": "2605.12822; 2305.01838 (Nived J M, q-Fibonacci interpretations) - the latter has no dilated-factor unimodality."
+  },
+  {
+   "query": "all:Fibonomial (sorted by date, arXiv web search after API returned 503)",
+   "source": "arXiv web search",
+   "result": "未找到",
+   "note": "35 results; only 2605.12822 and 2605.14342 (Fibonomial determinants) are from 2026; no arXiv paper addressing Conjecture 5.4 found."
+  },
+  {
+   "query": "abs:unimodality AND abs:\"Gaussian polynomials\" AND abs:product",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "3 hits (Dhand 1303.2536, Dabkowski-Przytycki 1711.05328, Kirillov 1505.01542); none treats a factor [b]_{q^r} with r>=2."
+  },
+  {
+   "query": "abs:unimodality AND abs:\"Gaussian polynomial\"",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "9 hits (Pawar, Krattenthaler-Kronholm-Marsh, Dhand, Dousse-Kim, Ji, Zanello, ...); none on products with a dilated q-integer."
+  },
+  {
+   "query": "abs:\"unimodality\" AND abs:\"q-integers\"",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "1 hit (Kafidov 2607.20595, Hessenberg graphs), irrelevant."
+  },
+  {
+   "query": "abs:\"product of q-integers\" / abs:\"products of q-integers\"",
+   "source": "arXiv API",
+   "result": "找到",
+   "note": "2603.22226 (Gatzweiler-Levican-Santibanez-Yoshida, CGF coefficient positivity; pdftotext grep finds no 'unimodal'); 2206.15029 (Adeyemo-Szendroi). Positivity, not unimodality."
+  },
+  {
+   "query": "abs:\"symmetric unimodal\" AND abs:\"q-analog\"",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "0 hits."
+  },
+  {
+   "query": "abs:unimodal AND abs:\"q-binomial\" AND abs:\"q^2\"",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "0 hits."
+  },
+  {
+   "query": "unimodality product of q-integers [a]_q [b]_{q^2} characterization \"if and only if\" unimodal",
+   "source": "WebSearch",
+   "result": "找到",
+   "note": "Only the source paper (arXiv 2605.12822, pdf and html) gives such a characterization; other hits (Zanello PAMS 2015, Pak-Panova, rooted-tree q-polynomials 1601.03465, q-Kaplansky) concern undilated products."
+  },
+  {
+   "query": "unimodal polynomial product (1-q^a)/(1-q) (1-q^{rb})/(1-q^r) coefficients unimodal condition",
+   "source": "WebSearch",
+   "result": "找到",
+   "note": "2605.12822 and Mao-Shi-Zhu 2609.23779 (Almkvist conjecture). Search-engine summary misstated Conj 5.4; I used only the primary texts."
+  },
+  {
+   "query": "\"unimodal\" polynomial \"[a]_q[b]_{q^r}\" OR \"(1-q^{rb})/(1-q^r)\" unimodality product q-integer dilated",
+   "source": "WebSearch",
+   "result": "找到",
+   "note": "2605.12822 again; pith.science review page for 2605.12822 (fetched: no discussion of Conj 5.4); 1711.11252 (perturbed KOH recurrences), 2306.04438 (k-regular distinct partitions): different families."
+  },
+  {
+   "query": "abs:unimodal AND abs:\"product of chains\"",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "2 hits (Dhand 1402.1199; Bolognini-Sentinelli 2501.03037): ordinary rank only, no chain with rank step r."
+  },
+  {
+   "query": "abs:\"rank-unimodal\" AND abs:chains",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "6 hits (Young lattice SCDs, Morier-Genoud-Ovsienko rank-unimodality, ...); none with a weighted/strided chain."
+  },
+  {
+   "query": "abs:\"rank generating function\" AND abs:\"product of chains\" AND abs:unimodal; abs:Sperner AND abs:weighted AND abs:\"product of chains\"",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "0 hits each."
+  },
+  {
+   "query": "rank unimodal weighted product of chains rank function weights not all equal Sperner",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Hits: product partial orders with Sperner property, de Bruijn-type SCD results, Engel's weighted posets (element weights, not rank steps). Nothing on a chain whose rank increments are r."
+  },
+  {
+   "query": "Sperner theory weighted poset rank function weighted product of chains unimodal Engel normalized matching",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Weighted posets in Engel's sense weight elements multiplicatively; not the strided-rank setting."
+  },
+  {
+   "query": "abs:unimodal AND abs:convolution AND abs:\"discrete uniform\"",
+   "source": "arXiv API",
+   "result": "找到",
+   "note": "Belbachir 0708.2341: unimodality of ordinary multinomials = convolution POWERS of one discrete uniform; no dilated summand."
+  },
+  {
+   "query": "abs:unimodality AND abs:\"sum of independent\" AND abs:uniform; abs:\"uniform random variables\" AND abs:unimodal AND abs:sum",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "0 hits each."
+  },
+  {
+   "query": "abs:\"strongly unimodal\" AND abs:discrete",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "0 hits."
+  },
+  {
+   "query": "abs:\"discrete unimodality\"",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "6 hits, all statistics/ML usage, irrelevant."
+  },
+  {
+   "query": "abs:unimodal AND abs:convolution AND abs:lattice AND abs:distribution AND abs:span; abs:convolution AND abs:unimodal AND abs:\"arithmetic progression\"",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "0 hits each."
+  },
+  {
+   "query": "unimodality of the distribution of a sum of independent discrete uniform random variables arithmetic progression lattice span",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Generic pages and Belbachir 0708.2341 only."
+  },
+  {
+   "query": "site:math.stackexchange.com convolution discrete uniform distribution arithmetic progression unimodal sum of uniform random variables different step",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "No math.SE hit; arXiv 0706.0843, 0708.2341 (powers of uniform) only."
+  },
+  {
+   "query": "distribution of sum of dice with faces multiples of r unimodal / relabeled dice",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Sicherman dice and generic dice-sum pages only."
+  },
+  {
+   "query": "\"strongly unimodal\" Keilson Gerber 1971 \"Some results for discrete unimodality\" log-concave lattice distribution theorem",
+   "source": "WebSearch + arXiv 1404.5886 (Saumard-Wellner review, opened)",
+   "result": "找到",
+   "note": "Keilson-Gerber discrete strong-unimodality theorem as stated in Saumard-Wellner Thm 4.1 and following paragraph (opened PDF). JASA original not opened (JSTOR)."
+  },
+  {
+   "query": "Odlyzko Richmond \"On the unimodality of high convolutions of discrete distributions\" Annals of Probability 1985",
+   "source": "WebSearch + WebFetch of Project Euclid abstract page",
+   "result": "找到",
+   "note": "Abstract obtained via fetch of projecteuclid.org page (curl blocked by Incapsula); full text not opened."
+  },
+  {
+   "query": "\"Unimodality of Probability Measures\" Bertin Cuculescu Theodorescu discrete unimodality convolution lattice distributions",
+   "source": "WebSearch",
+   "result": "找到",
+   "note": "Book (1997) with chapters 'Discrete unimodality' and 'Strong unimodality' located; chapters not opened (Springer paywall); no statement used."
+  },
+  {
+   "query": "abs:unimodal AND abs:\"moving average\"; abs:\"moving average\" AND abs:\"unimodal\" AND abs:\"impulse response\"",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "1 irrelevant hit (solar-flare avalanche models); 0 for the second."
+  },
+  {
+   "query": "cascaded moving average filters impulse response unimodal dilated box filter comb filter convolution unimodality",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "CIC/boxcar filter tutorials (wirelesspi, dsprelated, signalsmith); impulse responses discussed but no unimodality criterion for a strided box."
+  },
+  {
+   "query": "upsampled moving average filter H(z^L) cascaded with moving average impulse response ripple periodic constant condition length multiple of L",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "IFIR/CIC material and patents only; no stated criterion."
+  },
+  {
+   "query": "dilated convolution gridding artifact effective receptive field stacked dilated and standard convolution condition kernel size covers dilation hybrid dilated convolution",
+   "source": "WebSearch + arXiv 1808.08931 (opened)",
+   "result": "找到",
+   "note": "Deep-learning 'gridding artifacts' of dilated convolutions and smoothing/degridding (Wang-Ji 1808.08931, HDC). Heuristic analog only; no unimodality theorem."
+  },
+  {
+   "query": "abs:\"box spline\" AND abs:discrete AND abs:unimodal; \"discrete box spline\" univariate unimodal",
+   "source": "arXiv API + WebSearch",
+   "result": "未找到",
+   "note": "0 arXiv hits; web hits are Ehrhart box polynomials and spline regression, unrelated."
+  },
+  {
+   "query": "abs:unimodal AND abs:\"cyclotomic\" AND abs:product AND abs:coefficients",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "0 hits."
+  },
+  {
+   "query": "\"products of cyclotomic polynomials\" unimodal coefficients OR unimodality cyclotomic product nonnegative coefficients characterization",
+   "source": "WebSearch",
+   "result": "找到",
+   "note": "Billey-Swanson 'Cyclotomic generating functions' (arXiv 2305.07620, EJC v31i4p4; opened) and Zongmin Liu, Zenodo 22388982 'Unimodality of products of binary cyclotomic factors' (opened)."
+  },
+  {
+   "query": "abs:\"cyclotomic generating function\" AND abs:unimodal",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "0 hits (Billey-Swanson was found via web search instead)."
+  },
+  {
+   "query": "abs:unimodal AND abs:\"internal zeros\"",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "4 hits (Alexander polynomial log-concavity, binary words, ...), none relevant."
+  },
+  {
+   "query": "product of polynomials with internal zeros unimodal \"internal zeros\" product unimodal coefficients sufficient condition gaps",
+   "source": "WebSearch",
+   "result": "找到",
+   "note": "Generic statements of the Ibragimov/Stanley principle (log-concave without internal zeros times unimodal is unimodal); primary statement taken from Stanley 1989 Prop. 3 (opened)."
+  },
+  {
+   "query": "abs:unimodal AND abs:\"products of polynomials\" AND abs:coefficients; abs:unimodal AND abs:\"symmetric polynomials\" AND abs:product AND abs:\"nonnegative coefficients\"; abs:\"palindromic\" AND abs:unimodal AND abs:product AND abs:gap",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "0 hits each."
+  },
+  {
+   "query": "ti:unimodal AND ti:products",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "3 hits (Pak-Panova Kronecker products, Schneider, Borcea-Branden), not about dilated factors."
+  },
+  {
+   "query": "ti:\"palindromic and unimodal coefficients\"",
+   "source": "arXiv API",
+   "result": "找到",
+   "note": "Sun-Wang-Zhang 1601.05629 (opened): palindromic unimodal <=> A-positive; Andrews' product theorem."
+  },
+  {
+   "query": "Stanley 1989 'Log-concave and unimodal sequences in algebra, combinatorics, and geometry' (math.mit.edu/~rstan/pubs/pubfiles/72.pdf)",
+   "source": "author's website (scanned PDF, pages rendered and read as images)",
+   "result": "找到",
+   "note": "Propositions 1, 2, 3 on p. 503-504 read from page images."
+  },
+  {
+   "query": "Andrews 1975 \"A theorem on reciprocal polynomials with applications to permutations and compositions\"",
+   "source": "WebSearch",
+   "result": "找到",
+   "note": "Metadata only (Amer. Math. Monthly 82 (1975) 830-833); original not opened; its content is used only through Sun-Wang-Zhang Cor. 3.5 and Stanley Prop. 1, which were opened."
+  },
+  {
+   "query": "abs:unimodal AND abs:Hilbert AND abs:\"non-standard grading\"",
+   "source": "arXiv API",
+   "result": "找到",
+   "note": "Abdallah-McDaniel 2404.05098 (opened)."
+  },
+  {
+   "query": "abs:Almkvist AND abs:unimodal",
+   "source": "arXiv API",
+   "result": "找到",
+   "note": "2404.05098 (Abdallah-McDaniel) and 2609.23779 (Mao-Shi-Zhu, proof of Almkvist's conjecture), both opened."
+  },
+  {
+   "query": "abs:Lefschetz AND abs:\"non-standard graded\"",
+   "source": "arXiv API",
+   "result": "找到",
+   "note": "Harima-Watanabe math/0702444 (J. Algebra 311 (2007)) opened; 2404.05098."
+  },
+  {
+   "query": "abs:Lefschetz AND abs:\"monomial complete intersection\" AND abs:grading AND abs:weighted; abs:\"weak Lefschetz\" AND abs:\"weighted\"; abs:unimodal AND abs:\"Hilbert series\" AND abs:\"complete intersection\"; abs:unimodal AND abs:\"Hilbert function\" AND abs:\"complete intersection\" AND abs:weighted; abs:\"weighted complete intersection\" AND abs:unimodal",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "0 hits each."
+  },
+  {
+   "query": "abs:\"strong Lefschetz\" AND abs:\"Hilbert function\" AND abs:\"not unimodal\"",
+   "source": "arXiv API",
+   "result": "找到",
+   "note": "McDaniel-Chen-Iarrobino-Macias Marques 1807.05869 (opened): weighted complete intersections whose Hilbert series lie in the family; also 2404.05098, Migliore, McCullough-Seceleanu, Miro-Roig-Perez Diez (not relevant)."
+  },
+  {
+   "query": "abs:\"Jordan type\" AND abs:grading AND abs:unimodal; ti:\"Artinian algebras and Jordan type\"",
+   "source": "arXiv API",
+   "result": "找到",
+   "note": "1807.05869 and Iarrobino-Macias Marques-McDaniel 1802.07383 (opened; Examples 3.13, 3.14, 3.25)."
+  },
+  {
+   "query": "unimodality Hilbert function Artinian monomial complete intersection non-standard grading weighted variables degrees unimodal criterion",
+   "source": "WebSearch",
+   "result": "找到",
+   "note": "Abdallah-McDaniel (arXiv and ALCO version), random monomial algebras 2402.17618, generic WLP material; no criterion for k[x_1..x_k,y]/(x_i^{a_i},y^b) with deg y=r."
+  },
+  {
+   "query": "Hilbert function k[x,y]/(x^a,y^b) deg x = 1 deg y = r unimodal if and only if weighted grading two variables",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Stacks project, cone of Hilbert functions in non-standard grading (1201.1555), lecture notes; no such criterion located."
+  },
+  {
+   "query": "Harima Maeno Morita Numata Wachi Watanabe \"The Lefschetz Properties\" non-standard grading Hilbert function not unimodal example",
+   "source": "WebSearch + arXiv 1806.02767 (opened)",
+   "result": "找到",
+   "note": "Book LNM 2080 not opened; 'Free extensions and Jordan type' 1806.02767 repeats the H=(1,1,2,1,2,1,1) example and cites [HW2, Example 6.3]."
+  },
+  {
+   "query": "abs:\"unimodal\" AND abs:\"restricted partitions\"; abs:unimodality AND abs:partitions AND abs:\"bounded parts\"",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "Bridges-Bringmann, Komatsu et al., Fel; Zanello 1101.1475 (KOH terms). None on partitions with k colours of part 1 and one part r, all multiplicity-bounded."
+  },
+  {
+   "query": "abs:unimodality AND abs:partition AND abs:polynomials; abs:\"unimodality\" AND abs:\"partition polynomials\"",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "32 hits incl. Dong-Ji 2304.01032 (prod (1+q^{3k+1})(1+q^{3k+2})), Stanley-Zanello Ferrers shapes; different families. Dong-Ji 2306.04438 also checked (abstract): different family."
+  },
+  {
+   "query": "number of solutions x_1+...+x_k + r y = n bounded box unimodal sequence lattice points weighted sum box unimodal",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Ehrhart/lattice-point and partitions-in-a-box material; Bryan Ek thesis (1804.05933, opened and grepped): perturbed KOH recurrences, not this family."
+  },
+  {
+   "query": "abs:unimodality AND abs:\"Adams operation\"; Adams operation psi^r sl2 character tensor product positivity virtual representation",
+   "source": "arXiv API + WebSearch",
+   "result": "未找到",
+   "note": "0 arXiv hits; web hits are general Adams-operation papers, nothing on unimodality of chi(V)*psi^r(chi(W)) for SL2."
+  },
+  {
+   "query": "SL(2) Steinberg tensor product character L(a-1+p(b-1)) weight multiplicities unimodal Frobenius twist",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Tilting modules, multiplicity-free tensor products, second cohomology of SL2-modules; nothing on unimodality of [a]_q[b]_{q^p}-type characters."
+  },
+  {
+   "query": "Betti numbers unimodal product quaternionic projective space complex projective space Poincare polynomial",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Hamiltonian circle action unimodality papers and HP^n homology pages; nothing on products CP^{a-1} x HP^{b-1} (the r=2 topological translation)."
+  },
+  {
+   "query": "Almkvist \"Representations of SL(2,C) and unimodal polynomials\" Journal of Algebra 1987",
+   "source": "WebSearch + ScienceDirect (curl, WebFetch) + Crossref + Elsevier API",
+   "result": "找到",
+   "note": "Metadata found (J. Algebra 108 (1987) 283-309, doi 10.1016/0021-8693(87)90103-7). Full text NOT accessible (HTTP 403 / API key required); no statement from it is used. Its content remains unchecked."
+  },
+  {
+   "query": "abs:unimodal AND abs:\"Hilbert series\" AND abs:\"invariant\" AND abs:\"reflection group\"; abs:unimodality AND abs:\"Fibonacci\" AND abs:\"q-analog\"; abs:\"unimodal\" AND abs:\"lattice points\" AND abs:\"box\"",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "0, 0, and 1 irrelevant hit (Nill, Ehrhart h*)."
+  },
+  {
+   "query": "site:mathoverflow.net unimodal product of q-integers different bases q^2 coefficients unimodal",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "No MathOverflow page returned; only arXiv papers already listed."
+  },
+  {
+   "query": "arXiv:2605.12822 citations",
+   "source": "Semantic Scholar API",
+   "result": "未找到",
+   "note": "citationCount 0 (queried 2026-10-01)."
+  },
+  {
+   "query": "search=q-Fibonomial, filter from_publication_date:2026-01-01",
+   "source": "OpenAlex API",
+   "result": "找到",
+   "note": "31 works; citing works of 2605.12822 are Zenodo preprints: Fathi (zenodo 22183086/7, 22177918/9, 22862687/8), Stefan-Donovan (22719862/3, 22720016/7), hainzhao (21826969/70). PDFs of 4 of them downloaded and grepped: none discusses Conjecture 5.4 or products [a_1]..[a_k][b]_{q^r} with general r."
+  },
+  {
+   "query": "unimodality products of q-integers; unimodal convolution discrete uniform distributions; unimodality Hilbert function non-standard grading complete intersection; unimodal product polynomials internal zeros; symmetric unimodal product q-analogs dilation",
+   "source": "OpenAlex API",
+   "result": "未找到",
+   "note": "Only already-known general works (Brenti memoir, O'Hara, Harima-Watanabe 2007, Pak-Panova); nothing new specific to the family."
+  },
+  {
+   "query": "\"Unimodality of q-Fibonomial coefficients for small cases\"",
+   "source": "Google Scholar (curl)",
+   "result": "未找到",
+   "note": "Response returned an unrelated item; no usable citation data."
+  },
+  {
+   "query": "unimodal \"q^2\" product; \"Almkvist\" unimodal; 1,1,2,1,2,1,1; \"partitions into parts 1 and\" bounded unimodal",
+   "source": "OEIS (JSON search)",
+   "result": "未找到",
+   "note": "Hits are generic partition/composition sequences or unrelated (prime signatures); no entry on unimodality of [a]_q[b]_{q^r}-type products."
+  },
+  {
+   "query": "github.com/brendanconnelly/Fibonomial-Conjecture-Tests (code cited in footnote of 2605.12822)",
+   "source": "GitHub (git clone)",
+   "result": "找到",
+   "note": "Contains README.md, fibonomial_test.py, conjecture_test.py; tests only the q-Fibonomial conjecture (m+n<=26 and selected pairs). No script for the Conjecture 5.4 verification (k<=5, r<=6, max<=15) is in the repository."
+  },
+  {
+   "query": "zenodo record 22388982 (Liu, binary cyclotomic factors)",
+   "source": "Zenodo API + PDF",
+   "result": "找到",
+   "note": "Opened; Theorems 1.2, 1.3 and Question 1.5 quoted below. Not peer reviewed."
+  }
+ ],
+ "items": [
+  {
+   "citation": "Connelly, Ito, Martinez, Shevchenko, Yang, 'Unimodality of q-Fibonomial coefficients for small cases', arXiv:2605.12822v1 (2026), Lemma 4.1, Lemma 4.2 and Corollary 4.3",
+   "link": "https://arxiv.org/abs/2605.12822 (TeX: https://arxiv.org/e-print/2605.12822v1, main.tex lines 1039-1106)",
+   "quoted_statement": "Lemma 4.1: \"Let $a\\leq b$ be two positive integers. Then, $$[a]_q[b]_q=\\sum_{k=0}^{a+b-2}c_kq^k, \\text{ where }c_k=\\begin{cases} k+1, & 0\\leq k \\leq a-1, \\\\ a, & a \\leq k \\leq b-1, \\\\ a+b-1-k, & b \\leq k \\leq a+b-2. \\end{cases}$$ In particular, $[a]_q[b]_q$ is symmetric and unimodal.\"  Lemma 4.2: \"Suppose $a, b, r$ are three positive integers such that $r\\,|\\, a$. Then $[a]_q[b]_{q^{r}}$ is symmetric and unimodal.\"  Corollary 4.3: \"Let $a_1,...,a_k,b, r$ be positive integers. Then if $r$ divides $a_i$ for some $1\\leq i \\leq k$, the product $[a_1]_q\\dots[a_k]_q[b]_{q^{r}}$ is symmetric and unimodal.\" Proof of Cor. 4.3: \"By Lemma 4.2, $[a_i]_q[b]_{q^{r}}$ is symmetric and unimodal. As each $[a_j]_q$ is symmetric and unimodal for $1\\leq j \\leq k$, $[a_1]_q\\dots[a_k]_q[b]_{q^{r}}$ is also symmetric and unimodal (see, for example, [Zei89, Observation 2]).\" (TeX macro \\pow is printed as r in the PDF.)",
+   "definitions_check": "[n]_q: paper defines $[n]_q:=1+q+\\dots+q^{n-1}$ - identical. [b]_{q^r}: the substitution q->q^r of the same - identical. Unimodal: paper (intro) 'c_0<=c_1<=...<=c_{M-1}<=c_M>=c_{M+1}>=...>=c_N for some M' - weak unimodality, identical to the problem. Parameters: a_1..a_k, b, r positive integers (r=1 allowed; problem has r>=2, k>=1: problem range contained). Condition: r | a_i for some i - equals the first disjunct of the conjectured sufficient condition. Conclusion: symmetric and unimodal (stronger than needed). Proof dependency: product of symmetric unimodal polynomials with nonnegative coefficients is symmetric unimodal; the cited Zeilberger note was not opened, but the same fact is Stanley 1989 Prop. 1 (opened, item below).",
+   "classification": "文献已有",
+   "differences": "No mismatch for the sub-claim 'r | a_i for some i implies unimodal' (all k>=1, r>=2, b>=1). It covers only the first disjunct of the sufficient condition in Conj. 5.4; it says nothing about the inequality disjunct or about necessity."
+  },
+  {
+   "citation": "Connelly et al., arXiv:2605.12822v1, Proposition 1.3 = Proposition 4.5 (with technical Lemma 4.4)",
+   "link": "https://arxiv.org/abs/2605.12822 (main.tex lines 222-224 and 1159-1162)",
+   "quoted_statement": "\"For any $a, b,c \\in \\mathbb{N}$, $T(q)=[a]_q[b]_q[c]_{q^2}$ is symmetric and unimodal if and only if $2c \\leq a+b$ or $a$ or $b$ is even.\"",
+   "definitions_check": "Same [n]_q and weak unimodality. This is the problem with k=2, r=2, (a_1,a_2,b)=(a,b,c). Conjecture 5.4 condition for k=2, r=2: 2|a_1 or 2|a_2, or b<=1+floor(a_1/2)+floor(a_2/2); when a_1,a_2 are both odd the right side equals (a_1+a_2)/2, so the condition is 2b<=a_1+a_2. Hence the Prop. 4.5 condition coincides exactly with the conjectured condition, and the 'iff' covers both sufficiency and necessity. Parameter domain: a,b,c in N (positive values intended; a value 0 would make T=0, outside the problem anyway).",
+   "classification": "文献已有",
+   "differences": "None for the case k=2, r=2. It does not cover k=2 with r>=3, or k=3 with any r, which Conj. 5.4 also asserts to be iff."
+  },
+  {
+   "citation": "Connelly et al., arXiv:2605.12822v1, Proposition 5.3",
+   "link": "https://arxiv.org/abs/2605.12822 (main.tex lines 1240-1262)",
+   "quoted_statement": "\"Let $a,b,r\\in\\mathbb{Z}_{>0}$. Then $[a]_q[b]_{q^{r}}$ is unimodal if and only if $a \\geq r(b-1)$ or $r \\,|\\, a$.\"",
+   "definitions_check": "Same objects and weak unimodality; this is the problem with k=1. Conj. 5.4 condition for k=1: r|a or b<=1+floor(a/r); since b-1 is an integer, b-1<=floor(a/r) iff r(b-1)<=a. So the condition is exactly that of Prop. 5.3, with both directions proved (the proof shows c_a<c_{a-1} with a<=D/2 when r does not divide a and a<r(b-1)). Domain r>=1 contains the problem's r>=2.",
+   "classification": "文献已有",
+   "differences": "None for k=1 (all r>=2, a>=1, b>=1)."
+  },
+  {
+   "citation": "Connelly et al., arXiv:2605.12822v1, Conjecture 5.4 and the paragraph after it (the source of the problem)",
+   "link": "https://arxiv.org/abs/2605.12822 (main.tex lines 1265-1272)",
+   "quoted_statement": "\"Let $r \\geq2, k \\geq1$ and let $a_1,\\ldots, a_k,b$ be positive integers. Then if $r \\mid a_i$ for any $1 \\leq i \\leq k$ or $b \\leq 1+\\sum_{i=1}^{k}\\left\\lfloor\\frac{a_i}{r}\\right\\rfloor,$ the polynomial $[a_1]_q\\dots[a_k]_q[b]_{q^{r}}$ is unimodal. Moreover, if $k \\leq 3$ or $r \\leq 3$, this condition is also necessary.\" Following text: \"We have computationally verified Conjecture 5.4 for $k \\leq 5, r \\leq 6$ and $\\max\\{a_i,b\\} \\leq 15$. In general, the condition is not necessary: $([3]_q)^4 [2]_{q^4}$ is unimodal despite violating the inequality $b \\leq 1 + \\sum_{i=1}^{k}\\lfloor \\frac{a_i}{r} \\rfloor$.\"",
+   "definitions_check": "Identical to the problem statement given to me. Proven parts inside the same paper: k=1 (Prop. 5.3), (k=2, r=2) (Prop. 4.5), and 'r | a_i implies unimodal' for all k (Cor. 4.3). The quoted example ([3]_q)^4[2]_{q^4} was recomputed by /tmp/claude-0/qu/lit/check_quoted.py: coefficients 1,4,10,16,20,20,20,20,20,16,10,4,1, unimodal (k=4, r=4, so outside the necessity clause).",
+   "classification": "背景",
+   "differences": "This is the open statement itself, not a resolution. Not proved in the paper: sufficiency of the inequality b<=1+sum floor(a_i/r) for k>=2 apart from (k=2,r=2); necessity for k in {2,3} with r>=3 and for r in {2,3} with k>=3. The authors' public repository (github.com/brendanconnelly/Fibonomial-Conjecture-Tests) contains no script for the stated Conj. 5.4 verification, so that computation is not reproducible from the published code."
+  },
+  {
+   "citation": "N. Abdallah, C. McDaniel, 'Lattice Paths, Lefschetz Properties, and Almkvist's Conjecture in Two Variables', arXiv:2404.05098v2 (2024; published in Algebraic Combinatorics), Theorem A and Conjecture 1.1",
+   "link": "https://arxiv.org/abs/2404.05098",
+   "quoted_statement": "Theorem A (pdftotext, math re-typeset): \"The Hilbert function H(m, 2) satisfies the formula H(m,2)_i = floor((i+2)/2) - floor((i+2-m)/2)_* + floor((i+2-2m)/2)_*, where floor(x)_* = max(0, floor(x)). If m = 2m' is even then H(m,2) = (1,1,2,2,...,m'-1,m'-1,m',m',...,m',m',m'-1,m'-1,...,2,2,1,1) [m+2 terms in the middle block], and if m = 2m'-1, then H(m,2) = (1,1,2,2,...,m'-1,m'-1,m',m'-1,...,m'-1,m',m'-1,m'-1,...,2,2,1,1) [m terms]. In particular, H(m, 2) is unimodal if and only if m is even.\" Here (eq. 1.2) H(m,n;t) = prod_{i=1}^n (1 + t^i + t^{2i} + ... + t^{(m-1)i}). Conjecture 1.1 (Almkvist 1985): \"(1) For each m, the Hilbert function H(m, n) is unimodal for all n >= 11. (2) Moreover if m is even, then H(m, n) is unimodal for all n.\"",
+   "definitions_check": "H(m,2;t) = [m]_t [m]_{t^2}: the problem with k=1, a_1=m, r=2, b=m. Unimodality: same weak notion (coefficient sequence). Conj. 5.4 / Prop. 5.3 give for this subfamily: unimodal iff m even or m>=2(m-1), i.e. iff m even or m<=2. For m>=2 this is 'iff m even', matching Theorem A. At m=1, H(1,2)=1 is unimodal but m is odd, so the literal 'iff m is even' needs m>=2 (Mao-Shi-Zhu restate it as 'r>=2 is even'). Recomputed m=1..7 in check_quoted.py: unimodal exactly for m=1,2,4,6.",
+   "classification": "文献连线",
+   "differences": "A one-parameter special case (k=1, a=b=m, r=2) of Prop. 5.3 of the source paper, obtained independently and earlier, via a Lefschetz/lattice-path method. The paper's main object is the family prod_{i=1}^n [m]_{t^i} (several dilated factors with dilations 1..n), which is not of the form [a_1]..[a_k][b]_{q^r} for n>=3. Edge discrepancy at m=1."
+  },
+  {
+   "citation": "J. Mao, W. Shi, B.-X. Zhu, 'Proof of Almkvist's conjecture on the unimodality of partition polynomials', arXiv:2609.23779v1 (2026), Conjecture 1.1, Theorem 1.3, Lemma 3.2",
+   "link": "https://arxiv.org/abs/2609.23779",
+   "quoted_statement": "\"For integers r>=2 and n>=1, let F_{r,n}(q)=prod_{k=1}^{n} (1-q^{rk})/(1-q^k).\" Conjecture 1.1 ([2]): \"Let r >= 2 and n >= 1 be integers. Then the polynomial F_{r,n}(q) is unimodal in each of the following cases. (i) r is even and n >= 1. (ii) r is odd and n >= 11.\" Theorem 1.3: \"Let r >= 2 and n >= 1 be integers. Then F_{r,n}(q) is unimodal whenever r is even or n >= 11.\" Lemma 3.2: \"Let P(q) be a polynomial of odd degree with nonnegative, symmetric, unimodal coefficients. Then Q(q) = (1 + q)(1 + q^3)P(q^2) also has nonnegative, symmetric, unimodal coefficients.\"",
+   "definitions_check": "F_{r,n}(q) = prod_{k=1}^n [r]_{q^k}: a product of q-integers of equal length r with dilations 1,2,...,n. The problem's product has k undilated factors of arbitrary lengths and exactly one dilated factor. Overlap only at n=2: F_{r,2} = [r]_q[r]_{q^2}, i.e. the problem with k=1, a=b=r, dilation 2 (Prop. 5.3 territory). Unimodality: same weak notion. Methods: an induction criterion on n, restricted-partition quasi-polynomials, Fourier inversion. Lemma 3.2 is a tool for a q->q^2 substitution.",
+   "classification": "文献连线",
+   "differences": "Different family: several dilated factors versus one, and equal lengths versus arbitrary a_i. Theorem 1.3 gives sufficiency only and makes no claim of necessity for odd r with 3<=n<=10. No statement covers [a_1]..[a_k][b]_{q^r} with k>=2."
+  },
+  {
+   "citation": "S. C. Billey, J. P. Swanson, 'Cyclotomic generating functions', arXiv:2305.07620 (Electron. J. Combin. 31(4) (2024) P4.4), Definition 3, Lemma 46, Conjecture 48, Problem 50",
+   "link": "https://arxiv.org/abs/2305.07620 ; https://www.combinatorics.org/ojs/index.php/eljc/article/download/v31i4p4/pdf",
+   "quoted_statement": "Definition 3: \"Among all CGFs, we focus on the family of basic CGFs with no alpha or q^beta factors, f(q) = prod_{j=1}^m [a_j]_q/[b_j]_q = prod_{j=1}^m (1-q^{a_j})/(1-q^{b_j}). The basic CGF monoid Phi^+ is the monoid consisting of all basic CGFs under multiplication.\" Section 6.1: \"let Phi^uni and Phi^lcc denote the submonoids of Phi^+ given by cyclotomic generating functions which are unimodal or log-concave with no internal zeros, respectively. These properties are preserved under multiplication [Sta89, Prop. 1-2].\" Lemma 46(iv): \"Any element 1 != f in Phi^+ has a cyclotomic factor of the form Phi_{p^k}(q) for some prime p.\" Conjecture 48: \"Any element 1 != f in Phi^uni has a cyclotomic factor of the form Phi_p(q) for some prime p.\" Problem 50: \"Classify the minimal generating set M in {Phi^lcc, Phi^uni, Phi^+}. Give an efficient algorithm for identifying the generators up to any desired degree. Find the asymptotic growth rate of the generating set as a function of degree.\"",
+   "definitions_check": "The problem's P = [a_1]_q...[a_k]_q [rb]_q/[r]_q is a basic CGF (in Phi^+), with numerator multiset {a_1..a_k, rb} and denominator multiset {1,...,1, r}. The question 'for which parameters is P unimodal' is the question of which members of this subfamily lie in Phi^uni. Billey-Swanson use the same weak unimodality notion (via Stanley). Their remark that Phi^+ allows 'fractal duplication' (1+q^N)f, which Phi^uni excludes, is the same gap phenomenon as [b]_{q^r}.",
+   "classification": "文献连线",
+   "differences": "Billey-Swanson give no membership criterion for Phi^uni. Conjecture 48 is a necessary-condition-type conjecture about all of Phi^uni (existence of a Phi_p factor) and is not specific to this family; in the family, any a_i>=2 already supplies such factors, so it gives no constraint on b. Problem 50 (classifying Phi^uni) is open in their paper."
+  },
+  {
+   "citation": "Zongmin Liu, 'Unimodality of products of binary cyclotomic factors, with a formal proof', Zenodo record 22388982 (2026-09-05; not peer reviewed), Theorems 1.2, 1.3, Question 1.5",
+   "link": "https://zenodo.org/records/22388982",
+   "quoted_statement": "\"For nonnegative integers d_0,...,d_K, not all zero, put P_d(x)=prod_{k=0}^K (1+x^{2^k})^{d_k}. Call d gapless if d_k>0 for every k<=max{k:d_k>0}.\" Theorem 1.2: \"If d is gapless then P_d is palindromic, unimodal, and its coefficients are strictly positive on the whole range 0, 1, ..., deg P_d.\" Theorem 1.3: \"The converse of Theorem 1.2 is false. The smallest counterexample, by total degree, is d = (8, 0, 2): (1 + x)^8 (1 + x^4)^2 is unimodal, yet d_1 = 0. An exhaustive search over all d with K <= 3 and d_k <= 8 produces exactly 15 non-gapless vectors with P_d unimodal; over all d with d_k <= 3 (any K <= 6) there are none.\" Question 1.5: \"Characterise exactly the d for which P_d is unimodal. The discussion above suggests a condition of the form sum_{k<j} 2^k d_k >= 2^{j+1} - 1 at every index j with d_j = 0 below the top.\"",
+   "definitions_check": "P_d is a product of [2]_{x^{2^k}} factors with multiplicities: dilated factors of length 2 with dilations powers of 2, possibly repeated. The problem's family has exactly one dilated factor of arbitrary length b and dilation r, with undilated factors of arbitrary lengths. Intersection: d=(d_0,0,1) gives ([2]_q)^{d_0}[2]_{q^4}, i.e. the problem with k=d_0, all a_i=2, r=4, b=2. The 'smallest counterexample by total degree is (8,0,2)' statement (degree 16), together with the exhaustive search over d_k<=8, implies that ([2]_q)^{d_0}[2]_{q^4} (degree d_0+4<=12) is not unimodal for d_0<=8. This is my inference from their report, not a separate statement. Unimodality notion: same. Claim (1+x)^8(1+x^4)^2 unimodal re-checked in check_quoted.py.",
+   "classification": "文献连线",
+   "differences": "Different family: several dilated factors, all of length 2, dilations 2^j. Question 1.5 is open there and has the same 'span of lower factors vs gap' shape as the inequality in Conj. 5.4, but with a different threshold expression. Non-peer-reviewed source."
+  },
+  {
+   "citation": "R. P. Stanley, 'Log-concave and unimodal sequences in algebra, combinatorics, and geometry', Ann. New York Acad. Sci. 576 (1989) 500-535, Propositions 1 and 3 (p. 503-504)",
+   "link": "https://math.mit.edu/~rstan/pubs/pubfiles/72.pdf",
+   "quoted_statement": "(read from scanned page images) \"PROPOSITION 1: If A(q) and B(q) are symmetric unimodal polynomials with nonnegative coefficients, then so is A(q)B(q).\" ... \"Note that the assumption of symmetry in Proposition 1 cannot be dropped. For instance, (q^2 + q + 3)^2 = q^4 + q^3 + 7q^2 + 6q + 9.\" \"PROPOSITION 3: Let A be the class of all polynomials with nonnegative coefficients with the following property: If A(q) in A and B(q) is any polynomial with nonnegative unimodal coefficients, then A(q)B(q) has unimodal coefficients. Then A(q) in A if and only if A(q) has log-concave nonnegative coefficients with no internal zeros.\"",
+   "definitions_check": "Prop. 1 'symmetric unimodal' means palindromic (centre (m+n)/2 in the proof) and weakly unimodal, the same as the problem. It applies to any product of symmetric unimodal factors; [b]_{q^r} with r>=2, b>=2 is symmetric but NOT unimodal (internal zeros), so Prop. 1 applies only after grouping [a_i]_q[b]_{q^r} into a unimodal block (CIMSY Lemma 4.2 does this when r|a_i). Prop. 3: K(q)=prod [a_i]_q is log-concave with no internal zeros, hence in class A, but the partner B=[b]_{q^r} is not unimodal, so Prop. 3 gives no conclusion about P.",
+   "classification": "背景",
+   "differences": "General tools only. They yield the r|a_i direction (with Lemma 4.2) and explain why the generic route fails otherwise. No statement about dilated factors."
+  },
+  {
+   "citation": "Keilson-Gerber (1971) discrete strong unimodality, as stated in A. Saumard, J. A. Wellner, 'Log-concavity and strong log-concavity: a review', Statist. Surveys 8 (2014) 45-114, arXiv:1404.5886, Theorem 4.1 and the following paragraph; Ibragimov (1956), ibid. Theorem 6.6",
+   "link": "https://arxiv.org/abs/1404.5886",
+   "quoted_statement": "\"Theorem 4.1. (a) (Keilson and Gerber [1971]) The class of log-concave distributions on Z is closed under convolution. If U ~ p and V ~ q are independent and p and q are log-concave, then U + V ~ p * q is log-concave.\" ... \"Actually, Keilson and Gerber [1971] proved more: analogously to Ibragimov [1956a] they showed that p is strongly unimodal (i.e. X + Y ~ p * q with X, Y independent is unimodal for every unimodal q on Z) if and only if X ~ p is log-concave.\" Definition used there (4.5): \"An integer-valued random variable X with probability mass function {p_x : x in Z} is log-concave if p_x^2 >= p_{x+1} p_{x-1} for all x in Z.\"",
+   "definitions_check": "Probability translation: P(q)/P(1) is the law of X_1+...+X_k + rY with X_i ~ Unif{0..a_i-1}, Y ~ Unif{0..b-1}, all independent; unimodality of the law equals (weak) unimodality of the coefficients. Sum X = X_1+...+X_k is log-concave without internal zeros, hence strongly unimodal. But rY is not unimodal on Z for r>=2, b>=2, so the theorem gives no conclusion. Definitional caveat: (4.5) as displayed omits the 'no internal zeros' condition. The law of rY with r>=3 satisfies (4.5) literally, so the theorem must be read with the standard definition (contiguous support); the JASA original was not opened.",
+   "classification": "背景",
+   "differences": "Covers convolution with an arbitrary unimodal law, not with a lattice-strided uniform law. The problem's difficulty is exactly the case outside its hypotheses."
+  },
+  {
+   "citation": "A. M. Odlyzko, L. B. Richmond, 'On the unimodality of high convolutions of discrete distributions', Ann. Probab. 13(1) (1985) 299-306 (abstract)",
+   "link": "https://projecteuclid.org/journals/annals-of-probability/volume-13/issue-1/On-the-Unimodality-of-High-Convolutions-of-Discrete-Distributions/10.1214/aop/1176993082.full",
+   "quoted_statement": "Abstract (obtained via fetch of the Project Euclid page; full text not opened): \"It is shown that if {p_j} is a discrete density function on the integers with support contained in {0, 1, ..., d}, and p_0 > 0, p_1 > 0, p_{d-1} > 0, p_d > 0, then there is an n_0 such that the n-fold convolution {p_j}^{*n} is unimodal for all n >= n_0.\"",
+   "definitions_check": "Concerns n-fold convolution POWERS of a single law. The dilated uniform r*Unif{0..b-1} has p_1=0 for r>=2, so it violates the hypothesis. The problem's P is a product of distinct factors, not a power, and has no large-n parameter (the necessity clause concerns k<=3 or r<=3).",
+   "classification": "文献连线",
+   "differences": "Different operation (powers versus a fixed product). It is relevant only as the general principle that enough convolution with gap-free factors fills gaps (cf. the k=4, r=4 example). It gives no threshold of the form b<=1+sum floor(a_i/r)."
+  },
+  {
+   "citation": "T. Harima, J. Watanabe, 'The strong Lefschetz property for Artinian algebras with non-standard grading', J. Algebra 311 (2007) 511-537, arXiv:math/0702444, Remark 2.2 and Example 6.3",
+   "link": "https://arxiv.org/abs/math/0702444",
+   "quoted_statement": "Remark 2.2 (1): \"It is easy to see that if A has the WLP and if A has the standard grading, then the Hilbert function of A is unimodal. If the grading of A is not standard, the WLP of A does not imply the unimodality of the Hilbert function of A. Whatever the grading of A is, the WLP of an A-module V does not imply the unimodality of the Hilbert function.\" (3): \"If V has the SLP, then the Hilbert function of V is symmetric and unimodal.\" Example 6.3: \"Let A = K[x_1, x_2]/(e_1^2, e_2^2) and B = K[e_1, e_2]/(e_1^2, e_2^2), where e_1 = x_1 + x_2 and e_2 = x_1 x_2. Note that A has the standard grading, but B does not. ... However, B does not have the SLP. In fact e_1 is the only candidate for a strong Lefschetz element for B while we have h_B(q) = 1 + q + q^2 + q^3 and e_1^2 = 0 in B.\"",
+   "definitions_check": "Algebraic translation: P(q) is the Hilbert series of the monomial complete intersection K[x_1..x_k,y]/(x_1^{a_1},...,x_k^{a_k},y^b) with deg x_i=1, deg y=r. Example 6.3's B has h_B=[2]_q[2]_{q^2} (problem instance k=1, a=2, b=2, r=2, with r|a): unimodal yet not SLP. Their 'unimodal' is the same weak notion.",
+   "classification": "背景",
+   "differences": "Gives a framework (SLP/WLP in non-standard grading) but no unimodality criterion for this family. Remark 2.2 states explicitly that WLP does not imply unimodality in non-standard grading."
+  },
+  {
+   "citation": "A. Iarrobino, P. Macias Marques, C. McDaniel, 'Artinian algebras and Jordan type', arXiv:1802.07383v6 (J. Commut. Algebra 14 (2022)), Examples 3.13 and 3.25; C. McDaniel, S. Chen, A. Iarrobino, P. Macias Marques, 'Free extensions and Lefschetz properties...', arXiv:1807.05869 (Linear Multilinear Algebra 69 (2021)), Example 3.7, Conjecture 3.15",
+   "link": "https://arxiv.org/abs/1802.07383 ; https://arxiv.org/abs/1807.05869",
+   "quoted_statement": "IMM Example 3.13: \"Let alpha in k and A = k[a, b]/(a^3 - alpha ab, b^3) with weight function w(a, b) = (1, 2), and B = k[t]/(t^2) with the standard grading. It is easy to see that both A and B have the relative Lefschetz property for their Hilbert functions, which are, respectively, H(A) = (1, 1, 2, 1, 2, 1, 1) and H(B) = (1, 1). On the other hand, the Hilbert function of their tensor product C = A tensor_k B is H(C) = (1, 2, 3, 3, 3, 3, 2, 1) which is unimodal.\" IMM Example 3.25: \"H(A) = (1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1), H(B) = (1, 1, 1, 1), and H(C) = H(A) tensor H(B) = (1, 2, 3, 4, 5, 5, 5, 5, 5, 5, 5, 5, 4, 3, 2, 1).\" MCIM Conjecture 3.15(2): \"A(m, n) has maximum Jordan type consistent with its Hilbert function. In particular, A(m, n) is strong Lefschetz if and only if H(A(m, n)) is unimodal, and A(m, n) is always weak Lefschetz.\"",
+   "definitions_check": "(1,1,2,1,2,1,1) = [3]_q[3]_{q^2} (k=1,a=3,b=3,r=2: non-unimodal, matches Prop. 5.3). (1,2,3,3,3,3,2,1) = [3]_q[2]_q[3]_{q^2} (k=2,r=2, a_2=2 even: unimodal, matches Prop. 4.5/Cor. 4.3). (1,1,1,1,2,1,1,1,2,1,1,1,1) = [5]_q[3]_{q^4} (k=1,a=5,b=3,r=4: 5<8, non-unimodal, matches Prop. 5.3). The product with [4]_q (k=2, r=4, 4|a_2) is unimodal, matching Cor. 4.3. Unimodality: the same notion.",
+   "classification": "文献连线",
+   "differences": "Isolated examples that arose as Hilbert functions of weighted complete intersections (relative coinvariant rings). All are consistent with the proven cases of CIMSY. No general criterion is given, and their conjectures concern A(m,n) = prod [m]_{t^i}, not this family."
+  },
+  {
+   "citation": "H. Sun, Y. Wang, H.-X. Zhang, 'Polynomials with palindromic and unimodal coefficients', arXiv:1601.05629 (Acta Math. Sin. 2015), Theorem 3.1 and Corollary 3.5 (Andrews 1975)",
+   "link": "https://arxiv.org/abs/1601.05629",
+   "quoted_statement": "\"Theorem 3.1. Let f(q) be a palindromic polynomial of nonnegative coefficients. Then f(q) is A-positive if and only if f(q) is unimodal, i.e., f(q) is a Lambda-polynomial.\" (A-positive = expansion f(q)=sum_j c_j q^j (1+q+...+q^{n-2j}) with c_j>=0.) \"In particular, taking f_j(q) = A_j(q) in Proposition 3.4, we obtain a result due to Andrews [2, Theorem 1]. Corollary 3.5. The product of Lambda-polynomials is a Lambda-polynomial.\"",
+   "definitions_check": "P is palindromic of darga D = sum(a_i-1)+r(b-1), so P is unimodal iff P = sum_j c_j q^j [D-2j+1]_q with all c_j>=0 (equivalently c_j = p_j - p_{j-1} >= 0 on the first half). This matches the 'sl2-string' reformulation. Same unimodality notion.",
+   "classification": "背景",
+   "differences": "An equivalent reformulation plus a closure property; no information specific to dilated factors."
+  },
+  {
+   "citation": "Zenodo preprints (2026) citing arXiv:2605.12822: M. Stefan-Donovan, 'Unimodality of q-Fibonomial Coefficients for n = 4' (doi 10.5281/zenodo.22719862) and Lean companion (10.5281/zenodo.22720016); hainzhao, 'The Width-Four q-Fibonomial Coefficients Are Unimodal' (10.5281/zenodo.21826970); K. Fathi, three records (10.5281/zenodo.22183086, 22177918, 22862687)",
+   "link": "https://doi.org/10.5281/zenodo.22719862 ; https://doi.org/10.5281/zenodo.21826970 ; https://doi.org/10.5281/zenodo.22183086 ; https://doi.org/10.5281/zenodo.22862687",
+   "quoted_statement": "Stefan-Donovan abstract: \"Recent work of Connelly, Ito, Martinez, Shevchenko, and Yang proves the conjecture for all slices with n <= 3. We prove the complete n = 4 slice: for every integer m >= 0, the q-Fibonomial coefficient binom{m+4}{4}_{F,q} is a polynomial with nonnegative, symmetric, unimodal coefficients.\" hainzhao abstract: \"We prove that the width-four q-Fibonomial coefficient [m+4 choose 4]_F is unimodal for every integer m at least 1.\" Fathi (zenodo 22183086) Remark 7.3: \"In a nonstandard grading, weak Lefschetz does not by itself imply unimodality [9].\"",
+   "definitions_check": "These concern the q-Fibonomial coefficients (BCK Conjecture 2.5), not Conj. 5.4. A text search (grep for '5.4', 'Conjecture 5', 'q^r', '[b]') of the downloaded PDFs (fathi1.txt, fathi2.txt, sd.txt, hz.txt) finds no treatment of products [a_1]..[a_k][b]_{q^r} with general r. Fathi's text mentions only the third-column product [a]_q[b]_q[c]_{q^2} (the CIMSY Prop. 4.5 case).",
+   "classification": "背景",
+   "differences": "No result on Conj. 5.4. All are non-peer-reviewed; Fathi claims a full resolution of the BCK conjecture, which I did not check because it is outside this problem."
+  }
+ ],
+ "summary": "How results are marked: 找到 means a query returned at least one item relevant to the object or the phrasing (irrelevant hits are listed in the note as 未找到). More than 75 queries were run across arXiv API and web search, WebSearch, WebFetch, Semantic Scholar, OpenAlex, Google Scholar, OEIS, Zenodo and GitHub. They cover q-analog language, probability (sums of uniforms, strong unimodality), posets (products of chains), partitions, signal processing (box, CIC, dilated filters), polynomials (cyclotomic products, internal zeros), log-concavity and Pólya-frequency results, commutative algebra (weighted monomial complete intersections, Lefschetz properties), representation theory (Adams operations, Frobenius twists) and topology (Betti numbers of CP x HP). Downloaded texts are in /tmp/claude-0/qu/lit/. The two quoted numerical claims were re-checked with /tmp/claude-0/qu/lit/check_quoted.py.\n\nExact results found (all in the source paper arXiv:2605.12822 itself):\n- Cor. 4.3: r | a_i for some i implies symmetric and unimodal, for all k.\n- Prop. 5.3: k=1 is fully characterized; unimodal iff a >= r(b-1) or r | a, which equals the Conj. 5.4 condition.\n- Prop. 4.5: k=2, r=2 is fully characterized; unimodal iff 2b <= a_1+a_2 or some a_i is even, which equals the Conj. 5.4 condition.\n- The paper reports a computational check for k<=5, r<=6, max<=15, and the example ([3]_q)^4[2]_{q^4}, which I re-verified as unimodal. The authors' public code repository has no script for this check.\n\nNot found in any source searched:\n- A proof of sufficiency of b <= 1+sum floor(a_i/r) for k>=2, other than k=2, r=2.\n- A proof of necessity for k in {2,3} with r>=3, or for r in {2,3} with k>=3.\n- Any counterexample inside the claimed necessity range.\n- Any work that discusses Conj. 5.4. Semantic Scholar shows 0 citations. OpenAlex lists 5 Zenodo q-Fibonomial preprints citing the paper, and their texts do not treat Conj. 5.4.\n\nAdjacent results (文献连线):\n- Abdallah-McDaniel 2024 Thm A, [m]_t[m]_{t^2} unimodal iff m even for m>=2: a special case of Prop. 5.3, with an edge discrepancy at m=1.\n- Mao-Shi-Zhu 2026 prove Almkvist's conjecture for prod_{k=1}^n [r]_{q^k}: a different family that overlaps only at [r]_q[r]_{q^2}.\n- Billey-Swanson: P is a basic cyclotomic generating function. Classifying unimodal CGFs is their open Problem 50, and Conjecture 48 is a weak necessary-type statement.\n- Liu (Zenodo 2026, not peer reviewed): products prod (1+x^{2^k})^{d_k}. The open Question 1.5 has a similar span-vs-gap form. Their reported search implies ([2]_q)^{d}[2]_{q^4} is non-unimodal for d<=8; this is my inference from their report.\n- Weighted complete-intersection examples (Iarrobino-Macias Marques-McDaniel; McDaniel-Chen-Iarrobino-Macias Marques) are consistent with the proven cases.\n- Odlyzko-Richmond is about convolution powers, not a fixed product.\n\nBackground tools:\n- Stanley 1989 Props. 1 and 3, and Keilson-Gerber/Ibragimov strong unimodality. These do not apply because [b]_{q^r} is not unimodal on Z. Note that Saumard-Wellner's displayed definition (4.5) omits the no-internal-zeros condition.\n- Harima-Watanabe 2007: WLP does not imply unimodality in non-standard grading.\n- Sun-Wang-Zhang: palindromic and unimodal is equivalent to A-positive.\n\nGaps in coverage:\n- Almkvist 1987 (J. Algebra 108) and Almkvist 1989 (J. Number Theory 32) full texts were not accessible (403, or an API key required), so their contents are unchecked.\n- The Keilson-Gerber original (JASA), the Bertin-Cuculescu-Theodorescu chapters, the Andrews 1975 original, Zeilberger's 1989 note, and the Lefschetz Properties book (LNM 2080) were not opened.\n- The phrasings for signal processing, posets with strided rank, coloured or restricted partitions, Adams operations and Frobenius twists, and Betti numbers returned nothing specific."
+}
