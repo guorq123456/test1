@@ -14,7 +14,9 @@
 | `render/` | Playwright + ffmpeg 逐帧渲染脚本；`build_dist.py` / `subset_fonts.py` 生成单文件网页版 |
 | `dist/` | 单文件网页版（字体子集内嵌），可直接静态托管或作为 claude.ai Artifact 发布 |
 | `video/` | 已渲染的 720p 无声成片（预览用） |
-| `STORYBOARD.md` | 分镜脚本与设计规范（冷→暖的视觉弧线、配色、字体、每段镜头） |
+| `STORYBOARD.md` / `STORYBOARD_V2.md` | 分镜脚本与设计规范；V2 增加了 3D 环境、动态镜头、角色动画与竖排歌词的方向 |
+| `js/env.js` `js/charfx.js` | v2 的伪 3D 环境库（线框城市 / 人形灯群大厅 / 光隧道 / 球体 / 悬浮屏幕 / 警报场 / 驾驶舱 HUD）与角色动画库（呼吸、发丝摆动、辉光、全息、残影） |
+| `dev/` | 两个库的演示页与对照图 |
 | `ref/` | 原版 MV 的参考封面帧 |
 
 ## 在浏览器里播放（带音乐）
@@ -33,7 +35,7 @@ cd mv && npx http-server -p 8765      # 或 python3 -m http.server 8765
 cd mv/render && node render.mjs --serve --chunk 20 --out ../out/mv_1080p.mp4
 ```
 
-CRF 18 的 1080p 原始渲染约 700MB（胶片颗粒导致码率高）；分享用可再压一次，例如 `-crf 25` 约 79MB。
+v2 的 1080p 原始渲染（CRF 18）约 880MB，辉光与颗粒让码率很高；分享用可再压一次，例如 720p `-crf 33` 约 25MB。4 核机器渲染约 21 分钟。
 渲染出的是无声视频，之后用 ffmpeg 把音频合进去：
 
 ```bash
