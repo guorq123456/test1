@@ -281,24 +281,40 @@ function drawOverlays(t, si, opts) {
   const hud = light ? P.ink : fx.rgba(fx.mix(P.ice, P.gold, smooth(0.15, 0.8, w)));
   // top-left bug (from 43.085 on; the title scene animates it into place)
   const bugA = (opts.bugAlpha == null ? 1 : opts.bugAlpha) * (t >= 43.085 ? 1 : 0);
-  // soft shadow keeps the persistent HUD legible over imagery
+  // soft gradient plates keep the persistent HUD legible over imagery (no shadowBlur: it is cached by Skia
+  // and is not bit-exact between first and later renders)
   ctx.save();
-  ctx.shadowColor = light ? 'rgba(243,234,217,0.9)' : 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 8;
-  if (bugA > 0.01 && !opts.hideBug) drawBug(ctx, hud, bugA);
-  // bottom-right timecode + section id
+  const plate = (cx, cy, rx, ry, a) => {
+    ctx.save(); ctx.translate(cx, cy); ctx.scale(rx / ry, 1);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, ry);
+    const pc = light ? P.paper : '#050403';
+    g.addColorStop(0, fx.rgba(pc, 0.55 * a)); g.addColorStop(0.6, fx.rgba(pc, 0.3 * a)); g.addColorStop(1, fx.rgba(pc, 0));
+    ctx.fillStyle = g; ctx.fillRect(-ry, -ry, ry * 2, ry * 2); ctx.restore();
+  };
+  if (bugA > 0.01 && !opts.hideBug) { plate(230, 118, 230, 60, bugA); drawBug(ctx, hud, bugA); }
+  // timecode + section id: bottom-right by default; scenes whose character stands on the right return
+  // tcLeft (0..1) to move it to the bottom-left (cross-faded, so a gradual value never makes it jump)
   const tcA = (opts.tcAlpha == null ? 1 : opts.tcAlpha) * smooth(1.0, 1.6, t) * (1 - smooth(395.5, 397.5, t));
   if (tcA > 0.01 && !opts.hideTC) {
     const lbl = `SEC.${String(si + 1).padStart(2, '0')} ${sec.id.toUpperCase()}`;
-    ctx.save();
-    ctx.globalAlpha = 0.5 * tcA;
-    fx.label(ctx, fmtTC(t), W - 96, H - 96, { size: 16, align: 'right', color: hud, track: 0.1 });
-    fx.label(ctx, lbl, W - 96, H - 96 - 24, { size: 14, align: 'right', color: hud, track: 0.16 });
-    ctx.globalAlpha = 0.35 * tcA;
-    ctx.fillStyle = hud;
-    // dotted leader to the left of the timecode
-    for (let i = 0; i < 16; i++) ctx.fillRect(W - 96 - 132 - i * 7, H - 96 - 6, 2, 2);
-    ctx.fillRect(W - 96 - 132 - 16 * 7 - 6, H - 96 - 9, 8, 8);
-    ctx.restore();
+    const k = clamp(opts.tcLeft || 0);
+    const drawTC = (left, a) => {
+      if (a <= 0.01) return;
+      const ax = left ? 96 : W - 96, dir = left ? 1 : -1, align = left ? 'left' : 'right'; // mirrored layout
+      plate(ax + dir * 130, H - 96 - 14, 210, 52, a);
+      ctx.save();
+      ctx.globalAlpha = 0.5 * a;
+      fx.label(ctx, fmtTC(t), ax, H - 96, { size: 16, align, color: hud, track: 0.1 });
+      fx.label(ctx, lbl, ax, H - 96 - 24, { size: 14, align, color: hud, track: 0.16 });
+      ctx.globalAlpha = 0.35 * a;
+      ctx.fillStyle = hud;
+      // dotted leader beside the timecode
+      for (let i = 0; i < 16; i++) ctx.fillRect(left ? ax + 130 + i * 7 : ax - 132 - i * 7, H - 96 - 6, 2, 2);
+      ctx.fillRect(left ? ax + 242 : ax - 250, H - 96 - 9, 8, 8);
+      ctx.restore();
+    };
+    drawTC(false, tcA * (1 - k));
+    drawTC(true, tcA * k);
   }
   ctx.restore();
 }

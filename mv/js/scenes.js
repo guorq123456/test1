@@ -343,7 +343,7 @@ SCENES.verse1 = (S) => {
     const big = ease.outBack(inv(22.2, 22.75, t));
     const out = inv(23.0, 23.4, t);
     const restA = 1 - smooth(22.15, 22.6, t) * 0.75;
-    const box = fx.drawBlock(c, B, X, Y, {
+    fx.drawBlock(c, B, X, Y, {
       color: ice, reveal: { style: 'typewriter', rt: t - T7, dur: 0.8 },
       charFx: (it, s) => {
         if (it.c.ch === '？') { s.vis = s.vis && out < 0.98; s.sc = 1 + 2 * big; s.dy = -it.c.size * 0.9 * big; s.dx = 30 * big; if (out > 0) { s.dx += (rnd('q', bucket(t, 30)) - 0.5) * 80 * out; s.a = 1 - out; } }
@@ -351,7 +351,6 @@ SCENES.verse1 = (S) => {
       },
       cursor: t < 22.2 ? { color: ice, blink: true, t, alpha: 0.85, w: 30 } : null,
     });
-    void box;
     indexTag(c, 7, X, Y - 112, P.steel, 0.55 * (1 - smooth(22.2, 22.6, t)));
     if (S.cfg.showZh) {
       const ZB = lay({ text: LINES[7].zh, family: F.zh, weight: 400, size: 32, maxW: 900, maxLines: 2, track: 0.04, lineH: 1.4, shrinkFirst: 0.8 });
@@ -690,7 +689,7 @@ SCENES.verse2b = (S) => {
   // long blink — eyelids close to 50 %
   const lid = ease.inOutCubic(inv(84.4, 86.0, t));
   eyelids(c, lid);
-  return { scan: 0.07, vignette: 0.8 };
+  return { scan: 0.07, vignette: 0.8, tcLeft: faceIn };
 };
 
 /* -------------------------------------------------------------- quotes */
@@ -764,7 +763,7 @@ SCENES.quotes = (S) => {
   }
   // eyelids open from the verse2b blink
   eyelids(c, 1 - ease.inOutCubic(inv(86.24, 87.1, t)));
-  return { scan: 0.07, vignette: 0.85 };
+  return { scan: 0.07, vignette: 0.85, tcLeft: 1 - smooth(86.24, 87.1, t) };
 };
 
 /* ------------------------------------------------------------- chorus1 */
@@ -876,7 +875,7 @@ SCENES.bridge = (S) => {
   }
   fx.label(c, `ERR.${String(li - 35).padStart(2, '0')} // REJECTED`, tx + 4, y0 - B.size - 18, { size: 15, color: fg, alpha: 0.55 });
   // micro-glitches (2–3 per line) + per-line hard cuts
-  const out = { tone: paperWorld ? 'light' : 'dark', vignette: paperWorld ? 0.25 : 0.7, scan: 0.07 };
+  const out = { tone: paperWorld ? 'light' : 'dark', vignette: paperWorld ? 0.25 : 0.7, scan: 0.07, tcLeft: right ? 1 : 0 };
   for (let m = 0; m < 3; m++) {
     const mt = ln.t + 0.55 + m * 0.7 + rnd('mg', li, m) * 0.3;
     if (t >= mt && t < mt + 0.1) out.glitch = { slice: 0.55, rgb: 4 };
@@ -995,7 +994,7 @@ SCENES.interlude = (S) => {
     fx.glow(c, 960, H + 20, 220, P.orangeL, 0.5 * em * fl, 'screen');
     fx.particles(c, t, { kind: 'ember', n: 26, seed: 'ilem', x0: 620, x1: 1300, y0: 760, y1: H + 10, rise: 60, life: 4, size: 2, color: P.orangeL, alpha: 0.8 * em, sway: 14, spawnSpread: 0.15, glow: true });
   }
-  return { scan: 0.07, vignette: 0.8 };
+  return { scan: 0.07, vignette: 0.8, tcAlpha: 1 - smooth(189.35, 189.6, t) * (1 - smooth(190.35, 190.7, t)) };
 };
 
 /* -------------------------------------------------------------- verse3 */
@@ -1203,7 +1202,7 @@ SCENES.prayer = (S) => {
     const long = ln.end - ln.t > 6;
     lyric(S, li, { x: 150, y: 500, size: 64, weight: 400, maxW: 860, color: P.paper, reveal: 'charfade', rdur: Math.min(1.6, 0.6 + [...ln.ja].length * 0.06), exit: 'rise', edur: long ? 0.9 : 0.45, exitAt: long ? ln.end - 0.9 : ln.end - 0.45, zh: { dy: 56, delay: 0.5 } });
   }
-  return { scan: 0.04, vignette: 0.9 };
+  return { scan: 0.04, vignette: 0.9, tcLeft: smooth(LINES[66].t, LINES[66].t + 0.8, t) };
 };
 
 /* --------------------------------------------------------------- build */
@@ -1257,7 +1256,7 @@ SCENES.build = (S) => {
   } else if (li === 77) {
     lyric(S, 77, { x: X, y: Y, size: 72, weight: 400, maxW: 920, color: P.paper, reveal: 'charfade', rdur: 1.6, glow: { color: rgba(P.orangeL, 0.5), blur: 20 * embrace }, zh: { dy: 58, delay: 0.6 } });
   }
-  return { scan: 0.04, vignette: 0.85, warmVignette: 1.15 * embrace, warmVignetteColour: '#120804' };
+  return { scan: 0.04, vignette: 0.85, warmVignette: 1.15 * embrace, warmVignetteColour: '#120804', tcLeft: 1 };
 };
 
 /* ------------------------------------------------------------- final_a */
@@ -1301,7 +1300,7 @@ SCENES.final_a = (S) => {
   }
   const li = activeLine(t, [78, 79, 80, 81, 82, 83, 84]);
   if (li === 80) {
-    lyric(S, 80, { x: 960, y: 905, align: 'center', size: 104, family: F.cor, fstyle: 'italic', weight: 500, maxW: 1640, maxLines: 1, track: 0.06, color: P.paper, reveal: 'typewriter', rdur: 0.7, cursor: { color: P.orangeL, blink: true, alpha: 0.9, w: 14 }, zh: false });
+    lyric(S, 80, { x: 960, y: 905, align: 'center', size: 110, family: F.cor, fstyle: 'italic', weight: 500, maxW: 1640, maxLines: 1, track: 0.06, color: P.paper, reveal: 'typewriter', rdur: 0.7, cursor: { color: P.orangeL, blink: true, alpha: 0.9, w: 14 }, zh: false });
   } else if (li >= 0) {
     const spans = li === 84 ? [{ match: 'リンク', color: P.orange }] : undefined;
     lyric(S, li, { x: 960, y: 900, align: 'center', size: 88, family: F.smb, weight: 800, maxW: 1640, maxLines: 1, color: P.paper, reveal: 'slice', rdur: 0.42, spans, zh: { dy: 56 }, shrinkFirst: 0.7 });
@@ -1340,11 +1339,12 @@ function drawPoem(S, X, outA) {
     const size = i === 92 ? 108 : 76;
     const B = lay({ text: ln.ja, family: F.smb, weight: 800, size, maxW: 940, maxLines: 1, track: 0.02, lineH: 1.2, shrinkFirst: 0.6 });
     const rt = t - ln.t;
-    const dimK = i === 92 ? 1 : lerp(1, 0.42, smooth(LINES[i + 1].t, LINES[i + 1].t + 0.6, t));
+    const dk = i === 92 ? 0 : smooth(LINES[i + 1].t, LINES[i + 1].t + 0.6, t); // 0 = current line, 1 = earlier line
+    const dimK = lerp(1, 0.7, dk);
     fx.drawBlock(c, B, X, ys[k], { color: P.paper, alpha: dimK * outA, reveal: { style: 'slice', rt, dur: 0.42, seed: i }, glow: shadow, sliceAmp: 60 });
     if (S.cfg.showZh) {
       const ZB = lay({ text: ln.zh, family: F.zh, weight: 400, size: i === 92 ? 34 : 28, maxW: 940, maxLines: 1, track: 0.05, lineH: 1.3 });
-      fx.drawBlock(c, ZB, X + 2, ys[k] + (i === 92 ? 64 : 48), { color: P.paper, alpha: 0.62 * dimK * outA * smooth(0.15, 0.6, rt) });
+      fx.drawBlock(c, ZB, X + 2, ys[k] + (i === 92 ? 64 : 48), { color: P.paper, alpha: lerp(0.62, 0.55, dk) * outA * smooth(0.15, 0.6, rt) });
     }
   });
 }
@@ -1400,7 +1400,7 @@ SCENES.final_b = (S) => {
     drawPoem(S, X, 1);
     fx.label(c, '— 守ってあげられるのに —', X, 930, { size: 13, color: P.paper, alpha: 0.4 * smooth(LINES[92].t + 1, LINES[92].t + 2, t) * hudOut(1), upper: false });
   }
-  return { scan: 0.035, vignette: 0.6, tcAlpha: hudOut(3), bugAlpha: 1 };
+  return { scan: 0.035, vignette: 0.6, tcAlpha: hudOut(3), bugAlpha: 1, tcLeft: 1 };
 };
 
 /* --------------------------------------------------------------- outro */
@@ -1537,5 +1537,5 @@ SCENES.outro = (S) => {
     c.restore();
   }
   const paper = toPaper >= 1 && !crt;
-  return { tone: paper ? 'light' : 'dark', vignette: paper ? 0.22 : crt ? 0 : 0.7, scan: crt ? 0.02 : 0.04, bugAlpha: 1 - smooth(384.0, 385.0, t), hideTC: crt, grain: crt ? 0.02 : 0.05 };
+  return { tone: paper ? 'light' : 'dark', vignette: paper ? 0.22 : crt ? 0 : 0.7, scan: crt ? 0.02 : 0.04, bugAlpha: 1 - smooth(384.0, 385.0, t), hideTC: crt, grain: crt ? 0.02 : 0.05, tcLeft: 1 };
 };

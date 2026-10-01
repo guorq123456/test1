@@ -461,11 +461,12 @@ export function drawBlock(ctx, B, x, y, o = {}) {
     // render to scratch then draw horizontal slices with decaying offsets
     const D = rv.dur || 0.45, p = clamp(rv.rt / D);
     const pad = 60;
-    const bw = box.x1 - box.x0 + pad * 2, bh = box.y1 - box.y0 + pad * 2;
+    const bw = Math.min(SCR_W, Math.ceil(box.x1 - box.x0 + pad * 2)), bh = Math.min(SCR_H, Math.ceil(box.y1 - box.y0 + pad * 2));
     const sc = scratch(bw, bh), sx = sc.getContext('2d');
     sx.setTransform(1, 0, 0, 1, 0, 0); sx.clearRect(0, 0, sc.width, sc.height);
     sx.textBaseline = 'alphabetic';
-    drawAll(sx, -box.x0 + pad, -box.y0 + pad, null, 1);
+    const sbx = Math.floor(box.x0 - pad), sby = Math.floor(box.y0 - pad); // integer blit origin, sub-pixel kept in scratch
+    drawAll(sx, -sbx, -sby, null, 1);
     const r = rng(rv.seed || 3, 'slice', Math.floor(rv.rt * 30));
     const amp = (1 - ease.outCubic(p)) * (o.sliceAmp || 90);
     let yy = 0;
@@ -476,7 +477,7 @@ export function drawBlock(ctx, B, x, y, o = {}) {
       const show = r() < appear + 0.15;
       if (show) {
         ctx.globalAlpha = alpha * clamp(0.3 + appear);
-        ctx.drawImage(sc, 0, yy, bw, Math.min(hh, bh - yy), box.x0 - pad + off, box.y0 - pad + yy, bw, Math.min(hh, bh - yy));
+        ctx.drawImage(sc, 0, yy, bw, Math.min(hh, bh - yy), sbx + Math.round(off), sby + yy, bw, Math.min(hh, bh - yy));
       }
       yy += hh;
     }
@@ -484,8 +485,8 @@ export function drawBlock(ctx, B, x, y, o = {}) {
       // chromatic ghost
       ctx.globalAlpha = alpha * 0.35 * (1 - p / 0.6);
       ctx.globalCompositeOperation = o.lightBg ? 'multiply' : 'screen';
-      ctx.drawImage(tintScratch(sc, o.lightBg ? '#00A0C0' : '#FF3030'), box.x0 - pad - amp * 0.12 - 4, box.y0 - pad);
-      ctx.drawImage(tintScratch(sc, o.lightBg ? '#C02040' : '#30E0FF'), box.x0 - pad + amp * 0.12 + 4, box.y0 - pad);
+      ctx.drawImage(tintScratch(sc, o.lightBg ? '#00A0C0' : '#FF3030', bw, bh), 0, 0, bw, bh, sbx - Math.round(amp * 0.12 + 4), sby, bw, bh);
+      ctx.drawImage(tintScratch(sc, o.lightBg ? '#C02040' : '#30E0FF', bw, bh), 0, 0, bw, bh, sbx + Math.round(amp * 0.12 + 4), sby, bw, bh);
       ctx.globalCompositeOperation = 'source-over';
     }
     ctx.globalAlpha = 1;
@@ -523,18 +524,19 @@ export function drawBlock(ctx, B, x, y, o = {}) {
   box.items = items;
   return box;
 }
+// fixed-size scratch buffers: their size must not depend on render history (bit-exact re-renders)
+const SCR_W = W + 480, SCR_H = 900;
 let _scratch = null, _tscr = null;
 function scratch(w, h) {
-  if (!_scratch || _scratch.width < w || _scratch.height < h) {
-    _scratch = makeCanvas(Math.max(w, _scratch ? _scratch.width : 0), Math.max(h, _scratch ? _scratch.height : 0));
-  }
+  if (!_scratch) _scratch = makeCanvas(SCR_W, SCR_H);
   return _scratch;
 }
-function tintScratch(src, colour) {
-  if (!_tscr || _tscr.width !== src.width || _tscr.height !== src.height) _tscr = makeCanvas(src.width, src.height);
+function tintScratch(src, colour, w, h) {
+  if (!_tscr) _tscr = makeCanvas(SCR_W, SCR_H);
   const x = _tscr.getContext('2d');
-  x.globalCompositeOperation = 'copy'; x.drawImage(src, 0, 0);
-  x.globalCompositeOperation = 'source-in'; x.fillStyle = colour; x.fillRect(0, 0, src.width, src.height);
+  x.clearRect(0, 0, SCR_W, SCR_H);
+  x.globalCompositeOperation = 'source-over'; x.drawImage(src, 0, 0, w, h, 0, 0, w, h);
+  x.globalCompositeOperation = 'source-in'; x.fillStyle = colour; x.fillRect(0, 0, w, h);
   x.globalCompositeOperation = 'source-over';
   return _tscr;
 }
@@ -648,9 +650,8 @@ export function hexGridCanvas(w, h, r = 46, lw = 1) {
   for (let row = -1; row * vs < h + r; row++) {
     for (let col = -1; col * hw < w + hw; col++) {
       const cx = col * hw + (row % 2 ? hw / 2 : 0), cy = row * vs;
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 3; i++) { // half the edges per hex: neighbours draw the rest (no double strokes)
         const a0 = Math.PI / 6 + (i * Math.PI) / 3, a1 = a0 + Math.PI / 3;
-        if (i > 2) continue; // draw half the edges per hex to avoid double strokes
         x.moveTo(cx + Math.cos(a0) * r, cy + Math.sin(a0) * r);
         x.lineTo(cx + Math.cos(a1) * r, cy + Math.sin(a1) * r);
       }
@@ -842,21 +843,18 @@ export function buildPost() {
   g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(0.55, 'rgba(0,0,0,0.28)'); g.addColorStop(1, 'rgba(0,0,0,0.85)');
   vx.fillStyle = g; vx.fillRect(0, 0, W, H);
 }
-const grainPatterns = new WeakMap();
+/** animated film grain: one of 6 seeded tiles, tiled with drawImage (no CanvasPattern: patterns created lazily
+ *  rasterise slightly differently on first use, which would break bit-exact re-renders) */
 export function grain(ctx, t, amount = 0.05) {
   if (!grainTiles) return;
   const b = bucket(t, 24);
   const tile = grainTiles[b % grainTiles.length];
-  let pat = grainPatterns.get(tile);
-  if (!pat) { pat = ctx.createPattern(tile, 'repeat'); grainPatterns.set(tile, pat); }
   const r = rng('gr', b);
-  const ox = Math.floor(r() * 256), oy = Math.floor(r() * 256);
+  const ox = -Math.floor(r() * 256), oy = -Math.floor(r() * 256);
   ctx.save();
   ctx.globalCompositeOperation = 'overlay';
   ctx.globalAlpha = amount * 2.2;
-  ctx.translate(-ox, -oy);
-  ctx.fillStyle = pat;
-  ctx.fillRect(ox, oy, W, H);
+  for (let y = oy; y < H; y += 256) for (let x = ox; x < W; x += 256) ctx.drawImage(tile, x, y);
   ctx.restore();
 }
 export function scanlines(ctx, a = 0.06) {
