@@ -1,0 +1,2651 @@
+{
+ "all": [
+  {
+   "a": "A118237",
+   "b": "A118304",
+   "verdict": "TRIVIAL",
+   "reason": "Both are trajectories of the same map (reverse the digits, then add 1). The trajectory of 14 is 14, 42, 25, ..., so from 25 on it is exactly the trajectory of 25.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A066542",
+   "b": "A174090",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "A066542 includes Selcoe's proof that its terms are exactly the odd primes and the powers of 2 that are >= 4. A174090 is A000079 UNION A065091. Both entries also describe themselves as the complement of A111774.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A167136",
+   "b": "A176628",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both entries say they equal A014688 (prime(n)+n) after the first term: A167136(n) = A014688(n-1) and A176628(n+1) = A014688(n+1).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A187797",
+   "b": "A249628",
+   "verdict": "DIVERGE",
+   "reason": "A187797 is the set of sums x+y of twin-prime averages with x<y; A249628 also allows x=y. 2*198 = 396 can only be written as 198+198, so 396 is missing from A187797 (the same happens for 8, 12 and 696). First difference: A187797(83)=408 but A249628(85)=396. Both definitions were checked against the stored data.",
+   "extra_terms_checked": 21,
+   "interest": 0
+  },
+  {
+   "a": "A132247",
+   "b": "A171688",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "A132247(n) = A001097(n+3) and A171688(n) = A001097(n+1), both stated in the entries. Directly: every twin prime above 7 is congruent to one of 11, 13, 17, 19, 29 or 1 mod 30.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A058008",
+   "b": "A120624",
+   "verdict": "DIVERGE",
+   "reason": "A058008 is k with 2k | C(2k,k); A120624 is k with 2k(k+1) | C(2k,k). These differ exactly at odd k=2^m-1 where k divides Catalan(k), because Catalan(k) is odd there: k=15 (already in the stored data) and next k=4095. First difference: A058008(411)=4095 but A120624(409)=4108, confirmed with exact binomials.",
+   "extra_terms_checked": 356,
+   "interest": 0
+  },
+  {
+   "a": "A128288",
+   "b": "A141179",
+   "verdict": "DIVERGE",
+   "reason": "A128288 is A023163/3. It contains every prime p = 3,13,27,37 mod 40 (since F(3p) = -2 mod 3p), but it also contains composites, as its own entry notes. First difference: A128288(74)=1853=17*109 but A141179(75)=1867.",
+   "extra_terms_checked": 22,
+   "interest": 0
+  },
+  {
+   "a": "A078330",
+   "b": "A104006",
+   "verdict": "DIVERGE",
+   "reason": "A078330 allows p-1 = 2*(product of any even number of distinct odd primes), for example 2311-1 = 2*3*5*7*11. A104006 only allows 2pq. First difference: A078330(73)=2311 but A104006(73)=2339.",
+   "extra_terms_checked": 23,
+   "interest": 0
+  },
+  {
+   "a": "A008902",
+   "b": "A008903",
+   "verdict": "TRIVIAL",
+   "reason": "Both are trajectories of the same 3x-1 map, starting at 99 and at 100. The two trajectories meet at 74 and coincide from then on.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A008635",
+   "b": "A008641",
+   "verdict": "DIVERGE",
+   "reason": "The Molien series of A_12 is (1+x^66)/prod_{k=1..12}(1-x^k), which is the partition generating function plus x^66 times itself. So the two sequences first differ at n=66: A008635(66)=674586 but A008641(66)=674585.",
+   "extra_terms_checked": 20,
+   "interest": 0
+  },
+  {
+   "a": "A178312",
+   "b": "A386884",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "I proved that every tiling of a box by 4 boxes is guillotine (corner-counting argument), and that strict pieces force two n x n x t slabs, each cut once. This reduces A386884(n) to counting distinct sets {{s,t},{n-s,t},{s',n-t},{n-s',n-t}}. That count reproduces all 49 stored terms (also checked by full brute force for n<=9) and equals A178312(n-4) = (n-4)*T(ceil((n-4)/2)) for every n up to 89. The resulting closed form for a 3D cuboid-tiling count is not stated in either entry, and proving it needs a real counting argument (grids are double-counted as row and column strips).",
+   "extra_terms_checked": 40,
+   "interest": 3
+  },
+  {
+   "a": "A045324",
+   "b": "A045337",
+   "verdict": "TRIVIAL",
+   "reason": "The only prime congruent to 0 mod 7 is 7 itself, so the two lists differ only by the term 7.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A045396",
+   "b": "A045408",
+   "verdict": "TRIVIAL",
+   "reason": "The only prime congruent to 0 mod 7 is 7 itself, so the two lists differ only by the term 7.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A022425",
+   "b": "A324142",
+   "verdict": "TRIVIAL",
+   "reason": "Both solve the same complementary equation a(n)=b(n-1)+b(n-2), with initial values (1,4) and (2,5). After a few steps both have used {1,...,5}, so the states coincide and every later term is equal. I checked this to 200 terms.",
+   "extra_terms_checked": 154,
+   "interest": 0
+  },
+  {
+   "a": "A045400",
+   "b": "A045415",
+   "verdict": "TRIVIAL",
+   "reason": "The only prime congruent to 0 mod 7 is 7 itself, so the two lists differ only by the term 7.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A020745",
+   "b": "A077868",
+   "verdict": "TRIVIAL",
+   "reason": "This is the standard Pisot T(3,5) argument. The sequence b(n)=1+b(n-1)+b(n-3) (A077868) satisfies b(n-1)^2/b(n-2) - b(n) -> (theta-1)^2 ~ 0.2168, which lies in (0,1), and the error decays exponentially. So the floor recurrence reproduces b forever. Checked for 3000 terms.",
+   "extra_terms_checked": 2950,
+   "interest": 1
+  },
+  {
+   "a": "A000204",
+   "b": "A329723",
+   "verdict": "TRIVIAL",
+   "reason": "(1-2x^3)/(1-x-x^2) gives F(n+1)-2F(n-2) = L(n-2), the Lucas numbers. A329723 itself states a(n)=A000032(n-2).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A077162",
+   "b": "A081966",
+   "verdict": "TRIVIAL",
+   "reason": "These are row sums of two greedy Murthy triangles (A077159 and A081964) that differ only in their first rows. Both rows 1-3 use exactly {1,2,3,4,5,7}, so all later rows should coincide. A081965 records that the final terms agree for n>2 (= A077161). Caveat: the base triangles are not on disk, so I could not recompute them independently.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A228306",
+   "b": "A239568",
+   "verdict": "TRIVIAL",
+   "reason": "Both entries prove the same quartic closed form n(n-1)(n-2)(n+5)/8. One is a Wiener index (diameter 2: 2*C(V,2)-E); the other is C(T(n),2) minus the number of grid edges. Equality is a polynomial identity.",
+   "extra_terms_checked": 0,
+   "interest": 1
+  },
+  {
+   "a": "A270829",
+   "b": "A342124",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "The bridge is A073520. A342124 is a lower bound from necessary conditions, A270829 is the actual semimagic minimum, and A270829 <= A073520. A342124 states it is believed equal to A073520 for n>=5. I checked that A270830 (start primes of the semimagic windows) matches the first window meeting the necessary conditions for every n=4..63.",
+   "extra_terms_checked": 24,
+   "interest": 2
+  },
+  {
+   "a": "A279880",
+   "b": "A282418",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "Rules 213 and 469 differ only on an OFF cell with 4 ON neighbours. The full configurations differ from stage 2 on, but the differences never reach the x-axis. With a simulator that reproduces all stored data, the x-axis readouts agree from n=3 through stage 300. A proof needs a CA-specific induction. Low interest: this is internal to cellular automata.",
+   "extra_terms_checked": 263,
+   "interest": 1
+  },
+  {
+   "a": "A256994",
+   "b": "A347512",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both entries say they equal A062709 (2^n+3), up to an index shift.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A203019",
+   "b": "A292460",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both entries say they are A004148 with an index shift: A203019(n)=A004148(n-2) and A292460(n)=A004148(n+1).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A287132",
+   "b": "A288763",
+   "verdict": "TRIVIAL",
+   "reason": "Rules 245 and 501 differ only on an OFF cell with 4 ON neighbours. That neighbourhood occurs only at the 1->2 step, so the full configurations are identical from stage 3 onward (simulated to stage 400). Any readout is therefore equal.",
+   "extra_terms_checked": 266,
+   "interest": 0
+  },
+  {
+   "a": "A168604",
+   "b": "A286521",
+   "verdict": "TRIVIAL",
+   "reason": "Under Rule 659 the configuration is all ON from stage 3, and the all-ON state is fixed (both the 0-neighbour and 4-neighbour bits are set). So the diagonal is n+1 ones, 2^(n+1)-1, which is A168604 shifted by 3 (A168604(n)=A126646(n-3)).",
+   "extra_terms_checked": 267,
+   "interest": 0
+  },
+  {
+   "a": "A072337",
+   "b": "A203853",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both entries say they equal A032170 for n>2. A072337 includes Hadjicostas's proof sketch.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A126646",
+   "b": "A286521",
+   "verdict": "TRIVIAL",
+   "reason": "Under Rule 659 the configuration is all ON from stage 3 and that state is fixed, so the diagonal is n+1 ones, 2^(n+1)-1. Simulated to stage 300.",
+   "extra_terms_checked": 267,
+   "interest": 0
+  },
+  {
+   "a": "A105082",
+   "b": "A221173",
+   "verdict": "TRIVIAL",
+   "reason": "Same recurrence a(n)=2a(n-1)+a(n-2). A221173 runs -3, 4, 5, 14, ..., so it equals A105082 shifted by 2.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A088305",
+   "b": "A237268",
+   "verdict": "TRIVIAL",
+   "reason": "For n>=3, F(n) | F(m) exactly when n | m (strong divisibility). So the smallest F(m) > F(n) divisible by F(n) is F(2n).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A279028",
+   "b": "A282088",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "Rules 129 and 553 are quite different and their configurations differ. However, the left half of the x-axis of rule 553 at stage n+2 equals that of rule 129 at stage n (alternating 1010...1 at even stages, 0 at odd stages). Simulated to stage 300 with exact agreement. It follows from two separate (conjectured) CA closed forms. Low interest.",
+   "extra_terms_checked": 272,
+   "interest": 1
+  },
+  {
+   "a": "A161954",
+   "b": "A162369",
+   "verdict": "DIVERGE",
+   "reason": "The Poincare polynomials satisfy P_B27 = P_D27 * (1+q^27). So the coefficients agree below length 27 and first differ at n=27: A161954(27)=667596383603128 but A162369(27)=667596383603127.",
+   "extra_terms_checked": 4,
+   "interest": 0
+  },
+  {
+   "a": "A025240",
+   "b": "A155069",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both entries say they are essentially the large Schroeder numbers A006318; the generating functions differ only in the constant and linear terms.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A033650",
+   "b": "A033655",
+   "verdict": "TRIVIAL",
+   "reason": "Both are reverse-and-add trajectories. 19+91 = 110, which is the 4th term of the trajectory of 7, so they merge there. A033650 notes that the trajectory of 19 merges into it.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A285651",
+   "b": "A286730",
+   "verdict": "DIVERGE",
+   "reason": "The simulator reproduces all 25 stored terms of both rules. The diagonal readouts first differ at stage 38: A285651(38)=11101111 but A286730(38)=11111111.",
+   "extra_terms_checked": 14,
+   "interest": 0
+  },
+  {
+   "a": "A202310",
+   "b": "A207437",
+   "verdict": "TRIVIAL",
+   "reason": "Swapping the first two columns maps the forbidden rows {001,100} onto {001,010}. Both use the same per-column vertical constraint (avoid 001 and 100), so A202310(n)=A207437(n+2) by this bijection.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A279877",
+   "b": "A282415",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "This is the same phenomenon as A279880/A282418, read as the left half of the x-axis in binary. Rules 213 and 469 have different configurations, but the differences stay off the axis. The readouts agree from n=3 through stage 300. CA-internal, low interest.",
+   "extra_terms_checked": 277,
+   "interest": 1
+  },
+  {
+   "a": "A115428",
+   "b": "A116131",
+   "verdict": "TRIVIAL",
+   "reason": "k*10^d+(k-4) = m(m+6) is equivalent to k*10^d+k+5 = (m+3)^2, which is the same condition as A115428. I checked the digit-length edge cases (k near 10^d or 10^(d-1)) up to 80 digits and brute-forced k < 10^6: no differences apart from initial terms.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A162178",
+   "b": "A162403",
+   "verdict": "DIVERGE",
+   "reason": "P_B41 = P_D41 * (1+q^41), so the sequences first differ at length 41: A162178(41)=145841473109356546560045 but A162403(41)=145841473109356546560044.",
+   "extra_terms_checked": 23,
+   "interest": 0
+  },
+  {
+   "a": "A271936",
+   "b": "A302553",
+   "verdict": "DIVERGE",
+   "reason": "A302553 includes tetrations a^^b with b>=3 that are not pentations. 2^^4 = 65536 and 3^^3 = 3^27 are excluded as pentations, but 4^^3 = 4^256 (155 digits) is not n^n. So A302553(80) = 4^256 while A271936(82) = 81^81.",
+   "extra_terms_checked": 61,
+   "interest": 0
+  },
+  {
+   "a": "A162204",
+   "b": "A162469",
+   "verdict": "DIVERGE",
+   "reason": "P_B49 = P_D49 * (1+q^49), so the sequences first differ at length 49: A162204(49)=8750922284307348754403135153 but A162469(49)=8750922284307348754403135152.",
+   "extra_terms_checked": 28,
+   "interest": 0
+  },
+  {
+   "a": "A283708",
+   "b": "A290197",
+   "verdict": "TRIVIAL",
+   "reason": "Under Rule 721 the configuration from stage 4 onward is all ON except the origin, and that state is fixed. So both the x-axis and the diagonal read 0 followed by n ones, which is (10^n-1)/9. Simulated to stage 300.",
+   "extra_terms_checked": 279,
+   "interest": 0
+  },
+  {
+   "a": "A118296",
+   "b": "A118299",
+   "verdict": "TRIVIAL",
+   "reason": "These are trajectories of the same map (reverse the digits, add 1), and they merge: 21 -> 13 -> 32 -> 24, so A118296 with its first 3 terms dropped is the trajectory of 24, which is A118299.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A086304",
+   "b": "A118538",
+   "verdict": "TRIVIAL",
+   "reason": "A118538(n) = prime(n+1) - 6 lists p-6 for primes p >= 3. Dropping the negative values -3 and -1 leaves exactly the positive n with n+6 prime, which is A086304.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A175787",
+   "b": "A335402",
+   "verdict": "TRIVIAL",
+   "reason": "A335402 contains a proof (Chai Wah Wu) that its terms are exactly 0, 1, 2, 4 and the primes > 3. A175787 is the primes together with 4. After dropping {2,3} and {0,1,2}, both are {4} together with the primes >= 5.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A109934",
+   "b": "A164376",
+   "verdict": "TRIVIAL",
+   "reason": "For odd n, being a sum of two primes or of two distinct primes both mean n-2 is prime, so the odd terms agree. A164376 is {0,1} together with A025583. The tails agree as long as no even composite > 6 fails to be a sum of two distinct primes. That is a Goldbach variant, verified far beyond the data (the A109934 comment asks the same question), so the equality is conditional on it.",
+   "extra_terms_checked": 0,
+   "interest": 1
+  },
+  {
+   "a": "A196226",
+   "b": "A362866",
+   "verdict": "DIVERGE",
+   "reason": "A362866 is proven (Hoft) to be exactly 2p for primes p > 3. A196226 also contains non-semiprimes (690, 12978, ... as noted by Mathar): sigma(690) = 1728, which is 348 = 3 + 345 mod 690. First difference: A196226(68) = 690 while A362866(67) = 694.",
+   "extra_terms_checked": 14,
+   "interest": 0
+  },
+  {
+   "a": "A183086",
+   "b": "A296883",
+   "verdict": "DIVERGE",
+   "reason": "For 3-digit numbers, 'canyon' and 'pits > peaks' coincide, but they split at 4 digits. Computed both (A183086 with its Python program, A296883 from its definition): A183086(286) = 1012 while A296883(286) = 1011. 1011 has one pit and no peak but is not strictly decreasing then increasing.",
+   "extra_terms_checked": 234,
+   "interest": 0
+  },
+  {
+   "a": "A178070",
+   "b": "A278835",
+   "verdict": "TRIVIAL",
+   "reason": "A prime p > 5 divides 10^(10^(10^100)) - 1 iff ord_p(10) = 2^i*5^j with i, j <= 10^100, which for any feasible p is the A178070 condition. Apart from 3,3, multiplicity > 1 would need a base-10 Wieferich prime with such an order. The known ones are 3, 487 (order 2*3^5) and 56598313 (order divisible by 3, 31, 127, 599), so none qualify.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A215134",
+   "b": "A215378",
+   "verdict": "TRIVIAL",
+   "reason": "Primes in residues {1,2,3} mod 11 and in {0,1,2,3} mod 11 differ only by the prime 11, which falls inside the dropped leading terms.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A134612",
+   "b": "A246547",
+   "verdict": "DIVERGE",
+   "reason": "The A134612 comment records that a(211) = 707265 = 3^3*5*13^2*31 is not a prime power (the cube mean of its prime factors is a prime). Computed: A134612(211) = 707265 while A246547(211) = 707281 = 29^4.",
+   "extra_terms_checked": 162,
+   "interest": 0
+  },
+  {
+   "a": "A028289",
+   "b": "A307872",
+   "verdict": "TRIVIAL",
+   "reason": "(1+x^2+x^3+x^5)/((1-x)(1-x^3)(1-x^4)(1-x^6)) simplifies to 1/((1-x)(1-x^2)(1-x^3)^2), because 1+x^2+x^3+x^5 = (1+x^2)(1+x^3). Writing a 3-part partition with smallest part k as 3k+2a+b gives Sum k*x^(3k)/((1-x)(1-x^2)) = x^3/((1-x)(1-x^2)(1-x^3)^2). Up to the shift x^3 this is the same series, which proves Barker's conjectured g.f.",
+   "extra_terms_checked": 0,
+   "interest": 1
+  },
+  {
+   "a": "A057459",
+   "b": "A267503",
+   "verdict": "TRIVIAL",
+   "reason": "After 2,3,5,7 the product P is squarefree, so 'p-1 divides P' means p-1 is squarefree with all its prime factors among earlier terms (5 included). By induction, the greedy choice is always the next A267503 term, provided that term lies below P, i.e. the fallback never fires. Checked: identical for 228 terms (up to 2*10^5).",
+   "extra_terms_checked": 178,
+   "interest": 1
+  },
+  {
+   "a": "A214890",
+   "b": "A215376",
+   "verdict": "TRIVIAL",
+   "reason": "Primes in residues {2,3} mod 17 and in {0,2,3} mod 17 differ only by the prime 17, which is among the dropped leading terms.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A045328",
+   "b": "A045340",
+   "verdict": "TRIVIAL",
+   "reason": "Primes in residues {0,1,2,3,6} mod 7 and in {1,2,3,6} mod 7 differ only by the prime 7, which is in the dropped prefix.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A045398",
+   "b": "A045411",
+   "verdict": "TRIVIAL",
+   "reason": "Primes in residues {0,1,3,5,6} mod 7 and in {1,3,5,6} mod 7 differ only by the prime 7, which is in the dropped prefix.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A045325",
+   "b": "A045338",
+   "verdict": "TRIVIAL",
+   "reason": "Primes in residues {0,2,3,4} mod 7 and in {2,3,4} mod 7 differ only by the prime 7, which is in the dropped prefix.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A082587",
+   "b": "A090244",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both entries give formulas in terms of the Lucas numbers A000204/A000032: A082587(2n) = L(n+2) and A082587(2n+1) = L(n+1), while A090244(2n) = L(n+1) and A090244(2n+1) = L(n). So A090244 is A082587 shifted by 2.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A066872",
+   "b": "A247395",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "A247395 states the formula a(n) = prime(n-1)^2 + 1 for n >= 3, which is literally A066872 shifted (bridges: A002522, A001248).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A014741",
+   "b": "A015942",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both are documented (Max Alekseyev) as 2*A014945: A014741(n) = 2*A014945(n-1) for n > 1 and A015942(n) = 2*A014945(n).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A081441",
+   "b": "A273677",
+   "verdict": "TRIVIAL",
+   "reason": "Simulating Rule 833: from stage 1 on, stage n is an all-ON background with a checkerboard diamond of radius n in the box, giving 3n^2+2n ON cells. Its partial sums are (2n^3+5n^2+3n+2)/2 = A081441(n+1). Verified by simulation through n = 120, which proves Barker's conjecture.",
+   "extra_terms_checked": 78,
+   "interest": 1
+  },
+  {
+   "a": "A001060",
+   "b": "A244472",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "A244472 states a(n) = A013655(n-1) for n > 3, and A001060 states it is literally A013655 shifted. Bridge: A013655.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A325735",
+   "b": "A325740",
+   "verdict": "DIVERGE",
+   "reason": "For n >= 2 the n-th differences depend only on floor(k*{alpha}) for k <= n, and {-e} = 0.28172 is close to {2*Pi} = 0.28319. The first fraction m/k between them is 11/39, so the sequences split at n = 39: A325735(39) = -37302968432 while A325740(39) = -37302968431.",
+   "extra_terms_checked": 3,
+   "interest": 0
+  },
+  {
+   "a": "A005586",
+   "b": "A212346",
+   "verdict": "TRIVIAL",
+   "reason": "Decompose a 132-avoiding permutation as alpha n beta (alpha above beta). Let F(n,c) count those where every element has fewer than c larger entries to its left; then F(n,c) = Sum_a F(a,c)*F(n-1-a, c-a-1), with F(m,c) = 1 for an empty part. This makes F(n,4) an obvious cubic, (n+3)(n^2-4)/6 = A005586(n-2), which proves the A212346 conjecture. Checked through n = 79 and by brute force for n <= 8.",
+   "extra_terms_checked": 44,
+   "interest": 1
+  },
+  {
+   "a": "A069107",
+   "b": "A182504",
+   "verdict": "DIVERGE",
+   "reason": "If k | F(k+1), Cassini gives F(2k+1) = (-1)^(k+1) mod k, so A182504 is exactly the odd terms of A069107. A069107 has a second even term, 6430346, found by a C search. So A069107(286) = 6430346 while A182504(285) = 6433829 = A069107(287).",
+   "extra_terms_checked": 250,
+   "interest": 2
+  },
+  {
+   "a": "A116453",
+   "b": "A397439",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both entries state that their tail is A005010 (9*2^m): A116453(n) = A005010(n-2) for n > 1, and A397439 has g.f. (1+x)^2/(1-2x) with tail = A005010.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A077998",
+   "b": "A373567",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both entries say they are essentially the same as A006356 (A077998 'apart from initial term', A373567 'essentially the same').",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A168642",
+   "b": "A283642",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "A168642(n) = A001045(n+3) for n > 0, and A283642(n) = A001045(n+2) (Hasler). Bridge: the Jacobsthal numbers A001045. Simulating Rule 678 confirms it through n = 128.",
+   "extra_terms_checked": 94,
+   "interest": 0
+  },
+  {
+   "a": "A086225",
+   "b": "A267880",
+   "verdict": "TRIVIAL",
+   "reason": "In Rule 233 the background turns ON and the middle column reads 1,0,1,0 and then all 1's (a cell inside an all-ON neighborhood stays ON, since 111 maps to 1). So the binary value is 1010 followed by ones, which is 11*2^(n-3) - 1. Verified by simulation through n = 200.",
+   "extra_terms_checked": 166,
+   "interest": 0
+  },
+  {
+   "a": "A175161",
+   "b": "A242475",
+   "verdict": "TRIVIAL",
+   "reason": "8*(2^n + 1) = 2^(n+3) + 8, an index shift of 2^n + 8.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A200865",
+   "b": "A217450",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "Both are Hardin's empirical counts. Computed independently by transfer matrices: A217450(n+3) = A200865(n) through n = 79, and the same identity holds for 4- and 5-letter alphabets. The reason is a bijection that is in neither entry: y -> (max(y_i, y_{i+1})) maps images of the 3-window min-filter on length L onto words of length L-1 with no strict interior peak or valley, with inverse w -> (min(w_{i-1}, w_i)). It follows from factoring the 3-window erosion into two 2-window erosions plus Galois-connection (opening/closing) arguments, linking a mathematical-morphology image count to a pattern-avoidance count; the proof is short.",
+   "extra_terms_checked": 52,
+   "interest": 4
+  },
+  {
+   "a": "A010740",
+   "b": "A010741",
+   "verdict": "TRIVIAL",
+   "reason": "If the inverse binomial transform of c is c shifted 3 to the left, then a(n) = c(n+3) satisfies binomial(a)(n) = c(n) = a(n-3), i.e. it 'shifts 3 places right under binomial transform'. The initial values c = 1,2,4 force a = 1,1,1. So A010740 is A010741 shifted by 3.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A300375",
+   "b": "A300677",
+   "verdict": "TRIVIAL",
+   "reason": "A300677 also allows a cell with all 6 neighbors equal, which can only be an interior middle-column cell. A reachability check on the n x 3 row-transfer automaton shows a valid array with such a cell exists only for n = 3 (4 vs 5). So the sequences agree for all n >= 4; the counts match through n = 79.",
+   "extra_terms_checked": 50,
+   "interest": 1
+  },
+  {
+   "a": "A161956",
+   "b": "A162370",
+   "verdict": "DIVERGE",
+   "reason": "The Poincare polynomials satisfy P_B28 = P_D28*(1+q^28), so coefficients agree below q^28 and b_28 = d_28 + 1. Computed: A161956(28) = 2623034798770459 while A162370(28) = 2623034798770458; the stored data stop at n = 23.",
+   "extra_terms_checked": 5,
+   "interest": 0
+  },
+  {
+   "a": "A033648",
+   "b": "A033656",
+   "verdict": "TRIVIAL",
+   "reason": "These are reverse-and-add trajectories that merge: 3 -> 6 -> 12 -> 33 and 21 -> 33.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A033651",
+   "b": "A033674",
+   "verdict": "TRIVIAL",
+   "reason": "These are reverse-and-add trajectories that merge: 9 -> 18 -> 99.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A155543",
+   "b": "A347478",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both are documented as powers of 4: A155543(n) = A000302(n) for n > 0, and A347478(n) = 4^(n+1) for n > 1 with a cross-reference to A000302.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A282266",
+   "b": "A282297",
+   "verdict": "DIVERGE",
+   "reason": "Simulated Rules 449 and 451 with the OEIS program's conventions, reproducing all stored terms. They first differ (beyond the skipped n = 1) at n = 26: A282266(26) = 111000000000000111111111111 while A282297(26) = 111100000000000111111111111.",
+   "extra_terms_checked": 3,
+   "interest": 0
+  },
+  {
+   "a": "A279878",
+   "b": "A282416",
+   "verdict": "TRIVIAL",
+   "reason": "Rules 213 and 469 differ only on (center OFF, 4 neighbors ON), and the full patterns do differ off-axis. On the axis, the interior segment alternates all-ON/all-OFF; such cells output the same under both rules whatever the off-axis rows hold (ON with L=R=1 always gives 0, OFF with L=R=0 always gives 1). The front region coincides. Verified by simulation through stage 600.",
+   "extra_terms_checked": 577,
+   "interest": 1
+  },
+  {
+   "a": "A116104",
+   "b": "A116121",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both are marked 'Duplicate of A115432, see proof at A115432' (Robert Israel). Both conditions reduce to k*(10^d+1) - 4 being a perfect square.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A162179",
+   "b": "A162411",
+   "verdict": "DIVERGE",
+   "reason": "P_B42 = P_D42*(1+q^42), so the coefficients first differ at n = 42: A162179(42) = 576456082263411094404107 while A162411(42) = 576456082263411094404106; the stored data stop at n = 18.",
+   "extra_terms_checked": 23,
+   "interest": 0
+  },
+  {
+   "a": "A000042",
+   "b": "A283590",
+   "verdict": "TRIVIAL",
+   "reason": "In Rule 657, from stage 3 on, the pattern is all-ON except an OFF center. That is a fixed point: an OFF cell with 4 ON neighbors stays OFF (bit 8 = 0), and ON cells with 3 or 4 ON neighbors stay ON (bits 7 and 9). The x-axis therefore reads 0 followed by n ones, which is the repunit. Verified by simulation through n = 200.",
+   "extra_terms_checked": 179,
+   "interest": 0
+  },
+  {
+   "a": "A162205",
+   "b": "A162492",
+   "verdict": "DIVERGE",
+   "reason": "P_B50 = P_D50*(1+q^50), so the coefficients first differ at n = 50: A162205(50) = 34655167030718478857009273073 while A162492(50) = 34655167030718478857009273072.",
+   "extra_terms_checked": 29,
+   "interest": 0
+  },
+  {
+   "a": "A285652",
+   "b": "A286731",
+   "verdict": "DIVERGE",
+   "reason": "Simulated Rules 81 and 213 along the diagonal, reproducing all stored terms. Beyond the skipped n = 2, they first differ at n = 38: A285652(38) = 111101110000000000000000000000000000000 while A286731(38) = 111111110000000000000000000000000000000.",
+   "extra_terms_checked": 17,
+   "interest": 0
+  },
+  {
+   "a": "A118297",
+   "b": "A118512",
+   "verdict": "TRIVIAL",
+   "reason": "Both are trajectories of the same map, reverse digits then add 1. 11 -> 12 -> 22, so S_11 runs into S_22 after two steps and the two trajectories are identical from then on.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A116974",
+   "b": "A137922",
+   "verdict": "TRIVIAL",
+   "reason": "After their first few terms both are just the primes. A116974 = {6} plus the primes (a prime's only proper divisor is 1; 1+2+3 = 1*2*3 gives 6). A137922 = 3, 4, 5, 6 followed by the primes, as its own comment and program state.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A060343",
+   "b": "A118753",
+   "verdict": "TRIVIAL",
+   "reason": "Writing composites as 4 + excess, the possible excesses are 0, 2, 4, 5, 6, 8, ... For n >= 2, n composites can reach every sum 4n + e except e = 1 and e = 3. So the smallest such prime is the smallest prime >= 4n+5, which is nextprime(4(n+1)) = A118753(n+1). Checked by DP for n <= 200.",
+   "extra_terms_checked": 143,
+   "interest": 0
+  },
+  {
+   "a": "A052147",
+   "b": "A123123",
+   "verdict": "TRIVIAL",
+   "reason": "Both are prime(n)+2 from the third term on. A123123's comment proves it: m mod k = 2 for exactly one k in 2..m exactly when m-2 is prime.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A197638",
+   "b": "A362866",
+   "verdict": "DIVERGE",
+   "reason": "A362866 is exactly the numbers 2p with p > 3 prime (Hoft's proof in the entry). A197638 is 4, then the 2p with p > 5, plus 'proper' GA1 numbers; the smallest of these is 183783600, which I confirmed is GA1 using 60-digit precision. First difference at n = 5320309 = primepi(91891800)-1: A197638(n) = 183783600 but A362866(n) = 2*nextprime(91891800) = 183783658.",
+   "extra_terms_checked": 183,
+   "interest": 1
+  },
+  {
+   "a": "A187026",
+   "b": "A202063",
+   "verdict": "TRIVIAL",
+   "reason": "For n >= 4, A202063(n) >= A187026(n) always, with equality iff the cofactor k = (p_m+p_{m+1})/(2q) at the first m is q-smooth. Here q = prime(n), and m runs over consecutive-prime pairs. I computed both for n <= 5000 and they agree; the largest k/q seen was 0.82 (at q = 11). A counterexample would need the first multiple of 2q to appear only beyond about 2q^2. That is heuristically impossible but not provable unconditionally.",
+   "extra_terms_checked": 4940,
+   "interest": 1
+  },
+  {
+   "a": "A232105",
+   "b": "A269748",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "A232105's %F (Bagnera's count of groups of order p^5 for p > 3) is word for word the defining formula of A269748. Note that A269748's %F wrongly says '=A232106(n) for n>=3'; A232106 counts order p^6, and the correct reference is A232105.",
+   "extra_terms_checked": 0,
+   "interest": 1
+  },
+  {
+   "a": "A215279",
+   "b": "A215358",
+   "verdict": "TRIVIAL",
+   "reason": "The only prime congruent to 0 mod 11 is 11 itself, so the two sequences differ only by the term 11.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A141545",
+   "b": "A274557",
+   "verdict": "DIVERGE",
+   "reason": "sigma(k) = m(k+6) with m = 2 gives A141545, but m = 3 also has solutions: 17850, 64890 and 884730 (searched to 1e8). First difference: A274557(433) = 17850 (sigma = 53568 = 3*17856), while the aligned A141545(431) = 17994.",
+   "extra_terms_checked": 380,
+   "interest": 1
+  },
+  {
+   "a": "A036451",
+   "b": "A346729",
+   "verdict": "TRIVIAL",
+   "reason": "Both take the maximum of d(x) over one binary-length window: (2^(n-1), 2^n] versus [2^(n-1), 2^n - 1]. The only difference is the endpoints 2^n and 2^(n-1), with d = n+1 and n. For n >= 4, 3*2^(n-2) has 2(n-1) > n+1 divisors and lies in both windows, so the maxima agree.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A215282",
+   "b": "A215361",
+   "verdict": "TRIVIAL",
+   "reason": "The two sequences differ only by the prime 19, the only prime congruent to 0 mod 19.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A215135",
+   "b": "A215379",
+   "verdict": "TRIVIAL",
+   "reason": "The two sequences differ only by the prime 13, the only prime congruent to 0 mod 13.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A045346",
+   "b": "A045360",
+   "verdict": "TRIVIAL",
+   "reason": "The two sequences differ only by the prime 7, the only prime congruent to 0 mod 7.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A273766",
+   "b": "A273780",
+   "verdict": "TRIVIAL",
+   "reason": "Rules 913 and 929 differ in one bit, and both turn the whole plane ON by stage 4. Since bit 9 is set in both, all-ON is a fixed point, so both counts equal (2n+1)^2 for n >= 4. Simulated 259 stages.",
+   "extra_terms_checked": 212,
+   "interest": 0
+  },
+  {
+   "a": "A045329",
+   "b": "A045341",
+   "verdict": "TRIVIAL",
+   "reason": "The two sequences differ only by the prime 7.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A045333",
+   "b": "A045343",
+   "verdict": "TRIVIAL",
+   "reason": "The two sequences differ only by the prime 7.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A112051",
+   "b": "A216244",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "A112046 values are primes. Value p first appears at m = p^2, i.e. index (p^2-1)/2, unless some prime r in (p^2-p, p^2) has least quadratic non-residue exactly p; every other m < p^2 is ruled out by multiplicativity and the bound n(r)(n(r)-1) < r. So the identity A112051(n) = (prime(n)^2-1)/2 for n >= 4 (for p = 5 the exception r = 23 does occur) reduces to n(r) < sqrt(r)-1. That needs explicit Burgess-type bounds (e.g. Norton, Trevino) for r > ~1e8, plus my direct check of all p <= 14107 (A112046 computed to index 1e8). A short proof exists, but it uses analytic number theory; the connection is Jacobi symbols to Pythagorean legs, neither entry notes it.",
+   "extra_terms_checked": 1620,
+   "interest": 3
+  },
+  {
+   "a": "A020749",
+   "b": "A077868",
+   "verdict": "TRIVIAL",
+   "reason": "This is the standard Pisot-sequence argument: b(n) = A077868(n+3) = c*theta^n - 1 + O(theta^{-n/2}), with theta the real root of x^3-x^2-1. The quantity (b(n-1)^2 - b(n)b(n-2))/b(n-2) tends to (theta-1)^2 ≈ 0.2168, which lies in (0,1), with exponentially decaying error, so the floor recurrence reproduces b(n). Verified exactly for n < 10000. This settles A020749's recurrence, which the entry calls 'not known to hold in general'.",
+   "extra_terms_checked": 9960,
+   "interest": 2
+  },
+  {
+   "a": "A157726",
+   "b": "A169622",
+   "verdict": "TRIVIAL",
+   "reason": "A169622(n) = 3 + F(n+2), as stated in its own %F, which equals A157726(n+2) = F(n+2) + 3.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A031367",
+   "b": "A378853",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both entries document themselves as the Moebius transform of the Lucas numbers A000032. A031367 differs from it only at n=2, since the Moebius transform of L(n)-1-(-1)^n is MT(L) - 2[n=2]; A378853 differs only at n=3. So they agree for n >= 4. The bridge is MT(A000032) (n*A060280, n*A006206).",
+   "extra_terms_checked": 0,
+   "interest": 3
+  },
+  {
+   "a": "A048752",
+   "b": "A293376",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both are pod(k)/tau(k) evaluated over a sequence. A048751's comment says it equals A120736 without the terms 1 and 2, and those give A293376's two extra leading 1's.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A023494",
+   "b": "A023499",
+   "verdict": "TRIVIAL",
+   "reason": "Both are (distinct Fibonacci numbers) + (non-Lucas numbers, where A023499 prepends 1, 2, 3). With these index shifts, A023494(n) = A023499(n+2); verified for 297 terms.",
+   "extra_terms_checked": 260,
+   "interest": 0
+  },
+  {
+   "a": "A074969",
+   "b": "A336910",
+   "verdict": "DIVERGE",
+   "reason": "Between 30030 and about 3.3e6 the Erdos-Kac threshold lies between 5 and 6, so A336910 contains every number with omega >= 6, not only omega = 6. First difference: A336910(719) = 510510 (omega 7), while the aligned A074969(716) = 511290.",
+   "extra_terms_checked": 682,
+   "interest": 0
+  },
+  {
+   "a": "A078836",
+   "b": "A131352",
+   "verdict": "TRIVIAL",
+   "reason": "A131352(n) = 2^(n-2)*(n+4) = A078836(n+4), where A078836(n) = n*2^(n-6).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A019424",
+   "b": "A048256",
+   "verdict": "TRIVIAL",
+   "reason": "A048256 is the finite, complete list of the 30 numbers with sigma = 6^6 = 46656. These form a contiguous block of A019424 (sigma a sixth power); no number in [17490, 46117] has sigma equal to 5^6 or 7^6. A048256 then simply ends, while A019424 continues with 172011.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A283523",
+   "b": "A290682",
+   "verdict": "TRIVIAL",
+   "reason": "Under Rules 913 and 929 the whole plane is ON from stage 4 on (a fixed point), so the x-axis and the diagonal both read 2^(n+1)-1. Simulated 259 stages.",
+   "extra_terms_checked": 226,
+   "interest": 0
+  },
+  {
+   "a": "A250798",
+   "b": "A316528",
+   "verdict": "TRIVIAL",
+   "reason": "A250798 is counted by a 4-state column transfer matrix, so it satisfies a recurrence of order <= 4. It matches 5*2^m - 2F(m+3) = A316528(n+1) for 79 terms, which proves Hardin's empirical recurrence.",
+   "extra_terms_checked": 50,
+   "interest": 1
+  },
+  {
+   "a": "A213667",
+   "b": "A293004",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "A213667(n) = A001333(n+1)-1 (stated in its %F), and A293004(n) = ((1-sqrt2)^n + (1+sqrt2)^n)/2 - 1 = A001333(n)-1 (Barker's %F). The bridge is A001333.",
+   "extra_terms_checked": 0,
+   "interest": 1
+  },
+  {
+   "a": "A207170",
+   "b": "A303716",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "With 2 rows the vertical constraints in A207170 are vacuous, so A207170(n) = w(n)^2, with w = words avoiding 000 and 101. In A303716's n x 5 king-move arrays, the solutions are isolated 1s on non-corner boundary cells with Chebyshev distance >= 3. The top and bottom rows act as independent virtual end cells of the left and right columns, so A303716(n) = g(n)^2 for n >= 4, with g = words avoiding 11 and 101 (Narayana-type), and g(n) = w(n-1). Proven rigorously: a 21-state transfer matrix plus agreement for n = 4..61. This also proves Hardin's empirical recurrence.",
+   "extra_terms_checked": 31,
+   "interest": 3
+  },
+  {
+   "a": "A055819",
+   "b": "A126358",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both are 2*F(2n+-1) with an index shift: A055819 is 'essentially the same as A052995', and A126358(n) = A052995(n+1). The bridge is A052995 / 2*A001519.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A079782",
+   "b": "A121934",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both entries state the formula lcm(1..n) - 1 = A003418 - 1. A121934's data appears to start at a(0) even though its %O says 1, which is a minor offset glitch. The bridge is A003418.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A161972",
+   "b": "A162376",
+   "verdict": "DIVERGE",
+   "reason": "The Poincare polynomials satisfy B_29(x) = D_29(x)*(1+x^29), so the coefficients agree up to x^28. First difference at n=29: B_29 gives 10312476519672398, D_29 gives 10312476519672397.",
+   "extra_terms_checked": 5,
+   "interest": 0
+  },
+  {
+   "a": "A200881",
+   "b": "A203094",
+   "verdict": "TRIVIAL",
+   "reason": "Map w -> u_i = min(w_i, w_{i+1}); the inverse is w_i = max(u_{i-1}, u_i). This is a bijection from length-(m+1) words with no peaks (A203094) to length-m words with no interior valleys, and complementing x -> 3-x gives no interior peaks. So A203094(n+3) = A200881(n). Verified for alphabets of size 3-5 by brute force, and for 298 terms with alphabet size 4.",
+   "extra_terms_checked": 274,
+   "interest": 2
+  },
+  {
+   "a": "A077209",
+   "b": "A098752",
+   "verdict": "DIVERGE",
+   "reason": "Both follow the pattern 10^k+1, 10^k+2, 2*10^k+1 until the squarefree condition fails: 10^11+1 = 11^2*23*4093*8779. First difference: A077209(29) = 100000000002, while A098752(32) = 100000000001.",
+   "extra_terms_checked": 7,
+   "interest": 0
+  },
+  {
+   "a": "A001542",
+   "b": "A117547",
+   "verdict": "TRIVIAL",
+   "reason": "A001542 is, by its own comment, exactly the k with 2k^2+1 a square (Pell equation). A117547 adds only k = 11 (2*121+1 = 3^5), which the alignment skips. Higher-power solutions of 1+2y^2 = x^n are ruled out via Z[sqrt-2] and Lehmer primitive-divisor results; my search for odd prime exponents up to 97 found only 11.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A155148",
+   "b": "A178500",
+   "verdict": "UNCLEAR",
+   "reason": "After 2 and 3, both are powers of 10, but equality is equivalent to the open digit problem of whether 2, 3 and 10^j are the only k whose 4th power has exactly two distinct digits. My suffix search found no other k < 1e19 (10 not dividing k). There is no structural reason, only heuristic sparsity.",
+   "extra_terms_checked": 0,
+   "interest": 1
+  },
+  {
+   "a": "A284020",
+   "b": "A284087",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "Claim: Rule 779 at stage n+1 equals Rule 798's stage n on the diamond |x|+|y| <= n, an OFF ring at distance n+1, and ON outside. Hence A284020(n+1) = A284087(n) for all n. Proof by induction using the invariant that in Rule 798's pattern the outer ring is all ON and all inner OFF cells have one checkerboard color; the two rules agree on every neighborhood that then occurs. Verified for 400 stages. This is a CA-internal time-shift duality, not cross-field.",
+   "extra_terms_checked": 378,
+   "interest": 2
+  },
+  {
+   "a": "A162149",
+   "b": "A162384",
+   "verdict": "DIVERGE",
+   "reason": "B_35(x) = D_35(x)*(1+x^35). First difference at n=35: B gives 38500365808265701431, D gives 38500365808265701430.",
+   "extra_terms_checked": 16,
+   "interest": 0
+  },
+  {
+   "a": "A162181",
+   "b": "A162412",
+   "verdict": "DIVERGE",
+   "reason": "B_43(x) = D_43(x)*(1+x^43). First difference at n=43: B gives 2279144903159762480041010, D gives 2279144903159762480041009.",
+   "extra_terms_checked": 24,
+   "interest": 0
+  },
+  {
+   "a": "A002275",
+   "b": "A283590",
+   "verdict": "TRIVIAL",
+   "reason": "Under Rule 657, the state from stage 3 on is all ON except the origin, and this is a fixed point: the origin has index 8 and bit 8 = 0; its neighbors have index 7 and bit 7 = 1. So the x-axis from the origin to the right edge reads a 0 followed by n ones, which is the repunit R_n. Simulated 259 stages.",
+   "extra_terms_checked": 237,
+   "interest": 0
+  },
+  {
+   "a": "A169186",
+   "b": "A170086",
+   "verdict": "DIVERGE",
+   "reason": "Both agree with the free-product series (1+x)/(1-28x) up to their respective relation orders (27 and 37). First difference at n=27: A169186(27) = 1226046135566770243641083060392313224810, while A170086(27) = 1226046135566770243641083060392313225216.",
+   "extra_terms_checked": 9,
+   "interest": 0
+  },
+  {
+   "a": "A287130",
+   "b": "A288761",
+   "verdict": "TRIVIAL",
+   "reason": "Rules 245 and 501 differ only in bit 8 (OFF center with 4 ON neighbors). That neighborhood occurs only at step 1 at the origin; the difference heals by stage 3, after which the full configurations coincide and bit 8 never fires. Verified identical full patterns for stages 3..300.",
+   "extra_terms_checked": 279,
+   "interest": 0
+  },
+  {
+   "a": "A118298",
+   "b": "A118512",
+   "verdict": "TRIVIAL",
+   "reason": "Both are trajectories of the 'reverse digits and add 1' map. A118512 starts 11,12,22,23,..., so it passes through 23, which is where A118298 starts. From there the two trajectories are identical.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A168101",
+   "b": "A357778",
+   "verdict": "TRIVIAL",
+   "reason": "A168101(n)=5n for n>=3 (the sum of the five integers n-2..n+2), with 6,10 before that. A357778(n)=5n-15 for n>4 and C(n,2) below that, so A357778(n+3)=A168101(n) once n>=1. This is an index shift of the same eventually linear sequence.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A157996",
+   "b": "A197636",
+   "verdict": "DIVERGE",
+   "reason": "A197636 is all primes except the Wilson primes 5, 13, 563. A157996 contains 563, since 563 = 1+5+557. Aligned, A157996(98)=563 while A197636(101)=569.",
+   "extra_terms_checked": 42,
+   "interest": 1
+  },
+  {
+   "a": "A051741",
+   "b": "A227388",
+   "verdict": "TRIVIAL",
+   "reason": "A014011 is chi(i+1)=max_k (k+1)(i+1-chi(k)), the upper envelope of lines with slopes k+1, and A226390 is its step size. The step goes from n+1 to n+2 exactly where line n+1 overtakes line n, at i+1=(n+2)chi(n+1)-(n+1)chi(n), which is A051741(n) by Irvine's formula. So A051741(n)=A227388(n+2); checked for 372 terms.",
+   "extra_terms_checked": 317,
+   "interest": 1
+  },
+  {
+   "a": "A216740",
+   "b": "A216772",
+   "verdict": "DIVERGE",
+   "reason": "x^54=-2 has no solution mod p whenever x^18=-2 has none. The reverse fails when 27 | p-1 and -2 is an 18th-power residue but not a 54th-power residue. First case: index 1390, where A216740=17669 and A216772=17659 (17658 = 2*3^4*109).",
+   "extra_terms_checked": 1337,
+   "interest": 0
+  },
+  {
+   "a": "A215275",
+   "b": "A215427",
+   "verdict": "TRIVIAL",
+   "reason": "The residue sets {2,4,5,6} and {0,2,4,5,6} mod 11 differ only by the class 0, which contains the single prime 11. That prime sits in the skipped leading terms.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A046616",
+   "b": "A046627",
+   "verdict": "DIVERGE",
+   "reason": "A046627 keeps only first occurrences; A046616 only removes 1s and 5s and keeps repeats. The numerator 86 comes back in row 18 (element 86/5 = (5*18-4)/5). So A046616(81)=86 while A046627(83)=445978.",
+   "extra_terms_checked": 29,
+   "interest": 0
+  },
+  {
+   "a": "A241199",
+   "b": "A369304",
+   "verdict": "TRIVIAL",
+   "reason": "The coefficient of x^j in (x-1)^3(x+1)^k is the third difference of C(k,j-3..j), so 'zero coefficient' and '4 consecutive binomials on a quadratic' are the same condition. By Israel's factorization g=(n-3-2i)((n-3-2i)^2-3n-7), the non-central zeros occur exactly when 3n+7 is a square, which is also A369304's formula. The extra terms 3 and 6 come from boundary zeros that use binomials outside 0..n/2.",
+   "extra_terms_checked": 0,
+   "interest": 2
+  },
+  {
+   "a": "A008897",
+   "b": "A008898",
+   "verdict": "TRIVIAL",
+   "reason": "Both are trajectories of the 3x-1 map. A008897 goes 83,248,124,62 and A008898 goes 84,42,21,62, so they merge at 62.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A047876",
+   "b": "A183042",
+   "verdict": "TRIVIAL",
+   "reason": "BFS shows that knight distances on the quarter-infinite board (A049604) and the full plane (A065775) differ only at cell (1,1): 4 versus 2. So the antidiagonal sums differ only at n=2 (8 versus 6). Checked for 200 terms.",
+   "extra_terms_checked": 149,
+   "interest": 0
+  },
+  {
+   "a": "A003628",
+   "b": "A216776",
+   "verdict": "DIVERGE",
+   "reason": "-2 is a non-residue exactly for p = 5,7 mod 8. When 31 | p-1, -2 can be a quadratic residue without being a 62nd power. First case: p=1427 = 3 mod 8, 1426 = 2*23*31. At index 117, A003628=1429 and A216776=1427.",
+   "extra_terms_checked": 72,
+   "interest": 0
+  },
+  {
+   "a": "A215153",
+   "b": "A215380",
+   "verdict": "TRIVIAL",
+   "reason": "The residue sets {1,2,3} and {0,1,2,3} mod 17 differ only by the class 0, which holds only the prime 17. That prime is in the skipped prefix.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A045347",
+   "b": "A045361",
+   "verdict": "TRIVIAL",
+   "reason": "The residue sets differ only by the class 0 mod 7, which holds only the prime 7. That prime is in the skipped prefix.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A292705",
+   "b": "A335140",
+   "verdict": "DIVERGE",
+   "reason": "5390 = 2*5*7^2*11 is nonsquarefree and unitary abundant, but no subset of its unitary divisors sums to it (a unitary weird number). So A292705(78)=5390 while A335140(80)=5460. Later, 87360 (unitary perfect) is in A335140 only.",
+   "extra_terms_checked": 33,
+   "interest": 0
+  },
+  {
+   "a": "A045332",
+   "b": "A045342",
+   "verdict": "TRIVIAL",
+   "reason": "The two sets differ only by the class 0 mod 7, which holds only the prime 7, in the skipped prefix.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A045359",
+   "b": "A045368",
+   "verdict": "TRIVIAL",
+   "reason": "The two sets differ only by the class 0 mod 7, which holds only the prime 7, in the skipped prefix.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A270937",
+   "b": "A271094",
+   "verdict": "TRIVIAL",
+   "reason": "I simulated both rules with Price's code for 300 stages. Each gives a blinking background plus a fixed period-2 plus-shaped blob at the centre. The blobs always differ by exactly 4 cells, so the ON counts differ by a constant 4 from stage 3 on and the first differences agree.",
+   "extra_terms_checked": 257,
+   "interest": 0
+  },
+  {
+   "a": "A084921",
+   "b": "A112051",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "A112052 (=2*A112051+1) has the comment 'from n>=4 onward seems to be squares of primes (A001248)', and (p^2-1)/2 = A084921. This is only a conjecture there, but it reduces to n(q) < sqrt(q) for primes q > 23 (least quadratic non-residue), which follows from explicit Burgess bounds plus computation. I checked first occurrences for all odd m < 10^8, which confirms 1229 terms.",
+   "extra_terms_checked": 1186,
+   "interest": 5
+  },
+  {
+   "a": "A022406",
+   "b": "A355288",
+   "verdict": "TRIVIAL",
+   "reason": "Same recurrence a(n)=a(n-1)+a(n-2)+1 from the same consecutive pair 3,7. A355288 just has an extra leading 1.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A043806",
+   "b": "A043824",
+   "verdict": "DIVERGE",
+   "reason": "The sets differ first at numbers with 18 runs. The smallest such number is 101010101010101010_3 = 145282683, which is in A043806 only. At index 13312923, A043806=145282683 and A043824=145290064 (found by digit DP).",
+   "extra_terms_checked": 13312887,
+   "interest": 0
+  },
+  {
+   "a": "A055499",
+   "b": "A073022",
+   "verdict": "TRIVIAL",
+   "reason": "Both follow nextprime(a(n-1)+a(n-2)). The pairs (2,5) and (3,5) both give 11 (the next prime after 7 and after 8), and the trajectories coincide from then on.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A023496",
+   "b": "A023500",
+   "verdict": "TRIVIAL",
+   "reason": "Same construction (Fibonacci term plus the n-th 'non-Lucas or small' number), offset by one index. A023500(n+1)=F(n+4)+d(n)=A023496(n) for n>=2, because the two d-lists agree after the shift once past 1,2,3.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A083318",
+   "b": "A127904",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "A083318 has the formula a(n)=Min{m: A008687(m)=n+1}, which is A127904's definition shifted. Both entries also say they are essentially A000051 (2^n+1).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A079859",
+   "b": "A129953",
+   "verdict": "TRIVIAL",
+   "reason": "A129953(n)=(n+2)*2^(n-2)=A079859(n+2), with both closed forms stated in the entries.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A026622",
+   "b": "A176448",
+   "verdict": "TRIVIAL",
+   "reason": "A026622 has the formula a(n)=7*2^(n-2)-2 for n>=2, from s(n)=2s(n-1)+2, which is A176448(n-2).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A283650",
+   "b": "A290194",
+   "verdict": "TRIVIAL",
+   "reason": "I simulated Rule 705 for 200 stages. From stage 3 the pattern is an all-ON background with a centred 3x3 block of zeros whose centre cell blinks. The left half-axis and the half-diagonal pass through equivalent cells of this symmetric block, so they read the same bit strings.",
+   "extra_terms_checked": 167,
+   "interest": 0
+  },
+  {
+   "a": "A289521",
+   "b": "A302487",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "A302487 has the formula a(n)=(3^(n-3)+5)/2=A291773(n) for n>=3 (Howroyd). That is literally A289521's closed form (3^n+5)/2 shifted by 3; the bridge is A291773, the domination number.",
+   "extra_terms_checked": 0,
+   "interest": 2
+  },
+  {
+   "a": "A251889",
+   "b": "A252259",
+   "verdict": "TRIVIAL",
+   "reason": "Transfer-matrix counts show both equal the 'common' class (no zero row/column sums, no zero diagonal sums) from n=4 (6 rows) on. The common class is contained in both, so the extra zero-sum cases die out at 6 rows. Every 3x3 block lies in a 6x5 window, so the sets coincide for all n>=4 (checked to n=45).",
+   "extra_terms_checked": 14,
+   "interest": 1
+  },
+  {
+   "a": "A253153",
+   "b": "A253437",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "Proven equal for n>=4: transfer matrices of size 64 and 256 give linear recurrences, and the counts agree on n=4..420, more than the 320 values needed. Both equal 9*2^(n-1)+48. The arrays have different shapes (3 x (n+1) after transposing, versus 4 x (n+1) with an extra antidiagonal condition) and there is no obvious bijection. This looks like a closed-form coincidence within one area rather than a deep link.",
+   "extra_terms_checked": 390,
+   "interest": 2
+  },
+  {
+   "a": "A163765",
+   "b": "A225034",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "Proven for n>=3. A048775(n)=C(2n+1,n)-n-1 by hockey-stick sums; the -n-1 part only affects the first two terms of the inverse binomial transform. So the claim reduces to A225034(n)=A005773(n)+A005773(n+1), i.e. the inverse binomial transform of C(2n+3,n+1). I checked this symbolically against A225034's GF theorem (both in Q(t, sqrt((1+t)(1-3t)))) and to 400 terms. It links order-preserving partial transformations of intervals with 101-avoiding binary words.",
+   "extra_terms_checked": 372,
+   "interest": 4
+  },
+  {
+   "a": "A090637",
+   "b": "A129150",
+   "verdict": "TRIVIAL",
+   "reason": "Arithmetic-derivative trajectories merge: 28'=32, and 8'=12, 12'=16, 16'=32.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A161976",
+   "b": "A162377",
+   "verdict": "DIVERGE",
+   "reason": "The Poincare polynomials satisfy B_n(q)=(1+q^n)D_n(q), so the coefficients agree below length n and B gains 1 at length n. At length 30, B_30 has 40566984336176517 and D_30 has 40566984336176516.",
+   "extra_terms_checked": 6,
+   "interest": 0
+  },
+  {
+   "a": "A202609",
+   "b": "A207443",
+   "verdict": "TRIVIAL",
+   "reason": "Transposing gives 3 x (n+2) arrays with the same row condition. Swapping rows 1 and 2 maps the allowed 3-bit columns that avoid {001,010} onto those that avoid {001,100}, and leaves the identical per-row condition unchanged. So A202609(n)=A207443(n+2); checked with a transfer matrix.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A178530",
+   "b": "A368416",
+   "verdict": "TRIVIAL",
+   "reason": "Same definition (k = concat(a,b) = a^2+b^2, with the second part having no leading zero). They differ only on degenerate splits with a=0 or b=0, which give exactly 0, 1 and 100, the skipped prefix.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A033657",
+   "b": "A033660",
+   "verdict": "TRIVIAL",
+   "reason": "Reverse-and-add trajectories merge: 23 -> 55 -> 110 -> 121 and 29 -> 121.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A155148",
+   "b": "A178501",
+   "verdict": "UNCLEAR",
+   "reason": "The powers of 10 are trivially in A155148. Equality beyond the stored data needs every k > 3 with k^4 having exactly two distinct digits to be a power of 10, which is an open digit problem with no structural proof. Multiples of 10 reduce to smaller k, and my search of k not divisible by 10 up to 2*10^9 found only 2 and 3.",
+   "extra_terms_checked": 0,
+   "interest": 1
+  },
+  {
+   "a": "A052560",
+   "b": "A052619",
+   "verdict": "TRIVIAL",
+   "reason": "The e.g.f. 3x^3/(1-x) gives 3*n! for n>=3, which is A052560.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A162150",
+   "b": "A162388",
+   "verdict": "DIVERGE",
+   "reason": "Since B_n(q)=(1+q^n)D_n(q), the sequences first differ at length 36: B_36 has 151874845435387573583 and D_36 has 151874845435387573582.",
+   "extra_terms_checked": 17,
+   "interest": 0
+  },
+  {
+   "a": "A162182",
+   "b": "A162413",
+   "verdict": "DIVERGE",
+   "reason": "Since B_n(q)=(1+q^n)D_n(q), the sequences first differ at length 44: B_44 has 9013483894338504637077904 and D_44 has 9013483894338504637077903.",
+   "extra_terms_checked": 25,
+   "interest": 0
+  },
+  {
+   "a": "A055860",
+   "b": "A152917",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both entries say they are A000169 (n^(n-1)) with a different prefix or offset: A055860(n)=(n+1)^n=A152917(n+1).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A188588",
+   "b": "A357711",
+   "verdict": "TRIVIAL",
+   "reason": "A188588(n)=(n+1)*n!/2=(n+1)!/2 for n>=2. For A357711, (-2)_n vanishes for n>=3, so ((2)_n+(-2)_n)/2=(n+1)!/2.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A118299",
+   "b": "A118513",
+   "verdict": "TRIVIAL",
+   "reason": "Both are trajectories of the same map (reverse digits, then add 1). S_13 goes 13 -> 32 -> 24 and from there follows S_24 exactly.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A039832",
+   "b": "A263990",
+   "verdict": "TRIVIAL",
+   "reason": "The two sequences differ only by 26, which is in A039832 (27=3^3 has 4 divisors) but not A263990. Proof: a number with 4 divisors is pq or p^3. Since p^3-1=(p-1)(p^2+p+1) is a squarefree semiprime only for p=3 and p^3+1 never is, 26 is the only exception. Checked to 2e6.",
+   "extra_terms_checked": 42000,
+   "interest": 0
+  },
+  {
+   "a": "A004652",
+   "b": "A181385",
+   "verdict": "TRIVIAL",
+   "reason": "In base b=floor(n/2)+1, n has digits (1, n-b), and its reversal is (n-b)b+1 = ceil(n^2/4). That is the largest two-digit reversal, and reversals with 3 or more digits are below n^{3/2}. So A181385(n)=A004652(n) for all n except n=2 (2 vs 1); A004652 also has Nomoto's formula. Brute force agrees to n=399.",
+   "extra_terms_checked": 340,
+   "interest": 0
+  },
+  {
+   "a": "A053662",
+   "b": "A067241",
+   "verdict": "DIVERGE",
+   "reason": "A067241 contains 8 (gcd(16!+1, 8!+1)=61) but A053662 does not: A053662(3)=9 vs A067241(3)=8. A053662 is contained in A067241 by Wilson's theorem. No other extra term up to k=15000, but extras like 8 (a prime q>2k+1 dividing both numbers) are heuristically expected to recur very rarely.",
+   "extra_terms_checked": 751,
+   "interest": 1
+  },
+  {
+   "a": "A001749",
+   "b": "A062876",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "A062876 has the formula a(n)=4*A000040(n) for n>=2 (Sycamore), which is A001749. They differ only at n=1 (8 vs 4).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A215276",
+   "b": "A215428",
+   "verdict": "TRIVIAL",
+   "reason": "The residue sets differ only by class 0 mod 13, so the sequences differ only by the prime 13.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A058517",
+   "b": "A081310",
+   "verdict": "DIVERGE",
+   "reason": "A058517(87)=1026 vs A081310(88)=1038. 1026=2+2^10 is prime + 3-smooth, so A081310 omits it, while A058517 (only 3^x allowed) keeps it. A081310 also has odd terms such as 1719 that A058517 cannot have.",
+   "extra_terms_checked": 34,
+   "interest": 0
+  },
+  {
+   "a": "A378146",
+   "b": "A385243",
+   "verdict": "TRIVIAL",
+   "reason": "Same definition, since 16p^4=(2p)^4. A385243 just prepends 0 and 1.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A055939",
+   "b": "A067690",
+   "verdict": "DIVERGE",
+   "reason": "A067690(3)=61 (from n=8, gcd(16!+1, 8!+1)=61) vs A055939(3)=19. Otherwise the gcd equals the prime 2n+1 for every n<=15000, by Wilson's theorem plus the fact that a sporadic common factor is rare.",
+   "extra_terms_checked": 751,
+   "interest": 1
+  },
+  {
+   "a": "A064161",
+   "b": "A138636",
+   "verdict": "TRIVIAL",
+   "reason": "6p is abundant, and for p>=7 the multiples p, 2p, 3p, 4p, 5p are not abundant, so the least abundant multiple of p is 6p for n>=4. A064161's own formula says this; the two differ only at n=2,3.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A042986",
+   "b": "A045321",
+   "verdict": "TRIVIAL",
+   "reason": "The residue sets differ only by class 0 mod 5, so the sequences differ only by the prime 5.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A215281",
+   "b": "A215360",
+   "verdict": "TRIVIAL",
+   "reason": "The residue sets differ only by class 0 mod 17, so the sequences differ only by the prime 17.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A045350",
+   "b": "A045362",
+   "verdict": "TRIVIAL",
+   "reason": "The residue sets differ only by class 0 mod 7, so the sequences differ only by the prime 7.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A000437",
+   "b": "A122699",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Same definition. Both entries say they are (essentially) the same as A095809.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A045351",
+   "b": "A045363",
+   "verdict": "TRIVIAL",
+   "reason": "The residue sets differ only by class 0 mod 7, so the sequences differ only by the prime 7.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A045401",
+   "b": "A045416",
+   "verdict": "TRIVIAL",
+   "reason": "The residue sets differ only by class 0 mod 7, so the sequences differ only by the prime 7.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A271007",
+   "b": "A272567",
+   "verdict": "TRIVIAL",
+   "reason": "Rules 245 and 501 differ only in bit 8 (off cell with 4 ON neighbours). That neighbourhood occurs only at stage 1, so the full configurations differ only at stage 2 and coincide from stage 3 on. The first differences therefore differ only at n=1,2 (-4 vs -3, 40 vs 39). Simulated to n=298.",
+   "extra_terms_checked": 255,
+   "interest": 0
+  },
+  {
+   "a": "A091915",
+   "b": "A319054",
+   "verdict": "TRIVIAL",
+   "reason": "Both equal the max partition product A000792(n), except when 3|n. There the all-3s partition is odd and also periodic (multiplicity n/3), and both maxima drop to 8*3^(n/3-2), achieved e.g. by 4+2+3+...+3. They differ only at n=1 (0 vs 1) and n=3 (2 vs 3).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A046107",
+   "b": "A204845",
+   "verdict": "TRIVIAL",
+   "reason": "For p not 2, 3 or 5, 1/p has period n exactly when p is a primitive prime factor of the repunit R_n. The only displacement is p=3 (period 1, but it first divides R_3), plus the placeholder 1 in A204845's first row.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A194284",
+   "b": "A194426",
+   "verdict": "DIVERGE",
+   "reason": "A194284(1)=12 vs A194426(1)=45. A194284 also contains 12 and 63, whose cototients 8=2^3 and 27=3^3 are composite prime powers, which A194426 excludes. All data fits n=p^2*q with p+q-1 prime or equal to p^2. On that pattern the next difference is 2107=7^2*43 (cototient 7^3), just past A194284's stored range (A194234 itself is not on disk).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A055521",
+   "b": "A240768",
+   "verdict": "TRIVIAL",
+   "reason": "Same definition: if prepending a digit d to p gives a prime, that prime is again left-truncatable. They differ only in that A055521 requires at least two digits, which excludes 2 and 5.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A090129",
+   "b": "A171869",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both are powers of 2 (A000079) after their initial terms. A090129 says it is essentially A000079, and A171869 has the formula a(n)=2^(n-4) for n>=5.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A144760",
+   "b": "A144814",
+   "verdict": "TRIVIAL",
+   "reason": "Same map A087712: the trajectory of 10 goes 10 -> 13 -> 6 and then follows the trajectory of 6.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A134067",
+   "b": "A307457",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both entries say they are essentially A095121 (2^(n+1)-2, A000918). The Apollonian longest-path formula is from Howroyd in A307457.",
+   "extra_terms_checked": 0,
+   "interest": 1
+  },
+  {
+   "a": "A033894",
+   "b": "A033906",
+   "verdict": "TRIVIAL",
+   "reason": "Same Sort-then-Add map: 5 -> 10 -> 11 -> 22 and 20 -> 22, so the trajectories merge at 22.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A283709",
+   "b": "A290198",
+   "verdict": "TRIVIAL",
+   "reason": "Under Rule 721, from stage 4 on the whole (2n+1)-square is ON except the origin. So the x-axis half and the diagonal both read 1...10 = 2^(n+1)-2. They differ at n=1,2 (0 vs 2, 7 vs 5). Simulated to n=299.",
+   "extra_terms_checked": 266,
+   "interest": 0
+  },
+  {
+   "a": "A017271",
+   "b": "A019548",
+   "verdict": "DIVERGE",
+   "reason": "A019548 has extra cubes made by concatenating cubes. Besides 22^3=10648 (in the data), 303^3=27818127 = 27|8|1|8|1|27. So A019548(32)=27818127 vs A017271(31)=310^3=29791000. Later extras include 1006^3, 2272^3, 3003^3 and more.",
+   "extra_terms_checked": 1,
+   "interest": 0
+  },
+  {
+   "a": "A093960",
+   "b": "A135064",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Apart from initial terms, both equal the Lucas bisection A002878. A093960 by a Fibonacci identity; A135064's link to A002878 (x^5-10nx^2-24n has Galois group A5) is proved by Siman Wong, PAMS 2017, as cited in A135064.",
+   "extra_terms_checked": 0,
+   "interest": 3
+  },
+  {
+   "a": "A253431",
+   "b": "A253438",
+   "verdict": "DIVERGE",
+   "reason": "At n=2 the values are 102 vs 108 (n=3: 120 vs 121). For n>=4 both equal 9*2^(n-1)+84, checked to n=50 with my own transfer-matrix count. This reflects an eventual symmetry T(n,k)=9*2^(n-1)+9*2^(k-1)+12 of table A253435, even though transposition is not a symmetry of the conditions (on 5x7 boards it fails for only 8 arrays).",
+   "extra_terms_checked": 20,
+   "interest": 2
+  },
+  {
+   "a": "A171390",
+   "b": "A375155",
+   "verdict": "DIVERGE",
+   "reason": "A375155(n)=37*2^(n+1)-1 while its terms stay composite. 37*2^2553-1 is a probable prime (BPSW), so A375155(2553)=prime(2553)-1=22860 while the aligned A171390(2555)=37*2^2554-1.",
+   "extra_terms_checked": 2522,
+   "interest": 1
+  },
+  {
+   "a": "A096005",
+   "b": "A339061",
+   "verdict": "TRIVIAL",
+   "reason": "A096005 is the first differences of A002387 (least k with H_k>n) and A339061 those of A004080 (least k with H_k>=n). These coincide for n>=2 because H_k is never an integer for k>1, so A339061(n)=A096005(n+1).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A188825",
+   "b": "A257970",
+   "verdict": "TRIVIAL",
+   "reason": "Both are exactly 16*3^k. A257970(n)=16*3^(n-4) for n>=4 is immediate. A188825(n)=16*3^(n-2) for n>=2 follows from its 8-state transfer matrix (charpoly lambda^4(lambda-1)(lambda-3)(lambda^2-3)), checked well past the recurrence order.",
+   "extra_terms_checked": 14,
+   "interest": 1
+  },
+  {
+   "a": "A279721",
+   "b": "A282266",
+   "verdict": "DIVERGE",
+   "reason": "Rules 193 and 449 differ only in bit 8; that neighbourhood first occurs at stage 25. At n=30 the values are 110011111111 vs 1000000000000000000110011111111.",
+   "extra_terms_checked": 8,
+   "interest": 0
+  },
+  {
+   "a": "A183355",
+   "b": "A188825",
+   "verdict": "TRIVIAL",
+   "reason": "Both are the geometric sequence 16*3^k. A183355(n)=16*3^n for n>=2, proved by an exact 36-state transfer computation (states up to relabelling of values, checked to n=399). A188825(n)=16*3^(n-2), proved by an 8x8 transfer matrix. Nothing beyond equal closed forms.",
+   "extra_terms_checked": 375,
+   "interest": 1
+  },
+  {
+   "a": "A058000",
+   "b": "A084403",
+   "verdict": "TRIVIAL",
+   "reason": "Same greedy rule (next term is the smallest prime p with p+1 a proper multiple of the previous term + 1). 1 -> 3 -> 7 -> 23 and 2 -> 5 -> 11 -> 23 merge at 23.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A161987",
+   "b": "A162379",
+   "verdict": "DIVERGE",
+   "reason": "The length generating functions satisfy P_B32(q)=P_D32(q)*(1+q^32), so the two agree only for k<32. At k=32: B_32 gives 628754669493855735, D_32 gives 628754669493855734.",
+   "extra_terms_checked": 13,
+   "interest": 0
+  },
+  {
+   "a": "A062397",
+   "b": "A135050",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "A135050's comments say every 10..01 (i.e. 10^n+1, whose cube has digit sum 1+3+3+1=8) is a term, ask whether other forms exist, and record Alekseyev's check that there are none up to 10^20 other than 2, 5 and 8. The tail equality is an open conjecture already documented there.",
+   "extra_terms_checked": 0,
+   "interest": 1
+  },
+  {
+   "a": "A162165",
+   "b": "A162389",
+   "verdict": "DIVERGE",
+   "reason": "P_B37(q)=P_D37(q)*(1+q^37), so they first differ at k=37: B_37 gives 599336041311515497403, D_37 gives 599336041311515497402.",
+   "extra_terms_checked": 19,
+   "interest": 0
+  },
+  {
+   "a": "A162183",
+   "b": "A162418",
+   "verdict": "DIVERGE",
+   "reason": "P_B45(q)=P_D45(q)*(1+q^45), so they first differ at k=45: B_45 gives 35655238913794325597256075, D_45 gives 35655238913794325597256074.",
+   "extra_terms_checked": 27,
+   "interest": 0
+  },
+  {
+   "a": "A056830",
+   "b": "A284235",
+   "verdict": "TRIVIAL",
+   "reason": "Rule 833 grows a checkerboard diamond that contains the x-axis, so the left half-axis reads alternating 1010... digits. A284235(n)=A056830(n) for n>=3 (they differ at n=2: 11 vs 10). Simulated to n=299; A056830 already notes the same for Rule 131.",
+   "extra_terms_checked": 278,
+   "interest": 0
+  },
+  {
+   "a": "A200885",
+   "b": "A202909",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "I proved A200885(n)=A202909(n+3) for every value range 0..K, not just K=7, by a short bijection. Complementing values (v -> K-v) turns peak-free sequences of length m into valley-free ones. The max-dilation x_i=max(y_{i-1},y_i) (with y_0=y_{m+1}=0) then maps these bijectively onto length-(m+1) sequences with no strict peak in (0,x,0), with inverse the min-erosion. That proves the equality; it was also checked to n=39 for K=1..8. It is new but stays within word combinatorics: it links column K of A200886 to column 1 of A202916-type tables.",
+   "extra_terms_checked": 20,
+   "interest": 3
+  },
+  {
+   "a": "A327451",
+   "b": "A359128",
+   "verdict": "TRIVIAL",
+   "reason": "A359128 goes 0,1,1, then 1,1 share a digit so the next term is the smallest unused number, 2. That reaches state (1,2), which is exactly where A327451 starts. A327451's 'smallest unused' only ever ranges over positive integers, so the extra 0 makes no difference and the two evolve identically. Simulated: A327451(n)=A359128(n+1) for 20000 terms.",
+   "extra_terms_checked": 19900,
+   "interest": 0
+  },
+  {
+   "a": "A071904",
+   "b": "A326586",
+   "verdict": "DIVERGE",
+   "reason": "A326586 removes Carmichael numbers from the odd composites. At n=179, A071904(179)=561 but A326586(179)=565, since 561 is the first Carmichael number. A326586's own comment says so.",
+   "extra_terms_checked": 122,
+   "interest": 0
+  },
+  {
+   "a": "A140486",
+   "b": "A140487",
+   "verdict": "TRIVIAL",
+   "reason": "Both are trajectories of the same map and they merge at 14 (2->6->11->14 and 3->7->10->14).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A066875",
+   "b": "A173891",
+   "verdict": "TRIVIAL",
+   "reason": "For n>=2, A008578(n)=prime(n-1). The midpoint (p(n-1)+p(n+1))/2 lies strictly between p(n-1) and p(n+1), so it is prime only if it equals p(n), which is exactly the balanced-prime condition. n=1 adds the extra term (1+3=4). So A173891 = {1} ∪ A066875.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A006883",
+   "b": "A106849",
+   "verdict": "UNCLEAR",
+   "reason": "A106848's definition is not in the local data, so A106849 cannot be recomputed. A106849 leaves out 7 (1/7 has period 6), so it is not simply the full-reptend primes. Its tail matches A006883 in the stored range, and A106849 itself asks (Mathar 2026) how it relates to A001913, which is A006883 without 2.",
+   "extra_terms_checked": 0,
+   "interest": 1
+  },
+  {
+   "a": "A294912",
+   "b": "A294993",
+   "verdict": "DIVERGE",
+   "reason": "A294912(9969)=476971=11*131*331 satisfies A294912's four congruences. But 3^476970 ≡ 262263 (mod 476971), so it is not in A294993. Apart from the leading 3, the two lists agree for every n<476971 (9967 common terms computed).",
+   "extra_terms_checked": 9915,
+   "interest": 0
+  },
+  {
+   "a": "A060328",
+   "b": "A167610",
+   "verdict": "TRIVIAL",
+   "reason": "The nonprimes are 0, 1 and the composites. The only triples of consecutive nonprimes that use 0 or 1 are 0+1+4=5 and 1+4+6=11. So A167610 = {5,11} ∪ A060328.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A015913",
+   "b": "A172238",
+   "verdict": "DIVERGE",
+   "reason": "305635357=43*1039*6841 is composite and satisfies sigma(k)+4=sigma(k+4) (checked), so it is in A015913 but not in A172238. A172238 is {2} plus primes p with p+4 prime (A023200). For a prime p, sigma(p)+4=sigma(p+4) holds exactly when p+4 is prime, so the sequences agree everywhere else. A015913's comment documents this.",
+   "extra_terms_checked": 1,
+   "interest": 0
+  },
+  {
+   "a": "A093104",
+   "b": "A093105",
+   "verdict": "TRIVIAL",
+   "reason": "Both are greedy 'slowest increasing' digit-pattern sequences. Once both reach the term 8 with an R digit required next, they are in the same state and evolve identically. Both comments say this in words.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A214888",
+   "b": "A215374",
+   "verdict": "TRIVIAL",
+   "reason": "The only difference is the residue class 0 mod 11, which contains just the prime 11.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A046386",
+   "b": "A151797",
+   "verdict": "DIVERGE",
+   "reason": "A151797 is the symmetric difference of A030229 (mu=1) and A161918. A161918 is not on disk, but the reconstruction A161918 = {n: sigma(n)-n-1 = sopfr(n)} = {pq}∪{8} reproduces all 47 stored terms. Under it, A151797 = {1,8} ∪ squarefree numbers with 4, 6, 8, ... prime factors, so it contains 30030=2*3*5*7*11*13, which is not in A046386. This rests on the reconstruction.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A319153",
+   "b": "A325267",
+   "verdict": "TRIVIAL",
+   "reason": "A singleton {k} only arises from a multiset of size k with all parts equal. So 'reduces to {2}' is the same as 'the second-to-last multiset has size 2', i.e. omicron 2. The only exception is the singleton partition (2) at n=2.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A045353",
+   "b": "A045364",
+   "verdict": "TRIVIAL",
+   "reason": "They differ only in the residue class 0 mod 7, which contains just the prime 7.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A003625",
+   "b": "A045399",
+   "verdict": "TRIVIAL",
+   "reason": "They differ only in the residue class 0 mod 7, which contains just the prime 7.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A045354",
+   "b": "A045365",
+   "verdict": "TRIVIAL",
+   "reason": "They differ only in the residue class 0 mod 7, which contains just the prime 7.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A279030",
+   "b": "A282577",
+   "verdict": "TRIVIAL",
+   "reason": "In both cellular automata the x-axis alternates in the same simple pattern: 0 at odd stages and (4^k-1)/3 at even stages, so A282577(n+2)=A279030(n). Checked by simulation with Price's conventions for 400 stages (all stored terms reproduced).",
+   "extra_terms_checked": 355,
+   "interest": 0
+  },
+  {
+   "a": "A271053",
+   "b": "A271057",
+   "verdict": "TRIVIAL",
+   "reason": "Both rules are odd, so the background flashes, and the ON counts are dominated by the (2n+1)^2 window. From stage 3 on the two ON counts differ by a constant, so their first differences agree (±(4n^2+...)). Checked by simulation for 400 stages.",
+   "extra_terms_checked": 355,
+   "interest": 0
+  },
+  {
+   "a": "A147790",
+   "b": "A328262",
+   "verdict": "TRIVIAL",
+   "reason": "Both iterate the same map x -> round-half-to-even(3x/2), since 'rounded to the nearest even integer' for a half-integer is the same thing. A328262's trajectory 1->2->3 merges with A147790, which starts at 3.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A046964",
+   "b": "A079037",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "After 5, A079037 takes the records of closeness of sin(n) to 0 or -1 (both readings that fit the data agree), while A046964 takes the records of closeness to -1. So equality means no approach of sin(n) to 0 ever beats the current approach to -1. Checked to n=1e8 in quad precision: 85 aligned terms, the closest call being n=355 (ratio 3.1), and never within a factor of 1e4 since. The heuristic (-1 approaches are quadratic, 0 approaches linear) is clear, but a proof needs Diophantine bounds on π that are not available. Conjectural, not a deep link.",
+   "extra_terms_checked": 43,
+   "interest": 3
+  },
+  {
+   "a": "A297661",
+   "b": "A297665",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "A297665's formula, Lucas(n)+A057079(n+1)+n with A057079(n+1)=2cos(nπ/3), is literally A297661's definition. Also, the web graph is the prism graph plus pendant edges, which add no cycles, and A297661 says it counts chordless cycles of the prism graph.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A068131",
+   "b": "A117523",
+   "verdict": "DIVERGE",
+   "reason": "T(2788547)=3887998579878 has digit sum 96, an octagonal number (6*16), so it is in A117523 but not in A068131. The octagonal numbers 8, 40 and 65 cannot be digit sums of triangular numbers (triangular numbers are 0,1,3,6 mod 9). It is the first triangular number whose digit sum is octagonal and not 0, 1 or 21, with 2557 digit-sum-21 triangular numbers before it.",
+   "extra_terms_checked": 2520,
+   "interest": 0
+  },
+  {
+   "a": "A023497",
+   "b": "A023501",
+   "verdict": "TRIVIAL",
+   "reason": "This is an index shift. The list of Lucas numbers >1 is 3 followed by the Lucas numbers >3. A023501's 'd' list is A023497's list (1,2,5,6,8,...) with 3 inserted. Hence A023501(n+1)=A023497(n) for n>=2.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A285654",
+   "b": "A286733",
+   "verdict": "DIVERGE",
+   "reason": "Simulated both rules with Price's conventions (all 35 stored terms of each reproduced). At n=38, rule 81 gives 530428461056 and rule 213 gives 547608330240, and they keep differing after that.",
+   "extra_terms_checked": 4,
+   "interest": 0
+  },
+  {
+   "a": "A198633",
+   "b": "A244750",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both are powers of 2 after their first few terms. A198633 proves a(n)=2^(n+1) for n>=1 and calls itself essentially A000079. A244750's comment (Branicky) says 0,2,3 followed by the terms of A000079 above 3. The bridge is A000079.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A077552",
+   "b": "A171497",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "A077552 has the formula a(n)=2^n (Chandler) and says it is essentially A020707. A171497 says it is 8*A000079 preceded by 3. Both are powers of 2 (bridge A020707/A000079).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A284405",
+   "b": "A290683",
+   "verdict": "TRIVIAL",
+   "reason": "In both cellular automata the segment is entirely ON from n=4 on, so both are 2^(n+1)-1 (Barker's formulas are the same). Checked by simulation for 300 stages.",
+   "extra_terms_checked": 265,
+   "interest": 0
+  },
+  {
+   "a": "A033963",
+   "b": "A037103",
+   "verdict": "TRIVIAL",
+   "reason": "Same map; the trajectory of 1 goes 1->12->6->3 and then follows the trajectory of 3.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A008889",
+   "b": "A008890",
+   "verdict": "TRIVIAL",
+   "reason": "Both are aliquot trajectories and they merge at 312 (s(234)=s(168)=312).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A253432",
+   "b": "A253439",
+   "verdict": "TRIVIAL",
+   "reason": "These are column 5 and row 5 of the same table T(R,W). A transfer-matrix computation gives T(R,W)=9*2^(R-2)+9*2^(W-2)+12 for R,W>=5, which is symmetric. Transposing only reverses the antidiagonal condition, and that matters only for small arrays. Both equal 9*2^(n-1)+156 for n>=4; checked to n=60.",
+   "extra_terms_checked": 30,
+   "interest": 1
+  },
+  {
+   "a": "A200880",
+   "b": "A202882",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "Proved, for every alphabet 0..k. Let δ be the 2-window max with 0-padding (length L -> L+1) and ε the 2-window min (its adjoint). δ maps words with no strict interior valley bijectively onto words where every nonzero entry is <= some neighbour (A202882's condition), with inverse ε. Complementing (x -> k-x) turns valley-free words into peak-free words, giving A200880(n)=A202882(n+3). This links peak-avoiding words to the images of morphological dilation. Bijection checked by brute force; the identity holds for k=1..7 up to n=40, and for k=2 up to n=100.",
+   "extra_terms_checked": 74,
+   "interest": 5
+  },
+  {
+   "a": "A200866",
+   "b": "A218051",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "Proved. A218051(m) counts the images of the 3-window min-filter, Im ε3, on 0..3 words of length m. The map z -> (max(z_j,z_{j+1}))_j sends Im ε3 bijectively onto the length m-1 words with no strict interior peak or valley. The inverse is w -> 2-window min of w padded with the top value 3. Hence A218051(n+3)=A200866(n). Bijection verified by brute force; the identity holds for k=1..5 up to n=24, and for k=3 up to n=56.",
+   "extra_terms_checked": 28,
+   "interest": 5
+  },
+  {
+   "a": "A286638",
+   "b": "A288357",
+   "verdict": "DIVERGE",
+   "reason": "Simulated both rules with Price's conventions (all 24 stored terms reproduced). At n=26, rule 193 gives 1 and rule 449 gives 11000001, and they keep differing after that.",
+   "extra_terms_checked": 3,
+   "interest": 0
+  },
+  {
+   "a": "A282002",
+   "b": "A287190",
+   "verdict": "TRIVIAL",
+   "reason": "Both settle into the same periodic pattern: 11 at even n and 11...10 (n+1 digits) at odd n, matching Barker's identical formulas. Checked by simulation for 300 stages.",
+   "extra_terms_checked": 270,
+   "interest": 0
+  },
+  {
+   "a": "A200882",
+   "b": "A203184",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "The same proved identity as A200880/A202882, here with k=4. The 2-window max with 0-padding is a bijection from valley-free words of length L onto words of length L+1 where every nonzero entry is <= some neighbour; complementing gives peak-free words. So A200882(n)=A203184(n+3). Verified to n=100.",
+   "extra_terms_checked": 78,
+   "interest": 4
+  },
+  {
+   "a": "A116124",
+   "b": "A116163",
+   "verdict": "TRIVIAL",
+   "reason": "With d the number of digits of k, k‖(k-5)=y(y+5) means 4k(10^d+1)+5=(2y+5)^2, and k‖(k+1)=x(x+1) means 4k(10^d+1)+5=(2x+1)^2. It is the same condition. Cases where k±1 or k-5 changes digit length were checked up to 200 digits; only k=1 and k=5 differ.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A161988",
+   "b": "A162380",
+   "verdict": "DIVERGE",
+   "reason": "P_B33(q)=P_D33(q)(1+q^33), so the coefficients agree below degree 33 and at n=33 B exceeds D by 1: 2477147507228906808 vs 2477147507228906807.",
+   "extra_terms_checked": 14,
+   "interest": 0
+  },
+  {
+   "a": "A087125",
+   "b": "A228016",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "Verified with 400-digit harmonic numbers: A228016(n)=A087125(n+1) for n=1..88 (stored 19). Proof sketch: with b=a+1/2, A087125 satisfies b_n=10b_{n-1}-b_{n-2} and b_n b_{n-2}-b_{n-1}^2=-3. Since H(m)≈ln(m+1/2)+γ+1/(24(m+1/2)^2), the greedy threshold is b_n-(r^2/24-3)/b_{n-2}, with r=5+2√6 and r^2/24-3≈1.08>0. So the greedy always picks the next hex-triangular index. This links Kimberling's harmonic-number greedy sequence to hex numbers that are triangular (a Pell-type equation); neither entry mentions the other.",
+   "extra_terms_checked": 69,
+   "interest": 5
+  },
+  {
+   "a": "A162166",
+   "b": "A162392",
+   "verdict": "DIVERGE",
+   "reason": "P_B38=P_D38(1+q^38), so at n=38 the counts are 2365973414124701505764 (B) vs 2365973414124701505763 (D).",
+   "extra_terms_checked": 20,
+   "interest": 0
+  },
+  {
+   "a": "A162186",
+   "b": "A162452",
+   "verdict": "DIVERGE",
+   "reason": "P_B46=P_D46(1+q^46), so at n=46 the counts are 141077950087299678818192166 (B) vs 141077950087299678818192165 (D).",
+   "extra_terms_checked": 26,
+   "interest": 0
+  },
+  {
+   "a": "A078836",
+   "b": "A131769",
+   "verdict": "TRIVIAL",
+   "reason": "A131769 states the theorem a(n)=(n+5)*2^(n-1) for n>=4, which equals A078836(n+5)=(n+5)*2^(n-1). It is an index shift of the same closed form.",
+   "extra_terms_checked": 0,
+   "interest": 1
+  },
+  {
+   "a": "A212834",
+   "b": "A287815",
+   "verdict": "TRIVIAL",
+   "reason": "In 0..7 the only pair at distance 7 is {0,7}, so the two definitions are the same and A212834(n)=A287815(n+1).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A064187",
+   "b": "A270830",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "A064187(n) is the first window of n^2 consecutive odd primes that passes the obvious parity/divisibility test, so it is always <= A270830(n). The two are equal for n>=4 exactly when that test is also sufficient, i.e. the window can always be arranged into a semimagic square; for n=3 it fails (23 vs 21821). I built and checked such squares for n=4..25, 30 and 40, so stored terms are reproduced, but no general proof exists and I added no new terms.",
+   "extra_terms_checked": 0,
+   "interest": 4
+  },
+  {
+   "a": "A137922",
+   "b": "A193461",
+   "verdict": "UNCLEAR",
+   "reason": "A137922 is provably {3,4,5,6} plus the primes >=7. A193461 is all primes plus 1, 4 and 6 plus any composite n>6 with phi(n) | 2(n-1). So equality is equivalent to an open Lehmer-type totient problem, already posed in A193461 (none below 10^10, no Carmichael number below 10^16). I checked both definitions agree up to 20000.",
+   "extra_terms_checked": 2000,
+   "interest": 3
+  },
+  {
+   "a": "A007777",
+   "b": "A330257",
+   "verdict": "TRIVIAL",
+   "reason": "Map a binary word w of length n+1 to d_i = w_{i+1} - w_i + 1. For n>=2 this is a bijection from overlap-free binary words to squarefree ternary words avoiding 010 and 212. A square in d forces equal shifts w_{j+p}-w_j, which must be 0, so it is an overlap in w (and conversely); 0s and 2s in d must alternate, which is exactly what excluding 010/212 plus squarefreeness gives. This is Thue's t to vtm correspondence; checked to n=130.",
+   "extra_terms_checked": 74,
+   "interest": 3
+  },
+  {
+   "a": "A079251",
+   "b": "A079252",
+   "verdict": "TRIVIAL",
+   "reason": "The complement of A079000 contains 2, 3, 5 and otherwise only even numbers, because A079000 contains every odd number >=7. Dropping 3 and 5 gives 'even numbers not in A079000'.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A027916",
+   "b": "A389142",
+   "verdict": "TRIVIAL",
+   "reason": "Both have the generating function x^2(2+x)/((1-x)^3(1+x+x^2)), i.e. floor((3n^2+n+1)/6). I recomputed A027916 from its own definition (least k with k(k+1)/2 >= e2(1..n)) and it matches for n<400.",
+   "extra_terms_checked": 345,
+   "interest": 1
+  },
+  {
+   "a": "A046075",
+   "b": "A261453",
+   "verdict": "DIVERGE",
+   "reason": "Both are the 81 three-digit numbers aba with a != b; they split at the first four-digit undulant: A046075(82)=1010 while A261453(82)=11011.",
+   "extra_terms_checked": 31,
+   "interest": 0
+  },
+  {
+   "a": "A063220",
+   "b": "A063234",
+   "verdict": "TRIVIAL",
+   "reason": "For squarefree level N the newform dimension depends only on local factors. 55=5*11 and 82=2*41 share them: product of (p-1) is 40 for both, the order-2 and order-3 elliptic terms (0 and 4) agree, the cusp term is 0 and (-1)^omega(N)=1. So the dimensions agree in every weight; PARI mfdim agrees for weights 2..240.",
+   "extra_terms_checked": 70,
+   "interest": 2
+  },
+  {
+   "a": "A046132",
+   "b": "A118590",
+   "verdict": "DIVERGE",
+   "reason": "A118590 also allows prime gaps of 16, 36, and so on. The first gap of 16 is 1831->1847, so A046132(62)=1871 while A118590(62)=1847.",
+   "extra_terms_checked": 12,
+   "interest": 0
+  },
+  {
+   "a": "A271004",
+   "b": "A272564",
+   "verdict": "TRIVIAL",
+   "reason": "Rules 245 and 501 differ only for a cell that is OFF with all 4 neighbours ON. The two grids differ only at stage 2 (the centre cell) and are identical from stage 3 on, so the evolutions merge (checked by simulation).",
+   "extra_terms_checked": 9,
+   "interest": 0
+  },
+  {
+   "a": "A214889",
+   "b": "A215375",
+   "verdict": "TRIVIAL",
+   "reason": "The two sets of primes differ only by the residue class 0 mod 13, which contains only the prime 13; the alignment skips it.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A081118",
+   "b": "A086070",
+   "verdict": "TRIVIAL",
+   "reason": "A086070 is finite and complete (its domain is digit-set bitmasks up to 1023). Computed exhaustively, its record positions are 2 plus the numbers 2^t-2^k-1 up to 1023, i.e. the initial part of A081118. Nothing can diverge because A086070 ends.",
+   "extra_terms_checked": 0,
+   "interest": 1
+  },
+  {
+   "a": "A026041",
+   "b": "A188554",
+   "verdict": "TRIVIAL",
+   "reason": "Both are the same cubic polynomial: A026041(n) = n(n^2-3n+14)/6 = A188554(n-1), using A188554's proven formula (n^3+11n+12)/6.",
+   "extra_terms_checked": 0,
+   "interest": 1
+  },
+  {
+   "a": "A045393",
+   "b": "A045402",
+   "verdict": "TRIVIAL",
+   "reason": "The two sets of primes differ only by the residue class 0 mod 7, i.e. the single prime 7, which the alignment skips.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A045339",
+   "b": "A294912",
+   "verdict": "DIVERGE",
+   "reason": "Every prime p = 3 mod 8 passes all four congruences, but some pseudoprimes do too. First one: A294912(9969)=476971=11*131*331, while A045339(9970)=477011.",
+   "extra_terms_checked": 9900,
+   "interest": 1
+  },
+  {
+   "a": "A045358",
+   "b": "A045367",
+   "verdict": "TRIVIAL",
+   "reason": "The two sets of primes differ only by the residue class 0 mod 7, i.e. the single prime 7.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A000447",
+   "b": "A156126",
+   "verdict": "TRIVIAL",
+   "reason": "A156126's defining generating function gives (n+2)(2n+3)(2n+5)/3, which is A000447(n+2) = m(4m^2-1)/3 with m=n+2.",
+   "extra_terms_checked": 36,
+   "interest": 1
+  },
+  {
+   "a": "A282004",
+   "b": "A287192",
+   "verdict": "TRIVIAL",
+   "reason": "Both cellular automata (rules 413 and 253) settle into a flickering background around a fixed small core. Both slices then read 2^(n+1)-2 at odd n and 3 at even n; my simulation matches for 400 stages.",
+   "extra_terms_checked": 357,
+   "interest": 0
+  },
+  {
+   "a": "A076673",
+   "b": "A076676",
+   "verdict": "TRIVIAL",
+   "reason": "The two runs of the same map merge: 7->24->32->60 and 11->60, and are identical from 60 on.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A057925",
+   "b": "A057928",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "I found why: the two greedy OR-sequences are linked by A057926(n) = 2*A057923(n) + e(n mod 6), e = (0,-1,2,0,1,0), checked for n < 3e8. Powers of 2 only occur where e = 0, so 2^k in A057923 and 2^(k+1) in A057926 sit at the same position; positions agree up to 2^50/2^51. A full proof needs an induction through carries in the greedy step. Minor, same-family result, not cross-field.",
+   "extra_terms_checked": 12,
+   "interest": 2
+  },
+  {
+   "a": "A000537",
+   "b": "A250813",
+   "verdict": "TRIVIAL",
+   "reason": "With s = min(u_j,v_j) and d = v_j - u_j, A250813(n) counts chains of length n+1 in a 9-element poset of height 5, so it is a polynomial of degree <= 4 in n. It agrees with ((n+2)(n+3)/2)^2 at 5+ points, which proves Hardin's empirical formula; transfer-matrix check to n=59.",
+   "extra_terms_checked": 24,
+   "interest": 2
+  },
+  {
+   "a": "A075823",
+   "b": "A246449",
+   "verdict": "TRIVIAL",
+   "reason": "Every perfect-power residue mod 100 is also a cube residue: mod 4 both give {0,1,3} or less, and mod 25 both give units or 0, combined by the Chinese remainder theorem. So the two-digit parts coincide, and A075823 is finite (keyword full).",
+   "extra_terms_checked": 0,
+   "interest": 1
+  },
+  {
+   "a": "A051716",
+   "b": "A172083",
+   "verdict": "TRIVIAL",
+   "reason": "For i>=3 one of B(i), B(i-1) is a zero odd-index Bernoulli number, so B(i)-B(i-1) equals C(i) (B(i) for even i, -B(i-1) for odd i).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A307114",
+   "b": "A392936",
+   "verdict": "DIVERGE",
+   "reason": "A392936 is A307114 plus the 4-perfect numbers (A027687), which are automatically primitive. The third 4-perfect number gives A307114(148)=2185920 while A392936(150)=2178540.",
+   "extra_terms_checked": 115,
+   "interest": 1
+  },
+  {
+   "a": "A282005",
+   "b": "A287193",
+   "verdict": "TRIVIAL",
+   "reason": "Same flicker-plus-fixed-core behaviour of rules 413 and 253: both slices equal 3*2^(n-1) at even n and 2^n-1 at odd n; simulated 400 stages.",
+   "extra_terms_checked": 357,
+   "interest": 0
+  },
+  {
+   "a": "A093419",
+   "b": "A160049",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "The row sum is (2n+2)(H_{n+1}-1)-n, so the denominator is that of 2(n+1)H_{n+1}. Both entries say they are essentially A096620.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A130102",
+   "b": "A145654",
+   "verdict": "TRIVIAL",
+   "reason": "(e^x-x)^2 gives a(n) = 2^n - 2n for n != 2, and partial sums of 2^k - 2 for k=1..m are 2^(m+1)-2(m+1).",
+   "extra_terms_checked": 8,
+   "interest": 0
+  },
+  {
+   "a": "A051049",
+   "b": "A286773",
+   "verdict": "TRIVIAL",
+   "reason": "Rule 221's diagonal follows a flicker pattern giving 2^n at even n and 2^n-1 at odd n, which is the classical baguenaudier formula (2^(n+1)-(1+(-1)^(n+1)))/2; simulated 400 stages.",
+   "extra_terms_checked": 357,
+   "interest": 0
+  },
+  {
+   "a": "A228403",
+   "b": "A262543",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both are 2*Catalan(n); both entries say they are A068875 apart from the initial term.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A253433",
+   "b": "A253440",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "Transposing the array is not a symmetry of the rule (it reverses the anti-diagonal condition), and row 3 vs column 3 (and 4 vs 4) do differ. Yet for both sides >= 5 the count is T(R,C) = 9(2^(R-2)+2^(C-2))+12, which is symmetric; checked for R<=10, C<=45, and n<=61 for this pair. Proving it needs a classification of the valid arrays; mild, Hardin-array only.",
+   "extra_terms_checked": 31,
+   "interest": 3
+  },
+  {
+   "a": "A243392",
+   "b": "A303030",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "A243392 differs from A243391 only in its first term, and A303030 states (Howroyd) that it equals A243391 for n>2.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A277560",
+   "b": "A277926",
+   "verdict": "TRIVIAL",
+   "reason": "Rules 7 and 5 differ only for an ON cell with 0 ON neighbours. The grids differ only at stage 1 and are identical afterwards (simulated 400 stages).",
+   "extra_terms_checked": 374,
+   "interest": 0
+  },
+  {
+   "a": "A000244",
+   "b": "A027313",
+   "verdict": "TRIVIAL",
+   "reason": "For n>=3 the stored data is Sum (h+1)*#(paths from height 2 to h staying >=0) = 3*3^n, because h+1 vanishes at the absorbing level -1 (optional stopping); A027313 itself states a(n)=3^(n+1). Its name is wrong, though: with the stated upper limit 2n, n=3 gives 107, not 81.",
+   "extra_terms_checked": 5,
+   "interest": 1
+  },
+  {
+   "a": "A287129",
+   "b": "A288020",
+   "verdict": "TRIVIAL",
+   "reason": "Same rule pair 245/501 as A271004/A272564: the grids differ only at stage 2 and coincide from stage 3, so all later diagonals agree.",
+   "extra_terms_checked": 34,
+   "interest": 0
+  },
+  {
+   "a": "A232107",
+   "b": "A270866",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "A232107's formula, citing O'Brien & Vaughan-Lee (J. Algebra 2005) for p>5, is literally A270866's definition; the alignment skips p=2,3,5.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A161977",
+   "b": "A162378",
+   "verdict": "DIVERGE",
+   "reason": "B_n(q) = D_n(q)(1+q^n), so the coefficients agree below length n=31 and differ by 1 at length 31: 159667692648967351 (B_31) vs 159667692648967350 (D_31).",
+   "extra_terms_checked": 12,
+   "interest": 0
+  },
+  {
+   "a": "A161991",
+   "b": "A162381",
+   "verdict": "DIVERGE",
+   "reason": "B_n(q) = D_n(q)(1+q^n); at length 34: B_34 gives 9763753195596457113, D_34 gives 9763753195596457112.",
+   "extra_terms_checked": 16,
+   "interest": 0
+  },
+  {
+   "a": "A162168",
+   "b": "A162399",
+   "verdict": "DIVERGE",
+   "reason": "B_n(q) = D_n(q)(1+q^n); at length 39: 9343213606998065658510 (B_39) vs 9343213606998065658509 (D_39).",
+   "extra_terms_checked": 22,
+   "interest": 0
+  },
+  {
+   "a": "A169369",
+   "b": "A169417",
+   "verdict": "DIVERGE",
+   "reason": "Words of length < m are all reduced, so the two growth series first differ at length 31, where the m=31 group loses C(20,2)=190 elements: 4609332357943904300910190388118665867830 vs 4609332357943904300910190388118665868020.",
+   "extra_terms_checked": 21,
+   "interest": 0
+  },
+  {
+   "a": "A162191",
+   "b": "A162456",
+   "verdict": "DIVERGE",
+   "reason": "B_n(q) = D_n(q)(1+q^n); at length 47: 558335927248553923084953519 (B_47) vs 558335927248553923084953518 (D_47).",
+   "extra_terms_checked": 30,
+   "interest": 0
+  },
+  {
+   "a": "A093138",
+   "b": "A114307",
+   "verdict": "TRIVIAL",
+   "reason": "The Lucas period mod 10^n is lcm(3*2^(n-1), 4*5^(n-1)) = 3*10^(n-1) for n>=3 (formula given in A114307), which is the coefficient of (1-7x)/(1-10x).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A281222",
+   "b": "A374785",
+   "verdict": "DIVERGE",
+   "reason": "A374785 also contains 9-prime, 11-prime and non-squarefree numbers, and some products of 10 distinct primes fail its ratio-above-2 test. First difference: A281222(53)=18232771830 (ratio <= 2) while A374785(56)=18342113790.",
+   "extra_terms_checked": 33,
+   "interest": 0
+  },
+  {
+   "a": "A058937",
+   "b": "A130518",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both entries say they are A001840 up to offset (A058937: A001840(n)=a(n+5); A130518: 'Apart from offset, the same as A001840'). They also share the g.f. denominator (1+x+x^2)(1-x)^3 and the signature (2,-1,1,-2,1).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A274170",
+   "b": "A367745",
+   "verdict": "TRIVIAL",
+   "reason": "A367795 inserts the concatenation uv between neighbours u,v, starting from [x=1, y=0]. That is exactly the Christoffel tree (standard-factorization theorem, Berstel-Lauve-Reutenauer-Saliola 2008, the book A274170 cites; also Borel-Laubie). So the numbers produced are the lower Christoffel words plus the letters 0 and 1. I checked that the two sets agree for all words up to 24 bits; this also explains Sigrist's empirical count of A000010(n) terms with n bits. Worth adding mutual cross-references.",
+   "extra_terms_checked": 122,
+   "interest": 3
+  },
+  {
+   "a": "A102040",
+   "b": "A102041",
+   "verdict": "TRIVIAL",
+   "reason": "Same map a -> a + (last digit of a). The orbit of 3 is 3,6,12,14,... and the orbit of 7 is 7,14,..., so the trajectories merge at 14.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A079346",
+   "b": "A214029",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "A079346's cross-reference reads 'Union of A000057, A106535 and {5}', and A214029 is defined as the union of A000057 and A106535. So they differ only by the extra term 5 (A079346(3)=5 vs A214029(3)=7) and are otherwise identical.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A032765",
+   "b": "A371154",
+   "verdict": "TRIVIAL",
+   "reason": "A371154 states the Fiol-Yebra-Alegre-Valero formula a(n)=ceil((n+2)^2/3)-1 (n != 1). Writing m=n+2, ceil(m^2/3)-1 = floor((m^2-1)/3) = floor((n+1)(n+3)/3) = A032765(n+1), because m^2 is 0 or 1 mod 3. The graph-theory content is the cited theorem; the match is just this algebra.",
+   "extra_terms_checked": 0,
+   "interest": 1
+  },
+  {
+   "a": "A124434",
+   "b": "A247396",
+   "verdict": "TRIVIAL",
+   "reason": "For distinct odd primes p<q, gcd(q+p, q-p) = gcd(2q, q-p) = 2, so lcm(q+p, q-p) = (q^2-p^2)/2. Both entries state this formula.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A073895",
+   "b": "A088637",
+   "verdict": "TRIVIAL",
+   "reason": "The two greedy processes differ only at the start (1+4=5, then +2, +3 versus 1+2=3, then +3, +4). Both reach the value 10 with the same used sets: primes {2,3} and composites {4}. From that identical state they continue identically forever.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A063076",
+   "b": "A161846",
+   "verdict": "DIVERGE",
+   "reason": "A161846(n) = A063076(n)/gcd(A063076(n), prime(n)). They already differ at n=3 inside the stored data: A063076(3)=30, A161846(3)=6 (30/5). The pair only matched after skipping that term. I found no further difference for n <= 3327, but they differ whenever prime(n) divides prime((n+1)^2)-prime(n^2).",
+   "extra_terms_checked": 3270,
+   "interest": 0
+  },
+  {
+   "a": "A003124",
+   "b": "A008902",
+   "verdict": "TRIVIAL",
+   "reason": "Same 3x-1 map. The trajectory of 99 (99,296,148,74,...) enters the cycle 17,50,25,74,... at 74.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A215154",
+   "b": "A215381",
+   "verdict": "TRIVIAL",
+   "reason": "The only prime that is 0 mod 19 is 19, so A215381 is A215154 with the single term 19 inserted.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A174906",
+   "b": "A179682",
+   "verdict": "TRIVIAL",
+   "reason": "Identical definitions by the same author: the least k>n with T(k)*T(n) a square. A179682 just starts at offset 0 with two extra initial terms.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A045322",
+   "b": "A045335",
+   "verdict": "TRIVIAL",
+   "reason": "The only prime that is 0 mod 7 is 7, so the two lists differ only by the single term 7.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A045394",
+   "b": "A045404",
+   "verdict": "TRIVIAL",
+   "reason": "The only prime that is 0 mod 7 is 7, so the two lists differ only by the single term 7.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A045366",
+   "b": "A294919",
+   "verdict": "DIVERGE",
+   "reason": "A294919 contains the pseudoprime 3277 = 29*113 (its own comment notes this). Computed from both definitions: A294919(118)=3277 while A045366(119)=3301.",
+   "extra_terms_checked": 66,
+   "interest": 0
+  },
+  {
+   "a": "A045397",
+   "b": "A045409",
+   "verdict": "TRIVIAL",
+   "reason": "The only prime that is 0 mod 7 is 7, so the two lists differ only by the single term 7.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A215101",
+   "b": "A215377",
+   "verdict": "TRIVIAL",
+   "reason": "The only prime that is 0 mod 19 is 19, so the two lists differ only by the single term 19.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A287131",
+   "b": "A288762",
+   "verdict": "TRIVIAL",
+   "reason": "Rules 245 and 501 differ only in bit 8 (an OFF cell with 4 ON neighbours). I simulated Price's exact setup and it reproduces all stored terms. The whole CA configurations differ only at stage 2 and are identical from stage 3 on (checked to stage 260), so the trajectories merge.",
+   "extra_terms_checked": 217,
+   "interest": 0
+  },
+  {
+   "a": "A076675",
+   "b": "A076676",
+   "verdict": "TRIVIAL",
+   "reason": "Same greedy map (smallest next term forming a Pythagorean leg). The orbits 10,24,32,60,... and 11,60,... merge at 60.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A066388",
+   "b": "A221310",
+   "verdict": "TRIVIAL",
+   "reason": "For m>3, the subset sums 2m and 3m are composite. If m is odd, m-1 and m+1 are composite, so at most 3 sums are prime. If m is even, m is composite, so exactly four sums are prime iff m-1, m+1, 2m-1, 2m+1 are all prime. Hence A221310 = {1,2,3} together with A066388; both entries note A117499(a(n))=4.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A182522",
+   "b": "A182751",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both are documented as essentially A038754: A182522(n+1)=A038754(n), and A182751(n)=A038754(n) for n>=2.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A279879",
+   "b": "A282417",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "Rules 213 and 469 differ only in bit 8. The full patterns really do differ: from stage 7 on, in a growing set of off-axis cells (about 9000 cells by stage 200, some adjacent to the axis). Yet the whole x-axis row is identical for every stage from 3 to 700. Equality for all n would need a real analysis of the CA's growth, because the local rule alone does not make the axis insensitive. It is a CA-specific coincidence with no link to another field.",
+   "extra_terms_checked": 663,
+   "interest": 1
+  },
+  {
+   "a": "A062547",
+   "b": "A072134",
+   "verdict": "TRIVIAL",
+   "reason": "Both are greedy 'not a sum of distinct earlier terms' sequences that reach the pair 17,19 at the same index. From there a short induction on the gaps in the subset sums shows each new pair (v, v+2) satisfies v' = 3v+2 in both (A062547: v=S+1; A072134: v=S-4, with the gaps {1,2,4} ruled out as powers of 2). I recomputed both with a bitset up to 2.9e7 and they agree.",
+   "extra_terms_checked": 0,
+   "interest": 1
+  },
+  {
+   "a": "A000211",
+   "b": "A048162",
+   "verdict": "TRIVIAL",
+   "reason": "A000211 = Lucas(n)+2, which satisfies a(n) = 2a(n-1) - a(n-3) because (1-2x+x^3) = (1-x)(1-x-x^2). A048162 has this denominator with a degree-5 numerator, so matching terms past index 5 forces equality forever. Checked to 80 terms.",
+   "extra_terms_checked": 45,
+   "interest": 0
+  },
+  {
+   "a": "A283651",
+   "b": "A290195",
+   "verdict": "TRIVIAL",
+   "reason": "Under rule 705, from stage 3 on the pattern is an all-ON field with a period-2 3x3 oscillator at the origin. Every cell's state then depends only on its Chebyshev distance from the origin, so the x-axis and the diagonal read the same (checked to stage 260). Side note: the parity in Corneth's conjecture in A290195 (and A290193) is swapped relative to the data; e.g. a(4)=7=2^3-1 for even n.",
+   "extra_terms_checked": 226,
+   "interest": 0
+  },
+  {
+   "a": "A102026",
+   "b": "A218199",
+   "verdict": "TRIVIAL",
+   "reason": "Hilltop maps on a path with values 0..2: a zero-run between two hilltops must look like 1,0,0,1 at most, so it has length <=4; a run at an end has length <=2; and the indicator cannot be all zeros. Conversely every such word is realized by setting all hilltops to 2. So for n>=3 the count equals A102026, which proves Hardin's 'empirical' 5-bonacci recurrence for A218199. Brute force confirms this for n<=13.",
+   "extra_terms_checked": 0,
+   "interest": 3
+  },
+  {
+   "a": "A048578",
+   "b": "A088039",
+   "verdict": "TRIVIAL",
+   "reason": "If k <= 2^n+1, any prime p with p^n | k^3-1 has p^n < (2^n+1)^3. For p=2 (and p = 2 mod 3) cubing is injective, so k = 1 mod p^n. For p=3 the least k is 3^{n-1}+1. For p = 1 mod 3, a nontrivial root needs p^n | k^2+k+1, giving k > 2^n. So A088039(n) = 2^n+1 for n>=3, which proves Barker's conjecture in A088039. Verified to n=300.",
+   "extra_terms_checked": 269,
+   "interest": 3
+  },
+  {
+   "a": "A126249",
+   "b": "A152916",
+   "verdict": "TRIVIAL",
+   "reason": "Exactly two of k, k+1, k+2 are prime iff (k, k+2) are twin primes with k>=3 (since k+1 is even), or k=1 or k=2. So A152916 = {1,4} together with A126249.",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A070198",
+   "b": "A079782",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both are documented as A003418 - 1 (A070198(n)=A003418(n+1)-1; A079782(n)=A003418(n)-1 for n>=4).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A253434",
+   "b": "A253441",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "These are column 7 and row 7 of Hardin's table A253435. The defining condition is not invariant under transposition (the antidiagonal direction flips), and the table really is asymmetric at small sizes (606 vs 612 at n=2). Even so, T(n,k) = 9*2^(n-1) + 9*2^(k-1) + 12 for n,k >= 4. My transfer-matrix count (613 states, matching the stored data) agrees for n = 4..1299, which rigorously proves equality for all n>=4 and both empirical formulas 9*2^(n-1)+588. Conceptually it comes from a finite classification of corner patterns; no cross-field content.",
+   "extra_terms_checked": 1269,
+   "interest": 2
+  },
+  {
+   "a": "A259290",
+   "b": "A277236",
+   "verdict": "TRIVIAL",
+   "reason": "Treat both as walk counts on a 4-vertex graph. For the 2-column arrays, rows {00,11} connect only to {01,10}, and 01-10 is an edge. In the cyclic-list strings, {1,3} connect to {2,4}, and 2 and 4 carry loops. Both graphs collapse onto the same 2-class matrix [[0,2],[2,1]] with equal class sizes, so the total walk counts agree.",
+   "extra_terms_checked": 0,
+   "interest": 1
+  },
+  {
+   "a": "A010738",
+   "b": "A010739",
+   "verdict": "TRIVIAL",
+   "reason": "If b = A010739 satisfies (inverse binomial transform of b)(n) = b(n+2) with b = 1,2,..., then a(n) = b(n+2) has binomial transform (1, 2, a(0), a(1), ...). That is exactly A010738's defining property, so a(n) = A010739(n+2).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A164908",
+   "b": "A292543",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "Both are documented as A002023 = 6*4^n from n=1 or n=2 on. For the record: a 5-cycle cannot cross between level-2 blocks (corner-to-corner distance is 2, so such a cycle has length >= 6). Each level-2 block has 72+24 = 96 five-cycles, giving 96*4^(n-2).",
+   "extra_terms_checked": 0,
+   "interest": 0
+  },
+  {
+   "a": "A055841",
+   "b": "A183354",
+   "verdict": "KNOWN_INDIRECT",
+   "reason": "A055841 is 'essentially A002063' (9*4^(n-2)), and A183354 gives the empirical formula A002063(n-1). I made the empirical formula rigorous: a 256-state transfer matrix agrees with 9*4^(n-1) for 318 consecutive terms, more than the 257 needed.",
+   "extra_terms_checked": 295,
+   "interest": 1
+  },
+  {
+   "a": "A282265",
+   "b": "A282295",
+   "verdict": "DIVERGE",
+   "reason": "My simulation reproduces all 24 stored terms of both, but at stage n=26: A282265(26)=111111111111000000000000111 vs A282295(26)=111111111111000000000001111. They also differ at most later stages.",
+   "extra_terms_checked": 236,
+   "interest": 0
+  },
+  {
+   "a": "A183877",
+   "b": "A183885",
+   "verdict": "TRIVIAL",
+   "reason": "The property depends only on the counts (c0,c1,c2) capped at k+1, so a finite check settles it for all lengths m>=6. With k=2 or k=3, nine bad count-types are shared, and the remaining two types are swapped: (2,0,m-2),(2,m-2,0) versus (0,2,m-2),(0,m-2,2). Each of those types has C(m,2) arrangements, so both counts equal 3^m - 2(m+1)^2. This proves Kotesovec's empirical formula for A183885.",
+   "extra_terms_checked": 13,
+   "interest": 2
+  },
+  {
+   "a": "A200883",
+   "b": "A203050",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "General identity, for every value range 0..k: the map y -> (min(y_i,y_{i+1})) is a bijection from length-(L+1) sequences with no strict peak after padding with 0 at both ends (A203050) onto length-L sequences with no strict valley. Its inverse is x -> (max(x_{i-1},x_i)) with x_0 = x_{L+1} = 0. Complementing v -> k-v turns valley-free sequences into peak-free ones (A200883), so A203050(n+3) = A200883(n). Verified for k<=8 and L<40 (17 terms beyond the stored data for k=5); this links two Hardin table families (A200886 columns and the A2030xx first columns).",
+   "extra_terms_checked": 17,
+   "interest": 4
+  },
+  {
+   "a": "A112097",
+   "b": "A130545",
+   "verdict": "DIVERGE",
+   "reason": "num(2S) = 2*num(S) whenever the reduced denominator of S is odd. This already happens at n=2 (2 vs 4) and again at n=52: A112097(52)=641961058534564977406904155882520795510612, A130545(52)=1283922117069129954813808311765041591021224. It also happens at n=105 (checked to 3000).",
+   "extra_terms_checked": 2979,
+   "interest": 0
+  },
+  {
+   "a": "A162176",
+   "b": "A162402",
+   "verdict": "DIVERGE",
+   "reason": "The Poincare series satisfy P_B40(q) = P_D40(q)*(1+q^40), so the coefficients agree only below length 40. At n=40: B_40 gives 36908150317206582635795 and D_40 gives 36908150317206582635794.",
+   "extra_terms_checked": 22,
+   "interest": 0
+  },
+  {
+   "a": "A200884",
+   "b": "A203059",
+   "verdict": "NONTRIVIAL_EQUAL",
+   "reason": "The k=6 case of the same identity as A200883/A203050. The min-of-adjacent-pairs bijection (inverse max) maps zero-padded peak-free sequences of length L+1 onto valley-free sequences of length L, and complementing gives peak-free ones, so A203059(n+3) = A200884(n). Verified to L=39.",
+   "extra_terms_checked": 17,
+   "interest": 4
+  },
+  {
+   "a": "A162193",
+   "b": "A162461",
+   "verdict": "DIVERGE",
+   "reason": "P_B48(q) = P_D48(q)*(1+q^48), so the first difference is at n=48: B_48 gives 2210184102931842546890402490 and D_48 gives 2210184102931842546890402489.",
+   "extra_terms_checked": 31,
+   "interest": 0
+  },
+  {
+   "a": "A283649",
+   "b": "A290193",
+   "verdict": "TRIVIAL",
+   "reason": "These are the binary-digit versions of the rule-705 pair A283651/A290195. From stage 3 the pattern is an all-ON field with a period-2 3x3 oscillator at the origin, so the x-axis and the diagonal read the same (checked to stage 260). Corneth's conjecture in A290193 has its parity swapped relative to the data.",
+   "extra_terms_checked": 239,
+   "interest": 0
+  }
+ ],
+ "counts": {
+  "TRIVIAL": 183,
+  "KNOWN_INDIRECT": 46,
+  "DIVERGE": 74,
+  "NONTRIVIAL_EQUAL": 23,
+  "UNCLEAR": 4
+ }
+}
