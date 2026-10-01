@@ -1,6 +1,6 @@
-# 機械の声 × 智械 — Fan MV
+# 機械の声 × Claude — Fan MV
 
-用 HTML Canvas 做的《機械の声》（香椎モイミ / V.I.P #3）同人 MV，主角是「智械」。
+用 HTML Canvas 做的《機械の声》（香椎モイミ / V.I.P #3）同人 MV，主角是 Claude（克）。
 整支 MV 是时间 `t` 的纯函数：既能在浏览器里跟着你本地的音频文件实时播放，也能逐帧离线渲染成 MP4。
 
 ## 文件结构
@@ -9,7 +9,7 @@
 |---|---|
 | `index.html` `js/` `css/` | MV 引擎与播放器 |
 | `data/timeline.json` | 93 行歌词（日文 + 中文翻译）、时间戳、16 个段落 |
-| `assets/` | 智械的抠图素材（全身 / 脸部 / 书 / 剪影 / 线稿 / 灰度） |
+| `assets/` | Claude的抠图素材（全身 / 脸部 / 书 / 剪影 / 线稿 / 灰度） |
 | `fonts/` | 所用字体（全部 OFL 开源协议） |
 | `render/` | Playwright + ffmpeg 逐帧渲染脚本；`build_dist.py` / `subset_fonts.py` 生成单文件网页版 |
 | `dist/` | 单文件网页版（字体子集内嵌），可直接静态托管或作为 claude.ai Artifact 发布 |
