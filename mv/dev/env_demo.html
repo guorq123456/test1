@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>env.js demo</title>
+<link rel="icon" href="data:,">
+<style>
+@font-face { font-family: "Zen Old Mincho"; src: url("../fonts/ZenOldMincho-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: "Zen Old Mincho"; src: url("../fonts/ZenOldMincho-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: block; }
+@font-face { font-family: "Zen Old Mincho"; src: url("../fonts/ZenOldMincho-Black.ttf") format("truetype"); font-weight: 900; font-style: normal; font-display: block; }
+@font-face { font-family: "Shippori Mincho B1"; src: url("../fonts/ShipporiMinchoB1-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: "Shippori Mincho B1"; src: url("../fonts/ShipporiMinchoB1-ExtraBold.ttf") format("truetype"); font-weight: 800; font-style: normal; font-display: block; }
+@font-face { font-family: "Zen Kaku Gothic New"; src: url("../fonts/ZenKakuGothicNew-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: "Zen Kaku Gothic New"; src: url("../fonts/ZenKakuGothicNew-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: block; }
+@font-face { font-family: "Zen Kaku Gothic New"; src: url("../fonts/ZenKakuGothicNew-Black.ttf") format("truetype"); font-weight: 900; font-style: normal; font-display: block; }
+@font-face { font-family: "DotGothic16"; src: url("../fonts/DotGothic16-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: "Share Tech Mono"; src: url("../fonts/ShareTechMono-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: "Orbitron"; src: url("../fonts/Orbitron-Variable.ttf") format("truetype"); font-weight: 400 900; font-style: normal; font-display: block; }
+@font-face { font-family: "Cormorant Garamond"; src: url("../fonts/CormorantGaramond-Variable.ttf") format("truetype"); font-weight: 300 700; font-style: normal; font-display: block; }
+@font-face { font-family: "Cormorant Garamond"; src: url("../fonts/CormorantGaramond-Italic-Variable.ttf") format("truetype"); font-weight: 300 700; font-style: italic; font-display: block; }
+@font-face { font-family: "MV Noto Sans SC"; src: url("../fonts/NotoSansSC-Regular-SC.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: block; }
+html, body { margin: 0; padding: 0; background: #000; }
+body.fit { display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+body.fit canvas { width: min(100vw, calc(100vh * 16 / 9)); height: auto; }
+canvas { display: block; width: 1920px; height: 1080px; }
+#info { position: fixed; left: 8px; bottom: 6px; color: #9FB3BF; font: 12px "Share Tech Mono", monospace; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<div id="info"></div>
+<script type="module" src="env_demo.js"></script>
+</body>
+</html>
