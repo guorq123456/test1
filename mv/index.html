@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>機械の声 × 智械 — Fan MV</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="css/style.css">
+<script>
+  // Contract stub (STORYBOARD §6): MV exists synchronously; engine.js fills in render() and resolves ready.
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var render = q.get('render') === '1';
+    if (render) document.documentElement.classList.add('render');
+    var res, rej;
+    window.MV = {
+      duration: 400,
+      config: { showZh: true, grain: true, offset: 0 },
+      timeline: null,
+      renderMode: render,
+      ready: new Promise(function (a, b) { res = a; rej = b; }),
+      render: function () { throw new Error('MV not ready yet — await MV.ready'); }
+    };
+    window.MV.__resolve = res; window.MV.__reject = rej;
+  })();
+</script>
+</head>
+<body>
+<div id="stage"><canvas id="mv" width="1920" height="1080"></canvas></div>
+<div id="loading">LOADING VOICEBANK… <span>智械</span></div>
+<div id="ui" hidden>
+  <div id="bar">
+    <label class="btn file" title="选择音频文件 / choose audio file">选择音频文件<input type="file" id="file" accept="audio/*"></label>
+    <button class="btn" id="play" title="Play / Pause (Space)">▶</button>
+    <span id="tc">00:00.00</span>
+    <input type="range" id="seek" min="0" max="400" step="0.01" value="0" aria-label="seek">
+    <span id="dur">06:40.00</span>
+    <button class="btn" id="zh" title="Chinese subtitles (Z)">中</button>
+    <span class="off"><button class="btn sm" id="offm" title="offset −0.1 s ([)">[</button><span id="off">±0.0s</span><button class="btn sm" id="offp" title="offset +0.1 s (])">]</button></span>
+    <button class="btn" id="fs" title="Fullscreen (F)">⛶</button>
+  </div>
+  <div id="hint"><span id="src">无音频 · 静音时钟</span> · SPACE 播放/暂停 · Z 中文 · F 全屏 · [ ] 偏移 ±0.1 s · ← → ±5 s</div>
+</div>
+<audio id="audio" preload="auto"></audio>
+<script type="module" src="js/engine.js"></script>
+</body>
+</html>
