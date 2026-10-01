@@ -1537,5 +1537,5 @@ SCENES.outro = (S) => {
     c.restore();
   }
   const paper = toPaper >= 1 && !crt;
-  return { tone: paper ? 'light' : 'dark', vignette: paper ? 0.22 : crt ? 0 : 0.7, scan: crt ? 0.02 : 0.04, bugAlpha: 1 - smooth(384.0, 385.0, t), hideTC: crt, grain: crt ? 0.02 : 0.05, tcLeft: 1 };
+  return { tone: paper ? 'light' : 'dark', vignette: paper ? 0.22 : crt ? 0 : 0.7, scan: crt ? 0.02 : 0.04, bugAlpha: 1 - smooth(384.0, 385.0, t), hideTC: crt, grain: crt ? 0.02 : 0.05, tcLeft: 1, tcAlpha: smooth(386.0, 386.8, t) }; // final_b faded the HUD out; it returns on the paper page
 };
