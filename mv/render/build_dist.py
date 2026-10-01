@@ -40,17 +40,27 @@ fx_src, fx_names = strip_exports((MV / 'js/fx.js').read_text(encoding='utf-8'))
 for n in fx_names:
     if not re.search(r'^(?:async\s+)?(?:function\s+' + n + r'\b|(?:const|let|var)\s+(?:\w+\s*=\s*[\d.]+\s*,\s*)?' + n + r'\s*=)', fx_src, re.M):
         sys.exit('export name not declared at top level: ' + n)
+# env.js: named imports from fx → destructure inside its IIFE
+env_src = (MV / 'js/env.js').read_text(encoding='utf-8')
+m = re.search(r"^import \{([^}]*)\} from './fx\.js';\n", env_src, re.M)
+if not m:
+    sys.exit('env.js import not found')
+env_src = env_src.replace(m.group(0), 'const {' + m.group(1) + '} = fx;\n')
+env_src, env_names = strip_exports(env_src)
+cf_src = (MV / 'js/charfx.js').read_text(encoding='utf-8')
+cf_src = sub(cf_src, "import * as fx from './fx.js';\n", '')
+cf_src, cf_names = strip_exports(cf_src)
 sc_src = (MV / 'js/scenes.js').read_text(encoding='utf-8')
 sc_src = sub(sc_src, "import * as fx from './fx.js';\n", '')
+sc_src = sub(sc_src, "import * as env from './env.js';\n", '')
+sc_src = sub(sc_src, "import * as cf from './charfx.js';\n", '')
 sc_src, sc_names = strip_exports(sc_src)
 en_src = (MV / 'js/engine.js').read_text(encoding='utf-8')
 en_src = sub(en_src, "import * as fx from './fx.js';\n", '')
-en_src = sub(en_src, "import { SCENES, TRANSITIONS, prepareScenes, drawBug } from './scenes.js';\n", '')
+en_src = sub(en_src, "import { SCENES, TRANSITIONS, prepareScenes, finishFrame, energyAt, frameState } from './scenes.js';\n", '')
 en_src, _ = strip_exports(en_src)
 
 # --- dist-only engine patches (player robustness inside a sandboxed iframe / on phones)
-# char_bust.png is loaded by the main build but never used: don't ship it.
-en_src = sub(en_src, "'char_face', 'char_bust', 'char_book'", "'char_face', 'char_book'")
 # SVG icons instead of ▶ ❚❚ glyphs (not in the embedded fonts, tofu on some phones)
 en_src = sub(en_src, "    play.textContent = isPlaying() ? '❚❚' : '▶';",
              "    play.innerHTML = isPlaying() ? ICON_PAUSE : ICON_PLAY;")
@@ -93,8 +103,10 @@ en_src = sub(en_src, "  window.addEventListener('mousemove', () => { lastMove = 
   window.addEventListener('touchstart', wake, { passive: true });""")
 
 bundle = (
-    "// 機械の声 × 智械 — fan MV player (single-file build of js/fx.js + js/scenes.js + js/engine.js)\n"
+    "// 機械の声 × Claude — fan MV player (single-file build of js/fx.js, env.js, charfx.js, scenes.js, engine.js)\n"
     "const fx = (() => {\n" + fx_src + "\nreturn { " + ', '.join(fx_names) + " };\n})();\n\n"
+    "const env = (() => {\n" + env_src + "\nreturn { " + ', '.join(env_names) + " };\n})();\n\n"
+    "const cf = (() => {\n" + cf_src + "\nreturn { " + ', '.join(cf_names) + " };\n})();\n\n"
     "const { " + ', '.join(sc_names) + " } = (() => {\n" + sc_src + "\nreturn { " + ', '.join(sc_names) + " };\n})();\n\n"
     + en_src
 )
@@ -108,7 +120,7 @@ for bad in ('\nimport ', '\nexport ', '</script', '<!--'):
 
 # ------------------------------------------------------------------ fonts
 ui_strings = ('选择音频文件 无音频 · 静音时钟 播放 / 暂停 全屏 中 ON OFF 偏移 方向键 '
-              '选择本地《機械の声》音频文件后播放；Z 切换中文字幕，[ / ] 微调偏移 智械 LOADING VOICEBANK…')
+              '选择本地《機械の声》音频文件后播放；Z 切换中文字幕，[ / ] 微调偏移 Claude LOADING VOICEBANK…')
 ui_font = SCR / 'subset' / 'MVUI-NotoSansSC.ttf'
 ui_font.parent.mkdir(exist_ok=True)
 opts = ftsubset.Options(); opts.layout_features = ['*']; opts.name_IDs = ['*']
@@ -164,7 +176,7 @@ index = (MV / 'index.html').read_text(encoding='utf-8')
 stub = re.search(r'<script>\s*(// Contract stub.*?)</script>', index, re.S).group(1)
 
 markup = """<div id="stage"><canvas id="mv" width="1920" height="1080"></canvas></div>
-<div id="loading">LOADING VOICEBANK… <span>智械</span></div>
+<div id="loading">LOADING VOICEBANK… <span>CLAUDE</span></div>
 <div id="ui" hidden>
   <div id="bar">
     <label class="btn file" title="选择音频文件">选择音频文件<input type="file" id="file" accept="audio/*"></label>
@@ -183,7 +195,7 @@ markup = """<div id="stage"><canvas id="mv" width="1920" height="1080"></canvas>
 
 font_note = ('/* Embedded fonts (subsets), all SIL Open Font License 1.1: Zen Old Mincho, Shippori Mincho B1, Zen Kaku Gothic New,\n'
              '   DotGothic16, Share Tech Mono, Orbitron, Cormorant Garamond, Noto Sans SC. Licence texts: licenses/ */\n')
-page = ("<title>機械の声 × 智械</title>\n"
+page = ("<title>機械の声 × Claude</title>\n"
         '<meta charset="utf-8">\n<link rel="icon" href="data:,">\n'
         "<style>\n" + font_note + css + "\n</style>\n"
         "<script>\n" + stub.strip() + "\n</script>\n"

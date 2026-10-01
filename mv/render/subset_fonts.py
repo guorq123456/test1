@@ -11,7 +11,7 @@ walk(tl)
 for f in glob.glob(f'{MV}/js/*.js')+[f'{MV}/index.html', f'{MV}/css/style.css']:
     chars.update(open(f,encoding='utf-8').read())
 chars.update('「」『』（）【】…―—–・、。！？：；，．％＋－×÷＝〜～ー々〆〇０１２３４５６７８９ＡＢＣＤＥＦ　')
-chars.update('机械的声音智械你我他她它们这那是不了在有和就都而及与着或一个之为以于上下中')
+chars.update('机械的声音克你我他她它们这那是不了在有和就都而及与着或一个之为以于上下中')
 chars={c for c in chars if ord(c)>=0x20 and c not in '  '}
 txt=''.join(sorted(chars)); open(f'{OUT}/chars.txt','w',encoding='utf-8').write(txt)
 print('glyph set:', len(chars), 'chars')

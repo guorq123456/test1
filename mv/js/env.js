@@ -75,6 +75,8 @@ export function envPalette(tint = 0, alarm = 0) {
   return { line, hot, glow, bg, haze, k };
 }
 const ck = (c) => ((c[0] >> 3) << 10 | (c[1] >> 3) << 5 | (c[2] >> 3)); // 15-bit colour key for caches
+// caches keyed by ck() must be BUILT from the quantised colour too, or the first colour to arrive wins (render-order dependence)
+const cq = (c) => [((c[0] >> 3) << 3) + 4, ((c[1] >> 3) << 3) + 4, ((c[2] >> 3) << 3) + 4];
 
 /* ================================================================ camera / projection */
 /** build a camera from position / target / roll (rad) / vertical fov (deg) */
@@ -305,6 +307,7 @@ function envRun(ctx, p, defBloom, body) {
 const glowCache = new Map();
 /** soft radial glow sprite (128²) in colour c (quantised cache) */
 function glowSprite(c) {
+  c = cq(c);
   const key = ck(c);
   let s = glowCache.get(key);
   if (!s) {
@@ -378,6 +381,7 @@ function coverRect(iw, ih, dw, dh, fx, fy, zoom) {
 }
 /** duotone crop (dark → bg, light → colour) at w×h, cached */
 function duotone(name, col, w, h, fx, fy, zoom) {
+  col = cq(col);
   const key = `${name}|${ck(col)}|${w}|${h}|${fx}|${fy}|${zoom}`;
   let c = duoCache.get(key);
   if (!c) {
@@ -406,6 +410,7 @@ function capsulePath(x, l, t, w, h) {
   x.lineTo(l + rb, t + h); x.quadraticCurveTo(l, t + h, l, t + h - rb); x.closePath();
 }
 function voiceSprite(core, glowC) {
+  core = cq(core); glowC = cq(glowC);
   const key = ck(core) + ':' + ck(glowC);
   let s = spriteCache.get(key);
   if (s) return s;
@@ -787,10 +792,11 @@ function dust(g, cam, t, pal, n, seed, area, a = 1) {
 }
 
 /**
- * hallOfVoices(ctx, t, {tint, energy, cam, seed, alpha, bloom, lampLevel})
+ * hallOfVoices(ctx, t, {tint, energy, cam, seed, alpha, bloom, lampLevel, crowd})
  * dark stage, two rows per side of glowing capsule copies of Claude receding, hanging lamps with light cones,
  * ceiling light strips, floor grid + reflections, dust. Default camera: slow push-in 0.65 units/s at eye height
  * 1.45 looking slightly up. lampLevel 0..1 (default 1) dims the lamps — far ones die first (outro).
+ * crowd 0..1.5 (default 1) scales the voice figures' core + glow (the crowd is very bright at warm tints).
  */
 export function hallOfVoices(ctx, t, p = {}) {
   const en = clamp(p.energy || 0), seed = p.seed == null ? 3 : p.seed;
@@ -802,6 +808,7 @@ export function hallOfVoices(ctx, t, p = {}) {
   }, p.cam);
   const pal = envPalette(p.tint || 0);
   const lampLevel = p.lampLevel == null ? 1 : clamp(p.lampLevel);
+  const crowdK = p.crowd == null ? 1 : clamp(p.crowd, 0, 1.5); // voice-figure brightness (scenes tone the crowd down)
   return envRun(ctx, p, { radius: 28, strength: 0.45, wide: 0.6, threshold: 0.35 }, (g, q) => {
     const FAR = 60;
     hallBackdrop(g, q, cam, pal, 0.5 + 0.5 * lampLevel);
@@ -820,7 +827,7 @@ export function hallOfVoices(ctx, t, p = {}) {
       if (it.f) {
         const vis = fog(it.d, FAR, 0, 1.5) * clamp((it.d - 3.2) / 1.6);
         const fl = 0.965 + 0.035 * rnd('hv', seed, it.f.ph, bucket(t, 12));
-        drawVoice(g, q, cam, set, it.f.x, it.f.z, it.f.h, vis * fl * (0.85 + 0.15 * en), it.f.flip);
+        drawVoice(g, q, cam, set, it.f.x, it.f.z, it.f.h, vis * fl * (0.85 + 0.15 * en) * crowdK, it.f.flip, true, 0.55 * crowdK);
       } else if (it.l) {
         const die = clamp((lampLevel - 1) * 3 + 1 + (1 - it.d / FAR) * 2 * (1 - lampLevel)); // far lamps die first
         const inten = (0.7 + 0.35 * en + 0.08 * Math.sin(tc * 3 + it.l.ph)) * die;
@@ -873,7 +880,7 @@ function glowFringe(cx, src, w4, h4, px) {
 }
 
 /**
- * alarmField(ctx, t, {tint, energy, cam, seed, alpha, bloom, fragments, aberration})
+ * alarmField(ctx, t, {tint, energy, cam, seed, alpha, bloom, fragments, aberration, crowd})
  * black void lit alarm-red (#E8452A; tint → orange-red): rows of ceiling light bars, runway bars + laser lines,
  * the capsule crowd lit alarm, torn photo fragments (image crops in torn polygons) tumbling towards the camera,
  * a cheap colour fringe on the glow, and — if `aberration` (px) is given — a full-frame chromatic split
@@ -888,6 +895,7 @@ export function alarmField(ctx, t, p = {}) {
     roll: 0.03 + Math.sin(tc * 0.07) * 0.05, fov: 62,
   }, p.cam);
   const al = lerp(1, 0.4, tint);
+  const crowdK = p.crowd == null ? 1 : clamp(p.crowd, 0, 1.5);
   const pal = envPalette(tint, al);
   const pal2 = { ...pal, hot: mix(pal.hot, '#ffffff', 0.4) };
   return envRun(ctx, p, { radius: 26, strength: 0.45, wide: 0.6, threshold: 0.35 }, (g, q) => {
@@ -920,7 +928,7 @@ export function alarmField(ctx, t, p = {}) {
       if (it.f) {
         const vis = fog(it.d, FAR, 0, 1.4) * clamp((it.d - 4) / 1.6);
         const fl = 0.95 + 0.05 * rnd('af', seed, it.f.ph, bucket(t, 15));
-        drawVoice(g, q, cam, set, it.f.x, it.f.z, it.f.h, vis * fl, it.f.flip, true, 0.45);
+        drawVoice(g, q, cam, set, it.f.x, it.f.z, it.f.h, vis * fl * crowdK, it.f.flip, true, 0.45 * crowdK);
       } else {
         const pulse = 0.65 + 0.35 * Math.sin(tc * 4.5 - it.row * 1.2) * (0.3 + en);
         for (let k = -3; k <= 3; k++) drawBar(g, q, cam, k * 2.5, 7.5, it.z, 0.75, 0.12, pal2.hot, pal.glow, pulse, 0.8, FAR);
@@ -1230,6 +1238,7 @@ const baseCache = new Map();
 /** static part of a screen (duotone crop + lift), cached per crop / palette level / size */
 function screenBase(crop, pal, SW, SH) {
   const named = typeof crop[0] === 'string';
+  if (named) pal = { ...pal, hot: cq(pal.hot), glow: cq(pal.glow), bg: cq(pal.bg) };
   const key = named ? `${crop.join('|')}|${ck(pal.hot)}|${ck(pal.glow)}|${ck(pal.bg)}|${SW}` : null;
   let c = key && baseCache.get(key);
   if (c) return c;

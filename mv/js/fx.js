@@ -1,4 +1,4 @@
-// fx.js — pure drawing helpers for the 機械の声 × 智械 MV.
+// fx.js — pure drawing helpers for the 機械の声 × Claude MV.
 // Everything here is deterministic: randomness comes only from seeded mulberry32.
 
 export const W = 1920, H = 1080;
@@ -699,7 +699,7 @@ export function waveform(ctx, x0, x1, cy, o) {
   return pts;
 }
 /** faux code columns (prebuilt text, scrolled by t) */
-const CODE_TOKENS = ['voice.synth', 'f0=', 'formant[', 'vibrato', 'emotion=NULL', 'loop', 'return', '0x', 'buf.push', 'if(', 'phoneme', '/ka/', '/i/', 'sample', 'gain', 'pitch', 'ENV', 'adsr', 'feel()', 'void', 'null', '==', '!=', 'await', 'tts', 'mel', 'fft', 'z-1', 'model', 'loss', 'grad', '機械', '声', '智械', '//', '{', '}', ';'];
+const CODE_TOKENS = ['voice.synth', 'f0=', 'formant[', 'vibrato', 'emotion=NULL', 'loop', 'return', '0x', 'buf.push', 'if(', 'phoneme', '/ka/', '/i/', 'sample', 'gain', 'pitch', 'ENV', 'adsr', 'feel()', 'void', 'null', '==', '!=', 'await', 'tts', 'mel', 'fft', 'z-1', 'model', 'loss', 'grad', '機械', '声', 'Claude', '//', '{', '}', ';'];
 export function codeColumns(ctx, t, o) {
   const size = o.size || 14, colW = o.colW || 150, lh = size * 1.45;
   const cols = Math.ceil((o.w || W) / colW);

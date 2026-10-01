@@ -1,6 +1,7 @@
-// engine.js — loader, timeline, time→scene dispatch, global warmth w(t), persistent overlays, player.
+// engine.js — loader, timeline, time→scene dispatch, global warmth w(t), post-processing, player.
+// v2: scenes draw env (env.js) + Claude (charfx.js); scenes.finishFrame adds blackouts, the cockpit frame and text.
 import * as fx from './fx.js';
-import { SCENES, TRANSITIONS, prepareScenes, drawBug } from './scenes.js';
+import { SCENES, TRANSITIONS, prepareScenes, finishFrame, energyAt, frameState } from './scenes.js';
 
 const { W, H, P, clamp, lerp, inv, smooth, ease } = fx;
 const MV = window.MV || (window.MV = { duration: 400, config: { showZh: true, grain: true, offset: 0 } });
@@ -49,7 +50,7 @@ const FONT_FACES = [
   ['400 32px "Zen Old Mincho"', '機械の声'], ['700 32px "Zen Old Mincho"', '機械の声'], ['900 32px "Zen Old Mincho"', '機械の声'],
   ['400 32px "Shippori Mincho B1"', '機械の声'], ['800 32px "Shippori Mincho B1"', '機械の声'],
   ['400 32px "Zen Kaku Gothic New"', '機械の声'], ['700 32px "Zen Kaku Gothic New"', '機械の声'], ['900 32px "Zen Kaku Gothic New"', '機械の声'],
-  ['400 32px "DotGothic16"', '智械 BOOT'], ['400 32px "Share Tech Mono"', 'BOOT 0123'],
+  ['400 32px "DotGothic16"', '機械の声 BOOT'], ['400 32px "Share Tech Mono"', 'BOOT 0123'],
   ['700 32px "Orbitron"', 'feat'], ['400 32px "Orbitron"', 'feat'],
   ['400 32px "Cormorant Garamond"', 'Voice'], ['italic 400 32px "Cormorant Garamond"', 'The Voice of AI'],
   ['400 32px "MV Noto Sans SC"', '机械的声音'],
@@ -207,11 +208,12 @@ function sceneCtx(c, si, t) {
   const w = warmth(t);
   return {
     ctx: c, t, lt: t - sec.start, sec, si, p: clamp((t - sec.start) / (sec.end - sec.start)),
-    w, A, TL, LINES, cfg: MV.config, fx, W, H,
+    w, A, TL, LINES, cfg: MV.config, fx, W, H, energy: energyAt(t), cutAge: frameState(t).cutAge,
   };
 }
 function drawScene(c, si, t) {
   fx.reset(c);
+  c.fillStyle = '#000'; c.fillRect(0, 0, W, H); // never let the previous frame show through (envs may draw with alpha < 1)
   const S = sceneCtx(c, si, t);
   const fn = SCENES[S.sec.id];
   let out = null;
@@ -227,7 +229,7 @@ function render(t) {
   const si = sectionIndexAt(t);
   const sec = SECS[si];
   let opts = drawScene(ctx, si, t);
-  const tr = TRANSITIONS[sec.id] || { type: 'cut' };
+  const tr = TRANSITIONS[sec.id] || { type: 'none' };
   const since = t - sec.start;
   // cross-dissolve: previous scene (rendered at the same t) fades out over the new one
   if (tr.type === 'dissolve' && si > 0 && since < tr.d) {
@@ -235,10 +237,11 @@ function render(t) {
     const k = ease.inOutSine(clamp(since / tr.d));
     fx.blit(ctx, dissolveBuf, 0, 0, W, H, 1 - k);
   }
-  // persistent overlays
-  drawOverlays(t, si, opts);
+  // blackout, cockpit frame (re-draws after each cut) and the typography layer
+  const fin = finishFrame(ctx, sceneCtx(ctx, si, t), opts);
+  if (fin.cuts && fin.cuts.length) opts.cuts = (opts.cuts || []).concat(fin.cuts);
   // designed hard cut: glitch burst + 2-frame flash
-  if (tr.type === 'cut' && si > 0) cutFX(t, sec.start, tr, si);
+  if (tr.type === 'cut' && si > 0) cutFX(t, sec.start, tr, si); // (v2: TRANSITIONS is empty — cuts come from blackouts)
   // inner cuts requested by the scene (e.g. bridge per-line hard cuts)
   if (opts.cuts) for (const cu of opts.cuts) cutFX(t, cu.t, cu, si * 100 + (cu.id || 0));
   if (opts.glitch) {
@@ -274,52 +277,6 @@ function cutFX(t, t0, tr, seed) {
   }
 }
 
-function drawOverlays(t, si, opts) {
-  const sec = SECS[si];
-  const light = opts.tone === 'light';
-  const w = warmth(t);
-  const hud = light ? P.ink : fx.rgba(fx.mix(P.ice, P.gold, smooth(0.15, 0.8, w)));
-  // top-left bug (from 43.085 on; the title scene animates it into place)
-  const bugA = (opts.bugAlpha == null ? 1 : opts.bugAlpha) * (t >= 43.085 ? 1 : 0);
-  // soft gradient plates keep the persistent HUD legible over imagery (no shadowBlur: it is cached by Skia
-  // and is not bit-exact between first and later renders)
-  ctx.save();
-  const plate = (cx, cy, rx, ry, a) => {
-    ctx.save(); ctx.translate(cx, cy); ctx.scale(rx / ry, 1);
-    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, ry);
-    const pc = light ? P.paper : '#050403';
-    g.addColorStop(0, fx.rgba(pc, 0.55 * a)); g.addColorStop(0.6, fx.rgba(pc, 0.3 * a)); g.addColorStop(1, fx.rgba(pc, 0));
-    ctx.fillStyle = g; ctx.fillRect(-ry, -ry, ry * 2, ry * 2); ctx.restore();
-  };
-  if (bugA > 0.01 && !opts.hideBug) { plate(230, 118, 230, 60, bugA); drawBug(ctx, hud, bugA); }
-  // timecode + section id: bottom-right by default; scenes whose character stands on the right return
-  // tcLeft (0..1) to move it to the bottom-left (cross-faded, so a gradual value never makes it jump)
-  const tcA = (opts.tcAlpha == null ? 1 : opts.tcAlpha) * smooth(1.0, 1.6, t) * (1 - smooth(395.5, 397.5, t));
-  if (tcA > 0.01 && !opts.hideTC) {
-    const lbl = `SEC.${String(si + 1).padStart(2, '0')} ${sec.id.toUpperCase()}`;
-    const k = clamp(opts.tcLeft || 0);
-    const drawTC = (left, a) => {
-      if (a <= 0.01) return;
-      const ax = left ? 96 : W - 96, dir = left ? 1 : -1, align = left ? 'left' : 'right'; // mirrored layout
-      plate(ax + dir * 130, H - 96 - 14, 210, 52, a);
-      ctx.save();
-      ctx.globalAlpha = 0.5 * a;
-      fx.label(ctx, fmtTC(t), ax, H - 96, { size: 16, align, color: hud, track: 0.1 });
-      fx.label(ctx, lbl, ax, H - 96 - 24, { size: 14, align, color: hud, track: 0.16 });
-      ctx.globalAlpha = 0.35 * a;
-      ctx.fillStyle = hud;
-      // dotted leader beside the timecode
-      for (let i = 0; i < 16; i++) ctx.fillRect(left ? ax + 130 + i * 7 : ax - 132 - i * 7, H - 96 - 6, 2, 2);
-      ctx.fillRect(left ? ax + 242 : ax - 250, H - 96 - 9, 8, 8);
-      ctx.restore();
-    };
-    drawTC(false, tcA * (1 - k));
-    drawTC(true, tcA * k);
-  }
-  ctx.restore();
-}
-
-
 /* ---------------------------------------------------------------- startup */
 async function init() {
   try {
@@ -329,7 +286,7 @@ async function init() {
     const [imgs] = await Promise.all([loadAssets(), loadFonts()]);
     A = buildCaches(imgs);
     fx.buildPost();
-    prepareScenes({ A, TL, LINES, SECS, warmth });
+    prepareScenes({ A, TL, LINES, SECS, warmth, imgs });
     MV.render = (t) => render(t);
     MV.warmth = warmth;
     MV.sections = SECS;
