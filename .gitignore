@@ -1,0 +1,5 @@
+node_modules/
+mv/out/
+mv/render/sheet_test/
+mv/render/frames/
+*.log
