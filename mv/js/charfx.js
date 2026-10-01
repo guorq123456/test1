@@ -7,7 +7,7 @@
 //
 // Exports
 //   drawCharacter(ctx, t, opts)                 -> {x0,y0,x1,y1, scale}   (bbox in the ctx's current user space)
-//   drawVoiceCrowd(ctx, t, {silhouette, positions:[{x,y,h,depth,alpha?}], color, blur, alpha, glow, seed})
+//   drawVoiceCrowd(ctx, t, {silhouette, positions:[{x,y,h,depth,alpha?,flip?}], color, blur, alpha, glow, seed, op})
 //   drawMonitorFace(ctx, quad:[p0,p1,p2,p3], image, srcRect, {scanlines, glitch, t, seed, tint, alpha, bg, glow})
 //   cameraShot(t, {from, to, t0, t1, ease, drift, seed}) | cameraShot(k, from, to, ease)  -> {scale,x,y,rotate,cx,cy}
 //   applyCamera(ctx, cam)
@@ -598,10 +598,10 @@ function mix3(a, b, k) { return [lerp(a[0], b[0], k), lerp(a[1], b[1], k), lerp(
 // silhouette -> Map(colour -> {body, soft, halo}) at a fixed cache height
 const CROWD = new Map();
 const CROWD_H = 520;
-function crowdEntry(sil, col) {
+function crowdEntry(sil, col, glowQ) {
   let m = CROWD.get(sil);
   if (!m) { m = new Map(); CROWD.set(sil, m); }
-  const key = String(col);
+  const key = String(col) + '|' + glowQ;
   let e = m.get(key);
   if (e) return e;
   const hc = Math.min(CROWD_H, imgH(sil)), wc = Math.round(imgW(sil) * hc / imgH(sil));
@@ -631,7 +631,17 @@ function crowdEntry(sil, col) {
   const halo = makeCanvas(cw, ch), hx = wctx(halo);
   hx.filter = 'blur(22px)'; hx.drawImage(base, 0, 0); hx.filter = 'none';
   hx.globalCompositeOperation = 'source-in'; hx.fillStyle = rgba(rgb, 1); hx.fillRect(0, 0, cw, ch);
-  e = { body, soft, halo, hc, wc, pad, cw, ch };
+  // pre-composited sprites at 5 softness levels: halo + (body ↔ soft) + a touch of additive light, so each figure
+  // costs ONE drawImage per frame (the 4-draw version cost ~8 ms per figure on the CPU raster)
+  const levels = [0, 0.25, 0.5, 0.75, 1].map((k) => {
+    const c = makeCanvas(cw, ch), x = wctx(c);
+    x.globalAlpha = clamp(0.42 * glowQ); x.drawImage(halo, 0, 0);
+    if (k < 0.99) { x.globalAlpha = 1 - k; x.drawImage(body, 0, 0); }
+    if (k > 0.01) { x.globalAlpha = k; x.drawImage(soft, 0, 0); }
+    x.globalCompositeOperation = 'lighter'; x.globalAlpha = clamp(0.12 * glowQ); x.drawImage(soft, 0, 0);
+    return c;
+  });
+  e = { levels, hc, wc, pad, cw, ch };
   if (m.size > 10) m.delete(m.keys().next().value);
   m.set(key, e);
   return e;
@@ -643,15 +653,17 @@ function crowdEntry(sil, col) {
  *  opts.color       glow colour (hex or [r,g,b])                         [P.ice]
  *  opts.blur        0..1 extra softness (far figures get more)            [0.4]
  *  opts.alpha       overall alpha                                         [1]
- *  opts.glow        halo strength multiplier                              [1]
+ *  opts.glow        halo strength multiplier, quantised to 0.25 steps (baked) [1]
+ *  opts.op          composite op per figure ('lighter' = purely additive)  ['source-over']
  *  opts.seed        PRNG key for the per-figure idle motion               ['crowd']
  * Figures are drawn far → near; each breathes and sways on its own seeded phase.
  */
 export function drawVoiceCrowd(ctx, t, o = {}) {
   const sil = o.silhouette;
   if (!sil || !o.positions || !o.positions.length) return;
-  const e = crowdEntry(sil, o.color || P.ice);
-  const blur = o.blur == null ? 0.4 : o.blur, alpha = o.alpha == null ? 1 : o.alpha, glow = o.glow == null ? 1 : o.glow;
+  const glow = o.glow == null ? 1 : Math.round(clamp(o.glow, 0, 2.5) * 4) / 4;
+  const e = crowdEntry(sil, o.color || P.ice, glow);
+  const blur = o.blur == null ? 0.4 : o.blur, alpha = o.alpha == null ? 1 : o.alpha;
   const seed = o.seed == null ? 'crowd' : o.seed;
   const order = o.positions.map((p, i) => [p, i]).sort((a, b) => (b[0].depth || 0) - (a[0].depth || 0));
   ctx.save();
@@ -670,16 +682,9 @@ export function drawVoiceCrowd(ctx, t, o = {}) {
     ctx.scale(s * (flip ? -1 : 1) * (1 + (br - 1) * 0.5), s * br);
     ctx.translate(-e.cw / 2, -(e.pad + e.hc));
     const k = clamp(blur * (0.35 + d));
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.globalAlpha = ga * clamp(a * 0.42 * glow);
-    ctx.drawImage(e.halo, 0, 0);
-    ctx.globalCompositeOperation = 'source-over';
-    if (k < 0.99) { ctx.globalAlpha = ga * clamp(a * (1 - k)); ctx.drawImage(e.body, 0, 0); }
-    if (k > 0.01) { ctx.globalAlpha = ga * clamp(a * k); ctx.drawImage(e.soft, 0, 0); }
-    // a touch of additive light so the figures read as emitters, not cut-outs
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.globalAlpha = ga * clamp(a * 0.12 * glow);
-    ctx.drawImage(e.soft, 0, 0);
+    ctx.globalCompositeOperation = o.op || 'source-over';
+    ctx.globalAlpha = ga * clamp(a);
+    ctx.drawImage(e.levels[Math.round(k * 4)], 0, 0);
     ctx.restore();
   }
   ctx.restore();
