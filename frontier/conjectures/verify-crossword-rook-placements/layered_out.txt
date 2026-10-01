@@ -1,0 +1,28 @@
+n=15 rank 1 value 202352501701 shape (5,1,1,1,1,1,5)
+n=15 rank 2 value 187453346761 shape (4,3,1,1,1,5)
+n=15 rank 3 value 187453346761 shape (5,1,1,1,3,4)
+n=15 rank 4 value 185845519201 shape (5,1,1,1,2,5)
+n=15 rank 5 value 185845519201 shape (5,2,1,1,1,5)
+n=15 rank 6 value 182739205277 shape (5,2,1,2,5)
+time 4.743090895
+n=16 rank 1 value 4493953750501 shape (5,1,1,1,1,1,1,5)
+n=16 rank 2 value 4250088142445 shape (5,2,1,1,2,5)
+n=16 rank 3 value 4146050421121 shape (5,1,1,1,1,2,5)
+n=16 rank 4 value 4146050421121 shape (5,2,1,1,1,1,5)
+n=16 rank 5 value 4059639605161 shape (4,3,1,1,1,1,5)
+n=16 rank 6 value 4059639605161 shape (5,1,1,1,1,3,4)
+time 22.113272541
+n=17 rank 1 value 104476798194769 shape (5,3,1,3,5)
+n=17 rank 2 value 103978263191117 shape (5,2,1,1,1,2,5)
+n=17 rank 3 value 103460138813701 shape (5,1,1,1,1,1,1,1,5)
+n=17 rank 4 value 100124172368413 shape (5,2,1,1,3,5)
+n=17 rank 5 value 100124172368413 shape (5,3,1,1,2,5)
+n=17 rank 6 value 98117876857201 shape (5,3,4,5)
+time 94.882010154
+n=18 rank 1 value 2949333362474113 shape (5,3,1,1,3,5)
+n=18 rank 2 value 2796898184428381 shape (5,3,1,4,5)
+n=18 rank 3 value 2796898184428381 shape (5,4,1,3,5)
+n=18 rank 4 value 2784281575269817 shape (5,3,2,3,5)
+n=18 rank 5 value 2760471609095249 shape (5,4,4,5)
+n=18 rank 6 value 2662629689148829 shape (5,2,1,1,1,3,5)
+time 303.101811837

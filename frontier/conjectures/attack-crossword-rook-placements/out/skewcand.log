@@ -1,0 +1,18 @@
+N=12 skew-merged(N)=1209916 candidates=34 min|RP| over candidates=5  #candidates with |RP|<=2: 0
+candidate |RP| histogram (<64): 5:4 16:4 60:4
+N=12 wall .238088962 s
+N=13 skew-merged(N)=4707964 candidates=38 min|RP| over candidates=5  #candidates with |RP|<=2: 0
+candidate |RP| histogram (<64): 5:4 16:4 60:4
+N=13 wall 1.033572890 s
+N=14 skew-merged(N)=18330728 candidates=42 min|RP| over candidates=5  #candidates with |RP|<=2: 0
+candidate |RP| histogram (<64): 5:4 16:4 60:4
+N=14 wall 4.241714394 s
+N=15 skew-merged(N)=71429176 candidates=46 min|RP| over candidates=5  #candidates with |RP|<=2: 0
+candidate |RP| histogram (<64): 5:4 16:4 60:4
+N=15 wall 18.254798067 s
+N=16 skew-merged(N)=278586182 candidates=50 min|RP| over candidates=5  #candidates with |RP|<=2: 0
+candidate |RP| histogram (<64): 5:4 16:4 60:4
+N=16 wall 74.336480550 s
+N=17 skew-merged(N)=1087537414 candidates=54 min|RP| over candidates=5  #candidates with |RP|<=2: 0
+candidate |RP| histogram (<64): 5:4 16:4 60:4
+N=17 wall 337.033145423 s

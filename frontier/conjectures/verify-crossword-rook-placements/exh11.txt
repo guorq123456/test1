@@ -1,0 +1,4 @@
+n=11 perms=39916800 max=3316625 count1=184756 count2=126272 le2_skewmerged=311028 le2_NOT_skewmerged=0 distinct_values=178312
+maximizer: 4 3 2 1 5 6 7 11 10 9 8
+maximizer: 8 9 10 11 7 6 5 1 2 3 4
+time 81.016294451
