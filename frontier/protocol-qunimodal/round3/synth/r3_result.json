@@ -1,0 +1,110 @@
+{
+ "synthesis": {
+  "strongest_conjecture": "Setup. Let r >= 2 and a_i >= 1. Write A = prod[a_i]_q, D = deg A, F = sum floor(a_i/r) and U = {b : P_b unimodal}.\n\n(0) [proved] If r divides some a_i, then U contains every b >= 1.\n\nFrom now on r divides no a_i. Define the new explicit invariant\n  Bd := 1 + floor((2y* - D - 1)/r),\nwhere y* is the index of the first negative coefficient of the power series A(q)/[r]_q = (1-q)A(q)/(1-q^r).\n\n(1) [proved, synth r2 Thm 4.2] U = [1,N*] u {N*+2, N*+4, ..., beta}. Here N* = min_C n*(C) is taken over the class pairs C, and N* == beta == F+1 (mod 2).\n\n(2) [proved this round, Thm 3] Bd == F+1 (mod 2), and\n  1+F <= N* <= beta = max U <= Bd <= T6.\n\n(3) CONJECTURE (O): N* >= Bd - 2. Equivalently, P_{Bd-3} is unimodal (when Bd >= 4).\n  This gives [1, Bd-2] ⊆ U ⊆ [1, Bd], and U is exactly one of [1,Bd], [1,Bd]\\{Bd-1}, [1,Bd-2].\n  The choice is decided by two explicit tests, at b = Bd-1 and b = Bd.\n  (O) implies S2 (beta <= N*+2) and is strictly stronger in form: it ties the threshold to the computable Bd.\n  (O) is proved in these cases (Thm 5):\n   - r <= 3;\n   - the flat domain (at most two middle residues);\n   - exactly three middle residues with all other a_i == ±1 (mod r);\n   - at most three a_i >= 2.\n  In the tail-sum form (Thm 4), (O) says that every class pair C satisfies T^C_{J*-4} >= |A^C_inf|, where J* = Bd + 1.\n\n(4) [REFUTED this round, Thm 6] The further strengthening (M) \"max U = Bd\", i.e. SC \"U = [1,Bd] or [1,Bd]\\{Bd-1}\", is false.\n  - It holds on all 100,488 exhaustive multisets (r 4..8, k <= 6, a_i <= 2r+2) and on about 16k random instances.\n  - It fails for r=500, k=39, a=(1802 1803 759 146 723 732 1305 738 751 177 706 1801 719 1800 1810 1297 718 696 752 140 1303 1804 718 1306 1310 1302 701 1300 1300 1801 178 1303 1801 1803 1801 137 742 125 137). Here Bd=72 but U=[1,70], confirmed by brute force.\n  - A second counterexample is in /tmp/claude-0/qu/synth/r3/M_counterexamples.txt (Bd=62, U=[1,60]).\n  - Both satisfy (O) and S2.\n\n(5) [proved] No aggregate rule decides U (T7, T17), and U need not be an interval (N1). Both witness pairs of T7 and T17 are separated by Bd.",
+  "answer_shape": "An explicit finite formula (finite-state per instance), not an aggregate closed form.\n\nComputing Bd needs only one scan of the coefficients of prod[a_i]_q/[r]_q, up to the first negative one. Then:\n- U ⊆ [1,Bd] is proved.\n- Conjecturally, U = [1,Bd-2] ∪ (whatever passes the exact tests at b = Bd-1 and b = Bd), so U ∈ {[1,Bd], [1,Bd]\\{Bd-1}, [1,Bd-2]}.\n\nThe exact proved structure is U = [1,N*] ∪ {N*+2,...,beta}, from about r/2 alternating class-pair sums.\n\nClosed form in aggregates exists only on these domains:\n- the flat domain: U = [1,T6], T6 = 1+floor((D+1-2mu)/r);\n- the three-middle domain (others ±1): U = [1, T6 - 2·FIRE];\n- r | a_i: all b.\n\nProved non-existence results:\n- no aggregate rule (T7, T17);\n- no threshold rule (N1);\n- no pair-local proof (r=8595);\n- \"max U = Bd\" is false (Thm 6), so the 3-way defect at the top is genuine.",
+  "rule_file": "/tmp/claude-0/qu/synth/r3/rule.py",
+  "decision_tools_considered": "- Membership for a given (r,a,b) is trivially decidable.\n  - rule.exact uses the proved pair criterion.\n  - c/tails.c is an exact multi-limb C program that computes N*, beta and Bd together with the (O)/(M) margins. It handles r up to about 5e4 and D about 2e6.\n  - The universal statements (S2, (O)) quantify over unbounded k and r.\n\n- Barvinok / parametric lattice-point counting: not applicable.\n  - For fixed k, the coefficients of A and of A/[r]_q are piecewise quasi-polynomials in (a, y). So \"first negative coefficient\" (Bd) and the window inequalities are chamber-wise polynomial sign conditions of degree k-2.\n  - (O) quantifies over k, and the degree grows with k.\n  - Lifting removes part sizes, but residue multiplicities enter exponentially.\n\n- Presburger arithmetic: not applicable. It handles linear conditions only, which is just the k=2 case (already literature).\n\n- Zeilberger / creative telescoping: usable only for one-parameter families.\n  - For a family like [s]^n, the coefficients are holonomic, which gives recurrences and asymptotics (as in R2E6/R3E8).\n  - (O) is evaluated at a data-dependent index (J* = Bd+1), so telescoping does not decide it.\n  - It can only re-verify identities: the pair-tail identity of Lemma 2 and the E5 identities.\n\n- Walnut / automatic sequences: not applicable. There is no automatic structure in k or r.\n\n- CAD: not applicable. The real relaxation loses integrality and the residue structure, and it works only for fixed small k.\n\n- SMT (z3): usable only for bounded induction steps (as in R2E1).\n\n- Skolem-type sign problems for rational power series: related, since Bd is the first negative coefficient of a rational series with cyclotomic denominator. But here only existence and position are needed, and existence is proved (Thm 3(b)). No general decision procedure helps with the comparison to N*.\n\n- What was actually used:\n  1. Exact symbolic reductions: Lemma 1 (tail form), Lemma 2 (pair form of d) and Theorems 3-4.\n  2. Exact computation: an exhaustive box and stratified random batches in C and Python.\n  3. A targeted long-double optimiser (c/mopt.c, c/oopt.c) driven by a heuristic that predicted (M) to be fragile and (O) robust. It found the (M) counterexamples, which were verified exactly and by brute force. It found no (O) failure: minimum relative margin 1.0 over 299 runs.",
+  "proof_file": "/tmp/claude-0/qu/synth/r3/proof.txt",
+  "proof_status": "PARTIAL",
+  "nonexistence": "(a) [proved, Thm 6 — new] Max U is not given by the first negative coefficient of prod[a_i]_q/[r]_q. Equivalently, \"beta = Bd\" and the two-point form SC are false.\n  - Witness: r=500, k=39, a as in strongest_conjecture (4). Bd=72, while U=[1,70].\n  - Brute force: P_69 and P_70 are unimodal; P_71, P_72 and P_73 are not.\n  - Second witness: r=500, k=41, Bd=62, U=[1,60].\n  - Both are verified by exact multi-limb C and by an independent Python big-integer computation (verify_M_cex.py).\n  - So the top of U has a genuine three-way defect, Bd vs Bd-2, in both directions. For example, r=6, a=(2,3,4,4,4,4,4,8) has N* = Bd-2 < beta = Bd.\n\n(b) [proved, T7/T17] No function of (r,k,b, residue multiset, F, D) decides unimodality. With four middle residues, adding Gamma, sum a_i and prod a_i still does not suffice. Bd separates both witness pairs: 4 vs 2 at r=6, and 20 vs 22 at r=20.\n\n(c) [proved, N1] U need not be an interval: r=6, a=(2,3,3,4,4,4,5) gives U={1,3}.\n\n(d) [counterexample, synth r2] No pair-local proof exists. The same r=8595 instance shows that (O) and (M) are decided by pairs other than the locally failing one.\n\n(e) [R3E1 Prop D] S2/(O) do not follow from qualitative properties of the sequence.\n\n(f) [T20] The residue-level certificate O_rho is false.\n\nS2 and (O) themselves are NOT claimed to fail. Evidence:\n- the exhaustive box;\n- about 16k stratified instances, including r up to 3000 and the R3E2 padded lifts;\n- the five r2 pair-local instances (r up to 50000);\n- 299 adversarially optimised instances.",
+  "necessary_constraints": [
+   {
+    "constraint": "C43: r | a_i for some i => U = all b (Bd := infinity).",
+    "basis": "已证明",
+    "independence_witness": "Candidate 'U=[1,Bd] with Bd computed formally' or 'U=[1,1+F]' satisfies T1/T6/parity, but fails at r=2, a=(2), b=5 (unimodal).",
+    "type": "必要"
+   },
+   {
+    "constraint": "T1: [1,1+F] ⊆ U.",
+    "basis": "已证明",
+    "independence_witness": "For F>=2, the candidate U=[1,F-1]∪{F+1} satisfies the Bd/T6 upper bounds, max U == F+1 and S2-shape, but omits F.",
+    "type": "必要"
+   },
+   {
+    "constraint": "Structure (synth r2 Thm 4.2; T9/T11): U=[1,N*]∪{N*+2,...,beta}, N* == beta == F+1 (mod 2), N*+1 ∉ U.",
+    "basis": "已证明",
+    "independence_witness": "The candidate U=[1,Bd] (an interval ending in Bd) satisfies T1, C43 and U ⊆ [1,Bd]. It is wrong at r=6, a=(2,3,3,4,4,4,5), where U={1,3}: 2 ∉ U.",
+    "type": "必要"
+   },
+   {
+    "constraint": "NEW Thm 3: Bd == F+1 (mod 2) and N* <= beta = max U <= Bd <= T6, where Bd = 1+floor((2y*-D-1)/r) and y* is the first negative coefficient of prod[a_i]_q/[r]_q.",
+    "basis": "已证明",
+    "independence_witness": "The candidate U=[1,T6] (flat closed form applied everywhere) satisfies T1, C43, the parity rules and S2. It violates max U <= Bd at r=5, a=(2,2,4,4,4,7): Bd=2, T6=4, U=[1,2].",
+    "type": "必要"
+   },
+   {
+    "constraint": "T6: b > 1+floor((D+1-2mu)/r) => b ∉ U.",
+    "basis": "已证明",
+    "independence_witness": "可能冗余 (implied by Thm 3: Bd <= T6)",
+    "type": "必要"
+   },
+   {
+    "constraint": "Flat domain (r1 Thm E; contains T2 r=3 and T5 r=2): at most two middle residues => U=[1,T6]=[1,Bd].",
+    "basis": "已证明",
+    "independence_witness": "Candidate U=[1,1+F] satisfies T1, Thm 3 and parity, but fails at r=3, a=(2^6): U={1,2,3}, F=0.",
+    "type": "必要"
+   },
+   {
+    "constraint": "T15b: exactly three middle residues, others ±1 => U=[1,T6-2·FIRE]=[1,Bd] (Bd identification proved here via R2E8 Lemma 2).",
+    "basis": "已证明",
+    "independence_witness": "可能冗余 given (O)+exact tests; as a closed form, independent of the flat rule (U=[1,T6] fails when FIRE holds).",
+    "type": "必要"
+   },
+   {
+    "constraint": "T16: S2 holds for r=4,5,6 (all k, all part sizes).",
+    "basis": "已证明",
+    "independence_witness": "可能冗余 (implied by conjecture (O); independent of the other proved constraints, since synth r2 Thm 4.2 allows beta = N*+4)",
+    "type": "必要"
+   },
+   {
+    "constraint": "T7/T17 non-aggregate: r=6, b=4, a=(2,3,4,4,4,4,4,8) is unimodal but a=(2,2,3,4,4,4,4,10) is not. With four middle residues at r=20, (1,14,59,65,79,105,123) gives U=[1,20] and (3,14,21,59,65,79,205) gives U=[1,22].",
+    "basis": "反例",
+    "independence_witness": "Any aggregate rule (e.g. b <= T6) satisfies T1/T6/parity/C43, but fails on these pairs.",
+    "type": "必要"
+   },
+   {
+    "constraint": "N1 non-interval: r=6, a=(2,3,3,4,4,4,5) has U={1,3}.",
+    "basis": "反例",
+    "independence_witness": "Threshold candidate U=[1,max U] satisfies T1, Thm 3, parity of max U and C43; wrong at b=2.",
+    "type": "必要"
+   },
+   {
+    "constraint": "NEW Thm 6: max U ≠ Bd in general. r=500, k=39, a=(1802 1803 759 146 723 732 1305 738 751 177 706 1801 719 1800 1810 1297 718 696 752 140 1303 1804 718 1306 1310 1302 701 1300 1300 1801 178 1303 1801 1803 1801 137 742 125 137) has Bd=72 and U=[1,70]. A second witness is in M_counterexamples.txt.",
+    "basis": "反例",
+    "independence_witness": "Candidate SC (U=[1,Bd] or [1,Bd]\\{Bd-1}) satisfies every other listed constraint: the exhaustive 100,488-set box, about 16k random instances, T1, Thm 3, the flat and three-middle domains, T7 and N1. It fails only here.",
+    "type": "必要"
+   },
+   {
+    "constraint": "X_pairlocal: the per-pair inequality beta_C <= n*(C)+2 is false. Example: r=8595, k=127, pair C=8594 has n*=3 and beta_C=7, while globally U={1,2,3,5} and Bd=5.",
+    "basis": "反例",
+    "independence_witness": "The pair-local statement agrees with all data for r<=400 and with every other constraint.",
+    "type": "必要"
+   },
+   {
+    "constraint": "Conjecture (O): N* >= Bd-2, i.e. [1,Bd-2] ⊆ U. Equivalently P_{Bd-3} is unimodal. It implies S2.",
+    "basis": "有限范围计算",
+    "independence_witness": "Candidate U=[1,Bd-4]∪{Bd-2,Bd} satisfies the proved structure (with N*=Bd-4), Thm 3, T1, C43, T7, N1 and Thm 6, but violates (O) and S2. Evidence for (O): exhaustive box of 100,488 sets; about 16k stratified instances with r up to 3000; pair-local instances with r up to 50000; 299 optimised runs, minimum margin factor 2.",
+    "type": "可行"
+   },
+   {
+    "constraint": "S2 (beta <= N*+2): U=[1,N*] or [1,N*]∪{N*+2}.",
+    "basis": "有限范围计算",
+    "independence_witness": "可能冗余 (implied by (O); proved for r<=6 by T16)",
+    "type": "可行"
+   },
+   {
+    "constraint": "N3_four / N3_stab: the four-middle rule_gen and stabilization Conjecture Q.",
+    "basis": "有限范围计算",
+    "independence_witness": "可能冗余 relative to the exact criterion; they give independent closed forms on their subdomains.",
+    "type": "可行"
+   }
+  ]
+ },
+ "synthesis_review": {
+  "verdict": "ACCEPT",
+  "steps_checked": "Working dir: /tmp/claude-0/qu/review/r3/synth-proof/ (ref.py = independent implementation of brute-force U, class pairs, Bd, T6; check1*.py exhaustive; check2.py random; verify_T6.py; chk8595.py; sym.py; hillO*.py; local30.py; count86.py).\n\nSection 0 / cited facts: c_n - c_{n-1} = d_n - d_{n-rb} (trivial from (1-q)P_b = d(q)(1-q^{rb})) OK. Gamma_s = Gamma_{D-s} (palindromy) OK. d_n - d_{D+1-r-n} = Gamma_n - Gamma_{n-1}: re-derived by hand (both sides reduce to S_n - S_{n-1} with S_t = sum_{x==t, x<=t} alpha_x) and checked numerically at every n on ~5,000 random instances: OK. \"Gamma not constant when r divides no a_i\" (E5 Lemma 6): re-proved via A(zeta) != 0 at a primitive r-th root of unity: OK. Definitions of y_n, A_n, a_n, n*(C), G_b, beta_C taken from synth r2 proof.txt Sections 3-4 (not an explorer folder); my implementation of that structure theorem reproduces brute-force U on 100,488 exhaustive + ~5,000 random instances + the r=500 and r=8595 instances: 0 mismatches.\n\nLemma 1 (a),(b): hand-checked (A_inf - A_n = (-1)^{n+1} T_{n+1}; parity gives (-1)^n A_inf = -|A|; b=1 edge case fine); the underlying identities verified symbolically with sympy for a generic sequence of length 16 and numerically on all pairs/all indices of every tested instance: OK.\n\nLemma 2 (i),(ii),(iii): hand-checked all three cases including the index bookkeeping (w = C/2+(m-1)r gives moduli C/2+ir -> y_{2i}, positives r-C/2+ir -> y_{2i+1}, floor(Z/r)=2m-2, J=2m; mirror case J=2m+1), the cancellation in (ii), and the consequence using (-1)^F A_inf = |A|. Numerically: formula compared with the actual power-series coefficient at every y in [0, D+1+2r] on all 100,488 exhaustive and ~5,000 random instances: 0 mismatches. OK.\n\nTheorem 3: (b) hand-checked (minimality of mu gives Gamma_{mu-1} < Gamma_mu; mu-r<0 so d_{mu-r}=0; mu=0 case uses non-constancy). (a) hand-checked: J(y) monotone in y, Lemma 2(iii) is a bijection onto {(C,J): J>=2}, j0(C) >= 2 because |A| <= E_0 (F even) or <= E_1 (F odd); numerically Bd = min_C j0(C) - 1 on every instance. (c) immediate. (d) beta <= Bd via G_{J*+1} < 0 and the fact that all b == F+1, b <= beta lie in U; Bd <= T6 from (b). Numerically 1+F <= N* <= beta = max U <= Bd <= T6 and Bd == F+1 mod 2 on all ~105,000 instances (r up to 200 brute force, r=500 and r=8595 via pair criterion + brute force): 0 violations. OK.\n\nTheorem 4 (1)-(4): hand-checked (b == F in U iff b <= N*-1; dangerous-index initial segment from r2 Lemma 4.1(c); b=J*-1 in Lemma 1(b)); all three forms of (O) and of (M) agree numerically on every instance. OK.\n\nTheorem 5: logic hand-checked ((ii): T6 = N* = beta <= Bd <= T6; (iii): FIRE => y* <= D+1-r => Bd <= floor((D+1)/r)-1 = T6-2 = B*). Depends on cited [r1-E], [T15b], [R2E8-L2]; I could not read the explorer folders, but tested them: r1-E on 3,085 + ~500 flat instances, T15b on 3,200 + ~1,100 three-middle instances (r up to 40), R2E8-L2 on ~110 FIRE instances: 0 violations. OK modulo the cited (reviewed) results.\n\nTheorem 6: independently verified with my own big-integer code. Instance 1: D=40208, F=61, y*=37855, Bd=72, T6=80; brute force over all b in [1,84] (difference form) gives U=[1,70]; direct coefficient lists confirm b=69,70 unimodal, b=71,72,73 not; pair criterion gives N*=beta=70. Instance 2 (k=41): D=35729, F=51, y*=33116, Bd=62, U=[1,60], b=59,60 unimodal, 61,62,63 not. Both satisfy (O) and S2. (M) refuted: OK.\n\nSection 7: all examples verified (r=6 (2,3,4,4,4,4,4,8): U={1,2,4}, Bd=4, N*=2, beta=4; (2,2,3,4,4,4,4,10): U={1,2}, Bd=2; same residue multiset/F/D; r=20 pair: Bd=20 vs 22, U=[1,20] vs [1,22], same residues, F, D, sum, prod and Gamma; (2,3,3,4,4,4,5): U={1,3}, Bd=3, N*=1; r=8595 instance: N*=3, beta=Bd=5, pair 8594 has n*=3, beta_C=7, U={1,2,3,5} by brute force). OK.\n\nSection 8: reproduced the exhaustive count 100,488 non-divisible multisets (r 4..8, k<=6, a_i in [2,2r+2]), SC holds in all, beta-N*=2 in exactly 86 (38 at r=7, 48 at r=8), Bd-N* in {0,2}, T6-Bd in {0,2}. OK.\n\nMinor remarks (no theorem affected): (a) Section 6 (marked NOT A PROOF) says the optimiser's minimum relative O-margin was 1.0, \"a factor 2 to spare\"; this is family-specific: r=30, a=(1,1,1,226,1,11,164,12) has margin exactly 0 (a_{Bd-4}=0 on pairs C=24,26,28; N*=beta=Bd=T6=13), so (O) is tight there. A local exhaustive search of 57,967 neighbours of it still gave 0 (O) failures. (b) The task STATEMENT places the two decisive tests at b=Bd-1 and b=Bd (correct under (O)); the proof's Theorem 4(3) uses b=Bd and b=Bd-3 (correct unconditionally). (c) Lemma 2 cites [R2-2.1] for e >= 0, which is really r2's (F1); harmless.",
+  "lemma_counterexample_attempts": "Exhaustive: all multisets r in [2,5], k<=4, a_i<=2r+2 (3,522 incl. divisible cases) and all r in [4,8], k<=6, a_i in [2,2r+2] (100,946 incl. divisible; 100,488 non-divisible): brute-force U vs pair formula, Lemma 2 at every y, Lemma 1 at every pair/index, Theorem 3(a)-(d), Theorem 4(1)-(2), (O), (M), S2, r1-E, T15b: 0 violations anywhere. Random: 4,800 instances r<=40/120, k<=20/30 (uniform, near-r/2 residues, three-middle+padding, small parts) and 120 instances r<=200, k<=40, all with full brute force: 0 violations. Dedicated families: 3,200 three-middle (r 5..12) and 3,085 flat instances: T15b and r1-E hold. Big instances: both Theorem 6 instances (r=500) and the r=8595, k=127 instance from synth r2: Theorem 3 sandwich holds; (M) fails exactly as claimed in the two r=500 cases. Attempts to break (O): hill-climbs on the relative O-margin (r=30 half, r=100 half k=20, r=60 pad1 k=25, 150-step perturbation of the r=500 counterexample): no (O) failure, no sandwich violation; the smallest margin found is an exact tie 0 at r=30 (a_{Bd-4}=0), and the 57,967-instance local exhaustive neighbourhood of that tie has 0 failures; a targeted climb near the r=8595 pair-local counterexample (objective min_C (E_{N*+3}-|A_C|)/|A_C|, >=0 would break (O)) sits at about -0.9985, far from 0. Section 6 heuristic not evaluated (marked NOT A PROOF).",
+  "formalization": "No Lean. sympy symbolic verification (sym.py) of the algebraic identities underlying Lemma 1(a),(b) and Lemma 2(iii) for a generic real sequence y_0..y_15 (a_n = (-1)^n A_inf + T_{n+1}; G_b tail form; E_1 - sum_{i<m} y_{2i} = E_{2m} - A_inf and E_0 - sum_{i<m} y_{2i+1} = E_{2m+1} + A_inf): all identically zero. Exhaustive exact certificates (Python big integers, independent code in ref.py) for Lemma 2, Theorem 3, Theorem 4 on the full 100,488-multiset set and ~5,000 random instances, and exact big-integer brute force of Theorem 6 (direct coefficient lists for b in [Bd-3,Bd+1] and the difference form for all b up to ceil((D+1)/r)+3, which suffices since larger b are automatically non-unimodal). The remaining content (Theorem 3(b), Lemma 2 cases, Theorem 4/5 logic) was checked by hand; the cited r1/r2/explorer results were not re-proved but were tested numerically.",
+  "reasons": "Every statement labelled \"proved\" (Lemmas 1-2, Theorems 3-5, the equivalences of Theorem 4, the collected non-existence examples) is correct: the arguments are complete and I re-derived each step by hand, verified the algebraic identities symbolically, and found zero violations in exhaustive (100,488 multisets) and random (~5,000, r up to 200) brute-force testing with independent code. The refutation of (M) (Theorem 6) is genuine: my own big-integer brute force reproduces D, F, y*, Bd=72 (resp. 62) and U=[1,70] (resp. [1,60]) for both r=500 instances. The conjectural part (O) is clearly labelled as a conjecture, implies S2 as stated, and is proved exactly on the domains where U was already known via accepted cited results (which my tests also support). The only weakness is in the heuristic Section 6 (marked NOT A PROOF): the claimed \"factor 2 to spare\" in the O-margin is not general (an exact tie, margin 0, exists at r=30), so the empirical evidence for (O) is less comfortable than stated; this does not affect any theorem. Section 8 computational claims (counts 100,488 and 86) reproduce exactly."
+ }
+}

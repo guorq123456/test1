@@ -1,0 +1,239 @@
+SYNTHESIS r3 -- unimodality of P(q) = [a_1]_q ... [a_k]_q [b]_{q^r}   (arXiv:2605.12822, Conj. 5.4)
+====================================================================================================
+Status: PARTIAL.
+ * Sections 1-4 are complete proofs.  They use only the cited, reviewed results listed in 0.2.
+ * Section 5 proves the new strongest conjecture on the domains where U is already known.
+ * Section 6 states what is still open, as two inequalities, and gives a heuristic (marked NOT A PROOF) for why one of them is
+   robust and the other fragile.
+ * Section 7 collects the non-existence theorems.  Section 8 lists the computations.
+
+New in this round:
+ * A new explicit invariant Bd(r,a), defined from the first negative coefficient of the power series prod[a_i]_q / [r]_q.
+ * The proved sandwich  N* <= max U <= Bd <= T6  with  Bd == 1+F (mod 2)  (Theorem 3).
+ * A pair-tail identity for that power series (Lemma 2).
+ * Conjecture (O):  N* >= Bd - 2, equivalently [1, Bd-2] is contained in U (and U is contained in [1,Bd], which is proved).  It
+   implies S2 and is proved wherever U was previously determined (Theorem 5).
+ * The tempting further strengthening (M) "max U = Bd" (equivalently SC: U = [1,Bd] or [1,Bd]\{Bd-1}) holds on 100,488 exhaustive
+   and about 16,000 random instances.  It is nevertheless FALSE: Theorem 6 gives two exact counterexamples (r = 500), found by an
+   optimiser after a heuristic predicted rare failures.
+
+----------------------------------------------------------------------------------------------------
+0. Notation and cited results
+----------------------------------------------------------------------------------------------------
+0.1  r >= 2, a_i >= 1, b >= 1.
+     A(q) = prod [a_i]_q = sum alpha_x q^x,  D = deg A = sum(a_i-1),  delta = (1-q)A (delta_x = alpha_x - alpha_{x-1}),
+     F = sum floor(a_i/r),  U = {b >= 1 : P_b unimodal}.
+     d(q) := A(q)/[r]_q = (1-q)A(q)/(1-q^r) = sum_y d_y q^y   (a power series; d_y = sum_{j>=0} delta_{y-rj}).
+     Gamma_t := sum_{x == t (r)} alpha_x;  tau(t) := Gamma_t - Gamma_{t-1}.
+     mu := least t in [0,r-1] with Gamma_t >= ... >= Gamma_{r-1};  T6 := 1 + floor((D+1-2mu)/r).
+     Class pairs C (0<C<r, C == D+1 mod 2), the sequence y_n = y^{(C)}_n, A_n, a_n = (-1)^n A_n, n*(C), N* = min_C n*(C),
+     beta_C, beta = min_C beta_C:  exactly as in synth r2 (proof.txt Sections 3-4).
+     Tail sums:  E_j := y_j + y_{j+2} + y_{j+4} + ...,   T_j := y_j - y_{j+1} + y_{j+2} - ... = E_j - E_{j+1}.
+     A^{(C)}_inf := lim A_n = E_0 - E_1.
+0.2  Cited results (all reviewed and passed).
+ [R2-3.1/4.2]  synth r2 Theorems 3.1 and 4.2 (referee ACCEPT).  If r divides no a_i, then
+               U = [1,N*] u {N*+2, N*+4, ..., beta},  N* == beta == F+1 (mod 2),  beta >= N*.
+               For b == F+1:  b in U  <=>  G^{(C)}_{b'} >= 0 for all C and all b' == F+1 with b' <= b,  where G_b := a_{b-2} + y_b.
+               The set {b == F+1 : G^{(C)}_b >= 0} is an initial segment for each C (Lemma 4.1(d)).
+ [R2-3.2/3.3]  A^{(C)}_inf = tau(u_C) with u_C = (D+1-C)/2 mod r.  If r divides no a_i, then (-1)^F A^{(C)}_inf >= 0 for every C,
+               and A^{(C)}_inf != 0 for some C.
+ [R2-2.1]      e(z) := delta_{(D+1)/2 - z} restricted to z > 0 is >= 0 and unimodal; e(-z) = -e(z) (palindromy).
+ [E5]          /tmp/claude-0/qu/explore/E5/proofs.txt Lemmas 3-5 (T3/T6, ACCEPT):
+               c_n - c_{n-1} = d_n - d_{n-rb};  Gamma_s = Gamma_{D-s};  d_n - d_{D+1-r-n} = Gamma_n - Gamma_{n-1}.
+ [T1]          b <= 1+F  =>  b in U.        [C43]  r | a_i for some i  =>  U = all b.
+ [r1-E]        synth r1 Theorem E (flat domain): at most two a_i with residue in [2,r-2], r dividing no a_i  =>  U = [1,T6].
+ [R2E8-L2]     R2E8 Lemma 2.  If FIRE := [tau_s <= -2 and s >= 2mu] (s = (D+1) mod r) holds, then d_{D+1-r} <= -1 and D+1 >= r.
+               This is steps 1-3 of that proof; g there is our d.
+ [T15b]        R3E5: exactly three middle residues, all others +-1 mod r  =>  U = [1, T6 - 2 FIRE].
+
+----------------------------------------------------------------------------------------------------
+1. Tail form of the pair quantities
+----------------------------------------------------------------------------------------------------
+Lemma 1.  Assume r divides no a_i, and fix a pair C.  Write |A| := |A^{(C)}_inf|.
+ (a) For every n == F+1 (mod 2), n >= 0:   a_n = T_{n+1} - |A|.
+ (b) For every b == F+1 (mod 2), b >= 1:   G_b = E_{b-1} - E_{b+2} - |A|.
+Proof.
+ (a) A_inf = A_n + (-1)^{n+1} T_{n+1}, so a_n = (-1)^n A_inf + T_{n+1}.  Since n == F+1, we have (-1)^n A_inf = -(-1)^F A_inf = -|A|
+     by [R2-3.3].
+ (b) We have b-2 == F+1, so G_b = a_{b-2} + y_b = T_{b-1} - |A| + y_b by (a).  Also T_{b-1} = E_{b-1} - E_b and E_b - y_b = E_{b+2}.
+     (For b = 1 with F even, a_{-1} := 0; then G_1 = y_1 and E_0 - E_3 - |A| = y_0 + E_2 - E_3 - (E_0 - E_1) = y_1.)          []
+
+----------------------------------------------------------------------------------------------------
+2. The power series d = A/[r]_q in pair coordinates
+----------------------------------------------------------------------------------------------------
+Lemma 2.  Let y be an integer.
+ (i)   If 2y <= D+1, then d_y >= 0.
+ (ii)  Let Z := 2y - D - 1 > 0.  If Z == 0 or r (mod 2r), then d_y >= 0.
+ (iii) Otherwise put c2 := Z mod 2r, C := min(c2, 2r - c2) (a class pair) and J := floor(Z/r) + 2.  Then
+           d_y = E^{(C)}_J - (-1)^J A^{(C)}_inf.
+       Consequently, if r divides no a_i:  d_y < 0  <=>  J == F (mod 2) and E^{(C)}_J < |A^{(C)}_inf|.
+Proof.
+ Put z(x) := (D+1)/2 - x and epsilon(z(x)) := delta_x.  Then d_y = sum_{j>=0} epsilon(-w + jr) with w := Z/2, and epsilon is odd with
+ epsilon = e >= 0 on z > 0 [R2-2.1].
+ (i) Here w <= 0, so every argument is >= 0.
+ (ii) If w == 0 (mod r), the negative arguments -w, -w+r, ..., -r cancel against the positive arguments r, ..., w (oddness).
+      This leaves sum_{z>w, z == 0 (r)} e(z) >= 0.  The case w == r/2 (mod r) is the same.
+ (iii) Let c := w mod r in (0,r), c != r/2.
+  Case c < r/2, so C = 2c.  Write w = C/2 + (m-1)r with m >= 1.  The negative arguments have moduli C/2 + ir (0 <= i < m); these are the
+   points of y_{2i}.  The positive arguments are r - C/2 + ir (i >= 0), the points of y_{2i+1}.  So
+   d_y = sum_i y_{2i+1} - sum_{i<m} y_{2i} = E_1 - (E_0 - E_{2m}) = E_{2m} - A_inf.  Here floor(Z/r) = floor((C + 2(m-1)r)/r) = 2m-2,
+   so J = 2m and (-1)^J = 1.
+  Case c > r/2, so C = 2r - 2c.  Write w = r - C/2 + (m-1)r with m >= 1.  The negative moduli r - C/2 + ir (i < m) are the points of
+   y_{2i+1}, and the positive arguments C/2 + ir (i >= 0) are the points of y_{2i}.  So d_y = E_0 - (E_1 - E_{2m+1}) = E_{2m+1} + A_inf.
+   Here floor(Z/r) = floor((2mr - C)/r) = 2m - 1, so J = 2m+1.
+  The consequence follows from E_J >= 0 and (-1)^F A_inf = |A_inf| [R2-3.3].                                                  []
+ (Checked: check_lemmas.py compares the formula with the direct power-series coefficients on 93,315 values of d_y; 0 mismatches.)
+
+----------------------------------------------------------------------------------------------------
+3. The invariant Bd and the sandwich theorem
+----------------------------------------------------------------------------------------------------
+Definition.  If r divides no a_i, let y* := least y with d_y < 0 and Bd := 1 + floor((2y* - D - 1)/r).
+ (y* exists by Theorem 3(b) below.  If r | a_i for some i, put Bd := +infinity.)
+ Bd is a "closed form modulo one power series": a single scan of the coefficients of prod[a_i]_q/[r]_q.
+
+Theorem 3.  Assume r divides no a_i.
+ (a) Bd = J* - 1, where J* := min over pairs C of j0(C), and j0(C) := least J == F (mod 2), J >= 0, with E^{(C)}_J < |A^{(C)}_inf|
+     (j0 = +infinity if A^{(C)}_inf = 0).
+ (b) y* exists, y* <= D+1-mu when mu >= 1, and y* <= D+1 when mu = 0.
+ (c) Bd == F+1 (mod 2).
+ (d) N* <= beta = max U <= Bd <= T6.
+Proof.
+ (b) Let mu >= 1.  By [E5], d_{D+1-mu} - d_{mu-r} = Gamma_{D+1-mu} - Gamma_{D-mu} = Gamma_{mu-1} - Gamma_mu.  This uses Gamma_s = Gamma_{D-s}.
+     Since mu - r < 0, d_{mu-r} = 0.  By minimality of mu, Gamma_{mu-1} < Gamma_mu, so d_{D+1-mu} < 0.
+     Let mu = 0.  Then d_{D+1} - d_{-r} = Gamma_{D+1} - Gamma_D = Gamma_{r-1} - Gamma_0.  This is < 0, because Gamma is non-increasing
+     on [0,r-1] and not constant (E5 Lemma 6).
+ (a) By Lemma 2, the indices y with d_y < 0 are exactly the y with Z = 2y-D-1 > 0 on a pair line with J(y) == F and
+     E^{(C)}_{J(y)} < |A^{(C)}|.  The map y -> J(y) = floor((2y-D-1)/r) + 2 is non-decreasing in y.  Hence J(y*) is the least J that
+     occurs among the y with d_y < 0.
+     Conversely, every pair C and every J >= 2 is attained by some y (Lemma 2(iii) is a bijection between {y : Z > 0, Z not == 0, r mod 2r}
+     and {(C, J) : J >= 2}).  For J in {0,1} and J == F we have E_J >= |A|: if F is even, |A| = E_0 - E_1 <= E_0; if F is odd,
+     |A| = E_1 - E_0 <= E_1.  So j0(C) >= 2.  Hence J(y*) = J*, and Bd = 1 + floor((2y*-D-1)/r) = J(y*) - 1 = J* - 1.
+ (c) J* == F by definition.
+ (d) Let C0 attain J*.
+     beta <= Bd: by Lemma 1(b), G^{(C0)}_{J*+1} = E_{J*} - E_{J*+3} - |A| <= E_{J*} - |A| < 0, and J*+1 == F+1.  By [R2-3.1/4.2],
+     J*+1 is not in U, so beta <= J* - 1 = Bd.  (Parity: beta == J*+1.)
+     N* <= beta is part of [R2-4.2].
+     Bd <= T6: by (b), y* <= D+1-mu, so 2y* - D - 1 <= D + 1 - 2mu.                                                              []
+ Remark.  "beta <= Bd" is T10 Lemma 10 (R2E2), re-proved here in pair form.  Theorem 3(a) and (c) are new.
+ (Checked on 819 instances in check_lemmas.py and on all batch data: 0 violations of (c) or (d).)
+
+----------------------------------------------------------------------------------------------------
+4. The strengthened conjecture and its equivalent forms
+----------------------------------------------------------------------------------------------------
+Two candidate statements (r dividing no a_i):
+  (O)  N* >= Bd - 2.                       [CONJECTURE; the strongest statement surviving all tests]
+  (M)  beta = Bd, i.e. max U = Bd.         [FALSE: Theorem 6]
+  SC := (O) and (M), i.e. U = [1,Bd] or U = [1,Bd] \ {Bd-1}.   [FALSE, because (M) is false]
+ (O) alone implies S2:  beta <= Bd <= N* + 2.  Under (O):  U is one of [1,Bd], [1,Bd]\{Bd-1}, [1,Bd-2].
+
+Theorem 4 (equivalent forms; proved).  Assume r divides no a_i.
+ (1) (O) <=> Bd - 3 in U (or Bd <= 3)  <=>  for every pair C: T^{(C)}_{J*-4} >= |A^{(C)}|  (vacuous if J* < 4).
+ (2) (M) <=> Bd in U  <=>  for every pair C: E^{(C)}_{J*-2} - |A^{(C)}| >= E^{(C)}_{J*+1}.
+ (3) SC <=> (M) and (O) <=> P_{Bd} and P_{Bd-3} are both unimodal.  This is a two-point test.
+ (4) (O) => S2, and S2 does not imply (O) formally.
+Proof.
+ (1) We have Bd - 3 == F.  By [R2-4.2], a b == F lies in U iff b <= N* - 1.  So Bd - 3 in U <=> N* >= Bd - 2.
+     Also N* >= J* - 3 <=> no pair has a_n < 0 at a dangerous n <= J* - 5.  By Lemma 4.1(c) of r2 this is equivalent to
+     a^{(C)}_{J*-5} >= 0 for all C, i.e. T_{J*-4} >= |A| (Lemma 1(a)).
+ (2) We have Bd == F+1, so Bd in U <=> beta >= Bd <=> beta = Bd (Theorem 3(d)).  By the initial-segment property this means
+     G^{(C)}_{Bd} >= 0 for all C, i.e. E_{J*-2} - E_{J*+1} - |A| >= 0 (Lemma 1(b) with b = J*-1).
+ (3) Combine (1) and (2) with U = [1,N*] u {N*+2,...,beta}.  If N* = Bd, then U = [1,Bd].  If N* = Bd-2 and beta = Bd, then
+     U = [1,Bd] \ {Bd-1}.
+ (4) beta <= Bd <= N*+2.                                                                                                      []
+ Note.  Every pair satisfies E_{J*-2} >= |A|, and some pair has E_{J*} < |A|.  So both (M) and (O) compare the slack of the
+ "last good" level with tails that start further out on the same pair.  This is the same kind of statement as S2 (r2 Prop. 6.1),
+ but with a reference level Bd that is explicit and computable from d alone.
+
+----------------------------------------------------------------------------------------------------
+5. SC is proved where U is known
+----------------------------------------------------------------------------------------------------
+Theorem 5.  SC, hence (O), S2 and max U = Bd, holds in each of the following cases:
+ (i)   r | a_i for some i (U = all b; Bd = infinity, by convention);
+ (ii)  the flat domain: r divides no a_i and at most two a_i have residue in [2, r-2].  In particular SC holds for every a when r = 2
+       or r = 3, and whenever at most two a_i are >= 2;
+ (iii) exactly three a_i of middle residue, all others == +-1 (mod r).  In particular SC holds whenever at most three a_i are >= 2.
+Proof.
+ (ii) [r1-E] gives U = [1,T6].  So N* = beta = T6, and Theorem 3(d) forces Bd = T6.  Then U = [1,Bd].
+ (iii) [T15b] gives U = [1,B*] with B* = T6 - 2 FIRE, so N* = beta = B*.  If FIRE fails, B* = T6 = Bd as in (ii).  If FIRE holds,
+       [R2E8-L2] gives d_{D+1-r} < 0 and D+1 >= r, hence y* <= D+1-r.  So Bd <= 1 + floor((D+1-2r)/r) = floor((D+1)/r) - 1.
+       By step 2 of R2E8 Lemma 2 (0 <= s - 2mu < r), floor((D+1-2mu)/r) = floor((D+1)/r) = T6 - 1.  So Bd <= T6 - 2 = B* = beta <= Bd,
+       which gives Bd = B* and U = [1,Bd].
+ At most three a_i >= 2: residues 0 are excluded by (i); the parts equal to 1 have residue 1.  So at most three middle residues occur,
+ and case (ii) or case (iii) applies.                                                                                          []
+ Remark.  For r = 4,5,6 (T16) S2 is proved.  (O) is not covered there: T16 gives beta <= N*+2 but not N* >= Bd-2.  On the exhaustive
+ sets used here (r <= 8) SC holds without exception (Section 8).
+
+----------------------------------------------------------------------------------------------------
+6. What is open, and a heuristic (NOT A PROOF)
+----------------------------------------------------------------------------------------------------
+Open:  (O) for r >= 7 with >= 4 middle residues.  (M) is refuted (Theorem 6).  By Theorem 4 both are explicit inequalities between tail sums
+along class pairs, at levels fixed by the first negative coefficient of A/[r]_q.
+
+Heuristic.  The tail e decays geometrically at rate about e^{-kappa} per step r near the crossing.  Write f(t) = |tau(rt)| e^{kappa t}/K'
+(t = C/(2r) in (0,1/2)), normalised so that the level J*-2 is good iff f <= 1 everywhere, and J* is reached iff f > e^{-kappa} somewhere.
+Then:
+  (O) fails  <=>  f(t) > e^{kappa}(1 - e^{-kappa(1-2t)})  for some t.
+      The right-hand side is >= 1 except within O(e^{-kappa}/kappa) of t = 1/2, where |tau| vanishes linearly (antisymmetry; R3E4).
+      So (O) can fail only for tau concentrated within about r e^{-kappa}/kappa classes of the anti-centre.  This is the same obstruction
+      R3E4 found for S2: robust.
+  (M) fails  <=>  f(t) > 1 - e^{-2 kappa (1-t)}  for some t, i.e. the last good level is good by a relative margin < e^{-2kappa(1-t)}.
+      Nothing structural prevents a "barely good" level.  Generic instances have relative slack spread over (0,1), so failures of (M)
+      should occur with density about e^{-2kappa(1-t0)} (t0 = argmax f), i.e. roughly 1e-6 to 1e-9 per instance at the observed
+      kappa ~ 6-13.  This is invisible to random sampling.
+  Optimiser evidence (c/mopt.c): the relative slack at the binding pair can be pushed down to about 1e-5 to 1e-6 by integer moves.
+      The comparison tail ratio E_{J*+1}/E_{J*-2} at the binding pairs stayed below the slack in every run.  The best value of
+      slack/ratio - 1 is reported in Section 8.  The large-ratio pairs (C near r) have slack close to 1 because |tau| -> 0 there.
+ The heuristic predicted that (M) fails rarely; Theorem 6 confirms this.  (O) remained robust under the same optimiser: 299 optimised
+ runs (c/oopt.c, runoo_*.out, r in {30,...,300}, k <= 45) gave the minimum relative O-margin (T_{J*-4}-|A|)/|A| = 1.0, i.e. a factor 2
+ to spare.  A failure needs a value < 0.
+
+Theorem 6 (refutation of (M); exact, computer-verified).  (M) fails for
+   r = 500, k = 39,  a = (1802 1803 759 146 723 732 1305 738 751 177 706 1801 719 1800 1810 1297 718 696 752 140 1303 1804 718 1306
+                         1310 1302 701 1300 1300 1801 178 1303 1801 1803 1801 137 742 125 137):
+       D = 40208, F = 61, y* = 37855, Bd = 72, N* = beta = 70.  Brute force on the full coefficient lists:
+       P_69, P_70 are unimodal; P_71, P_72, P_73 are not.  So U = [1,70] and max U = Bd - 2.
+   r = 500, k = 41 (second line of M_counterexamples.txt):  Bd = 62, N* = beta = 60; P_59, P_60 are unimodal; P_61, P_62, P_63 are not.
+ Verification: (1) exact multi-limb C (c/tails.c) prints M=FAIL and O=OK; (2) independent Python big-integer computation
+ (verify_M_cex.py) of y* from the full coefficient list, the pair criterion, and direct unimodality checks of P_b for b in [Bd-3, Bd+1].
+ Both instances satisfy (O) and S2 (N* = Bd - 2, U = [1,Bd-2]).
+ Consequence (non-existence): max U is not given by the first negative coefficient of prod[a_i]_q/[r]_q.  The defect "max U = Bd or Bd-2"
+ genuinely occurs in both directions.  N* = beta = Bd - 2 here, while N* = Bd - 2 < beta = Bd occurs for r=6, a=(2,3,4,4,4,4,4,8).
+
+----------------------------------------------------------------------------------------------------
+7. Non-existence theorems (collected)
+----------------------------------------------------------------------------------------------------
+ N-a [T7, T17]  No function of (r,k,b, residue multiset, F, D) decides unimodality.  With four middle residues, adding Gamma,
+     sum a_i and prod a_i still does not suffice.  Both witness pairs are separated by Bd:
+     r=6: a=(2,3,4,4,4,4,4,8) has Bd=4, U={1,2,4}; a=(2,2,3,4,4,4,4,10) has Bd=2, U={1,2}.
+     r=20: (1,14,59,65,79,105,123) has Bd=20; (3,14,21,59,65,79,205) has Bd=22.
+ N-b [N1]  U need not be an interval.  r=6, a=(2,3,3,4,4,4,5): U={1,3}, Bd=3, N*=1.  So no threshold rule exists; the defect is
+     exactly the SC defect {Bd-1}.
+ N-c [X_pairlocal, synth r2 Section 9]  No per-pair proof of S2 exists: beta_C <= n*(C)+2 fails at r=8595 and beyond.  The same
+     computation shows that (O) and (M) are not pair-local either.  For r=8595, the binding pair C=8594 has n*=3 and beta_C=7, while
+     globally Bd = beta = 5 and N* = 3.  (O) and (M) hold, decided by other pairs (c/s2bd output in Section 8).
+ N-d [R3E1 Prop. D]  S2, and hence SC, does not follow from qualitative properties: palindromy, log-concavity, unimodal e, the
+     Wintner sign pattern and cyclically unimodal Gamma.  Explicit non-product sequences violate S2.
+ N-e [T20]  The residue-level certificate O_rho is false (r=57, padded with ones), so the T10 route cannot prove S2 in general.
+
+----------------------------------------------------------------------------------------------------
+8. Computations (all in /tmp/claude-0/qu/synth/r3/)
+----------------------------------------------------------------------------------------------------
+ * validate.py: rule.exact and rule.predict against brute force, 65,085 (r,a,b) with r <= 14 (seeds 1-4): 0 errors.  The flat
+   closed-form fast path also has 0 errors.
+ * check_lemmas.py: Lemma 2 on 93,315 values of d_y; Theorem 3 (c),(d) and the Theorem 4(3) two-point form on 819 instances: 0 mismatches.
+ * test_Oa.py / test_Oa2.py / test_beta_bd.py (Python, exact):
+   - 1,896 + 5,075 + 4,981 random instances, r <= 60, k <= 60, mixed families: beta = Bd and Bd - N* in {0,2} in every case.
+     Bd - N* = 2 in about 1%.  T6 - Bd is in {0,2,4}.
+ * batch.py with c/s2bd (exact multi-limb C).  Strata: mod (r<=60), pad1 (many parts == 1 mod r, the R3E2 mechanism), mid
+   (4-6 middle residues among many +-1), equal, near_half (r<=200, k<=120), bigr (r in [100,2500]), narrow (r in [200,3000],
+   k<=120, clustered residues).  About 3,960 instances, 0 violations of SC.
+ * The four pair-local counterexamples of synth r2 (r = 8595, 12552, 15167, 50000) plus inst_f32652 (r=50000): SC holds.
+   (Bd, N*, beta) = (5,3,5), (5,3,5), (14,12,14), (11,11,11), (11,9,11).
+ * c/tails.c: exact computation of N*, beta, Bd and the (M)/(O) margins, cross-checked with Python on 173 instances.
+ * exhaust.py: all 100,488 multisets r in [4,8], k <= 6, a_i in [2,2r+2], r dividing no a_i (the N2_S2 family).  SC holds in every one
+   (beta = Bd always; beta - N* = 2 in 86 of them, which reproduces the N2_S2 count).
+ * c/mopt.c + runopt*.py: long-double optimiser that minimises min_C [(E_{J*-2}-|A|)/E_{J*+1} - 1] over integer moves (a negative
+   value means (M) fails).  It found the two Theorem 6 counterexamples (cand_M.txt -> M_counterexamples.txt) in family "half"
+   (residues near r/2, r = 500).
+ * c/oopt.c + runoo.py: the same for the (O) margin.  299 optimised runs; minimum relative margin 1.0 (no failure).
+ * R3E2 O_rho counterexample (r=57) and 6 random lifts of it padded with 38-97 parts == 1 (mod r): SC holds (N* = beta = Bd).
