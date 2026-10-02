@@ -1,0 +1,280 @@
+SYNTHESIS r2 -- unimodality of P(q) = [a_1]_q ... [a_k]_q [b]_{q^r}   (arXiv:2605.12822, Conj. 5.4)
+====================================================================================================
+
+Status: PARTIAL.  Sections 1-5 are complete proofs, self-contained apart from three cited facts (0.2).  Section 6 reduces the open
+Conjecture S2 to one inequality.  Section 9 is a new computational COUNTEREXAMPLE to the class-pair-local form of that inequality,
+i.e. to every per-pair route to S2, including the (Z2) and L' routes of rounds R2E1 and R2E3.  Section 10 is a heuristic, marked
+NOT A PROOF.  Section 11 states the conjecture and Section 12 records the computations.
+
+----------------------------------------------------------------------------------------------------
+0. Notation and cited facts
+----------------------------------------------------------------------------------------------------
+0.1  r >= 2, a_i >= 1, b >= 1.  A(q) = prod [a_i]_q = sum alpha_x q^x, D = deg A = sum(a_i - 1).
+     delta_x := alpha_x - alpha_{x-1} (x in Z; alpha = 0 outside [0,D]), so delta(q) = (1-q)A(q), supported on [0, D+1].
+     F = sum floor(a_i/r), rho_i = a_i mod r, sigma = sum(rho_i - 1), D = rF + sigma.
+     Gamma_t = sum_{x == t (r)} alpha_x,  tau(t) = Gamma_t - Gamma_{t-1} = sum_{x == t (r)} delta_x.
+     U = U(r,a) = { b >= 1 : P_b := A(q)[b]_{q^r} is unimodal }.
+     Centred doubled coordinate: Z := D+1-2x;  z := Z/2;  epsilon(z) := delta_{(D+1)/2 - z}.  z runs over the grid
+     Lambda = (D+1)/2 + Z.  Because A is palindromic, delta_{D+1-x} = -delta_x, i.e. epsilon is ODD: epsilon(-z) = -epsilon(z).
+     e(z) := epsilon(z) for z > 0.
+0.2  Cited facts.
+     (F1) A product of palindromic unimodal polynomials with non-negative coefficients is palindromic unimodal (classical).
+          So delta_x >= 0 for x < (D+1)/2, i.e. e >= 0.
+     (F2) Keilson-Gerber (1971): if f is a unimodal sequence and g is log-concave without internal zeros, then f*g is unimodal.
+     (F3) Lemma U of the round-1 synthesis (/tmp/claude-0/qu/synth/r1/proof.txt; referee ACCEPT), the cyclic Wintner lemma:
+          if r !| a_i for all i, then with c0 := sigma/2 (mod r): tau(t) <= 0 when t - 1/2 lies in the open arc (c0, c0 + r/2) mod r,
+          and tau(t) >= 0 when t - 1/2 lies in (c0 + r/2, c0 + r) mod r.
+     A sequence is unimodal if it is weakly increasing and then weakly decreasing.
+
+----------------------------------------------------------------------------------------------------
+1. Windows
+----------------------------------------------------------------------------------------------------
+Lemma 1.1.  c_n - c_{n-1} = sum_{j=0}^{b-1} delta_{n - rj}, where P_b = sum c_n q^n.
+Proof. (1-q)P_b = delta(q)(1 + q^r + ... + q^{r(b-1)}).                                                   []
+
+A "b-window" is a set W = {w, w+r, ..., w+(b-1)r} of b consecutive points of an arithmetic progression with step r.
+Its mean is w + (b-1)r/2.  Write S(W) = sum_{x in W} delta_x.
+
+Lemma 1.2 (window criterion).  P_b is unimodal  <=>  S(W) >= 0 for every b-window W in Z with mean <= D/2.
+Proof. P_b is palindromic of degree N = D + r(b-1), so it is unimodal iff c_n >= c_{n-1} for n <= N/2.  By Lemma 1.1,
+c_n - c_{n-1} = S(W) with W = {n-(b-1)r, ..., n}, whose mean n - (b-1)r/2 is <= D/2 iff n <= N/2.            []
+
+Lemma 1.3 (only the most central window of each class matters).  Let W have mean <= D/2 - r and W' = W + r.
+If S(W') >= 0 then S(W) >= 0.
+Proof. S(W) = S(W') - delta_{max W'} + delta_{min W}.  If max W' > (D+1)/2 then delta_{max W'} <= 0 by (F1), and
+min W < mean(W) < (D+1)/2 gives delta_{min W} >= 0 (F1, or 0 off the support), so S(W) >= S(W') >= 0.  If
+max W' <= (D+1)/2, every point of W is < (D+1)/2, so S(W) >= 0 by (F1).                                      []
+
+In z-coordinates a b-window is b consecutive points of a "line" (a coset z0 + rZ inside Lambda); its z-mean mu equals
+(D+1)/2 minus its x-mean, and the condition "x-mean <= D/2" reads mu >= 1/2.  Sums are S(W) = sum_{z in W} epsilon(z).
+By Lemmas 1.2-1.3:  P_b is unimodal iff, on every line, the b-window with the smallest z-mean mu >= 1/2 has S >= 0.
+
+----------------------------------------------------------------------------------------------------
+2. e is unimodal on the positive half-line
+----------------------------------------------------------------------------------------------------
+Lemma 2.1.  For every a, the function e (that is, epsilon restricted to z > 0) is unimodal on Lambda intersect (0, infinity).
+Proof. Induction on the number of factors with a_i >= 2.  Base A = 1: D = 0, Lambda = 1/2 + Z, epsilon(1/2) = 1,
+epsilon(-1/2) = -1, and e = (1) is unimodal.
+Step A' = A[w]_q, w >= 2.  Then D' = D + w - 1, Lambda' = Lambda + (w-1)/2, and delta'_x = sum_{i=0}^{w-1} delta_{x-i}.
+In z-coordinates this reads epsilon'(z) = sum_{s in S_w} epsilon(z+s), where S_w = {-(w-1)/2, ..., (w-1)/2} (w points, step 1),
+which is symmetric.  Put f := epsilon * 1_{z>0}; by the induction hypothesis and (F1), f is unimodal on Lambda (zeros, then e).
+Since epsilon(z) = f(z) - f(-z) and S_w is symmetric, epsilon'(z) = g(z) - g(-z) with g(z) := sum_{s in S_w} f(z+s).
+ (i) g is unimodal by (F2), because the indicator of S_w is log-concave.
+ (ii) g(z+1) - g(z) = f(z + (w+1)/2) - f(z - (w-1)/2) >= 0 whenever z <= (w-1)/2, since then f(z - (w-1)/2) = 0.
+ (iii) For z >= (w-1)/2 every argument -z+s (s in S_w) is <= 0, so g(-z) = 0 and epsilon'(z) = g(z).
+ (iv) For grid points 0 < z <= (w-1)/2: epsilon'(z+1) - epsilon'(z) = [g(z+1) - g(z)] + [g(-z) - g(-z-1)] >= 0 by (ii),
+      applied at z and at -z-1 (both <= (w-1)/2).
+The interval [(w-1)/2, (w+1)/2] contains a grid point p > 0.  By (iv) epsilon' is non-decreasing on (0, p], and by
+(iii) and (i) it is unimodal on [p, infinity).  Hence epsilon' is unimodal on (0, infinity).                []
+(Checked numerically on every product used below: 0 violations.)
+
+----------------------------------------------------------------------------------------------------
+3. The class-pair (zigzag) criterion
+----------------------------------------------------------------------------------------------------
+Definition.  A class pair is an integer C with 0 < C < r and C == D+1 (mod 2).  Its points are the z > 0 with
+2z == +-C (mod 2r), in increasing order:  Z = 2z = C, 2r-C, 2r+C, 4r-C, 4r+C, ...
+(that is, x_n = (D+1-Z_n)/2, a decreasing sequence of integers; we stop at Z <= D+1 and pad with zeros).
+  y_n := e(Z_n/2) = delta_{x_n} >= 0,   A_n := sum_{k<=n} (-1)^k y_k  (A_{-1} := 0),   a_n := (-1)^n A_n.
+By Lemma 2.1 the sequence (y_n) is unimodal: it is a restriction of e to increasing positions.  Let p be a peak index.
+
+Theorem 3.1 (pair criterion; no hypothesis on r | a_i).  P_b is unimodal iff, for every class pair C,
+   b = 2m+1 :  A_{2m} >= 0  and  A_{2m-1} <= y_{2m+1};
+   b = 2m   :  A_{2m-1} <= 0  and  A_{2m-2} + y_{2m} >= 0.
+Proof. Fix a line L = c0 + rZ (in z) with representative c in (0, r].
+Case 0 < c < r, c != r/2.  Put c' = min(c, r-c) in (0, r/2) and C := 2c'.  The positive points of L are c + ir (i >= 0); the negative points
+c - (j+1)r have |z| = (r-c) + jr.  So, writing P_i := e(c' + ir) = y_{2i} and Q_j := e(r - c' + jr) = y_{2j+1}, the line c = c' has
+positive values P and negative values Q, and the line c = r - c' has positive values Q and negative values P.
+A b-window on L consists of the i+1 smallest positive points and the j+1 smallest negative points, with i + j + 2 = b, and has
+z-mean c + (d-1)r/2 where d = i - j.
+ * Line c = c' (c' < r/2): the mean is >= 1/2 iff d >= 1.  The minimal admissible window has d = 1 (b odd) or d = 2 (b even).
+   b = 2m+1: i = m, j = m-1, S = (P_0+...+P_m) - (Q_0+...+Q_{m-1}) = A_{2m}.
+   b = 2m:   i = m, j = m-2, S = (P_0+...+P_m) - (Q_0+...+Q_{m-2}) = A_{2m-2} + y_{2m}.
+ * Line c = r - c' (> r/2): d = 0 gives mean r/2 - c' >= 1/2 (c' and r/2 - c' lie in a grid of step 1/2 with c' < r/2,
+   and c' == (D+1)/2 mod 1 forces r/2 - c' >= 1/2), so the minimal window has d = 0 (b even) or d = 1 (b odd).
+   b = 2m:   i = j = m-1, S = (Q_0+...+Q_{m-1}) - (P_0+...+P_{m-1}) = -A_{2m-1}.
+   b = 2m+1: i = m, j = m-1, S = (Q_0+...+Q_m) - (P_0+...+P_{m-1}) = y_{2m+1} - A_{2m-1}.
+Case c = r/2 (self-paired line): positive values P_i = e(r/2 + ir) and negative values with the same moduli.  The minimal windows have d = 1 or 2
+and sums P_{j+1} >= 0 or P_{j+1} + P_{j+2} >= 0.  No condition arises.
+Case c = r (the line rZ, containing z = 0 where epsilon = 0): the minimal means are r (b odd) and r/2 (b even), with sums
+e(sr) + e((s+1)r) >= 0 and e(sr) >= 0 respectively.  No condition arises.
+Collecting the lines and applying Lemmas 1.2-1.3 gives the statement.                                    []
+
+Lemma 3.2 (the total alternating sum).  For a class pair C let u = (D+1-C)/2 (mod r).  Then
+  A_inf := lim A_n = tau(u)   (= Gamma_u - Gamma_{u-1}).
+Proof. Z == C (mod 2r) iff x == u (mod r), and Z == -C iff x == v := (D+1+C)/2 (mod r).  Then u != v (mod r), since C is not 0 mod r.
+tau(u) = sum_{x == u, x < (D+1)/2} delta_x + sum_{x == u, x > (D+1)/2} delta_x, and x -> D+1-x maps the second range bijectively onto
+{x' == v, x' < (D+1)/2} with delta_x = -delta_{x'}.  So tau(u) = sum_{even n} y_n - sum_{odd n} y_n = A_inf.      []
+
+Lemma 3.3 (sign lemma).  If r !| a_i for all i, then for every class pair C:  F even => A_inf >= 0;  F odd => A_inf <= 0.
+If r | a_i for some i, then A_inf = 0 for every pair.
+Proof. u - 1/2 = (D - C)/2 = (rF + sigma - C)/2 == c0 + rF/2 - C/2 (mod r) with c0 = sigma/2.  As 0 < C < r:
+F even: u - 1/2 lies in (c0 - r/2, c0) = (c0 + r/2, c0 + r) mod r, so tau(u) >= 0 by (F3).  F odd: u - 1/2 lies in (c0, c0 + r/2), so tau(u) <= 0.
+If r | a_i, then [a_i]_q is 0 mod [r]_q, hence A(zeta) = 0 for every r-th root of unity zeta != 1; so Gamma is constant and tau = 0.     []
+
+Lemma 3.4 (automatic half).  Let A_inf >= 0.  Then A_{2m} >= 0 for all m >= 0.  Let A_inf <= 0.  Then A_{2m+1} <= 0 for all m >= -1.
+Proof. Let A_inf >= 0.  If 2m <= p: A_{2m} = y_0 + sum_{i=1}^{m} (y_{2i} - y_{2i-1}) >= 0, since y is non-decreasing up to p.
+If 2m >= p: A_{2m} = A_inf + sum_{t>=0} (y_{2m+1+2t} - y_{2m+2+2t}) >= A_inf >= 0, since y is non-increasing from p on.
+The second claim is symmetric: if 2m+1 <= p, A_{2m+1} = sum_{i<=m} (y_{2i} - y_{2i+1}) <= 0; if 2m+1 >= p,
+A_{2m+1} = A_inf - sum_{t>=0} (y_{2m+2+2t} - y_{2m+3+2t}) <= A_inf <= 0.                                  []
+
+----------------------------------------------------------------------------------------------------
+4. Structure theorem
+----------------------------------------------------------------------------------------------------
+Call an index n "dangerous" if n == F+1 (mod 2).  Put a_{-1} := 0.  For a pair C define
+   n*(C) := least n >= 0 with a_n < 0   (infinity if there is none);
+   G_b   := a_{b-2} + y_b   for b == F+1 (mod 2).
+
+Lemma 4.1.  Assume r !| a_i for all i.
+ (a) a_n >= 0 for every n == F (mod 2).  Hence n*(C) is dangerous.
+ (b) The pair conditions of Theorem 3.1 are equivalent to:  b == F (mod 2): a_{b-1} >= 0;   b == F+1 (mod 2): G_b >= 0.
+ (c) Along dangerous indices, a_{n+2} - a_n = y_{n+2} - y_{n+1}.  The sequence (a_n) over dangerous n is unimodal and starts with a value
+     >= 0 (a_{-1} = 0 or a_0 = y_0).  Hence {dangerous n : a_n >= 0} = {dangerous n < n*}.
+ (d) Along b == F+1, G_{b+2} - G_b = y_{b+2} - y_{b-1}.  This has at most one sign change (+ to -), and G at the first admissible b is >= 0
+     (G_1 = y_1 if F is even; G_2 = y_0 + y_2 if F is odd).  Hence {b == F+1 : G_b >= 0} is an initial segment, and it contains every
+     b == F+1 with b <= n* + 2 such that a_{b-2} >= 0, in particular every b <= n*.
+Proof. (a) For F even, Lemmas 3.3 and 3.4 give A_{even} >= 0, i.e. a_n >= 0 for even n.  For F odd they give A_{odd} <= 0, i.e. a_n >= 0 for odd n.
+(b) Substitute (a) into Theorem 3.1.  F even, b = 2m: A_{2m-2} + y_{2m} >= 0 holds automatically, and the remaining condition A_{2m-1} <= 0 is
+a_{b-1} >= 0.  F even, b = 2m+1: A_{2m} >= 0 is automatic, and A_{2m-1} <= y_{2m+1} is G_b >= 0.  F odd, b = 2m+1: A_{2m-1} <= 0 <= y_{2m+1} is
+automatic, and A_{2m} >= 0 is a_{b-1} >= 0.  F odd, b = 2m: A_{2m-1} <= 0 is automatic, and A_{2m-2} + y_{2m} >= 0 is G_b >= 0.
+(c) a_{n+2} - a_n = (-1)^n (A_{n+2} - A_n) = (-1)^n((-1)^{n+1} y_{n+1} + (-1)^n y_{n+2}) = y_{n+2} - y_{n+1}.  This is >= 0 when n+2 <= p
+and <= 0 when n+1 >= p, so it changes sign once.  A unimodal sequence that starts >= 0 is >= 0 exactly on an initial segment.
+(d) G_{b+2} - G_b = (a_b - a_{b-2}) + y_{b+2} - y_b = y_b - y_{b-1} + y_{b+2} - y_b.  This is >= 0 when b+2 <= p and <= 0 when b-1 >= p,
+and at most one b of each parity lies strictly between.  The remaining claims follow from (c).                                       []
+
+Theorem 4.2 (structure of U; proved).  Let r !| a_i for all i, and put N* := min_C n*(C), which is finite.  Then N* == F+1 (mod 2) and
+      U = [1, N*]  u  {N*+2, N*+4, ..., beta},     beta := min_C beta_C,   beta_C := max{ b == F+1 : G^{(C)}_{b'} >= 0 for all b' == F+1, b' <= b }.
+Moreover:  N*+1 is not in U;  N*+2 is in U  iff  |a^{(C)}_{N*}| <= y^{(C)}_{N*+2} for every pair C with n*(C) = N*.
+If r | a_i for some i, then U = {1, 2, 3, ...}.
+Proof. By Theorem 3.1, U is the intersection over C of U_C = {b == F : b <= n*(C)} u {b == F+1 : b <= beta_C} (Lemma 4.1 (b)-(d)), and
+beta_C >= n*(C).  Intersecting gives the formula.  N* is finite: if every pair had a_n >= 0 for all n, then by Lemma 3.2 (with n large)
+tau(u) = 0 for every u attached to a pair; the classes u attached to pairs cover all classes up to the reflection t -> D+1-t, and
+tau(D+1-t) = -tau(t), so tau = 0 and Gamma is constant.  That is impossible when r !| a_i (r1 Lemma C0: [a_i]_zeta != 0 at zeta = e^{2 pi i/r}).
+The statement about N*+2: for pairs with n*(C) >= N*+2 we have G_{N*+2} = a_{N*} + y_{N*+2} >= 0, while for n*(C) = N* we get G = y_{N*+2} - |a_{N*}|.
+If r | a_i, every A_inf = 0 (Lemma 3.3), so Lemma 3.4 applies with both signs: every a_n >= 0 and every G_b >= 0.                         []
+
+Corollaries (re-proofs of reviewed results inside one framework).
+ 4.3 C43 (r | a_i => unimodal for all b): last sentence of Theorem 4.2.
+ 4.4 T9 S2(i): b in U and b == F (mod 2) => b+1 in U.  (b == F in U means b <= N*-1, so b+1 <= N*.)
+ 4.5 T9/T11 step-2 closure (b in U, b >= 3 => b-2 in U), max U == 1+F (mod 2), and the T11 shape with sigma = N*, tau* = beta + 2.
+ 4.6 U is finite iff r divides no a_i (T9 Thm 15).
+
+Theorem 4.7 (window-centre dichotomy; reformulation).  Let r !| a_i for all i.  From the proof of 3.1 and Lemma 4.1:
+   b == F   (mod 2):  P_b is unimodal  iff  every b-window whose z-centre mu lies in (0, r/2) has non-negative sum;
+   b == F+1 (mod 2):  P_b is unimodal  iff  every b-window whose z-centre mu lies in (r/2, r) has non-negative sum;
+and windows centred in the complementary interval always have non-negative sums.
+(For b == F the binding windows are the d = 0 windows of the lines r-c' (F even) or the d = 1 windows of the lines c' (F odd), centred at r/2 - c'
+or at c'.  For b == F+1 they are the windows centred at r - c' or at c' + r/2.)
+
+----------------------------------------------------------------------------------------------------
+5. Where F enters
+----------------------------------------------------------------------------------------------------
+F enters only through Lemma 3.3: the parity of F decides whether the folded class-sum profile Gamma, read along the pair classes
+u = (D+1-C)/2, is ascending or descending.  Equivalently, in Theorem 4.7, it decides which half of (0, r) carries the binding windows of
+each parity of b.  Part sizes enter through e, that is through delta near the tail.  This is consistent with the lifting results T10 and B3/B4.
+
+----------------------------------------------------------------------------------------------------
+6. Reduction of Conjecture S2
+----------------------------------------------------------------------------------------------------
+Conjecture S2 (round 1): if r !| a_i for all i, then U = [1,B*] or [1,B*] \ {B*-1}, with B* == 1+F (mod 2).
+By Theorem 4.2 this is equivalent to beta <= N*+2, i.e. to   U = [1,N*]   or   U = [1,N*] u {N*+2}.
+
+Proposition 6.1.  S2 holds for (r,a)  <=>  there is a pair C with n*(C) in {N*, N*+2} and G^{(C)}_{N*+4} < 0.
+For a pair with n*(C) = N* =: n,  G_{n+4} = a_{n+2} + y_{n+4} = a_n + y_{n+2} - y_{n+1} + y_{n+4}.  So G_{n+4} < 0 is
+   KI_C :  |a_n| + y_{n+1} > y_{n+2} + y_{n+4}.
+Sufficient conditions for KI_C:  (i) y_{n+4} = 0 (n* + 4 >= length of the pair);  (ii) L'_C : y_{n+1} - y_{n+2} >= y_{n+4}
+(since a_n < 0).  These are the conditional criteria found in rounds R2E1/R2E3.  In terms of tail alternating sums
+T_j := sum_{t>=0} (-1)^t y_{j+t}:   a_n = T_{n+1} - |A_inf|  for every dangerous n, and  KI_C <=> |A_inf| > y_{n+3} + T_{n+5}.
+Proof. Theorem 4.2 together with the identity a_{n+2} = a_n + y_{n+2} - y_{n+1} of Lemma 4.1(c).                                  []
+
+----------------------------------------------------------------------------------------------------
+7. (Not used) relation to T6
+----------------------------------------------------------------------------------------------------
+For pair C, once n exceeds the length of the pair, a_n = (-1)^n A_inf = -|A_inf| for dangerous n.  So n*(C) <= (first dangerous index
+>= length of pair C) whenever A_inf(C) != 0.  This recovers bounds of the type of T6, without the sharp constant mu.
+
+----------------------------------------------------------------------------------------------------
+8. Summary of what is proved
+----------------------------------------------------------------------------------------------------
+(P1) Theorem 3.1: exact criterion, O(D) work after computing A, one test per class pair (about r/2 pairs).
+(P2) Theorem 4.2: U = [1,N*] u {N*+2, ..., beta}, an explicit formula for N* and beta, and an explicit iff for N*+2 in U.
+(P3) Theorem 4.7: the window-centre dichotomy.
+(P4) Re-proofs of C43, S2(i), step-2 closure, max U parity and the finiteness of U.
+
+----------------------------------------------------------------------------------------------------
+9. The pair-local route cannot work
+----------------------------------------------------------------------------------------------------
+Every per-pair route to S2 tries to prove: for every pair C, beta_C <= n*(C) + 2, i.e. KI_C at n = n*(C).  This covers L' (R2E1 Thm 17),
+(Z2) (R2E3) and "U_delta has the S2 shape for each class pair delta" (R2E3).  It is FALSE:
+
+Counterexample 9.1 (computational, exact; the smallest r found).  r = 8595, k = 127, a = the numbers after "24 8595" in
+ /tmp/claude-0/qu/synth/r2/inst_ki_fail_r8595.txt (all a_i in [1687,1693], i.e. residues about 0.197 r; F = 0, D = 214497).
+ Pair C = 8594 (the adjacent pair, x-gap 1):  n* = 3,  KI value/(y_5 + y_7) = -1.1740e-05 < 0,  beta_C = 7.
+ So U_C = [1,3] u {5, 7}: the pair-local parity-gap statement fails.
+ Global:  N* = 3, beta = 5, so U = {1,2,3,5}.  S2 holds, and this U is confirmed by brute force from the full coefficient list
+ (brute_big.py: b = 3, 5 unimodal; b = 4, 6, 7 not unimodal).
+Further exact instances (same verification by the C program and by verify_ki_fail.py):
+ r = 12552, k = 83 (inst_ki_fail_r12552.txt), pair C = 12551: n* = 3, beta_C = 7; global U = [1,3] u {5}.
+ r = 15167, k = 111, F = 1 (inst_ki_fail_r15167_Fodd.txt), pair C = 1: n* = 12, beta_C = 16; global beta = 14 = N*+2.  For F odd the
+   failing pair is C = 1, as predicted.
+ r = 50000, k = 100 (inst_ki_fail.txt), pair C = 49999: n* = 11, beta_C = 15; global U = [1,11] (brute force: b = 11 unimodal;
+   b = 12, 13, 15 not unimodal).  12,432 other pairs (C in [22027,46889]) have beta_C = 11.
+ Frequency: in the random big-r sweep (1,822 instances, r in [2035,79838], k in [30,160]), 42 instances have a pair-local failure
+ (the smallest is r = 8595); S2 fails in 0.  In the family r = 50000, k = 100, residues 0.35r +- 300, 14 of 25 seeds have a pair-local
+ failure.  No pair-local failure occurs for r <= 400 (hill-climb minimum ratio 1.02; the margin of the adjacent pair decays like 7/r).
+
+Consequence.  A proof of S2 must use interaction between different class pairs (the minimum over C in N* and beta).  Pair-local
+inequalities true for products of q-integers are not enough.  This explains the failure of the R2E1/R2E3 routes and refines their
+records: L' and (Z2) are not just unproved, they are false at large r.
+
+----------------------------------------------------------------------------------------------------
+10. Mechanism (heuristic, NOT A PROOF)
+----------------------------------------------------------------------------------------------------
+Near the crossing the tail of e decays by a factor e^{kappa} per step r in z; numerically kappa >= about 7 for all families tried.
+For a pair with gap g = min(C, r-C), y_{n+1} - y_{n+2} is about (theta*g) y_{n+2} with theta about 7/r.  So
+   KI_C margin  ~  theta*g + |a_n|/y_{n+2} - e^{-kappa}.
+This is negative for g = 1 once r exceeds roughly 7 e^{kappa}, about 10^4, provided the crossing is "barely made" (|a_n| small).
+Globally, the binding set {C : n*(C) = N*} is an interval of pairs that always contained pairs with large g in our data.  When the
+boundary moves to near-adjacent pairs, the next pairs below it have beta_C = N*+2, because |a_{N*+2}| is about g*theta*y > y_{N*+4}.
+This is why S2 survives although the pair-local form fails.
+Tuning experiment (scan2/scan3/scan4.out; r = 50000, k = 100): f is scanned through the jump N* = 9 -> 11, and then one part is moved
+in steps of 2.  The binding set shrinks from [681, r) to [49943, r), only 29 pairs with g <= 57, and then disappears (N* jumps).  The
+pair-local failures are always the 3 pairs with g <= 5.  In every one of the 182 configurations beta <= N*+2.  The rescue comes either from
+binding pairs with g >= 7 or from the many pairs with n*(C) = N*+2 and beta_C = N*+2 (C in [265, 49993]), which cross decisively.
+So a counterexample to S2 needs two independent near-coincidences: all binding pairs barely crossing with small g, and all
+second-tier pairs barely crossing.  Turning this into a proof needs a comparison between neighbouring pairs:
+their y-sequences sample the same e at positions shifted by +-1 in x, and their totals tau(u), tau(u-1) are adjacent steps of the
+cyclically unimodal Gamma.
+
+----------------------------------------------------------------------------------------------------
+11. Conjecture (strongest form compatible with everything known)
+----------------------------------------------------------------------------------------------------
+For all r >= 2 and a_i >= 1:
+ (0) r | a_i for some i  =>  U = all b.                                                          [proved]
+ (1) Otherwise U = [1,N*] u ({N*+2} if Delta >= 0), where, over the class pairs C,
+       N* = min_C n*(C),  n*(C) = first n with (-1)^n (y_0 - y_1 + ... +- y_n) < 0,
+       Delta = min over {C : n*(C) = N*} of ( y^{(C)}_{N*+2} - |a^{(C)}_{N*}| ).
+     Everything except "beta <= N*+2" is proved (Theorem 4.2).  The conjectural part is exactly S2.
+ (2) N* == F+1 (mod 2) and 1+F <= N* <= max U <= T6.   [proved: T1, T6, Theorem 4.2]
+ (3) The pair-local strengthening is false (Section 9), so (1) is a genuinely global statement.
+ (4) No rule in (r,k,b, residue multiset, F, D) decides membership (T7), and U need not be an interval (N1).
+Answer shape: an explicit finite formula (alternating partial sums of (1-q)prod[a_i]_q along about r/2 class pairs), which is a closed form
+modulo computing A.  It is a two-point-defect threshold: U = [1,N*] or [1,N*] u {N*+2}.  There is no aggregate closed form outside
+the flat domain (T7; r1 Theorem E).
+
+----------------------------------------------------------------------------------------------------
+12. Computations (all in /tmp/claude-0/qu/synth/r2/)
+----------------------------------------------------------------------------------------------------
+ * test_pairs.py: Theorem 3.1 against brute force, 20,031 (r,a,b), r <= 9: 0 mismatches.
+ * chk_fast.py: Theorem 4.2 formula against brute force, 720 (r,a) full profiles: 0 mismatches.
+ * validate_rule.py: rule.exact and rule.predict against brute force, 45,000 (r,a,b), r <= 12, a_i <= 4r, including r | a_i and a_i = 1:
+   0 mismatches.
+ * validate_vs_r1.py: rule.exact against the r1 Theorem A criterion, 29,302 (r,a,b) with r <= 40, k <= 40, a_i <= 100: 0 mismatches;
+   S2 failures 0.
+ * val_c.py: C program against Python, 227 (r,a): identical (N*, beta, number of KI failures).
+ * test_ki*.py, scale.py, kappa*.py, hill.py: per-pair KI holds for all r <= 200 tested (hill-climb minimum ratio 2.40 at r=16 and
+   1.02 at r=400); the minimal margin decays like 7/r for the adjacent pair (r = 50..400).
+ * batch b1-b8 (structured families, r in {10000,...,50000}, k up to 300) and bs1-bs3 (1,822 random instances, r in [2035,79838],
+   k in [30,160], centred/uniform/bimodal residues, F even and odd): S2 failures 0.  Pair-local KI failures: 42 in bs and 14 in b3.
+ * scan2/3/4 (182 tuned configurations around an N* jump, r = 50000): S2 failures 0.
+ * test_dichotomy.py: Theorem 4.7 checked directly on all windows with centre in (0,r), 15,642 (r,a,b): 0 mismatches, and no negative
+   sum among the windows the theorem declares automatic.
