@@ -1,0 +1,74 @@
+===== R3E1 (outcome FAILED, candidates tried 16)
+S2 is not proved. Where the path broke: Proposition D shows that S2 does not follow from the qualitative ingredients the framework has available. The explicit sequences D1-D3 (obstruction.py) are palindromic and log-concave, have e unimodal, satisfy the Wintner sign pattern and have cyclically unimodal Gamma, yet violate S2. D1 (r=3, D=34) gives U={1,3,5}. D2 (r=8) gives U={1,2,3,5,7}. D3 (r=3) gives N*=18 with 22 in U. So every cross-pair inequality of the type suggested fails on them: neighbouring pairs C+-2, cyclic unimodality of Gamma, sum tau = 0, middle/max-psi/deepest/average witnesses. On real products these witnesses had 0 errors, except the middle pair, which failed 27/1498 at r<=120. What separates products from these sequences is quantitative: the decay rate of e at the crossing. It is >= 8.78 per r in real fit-box data (or the crossing sits at the support edge), against <= 0.353 in D1-D3. What was proved: Theorems B*/B (proof_crosspair.txt) are a rigorous cross-pair transfer. Given (H2) per-unit decay at rate kappa/r beyond L-r/2 and a shape condition on psi (K*, or sine-comparability H1 with kappa >= 1.899 at c=1), a binding pair anywhere forces a negative (N*+4)-window at a pair fixed in advance (near r/4). These theorems cover the known pair-local counterexamples r=8595/12552/15167, all 41 near-jump configurations at r=20000, and every fit-box instance in the partial coverage runs (420 small, 19 big, 37 tuned), with 0 instances uncovered. The missing step for an unconditional proof is a large-deviation estimate: that for prod[a_i]_q, delta decays at local rate >= kappa_0/r (kappa_0 about 1.9-4.4) on z >= L-r/2. Conjecture DLC (delta log-concave on its rising part; 0 violations in 1799 instances) would reduce this to a single local ratio, but it is unproved too. The coverage runs were still running when this report was written (counts above are partial). No P was computed with 121<=r<=999.
+
+===== R3E2 (outcome FAILED, candidates tried 7)
+The path cannot be completed, because the target statement 'TP_rho, E_rho, O_rho hold for every rho' is false.
+
+What works (proved in /tmp/claude-0/qu/explore3/R3E2/proof_TPE.txt):
+- TP_rho holds for every rho, by cyclic unimodality (T11 Lemma 7) plus e>=0 on the lower half.
+- E_rho holds for every rho, even without the lower bound K>=2mu*_inf. It is the automatic half: alternating sums of a nonnegative unimodal sequence whose total is a class sum >=0.
+- O_rho is equivalent to one inequality: r(N*(rho)+5) > sigma+1-2mu*_inf(k,tau). Equivalently N*(rho) >= floor((sigma+1-2mu*_inf)/r)-3, and the slack is always 1 or 3 when O holds. So Theorem R reduces to that single inequality (Corollary 5).
+
+Where it breaks: O_rho is false.
+- Explicit fit-box counterexample: r=57, rho=(1^37,6,7,9,15,18,20,22,23,25,26,27,28,30,33,37), k=52, sigma=311. P_2(rho) is not unimodal, so N*=1 and K_1=141. mu*_inf=-16, so 2mu*_inf+3r=139<=141 and O fails. With 36 ones it holds (mu*_inf=14).
+- More cases with minimal padding m (number of ones): m=64 (r=50), m=73 (r=31), m=58 (r=28), m=98 (r=21).
+- 44 of 137 random padded rho' (k=140) fail O.
+- Without residue-1 parts, O held in 1500 of 1500 cases; with few ones, in 2893 of 2893.
+
+Mechanism (proved): ones change only k, hence f, hence mu*_inf, which drops toward mu_neg >= -r. Meanwhile N*(rho) and mu*(rho) stay fixed. Once binom(k,2)>=max tau, O becomes the strong certificate O+, which is known to fail (R2E2: 25,737 rho').
+
+The failure is in the certificate, not in S2. Lifts of the counterexample have U=[1,40]u{42}, [1,55]u{57}, [1,144]u{146}, [1,300]u{302}, and ND_a(K_1) holds for each. Lifting strictly improves ND, and the residue level loses this.
+
+Consequence: any certificate of this kind fails on rho padded with ones. That covers residue-level ND together with any lower bound on mu*(a) that is uniform over all lifts. The k-dependence through mu*_inf runs the wrong way.
+
+Untested suggestion, outside this path because it leaves the parts-<r level: take as base the instance where residue-1 parts equal r+1 (parts equal to 1 can be deleted). Lemmas 1-2 carry over through the parity dichotomy (synthesis Thm 4.7), so only an analogue of O would remain to prove.
+
+Tool note: tools/uni overflows on these k~50 instances (it disagrees with gt_big at b=42). I used gt_big and my own exact code.
+
+===== R3E3 (outcome PROOF, candidates tried 20)
+(no failure report)
+
+===== R3E4: refute Conjecture S2 globally at large r (r >= 1000) (outcome NONEXISTENCE_EVIDENCE, candidates tried 316601)
+I found no counterexample to S2. Every instance I evaluated (316,601 evaluations, all with r >= 1000, up to r = 50000) has beta - N* in {0, 2}. A global S2 failure needs beta - N* >= 4.
+
+Measures I used:
+- gap = umin - vmin, the continuous crossing positions of the two threshold sequences T_{n+1} and T_{b-1}+y_b, in index units. A failure needs gap >= 4. In well-resolved instances the gap stays at 2.0-2.34. The baseline of 2 is structural.
+- The failure margin min_C log((T_{N*+3}+y_{N*+4})/|A_C|), which must be >= 0. The best value is -1.135 levels, about -6.8 nats.
+- Exact checks: the two best new near-misses were verified by brute force and by the exact pair criterion (verify_nearmiss.py).
+
+Why it fails (heuristic, quantitative, not a proof):
+- In level units with decay kappa per r-step, pair C has beta_C ~ 2*floor(u_C)+1 and n*(C) ~ 2*floor(u_C - delta_C)+1. Here u_C = -ln|tau(t_C)|/kappa - C/(2r), and delta_C ~ ln((1-e^-kappa)/(1-e^{-kappa(r-C)/r}))/kappa is large only for small-gap pairs, C near r.
+- A global failure needs min_C u_C >= min_C(u_C - delta_C) + 1.
+- Antisymmetry forces tau to vanish at the anti-centre class C = r. So |tau| grows linearly in g' = r-C there, and this cancels the delta advantage of the small-gap pairs to first order.
+- With a sinusoidal tau the excess is only about 0.07 levels at kappa ~ 5-6. This matches the data (mean 0.065 vs 0.068).
+- Escaping needs either kappa < ~1, or a tau concentrated within about r e^{-kappa}/kappa classes of the anti-centre.
+
+Neither is reachable:
+- kappa: the binomial-tail (lifted) regime gives kappa >~ pi*e*(1-2/k). The Gaussian regime gives kappa >= 2*pi. The smallest resolved kappa found by a dedicated minimisation (hc4) and in the surveys was about 3.9.
+- Concentrated tau: this needs many comparable harmonics. That happens only with small effective residues (s or r-s, with s << r). These make |tau| tiny, push the crossing to the extreme tail, and make kappa about e*r/s, which is huge.
+- The designed family built on exactly this idea (two residues near r/2 for a triangle-wave Gamma, small-width parts, lifted +-1 parts; 216 instances) gives beta = N* in every case, with margin -50.
+
+Closest near-misses:
+- r=15167, k=111 (the r2 instance): margin -1.135 levels.
+- r=5000, k=150, a_i in [1394,1493]: margin -1.19 levels; exact U contains 9,10,11 and is not unimodal at b = 12..16 (b = 1..8 not checked).
+- r=8000, a=(12871,12875,12921,20863,20986): largest resolved excess, 0.30 index units; exact U contains 6,7,8 and is not unimodal at b = 9..13 (b = 1..5 not checked).
+A failure needs about +1 level of margin, i.e. excess >= 2.
+
+Limits:
+- The search was in floating point. Ties, if any, would need exact rechecks, but no instance came within a level of failing.
+- Hill-climbs at r >= 10000 were slow, 1.6k-5k evaluations per run.
+- I did not search r > 50000 exhaustively. The model says larger r only helps pair-local failures (r >~ kappa e^kappa), not the global inequality.
+- Coarsely sampled instances (D/r small) give gap values up to 3.69, but these are interpolation artifacts; in all of them beta = N*.
+
+===== R3E5 (outcome PROOF, candidates tried 8)
+(no failure report)
+
+===== R3E6 (outcome RULE, candidates tried 17)
+The path partly succeeded, and the main caveat is this. A closed form at the Gamma level (r, Gamma/tau, D, F) does not exist, and this is proved by exact witness pairs. But every witness relies on parts a_i = 1: they leave P unchanged but change k' = #{a_i >= 2}, which Gamma, D and F do not see. With k' added, rule_gen.py (which uses only r, tau, D, k') fits every tested instance with 0 errors. Its form is U = [1,T6-2] plus up to two more values, T6-1 and T6, each decided by about r inequalities f_{K+m} + tau_{-m} >= 0 (f = coefficients of 1/((1-q)^(k'-1)(1-q^r))) and one j=0 test. I did not prove it: the claims [1,T6-2] ⊆ U, that the window suffices, and that the actual g and the generic f agree are all conjectural. Instances with r >= 1000 were tested only weakly (40 instances, none with the correction active). The T15 formula alone has 18 errors on the main sample, so the four-middle case really does need the low-order (k') correction.
+
+===== R3E7 (outcome RULE, candidates tried 9)
+The path worked partly. I did not find a closed form for the sharp L0 in terms of r, k and residue statistics; the formula found is a finite residue-level test. Any formula depending only on (r,k,S,tau) is impossible (Thm 8, proved). Six closed-form or approximate candidates were rejected, with error counts in candidates.txt. The exact formula L0* = L0_hyb is proved only as a lower bound, L0_hyb <= L0*. Equality, and the bound L0* <= max(s)+1 <= r, are Conjecture Q / Q1. These have 0 counterexamples in the fit box but no proof. The hard step is showing that a part of quotient exactly 1 is as harmless as an infinite part. The deficit is a sum of Ahat_{m-c} - Ahat_{y-c} terms against the hybrid slack, and I found no structural inequality bounding it.
+
+===== R3E8 (outcome RULE, candidates tried 6)
+The path did not fail, but four points limit the result. (1) Theorem 4 holds only outside eps0-windows around the thresholds. I did not prove whether the exceptional set is finite. With O(1/k) corrections the expected number of exceptions up to K grows like log K: infinitely many, but of density zero. (2) Pre-asymptotic errors are large when the spectral gap l_1 - l_2 per part is small, i.e. residues near 1 or r-1. Example: r=119, block (112), k in [14,52], where X is off by up to 0.39. Theorem 4 still holds there, but its m0 is large. (3) delta < 2 (asymptotic S2) is only numerical. (4) The irrationality of c is not needed and was not proved.
+
