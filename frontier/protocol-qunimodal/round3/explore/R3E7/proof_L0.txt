@@ -1,0 +1,120 @@
+PATH R3E7 -- the SHARP stabilization threshold L0.  Proofs (Part I) and conjectures (Part II).
+
+NOTATION (as in R2E7/proofs.txt).  r>=2, k>=2, a = (a_1..a_k), every a_i >= 2, r divides no a_i.
+s_i = a_i mod r in [1,r-1]; s = residue multiset; S = sum s_i; K0 = S-k+1; F = sum floor(a_i/r).
+tau_t = residue-class-t sum of (1-q)prod[s_i]_q (depends on s only, R2E7 Lemma 5).
+w_n = [q^n] 1/((1-q)^{k-1}(1-q^r)) (w_n = 0 for n<0).  g^a_n = [q^n] A(q)(1-q)/(1-q^r) = [q^n] X_a(q) w(q),
+X_a = prod_i (1-q^{a_i})  (since A(1-q) = X_a/(1-q)^{k-1}).
+Delta_e = K0 - r(e+1);  W(Delta) = {m : Delta/2 < m <= Delta/2 + r}.
+U_inf(r,s) = {1} u {e>=2 : w_m - w_{Delta_e-m} >= tau_m for all m in W(Delta_e)}   (R2E7 Thm 3; depends on r,k,S,tau).
+U(a) = {b>=1 : P unimodal}.
+DEFINITION.  a is STABLE iff U(a) = [1,F] u (F + U_inf(r,s)).
+DEFINITION (sharp threshold).  L0*(r,s) = least L >= 2 such that every a with residue multiset s and min a_i >= L
+is stable.   (Parts equal to 1 are trivial factors [1]_q = 1 and change k; we therefore work with parts >= 2.)
+
+Established results used (all proved earlier): T1 ([1,F+1] in U(a)); Thm B peeling (U(a + r e_i) contains
+{1} u (1+U(a))); R2E7 Theorem 1 (window criterion: b in U(a) iff g^a_m - g^a_{Delta-m} >= tau_m for all m in
+W(Delta), Delta = D+1-r(b+1); for b = F+e this Delta equals Delta_e); R2E7 Theorem 4 (k>=2, parts >= 2:
+U(a) is contained in [1,F+1] u (F+U_inf)); R2E7 Lemma 6 (g^a_n = w_n for n <= min a_i - 1).
+
+=====================================================================================================
+PART I.  PROVED.
+=====================================================================================================
+Lemma 1 (reduction of stability).  [1,F+1] is contained in U(a) and U(a) is contained in [1,F] u (F+U_inf).
+Hence a is stable iff F+e is in U(a) for every e in U_inf with e >= 2, iff for every such e and every m in
+W(Delta_e):  g^a_m - g^a_{Delta_e - m} >= tau_m.
+Proof.  First inclusion: T1.  Second: R2E7 Thm 4 gives U(a) in [1,F+1] u (F+U_inf), and F+1 = F+1 with
+1 in U_inf, so [1,F+1] u (F+U_inf) = [1,F] u (F+U_inf).  The last equivalence is R2E7 Thm 1 with b=F+e.  QED
+
+Lemma 2 (lifting preserves stability).  If a is stable then a' = a + r e_i is stable (any i).
+Proof.  a' has the same residues and F' = F+1.  By Thm B, U(a') contains {1} u (1+U(a))
+= {1} u [2,F+1] u (F+1+U_inf) = [1,F'] u (F'+U_inf).  By Lemma 1 (applied to a', all parts >= 2)
+U(a') is contained in [1,F'] u (F'+U_inf).  Equality.  QED
+
+Corollary 3 (up-set).  If a_i' >= a_i and a_i' == a_i (mod r) for all i, and a is stable, then a' is stable.
+Proof.  Iterate Lemma 2.  QED
+
+Proposition 4 (the sharp threshold is decided by one instance).  For L >= 2 let a^L be the instance with
+a^L_i = least integer >= L congruent to s_i mod r.  Then:
+ (a) L0*(r,s) = least L >= 2 such that a^L is stable, and {L >= 2 : a^L stable} = [L0*, infinity).
+ (b) L0*(r,s) <= max(2, M+1), where M = floor(Delta_{e2}/2) + r and e2 = min(U_inf \ {1}) (M := 1 if
+     U_inf = {1}).  In particular L0* <= max(2, floor((S-k+3-r)/2)) (the R2E7 bound).
+ (c) L0*(r,s) is, by (a), a function of (r, s) only (k = |s|), computable by a finite exact check.
+Proof.  (a) Let a have residue multiset s and min a_i >= L.  Match each part a_i with the component of a^L of the
+same residue: a_i >= L and a_i == s_i give a_i >= a^L_i with a_i - a^L_i divisible by r.  By Cor. 3 stability of
+a^L implies stability of a.  a^L itself has min >= L.  So "L forces stability" iff a^L stable.  For L' >= L,
+a^{L'} >= a^L componentwise with differences divisible by r, so Cor. 3 gives the up-ray property.
+(b) If every part of a exceeds M, then for every e in U_inf with e>=2 we have e >= e2, Delta_e <= Delta_{e2} and every
+m in W(Delta_e) satisfies m <= floor(Delta_e/2)+r <= M <= min a_i - 1, and Delta_e - m < m; by R2E7 Lemma 6
+g^a = w at both indices, so the window inequalities of Lemma 1 are exactly the defining inequalities of
+e in U_inf: a is stable.  a^{max(2,M+1)} has all parts >= M+1.  Also e2 >= 2 gives M <= floor(Delta_2/2)+r
+= floor((K0-r)/2) so M+1 <= floor((S-k+3-r)/2).  (c) immediate.  QED
+
+Definition 5 (hybrid test).  For a sub-multiset Z of s (the parts kept equal to their residue) let
+   h^Z(q) = prod_{z in Z}(1-q^z) * w(q) = prod_{z in Z}[z]_q / ((1-q)^{k-1-|Z|}(1-q^r)),
+and H(Z) :<=> for every e in U_inf with e >= 2 and every m in W(Delta_e):  h^Z_m - h^Z_{Delta_e-m} >= tau_m.
+For an instance a put Z(a) = multiset of parts a_i < r (these equal their residues).
+
+Proposition 6 (H is exactly the stability of the "hybrid" instance; monotonicity).
+ (a) Let a'' have residues s, parts Z at their residue values and every other part > N0 := floor(Delta_2/2)+r.
+     Then a'' is stable iff H(Z).
+ (b) Z subset Z' and H(Z') imply H(Z).
+ (c) For every a: a stable  =>  H(Z(a)).
+Proof.  (a) For n <= N0, X_{a''} == prod_{z in Z}(1-q^z) (mod q^{N0+1}) since the other factors are 1 + O(q^{N0+1});
+so g^{a''}_n = h^Z_n for all n <= N0 (and both are 0 for n < 0).  Every index in the window inequalities of Lemma 1
+is <= N0 (m <= floor(Delta_e/2)+r <= N0, Delta_e - m < m).  Apply Lemma 1.
+(b) Take a'' for Z' as in (a) (stable by (a)); lift each part of Z' \ Z by multiples of r above N0; by Cor. 3 the
+result is stable, and it is an instance as in (a) for Z.  (c) Lift every part of a not in Z(a) (they are >= r+1)
+above N0 by multiples of r; stable by Cor. 3; conclude by (a).  QED
+
+Corollary 7 (proved lower bound for the sharp threshold).  Let Z_t = {s_i : s_i >= t} and
+   L0_hyb(r,s) = least t >= 2 with H(Z_t)   (exists: Z_t is empty for t > max s, and H(empty) is the definition of U_inf;
+                                             {t : H(Z_t)} is an up-ray by Prop 6(b)).
+Then L0_hyb(r,s) <= L0*(r,s) <= max(2, M+1), and L0_hyb <= max(s)+1 <= r.
+Proof.  Let L = L0*.  If L <= r then the parts of a^L are s_i (if s_i >= L) and s_i + r (if s_i < L), so
+Z(a^L) = Z_L; a^L is stable (Prop 4a), so H(Z_L) by Prop 6(c), i.e. L0_hyb <= L.  If L > r then L0_hyb <= max(s)+1 <= r < L.  QED
+
+Theorem 8 (L0* is NOT a function of the data that determines U_inf).  There are residue multisets with equal
+(r, k, S, tau) -- hence identical U_inf, identical T, mu, K0 and identical R2E7 bound -- but different sharp L0*.
+Example: r = 7, k = 9, s = (1,1,3,4,4,4,4,5,5) and s' = (1,2,2,4,4,4,4,4,6): S = 31, tau = (-36,0,36,45,20,-20,-45),
+U_inf = {1,3}.  L0*(s) = 2 and L0*(s') = 3.
+Proof (finite exact computation, script pair_examples.py, output pair_examples.out, ground truth /tmp/claude-0/qu/tools/uni;
+all instances have coefficients < 2^40).
+ * U_inf = {1,3} for both (direct evaluation of R_k; cross-checked: the large-part instances a^9, which are stable by
+   R2E7 Thm 3, have U = [1,F] u (F+{1,3}) by direct computation).
+ * s: a^2 = (3,4,4,4,4,5,5,8,8), F = 2, U(a^2) = {1,2,3,5} = [1,2] u (2+{1,3}): stable, so L0*(s) = 2 (Prop 4a).
+ * s': a^2 = (2,2,4,4,4,4,4,6,8), F = 1, U(a^2) = {1,2} != {1,2,4}: not stable, so L0*(s') > 2;
+       a^3 = (4,4,4,4,4,6,8,9,9), F = 3, U(a^3) = {1,2,3,4,6} = [1,3] u (3+{1,3}): stable, so L0*(s') = 3.  QED
+(Exhaustively, for r <= 8, k <= 10 (31,779 multisets in the box), 65 groups of equal (r,k,S,tau) contain multisets with
+different L0*: groupcheck.py.)
+
+Theorem 9 (stability is not decided by (residue multiset, a_min); so no a_min-threshold is sharp in the "iff" sense).
+r = 5, s = (2,2,3,3,3,3,3,3,3), U_inf = {1,2,3}, L0*(s) = 3:
+   a  = (2,7,8,8,8,8,8,8,8): a_min = 2, F = 8,  U(a)  = [1,11] = [1,8] u (8+{1,2,3})   -- stable;
+   a' = (2,2,8,8,8,8,8,8,8): a_min = 2, F = 7,  U(a') = [1,8] u {10} != [1,7] u (7+{1,2,3}) -- not stable;
+   a^2 = (2,2,3^7): U = {1,3}, not stable;  a^3 = (3^7,7,7): U = [1,5] = [1,2] u (2+{1,2,3}), stable.
+Same residue multiset, same a_min, different stabilization; and a is stable although a_min = 2 < L0* = 3.
+Second example r = 6, s = (2,2,2,3,4,4,4,4,4): (2,8,8,9,10^5) stable, (2,2,8,9,10^5) not stable.
+Proof: exact computation, pair_examples.py / pair_examples.out (uni ground truth).  QED
+Hence: the set of stable instances with residues s is an up-set in the quotient vector (Cor. 3), but it is not of
+the form {a_min >= L}; the sharp L0*(r,s) of Prop. 4 is only the forcing threshold.  (find_pair.py: 120 such
+residue multisets with r <= 8, k <= 10.)
+
+=====================================================================================================
+PART II.  CONJECTURES (numerical evidence only).
+=====================================================================================================
+Conjecture Q (zero-pattern conjecture).  For every a (k>=2, parts >= 2, r dividing no a_i):
+     a is stable  <=>  H(Z(a)).
+"=>" is Prop 6(c).  "<=" says parts of quotient >= 1 behave exactly like infinite parts.
+Consequences:  (Q1) every a with all a_i > r is stable: U(a) = [1,F] u (F+U_inf(r,s));
+               (Q-L0) L0*(r,s) = L0_hyb(r,s) <= max(s)+1 <= r   (explicit residue-level formula, Cor. 7).
+Evidence (all inside the fit box; scripts in this folder):
+ * cmp_rules.py: L0_hyb == L0* in 31,779/31,779 multisets (exhaustive r<=8, k<=10), 1,221/1,221 random (r<=40,k<=140),
+   828/828 random (r<=120, k<=60);  7972/7972 exhaustive r<=7,k<=9 (after the gfun rewrite, same result).
+ * test_rule.py (log test_rule.log): 8,000 random instances (r<=60, k<=140, a_i<=400, random zero patterns and
+   random quotients): H(Z(a)) == stable(a) in all; predictions of rule_stab.py on its domain against ground truth:
+   60,193 (a,b) pairs with uni (coefficients < 2^120) + 664 (a,b) pairs with gt_big.py: 0 errors.
+ * testQ.py: Q1 holds in 5,400 random instances (and 20,000 zero-pattern comparisons, 0 failures);
+   q1_nontrivial.py: 3,000 further random instances, 2,469 of which have a quotient-1 part inside a needed window
+   (so Q1 is not implied by Prop 4b); 0 failures.
+No closed form for H(Z_t) beyond Definition 5 was found (Part III of the report lists rejected closed-form candidates).

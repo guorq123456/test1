@@ -1,0 +1,268 @@
+[
+ {
+  "path_id": "R3E5",
+  "stayed_on_path": true,
+  "outcome": "PROOF",
+  "candidates_tried_total": 8,
+  "candidates_file": "/tmp/claude-0/qu/explore3/R3E5/candidates.txt",
+  "rules": [
+   {
+    "name": "T15 three-middle closed form (now proved for all r>=4, all nm)",
+    "rule_file": "/tmp/claude-0/qu/explore3/R3E5/rule_T15.py",
+    "description_text": "Domain: r>=4, r divides no a_i, exactly three a_i have residue a_i mod r in [2,r-2], and every other a_i has residue 1 or r-1. (If some a_i is divisible by r, predict True.) Compute D = sum(a_i-1). Compute the class sums Gamma_t (t mod r) of prod over the parts with residue >=2 of [a_i mod r]_q, reduced mod q^r-1, and set tau_t = Gamma_t - Gamma_{t-1}. (This equals the residue-class sums of (1-q)prod[a_i]_q.) Set mu = the largest j in [1,r-1] with tau_j>0, or 0 if there is none. Set T6 = 1+floor((D+1-2mu)/r), s = (D+1) mod r, FIRE = (tau_s <= -2 and s >= 2mu), and B* = T6 - 2*FIRE. Predict that P is unimodal iff b <= B*.",
+    "fit_range": "Proved for the whole domain (all r>=4, any number of parts of residue 1 or r-1, any part sizes). Sanity tests inside the fit box: r<=120, k<=54, a_i<=400, plus r in [1000,1600] with nm<=8",
+    "free_parameters": 0,
+    "fit_errors": 0
+   }
+  ],
+  "numeric_claims": [
+   {
+    "claim": "Each lemma of the proof was checked on every base tuple (m1<=m2<=m3 in [2,r-2], (r-1)^n) for r<=40 and n<=50: 4,660,890 base instances and 32,511,116 case-(c) binding pairs. There were 0 failures in each of these: jump FIRE, K>r-3, u>r-2, the Lipschitz bound, |tau|<=m1, the e-difference bound, Phi<0 at a jump, B*(0)!=1, B* odd, B* decreasing.",
+    "script": "cd /tmp/claude-0/qu/explore3/R3E5 && python3 verify_lemmas.py 40 50   (output saved in verify_r40.txt)",
+    "range": "r in [4,40], all triples, n in [0,50] (k<=53, a_i<=39, inside the fit box)"
+   },
+   {
+    "claim": "rule_T15 agrees with exact ground truth (tools/uni int128, gt_big) on 325 random lifted instances, 13,153 (r,a,b) tests, 0 errors",
+    "script": "cd /tmp/claude-0/qu/explore3/R3E5 && python3 rule_check.py 1 400   (rule_check_out.txt)",
+    "range": "r in [4,120], k<=54, a_i<=400, b in [1,B*+3]"
+   },
+   {
+    "claim": "rule_T15 agrees with exact ground truth on 353 instances (2,864 tests) with r in [1000,1600], 0 errors",
+    "script": "cd /tmp/claude-0/qu/explore3/R3E5 && python3 bigr_check.py 7 60; python3 bigr_check.py 8 300   (bigr_out.txt, bigr_out2.txt)",
+    "range": "r in [1000,1600], nm<=8, at most 2 parts of residue 1, b in [1,B*+3]"
+   },
+   {
+    "claim": "The window-test implementation (base.py) agrees with brute force on 2,888 (r,a,b) tests, 0 mismatches",
+    "script": "cd /tmp/claude-0/qu/explore3/R3E5 && python3 xval.py",
+    "range": "r in [4,14], n<=12, b<=T6+2"
+   },
+   {
+    "claim": "The fast cyclic-tau implementation in rule_T15 equals the direct computation on 3,000 instances",
+    "script": "cd /tmp/claude-0/qu/explore3/R3E5 && python3 cmp_rule_impl.py",
+    "range": "r in [4,40], n<=20"
+   },
+   {
+    "claim": "Discarded candidate: the bound tau_u<=u+1 at binding pairs fails at 4,635 pairs, and a pure flip-decomposition induction falls short in 12,609 of 54,600 cases",
+    "script": "cd /tmp/claude-0/qu/explore3/R3E5 && python3 hard.py 24 40; python3 flip.py 16 30",
+    "range": "r<=24, n<=40 (hard.py); r<=16, n<=30 (flip.py)"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "T15 holds for all r>=4 and all nm. Take r dividing no a_i, exactly three a_i of middle residue, and all other a_i of residue 1 or r-1. Then U = [1,B*] with B* = T6 - 2*[tau_s<=-2 and s>=2mu]. The old restrictions r<=30 and nm<=37 are removed.",
+    "proof_file": "/tmp/claude-0/qu/explore3/R3E5/proof_T15_all.txt"
+   }
+  ],
+  "failure_report": ""
+ },
+ {
+  "path_id": "R3E6",
+  "stayed_on_path": true,
+  "outcome": "RULE",
+  "candidates_tried_total": 17,
+  "candidates_file": "/tmp/claude-0/qu/explore3/R3E6/candidates.txt",
+  "rules": [
+   {
+    "name": "rule_gen (four middle residues: residue-level closed form with the nontrivial-part count k')",
+    "rule_file": "/tmp/claude-0/qu/explore3/R3E6/rule_gen.py",
+    "description_text": "Domain: r>=4, r divides no a_i, exactly four a_i have a residue in [2,r-2], and every other a_i has residue 1 or r-1. Step 1: drop the parts equal to 1. Let k' be the number of remaining parts, D = sum(a_i-1), tau = (1-q)*prod_i [a_i mod r]_q reduced mod q^r-1 (tau_t for t in Z/r), mu = max{j in [1,r-1]: tau_j>0} (0 if there is none), and T6 = 1+floor((D+1-2mu)/r). Let f_i be the coefficients of 1/((1-q)^(k'-1)(1-q^r)), i.e. f_i = sum_{m>=0} C(i-rm+k'-2, k'-2), with f_i = 0 for i<0. predict(b) is true if b <= T6-2. It is false if b > T6. For b in {T6-1, T6}, put K = D+1-r(b+1) and m0 = max(1, -floor((K-1)/2)). Then b is predicted unimodal iff (a) f_{K+m} + tau_{(-m) mod r} >= 0 for every m in [m0, min(r*b, m0+r)], and (b) either K < 1 or 1 - f_K <= tau_0. Consequently U = [1,T6-2] ∪ {T6-1 if LOW(T6-1)} ∪ {T6 if LOW(T6)}. The rule depends only on (r, tau, D, k'), and the correction affects at most the two values T6-1 and T6. Background: this is a truncation of the K-form of Thm A, which I derived (P_b unimodal iff g_j - g_{K-j} <= tau_j for -rb <= j <= floor((K-1)/2), with g = A/[r]_q). Here the actual g is replaced by its 'generic' value f. Conjecture, not proved: (1) [1,T6-2] ⊆ U; (2) the conditions outside the window hold automatically; (3) the actual g and the generic f give the same verdict.",
+    "fit_range": "Four-middle instances (other residues 1 or r-1), k<=19, a_i<=400, 4<=r<=120. Exhaustive for r=4..10 with all parts <3r and up to 3 extra parts (1,213,632 instances). Random checks: about 9,300 instances with r<=120 and 2,400 tiny-part instances, plus hill-climbing. Weak spot check: 40 instances with r in [1000,1400], none of which activates the correction.",
+    "free_parameters": 0,
+    "fit_errors": 0
+   },
+   {
+    "name": "rule_simple (same skeleton, actual low-order coefficients g of A/[r]_q)",
+    "rule_file": "/tmp/claude-0/qu/explore3/R3E6/rule_simple.py",
+    "description_text": "Same as rule_gen, except that f is replaced by the actual g_i = sum_{m>=0} B_{i-rm}, where B = coefficients of (1-q)*prod[a_i]_q (g = A/[r]_q). Only g_0..g_{3r} are used, and they depend only on A mod q^{3r}. tau, mu and T6 are as in rule_gen. predict(b) = b<=T6-2, or (b in {T6-1,T6} and [g_{K+m} + tau_{-m mod r} >= 0 for m in [m0, min(rb, m0+r)]] and [K<1 or 1-g_K <= tau_0]). The companion rule_low.py (window 2r, which also checks the symmetric-end and full j>=0 branches) also has 0 errors.",
+    "fit_range": "Same as rule_gen (exhaustive r=4..10: 1,213,632 instances; random r<=120: 6,600 plus 3,400 plus 2,400 tiny-part instances; 40 instances with r in [1000,1400]).",
+    "free_parameters": 0,
+    "fit_errors": 0
+   }
+  ],
+  "numeric_claims": [
+   {
+    "claim": "Over the fixed sample of 3,400 four-middle instances (114,797 (instance,b) pairs), the error counts are: C0 U=[1,T6]: 356; C1 T15 formula: 18; C4 rule_low: 0; C5 rule_simple: 0; window r/2: 45; window 3: 131; window 1: 178; window 0: 178.",
+    "script": "/tmp/claude-0/qu/explore3/R3E6/eval_candidates.py (output eval_candidates.out)",
+    "range": "r in [4,40] x3000 and [41,120] x400 sampled, k<=19, a_i<=400, seed 2026"
+   },
+   {
+    "claim": "On the same sample: rule_gen (generic f, needs only r, tau, D, k') has 0 errors. The same rule without the (ii) j=0 test has 0 errors here but fails elsewhere. With k (counting parts equal to 1) instead of k' it has 2 errors.",
+    "script": "/tmp/claude-0/qu/explore3/R3E6/eval_candidates2.py (output eval_candidates2.out); check_c14.py",
+    "range": "same sample"
+   },
+   {
+    "claim": "Exhaustive check with r=4..10, four middle parts <3r and 0..3 extra parts of residue 1 or r-1 below 3r: 1,213,632 instances, 0 errors each for rule_gen, rule_simple and rule_low. In every one of these instances U is either [1,T6] or [1,T6-2].",
+    "script": "/tmp/claude-0/qu/explore3/R3E6/exhaustive.py <r> 3 rule_gen.py rule_simple.py rule_low.py (rule_gen output in exhaustive_gen.out)",
+    "range": "r=4..10"
+   },
+   {
+    "claim": "There are 13 exact witness pairs of four-middle instances that agree on r, k, residue multiset, sum, product, F, D, the Gamma vector, tau, mu and T6, but have different U (max U differs by 2). All 13 were confirmed with tools/uni. Example: r=20, a=(1,14,59,65,79,105,123) has U=[1,20], while a'=(3,14,21,59,65,79,205) has U=[1,22] (T6=22).",
+    "script": "/tmp/claude-0/qu/explore3/R3E6/verify_witness.py and witness_proof_check.py (the latter also cross-checks with uni_ref.py)",
+    "range": "r in {10,12,13,16,17,20,21,22,26,31}, k<=12, a_i<=400"
+   },
+   {
+    "claim": "No witness pair was found with equal k' (no part equal to 1): 24,000 plus 36,000 embedding tests, 1,200,000 prefiltered tries, and 6,000 groups with 12 quotient redistributions each all gave 0. A hill-climb (600 restarts x 400 steps) found no instance where the actual g and the generic f give different LOW verdicts.",
+    "script": "/tmp/claude-0/qu/explore3/R3E6/embed.py, embed2.py, embed2fast.py, redistribute2.py, hill_gen.py (logs emb2_log_*, emb2f_log_*, red2_log_*, hill_gen_log_*)",
+    "range": "r<=40 (hill_gen: r<=60), k<=19, a_i<=400"
+   },
+   {
+    "claim": "In the binding analysis over 20,000 random four-middle instances, the smallest violated index in the (ia) test is 0 (1374 cases), 1 (104), 2 (8) or 3 (2). No violation ever occurs at a negative index.",
+    "script": "/tmp/claude-0/qu/explore3/R3E6/binding_index.py",
+    "range": "r in [4,60], k<=19, a_i<=400"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "Theorem N: For exactly four middle residues (other residues 1 or r-1), no function of (r, k, b, residue multiset, F, D, Gamma vector), even with sum(a_i) and prod(a_i) added, decides unimodality. The proof uses Lemma 2: Gamma = Gamma(prod[s_i]_q) + ((prod a - prod s)/r)*(1,...,1), so equal sum, product and residue multiset force identical Gamma, tau, mu, T6, F and D. The witness r=20, a=(1,14,59,65,79,105,123) gives U=[1,20], while a'=(3,14,21,59,65,79,205) gives U=[1,22]; two further witnesses are included. The cause is that g_1 = #{a_i>=2} - 1 enters the j=-1 condition at b=T6-1 with K=0.",
+    "proof_file": "/tmp/claude-0/qu/explore3/R3E6/proof_nonexistence.txt"
+   }
+  ],
+  "failure_report": "The path partly succeeded, and the main caveat is this. A closed form at the Gamma level (r, Gamma/tau, D, F) does not exist, and this is proved by exact witness pairs. But every witness relies on parts a_i = 1: they leave P unchanged but change k' = #{a_i >= 2}, which Gamma, D and F do not see. With k' added, rule_gen.py (which uses only r, tau, D, k') fits every tested instance with 0 errors. Its form is U = [1,T6-2] plus up to two more values, T6-1 and T6, each decided by about r inequalities f_{K+m} + tau_{-m} >= 0 (f = coefficients of 1/((1-q)^(k'-1)(1-q^r))) and one j=0 test. I did not prove it: the claims [1,T6-2] ⊆ U, that the window suffices, and that the actual g and the generic f agree are all conjectural. Instances with r >= 1000 were tested only weakly (40 instances, none with the correction active). The T15 formula alone has 18 errors on the main sample, so the four-middle case really does need the low-order (k') correction."
+ },
+ {
+  "path_id": "R3E7",
+  "stayed_on_path": true,
+  "outcome": "RULE",
+  "candidates_tried_total": 9,
+  "candidates_file": "/tmp/claude-0/qu/explore3/R3E7/candidates.txt",
+  "rules": [
+   {
+    "name": "R3E7-STAB (hybrid zero-pattern rule; gives sharp L0 = L0_hyb)",
+    "rule_file": "/tmp/claude-0/qu/explore3/R3E7/rule_stab.py",
+    "description_text": "Setup: r divides no a_i, all a_i>=2. Let s be the residues a_i mod r, k=len(a), S=sum s, K0=S-k+1, F=sum floor(a_i/r). tau = residue-class sums of (1-q)prod[s_i]_q reduced mod q^r-1. w_n=[q^n]1/((1-q)^{k-1}(1-q^r)) (0 for n<0). Delta_e=K0-r(e+1), W(Delta)={m: Delta/2<m<=Delta/2+r}. U_inf={1} u {e in [2,T]: w_m - w_{Delta_e-m} >= tau_{m mod r} for all m in W(Delta_e)}, T=1+floor((K0-2mu)/r), mu=max{t in [0,r-1]: tau_t>0}. Hybrid test for a multiset Z of small parts: h^Z = prod_{z in Z}(1-q^z) * w (coefficientwise; equivalently prod[z]_q/((1-q)^{k-1-|Z|}(1-q^r))); H(Z) holds iff h^Z_m - h^Z_{Delta_e-m} >= tau_{m mod r} for every e in U_inf with e>=2 and every m in W(Delta_e). DOMAIN: r divides no a_i, min a_i>=2, and H(Z(a)) where Z(a) = the parts a_i < r. PREDICT: P unimodal iff b<=F+1 or b-F in U_inf. Sharp threshold formula: L0*(r,s) = least t>=2 with H({s_i : s_i>=t}). This is proved to be a lower bound for L0*, conjectured equal, and it is always <= max(s)+1 <= r. Proved part: on the subdomain min a_i >= max(2, floor(Delta_{e2}/2)+r+1), e2=min(U_inf\\{1}), the prediction is a theorem. Monotone part: if the prediction holds for a, it also holds for every lift of a by multiples of r.",
+    "fit_range": "r<=120, k<=140, a_i<=400 (fit box, excluded sub-families respected); exhaustive r<=8,k<=10 for the threshold; random r<=120 for domain/predict",
+    "free_parameters": 0,
+    "fit_errors": 0
+   }
+  ],
+  "numeric_claims": [
+   {
+    "claim": "Sharp L0* equals the hybrid formula L0_hyb in every residue multiset tested: 31,779/31,779 (exhaustive), 1,221/1,221 and 828/828 (random). L0*>2 in 208, 177 and 88 of these. Error counts for the other candidates: constant 2 gives 208/177/88; the single-part rule gives 120/167/79; first-order gives 7098/997/494; the R2E7 bound gives 29535/1197/788, the Me2 bound 16522/1068/572 and max(s)+1 gives 31722/1208/821 (the last three are upper bounds with 0 violations).",
+    "script": "cd /tmp/claude-0/qu/explore3/R3E7 && python3 cmp_rules.py exh 8 10; python3 cmp_rules.py rnd 5 2000 40 140; python3 cmp_rules.py rnd 6 1500 120 60",
+    "range": "exhaustive r in [3,8], k in [2,10]; random r<=40,k<=140 and r<=120,k<=60 (in box)"
+   },
+   {
+    "claim": "L0* is not a function of (r,k,S,tau): 65 groups with equal (r,k,S,tau) contain multisets with different L0*. Example: r=7, s=(1,1,3,4,4,4,4,5,5) has L0*=2 and s'=(1,2,2,4,4,4,4,4,6) has L0*=3; both have U_inf={1,3}.",
+    "script": "cd /tmp/claude-0/qu/explore3/R3E7 && python3 groupcheck.py 8 10; python3 pair_examples.py",
+    "range": "exhaustive r<=8, k<=10"
+   },
+   {
+    "claim": "Same residue multiset and same a_min, but different stabilization. With r=5: a=(2,7,8^7) has U=[1,11] (stable), while a'=(2,2,8^7) has U=[1,8]u{10} (not stable). Also (2,2,3^7) has U={1,3}. There are 120 residue multisets with such pairs for r<=8, k<=10.",
+    "script": "cd /tmp/claude-0/qu/explore3/R3E7 && python3 pair_examples.py; python3 find_pair.py",
+    "range": "r<=8, k<=10"
+   },
+   {
+    "claim": "Conjecture Q, stable(a) <=> H(Z(a)), held with 0 mismatches over 8,000 random instances. The rule had 0 prediction errors against ground truth: 60,193 (a,b) pairs checked with uni and 664 with gt_big.",
+    "script": "cd /tmp/claude-0/qu/explore3/R3E7 && python3 test_rule.py 1 3000 12 12 120; python3 test_rule.py 2 3000 30 40 200; python3 test_rule.py 3 2000 60 140 400  (log: test_rule.log)",
+    "range": "r<=60, k<=140, a_i<=400"
+   },
+   {
+    "claim": "Q1 (all a_i>r => stable) had 0 failures in 5,400 random instances, with 0/20,000 zero-pattern comparisons failing. It also had 0 failures in 3,000 more instances, 2,469 of them non-trivial. The up-ray property in L had 0 violations over 77,500 multisets.",
+    "script": "cd /tmp/claude-0/qu/explore3/R3E7 && python3 testQ.py 1 2000 40 140; python3 testQ.py 2 3000 12 30; python3 testQ.py 7 400 8 140; python3 q1_nontrivial.py 11 1500 10 140; python3 q1_nontrivial.py 12 1500 40 100; python3 survey.py 8 12 data_r8k12.txt",
+    "range": "r<=40, k<=140, in box"
+   },
+   {
+    "claim": "The window-criterion implementation core.py (used for all stability computations) matches ground truth uni on 29,681 (a,b) pairs.",
+    "script": "cd /tmp/claude-0/qu/explore3/R3E7 && python3 validate.py 1; python3 validate.py 2; python3 validate.py 3",
+    "range": "r<=12, k<=7, a_i<60"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "(Lemma 2/Cor 3) Stability, meaning U(a)=[1,F]u(F+U_inf(r,s)), is preserved by lifting any part by r. So the stable instances form an up-set in the quotient vector. (Prop 4) The sharp L0*(r,s) = least L>=2 such that a^L is stable, where a^L_i is the least value >=L congruent to s_i. The set of such L is an up-ray, and L0* <= max(2, floor(Delta_{e2}/2)+r+1) <= max(2, floor((S-k+3-r)/2)).",
+    "proof_file": "/tmp/claude-0/qu/explore3/R3E7/proof_L0.txt"
+   },
+   {
+    "statement": "(Prop 6, Cor 7) Let H(Z) be the hybrid test with h^Z = prod_{z in Z}(1-q^z)/((1-q)^{k-1}(1-q^r)). H(Z) holds iff the instance with Z at residue values and all other parts very large is stable. H is monotone, stable(a) implies H(Z(a)), and L0_hyb = min{t>=2: H({s_i>=t})} satisfies L0_hyb <= L0* and L0_hyb <= max(s)+1 <= r.",
+    "proof_file": "/tmp/claude-0/qu/explore3/R3E7/proof_L0.txt"
+   },
+   {
+    "statement": "(Thm 8) The sharp L0* is not a function of (r,k,S,tau), which is the data fixing U_inf. With r=7, s=(1,1,3,4,4,4,4,5,5) gives L0*=2 and s'=(1,2,2,4,4,4,4,4,6) gives L0*=3. (Thm 9) Stabilization is not determined by (residue multiset, a_min). With r=5, (2,7,8^7) is stable and (2,2,8^7) is not, both with a_min=2. The proofs use Prop 4 plus a finite exact computation with uni.",
+    "proof_file": "/tmp/claude-0/qu/explore3/R3E7/proof_L0.txt"
+   }
+  ],
+  "failure_report": "The path worked partly. I did not find a closed form for the sharp L0 in terms of r, k and residue statistics; the formula found is a finite residue-level test. Any formula depending only on (r,k,S,tau) is impossible (Thm 8, proved). Six closed-form or approximate candidates were rejected, with error counts in candidates.txt. The exact formula L0* = L0_hyb is proved only as a lower bound, L0_hyb <= L0*. Equality, and the bound L0* <= max(s)+1 <= r, are Conjecture Q / Q1. These have 0 counterexamples in the fit box but no proof. The hard step is showing that a part of quotient exactly 1 is as harmless as an infinite part. The deficit is a sum of Ahat_{m-c} - Ahat_{y-c} terms against the hybrid slack, and I found no structural inequality bounding it."
+ },
+ {
+  "path_id": "R3E8",
+  "stayed_on_path": true,
+  "outcome": "RULE",
+  "candidates_tried_total": 6,
+  "candidates_file": "/tmp/claude-0/qu/explore3/R3E8/candidates.txt",
+  "rules": [
+   {
+    "name": "B: zero-parameter rotation-word closed form for U in the large-part regime (exact log-binomial)",
+    "rule_file": "/tmp/claude-0/qu/explore3/R3E8/rule_B.py",
+    "description_text": "Domain: r divides no a_i, k>=3, at least one residue s_i=a_i mod r in [2,r-2], and min a_i >= max(1, floor((S-k+3-r)/2)), where S = sum s_i. Prediction: let F = sum floor(a_i/r), S1 = sum(s_i-1), K0 = S1+1. If b <= F+1, predict unimodal. Otherwise put e = b-F. Let l = sum_i ln( sin(pi s_i/r)/sin(pi/r) ). Let theta solve (1+t)ln(1+t) - t ln t = l/k, lambda = ln(1+1/theta), rho = e^lambda. For each chain parity eps in {1 (odd e), 0 (even e)}: the lattice is u in {1,...,r} if K0 - r(eps+1) is even, and u in {1/2, 3/2, ..., r-1/2} otherwise. Put g(u) = (4 sin(pi/r)/r) * (-1)^eps * sin(2 pi u/r), and keep only the u with g(u) > 0. For each kept u, let n_u be the least real n with lnGamma(n+u+k-1) - lnGamma(k-1) - lnGamma(n+u+1) + ln((1-rho^(-2u))/(1-rho^(-r))) >= l + ln g(u), found by bisection. Let nu_eps = max_u n_u and X_eps = (K0 - r - 2 nu_eps)/r. Then e_odd = max(1, largest odd integer <= X_1) and e_even = max(0, largest even integer <= X_0). Predict unimodal iff (e odd and e <= e_odd) or (e even and e <= e_even). Variant A (rule_asym.py) is the fully explicit form. It replaces the log-binomial by its Stirling linearisation, which gives nu_eps = theta k + ln k/(2 lambda) + (psi_eps - c0)/lambda, where psi_eps = max over kept u of [ln g(u) - lambda u - ln((1-rho^(-2u))/(1-rho^(-r)))] and c0 = -1.5 ln(1+theta) - 0.5 ln theta - 0.5 ln(2 pi). So X_1 = c k - kappa ln k + gamma(parity of S1+1), with c = (S1/k - 2 theta)/r and kappa = 1/(r lambda). In words, the O(1) term of E = e_odd - 1 is a two-state function (the parity of S1+1) of the fractional part of an explicit real sequence: a rotation word with a logarithmic drift.",
+    "fit_range": "Two parts. (1) Fit box r<=120, k<=140 at residue level (excluded classes skipped): 173 random families (block repeated, k = m*len(block)), 7245 (family,k) points, plus sweep2 runs (6047 points). The instance level used a_i<=400, r in [4,120], k in [3,40] and exact ground truth gt_big.py: 124047 (r,a,b) checks. (2) r>=1000 families: r=1000 block(500,1) k<=998; r=1001 block(300,650,1) k<=498; r=1009 block(400,700,1) k<=1059; r=1200 block(77) k<=556; r=2000 block(999,1999,1) k<=345. This is 1686 points.",
+    "free_parameters": 0,
+    "fit_errors": 61
+   },
+   {
+    "name": "A: fully explicit linearised closed form (same structure, Stirling-linearised)",
+    "rule_file": "/tmp/claude-0/qu/explore3/R3E8/rule_asym.py",
+    "description_text": "Same domain and same chain-top rule as rule B. The difference is nu_eps = theta k + ln k/(2 lambda) + (psi_eps - c0)/lambda, where psi_eps = max over lattice u with g(u)>0 of [ln g(u) - lambda u - ln((1-rho^(-2u))/(1-rho^(-r)))], with g(u) = (4 sin(pi/r)/r)(-1)^eps sin(2 pi u/r) and c0 = -1.5 ln(1+theta) - 0.5 ln theta - 0.5 ln(2 pi). Then X_eps = (S1 + 1 - r - 2 nu_eps)/r, e_odd = max(1, largest odd <= X_1) and e_even = max(0, largest even <= X_0). Predict unimodal iff b <= F+1, or e = b-F is odd with e <= e_odd, or e is even with 2 <= e <= e_even. Along a family this gives E(k) = 2 floor((c k - kappa ln k + gamma_1 - 1)/2), with gamma_1 = (1-r)/r - 2(ln(4 sin(pi/r)/r) + psi_1' - c0)/(lambda r) depending only on the parity of S1+1. Here psi_1' is psi_1 without the amplitude constant.",
+    "fit_range": "Same data as rule B: box r<=120, k<=140 (7245 family points plus the sweeps), 124047 instance checks with a_i<=400, and 1686 points from r>=1000 families.",
+    "free_parameters": 0,
+    "fit_errors": 92
+   }
+  ],
+  "numeric_claims": [
+   {
+    "claim": "The residue-level U_inf code (R2E7 window criterion) matches ground truth: 0 errors in 10685 (r,a,b) checks",
+    "script": "/tmp/claude-0/qu/explore3/R3E8/validate_uinf.py (seeds 1,2)",
+    "range": "r in [4,12], k<=9, large parts (a_i>=L0), a_i<=400"
+   },
+   {
+    "claim": "Rule B gets 52 of 7245 family points wrong (chain tops). By k: <=12: 21/936, 13-40: 21/2479, 41-90: 8/2523, 91-140: 2/1307. Rule A gets 70 of 7245 wrong. Most errors have X within 0.05 of the threshold integer",
+    "script": "/tmp/claude-0/qu/explore3/R3E8/boxdata.py (seeds 11,12,13; 60 families, r 4..120) then analyze.py -> analyze.out",
+    "range": "r<=120, k<=140, residue level"
+   },
+   {
+    "claim": "Instance level: rule B is wrong on 9 of 124047 (r,a,b) checks, all at k<=12; rule A is wrong on 20",
+    "script": "/tmp/claude-0/qu/explore3/R3E8/fitcheck.py seeds 1,2,3 (r 4..40) and seed 4 (r 41..120) -> fitcheck_1..3.txt, fitcheck_4_r41_120.txt",
+    "range": "r<=120, k<=40, a_i<=400, large parts"
+   },
+   {
+    "claim": "r>=1000 families: rule B is wrong on 1 of 1686 points (X_even=3.9993) and rule A on 2",
+    "script": "/tmp/claude-0/qu/explore3/R3E8/bigr.py runs -> big_*.txt, summarised by bigsummary.py -> bigsummary.out",
+    "range": "r in {1000,1001,1009,1200,2000}, k<=1059"
+   },
+   {
+    "claim": "Diagnostic C (exact w, tau replaced by its dominant Fourier mode only) is wrong on 6 of 6047 points. So the fine structure of E is driven by a single Fourier mode plus smooth binomial asymptotics",
+    "script": "/tmp/claude-0/qu/explore3/R3E8/sweep2.py 1 40 4 12 C; 2 40 13 40; 3 30 41 120; 4 60 4 12 -> sw2_*.txt",
+    "range": "r<=120, k<=140"
+   },
+   {
+    "claim": "Fitted alternatives are worse than the zero-parameter rule B (52 errors): one beta per family gives 73/7245 errors, and one beta per family and S1 parity gives 55/7245. Eventually periodic increments with period <=12 fail for 73 of 126 families",
+    "script": "/tmp/claude-0/qu/explore3/R3E8/analyze.py box_11.csv box_12.csv box_13.csv",
+    "range": "r<=120, k<=140"
+   },
+   {
+    "claim": "The model gap delta = X_odd - X_even lies in (1.00005, 1.086). So asymptotically e_even = e_odd - 1, except on a window of the rotation circle of width delta-1, where e_even = e_odd - 3 (the S2 shape)",
+    "script": "/tmp/claude-0/qu/explore3/R3E8/delta_gap.py 1 3000 -> delta_gap.out",
+    "range": "r<=120 or r in {1000,1001,1500,2001}, k<=140"
+   },
+   {
+    "claim": "The dominant-mode formula for tau on the window lattice has max abs error 1.3e-5 (relative to e^{l_1}), and the dominant set is always {1,r-1}",
+    "script": "/tmp/claude-0/qu/explore3/R3E8/check_modes.py -> check_modes.out",
+    "range": "r<=30, k in [21,61]"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "Lemma 1: if some residue is middle, then l_1 = l_{r-1} > l_j for every other j. Lemma 2 (exact phase alignment): for m = Delta_e/2 + u, tau_m = (4 sin(pi/r)/r) e^{l_1} (-1)^e sin(2 pi u/r) + O(e^{l'}). So the dominant window profile depends on k only through the parity of S1+1.",
+    "proof_file": "/tmp/claude-0/qu/explore3/R3E8/proof_fine_structure.txt"
+   },
+   {
+    "statement": "Theorem 4 / Corollary 5: fix r>=4 and a block containing a middle residue, with k = m p. For every eps0>0 and m large, if X_1(k) is at least eps0 from the odd integers, then E(k) = 2 floor((X_1(k)-1)/2). Here X_1 = ck - kappa ln k + gamma_1(parity of S1+1) with explicit constants. The analogous statement holds for e_even with X_0. So the O(1) term is a two-state rotation word with logarithmic drift.",
+    "proof_file": "/tmp/claude-0/qu/explore3/R3E8/proof_fine_structure.txt"
+   },
+   {
+    "statement": "Proposition 6: along any family, E(k) - (ck - kappa ln k) is not eventually periodic in m, and the increments E((m+1)p) - E(mp) are not eventually periodic. The second part uses R2E6 Thm 3. Remark 7: in the model, delta = X_1 - X_0 > 1.",
+    "proof_file": "/tmp/claude-0/qu/explore3/R3E8/proof_fine_structure.txt"
+   }
+  ],
+  "failure_report": "The path did not fail, but four points limit the result. (1) Theorem 4 holds only outside eps0-windows around the thresholds. I did not prove whether the exceptional set is finite. With O(1/k) corrections the expected number of exceptions up to K grows like log K: infinitely many, but of density zero. (2) Pre-asymptotic errors are large when the spectral gap l_1 - l_2 per part is small, i.e. residues near 1 or r-1. Example: r=119, block (112), k in [14,52], where X is off by up to 0.39. Theorem 4 still holds there, but its m0 is large. (3) delta < 2 (asymptotic S2) is only numerical. (4) The irrationality of c is not needed and was not proved."
+ }
+]

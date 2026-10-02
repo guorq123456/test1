@@ -1,0 +1,35 @@
+R3E6 candidates (path: exactly four middle residues). Fit box: four-middle instances, k<=19, a_i<=400, r<=120 (and r>=1000 spot check).
+Error counts = number of mismatching (instance, b) pairs, b = 1..T6+2, on the fixed sample of eval_candidates.py /
+eval_candidates2.py (3400 instances, 114797 (instance,b) pairs; seed 2026), unless stated otherwise.
+
+C0  U = [1,T6] (Thm C bound tight)                                   356   (eval_candidates.out)   discarded
+C1  T15 formula U = [1, T6 - 2*FIRE], FIRE=[tau_s<=-2 and s>=2mu]      18   (eval_candidates.out)   discarded (shows 4-middle needs more)
+C2  rule_low v1 (truncated Thm A, missing the (ia) branch) [bug]      355   (eval_candidates.out)   discarded
+C3  rule_low v2 ((ia) without the m0 lower bound) [bug]              1549   (eval_candidates.out)   discarded
+C4  rule_low final: b<=T6-2, or b in{T6-1,T6} & truncated K-form of Thm A (window 2r; ia, ib, ii) with ACTUAL g
+                                                                         0   (eval_candidates.out); also 0 on test_rule2 seeds 1-6 (6600 inst.),
+                                                                             0 on exhaustive r=4..10 (1,213,632 inst., exhaustive.py)
+C5  rule_simple: as C4 with window r, (ia) + (ii) at j=0 only, ACTUAL g      0   (eval); 0 on test_rule2 seeds 21-26 (6600), exhaustive r<=10 (1,213,632), test_tiny (2400)
+C6  as C5 with window r/2                                               45
+C7  as C5 with window 3                                                131
+C8  as C5 with window 1                                                178
+C9  as C5 with window 0 (single condition m=m0)                        178
+C10 rule_gen: as C5 but g replaced by generic f = coeffs of 1/((1-q)^(k'-1)(1-q^r)), k' = #{a_i>=2}
+    -> depends only on (r, tau, D, k')                                   0   (eval_candidates2.out); 0 on test_rule2 seeds 31-35 (6300),
+                                                                             0 on exhaustive r=4..10 (1,213,632; exhaustive_gen.out), 0 on test_tiny (2400),
+                                                                             hill_gen.py 600 restarts x 400 steps: no instance with LOW_g != LOW_f
+C11 generic f, window r/2                                               45
+C12 generic f, window 3                                                131
+C13 generic f, window 0                                                178
+C14 generic f, window r, without the (ii) j=0 test                       0 on this sample; known to fail on r=25, a=(12,26,33,67,69,99)
+                                                                             (U={1..10,12}, decided by (ii) at b=11); discarded
+C15 generic f with k (counting parts a_i=1) instead of k'                2   discarded
+C16 "any function of Gamma-level data (r, k, residue multiset incl. a_i=1 parts, F, D, Gamma vector, sum, prod)":
+    impossible -- 13 exact witness pairs (emb1_*.jsonl, verify_witness.py: 13/13 verified with tools/uni);
+    every such function errs on >= 2 (instance,b) pairs per witness pair.
+Searches for witness pairs WITHOUT parts equal to 1 (i.e. same k'): embed.py (24000 tests, 0), embed2.py (36000, 0),
+    embed2fast.py (1,200,000 tries, 0 prefilter hits), redistribute2.py (6000 groups x 12 redistributions, 0). None found.
+Total candidates: 17 (C0-C16).
+Additional checks of C10 (rule_gen): test_rule2.py seed 41, r in [60,120], 600 instances: 0 errors (test_gen_r60_120.out);
+r in [1000,1400] (region (ii)), 40 instances: 0 errors for C5 and C10, but U = [1,T6] in all 40 (correction never active;
+weak test) (test_bigr_1.out). check_c14.py: C14 fails on r=25, a=(12,26,33,67,69,99), C10 correct there.

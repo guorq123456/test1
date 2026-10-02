@@ -1,0 +1,20 @@
+R3E7 candidates for the SHARP stabilization threshold L0*(r,s) (least L>=2 with a^L stable; Prop 4 of proof_L0.txt).
+Error counts = #residue multisets where candidate != true L0*.  Test sets (all in the fit box; script cmp_rules.py):
+  EXH  = exhaustive r in [3,8], k in [2,10]   : 31,779 multisets (208 with L0*>2)      [python3 cmp_rules.py exh 8 10]
+  RND1 = random r<=40,  k<=140 (seed 5)       : 1,221 multisets (177 with L0*>2)       [python3 cmp_rules.py rnd 5 2000 40 140]
+  RND2 = random r<=120, k<=60  (seed 6)       : 828 multisets (88 with L0*>2)          [python3 cmp_rules.py rnd 6 1500 120 60]
+ #  candidate                                                         EXH     RND1   RND2   status
+ 1  L0 = 2 (always stable once parts >= 2)                             208     177    88    rejected
+ 2  L0 = max(2, floor((S-k+3-r)/2))  (R2E7 bound as sharp value)     29535    1197   788    rejected as sharp; proved upper bound (0 violations)
+ 3  L0 = max(2, floor(Delta_{e2}/2)+r+1), e2=min(U_inf\{1})          16522    1068   572    rejected as sharp; proved upper bound (Prop 4b)
+ 4  L0 = max(s)+1                                                     31722    1208   821    rejected as sharp; conjectured upper bound (0 violations)
+ 5  single-part rule: 1+max{x in s: H({x}) fails} (or 2)               120     167    79    rejected (proved lower bound: H monotone)
+ 6  first-order hybrid (g ~ w - sum_{z in Z} w_{.-z})                 7098     997   494    rejected
+ 7  exact hybrid L0_hyb = least t>=2 with H(Z_t)                         0       0     0    ACCEPTED (proved <= L0*; equality conjectured)
+ 8  any function of (r,k,S,tau) (the data fixing U_inf)              65 ambiguous groups (groupcheck.py 8 10)  -> impossible (Thm 8)
+Domain-level rule (rule_stab.py, conjecture Q: stable(a) <=> H(Z(a))):
+ 9  domain=H(Z(a)) vs exact stability: 0 mismatches / 8,000 instances; predict vs ground truth on domain: 0 errors /
+    60,193 (a,b) via uni + 664 (a,b) via gt_big   (test_rule.py, test_rule.log)
+Sub-conjecture checks:  Q1 (all a_i>r => stable): testQ.py 0/5,400 fails; q1_nontrivial.py 0/3,000 fails (2,469 nontrivial).
+                        Q2 (stability depends only on zero pattern): testQ.py 0/20,000 fails.  Up-ray in L: survey.py 0 violations / 77,500.
+Total candidates tried: 9 (8 threshold candidates incl. the (r,k,S,tau)-class, + 1 domain rule).

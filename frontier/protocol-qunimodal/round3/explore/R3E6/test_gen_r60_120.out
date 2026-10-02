@@ -1,0 +1,2 @@
+rule_gen.py seed 41 instances 600 b-errors 0 bad 0
+{(-4, -3, -2, -1, 0, 'full'): 449, (-1, 0, 'full'): 42, (-2, -1, 0, 'full'): 51, (-3, -2, -1, 0, 'full'): 37, (0, 'full'): 18, (-4, -3, -2, 'full'): 2, (-3, -2, 'full'): 1}

@@ -1,0 +1,20 @@
+(a) tau_u>0 0
+(b) tau_K<-1 0
+(c) checked 32511116
+(c) ediff<min(L,m1) 0
+(c) tau_u>L 0
+B* decrease 0
+B* odd fail 0
+L1 tau shift fail 0
+L2 lipschitz fail 0
+L3 |tau3|<=m1 fail 0
+L4 R3_j>=3 fail 0
+Phi<0 at jump 0
+instances 4660890
+jump K>r-3 0
+jump fire 0
+n0 B*!=1 0
+n0 case3 mu<r-2 0
+n1 jump B!=3 or K 0
+n2 K>M3-r-3 0
+u>r-2 0

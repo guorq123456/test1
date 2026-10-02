@@ -1,0 +1,134 @@
+PATH R3E8 -- FINE STRUCTURE OF THE EXCESS E(k) = B* - 1 - F ALONG FAMILIES.   Proofs.
+
+NOTATION (as in R2E7 / R2E6).  r >= 4, residues s_1..s_k in [1,r-1] (r divides no a_i), at least one
+middle residue (2 <= s_i <= r-2).  S1 = sum (s_i - 1), K0 = S1 + 1.  tau_t = class sums of (1-q)prod[s_i]_q
+mod q^r - 1.  B_n = C(n+k-2,k-2) (0 for n<0), w_n = sum_{j>=0} B_{n-jr}.  For e >= 2 put
+Delta_e = K0 - r(e+1);  W(Delta) = {m in Z : Delta/2 < m <= Delta/2 + r}.
+R_k(Delta):  w_m - w_{Delta-m} >= tau_{m mod r} for all m in W(Delta).
+Established: (R2E7 Thm 3) in the large-part regime U = [1,F+1] u (F + U_inf), U_inf = {1} u {e>=2 : R_k(Delta_e)};
+(R2E7 Thm 5) U_inf = {odd e <= e_odd} u {even e, 2<=e<=e_even};  (T9) max U == 1+F (mod 2), so
+max U_inf = e_odd and E = e_odd - 1.
+omega = exp(2 pi i/r).  l_j = sum_i ln|sin(pi j s_i/r)/sin(pi j/r)|  (j=1..r-1), l_1 > 0.
+H(t) = (1+t)ln(1+t) - t ln t.   theta := H^{-1}(l_1/k),  lambda := ln(1+1/theta),  rho := e^lambda = (1+theta)/theta.
+c0(theta) := -(3/2)ln(1+theta) - (1/2)ln theta - (1/2)ln(2 pi);   C_r := 4 sin(pi/r)/r.
+For a chain parity eps in {1 (odd e), 0 (even e)}: the lattice Lam_eps = {u = m - Delta_e/2 : m in W(Delta_e)}
+is {1,...,r} if Delta_e is even and {1/2,3/2,...,r-1/2} if Delta_e is odd; Delta_e mod 2 = (K0 - r(eps+1)) mod 2
+depends only on eps and the parity of K0 = S1+1.
+g_eps(u) := (-1)^eps sin(2 pi u/r).
+psi_eps := max_{u in Lam_eps, g_eps(u) > 0} [ ln g_eps(u) - lambda u - ln(1 - rho^{-2u}) + ln(1 - rho^{-r}) ].
+nu_eps := theta k + ln k/(2 lambda) + (ln C_r + psi_eps - c0)/lambda.
+X_eps := (K0 - r - 2 nu_eps)/r.
+For a family (fixed r and block beta = (b_1..b_p), residues = beta repeated m times, k = mp):
+sigma1 = S1/k, L = l_1/k, theta, lambda constant;
+X_eps(k) = c k - kappa ln k + gamma_eps(pi),   c = (sigma1 - 2 theta)/r,  kappa = 1/(r lambda),
+gamma_eps(pi) = (1-r)/r - 2(ln C_r + psi_eps - c0)/(lambda r), pi = parity of K0 = m*sum(b_i - 1) + 1.
+(c, kappa agree with R2E6 Theorem 3.)
+
+-----------------------------------------------------------------------------------------------
+LEMMA 1 (j = 1 dominates).  Let r >= 4 and 1 <= j <= r-1, j not in {1, r-1}.
+ (a) If 2 <= s <= r-2 then |sin(pi j s/r)/sin(pi j/r)| < sin(pi s/r)/sin(pi/r).
+ (b) If s in {1, r-1} then |sin(pi j s/r)/sin(pi j/r)| = 1.
+Hence if at least one residue is middle, l_j < l_1 for every j not in {1,r-1}, and l_{r-1} = l_1.
+Proof.
+ 1. Put D_s(y) = |sin(s y)/sin y| for y in (0, pi).  D_s(pi - y) = D_s(y), and for y = pi j/r (j=1..r-1),
+    D_s(pi j/r) = D_{r-s}(pi j/r) because sin(pi j (r-s)/r) = sin(pi j - pi j s/r) = +-sin(pi j s/r).
+    So WLOG 2 <= s <= r/2, and y := pi j'/r with j' = min(j, r-j), 2 <= j' <= r/2, i.e. y in [2x, pi/2], x = pi/r.
+ 2. D_s is strictly decreasing on (0, pi/s): write N(y) = s cos(sy) sin y - sin(sy) cos y (numerator of
+    the derivative of sin(sy)/sin y).  For 0 < y < pi/(2s): N = cos(sy)cos(y)(s tan y - tan(sy)) < 0 because
+    tan is strictly convex on [0, pi/2) with tan 0 = 0, so tan(sy) > s tan y for s >= 2.  For
+    pi/(2s) <= y < pi/s (note pi/s <= pi/2): cos(sy) <= 0, sin(sy) > 0, cos y > 0, so N < 0.  On (0,pi/s)
+    sin(sy) > 0, so D_s = sin(sy)/sin y is strictly decreasing there.
+ 3. If y in [2x, pi/s): D_s(y) < D_s(x) by step 2 (x < y, both in (0, pi/s) since s x <= pi/2 < pi).
+ 4. If y in [pi/s, pi/2] (s >= 3 for this to be nonempty beyond the point pi/2): D_s(y) <= 1/sin y <= 1/sin(pi/s)
+    <= s/2 (sin z >= 2z/pi on [0,pi/2], z = pi/s).  And D_s(x) = sin(s x)/sin x >= (2 s x/pi)/x = 2s/pi
+    (s x <= pi/2, sin x <= x).  Since s/2 < 2s/pi, D_s(y) < D_s(x).  (For s = 2, y = pi/2: D_2 = 0 < D_2(x).)
+ 5. (b): [1]_zeta = 1; [r-1]_zeta = -zeta^{-1} for zeta^r = 1, zeta != 1.
+ 6. l_1 - l_j = sum_i (ln D_{s_i}(x) - ln D_{s_i}(pi j/r)) is a sum of nonnegative terms (steps 3-5) with a
+    positive term for each middle residue.  l_{r-1} = l_1 by step 1.  QED
+ Numerical check: lemma_j1.py (r<=120 and r in {1000,1001,1200}, 2<=s,j<=r-2: max ratio < 1; see lemma_j1.out).
+
+LEMMA 2 (exact phase alignment of the dominant mode).  For every e and every m in Z, with u = m - Delta_e/2,
+  tau_m = C_r e^{l_1} (-1)^e sin(2 pi u/r) + Rem_m,   |Rem_m| <= (2(r-3)/r) e^{l'},  l' = max_{j not in {1,r-1}} l_j.
+Proof.
+ 1. tau(z) := sum_t tau_t z^t == (1-z) prod_i [s_i]_z mod z^r - 1, so tau(omega^j) = (1-omega^j) prod_i [s_i]_{omega^j},
+    and tau(1) = 0.  Fourier inversion: tau_m = (1/r) sum_{j=1}^{r-1} tau(omega^j) omega^{-jm}.
+ 2. With zeta = omega^j and zeta^{1/2} := e^{i pi j/r}: [s]_zeta = zeta^{(s-1)/2} sin(pi j s/r)/sin(pi j/r) and
+    1 - zeta = -2i sin(pi j/r) zeta^{1/2}.  Hence tau(omega) = -2i sin(pi/r) e^{i pi (S1+1)/r} e^{l_1}
+    (all factors sin(pi s_i/r)/sin(pi/r) are positive).
+ 3. tau real => the j=1 and j=r-1 terms are complex conjugate; together they equal
+    (2/r) Re(tau(omega) omega^{-m}) = (4 sin(pi/r)/r) e^{l_1} Re(-i e^{i pi (S1+1-2m)/r}) = C_r e^{l_1} sin(pi(S1+1-2m)/r).
+ 4. S1+1-2m = K0 - Delta_e - 2u = r(e+1) - 2u, and sin(pi(e+1) - 2 pi u/r) = (-1)^e sin(2 pi u/r).
+ 5. Each remaining term has modulus <= (1/r)|1-omega^j| e^{l_j} <= (2/r) e^{l'}; there are r-3 of them.  QED
+ Consequence: for the dominant part of tau, the window profile in the coordinate u does not depend on S1
+ (the rotation of tau with S1 is exactly compensated by the shift of the window), only on the lattice Lam_eps,
+ i.e. on the parity of K0.  Numerical check: check_modes.py.
+
+LEMMA 3 (local asymptotics of w).  Fix r, theta > 0 and Y > 0.  Uniformly for u in (0, r] and real n with
+|n - theta k - ln k/(2 lambda)| <= Y (n with n+u integer), as k -> infinity along a family:
+  (a) ln B_{n+u} = k H(theta) - (1/2) ln k + lambda (n + u - theta k) + c0 + o(1);
+  (b) (w_{n+u} - w_{n-u}) / B_{n+u} -> (1 - rho^{-2u}) / (1 - rho^{-r}).
+Proof.
+ (a) x := n+u-theta k = O(ln k).  Stirling ln Gamma(z) = (z-1/2)ln z - z + (1/2)ln(2pi) + O(1/z) applied to
+     ln B = ln Gamma(n+u+k-1) - ln Gamma(k-1) - ln Gamma(n+u+1), expanding ln((1+theta)k + x - 1) and
+     ln(theta k + x + 1) to first order in x/k (error O(x^2/k) = o(1)), the terms of order k combine to
+     k[(1+theta)ln(1+theta) - theta ln theta] = kH(theta), the ln k terms to -(1/2)ln k, the terms linear in x to
+     x ln((1+theta)/theta) = lambda x, the constants to c0.  (Numerical check of the expansion: check_modes.py.)
+ (b) For 0 <= z <= n+r: B_{z-1}/B_z = z/(z+k-2) <= (n+r)/(n+r+k-2) =: q_k -> theta/(1+theta) = 1/rho < 1, and
+     for fixed j, B_{n+u-jr}/B_{n+u} = prod of jr such ratios each -> 1/rho (z = theta k + O(jr + ln k)), so
+     -> rho^{-jr}.  Dominated convergence (bound q_k^{jr} <= q^{jr}, q<1 fixed) gives w_{n+u}/B_{n+u} ->
+     1/(1-rho^{-r}); likewise w_{n-u}/B_{n+u} -> rho^{-2u}/(1-rho^{-r}).  QED
+
+THEOREM 4 (asymptotic closed form for the chain tops).  Fix r >= 4 and a block containing a middle residue;
+k = mp.  For every eps0 > 0 there is m0 such that for m >= m0:
+  if dist(X_1(k), 2Z+1) >= eps0 then e_odd(k) = max(1, largest odd integer <= X_1(k));
+  if dist(X_0(k), 2Z) >= eps0 then e_even(k) = max(0, largest even integer <= X_0(k)) (value 0 meaning no even e).
+Proof.
+ 1. By Lemma 1 (applied blockwise) l' <= l_1 - m g0 with g0 > 0 fixed, so by Lemma 2
+    tau_m = e^{l_1}(C_r g_eps(u) + O(e^{-m g0})).
+ 2. kH(theta) = l_1 by definition of theta.  Let n = Delta_e/2 with |n - nu_eps| <= r + 1 (so Lemma 3 applies with
+    Y = r + 1 + |(ln C_r + psi_eps - c0)/lambda|).  For u in Lam_eps with g_eps(u) > 0, by Lemma 3:
+    ln(w_{n+u} - w_{n-u}) - ln tau_{n+u} = lambda(n - theta k) - (1/2)ln k + c0 + lambda u
+        + ln((1-rho^{-2u})/(1-rho^{-r})) - ln(C_r g_eps(u)) + o(1) = lambda (n - nu_eps,u) + o(1),
+    where nu_eps,u is nu_eps with psi_eps replaced by the u-term; nu_eps = max_u nu_eps,u.
+ 3. For u with g_eps(u) <= 0: tau_{n+u} <= e^{l_1} O(e^{-m g0}) while w_{n+u} - w_{n-u} >= B_{n+u}(1-rho^{-2u})(1+o(1))/(1-rho^{-r})
+    = e^{l_1} Theta(1) (Lemma 3(a) with n - theta k - ln k/(2 lambda) bounded), so the condition holds for large k.
+ 4. Hence, uniformly: if n >= nu_eps + delta then R_k(2n) holds, and if n <= nu_eps - delta then it fails (at the
+    u attaining psi_eps), for any fixed delta > 0 and k large.
+ 5. Let eps = 1 and e = largest odd integer <= X_1, assume e >= 3.  Delta_e/2 - nu_1 = r(X_1 - e)/2 >= r eps0/2 and
+    Delta_{e+2}/2 - nu_1 = r(X_1 - e - 2)/2 <= -r eps0/2; both points are within r+1 of nu_1.  By step 4 R_k(Delta_e)
+    holds and R_k(Delta_{e+2}) fails; by the chain monotonicity (R2E7 Thm 5: R_k(Delta) => R_k(Delta+2r)), e is the
+    top of the odd chain.  If e = 1 (X_1 < 3): Delta_3/2 - nu_1 <= -r eps0/2, so 3 is not in U_inf, and e_odd = 1.
+    Even chain identical.  QED
+
+COROLLARY 5 (structure of the O(1) term).  In the setting of Theorem 4, for m >= m0(eps0) and
+dist(X_1(k), 2Z+1) >= eps0:
+   E(k) = 2 floor((X_1(k) - 1)/2),   i.e.
+   E(k) - (c k - kappa ln k) = gamma_1(pi(k)) - 1 - 2 frac((X_1(k) - 1)/2),
+where pi(k) = parity of S1+1 is periodic in m with period 1 or 2.  So the O(1) term is a 2-state (parity of K0)
+function of the fractional part of the explicit real sequence (X_1(k)-1)/2 = (ck - kappa ln k + gamma_1)/2 - 1/2:
+a mechanical (rotation) word with logarithmic phase drift.  All constants are explicit (zero free parameters).
+Proof. E = e_odd - 1 (T9 + R2E7 Thm 5) and Theorem 4.  QED
+
+PROPOSITION 6 (no eventual periodicity).  Along any family as above:
+ (a) E(k) - (ck - kappa ln k) is not eventually periodic in m.
+ (b) The increment sequence E((m+1)p) - E(mp) is not eventually periodic.
+Proof.
+ (a) Suppose it has period P >= 1 for m >= m1.  Then for m >= m1, E((m+P)p) - E(mp) = f(m+P) - f(m) with
+     f(m) = cpm - kappa ln(mp), i.e. = cpP - kappa ln(1 + P/m).  The left side is an integer.  The right side is
+     strictly increasing in m (kappa = 1/(r lambda) > 0) and lies in the bounded interval [f(m1+P)-f(m1), cpP), which
+     contains finitely many integers, each attained at most once.  So only finitely many m >= m1 can satisfy the
+     identity, a contradiction.
+ (b) If the increments are periodic with period P from m1 on, then E((m1+jP)p) = E(m1 p) + jD for an integer D.
+     By R2E6 Theorem 3 (applied to the residue-level excess, i.e. parts large enough), |E(k) - (ck - kappa ln k)| <= C2.
+     Then |jD - cp(m1+jP) + kappa ln(p(m1+jP))| is bounded in j; the coefficient of j must vanish (D = cpP) and
+     then kappa ln(p(m1+jP)) is bounded, false.  QED
+ Remark: (b) needs only Theorem 3 of R2E6; via Corollary 5 one sees the stronger fact that the sequence is a
+ rotation word with an irrational-or-drifting phase; c's irrationality is not needed for (a),(b).
+
+REMARK 7 (even chain; link to S2, numerical only).  delta := X_1 - X_0 = 2(psi_0 - psi_1)/(lambda r).  Proof that
+delta > 1 (model level): take u1 attaining psi_1 (u1 in (r/2,r)); u0 = u1 - r/2 lies in Lam_0 (if r is even the
+lattices coincide and r/2 is an integer; if r is odd they differ by 1/2 and r/2 is a half-integer) and g_0(u0) = g_1(u1);
+ln(1-rho^{-2u0}) = ln(1 - rho^{-2u1+r}) < ln(1-rho^{-2u1}), and -lambda u0 = -lambda u1 + lambda r/2, so
+psi_0 > psi_1 + lambda r/2, delta > 1.  Numerically 1 < delta < 1.09 (delta_gap.py), so asymptotically
+e_even = e_odd - 1 except when frac-window X_1 in [2i+1, 2i+delta) where e_even = e_odd - 3: this is S2's shape,
+with the e_odd - 3 case occupying a fraction (delta - 1)/2 of the rotation circle.  (delta < 2 not proved here.)

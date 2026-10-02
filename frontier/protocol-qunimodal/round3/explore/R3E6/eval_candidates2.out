@@ -1,0 +1,7 @@
+instances 3400 (instance,b) pairs 114797
+C10 rule_gen (generic f with k', W=r): 0
+C11 generic f, W=r/2: 45
+C12 generic f, W=3: 131
+C13 generic f, W=0: 178
+C14 generic f, W=r, without the j=0 (ii) test: 0
+C15 generic f with k (counting a_i=1) instead of k': 2

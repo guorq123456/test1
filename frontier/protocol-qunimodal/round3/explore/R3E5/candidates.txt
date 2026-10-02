@@ -1,0 +1,16 @@
+# candidates tried (path R3E5: prove T15 base family for all r>=4, nm)
+C1 peeling identity P(n+2,b+2)=q^{2r-2}P(n,b)+A_n*Z, Z=[r-1]^2[b+2]_{q^r}-q^{2r-2}[b]_{q^r}: Z not unimodal for r=5 all b<=11 (peel_try.py) -> discarded (also j=1,e=1 gives negative coeffs)
+C2 reduction: U(n) subset U(n+1) (multiply by [r-1], F1) + S2(i) + step-2 closure => suffices b0=B*(n)-1 in U(n) at n with B*(n)>B*(n-1); data r<=22,n<=40: dB in {0,2}, no FIRE at jumps, all binding indices < r-1 (jumps.py) -- kept as framework (not a rule)
+C3 flip decomposition [m][r-1]=[r][m-1]+q^{m-1}[r-m] => U(m1,m2,m3;n) contains U(flip_i;n-1); induction max(B*(n-1),B*(flips))>=B*(n): fails in 12609/54600 (r<=16,n<=30) (flip.py) -> discarded as sole mechanism
+C4 decomposition into two-middle pieces via [a][b]=[a+j][b-j]+sum q^{b-i}[a-b+2i-1] + Thm E: considered, not pursued (superseded by C5)
+C5 [PROOF ROUTE] jump-point induction: monotone U(n)<=U(n+1); only jumps need a check; at jumps no FIRE, K<=r-3, binding u<=r-2 so g=e=R3/(1-q)^{n-1};
+   degenerate u<=0 by mu/FIRE; u>=1 by Lipschitz |tau_t-tau_{t-1}|<=2 (tau_u<=min(2u-K,2u+1)), |tau|<=m1, and e-difference lower bounds (n=1,n=2,n>=3 cases).
+   Numerical sanity check of every lemma: verify_lemmas.py (0 failures expected); final rule errors: see rule_check.py
+C6 sufficient bound 'tau_u <= u+1 at binding pairs (jumps)': violated at 4635 binding pairs (r<=24, n<=40; hard.py) -> discarded
+C7 crude bound 'tau_u <= n-2 suffices for n>=3': leaves 58k+ binding pairs (n<=3) uncovered (hard.py) -> superseded by C5's Lipschitz bound (lip.py: 0 uncovered, r<=24,n<=40)
+RULE rule_T15.py (T15 closed form, domain: three middle residues, rest 1 or r-1): fit-box errors 0
+   rule_check.py seed1: 325 random lifted instances r<=120,k<=54,a_i<=400, 13153 (r,a,b) tests, 0 errors (rule_check_out.txt)
+   bigr_check.py seed7: 60 instances/523 tests, seed8: 293 instances/2341 tests, r in [1000,1600], nm<=8, 0 errors (bigr_out.txt, bigr_out2.txt)
+   cmp_rule_impl.py: fast cyclic tau implementation == direct computation, 3000 instances, 0 mismatches
+   verify_lemmas.py 40 50: 4,660,890 base instances (all triples r<=40, n<=50), 32,511,116 case-(c) pairs, 0 lemma failures (verify_r40.txt)
+TOTAL candidates tried: 8 (C1-C7 + RULE)

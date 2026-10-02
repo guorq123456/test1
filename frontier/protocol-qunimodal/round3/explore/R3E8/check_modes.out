@@ -1,0 +1,2 @@
+instances 300 dominant set {1,r-1} in all; max |tau/e^l1 - formula| = 1.3438014073247073e-05
+Stirling expansion max abs error (k>=1000, |x|<=5): 0.012500595821279603

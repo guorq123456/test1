@@ -1,0 +1,69 @@
+THEOREM N (no Gamma-level closed form for exactly four middle residues).
+Class C4: r>=4, r divides no a_i, exactly four a_i have residue in [2,r-2], every other a_i has residue 1 or r-1.
+There exist pairs a, a' in C4 with the same r, the same k, the same residue multiset, the same sum(a_i) and the
+same prod(a_i) -- hence the same F, D, Gamma vector, tau vector, mu and T6 -- but U(a) != U(a').
+Consequently no function Phi(r, k, b, residue multiset, F, D, Gamma) (nor one that also sees sum a_i and prod a_i)
+decides unimodality on C4. In particular U on C4 is not given by any closed form in r, Gamma/tau, D, F plus a
+correction that is itself a function of those data. (Contrast: for exactly three middle residues, T15 gives
+U = [1,B*] with B* a function of (r, tau, D) in its proved range.)
+
+Notation as in the problem: A = prod [a_i]_q, D = sum(a_i - 1) = deg A, F = sum floor(a_i/r),
+Gamma_t = sum_{j == t mod r} A_j (t in Z/r), tau_t = Gamma_t - Gamma_{t-1}, U = {b>=1 : P_b unimodal}.
+
+Lemma 1 (reduction mod q^r - 1). If a = r n + s with n>=0, 0<=s<r, then [a]_q == n [r]_q + [s]_q (mod q^r - 1).
+ 1. [rn+s]_q = sum_{j=0}^{rn+s-1} q^j = [r]_q (1 + q^r + ... + q^{r(n-1)}) + q^{rn} [s]_q.
+ 2. q^r == 1 (mod q^r - 1), so 1 + q^r + ... + q^{r(n-1)} == n and q^{rn} == 1. Done.
+
+Lemma 2 (Gamma depends only on r, the residue multiset and prod a_i).
+Let J = [r]_q, S_i = [s_i]_q with s_i = a_i mod r, n_i = floor(a_i/r). Then, modulo q^r - 1,
+A == prod S_i + c J with c = (prod a_i - prod s_i)/r, so Gamma = Gamma(prod S_i) + c (1,1,...,1).
+ 1. By Lemma 1, A == prod_i (n_i J + S_i) (mod q^r - 1).
+ 2. For any polynomial X, J X == X(1) J (mod q^r - 1): q^j J == J since q^j permutes the monomials 1..q^{r-1} mod q^r-1.
+ 3. Expanding the product in step 1, every term containing at least one factor J is, by step 2, a constant times J.
+    Hence A == prod S_i + c J for a constant c.
+ 4. Evaluate at q = 1 (allowed: q^r - 1 vanishes at q=1): prod a_i = prod s_i + c r, so c = (prod a_i - prod s_i)/r.
+ 5. The class-sum vector of a polynomial depends only on its residue mod q^r - 1; J has class-sum vector (1,...,1).
+ Hence Gamma = Gamma(prod S_i) + c(1,...,1). prod S_i and prod s_i depend only on the residue multiset.
+Corollary 2'. If a, a' have the same k, residue multiset, sum and product, then they have the same Gamma, tau
+(= differences of Gamma), mu (defined from Gamma), F = (sum a - sum s)/r, D = sum a - k, T6 = 1+floor((D+1-2mu)/r).
+
+Lemma 3 (Thm C, established). If r divides no a_i and b > T6 then b is not in U.
+
+Proof of Theorem N (witness pairs; all numbers from witness_proof_check.py, which uses two independent exact
+checkers: /tmp/claude-0/qu/tools/uni (C, __int128; coefficients here are far below 2^127) and uni_ref.py (Python ints)).
+ Pair W1: r = 20, k = 7,
+   a  = (1, 14, 59, 65, 79, 105, 123)     residues (1,14,19,5,19,5,3)
+   a' = (3, 14, 21, 59, 65, 79, 205)      residues (3,14,1,19,5,19,5)
+   Both: middle residues {3,5,5,14} (exactly four), others {1,19,19} (residue 1 or r-1); sum = 446 for both;
+   prod = 54779101650 for both (1*14*59*65*79*105*123 = 3*14*21*59*65*79*205; check: 105*123 = 12915 and
+   3*21*205 = 12915, and the remaining factors 14,59,65,79 are common). So by Corollary 2' all Gamma-level data agree:
+   D = 439, F = 19, mu = 8, T6 = 22, Gamma identical (printed by the script).
+   Exact computation for b = 1..24: U(a) contains exactly 1..20 among 1..24; U(a') contains exactly 1..22.
+   By Lemma 3, no b > 22 lies in either U. Hence U(a) = [1,20] != [1,22] = U(a').
+ Pair W2: r = 12: a = (1,11,29,42,129,189), a' = (9,9,11,29,42,301); 129*189 = 24381 = 9*9*301; same residues
+   {1,11,5,6,9,9}; U(a) = [1,31], U(a') = [1,33] (T6 = 33).
+ Pair W3: r = 13: a = (1,8,27,33,38,110,114), a' = (6,8,10,27,33,38,209); 110*114 = 12540 = 6*10*209;
+   U(a) = [1,23], U(a') = [1,25] (T6 = 25).
+ In each pair the data (r, k, residue multiset, sum, prod, F, D, Gamma) coincide while U differs; so for b = T6-1
+ (and b = T6) the unimodality of P_b is not a function of these data. QED.
+
+Remark (mechanism; uses only established Thm A and the symmetry below).
+ Symmetry (R2E8 Lemma 1, reproved): with B = (1-q)A, g_i = sum_{m>=0} B_{i-rm} (g = coefficients of A/[r]_q),
+ g_i = tau_{i mod r} + g_{D+1-r-i} for i >= 0 (g at negative index = 0). Proof: B_{D+1-j} = -B_j (A palindromic);
+ tau_{i mod r} - g_i = sum of B_j over j > i in the class of i; substituting j' = D+1-j turns it into
+ -sum of B_{j'} over j' <= D+1-r-i in the class of D+1-i, which is -g_{D+1-r-i}.
+ Thm A (g-form): P_b unimodal iff g_i >= g_{i-rb} for 0 <= i <= floor((D + r(b-1))/2). Writing j = i - rb and
+ K = D+1-r(b+1), the symmetry gives the equivalent K-form: for all j with -rb <= j <= floor((K-1)/2),
+ g_j - g_{K-j} <= tau_{j mod r}.
+ In W1 at b = 21 = T6-1: K = 440 - 440 = 0, and the j = -1 condition reads g_1 >= -tau_{19}. Here
+ tau_19 = Gamma_19 - Gamma_18 = -6 (same for both), while g_1 = B_1 = A_1 - 1 = #{i : a_i >= 2} - 1 equals 5 for a
+ (the part a_1 = 1 contributes nothing) and 6 for a'. So the condition fails for a and holds for a'.
+ The deciding quantity is a low-order coefficient of A (number of nontrivial parts, and more generally A mod q^{3r}),
+ which Gamma does not see.
+
+Remark 2 (what the obstruction is). In every witness pair found (13 pairs, emb1_*.jsonl) one instance contains a
+part a_i = 1 and the other does not, so k' = #{i : a_i >= 2} differs while k agrees. Parts equal to 1 do not change P,
+but they are invisible to Gamma, D, F; k' is not determined by Gamma, D, F (W1). Directed searches for witness pairs
+with equal k' (no part equal to 1) found none (candidates.txt, C16). The conjectural rule rule_gen.py (0 errors in
+the fit box) depends only on (r, tau, D, k'), i.e. adding the single integer k' to the Gamma-level data appears to
+suffice; that is a conjecture, not part of Theorem N.

@@ -1,0 +1,23 @@
+R3E8 candidates (all tried, incl. discarded).  "points" = (family, k) residue-level chain-top predictions
+(e_odd, e_even); "checks" = instance-level (r,a,b) unimodality predictions vs exact ground truth (gt_big.py).
+Fit box only: r<=120,k<=140 (excluded classes skipped via boxcheck.py) or r>=1000.
+
+1. A  rule_asym.py  zero-parameter linearised closed form  X_eps = ck - kappa ln k + gamma_eps(parity of S1+1),
+      e_odd = largest odd <= X_1, e_even = largest even <= X_0.          free params 0
+      box families (analyze.out): 70 / 7245 points wrong  (by k: <=12: 18/936, 13-40: 33/2479, 41-90: 16/2523, 91-140: 3/1307)
+      sweep2 (odd,even errors): r4-12 s1: (9,8)/1428; r13-40: (9,5)/1597; r41-120: (5,3)/1102; r4-12 s4: (7,9)/1920
+      r>=1000 families (bigsummary.out): 2 / 1686 points wrong
+      instance level (fitcheck_1..4): 20 / 124047 checks wrong
+2. B  rule_B.py  same, but log-binomial via exact lgamma instead of the linear Stirling expansion. free params 0  [KEPT]
+      box families: 52 / 7245 points wrong (<=12: 21, 13-40: 21, 41-90: 8, 91-140: 2)
+      sweep2: (2,5),(2,4),(1,2),(3,3)
+      r>=1000 families: 1 / 1686 points wrong (X_even = 3.9993, i.e. 7e-4 from the threshold)
+      instance level: 9 / 124047 checks wrong (all at k<=12)
+3. C  variants.tops_C  diagnostic (not closed form): exact w, tau replaced by its dominant Fourier mode only.
+      sweep2: (3,3)/1428, (0,0)/1597, (0,0)/1102, (0,0)/1920.   -> remaining A/B errors are w-approximation (O(1/k))
+      plus slow subdominant modes (families with residues near 1 or r-1, e.g. r=119 block (112)).
+4. P  "increments of E along a family are eventually periodic" (period <= 12, onset in first half of data):
+      73 of 126 families with >=30 points admit no such period (analyze.out).  Disproved in general (Prop 6).  DISCARDED
+5. F1 E = 2 floor((ck - kappa ln k + beta)/2), beta fitted per family (1 param/family): 73 / 7245 wrong.  DISCARDED (worse than B, which has 0 params)
+6. F2 as F1 with beta fitted per (family, parity of S1): 55 / 7245 wrong.  DISCARDED (worse than B)
+Total candidates: 6

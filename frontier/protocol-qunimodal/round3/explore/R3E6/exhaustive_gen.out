@@ -1,0 +1,14 @@
+r 4 E 3 inst 840 errors {} missing-from-[1,T6] shapes {(): 690, (-1, 0): 150}
+{}
+r 5 E 3 inst 7056 errors {} missing-from-[1,T6] shapes {(): 5718, (-1, 0): 1338}
+{}
+r 6 E 3 inst 27720 errors {} missing-from-[1,T6] shapes {(): 24006, (-1, 0): 3714}
+{}
+r 7 E 3 inst 76440 errors {} missing-from-[1,T6] shapes {(): 68784, (-1, 0): 7656}
+{}
+r 8 E 3 inst 171360 errors {} missing-from-[1,T6] shapes {(): 156648, (-1, 0): 14712}
+{}
+r 9 E 3 inst 335160 errors {} missing-from-[1,T6] shapes {(): 309690, (-1, 0): 25470}
+{}
+r 10 E 3 inst 595056 errors {} missing-from-[1,T6] shapes {(): 554028, (-1, 0): 41028}
+{}

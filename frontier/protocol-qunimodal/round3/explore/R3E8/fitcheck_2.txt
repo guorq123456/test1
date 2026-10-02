@@ -1,0 +1,1 @@
+seed 2 instances 400 checks 37622 errA 2 errB 1 B-errors by k [(12, 1)]

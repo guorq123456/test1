@@ -1,0 +1,162 @@
+THEOREM (T15 for all r >= 4 and all nm).  Path R3E5.
+Let r >= 4, a_1..a_k >= 1, r dividing no a_i, exactly three a_i with residue in [2, r-2], all other a_i with
+residue 1 or r-1.  With the notation of T15 (R2E8):
+  D = sum(a_i - 1), F = sum floor(a_i/r), tau_t = residue-class-t sum of the coefficients of (1-q)prod[a_i]_q,
+  mu = max{ j in [1,r-1] : tau_j > 0 } (0 if none), T6 = 1 + floor((D+1-2mu)/r), s = (D+1) mod r,
+  FIRE = [tau_s <= -2 and s >= 2mu], B* = T6 - 2*FIRE,
+we have U = {b >= 1 : P unimodal} = [1, B*].   (No restriction on r, on nm = #{a_i == -1 mod r}, or on part sizes.)
+
+(floor and mod are the integer floor and the least non-negative residue, also for negative arguments.)
+
+CITED (established / refereed) RESULTS
+ [F1]  A product of palindromic unimodal polynomials with non-negative coefficients is palindromic unimodal (classical).
+ [R2E8] proof_three_middle.txt: Lemma 2 (FIRE => U c [1,T6-2]), Lemma 3 / Corollary 3' (U(a) contains
+        [1,F] u (F + U(rho)), rho = residue vector with the 1's deleted), Lemma 4 (B*(a) = B*(rho)+F),
+        and the upper bound U(a) c [1, B*(a)] (Thm C + Lemma 2).  All of these are proved there for all r.
+ [T9]  S2(i): b in U, b == F (mod 2) => b+1 in U;  step-2 closure: b in U, b >= 3 => b-2 in U.
+ [Lemma 7] E6 = T6 - 1 - F is even (so T6 == 1 + F mod 2).
+ [R2E5] proofs.txt Lemmas 1-5: with g = coefficients of A(1-q)/(1-q^r) (g_j = 0 for j < 0),
+        K = D + 1 - r(b+1), Phi(m) := tau_m + g_{K-m} - g_m, one has Phi(m) = p_i - p_{i-1} for i = m + rb
+        (p = coefficients of P_b), for every integer m; and tau_t = -tau_{D+1-t} (A palindromic).
+ [synth r2] Theorem 4.7 (window-centre dichotomy) with Lemma 1.2: if r divides no a_i and b == F (mod 2), then
+        P_b is unimodal iff every b-window with z-centre in (0, r/2) has non-negative sum.  The b-window whose sum is
+        p_i - p_{i-1} (i = m + rb) is {m + r, ..., m + rb}; its z-centre is (D+1)/2 - (m + r(b+1)/2) = (K - 2m)/2.
+        Hence:  for b == F (mod 2), P_b is unimodal  iff  Phi(m) >= 0 for every integer m with K/2 - r/2 < m < K/2.  (W)
+ [F3]  (cyclic Wintner lemma, synth r2 0.2, from r1 Lemma U) if r divides no a_i: tau_t <= 0 when t - 1/2 lies in the open arc
+        (D/2, D/2 + r/2) mod r; used only in Lemma 5(b).  [C0] (r1 Lemma C0, used in synth r2 Thm 4.2): if r divides no a_i,
+        A(zeta) != 0 at zeta = e^{2 pi i/r}, so the class sums Gamma_t are not all equal and tau is not identically 0.
+
+STEP 0 (reduction to the base family, as in R2E8).  By [R2E8] Corollary 3' and Lemma 4, and the upper bound,
+ it suffices to prove U(rho) contains [1, B*(rho)] for every base tuple rho = (m1, m2, m3, (r-1)^n),
+ 2 <= m1 <= m2 <= m3 <= r-2, n >= 0.  Then U(a) contains [1,F] u (F + [1,B*(rho)]) = [1, B*(a)] and equality
+ follows from the upper bound.  From now on fix r, m1 <= m2 <= m3 and write
+   R3 = [m1][m2][m3] = sum R3_j q^j,  M3 = m1+m2+m3-3 = deg R3,  X = [r-1]_q,  A^(n) = R3 X^n,  D_n = M3 + n(r-2),
+   F = 0, and tau^(n), mu_n, T6(n), s_n, FIRE(n), B*(n), U(n) for this tuple.
+   tau3 := tau^(0) (the class sums of (1-q)R3).
+
+LEMMA 1 (tau of the base family).  tau^(n)_t = (-1)^n tau3_{(t+n) mod r}, and for every n and t,
+ |tau^(n)_t - tau^(n)_{t-1}| <= 2.
+ Proof. 1. [r-1]_q = [r]_q - q^{r-1}, q^{r-1} == q^{-1} and (1-q)[r]_q = 1 - q^r == 0 modulo q^r - 1.
+ 2. Expanding X^n = ([r]_q - q^{r-1})^n binomially, every term containing [r]_q is killed by the factor (1-q), so
+    (1-q)A^(n) == (1-q)R3 (-q^{-1})^n and (1-q)^2 A^(n) == (1-q)^2 R3 (-q^{-1})^n  (mod q^r - 1).
+ 3. Reading off class sums gives the first claim; for the second, tau_t - tau_{t-1} is the class-t sum of (1-q)^2 A,
+    i.e. +- the class-(t+n) sum of (1-q)^2 R3 = (1-q^{m1})(1-q^{m2})[m3]_q.
+ 4. Let I(t) = 1 if t mod r lies in {0,...,m3-1}, else 0 (m3 < r, so [m3]_q has class sums I).  The class-t sum of
+    (1 - q^{m1} - q^{m2} + q^{m1+m2})[m3]_q is I(t) - I(t-m1) - I(t-m2) + I(t-m1-m2), which lies in [-2, 2].  []
+ (Check: verify_lemmas.py 'L1', 'L2'.)
+
+LEMMA 2 (|tau| <= m1).  |tau^(n)_t| <= m1 for all n, t.
+ Proof. By Lemma 1 it suffices for tau3.  (1-q)R3 = (1 - q^{m3})[m1][m2]_q, so tau3_t = G(t) - G(t - m3) where G(t) is
+ the class-t sum of [m1][m2]_q, i.e. #{(i,j): 0<=i<m1, 0<=j<m2, i+j == t mod r}.  For each i at most one j in [0,m2-1]
+ (m2 <= r) has i + j == t, so 0 <= G <= m1, and |tau3_t| <= m1.  []  (verify_lemmas.py 'L3'.)
+
+LEMMA 3 (coefficients of R3).  (a) R3_0 = 1, R3_j >= 3 for 1 <= j <= M3-1, sum_j R3_j = m1 m2 m3 >= m1.
+ (b) R3 is non-decreasing on [0, floor(M3/2)].  (c) R3_j = C(j+2,2) for 0 <= j <= m1-1.
+ (d) delta3_j := R3_j - R3_{j-1} >= 1 for 0 <= j <= min(m3-1, m1+m2-2).
+ Proof. (b) R3 is a product of q-integers, palindromic unimodal [F1]; non-decreasing up to the centre.
+ (a) R3_1 = 3 = R3_{M3-1} (three factors of length >= 2, M3 >= 3); for 1<=j<=M3-1 a unimodal sequence on an interval is
+     >= the smaller endpoint value, so R3_j >= 3.
+ (c) For j <= m1-1 <= m2-1 <= m3-1 every (i1,i2,i3) >= 0 with i1+i2+i3 = j satisfies i_l <= m_l - 1: C(j+2,2) of them.
+ (d) delta3 = (1-q^{m1})[m2][m3], and (1-q)[m2][m3] = (1-q^{m2})[m3] has coefficient +1 on [0,m2-1], 0 on [m2,m3-1],
+     -1 on [m3, m2+m3-1] (m2 <= m3).  delta3_j = sum over i in (j-m1, j] of that coefficient.  For j <= m3-1 no -1 occurs,
+     and for 0 <= j <= m1+m2-2 the interval (j-m1, j] meets [0, m2-1] (it contains min(j, m2-1) >= 0 because
+     j - m1 < m2 - 1).  So delta3_j >= 1.  []  (verify_lemmas.py 'L4'.)
+
+LEMMA 4 (low coefficients of g).  For n >= 1 and every integer j <= r-2:  g^(n)_j = e^(n)_j := [q^j] R3/(1-q)^{n-1}
+ (= 0 for j < 0).  e^(1) = R3.  For n >= 2, c_j := e^(n)_j - e^(n)_{j-1} = [q^j] R3/(1-q)^{n-2} >= 0, and c_j = R3_j if n = 2,
+ c_j >= sum_{i<=j} R3_i >= 1 (j >= 0) if n >= 3.
+ Proof. g^(n) = A(1-q)/(1-q^r) = R3 (1-q^{r-1})^n / ((1-q)^{n-1}(1-q^r)); the factors (1-q^{r-1})^n and 1/(1-q^r) have no
+ terms of degree 1..r-2.  The rest is the expansion of 1/(1-q)^{n-2} (all coefficients >= 1 for n >= 3).  []
+
+LEMMA 5 (B* is odd; n = 0).  (a) B*(n) is odd for every n.  (b) B*(0) = 1.
+ Proof. (a) F = 0, so T6 is odd by [Lemma 7]; B* = T6 - 2FIRE.
+ (b) 1 is always in U (b = 1: P = A, a product of q-integers), and by [R2E8 Lemma 2] FIRE implies U c [1, T6-2], so FIRE
+ forces T6 >= 3.  Hence it suffices to show T6(0) = 1, i.e. M3 + 1 - 2mu < r with mu = mu_0.
+ 1. If M3 + 1 < r this holds since mu >= 0.
+ 2. By [F3] (with D = M3, F = 0), tau3_t <= 0 when t - 1/2 lies in the open arc (M3/2, M3/2 + r/2) mod r.  At the two
+    endpoints of that arc, 2t == M3 + 1 (mod r), and then tau3_t = -tau3_{M3+1-t} = -tau3_t (palindromy), so tau3_t = 0.
+    Hence tau3_t > 0 forces t - 1/2 to lie in the open arc (M3/2 - r/2, M3/2) mod r, i.e. t in ((M3+1-r)/2, (M3+1)/2) mod r.
+    Case r <= M3 + 1 < 2r: this arc is ((M3+1-r)/2, (M3+1)/2) with 0 <= (M3+1-r)/2 and (M3+1)/2 < r, so it contains no
+    multiple of r and every positive value sits at a class t in [1, r-1] with 2t > M3+1-r.  tau3 is not identically 0
+    ([C0]) and sums to 0, so some value is
+    positive; hence 2mu > M3+1-r.
+ 3. Case M3 + 1 >= 2r.  Let c_i be the indicator of the arc {m_i, ..., r-1} (length r - m_i) on Z/r, a_i = 1 - c_i the
+    indicator of {0..m_i-1}.  On Z/r, (1 * f) is constant for every f, so Gamma3 = a1*a2*a3 = const - c1*c2*c3 (expand
+    the product; every term containing a factor 1 is constant).  c1*c2*c3 is the shift by S = m1+m2+m3 of the linear
+    convolution R3' = [r-m1][r-m2][r-m3] (degree M3' = 3r - S - 3); its support has M3'+1 = 3r - S - 2 = 3r - M3 - 5
+    <= r - 4 points (M3 >= 2r - 1), so there is no wrap-around.  Hence tau3_t = -(R3'_{t-S} - R3'_{t-S-1}) with indices of R3' taken in
+    [0, M3'+1] (residues mod r).  At t = S + M3' + 1 = 3r - 2 == r - 2: tau3_{r-2} = R3'_{M3'} = 1 > 0.  So mu >= r-2 and
+    M3 + 1 - 2mu <= (3r - 8) - 2(r-2) = r - 4 < r.   []
+ (verify_lemmas.py: 'n0 B*!=1' = 0, 'n0 case3 mu<r-2' = 0.)
+
+LEMMA 6 (monotonicity in n).  U(n) c U(n+1).
+ Proof. P^(n+1)_b = [r-1]_q P^(n)_b; apply [F1].  []
+
+LEMMA 7 (what happens at a jump).  Let n >= 1 with B*(n) > B*(n-1).  Then (i) B*(n) >= B*(n-1) + 2; (ii) FIRE(n) fails,
+ so B*(n) = T6(n); (iii) K := D_n + 1 - r B*(n) satisfies 2mu_n - r <= K <= 2mu_n - 1 and K <= r - 3;
+ (iv) for n = 1: B*(1) = 3 and K = M3 - 2r - 1;  for n = 2: K <= M3 - r - 3.
+ Proof. (i) Lemma 5(a).
+ 1. Put K'(n-1) := D_{n-1} + 1 - r B*(n-1).  If FIRE(n-1) fails, B*(n-1) = T6(n-1) = 1 + floor((D_{n-1}+1-2mu')/r) and
+    K'(n-1) = 2mu' - r + ((D_{n-1}+1-2mu') mod r) <= 2(r-1) - r + (r-1) = 2r - 3 (mu' = mu_{n-1}).
+    If FIRE(n-1) holds, s' := (D_{n-1}+1) mod r >= 2mu', so (D_{n-1}+1-2mu') mod r = s' - 2mu' and
+    K'(n-1) = D_{n-1}+1 - r(T6(n-1)-2) = 2mu' - r + (s'-2mu') + 2r = s' + r <= 2r - 1.
+ 2. D_n = D_{n-1} + r - 2 and B*(n) >= B*(n-1) + 2 give K(n) := D_n + 1 - rB*(n) <= K'(n-1) + r - 2 - 2r <= r - 3.
+ 3. (ii) If FIRE(n) held, the computation of step 1 at n gives K(n) = s_n + r >= r, contradicting step 2.
+ 4. (iii) Non-FIRE: K = D_n + 1 - r T6(n) = 2mu_n - r + ((D_n+1-2mu_n) mod r) in [2mu_n - r, 2mu_n - 1].
+ 5. (iv) n = 1: T6(1) = 1 + floor((M3 + r - 1 - 2mu)/r) <= 1 + floor((4r-10)/r) <= 4, so T6(1) <= 3 (odd); B*(0) = 1 and a jump
+    give B*(1) = 3, K = M3 + r - 1 - 3r.  n = 2: B*(2) >= B*(1) + 2 >= 3, so K <= M3 + 2r - 3 - 3r.  []
+ (verify_lemmas.py: 'jump fire' = 0, 'jump K>r-3' = 0, 'n1 jump B!=3 or K' = 0, 'n2 K>M3-r-3' = 0.)
+
+LEMMA 8 (the check at a jump).  Let n >= 1 with B*(n) > B*(n-1), b0 = B*(n) - 1, K as in Lemma 7.  Then P^(n)_{b0} is unimodal.
+ Proof. b0 is even (Lemma 5a) and F = 0, so by (W) it suffices to show Phi(m) >= 0 for all integers m with
+ K/2 - r/2 < m < K/2.  Fix such m and put u := K - m, so K/2 < u < K/2 + r/2 and m < u.
+ 1. u <= r - 2: u < K/2 + r/2 <= (r-3)/2 + r/2 = r - 3/2 (Lemma 7(iii)).  Hence by Lemma 4, g_u = e_u and g_m = e_m
+    (e := e^(n), e_j = 0 for j < 0), and Phi(m) = tau_m + e_u - e_m.
+ 2. u + m = K == D_n + 1 (mod r), so tau_m = -tau_u ([R2E5] reflection).  So Phi(m) = e_u - e_m - tau_u.
+ 3. K >= 2mu - r >= -r (Lemma 7(iii)), and if K = -r there is no u >= 0 in range; in all cases K > -r when u >= 0 occurs.
+ Case (a) u <= -1.  Then m < u < 0, so Phi(m) = -tau_u = -tau_{u+r}.  Here 1 <= u + r <= r-1 and
+    u + r > K/2 + r >= mu - r/2 + r > mu, so tau_{u+r} <= 0 by the definition of mu.  Phi(m) >= 0.
+ Case (b) u = 0.  Then K < 0 (0 > K/2), m = K, Phi(m) = tau_K + e_0 = tau_K + 1 (e_0 = R3_0 = 1).  The class of K is
+    s = (D_n+1) mod r = K + r (as -r < K < 0), and s >= 2mu iff K >= 2mu - r, which holds.  Since FIRE(n) fails,
+    tau_s >= -1, so Phi(m) >= 0.
+ Case (c) u >= 1.
+  c1. (Lipschitz bound.)  tau_u <= L := min(2u - K, 2u + 1).
+      If K is even, t0 = K/2 is self-paired: tau_{t0} = -tau_{K-t0} = -tau_{t0}, so tau_{t0} = 0, and Lemma 1 gives
+      tau_u <= 2(u - t0) = 2u - K.  If K is odd, t1 = (K+1)/2 has tau_{t1} = -tau_{t1-1} and |tau_{t1} - tau_{t1-1}| <= 2,
+      so tau_{t1} <= 1 and tau_u <= 1 + 2(u - t1) = 2u - K.  If K < 0, then (Case (b) computation) tau_0 = -tau_K <= 1 and
+      tau_u <= 1 + 2u.  If K >= 0 then 2u - K <= 2u + 1; if K < 0 then 2u + 1 < 2u - K; in both cases the proved bound is L.
+  c2. tau_u <= m1 (Lemma 2).  So it suffices to show  e_u - e_m >= min(L, m1).
+  c3. n >= 2, m >= 0.  Then K = u + m >= 1, L = 2u - K = u - m, and e_u - e_m = sum_{j=m+1}^{u} c_j (Lemma 4).
+      If n >= 3 each c_j >= 1.  If n = 2, c_j = R3_j >= 1 for 0 <= j <= M3 (Lemma 3a), and u <= M3 because
+      u < K/2 + r/2 <= (M3 - 3)/2 (Lemma 7(iv)).  So e_u - e_m >= u - m = L.
+  c4. n >= 2, m < 0.  e_u - e_m = e_u = sum_{j=0}^{u} c_j.  For n = 2 this is sum_{j=0}^{u} R3_j, which is >= 1 + 3u >= 2u + 1 >= L
+      if u <= M3 - 1 (Lemma 3a), and = m1 m2 m3 >= m1 if u >= M3.  For n >= 3, c_u >= sum_{i<=u} R3_i, the same quantity.
+      So e_u >= min(L, m1).
+  c5. n = 1.  e = R3, b0 = 2, K = M3 - 2r - 1, so u < K/2 + r/2 = (M3 - r - 1)/2 < M3/2 and R3 is non-decreasing on
+      [0, u] (Lemma 3b).
+      m < 0: need R3_u >= min(2u+1, m1).  If u <= m1 - 1, R3_u = C(u+2,2) >= 2u + 1 (u >= 1; C(u+2,2) - 2u - 1 = u(u-1)/2).
+        If u >= m1, R3_u >= R3_{m1-1} = C(m1+1,2) >= m1 (monotone on [0,u]).
+      m >= 0: then K >= 1 and L = u - m.  R3_u - R3_m = sum_{j=m+1}^{u} delta3_j >= u - m by Lemma 3d, because
+        u <= min(m3 - 1, m1 + m2 - 2):  u < (m1+m2+m3-r-4)/2, and m1 + m2 - r - 2 < m3 (as m2 <= r-2 < r+2 and m1 <= m3)
+        gives (m1+m2+m3-r-4)/2 < m3 - 1;  m3 - r <= m1 + m2 gives (m1+m2+m3-r-4)/2 <= m1 + m2 - 2.
+  In every subcase e_u - e_m >= min(L, m1) >= tau_u, i.e. Phi(m) >= 0.  []
+ (verify_lemmas.py: '(a) tau_u>0' = 0, '(b) tau_K<-1' = 0, '(c) tau_u>L' = 0, '(c) ediff<min(L,m1)' = 0, 'Phi<0 at jump' = 0.)
+
+PROOF OF THE THEOREM.  By Step 0 it suffices to show  S(n): [1, B*(n)] c U(n)  for all n >= 0 (base tuple).
+ 1. S(0): B*(0) = 1 (Lemma 5b) and 1 is in U(0).
+ 2. Let n >= 1 and assume S(n-1).  If B*(n) <= B*(n-1), then [1,B*(n)] c [1,B*(n-1)] c U(n-1) c U(n) (Lemma 6).
+ 3. If B*(n) > B*(n-1): by Lemma 8, b0 = B*(n) - 1 is in U(n).  b0 is even, i.e. b0 == F (mod 2), so by [T9] S2(i)
+    B*(n) = b0 + 1 is in U(n).  By [T9] step-2 closure applied to B*(n) and to b0, all of B*(n), B*(n)-2, ..., and
+    b0, b0-2, ... down to 1 or 2 lie in U(n); together with 1 in U(n) this is [1, B*(n)].  (B*(n) >= 3 here.)
+ 4. Hence S(n) for all n.  With the upper bound U c [1, B*] ([R2E8], general r) and Step 0, U(a) = [1, B*(a)].   QED.
+
+REMARKS.
+ * No computation is used in the proof.  The scripts only sanity-check each lemma inside the fit box:
+   verify_lemmas.py 20 50 (all triples, r <= 20, n <= 50; 247,095 base instances, 788,631 case-(c) pairs, 0 failures) and
+   verify_r40.txt (r <= 40).  rule_check.py compares the rule with ground truth (tools/uni, gt_big) on random lifted
+   instances r <= 120, k <= 54, a_i <= 400.
+ * As a corollary, B*(n) is non-decreasing in n for the base family (U(n) c U(n+1) and U(n) = [1,B*(n)]).
+ * The step "B*(n) > B*(n-1) => K <= r-3" is what makes the check local: only coefficients of index <= r-2 of A enter, and
+   these are the coefficients of R3/(1-q)^n.  The Lipschitz bound |tau_t - tau_{t-1}| <= 2 is special to three middle
+   residues plus residues +-1 (second differences of three arcs); this is why the argument does not extend verbatim to
+   four or more middle residues.

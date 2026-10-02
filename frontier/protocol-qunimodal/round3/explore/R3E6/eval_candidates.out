@@ -1,0 +1,11 @@
+instances 3400 (instance,b) pairs 114797
+C0 U=[1,T6] (Thm C bound tight): 356
+C1 T15 formula U=[1,T6-2*FIRE]: 18
+C2 rule_low_v1 (no (ia)) DISCARDED: 355
+C3 rule_low_v2 (ia w/o m0 bound) DISCARDED: 1549
+C4 rule_low final (W=2r; ia,ib,ii): 0
+C5 rule_simple (W=r; ia + ii at j=0): 0
+C6 window W=r/2: 45
+C7 window W=3: 131
+C8 window W=1: 178
+C9 window W=0 (single condition): 178
