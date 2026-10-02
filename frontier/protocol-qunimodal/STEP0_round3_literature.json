@@ -1,0 +1,335 @@
+{
+ "search_log": [
+  {
+   "query": "\"2605.12822\" (all public code)",
+   "source": "GitHub code search (MCP)",
+   "result": "找到",
+   "note": "34 hits, the same set as round 2: ProveIt, AI-Has-Taste, trureturing, plus mirrors such as lenis2000/homepage and ehijano/rss_fetch. No new repository since round 2."
+  },
+  {
+   "query": "Re-fetch ProveIt report.tex/README.md and AI-Has-Taste main.tex; diff against round-2 copies",
+   "source": "GitHub raw",
+   "result": "找到",
+   "note": "HTTP 200. Byte-identical to the round-2 copies, so no new general-r results were added. The commit-history API was refused (repository not enabled for this session)."
+  },
+  {
+   "query": "\"Conjecture 5.4\" unimodal Fibonomial",
+   "source": "GitHub code search (MCP)",
+   "result": "找到",
+   "note": "9 hits, all in the three known repositories. Nothing new."
+  },
+  {
+   "query": "unimodal \"q^r\" \"floor(a/r)\" OR \"a_i // r\" product q-integers",
+   "source": "GitHub code search (MCP)",
+   "result": "未找到",
+   "note": "0 results."
+  },
+  {
+   "query": "\"is_unimodal\" \"q_int\" stretch r b unimodal set parity",
+   "source": "GitHub code search (MCP)",
+   "result": "未找到",
+   "note": "0 results."
+  },
+  {
+   "query": "\"cyclically unimodal\" residue sums polynomial",
+   "source": "GitHub code search (MCP)",
+   "result": "未找到",
+   "note": "0 results (R4 phrasing)."
+  },
+  {
+   "query": "\"residue masses\" unimodal q-integers",
+   "source": "GitHub code search (MCP)",
+   "result": "找到",
+   "note": "Only ProveIt report.tex, already known. It defines R_s but does not prove cyclic unimodality."
+  },
+  {
+   "query": "q-integer unimodality",
+   "source": "GitHub repository search (MCP)",
+   "result": "未找到",
+   "note": "0 repositories."
+  },
+  {
+   "query": "unimodality product q-integers [b]_{q^r} residue classes mod r alternating sums criterion",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "R1 phrasing. Only generic results (alternating gamma vectors 1601.04979, Kronecker 1304.5044, rooted trees 1601.03465)."
+  },
+  {
+   "query": "cyclic unimodality residue class sums coefficients product of q-integers modulo r roots of unity",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "R4 phrasing. Billey-Swanson CGF 2305.07620 and roots-of-unity notes only."
+  },
+  {
+   "query": "character of tensor product sl2 representations Adams operation psi^r unimodal coefficients symmetric power Almkvist",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Representation-theory phrasing. Generic sl2 and Adams material, Block notes, Mao-Shi-Zhu 2609.23779. No criterion for f(q)g(q^r)."
+  },
+  {
+   "query": "set of b for which polynomial times [b]_{q^r} unimodal parity gaps \"b-2\"",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "R2/R3 phrasing. Returned 2605.12822 itself and parity-unimodality papers (Xin-Zhong 1912.01829, Stucky 1812.04578), which concern a different notion."
+  },
+  {
+   "query": "lattice points in box cut by hyperplane x_1+...+x_k+r y=n unimodal weighted part restricted partitions",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Lattice-point phrasing. Barany-Frankl 2004.12306 (cells cut by a hyperplane) and Ek thesis. Neither is relevant."
+  },
+  {
+   "query": "sum of independent discrete uniforms plus uniform on multiples of r, mode/unimodality, local limit theorem, lattice Edgeworth",
+   "source": "WebSearch",
+   "result": "找到",
+   "note": "Probability phrasing. Adjacent framework: Dolgopyat-Hafouta arXiv:2011.14852 (Edgeworth expansions for bounded integer summands; obstruction = distance of the sum mod h from uniform). No unimodality statement."
+  },
+  {
+   "query": "cyclic sieving phenomenon q-integers product evaluation at roots of unity coefficient sums residue classes unimodal around cycle",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Cyclic sieving phrasing. Reiner-Stanton-White surveys, Armstrong 2502.00378 (h_k^{(b)} at roots of unity). Nothing on cyclic unimodality."
+  },
+  {
+   "query": "distribution of sum of residues mod r of independent uniforms on {0..a-1}, unimodal on cyclic group, equidistribution",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Number theory/probability phrasing. Entropy in cyclic groups (1710.00812) and sums mod m (Stat. Prob. Lett. 1993). No cyclic-unimodality statement."
+  },
+  {
+   "query": "convolution of moving average box filters with comb filter impulse response unimodal condition",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Signal-processing phrasing. Only CIC/moving-average tutorials."
+  },
+  {
+   "query": "plethysm h_b[p_r] times product of h_{a_i} principal specialization unimodality q-analog",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Symmetric-functions phrasing. Plethysm-coefficient papers (2511.02312) and Eulerian quasisymmetric functions. Not relevant."
+  },
+  {
+   "query": "export.arxiv.org API: all:unimodal AND \"q-integers\"; abs:unimodal AND Fibonomial; abs:unimodal AND \"residue classes\" AND polynomial; abs:\"cyclically unimodal\"; abs:unimodal AND \"discrete uniform\"; abs:unimodal AND \"Gaussian polynomials\"",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "The API worked this round. Hits: 2605.12822 (source), 2607.20595, 0708.2341, 2111.03369 and others. None is about the stretched-factor product."
+  },
+  {
+   "query": "export.arxiv.org API: cat:math.CO AND abs:unimodal (40 newest); \"restricted partitions\"; \"lattice points\" AND box; Edgeworth AND lattice; \"roots of unity\" AND coefficients; weighted projective Hilbert function; sl_2 Adams operation",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "Scanned the 40 newest math.CO unimodality papers (2026-05-13 to 2026-09-30). None concerns [a]_q-products with [b]_{q^r}. Several phrasings returned 0."
+  },
+  {
+   "query": "export.arxiv.org API: abs:\"q-integers\"; abs:unimodal AND product AND \"q-analog\"; \"Hilbert function\" AND unimodal AND \"complete intersection\"; \"local limit theorem\" AND unimodal; \"cyclic sieving\" AND unimodal",
+   "source": "arXiv API",
+   "result": "未找到",
+   "note": "Hits: 2605.12822, 2404.05098 (Abdallah-McDaniel), 1905.00975 (Billey-Konvalinka-Swanson), 1812.04578 (Stucky). Only adjacent material."
+  },
+  {
+   "query": "OpenAlex works search \"Unimodality of q-Fibonomial coefficients\" and \"unimodal product q-integers residue\"",
+   "source": "OpenAlex API",
+   "result": "未找到",
+   "note": "Rate-limited: the daily free budget was exhausted, so no data."
+  },
+  {
+   "query": "Semantic Scholar citations of arXiv:2605.12822",
+   "source": "Semantic Scholar API",
+   "result": "未找到",
+   "note": "HTTP 429, no data."
+  },
+  {
+   "query": "MathOverflow (StackExchange API): \"unimodal q-integers\", \"unimodal polynomial product\", \"unimodality\" (relevance)",
+   "source": "MathOverflow",
+   "result": "未找到",
+   "note": "About 40 questions listed. Opened 440499, 385120 and 142565, none about stretched factors. Nothing on residue-class criteria."
+  },
+  {
+   "query": "zbMATH Open API: \"unimodal q-integers\", \"unimodal Gaussian polynomial product\", \"Almkvist unimodal\", \"unimodal residue classes polynomial\", \"unimodality cyclotomic generating functions\"",
+   "source": "zbMATH Open",
+   "result": "找到",
+   "note": "Found the zbMATH reviews of Almkvist, J. Algebra 108 (1987), Zbl 0624.20028, and Almkvist, J. Number Theory 32 (1989), Zbl 0678.05002. These were paywalled in round 2. Adjacent framework only (see R5/R6). The last two phrasings returned no results."
+  },
+  {
+   "query": "\"(1+x+...+x^m)^n\" times \"(1+x^r)\" unimodal OR log-concave threshold ordinary multinomials",
+   "source": "WebSearch",
+   "result": "找到",
+   "note": "Handelman arXiv:1102.2961 (b=2, a=2 case of the all-equal family) and Belbachir et al. 0708.2341 (ordinary multinomials). Background for R5."
+  },
+  {
+   "query": "Handelman log concavity (1+x)^m(1+x^k) generalization multinomial eventually unimodal",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "No generalization to [a]^k[b]_{q^r} with b>=3 or a>=3."
+  },
+  {
+   "query": "Hilbert series k[x_1..x_k,y]/(x_i^{a_i},y^b) deg y=r unimodal weak Lefschetz non-standard graded complete intersection",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Commutative-algebra phrasing. Only standard-grading SLP/WLP papers."
+  },
+  {
+   "query": "log-concave convolution with lattice-supported uniform distribution, unimodality preserved, stride r, strongly unimodal",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Only generic Ibragimov/Keilson-Gerber log-concavity reviews (1404.5886)."
+  },
+  {
+   "query": "sums of coefficients of Gaussian polynomial in residue classes modulo m, partitions in a rectangle, unimodal",
+   "source": "WebSearch",
+   "result": "找到",
+   "note": "Krason-Milewski arXiv:1905.11815: residue-class sums of Gaussian-polynomial coefficients. Opened and read Theorem 4.3 and Example 4.8. Adjacent to R4."
+  },
+  {
+   "query": "\"unimodal\" \"q^r\" product \"[n]_{q^r}\" \"[m]_q\" Gaussian polynomials stretched factor criterion 2026",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Only 2605.12822, 2609.23779 and generic Gaussian-polynomial papers."
+  },
+  {
+   "query": "asymptotic coefficients 1/((1-q)^k(1-q^r)) quasi-polynomial restricted partition function, Sylvester waves",
+   "source": "WebSearch",
+   "result": "找到",
+   "note": "R5 phrasing. Restricted-partition quasi-polynomial and Sylvester-wave literature (O'Sullivan; 2512.20398; 2305.00085). This is the generic asymptotic toolkit only. Nothing on unimodality thresholds of the product."
+  },
+  {
+   "query": "unimodality of a product stabilizes for large parameters, depends only on residues mod r, eventually periodic classification",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "R6 phrasing. Only unrelated eventual-periodicity results."
+  },
+  {
+   "query": "convolution on Z_n of indicator functions of arcs is circularly unimodal",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "R4 phrasing (cyclic convolution of arcs). Only circulant and circular-convolution basics."
+  },
+  {
+   "query": "Gaussian polynomial coefficients sum over residue class mod n \"unimodal\" cyclic, partitions in box modulo n",
+   "source": "WebSearch",
+   "result": "找到",
+   "note": "Again Krason-Milewski 1905.11815, plus Pentland 1801.00188 (coefficient values mod N, a different question)."
+  },
+  {
+   "query": "\"Almkvist\" \"symmetric unimodal\" product \"f(t^r)\" OR \"Adams operation\" \"psi^r\" homogeneous representation unimodality criterion",
+   "source": "WebSearch",
+   "result": "找到",
+   "note": "Abdallah-McDaniel, ALCO 8(2) 2025 (published version of 2404.05098). Downloaded and read Theorem 1.3. It covers the k=1 case [m]_t[m]_{t^2}."
+  },
+  {
+   "query": "sum of equally spaced translates of a symmetric unimodal sequence is unimodal, spacing, superposition",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Probability/sequence phrasing (P = sum of b translates of A at step r). Only the generic same-mode closure lemma."
+  },
+  {
+   "query": "unimodality of \"A(q)(1+q^r+...+q^{(b-1)r})\" OR \"f(q)[b]_{q^r}\" OR \"multiplying by 1+q^r\"",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Only 2605.12822 Lemma 4.2 / Prop 5.3 and generic [l]f closure."
+  },
+  {
+   "query": "Billey Swanson cyclotomic generating functions unimodal monoid q^r stretched factor follow-up 2025 2026",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Billey-Swanson EJC 31(4) P4.4 and Gatzweiler-Levican-Santibanez-Yoshida 2603.22226 (positivity, not unimodality). Billey-Swanson Sec. 6.1 re-read: Phi^uni has no criterion. Conjecture 48 is about Phi_p factors."
+  },
+  {
+   "query": "mathoverflow unimodality polynomial multiplied by 1+x^k+x^{2k}, sufficient number of factors (1+x+...+x^{a-1})",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Handelman again. No MathOverflow thread."
+  },
+  {
+   "query": "\"three\" residues counterexample unimodal product q-integers stretched factor large r parity gap not an interval",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "R7/R8 phrasing. Only unrelated counterexample papers and zenodo 22388982 (binary cyclotomic factors)."
+  },
+  {
+   "query": "entropy Stirling asymptotics coefficients of (1+q+...+q^{a-1})^k near mode, lattice correction, k log k threshold",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "R5 phrasing. Nothing relevant."
+  },
+  {
+   "query": "Odlyzko Richmond \"On the unimodality of some partition polynomials\" 1982",
+   "source": "WebSearch",
+   "result": "找到",
+   "note": "Bibliographic record (Europ. J. Combin. 3 (1982) 69-84). Adjacent analytic method for products. Full text not opened."
+  },
+  {
+   "query": "\"Coefficients of Gaussian Polynomials Modulo N\" / residue classes equidistribution, Stanley-Zanello",
+   "source": "WebSearch",
+   "result": "未找到",
+   "note": "Pentland 1801.00188 and Stanley-Zanello treat coefficient values mod N, not exponents mod r. Not relevant."
+  },
+  {
+   "query": "OEIS: threshold sequences k where max U([2]^k,[b]_{q^4}) jumps: \"13,25,35,45,55,65,77,87\" and \"1,13,25,35,45,55,65\"",
+   "source": "OEIS",
+   "result": "未找到",
+   "note": "Computed locally (/tmp/claude-0/qu/lit3/thr.py). 0 OEIS results."
+  },
+  {
+   "query": "OEIS: \"6,13,22,33,46\" and \"1,6,13,22,33,46,61\" (b=2 thresholds r^2-3)",
+   "source": "OEIS",
+   "result": "找到",
+   "note": "A028872 n^2-3. This matches Handelman threshold k >= r^2-3, but the OEIS entry has no comment linking it to unimodality."
+  },
+  {
+   "query": "OEIS keyword search: \"unimodal q^r\", \"unimodal Gaussian polynomial residue\", \"log concave (1+x)^m\"",
+   "source": "OEIS",
+   "result": "未找到",
+   "note": "Only irrelevant entries (A378470, A000009, ...)."
+  },
+  {
+   "query": "Abstracts via arXiv API id_list: 1905.11815, 2502.00378, 1511.07036, 2011.14852, 1812.04578, 1912.01829, 1905.00975",
+   "source": "arXiv API",
+   "result": "找到",
+   "note": "Read all seven abstracts. Relevant adjacent items: Krason-Milewski (R4), Dolgopyat-Hafouta (R4/R5), Xin-Zhong (R1, sampling along residue classes mod 2). The others are not relevant."
+  }
+ ],
+ "per_claim": [
+  {
+   "claim": "R1: Residue-thread / class-pair criterion. Unimodality of A(q)[b]_{q^r} is decided by alternating partial sums of (1-q)A(q) sampled along arithmetic progressions of step r ('class pairs').",
+   "status": "文献连线",
+   "evidence": "The criterion as stated was not found. Closest ingredients, each opened and quoted:\n(1) ProveIt report.tex, Lemma 4.1 ('The periodic tail') (https://raw.githubusercontent.com/VladimirReshetnikov/ProveIt/main/SetTheory/Cardinals/docs/reports/log-concavity-and-unimodality/q-integer-product-unimodality/report.tex): 'If $n\\ge\\max\\{1,S-r+2\\}$, then $u_n-u_{n-1}=\\delta_{n\\bmod r}$. If also $n<rb$, the same difference occurs in $P=F\\qir b r$', where 'R_s=\\sum_{0\\le j\\le S, j\\equiv s (r)} f_j' and '\\delta_s=R_s-R_{s-1}'. So ProveIt computes first differences of P as sums of differences of F along the residue class of n, i.e. (1-q)F sampled on a progression of step r. It does this only in the tail range n>=S-r+2 and uses it only as a necessary condition (Thm 4.2). It has no alternating partial sums, no class pairs and no iff criterion.\n(2) AI-Has-Taste main.tex (https://raw.githubusercontent.com/ArtificialZeng/AI-Has-Taste/main/reproducible_source_code/BigWIN2/BW2-PR20260914-q_product_unimodality/source/manuscript/main.tex), k=2 only: '\\Delta_n=N(n-a+1,n)-N(n-a-c+1,n-c)' with N counting j in [0,b-1] with rj in a window. This is an exact difference formula for two ordinary factors, in counting form, not a general class-pair criterion.\n(3) Xin-Zhong, arXiv:1912.01829 (https://arxiv.org/abs/1912.01829), abstract: 'We conjecture that they are unimodal with respect to parity, or equivalently, $(1+q)C_{m+n}(q)$ is unimodal.' This is an adjacent idea: coefficients sampled along residue classes mod 2 are tied to unimodality after multiplying by a q-integer. It concerns [2]_q and q-Catalan polynomials, not [b]_{q^r}.\n(4) Abdallah-McDaniel, ALCO 8(2) (2025) 295-317 (https://doi.org/10.5802/alco.414): 'complex Hodge-Riemann relations (complex HRR) to mean that the maps in Equation (3) have signature equal to the alternating sum of even first differences of the Hilbert function.' This is an alternating sum of first differences along one parity class, for the Hilbert function prod_i [m]_{t^i}. It is a representation and Lefschetz invariant, not a unimodality criterion for f(q)[b]_{q^r}.\nDifferences from R1: no source states an iff criterion for general A and r via alternating class sums."
+  },
+  {
+   "claim": "R2: Parity/closure structure. U = [1,N*] ∪ {N*+2, N*+4, ..., beta}, max U ≡ 1+F (mod 2), and b in U implies b-2 in U.",
+   "status": "文献连线",
+   "evidence": "The general structure was not found. Every complete classification in the literature gives an interval U=[1,B*], which is the gap-free case of R2. In each, B*-1-F is even, matching max U ≡ 1+F (mod 2):\n(a) CIMSY arXiv:2605.12822 Prop 5.3 (https://arxiv.org/abs/2605.12822): 'Let $a,b,r\\in\\mathbb{Z}_{>0}$. Then $[a]_{q}[b]_{q^{r}}$ is unimodal if and only if $a\\geq r(b-1)$ or $r\\,|\\,a$.' For r∤a, U=[1,1+floor(a/r)], excess 0.\n(b) AHT Theorem 1 (https://raw.githubusercontent.com/ArtificialZeng/AI-Has-Taste/main/reproducible_source_code/BigWIN2/BW2-PR20260914-q_product_unimodality/source/manuscript/main.tex): '[a]_q[c]_q[b]_{q^r} is weakly unimodal if and only if r\\mid a or r\\mid c or b\\le1+\\lfloor a/r\\rfloor+\\lfloor c/r\\rfloor.' Excess 0.\n(c) ProveIt Thm 5.1 (https://raw.githubusercontent.com/VladimirReshetnikov/ProveIt/main/SetTheory/Cardinals/docs/reports/log-concavity-and-unimodality/q-integer-product-unimodality/report.tex): 'The polynomial $(\\prod_i\\qi{a_i})\\qir b2$ is unimodal if and only if some $a_i$ is even or b\\le1+\\sum_i\\lfloor a_i/2\\rfloor.' Excess 0.\n(d) ProveIt Thm 'Sharp spacing-three criterion' (thm:r3; Thm 6.1 in round-2 numbering): 'The polynomial $P_{\\boldsymbol a,b,3}$ is unimodal if and only if (\\exists i\\colon3\\mid a_i) or b\\le1+Q+2\\lfloor t/6\\rfloor'. Excess 2floor(t/6), even.\n(e) CIMSY remark: '$([3]_{q})^{4}[2]_{q^{4}}$ is unimodal despite violating the inequality'. Numerically U={1,2,3} (round 2), max 3 ≡ 1+F with F=0.\nProveIt states the open gap explicitly: 'The residue classes decide what happens in the possible gap' (after the sandwich eq.). It neither proves nor states a parity or closure rule. Not found: non-interval U, the step-2 tail {N*+2,...}, closure b->b-2, and max U ≡ 1+F in general."
+  },
+  {
+   "claim": "R3: Conjecture S2. U = [1,B*] or U = [1,B*] minus {B*-1}.",
+   "status": "文献连线",
+   "evidence": "Only the interval alternative appears, and only in the classified ranges: r=2 (ProveIt Thm 5.1), r=3 (ProveIt Thm 6.1 and Cor. cor:binomialexact '(1+q)^t\\qir B3 is unimodal \\Longleftrightarrow t\\ge6\\lfloor B/2\\rfloor'), k=1 (CIMSY Prop 5.3) and k=2 (AHT Thm 1). All quoted verbatim under R2, links https://raw.githubusercontent.com/VladimirReshetnikov/ProveIt/main/SetTheory/Cardinals/docs/reports/log-concavity-and-unimodality/q-integer-product-unimodality/report.tex , https://raw.githubusercontent.com/ArtificialZeng/AI-Has-Taste/main/reproducible_source_code/BigWIN2/BW2-PR20260914-q_product_unimodality/source/manuscript/main.tex , https://arxiv.org/abs/2605.12822. The second alternative (one missing value B*-1) and the global S2 dichotomy for r>=4 were not found. ProveIt writes: 'For $r\\ge4$, a general classification of $(\\prod_i\\qi{a_i})\\qir b r$ is not obtained here.'"
+  },
+  {
+   "claim": "R4: Cyclic unimodality of residue-class sums. The sums of coefficients of a product of q-integers in each class mod r are unimodal around the cycle Z/r, peaked at the centre.",
+   "status": "未找到",
+   "evidence": "No source states this. Adjacent material:\n(1) ProveIt (link above) defines exactly these sums, 'R_s=\\sum_{0\\le j\\le S,\\ j\\equiv s (r)} f_j ... The $R_s$ are the total coefficient masses in the residue classes modulo $r$', and proves only 'The $R_s$ cannot all be equal' (proof of Thm 4.2). It uses symmetry, 'Symmetry of $F$ implies $R_0=R_{r-1}$'. It says nothing about cyclic unimodality.\n(2) Krason-Milewski arXiv:1905.11815 (https://arxiv.org/abs/1905.11815), Theorem 4.3: 'Let k, l be positive integers such that gcd(k, l) = 1 and r any positive divisor of l. For any i ∈ Z/rZ we have \\sum p(k, l-1, j ≡ i mod r) = (1/r) binom(k+l-1, l-1)'. Remark 4.6: 'the left hand side of (4.35) is the sum ... over the moduli classes modulo r of the coefficients of the Gaussian polynomial'. This concerns Gaussian polynomials (quotients), not products of q-integers. Their Example 4.8 (k=l=6, r=6) lists class sums '80, 75, 78, 76, 78, 75'. These are not cyclically unimodal (local maxima at classes 0, 2, 4), so the R4 phenomenon does not extend to Gaussian polynomials. Problem 4.16 there, 'Find relations between sums over moduli classes modulo d of coefficients of Gaussian polynomials', is open in that paper.\n(3) Dolgopyat-Hafouta arXiv:2011.14852 (https://arxiv.org/abs/2011.14852), abstract: 'the distance between the distribution of the underlying partial sums modulo some $h\\in \\bbN$ and the uniform distribution could fail to be $o(σ_N^{1-r})$'. This is the probabilistic role of residue-class masses. It gives no unimodality-on-the-cycle statement."
+  },
+  {
+   "claim": "R5: Exact rule for the all-equal family [a]_q^k [b]_{q^r}. The excess B*-1-F grows linearly in k with a -ln k correction (entropy/Stirling asymptotics of the coefficients of 1/((1-q)^{k-1}(1-q^r))).",
+   "status": "文献连线",
+   "evidence": "Special cases of the exact rule are in the literature (quoted verbatim). The general rule and the -ln k asymptotics were not found.\n(a) a=2, r=3 (ProveIt Cor. 'A two-parameter infinite family' (label cor:binomialexact), https://raw.githubusercontent.com/VladimirReshetnikov/ProveIt/main/SetTheory/Cardinals/docs/reports/log-concavity-and-unimodality/q-integer-product-unimodality/report.tex): 'For $t\\ge0$ and $B\\ge1$, (1+q)^t\\qir B3 is unimodal \\Longleftrightarrow t\\ge6\\lfloor B/2\\rfloor.' Here the excess is 2floor(k/6), linear in k with no log term.\n(b) a=2, b=2, any r: Handelman arXiv:1102.2961 (https://arxiv.org/abs/1102.2961), abstract: 'Let m and k ≥ 2 be positive integers. We show that polynomial P = (1 + x)^m (1 + x^k) is strongly unimodal (frequently known as log concave) if and only if m ≥ k^2 − 3; this is also the criterion for P to be merely unimodal'. Mapping: m=k (number of factors), k=r. This gives only the first jump of B* (from 1 to at least 2). ProveIt's 'Sharp two-shift smoothing threshold' theorem (thm:twoshift) reproves it, with table row: 'Gap r & First unimodal exponent r^2-3'.\n(c) k=1 and k=2: CIMSY Prop 5.3 and AHT Thm 1 (quoted under R2).\n(d) Asymptotic toolkit, framework only: the Almkvist zbMATH review (Zbl 0624.20028, https://zbmath.org/?q=an:0624.20028) says '...the author proves it for n=4, using analytic methods of A. Odlyzko and B. Richmond to estimate the coefficients.' Also restricted-partition quasi-polynomials and Sylvester waves, and Dolgopyat-Hafouta Edgeworth expansions with mod-h obstructions. None treats [a]^k[b]_{q^r}.\nOur computed jump points for a=2, r=4 (k = 13, 25, 35, 45, 55, 65, 77, 87 for B* = 3, 5, ..., 17) are not in OEIS. The first one equals Handelman's r^2-3 = 13."
+  },
+  {
+   "claim": "R6: Large-part stabilization. Once all a_i exceed an explicit threshold, U depends only on the residues (shifted by F).",
+   "status": "文献连线",
+   "evidence": "Not found as stated. Related:\n(1) ProveIt Cor 3.3 ('Reduction to small residues', https://raw.githubusercontent.com/VladimirReshetnikov/ProveIt/main/SetTheory/Cardinals/docs/reports/log-concavity-and-unimodality/q-integer-product-unimodality/report.tex): 'Suppose no $a_i$ is divisible by $r$, and write a_i=rA_i+s_i ... If $b>Q+1$ and (\\prod_i\\qi{s_i})\\qir{b-Q}{r} is $\\SU$, then $P_{\\boldsymbol a,b,r}$ is $\\SU$.' ProveIt then adds: 'Corollary~\\ref{cor:core} is a sufficient reduction, not an assertion that residue reduction preserves unimodality in both directions for every $r$.' So the shift by F is in the literature, but only in the sufficient direction and with no threshold.\n(2) In every classified range (r=2, r=3, k<=2) the answer depends only on residues and F, so stabilization holds trivially there with threshold 0 (statements under R2).\n(3) Almkvist (zbMATH Zbl 0678.05002, https://zbmath.org/?q=an:0678.05002): 'The author investigates the well-known conjecture that the polynomial \\prod^{r}_{\\nu =1}(1-t^{n\\nu})/(1-t^{\\nu}) is symmetric unimodal if n is even and r\\geq 1, or n is odd and r\\geq 11 ... The method of proof makes use of a clever induction for \"large\" r'. This is a different stabilization: more stretched factors, a different family."
+  },
+  {
+   "claim": "R7: Closed form for exactly three 'middle' residues.",
+   "status": "未找到",
+   "evidence": "No source treats three factors with residues in [2,r-2] for r>=4. The nearest results are AHT Thm 1 (two ordinary factors, all r) and ProveIt Thm 6.1 (r=3, which has no middle residues), quoted under R2. ProveIt says: 'the necessity question for two or three ordinary factors at those spacings is not settled by the present arguments' and '\\emph{open} here for $k\\le3$ with $r\\ge4$' (https://raw.githubusercontent.com/VladimirReshetnikov/ProveIt/main/SetTheory/Cardinals/docs/reports/log-concavity-and-unimodality/q-integer-product-unimodality/report.tex)."
+  },
+  {
+   "claim": "R8: Counterexample to a 'local' parity-gap statement at r ≈ 8595 (only the global S2 survives).",
+   "status": "未找到",
+   "evidence": "No such counterexample or parity-gap statement was found. The known counterexamples in the literature concern the necessity clause of CIMSY Conj 5.4: ProveIt Prop. 'Exact disproof' (prop:counterexample) and Cor. 'A log-concave infinite family' (cor:infinite) ('For every $n\\ge6$, the polynomial $\\qi2^{\\,n}\\qir23=(1+q)^n(1+q^3)$ is a log-concave counterexample to the necessity assertion of [Conjecture 5.4]'), trureturing's Lean certificate of (1+q)^6(1+q^3), and the CIMSY remark on ([3]_q)^4[2]_{q^4}. None involves large r or parity gaps."
+  }
+ ],
+ "summary": "Round 3 literature search, 48 logged queries across GitHub code/repo search, WebSearch, the export.arxiv.org API (working this round), zbMATH Open, MathOverflow/StackExchange and OEIS. OpenAlex and Semantic Scholar were rate-limited. No new repository or paper on CIMSY Conj 5.4 appeared since round 2: the ProveIt and AI-Has-Taste files are byte-identical to the round-2 copies, the GitHub hits are the same 34, and the 40 newest math.CO unimodality papers through 2026-09-30 contain nothing relevant. Status: R1 文献连线, R2 文献连线, R3 文献连线, R4 未找到, R5 文献连线, R6 文献连线, R7 未找到, R8 未找到. No claim is 文献已有. R1 connects to ProveIt Lemma 4.1 (tail differences = residue-mass differences), AHT's k=2 counting differences, and Xin-Zhong/Abdallah-McDaniel parity-class ideas. R2 and R3 contain only the interval case (U=[1,B*] with even excess), which is all the literature proves (r=2, r=3, k=1, k=2). R5 contains the a=2, r=3 exact rule (ProveIt Cor. 'A two-parameter infinite family' (label cor:binomialexact): t>=6floor(B/2)) and Handelman's b=2 threshold k>=r^2-3. The jump sequence 13, 25, 35, ... for a=2, r=4 is not in OEIS. R6 matches ProveIt Cor 3.3 (one-directional reduction to residues). New sources this round: Almkvist 1987/1989 zbMATH reviews (Zbl 0624.20028, Zbl 0678.05002), Abdallah-McDaniel ALCO 2025 Thm 1.3 (H(m,2)=[m]_t[m]_{t^2} unimodal iff m even; k=1 case), Krason-Milewski arXiv:1905.11815 (residue-class sums of Gaussian polynomials; their Example 4.8 shows such sums need not be cyclically unimodal for Gaussian polynomials, a useful contrast for R4), and Dolgopyat-Hafouta arXiv:2011.14852 (Edgeworth expansions with mod-h obstructions)."
+}
