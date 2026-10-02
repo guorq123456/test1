@@ -1,0 +1,183 @@
+SYNTHESIS r1 -- unimodality of P(q) = [a_1]_q ... [a_k]_q [b]_{q^r}   (arXiv:2605.12822, Conj. 5.4)
+=====================================================================================
+
+Notation.  r >= 2, a_i >= 1, b >= 1.  A(q) = prod [a_i]_q = sum alpha_n q^n, D = sum (a_i - 1) = deg A,
+N = D + r(b-1) = deg P, P = sum c_n q^n.  rho_i = a_i mod r, F = sum floor(a_i/r).
+If no rho_i = 0:  sigma = sum (rho_i - 1)  (so D = rF + sigma).
+Gamma_t (t in Z/r) = sum_{n = t mod r} alpha_n ;  tau(t) = Gamma_t - Gamma_{t-1}  (r-periodic in t).
+mu = least t in [0, r-1] with Gamma_t >= Gamma_{t+1} >= ... >= Gamma_{r-1}.
+E6 = floor((sigma + 1 - 2mu)/r),  T6 = 1 + F + E6 = 1 + floor((D + 1 - 2mu)/r).
+A residue rho is a "unit" if rho in {1, r-1}, "middle" if 2 <= rho <= r-2.
+U(r,a) = { b >= 1 : P unimodal }.   "flat" means max_t |tau(t)| <= 1.
+All polynomials below are palindromic; a sum of palindromic unimodal polynomials with a common
+centre is palindromic unimodal, and a palindromic sequence c_0..c_N is unimodal iff c_n >= c_{n-1}
+for 1 <= n <= N/2.  (Used without further comment.)
+
+-------------------------------------------------------------------------------------
+Lemma 1 (division by [r]_q).  Let delta_m = alpha_m - alpha_{m-1} (m in Z; support [0,D+1]),
+so delta_m = -delta_{D+1-m}.  Let g_n = [q^n] A(q)/[r]_q = sum_{j>=0} delta_{n-rj} for n >= 0, g_n = 0 for n < 0,
+and tau(n) = sum_{m = n mod r} delta_m (this equals Gamma_n - Gamma_{n-1}).  Put M = D + 1 - r. Then
+ (a) tau(D+1-x) = -tau(x);
+ (b) g_n = tau(n) + g_{M-n} for every n in Z;
+ (c) g_{n+r} - g_n = delta_{n+r} for every n in Z;
+ (d) c_n - c_{n-1} = g_n - g_{n-rb}.
+Proof. (a) from antisymmetry of delta. (b) For n >= 0: g_n = tau(n) - sum_{m>n, m=n} delta_m
+ = tau(n) + sum_{m>n, m=n} delta_{D+1-m} = tau(n) + sum_{m'<=D+1-n-r, m'=D+1-n} delta_{m'} = tau(n) + g_{M-n}.
+ For n < 0: M - n > M, and for x > M every element of the class of x in [0,D+1] is <= x, so g_x = tau(x);
+ thus tau(n) + g_{M-n} = tau(n) + tau(D+1-(n+r)) = tau(n) - tau(n) = 0 = g_n.  (c) direct.
+ (d) (1-q)P = (1-q)A (1-q^{rb})/(1-q^r) = G(q)(1 - q^{rb}).                                          []
+
+Theorem A (symmetrised exact criterion).  Define h_n = g_n - tau(n)/2 for all n in Z.  Then
+ h_n = h_{M-n} (all n),  h_n = -tau(n)/2 (n < 0),  h_n = tau(n)/2 (n > M),  and with K := M - rb = D + 1 - r(b+1):
+      P is unimodal  <=>  h_m <= h_{K-m} for every integer m with 1 - rb <= m < K/2.
+Proof. Symmetry: by (b), h_n - h_{M-n} = tau(n)/2 + tau(M-n)/2 and tau(M-n) = tau(D+1-(n+r)) = -tau(n).
+ By (d) and periodicity, c_n - c_{n-1} = h_n - h_{n-rb} = h_{M-n} - h_{n-rb}; put m = n - rb, so M - n = K - m.
+ 1 <= n <= N/2  <=>  1 - rb <= m <= (K-1)/2.                                                            []
+(Theorem A is a reformulation of the reviewed exact criterion T3; it was re-derived and checked against
+ brute force on 44,000 + 78,000 random instances, 0 mismatches.)
+
+Corollary A1 (three kinds of conditions).  Split the pairs (m, K-m) of Theorem A:
+ (N-) m < 0 and K-m < 0:   equivalent to  tau(x) <= 0 for all integers x in (K/2, 0) with x <= M-1;
+ (N+) m < 0 <= K-m:        equivalent to  g_j >= tau(j)  (i.e. 2h_j >= tau(j)) for integers j >= 0, j > K, j > K/2, j <= M-1;
+ (P)  0 <= m < K/2:        h_m <= h_{K-m}  (both indices in [0, K], K < M).
+Proof. Uses h_m = -tau(m)/2 for m<0 and tau(K - m) = tau(D+1-m) = -tau(m) (K = D+1 mod r); put x = K-m.  []
+
+Lemma C0.  For integers K = D+1 mod r:  (N-) holds  <=>  K >= 2mu - 2r.   (Uses r !| a_i for all i.)
+Proof. If K >= 2mu - 2r, every x in (K/2, 0) has x > mu - r, so x mod r in [mu+1, r-1] and tau(x) <= 0.
+ If K < 2mu - 2r take x = mu - r: then K/2 < x <= -1, and x <= M-1 because mu <= D (if D < r-1 then
+ Gamma_t = 0 for t > D and Gamma_D > 0, so mu <= D).  tau(x) = tau(mu) > 0: for mu >= 1 by minimality of mu;
+ for mu = 0, tau(0) = Gamma_0 - Gamma_{r-1} >= 0 with equality only if Gamma is constant, i.e. A(zeta) = 0
+ for every r-th root of unity zeta != 1, impossible since [a_i]_zeta != 0 for zeta = e^{2 pi i/r} when r !| a_i.  []
+
+Theorem C (necessity, = reviewed T6).  If r !| a_i for all i and P is unimodal, then b <= T6.
+Proof. b > T6 <=> K < 2mu - 2r, so (N-) fails by Lemma C0.                                              []
+
+-------------------------------------------------------------------------------------
+Theorem B (peeling monotonicity).  For a >= r, b >= 1:
+      [a]_q [b]_{q^r} = [a + r(b-1)]_q + q^r [a-r]_q [b-1]_{q^r}
+(check: multiply by (1-q)(1-q^r); both sides give (1-q^a)(1-q^{rb})).  Hence, if a_1 >= r and a^- = (a_1 - r, a_2, ...),
+      P_a(b) = [a_1 + r(b-1)]_q prod_{i>=2}[a_i]_q  +  q^r P_{a^-}(b-1),
+both summands palindromic with centre N/2 (the first is a product of q-integers, hence unimodal).  Therefore
+      U(a + r e_i)  contains  {1} u (1 + U(a))            for every i.
+Corollaries.
+ B1 (C43 reproved) if r | a_i: peel a_i down to r; P_{(r, ...)}(b') = [r b']_q prod[...] is unimodal for all b'. So U = all b.
+ B2 (T1 reproved) U(a) contains {1, ..., 1+F}  (peel every a_i to its residue; b = 1 is trivially unimodal).
+ B3 (residue sandwich) with rho the residue vector:  U(a) contains [1, F] u (F + U(rho)).
+    Upward: U(a)-F is non-decreasing (as a set) under a_i -> a_i + r, and bounded (Theorem C), so it stabilises.
+ B4 (eventual residue determination).  Let rhohat be the full residue vector of the a_i >= 2 (entries in [1, r-1]),
+    k' = its length, g^inf = coefficients of 1/((1-q)^{k'-1}(1-q^r)) (non-decreasing for k' >= 2), i0 = least i with
+    g^inf_i >= max tau, L0 = max(sigma + 2 - 2r, i0 + r, 2).  If every a_i >= 2 satisfies a_i >= L0, then
+        U(a) = [1, F] u (F + U_inf(r, rhohat)),
+    where U_inf is computed by Corollary A1 with g replaced by g^inf (finite computation depending only on r, rhohat).
+    Proof: for b = 1+F+e (e >= 0) K = sigma + 1 - r(e+2) <= sigma + 1 - 2r < L0, so all (P) indices are < min a_i,
+    where g = g^inf (prod(1 - q^{a_i}) = 1 mod q^{min a_i}).  In (N+), indices j < min a_i again see g^inf; for
+    min a_i <= j <= D/2, Lemma 1(c) and delta >= 0 on [0, D/2] give g_j >= g_{j'} = g^inf_{j'} >= max tau for the j' = j
+    (mod r) in [min a_i - r, min a_i); for D/2 < j <= M-1, g_j - tau(j) = g_{M-j} >= 0.  The same holds for g^inf.  []
+    (Verified numerically: 300 random (r, rhohat) with a_i >= L0, 0 mismatches.)
+
+-------------------------------------------------------------------------------------
+Lemma U (cyclic Wintner lemma).  Let a be arbitrary with r !| a_i.  Then Gamma - const is symmetric about
+c := sigma/2 (mod r) and "symmetric-unimodal": tau(t) <= 0 for every step t whose midpoint t - 1/2 lies in the
+arc (c, c + r/2) (mod r), tau(t) >= 0 when t - 1/2 lies in (c + r/2, c + r), and tau(t) = 0 when t - 1/2 = c or c + r/2.
+Proof. Folding mod r: [a]_q -> F_a * J + 1_{[0, rho-1]} (J = all-ones vector), and J * v = (sum v) J, so
+ Gamma = (cyclic convolution of the arcs 1_{[0, rho_i - 1]}) + const.  Call a cyclic sequence SU(c) if it is symmetric
+ about c and non-increasing as one moves from c towards c + r/2 along either side.  (i) The arc 1_{[0,rho-1]} is SU((rho-1)/2).
+ (ii) An SU(c) sequence is a non-negative combination of indicators of arcs centred at c plus a constant (layer cake).
+ (iii) For arcs U (length p, centre u) and V (length q, centre v), (1_U * 1_V)(t) = |U intersect (t - V)| depends only on the
+ cyclic distance d between t and u+v, and equals Lc(d) + Lc(r-d) with Lc(x) = clamp((p+q)/2 - x, 0, min(p,q)); on
+ d in [0, r/2] the second term can only increase where the first also decreases (otherwise r < max(p,q) or d > r/2),
+ so the total is non-increasing in d: the convolution is SU(u+v).  (iv) Bilinearity + (ii),(iii): SU(c1)*SU(c2) is SU(c1+c2).
+ Induction over the factors gives Gamma - const in SU(sum (rho_i - 1)/2) = SU(sigma/2).                        []
+(Also checked on 50,000 random residue multisets, r <= 30, up to 40 factors: 0 violations.)
+
+Lemma 7 (the excess of the necessary bound is even).  If r !| a_i for all i, then E6 = T6 - 1 - F is an even integer >= 0.
+Proof. E6 >= 0 by B2 and Theorem C.  Write b = 1 + F + e; then K = K_e = sigma + 1 - r(e+2), and by Lemma C0,
+ E6 = max{ e : C(K_e) }, where C(K) means "tau(x) <= 0 for all integers x in (K/2, 0)"; C is monotone (C(K) => C(K') for K' >= K).
+ Suppose E = E6 is odd and put K = K_E.  Since E + 2 is odd, (K-1)/2 = sigma/2 - r(E+2)/2 = c + r/2 (mod r).
+ C(K - r) asks tau(x) <= 0 for x in ((K-r)/2, 0).  The steps x with midpoint x - 1/2 in ((K-r-1)/2, (K-1)/2] have midpoints in
+ the arc (c, c + r/2] (mod r), where tau <= 0 by Lemma U; the remaining steps satisfy x > K/2 and are covered by C(K).
+ So C(K_{E+1}) holds, contradicting maximality.                                                          []
+(Consistent with 100,000 random residue multisets, r <= 30, k <= 60: E6 always even.)
+
+Lemma 8 (flat domain).  For r >= 4 and r !| a_i:  Gamma is flat (|tau| <= 1)  <=>  at most two a_i have a middle residue.
+Proof. tau depends only on A mod [r]_q.  Unit factors: [r-1]_q = -q^{r-1} (mod [r]_q) rotates and negates tau; residue-1
+ factors are 1.  Also [rho]_q = -q^rho [r - rho]_q (mod [r]_q), so a middle rho may be replaced by r - rho (preserves flatness).
+ (<=)  One middle: tau = 1_0 - 1_rho (folded).  Two middles x, y: (1-q)[x][y] = (1-q^x)[y], folded = 1_{[0,y-1]} - 1_{[x, x+y-1]},
+     each arc of length y <= r-2 < r, so entries lie in {-1,0,1}.
+ (=>)  Three middles x <= y <= z (in [2, r-2]): tau(t) = B_t - B_{t-x} with B the folded [y][z], B_t = |[0,y-1] intersect [t-z+1, t]|.
+     B_{y-1} = y and B_{y-1-x} = (y - x) + max(0, x + z - r), so tau(y-1) = min(x, r - z) >= 2.
+     More middles: replace each middle w by min(w, r-w) <= r/2.  If tau_A(t0) >= 2, then t0 lies in the closed ascending arc of A
+     (Lemma U), a run of >= floor(r/2) consecutive steps with tau_A >= 0; for A' = A[w] (w <= floor(r/2)),
+     tau_{A'}(t) = sum_{i<w} tau_A(t - i); choosing the window inside that run and containing t0 gives tau_{A'}(t) >= 2.
+     Induction on the number of middles.                                                                  []
+(For r <= 3 there are no middle residues and every Gamma is flat.)
+
+Theorem D (at most three non-unit residues).  If r !| a_i for all i and at most three a_i have residue not in {0, 1},
+then U(a) = {1, ..., 1+F}.   (Extends reviewed T4 [<= 3 factors >= 2] and T8 [r <= 6, computer-assisted] to all r.)
+Proof. By B2 and Theorem C it suffices to show E6 = 0, i.e. sigma + 1 - 2mu < r; only the <= 3 residues in [2, r-1] matter.
+ 0 or 1 residue: sigma + 1 <= r - 1.  Two residues x <= y: (1-q)[x][y] = (1-q^y)[x] gives tau(x-1) = 1 > 0, so mu >= x - 1 and
+ sigma + 1 - 2mu <= y - x + 1 <= r - 1.  Three residues x <= y <= z <= r-1: as in Lemma 8, tau(y-1) = min(x, r-z) >= 1, so
+ mu >= y - 1 and sigma + 1 - 2mu <= x + z - y <= z <= r - 1.                                              []
+(Exhaustively checked: E6 = 0 for all <= 3-element residue multisets, r <= 40.)
+
+-------------------------------------------------------------------------------------
+Lemma 9 (box step).  h is multiplicative: if A' = A [w]_q then h(A') = h(A) * 1_{[0,w-1]} as bi-infinite sequences
+(because g' = window sums of g, tau' = window sums of tau, and h = g - tau/2 with g = 0 on negatives).
+Write H = 2h(A), body [0, M].  Suppose: A is flat; H is non-decreasing on [0, M/2] (hence unimodal on the body, by symmetry);
+H_0 >= 1; and M >= w - 2, M >= 0.  Then H' = 2h(A') is non-decreasing on [0, M'/2] (M' = M + w - 1); if moreover A' is flat,
+H'_0 = 2 - tau'(0) >= 1.
+Proof. H'_n - H'_{n-1} = H_n - H_{n-w}.  For 1 <= n <= M'/2 we have n <= M (as M >= w - 2).  If n - w < 0:
+ H_{n-w} = -tau(n-w) <= 1 <= H_0 <= H_n.  If n - w >= 0: both in the body; the midpoint n - w/2 <= M/2 - 1/2 and n <= (M+w)/2
+ give |n - M/2| <= |n - w - M/2|, so H_n >= H_{n-w} by symmetric unimodality.                               []
+
+Lemma 10 (base).  For r >= 3, [r-1]_q^2 = [r-2]_q [r]_q + q^{r-2}, so g_n = 1 and tau(n) = 0 on the body [0, r-3]; H = 2 there.
+
+Theorem E (flat closed form; proves the E5 "flat residue" conjecture, both halves).  If r !| a_i for all i and at most two a_i
+have residue in [2, r-2] (always true for r <= 3; equivalently Gamma is flat, Lemma 8), then
+        P unimodal  <=>  b <= 1 + floor((D + 1 - 2mu)/r) = 1 + F + E6.
+Proof. (=>) Theorem C.  (<=) By B3 it suffices that U(rho) contains [1, 1 + E6] for the reduced product
+ A_rho = [r-1]^s * (at most two middle boxes) (residue-1 factors are 1; T6(a) = F + T6(rho) since mu depends only on residues).
+ r = 2: A_rho = 1 and E6 = 0.  If s <= 1 (r >= 3): at most three non-unit residues, so E6 = 0 by Theorem D and there is nothing to prove.
+ If s >= 2: start from [r-1]^2 (Lemma 10: flat, H = 2 on the body, M = r - 3 >= w - 2 for every w <= r - 1) and multiply the remaining
+ boxes one at a time.  Every intermediate product has <= 2 middles, hence is flat (Lemma 8), and M only grows, so Lemma 9 applies at
+ every step: the final H is unimodal on its body with H >= H_0 >= 1 there.  Now let b <= 1 + E6, i.e. K >= 2mu - 2r, and check
+ Corollary A1:  (N-) by Lemma C0;  (N+) 2h_j = H_j >= 1 >= tau(j) on the body;  (P) for 0 <= m < K/2 both m and K-m lie in [0, K] with
+ K < M, and K - m is not farther from M/2 than m, so h_m <= h_{K-m}.  Hence P_rho(b) is unimodal for all b <= 1 + E6.        []
+Corollary E1 (all a_i = +-1 mod r).  Let s = #{i : a_i = -1 mod r} (r >= 3), s' = 2 floor(s/2).  Then mu = (-s) mod r (s even),
+ (1-s) mod r (s odd) [Gamma is a single spike], and  P unimodal <=> b <= 1 + F + s' - 2 ceil(s'/r).
+ r = 3 recovers T2 (s' - 2 ceil(s'/3) = 2 floor(S/6)); r = 2 recovers T5 (excess 0).
+(Theorem E checked against brute force: 0 errors on ~60,000 closed-form-domain instances; reduced family r <= 12, s <= 16: H unimodal
+ in all 3,730 cases; exhaustive C boxes r = 2..12: flat_fail = 0.)
+
+-------------------------------------------------------------------------------------
+Theorem T7' (non-existence, reviewed T7, refined).  No rule depending only on (r, k, b, residue multiset, F, D) decides unimodality:
+r = 6, b = 4, U(2,3,4,4,4,4,4,8) = {1,2,4} but U(2,2,3,4,4,4,4,10) = {1,2}.  Both have residue multiset rho = {2,2,3,4,4,4,4,4},
+U(rho) = {1}, U_inf = {1,2,3}: the sandwich of B3/B4 is strict, and which a_i is enlarged matters.  By Lemma 8 these are
+non-flat (8 middles), consistent with Theorem E.  By B4 the dependence on fine structure disappears once min a_i >= L0.
+
+-------------------------------------------------------------------------------------
+CONJECTURE S2 (parity-gap structure; NOT proved).  For all r >= 2 and a with r !| a_i:
+   U(a) = {1, ..., B*}  or  U(a) = {1, ..., B*} \ {B* - 1},   with  B* = 1 + F (mod 2),  1 + F <= B* <= 1 + F + E6.
+Equivalently: (i) P_b unimodal and b - 1 - F odd  =>  P_{b+1} unimodal;  (ii') P_b unimodal => P_{b'} unimodal for all b' <= b - 2.
+Status/evidence:
+ * proved on the flat domain (Theorem E: U is an interval with B* = 1+F+E6, E6 even by Lemma 7) and for <= 3 non-unit residues;
+ * proved for the (N-) part of the criterion: C(K_e) for odd e implies C(K_{e+1}) (proof of Lemma 7);
+ * exhaustive C runs (r = 3..12, all multisets in boxes, e.g. r=6 k<=8 a<=12; r=8 k<=7 a<=17; r=10 k<=6 a<=19; r=5 k<=12 a<=7, ...):
+   ~800,000 (r,a) profiles, parity_fail = 0, gap_fail = 0; random r <= 19, k <= 24, a <= 5r: 0 failures;
+   1,600 random profiles with r <= 30, k <= 60, a_i <= 100: 0 failures; (i) and (ii) tested on 38,000 implications: 0 failures.
+ * Gaps (B*-1 not in U) occur (e.g. N1: r=6, a=(2,3,3,4,4,4,5), U={1,3}); they never have size > 1 and never sit elsewhere.
+ * Note the obvious strengthening "P-type conditions hold at every even excess" is FALSE (r=13,
+   a=(47,50,48,60,36,20,59,55,4,2,9,57,48,61,50,45,8,48,48,46,20,23,2): N holds at e = 7, 8 but P fails at both; B*-1-F = 6),
+   yet S2 survives because failures come in (odd, even) pairs.
+
+-------------------------------------------------------------------------------------
+Answer (synthesis).
+ * r | a_i for some i: unimodal for all b.
+ * otherwise U(r,a) is the finite set decided by Theorem A (O(D + rb) arithmetic after computing A);
+   {1..1+F} <= U <= {1..1+F+E6}, E6 even;
+ * closed form iff-statement on the flat domain (<= 2 middle residues; all r <= 3): b <= 1 + floor((D+1-2mu)/r);
+   in particular <= 3 non-unit residues: b <= 1 + F (Conjecture 5.4 holds exactly there and for r = 2), and
+   all a_i = +-1: b <= 1 + F + s' - 2 ceil(s'/r);
+ * in general: no aggregate closed form (T7'); U - F is monotone under a_i -> a_i + r and eventually a function of
+   (r, residue multiset with 1's, number of factors) (B3, B4), i.e. a finite table per residue class;
+ * conjectured shape: S2.
