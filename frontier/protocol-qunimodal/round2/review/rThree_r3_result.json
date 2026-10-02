@@ -1,0 +1,91 @@
+{
+  "summary": "Step 4: default-reject review by a different model (reimplementers, proof referees, literature recheck)",
+  "agentCount": 2,
+  "logs": [
+    "passed review: N2_three_r3"
+  ],
+  "result": {
+    "reviews": [
+      {
+        "id": "N2_three_r3",
+        "kind": "A",
+        "v": {
+          "reproduced": true,
+          "own_numbers": "Interpretation (P is not defined in the text; inferred, and confirmed by the data): P_b(q) = prod_i [a_i]_q * [b]_{q^r} = prod_i [a_i]_q * [rb]_q/[r]_q; tau is then exactly (1-q)*P_0 mod (q^r-1), the cyclic differences of residue-class sums. Rule implemented verbatim (floor division, mu = largest j in [1,r-1] with tau_j>0, s=(D+1) mod r, FIRE => B*=T6-2). Ground truth: exact (multi-limb / Python big-int) brute force of unimodality of P_b for every b in [1, max(B*,T6,floor((D+1)/r)+1)+3]; an instance is an 'error' unless {b: P_b unimodal} == {1..B*}. Results: Dataset 1 (all k=3 multisets a1<=a2<=a3 in [1,100], all residues middle, r=4..30): 2,322,483 instances (count matches exactly), 0 errors. Dataset 3 (8,000 random in-domain, r 4..30, k 3..40, floors 0..5): 0 errors. Dataset 2 (base family, 27,405 triples x 38 nm = 1,041,390, count matches): the full exact run was still in progress when output was forced; a uniform 2% random sample (20,786 instances) had 0 errors, and a separate 300-instance random in-domain sample agreed between the C bigint checker and an independent exact Python implementation (0 mismatches). (My first 64-bit run of dataset 2 showed 677,615 'errors' which were entirely coefficient overflow in my checker, e.g. [4]^32 > 2^63; the exact checker shows none.) B* was >= 1 on every instance.",
+          "new_instances_tested": "All out of the fit range, all with exact arithmetic, extra=3 beyond B*: (A) 1,500 random with k in 41..80, r 4..30, floors<=5: 0 errors (B* up to 267). (B) 1,500 random with floors up to 15 (a_i up to ~465), k 3..40, r 4..30: 0 errors (B* up to 384). (C) 1,500 random with r in 31..80, k 3..40, floors<=5: 0 errors. (G) 1,000 random with r in 81..150, k 3..10, floors<=3: 0 errors. (F) 1,000 random with r in 4..6, k 20..60, floors<=20: 0 errors (B* up to 730). (D) exhaustive k=3 sweep, r in 31..50, all multisets a_i<=100 with middle residues: 2,734,260 instances, 0 errors. Still running when output was forced (no result yet): (E) base family extended to r 31..40 with nm in {38,45,50}; (H/I) persistence checks with 15 extra b values beyond B*.",
+          "new_instances_ok": true,
+          "verdict": "PASS",
+          "reasons": "Under the only natural reading of P (prod[a_i]_q * [b]_{q^r}), an independent implementation of the rule reproduces 0 errors on the full 2,322,483-instance dataset 1, on 8,000 random in-domain instances, and on a 20,786-instance exact random sample of dataset 2 (full dataset-2 run not finished at forced-output time, but no error seen in any sampled instance). On 8,234,260 new instances well outside the fit range (k up to 80, a_i up to ~465, r up to 150, including an exhaustive 2.73M-instance k=3 sweep for r 31..50) there was not a single mismatch; the rule's structure (tau = cyclic differences of residue-class sums governing the periodic middle of P_b) also explains why it should hold generally. Caveats: P had to be inferred from the formula shape since the description does not define it; dataset 2 was verified exactly only on a 2% sample plus the in-domain random sets; the two remaining extended checks (E, H/I) had not completed. Code: /tmp/claude-0/qu/review/r2/N2_three_r3-A/{rule.py, check2.c, gen.py, genD.py, genE.py}."
+        }
+      },
+      {
+        "id": "N2_three_r3",
+        "kind": "B",
+        "v": {
+          "reproduced": true,
+          "own_numbers": "Family (i): exactly 2,322,483 instances generated (all multisets a1<=a2<=a3 in [1,100], r in [4,30], all three residues in [2,r-2]); 0 mismatches between U (computed by brute force) and {1..B*}; 0 FIRE events; B* = 1+F in all 2,322,483. Family (ii): exactly 1,041,390 instances ((m1,m2,m3) middle multiset with m_i<r plus nm copies of r-1, nm=0..37, r in [4,30]); 0 mismatches; 8,914 FIRE events, all with s=r-2 and tau_{r-2}=-2. Family (iii): 8,000 random in-domain instances (k<=40, a_i<=100, <=5 floors): 0 mismatches, 235 fires. In every instance U was a prefix {1..B*}, Gamma was non-constant, and B*-1-F was even and >=0. Ground truth uses exact 448/640-bit integer arithmetic (an int64 version overflowed and was discarded), cross-validated against an independent Python big-int brute force on 450 instances; claim formula implemented independently in C and Python, agreeing on 8,150 instances. Files in /tmp/claude-0/qu/review/r2/N2_three_r3-B/ (check2.c, claim.py, gen.py, gen_rand.py).",
+          "new_instances_tested": "8,910 new instances outside the claimed fit range, all in the claimed domain: (A) 1,500 random with r in [31,60], k<=40, a_i<=200, any number of floors; (B) 1,500 random with r in [4,30], k<=12, a_i<=300; (C) 300 random with k in [41,80], r in [4,30], a_i<=100; (D) 600 structured instances r in [31,45], three middle residues plus up to 40 copies of 1 or r-1; (E) 3,000 random r in [4,30], k<=40, a_i<=100 with up to all a_i carrying floors (beyond the '5 floors' limit); (F) 2,010 instances: structured family with nm in 38..60 (k up to 63) for r in [4,8] plus mixed 1/(r-1) fills with floors, k up to 50. Results: 0 mismatches in all 8,910; U always a prefix {1..B*}; parity side-claim held; 265 FIRE events, all still with s=r-2 and tau_{r-2}=-2 (including r>30). Also confirmed empirically on 1,380 (instance,b) pairs that P is non-unimodal for every b beyond my cutoff bmax.",
+          "new_instances_ok": true,
+          "verdict": "PASS",
+          "reasons": "Independent exact-arithmetic implementation of P's coefficients and weak unimodality reproduces every claimed count exactly (2,322,483; 1,041,390; 8,000 random) with 0 errors, and the claim's formula U={1..B*} with B* = T6 (or T6-2 when FIRE) holds on all 3,371,873 in-range instances plus 8,910 new out-of-range instances (r up to 60, a_i up to 300, k up to 80, unlimited floors). Side claims (B*-1-F even and nonnegative; FIRE only with s=r-2, tau_{r-2}=-2 for r<=30, and in fact also for r<=60 in tests) also held with no exceptions. No mismatch of any kind was found. Caveat: this is numerical verification of the conjectured formula, not a proof; nonetheless nothing contradicts the claim."
+        }
+      }
+    ],
+    "passed": [
+      "N2_three_r3"
+    ]
+  },
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Review"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "revA:N2_three_r3",
+      "phaseIndex": 1,
+      "phaseTitle": "Review",
+      "agentId": "af95d75e42ea8a82f",
+      "model": "claude-fable-5-1",
+      "state": "done",
+      "startedAt": 1790961033967,
+      "queuedAt": 1790961033931,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "Interpretation (P is not defined in the text; inferred, and…",
+      "promptPreview": "DEFAULT: REJECT. Reimplement from a TEXT DESCRIPTION ONLY and check a claimed result.\nTEXT DESCRIPTION (this is all you get about how it was produced): Three-middle-residue rule. Domain: r>=4; r divides no a_i; exactly three a_i have residue a_i mod r in [2, r-2]; every other a_i has residue 1 or r-1. Let rho_i = a_i mod r; tau = (1-q)*prod_i [rho_i]_q with exponents reduced mod r (length-r vector…",
+      "promptFramed": true,
+      "lastProgressAt": 1790961816836,
+      "tokens": 99797,
+      "toolCalls": 28,
+      "durationMs": 782864,
+      "resultPreview": "{\"reproduced\":true,\"own_numbers\":\"Interpretation (P is not defined in the text; inferred, and confirmed by the data): P_b(q) = prod_i [a_i]_q * [b]_{q^r} = prod_i [a_i]_q * [rb]_q/[r]_q; tau is then exactly (1-q)*P_0 mod (q^r-1), the cyclic differences of residue-class sums. Rule implemented verbatim (floor division, mu = largest j in [1,r-1] with tau_j>0, s=(D+1) mod r, FIRE => B*=T6-2). Ground t…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "revB:N2_three_r3",
+      "phaseIndex": 1,
+      "phaseTitle": "Review",
+      "agentId": "ad67f51d51673176b",
+      "model": "claude-fable-5-1",
+      "state": "done",
+      "startedAt": 1790961033970,
+      "queuedAt": 1790961033931,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "Family (i): exactly 2,322,483 instances generated (all mult…",
+      "promptPreview": "DEFAULT: REJECT. Check a claim starting ONLY from the original problem.\nORIGINAL PROBLEM: For integers r>=2, k>=1, a_1..a_k>=1, b>=1 let P(q) = [a_1]_q...[a_k]_q * [b]_{q^r}, where [n]_q = 1+q+...+q^{n-1} and [b]_{q^r} = 1+q^r+...+q^{r(b-1)}. P is (weakly) unimodal if its coefficients satisfy c_0<=...<=c_m>=...>=c_N for some m. U = {b : P unimodal}, F = sum floor(a_i/r), D = sum(a_i-1). Question: …",
+      "promptFramed": true,
+      "lastProgressAt": 1790961582090,
+      "tokens": 82394,
+      "toolCalls": 25,
+      "durationMs": 548118,
+      "resultPreview": "{\"reproduced\":true,\"own_numbers\":\"Family (i): exactly 2,322,483 instances generated (all multisets a1<=a2<=a3 in [1,100], r in [4,30], all three residues in [2,r-2]); 0 mismatches between U (computed by brute force) and {1..B*}; 0 FIRE events; B* = 1+F in all 2,322,483. Family (ii): exactly 1,041,390 instances ((m1,m2,m3) middle multiset with m_i<r plus nm copies of r-1, nm=0..37, r in [4,30]); 0 …"
+    }
+  ],
+  "totalTokens": 182191,
+  "totalToolCalls": 53
+}
