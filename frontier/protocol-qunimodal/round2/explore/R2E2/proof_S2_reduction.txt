@@ -1,0 +1,155 @@
+PROOF FILE (path R2E2): reduction of Conjecture S2 to a finite residue-level certificate, via peeling/lifting.
+
+======================================================================================
+0. NOTATION
+======================================================================================
+r >= 2, k >= 1, a = (a_1..a_k), all a_i >= 1, and r divides no a_i (otherwise C43 settles everything).
+A(q) = prod [a_i]_q = sum c_y q^y, D = deg A = sum (a_i - 1).          (c_y = 0 outside [0,D])
+e(q) = (1-q)A(q) = sum e_y q^y, e_y = c_y - c_{y-1}                     (e_y = 0 outside [0,D+1])
+d(q) = e(q)/(1-q^r) = sum_{y>=0} d_y q^y, i.e. d_y = sum_{m>=0} e_{y-rm}; set d_y = 0 for y < 0.
+       Equivalently d_y = d_{y-r} + e_y for every integer y.                                  (0.1)
+tau_t = sum_{y = t (mod r)} e_y  (t in Z/r).   Q_u = d_u - tau_{u mod r}  (u in Z).
+rho_i = a_i mod r in [1,r-1]; rho = residue multiset; sigma = sum(rho_i - 1); F = sum floor(a_i/r);
+D = sigma + rF.  For b >= 1: P_b = A(q)[b]_{q^r}, N_b = D + r(b-1), K(b) = D+1-r(b+1).
+U = {b >= 1 : P_b unimodal};  J(a) = {j >= 0 : 1+F+j in U};  K_j := sigma + 1 - r(j+2) = K(1+F+j).
+ND(K) ("near-diagonal condition"):  Q_{K-x} >= d_x for every integer x with K - r <= 2x < K.
+Phi_b(K):                            Q_{K-x} >= d_x for every integer x with x >= 1-rb and 2x < K.
+Bad(a) = {u in Z : Q_u < 0} = {u : d_u < tau_u};  mu*(a) = max Bad(a)  (exists, Lemma 9).
+f = coefficients of (1-q)^{-(k-1)}(1-q^r)^{-1} (f_u = 0 for u < 0)  -- the large-part limit (B4).
+Bad_inf = {u : f_u < tau_u}; mu*_inf = max Bad_inf; mu_neg = max{u in [-r,-1] : tau_{u mod r} > 0}.
+
+S2 (target): J(a) = [0,E] or [0,E] \ {E-1} with E even. (Since [1,F] is in U by T1, this is
+U = [1,B*] or [1,B*]\{B*-1}, B* = 1+F+E = 1+F mod 2.)
+
+======================================================================================
+1. THE PAIR CRITERION (all steps elementary)
+======================================================================================
+Lemma 1. A palindromic sequence p_0..p_N (p_n = p_{N-n}) is unimodal iff p_{n-1} <= p_n for 1 <= n <= floor(N/2).
+ Proof. (<=) nondecreasing up to floor(N/2), and by symmetry nonincreasing from ceil(N/2) on.
+ (=>) suppose p_n < p_{n-1} with 2n <= N. A mode m satisfies m <= n-1 (else p_{n-1} <= p_n). Then the
+ sequence is nonincreasing from m on, so p_n >= p_{N-n+1} (as N-n+1 >= n+1 > n >= m). But p_{N-n+1} = p_{n-1} > p_n. Contradiction.
+
+Lemma 2. Let p_n be the coefficients of P_b. Then p_n - p_{n-1} = d_n - d_{n-rb} for all n.
+ Proof. (1-q)P_b = e(q)(1-q^{rb})/(1-q^r) = d(q)(1-q^{rb}).
+
+Lemma 3 (reflection). (a) d_y = tau_{y mod r} for y >= D+1.  (b) Q_u = d_{D+1-r-u} for every integer u.
+ Proof. (a) for y >= D+1 the sum d_y = sum_{m>=0} e_{y-rm} contains every y' = y (mod r) with 0 <= y' <= D+1.
+ (b) tau_{u mod r} = sum_{m in Z} e_{u-rm}, so Q_u = -sum_{m>=1} e_{u+rm}. A is palindromic (c_y = c_{D-y}), hence
+ e_{D+1-y} = c_{D+1-y} - c_{D-y} = c_{y-1} - c_y = -e_y. So Q_u = sum_{m>=1} e_{D+1-u-rm} = sum_{m'>=0} e_{(D+1-r-u) - r m'}
+ = d_{D+1-r-u}.
+
+Lemma 4 (pair criterion). P_b is unimodal iff Phi_b(K(b)).
+ Proof. P_b is palindromic of degree N_b (both factors are). By Lemmas 1,2: unimodal iff d_n >= d_{n-rb} for
+ 1 <= n <= floor(N_b/2) (n = 0 is not needed). Put x = n - rb. By Lemma 3(b), d_{x+rb} = Q_{D+1-r-x-rb} = Q_{K-x}, K = K(b).
+ n >= 1 <=> x >= 1-rb;  2n <= N_b <=> 2x + 2rb <= D + rb - r <=> 2x <= K - 1 <=> 2x < K.
+
+Lemma 5. e_y >= 0 whenever 2y <= D+1.
+ Proof. Each [a_i]_q is a palindromic unimodal polynomial with nonnegative coefficients; such polynomials are closed under
+ product (standard; e.g. Stanley, "Log-concave and unimodal sequences...", 1989, Prop. 1). So c is palindromic unimodal
+ with centre D/2, hence c_y >= c_{y-1} whenever |y - D/2| <= |y-1-D/2|, i.e. 2y <= D+1.
+
+Lemma 6 (LCW: only near-diagonal pairs matter when b-1 is unimodal). Let b >= 2, K = K(b) (so K+r = K(b-1)).
+ If Phi_{b-1}(K+r) and ND(K) hold, then Phi_b(K) holds.
+ Proof. Take x with x >= 1-rb, 2x < K. If 2x >= K-r, the inequality is part of ND(K). Otherwise 2x < K-r. Put x' = x+r:
+ x' >= 1-r(b-1) and 2x' = 2x+2r < K+r, so Phi_{b-1}(K+r) gives Q_{K-x} = Q_{(K+r)-x'} >= d_{x'} = d_{x+r}.
+ By (0.1), d_{x+r} - d_x = e_{x+r}, and 2(x+r) < K + r = D+1-rb <= D+1, so e_{x+r} >= 0 by Lemma 5.
+ Hence Q_{K-x} >= d_x.
+
+======================================================================================
+2. PEELING / LIFTING (Theorem B at the level of d)
+======================================================================================
+Lemma 7 (lifting). Let a' = a + r e_i (a_i -> a_i + r). Write Ahat_i = prod_{j != i}[a_j]_q = sum ahat_m q^m. Then
+ (a) tau' = tau;  (b) d'_x = d_x + ahat_{x-a_i} >= d_x and Q'_u = Q_u + ahat_{u-a_i} >= Q_u for all integers x,u;
+ (c) rho, sigma and every K_j are unchanged, F' = F+1, D' = D+r;
+ (d) if K <= D+1+a_i then ND_a(K) implies ND_{a'}(K).
+ Proof. [a_i+r]_q = [a_i]_q + q^{a_i}[r]_q (this is the peeling identity), so A' = A + q^{a_i}[r]_q Ahat_i and
+ e' = e + q^{a_i}(1-q^r)Ahat_i. The class sums of (1-q^r)Ahat_i are all 0, giving (a); dividing by (1-q^r) gives d' = d + q^{a_i}Ahat_i,
+ i.e. (b) (Q' = d' - tau). (c): a_i mod r unchanged; K_j = D+1-r(F+j+2) is invariant under D->D+r, F->F+1.
+ (d): take a pair x < u = K-x with u - x = K - 2x in (0,r]. Need Q'_u >= d'_x, i.e. (given Q_u >= d_x) ahat_{u-a_i} >= ahat_{x-a_i}.
+ Ahat_i is palindromic unimodal (Lemma 5's fact) of degree D-a_i+1, centre c = (D-a_i+1)/2, with ahat = 0 outside its support;
+ so ahat_m >= ahat_{m'} whenever |m-c| <= |m'-c|. With m = u-a_i, m' = x-a_i, C = a_i + c = (D+1+a_i)/2 and x < u:
+ |u-C| <= |x-C|  <=>  x+u <= 2C  <=>  K <= D+1+a_i.  (If k = 1, Ahat = 1 and the same holds.)
+
+Lemma 8 (comparison with the large-part limit, B4). d^a_x <= f_x for every integer x.
+ Proof. d^a(q) = f(q) * prod_i (1-q^{a_i}), so d^a_x = f_x whenever x < min a_i. By Lemma 7(b) d_x does not decrease under
+ lifting; lift every part until all exceed x: d^a_x <= d^{a''}_x = f_x.
+
+Lemma 9 (bad sets). (a) tau != 0 and some tau_t > 0; hence mu_neg exists.
+ (b) Bad(a) is nonempty and bounded above (Q_u = 0 for u >= D+1), so mu*(a) exists.
+ (c) Bad_inf subset Bad(a) subset Bad(rho); mu_neg in Bad_inf. Hence  -r <= mu_neg <= mu*_inf <= mu*(a) <= mu*(rho).
+ Proof. (a) tau = 0 iff (1-q^r) | (1-q)A iff [r]_q | A. The cyclotomic Phi_r (r >= 2) divides [r]_q, and divides [a]_q iff r | a;
+ being irreducible it would divide some [a_i]_q, i.e. r | a_i, excluded. sum_t tau_t = e(1) = 0, so some tau_t > 0.
+ (b) For u < 0 with tau_u > 0, Q_u = -tau_u < 0. Upper bound by Lemma 3(a).
+ (c) Q^a = d^a - tau <= f - tau (Lemma 8) gives Bad_inf subset Bad(a); Q^{rho} <= Q^a (Lemma 7(b), a is obtained from rho by lifts)
+ gives Bad(a) subset Bad(rho). For u in [-r,-1], f_u = 0, so mu_neg in Bad_inf. Max exists since subsets of bounded-above sets.
+
+Lemma 10 (TU: necessary bound). If 1+F+j in U then K_j >= 2 mu*(a).
+ Proof. Let y* = D+1-r-mu*; by Lemma 3(b) y* = min{y : d_y < 0}, and y* >= 1 since d_0 = 1, d_y = 0 (y<0).
+ Let b = 1+F+j, K = K_j and suppose K < 2mu*. Put x = K - mu* = y* - rb. Then 2x < K, x >= 1-rb, and x < y* so d_x >= 0.
+ But Q_{K-x} = Q_{mu*} < 0 <= d_x, contradicting Phi_b(K) (Lemma 4).
+
+======================================================================================
+3. RESIDUE CERTIFICATE AND THE REDUCTION THEOREM
+======================================================================================
+For a residue multiset rho (parts in [1,r-1]; computed with a := rho, so D = sigma, F = 0) define
+ (TP_rho)  every z in Bad(rho) has floor((sigma+1-2z)/r) even.
+           [finite check: z in [-r, sigma+1] suffices: Q_z = 0 for z >= sigma+1; for z < -r, Q_z = -tau_z = Q_{z+r}
+            and floor((sigma+1-2z)/r) = floor((sigma+1-2(z+r))/r) + 2.]
+ (E_rho)   ND_rho(K) for every K = sigma+1 (mod 2r) with 2mu*_inf <= K <= sigma+1-2r.
+ (O_rho)   ND_rho(K) for every K = sigma+1+r (mod 2r) with 2mu*_inf + 3r <= K <= sigma+1-2r.
+ Strong version (E+,O+): the same with mu*_inf replaced by mu_neg (weaker hypothesis on K, so a stronger statement);
+ TP, E+, O+ depend only on the residues != 1 (A_rho, tau, sigma ignore parts [1]_q = 1; mu_neg depends on tau only).
+
+Lemma 11 (transfer to all lifts). Let a have residue multiset rho.
+ (a) TP_rho => every z in Bad(a) has floor((sigma+1-2z)/r) even.     [Bad(a) subset Bad(rho), Lemma 9(c)]
+ (b) ND_rho(K) => ND_a(K) for every K <= sigma+1.  [iterate Lemma 7(d); at each stage K <= sigma+1 <= D_current+1 <= D+1+a_i]
+ (c) Hence E_rho/O_rho give ND_a(K) on the same K-ranges; and since mu*_inf <= mu*(a) (Lemma 9c) these ranges contain
+     {even-family K: 2mu*(a) <= K <= K_0} and {odd-family K: 2mu*(a)+3r <= K <= K_0}.
+
+THEOREM R. If r divides no a_i and TP_rho, E_rho, O_rho hold for the residue multiset rho of a, then S2 holds for a.
+ With (TP, E+, O+) for rho' = residues of a different from 1, S2 holds for every a whose residues != 1 form rho'
+ (any number of parts = 1 mod r, any sizes): indeed mu_neg <= mu*_inf for every k (Lemma 9c), so E+,O+ imply E,O.
+ Proof. Write mu* = mu*(a). Note K_j belongs to the "even family" (K = sigma+1 mod 2r) iff j is even.
+ Step 0. 0 in J (T1: b = 1+F is unimodal).
+ Step 1 (parity gap). By Lemma 11(a) applied to z = mu* in Bad(a), floor((sigma+1-2mu*)/r) = 2s is even.
+   If j in J then K_j >= 2mu* (Lemma 10), i.e. r(j+2) <= sigma+1-2mu* < r(2s+1), so j <= 2s-2 (J is finite).
+   If moreover j is odd, j <= 2s-3, so K_j - 2mu* = (sigma+1-2mu*) - r(j+2) >= 2sr - r(2s-1) = r.
+ Step 2 (S2 (i)). Let j in J be odd. K_{j+1} = K_j - r >= 2mu* (Step 1), K_{j+1} <= K_0, even family, so ND_a(K_{j+1})
+   holds (Lemma 11(c)). Phi(K_j) holds for b = 1+F+j (Lemma 4). Lemma 6 with b+1 >= 2 gives j+1 in J.
+ Step 3 (S2 (ii)). Let j in J and suppose some j' <= j-2 is not in J; let j0 be the least one (j0 >= 1 by Step 0), so
+   j0-1 in J, j0 not in J. By Lemma 6 (b = 1+F+j0 >= 2) ND_a(K_{j0}) fails. K_{j0} <= K_1 < K_0.
+   - j0 even: K_{j0} >= K_j + 2r >= 2mu*: contradicts Lemma 11(c) (even family).
+   - j0 odd, j even: j - j0 is odd and >= 2, so >= 3: K_{j0} >= K_j + 3r >= 2mu* + 3r.
+   - j0 odd, j odd: K_j >= 2mu* + r (Step 1) and j - j0 >= 2: K_{j0} >= 2mu* + 3r.
+   In both odd cases Lemma 11(c) (odd family) gives ND_a(K_{j0}), contradiction. Hence [0, j-2] subset J.
+ Step 4. J is finite and nonempty; E := max J. By Step 3, [0,E-2] subset J. If E were odd, Step 2 gives E+1 in J: impossible.
+   So E is even and J = [0,E] or [0,E]\{E-1} (the latter only if E >= 2).  QED
+
+======================================================================================
+4. STATUS
+======================================================================================
+* Theorem R is proved (all lemmas above are complete). It reduces S2 for ALL part sizes to three finite statements about the
+  residue multiset rho (or rho' with the strong version) - this is the "residue-level statement"; the role of "adding small
+  parts" is exactly Lemma 7 (lifting never destroys ND and only shrinks Bad).
+* Verified certificates (exact integer computation, parts < r, inside the fit box):
+    E_rho, O_rho : residue_check.check_rho via sweep_certificate.py -> sweep_results.txt
+    TP_rho (+ sanity mu*_inf >= -r) on the SAME ranges : residue_check2.tp_rho via sweep_tp.py -> sweep_tp.txt
+        ranges: all rho with r = 2..30 and k up to the bound listed per r (k<=40 for r<=5, ..., k<=4 for r=28..30);
+                equal-residue rho = (t^k), k <= 60, r = 2..30.
+    (sweep_results2.txt is a partial re-run of all three checks together for r <= 6; identical outcome.)
+    Strong version (TP, E+, O+) for rho' with parts in [2,r-1]: strong_check.strong via sweep_strong.py -> sweep_strong.txt
+  RESULTS: full certificate (TP,E,O): 3,154,273 residue multisets checked, 0 failures (r = 2..30).
+           strong certificate (TP,E+,O+): 1,547,599 rho' checked, 25,737 fail (O+/E+ too strong for long rho'); it passes
+           for EVERY rho' with k' <= 5 parts (r <= 12) and k' <= 3 parts (r <= 30) (strong_minfail.txt).
+  COROLLARIES (proved = Theorem R + finite computation):
+   (C1) S2 holds for every a (r <= 30, r divides no a_i, ANY part sizes) whose residue multiset rho lies in the swept range,
+        e.g. k <= 40 for r <= 5, k <= 26 for r = 6, k <= 19 for r = 7, ..., k <= 4 for r = 28..30, and all a with all
+        a_i congruent mod r and k <= 60.
+   (C2) S2 holds for every a with r <= 12 having at most 5 parts with residue in [2,r-1] (any number of parts = 1 mod r,
+        any sizes), and for r <= 30 with at most 3 such parts (the latter also follows from Thm D).
+  Each verified rho (resp. rho') yields a THEOREM: S2 holds for every a with that residue multiset (resp. with those
+  residues != 1 and any number of residue-1 parts), with arbitrary part sizes.
+* NOT proved: TP_rho, E_rho, O_rho for every rho. So S2 in full generality remains a conjecture; it is now implied by the
+  residue certificate (TP, E, O for every rho). No counterexample to the certificate was found in any sweep.
+* Sanity checks of the lemmas on random instances: test_lemmas.py (L3 = Lemma 4, LCW = Lemma 6, LM = Lemma 7(d),
+  TU = Lemma 10, TP); 0 violations.

@@ -1,0 +1,72 @@
+===== R2E1 (outcome FAILED, candidates tried 23)
+S2 is not fully proved. (i) is proved, and so is every part of (ii) except one inequality.
+
+What remains: for b in U with b != F (mod 2) and b>=4, show b-3 is in U. Equivalently, show B_off >= B*-3, where B_off is the largest element of U with parity F.
+
+How it reduces: by the thread criterion (Theorem 12), this is a statement about each thread separately. For j == F (mod 2) with V_j<0, it requires V_j < d_j - d_{j+1} - d_{j+3}. It would follow from inequality L': d_j - d_{j+1} >= d_{j+3} at the first off-parity failure. In positions this reads delta_u - delta_v >= delta_{v-r}, where v<u<v+r are consecutive thread positions.
+
+Why the proved lemmas are not enough: unimodality of delta plus the sign lemma do not imply (C). The abstract sequence d=(2,1,1,1,1,1) with F even satisfies both lemmas but violates (C). Over all abstract unimodal sequences of length up to 7 with entries up to 4, 82 of 8659 violate it (abstract_thread.py). A proof therefore needs quantitative arithmetic of (1-q)prod[a_i]_q: an off-parity failure must never happen at a level where delta grows slowly.
+
+How big the gap is: a pure exponential model delta=e^{lambda y}, with thread gaps g and r-g, has a violation window exactly when e^{-lambda g}(1+e^{-lambda r})>1, roughly lambda<1/(r+2g). No instance in the fit box comes close:
+- L' held at all 3270 high failures checked, with minimum ratio 1.67e5.
+- Inside the fit box (Theorem 17 coverage), failures fall at the very bottom of the thread in all 100488 exhaustive sets and in 1277 of 1500 random ones.
+- Large-k instances can fail high (height 9 for r=30, a=[15]^40), but there delta grows very fast.
+
+Evidence for S2 itself: 0 violations in 100488 exhaustive and 12000 random sets.
+
+Fit-box incident: bigk.py once built thr2.Thr for (r=30, a=[14]*30+[16]*30). That is k=60 with unequal a_i, which is outside the box. It computed A and g before an assertion stopped the run; nothing was printed or used. Assertions now guard every instance constructor.
+
+===== R2E2 (outcome PROOF, candidates tried 16)
+This is a partial proof, not a proof of S2 for all parameters. The peeling path proves that S2 follows from a residue-level certificate: three finite statements (TP_rho, E_rho, O_rho) about the small-part instance rho, with all parts below r. Lifting (Theorem B) shows that the part sizes never matter. What is not done is a proof of that certificate for every rho; the attempt to prove it by adding one small part at a time did not close. Adding a part [s]_q convolves d, tau and Q with s ones. That turns ND(K') into a mix of pair conditions at the sums K'-2i for i<s, and these fall in both residue classes of K mod 2r. Only one class (E) holds for every K; the other (O) holds only above 2mu*+3r. So a single-part induction loses the parity bookkeeping. The certificate holds for all 3,154,273 rho swept (0 failures). The k-independent strong version, which covers any number of parts that are 1 mod r, fails for 25,737 of 1,547,599 long rho', so it cannot serve as the universal residue statement. Every failure has many parts: there are none with k'<=5 for r<=12 or k'<=3 for r<=30. Proving TP/E/O for all rho, for example from cyclic unimodality of prod[rho_i] mod (q^r-1) (0 failures in test_cyclic_unimodal.py, unproved), remains open.
+
+===== R2E3 (outcome FAILED, candidates tried 26)
+S2 is only partly proved. The part still open is the odd shift b -> b-3 in S2(ii).
+
+What is proved (see proof_S2_partial.txt):
+- U = [1,sigma] u {sigma+2, sigma+4, ..., tau*-2}, with sigma and tau* both congruent to 1+F mod 2 and tau* >= sigma+2.
+- From this: S2(i) holds; max U is congruent to 1+F mod 2; U is closed under b -> b-2; and S2 is equivalent to tau* <= sigma+4.
+
+How the proof goes:
+- Two pairing arguments on the centred difference sequence e: Lemma 3 shows e is unimodal on the positive half; Lemma 4 is the exact zigzag criterion over class pairs +-delta.
+- Lemma 7 (new) shows the class sums of prod[a_i] are cyclically unimodal, peaked at S/2. Its proof uses an arc-overlap lemma on Z_r. Lemma 8 turns this into the sign rule that fixes all parities.
+
+Where it breaks: for each class pair delta, the shape of U_delta needs (Z2): A_{s0+2} + E_{s0+4} < 0, with s0 the first index where the alternating sum A_s goes negative.
+- The paired identity Q_{s0} = E_{s0} + A_{s0-2} >= 0 only gives t1 >= s0+2. The needed bound t1 <= s0+4 cannot come from pairing alone.
+- e-unimodality plus cyclic unimodality are not enough for the S2 shape. They fail on 102/2312 generic symmetric A, and on 226/10859 generic log-concave A (generic_cu.py, generic_cu_lc.py). So any proof of (Z2) must use quantitative product structure: it has to compare the class sum |tilde-tau(delta)| with the e-samples near the end of the support.
+- The easy route s0 >= L-3 (which would make E_{s0+4}=0) is false. In the large-k stress set it fails in 495/1944 cases, with s0-L as low as -8.
+- The robust inequality E_{s0+1} >= E_{s0+2} + E_{s0+4} holds at s0 in 1847/1847 cases. But it fails as a uniform lemma: its validity threshold sbar lies up to 28 steps past the E-peak. It would therefore need a separate proof that s0 >= sbar, which is no easier.
+
+Empirically (Z2) holds everywhere tested: 0 failures in 5552 + 1944 class-pair instances. Also tau*-sigma is always 2 or 4 on 20233 instances, and s_neg - s0 is always 0 or 2 on 1705 instances. A proof of (Z2) would finish S2 with no other changes.
+
+All files are in /tmp/claude-0/qu/explore2/R2E3/.
+
+===== R2E4 (outcome NONEXISTENCE_EVIDENCE, candidates tried 19)
+I found no counterexample to S2 anywhere in the fit box (0 violations in about 659M exact evaluations). Everything is in /tmp/claude-0/qu/explore2/R2E4/.
+
+Coverage:
+- All-equal family: complete in the box.
+- Two-value family: complete up to k<=14.
+- Exhaustive multiset sweeps: 646.5M instances over all r=4..30 and k=3..40, but only for small value ranges at larger k.
+- Random families: many middle residues; composite r in {12,24,30}; a_i near multiples of r; many 1s plus a few large entries.
+- One- and two-change neighbourhoods of about 190k gap instances.
+- Three hill-climbing objectives: 1.94M evaluations.
+
+Not covered exhaustively: large k with large, mixed a_i (only sampled and hill-climbed). The many-1s family is degenerate because [1]_q=1, so those 1s change nothing.
+
+The near-miss metrics based on normalized coefficient margins were scale-dependent: they drift towards large a_i, so I discarded them. Descent counts were the informative measure. Every gap seen has pattern 1^j 0 1 on (F,T6] with j odd. Two stronger descent-count relations, which together imply S2, were never broken. Bad candidates fail in matched pairs (b, b+1) with b-1-F odd, which is consistent with S2(i).
+
+===== R2E5 (outcome RULE, candidates tried 13)
+(no failure report)
+
+===== R2E6 (outcome PROOF, candidates tried 15)
+(no failure report)
+
+===== R2E7: explicit L0 and explicit U_inf (finite-state description) in the large-part regime (outcome RULE, candidates tried 21)
+Partial negatives (the main rule did not fail):
+(1) The proved L0 = max(1, floor((S-k+3-r)/2)) is safe but not sharp. For r<=7, k<=5 no failure was found at any L>=1. In targeted search, failures below L0 occurred for 11 of 271 multisets, at least 6 below L0. I found no residue-only formula for the sharp threshold: it depends on the actual parts, through how much the R inequalities have to spare against corrections at indices >= L.
+(2) The three-shape conjecture is FALSE: 'U_inf is one of [1,T], [1,T]\{T-1}, [1,T-2] with T = T6-F'. It holds exhaustively for r<=13, k<=6 and other small ranges. For large k the gap T - e_odd reaches 4 and 6, e.g. r=10, k=40 with T=15 and U_inf=[1,11] (types_counter.py seed 1); it fails on 270 of 3000 random multisets, and rule_types has 130 b-errors out of 610085.
+(3) The S2 shape for U_inf (e_even in {e_odd-1, e_odd-3}) is unproved; there are 0 counterexamples in all tested ranges. Theorem 5 reduces it to two inequalities, e_even < e_odd and e_even >= e_odd - 3.
+
+===== R2E8 (exactly three middle residues, r>=4) (outcome RULE, candidates tried 6)
+Not a failure; the limits are as follows. The upper bound (Lemma 2 together with Thm C) and the reduction to residues (Lemmas 3 and 4) hold in general. The only gap is the lower bound for the base family (m1,m2,m3,(r-1)^nm) when nm>=38 or r>=31. Checking that by computation would need instances outside the fit box, so I did not do it. A structural argument for large nm, such as a peeling identity that removes pairs of (r-1) factors, was not found.
+

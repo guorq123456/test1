@@ -1,0 +1,204 @@
+PARTIAL PROOF OF CONJECTURE S2 (path: pairing / involution on coefficient differences)
+=====================================================================================
+
+What this file proves (all r>=2, k>=1, a_i>=1, r dividing no a_i; U = {b>=1 : P_b unimodal}):
+
+  THEOREM 1 (structure of U).  There are integers sigma >= 1 and tau* >= sigma+2, both
+     congruent to 1+F (mod 2), such that
+            U = [1, sigma]  union  {sigma+2, sigma+4, ..., tau*-2}.
+  COROLLARY 2.  (a) S2(i) holds: b in U and b-1-F odd  =>  b+1 in U.
+                (b) max U = B* satisfies B* = 1+F (mod 2).
+                (c) b in U => b-2 in U  (so b in U => b-2j in U for all j).
+                (d) S2 as a whole is EQUIVALENT to  tau* <= sigma+4
+                    (i.e. the step-2 tail of U has at most one element).
+  NOT PROVED: tau* <= sigma+4 (equivalently S2(ii) for the odd shift b -> b-3).
+
+Notation.  A(q) = prod_i [a_i]_q = sum alpha_m q^m, D = deg A = sum(a_i-1), palindromic
+(alpha_m = alpha_{D-m}), alpha_m := 0 outside [0,D].  a_i = r f_i + rho_i, 1<=rho_i<=r-1,
+F = sum f_i, S = sum(rho_i - 1), so D = rF + S.
+d_m := alpha_m - alpha_{m-1} (m in Z); d is antisymmetric: d_{D+1-m} = -d_m.
+M := (D+1)/2.  The lattice X := M + Z (a coset of Z inside (1/2)Z).
+e(u) := d_{M-u} for u in X.  Then e(-u) = d_{M+u} = d_{D+1-(M-u)} = -e(u): e is ODD.
+e has finite support: e(u) = 0 for |u| > M.
+P_b(q) = A(q)[b]_{q^r} = sum p_n q^n, N = D + r(b-1), p_n = sum_{y=0}^{b-1} alpha_{n-ry};
+P_b is palindromic of degree N.
+
+-------------------------------------------------------------------------------------
+LEMMA 1 (symmetric sequences).  A palindromic sequence c_0..c_N is unimodal iff
+c_{n-1} <= c_n for all 1 <= n <= N/2.
+Proof. (<=) by symmetry c is nonincreasing from the middle on.  (=>) if c_{n-1} > c_n
+for some n <= N/2, then by symmetry c_{N-n} = c_n < c_{n-1} = c_{N-n+1}, an ascent at
+position N-n+1 > n after a descent at n: not unimodal.  QED
+
+LEMMA 2 (window form).  Delta p_n := p_n - p_{n-1} = sum_{y=0}^{b-1} d_{n-ry}.  Put
+theta := M - n + r(b-1)/2 and I_b := {-(b-1)/2, -(b-1)/2+1, ..., (b-1)/2}. Then
+      Delta p_n = V_b(theta) := sum_{i in I_b} e(theta + r i),
+and P_b is unimodal  iff  V_b(theta) >= 0 for every theta > 0 with theta + r I_b in X.
+Proof.  d_{n-ry} = e(M-n+ry); re-index y = i + (b-1)/2.  n <= N/2 iff theta >= M - N/2 +
+r(b-1)/2 = 1/2, i.e. theta > 0 on the lattice.  For n <= 0 Delta p_n is d_0 = 1 (n=0) or 0,
+so including those theta changes nothing.  Apply Lemma 1.  QED
+
+-------------------------------------------------------------------------------------
+LEMMA 3 (e is nonnegative and unimodal on the positive half; "Lemma S").
+For A = prod [a_i]_q (any k >= 0, a_i >= 1): the sequence (e(u))_{u in X, u >= 0} is
+nonnegative and unimodal (weakly increasing, then weakly decreasing).
+Proof by induction on k.
+ 3.0 Base k=0: A = 1, D = 0, M = 1/2, e(1/2) = d_0 = 1, e(u) = 0 for u >= 3/2. Unimodal, >=0.
+ 3.1 Step A+ = A*[a].  D+ = D+a-1, M+ = M+(a-1)/2, d+ = d * [a]  (d+_m = sum_{j=0}^{a-1} d_{m-j}),
+     so e+(u) = sum_{t in J_a} e(u+t), J_a = {-(a-1)/2,...,(a-1)/2}; u in M+ + Z gives u+t in X.
+     e+ is odd.  Increment:  e+(u+1) - e+(u) = e(u+(a+1)/2) - e(u-(a-1)/2).
+ 3.2 If u >= 0 and u < (a-1)/2 the increment equals e(u+(a+1)/2) + e((a-1)/2-u) >= 0
+     (both arguments positive; induction hypothesis).
+ 3.3 For x := u-(a-1)/2 >= 0 put f(x) = e(x+a) - e(x).  Claim: if f(x) > 0 then f(x') >= 0 for
+     every lattice x' with 0 <= x' < x.  Let P be a peak position of e on [0,inf).  Suppose
+     f(x') < 0, i.e. e(x'+a) < e(x').  Then x'+a > P (on [0,P] e is nondecreasing).  As
+     x+a > x'+a > P, e(x+a) <= e(x'+a) < e(x').  The point x lies in [x', x+a], and a unimodal
+     sequence is >= the minimum of its two endpoint values on any interval, so
+     e(x) >= min(e(x'), e(x+a)) = e(x+a), i.e. f(x) <= 0, contradiction.
+     (e(0) = 0 if 0 in X; prepending a minimum keeps unimodality.)
+ 3.4 By 3.2-3.3 the increments of e+ along u >= 0 are >= 0 up to some point and, after the
+     first strictly negative one, never strictly positive: e+ is unimodal on u >= 0.
+ 3.5 Nonnegativity: if 0 is in the lattice of e+, e+(0) = 0 and the first increment is >= 0
+     by 3.2 (or a = 1, trivial).  If the lattice is Z+1/2, 2e+(1/2) = e+(1/2) - e+(-1/2)
+     = e(a/2) + e(a/2) >= 0.  So the first positive value is >= 0, the last (beyond the
+     support) is 0, and a unimodal sequence lies above the minimum of its end values.  QED
+ (Numerical check: sunimodal.py, sunimodal2.py: 0 non-unimodal cases.)
+
+-------------------------------------------------------------------------------------
+LEMMA 4 (zigzag decomposition; exact criterion per class pair).
+For delta in (0, r/2) with delta in X (mod r) let pi_0 < pi_1 < pi_2 < ... enumerate the
+positive points of X congruent to +delta or -delta mod r:  pi_{2n} = delta + rn,
+pi_{2n+1} = r - delta + rn.  Put E_j := e(pi_j) (>= 0), A_s := sum_{i=0}^{s} (-1)^{s-i} E_i
+(A_{-1} := 0) and Q_b := E_b + A_{b-2}.  Then
+     P_b unimodal  <=>  for every such delta:  A_{b-1} >= 0  and  Q_b >= 0.
+Proof.  Each window theta + r I_b consists of b consecutive points of one class kappa mod r
+(in X).  Classes kappa = 0 and kappa = r/2 (when in X) are mapped to themselves by u -> -u.
+ 4.1 Class kappa = 0: window points r j, j_lo..j_hi, j_hi - j_lo = b-1, centre r(j_lo+j_hi)/2 > 0
+     so j_lo + j_hi >= 1.  By oddness the terms with j and -j cancel (e(0)=0), leaving only
+     positive arguments: V >= 0.  Same for kappa = r/2 (points r/2 + rj, j and -1-j cancel).
+     So these classes never fail.
+ 4.2 Class kappa = delta: points delta + rj, j_lo <= j <= j_hi.  Centre > 0 iff
+     j_lo + j_hi >= 0 (since 0 < delta < r/2).  Positive points (j >= 0) give E_{2j};
+     a negative point delta + rj (j<0) gives e = -e(r(-j) - delta) = -E_{2(-j-1)+1}.  So
+        V = sum_{j=max(0,j_lo)}^{j_hi} E_{2j} - sum_{i=0}^{-j_lo-1} E_{2i+1}.
+     If j_lo >= 0 all terms are >= 0.  If j_lo < 0, moving the window one step right adds a
+     term E >= 0 and deletes a subtracted term E >= 0, so V increases; hence the minimum over
+     admissible windows is at the smallest centre: j_lo + j_hi = 0 (b odd) or 1 (b even).
+       b odd:  V = E_0 - E_1 + E_2 - ... + E_{b-1} = A_{b-1}.
+       b even: V = (E_0 - E_1 + ... + E_{b-2}) + E_b = A_{b-2} + E_b = Q_b.
+ 4.3 Class kappa = -delta: points r - delta + rj; positive for j >= 0 giving E_{2j+1}; negative
+     ones reflect to E_{2(-j-1)}.  Centre > 0 iff j_lo + j_hi >= -1.  Same monotonicity;
+     minimum at j_lo + j_hi = 0 (b odd) or -1 (b even):
+       b odd:  V = (E_1 + E_3 + ... + E_b) - (E_0 + ... + E_{b-3}) = E_b + A_{b-2} = Q_b.
+       b even: V = (E_1 + ... + E_{b-1}) - (E_0 + ... + E_{b-2}) = A_{b-1}.
+ 4.4 Every class mod r in X is 0, r/2, delta or -delta for a unique delta in (0,r/2); combine
+     with Lemma 2.  QED
+ (Identity used later: A_s + A_{s-1} = E_s, hence Q_b = E_b + A_{b-2} = E_{b-1} + A_b.)
+ (Numerical check: zigzag.py, 4000 random instances vs ground truth, 0 mismatches.)
+
+So U = intersection over delta of U_delta := {b >= 1 : A_{b-1} >= 0 and Q_b >= 0}.
+
+-------------------------------------------------------------------------------------
+LEMMA 5 (shape of one U_delta).  Let tilde-tau(delta) := sum_{x in delta + rZ, x in X} e(x)
+(the class sum of e).  Then:
+ (a) tilde-tau(delta) = sum_j (-1)^j E_j, and A_s = (-1)^s tilde-tau(delta) for s >= L
+     (L = last index with E_L > 0).
+ (b) If tilde-tau(delta) = 0 then U_delta = {1,2,3,...}.
+ (c) If tilde-tau(delta) != 0, let s0 = min{s : A_s < 0}.  Then s0 >= 1,
+     s0 = parity of {s : (-1)^s tilde-tau < 0}, and there is t1 >= s0+2, t1 = s0 (mod 2), with
+          U_delta = [1, s0]  union  {s0+2, s0+4, ..., t1-2}.
+Proof.
+ 5.1 (a): positive points x = delta + rn contribute E_{2n}; negative points x = delta - r(n+1)
+     contribute e(x) = -e(r - delta + rn) = -E_{2n+1}.  For s >= L, A_s = (-1)^s sum_i (-1)^i E_i.
+ 5.2 By Lemma 3 and pi increasing, (E_j) is nonnegative and unimodal; let p be a peak index.
+     A_s - A_{s-2} = E_s - E_{s-1}: >= 0 for s <= p, <= 0 for s >= p+1.
+     A_0 = E_0 >= 0 and, if p >= 1, A_1 = E_1 - E_0 >= 0; hence A_s >= 0 for all s <= p.
+     Each parity chain (A_s, A_{s+2}, ...) is nonincreasing for s >= p-1.
+ 5.3 Hence once A_s < 0 (necessarily s > p), A_{s+2j} < 0 for all j >= 0; and the other parity
+     is then positive: A_{t} = E_t - A_{t-1} > 0 whenever A_{t-1} < 0.  So the set of negative
+     A's is exactly Neg = {s0, s0+2, s0+4, ...} (or empty).  If tilde-tau = 0, A_s = 0 for
+     s >= L, so no chain can stay negative: Neg is empty.  If tilde-tau != 0, by (a) Neg is
+     nonempty and its parity is that of the s with (-1)^s tilde-tau < 0.  s0 >= 1 as A_0 >= 0.
+ 5.4 Q_b < 0 forces A_b < 0 (from Q_b = E_{b-1} + A_b) and A_{b-2} < 0 (from Q_b = E_b + A_{b-2}),
+     so b, b-2 in Neg: b in {s0+2, s0+4, ...}.  For such b,
+        Q_{b+2} - Q_b = E_{b+2} - E_b + (A_b - A_{b-2}) = E_{b+2} - E_{b-1} <= 0
+     (b-1 >= s0+1 > p).  So {b : Q_b < 0} = {t1, t1+2, ...} for some t1 >= s0+2,
+     t1 = s0 (mod 2).  t1 exists when tilde-tau != 0: for b >= L+2 with b = s0 (mod 2),
+     Q_b = A_{b-2} < 0.  If tilde-tau = 0, Neg empty, so Q_b >= 0 always.
+ 5.5 b fails iff b-1 in Neg or Q_b < 0, i.e. b in {s0+1, s0+3, ...} or b in {t1, t1+2, ...}.
+     The complement in {1,2,...} is [1,s0] union {s0+2, ..., t1-2}.  (b): no failures.  QED
+ (Remark: the automatic inequality t1 >= s0+2 is the "pairing" Q_{s0} = E_{s0} + A_{s0-2} >= 0.)
+
+-------------------------------------------------------------------------------------
+LEMMA 6 (arc-overlap lemma on the circle).  Work in G = (1/2)Z / rZ, |x|_r := distance of x
+to rZ.  For 1 <= p <= r-1 let C_p := {-(p-1)/2, ..., (p-1)/2} (p consecutive points, mod r;
+they are distinct mod r because p < r).  For 1 <= p, q <= r-1, (1_{C_p} * 1_{C_q})(x)
+depends only on delta = |x|_r and is nonincreasing in delta on [0, r/2].
+Proof.  Lifting C_p to the line, the count is O(x) = sum_{j in Z} L(|x + rj|) where
+L(w) = |C_p cap (w + C_q)| = max(0, min(p, q, (p+q)/2 - w)) for w >= 0 (overlap of two runs of
+consecutive points).  Since (p+q)/2 <= r-1 < r, L(w) = 0 for w >= r, so for delta in [0,r/2]:
+O = L(delta) + L(r - delta).  Let delta+1 <= r/2.  L(delta+1) - L(delta) is 0 or -1, and it is
+-1 iff |p-q|/2 <= delta and delta+1 <= (p+q)/2.  L(r-delta-1) - L(r-delta) is 0 or +1, and it is
++1 iff r-delta-1 >= |p-q|/2 and r-delta-1 <= (p+q)/2 - 1.  In the +1 case:
+delta >= r - (p+q)/2 >= max(p,q)+1-(p+q)/2 = |p-q|/2 + 1, and delta+1 <= r/2 <= r-delta-1 <=
+(p+q)/2 - 1; so the first difference is -1 and the sum is <= 0.  Hence O(delta+1) <= O(delta).
+QED
+LEMMA 7 (CU: class sums are cyclically unimodal, peaked at S/2).  Gamma_t := sum_{n = t mod r}
+alpha_n.  Then Gamma_t = C + Psi(t - S/2) with Psi symmetric-decreasing on G (a nonincreasing
+function of |x|_r).  Consequently, with tau_t := Gamma_t - Gamma_{t-1} = sum_{m = t mod r} d_m:
+        tau_t > 0   =>   floor((S+1-2t)/r) is even.
+Proof.
+ 7.1 [a]_q = f[r]_q + q^{rf}[rho]_q and q^r = 1, q[r]_q = [r]_q mod (q^r - 1); hence [r]X = X(1)[r]
+     mod (q^r-1) and A = C'[r]_q + R(q) mod (q^r - 1), R = prod [rho_i]_q.  So Gamma_t = C + Gamma^R_t.
+ 7.2 [rho]_q = q^{(rho-1)/2} * (centred run C_rho); so Gamma^R_t = Psi(t - S/2), Psi := 1_{C_rho_1} *
+     ... * 1_{C_rho_k} (cyclic convolution on G).
+ 7.3 Induction: Psi_0 = 1_{C_1} is symmetric-decreasing.  If Psi_{i-1} >= 0 is symmetric-decreasing,
+     its superlevel sets are balls {|x|_r <= R}, each a centred run C_p (p <= r-1) or a full coset;
+     so Psi_{i-1} = sum c_l 1_{ball_l}, c_l >= 0.  A full coset convolved with C_q is constant;
+     a run C_p convolved with C_q is symmetric-decreasing by Lemma 6; nonnegative combinations
+     preserve this.  So Psi_k = Psi is symmetric-decreasing.
+ 7.4 tau_t = Psi(y + 1/2) - Psi(y - 1/2), y := t - (S+1)/2.  For y mod r in [0, r/2]:
+     |y+1/2|_r >= |y-1/2|_r (y in [1/2,(r-1)/2]: y+1/2 >= y-1/2; y = 0 or r/2: equality; no
+     half-integer lies strictly between (r-1)/2 and r/2), so tau_t <= 0.  Hence tau_t > 0 forces
+     y mod r in (-r/2, 0), i.e. S+1-2t = -2y in (0, r) mod 2r: floor((S+1-2t)/r) even.  QED
+ (Numerical check: cu_test.py, 0 violations in 5000 random + 46,918 exhaustive tuples.)
+
+LEMMA 8 (sign of tilde-tau).  For delta in (0, r/2):  (-1)^F tilde-tau(delta) >= 0.
+Proof.  tilde-tau(delta) = sum_{x = delta} d_{M-x} = tau_t with t = M - delta (an integer, as
+delta is in X).  S+1-2t = 2 delta - rF, floor((2delta - rF)/r) = -F (0 < 2delta/r < 1).  By
+Lemma 7, tilde-tau(delta) > 0 => F even.  Also tilde-tau(-delta) = -tilde-tau(delta) (oddness of e)
+and -delta = r - delta gives t' = M + delta - r, S+1-2t' = 2r - 2delta - rF, floor = 1 - F; so
+tilde-tau(delta) < 0 => tilde-tau(r-delta) > 0 => 1-F even => F odd.  QED
+
+-------------------------------------------------------------------------------------
+PROOF OF THEOREM 1.
+ T.1 Since r divides no a_i, Phi_r(q) does not divide A (Phi_r | [a]_q iff r | a), so the class
+     sums Gamma_t are not all equal, tau is not identically 0, and (by 5.1 and the oddness
+     relations tilde-tau(0) = tilde-tau(r/2) = 0) some delta in (0, r/2) has tilde-tau(delta) != 0.
+ T.2 By Lemma 8 and 5.3, for every delta with tilde-tau(delta) != 0, Neg has the parity of s with
+     (-1)^{s+F} < 0, i.e. s0^delta = F+1 (mod 2); by 5.4 also t1^delta = F+1 (mod 2).
+ T.3 Let sigma := min s0^delta, tau* := min t1^delta over these delta (deltas with tilde-tau = 0 impose
+     nothing, Lemma 5(b)).  For b = F (mod 2): b in U_delta iff b <= s0^delta (b is not of the
+     tail parity), so b in U iff b <= sigma.  For b = F+1 (mod 2): b in U_delta iff b < t1^delta
+     (as t1 > s0), so b in U iff b < tau*.  Hence U = [1,sigma] union {sigma+2, ..., tau*-2},
+     with sigma = tau* = 1+F (mod 2) and tau* >= sigma+2 (each t1 >= s0+2 and min over the same
+     set).  QED
+PROOF OF COROLLARY 2.  (a) b in U with b-1-F odd means b = F (mod 2), so b <= sigma - 1 (sigma
+ has the other parity), hence b+1 <= sigma, b+1 in U.  (b) max U is sigma or tau*-2, both = 1+F.
+ (c) both pieces of the description are closed under b -> b-2.  (d) U = [1,B] or [1,B]\{B-1}
+ iff the tail {sigma+2,...,tau*-2} has at most one element iff tau* <= sigma+4.  QED
+
+-------------------------------------------------------------------------------------
+WHERE THE PROOF STOPS (the obstruction).
+S2 <=> tau* <= sigma + 4.  A sufficient per-class statement is (Z2): for every delta with
+tilde-tau != 0,  A_{s0+2} + E_{s0+4} < 0  (i.e. t1 <= s0+4).  Everything above uses only
+(i) e odd, nonnegative and unimodal on the positive half and (ii) the sign rule of Lemma 8.
+These are NOT enough for (Z2): random symmetric A with e unimodal and cyclically unimodal class
+sums (even when also log-concave) violate the S2 shape (generic_cu.py, generic_cu_lc.py).
+Any proof of (Z2) must use quantitative product structure relating |tilde-tau(delta)| (a class
+sum) to the samples E_j near the end of the support.  Observed (not proved):
+  * (Z2) holds in every tested case;  t1 - s0 in {2,4};  tau* - sigma in {2,4}.
+  * the "lower chain" (positions s0, s0+2, ...) already lies below the upper chain's limit by
+    index s0+2 (sneg.py: s_neg - s0 in {0,2});
+  * the robust inequality E_{s0+1} >= E_{s0+2} + E_{s0+4} holds at s0 (robustZ2.py) but fails
+    for general s beyond the E-peak (robust_range.py), so it does not give a proof by itself.

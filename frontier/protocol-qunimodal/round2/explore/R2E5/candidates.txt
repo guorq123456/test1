@@ -1,0 +1,30 @@
+CANDIDATES TRIED ON PATH R2E5 (all-equal family [a]^k [b]_{q^r}, a = nr+s, s in [2,r-2], k>=3)
+Fit box used: 4<=r<=30, k<=60, a<=100. Ground truth: full Thm-A scans validated against gt_big (validate.py: 293 instances, 0 mismatches).
+Data: 119480 instances (count_data.py): r=4..8 all n (13688), r=9..30 n in {0,1} (42108), r=9..30 n>=2 (63684). 97556 have n>=1.
+
+C0a  "B* = T6" (the established upper bound is attained)                         errors: 93462 / 119480 instances   (t6exact.py)   DISCARDED
+C0b  "U = [1,T6]"                                                                  errors: 93807 / 119480 instances   (t6exact.py)   DISCARDED
+C1   quasi-linear law E_even(r,s,k) = 2*max(0,floor(alpha*k+gamma)), 2 free reals per (r,s) (756 params total), best fit per pair:
+       113 mispredicted (r,s,k) values out of 378*58; 65 of 378 (r,s) pairs admit no exact fit      (beatty_opt.py, beatty_fit.py)   DISCARDED
+C2   flat formula for ALL n (incl. n=0): U = [1,kn+1] U (kn+1+E_inf(r,s,k))       errors: 2363 / 21924 n=0 instances, 0 on n>=1
+                                                                                    (cmp_flat.py, cmp_flat2.py)    DISCARDED for n=0
+C3   flat formula for n>=1, E_inf by scanning all m < K/2 (flat.flat_U)             errors: 0 / 97556 n>=1 instances (cmp_flat.py r<=8;
+                                                                                    cmp_flat2.py via C4 for r>=9)  KEPT (n>=1)
+C4   same as C3 with only the r-window (flat.flat_fast; Window Lemma)               differences from C3: 0 (all r<=12,k<=60);
+                                                                                    errors 0 / 97556 n>=1 instances (cmp_flat*.py)  KEPT
+C5a  single inequality: min_t tau_t + c_{K-M} - c_M >= 0                            errors: 14244 / 342639 (r,s,k,e) cases (single_ineq.py) DISCARDED
+C5b  single inequality at the window position with most negative tau               errors: 3883 / 342639                                DISCARDED
+C5c  single inequality at the largest window position with tau<0                    errors: 640 / 342639                                 DISCARDED
+C6   FINAL RULE rule_allequal_middle.py: n>=1 -> C4 (flat, depends on n only via the shift kn); n=0 -> window criterion on [s]^k.
+       errors: 0 / 4824541 (instance,b) pairs (data+data2, b<=T6+2; test_rule.py)
+               0 / 919946  pairs (data3, b in [F+1,T6+2]; cmp_flat3.py)
+               0 / 5315    random gt_big pairs, random n (test_rule.py)
+               0 / 1566    Handelman pairs (a=2,b=2) (handelman_check.py)
+               (informational, outside declared domain: k=2, 0 / 21251 pairs; k2_check.py)                   KEPT
+C7   Window Lemma for general tuples (not a family rule; used as a lemma)           errors: 0 / 43078 random (tuple,b) pairs (window_general_check.py); proved in proofs.txt
+C8   E(1) = E_inf (n=1 equals flat), exact certification                            differences: 0 / 21924 (r,s,k) triples (certify_n1.py)
+C9   S2 shape of E_inf: interval or one hole at E_even-1                            exceptions: 0 / 21924 triples (s2check.py); also n=0: 0 exceptions
+C10  "cyclic unimodality" tau_t>=0 on the half period below D_s/2 (Lemma 12)       exceptions: 0 / 225533 positions (cyc_unimodal.py); proved
+C11  asymptotic slope heuristic E_even/k -> (s-1-2beta)/r                          not a rule; secant slopes in box are 0.749..1.014 x prediction (asym_slope.py)
+
+Total candidates tried (rules/approaches, incl. discarded): 13  (C0a,C0b,C1,C2,C3,C4,C5a,C5b,C5c,C6,C7,C9,C10; C8 and C11 are checks)

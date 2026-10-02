@@ -1,0 +1,243 @@
+[
+ {
+  "path_id": "R2E1",
+  "stayed_on_path": true,
+  "outcome": "FAILED",
+  "candidates_tried_total": 23,
+  "candidates_file": "/tmp/claude-0/qu/explore2/R2E1/candidates.txt",
+  "rules": [
+   {
+    "name": "parity-split thread criterion (exact, proved: Lemma 5 + Theorem 12)",
+    "rule_file": "/tmp/claude-0/qu/explore2/R2E1/rule_threads.py",
+    "description_text": "Let A=prod[a_i]_q, D=deg A, delta_j=A_j-A_{j-1} (0 outside), c0=(D+1)/2, F=sum floor(a_i/r). For each unordered pair {rho,sigma} of residues mod r with sigma = D+1-rho (mod r) and rho != sigma (a 'thread'), list ALL integers y<c0 congruent to rho or sigma in decreasing order y_0>y_1>y_2>... (continue into negative integers, where delta=0), put d_i=delta_{y_i}, V_0=0, V_{m+1}=d_m-V_m. Then P_b=A[b]_{q^r} is unimodal iff for every thread: V_b>=0 if b==F (mod 2), and V_{b-1}+d_b>=0 if b!=F (mod 2). (Residues with sigma=rho never fail.) Equivalently, without the parity split: V_b>=0 and V_{b-1}+d_b>=0 for every thread.",
+    "fit_range": "exhaustive r=2..7, k<=4, a_i<=2r+1, b<=6, plus 4000 random r<=30, k<=12, a_i<=40, b<=12 (56716 cases vs tools/uni)",
+    "free_parameters": 0,
+    "fit_errors": 0
+   }
+  ],
+  "numeric_claims": [
+   {
+    "claim": "S2 holds on every parameter set tested exhaustively: r in [4,8], 1<=k<=6, a_i in [2,2r+2], r divides no a_i (100488 sets); B_main-B_off = 1 in 100402 sets and 3 in 86",
+    "script": "/tmp/claude-0/qu/explore2/R2E1/parity_data.py",
+    "range": "r 4..8, k<=6, a_i<=2r+2"
+   },
+   {
+    "claim": "S2 holds on 12000 random sets (gaps U=[1,B*]\\{B*-1} in 186 of them)",
+    "script": "/tmp/claude-0/qu/explore2/R2E1/rand_s2.py (args: seed 1..3, 4000)",
+    "range": "r 4..30, k 2..40, a_i<=100"
+   },
+   {
+    "claim": "The proved parity-split thread criterion matches ground truth tools/uni in 56716 of 56716 cases",
+    "script": "/tmp/claude-0/qu/explore2/R2E1/verify_rule.py",
+    "range": "exhaustive r 2..7,k<=4,a<=2r+1,b<=6 plus random r<=30,k<=12,a<=40,b<=12"
+   },
+   {
+    "claim": "(C) does not follow from unimodality of delta plus the proved sign lemma: 82 of 8659 abstract unimodal sequences (with (-1)^F t0>=0) violate (C), while none violate (i) or step-2 closure; smallest example d=(2,1,1,1,1,1), F even",
+    "script": "/tmp/claude-0/qu/explore2/R2E1/abstract_thread.py 4 7",
+    "range": "abstract unimodal integer sequences, length<=7, entries<=4"
+   },
+   {
+    "claim": "Proved sufficient condition B_off >= F+e-4 (Theorem 17) holds in 100488/100488 exhaustive sets and 1277/1500 random sets; the weaker hypothesis of Theorem 17 (inequality L' at the first off-failure) holds in all 101988",
+    "script": "/tmp/claude-0/qu/explore2/R2E1/coverage.py (args: exh | rand 1 1500)",
+    "range": "exh: r 4..8,k<=6,a<=2r+2; rand: r 4..30,k 2..40,a<=100"
+   },
+   {
+    "claim": "Per-thread versions of (i), step-2 closure and (C) hold on all 96405 threads tested",
+    "script": "/tmp/claude-0/qu/explore2/R2E1/perthread.py",
+    "range": "r 3..8, k<=5, a_i<=2r+2"
+   },
+   {
+    "claim": "Missing inequality L' (d_j-d_{j+1}>=d_{j+3} where V_j<0) holds at all 3270 'high' off-failures (d_{j+3}>0) found in multi-scale instances; minimum ratio (d_j-d_{j+1})/d_{j+3} = 1.67e5",
+    "script": "/tmp/claude-0/qu/explore2/R2E1/multiscale.py (args: seed 1..4, 1500)",
+    "range": "r 3..30, mixtures of a_i in [2,6],[7,49],[50,100], k<=40"
+   },
+   {
+    "claim": "Off-failures are not always at the thread bottom: r=30, a=[15]^40 has off-failure height 9 (F=0, e=18, U=[1,9])",
+    "script": "/tmp/claude-0/qu/explore2/R2E1/bigk.py",
+    "range": "listed large-k equal-a instances"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "Exact thread criterion: for b>=1, P_b is unimodal iff for every thread V_b>=0 and V_{b-1}+d_b>=0. Parity split: if b==F (mod 2) only V_b>=0 can fail; if b!=F only V_{b-1}+d_b>=0 can fail. In Theorem A terms: for b==F only the h_m<=h_{K-m} with K-2m<r can fail, and for b!=F only those with r<K-2m<2r can fail (Lemmas 3-11, Theorem 12, Remark 12a)",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E1/proof_S2_partial.txt"
+   },
+   {
+    "statement": "S2 (i): if b in U and b==F (mod 2) then b+1 in U. Hence when r divides no a_i, max U == 1+F (mod 2) (Theorem 13, Corollary 16)",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E1/proof_S2_partial.txt"
+   },
+   {
+    "statement": "Step-2 closure for all r and a_i: b in U, b>=3 implies b-2 in U. So U intersected with each parity class is an initial segment, and S2 (ii) holds for every b==F (mod 2) and for every b' of the same parity as b (Theorem 14, Corollary 16)",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E1/proof_S2_partial.txt"
+   },
+   {
+    "statement": "U is finite iff r divides no a_i (this reproves Cor 4.3) (Theorem 15)",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E1/proof_S2_partial.txt"
+   },
+   {
+    "statement": "Auxiliary results: delta=(1-q)prod[a_i]_q is weakly unimodal on the integers below (D+1)/2 (Lemma 3); for R=prod[rho_i]_q, the wrap of (1-q)R mod q^r-1 is >=0 on the half-period ((E+1-r)/2,(E+1)/2) (Lemma 8)",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E1/proof_S2_partial.txt"
+   },
+   {
+    "statement": "Conditional (C): let j*=B_off+2. If some thread with V_{j*}<0 satisfies d_{j*}-d_{j*+1}>=d_{j*+3}, then B*<=B_off+3 and S2 holds. In particular S2 holds whenever B_off>=F+e-4, with e=floor((E+1)/r) and E=sum(a_i mod r)-k (Theorem 17)",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E1/proof_S2_partial.txt"
+   }
+  ],
+  "failure_report": "S2 is not fully proved. (i) is proved, and so is every part of (ii) except one inequality.\n\nWhat remains: for b in U with b != F (mod 2) and b>=4, show b-3 is in U. Equivalently, show B_off >= B*-3, where B_off is the largest element of U with parity F.\n\nHow it reduces: by the thread criterion (Theorem 12), this is a statement about each thread separately. For j == F (mod 2) with V_j<0, it requires V_j < d_j - d_{j+1} - d_{j+3}. It would follow from inequality L': d_j - d_{j+1} >= d_{j+3} at the first off-parity failure. In positions this reads delta_u - delta_v >= delta_{v-r}, where v<u<v+r are consecutive thread positions.\n\nWhy the proved lemmas are not enough: unimodality of delta plus the sign lemma do not imply (C). The abstract sequence d=(2,1,1,1,1,1) with F even satisfies both lemmas but violates (C). Over all abstract unimodal sequences of length up to 7 with entries up to 4, 82 of 8659 violate it (abstract_thread.py). A proof therefore needs quantitative arithmetic of (1-q)prod[a_i]_q: an off-parity failure must never happen at a level where delta grows slowly.\n\nHow big the gap is: a pure exponential model delta=e^{lambda y}, with thread gaps g and r-g, has a violation window exactly when e^{-lambda g}(1+e^{-lambda r})>1, roughly lambda<1/(r+2g). No instance in the fit box comes close:\n- L' held at all 3270 high failures checked, with minimum ratio 1.67e5.\n- Inside the fit box (Theorem 17 coverage), failures fall at the very bottom of the thread in all 100488 exhaustive sets and in 1277 of 1500 random ones.\n- Large-k instances can fail high (height 9 for r=30, a=[15]^40), but there delta grows very fast.\n\nEvidence for S2 itself: 0 violations in 100488 exhaustive and 12000 random sets.\n\nFit-box incident: bigk.py once built thr2.Thr for (r=30, a=[14]*30+[16]*30). That is k=60 with unequal a_i, which is outside the box. It computed A and g before an assertion stopped the run; nothing was printed or used. Assertions now guard every instance constructor."
+ },
+ {
+  "path_id": "R2E2",
+  "stayed_on_path": true,
+  "outcome": "PROOF",
+  "candidates_tried_total": 16,
+  "candidates_file": "/tmp/claude-0/qu/explore2/R2E2/candidates.txt",
+  "rules": [
+   {
+    "name": "S3* (refinement of S2 with explicit B and single undecided value decided by pair condition)",
+    "rule_file": "/tmp/claude-0/qu/explore2/R2E2/s3star_rule.py",
+    "description_text": "If r divides some a_i: unimodal. Otherwise let d_y be the coefficients of the power series A(q)(1-q)/(1-q^r), A=prod[a_i]_q of degree D; tau_t = sum of coefficients of (1-q)A in residue class t mod r; y* = least y with d_y<0; B = 1+floor((2y*-D-1)/r). Predict: b>B -> not unimodal (proved, Lemma 10 of proof file); b<=B and b != B-1 -> unimodal (conjecture S3*); b = B-1 -> unimodal iff for all integers 0<=x<K/2 (K=D+1-r(b+1)): d_{K-x} - tau_{(K-x) mod r} >= d_x.",
+    "fit_range": "r in 4..7, all parts <=2r+1 not divisible by r, k<=6; equal-part families r 4..10, k<=60; N1/T7 instances (338521 (a,b) pairs)",
+    "free_parameters": 0,
+    "fit_errors": 0
+   }
+  ],
+  "numeric_claims": [
+   {
+    "claim": "Full residue certificate (TP_rho, E_rho, O_rho) holds for all 3,154,273 residue multisets swept (r=2..30, all rho with k up to: 40 (r<=5), 26 (r=6), 19 (r=7), 15 (r=8), 12 (r=9), 11 (r=10), 10 (r=11), 9 (r=12), 8 (r=13), 7 (r=14-16), 6 (r=17-20), 5 (r=21-27), 4 (r=28-30); plus equal-residue rho=(t^k), k<=60); 0 failures",
+    "script": "/tmp/claude-0/qu/explore2/R2E2/sweep_certificate.py all 2 30 190000 + equal 2 30 (E,O -> sweep_results.txt, second run) and /tmp/claude-0/qu/explore2/R2E2/sweep_tp.py all 2 30 190000 + equal 2 30 (TP -> sweep_tp.txt)",
+    "range": "r=2..30, parts < r, k within listed bounds (k<=60 equal)"
+   },
+   {
+    "claim": "Strong (k-independent) certificate passes for every rho' with parts in [2,r-1] and k'<=5 when r<=12, and k'<=3 when r<=30; overall 25,737 of 1,547,599 rho' fail (only at large k')",
+    "script": "/tmp/claude-0/qu/explore2/R2E2/strong_minfail.py (-> strong_minfail.txt); /tmp/claude-0/qu/explore2/R2E2/sweep_strong.py 3 30 100000 (-> sweep_strong.txt)",
+    "range": "r=3..30, rho' parts in [2,r-1]"
+   },
+   {
+    "claim": "Lemmas of the reduction (pair criterion, LCW, lifting monotonicity, TU, TP) have 0 violations on random instances (23032/14558/123793/14558/13180 checks)",
+    "script": "/tmp/claude-0/qu/explore2/R2E2/test_lemmas.py",
+    "range": "r 2..12, k<=8, parts<=3r"
+   },
+   {
+    "claim": "S2 shape holds on the 48748-instance test set; S3* rule matches ground truth on 338521 (a,b) pairs",
+    "script": "/tmp/claude-0/qu/explore2/R2E2/candidates_eval.py",
+    "range": "r 4..7 parts<=2r+1 k<=6; equal parts r 4..10 k<=60"
+   },
+   {
+    "claim": "Library criterion agrees with ground-truth checker tools/uni on 4000 random instances (0 mismatches)",
+    "script": "/tmp/claude-0/qu/explore2/R2E2/validate_lib.py",
+    "range": "r 2..9, k<=7, parts<=25"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "Theorem R (reduction via peeling): let r divide no a_i, rho = residue multiset of a, sigma = sum(rho_i-1), d = coefficients of A(1-q)/(1-q^r), tau = residue-class sums of (1-q)A, Q_u = d_u - tau_{u mod r}, ND(K): Q_{K-x} >= d_x for all x with K-r <= 2x < K, mu*_inf = max{u: f_u < tau_u} where f = coefficients of 1/((1-q)^{k-1}(1-q^r)). If (TP_rho) every z with Q^rho_z<0 has floor((sigma+1-2z)/r) even, (E_rho) ND_rho(K) for all K = sigma+1 mod 2r with 2mu*_inf <= K <= sigma+1-2r, and (O_rho) ND_rho(K) for all K = sigma+1+r mod 2r with 2mu*_inf+3r <= K <= sigma+1-2r, then S2 holds for a, for all part sizes. Key lemmas: pair criterion (unimodal iff Q_{K-x}>=d_x for x>=1-rb, 2x<K, K=D+1-r(b+1)); LCW (if b-1 unimodal, only near-diagonal pairs matter); lifting a_i->a_i+r leaves tau and K_j=sigma+1-r(j+2) unchanged, adds a palindromic unimodal shift to d, so preserves ND and shrinks the bad set; d^a <= f (large-part limit); unimodal => K >= 2mu*(a). Corollaries (Theorem R + finite exact computation): S2 holds for every a with r<=30 whose residue multiset lies in the swept range (e.g. k<=40 for r<=5, k<=19 for r=7, k<=4 for r=28..30, all-congruent parts k<=60), with any part sizes; and for every a with r<=12 having at most 5 parts with residue in [2,r-1] (any number of parts that are 1 mod r, any sizes).",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E2/proof_S2_reduction.txt"
+   }
+  ],
+  "failure_report": "This is a partial proof, not a proof of S2 for all parameters. The peeling path proves that S2 follows from a residue-level certificate: three finite statements (TP_rho, E_rho, O_rho) about the small-part instance rho, with all parts below r. Lifting (Theorem B) shows that the part sizes never matter. What is not done is a proof of that certificate for every rho; the attempt to prove it by adding one small part at a time did not close. Adding a part [s]_q convolves d, tau and Q with s ones. That turns ND(K') into a mix of pair conditions at the sums K'-2i for i<s, and these fall in both residue classes of K mod 2r. Only one class (E) holds for every K; the other (O) holds only above 2mu*+3r. So a single-part induction loses the parity bookkeeping. The certificate holds for all 3,154,273 rho swept (0 failures). The k-independent strong version, which covers any number of parts that are 1 mod r, fails for 25,737 of 1,547,599 long rho', so it cannot serve as the universal residue statement. Every failure has many parts: there are none with k'<=5 for r<=12 or k'<=3 for r<=30. Proving TP/E/O for all rho, for example from cyclic unimodality of prod[rho_i] mod (q^r-1) (0 failures in test_cyclic_unimodal.py, unproved), remains open."
+ },
+ {
+  "path_id": "R2E3",
+  "stayed_on_path": true,
+  "outcome": "FAILED",
+  "candidates_tried_total": 26,
+  "candidates_file": "/tmp/claude-0/qu/explore2/R2E3/candidates.txt",
+  "rules": [],
+  "numeric_claims": [
+   {
+    "claim": "Zigzag per-class-pair criterion (Lemma 4) agrees with ground truth uni_ref on every instance: 0 mismatches out of 4000",
+    "script": "/tmp/claude-0/qu/explore2/R2E3/zigzag.py 1 4000",
+    "range": "r in [2,10], k in [1,7], a_i in [1,25], b in [1,14], random seed 1"
+   },
+   {
+    "claim": "Structure theorem U=[1,sigma] u {sigma+2,...,tau*-2} with sigma = tau* = 1+F (mod 2) matches exact U on all 20233 instances; tau*-sigma is always 2 or 4 (so S2 holds on all of them)",
+    "script": "/tmp/claude-0/qu/explore2/R2E3/structure_check.py 7 2000",
+    "range": "1318 random (r<=30,k<=14,a_i<=100) + exhaustive r=6,k=6,a<=13; r=5,k=5,a<=16; r=4,k=7,a<=9; r=3,k=8,a<=10 (r dividing no a_i)"
+   },
+   {
+    "claim": "Cyclic unimodality (Lemma 7): tau_t>0 implies floor((S+1-2t)/r) even, 0 violations in 5000 random and 46918 exhaustive tuples; the D-centred version fails on 1070/5000",
+    "script": "/tmp/claude-0/qu/explore2/R2E3/cu_test.py rand 1 5000 ; cu_test.py exh 7 5 14 ; exh 4 7 9 ; exh 10 4 25 ; exh 3 9 8",
+    "range": "random r<=30,k<=20,a_i<=100; exhaustive as listed"
+   },
+   {
+    "claim": "e-unimodality plus cyclic unimodality of class sums do not imply the S2 shape: 102 failures among 2312 generic symmetric A, and 226 among 10859 when A is also log-concave",
+    "script": "/tmp/claude-0/qu/explore2/R2E3/generic_cu.py 1 3000 ; generic_cu_lc.py 1 20000",
+    "range": "generic integer A with D in [3,36], r in [2,7] (not products of q-integers)"
+   },
+   {
+    "claim": "The open per-class condition (Z2) A_{s0+2}+E_{s0+4}<0 holds in 0-failure fashion on 5552 + 1944 class-pair instances, while the easy route s0>=L-3 (E_{s0+4}=0) fails in 495 of the 1944 large-k cases",
+    "script": "/tmp/claude-0/qu/explore2/R2E3/s0L.py 1 3000 ; s0L_stress.py 1 300",
+    "range": "r<=14,k<=10 random; stress: r<=30, k in [10,40], a_i<=100"
+   },
+   {
+    "claim": "U(b) => U(b-2) holds for generic odd e with unimodal positive half: 0 violations in 37492 (b,b-2) pairs",
+    "script": "/tmp/claude-0/qu/explore2/R2E3/down2_generic.py 5 4000",
+    "range": "generic e, D in [2,40], r in [2,7]"
+   },
+   {
+    "claim": "Generic odd unimodal e (d_0=1) violates the S2 shape in 105/3000 and 112/3000 cases, so product structure is needed",
+    "script": "/tmp/claude-0/qu/explore2/R2E3/generic_e2.py 1 3000 2 ; generic_e2.py 2 3000 4",
+    "range": "generic e, D in [2,40], r in [2,7]"
+   },
+   {
+    "claim": "Per-class-pair sets U_delta always have shape all/[1,B]/[1,B]\\{B-1} with B = 1+F (mod 2): 0 failures in 7177 class-pair instances",
+    "script": "/tmp/claude-0/qu/explore2/R2E3/perdelta.py 1 3000",
+    "range": "r in [3,14], k<=10, a_i<=100 random"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "THEOREM 1 (proved). Let r>=2 divide no a_i, and let U = {b : A(q)[b]_{q^r} unimodal}. Then there are sigma>=1 and tau*>=sigma+2, both congruent to 1+F mod 2, such that U = [1,sigma] union {sigma+2, sigma+4, ..., tau*-2}. COROLLARIES (proved): (a) S2(i): if b is in U and b-1-F is odd, then b+1 is in U. (b) max U is congruent to 1+F mod 2. (c) If b is in U, then b-2 is in U. (d) S2 holds iff tau* <= sigma+4. Ingredients: Lemma 3 (e = centred (1-q)A is nonnegative and unimodal on the positive half; induction on k with a sign-pattern argument). Lemma 4 (exact zigzag criterion: U is the intersection over class pairs +-delta of {b : A_{b-1}>=0 and E_b+A_{b-2}>=0}, where E_j are e-samples on the positive points congruent to +-delta mod r and A_s are their alternating partial sums). Lemma 5 (each U_delta = [1,s0] union {s0+2,...,t1-2}). Lemmas 6-7 (arc-overlap lemma on Z_r, so the class sums of A are cyclically unimodal and peaked at S/2). Lemma 8 (sign rule (-1)^F * class-sum >= 0, which fixes the parity of s0). NOT PROVED: tau* <= sigma+4.",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E3/proof_S2_partial.txt"
+   }
+  ],
+  "failure_report": "S2 is only partly proved. The part still open is the odd shift b -> b-3 in S2(ii).\n\nWhat is proved (see proof_S2_partial.txt):\n- U = [1,sigma] u {sigma+2, sigma+4, ..., tau*-2}, with sigma and tau* both congruent to 1+F mod 2 and tau* >= sigma+2.\n- From this: S2(i) holds; max U is congruent to 1+F mod 2; U is closed under b -> b-2; and S2 is equivalent to tau* <= sigma+4.\n\nHow the proof goes:\n- Two pairing arguments on the centred difference sequence e: Lemma 3 shows e is unimodal on the positive half; Lemma 4 is the exact zigzag criterion over class pairs +-delta.\n- Lemma 7 (new) shows the class sums of prod[a_i] are cyclically unimodal, peaked at S/2. Its proof uses an arc-overlap lemma on Z_r. Lemma 8 turns this into the sign rule that fixes all parities.\n\nWhere it breaks: for each class pair delta, the shape of U_delta needs (Z2): A_{s0+2} + E_{s0+4} < 0, with s0 the first index where the alternating sum A_s goes negative.\n- The paired identity Q_{s0} = E_{s0} + A_{s0-2} >= 0 only gives t1 >= s0+2. The needed bound t1 <= s0+4 cannot come from pairing alone.\n- e-unimodality plus cyclic unimodality are not enough for the S2 shape. They fail on 102/2312 generic symmetric A, and on 226/10859 generic log-concave A (generic_cu.py, generic_cu_lc.py). So any proof of (Z2) must use quantitative product structure: it has to compare the class sum |tilde-tau(delta)| with the e-samples near the end of the support.\n- The easy route s0 >= L-3 (which would make E_{s0+4}=0) is false. In the large-k stress set it fails in 495/1944 cases, with s0-L as low as -8.\n- The robust inequality E_{s0+1} >= E_{s0+2} + E_{s0+4} holds at s0 in 1847/1847 cases. But it fails as a uniform lemma: its validity threshold sbar lies up to 28 steps past the E-peak. It would therefore need a separate proof that s0 >= sbar, which is no easier.\n\nEmpirically (Z2) holds everywhere tested: 0 failures in 5552 + 1944 class-pair instances. Also tau*-sigma is always 2 or 4 on 20233 instances, and s_neg - s0 is always 0 or 2 on 1705 instances. A proof of (Z2) would finish S2 with no other changes.\n\nAll files are in /tmp/claude-0/qu/explore2/R2E3/."
+ },
+ {
+  "path_id": "R2E4",
+  "stayed_on_path": true,
+  "outcome": "NONEXISTENCE_EVIDENCE",
+  "candidates_tried_total": 19,
+  "candidates_file": "/tmp/claude-0/qu/explore2/R2E4/candidates.txt",
+  "rules": [],
+  "numeric_claims": [
+   {
+    "claim": "S2 has 0 violations on 658,630,875 exact evaluations inside the fit box. Every instance has r dividing no a_i and at least 3 a_i with a middle residue; the other cases are already settled by Thm E and Lemma 7. The evaluations include 8.5M gap-shaped U found (exhaustive sweeps, neighbourhoods, two-value, random families) plus 1.94M hill-climbing evaluations.",
+    "script": "/tmp/claude-0/qu/explore2/R2E4/summarize.py (aggregates outputs; result in summary.txt)",
+    "range": "r=4..30, k<=40 (<=60 all-equal), a_i<=100"
+   },
+   {
+    "claim": "All-equal family, complete in the box (r=4..30, middle residue a<=100, k=3..60): 119,480 instances, 2,975 with U=[1,B*] minus {B*-1}, 0 S2 violations, 0 cases with B*>T6. B*-F reaches 53 and T6-B* reaches 18.",
+    "script": "/tmp/claude-0/qu/explore2/R2E4/fam_equal.py",
+    "range": "r 4..30, a<=100, k 3..60"
+   },
+   {
+    "claim": "Exhaustive multiset sweeps (1026 (r,k) jobs, r=4..30, k=3..40, all sorted a in [1,vmax], capped at 3M multisets for r<=5 and 1M for most of r>=6): 646,520,481 instances, 8,120,059 gaps, 0 violations, 0 overflow skips. The only U patterns seen on (F,T6] are 1^j0^l and 1^j010^l with j odd, as S2 predicts.",
+    "script": "/tmp/claude-0/qu/explore2/R2E4/s2enum2.c run via runjobs.sh on jobs1.txt then jobs2.txt; outputs in sweeps/",
+    "range": "r 4..30, k 3..40, a_i<=vmax(r,k)<=100"
+   },
+   {
+    "claim": "Two-value family a=(x^m,y^n), complete for r=4..30, x<y<=100, m+n<=14: 9,174,156 instances, 145,461 gaps, 0 violations",
+    "script": "/tmp/claude-0/qu/explore2/R2E4/run_two.sh (two_gen.py | s2big)",
+    "range": "r 4..30, a<=100, k<=14"
+   },
+   {
+    "claim": "One-change neighbourhoods of all equal-family gap instances: 165,283 instances, 22,128 gaps, 0 violations. Two-change neighbourhoods of 20,000 gap instances: 400,000 instances, 103,014 gaps, 0 violations.",
+    "script": "/tmp/claude-0/qu/explore2/R2E4/nbhd_gen.py, nb2_gen.py + s2big",
+    "range": "r 4..30, k<=40, a<=100"
+   },
+   {
+    "claim": "Near-miss structure. Let nneg(b) be the number of descents of P in its first half. In 307,589 instances checked (all gap sets plus 7 random families), nneg(b) >= nneg(b-2) and nneg(b+1) <= nneg(b) for b-1-F odd held with 0 breaks; these relations imply S2. Also 0 breaks in 441,970 adversarial hill-climb evaluations. The closest near-misses: the parity-flip candidate b=B*+1 often fails by exactly 1 descent, with nneg(B*+1)=nneg(B*+2). Any b >= B*+2 whose joining U would create a second missing point needed at least 2 descents.",
+    "script": "/tmp/claude-0/qu/explore2/R2E4/nneg_stats.py, hill2.py (MODE A/B), hill3.py",
+    "range": "r 4..30, k<=40, a<=100"
+   },
+   {
+    "claim": "Evaluators validated: core.margins agrees with tools/uni on 23,980 cases, and s2big (512-bit) agrees with tools/uni on 10,404 cases and with Python big-int results on 4,000 equal-family instances. s2enum2 gap and violation counts match s2big on 4 complete configurations.",
+    "script": "/tmp/claude-0/qu/explore2/R2E4/validate.py, xval_big.py, xval_c.py, xval_enum.py",
+    "range": "box"
+   }
+  ],
+  "proofs": [],
+  "failure_report": "I found no counterexample to S2 anywhere in the fit box (0 violations in about 659M exact evaluations). Everything is in /tmp/claude-0/qu/explore2/R2E4/.\n\nCoverage:\n- All-equal family: complete in the box.\n- Two-value family: complete up to k<=14.\n- Exhaustive multiset sweeps: 646.5M instances over all r=4..30 and k=3..40, but only for small value ranges at larger k.\n- Random families: many middle residues; composite r in {12,24,30}; a_i near multiples of r; many 1s plus a few large entries.\n- One- and two-change neighbourhoods of about 190k gap instances.\n- Three hill-climbing objectives: 1.94M evaluations.\n\nNot covered exhaustively: large k with large, mixed a_i (only sampled and hill-climbed). The many-1s family is degenerate because [1]_q=1, so those 1s change nothing.\n\nThe near-miss metrics based on normalized coefficient margins were scale-dependent: they drift towards large a_i, so I discarded them. Descent counts were the informative measure. Every gap seen has pattern 1^j 0 1 on (F,T6] with j odd. Two stronger descent-count relations, which together imply S2, were never broken. Bad candidates fail in matched pairs (b, b+1) with b-1-F odd, which is consistent with S2(i)."
+ }
+]

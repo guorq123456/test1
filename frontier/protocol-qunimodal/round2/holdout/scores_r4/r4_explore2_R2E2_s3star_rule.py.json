@@ -1,0 +1,1 @@
+{"tuples": 1270, "inst": 51858, "tuples_err": 0, "per_stratum": {"r23_xxl": {"inst": 2744}, "r4to12_xxl": {"inst": 10594}, "bigr_xxl": {"inst": 4314}, "three_middle": {"inst": 7897}, "equal_middle": {"inst": 10293}, "small_parts": {"inst": 7325}, "half_xxl": {"inst": 8691}}, "first": []}

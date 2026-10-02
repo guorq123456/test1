@@ -1,0 +1,5 @@
+r=2 all k<=40: residue multisets 40, full-certificate failures 0 []
+r=3 all k<=40: residue multisets 860, full-certificate failures 0 []
+r=4 all k<=40: residue multisets 12340, full-certificate failures 0 []
+r=5 all k<=40: residue multisets 135750, full-certificate failures 0 []
+r=6 all k<=26: residue multisets 169910, full-certificate failures 0 []

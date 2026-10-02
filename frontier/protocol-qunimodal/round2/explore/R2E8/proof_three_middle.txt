@@ -1,0 +1,72 @@
+THEOREM (exactly three middle residues, proved range).
+Let r>=4, a_1..a_k>=1 with r dividing no a_i, exactly three a_i with residue in [2,r-2]
+(all other a_i have residue 1 or r-1). Let nm = #{i : a_i = r-1 mod r}.
+Notation: D = sum(a_i-1), F = sum floor(a_i/r), A(q) = prod [a_i]_q, B(q) = (1-q)A(q) = sum_{j=0}^{D+1} B_j q^j,
+g_i = sum_{n>=0} B_{i-rn} (B_j = 0 for j<0 or j>D+1; g_i = 0 for i<0), i.e. g = coefficients of A(q)/[r]_q,
+tau_t = sum_{j = t mod r} B_j (t in Z/r), mu = max{j in [1,r-1] : tau_j > 0} (0 if none), T6 = 1+floor((D+1-2mu)/r),
+s = (D+1) mod r, FIRE = [tau_s <= -2 and s >= 2mu], B* = T6 - 2*FIRE, U = {b>=1 : P unimodal}.
+CLAIM: if r <= 30 and nm <= 37 then U = [1, B*]. (No bound on the sizes of the a_i nor on the number of a_i = 1 mod r.)
+
+Cited established results: Thm A (g-form): for b>=1 and N = D + r(b-1), P is unimodal iff g_i >= g_{i-rb} for all 0<=i<=floor(N/2).
+Thm C: if r divides no a_i and P is unimodal then b <= T6.
+(Remark: tau_t = Gamma_t - Gamma_{t-1}, so mu here is the mu of Thm C: Gamma_t>=...>=Gamma_{r-1} iff tau_j<=0 for all j in (t,r-1].
+Checked numerically: check_mu.py, 0 mismatches.)
+
+Lemma 1 (symmetry). For every integer i>=0: g_i = tau_{i mod r} + g_{D+1-r-i}.
+ 1. A is palindromic: A_j = A_{D-j}. Hence B_{D+1-j} = A_{D+1-j} - A_{D-j} = A_{j-1} - A_j = -B_j for all j.
+ 2. tau_{i mod r} - g_i = sum_{j>i, j=i mod r} B_j (the class sum minus the part with j<=i).
+ 3. Substitute j' = D+1-j: by step 1 this sum equals -sum B_{j'} over j' < D+1-i with j' = D+1-i (mod r),
+    i.e. over j' <= D+1-i-r in that class; that sum is g_{D+1-r-i} by definition (0 if the index is negative).
+ 4. Hence g_i = tau_{i mod r} + g_{D+1-r-i}. (Numerical check: lemma_checks.py, 0 failures.)
+
+Lemma 2 (firing kills T6-1 and T6). If FIRE holds then no b >= T6-1 lies in U; hence U is contained in [1, T6-2].
+ 1. If D+1 < r then B has degree D+1 < r so tau_{D+1} = B_{D+1} = -A_D = -1 > -2; so FIRE implies D+1 >= r.
+ 2. Write D+1 = Qr + s, 0<=s<r. Since 0 <= s-2mu < r, floor((D+1-2mu)/r) = Q, so T6-1 = Q.
+ 3. Let i0 = D+1-r >= 0 (step 1). By Lemma 1, g_{i0} = tau_{(D+1) mod r} + g_0 = tau_s + 1 <= -1 (g_0 = B_0 = A_0 = 1).
+ 4. Let b >= Q and N = D+r(b-1). Then rb >= Qr = D+1-s >= D+2-r, so i0 = D+1-r < rb, hence g_{i0-rb} = 0;
+    and 2*i0 = 2D+2-2r <= D + rb - r = N (equivalent to rb >= D+2-r), so i0 <= floor(N/2).
+ 5. Thus the Thm A condition g_{i0} >= g_{i0-rb} = 0 fails; P is not unimodal for every b >= Q = T6-1.
+ (Numerical check on random tuples, any number of middle residues: lemma_checks.py, 59 firing cases, 0 failures.)
+
+Lemma 3 (peeling). If a_i >= 1, b >= 2 and P(a,b-1) is unimodal then P(a + r e_i, b) is unimodal. Also 1 in U(a) always.
+ 1. Identity: [x+r]_q [b]_{q^r} = [x+rb]_q + q^r [x]_q [b-1]_{q^r} for x>=0, b>=1. Proof: multiply both sides by
+    (1-q)(1-q^r); LHS becomes (1-q^{x+r})(1-q^{rb}) = 1 - q^{rb} - q^{x+r} + q^{x+r+rb};
+    RHS becomes (1-q^{x+rb})(1-q^r) + q^r(1-q^x)(1-q^{r(b-1)}) which expands to the same four terms.
+ 2. Multiply by Q = prod_{j!=i}[a_j]_q (x = a_i): P(a+re_i,b) = [a_i+rb]_q Q + q^r P(a,b-1).
+ 3. Both summands have nonnegative coefficients and are palindromic about the same center:
+    the first has degree M = a_i+rb-1+deg Q; the second occupies degrees r .. r+deg P(a,b-1) = M - r, so it is
+    palindromic in the same length-(M+1) window.
+ 4. The first summand is a product of [n]_q's, hence symmetric unimodal (standard). The second is unimodal by hypothesis.
+ 5. A palindromic unimodal nonnegative sequence c_0..c_M is nondecreasing on [0, floor(M/2)]: if the peak m >= M/2 this is
+    immediate; if m < M/2 then c is nonincreasing on [m, M-m] while c_m = c_{M-m}, so constant there.
+ 6. The sum of two sequences, each palindromic in the window [0,M] and nondecreasing on [0,floor(M/2)], is again such,
+    hence unimodal. b=1: P = A is a product of [n]_q's, unimodal.
+ Corollary 3'. Write a_i = rho_i + r f_i with rho_i in [1,r-1]. Then U(a) contains [1,F] union (F + U(rho)).
+    Induction on F = sum f_i: F=0 trivial; else a = a' + r e_i with F(a') = F-1, and Lemma 3 gives
+    U(a) contains {1} union (1 + U(a')) which contains {1} union [2,F] union (F + U(rho)).
+    (rho_i = 1 entries are factors [1]_q = 1 and may be deleted from rho without changing P, D, tau.)
+
+Lemma 4 (invariance). B*(a) = B*(rho) + F, FIRE(a) = FIRE(rho), T6(a) = T6(rho) + F.
+ 1. D(a) = D(rho) + rF since a_i - 1 = rho_i - 1 + r f_i.
+ 2. [a_i]_q = [rho_i]_q + q^{rho_i} [r]_q [f_i]_{q^r}, and (1-q)[r]_q = 1-q^r = 0 mod (q^r-1); expanding the product,
+    (1-q)A(a) = (1-q)A(rho) mod (q^r-1). So tau(a) = tau(rho), hence mu and FIRE agree (s agrees by step 1).
+ 3. T6(a) = 1 + floor((D(rho)+rF+1-2mu)/r) = T6(rho) + F; so B*(a) = B*(rho) + F.
+ (Numerical check of tau invariance: lemma_checks.py, 0 failures.)
+
+Lemma 5 (base family, computation). For every r in [4,30], m1<=m2<=m3 in [2,r-2] and nm in [0,37], the tuple
+ rho = (m1,m2,m3,(r-1)^nm) has U(rho) = [1, B*(rho)] (tested for all b in [1, T6+3]; Thm C covers b > T6).
+ Script: gen_base.py (inputs), ubig (exact 256-bit two's-complement arithmetic implementing Thm A's g-form test;
+ prod a_i < 2^195 here so no overflow; ubig cross-validated against tools/gt_big.py by xval_ubig.py and xval_ubig2.py,
+ 0 mismatches incl. 54 instances with prod >= 2^127), check_base.py; driver run_base.sh.
+ Result: 1,041,390 base tuples, 0 with U != [1,B*]. These computations are all inside the fit box (k = 3+nm <= 40, a_i <= 29).
+
+Proof of the THEOREM.
+ 1. Let rho be the residue vector of a with the 1's deleted; it is a base tuple (m1,m2,m3,(r-1)^nm) with the same r, nm.
+ 2. Lower bound: by Cor 3' and Lemma 5, U(a) contains [1,F] union (F + [1,B*(rho)]) = [1, F + B*(rho)] = [1, B*(a)] (Lemma 4).
+ 3. Upper bound: if FIRE fails, Thm C gives U(a) contained in [1,T6(a)] = [1,B*(a)]. If FIRE holds, Lemma 2 gives
+    U(a) contained in [1,T6(a)-2] = [1,B*(a)].
+ 4. Hence U(a) = [1,B*(a)].  QED.
+
+What is NOT proved: the base family for nm >= 38 or r >= 31 (outside the fit box); the rule is conjectural there.
+Empirical remark (not used): over all residue data with r<=30 (fire_table.py, 1,359,288 configurations, 11,150 firing),
+FIRE always has s = r-2 and tau_s = -2 exactly, and B* - 1 - F = E6 - 2*FIRE is even and >= 0 in all data seen.

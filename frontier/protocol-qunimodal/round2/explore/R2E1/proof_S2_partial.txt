@@ -1,0 +1,261 @@
+PARTIAL PROOF OF CONJECTURE S2  (path R2E1: exact criterion near the threshold)
+==========================================================================
+
+Result proved here (all r>=2, all a_i>=1):
+  (A)  b in U, b>=3            ==>  b-2 in U.
+  (i)  b in U, b == F (mod 2)   ==>  b+1 in U.          [S2 (i)]
+  (F)  U is finite  <=>  r divides no a_i.
+  Consequently, if r divides no a_i and B* = max U, then B* == 1+F (mod 2) and
+     U = { b<=B* : b != F mod 2 }  u  { b<=B_off : b == F mod 2 },   B_off <= B*-1,
+  i.e. S2 (ii) holds for every b of parity F and for every b' == b (mod 2).
+  NOT proved: (C)  b in U, b != F (mod 2), b>=4  ==>  b-3 in U   (equivalently B_off >= B*-3).
+  (C) is proved under the extra hypothesis of Theorem 15 (in particular whenever B_off >= F+e-4,
+  e = floor((E+1)/r), E = sum (a_i mod r) - k).
+Scripts: threads.py / rule_threads.py (criterion), verify_rule.py (ground-truth check),
+         abstract_thread.py (shows (C) is not a consequence of Lemmas 3,10 alone).
+
+---------------------------------------------------------------------------
+0. Notation
+---------------------------------------------------------------------------
+A(q) = prod_{i=1..k} [a_i]_q = sum_j A_j q^j, D = deg A = sum (a_i - 1), A_j := 0 for j<0 or j>D.
+F = sum floor(a_i/r).  P_b = A(q) [b]_{q^r}, N_b = deg P_b = D + r(b-1), U = {b>=1 : P_b unimodal}.
+delta_j := A_j - A_{j-1} (j in Z), the coefficients of (1-q)A.  c0 := (D+1)/2.
+For a residue rho mod r its MIRROR is sigma(rho) := D+1-rho (mod r).  rho is FIXED if sigma(rho)=rho.
+A THREAD is an unordered pair theta={rho,sigma} of non-fixed mirror residues.
+For a thread, y_0>y_1>y_2>... are ALL integers < c0 congruent to rho or sigma (mod r)
+(the list continues into negative integers), d_i := delta_{y_i},
+   V_0 := 0,  V_m := sum_{i=0}^{m-1} (-1)^{m-1-i} d_i      (so V_{m+1} = d_m - V_m),
+   t0  := sum_{i>=0} (-1)^i d_i   (finite sum: d_i = 0 once y_i < 0).
+tau_t := sum_{j == t (mod r)} delta_j   (t mod r).
+
+---------------------------------------------------------------------------
+1. Elementary facts
+---------------------------------------------------------------------------
+Lemma 1. A is palindromic (A_j = A_{D-j}) with nonnegative coefficients, and unimodal.
+  delta_{D+1-j} = -delta_j for all j; delta_j >= 0 for j < c0, delta_j <= 0 for j > c0,
+  delta_{c0} = 0 when c0 is an integer.
+Proof. Each [a]_q is palindromic and unimodal; products of palindromic unimodal polynomials with
+  nonnegative coefficients are palindromic unimodal (standard).  delta_{D+1-j} = A_{D+1-j}-A_{D-j}
+  = A_{j-1}-A_j = -delta_j.  For j <= D/2, A_{j-1} <= A_j (increasing half), so delta_j >= 0; for
+  j = c0 integer, delta_{c0} = -delta_{c0} = 0.  The rest follows by antisymmetry.            QED
+
+Lemma 2 (palindromic criterion). A palindromic sequence c_0..c_N is weakly unimodal iff
+  c_n >= c_{n-1} for all 1 <= n <= N/2.
+Proof. (<=) by symmetry the sequence is nonincreasing after N/2.  (=>) let c be unimodal with
+  mode m.  If n <= m nothing to show.  If m < n <= N/2 then c_{n-1} >= c_n; also N-n+1 > N-n >= N/2
+  > m, so c_{N-n} >= c_{N-n+1}, i.e. c_n >= c_{n-1}.  Hence c_n = c_{n-1}.                       QED
+
+---------------------------------------------------------------------------
+2. Unimodality of delta on the left half
+---------------------------------------------------------------------------
+Lemma 3. For every A = prod [a_i]_q, the restriction of delta to the integers j < c0 is
+  weakly unimodal: there is p with delta nondecreasing on {j <= p} and nonincreasing on
+  {p <= j < c0}.  (Verified numerically: delta_unimodal.py, delta_unimodal_rand.py, 0 failures.)
+Proof. Induction on k.  k=0: A=1, c0=1/2, delta restricted to j<=0 is (...,0,0,1): nondecreasing.
+ Step: A' = A[a], a>=2 (a=1 trivial).  Write phi = delta (of A), with peak p (p < c0).
+ By Lemma 1 and the hypothesis, on the integers phi is
+   nondecreasing on (-inf,p],  nonincreasing on [p, 2c0-p],  nondecreasing on [2c0-p, inf)   (*)
+ [for j in (c0,2c0-p]: phi_j = -phi_{2c0-j} with 2c0-j in [p,c0) decreasing as j grows;
+  for j >= 2c0-p: 2c0-j <= p.]
+ D' = D+a-1, c0' = c0+(a-1)/2, delta'_j = sum_{s=0}^{a-1} phi_{j-s}, and
+   E_j := delta'_j - delta'_{j-1} = phi_j - phi_{j-a}.
+ For integers j < c0' we have 2j-a < 2c0-1, hence j-a < 2c0-j.  Four cases:
+  R1 j <= p:                      j-a < j <= p, so E_j >= 0 by (*).
+  R2 p < j <= 2c0-p, j-a < p:     on R2, phi_j is nonincreasing and phi_{j-a} nondecreasing in j,
+                                  so E_j is nonincreasing in j along R2.
+  R3 j-a >= p, j <= 2c0-p:        both in [p,2c0-p]: E_j <= 0.
+  R4 j > 2c0-p:                   j > c0 so phi_j <= 0; j-a < 2c0-j < p <= c0 so phi_{j-a} >= 0;
+                                  E_j <= 0.
+ Suppose j1 < j2 < c0' with E_{j1} < 0 < E_{j2}.  Then j2 is in R1 or R2.  If j2 in R1 then j1 in R1,
+ E_{j1} >= 0, contradiction.  So j2 in R2; j1 not in R1 (E_{j1}<0) so p < j1 < j2 <= 2c0-p and
+ j1-a < j2-a < p: j1 in R2, and E_{j1} >= E_{j2} > 0, contradiction.  Hence the signs of E_j
+ (j < c0') are (>=0)...(>=0)(<=0)...(<=0): delta' is unimodal on the integers < c0'.
+ (delta'_j >= 0 there by Lemma 1 applied to A'.)                                               QED
+
+---------------------------------------------------------------------------
+3. Reduction to one coefficient per residue class
+---------------------------------------------------------------------------
+Lemma 4. For b>=1, P_b is unimodal iff F_b(n_rho) >= 0 for every residue rho, where
+  F_b(n) := sum_{i=0}^{b-1} delta_{n-ri}  (= c_n - c_{n-1} for P_b)  and
+  n_rho := max{ n == rho (mod r) : n <= N_b/2 }.
+Proof. P_b is palindromic (product of palindromic polynomials) with coefficients c_n = sum_{i<b} A_{n-ri},
+ so c_n - c_{n-1} = F_b(n); use Lemma 2.  Fix rho and n == rho, n <= N_b/2.
+ If n <= c0, every index n-ri <= c0, so F_b(n) >= 0 (Lemma 1).
+ If n > c0 and n+r <= N_b/2:  F_b(n) = F_b(n+r) - delta_{n+r} + delta_{n-r(b-1)}.  Here delta_{n+r} <= 0
+ (n+r > c0) and n-r(b-1) <= N_b/2 - r - r(b-1) = (D - r(b+1))/2 < c0 so delta_{n-r(b-1)} >= 0.
+ Hence F_b(n) >= F_b(n+r) >= ... >= F_b(n_rho).  So min over n <= N_b/2 in class rho is
+ >= min(0, F_b(n_rho)), and F_b(n_rho) is attained.                                           QED
+
+---------------------------------------------------------------------------
+4. Thread formula
+---------------------------------------------------------------------------
+Lemma 5. For b >= 1:  P_b unimodal  <=>  for every thread:  V_b >= 0  and  V_{b-1} + d_b >= 0.
+  (Verified: threads.py 3000 random instances, verify_rule.py 56716 cases vs tools/uni, 0 mismatches.)
+Proof. Fix a residue rho, n := n_rho.  The progression AP = {n - ri : 0<=i<b} has lowest point
+ L1 := n - r(b-1).  Put L2 := D+1-n and l := L2 - L1 = N_b + 1 - 2n.  Since N_b/2 - r < n <= N_b/2,
+ 1 <= l <= 2r.
+ (a) Since n + r > N_b/2 >= c0 - 1/2 and n+r is an integer, n+r >= c0, with equality only if
+     c0 is an integer congruent to rho, i.e. rho fixed.  Assume rho non-fixed; then no element of
+     class rho lies in (n, c0), so AP ∩ (-inf,c0) = {x == rho : L1 <= x < c0}.
+     The points x of AP with x > c0 satisfy delta_x = -delta_{D+1-x} (Lemma 1); their images D+1-x are
+     exactly the integers == sigma(rho) in [L2, c0) (consecutive images differ by r; the next image
+     above would come from an AP point <= c0).  No AP point equals c0 (rho non-fixed).  Hence
+        F_b(n) = S_rho[L1,c0) - S_sigma[L2,c0),     S_kappa[u,v) := sum of delta over integers == kappa in [u,v).
+     The number of AP points is b = #(class rho in [L1,c0)) + #(class sigma in [L2,c0)).
+ (b) Integers == rho or sigma alternate between the two classes (rho != sigma mod r).
+     Case l < r: L2 - r < L1, so no sigma-integer lies in [L1, L2).  Therefore the integers of the
+     thread in [L1,c0) are exactly the two runs; they are the top b thread positions y_0..y_{b-1},
+     with y_{b-1} = L1 in class rho.  Assigning + to class rho and - to class sigma is the
+     alternating sign (-1)^{b-1-i}.  So F_b(n) = V_b.
+     Case l > r: then l < 2r (l = 2r forces sigma == rho), so the sigma-integer L2 - r lies in (L1, L1+r).
+     F_b(n) = delta_{L1} + [S_rho[L1+r,c0) - S_sigma[L2,c0)].  Sigma-integers in [L1+r,c0) are those in
+     [L2,c0) (as L2-r < L1+r < L2).  So the bracket is the alternating sum over the top b-1 thread
+     positions (bottom one L1+r of class rho) = V_{b-1}; the next positions are y_{b-1} = L2-r and
+     y_b = L1.  So F_b(n) = V_{b-1} + d_b.   (If b=1: bracket empty, F = d_1 = delta_{L1}.)
+     l = r is impossible for non-fixed rho (l == sigma-rho mod r).
+ (c) Partner class: m := N_b + 1 - r - n is == sigma; for non-fixed rho one checks N_b/2 - r < m <= N_b/2
+     (the boundary case would force m = n+r, i.e. rho fixed), so n_sigma = m and
+     l_sigma = N_b + 1 - 2m = 2r - l_rho.  Hence in every thread exactly one class gives V_b and the
+     other gives V_{b-1}+d_b, both computed from the same thread sequence d.
+ (d) Fixed rho (2rho == D+1 mod r): reflection j -> D+1-j preserves the class.  If n <= c0 every AP
+     index is <= c0 and F_b(n) >= 0.  If n > c0, the reflected images of the AP points above c0 are
+     exactly the class-rho integers in [L2, c0), and all class-rho integers in [L1, c0) are AP points,
+     so F_b(n) = S_rho[L1,c0) - S_rho[L2,c0) = S_rho[L1,L2) >= 0 (indices < c0).  Fixed classes never fail.
+ Combining with Lemma 4 proves the claim.                                                      QED
+
+---------------------------------------------------------------------------
+5. The sign of the thread tail  t0
+---------------------------------------------------------------------------
+Lemma 6. For a thread, t0 = tau_{y_0}, and y_0 lies in the open interval (c0 - r/2, c0).
+Proof. y_0, y_1 are the largest thread integers < c0, of different classes, both in (c0-r, c0); their sum
+ is == rho+sigma == D+1 (mod r) and lies in (D+1-2r, D+1), so y_0 + y_1 = D+1-r and y_0 > c0 - r/2.
+ t0 = S_{class(y_0)}(-inf,c0) - S_{class(y_1)}(-inf,c0).  The full class sum tau_{y_0} splits into
+ the part below c0 and the part above c0; by antisymmetry the part above equals -S_{class(y_1)}(-inf,c0)
+ (j -> D+1-j maps class(y_0) to class(y_1)).  So tau_{y_0} = t0.                               QED
+
+Lemma 7 (residue reduction).  Write a_i = r f_i + rho_i, 0 <= rho_i < r, R(q) := prod [rho_i]_q.
+ Then sum_t tau_t q^t == (1-q) R(q)  (mod q^r - 1).  If some rho_i = 0 then tau == 0.
+Proof. [a_i]_q = [rho_i]_q + q^{rho_i} [r]_q [f_i]_{q^r}, and (1-q)[r]_q = 1 - q^r == 0 mod (q^r - 1).
+ Expand the product.                                                                           QED
+
+Lemma 8 (half-period sign).  Let rho_i in [1, r-1], R = prod [rho_i]_q, E = deg R, c_R = (E+1)/2,
+ tau^R := (1-q)R reduced mod q^r - 1 (an r-periodic sequence on Z).  Then
+   tau^R_t >= 0 for every integer t with c_R - r/2 < t < c_R.
+ (By antisymmetry tau^R_{E+1-t} = -tau^R_t, also tau^R_t <= 0 for c_R < t < c_R + r/2.)
+Proof. Induction on the number of factors.  R=1: E=0, c_R=1/2, tau_0 = 1, tau_1 = -1 (indices mod r),
+ all other tau = 0; the integers t in (1/2 - r/2, 1/2) are t = 0 and residues r-1, r-2, ... which are
+ never == 1 there.  OK.
+ Step R' = R[rho] (rho in [2,r-1]): c' = c + (rho-1)/2 (c := c_R), tau'_t = sum_{s=0}^{rho-1} tau_{t-s}.
+ tau is r-periodic and antisymmetric about c (tau_{2c-u} = -tau_u), hence also about c - r/2
+ (tau_{2c-r-u} = -tau_u); in particular tau = 0 at c and at c - r/2 when these are integers.
+ Let t in (c'-r/2, c').  The window W = {t-rho+1,...,t} has rho <= r-1 elements and center
+ m = t-(rho-1)/2 in (c - r/2, c); W ⊂ (c - r, c + r/2).  Put W+ = W ∩ (c-r/2, c),
+ Wa = W ∩ (c, c+r/2), Wb = W ∩ (c-r, c-r/2).
+   For u in Wa: 2c-u is in W+ (2c-u >= 2c-t > 2m-t = t-rho+1, and 2c-u < c < u <= t).
+   For u in Wb: 2c-r-u is in W+ (2c-r-u <= 2c-r-(t-rho+1) <= t because m >= c - r/2, and
+     c - r/2 < 2c-r-u < c).
+   The two maps are injective with disjoint images (a common image would give two elements of W
+   differing by r).  Paired terms cancel; the remaining terms are tau_u with u in W+ (>= 0 by
+   induction) or u in {c, c-r/2} (= 0).  So tau'_t >= 0.  Antisymmetry of tau' about c' holds since
+   R' is palindromic.                                                                          QED
+
+Lemma 9 (sign of t0).  For every thread:  (-1)^F t0 >= 0.
+Proof. If some r | a_i, tau == 0 (Lemma 7) and t0 = 0.  Otherwise all rho_i >= 1, D = rF + E, so
+ c0 = c_R + rF/2.  By Lemma 6, t0 = tau_{y_0} with y_0 in (c0 - r/2, c0).  If F is even, y_0 - rF/2
+ lies in (c_R - r/2, c_R) and tau is r-periodic: t0 >= 0 (Lemma 8).  If F is odd, y_0 - r(F-1)/2 lies
+ in (c_R, c_R + r/2): t0 <= 0.                                                                QED
+
+---------------------------------------------------------------------------
+6. Alternating sums of the thread
+---------------------------------------------------------------------------
+Lemma 10.  (a) For every thread, d is weakly unimodal in i: there is M with d nondecreasing on
+ [0,M] and nonincreasing on [M,inf); d_i >= 0; d_i = 0 for i large.
+ (b) If d is nondecreasing on [0, m-1] then V_m >= 0.
+ (c) V_{m+2} = V_m + d_{m+1} - d_m;  for m large V_m = (-1)^{m-1} t0.
+Proof. (a) y_i is decreasing and all y_i < c0; apply Lemma 3 (positions above the peak p give
+ nondecreasing d, positions below p nonincreasing d).  (b) V_m = (d_{m-1}-d_{m-2}) + (d_{m-3}-d_{m-4})
+ + ... (+ d_0 if m is odd), each bracket >= 0.  (c) from V_{m+1} = d_m - V_m twice; and
+ sum_{i<m} (-1)^{m-1-i} d_i = (-1)^{m-1} sum_i (-1)^i d_i once d_i = 0 for i >= m.          QED
+
+Lemma 11.  For every thread and every m >= 1 with m != F (mod 2):  V_m >= 0.
+Proof. If d is nondecreasing on [0,m-1], use Lemma 10(b).  Otherwise every admissible M satisfies
+ M < m-1, so d is nonincreasing on [m-1, inf) and by Lemma 10(c) V_m >= V_{m+2} >= V_{m+4} >= ...
+ = (-1)^{m-1} t0 = (-1)^F t0 >= 0 (Lemma 9; m-1 == F mod 2).                                   QED
+
+---------------------------------------------------------------------------
+7. Main consequences
+---------------------------------------------------------------------------
+Theorem 12 (parity-split exact criterion).  For b >= 1:
+   if b == F (mod 2):  b in U  <=>  V_b >= 0 for every thread;
+   if b != F (mod 2):  b in U  <=>  V_{b-1} + d_b >= 0 for every thread.
+Proof. Lemma 5 plus Lemma 11 (for b == F, V_{b-1} >= 0 [V_0 = 0 if b = 1], so V_{b-1}+d_b >= 0;
+ for b != F, V_b >= 0).                                                                       QED
+ (Implemented as rule_threads.py; 0 mismatches on 56716 ground-truth cases, verify_rule.py.)
+
+Remark 12a (which inequalities of Theorem A can fail).  In the notation of Theorem A
+ (K = D+1-r(b+1), condition h_m <= h_{K-m} for m < K/2), the pair with gap l = K-2m is the class-rho
+ condition of Lemma 4 with l = l_rho (Lemma 5 proof); gaps l > 2r never bind (Lemma 4), gap l = r
+ (fixed classes) never fails, gaps l < r give V_b, gaps r < l < 2r give V_{b-1}+d_b.  Theorem 12 says:
+   for b == F (mod 2) only inequalities with gap K-2m < r can fail;
+   for b != F (mod 2) only inequalities with gap r < K-2m < 2r can fail.
+ (Seen in inner.py output, e.g. r=6, a=(2,3,3,4,4,4,5): b=2,4,6 fail at gaps {1},{1,3,5},{1,3,5};
+  b=5 fails at gaps {7,9,11}.)
+
+Theorem 13 (S2 (i)).  b in U and b == F (mod 2)  ==>  b+1 in U.
+Proof. V_b >= 0 for every thread, so V_b + d_{b+1} >= 0; b+1 != F, apply Theorem 12.          QED
+
+Theorem 14 (step-2 closure).  b in U, b >= 3  ==>  b-2 in U.   (No hypothesis on r | a_i.)
+Proof. By Lemma 5 it suffices, for each thread, to derive V_{b-2} >= 0 and V_{b-3}+d_{b-2} >= 0
+ from V_b >= 0 and V_{b-1}+d_b >= 0.
+ * V_b = V_{b-2} + d_{b-1} - d_{b-2}.  If d_{b-1} <= d_{b-2}: V_{b-2} >= V_b >= 0.  Otherwise no
+   admissible M is <= b-2, so d is nondecreasing on [0,b-1] and V_{b-2} >= 0 by Lemma 10(b).
+ * V_{b-3} + d_{b-2} = V_{b-1} + d_{b-3}.  If d_{b-3} >= d_b this is >= V_{b-1}+d_b >= 0.  Otherwise
+   no admissible M is <= b-3, d is nondecreasing on [0,b-2], V_{b-3} >= 0 (Lemma 10(b)) and
+   V_{b-3}+d_{b-2} >= 0.                                                                       QED
+
+Theorem 15 (finiteness).  U is finite iff r divides no a_i; if some r | a_i then U = all b >= 1.
+Proof. If some rho_i = 0: t0 = 0 for all threads; in the proof of Lemma 11 the limit is 0 for both
+ parities, so V_m >= 0 for all m and every condition of Lemma 5 holds.  If no rho_i = 0: at a
+ primitive r-th root of unity w, R(w) = prod (1-w^{rho_i})/(1-w) != 0, so tau is not identically 0;
+ tau vanishes on fixed classes and tau_{y_1} = -tau_{y_0} inside each thread, so some thread has
+ t0 = tau_{y_0} != 0.  For b >= 2 + (number of thread positions >= 0), d_b = 0 and Lemma 5 requires
+ (-1)^{b-1} t0 >= 0 and (-1)^{b-2} t0 >= 0, impossible.                                       QED
+
+Corollary 16.  Let r divide no a_i, B* = max U, B_off = max{b in U : b == F (mod 2)} (0 if none).
+ Then B* == 1 + F (mod 2), B_off <= B* - 1, and
+   U = {b <= B* : b != F (mod 2)}  ∪  {b <= B_off : b == F (mod 2)}.
+ Hence S2 (i) holds, and S2 (ii) holds for every b == F (mod 2) and for every b' == b (mod 2).
+ S2 is equivalent to the single remaining inequality  B_off >= B* - 3,  i.e. to
+   (C)  b in U, b != F (mod 2), b >= 4  ==>  b-3 in U.
+Proof. Theorem 14 makes both parity parts of U initial segments of their parity classes (1 in U).
+ Theorem 13: if B* == F then B*+1 in U, contradiction; and B_off + 1 in U gives B* >= B_off + 1.
+ For b == F in U: b+1 in U (Thm 13), then b-1, b-3, ... in U (Thm 14), and b-2, b-4, ... in U.  QED
+
+Theorem 17 (conditional (C)).  Let j* := B_off + 2 (the least b == F, b >= 1, with b not in U).
+ By Theorem 12 some thread has V_{j*} < 0.  If for one such thread
+     d_{j*} - d_{j*+1} >= d_{j*+3}                     (L')
+ then B* <= B_off + 3, hence S2 holds for this parameter set.  (L') holds automatically when the
+ thread position y_{j*+3} is negative (d_{j*+3} = 0); every thread has at most F+e+1 positions in
+ [0,c0) (e = floor((E+1)/r)), so (L') -- and therefore S2 -- holds whenever B_off >= F + e - 4.
+Proof. V_{j*} < 0 rules out d nondecreasing on [0,j*-1] (Lemma 10(b)), so d is nonincreasing on
+ [j*-1, inf) and d_{j*} >= d_{j*+1}.  Then
+   V_{j*+2} + d_{j*+3} = V_{j*} - (d_{j*} - d_{j*+1} - d_{j*+3}) <= V_{j*} < 0,
+ so j*+3 (parity != F) is not in U (Theorem 12) and by Theorem 14 no larger b of that parity is in U:
+ B* <= j*+1 = B_off+3.  Thread position count: the integers == rho or sigma in [0, D+1] are symmetric
+ about c0 and number 2*floor((D+1)/r) or 2*floor((D+1)/r)+2 (both residues <= (D+1) mod r or both
+ larger, since rho+sigma == D+1); half of them lie below c0; floor((D+1)/r) = F + e.  If
+ j*+3 >= F+e+1 then y_{j*+3} < 0.                                                              QED
+
+---------------------------------------------------------------------------
+8. What is missing (exact obstruction)
+---------------------------------------------------------------------------
+(C) is equivalent, thread by thread, to:  for j == F (mod 2) with V_j < 0,
+     V_j < d_j - d_{j+1} - d_{j+3}    (main parity fails three steps later).
+Lemmas 3 and 9 alone do not imply it: the unimodal sequence d = (2,1,1,1,1,1,0,...) with F even
+satisfies t0 = 1 >= 0 but V_2 = -1 < 0 while V_4 + d_5 = 0 >= 0 (abstract_thread.py: 82 of 8659
+abstract unimodal cases violate (C), none violate (i) or (A)).  So a proof of (C) must use more of
+the arithmetic of delta = (1-q) prod [a_i]_q than unimodality: it has to show that an off-parity
+failure (V_j < 0) never occurs at a level where delta grows slowly, i.e. where
+delta_{y_j} - delta_{y_{j+1}} < delta_{y_{j+3}}.  In a pure exponential model delta(y) = exp(lambda y)
+with thread gaps g, r-g, a violation window for t0 exists iff exp(-lambda g)(1+exp(-lambda r)) > 1,
+roughly lambda < 1/(r+2g); no instance in the fit box reaches such a level (see report numbers).

@@ -1,0 +1,19 @@
+# Candidates tried on path R2E2 (peeling induction for S2). Error counts on fit-box test set T
+# T = all multisets r in {4..7}, parts<=2r+1 (r not dividing), k<=6; equal-part families r<=10,k<=60; N1/T7 instances.
+C01 S2 (target): tested 48748, violations 0
+C02 J(a) is a prefix of J_inf(rho): tested 48745, violations 32
+C03 S3: U in {[1,T6],[1,T6]-{T6-1},[1,T6-2]}: tested 48748, violations 825
+C04 small-part instance alone certifies lifts: [0,E6-2] subset J(rho): tested 4197, violations 825
+C05 A1: Bad(a) subset [0,mu]: tested 48748, violations 959
+C06 P(K) fails only for K in {1,2} (small parts): tested 4197, violations 1185
+C07 S3*: U in {[1,B],[1,B]-{B-1}}, B from first negative coeff y* of A/[r]: tested 48748, violations 0
+C08 Par*: every y with d_y<0 has floor((2y-D-1)/r)=F mod 2: tested 48748, violations 0
+C09 bound: U subset [1,B]: tested 48748, violations 0
+C10 ND-even holds for all K (even family): tested 48748, violations 0
+C11 ND-odd holds for K>=2mu*+2r: tested 48748, violations 0
+C12 d nondecreasing on [0,D/2]: tested 48748, violations 47052
+C13 E6=0 for k<=3: tested 1386, violations 0
+C14 rule s3star_rule.predict matches ground truth (per b): tested 338521, violations 0
+# --- continuation (after usage-limit reset): residue certificate of Theorem R (proof_S2_reduction.txt) ---
+C15 full residue certificate (TP_rho & E_rho & O_rho) for all rho in sweep ranges (r=2..30, k up to budget; equal t^k k<=60): tested 3154273 residue multisets, violations 0   [E,O: sweep_results.txt 2nd run; TP: sweep_tp.txt]
+C16 strong certificate (TP & E+ & O+ with mu_neg, covers any number of residue-1 parts) for rho' with parts in [2,r-1]: tested 1547599, violations 25737 (all at large k'; none for k'<=5, r<=12 or k'<=3, r<=30: strong_minfail.txt)  [discarded as universal statement; kept as sufficient condition]

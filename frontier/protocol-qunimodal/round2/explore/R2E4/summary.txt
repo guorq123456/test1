@@ -1,0 +1,29 @@
+equal_all (119480, 2975, 0)
+sweeps (646520481, 8120059, 0)
+sweeps_jobs 1026
+sweeps_skipped_overflow 0
+nb1_equalgap (165283, 22128, 0)
+two_value (9174156, 145461, 0)
+rand_comp_1 (40000, 687, 0)
+rand_equalp_1 (40000, 845, 0)
+rand_mid_1 (40000, 893, 0)
+rand_near_1 (40000, 402, 0)
+rand_smallmid_1 (40000, 956, 0)
+rand_two_1 (40000, 815, 0)
+rand_wide_1 (40000, 604, 0)
+nb2_twochange (400000, 103014, 0)
+ones (30000, 209, 0)
+hill_A (599157, None, 0)
+hill_B (900348, None, 0)
+hill3_monot (441970, None, 0)
+TOTAL evaluations 658630875 violations 0
+sweep U-patterns on (F,T6] (top 25): [('1', 213701874), ('100', 173267299), ('111', 53404173), ('10000', 38893196), ('11100', 38502196), ('1111100', 20928161), ('11111', 20780158), ('1110000', 16134782), ('111111100', 11983910), ('1111111', 10280497), ('111110000', 7134504), ('11111111100', 6066536), ('111111111', 5231103), ('11111110000', 3472080), ('1111111111100', 2864212), ('10100', 2677806), ('11111111111', 2588366), ('1000000', 2351578), ('111000000', 2235766), ('101', 1997362), ('1111111110000', 1643787), ('111111111111100', 1318147), ('1111111111111', 1245417), ('11111000000', 1140505), ('1010000', 1007919)]
+nneg ['nb_gap_gaps.txt'] 22128 M2breaks 0 P1breaks 0 min ii-slack 2
+nneg ['two_gaps.txt'] 145461 M2breaks 0 P1breaks 0 min ii-slack 2
+nneg ['two'] 20000 M2breaks 0 P1breaks 0 min ii-slack 2
+nneg ['mid'] 20000 M2breaks 0 P1breaks 0 min ii-slack 2
+nneg ['near'] 20000 M2breaks 0 P1breaks 0 min ii-slack 2
+nneg ['comp'] 20000 M2breaks 0 P1breaks 0 min ii-slack 5
+nneg ['wide'] 20000 M2breaks 0 P1breaks 0 min ii-slack 2
+nneg ['equalp'] 20000 M2breaks 0 P1breaks 0 min ii-slack 2
+nneg ['smallmid'] 20000 M2breaks 0 P1breaks 0 min ii-slack 2

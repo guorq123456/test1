@@ -1,0 +1,240 @@
+ASYMPTOTIC SHAPE OF THE EXCESS  E = B* - 1 - F   (path R2E6)
+=====================================================================
+
+Notation.  r >= 2, k >= 3, a_1..a_k >= 1 with r dividing no a_i, s_i = a_i mod r in [1, r-1].
+A(q) = prod [a_i]_q = sum_{j=0}^{D} c_j q^j,  D = sum (a_i - 1),  F = sum floor(a_i/r),
+S1 = sum (s_i - 1)  (so D = rF + S1),  a_min = min a_i.
+P_b = A(q) [b]_{q^r},  N = D + r(b-1).  U = {b >= 1 : P_b unimodal},  B* = max U,
+E = B* - 1 - F (the excess; E >= 0 by T1).  For b = 1 + F + e write
+      K = K(e) = D + 1 - r(b+1) = S1 + 1 - r(2+e).
+Delta(q) = (1-q)A(q) = sum_{j=0}^{D+1} Delta_j q^j.
+G(q) = A(q)/[r]_q = Delta(q)/(1-q^r) = sum_{n>=0} g_n q^n  (power series; g_n := 0 for n < 0).
+tau_t = sum_{j == t mod r} Delta_j  (t in Z/r)   ("periodic tail").
+M := max_t tau_t.
+gamma_n = [q^n] 1/((1-q)^{k-1}(1-q^r))   (gamma_n := 0 for n<0),
+delta_n = gamma_{n+1} - gamma_n.
+omega = exp(2 pi i / r);  ell_j = sum_i ln|sin(pi j s_i/r)/sin(pi j/r)|  (j = 1..r-1),
+L_k := max_j ell_j  (so e^{L_k} = max_j |prod_i [s_i]_{omega^j}|).
+H(t) = (1+t)ln(1+t) - t ln t  (t >= 0, H(0)=0).
+
+---------------------------------------------------------------------
+PART I.  EXACT REFORMULATION
+---------------------------------------------------------------------
+Lemma 1.  P_b is unimodal  <=>  g_i >= g_{i-rb} for all integers 0 <= i <= floor(N/2).
+Proof.  (1-q)P_b = Delta(q)(1-q^{rb})/(1-q^r) = G(q)(1-q^{rb}); comparing coefficients,
+c'_i - c'_{i-1} = g_i - g_{i-rb} where c' are the coefficients of P_b (c'_{-1} = 0).
+P_b is a product of palindromic polynomials with nonnegative coefficients, hence palindromic
+of degree N: c'_i = c'_{N-i}.
+(<=) if c'_i >= c'_{i-1} for 1 <= i <= floor(N/2), then for i >= ceil(N/2):
+c'_i - c'_{i+1} = c'_{N-i} - c'_{N-i-1} >= 0 because 1 <= N-i <= floor(N/2); so the sequence
+rises to index floor(N/2) and falls afterwards.
+(=>) if c'_i < c'_{i-1} for some 1 <= i <= floor(N/2), unimodality forces c' to be
+nonincreasing from index i-1 on; but c'_{N-i+1} = c'_{i-1} > c'_i with N-i+1 > i, contradiction.
+(i = 0 gives g_0 - 0 = 1 >= 0, harmless.)  []
+
+Lemma 2 (antisymmetry, reflection).
+ (a) Delta_{D+1-j} = -Delta_j for all j; tau_{D+1-t} = -tau_t; sum_t tau_t = 0;
+     hence {tau_t} is symmetric under negation and M = max_t tau_t = max_t(-tau_t) = max_t |tau_t|.
+ (b) For every integer i:  g_i = tau_{i mod r} + g_{D+1-r-i}.
+Proof. (a) A is palindromic: q^D A(1/q) = A(q). Then q^{D+1}Delta(1/q) = (q-1) q^D A(1/q)
+= -Delta(q), i.e. Delta_{D+1-j} = -Delta_j.  Summing over a residue class gives
+tau_t = -tau_{D+1-t}.  sum_t tau_t = Delta(1) = 0.
+(b) g_i = sum_{u>=0} Delta_{i-ru} (finite sum), tau_i = sum_{u in Z} Delta_{i-ru}, so
+tau_i - g_i = sum_{u>=1} Delta_{i+ru} = - sum_{u>=1} Delta_{D+1-i-ru}
+= - sum_{u'>=0} Delta_{(D+1-r-i) - r u'} = - g_{D+1-r-i}.  []
+
+Lemma 3 (reformulation).  P_b unimodal  <=>  for every integer m with -rb <= m <= (K-1)/2:
+        g_{K-m} - g_m + tau_{m mod r} >= 0 .
+Proof. Put i = m + rb in Lemma 1. By Lemma 2(b), g_i = tau_i + g_{D+1-r-i} and
+D+1-r-i = D+1-r-rb-m = K-m, i == m (mod r).  The range 0 <= i <= floor(N/2) is
+-rb <= m <= floor(N/2) - rb = floor((N-2rb)/2) = floor((K-1)/2), since N - 2rb = K - 1.  []
+
+Lemma 4 (monotonicity facts).
+ (a) Delta_j >= 0 for 0 <= j <= (D+1)/2.
+ (b) g_p - g_{p-r} = Delta_p for all p; hence for 0 <= p' <= p <= (D+1)/2 with p' == p (mod r),
+     g_p >= g_{p'}; and g_p >= 0 for p <= (D+1)/2.
+ (c) g_n = gamma_n for all n < a_min.
+ (d) (k >= 3) delta_n = [q^{n+1}] 1/((1-q)^{k-2}(1-q^r)) for n >= -1, delta_n = 0 for n < -1;
+     delta is nondecreasing on Z, delta_{-1} = 1; gamma is nondecreasing on Z; for integers
+     x <= y:  (y-x) delta_x <= gamma_y - gamma_x <= (y-x) delta_{y-1}.
+ (e) (k >= 3) for n >= -1:  delta_{n+1} >= ((n+k-1)/(n+2)) delta_n.
+Proof. (a) Each [a_i]_q is palindromic and unimodal with nonnegative coefficients; a product of
+such polynomials is palindromic and unimodal (classical, e.g. Stanley, "Log-concave and unimodal
+sequences", Prop. 1).  So c_j >= c_{j-1} for j <= D/2; if D is odd and j = (D+1)/2 then
+c_j = c_{D-j} = c_{j-1}, so Delta_j = 0.
+(b) G(1-q^r) = Delta gives g_p - g_{p-r} = Delta_p.  Apply (a) along p, p-r, ..., p'+r, all
+<= (D+1)/2. g_p = sum_{u>=0} Delta_{p-ru} >= 0 by (a).
+(c) G = prod(1-q^{a_i}) / ((1-q)^{k-1}(1-q^r)) and prod(1-q^{a_i}) == 1 mod q^{a_min}.
+(d) gamma_{n+1}-gamma_n is the coefficient of q^{n+1} in (1-q)/((1-q)^{k-1}(1-q^r)).
+delta_n = sum_{t>=0, rt<=n+1} C(n+1-rt+k-3, k-3): every summand is nondecreasing in n
+(k-3 >= 0) and the number of summands is nondecreasing, so delta is nondecreasing; delta_n = 0
+for n < -1 and delta_{-1} = 1, so gamma is nondecreasing; the sandwich follows from
+gamma_y - gamma_x = sum_{n=x}^{y-1} delta_n.
+(e) delta_{n+1} >= sum_{t: rt<=n+1} C(x+1+k-3, k-3) with x = n+1-rt <= n+1, and
+C(x+1+k-3,k-3)/C(x+k-3,k-3) = (x+k-2)/(x+1), which is nonincreasing in x, hence >= (n+k-1)/(n+2).  []
+
+---------------------------------------------------------------------
+PART II.  THE SANDWICH (non-asymptotic, explicit)
+---------------------------------------------------------------------
+Theorem 1.  Let k >= 3, r divide no a_i, b >= 1, K = D+1-r(b+1).  Note M > 0
+(tau(omega) = (1-omega)A(omega) != 0 since [a_i]_omega = (1-omega^{s_i})/(1-omega) != 0, and
+sum tau = 0).
+ (a) If K >= 0, K + r < a_min and delta_{floor(K/2)} >= M, then P_b is unimodal.
+ (b) If floor(K/2) + r < a_min, D + 1 + rb >= 3r and 2r * delta_{floor(K/2)+r-1} < M,
+     then P_b is not unimodal.
+Proof of (a).  Check Lemma 3 for every m in [-rb, (K-1)/2].
+ Step a1 (0 <= m <= (K-1)/2).  Then 0 <= m < K-m <= K < a_min, so by Lemma 4(c) the condition
+ reads gamma_{K-m} - gamma_m + tau_m >= 0.  Since K-m-1 >= m and gamma is nondecreasing,
+ gamma_{K-m} - gamma_m >= gamma_{K-m} - gamma_{K-m-1} = delta_{K-m-1}; and the integer
+ K-m-1 >= (K-1)/2 so K-m-1 >= floor(K/2); thus >= delta_{floor(K/2)} >= M >= -tau_m.
+ Step a2 (-rb <= m <= -1).  Then g_m = 0.  Put p = K - m >= K+1.  By Lemma 2(a),
+ tau_m = -tau_{D+1-m} and D+1-m = p + r(b+1) == p, so the condition is g_p - tau_p >= 0.
+   Case p <= (D+1)/2: let p' be the unique integer in [K+1, K+r] with p' == p (mod r); p' <= p.
+   Lemma 4(b): g_p >= g_{p'}; Lemma 4(c) (p' <= K+r < a_min): g_{p'} = gamma_{p'};
+   gamma nondecreasing: gamma_{p'} >= gamma_{K+1} >= gamma_{K+1} - gamma_K = delta_K
+   (gamma_K >= 0); delta nondecreasing: delta_K >= delta_{floor(K/2)} >= M >= tau_p.
+   Case p > (D+1)/2: p <= K + rb = D+1-r, so 0 <= D+1-r-p < (D+1)/2, and by Lemma 2(b)
+   g_p - tau_p = g_{D+1-r-p} >= 0 (Lemma 4(b)).
+ All conditions hold, so P_b is unimodal by Lemma 3.
+Proof of (b).  Let rho* be a residue with tau_{rho*} = -M (exists by Lemma 2(a)); let m be the
+largest integer <= (K-1)/2 with m == rho* (mod r).  Then m >= floor((K-1)/2) - (r-1) >= K/2 - r
+>= -rb, the last step being equivalent to D+1+rb >= 3r.  So m is in the range of Lemma 3.
+Indices: m <= K-m <= K - floor((K-1)/2) + r - 1 = floor(K/2) + r < a_min, so g = gamma at both
+(also when negative: both are 0).  By Lemma 4(d),
+  gamma_{K-m} - gamma_m <= (K-2m) delta_{K-m-1} <= 2r delta_{floor(K/2)+r-1} < M,
+using 1 <= K-2m <= K - 2floor((K-1)/2) + 2r - 2 <= 2r and K-m-1 <= floor(K/2)+r-1.
+Thus g_{K-m} - g_m + tau_m < M - M = 0 and P_b is not unimodal by Lemma 3.  []
+
+Corollary 1 (window).  Let k >= 3, r divide no a_i, and define (they depend only on r, k and
+the residues, through M)
+   n_lo = min{n >= 0 : delta_n >= M},     n_hi = min{n in Z : 2r delta_{n+r-1} >= M},
+   E_lo = floor((S1+1-2r-2 n_lo)/r),      E_hi = floor((S1+1-2r-2 n_hi)/r).
+(n_hi >= -r because delta_{n+r-1}=0 for n<-r; n_hi <= n_lo because delta_n >= M implies
+2r delta_{n+r-1} >= M.)  If a_min >= 2 n_lo + 2r then
+   (i)   max(0, E_lo) <= E <= E_hi ;
+   (ii)  no b >= F + 2 + E_hi lies in U;
+   (iii) if moreover a_min >= S1 + 2 - r, then [1, F + 1 + E_lo] is contained in U.
+Proof. (i, lower) If E_lo < 0 use E >= 0 (T1).  Otherwise take e = E_lo, b = 1+F+e.
+ From E_lo <= (S1+1-2r-2n_lo)/r < E_lo + 1:  2 n_lo <= K(E_lo) < 2 n_lo + r.  Hence K >= 0,
+ floor(K/2) >= n_lo so delta_{floor(K/2)} >= M, and K + r < 2n_lo + 2r <= a_min.  Theorem 1(a)
+ gives b in U, so E >= E_lo.
+ (ii) and (i, upper) Let e >= E_hi + 1 with b = 1+F+e >= 1.  Then e > (S1+1-2r-2n_hi)/r, i.e.
+ K(e) < 2 n_hi, so floor(K/2) <= n_hi - 1 and, by minimality of n_hi and monotonicity of delta,
+ 2r delta_{floor(K/2)+r-1} < M.  Also floor(K/2) + r <= n_hi - 1 + r < a_min (as
+ a_min >= 2n_lo + 2r >= n_hi + r + 1 when n_lo >= 0).  Finally D + 1 + rb >= 3r: if e >= 0 then
+ b >= 1+F and D >= k(a_min - 1) >= 3(2r-1) >= 2r - 1, so D+1+rb >= 2r + r.  (If E_hi + 1 <= e < 0
+ the same argument would contradict T1, so in fact E_hi >= 0 under the hypothesis; for such e the
+ inequality D+1+rb >= 3r also holds since D >= 6r-3.)  Theorem 1(b): b not in U.
+ (iii) For 0 <= e <= E_lo: K(e) >= K(E_lo) >= 2 n_lo, so delta_{floor(K/2)} >= M; and
+ K(e) + r <= K(0) + r = S1 + 1 - r < a_min.  Theorem 1(a) gives 1+F+e in U; b <= 1+F by T1.  []
+
+Lemma 5 (width of the window).  If n_lo >= 1 then n_lo - n_hi < r + ln(2r)/ln R with
+R = (n_lo + k - 3)/n_lo; if n_lo = 0 then n_lo - n_hi <= r.  Consequently
+E_hi - E_lo <= 2(n_lo - n_hi)/r + 1 < 3 + 2 ln(2r)/(r ln R).
+Proof. n_hi >= -r gives the case n_lo = 0.  Let d = n_lo - n_hi - r and suppose d >= 1.
+By minimality delta_{n_lo - 1} < M <= 2r delta_{n_hi+r-1}; delta_{n_hi+r-1} > 0 forces
+n_hi + r - 1 >= -1.  By Lemma 4(e), for -1 <= n <= n_lo - 2, delta_{n+1}/delta_n >= (n+k-1)/(n+2)
+>= (n_lo+k-3)/n_lo = R (the bound decreases in n).  So delta_{n_lo-1} >= R^d delta_{n_hi+r-1},
+giving R^d < 2r.  The E-bound: floor(x) - floor(y) <= x - y + 1.  []
+
+Theorem 2 (explicit, residue-statistics-only window).  For every j,
+|tau(omega^j)| = |1-omega^j| e^{ell_j} = 2 sin(pi j/r) e^{ell_j}, and
+     (2 sin(pi/r)/r) e^{L_k}  <=  M  <=  (2(r-1)/r) e^{L_k}.
+Hence with n_+ = min{n >= 0 : delta_n >= (2(r-1)/r) e^{L_k}} and
+n_- = min{n in Z : 2r delta_{n+r-1} >= (2 sin(pi/r)/r) e^{L_k}} we have n_- <= n_hi <= n_lo <= n_+,
+and if a_min >= 2 n_+ + 2r:
+   max(0, floor((S1+1-2r-2n_+)/r)) <= E <= floor((S1+1-2r-2n_-)/r).
+Proof. tau(q) := sum_t tau_t q^t is Delta(q) mod (q^r - 1), so tau(omega^j) = Delta(omega^j) =
+(1-omega^j) prod_i [a_i]_{omega^j}, and [a_i]_{zeta} = (1-zeta^{a_i})/(1-zeta) = [s_i]_zeta for
+zeta = omega^j != 1; |[s]_zeta| = |sin(pi j s/r)/sin(pi j/r)|.
+Lower bound: |tau(omega^j)| <= sum_t |tau_t| <= r max|tau_t| = rM (Lemma 2(a)); take j attaining
+L_k and use sin(pi j/r) >= sin(pi/r).
+Upper bound: tau_t = (1/r) sum_{j=0}^{r-1} tau(omega^j) omega^{-jt} and tau(1) = 0, so
+|tau_t| <= ((r-1)/r) max_j 2 sin(pi j/r) e^{ell_j} <= (2(r-1)/r) e^{L_k}.
+The rest follows from Corollary 1 since delta is nondecreasing (n_lo <= n_+ because
+delta_{n_+} >= M; n_- <= n_hi because 2r delta_{n_hi+r-1} >= M >= lower bound), and the window
+bounds are monotone in n.  []
+
+---------------------------------------------------------------------
+PART III.  ASYMPTOTICS  (r and residue proportions fixed, k -> infinity)
+---------------------------------------------------------------------
+Setting.  Fix r >= 4 and rational proportions p_1..p_{r-1} (sum 1) with p_s > 0 for some
+middle s in [2, r-2].  Consider k in the set of multiples of the common denominator and residue
+vectors with exactly p_s k entries equal to s.  Then sigma1 := S1/k = sum p_s (s-1) and
+L := L_k / k = max_j sum_s p_s ln|sin(pi j s/r)/sin(pi j/r)| do not depend on k.
+
+Lemma 6 (0 < theta* < sigma1/2).  L > 0, and H(sigma1/2) > L.  Hence the root theta* of
+H(theta) = L satisfies 0 < theta* < sigma1/2, and c := (sigma1 - 2 theta*)/r lies in (0, sigma1/r).
+Proof. H is continuous, strictly increasing and strictly concave on [0,inf) (H' = ln(1+1/t) > 0,
+H'' = -1/(t(1+t)) < 0), H(0) = 0, H -> inf; so theta* exists uniquely.
+L > 0: for j = 1 every term ln(sin(pi s/r)/sin(pi/r)) is >= 0 (sin(pi s/r) >= sin(pi/r) for
+1 <= s <= r-1) and > 0 for middle s.
+H(sigma1/2) > L:  (1) For zeta != 1 with zeta^r = 1, |[s]_zeta| <= min(s, r-s): trivially
+|[s]_zeta| <= s, and 0 = [r]_zeta = [s]_zeta + zeta^s [r-s]_zeta gives |[s]_zeta| = |[r-s]_zeta|.
+(2) For x > 0, H(x) > ln(1+2x): H(x) - ln(1+2x) = x ln(1+1/x) - ln(1 + x/(1+x)), and
+x ln(1+1/x) >= x * (1/x)/(1+1/x) = x/(1+x) > ln(1+x/(1+x))  (ln(1+u) >= u/(1+u) and
+ln(1+y) < y for y > 0).  With x = (s-1)/2: H((s-1)/2) > ln s >= ln min(s, r-s) for s >= 2,
+and H(0) = 0 = ln 1 for s = 1.
+(3) For every j, by (1), (2) and Jensen (H concave):
+  sum_s p_s ln|[s]_{omega^j}| <= sum_s p_s ln min(s,r-s) < sum_s p_s H((s-1)/2) <= H(sum_s p_s (s-1)/2)
+  = H(sigma1/2), the strict step because some p_s > 0 with s >= 2.  Max over j gives L < H(sigma1/2).  []
+
+Lemma 7 (Stirling for delta).  For fixed 0 < t1 < t2 there are k0 and C (depending on r, t1, t2)
+such that for k >= k0 and integers n with t1 <= n/k <= t2:
+     | ln delta_n - k H(n/k) + (1/2) ln k | <= C.
+Proof. (i) delta_n >= u_n := C(n+k-2, k-3) (the t = 0 summand).
+(ii) Consecutive summands of delta_n (Lemma 4(d)) have ratio
+C(x-r+k-3,k-3)/C(x+k-3,k-3) = prod_{i<r} (x-i)/(x-i+k-3) <= (x/(x+k-3))^r <= rho^r with
+x <= n+1 and rho = (n+1)/(n+k-2) <= (t2 k + 1)/(t2 k + k - 2) <= rho2 < 1 for k >= k0
+(rho2 any number in (t2/(1+t2), 1)).  So u_n <= delta_n <= u_n / (1 - rho2^r).
+(iii) u_n = C(n+k,k) * k(k-1)(k-2)/((n+1)(n+k)(n+k-1)); for t1 <= n/k <= t2 and k >= 4 the
+factor lies between two positive constants depending only on t1, t2.
+(iv) Robbins: ln m! = m ln m - m + (1/2) ln(2 pi m) + eps_m, 0 < eps_m < 1/(12m).  With
+theta = n/k:  (n+k)ln(n+k) - n ln n - k ln k = k H(theta), so
+ln C(n+k,k) = k H(theta) + (1/2) ln((1+theta)/(2 pi theta)) - (1/2) ln k + O(1/k).
+Combining (i)-(iv) gives the claim.  []
+
+Lemma 8 (threshold location).  For a fixed constant c0 > 0 let nu(k) = min{n : delta_n >= c0 e^{kL}}.
+With lambda = ln(1 + 1/theta*) = H'(theta*):
+     nu(k) = theta* k + ln k/(2 lambda) + O(1).
+Proof. Apply Lemma 7 with t1 = theta*/2, t2 = 2 theta*; let C be its constant.  For real x put
+n(x) = ceil(theta* k + ln k/(2 lambda) + x).  For |x| <= X (X fixed) and k >= k0(X),
+n(x)/k is in [t1, t2] and, by Taylor with |H''| <= 1/(t1(1+t1)) on [t1,t2],
+k H(n(x)/k) = kL + lambda (n(x) - theta* k) + rem, |rem| <= (n(x)-theta* k)^2/(2k t1(1+t1)) <= 1
+for k >= k0(X).  Hence
+ln delta_{n(x)} - ln(c0 e^{kL}) = lambda (ln k/(2 lambda) + x + eta) - (1/2) ln k + O(1)
+                               = lambda x + B(x,k),  eta in [0,1),  |B| <= B0
+with B0 = C + 1 + lambda + |ln c0| independent of X.  Choose X = (B0+1)/lambda.  Then
+delta_{n(X)} > c0 e^{kL} and delta_{n(-X)} < c0 e^{kL}; delta being nondecreasing,
+n(-X) < nu(k) <= n(X).  So |nu(k) - theta* k - ln k/(2 lambda)| <= X + 1.  []
+
+Theorem 3 (asymptotic excess).  In the Setting, let theta* = H^{-1}(L), lambda = ln(1+1/theta*),
+c = (sigma1 - 2 theta*)/r.  There are constants C1, C2 (depending only on r and p) such that for
+every admissible k >= 3 and every a with the prescribed residues and
+     a_min >= 2 theta* k + ln k / lambda + C1,
+the excess satisfies
+     | E  -  ( c k  -  ln k / (r lambda) ) |  <=  C2 .
+In particular E grows linearly in k with leading constant c in (0, sigma1/r), and
+E6 - E = (2 theta* k + ln k / lambda)/r + O(1) -> infinity, where E6 = T6 - 1 - F (Thm C) satisfies
+E6 = floor((S1 + 1 - 2 mu)/r) = sigma1 k / r + O(1).
+Proof. By Theorem 2 the quantities n_+ and n_- are thresholds of the form in Lemma 8 (n_+ with
+c0 = 2(r-1)/r; n_- + r - 1 with c0 = sin(pi/r)/r^2), so n_+, n_- = theta* k + ln k/(2 lambda)
++ O(1).  Choose C1 so that 2 n_+ + 2r <= 2 theta* k + ln k/lambda + C1 for all k (possible since
+n_+ - theta* k - ln k/(2 lambda) is bounded).  Theorem 2 then gives
+E in [ (S1 - 2 n_+)/r - 3 , (S1 - 2 n_-)/r + 1 ] (also using E >= 0), and S1 = sigma1 k.
+Substituting the expansions of n_+- gives |E - (c k - ln k/(r lambda))| <= C2.  The statement
+on E6 uses 0 <= mu <= r-1.  c in (0, sigma1/r) is Lemma 6.  []
+
+Remarks.
+ R1 (density zero of middle residues).  If only O(1) residues are middle (the rest in {1, r-1}),
+    then e^{L_k} = O(1), so M = O(1), while delta_1 >= C(k-1, k-3) -> infinity; hence n_lo <= 1
+    for large k and, by Corollary 1, E = S1/r + O(1) = E6 + O(1) (bounded gap to Thm C).
+ R2 (growth-order classification).  Combining Theorem 3 and R1: the excess is always O(k)
+    (E <= E6 <= S1/r <= (r-2)k/r) and, under the hypothesis on a_min, E = (S1 - 2 n_lo)/r + O(1)
+    with n_lo = min{n : delta_n >= M}; it is linear with slope sigma1/r - 2 theta*/r, where
+    theta* = H^{-1}(lim L_k/k).  It is never bounded when sigma1 > 0, and never superlinear.
+ R3 The O(1) term in Theorem 3 does not converge: it depends on the fractional position of the
+    threshold and on the phase of the dominant Fourier mode tau(omega^{j*}), which rotates with k.
+ R4 (scope).  The hypothesis a_min >= 2 theta* k + O(log k) is used only to replace g by gamma
+    (Lemma 4(c)).  Without it nothing is proved here.  (Numerically, in the fit box, E equals the
+    a-independent value for every tested instance with a_min >= r; see numeric claims.)

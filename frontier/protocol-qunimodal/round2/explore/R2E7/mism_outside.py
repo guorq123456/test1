@@ -1,0 +1,33 @@
+# List mismatches of rule "unimodal <=> (b<=F+1 or R(Delta))" for instances outside the proven L-bound.
+# Usage: python3 mism_outside.py SEED NTRIALS
+import sys, random
+sys.path.insert(0, '/tmp/claude-0/qu/explore2/R2E7')
+from core import *
+seed = int(sys.argv[1]); NT = int(sys.argv[2])
+rng = random.Random(seed)
+tot = bad = badT1 = 0
+for trial in range(NT):
+    r = rng.randint(2, 30)
+    k = rng.randint(2, 12)
+    a = []
+    while len(a) < k:
+        x = rng.randint(1, rng.choice([2*r, 4*r, 100]))
+        if x <= 100 and x % r: a.append(x)
+    a.sort()
+    D = sum(x-1 for x in a); L = a[0]
+    res = [x % r for x in a]; tau = tau_vec(r, res)
+    F = sum(x//r for x in a)
+    bmax = F + (sum(res)-k+1)//r + 4
+    bs = list(range(2, bmax+1))
+    gt = gt_profile(r, a, bs)
+    w = wcoef(k, r, D + 4*r + 10)
+    for b, g in zip(bs, gt):
+        Delta = D + 1 - r*(b+1)
+        p = R(r, k, tau, Delta, w)
+        pT = p or b <= F+1
+        tot += 1
+        if p != g: bad += 1
+        if pT != g:
+            badT1 += 1
+            print('MISM', 'r',r,'a',a,'b',b,'F',F,'gt',g,'R',p,'L',L,'need',(Delta+2*r+2)/2)
+print(f'seed={seed} total={tot} mismatch_R={bad} mismatch_R_or_T1={badT1}')

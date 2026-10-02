@@ -1,0 +1,31 @@
+CANDIDATES TRIED (path R2E6: asymptotic shape of the excess)
+Fit set: out/fit_{1,2,3,4}.jsonl (build_fitset.py seeds 1-4), 1600 in-box instances, all with
+>= 3 middle residues, r in [4,30], k in [3,40] (<= 60 if all a_i equal), a_i <= 100, r | no a_i.
+Error count = number of (instance, b) pairs with b in [1, T6+2] where the prediction is wrong;
+195666 pairs in total.  Hold-out: out/hold_{11,12}.jsonl (800 instances, 102673 pairs).
+Every candidate predicts  b <= 1 + F + E_pred  (C1-C10 as evaluated in candidates_eval*.py do NOT
+add the "b <= 1+F -> True" floor; the rule files do).
+
+ id     description                                                     free  fit errors (pairs / instances)  script
+ C1     E_pred = floor(c k), c = (sigma1 - 2 theta*)/r                    0    1844 / 1334                      candidates_eval.py
+ C2     E_pred = floor(c k - kappa ln k), kappa = 1/(r ln(1+1/theta*))   0    1478 / 1140                      candidates_eval.py
+ C3     E_pred = 2 floor((c k - kappa ln k + beta)/2), beta=-0.5         1     177 /  107                      candidates_eval.py
+ C3b    E_pred = floor(c k - kappa ln k + beta), beta=-0.7               1     807 /  776                      candidates_eval.py
+ C4     E_pred = E_lo (proven window lower end)                          0    1038 /  880                      candidates_eval.py
+ C5     E_pred = E_hi (proven window upper end)                          0    2493 / 1555                      candidates_eval.py
+ C6     E_pred = largest even <= E_hi                                    0    1655 /  840                      candidates_eval.py
+ C6b    E_pred = smallest even >= E_lo                                   0     353 /  190                      candidates_eval.py
+ C7     E_pred = 2 floor(((S1 - 2 n*)/r + beta)/2), n* = continuous      1     327 /  163                      candidates_eval.py
+        solution of ln delta_n = ln M, beta=-0.7
+ C7b    E_pred = floor((S1 - 2 n*)/r + beta), beta=-0.9                  1     873 /  780                      candidates_eval.py
+ C9     C3 plus second-order constant -2(ln mu0 - ln A0(theta*))/(r lambda),
+        mu0 = (4/r) sin(pi j*/r), beta=-0.7                              1     201 /  118                      candidates_eval2.py
+ C10    as C9 with mu = M e^{-kL} (exact), beta=-0.7                     1     209 /  122                      candidates_eval2.py
+ C11    C3 (beta=-0.5) clipped to even values of [max(E_lo,0), E_hi]     1      71 /   49                      candidates_eval3.py
+ C3'    rule_C3.py = C3 with max(0,.) and T1 floor (b<=1+F -> True)      1      93 /   60  (hold-out 53 / 32)  eval_rule_files.py
+ C11'   rule_C11.py (same as C11 + T1 floor; identical counts)           1      71 /   49  (hold-out 37 / 24)  eval_rule_files.py
+
+beta for C3, C3b, C7, C7b, C9, C10, C11 was chosen by a grid scan (step 0.1) minimizing fit errors;
+the grid points are scans of one candidate, not separate candidates.
+Total distinct candidates: 15 (C1, C2, C3, C3b, C4, C5, C6, C6b, C7, C7b, C9, C10, C11, C3', C11').
+Selected: C11' (rule_C11.py) and C3' (rule_C3.py, pure closed form).

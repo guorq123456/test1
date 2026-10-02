@@ -1,0 +1,176 @@
+PROOFS FOR PATH R2E5: all-equal family [a]_q^k [b]_{q^r}, middle residue
+=========================================================================
+
+Notation. r>=2. For a polynomial A(q)=sum A_j q^j of degree D (A_j:=0 for j outside [0,D]):
+  delta_j := A_j - A_{j-1}                                  (all j in Z)
+  g := A(q)(1-q)/(1-q^r) in Z[[q]],  g_j := 0 for j<0
+  Gamma_t := sum_{j = t mod r} A_j,  tau_t := Gamma_t - Gamma_{t-1}   (t mod r)
+  P := A(q) [b]_{q^r},  N := deg P = D + r(b-1),  p_i its coefficients (p_i:=0 outside [0,N])
+  K := D + 1 - r(b+1),   M := floor((K-1)/2)  (the largest integer m with 2m < K)
+  Phi(m) := tau_{m mod r} + g_{K-m} - g_m        (m in Z)
+
+-------------------------------------------------------------------------
+Lemma 1. (1-q)P(q) = g(q)(1-q^{rb}); hence p_i - p_{i-1} = g_i - g_{i-rb} for all i.
+Proof. P = A(1-q^{rb})/(1-q^r), multiply by (1-q). Compare coefficients. []
+
+Lemma 2. g_j - g_{j-r} = delta_j for all j in Z; hence g_j = sum_{l>=0} delta_{j-lr}.
+Proof. (1-q^r) g = (1-q) A; coefficient of q^j. For j<0 both sides are 0. []
+
+Lemma 3 (reflection). If A is palindromic (A_j = A_{D-j}) then
+ (a) delta_j = -delta_{D+1-j} for all j;
+ (b) tau_t = sum_{j = t mod r} delta_j (a finite sum);
+ (c) g_i = tau_i + g_{D+1-r-i} for all i in Z.
+Proof. (a) delta_j = A_j - A_{j-1} = A_{D-j} - A_{D-j+1} = -delta_{D+1-j}.
+ (b) sum_{j=t} delta_j = sum_{j=t} A_j - sum_{j=t} A_{j-1} = Gamma_t - Gamma_{t-1}.
+ (c) By Lemma 2, g_i = sum_{j<=i, j=i mod r} delta_j, so tau_i - g_i = sum_{j>i, j=i} delta_j.
+ Substitute j' = D+1-j and use (a): this equals -sum_{j'<D+1-i, j' = D+1-i mod r} delta_{j'}
+ = -sum_{j'<=D+1-i-r, j' = D+1-i-r} delta_{j'} = -g_{D+1-r-i}  (Lemma 2 again). []
+
+Lemma 4. If P is palindromic of degree N, then P is (weakly) unimodal iff p_i >= p_{i-1} for 1<=i<=floor(N/2).
+Proof. (<=) then p is nondecreasing on [0,floor(N/2)] and by symmetry nonincreasing on [ceil(N/2),N].
+ (=>) if p_i < p_{i-1} with i<=N/2, then by symmetry p_{N-i} < p_{N-i+1}; since N-i >= i, this strict
+ increase happens after the strict decrease at (i-1,i), contradicting unimodality. []
+ (P is palindromic when A is: [b]_{q^r} is palindromic.)
+
+Lemma 5. Assume A palindromic. For all m in Z: Phi(m) = g_{rb+m} - g_m. For 0<=i<=floor(N/2) and m=i-rb,
+ p_i - p_{i-1} = Phi(m), and i ranges over [0,floor(N/2)] exactly when m ranges over [-rb, M].
+Proof. Lemma 3(c) with i -> rb+m: g_{rb+m} = tau_{rb+m} + g_{D+1-r-rb-m} = tau_m + g_{K-m}. Then Lemma 1.
+ N/2 - rb = (D + rb - r)/2 - rb = (K-1)/2, so i<=N/2 <=> m<=(K-1)/2 <=> m<=M. []
+
+Lemma 6 (WINDOW LEMMA). Let A be palindromic and unimodal with nonnegative coefficients. Then
+ P = A [b]_{q^r} is unimodal  <=>  Phi(m) >= 0 for each of the r integers m with M-r+1 <= m <= M
+ (equivalently K/2 - r <= m < K/2).
+Proof. Step 0: delta_j >= 0 whenever 2j <= D+1, and delta_j <= 0 whenever 2j >= D+1.
+  For j<0, delta_j=0; delta_0 = A_0 >= 0. For 1<=j<=D/2: A is nondecreasing on [0,floor(D/2)] (same
+  argument as Lemma 4). For 2j = D+1: delta_j = A_{D-j} - A_{j-1} = A_{j-1}-A_{j-1} = 0. The second claim
+  follows from Lemma 3(a).
+ Step 1 (=>). Let m be in the window. If m >= -rb, Phi(m) = p_i - p_{i-1} with i = rb+m in [0,floor(N/2)]
+  (Lemma 5), which is >= 0 by Lemma 4 (for i=0 it is p_0 = A_0 >= 0). If m < -rb, then both rb+m<0 and m<0,
+  so Phi(m) = g_{rb+m} - g_m = 0.
+ Step 2 (<=). By Lemmas 4,5 it suffices to show Phi(m) >= 0 for every m in [-rb, M]. Induction on M-m.
+  If m >= M-r+1 this is the hypothesis. Let m <= M-r and put i = rb+m >= 0.
+  Case (a) 2i <= D+1. Phi(m) = g_i - g_m = sum_{j = i mod r, m<j<=i} delta_j (Lemma 2), each term has
+   2j <= 2i <= D+1, so delta_j >= 0 (Step 0) and Phi(m) >= 0.
+  Case (b) 2i > D+1. By Lemma 2, Phi(m) - Phi(m+r) = (g_i - g_m) - (g_{i+r} - g_{m+r}) = -delta_{i+r} + delta_{m+r}.
+   2(i+r) > D+1 gives delta_{i+r} <= 0; 2(m+r) <= 2M <= K-1 = D - r(b+1) < D+1 gives delta_{m+r} >= 0.
+   So Phi(m) >= Phi(m+r), and m+r is in [-rb, M] with M-(m+r) < M-m, so Phi(m+r) >= 0 by induction. []
+ Remark. Any product of [a_i]_q is palindromic, unimodal and nonnegative (classical), so Lemma 6 applies to
+ every instance of the problem; it sharpens the established Thm A to r inequalities. Numerical sanity check
+ (not needed for the proof): window_general_check.py, 43078 random (tuple,b) pairs, 0 disagreements.
+
+Lemma 7 (tau depends only on residues). For A = prod [a_i]_q with a_i = s_i mod r, tau(A) = tau(prod [s_i]_q).
+Proof. sum_t tau_t q^t = (1-q) A(q) mod (q^r - 1) (Lemma 3(b) and sum_t Gamma_t q^t = A mod q^r-1).
+ [a_i] - [s_i] = q^{s_i}[a_i - s_i]_q = q^{s_i} [r]_q [(a_i-s_i)/r]_{q^r}. prod[a_i] - prod[s_i] is a sum of
+ terms each containing a factor [a_i]-[s_i], hence divisible by [r]_q; times (1-q) it is divisible by 1-q^r. []
+
+-------------------------------------------------------------------------
+THE ALL-EQUAL FAMILY. a = nr+s, n>=0, 2<=s<=r-2, k>=3, A = [a]_q^k, D = k(a-1), F = kn.
+Write b = kn+1+e. Then K = k(nr+s-1)+1-r(kn+2+e) = k(s-1)+1-r(2+e) =: K_e  (independent of n), M_e = floor((K_e-1)/2).
+tau = tau(r,s,k) is computed from [s]_q^k (Lemma 7).
+ c := 1/((1-q)^{k-1}(1-q^r)),  c_j = sum_{l>=0, lr<=j} C(j-lr+k-2, k-2) (j>=0), c_j = 0 (j<0).
+ g^{(n)} := [a]^k (1-q)/(1-q^r) = (1-q^a)^k c(q);  hence g^{(n)}_j = c_j for all j < a.        (*)
+ E(n) := { e>=1 : kn+1+e in U },  E_inf := { e>=1 : tau_m + c_{K_e-m} - c_m >= 0 for M_e-r+1 <= m <= M_e }.
+By T1 (established: b <= 1+F => unimodal), U = [1,kn+1] U (kn+1+E(n)).
+By Lemma 6, e in E(n) iff tau_m + g^{(n)}_{K_e-m} - g^{(n)}_m >= 0 for M_e-r+1 <= m <= M_e.            (**)
+
+Lemma 8 (large n). If 2(nr+s) > k(s-1)+1-r then E(n) = E_inf.
+Proof. Let e>=1, so K_e <= k(s-1)+1-3r. The indices used in (**) are m in [M-r+1, M] and K-m in
+ [K-M, K-M+r-1]; K-M = ceil((K+1)/2) <= (K+2)/2, so every index is <= K/2 + r <= (k(s-1)+1-r)/2 < a.
+ By (*) (and both series vanish at negative indices) the r window values for g^{(n)} and for c coincide. []
+
+Lemma 9 (shift monotonicity; this is the established Thm B, proof included). For any tuple a and index i,
+ b in U(a) => b+1 in U(a + r e_i).
+Proof. Identity [x]_q [b+1]_{q^r} = [x+rb]_q + q^r [x-r]_q [b]_{q^r} (multiply both sides by (1-q)(1-q^r):
+ both equal 1 - q^x - q^{r(b+1)} + q^{x+r(b+1)}). With x = a_i + r and R = prod_{j != i}[a_j]:
+ P' := R [a_i+r] [b+1]_{q^r} = R [a_i+r+rb] + q^r P.  Both summands are nonnegative, palindromic about the
+ same center (D+r+rb)/2, and unimodal (R[a_i+r+rb] is a product of [.]'s; q^r P is a shift of P, unimodal
+ by assumption). A sum of nonnegative sequences that are palindromic about a common center and
+ nondecreasing up to it is again such, hence unimodal. []
+Corollary 9'. E(n) is contained in E(n+1) (apply Lemma 9 once to each of the k coordinates:
+ kn+1+e in U(n) => k(n+1)+1+e in U(n+1)).
+
+THEOREM S (sandwich). E(0) <= E(1) <= E(2) <= ... and E(n) = E_inf for all n >= n0, where n0 is the least n
+ with 2(nr+s) > k(s-1)+1-r. In particular E(n) <= E_inf for every n, and if E(1) = E_inf then E(n) = E_inf for
+ every n >= 1.  Proof: Corollary 9' and Lemma 8. []
+
+COMPUTATION C1 (certify_n1.py, exact integers, uses only Lemma 6, Lemma 7 and (*)): for all 4<=r<=30,
+ 2<=s<=r-2, 3<=k<=60 (21924 triples; instances a=r+s<=58, inside the fit box): E(1) = E_inf.
+THEOREM F (proved for the ranges of C1). For 4<=r<=30, 2<=s<=r-2, 3<=k<=60 and EVERY n>=1:
+   U([nr+s]^k) = [1, kn+1]  U  { kn+1+e : e in E_inf(r,s,k) }.
+ Proof: Theorem S + Computation C1. (No instance with n>=2 needs to be computed.) []
+ Independent cross-checks (not needed): full-scan data for r<=8 and all n with a<=100, and for r=9..30, n in {0,1}
+ (cmp_flat.py, cmp_flat2.py) and n>=2 (cmp_flat3.py): no disagreement with this formula.
+CONJECTURE F'. Theorem F holds for all r>=4, all middle s and all k>=3.
+
+Lemma 10 (step-2 monotonicity of E_inf). If e+2 in E_inf (e>=1) then e in E_inf.
+Proof. K_{e+2} = K_e - 2r and M_{e+2} = M_e - r, so m -> m-r maps the window of e onto the window of e+2,
+ preserving residues (tau_{m-r} = tau_m). Phi_e(m) - Phi_{e+2}(m-r) = (c_{K-m} - c_{K-m-r}) - (c_m - c_{m-r})
+ = d_{K-m} - d_m with d_j := c_j - c_{j-r} = C(j+k-2,k-2) for j>=0, 0 for j<0. d is nondecreasing on Z (k>=2)
+ and K-m > m (because 2m < K), so Phi_e(m) >= Phi_{e+2}(m-r) >= 0. []
+Corollary 10'. E_inf = {odd e : 1<=e<=E_odd} U {even e : 2<=e<=E_even} for some E_odd (odd or -1) and
+ E_even (even or 0). Also E_inf <= [1, E6], E6 = T6-1-F (established T6).
+COMPUTATION C2 (s2check.py / Einf_table.txt): for 4<=r<=30, k<=60: E_odd = E_even-1 in 15072+6304(empty) triples
+ and E_odd = E_even-3 in 548 triples; no other case. Hence, for those (r,s,k) and all n>=1,
+   B* = kn + 1 + E_even(r,s,k),  and U = [1,B*] or U = [1,B*] minus {B*-1} (the latter iff E_odd = E_even-3),
+ i.e. Conjecture S2 holds for this family in that range.
+
+Lemma 11 (closed form of tau). With D_s := k(s-1) and sigma_j := sin(pi j s/r)/sin(pi j/r),
+   tau_t = (2/r) * sum_{j=1}^{r-1} sin(pi j/r) * sigma_j^k * sin(pi j (D_s+1-2t)/r).
+Proof. Gamma_t = (1/r) sum_{w^r=1} w^{-t} S(w), S = [s]_q^k (finite Fourier inversion), so
+ tau_t = (1/r) sum_{w != 1} w^{-t}(1-w) S(w). For w = e^{i theta}, theta = 2 pi j/r: 1-w = -2i sin(theta/2) e^{i theta/2},
+ [s]_w = e^{i theta (s-1)/2} sin(s theta/2)/sin(theta/2). Hence w^{-t}(1-w)S(w) = -2i sin(pi j/r) sigma_j^k e^{i pi j (D_s+1-2t)/r}.
+ tau_t is real, so it equals the real part of the sum; Re(-2i e^{i phi}) = 2 sin(phi). []  (tau_closed.py: 40320 checks.)
+ In the window, put x := K_e - 2m (x in {1,3,..,2r-1} if K_e odd, {2,4,..,2r} if K_e even). Since
+ D_s+1-2m = x + r(2+e), tau_m = (2/r) sum_j (-1)^{je} sin(pi j/r) sigma_j^k sin(pi j x/r): the tau-part of the window
+ depends on e only through its parity. EXPLICIT FORM OF THE CRITERION (n>=1, e>=1):
+   kn+1+e in U  <=>  for every x = K_e (mod 2), 1<=x<=2r:
+       (2/r) sum_{j=1}^{r-1} (-1)^{je} sin(pi j/r) sigma_j^k sin(pi j x/r)  +  c_{(K_e+x)/2} - c_{(K_e-x)/2}  >= 0.
+
+Lemma 12 (cyclic unimodality of the residue sums of [s]^k). On Z/r, Gamma_t is a nonincreasing function of the
+ cyclic distance from t to D_s/2. Consequently tau_t >= 0 whenever D_s+1-r <= 2t <= D_s+1.
+Proof. Call f: Z/r -> R>=0 "SU about c" (c in (1/2)Z mod r) if f(t) = phi(dist(t,c)) with phi nonincreasing.
+ (i) Two-arc lemma: if I, J are arcs (sets of consecutive residues) of lengths L1, L2 <= r with centers c1, c2,
+  then (1_I * 1_J)(x) = |I cap (x-J)| (cyclic convolution) is SU about c1+c2. Indeed x-J is an arc of length L2
+  centered at x-c2, and the overlap Ov of two arcs depends only on delta = dist(c1, x-c2) = dist(x, c1+c2):
+  if L1 = r or L2 = r, Ov is constant. Else WLOG L1 <= L2 < r. If L1+L2 <= r the intersection is at most one arc
+  (two components would force I cup J = Z/r and L1+L2 >= r+2), and unrolling the cycle at a point outside I cup J
+  gives the interval formula Ov = max(0, min(L1, (L1+L2)/2 - delta)) (when the arcs are disjoint, delta >=
+  (L1+L2)/2), nonincreasing in delta. If L1+L2 > r, Ov = L1 - |I cap J^c| where J^c is an arc of length r-L2
+  centered at c2 + r/2 and L1 + (r-L2) <= r; by the previous case |I cap J^c| is nonincreasing in
+  dist(c1, x-c2+r/2) = r/2 - delta, i.e. nondecreasing in delta, so Ov is nonincreasing in delta.
+ (ii) Layer cake: an SU function about c is a nonnegative combination of indicators of arcs centered at c (its
+  superlevel sets {dist(t,c) <= rho}) and of the constant 1 (= indicator of the full arc). By bilinearity and (i),
+  if f is SU about c and h is SU about c', then f*h is SU about c+c' (nonnegative combinations of SU functions
+  about one center are SU about it).
+ (iii) Reduction mod q^r-1 is a ring map, so Gamma([s]^k) = (1_{[0,s-1]})^{*k}; 1_{[0,s-1]} is SU about (s-1)/2;
+  by (ii) Gamma is SU about k(s-1)/2 = D_s/2.
+ (iv) If D_s+1-r <= 2t <= D_s+1, put x = D_s/2 - t + 1 in [1/2, (r+1)/2]. dist(t,D_s/2) = |x-1| and
+  dist(t-1,D_s/2) = min(x, r-x); one checks |x-1| <= min(x, r-x) on that range. So Gamma_t >= Gamma_{t-1}. []
+ (cyc_unimodal.py: 225533 positions in the box, none negative.)
+
+Lemma 13 (odd excess implies the next even excess). If e is odd and e in E_inf then e+1 in E_inf.
+Proof. Let K = K_e, e' = e+1, K' = K-r. The window of e' is W' = {m': K/2 - 3r/2 <= m' < K/2 - r/2}.
+ Case A: K/2 - r <= m' < K/2 - r/2. Then 2m' in [K-2r, K-r) = [D_s+1-r(4+e), D_s+1-r(3+e)); as 3+e is even,
+  t := m' + r(3+e)/2 is an integer = m' (mod r) with D_s+1-r <= 2t < D_s+1, so tau_{m'} = tau_t >= 0 (Lemma 12),
+  and Phi_{e'}(m') = tau_{m'} + c_{K'-m'} - c_{m'} >= 0 because c is nondecreasing and K'-m' > m'.
+ Case B: K/2 - 3r/2 <= m' < K/2 - r. Then m := m'+r lies in the window of e (K/2 - r/2 <= m < K/2), tau_m = tau_{m'},
+  and Phi_{e'}(m') - Phi_e(m) = (c_{K-r-m'} - c_{m'}) - (c_{K-m} - c_m) = c_m - c_{m-r} = d_m >= 0.
+ So Phi_{e'} >= 0 on W'. []
+COROLLARY (proved for all r>=4, middle s, k>=3): E_inf = {odd e: 1<=e<=E_odd} U {even e: 2<=e<=E_even} with
+ E_odd < E_even whenever E_inf is nonempty. Hence, wherever E(n) = E_inf (n>=n0 always; all n>=1 in the C1 range),
+ U(n) = [1, B*] minus {B*-1, B*-3, ..., B*-2h+1} with B* = kn+1+E_even and h = (E_even-1-E_odd)/2 >= 0,
+ i.e. part (i) of Conjecture S2 holds for this family, and part (ii) holds iff h <= 1.
+ COMPUTATION C2: h <= 1 for all 4<=r<=30, k<=60 (h=1 in 548 triples).
+
+Remark (positive tau never binds). If tau_m >= 0 then Phi(m) >= tau_m >= 0 since c is nondecreasing and K-m>m.
+ So only window positions with tau_m < 0 matter. A single-position test is NOT enough (single_ineq.py).
+
+n = 0 (a = s < r). Lemma 6 with A = [s]^k gives the exact criterion
+  e in E(0) <=> tau_m + d0_{K_e-m} - d0_m >= 0 for M_e-r+1<=m<=M_e,   d0 := [s]_q^k (1-q)/(1-q^r),
+ and Theorem S gives E(0) <= E(1) (= E_inf in the C1 range). E(0) != E_inf occurs (2363 of 21924 triples with k<=60).
+
+HEURISTIC (not proved): writing rho = max_{1<=j<r} |sin(pi s j/r)/sin(pi j/r)| (> 1 for middle s) and beta>0 the root
+ of (1+beta)ln(1+beta) - beta ln beta = ln rho, E_even(r,s,k)/k -> (s-1-2beta)/r as k -> infinity. The limit is
+ given by a transcendental equation, and within k<=60 no linear-floor law fits (beatty_fit.py: 65 of 378 (r,s)
+ pairs admit no exact floor(alpha k + gamma) fit of E_even/2 with real alpha, gamma). So B* is not of the
+ form 1+F+2floor((k-c)/p) in general, unlike the r=3 formula 1+F+2floor(S/6).

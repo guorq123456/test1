@@ -1,0 +1,31 @@
+{
+ "reviews": [
+  {
+   "id": "N2_S2_tiebreak",
+   "kind": "A",
+   "v": {
+    "reproduced": true,
+    "own_numbers": "Interpretation (text defines neither U nor F): P=prod_i [a_i]_x, Q_b=P*[b]_{x^r}, U={b>=1: Q_b unimodal}; rigorous bound b<=(D+2r)/r+1 since for r∤a_i the residue-class sums of P are unequal and the flat middle of Q_b is non-unimodal once it spans >=2r. Results on the claimed family: 100,488 sets (1715/5004/12375/27131/54263 for r=4..8); 0 violations of S2; 100,402 with U=[1,B*], 86 with U=[1,B*]\\{B*-1} (holes only at (r,k)=(7,6):38 and (8,6):48). B_main-B_off: diff 1 for all full cases, 3 for holes; 1,310 degenerate sets (U={1}: 1307, U={1,3}: 3) have no literal B_off unless b=0 is admitted, under which the split is exactly 100,402/86. B* ranges 1..13. No simple arithmetic F (k, sum a_i, D, floor(D/r), ...) gives B*≡1+F; F=first b not in U does for all 100,488 sets, but that is equivalent to the S2 shape rather than an independent prediction.",
+    "new_instances_tested": "(1) r in {3,9,10,11}, k<=4, a_i<=2r+2: 27,612 sets, 0 violations, 0 holes. (2) r in {4,5}, k<=4, a_i up to 4r+3: 10,373 sets, 0 violations, 0 holes. (3) r in {4,5}, k in {7,8}, a_i<=2r+2: 24,024 sets, 0 violations, 0 holes. (4) hole regime beyond range: r=7,k=7: 50,388 sets, 0 violations, 228 holes all of shape [1,B*]\\{B*-1}; r=7,k in {4,5}, a_i<=23: 40,964 sets, 0 violations; r=9, k in {5,6}: 94,962 sets, 0 violations, 252 holes all of the S2 shape. Total ~248k new sets, every U is [1,B*] or [1,B*]\\{B*-1}.",
+    "new_instances_ok": true,
+    "verdict": "PASS",
+    "reasons": "Under the only natural reading of the (underspecified) description — U = set of b for which [b]_{x^r}·prod[a_i]_x is unimodal — my independent implementation reproduces all three claimed numbers exactly (100,488 sets; 0 violations; 100,402/86 split), and the exact match of the 86-hole count essentially certifies the interpretation. Roughly 248k additional out-of-range instances (other r, larger a_i, larger k, including regimes with hundreds of holes) show no violation of S2. Caveats for the record: the text does not define U or F; the parity claim B*≡1+F is only verifiable with F := first b not in U, where it is a restatement of the S2 shape; and the claimed 100,402/86 split requires a convention (b=0 ∈ U, or formal B_off=B*-1/B*-3) for the 1,310 sets with U={1} or {1,3} that have no opposite-parity element."
+   }
+  },
+  {
+   "id": "N2_S2_tiebreak",
+   "kind": "B",
+   "v": {
+    "reproduced": true,
+    "own_numbers": "Independent implementation (/tmp/claude-0/qu/review/r2/N2_S2_tiebreak-B/check.py pure-Python reference, fast.py numpy version, cross-checked on 300 random cases). Coefficients of P computed by direct convolution; weak unimodality by scanning for a descent followed by an ascent; U made finite by rigorous bound: with r dividing no a_i, P has a non-constant r-periodic plateau once r(b-1) >= D+2r, so b <= D/r+3 (searched to D//r+4 and asserted the last two b are not unimodal). Family r in 4..8, k in 1..6, a_i in [2,2r+2], r∤a_i: 100,488 sets (matches C(m+k-1,k) sums 1715+5004+12375+27131+54263). S2 (max U ≢ F mod 2): 0 violations. Split: with B_off := 0 when U has no element ≡ F (mod 2) (i.e. b=0 counted as trivially in U): d=1 for 100,402 sets, d=3 for 86 sets — exact match. Without that convention (b>=1 strictly): d=1 for 99,095, d=3 for 83, and 1,310 sets have no B_off (1,307 with U={1}, F even; 3 with U={1,3}, F even: r=7 (2,5,5,5,5,5), r=7 (4,4,4,4,5,6), r=8 (3,4,5,5,6,7)). Example d=3 set: r=7, a=(2,5,5,5,5,12), U={1,2,4}, F=1.",
+    "new_instances_tested": "(1) r in {3,9,10}, k<=4, a_i in [2,2r+2], r∤a_i: 14,963 sets, 0 S2 violations, all d=1 (782 use B_off:=0). (2) r in 4..6, k<=4, a_i in [2,3r+3]: 10,407 sets, 0 violations, all d=1. (3) r in {4,5}, k in {7,8}, a_i in [2,2r+2]: 24,024 sets, 0 violations, all d=1. (4) r=2, k<=6, a_i in [2,12] odd: 461 sets, 0 violations, all d=1. (5) r=7 values {2,4,5,6,12,13} k=7,8 and r=8 values {3,4,5,6,7,9,10} k=7: 3,795 sets, 0 violations, d=1 for 3,767 and d=3 for 28 (e.g. r=7 (2,2,4,4,5,5,6) U={1,3} F=0). Total ~53,650 new sets, all consistent with S2.",
+    "new_instances_ok": true,
+    "verdict": "PASS",
+    "reasons": "All claimed numbers reproduce exactly (100,488 sets; 0 S2 violations; 100,402 / 86 split) with my own implementation of the coefficients and weak unimodality, and S2 holds on every out-of-range instance tested (r=2,3,9,10; larger a_i; k=7,8). Caveat worth recording: the 100,402/86 split presupposes B_off = 0 when no b>=1 in U has the parity of F (equivalently treating b=0 as in U). Under a strict b>=1 reading, 1,310 sets have undefined B_off and the split is 99,095/83; the 3-set difference is exactly the three sets with U={1,3}, F even. This is a convention issue, not a computational discrepancy, and the structural statement S2 (max U has parity F+1) is unaffected by it."
+   }
+  }
+ ],
+ "passed": [
+  "N2_S2_tiebreak"
+ ]
+}

@@ -1,0 +1,50 @@
+CANDIDATES TRIED ON PATH R2E7 (explicit L0 and explicit U_inf), with fit-box error counts.
+Unit: "b-errors" = (instance,b) pairs where prediction != ground truth (tools/uni or gt_big), inside the
+fit box (r<=30, k<=40, a_i<=100).  For statistic candidates the unit is "ambiguous classes" (classes of
+equal statistic containing residue multisets with different U_inf).
+
+A. Threshold L0 (rule: U = [1,F+1] u (F+U_inf) when min a >= L0)
+ 1. L0_old = max(1, ceil((S-k+3-r)/2))                verify_B4.py seed 1 (300 trials): 0 b-errors / 6789
+ 2. L0 = max(1, floor((S-k+3-r)/2))  [PROVED, kept]   verify_B4.py seeds 11,12,13 (2000 each): 0 / 138948;
+                                                      eval_gt.py rand seeds 1,2,3,4,11,12: 0 / 610085;
+                                                      eval_gt.py exh (r2-6,k1-6),(r7-8,k1-5),(r9-10,k1-4): 0 / 30023
+ 3. "L0 is sharp" (failures at L0-1)                  REFUTED: sharp_L0.py r<=7,k<=5: no failure at any L>=1
+                                                      (configs base/base+r); sharp_search.py seeds 1,2: smallest
+                                                      observed gap L0 - (largest failing L) = 6 (11 failing
+                                                      multisets of 271 tested, rest none within depth 60)
+ 4. no domain at all ("b<=F+1 or R_k(Delta)" everywhere, k = #parts>=2)
+                                                      verify_nec.py seeds 1,2,3: 61 b-errors / 87101 (all of
+                                                      type predicted-unimodal-but-not; 0 of the other type = Thm 4)
+ 5. R alone (without T1) on arbitrary instances       margin_scan.py seed 1 (300): 8 b-errors / 5164
+
+B. Description of U_inf / U in the domain (evaluated with eval_gt.py on the same instances as A2)
+ 6. R_k(Delta_e) window rule (rule_B4.py) [PROVED]    0 b-errors (counts as in A2)
+ 7. two-chain formula (rule_chains.py) [PROVED, k>=2] eval_gt.py rand 11,12 + exh r2-6: 0 / 210597
+ 8. U_inf = [1, T6-F]  (i.e. "b <= T6" exact)         rand seeds 1,2,3,4,11,12: 3557 / 610085;
+                                                      exh: 66 + 0 + 52 = 118 / 30023
+ 9. U_inf = {1} ("b <= F+1" exact)                    rand: 12309 / 610085; exh: 208+90+232 = 530 / 30023
+10. three-shape rule (rule_types.py): U_inf in {[1,T],[1,T]\{T-1},[1,T-2]} with beta1 (POS-only test at
+    m<=mu) and beta2 = R(Delta_{T-1})                rand seeds 1,2,3,4,11,12: 13+19+22+34+18+24 = 130 / 610085;
+                                                      exh: 0.  Residue level: 0 mismatches on all multisets
+                                                      r<=13,k<=6; r<=6,k<=12; r in{3,4},k in{14..30};
+                                                      r in{15,20,25,30},k<=3  -- FALSE for large k
+                                                      (types_counter.py seed 1: 270 of 3000 random multisets)
+11. beta1 restricted to POS positions m<=mu           part of 10; 0 mismatches vs R(Delta_T) in bits_anatomy.py
+                                                      data (r<=10,k<=6): all failures at e=T are POS with m<=mu
+12. S2 shape for U_inf (e_even in {e_odd-1,e_odd-3})  0 violations: uinf_survey2.py / check_types.py exhaustive
+                                                      sets above; check_chains.py seeds 1-4 (10000 random r<=30,k<=40)
+
+C. Statistics on which U_inf might depend (stat_pairs.py: exhaustive r in 2..9, k in 2..6, 6390 multisets;
+   uinf_survey.py / uinf_survey2.py other ranges)
+13. (r,k,S)                 46 ambiguous classes (e.g. r=4: (1,3,3,3,3) U_inf=[1,3] vs (2,2,3,3,3) U_inf=[1])
+14. (r,k,S,mu)  (equivalently (r,k,S,T))   39 ambiguous (r=4: (1,2,3,3,3,3) [1,3] vs (2,2,2,3,3,3) [1];
+                            confirmed by ground truth, pair_gt.py)
+15. (r,k,S,mu,max tau)      23 ambiguous (uinf_survey.py r3-8,k2-6)
+16. (r,k,S,#middle)         72 ambiguous
+17. (r,k,tau)               617 ambiguous
+18. (r,S-k,tau)             3 ambiguous (r=7: (5,5,5,5,5) [1] vs (1,5,5,5,5,5) [1,3]) -> k matters
+19. (r,k,S,mu,tau_0)        1 to 18 ambiguous depending on range (uinf_survey2.py)
+20. (r,k,S,mu,tau_0..tau_mu) 0 ambiguous in all surveyed ranges (but same class count as full tau there)
+21. (r,k,S,tau)             0 ambiguous -- PROVED sufficient (Theorem 3)
+
+TOTAL candidates tried: 21

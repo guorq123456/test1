@@ -1,0 +1,45 @@
+CANDIDATES TRIED (path R2E1: prove S2 via the exact criterion).  All computations inside the fit box
+(one accidental exception, see bottom).  "errors" = counterexamples found in the fit box.
+
+ #  candidate                                                         tested on (script)                         errors  status
+ 1  S2 itself (shape of U)                                            test_s2.py 4 6 5 13: 8005 inst             0       evidence
+                                                                      test_s2.py 4 8 7 11: 47185 inst            0
+                                                                      rand_s2.py seeds1-3: 12000 inst            0
+                                                                      parity_data.py: 100488 inst                0  (B_main-B_off: 1 x100402, 3 x86)
+ 2  delta=(1-q)A unimodal on integers < (D+1)/2                       delta_unimodal.py 38759 + _rand.py 3000    0       PROVED (Lemma 3)
+ 3  window reduction (one n per residue class)                        phi.py check 5921 (K-progression)          0       PROVED (Lemma 4)
+ 4  thread formula: b in U <=> all threads V_b>=0, V_{b-1}+d_b>=0     threads.py 3000 inst                       0       PROVED (Lemma 5)
+ 5  bottom (P,Q,tau,n) interval form of 4                             thr2.py 3000 inst                          0       equivalent to 4
+ 6  simplified criterion a_n >= (-1)^{n-pi} T (wrong orientation)     simple_thread.py 154010 checks             136     DISCARDED
+ 7  corrected criterion a_n>=T (n=pi), c_n>=T (n!=pi)                 = Theorem 12, verify_rule.py 56716         0       PROVED
+ 8  TS: T=(-1)^{e+[low]+1} tau_rho >= 0 per thread                    tsign.py 201737 threads                    0       PROVED (Lemmas 6-9)
+ 9  AP: a_n >= 0 whenever n == pi                                     tsign.py (91200 neg a_n, all n!=pi)        0       PROVED (inside Lemma 11 argument)
+10  per-thread (i),(A),(C)                                            perthread.py 96405 threads                 0       (i),(A) PROVED; (C) open
+11  abstract lemma: unimodal d + TS => (i),(A),(C)                    abstract_thread.py 4 7: 8659 cases         (i)0 (A)0 (C)82   (C)-part DISCARDED
+12  "failures only near the bottom": B*-F-e in [-3,1]                 fail_n.py 3000 inst: holds;                large-k counterexamples DISCARDED
+                                                                      bigk.py r=30,a=[15]^40: failure height 9    (bigk.py)
+13  Lemma L: V_{b-1}<0 (b-1=F) => d_{b-3} >= d_{b-2}+d_b               suffcheck.py 21752 negV; suffcheck2 6571   0       open (suffices for (C))
+14  Lemma L': V_j<0 (j=F) => d_j >= d_{j+1}+d_{j+3}                    suffcheck2.py; target_C.py (~144k negV);   0       open (suffices for (C))
+                                                                      multiscale.py 3270 high failures,
+                                                                      min ratio (d_j-d_{j+1})/d_{j+3}=1.67e5
+15  small k: V_j<0 forces y_{j+3}<0                                   negV_pos2.py exh (k<=5,r<=11,a<=3r):        0       true in range; false for large k
+                                                                      6.83M negV cases all d_{j+3}=0;
+                                                                      margin.py F0 r=5..10,k<=9: margin 1.0
+16  sufficient ineq. at critical configs d_{b-3}>=d_{b-2}+d_b          critC_detail.py 14 critical configs        0       evidence
+17  Thm 17b condition B_off >= F+e-4 (=> S2, proved)                  coverage.py exh: 100488/100488 covered;     -       PROVED sufficient condition
+                                                                      rand: 1277/1500 covered
+18  Thm 17a hypothesis (L' at first off-failure thread)               coverage.py exh 100488/100488;              0       PROVED sufficient condition
+                                                                      rand 1500/1500                              (hypothesis checked per instance)
+19  exact rule rule_threads.py (parity-split thread criterion)         verify_rule.py 56716 cases vs tools/uni     0       PROVED (Thm 12)
+20  per-class step-2 monotonicity (change delta_m - delta_{K-m})       derivation + perthread.py                   0       PROVED (Thm 14)
+21  hill-climb minimizing (C)-margin                                   slackC.py 3 runs: min rel. slack 2.2e7      0       evidence
+22  targeted slow-growth regime (k=4..8, a~100, middle residues)       target_C.py 4x1500 inst: no negV with       0       evidence
+                                                                      d_{j+3}>0; S2 checked 1171 inst
+23  exponential-model analysis of (C) violation window                analytic (proof file sec. 8)                -       heuristic: window iff
+                                                                                                                         e^{-lg}(1+e^{-lr})>1
+TOTAL candidates: 23
+
+FIT-BOX INCIDENT (reported honestly): bigk.py's list once contained (r=30, a=[14]*30+[16]*30), k=60 with
+unequal a_i, which is outside the box.  thr2.Thr computed A and g for it before core.U_set's in_box
+assertion stopped the run; nothing was printed or used.  The list entry was then changed to
+[14]*20+[16]*20 and in_box assertions were added to thr2.Thr and threads.threads.

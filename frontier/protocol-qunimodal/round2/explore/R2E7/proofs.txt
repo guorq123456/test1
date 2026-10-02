@@ -1,0 +1,138 @@
+PATH R2E7 -- explicit L0 and explicit U_inf in the large-part regime.  Proofs.
+
+NOTATION.  r>=2, k>=1, a_1..a_k>=1, b>=1.  A(q)=prod [a_i]_q, A_n its coefficients (A_n=0 outside [0,D]),
+D = sum(a_i-1), N = D + r(b-1), P = A(q)[b]_{q^r}, P_x its coefficients.
+  c_n = A_n - A_{n-1}            (coefficients of (1-q)A; c_n=0 for n<0 and n>D+1)
+  g_n = sum_{j>=0} c_{n-jr}      (one-sided coefficients of A/[r]_q = (1-q)A/(1-q^r); g_n=0 for n<0)
+  tau_t = sum_{n = t mod r} c_n  (t taken mod r)
+  Delta = D+1-r(b+1),   window W(Delta) = { m in Z : Delta/2 < m <= Delta/2 + r }  (r consecutive integers)
+  B_n = [q^n](1-q)^{-(k-1)}  (= C(n+k-2,k-2) for k>=2, = [n=0] for k=1, = 0 for n<0)
+  w_n = sum_{j>=0} B_{n-jr} = [q^n] 1/((1-q)^{k-1}(1-q^r)), w_n = 0 for n<0.
+  R_k(Delta):  w_m - w_{Delta-m} >= tau_{m mod r}  for every m in W(Delta).
+When r divides no a_i: s_i = a_i mod r in [1,r-1], S = sum s_i, K0 = S-k+1, F = sum floor(a_i/r),
+  so D+1 = rF + K0;  for b = F+e:  Delta = Delta_e := K0 - r(e+1)   (independent of the quotients).
+  mu = max{t in [0,r-1] : tau_t > 0} (0 if none) -- this equals the mu of the established results, since
+  Gamma_t - Gamma_{t-1} = tau_t, so Gamma_t>=...>=Gamma_{r-1} iff tau_{t'}<=0 for t'=t+1..r-1.
+  T = 1 + floor((K0-2mu)/r)  (= T6 - F).
+
+----------------------------------------------------------------------------------------------------
+Lemma 0 (classical).  A is symmetric (A_n = A_{D-n}) and unimodal.  Hence c_n >= 0 for n <= D/2,
+c_n <= 0 for n > D/2, and c_{D+1-n} = -c_n for all n.
+Proof. Each [a]_q has positive coefficients, is symmetric and log-concave with no internal zeros; a product
+of such polynomials is again log-concave with no internal zeros (Hoggar / standard convolution fact) and
+symmetric about D/2, hence unimodal with mode at D/2.  c_{D+1-n} = A_{D+1-n}-A_{D-n} = A_{n-1}-A_n = -c_n.  QED
+
+Lemma 1.  d_x := P_x - P_{x-1} = sum_{j=0}^{b-1} c_{x-jr} = g_x - g_{x-rb}.  P is unimodal iff d_x >= 0 for
+every integer x <= N/2.
+Proof. (1-q)P = (1-q)A * sum_{j<b} q^{jr} gives the first formula; the second is telescoping of g along
+the class of x.  P is palindromic of degree N.  If d_x>=0 for x<=N/2 then by P_x=P_{N-x} the sequence is
+nonincreasing after N/2, so unimodal.  Conversely if d_x<0 for some x<=N/2 then P_{x-1}>P_x and by
+palindromy P_{N-x}<P_{N-x+1} with x-1 < x <= N-x < N-x+1: a strict descent followed by a strict ascent,
+not unimodal.  QED
+
+Lemma 2 (window lemma, any parameters).  (i) d_x >= 0 for every x <= D/2.  (ii) If D/2 < x and x+r <= N/2
+then d_{x+r} <= d_x.  Consequently P is unimodal iff d_x >= 0 for every integer x in (N/2 - r, N/2].
+Proof. (i) every index x-jr is <= D/2, so every c-term is >= 0 (Lemma 0; c=0 at negative indices).
+(ii) d_{x+r} - d_x = c_{x+r} - c_{x+r-rb}.  x+r > D/2 gives c_{x+r} <= 0.  x+r-rb <= N/2 - rb
+= D/2 - r(b+1)/2 < D/2 gives c_{x+r-rb} >= 0.  So d_{x+r} <= d_x.
+Consequence: take x <= N/2 with x > D/2; let x' = x + jr be the largest element of x + rZ with x' <= N/2,
+so x' lies in (N/2-r, N/2].  Each step y -> y+r from x to x' has y > D/2 and y + r <= N/2, so by (ii)
+d_x >= d_{x'} >= 0.  Points x <= D/2 are covered by (i).  Combine with Lemma 1.  QED
+
+Lemma 3 (reflection).  For every integer n: g_n = tau_n + g_{D+1-r-n}; and tau_{D+1-t} = -tau_t.
+Proof. tau_{D+1-t} = sum_{n=D+1-t} c_n = sum_{n'=t} c_{D+1-n'} = -tau_t (Lemma 0).
+g_n - tau_n = -sum_{j>n, j=n mod r} c_j = sum_{j>n, j=n} c_{D+1-j} = sum_{i<D+1-n, i=D+1-n} c_i
+= sum_{i<=D+1-n-r, i = D+1-n-r} c_i = g_{D+1-r-n}.  QED
+
+Lemma 4 (translation).  For integer x put m = D+1-r-x.  Then d_x = g_m - g_{Delta-m} - tau_m, and
+x in (N/2-r, N/2]  <=>  m in W(Delta).
+Proof. By Lemma 3 with n=x: g_x = tau_x + g_m, and tau_x = tau_{D+1-m} = -tau_m (period r, Lemma 3).
+x - rb = D+1-r-m-rb = Delta - m.  So d_x = g_x - g_{x-rb} = g_m - tau_m - g_{Delta-m}.
+x <= N/2 <=> m >= D+1-r-N/2 = (Delta+1)/2 <=> 2m > Delta.  x > N/2 - r <=> m < (Delta+1)/2 + r
+<=> 2m <= Delta + 2r.  QED
+
+THEOREM 1 (window criterion; all r>=2, k>=1, a_i>=1, b>=1).
+  P unimodal  <=>  g_m - g_{Delta-m} >= tau_{m mod r} for every m in W(Delta)  (r conditions).
+Proof. Lemma 2 + Lemma 4.  QED
+
+Lemma 5.  tau depends only on the residues: sum_t tau_t q^t == (1-q) prod_i [s_i]_q  (mod q^r - 1),
+s_i = a_i mod r.  If no s_i is 0 then tau is not identically 0, and tau_mu > 0.
+Proof. [a]_q = [s]_q + q^s [r]_q [(a-s)/r]_{q^r}; expanding the product, every term containing a factor
+[r]_q is killed by (1-q)[r]_q = 1-q^r == 0.  With zeta = e^{2 pi i/r}: sum_t tau_t zeta^t =
+prod_i (1-zeta^{s_i}) / (1-zeta)^{k-1} != 0 since r does not divide s_i; so tau != 0.  sum_t tau_t =
+value at q=1 of (1-q)prod[s_i] = 0, so some tau_t > 0, hence tau_mu > 0.  QED
+
+Lemma 6 (small indices).  Let L = min a_i.  For n <= L-1: c_n = B_n and g_n = w_n.
+Proof. (1-q)A = prod_i (1-q^{a_i}) / (1-q)^{k-1} == (1-q)^{-(k-1)} (mod q^L).  g, w are the class sums of
+c, B over indices <= n <= L-1.  QED
+
+THEOREM 2 (per-b reduction).  If L = min a_i >= floor(Delta/2) + r + 1 then  P unimodal <=> R_k(Delta).
+Proof. Every m in W(Delta) has m <= floor(Delta/2)+r <= L-1 and Delta-m < m, so Lemma 6 gives
+g_m = w_m, g_{Delta-m} = w_{Delta-m}; tau is the same (Lemma 5).  Apply Theorem 1.  QED
+
+THEOREM 3 (explicit L0; B4 made explicit).  Let r divide no a_i, k>=1, and
+      L0(r,s) := max(1, floor((S - k + 3 - r)/2)).
+If min a_i >= L0 then
+      U = {b>=1 : b <= F+1}  u  {F+e : e>=2, R_k(Delta_e)}  =  [1,F] u (F + U_inf),
+      U_inf(r,s) := {1} u {e>=2 : R_k(Delta_e)},
+and U_inf depends only on (r, k, S, tau)  (tau as in Lemma 5).
+Proof. b <= F+1: established result T1.  b = F+e, e>=2: Delta_e <= Delta_2 = K0 - 3r, hence
+floor(Delta_e/2)+r+1 <= floor((K0-3r)/2) + r + 1 = floor((K0 - r + 2)/2) = floor((S-k+3-r)/2) <= L0 <= L,
+and Theorem 2 applies with Delta = Delta_e.  R_k(Delta_e) uses only r, k, tau and Delta_e = S-k+1-r(e+1).
+Finiteness is Theorem 6.  QED
+
+Lemma 7 (eps lemma).  k>=2, a_i>=1 arbitrary.  eps_n := B_n - c_n.  Then (a) eps_n >= 0 for all n (this
+part also for k=1), and (b) eps_n >= eps_{n-1} for every integer n <= (D + a_max + 1)/2.
+Proof. (a) c = coefficients of (1-q^{a_1}) A'(q), A' = prod_{i>=2}[a_i]_q, so c_n <= A'_n; and
+[a]_q <= 1/(1-q) coefficientwise, products of nonnegative series preserve <=, so A'_n <= B_n.
+(b) Write X_j = prod_{i<=j}(1-q^{a_i}), A_j = prod_{i<=j}[a_i]_q, order parts so a_k = a_max.
+eps = (1 - X_k)/(1-q)^{k-1}, so (1-q) eps = E := (1-X_k)/(1-q)^{k-2}.  Since 1-X_k = (1-X_{k-1}) + q^{a_k} X_{k-1}
+and X_{k-1} = (1-q)^{k-1} A_{k-1}:
+      E = (1-X_{k-1})/(1-q)^{k-2}  +  q^{a_k} (1-q) A_{k-1}.
+The first series is the eps-sequence of the first k-1 parts, >= 0 by (a) (for k-1=1 it is q^{a_1}).
+The second has coefficient c^{(k-1)}_{n-a_k}, which is >= 0 whenever n - a_k <= D_{k-1}/2 with
+D_{k-1} = D - (a_k - 1) (Lemma 0 for the first k-1 parts; 0 at negative index), i.e. n <= (D+a_k+1)/2.
+So E_n = eps_n - eps_{n-1} >= 0 for n <= (D+a_max+1)/2.  QED
+
+THEOREM 4 (universal necessity; any part sizes).  k>=2, r divides no a_i, b>=1.  If P is unimodal then
+R_k(Delta) holds.  Consequently, for every a (no part divisible by r, at least two parts >= 2):
+      U(a)  is contained in  [1, F+1]  u  (F + U_inf(r, s'))
+where s' = residues of the parts >= 2 and k' = their number (parts equal to 1 do not change P).
+Proof. Let m in W(Delta), y = Delta - m < m.  m <= floor(Delta/2)+r <= (D+1-rb+r)/2 <= (D+1)/2
+<= M := floor((D+a_max+1)/2).  Put G_n = w_n - g_n = sum_{j>=0} eps_{n-jr}.  eps is nondecreasing on
+(-inf, M] (it is 0 at negative indices, >=0 by Lemma 7(a), nondecreasing on [.., M] by 7(b)), and
+y - jr < m - jr <= M, so G_m - G_y = sum_j (eps_{m-jr} - eps_{y-jr}) >= 0.  Hence
+w_m - w_y >= g_m - g_y >= tau_m by Theorem 1.  For the consequence take b = F+e >= F+2: Delta = Delta_e,
+so e in U_inf.  QED
+
+THEOREM 5 (two-chain structure; k>=2).  R_k(Delta) => R_k(Delta + 2r).  Hence
+      U_inf = {odd e <= e_odd} u {even e : 2 <= e <= e_even}
+for two numbers e_odd (odd, >=1) and e_even (even, >=0), and explicitly, for a chain top c with
+Delta = Delta_c:  the elements of U_inf in {c, c-2, c-4, ...} (that are >=2) are exactly c - 2j with
+j >= J := max_{m in W(Delta_c)} J(m),  J(m) = least j>=0 with w_{m+jr} - w_{Delta_c - m + jr} >= tau_m.
+Proof. W(Delta+2r) = W(Delta) + r, (Delta+2r)-(m+r) = Delta-m+r, tau has period r.  For all integers n,
+w_{n+r} - w_n = B_{n+r}.  So the condition at (Delta+2r, m+r) minus the condition at (Delta, m) changes the
+left side by B_{m+r} - B_{Delta-m+r} >= 0, because m > Delta-m and B is nondecreasing on Z for k>=2.
+Iterating: f_m(j) := w_{m+jr} - w_{Delta-m+jr} is nondecreasing in j, and R(Delta+2jr) <=> f_m(j) >= tau_m
+for all m in W(Delta); the set of good j is upward closed with least element max_m J(m).
+Delta_{c-2j} = Delta_c + 2jr.  1 is in U_inf by definition.  QED
+Corollary 5'. In the regime of Theorem 3, b in U and b >= F+4 implies b-2 in U (and b-2 <= F+1 is in U by T1).
+
+THEOREM 6 (finiteness; recovers T6 in this regime).  R_k(Delta_e) fails for every e >= T+1.  So
+U_inf is contained in [1, T], T = 1 + floor((K0-2mu)/r) = T6 - F.
+Proof. e >= T+1 means r(e-1) > K0 - 2mu, i.e. Delta_e/2 + r < mu.  W(Delta_e) contains exactly one m = mu
+(mod r); it satisfies m <= Delta_e/2 + r < mu, so m <= mu - r < 0.  Then w_m = 0 and w_{Delta_e - m} = 0
+(Delta_e - m < m < 0), and the condition reads 0 >= tau_mu, false by Lemma 5.  QED
+(Remark: combined with Theorem 4 this re-derives the established bound b <= T6 for all part sizes.)
+
+----------------------------------------------------------------------------------------------------
+CONJECTURES (numerical evidence only; scripts named).
+C1 (S2 restricted to U_inf):  e_even in {e_odd - 1, e_odd - 3}.  Equivalently U_inf = [1,e*] or
+   [1,e*]\{e*-1} with e* odd.  0 violations: exhaustive over all residue multisets r<=13,k<=6 and
+   r<=6,k<=12, r in {3,4}, k in {14,...,30}  (check_types.py / uinf_survey2.py); 10000 random multisets
+   r<=30, k<=40 (check_chains.py seeds 1-4).  By Theorem 5 C1 reduces to two inequalities
+   e_even < e_odd and e_even >= e_odd - 3.  With Theorems 3 and 5 it would give Conjecture S2 in the
+   large-part regime.
+C2 (FALSE): "T - e_odd <= 2" (three shapes [1,T], [1,T]\{T-1}, [1,T-2]).  True exhaustively for r<=13,k<=6,
+   but fails for large k: r=10, k=40, residues in types_counter.py output: T=15, U_inf=[1,11].
+   Observed T - e_odd in {0,2,4,6}, growing with k (check_chains.py histograms).

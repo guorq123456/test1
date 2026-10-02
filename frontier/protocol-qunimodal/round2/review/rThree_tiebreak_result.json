@@ -1,0 +1,89 @@
+{
+  "summary": "Step 4: default-reject review by a different model (reimplementers, proof referees, literature recheck)",
+  "agentCount": 2,
+  "logs": [
+    "passed review: none"
+  ],
+  "result": {
+    "reviews": [
+      {
+        "id": "N2_three_tiebreak",
+        "kind": "A",
+        "v": {
+          "reproduced": true,
+          "own_numbers": "Work dir: /tmp/claude-0/qu/review/r2/N2_three_tiebreak-A/ (check.c = C checker with __int128 coefficients, rule.py/bigcheck.py = independent Python/exact-bigint implementations, count*.py = enumeration-range search). The text never states P; I inferred P_b(q) = [b]_{q^r} * prod_i [a_i]_q (= prod [a_i]_q * [rb]_q/[r]_q), which the rule fits perfectly (and the quoted out-of-domain example r=12, a=(6,7,8,10,4,2,4,21) indeed gives a non-interval U={1,2,4} vs B*=4, consistent with it being excluded). Ground truth = direct coefficient computation of P_b for every b in [1, B*+r+4] and a nondecreasing-then-nonincreasing test. (1) k=3 all-middle triples: the only enumeration producing 2,322,483 is multisets a1<=a2<=a3 in [1,100], r in [4,30], all residues in [2,r-2]; my exhaustive run: tested=2,322,483 (1,577,103+368,640+251,160+125,580), bad=0, FIRE never fires there, side claim B*-1-F even and >=0 held in all. (2) Base family: 1,041,390 = 38*C(30,4) with C(30,4)=sum_{r=4..30} C(r-1,3) = middle multisets with all a_i<r. Exact-count reading found: three middle residues (<r, multiset) + one extra a4 in {1+jr, (r-1)+jr : 0<=j<=18}: tested=1,041,390, bad=0. Also a strict superset family (all a_i<r, 3 middle multiset, n1<=18 ones and n2<=18 copies of r-1): tested=9,893,205, bad=0, FIRE=78,147 cases, side_bad=0, fire_side_bad=0 (every FIRE for r<=30 had s=r-2 and tau_{r-2}=-2); plus 19 identical edge copies: 2x548,100, bad=0. (3) Random in-domain: 2000+500 (C, r<=14, a<=60, k<=6) + 400 (Python) + 200 cross-check C-vs-Python: 0 errors, 34 FIRE cases confirmed.",
+          "new_instances_tested": "All in-domain, all outside the claimed ranges: (a) 3000 random, r in [4,60], a_i<=400, k<=8 (C, int128): bad=0, fire=27; (b) 3000 random, r<=40, a_i<=1000, k<=5: bad=0, fire=7; (c) exact Python big-int: 8 hand-built extremes (r=100 k=8; r=37 with a up to 3001, k=9; r=61 k=12; r=200; r=11 k=18; r=4 k=15 with FIRE; r=45 a~1000; r=150 k=8) + 40 random with r in [31,120], k<=10, a up to ~750: all 48 OK (U = [1,B*] exactly, B*-1-F even >=0); (d) full enumeration k=4: 3 middle multiset in [1,100] + one edge a4<=100, r in [4,30]: 26,948,263 instances, bad=0; (e) base-family superset above (9.9M, all a_i<r, k up to 39): bad=0. Informational: FIRE side-claim pattern (s=r-2, tau_{r-2}=-2) also held for all 61 FIRE cases among 20,000 random r in [31,90] instances, beyond the claimed r<=30.",
+          "new_instances_ok": true,
+          "verdict": "PASS",
+          "reasons": "Independent reimplementation (C with 128-bit coefficients, cross-checked against two Python implementations incl. exact big ints) reproduces every claimed number: the 2,322,483-triple range was identified uniquely (r in 4..30, a_i in 1..100, multisets) and gives 0 errors; the 1,041,390 base-family count is reproduced exactly under a concrete reading (3 middle residues <r plus one lifted edge value, j<=18), and a much larger superset family (9.9M tuples, 78k FIRE cases) also gives 0 errors; ~8.5k random in-domain instances give 0 errors. Both side claims (B*-1-F even and >=0; FIRE only with s=r-2, tau_{r-2}=-2 for r<=30) held in every tested instance (~40M). New out-of-range instances (r up to 200, a_i up to 3001, k up to 39, 27M-instance k=4 enumeration) show no mismatch. Caveats: the definition of P had to be inferred (text omits it) and the exact enumeration behind '1,041,390 base-family tuples' is not uniquely determinable from the text, though both the exact count and a superset reproduce with 0 errors."
+        }
+      },
+      {
+        "id": "N2_three_tiebreak",
+        "kind": "B",
+        "v": {
+          "reproduced": false,
+          "own_numbers": "Ground truth implemented independently in C (exact 384-bit integer coefficients, prefix-sum multiplication, weak-unimodality scan; cross-checked against pure-Python big-int and sympy on sampled cases, all agreeing). Files in /tmp/claude-0/qu/review/r2/N2_three_tiebreak-B/ (gt3.c, full_k3.log, base_full3.txt, rand_in_res.txt, rand_out_res.txt, k3_out_res.txt). Dataset sizes reproduced: k=3 all-middle multisets (a_i<=100, residues in [2,r-2], r=4..30) = 2,322,483 exactly; base family (m1,m2,m3 in [2,r-2], nm=0..37, r=4..30) = 27,405*38 = 1,041,390 exactly. Ground truth on all 2,322,483 k=3 triples: U is an interval [1,B*] in every case and B* = 1+F in every case (so this dataset is trivially the paper's Conjecture 5.4 for k<=3; it cannot discriminate any tiebreak rule). Ground truth on all 1,041,390 base-family tuples: U is an interval in every case; B* is always odd, B* distribution 1:58159, 3:58831, 5:58932, ..., 35:30824, 37:726; B* depends on the triple (m1,m2,m3), not only on (r,nm), in 820 of 1026 (r,nm) classes. 8,000 random in-range instances (r 4..30, k 3..40, exactly three middle residues, others 1 or r-1, up to 5 floors, a_i<=100): all intervals; B*-(1+F) is always even and in {0,...,26}. What I could NOT do: evaluate the claimed formula B* = T6 - 2*[tau_s <= -2 and s >= 2 mu], because T6, tau_s, s and mu are undefined in the claim statement (they are not defined in the original problem nor in arXiv:2605.12822, whose Conjecture 5.4 only has the condition b <= 1 + sum floor(a_i/r) or r | a_i). Hence the claimed '0 errors' for the formula is irreproducible from the material given.",
+          "new_instances_tested": "(1) 3,000 random instances outside the fit range: r in 31..45, k up to 60, a_i up to 160, up to 8 floors, exactly three middle residues, others residue 1 or r-1, r dividing no a_i: U is an interval [1,B*] in all 3,000, B*-(1+F) always even, ranging 0..36. (2) 4,000 random k=3 all-middle triples with r in 31..50 and a_i up to 300: all intervals and B* = 1+F in all 4,000. The interval-shape part of the claim (U = [1,B*]) held on every instance tested; the formula for B* could not be tested.",
+          "new_instances_ok": true,
+          "verdict": "REJECT",
+          "reasons": "The central claim, B* = T6 - 2*[tau_s <= -2 and s >= 2 mu], is not a self-contained mathematical statement: T6, tau_s, s and mu are never defined in the claim or in the original problem/paper, so the formula cannot be implemented and the claimed 0-error counts cannot be reproduced. Everything that IS checkable from the problem statement reproduces: the two dataset sizes (2,322,483 and 1,041,390) match exactly under the natural reading (middle residue = a_i mod r in [2,r-2]; base family uses m_i in [2,r-2]); U is an interval [1,B*] on every instance in the claimed datasets and on 7,000 new out-of-range instances; the k=3 dataset has B* = 1+F throughout (trivial w.r.t. any tiebreak). But the k=3 dataset provides zero discriminating power for the tiebreak formula, and in the base family B* genuinely depends on the middle triple in 820/1026 (r,nm) classes, so the unverifiable tiebreak term is load-bearing. With the formula undefined, the default REJECT stands; a resubmission must state T6, tau_s, s, mu explicitly in terms of r, a_1..a_k."
+        }
+      }
+    ],
+    "passed": []
+  },
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Review"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "revA:N2_three_tiebreak",
+      "phaseIndex": 1,
+      "phaseTitle": "Review",
+      "agentId": "a2100896b9ef9b97a",
+      "model": "claude-fable-5-1",
+      "state": "done",
+      "startedAt": 1790957913846,
+      "queuedAt": 1790957913817,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "Work dir: /tmp/claude-0/qu/review/r2/N2_three_tiebreak-A/ (…",
+      "promptPreview": "DEFAULT: REJECT. Reimplement from a TEXT DESCRIPTION ONLY and check a claimed result.\nTEXT DESCRIPTION (this is all you get about how it was produced): DOMAIN (the rule claims nothing outside it): r>=4; r divides no a_i; EXACTLY THREE of the a_i have residue a_i mod r in the 'middle' range [2, r-2]; every other a_i has residue 1 or r-1. (Example outside the domain: r=12, a=(6,7,8,10,4,2,4,21) has …",
+      "promptFramed": true,
+      "lastProgressAt": 1790960911418,
+      "tokens": 108414,
+      "toolCalls": 27,
+      "durationMs": 2997569,
+      "resultPreview": "{\"reproduced\":true,\"own_numbers\":\"Work dir: /tmp/claude-0/qu/review/r2/N2_three_tiebreak-A/ (check.c = C checker with __int128 coefficients, rule.py/bigcheck.py = independent Python/exact-bigint implementations, count*.py = enumeration-range search). The text never states P; I inferred P_b(q) = [b]_{q^r} * prod_i [a_i]_q (= prod [a_i]_q * [rb]_q/[r]_q), which the rule fits perfectly (and the quote…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "revB:N2_three_tiebreak",
+      "phaseIndex": 1,
+      "phaseTitle": "Review",
+      "agentId": "a98341fc942e47d00",
+      "model": "claude-fable-5-1",
+      "state": "done",
+      "startedAt": 1790957913848,
+      "queuedAt": 1790957913818,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "Ground truth implemented independently in C (exact 384-bit …",
+      "promptPreview": "DEFAULT: REJECT. Check a claim starting ONLY from the original problem.\nORIGINAL PROBLEM: For integers r>=2, k>=1, a_1..a_k>=1, b>=1 let P(q) = [a_1]_q...[a_k]_q * [b]_{q^r}, where [n]_q = 1+q+...+q^{n-1} and [b]_{q^r} = 1+q^r+...+q^{r(b-1)}. P is (weakly) unimodal if its coefficients satisfy c_0<=...<=c_m>=...>=c_N for some m. U = {b : P unimodal}, F = sum floor(a_i/r), D = sum(a_i-1). Question: …",
+      "promptFramed": true,
+      "lastProgressAt": 1790958423442,
+      "tokens": 74304,
+      "toolCalls": 17,
+      "durationMs": 506895,
+      "resultPreview": "{\"reproduced\":false,\"own_numbers\":\"Ground truth implemented independently in C (exact 384-bit integer coefficients, prefix-sum multiplication, weak-unimodality scan; cross-checked against pure-Python big-int and sympy on sampled cases, all agreeing). Files in /tmp/claude-0/qu/review/r2/N2_three_tiebreak-B/ (gt3.c, full_k3.log, base_full3.txt, rand_in_res.txt, rand_out_res.txt, k3_out_res.txt). Dat…"
+    }
+  ],
+  "totalTokens": 182718,
+  "totalToolCalls": 44
+}

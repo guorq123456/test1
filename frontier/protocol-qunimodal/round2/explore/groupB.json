@@ -1,0 +1,377 @@
+[
+ {
+  "path_id": "R2E5",
+  "stayed_on_path": true,
+  "outcome": "RULE",
+  "candidates_tried_total": 13,
+  "candidates_file": "/tmp/claude-0/qu/explore2/R2E5/candidates.txt",
+  "rules": [
+   {
+    "name": "all-equal middle-residue window rule (flat for n>=1, [s]^k for n=0)",
+    "rule_file": "/tmp/claude-0/qu/explore2/R2E5/rule_allequal_middle.py",
+    "description_text": "Domain: r>=4, k=len(a)>=3, all a_i equal to a, s = a mod r in [2, r-2]; n = floor(a/r). (1) If b <= kn+1, P is unimodal. (2) Otherwise let e = b-1-kn and K = k(s-1)+1-r(2+e). This does not depend on n. Let tau_t = Gamma_t - Gamma_{t-1} (indices mod r), where Gamma_t = number of k-tuples in {0,...,s-1}^k whose sum is congruent to t mod r. Equivalently, tau_t = (2/r) * sum_{j=1}^{r-1} sin(pi j/r) * (sin(pi j s/r)/sin(pi j/r))^k * sin(pi j (k(s-1)+1-2t)/r). If n>=1, let h_j = sum_{l>=0, lr<=j} C(j-lr+k-2, k-2) for j>=0, i.e. the coefficients of 1/((1-q)^(k-1)(1-q^r)). If n=0, let h_j be the power-series coefficients of [s]_q^k (1-q)/(1-q^r). In both cases h_j = 0 for j<0. Then P is unimodal iff tau_{m mod r} + h_{K-m} - h_m >= 0 for each of the r integers m with K/2 - r <= m < K/2. Only positions with tau_m < 0 can fail. Consequences: for n>=1, U = [1,kn+1] united with (kn+1+E_inf(r,s,k)), so U depends on n only through the shift F = kn. E_inf has the form {odd e <= E_odd} united with {even e <= E_even}, with E_odd < E_even. B* = kn+1+E_even, and U is either [1,B*] or [1,B*] minus {B*-1}.",
+    "fit_range": "4<=r<=30, middle s in [2,r-2], 3<=k<=60, a<=100 (every n with n*r+s<=100), b from 1 to T6+2; ground truth was a full Thm-A scan validated against gt_big",
+    "free_parameters": 0,
+    "fit_errors": 0
+   }
+  ],
+  "numeric_claims": [
+   {
+    "claim": "The rule makes 0 errors on 4,824,541 (instance,b) pairs: r=4..8 with all n, r=9..30 with n in {0,1}, k=3..60, b<=T6+2. It also makes 0 errors on 5,315 random gt_big pairs with random n.",
+    "script": "/tmp/claude-0/qu/explore2/R2E5/test_rule.py",
+    "range": "r 4..30, s middle, k 3..60, a<=100"
+   },
+   {
+    "claim": "The rule makes 0 errors on 919,946 pairs from 63,684 instances with n>=2 (b in [F+1,T6+2]).",
+    "script": "/tmp/claude-0/qu/explore2/R2E5/cmp_flat3.py",
+    "range": "r 9..30, n>=2, a<=100, k 3..60"
+   },
+   {
+    "claim": "E(1) equals the flat set E_inf (exact window computation) for all 21,924 triples (r,s,k). With the proven sandwich this gives E(n) = E_inf for every n>=1 for these triples.",
+    "script": "/tmp/claude-0/qu/explore2/R2E5/certify_n1.py",
+    "range": "r 4..30, s middle, k 3..60"
+   },
+   {
+    "claim": "The flat formula also holds for n>=1 in all 97,556 full-scan instances. For n=0 it fails in 2,363 of 21,924 instances: E(0) is a proper subset of E_inf there.",
+    "script": "/tmp/claude-0/qu/explore2/R2E5/cmp_flat.py 4 5 6 7 8 ; /tmp/claude-0/qu/explore2/R2E5/cmp_flat2.py 9 30",
+    "range": "r 4..30, k 3..60, a<=100"
+   },
+   {
+    "claim": "Window Lemma sanity check on general (not all-equal) tuples: 0 disagreements with gt_big on 43,078 random (tuple,b) pairs.",
+    "script": "/tmp/claude-0/qu/explore2/R2E5/window_general_check.py",
+    "range": "r 2..30, k 1..12, a_i<=60"
+   },
+   {
+    "claim": "Shape of E_inf over 21,924 triples: an interval in 15,072, empty in 6,304, a single hole at E_even-1 in 548, and no other shape. The n=0 sets also show no other shape.",
+    "script": "/tmp/claude-0/qu/explore2/R2E5/s2check.py",
+    "range": "r 4..30, k 3..60"
+   },
+   {
+    "claim": "No linear-floor (Beatty) law E_even/2 = floor(alpha k + gamma) fits exactly for 65 of the 378 (r,s) pairs. The best per-pair fit (756 real parameters in total) still mispredicts 113 (r,s,k) values.",
+    "script": "/tmp/claude-0/qu/explore2/R2E5/beatty_fit.py ; /tmp/claude-0/qu/explore2/R2E5/beatty_opt.py",
+    "range": "r 4..30, k 3..60"
+   },
+   {
+    "claim": "The established bound T6 is not attained (B* != T6) in 93,462 of 119,480 instances.",
+    "script": "/tmp/claude-0/qu/explore2/R2E5/t6exact.py",
+    "range": "all generated data, r 4..30, k 3..60, a<=100"
+   },
+   {
+    "claim": "The trigonometric closed form of tau matches the exact integers in 40,320 checks.",
+    "script": "/tmp/claude-0/qu/explore2/R2E5/tau_closed.py",
+    "range": "r 4..30, s middle, k in {3,7,20,41,60}"
+   },
+   {
+    "claim": "Single-inequality simplifications of the window criterion are not exact. Errors out of 342,639 (r,s,k,e) cases: 14,244 (min tau), 3,883 (most negative tau), 640 (nearest negative tau).",
+    "script": "/tmp/claude-0/qu/explore2/R2E5/single_ineq.py",
+    "range": "r 4..30, k 3..60, e 1..E6+2"
+   },
+   {
+    "claim": "For n=1 versus flat, the per-position window signs agree in all 340,266 window values. The minimum slack ratio Phi_c/(Phi_c - Phi_g) is 1.956.",
+    "script": "/tmp/claude-0/qu/explore2/R2E5/slack1.py 12",
+    "range": "r 4..12, k 3..60"
+   },
+   {
+    "claim": "The rule reproduces Handelman's theorem (1+q)^k(1+q^r) unimodal iff k >= r^2-3, with 0 disagreements in 1,566 pairs.",
+    "script": "/tmp/claude-0/qu/explore2/R2E5/handelman_check.py",
+    "range": "r 4..30, k 3..60, a=2, b=2"
+   },
+   {
+    "claim": "Heuristic asymptotic slope (s-1-2beta)/r: observed secant slopes of E_even are 0.749 to 1.014 times the prediction (mean 0.943) over 249 (r,s) pairs.",
+    "script": "/tmp/claude-0/qu/explore2/R2E5/asym_slope.py",
+    "range": "r 4..30, k up to 60, pairs with E_even(60)>=8"
+   },
+   {
+    "claim": "Cyclic unimodality: tau_t >= 0 on the half period below D_s/2 at all 225,533 positions checked.",
+    "script": "/tmp/claude-0/qu/explore2/R2E5/cyc_unimodal.py",
+    "range": "r 4..30, s middle, k 3..60"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "Window Lemma, a sharpening of Thm A to r inequalities: for any palindromic, unimodal, nonnegative A (in particular any product of [a_i]_q), with g = A(1-q)/(1-q^r), tau its r-periodic tail and K = D+1-r(b+1), P = A[b]_{q^r} is unimodal iff tau_m + g_{K-m} - g_m >= 0 for the r integers m with K/2-r <= m < K/2.",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E5/proofs.txt (Lemmas 1-6)"
+   },
+   {
+    "statement": "Sandwich theorem for a = nr+s, s middle: E(0) is contained in E(1), which is contained in E(2), and so on, with E(n) = E_inf(r,s,k) for every n with 2(nr+s) > k(s-1)+1-r. Here E(n) = {e : kn+1+e in U}, and E_inf is defined by the window test with c = 1/((1-q)^(k-1)(1-q^r)) and tau from [s]^k. Combined with the exact computation E(1) = E_inf, this proves U([nr+s]^k) = [1,kn+1] united with (kn+1+E_inf) for all n>=1, for every 4<=r<=30, middle s, 3<=k<=60.",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E5/proofs.txt (Lemmas 7-9, Theorem S, Computation C1, Theorem F)"
+   },
+   {
+    "statement": "Parity structure of E_inf, for all r>=4, middle s, k>=3: e+2 in E_inf implies e in E_inf, and odd e in E_inf implies e+1 in E_inf. The second step uses a new cyclic-unimodality lemma for the residue sums of [s]^k. Hence E_inf = {odd e <= E_odd} united with {even e <= E_even}, with E_odd < E_even, and part (i) of Conjecture S2 holds for this family wherever E(n) = E_inf. Part (ii) is equivalent to E_odd >= E_even-3, which was checked for r<=30, k<=60.",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E5/proofs.txt (Lemmas 10-13 and Corollary)"
+   },
+   {
+    "statement": "Closed form: tau_t = (2/r) sum_{j=1}^{r-1} sin(pi j/r) sigma_j^k sin(pi j (k(s-1)+1-2t)/r), with sigma_j = sin(pi j s/r)/sin(pi j/r). In the window, the tau part depends on e only through its parity.",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E5/proofs.txt (Lemma 11)"
+   }
+  ],
+  "failure_report": ""
+ },
+ {
+  "path_id": "R2E6",
+  "stayed_on_path": true,
+  "outcome": "PROOF",
+  "candidates_tried_total": 15,
+  "candidates_file": "/tmp/claude-0/qu/explore2/R2E6/candidates.txt",
+  "rules": [
+   {
+    "name": "C11: asymptotic excess clipped to the proved residue-only window",
+    "rule_file": "/tmp/claude-0/qu/explore2/R2E6/rule_C11.py",
+    "description_text": "If r divides some a_i: unimodal (C43). If b <= 1+F: unimodal (T1). If k < 3: not unimodal. Otherwise unimodal iff b <= 1+F+E_pred, where E_pred is built as follows. Let s_i = a_i mod r, S1 = sum(s_i-1), sigma1 = S1/k. Let L = (1/k) * max over j=1..r-1 of sum_i ln|sin(pi*j*s_i/r)/sin(pi*j/r)| (a term with a zero sine gives -infinity for that j). Let theta* be the root of H(t) = (1+t)ln(1+t) - t ln t = L, and lambda = ln(1+1/theta*). Set X = (S1 - 2*theta*k)/r - ln(k)/(r*lambda) (drop the log term if theta* = 0), and e0 = 2*floor((X - 0.5)/2). Window: tau_t = coefficients of (1-q)*prod_i [s_i]_q reduced mod q^r - 1, M = max_t tau_t; delta_n = sum over t>=0 with rt <= n+1 of C(n+1-rt+k-3, k-3) (0 for n < -1); n_lo = least n>=0 with delta_n >= M; n_hi = least integer n >= -r with 2r*delta_{n+r-1} >= M; E_lo = floor((S1+1-2r-2n_lo)/r), E_hi = floor((S1+1-2r-2n_hi)/r). lo = max(E_lo,0) rounded up to even, hi = E_hi rounded down to even. If lo <= hi, clip e0 into [lo,hi]. E_pred = max(e0,0). Claimed domain: k>=3, r divides no a_i, at least three a_i with a_i mod r in [2,r-2].",
+    "fit_range": "In-box fit set of 1600 instances (out/fit_1..4.jsonl): r in [4,30], k in [3,40] (up to 60 if all a_i are equal), a_i <= 100, r divides no a_i, at least 3 middle residues, b in [1, T6+2]. That is 195666 (instance,b) pairs. Hold-out out/hold_11,12.jsonl (800 instances, 102673 pairs): 37 pair errors in 24 instances.",
+    "free_parameters": 1,
+    "fit_errors": 71
+   },
+   {
+    "name": "C3': pure closed-form asymptotic excess",
+    "rule_file": "/tmp/claude-0/qu/explore2/R2E6/rule_C3.py",
+    "description_text": "If r divides some a_i: unimodal. If b <= 1+F: unimodal. If k < 3: not unimodal. Otherwise unimodal iff b <= 1+F+E_pred, with E_pred = max(0, 2*floor((X - 0.5)/2)) and X = k*(sigma1 - 2*theta*)/r - ln(k)/(r*ln(1+1/theta*)). Here sigma1 = mean(s_i - 1), s_i = a_i mod r, L = (1/k) max_{1<=j<=r-1} sum_i ln|sin(pi j s_i/r)/sin(pi j/r)|, and theta* solves (1+t)ln(1+t) - t ln t = L. The rule uses only r, k and the residue multiset. Claimed domain: k>=3, r divides no a_i, at least three middle residues.",
+    "fit_range": "Same fit set as C11: 1600 instances, 195666 pairs, r 4..30, k 3..40 (60 if all equal), a_i <= 100. Fit errors are 93 pairs in 60 instances. Hold-out: 53 pairs in 32 instances.",
+    "free_parameters": 1,
+    "fit_errors": 93
+   }
+  ],
+  "numeric_claims": [
+   {
+    "claim": "The exact unimodality routine excess.Inst.unimodal (Lemma 1 form g_i >= g_{i-rb}) agrees with gt_big.profile with 0 mismatches: 2848 (instance,b) pairs (seed 1) and 3328 pairs over 300 instances (seed 7). It also agrees on a 300-instance sample of the fit set.",
+    "script": "/tmp/claude-0/qu/explore2/R2E6/verify_excess.py 1 ; verify_excess2.py 7 300 ; verify_fitset.py 300 out/fit_*.jsonl",
+    "range": "r 4..30, k 1..25, a_i <= 100"
+   },
+   {
+    "claim": "The residue-only B4-limit criterion (gamma = coefficients of 1/((1-q)^{k-1}(1-q^r)), tau) reproduces the exact U-1-F in 200 of 200 random instances. Each instance uses a_i = the largest value <= 100 with the given residue.",
+    "script": "/tmp/claude-0/qu/explore2/R2E6/verify_b4.py 1 200",
+    "range": "r 4..12, k 2..30"
+   },
+   {
+    "claim": "E equals the residue-only B4-limit value in 1593/1600 fit instances and 796/800 hold-out instances. It does so in every instance with a_min >= r (1190 fit, 611 hold-out). It also holds for all k=3..60 in the all-equal families (r,a) = (6,8),(6,9),(6,10),(8,12),(10,15),(10,13),(12,18),(5,7),(7,10),(4,6),(6,4). It fails for 8/58 values of k at (r,a)=(10,5) and for 7/58 at (12,6).",
+    "script": "/tmp/claude-0/qu/explore2/R2E6/analyze_fitset.py out/fit_*.jsonl (resp. out/hold_*.jsonl); cmp_small_a.py r a 60",
+    "range": "in-box fit set and hold-out (r 4..30, k 3..40/60, a_i<=100, >=3 middle residues)"
+   },
+   {
+    "claim": "E is even in all 2400 fit and hold-out instances. U has holes in 38 instances (27 fit, 11 hold-out), and in every one the only hole is at B*-1.",
+    "script": "/tmp/claude-0/qu/explore2/R2E6/analyze_fitset.py out/fit_*.jsonl ; analyze_fitset.py out/hold_*.jsonl",
+    "range": "fit plus hold-out sets"
+   },
+   {
+    "claim": "Checks of the proved statements on the instances that meet their hypotheses. All 606 instances with a_min >= 2n_lo+2r have max(0,E_lo) <= E <= E_hi and no b >= F+2+E_hi in U. All 366 that also have a_min >= S1+2-r contain [1,F+1+E_lo] in U. All 495 with a_min >= 2n_+ + 2r satisfy the explicit window of Thm 2.",
+    "script": "/tmp/claude-0/qu/explore2/R2E6/check_theorems.py out/fit_*.jsonl out/hold_*.jsonl",
+    "range": "fit plus hold-out sets"
+   },
+   {
+    "claim": "The explicit window [E_-,E_+], computed from (r,k,S1,L) only, and the sandwich [E_lo,E_hi] both contain E in 1592/1592 family cases. These cover 36 residue patterns with k from 3 to 40 (60 for a single residue). The explicit window has maximum width 5 and mean width 2.63.",
+    "script": "/tmp/claude-0/qu/explore2/R2E6/check_window.py",
+    "range": "r 4..30, k 3..40/60, residue-pattern families"
+   },
+   {
+    "claim": "For each family, the least-squares slope of E + kappa ln k against k (k = 6..60 or 6..40) matches the predicted leading constant c = (sigma1 - 2 theta*)/r to within 0.021, across all 26 families with c >= 0.05. Examples: r=10,s=5 gives 0.2557 vs 0.2548; r=6,s=4 gives 0.4293 vs 0.4317; r=30,s=15 gives 0.2681 vs 0.2646; r=6,(2,3,4) gives 0.2616 vs 0.2557.",
+    "script": "/tmp/claude-0/qu/explore2/R2E6/slope_table.py --exact (output out/slope_table.txt)",
+    "range": "27 families, a_i = largest value <= 100 with the residue, k <= 60 (single residue) or <= 40"
+   },
+   {
+    "claim": "The residual E - (c k - kappa ln k) is bounded: it lies in [-3.40,-0.03] on the fit set, [-3.13,-0.04] on the hold-out, and [-2.47,-0.04] on the 27 pattern families (k >= 6).",
+    "script": "/tmp/claude-0/qu/explore2/R2E6/analyze_fitset.py ; slope_table.py",
+    "range": "in-box sets above"
+   },
+   {
+    "claim": "rule_C11 makes 71 errors in 195666 fit pairs (49/1600 instances) and 37 in 102673 hold-out pairs (24/800). rule_C3 makes 93 fit errors (60 instances) and 53 hold-out errors (32 instances).",
+    "script": "/tmp/claude-0/qu/explore2/R2E6/eval_rule_files.py rule_C11.py out/fit_*.jsonl (also rule_C3.py, out/hold_*.jsonl)",
+    "range": "fit and hold-out sets"
+   },
+   {
+    "claim": "C3 (beta=-0.5, no clipping) predicts E exactly in 1500/1600 fit instances. Every miss is off by 2: 89 are too low and 11 too high. The share of wrong-E instances falls from 40/283 for k<=10 to 9/377 for k=31..40.",
+    "script": "/tmp/claude-0/qu/explore2/R2E6/c3_errors.py out/fit_*.jsonl",
+    "range": "fit set"
+   },
+   {
+    "claim": "Leading constants for single-residue families: c(4,2)=0.1976, c(6,2)=0.0984, c(6,3)=0.2354, c(6,4)=0.4317, c(10,5)=0.2548, c(30,15)=0.2646. The log coefficient kappa = 1/(r ln(1+1/theta*)) is about 0.09-0.12 for middle residues.",
+    "script": "/tmp/claude-0/qu/explore2/R2E6/c_table.py",
+    "range": "r 4..30 (formula only, no polynomial computed)"
+   },
+   {
+    "claim": "Sanity check of Lemma 6 over 20000 random residue distributions with r <= 30 and positive middle mass: 0 < theta* < sigma1/2 holds every time, and the smallest observed (sigma1-2theta*)/sigma1 is 0.5435. On the grid x in (0,100], min of H(x) - ln(1+2x) is 0.0059 > 0.",
+    "script": "/tmp/claude-0/qu/explore2/R2E6/check_lemma6.py",
+    "range": "r 4..30"
+   },
+   {
+    "claim": "The Lemma 5 width bound n_lo - n_hi < r + ln(2r)/ln R (and the matching bound on E_hi - E_lo) holds for all 2400 fit and hold-out residue vectors.",
+    "script": "/tmp/claude-0/qu/explore2/R2E6/check_lemma5.py out/fit_*.jsonl out/hold_*.jsonl",
+    "range": "fit plus hold-out sets"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "Theorem 1 and Corollary 1 (sandwich). Let k>=3 and suppose r divides no a_i. Let M = max_t tau_t, where tau = (1-q)A(q) mod (q^r-1); M equals max|tau_t| by antisymmetry. Let delta_n = [q^{n+1}] 1/((1-q)^{k-2}(1-q^r)). Define n_lo = min{n>=0: delta_n >= M}, n_hi = min{n in Z: 2r delta_{n+r-1} >= M}, E_lo = floor((S1+1-2r-2n_lo)/r) and E_hi = floor((S1+1-2r-2n_hi)/r). If a_min >= 2n_lo+2r, then: max(0,E_lo) <= E = B*-1-F <= E_hi; no b >= F+2+E_hi is in U; and if also a_min >= S1+2-r, then [1,F+1+E_lo] is contained in U. Lemma 5 bounds the window: E_hi - E_lo < 3 + 2 ln(2r)/(r ln R), with R = (n_lo+k-3)/n_lo. The proof first reduces unimodality exactly to: g_{K-m} - g_m + tau_m >= 0 for -rb <= m <= (K-1)/2, where g = A/[r]_q and K = D+1-r(b+1).",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E6/proof_excess_asymptotics.txt"
+   },
+   {
+    "statement": "Theorem 2 (explicit window from residue statistics). (2 sin(pi/r)/r) e^{L_k} <= M <= (2(r-1)/r) e^{L_k}, where L_k = max_j sum_i ln|sin(pi j s_i/r)/sin(pi j/r)|. Hence the window of Corollary 1 holds with n_lo and n_hi replaced by thresholds n_+ and n_- that depend only on (r, k, L_k).",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E6/proof_excess_asymptotics.txt"
+   },
+   {
+    "statement": "Theorem 3 (growth order). Fix r and rational residue proportions with positive mass on middle residues, and let k -> infinity with exact counts. Let L = max_j sum_s p_s ln|sin(pi j s/r)/sin(pi j/r)|, theta* the root of (1+t)ln(1+t) - t ln t = L, lambda = ln(1+1/theta*), sigma1 = sum p_s (s-1), and c = (sigma1 - 2theta*)/r. Then for all a with these residues and a_min >= 2theta* k + ln k/lambda + C1: |E - (c k - ln k/(r lambda))| <= C2. The constants depend only on r and the proportions. Lemma 6 gives 0 < c < sigma1/r. So the excess is linear in k, never bounded and never superlinear, and E6 - E = (2theta* k + ln k/lambda)/r + O(1) -> infinity: the T6 bound is off by a linearly growing amount. If middle residues have density zero, E = S1/r + O(1) = E6 + O(1). The O(1) term oscillates and does not converge.",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E6/proof_excess_asymptotics.txt"
+   },
+   {
+    "statement": "Lemma 6. For any residue distribution with sigma1 > 0: L < H(sigma1/2). L > 0 when the middle mass is positive. Proof uses |[s]_zeta| <= min(s,r-s), H(x) > ln(1+2x) for x > 0, and concavity of H (Jensen).",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E6/proof_excess_asymptotics.txt"
+   }
+  ],
+  "failure_report": ""
+ },
+ {
+  "path_id": "R2E7: explicit L0 and explicit U_inf (finite-state description) in the large-part regime",
+  "stayed_on_path": true,
+  "outcome": "RULE",
+  "candidates_tried_total": 21,
+  "candidates_file": "/tmp/claude-0/qu/explore2/R2E7/candidates.txt",
+  "rules": [
+   {
+    "name": "B4-explicit window rule (proved)",
+    "rule_file": "/tmp/claude-0/qu/explore2/R2E7/rule_B4.py",
+    "description_text": "Let s_i = a_i mod r (none 0), S = sum s_i, k = len(a), K0 = S-k+1, F = sum floor(a_i/r). Domain: r divides no a_i, k>=1, min(a) >= L0 = max(1, floor((S-k+3-r)/2)). Let tau_t (t mod r) be the coefficients of (1-q)*prod_i [s_i]_q reduced mod q^r-1 (tau_t = sum of the coefficients in degrees congruent to t). Let w_n = coefficient of q^n in 1/((1-q)^(k-1)(1-q^r)), with w_n = 0 for n<0. Predict unimodal iff b <= F+1, or, with e = b-F and Delta = K0 - r(e+1): for every integer m with Delta/2 < m <= Delta/2 + r (r values), w_m - w_{Delta-m} >= tau_{m mod r}. (Outside the domain predict() returns True when r | some a_i, by C43; otherwise it applies the same test, but nothing is claimed there.) U_inf = {1} union {e>=2 : test holds}. It depends only on (r,k,S,tau) and is contained in [1, T] with T = 1+floor((K0-2mu)/r), mu = max{t: tau_t>0}.",
+    "fit_range": "r<=30, k<=40, a_i<=100, inside the domain; all b from 1 to F+floor(S/r)+4",
+    "free_parameters": 0,
+    "fit_errors": 0
+   },
+   {
+    "name": "Two-chain explicit U_inf (proved, k>=2)",
+    "rule_file": "/tmp/claude-0/qu/explore2/R2E7/rule_chains.py",
+    "description_text": "Same domain as rule_B4 plus k>=2. T = 1+floor((K0-2mu)/r), Delta_e = K0-r(e+1). For a chain top c in {T, T-1}, let W = {m : Delta_c/2 < m <= Delta_c/2 + r}. For each m in W, let J(m) = least j>=0 with w_{m+jr} - w_{Delta_c-m+jr} >= tau_{m mod r}. Chain top value = c - 2*max_{m in W} J(m). This gives e_odd (from c=T, floored at 1) and e_even (from c=T-1, floored at 0). U_inf = {odd e <= e_odd} union {even e with 2 <= e <= e_even}. Predict unimodal iff b <= F+1 or b-F is in U_inf. This is equivalent to rule_B4 (Theorem 5).",
+    "fit_range": "r<=30, k in [2,40], a_i<=100, inside the domain",
+    "free_parameters": 0,
+    "fit_errors": 0
+   }
+  ],
+  "numeric_claims": [
+   {
+    "claim": "rule_B4 (proved L0 = max(1,floor((S-k+3-r)/2))) has 0 errors on 138948 (instance,b) pairs",
+    "script": "cd /tmp/claude-0/qu/explore2/R2E7; for s in 11 12 13; do python3 verify_B4.py $s 2000; done",
+    "range": "random r<=30, k in {2..20}, a_i<=100, min a >= L0"
+   },
+   {
+    "claim": "rule_B4 has 0 errors on 610085 random plus 30023 exhaustive-multiset (instance,b) pairs. On the same pairs 'b<=T6' has 3557 (random) and 118 (exhaustive) errors, and 'b<=F+1' has 12309 and 530 errors",
+    "script": "cd /tmp/claude-0/qu/explore2/R2E7; for s in 1 2 3 4 11 12; do python3 eval_gt.py rand $s 1500; done; python3 eval_gt.py exh 2,3,4,5,6 1,2,3,4,5,6 7; python3 eval_gt.py exh 7,8 1,2,3,4,5 7; python3 eval_gt.py exh 9,10 1,2,3,4 7",
+    "range": "r<=30, k in {1,...,40}, a_i<=100, domain min a>=L0"
+   },
+   {
+    "claim": "rule_chains has 0 errors on 210597 (instance,b) pairs, and its U_inf equals the window-rule U_inf on 10000 random residue multisets",
+    "script": "cd /tmp/claude-0/qu/explore2/R2E7; python3 eval_gt.py rand 11 1500; python3 eval_gt.py rand 12 1500; python3 eval_gt.py exh 2,3,4,5,6 1,2,3,4,5,6 7; for s in 1 2 3 4; do python3 check_chains.py $s 2500; done",
+    "range": "r<=30, k 2..40"
+   },
+   {
+    "claim": "Universal necessity (Thm 4): with arbitrary small parts, U never leaves the envelope [1,F+1] u (F+U_inf): 0 violations on 87101 (instance,b) pairs. Only 61 envelope-true b values are not unimodal",
+    "script": "cd /tmp/claude-0/qu/explore2/R2E7; for s in 1 2 3; do python3 verify_nec.py $s 1500; done",
+    "range": "r<=30, k<=20, a_i<=100, r divides no a_i"
+   },
+   {
+    "claim": "The lemmas (window lemma WL, g<=w, eps monotonicity, necessity) have 0 failures in 9869 window checks",
+    "script": "cd /tmp/claude-0/qu/explore2/R2E7; python3 verify_lemmas.py 1 300; python3 verify_lemmas.py 2 300",
+    "range": "r<=30, k<=10, a_i<=60"
+   },
+   {
+    "claim": "The S2 shape for U_inf (e_even in {e_odd-1, e_odd-3}, e_odd odd) has 0 violations",
+    "script": "cd /tmp/claude-0/qu/explore2/R2E7; python3 check_types.py 2,3,4,5 1,2,3,4,5,6; python3 check_types.py 12,13 1,2,3,4,5,6; python3 uinf_chains.py 3,4,5,6 8,9,10,11,12; python3 check_types.py 3,4 14,18,22,26,30; for s in 1 2 3 4; do python3 check_chains.py $s 2500; done",
+    "range": "exhaustive r<=13,k<=6; r<=6,k<=12; r in {3,4}, k up to 30; plus 10000 random multisets r<=30,k<=40"
+   },
+   {
+    "claim": "T - e_odd takes values 0,2,4,6 and grows with k. For k<=10 it is 0 or 2; for k in [31,40] about 40% have 4 or more (seed 1: 242 of 643). The three-shape conjecture fails on 270 of 3000 random multisets",
+    "script": "cd /tmp/claude-0/qu/explore2/R2E7; python3 check_chains.py 1 2500; python3 types_counter.py 1 3000",
+    "range": "random r in [2,30] (types_counter: [4,30]), k up to 40"
+   },
+   {
+    "claim": "U_inf is not a function of (r,k,S,mu): 39 ambiguous classes. Example r=4: residues (1,2,3,3,3,3) give U_inf=[1,3] and (2,2,2,3,3,3) give U_inf=[1]; ground truth confirms this with a=(5,6,7,7,7,7) (U=[1,9]) vs a=(6,6,6,7,7,7) (U=[1,7]), both F=6. (r,S-k,tau) has 3 ambiguous classes and (r,k,tau) has 617; (r,k,S,tau) has 0",
+    "script": "cd /tmp/claude-0/qu/explore2/R2E7; python3 stat_pairs.py; python3 pair_gt.py",
+    "range": "exhaustive r 2..9, k 2..6 (6390 multisets)"
+   },
+   {
+    "claim": "The proved L0 is not sharp: for r<=7,k<=5 no failure was found at any L>=1 (base/base+r configs); in targeted search the smallest gap between L0 and the largest failing L was 6 (11 failing of 271 multisets)",
+    "script": "cd /tmp/claude-0/qu/explore2/R2E7; python3 sharp_L0.py 3,4,5,6,7 2,3,4,5; python3 sharp_search.py 1 150 60; python3 sharp_search.py 2 150 60",
+    "range": "r<=30, k<=16, a_i<=100"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "Theorem 1 (window criterion, all r>=2, k>=1, a_i>=1, b>=1): with Delta = D+1-r(b+1), P is unimodal iff g_m - g_{Delta-m} >= tau_{m mod r} for the r integers m in (Delta/2, Delta/2+r], where g are the one-sided coefficients of A/[r]_q. Equivalently, P is unimodal iff it is weakly increasing on the last r steps before N/2. Each residue class of the differences is monotone on (D/2, N/2].",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E7/proofs.txt"
+   },
+   {
+    "statement": "Theorem 2/3 (explicit L0): if r divides no a_i and min a_i >= floor(Delta/2)+r+1, then P is unimodal iff R_k(Delta). Hence for min a_i >= L0(r,s) = max(1, floor((S-k+3-r)/2)), U = [1,F+1] u {F+e : e>=2, R_k(K0-r(e+1))}. Here R_k uses only w = coefficients of 1/((1-q)^(k-1)(1-q^r)) and tau = (1-q)prod[s_i]_q mod q^r-1, so U_inf depends only on (r,k,S,tau).",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E7/proofs.txt"
+   },
+   {
+    "statement": "Theorem 4 (universal necessity, any part sizes, k>=2, r divides no a_i): if P is unimodal then R_k(Delta) holds. So U(a) is contained in [1,F+1] u (F+U_inf(r, residues of the parts >=2)) for every a. Proof via the eps lemma: B-c >= 0 everywhere and nondecreasing up to (D+a_max+1)/2.",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E7/proofs.txt"
+   },
+   {
+    "statement": "Theorem 5 (two-chain structure, k>=2): R_k(Delta) implies R_k(Delta+2r). So U_inf = {odd e <= e_odd} u {even e in [2,e_even]}, and each chain top equals c - 2*max_m J(m), with J(m) the least j such that w_{m+jr} - w_{Delta_c-m+jr} >= tau_m. In the large regime, b in U and b >= F+4 imply b-2 in U.",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E7/proofs.txt"
+   },
+   {
+    "statement": "Theorem 6: R_k(Delta_e) fails for every e > T = 1+floor((S-k+1-2mu)/r), so U_inf is contained in [1, T6-F]. Combined with Theorem 4 this re-derives b <= T6 for all part sizes.",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E7/proofs.txt"
+   }
+  ],
+  "failure_report": "Partial negatives (the main rule did not fail):\n(1) The proved L0 = max(1, floor((S-k+3-r)/2)) is safe but not sharp. For r<=7, k<=5 no failure was found at any L>=1. In targeted search, failures below L0 occurred for 11 of 271 multisets, at least 6 below L0. I found no residue-only formula for the sharp threshold: it depends on the actual parts, through how much the R inequalities have to spare against corrections at indices >= L.\n(2) The three-shape conjecture is FALSE: 'U_inf is one of [1,T], [1,T]\\{T-1}, [1,T-2] with T = T6-F'. It holds exhaustively for r<=13, k<=6 and other small ranges. For large k the gap T - e_odd reaches 4 and 6, e.g. r=10, k=40 with T=15 and U_inf=[1,11] (types_counter.py seed 1); it fails on 270 of 3000 random multisets, and rule_types has 130 b-errors out of 610085.\n(3) The S2 shape for U_inf (e_even in {e_odd-1, e_odd-3}) is unproved; there are 0 counterexamples in all tested ranges. Theorem 5 reduces it to two inequalities, e_even < e_odd and e_even >= e_odd - 3."
+ },
+ {
+  "path_id": "R2E8 (exactly three middle residues, r>=4)",
+  "stayed_on_path": true,
+  "outcome": "RULE",
+  "candidates_tried_total": 6,
+  "candidates_file": "/tmp/claude-0/qu/explore2/R2E8/candidates.txt",
+  "rules": [
+   {
+    "name": "H1 (three middle residues)",
+    "rule_file": "/tmp/claude-0/qu/explore2/R2E8/rule_three_middle.py",
+    "description_text": "Domain: r>=4, r divides no a_i, and exactly three a_i have residue a_i mod r in [2,r-2]; every other a_i then has residue 1 or r-1. Compute tau = (1-q) * prod_i [a_i mod r]_q reduced mod (q^r - 1). This is a length-r integer vector with tau_t = Gamma_t - Gamma_{t-1}, and it depends only on the residues. Let mu = the largest j in [1,r-1] with tau_j > 0, or 0 if there is none; this is the mu of Theorem C. Let D = sum(a_i - 1), T6 = 1 + floor((D+1-2mu)/r) and s = (D+1) mod r. FIRE holds when tau_s <= -2 and s >= 2mu. Then B* = T6 - 2 if FIRE holds, otherwise B* = T6. Prediction: P is unimodal iff b <= B*, so U = [1,B*] is always an interval. B* - 1 - F is even and >= 0. Over all residue data with r<=30, FIRE occurs only when s = r-2 and tau_{r-2} = -2. FIRE depends only on (r, the middle residues, and the count of residue r-1 elements mod 2r), so it does not depend on F or on the sizes of the a_i.",
+    "fit_range": "r in [4,30], k<=40, a_i<=100. Datasets: all k=3 all-middle triples with a_i<=100 (2,322,483); gen_small family (6,752,592); full base family r<=30, nm<=37 (1,041,390); random tests with f up to 5 and k up to 40 (about 8,000 instances). Zero errors on all of them.",
+    "free_parameters": 0,
+    "fit_errors": 0
+   }
+  ],
+  "numeric_claims": [
+   {
+    "claim": "H1 has 0 errors on 2,322,483 k=3 all-middle triples (r 4..30, a_i<=100). C1 (b<=T6) and C2 (b<=1+F) also have 0 errors there: for k=3 all-middle, E6=0.",
+    "script": "/tmp/claude-0/qu/explore2/R2E8/score_candidates.py k3_out.txt (inputs from gen_k3.py, run through ufast); run_check.py k3_in.txt k3_out.txt",
+    "range": "r 4..30, k=3, a_i<=100"
+   },
+   {
+    "claim": "On 6,752,592 gen_small tuples, H1 has 0 errors, C1 (U=[1,T6]) fails on 53,580 instances and C2 (U=[1,1+F]) fails on 4,762,344. No U is a non-interval.",
+    "script": "/tmp/claude-0/qu/explore2/R2E8/score_candidates.py small_out.txt ; run_check.py small_in.txt small_out.txt",
+    "range": "r 4..30, k<=13, a_i<=100"
+   },
+   {
+    "claim": "In the base family rho=(m1,m2,m3,(r-1)^nm), with m_i in [2,r-2], r in [4,30] and nm in [0,37], U(rho)=[1,B*] exactly for all 1,041,390 tuples. C1 fails on 8,914 of them.",
+    "script": "/tmp/claude-0/qu/explore2/R2E8/run_base.sh (gen_base.py, ubig, check_base.py); score_candidates.py base_out_*.txt",
+    "range": "r 4..30, nm 0..37 (k<=40), a_i<=29"
+   },
+   {
+    "claim": "The 256-bit checker ubig agrees with tools/gt_big.py on every instance tested: 669 random instances plus 80 large ones, 54 of them with prod a_i >= 2^127.",
+    "script": "/tmp/claude-0/qu/explore2/R2E8/xval_ubig.py 1 600; xval_ubig.py 2 600; xval_ubig2.py 1 80",
+    "range": "r 2..30, k<=40, a_i<=100"
+   },
+   {
+    "claim": "In random domain tests, H1 has 0 errors: 1404+1423+3000+1655 instances via core.Uset (verified against tools/uni: 4800 checks, 0 mismatches), and 600 instances with k up to 40 against gt_big.",
+    "script": "/tmp/claude-0/qu/explore2/R2E8/test_rule.py rule_H1 11 3000 4 12 5 5 / 12 1500 4 30 6 3 / 13 1500 13 30 3 3 ; test_rule.py rule_three_middle 21 2000 4 30 6 4 ; test_bigk.py 1..4 150 ; verify_core.py",
+    "range": "r 4..30, k<=40, a_i<=100"
+   },
+   {
+    "claim": "Over all residue data with r<=30 there are 1,359,288 configurations, 11,150 of which fire. In every firing case s=r-2 and tau_s=-2.",
+    "script": "/tmp/claude-0/qu/explore2/R2E8/fire_table.py 30",
+    "range": "r 4..30, nm mod 2r"
+   },
+   {
+    "claim": "The symmetry g_i = tau_i + g_{D+1-r-i}, the tau invariance, and Lemma 2 (firing kills every b>=T6-1) all hold on 2,287 random tuples, including 59 firing cases, with 0 failures.",
+    "script": "/tmp/claude-0/qu/explore2/R2E8/lemma_checks.py",
+    "range": "r 2..15, k<=7, a_i<=40"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "Take r>=4, r dividing no a_i, and exactly three a_i with residue in [2,r-2]. Let nm = #{a_i = -1 mod r}. If r<=30 and nm<=37, then U = [1,B*], where B* = T6 - 2*[tau_s<=-2 and s>=2mu] and s=(D+1) mod r. There is no restriction on the sizes of the a_i or on the number of a_i = 1 mod r. The proof uses: Lemma 1, the symmetry g_i = tau_i + g_{D+1-r-i}; Lemma 2, which shows by a general argument that the firing condition rules out every b>=T6-1; Lemma 3, peeling [x+r]_q[b]_{q^r} = [x+rb]_q + q^r[x]_q[b-1]_{q^r}, which gives U(a) containing [1,F] union (F+U(rho)); Lemma 4, B*(a)=B*(rho)+F; Lemma 5, an exact computation over the base family (r<=30, nm<=37, inside the fit box); and the established Thm A (g-form) and Thm C. Beyond this range (nm>=38 or r>=31) the base family is unverified and the rule is conjectural.",
+    "proof_file": "/tmp/claude-0/qu/explore2/R2E8/proof_three_middle.txt"
+   }
+  ],
+  "failure_report": "Not a failure; the limits are as follows. The upper bound (Lemma 2 together with Thm C) and the reduction to residues (Lemmas 3 and 4) hold in general. The only gap is the lower bound for the base family (m1,m2,m3,(r-1)^nm) when nm>=38 or r>=31. Checking that by computation would need instances outside the fit box, so I did not do it. A structural argument for large nm, such as a peeling identity that removes pairs of (r-1) factors, was not found."
+ }
+]

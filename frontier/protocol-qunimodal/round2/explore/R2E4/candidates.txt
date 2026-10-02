@@ -1,0 +1,26 @@
+# Path R2E4: adversarial search for counterexamples to Conjecture S2 (fit box only).
+# Each line: candidate approach/family | instances (or evaluations) | gap-shaped U found | S2 violations (= "errors" of S2 on this set)
+# All instances: r divides no a_i and >=3 a_i with middle residue (otherwise Thm E gives U=[1,T6], S2 holds by Lemma 7).
+# Numbers produced by summarize.py (output summary.txt); individual scripts named per line.
+C1  all-equal family, r=4..30, a<=100 middle residue, k=3..60 (complete within box)  [fam_equal.py, python big-int]      | 119480    | 2975    | 0
+C2  exhaustive multisets, 1026 jobs (r=4..30, k=3..40, values 1..vmax, cap 3M (r<=5/6) or 1M multisets per (r,k)) [s2enum2.c via runjobs.sh, jobs1.txt/jobs2.txt] | 646520481 | 8120059 | 0
+C3  one-change neighbourhoods of every all-equal gap instance (k<=40 after change) [nb_gap_gen.py + s2big]                 | 165283    | 22128   | 0
+C4  two-value family a=(x^m,y^n), r=4..30, x<y<=100, m+n<=14 (complete) [two_gen.py + s2big, run_two.sh]                  | 9174156   | 145461  | 0
+C5  random 'two' (two values, k<=40)  [gen_rand.py/sampler.py + s2big]   | 40000 | 815 | 0
+C6  random 'mid' (all residues middle, k<=40)                            | 40000 | 893 | 0
+C7  random 'near' (>=3 middle plus a_i = c*r +-1,+-2)                    | 40000 | 402 | 0
+C8  random 'comp' (r in {12,24,30})                                      | 40000 | 687 | 0
+C9  random 'wide' (r 4..30, k<=40, a<=100 uniform)                        | 40000 | 604 | 0
+C10 random 'equalp' (all equal but one perturbed)                        | 40000 | 845 | 0
+C11 random 'smallmid' (middle residues, values < 3r)                     | 40000 | 956 | 0
+C12 two-change neighbourhoods of 20000 known gap instances [nb2_gen.py + s2big] | 400000 | 103014 | 0
+C13 many a_i=1 plus 3..8 large entries [gen_ones.py + s2big]               | 30000 | 209 | 0
+C14 hill climbing, objective A: min #descents over b whose joining U would violate S2 [hill2.py MODE=A, run_hill.sh] | 599157 evals | - | 0  (best: 1 descent, always at b=B*+1, parity flip)
+C15 hill climbing, objective B: same but excluding b=B*+1 [hill2.py MODE=B]  | 900348 evals | - | 0  (best: 2 descents)
+C16 hill climbing on descent-count monotonicity relations M2/P1 [hill3.py]  | 441970 evals | - | 0  (no M2/P1 break)
+C17 descent-count diagnostics M2: nneg(b)>=nneg(b-2); P1: nneg(b+1)<=nneg(b) for b-1-F odd [nneg_stats.py] on 307589 instances | 0 breaks of M2, 0 breaks of P1
+TOTAL instances/evaluations: 658630875 ; S2 violations: 0
+# Discarded near-miss objectives (scale-dependent; drift to large a_i, uninformative):
+D1  closeness = min(margin) normalized by max|d| (core.closeness)           | not used for search | 0 violations seen in its tests
+D2  frac = negative mass / total variation (hill.py first version)          | ~470 evals          | 0
+# Candidates tried total: 19

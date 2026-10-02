@@ -1,0 +1,15 @@
+# Candidates tried on path R2E8 (exactly three middle residues, r>=4). Error counts are instance errors / b-test errors
+# (b in [1,T6+3]) as produced by score_candidates.py on the named outputs (all inside the fit box).
+# Datasets: K3 = k3_out.txt (2,322,483 triples, all residues middle, r 4..30, a<=100; from gen_k3.py + ufast)
+#           SMALL = small_out.txt (6,752,592 tuples from gen_small.py + ufast)
+#           BASE = base_out_*.txt (1,041,390 base tuples from gen_base.py + ubig)
+1. C1: U = [1,T6] (Thm E form extended)          K3 0/0   SMALL 53580/107160   BASE 8914/17828     DISCARDED
+2. C2: U = [1,1+F] (Thm D form)                   K3 0/0   SMALL 4762344/13944024  BASE 983231/17238228  DISCARDED
+3. C3: X=|U|-1-F is a function of (r, residue multiset) only (analyze.py on samp_5_6000_5_9_6_5.pkl): 3022 groups,
+       0 non-constant; not a closed form itself, superseded by H1 (consistent with H1, which depends on residues and D mod r only)
+4. C4: X is a function of (r, residue multiset, F) (analyze.py): 5592 groups, 0 non-constant; superseded by H1
+5. C5 (fixres.py / table.py): X independent of f-vector given residues: no inconsistencies found in the runs on record; superseded
+6. H1: B* = T6 - 2*[tau_s<=-2 and s>=2mu]       K3 0/0   SMALL 0/0   BASE 0/0   KEPT (rule_three_middle.py)
+   further H1 tests: test_rule.py (random, f up to 5): 1404+1423+3000+1655 instances, 0 errors;
+   test_bigk.py (k up to 40, gt_big ground truth): 600 instances, 0 errors.
+Total candidates: 6
