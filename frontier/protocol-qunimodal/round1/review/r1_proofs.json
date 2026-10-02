@@ -80,12 +80,270 @@
   {
    "id": "PR_E6",
    "kind": "proof",
-   "v": null
+   "v": {
+    "verdict": "ACCEPT",
+    "steps_checked": "Proof file: /tmp/claude-0/qu/explore/E6/proof_r2_tie.txt (19 lines). Work dir: /tmp/claude-0/qu/review/r1/PR_E6-proof/.\n\nStep 1 — OK. a_i odd => floor(a_i/2) = (a_i-1)/2, so b-1 = sum (a_i-1)/2 = D/2; every a_i-1 is even so D is even; deg P = D + 2(b-1) = 2D = N. Asserted exactly in brute_force.py for every instance.\n\nStep 2 — OK. c_n = sum_{t=0}^{b-1} A_{n-2t} is the definition of the product with [b]_{q^2}. For n <= D+1 the index progression n, n-2, ..., n-D has smallest term n-D <= 1, so it hits every m in {0..n} with m = n (mod 2) (negative indices and m = D+1 contribute 0 by the stated convention A_m := 0 outside [0,D]). Formalized in z3 (test S2) as an unconditional identity in symbolic integers A_0..A_D for every n <= D+1 and every even D <= 60; also confirmed that the identity FAILS at n = D+2 (z3 SAT), so the stated range is exactly right.\n\nStep 3 — OK. c_n - c_{n-1} = sum_{i=0}^n (-1)^i A_{n-i} =: T_n is the difference of the two parity sums; T_n = A_n - T_{n-1} is re-indexing. Both valid for 1 <= n <= D+1 (both c_n and c_{n-1} in the step-2 regime). z3 test S3 (identity in symbolic A_m, all even D <= 60).\n\nStep 4 — OK. [a]_{-1} = sum_{t=0}^{a-1} (-1)^t = 1 for odd a (sympy: sum_{t=0}^{2j}(-1)^t = 1 symbolically in j; brute force a <= 2001; control: = 0 for even a). Hence A(-1) = prod [a_i]_{-1} = 1. T_D = sum_m (-1)^{D-m} A_m = (-1)^D A(-1) = A(-1) because D is even. z3 test S4.\n\nStep 5 — OK. A_D = 1 (leading coefficient of a product of monic polynomials); T_{D-1} = A_D - T_D = 1 - 1 = 0 by the recursion of step 3 at n = D. z3 test S5.\n\nStep 6 — OK. n = D-1 is in the valid range 1 <= n <= D+1 precisely because D >= 2; c_{D-1} - c_{D-2} = T_{D-1} = 0; D-2 < D = N/2, so the tie is strictly in the first half. Combined main theorem formalized in z3: for each even D in {2,...,60}, (A_D = 1) AND (sum (-1)^m A_m = 1) AND (c_{D-1} != c_{D-2}) is UNSAT with A_m arbitrary integers; and dropping either hypothesis makes it SAT (so both facts are genuinely used). sympy: c_{D-1} - c_{D-2} == A_D - A(-1) as an exact polynomial identity in symbolic A_m for every even D <= 200.\n\nStep 7 (contested) — OK. Delta_{D-2} = c_{D-1} - c_{D-2} = sum_t (A_{D-1-2t} - A_{D-2-2t}) = sum_t dA_{D-1-2t} (telescoping of the convolution; dA and Delta are not defined in the file but the standard reading dA_m = A_m - A_{m-1}, Delta_j = c_{j+1} - c_j is the only one consistent with the text and is what I verified). t = 0 term: A_{D-1} - A_{D-2} = A_1 - A_2 by palindromicity of A (product of palindromic polynomials). A_1 = #{i : a_i >= 2} = k when all a_i >= 3. A_2 = k + C(k,2) when all a_i >= 3: since [a]_q == 1+q+q^2 (mod q^3) for a >= 3, A(q) == (1+q+q^2)^k (mod q^3), and [q^2](1+q+q^2)^k = C(k,1) + C(k,2) (sympy, symbolic in k; also direct expansion k <= 14 and actual products for odd a_i in 3..15, k <= 6). For k >= 2, C(k,2) >= 1 so dA_{D-1} = -C(k,2) < 0.\n\nMinor notes (not errors): (i) The tie actually only needs 2(b-1) >= D-2, so c_{D-1} = c_{D-2} also holds at b = bound +- 1 (brute-force controls confirm: tie present in all 25,497 cases at both b-1 and b+1); the proof's choice b = bound is what makes N = 2D so that j = D-2 is in the first half, which is what the claimed statement asserts. (ii) Hypothesis 'k >= 1' plus 'all a_i odd' allows a_i = 1 factors; these are the constant 1 and do not affect D, b, or any step; the contested part correctly restricts to all a_i >= 3. (iii) The Remark (lines 17-18) is labelled 'not part of the proof' and relies on external files margins.c / verify_ff.py and an unspecified 'box'; see formalization section.",
+    "lemma_counterexample_attempts": "The proof has one lemma with two conclusions (tie; contested sign) plus several auxiliary identities (steps 2-5, 7). All attempts used exact integer arithmetic.\n\n(1) Full step-by-step check (brute_force.py, log brute_force_k8_s60.log): ALL multisets of odd a_i >= 1 with k <= 8 and sum a_i <= 60 (25,505 multisets, 25,497 with D >= 2). For every instance asserted: step-1 parity/degree facts; step-2 formula for EVERY n <= D+1; step-3 identities for every 1 <= n <= D+1; A(-1) = 1, T_D = 1, [a_i]_{-1} = 1; A_D = 1, T_{D-1} = 0; c_{D-1} = c_{D-2}; comb-sum decomposition sums to 0; palindromicity; A_1 = #{a_i >= 2}; and for k >= 2, all a_i >= 3 (8,377 cases): A_2 = k + C(k,2) and dA_{D-1} = -C(k,2) < 0. Zero failures. Non-vacuity controls: with at least one even a_i (k <= 5, sum <= 30; 4,727 multisets, other hypotheses kept) the tie c_{D-1} = c_{D-2} FAILS in all 4,727 cases; with r = 3 instead of 2 the tie fails in 2,678 of 25,497 cases. So the test discriminates and the odd-a_i hypothesis is essential.\n\n(2) Lean large sweep (brute_force_lean.py, numpy int64 with overflow guard, log lean_k12_s100.log): ALL odd multisets with k <= 12 and sum a_i <= 100: 1,376,264 multisets with D >= 2. Tie holds in all 1,376,264; contested sign dA_{D-1} = -C(k,2) < 0 in all 348,745 applicable cases. (Also: P unimodal at b = bound in all 1,376,264; P NOT unimodal at b = bound+1 in all 1,376,264 — the Remark's two numerical claims.)\n\n(3) Large-degree probe (large_degree_probe.py): k = 1 with a_1 = 3..2001; pairs (a_1, a_2) up to 401; 300 random multisets k <= 12 with a_i < 120; 20 random multisets k <= 5 with a_i < 1200 (degrees up to several thousand). 6,419 instances, tie and contested sign hold in all.\n\n(4) Remark box re-check (remark_box_recheck.log): odd a_i in {3,...,11}, 2 <= k <= 8 — exactly 1281 multisets — tie 1281/1281, contested negative 1281/1281, unimodal at bound 1281/1281, not unimodal at bound+1 1281/1281.\n\nNo counterexample to any step or lemma was found in any range.",
+    "formalization": "No Lean available in the environment (checked: which lean lake -> none); z3 5.1.0, sympy 1.14.0, PARI/GP, gcc present.\n\nz3 (z3_formalize.py, log z3_formalize.log, ~12 s): For each even D in {2,4,...,60}, with A_0..A_D as UNCONSTRAINED Int variables (so independent of the a_i; only the two facts the proof uses are assumed), define c_n := sum_{t=0}^{D/2} A_{n-2t} (A_m = 0 outside [0,D]) and T_n := sum_i (-1)^i A_{n-i}. Results, all D: (main) A_D = 1 /\\ sum(-1)^m A_m = 1 /\\ c_{D-1} != c_{D-2} is UNSAT; witness (hyps /\\ goal) SAT; dropping A(-1)=1 -> goal can fail (SAT); dropping A_D=1 -> goal can fail (SAT). Unconditional identities (negation UNSAT): S2 for every n <= D+1 (and S2 fails at n = D+2, SAT, as expected); S3 for every 1 <= n <= D+1; S4 T_D = sum(-1)^m A_m; S5 T_{D-1} = A_D - T_D. Plus exhaustive S4c ([a]_{-1} = 1 for odd a <= 2001, 0 for even) and S7 (A_1 = k, A_2 = k + C(k,2) for a_i in 3..9, k <= 7 by exponent-tuple counting).\n\nsympy (sympy_symbolic.py, log sympy_symbolic.log): (I) c_{D-1} - c_{D-2} - (A_D - A(-1)) expands to the zero polynomial in symbolic A_0..A_D for every even D <= 200 — this is steps 2-6 in one identity, valid for arbitrary coefficient sequences. (II) [q^2](1+q+q^2)^k = C(k,1)+C(k,2) = k + C(k,2) symbolically in k; and for all odd a_i in 3..15, k <= 6 the actual products satisfy A_1 = k, A_2 = k + C(k,2), A_D = 1, A(-1) = 1, palindromic, and [a_i]_q == 1+q+q^2 (mod q^3). (III) sum_{t=0}^{2j} (-1)^t = 1 symbolically.\n\nExhaustive certificates: the sweeps listed above (1,376,264 + 25,497 + 6,419 + 1,281 instances), each asserting the claims with exact arithmetic.\n\nNot formalized / limits: (a) the D-uniform statement is not machine-checked in a proof assistant (no Lean); it is a telescoping-sum identity whose instances D <= 200 are verified symbolically, and the hand argument (sum_{m=0}^{D-1} (-1)^{D-1-m} A_m = A_D - A(-1)) is one line. (b) The general-k facts A_D = 1, palindromicity, A(-1) = 1, A_1 = k, A_2 = k + C(k,2) are standard (monic/palindromic product, [a]_{-1} = 1 for odd a, mod-q^3 reduction) and were verified for bounded ranges plus the symbolic-in-k binomial argument, not for symbolic k in a prover.\n\nRerunnability of the proof's computational parts: the proof proper (steps 1-7) contains no computation. The Remark (explicitly 'not part of the proof') cites margins.c and verify_ff.py, which are not in the proof file and were not rerun (the explorer folder is off-limits); its 'box' is unspecified. I identified the box by counting (box_search_dp.py): odd a_i in {3,...,11} with 2 <= k <= 8 gives exactly 1281 multisets (sum_{k=2}^{8} C(k+4,k) = 1281); this box lies inside my sweep and both Remark claims are independently reproduced on it and far beyond. Note also the Remark's second claim has a one-line proof in the same framework: at b = bound+1, N = 2D+2 and c_{D+1} - c_D = T_{D+1} = A_{D+1} - T_D = -1 at n = D+1 = N/2, a central dip, so P is not unimodal.\n\nContext check: arXiv:2605.12822 ('Unimodality of q-Fibonomial coefficients for small cases'), Conjecture 5.4: P is unimodal if r | some a_i or b <= 1 + sum floor(a_i/r), and for k <= 3 or r <= 3 this is also necessary. The lemma treats the r = 2, no-even-a_i, b = bound boundary case, consistent with that statement; files saved as arxiv_abs.html / arxiv_html.html in the work dir.",
+    "reasons": "Every step of the proof is correct and the claimed statement (r = 2, all a_i odd, D >= 2, b = 1 + sum floor(a_i/2) => c_{D-1} = c_{D-2}, with D-2 < N/2) follows: the difference c_{D-1} - c_{D-2} telescopes to A_D - A(-1) = 1 - 1 = 0 using only A_D = 1 (monic product) and A(-1) = prod [a_i]_{-1} = 1 (odd a_i), with D even guaranteeing the sign. The hypotheses D >= 2 (so n = D-1 >= 1) and 'all a_i odd' are each used and the latter is shown essential by controls (tie fails for every tested multiset containing an even a_i). The 'contested' addendum (k >= 2, all a_i >= 3 => dA_{D-1} = A_1 - A_2 = -C(k,2) < 0) is also correct via palindromicity and the mod-q^3 count. The algebraic core was formalized in z3 for every even D <= 60 with arbitrary integer coefficients (UNSAT negation, plus checks that both hypotheses are necessary) and in sympy as an exact symbolic identity for even D <= 200; exhaustive exact-arithmetic sweeps over 1.4 million odd multisets (k <= 12, sum a_i <= 100), large-degree instances (a_i up to 2001), and the Remark's 1281-multiset box found no counterexample to any step. Only cosmetic issues: the notations dA, Delta_j and the Remark's 'box' are not defined in the file, and the Remark's scripts are not included (but the Remark is explicitly excluded from the proof and I reproduced its claims independently). Nothing found that would warrant rejection."
+   }
   },
   {
    "id": "literature",
    "kind": "lit",
-   "v": null
+   "v": {
+    "search_log": [
+     {
+      "query": "id 2605.12822: abs page + e-print (TeX) re-downloaded to /tmp/claude-0/qu/review/r1/lit/src/main.tex",
+      "source": "arXiv abs + arXiv e-print",
+      "result": "找到",
+      "note": "Only v1 (12 May 2026) as of 2026-10-02. \\newcommand{{\\pow}}{r} at line 148; Lemma 4.1/4.2/Cor 4.3 (lines 1039-1106), Prop 1.3/4.5 (223, 1161), Prop 5.3 (1241), Conj 5.4 + following paragraph (1265-1272) all verified verbatim. references.bib: zeilberger1989one = Zeilberger, 'A One-Line High School Algebra Proof...', q-Series and Partitions, 1989, pp. 67-72."
+     },
+     {
+      "query": "abs:unimodal AND abs:\"non-standard grading\"",
+      "source": "arXiv API",
+      "result": "找到",
+      "note": "1 hit, 2404.05098 (already in step 0)."
+     },
+     {
+      "query": "abs:unimodal AND abs:\"weighted\" AND abs:\"Hilbert function\"",
+      "source": "arXiv API",
+      "result": "未找到",
+      "note": "1 irrelevant hit (2111.06993, uniform grids)."
+     },
+     {
+      "query": "abs:\"q-integers\" AND abs:product AND abs:unimodal; abs:\"quantum integer\" AND abs:unimodal; abs:unimodal AND abs:\"product of\" AND abs:\"q-numbers\"; abs:\"unimodal\" AND abs:\"products of q-integers\"",
+      "source": "arXiv API",
+      "result": "未找到",
+      "note": "Only Kafidov 2607.20595 (Hessenberg graphs); other three queries 0 hits."
+     },
+     {
+      "query": "all:unimodal AND all:Fibonomial; all:\"q-Fibonomial\" OR (all:Fibonomial AND all:unimodal)",
+      "source": "arXiv API",
+      "result": "找到",
+      "note": "Only the source 2605.12822 and 2305.01838 (Nived J M, q-Fibonacci interpretations); no new arXiv paper on Conjecture 5.4 as of 2026-10-02."
+     },
+     {
+      "query": "representation-theory translation: abs:unimodal AND abs:\"weight multiplicities\" AND abs:characteristic; abs:\"Frobenius twist\" AND abs:unimodal; abs:\"Steinberg tensor product\" AND abs:unimodal; abs:unimodal AND abs:\"Adams operation\"; abs:unimodal AND abs:\"SL(2\" AND abs:\"tensor product\" AND abs:symmetric",
+      "source": "arXiv API",
+      "result": "未找到",
+      "note": "0 hits each. (Character of L(a-1)⊗L(b-1)^[1] for SL2 in char p is [a]_q[b]_{q^p}, i.e. the problem's k=1 family.)"
+     },
+     {
+      "query": "partition/coin translation: abs:unimodal AND abs:denumerant; abs:unimodal AND abs:\"two denominations\"; abs:unimodal AND abs:\"restricted partitions\" AND abs:\"two kinds\"; abs:\"unimodal\" AND abs:\"coin\"",
+      "source": "arXiv API",
+      "result": "未找到",
+      "note": "0, 0, 0, and 3 irrelevant hits (statistics)."
+     },
+     {
+      "query": "geometry translation: abs:unimodal AND abs:\"lattice points\" AND abs:hyperplane",
+      "source": "arXiv API",
+      "result": "未找到",
+      "note": "1 irrelevant hit (1502.07934, simultaneous core partitions)."
+     },
+     {
+      "query": "probability translation: abs:\"sum of independent\" AND abs:\"uniform\" AND abs:unimodal AND abs:lattice",
+      "source": "arXiv API",
+      "result": "未找到",
+      "note": "0 hits."
+     },
+     {
+      "query": "abs:\"unimodal\" AND abs:\"symmetric\" AND abs:\"internal zeros\"; abs:\"symmetric unimodal\" AND abs:product AND abs:polynomials AND abs:characterization; abs:unimodal AND abs:\"q-analogue\" AND abs:\"necessary and sufficient\"",
+      "source": "arXiv API",
+      "result": "未找到",
+      "note": "0 hits each."
+     },
+     {
+      "query": "abs:unimodal AND abs:dilated",
+      "source": "arXiv API",
+      "result": "未找到",
+      "note": "13 hits, all Ehrhart-theory/ML/metamaterials; none on dilated q-integers."
+     },
+     {
+      "query": "poset translation: abs:unimodal AND abs:\"rank function\" AND abs:weighted AND abs:chain",
+      "source": "arXiv API",
+      "result": "未找到",
+      "note": "0 hits."
+     },
+     {
+      "query": "abs:unimodal AND abs:\"Gaussian polynomial\" AND abs:generalization AND abs:product",
+      "source": "arXiv API",
+      "result": "未找到",
+      "note": "Dhand 1303.2536, Kirillov 1505.01542 only."
+     },
+     {
+      "query": "ti:\"q-rious unimodality\"",
+      "source": "arXiv API + PDF opened",
+      "result": "找到",
+      "note": "2502.03993v2 Warnaar-Zudilin (surfaced by web search); Conjecture 5 quoted below; different family (q-factorial ratios satisfying Landau's criterion)."
+     },
+     {
+      "query": "abs:unimodal AND abs:\"partition polynomials\" AND abs:Almkvist; abs:unimodal AND abs:\"complete intersection\" AND abs:\"weighted\"; abs:\"not unimodal\" AND abs:\"Hilbert function\" AND abs:Gorenstein AND abs:weight",
+      "source": "arXiv API",
+      "result": "未找到",
+      "note": "0 hits each."
+     },
+     {
+      "query": "ti:Lefschetz AND ti:problems; abs:\"Lefschetz properties\" AND abs:\"open problems\" AND abs:unimodal",
+      "source": "arXiv API",
+      "result": "未找到",
+      "note": "Only Lefschetz-thimble physics papers and 2405.14756 / math/0505678; no arXiv version of the INdAM 'List of Problems' chapter."
+     },
+     {
+      "query": "abs:unimodal AND abs:\"(1+x)^n\"; abs:unimodal AND abs:binomial AND abs:\"(1+q)^n\"; au:Zeng AND abs:unimodal AND abs:\"q-integers\"; abs:\"two-factor criterion\" AND abs:unimodal; abs:unimodal AND abs:\"stretch\" AND abs:\"q-integers\"",
+      "source": "arXiv API",
+      "result": "未找到",
+      "note": "0 hits each: the GitHub notes found below have no arXiv counterpart."
+     },
+     {
+      "query": "au:Almkvist ti:unimodal (and document 4012887 full record)",
+      "source": "zbMATH Open API",
+      "result": "找到",
+      "note": "Almkvist 1987 J. Algebra 108, 283-309 (review by G. E. Wall, opened and quoted below) and Almkvist 1989 J. Number Theory 32, 43-57 (review opened). The 1987 review mentions Adams operations and p-modular SL2 representations but no criterion for [a]_t[b]_{t^r}."
+     },
+     {
+      "query": "ab:\"symmetric unimodal\" ab:Adams; ti:unimodal ab:\"q^2\"; ab:unimodal ab:\"q-analog\" ab:product; ab:unimodal ab:\"non-standard grading\"; ab:unimodal ab:\"Gaussian polynomial\" ab:\"necessary and sufficient\"; ab:unimodal ab:convolution ab:\"uniform distribution\" ab:lattice",
+      "source": "zbMATH Open API",
+      "result": "未找到",
+      "note": "Only Almkvist 1987 and Stanley 1980 'Unimodal sequences arising from Lie algebras'; the other queries returned empty result sets."
+     },
+     {
+      "query": "arXiv:2605.12822 citations; DOI 10.1016/0021-8693(87)90103-7",
+      "source": "Semantic Scholar API",
+      "result": "未找到",
+      "note": "citationCount 0 for the source paper (2026-10-02). Almkvist 1987: abstract elided by publisher, openAccessPdf marked BRONZE at ScienceDirect (returns 403 to us)."
+     },
+     {
+      "query": "title search 'Unimodality of q-Fibonomial coefficients for small cases'; filter=cites:W7161168094",
+      "source": "OpenAlex API",
+      "result": "未找到",
+      "note": "W7161168094 cited_by_count 0; the cites-filter call was refused (daily free budget exhausted), so OpenAlex citing-works could not be re-listed today."
+     },
+     {
+      "query": "\"Unimodality of q-Fibonomial coefficients for small cases\"",
+      "source": "Google Scholar (WebFetch)",
+      "result": "未找到",
+      "note": "Result shown with no 'Cited by' count."
+     },
+     {
+      "query": "\"unimodal\" \"[a]_q\" \"[b]_{q^2}\" OR \"[b]_{q^r}\" OR \"[c]_{q^2}\" product q-analogs conjecture Connelly Fibonomial",
+      "source": "WebSearch",
+      "result": "找到",
+      "note": "Source paper (abs/html/pdf) and 2502.03993 (opened); other hits (Pak-Panova, Stanley 1989, 0707.1052) are undilated families."
+     },
+     {
+      "query": "Almkvist \"Representations of SL(2,C) and unimodal polynomials\" theorem product (1-q^a)(1-q^{rb}) unimodal",
+      "source": "WebSearch",
+      "result": "找到",
+      "note": "Metadata only; surfaced Guo-Zhu 2025 (J. Syst. Sci. Complex., opened: irrelevant family) and the Springer 'List of Problems' chapter (metadata only)."
+     },
+     {
+      "query": "weight multiplicities simple module SL_2 characteristic p Steinberg tensor product Frobenius twist \"not unimodal\" OR \"unimodal\" character",
+      "source": "WebSearch",
+      "result": "未找到",
+      "note": "Tilting/multiplicity-free/cohomology papers only; nothing on unimodality of [a]_q[b]_{q^p}-type characters."
+     },
+     {
+      "query": "q-整数 乘积 单峰性 q^r 猜想 单峰多项式 Fibonomial (Chinese-language phrasing)",
+      "source": "WebSearch",
+      "result": "未找到",
+      "note": "Only the source paper and unrelated pages."
+     },
+     {
+      "query": "mathoverflow product of symmetric unimodal polynomials \"internal zeros\" (1+q^2) not unimodal",
+      "source": "WebSearch",
+      "result": "未找到",
+      "note": "No MO/MSE thread; surfaced Zeilberger 1989 PDF (opened, Observation 2 verified) and Liu's Zenodo record."
+     },
+     {
+      "query": "Hilbert series weighted complete intersection \"not unimodal\" codimension two deg y = 2 Gorenstein non-standard grading unimodality criterion",
+      "source": "WebSearch",
+      "result": "未找到",
+      "note": "Generic Gorenstein h-vector material only."
+     },
+     {
+      "query": "number of partitions of n into parts 1 and r with bounded multiplicities unimodal; coin change two denominations unimodality",
+      "source": "WebSearch",
+      "result": "找到",
+      "note": "Surfaced Armstrong 2502.00378v3 (opened): its Corollary 4.5 'products of t-integers are unimodal' concerns products in a single variable (g_r(t)=t^{γ_r}[β_1]_t[b]_t^{(n+1)/d-1}), not mixed dilations; irrelevant to the family."
+     },
+     {
+      "query": "\"2605.12822\"; \"(1+q)^n(1+q^r)\" OR \"(1+q)^6(1+q^3)\" unimodal counterexample Connelly Conjecture 5.4; \"Conjecture 5.4\" \"q-Fibonomial\" counterexample necessity",
+      "source": "WebSearch",
+      "result": "未找到",
+      "note": "Web search engines return only the source paper and pith.science; the GitHub material below is not web-indexed."
+     },
+     {
+      "query": "Odlyzko-Richmond 1985 abstract (projecteuclid .full page)",
+      "source": "WebFetch",
+      "result": "找到",
+      "note": "Abstract obtained verbatim (quoted in item 10 check)."
+     },
+     {
+      "query": "Almkvist 1987 full text: sciencedirect abs page, /pdf endpoint (WebFetch), curl with browser UA, fatcat DOI lookup, CORE v3 search",
+      "source": "WebFetch + curl + fatcat + CORE",
+      "result": "未找到",
+      "note": "HTTP 403 (ScienceDirect, both), connection reset (fatcat), bot challenge (CORE). Full text remains unopened; only the zbMATH review was read."
+     },
+     {
+      "query": "Springer 10.1007/s11424-025-4302-5 (Guo-Zhu 2025) and 10.1007/978-981-97-3886-1_12 ('List of Problems', Lefschetz Properties, INdAM 59, 2024) via idp redirect + Crossref",
+      "source": "WebFetch + Crossref API",
+      "result": "找到",
+      "note": "Guo-Zhu abstract obtained (family ∏_{k=1}^n [1+(2+β)q^k+q^{2k}]; irrelevant). 'List of Problems' (Juhnke, Miró-Roig, pp. 211-225): only metadata; problem statements behind paywall."
+     },
+     {
+      "query": "Zenodo records 22388982 (Liu), 21826970 (hainzhao), 22719862 (Stefan-Donovan), 22183086/22183087 (Fathi), 22862687 (Fathi)",
+      "source": "Zenodo REST API + PDFs",
+      "result": "找到",
+      "note": "All opened; Liu PDF and Fathi PDF downloaded; quotes of items 7 and 14 verified (Fathi Remark 7.3 at fathi1.txt line 707)."
+     },
+     {
+      "query": "Zenodo search: 'q-integers unimodality counterexample Connelly', '\"two-shift\" unimodal q-integers', 'Conjecture 5.4 q-Fibonomial necessity'",
+      "source": "Zenodo search API",
+      "result": "未找到",
+      "note": "Search endpoint returned 403; no Zenodo deposit of the GitHub notes located."
+     },
+     {
+      "query": "1,4,10,16,20,20,20,20,20,16,10,4,1 ; 1,1,2,2,3,2,3,2,2,1,1",
+      "source": "OEIS JSON",
+      "result": "未找到",
+      "note": "No entry for the first; second matches only A063995 (partitions by rank), unrelated."
+     },
+     {
+      "query": "search_repositories 'Fibonomial unimodal'",
+      "source": "GitHub (MCP)",
+      "result": "找到",
+      "note": "Only brendanconnelly/Fibonomial-Conjecture-Tests (as in step 0)."
+     },
+     {
+      "query": "search_code '\"Fibonomial\" unimodal q' and '\"2605.12822\"'",
+      "source": "GitHub code search (MCP), files then fetched from raw.githubusercontent.com (gh API refused: repos not attached to session)",
+      "result": "找到",
+      "note": "NEW: VladimirReshetnikov/ProveIt (.../q-integer-product-unimodality/{README.md,PROVENANCE.md,report.tex,data/counterexample.json,...}); ArtificialZeng/AI-Has-Taste (reproducible_source_code/BigWIN2/BW2-PR20260914-q_product_unimodality/...); the-omega-institute/trureturing (QProductNecessityRefutation.md/.lean, Library/notes/connelly2026qfibonomial.md); lenis2000/homepage and ehijano/rss_fetch are mere arXiv listings."
+     },
+     {
+      "query": "search_code '\"[b]_{q^r}\" OR \"QProductNecessity\" OR \"q-integer product unimodality\"'",
+      "source": "GitHub code search (MCP)",
+      "result": "未找到",
+      "note": "0 results (symbol search not indexed); the repositories were reached through the previous query."
+     },
+     {
+      "query": "Zeilberger 1989 note (sites.math.rutgers.edu/~zeilberg/mamarimY/Zeilberger_p67.pdf)",
+      "source": "author's website PDF",
+      "result": "找到",
+      "note": "Opened; closes the step-0 gap on [Zei89, Observation 2]."
+     },
+     {
+      "query": "Local recomputation (recheck.py, bigsearch.py, checkproveit.py, k2wide.py in /tmp/claude-0/qu/review/r1/lit/)",
+      "source": "own computation (not literature)",
+      "result": "找到",
+      "note": "Independently found necessity-clause counterexamples: 50 violations for r=3, k=6 with a_i≤10, b≤12 (smallest: a=(2,2,2,2,2,2), b=2, r=3); 0 violations of sufficiency for k≤5, r≤10 in the tested ranges; 0 necessity violations for k=2 (r≤20, a,c,b≤30; r≤12, ≤40) and k=3 (r=4..10, ≤22). ProveIt's peeling identity verified on 1680 cases; its Theorems 4.2/5.1/6.1/7.1 and Prop 8.1 pass all spot checks (>250,000 products)."
+     }
+    ],
+    "item_checks": "Every item was re-opened from a fresh download (not step-0's files), unless stated.\n\nItem 0 (CIMSY Lemma 4.1, 4.2, Cor 4.3): opened TeX source (fresh e-print). Quotes verbatim (main.tex 1039-1106; \\pow prints as r by line 148). Classification 文献已有 correct for the sub-claim 'r | a_i for some i ⇒ symmetric unimodal'. Note: the proof of Lemma 4.2 writes \"[a]_q[b]_q = (1+q+...+q^{r-1})[k]_{q^r}[b]_{q^r}\" where [a]_q[b]_{q^r} is meant (typo in source, harmless).\n\nItem 1 (Prop 1.3 = Prop 4.5): opened; verbatim at lines 223 and 1161 (\"For any $a, b,c \\in \\mathbb{N}$, $T(q)=[a]_q[b]_q[c]_{q^2}$ is symmetric and unimodal if and only if $2c \\leq a+b$ or $a$ or $b$ is even.\"). Classification 文献已有 (k=2, r=2) correct.\n\nItem 2 (Prop 5.3): opened; verbatim at line 1241. Classification 文献已有 (k=1) correct; proof (lines 1245-1262) indeed shows c_a<c_{a-1}.\n\nItem 3 (Conj 5.4 + paragraph): opened; verbatim at lines 1265-1272. Classification 背景 (problem statement) acceptable, BUT the step-0 'differences'/summary text is wrong: step 0 wrote \"Not found in any source searched: ... Any counterexample inside the claimed necessity range\" and \"Any work that discusses Conj 5.4\". In fact the necessity clause is FALSE inside its own range: r=3, k=6, a_i=2, b=2 gives (1+q)^6(1+q^3) = 1,6,15,21,21,21,21,15,6,1 (unimodal; 3∤2; b=2>1+0). I found this independently by brute force (the authors' check stopped at k≤5), and three GitHub sources (Sept 2026) had already recorded it — see new_items. The step-0 recomputation of ([3]_q)^4[2]_{q^4} is confirmed (1,4,10,16,20,20,20,20,20,16,10,4,1).\n\nItem 4 (Abdallah-McDaniel 2404.05098v2): opened PDF→text. Theorem A, Conjecture 1.1 and \"In particular, H(m, 2) is unimodal if and only if m is even.\" verbatim. One defect in the step-0 quote: the printed Theorem A formula reads \"⌊(i+2)/2⌋ − ⌊(i+2−m)/2⌋_⋆ + ⌊(i+2−2m)/2⌋_⋆\" (sign '+'), while Proposition 3.2 (p. 11 of the text) has '−' for the third term; '−' is the correct one (m=3, i=6: '−' gives 1 = true coefficient, '+' gives 3). Irrelevant to the unimodality classification; classification 文献连线 correct. Supplement: Mao-Shi-Zhu line 83 restates it as \"Recently, Abdallah and McDaniel [1] proved that for n = 2, F_{r,2}(q) is unimodal if and only if r ≥ 2 is even.\" and their Theorem 1.2 lists \"(ii) n = 2 and r is even\" as previously known via [1, 4, 14] (Abdallah-McDaniel; Almkvist 1989; Hughes 1977).\n\nItem 5 (Mao-Shi-Zhu 2609.23779v1): opened. Conjecture 1.1, Theorem 1.3, Lemma 3.2 verbatim (msz.txt lines 77-80, 96-97, 344-347). Classification 文献连线 correct (family ∏_{k=1}^n [r]_{q^k}; overlap only at n=2).\n\nItem 6 (Billey-Swanson 2305.07620): opened. Definition 3 (line 155), Section 6.1 sentence (1740-1742), Lemma 46(iv) (\"Any element 1 ≠ f ∈ Φ+ has a cyclotomic factor of the form Φ_{p^k}(q) for some prime p.\", line 1749), Conjecture 48 (1782), Problem 50 (1795) and the 'fractal' remark (291) all verbatim. Classification 文献连线 correct.\n\nItem 7 (Liu, Zenodo 22388982): opened (fresh PDF). Definition 1.1, Theorem 1.2, Theorem 1.3, Question 1.5 verbatim (liu.txt 54-92). Step-0's inference that ([2]_q)^{d}[2]_{q^4} is non-unimodal for d≤8 is confirmed and extended: non-unimodal for all d≤12; ProveIt's Theorem 7.1 (below) gives the exact threshold d ≥ 4^2−3 = 13, consistent. Classification 文献连线 correct. Note Liu's suggested form in Question 1.5 (∑_{k<j}2^k d_k ≥ 2^{j+1}−1) would predict threshold 3 for this slice, so it does not describe this family.\n\nItem 8 (Stanley 1989): PDF re-downloaded and pages 503-504 re-rendered and read as images. Proposition 1, the remark \"(q^2+q+3)^2 = q^4+q^3+7q^2+6q+9\", and Proposition 3 verbatim. Classification 背景 correct.\n\nItem 9 (Saumard-Wellner 1404.5886): opened. Theorem 4.1(a), the 'strongly unimodal' paragraph and display (4.5) verbatim (sw.txt 1085-1129). Classification 背景 correct.\n\nItem 10 (Odlyzko-Richmond 1985): abstract now obtained verbatim from Project Euclid: \"It is shown that if {p_j} is a discrete density function on the integers with support contained in {0, 1, ⋯, d}, and p_0 > 0, p_1 > 0, p_{d−1} > 0, p_d > 0, then there is an n_0 such that the n-fold convolution {p_j}^{*n} is unimodal for all n ≥ n_0.\" Matches step 0. Classification 文献连线 acceptable.\n\nItem 11 (Harima-Watanabe math/0702444): opened. Remark 2.2 (1),(3) and Example 6.3 verbatim (hw.txt 171-177, 910-915; source spells \"Propositon\"). Classification 背景 correct.\n\nItem 12 (IMM 1802.07383v6; MCIM 1807.05869): opened both. IMM Example 3.13 and 3.25 verbatim (imm.txt 1826-1833, 2079-2081); MCIM Conjecture 3.15 verbatim (1291-1296). Minor locator error: the MCIM sentence \"The Hilbert function H(A) = (1, 1, 2, 1, 2, 1, 1) is not unimodal, so A cannot be strong Lefschetz.\" (mcim.txt 769-770) belongs to the Section 3 example A = k[z1,z2]/(z1^3−3z1z2, z2^3) with footnote \"This has the same Hilbert functions as the (different) Example 3.7\", not to Example 3.7 itself. Classification 文献连线 correct.\n\nItem 13 (Sun-Wang-Zhang 1601.05629): opened. Theorem 3.1 and Corollary 3.5 verbatim (swz.txt 394-395, 505). Classification 背景 correct.\n\nItem 14 (Zenodo q-Fibonomial preprints): opened records 22719862 (Stefan-Donovan; abstract verbatim incl. \"Recent work of Connelly, Ito, Martinez, Shevchenko, and Yang proves the conjecture for all slices with n ≤ 3. We prove the complete n = 4 slice: for every integer m ≥ 0, the q-Fibonomial coefficient binom{m+4}{4}_{F,q} is a polynomial with nonnegative, symmetric, unimodal coefficients.\"), 21826970 (hainzhao; abstract verbatim), 22183086 (Fathi; PDF opened, Remark 7.3 verbatim: \"In a nonstandard grading, weak Lefschetz does not by itself imply unimodality [9].\"; only mention of the family is line 5067 \"The third-column product has the form [a]_q[b]_q[c]_{q^2}\"), 22862687 (Fathi, log-concavity; abstract read). Classification 背景 correct.\n\nGaps noted by step 0 that are now closed: Zeilberger 1989 opened — \"Observation 2. The product of two symmetric and unimodal polynomials of dargas m and m' respectively is a symmetric and unimodal polynomial of darga m + m'.\" (p. 67). Almkvist 1987 full text still inaccessible (403), but its zbMATH review was opened (quoted below). The LNM 2080 book, Keilson-Gerber original, Andrews 1975 original and the INdAM 'List of Problems' remain unopened.",
+    "new_items": "N1. [NEW, decisive] VladimirReshetnikov/ProveIt, directory SetTheory/Cardinals/docs/reports/log-concavity-and-unimodality/q-integer-product-unimodality (branch main), https://github.com/VladimirReshetnikov/ProveIt/tree/main/SetTheory/Cardinals/docs/reports/log-concavity-and-unimodality/q-integer-product-unimodality (files fetched from raw.githubusercontent.com; README.md, PROVENANCE.md, report.tex, data/counterexample.json). Status: README says \"Research note, 18-20 September 2026. Prepared with ChatGPT.\" and \"The work is not refereed or proof-assistant verified; historical priority has not been established exhaustively.\" Definitions identical to the problem (P_{a,b,r}=(∏[a_i]_q)[b]_{q^r}, weak unimodality of the full coefficient sequence, a_i=1 and b=1 allowed; their 'spacing' = r, S=∑(a_i−1), Q=∑⌊a_i/r⌋, and for r=3: a_i=3A_i+s_i, Q=∑A_i, t=#{i: s_i=2}). Verbatim statements:\n - README: \"Take r=3, b=2, and six ordinary parameters a_i=2. Then (1+q)^6 (1+q^3) has coefficient list [1, 6, 15, 21, 21, 21, 21, 15, 6, 1]. It is symmetric and weakly unimodal, but no a_i is divisible by 3 and b=2 exceeds 1+sum(floor(a_i/3))=1. The source asserts necessity when k<=3 OR r<=3, so this example is within its claimed range.\" [My check: coefficients and unimodality confirmed; also (1+q)^9(1+q^3) = 1,9,36,85,135,162,168,162,135,85,36,9,1 has a unique maximum.]\n - Theorem 3.2 [Sufficiency for every spacing]: \"For every $r\\ge2$ and every number $k$ of ordinary factors, $\\mathcal C_r(\\boldsymbol a,b)$ implies unimodality of $P_{\\boldsymbol a,b,r}$.\" Proof uses Lemma [Centered peeling]: \"For integers $a>r$ and $b\\ge2$, $\\qi a\\qir b r =\\qi{a+r(b-1)}+q^r\\qi{a-r}\\qir{b-1}{r}$. Both terms on the right, with zero padding, are symmetric about the center of the polynomial on the left.\" and induction on b (\"Let $b\\ge2$. Then $Q\\ge1$, so at least one $a_i$ is greater than $r$ ... The induction hypothesis makes the residual product $\\SU$ ... Their sum is therefore $\\SU$ by Lemma~\\ref{lem:closure}.\"). [My check: the peeling identity holds on all 1680 tested (r,a,b) with 2≤r≤8, r<a<30, 2≤b≤11; the centers coincide ((a−1+r(b−1))/2 for both terms); the induction is short and I found no gap. If correct, this proves the sufficiency half of Conjecture 5.4 for all k, r.]\n - Theorem 4.2 [A necessary degree bound for every spacing]: \"Suppose no $a_i$ is divisible by $r$. If $P_{\\boldsymbol a,b,r}$ is unimodal, then $r(b-1)\\le S$, equivalently $b\\le1+\\lfloor S/r\\rfloor$.\" [0 violations in 80,415 cases, r≤7, k≤5, a_i≤9, b≤15.]\n - Theorem 5.1 [Complete spacing-two criterion]: \"The polynomial $(\\prod_i\\qi{a_i})\\qir b2$ is unimodal if and only if some $a_i$ is even or $b\\le1+\\sum_i\\lfloor a_i/2\\rfloor$.\" [0 violations in 73,346 cases, k≤7.]\n - Theorem 6.1 [Sharp spacing-three criterion]: \"The polynomial $P_{\\boldsymbol a,b,3}$ is unimodal if and only if $(\\exists i\\colon3\\mid a_i)$ or $b\\le1+Q+2\\lfloor t/6\\rfloor$ ... If no $a_i$ is divisible by three and the inequality fails, write $t=6h+v$, $0\\le v\\le5$, and $M=Q+2h$. At the explicit index $n_0=3M+\\lfloor (v+3)/2\\rfloor$ we have $n_0\\le\\lfloor D/2\\rfloor$, $\\coef{n_0}P-\\coef{n_0-1}P=-1$.\" [0 violations in 17,303 + 77,220 cases, k≤7.] Corollary 6.3: \"(1+q)^t [B]_{q^3} is unimodal ⟺ t ≥ 6⌊B/2⌋\" [checked B≤8].\n - Theorem 7.1 [Sharp two-shift smoothing threshold]: \"For integers $r\\ge2$ and $n\\ge0$, $\\TS_{n,r}(q)$ [=(1+q)^n(1+q^r)] is unimodal $\\Longleftrightarrow$ $n\\ge r^2-3$.\" [0 violations for r≤12, n≤r^2+11.] Corollary 7.8: for every n≥6, (1+q)^n(1+q^3) is log-concave [checked n≤20].\n - Proposition 8.1 [Exact finite computation]: \"Among products in the asserted necessity range, the minimum degree of a counterexample to necessity is nine. After deleting trivial factors and permuting the ordinary factors, the degree-nine counterexample parameter set is unique, namely $r=3$, $b=2$, $a_1=\\cdots=a_6=2$.\" [My degree≤10 search agrees: only (2^6,2,3) at degree 9 and (2^7,2,3) at degree 10.]\n - PROVENANCE.md scope statement: \"Precisely: necessity is true for r = 2 and for r = 3 with k <= 5, false for r = 3 with t >= 6, and open here for k <= 3 with r >= 4.\" and \"For r >= 4, no complete arbitrary-product classification is claimed.\"\n Comparison with the problem: same P, same weak unimodality, same parameter domain. Classification: the counterexample is 文献已有 (necessity clause of Conj 5.4 refuted, independently confirmed by my computation); the sufficiency theorem and the r=2, r=3 complete criteria are claimed proofs in an unrefereed AI-assisted note (文献连线/待核). No refereed source with these results was located.\n\nN2. [NEW] the-omega-institute/trureturing (branch master): Blueprint/D5/S0/Certificates/Polynomials/QProductNecessityRefutation.md, https://github.com/the-omega-institute/trureturing/blob/master/Blueprint/D5/S0/Certificates/Polynomials/QProductNecessityRefutation.md and the Lean 4 file https://github.com/the-omega-institute/trureturing/blob/master/D5/S0/Certificates/Polynomials/QProductNecessityRefutation.lean (plus Library/notes/connelly2026qfibonomial.md). Verbatim: \"The necessity clause of Conjecture 5.4 is false: six factors [2]_q and one factor [2]_(q^3) give a unimodal polynomial outside the proposed condition.\" ... \"Take r=3, k=6, a_i=2 for every index, and b=2. The actual geometric product is (1+q)^6(1+q^3). Its coefficients, including all internal positions, are 1, 6, 15, 21, 21, 21, 21, 15, 6, 1.\" ... \"The paper reports checking only k at most five; this witness has k=6. Its following example has k=r=4 and therefore misses the restricted necessity premise. The present result concerns the necessity clause alone. The sufficiency clause and a classification of all such products are not asserted here.\" Lean: `def claim : Prop := ∀ (r k : ℕ) (a : Fin k → ℕ) (b : ℕ), 2 ≤ r → 1 ≤ k → (∀ i, 1 ≤ a i) → 1 ≤ b → (k ≤ 3 ∨ r ≤ 3) → Unimodal (qProduct r a b) → necessaryCondition r a b` and `theorem result : ¬ claim` (proved from `six_unimodal` by norm_num). The note also fixes the quantifier reading: \"Corollary 4.3 explicitly uses \\\"for some\\\"; Conjecture 5.4 is introduced as its generalization. This determines the existential reading of \\\"for any\\\".\" Not compiled by me; definitions match the problem (weak unimodality with zero coefficients retained). Classification: 文献已有 for the necessity refutation (machine-checked certificate in a GitHub repository; unrefereed).\n\nN3. [NEW] ArtificialZeng/AI-Has-Taste (branch main), reproducible_source_code/BigWIN2/BW2-PR20260914-q_product_unimodality/ (source.md, problem.md, claim.json, manuscript/main.tex) and assets/BigWIN2/gates/BW2-PR20260914-q_product_unimodality/audit/{math.md,citations.md}, https://github.com/ArtificialZeng/AI-Has-Taste/tree/main/reproducible_source_code/BigWIN2/BW2-PR20260914-q_product_unimodality. Manuscript \"A two-factor criterion for unimodality ...\" by Xiaojian Zeng, dated September 14, 2026 (an automated pipeline; audit says \"This is a separate model review pass, not external peer review\"). Verbatim Theorem: \"Let $r\\ge2$ be an integer and let $a,c,b$ be positive integers. Then $[a]_q[c]_q[b]_{q^r}$ is weakly unimodal if and only if $r\\mid a$ or $r\\mid c$ or $b\\le1+\\lfloor a/r\\rfloor+\\lfloor c/r\\rfloor$. The alternatives are inclusive, and parameters equal to $1$ are allowed.\" Abstract: \"This establishes the two-factor case of Conjecture~5.4 of Connelly, Ito, Martinez, Shevchenko, and Yang, extending their stretch-$2$ characterization to arbitrary stretch. ... When the criterion fails, an explicit first-half coefficient difference equals $-1$. The original conjecture in its full parameter range remains unresolved here.\" Its problem.md also contains a careful restatement of Conj 5.4 with the same definitions as the problem and notes \"Source status: open-supported by the inspected primary text; no later full resolution found in this bounded search\". [My check: k=2 criterion has 0 violations for r=2..12 with a,c,b≤40 and r=13..20 with a,c,b≤30.] Classification: claimed proof (unrefereed, AI-generated) of the k=2 case for every r≥2 — exactly the conjectured iff for k=2; it does not interact with the k=6 counterexample.\n\nN4. Almkvist, 'Representations of SL(2,C) and unimodal polynomials', J. Algebra 108 (1987) 283-309 — zbMATH review (G. E. Wall), https://zbmath.org/4012887 (API: https://api.zbmath.org/v1/document/4012887): \"There is a bijection from the set of all symmetric unimodal polynomials to the set of all homogeneous representations of G, having the property that the image of the product of two polynomials is the tensor product of their images. ... Similar considerations (involving the Adams operations) lead the author to conjecture that ∏_{v=1}^{r}(1−t^{vn})/(1−t^v) is symmetric unimodal if n is even or if n is odd and r sufficiently large. This is known to be true for n=2 and the author proves it for n=4 ... The author also uses the (explicitly known) p-modular representation theory of G to produce still further symmetric unimodal polynomials.\" Relevance: ψ^r(V_b) has character [b]_{q^r}, so the problem's P is the character of V_{a_1}⊗…⊗V_{a_k}⊗ψ^r V_b; the review records no criterion for such products. Full text still inaccessible (ScienceDirect 403). 文献连线 (background), content unchecked beyond the review.\n\nN5. Zeilberger 1989 (q-Series and Partitions, IMA 18, pp. 67-72), https://sites.math.rutgers.edu/~zeilberg/mamarimY/Zeilberger_p67.pdf: \"Observation 2. The product of two symmetric and unimodal polynomials of dargas m and m' respectively is a symmetric and unimodal polynomial of darga m + m'.\" — the fact cited by CIMSY Cor. 4.3; 背景.\n\nN6. Warnaar-Zudilin, 'q-rious unimodality', arXiv:2502.03993v2, https://arxiv.org/abs/2502.03993: \"Conjecture 5 (q-rious unimodality). Let (a, b) satisfy Landau's criterion (1). Then the polynomial (1 + q)D(a, b; q) is unimodal.\" with D(a,b;q)=[a_1]!⋯[a_r]!/([b_1]!⋯[b_s]!). Differences: P=∏[a_i]_q·[rb]_q/[r]_q is a q-factorial ratio with a=(a_1..a_k, rb, r−1), b=(a_1−1,…,a_k−1, rb−1, r), but the dilated family D_n(a,b;q) is not a polynomial in general (e.g. [2rb−1]_q/[2r−1]_q at n=2), so Landau's criterion fails and the family is outside their conjecture; their (1+q)-smoothing is reminiscent of (1+q)[b]_{q^2}=[2b]_q. 文献连线 (weak).\n\nN7. Armstrong, 'Cyclic Sieving of Multisets with Bounded Multiplicity and the Frobenius Coin Problem', arXiv:2502.00378v3, https://arxiv.org/abs/2502.00378, Corollary 4.5: g_r(t)=t^{γ_r}[β_1]_t[b]_t^{(n+1)/d−1} (or minus the analogous term) and \"We observe that each g_r(t) is (plus or minus) a unimodal polynomial since products of t-integers are unimodal; see [2, Theorem 3.9].\" — all factors in one variable; irrelevant to mixed dilations (checked, not a 连线).\n\nN8. Guo-Zhu, 'Unimodality of Certain Partition Polynomials', J. Syst. Sci. Complex. (2025), doi 10.1007/s11424-025-4302-5: \"Let β be an integer and satisfy 0 ≤ β ≤ 5. In this paper, the authors prove that the partition polynomial ∏_{k=1}^n[1+(2+β)q^k+q^{2k}] is symmetric and unimodal for n ≥ 1.\" — different family; irrelevant.\n\nN9. Juhnke, Miró-Roig, 'List of Problems', in Lefschetz Properties (Springer INdAM Series 59, 2024), pp. 211-225, doi 10.1007/978-981-97-3886-1_12 — may contain open problems on unimodality in non-standard gradings; text not accessible (paywall; no arXiv version). Unchecked.\n\nSummary of the corrected picture for the problem 'exactly which parameters make P unimodal': (i) sufficiency of [r|a_i for some i] ∨ [b ≤ 1+∑⌊a_i/r⌋]: proved in CIMSY only for the divisibility branch (Cor 4.3), k=1 (Prop 5.3) and (k=2,r=2) (Prop 4.5); a short peeling-identity proof for all k,r is given in the unrefereed ProveIt note (identity verified by me); (ii) the necessity clause 'if k ≤ 3 or r ≤ 3' is false (r=3, k=6 witness; also 50 witnesses with k=6 in my search; none with k ≤ 5), so the conjecture as stated is CORRECTED by the literature; (iii) claimed complete answers exist (unrefereed) for r=2 (original condition exact), r=3 (b ≤ 1+Q+2⌊t/6⌋), k=2 for all r (original condition exact), and the slice (1+q)^n(1+q^r) (n ≥ r^2−3); (iv) no source, refereed or not, was located giving the classification for r ≥ 4 with k ≥ 3, and no refereed treatment of Conjecture 5.4 at all was found (Semantic Scholar/OpenAlex/Google Scholar show 0 citations).",
+    "verdict": "CORRECTED"
+   }
   }
  ],
  "passed": [
@@ -95,6 +353,7 @@
   "PR_E2",
   "PR_E5",
   "PR_E7",
-  "PR_E3"
+  "PR_E3",
+  "PR_E6"
  ]
 }

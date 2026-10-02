@@ -266,11 +266,11 @@
 
   <div class="answer">
     <h2>能找到，但都是小东西</h2>
-    <p>一共有 9 个结果站得住。每一个都另外派人用自己的代码重新算过、专门挑过毛病，没有一个被推翻。再去查文献：4 个完全查不到前人做过，5 个有新东西但前人知道一部分。另外还有 2 个反例，被别人抢先发出来了。大难题一个也没碰到。</p>
+    <p>一共有 11 个结果站得住。每一个都另外派人用自己的代码重新算过、专门挑过毛病，没有一个被推翻。再去查文献：3 个完全查不到前人做过，5 个有新东西但前人知道一部分，3 个反例被别人抢先发出来了。大难题一个也没碰到。（10 月 2 日更正：q-整数乘积那个反例原先标成全新，后来查到 GitHub 上早有人发过，已改为被抢先。）</p>
     <div class="tally">
-      <span class="t-new num">全新 4</span>
+      <span class="t-new num">全新 3</span>
       <span class="t-partial num">半新 5</span>
-      <span class="t-scooped num">被抢先 2</span>
+      <span class="t-scooped num">被抢先 3</span>
     </div>
   </div>
 
@@ -295,9 +295,9 @@
     <h2 id="cards-h">填上的缺口</h2>
     <div class="filters" role="group" aria-label="按新不新筛选">
       <button class="chip" type="button" id="f-all" data-f="all" aria-pressed="true">全部 11</button>
-      <button class="chip" type="button" id="f-new" data-f="new" aria-pressed="false">全新 4</button>
+      <button class="chip" type="button" id="f-new" data-f="new" aria-pressed="false">全新 3</button>
       <button class="chip" type="button" id="f-partial" data-f="partial" aria-pressed="false">半新 5</button>
-      <button class="chip" type="button" id="f-scooped" data-f="scooped" aria-pressed="false">被抢先 2</button>
+      <button class="chip" type="button" id="f-scooped" data-f="scooped" aria-pressed="false">被抢先 3</button>
     </div>
 
     <div class="cards" id="cards">
@@ -328,16 +328,14 @@
         </div>
       </article>
 
-      <article class="card" data-s="new">
-        <div class="card-top"><span class="kind kind-refute">反例</span><span class="flag flag-new">全新</span><span class="src">arXiv:2605.12822 · 2026 年 5 月</span></div>
+      <article class="card is-scooped" data-s="scooped">
+        <div class="card-top"><span class="kind kind-refute">反例</span><span class="flag flag-scooped">被抢先</span><span class="src">arXiv:2605.12822 · 2026 年 5 月</span></div>
         <div class="card-body">
           <h3>一个本该「不单峰」的多项式</h3>
-          <p class="claim">论文里有个猜想：满足某些条件时，这类多项式的系数一定不是先升后降的。我们找到一个满足条件、系数却老老实实先升后降的例子，而且只有十项，手算就能验。</p>
+          <p class="claim">论文里有个猜想：满足某些条件时，这类多项式的系数一定不是先升后降的。我们找到一个满足条件、系数却先升后降的例子，只有十项，手算就能验。</p>
           <div class="formula">(1+q)⁶(1+q³) = 1+6q+15q²+21q³+21q⁴+21q⁵+21q⁶+15q⁷+6q⁸+q⁹</div>
           <dl class="facts">
-            <div><dt>不止一个</dt><dd>把 6 换成任何不小于 6 的数都一样，所以反例有无穷多个。作者只试到了 5。</dd></div>
-            <div><dt>怎么确认的</dt><dd>两边各用三套程序算过；我又亲自翻了论文原文，确认没读错题。</dd></div>
-            <div><dt>新不新</dt><dd>论文没改过版，也没人引用或反驳过它。</dd></div>
+            <div><dt>新不新</dt><dd>更正：后来的文献复查在 GitHub 上找到了三份 2026 年 9 月 14 日到 26 日、由 AI 辅助完成的笔记，都早已给出这个反例，其中一份还附了 Lean 证明。我们第一次查新只搜了 arXiv 和网页，漏掉了它们。</dd></div>
           </dl>
         </div>
       </article>
@@ -452,7 +450,7 @@
       <li><b>真正费劲的是挑题和查新。</b>331 对候选，值得动手的只有 23 对；真动手的 7 对里，完全没人做过的只有 2 对。查「是不是新的」花的工夫，跟证明本身差不多。</li>
       <li><b>「学不全前置知识」造成的缺口，是真的有。</b>最好的例子就是那本 1956 年的教科书：答案早就有了，只是提问的人和知道答案的人没碰上面。修图滤镜那条也一样，两个领域各自都很成熟，就是没人把它们放在一起看过。</li>
       <li><b>但这样能填上的，都是小缺口。</b>它们离已知结果只差几步，所以几步就能推到。大难题之所以难，是因为手头的知识根本不够用。光靠把已知的东西串起来推不过去，得先发明新的「卡」。</li>
-      <li><b>这块地方已经有点挤了。</b>我们推翻的 4 个猜想里，有 2 个被别人抢了先，至少有一个团队也在用 AI 干一样的事。新论文一挂上网，几周之内就会有机器去验它。</li>
+      <li><b>这块地方已经有点挤了。</b>我们推翻的 4 个猜想里，有 3 个被别人抢了先，至少有一个团队也在用 AI 干一样的事。新论文一挂上网，几周之内就会有机器去验它。</li>
     </ul>
   </section>
 
