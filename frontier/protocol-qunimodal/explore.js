@@ -33,10 +33,11 @@ PROBLEM. For integers r>=2, k>=1, a_1..a_k>=1, b>=1 let P(q) = [a_1]_q ... [a_k]
 
 LITERATURE (step 0 findings, for context only):
 ${args.lit}
+${args.known ? 'ESTABLISHED RESULTS (proved and refereed in earlier rounds; you may use them):\n' + args.known : ''}
 
 HARD RULES.
-- FIT BOX: you may compute P (or anything derived from specific parameter values) ONLY for r in {2,...,6}, k<=8, every a_i<=12, b<=60. Computing any instance outside this box is forbidden, including "just to check". If your path needs larger instances, say so in the failure report instead.
-- Work only inside /tmp/claude-0/qu/explore/${p.id}/ (create it). Do not read other folders under /tmp/claude-0/qu/explore/ or anything under /root/. A ground-truth checker you may use (within the box) is /tmp/claude-0/qu/tools/uni (stdin lines "r k a1..ak b", prints 1/0) and /tmp/claude-0/qu/tools/uni_ref.py.
+- FIT BOX: ${args.box ?? 'you may compute P (or anything derived from specific parameter values) ONLY for r in {2,...,6}, k<=8, every a_i<=12, b<=60'}. Computing any instance outside this box is forbidden, including "just to check". If your path needs larger instances, say so in the failure report instead.
+- Work only inside ${args.dir ?? '/tmp/claude-0/qu/explore'}/${p.id}/ (create it). Do not read other folders under ${args.dir ?? '/tmp/claude-0/qu/explore'}/ or anything under /root/. A ground-truth checker you may use (within the box) is /tmp/claude-0/qu/tools/uni (stdin lines "r k a1..ak b", prints 1/0) and /tmp/claude-0/qu/tools/uni_ref.py.
 - Follow ONLY your assigned path. Do not switch to another approach to have something to report. If the path does not work, stop and report FAILED with numbers (what you tried, how many candidates, how badly they failed).
 - Every numeric statement must come from a rerunnable script you name. Record every candidate you tried (including discarded ones) in a candidates file with its error count in the fit box, and report the total.
 - Any rule you propose must be a Python file defining predict(r, a, b) -> bool (a is a sorted list) and, if the rule only claims part of the parameter space, domain(r, a) -> bool. Also give a plain-text description sufficient to reimplement it, the fit range, and the number of free parameters you fitted. Do NOT test it outside the fit box; the coordinator will test it on hidden data.
