@@ -1,0 +1,556 @@
+<title>单峰集合 U 图解</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one calm reading column (~680px); each section = short text + one small figure on a quiet panel. */
+:root {
+  --bg: #f6f7f9;
+  --panel: #ffffff;
+  --ink: #18202c;
+  --ink-2: #4c5667;
+  --ink-3: #7a8494;
+  --line: #e1e5ec;
+  --grid: #eceff3;
+  --accent: #2a5fc4;
+  --s1: #2a78d6;      /* series: main bars / in U */
+  --s2: #eb6834;      /* series: shifted copy */
+  --bad: #e34948;     /* where unimodality breaks */
+  --warn: #b97f00;    /* conjecture chip */
+  --violet: #4a3aa7;  /* "does not exist" chip */
+  --s1-soft: #e3edfb;
+  --bad-soft: #fde8e7;
+  --font-display: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12151b; --panel: #1a1e26; --ink: #eef1f6; --ink-2: #b7bfcc; --ink-3: #8a93a3;
+    --line: #2c323d; --grid: #252a33; --accent: #7aa5f0;
+    --s1: #3987e5; --s2: #d95926; --bad: #e66767; --warn: #d9a227; --violet: #9085e9;
+    --s1-soft: #1d2b40; --bad-soft: #3a2224;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12151b; --panel: #1a1e26; --ink: #eef1f6; --ink-2: #b7bfcc; --ink-3: #8a93a3;
+  --line: #2c323d; --grid: #252a33; --accent: #7aa5f0;
+  --s1: #3987e5; --s2: #d95926; --bad: #e66767; --warn: #d9a227; --violet: #9085e9;
+  --s1-soft: #1d2b40; --bad-soft: #3a2224;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.8;
+  padding: 0 16px;
+}
+.wrap { max-width: 680px; margin: 0 auto; padding-block: 48px 72px; display: flex; flex-direction: column; gap: 56px; }
+header { display: flex; flex-direction: column; gap: 12px; }
+.eyebrow { font-size: 13px; letter-spacing: .12em; color: var(--ink-3); }
+h1 { font-family: var(--font-display); font-size: clamp(30px, 7vw, 42px); line-height: 1.3; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--font-display); font-size: 24px; line-height: 1.4; margin: 0; text-wrap: balance; }
+h3 { font-size: 16px; margin: 0; }
+p { margin: 0; }
+.lead { font-size: 17px; color: var(--ink-2); }
+section { display: flex; flex-direction: column; gap: 16px; }
+.num { font-family: var(--font-mono); font-size: 13px; color: var(--accent); letter-spacing: .05em; }
+.muted { color: var(--ink-2); }
+.small { font-size: 14px; color: var(--ink-2); }
+.math { font-family: var(--font-mono); font-size: .92em; white-space: nowrap; }
+.formula { font-family: var(--font-mono); font-size: 15px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; white-space: nowrap; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.panel-title { font-size: 14px; font-weight: 500; color: var(--ink); }
+.cap { font-size: 13px; color: var(--ink-3); line-height: 1.6; }
+.chart { width: 100%; position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.two > * { min-width: 0; }
+@media (max-width: 560px) { .two { grid-template-columns: 1fr; } }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 2px 10px; border-radius: 999px; font-weight: 500; }
+.pill.ok { background: var(--s1-soft); color: var(--ink); }
+.pill.no { background: var(--bad-soft); color: var(--ink); }
+.pill .dot { width: 8px; height: 8px; border-radius: 50%; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; font-size: 14px; border: 0; background: transparent; color: var(--ink-2); padding: 6px 14px; cursor: pointer; font-family: var(--font-mono); }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--panel); font-size: 12px; font-family: var(--font-mono); padding: 4px 8px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -100%); margin-top: -8px; z-index: 2; }
+/* strips */
+.strip { display: flex; flex-direction: column; gap: 8px; }
+.strip-row { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.strip-label { font-size: 13px; color: var(--ink-2); font-family: var(--font-mono); }
+.cells { display: flex; gap: 6px; flex-wrap: wrap; }
+.cell { width: 44px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.cell .box { width: 44px; height: 32px; border-radius: 6px; display: grid; place-items: center; font-family: var(--font-mono); font-size: 14px; }
+.cell .box.in { background: var(--s1); color: #fff; }
+.cell .box.out { background: transparent; border: 1.5px dashed var(--ink-3); color: var(--ink-3); }
+.cell .box.hole { background: transparent; border: 2px solid var(--bad); color: var(--ink); }
+.cell .tag { font-size: 11px; color: var(--ink-3); line-height: 1.3; text-align: center; min-height: 15px; }
+/* traps */
+.trap { display: flex; flex-direction: column; gap: 10px; }
+.trap h3 { font-size: 17px; }
+.stat-row { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 14px; color: var(--ink-2); }
+.stat-row b { font-family: var(--font-mono); color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+/* status map */
+.map { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); overflow: hidden; }
+.grp { display: grid; grid-template-columns: 112px 1fr; gap: 12px; padding: 14px 16px; border-top: 1px solid var(--line); }
+.grp:first-child { border-top: 0; }
+.grp > * { min-width: 0; }
+@media (max-width: 520px) { .grp { grid-template-columns: 1fr; gap: 6px; } }
+.chip { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; align-self: start; }
+.chip i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+.chip small { display: block; font-weight: 400; font-size: 12px; color: var(--ink-3); }
+.grp ul { margin: 0; padding-left: 18px; font-size: 14.5px; line-height: 1.7; display: flex; flex-direction: column; gap: 4px; }
+/* flow */
+.flow svg { display: block; width: 100%; max-width: 560px; height: auto; margin: 0 auto; }
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.facts > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.facts b { font-family: var(--font-mono); font-size: 22px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.facts span { font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+@media (max-width: 480px) { .facts { grid-template-columns: 1fr 1fr; } }
+.limits { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 10px; }
+.limits b { font-weight: 700; }
+footer { font-size: 13px; color: var(--ink-3); border-top: 1px solid var(--line); padding-top: 16px; }
+@media (prefers-reduced-motion: no-preference) { .bar { transition: y .25s, height .25s; } }
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">一次 AI 辅助的数学小研究 · 讲给朋友听</div>
+  <h1>什么时候，一串数会「先升后降」？</h1>
+  <p class="lead">这一页讲一个很窄的组合数学问题：一类多项式的系数什么时候是单峰的。我们用几张小图说清楚三件事：问题是什么，发现了什么，以及哪些结论靠得住、哪些还只是猜测。</p>
+</header>
+
+<!-- 1 -->
+<section id="problem">
+  <div class="num">问题是什么</div>
+  <h2>数一数「有多少种凑法」</h2>
+  <p>先选几个正整数 <span class="math">a₁, …, aₖ</span>，再选一个步长 <span class="math">r</span> 和一个次数 <span class="math">b</span>。我们关心这个多项式：</p>
+  <div class="formula">P_b(q) = [a₁]_q · [a₂]_q ⋯ [aₖ]_q · [b]_{q^r}</div>
+  <p class="muted">其中 <span class="math">[n]_q = 1+q+…+q^(n−1)</span>，<span class="math">[b]_{q^r} = 1+q^r+q^(2r)+…+q^(r(b−1))</span>。</p>
+  <p>别被符号吓到。它的系数有个很直白的意思：<b>q 的 n 次方前面的系数，就是把 n 写成</b></p>
+  <div class="formula">n = x₁ + x₂ + … + xₖ + r·y　　（0 ≤ xᵢ &lt; aᵢ，0 ≤ y &lt; b）</div>
+  <p><b>的方法有几种。</b>比如 <span class="math">a = (2, 3)</span>、<span class="math">r = 4</span>、<span class="math">b = 2</span> 时，n = 5 只能取 y = 1，剩下 x₁+x₂ = 1，有 (1,0) 和 (0,1) 两种，所以 q⁵ 的系数是 2。</p>
+  <p>把所有系数排成一排画成柱子，如果柱子<b>先不降、再不升</b>（中间可以有平台），就叫<b>单峰</b>。下面两张图用的是同一组 <span class="math">a = (2, 3)</span>、<span class="math">b = 2</span>，只是步长不同。蓝色是 y = 0 的凑法，橙色是 y = 1 的凑法，它们其实是同一座小山，只是往右平移了 r 格。</p>
+  <div class="two">
+    <div class="panel">
+      <div class="panel-title">r = 2 <span class="pill ok"><span class="dot" style="background:var(--s1)"></span>单峰</span></div>
+      <div class="chart" id="c1a"></div>
+      <div class="cap">两座小山挨得近，叠成一座大山：1, 2, 3, 3, 2, 1</div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">r = 4 <span class="pill no"><span class="dot" style="background:var(--bad)"></span>不单峰</span></div>
+      <div class="chart" id="c1b"></div>
+      <div class="cap">两座小山离得远，中间凹下去：1, 2, 2, 1, 1, 2, 2, 1</div>
+    </div>
+  </div>
+  <div class="legend"><span><i class="sw" style="background:var(--s1)"></i>y = 0 的凑法</span><span><i class="sw" style="background:var(--s2)"></i>y = 1 的凑法</span></div>
+  <p>所以研究的问题是：给定 a 和 r，<b>哪些 b 能让 P_b 单峰？</b>把这些 b 收集起来，记作集合 <span class="math">U</span>。另外记 <span class="math">F = Σ⌊aᵢ / r⌋</span>（每个 aᵢ 里能装下几个完整的 r，加起来）。</p>
+  <p class="small">起点是 2026 年 5 月的论文 arXiv:2605.12822 的猜想 5.4：如果 r 整除某个 aᵢ，或者 b ≤ 1+F，就一定单峰；当 k ≤ 3 或 r ≤ 3 时，这个条件也是必须的。后半句「必须」在文献里已经被别人推翻了（不是我们）：<span class="math">(1+q)⁶(1+q³)</span> 是单峰的，可这里 b = 2，比 1+F = 1 大。</p>
+</section>
+
+<!-- 2 -->
+<section id="surprise">
+  <div class="num">一个反直觉的现象</div>
+  <h2>b 变大，单峰性可以「丢了又回来」</h2>
+  <p>直觉会说：b 越大，往右平移的拷贝越多，越难单峰，所以 U 应该是一段从 1 开始的连续整数。可下面这个例子不是这样。取 <span class="math">r = 6</span>，<span class="math">a = (2, 3, 3, 4, 4, 4, 5)</span>：</p>
+  <div class="panel">
+    <div class="controls">
+      <div class="seg" role="group" aria-label="选择 b">
+        <button type="button" id="b1" data-b="1">b=1</button><button type="button" id="b2" data-b="2">b=2</button><button type="button" id="b3" data-b="3">b=3</button><button type="button" id="b4" data-b="4">b=4</button>
+      </div>
+      <span id="s2pill" class="pill"></span>
+    </div>
+    <div class="chart" id="c2full"></div>
+    <div class="cap" id="c2cap"></div>
+    <div class="panel-title" style="margin-top:4px">放大看山顶 <span class="cap">（纵轴不从 0 开始，只为看清小起伏）</span></div>
+    <div class="chart" id="c2zoom"></div>
+    <div class="legend"><span><i class="sw" style="background:var(--s1)"></i>正常的系数</span><span><i class="sw" style="background:var(--bad)"></i>凹下去的地方（破坏单峰）</span></div>
+  </div>
+  <p>b = 1 单峰，b = 2 不单峰（山顶 947, 946, 947 凹了 1），b = 3 <b>又单峰了</b>，b = 4 再次不单峰。所以这里 <span class="math">U = {1, 3}</span>：<b>U 不一定是一段区间。</b></p>
+</section>
+
+<!-- 3 -->
+<section id="s2">
+  <div class="num">「缺一个点」</div>
+  <h2>U 最多只缺一个点</h2>
+  <p>那 U 能乱到什么程度？我们的主要结论（代号 S2）说：不会太乱。设 <span class="math">B*</span> 是 U 里最大的数，那么 U 只有两种样子：</p>
+  <ul class="limits" style="gap:4px">
+    <li>完整的一段 <span class="math">[1, B*]</span>；或者</li>
+    <li><span class="math">[1, B*]</span> 挖掉倒数第二个点 <span class="math">B*−1</span>。</li>
+  </ul>
+  <div class="panel">
+    <div class="panel-title">b = 1 到 B*+2，哪些在 U 里</div>
+    <div class="strip" id="strips"></div>
+    <div class="legend"><span><i class="sw" style="background:var(--s1)"></i>在 U 里（单峰）</span><span><i class="sw" style="border:2px solid var(--bad)"></i>被挖掉的 B*−1</span><span><i class="sw" style="border:1.5px dashed var(--ink-3)"></i>不在 U 里</span></div>
+  </div>
+  <p>上一节的 <span class="math">U = {1, 3}</span> 也是这个样子：B* = 3，挖掉了 2。</p>
+  <p><b>可信度要说清楚：</b>S2 在 <b>r = 4、5、6</b> 时已经证明（计算机辅助证明）；<b>r ≥ 7 还是猜想</b>。它的证据很多（见下一节和「现在的地图」），但证据不等于证明。</p>
+</section>
+
+<!-- 4 -->
+<section id="traps">
+  <div class="num">看起来对、其实不对</div>
+  <h2>小范围全对，不代表永远对</h2>
+  <p>这次研究里有两条说法，在大量数据上都成立，后来还是被推翻了。第一个反例由两名复核者各自独立重算确认；第二个由综合者用两套程序算出、再由审稿人独立重算，还没走「两名复核者重写代码」那一步。</p>
+
+  <div class="panel trap">
+    <h3>一、「逐个类对」的局部论证</h3>
+    <p class="small">一种只看局部、两两比较的证明思路。在 r ≤ 400 的所有数据上都成立。</p>
+    <div class="chart" id="c4a"></div>
+    <p class="small">在 <b>r = 8595</b>（k = 127，aᵢ 都在 1687 到 1693 之间）失败；另一位独立复核者又在 <b>r = 10331</b> 找到一个同类型的反例。不过这个例子的整体答案 <span class="math">U = {1, 2, 3, 5}</span> 仍然符合 S2，坏掉的是这条证明路线，不是 S2 本身。</p>
+  </div>
+
+  <div class="panel trap">
+    <h3>二、「U 的最大值就等于 Bd」</h3>
+    <p class="small">Bd 是一个能直接算出来的上界（已证明 max U ≤ Bd）。曾经看上去它总是恰好取到：</p>
+    <div class="stat-row"><span>穷举实例 <b>100,488</b> 个：全成立</span><span>随机实例 <b>约 16,000</b> 个：全成立</span></div>
+    <div class="chart" id="c4b"></div>
+    <p class="small">在 <b>r = 500、k = 39</b> 失败：Bd = 72，但 U = [1, 70]，差了 2。</p>
+  </div>
+  <p class="small">另外，第 2 轮提出的一个「余数证书」条件也在 r = 57 被推翻。教训：小范围的大量证据，也可能误导人。</p>
+</section>
+
+<!-- 5 -->
+<section id="map">
+  <div class="num">现在的地图</div>
+  <h2>按可信程度分一分</h2>
+  <p class="muted">「已证明」的每一条，都由另一个模型扮演的复核者逐步核对并通过。</p>
+  <div class="map">
+    <div class="grp">
+      <div class="chip"><i style="background:var(--ink-3)"></i><div>复现的<small>文献里已有</small></div></div>
+      <ul>
+        <li>充分性：b ≤ 1+F 就一定单峰（对所有 r、k）。</li>
+        <li>r = 2、r = 3、k ≤ 2 这几种情况的完整答案。</li>
+      </ul>
+    </div>
+    <div class="grp">
+      <div class="chip"><i style="background:var(--s1)"></i><div>已证明</div></div>
+      <ul>
+        <li>精确判定算法：给定任何参数都能算出 U（是算法，不是公式）。</li>
+        <li>上界：max U ≤ Bd ≤ T6。</li>
+        <li>结构：U = [1, N*] ∪ {N*+2, N*+4, …, β}，N* 和 β 的奇偶都与 1+F 相同。</li>
+        <li>「缺一个点」S2：r = 4、5、6 成立（计算机辅助）。</li>
+        <li>闭式：「中间余数」（落在 [2, r−2] 的余数）最多两个时，U = [1, T6]；恰好三个、其余余数为 ±1 时，U = [1, T6 − 2·FIRE]。对所有 r 成立。</li>
+        <li>超出量 B*−1−F 随 k 线性增长，带一个 −ln k 修正；更细的部分不是最终周期的。</li>
+      </ul>
+    </div>
+    <div class="grp">
+      <div class="chip"><i style="background:var(--warn)"></i><div>猜想<small>未证明</small></div></div>
+      <ul>
+        <li>S2 对所有 r 成立；以及更强的 (O)：[1, Bd−2] ⊆ U。目前 0 反例：100,488 个穷举、约 16,000 个分层随机、r 到 50,000 的实例、299 次对抗优化。</li>
+        <li>四个中间余数时的修正规则；稳定化猜想 Q。</li>
+      </ul>
+    </div>
+    <div class="grp">
+      <div class="chip"><i style="background:var(--bad)"></i><div>被推翻</div></div>
+      <ul>
+        <li>逐个类对的局部论证（r = 8595、r = 10331）。</li>
+        <li>「max U = Bd」（r = 500，k = 39）。</li>
+        <li>第 2 轮的余数证书条件（r = 57）。</li>
+        <li>猜想 5.4 的必要性部分（文献里别人推翻的）。</li>
+      </ul>
+    </div>
+    <div class="grp">
+      <div class="chip"><i style="background:var(--violet)"></i><div>不存在<small>证明了「没有」</small></div></div>
+      <ul>
+        <li>只看余数统计量的公式不存在（r = 6 有一对反例；四个中间余数时 r = 20 有一对）。</li>
+        <li>最优稳定阈值 L0 不是 (r, k, S, τ) 的函数。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="how">
+  <div class="num">怎么做出来的</div>
+  <h2>一套事先定好的流程，跑了 3 轮</h2>
+  <p>用户事先定了一个 7 步协议（从第 0 步「文献先行」算起）。每轮按顺序走一遍，最后看停止规则决定要不要再来一轮。</p>
+  <div class="facts">
+    <div><b>3 × 8</b><span>3 轮，每轮 8 个独立探索者</span></div>
+    <div><b>H1–H5</b><span>隐藏留出集，每轮换新；最后一套 r 到 900、k 到 200</span></div>
+    <div><b>11 / 11</b><span>第 3 轮复核的结论全部通过</span></div>
+  </div>
+  <div class="panel flow">
+    <svg id="flow" viewBox="0 0 360 600" role="img" aria-label="协议流程图，第 0 步到第 7 步"></svg>
+  </div>
+  <p class="small">第 3 轮的 11 项结论里，有两项是补全了定义、重新复核后才通过的。原因是协调者交接材料里漏写了定义，不是数字算错。</p>
+</section>
+
+<!-- 7 -->
+<section id="limits">
+  <div class="num">限制</div>
+  <h2>这些地方要打个折扣</h2>
+  <ul class="limits">
+    <li><b>所有复核都是 AI 复核。</b>没有人类数学家检查过。</li>
+    <li><b>「文献里没找到」不等于「是新的」。</b>第 1 轮就曾把一个已有结果误标为新结果，后来纠正了。</li>
+    <li><b>问题本身很窄。</b>即使全对，影响面也有限。</li>
+    <li><b>停下来是因为用户要求收尾。</b>协议自己的停止规则并没有满足，第 3 轮仍在产生新的约束。</li>
+  </ul>
+</section>
+
+<footer>图中的小例子（r = 2、4、6、7、12 的系数和 U）都在本页制作时用精确整数重新算过。其余数字来自研究记录。</footer>
+</div>
+
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, parent) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) {
+      var v = attrs[k];
+      if (typeof v === "string" && v.indexOf("var(") >= 0) e.style.setProperty(k, v);
+      else e.setAttribute(k, v);
+    }
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function txt(parent, x, y, s, attrs) {
+    var t = el("text", Object.assign({ x: x, y: y, fill: "var(--ink-3)", "font-size": 11, "font-family": "var(--font-mono)" }, attrs || {}), parent);
+    t.textContent = s; return t;
+  }
+  // rounded-top bar path, square at baseline
+  function barPath(x, y, w, h) {
+    var r = Math.min(4, w / 2, h);
+    if (h <= 0) return "";
+    return "M" + x + "," + (y + h) + "V" + (y + r) + "Q" + x + "," + y + " " + (x + r) + "," + y +
+      "H" + (x + w - r) + "Q" + (x + w) + "," + y + " " + (x + w) + "," + (y + r) + "V" + (y + h) + "Z";
+  }
+  // tooltip
+  function attachTip(container) {
+    var tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; container.appendChild(tip);
+    container.addEventListener("pointermove", function (e) {
+      var t = e.target.closest("[data-tip]");
+      if (!t) { tip.hidden = true; return; }
+      var box = container.getBoundingClientRect();
+      tip.textContent = t.getAttribute("data-tip");
+      tip.style.left = (e.clientX - box.left) + "px";
+      tip.style.top = (e.clientY - box.top) + "px";
+      tip.hidden = false;
+    });
+    container.addEventListener("pointerleave", function () { tip.hidden = true; });
+  }
+  function width(node) { return Math.max(240, Math.round(node.clientWidth || 300)); }
+
+  // ---------- Section 1: stacked copies ----------
+  function stacked(id, base, r) {
+    var node = document.getElementById(id); node.querySelectorAll("svg").forEach(function (s) { s.remove(); });
+    var n = base.length + r, lo = [], hi = [];
+    for (var i = 0; i < n; i++) { lo.push(base[i] || 0); hi.push(i - r >= 0 ? (base[i - r] || 0) : 0); }
+    var W = width(node), H = 150, padL = 22, padB = 22, padT = 8;
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": "系数柱状图" }, null);
+    var maxV = 3, ih = H - padB - padT, iw = W - padL - 4;
+    var band = iw / n, bw = Math.min(24, band - 2);
+    var ys = function (v) { return ih * v / maxV; };
+    for (var g = 0; g <= maxV; g++) {
+      var gy = padT + ih - ys(g);
+      el("line", { x1: padL, x2: W - 4, y1: gy, y2: gy, stroke: "var(--grid)", "stroke-width": 1 }, svg);
+      txt(svg, padL - 6, gy + 4, g, { "text-anchor": "end" });
+    }
+    for (i = 0; i < n; i++) {
+      var x = padL + i * band + (band - bw) / 2, base0 = padT + ih;
+      var hLo = ys(lo[i]), hHi = ys(hi[i]);
+      var g1 = el("g", { "data-tip": "q^" + i + "：共 " + (lo[i] + hi[i]) + " 种（y=0: " + lo[i] + "，y=1: " + hi[i] + "）" }, svg);
+      el("rect", { x: padL + i * band, y: padT, width: band, height: ih, fill: "transparent" }, g1);
+      if (hHi > 0 && hLo > 0) {
+        el("rect", { x: x, y: base0 - hLo, width: bw, height: hLo, fill: "var(--s1)" }, g1);
+        el("path", { d: barPath(x, base0 - hLo - hHi, bw, hHi - 2), fill: "var(--s2)" }, g1);
+      } else if (hLo > 0) {
+        el("path", { d: barPath(x, base0 - hLo, bw, hLo), fill: "var(--s1)" }, g1);
+      } else if (hHi > 0) {
+        el("path", { d: barPath(x, base0 - hHi, bw, hHi), fill: "var(--s2)" }, g1);
+      }
+      txt(svg, padL + i * band + band / 2, H - 6, i, { "text-anchor": "middle" });
+    }
+    node.appendChild(svg);
+  }
+
+  // ---------- Section 2: r=6 example ----------
+  var D6 = {
+    1: [1,7,27,75,165,302,473,645,774,822,774,645,473,302,165,75,27,7,1],
+    2: [1,7,27,75,165,302,474,652,801,897,939,947,946,947,939,897,801,652,474,302,165,75,27,7,1],
+    3: [1,7,27,75,165,302,474,652,801,897,939,947,947,954,966,972,966,954,947,947,939,897,801,652,474,302,165,75,27,7,1],
+    4: [1,7,27,75,165,302,474,652,801,897,939,947,947,954,966,972,966,954,948,954,966,972,966,954,947,947,939,897,801,652,474,302,165,75,27,7,1]
+  };
+  // a coefficient is in the "dip" if something to its left AND to its right is strictly bigger
+  function dipSet(c) {
+    var n = c.length, L = [], R = [], m = -1, s = new Set();
+    for (var i = 0; i < n; i++) { L[i] = m; m = Math.max(m, c[i]); }
+    m = -1; for (i = n - 1; i >= 0; i--) { R[i] = m; m = Math.max(m, c[i]); }
+    for (i = 0; i < n; i++) if (c[i] < L[i] && c[i] < R[i]) s.add(i);
+    return s;
+  }
+  var curB = 2;
+  function drawFull(c, dips) {
+    var node = document.getElementById("c2full"); node.querySelectorAll("svg").forEach(function (s) { s.remove(); });
+    var W = width(node), H = 170, padL = 34, padB = 22, padT = 8, n = 37; // fixed x-range up to b=4 length
+    var ih = H - padB - padT, iw = W - padL - 4, band = iw / n, bw = Math.max(2, Math.min(24, band - 2)), maxV = 1000;
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": "b=" + curB + " 时的系数" });
+    [0, 500, 1000].forEach(function (g) {
+      var gy = padT + ih - ih * g / maxV;
+      el("line", { x1: padL, x2: W - 4, y1: gy, y2: gy, stroke: "var(--grid)", "stroke-width": 1 }, svg);
+      txt(svg, padL - 6, gy + 4, g, { "text-anchor": "end" });
+    });
+    for (var i = 0; i < c.length; i++) {
+      var h = ih * c[i] / maxV, x = padL + i * band + (band - bw) / 2;
+      var g1 = el("g", { "data-tip": "q^" + i + " 的系数 = " + c[i] + (dips.has(i) ? "（凹处）" : "") }, svg);
+      el("rect", { x: padL + i * band, y: padT, width: band, height: ih, fill: "transparent" }, g1);
+      el("path", { d: barPath(x, padT + ih - h, bw, h), fill: dips.has(i) ? "var(--bad)" : "var(--s1)" }, g1);
+    }
+    [0, 12, 24, 36].forEach(function (t) { if (t < n) txt(svg, padL + t * band + band / 2, H - 6, t, { "text-anchor": "middle" }); });
+    node.appendChild(svg);
+  }
+  function drawZoom(c, dips) {
+    var node = document.getElementById("c2zoom"); node.querySelectorAll("svg").forEach(function (s) { s.remove(); });
+    var mx = Math.max.apply(null, c), idx = [];
+    for (var i = 0; i < c.length; i++) if (c[i] >= mx * 0.99) idx.push(i);
+    var a = idx[0], z = idx[idx.length - 1];
+    while (z - a < 4) { a = Math.max(0, a - 1); z = Math.min(c.length - 1, z + 1); }
+    var win = c.slice(a, z + 1), lo = Math.min.apply(null, win), hi = mx;
+    var W = width(node), H = 150, padL = 40, padR = 10, padB = 22, padT = 18;
+    var ih = H - padB - padT, iw = W - padL - padR;
+    var xs = function (j) { return padL + (win.length === 1 ? iw / 2 : iw * (j - a) / (z - a)); };
+    var ys = function (v) { return padT + ih - ih * (v - lo) / Math.max(1, hi - lo); };
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": "山顶放大图" });
+    [lo, hi].forEach(function (g) {
+      el("line", { x1: padL, x2: W - padR, y1: ys(g), y2: ys(g), stroke: "var(--grid)", "stroke-width": 1 }, svg);
+      txt(svg, padL - 6, ys(g) + 4, g, { "text-anchor": "end" });
+    });
+    var d = "";
+    for (i = a; i <= z; i++) d += (i === a ? "M" : "L") + xs(i) + "," + ys(c[i]);
+    el("path", { d: d, fill: "none", stroke: "var(--ink-3)", "stroke-width": 1.5, "stroke-linejoin": "round", "stroke-linecap": "round", opacity: .6 }, svg);
+    var step = Math.max(1, Math.ceil((z - a + 1) / 9));
+    for (i = a; i <= z; i++) {
+      var g1 = el("g", { "data-tip": "q^" + i + " 的系数 = " + c[i] }, svg);
+      el("circle", { cx: xs(i), cy: ys(c[i]), r: 12, fill: "transparent" }, g1);
+      el("circle", { cx: xs(i), cy: ys(c[i]), r: dips.has(i) ? 5.5 : 4.5, fill: dips.has(i) ? "var(--bad)" : "var(--s1)", stroke: "var(--panel)", "stroke-width": 2 }, g1);
+      if ((i - a) % step === 0) txt(svg, xs(i), H - 6, i, { "text-anchor": "middle" });
+    }
+    // label the lowest dip point
+    if (dips.size) {
+      var m = null; dips.forEach(function (j) { if (m === null || c[j] < c[m]) m = j; });
+      txt(svg, xs(m), ys(c[m]) + 18, c[m], { "text-anchor": "middle", fill: "var(--ink)", "font-size": 12 });
+    }
+    node.appendChild(svg);
+  }
+  function setB(b) {
+    curB = b;
+    document.querySelectorAll(".seg button").forEach(function (bt) { bt.setAttribute("aria-pressed", String(+bt.dataset.b === b)); });
+    var c = D6[b], dips = dipSet(c), ok = dips.size === 0;
+    var pill = document.getElementById("s2pill");
+    pill.className = "pill " + (ok ? "ok" : "no");
+    pill.innerHTML = '<span class="dot" style="background:var(' + (ok ? "--s1" : "--bad") + ')"></span>' + (ok ? "单峰，b 在 U 里" : "不单峰，b 不在 U 里");
+    document.getElementById("c2cap").textContent = "b = " + b + "：共 " + c.length + " 个系数，最高 " + Math.max.apply(null, c) + "。整体看都像一座山，凹处只有放大才看得见。";
+    drawFull(c, dips); drawZoom(c, dips);
+  }
+  document.querySelectorAll(".seg button").forEach(function (bt) { bt.addEventListener("click", function () { setB(+bt.dataset.b); }); });
+
+  // ---------- Section 3: strips ----------
+  var strips = [
+    { label: "r = 7，a = (2, 5, 5, 5, 5, 12)，F = 1", U: [1, 2, 4] },
+    { label: "r = 12，a = (6, 7, 8, 10, 4, 2, 4, 21)", U: [1, 2, 4] },
+    { label: "r = 6，a = (2, 3, 3, 4, 4, 4, 5)", U: [1, 3] }
+  ];
+  var host = document.getElementById("strips");
+  strips.forEach(function (s) {
+    var B = Math.max.apply(null, s.U), row = document.createElement("div"); row.className = "strip-row";
+    var lab = document.createElement("div"); lab.className = "strip-label"; lab.textContent = s.label + "　→ U = {" + s.U.join(", ") + "}，B* = " + B; row.appendChild(lab);
+    var cells = document.createElement("div"); cells.className = "cells";
+    for (var b = 1; b <= B + 2; b++) {
+      var inU = s.U.indexOf(b) >= 0, hole = !inU && b === B - 1;
+      var c = document.createElement("div"); c.className = "cell";
+      c.innerHTML = '<div class="box ' + (inU ? "in" : hole ? "hole" : "out") + '">' + b + '</div><div class="tag">' + (b === B ? "B*" : hole ? "挖掉" : "") + "</div>";
+      cells.appendChild(c);
+    }
+    row.appendChild(cells); host.appendChild(row);
+  });
+
+  // ---------- Section 4: number lines ----------
+  function drawTrapA() {
+    var node = document.getElementById("c4a"); node.querySelectorAll("svg").forEach(function (s) { s.remove(); });
+    var W = width(node), H = 92, pl = 12, pr = 16, max = 11000, y = 46;
+    var xs = function (v) { return pl + (W - pl - pr) * v / max; };
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": "r 的数轴：0 到 400 全部成立，8595 和 10331 处失败" });
+    el("line", { x1: xs(0), x2: xs(max), y1: y, y2: y, stroke: "var(--line)", "stroke-width": 2, "stroke-linecap": "round" }, svg);
+    el("rect", { x: xs(0), y: y - 5, width: Math.max(3, xs(400) - xs(0)), height: 10, rx: 3, fill: "var(--s1)" }, svg);
+    txt(svg, xs(0), y - 14, "r ≤ 400：全部成立", { fill: "var(--ink-2)", "font-size": 12, "font-family": "var(--font-body)" });
+    [8595, 10331].forEach(function (v, k) {
+      var g1 = el("g", { "data-tip": "r = " + v + "：反例" }, svg);
+      el("circle", { cx: xs(v), cy: y, r: 6, fill: "var(--bad)", stroke: "var(--panel)", "stroke-width": 2 }, g1);
+      txt(svg, xs(v), k === 0 ? y + 26 : y - 14, v, { "text-anchor": k === 0 ? "middle" : "end", fill: "var(--ink)", "font-size": 12 });
+    });
+    [0, 5000, 10000].forEach(function (t) { txt(svg, xs(t), H - 4, t === 0 ? "r = 0" : t.toLocaleString("en-US"), { "text-anchor": t === 0 ? "start" : "middle" }); });
+    node.appendChild(svg);
+  }
+  function drawTrapB() {
+    var node = document.getElementById("c4b"); node.querySelectorAll("svg").forEach(function (s) { s.remove(); });
+    var W = width(node), from = 63, to = 73, n = to - from + 1, H = 96, pl = 4, pr = 4;
+    var cw = (W - pl - pr) / n, bw = Math.min(30, cw - 4), y = 34, h = 26;
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": "b 从 63 到 73：到 70 都在 U 里，71、72 不在；Bd 等于 72" });
+    for (var b = from; b <= to; b++) {
+      var x = pl + (b - from) * cw + (cw - bw) / 2, inU = b <= 70;
+      var g1 = el("g", { "data-tip": "b = " + b + (inU ? "：在 U 里" : "：不在 U 里") }, svg);
+      el("rect", { x: x, y: y, width: bw, height: h, rx: 4, fill: inU ? "var(--s1)" : "transparent", stroke: inU ? "none" : "var(--ink-3)", "stroke-dasharray": inU ? "" : "3 2", "stroke-width": 1.2 }, g1);
+      txt(svg, x + bw / 2, y + h + 16, b, { "text-anchor": "middle", fill: (b === 70 || b === 72) ? "var(--ink)" : "var(--ink-3)" });
+    }
+    var x70 = pl + (70 - from) * cw + cw / 2, x72 = pl + (72 - from) * cw + cw / 2;
+    el("line", { x1: x72, x2: x72, y1: 14, y2: y - 2, stroke: "var(--bad)", "stroke-width": 2 }, svg);
+    txt(svg, x72, 10, "Bd = 72", { "text-anchor": "end", fill: "var(--ink)", "font-size": 12 });
+    el("line", { x1: x70, x2: x70, y1: 14, y2: y - 2, stroke: "var(--s1)", "stroke-width": 2 }, svg);
+    txt(svg, x70 - 6, 10, "max U = 70", { "text-anchor": "end", fill: "var(--ink)", "font-size": 12 });
+    node.appendChild(svg);
+  }
+
+  // ---------- Section 6: flow ----------
+  function drawFlow() {
+    var svg = document.getElementById("flow");
+    var steps = [
+      ["0", "文献先行", "每轮至少换 8 种说法去搜"],
+      ["1", "写下默认做法和替代路线", "先把假设摊开"],
+      ["2", "每条路线派一个独立探索者", "每轮 8 个，探索者用 Opus"],
+      ["3", "隐藏留出集机械验证", "H1–H5，每轮换一套新的"],
+      ["4", "默认驳回的复核", "复核者换用 Fable；两人各自重写代码"],
+      ["5", "综合者汇总", "由没参与探索的人来做"],
+      ["6", "六类报告", "按可信程度分门别类"],
+      ["7", "停止规则", "没满足就回到第 0 步"]
+    ];
+    var x0 = 8, bwid = 290, bh = 60, gap = 14, top = 6;
+    var defs = el("defs", {}, svg);
+    var mk = el("marker", { id: "ah", viewBox: "0 0 10 10", refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" }, defs);
+    el("path", { d: "M0,0 L10,5 L0,10 z", fill: "var(--ink-3)" }, mk);
+    steps.forEach(function (s, i) {
+      var y = top + i * (bh + gap), hot = (i === 3 || i === 4);
+      el("rect", { x: x0, y: y, width: bwid, height: bh, rx: 10, fill: hot ? "var(--s1-soft)" : "var(--bg)", stroke: "var(--line)", "stroke-width": 1 }, svg);
+      el("circle", { cx: x0 + 22, cy: y + bh / 2, r: 12, fill: "var(--ink)" }, svg);
+      var n = el("text", { x: x0 + 22, y: y + bh / 2 + 4.5, "text-anchor": "middle", fill: "var(--panel)", "font-size": 13, "font-family": "var(--font-mono)" }, svg); n.textContent = s[0];
+      var t = el("text", { x: x0 + 44, y: y + 25, fill: "var(--ink)", "font-size": 14.5, "font-weight": 700, "font-family": "var(--font-body)" }, svg); t.textContent = s[1];
+      var sub = el("text", { x: x0 + 44, y: y + 45, fill: "var(--ink-2)", "font-size": 11.5, "font-family": "var(--font-body)" }, svg); sub.textContent = s[2];
+      if (i < steps.length - 1) el("line", { x1: x0 + 22, x2: x0 + 22, y1: y + bh + 1, y2: y + bh + gap - 2, stroke: "var(--ink-3)", "stroke-width": 1.5, "marker-end": "url(#ah)" }, svg);
+    });
+    var yLast = top + 7 * (bh + gap) + bh / 2, yFirst = top + bh / 2, xr = x0 + bwid;
+    el("path", { d: "M" + xr + "," + yLast + " H" + (xr + 34) + " V" + yFirst + " H" + (xr + 4), fill: "none", stroke: "var(--accent)", "stroke-width": 1.5, "stroke-dasharray": "4 3", "marker-end": "url(#ah)" }, svg);
+    var lt = el("text", { x: xr + 46, y: (yFirst + yLast) / 2, fill: "var(--ink-2)", "font-size": 12, "font-family": "var(--font-body)", "text-anchor": "middle", transform: "rotate(-90 " + (xr + 46) + " " + ((yFirst + yLast) / 2) + ")" }, svg);
+    lt.textContent = "下一轮（共 3 轮）";
+    svg.setAttribute("viewBox", "0 0 360 " + (top + 8 * (bh + gap)));
+  }
+
+  function renderAll() {
+    stacked("c1a", [1, 2, 2, 1], 2);
+    stacked("c1b", [1, 2, 2, 1], 4);
+    setB(curB);
+    drawTrapA(); drawTrapB();
+  }
+  ["c1a", "c1b", "c2full", "c2zoom", "c4a", "c4b"].forEach(function (id) { attachTip(document.getElementById(id)); });
+  drawFlow();
+  renderAll();
+  var t; window.addEventListener("resize", function () { clearTimeout(t); t = setTimeout(renderAll, 120); });
+})();
+</script>
