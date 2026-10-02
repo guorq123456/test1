@@ -1,0 +1,1 @@
+instances 1499 with a log-concavity violation of delta on [0,argmax] 0 []

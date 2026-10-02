@@ -1,0 +1,245 @@
+[
+ {
+  "path_id": "R3E1",
+  "stayed_on_path": true,
+  "outcome": "FAILED",
+  "candidates_tried_total": 16,
+  "candidates_file": "/tmp/claude-0/qu/explore3/R3E1/candidates.txt",
+  "rules": [],
+  "numeric_claims": [
+   {
+    "claim": "Cross-pair witnesses W2 (max-psi pair), W3 (deepest binding pair), W4 (largest binding gap), W5 (uniform average over pairs) each gave a negative (N*+4)-window in every fit-box instance tested. W1 (the middle pair) failed in 27/1498 small-r instances. The pair-local W6 failed in 4/240 tuned instances and 3/3 known instances.",
+    "script": "/tmp/claude-0/qu/explore3/R3E1/survey2.py (seeds 11 small 1500, 12 big 200), survey3.py (seeds 1-4, 60 each), known3.py",
+    "range": "r<=120 (1498 inst), r>=1000 random (200), tuned r in [3000,20000] (240), plus r=8595,12552,15167"
+   },
+   {
+    "claim": "There are abstract palindromic sequences (log-concave, e unimodal, Wintner sign pattern, Gamma cyclically unimodal) for which S2 fails. Example D1: r=3, D=34, U={1,3,5}. Example D2: r=8, U={1,2,3,5,7}. Example D3: r=3, N*=18, U=[1,18] u {20,22,24}.",
+    "script": "/tmp/claude-0/qu/explore3/R3E1/obstruction.py",
+    "range": "abstract sequences, r in {3,8}"
+   },
+   {
+    "claim": "Decay rate kappa at the crossing level: real fit-box instances have min 8.78 (r<=120, 400 instances) and min 10.62 (r>=1000, 25 instances), or the crossing lies at the support edge. Abstract counterexamples have kappa_eff 0, 0, 0.353.",
+    "script": "/tmp/claude-0/qu/explore3/R3E1/kappa_real.py (seeds 21/22), kappa_smallk.py, obstruction.py",
+    "range": "fit box"
+   },
+   {
+    "claim": "Theorem B hypotheses hold on all three known pair-local-failure instances (eps 2.2e-11, 7.4e-12, 2.8e-34; kappa_eff 4.43, 4.45, 5.97). They also hold for all 41 configurations of a near-jump scan at r=20000 (N* 7->9; binding set down to 1500 pairs), and the middle-pair witness works in each.",
+    "script": "/tmp/claude-0/qu/explore3/R3E1/known_hyp.py, jumpscan.py 20000 100 5600 6400 20",
+    "range": "r=8595,12552,15167,20000"
+   },
+   {
+    "claim": "Coverage on partial runs: Theorem B* applies in 420/420 small-r, 19/19 big-r and 37/37 tuned instances. Theorem B (sine form, condition K) applies in 403/420 small-r instances. No instance was inconsistent, and none was uncovered (neither B/B* nor pair-local at some binding pair).",
+    "script": "/tmp/claude-0/qu/explore3/R3E1/coverage2.py small 11 1500 / big 12 120 / tuned 7 60 (runs incomplete at report time)",
+    "range": "fit box"
+   },
+   {
+    "claim": "Thresholds for (K') as r->oo: c=1 needs kappa>=1.899; c=0.5 needs 2.558; c=0.1 needs 4.336. The heuristic exponential/sine model gives kappa_crit=1.083.",
+    "script": "/tmp/claude-0/qu/explore3/R3E1/kcond.py, model_kcrit.py",
+    "range": "analytic"
+   },
+   {
+    "claim": "Lemma A2 identity: 36702 exact checks, 0 mismatches. Fourier formula for psi: max relative deviation 2.6e-59.",
+    "script": "/tmp/claude-0/qu/explore3/R3E1/check_A2.py, hyp.py",
+    "range": "r<=120 random instances"
+   },
+   {
+    "claim": "Abstract products of log-concave palindromic factors of degree <= r-2 showed 0 S2 failures in 3600 tests. delta=(1-q)A was log-concave on [0, argmax delta] in all 1799 instances checked (r<=120).",
+    "script": "/tmp/claude-0/qu/explore3/R3E1/gen_short.py 1 3000, gen_short2.py 2 600, dlc_test.py",
+    "range": "r<=60 abstract; r<=120 real"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "Lemma A1/A2 (window form): S2 holds iff, for some t in T, S_{n+4}(t) = Phi(L+r-t) - Phi(L+2r+t) - psi(t) is negative. Here n=N*, L=(n+2)r/2, Phi(w)=sum_{i>=0} e(w+ir), and psi is the class-sum profile. Every binding window has the form V_b(t) = H((b+1)r/2,t) - psi(t) with H(w,t)=Phi(w-t)-Phi(w+t).",
+    "proof_file": "/tmp/claude-0/qu/explore3/R3E1/proof_crosspair.txt"
+   },
+   {
+    "statement": "Theorem B* (cross-pair transfer). Assume (H2): for z >= L - r/2, e(z+1) <= e^{-kappa/r} e(z). Let lambda >= max_t psi(t)/t, and assume (K*): some t1 in T has 2(1-e^{-kappa})^2 psi(t1) >= lambda r e^{-kappa(1-t1/r)}. Then a binding pair anywhere forces a negative (N*+4)-window centred at t1+r/2, so beta <= N*+2. Theorem B (sine form) and Corollary C2 give a residue-level certificate eps = sum_{j>=2} j|beta_j|/beta_1 < 1, where beta_j is computed from R_j = prod_i sin(pi j a_i/r)/sin(pi j/r).",
+    "proof_file": "/tmp/claude-0/qu/explore3/R3E1/proof_crosspair.txt"
+   },
+   {
+    "statement": "Proposition D (obstruction). S2 does not follow from the framework's qualitative ingredients: palindromic log-concave A, Lemma 2.1, the sign lemma, cyclic unimodality of Gamma, and sum tau = 0. Explicit sequences D1-D3 satisfy all of these but violate S2, so no cross-pair inequality built only from them can prove S2.",
+    "proof_file": "/tmp/claude-0/qu/explore3/R3E1/proof_crosspair.txt"
+   }
+  ],
+  "failure_report": "S2 is not proved. Where the path broke: Proposition D shows that S2 does not follow from the qualitative ingredients the framework has available. The explicit sequences D1-D3 (obstruction.py) are palindromic and log-concave, have e unimodal, satisfy the Wintner sign pattern and have cyclically unimodal Gamma, yet violate S2. D1 (r=3, D=34) gives U={1,3,5}. D2 (r=8) gives U={1,2,3,5,7}. D3 (r=3) gives N*=18 with 22 in U. So every cross-pair inequality of the type suggested fails on them: neighbouring pairs C+-2, cyclic unimodality of Gamma, sum tau = 0, middle/max-psi/deepest/average witnesses. On real products these witnesses had 0 errors, except the middle pair, which failed 27/1498 at r<=120. What separates products from these sequences is quantitative: the decay rate of e at the crossing. It is >= 8.78 per r in real fit-box data (or the crossing sits at the support edge), against <= 0.353 in D1-D3. What was proved: Theorems B*/B (proof_crosspair.txt) are a rigorous cross-pair transfer. Given (H2) per-unit decay at rate kappa/r beyond L-r/2 and a shape condition on psi (K*, or sine-comparability H1 with kappa >= 1.899 at c=1), a binding pair anywhere forces a negative (N*+4)-window at a pair fixed in advance (near r/4). These theorems cover the known pair-local counterexamples r=8595/12552/15167, all 41 near-jump configurations at r=20000, and every fit-box instance in the partial coverage runs (420 small, 19 big, 37 tuned), with 0 instances uncovered. The missing step for an unconditional proof is a large-deviation estimate: that for prod[a_i]_q, delta decays at local rate >= kappa_0/r (kappa_0 about 1.9-4.4) on z >= L-r/2. Conjecture DLC (delta log-concave on its rising part; 0 violations in 1799 instances) would reduce this to a single local ratio, but it is unproved too. The coverage runs were still running when this report was written (counts above are partial). No P was computed with 121<=r<=999."
+ },
+ {
+  "path_id": "R3E2",
+  "stayed_on_path": true,
+  "outcome": "FAILED",
+  "candidates_tried_total": 7,
+  "candidates_file": "/tmp/claude-0/qu/explore3/R3E2/candidates.txt",
+  "rules": [],
+  "numeric_claims": [
+   {
+    "claim": "Counterexample to O_rho: r=57, rho=(1^37,6,7,9,15,18,20,22,23,25,26,27,28,30,33,37), k=52, sigma=311. P_2(rho) is not unimodal (checked with gt_big), so ND(K_1) fails at 14 values of x, and N*=1, K_1=141. mu*_inf=-16, so 2mu*_inf+3r=139<=141 and O fails at j=1. TP and E hold. With 36 ones (k=51), mu*_inf=14 and the certificate holds.",
+    "script": "/tmp/claude-0/qu/explore3/R3E2/verify_counterexample.py",
+    "range": "r=57, k=51,52 (fit box)"
+   },
+   {
+    "claim": "Smallest padding m (number of ones) at which O_rho fails: r=57 (k'=15): m=37; r=50 (k'=17): m=64; r=31 (k'=19): m=73; r=28 (k'=21): m=58; r=21 (k'=29): m=98. TP and E hold in every case.",
+    "script": "/tmp/claude-0/qu/explore3/R3E2/verify_O_fail.py",
+    "range": "r in {21,28,31,50,57}, k<=140"
+   },
+   {
+    "claim": "44 of 137 random rho', padded with ones to k=140 (only those with u0>=mu_neg), violate O_rho",
+    "script": "python3 /tmp/claude-0/qu/explore3/R3E2/search_O_fail2.py 2 3000",
+    "range": "r in [3,60], k=140, sigma<=3000"
+   },
+   {
+    "claim": "0 violations of TP, of E for all even j (no lower bound on K), of the O-equivalence and of ND(K_j)<=>P_{j+1} unimodal (odd j). Slack N*-(floor(M/r)-4) is always 1 (97 cases) or 3 (2796 cases); 2893 instances.",
+    "script": "python3 /tmp/claude-0/qu/explore3/R3E2/tp_e_check.py 1 3000",
+    "range": "r in [2,40], k<=12, random rho (including ones)"
+   },
+   {
+    "claim": "O_rho holds for all 1500 random rho without residue-1 parts (slack 1: 141 cases, slack 3: 1359 cases)",
+    "script": "python3 /tmp/claude-0/qu/explore3/R3E2/O_noones.py 5 1500",
+    "range": "r in [3,60], k' in [2,40], sigma<=2500"
+   },
+   {
+    "claim": "The certificate fails but S2 holds: lifts of the r=57 counterexample have U=[1,40]u{42}, [1,55]u{57}, [1,144]u{146}, [1,300]u{302}, and ND_a(K_1) holds for each. My computation agrees with gt_big for b=38..45. tools/uni overflows on these instances (coefficients up to 2^273).",
+    "script": "/tmp/claude-0/qu/explore3/R3E2/lift_check.py and /tmp/claude-0/qu/explore3/R3E2/gt_cross.py",
+    "range": "r=57,28; k=52,79; a_i<=400"
+   },
+   {
+    "claim": "Strong certificate (mu_neg) failures: 3 of 4000 random rho' (r 6..30, k' 4..14); 0 for r in 4..8 with k'<=12 (exhaustive). For r=30, rho'=(3,4,5,5,6,9,14,15,16,16,17,18,18,19): max tau=8857385434, tau_0<0, tau_1=0, mu_neg=-15, N*=1, sigma=151. The full certificate still holds for up to m=120 ones.",
+    "script": "/tmp/claude-0/qu/explore3/R3E2/find_strong_fail2.py, find_strong_fail.py, ones_test.py",
+    "range": "r<=30, k<=134"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "Lemma 1: TP_rho holds for every residue multiset rho. If Q_z<0, then d_y<0 with y=sigma+1-r-z, so 2y>sigma+1 and d_y>=tau_y, hence tau_y<0. By T11 Lemma 7 together with tau_{sigma+1-t}=-tau_t, floor((2y-sigma-1)/r) is then even.",
+    "proof_file": "/tmp/claude-0/qu/explore3/R3E2/proof_TPE.txt"
+   },
+   {
+    "statement": "Lemma 2: E_rho holds for every rho, and in fact ND_rho(K_j) holds for every even j>=0 with no lower bound on K. Each such window sum, centred in (0,r/2], is an alternating sum A_j of a nonnegative unimodal sequence whose total is a class sum tau_{t0}>=0 by cyclic unimodality.",
+    "proof_file": "/tmp/claude-0/qu/explore3/R3E2/proof_TPE.txt"
+   },
+   {
+    "statement": "Lemma 3: O_rho <=> r(N*(rho)+5) > sigma+1-2mu*_inf, where N*(rho) is the least odd j with ND_rho(K_j) false. For odd j, ND_rho(K_j) <=> P_{j+1}(rho) unimodal. Equivalently, O_rho <=> N*(rho) >= floor((sigma+1-2mu*_inf)/r)-3, and the slack is always <=3 and odd. Corollary 5: if r(N*(rho)+5) > sigma+1-2mu*_inf(k,tau), then S2 holds for every a with residue multiset rho.",
+    "proof_file": "/tmp/claude-0/qu/explore3/R3E2/proof_TPE.txt"
+   },
+   {
+    "statement": "Proposition 4: O_rho is false in general. There is an explicit fit-box counterexample (r=57, k=52) and a general mechanism. Adding parts equal to 1 leaves A_rho, sigma, tau, ND and N*(rho) unchanged but lowers mu*_inf down to mu_neg once binom(k,2)>=max tau. The certificate then becomes the strong one, which is known to fail (for example r=30, 14-part rho', for any m>=133,084 ones).",
+    "proof_file": "/tmp/claude-0/qu/explore3/R3E2/proof_TPE.txt"
+   }
+  ],
+  "failure_report": "The path cannot be completed, because the target statement 'TP_rho, E_rho, O_rho hold for every rho' is false.\n\nWhat works (proved in /tmp/claude-0/qu/explore3/R3E2/proof_TPE.txt):\n- TP_rho holds for every rho, by cyclic unimodality (T11 Lemma 7) plus e>=0 on the lower half.\n- E_rho holds for every rho, even without the lower bound K>=2mu*_inf. It is the automatic half: alternating sums of a nonnegative unimodal sequence whose total is a class sum >=0.\n- O_rho is equivalent to one inequality: r(N*(rho)+5) > sigma+1-2mu*_inf(k,tau). Equivalently N*(rho) >= floor((sigma+1-2mu*_inf)/r)-3, and the slack is always 1 or 3 when O holds. So Theorem R reduces to that single inequality (Corollary 5).\n\nWhere it breaks: O_rho is false.\n- Explicit fit-box counterexample: r=57, rho=(1^37,6,7,9,15,18,20,22,23,25,26,27,28,30,33,37), k=52, sigma=311. P_2(rho) is not unimodal, so N*=1 and K_1=141. mu*_inf=-16, so 2mu*_inf+3r=139<=141 and O fails. With 36 ones it holds (mu*_inf=14).\n- More cases with minimal padding m (number of ones): m=64 (r=50), m=73 (r=31), m=58 (r=28), m=98 (r=21).\n- 44 of 137 random padded rho' (k=140) fail O.\n- Without residue-1 parts, O held in 1500 of 1500 cases; with few ones, in 2893 of 2893.\n\nMechanism (proved): ones change only k, hence f, hence mu*_inf, which drops toward mu_neg >= -r. Meanwhile N*(rho) and mu*(rho) stay fixed. Once binom(k,2)>=max tau, O becomes the strong certificate O+, which is known to fail (R2E2: 25,737 rho').\n\nThe failure is in the certificate, not in S2. Lifts of the counterexample have U=[1,40]u{42}, [1,55]u{57}, [1,144]u{146}, [1,300]u{302}, and ND_a(K_1) holds for each. Lifting strictly improves ND, and the residue level loses this.\n\nConsequence: any certificate of this kind fails on rho padded with ones. That covers residue-level ND together with any lower bound on mu*(a) that is uniform over all lifts. The k-dependence through mu*_inf runs the wrong way.\n\nUntested suggestion, outside this path because it leaves the parts-<r level: take as base the instance where residue-1 parts equal r+1 (parts equal to 1 can be deleted). Lemmas 1-2 carry over through the parity dichotomy (synthesis Thm 4.7), so only an analogue of O would remain to prove.\n\nTool note: tools/uni overflows on these k~50 instances (it disagrees with gt_big at b=42). I used gt_big and my own exact code."
+ },
+ {
+  "path_id": "R3E3",
+  "stayed_on_path": true,
+  "outcome": "PROOF",
+  "candidates_tried_total": 20,
+  "candidates_file": "/tmp/claude-0/qu/explore3/R3E3/candidates.txt",
+  "rules": [],
+  "numeric_claims": [
+   {
+    "claim": "C2 (r=4, k'<=15 parts >=2): every possible crossing position x_{n*+1} with x-g-4>=0 is excluded (pre-peak), satisfies L' exactly, or has T>=V=2^floor((n2-1)/2). Exhaustive over 7,555,616 capped multisets (exact sizes 2,3,5,6,7,9,10,11, plus lumped parts >=13/14/15 by residue), 30,963,535 checks, 0 uncovered.",
+    "script": "/tmp/claude-0/qu/explore3/R3E3/small_exhaust.c (gcc -O2 -o small_exhaust small_exhaust.c; ./small_exhaust 15) -> small_exhaust_15.txt",
+    "range": "r=4, 1<=k'<=15, n2>=1, all part sizes (tails exact up to x=12)"
+   },
+   {
+    "claim": "C1 analytic coverage (Proposition 8 with Lemma 6/7 bounds): r=4 every k' in [12,140] except 13 is covered; r=5 every k' in [24,140] is covered; r=5 is uncovered for k'<=23.",
+    "script": "/tmp/claude-0/qu/explore3/R3E3/analytic_cert2.py 4 12 140 ; analytic_cert2.py 5 24 140 ; analytic_cert2.py 5 1 60",
+    "range": "r=4: k' in [12,140]; r=5: k' in [1,140]"
+   },
+   {
+    "claim": "C1-6 analytic coverage for r=6, every split k=p+s (p = #parts equal to 2): 0 uncovered k in [54,59] using B_{p,s} domination, and 0 uncovered in [60,140] using the single-convolution-term lower bound.",
+    "script": "/tmp/claude-0/qu/explore3/R3E3/analytic_cert6.py 54 59 ; analytic_cert6m.py 60 140",
+    "range": "r=6, k in [54,140]"
+   },
+   {
+    "claim": "C3 small-V coverage for residue classes with at most 5 middle parts: r=5 with V=5, k in [20,30], 0 uncovered; r=6 with V=11, k in [20,60], 0 uncovered.",
+    "script": "/tmp/claude-0/qu/explore3/R3E3/analytic_smallV.py 5 5 20 30 ; analytic_smallV.py 6 11 20 60",
+    "range": "r=5: k in [20,30]; r=6: k in [20,60]"
+   },
+   {
+    "claim": "C4 own residue certificate (TP,E,O of R2E2 Theorem R), 0 failures. r=5 |rho|<=23: 16,759 checked (790 fit-box-excluded skipped). r=5 [24,40]: 112,880. r=6 |rho|<=26: 165,017 (4,893 skipped). r=6 [27,53]: 4,376,808 (35,397 skipped). r=4 |rho|<=40: 11,227. Counts match the independent Python implementation; failure detection was cross-validated with a mu shift (30/1819 in both).",
+    "script": "/tmp/claude-0/qu/explore3/R3E3/rescert.c (./rescert r KLO KHI 1); reverify_T10.py; rescert_shift.c + val_shift.py",
+    "range": "r=4,5,6 residue multisets up to the stated sizes, fit box only"
+   },
+   {
+    "claim": "Large-k hand-proof constants (Lemmas 12, 13, k>=141): H(9/29-5/141)=0.848386, margins 39.15 (r=4) and 11.26 (r=5) at k=141, both increasing. r=6: kappa_lb=0.10097 > R0^7=0.05057. Case minima 6.148 / 11.001 / 2.047 / 15.907, all >= the needed 1.7230. ALL OK.",
+    "script": "/tmp/claude-0/qu/explore3/R3E3/hand_checks2.py -> hand_checks2.txt",
+    "range": "k>=141 (analytic); exact tables only for p,s<=140"
+   },
+   {
+    "claim": "The residue-level strong certificate (k->infinity mu, residue-1 parts of size 1) fails for 179 of 2,998 r=4 rho'=(2^n2,3^n3) (min n2 among failures = 41). With mu*_inf(k=|rho'|) there are 0 failures.",
+    "script": "/tmp/claude-0/qu/explore3/R3E3/scan4_strong.py -> scan4_strong.txt",
+    "range": "r=4, n2,n3<60, fit box"
+   },
+   {
+    "claim": "L' at n*(C) is never violated in random fit-box samples. The minimum ratio (y_{n+1}-y_{n+2})/y_{n+4} is 3.69e5 (r=5) and 3.11e5 (r=6), and x_{n*+1}<=6 in all 2,826 r=4 samples.",
+    "script": "/tmp/claude-0/qu/explore3/R3E3/lp_check_r.py 5 1 2000 ; lp_check_r.py 6 2 2000 ; lp_stats2.py 2",
+    "range": "r=4,5,6, k<=60, parts<80, fit box"
+   },
+   {
+    "claim": "Bound functions of Lemma 7 validated: 371,285 position checks, 0 violations; at all 1,154 actual crossings, the automatic case or Elb>=Rub holds.",
+    "script": "/tmp/claude-0/qu/explore3/R3E3/validate_bounds.py",
+    "range": "r=4,5,6, k<=30, parts<40"
+   },
+   {
+    "claim": "V bounds (Lemma 5a,b,c, including m<=5 cases) and B_{p,s} domination: 0 violations on 1,473 instances. Lemma 9 class formula: 0 exceptions on 4,182 crossings. Lemma 6 (B, B', domination, beta convexity, operator M>=0): 0 violations.",
+    "script": "/tmp/claude-0/qu/explore3/R3E3/validate_V.py ; sanity_class.py ; sanity_lemmas.py ; second_order.py ; sanity_M.py",
+    "range": "random fit-box instances, r=4,5,6"
+   },
+   {
+    "claim": "End-to-end: exact U has the S2 shape on 394 random fit-box instances (r=4,5,6).",
+    "script": "/tmp/claude-0/qu/explore3/R3E3/s2_endtoend.py 1 400",
+    "range": "r in {4,5,6}, k<=22, parts<4r"
+   }
+  ],
+  "proofs": [
+   {
+    "statement": "THEOREM: Conjecture S2 holds for r=4, r=5 and r=6, for every k and every part sizes. If r divides no a_i, then U = [1,B*] or [1,B*]\\{B*-1}.\n\nUses (cited as refereed): the round-2 synthesis (Thms 3.1 and 4.2, Lemmas 2.1, 3.2, 3.3, 4.1), R2E2 Theorem R (the reduction only; I did not use the R2E2 certificate run, every residue certificate here is my own recomputation), and Thm E.\n\nProof structure.\n(1) Lemma 1 (new): if L' := y_{n+1}-y_{n+2} >= y_{n+4} holds at n=n*(C) for every class pair C with A_inf != 0, then beta_C <= n*(C)+2 for every pair, and S2 follows.\n(2) The y-sequence is nonincreasing after n*. The crossing satisfies T_{n*+1} < |A_inf|.\n(3) Explicit bounds V on |A_inf| from roots of unity: r=4 gives 2^floor((n2-1)/2); r=5 gives about 0.47 phi^k; r=6 gives 3^{p/2}2^s/3+1.\n(4) Operator lemmas for products of q-integers (L_n=(1+q)d/dq-n, P_n=n-(1-q)d/dq), which give:\n  - two-sided ratio bounds j/(j+k-1) <= alpha_{j-1}/alpha_j <= j/(k-j+1);\n  - alpha_j/C(k,j) is nondecreasing and convex, hence second-difference bounds;\n  - binomial and trinomial domination.\n(5) A covering criterion: at each candidate crossing position, either L' holds by the bounds, or T >= V, which rules the position out.\n(6) Assembly by cases:\n  - r=4: exhaustive exact-tail check for k<=15; analytic certificate for 12<=k<=140; hand proof for k>=141. This case does not use Theorem R.\n  - r=5: own residue certificate plus Theorem R for k<=23, with the fit-box-excluded classes covered analytically using V<=5; analytic certificate for 24<=k<=140; hand proof for k>=141.\n  - r=6: own residue certificate plus Theorem R for k<=53, with the excluded classes covered using V<=11; two-parameter analytic certificate for 54<=k<=140; hand proof (entropy and Robbins/Stirling bounds) for k>=141.\n\nAll numeric certificates use only k<=140 and instances inside the fit box.\n\nCaveat on the path. The asymptotic regime runs through the class-pair inequality L', not the residue-level TP/E/O conditions, because the residue-level asymptotics fail: 179 of 2,998 rho' fail for r=4. A side effect: in the regimes handled by Lemma 1, the pair-local inequality beta_C <= n*(C)+2 is proved. For r=5 with k<=23 and r=6 with k<=53, the proof uses Theorem R instead.",
+    "proof_file": "/tmp/claude-0/qu/explore3/R3E3/proof_S2_r456.txt"
+   }
+  ],
+  "failure_report": ""
+ },
+ {
+  "path_id": "R3E4: refute Conjecture S2 globally at large r (r >= 1000)",
+  "stayed_on_path": true,
+  "outcome": "NONEXISTENCE_EVIDENCE",
+  "candidates_tried_total": 316601,
+  "candidates_file": "/tmp/claude-0/qu/explore3/R3E4/candidates.tsv",
+  "rules": [],
+  "numeric_claims": [
+   {
+    "claim": "Random survey: 7,907 instances in 6 families (uniform, concentrated, bimodal and lifted residues, middle parts mixed with residue +-1 parts, many equal small parts). S2 failures: 0. Largest beta-N* seen: 2 (a failure needs >= 4). Largest gap = umin - vmin: 2.34 (a failure needs gap >= 4).",
+    "script": "/tmp/claude-0/qu/explore3/R3E4/survey1.py (generator; float class-pair engine fpv.py), summarised by /tmp/claude-0/qu/explore3/R3E4/make_candidates.py and summ1.py",
+    "range": "r in {1000,1500,2000,3000,5000,8000,12000}, k in 4..3000, D <= 3e6"
+   },
+   {
+    "claim": "Hill-climbs: 308,478 evaluations in 18 runs. Objectives: the gap; obj2 = umin - N* (S2 fails iff obj2 >= 4); the log failure margin; and minimising kappa. Two further searches: small-k lifted residue vectors, and a designed sharp-profile family (216 instances). S2 failures: 0. Best beta-N* = 2. Best resolved obj2 about 2.10. Gap values of 3.6 appear only in coarsely sampled instances, and there beta = N*, so they are interpolation artifacts. The designed family gives beta = N* in all 216 instances.",
+    "script": "/tmp/claude-0/qu/explore3/R3E4/hc.py, hc2.py, hc3.py, hc4.py, hc5.py, design1.py; tallied in candidates.tsv by make_candidates.py",
+    "range": "r in [1000, 30000], k in 4..150, a_i <= 3r (hc3: lifted, a_i up to about 4r)"
+   },
+   {
+    "claim": "Closest near-miss by the failure margin. S2 fails iff min over pairs C of min(T_{N*+1}+y_{N*+2}, T_{N*+3}+y_{N*+4})/|A_C| >= 1. The best value of this log-ratio over the 300 highest-gap resolved instances plus the four r2 pair-local-failure instances is -6.77 nats, which is -1.135 levels (kappa = 5.97), on the r2 instance r=15167, k=111, F=1. The best new instance is r=5000, k=150, a_i in [1394,1493]: -1.19 levels. A counterexample needs >= 0, so about one full level (a factor of about e^6 in the decisive ratio) is missing.",
+    "script": "/tmp/claude-0/qu/explore3/R3E4/nearmiss.py (output nearmiss_top.json)",
+    "range": "304 instances, r in [1000, 50000]"
+   },
+   {
+    "claim": "Exact check, by brute force on the full coefficient list (python-flint big integers) and by an independent exact pair criterion, of two near-misses. (1) r=5000, k=150 (a in nearmiss_top.json): N* = beta = 11; brute-force U restricted to b = 9..16 is {9,10,11}. (2) r=8000, a=(12871,12875,12921,20863,20986): this has the largest gap 2.30 among resolved lifted instances. N* = beta = 8; brute-force U restricted to b = 6..13 is {6,7,8}. The float engine agrees on both.",
+    "script": "/tmp/claude-0/qu/explore3/R3E4/verify_nearmiss.py (uses exact_verify.py)",
+    "range": "the two instances named"
+   },
+   {
+    "claim": "Validation of the float search engine. Against brute force (/tmp/claude-0/qu/tools/gt_big.py): 0 mismatches in U on about 270 random instances with r <= 40, k <= 10. The vectorised engine agrees with the loop version (fpair.py) on (N*, beta): 0 mismatches on 400 random instances with r <= 60. It also reproduces the recorded r2 values: (N*, beta) = (3,5), (3,5), (12,14), (11,11) for r = 8595, 12552, 15167, 50000.",
+    "script": "/tmp/claude-0/qu/explore3/R3E4/val2.py, val4.py, val3.py",
+    "range": "r<=60 fit box (k<=12, a_i<=5r, no excluded families) and the four r2 instances"
+   },
+   {
+    "claim": "Heuristic model, NOT A PROOF: a geometric tail with decay kappa per level, plus a sinusoidal class profile tau that vanishes at the anti-centre class as antisymmetry forces. It predicts excess = gap - 2 = 2*min_w[(ln(pi(1-e^-kappa)/kappa) - ln sin(pi w))/kappa + w/2]. Excess is in index units; failure needs excess >= 2. Observed mean excess 0.065 against model mean 0.068 (n=1602, r >= 3000, N* >= 5, correlation 0.52). Observed maximum 0.30, reached by k=5 lifted instances. The model's excess reaches 2 only when kappa < about 0.95. Observed kappa is never below about 3.9 in resolved instances.",
+    "script": "/tmp/claude-0/qu/explore3/R3E4/model_cmp.py",
+    "range": "survey1 instances with r>=3000, N*>=5"
+   }
+  ],
+  "proofs": [],
+  "failure_report": "I found no counterexample to S2. Every instance I evaluated (316,601 evaluations, all with r >= 1000, up to r = 50000) has beta - N* in {0, 2}. A global S2 failure needs beta - N* >= 4.\n\nMeasures I used:\n- gap = umin - vmin, the continuous crossing positions of the two threshold sequences T_{n+1} and T_{b-1}+y_b, in index units. A failure needs gap >= 4. In well-resolved instances the gap stays at 2.0-2.34. The baseline of 2 is structural.\n- The failure margin min_C log((T_{N*+3}+y_{N*+4})/|A_C|), which must be >= 0. The best value is -1.135 levels, about -6.8 nats.\n- Exact checks: the two best new near-misses were verified by brute force and by the exact pair criterion (verify_nearmiss.py).\n\nWhy it fails (heuristic, quantitative, not a proof):\n- In level units with decay kappa per r-step, pair C has beta_C ~ 2*floor(u_C)+1 and n*(C) ~ 2*floor(u_C - delta_C)+1. Here u_C = -ln|tau(t_C)|/kappa - C/(2r), and delta_C ~ ln((1-e^-kappa)/(1-e^{-kappa(r-C)/r}))/kappa is large only for small-gap pairs, C near r.\n- A global failure needs min_C u_C >= min_C(u_C - delta_C) + 1.\n- Antisymmetry forces tau to vanish at the anti-centre class C = r. So |tau| grows linearly in g' = r-C there, and this cancels the delta advantage of the small-gap pairs to first order.\n- With a sinusoidal tau the excess is only about 0.07 levels at kappa ~ 5-6. This matches the data (mean 0.065 vs 0.068).\n- Escaping needs either kappa < ~1, or a tau concentrated within about r e^{-kappa}/kappa classes of the anti-centre.\n\nNeither is reachable:\n- kappa: the binomial-tail (lifted) regime gives kappa >~ pi*e*(1-2/k). The Gaussian regime gives kappa >= 2*pi. The smallest resolved kappa found by a dedicated minimisation (hc4) and in the surveys was about 3.9.\n- Concentrated tau: this needs many comparable harmonics. That happens only with small effective residues (s or r-s, with s << r). These make |tau| tiny, push the crossing to the extreme tail, and make kappa about e*r/s, which is huge.\n- The designed family built on exactly this idea (two residues near r/2 for a triangle-wave Gamma, small-width parts, lifted +-1 parts; 216 instances) gives beta = N* in every case, with margin -50.\n\nClosest near-misses:\n- r=15167, k=111 (the r2 instance): margin -1.135 levels.\n- r=5000, k=150, a_i in [1394,1493]: margin -1.19 levels; exact U contains 9,10,11 and is not unimodal at b = 12..16 (b = 1..8 not checked).\n- r=8000, a=(12871,12875,12921,20863,20986): largest resolved excess, 0.30 index units; exact U contains 6,7,8 and is not unimodal at b = 9..13 (b = 1..5 not checked).\nA failure needs about +1 level of margin, i.e. excess >= 2.\n\nLimits:\n- The search was in floating point. Ties, if any, would need exact rechecks, but no instance came within a level of failing.\n- Hill-climbs at r >= 10000 were slow, 1.6k-5k evaluations per run.\n- I did not search r > 50000 exhaustively. The model says larger r only helps pair-local failures (r >~ kappa e^kappa), not the global inequality.\n- Coarsely sampled instances (D/r small) give gap values up to 3.69, but these are interpolation artifacts; in all of them beta = N*."
+ }
+]

@@ -1,0 +1,28 @@
+candidate	kind	instances_evaluated	S2_failures_found(error_count)	best_beta_minus_Nstar	best_gap
+survey1:bimodal	random r in {1000..12000}	1358	0	2	2.2045869133619576
+survey1:conc	random r in {1000..12000}	1276	0	2	2.217544428345886
+survey1:lift	random r in {1000..12000}	1315	0	2	2.3392553999671737
+survey1:mixpm1	random r in {1000..12000}	1316	0	2	2.0728999151939256
+survey1:smallparts	random r in {1000..12000}	1288	0	0	0.0
+survey1:unif	random r in {1000..12000}	1354	0	2	2.2010950300590624
+hc:1000 20 2 unif	hill-climb	4850	0	0	2.0819915296567935
+hc:1000 8 1 conc	hill-climb	41540	0	0	3.6902598231325214
+hc:1500 30 4 wide	hill-climb	32942	0	0	3.573327989242858
+hc:2000 12 3 lift	hill-climb	22239	0	0	3.586434701094368
+hc2:10000 80 13 unif	hill-climb	2279	0	2	2.056440327879347
+hc2:20000 100 14 conc	hill-climb	1656	0	2	2.5208595980729607
+hc2:2000 40 11 conc	hill-climb	22377	0	2	2.141759287307684
+hc2:5000 60 12 conc	hill-climb	5494	0	2	2.1222975795775323
+hc3:10000 4 21 3 0	hill-climb	45669	0	2	2.0000000459868126
+hc3:10000 5 22 2 1	hill-climb	31894	0	2	2.195562652597104
+hc3:20000 5 23 2 0	hill-climb	17092	0	2	2.0252493603803767
+hc3:30000 6 24 2 1	hill-climb	9029	0	2	2.143286425410883
+hc4:15000 40 42 30000	hill-climb	5364	0	2	2.091559601399876
+hc4:3000 20 41 9000	hill-climb	47378	0	2	2.11762796942649
+hc5:15000 60 32 conc	hill-climb	2225	0	2	2.173836842424783
+hc5:3000 30 31 conc	hill-climb	16446	0	2	2.099398402359686
+design1:2x(r/2)+small-width+lifted+-1	structured grid	216	0	0	2.0109295153699662
+r2-reanalysis:inst_ki_fail_r8595	given	1	0	2	0
+r2-reanalysis:inst_ki_fail_r12552	given	1	0	2	0
+r2-reanalysis:inst_ki_fail_r15167_Fodd	given	1	0	2	0
+r2-reanalysis:inst_ki_fail	given	1	0	0	0

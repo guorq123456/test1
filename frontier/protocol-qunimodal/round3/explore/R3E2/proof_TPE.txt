@@ -1,0 +1,131 @@
+PATH R3E2 -- the residue certificate (TP, E, O) of T10 (R2E2, Theorem R)
+==========================================================================
+Result: TP_rho and E_rho hold for EVERY residue multiset rho (proved below, Lemmas 1-2).
+        O_rho is equivalent to one inequality (Lemma 3), and it is FALSE for some rho (Proposition 4,
+        explicit counterexample inside the fit box, and an infinite family).  So "TP, E, O for every rho"
+        is false, and Theorem R cannot prove S2 in general.  What survives is Corollary 5.
+
+Notation exactly as in /tmp/claude-0/qu/explore2/R2E2/proof_S2_reduction.txt, applied to a := rho
+(all parts in [1,r-1], so F = 0, D = sigma, A = prod [rho_i]_q, k = number of parts INCLUDING parts equal to 1).
+  e = (1-q)A, e_y = 0 outside [0, sigma+1];  d_y = sum_{m>=0} e_{y-rm} (d_y = 0 for y < 0);  d_y = d_{y-r} + e_y for all y.
+  tau_t = sum_{y = t mod r} e_y;  Q_u = d_u - tau_{u mod r};  Bad = {u : Q_u < 0}.
+  K_j = sigma+1 - r(j+2) (j >= 0).  ND(K): Q_{K-x} >= d_x for all integers x with K - r <= 2x < K.
+  f = coefficients of 1/((1-q)^{k-1}(1-q^r)), mu*_inf = max{u : f_u < tau_u}.
+  (TP) every z in Bad has floor((sigma+1-2z)/r) even.
+  (E)  ND(K_j) for every even j >= 0 with K_j >= 2 mu*_inf.
+  (O)  ND(K_j) for every odd j >= 1 with K_j >= 2 mu*_inf + 3r.
+(K_j with j even is the family K = sigma+1 mod 2r; j odd is K = sigma+1+r mod 2r.)
+
+Facts used (all proved and refereed earlier):
+ (F1) e_y >= 0 whenever 2y <= sigma+1  [R2E2 Lemma 5].  Antisymmetry e_{sigma+1-y} = -e_y [R2E2 Lemma 3 proof].
+      Hence e_y <= 0 whenever 2y >= sigma+1.
+ (F2) R2E2 Lemma 3(b): Q_u = d_{sigma+1-r-u} for every integer u.
+ (F3) T11 Lemma 7 (R2E3, cyclic unimodality of class sums): tau_t > 0 => floor((sigma+1-2t)/r) is even.
+      Equivalent form used below: tau_t < 0 => floor((2t-sigma-1)/r) is even.
+      [Proof of the equivalence: tau_{sigma+1-t} = -tau_t, because y -> sigma+1-y maps the class t onto the class
+       sigma+1-t and e_{sigma+1-y} = -e_y.  If tau_t < 0 then tau_{t'} > 0 for t' = sigma+1-t, and
+       sigma+1-2t' = 2t-sigma-1.  (The parity of floor((W)/r) is unchanged by W -> W +- 2r, so the choice of
+       representative of t mod r does not matter.)]
+ (F4) Synthesis r2 Lemma 2.1 (also R2E3 Lemma 3): put E(s) := e_{(sigma+1)/2 - s} for s in (sigma+1)/2 + Z.
+      E is odd (E(-s) = -E(s)), E(s) >= 0 for s > 0, and (E(s))_{s>0} is unimodal (weakly up, then weakly down,
+      zeros beyond the support included).
+ (F5) Synthesis r2 Theorem 3.1 / Theorem 4.7 with F = 0 (the window-centre dichotomy) -- used only in Lemma 3(b);
+      Lemma 3(b) is not needed for the counterexample.
+
+Elementary observation W (window form of ND).  For x in Z and b >= 1,
+   d_{x+rb} - d_x = sum_{i=1}^{b} e_{x+ri}            (iterate d_y = d_{y-r} + e_y).
+By (F2), Q_{K_j - x} = d_{sigma+1-r-K_j+x} = d_{x + r(j+1)}.  Hence
+   ND(K_j)  <=>  S_j(x) := sum_{i=1}^{j+1} e_{x+ri} >= 0  for every integer x with K_j - r <= 2x < K_j.
+In the coordinate s of (F4) the points x+ri have s_i = (sigma+1-2x)/2 - ri, with mean
+   cbar = (sigma+1-2x)/2 - r(j+2)/2 = (K_j - 2x)/2,  and  K_j - r <= 2x < K_j  <=>  0 < cbar <= r/2.          (W)
+So ND(K_j) says: every sum of j+1 values of E at the points cbar + r t, t = -j/2, ..., j/2, with centre cbar in (0, r/2],
+is >= 0.
+
+---------------------------------------------------------------------------------------------------------------
+LEMMA 1 (TP_rho holds for every rho).
+Proof.
+ 1.1 Let z in Bad, i.e. Q_z < 0.  Put y := sigma+1-r-z.  By (F2) d_y = Q_z < 0.  Put w := 2y - sigma - 1.
+     Then sigma+1-2z = w + 2r, so floor((sigma+1-2z)/r) = floor(w/r) + 2 and it suffices to show: floor(w/r) is even.
+ 1.2 If w <= 0 then every index y - rm (m >= 0) satisfies 2(y-rm) <= 2y <= sigma+1, so by (F1) each e_{y-rm} >= 0
+     and d_y >= 0, contradiction.  So w > 0.
+ 1.3 Claim: d_y >= tau_y.  Indeed tau_y - d_y = sum_{m >= 1} e_{y+rm}, and 2(y+rm) > 2y > sigma+1 (w > 0), so each of
+     these terms is <= 0 by (F1).  Hence tau_y <= d_y < 0.
+ 1.4 By (F3) (equivalent form) tau_y < 0 gives floor((2y-sigma-1)/r) = floor(w/r) even.                         QED
+
+LEMMA 2 (E_rho holds for every rho; in fact ND(K_j) holds for EVERY even j >= 0, without the bound K_j >= 2 mu*_inf).
+Proof. Fix an even j >= 0 and x with K_j - r <= 2x < K_j; let cbar be as in (W), 0 < cbar <= r/2.  The points are
+ cbar + r t, t = -j/2..j/2 (integers, j even).  Note 2 cbar = K_j - 2x == sigma+1 (mod 2) since r(j+2) is even.
+ 2.1 If cbar = r/2: the points are r/2 + r t.  For t <= -1, E(r/2 + rt) = -E(r/2 + r(-t-1)) (oddness), and -t-1 runs over
+     0..j/2-1.  These cancel against the terms t = 0..j/2-1, leaving S = E(r/2 + r j/2) >= 0.
+ 2.2 Let 0 < cbar < r/2 and c' := r - cbar in (r/2, r).  Terms with t >= 0 have positive argument; for t = -u <= -1,
+     E(cbar - ru) = -E(c' + r(u-1)).  So
+         S = sum_{t=0}^{j/2} E(cbar + rt) - sum_{t=0}^{j/2-1} E(c' + rt) = y_0 - y_1 + y_2 - ... + y_j =: A_j,
+     where y_{2t} := E(cbar + rt), y_{2t+1} := E(c' + rt).  The positions cbar < c' < cbar + r < c' + r < ... are
+     increasing and positive, so by (F4) (y_n) is nonnegative and unimodal; let p be a peak index.
+ 2.3 The full alternating sum A_inf := sum_n (-1)^n y_n is the class sum of e over the class of
+     t0 := (sigma+1)/2 - cbar (an integer): the points of that class are exactly s = cbar + r t (t in Z), positive ones
+     give +y_{2t}, negative ones give -y_{2u+1}.  So A_inf = tau_{t0}.  Now 2 t0 - sigma - 1 = -2 cbar in (-r, 0), so
+     floor((2t0-sigma-1)/r) = -1 is odd, and by (F3) (equivalent form) tau_{t0} is not < 0: A_inf >= 0.
+ 2.4 (as in synthesis Lemma 3.4) If j <= p: A_j = y_0 + sum_{i=1}^{j/2} (y_{2i} - y_{2i-1}) >= 0 (y nondecreasing up to p).
+     If j >= p: A_j = A_inf + sum_{t >= 0} (y_{j+1+2t} - y_{j+2+2t}) >= A_inf >= 0 (y nonincreasing from p on;
+     the sum is finite since y has finite support).
+ So S_j(x) >= 0 for every admissible x: ND(K_j) holds.                                                        QED
+
+LEMMA 3 (what O_rho says).
+ (a) Let J_bad := {odd j >= 1 : ND(K_j) fails} and, if J_bad is nonempty, N* := min J_bad.  Since K_j decreases in j,
+     O_rho  <=>  J_bad is empty, or K_{N*} < 2 mu*_inf + 3r,  i.e.   r (N* + 5) > sigma + 1 - 2 mu*_inf.
+     [Proof: O_rho fails iff some j in J_bad has K_j >= 2mu*_inf + 3r; the easiest such j is the smallest.]
+ (b) For odd j:  ND(K_j)  <=>  P_{j+1}(rho) = A_rho(q)[j+1]_{q^r} is unimodal.  Hence N* = N*(rho) is the
+     synthesis invariant (least odd b-1 with P_b(rho) not unimodal), J_bad = {odd j >= N*}, and J_bad is nonempty
+     whenever rho has a part >= 2 (U(rho) is finite, T9).
+     [Proof: by (W), ND(K_j) is the nonnegativity of all (j+1)-windows with z-centre in (0, r/2].  For b = j+1 even
+      = F (mod 2) (F = 0), synthesis Theorem 4.7 says P_b is unimodal iff all b-windows with centre in (0, r/2) are >= 0;
+      the window with centre exactly r/2 is >= 0 by 2.1's computation (self-paired line).]
+ (c) By TP (Lemma 1) applied to z = mu*_inf in Bad_inf subset Bad(rho) (R2E2 Lemma 9c), floor((sigma+1-2mu*_inf)/r)
+     is even, and N* is odd, so the slack  N* - (floor((sigma+1-2mu*_inf)/r) - 4)  is odd, and
+         O_rho  <=>  N*(rho) >= floor((sigma+1-2mu*_inf)/r) - 3.
+     Residue-level TU (R2E2 Lemma 10 at a = rho, b = N*) gives N* <= floor((sigma+1-2mu*(rho))/r) - 1 and
+     mu*_inf <= mu*(rho), so the slack is <= 3; O_rho says the slack is 1 or 3.
+
+So after Lemmas 1-2, Theorem R of R2E2 reads:
+COROLLARY 5 (proved).  Let r divide no a_i, rho = residue multiset of a (k = number of parts of a, parts equal to 1 may be
+deleted first).  If  r (N*(rho) + 5) > sigma + 1 - 2 mu*_inf(k, tau),  then S2 holds for a.
+
+---------------------------------------------------------------------------------------------------------------
+PROPOSITION 4 (O_rho is false in general; computation inside the fit box + a general mechanism).
+ 4.1 Explicit counterexample (verify_counterexample.py, exact integers): r = 57,
+       rho = (1^37, 6,7,9,15,18,20,22,23,25,26,27,28,30,33,37), k = 52, sigma = 311.
+     - P_2(rho) is not unimodal (gt_big.profile: b=1 True, b=2 False), so ND(K_1) fails (Lemma 3b; also checked directly:
+       14 failing x, the first x = 57), N*(rho) = 1, K_1 = sigma+1-3r = 141.
+     - mu*_inf = -16, computed exactly by reslev.mustar_inf (scan of u from -r upward until f_{u-r}, f_u > max tau; f is
+       nondecreasing on u >= 0 for k >= 2): f_u >= tau_u for all u >= -15, and tau_{-16 mod 57} = 77673577415264 > 0 = f_{-16}.
+     - 2 mu*_inf + 3r = 139 <= 141 = K_1, so O_rho fails at j = 1.  TP_rho and E_rho hold (as they must).
+     - With 36 ones instead of 37 (k = 51): mu*_inf = 14 and the certificate holds.
+ 4.2 Mechanism (general, proved).  Fix rho' (parts in [2, r-1]) and add m parts equal to 1.  A_rho, sigma, tau, ND(.)
+     and N*(rho) do not depend on m; only k = |rho'| + m enters, through f.  For u >= 0, f^{(k+1)}_u = sum_{v<=u} f^{(k)}_v
+     >= f^{(k)}_u, so mu*_inf is nonincreasing in m.  For u >= 2, f_u >= binom(u+k-2, k-2) >= binom(k, 2); f_1 = k-1; f_0 = 1.
+     Hence once binom(k,2) >= max_t tau_t, k - 1 >= tau_1 and 1 >= tau_0, no u >= 0 is in Bad_inf and mu*_inf = mu_neg
+     (= max{u in [-r,-1] : tau_u > 0}).  Then O_rho coincides with the strong condition O+_{rho'} of R2E2, which is
+     known to fail for 25,737 rho' (R2E2) -- e.g. r = 30, rho' = (3,4,5,5,6,9,14,15,16,16,17,18,18,19): N* = 1, sigma = 151,
+     mu_neg = -15, K_1 = 62 >= 2(-15)+90 = 60, max tau = 8857385434, tau_0 < 0, tau_1 = 0; so O_rho fails for every
+     m with binom(14+m, 2) >= 8857385434 (m >= 133,084 suffices).  [Numbers for rho' from ones_test.py / find_strong_fail2.py;
+     the statement for large m is the inequality argument above, no computation outside the box.]
+ 4.3 Frequency in the box (search_O_fail2.py, seed 2): among 137 random rho' (r in [3,60], up to 30 parts, padded with
+     ones to k = 140) for which a failure is not excluded a priori (u0 >= mu_neg), 44 violate O_rho.
+     Without residue-1 padding (O_noones.py, seed 5): 0 violations in 1500 random rho' (slack 1: 141, slack 3: 1359);
+     mixed random rho with few ones (tp_e_check.py, seed 1): 0 violations in 2893 (slack 1: 97, slack 3: 2796).
+ 4.4 The failure is a failure of the CERTIFICATE, not of S2: for the lifts a = (58^37, rho') (F = 37) and
+     a = (58^37, rho'+57) (F = 52), (172^37, rho'+114), (343^37, rho'+285), U is [1,40]u{42}, [1,55]u{57}, [1,144]u{146},
+     [1,300]u{302} (lift_check.py, exact; agrees with gt_big on b = 38..45 for the first, gt_cross.py) and ND_a(K_1) holds
+     for each.  (Note: tools/uni overflows on these instances, coefficients ~ 2^273.)
+
+WHY THE PATH CANNOT BE COMPLETED.  Lifting (R2E2 Lemma 7) transfers ND from rho to a, and ND improves strictly under
+lifting.  The certificate needs ND_rho on the range K >= 2 mu*_inf + 3r, where mu*_inf is the large-part value of
+mu*(a), which is attained only when all parts are large.  Parts of residue 1 increase k (hence lower mu*_inf, down to
+mu_neg >= -r) without changing anything at the residue level, so ND_rho must hold far below the residue-level unimodality
+range.  Equivalently (Lemma 3c), O_rho demands N*(rho) >= floor((sigma+1-2mu*_inf)/r) - 3, while N*(rho) is bounded by
+floor((sigma+1-2mu*(rho))/r) - 1 and mu*(rho) is unchanged by the padding.  Any residue-level certificate of this type
+(ND at the residue level plus a lower bound for mu*(a) uniform over all lifts) must fail on these rho.
+Untested suggestion (outside this path because it leaves the parts-<-r level): use as base the instance in which residue-1
+parts are r+1 (parts equal to 1 can be deleted).  Lemmas 1-2 hold for any base with F even/odd in the form
+"ND(K_j) automatic for b = 1+F+j == F+1 (mod 2)" (synthesis Thm 4.7), so only the analogue of O would remain.

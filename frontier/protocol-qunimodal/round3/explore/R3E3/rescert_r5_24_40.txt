@@ -1,0 +1,1 @@
+r=5 k in [24,40] checked=112880 skipped=5321 fails=0

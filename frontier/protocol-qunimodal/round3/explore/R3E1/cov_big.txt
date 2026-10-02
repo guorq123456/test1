@@ -1,0 +1,12 @@
+big 8775 54 21 44 eps=1.09e-18 kappa=9.3 K=1 W1=1 W6=1 PLany=1
+big 3944 117 55 60 eps=2.11e-10 kappa=11.6 K=1 W1=1 W6=1 PLany=1
+big 5384 119 54 91 eps=2.2e-46 kappa=10.8 K=1 W1=1 W6=1 PLany=1
+big 5245 31 16 29 eps=2.81e-10 kappa=15.8 K=1 W1=1 W6=1 PLany=1
+big 10026 58 20 23 eps=3.75e-05 kappa=14 K=1 W1=1 W6=1 PLany=1
+big 3075 107 53 86 eps=1.72e-34 kappa=12 K=1 W1=1 W6=1 PLany=1
+big 9151 108 48 77 eps=1.26e-40 kappa=9.53 K=1 W1=1 W6=1 PLany=1
+big 12696 72 47 68 eps=3.24e-14 kappa=9.53 K=1 W1=1 W6=1 PLany=1
+big 14381 135 53 58 eps=2.37e-10 kappa=11.9 K=1 W1=1 W6=1 PLany=1
+big 13970 56 33 34 eps=0.000626 kappa=12.1 K=1 W1=1 W6=1 PLany=1
+big 1784 140 55 94 eps=1.97e-26 kappa=9.69 K=1 W1=1 W6=1 PLany=1
+big 4874 123 38 43 eps=1.37e-10 kappa=11.2 K=1 W1=1 W6=1 PLany=1

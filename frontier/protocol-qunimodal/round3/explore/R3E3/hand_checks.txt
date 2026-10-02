@@ -1,0 +1,16 @@
+OK   1-2theta=0.1 > theta^5
+OK   H(9/29-5/401) >= 0.8785  [0.87867902]
+OK   r=4: f4(401)>0 and f4 increasing (0.3785 > 1/(402 ln2))
+OK   r=5: V5(k) <= phi^k for k>=2 (0.4703+0.7609/phi^2<1)
+OK   r=5: f5(401)>0 and increasing
+OK   R0=0.65289256, kappa_lb=0.11593016 >= 0.11592
+OK   R0^7=0.0505699 < 0.11592
+OK   0.395k-6 >= 0.385k for k>=601
+need b1+b2 >= 1.5238361
+p>=300: b1 >= 0.16672939 p - log2(p+1)
+s>=300: multinomial type entropy >= 1.1284885 (vertices [('0.68833', '0.245', '0.066667'), ('0.66833', '0.265', '0.066667'), ('0.685', '0.245', '0.07'), ('0.665', '0.265', '0.07')])
+min_{p<300} b1min = -1.6405   min_{s<300} b2min = -1.0931
+case p<300: 20.677  case s<300: 41.016  case both>=300: 63.865
+OK   all cases >= need
+OK   b1_big, b2_big increasing beyond 300
+ALL OK

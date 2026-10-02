@@ -1,0 +1,11 @@
+R3E2 candidates (path: residue certificate TP/E/O of T10 via cyclic unimodality of class sums)
+Each line: candidate | status | fit-box error count (instances violating it) | script
+
+1. TP_rho for every rho (via T11 Lemma 7 + e>=0 + d_y >= tau_y beyond centre) | PROVED (proof_TPE.txt Lemma 1) | 0 violations / 2893 random rho | tp_e_check.py 1 3000
+2. E_rho for every rho, even without the lower bound K>=2mu*_inf (automatic half, Thm 4.7 parity) | PROVED (Lemma 2) | 0 / 2893 (ND(K_j) for all even j>=0) | tp_e_check.py 1 3000
+3. Equivalence O_rho <=> r(N*(rho)+5) > sigma+1-2mu*_inf, and ND(K_j) (j odd) <=> P_{j+1}(rho) unimodal | PROVED (Lemma 3) | 0 mismatches / 2893 | tp_e_check.py 1 3000
+4. O_rho for every rho (the remaining certificate condition) | REFUTED | 44 violations / 137 padded rho (k=140); explicit r=57,k=52 | search_O_fail2.py 2 3000, verify_O_fail.py, verify_counterexample.py
+5. O_rho for rho with no residue-1 parts (k = k') | open, unproved | 0 / 1500 | O_noones.py 5 1500
+6. Strong certificate O+ (mu_neg instead of mu*_inf) | known false (R2E2), re-observed | 3 / 4000 random rho' (r 6..30) ; 0 for r 4..8, k'<=12 exhaustive (find_strong_fail.py) | find_strong_fail2.py, find_strong_fail.py
+7. Full certificate for rho' + m ones, m up to 120 (r=24,30 strong-failing rho') | holds in box for these 3 rho' (tau ~1e9-1e10 too large); fails for m >= 133,084 by proof | 0 / 27 | ones_test.py
+Total candidates tried: 7

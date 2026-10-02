@@ -1,0 +1,254 @@
+THEOREM.  Conjecture S2 holds for r = 4, r = 5 and r = 6, for every k and all part sizes:
+if r divides no a_i, then U = [1,B*] or U = [1,B*] \ {B*-1}.
+(If r divides some a_i, U = all b by C43, and S2 is vacuous.)
+
+Path R3E3: fixed small r, finite exact computation for few parts plus an analytic regime for many parts.
+All scripts are in /tmp/claude-0/qu/explore3/R3E3/.
+
+==========================================================================================
+0. WHAT IS CITED (all listed as established and refereed in the task)
+==========================================================================================
+[S]   Round-2 synthesis, /tmp/claude-0/qu/synth/r2/proof.txt:
+        Lemma 2.1 (for each class pair the sequence y_n is unimodal), Theorem 3.1 (pair criterion),
+        Lemma 3.2 (A_inf = tau(u)), Lemma 3.3 (sign lemma), Lemma 4.1, Theorem 4.2 (structure of U).
+[R]   R2E2 Theorem R (/tmp/claude-0/qu/explore2/R2E2/proof_S2_reduction.txt): if r divides no a_i and
+      TP_rho, E_rho, O_rho hold for the residue multiset rho of a, then S2 holds for a.
+      I do NOT cite R2E2's certificate run. All residue certificates used below were recomputed by my own
+      code (rescert.c, cross-checked against my independent Python cert.py).
+[E]   Thm E: if at most two a_i have a middle residue, then U = [1,T6], an interval, so S2 holds.
+Standard facts: binomial and multinomial type-class bounds
+      C(n,m) >= 2^{n H(m/n)}/(n+1),   multinomial(n; n0,n1,n2) >= 2^{n H(n0/n,n1/n,n2/n)}/(n+1)^2
+      (P^n(T(P)) >= 1/#types and #types <= (n+1)^{|X|-1}).
+
+Reduction 0.1.  A part a_i = 1 contributes the factor [1]_q = 1. Removing it changes neither P, F, D nor U.
+So WLOG every a_i >= 2. From now on k = number of parts, all >= 2, and r divides no a_i.
+Notation:
+  A = prod [a_i]_q = sum alpha_x q^x,  D = deg A,  delta_x = alpha_x - alpha_{x-1} (alpha = 0 off [0,D]),
+  rho_j := alpha_{j-1}/alpha_j (1 <= j <= D; a RATIO),  sigma = sum (res_i - 1) with res_i = a_i mod r,  F = sum floor(a_i/r).
+  (The residue MULTISET of [R] is written rho without index.)
+Class pairs, y_n, A_n, a_n, n*(C), G_b, beta_C, N*, beta: as in [S].
+
+==========================================================================================
+1. REDUCTION OF S2 TO A TAIL INEQUALITY (all r)
+==========================================================================================
+Lemma 1.  Let C be a class pair with A_inf(C) != 0, n := n*(C), and suppose
+            (L')   y_{n+1} - y_{n+2} >= y_{n+4}.
+          Then G_{n+4} < 0, hence beta_C <= n+2.
+          If (L') holds for every class pair with A_inf(C) != 0, then S2 holds.
+Proof.  Put T_j := sum_{t>=0} (-1)^t y_{j+t} (a finite sum). Since A_inf = A_m + (-1)^{m+1} T_{m+1},
+  a_m = (-1)^m A_m = (-1)^m A_inf + T_{m+1}.  For dangerous m (m == F+1 mod 2), Lemma 3.3 of [S] gives
+  (-1)^m A_inf = -|A_inf|  (F even: A_inf >= 0 and m odd; F odd: A_inf <= 0 and m even).  So
+            a_m = T_{m+1} - |A_inf|   for every dangerous m.                                  (1.1)
+  n is dangerous (Lemma 4.1(a) of [S]) and a_n < 0, so T_{n+1} < |A_inf|.  n+2 is dangerous, so
+  G_{n+4} = a_{n+2} + y_{n+4} = T_{n+3} - |A_inf| + y_{n+4}
+          = T_{n+1} - (y_{n+1} - y_{n+2}) + y_{n+4} - |A_inf|  <  -(y_{n+1} - y_{n+2} - y_{n+4})  <= 0.
+  n+4 == F+1 (mod 2), so by the definition of beta_C, beta_C <= n+2.
+  For the last claim, Theorem 4.2 of [S] gives U = [1,N*] u {N*+2,...,beta} with beta = min_C beta_C, and N* = n*(C0)
+  for some pair C0. C0 has A_inf(C0) != 0, because otherwise n*(C0) would be infinite. So beta <= beta_{C0} <= N*+2,
+  and U is [1,N*] or [1,N*] u {N*+2}. That is S2.                                                                  []
+
+Lemma 2 (past the peak).  Let p be a peak index of the unimodal sequence (y_n) (Lemma 2.1 of [S]).
+  Then n*(C) >= p+1, so y_j >= y_{j+1} for every j >= n*(C).
+Proof.  Lemma 4.1(c) of [S]: along dangerous indices, a_{m+2} - a_m = y_{m+2} - y_{m+1} >= 0 while m+2 <= p, and the first
+  value is >= 0.  So a_m >= 0 for every dangerous m <= p. Hence n* > p.                                            []
+
+Lemma 3 (positions).  For pair C, x_n := (D+1-Z_n)/2 with Z_{2s} = 2rs + C and Z_{2s+1} = 2r(s+1) - C, and y_n = delta_{x_n}
+  (delta := 0 at negative positions). Then x_{2s} - x_{2s+1} = r - C, x_{2s+1} - x_{2s+2} = C, and x_{j+2} = x_j - r.
+  With x := x_{n+1} and g := x_{n+1} - x_{n+2} in {C, r-C}:
+     x_{n+1+2t} = x - rt,   x_{n+2+2t} = x - g - rt,
+     (L')  <=>  delta_x - delta_{x-g} >= delta_{x-g-r},
+     T_{n+1} = sum_{t>=0} (delta_{x-rt} - delta_{x-rt-g}).
+  All positions satisfy x_j <= D/2.  Proof: direct from the definition of Z_n in [S].                               []
+
+Corollary 3.1 (automatic case).  If x - g - r < 0, then (L') holds at n = n*(C).
+  Proof.  The right side is delta at a negative position, which is 0. The left side is y_{n+1} - y_{n+2} >= 0 by Lemma 2.  []
+
+Lemma 4 (the crossing value).  Let V be any integer with |A_inf(C)| <= V. If T_{n+1} >= V for the index n with
+  x_{n+1} = x, then n != n*(C).  Proof: by (1.1), a_n = T_{n+1} - |A_inf| >= 0.                                      []
+
+==========================================================================================
+2. BOUNDS ON |A_inf|  (A_inf(C) = tau(u) by Lemma 3.2 of [S])
+==========================================================================================
+tau(t) = (1/r) sum_{j=1}^{r-1} zeta^{-jt}(1-zeta^j) A(zeta^j), zeta = e^{2 pi i/r} (the j=0 term vanishes), and
+|[a]_{zeta^j}| = |sin(pi j a/r)/sin(pi j/r)| depends only on a mod r.
+Lemma 5.
+ (a) r = 4 and n2 := #{a_i == 2 mod 4} >= 1:  |tau(t)| <= 2^{floor((n2-1)/2)} <= 2^{floor((k-1)/2)}.
+     Proof.  [a]_{-1} = 0 for even a, so A(-1) = 0.  [a]_i = 1, 1+i, i for a == 1, 2, 3 (mod 4), so
+     A(i) = (1+i)^{n2} i^{n3}, and tau(t) = (1/2) Re(i^{-t}(1-i)A(i)) = Re(i^{n3-t}(1+i)^{n2-1}).
+     For n2-1 = 2m: (1+i)^{2m} = (2i)^m, so tau is in {0, +-2^m}.  For n2-1 = 2m+1: (1+i)^{2m+1} = (2i)^m (1+i),
+     whose rotated real part is +-2^m.
+ (b) r = 5, with m := number of middle parts (residue 2 or 3): |A(zeta^{+-1})| = phi^m and |A(zeta^{+-2})| = phi^{-m}
+     (|[2]|, |[3]| are phi at j = 1 and 1/phi at j = 2; residues 1 and 4 give 1). So
+       |tau| <= (2/5)(2 sin(pi/5) phi^m + 2 sin(2pi/5) phi^{-m}) <= V5(k) := vmax(5,k)  (vbound.py; ~0.4702 phi^k + 0.7608),
+     and if m <= 5, |tau| <= floor(5.2835...) = 5.
+ (c) r = 6, with p := #{a_i = 2} and s := #{a_i >= 3}.  |A(zeta^{+-1})| <= 3^{p/2} 2^s, since a part equal to 2 gives sqrt3 and
+     any part gives at most 2 (residues 1..5 give 1, sqrt3, 2, sqrt3, 1). |A(zeta^{+-2})| <= 1 (each factor is 0 or 1).
+     |A(-1)| <= 1. So
+       |tau| <= 3^{p/2} 2^s / 3 + (1+sqrt3)/3,   V6(p,s) := floor of that (analytic_cert6.V6).
+     If m := #middle parts (residue 2, 3, 4) <= 5:  |tau| <= 2^m/3 + (1+sqrt3)/3 <= 11.577..., so |tau| <= 11.
+ Numerical cross-check: validate_V.py (1473 random fit-box instances, 0 violations of (a), (b), (c)).
+
+==========================================================================================
+3. COEFFICIENT INEQUALITIES FOR PRODUCTS OF q-INTEGERS (k parts, all >= 2)
+==========================================================================================
+Lemma 6.  For a polynomial G and an integer n put L_n G := (1+q)G' - nG and P_n G := nG - (1-q)G'.
+  Both satisfy Leibniz:  L_{n+m}(GH) = (L_n G)H + G(L_m H),  P_{n+m}(GH) = (P_n G)H + G(P_m H).
+ (a) L_1[a] = sum_{j=1}^{a-2} 2j q^j + (a-2) q^{a-1} >= 0 for a >= 2.  Hence L_k A >= 0 coefficientwise.  Its q^j coefficient is
+     (j+1)alpha_{j+1} - (k-j)alpha_j, so
+          rho_j <= j/(k-j+1)   (1 <= j <= k).                                                           (Lemma B)
+ (b) P_1[a] = a q^{a-1} >= 0.  Hence P_k A >= 0: (j+1)alpha_{j+1} <= (k+j)alpha_j, so
+          rho_j >= j/(j+k-1)   (j >= 1).                                                                (Lemma B')
+ (c) [a] >= 1+q coefficientwise (a >= 2), so alpha_x >= C(k,x).  For r = 6 also [a] >= [3] for a >= 3, so
+     alpha >= B_{p,s} := (1+q)^p (1+q+q^2)^s coefficientwise.                                          (domination)
+ (d) rho_j <= 1 for 1 <= j <= (D+1)/2, since A is palindromic and unimodal.
+ (e) (Second order.)  L_{k-1}(L_k A) >= 0.  Proof: L_k A = sum_i (L_1[a_i]) Ahat_i, where Ahat_i = prod_{l != i}[a_l] has
+     k-1 factors.  By Leibniz with (0, k-1): L_{k-1}((L_1[a_i]) Ahat_i) = (L_0 L_1[a_i]) Ahat_i + (L_1[a_i])(L_{k-1}Ahat_i).
+     L_0 G = (1+q)G' >= 0 for G >= 0, and L_{k-1}Ahat_i >= 0 by (a).
+     Put beta_j := alpha_j/C(k,j) (0 <= j <= k).  With N_j := (j+1)alpha_{j+1} - (k-j)alpha_j = k C(k-1,j)(beta_{j+1} - beta_j),
+     the inequality (j+1)N_{j+1} >= (k-1-j)N_j and (j+1)C(k-1,j+1) = (k-1-j)C(k-1,j) > 0 give
+     beta_{j+2} - beta_{j+1} >= beta_{j+1} - beta_j for 0 <= j <= k-2.  So beta is nondecreasing (by (a)) and convex on [0,k].
+     Consequence: for 1 <= x <= k with 2x <= k+3 (so C(k,x-1) >= C(k,x-2)), and kappa_x := D2C(k,x)/C(k,x):
+          D2 alpha_x := alpha_x - 2alpha_{x-1} + alpha_{x-2} >= kappa_x alpha_x.
+     Proof: with d1 = beta_x - beta_{x-1} >= d2 = beta_{x-1} - beta_{x-2} >= 0,
+     D2 alpha_x = beta_x D2C_x + d1(2C_{x-1} - C_{x-2}) - d2 C_{x-2} >= beta_x D2C_x + 2 d1 (C_{x-1} - C_{x-2}) >= beta_x D2C_x.
+     (x = 1: D2 alpha_1 = k - 2 = D2 C_1.)                                                              []
+ Numerical cross-checks (not used in the proof): sanity_lemmas.py and second_order.py (0 violations).
+
+Lemma 7 (the bound functions in analytic_cert2.make(k)).  Write rhi(j) = min(1, j/(k-j+1)) (rhi(j) = 1 if j > k),
+  rlo(j) = j/(j+k-1), rhi(0) = rlo(0) = 0, pihi(x,g) = prod_{i<g} rhi(x-i), pilo(x,g) = prod_{i<g} rlo(x-i)
+  (0 if some x-i <= 0).  For 0 <= x <= D/2 and 1 <= g <= r-1:
+   (i)  (delta_x - delta_{x-g})/alpha_x >= Elb(x,g) := max(E1, E2), where
+        E1 = 1 - rhi(x) - pihi(x,g)(1 - rlo(x-g))      [E1 = 1 - rhi(x) if x < g],
+        E2 = sum_{i<g} kappa_{x-i} * (pilo(x,i) if kappa >= 0 else pihi(x,i))   (only if every x-i is kappa-valid).
+        E1 follows from delta_x - delta_{x-g} = alpha_x(1-rho_x) - alpha_{x-g}(1-rho_{x-g}), alpha_{x-g}/alpha_x = prod rho, and
+        Lemma 6(a,b,d).  E2 follows from delta_x - delta_{x-g} = sum_{i<g} D2 alpha_{x-i} and Lemma 6(e).
+   (ii) delta_{x-g-r}/alpha_x <= Rub(x,g,r) := pihi(x, g+r) (1 - rlo(x-g-r)).
+   (iii) If n+1 is past the peak (Lemma 2), then T_{n+1} >= Tlb(x,g) := sum_{t>=0} Bnd(x-rt) * max(0, Elb(x-rt,g)),
+        where Bnd = C(k,.) (r = 4, 5), or for r = 6 B_{p,s} or any lower bound for it (e.g. max_{x1} C(p,x1)Tri_s(x-x1)).
+        Each summand delta_{x'} - delta_{x'-g} is >= 0 (Lemma 2), and it is >= alpha_{x'} Elb(x') >= Bnd(x') Elb(x') when
+        Elb > 0 (Lemma 6(c)).
+  validate_bounds.py: 371,285 position checks on random fit-box instances (r = 4, 5, 6), 0 violations; at all 1,154 actual
+  crossings x_{n*+1}, either the automatic case holds or Elb >= Rub.
+
+Proposition 8 (covering criterion).  Fix r, k, a bound V >= |A_inf| (Lemma 5), and a gap g.  Call x >= g + r COVERED if
+  Elb(x,g) >= Rub(x,g,r) or Tlb(x,g) >= V.  If every x >= g + r is covered, then (L') holds at n*(C) for every pair whose
+  gap at n*(C)+1 is g.
+Proof.  Let x = x_{n*+1}.  If x - g - r < 0, use Cor 3.1.  Otherwise, if Elb >= Rub, Lemma 7(i,ii) gives
+  delta_x - delta_{x-g} >= alpha_x Elb >= alpha_x Rub >= delta_{x-g-r}, which is (L').  If Tlb >= V, then
+  T_{n*+1} >= V by Lemma 7(iii), contradicting Lemma 4.                                                               []
+Window remark (used by the scripts).  Tlb(x+r,g) >= Tlb(x,g).  So if Tlb >= V at r consecutive x, all larger x are covered.
+
+Lemma 9 (where x_{n*+1} can be).  (g, x_{n*+1} mod r) = (r - C, (sigma+1-C)/2 mod r) for some pair C, whatever the parity of F.
+Proof.  n*+1 == F (mod 2) (Theorem 4.2 of [S]).  If F is even, n*+1 = 2s and x = (D+1-C)/2 - rs with gap r - C.  Since
+  D = rF + sigma and F/2 is an integer, x == (sigma+1-C)/2 (mod r).  If F is odd, n*+1 = 2s+1, x = (D+1+C)/2 - r(s+1),
+  gap C, and x == (r+sigma+1+C)/2 (mod r).  Substituting C' = r - C gives gap r - C' and class (sigma+1-C')/2 (mod r),
+  where C' is again a class pair.                                                                                     []
+  r = 4:  sigma odd -> (g, x) = (2, (sigma-1)/2);  sigma even -> (1, sigma/2+3) or (3, sigma/2)  (mod 4).
+  sanity_class.py: 4,182 crossings, 0 exceptions.
+
+==========================================================================================
+4. CERTIFICATES (exact integer or rational arithmetic; all outputs saved)
+==========================================================================================
+C1 (analytic_cert2.py r lo hi): Proposition 8 checked for all g, with V = 2^floor((k-1)/2) (r = 4) or vmax(5,k) (r = 5).
+   x is scanned up to k+3r+8, and Tlb >= V is required at the last r scanned x (window remark).
+   r = 4: every k in [12,140] except k = 13 is covered (cert2_r4_12_140.txt).
+   r = 5: every k in [24,140] is covered (cert2_r5_24_140.txt); k <= 23 is not (cert2_r5_1_60.txt).
+C1-6 (r = 6), for every split k = p + s and with V = V6(p,s):
+   k in [54,59]: analytic_cert6.py with Bnd = B_{p,s} (cert6_54_59.txt).
+   k in [60,140]: analytic_cert6m.py with Bnd(x) = max_{x1} C(p,x1) Tri_s(x-x1), a single convolution term, which is a lower
+   bound for B_{p,s} (cert6m_60_140.txt).  This expands only (1+q)^p and (1+q+q^2)^s with p, s <= 140.
+   Both scripts use integer floors of Elb * 2^30 in the T-sums, which give a lower bound.  0 uncovered k.
+C2 (small_exhaust.c, r = 4, k <= 15): exhaustive over all multisets of k <= 15 parts from 11 types: exact sizes 2,3,5,6,7,9,10,11
+   and lumped L1, L2, L3 (any part >= 13, >= 14, >= 15 with residue 1, 2, 3).  For x <= 12 the tail alpha_0..alpha_12 is exact for every
+   realization.  Only multisets with n2 >= 1 are checked, with V = 2^floor((n2-1)/2) (Lemma 5a), and only the (g, class)
+   allowed by Lemma 9.  A candidate x <= 12 is excluded if some chain step at or below x increases (it would then be before the
+   peak, against Lemma 2), or if the exact (L') holds, or if the exact T >= V (Lemma 4).  Positions x >= 13 are covered by the
+   largest chain position xc <= 12 of the same class: either that chain is pre-peak, or T(x) >= T(xc) >= V.  Positions with
+   2x >= D+1 do not exist and are skipped only when there is no lumped part.
+   Result: 7,555,616 multisets, 30,963,535 checks, 0 uncovered (small_exhaust_15.txt).
+C3 (analytic_smallV.py): C1 bounds with a fixed V for the residue classes with at most 5 middle parts:
+   r = 5, V = 5, k in [20,30]: 0 uncovered (smallV_r5.txt);  r = 6, V = 11, k in [20,60]: 0 uncovered (smallV_r6.txt).
+C4 (rescert.c r KLO KHI 1): my own C implementation of TP_rho, E_rho, O_rho of [R], with mu*_inf(k) from
+   f = 1/((1-q)^{k-1}(1-q^r)).  It enumerates all residue multisets with KLO <= |rho| <= KHI and skips (fit-box exclusion (a)) those
+   with exactly 4 or 5 middle residues when |rho| >= 20.
+   r = 4, |rho| <= 40: 11,227 checked, 0 fails (rescert_r4_1_40.txt), only as a cross-check.
+   r = 5, |rho| <= 23: 16,759 checked, 0 fails, 790 skipped (rescert_r5_1_23.txt);  [24,40]: 112,880 checked, 0 fails.
+   r = 6, |rho| <= 26: 165,017 checked, 0 fails, 4,893 skipped;  [27,53]: 4,376,808 checked, 0 fails, 35,397 skipped
+   (rescert_r6_1_26.txt, rescert_r6_27_53.txt).
+   Validation of C4: identical counts to the independent Python implementation cert.py (reverify_T10.py: r=4 815/0,
+   r=5 16,759/0/790 skipped, r=6 165,017/0/4,893 skipped).  Failure detection was tested by shifting mu by -6 (rescert_shift.c
+   against val_shift.py): both report the same 30 failures out of 1,819.  __int128 is safe: a guard aborts if any coefficient
+   exceeds 2^120, and f saturates at 2^100 (tau is far smaller).
+
+==========================================================================================
+5. LARGE k (hand proofs for k >= 141; constants checked by hand_checks2.py, all "OK")
+==========================================================================================
+Lemma 12 (r in {4,5}, k >= 141).  Every x >= g+r is covered (Proposition 8).
+ theta = 9/20, xi = 9(k+1)/29.  If j <= xi then rhi(j) = j/(k-j+1) <= theta.
+ * x <= xi: E1 >= 1 - theta - theta^g >= 1 - 2theta = 1/10 > theta^5 >= Rub.  So x is covered by (L).
+ * x > xi: let x' be the largest chain position x - rt <= xi.  Then x' > xi - r, so x' >= m := ceil(xi) - r, and
+   Elb(x') >= 1/10.  So Tlb >= C(k,x')/10 >= C(k,m)/10 (m <= x' <= xi < k/2), and
+   C(k,m) >= 2^{kH(m/k)}/(k+1) with m/k in [9/29 - 5/141, 0.3112].  H(9/29 - 5/141) = 0.848386.
+   r = 4 (V <= 2^{(k-1)/2}): need 0.848386k - log2(k+1) - log2 10 >= (k-1)/2.  The margin is 39.15 at k = 141 and increasing.
+   r = 5 (V5(k) <= phi^k): need 0.848386k - log2(10(k+1)) >= k log2 phi.  The margin is 11.26 at k = 141 and increasing.
+Lemma 13 (r = 6, k >= 141).  Every x >= g+6 is covered, for every split k = p + s.
+ Let L2 = 0.395 and R0 = L2/(1-L2) = 0.652893.
+ * x <= L2 k: rhi(j) < R0 for j <= x.  With r_j = j/(k-j+1),
+   kappa_x = (1-r_x)^2 - r_x(r_x - r_{x-1}) >= (1-R0)^2 - (k+1)/(0.605k)^2 >= 0.100970  (k >= 141).
+   Every kappa_{x-i} > 0, so Elb >= E2 >= kappa_x > R0^7 = 0.050570 >= Rub.  So x is covered by (L).
+ * x > L2 k: the largest chain position x' <= L2 k satisfies x' > L2 k - 6, so lambda = x'/k lies in
+   [lambda1, 0.395] with lambda1 = 0.395 - 6/141 = 0.352447.
+   Tlb >= kappa_lb B_{p,s}(x') >= kappa_lb C(p,x1) Tri_s(x2), with x1 = floor(lambda p) and x2 = x' - x1 in [lambda s, lambda s + 1).
+   Since V6 <= 3^{p/2}2^s/3 + 1 and 3^{-p/2}2^{-s} <= 2^{-100}, it suffices that b1 + b2 >= 1.72304, where
+   b1 = log2 C(p,x1) - (p/2) log2 3 and b2 = log2 Tri_s(x2) - s.
+   Exact tables for p, s <= 140 (single-value products only):
+     b1 >= b1min(p) := log2 C(p, floor(lambda1 p)) - (p/2) log2 3   (C(p,.) increases below p/2),
+     b2 >= b2min(s) := log2 Tri_s(ceil(lambda1 s)) - s              (Tri_s increases below s).
+   p >= 141: x1/p > lambda1 - 1/141, so b1 >= 0.137370p - log2(p+1)  (binomial type bound).
+   s >= 141: take n2 = floor(0.065 s), n1 = x2 - 2n2, n0 = s - n1 - n2.  The type (n0,n1,n2)/s lies in a box with
+     pi2 in [0.065-1/141, 0.065] and pi1 in [lambda1 - 0.13, 0.265 + 3/141].  Its entropy is >= 1.061949 (concave, so the
+     minimum is at the 4 vertices; also checked on a 21x21 grid), and pi0 pi1 pi2 <= 0.013391.
+     Robbins' Stirling bounds give log2 M(n2) >= sH - log2(2 pi) - log2 s - (1/2) log2(pi0 pi1 pi2) - (1/ln2) sum 1/(12 n_i).
+     Five neighbouring multinomials M(n2-2..n2+2) all have nonnegative entries.  Their consecutive ratios are bounded below
+     on the box: rp >= 0.9144, rm >= 0.4262, rp2 >= 0.7210, rm2 >= 0.3369.  Each bound is increasing in s, so its value at
+     s = 141 is valid for all s >= 141.  This adds log2(1 + rp + rm + rp rp2 + rm rm2) = 1.6523 bits.
+   Since k >= 141, the four cases are: p,s <= 140 (exact tables): min 6.148.  p >= 141, s <= 140: 11.001.
+   p <= 140, s >= 141: 2.047.  Both >= 141: 15.907.  All are >= 1.72304, and both asymptotic bounds increase with p, s.
+ All constants: hand_checks2.py -> hand_checks2.txt ("ALL OK").
+
+==========================================================================================
+6. ASSEMBLY
+==========================================================================================
+r = 4.  If no a_i == 2 (mod 4), there is no middle residue, and [E] applies.  Otherwise n2 >= 1:
+        k <= 15: C2 gives (L') at every n*(C) (Proposition 8 logic applied with exact tails), so S2 holds by Lemma 1.
+        12 <= k <= 140, k != 13: C1 with Proposition 8.   k >= 141: Lemma 12.   Every k is covered.
+        This case does not depend on [R].
+r = 5.  k >= 141: Lemma 12.  24 <= k <= 140: C1.  k <= 23: the residue multiset rho of a has |rho| = k.
+        If rho is not fit-box-excluded, C4 verifies TP, E, O, and [R] gives S2.
+        If it is excluded (exactly 4 or 5 middle residues, 20 <= k <= 23), then |A_inf| <= 5 (Lemma 5b), and C3 with
+        Proposition 8 and Lemma 1 gives S2.
+r = 6.  k >= 141: Lemma 13.  54 <= k <= 140: C1-6.  k <= 53: C4 with [R], except the excluded classes (exactly 4 or 5
+        middle residues, 20 <= k <= 53), which are covered by C3 (|A_inf| <= 11, Lemma 5c).                         QED
+
+==========================================================================================
+7. REMARKS / WHAT FAILED ALONG THE WAY (see candidates.txt)
+==========================================================================================
+* The residue-level route alone does not give an asymptotic regime.  For r = 4, rho' = (2^{n2}, 3^{n3}) with the
+  k -> infinity value of mu*_inf (residue-1 parts taken as size 1), the O condition fails for 179 of 2,998 (n2,n3) with
+  n2 + n3 <= 118 in the fit box (scan4_strong.py), all with n2 >= 41.  This is why the large-count regime uses the class-pair
+  inequality (L') with the coefficient bounds of Section 3, and not TP/E/O.
+* (L') is far from tight in the fit box.  At n*, x_{n*+1} <= 6 in all 2,826 sampled r = 4 instances (lp_stats2.py), and the smallest
+  observed ratio (y_{n+1}-y_{n+2})/y_{n+4} is above 3*10^5 for r = 4, 5, 6 (lp_check_r.py).  The proof needs exact
+  computation only because the bounds of Lemma 7 are lossy near the binomial inflection point.
+* The pair-local form of S2 is false at r = 8595 ([S] Section 9).  Wherever the proof goes through Lemma 1 (all of r = 4;
+  r = 5 with k >= 24; r = 6 with k >= 54; and the excluded classes of C3), it proves the pair-local inequality
+  beta_C <= n*(C)+2 for every pair.  For the remaining small-k cases (r = 5, k <= 23; r = 6, k <= 53) the proof uses the
+  residue certificate [R] + C4.  There (L') at n* is only observed numerically (0 failures in lp_check_r.py), not proved.
+* Fit box.  The final proof evaluates exact numbers only for k <= 140, and only for single-value products
+  (2^p), (3^s), for k < 60 for B_{p,s}, and inside the box otherwise.  Earlier exploratory runs (analytic_cert.py up to
+  k = 700, analytic_cert2.py up to 400, analytic_cert6.py up to 600, hand_checks.py) evaluated generic binomial and trinomial
+  coefficients C(k,x), B_{p,s}(x) for larger k as bounds.  These are not P or unimodality data of any instance, but they
+  coincide with A-coefficients of instances like (2^k).  The final proof does not depend on them, because the hand
+  Lemmas 12 and 13 now start at k = 141.
+* Not attempted: r >= 7.  For r = 7 the same scheme should work: the residue certificate C4 is fast (6.6 s for 4.4M
+  multisets at r = 6), and C1 needs a V bound with M_1 = max|[rho]_zeta| = 2.247.

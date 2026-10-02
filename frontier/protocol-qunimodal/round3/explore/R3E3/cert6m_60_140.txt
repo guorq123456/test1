@@ -1,0 +1,1 @@
+r 6 (max-term) k range 60 140 uncovered k: []

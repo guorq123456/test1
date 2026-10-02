@@ -1,0 +1,6 @@
+r=6 k in [27,53] checked=4376808 skipped=35397 fails=0
+
+real	0m6.645s
+user	0m6.186s
+sys	0m0.008s
+done

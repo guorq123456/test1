@@ -1,0 +1,46 @@
+CANDIDATES TRIED (path R3E3: S2 for fixed r = 4, 5, 6 by finite computation plus an analytic regime)
+Error counts are within the fit box.  Each line gives the script and its saved output.
+
+1. Residue-level certificate (TP,E,O of R2E2), strong limit: residue-1 parts taken as size 1 and k -> infinity (mu_lim), r=4,
+   rho'=(2^n2,3^n3), n2,n3<60.  179 failures out of 2998 (all with n2>=41).  DISCARDED as the asymptotic route.
+   [scan4_strong.py -> scan4_strong.txt]
+2. Same certificate with mu*_inf(k=|rho'|).  0 failures out of 2998, but it does not cover added residue-1 parts, so it is
+   not a full route.  [scan4_strong.py]
+3. Class-pair tail inequality L' at n*(C) (y_{n+1}-y_{n+2} >= y_{n+4}), tested directly.  r=4: 0 failures (2884 instances,
+   sanity_lemmas.py; 3475+2826 instances, lp_stats.py, lp_stats2.py).  r=5: 0 failures in 1998 instances.  r=6: 0 failures in
+   2000 instances (lp_check_r.py).  KEPT: core of the proof (Lemma 1).
+4. Analytic coverage v1 (one-sided ratio bound, Lemma B only), r=4: uncovered for k' <= 17.
+   [coverage.py -> coverage_v1.txt]  superseded
+5. Analytic coverage v2 (two-sided ratio bounds, Lemma B + B'), r=4: uncovered for k' in {4..13,15}.
+   [coverage2.py -> coverage_v2.txt]  superseded
+6. analytic_cert.py (first-order, both bounds, window argument), r=4: covers k' = 14 and 16..700.  Uncovered for k' <= 13
+   and k' = 15.  [analytic_cert_14.txt, analytic_cert_16_700.txt]  superseded by 8
+7. analytic_cert_r.py (first-order, general r), r=5: uncovered for k' <= 29 and k' = 31.  superseded
+8. analytic_cert2.py (adds the second-order Lemma 6(e)).  r=4: covers [12,400] except k'=13.  r=5: covers [24,400];
+   uncovered for k' <= 23.  KEPT (certificate C1), used only on k' <= 140 (item 17).
+   [cert2_r4_12_400.txt, cert2_r4_1_40.txt, cert2_r5_24_200.txt, cert2_r5_201_400.txt, cert2_r5_1_60.txt]
+9. small_exhaust.c v1 (exact capped tails, no gap/class restriction), r=4, k'<=8: 547 uncovered (spurious, from gap/class
+   combinations that cannot occur).  Superseded by 10.
+10. small_exhaust.c v2 (gap/class restriction of Lemma 9), r=4, k'<=15: 0 uncovered out of 30,963,535 checks.  KEPT (C2).
+    [small_exhaust_15.txt]
+11. analytic_cert6.py (r=6, k-only ratio bounds plus B_{p,s} domination): covers k in [54,600]; uncovered for k in [27,53].
+    KEPT only for k in [54,59] (C1-6; cert6_54_59.txt).  Exploratory outputs: cert6_54_200.txt, cert6_201_400.txt,
+    cert6_401_520.txt, cert6_521_600.txt (not used, since k > 140 is outside the fit box).
+11b. analytic_cert6m.py (r=6, single-convolution-term lower bound for B_{p,s}): uncovered for k in {54,55,57} out of
+    [54,70]; covers all of [60,140].  KEPT for [60,140] (cert6m_60_140.txt).
+12. analytic_cert6b.py (r=6, refined ratio bound from the operator M>=0): still uncovered for k in [27,34] (all splits).
+    DISCARDED.  [cert6b_27_34.txt]
+13. rescert.c (own C implementation of TP/E/O with mu*_inf(k), all residue multisets, fit-box excluded classes skipped):
+    0 failures for r=4 |rho|<=40, r=5 |rho|<=40, r=6 |rho|<=53.  KEPT (C4).
+    [rescert_r4_1_40.txt, rescert_r5_1_23.txt, rescert_r5_24_40.txt, rescert_r6_1_26.txt, rescert_r6_27_53.txt]
+    Validated against the Python implementation (reverify_T10.py, val_shift.py).
+14. analytic_smallV.py (C1 bounds with V=5 for r=5 and V=11 for r=6, for the excluded classes with <=5 middle parts):
+    0 uncovered.  KEPT (C3).  [smallV_r5.txt, smallV_r6.txt]
+15. Hand proofs for large k with thresholds 401 (r=4,5) and 601 (r=6): constants OK (hand_checks.py -> hand_checks.txt).
+    Superseded by 16, so that no numeric certificate needs k > 140.
+16. Hand proofs with threshold k >= 141 (Lemmas 12, 13 of the proof).  First version for r=6: 1 FAIL (case p<=140,
+    s>=141, margin 0.735 < 1.723).  With a 3-term multinomial sum: margin 1.962, but that run had a wrong-direction bound on
+    pi0*pi1*pi2.  Corrected: 1.622, FAIL.  5-term version: 2.047 >= 1.723, ALL OK.  KEPT (hand_checks2.py -> hand_checks2.txt).
+17. Analytic certificates rerun on k <= 140: cert2_r4_12_140.txt (uncovered only k=13), cert2_r5_24_140.txt (none).  KEPT.
+
+TOTAL candidates tried: 20 (items 1-15, 11b, the three versions of 16, and 17).

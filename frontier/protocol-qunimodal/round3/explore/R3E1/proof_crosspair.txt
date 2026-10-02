@@ -1,0 +1,196 @@
+R3E1 -- Cross-pair route to Conjecture S2 inside the class-pair framework
+==========================================================================
+Status: S2 NOT PROVED.  This file contains
+  Part A  (proved)  the Phi / psi representation of all binding windows (one function Phi, one profile psi);
+  Part B  (proved)  Theorems B*, B: CROSS-PAIR transfer theorems.  If e decays at rate >= kappa/r per unit step beyond the
+                    crossing level (H2) and the class profile psi satisfies a shape inequality (K*) (e.g. psi comparable to
+                    a sine, H1, with (c,kappa) satisfying (K')), then a binding pair t0 ANYWHERE in (0,r/2) forces a
+                    negative (N*+4)-window at a pair t1 fixed in advance (near r/4 in the sine case), so beta <= N*+2.
+  Part C  (proved)  Corollary C: H1 holds with explicit c when the residue spectrum has a gap (eps < 1), eps computable
+                    from R_j = prod_i sin(pi j a_i/r)/sin(pi j/r) alone.
+  Part D  (proved, finite exact verification)  OBSTRUCTION: S2 is not a consequence of the qualitative ingredients of the
+                    framework (palindromic, log-concave A, Lemma 2.1, sign lemma, cyclic unimodality of Gamma, sum tau = 0).
+                    Hence every cross-pair inequality built only from those ingredients is false in general; a proof must
+                    import a quantitative property of prod [a_i]_q (decay rate at the crossing, as in H2/K').
+  Part E  (heuristic, NOT A PROOF) model threshold kappa_crit ~ 1.08.
+References: round-2 synthesis /tmp/claude-0/qu/synth/r2/proof.txt (Theorems 3.1, 4.2, 4.7, Lemma 2.1, Lemma 3.3), refereed.
+
+----------------------------------------------------------------------------------------------------
+0. Notation (as in the synthesis)
+----------------------------------------------------------------------------------------------------
+r >= 3 (r = 2 is settled: T1 + Thm E), a_i >= 1 with r !| a_i for all i (otherwise U = all b, C43).  A = prod [a_i]_q,
+D = deg A, F = sum floor(a_i/r).  delta(q) = (1-q)A(q).  Grid Lambda = (D+1)/2 + Z  (note Lambda = -Lambda).
+eps(z) = delta_{(D+1)/2 - z}, odd in z;  e(z) = eps(z) for z > 0, e >= 0 (F1), e = 0 for z > (D+1)/2.
+A b-window is b points of Lambda with step r; its centre is its mean (z-coordinates).
+Synthesis Thm 4.7 (window-centre dichotomy, r !| a_i):  b == F (mod 2): P_b unimodal iff every b-window with centre in
+(0,r/2) has sum >= 0;  b == F+1: P_b unimodal iff every b-window with centre in (r/2,r) has sum >= 0.
+Synthesis Thm 4.2: U = [1,N*] u {N*+2,...,beta}, N* == F+1 (mod 2), N*+1 not in U.  S2 <=> beta <= N*+2.
+
+Phi(w) := sum_{i>=0} e(w + i r)   (w in Lambda, w > 0; a finite sum).                      Phi(w) - Phi(w+r) = e(w).   (0.1)
+H(w,t) := Phi(w - t) - Phi(w + t)   (0 < t < w).
+psi(t) := H(r/2, t) = Phi(r/2 - t) - Phi(r/2 + t)   if F is even;
+psi(t) := Phi(r - t) - Phi(t)                         if F is odd.             (0 < t < r/2)
+For n := N* put L := (n+2) r/2 and T := { t in (0, r/2) : the (n+1)-window centred at t lies in Lambda }.
+T is a coset of Z intersected with (0,r/2) (consecutive elements differ by 1).
+
+----------------------------------------------------------------------------------------------------
+Part A.  Representation
+----------------------------------------------------------------------------------------------------
+Lemma A1 (S2 in window form).  Let r !| a_i for all i and n = N*.
+ (a) There is t0 in T such that the (n+1)-window centred at t0 has negative sum.
+ (b) beta <= N*+2  iff  some (n+4)-window centred at a point of (r/2, r) has negative sum.
+Proof.  (a) n+1 = N*+1 is not in U and n+1 == F (mod 2) (Thm 4.2), so by Thm 4.7 some (n+1)-window with centre t0 in
+(0,r/2) has negative sum; its points lie in Lambda, so t0 is in T.
+(b) By Thm 4.2, the elements of U above N* are N*+2, N*+4, ..., beta, all == F+1.  Hence beta >= N*+4 iff N*+4 in U.
+N*+4 == F+1 (mod 2), so by Thm 4.7, N*+4 is not in U iff some (N*+4)-window centred in (r/2,r) has negative sum.     []
+
+Lemma A2 (Phi-representation).  Let b == F (mod 2), b >= 1, and t in (0,r/2) such that the b-window centred at t lies in
+Lambda.  Write V_b(t) for its sum.  Then
+   V_b(t) = H((b+1) r/2, t) - psi(t),                                                                         (A2.1)
+and the (b+1)-window centred at t + r/2 lies in Lambda and has sum
+   V_b(t) + e(t + (b+1) r/2).                                                                                  (A2.2)
+Proof.  F even, b = 2m: the window points are t +- s_i, s_i = (2i+1) r/2, 0 <= i < m.  As t < r/2 <= s_i, t - s_i < 0 and
+eps is odd, so V_b(t) = sum_{i<m} e(s_i + t) - sum_{i<m} e(s_i - t).  By the definition of Phi (telescoping along the
+progression of step r):  sum_{i<m} e(s_i + t) = Phi(r/2 + t) - Phi(s_m + t),  sum_{i<m} e(s_i - t) = Phi(r/2 - t) - Phi(s_m - t).
+With s_m = (b+1) r/2 this is (A2.1).
+F odd, b = 2m+1: the points are t + i r, |i| <= m.  For i >= 1, t - i r < 0, so V_b(t) = sum_{i=0}^{m} e(t + i r) - sum_{i=1}^{m} e(i r - t)
+= [Phi(t) - Phi(t + (m+1) r)] - [Phi(r - t) - Phi((m+1) r - t)] = H((m+1) r, t) - psi(t), and (m+1) r = (b+1) r/2.
+(A2.2): the b-window centred at t has points t + (j - (b-1)/2) r, j = 0..b-1; the (b+1)-window centred at t + r/2 has points
+t + r/2 + (j - b/2) r = t + (j - (b-1)/2) r, j = 0..b: the same points plus t + (b+1) r/2 > 0, where eps = e.             []
+
+Remark A3.  With b = n+1 and b = n+3 (both == F), (b+1) r/2 = L and L + r.  So, for t in T:
+   (n+1)-window at t:        V_{n+1}(t) = H(L, t) - psi(t);                                                    (A3.1)
+   (n+4)-window at t + r/2:  S_{n+4}(t) = H(L + r, t) - psi(t) + e(L + r + t) = Phi(L + r - t) - Phi(L + 2r + t) - psi(t)   (A3.2)
+(the last equality by (0.1)).  The points L - t, L + t, L + r +- t lie in Lambda (they are points of the (n+3)-window at t,
+up to the sign z -> -z, and Lambda = -Lambda).  Every pair quantity of the synthesis is a value of the single function Phi:
+the pair C of the synthesis corresponds to t = (r - C)/2 (F even) or t = C/2 (F odd), and V_b(t) = a^{(C)}_{b-1}.
+(Checked numerically: win.py/winx.py reproduce N*, the binding set and beta of s2check.c on the three known instances.)
+
+----------------------------------------------------------------------------------------------------
+Part B.  Cross-pair transfer theorems
+----------------------------------------------------------------------------------------------------
+Theorem B* (shape-ratio form).  Let r >= 3, r !| a_i for all i, n = N*, L = (n+2) r/2, T as in Section 0.  Assume
+ (H2) [decay beyond the crossing]  there is kappa > 0 with
+          e(z+1) <= exp(-kappa/r) e(z)   for every z in Lambda with z >= L - r/2;
+ and let lambda > 0 satisfy  psi(t) <= lambda t  for all t in T  (e.g. lambda = max_{t in T} psi(t)/t).  If
+ (K*) there is t1 in T with   2 (1 - e^{-kappa})^2 psi(t1)  >=  lambda r exp(-kappa (r - t1)/r),
+then the (n+4)-window centred at t1 + r/2 has negative sum, and therefore beta <= N*+2 (S2 holds for this (r,a)).
+The witness t1 is chosen from psi and kappa alone; the binding pair t0 may lie anywhere in T.
+
+Proof.
+B1. By Lemma A1(a) and (A3.1) there is t0 in T with  psi(t0) > H(L, t0).
+B2. Iterating (H2): for z in Lambda, z >= L - r/2 and integer s >= 0,  e(z+s) <= exp(-kappa s/r) e(z).  (If e(z) = 0 then
+    e(z+1) = 0 by (H2), and so on.)  In particular e is non-increasing on Lambda intersect [L - r/2, oo).
+B3. H(L,t0) = sum_{i>=0} [ e(L - t0 + i r) - e(L + t0 + i r) ].  Since L - t0 > L - r/2, every bracket is >= 0 by B2, so
+    H(L,t0) >= e(L - t0) - e(L + t0) >= (1 - e^{-y}) e(L - t0),   y := 2 kappa t0/r in (0, kappa)
+    (B2 with s = 2 t0, an integer because L - t0 and L + t0 are in Lambda).  In particular H(L,t0) >= 0, so psi(t0) > 0 and
+    lambda >= psi(t0)/t0 > 0.
+B4. lambda t0 >= psi(t0) > H(L,t0) >= (1 - e^{-y}) e(L - t0), hence
+       e(L - t0) < lambda t0/(1 - e^{-y}) = (lambda r/(2 kappa)) * y/(1 - e^{-y}) <= (lambda r/(2 kappa)) * kappa/(1 - e^{-kappa})
+                 = lambda r / (2 (1 - e^{-kappa})),
+    using that y -> y/(1 - e^{-y}) is increasing on (0,oo) and y < kappa.  (If e(L - t0) = 0 the strict bound holds as lambda > 0.)
+B5. By (A3.2), S_{n+4}(t1) = Phi(L + r - t1) - Phi(L + 2r + t1) - psi(t1) <= Phi(L + r - t1) - psi(t1).
+    L + r - t1 is in Lambda and exceeds L - t0 by the positive integer d := r - t1 + t0 (t0, t1 lie in the same coset T).
+    By B2, e(L + r - t1 + i r) <= exp(-kappa (d + i r)/r) e(L - t0) for i >= 0, so
+       Phi(L + r - t1) <= e(L - t0) exp(-kappa d/r)/(1 - e^{-kappa}) <= e(L - t0) exp(-kappa (r - t1)/r)/(1 - e^{-kappa}).
+B6. By B4, B5 and (K*):
+       Phi(L + r - t1) < lambda r exp(-kappa (r - t1)/r) / (2 (1 - e^{-kappa})^2) <= psi(t1),
+    so S_{n+4}(t1) < 0.
+B7. The centre t1 + r/2 lies in (r/2, r), so by Lemma A1(b), beta <= N*+2.                                             []
+
+Theorem B (sine form).  Assume (H2) and
+ (H1) [sine-comparability of the class profile]  there are A > 0 and 0 < c <= 1 with c A s(t) <= psi(t) <= A s(t) for all t in T,
+      s(t) := sin(2 pi t/r);
+ (K') there is t1 in T with   c s(t1) (1 - e^{-kappa})^2  >=  pi exp(-kappa (r - t1)/r).
+Then the (n+4)-window centred at t1 + r/2 has negative sum and beta <= N*+2.
+Proof.  sin x <= x gives psi(t) <= A s(t) <= (2 pi A/r) t, so lambda := 2 pi A/r is admissible in Theorem B*.  By (H1) and (K'),
+2 (1 - e^{-kappa})^2 psi(t1) >= 2 (1 - e^{-kappa})^2 c A s(t1) >= 2 pi A exp(-kappa (r-t1)/r) = lambda r exp(-kappa (r - t1)/r),
+which is (K*).                                                                                                         []
+
+Corollary B8 (explicit form of K').  Let t1 be the element of T nearest r/4 (|t1 - r/4| <= 1/2; it exists and lies in (0,r/2)
+because T is a coset of Z intersected with (0,r/2) and r >= 3).  Then s(t1) >= cos(pi/r) (|2 pi t1/r - pi/2| <= pi/r) and
+(r - t1)/r >= 3/4 - 1/(2r), so (K') holds whenever
+     c cos(pi/r) (1 - e^{-kappa})^2 >= pi exp(-kappa (3/4 - 1/(2r))).                                             (K)
+Thresholds of (K') as r -> oo (optimal t1/r = arctan(2 pi/kappa)/(2 pi)), script kcond.py:
+     c = 1: kappa >= 1.899;  c = 0.9: 1.992;  c = 0.75: 2.160;  c = 0.5: 2.558;  c = 0.25: 3.299;  c = 0.1: 4.336.
+
+----------------------------------------------------------------------------------------------------
+Part C.  A residue-level certificate for (H1)
+----------------------------------------------------------------------------------------------------
+Lemma C1 (Fourier form of psi).  Let omega = e^{2 pi i/r}, R_j := prod_i sin(pi j a_i/r)/sin(pi j/r) (real), and
+w_j := 4/r for 1 <= j < r/2, w_{r/2} := 2/r (r even).  Then for t in T
+     psi(t) = sum_{1 <= j <= r/2} beta_j sin(2 pi j t/r),   beta_j := - w_j R_j sin(pi j/r) * (-1)^{j (F+1)}.
+Proof.
+C1.1  Gamma_u = sum_{x == u} alpha_x has discrete Fourier transform sum_u Gamma_u omega^{j u} = A(omega^j); tau(u) = Gamma_u - Gamma_{u-1}
+      has transform A(omega^j)(1 - omega^j), which vanishes at j = 0.  Inversion: tau(u) = (1/r) sum_{j=1}^{r-1} A(omega^j)(1 - omega^j) omega^{-j u}.
+C1.2  (1 - omega^{j a})/(1 - omega^j) = e^{pi i j (a-1)/r} sin(pi j a/r)/sin(pi j/r), so A(omega^j) = e^{pi i j D/r} R_j, and
+      1 - omega^j = -2 i sin(pi j/r) e^{pi i j/r}.  Hence the j-th term equals (1/r) R_j (-2i) sin(pi j/r) exp(2 pi i j z_u / r) with
+      z_u := (D+1)/2 - u.
+C1.3  sin(pi (r-j) a/r) = (-1)^{a+1} sin(pi j a/r) and sin(pi(r-j)/r) = sin(pi j/r), so R_{r-j} = (-1)^{D+2k} R_j = (-1)^D R_j;
+      and exp(2 pi i (r-j) z_u/r) = (-1)^{D+1} exp(-2 pi i j z_u/r).  Adding the terms j and r-j (j < r/2) gives
+      (4/r) R_j sin(pi j/r) sin(2 pi j z_u/r).  For r even, j = r/2: if D is odd then R_{r/2} = -R_{r/2} = 0; if D is even then z_u is a
+      half-integer and the term equals (2/r) R_{r/2} sin(pi z_u).  So tau(u) = sum_{1<=j<=r/2} w_j R_j sin(pi j/r) sin(2 pi j z_u/r).
+C1.4  psi(t) = -(sum of eps over the whole line through the window centred at t), because H(w,t) = 0 for w large (finite support)
+      and (A2.1).  That line is {z == t + r/2 (mod r)} (F even) or {z == t (mod r)} (F odd), and its eps-sum is tau(u) for the class u
+      with z_u == that residue (z = (D+1)/2 - x).  Since sin(2 pi j z/r) has period r in z, and sin(2 pi j (t + r/2)/r) = (-1)^j sin(2 pi j t/r),
+      psi(t) = - sum_j w_j R_j sin(pi j/r) (-1)^{j [F even]} sin(2 pi j t/r), which is the claim ((-1)^{j[F even]} = (-1)^{j(F+1)}).   []
+(Checked: hyp.py fourier_check, max relative deviation 2.6e-59 against exact psi on random small instances.)
+
+Corollary C2 (spectral certificate).  beta_1 = (4/r)|R_1| sin(pi/r) > 0 (sign R_1 = (-1)^F because sign sin(pi a/r) = (-1)^{floor(a/r)}).
+Put eps := sum_{2 <= j <= r/2} j |beta_j| / beta_1.  If eps < 1 then (H1) holds with A = beta_1 (1 + eps), c = (1 - eps)/(1 + eps).
+Proof.  |sin(j x)| <= j |sin x| (induction via sin((j+1)x) = sin(jx)cos x + cos(jx) sin x).  For t in (0,r/2), s(t) > 0 and
+|beta_j sin(2 pi j t/r)| <= j |beta_j| s(t); so (1 - eps) beta_1 s(t) <= psi(t) <= (1 + eps) beta_1 s(t).                       []
+Note eps depends only on r and the residues a_i mod r (R_j changes at most by a sign when a_i -> a_i + r).
+
+Corollary C3.  If eps < 1, (H2) holds with kappa, and (K') holds with c = (1-eps)/(1+eps), then S2 holds for (r,a), with witness
+the middle pair t1.  (Theorem B + Corollary C2.)
+
+----------------------------------------------------------------------------------------------------
+Part D.  Obstruction: the framework's qualitative ingredients do not imply S2
+----------------------------------------------------------------------------------------------------
+Proposition D.  There are palindromic integer sequences alpha (not products of q-integers) such that
+   (i) alpha is log-concave and unimodal (so F1 holds);
+  (ii) e = delta on the left half is unimodal (the analogue of Lemma 2.1);
+ (iii) the class sums tau satisfy the Wintner sign pattern of (F3)/Lemma 3.3 for a parity of F with N* == F+1;
+  (iv) Gamma is cyclically unimodal (the analogue of T11 Lemma 7); sum_u tau(u) = 0 holds automatically;
+and yet U = {b : alpha(q)[b]_{q^r} unimodal} contains N*+4, i.e. beta >= N*+4 and S2 FAILS.
+Examples (script obstruction.py, exact integer arithmetic, brute-force unimodality):
+  D1: r = 3, D = 34, alpha_x = (x+1) 8^11 (0<=x<=7), alpha_{7+j} = 8^{11-j} 9^j (1<=j<=10), mirrored about x = 17.
+      U (b <= 30) = {1, 3, 5}: N* = 1, beta >= 5.
+  D2: r = 8, alpha = D1-type ramp-geometric (m = 13, G = 40) times [6]_q [4]_q, D = 112.  U (b <= 36) = {1,2,3,5,7}: N* = 3, beta >= 7.
+  D3: r = 3, alpha = ramp-geometric (m = 8, G = 20) times [29]_q, D = 82.  U (b<=62) = [1,18] u {20,22,24}: N* = 18, beta >= 22.
+Proof.  Finite exact computation (obstruction.py prints every property and the profile).  In each example the structural
+theorems 3.1, 4.2, 4.7 of the synthesis apply verbatim (their proofs use only (i)-(iii) and the window criterion), and they
+give U = [1,N*] u {N*+2,...,beta} with beta >= N*+4.                                                                       []
+Consequences.
+ D-a. No inequality that is derived only from (i)-(iv), from relations between neighbouring pairs C, C+-2, from the cyclic
+      unimodality of Gamma, or from sum tau = 0, can prove S2: such an inequality would also hold for D1-D3.
+      In particular the cross-pair witnesses tested in Section F (middle pair, max-psi pair, deepest binding pair, last binding
+      pair, uniform average over pairs, neighbour rescue) all fail on D1-D3 (S2 fails there), although none fails on products.
+ D-b. The examples violate exactly the quantitative hypothesis of Theorem B: on z >= L - r/2 their decay rate is
+      kappa_eff = 0.000 (D1, D2: flat ramp delta_x = const near the edge) and 0.353 (D3), far below the (K') threshold 1.899.
+      Real products in the fit box have kappa >= 8.78 at the crossing (kappa_real.py, 400 instances r<=120: min 8.78; 25 instances
+      r>=1000: min 10.62), or the crossing lies within r of the support edge (kappa = infinity).
+ D-c. LP search (lp_abstract.py, lp_sign.py, lp_decay.py): without log-concavity even a per-r decay of e^{-3} beyond the crossing
+      is compatible with S2 failing (staircase e, r = 8): a per-UNIT-step decay rate (H2) is needed, not a per-r decay.
+
+----------------------------------------------------------------------------------------------------
+Part E.  Model threshold (HEURISTIC, NOT A PROOF; model_kcrit.py)
+----------------------------------------------------------------------------------------------------
+With e(z) ~ C exp(-kappa z/r) beyond the crossing and psi(t) = A sin(2 pi t/r) exactly, minimality of N* forces
+rho := e(s_M) kappa/(pi A (1 - e^{-kappa})) in [e^{-kappa}, 1), and S2 holds for all such rho iff
+  min_{0<u<1/2} [ -sin(2 pi u) + (pi e^{-kappa}/kappa)(2 sinh(kappa u) + (1 - e^{-kappa}) e^{-kappa u}) ] < 0,  i.e. kappa > 1.083.
+Theorem B is the rigorous (lossy) version: kappa >= 1.899 at c = 1.
+
+----------------------------------------------------------------------------------------------------
+Part F.  What remains (the exact obstruction to an unconditional proof)
+----------------------------------------------------------------------------------------------------
+To finish S2 along this route one needs, for every product prod [a_i]_q with r !| a_i, either the pair-local inequality at
+some binding pair (true in all fit-box data with r <= 120 and in all random r >= 1000 data, false at r = 8595, 12552, 15167, ...),
+or (H1)+(H2)+(K').  Neither (H1) nor (H2) follows from the framework (Part D); both are quantitative statements about
+prod [a_i]_q:
+  (H1) a spectral gap of the residue spectrum R_j (fails e.g. for r = 4, or few parts, or all residues << r/j);
+  (H2) a per-unit-step decay rate >= kappa_0/r of delta on the tail beyond the crossing level L - r/2, kappa_0 ~ 1.9-4.4.
+A proof of S2 by combining class pairs therefore requires a large-deviation type estimate linking the crossing level
+(where tail sums of delta equal the aliasing amplitude psi ~ |A(omega)|) to the local decay rate of delta there.
+Numerical coverage of Theorems B (via (K)) and B* (via (K*)) is reported by coverage2.py.

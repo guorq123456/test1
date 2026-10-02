@@ -1,0 +1,21 @@
+R3E1 candidates (cross-pair route to S2). Error = fit-box instances where the candidate statement is FALSE.
+Data sets: survey2 small (seed 11, 1498 inst, r<=120), survey2 big (seed 12, 200 inst, r>=1000), survey3 tuned (seeds 1-4, 240 inst,
+r in [3000,20000], tight residues), known (3 synthesis pair-local failure instances r=8595,12552,15167), jumpscan (r=20000,k=100, 41+ configs through an N* jump).
+ 1. W6 pair-local KI at smallest binding pair (baseline)        errors: small 0, big 0, tuned 4/240, known 3/3            [survey2.py, survey3.py, known3.py]
+ 2. W1 middle pair (t nearest r/4) has negative (N*+4)-window      errors: small 27/1498, big 0, tuned 0, known 0, jump1 0/41 [survey2.py, survey3.py, jumpscan.py]
+ 3. W2 pair maximizing psi                                        errors: 0 (all sets)
+ 4. W3 deepest binding pair                                       errors: 0
+ 5. W4 largest-gap binding pair                                   errors: 0
+ 6. W5 uniform average over pairs of Q_{N*+4} < 0                  errors: 0
+ 7. NB neighbour rescue (binding pair g failing => g+2 works)     errors: tuned 0/240, known 0/3
+ 8. ALLG every pair with psi>0 negative at N*+4                   errors: tuned 106/240, known 3/3, survey1 small 1/300 (r=5817 big: 1)
+ 9. "qualitative framework ingredients (palindromic, log-concave, e unimodal, sign lemma, Gamma cyc. unimodal) => S2"
+                                                                  REFUTED: abstract counterexamples D1-D3 (obstruction.py); geo_test 29/1624, geo2 74/1064, geo3 8/344 abstract configs violate S2; lp_abstract/lp_sign feasible
+10. "per-r decay e^{-3} beyond crossing + qualitative => S2"      REFUTED (lp_decay.py, staircase e, r=8)
+11. short-factor generalisation (products of log-concave palindromic factors of degree<=r-2 satisfy S2): 0 failures in 3000+600 abstract tests (gen_short.py, gen_short2.py)
+12. Theorem B (H1 sine + H2 decay + K) PROVED; applies (K) in small 403/420, big 19/19, tuned 37/37 (partial run), known 3/3, jump 44/44; consistency errors 0  [coverage2.py, known_hyp.py, jumpscan.py]
+13. Theorem B* (H2 + shape K*) PROVED; applies in small 420/420, big 19/19, tuned 37/37 (partial run); consistency errors 0; uncovered (neither B/B* nor pair-local) 0
+14. DLC conjecture: delta log-concave on [0,argmax delta]: 0 violations / 1499+300 instances r<=120 (dlc_test.py)
+15. Model threshold kappa_crit=1.083 (heuristic, model_kcrit.py); K' thresholds kcond.py
+16. Fourier formula for psi (Lemma C1): max rel. deviation 2.6e-59 (hyp.py); Lemma A2 identity: 36702 exact checks, 0 mismatches (check_A2.py)
+Total candidates tried: 16.

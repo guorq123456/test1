@@ -1,0 +1,17 @@
+tuned 13611 79 0 3 eps=8.11e-11 kappa=4.92 K=1 W1=1 W6=1 PLany=1
+tuned 6836 123 0 1 eps=2.77e-05 kappa=4.15 K=1 W1=1 W6=1 PLany=1
+tuned 14651 63 0 11 eps=3.8e-37 kappa=7.3 K=1 W1=1 W6=1 PLany=1
+tuned 13682 93 0 7 eps=8.01e-19 kappa=6.49 K=1 W1=1 W6=1 PLany=1
+tuned 6084 110 0 15 eps=5.69e-50 kappa=6.27 K=1 W1=1 W6=1 PLany=1
+tuned 6482 115 2 13 eps=1.62e-30 kappa=6.51 K=1 W1=1 W6=1 PLany=1
+tuned 4531 85 0 1 eps=0.000539 kappa=5.91 K=1 W1=1 W6=1 PLany=1
+tuned 12497 92 1 6 eps=8.52e-12 kappa=7.38 K=1 W1=1 W6=1 PLany=1
+tuned 13462 90 2 5 eps=2.04e-11 kappa=4.85 K=1 W1=1 W6=1 PLany=1
+tuned 15131 89 0 5 eps=8.19e-16 kappa=5.46 K=1 W1=1 W6=1 PLany=1
+tuned 5031 92 1 4 eps=9.13e-07 kappa=8.13 K=1 W1=1 W6=1 PLany=1
+tuned 9211 84 2 15 eps=1.21e-42 kappa=6.86 K=1 W1=1 W6=1 PLany=1
+tuned 8302 126 0 3 eps=1.74e-08 kappa=6.06 K=1 W1=1 W6=1 PLany=1
+tuned 13244 60 0 7 eps=8.78e-20 kappa=7.08 K=1 W1=1 W6=1 PLany=1
+tuned 19149 91 1 2 eps=5.14e-06 kappa=4.25 K=1 W1=1 W6=1 PLany=1
+tuned 12416 121 0 1 eps=3.47e-06 kappa=3.41 K=1 W1=1 W6=1 PLany=1
+tuned 7646 92 1 8 eps=1.49e-21 kappa=5.84 K=1 W1=1 W6=1 PLany=1

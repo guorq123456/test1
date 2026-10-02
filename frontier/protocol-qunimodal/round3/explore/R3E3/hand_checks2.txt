@@ -1,0 +1,16 @@
+OK   1-2theta=1/10 > theta^5
+m/k >= 0.27488383, H >= 0.84838567
+OK   r=4 at k=141: 39.1507 > 0, increasing
+OK   r=5 at k=141: 11.2626 > 0, increasing
+OK   r=5: V5(k)<=phi^k (k>=2)
+OK   kappa_lb=0.10096988 > R0^7=0.050569894
+lambda in [0.35244681, 0.395], need b1+b2 >= 1.7230405
+p>=141: b1 >= 0.13736951 p - log2(p+1)
+OK   grid entropy >= vertex min
+s>=141: type entropy >= 1.0619493; pi0*pi1*pi2 <= 0.0133911
+OK   b1asym increasing for p>=141
+OK   b2asym increasing for s>=141 (Hmin-1 > 1/(141 ln2))
+five-term gain: rp>=0.914354 rm>=0.426182 rp2>=0.721007 rm2>=0.336931 gain=1.65232 bits (all factors increasing in s)
+case (p,s<=140): 6.148  (p>=141,s<=140): 11.001  (p<=140,s>=141): 2.047  (both>=141): 15.907
+OK   all cases >= need
+ALL OK
