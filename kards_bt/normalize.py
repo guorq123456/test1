@@ -41,6 +41,9 @@ def norm_name(name):
     return re.sub(r"\s+", "", name).lower()
 
 
+EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+
+
 def has_letter(name):
     return bool(re.search(r"[^\W\d_]", norm_name(name)))
 
@@ -74,6 +77,8 @@ class Identities:
 
     def add(self, node, display, link_names, when):
         self.find(node)
+        if EMAIL.search(display):  # some people registered under their email; still link on it, never show it
+            display = "Player " + node.split(":", 1)[1][-6:]
         self.names[node][display] += 1
         if when and when > self.last_seen.get(node, ""):
             self.last_seen[node] = when
@@ -269,7 +274,10 @@ def load_challonge(ids):
                     ids.add(node, "BYE", [], when)
                 else:
                     node = "ch:" + (p.get("challonge_username") or norm_name(display) or str(pid))
-                    ids.add(node, re.sub(r"#\s*\d*\s*$", "", display).strip(), [display], when)
+                    # "老虎不发猫#2880 (Tiger)", "Jking7 (CA)", "Shiva's (dropped)": link on the name outside
+                    # the brackets only; the bracketed nickname is too loose to merge on
+                    outer = re.sub(r"\s*\([^)]*\)\s*$", "", re.sub(r"#\d+", "", display)).strip()
+                    ids.add(node, re.sub(r"\s*#\d+", "", display).strip(), [display, outer], when)
                 nodes.append(node)
             s1, s2 = series_score(m.get("scores_csv"))
             winner = 1 if m.get("winner_id") == m["player1_id"] else 2 if m.get("winner_id") == m["player2_id"] else 0

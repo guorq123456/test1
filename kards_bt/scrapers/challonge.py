@@ -9,6 +9,7 @@ requests a month.
 import csv
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -31,6 +32,26 @@ def tournament_id(url):
     return f"{sub}-{slug}" if sub else slug
 
 
+EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+# participant fields that hold or derive from personal data (sign-up form answers, email hashes)
+PRIVATE = ("custom_field_response", "email_hash", "attached_participatable_portrait_url",
+           "challonge_email_address_verified", "invite_email")
+
+
+def scrub(d):
+    """Drop personal fields before saving; someone who registered under their email gets 'Player <id>'."""
+    for x in d["tournament"].get("participants", []):
+        p = x["participant"]
+        for k in PRIVATE:
+            p.pop(k, None)
+        for k, v in list(p.items()):
+            if isinstance(v, str) and EMAIL.search(v):
+                p[k] = f"Player {p['id']}"
+    text = json.dumps(d)
+    assert not EMAIL.search(text), "email address left in download"
+    return d
+
+
 def fetch(tid, key, retries=4):
     url = f"{API}/tournaments/{urllib.parse.quote(tid)}.json"
     params = ["include_participants=1", "include_matches=1", f"api_key={key}"]
@@ -51,6 +72,13 @@ def fetch(tid, key, retries=4):
 
 
 def main():
+    if "--scrub" in sys.argv:  # re-clean files downloaded before scrub() existed
+        for name in sorted(os.listdir(RAW)):
+            path = os.path.join(RAW, name)
+            d = scrub(json.load(open(path)))
+            with open(path, "w") as f:
+                json.dump(d, f)
+        return
     key = os.environ.get("CHALLONGE_API_KEY")
     if not key:
         sys.exit("Set CHALLONGE_API_KEY (challonge.com/settings/developer) first.")
@@ -67,6 +95,7 @@ def main():
         except RuntimeError as e:
             print(f"skip {row['url']}: {e}", file=sys.stderr)
             continue
+        d = scrub(d)
         d["kards_meta"] = row
         t = d["tournament"]
         print(f"{t['name']}: {len(t.get('participants', []))} players, {len(t.get('matches', []))} matches", file=sys.stderr)

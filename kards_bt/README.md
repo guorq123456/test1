@@ -23,15 +23,19 @@ python3 build_site.py          # 生成交互页面 site/index.html
 | KARDS Open VIII – XIV（2021.08 – 2022.11，983 Media） | start.gg | ✅ 已收录 |
 | KARDS 世界赛 2021、2022（约 100 人，小组循环赛 + 双败淘汰赛；未公开列出） | start.gg | ✅ 已收录，类别 `official` |
 | Weekday Skirmish、Blitz、Homebrew Brawl 等社区赛 | Battlefy / start.gg | 已抓取，类别为 `community`，默认不计入 |
-| KARDS 世界赛 2023 淘汰阶段（128 人，小组赛 + 双败淘汰赛） | Challonge | ✅ 已收录，类别 `official` |
-| OCC 2022 年 2、3、9、11 月资格赛（各 16 人，双败） | Challonge | ✅ 已收录，类别 `official` |
-| Air Supremacy 扩展赛 2025（31 人，瑞士轮） | Challonge | ✅ 已收录，类别 `official` |
-| 其余 OCC 月赛和资格赛分组、其他扩展赛 | Challonge | ❌ 还没有链接；找到后加进 `data/challonge_events.csv` |
-| 2024、2025 世界赛，2023–2024 OCC，2025–26 其他扩展赛 | 未知 | ❌ 没找到公开的对阵表 |
+| OCC 月赛 2021.05 – 2024.11（同月的资格赛 A/B + Top 8 合并成一站；2024 年 4–8 月只有 Top 8） | Challonge | ✅ 已收录，类别 `official` |
+| OCC Ultimate I – III（2023，8 人邀请赛） | Challonge | ✅ 已收录，类别 `official` |
+| KARDS 世界赛 2023（128 人小组赛 + 淘汰赛）、2024、2025（决赛阶段） | Challonge | ✅ 已收录，类别 `official` |
+| 2025 年 4 个扩展赛（Blood & Iron、United Front、Naval Warfare、Air Supremacy，各含 Top 8） | Challonge | ✅ 已收录，类别 `official` |
+| 2026 年冬、春、夏、秋季赛（各含 Top 8） | Challonge | ✅ 已收录，类别 `official` |
+| KARDS Open XV、XVI（2023） | Challonge | ✅ 已收录，类别 `open` |
+| Pauper II | Challonge | 已抓取，类别为 `community`，默认不计入 |
 
-共 24 站、4399 场有效对局（Battlefy + start.gg 3866 场，Challonge 533 场）。
+`data/challonge_events.csv` 是 kards_esports 账号下的全部 139 个 Challonge 对阵表。
+
+共 77 站、6927 场计分对局（Battlefy + start.gg 3866 场，Challonge 3061 场）；算上社区赛共 7655 场有效对局。
 轮空、弃权/取消资格、双败、未录入结果的对局不计入；Challonge 上还会排除 `BYE`/`CPU` 等占位选手，
-以及记成 0-0 的不战而胜。2023 年 11 月到 2025 年 10 月之间没有数据，所以最后一站的分数整体往 1500 收缩。
+以及记成 0-0 的不战而胜。
 
 ## 模型
 
@@ -52,7 +56,8 @@ python3 build_site.py          # 生成交互页面 site/index.html
 - `data/raw/` 平台原始数据（JSON）
 - `data/matches.csv` 规整后的对局表；`valid=1` 的才参与计算，`category` 为 `open` / `open_special` / `official` / `community`
 - `data/players.csv` 选手身份表：同一人在不同平台的账号按游戏内 ID 合并
-- `data/aliases.csv`：`alias,canonical` 两列，手动把两个名字指向同一人（目前 3 条：名字带 `[CN]`、`·` 或括号备注的 Challonge 账号）
+- `data/aliases.csv`：`alias,canonical` 两列，手动把两个名字指向同一人（目前 9 条，都是 Challonge 名字的拼写变体，例如 `[CN]`、`·`、下划线、字母颠倒）。
+  Challonge 名字里的 `#1234` 和结尾的括号备注（`Jking7 (CA)`、`老虎不发猫 (Tiger)`）会自动去掉再合并；括号里的昵称不参与合并
 - `data/ratings_timeline.csv` 每站之后每位选手的分数、标准误、累计场次
 
 ## 补上官方赛事
@@ -62,7 +67,11 @@ python3 build_site.py          # 生成交互页面 site/index.html
 1. 在 challonge.com 注册并验证邮箱，到 <https://challonge.com/settings/developer> 生成 API v1 key
    （找不到的话，新版开发者门户在 <https://connect.challonge.com>）
 2. 把 key 存成环境变量 `CHALLONGE_API_KEY`，不要写进代码或提交到仓库
-3. 在 `data/challonge_events.csv` 里每行填一个赛事：`url,event,category,stage`，`category` 填 `official`
+3. 在 `data/challonge_events.csv` 里每行填一个对阵表：`url,title,category,event,stage`，`category` 填 `official`；
+   `event`、`stage` 留空即可，`normalize.py` 会按标题自动归并（例如同月 OCC 的资格赛 A/B + Top 8 合成 "OCC 2022-11"）
 4. 运行 `scrapers/challonge.py`，再依次跑 `normalize.py`、`bt.py`、`build_site.py`
 
 每个赛事只用 1 次 API 请求，已下载的会跳过。免费账号每月限 500 次。
+
+下载时 `scrapers/challonge.py` 会去掉报名表答案、邮箱哈希等个人信息字段，用邮箱当名字的选手改成 `Player <id>`；
+在这之前下载的文件可以用 `python3 scrapers/challonge.py --scrub` 重新清理（不需要 API key）。
