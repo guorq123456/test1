@@ -21,10 +21,12 @@ python3 build_site.py          # 生成交互页面 site/index.html
 |---|---|---|
 | KARDS Open #1 – VII、Open: Singleton、Operation: Kards（2020.05 – 2021.06，983 Media） | Battlefy | ✅ 已收录 |
 | KARDS Open VIII – XIV（2021.08 – 2022.11，983 Media） | start.gg | ✅ 已收录 |
+| KARDS 世界赛 2021、2022（约 100 人，小组循环赛 + 双败淘汰赛；未公开列出） | start.gg | ✅ 已收录，类别 `official` |
 | Weekday Skirmish、Blitz、Homebrew Brawl 等社区赛 | Battlefy / start.gg | 已抓取，类别为 `community`，默认不计入 |
-| 官方 OCC 月赛、扩展赛、世界赛（含资格赛阶段） | Challonge | ❌ 未收录：页面有 Cloudflare，API 需要 key |
+| 官方 OCC 月赛、扩展赛、2023 年起的世界赛 | Challonge | ❌ 未收录：页面有 Cloudflare，API 需要 key；已知链接列在 `data/challonge_events.csv` |
+| 2024、2025 世界赛，2023–2024 OCC，2025–26 扩展赛 | 未知 | ❌ 没找到公开的对阵表 |
 
-公开赛共 16 站、3251 场有效对局、714 名选手。轮空、弃权/取消资格、双败的对局不计入。
+共 18 站、3866 场有效对局。轮空、弃权/取消资格、双败、未录入结果的对局不计入。
 
 ## 模型
 
@@ -37,12 +39,12 @@ python3 build_site.py          # 生成交互页面 site/index.html
 - BT 分 = 1500 + β × 400 / ln 10
 
 半衰期和先验由 `evaluate.py` 挑出：用每站赛前的分数预测该站胜负，
-样本外 log loss 0.656（抛硬币为 0.693），准确率约 59%。
+样本外 log loss 0.660（抛硬币为 0.693），准确率约 59%。
 
 ## 文件
 
 - `data/raw/` 平台原始数据（JSON）
-- `data/matches.csv` 规整后的对局表；`valid=1` 的才参与计算，`category` 为 `open` / `open_special` / `community`
+- `data/matches.csv` 规整后的对局表；`valid=1` 的才参与计算，`category` 为 `open` / `open_special` / `official` / `community`
 - `data/players.csv` 选手身份表：同一人在不同平台的账号按游戏内 ID 合并
 - `data/aliases.csv`（可选，自己建）：`alias,canonical` 两列，手动把两个名字指向同一人
 - `data/ratings_timeline.csv` 每站之后每位选手的分数、标准误、累计场次

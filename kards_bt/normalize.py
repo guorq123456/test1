@@ -19,6 +19,7 @@ DATA = os.path.join(HERE, "data")
 CATEGORIES = [
     ("open", re.compile(r"^kards open( #?\d+| [ivxl]+\b|$)", re.I)),
     ("open_special", re.compile(r"^(kards open: singleton|operation: kards)", re.I)),
+    ("official", re.compile(r"world championship|\bocc\b|officer'?s? club|expansion tournament", re.I)),
     ("community", re.compile(r".")),
 ]
 
@@ -126,6 +127,7 @@ def load_startgg(ids):
                 if len(slots) != 2 or any(not s.get("entrant") for s in slots):
                     continue
                 when = iso(st.get("completedAt") or st.get("startedAt") or ev["event"].get("startAt") or t["startAt"])
+                phase = (st.get("phaseGroup") or {}).get("phase") or {}
                 side = []
                 for s in slots:
                     e = s["entrant"]
@@ -139,10 +141,11 @@ def load_startgg(ids):
                 (n1, e1, sc1), (n2, e2, sc2) = side
                 winner = 1 if st.get("winnerId") == e1 else 2 if st.get("winnerId") == e2 else 0
                 forfeit = st.get("displayScore") in (None, "DQ") or (sc1 is not None and sc1 < 0) or (sc2 is not None and sc2 < 0)
-                phase = (st.get("phaseGroup") or {}).get("phase") or {}
                 rows.append({
                     "source": "startgg", "event_id": str(ev["event"]["id"]), "event": t["name"].strip(),
-                    "category": category(t["name"]), "stage": ev["event"]["name"],
+                    "category": category(t["name"]),
+                    # WC events have a single event named like the tournament; the phase tells the stage apart
+                    "stage": ev["event"]["name"] if ev["event"]["name"] != t["name"] else phase.get("name"),
                     "stage_type": (phase.get("bracketType") or "").lower(), "round": st.get("fullRoundText"),
                     "time": when, "p1": n1, "p2": n2, "s1": sc1, "s2": sc2,
                     "winner": winner, "valid": int(winner > 0 and not forfeit),

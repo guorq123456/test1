@@ -132,11 +132,11 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
 
 <div class="wrap">
   <header>
-    <span class="eyebrow">KARDS · Bradley–Terry · 赛事对局</span>
+    <span class="eyebrow">KARDS · Bradley–Terry · 公开赛 + 世界赛</span>
     <h1>KARDS 赛事 BT 实力榜</h1>
     <p class="lede">用 Bradley–Terry 模型给每位选手估一个实力分（Elo 刻度，场均 1500），每站比赛结束后重新拟合一次，所以能看到分数怎样随时间变化。旧比赛按一年半衰期逐渐降权，新人会被先验拉向平均分。</p>
     <div class="facts" id="facts"></div>
-    <div class="notice"><span class="tag">数据范围</span><p>目前只有 983 Media 主办的 <b>KARDS Open 公开赛</b>（Battlefy + start.gg，含瑞士轮资格赛和正赛）。官方 OCC 月赛、扩展赛、世界赛的对阵表在 Challonge 上，需要 API key 才能读取，暂未计入；补上后分数会更准，也会延续到 2023 年以后。</p></div>
+    <div class="notice"><span class="tag">数据范围</span><p>已收录 983 Media 主办的 <b>KARDS Open 公开赛</b>（Battlefy + start.gg，含瑞士轮资格赛和正赛）和 <b>2021、2022 世界赛</b>（start.gg，约 100 人的小组循环赛 + 双败淘汰赛）。官方 OCC 月赛、扩展赛、2023 年及以后的世界赛在 Challonge 上，需要 API key，暂未计入。</p></div>
   </header>
 
   <section aria-labelledby="h-trend">
@@ -195,7 +195,7 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
       <li><b>随时间变化</b>：每站比赛结束后，用截至当天的全部对局重新拟合；距今 d 天的对局权重为 0.5<sup>d/365</sup>。</li>
       <li><b>先验</b>：β ~ N(0, 0.8²)，相当于每人先带一点“平均水平”的虚拟战绩，只打过两三场的人不会被冲到榜首。</li>
       <li><b>区间</b>：± 是拉普拉斯近似给出的 1 个标准误。场次越少，区间越宽。</li>
-      <li><b>参数怎么定的</b>：用每站赛前的分数预测这一站的胜负，在半衰期 90–730 天、先验 0.4–1.5 的网格里挑样本外 log loss 最低的组合（0.656，抛硬币是 0.693；预测准确率约 59%）。</li>
+      <li><b>参数怎么定的</b>：用每站赛前的分数预测这一站的胜负，在半衰期 90–730 天、先验 0.4–1.5 的网格里挑样本外 log loss 最低的组合（0.660，抛硬币是 0.693；预测准确率约 59%）。</li>
       <li><b>排除</b>：轮空、弃权/取消资格、双败的对局；Weekday Skirmish、Blitz 等特殊规则的社区赛不计入。</li>
       <li><b>同一人跨平台</b>：按平台账号 + 游戏内 ID 合并，可在 <code>data/aliases.csv</code> 里手动补充。</li>
     </ul>

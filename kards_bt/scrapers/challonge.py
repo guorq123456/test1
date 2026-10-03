@@ -31,12 +31,14 @@ def tournament_id(url):
 
 
 def fetch(tid, key, retries=4):
-    url = f"{API}/tournaments/{urllib.parse.quote(tid)}.json?include_participants=1&include_matches=1"
+    url = f"{API}/tournaments/{urllib.parse.quote(tid)}.json"
+    params = ["include_participants=1", "include_matches=1", f"api_key={key}"]
     for i in range(retries):
-        # key goes in a header so it never shows up in process lists or logs
+        # pass the key through curl's stdin config so it stays out of process lists
+        config = f'url = "{url}"\nget\n' + "".join(f'data = "{p}"\n' for p in params)
         out = subprocess.run(
-            ["curl", "-sS", "-w", "\n%{http_code}", "-H", "Authorization-Type: v1", "-H", f"Authorization: {key}", url],
-            capture_output=True, text=True,
+            ["curl", "-sS", "-w", "\n%{http_code}", "-K", "-"],
+            input=config, capture_output=True, text=True,
         )
         body, _, code = out.stdout.rpartition("\n")
         if code == "200":

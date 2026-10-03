@@ -1,4 +1,4 @@
-"""Scrape KARDS tournaments hosted on start.gg (KARDS Open VIII-XIV, 2021-2022).
+"""Scrape KARDS tournaments hosted on start.gg (KARDS Open VIII-XIV, World Championship 2021-2022).
 
 Uses the same GraphQL endpoint the start.gg website calls, which serves
 public tournament data without an API token.
@@ -22,29 +22,41 @@ HEADERS = [
 HERE = os.path.dirname(os.path.abspath(__file__))
 RAW = os.path.join(HERE, "..", "data", "raw", "startgg")
 
+# unlisted tournaments: they don't show up under the Kards videogame listing
+EXTRA_SLUGS = ["kards-world-championship-2021", "kards-world-championship-2022"]
+
+TOURNAMENT_FIELDS = "id name slug startAt endAt events { id name slug startAt numEntrants videogame { id } phases { phaseGroups(query: {perPage: 64}) { nodes { id } } } }"
+
 TOURNAMENTS_Q = """
 query($p: Int) {
   tournaments(query: {perPage: 50, page: $p, sortBy: "startAt asc", filter: {videogameIds: [%d]}}) {
-    nodes { id name slug startAt endAt events { id name slug startAt numEntrants videogame { id } } }
+    nodes { %s }
   }
-}""" % KARDS_VIDEOGAME_ID
+}""" % (KARDS_VIDEOGAME_ID, TOURNAMENT_FIELDS)
 
-SETS_Q = """
-query($id: ID!, $p: Int) {
-  event(id: $id) {
-    sets(page: $p, perPage: 40, sortType: STANDARD) {
-      pageInfo { totalPages }
-      nodes {
+TOURNAMENT_BY_SLUG_Q = "query($s: String) { tournament(slug: $s) { %s } }" % TOURNAMENT_FIELDS
+
+SET_FIELDS = """
         id round fullRoundText completedAt startedAt winnerId displayScore state
         phaseGroup { displayIdentifier phase { name bracketType } }
         slots {
           entrant { id name participants { gamerTag player { id gamerTag } user { slug } } }
           standing { stats { score { value } } }
-        }
-      }
-    }
+        }"""
+
+SETS_Q = """
+query($id: ID!, $p: Int) {
+  event(id: $id) {
+    sets(page: $p, perPage: 30, sortType: STANDARD) { pageInfo { totalPages } nodes { %s } }
   }
-}"""
+}""" % SET_FIELDS
+
+GROUP_SETS_Q = """
+query($id: ID!, $p: Int) {
+  phaseGroup(id: $id) {
+    sets(page: $p, perPage: 30, sortType: STANDARD) { pageInfo { totalPages } nodes { %s } }
+  }
+}""" % SET_FIELDS
 
 
 def gql(query, variables, retries=5):
@@ -67,20 +79,36 @@ def list_tournaments():
     while True:
         nodes = gql(TOURNAMENTS_Q, {"p": page})["tournaments"]["nodes"]
         if not nodes:
-            return tours
+            break
         tours += nodes
         page += 1
+    for slug in EXTRA_SLUGS:
+        t = gql(TOURNAMENT_BY_SLUG_Q, {"s": slug})["tournament"]
+        if t and t["id"] not in {x["id"] for x in tours}:
+            tours.append(t)
+    return tours
 
 
-def event_sets(event_id):
+def paged_sets(query, key, id_):
     sets, page = [], 1
     while True:
-        d = gql(SETS_Q, {"id": event_id, "p": page})["event"]["sets"]
+        d = gql(query, {"id": id_, "p": page})[key]["sets"]
         sets += d["nodes"]
         if page >= (d["pageInfo"]["totalPages"] or 0):
             return sets
         page += 1
         time.sleep(0.5)
+
+
+def event_sets(event):
+    sets = paged_sets(SETS_Q, "event", event["id"])
+    if sets:
+        return sets
+    # some events (e.g. WC 2022) return no sets at the event level; walk the bracket groups instead
+    for phase in event.get("phases") or []:
+        for group in phase["phaseGroups"]["nodes"]:
+            sets += paged_sets(GROUP_SETS_Q, "phaseGroup", group["id"])
+    return sets
 
 
 def main():
@@ -93,7 +121,9 @@ def main():
         for e in t["events"]:
             if (e.get("videogame") or {}).get("id") != KARDS_VIDEOGAME_ID:
                 continue
-            events.append({"event": e, "sets": event_sets(e["id"])})
+            sets = event_sets(e)
+            e = {k: v for k, v in e.items() if k != "phases"}
+            events.append({"event": e, "sets": sets})
         n = sum(len(e["sets"]) for e in events)
         print(f"{t['name']}: {len(events)} events, {n} sets", file=sys.stderr)
         with open(path, "w") as f:
