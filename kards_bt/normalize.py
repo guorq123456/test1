@@ -61,7 +61,11 @@ def iso(ts):
         return None
     if isinstance(ts, (int, float)):
         return datetime.fromtimestamp(ts, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    return ts[:19] + "Z"
+    # Challonge stamps carry a local offset ("07:55:55.021-05:00"); convert instead of dropping it
+    t = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=timezone.utc)
+    return t.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 class Identities:
