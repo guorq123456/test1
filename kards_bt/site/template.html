@@ -1,0 +1,539 @@
+<title>KARDS BT 实力榜</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one reading column; chart first (the question is "how did ratings move"), leaderboard second as the table view, method last. */
+:root {
+  --bg: #f2f3ee;
+  --surface: #fcfcfa;
+  --ink: #16190f;
+  --ink-2: #4b4f40;
+  --muted: #7e8372;
+  --grid: #e3e5dc;
+  --axis: #c3c6b7;
+  --line: rgba(22, 25, 15, 0.12);
+  --accent: #4b5c1c;
+  --accent-ink: #ffffff;
+  --accent-wash: rgba(75, 92, 28, 0.10);
+  --warn: #8a5a00;
+  --warn-wash: rgba(250, 178, 25, 0.16);
+  --up: #1d7a1d;
+  --down: #b23a3a;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+  --s5: #e87ba4; --s6: #008300; --s7: #4a3aa7; --s8: #e34948;
+  --display: "Barlow Condensed", "Arial Narrow", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --body: "IBM Plex Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f110c; --surface: #181a14; --ink: #f3f4ee; --ink-2: #c2c5b4; --muted: #8b8f7d;
+    --grid: #282b22; --axis: #3b3f32; --line: rgba(255, 255, 255, 0.10);
+    --accent: #a8bd66; --accent-ink: #12150c; --accent-wash: rgba(168, 189, 102, 0.14);
+    --warn: #f3c25a; --warn-wash: rgba(250, 178, 25, 0.12); --up: #4cc24c; --down: #ef7b7b;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f110c; --surface: #181a14; --ink: #f3f4ee; --ink-2: #c2c5b4; --muted: #8b8f7d;
+  --grid: #282b22; --axis: #3b3f32; --line: rgba(255, 255, 255, 0.10);
+  --accent: #a8bd66; --accent-ink: #12150c; --accent-wash: rgba(168, 189, 102, 0.14);
+  --warn: #f3c25a; --warn-wash: rgba(250, 178, 25, 0.12); --up: #4cc24c; --down: #ef7b7b;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+  --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; display: grid; gap: 36px; }
+h1, h2 { font-family: var(--display); font-weight: 700; letter-spacing: 0.01em; text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); }
+h2 { font-size: 1.6rem; }
+p { margin: 0; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+header { display: grid; gap: 14px; }
+.lede { color: var(--ink-2); max-width: 68ch; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 28px; font-size: 13px; color: var(--ink-2); }
+.facts b { font: 500 15px var(--mono); color: var(--ink); margin-right: 4px; }
+.notice { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; background: var(--warn-wash); border-radius: 6px; padding: 12px 14px; font-size: 13.5px; color: var(--ink); max-width: 80ch; }
+.notice .tag { font: 600 11px/1.9 var(--mono); letter-spacing: 0.08em; color: var(--warn); text-transform: uppercase; white-space: nowrap; }
+section { display: grid; gap: 14px; min-width: 0; }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+.sec-head p { color: var(--ink-2); font-size: 13.5px; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+input[type="search"], select {
+  font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; min-width: 0;
+}
+input[type="search"] { width: min(260px, 100%); }
+button {
+  font: 500 13px var(--body); color: var(--ink-2); background: transparent; border: 1px solid var(--line);
+  border-radius: 6px; padding: 7px 11px; cursor: pointer;
+}
+button:hover { background: var(--accent-wash); color: var(--ink); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 8px; padding: 4px 6px 4px 10px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); font-size: 13px; color: var(--ink);
+}
+.chip .key { width: 14px; height: 2px; border-radius: 1px; background: currentColor; flex: none; }
+.chip .x { border: 0; padding: 0 6px; font-size: 15px; line-height: 1; color: var(--muted); }
+.chip .x:hover { color: var(--ink); background: transparent; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 12px 8px; position: relative; min-width: 0; }
+#chart { width: 100%; display: block; touch-action: pan-y; }
+#chart text { font: 11px var(--mono); fill: var(--muted); }
+.tip {
+  position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 6px; padding: 8px 10px; font-size: 12.5px; min-width: 180px; max-width: 260px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12); z-index: 2;
+}
+.tip .t-head { font: 500 11px var(--mono); color: var(--muted); margin-bottom: 6px; }
+.tip .t-row { display: grid; grid-template-columns: 14px auto 1fr; gap: 8px; align-items: center; }
+.tip .t-row .key { height: 2px; border-radius: 1px; }
+.tip .t-row b { font: 500 13px var(--mono); color: var(--ink); }
+.tip .t-row span { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tip .t-row small { color: var(--muted); font-family: var(--mono); }
+.empty { padding: 40px 12px; text-align: center; color: var(--muted); }
+.slider { display: grid; gap: 6px; flex: 1 1 320px; min-width: 0; }
+.slider label { font-size: 13px; color: var(--ink-2); }
+.slider label b { color: var(--ink); font-weight: 600; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { padding: 8px 12px; text-align: left; white-space: nowrap; }
+th { font: 500 11px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); }
+td { border-bottom: 1px solid var(--grid); }
+tbody tr { cursor: pointer; }
+tbody tr:hover td { background: var(--accent-wash); }
+td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+td.rank { color: var(--muted); font-family: var(--mono); width: 3em; }
+td.name .who { display: inline-flex; align-items: center; gap: 8px; vertical-align: middle; }
+td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; background: transparent; border: 1px solid var(--line); }
+.up { color: var(--up); } .down { color: var(--down); } .new { color: var(--muted); }
+.range { position: relative; width: 120px; height: 10px; }
+.range i { position: absolute; top: 4px; height: 2px; background: var(--axis); border-radius: 1px; }
+.range s { position: absolute; top: 1px; width: 2px; height: 8px; background: var(--ink-2); border-radius: 1px; }
+.more { justify-self: start; }
+.method { display: grid; gap: 12px; max-width: 72ch; color: var(--ink-2); font-size: 14px; }
+.method code, .formula { font-family: var(--mono); font-size: 13px; color: var(--ink); }
+.formula { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; overflow-x: auto; white-space: nowrap; }
+.method ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.method b { color: var(--ink); font-weight: 600; }
+@media (max-width: 640px) {
+  .hide-sm { display: none; }
+  th, td { padding: 8px 8px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">KARDS · Bradley–Terry · 赛事对局</span>
+    <h1>KARDS 赛事 BT 实力榜</h1>
+    <p class="lede">用 Bradley–Terry 模型给每位选手估一个实力分（Elo 刻度，场均 1500），每站比赛结束后重新拟合一次，所以能看到分数怎样随时间变化。旧比赛按一年半衰期逐渐降权，新人会被先验拉向平均分。</p>
+    <div class="facts" id="facts"></div>
+    <div class="notice"><span class="tag">数据范围</span><p>目前只有 983 Media 主办的 <b>KARDS Open 公开赛</b>（Battlefy + start.gg，含瑞士轮资格赛和正赛）。官方 OCC 月赛、扩展赛、世界赛的对阵表在 Challonge 上，需要 API key 才能读取，暂未计入；补上后分数会更准，也会延续到 2023 年以后。</p></div>
+  </header>
+
+  <section aria-labelledby="h-trend">
+    <div class="sec-head">
+      <h2 id="h-trend">分数走势</h2>
+      <p>悬停看每站后的分数；点选手名查看 ±1 标准误区间。</p>
+    </div>
+    <div class="controls">
+      <input type="search" id="search" list="names" placeholder="搜索选手并加入图表" autocomplete="off" aria-label="搜索选手">
+      <datalist id="names"></datalist>
+      <button type="button" id="btn-top">当期前 6 名</button>
+      <button type="button" id="btn-clear">清空</button>
+    </div>
+    <div class="chips" id="chips" aria-label="图例"></div>
+    <div class="card" id="card">
+      <svg id="chart" role="img" aria-label="选手 BT 分数随时间变化的折线图"></svg>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-board">
+    <div class="sec-head">
+      <h2 id="h-board">实力榜</h2>
+      <p>点击一行，把选手加入或移出上方图表。</p>
+    </div>
+    <div class="controls">
+      <div class="slider">
+        <label for="snap">截至 <b id="snap-label"></b></label>
+        <input type="range" id="snap" min="0" max="0" step="1">
+      </div>
+      <select id="minres" aria-label="最少对局数">
+        <option value="1">全部选手</option>
+        <option value="10" selected>至少 10 场</option>
+        <option value="20">至少 20 场</option>
+        <option value="40">至少 40 场</option>
+      </select>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>选手</th><th class="num">BT 分</th><th class="num">±</th>
+          <th class="hide-sm">区间（±1 标准误）</th><th class="num">较上站</th>
+          <th class="num hide-sm">对局</th><th class="hide-sm">最近参赛</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <button type="button" class="more" id="more">显示更多</button>
+  </section>
+
+  <section aria-labelledby="h-method" class="method">
+    <h2 id="h-method">怎么算的</h2>
+    <p>每场比赛（一个 Bo3/Bo5 系列赛算一场）给出“谁赢了谁”。BT 模型假设：</p>
+    <div class="formula">P(i 胜 j) = 1 / (1 + e<sup>−(β<sub>i</sub> − β<sub>j</sub>)</sup>)，　BT 分 = 1500 + β × 400 / ln 10</div>
+    <ul>
+      <li><b>随时间变化</b>：每站比赛结束后，用截至当天的全部对局重新拟合；距今 d 天的对局权重为 0.5<sup>d/365</sup>。</li>
+      <li><b>先验</b>：β ~ N(0, 0.8²)，相当于每人先带一点“平均水平”的虚拟战绩，只打过两三场的人不会被冲到榜首。</li>
+      <li><b>区间</b>：± 是拉普拉斯近似给出的 1 个标准误。场次越少，区间越宽。</li>
+      <li><b>参数怎么定的</b>：用每站赛前的分数预测这一站的胜负，在半衰期 90–730 天、先验 0.4–1.5 的网格里挑样本外 log loss 最低的组合（0.656，抛硬币是 0.693；预测准确率约 59%）。</li>
+      <li><b>排除</b>：轮空、弃权/取消资格、双败的对局；Weekday Skirmish、Blitz 等特殊规则的社区赛不计入。</li>
+      <li><b>同一人跨平台</b>：按平台账号 + 游戏内 ID 合并，可在 <code>data/aliases.csv</code> 里手动补充。</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const SLOTS = 8;
+const fmtDate = d => d.replace(/-/g, ".");
+const snaps = DATA.snaps;
+const players = DATA.players;
+const byId = new Map(players.map(p => [p.id, p]));
+players.forEach(p => { p.at = new Map(p.p.map(x => [x[0], x])); });
+
+const state = { selected: [], slot: new Map(), focus: null, snap: snaps.length - 1, shown: 50, hover: null };
+
+// ---------- header facts
+(function facts() {
+  const el = document.getElementById("facts");
+  const items = [
+    [fmtDate(DATA.stats.first) + " – " + fmtDate(DATA.stats.last), "时间范围"],
+    [String(snaps.length), "站比赛"],
+    [DATA.stats.matches.toLocaleString(), "场有效对局"],
+    [DATA.stats.players.toLocaleString(), "名选手"],
+  ];
+  for (const [v, k] of items) {
+    const s = document.createElement("span");
+    const b = document.createElement("b"); b.textContent = v;
+    s.append(b, document.createTextNode(k));
+    el.append(s);
+  }
+})();
+
+// ---------- selection with stable color slots (color follows the player, never the rank)
+function colorOf(id) { return `var(--s${state.slot.get(id) + 1})`; }
+function addPlayer(id) {
+  if (!byId.has(id) || state.selected.includes(id)) return;
+  if (state.selected.length >= SLOTS) { flashFull(); return; }
+  const used = new Set(state.slot.values());
+  let s = 0; while (used.has(s)) s++;
+  state.slot.set(id, s);
+  state.selected.push(id);
+  renderAll();
+}
+function removePlayer(id) {
+  state.selected = state.selected.filter(x => x !== id);
+  state.slot.delete(id);
+  if (state.focus === id) state.focus = null;
+  renderAll();
+}
+function togglePlayer(id) { state.selected.includes(id) ? removePlayer(id) : addPlayer(id); }
+function flashFull() {
+  const s = document.getElementById("search");
+  s.value = ""; s.placeholder = `图表最多 ${SLOTS} 人，先移除一位`;
+  setTimeout(() => { s.placeholder = "搜索选手并加入图表"; }, 2500);
+}
+
+function boardAt(si, minRes) {
+  const out = [];
+  for (const p of players) {
+    const x = p.at.get(si);
+    if (x && x[3] >= minRes) out.push({ p, elo: x[1], se: x[2], n: x[3], last: x[4] });
+  }
+  out.sort((a, b) => b.elo - a.elo);
+  return out;
+}
+function topIds(k) { return boardAt(snaps.length - 1, 20).slice(0, k).map(r => r.p.id); }
+
+// ---------- search
+(function search() {
+  const dl = document.getElementById("names");
+  const names = new Map();
+  for (const p of players) names.set(p.n, p.id);
+  [...names.keys()].sort((a, b) => a.localeCompare(b)).forEach(n => {
+    const o = document.createElement("option"); o.value = n; dl.append(o);
+  });
+  const input = document.getElementById("search");
+  const lookup = q => {
+    q = q.trim().toLowerCase(); if (!q) return null;
+    const exact = players.find(p => p.n.toLowerCase() === q);
+    if (exact) return exact.id;
+    const hit = players.find(p => p.a.toLowerCase().split(" / ").includes(q)) || players.find(p => p.n.toLowerCase().includes(q));
+    return hit ? hit.id : null;
+  };
+  input.addEventListener("change", () => { const id = lookup(input.value); if (id) { addPlayer(id); input.value = ""; } });
+  input.addEventListener("keydown", e => { if (e.key === "Enter") { const id = lookup(input.value); if (id) { addPlayer(id); input.value = ""; } } });
+  document.getElementById("btn-top").addEventListener("click", () => {
+    state.selected = []; state.slot.clear(); state.focus = null;
+    topIds(6).forEach(addPlayer); renderAll();
+  });
+  document.getElementById("btn-clear").addEventListener("click", () => {
+    state.selected = []; state.slot.clear(); state.focus = null; renderAll();
+  });
+})();
+
+// ---------- chips (legend)
+function renderChips() {
+  const el = document.getElementById("chips");
+  el.replaceChildren();
+  for (const id of state.selected) {
+    const p = byId.get(id);
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    chip.style.color = colorOf(id);
+    const key = document.createElement("span"); key.className = "key";
+    const name = document.createElement("button");
+    name.type = "button"; name.textContent = p.n; name.title = p.a ? "曾用名：" + p.a : "";
+    name.style.cssText = "border:0;padding:0;background:none;color:var(--ink);font:inherit;";
+    name.setAttribute("aria-pressed", String(state.focus === id));
+    name.addEventListener("click", () => { state.focus = state.focus === id ? null : id; renderChart(); renderChips(); });
+    name.addEventListener("mouseenter", () => { state.focus = id; renderChart(); });
+    name.addEventListener("mouseleave", () => { state.focus = null; renderChart(); });
+    const x = document.createElement("button"); x.type = "button"; x.className = "x"; x.textContent = "×";
+    x.setAttribute("aria-label", "移除 " + p.n);
+    x.addEventListener("click", () => removePlayer(id));
+    chip.append(key, name, x);
+    el.append(chip);
+  }
+}
+
+// ---------- chart
+const NS = "http://www.w3.org/2000/svg";
+const svgEl = (tag, attrs, parent) => {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.append(e);
+  return e;
+};
+const tms = snaps.map(s => Date.parse(s.d + "T00:00:00Z"));
+let geom = null;
+
+function renderChart() {
+  const svg = document.getElementById("chart");
+  const card = document.getElementById("card");
+  svg.replaceChildren();
+  const W = Math.max(card.clientWidth - 24, 280);
+  const H = Math.round(Math.min(Math.max(W * 0.48, 260), 430));
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("height", H);
+  const m = { l: 46, r: 14, t: 12, b: 28 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+
+  const sel = state.selected.map(id => byId.get(id));
+  if (!sel.length) {
+    const t = svgEl("text", { x: W / 2, y: H / 2, "text-anchor": "middle" }, svg);
+    t.textContent = "在上方搜索选手，或点“当期前 6 名”";
+    geom = null;
+    return;
+  }
+  let lo = Infinity, hi = -Infinity;
+  for (const p of sel) for (const x of p.p) {
+    const pad = state.focus === p.id ? x[2] : 0;
+    lo = Math.min(lo, x[1] - pad); hi = Math.max(hi, x[1] + pad);
+  }
+  const step = hi - lo > 300 ? 100 : 50;
+  lo = Math.floor((lo - 15) / step) * step; hi = Math.ceil((hi + 15) / step) * step;
+  const x0 = tms[0], x1 = tms[tms.length - 1];
+  const X = t => m.l + (t - x0) / (x1 - x0) * iw;
+  const Y = v => m.t + (hi - v) / (hi - lo) * ih;
+  geom = { X, Y, m, iw, ih, W, H };
+
+  // grid + y ticks
+  for (let v = lo; v <= hi; v += step) {
+    svgEl("line", { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: v === 1500 ? "var(--axis)" : "var(--grid)", "stroke-width": 1 }, svg);
+    const t = svgEl("text", { x: m.l - 8, y: Y(v) + 4, "text-anchor": "end" }, svg); t.textContent = v;
+  }
+  // x ticks: Jan and Jul of each year
+  const y0 = new Date(x0).getUTCFullYear(), y1 = new Date(x1).getUTCFullYear();
+  for (let y = y0; y <= y1 + 1; y++) for (const mo of [0, 6]) {
+    const t = Date.UTC(y, mo, 1);
+    if (t < x0 || t > x1) continue;
+    svgEl("line", { x1: X(t), x2: X(t), y1: H - m.b, y2: H - m.b + 4, stroke: "var(--axis)" }, svg);
+    const tx = svgEl("text", { x: X(t), y: H - m.b + 17, "text-anchor": "middle" }, svg);
+    tx.textContent = mo === 0 ? `${y}` : `${y}.07`;
+  }
+  svgEl("line", { x1: m.l, x2: W - m.r, y1: H - m.b, y2: H - m.b, stroke: "var(--axis)" }, svg);
+
+  // leaderboard snapshot marker
+  const sx = X(tms[state.snap]);
+  svgEl("line", { x1: sx, x2: sx, y1: m.t, y2: H - m.b, stroke: "var(--accent)", "stroke-dasharray": "3 4", "stroke-width": 1 }, svg);
+
+  // focus band (±1 se)
+  if (state.focus && state.selected.includes(state.focus)) {
+    const p = byId.get(state.focus);
+    for (const seg of segments(p)) {
+      const top = seg.map(x => `${X(tms[x[0]])},${Y(x[1] + x[2])}`);
+      const bot = seg.slice().reverse().map(x => `${X(tms[x[0]])},${Y(x[1] - x[2])}`);
+      svgEl("polygon", { points: top.concat(bot).join(" "), fill: colorOf(p.id), "fill-opacity": 0.14, stroke: "none" }, svg);
+    }
+  }
+  // lines + points, focused series drawn last
+  const order = sel.slice().sort((a, b) => (a.id === state.focus) - (b.id === state.focus));
+  for (const p of order) {
+    const dim = state.focus && state.focus !== p.id;
+    const g = svgEl("g", { opacity: dim ? 0.3 : 1 }, svg);
+    for (const seg of segments(p)) {
+      if (seg.length > 1) svgEl("path", {
+        d: seg.map((x, i) => `${i ? "L" : "M"}${X(tms[x[0]]).toFixed(1)},${Y(x[1]).toFixed(1)}`).join(""),
+        fill: "none", stroke: colorOf(p.id), "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round",
+      }, g);
+      for (const x of seg) svgEl("circle", { cx: X(tms[x[0]]), cy: Y(x[1]), r: 4, fill: colorOf(p.id), stroke: "var(--surface)", "stroke-width": 2 }, g);
+    }
+  }
+  // crosshair layer
+  const cross = svgEl("line", { y1: m.t, y2: H - m.b, stroke: "var(--ink-2)", "stroke-width": 1, visibility: "hidden" }, svg);
+  const hit = svgEl("rect", { x: m.l - 10, y: 0, width: iw + 20, height: H, fill: "transparent", tabindex: 0, "aria-label": "用左右方向键逐站查看分数" }, svg);
+  const show = si => {
+    state.hover = si;
+    cross.setAttribute("x1", X(tms[si])); cross.setAttribute("x2", X(tms[si]));
+    cross.setAttribute("visibility", "visible");
+    showTip(si);
+  };
+  const hide = () => { state.hover = null; cross.setAttribute("visibility", "hidden"); document.getElementById("tip").hidden = true; };
+  hit.addEventListener("pointermove", e => {
+    const r = svg.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (W / r.width);
+    let best = 0;
+    tms.forEach((t, i) => { if (Math.abs(X(t) - px) < Math.abs(X(tms[best]) - px)) best = i; });
+    show(best);
+  });
+  hit.addEventListener("pointerleave", hide);
+  hit.addEventListener("blur", hide);
+  hit.addEventListener("focus", () => show(state.hover ?? state.snap));
+  hit.addEventListener("keydown", e => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    e.preventDefault();
+    const cur = state.hover ?? state.snap;
+    show(Math.max(0, Math.min(snaps.length - 1, cur + (e.key === "ArrowRight" ? 1 : -1))));
+  });
+  hit.addEventListener("click", () => { if (state.hover != null) setSnap(state.hover); });
+}
+
+function segments(p) {
+  const segs = []; let cur = [];
+  for (const x of p.p) {
+    if (cur.length && x[0] !== cur[cur.length - 1][0] + 1) { segs.push(cur); cur = []; }
+    cur.push(x);
+  }
+  if (cur.length) segs.push(cur);
+  return segs;
+}
+
+function showTip(si) {
+  const tip = document.getElementById("tip");
+  tip.replaceChildren();
+  const head = document.createElement("div"); head.className = "t-head";
+  head.textContent = `${fmtDate(snaps[si].d)} · ${snaps[si].e} 之后`;
+  tip.append(head);
+  const rows = state.selected.map(id => ({ p: byId.get(id), x: byId.get(id).at.get(si) })).filter(r => r.x).sort((a, b) => b.x[1] - a.x[1]);
+  if (!rows.length) {
+    const d = document.createElement("div"); d.className = "t-row"; d.style.color = "var(--muted)";
+    d.textContent = "所选选手此时还没有比赛记录"; tip.append(d);
+  }
+  for (const r of rows) {
+    const row = document.createElement("div"); row.className = "t-row";
+    const key = document.createElement("i"); key.className = "key"; key.style.background = colorOf(r.p.id);
+    const b = document.createElement("b"); b.textContent = Math.round(r.x[1]);
+    const name = document.createElement("span"); name.textContent = r.p.n + " ";
+    const se = document.createElement("small"); se.textContent = "±" + Math.round(r.x[2]);
+    name.append(se);
+    row.append(key, b, name);
+    tip.append(row);
+  }
+  tip.hidden = false;
+  const card = document.getElementById("card");
+  const svg = document.getElementById("chart");
+  const scale = svg.getBoundingClientRect().width / geom.W;
+  const px = geom.X(tms[si]) * scale + 12;
+  const w = tip.offsetWidth;
+  const left = px + 14 + w > card.clientWidth ? px - w - 14 : px + 14;
+  tip.style.left = Math.max(4, left) + "px";
+  tip.style.top = "14px";
+}
+
+// ---------- leaderboard
+const snapInput = document.getElementById("snap");
+snapInput.max = snaps.length - 1;
+snapInput.value = state.snap;
+snapInput.addEventListener("input", () => setSnap(+snapInput.value));
+document.getElementById("minres").addEventListener("change", () => { state.shown = 50; renderBoard(); });
+document.getElementById("more").addEventListener("click", () => { state.shown += 50; renderBoard(); });
+function setSnap(i) { state.snap = i; snapInput.value = i; state.shown = 50; renderBoard(); renderChart(); }
+
+function renderBoard() {
+  const s = snaps[state.snap];
+  document.getElementById("snap-label").textContent = `${fmtDate(s.d)} · ${s.e}（第 ${state.snap + 1}/${snaps.length} 站，本站 ${s.n} 场）`;
+  const minRes = +document.getElementById("minres").value;
+  const rows = boardAt(state.snap, minRes);
+  const lo = 1300, hi = 1950, sc = v => Math.max(0, Math.min(120, (v - lo) / (hi - lo) * 120));
+  const tb = document.getElementById("tbody");
+  tb.replaceChildren();
+  rows.slice(0, state.shown).forEach((r, i) => {
+    const tr = document.createElement("tr");
+    tr.tabIndex = 0;
+    const sel = state.selected.includes(r.p.id);
+    tr.setAttribute("aria-label", `${r.p.n}，${sel ? "已在图表中，按回车移除" : "按回车加入图表"}`);
+    const cell = (cls, text) => { const td = document.createElement("td"); if (cls) td.className = cls; if (text != null) td.textContent = text; tr.append(td); return td; };
+    cell("rank", i + 1);
+    const nm = cell("name");
+    const sw = document.createElement("i"); sw.className = "sw";
+    if (sel) { sw.style.background = colorOf(r.p.id); sw.style.borderColor = "transparent"; }
+    const label = document.createElement("span"); label.textContent = r.p.n;
+    if (r.p.a && r.p.a !== r.p.n) nm.title = "曾用名：" + r.p.a;
+    const who = document.createElement("span"); who.className = "who";
+    who.append(sw, label);
+    nm.append(who);
+    cell("num", Math.round(r.elo));
+    cell("num", Math.round(r.se));
+    const rg = cell("hide-sm");
+    const bar = document.createElement("div"); bar.className = "range";
+    const ln = document.createElement("i"); ln.style.left = sc(r.elo - r.se) + "px"; ln.style.width = (sc(r.elo + r.se) - sc(r.elo - r.se)) + "px";
+    const mk = document.createElement("s"); mk.style.left = (sc(r.elo) - 1) + "px";
+    bar.append(ln, mk); rg.append(bar);
+    const prev = state.snap > 0 ? r.p.at.get(state.snap - 1) : null;
+    const d = prev ? Math.round(r.elo - prev[1]) : null;
+    const dc = cell("num " + (d == null ? "new" : d > 0 ? "up" : d < 0 ? "down" : ""), d == null ? "新" : (d > 0 ? "▲ " : d < 0 ? "▼ " : "") + Math.abs(d));
+    if (d == null) dc.title = "上一站时还没有记录";
+    cell("num hide-sm", r.n);
+    cell("hide-sm", fmtDate(r.last));
+    tr.addEventListener("click", () => togglePlayer(r.p.id));
+    tr.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); togglePlayer(r.p.id); } });
+    tb.append(tr);
+  });
+  if (!rows.length) {
+    const tr = document.createElement("tr"); const td = document.createElement("td");
+    td.colSpan = 8; td.className = "empty"; td.textContent = "这一站还没有满足条件的选手，试试降低最少对局数。";
+    tr.append(td); tb.append(tr);
+  }
+  document.getElementById("more").hidden = rows.length <= state.shown;
+}
+
+function renderAll() { renderChips(); renderChart(); renderBoard(); }
+
+// default view: current top 6, plus guorq123456 if present
+topIds(6).forEach(id => { const used = new Set(state.slot.values()); let s = 0; while (used.has(s)) s++; state.slot.set(id, s); state.selected.push(id); });
+const me = players.find(p => p.n.toLowerCase() === "guorq123456");
+if (me && !state.selected.includes(me.id)) { state.slot.set(me.id, state.selected.length); state.selected.push(me.id); }
+renderAll();
+let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(renderChart, 120); });
+</script>

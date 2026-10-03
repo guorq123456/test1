@@ -1,0 +1,154 @@
+"""Time-varying Bradley-Terry ratings for KARDS tournament players.
+
+After every event we refit a Bradley-Terry model on all matches played up to
+that day:
+
+    P(i beats j) = sigmoid(b_i - b_j)
+
+with two tweaks that make the snapshot reflect form *at that time*:
+
+* time decay: a match played d days before the snapshot gets weight
+  0.5 ** (d / half_life), so old results fade out;
+* Gaussian prior b_i ~ N(0, prior_sd^2): players with few matches are pulled
+  toward the field average instead of exploding to +-infinity after a
+  perfect 2-0 record.
+
+The MAP estimate is a weighted, L2-regularized logistic regression. Standard
+errors come from the inverse Hessian (Laplace approximation). Ratings are
+reported on the Elo scale: elo = 1500 + b * 400 / ln(10).
+"""
+import argparse
+import csv
+import math
+import os
+from collections import defaultdict
+from datetime import datetime
+
+import numpy as np
+from scipy.optimize import minimize
+from scipy.special import expit, log_expit
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+DATA = os.path.join(HERE, "data")
+ELO_SCALE = 400 / math.log(10)
+
+
+def parse_time(s):
+    return datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ")
+
+
+def load_matches(categories, use_games):
+    """Return list of (time, winner_id, loser_id, weight, event) for valid matches."""
+    out = []
+    for r in csv.DictReader(open(os.path.join(DATA, "matches.csv"))):
+        if r["valid"] != "1" or r["category"] not in categories:
+            continue
+        p1, p2 = r["p1"], r["p2"]
+        t = parse_time(r["time"])
+        if use_games and r["s1"] not in ("", None) and r["s2"] not in ("", None):
+            g1, g2 = max(int(float(r["s1"])), 0), max(int(float(r["s2"])), 0)
+            if g1 + g2 > 0:
+                if g1:
+                    out.append((t, p1, p2, float(g1), r["event"]))
+                if g2:
+                    out.append((t, p2, p1, float(g2), r["event"]))
+                continue
+        w, l = (p1, p2) if r["winner"] == "1" else (p2, p1)
+        out.append((t, w, l, 1.0, r["event"]))
+    return out
+
+
+def fit_bt(winners, losers, weights, n, prior_sd, x0=None):
+    """MAP Bradley-Terry fit. winners/losers are int index arrays into n players."""
+    lam = 1.0 / prior_sd ** 2
+
+    def f(b):
+        d = b[winners] - b[losers]
+        nll = -(weights * log_expit(d)).sum() + 0.5 * lam * (b @ b)
+        g = weights * (expit(d) - 1.0)  # d nll / d d
+        grad = lam * b
+        np.add.at(grad, winners, g)
+        np.add.at(grad, losers, -g)
+        return nll, grad
+
+    res = minimize(f, np.zeros(n) if x0 is None else x0, jac=True, method="L-BFGS-B",
+                   options={"maxiter": 2000, "gtol": 1e-8})
+    b = res.x
+
+    # Hessian of the negative log posterior -> Laplace standard errors
+    d = b[winners] - b[losers]
+    h = weights * expit(d) * expit(-d)
+    H = np.diag(np.full(n, lam))
+    np.add.at(H, (winners, winners), h)
+    np.add.at(H, (losers, losers), h)
+    np.add.at(H, (winners, losers), -h)
+    np.add.at(H, (losers, winners), -h)
+    se = np.sqrt(np.diag(np.linalg.inv(H)))
+    return b, se
+
+
+def event_snapshots(matches):
+    """One snapshot per event, dated at the event's last match."""
+    end = defaultdict(lambda: datetime.min)
+    for t, *_, ev in matches:
+        end[ev] = max(end[ev], t)
+    return sorted((t, ev) for ev, t in end.items())
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--categories", default="open,open_special",
+                    help="comma list of match categories to use (open, open_special, community, official, ...)")
+    ap.add_argument("--half-life", type=float, default=365, help="days; <=0 disables time decay")
+    ap.add_argument("--prior-sd", type=float, default=0.8, help="prior sd of ratings in log-odds units (0.8 ~ 139 Elo)")
+    ap.add_argument("--games", action="store_true", help="count individual games instead of match (series) wins")
+    ap.add_argument("--active-days", type=float, default=730,
+                    help="only report a player at a snapshot if they played within this many days")
+    ap.add_argument("--out", default=os.path.join(DATA, "ratings_timeline.csv"))
+    args = ap.parse_args()
+
+    matches = load_matches(set(args.categories.split(",")), args.games)
+    names = {r["player_id"]: r["name"] for r in csv.DictReader(open(os.path.join(DATA, "players.csv")))}
+    snapshots = event_snapshots(matches)
+    print(f"{len(matches)} results, {len(snapshots)} snapshots")
+
+    rows = []
+    for snap_t, snap_event in snapshots:
+        past = [m for m in matches if m[0] <= snap_t]
+        ids = sorted({p for m in past for p in (m[1], m[2])})
+        idx = {p: i for i, p in enumerate(ids)}
+        age = np.array([(snap_t - m[0]).total_seconds() / 86400 for m in past])
+        decay = 0.5 ** (age / args.half_life) if args.half_life > 0 else np.ones(len(past))
+        weights = decay * np.array([m[3] for m in past])
+        winners = np.array([idx[m[1]] for m in past])
+        losers = np.array([idx[m[2]] for m in past])
+        b, se = fit_bt(winners, losers, weights, len(ids), args.prior_sd)
+
+        n_matches = np.zeros(len(ids))
+        eff = np.zeros(len(ids))
+        last = {}
+        for m, w in zip(past, decay):
+            for p in (m[1], m[2]):
+                n_matches[idx[p]] += 1
+                eff[idx[p]] += w
+                last[p] = max(last.get(p, m[0]), m[0])
+        for p, i in idx.items():
+            if (snap_t - last[p]).days > args.active_days:
+                continue
+            rows.append({
+                "date": snap_t.strftime("%Y-%m-%d"), "event": snap_event, "player_id": p,
+                "name": names.get(p, p), "elo": round(1500 + ELO_SCALE * b[i], 1),
+                "se": round(ELO_SCALE * se[i], 1), "results": int(n_matches[i]),
+                "eff_results": round(eff[i], 2), "last_played": last[p].strftime("%Y-%m-%d"),
+            })
+        print(f"{snap_t:%Y-%m-%d} {snap_event:40s} players={len(ids):4d} results={len(past)}")
+
+    with open(args.out, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=list(rows[0]))
+        w.writeheader()
+        w.writerows(rows)
+    print(f"wrote {len(rows)} rows to {args.out}")
+
+
+if __name__ == "__main__":
+    main()
