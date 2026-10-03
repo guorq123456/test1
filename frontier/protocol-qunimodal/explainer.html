@@ -108,8 +108,6 @@ section { display: flex; flex-direction: column; gap: 16px; }
 .chip i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
 .chip small { display: block; font-weight: 400; font-size: 12px; color: var(--ink-3); }
 .grp ul { margin: 0; padding-left: 18px; font-size: 14.5px; line-height: 1.7; display: flex; flex-direction: column; gap: 4px; }
-/* flow */
-.flow svg { display: block; width: 100%; max-width: 560px; height: auto; margin: 0 auto; }
 .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .facts > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .facts b { font-family: var(--font-mono); font-size: 22px; font-weight: 500; font-variant-numeric: tabular-nums; }
@@ -270,22 +268,6 @@ footer { font-size: 13px; color: var(--ink-3); border-top: 1px solid var(--line)
 </section>
 
 <!-- 6 -->
-<section id="how">
-  <div class="num">怎么做出来的</div>
-  <h2>一套事先定好的流程，跑了 3 轮</h2>
-  <p>用户事先定了一个 7 步协议（从第 0 步「文献先行」算起）。每轮按顺序走一遍，最后看停止规则决定要不要再来一轮。</p>
-  <div class="facts">
-    <div><b>3 × 8</b><span>3 轮，每轮 8 个独立探索者</span></div>
-    <div><b>H1–H5</b><span>隐藏留出集，每轮换新；最后一套 r 到 900、k 到 200</span></div>
-    <div><b>11 / 11</b><span>第 3 轮复核的结论全部通过</span></div>
-  </div>
-  <div class="panel flow">
-    <svg id="flow" viewBox="0 0 360 600" role="img" aria-label="协议流程图，第 0 步到第 7 步"></svg>
-  </div>
-  <p class="small">第 3 轮的 11 项结论里，有两项是补全了定义、重新复核后才通过的。原因是协调者交接材料里漏写了定义，不是数字算错。</p>
-</section>
-
-<!-- 7 -->
 <section id="limits">
   <div class="num">限制</div>
   <h2>这些地方要打个折扣</h2>
@@ -509,39 +491,6 @@ footer { font-size: 13px; color: var(--ink-3); border-top: 1px solid var(--line)
     node.appendChild(svg);
   }
 
-  // ---------- Section 6: flow ----------
-  function drawFlow() {
-    var svg = document.getElementById("flow");
-    var steps = [
-      ["0", "文献先行", "每轮至少换 8 种说法去搜"],
-      ["1", "写下默认做法和替代路线", "先把假设摊开"],
-      ["2", "每条路线派一个独立探索者", "每轮 8 个，探索者用 Opus"],
-      ["3", "隐藏留出集机械验证", "H1–H5，每轮换一套新的"],
-      ["4", "默认驳回的复核", "复核者换用 Fable；两人各自重写代码"],
-      ["5", "综合者汇总", "由没参与探索的人来做"],
-      ["6", "六类报告", "按可信程度分门别类"],
-      ["7", "停止规则", "没满足就回到第 0 步"]
-    ];
-    var x0 = 8, bwid = 290, bh = 60, gap = 14, top = 6;
-    var defs = el("defs", {}, svg);
-    var mk = el("marker", { id: "ah", viewBox: "0 0 10 10", refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" }, defs);
-    el("path", { d: "M0,0 L10,5 L0,10 z", fill: "var(--ink-3)" }, mk);
-    steps.forEach(function (s, i) {
-      var y = top + i * (bh + gap), hot = (i === 3 || i === 4);
-      el("rect", { x: x0, y: y, width: bwid, height: bh, rx: 10, fill: hot ? "var(--s1-soft)" : "var(--bg)", stroke: "var(--line)", "stroke-width": 1 }, svg);
-      el("circle", { cx: x0 + 22, cy: y + bh / 2, r: 12, fill: "var(--ink)" }, svg);
-      var n = el("text", { x: x0 + 22, y: y + bh / 2 + 4.5, "text-anchor": "middle", fill: "var(--panel)", "font-size": 13, "font-family": "var(--font-mono)" }, svg); n.textContent = s[0];
-      var t = el("text", { x: x0 + 44, y: y + 25, fill: "var(--ink)", "font-size": 14.5, "font-weight": 700, "font-family": "var(--font-body)" }, svg); t.textContent = s[1];
-      var sub = el("text", { x: x0 + 44, y: y + 45, fill: "var(--ink-2)", "font-size": 11.5, "font-family": "var(--font-body)" }, svg); sub.textContent = s[2];
-      if (i < steps.length - 1) el("line", { x1: x0 + 22, x2: x0 + 22, y1: y + bh + 1, y2: y + bh + gap - 2, stroke: "var(--ink-3)", "stroke-width": 1.5, "marker-end": "url(#ah)" }, svg);
-    });
-    var yLast = top + 7 * (bh + gap) + bh / 2, yFirst = top + bh / 2, xr = x0 + bwid;
-    el("path", { d: "M" + xr + "," + yLast + " H" + (xr + 34) + " V" + yFirst + " H" + (xr + 4), fill: "none", stroke: "var(--accent)", "stroke-width": 1.5, "stroke-dasharray": "4 3", "marker-end": "url(#ah)" }, svg);
-    var lt = el("text", { x: xr + 46, y: (yFirst + yLast) / 2, fill: "var(--ink-2)", "font-size": 12, "font-family": "var(--font-body)", "text-anchor": "middle", transform: "rotate(-90 " + (xr + 46) + " " + ((yFirst + yLast) / 2) + ")" }, svg);
-    lt.textContent = "下一轮（共 3 轮）";
-    svg.setAttribute("viewBox", "0 0 360 " + (top + 8 * (bh + gap)));
-  }
-
   function renderAll() {
     stacked("c1a", [1, 2, 2, 1], 2);
     stacked("c1b", [1, 2, 2, 1], 4);
@@ -549,7 +498,6 @@ footer { font-size: 13px; color: var(--ink-3); border-top: 1px solid var(--line)
     drawTrapA(); drawTrapB();
   }
   ["c1a", "c1b", "c2full", "c2zoom", "c4a", "c4b"].forEach(function (id) { attachTip(document.getElementById(id)); });
-  drawFlow();
   renderAll();
   var t; window.addEventListener("resize", function () { clearTimeout(t); t = setTimeout(renderAll, 120); });
 })();
