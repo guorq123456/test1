@@ -19,7 +19,8 @@ DATA = os.path.join(HERE, "data")
 CATEGORIES = [
     ("open", re.compile(r"^kards open( #?\d+| [ivxl]+\b|$)", re.I)),
     ("open_special", re.compile(r"^(kards open: singleton|operation: kards)", re.I)),
-    ("official", re.compile(r"world championship|\bocc\b|officer'?s? club|expansion tournament", re.I)),
+    ("official", re.compile(r"world championship|\bocc\b|officer'?s? club|expansion tournament|"
+                            r"\b(clash|conflict|ultimate)\b|qualifier|tournament finals|seasonal", re.I)),
     ("community", re.compile(r".")),
 ]
 
@@ -173,6 +174,9 @@ def load_challonge(ids):
     for f in sorted(glob.glob(os.path.join(DATA, "raw", "challonge", "*.json"))):
         d = json.load(open(f))
         t, meta = d["tournament"], d["kards_meta"]
+        # the event list may carry only URLs; fall back to Challonge's own tournament name
+        event = (meta.get("event") or t["name"]).strip()
+        cat = meta.get("category") or category(t["name"])
         # group-stage matches reference group_player_ids instead of participant ids
         part = {}
         for p in (x["participant"] for x in t.get("participants", [])):
@@ -193,8 +197,8 @@ def load_challonge(ids):
             winner = 1 if m.get("winner_id") == m["player1_id"] else 2 if m.get("winner_id") == m["player2_id"] else 0
             forfeit = bool(m.get("forfeited")) or (s1 is not None and min(s1, s2) < 0)
             rows.append({
-                "source": "challonge", "event_id": str(t["id"]), "event": meta["event"].strip(),
-                "category": meta["category"], "stage": meta.get("stage") or t.get("name"),
+                "source": "challonge", "event_id": str(t["id"]), "event": event,
+                "category": cat, "stage": meta.get("stage") or t.get("name"),
                 "stage_type": "group" if m.get("group_id") else t.get("tournament_type"), "round": m.get("round"),
                 "time": when, "p1": nodes[0], "p2": nodes[1], "s1": s1, "s2": s2,
                 "winner": winner, "valid": int(winner > 0 and not forfeit),

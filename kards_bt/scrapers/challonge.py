@@ -2,8 +2,9 @@
 
 Needs a Challonge API v1 key in the CHALLONGE_API_KEY environment variable
 (challonge.com/settings/developer). Events to fetch are listed in
-data/challonge_events.csv; each one costs a single API request, which matters
-because free accounts are limited to 500 requests a month.
+data/challonge_events.csv (only the url column is required); each one costs a
+single API request, which matters because free accounts are limited to 500
+requests a month.
 """
 import csv
 import json
@@ -55,6 +56,8 @@ def main():
         sys.exit("Set CHALLONGE_API_KEY (challonge.com/settings/developer) first.")
     os.makedirs(RAW, exist_ok=True)
     for row in csv.DictReader(open(EVENTS)):
+        if not (row.get("url") or "").strip():
+            continue
         tid = tournament_id(row["url"])
         path = os.path.join(RAW, f"{tid}.json")
         if os.path.exists(path):
@@ -62,11 +65,11 @@ def main():
         try:
             d = fetch(tid, key)
         except RuntimeError as e:
-            print(f"skip {row['event']}: {e}", file=sys.stderr)
+            print(f"skip {row['url']}: {e}", file=sys.stderr)
             continue
         d["kards_meta"] = row
         t = d["tournament"]
-        print(f"{row['event']}: {len(t.get('participants', []))} players, {len(t.get('matches', []))} matches", file=sys.stderr)
+        print(f"{t['name']}: {len(t.get('participants', []))} players, {len(t.get('matches', []))} matches", file=sys.stderr)
         with open(path, "w") as f:
             json.dump(d, f)
 
