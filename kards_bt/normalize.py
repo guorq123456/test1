@@ -44,6 +44,14 @@ def norm_name(name):
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 
 
+NOTE = re.compile(r"\s*[\(（\[][^\)）\]]*[\)）\]]\s*$")
+
+
+def name_keys(display):
+    """Keys a display name can be referred to by in aliases.csv: as written, and without a trailing '(note)'."""
+    return {k for k in (norm_name(display), norm_name(NOTE.sub("", display or ""))) if k}
+
+
 def has_letter(name):
     return bool(re.search(r"[^\W\d_]", norm_name(name)))
 
@@ -320,8 +328,17 @@ def main():
 
     alias_path = os.path.join(DATA, "aliases.csv")
     if os.path.exists(alias_path):
+        accounts_by_name = defaultdict(set)
+        for node, names in ids.names.items():
+            for display in names:
+                for key in name_keys(display):
+                    accounts_by_name[key].add(node)
         for r in csv.DictReader(open(alias_path)):
             ids.union("name:" + norm_name(r["alias"]), "name:" + norm_name(r["canonical"]))
+            # names too short to link automatically (two-character names) are merged through the accounts that used them
+            nodes = sorted(accounts_by_name[norm_name(r["alias"])] | accounts_by_name[norm_name(r["canonical"])])
+            for a, b in zip(nodes, nodes[1:]):
+                ids.union(a, b)
 
     # canonical id = root of the merged component; display name = latest name used
     groups = defaultdict(list)
