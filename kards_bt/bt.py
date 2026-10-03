@@ -97,7 +97,7 @@ def event_snapshots(matches):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--categories", default="open,open_special",
+    ap.add_argument("--categories", default="open,open_special,official",
                     help="comma list of match categories to use (open, open_special, community, official, ...)")
     ap.add_argument("--half-life", type=float, default=365, help="days; <=0 disables time decay")
     ap.add_argument("--prior-sd", type=float, default=0.8, help="prior sd of ratings in log-odds units (0.8 ~ 139 Elo)")

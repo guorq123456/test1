@@ -1,4 +1,4 @@
-"""Turn raw Battlefy / start.gg dumps into one match table plus a player identity table.
+"""Turn raw Battlefy / start.gg / Challonge dumps into one match table plus a player identity table.
 
 Identity: each platform account (Battlefy user, start.gg player) is a node; nodes
 that share a normalized name (KARDS in-game name, Battlefy/Discord name, start.gg
@@ -150,9 +150,58 @@ def load_startgg(ids):
     return rows
 
 
+def series_score(scores_csv):
+    """Challonge 'scores_csv' is '2-1' for a series score or '1-0,0-1,1-0' per game."""
+    s1 = s2 = 0
+    for part in (scores_csv or "").split(","):
+        m = re.match(r"^\s*(-?\d+)-(-?\d+)\s*$", part)
+        if not m:
+            return None, None
+        a, b = int(m.group(1)), int(m.group(2))
+        if "," in scores_csv:
+            s1, s2 = s1 + (a > b), s2 + (b > a)
+        else:
+            s1, s2 = a, b
+    return s1, s2
+
+
+def load_challonge(ids):
+    rows = []
+    for f in sorted(glob.glob(os.path.join(DATA, "raw", "challonge", "*.json"))):
+        d = json.load(open(f))
+        t, meta = d["tournament"], d["kards_meta"]
+        # group-stage matches reference group_player_ids instead of participant ids
+        part = {}
+        for p in (x["participant"] for x in t.get("participants", [])):
+            for pid in [p["id"]] + list(p.get("group_player_ids") or []):
+                part[pid] = p
+        for m in (x["match"] for x in t.get("matches", [])):
+            if m.get("state") != "complete" or not m.get("player1_id") or not m.get("player2_id"):
+                continue
+            when = iso(m.get("completed_at") or m.get("started_at") or t.get("started_at"))
+            nodes = []
+            for pid in (m["player1_id"], m["player2_id"]):
+                p = part.get(pid, {})
+                display = p.get("display_name") or p.get("name") or str(pid)
+                node = "ch:" + (p.get("challonge_username") or norm_name(display) or str(pid))
+                ids.add(node, re.sub(r"#\s*\d*\s*$", "", display).strip(), [display, p.get("name") or ""], when)
+                nodes.append(node)
+            s1, s2 = series_score(m.get("scores_csv"))
+            winner = 1 if m.get("winner_id") == m["player1_id"] else 2 if m.get("winner_id") == m["player2_id"] else 0
+            forfeit = bool(m.get("forfeited")) or (s1 is not None and min(s1, s2) < 0)
+            rows.append({
+                "source": "challonge", "event_id": str(t["id"]), "event": meta["event"].strip(),
+                "category": meta["category"], "stage": meta.get("stage") or t.get("name"),
+                "stage_type": "group" if m.get("group_id") else t.get("tournament_type"), "round": m.get("round"),
+                "time": when, "p1": nodes[0], "p2": nodes[1], "s1": s1, "s2": s2,
+                "winner": winner, "valid": int(winner > 0 and not forfeit),
+            })
+    return rows
+
+
 def main():
     ids = Identities()
-    rows = load_battlefy(ids) + load_startgg(ids)
+    rows = load_battlefy(ids) + load_startgg(ids) + load_challonge(ids)
 
     alias_path = os.path.join(DATA, "aliases.csv")
     if os.path.exists(alias_path):

@@ -28,7 +28,7 @@ def main():
         ])
 
     matches = [m for m in csv.DictReader(open(os.path.join(DATA, "matches.csv")))]
-    used = [m for m in matches if m["valid"] == "1" and m["category"] in ("open", "open_special")]
+    used = [m for m in matches if m["valid"] == "1" and m["category"] in ("open", "open_special", "official")]
     per_event = Counter(m["event"] for m in used)
 
     payload = {

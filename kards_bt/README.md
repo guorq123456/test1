@@ -8,6 +8,7 @@
 pip install -r requirements.txt
 python3 scrapers/battlefy.py   # 抓 Battlefy（已有的 data/raw 会跳过）
 python3 scrapers/startgg.py    # 抓 start.gg
+python3 scrapers/challonge.py  # 抓官方赛事（需要环境变量 CHALLONGE_API_KEY，赛事清单在 data/challonge_events.csv）
 python3 normalize.py           # 合并成 data/matches.csv + data/players.csv
 python3 evaluate.py            # （可选）样本外验证，挑半衰期和先验
 python3 bt.py                  # 算出 data/ratings_timeline.csv
@@ -49,6 +50,11 @@ python3 build_site.py          # 生成交互页面 site/index.html
 ## 补上官方赛事
 
 官方赛事在 Challonge 上（例如 WC 2023 淘汰赛 `challonge.com/iwu8v1m9`）。
-在 challonge.com 免费注册后到 Settings → Developer API 拿一个 key，
-就能通过 `api.challonge.com/v1/tournaments/<id>.json?include_matches=1&include_participants=1` 读取任何公开赛事，
-再加一个 `scrapers/challonge.py` 输出同样格式的对局即可。
+
+1. 在 challonge.com 注册并验证邮箱，到 <https://challonge.com/settings/developer> 生成 API v1 key
+   （找不到的话，新版开发者门户在 <https://connect.challonge.com>）
+2. 把 key 存成环境变量 `CHALLONGE_API_KEY`，不要写进代码或提交到仓库
+3. 在 `data/challonge_events.csv` 里每行填一个赛事：`url,event,category,stage`，`category` 填 `official`
+4. 运行 `scrapers/challonge.py`，再依次跑 `normalize.py`、`bt.py`、`build_site.py`
+
+每个赛事只用 1 次 API 请求，已下载的会跳过。免费账号每月限 500 次。
