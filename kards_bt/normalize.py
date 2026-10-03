@@ -176,6 +176,28 @@ PLACEHOLDER = re.compile(r"^(bye(\d+| [a-z])?|cpu\b.*)$", re.I)
 TAG = re.compile(r"\s*[\(\[](dq|cn)[\)\]]\s*", re.I)
 
 
+def load_manual(ids):
+    """data/manual_matches.csv: results published only in official news (e.g. the 2021-2023 World Championship
+    grand finals played at LAN), keyed to existing platform accounts so they join the right player."""
+    path = os.path.join(DATA, "manual_matches.csv")
+    if not os.path.exists(path):
+        return []
+    rows = []
+    for m in csv.DictReader(open(path)):
+        for side in ("1", "2"):
+            if m[f"p{side}_account"] not in ids.parent:
+                raise ValueError(f"manual match names an unknown account: {m}")
+            ids.add(m[f"p{side}_account"], m[f"p{side}"], [], m["time"])
+        s1, s2 = int(m["s1"]), int(m["s2"])
+        rows.append({
+            "source": "manual", "event_id": "", "event": m["event"], "category": category(m["event"]),
+            "stage": m["stage"], "stage_type": m["stage_type"], "round": m["round"], "time": m["time"],
+            "p1": m["p1_account"], "p2": m["p2_account"], "s1": s1, "s2": s2,
+            "winner": 1 if s1 > s2 else 2, "valid": 1,
+        })
+    return rows
+
+
 def series_score(scores_csv):
     """Challonge 'scores_csv' is '2-1' for a series score or '1-0,0-1,1-0' per game."""
     s1 = s2 = 0
@@ -325,6 +347,7 @@ def apply_overrides(rows, players):
 def main():
     ids = Identities()
     rows = load_battlefy(ids) + load_startgg(ids) + load_challonge(ids)
+    rows += load_manual(ids)
 
     alias_path = os.path.join(DATA, "aliases.csv")
     if os.path.exists(alias_path):

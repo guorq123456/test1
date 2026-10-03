@@ -59,6 +59,7 @@ python3 build_site.py          # 生成交互页面 site/index.html
 - `data/players.csv` 选手身份表：同一人在不同平台的账号按游戏内 ID 合并
 - `data/aliases.csv`：`alias,canonical` 两列，手动把两个名字指向同一人（目前 9 条，都是 Challonge 名字的拼写变体，例如 `[CN]`、`·`、下划线、字母颠倒）。
 - `data/overrides.csv`（可选）：`event,player,actual,note`，把某一站里某个账号的对局改记到实际上场的人名下（代打）
+- `data/manual_matches.csv`：只在官方新闻里公布的结果（2021–2023 世界赛前 4 名线下总决赛，共 18 场），按已有账号录入，每行附出处
 - `data/match_timeline.csv`（`python3 timeline.py` 生成，不到 1 秒）：原始数据里每一场对局的赛制、轮次、DQ 标记、比分、开放/进行/完成时间、用时与同轮中位数、批量录入数量、各自上一场的间隔。用来判断一场结果是不是真打的。注意 Challonge 的 `inactive` 只表示已结束比赛，不代表 DQ
   Challonge 名字里的 `#1234` 和结尾的括号备注（`Jking7 (CA)`、`老虎不发猫 (Tiger)`）会自动去掉再合并；括号里的昵称不参与合并
 - `data/ratings_timeline.csv` 每站之后每位选手的分数、标准误、累计场次
