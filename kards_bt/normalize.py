@@ -293,6 +293,27 @@ def load_challonge(ids):
     return rows
 
 
+def apply_overrides(rows, players):
+    """data/overrides.csv (event,player,actual,note): within one event, credit a player's results to
+    whoever really played them (e.g. someone else piloting the account). Unknown names fail loudly."""
+    path = os.path.join(DATA, "overrides.csv")
+    if not os.path.exists(path):
+        return
+    pid_by_name = {}
+    for p in players:
+        for name in p["aliases"].split(" / ") + [p["name"]]:
+            pid_by_name.setdefault(norm_name(name), p["player_id"])
+    events = {r["event"] for r in rows}
+    for o in csv.DictReader(open(path)):
+        src, dst = pid_by_name.get(norm_name(o["player"])), pid_by_name.get(norm_name(o["actual"]))
+        if not src or not dst or o["event"] not in events:
+            raise ValueError(f"override does not match the data: {o}")
+        for r in rows:
+            if r["event"] == o["event"]:
+                r["p1"] = dst if r["p1"] == src else r["p1"]
+                r["p2"] = dst if r["p2"] == src else r["p2"]
+
+
 def main():
     ids = Identities()
     rows = load_battlefy(ids) + load_startgg(ids) + load_challonge(ids)
@@ -320,6 +341,8 @@ def main():
 
     for r in rows:
         r["p1"], r["p2"] = player_of[r["p1"]], player_of[r["p2"]]
+    apply_overrides(rows, players)
+    for r in rows:
         if r["p1"] == r["p2"]:
             r["valid"] = 0
     rows.sort(key=lambda r: (r["time"] or "", r["event"]))
