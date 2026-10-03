@@ -154,6 +154,12 @@ def load_startgg(ids):
     return rows
 
 
+# placeholder entrants organisers add to fill a bracket ("BYE", "BYE2", "BYE D", "CPU - Easy")
+PLACEHOLDER = re.compile(r"^(bye(\d+| [a-z])?|cpu\b.*)$", re.I)
+# organiser tags: "钟离梓 (DQ)", "老虎不发猫 (CN)", "[CN]lgyouch", "(cn)symbol"
+TAG = re.compile(r"\s*[\(\[](dq|cn)[\)\]]\s*", re.I)
+
+
 def series_score(scores_csv):
     """Challonge 'scores_csv' is '2-1' for a series score or '1-0,0-1,1-0' per game."""
     s1 = s2 = 0
@@ -186,16 +192,22 @@ def load_challonge(ids):
             if m.get("state") != "complete" or not m.get("player1_id") or not m.get("player2_id"):
                 continue
             when = iso(m.get("completed_at") or m.get("started_at") or t.get("started_at"))
-            nodes = []
+            nodes, placeholder = [], False
             for pid in (m["player1_id"], m["player2_id"]):
                 p = part.get(pid, {})
-                display = p.get("display_name") or p.get("name") or str(pid)
-                node = "ch:" + (p.get("challonge_username") or norm_name(display) or str(pid))
-                ids.add(node, re.sub(r"#\s*\d*\s*$", "", display).strip(), [display, p.get("name") or ""], when)
+                display = TAG.sub("", p.get("display_name") or p.get("name") or str(pid)).strip()
+                if PLACEHOLDER.match(display):
+                    # one shared node, never name-linked, so a bye can't merge with a real player
+                    placeholder, node = True, "ch:BYE"
+                    ids.add(node, "BYE", [], when)
+                else:
+                    node = "ch:" + (p.get("challonge_username") or norm_name(display) or str(pid))
+                    ids.add(node, re.sub(r"#\s*\d*\s*$", "", display).strip(), [display], when)
                 nodes.append(node)
             s1, s2 = series_score(m.get("scores_csv"))
             winner = 1 if m.get("winner_id") == m["player1_id"] else 2 if m.get("winner_id") == m["player2_id"] else 0
-            forfeit = bool(m.get("forfeited")) or (s1 is not None and min(s1, s2) < 0)
+            # a 0-0 with a winner is a walkover (no-show or DQ), not a played series
+            forfeit = placeholder or bool(m.get("forfeited")) or (s1 is not None and (min(s1, s2) < 0 or s1 == s2 == 0))
             rows.append({
                 "source": "challonge", "event_id": str(t["id"]), "event": event,
                 "category": cat, "stage": meta.get("stage") or t.get("name"),
@@ -225,7 +237,8 @@ def main():
         latest = max(nodes, key=lambda n: ids.last_seen.get(n, ""))
         display = ids.latest.get(latest) or ids.names[latest].most_common(1)[0][0]
         aliases = sorted({n for node in nodes for n in ids.names[node]})
-        pid = sorted(nodes)[0]
+        # prefer Battlefy / start.gg accounts so ids stay stable when Challonge accounts join
+        pid = min(nodes, key=lambda n: (n.startswith("ch:"), n))
         for n in nodes:
             player_of[n] = pid
         players.append({"player_id": pid, "name": display, "aliases": " / ".join(aliases), "accounts": " ".join(sorted(nodes))})
