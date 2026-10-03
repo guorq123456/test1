@@ -19,8 +19,9 @@ DATA = os.path.join(HERE, "data")
 CATEGORIES = [
     ("open", re.compile(r"^kards open( #?\d+| [ivxl]+\b|$)", re.I)),
     ("open_special", re.compile(r"^(kards open: singleton|operation: kards)", re.I)),
-    ("official", re.compile(r"world championship|\bocc\b|officer'?s? club|expansion tournament|"
-                            r"\b(clash|conflict|ultimate)\b|qualifier|tournament finals|seasonal", re.I)),
+    ("community", re.compile(r"pauper|singleton|skirmish|blitz|brawl", re.I)),
+    ("official", re.compile(r"world championship|\bocc\b|officer'?s? club|\bexpansion\b|"
+                            r"\b(clash|conflict|ultimate)\b|\b(winter|spring|summer|fall) tournament|seasonal", re.I)),
     ("community", re.compile(r".")),
 ]
 
@@ -175,13 +176,71 @@ def series_score(scores_csv):
     return s1, s2
 
 
+MONTHS = ["january", "february", "march", "april", "may", "june", "july",
+          "august", "september", "october", "november", "december"]
+ROMAN = {"": "I", "i": "I", "ii": "II", "iii": "III"}
+
+
+def challonge_event(title, started_at):
+    """Group Challonge brackets into events: 'November OCC - Qualifier A' + 'November OCC Top 8' -> 'OCC 2022-11'.
+
+    OCC titles before 2024 carry no year, so the year comes from the bracket's start date.
+    Returns (event, stage).
+    """
+    low = title.lower()
+    m = re.search(r"\b(top|final) (\d+)", low)
+    if m:
+        stage = f"Top {m.group(2)}"
+    elif "qualifier" in low:
+        q = re.search(r"qualifier(?: - bracket)?\s*([ab])\b", low)
+        stage = "Qualifier" + (f" {q.group(1).upper()}" if q else "") + (" (redemption)" if "redemption" in low else "")
+    elif "knockout" in low:
+        stage = "Knockout"
+    else:
+        stage = "Main"
+
+    start = datetime.strptime(started_at[:10], "%Y-%m-%d") if started_at else None
+    year = re.search(r"\b(20\d\d)\b", title)
+    if "ultimate" in low:
+        return "OCC Ultimate " + ROMAN[re.search(r"ultimate\s*(i*)\b", low).group(1)], stage
+    if re.search(r"\bocc\b", low):
+        month = next(i for i, name in enumerate(MONTHS, 1) if name in low)
+        if year:
+            y = int(year.group(1))
+        else:
+            y = start.year
+            if month == 12 and start.month == 1:
+                y -= 1
+            elif month == 1 and start.month == 12:
+                y += 1
+        return f"OCC {y}-{month:02d}", stage
+    m = re.search(r"world championship (20\d\d)", low)
+    if m:
+        return f"KARDS World Championship {m.group(1)}", stage
+    m = re.search(r"kards open ([ivxl]+)\b", low)
+    if m:
+        return f"Kards Open {m.group(1).upper()}", stage
+    m = re.match(r"(.+?) expansion\b", title, re.I)
+    if m:
+        return f"{m.group(1).strip()} Expansion Tournament", stage
+    m = re.search(r"\b(winter|spring|summer|fall) tournament (?:20)?(\d\d)\b", low)
+    if m:
+        return f"KARDS {m.group(1).title()} Tournament 20{m.group(2)}", stage
+    m = re.match(r"(pauper\s*[ivx]*)", low)
+    if m:
+        return m.group(1).strip().title().replace("Ii", "II"), stage
+    return title.strip(), stage
+
+
 def load_challonge(ids):
     rows = []
     for f in sorted(glob.glob(os.path.join(DATA, "raw", "challonge", "*.json"))):
         d = json.load(open(f))
         t, meta = d["tournament"], d["kards_meta"]
         # the event list may carry only URLs; fall back to Challonge's own tournament name
-        event = (meta.get("event") or t["name"]).strip()
+        auto_event, auto_stage = challonge_event(t["name"], t.get("started_at") or t.get("start_at") or t.get("created_at"))
+        event = (meta.get("event") or auto_event).strip()
+        stage = meta.get("stage") or auto_stage
         cat = meta.get("category") or category(t["name"])
         # group-stage matches reference group_player_ids instead of participant ids
         part = {}
@@ -210,7 +269,7 @@ def load_challonge(ids):
             forfeit = placeholder or bool(m.get("forfeited")) or (s1 is not None and (min(s1, s2) < 0 or s1 == s2 == 0))
             rows.append({
                 "source": "challonge", "event_id": str(t["id"]), "event": event,
-                "category": cat, "stage": meta.get("stage") or t.get("name"),
+                "category": cat, "stage": stage,
                 "stage_type": "group" if m.get("group_id") else t.get("tournament_type"), "round": m.get("round"),
                 "time": when, "p1": nodes[0], "p2": nodes[1], "s1": s1, "s2": s2,
                 "winner": winner, "valid": int(winner > 0 and not forfeit),
