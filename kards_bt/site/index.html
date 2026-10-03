@@ -134,7 +134,7 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
   <header>
     <span class="eyebrow">KARDS · Bradley–Terry · 公开赛 + 官方赛事</span>
     <h1>KARDS 赛事 BT 实力榜</h1>
-    <p class="lede">用 Bradley–Terry 模型给每位选手估一个实力分（Elo 刻度，场均 1500），每站比赛结束后重新拟合一次，所以能看到分数怎样随时间变化。旧比赛按一年半衰期逐渐降权，新人会被先验拉向平均分。</p>
+    <p class="lede">用 Bradley–Terry 模型给每位选手估一个实力分（Elo 刻度）。1500 是全体选手的平均水平，不是起点或保底：低于 1500 表示弱于平均，差 100 分约等于 64% 对 36% 的胜率。每站比赛结束后重新拟合一次，旧比赛按一年半衰期逐渐降权，所以长期不参赛的选手会慢慢回到 1500 附近。</p>
     <div class="facts" id="facts"></div>
     <div class="notice"><span class="tag">数据范围</span><p>已收录 <b>KARDS Open 公开赛</b> #1 – XVI（Battlefy、start.gg、Challonge），以及 Challonge 上官方账号的全部对阵表：<b>OCC 月赛</b>（2021.05 – 2024.11，同月的资格赛和 Top 8 算一站）、<b>OCC Ultimate</b> I–III、<b>2021–2025 世界赛</b>、<b>2025 年四个扩展赛</b>和 <b>2026 年四季赛</b>。Pauper、Blitz 等特殊规则的社区赛不计入。</p></div>
   </header>
@@ -142,7 +142,7 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
   <section aria-labelledby="h-trend">
     <div class="sec-head">
       <h2 id="h-trend">分数走势</h2>
-      <p>悬停看每站后的分数；点选手名查看 ±1 标准误区间。</p>
+      <p>圆点是本人出赛的那一站，其余时段的起伏来自旧比赛的时间衰减。悬停看每站后的分数；点选手名查看 ±1 标准误区间。</p>
     </div>
     <div class="controls">
       <input type="search" id="search" list="names" placeholder="搜索选手并加入图表" autocomplete="off" aria-label="搜索选手">
@@ -209,7 +209,11 @@ const fmtDate = d => d.replace(/-/g, ".");
 const snaps = DATA.snaps;
 const players = DATA.players;
 const byId = new Map(players.map(p => [p.id, p]));
-players.forEach(p => { p.at = new Map(p.p.map(x => [x[0], x])); });
+players.forEach(p => {
+  p.at = new Map(p.p.map(x => [x[0], x]));
+  // results gained at each snapshot: >0 means the player actually played in that event
+  p.played = new Map(p.p.map(x => { const prev = p.at.get(x[0] - 1); return [x[0], x[3] - (prev ? prev[3] : 0)]; }));
+});
 
 const state = { selected: [], slot: new Map(), focus: null, snap: snaps.length - 1, shown: 50, hover: null };
 
@@ -363,11 +367,14 @@ function renderChart() {
     svgEl("line", { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: v === 1500 ? "var(--axis)" : "var(--grid)", "stroke-width": 1 }, svg);
     const t = svgEl("text", { x: m.l - 8, y: Y(v) + 4, "text-anchor": "end" }, svg); t.textContent = v;
   }
-  // x ticks: Jan and Jul of each year
+  // x ticks: Jan (and Jul when there is room); thin out years on narrow screens
   const y0 = new Date(x0).getUTCFullYear(), y1 = new Date(x1).getUTCFullYear();
-  for (let y = y0; y <= y1 + 1; y++) for (const mo of [0, 6]) {
+  const pxPerYear = iw / ((x1 - x0) / 31557600000);
+  const months = pxPerYear >= 120 ? [0, 6] : [0];
+  const everyYears = pxPerYear >= 48 ? 1 : 2;
+  for (let y = y0; y <= y1 + 1; y++) for (const mo of months) {
     const t = Date.UTC(y, mo, 1);
-    if (t < x0 || t > x1) continue;
+    if (t < x0 || t > x1 || (mo === 0 && y % everyYears)) continue;
     svgEl("line", { x1: X(t), x2: X(t), y1: H - m.b, y2: H - m.b + 4, stroke: "var(--axis)" }, svg);
     const tx = svgEl("text", { x: X(t), y: H - m.b + 17, "text-anchor": "middle" }, svg);
     tx.textContent = mo === 0 ? `${y}` : `${y}.07`;
@@ -397,7 +404,8 @@ function renderChart() {
         d: seg.map((x, i) => `${i ? "L" : "M"}${X(tms[x[0]]).toFixed(1)},${Y(x[1]).toFixed(1)}`).join(""),
         fill: "none", stroke: colorOf(p.id), "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round",
       }, g);
-      for (const x of seg) svgEl("circle", { cx: X(tms[x[0]]), cy: Y(x[1]), r: 4, fill: colorOf(p.id), stroke: "var(--surface)", "stroke-width": 2 }, g);
+      // dots only where the player actually played; between them the line is time decay alone
+      for (const x of seg) if (p.played.get(x[0]) > 0) svgEl("circle", { cx: X(tms[x[0]]), cy: Y(x[1]), r: 4, fill: colorOf(p.id), stroke: "var(--surface)", "stroke-width": 2 }, g);
     }
   }
   // crosshair layer
@@ -455,7 +463,8 @@ function showTip(si) {
     const key = document.createElement("i"); key.className = "key"; key.style.background = colorOf(r.p.id);
     const b = document.createElement("b"); b.textContent = Math.round(r.x[1]);
     const name = document.createElement("span"); name.textContent = r.p.n + " ";
-    const se = document.createElement("small"); se.textContent = "±" + Math.round(r.x[2]);
+    const n = r.p.played.get(si);
+    const se = document.createElement("small"); se.textContent = "±" + Math.round(r.x[2]) + (n > 0 ? ` · 本站 ${n} 场` : " · 未出赛");
     name.append(se);
     row.append(key, b, name);
     tip.append(row);
