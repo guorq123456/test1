@@ -12,6 +12,8 @@ import re
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 
+from scrapers.challonge import tournament_id
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "data")
 
@@ -233,10 +235,16 @@ def challonge_event(title, started_at):
 
 
 def load_challonge(ids):
+    # the current event list wins over the copy saved with each download, so edits to it apply
+    listed = {}
+    events_csv = os.path.join(DATA, "challonge_events.csv")
+    if os.path.exists(events_csv):
+        listed = {tournament_id(r["url"]): r for r in csv.DictReader(open(events_csv)) if r.get("url")}
     rows = []
     for f in sorted(glob.glob(os.path.join(DATA, "raw", "challonge", "*.json"))):
         d = json.load(open(f))
-        t, meta = d["tournament"], d["kards_meta"]
+        t = d["tournament"]
+        meta = listed.get(os.path.basename(f)[:-len(".json")], d["kards_meta"])
         # the event list may carry only URLs; fall back to Challonge's own tournament name
         auto_event, auto_stage = challonge_event(t["name"], t.get("started_at") or t.get("start_at") or t.get("created_at"))
         event = (meta.get("event") or auto_event).strip()
