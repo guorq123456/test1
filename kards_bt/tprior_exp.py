@@ -42,6 +42,7 @@ def main():
     for label, df, sd in CONFIGS:
         fit = lambda *a, **k: bt.fit_bt(*a, **k, prior_df=df)  # noqa: E731
         virt_all = [c + (INV_HL,) for c in credits] + newcomers.anchors(ms, HL, sd, fit, 2)
+        gap = newcomers.offsets(ms, HL, sd, fit)[0]
         per_event, acc = {}, defaultdict(lambda: [0.0, 0.0, 0.0])
         snaps = evs + [None]  # None = the final snapshot (current board)
         for ev in snaps:
@@ -60,7 +61,7 @@ def main():
                 order = sorted((p for p in ids if total[p] >= 10), key=lambda p: -(elo[idx[p]] - sd_e[idx[p]]))
                 boards[label] = {names[p]: (i + 1, elo[idx[p]], sd_e[idx[p]]) for i, p in enumerate(order)}
                 continue
-            r = lambda p: b[idx[p]] if p in idx else 0.0  # noqa: E731
+            r = lambda p: b[idx[p]] if p in idx else -gap.get(ev, 0.0)  # noqa: E731
             out = []
             for m in ms:
                 if m[4] != ev:

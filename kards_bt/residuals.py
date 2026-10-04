@@ -37,6 +37,7 @@ def main():
         start[m[4]] = min(start[m[4]], m[0])
     credits = invites.credits(lambda t: bt._fit_before(ms, t, HL, SD))
     virt_all = [c + (INV_HL,) for c in credits] + newcomers.anchors(ms, HL, SD, bt.fit_bt, 2)
+    gap = newcomers.offsets(ms, HL, SD, bt.fit_bt)[0]  # a player with no results yet sits at -gap[event]
 
     acc = defaultdict(lambda: {"n": 0, "w": 0, "e": 0.0, "v": 0.0, "first": None, "last": None, "recent_w": 0, "recent_e": 0.0, "recent_n": 0})
     for ev in sorted(start, key=start.get)[2:]:
@@ -50,7 +51,7 @@ def main():
              for sign, n in ((1.0, wins), (-1.0, losses)) if n > 0]
         virtual = tuple(np.array(c) for c in zip(*v)) if v else None
         b, _ = bt.fit_bt(np.array([idx[m[1]] for m in past]), np.array([idx[m[2]] for m in past]), w, len(ids), SD, virtual=virtual)
-        r = lambda p: b[idx[p]] if p in idx else 0.0  # noqa: E731
+        r = lambda p: b[idx[p]] if p in idx else -gap.get(ev, 0.0)  # noqa: E731
         for m in ms:
             if m[4] != ev:
                 continue
