@@ -32,7 +32,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("player", help="display name or player_id")
     ap.add_argument("--half-life", type=float, default=240)
-    ap.add_argument("--prior-sd", type=float, default=0.6)
+    ap.add_argument("--prior-sd", type=float, default=0.4)
     ap.add_argument("--invite-half-life", type=float, default=120)
     ap.add_argument("--out", help="write a Markdown report here")
     args = ap.parse_args()
