@@ -1,0 +1,858 @@
+<title>KARDS BT 实力榜</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one reading column; chart first (the question is "how did ratings move"), leaderboard second as the table view, method last. */
+:root {
+  --bg: #f2f3ee;
+  --surface: #fcfcfa;
+  --ink: #16190f;
+  --ink-2: #4b4f40;
+  --muted: #7e8372;
+  --grid: #e3e5dc;
+  --axis: #c3c6b7;
+  --line: rgba(22, 25, 15, 0.12);
+  --accent: #4b5c1c;
+  --accent-ink: #ffffff;
+  --accent-wash: rgba(75, 92, 28, 0.10);
+  --warn: #8a5a00;
+  --warn-wash: rgba(250, 178, 25, 0.16);
+  --up: #1d7a1d;
+  --down: #b23a3a;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+  --s5: #e87ba4; --s6: #008300; --s7: #4a3aa7; --s8: #e34948;
+  --display: "Barlow Condensed", "Arial Narrow", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --body: "IBM Plex Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f110c; --surface: #181a14; --ink: #f3f4ee; --ink-2: #c2c5b4; --muted: #8b8f7d;
+    --grid: #282b22; --axis: #3b3f32; --line: rgba(255, 255, 255, 0.10);
+    --accent: #a8bd66; --accent-ink: #12150c; --accent-wash: rgba(168, 189, 102, 0.14);
+    --warn: #f3c25a; --warn-wash: rgba(250, 178, 25, 0.12); --up: #4cc24c; --down: #ef7b7b;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f110c; --surface: #181a14; --ink: #f3f4ee; --ink-2: #c2c5b4; --muted: #8b8f7d;
+  --grid: #282b22; --axis: #3b3f32; --line: rgba(255, 255, 255, 0.10);
+  --accent: #a8bd66; --accent-ink: #12150c; --accent-wash: rgba(168, 189, 102, 0.14);
+  --warn: #f3c25a; --warn-wash: rgba(250, 178, 25, 0.12); --up: #4cc24c; --down: #ef7b7b;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+  --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; display: grid; gap: 36px; }
+h1, h2 { font-family: var(--display); font-weight: 700; letter-spacing: 0.01em; text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); }
+h2 { font-size: 1.6rem; }
+p { margin: 0; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+header { display: grid; gap: 14px; }
+.lede { color: var(--ink-2); max-width: 68ch; }
+html[lang="en"] [data-lang="zh"], html:not([lang="en"]) [data-lang="en"] { display: none; }
+.topline { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.lang { font: 600 12px var(--mono); letter-spacing: 0.06em; padding: 5px 10px; white-space: nowrap; flex: none; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; flex: none; }
+.seg button { border: 0; border-radius: 0; padding: 7px 14px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 28px; font-size: 13px; color: var(--ink-2); }
+.facts b { font: 500 15px var(--mono); color: var(--ink); margin-right: 4px; }
+.notice { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; background: var(--warn-wash); border-radius: 6px; padding: 12px 14px; font-size: 13.5px; color: var(--ink); max-width: 80ch; }
+.notice .tag { font: 600 11px/1.9 var(--mono); letter-spacing: 0.08em; color: var(--warn); text-transform: uppercase; white-space: nowrap; }
+section { display: grid; gap: 14px; min-width: 0; }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+.sec-head p { color: var(--ink-2); font-size: 13.5px; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+input[type="search"], select {
+  font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; min-width: 0;
+}
+input[type="search"] { width: 100%; }
+.search { position: relative; width: min(260px, 100%); }
+.suggest {
+  position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 5; margin: 0; padding: 4px; list-style: none;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  max-height: 40vh; overflow-y: auto;
+}
+.suggest li { padding: 7px 8px; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; gap: 10px; }
+.suggest li small { color: var(--muted); font: 12px var(--mono); white-space: nowrap; }
+.suggest li[aria-selected="true"], .suggest li:hover { background: var(--accent-wash); }
+.suggest li.none { color: var(--muted); cursor: default; background: none; }
+button {
+  font: 500 13px var(--body); color: var(--ink-2); background: transparent; border: 1px solid var(--line);
+  border-radius: 6px; padding: 7px 11px; cursor: pointer;
+}
+button:hover { background: var(--accent-wash); color: var(--ink); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 8px; padding: 4px 6px 4px 10px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); font-size: 13px; color: var(--ink);
+}
+.chip .key { width: 14px; height: 2px; border-radius: 1px; background: currentColor; flex: none; }
+.chip .x { border: 0; padding: 0 6px; font-size: 15px; line-height: 1; color: var(--muted); }
+.chip .x:hover { color: var(--ink); background: transparent; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 12px 8px; position: relative; min-width: 0; }
+#chart { width: 100%; display: block; touch-action: pan-y; }
+#chart text { font: 11px var(--mono); fill: var(--muted); }
+.tip {
+  position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 6px; padding: 8px 10px; font-size: 12.5px; min-width: 180px; max-width: 260px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12); z-index: 2;
+}
+.tip .t-head { font: 500 11px var(--mono); color: var(--muted); margin-bottom: 6px; }
+.tip .t-row { display: grid; grid-template-columns: 14px auto 1fr; gap: 8px; align-items: center; }
+.tip .t-row .key { height: 2px; border-radius: 1px; }
+.tip .t-row b { font: 500 13px var(--mono); color: var(--ink); }
+.tip .t-row span { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tip .t-row .place { grid-column: 2 / 4; color: var(--ink); font-size: 12px; margin: -2px 0 4px; white-space: normal; }
+.tip .t-row small { color: var(--muted); font-family: var(--mono); }
+.empty { padding: 40px 12px; text-align: center; color: var(--muted); }
+.slider { display: grid; gap: 6px; flex: 1 1 320px; min-width: 0; }
+.slider label { font-size: 13px; color: var(--ink-2); }
+.slider label b { color: var(--ink); font-weight: 600; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { padding: 8px 12px; text-align: left; white-space: nowrap; }
+th { font: 500 11px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); }
+td { border-bottom: 1px solid var(--grid); }
+tbody tr { cursor: pointer; }
+tbody tr:hover td { background: var(--accent-wash); }
+td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+td.rank { color: var(--muted); font-family: var(--mono); width: 3em; }
+td.name .who { display: inline-flex; align-items: center; gap: 8px; vertical-align: middle; }
+tr.idle td.name, tr.idle td.num:nth-child(3) { color: var(--muted); }
+td.name small { color: var(--muted); font-size: 12px; margin-left: 6px; }
+td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; background: transparent; border: 1px solid var(--line); }
+.up { color: var(--up); } .down { color: var(--down); } .new { color: var(--muted); }
+td.vs { font-variant-numeric: tabular-nums; }
+td.vs .flag { font-size: 11px; margin-left: 3px; }
+td.vs.hot { color: var(--up); font-weight: 600; } td.vs.cold { color: var(--down); }
+.range { position: relative; width: 120px; height: 10px; }
+.range i { position: absolute; top: 4px; height: 2px; background: var(--axis); border-radius: 1px; }
+.range s { position: absolute; top: 1px; width: 2px; height: 8px; background: var(--ink-2); border-radius: 1px; }
+.more { justify-self: start; }
+.method { display: grid; gap: 12px; max-width: 72ch; color: var(--ink-2); font-size: 14px; }
+.method code, .formula { font-family: var(--mono); font-size: 13px; color: var(--ink); }
+.formula { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; overflow-x: auto; white-space: nowrap; }
+.method ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.method b { color: var(--ink); font-weight: 600; }
+@media (max-width: 640px) {
+  .hide-sm { display: none; }
+  th, td { padding: 8px 8px; }
+  td.name small { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="topline">
+      <span class="eyebrow" data-t="eyebrow"></span>
+      <button type="button" id="lang" class="lang" aria-label="切换语言 / Switch language"></button>
+    </div>
+    <h1 data-t="h1"></h1>
+    <p class="lede" data-lang="zh">用 Bradley–Terry 模型给每位选手估一个实力分（Elo 刻度）。1500 是<b>当时</b>参赛选手的平均水平，不是起点或保底：低于 1500 表示弱于平均，差 100 分约等于 64% 对 36% 的胜率。每站比赛结束后（以及每月初）重新拟合一次，旧比赛按 240 天半衰期逐渐降权，所以长期不参赛的选手会慢慢回到 1500 附近。第一次打官方赛的选手从略低于 1500 的位置起步（按当时新人的实际表现估计），打得越多越由真实战绩决定。2023 年起参赛选手整体更强，因此不同年份的分数只适合各自比较排名，不能直接比高低。</p>
+    <p class="lede" data-lang="en">A Bradley–Terry strength rating (Elo scale) for every player in official KARDS esports events. 1500 is the average of the field <b>at that time</b>, not a starting point or a floor: below 1500 means weaker than average, and a 100-point gap is about a 64% to 36% win chance. Ratings are refit after every event (and on the 1st of each month); older matches lose weight with a 240-day half-life, so players who stop competing drift back toward 1500. First-time official players start a little below 1500, at the level recent newcomers have actually played at, and their own results take over as they play. The field has been clearly stronger since 2023, so compare rankings within a period rather than raw numbers across years.</p>
+    <div class="facts" id="facts"></div>
+    <div class="notice"><span class="tag" data-t="scope"></span>
+      <p data-lang="zh">计入<b>官方电竞赛事</b>：Challonge 上官方账号的全部对阵表，包括<b>OCC 月赛</b>（2021.05 – 2024.11，同月的资格赛和 Top 8 算一站；2020.06 – 2021.04 的前 11 届只有 Top 8，来自社区整理的 OCC 战绩表）、<b>OCC Ultimate</b> I–III、<b>2021–2025 世界赛</b>（2021、2022 年在 start.gg，2024 年瑞士轮在 Battlefy）、<b>2025 年四个扩展赛</b>和 <b>2026 年四季赛</b>；2021–2023 世界赛前 4 名线下总决赛按官方新闻补录。<b>KARDS Open 公开赛</b>（2020–2023，#1 – XVI）没有报名门槛，它的瑞士轮和资格赛不计入；但 Open 的<b>正赛阶段</b>（16 强 / 8 强 / 淘汰赛，共 214 场）是打赢了预选的选手之间的比赛，按官方赛事同样计入。弃权、缺席、DQ 后被录入的结果整场作废。</p>
+      <p data-lang="en">Official esports events: every bracket on the official Challonge account, including the <b>OCC monthly cups</b> (2021.05 – 2024.11, a month's qualifiers and Top 8 counting as one event; for the first eleven, 2020.06 – 2021.04, only the Top 8 is known, from the community OCC results sheet), <b>OCC Ultimate</b> I–III, the <b>2021–2025 World Championships</b> (2021 and 2022 on start.gg, the 2024 Swiss stage on Battlefy), the <b>four 2025 expansion tournaments</b> and the <b>2026 seasonal tournaments</b>. The 2021–2023 World Championship LAN finals are entered from official news. The <b>KARDS Open</b> series (2020–2023, #1 – XVI) has no entry bar, so its Swiss and qualifier rounds are not counted; its <b>main stages</b> (Top 16 / Top 8 / playoffs, 214 matches) are between players who came through them and count like official events. Forfeits, no-shows and results entered after a DQ are voided.</p>
+    </div>
+  </header>
+
+  <section aria-labelledby="h-trend">
+    <div class="sec-head">
+      <h2 id="h-trend" data-t="hTrend"></h2>
+      <p data-lang="zh">横轴是时间，可以直接看出一个选手强了多久。圆点是本人出赛的那一站，悬停可看该站名次；两站之间的起伏来自旧比赛的时间衰减，虚线表示已 8 个月（240 天）以上没打官方赛（分数是推测，不是打出来的）。点选手名查看 ±1 标准误区间。</p>
+      <p data-lang="en">Time runs along the x-axis, so you can see how long a player stayed strong. Dots mark the events the player entered; hover to see where they finished. Between events the line moves only because older results fade. A dashed line means no official match for more than 8 months (240 days): the rating there is inferred, not earned. Click a player's name to show the ±1 standard-error band.</p>
+    </div>
+    <div class="controls">
+      <div class="search">
+        <input type="search" id="search" data-t-attr="placeholder:searchPh;aria-label:searchAria" autocomplete="off" enterkeyhint="search"
+          role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggest">
+        <ul class="suggest" id="suggest" role="listbox" hidden></ul>
+      </div>
+      <button type="button" id="btn-top" data-t="btnTop"></button>
+      <button type="button" id="btn-clear" data-t="btnClear"></button>
+    </div>
+    <div class="chips" id="chips" data-t-attr="aria-label:legend"></div>
+    <div class="card" id="card">
+      <svg id="chart" role="img" data-t-attr="aria-label:chartAria"></svg>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-board">
+    <div class="sec-head">
+      <h2 id="h-board" data-t="hBoard"></h2>
+      <div data-board="current">
+      <p data-lang="zh">按<b>排名分</b>（BT 分 − 1 个标准误）排序：长期不出赛，标准误变大，排名分就会往下掉；一直在打的选手几乎不受影响。灰色是 8 个月以上没打官方赛的选手。点击一行，把选手加入或移出上方图表。</p>
+      <p data-lang="en">Sorted by <b>rank score</b> (BT rating − 1 standard error): the longer a player sits out, the wider their uncertainty and the lower their rank score, while active players are barely affected. Greyed-out players have not played an official match for more than 8 months. Click a row to add or remove the player from the chart.</p>
+      </div>
+      <div data-board="peak" hidden>
+      <p data-lang="zh"><b>巅峰榜</b>看每个人状态最好时有多强。和当前榜不同，这里用了“事后诸葛亮”：估计某个时间点的实力时，前后的比赛都参考（离得越远权重越低，同样是 240 天半衰期），所以短时间的爆发会被完整计入，后来的下滑也会让当时的高分打折扣。只统计当时已打满 10 场官方赛的选手，按巅峰时的排名分排序。</p>
+      <p data-lang="en">The <b>peak leaderboard</b> shows how strong each player was at their best. Unlike the current board it uses hindsight: strength at a date is estimated from results both before and after it (weighted by distance in time, the same 240-day half-life), so a short strong run gets full credit and a later slump tempers an earlier high. Players count once they have 10 official matches; sorted by rank score at their peak.</p>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" data-t-attr="aria-label:modeAria">
+        <button type="button" id="mode-cur" aria-pressed="true" data-t="modeCur"></button>
+        <button type="button" id="mode-peak" aria-pressed="false" data-t="modePeak"></button>
+      </div>
+      <div class="slider" data-board="current">
+        <label for="snap"><span data-t="asOf"></span> <b id="snap-label"></b></label>
+        <input type="range" id="snap" min="0" max="0" step="1">
+      </div>
+      <select id="minres" data-t-attr="aria-label:minresAria">
+        <option value="1" data-t="minAll"></option>
+        <option value="10" selected data-t="min10"></option>
+        <option value="20" data-t="min20"></option>
+        <option value="40" data-t="min40"></option>
+      </select>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <button type="button" class="more" id="more" data-t="more"></button>
+  </section>
+
+  <section aria-labelledby="h-method" class="method" data-lang="zh">
+    <h2 id="h-method">怎么算的</h2>
+    <p>每场比赛（一个 Bo3/Bo5 系列赛算一场）给出“谁赢了谁”。BT 模型假设：</p>
+    <div class="formula">P(i 胜 j) = 1 / (1 + e<sup>−(β<sub>i</sub> − β<sub>j</sub>)</sup>)，　BT 分 = 1500 + β × 400 / ln 10</div>
+    <ul>
+      <li><b>随时间变化</b>：每站比赛结束后和每月 1 日，用截至当时的全部对局重新拟合；距今 d 天的对局权重为 0.5<sup>d/240</sup>。</li>
+      <li><b>先验</b>：β ~ N(0, 0.4²)，相当于每人先带一点“平均水平”的虚拟战绩，只打过两三场的人不会被冲到榜首。</li>
+      <li><b>区间</b>：± 是拉普拉斯近似给出的 1 个标准误。场次越少，区间越宽。</li>
+      <li><b>参数怎么定的</b>：用每站赛前的分数预测这一站的胜负（清洗后 3,646 场），半衰期 240 天、先验 0.4 的 log loss 是 0.685（抛硬币是 0.693；预测准确率约 54%）。官方赛事的参赛者水平接近，胜负本来就难预测，分差小于 100 分的对局基本是五五开。按赛事级别加权、预选降权、按 Bo3/Bo5 和 ban 位区分赛制，都检验过，样本外预测没有变好，所以没有采用。</li>
+      <li><b>没打的比赛不算</b>：轮空、平台判负、Battlefy 只有一方签到后 10 分钟的自动判负、选手被标记 DQ 之后录入（或在 DQ 时被改写）的结果、start.gg 上只记胜负没有比分的缺席判负、管理员几秒内批量清掉的缺席选手对局，整场作废，对手的“胜场”也一起去掉。DQ 之前真打的比赛保留；瑞士轮和循环赛不按负场数判断；只要双方都在场、比分正常，录入再快也算真实对局。</li>
+      <li><b>排名分</b>：榜单按 BT 分 − 1 个标准误排序。停赛后旧比赛的权重越来越小，标准误随之变大，排名分自然下降；BT 分本身仍是对实力的最佳估计。检验过“久未出赛直接扣分”：久未出赛的选手回来后反而赢得比模型预期多（停赛 120–240 天的实际胜率高出 6.8 个百分点），扣分只会让预测变差，所以只在排名上体现“不确定”，不改分数。</li>
+      <li><b>新人起点</b>：第一次打官方赛的选手实际胜率约 42%，模型若按平均水平算会给到约 49%，被高估了。而且新人比平均弱多少随时代变化（2022 年约 46 分，2023–2025 年约 90 分，2026 年约 49 分）。所以每站赛前，用过去一年新人的实际表现估计这个差距，新人从这个位置起步（相当于 2 场虚拟的平局，按 240 天半衰期淡出）。2024 年后的检验里预测略有改善（log loss −0.0055），但还在误差范围内，属于有依据、待更多数据确认的修正。</li>
+      <li><b>小样本和“赢家诅咒”</b>：分数几乎全来自预选的选手，到了正赛平均比预测少赢约 4 个百分点。能进正赛的人是被“预选打得好”筛出来的，其中一部分是手感和运气，进了正赛自然回落。降低预选权重检验过，修不好这一点，预测还变差，所以没有采用；更可靠的是看<b>排名分</b>，场次少的人标准误大，排名分会更保守。</li>
+      <li><b>巅峰榜</b>：当前榜只用截至当天的比赛，会“滞后”：一段很短的爆发结束时只被计入一半，巅峰也是在后来的下滑发生前评出来的。巅峰榜用事后估计，在每站比赛的日期上，用前后所有比赛（按时间距离加权，240 天半衰期）重新拟合，新人起点和天梯直邀补偿也按同样方式计入，取每人排名分最高的那一站。巅峰榜里的直邀补偿按选手已有的真实场次递减（n0 = 20）：补偿本来是给“没有别的证据”的选手的，一年直邀十几次的老将再按每次全额计入，会让巅峰分里四成是补偿（Noein5 曾因此排到第 2，按真实比赛是第 3–4）。当前榜仍用统一补偿，两者样本外预测相同。它适合比较“谁状态最好时最强”，不能用来预测比赛（用到了未来的结果）。</li>
+      <li><b>正赛胜率</b>：榜上另列每人在官方赛事正赛阶段（8 强 / 16 强 / 总决赛 / 邀请赛 / 淘汰赛）的生涯胜率，悬停看胜负场数。它只是参考，不参与排名：BT 分只看每场胜负，不区分决赛和资格赛，而“总能打进决赛”这件事在体感里的分量比模型里重。</li>
+      <li><b>vs 预期</b>：模型压不住的强者怎么体现？分数这边试过放宽先验、重尾先验、按小局计分，都会让整体预测变差或者没有作用，所以不改分数，而是把证据列出来：每个人每场赛前的模型胜率加起来是“期望胜场”，和实际胜场相减就是这一列；超过 2 个标准差标 ▲（模型一直低估他）或 ▽（一直高估）。当前榜看近 24 个月，巅峰榜看生涯。</li>
+      <li><b>直邀补偿按人校准</b>：检验过三种做法（按选手已有真实场次递减、门槛模型、按直邀后 8 强表现打折）。按 8 强表现打折几乎没有作用，因为直邀选手在 8 强的整体战绩和资格赛晋级者相当；另两种对 8 强对局的预测略好（约 −0.005），整体预测不变，都在误差范围内。当前榜保留统一补偿，巅峰榜用按证据递减（见上）。</li>
+      <li><b>天梯直邀</b>：OCC 8 强里没打资格赛的直邀选手，记上当月资格赛晋级者的中位战绩（直邀和资格赛胜出一样难），按 120 天半衰期淡出。</li>
+      <li><b>人工修正</b>：<code>data/aliases.csv</code> 合并同一人的不同账号，<code>data/overrides.csv</code> 把代打的结果记到实际上场的人名下，<code>data/manual_matches.csv</code> 补录只在官方新闻里公布的总决赛。</li>
+      <li><b>同一人跨平台</b>：按平台账号 + 游戏内 ID 合并，可在 <code>data/aliases.csv</code> 里手动补充。</li>
+    </ul>
+  </section>
+  <section aria-labelledby="h-method-en" class="method" data-lang="en">
+    <h2 id="h-method-en">How it works</h2>
+    <p>Each match (a Bo3/Bo5 series counts as one) tells us who beat whom. The Bradley–Terry model assumes:</p>
+    <div class="formula">P(i beats j) = 1 / (1 + e<sup>−(β<sub>i</sub> − β<sub>j</sub>)</sup>),　rating = 1500 + β × 400 / ln 10</div>
+    <ul>
+      <li><b>Changes over time</b>: after every event and on the 1st of each month, the model is refit on all matches so far; a match played d days earlier has weight 0.5<sup>d/240</sup>.</li>
+      <li><b>Prior</b>: β ~ N(0, 0.4²), like giving everyone a few virtual "average" results, so a player with two or three wins cannot jump to the top.</li>
+      <li><b>Uncertainty</b>: ± is one standard error from the Laplace approximation. Fewer matches, wider band.</li>
+      <li><b>How the settings were chosen</b>: each event is predicted from ratings computed before it started (3,646 matches after cleaning). With a 240-day half-life and prior 0.4 the log loss is 0.685 (a coin flip is 0.693; about 54% of winners predicted). Official fields are close in strength, so results are hard to predict: matches between players less than 100 points apart are close to 50/50. Weighting events by tier, down-weighting qualifiers and treating Bo3/Bo5/ban formats differently were all tested; none improved out-of-sample predictions, so neither is used.</li>
+      <li><b>Unplayed matches do not count</b>: byes, platform forfeits, Battlefy's automatic win 10 minutes after only one player checked in, results entered after (or rewritten at) a player's DQ, start.gg results with no score (the no-show convention), and no-show losses an admin cleared in bulk within seconds are voided, and so is the opponent's "win". Real matches played before a DQ are kept; Swiss and round-robin records are never judged by loss count; and a normally scored match between two present players counts however quickly it was reported.</li>
+      <li><b>Rank score</b>: the leaderboard is sorted by rating − 1 standard error. Once a player stops competing their old results lose weight, their uncertainty grows and the rank score falls; the rating itself remains the best estimate of strength. A direct penalty for inactivity was tested: players returning from a break actually win more than the model expects (6.8 points above prediction after a 120–240-day break), so a penalty would make predictions worse. Inactivity therefore shows up only as uncertainty in the ranking, not in the rating.</li>
+      <li><b>Newcomers</b>: first-time official players win about 42% of matches, where an average starting point would predict about 49%. How far below average newcomers are changes with the era (about 46 points in 2022, about 90 in 2023–2025, about 49 in 2026), so before every event the gap is estimated from the past year's newcomers and debutants start there (the equivalent of two virtual draws, fading with the 240-day half-life). On post-2024 data it improves predictions slightly (log loss −0.0055), within the margin of error: a well-founded correction awaiting more data.</li>
+      <li><b>Small samples and the winner's curse</b>: players whose rating comes almost entirely from qualifiers win about 4 points less than predicted once they reach a main stage. Players reach the main stage by doing well in qualifiers, partly through form and luck, so as a group they fall back. Down-weighting qualifier results was tested; it does not fix this and makes predictions worse, so it is not used. The <b>rank score</b> is the safer guide: few matches mean a wide standard error and a more cautious rank score.</li>
+      <li><b>Peak leaderboard</b>: the current board uses only results up to each date, so it lags: a short strong run is only half credited when it ends, and a peak is judged before any slump that followed. The peak board uses hindsight: at every event date the model is refit on all results before and after it (weighted by distance in time, 240-day half-life), with the newcomer anchor and ladder-invite credit included the same way, and each player's highest rank score is kept. On the peak board the invite credit shrinks with the player's own real evidence (n0 = 20): the credit exists for players with little else, and counting a veteran's dozen invites a year in full made 40% of one peak rating virtual (Noein5 sat 2nd by it, 3rd–4th by real matches). The current board keeps the uniform credit; the two predict equally well out of sample. It compares how strong players were at their best; it cannot be used for prediction, since it looks at future results.</li>
+      <li><b>Main-stage win rate</b>: both boards also list each player's career win rate in main stages of official events (Top 8 / Top 16 / grand finals / invitationals / knockouts); hover for the record. It is a reference only and does not affect the ranking: the rating counts every match the same, a final no more than a qualifier, while "always reaching the final" weighs more in people's impressions than in the model.</li>
+      <li><b>vs expected</b>: how to show players the prior keeps compressing? On the rating side a wider prior, a heavy-tailed prior and game-level scoring were all tested; each made overall prediction worse or did nothing, so the rating stays and the evidence is shown instead: summing the model's pre-match win probabilities gives each player's expected wins, and this column is actual minus expected; ▲ marks more than 2 standard errors above (the model has kept underrating them), ▽ below. The current board uses the last 24 months, the peak board the whole career.</li>
+      <li><b>Calibrating the invite credit per player</b>: three variants were tested (shrinking with the player's own real evidence, a threshold model, discounting by Top 8 results after invites). Discounting by Top 8 results does almost nothing, because invitees' Top 8 record matches qualifier advancers'; the other two predict Top 8 matches slightly better (about −0.005) with overall prediction unchanged, within the margin of error. The current board keeps the uniform credit; the peak board uses the evidence-shrunk one (above).</li>
+      <li><b>Ladder invites</b>: OCC Top 8 players invited from the in-game ladder skip the qualifier, so each is credited with that month's median qualifier-advancer record (an invite is as hard to earn as a qualifier win), fading with a 120-day half-life.</li>
+      <li><b>Manual corrections</b>: <code>data/aliases.csv</code> merges one person's accounts, <code>data/overrides.csv</code> credits a substitute's results to the person who actually played, and <code>data/manual_matches.csv</code> adds grand finals published only in official news.</li>
+      <li><b>One person, several platforms</b>: accounts are merged by platform account and in-game ID, with manual additions in <code>data/aliases.csv</code>.</li>
+    </ul>
+  </section>
+</div>
+<script>
+const DATA = /*__DATA__*/null;
+const SLOTS = 8;
+
+// ---------- language (中文 / English); choice kept in the URL (?lang=en) and this browser
+const T = {
+  zh: {
+    title: "KARDS BT 实力榜", eyebrow: "KARDS · Bradley–Terry · 官方赛事 + 公开赛正赛", h1: "KARDS 赛事 BT 实力榜", scope: "数据范围",
+    hTrend: "分数走势", hBoard: "实力榜", searchPh: "搜索选手并加入图表", searchAria: "搜索选手", btnTop: "当期前 6 名", btnClear: "清空",
+    legend: "图例", chartAria: "选手 BT 分数随时间变化的折线图", asOf: "截至", minresAria: "最少对局数",
+    minAll: "全部选手", min10: "至少 10 场", min20: "至少 20 场", min40: "至少 40 场",
+    thPlayer: "选手", thScore: "排名分", thScoreTitle: "BT 分 − 1 个标准误", thBT: "BT 分", thRange: "区间（±1 标准误）",
+    thDelta: "较上站", thDeltaTitle: "排名分较上一站", thMatches: "对局", thLast: "最近参赛", more: "显示更多",
+    fRange: "时间范围", fEvents: "站比赛", fMatches: "场有效对局", fPlayers: "名选手",
+    full: n => `图表最多 ${n} 人，先移除一位`, inChart: "已在图中", sugMeta: (n, y) => `${n} 场 · ${y}`, noHit: "没有找到这位选手",
+    aka: "曾用名：", remove: "移除 ", emptyChart: "在上方搜索选手，或点“当期前 6 名”", keysAria: "用左右方向键逐站查看分数",
+    after: e => `${e} 之后`, monthStart: "月初", noRecord: "所选选手此时还没有比赛记录",
+    idle: m => `${m} 个月未出赛`, absent: "未出赛",
+    snapLabel: (d, e, k, n, c) => `${d} · ${e}（第 ${k}/${n} 站，本站 ${c} 场）`,
+    rowAria: (n, sel) => `${n}，${sel ? "已在图表中，按回车移除" : "按回车加入图表"}`,
+    isNew: "新", isNewTitle: "上一站时还没有记录", emptyBoard: "这一站还没有满足条件的选手，试试降低最少对局数。",
+    langBtn: "EN",
+    modeAria: "榜单类型", modeCur: "当前榜", modePeak: "巅峰榜", thPeakScore: "巅峰排名分", thPeakTitle: "巅峰时的 BT 分 − 1 个标准误（前后比赛都参考）",
+    thVs: "vs 预期", thVsRecentTitle: "近 24 个月：实际胜场 − 模型赛前期望胜场。▲ / ▽ 表示超出 2 个标准差，即模型一直在低估 / 高估这位选手；不参与排名",
+    thVsCareerTitle: "生涯：实际胜场 − 模型赛前期望胜场。▲ / ▽ 表示超出 2 个标准差；不参与排名", vsFew: "近 24 个月不足 10 场",
+    thMain: "正赛胜率", thMainTitle: "官方赛事正赛阶段（8 强 / 16 强 / 总决赛 / 邀请赛 / 淘汰赛）的生涯战绩，不计资格赛、瑞士轮和小组赛；不参与排名",
+    thPeakWhen: "巅峰时间", thRankThen: "当时名次", thRankThenTitle: "按同样的事后估计，当时在所有已打满 10 场的选手中的名次",
+  },
+  en: {
+    title: "KARDS BT Ratings", eyebrow: "KARDS · Bradley–Terry · official events + Open main stages", h1: "KARDS Esports BT Ratings", scope: "Coverage",
+    hTrend: "Rating history", hBoard: "Leaderboard", searchPh: "Search a player to add to the chart", searchAria: "Search players",
+    btnTop: "Current top 6", btnClear: "Clear", legend: "Legend", chartAria: "Line chart of player BT ratings over time",
+    asOf: "As of", minresAria: "Minimum matches",
+    minAll: "All players", min10: "10+ matches", min20: "20+ matches", min40: "40+ matches",
+    thPlayer: "Player", thScore: "Rank score", thScoreTitle: "BT rating − 1 standard error", thBT: "Rating", thRange: "Range (±1 SE)",
+    thDelta: "Change", thDeltaTitle: "Rank score change since the previous event", thMatches: "Matches", thLast: "Last played", more: "Show more",
+    fRange: "period", fEvents: "events", fMatches: "matches", fPlayers: "players",
+    full: n => `The chart holds ${n} players; remove one first`, inChart: "in chart", sugMeta: (n, y) => `${n} matches · ${y}`,
+    noHit: "No player found", aka: "Also known as: ", remove: "Remove ", emptyChart: "Search for players above, or tap “Current top 6”",
+    keysAria: "Use the left and right arrow keys to step through snapshots",
+    after: e => `after ${e}`, monthStart: "start of month", noRecord: "No results yet for the selected players",
+    idle: m => `idle ${m} mo`, absent: "did not play",
+    snapLabel: (d, e, k, n, c) => `${d} · ${e} (event ${k}/${n}, ${c} matches)`,
+    rowAria: (n, sel) => `${n}, ${sel ? "in chart, press Enter to remove" : "press Enter to add to chart"}`,
+    isNew: "new", isNewTitle: "No rating at the previous event", emptyBoard: "No players match at this event; try a lower minimum.",
+    langBtn: "中文",
+    modeAria: "Leaderboard type", modeCur: "Current", modePeak: "Peak", thPeakScore: "Peak score", thPeakTitle: "Rating − 1 standard error at the peak, estimated with hindsight",
+    thVs: "vs expected", thVsRecentTitle: "Last 24 months: actual wins minus the wins the model expected before each match. ▲ / ▽ marks more than 2 standard errors, i.e. the model has kept under- / overrating this player; not used for ranking",
+    thVsCareerTitle: "Career: actual wins minus the model's pre-match expected wins. ▲ / ▽ marks more than 2 standard errors; not used for ranking", vsFew: "fewer than 10 matches in the last 24 months",
+    thMain: "Main-stage", thMainTitle: "Career record in main stages of official events (Top 8 / Top 16 / grand finals / invitationals / knockouts), excluding qualifiers, Swiss and groups; not used for ranking",
+    thPeakWhen: "Peak date", thRankThen: "Rank then", thRankThenTitle: "Rank at that date among players with 10+ matches, by the same hindsight estimate",
+  },
+};
+let LANG = (() => {
+  const q = new URLSearchParams(location.search).get("lang");
+  if (q === "en" || q === "zh") return q;
+  try { const v = localStorage.getItem("kards-bt-lang"); if (v === "en" || v === "zh") return v; } catch (e) {}
+  return /^zh/i.test(navigator.language || "") ? "zh" : "en";
+})();
+const t = (k, ...a) => { const v = T[LANG][k]; return typeof v === "function" ? v(...a) : v; };
+// placement labels come from placements.py in Chinese, e.g. "16 强 · 第 2 名（3-1）", "瑞士轮 4-2", "第 5–8 名"
+const STAGE_EN = [["总决赛", "Grand final"], ["小组赛", "Groups"], ["瑞士轮", "Swiss"], ["资格赛", "Qualifier"], ["邀请赛", "Invitational"],
+  ["淘汰赛", "Playoffs"], ["正赛", "Main event"], ["32 强", "Top 32"], ["16 强", "Top 16"], ["8 强", "Top 8"], ["参赛", "Played"]];
+function placeText(label) {
+  if (LANG === "zh" || !label) return label;
+  let s = label;
+  for (const [zh, en] of STAGE_EN) s = s.replace(zh, en);
+  return s.replace(/第 (\d+)–(\d+) 名/, "#$1–$2").replace(/第 (\d+) 名/, "#$1").replace(/（(.*?)）/, " ($1)");
+}
+function applyLang() {
+  document.documentElement.lang = LANG === "zh" ? "zh-CN" : "en";
+  document.title = t("title");
+  document.querySelectorAll("[data-t]").forEach(el => { el.textContent = t(el.dataset.t); });
+  document.querySelectorAll("[data-t-attr]").forEach(el => {
+    for (const pair of el.dataset.tAttr.split(";")) { const [attr, key] = pair.split(":"); el.setAttribute(attr, t(key)); }
+  });
+  document.getElementById("lang").textContent = t("langBtn");
+}
+applyLang();
+const fmtDate = d => d.replace(/-/g, ".");
+const snaps = DATA.snaps;
+const players = DATA.players;
+const byId = new Map(players.map(p => [p.id, p]));
+// snapshots are events (e = event name) plus the 1st of every month (e = ""); the leaderboard steps through events only
+const evSnaps = snaps.map((s, i) => s.e ? i : -1).filter(i => i >= 0);
+players.forEach(p => {
+  p.at = new Map(p.p.map(x => [x[0], x]));
+  // x[5]: where the player finished in that event (truthy only if they played in it)
+  p.played = new Map(p.p.map(x => [x[0], x[5]]));
+});
+
+// B: past this many days without an official match, the line is dashed and the player greyed out
+const IDLE_DAYS = 240;
+const idleDays = (si, x) => (Date.parse(snaps[si].d) - Date.parse(x[4])) / 86400000;
+
+const state = { mode: "current", selected: [], slot: new Map(), focus: null, snap: evSnaps[evSnaps.length - 1], shown: 50, hover: null };
+
+// ---------- header facts
+function renderFacts() {
+  const el = document.getElementById("facts");
+  el.replaceChildren();
+  const items = [
+    [fmtDate(DATA.stats.first) + " – " + fmtDate(DATA.stats.last), t("fRange")],
+    [String(evSnaps.length), t("fEvents")],
+    [DATA.stats.matches.toLocaleString(), t("fMatches")],
+    [DATA.stats.players.toLocaleString(), t("fPlayers")],
+  ];
+  for (const [v, k] of items) {
+    const s = document.createElement("span");
+    const b = document.createElement("b"); b.textContent = v;
+    s.append(b, document.createTextNode(k));
+    el.append(s);
+  }
+}
+renderFacts();
+
+// ---------- selection with stable color slots (color follows the player, never the rank)
+function colorOf(id) { return `var(--s${state.slot.get(id) + 1})`; }
+function addPlayer(id) {
+  if (!byId.has(id) || state.selected.includes(id)) return;
+  if (state.selected.length >= SLOTS) { flashFull(); return; }
+  const used = new Set(state.slot.values());
+  let s = 0; while (used.has(s)) s++;
+  state.slot.set(id, s);
+  state.selected.push(id);
+  renderAll();
+}
+function removePlayer(id) {
+  state.selected = state.selected.filter(x => x !== id);
+  state.slot.delete(id);
+  if (state.focus === id) state.focus = null;
+  renderAll();
+}
+function togglePlayer(id) { state.selected.includes(id) ? removePlayer(id) : addPlayer(id); }
+function flashFull() {
+  const s = document.getElementById("search");
+  s.value = ""; s.placeholder = t("full", SLOTS);
+  setTimeout(() => { s.placeholder = t("searchPh"); }, 2500);
+}
+
+function boardAt(si, minRes) {
+  const out = [];
+  for (const p of players) {
+    const x = p.at.get(si);
+    if (x && x[3] >= minRes) out.push({ p, elo: x[1], se: x[2], n: x[3], last: x[4], score: x[1] - x[2], idle: idleDays(si, x) > IDLE_DAYS });
+  }
+  // rank by the lower 1-se bound: a long break widens the se, so idle players slide down without a rule
+  out.sort((a, b) => b.score - a.score);
+  return out;
+}
+function topIds(k) { return boardAt(evSnaps[evSnaps.length - 1], 20).slice(0, k).map(r => r.p.id); }
+
+// ---------- search
+(function search() {
+  // a short suggestion list that only opens once something is typed, so on phones it never covers the keyboard
+  const input = document.getElementById("search");
+  const box = document.getElementById("suggest");
+  const latest = new Map(players.map(p => [p.id, p.p[p.p.length - 1]]));
+  let hits = [], active = -1;
+  const find = q => {
+    q = q.trim().toLowerCase(); if (!q) return [];
+    const scored = [];
+    for (const p of players) {
+      const n = p.n.toLowerCase(), al = (p.a || "").toLowerCase();
+      const s = n === q ? 0 : n.startsWith(q) ? 1 : n.includes(q) ? 2 : al.includes(q) ? 3 : -1;
+      if (s >= 0) scored.push([s, -latest.get(p.id)[3], p]);
+    }
+    scored.sort((x, y) => x[0] - y[0] || x[1] - y[1]);
+    return scored.slice(0, 8).map(x => x[2]);
+  };
+  const close = () => { box.hidden = true; input.setAttribute("aria-expanded", "false"); input.removeAttribute("aria-activedescendant"); active = -1; };
+  const pick = p => { addPlayer(p.id); input.value = ""; close(); input.blur(); };
+  const render = () => {
+    box.replaceChildren();
+    if (!input.value.trim()) { close(); return; }
+    hits.forEach((p, i) => {
+      const li = document.createElement("li");
+      li.id = "sg-" + i; li.setAttribute("role", "option"); li.setAttribute("aria-selected", String(i === active));
+      const nm = document.createElement("span"); nm.textContent = p.n;
+      const meta = document.createElement("small");
+      const last = latest.get(p.id);
+      meta.textContent = state.selected.includes(p.id) ? t("inChart") : t("sugMeta", last[3], last[4].slice(0, 4));
+      li.append(nm, meta);
+      li.addEventListener("pointerdown", e => e.preventDefault()); // keep focus so the click lands
+      li.addEventListener("click", () => pick(p));
+      box.append(li);
+    });
+    if (!hits.length) { const li = document.createElement("li"); li.className = "none"; li.textContent = t("noHit"); box.append(li); }
+    box.hidden = false; input.setAttribute("aria-expanded", "true");
+    if (active >= 0) input.setAttribute("aria-activedescendant", "sg-" + active); else input.removeAttribute("aria-activedescendant");
+  };
+  input.addEventListener("input", () => { hits = find(input.value); active = -1; render(); });
+  input.addEventListener("keydown", e => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      if (!hits.length) return;
+      e.preventDefault();
+      active = (active + (e.key === "ArrowDown" ? 1 : -1) + hits.length) % hits.length; render();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const p = hits[active >= 0 ? active : 0]; if (p) pick(p);
+    } else if (e.key === "Escape") close();
+  });
+  input.addEventListener("blur", close);
+  document.getElementById("btn-top").addEventListener("click", () => {
+    state.selected = []; state.slot.clear(); state.focus = null;
+    topIds(6).forEach(addPlayer); renderAll();
+  });
+  document.getElementById("btn-clear").addEventListener("click", () => {
+    state.selected = []; state.slot.clear(); state.focus = null; renderAll();
+  });
+})();
+
+// ---------- chips (legend)
+function renderChips() {
+  const el = document.getElementById("chips");
+  el.replaceChildren();
+  for (const id of state.selected) {
+    const p = byId.get(id);
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    chip.style.color = colorOf(id);
+    const key = document.createElement("span"); key.className = "key";
+    const name = document.createElement("button");
+    name.type = "button"; name.textContent = p.n; name.title = p.a ? t("aka") + p.a : "";
+    name.style.cssText = "border:0;padding:0;background:none;color:var(--ink);font:inherit;";
+    name.setAttribute("aria-pressed", String(state.focus === id));
+    name.addEventListener("click", () => { state.focus = state.focus === id ? null : id; renderChart(); renderChips(); });
+    name.addEventListener("mouseenter", () => { state.focus = id; renderChart(); });
+    name.addEventListener("mouseleave", () => { state.focus = null; renderChart(); });
+    const x = document.createElement("button"); x.type = "button"; x.className = "x"; x.textContent = "×";
+    x.setAttribute("aria-label", t("remove") + p.n);
+    x.addEventListener("click", () => removePlayer(id));
+    chip.append(key, name, x);
+    el.append(chip);
+  }
+}
+
+// ---------- chart
+const NS = "http://www.w3.org/2000/svg";
+const svgEl = (tag, attrs, parent) => {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.append(e);
+  return e;
+};
+const tms = snaps.map(s => Date.parse(s.d + "T00:00:00Z"));
+let geom = null;
+
+function renderChart() {
+  const svg = document.getElementById("chart");
+  const card = document.getElementById("card");
+  svg.replaceChildren();
+  const W = Math.max(card.clientWidth - 24, 280);
+  const H = Math.round(Math.min(Math.max(W * 0.48, 260), 430));
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("height", H);
+  const m = { l: 46, r: 14, t: 12, b: 28 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+
+  const sel = state.selected.map(id => byId.get(id));
+  if (!sel.length) {
+    const msg = svgEl("text", { x: W / 2, y: H / 2, "text-anchor": "middle" }, svg);
+    msg.textContent = t("emptyChart");
+    geom = null;
+    return;
+  }
+  let lo = Infinity, hi = -Infinity;
+  for (const p of sel) for (const x of p.p) {
+    const pad = state.focus === p.id ? x[2] : 0;
+    lo = Math.min(lo, x[1] - pad); hi = Math.max(hi, x[1] + pad);
+  }
+  const step = hi - lo > 300 ? 100 : 50;
+  lo = Math.floor((lo - 15) / step) * step; hi = Math.ceil((hi + 15) / step) * step;
+  const x0 = tms[0], x1 = tms[tms.length - 1];
+  const X = t => m.l + (t - x0) / (x1 - x0) * iw;
+  const Y = v => m.t + (hi - v) / (hi - lo) * ih;
+  geom = { X, Y, m, iw, ih, W, H };
+
+  // grid + y ticks
+  for (let v = lo; v <= hi; v += step) {
+    svgEl("line", { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: v === 1500 ? "var(--axis)" : "var(--grid)", "stroke-width": 1 }, svg);
+    const t = svgEl("text", { x: m.l - 8, y: Y(v) + 4, "text-anchor": "end" }, svg); t.textContent = v;
+  }
+  // x ticks: Jan (and Jul when there is room); thin out years on narrow screens
+  const y0 = new Date(x0).getUTCFullYear(), y1 = new Date(x1).getUTCFullYear();
+  const pxPerYear = iw / ((x1 - x0) / 31557600000);
+  const months = pxPerYear >= 120 ? [0, 6] : [0];
+  const everyYears = pxPerYear >= 48 ? 1 : 2;
+  for (let y = y0; y <= y1 + 1; y++) for (const mo of months) {
+    const t = Date.UTC(y, mo, 1);
+    if (t < x0 || t > x1 || (mo === 0 && y % everyYears)) continue;
+    svgEl("line", { x1: X(t), x2: X(t), y1: H - m.b, y2: H - m.b + 4, stroke: "var(--axis)" }, svg);
+    const tx = svgEl("text", { x: X(t), y: H - m.b + 17, "text-anchor": "middle" }, svg);
+    tx.textContent = mo === 0 ? `${y}` : `${y}.07`;
+  }
+  svgEl("line", { x1: m.l, x2: W - m.r, y1: H - m.b, y2: H - m.b, stroke: "var(--axis)" }, svg);
+
+  // leaderboard snapshot marker
+  const sx = X(tms[state.snap]);
+  svgEl("line", { x1: sx, x2: sx, y1: m.t, y2: H - m.b, stroke: "var(--accent)", "stroke-dasharray": "3 4", "stroke-width": 1 }, svg);
+
+  // focus band (±1 se)
+  if (state.focus && state.selected.includes(state.focus)) {
+    const p = byId.get(state.focus);
+    for (const seg of segments(p)) {
+      const top = seg.map(x => `${X(tms[x[0]])},${Y(x[1] + x[2])}`);
+      const bot = seg.slice().reverse().map(x => `${X(tms[x[0]])},${Y(x[1] - x[2])}`);
+      svgEl("polygon", { points: top.concat(bot).join(" "), fill: colorOf(p.id), "fill-opacity": 0.14, stroke: "none" }, svg);
+    }
+  }
+  // lines + points, focused series drawn last
+  const order = sel.slice().sort((a, b) => (a.id === state.focus) - (b.id === state.focus));
+  for (const p of order) {
+    const dim = state.focus && state.focus !== p.id;
+    const g = svgEl("g", { opacity: dim ? 0.3 : 1 }, svg);
+    for (const seg of segments(p)) {
+      // split the line into runs: solid while the player is active, dashed once they have been idle > IDLE_DAYS
+      let run = [seg[0]], idle = false;
+      const flush = () => {
+        if (run.length > 1) svgEl("path", {
+          d: run.map((x, i) => `${i ? "L" : "M"}${X(tms[x[0]]).toFixed(1)},${Y(x[1]).toFixed(1)}`).join(""),
+          fill: "none", stroke: colorOf(p.id), "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round",
+          ...(idle ? { "stroke-dasharray": "2 5", "stroke-opacity": 0.7 } : {}),
+        }, g);
+      };
+      for (const x of seg.slice(1)) {
+        const now = idleDays(x[0], x) > IDLE_DAYS;
+        if (now !== idle) { flush(); run = [run[run.length - 1]]; idle = now; }
+        run.push(x);
+      }
+      flush();
+      // dots only where the player actually played; between them the line is time decay alone
+      for (const x of seg) if (p.played.get(x[0])) svgEl("circle", { cx: X(tms[x[0]]), cy: Y(x[1]), r: 4, fill: colorOf(p.id), stroke: "var(--surface)", "stroke-width": 2 }, g);
+    }
+  }
+  // crosshair layer
+  const cross = svgEl("line", { y1: m.t, y2: H - m.b, stroke: "var(--ink-2)", "stroke-width": 1, visibility: "hidden" }, svg);
+  const hit = svgEl("rect", { x: m.l - 10, y: 0, width: iw + 20, height: H, fill: "transparent", tabindex: 0, "aria-label": t("keysAria") }, svg);
+  const show = si => {
+    state.hover = si;
+    cross.setAttribute("x1", X(tms[si])); cross.setAttribute("x2", X(tms[si]));
+    cross.setAttribute("visibility", "visible");
+    showTip(si);
+  };
+  const hide = () => { state.hover = null; cross.setAttribute("visibility", "hidden"); document.getElementById("tip").hidden = true; };
+  hit.addEventListener("pointermove", e => {
+    const r = svg.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (W / r.width);
+    let best = 0;
+    tms.forEach((t, i) => { if (Math.abs(X(t) - px) < Math.abs(X(tms[best]) - px)) best = i; });
+    show(best);
+  });
+  hit.addEventListener("pointerleave", hide);
+  hit.addEventListener("blur", hide);
+  hit.addEventListener("focus", () => show(state.hover ?? state.snap));
+  hit.addEventListener("keydown", e => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    e.preventDefault();
+    const cur = state.hover ?? state.snap;
+    show(Math.max(0, Math.min(snaps.length - 1, cur + (e.key === "ArrowRight" ? 1 : -1))));
+  });
+  hit.addEventListener("click", () => { if (state.hover != null) setSnap(state.hover); });
+}
+
+function segments(p) {
+  const segs = []; let cur = [];
+  for (const x of p.p) {
+    if (cur.length && x[0] !== cur[cur.length - 1][0] + 1) { segs.push(cur); cur = []; }
+    cur.push(x);
+  }
+  if (cur.length) segs.push(cur);
+  return segs;
+}
+
+function showTip(si) {
+  const tip = document.getElementById("tip");
+  tip.replaceChildren();
+  const head = document.createElement("div"); head.className = "t-head";
+  head.textContent = `${fmtDate(snaps[si].d)} · ` + (snaps[si].e ? t("after", snaps[si].e) : t("monthStart"));
+  tip.append(head);
+  const rows = state.selected.map(id => ({ p: byId.get(id), x: byId.get(id).at.get(si) })).filter(r => r.x).sort((a, b) => b.x[1] - a.x[1]);
+  if (!rows.length) {
+    const d = document.createElement("div"); d.className = "t-row"; d.style.color = "var(--muted)";
+    d.textContent = t("noRecord"); tip.append(d);
+  }
+  for (const r of rows) {
+    const row = document.createElement("div"); row.className = "t-row";
+    const key = document.createElement("i"); key.className = "key"; key.style.background = colorOf(r.p.id);
+    const b = document.createElement("b"); b.textContent = Math.round(r.x[1]);
+    const name = document.createElement("span"); name.textContent = r.p.n + " ";
+    const place = r.p.played.get(si);
+    const gap = idleDays(si, r.x);
+    const se = document.createElement("small");
+    se.textContent = "±" + Math.round(r.x[2]) + (gap > IDLE_DAYS ? " · " + t("idle", Math.round(gap / 30.4)) : snaps[si].e && !place ? " · " + t("absent") : "");
+    name.append(se);
+    row.append(key, b, name);
+    if (place) { const pl = document.createElement("span"); pl.className = "place"; pl.textContent = placeText(place); row.append(pl); }
+    tip.append(row);
+  }
+  tip.hidden = false;
+  const card = document.getElementById("card");
+  const svg = document.getElementById("chart");
+  const scale = svg.getBoundingClientRect().width / geom.W;
+  const px = geom.X(tms[si]) * scale + 12;
+  const w = tip.offsetWidth;
+  const left = px + 14 + w > card.clientWidth ? px - w - 14 : px + 14;
+  tip.style.left = Math.max(4, left) + "px";
+  tip.style.top = "14px";
+}
+
+// ---------- leaderboard
+const snapInput = document.getElementById("snap");
+snapInput.max = evSnaps.length - 1;
+snapInput.value = evSnaps.length - 1;
+snapInput.addEventListener("input", () => setSnap(evSnaps[+snapInput.value]));
+document.getElementById("minres").addEventListener("change", () => { state.shown = 50; renderBoard(); });
+for (const [id, mode] of [["mode-cur", "current"], ["mode-peak", "peak"]]) {
+  document.getElementById(id).addEventListener("click", () => { state.mode = mode; state.shown = 50; renderBoard(); });
+}
+document.getElementById("more").addEventListener("click", () => { state.shown += 50; renderBoard(); });
+// clicking the chart between events snaps the leaderboard to the latest event before that time
+function setSnap(si) {
+  let k = 0; evSnaps.forEach((e, j) => { if (e <= si) k = j; });
+  state.snap = evSnaps[k]; snapInput.value = k; state.shown = 50; renderBoard(); renderChart();
+}
+
+function renderHead() {
+  const cols = state.mode === "peak"
+    ? [["#"], [t("thPlayer")], [t("thPeakScore"), "num", t("thPeakTitle")], [t("thBT"), "num"], ["±", "num"], [t("thRange"), "hide-sm"],
+       [t("thMain"), "num", t("thMainTitle")], [t("thVs"), "num", t("thVsCareerTitle")], [t("thPeakWhen")], [t("thRankThen"), "num", t("thRankThenTitle")], [t("thMatches"), "num hide-sm"]]
+    : [["#"], [t("thPlayer")], [t("thScore"), "num", t("thScoreTitle")], [t("thBT"), "num"], ["±", "num"], [t("thRange"), "hide-sm"],
+       [t("thMain"), "num", t("thMainTitle")], [t("thVs"), "num", t("thVsRecentTitle")], [t("thDelta"), "num", t("thDeltaTitle")], [t("thMatches"), "num hide-sm"], [t("thLast"), "hide-sm"]];
+  const tr = document.createElement("tr");
+  for (const [text, cls, title] of cols) {
+    const th = document.createElement("th"); th.textContent = text;
+    if (cls) th.className = cls; if (title) th.title = title;
+    tr.append(th);
+  }
+  document.getElementById("thead").replaceChildren(tr);
+  document.querySelectorAll("[data-board]").forEach(el => { el.hidden = el.dataset.board !== state.mode; });
+  document.getElementById("mode-cur").setAttribute("aria-pressed", String(state.mode === "current"));
+  document.getElementById("mode-peak").setAttribute("aria-pressed", String(state.mode === "peak"));
+}
+
+// a player cell (colour swatch when in the chart, former names on hover), shared by both boards
+function playerCell(tr, p, note) {
+  const td = document.createElement("td"); td.className = "name"; tr.append(td);
+  const sw = document.createElement("i"); sw.className = "sw";
+  if (state.selected.includes(p.id)) { sw.style.background = colorOf(p.id); sw.style.borderColor = "transparent"; }
+  const label = document.createElement("span"); label.textContent = p.n;
+  if (p.a && p.a !== p.n) td.title = t("aka") + p.a;
+  const who = document.createElement("span"); who.className = "who";
+  who.append(sw, label);
+  if (note) { const sm = document.createElement("small"); sm.textContent = note; who.append(sm); }
+  td.append(who);
+}
+
+// main-stage record cell: "61%" with the W-L on hover, or "–" for players who never reached a main stage
+function mainCell(tr, p) {
+  const [w, l] = p.m || [0, 0];
+  const td = document.createElement("td"); td.className = "num";
+  if (w + l) { td.textContent = Math.round(100 * w / (w + l)) + "%"; td.title = `${w}-${l}`; }
+  else { td.textContent = "–"; td.style.color = "var(--muted)"; }
+  tr.append(td);
+}
+
+// "vs expected": actual - expected wins, flagged when |z| >= 2 (residuals.py). recent=true uses the 24-month window.
+function vsCell(tr, p, recent) {
+  const r = p.r;
+  const td = document.createElement("td"); td.className = "num vs";
+  const enough = r && (!recent || r[2] >= 10);
+  if (!enough) { td.textContent = "–"; td.style.color = "var(--muted)"; if (recent && r) td.title = t("vsFew"); }
+  else {
+    const diff = recent ? r[3] : r[0], z = recent ? r[4] : r[1];
+    td.textContent = (diff > 0 ? "+" : "") + diff.toFixed(1);
+    const flag = z >= 2 ? "▲" : z <= -2 ? "▽" : "";
+    if (flag) { td.classList.add(z > 0 ? "hot" : "cold"); const f = document.createElement("span"); f.className = "flag"; f.textContent = flag; td.append(f); }
+    td.title = `z = ${z.toFixed(2)}`;
+  }
+  tr.append(td);
+}
+
+function renderPeak() {
+  const minRes = +document.getElementById("minres").value;
+  const rows = players.filter(p => p.k && p.k[6] >= minRes).sort((a, b) => b.k[0] - a.k[0]);
+  const lo = 1350, hi = 1750, sc = v => Math.max(0, Math.min(120, (v - lo) / (hi - lo) * 120));
+  const tb = document.getElementById("tbody");
+  tb.replaceChildren();
+  rows.slice(0, state.shown).forEach((p, i) => {
+    const [score, elo, se, date, ev, rankThen, n] = p.k;
+    const tr = document.createElement("tr"); tr.tabIndex = 0;
+    tr.setAttribute("aria-label", t("rowAria", p.n, state.selected.includes(p.id)));
+    const cell = (cls, text) => { const td = document.createElement("td"); if (cls) td.className = cls; if (text != null) td.textContent = text; tr.append(td); return td; };
+    cell("rank", i + 1);
+    playerCell(tr, p);
+    cell("num", Math.round(score));
+    cell("num", Math.round(elo));
+    cell("num", Math.round(se));
+    const rg = cell("hide-sm");
+    const bar = document.createElement("div"); bar.className = "range";
+    const ln = document.createElement("i"); ln.style.left = sc(elo - se) + "px"; ln.style.width = (sc(elo + se) - sc(elo - se)) + "px";
+    const mk = document.createElement("s"); mk.style.left = (sc(elo) - 1) + "px";
+    bar.append(ln, mk); rg.append(bar);
+    mainCell(tr, p);
+    vsCell(tr, p, false);
+    const when = cell("", fmtDate(date).slice(0, 7)); when.title = ev;
+    cell("num", "#" + rankThen);
+    cell("num hide-sm", n);
+    tr.addEventListener("click", () => togglePlayer(p.id));
+    tr.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); togglePlayer(p.id); } });
+    tb.append(tr);
+  });
+  document.getElementById("more").hidden = rows.length <= state.shown;
+}
+
+function renderBoard() {
+  renderHead();
+  if (state.mode === "peak") { renderPeak(); return; }
+  const s = snaps[state.snap];
+  const k = evSnaps.indexOf(state.snap);
+  document.getElementById("snap-label").textContent = t("snapLabel", fmtDate(s.d), s.e, k + 1, evSnaps.length, s.n);
+  const minRes = +document.getElementById("minres").value;
+  const rows = boardAt(state.snap, minRes);
+  const lo = 1350, hi = 1750, sc = v => Math.max(0, Math.min(120, (v - lo) / (hi - lo) * 120));
+  const tb = document.getElementById("tbody");
+  tb.replaceChildren();
+  rows.slice(0, state.shown).forEach((r, i) => {
+    const tr = document.createElement("tr");
+    tr.tabIndex = 0;
+    if (r.idle) tr.className = "idle";
+    const sel = state.selected.includes(r.p.id);
+    tr.setAttribute("aria-label", t("rowAria", r.p.n, sel));
+    const cell = (cls, text) => { const td = document.createElement("td"); if (cls) td.className = cls; if (text != null) td.textContent = text; tr.append(td); return td; };
+    cell("rank", i + 1);
+    playerCell(tr, r.p, r.idle ? t("idle", Math.round(idleDays(state.snap, [0, 0, 0, 0, r.last]) / 30.4)) : null);
+    cell("num", Math.round(r.score));
+    cell("num", Math.round(r.elo));
+    cell("num", Math.round(r.se));
+    const rg = cell("hide-sm");
+    const bar = document.createElement("div"); bar.className = "range";
+    const ln = document.createElement("i"); ln.style.left = sc(r.elo - r.se) + "px"; ln.style.width = (sc(r.elo + r.se) - sc(r.elo - r.se)) + "px";
+    const mk = document.createElement("s"); mk.style.left = (sc(r.elo) - 1) + "px";
+    bar.append(ln, mk); rg.append(bar);
+    mainCell(tr, r.p);
+    vsCell(tr, r.p, true);
+    const prev = k > 0 ? r.p.at.get(evSnaps[k - 1]) : null;
+    const d = prev ? Math.round(r.score - (prev[1] - prev[2])) : null;
+    const dc = cell("num " + (d == null ? "new" : d > 0 ? "up" : d < 0 ? "down" : ""), d == null ? t("isNew") : (d > 0 ? "▲ " : d < 0 ? "▼ " : "") + Math.abs(d));
+    if (d == null) dc.title = t("isNewTitle");
+    cell("num hide-sm", r.n);
+    cell("hide-sm", fmtDate(r.last));
+    tr.addEventListener("click", () => togglePlayer(r.p.id));
+    tr.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); togglePlayer(r.p.id); } });
+    tb.append(tr);
+  });
+  if (!rows.length) {
+    const tr = document.createElement("tr"); const td = document.createElement("td");
+    td.colSpan = 11; td.className = "empty"; td.textContent = t("emptyBoard");
+    tr.append(td); tb.append(tr);
+  }
+  document.getElementById("more").hidden = rows.length <= state.shown;
+}
+
+function renderAll() { renderChips(); renderChart(); renderBoard(); }
+
+// default view: a fixed set of well-known players
+const DEFAULT_PLAYERS = ["Jking7", "钟离梓", "66better", "henry449856878", "作死的骡博 (Radish)", "Head"];
+for (const n of DEFAULT_PLAYERS) {
+  const p = players.find(x => x.n.toLowerCase() === n.toLowerCase());
+  if (p && !state.selected.includes(p.id)) { state.slot.set(p.id, state.selected.length); state.selected.push(p.id); }
+}
+renderAll();
+document.getElementById("lang").addEventListener("click", () => {
+  LANG = LANG === "zh" ? "en" : "zh";
+  try { localStorage.setItem("kards-bt-lang", LANG); } catch (e) {}
+  const u = new URL(location.href); u.searchParams.set("lang", LANG);
+  try { history.replaceState(null, "", u); } catch (e) {}
+  applyLang(); renderFacts(); renderAll();
+});
+let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(renderChart, 120); });
+</script>
