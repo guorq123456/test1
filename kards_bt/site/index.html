@@ -135,6 +135,9 @@ tr.idle td.name, tr.idle td.num:nth-child(3) { color: var(--muted); }
 td.name small { color: var(--muted); font-size: 12px; margin-left: 6px; }
 td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; background: transparent; border: 1px solid var(--line); }
 .up { color: var(--up); } .down { color: var(--down); } .new { color: var(--muted); }
+td.vs { font-variant-numeric: tabular-nums; }
+td.vs .flag { font-size: 11px; margin-left: 3px; }
+td.vs.hot { color: var(--up); font-weight: 600; } td.vs.cold { color: var(--down); }
 .range { position: relative; width: 120px; height: 10px; }
 .range i { position: absolute; top: 4px; height: 2px; background: var(--axis); border-radius: 1px; }
 .range s { position: absolute; top: 1px; width: 2px; height: 8px; background: var(--ink-2); border-radius: 1px; }
@@ -242,6 +245,7 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
       <li><b>小样本和“赢家诅咒”</b>：分数几乎全来自预选的选手，到了正赛平均比预测少赢约 4 个百分点。能进正赛的人是被“预选打得好”筛出来的，其中一部分是手感和运气，进了正赛自然回落。降低预选权重检验过，修不好这一点，预测还变差，所以没有采用；更可靠的是看<b>排名分</b>，场次少的人标准误大，排名分会更保守。</li>
       <li><b>巅峰榜</b>：当前榜只用截至当天的比赛，会“滞后”：一段很短的爆发结束时只被计入一半，巅峰也是在后来的下滑发生前评出来的。巅峰榜用事后估计，在每站比赛的日期上，用前后所有比赛（按时间距离加权，240 天半衰期）重新拟合，新人起点和天梯直邀补偿也按同样方式计入，取每人排名分最高的那一站。它适合比较“谁状态最好时最强”，不能用来预测比赛（用到了未来的结果）。</li>
       <li><b>正赛胜率</b>：榜上另列每人在官方赛事正赛阶段（8 强 / 16 强 / 总决赛 / 邀请赛 / 淘汰赛）的生涯胜率，悬停看胜负场数。它只是参考，不参与排名：BT 分只看每场胜负，不区分决赛和资格赛，而“总能打进决赛”这件事在体感里的分量比模型里重。</li>
+      <li><b>vs 预期</b>：模型压不住的强者怎么体现？分数这边试过放宽先验、重尾先验、按小局计分，都会让整体预测变差或者没有作用，所以不改分数，而是把证据列出来：每个人每场赛前的模型胜率加起来是“期望胜场”，和实际胜场相减就是这一列；超过 2 个标准差标 ▲（模型一直低估他）或 ▽（一直高估）。当前榜看近 24 个月，巅峰榜看生涯。</li>
       <li><b>直邀补偿按人校准</b>：检验过三种做法（按选手已有真实场次递减、门槛模型、按直邀后 8 强表现打折）。按 8 强表现打折几乎没有作用，因为直邀选手在 8 强的整体战绩和资格赛晋级者相当；另两种对 8 强对局的预测略好（约 −0.005），整体预测不变，都在误差范围内，默认仍用统一补偿（<code>--invite-shrink</code> 可切换）。</li>
       <li><b>天梯直邀</b>：OCC 8 强里没打资格赛的直邀选手，记上当月资格赛晋级者的中位战绩（直邀和资格赛胜出一样难），按 120 天半衰期淡出。</li>
       <li><b>人工修正</b>：<code>data/aliases.csv</code> 合并同一人的不同账号，<code>data/overrides.csv</code> 把代打的结果记到实际上场的人名下，<code>data/manual_matches.csv</code> 补录只在官方新闻里公布的总决赛。</li>
@@ -263,6 +267,7 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
       <li><b>Small samples and the winner's curse</b>: players whose rating comes almost entirely from qualifiers win about 4 points less than predicted once they reach a main stage. Players reach the main stage by doing well in qualifiers, partly through form and luck, so as a group they fall back. Down-weighting qualifier results was tested; it does not fix this and makes predictions worse, so it is not used. The <b>rank score</b> is the safer guide: few matches mean a wide standard error and a more cautious rank score.</li>
       <li><b>Peak leaderboard</b>: the current board uses only results up to each date, so it lags: a short strong run is only half credited when it ends, and a peak is judged before any slump that followed. The peak board uses hindsight: at every event date the model is refit on all results before and after it (weighted by distance in time, 240-day half-life), with the newcomer anchor and ladder-invite credit included the same way, and each player's highest rank score is kept. It compares how strong players were at their best; it cannot be used for prediction, since it looks at future results.</li>
       <li><b>Main-stage win rate</b>: both boards also list each player's career win rate in main stages of official events (Top 8 / Top 16 / grand finals / invitationals / knockouts); hover for the record. It is a reference only and does not affect the ranking: the rating counts every match the same, a final no more than a qualifier, while "always reaching the final" weighs more in people's impressions than in the model.</li>
+      <li><b>vs expected</b>: how to show players the prior keeps compressing? On the rating side a wider prior, a heavy-tailed prior and game-level scoring were all tested; each made overall prediction worse or did nothing, so the rating stays and the evidence is shown instead: summing the model's pre-match win probabilities gives each player's expected wins, and this column is actual minus expected; ▲ marks more than 2 standard errors above (the model has kept underrating them), ▽ below. The current board uses the last 24 months, the peak board the whole career.</li>
       <li><b>Calibrating the invite credit per player</b>: three variants were tested (shrinking with the player's own real evidence, a threshold model, discounting by Top 8 results after invites). Discounting by Top 8 results does almost nothing, because invitees' Top 8 record matches qualifier advancers'; the other two predict Top 8 matches slightly better (about −0.005) with overall prediction unchanged, within the margin of error, so the uniform credit stays the default (<code>--invite-shrink</code> switches).</li>
       <li><b>Ladder invites</b>: OCC Top 8 players invited from the in-game ladder skip the qualifier, so each is credited with that month's median qualifier-advancer record (an invite is as hard to earn as a qualifier win), fading with a 120-day half-life.</li>
       <li><b>Manual corrections</b>: <code>data/aliases.csv</code> merges one person's accounts, <code>data/overrides.csv</code> credits a substitute's results to the person who actually played, and <code>data/manual_matches.csv</code> adds grand finals published only in official news.</li>
@@ -293,6 +298,8 @@ const T = {
     isNew: "新", isNewTitle: "上一站时还没有记录", emptyBoard: "这一站还没有满足条件的选手，试试降低最少对局数。",
     langBtn: "EN",
     modeAria: "榜单类型", modeCur: "当前榜", modePeak: "巅峰榜", thPeakScore: "巅峰排名分", thPeakTitle: "巅峰时的 BT 分 − 1 个标准误（前后比赛都参考）",
+    thVs: "vs 预期", thVsRecentTitle: "近 24 个月：实际胜场 − 模型赛前期望胜场。▲ / ▽ 表示超出 2 个标准差，即模型一直在低估 / 高估这位选手；不参与排名",
+    thVsCareerTitle: "生涯：实际胜场 − 模型赛前期望胜场。▲ / ▽ 表示超出 2 个标准差；不参与排名", vsFew: "近 24 个月不足 10 场",
     thMain: "正赛胜率", thMainTitle: "官方赛事正赛阶段（8 强 / 16 强 / 总决赛 / 邀请赛 / 淘汰赛）的生涯战绩，不计资格赛、瑞士轮和小组赛；不参与排名",
     thPeakWhen: "巅峰时间", thRankThen: "当时名次", thRankThenTitle: "按同样的事后估计，当时在所有已打满 10 场的选手中的名次",
   },
@@ -315,6 +322,8 @@ const T = {
     isNew: "new", isNewTitle: "No rating at the previous event", emptyBoard: "No players match at this event; try a lower minimum.",
     langBtn: "中文",
     modeAria: "Leaderboard type", modeCur: "Current", modePeak: "Peak", thPeakScore: "Peak score", thPeakTitle: "Rating − 1 standard error at the peak, estimated with hindsight",
+    thVs: "vs expected", thVsRecentTitle: "Last 24 months: actual wins minus the wins the model expected before each match. ▲ / ▽ marks more than 2 standard errors, i.e. the model has kept under- / overrating this player; not used for ranking",
+    thVsCareerTitle: "Career: actual wins minus the model's pre-match expected wins. ▲ / ▽ marks more than 2 standard errors; not used for ranking", vsFew: "fewer than 10 matches in the last 24 months",
     thMain: "Main-stage", thMainTitle: "Career record in main stages of official events (Top 8 / Top 16 / grand finals / invitationals / knockouts), excluding qualifiers, Swiss and groups; not used for ranking",
     thPeakWhen: "Peak date", thRankThen: "Rank then", thRankThenTitle: "Rank at that date among players with 10+ matches, by the same hindsight estimate",
   },
@@ -695,9 +704,9 @@ function setSnap(si) {
 function renderHead() {
   const cols = state.mode === "peak"
     ? [["#"], [t("thPlayer")], [t("thPeakScore"), "num", t("thPeakTitle")], [t("thBT"), "num"], ["±", "num"], [t("thRange"), "hide-sm"],
-       [t("thMain"), "num", t("thMainTitle")], [t("thPeakWhen")], [t("thRankThen"), "num", t("thRankThenTitle")], [t("thMatches"), "num hide-sm"]]
+       [t("thMain"), "num", t("thMainTitle")], [t("thVs"), "num", t("thVsCareerTitle")], [t("thPeakWhen")], [t("thRankThen"), "num", t("thRankThenTitle")], [t("thMatches"), "num hide-sm"]]
     : [["#"], [t("thPlayer")], [t("thScore"), "num", t("thScoreTitle")], [t("thBT"), "num"], ["±", "num"], [t("thRange"), "hide-sm"],
-       [t("thMain"), "num", t("thMainTitle")], [t("thDelta"), "num", t("thDeltaTitle")], [t("thMatches"), "num hide-sm"], [t("thLast"), "hide-sm"]];
+       [t("thMain"), "num", t("thMainTitle")], [t("thVs"), "num", t("thVsRecentTitle")], [t("thDelta"), "num", t("thDeltaTitle")], [t("thMatches"), "num hide-sm"], [t("thLast"), "hide-sm"]];
   const tr = document.createElement("tr");
   for (const [text, cls, title] of cols) {
     const th = document.createElement("th"); th.textContent = text;
@@ -732,6 +741,22 @@ function mainCell(tr, p) {
   tr.append(td);
 }
 
+// "vs expected": actual - expected wins, flagged when |z| >= 2 (residuals.py). recent=true uses the 24-month window.
+function vsCell(tr, p, recent) {
+  const r = p.r;
+  const td = document.createElement("td"); td.className = "num vs";
+  const enough = r && (!recent || r[2] >= 10);
+  if (!enough) { td.textContent = "–"; td.style.color = "var(--muted)"; if (recent && r) td.title = t("vsFew"); }
+  else {
+    const diff = recent ? r[3] : r[0], z = recent ? r[4] : r[1];
+    td.textContent = (diff > 0 ? "+" : "") + diff.toFixed(1);
+    const flag = z >= 2 ? "▲" : z <= -2 ? "▽" : "";
+    if (flag) { td.classList.add(z > 0 ? "hot" : "cold"); const f = document.createElement("span"); f.className = "flag"; f.textContent = flag; td.append(f); }
+    td.title = `z = ${z.toFixed(2)}`;
+  }
+  tr.append(td);
+}
+
 function renderPeak() {
   const minRes = +document.getElementById("minres").value;
   const rows = players.filter(p => p.k && p.k[6] >= minRes).sort((a, b) => b.k[0] - a.k[0]);
@@ -754,6 +779,7 @@ function renderPeak() {
     const mk = document.createElement("s"); mk.style.left = (sc(elo) - 1) + "px";
     bar.append(ln, mk); rg.append(bar);
     mainCell(tr, p);
+    vsCell(tr, p, false);
     const when = cell("", fmtDate(date).slice(0, 7)); when.title = ev;
     cell("num", "#" + rankThen);
     cell("num hide-sm", n);
@@ -793,6 +819,7 @@ function renderBoard() {
     const mk = document.createElement("s"); mk.style.left = (sc(r.elo) - 1) + "px";
     bar.append(ln, mk); rg.append(bar);
     mainCell(tr, r.p);
+    vsCell(tr, r.p, true);
     const prev = k > 0 ? r.p.at.get(evSnaps[k - 1]) : null;
     const d = prev ? Math.round(r.score - (prev[1] - prev[2])) : null;
     const dc = cell("num " + (d == null ? "new" : d > 0 ? "up" : d < 0 ? "down" : ""), d == null ? t("isNew") : (d > 0 ? "▲ " : d < 0 ? "▼ " : "") + Math.abs(d));
@@ -805,7 +832,7 @@ function renderBoard() {
   });
   if (!rows.length) {
     const tr = document.createElement("tr"); const td = document.createElement("td");
-    td.colSpan = 10; td.className = "empty"; td.textContent = t("emptyBoard");
+    td.colSpan = 11; td.className = "empty"; td.textContent = t("emptyBoard");
     tr.append(td); tb.append(tr);
   }
   document.getElementById("more").hidden = rows.length <= state.shown;
