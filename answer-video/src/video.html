@@ -1,0 +1,1333 @@
+<title>一个回答的诞生</title>
+<style>
+/*FONTS*/
+/* Layout: one column. A paper "stage" plays the video; controls sit under it; the chapter index follows. */
+:root {
+  --bg: #e6ebe5;
+  --surface: #f3f6f1;
+  --fg: #1d2420;
+  --muted: #56615b;
+  --ink: #233e91;
+  --red: #c4372c;
+  --line: #c4d0c5;
+  --stage-paper: #f2f5ef;
+  --stage-ink: #233e91;
+  --stage-on-ink: #ffffff;
+  --f-display: "Noto Serif SC", "Songti SC", "STSong", "Noto Sans SC", serif;
+  --f-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "WenQuanYi Zen Hei", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, "Noto Sans SC", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111714; --surface: #18201c; --fg: #e1e8e2; --muted: #9ba89f;
+    --ink: #a3b6ff; --red: #ff8174; --line: #2c3832; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111714; --surface: #18201c; --fg: #e1e8e2; --muted: #9ba89f;
+  --ink: #a3b6ff; --red: #ff8174; --line: #2c3832; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.7; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; display: grid; gap: 22px; }
+.intro { display: grid; gap: 6px; }
+.eyebrow { margin: 0; font-size: 13px; letter-spacing: .14em; color: var(--muted); }
+h1 { margin: 0; font-family: var(--f-display); font-weight: 700; font-size: clamp(36px, 6vw, 58px); line-height: 1.12; color: var(--ink); text-wrap: balance; }
+.lede { margin: 0; max-width: 62ch; color: var(--muted); }
+
+.player { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.stage { position: relative; background: var(--stage-paper); cursor: pointer; }
+.stage canvas { display: block; width: 100%; aspect-ratio: 16 / 9; height: auto; max-width: 100%; }
+.stage:fullscreen { display: grid; place-items: center; background: #0d0f0e; }
+.stage:fullscreen canvas { width: min(100vw, 177.78vh); }
+.bigplay {
+  position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+  width: 84px; height: 84px; border-radius: 50%; border: 0;
+  background: var(--stage-ink); color: var(--stage-on-ink);
+  display: grid; place-items: center; cursor: pointer;
+  box-shadow: 0 6px 24px rgba(35, 62, 145, .28);
+}
+.bigplay svg { width: 30px; height: 30px; margin-left: 4px; }
+.bigplay:focus-visible, .ctl:focus-visible, .chapters button:focus-visible, #seek:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+
+.cc { margin: 0; padding: 10px 16px; min-height: 3.6em; border-top: 1px solid var(--line); font-size: 16px; line-height: 1.6; }
+.cc.wide { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); padding: 0; min-height: 0; border: 0; }
+
+.controls { display: grid; gap: 8px; padding: 10px 14px 12px; border-top: 1px solid var(--line); }
+.scrub { position: relative; display: grid; }
+#seek { width: 100%; margin: 0; accent-color: var(--ink); cursor: pointer; }
+.ticks { position: relative; height: 8px; }
+.ticks i { position: absolute; top: 0; width: 2px; height: 8px; background: var(--line); border-radius: 1px; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.ctl {
+  font: inherit; font-size: 14px; color: var(--fg); background: transparent;
+  border: 1px solid var(--line); border-radius: 8px; padding: 4px 12px; min-height: 34px; cursor: pointer;
+}
+.ctl[aria-pressed="true"] { border-color: var(--ink); color: var(--ink); }
+.ctl.play { min-width: 74px; font-weight: 700; color: var(--ink); border-color: var(--ink); }
+select.ctl { padding-inline: 8px; }
+.time { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); }
+.spacer { flex: 1 1 auto; }
+.hint { font-size: 12px; color: var(--muted); }
+
+.chapters h2 { margin: 0 0 8px; font-family: var(--f-display); font-weight: 700; font-size: 26px; color: var(--ink); }
+.chapters ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
+.chapters button {
+  width: 100%; display: grid; grid-template-columns: 2.2em 1fr auto; align-items: baseline; gap: 6px;
+  font: inherit; text-align: left; color: var(--fg); background: transparent;
+  border: 1px solid transparent; border-radius: 8px; padding: 6px 10px; cursor: pointer;
+}
+.chapters button:hover { border-color: var(--line); }
+.chapters .n, .chapters .t { font-family: var(--f-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.chapters [aria-current="true"] { border-color: var(--ink); }
+.chapters [aria-current="true"] .n { color: var(--red); }
+.note { margin: 0; font-size: 13px; color: var(--muted); max-width: 70ch; }
+
+html.export body { margin: 0; background: var(--stage-paper); }
+html.export .wrap { padding: 0; display: block; max-width: none; }
+html.export .intro, html.export .controls, html.export .chapters, html.export .note, html.export .cc, html.export .bigplay { display: none; }
+html.export .player { border: 0; border-radius: 0; }
+html.export .stage canvas { width: 1280px; height: 720px; }
+@media (max-width: 640px) { .bigplay { width: 56px; height: 56px; } .bigplay svg { width: 22px; height: 22px; } }
+@media (prefers-reduced-motion: reduce) { .bigplay { box-shadow: none; } }
+</style>
+
+<main class="wrap">
+  <header class="intro">
+    <p class="eyebrow">CLAUDE 讲给大学生的思考过程图解 · 约 6 分钟</p>
+    <h1>一个回答的诞生</h1>
+    <p class="lede">从你按下发送，到我写出第一个字，中间发生了什么？切词、向量、注意力、逐字预测，再到训练、打草稿和动手做事，全画在一张草稿纸上。</p>
+  </header>
+
+  <section class="player" aria-label="视频播放器">
+    <div class="stage" id="stage">
+      <canvas id="cv" role="img" aria-label="动画画面：Claude 的思考过程图解"></canvas>
+      <button class="bigplay" id="bigplay" aria-label="播放">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4l14 8-14 8z" fill="currentColor"/></svg>
+      </button>
+    </div>
+    <p class="cc" id="cc" aria-live="polite"></p>
+    <div class="controls">
+      <div class="scrub">
+        <input type="range" id="seek" min="0" max="1000" step="1" value="0" aria-label="播放进度">
+        <div class="ticks" id="ticks" aria-hidden="true"></div>
+      </div>
+      <div class="row">
+        <button class="ctl play" id="play" type="button">播放</button>
+        <span class="time" id="time">0:00 / 0:00</span>
+        <span class="spacer"></span>
+        <label class="hint" for="speed">速度</label>
+        <select class="ctl" id="speed">
+          <option value="0.75">0.75×</option>
+          <option value="1" selected>1×</option>
+          <option value="1.25">1.25×</option>
+          <option value="1.5">1.5×</option>
+        </select>
+        <button class="ctl" id="voice" type="button" aria-pressed="false">朗读字幕</button>
+        <button class="ctl" id="fs" type="button">全屏</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapters" aria-labelledby="chap-h">
+    <h2 id="chap-h">章节</h2>
+    <ol id="chapters"></ol>
+  </section>
+
+  <p class="note">画面里的 token 切法、编号、概率和坐标都是示意，用来讲清原理，不是真实模型的内部数据。「朗读字幕」使用你设备自带的中文语音，音色因设备而异。快捷键：空格 播放/暂停，← → 快退/快进 5 秒。</p>
+</main>
+
+<script>
+(() => {
+'use strict';
+
+/* ================================================================
+   Stage constants
+   ================================================================ */
+const W = 1280, H = 720;
+const EXPORT = /[?&]export=1/.test(location.search);
+if (EXPORT) document.documentElement.classList.add('export');
+
+const C = {
+  paper: '#F2F5EF', grid: '#D6E1D6', gridBold: '#BCCDBE',
+  ink: '#233E91', inkSoft: '#5C70B3', red: '#C4372C', pencil: '#58605C', text: '#1D2420', white: '#FFFFFF',
+  hl: ['rgba(255,210,40,0.55)', 'rgba(255,110,150,0.36)', 'rgba(60,175,230,0.36)',
+       'rgba(100,200,100,0.40)', 'rgba(255,145,50,0.42)', 'rgba(150,120,240,0.34)'],
+  hlRGB: [[255,214,51], [255,128,165], [86,186,232], [118,204,112], [255,160,72], [160,134,240]],
+};
+const F = {
+  display: '"Noto Serif SC", "Songti SC", "STSong", "Noto Sans SC", serif',
+  body: '"Noto Sans SC", "PingFang SC", "Microsoft YaHei", "WenQuanYi Zen Hei", sans-serif',
+  hand: '"Long Cang", "Noto Sans SC", "Kaiti SC", "KaiTi", cursive',
+  mono: '"JetBrains Mono", "SFMono-Regular", Menlo, "Noto Sans SC", monospace',
+};
+
+/* ================================================================
+   Drawing kit (immediate mode, everything is a function of time)
+   ================================================================ */
+let ctx = null;
+let textHook = null;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const sum = a => a.reduce((s, v) => s + v, 0);
+const E = {
+  lin: t => t,
+  out: t => 1 - Math.pow(1 - t, 3),
+  inOut: t => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2),
+  back: t => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); },
+};
+const P = (t, start, dur = 0.6, fn = E.out) => fn(clamp((t - start) / dur));
+const rnd = i => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+const mix = (a, b, k) => `rgb(${a.map((v, i) => Math.round(lerp(v, b[i], k))).join(',')})`;
+
+function setFont(kind, size, wt) { ctx.font = `${wt || (kind === 'display' ? 700 : 400)} ${size}px ${F[kind]}`; }
+function measure(s, o = {}) { setFont(o.f || 'body', o.size || 28, o.wt); return ctx.measureText(s).width; }
+function text(s, x, y, o = {}) {
+  if (textHook) textHook(o.f || 'body', s);
+  const a = o.alpha ?? 1;
+  if (a <= 0.001) return;
+  ctx.save();
+  setFont(o.f || 'body', o.size || 28, o.wt);
+  ctx.fillStyle = o.color || C.text;
+  ctx.textAlign = o.align || 'left';
+  ctx.textBaseline = 'middle';
+  ctx.globalAlpha *= a;
+  ctx.fillText(s, x, y);
+  ctx.restore();
+}
+/* Handwriting reveal: characters appear in order; layout never shifts. */
+function write(s, x, y, k, o = {}) {
+  if (textHook) textHook(o.f || 'body', s);
+  if (k <= 0) return;
+  const chars = Array.from(s);
+  const n = chars.length * clamp(k);
+  const whole = Math.floor(n);
+  const full = measure(s, o);
+  const x0 = o.align === 'center' ? x - full / 2 : o.align === 'right' ? x - full : x;
+  const shown = chars.slice(0, whole).join('');
+  if (shown) text(shown, x0, y, { ...o, align: 'left' });
+  if (whole < chars.length && n - whole > 0) {
+    text(chars[whole], x0 + measure(shown, o), y, { ...o, align: 'left', alpha: (o.alpha ?? 1) * (n - whole) });
+  }
+}
+function rr(x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function box(x, y, w, h, o = {}) {
+  const a = o.alpha ?? 1;
+  if (a <= 0.001) return;
+  ctx.save();
+  ctx.globalAlpha *= a;
+  rr(x, y, w, h, o.r ?? 10);
+  if (o.fill) { ctx.fillStyle = o.fill; ctx.fill(); }
+  if (o.stroke) { ctx.strokeStyle = o.stroke; ctx.lineWidth = o.lw || 2; if (o.dash) ctx.setLineDash(o.dash); ctx.stroke(); }
+  ctx.restore();
+}
+function chip(label, cx, cy, o = {}) {
+  const size = o.size || 28, pad = o.pad ?? 16, h = o.h || Math.round(size * 1.75);
+  const w = o.width || measure(label, { f: o.f, size, wt: o.wt }) + pad * 2;
+  box(cx - w / 2, cy - h / 2, w, h, { fill: o.fill, stroke: o.stroke, lw: o.lw, r: o.r ?? 10, alpha: o.alpha, dash: o.dash });
+  text(label, cx, cy + 1, { f: o.f, size, wt: o.wt, color: o.color || C.text, align: 'center', alpha: o.alpha });
+  return w;
+}
+/* Highlighter swipe, multiplied onto the paper like a real marker. */
+function marker(x, y, w, h, k, color, seed = 1) {
+  k = clamp(k);
+  if (k <= 0) return;
+  ctx.save();
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.fillStyle = color;
+  const ww = w * k, j = h * 0.14;
+  ctx.beginPath();
+  ctx.moveTo(x, y + rnd(seed) * j);
+  ctx.lineTo(x + ww, y + rnd(seed + 1) * j);
+  ctx.lineTo(x + ww - 3, y + h - rnd(seed + 2) * j);
+  ctx.lineTo(x + 2, y + h - rnd(seed + 3) * j);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+function linePts(x0, y0, x1, y1, seed = 1, amp = 1.2, n = 14) {
+  const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L, pts = [];
+  for (let i = 0; i <= n; i++) {
+    const f = i / n, off = Math.sin(f * Math.PI * 2 + seed) * amp * Math.sin(f * Math.PI);
+    pts.push([x0 + dx * f + nx * off, y0 + dy * f + ny * off]);
+  }
+  return pts;
+}
+function quadPts(x0, y0, cx, cy, x1, y1, n = 44) {
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const f = i / n, u = 1 - f;
+    pts.push([u * u * x0 + 2 * u * f * cx + f * f * x1, u * u * y0 + 2 * u * f * cy + f * f * y1]);
+  }
+  return pts;
+}
+function arcPts(cx, cy, r, a0, a1, n = 48) {
+  const pts = [];
+  for (let i = 0; i <= n; i++) { const a = lerp(a0, a1, i / n); pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); }
+  return pts;
+}
+/* A hand-drawn loop: slightly more than one turn, slowly widening. */
+function ellipsePts(cx, cy, rx, ry, seed = 1) {
+  const pts = [], n = 64, start = -2.5;
+  for (let i = 0; i <= n; i++) {
+    const f = i / n, a = start + f * Math.PI * 2 * 1.1;
+    const wob = 1 + 0.035 * Math.sin(f * 9 + seed) + 0.06 * f;
+    pts.push([cx + Math.cos(a) * rx * wob, cy + Math.sin(a) * ry * wob]);
+  }
+  return pts;
+}
+function strokePts(pts, k = 1, o = {}) {
+  k = clamp(k);
+  if (k <= 0 || pts.length < 2) return null;
+  ctx.save();
+  ctx.strokeStyle = o.color || C.ink;
+  ctx.lineWidth = o.width || 3;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.globalAlpha *= o.alpha ?? 1;
+  if (o.dash) ctx.setLineDash(o.dash);
+  const seg = [];
+  let L = 0;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const d = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]);
+    seg.push(d); L += d;
+  }
+  let rem = L * k, tip = pts[0], ang = 0;
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 0; i < seg.length; i++) {
+    const a = pts[i], b = pts[i + 1];
+    if (seg[i] > 0.01) ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+    if (rem >= seg[i]) { ctx.lineTo(b[0], b[1]); tip = b; rem -= seg[i]; }
+    else { const f = seg[i] ? rem / seg[i] : 0; tip = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]; ctx.lineTo(tip[0], tip[1]); break; }
+  }
+  ctx.stroke();
+  ctx.restore();
+  return { x: tip[0], y: tip[1], ang };
+}
+function head(x, y, ang, o = {}) {
+  const s = o.size || 13;
+  ctx.save();
+  ctx.strokeStyle = o.color || C.ink;
+  ctx.lineWidth = o.width || 3;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.globalAlpha *= o.alpha ?? 1;
+  ctx.beginPath();
+  ctx.moveTo(x - s * Math.cos(ang - 0.45), y - s * Math.sin(ang - 0.45));
+  ctx.lineTo(x, y);
+  ctx.lineTo(x - s * Math.cos(ang + 0.45), y - s * Math.sin(ang + 0.45));
+  ctx.stroke();
+  ctx.restore();
+}
+function arrowPts(pts, k, o = {}) { const tip = strokePts(pts, k, o); if (tip && k > 0.04) head(tip.x, tip.y, tip.ang, o); }
+function arrow(x0, y0, x1, y1, k, o = {}) { arrowPts(linePts(x0, y0, x1, y1, o.seed || 1, o.amp ?? 1.2), k, o); }
+function check(x, y, s, k, o = {}) {
+  strokePts([[x - s * 0.5, y], [x - s * 0.12, y + s * 0.4], [x + s * 0.55, y - s * 0.45]], k, { color: o.color || C.ink, width: o.width || 4, alpha: o.alpha });
+}
+function cross(x, y, s, k, o = {}) {
+  const c = o.color || C.red, w = o.width || 5;
+  strokePts([[x - s / 2, y - s / 2], [x + s / 2, y + s / 2]], clamp(k * 2), { color: c, width: w });
+  strokePts([[x + s / 2, y - s / 2], [x - s / 2, y + s / 2]], clamp(k * 2 - 1), { color: c, width: w });
+}
+function dot(x, y, r, color, a = 1) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); ctx.restore();
+}
+function bubble(label, cx, cy, w, h, a, side, o = {}) {
+  if (a <= 0) return;
+  const x = cx - w / 2, y = cy - h / 2, fill = o.fill || C.white, stroke = o.stroke || C.ink;
+  ctx.save();
+  ctx.globalAlpha *= a;
+  rr(x, y, w, h, 16);
+  ctx.fillStyle = fill; ctx.fill();
+  ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke();
+  const tx = side === 'left' ? x + 34 : x + w - 34, dir = side === 'left' ? -1 : 1;
+  ctx.beginPath();
+  ctx.moveTo(tx - 10, y + h - 1.5); ctx.lineTo(tx + dir * 16, y + h + 16); ctx.lineTo(tx + 10, y + h - 1.5); ctx.closePath();
+  ctx.fillStyle = fill; ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(tx - 10, y + h); ctx.lineTo(tx + dir * 16, y + h + 16); ctx.lineTo(tx + 10, y + h);
+  ctx.stroke();
+  ctx.restore();
+  text(label, cx, cy + 1, { size: o.size || 26, color: o.color || C.text, align: 'center', alpha: a, wt: o.wt });
+}
+function wrapText(s, maxW, o) {
+  const out = [];
+  let cur = '';
+  for (const ch of Array.from(s)) {
+    const next = cur + ch;
+    if (measure(next, o) > maxW && cur) {
+      if ('，。、；：？！）」'.includes(ch)) { cur = next; continue; }
+      out.push(cur); cur = ch;
+    } else cur = next;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+function vcell(x, y, w, h, v, a) {
+  const col = v < 0 ? `rgba(35,62,145,${(0.15 + Math.abs(v) * 0.75).toFixed(3)})` : `rgba(214,96,44,${(0.15 + v * 0.75).toFixed(3)})`;
+  box(x, y, w, h, { fill: col, r: 3, alpha: a });
+}
+
+/* ================================================================
+   Scenes. Each draw(t, c) gets local time t and the start times c[]
+   of its captions, so the animation stays in step with the words.
+   ================================================================ */
+const SCENES = [];
+
+/* ---------- 0 · 开场 ---------- */
+SCENES.push({
+  chapter: '开场',
+  caps: [
+    '嗨，我是 Claude。',
+    '你问我一个问题，几秒钟后我给出回答。中间到底发生了什么？',
+    '这次我把整个过程画在草稿纸上，一步一步讲给你听。',
+  ],
+  draw(t, c) {
+    const title = '一个回答的诞生';
+    const tw = measure(title, { f: 'display', size: 96 });
+    marker(640 - tw / 2 - 16, 214, tw + 32, 46, P(t, 1.5, 0.7, E.inOut), C.hl[0], 3);
+    write(title, 640, 192, P(t, 0.3, 1.2, E.lin), { f: 'display', size: 96, color: C.ink, align: 'center' });
+    text('Claude 讲给大学生的思考过程图解', 640, 280, { size: 28, color: C.pencil, align: 'center', alpha: P(t, 1.9, 0.6) });
+
+    const q = '期末考试前一晚，最重要的是？', ans = '睡好觉！';
+    const o = { size: 26 };
+    const wq = measure(q, o) + 48, wa = measure(ans, o) + 48, wb = 190, gap = 100, y = 478;
+    const total = wq + wb + wa + gap * 2;
+    const x0 = 640 - total / 2;
+    const xq = x0 + wq / 2, xb = x0 + wq + gap + wb / 2, xa = x0 + wq + gap + wb + gap + wa / 2;
+    const pq = P(t, c[1] + 0.2, 0.5), pb = P(t, c[1] + 1.5, 0.5), pa = P(t, c[1] + 2.9, 0.5);
+    text('你', xq - wq / 2 + 4, y - 52, { size: 20, color: C.pencil, alpha: pq });
+    bubble(q, xq, y, wq, 62, pq, 'left');
+    arrow(xq + wq / 2 + 14, y, xb - wb / 2 - 14, y, P(t, c[1] + 1.0, 0.5), { color: C.pencil, width: 2.5 });
+    box(xb - wb / 2, y - 62, wb, 124, { stroke: C.pencil, lw: 2, dash: [8, 7], r: 14, alpha: pb, fill: 'rgba(255,255,255,0.5)' });
+    text('？', xb, y - 6, { f: 'display', size: 72, color: C.red, align: 'center', alpha: pb });
+    text('我的内部', xb, y + 86, { size: 20, color: C.pencil, align: 'center', alpha: pb });
+    arrow(xb + wb / 2 + 14, y, xa - wa / 2 - 14, y, P(t, c[1] + 2.4, 0.5), { color: C.pencil, width: 2.5 });
+    text('我', xa + wa / 2 - 22, y - 52, { size: 20, color: C.pencil, alpha: pa });
+    bubble(ans, xa, y, wa, 62, pa, 'right', { fill: 'rgba(35,62,145,0.08)' });
+
+    strokePts(ellipsePts(xb, y + 4, wb / 2 + 34, 94, 5), P(t, c[2] + 0.2, 0.9, E.inOut), { color: C.red, width: 3 });
+    text('这期视频，就是要打开它', xb, y - 128, { f: 'hand', size: 34, color: C.red, align: 'center', alpha: P(t, c[2] + 1.0, 0.5) });
+  },
+});
+
+/* ---------- 1 · 切词 ---------- */
+SCENES.push({
+  chapter: '切成 token', num: 1, title: '把句子切成 token',
+  caps: [
+    '第一步：我读到的不是一个个「字」，而是一串 token。',
+    'token 是文字的小碎片：可能是一个字、一个词，也可能是半个英文单词。',
+    '每个 token 都对应一个编号。所以你的问题，先变成了一串数字。',
+  ],
+  draw(t, c) {
+    const toks = ['期末', '考试', '前', '一晚', '，', '最', '重要', '的是'];
+    const ids = [48213, 9072, 1530, 30418, 236, 2876, 6012, 15704];
+    const o = { size: 54 }, y = 222, pad = 16, gap = 18;
+    const ws = toks.map(s => measure(s, o));
+    const full = sum(ws), cw = ws.map(w => w + pad * 2), st = sum(cw) + gap * (toks.length - 1);
+    const joined = [], split = [];
+    let xj = 640 - full / 2, xs = 640 - st / 2;
+    toks.forEach((s, i) => { joined.push(xj + ws[i] / 2); xj += ws[i]; split.push(xs + cw[i] / 2); xs += cw[i] + gap; });
+
+    const kw = P(t, 0.3, 1.2, E.lin);
+    const cutAt = c[0] + 1.6, ks = P(t, c[0] + 2.4, 0.9, E.inOut);
+    if (kw < 1) write(toks.join(''), 640, y, kw, { ...o, align: 'center' });
+    else {
+      toks.forEach((s, i) => {
+        const x = lerp(joined[i], split[i], ks), w = lerp(ws[i], cw[i], ks);
+        if (ks > 0) box(x - w / 2, y - 46, w, 92, { fill: C.hl[i % 6], alpha: ks, r: 12 });
+        text(s, x, y + 2, { ...o, align: 'center' });
+      });
+    }
+    if (t > cutAt && ks < 1) {
+      for (let i = 1; i < toks.length; i++) {
+        const bx = lerp(joined[i] - ws[i] / 2, split[i] - cw[i] / 2 - gap / 2, ks);
+        strokePts([[bx, y - 50], [bx, y + 50]], P(t, cutAt + i * 0.07, 0.3), { color: C.red, width: 2.5, dash: [6, 6], alpha: 1 - ks });
+      }
+    }
+
+    // English example
+    const ke = P(t, c[1] + 0.5, 0.5) * (1 - P(t, c[2], 0.4));
+    if (ke > 0) {
+      text('英文也一样会被切开：', 640, 372, { size: 22, color: C.pencil, align: 'center', alpha: ke });
+      const en = ['un', 'believ', 'able'], eo = { f: 'mono', size: 40 };
+      const ew = en.map(s => measure(s, eo)), ecw = ew.map(w => w + 28), est = sum(ecw) + 16 * 2;
+      const kse = P(t, c[1] + 2.0, 0.8, E.inOut);
+      let ej = 640 - sum(ew) / 2, es = 640 - est / 2;
+      en.forEach((s, i) => {
+        const x = lerp(ej + ew[i] / 2, es + ecw[i] / 2, kse), w = lerp(ew[i], ecw[i], kse);
+        if (kse > 0) box(x - w / 2, 434 - 32, w, 64, { fill: C.hl[(i + 2) % 6], alpha: ke * kse, r: 10 });
+        text(s, x, 436, { ...eo, align: 'center', alpha: ke });
+        ej += ew[i]; es += ecw[i] + 16;
+      });
+    }
+    text('* 切法和编号都只是示意', 1210, 540, { f: 'hand', size: 28, color: C.red, align: 'right', alpha: P(t, c[1] + 2.8, 0.5) });
+
+    // ids
+    toks.forEach((s, i) => {
+      const k = P(t, c[2] + 0.2 + i * 0.12, 0.35);
+      arrow(split[i], y + 54, split[i], y + 92, k, { color: C.pencil, width: 2, size: 8 });
+      text(String(ids[i]), split[i], y + 114, { f: 'mono', size: 22, color: C.ink, align: 'center', alpha: k });
+    });
+    text('模型真正收到的：', 640, 406, { size: 22, color: C.pencil, align: 'center', alpha: P(t, c[2] + 1.6, 0.4) });
+    write('[' + ids.join(', ') + ']', 640, 452, P(t, c[2] + 1.9, 1.3, E.lin), { f: 'mono', size: 30, color: C.ink, align: 'center', wt: 600 });
+  },
+});
+
+/* ---------- 2 · 向量 ---------- */
+SCENES.push({
+  chapter: '变成向量', num: 2, title: '编号变成向量',
+  caps: [
+    '第二步：每个编号会被换成一长串数字，叫做「向量」。',
+    '你可以把向量想成「意义地图」上的坐标：意思相近的词，位置也挨得近。',
+    '真实的地图有几千个维度，人脑想象不出来，这里把它压扁成二维给你看。',
+  ],
+  hold: [1.0, 1.5, 0],
+  draw(t, c) {
+    const rows = ['考试', '复习', '一晚'];
+    text('每个 token → 一串数字', 70, 160, { size: 22, color: C.pencil, alpha: P(t, c[0] + 0.2, 0.5) });
+    rows.forEach((tok, r) => {
+      const y = 212 + r * 90, a = P(t, c[0] + 0.5 + r * 0.5, 0.5);
+      if (a <= 0) return;
+      chip(tok, 108, y, { size: 26, fill: C.hl[r], alpha: a });
+      arrow(152, y, 186, y, P(t, c[0] + 0.7 + r * 0.5, 0.3), { width: 2.5, size: 9, color: C.pencil });
+      const vals = [];
+      for (let j = 0; j < 8; j++) {
+        const v = rnd(r * 17 + j * 3.1) * 2 - 1;
+        vals.push(v);
+        vcell(198 + j * 25, y - 17, 22, 34, v, a * P(t, c[0] + 0.9 + r * 0.5 + j * 0.05, 0.25));
+      }
+      text('…', 400, y, { size: 24, color: C.pencil, alpha: a });
+      const fmt = v => (v < 0 ? '−' : '') + Math.abs(v).toFixed(2);
+      text(`[${vals.slice(0, 3).map(fmt).join(', ')}, …]`, 198, y + 36, { f: 'mono', size: 15, color: C.pencil, alpha: a * P(t, c[0] + 1.3 + r * 0.5, 0.4) });
+    });
+
+    // meaning map
+    const km = P(t, c[1] + 0.1, 0.6);
+    if (km > 0) {
+      arrowPts(linePts(500, 566, 1200, 566, 2, 0.6), km, { color: C.pencil, width: 1.6, size: 10, alpha: 0.7 });
+      arrowPts(linePts(500, 566, 500, 150, 3, 0.6), km, { color: C.pencil, width: 1.6, size: 10, alpha: 0.7 });
+      text('意义地图（示意）', 524, 168, { f: 'hand', size: 30, color: C.inkSoft, alpha: km });
+    }
+    const clusters = [
+      { name: '学习相关', c: [650, 330], r: [118, 100], lab: [650, 450], col: 0,
+        pts: [['考试', 600, 292], ['复习', 690, 318], ['期末', 580, 384], ['作业', 722, 250], ['图书馆', 690, 410]] },
+      { name: '睡眠相关', c: [960, 425], r: [110, 86], lab: [960, 534], col: 2,
+        pts: [['睡觉', 945, 410], ['熬夜', 895, 470], ['休息', 1025, 462], ['一晚', 1000, 372]] },
+      { name: '吃的', c: [985, 240], r: [120, 64], lab: [1128, 190], col: 4,
+        pts: [['奶茶', 960, 222], ['火锅', 1070, 250], ['宵夜', 895, 278]] },
+    ];
+    const ink = new Set(rows);
+    clusters.forEach((cl, ci) => {
+      const t0 = c[1] + 0.6 + ci * 0.7;
+      const ka = P(t, t0, 0.6);
+      if (ka <= 0) return;
+      ctx.save();
+      ctx.globalAlpha *= ka;
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.beginPath();
+      ctx.ellipse(cl.c[0], cl.c[1], cl.r[0], cl.r[1], 0, 0, Math.PI * 2);
+      ctx.fillStyle = C.hl[cl.col];
+      ctx.fill();
+      ctx.restore();
+      text(cl.name, cl.lab[0], cl.lab[1], { f: 'hand', size: 28, color: C.pencil, align: 'center', alpha: ka });
+      cl.pts.forEach(([lab, x, y], pi) => {
+        const kp = P(t, t0 + 0.1 + pi * 0.12, 0.4, E.back);
+        if (kp <= 0) return;
+        const on = ink.has(lab);
+        dot(x, y, (on ? 7 : 5.5) * kp, on ? C.ink : C.pencil);
+        text(lab, x, y - 20, { size: 22, color: on ? C.ink : C.text, wt: on ? 700 : 400, align: 'center', alpha: clamp(kp) });
+      });
+    });
+    const kd = P(t, c[1] + 3.4, 0.6, E.inOut);
+    if (kd > 0) {
+      strokePts(linePts(600, 292, 690, 318, 1, 0.5), kd, { color: C.ink, width: 2.5 });
+      text('近', 632, 338, { f: 'hand', size: 30, color: C.ink, alpha: kd });
+      strokePts(linePts(600, 292, 1070, 250, 4, 1.5), kd, { color: C.red, width: 2.5, dash: [8, 7] });
+      text('远', 792, 304, { f: 'hand', size: 32, color: C.red, alpha: kd });
+    }
+
+    // squash: thousands of dims -> 2
+    const kq = P(t, c[2] + 0.4, 0.6);
+    if (kq > 0) {
+      for (let i = 5; i >= 0; i--) box(86 + i * 7, 492 - i * 7, 64, 64, { fill: 'rgba(255,255,255,0.95)', stroke: C.inkSoft, lw: 1.5, r: 6, alpha: kq });
+      text('几千维', 140, 578, { size: 22, color: C.pencil, align: 'center', alpha: kq });
+      arrow(214, 512, 292, 512, P(t, c[2] + 0.9, 0.4), { color: C.red, width: 3 });
+      const k2 = P(t, c[2] + 1.3, 0.5);
+      box(312, 482, 64, 64, { fill: 'rgba(255,255,255,0.95)', stroke: C.ink, lw: 2, r: 6, alpha: k2 });
+      strokePts([[322, 536], [366, 536]], k2, { color: C.pencil, width: 1.5 });
+      strokePts([[322, 536], [322, 492]], k2, { color: C.pencil, width: 1.5 });
+      dot(346, 510, 4, C.red, k2);
+      text('2 维', 344, 578, { size: 22, color: C.pencil, align: 'center', alpha: k2 });
+    }
+  },
+});
+
+/* ---------- 3 · 注意力 ---------- */
+SCENES.push({
+  chapter: '注意力', num: 3, title: '注意力：回头看上下文',
+  caps: [
+    '第三步：注意力。读到每个 token 时，我都会回头看看前面的内容。',
+    '比如读到「她」的时候，得先弄清楚：「她」到底是谁？',
+    '连线越粗，关注越多。这里「她」最关注的是「小红」。',
+    '看完再融合，「她」就带上了上下文的意思：借到笔记、下周要考试的小红。',
+  ],
+  hold: [0.6, 0.8, 1.2, 0.6],
+  draw(t, c) {
+    const toks = ['小明', '把', '笔记', '借给了', '小红', '，', '因为', '她', '下周', '要', '考试', '。'];
+    const wts = [0.19, 0.02, 0.05, 0.06, 0.52, 0.01, 0.10];
+    const o = { size: 34 }, y = 470, gap = 10, SHE = 7, RED = 4;
+    const ws = toks.map(s => measure(s, o) + 26);
+    const xs = [];
+    let x = 640 - (sum(ws) + gap * (toks.length - 1)) / 2;
+    ws.forEach(w => { xs.push(x + w / 2); x += w + gap; });
+    const top = y - 32;
+    const arc = (i, j) => quadPts(xs[i], top, (xs[i] + xs[j]) / 2, top - 34 - Math.abs(xs[i] - xs[j]) * 0.44, xs[j], top);
+
+    // reading sweep: each token glances back at everything before it
+    const kRead = P(t, c[0] + 1.2, Math.max(1, c[1] - c[0] - 1.6), E.lin);
+    const m = Math.min(SHE, Math.floor(kRead * (SHE + 0.999)));
+    const thin = 1 - P(t, c[2], 0.5);
+    if (t > c[0] + 1.2 && thin > 0) {
+      for (let j = 0; j < m; j++) strokePts(arc(m, j), 1, { color: C.pencil, width: 1.6, alpha: 0.42 * thin });
+      ctx.save();
+      ctx.globalAlpha *= thin;
+      ctx.beginPath();
+      ctx.moveTo(xs[m], y + 40); ctx.lineTo(xs[m] - 9, y + 54); ctx.lineTo(xs[m] + 9, y + 54); ctx.closePath();
+      ctx.fillStyle = C.ink; ctx.fill();
+      ctx.restore();
+    }
+
+    // weighted attention from 她
+    wts.forEach((w, j) => {
+      const k = P(t, c[2] + 0.3 + (SHE - j) * 0.12, 0.7, E.inOut);
+      strokePts(arc(SHE, j), k, { color: j === RED ? C.red : C.ink, width: 1 + w * 22, alpha: 0.28 + w * 1.3 });
+    });
+    [[RED, '52%'], [0, '19%']].forEach(([j, lab], n) => {
+      const pk = arc(SHE, j)[22];
+      text(lab, pk[0], pk[1] - 14 - (1 + wts[j] * 22) / 2, { f: 'mono', size: 21, wt: 600, color: j === RED ? C.red : C.ink, align: 'center', alpha: P(t, c[2] + 1.4 + n * 0.25, 0.4) });
+    });
+
+    // chips
+    toks.forEach((s, i) => {
+      const a = P(t, 0.4 + i * 0.06, 0.4);
+      box(xs[i] - ws[i] / 2, y - 29, ws[i], 58, { fill: 'rgba(255,255,255,0.94)', stroke: C.gridBold, lw: 1.5, r: 10, alpha: a });
+      if (i === RED) box(xs[i] - ws[i] / 2, y - 29, ws[i], 58, { fill: C.hl[1], r: 10, alpha: P(t, c[2] + 1.0, 0.5) });
+      if (i === SHE) box(xs[i] - ws[i] / 2, y - 29, ws[i], 58, { fill: C.hl[1], r: 10, alpha: P(t, c[3] + 1.4, 0.8) });
+      text(s, xs[i], y + 1, { ...o, align: 'center', alpha: a, color: i === SHE && t > c[1] ? C.red : C.text, wt: i === SHE && t > c[1] ? 700 : 400 });
+    });
+
+    strokePts(ellipsePts(xs[SHE], y + 2, 42, 40, 7), P(t, c[1] + 0.3, 0.6, E.inOut), { color: C.red, width: 3 });
+    const swap = P(t, c[3] + 1.4, 0.4);
+    text('她 = ？', xs[SHE], 552, { f: 'hand', size: 36, color: C.red, align: 'center', alpha: P(t, c[1] + 0.9, 0.4) * (1 - swap) });
+    text('她 = 小红（借到笔记、下周要考试）', xs[SHE], 552, { f: 'hand', size: 32, color: C.red, align: 'center', alpha: swap });
+
+    const f = (t - (c[3] + 0.2)) / 1.1;
+    if (f >= 0 && f < 2) {
+      const pts = arc(RED, SHE), p = pts[Math.min(pts.length - 1, Math.floor((f % 1) * pts.length))];
+      dot(p[0], p[1], 8, C.red);
+    }
+    const kn = P(t, c[2] + 2.6, 0.5);
+    text('示意：真实模型里有很多个「注意力头」，', 1216, 132, { size: 20, color: C.pencil, align: 'right', alpha: kn });
+    text('各自盯着不同的关系，同时在看。', 1216, 160, { size: 20, color: C.pencil, align: 'right', alpha: kn });
+  },
+});
+
+/* ---------- 4 · 层层加工 ---------- */
+SCENES.push({
+  chapter: '层层加工', num: 4, title: '一层一层地加工',
+  caps: [
+    '第四步：这种「看一看、算一算」不只做一次，而是一层一层，重复很多遍。',
+    '大致来说：靠前的层更多处理字词和语法，靠后的层更多处理意思和意图。',
+    '每一层里都是大量的乘法和加法，用到的参数数以十亿计，全是训练出来的。',
+  ],
+  hold: [1.2, 0.6, 0.6],
+  draw(t, c) {
+    const cx = 500, w = 470, dx = 46, dy = 24, th = 16;
+    const layers = [['第 1 层', 540], ['第 2 层', 475], ['第 3 层', 410], ['第 N−2 层', 290], ['第 N−1 层', 225], ['第 N 层', 160]];
+    const fronts = ['#DCE6F7', '#DCE6F7', '#DCE6F7', '#E8DDF5', '#E8DDF5', '#E8DDF5'];
+    layers.forEach(([lab, cy], i) => {
+      const a = P(t, 0.4 + i * 0.16, 0.5);
+      if (a <= 0) return;
+      const yy = cy + (1 - a) * 18;
+      ctx.save();
+      ctx.globalAlpha *= a;
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = C.ink;
+      ctx.fillStyle = fronts[i];
+      ctx.beginPath(); ctx.rect(cx - w / 2, yy, w, th); ctx.fill(); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx + w / 2, yy); ctx.lineTo(cx + w / 2 + dx, yy - dy); ctx.lineTo(cx + w / 2 + dx, yy - dy + th); ctx.lineTo(cx + w / 2, yy + th); ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = 'rgba(29,36,32,0.08)'; ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx - w / 2, yy); ctx.lineTo(cx + w / 2, yy); ctx.lineTo(cx + w / 2 + dx, yy - dy); ctx.lineTo(cx - w / 2 + dx, yy - dy); ctx.closePath();
+      ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx + dx / 2 + 6, yy - dy + 3); ctx.lineTo(cx + dx / 2 - 6, yy - 3);
+      ctx.setLineDash([3, 4]); ctx.strokeStyle = C.pencil; ctx.stroke();
+      ctx.restore();
+      text('注意力', cx - w / 4 + dx / 2, yy - dy / 2, { size: 16, color: C.pencil, align: 'center', alpha: a });
+      text('前馈网络', cx + w / 4 + dx / 2, yy - dy / 2, { size: 16, color: C.pencil, align: 'center', alpha: a });
+      text(lab, cx - w / 2 - 18, yy + th / 2 - 4, { size: 20, color: C.pencil, align: 'right', alpha: a });
+    });
+    text('⋮', cx + dx / 2, 350, { size: 40, color: C.pencil, align: 'center', alpha: P(t, 1.0, 0.5) });
+    text('（很多层）', cx - w / 2 - 18, 350, { size: 20, color: C.pencil, align: 'right', alpha: P(t, 1.0, 0.5) });
+
+    // a row of token vectors rising through the stack, blending as it goes
+    const kk = P(t, c[0] + 1.0, c[1] + 3.0 - (c[0] + 1.0), E.inOut);
+    const ka = P(t, c[0] + 0.6, 0.5);
+    if (ka > 0) {
+      const ry = lerp(588, 112, kk);
+      for (let i = 0; i < 8; i++) {
+        const base = C.hlRGB[i % 6], blend = mix(base, [92, 112, 179], kk * 0.65);
+        box(cx + dx / 2 - 126 + i * 32, ry - 12, 26, 24, { fill: blend, stroke: 'rgba(29,36,32,0.25)', lw: 1, r: 4, alpha: ka });
+      }
+    }
+
+    const bx = 832;
+    const k1 = P(t, c[1] + 0.3, 0.6, E.inOut), k2 = P(t, c[1] + 2.2, 0.6, E.inOut);
+    strokePts([[bx, 452], [bx + 12, 452], [bx + 12, 558], [bx, 558]], k1, { color: C.ink, width: 2.5 });
+    text('字词 · 语法', bx + 32, 505, { size: 28, color: C.ink, alpha: k1 });
+    strokePts([[bx, 134], [bx + 12, 134], [bx + 12, 243], [bx, 243]], k2, { color: C.ink, width: 2.5 });
+    text('意思 · 意图 · 推理', bx + 32, 176, { size: 28, color: C.ink, alpha: k2 });
+    text('（大致趋势，研究仍在进行）', bx + 32, 214, { f: 'hand', size: 26, color: C.pencil, alpha: P(t, c[1] + 3.0, 0.5) });
+
+    write('0.31×1.7 + (−0.8)×0.42 + …', bx + 4, 330, P(t, c[2] + 0.3, 1.4, E.lin), { f: 'mono', size: 21, color: C.pencil });
+    text('参数：数以十亿计', bx + 4, 376, { f: 'hand', size: 34, color: C.red, alpha: P(t, c[2] + 1.9, 0.5) });
+  },
+});
+
+/* ---------- 5 · 预测下一个 token ---------- */
+SCENES.push({
+  chapter: '预测下一个', num: 5, title: '预测下一个 token',
+  caps: [
+    '第五步：我会给「下一个 token」的每种可能，都打一个概率。',
+    '然后按概率挑一个，接到句子后面。',
+    '通常挑概率高的，但带一点随机性，所以同一个问题，每次回答会略有不同。',
+    '接着把新句子整个送回去，再预测下一个。就这样，一个 token 一个 token 往外写。',
+    '所以你看到我的回答，是一点一点「流」出来的。',
+  ],
+  hold: [0.8, 1.2, 0, 0, 0.6],
+  draw(t, c) {
+    const prompt = '期末考试前一晚，最重要的是';
+    const steps = [
+      { at: c[0] + 0.6, grow: 0.8, rows: [['睡', .32], ['复习', .24], ['保持', .13], ['把', .09], ['不要', .06]], pick: 0, pickAt: c[1] + 0.2, flyAt: c[1] + 1.0, flyDur: 0.7 },
+      { at: c[2] + 0.2, grow: 0.5, rows: [['好', .71], ['个', .12], ['足', .09], ['觉', .05], ['够', .02]], pick: 0, pickAt: c[2] + 1.2, flyAt: c[2] + 1.5, flyDur: 0.6 },
+      { at: c[2] + 2.7, grow: 0.5, rows: [['觉', .93], ['，', .02], ['足', .02], ['眠', .01], ['好', .01]], pick: 0, pickAt: c[2] + 3.6, flyAt: c[2] + 3.9, flyDur: 0.6 },
+    ];
+    const fast = ['，', '因为', '记忆', '会', '在', '睡眠', '中', '巩固', '。'];
+    const filler = ['的', '是', '也', '要', '了', '在', '和', '大脑'];
+    fast.forEach((tok, i) => {
+      const at = c[3] + 0.5 + i * 0.46;
+      const p0 = 0.42 + rnd(i + 3) * 0.4;
+      const others = filler.filter(f => f !== tok).slice(i % 3, i % 3 + 4);
+      let rest = 1 - p0;
+      const rows = [[tok, p0]];
+      others.forEach((f, j) => { const p = rest * (0.42 - j * 0.06); rows.push([f, p]); rest -= p; });
+      let pick = 0;
+      if (tok === '记忆') { rows.splice(0, 1, ['大脑', 0.41]); rows.splice(1, 1, ['记忆', 0.33]); pick = 1; }
+      steps.push({ at, grow: 0.18, rows, pick, pickAt: at + 0.2, flyAt: at + 0.24, flyDur: 0.2 });
+    });
+
+    const o = { size: 36 }, x0 = 110, yL = 168;
+    text(prompt, x0, yL, { ...o, color: C.pencil, alpha: P(t, 0.3, 0.5) });
+    let x = x0 + measure(prompt, o);
+    steps.forEach((st, i) => {
+      const tok = st.rows[st.pick][0], w = measure(tok, { ...o, wt: 700 });
+      st.tok = tok; st.dest = x + w / 2;
+      const land = st.flyAt + st.flyDur;
+      if (t >= land) {
+        marker(x - 1, yL + 6, w + 2, 16, P(t, land, 0.25), C.hl[0], i + 2);
+        text(tok, x, yL, { ...o, color: C.ink, wt: 700 });
+      }
+      x += w;
+    });
+    const endX = x;
+
+    text('下一个 token 的候选（概率为示意）', 350, 236, { size: 21, color: C.pencil, alpha: P(t, c[0] + 0.3, 0.5) });
+    let cur = null;
+    for (const st of steps) if (t >= st.at) cur = st;
+    if (cur) {
+      const g = P(t, cur.at, cur.grow);
+      const picked = t >= cur.pickAt, flown = t >= cur.flyAt;
+      cur.rows.forEach(([tok, p], r) => {
+        const ry = 280 + r * 56, chosen = r === cur.pick;
+        text(tok, 330, ry, { size: 30, align: 'right', color: picked && chosen ? C.red : C.text, wt: picked && chosen ? 700 : 400, alpha: picked && chosen && flown ? 0.25 : 1 });
+        const bw = Math.max(3, p * 640 * g);
+        box(350, ry - 17, bw, 34, { fill: picked && chosen ? C.ink : 'rgba(92,112,179,0.30)', r: 6 });
+        text(Math.round(p * 100) + '%', 350 + bw + 12, ry, { f: 'mono', size: 20, color: C.pencil, alpha: g });
+      });
+      if (picked) {
+        const tw = measure(cur.tok, { size: 30, wt: 700 });
+        strokePts(ellipsePts(330 - tw / 2, 282 + cur.pick * 56, tw / 2 + 26, 27, 3), P(t, cur.pickAt, 0.35, E.inOut), { color: C.red, width: 3 });
+      }
+      if (t >= cur.flyAt && t < cur.flyAt + cur.flyDur) {
+        const k = P(t, cur.flyAt, cur.flyDur, E.inOut);
+        const sx = 330 - measure(cur.tok, { size: 30, wt: 700 }) / 2, sy = 280 + cur.pick * 56;
+        text(cur.tok, lerp(sx, cur.dest, k), lerp(sy, yL, k) - Math.sin(k * Math.PI) * 36, { size: lerp(30, 36, k), wt: 700, color: C.red, align: 'center' });
+      }
+    }
+
+    const kl = P(t, c[3] + 0.1, 0.9, E.inOut);
+    arrowPts(quadPts(1168, 198, 1250, 270, 1080, 318), kl, { color: C.red, width: 3 });
+    text('整句送回去，', 1138, 380, { f: 'hand', size: 30, color: C.red, align: 'center', alpha: P(t, c[3] + 0.7, 0.4) });
+    text('再算一次', 1138, 416, { f: 'hand', size: 30, color: C.red, align: 'center', alpha: P(t, c[3] + 0.7, 0.4) });
+
+    const last = steps[steps.length - 1];
+    if (t > last.flyAt + last.flyDur && Math.floor(t * 2.2) % 2 === 0) box(endX + 6, yL - 20, 3, 40, { fill: C.ink, r: 1 });
+  },
+});
+
+/* ---------- 6 · 训练 ---------- */
+SCENES.push({
+  chapter: '训练', num: 6, title: '这些参数是怎么学来的',
+  caps: [
+    '这些参数从哪来？答案是：训练。',
+    '先是「预训练」：读海量的文字，反复做同一种题。遮住下一个词，猜猜看。',
+    '猜错了，就把参数往对的方向调一点点。这样的猜测，要做上万亿次。',
+    '之后还有「后训练」：通过人类反馈和一套写下来的原则，学着做一个有帮助、诚实、不伤害人的助手。',
+  ],
+  hold: [0.4, 1.4, 1.2, 1.4],
+  draw(t, c) {
+    const kL = P(t, c[0] + 0.4, 0.5);
+    box(56, 128, 584, 450, { stroke: C.gridBold, lw: 1.5, r: 16, dash: [6, 6], alpha: kL });
+    text('① 预训练', 82, 162, { f: 'display', size: 32, color: C.ink, alpha: kL });
+
+    const line = '床前明月光，疑是地上';
+    const lo = { size: 34 };
+    write(line, 86, 228, P(t, c[1] + 0.3, 1.0, E.lin), lo);
+    const bx = 86 + measure(line, lo) + 10;
+    const kb = P(t, c[1] + 1.4, 0.4);
+    box(bx, 200, 58, 56, { stroke: C.red, lw: 2, dash: [5, 5], r: 8, alpha: kb, fill: 'rgba(255,255,255,0.8)' });
+    const kg = P(t, c[1] + 2.6, 0.4), kx = P(t, c[1] + 3.6, 0.5), kr = P(t, c[2] + 0.2, 0.5);
+    text('雪', bx + 29, 230, { f: 'hand', size: 40, color: C.red, align: 'center', alpha: kg * (1 - kr) });
+    cross(bx + 29, 228, 40, kx * (1 - kr), { width: 4 });
+    text('霜', bx + 29, 229, { size: 36, wt: 700, color: C.ink, align: 'center', alpha: kr });
+    check(bx + 88, 230, 30, P(t, c[2] + 0.5, 0.4));
+    text('猜：雪？', bx + 76, 182, { f: 'hand', size: 26, color: C.red, alpha: kg * (1 - kr) });
+    text('（不是「雪」）', bx + 112, 230, { size: 20, color: C.pencil, alpha: P(t, c[2] + 0.8, 0.4) });
+
+    // knobs
+    const ks = P(t, c[2] + 0.9, 0.5);
+    text('调整参数（示意）', 86, 300, { size: 21, color: C.pencil, alpha: ks });
+    for (let i = 0; i < 4; i++) {
+      const y = 342 + i * 44;
+      strokePts([[96, y], [320, y]], ks, { color: C.gridBold, width: 4 });
+      const from = 130 + rnd(i * 5) * 160, to = 130 + rnd(i * 5 + 1) * 160;
+      const km = P(t, c[2] + 1.3 + i * 0.25, 1.2, E.inOut);
+      dot(lerp(from, to, km) + Math.sin(km * Math.PI * 3) * 6 * (1 - km), y, 9, C.ink, ks);
+    }
+    // loss curve
+    const kc = P(t, c[2] + 1.0, 0.5);
+    if (kc > 0) {
+      arrowPts([[372, 500], [372, 300]], kc, { color: C.pencil, width: 1.6, size: 9 });
+      arrowPts([[372, 500], [612, 500]], kc, { color: C.pencil, width: 1.6, size: 9 });
+      text('猜错的程度', 384, 300, { size: 19, color: C.pencil, alpha: kc });
+      text('练习次数 →', 612, 524, { size: 19, color: C.pencil, align: 'right', alpha: kc });
+      const pts = [];
+      for (let i = 0; i <= 60; i++) {
+        const f = i / 60;
+        pts.push([378 + f * 220, 486 - 160 * Math.exp(-f * 3.4) - 10 + (rnd(i) - 0.5) * 14 * (1 - f * 0.7)]);
+      }
+      strokePts(pts, P(t, c[2] + 1.4, 2.6, E.lin), { color: C.red, width: 2.5 });
+    }
+    text('要做上万亿次这样的猜测', 348, 556, { f: 'hand', size: 30, color: C.red, align: 'center', alpha: P(t, c[2] + 3.6, 0.5) });
+
+    // post-training
+    const kR = P(t, c[3] + 0.2, 0.5);
+    box(668, 128, 556, 450, { stroke: C.gridBold, lw: 1.5, r: 16, dash: [6, 6], alpha: kR });
+    text('② 后训练', 694, 162, { f: 'display', size: 32, color: C.ink, alpha: kR });
+    bubble('帮我写一封请假邮件', 946, 222, 280, 52, P(t, c[3] + 0.6, 0.4), 'left', { size: 22 });
+    const ka = P(t, c[3] + 1.2, 0.4);
+    chip('A：随手敷衍几句', 806, 312, { size: 21, width: 220, h: 58, fill: C.white, stroke: C.gridBold, alpha: ka });
+    chip('B：格式清楚、理由得体', 1056, 312, { size: 21, width: 252, h: 58, fill: C.white, stroke: C.ink, alpha: ka });
+    check(1204, 312, 24, P(t, c[3] + 2.0, 0.4), { color: C.red });
+    text('人类反馈：B 更好', 1056, 370, { f: 'hand', size: 28, color: C.red, align: 'center', alpha: P(t, c[3] + 2.1, 0.4) });
+    text('写下来的原则', 946, 418, { size: 21, color: C.pencil, align: 'center', alpha: P(t, c[3] + 2.8, 0.4) });
+    ['有帮助', '诚实', '不伤害人'].forEach((s, i) => {
+      chip(s, 806 + i * 140, 462, { size: 26, fill: C.hl[[3, 2, 1][i]], alpha: P(t, c[3] + 3.2 + i * 0.4, 0.4, E.back) });
+    });
+    const kz = P(t, c[3] + 4.8, 0.5);
+    chip('像一个靠谱的助手那样对话', 946, 532, { size: 22, fill: 'rgba(35,62,145,0.08)', stroke: C.ink, alpha: kz, color: C.ink });
+  },
+});
+
+/* ---------- 7 · 思考 = 草稿 ---------- */
+SCENES.push({
+  chapter: '打草稿', num: 7, title: '「思考」就是先打草稿',
+  caps: [
+    '那「思考」又是什么？来看一道小题。',
+    '如果直接脱口而出，很容易跳步出错。',
+    '因为我是一个 token 一个 token 写的，写下来的每一步，都会成为下一步的依据。',
+    '所以遇到难题，我会先在「草稿」里写出中间步骤，再给出最终回答。',
+    '这就是「扩展思考」：先想清楚，再回答。跟你考试时打草稿，是一个道理。',
+  ],
+  hold: [0.6, 1.2, 1.4, 1.2, 0.4],
+  draw(t, c) {
+    const q = '书包原价 120 元，打八折后再减 10 元，要付多少钱？';
+    const kq = P(t, c[0] + 0.6, 0.5);
+    const qw = measure(q, { size: 30 }) + 60;
+    box(640 - qw / 2, 136, qw, 64, { fill: C.white, stroke: C.ink, lw: 2, r: 12, alpha: kq });
+    text(q, 640, 169, { size: 30, color: C.text, align: 'center', alpha: kq });
+
+    const kc = P(t, c[1], 0.4);
+    text('直接回答', 300, 262, { size: 26, color: C.pencil, align: 'center', alpha: kc });
+    text('100 元？', 300, 350, { f: 'display', size: 64, color: C.text, align: 'center', alpha: P(t, c[1] + 0.4, 0.4) });
+    cross(300, 352, 120, P(t, c[1] + 1.4, 0.5));
+    text('跳步了，算错', 300, 442, { f: 'hand', size: 34, color: C.red, align: 'center', alpha: P(t, c[1] + 2.0, 0.4) });
+    strokePts([[560, 240], [560, 560]], kc, { color: C.gridBold, width: 2, dash: [6, 8] });
+
+    text('先打草稿', 630, 262, { size: 26, color: C.pencil, alpha: P(t, c[2], 0.4) });
+    const ho = { f: 'hand', size: 46, color: C.ink };
+    const l1 = '八折：120 × 0.8 = 96', l2 = '再减 10：96 − 10 = 86', l3 = '检查：86 比 120 小，合理';
+    write(l1, 640, 322, P(t, c[2] + 0.3, 1.4, E.lin), ho);
+    write(l2, 640, 402, P(t, c[2] + 2.4, 1.4, E.lin), ho);
+    const w96a = measure('96', ho), x96a = 640 + measure(l1, ho) - w96a;
+    const x96b = 640 + measure('再减 10：', ho), w96b = measure('96', ho);
+    marker(x96a - 3, 330, w96a + 6, 14, P(t, c[2] + 1.9, 0.3), C.hl[0], 4);
+    marker(x96b - 3, 410, w96b + 6, 14, P(t, c[2] + 3.9, 0.3), C.hl[0], 5);
+    arrowPts(quadPts(x96a + w96a / 2, 344, (x96a + x96b) / 2 + 70, 376, x96b + w96b / 2 + 6, 384), P(t, c[2] + 2.0, 0.6, E.inOut), { color: C.red, width: 2.5, size: 10 });
+    text('依据', x96a + w96a + 26, 360, { f: 'hand', size: 28, color: C.red, alpha: P(t, c[2] + 2.4, 0.4) });
+
+    write(l3, 640, 474, P(t, c[3] + 0.2, 1.3, E.lin), ho);
+    check(640 + measure(l3, ho) + 30, 474, 30, P(t, c[3] + 1.6, 0.4), { color: C.red });
+    const ka = P(t, c[3] + 2.2, 0.5);
+    text('答：86 元', 640, 544, { f: 'display', size: 46, color: C.ink, alpha: ka });
+    strokePts(ellipsePts(640 + measure('答：86 元', { f: 'display', size: 46 }) / 2, 546, 128, 38, 2), P(t, c[3] + 2.6, 0.6, E.inOut), { color: C.red, width: 3 });
+
+    const kt = P(t, c[4] + 0.3, 0.6);
+    box(612, 286, 600, 220, { stroke: C.inkSoft, lw: 2, dash: [8, 6], r: 14, alpha: kt });
+    chip('思考（草稿）', 1130, 286, { size: 20, fill: C.paper, stroke: C.inkSoft, color: C.inkSoft, h: 34, alpha: kt });
+    chip('最终回答', 960, 544, { size: 20, fill: C.paper, stroke: C.ink, color: C.ink, h: 34, alpha: P(t, c[4] + 0.9, 0.5) });
+  },
+});
+
+/* ---------- 8 · 动手做事 ---------- */
+SCENES.push({
+  chapter: '动手做事', num: 8, title: '动手做事：比如做这个视频',
+  caps: [
+    '有了工具，我还能动手做事。你现在看的这个视频，就是这样做出来的。',
+    '先弄清你要什么，再拆成计划：分几幕、讲什么、怎么画。',
+    '然后写代码、运行、截图检查。不对就改，改完再检查。',
+    '转上几圈，直到满意，再交给你。',
+  ],
+  hold: [0.8, 1.2, 2.4, 1.6],
+  draw(t, c) {
+    const cx = 520, cy = 350, R = 150;
+    const nodes = [
+      { lab: '理解目标', a: -Math.PI / 2, note: '你要：给大学生的可视化视频', nx: cx, ny: 154, al: 'center', at: c[0] + 1.2, nt: c[1] + 0.3 },
+      { lab: '制定计划', a: 0, note: '分镜 · 内容 · 画法', nx: cx + R + 80, ny: cy, al: 'left', at: c[1] + 1.4, nt: c[1] + 2.0 },
+      { lab: '动手执行', a: Math.PI / 2, note: '写代码 · 渲染画面', nx: cx, ny: 548, al: 'center', at: c[2] + 0.3, nt: c[2] + 0.7 },
+      { lab: '检查结果', a: Math.PI, note: '截图 · 修 bug', nx: cx - R - 80, ny: cy, al: 'right', at: c[2] + 2.0, nt: c[2] + 2.4 },
+    ];
+    const kc = P(t, c[0] + 0.8, 0.5);
+    strokePts(arcPts(cx, cy, R, 0, Math.PI * 2, 96), kc, { color: C.gridBold, width: 1.5, dash: [4, 8] });
+    const d = 0.5;
+    [[0, c[1] + 0.8], [1, c[2] + 0.1], [2, c[2] + 1.6], [3, c[2] + 3.2]].forEach(([i, at]) => {
+      const a0 = nodes[i].a + d, a1 = nodes[i].a + Math.PI / 2 - d;
+      arrowPts(arcPts(cx, cy, R, a0, a1, 36), P(t, at, 0.6, E.inOut), { color: C.ink, width: 3 });
+    });
+    const lt = c[2] + 4.0;
+    if (t > lt) {
+      const a = -Math.PI / 2 + (t - lt) * 2.2;
+      dot(cx + Math.cos(a) * R, cy + Math.sin(a) * R, 8, C.red, P(t, lt, 0.3));
+    }
+    nodes.forEach(n => {
+      const k = P(t, n.at, 0.45, E.back);
+      const x = cx + Math.cos(n.a) * R, y = cy + Math.sin(n.a) * R;
+      chip(n.lab, x, y, { size: 26, fill: C.white, stroke: C.ink, color: C.ink, wt: 700, alpha: clamp(k) });
+      text(n.note, n.nx, n.ny, { f: 'hand', size: 28, color: C.pencil, align: n.al, alpha: P(t, n.nt, 0.5) });
+    });
+    text('转几圈', cx, cy, { f: 'hand', size: 36, color: C.red, align: 'center', alpha: P(t, c[3] + 0.2, 0.5) });
+
+    const kt = P(t, c[0] + 2.2, 0.5);
+    text('我的工具箱', 1132, 168, { size: 22, color: C.pencil, align: 'center', alpha: kt });
+    ['读写文件', '运行代码', '浏览器截图', '提交 Git'].forEach((s, i) => {
+      chip(s, 1132, 218 + i * 58, { size: 22, width: 160, fill: C.hl[[2, 3, 0, 5][i]], alpha: P(t, c[0] + 2.4 + i * 0.25, 0.4) });
+    });
+    arrowPts(quadPts(732, 392, 840, 520, 1030, 512), P(t, c[3] + 0.8, 0.7, E.inOut), { color: C.red, width: 3 });
+    const kd = P(t, c[3] + 1.4, 0.5, E.back);
+    chip('交付给你', 1124, 512, { size: 28, wt: 700, fill: 'rgba(35,62,145,0.10)', stroke: C.ink, color: C.ink, alpha: clamp(kd), width: 176 });
+    check(1232, 512, 24, P(t, c[3] + 1.9, 0.4), { color: C.red });
+  },
+});
+
+/* ---------- 9 · 实话实说 ---------- */
+SCENES.push({
+  chapter: '实话实说', num: 9, title: '最后，说几句实话',
+  caps: [
+    '最后，说几句实话。',
+    '我会犯错，有时还会很自信地说出不存在的东西，这叫「幻觉」。重要的事，请你核实。',
+    '刚才讲的是原理。我其实看不见自己内部每一步在算什么，研究者也还在努力打开这个「黑箱」。',
+    '另外，我的知识停在训练的某个时间点，之后发生的新事情，我可能不知道。',
+  ],
+  hold: [0.2, 1.0, 1.0, 1.4],
+  draw(t, c) {
+    const cards = [
+      { x: 262, rot: -0.025, fill: '#FFF6C9', head: '我会犯错', body: '可能一本正经地说错，也就是「幻觉」。重要的事，记得核实。', at: c[1] + 0.2, icon: 'bang' },
+      { x: 640, rot: 0.018, fill: '#FDE3EA', head: '我看不清自己', body: '我讲的是原理。内部每一步具体怎么算，研究者正在用「可解释性」研究慢慢看清。', at: c[2] + 0.2, icon: 'box' },
+      { x: 1018, rot: -0.012, fill: '#DDEFFA', head: '知识有截止日', body: '训练之后发生的事，我可能不知道，或者知道得不全。', at: c[3] + 0.2, icon: 'cal' },
+    ];
+    cards.forEach((cd, i) => {
+      const k = P(t, cd.at, 0.6);
+      if (k <= 0) return;
+      const w = 334, h = 318, y = 372 - (1 - k) * 40;
+      ctx.save();
+      ctx.globalAlpha *= k;
+      ctx.translate(cd.x, y);
+      ctx.rotate(cd.rot);
+      ctx.shadowColor = 'rgba(29,36,32,0.14)'; ctx.shadowBlur = 14; ctx.shadowOffsetY = 6;
+      rr(-w / 2, -h / 2, w, h, 6); ctx.fillStyle = cd.fill; ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.fillRect(-46, -h / 2 - 12, 92, 26);
+      text(cd.head, -w / 2 + 26, -h / 2 + 52, { f: 'display', size: 34, color: C.red });
+      const ix = w / 2 - 50, iy = -h / 2 + 52;
+      if (cd.icon === 'bang') {
+        ctx.beginPath(); ctx.arc(ix, iy, 20, 0, Math.PI * 2); ctx.strokeStyle = C.red; ctx.lineWidth = 3; ctx.stroke();
+        text('!', ix, iy + 1, { size: 28, wt: 700, color: C.red, align: 'center' });
+      } else if (cd.icon === 'box') {
+        ctx.fillStyle = C.text; ctx.fillRect(ix - 20, iy - 20, 40, 40);
+        text('?', ix, iy + 1, { size: 26, wt: 700, color: cd.fill, align: 'center' });
+      } else {
+        ctx.strokeStyle = C.ink; ctx.lineWidth = 3; ctx.strokeRect(ix - 20, iy - 17, 40, 38);
+        ctx.fillStyle = C.ink; ctx.fillRect(ix - 20, iy - 17, 40, 10);
+        text('31', ix, iy + 9, { f: 'mono', size: 15, wt: 600, color: C.ink, align: 'center' });
+      }
+      const bo = { size: 23 };
+      wrapText(cd.body, w - 52, bo).forEach((ln, j) => text(ln, -w / 2 + 26, -h / 2 + 118 + j * 38, { ...bo, color: C.text }));
+      ctx.restore();
+    });
+  },
+});
+
+/* ---------- 10 · 回顾 ---------- */
+SCENES.push({
+  chapter: '回顾', title: '回顾',
+  caps: [
+    '回顾一下：切成 token、变成向量、互相注意、层层加工、预测下一个，再一个个写出来。',
+    '训练让我学会这些；草稿让推理更稳；工具让我能动手。',
+    'AI 是好用的工具，但最好的思考，永远是你自己的。我们下次见！',
+  ],
+  hold: [1.0, 0.8, 0],
+  extra: 3.0,
+  last: true,
+  draw(t, c) {
+    const steps = ['切词', '向量', '注意力', '层层加工', '预测下一个'];
+    const o = { size: 30, wt: 700 }, gap = 74, y = 214;
+    const ws = steps.map(s => measure(s, o) + 36);
+    const xs = [];
+    let x = 640 - (sum(ws) + gap * (steps.length - 1)) / 2;
+    ws.forEach(w => { xs.push(x + w / 2); x += w + gap; });
+    steps.forEach((s, i) => {
+      const k = P(t, c[0] + 0.5 + i * 1.15, 0.45, E.back);
+      chip(s, xs[i], y, { ...o, fill: C.hl[i], width: ws[i], alpha: clamp(k) });
+      if (i > 0) arrow(xs[i - 1] + ws[i - 1] / 2 + 12, y, xs[i] - ws[i] / 2 - 12, y, P(t, c[0] + 0.3 + i * 1.15, 0.35), { color: C.pencil, width: 2.5, size: 10 });
+    });
+    const kl = P(t, c[0] + 6.4, 0.9, E.inOut);
+    arrowPts(quadPts(xs[4], y + 32, 640, y + 170, xs[0], y + 32), kl, { color: C.red, width: 3 });
+    text('写出一个，接回去，再来', 640, y + 116, { f: 'hand', size: 30, color: C.red, align: 'center', alpha: P(t, c[0] + 7.0, 0.5) });
+
+    ['训练 · 学会这些', '草稿 · 推理更稳', '工具 · 能动手'].forEach((s, i) => {
+      chip(s, 340 + i * 300, 392, { size: 26, fill: C.white, stroke: C.ink, color: C.ink, alpha: P(t, c[1] + 0.4 + i * 1.3, 0.5) });
+    });
+    const fin = '最好的思考，永远是你自己的。';
+    const fo = { f: 'display', size: 54 };
+    const fw = measure(fin, fo);
+    marker(640 - fw / 2 - 12, 504, fw + 24, 30, P(t, c[2] + 2.2, 0.8, E.inOut), C.hl[0], 9);
+    write(fin, 640, 494, P(t, c[2] + 0.6, 1.4, E.lin), { ...fo, color: C.ink, align: 'center' });
+    text('—— Claude', 1180, 562, { f: 'display', size: 30, color: C.red, align: 'right', alpha: P(t, c[2] + 3.0, 0.6) });
+  },
+});
+
+/* ================================================================
+   Timeline
+   ================================================================ */
+const LEAD = 0.8, TAIL = 0.9;
+let TOTAL = 0;
+SCENES.forEach((s, idx) => {
+  s.idx = idx;
+  s.start = TOTAL;
+  s.cues = [];
+  let t = LEAD;
+  s.caps.forEach((cap, i) => {
+    const d = Math.max(2.8, 1.1 + Array.from(cap).length / 5) + (s.hold?.[i] || 0);
+    s.cues.push({ t, d, text: cap });
+    t += d;
+  });
+  s.dur = t + TAIL + (s.extra || 0);
+  TOTAL += s.dur;
+});
+function sceneAt(time) {
+  for (let i = SCENES.length - 1; i >= 0; i--) if (time >= SCENES[i].start) return SCENES[i];
+  return SCENES[0];
+}
+function cueOf(s, lt) {
+  for (let i = 0; i < s.cues.length; i++) { const q = s.cues[i]; if (lt >= q.t && lt < q.t + q.d) return { ...q, i }; }
+  return null;
+}
+
+/* ================================================================
+   Frame
+   ================================================================ */
+const stage = document.getElementById('stage');
+const cv = document.getElementById('cv');
+ctx = cv.getContext('2d');
+let scale = 1, paper = null, wideCaptions = true;
+
+function makePaper() {
+  paper = document.createElement('canvas');
+  paper.width = cv.width; paper.height = cv.height;
+  const p = paper.getContext('2d');
+  p.scale(scale, scale);
+  p.fillStyle = C.paper; p.fillRect(0, 0, W, H);
+  p.lineWidth = 1;
+  for (let x = 0; x <= W; x += 24) {
+    p.strokeStyle = x % 120 === 0 ? C.gridBold : C.grid;
+    p.beginPath(); p.moveTo(x + 0.5, 0); p.lineTo(x + 0.5, H); p.stroke();
+  }
+  for (let y = 0; y <= H; y += 24) {
+    p.strokeStyle = y % 120 === 0 ? C.gridBold : C.grid;
+    p.beginPath(); p.moveTo(0, y + 0.5); p.lineTo(W, y + 0.5); p.stroke();
+  }
+}
+function fit() {
+  if (EXPORT) { cv.width = 1920; cv.height = 1080; scale = 1.5; wideCaptions = true; makePaper(); return; }
+  const r = cv.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const cw = Math.max(320, Math.round(r.width * dpr));
+  cv.width = cw; cv.height = Math.round(cw * 9 / 16);
+  scale = cv.width / W;
+  wideCaptions = r.width >= 640;
+  document.getElementById('cc').classList.toggle('wide', wideCaptions);
+  makePaper();
+}
+function header(s, t) {
+  if (!s.title) return;
+  const x = s.num ? 128 : 72;
+  if (s.num) {
+    strokePts(ellipsePts(88, 64, 25, 23, s.num), P(t, 0.05, 0.5, E.inOut), { color: C.red, width: 2.6 });
+    text(String(s.num), 88, 66, { f: 'mono', size: 26, wt: 600, color: C.red, align: 'center', alpha: P(t, 0.2, 0.4) });
+  }
+  write(s.title, x, 64, P(t, 0.15, 0.8, E.lin), { f: 'display', size: 40, color: C.ink });
+}
+function progressDots(idx) {
+  const n = SCENES.length, x0 = 1222 - (n - 1) * 18;
+  for (let i = 0; i < n; i++) dot(x0 + i * 18, 62, i === idx ? 6 : 4, i <= idx ? C.ink : C.gridBold, i < idx ? 0.5 : 1);
+}
+function splitCaption(s, maxW, o) {
+  if (measure(s, o) <= maxW) return [s];
+  const ch = Array.from(s), mid = ch.length / 2;
+  let best = -1, bestD = 1e9;
+  ch.forEach((c, i) => {
+    if ('，。：；？！、'.includes(c) && i < ch.length - 1) { const d = Math.abs(i + 1 - mid); if (d < bestD) { bestD = d; best = i + 1; } }
+  });
+  if (best < 0 || bestD > ch.length * 0.3) best = Math.ceil(mid);
+  return [ch.slice(0, best).join(''), ch.slice(best).join('')];
+}
+function drawCaption(s, a) {
+  if (a <= 0) return;
+  const o = { size: 28 };
+  const lines = splitCaption(s, 1080, o);
+  const lh = 40, padY = 13;
+  const bw = Math.max(...lines.map(l => measure(l, o))) + 56, bh = lines.length * lh + padY * 2;
+  const y = H - 22 - bh;
+  box(640 - bw / 2, y, bw, bh, { fill: 'rgba(255,255,255,0.9)', stroke: C.gridBold, lw: 1.5, r: 12, alpha: a });
+  lines.forEach((l, i) => text(l, 640, y + padY + lh / 2 + i * lh + 1, { ...o, align: 'center', color: C.text, alpha: a }));
+}
+function render(time, poster = false) {
+  time = clamp(time, 0, TOTAL - 1e-4);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.drawImage(paper, 0, 0);
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  const s = sceneAt(time), t = time - s.start;
+  const fade = Math.min(P(t, 0, 0.5, E.inOut), s.last ? 1 : 1 - P(t, s.dur - 0.5, 0.5, E.inOut));
+  ctx.save();
+  ctx.globalAlpha = fade;
+  header(s, t);
+  s.draw(t, s.cues.map(q => q.t), s);
+  ctx.restore();
+  progressDots(s.idx);
+  const q = cueOf(s, t);
+  if (q && !poster && (wideCaptions || textHook)) drawCaption(q.text, Math.min(P(t, q.t, 0.25), 1 - P(t, q.t + q.d - 0.15, 0.15)));
+  return { s, q };
+}
+
+/* ================================================================
+   Fonts
+   ================================================================ */
+async function fontsReady() {
+  if (!document.fonts) return;
+  const sample = '一个回答的诞生期末考试 token 0123';
+  const faces = ['400 20px "Noto Sans SC"', '700 20px "Noto Sans SC"', '700 20px "Noto Serif SC"', '400 20px "Long Cang"', '400 20px "JetBrains Mono"', '600 20px "JetBrains Mono"'];
+  // Canvas text does not trigger unicode-range chunks on its own, so load every face up front.
+  const all = Promise.all([
+    ...faces.map(f => document.fonts.load(f, sample).catch(() => null)),
+    ...[...document.fonts].map(f => f.load().catch(() => null)),
+  ]);
+  await Promise.race([all, new Promise(r => setTimeout(r, 4000))]);
+  await Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1500))]);
+}
+
+/* ================================================================
+   Export hooks (used to render the MP4 frame by frame)
+   ================================================================ */
+if (EXPORT) {
+  fit();
+  window.__video = {
+    total: TOTAL,
+    ready: fontsReady().then(() => true),
+    frame(t) { render(t); return cv.toDataURL('image/jpeg', 0.93); },
+    cues() { return SCENES.flatMap(s => s.cues.map(q => ({ start: s.start + q.t, end: s.start + q.t + q.d, text: q.text }))); },
+    collect() {
+      const used = { body: new Set(), display: new Set(), hand: new Set(), mono: new Set() };
+      textHook = (kind, s) => { for (const ch of s) used[kind].add(ch); };
+      for (let t = 0; t < TOTAL; t += 0.05) render(t);
+      textHook = null;
+      return Object.fromEntries(Object.entries(used).map(([k, v]) => [k, [...v].join('')]));
+    },
+  };
+  return;
+}
+
+/* ================================================================
+   Player
+   ================================================================ */
+const $ = id => document.getElementById(id);
+const playBtn = $('play'), bigPlay = $('bigplay'), seek = $('seek'), timeEl = $('time'), ccEl = $('cc'), voiceBtn = $('voice');
+const fmt = s => { s = Math.max(0, Math.floor(s)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+const POSTER = 3.4;
+let cur = 0, playing = false, last = null, speed = 1, dirty = true, started = false;
+let lastCaption = null, chapterIdx = -1;
+
+const ticks = $('ticks');
+SCENES.forEach(s => { const i = document.createElement('i'); i.style.left = `calc(${(s.start / TOTAL) * 100}% - 1px)`; ticks.appendChild(i); });
+const list = $('chapters');
+const chapterBtns = SCENES.map((s, i) => {
+  const li = document.createElement('li');
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.innerHTML = `<span class="n">${String(i).padStart(2, '0')}</span><span>${s.chapter}</span><span class="t">${fmt(s.start)}</span>`;
+  b.addEventListener('click', () => { seekTo(s.start + 0.01); if (!playing) play(); });
+  li.appendChild(b);
+  list.appendChild(li);
+  return b;
+});
+
+/* optional read-aloud with the device's own Chinese voice; time waits for the voice */
+const synth = 'speechSynthesis' in window ? window.speechSynthesis : null;
+let voiceOn = false, zhVoice = null, spokenKey = null, speechDone = true, holdSince = 0, utter = null, spokenEnd = 0;
+function pickVoice() {
+  if (!synth) return;
+  const vs = synth.getVoices();
+  zhVoice = vs.find(v => /^zh[-_]CN/i.test(v.lang)) || vs.find(v => /^zh/i.test(v.lang)) || null;
+}
+if (synth) { pickVoice(); synth.onvoiceschanged = pickVoice; } else voiceBtn.hidden = true;
+function stopSpeech() { if (synth) synth.cancel(); spokenKey = null; speechDone = true; utter = null; }
+function speak(textToSay) {
+  if (!synth) return;
+  synth.cancel();
+  const u = new SpeechSynthesisUtterance(textToSay.replace(/token/g, 'token '));
+  u.lang = 'zh-CN';
+  if (zhVoice) u.voice = zhVoice;
+  u.rate = Math.min(2, 1.05 * speed);
+  u.onend = u.onerror = () => { if (utter === u) speechDone = true; };
+  utter = u; speechDone = false; holdSince = 0;
+  synth.speak(u);
+}
+voiceBtn.addEventListener('click', () => {
+  voiceOn = !voiceOn;
+  voiceBtn.setAttribute('aria-pressed', String(voiceOn));
+  voiceBtn.textContent = voiceOn ? '朗读字幕：开' : '朗读字幕';
+  if (!voiceOn) stopSpeech();
+});
+
+function play() {
+  if (cur >= TOTAL - 0.05) cur = 0;
+  playing = true; started = true; last = null; dirty = true;
+  playBtn.textContent = '暂停';
+  bigPlay.hidden = true;
+}
+function pause() {
+  playing = false;
+  playBtn.textContent = cur >= TOTAL - 0.05 ? '重播' : '播放';
+  bigPlay.hidden = false;
+  stopSpeech();
+  dirty = true;
+}
+function toggle() { playing ? pause() : play(); }
+function seekTo(t) { cur = clamp(t, 0, TOTAL); started = true; stopSpeech(); dirty = true; }
+
+playBtn.addEventListener('click', toggle);
+bigPlay.addEventListener('click', e => { e.stopPropagation(); toggle(); });
+cv.addEventListener('click', toggle);
+seek.addEventListener('input', () => seekTo(seek.value / 1000 * TOTAL));
+$('speed').addEventListener('change', e => { speed = parseFloat(e.target.value) || 1; });
+$('fs').addEventListener('click', () => {
+  if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+  else stage.requestFullscreen?.().catch(() => {});
+});
+document.addEventListener('keydown', e => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (['input', 'select', 'textarea', 'button'].includes(tag)) return;
+  if (e.key === ' ' || e.key === 'k') { e.preventDefault(); toggle(); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); seekTo(cur + 5); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); seekTo(cur - 5); }
+});
+let rt = null;
+window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { fit(); dirty = true; }, 80); });
+document.addEventListener('fullscreenchange', () => { setTimeout(() => { fit(); dirty = true; }, 60); });
+
+function tick(ts) {
+  if (playing) {
+    if (last != null) {
+      let next = cur + Math.min(0.1, (ts - last) / 1000) * speed;
+      if (voiceOn && synth) {
+        const s = sceneAt(cur), q = cueOf(s, cur - s.start);
+        const key = q ? `${s.idx}:${q.i}` : null;
+        if (key && key !== spokenKey) { spokenKey = key; spokenEnd = s.start + q.t + q.d - 0.05; speak(q.text); }
+        if (!speechDone && next > spokenEnd) {
+          if (!holdSince) holdSince = ts;
+          if (ts - holdSince < 9000) next = Math.max(cur, spokenEnd);
+        }
+      }
+      cur = Math.min(TOTAL, next);
+      dirty = true;
+      if (cur >= TOTAL) pause();
+    }
+    last = ts;
+  } else last = null;
+
+  if (dirty) {
+    dirty = false;
+    const { s, q } = render(started ? cur : POSTER, !started);
+    seek.value = String(Math.round(cur / TOTAL * 1000));
+    timeEl.textContent = `${fmt(cur)} / ${fmt(TOTAL)}`;
+    const capText = started && q ? q.text : '';
+    if (capText !== lastCaption) { lastCaption = capText; ccEl.textContent = capText; }
+    const ci = started ? s.idx : 0;
+    if (ci !== chapterIdx) {
+      chapterIdx = ci;
+      chapterBtns.forEach((b, i) => b.setAttribute('aria-current', String(i === ci)));
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+fit();
+timeEl.textContent = `0:00 / ${fmt(TOTAL)}`;
+fontsReady().then(() => { dirty = true; requestAnimationFrame(tick); });
+})();
+</script>
