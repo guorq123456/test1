@@ -21,8 +21,8 @@ python3 build_site.py          # 生成交互页面 site/index.html
 
 | 赛事 | 平台 | 状态 |
 |---|---|---|
-| KARDS Open #1 – VII、Open: Singleton、Operation: Kards（2020.05 – 2021.06，983 Media） | Battlefy | 已抓取，类别 `open`，默认不计入 |
-| KARDS Open VIII – XIV（2021.08 – 2022.11，983 Media） | start.gg | 已抓取，类别 `open`，默认不计入 |
+| KARDS Open #1 – VII、Open: Singleton、Operation: Kards（2020.05 – 2021.06，983 Media） | Battlefy | 瑞士轮/资格赛 `open` 不计入；正赛阶段 `open_main` 计入 |
+| KARDS Open VIII – XIV（2021.08 – 2022.11，983 Media） | start.gg | 瑞士轮/资格赛 `open` 不计入；正赛阶段 `open_main` 计入 |
 | KARDS 世界赛 2021、2022（约 100 人，小组循环赛 + 双败淘汰赛；未公开列出） | start.gg | ✅ 已收录，类别 `official` |
 | Weekday Skirmish、Blitz、Homebrew Brawl 等社区赛 | Battlefy / start.gg | 已抓取，类别为 `community`，默认不计入 |
 | OCC 月赛 2021.05 – 2024.11（同月的资格赛 A/B + Top 8 合并成一站；2024 年 4–8 月只有 Top 8） | Challonge | ✅ 已收录，类别 `official` |
@@ -32,12 +32,12 @@ python3 build_site.py          # 生成交互页面 site/index.html
 | 2021–2023 世界赛前 4 名线下总决赛（18 场） | 官方新闻 | ✅ 人工补录（`data/manual_matches.csv`） |
 | 2025 年 4 个扩展赛（Blood & Iron、United Front、Naval Warfare、Air Supremacy，各含 Top 8） | Challonge | ✅ 已收录，类别 `official` |
 | 2026 年冬、春、夏、秋季赛（各含 Top 8） | Challonge | ✅ 已收录，类别 `official` |
-| KARDS Open XV、XVI（2023） | Challonge | 已抓取，类别 `open`，默认不计入 |
+| KARDS Open XV、XVI（2023） | Challonge | 瑞士轮 `open` 不计入；正赛阶段 `open_main` 计入 |
 | Pauper II | Challonge | 已抓取，类别为 `community`，默认不计入 |
 
 `data/challonge_events.csv` 是 kards_esports 账号下的全部 139 个 Challonge 对阵表。
 
-默认只用官方赛事（`category=official`）：70 站、3455 场计分对局（含 18 场人工补录的总决赛）。
+默认计入官方赛事（`official`）和 Open 的正赛阶段（`open_main`，`normalize.py` 按阶段名把 Open 的 16 强 / 8 强 / 淘汰赛单独归类，共 214 场）：85 站、3669 场计分对局（含 18 场人工补录的总决赛）。Open 正赛是打赢预选的选手之间的比赛，加入后样本外预测不变、当前榜不变，2021–22 年老将的巅峰排序更合理（`open16_exp.py`）。
 KARDS Open 没有报名门槛、不在电竞计划内，新人和弱选手多，单独作为噪音来源检验过（`open_exp.py`，结果在 `data/open_exp_results.txt`）：
 把 Open 降权到 0.5 对官方对局的预测最好，完全去掉与不降权差不多；按项目决定完全去掉，换来只反映官方赛事的平滑走势，代价是 2021 年 5 月之前没有分数。
 `python3 bt.py --categories open,open_special,official --open-weight 0.5` 可以加回 Open。
@@ -69,7 +69,7 @@ KARDS Open 没有报名门槛、不在电竞计划内，新人和弱选手多，
 - BT 分 = 1500 + β × 400 / ln 10
 
 半衰期和先验由 `evaluate.py` 挑出：用每站赛前的分数预测该站胜负，
-只用官方赛事时，3432 场样本外对局上 log loss 0.687（抛硬币为 0.693），准确率约 53%：官方赛事选手水平接近，本来就难预测。
+3646 场样本外对局上 log loss 0.685（抛硬币为 0.693），准确率约 54%：官方赛事选手水平接近，本来就难预测。
 半衰期 240 天与 365 天相同（0.6907），120 天更差（0.6921）；先验 0.4–0.6 都比 0.8 好（0.687 vs 0.691），取 0.4。
 （含 Open 数据时为 0.674 / 58%，主要因为 Open 里强弱悬殊的对局容易猜。）赛事分级加权已检验：数据不支持（越重要的比赛结果反而越接近五五开），不采纳。
 
@@ -78,7 +78,8 @@ KARDS Open 没有报名门槛、不在电竞计划内，新人和弱选手多，
 - **新人从固定低于平均的位置起步**（`newcomer_exp.py`）：2024 年前选出的固定修正放到 2024 年后变差（+0.004），因为新人水平随时代变化；改成按时代自适应后见上面"新人起点"
 - **预选降权**（`stage_exp.py`）：预选 / 瑞士轮 / 小组赛按 0.75、0.5、0.25 计，2024 年后都略变差；分数几乎全来自预选的选手在正赛被高估约 4 个百分点（赢家诅咒），降权修不好
 - **直邀补偿按人校准**（`invite_exp.py`）：V1 按选手已有真实场次递减、V3 门槛模型、V4 按直邀后 8 强战绩打折。V4 几乎无效（直邀选手的 8 强战绩与资格赛晋级者相当，打折系数≈1）；V1/V3 对 8 强对局略好（HOLDOUT 77 场 −0.005 左右，V3 a=4 刚好显著），整体不变，DEV 略差，默认不采用。`bt.py --invite-shrink 20` / `peaks.py --invite-shrink 20` 可切到 V1，巅峰榜上钟离梓 #3、Noein5 #5、Bezio #9、dandelion #11（统一补偿下为 #4 / #2 / #11 / #14）
-- 结果文件：`data/decay_exp_results.txt`、`data/newcomer_exp_results.txt`、`data/invite_exp_results.txt`
+- **只加 Open 正赛**（`open16_exp.py`）：214 场，预测不变，当前榜不变，巅峰榜钟离梓 #4→#2、Noein5 #2→#3；已采用
+- 结果文件：`data/decay_exp_results.txt`、`data/newcomer_exp_results.txt`、`data/invite_exp_results.txt`、`data/open16_exp_results.txt`
 
 `bt.py` 每个 CPU 核算一段快照，并从上一站的解出发继续拟合，全量重算约 3 秒。
 
@@ -96,7 +97,7 @@ KARDS Open 没有报名门槛、不在电竞计划内，新人和弱选手多，
 - `data/match_timeline.csv`（`python3 timeline.py` 生成，不到 1 秒）：原始数据里每一场对局的赛制、轮次、DQ 标记、比分、开放/进行/完成时间、用时与同轮中位数、批量录入数量、各自上一场的间隔。用来判断一场结果是不是真打的。注意 Challonge 的 `inactive` 只表示已结束比赛，不代表 DQ
   Challonge 名字里的 `#1234` 和结尾的括号备注（`Jking7 (CA)`、`老虎不发猫 (Tiger)`）会自动去掉再合并；括号里的昵称不参与合并
 - `data/ratings_timeline.csv` 每站之后（`event` 为空的行是月初快照）每位选手的分数、标准误、累计场次
-- `data/peaks.csv`（`peaks.py`）：巅峰榜。每站日期上用前后所有比赛（|d| 天前后的权重 0.5^(|d|/240)）重新拟合，新人锚点和直邀补偿同样按前后距离衰减计入，取每人排名分（BT − 1 标准误）最高的一站；只计当时已满 10 场的选手。当前榜只用过去的比赛、会滞后，巅峰榜用事后信息，只用于比较巅峰，不用于预测
+- `data/peaks.csv`（`peaks.py`）：巅峰榜。每站日期上用前后所有比赛（|d| 天前后的权重 0.5^(|d|/240)）重新拟合，新人锚点和直邀补偿同样按前后距离衰减计入，取每人排名分（BT − 1 标准误）最高的一站；只计当时已满 10 场的选手。巅峰榜默认 `--invite-shrink 20`（直邀补偿按真实场次递减，见 `invite_exp.py` 的 V1）：一年十几次直邀的老将否则四成巅峰分来自补偿；当前榜（`bt.py`）保留统一补偿，两者样本外预测相同。当前榜只用过去的比赛、会滞后，巅峰榜用事后信息，只用于比较巅峰，不用于预测
 - `data/placements.csv` 每人每站的最终名次：Challonge 用官方 final_rank，其他淘汰赛按出局轮次推算（同轮出局并列，如“第 5–8 名”），没打进淘汰赛的写阶段战绩（如“瑞士轮 4-2”）
 
 ## 补上官方赛事
