@@ -74,8 +74,12 @@ def load_matches(categories, use_games, open_weight=1.0):
     return out
 
 
-def fit_bt(winners, losers, weights, n, prior_sd, x0=None, virtual=None):
+def fit_bt(winners, losers, weights, n, prior_sd, x0=None, virtual=None, prior_df=None):
     """MAP Bradley-Terry fit. winners/losers are int index arrays into n players.
+
+    prior_df=None: Gaussian prior N(0, prior_sd^2). prior_df=nu: Student-t prior with nu degrees of freedom
+    and scale prior_sd (heavy tails: the same pull toward 0 for players with little evidence, but a player
+    with enough evidence is allowed to sit far from average).
 
     virtual: optional (player idx, opponent level, sign, weight) arrays for results against a
     fixed-strength opponent (ladder-invite credit, newcomer anchor): +1 win / -1 loss; a sign of
@@ -84,11 +88,21 @@ def fit_bt(winners, losers, weights, n, prior_sd, x0=None, virtual=None):
     lam = 1.0 / prior_sd ** 2
     vi, vl, vs, vw = virtual if virtual is not None else (np.zeros(0, int), np.zeros(0), np.zeros(0), np.zeros(0))
 
+    def prior(b):
+        """(penalty, gradient, diagonal curvature) of -log prior."""
+        if prior_df is None:
+            return 0.5 * lam * (b @ b), lam * b, np.full(n, lam)
+        q = prior_df * prior_sd ** 2 + b * b
+        # curvature uses the IRLS form (nu+1)/q, which is positive everywhere (the exact second derivative
+        # turns negative in the tails, which would break the Cholesky factorisation below)
+        return 0.5 * (prior_df + 1) * np.log1p(b * b / (prior_df * prior_sd ** 2)).sum(), (prior_df + 1) * b / q, (prior_df + 1) / q
+
     def f(b):
         d = b[winners] - b[losers]
-        nll = -(weights * log_expit(d)).sum() + 0.5 * lam * (b @ b)
+        pen, pgrad, _ = prior(b)
+        nll = -(weights * log_expit(d)).sum() + pen
         g = weights * (expit(d) - 1.0)  # d nll / d d
-        grad = lam * b
+        grad = pgrad.copy()
         np.add.at(grad, winners, g)
         np.add.at(grad, losers, -g)
         if len(vi):
@@ -104,7 +118,7 @@ def fit_bt(winners, losers, weights, n, prior_sd, x0=None, virtual=None):
     # Hessian of the negative log posterior -> Laplace standard errors
     d = b[winners] - b[losers]
     h = weights * expit(d) * expit(-d)
-    H = np.diag(np.full(n, lam))
+    H = np.diag(prior(b)[2])
     np.add.at(H, (winners, winners), h)
     np.add.at(H, (losers, losers), h)
     np.add.at(H, (winners, losers), -h)
