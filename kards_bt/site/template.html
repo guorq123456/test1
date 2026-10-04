@@ -123,6 +123,8 @@ tbody tr:hover td { background: var(--accent-wash); }
 td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
 td.rank { color: var(--muted); font-family: var(--mono); width: 3em; }
 td.name .who { display: inline-flex; align-items: center; gap: 8px; vertical-align: middle; }
+tr.idle td.name, tr.idle td.num:nth-child(3) { color: var(--muted); }
+td.name small { color: var(--muted); font-size: 12px; margin-left: 6px; }
 td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; background: transparent; border: 1px solid var(--line); }
 .up { color: var(--up); } .down { color: var(--down); } .new { color: var(--muted); }
 .range { position: relative; width: 120px; height: 10px; }
@@ -137,6 +139,7 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
 @media (max-width: 640px) {
   .hide-sm { display: none; }
   th, td { padding: 8px 8px; }
+  td.name small { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
@@ -153,7 +156,7 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
   <section aria-labelledby="h-trend">
     <div class="sec-head">
       <h2 id="h-trend">分数走势</h2>
-      <p>横轴是时间，可以直接看出一个选手强了多久。圆点是本人出赛的那一站，悬停可看该站名次；两站之间的起伏来自旧比赛的时间衰减。点选手名查看 ±1 标准误区间。</p>
+      <p>横轴是时间，可以直接看出一个选手强了多久。圆点是本人出赛的那一站，悬停可看该站名次；两站之间的起伏来自旧比赛的时间衰减，虚线表示已半年以上没打官方赛（分数是推测，不是打出来的）。点选手名查看 ±1 标准误区间。</p>
     </div>
     <div class="controls">
       <div class="search">
@@ -174,7 +177,7 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
   <section aria-labelledby="h-board">
     <div class="sec-head">
       <h2 id="h-board">实力榜</h2>
-      <p>点击一行，把选手加入或移出上方图表。</p>
+      <p>按<b>排名分</b>（BT 分 − 1 个标准误）排序：长期不出赛，标准误变大，排名分就会往下掉；一直在打的选手几乎不受影响。灰色是半年以上没打官方赛的选手。点击一行，把选手加入或移出上方图表。</p>
     </div>
     <div class="controls">
       <div class="slider">
@@ -191,8 +194,8 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
     <div class="tablewrap">
       <table>
         <thead><tr>
-          <th>#</th><th>选手</th><th class="num">BT 分</th><th class="num">±</th>
-          <th class="hide-sm">区间（±1 标准误）</th><th class="num">较上站</th>
+          <th>#</th><th>选手</th><th class="num" title="BT 分 − 1 个标准误">排名分</th><th class="num">BT 分</th><th class="num">±</th>
+          <th class="hide-sm">区间（±1 标准误）</th><th class="num" title="排名分较上一站">较上站</th>
           <th class="num hide-sm">对局</th><th class="hide-sm">最近参赛</th>
         </tr></thead>
         <tbody id="tbody"></tbody>
@@ -211,6 +214,8 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
       <li><b>区间</b>：± 是拉普拉斯近似给出的 1 个标准误。场次越少，区间越宽。</li>
       <li><b>参数怎么定的</b>：用每站赛前的分数预测这一站的胜负（清洗后 3,219 场），半衰期 240 天、先验 0.4 的 log loss 是 0.687（抛硬币是 0.693；预测准确率约 54%）。官方赛事的参赛者水平接近，胜负本来就难预测，分差小于 100 分的对局基本是五五开。按赛事级别加权、按参赛途径给新人不同起点、按 Bo3/Bo5 和 ban 位区分赛制，都检验过，样本外预测没有变好，所以没有采用。</li>
       <li><b>没打的比赛不算</b>：轮空、平台判负、Battlefy 只有一方签到后 10 分钟的自动判负、选手被标记 DQ 之后录入（或在 DQ 时被改写）的结果、start.gg 上只记胜负没有比分的缺席判负、管理员几秒内批量清掉的缺席选手对局，整场作废，对手的“胜场”也一起去掉。DQ 之前真打的比赛保留；瑞士轮和循环赛不按负场数判断；只要双方都在场、比分正常，录入再快也算真实对局。</li>
+      <li><b>排名分</b>：榜单按 BT 分 − 1 个标准误排序。停赛后旧比赛的权重越来越小，标准误随之变大，排名分自然下降；BT 分本身仍是对实力的最佳估计。检验过“久未出赛直接扣分”：久未出赛的选手回来后反而赢得比模型预期多（停赛 120–240 天的实际胜率高出 6.8 个百分点），扣分只会让预测变差，所以只在排名上体现“不确定”，不改分数。</li>
+      <li><b>新人起点</b>：第一次打官方赛的选手实际胜率约 42%，模型预测约 49%，确实被高估。检验过让新人从低于平均的位置起步：用 2024 年前数据选出的力度，放到 2024 年后反而更差（2024 年后的新人比早年强，修正量随时代变化），所以没有采用。</li>
       <li><b>天梯直邀</b>：OCC 8 强里没打资格赛的直邀选手，记上当月资格赛晋级者的中位战绩（直邀和资格赛胜出一样难），按 120 天半衰期淡出。</li>
       <li><b>人工修正</b>：<code>data/aliases.csv</code> 合并同一人的不同账号，<code>data/overrides.csv</code> 把代打的结果记到实际上场的人名下，<code>data/manual_matches.csv</code> 补录只在官方新闻里公布的总决赛。</li>
       <li><b>同一人跨平台</b>：按平台账号 + 游戏内 ID 合并，可在 <code>data/aliases.csv</code> 里手动补充。</li>
@@ -232,6 +237,10 @@ players.forEach(p => {
   // x[5]: where the player finished in that event (truthy only if they played in it)
   p.played = new Map(p.p.map(x => [x[0], x[5]]));
 });
+
+// B: past this many days without an official match, the line is dashed and the player greyed out
+const IDLE_DAYS = 180;
+const idleDays = (si, x) => (Date.parse(snaps[si].d) - Date.parse(x[4])) / 86400000;
 
 const state = { selected: [], slot: new Map(), focus: null, snap: evSnaps[evSnaps.length - 1], shown: 50, hover: null };
 
@@ -280,9 +289,10 @@ function boardAt(si, minRes) {
   const out = [];
   for (const p of players) {
     const x = p.at.get(si);
-    if (x && x[3] >= minRes) out.push({ p, elo: x[1], se: x[2], n: x[3], last: x[4] });
+    if (x && x[3] >= minRes) out.push({ p, elo: x[1], se: x[2], n: x[3], last: x[4], score: x[1] - x[2], idle: idleDays(si, x) > IDLE_DAYS });
   }
-  out.sort((a, b) => b.elo - a.elo);
+  // rank by the lower 1-se bound: a long break widens the se, so idle players slide down without a rule
+  out.sort((a, b) => b.score - a.score);
   return out;
 }
 function topIds(k) { return boardAt(evSnaps[evSnaps.length - 1], 20).slice(0, k).map(r => r.p.id); }
@@ -451,10 +461,21 @@ function renderChart() {
     const dim = state.focus && state.focus !== p.id;
     const g = svgEl("g", { opacity: dim ? 0.3 : 1 }, svg);
     for (const seg of segments(p)) {
-      if (seg.length > 1) svgEl("path", {
-        d: seg.map((x, i) => `${i ? "L" : "M"}${X(tms[x[0]]).toFixed(1)},${Y(x[1]).toFixed(1)}`).join(""),
-        fill: "none", stroke: colorOf(p.id), "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round",
-      }, g);
+      // split the line into runs: solid while the player is active, dashed once they have been idle > IDLE_DAYS
+      let run = [seg[0]], idle = false;
+      const flush = () => {
+        if (run.length > 1) svgEl("path", {
+          d: run.map((x, i) => `${i ? "L" : "M"}${X(tms[x[0]]).toFixed(1)},${Y(x[1]).toFixed(1)}`).join(""),
+          fill: "none", stroke: colorOf(p.id), "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round",
+          ...(idle ? { "stroke-dasharray": "2 5", "stroke-opacity": 0.7 } : {}),
+        }, g);
+      };
+      for (const x of seg.slice(1)) {
+        const now = idleDays(x[0], x) > IDLE_DAYS;
+        if (now !== idle) { flush(); run = [run[run.length - 1]]; idle = now; }
+        run.push(x);
+      }
+      flush();
       // dots only where the player actually played; between them the line is time decay alone
       for (const x of seg) if (p.played.get(x[0])) svgEl("circle", { cx: X(tms[x[0]]), cy: Y(x[1]), r: 4, fill: colorOf(p.id), stroke: "var(--surface)", "stroke-width": 2 }, g);
     }
@@ -515,7 +536,9 @@ function showTip(si) {
     const b = document.createElement("b"); b.textContent = Math.round(r.x[1]);
     const name = document.createElement("span"); name.textContent = r.p.n + " ";
     const place = r.p.played.get(si);
-    const se = document.createElement("small"); se.textContent = "±" + Math.round(r.x[2]) + (snaps[si].e && !place ? " · 未出赛" : "");
+    const gap = idleDays(si, r.x);
+    const se = document.createElement("small");
+    se.textContent = "±" + Math.round(r.x[2]) + (gap > IDLE_DAYS ? ` · ${Math.round(gap / 30.4)} 个月未出赛` : snaps[si].e && !place ? " · 未出赛" : "");
     name.append(se);
     row.append(key, b, name);
     if (place) { const pl = document.createElement("span"); pl.className = "place"; pl.textContent = place; row.append(pl); }
@@ -551,12 +574,13 @@ function renderBoard() {
   document.getElementById("snap-label").textContent = `${fmtDate(s.d)} · ${s.e}（第 ${k + 1}/${evSnaps.length} 站，本站 ${s.n} 场）`;
   const minRes = +document.getElementById("minres").value;
   const rows = boardAt(state.snap, minRes);
-  const lo = 1300, hi = 1950, sc = v => Math.max(0, Math.min(120, (v - lo) / (hi - lo) * 120));
+  const lo = 1350, hi = 1750, sc = v => Math.max(0, Math.min(120, (v - lo) / (hi - lo) * 120));
   const tb = document.getElementById("tbody");
   tb.replaceChildren();
   rows.slice(0, state.shown).forEach((r, i) => {
     const tr = document.createElement("tr");
     tr.tabIndex = 0;
+    if (r.idle) tr.className = "idle";
     const sel = state.selected.includes(r.p.id);
     tr.setAttribute("aria-label", `${r.p.n}，${sel ? "已在图表中，按回车移除" : "按回车加入图表"}`);
     const cell = (cls, text) => { const td = document.createElement("td"); if (cls) td.className = cls; if (text != null) td.textContent = text; tr.append(td); return td; };
@@ -568,7 +592,9 @@ function renderBoard() {
     if (r.p.a && r.p.a !== r.p.n) nm.title = "曾用名：" + r.p.a;
     const who = document.createElement("span"); who.className = "who";
     who.append(sw, label);
+    if (r.idle) { const sm = document.createElement("small"); sm.textContent = `${Math.round(idleDays(state.snap, [0, 0, 0, 0, r.last]) / 30.4)} 个月未出赛`; who.append(sm); }
     nm.append(who);
+    cell("num", Math.round(r.score));
     cell("num", Math.round(r.elo));
     cell("num", Math.round(r.se));
     const rg = cell("hide-sm");
@@ -577,7 +603,7 @@ function renderBoard() {
     const mk = document.createElement("s"); mk.style.left = (sc(r.elo) - 1) + "px";
     bar.append(ln, mk); rg.append(bar);
     const prev = k > 0 ? r.p.at.get(evSnaps[k - 1]) : null;
-    const d = prev ? Math.round(r.elo - prev[1]) : null;
+    const d = prev ? Math.round(r.score - (prev[1] - prev[2])) : null;
     const dc = cell("num " + (d == null ? "new" : d > 0 ? "up" : d < 0 ? "down" : ""), d == null ? "新" : (d > 0 ? "▲ " : d < 0 ? "▼ " : "") + Math.abs(d));
     if (d == null) dc.title = "上一站时还没有记录";
     cell("num hide-sm", r.n);
@@ -588,7 +614,7 @@ function renderBoard() {
   });
   if (!rows.length) {
     const tr = document.createElement("tr"); const td = document.createElement("td");
-    td.colSpan = 8; td.className = "empty"; td.textContent = "这一站还没有满足条件的选手，试试降低最少对局数。";
+    td.colSpan = 9; td.className = "empty"; td.textContent = "这一站还没有满足条件的选手，试试降低最少对局数。";
     tr.append(td); tb.append(tr);
   }
   document.getElementById("more").hidden = rows.length <= state.shown;
