@@ -47,6 +47,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--body); }
 .wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; display: grid; gap: 36px; }
 h1, h2 { font-family: var(--display); font-weight: 700; letter-spacing: 0.01em; text-wrap: balance; margin: 0; line-height: 1.1; }
@@ -59,6 +60,10 @@ header { display: grid; gap: 14px; }
 html[lang="en"] [data-lang="zh"], html:not([lang="en"]) [data-lang="en"] { display: none; }
 .topline { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .lang { font: 600 12px var(--mono); letter-spacing: 0.06em; padding: 5px 10px; white-space: nowrap; flex: none; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; flex: none; }
+.seg button { border: 0; border-radius: 0; padding: 7px 14px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
 .facts { display: flex; flex-wrap: wrap; gap: 8px 28px; font-size: 13px; color: var(--ink-2); }
 .facts b { font: 500 15px var(--mono); color: var(--ink); margin-right: 4px; }
 .notice { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; background: var(--warn-wash); border-radius: 6px; padding: 12px 14px; font-size: 13.5px; color: var(--ink); max-width: 80ch; }
@@ -188,11 +193,21 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
   <section aria-labelledby="h-board">
     <div class="sec-head">
       <h2 id="h-board" data-t="hBoard"></h2>
+      <div data-board="current">
       <p data-lang="zh">按<b>排名分</b>（BT 分 − 1 个标准误）排序：长期不出赛，标准误变大，排名分就会往下掉；一直在打的选手几乎不受影响。灰色是 8 个月以上没打官方赛的选手。点击一行，把选手加入或移出上方图表。</p>
       <p data-lang="en">Sorted by <b>rank score</b> (BT rating − 1 standard error): the longer a player sits out, the wider their uncertainty and the lower their rank score, while active players are barely affected. Greyed-out players have not played an official match for more than 8 months. Click a row to add or remove the player from the chart.</p>
+      </div>
+      <div data-board="peak" hidden>
+      <p data-lang="zh"><b>巅峰榜</b>看每个人状态最好时有多强。和当前榜不同，这里用了“事后诸葛亮”：估计某个时间点的实力时，前后的比赛都参考（离得越远权重越低，同样是 240 天半衰期），所以短时间的爆发会被完整计入，后来的下滑也会让当时的高分打折扣。只统计当时已打满 10 场官方赛的选手，按巅峰时的排名分排序。</p>
+      <p data-lang="en">The <b>peak leaderboard</b> shows how strong each player was at their best. Unlike the current board it uses hindsight: strength at a date is estimated from results both before and after it (weighted by distance in time, the same 240-day half-life), so a short strong run gets full credit and a later slump tempers an earlier high. Players count once they have 10 official matches; sorted by rank score at their peak.</p>
+      </div>
     </div>
     <div class="controls">
-      <div class="slider">
+      <div class="seg" role="group" data-t-attr="aria-label:modeAria">
+        <button type="button" id="mode-cur" aria-pressed="true" data-t="modeCur"></button>
+        <button type="button" id="mode-peak" aria-pressed="false" data-t="modePeak"></button>
+      </div>
+      <div class="slider" data-board="current">
         <label for="snap"><span data-t="asOf"></span> <b id="snap-label"></b></label>
         <input type="range" id="snap" min="0" max="0" step="1">
       </div>
@@ -205,11 +220,7 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
     </div>
     <div class="tablewrap">
       <table>
-        <thead><tr>
-          <th>#</th><th data-t="thPlayer"></th><th class="num" data-t="thScore" data-t-attr="title:thScoreTitle"></th><th class="num" data-t="thBT"></th><th class="num">±</th>
-          <th class="hide-sm" data-t="thRange"></th><th class="num" data-t="thDelta" data-t-attr="title:thDeltaTitle"></th>
-          <th class="num hide-sm" data-t="thMatches"></th><th class="hide-sm" data-t="thLast"></th>
-        </tr></thead>
+        <thead id="thead"></thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
@@ -229,6 +240,7 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
       <li><b>排名分</b>：榜单按 BT 分 − 1 个标准误排序。停赛后旧比赛的权重越来越小，标准误随之变大，排名分自然下降；BT 分本身仍是对实力的最佳估计。检验过“久未出赛直接扣分”：久未出赛的选手回来后反而赢得比模型预期多（停赛 120–240 天的实际胜率高出 6.8 个百分点），扣分只会让预测变差，所以只在排名上体现“不确定”，不改分数。</li>
       <li><b>新人起点</b>：第一次打官方赛的选手实际胜率约 42%，模型若按平均水平算会给到约 49%，被高估了。而且新人比平均弱多少随时代变化（2022 年约 46 分，2023–2025 年约 90 分，2026 年约 49 分）。所以每站赛前，用过去一年新人的实际表现估计这个差距，新人从这个位置起步（相当于 2 场虚拟的平局，按 240 天半衰期淡出）。2024 年后的检验里预测略有改善（log loss −0.0055），但还在误差范围内，属于有依据、待更多数据确认的修正。</li>
       <li><b>小样本和“赢家诅咒”</b>：分数几乎全来自预选的选手，到了正赛平均比预测少赢约 4 个百分点。能进正赛的人是被“预选打得好”筛出来的，其中一部分是手感和运气，进了正赛自然回落。降低预选权重检验过，修不好这一点，预测还变差，所以没有采用；更可靠的是看<b>排名分</b>，场次少的人标准误大，排名分会更保守。</li>
+      <li><b>巅峰榜</b>：当前榜只用截至当天的比赛，会“滞后”：一段很短的爆发结束时只被计入一半，巅峰也是在后来的下滑发生前评出来的。巅峰榜用事后估计，在每站比赛的日期上，用前后所有比赛（按时间距离加权，240 天半衰期）重新拟合，取每人排名分最高的那一站。它适合比较“谁状态最好时最强”，不能用来预测比赛（用到了未来的结果）。</li>
       <li><b>天梯直邀</b>：OCC 8 强里没打资格赛的直邀选手，记上当月资格赛晋级者的中位战绩（直邀和资格赛胜出一样难），按 120 天半衰期淡出。</li>
       <li><b>人工修正</b>：<code>data/aliases.csv</code> 合并同一人的不同账号，<code>data/overrides.csv</code> 把代打的结果记到实际上场的人名下，<code>data/manual_matches.csv</code> 补录只在官方新闻里公布的总决赛。</li>
       <li><b>同一人跨平台</b>：按平台账号 + 游戏内 ID 合并，可在 <code>data/aliases.csv</code> 里手动补充。</li>
@@ -247,6 +259,7 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
       <li><b>Rank score</b>: the leaderboard is sorted by rating − 1 standard error. Once a player stops competing their old results lose weight, their uncertainty grows and the rank score falls; the rating itself remains the best estimate of strength. A direct penalty for inactivity was tested: players returning from a break actually win more than the model expects (6.8 points above prediction after a 120–240-day break), so a penalty would make predictions worse. Inactivity therefore shows up only as uncertainty in the ranking, not in the rating.</li>
       <li><b>Newcomers</b>: first-time official players win about 42% of matches, where an average starting point would predict about 49%. How far below average newcomers are changes with the era (about 46 points in 2022, about 90 in 2023–2025, about 49 in 2026), so before every event the gap is estimated from the past year's newcomers and debutants start there (the equivalent of two virtual draws, fading with the 240-day half-life). On post-2024 data it improves predictions slightly (log loss −0.0055), within the margin of error: a well-founded correction awaiting more data.</li>
       <li><b>Small samples and the winner's curse</b>: players whose rating comes almost entirely from qualifiers win about 4 points less than predicted once they reach a main stage. Players reach the main stage by doing well in qualifiers, partly through form and luck, so as a group they fall back. Down-weighting qualifier results was tested; it does not fix this and makes predictions worse, so it is not used. The <b>rank score</b> is the safer guide: few matches mean a wide standard error and a more cautious rank score.</li>
+      <li><b>Peak leaderboard</b>: the current board uses only results up to each date, so it lags: a short strong run is only half credited when it ends, and a peak is judged before any slump that followed. The peak board uses hindsight: at every event date the model is refit on all results before and after it (weighted by distance in time, 240-day half-life), and each player's highest rank score is kept. It compares how strong players were at their best; it cannot be used for prediction, since it looks at future results.</li>
       <li><b>Ladder invites</b>: OCC Top 8 players invited from the in-game ladder skip the qualifier, so each is credited with that month's median qualifier-advancer record (an invite is as hard to earn as a qualifier win), fading with a 120-day half-life.</li>
       <li><b>Manual corrections</b>: <code>data/aliases.csv</code> merges one person's accounts, <code>data/overrides.csv</code> credits a substitute's results to the person who actually played, and <code>data/manual_matches.csv</code> adds grand finals published only in official news.</li>
       <li><b>One person, several platforms</b>: accounts are merged by platform account and in-game ID, with manual additions in <code>data/aliases.csv</code>.</li>
@@ -275,6 +288,8 @@ const T = {
     rowAria: (n, sel) => `${n}，${sel ? "已在图表中，按回车移除" : "按回车加入图表"}`,
     isNew: "新", isNewTitle: "上一站时还没有记录", emptyBoard: "这一站还没有满足条件的选手，试试降低最少对局数。",
     langBtn: "EN",
+    modeAria: "榜单类型", modeCur: "当前榜", modePeak: "巅峰榜", thPeakScore: "巅峰排名分", thPeakTitle: "巅峰时的 BT 分 − 1 个标准误（前后比赛都参考）",
+    thPeakWhen: "巅峰时间", thRankThen: "当时名次", thRankThenTitle: "按同样的事后估计，当时在所有已打满 10 场的选手中的名次",
   },
   en: {
     title: "KARDS BT Ratings", eyebrow: "KARDS · Bradley–Terry · official events", h1: "KARDS Esports BT Ratings", scope: "Coverage",
@@ -294,6 +309,8 @@ const T = {
     rowAria: (n, sel) => `${n}, ${sel ? "in chart, press Enter to remove" : "press Enter to add to chart"}`,
     isNew: "new", isNewTitle: "No rating at the previous event", emptyBoard: "No players match at this event; try a lower minimum.",
     langBtn: "中文",
+    modeAria: "Leaderboard type", modeCur: "Current", modePeak: "Peak", thPeakScore: "Peak score", thPeakTitle: "Rating − 1 standard error at the peak, estimated with hindsight",
+    thPeakWhen: "Peak date", thRankThen: "Rank then", thRankThenTitle: "Rank at that date among players with 10+ matches, by the same hindsight estimate",
   },
 };
 let LANG = (() => {
@@ -338,7 +355,7 @@ players.forEach(p => {
 const IDLE_DAYS = 240;
 const idleDays = (si, x) => (Date.parse(snaps[si].d) - Date.parse(x[4])) / 86400000;
 
-const state = { selected: [], slot: new Map(), focus: null, snap: evSnaps[evSnaps.length - 1], shown: 50, hover: null };
+const state = { mode: "current", selected: [], slot: new Map(), focus: null, snap: evSnaps[evSnaps.length - 1], shown: 50, hover: null };
 
 // ---------- header facts
 function renderFacts() {
@@ -659,6 +676,9 @@ snapInput.max = evSnaps.length - 1;
 snapInput.value = evSnaps.length - 1;
 snapInput.addEventListener("input", () => setSnap(evSnaps[+snapInput.value]));
 document.getElementById("minres").addEventListener("change", () => { state.shown = 50; renderBoard(); });
+for (const [id, mode] of [["mode-cur", "current"], ["mode-peak", "peak"]]) {
+  document.getElementById(id).addEventListener("click", () => { state.mode = mode; state.shown = 50; renderBoard(); });
+}
 document.getElementById("more").addEventListener("click", () => { state.shown += 50; renderBoard(); });
 // clicking the chart between events snaps the leaderboard to the latest event before that time
 function setSnap(si) {
@@ -666,7 +686,71 @@ function setSnap(si) {
   state.snap = evSnaps[k]; snapInput.value = k; state.shown = 50; renderBoard(); renderChart();
 }
 
+function renderHead() {
+  const cols = state.mode === "peak"
+    ? [["#"], [t("thPlayer")], [t("thPeakScore"), "num", t("thPeakTitle")], [t("thBT"), "num"], ["±", "num"], [t("thRange"), "hide-sm"],
+       [t("thPeakWhen")], [t("thRankThen"), "num", t("thRankThenTitle")], [t("thMatches"), "num hide-sm"]]
+    : [["#"], [t("thPlayer")], [t("thScore"), "num", t("thScoreTitle")], [t("thBT"), "num"], ["±", "num"], [t("thRange"), "hide-sm"],
+       [t("thDelta"), "num", t("thDeltaTitle")], [t("thMatches"), "num hide-sm"], [t("thLast"), "hide-sm"]];
+  const tr = document.createElement("tr");
+  for (const [text, cls, title] of cols) {
+    const th = document.createElement("th"); th.textContent = text;
+    if (cls) th.className = cls; if (title) th.title = title;
+    tr.append(th);
+  }
+  document.getElementById("thead").replaceChildren(tr);
+  document.querySelectorAll("[data-board]").forEach(el => { el.hidden = el.dataset.board !== state.mode; });
+  document.getElementById("mode-cur").setAttribute("aria-pressed", String(state.mode === "current"));
+  document.getElementById("mode-peak").setAttribute("aria-pressed", String(state.mode === "peak"));
+}
+
+// a player cell (colour swatch when in the chart, former names on hover), shared by both boards
+function playerCell(tr, p, note) {
+  const td = document.createElement("td"); td.className = "name"; tr.append(td);
+  const sw = document.createElement("i"); sw.className = "sw";
+  if (state.selected.includes(p.id)) { sw.style.background = colorOf(p.id); sw.style.borderColor = "transparent"; }
+  const label = document.createElement("span"); label.textContent = p.n;
+  if (p.a && p.a !== p.n) td.title = t("aka") + p.a;
+  const who = document.createElement("span"); who.className = "who";
+  who.append(sw, label);
+  if (note) { const sm = document.createElement("small"); sm.textContent = note; who.append(sm); }
+  td.append(who);
+}
+
+function renderPeak() {
+  const minRes = +document.getElementById("minres").value;
+  const rows = players.filter(p => p.k && p.k[6] >= minRes).sort((a, b) => b.k[0] - a.k[0]);
+  const lo = 1350, hi = 1750, sc = v => Math.max(0, Math.min(120, (v - lo) / (hi - lo) * 120));
+  const tb = document.getElementById("tbody");
+  tb.replaceChildren();
+  rows.slice(0, state.shown).forEach((p, i) => {
+    const [score, elo, se, date, ev, rankThen, n] = p.k;
+    const tr = document.createElement("tr"); tr.tabIndex = 0;
+    tr.setAttribute("aria-label", t("rowAria", p.n, state.selected.includes(p.id)));
+    const cell = (cls, text) => { const td = document.createElement("td"); if (cls) td.className = cls; if (text != null) td.textContent = text; tr.append(td); return td; };
+    cell("rank", i + 1);
+    playerCell(tr, p);
+    cell("num", Math.round(score));
+    cell("num", Math.round(elo));
+    cell("num", Math.round(se));
+    const rg = cell("hide-sm");
+    const bar = document.createElement("div"); bar.className = "range";
+    const ln = document.createElement("i"); ln.style.left = sc(elo - se) + "px"; ln.style.width = (sc(elo + se) - sc(elo - se)) + "px";
+    const mk = document.createElement("s"); mk.style.left = (sc(elo) - 1) + "px";
+    bar.append(ln, mk); rg.append(bar);
+    const when = cell("", fmtDate(date).slice(0, 7)); when.title = ev;
+    cell("num", "#" + rankThen);
+    cell("num hide-sm", n);
+    tr.addEventListener("click", () => togglePlayer(p.id));
+    tr.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); togglePlayer(p.id); } });
+    tb.append(tr);
+  });
+  document.getElementById("more").hidden = rows.length <= state.shown;
+}
+
 function renderBoard() {
+  renderHead();
+  if (state.mode === "peak") { renderPeak(); return; }
   const s = snaps[state.snap];
   const k = evSnaps.indexOf(state.snap);
   document.getElementById("snap-label").textContent = t("snapLabel", fmtDate(s.d), s.e, k + 1, evSnaps.length, s.n);
@@ -683,15 +767,7 @@ function renderBoard() {
     tr.setAttribute("aria-label", t("rowAria", r.p.n, sel));
     const cell = (cls, text) => { const td = document.createElement("td"); if (cls) td.className = cls; if (text != null) td.textContent = text; tr.append(td); return td; };
     cell("rank", i + 1);
-    const nm = cell("name");
-    const sw = document.createElement("i"); sw.className = "sw";
-    if (sel) { sw.style.background = colorOf(r.p.id); sw.style.borderColor = "transparent"; }
-    const label = document.createElement("span"); label.textContent = r.p.n;
-    if (r.p.a && r.p.a !== r.p.n) nm.title = t("aka") + r.p.a;
-    const who = document.createElement("span"); who.className = "who";
-    who.append(sw, label);
-    if (r.idle) { const sm = document.createElement("small"); sm.textContent = t("idle", Math.round(idleDays(state.snap, [0, 0, 0, 0, r.last]) / 30.4)); who.append(sm); }
-    nm.append(who);
+    playerCell(tr, r.p, r.idle ? t("idle", Math.round(idleDays(state.snap, [0, 0, 0, 0, r.last]) / 30.4)) : null);
     cell("num", Math.round(r.score));
     cell("num", Math.round(r.elo));
     cell("num", Math.round(r.se));

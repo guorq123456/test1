@@ -33,6 +33,13 @@ def main():
             snap_idx[(r["date"], r["event"])], round(float(r["elo"])), round(float(r["se"])), int(r["results"]), r["last_played"], label,
         ])
 
+    # career peaks with hindsight (peaks.py): [score, rating, se, date, event, rank then, matches]
+    peaks = {}
+    if os.path.exists(os.path.join(DATA, "peaks.csv")):
+        for r in csv.DictReader(open(os.path.join(DATA, "peaks.csv"))):
+            peaks[r["player_id"]] = [round(float(r["peak_score"])), round(float(r["peak_elo"])), round(float(r["peak_se"])),
+                                     r["peak_date"], re.sub(r"^Kards ", "KARDS ", r["peak_event"]), int(r["rank_then"]), int(r["results"])]
+
     matches = [m for m in csv.DictReader(open(os.path.join(DATA, "matches.csv")))]
     used = [m for m in matches if m["valid"] == "1" and m["category"] == "official"]
     per_event = Counter(m["event"] for m in used)
@@ -40,7 +47,7 @@ def main():
     payload = {
         "snaps": [{"d": d, "e": re.sub(r"^Kards ", "KARDS ", e), "n": per_event.get(e, 0)} for d, e in snaps],
         "players": [
-            {"id": pid, "n": players[pid]["name"], "a": players[pid]["aliases"], "p": pts}
+            {"id": pid, "n": players[pid]["name"], "a": players[pid]["aliases"], "p": pts, **({"k": peaks[pid]} if pid in peaks else {})}
             for pid, pts in series.items()
         ],
         "stats": {

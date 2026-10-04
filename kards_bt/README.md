@@ -13,6 +13,7 @@ python3 normalize.py           # 合并成 data/matches.csv + data/players.csv
 python3 evaluate.py            # （可选）样本外验证，挑半衰期和先验
 python3 bt.py                  # 算出 data/ratings_timeline.csv
 python3 placements.py          # 每人每站的名次 data/placements.csv（网页提示框用）
+python3 peaks.py               # 事后估计的巅峰分 data/peaks.csv（网页巅峰榜用）
 python3 build_site.py          # 生成交互页面 site/index.html
 ```
 
@@ -90,6 +91,7 @@ KARDS Open 没有报名门槛、不在电竞计划内，新人和弱选手多，
 - `data/match_timeline.csv`（`python3 timeline.py` 生成，不到 1 秒）：原始数据里每一场对局的赛制、轮次、DQ 标记、比分、开放/进行/完成时间、用时与同轮中位数、批量录入数量、各自上一场的间隔。用来判断一场结果是不是真打的。注意 Challonge 的 `inactive` 只表示已结束比赛，不代表 DQ
   Challonge 名字里的 `#1234` 和结尾的括号备注（`Jking7 (CA)`、`老虎不发猫 (Tiger)`）会自动去掉再合并；括号里的昵称不参与合并
 - `data/ratings_timeline.csv` 每站之后（`event` 为空的行是月初快照）每位选手的分数、标准误、累计场次
+- `data/peaks.csv`（`peaks.py`）：巅峰榜。每站日期上用前后所有比赛（|d| 天前后的权重 0.5^(|d|/240)）重新拟合，取每人排名分（BT − 1 标准误）最高的一站；只计当时已满 10 场的选手。当前榜只用过去的比赛、会滞后，巅峰榜用事后信息，只用于比较巅峰，不用于预测
 - `data/placements.csv` 每人每站的最终名次：Challonge 用官方 final_rank，其他淘汰赛按出局轮次推算（同轮出局并列，如“第 5–8 名”），没打进淘汰赛的写阶段战绩（如“瑞士轮 4-2”）
 
 ## 补上官方赛事
