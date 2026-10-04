@@ -12,6 +12,7 @@ import re
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 
+import phantoms
 from scrapers.challonge import tournament_id
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -125,14 +126,15 @@ def load_battlefy(ids):
                     ids.add(node, re.sub(r"#\s*\d*\s*$", "", display).strip(), [team.get("name", "")] + kards, when)
                     side.append((node, slot))
                 (n1, s1), (n2, s2) = side
-                forfeit = bool(s1.get("disqualified") or s2.get("disqualified") or m.get("doubleLoss"))
+                reason = phantoms.battlefy_verdict(m)
                 winner = 1 if s1.get("winner") else 2 if s2.get("winner") else 0
                 rows.append({
                     "source": "battlefy", "event_id": t["_id"], "event": t["name"].strip(),
                     "category": category(t["name"]), "stage": stage.get("name"),
                     "stage_type": (stage.get("bracket") or {}).get("type"), "round": m.get("roundNumber"),
                     "time": when, "p1": n1, "p2": n2, "s1": s1.get("score"), "s2": s2.get("score"),
-                    "winner": winner, "valid": int(winner > 0 and not forfeit),
+                    "winner": winner, "valid": int(winner > 0 and reason in (None, "real")),
+                    "match_id": m["_id"], "note": reason or "",
                 })
     return rows
 
@@ -143,6 +145,7 @@ def load_startgg(ids):
         d = json.load(open(f))
         t = d["tournament"]
         for ev in d["events"]:
+            verdicts = phantoms.startgg_verdicts(ev["sets"])
             for st in ev["sets"]:
                 slots = st.get("slots") or []
                 if len(slots) != 2 or any(not s.get("entrant") for s in slots):
@@ -161,7 +164,7 @@ def load_startgg(ids):
                     side.append((node, e["id"], score))
                 (n1, e1, sc1), (n2, e2, sc2) = side
                 winner = 1 if st.get("winnerId") == e1 else 2 if st.get("winnerId") == e2 else 0
-                forfeit = st.get("displayScore") in (None, "DQ") or (sc1 is not None and sc1 < 0) or (sc2 is not None and sc2 < 0)
+                reason = verdicts.get(st["id"])
                 rows.append({
                     "source": "startgg", "event_id": str(ev["event"]["id"]), "event": t["name"].strip(),
                     "category": category(t["name"]),
@@ -169,7 +172,8 @@ def load_startgg(ids):
                     "stage": ev["event"]["name"] if ev["event"]["name"] != t["name"] else phase.get("name"),
                     "stage_type": (phase.get("bracketType") or "").lower(), "round": st.get("fullRoundText"),
                     "time": when, "p1": n1, "p2": n2, "s1": sc1, "s2": sc2,
-                    "winner": winner, "valid": int(winner > 0 and not forfeit),
+                    "winner": winner, "valid": int(winner > 0 and not reason),
+                    "match_id": str(st["id"]), "note": reason or "",
                 })
     return rows
 
@@ -197,7 +201,7 @@ def load_manual(ids):
             "source": "manual", "event_id": "", "event": m["event"], "category": category(m["event"]),
             "stage": m["stage"], "stage_type": m["stage_type"], "round": m["round"], "time": m["time"],
             "p1": m["p1_account"], "p2": m["p2_account"], "s1": s1, "s2": s2,
-            "winner": 1 if s1 > s2 else 2, "valid": 1,
+            "winner": 1 if s1 > s2 else 2, "valid": 1, "match_id": "", "note": "manual: " + m["source"],
         })
     return rows
 
@@ -294,6 +298,7 @@ def load_challonge(ids):
         for p in (x["participant"] for x in t.get("participants", [])):
             for pid in [p["id"]] + list(p.get("group_player_ids") or []):
                 part[pid] = p
+        verdicts = phantoms.challonge_verdicts(t)
         for m in (x["match"] for x in t.get("matches", [])):
             if m.get("state") != "complete" or not m.get("player1_id") or not m.get("player2_id"):
                 continue
@@ -315,14 +320,15 @@ def load_challonge(ids):
                 nodes.append(node)
             s1, s2 = series_score(m.get("scores_csv"))
             winner = 1 if m.get("winner_id") == m["player1_id"] else 2 if m.get("winner_id") == m["player2_id"] else 0
-            # a 0-0 with a winner is a walkover (no-show or DQ), not a played series
-            forfeit = placeholder or bool(m.get("forfeited")) or (s1 is not None and (min(s1, s2) < 0 or s1 == s2 == 0))
+            # byes, forfeits, 0-0 walkovers and organiser-entered no-shows: see phantoms.py
+            reason = verdicts.get(m["id"]) or ("placeholder" if placeholder else None)
             rows.append({
                 "source": "challonge", "event_id": str(t["id"]), "event": event,
                 "category": cat, "stage": stage,
                 "stage_type": "group" if m.get("group_id") else t.get("tournament_type"), "round": m.get("round"),
                 "time": when, "p1": nodes[0], "p2": nodes[1], "s1": s1, "s2": s2,
-                "winner": winner, "valid": int(winner > 0 and not forfeit),
+                "winner": winner, "valid": int(winner > 0 and not reason),
+                "match_id": str(m["id"]), "note": reason or "",
             })
     return rows
 
@@ -354,6 +360,7 @@ def main():
     rows += load_manual(ids)
 
     alias_path = os.path.join(DATA, "aliases.csv")
+    canonical_names = []
     if os.path.exists(alias_path):
         accounts_by_name = defaultdict(set)
         for node, names in ids.names.items():
@@ -361,6 +368,7 @@ def main():
                 for key in name_keys(display):
                     accounts_by_name[key].add(node)
         for r in csv.DictReader(open(alias_path)):
+            canonical_names.append(r["canonical"])
             ids.union("name:" + norm_name(r["alias"]), "name:" + norm_name(r["canonical"]))
             # names too short to link automatically (two-character names) are merged through the accounts that used them
             nodes = sorted(accounts_by_name[norm_name(r["alias"])] | accounts_by_name[norm_name(r["canonical"])])
@@ -376,6 +384,9 @@ def main():
     for root, nodes in groups.items():
         latest = max(nodes, key=lambda n: ids.last_seen.get(n, ""))
         display = ids.latest.get(latest) or ids.names[latest].most_common(1)[0][0]
+        # a manually merged player is shown under the canonical name given in aliases.csv
+        known = {n for node in nodes for d in ids.names[node] for n in name_keys(d)}
+        display = next((c for c in canonical_names if norm_name(c) in known), display)
         aliases = sorted({n for node in nodes for n in ids.names[node]})
         # prefer Battlefy / start.gg accounts so ids stay stable when Challonge accounts join
         pid = min(nodes, key=lambda n: (n.startswith("ch:"), n))

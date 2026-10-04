@@ -25,7 +25,8 @@ python3 build_site.py          # 生成交互页面 site/index.html
 | Weekday Skirmish、Blitz、Homebrew Brawl 等社区赛 | Battlefy / start.gg | 已抓取，类别为 `community`，默认不计入 |
 | OCC 月赛 2021.05 – 2024.11（同月的资格赛 A/B + Top 8 合并成一站；2024 年 4–8 月只有 Top 8） | Challonge | ✅ 已收录，类别 `official` |
 | OCC Ultimate I – III（2023，8 人邀请赛） | Challonge | ✅ 已收录，类别 `official` |
-| KARDS 世界赛 2023（128 人小组赛 + 淘汰赛）、2024、2025（决赛阶段） | Challonge | ✅ 已收录，类别 `official` |
+| KARDS 世界赛 2023（128 人小组赛 + 32 强双败）、2024（16 强单败）、2025（16 人双败） | Challonge | ✅ 已收录，类别 `official` |
+| 2021–2023 世界赛前 4 名线下总决赛（18 场） | 官方新闻 | ✅ 人工补录（`data/manual_matches.csv`） |
 | 2025 年 4 个扩展赛（Blood & Iron、United Front、Naval Warfare、Air Supremacy，各含 Top 8） | Challonge | ✅ 已收录，类别 `official` |
 | 2026 年冬、春、夏、秋季赛（各含 Top 8） | Challonge | ✅ 已收录，类别 `official` |
 | KARDS Open XV、XVI（2023） | Challonge | ✅ 已收录，类别 `open` |
@@ -33,9 +34,18 @@ python3 build_site.py          # 生成交互页面 site/index.html
 
 `data/challonge_events.csv` 是 kards_esports 账号下的全部 139 个 Challonge 对阵表。
 
-共 77 站、6927 场计分对局（Battlefy + start.gg 3866 场，Challonge 3061 场）；算上社区赛共 7655 场有效对局。
-轮空、弃权/取消资格、双败、未录入结果的对局不计入；Challonge 上还会排除 `BYE`/`CPU` 等占位选手，
-以及记成 0-0 的不战而胜。
+共 77 站、6602 场计分对局（含 18 场人工补录的总决赛）。
+
+**没打的比赛不算**（`phantoms.py`，每场单独判断，整场作废、对手的胜场一起去掉）：
+- 轮空和 `BYE`/`CPU` 占位选手、平台自己的判负标记（Challonge `forfeited`、start.gg `DQ`、Battlefy 双败）、0-0 的不战而胜
+- Battlefy 只有一方签到、正好 10 分钟后的自动 2-0（缺席判负，平台不打标记）
+- Challonge 上被主办方标 `(DQ)`/`(dropped)` 的选手：标记之后录入的 0 分负局，以及标记时被改写成 0-3 的旧结果（真实胜负已经丢失）
+- start.gg 上只记胜负、没有比分的结果（WC 2022 的缺席判负写法），以及管理员几秒内批量录入的缺席选手 0 分负局（WC 2021）
+- 瑞士轮里快到不可能打完、而且输家此后再也没真打过的 0 分负局
+
+规则刻意保守：DQ 之前真打的比赛保留（Battlefy 把 DQ 标在选手最后一场，即使那场真打过，也会恢复）；
+瑞士轮和循环赛不按负场数判断；**只要双方都在场、比分正常，录入再快也算真实对局**（淘汰赛常提前约战）。
+清洗后有 457 场原本计分的对局作废，115 场被误删的真实对局恢复。
 
 ## 模型
 
@@ -48,9 +58,10 @@ python3 build_site.py          # 生成交互页面 site/index.html
 - BT 分 = 1500 + β × 400 / ln 10
 
 半衰期和先验由 `evaluate.py` 挑出：用每站赛前的分数预测该站胜负，
-样本外 log loss 0.677（抛硬币为 0.693），准确率约 57%。
-（加入全部 Challonge 赛事后，网格最优是半衰期 365 天、先验 0.6，log loss 0.674；
-默认的 0.8 只差 0.002，在误差范围内，所以保留默认。想用最优值就加 `--prior-sd 0.6`。）
+清洗后 6003 场样本外对局上 log loss 0.675（抛硬币为 0.693），准确率约 58%。
+先验 0.6 略好（0.673），差距在误差范围内；新人起点、赛事级别等改进正在按预先定好的规则检验。
+
+`bt.py` 每个 CPU 核算一段快照，并从上一站的解出发继续拟合，全量重算约 3 秒。
 
 ## 文件
 

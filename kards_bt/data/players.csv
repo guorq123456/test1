@@ -30,6 +30,7 @@ sgg:2486950,9tribez,9tribez,ch:9tribez sgg:2486950
 bf:5fb43070a2fd346547530c21,[14e]tuveuxdugateaux,[14e]Tuveuxdugateaux / [14e]tuveuxdugateaux,bf:5fb43070a2fd346547530c21
 bf:5ebd8cafb3bec004beff6eff,[AAA] Caps04,[AAA] Caps04,bf:5ebd8cafb3bec004beff6eff
 sgg:3082416,[BZH] eTo,[BZH] eTo,sgg:3082416
+sgg:2491287,[CN]lgyouch,[CN]lgyouch / lgyouch,ch:lgyouch sgg:2491287
 bf:56ed79634fdf9b7e1224dddc,[DB] Praetorian,[DB] Praetorian,bf:56ed79634fdf9b7e1224dddc
 bf:5f17ef0fcfac0e373c6190c4,[REDi]1R COL ANZAC_Ace,[REDi]1R COL ANZAC_Ace,bf:5f17ef0fcfac0e373c6190c4
 bf:5a58cabb82c7de043a3c289b,[TNT] marvin_the_imp,[TNT] marvin_the_imp,bf:5a58cabb82c7de043a3c289b
@@ -53,7 +54,6 @@ bf:5f0cbd1969a363414a64af57,agent_182,agent_182,bf:5f0cbd1969a363414a64af57
 bf:5fc21ebcb0ef7749130e6b81,Agumonster,Agumonster,bf:5fc21ebcb0ef7749130e6b81
 bf:5f37cf6b6ce6de28d63de407,Ailoyros,Ailoyros,bf:5f37cf6b6ce6de28d63de407
 sgg:2800429,Air,Air,sgg:2800429
-bf:601d8d265470fa2af29f55e8,Akatsuki (bronzeguy),Akatsuki (bronzeguy) / Bronzeguy,bf:601d8d265470fa2af29f55e8 ch:akatsuki(bronzeguy)
 ch:akgz,akgz,akgz,ch:akgz
 bf:5fb110bd698db1048d26c5f6,Aksara,Aksara,bf:5fb110bd698db1048d26c5f6
 bf:5f32e74430b92e118dbc4866,alan1957,alan1957,bf:5f32e74430b92e118dbc4866
@@ -77,7 +77,6 @@ sgg:2483808,ApeGo,ApeGo,ch:apego sgg:2483808
 ch:apologize,Apologize,Apologize,ch:apologize
 bf:5ec99a6d5cb5d5345c7fdf7c,AriBigBehn,AriBigBehn,bf:5ec99a6d5cb5d5345c7fdf7c ch:AriBigBehn ch:aribigbehn sgg:2373035
 bf:5fb010199a9e750ea663b1d1,Arizonakid,Arizonakid,bf:5fb010199a9e750ea663b1d1
-ch:artemisia,artemisia,Artemisia (百里蒿) / artemisia,ch:artemisia ch:artemisia(百里蒿)
 ch:artizo,Artizo,Artizo,ch:artizo
 bf:601c52cb2eb6151da1f96ccf,Asarnil,Asarnil,bf:601c52cb2eb6151da1f96ccf
 bf:6095dfafbc14c611ca7d00f8,asdron777,asdron777,bf:6095dfafbc14c611ca7d00f8
@@ -139,6 +138,7 @@ bf:5fbc79591632970e916c3fe5,Breich,Breich,bf:5fbc79591632970e916c3fe5
 bf:5f38338163cc1128e5f86f97,Brendan,Brendan,bf:5f38338163cc1128e5f86f97
 bf:5f1b3f1b08ac6c1dd4d6bb23,brienoconan,brienoconan,bf:5f1b3f1b08ac6c1dd4d6bb23
 sgg:2375354,Brightstar,Brightstar,sgg:2375354
+bf:601d8d265470fa2af29f55e8,Bronzeguy,Akatsuki (bronzeguy) / Bronzeguy,bf:601d8d265470fa2af29f55e8 ch:akatsuki(bronzeguy)
 sgg:2505365,bruce,bruce,sgg:2505365
 bf:5fa3e36b6b9c704abc3f92a0,bruki,bruki,bf:5fa3e36b6b9c704abc3f92a0
 bf:601ad0d4bccfe11bd7952790,Bubblebox,Bubblebox,bf:601ad0d4bccfe11bd7952790 sgg:2805824
@@ -282,7 +282,7 @@ bf:5f0dde2dc47339351f7f7715,Dubba Roll,Abbud / Dubba Roll / abbud,bf:5f0dde2dc47
 sgg:2624805,Dutang Clem,Dutang Clem,sgg:2624805
 ch:dylan,Dylan,Dylan,ch:dylan
 bf:602efa92d7a4147c1146d997,Dynamo D,Dynamo D,bf:602efa92d7a4147c1146d997
-sgg:2631948,Easy101,Easy101 / Easy_101,ch:Easy101 sgg:2631948
+sgg:2631948,Easy_101,Easy101 / Easy_101,ch:Easy101 sgg:2631948
 ch:echidna,Echidna,Echidna,ch:echidna
 bf:60ae026e000fb03f36007a83,EcholoQE,EcholoQE,bf:60ae026e000fb03f36007a83
 ch:egoroff,Egoroff,Egoroff,ch:egoroff
@@ -341,6 +341,7 @@ sgg:3116938,Gambit1286,Gambit1286,ch:gambit1286 sgg:3116938
 bf:5f1b9f20a73922196c802448,Gamesite,Gamesite,bf:5f1b9f20a73922196c802448
 bf:60abd00e9226326cec5f56e5,Garand Конституції,Garand Конституції,bf:60abd00e9226326cec5f56e5
 bf:601a74d5f4761b1d98293c14,gardr,gardr,bf:601a74d5f4761b1d98293c14
+sgg:2498370,Garf ABC Albert,Garf ABC Albert / Graf ABC Albert,ch:grafabcalbert sgg:2498370
 bf:5fbe9b450f21e57963852d1e,garygo,garygo,bf:5fbe9b450f21e57963852d1e
 sgg:2489723,Gat0,Gat0,ch:gat0 sgg:2489723
 bf:5fc1f746a2fd34654753e1ae,GearWolf1991,GearWolf1991,bf:5fc1f746a2fd34654753e1ae
@@ -365,7 +366,6 @@ sgg:2357940,GMan,GMan,sgg:2357940
 bf:5f3a8e2d33118628f2f5a7d5,Goltz,Goltz,bf:5f3a8e2d33118628f2f5a7d5
 bf:6075a268938bed74f6ed9aee,Goran,Goran,bf:6075a268938bed74f6ed9aee
 sgg:2494716,gotoh,gotoh,ch:gotoh sgg:2494716
-sgg:2498370,Graf ABC Albert,Garf ABC Albert / Graf ABC Albert,ch:grafabcalbert sgg:2498370
 ch:gragon123,Gragon123,Gragon123,ch:gragon123
 sgg:2624368,Graptolith,Graptolith,sgg:2624368
 bf:5f464a379f8a441a7681100e,Grarivier,Grarivier,bf:5f464a379f8a441a7681100e
@@ -424,7 +424,7 @@ bf:602aa3c2a9de5d119d53bf98,Infamy Nexus,Infamy Nexus / vis4death,bf:602aa3c2a9d
 sgg:2492394,inktrail,inktrail,sgg:2492394
 bf:5ebd9402b92b28521a098ec8,Innocent Bubbles,Bubbles / Innocent Bubbles / Innocent_Bubbles / innocent bubbles,bf:5ebd9402b92b28521a098ec8 ch:Innocent_Bubbles ch:innocent_bubbles ch:innocentbubbles sgg:2357706
 ch:intradiction,Intradiction,Intradiction,ch:intradiction
-bf:6051fe41cbd09156d261e80c,Io_de_Scylla,Io de Scylla / Io_de_Scylla / Seb,bf:6051fe41cbd09156d261e80c ch:Io_de_Scylla ch:iodescylla sgg:2496703
+bf:6051fe41cbd09156d261e80c,Io de Scylla,Io de Scylla / Io_de_Scylla / Seb,bf:6051fe41cbd09156d261e80c ch:Io_de_Scylla ch:iodescylla sgg:2496703
 sgg:2695829,ION,ION,sgg:2695829
 bf:59b91e3e40985d034416fd27,Isenberg,Isenberg,bf:59b91e3e40985d034416fd27
 bf:601c0e79b125d31d258fd278,Ish,Ish,bf:601c0e79b125d31d258fd278
@@ -525,7 +525,6 @@ ch:leonard,LEONARD,LEONARD,ch:leonard
 bf:602de8ab384ba37dec87751b,leong_yc,leong_yc,bf:602de8ab384ba37dec87751b
 ch:leovinardo,leovinardo,leovinardo,ch:leovinardo
 ch:leps,leps,Leps / leps,ch:leps
-sgg:2491287,lgyouch,[CN]lgyouch / lgyouch,ch:lgyouch sgg:2491287
 bf:5f13952ceea71b24bc312529,Limitless Beast,Limitless Beast,bf:5f13952ceea71b24bc312529
 sgg:3082387,lin,lin,sgg:3082387
 sgg:2505316,link2sth,link2sth,sgg:2505316
@@ -844,7 +843,6 @@ ch:syswdsr,syswdsr,syswdsr,ch:syswdsr
 bf:5f0cf3becbf20c490eb4fa7d,T0M,T0M,bf:5f0cf3becbf20c490eb4fa7d
 sgg:2799802,tajailla,tajailla,sgg:2799802
 ch:takao,Takao,Takao,ch:takao
-ch:tangtang,tangtang,TangTang (钟离梓) / tangtang,ch:tangtang ch:tangtang(钟离梓)
 bf:60a5955444cea86cbcb2ebc2,Tanner,Tanner,bf:60a5955444cea86cbcb2ebc2
 ch:tastedasrainbow,TasteDasRainbow,TasteDasRainbow,ch:tastedasrainbow
 bf:5fb1e014eb92fe0475439152,TB273,TB273,bf:5fb1e014eb92fe0475439152 ch:TB273 ch:tb273 sgg:2498495
@@ -1041,7 +1039,6 @@ sgg:2483676,乱码乱码,乱码乱码,sgg:2483676
 ch:二月叶,二月叶,二月叶,ch:二月叶
 ch:云上梢离,云上梢离,云上梢离,ch:云上梢离
 ch:伊弗列姆,伊弗列姆 (ephraim),伊弗列姆 / 伊弗列姆 (ephraim),ch:伊弗列姆 ch:伊弗列姆(ephraim)
-ch:会导更会演,会导更会演,会导更会演 / 会导更会演 (Director),ch:会导更会演 ch:会导更会演(director)
 ch:伤心河,伤心河,伤心河,ch:伤心河
 ch:作死的骡博,作死的骡博 (Radish),作死的骡博 / 作死的骡博 (Radish),ch:作死的骡博 ch:作死的骡博(radish)
 ch:你算哪块小饼干,你算哪块小饼干,你算哪块小饼干,ch:你算哪块小饼干
@@ -1080,8 +1077,7 @@ ch:圆寂都察院,圆寂都察院 (Godyuan),圆寂都察院 / 圆寂都察院 (
 sgg:3080890,國際友人白求恩,國際友人白求恩,sgg:3080890
 ch:坦闪个垃圾游戏,坦闪个垃圾游戏,坦闪个垃圾游戏 / 坦闪个垃圾游戏 (Tanshan),ch:坦闪个垃圾游戏 ch:坦闪个垃圾游戏#1893(tanshan) ch:坦闪个垃圾游戏(tanshan)
 ch:基准线,基准线,基准线,ch:基准线
-ch:夏浪,夏 浪,夏 浪,ch:夏浪
-ch:夏浪(xialang),夏 浪 (Xialang),夏 浪 (Xialang) / 夏 浪 (xialang),ch:夏浪(xialang)
+ch:夏浪,夏 浪,夏 浪 / 夏 浪 (Xialang) / 夏 浪 (xialang),ch:夏浪 ch:夏浪(xialang)
 ch:大帝高文,大帝高文,大帝高文,ch:大帝高文
 ch:大米呱呱,大米呱呱,大米呱呱,ch:大米呱呱
 bf:5f31e18d7bd80311ab780bcb,天之子将军,天之子将军,bf:5f31e18d7bd80311ab780bcb
@@ -1107,8 +1103,7 @@ ch:影依丶,影依丶,影依丶,ch:影依丶
 ch:思路决定胜负,思路决定胜负,思路决定胜负,ch:思路决定胜负
 ch:恶法亦法(shawn),恶法亦法 (Shawn),恶法亦法 (Shawn),ch:恶法亦法(shawn)
 ch:惊鸿照影,惊鸿照影,惊鸿照影,ch:惊鸿照影
-ch:懿凌,懿凌,懿凌,ch:懿凌
-ch:懿凌(yiling),懿凌 ( Yiling),懿凌 ( Yiling),ch:懿凌(yiling)
+ch:懿凌,懿凌,懿凌 / 懿凌 ( Yiling),ch:懿凌 ch:懿凌(yiling)
 sgg:2519403,我开天王炸,我开天王炸 / 我开天王炸 (Cappuccino) / 我开天王炸 (cappuccino),ch:我开天王炸 ch:我开天王炸(cappuccino) sgg:2519403
 sgg:2620876,我是抖m,我是抖m,sgg:2620876
 ch:我永远都是中国人,我永远都是中国人,我永远都是中国人,ch:我永远都是中国人
@@ -1163,7 +1158,7 @@ ch:王牌卧底川建国,王牌卧底川建国,王牌卧底川建国,ch:王牌�
 ch:琪露诺,琪露诺,琪露诺,ch:琪露诺
 ch:Wanghongwen,电棍儿,电棍儿,ch:Wanghongwen ch:电棍儿
 bf:5fbf4b25698db1048d27bdc9,白皮猪杀手,白皮猪杀手,bf:5fbf4b25698db1048d27bdc9
-sgg:2388207,百里蒿 (Artemisia),百里蒿 / 百里蒿 (Artemisia) / 百里蒿 (artemisia),ch:百里蒿 ch:百里蒿(artemisia) sgg:2388207
+sgg:2388207,百里蒿,Artemisia (百里蒿) / artemisia / 百里蒿 / 百里蒿 (Artemisia) / 百里蒿 (artemisia),ch:artemisia ch:artemisia(百里蒿) ch:百里蒿 ch:百里蒿(artemisia) sgg:2388207
 sgg:2483799,祈手卿,祈手卿,sgg:2483799
 ch:禁忌之门,禁忌之门,禁忌之门 / 禁忌之门 (Taboo) / 禁忌之门 (taboo),ch:禁忌之门 ch:禁忌之门#3690(taboo) ch:禁忌之门(taboo)
 ch:竹将军,竹将军,竹将军,ch:竹将军
@@ -1171,12 +1166,12 @@ ch:算什么男人,算什么男人,算什么男人,ch:算什么男人
 ch:耀旭,耀 旭,耀 旭,ch:耀旭
 ch:老咸鱼了,老咸鱼了,老咸鱼了,ch:老咸鱼了
 sgg:2803048,老毛eee,老毛eee,ch:老毛eee sgg:2803048
-sgg:2409467,老虎不发猫 (Tiger),老虎不发猫 / 老虎不发猫 (Tiger),ch:NirvanaZhou ch:老虎不发猫 ch:老虎不发猫#2880(tiger) ch:老虎不发猫(tiger) sgg:2409467 sgg:2428668
+sgg:2409467,老虎不发猫,会导更会演 / 会导更会演 (Director) / 老虎不发猫 / 老虎不发猫 (Tiger),ch:NirvanaZhou ch:会导更会演 ch:会导更会演(director) ch:老虎不发猫 ch:老虎不发猫#2880(tiger) ch:老虎不发猫(tiger) sgg:2409467 sgg:2428668
 bf:5fc13c125d320863b86f1d60,聖訷殺,聖訷殺,bf:5fc13c125d320863b86f1d60
 ch:至死方休,至死方休,至死方休 / 至死方休 (last man),ch:至死方休 ch:至死方休(lastman)
 sgg:2351757,芥末~,芥末~,ch:芥末~ sgg:2351757
 ch:花满忘川,花满忘川,花满忘川,ch:花满忘川
-sgg:3082284,莱因哈特·舍尔BK,莱因哈特·舍尔BK / 莱因哈特舍尔BK,ch:莱因哈特·舍尔bk sgg:3082284
+sgg:3082284,莱因哈特舍尔BK,莱因哈特·舍尔BK / 莱因哈特舍尔BK,ch:莱因哈特·舍尔bk sgg:3082284
 ch:落寒尘,落寒尘,落寒尘,ch:落寒尘
 bf:60c9b27ea95cd94e9dae5da2,虚无主义,虚无主义,bf:60c9b27ea95cd94e9dae5da2 sgg:2805792
 ch:虚竹太岁,虚竹太岁,虚竹太岁,ch:虚竹太岁
@@ -1193,7 +1188,7 @@ bf:5fa3973bf8fc171ea9f68255,辉辉呀,辉辉呀,bf:5fa3973bf8fc171ea9f68255 ch:�
 ch:这是替身攻击(attack),这是替身攻击 (attack),这是替身攻击 (attack),ch:这是替身攻击(attack)
 ch:重生之我是印卡机,重生之我是印卡机,重生之我是印卡机,ch:重生之我是印卡机
 sgg:2917089,金轮会怎么做 (Jinlun),金轮会怎么做 / 金轮会怎么做 (Jinlun),ch:金轮会怎么做 ch:金轮会怎么做#2602(jinlun) sgg:2917089
-sgg:2483760,钟离梓,唐谨言 / 钟离梓 / 钟离梓 (TangTang) / 钟离梓 (tangtang) / 钟离梓 (唐谨言),ch:唐谨言 ch:钟离梓 ch:钟离梓#1688(tangtang) ch:钟离梓(tangtang) ch:钟离梓(唐谨言) sgg:2483760
+sgg:2483760,钟离梓,TangTang (钟离梓) / tangtang / 唐谨言 / 钟离梓 / 钟离梓 (TangTang) / 钟离梓 (tangtang) / 钟离梓 (唐谨言),ch:tangtang ch:tangtang(钟离梓) ch:唐谨言 ch:钟离梓 ch:钟离梓#1688(tangtang) ch:钟离梓(tangtang) ch:钟离梓(唐谨言) sgg:2483760
 ch:阔爱的汤圆酱,阔爱的汤圆酱,阔爱的汤圆酱,ch:阔爱的汤圆酱
 ch:阳阳rua,阳阳rua,阳阳rua,ch:阳阳rua
 ch:随风飘散,随风飘散,随风飘散,ch:随风飘散

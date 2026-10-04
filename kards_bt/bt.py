@@ -23,10 +23,16 @@ import math
 import os
 from collections import defaultdict
 from datetime import datetime
+from multiprocessing import Pool
 
-import numpy as np
-from scipy.optimize import minimize
-from scipy.special import expit, log_expit
+# parallelism comes from one process per core; a multi-threaded BLAS in every process would oversubscribe
+for _var in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ.setdefault(_var, "1")
+
+import numpy as np  # noqa: E402  (after the thread settings above)
+from scipy.linalg import lapack  # noqa: E402
+from scipy.optimize import minimize  # noqa: E402
+from scipy.special import expit, log_expit  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "data")
@@ -83,7 +89,11 @@ def fit_bt(winners, losers, weights, n, prior_sd, x0=None):
     np.add.at(H, (losers, losers), h)
     np.add.at(H, (winners, losers), -h)
     np.add.at(H, (losers, winners), -h)
-    se = np.sqrt(np.diag(np.linalg.inv(H)))
+    # H is symmetric positive definite: invert through its Cholesky factor (only the diagonal is needed)
+    c, info = lapack.dpotrf(H)
+    if info == 0:
+        inv, info = lapack.dpotri(c)
+    se = np.sqrt(np.diag(inv)) if info == 0 else np.sqrt(np.diag(np.linalg.inv(H)))
     return b, se
 
 
@@ -93,6 +103,45 @@ def event_snapshots(matches):
     for t, *_, ev in matches:
         end[ev] = max(end[ev], t)
     return sorted((t, ev) for ev, t in end.items())
+
+
+_JOB = None  # (matches, names, half_life, prior_sd, active_days), inherited by forked workers
+
+
+def _snapshot_chunk(snaps):
+    matches, names, half_life, prior_sd, active_days = _JOB
+    rows, prev = [], {}
+    for snap_t, snap_event in snaps:
+        past = [m for m in matches if m[0] <= snap_t]
+        ids = sorted({p for m in past for p in (m[1], m[2])})
+        idx = {p: i for i, p in enumerate(ids)}
+        age = np.array([(snap_t - m[0]).total_seconds() / 86400 for m in past])
+        decay = 0.5 ** (age / half_life) if half_life > 0 else np.ones(len(past))
+        weights = decay * np.array([m[3] for m in past])
+        winners = np.array([idx[m[1]] for m in past])
+        losers = np.array([idx[m[2]] for m in past])
+        x0 = np.array([prev.get(p, 0.0) for p in ids])
+        b, se = fit_bt(winners, losers, weights, len(ids), prior_sd, x0=x0)
+        prev = dict(zip(ids, b))
+
+        n_matches = np.zeros(len(ids))
+        eff = np.zeros(len(ids))
+        last = {}
+        for m, w in zip(past, decay):
+            for p in (m[1], m[2]):
+                n_matches[idx[p]] += 1
+                eff[idx[p]] += w
+                last[p] = max(last.get(p, m[0]), m[0])
+        for p, i in idx.items():
+            if (snap_t - last[p]).days > active_days:
+                continue
+            rows.append({
+                "date": snap_t.strftime("%Y-%m-%d"), "event": snap_event, "player_id": p,
+                "name": names.get(p, p), "elo": round(1500 + ELO_SCALE * b[i], 1),
+                "se": round(ELO_SCALE * se[i], 1), "results": int(n_matches[i]),
+                "eff_results": round(eff[i], 2), "last_played": last[p].strftime("%Y-%m-%d"),
+            })
+    return rows
 
 
 def main():
@@ -105,6 +154,7 @@ def main():
     ap.add_argument("--active-days", type=float, default=730,
                     help="only report a player at a snapshot if they played within this many days")
     ap.add_argument("--out", default=os.path.join(DATA, "ratings_timeline.csv"))
+    ap.add_argument("--jobs", type=int, default=os.cpu_count() or 1, help="worker processes")
     args = ap.parse_args()
 
     matches = load_matches(set(args.categories.split(",")), args.games)
@@ -112,36 +162,19 @@ def main():
     snapshots = event_snapshots(matches)
     print(f"{len(matches)} results, {len(snapshots)} snapshots")
 
-    rows = []
-    for snap_t, snap_event in snapshots:
-        past = [m for m in matches if m[0] <= snap_t]
-        ids = sorted({p for m in past for p in (m[1], m[2])})
-        idx = {p: i for i, p in enumerate(ids)}
-        age = np.array([(snap_t - m[0]).total_seconds() / 86400 for m in past])
-        decay = 0.5 ** (age / args.half_life) if args.half_life > 0 else np.ones(len(past))
-        weights = decay * np.array([m[3] for m in past])
-        winners = np.array([idx[m[1]] for m in past])
-        losers = np.array([idx[m[2]] for m in past])
-        b, se = fit_bt(winners, losers, weights, len(ids), args.prior_sd)
-
-        n_matches = np.zeros(len(ids))
-        eff = np.zeros(len(ids))
-        last = {}
-        for m, w in zip(past, decay):
-            for p in (m[1], m[2]):
-                n_matches[idx[p]] += 1
-                eff[idx[p]] += w
-                last[p] = max(last.get(p, m[0]), m[0])
-        for p, i in idx.items():
-            if (snap_t - last[p]).days > args.active_days:
-                continue
-            rows.append({
-                "date": snap_t.strftime("%Y-%m-%d"), "event": snap_event, "player_id": p,
-                "name": names.get(p, p), "elo": round(1500 + ELO_SCALE * b[i], 1),
-                "se": round(ELO_SCALE * se[i], 1), "results": int(n_matches[i]),
-                "eff_results": round(eff[i], 2), "last_played": last[p].strftime("%Y-%m-%d"),
-            })
-        print(f"{snap_t:%Y-%m-%d} {snap_event:40s} players={len(ids):4d} results={len(past)}")
+    # snapshots are independent fits; split them into contiguous chunks, one per core, and warm-start
+    # each fit from the previous snapshot of the same chunk (consecutive snapshots differ by one event)
+    global _JOB
+    _JOB = (matches, names, args.half_life, args.prior_sd, args.active_days)
+    workers = max(1, min(args.jobs, len(snapshots)))
+    chunks = [list(c) for c in np.array_split(np.arange(len(snapshots)), workers) if len(c)]
+    jobs = [[snapshots[i] for i in c] for c in chunks]
+    if workers > 1:
+        with Pool(workers) as pool:
+            parts = pool.map(_snapshot_chunk, jobs)
+    else:
+        parts = [_snapshot_chunk(j) for j in jobs]
+    rows = [r for part in parts for r in part]
 
     with open(args.out, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))
