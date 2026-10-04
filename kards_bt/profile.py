@@ -37,8 +37,12 @@ def main():
     ms = [m for m in load("matches.csv") if m["valid"] == "1" and m["category"] == "official"]
     peaks = load("peaks.csv")
     resid = {r["player_id"]: r for r in load("residuals.csv")}
-    pl = sorted(((r["event"], r["label"]) for r in load("placements.csv") if r["player_id"] == pid),
-                key=lambda x: min(m["time"] for m in ms if m["event"] == x[0]))
+    ev_start = {}
+    for m in ms:
+        ev_start[m["event"]] = min(ev_start.get(m["event"], m["time"]), m["time"])
+    # placements.csv also covers Open-series events, which the ratings do not use
+    pl = sorted(((r["event"], r["label"]) for r in load("placements.csv") if r["player_id"] == pid and r["event"] in ev_start),
+                key=lambda x: ev_start[x[0]])
     peak_elo = {r["player_id"]: float(r["peak_elo"]) for r in peaks}
     debut = {}
     for m in sorted(ms, key=lambda m: m["time"]):
