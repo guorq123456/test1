@@ -18,6 +18,7 @@ from datetime import timedelta
 
 import bt
 import invites
+import newcomers
 
 ELO = bt.ELO_SCALE
 
@@ -34,6 +35,7 @@ def main():
     ap.add_argument("--half-life", type=float, default=240)
     ap.add_argument("--prior-sd", type=float, default=0.4)
     ap.add_argument("--invite-half-life", type=float, default=120)
+    ap.add_argument("--newcomer-anchor", type=float, default=2)
     ap.add_argument("--out", help="write a Markdown report here")
     args = ap.parse_args()
 
@@ -46,7 +48,9 @@ def main():
     cats = {"official"}
     matches = bt.load_matches(cats, False)
     fit_before = lambda t: bt._fit_before(matches, t, args.half_life, args.prior_sd)  # noqa: E731
-    credits = invites.credits(fit_before)
+    credits = invites.credits(fit_before) + newcomers.anchors(matches, args.half_life, args.prior_sd, bt.fit_bt, args.newcomer_anchor)
+    # a player with no official results yet starts at the era's newcomer level (newcomers.py)
+    gap = newcomers.offsets(matches, args.half_life, args.prior_sd, bt.fit_bt)[0] if args.newcomer_anchor > 0 else {}
 
     rows = [r for r in csv.DictReader(open(os.path.join(bt.DATA, "matches.csv")))
             if r["valid"] == "1" and r["category"] in cats]
@@ -66,7 +70,7 @@ def main():
     out = [f"# {names[pid]}：逐站检验\n",
            "赛前分 = 用这站第一场之前的所有结果拟合；期望胜场 = 每场赛前胜率之和。"
            "变化拆成两部分：**本站战绩**（同一时刻、去掉本人这站对局再拟合一次，两者之差）"
-           "（含天梯直邀的虚拟战绩）和**其他**（旧比赛衰减、对手后来的成绩改变旧胜负的含金量）。新人对手没有赛前分，按 1500 计。\n",
+           "（含天梯直邀的虚拟战绩）和**其他**（旧比赛衰减、对手后来的成绩改变旧胜负的含金量）。还没打过官方赛的选手按当时新人的平均水平起步（低于 1500，见 newcomers.py）。\n",
            "| 赛事 | 结果 | 胜-负 | 期望胜 | 差 | 赛前 | 赛后 | 变化 | 本站战绩 | 其他 |",
            "|---|---|---|---|---|---|---|---|---|---|"]
     detail = []
@@ -77,16 +81,17 @@ def main():
         post = ratings(matches, names, credits, end, args)
         without = [m for m in matches if not (m[4] == event and pid in (m[1], m[2]))]
         # the ladder-invite credit (if any) belongs to this event's result too
-        cr_wo = [c for c in credits if not (c[1] == pid and start <= c[0] <= end)]
+        cr_wo = [c for c in credits if not (c[1] == pid and start <= c[0] <= end and len(c) == 5)]  # invite credit only
         post_wo = ratings(without, names, cr_wo, end, args)
-        me0 = pre.get(pid, 1500.0)
+        new_elo = 1500.0 - ELO * gap.get(event, 0.0)
+        me0 = pre.get(pid, new_elo)
         w = l = 0
         exp = 0.0
         lines = []
         for r in sorted(mine[event], key=lambda r: r["time"]):
             opp = r["p2"] if r["p1"] == pid else r["p1"]
             won = (r["winner"] == "1") == (r["p1"] == pid)
-            opp_elo = pre.get(opp, 1500.0)
+            opp_elo = pre.get(opp, new_elo)
             p = 1 / (1 + 10 ** ((opp_elo - me0) / 400))
             exp += p
             w, l = w + won, l + (not won)

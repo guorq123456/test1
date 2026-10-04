@@ -31,6 +31,7 @@ for _var in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
 
 import numpy as np  # noqa: E402  (after the thread settings above)
 import invites  # noqa: E402
+import newcomers  # noqa: E402
 from scipy.linalg import lapack  # noqa: E402
 from scipy.optimize import minimize  # noqa: E402
 from scipy.special import expit, log_expit  # noqa: E402
@@ -167,8 +168,9 @@ def _snapshot_chunk(snaps):
         winners = np.array([idx[m[1]] for m in past])
         losers = np.array([idx[m[2]] for m in past])
         x0 = np.array([prev.get(p, 0.0) for p in ids])
-        virtual = [(idx[p], level, sign, n * 0.5 ** ((snap_t - t).total_seconds() / 86400 / invite_half_life))
-                   for t, p, level, wins, losses in credits if t <= snap_t and p in idx
+        # virtual results: ladder-invite credits (5-tuples, invite half-life) and newcomer anchors (own half-life)
+        virtual = [(idx[p], level, sign, n * 0.5 ** ((snap_t - t).total_seconds() / 86400 / (rest[0] if rest else invite_half_life)))
+                   for t, p, level, wins, losses, *rest in credits if t <= snap_t and p in idx
                    for sign, n in ((1.0, wins), (-1.0, losses)) if n > 0]
         virtual = tuple(np.array(c) for c in zip(*virtual)) if virtual else None
         b, se = fit_bt(winners, losers, weights, len(ids), prior_sd, x0=x0, virtual=virtual)
@@ -208,6 +210,8 @@ def main():
     ap.add_argument("--out", default=os.path.join(DATA, "ratings_timeline.csv"))
     ap.add_argument("--jobs", type=int, default=os.cpu_count() or 1, help="worker processes")
     ap.add_argument("--no-invites", action="store_true", help="skip the OCC ladder-invite credit (invites.py)")
+    ap.add_argument("--newcomer-anchor", type=float, default=2,
+                    help="virtual draws anchoring debutants at the era's estimated newcomer level (newcomers.py); 0 = off")
     ap.add_argument("--invite-half-life", type=float, default=120,
                     help="days; how fast the ladder-invite credit fades (real results take over)")
     args = ap.parse_args()
@@ -222,6 +226,9 @@ def main():
     global _JOB
     credits = [] if args.no_invites else invites.credits(lambda t: _fit_before(matches, t, args.half_life, args.prior_sd))
     print(f"ladder-invite credits: {len(credits)}")
+    anchors = newcomers.anchors(matches, args.half_life, args.prior_sd, fit_bt, args.newcomer_anchor)
+    print(f"newcomer anchors: {len(anchors)}")
+    credits = credits + anchors
     _JOB = (matches, names, args.half_life, args.prior_sd, args.active_days, credits, args.invite_half_life)
     workers = max(1, min(args.jobs, len(snapshots)))
     chunks = [list(c) for c in np.array_split(np.arange(len(snapshots)), workers) if len(c)]
