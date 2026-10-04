@@ -44,11 +44,19 @@ def parse_time(s):
     return datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ")
 
 
-def load_matches(categories, use_games):
-    """Return list of (time, winner_id, loser_id, weight, event) for valid matches."""
+OPEN = ("open", "open_special")
+
+
+def load_matches(categories, use_games, open_weight=1.0):
+    """Return list of (time, winner_id, loser_id, weight, event) for valid matches.
+
+    open_weight scales Open-series results (no entry bar, so a noisier signal than official events)."""
     out = []
     for r in csv.DictReader(open(os.path.join(DATA, "matches.csv"))):
         if r["valid"] != "1" or r["category"] not in categories:
+            continue
+        k = open_weight if r["category"] in OPEN else 1.0
+        if k <= 0:
             continue
         p1, p2 = r["p1"], r["p2"]
         t = parse_time(r["time"])
@@ -56,12 +64,12 @@ def load_matches(categories, use_games):
             g1, g2 = max(int(float(r["s1"])), 0), max(int(float(r["s2"])), 0)
             if g1 + g2 > 0:
                 if g1:
-                    out.append((t, p1, p2, float(g1), r["event"]))
+                    out.append((t, p1, p2, k * g1, r["event"]))
                 if g2:
-                    out.append((t, p2, p1, float(g2), r["event"]))
+                    out.append((t, p2, p1, k * g2, r["event"]))
                 continue
         w, l = (p1, p2) if r["winner"] == "1" else (p2, p1)
-        out.append((t, w, l, 1.0, r["event"]))
+        out.append((t, w, l, k, r["event"]))
     return out
 
 
@@ -137,6 +145,8 @@ _JOB = None  # (matches, names, half_life, prior_sd, active_days), inherited by 
 
 def _fit_before(matches, t0, half_life, prior_sd):
     past = [m for m in matches if m[0] < t0]
+    if not past:
+        return {}
     ids = sorted({p for m in past for p in (m[1], m[2])})
     idx = {p: i for i, p in enumerate(ids)}
     w = 0.5 ** (np.array([(t0 - m[0]).total_seconds() / 86400 for m in past]) / half_life) * np.array([m[3] for m in past])
@@ -193,6 +203,8 @@ def main():
     ap.add_argument("--games", action="store_true", help="count individual games instead of match (series) wins")
     ap.add_argument("--active-days", type=float, default=730,
                     help="only report a player at a snapshot if they played within this many days")
+    ap.add_argument("--open-weight", type=float, default=1.0,
+                    help="weight of Open-series results relative to official events (0 = official only)")
     ap.add_argument("--out", default=os.path.join(DATA, "ratings_timeline.csv"))
     ap.add_argument("--jobs", type=int, default=os.cpu_count() or 1, help="worker processes")
     ap.add_argument("--no-invites", action="store_true", help="skip the OCC ladder-invite credit (invites.py)")
@@ -200,7 +212,7 @@ def main():
                     help="days; how fast the ladder-invite credit fades (real results take over)")
     args = ap.parse_args()
 
-    matches = load_matches(set(args.categories.split(",")), args.games)
+    matches = load_matches(set(args.categories.split(",")), args.games, args.open_weight)
     names = {r["player_id"]: r["name"] for r in csv.DictReader(open(os.path.join(DATA, "players.csv")))}
     snapshots = sorted(event_snapshots(matches) + month_snapshots(matches))
     print(f"{len(matches)} results, {len(snapshots)} snapshots")
