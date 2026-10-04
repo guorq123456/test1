@@ -25,7 +25,7 @@ python3 build_site.py          # 生成交互页面 site/index.html
 | Weekday Skirmish、Blitz、Homebrew Brawl 等社区赛 | Battlefy / start.gg | 已抓取，类别为 `community`，默认不计入 |
 | OCC 月赛 2021.05 – 2024.11（同月的资格赛 A/B + Top 8 合并成一站；2024 年 4–8 月只有 Top 8） | Challonge | ✅ 已收录，类别 `official` |
 | OCC Ultimate I – III（2023，8 人邀请赛） | Challonge | ✅ 已收录，类别 `official` |
-| KARDS 世界赛 2023（128 人小组赛 + 32 强双败）、2024（16 强单败）、2025（16 人双败） | Challonge | ✅ 已收录，类别 `official` |
+| KARDS 世界赛 2023（128 人小组赛 + 32 强双败）、2024（16 强单败；128 人瑞士轮在 Battlefy，未公开列出）、2025（16 人双败） | Challonge + Battlefy | ✅ 已收录，类别 `official` |
 | 2021–2023 世界赛前 4 名线下总决赛（18 场） | 官方新闻 | ✅ 人工补录（`data/manual_matches.csv`） |
 | 2025 年 4 个扩展赛（Blood & Iron、United Front、Naval Warfare、Air Supremacy，各含 Top 8） | Challonge | ✅ 已收录，类别 `official` |
 | 2026 年冬、春、夏、秋季赛（各含 Top 8） | Challonge | ✅ 已收录，类别 `official` |

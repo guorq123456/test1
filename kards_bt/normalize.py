@@ -128,8 +128,12 @@ def load_battlefy(ids):
                 (n1, s1), (n2, s2) = side
                 reason = phantoms.battlefy_verdict(m)
                 winner = 1 if s1.get("winner") else 2 if s2.get("winner") else 0
+                event = t["name"].strip()
+                wc = re.search(r"world championship (20\d\d)", event, re.I)
+                if wc:  # e.g. the 2024 128-player swiss joins the Challonge top 16 as one event
+                    event = f"KARDS World Championship {wc.group(1)}"
                 rows.append({
-                    "source": "battlefy", "event_id": t["_id"], "event": t["name"].strip(),
+                    "source": "battlefy", "event_id": t["_id"], "event": event,
                     "category": category(t["name"]), "stage": stage.get("name"),
                     "stage_type": (stage.get("bracket") or {}).get("type"), "round": m.get("roundNumber"),
                     "time": when, "p1": n1, "p2": n2, "s1": s1.get("score"), "s2": s2.get("score"),

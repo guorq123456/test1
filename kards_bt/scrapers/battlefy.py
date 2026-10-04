@@ -13,6 +13,8 @@ API = "https://dtmwra1jsgyb0.cloudfront.net"
 SEARCH = "https://search.battlefy.com"
 KARDS_GAME_ID = "5a18a24430e2150013d37c00"
 ORG_983_MEDIA = "5d8931d8d5014c471f1cb94d"
+# unlisted tournaments: they don't show up in the organisation's public listing
+EXTRA_IDS = ["673f9521237e35004096e446"]  # Kards World Championship 2024 Knockouts (128-player swiss)
 HEADERS = [
     "-A", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36",
     "-H", "Origin: https://battlefy.com",
@@ -66,6 +68,8 @@ def scrape_tournament(tid):
 def main():
     os.makedirs(RAW, exist_ok=True)
     tours = [t for t in list_org_tournaments(ORG_983_MEDIA) if t.get("gameID") == KARDS_GAME_ID]
+    known = {t["_id"] for t in tours}
+    tours += [{"_id": tid, "name": tid, "startTime": ""} for tid in EXTRA_IDS if tid not in known]
     print(f"{len(tours)} KARDS tournaments in 983 Media org", file=sys.stderr)
     for t in tours:
         path = os.path.join(RAW, f"{t['_id']}.json")
