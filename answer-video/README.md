@@ -35,7 +35,7 @@ Claude 讲给大学生的思考过程图解：一段约 6 分钟、画在「草�
 ```bash
 node build.cjs     # src/video.html -> dist/*.html，并把用到的字形子集化后内嵌进页面
 node snap.cjs out  # 可选：每句字幕结束时截一帧，方便检查画面
-node render.cjs    # 逐帧渲染 dist/answer-birth.mp4 和 .srt（4 核约 20 分钟）
+node render.cjs    # 逐帧渲染 dist/answer-birth.mp4 和 .srt（4 核约 5 分钟）
 ```
 
 每一帧都是「时间 → 画面」的纯函数，所以拖动进度、并行渲染、反复导出得到的画面完全一致。
