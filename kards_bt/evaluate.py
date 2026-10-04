@@ -39,7 +39,7 @@ def evaluate(matches, half_life, prior_sd, warmup=3):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--categories", default="open,open_special,official")
+    ap.add_argument("--categories", default="official")
     ap.add_argument("--games", action="store_true")
     args = ap.parse_args()
     matches = load_matches(set(args.categories.split(",")), args.games)

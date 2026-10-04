@@ -196,10 +196,10 @@ def _snapshot_chunk(snaps):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--categories", default="open,open_special,official",
+    ap.add_argument("--categories", default="official",
                     help="comma list of match categories to use (open, open_special, community, official, ...)")
     ap.add_argument("--half-life", type=float, default=240, help="days; <=0 disables time decay")
-    ap.add_argument("--prior-sd", type=float, default=0.8, help="prior sd of ratings in log-odds units (0.8 ~ 139 Elo)")
+    ap.add_argument("--prior-sd", type=float, default=0.6, help="prior sd of ratings in log-odds units (0.6 ~ 104 Elo)")
     ap.add_argument("--games", action="store_true", help="count individual games instead of match (series) wins")
     ap.add_argument("--active-days", type=float, default=730,
                     help="only report a player at a snapshot if they played within this many days")

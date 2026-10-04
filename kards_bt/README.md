@@ -20,8 +20,8 @@ python3 build_site.py          # 生成交互页面 site/index.html
 
 | 赛事 | 平台 | 状态 |
 |---|---|---|
-| KARDS Open #1 – VII、Open: Singleton、Operation: Kards（2020.05 – 2021.06，983 Media） | Battlefy | ✅ 已收录 |
-| KARDS Open VIII – XIV（2021.08 – 2022.11，983 Media） | start.gg | ✅ 已收录 |
+| KARDS Open #1 – VII、Open: Singleton、Operation: Kards（2020.05 – 2021.06，983 Media） | Battlefy | 已抓取，类别 `open`，默认不计入 |
+| KARDS Open VIII – XIV（2021.08 – 2022.11，983 Media） | start.gg | 已抓取，类别 `open`，默认不计入 |
 | KARDS 世界赛 2021、2022（约 100 人，小组循环赛 + 双败淘汰赛；未公开列出） | start.gg | ✅ 已收录，类别 `official` |
 | Weekday Skirmish、Blitz、Homebrew Brawl 等社区赛 | Battlefy / start.gg | 已抓取，类别为 `community`，默认不计入 |
 | OCC 月赛 2021.05 – 2024.11（同月的资格赛 A/B + Top 8 合并成一站；2024 年 4–8 月只有 Top 8） | Challonge | ✅ 已收录，类别 `official` |
@@ -30,12 +30,15 @@ python3 build_site.py          # 生成交互页面 site/index.html
 | 2021–2023 世界赛前 4 名线下总决赛（18 场） | 官方新闻 | ✅ 人工补录（`data/manual_matches.csv`） |
 | 2025 年 4 个扩展赛（Blood & Iron、United Front、Naval Warfare、Air Supremacy，各含 Top 8） | Challonge | ✅ 已收录，类别 `official` |
 | 2026 年冬、春、夏、秋季赛（各含 Top 8） | Challonge | ✅ 已收录，类别 `official` |
-| KARDS Open XV、XVI（2023） | Challonge | ✅ 已收录，类别 `open` |
+| KARDS Open XV、XVI（2023） | Challonge | 已抓取，类别 `open`，默认不计入 |
 | Pauper II | Challonge | 已抓取，类别为 `community`，默认不计入 |
 
 `data/challonge_events.csv` 是 kards_esports 账号下的全部 139 个 Challonge 对阵表。
 
-共 77 站、6602 场计分对局（含 18 场人工补录的总决赛）。
+默认只用官方赛事（`category=official`）：59 站、3341 场计分对局（含 18 场人工补录的总决赛）。
+KARDS Open 没有报名门槛、不在电竞计划内，新人和弱选手多，单独作为噪音来源检验过（`open_exp.py`，结果在 `data/open_exp_results.txt`）：
+把 Open 降权到 0.5 对官方对局的预测最好，完全去掉与不降权差不多；按项目决定完全去掉，换来只反映官方赛事的平滑走势，代价是 2021 年 5 月之前没有分数。
+`python3 bt.py --categories open,open_special,official --open-weight 0.5` 可以加回 Open。
 
 **没打的比赛不算**（`phantoms.py`，每场单独判断，整场作废、对手的胜场一起去掉）：
 - 轮空和 `BYE`/`CPU` 占位选手、平台自己的判负标记（Challonge `forfeited`、start.gg `DQ`、Battlefy 双败）、0-0 的不战而胜
@@ -54,14 +57,15 @@ python3 build_site.py          # 生成交互页面 site/index.html
 
 - P(i 胜 j) = σ(β_i − β_j)，一个系列赛（Bo3/Bo5）算一场；`--games` 改成按小局计
 - 时间衰减：d 天前的对局权重为 0.5^(d / 240)
-- 先验：β ~ N(0, 0.8²)，防止场次少的选手分数爆表
+- 先验：β ~ N(0, 0.6²)，防止场次少的选手分数爆表
 - 天梯直邀修正（`invites.py`）：OCC 有资格赛数据的月份里，没打资格赛就进 8 强的选手是天梯直邀。直邀和资格赛胜出一样难，所以给每个直邀选手记上当月资格赛晋级者的中位战绩（对手设为晋级者在资格赛里对手的平均赛前水平），没有可调参数，日期记在 8 强开赛时。这些虚拟战绩按 120 天半衰期衰减，之后由真实比赛接替，不会让多年前的直邀撑起现在的排名。实验里它把直邀选手在 8 强被低估的程度从 +0.12 降到 +0.06，整体预测不变差（`experiments.py`）
 - ± 是拉普拉斯近似（逆 Hessian）给出的 1 个标准误
 - BT 分 = 1500 + β × 400 / ln 10
 
 半衰期和先验由 `evaluate.py` 挑出：用每站赛前的分数预测该站胜负，
-清洗后 6003 场样本外对局上 log loss 0.674（抛硬币为 0.693），准确率约 58%。半衰期 240 天与 365 天预测效果相同（0.6744 vs 0.6746），240 天对近况反应更快。
-先验 0.6 略好（0.673），差距在误差范围内；赛事分级加权已检验：数据不支持（越重要的比赛结果反而越接近五五开），不采纳。
+只用官方赛事时，3219 场样本外对局上 log loss 0.687（抛硬币为 0.693），准确率约 54%：官方赛事选手水平接近，本来就难预测。
+半衰期 240 天与 365 天相同（0.6907），120 天更差（0.6921）；先验 0.4–0.6 都比 0.8 好（0.687 vs 0.691），取 0.6。
+（含 Open 数据时为 0.674 / 58%，主要因为 Open 里强弱悬殊的对局容易猜。）赛事分级加权已检验：数据不支持（越重要的比赛结果反而越接近五五开），不采纳。
 
 `bt.py` 每个 CPU 核算一段快照，并从上一站的解出发继续拟合，全量重算约 3 秒。
 

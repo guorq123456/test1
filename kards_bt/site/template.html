@@ -143,11 +143,11 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
 
 <div class="wrap">
   <header>
-    <span class="eyebrow">KARDS · Bradley–Terry · 公开赛 + 官方赛事</span>
+    <span class="eyebrow">KARDS · Bradley–Terry · 官方赛事</span>
     <h1>KARDS 赛事 BT 实力榜</h1>
     <p class="lede">用 Bradley–Terry 模型给每位选手估一个实力分（Elo 刻度）。1500 是<b>当时</b>参赛选手的平均水平，不是起点或保底：低于 1500 表示弱于平均，差 100 分约等于 64% 对 36% 的胜率。每站比赛结束后（以及每月初）重新拟合一次，旧比赛按240 天半衰期逐渐降权，所以长期不参赛的选手会慢慢回到 1500 附近。2023 年起参赛选手整体更强，因此不同年份的分数只适合各自比较排名，不能直接比高低。</p>
     <div class="facts" id="facts"></div>
-    <div class="notice"><span class="tag">数据范围</span><p>已收录 <b>KARDS Open 公开赛</b> #1 – XVI（Battlefy、start.gg、Challonge），以及 Challonge 上官方账号的全部对阵表：<b>OCC 月赛</b>（2021.05 – 2024.11，同月的资格赛和 Top 8 算一站）、<b>OCC Ultimate</b> I–III、<b>2021–2025 世界赛</b>、<b>2025 年四个扩展赛</b>和 <b>2026 年四季赛</b>；2021–2023 世界赛前 4 名线下总决赛按官方新闻补录。弃权、缺席、DQ 后被录入的结果整场作废，Pauper、Blitz 等特殊规则的社区赛不计入。</p></div>
+    <div class="notice"><span class="tag">数据范围</span><p>只计<b>官方电竞赛事</b>：Challonge 上官方账号的全部对阵表，包括<b>OCC 月赛</b>（2021.05 – 2024.11，同月的资格赛和 Top 8 算一站）、<b>OCC Ultimate</b> I–III、<b>2021–2025 世界赛</b>（2021、2022 年在 start.gg，2024 年瑞士轮在 Battlefy）、<b>2025 年四个扩展赛</b>和 <b>2026 年四季赛</b>；2021–2023 世界赛前 4 名线下总决赛按官方新闻补录。<b>KARDS Open 公开赛</b>没有报名门槛、不在电竞计划内，不计入，所以 2021 年 5 月第一届 OCC 之前没有分数。弃权、缺席、DQ 后被录入的结果整场作废。</p></div>
   </header>
 
   <section aria-labelledby="h-trend">
@@ -207,9 +207,9 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
     <div class="formula">P(i 胜 j) = 1 / (1 + e<sup>−(β<sub>i</sub> − β<sub>j</sub>)</sup>)，　BT 分 = 1500 + β × 400 / ln 10</div>
     <ul>
       <li><b>随时间变化</b>：每站比赛结束后和每月 1 日，用截至当时的全部对局重新拟合；距今 d 天的对局权重为 0.5<sup>d/240</sup>。</li>
-      <li><b>先验</b>：β ~ N(0, 0.8²)，相当于每人先带一点“平均水平”的虚拟战绩，只打过两三场的人不会被冲到榜首。</li>
+      <li><b>先验</b>：β ~ N(0, 0.6²)，相当于每人先带一点“平均水平”的虚拟战绩，只打过两三场的人不会被冲到榜首。</li>
       <li><b>区间</b>：± 是拉普拉斯近似给出的 1 个标准误。场次越少，区间越宽。</li>
-      <li><b>参数怎么定的</b>：用每站赛前的分数预测这一站的胜负（清洗后 6,003 场），半衰期 240 天、先验 0.8 的 log loss 是 0.674（抛硬币是 0.693；预测准确率约 58%）。先验 0.6 略好（0.673），差距在误差范围内。按赛事级别加权、按参赛途径给新人不同起点、按 Bo3/Bo5 和 ban 位区分赛制，都检验过，样本外预测没有变好，所以没有采用。</li>
+      <li><b>参数怎么定的</b>：用每站赛前的分数预测这一站的胜负（清洗后 3,219 场），半衰期 240 天、先验 0.6 的 log loss 是 0.687（抛硬币是 0.693；预测准确率约 54%）。官方赛事的参赛者水平接近，胜负本来就难预测，分差小于 100 分的对局基本是五五开。按赛事级别加权、按参赛途径给新人不同起点、按 Bo3/Bo5 和 ban 位区分赛制，都检验过，样本外预测没有变好，所以没有采用。</li>
       <li><b>没打的比赛不算</b>：轮空、平台判负、Battlefy 只有一方签到后 10 分钟的自动判负、选手被标记 DQ 之后录入（或在 DQ 时被改写）的结果、start.gg 上只记胜负没有比分的缺席判负、管理员几秒内批量清掉的缺席选手对局，整场作废，对手的“胜场”也一起去掉。DQ 之前真打的比赛保留；瑞士轮和循环赛不按负场数判断；只要双方都在场、比分正常，录入再快也算真实对局。</li>
       <li><b>天梯直邀</b>：OCC 8 强里没打资格赛的直邀选手，记上当月资格赛晋级者的中位战绩（直邀和资格赛胜出一样难），按 120 天半衰期淡出。</li>
       <li><b>人工修正</b>：<code>data/aliases.csv</code> 合并同一人的不同账号，<code>data/overrides.csv</code> 把代打的结果记到实际上场的人名下，<code>data/manual_matches.csv</code> 补录只在官方新闻里公布的总决赛。</li>

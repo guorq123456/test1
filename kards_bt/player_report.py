@@ -32,7 +32,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("player", help="display name or player_id")
     ap.add_argument("--half-life", type=float, default=240)
-    ap.add_argument("--prior-sd", type=float, default=0.8)
+    ap.add_argument("--prior-sd", type=float, default=0.6)
     ap.add_argument("--invite-half-life", type=float, default=120)
     ap.add_argument("--out", help="write a Markdown report here")
     args = ap.parse_args()
@@ -43,7 +43,7 @@ def main():
     pid = next(p["player_id"] for p in players
                if q in (p["player_id"].lower(), p["name"].lower()) or q in p["aliases"].lower().split(" / "))
 
-    cats = {"open", "open_special", "official"}
+    cats = {"official"}
     matches = bt.load_matches(cats, False)
     fit_before = lambda t: bt._fit_before(matches, t, args.half_life, args.prior_sd)  # noqa: E731
     credits = invites.credits(fit_before)
