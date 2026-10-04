@@ -14,6 +14,7 @@ python3 evaluate.py            # （可选）样本外验证，挑半衰期和�
 python3 bt.py                  # 算出 data/ratings_timeline.csv
 python3 placements.py          # 每人每站的名次 data/placements.csv（网页提示框用）
 python3 peaks.py               # 事后估计的巅峰分 data/peaks.csv（网页巅峰榜用）
+python3 mainboard.py           # 只用正赛对局的榜 data/mainboard.csv（网页正赛榜用）
 python3 build_site.py          # 生成交互页面 site/index.html
 ```
 
@@ -98,6 +99,7 @@ KARDS Open 没有报名门槛、不在电竞计划内，新人和弱选手多，
   Challonge 名字里的 `#1234` 和结尾的括号备注（`Jking7 (CA)`、`老虎不发猫 (Tiger)`）会自动去掉再合并；括号里的昵称不参与合并
 - `data/ratings_timeline.csv` 每站之后（`event` 为空的行是月初快照）每位选手的分数、标准误、累计场次
 - `data/peaks.csv`（`peaks.py`）：巅峰榜。每站日期上用前后所有比赛（|d| 天前后的权重 0.5^(|d|/240)）重新拟合，新人锚点和直邀补偿同样按前后距离衰减计入，取每人排名分（BT − 1 标准误）最高的一站；只计当时已满 10 场的选手。巅峰榜默认 `--invite-shrink 20`（直邀补偿按真实场次递减，见 `invite_exp.py` 的 V1）：一年十几次直邀的老将否则四成巅峰分来自补偿；当前榜（`bt.py`）保留统一补偿，两者样本外预测相同。当前榜只用过去的比赛、会滞后，巅峰榜用事后信息，只用于比较巅峰，不用于预测
+- `data/mainboard.csv`（`mainboard.py`）：正赛榜。只用 8 强 / 16 强 / 淘汰赛 / 总决赛的对局拟合（无直邀补偿），截至最近一站。`qualdrop_exp.py` 检验过从主模型去掉 OCC 预选：正赛预测 +0.005（变差）、上榜 178 → 128 人、OCC 时代老将被低估；只用正赛预测 −0.003（不显著）但只剩 50 人上榜，所以作为独立榜单提供
 - `data/placements.csv` 每人每站的最终名次：Challonge 用官方 final_rank，其他淘汰赛按出局轮次推算（同轮出局并列，如“第 5–8 名”），没打进淘汰赛的写阶段战绩（如“瑞士轮 4-2”）
 
 ## 补上官方赛事
