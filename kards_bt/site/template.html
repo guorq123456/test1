@@ -720,8 +720,8 @@ function renderBoard() {
 
 function renderAll() { renderChips(); renderChart(); renderBoard(); }
 
-// default view: a fixed set of well-known players, plus guorq123456
-const DEFAULT_PLAYERS = ["Jking7", "钟离梓", "66better", "henry449856878", "作死的骡博 (Radish)", "Head", "guorq123456"];
+// default view: a fixed set of well-known players
+const DEFAULT_PLAYERS = ["Jking7", "钟离梓", "66better", "henry449856878", "作死的骡博 (Radish)", "Head"];
 for (const n of DEFAULT_PLAYERS) {
   const p = players.find(x => x.n.toLowerCase() === n.toLowerCase());
   if (p && !state.selected.includes(p.id)) { state.slot.set(p.id, state.selected.length); state.selected.push(p.id); }
