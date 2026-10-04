@@ -720,10 +720,12 @@ function renderBoard() {
 
 function renderAll() { renderChips(); renderChart(); renderBoard(); }
 
-// default view: current top 6, plus guorq123456 if present
-topIds(6).forEach(id => { const used = new Set(state.slot.values()); let s = 0; while (used.has(s)) s++; state.slot.set(id, s); state.selected.push(id); });
-const me = players.find(p => p.n.toLowerCase() === "guorq123456");
-if (me && !state.selected.includes(me.id)) { state.slot.set(me.id, state.selected.length); state.selected.push(me.id); }
+// default view: a fixed set of well-known players, plus guorq123456
+const DEFAULT_PLAYERS = ["Jking7", "钟离梓", "66better", "henry449856878", "作死的骡博 (Radish)", "Head", "guorq123456"];
+for (const n of DEFAULT_PLAYERS) {
+  const p = players.find(x => x.n.toLowerCase() === n.toLowerCase());
+  if (p && !state.selected.includes(p.id)) { state.slot.set(p.id, state.selected.length); state.selected.push(p.id); }
+}
 renderAll();
 document.getElementById("lang").addEventListener("click", () => {
   LANG = LANG === "zh" ? "en" : "zh";
