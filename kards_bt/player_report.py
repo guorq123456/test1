@@ -25,7 +25,7 @@ ELO = bt.ELO_SCALE
 
 def ratings(matches, names, credits, t, args):
     """{player: elo} from results up to and including time t."""
-    bt._JOB = (matches, names, args.half_life, args.prior_sd, 10 ** 6, credits, args.invite_half_life)
+    bt._JOB = (matches, names, args.half_life, args.prior_sd, 10 ** 6, credits, args.invite_half_life, args.invite_shrink)
     return {r["player_id"]: r["elo"] for r in bt._snapshot_chunk([(t, "")])}
 
 
@@ -36,6 +36,7 @@ def main():
     ap.add_argument("--prior-sd", type=float, default=0.4)
     ap.add_argument("--invite-half-life", type=float, default=120)
     ap.add_argument("--newcomer-anchor", type=float, default=2)
+    ap.add_argument("--invite-shrink", type=float, default=0)
     ap.add_argument("--out", help="write a Markdown report here")
     args = ap.parse_args()
 

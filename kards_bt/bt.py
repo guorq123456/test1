@@ -77,8 +77,9 @@ def load_matches(categories, use_games, open_weight=1.0):
 def fit_bt(winners, losers, weights, n, prior_sd, x0=None, virtual=None):
     """MAP Bradley-Terry fit. winners/losers are int index arrays into n players.
 
-    virtual: optional (player idx, opponent level, +1 win / -1 loss, weight) arrays for results
-    against a fixed-strength opponent (the ladder-invite credit, see invites.py).
+    virtual: optional (player idx, opponent level, sign, weight) arrays for results against a
+    fixed-strength opponent (ladder-invite credit, newcomer anchor): +1 win / -1 loss; a sign of
+    magnitude a != 1 gives a threshold term log sigmoid(a * (b - level)).
     """
     lam = 1.0 / prior_sd ** 2
     vi, vl, vs, vw = virtual if virtual is not None else (np.zeros(0, int), np.zeros(0), np.zeros(0), np.zeros(0))
@@ -109,8 +110,8 @@ def fit_bt(winners, losers, weights, n, prior_sd, x0=None, virtual=None):
     np.add.at(H, (winners, losers), -h)
     np.add.at(H, (losers, winners), -h)
     if len(vi):
-        dv = b[vi] - vl
-        np.add.at(H, (vi, vi), vw * expit(dv) * expit(-dv))
+        dv = vs * (b[vi] - vl)  # vs may carry a slope as well as the sign
+        np.add.at(H, (vi, vi), vw * vs * vs * expit(dv) * expit(-dv))
     # H is symmetric positive definite: invert through its Cholesky factor (only the diagonal is needed)
     c, info = lapack.dpotrf(H)
     if info == 0:
@@ -156,7 +157,7 @@ def _fit_before(matches, t0, half_life, prior_sd):
 
 
 def _snapshot_chunk(snaps):
-    matches, names, half_life, prior_sd, active_days, credits, invite_half_life = _JOB
+    matches, names, half_life, prior_sd, active_days, credits, invite_half_life, invite_shrink = _JOB
     rows, prev = [], {}
     for snap_t, snap_event in snaps:
         past = [m for m in matches if m[0] <= snap_t]
@@ -168,8 +169,12 @@ def _snapshot_chunk(snaps):
         winners = np.array([idx[m[1]] for m in past])
         losers = np.array([idx[m[2]] for m in past])
         x0 = np.array([prev.get(p, 0.0) for p in ids])
+        # evidence already behind each player (decayed real matches); with --invite-shrink the invite credit
+        # is scaled by n0 / (n0 + evidence), so it matters for players with little else and fades for veterans
+        evidence = np.bincount(np.concatenate([winners, losers]), weights=np.concatenate([decay, decay]), minlength=len(ids))
+        shrink = lambda i: invite_shrink / (invite_shrink + evidence[i]) if invite_shrink > 0 else 1.0  # noqa: E731
         # virtual results: ladder-invite credits (5-tuples, invite half-life) and newcomer anchors (own half-life)
-        virtual = [(idx[p], level, sign, n * 0.5 ** ((snap_t - t).total_seconds() / 86400 / (rest[0] if rest else invite_half_life)))
+        virtual = [(idx[p], level, sign, (1.0 if rest else shrink(idx[p])) * n * 0.5 ** ((snap_t - t).total_seconds() / 86400 / (rest[0] if rest else invite_half_life)))
                    for t, p, level, wins, losses, *rest in credits if t <= snap_t and p in idx
                    for sign, n in ((1.0, wins), (-1.0, losses)) if n > 0]
         virtual = tuple(np.array(c) for c in zip(*virtual)) if virtual else None
@@ -212,6 +217,8 @@ def main():
     ap.add_argument("--no-invites", action="store_true", help="skip the OCC ladder-invite credit (invites.py)")
     ap.add_argument("--newcomer-anchor", type=float, default=2,
                     help="virtual draws anchoring debutants at the era's estimated newcomer level (newcomers.py); 0 = off")
+    ap.add_argument("--invite-shrink", type=float, default=0,
+                    help="n0 > 0 scales each invite credit by n0 / (n0 + player's decayed real matches); 0 = uniform credit")
     ap.add_argument("--invite-half-life", type=float, default=120,
                     help="days; how fast the ladder-invite credit fades (real results take over)")
     args = ap.parse_args()
@@ -229,7 +236,7 @@ def main():
     anchors = newcomers.anchors(matches, args.half_life, args.prior_sd, fit_bt, args.newcomer_anchor)
     print(f"newcomer anchors: {len(anchors)}")
     credits = credits + anchors
-    _JOB = (matches, names, args.half_life, args.prior_sd, args.active_days, credits, args.invite_half_life)
+    _JOB = (matches, names, args.half_life, args.prior_sd, args.active_days, credits, args.invite_half_life, args.invite_shrink)
     workers = max(1, min(args.jobs, len(snapshots)))
     chunks = [list(c) for c in np.array_split(np.arange(len(snapshots)), workers) if len(c)]
     jobs = [[snapshots[i] for i in c] for c in chunks]

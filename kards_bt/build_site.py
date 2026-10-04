@@ -3,6 +3,7 @@ import csv
 import json
 import os
 import re
+from placements import stage_name
 from collections import Counter, defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -33,6 +34,15 @@ def main():
             snap_idx[(r["date"], r["event"])], round(float(r["elo"])), round(float(r["se"])), int(r["results"]), r["last_played"], label,
         ])
 
+    # main-stage record (Top 8 / Top 16 / grand finals / invitationals / knockouts), official events only
+    MAIN = {"8 强", "16 强", "总决赛", "邀请赛", "32 强", "淘汰赛"}
+    main_rec = defaultdict(lambda: [0, 0])
+    for m in csv.DictReader(open(os.path.join(DATA, "matches.csv"))):
+        if m["valid"] == "1" and m["category"] == "official" and stage_name(m["event"], m["stage"], m["stage_type"]) in MAIN:
+            w, l = (m["p1"], m["p2"]) if m["winner"] == "1" else (m["p2"], m["p1"])
+            main_rec[w][0] += 1
+            main_rec[l][1] += 1
+
     # career peaks with hindsight (peaks.py): [score, rating, se, date, event, rank then, matches]
     peaks = {}
     if os.path.exists(os.path.join(DATA, "peaks.csv")):
@@ -47,7 +57,8 @@ def main():
     payload = {
         "snaps": [{"d": d, "e": re.sub(r"^Kards ", "KARDS ", e), "n": per_event.get(e, 0)} for d, e in snaps],
         "players": [
-            {"id": pid, "n": players[pid]["name"], "a": players[pid]["aliases"], "p": pts, **({"k": peaks[pid]} if pid in peaks else {})}
+            {"id": pid, "n": players[pid]["name"], "a": players[pid]["aliases"], "p": pts, "m": main_rec.get(pid, [0, 0]),
+             **({"k": peaks[pid]} if pid in peaks else {})}
             for pid, pts in series.items()
         ],
         "stats": {
