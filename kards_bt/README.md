@@ -91,6 +91,7 @@ KARDS Open 没有报名门槛、不在电竞计划内，新人和弱选手多，
 - `data/overrides.csv`（可选）：`event,player,actual,note`，把某一站里某个账号的对局改记到实际上场的人名下（代打）
 - `data/occ_sheet_matches.csv`：`python3 import_occ_sheet.py` 从社区 OCC 战绩表导入的 Top 8 对局（格式同 manual_matches，只在表里出现过的选手用 `occsheet:` 账号）
 - `data/manual_matches.csv`：只在官方新闻里公布的结果（2021–2023 世界赛前 4 名线下总决赛，共 18 场），按已有账号录入，每行附出处
+- `python3 profile.py 选手名`：一屏看完一位选手（当前分/排名、峰值、巅峰榜、vs 预期、按年/阶段/对手强弱的战绩、名次、走势）；`python3 player_report.py 选手名` 给出逐站逐场的明细
 - `data/residuals.csv`（`python3 residuals.py --csv data/residuals.csv`）：每位选手样本外的实际胜场、模型期望胜场和 z 值，用来找模型对谁有系统性偏差；汇总在 `data/residuals_summary.txt`
 - `data/match_timeline.csv`（`python3 timeline.py` 生成，不到 1 秒）：原始数据里每一场对局的赛制、轮次、DQ 标记、比分、开放/进行/完成时间、用时与同轮中位数、批量录入数量、各自上一场的间隔。用来判断一场结果是不是真打的。注意 Challonge 的 `inactive` 只表示已结束比赛，不代表 DQ
   Challonge 名字里的 `#1234` 和结尾的括号备注（`Jking7 (CA)`、`老虎不发猫 (Tiger)`）会自动去掉再合并；括号里的昵称不参与合并
