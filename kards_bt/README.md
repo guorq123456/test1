@@ -110,6 +110,6 @@ KARDS Open 没有报名门槛、不在电竞计划内，新人和弱选手多，
 
 - **Cloudflare Pages**（推荐，私有仓库也免费）：Workers & Pages → Create → Pages → 连接 GitHub 仓库，构建命令留空，输出目录填 `kards_bt/site`。之后每次 push 自动更新。
 - **Netlify Drop**：打开 <https://app.netlify.com/drop>，把 `site` 文件夹拖进去即可得到网址；更新时重新拖一次。
-- **GitHub Pages**：免费账号只支持公开仓库。可以单独建一个公开仓库，只放 `index.html`，在 Settings → Pages 里选分支发布。
+- **GitHub Pages**（当前使用）：公开仓库 <https://github.com/guorq123456/kards-bt-ratings> 只放生成好的 `index.html`，网址 <https://guorq123456.github.io/kards-bt-ratings/>。更新时把 `site/index.html` 复制过去覆盖、提交并推送到 `main`。原始数据和代码只留在这个私有仓库里。
 
 页面默认按浏览器语言显示中文或英文，右上角按钮切换，链接加 `?lang=en` / `?lang=zh` 可固定语言。
