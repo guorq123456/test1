@@ -30,6 +30,7 @@ for _var in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ.setdefault(_var, "1")
 
 import numpy as np  # noqa: E402  (after the thread settings above)
+import invites  # noqa: E402
 from scipy.linalg import lapack  # noqa: E402
 from scipy.optimize import minimize  # noqa: E402
 from scipy.special import expit, log_expit  # noqa: E402
@@ -64,9 +65,14 @@ def load_matches(categories, use_games):
     return out
 
 
-def fit_bt(winners, losers, weights, n, prior_sd, x0=None):
-    """MAP Bradley-Terry fit. winners/losers are int index arrays into n players."""
+def fit_bt(winners, losers, weights, n, prior_sd, x0=None, virtual=None):
+    """MAP Bradley-Terry fit. winners/losers are int index arrays into n players.
+
+    virtual: optional (player idx, opponent level, +1 win / -1 loss, weight) arrays for results
+    against a fixed-strength opponent (the ladder-invite credit, see invites.py).
+    """
     lam = 1.0 / prior_sd ** 2
+    vi, vl, vs, vw = virtual if virtual is not None else (np.zeros(0, int), np.zeros(0), np.zeros(0), np.zeros(0))
 
     def f(b):
         d = b[winners] - b[losers]
@@ -75,6 +81,10 @@ def fit_bt(winners, losers, weights, n, prior_sd, x0=None):
         grad = lam * b
         np.add.at(grad, winners, g)
         np.add.at(grad, losers, -g)
+        if len(vi):
+            dv = vs * (b[vi] - vl)
+            nll -= (vw * log_expit(dv)).sum()
+            np.add.at(grad, vi, vw * vs * (expit(dv) - 1.0))
         return nll, grad
 
     res = minimize(f, np.zeros(n) if x0 is None else x0, jac=True, method="L-BFGS-B",
@@ -89,6 +99,9 @@ def fit_bt(winners, losers, weights, n, prior_sd, x0=None):
     np.add.at(H, (losers, losers), h)
     np.add.at(H, (winners, losers), -h)
     np.add.at(H, (losers, winners), -h)
+    if len(vi):
+        dv = b[vi] - vl
+        np.add.at(H, (vi, vi), vw * expit(dv) * expit(-dv))
     # H is symmetric positive definite: invert through its Cholesky factor (only the diagonal is needed)
     c, info = lapack.dpotrf(H)
     if info == 0:
@@ -108,8 +121,17 @@ def event_snapshots(matches):
 _JOB = None  # (matches, names, half_life, prior_sd, active_days), inherited by forked workers
 
 
+def _fit_before(matches, t0, half_life, prior_sd):
+    past = [m for m in matches if m[0] < t0]
+    ids = sorted({p for m in past for p in (m[1], m[2])})
+    idx = {p: i for i, p in enumerate(ids)}
+    w = 0.5 ** (np.array([(t0 - m[0]).total_seconds() / 86400 for m in past]) / half_life) * np.array([m[3] for m in past])
+    b, _ = fit_bt(np.array([idx[m[1]] for m in past]), np.array([idx[m[2]] for m in past]), w, len(ids), prior_sd)
+    return dict(zip(ids, b))
+
+
 def _snapshot_chunk(snaps):
-    matches, names, half_life, prior_sd, active_days = _JOB
+    matches, names, half_life, prior_sd, active_days, credits, invite_half_life = _JOB
     rows, prev = [], {}
     for snap_t, snap_event in snaps:
         past = [m for m in matches if m[0] <= snap_t]
@@ -121,7 +143,11 @@ def _snapshot_chunk(snaps):
         winners = np.array([idx[m[1]] for m in past])
         losers = np.array([idx[m[2]] for m in past])
         x0 = np.array([prev.get(p, 0.0) for p in ids])
-        b, se = fit_bt(winners, losers, weights, len(ids), prior_sd, x0=x0)
+        virtual = [(idx[p], level, sign, n * 0.5 ** ((snap_t - t).total_seconds() / 86400 / invite_half_life))
+                   for t, p, level, wins, losses in credits if t <= snap_t and p in idx
+                   for sign, n in ((1.0, wins), (-1.0, losses)) if n > 0]
+        virtual = tuple(np.array(c) for c in zip(*virtual)) if virtual else None
+        b, se = fit_bt(winners, losers, weights, len(ids), prior_sd, x0=x0, virtual=virtual)
         prev = dict(zip(ids, b))
 
         n_matches = np.zeros(len(ids))
@@ -155,6 +181,9 @@ def main():
                     help="only report a player at a snapshot if they played within this many days")
     ap.add_argument("--out", default=os.path.join(DATA, "ratings_timeline.csv"))
     ap.add_argument("--jobs", type=int, default=os.cpu_count() or 1, help="worker processes")
+    ap.add_argument("--no-invites", action="store_true", help="skip the OCC ladder-invite credit (invites.py)")
+    ap.add_argument("--invite-half-life", type=float, default=120,
+                    help="days; how fast the ladder-invite credit fades (real results take over)")
     args = ap.parse_args()
 
     matches = load_matches(set(args.categories.split(",")), args.games)
@@ -165,7 +194,9 @@ def main():
     # snapshots are independent fits; split them into contiguous chunks, one per core, and warm-start
     # each fit from the previous snapshot of the same chunk (consecutive snapshots differ by one event)
     global _JOB
-    _JOB = (matches, names, args.half_life, args.prior_sd, args.active_days)
+    credits = [] if args.no_invites else invites.credits(lambda t: _fit_before(matches, t, args.half_life, args.prior_sd))
+    print(f"ladder-invite credits: {len(credits)}")
+    _JOB = (matches, names, args.half_life, args.prior_sd, args.active_days, credits, args.invite_half_life)
     workers = max(1, min(args.jobs, len(snapshots)))
     chunks = [list(c) for c in np.array_split(np.arange(len(snapshots)), workers) if len(c)]
     jobs = [[snapshots[i] for i in c] for c in chunks]
