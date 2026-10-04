@@ -5,6 +5,9 @@ and ladder-invite credit as bt.py). For each player we sum, over all their match
 model gave them (expected wins) and compare with actual wins. z = (actual - expected) / sqrt(sum p(1-p)).
 |z| > 2 means the model has been systematically wrong about that player, not just unlucky.
 
+The CSV also carries the same figures over the last RECENT_DAYS before the latest official match
+("recent_*"), which the site's current leaderboard shows as "vs expected".
+
     python3 residuals.py            # tables: veterans (>= 40 matches), mid (15-39), newcomers (< 15)
     python3 residuals.py --csv data/residuals.csv
 """
@@ -13,7 +16,7 @@ import csv
 import math
 import os
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import numpy as np
 
@@ -22,6 +25,7 @@ import invites
 import newcomers
 
 HL, SD, INV_HL = 240, 0.4, 120
+RECENT_DAYS = 730
 
 
 def main():
@@ -39,7 +43,9 @@ def main():
     virt_all = [c + (INV_HL,) for c in credits] + newcomers.anchors(ms, HL, SD, bt.fit_bt, 2)
     gap = newcomers.offsets(ms, HL, SD, bt.fit_bt)[0]  # a player with no results yet sits at -gap[event]
 
-    acc = defaultdict(lambda: {"n": 0, "w": 0, "e": 0.0, "v": 0.0, "first": None, "last": None, "recent_w": 0, "recent_e": 0.0, "recent_n": 0})
+    recent_from = max(m[0] for m in ms) - timedelta(days=RECENT_DAYS)
+    acc = defaultdict(lambda: {"n": 0, "w": 0, "e": 0.0, "v": 0.0, "first": None, "last": None,
+                               "recent_n": 0, "recent_w": 0, "recent_e": 0.0, "recent_v": 0.0})
     for ev in sorted(start, key=start.get)[2:]:
         t0 = start[ev]
         past = [m for m in ms if m[0] < t0]
@@ -64,17 +70,20 @@ def main():
                 a["v"] += pp * (1 - pp)
                 a["first"] = a["first"] or m[0]
                 a["last"] = m[0]
-                if m[0].year >= 2025:
+                if m[0] >= recent_from:
                     a["recent_n"] += 1
                     a["recent_w"] += won
                     a["recent_e"] += pp
+                    a["recent_v"] += pp * (1 - pp)
     rows = []
     for q, a in acc.items():
         z = (a["w"] - a["e"]) / math.sqrt(a["v"]) if a["v"] > 0 else 0.0
+        rz = (a["recent_w"] - a["recent_e"]) / math.sqrt(a["recent_v"]) if a["recent_v"] > 0 else 0.0
         rows.append({"player_id": q, "name": names.get(q, q), "matches": a["n"], "wins": a["w"], "expected": round(a["e"], 1),
                      "diff": round(a["w"] - a["e"], 1), "z": round(z, 2), "first": a["first"].strftime("%Y-%m"),
-                     "last": a["last"].strftime("%Y-%m"), "since2025": f"{a['recent_w']}-{a['recent_n'] - a['recent_w']}",
-                     "since2025_exp": round(a["recent_e"], 1)})
+                     "last": a["last"].strftime("%Y-%m"), "recent_n": a["recent_n"], "recent_wins": a["recent_w"],
+                     "recent_expected": round(a["recent_e"], 1), "recent_diff": round(a["recent_w"] - a["recent_e"], 1),
+                     "recent_z": round(rz, 2)})
     rows.sort(key=lambda r: -abs(r["z"]))
     if args.csv:
         with open(args.csv, "w", newline="") as f:
@@ -86,9 +95,10 @@ def main():
     def table(title, sel):
         xs = [r for r in rows if sel(r)]
         print(f"\n{title}（{len(xs)} 人）：|z| 最大的 {args.top} 人")
-        print(f"{'选手':<28}{'场次':>5}{'实际':>5}{'期望':>7}{'差':>7}{'z':>7}  活跃期        2025 起")
+        print(f"{'选手':<28}{'场次':>5}{'实际':>5}{'期望':>7}{'差':>7}{'z':>7}  活跃期        近 24 个月")
         for r in xs[:args.top]:
-            print(f"{r['name']:<28}{r['matches']:>5}{r['wins']:>5}{r['expected']:>7}{r['diff']:>+7}{r['z']:>+7}  {r['first']}–{r['last']}  {r['since2025']}（期望 {r['since2025_exp']}）")
+            rec = f"{r['recent_wins']}-{r['recent_n'] - r['recent_wins']}（期望 {r['recent_expected']}，z {r['recent_z']:+.2f}）" if r["recent_n"] else "–"
+            print(f"{r['name']:<28}{r['matches']:>5}{r['wins']:>5}{r['expected']:>7}{r['diff']:>+7}{r['z']:>+7}  {r['first']}–{r['last']}  {rec}")
         z = np.array([r["z"] for r in xs])
         print(f"  这一组 z 的均值 {z.mean():+.2f}，标准差 {z.std():.2f}（无系统偏差时应约为 0 和 1）")
 

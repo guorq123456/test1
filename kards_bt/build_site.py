@@ -43,6 +43,12 @@ def main():
             main_rec[w][0] += 1
             main_rec[l][1] += 1
 
+    # actual - expected wins (residuals.py): [career diff, career z, recent matches, recent diff, recent z]
+    resid = {}
+    if os.path.exists(os.path.join(DATA, "residuals.csv")):
+        for r in csv.DictReader(open(os.path.join(DATA, "residuals.csv"))):
+            resid[r["player_id"]] = [float(r["diff"]), float(r["z"]), int(r["recent_n"]), float(r["recent_diff"]), float(r["recent_z"])]
+
     # career peaks with hindsight (peaks.py): [score, rating, se, date, event, rank then, matches]
     peaks = {}
     if os.path.exists(os.path.join(DATA, "peaks.csv")):
@@ -58,7 +64,7 @@ def main():
         "snaps": [{"d": d, "e": re.sub(r"^Kards ", "KARDS ", e), "n": per_event.get(e, 0)} for d, e in snaps],
         "players": [
             {"id": pid, "n": players[pid]["name"], "a": players[pid]["aliases"], "p": pts, "m": main_rec.get(pid, [0, 0]),
-             **({"k": peaks[pid]} if pid in peaks else {})}
+             **({"r": resid[pid]} if pid in resid else {}), **({"k": peaks[pid]} if pid in peaks else {})}
             for pid, pts in series.items()
         ],
         "stats": {
