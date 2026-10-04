@@ -5116,7 +5116,7 @@ challonge,11151415,OCC 2022-05,official,Qualifier B,double elimination,1,2022-05
 challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,1,2022-05-14T12:48:03Z,ch:BYE,ch:BYE,0,0,1,0,276131382,placeholder
 challonge,11151415,OCC 2022-05,official,Qualifier B,double elimination,-1,2022-05-14T12:48:25Z,ch:BYE,ch:BYE,0,0,1,0,276131911,placeholder
 challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,-1,2022-05-14T12:48:27Z,ch:BYE,ch:BYE,0,0,2,0,276131399,placeholder
-challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,1,2022-05-14T12:49:20Z,sgg:3087923,ch:BYE,0,0,1,0,276131387,placeholder
+challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,1,2022-05-14T12:49:20Z,bf:673f98f370390c0041722f81,ch:BYE,0,0,1,0,276131387,placeholder
 challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,1,2022-05-14T12:49:25Z,ch:BYE,bf:5f362c8703dbcc11d58d78e3,0,0,2,0,276131389,placeholder
 challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,1,2022-05-14T12:49:37Z,ch:BYE,bf:5fa467df4eb3c2458669c29a,0,0,1,0,276131384,placeholder
 challonge,11151415,OCC 2022-05,official,Qualifier B,double elimination,1,2022-05-14T12:50:46Z,ch:BYE,ch:kdx13655350923,0,0,2,0,276131896,placeholder
@@ -5131,7 +5131,7 @@ challonge,11151415,OCC 2022-05,official,Qualifier B,double elimination,1,2022-05
 challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,1,2022-05-14T13:30:20Z,bf:5fb3184d9a9e750ea663e423,bf:5fa57306cc28b3594394b946,1,2,2,1,276131388,
 challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,-1,2022-05-14T13:41:03Z,bf:5fb3184d9a9e750ea663e423,ch:BYE,2,0,1,0,276131400,placeholder
 challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,-2,2022-05-14T13:41:13Z,ch:BYE,bf:5fb3184d9a9e750ea663e423,0,2,2,0,276131404,placeholder
-challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,2,2022-05-14T13:48:56Z,bf:5f130139f7c29f223fd64290,sgg:3087923,1,2,2,1,276131392,
+challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,2,2022-05-14T13:48:56Z,bf:5f130139f7c29f223fd64290,bf:673f98f370390c0041722f81,1,2,2,1,276131392,
 challonge,11151415,OCC 2022-05,official,Qualifier B,double elimination,1,2022-05-14T13:49:32Z,bf:57b5a7ffabd8181c0cfdf304,sgg:2616063,2,0,1,1,276131901,
 challonge,11151415,OCC 2022-05,official,Qualifier B,double elimination,2,2022-05-14T13:49:35Z,ch:BYE,bf:57b5a7ffabd8181c0cfdf304,0,2,2,0,276131905,placeholder
 challonge,11151415,OCC 2022-05,official,Qualifier B,double elimination,2,2022-05-14T13:50:33Z,ch:kdx13655350923,sgg:2706665,1,2,2,1,276131903,
@@ -5156,22 +5156,22 @@ challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,3,2022-05
 challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,-2,2022-05-14T14:30:23Z,bf:5f130139f7c29f223fd64290,bf:5ec038e2256baa1d38011a05,2,0,1,1,276131402,
 challonge,11151415,OCC 2022-05,official,Qualifier B,double elimination,-3,2022-05-14T14:34:00Z,ch:kdx13655350923,ch:blueccg,0,2,2,1,276131918,
 challonge,11151415,OCC 2022-05,official,Qualifier B,double elimination,3,2022-05-14T14:35:22Z,ch:zds,sgg:2706665,0,2,2,1,276131906,
-challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,3,2022-05-14T14:45:53Z,sgg:3087923,bf:5f362c8703dbcc11d58d78e3,2,1,1,1,276131395,
+challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,3,2022-05-14T14:45:53Z,bf:673f98f370390c0041722f81,bf:5f362c8703dbcc11d58d78e3,2,1,1,1,276131395,
 challonge,11151415,OCC 2022-05,official,Qualifier B,double elimination,-4,2022-05-14T14:51:19Z,ch:zds,ch:万仇甜瓜,2,1,1,1,276131919,
 challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,-3,2022-05-14T14:54:59Z,bf:5fa57306cc28b3594394b946,bf:5f130139f7c29f223fd64290,0,2,2,1,276131405,
 challonge,11151415,OCC 2022-05,official,Qualifier B,double elimination,-4,2022-05-14T15:01:14Z,bf:5f0e37b37c5e104738aebbe3,ch:blueccg,2,0,1,1,276131920,
 challonge,11151415,OCC 2022-05,official,Qualifier B,double elimination,4,2022-05-14T15:02:19Z,sgg:2706665,bf:57b5a7ffabd8181c0cfdf304,0,2,2,1,276131908,
 challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,-4,2022-05-14T15:09:01Z,bf:5f362c8703dbcc11d58d78e3,bf:5fb3184d9a9e750ea663e423,2,0,1,1,276131408,
-challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,4,2022-05-14T15:10:54Z,bf:673f9e78237e35004096e4c6,sgg:3087923,2,0,1,1,276131396,
+challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,4,2022-05-14T15:10:54Z,bf:673f9e78237e35004096e4c6,bf:673f98f370390c0041722f81,2,0,1,1,276131396,
 challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,-4,2022-05-14T15:15:27Z,sgg:2917089,bf:5f130139f7c29f223fd64290,0,2,2,1,276131407,
 challonge,11151415,OCC 2022-05,official,Qualifier B,double elimination,-5,2022-05-14T15:20:34Z,ch:zds,bf:5f0e37b37c5e104738aebbe3,2,0,1,1,276131921,
 challonge,11151415,OCC 2022-05,official,Qualifier B,double elimination,-6,2022-05-14T15:32:53Z,sgg:2706665,ch:zds,0,2,2,1,276131922,
 challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,-5,2022-05-14T15:36:19Z,bf:5f130139f7c29f223fd64290,bf:5f362c8703dbcc11d58d78e3,2,0,1,1,276131409,
-challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,-6,2022-05-14T16:08:42Z,sgg:3087923,bf:5f130139f7c29f223fd64290,2,1,1,1,276131410,
+challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,-6,2022-05-14T16:08:42Z,bf:673f98f370390c0041722f81,bf:5f130139f7c29f223fd64290,2,1,1,1,276131410,
 challonge,11151415,OCC 2022-05,official,Qualifier B,double elimination,5,2022-05-14T16:13:07Z,bf:57b5a7ffabd8181c0cfdf304,ch:zds,1,2,2,1,276131923,
 challonge,11151415,OCC 2022-05,official,Qualifier B,double elimination,5,2022-05-14T16:34:38Z,ch:zds,bf:57b5a7ffabd8181c0cfdf304,0,2,2,1,276131924,
-challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,5,2022-05-14T16:41:14Z,bf:673f9e78237e35004096e4c6,sgg:3087923,1,2,2,1,276131411,
-challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,5,2022-05-14T16:52:40Z,sgg:3087923,bf:673f9e78237e35004096e4c6,0,2,2,1,276131412,
+challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,5,2022-05-14T16:41:14Z,bf:673f9e78237e35004096e4c6,bf:673f98f370390c0041722f81,1,2,2,1,276131411,
+challonge,11151405,OCC 2022-05,official,Qualifier A,double elimination,5,2022-05-14T16:52:40Z,bf:673f98f370390c0041722f81,bf:673f9e78237e35004096e4c6,0,2,2,1,276131412,
 challonge,11151423,OCC 2022-05,official,Top 8,single elimination,1,2022-05-21T13:22:39Z,ch:evergardenxciv,bf:673f9e78237e35004096e4c6,0,2,2,1,276883184,
 challonge,11151423,OCC 2022-05,official,Top 8,single elimination,1,2022-05-21T13:44:45Z,bf:673f9ae481b1a20036ec0786,sgg:2388207,1,2,2,1,276883185,
 challonge,11151423,OCC 2022-05,official,Top 8,single elimination,1,2022-05-21T13:49:07Z,bf:673f9eb0237e35004096e4ca,bf:57b5a7ffabd8181c0cfdf304,2,0,1,1,276883182,
@@ -5353,11 +5353,11 @@ challonge,11265244,OCC 2022-06,official,Qualifier A,double elimination,5,2022-06
 challonge,11285117,OCC 2022-06,official,Top 8,single elimination,1,2022-06-18T13:35:15Z,bf:5fb3184d9a9e750ea663e423,bf:673f9cc689b5530023006e64,2,0,1,1,280029940,
 challonge,11285117,OCC 2022-06,official,Top 8,single elimination,1,2022-06-18T14:13:09Z,bf:564e7b5b80b8db4a00c4ff9c,bf:673f9ae481b1a20036ec0786,0,2,2,1,280029939,
 challonge,11285117,OCC 2022-06,official,Top 8,single elimination,1,2022-06-18T14:20:35Z,bf:673f9eb0237e35004096e4ca,bf:5ec038e2256baa1d38011a05,2,0,1,1,280029937,
-challonge,11285117,OCC 2022-06,official,Top 8,single elimination,1,2022-06-18T14:43:58Z,sgg:3087923,sgg:2388207,2,1,1,1,280029938,
+challonge,11285117,OCC 2022-06,official,Top 8,single elimination,1,2022-06-18T14:43:58Z,bf:673f98f370390c0041722f81,sgg:2388207,2,1,1,1,280029938,
 challonge,11285117,OCC 2022-06,official,Top 8,single elimination,2,2022-06-18T15:09:27Z,bf:673f9ae481b1a20036ec0786,bf:5fb3184d9a9e750ea663e423,0,2,2,1,280029942,
-challonge,11285117,OCC 2022-06,official,Top 8,single elimination,2,2022-06-18T16:04:33Z,bf:673f9eb0237e35004096e4ca,sgg:3087923,1,2,2,1,280029941,
+challonge,11285117,OCC 2022-06,official,Top 8,single elimination,2,2022-06-18T16:04:33Z,bf:673f9eb0237e35004096e4ca,bf:673f98f370390c0041722f81,1,2,2,1,280029941,
 challonge,11285117,OCC 2022-06,official,Top 8,single elimination,0,2022-06-18T16:58:46Z,bf:673f9eb0237e35004096e4ca,bf:673f9ae481b1a20036ec0786,3,0,1,1,280029944,
-challonge,11285117,OCC 2022-06,official,Top 8,single elimination,3,2022-06-18T17:40:23Z,sgg:3087923,bf:5fb3184d9a9e750ea663e423,3,2,1,1,280029943,
+challonge,11285117,OCC 2022-06,official,Top 8,single elimination,3,2022-06-18T17:40:23Z,bf:673f98f370390c0041722f81,bf:5fb3184d9a9e750ea663e423,3,2,1,1,280029943,
 startgg,739614,Kards Open XII,open,Kards Open XII - Top 16,single_elimination,Round 1,2022-06-25T13:21:47Z,bf:673f9e78237e35004096e4c6,bf:5fb1e014eb92fe0475439152,,,1,0,48827456,no_score
 startgg,739614,Kards Open XII,open,Kards Open XII - Top 16,single_elimination,Round 1,2022-06-25T13:37:11Z,sgg:2803542,sgg:2621073,3,0,1,1,48827455,
 startgg,739614,Kards Open XII,open,Kards Open XII - Top 16,single_elimination,Round 1,2022-06-25T13:41:39Z,sgg:2801104,bf:60509713496ba24d0604cc08,3,0,1,1,48827460,
@@ -5387,8 +5387,8 @@ challonge,11429747,OCC 2022-07,official,Qualifier A,double elimination,1,2022-07
 challonge,11429747,OCC 2022-07,official,Qualifier A,double elimination,1,2022-07-16T12:54:55Z,bf:5fa27bfdf8fc171ea9f66924,ch:BYE,0,0,1,0,282944908,placeholder
 challonge,11429747,OCC 2022-07,official,Qualifier A,double elimination,1,2022-07-16T12:55:00Z,ch:BYE,ch:blueccg,0,0,2,0,282944911,placeholder
 challonge,11429747,OCC 2022-07,official,Qualifier A,double elimination,1,2022-07-16T12:55:06Z,ch:BYE,ch:BYE,0,0,1,0,282944915,placeholder
-challonge,11429749,OCC 2022-07,official,Qualifier B,double elimination,1,2022-07-16T13:14:09Z,sgg:3087923,bf:5fb1e014eb92fe0475439152,0,0,2,0,282944954,zero_zero
-challonge,11429749,OCC 2022-07,official,Qualifier B,double elimination,-1,2022-07-16T13:14:14Z,sgg:3087923,ch:BYE,0,0,2,0,282944968,placeholder
+challonge,11429749,OCC 2022-07,official,Qualifier B,double elimination,1,2022-07-16T13:14:09Z,bf:673f98f370390c0041722f81,bf:5fb1e014eb92fe0475439152,0,0,2,0,282944954,zero_zero
+challonge,11429749,OCC 2022-07,official,Qualifier B,double elimination,-1,2022-07-16T13:14:14Z,bf:673f98f370390c0041722f81,ch:BYE,0,0,2,0,282944968,placeholder
 challonge,11429749,OCC 2022-07,official,Qualifier B,double elimination,-2,2022-07-16T13:14:19Z,ch:BYE,ch:BYE,0,0,1,0,282944972,placeholder
 challonge,11429747,OCC 2022-07,official,Qualifier A,double elimination,2,2022-07-16T13:15:27Z,ch:zds,bf:5fa27bfdf8fc171ea9f66924,2,0,1,1,282944919,
 challonge,11429747,OCC 2022-07,official,Qualifier A,double elimination,1,2022-07-16T13:19:10Z,bf:5fb3184d9a9e750ea663e423,sgg:2388207,2,0,1,1,282944916,
@@ -5930,7 +5930,7 @@ startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_ro
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 1,2022-10-29T13:59:09Z,sgg:3082033,bf:601ae997fb69622ad6617823,2,0,1,1,53570500,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 5,2022-10-29T13:59:44Z,sgg:3082395,sgg:3082246,-1,0,2,0,53570498,dq
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 1,2022-10-29T14:00:24Z,sgg:2801104,bf:602d5acba74cc17c31b7d9af,2,1,1,1,53570462,
-startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 1,2022-10-29T14:00:40Z,sgg:3087923,bf:57b5a7ffabd8181c0cfdf304,2,1,1,1,53570409,
+startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 1,2022-10-29T14:00:40Z,bf:673f98f370390c0041722f81,bf:57b5a7ffabd8181c0cfdf304,2,1,1,1,53570409,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 1,2022-10-29T14:01:12Z,bf:5fa3da8e11743771ade92018,sgg:3089987,1,2,2,1,53570499,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 2,2022-10-29T14:02:03Z,bf:673f9e78237e35004096e4c6,sgg:3080941,2,0,1,0,53570523,absent_player
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 1,2022-10-29T14:02:05Z,bf:5fb3184d9a9e750ea663e423,bf:5fbef0d92dc8793ada8527a5,2,0,1,1,53570295,
@@ -5954,7 +5954,7 @@ startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_ro
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 2,2022-10-29T14:25:23Z,sgg:2621073,sgg:2706665,2,1,1,1,53570349,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 2,2022-10-29T14:25:42Z,bf:673f97e4a144d7002b2e288b,bf:60509713496ba24d0604cc08,2,0,1,1,53570253,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 2,2022-10-29T14:25:56Z,sgg:3082033,sgg:3077324,2,0,1,1,53570504,
-startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 2,2022-10-29T14:26:17Z,sgg:3087923,bf:5f4318d1681ff84ab5ec92f9,2,1,1,1,53570412,
+startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 2,2022-10-29T14:26:17Z,bf:673f98f370390c0041722f81,bf:5f4318d1681ff84ab5ec92f9,2,1,1,1,53570412,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 2,2022-10-29T14:29:33Z,bf:57b5a7ffabd8181c0cfdf304,bf:5ebea2fd1eafc755976c161a,0,2,2,1,53570413,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 1,2022-10-29T14:32:11Z,sgg:3081838,bf:5fb0e0020c8f110e8a8bf3f2,1,2,2,1,53570426,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 3,2022-10-29T14:35:02Z,bf:5c4d3b7150078403fe2d5308,sgg:2695007,2,0,1,1,53570337,
@@ -5977,7 +5977,7 @@ startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_ro
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 2,2022-10-29T14:53:07Z,bf:5fa3973bf8fc171ea9f68255,sgg:2509034,2,1,1,1,53570198,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 3,2022-10-29T14:54:41Z,bf:673f9e78237e35004096e4c6,sgg:2621966,2,0,1,1,53570526,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 3,2022-10-29T14:54:47Z,sgg:2519403,bf:5f32c6147bd80311ab78193f,2,1,1,1,53570216,
-startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 3,2022-10-29T14:54:52Z,sgg:3087923,bf:5ebea2fd1eafc755976c161a,2,0,1,1,53570415,
+startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 3,2022-10-29T14:54:52Z,bf:673f98f370390c0041722f81,bf:5ebea2fd1eafc755976c161a,2,0,1,1,53570415,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 3,2022-10-29T14:55:04Z,sgg:3082290,bf:5bef1fd422a55803cb340a40,0,2,2,1,53570286,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 5,2022-10-29T14:56:24Z,sgg:2621966,sgg:3080941,-1,0,2,0,53570534,dq
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 3,2022-10-29T14:56:42Z,sgg:2483808,bf:5d4eae596c2b2139a67ce680,2,0,1,1,53570285,
@@ -6035,7 +6035,7 @@ startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_ro
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 5,2022-10-30T12:52:36Z,sgg:2616063,sgg:3080856,-1,0,2,0,53570460,dq
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 4,2022-10-30T12:52:45Z,sgg:2616063,sgg:2803542,-1,0,2,0,53570456,dq
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 4,2022-10-30T13:07:28Z,bf:5f362c8703dbcc11d58d78e3,sgg:2695007,2,0,1,1,53570339,
-startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 4,2022-10-30T13:13:52Z,sgg:3087923,bf:673f99d8a144d7002b2e28a0,2,0,1,1,53570418,
+startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 4,2022-10-30T13:13:52Z,bf:673f98f370390c0041722f81,bf:673f99d8a144d7002b2e28a0,2,0,1,1,53570418,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 4,2022-10-30T13:15:16Z,sgg:3080941,sgg:3082387,0,2,2,0,53570531,absent_player
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 5,2022-10-30T13:15:29Z,bf:602d5acba74cc17c31b7d9af,sgg:3090658,2,0,1,1,53570475,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 4,2022-10-30T13:17:30Z,sgg:3082246,bf:5fb1e014eb92fe0475439152,0,2,2,0,53570495,absent_player
@@ -6052,7 +6052,7 @@ startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_ro
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 3,2022-10-30T13:37:12Z,bf:5fb02943698db1048d26b9cd,bf:5fbfb60f1632970e916c6544,0,2,2,1,53570321,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 4,2022-10-30T13:38:17Z,bf:5fa467df4eb3c2458669c29a,bf:603aca86a4a3f111939e5346,2,0,1,1,53570508,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 5,2022-10-30T13:39:12Z,bf:601ae997fb69622ad6617823,bf:5fa3da8e11743771ade92018,2,1,1,1,53570513,
-startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 5,2022-10-30T13:39:35Z,sgg:3087923,sgg:3076926,2,0,1,1,53570421,
+startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 5,2022-10-30T13:39:35Z,bf:673f98f370390c0041722f81,sgg:3076926,2,0,1,1,53570421,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 4,2022-10-30T13:41:51Z,sgg:2483808,sgg:3082290,2,1,1,1,53570289,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 4,2022-10-30T13:42:04Z,bf:673f9b382ea3530021c8d9fd,sgg:3091311,2,0,1,1,53570304,
 startgg,803255,Kards World Championship 2022,official,Round Robin Stage,round_robin,Round 4,2022-10-30T13:42:13Z,bf:5eb65df574f31a11dd226b38,sgg:3082715,2,1,1,1,53570272,
@@ -6124,7 +6124,7 @@ startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,d
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Winners Round 1,2022-11-05T13:43:00Z,bf:5fa467df4eb3c2458669c29a,sgg:2519403,3,1,1,1,53822472,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Winners Round 1,2022-11-05T13:43:50Z,bf:5bef1fd422a55803cb340a40,bf:5fa5397c241d875936d2c2f2,3,1,1,1,53822462,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Winners Round 1,2022-11-05T13:47:26Z,sgg:2483698,sgg:2621073,3,1,1,1,53822465,
-startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Winners Round 1,2022-11-05T13:48:02Z,sgg:3087923,bf:5fbfb60f1632970e916c6544,3,0,1,1,53822467,
+startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Winners Round 1,2022-11-05T13:48:02Z,bf:673f98f370390c0041722f81,bf:5fbfb60f1632970e916c6544,3,0,1,1,53822467,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Losers Round 1,2022-11-05T13:50:14Z,bf:5fa27bfdf8fc171ea9f66924,sgg:2621073,,,2,0,53822526,no_score
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Winners Round 1,2022-11-05T13:52:11Z,bf:5ec038e2256baa1d38011a05,bf:5f362c8703dbcc11d58d78e3,3,2,1,1,53822466,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Winners Round 1,2022-11-05T13:55:18Z,sgg:2930602,bf:673f964570390c0041722f72,1,3,2,1,53822460,
@@ -6140,7 +6140,7 @@ startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,d
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Winners Round 2,2022-11-05T14:44:13Z,bf:673f9e78237e35004096e4c6,sgg:3082033,3,1,1,1,53822474,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Losers Round 1,2022-11-05T14:44:30Z,bf:5fa3973bf8fc171ea9f68255,bf:5f32c6147bd80311ab78193f,3,0,1,1,53822523,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Winners Round 2,2022-11-05T14:48:26Z,bf:5bef1fd422a55803cb340a40,bf:5fb3184d9a9e750ea663e423,3,0,1,1,53822476,
-startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Winners Round 2,2022-11-05T14:51:19Z,bf:5ec038e2256baa1d38011a05,sgg:3087923,2,3,2,1,53822478,
+startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Winners Round 2,2022-11-05T14:51:19Z,bf:5ec038e2256baa1d38011a05,bf:673f98f370390c0041722f81,2,3,2,1,53822478,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Winners Round 2,2022-11-05T15:07:11Z,bf:673f9ae481b1a20036ec0786,bf:564e7b5b80b8db4a00c4ff9c,2,3,2,1,53822479,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Winners Round 2,2022-11-05T15:10:06Z,bf:673f99d8a144d7002b2e28a0,sgg:2483698,3,2,1,1,53822477,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Losers Round 1,2022-11-05T15:12:00Z,sgg:2930602,sgg:3082715,1,3,2,1,53822524,
@@ -6157,13 +6157,13 @@ startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,d
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Losers Round 2,2022-11-05T15:38:12Z,bf:673f9ae481b1a20036ec0786,bf:5fa5397c241d875936d2c2f2,3,0,1,1,53822533,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Losers Round 2,2022-11-05T15:46:14Z,bf:5fb3184d9a9e750ea663e423,bf:5fa62937c3c163598ec80783,1,3,2,1,53822536,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Winners Quarter-Final,2022-11-05T16:11:52Z,bf:5bef1fd422a55803cb340a40,bf:673f99d8a144d7002b2e28a0,2,3,2,1,53822483,
-startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Winners Quarter-Final,2022-11-05T16:13:11Z,sgg:3087923,bf:564e7b5b80b8db4a00c4ff9c,1,3,2,1,53822484,
+startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Winners Quarter-Final,2022-11-05T16:13:11Z,bf:673f98f370390c0041722f81,bf:564e7b5b80b8db4a00c4ff9c,1,3,2,1,53822484,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Losers Round 3,2022-11-05T16:18:15Z,bf:673f97e4a144d7002b2e288b,sgg:2519403,3,2,1,1,53822542,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Winners Quarter-Final,2022-11-05T16:25:02Z,bf:5fb1e014eb92fe0475439152,bf:5fa467df4eb3c2458669c29a,2,3,2,1,53822485,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Losers Round 2,2022-11-05T16:41:27Z,bf:5eb65df574f31a11dd226b38,sgg:3082715,3,1,1,1,53822532,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Losers Round 3,2022-11-05T16:43:28Z,bf:5f362c8703dbcc11d58d78e3,bf:5fa62937c3c163598ec80783,3,1,1,1,53822541,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Losers Round 3,2022-11-05T16:46:37Z,bf:673f9ae481b1a20036ec0786,bf:5ec038e2256baa1d38011a05,2,3,2,1,53822540,
-startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Losers Round 4,2022-11-05T17:22:29Z,sgg:3087923,bf:673f97e4a144d7002b2e288b,2,3,2,1,53822546,
+startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Losers Round 4,2022-11-05T17:22:29Z,bf:673f98f370390c0041722f81,bf:673f97e4a144d7002b2e288b,2,3,2,1,53822546,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Losers Round 3,2022-11-05T17:31:11Z,bf:5fa3973bf8fc171ea9f68255,bf:5eb65df574f31a11dd226b38,3,2,1,1,53822539,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Losers Round 4,2022-11-05T17:36:11Z,bf:673f9e78237e35004096e4c6,bf:5ec038e2256baa1d38011a05,1,3,2,1,53822544,
 startgg,803255,Kards World Championship 2022,official,Double Elimination Stage,double_elimination,Losers Round 4,2022-11-05T17:37:32Z,bf:5fb1e014eb92fe0475439152,bf:5f362c8703dbcc11d58d78e3,1,3,2,1,53822545,
@@ -6764,11 +6764,11 @@ challonge,12645158,OCC 2023-03,official,Qualifier A,double elimination,2,2023-03
 challonge,12645158,OCC 2023-03,official,Qualifier A,double elimination,-2,2023-03-11T13:49:58Z,bf:673f9e78237e35004096e4c6,ch:BYE,2,0,1,0,311015742,placeholder
 challonge,12645158,OCC 2023-03,official,Qualifier A,double elimination,-1,2023-03-11T13:52:02Z,ch:solarflare6041,ch:BYE,2,0,1,0,311015740,placeholder
 challonge,12645158,OCC 2023-03,official,Qualifier A,double elimination,-2,2023-03-11T13:52:08Z,ch:BYE,ch:solarflare6041,0,2,2,0,311015744,placeholder
-challonge,12645168,OCC 2023-03,official,Qualifier B,double elimination,1,2023-03-11T13:59:04Z,sgg:3087923,ch:w,2,1,1,1,311015786,
+challonge,12645168,OCC 2023-03,official,Qualifier B,double elimination,1,2023-03-11T13:59:04Z,bf:673f98f370390c0041722f81,ch:w,2,1,1,1,311015786,
 challonge,12645158,OCC 2023-03,official,Qualifier A,double elimination,1,2023-03-11T13:59:25Z,bf:673f9726a144d7002b2e2888,ch:solarflare6041,2,1,1,1,311015727,
 challonge,12645168,OCC 2023-03,official,Qualifier B,double elimination,-1,2023-03-11T14:02:04Z,bf:5fb1e014eb92fe0475439152,ch:w,2,0,1,1,311015800,
 challonge,12645168,OCC 2023-03,official,Qualifier B,double elimination,3,2023-03-11T14:14:55Z,ch:linzhixiang562,bf:60509713496ba24d0604cc08,2,1,1,1,311015798,
-challonge,12645168,OCC 2023-03,official,Qualifier B,double elimination,2,2023-03-11T14:29:04Z,ch:UwU_moi,sgg:3087923,0,2,2,1,311015793,
+challonge,12645168,OCC 2023-03,official,Qualifier B,double elimination,2,2023-03-11T14:29:04Z,ch:UwU_moi,bf:673f98f370390c0041722f81,0,2,2,1,311015793,
 challonge,12645158,OCC 2023-03,official,Qualifier A,double elimination,-3,2023-03-11T14:30:19Z,ch:solarflare6041,ch:清残局,0,2,2,1,311015747,
 challonge,12645168,OCC 2023-03,official,Qualifier B,double elimination,-2,2023-03-11T14:30:41Z,ch:UwU_moi,ch:BYE,2,0,1,0,311015807,placeholder
 challonge,12645168,OCC 2023-03,official,Qualifier B,double elimination,-2,2023-03-11T14:30:50Z,bf:5fb42443a2fd346547530b2e,bf:5fb1e014eb92fe0475439152,2,1,1,1,311015804,
@@ -6777,9 +6777,9 @@ challonge,12645168,OCC 2023-03,official,Qualifier B,double elimination,-3,2023-0
 challonge,12645158,OCC 2023-03,official,Qualifier A,double elimination,-2,2023-03-11T15:09:46Z,bf:673f9726a144d7002b2e2888,ch:BYE,2,0,1,0,311015743,placeholder
 challonge,12645158,OCC 2023-03,official,Qualifier A,double elimination,2,2023-03-11T15:14:39Z,bf:673f9726a144d7002b2e2888,ch:pytorch,1,2,2,1,311015733,
 challonge,12645168,OCC 2023-03,official,Qualifier B,double elimination,-4,2023-03-11T15:18:34Z,bf:60509713496ba24d0604cc08,ch:UwU_moi,1,2,2,1,311015811,
-challonge,12645168,OCC 2023-03,official,Qualifier B,double elimination,3,2023-03-11T15:26:55Z,sgg:3087923,bf:5fb3184d9a9e750ea663e423,2,1,1,1,311015797,
+challonge,12645168,OCC 2023-03,official,Qualifier B,double elimination,3,2023-03-11T15:26:55Z,bf:673f98f370390c0041722f81,bf:5fb3184d9a9e750ea663e423,2,1,1,1,311015797,
 challonge,12645158,OCC 2023-03,official,Qualifier A,double elimination,3,2023-03-11T15:54:38Z,ch:pytorch,bf:673f964570390c0041722f72,2,1,1,1,311015736,
-challonge,12645168,OCC 2023-03,official,Qualifier B,double elimination,4,2023-03-11T16:04:13Z,sgg:3087923,ch:linzhixiang562,2,0,1,1,311015799,
+challonge,12645168,OCC 2023-03,official,Qualifier B,double elimination,4,2023-03-11T16:04:13Z,bf:673f98f370390c0041722f81,ch:linzhixiang562,2,0,1,1,311015799,
 challonge,12645158,OCC 2023-03,official,Qualifier A,double elimination,-3,2023-03-11T16:11:00Z,bf:673f9e78237e35004096e4c6,bf:673f9726a144d7002b2e2888,1,2,2,1,311015746,
 challonge,12645158,OCC 2023-03,official,Qualifier A,double elimination,-4,2023-03-11T16:17:24Z,bf:673f964570390c0041722f72,ch:清残局,2,0,1,1,311015749,
 challonge,12645168,OCC 2023-03,official,Qualifier B,double elimination,-4,2023-03-11T16:28:21Z,bf:5fb3184d9a9e750ea663e423,bf:5fb42443a2fd346547530b2e,2,1,1,1,311015810,
@@ -6791,7 +6791,7 @@ challonge,12645158,OCC 2023-03,official,Qualifier A,double elimination,-6,2023-0
 challonge,12645168,OCC 2023-03,official,Qualifier B,double elimination,-6,2023-03-11T18:12:49Z,ch:linzhixiang562,bf:5fb3184d9a9e750ea663e423,1,2,2,1,311015813,
 challonge,12645158,OCC 2023-03,official,Qualifier A,double elimination,5,2023-03-11T18:21:05Z,ch:pytorch,bf:673f9cc689b5530023006e64,1,2,2,1,311015752,
 challonge,12645158,OCC 2023-03,official,Qualifier A,double elimination,5,2023-03-11T18:40:54Z,bf:673f9cc689b5530023006e64,ch:pytorch,1,2,2,1,311015753,
-challonge,12645168,OCC 2023-03,official,Qualifier B,double elimination,5,2023-03-11T19:12:34Z,sgg:3087923,bf:5fb3184d9a9e750ea663e423,2,1,1,1,311015814,
+challonge,12645168,OCC 2023-03,official,Qualifier B,double elimination,5,2023-03-11T19:12:34Z,bf:673f98f370390c0041722f81,bf:5fb3184d9a9e750ea663e423,2,1,1,1,311015814,
 challonge,12528278,OCC 2023-02,official,Top 8,single elimination,2,2023-03-18T10:56:45Z,bf:5a4d98c332953903641106de,bf:673f99d8a144d7002b2e28a0,1,2,2,1,308240101,
 challonge,12528278,OCC 2023-02,official,Top 8,single elimination,0,2023-03-18T10:56:55Z,bf:5fa467df4eb3c2458669c29a,bf:5a4d98c332953903641106de,3,1,1,1,308240103,
 challonge,12528278,OCC 2023-02,official,Top 8,single elimination,1,2023-03-18T11:03:23Z,bf:564e7b5b80b8db4a00c4ff9c,bf:5a4d98c332953903641106de,0,2,2,1,308240098,
@@ -6815,14 +6815,14 @@ challonge,12659633,Kards Open XV,open,Top 16,single elimination,3,2023-03-19T17:
 challonge,12659633,Kards Open XV,open,Top 16,single elimination,3,2023-03-19T17:59:03Z,bf:5ec038e2256baa1d38011a05,bf:673f99d8a144d7002b2e28a0,3,1,1,1,311973708,
 challonge,12659633,Kards Open XV,open,Top 16,single elimination,0,2023-03-19T18:06:38Z,bf:5fb1e014eb92fe0475439152,bf:673f99d8a144d7002b2e28a0,2,3,2,1,311973710,
 challonge,12659633,Kards Open XV,open,Top 16,single elimination,4,2023-03-19T18:11:06Z,bf:673f9e78237e35004096e4c6,bf:5ec038e2256baa1d38011a05,1,3,2,1,311973709,
-challonge,12673257,OCC 2023-03,official,Top 8,single elimination,1,2023-04-14T13:26:34Z,bf:564e7b5b80b8db4a00c4ff9c,sgg:3087923,0,2,2,1,315850319,
+challonge,12673257,OCC 2023-03,official,Top 8,single elimination,1,2023-04-14T13:26:34Z,bf:564e7b5b80b8db4a00c4ff9c,bf:673f98f370390c0041722f81,0,2,2,1,315850319,
 challonge,12673257,OCC 2023-03,official,Top 8,single elimination,1,2023-04-14T13:26:35Z,bf:5fbe8c402dc8793ada8519d5,ch:pytorch,0,0,2,0,315850321,zero_zero
 challonge,12673257,OCC 2023-03,official,Top 8,single elimination,1,2023-04-14T13:26:52Z,bf:673f99d8a144d7002b2e28a0,bf:673f9ae481b1a20036ec0786,1,2,2,1,315850320,
 challonge,12673257,OCC 2023-03,official,Top 8,single elimination,1,2023-04-14T13:50:03Z,sgg:2917089,bf:5fa467df4eb3c2458669c29a,1,2,2,1,315850322,
-challonge,12673257,OCC 2023-03,official,Top 8,single elimination,2,2023-04-14T13:58:06Z,sgg:3087923,bf:673f9ae481b1a20036ec0786,2,1,1,1,315850323,
+challonge,12673257,OCC 2023-03,official,Top 8,single elimination,2,2023-04-14T13:58:06Z,bf:673f98f370390c0041722f81,bf:673f9ae481b1a20036ec0786,2,1,1,1,315850323,
 challonge,12673257,OCC 2023-03,official,Top 8,single elimination,2,2023-04-14T13:58:15Z,ch:pytorch,bf:5fa467df4eb3c2458669c29a,2,0,1,1,315850324,
 challonge,12673257,OCC 2023-03,official,Top 8,single elimination,0,2023-04-14T13:58:42Z,bf:673f9ae481b1a20036ec0786,bf:5fa467df4eb3c2458669c29a,2,3,2,1,315850326,
-challonge,12673257,OCC 2023-03,official,Top 8,single elimination,3,2023-04-14T13:58:49Z,sgg:3087923,ch:pytorch,3,0,1,1,315850325,
+challonge,12673257,OCC 2023-03,official,Top 8,single elimination,3,2023-04-14T13:58:49Z,bf:673f98f370390c0041722f81,ch:pytorch,3,0,1,1,315850325,
 challonge,12815267,OCC 2023-04,official,Qualifier B,double elimination,1,2023-04-15T12:41:30Z,ch:BYE,ch:BYE,2,0,1,0,316004309,placeholder
 challonge,12815250,OCC 2023-04,official,Qualifier A,double elimination,1,2023-04-15T12:49:56Z,ch:BYE,ch:BYE,2,0,1,0,316004261,placeholder
 challonge,12815250,OCC 2023-04,official,Qualifier A,double elimination,2,2023-04-15T12:54:22Z,ch:BYE,bf:5fb42443a2fd346547530b2e,0,2,2,0,316004268,placeholder
@@ -6895,7 +6895,7 @@ challonge,12825624,OCC 2023-04,official,Top 8,single elimination,0,2023-05-03T12
 challonge,12896194,OCC Ultimate I,official,Main,single elimination,1,2023-05-06T17:18:56Z,bf:673f9ae481b1a20036ec0786,bf:564e7b5b80b8db4a00c4ff9c,3,2,1,1,318886991,
 challonge,12896194,OCC Ultimate I,official,Main,single elimination,1,2023-05-06T17:19:46Z,bf:673f99d8a144d7002b2e28a0,ch:tiger,2,3,2,1,318886990,
 challonge,12896194,OCC Ultimate I,official,Main,single elimination,1,2023-05-06T17:20:04Z,bf:5fa467df4eb3c2458669c29a,ch:UwU_moi,3,0,1,1,318886993,
-challonge,12896194,OCC Ultimate I,official,Main,single elimination,1,2023-05-06T17:20:05Z,ch:jinlun,sgg:3087923,3,1,1,1,318886992,
+challonge,12896194,OCC Ultimate I,official,Main,single elimination,1,2023-05-06T17:20:05Z,ch:jinlun,bf:673f98f370390c0041722f81,3,1,1,1,318886992,
 challonge,12896194,OCC Ultimate I,official,Main,single elimination,2,2023-05-07T17:08:00Z,ch:tiger,bf:673f9ae481b1a20036ec0786,3,1,1,1,318886994,
 challonge,12896194,OCC Ultimate I,official,Main,single elimination,2,2023-05-07T17:08:07Z,ch:jinlun,bf:5fa467df4eb3c2458669c29a,1,3,2,1,318886995,
 challonge,12896194,OCC Ultimate I,official,Main,single elimination,0,2023-05-07T17:08:13Z,bf:673f9ae481b1a20036ec0786,ch:jinlun,3,1,1,1,318886997,
@@ -7140,7 +7140,7 @@ challonge,13168247,OCC 2023-07,official,Qualifier A,double elimination,-1,2023-0
 challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,1,2023-07-08T13:06:39Z,ch:BYE,ch:eszemteszem,0,0,2,0,326624344,placeholder
 challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,1,2023-07-08T13:06:51Z,bf:5fb1e014eb92fe0475439152,ch:BYE,0,0,1,0,326624347,placeholder
 challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,-1,2023-07-08T13:06:56Z,ch:BYE,ch:BYE,0,0,1,0,326624358,placeholder
-challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,1,2023-07-08T13:07:04Z,sgg:3087923,ch:BYE,0,0,1,0,326624346,placeholder
+challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,1,2023-07-08T13:07:04Z,bf:673f98f370390c0041722f81,ch:BYE,0,0,1,0,326624346,placeholder
 challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,1,2023-07-08T13:07:10Z,ch:BYE,ch:choas,0,0,2,0,326624345,placeholder
 challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,1,2023-07-08T13:07:13Z,bf:673f9be589b5530023006e4f,ch:BYE,0,0,1,0,326624348,placeholder
 challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,-1,2023-07-08T13:07:30Z,ch:BYE,ch:BYE,0,0,2,0,326624359,placeholder
@@ -7154,8 +7154,8 @@ challonge,13168247,OCC 2023-07,official,Qualifier A,double elimination,2,2023-07
 challonge,13168247,OCC 2023-07,official,Qualifier A,double elimination,1,2023-07-08T13:41:44Z,bf:673f9726a144d7002b2e2888,ch:拿古飞,2,1,1,1,326624200,
 challonge,13168247,OCC 2023-07,official,Qualifier A,double elimination,-1,2023-07-08T13:41:54Z,ch:拿古飞,ch:BYE,2,0,1,0,326624215,placeholder
 challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,1,2023-07-08T13:43:04Z,bf:673f9e78237e35004096e4c6,bf:5ec038e2256baa1d38011a05,1,2,2,1,326624343,
-challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,2,2023-07-08T13:43:15Z,sgg:3087923,bf:5fb1e014eb92fe0475439152,0,2,2,1,326624352,
-challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,-2,2023-07-08T13:43:29Z,sgg:3087923,ch:BYE,2,0,1,0,326624362,placeholder
+challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,2,2023-07-08T13:43:15Z,bf:673f98f370390c0041722f81,bf:5fb1e014eb92fe0475439152,0,2,2,1,326624352,
+challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,-2,2023-07-08T13:43:29Z,bf:673f98f370390c0041722f81,ch:BYE,2,0,1,0,326624362,placeholder
 challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,-1,2023-07-08T13:43:51Z,ch:BYE,ch:BYE,2,0,1,0,326624360,placeholder
 challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,2,2023-07-08T13:55:59Z,bf:673f9be589b5530023006e4f,ch:懿凌,0,0,1,0,326624353,zero_zero
 challonge,13168247,OCC 2023-07,official,Qualifier A,double elimination,1,2023-07-08T13:56:58Z,sgg:2917562,ch:BYE,0,0,1,0,326624205,placeholder
@@ -7182,7 +7182,7 @@ challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,-3,2023-0
 challonge,13168247,OCC 2023-07,official,Qualifier A,double elimination,4,2023-07-08T15:30:30Z,sgg:2616063,sgg:2917562,1,2,2,1,326624214,
 challonge,13168247,OCC 2023-07,official,Qualifier A,double elimination,-4,2023-07-08T15:36:23Z,ch:time_swallow,bf:673f9726a144d7002b2e2888,0,2,2,1,326624226,
 challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,4,2023-07-08T15:38:17Z,bf:5ec038e2256baa1d38011a05,bf:673f9be589b5530023006e4f,1,2,2,1,326624356,
-challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,-3,2023-07-08T15:47:42Z,bf:673f95f8744fee00353bc808,sgg:3087923,2,1,1,1,326624365,
+challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,-3,2023-07-08T15:47:42Z,bf:673f95f8744fee00353bc808,bf:673f98f370390c0041722f81,2,1,1,1,326624365,
 challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,-4,2023-07-08T16:00:36Z,bf:5fb1e014eb92fe0475439152,ch:eszemteszem,0,2,2,1,326624368,
 challonge,13168247,OCC 2023-07,official,Qualifier A,double elimination,-5,2023-07-08T16:06:55Z,bf:673f997c70390c0041722f8c,bf:673f9726a144d7002b2e2888,2,0,1,1,326624227,
 challonge,13168255,OCC 2023-07,official,Qualifier B,double elimination,-4,2023-07-08T16:11:12Z,ch:choas,bf:673f95f8744fee00353bc808,2,0,1,1,326624367,
@@ -7213,7 +7213,7 @@ challonge,13324030,OCC 2023-08,official,Qualifier A,double elimination,1,2023-08
 challonge,13324030,OCC 2023-08,official,Qualifier A,double elimination,1,2023-08-12T12:54:40Z,ch:BYE,ch:劣质暗杀兵,0,0,2,0,330937199,placeholder
 challonge,13324030,OCC 2023-08,official,Qualifier A,double elimination,1,2023-08-12T12:55:11Z,bf:5a4d98c332953903641106de,ch:BYE,0,0,1,0,330937203,placeholder
 challonge,13324030,OCC 2023-08,official,Qualifier A,double elimination,1,2023-08-12T12:55:32Z,ch:BYE,bf:5bef1fd422a55803cb340a40,0,0,2,0,330937205,placeholder
-challonge,13324039,OCC 2023-08,official,Qualifier B,double elimination,1,2023-08-12T12:55:53Z,ch:BYE,sgg:3087923,0,0,1,0,330937394,placeholder
+challonge,13324039,OCC 2023-08,official,Qualifier B,double elimination,1,2023-08-12T12:55:53Z,ch:BYE,bf:673f98f370390c0041722f81,0,0,1,0,330937394,placeholder
 challonge,13324039,OCC 2023-08,official,Qualifier B,double elimination,-1,2023-08-12T12:56:00Z,ch:BYE,ch:BYE,0,0,2,0,330937402,placeholder
 challonge,13324039,OCC 2023-08,official,Qualifier B,double elimination,1,2023-08-12T12:56:01Z,bf:564e7b5b80b8db4a00c4ff9c,ch:BYE,0,0,1,0,330937387,placeholder
 challonge,13324039,OCC 2023-08,official,Qualifier B,double elimination,1,2023-08-12T12:56:07Z,ch:BYE,bf:673f95f8744fee00353bc808,0,0,2,0,330937388,placeholder
@@ -7225,7 +7225,7 @@ challonge,13324030,OCC 2023-08,official,Qualifier A,double elimination,1,2023-08
 challonge,13324030,OCC 2023-08,official,Qualifier A,double elimination,-1,2023-08-12T13:26:07Z,bf:60509713496ba24d0604cc08,ch:BYE,0,0,1,0,330937215,placeholder
 challonge,13324030,OCC 2023-08,official,Qualifier A,double elimination,1,2023-08-12T13:27:00Z,bf:673f99d8a144d7002b2e28a0,bf:673f9c032ea3530021c8da09,0,0,1,0,330937198,zero_zero
 challonge,13324030,OCC 2023-08,official,Qualifier A,double elimination,-1,2023-08-12T13:27:30Z,bf:673f9c032ea3530021c8da09,ch:BYE,0,0,1,0,330937213,placeholder
-challonge,13324039,OCC 2023-08,official,Qualifier B,double elimination,-1,2023-08-12T13:32:11Z,sgg:2616063,sgg:3087923,0,0,1,0,330937405,zero_zero
+challonge,13324039,OCC 2023-08,official,Qualifier B,double elimination,-1,2023-08-12T13:32:11Z,sgg:2616063,bf:673f98f370390c0041722f81,0,0,1,0,330937405,zero_zero
 challonge,13324039,OCC 2023-08,official,Qualifier B,double elimination,1,2023-08-12T13:32:30Z,ch:顶级大厨,sgg:2616063,2,0,1,1,330937393,
 challonge,13324039,OCC 2023-08,official,Qualifier B,double elimination,1,2023-08-12T13:32:53Z,bf:673f99e1a144d7002b2e28a2,ch:ghost,2,1,1,1,330937392,
 challonge,13324030,OCC 2023-08,official,Qualifier A,double elimination,1,2023-08-12T13:33:14Z,bf:673f9ae481b1a20036ec0786,sgg:2917562,0,2,2,1,330937201,
@@ -7475,7 +7475,7 @@ challonge,13600610,KARDS World Championship 2023,official,Knockout,group,4,2023-
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,1,2023-10-21T13:34:37Z,sgg:3086985,bf:5fa467df4eb3c2458669c29a,0,3,2,0,340509566,dq_rewritten
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,3,2023-10-21T13:35:10Z,ch:BYE,ch:落寒尘,0,3,2,0,340509660,placeholder
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,3,2023-10-21T13:35:21Z,ch:BYE,bf:673f9ac72ea3530021c8d9f2,0,3,2,0,340509688,placeholder
-challonge,13600610,KARDS World Championship 2023,official,Knockout,group,1,2023-10-21T13:35:22Z,ch:BYE,sgg:3087923,0,3,2,0,340509650,placeholder
+challonge,13600610,KARDS World Championship 2023,official,Knockout,group,1,2023-10-21T13:35:22Z,ch:BYE,bf:673f98f370390c0041722f81,0,3,2,0,340509650,placeholder
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,2,2023-10-21T13:35:29Z,bf:5b38c676cbd82c03a4f28e8f,ch:BYE,3,0,1,0,340509655,placeholder
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,5,2023-10-21T13:35:39Z,ch:BYE,ch:camper,0,3,2,0,340509697,placeholder
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,7,2023-10-21T13:35:41Z,ch:BYE,ch:提尔比茨,0,3,2,0,340509703,placeholder
@@ -7584,7 +7584,7 @@ challonge,13600610,KARDS World Championship 2023,official,Knockout,group,2,2023-
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,2,2023-10-21T14:00:50Z,sgg:3116938,ch:BYE,0,0,0,0,340509767,placeholder
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,3,2023-10-21T14:00:58Z,ch:BYE,bf:5c4d3b7150078403fe2d5308,0,0,0,0,340509772,placeholder
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,6,2023-10-21T14:01:16Z,bf:673f9eea70390c0041722fac,ch:BYE,0,0,0,0,340509784,placeholder
-challonge,13600610,KARDS World Championship 2023,official,Knockout,group,2,2023-10-21T14:03:20Z,sgg:3087923,ch:落寒尘,3,0,1,1,340509657,
+challonge,13600610,KARDS World Championship 2023,official,Knockout,group,2,2023-10-21T14:03:20Z,bf:673f98f370390c0041722f81,ch:落寒尘,3,0,1,1,340509657,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,1,2023-10-21T14:04:20Z,ch:BYE,ch:kvj19,0,0,0,0,340509958,placeholder
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,5,2023-10-21T14:05:12Z,ch:少年游,ch:1021758278,3,0,1,1,340509694,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,7,2023-10-21T14:05:12Z,bf:6070a8022fd5451122c65ae8,ch:kvj19,3,0,1,0,340509985,dq_after_tag
@@ -7633,7 +7633,7 @@ challonge,13600610,KARDS World Championship 2023,official,Knockout,group,2,2023-
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,2,2023-10-21T14:30:48Z,ch:thorondor,bf:5fb1e014eb92fe0475439152,3,0,1,0,340509656,dq_after_tag
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,3,2023-10-21T14:30:52Z,bf:5f0df84e824086475be264b7,bf:673f9e78237e35004096e4c6,0,3,2,1,340509911,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,6,2023-10-21T14:31:17Z,bf:5fb1e014eb92fe0475439152,sgg:2388207,0,3,2,0,340509673,dq_after_tag
-challonge,13600610,KARDS World Championship 2023,official,Knockout,group,3,2023-10-21T14:31:37Z,bf:5fb1e014eb92fe0475439152,sgg:3087923,0,3,2,0,340509659,dq_after_tag
+challonge,13600610,KARDS World Championship 2023,official,Knockout,group,3,2023-10-21T14:31:37Z,bf:5fb1e014eb92fe0475439152,bf:673f98f370390c0041722f81,0,3,2,0,340509659,dq_after_tag
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,4,2023-10-21T14:32:04Z,ch:落寒尘,bf:5fb1e014eb92fe0475439152,3,0,1,0,340509662,dq_after_tag
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,7,2023-10-21T14:32:23Z,bf:5b38c676cbd82c03a4f28e8f,bf:5fb1e014eb92fe0475439152,3,0,1,0,340509674,dq_after_tag
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,5,2023-10-21T14:33:03Z,ch:BYE,bf:5fb1e014eb92fe0475439152,0,0,0,0,340509669,placeholder
@@ -7673,7 +7673,7 @@ challonge,13600610,KARDS World Championship 2023,official,Knockout,group,2,2023-
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,2,2023-10-21T15:06:51Z,bf:673f98d070390c0041722f7f,ch:永远鲜红的幼月,0,3,2,0,340509628,dq_rewritten
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,3,2023-10-21T15:07:13Z,ch:lok,bf:673f9b382ea3530021c8d9fd,3,0,1,0,340509717,dq_rewritten
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,3,2023-10-21T15:08:16Z,bf:5b38c676cbd82c03a4f28e8f,bf:673f98c7237e35004096e4a4,3,1,1,1,340509661,
-challonge,13600610,KARDS World Championship 2023,official,Knockout,group,4,2023-10-21T15:08:37Z,sgg:3087923,sgg:2388207,3,2,1,1,340509664,
+challonge,13600610,KARDS World Championship 2023,official,Knockout,group,4,2023-10-21T15:08:37Z,bf:673f98f370390c0041722f81,sgg:2388207,3,2,1,1,340509664,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,3,2023-10-21T15:09:11Z,ch:starrywarren,ch:圆寂都察院,3,0,1,1,340509714,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,2,2023-10-21T15:10:04Z,ch:少年游,ch:提尔比茨,2,3,2,1,340509682,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,3,2023-10-21T15:10:07Z,bf:5bef1fd422a55803cb340a40,bf:5a4d98c332953903641106de,3,2,1,1,340509857,
@@ -7764,7 +7764,7 @@ challonge,13600610,KARDS World Championship 2023,official,Knockout,group,3,2023-
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,4,2023-10-21T16:27:34Z,bf:673f9e78237e35004096e4c6,bf:673f97e4a144d7002b2e288b,3,1,1,1,340509916,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,6,2023-10-21T16:30:18Z,bf:5fa467df4eb3c2458669c29a,ch:小白小白小白狼,2,3,2,1,340509587,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,5,2023-10-21T16:33:13Z,bf:5fa57306cc28b3594394b946,ch:0.0,2,3,2,1,340509918,
-challonge,13600610,KARDS World Championship 2023,official,Knockout,group,7,2023-10-21T16:35:04Z,ch:thorondor,sgg:3087923,3,2,1,1,340509677,
+challonge,13600610,KARDS World Championship 2023,official,Knockout,group,7,2023-10-21T16:35:04Z,ch:thorondor,bf:673f98f370390c0041722f81,3,2,1,1,340509677,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,4,2023-10-21T16:35:35Z,bf:673f98d070390c0041722f7f,ch:且战且退的巴甫洛夫,0,3,2,0,340509635,dq_rewritten
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,6,2023-10-21T16:35:58Z,ch:woofbark,bf:673f98fb70390c0041722f84,1,3,2,1,340509754,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,2,2023-10-21T16:38:28Z,ch:susaad,sgg:3086985,3,0,1,0,340509571,dq_after_tag
@@ -7814,7 +7814,7 @@ challonge,13600610,KARDS World Championship 2023,official,Knockout,group,5,2023-
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,4,2023-10-21T17:15:08Z,bf:673f99d8a144d7002b2e28a0,bf:5f109d917a5f692572240090,3,2,1,1,340509636,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,6,2023-10-21T17:15:13Z,ch:leps,ch:s961578,3,0,1,1,340509981,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,6,2023-10-21T17:15:17Z,sgg:3077324,bf:673f9b982ea3530021c8da03,3,2,1,1,340509978,
-challonge,13600610,KARDS World Championship 2023,official,Knockout,group,6,2023-10-21T17:18:43Z,sgg:3087923,bf:673f98c7237e35004096e4a4,2,3,2,1,340509671,
+challonge,13600610,KARDS World Championship 2023,official,Knockout,group,6,2023-10-21T17:18:43Z,bf:673f98f370390c0041722f81,bf:673f98c7237e35004096e4a4,2,3,2,1,340509671,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,3,2023-10-21T17:23:17Z,bf:673f97e4a144d7002b2e288b,ch:0.0,2,3,2,1,340509910,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,6,2023-10-21T17:27:55Z,ch:943265831,sgg:3091901,0,3,2,0,340509838,dq_rewritten
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,1,2023-10-21T17:28:02Z,ch:pathfinder,bf:673f9b382ea3530021c8d9fd,0,0,0,0,340509708,
@@ -7841,7 +7841,7 @@ challonge,13600610,KARDS World Championship 2023,official,Knockout,group,7,2023-
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,4,2023-10-21T17:45:24Z,bf:6070a8022fd5451122c65ae8,bf:673f9b982ea3530021c8da03,3,0,1,1,340509971,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,6,2023-10-21T17:48:32Z,ch:ghost,ch:且战且退的巴甫洛夫,3,2,1,1,340509642,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,7,2023-10-21T17:49:04Z,bf:673f9c032ea3530021c8da09,sgg:3077324,3,1,1,1,340509984,
-challonge,13600610,KARDS World Championship 2023,official,Knockout,group,5,2023-10-21T18:00:40Z,bf:5b38c676cbd82c03a4f28e8f,sgg:3087923,1,3,2,1,340509668,
+challonge,13600610,KARDS World Championship 2023,official,Knockout,group,5,2023-10-21T18:00:40Z,bf:5b38c676cbd82c03a4f28e8f,bf:673f98f370390c0041722f81,1,3,2,1,340509668,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,6,2023-10-21T18:11:07Z,bf:673f99d8a144d7002b2e28a0,ch:pain-gan,3,1,1,1,340509643,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,5,2023-10-21T18:16:32Z,bf:673f98c7237e35004096e4a4,ch:thorondor,3,2,1,1,340509666,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,group,6,2023-10-21T18:27:09Z,bf:673f9e78237e35004096e4c6,bf:5fa57306cc28b3594394b946,0,3,2,1,340509923,
@@ -7875,7 +7875,7 @@ challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimin
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,1,2023-10-22T14:00:31Z,bf:673f9c032ea3530021c8da09,ch:gragon123,3,2,1,1,340657079,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,-1,2023-10-22T14:02:04Z,bf:5fa31ac6f8fc171ea9f67c43,ch:dchukov,0,3,2,1,340657102,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,-1,2023-10-22T14:03:41Z,ch:七海千秋,ch:gragon123,0,3,2,1,340657105,
-challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,1,2023-10-22T14:07:39Z,bf:5bef1fd422a55803cb340a40,sgg:3087923,2,3,2,1,340657085,
+challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,1,2023-10-22T14:07:39Z,bf:5bef1fd422a55803cb340a40,bf:673f98f370390c0041722f81,2,3,2,1,340657085,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,1,2023-10-22T14:20:53Z,ch:0.0,ch:二月叶,3,2,1,1,340657083,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,-1,2023-10-22T14:27:21Z,bf:673f997c70390c0041722f8c,ch:圆寂都察院,3,2,1,1,340657106,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,-1,2023-10-22T14:35:24Z,ch:提尔比茨,bf:5bef1fd422a55803cb340a40,3,1,1,1,340657108,
@@ -7884,7 +7884,7 @@ challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimin
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,2,2023-10-22T14:47:49Z,bf:564e7b5b80b8db4a00c4ff9c,bf:673f9726a144d7002b2e2888,3,1,1,1,340657089,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,2,2023-10-22T14:49:59Z,ch:leps,ch:chaos,3,1,1,1,340657086,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,2,2023-10-22T14:53:53Z,bf:5fa467df4eb3c2458669c29a,bf:673f9c032ea3530021c8da09,3,1,1,1,340657090,
-challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,2,2023-10-22T14:56:32Z,bf:673f9c6789b5530023006e53,sgg:3087923,1,3,2,1,340657093,
+challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,2,2023-10-22T14:56:32Z,bf:673f9c6789b5530023006e53,bf:673f98f370390c0041722f81,1,3,2,1,340657093,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,2,2023-10-22T15:04:55Z,sgg:2709342,ch:且战且退的巴甫洛夫,3,0,1,1,340657088,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,-1,2023-10-22T15:05:31Z,ch:symbol,ch:二月叶,1,3,2,1,340657107,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,-2,2023-10-22T15:06:55Z,ch:且战且退的巴甫洛夫,bf:673f997c70390c0041722f8c,0,3,2,1,340657114,
@@ -7903,7 +7903,7 @@ challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimin
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,-3,2023-10-22T16:41:10Z,sgg:2483808,bf:673f9c032ea3530021c8da09,2,3,2,1,340657118,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,-3,2023-10-22T16:45:11Z,bf:673f9c6789b5530023006e53,ch:0.0,1,3,2,1,340657117,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,-3,2023-10-22T16:54:16Z,bf:673f9726a144d7002b2e2888,bf:673f997c70390c0041722f8c,3,0,1,1,340657119,
-challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,3,2023-10-22T17:06:22Z,bf:673f99d8a144d7002b2e28a0,sgg:3087923,1,3,2,1,340657097,
+challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,3,2023-10-22T17:06:22Z,bf:673f99d8a144d7002b2e28a0,bf:673f98f370390c0041722f81,1,3,2,1,340657097,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,-4,2023-10-22T17:10:35Z,bf:5fa467df4eb3c2458669c29a,ch:二月叶,1,3,2,1,340657124,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,-4,2023-10-22T17:40:57Z,ch:leps,bf:673f9c032ea3530021c8da09,2,3,2,1,340657122,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,-4,2023-10-22T17:58:54Z,sgg:2709342,ch:0.0,3,2,1,1,340657121,
@@ -7918,7 +7918,7 @@ challonge,13574315,OCC 2023-10,official,Top 8,single elimination,2,2023-10-28T17
 challonge,13574315,OCC 2023-10,official,Top 8,single elimination,1,2023-10-28T17:00:56Z,bf:673f99d8a144d7002b2e28a0,ch:恶法亦法(shawn),2,1,1,1,341327235,
 challonge,13574315,OCC 2023-10,official,Top 8,single elimination,3,2023-10-28T18:33:03Z,bf:564e7b5b80b8db4a00c4ff9c,bf:673f9c6789b5530023006e53,3,1,1,1,341327238,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,4,2023-10-29T14:27:31Z,bf:57101bc80b3b0f8312f27ec5,bf:564e7b5b80b8db4a00c4ff9c,0,3,2,1,340657098,
-challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,4,2023-10-29T17:46:16Z,ch:pytorch,sgg:3087923,2,3,2,1,340657099,
+challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,4,2023-10-29T17:46:16Z,ch:pytorch,bf:673f98f370390c0041722f81,2,3,2,1,340657099,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,-6,2023-10-29T18:08:24Z,bf:57101bc80b3b0f8312f27ec5,bf:673f9726a144d7002b2e2888,3,2,1,1,340657128,
 challonge,13600610,KARDS World Championship 2023,official,Knockout,double elimination,-6,2023-10-29T19:23:39Z,ch:pytorch,bf:673f9c032ea3530021c8da09,2,3,2,1,340657127,
 challonge,13668606,OCC Ultimate III,official,Main,single elimination,1,2023-11-04T17:04:05Z,bf:564e7b5b80b8db4a00c4ff9c,bf:673f9c6789b5530023006e53,1,3,2,1,342637144,
@@ -7999,9 +7999,9 @@ challonge,13703470,OCC 2023-11,official,Top 8,single elimination,2,2023-11-18T16
 challonge,13703470,OCC 2023-11,official,Top 8,single elimination,2,2023-11-18T16:59:18Z,bf:5fb3184d9a9e750ea663e423,bf:5fa467df4eb3c2458669c29a,2,1,1,1,344242926,
 challonge,13703470,OCC 2023-11,official,Top 8,single elimination,0,2023-11-18T18:41:18Z,bf:673f99d8a144d7002b2e28a0,bf:5fa467df4eb3c2458669c29a,1,3,2,1,344242928,
 challonge,13703470,OCC 2023-11,official,Top 8,single elimination,3,2023-11-18T20:18:13Z,bf:564e7b5b80b8db4a00c4ff9c,bf:5fb3184d9a9e750ea663e423,3,2,1,1,344242927,
-manual,,KARDS World Championship 2023,official,Grand Finals,double elimination,Upper semifinal,2023-12-02T13:00:00Z,bf:564e7b5b80b8db4a00c4ff9c,sgg:3087923,3,1,1,1,,manual: https://www.kards.com/news/kards-2023-wc-relive-all-the-action (bracket image)
+manual,,KARDS World Championship 2023,official,Grand Finals,double elimination,Upper semifinal,2023-12-02T13:00:00Z,bf:564e7b5b80b8db4a00c4ff9c,bf:673f98f370390c0041722f81,3,1,1,1,,manual: https://www.kards.com/news/kards-2023-wc-relive-all-the-action (bracket image)
 manual,,KARDS World Championship 2023,official,Grand Finals,double elimination,Upper semifinal,2023-12-02T15:00:00Z,bf:57101bc80b3b0f8312f27ec5,bf:673f9c032ea3530021c8da09,3,2,1,1,,manual: https://www.kards.com/news/kards-2023-wc-relive-all-the-action (bracket image)
-manual,,KARDS World Championship 2023,official,Grand Finals,double elimination,Lower round 1,2023-12-02T17:00:00Z,bf:673f9c032ea3530021c8da09,sgg:3087923,3,1,1,1,,manual: https://www.kards.com/news/kards-2023-wc-relive-all-the-action (bracket image; text: Leo out on day 1)
+manual,,KARDS World Championship 2023,official,Grand Finals,double elimination,Lower round 1,2023-12-02T17:00:00Z,bf:673f9c032ea3530021c8da09,bf:673f98f370390c0041722f81,3,1,1,1,,manual: https://www.kards.com/news/kards-2023-wc-relive-all-the-action (bracket image; text: Leo out on day 1)
 manual,,KARDS World Championship 2023,official,Grand Finals,double elimination,Upper final,2023-12-03T13:00:00Z,bf:57101bc80b3b0f8312f27ec5,bf:564e7b5b80b8db4a00c4ff9c,3,1,1,1,,manual: https://www.kards.com/news/kards-2023-wc-relive-all-the-action (bracket image)
 manual,,KARDS World Championship 2023,official,Grand Finals,double elimination,Lower final,2023-12-03T15:00:00Z,bf:564e7b5b80b8db4a00c4ff9c,bf:673f9c032ea3530021c8da09,3,1,1,1,,manual: https://www.kards.com/news/kards-2023-wc-relive-all-the-action (bracket image)
 manual,,KARDS World Championship 2023,official,Grand Finals,double elimination,Grand final (Bo7),2023-12-03T17:00:00Z,bf:564e7b5b80b8db4a00c4ff9c,bf:57101bc80b3b0f8312f27ec5,4,2,1,1,,manual: https://www.kards.com/news/kards-2023-wc-relive-all-the-action (bracket image; text: 4-2)
@@ -9027,7 +9027,7 @@ challonge,17180966,KARDS World Championship 2025,official,Main,double eliminatio
 challonge,17180966,KARDS World Championship 2025,official,Main,double elimination,5,2025-12-21T16:43:45Z,ch:sie_,bf:673f99e9a144d7002b2e28a4,0,3,2,1,438963004,
 challonge,17180966,KARDS World Championship 2025,official,Main,double elimination,5,2025-12-21T18:03:31Z,bf:673f99e9a144d7002b2e28a4,ch:sie_,2,3,2,1,438963005,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,1,2026-02-14T11:21:27Z,bf:673f9e64237e35004096e4c4,bf:673f95f8744fee00353bc808,0,2,2,1,445498496,
-challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,1,2026-02-14T11:24:59Z,ch:失其本心八幡,ch:旮旯给木高手,0,2,2,1,445498495,
+challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,1,2026-02-14T11:24:59Z,ch:失其本心八幡,ch:hojoto,0,2,2,1,445498495,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,1,2026-02-14T11:26:23Z,bf:673f9ae481b1a20036ec0786,bf:673f9e86744fee00353bc83c,0,2,2,1,445498501,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,1,2026-02-14T11:28:45Z,ch:煎饼1,ch:70714,0,2,2,1,445498502,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,1,2026-02-14T11:29:23Z,ch:akgz,bf:673f9cc689b5530023006e64,0,2,2,1,445498498,
@@ -9041,7 +9041,7 @@ challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,1,2026-02-14
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,1,2026-02-14T11:59:22Z,ch:拉菲艾拉,ch:fusy,2,1,1,1,445498499,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,2,2026-02-14T12:21:54Z,ch:煎饼1,ch:cianeled,1,2,2,1,445504887,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,2,2026-02-14T12:22:35Z,ch:基准线,ch:失其本心八幡,0,2,2,1,445504886,
-challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,2,2026-02-14T12:27:52Z,ch:sie_,ch:旮旯给木高手,1,2,2,1,445504889,
+challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,2,2026-02-14T12:27:52Z,ch:sie_,ch:hojoto,1,2,2,1,445504889,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,2,2026-02-14T12:28:19Z,bf:673f9ae481b1a20036ec0786,ch:e我不到啊,1,2,2,1,445504888,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,2,2026-02-14T12:35:07Z,ch:咔滋糕手,bf:673f95f8744fee00353bc808,0,2,2,1,445504890,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,2,2026-02-14T12:37:05Z,ch:sob-liu,bf:673f9e64237e35004096e4c4,1,2,2,1,445504885,
@@ -9062,7 +9062,7 @@ challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,3,2026-02-14
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,3,2026-02-14T13:38:06Z,ch:七海千秋,ch:椎名ましろ,0,2,2,1,445512073,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,3,2026-02-14T13:39:44Z,ch:sie_,ch:yuehaiting-secretary,2,1,1,1,445512078,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,3,2026-02-14T13:41:26Z,ch:拉菲艾拉,bf:673f95f8744fee00353bc808,2,0,1,1,445512072,
-challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,3,2026-02-14T13:42:23Z,ch:旮旯给木高手,bf:673f9e86744fee00353bc83c,2,1,1,1,445512074,
+challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,3,2026-02-14T13:42:23Z,ch:hojoto,bf:673f9e86744fee00353bc83c,2,1,1,1,445512074,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,4,2026-02-14T13:44:45Z,bf:673f9cc689b5530023006e64,bf:673f9e86744fee00353bc83c,,,2,0,445517065,forfeited
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,4,2026-02-14T14:04:39Z,ch:cianeled,bf:673f9e64237e35004096e4c4,0,2,2,1,445517068,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,4,2026-02-14T14:11:31Z,ch:作死的骡博,bf:673f9c8c2ea3530021c8da11,2,0,1,1,445517064,
@@ -9070,7 +9070,7 @@ challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,4,2026-02-14
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,4,2026-02-14T14:15:38Z,bf:673f9ae481b1a20036ec0786,ch:我永远都是中国人,2,1,1,1,445517062,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,4,2026-02-14T14:17:30Z,ch:70714,ch:e我不到啊,1,2,2,1,445517063,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,4,2026-02-14T14:19:44Z,ch:落寒尘,ch:yuehaiting-secretary,2,0,1,1,445517061,
-challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,4,2026-02-14T14:22:46Z,ch:旮旯给木高手,ch:椎名ましろ,1,2,2,1,445517059,
+challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,4,2026-02-14T14:22:46Z,ch:hojoto,ch:椎名ましろ,1,2,2,1,445517059,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,4,2026-02-14T14:22:55Z,bf:673f95f8744fee00353bc808,ch:akgz,2,0,1,1,445517066,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,4,2026-02-14T14:35:52Z,ch:咔滋糕手,ch:失其本心八幡,1,2,2,1,445517069,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,4,2026-02-14T14:38:21Z,ch:拉菲艾拉,bf:673f9ca92ea3530021c8da13,1,2,2,1,445517060,
@@ -9080,10 +9080,10 @@ challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,5,2026-02-14
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,5,2026-02-14T15:07:52Z,bf:673f95f8744fee00353bc808,ch:sie_,0,2,2,1,445522096,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,5,2026-02-14T15:08:59Z,bf:673f9e86744fee00353bc83c,ch:七海千秋,0,2,2,1,445522098,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,5,2026-02-14T15:12:05Z,ch:失其本心八幡,bf:673f9e64237e35004096e4c4,2,0,1,1,445522097,
-challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,5,2026-02-14T15:12:12Z,ch:旮旯给木高手,ch:拉菲艾拉,0,2,2,1,445522095,
+challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,5,2026-02-14T15:12:12Z,ch:hojoto,ch:拉菲艾拉,0,2,2,1,445522095,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,5,2026-02-14T15:13:23Z,ch:椎名ましろ,bf:673f9ca92ea3530021c8da13,2,1,1,1,445522094,
 challonge,17506943,KARDS Winter Tournament 2026,official,Main,swiss,5,2026-02-14T15:20:08Z,ch:fusy,ch:落寒尘,,,2,0,445522099,forfeited
-challonge,17558426,KARDS Winter Tournament 2026,official,Top 8,single elimination,1,2026-02-28T14:52:06Z,ch:椎名ましろ,ch:旮旯给木高手,3,1,1,1,447289720,
+challonge,17558426,KARDS Winter Tournament 2026,official,Top 8,single elimination,1,2026-02-28T14:52:06Z,ch:椎名ましろ,ch:hojoto,3,1,1,1,447289720,
 challonge,17558426,KARDS Winter Tournament 2026,official,Top 8,single elimination,1,2026-02-28T14:52:13Z,ch:失其本心八幡,ch:拉菲艾拉,3,1,1,1,447289721,
 challonge,17558426,KARDS Winter Tournament 2026,official,Top 8,single elimination,1,2026-02-28T14:52:19Z,bf:673f9ca92ea3530021c8da13,bf:673f9e64237e35004096e4c4,0,3,2,1,447289722,
 challonge,17558426,KARDS Winter Tournament 2026,official,Top 8,single elimination,1,2026-02-28T14:52:25Z,ch:sie_,bf:673f95f8744fee00353bc808,3,1,1,1,447289723,
@@ -9096,7 +9096,7 @@ challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,1,2026-04-11
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,1,2026-04-11T11:32:19Z,ch:2598252160,bf:673f9e64237e35004096e4c4,2,0,1,1,452642770,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,1,2026-04-11T11:33:28Z,ch:laoba114514,ch:akgz,1,2,2,1,452642760,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,1,2026-04-11T11:34:33Z,ch:作死的骡博,ch:耀旭,2,0,1,1,452642759,
-challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,1,2026-04-11T11:34:56Z,ch:旮旯给木高手,ch:dhhcofn,0,2,2,1,452642757,
+challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,1,2026-04-11T11:34:56Z,ch:hojoto,ch:dhhcofn,0,2,2,1,452642757,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,1,2026-04-11T11:35:09Z,ch:椎名ましろ,bf:673f9e86744fee00353bc83c,2,0,1,1,452642762,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,1,2026-04-11T11:35:22Z,ch:syswdsr,ch:请叫我林林林大人,2,0,1,1,452642766,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,1,2026-04-11T11:38:23Z,ch:70714,ch:失其本心八幡,1,2,2,1,452642764,
@@ -9111,7 +9111,7 @@ challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,2,2026-04-11
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,2,2026-04-11T12:23:45Z,ch:嘤嘤怪,ch:上海上单dinzhencha,0,2,2,1,452649835,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,2,2026-04-11T12:24:21Z,bf:673f95f8744fee00353bc808,ch:sie_,0,2,2,1,452649839,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,2,2026-04-11T12:24:31Z,ch:耀旭,ch:爱欣欣欣欣,2,1,1,1,452649832,
-challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,2,2026-04-11T12:26:57Z,ch:旮旯给木高手,ch:player290592455,2,1,1,1,452649833,
+challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,2,2026-04-11T12:26:57Z,ch:hojoto,ch:player290592455,2,1,1,1,452649833,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,2,2026-04-11T12:27:12Z,ch:syswdsr,ch:失其本心八幡,2,1,1,1,452649838,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,2,2026-04-11T12:28:20Z,ch:鸾缨凤翎,ch:yuehaiting-secretary,2,1,1,1,452649837,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,2,2026-04-11T12:30:14Z,ch:梦鸡的泪巴,ch:huaji-knife,1,2,2,1,452649827,
@@ -9122,7 +9122,7 @@ challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,2,2026-04-11
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,2,2026-04-11T12:41:16Z,ch:卡牌的力量,ch:70714,1,2,2,1,452649829,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,3,2026-04-11T13:03:29Z,ch:椎名ましろ,ch:2598252160,0,2,2,1,452657381,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,3,2026-04-11T13:03:37Z,ch:akgz,ch:huaji-knife,2,0,1,1,452657387,
-challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,3,2026-04-11T13:05:05Z,ch:sie_,ch:旮旯给木高手,2,0,1,1,452657384,
+challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,3,2026-04-11T13:05:05Z,ch:sie_,ch:hojoto,2,0,1,1,452657384,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,3,2026-04-11T13:06:31Z,ch:laoba114514,ch:70714,0,2,2,1,452657391,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,3,2026-04-11T13:12:05Z,ch:爱欣欣欣欣,bf:673f9e64237e35004096e4c4,0,2,2,1,452657385,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,3,2026-04-11T13:13:30Z,ch:梦鸡的泪巴,ch:卡牌的力量,1,2,2,1,452657383,
@@ -9140,11 +9140,11 @@ challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,4,2026-04-11
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,4,2026-04-11T14:00:04Z,ch:嘤嘤怪,ch:70714,1,2,2,1,452665300,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,4,2026-04-11T14:07:38Z,ch:椎名ましろ,ch:dhhcofn,0,2,2,1,452665290,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,4,2026-04-11T14:07:46Z,ch:上海上单dinzhencha,ch:akgz,0,2,2,1,452665298,
-challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,4,2026-04-11T14:08:03Z,ch:旮旯给木高手,bf:673f9e64237e35004096e4c4,2,1,1,1,452665288,
+challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,4,2026-04-11T14:08:03Z,ch:hojoto,bf:673f9e64237e35004096e4c4,2,1,1,1,452665288,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,4,2026-04-11T14:12:27Z,ch:卡牌的力量,ch:耀旭,1,2,2,1,452665286,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,4,2026-04-11T14:29:10Z,ch:syswdsr,bf:673f990470390c0041722f86,1,2,2,1,452665289,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,5,2026-04-11T14:49:03Z,ch:2598252160,ch:dhhcofn,2,0,1,1,452672580,
-challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,5,2026-04-11T14:53:05Z,ch:旮旯给木高手,ch:猪猪农场保安,2,1,1,1,452672586,
+challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,5,2026-04-11T14:53:05Z,ch:hojoto,ch:猪猪农场保安,2,1,1,1,452672586,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,5,2026-04-11T14:57:31Z,ch:上海上单dinzhencha,ch:请叫我林林林大人,0,2,2,1,452672587,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,5,2026-04-11T14:57:46Z,ch:椎名ましろ,ch:耀旭,0,2,2,1,452672585,
 challonge,17764891,KARDS Spring Tournament 2026,official,Main,swiss,5,2026-04-11T14:58:48Z,ch:鸾缨凤翎,ch:失其本心八幡,2,0,1,1,452672581,
@@ -9161,14 +9161,14 @@ challonge,17789623,KARDS Spring Tournament 2026,official,Top 8,single eliminatio
 challonge,17789623,KARDS Spring Tournament 2026,official,Top 8,single elimination,2,2026-04-18T14:03:05Z,ch:失其本心八幡,ch:70714,3,0,1,1,453347153,
 challonge,17789623,KARDS Spring Tournament 2026,official,Top 8,single elimination,0,2026-04-18T14:20:11Z,ch:70714,ch:dhhcofn,1,3,2,1,453347156,
 challonge,17789623,KARDS Spring Tournament 2026,official,Top 8,single elimination,3,2026-04-18T15:08:08Z,ch:失其本心八幡,ch:2598252160,3,1,1,1,453347155,
-challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,1,2026-06-20T11:29:45Z,ch:旮旯给木高手,bf:673f9e86744fee00353bc83c,2,0,1,1,461336804,
+challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,1,2026-06-20T11:29:45Z,ch:hojoto,bf:673f9e86744fee00353bc83c,2,0,1,1,461336804,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,1,2026-06-20T11:29:58Z,ch:sie_,ch:leonard,2,0,1,1,461336797,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,1,2026-06-20T11:30:11Z,ch:爱玩黄毛黑龙,ch:基准线,0,2,2,1,461336809,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,1,2026-06-20T11:30:20Z,ch:失其本心八幡,ch:cirno,0,2,2,1,461336800,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,1,2026-06-20T11:30:33Z,ch:说的道理,ch:gt_bed,0,2,2,1,461336796,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,1,2026-06-20T11:30:46Z,ch:爱欣欣欣欣,ch:kartash.璇,0,2,2,1,461336803,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,1,2026-06-20T11:30:57Z,bf:673f9e64237e35004096e4c4,ch:ルーミヤ,2,1,1,1,461336795,
-challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,1,2026-06-20T11:31:46Z,ch:赫宝赫宝我爱你,ch:新平游又晴,,,1,0,461336806,forfeited
+challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,1,2026-06-20T11:31:46Z,bf:673f9ced89b5530023006e66,ch:新平游又晴,,,1,0,461336806,forfeited
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,1,2026-06-20T11:39:29Z,ch:070714,ch:akgz,2,0,1,1,461336808,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,1,2026-06-20T11:39:45Z,ch:yuehaiting-secretary,ch:2598252160,2,1,1,1,461336805,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,1,2026-06-20T11:41:46Z,ch:明河共影,ch:dogmai,1,2,2,1,461336801,
@@ -9177,11 +9177,11 @@ challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,1,2026-06-20
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,1,2026-06-20T11:48:40Z,bf:673f9c6789b5530023006e53,ch:竹将军,1,2,2,1,461336798,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,1,2026-06-20T11:57:31Z,ch:卡牌的力量,ch:dhhcofn,2,1,1,1,461336802,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,2,2026-06-20T12:16:37Z,ch:foehnrevolt,ch:2598252160,0,2,2,1,461344096,
-challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,2,2026-06-20T12:18:20Z,ch:旮旯给木高手,ch:kartash.璇,2,0,1,1,461344087,
+challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,2,2026-06-20T12:18:20Z,ch:hojoto,ch:kartash.璇,2,0,1,1,461344087,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,2,2026-06-20T12:21:31Z,ch:明河共影,ch:dhhcofn,0,2,2,1,461344094,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,2,2026-06-20T12:25:57Z,bf:673f9c6789b5530023006e53,ch:leonard,2,0,1,1,461344092,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,2,2026-06-20T12:29:50Z,ch:爱玩黄毛黑龙,ch:akgz,2,1,1,1,461344097,
-challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,2,2026-06-20T12:31:17Z,ch:基准线,ch:赫宝赫宝我爱你,1,2,2,1,461344089,
+challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,2,2026-06-20T12:31:17Z,ch:基准线,bf:673f9ced89b5530023006e66,1,2,2,1,461344089,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,2,2026-06-20T12:32:05Z,ch:失其本心八幡,ch:cianeled,2,0,1,1,461344093,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,2,2026-06-20T12:35:02Z,ch:爱欣欣欣欣,bf:673f9e86744fee00353bc83c,1,2,2,1,461344095,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,2,2026-06-20T12:39:21Z,bf:673f9e64237e35004096e4c4,ch:gt_bed,2,1,1,1,461344083,
@@ -9191,7 +9191,7 @@ challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,2,2026-06-20
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,2,2026-06-20T12:47:37Z,ch:sie_,ch:竹将军,2,1,1,1,461344084,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,2,2026-06-20T12:48:23Z,ch:椎名ましろ,ch:cirno,1,2,2,1,461344085,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,2,2026-06-20T12:51:39Z,ch:卡牌的力量,ch:dogmai,2,1,1,1,461344086,
-challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,3,2026-06-20T13:25:39Z,bf:673f9e64237e35004096e4c4,ch:赫宝赫宝我爱你,0,2,2,1,461352407,
+challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,3,2026-06-20T13:25:39Z,bf:673f9e64237e35004096e4c4,bf:673f9ced89b5530023006e66,0,2,2,1,461352407,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,3,2026-06-20T13:26:45Z,ch:sie_,ch:cirno,0,2,2,1,461352408,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,3,2026-06-20T13:27:17Z,bf:673f9c6789b5530023006e53,ch:kartash.璇,1,2,2,1,461352416,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,3,2026-06-20T13:27:32Z,ch:gt_bed,ch:070714,2,0,1,1,461352412,
@@ -9203,9 +9203,9 @@ challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,3,2026-06-20
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,3,2026-06-20T13:36:52Z,bf:673f9e86744fee00353bc83c,ch:椎名ましろ,1,2,2,1,461352417,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,3,2026-06-20T13:46:17Z,ch:基准线,ch:dogmai,2,0,1,1,461352414,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,3,2026-06-20T13:49:43Z,ch:yuehaiting-secretary,ch:失其本心八幡,2,0,1,1,461352411,
-challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,3,2026-06-20T13:50:29Z,ch:旮旯给木高手,bf:673f9ca92ea3530021c8da13,2,0,1,1,461352410,
+challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,3,2026-06-20T13:50:29Z,ch:hojoto,bf:673f9ca92ea3530021c8da13,2,0,1,1,461352410,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,4,2026-06-20T14:13:29Z,ch:dogmai,ch:爱欣欣欣欣,0,2,2,1,461361183,
-challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,4,2026-06-20T14:13:41Z,ch:旮旯给木高手,ch:cirno,2,0,1,1,461361174,
+challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,4,2026-06-20T14:13:41Z,ch:hojoto,ch:cirno,2,0,1,1,461361174,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,4,2026-06-20T14:13:49Z,ch:gt_bed,ch:2598252160,2,0,1,1,461361180,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,4,2026-06-20T14:19:50Z,ch:hpph,ch:竹将军,2,0,1,1,461361177,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,4,2026-06-20T14:29:05Z,ch:dhhcofn,ch:akgz,0,2,2,1,461361184,
@@ -9213,24 +9213,24 @@ challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,4,2026-06-20
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,4,2026-06-20T14:29:32Z,ch:sie_,ch:kartash.璇,2,1,1,1,461361178,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,4,2026-06-20T14:29:44Z,ch:爱玩黄毛黑龙,bf:673f9e86744fee00353bc83c,2,1,1,1,461361182,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,4,2026-06-20T14:34:33Z,ch:yuehaiting-secretary,ch:基准线,1,2,2,1,461361179,
-challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,4,2026-06-20T14:40:43Z,ch:卡牌的力量,ch:赫宝赫宝我爱你,2,1,1,1,461361175,
+challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,4,2026-06-20T14:40:43Z,ch:卡牌的力量,bf:673f9ced89b5530023006e66,2,1,1,1,461361175,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,4,2026-06-20T14:40:54Z,ch:说的道理,bf:673f9ca92ea3530021c8da13,2,1,1,1,461361181,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,5,2026-06-20T15:04:06Z,ch:2598252160,ch:竹将军,0,2,2,1,461368332,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,5,2026-06-20T15:04:17Z,ch:hpph,bf:673f9e64237e35004096e4c4,0,2,2,1,461368328,
-challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,5,2026-06-20T15:04:30Z,ch:sie_,ch:赫宝赫宝我爱你,0,2,2,1,461368327,
+challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,5,2026-06-20T15:04:30Z,ch:sie_,bf:673f9ced89b5530023006e66,0,2,2,1,461368327,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,5,2026-06-20T15:13:04Z,ch:akgz,ch:leonard,0,2,2,1,461368335,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,5,2026-06-20T15:13:15Z,ch:cirno,ch:说的道理,2,0,1,1,461368330,
-challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,5,2026-06-20T15:18:16Z,ch:旮旯给木高手,ch:卡牌的力量,1,2,2,1,461368326,
+challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,5,2026-06-20T15:18:16Z,ch:hojoto,ch:卡牌的力量,1,2,2,1,461368326,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,5,2026-06-20T15:29:54Z,ch:kartash.璇,bf:673f9ca92ea3530021c8da13,2,1,1,1,461368333,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,5,2026-06-20T15:35:49Z,ch:椎名ましろ,ch:爱欣欣欣欣,2,0,1,1,461368334,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,5,2026-06-20T15:36:04Z,ch:爱玩黄毛黑龙,ch:yuehaiting-secretary,2,1,1,1,461368331,
 challonge,18091935,KARDS Summer Tournament 2026,official,Main,swiss,5,2026-06-20T15:52:25Z,ch:gt_bed,ch:基准线,2,1,1,1,461368329,
 challonge,18123770,KARDS Summer Tournament 2026,official,Top 8,single elimination,1,2026-06-26T12:34:26Z,ch:卡牌的力量,ch:sie_,2,3,2,1,462151947,
-challonge,18123770,KARDS Summer Tournament 2026,official,Top 8,single elimination,1,2026-06-26T14:06:32Z,ch:旮旯给木高手,ch:gt_bed,1,3,2,1,462151948,
+challonge,18123770,KARDS Summer Tournament 2026,official,Top 8,single elimination,1,2026-06-26T14:06:32Z,ch:hojoto,ch:gt_bed,1,3,2,1,462151948,
 challonge,18123770,KARDS Summer Tournament 2026,official,Top 8,single elimination,1,2026-06-26T15:14:24Z,bf:673f9e64237e35004096e4c4,ch:hpph,1,3,2,1,462151949,
-challonge,18123770,KARDS Summer Tournament 2026,official,Top 8,single elimination,1,2026-06-26T16:00:37Z,ch:赫宝赫宝我爱你,ch:cirno,3,2,1,1,462151950,
+challonge,18123770,KARDS Summer Tournament 2026,official,Top 8,single elimination,1,2026-06-26T16:00:37Z,bf:673f9ced89b5530023006e66,ch:cirno,3,2,1,1,462151950,
 challonge,18123770,KARDS Summer Tournament 2026,official,Top 8,single elimination,2,2026-06-27T12:50:21Z,ch:sie_,ch:gt_bed,3,1,1,1,462151951,
-challonge,18123770,KARDS Summer Tournament 2026,official,Top 8,single elimination,2,2026-06-27T13:11:41Z,ch:hpph,ch:赫宝赫宝我爱你,3,1,1,1,462151952,
+challonge,18123770,KARDS Summer Tournament 2026,official,Top 8,single elimination,2,2026-06-27T13:11:41Z,ch:hpph,bf:673f9ced89b5530023006e66,3,1,1,1,462151952,
 challonge,18123770,KARDS Summer Tournament 2026,official,Top 8,single elimination,3,2026-08-11T12:16:09Z,ch:sie_,ch:hpph,3,1,1,1,462151953,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,1,2026-08-15T11:24:41Z,ch:e我不到啊,ch:拉菲艾拉,0,2,2,1,468680757,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,1,2026-08-15T11:24:59Z,bf:673f9e64237e35004096e4c4,ch:2598252160,0,2,2,1,468680760,
@@ -9240,7 +9240,7 @@ challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,1,2026-08-15T1
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,1,2026-08-15T11:39:44Z,ch:tea,ch:akgz,2,0,1,1,468680767,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,1,2026-08-15T11:48:50Z,ch:sob-liu,ch:古月小莉,2,0,1,1,468680758,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,1,2026-08-15T11:49:01Z,ch:yals,ch:起个名子,2,1,1,1,468680768,
-challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,1,2026-08-15T11:49:13Z,ch:龙神上将,ch:旮旯给木高手,0,2,2,1,468680766,
+challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,1,2026-08-15T11:49:13Z,ch:龙神上将,ch:hojoto,0,2,2,1,468680766,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,1,2026-08-15T11:49:28Z,bf:673f99e1a144d7002b2e28a2,bf:673f95f8744fee00353bc808,2,1,1,1,468680762,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,1,2026-08-15T11:49:46Z,ch:moonshine,ch:爱欣欣欣欣,0,2,2,1,468680754,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,1,2026-08-15T11:51:36Z,bf:673f9c8c2ea3530021c8da11,ch:卡牌的力量,2,1,1,1,468680756,
@@ -9249,7 +9249,7 @@ challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,1,2026-08-15T1
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,1,2026-08-15T12:16:00Z,ch:东京圣爱音,bf:673f9e86744fee00353bc83c,1,2,2,1,468680765,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,2,2026-08-15T12:45:10Z,ch:jpkviii,ch:卡牌的力量,0,2,2,1,468691277,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,2,2026-08-15T12:53:26Z,ch:sob-liu,ch:2598252160,2,1,1,1,468691269,
-challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,2,2026-08-15T12:53:44Z,ch:旮旯给木高手,ch:yals,2,0,1,1,468691273,
+challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,2,2026-08-15T12:53:44Z,ch:hojoto,ch:yals,2,0,1,1,468691273,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,2,2026-08-15T12:54:05Z,ch:e我不到啊,ch:云上梢离,2,0,1,1,468691276,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,2,2026-08-15T12:54:14Z,ch:cirno,bf:673f95f8744fee00353bc808,0,2,2,1,468691279,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,2,2026-08-15T12:54:29Z,ch:东京圣爱音,ch:akgz,2,1,1,1,468691281,
@@ -9268,7 +9268,7 @@ challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,3,2026-08-15T1
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,3,2026-08-15T13:34:18Z,ch:sob-liu,ch:失其本心八幡,2,0,1,1,468699504,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,3,2026-08-15T13:35:27Z,ch:拉菲艾拉,ch:古月小莉,0,2,2,1,468699509,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,3,2026-08-15T13:37:08Z,bf:673f9e86744fee00353bc83c,ch:2598252160,1,2,2,1,468699510,
-challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,3,2026-08-15T13:37:29Z,ch:旮旯给木高手,ch:tea,2,0,1,1,468699506,
+challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,3,2026-08-15T13:37:29Z,ch:hojoto,ch:tea,2,0,1,1,468699506,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,3,2026-08-15T13:40:23Z,ch:yals,ch:卡牌的力量,1,2,2,1,468699508,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,3,2026-08-15T13:40:41Z,ch:东京圣爱音,ch:kalts1t,1,2,2,1,468699514,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,3,2026-08-15T13:49:08Z,bf:673f990470390c0041722f86,bf:673f95f8744fee00353bc808,0,2,2,1,468699512,
@@ -9277,7 +9277,7 @@ challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,3,2026-08-15T1
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,3,2026-08-15T14:21:58Z,ch:cianeled,ch:起个名子,2,1,1,1,468699513,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,3,2026-08-15T14:24:34Z,bf:673f9c8c2ea3530021c8da11,ch:龙神上将,1,2,2,1,468699507,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,4,2026-08-15T15:02:41Z,ch:kalts1t,ch:tea,2,0,1,1,468709205,
-challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,4,2026-08-15T15:02:55Z,ch:sob-liu,ch:旮旯给木高手,0,2,2,1,468709198,
+challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,4,2026-08-15T15:02:55Z,ch:sob-liu,ch:hojoto,0,2,2,1,468709198,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,4,2026-08-15T15:03:06Z,bf:673f99e1a144d7002b2e28a2,ch:说的道理,2,0,1,1,468709199,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,4,2026-08-15T15:03:25Z,ch:yals,ch:东京圣爱音,2,1,1,1,468709208,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,4,2026-08-15T15:03:42Z,ch:cianeled,ch:2598252160,2,1,1,1,468709203,
@@ -9292,13 +9292,13 @@ challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,5,2026-08-15T1
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,5,2026-08-15T15:50:58Z,ch:说的道理,bf:673f95f8744fee00353bc808,0,2,2,1,468715095,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,5,2026-08-15T15:51:18Z,ch:e我不到啊,ch:古月小莉,0,2,2,1,468715099,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,5,2026-08-15T15:52:03Z,ch:sob-liu,ch:cianeled,1,2,2,1,468715093,
-challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,5,2026-08-15T15:53:51Z,bf:673f99e1a144d7002b2e28a2,ch:旮旯给木高手,2,1,1,1,468715092,
+challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,5,2026-08-15T15:53:51Z,bf:673f99e1a144d7002b2e28a2,ch:hojoto,2,1,1,1,468715092,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,5,2026-08-15T15:54:26Z,ch:爱欣欣欣欣,ch:yals,2,1,1,1,468715097,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,5,2026-08-15T16:02:10Z,ch:卡牌的力量,ch:kalts1t,2,1,1,1,468715096,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,5,2026-08-15T16:02:16Z,ch:失其本心八幡,ch:sie_,2,1,1,1,468715094,
 challonge,18348484,KARDS Fall Tournament 2026,official,Main,swiss,5,2026-08-15T16:07:57Z,bf:673f9c8c2ea3530021c8da11,ch:云上梢离,2,1,1,1,468715098,
 challonge,18378802,KARDS Fall Tournament 2026,official,Top 8,single elimination,1,2026-08-21T12:18:32Z,bf:673f99e1a144d7002b2e28a2,ch:sie_,0,3,2,1,469357229,
-challonge,18378802,KARDS Fall Tournament 2026,official,Top 8,single elimination,1,2026-08-21T13:49:44Z,ch:旮旯给木高手,bf:673f95f8744fee00353bc808,1,3,2,1,469357230,
+challonge,18378802,KARDS Fall Tournament 2026,official,Top 8,single elimination,1,2026-08-21T13:49:44Z,ch:hojoto,bf:673f95f8744fee00353bc808,1,3,2,1,469357230,
 challonge,18378802,KARDS Fall Tournament 2026,official,Top 8,single elimination,1,2026-08-21T13:49:54Z,ch:卡牌的力量,ch:sob-liu,0,3,2,1,469357231,
 challonge,18378802,KARDS Fall Tournament 2026,official,Top 8,single elimination,1,2026-08-21T15:31:55Z,ch:失其本心八幡,ch:cianeled,3,2,1,1,469357232,
 challonge,18378802,KARDS Fall Tournament 2026,official,Top 8,single elimination,2,2026-08-22T12:45:24Z,ch:sie_,bf:673f95f8744fee00353bc808,2,3,2,1,469357233,

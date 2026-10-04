@@ -80,7 +80,7 @@ KARDS Open 没有报名门槛、不在电竞计划内，新人和弱选手多，
 - `data/raw/` 平台原始数据（JSON）
 - `data/matches.csv` 规整后的对局表；`valid=1` 的才参与计算，`category` 为 `open` / `open_special` / `official` / `community`
 - `data/players.csv` 选手身份表：同一人在不同平台的账号按游戏内 ID 合并
-- `data/aliases.csv`：`alias,canonical` 两列，手动把两个名字指向同一人（目前 9 条，都是 Challonge 名字的拼写变体，例如 `[CN]`、`·`、下划线、字母颠倒）。
+- `data/aliases.csv`：`alias,canonical` 两列，手动把两个名字指向同一人：拼写变体（`[CN]`、`·`、下划线等），以及选手改 ID（如 Leo → Dr.Leo、坦闪个垃圾游戏 → 赫宝赫宝我爱你、hojoto → 旮旯给木高手）。网页显示 canonical 名字，其余列为曾用名。
 - `data/overrides.csv`（可选）：`event,player,actual,note`，把某一站里某个账号的对局改记到实际上场的人名下（代打）
 - `data/manual_matches.csv`：只在官方新闻里公布的结果（2021–2023 世界赛前 4 名线下总决赛，共 18 场），按已有账号录入，每行附出处
 - `data/match_timeline.csv`（`python3 timeline.py` 生成，不到 1 秒）：原始数据里每一场对局的赛制、轮次、DQ 标记、比分、开放/进行/完成时间、用时与同轮中位数、批量录入数量、各自上一场的间隔。用来判断一场结果是不是真打的。注意 Challonge 的 `inactive` 只表示已结束比赛，不代表 DQ
