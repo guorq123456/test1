@@ -103,3 +103,13 @@ KARDS Open 没有报名门槛、不在电竞计划内，新人和弱选手多，
 
 下载时 `scrapers/challonge.py` 会去掉报名表答案、邮箱哈希等个人信息字段，用邮箱当名字的选手改成 `Player <id>`；
 在这之前下载的文件可以用 `python3 scrapers/challonge.py --scrub` 重新清理（不需要 API key）。
+
+## 网页部署
+
+`site/index.html` 是单个自包含文件（数据内嵌，只从 Google Fonts 加载字体），放到任何静态托管上都能用：
+
+- **Cloudflare Pages**（推荐，私有仓库也免费）：Workers & Pages → Create → Pages → 连接 GitHub 仓库，构建命令留空，输出目录填 `kards_bt/site`。之后每次 push 自动更新。
+- **Netlify Drop**：打开 <https://app.netlify.com/drop>，把 `site` 文件夹拖进去即可得到网址；更新时重新拖一次。
+- **GitHub Pages**：免费账号只支持公开仓库。可以单独建一个公开仓库，只放 `index.html`，在 Settings → Pages 里选分支发布。
+
+页面默认按浏览器语言显示中文或英文，右上角按钮切换，链接加 `?lang=en` / `?lang=zh` 可固定语言。

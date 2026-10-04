@@ -56,6 +56,9 @@ p { margin: 0; }
 .eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
 header { display: grid; gap: 14px; }
 .lede { color: var(--ink-2); max-width: 68ch; }
+html[lang="en"] [data-lang="zh"], html:not([lang="en"]) [data-lang="en"] { display: none; }
+.topline { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.lang { font: 600 12px var(--mono); letter-spacing: 0.06em; padding: 5px 10px; white-space: nowrap; flex: none; }
 .facts { display: flex; flex-wrap: wrap; gap: 8px 28px; font-size: 13px; color: var(--ink-2); }
 .facts b { font: 500 15px var(--mono); color: var(--ink); margin-right: 4px; }
 .notice { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; background: var(--warn-wash); border-radius: 6px; padding: 12px 14px; font-size: 13.5px; color: var(--ink); max-width: 80ch; }
@@ -146,65 +149,74 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
 
 <div class="wrap">
   <header>
-    <span class="eyebrow">KARDS · Bradley–Terry · 官方赛事</span>
-    <h1>KARDS 赛事 BT 实力榜</h1>
-    <p class="lede">用 Bradley–Terry 模型给每位选手估一个实力分（Elo 刻度）。1500 是<b>当时</b>参赛选手的平均水平，不是起点或保底：低于 1500 表示弱于平均，差 100 分约等于 64% 对 36% 的胜率。每站比赛结束后（以及每月初）重新拟合一次，旧比赛按240 天半衰期逐渐降权，所以长期不参赛的选手会慢慢回到 1500 附近。2023 年起参赛选手整体更强，因此不同年份的分数只适合各自比较排名，不能直接比高低。</p>
+    <div class="topline">
+      <span class="eyebrow" data-t="eyebrow"></span>
+      <button type="button" id="lang" class="lang" aria-label="切换语言 / Switch language"></button>
+    </div>
+    <h1 data-t="h1"></h1>
+    <p class="lede" data-lang="zh">用 Bradley–Terry 模型给每位选手估一个实力分（Elo 刻度）。1500 是<b>当时</b>参赛选手的平均水平，不是起点或保底：低于 1500 表示弱于平均，差 100 分约等于 64% 对 36% 的胜率。每站比赛结束后（以及每月初）重新拟合一次，旧比赛按 240 天半衰期逐渐降权，所以长期不参赛的选手会慢慢回到 1500 附近。2023 年起参赛选手整体更强，因此不同年份的分数只适合各自比较排名，不能直接比高低。</p>
+    <p class="lede" data-lang="en">A Bradley–Terry strength rating (Elo scale) for every player in official KARDS esports events. 1500 is the average of the field <b>at that time</b>, not a starting point or a floor: below 1500 means weaker than average, and a 100-point gap is about a 64% to 36% win chance. Ratings are refit after every event (and on the 1st of each month); older matches lose weight with a 240-day half-life, so players who stop competing drift back toward 1500. The field has been clearly stronger since 2023, so compare rankings within a period rather than raw numbers across years.</p>
     <div class="facts" id="facts"></div>
-    <div class="notice"><span class="tag">数据范围</span><p>只计<b>官方电竞赛事</b>：Challonge 上官方账号的全部对阵表，包括<b>OCC 月赛</b>（2021.05 – 2024.11，同月的资格赛和 Top 8 算一站）、<b>OCC Ultimate</b> I–III、<b>2021–2025 世界赛</b>（2021、2022 年在 start.gg，2024 年瑞士轮在 Battlefy）、<b>2025 年四个扩展赛</b>和 <b>2026 年四季赛</b>；2021–2023 世界赛前 4 名线下总决赛按官方新闻补录。<b>KARDS Open 公开赛</b>没有报名门槛、不在电竞计划内，不计入，所以 2021 年 5 月第一届 OCC 之前没有分数。弃权、缺席、DQ 后被录入的结果整场作废。</p></div>
+    <div class="notice"><span class="tag" data-t="scope"></span>
+      <p data-lang="zh">只计<b>官方电竞赛事</b>：Challonge 上官方账号的全部对阵表，包括<b>OCC 月赛</b>（2021.05 – 2024.11，同月的资格赛和 Top 8 算一站）、<b>OCC Ultimate</b> I–III、<b>2021–2025 世界赛</b>（2021、2022 年在 start.gg，2024 年瑞士轮在 Battlefy）、<b>2025 年四个扩展赛</b>和 <b>2026 年四季赛</b>；2021–2023 世界赛前 4 名线下总决赛按官方新闻补录。<b>KARDS Open 公开赛</b>没有报名门槛、不在电竞计划内，不计入，所以 2021 年 5 月第一届 OCC 之前没有分数。弃权、缺席、DQ 后被录入的结果整场作废。</p>
+      <p data-lang="en">Official esports events only: every bracket on the official Challonge account, including the <b>OCC monthly cups</b> (2021.05 – 2024.11; a month's qualifiers and Top 8 count as one event), <b>OCC Ultimate</b> I–III, the <b>2021–2025 World Championships</b> (2021 and 2022 on start.gg, the 2024 Swiss stage on Battlefy), the <b>four 2025 expansion tournaments</b> and the <b>2026 seasonal tournaments</b>. The 2021–2023 World Championship LAN finals are entered from official news. The <b>KARDS Open</b> series has no entry bar and is outside the esports programme, so it is not counted, and there are no ratings before the first OCC in May 2021. Forfeits, no-shows and results entered after a DQ are voided.</p>
+    </div>
   </header>
 
   <section aria-labelledby="h-trend">
     <div class="sec-head">
-      <h2 id="h-trend">分数走势</h2>
-      <p>横轴是时间，可以直接看出一个选手强了多久。圆点是本人出赛的那一站，悬停可看该站名次；两站之间的起伏来自旧比赛的时间衰减，虚线表示已半年以上没打官方赛（分数是推测，不是打出来的）。点选手名查看 ±1 标准误区间。</p>
+      <h2 id="h-trend" data-t="hTrend"></h2>
+      <p data-lang="zh">横轴是时间，可以直接看出一个选手强了多久。圆点是本人出赛的那一站，悬停可看该站名次；两站之间的起伏来自旧比赛的时间衰减，虚线表示已 8 个月（240 天）以上没打官方赛（分数是推测，不是打出来的）。点选手名查看 ±1 标准误区间。</p>
+      <p data-lang="en">Time runs along the x-axis, so you can see how long a player stayed strong. Dots mark the events the player entered; hover to see where they finished. Between events the line moves only because older results fade. A dashed line means no official match for more than 8 months (240 days): the rating there is inferred, not earned. Click a player's name to show the ±1 standard-error band.</p>
     </div>
     <div class="controls">
       <div class="search">
-        <input type="search" id="search" placeholder="搜索选手并加入图表" autocomplete="off" enterkeyhint="search"
-          role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggest" aria-label="搜索选手">
+        <input type="search" id="search" data-t-attr="placeholder:searchPh;aria-label:searchAria" autocomplete="off" enterkeyhint="search"
+          role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggest">
         <ul class="suggest" id="suggest" role="listbox" hidden></ul>
       </div>
-      <button type="button" id="btn-top">当期前 6 名</button>
-      <button type="button" id="btn-clear">清空</button>
+      <button type="button" id="btn-top" data-t="btnTop"></button>
+      <button type="button" id="btn-clear" data-t="btnClear"></button>
     </div>
-    <div class="chips" id="chips" aria-label="图例"></div>
+    <div class="chips" id="chips" data-t-attr="aria-label:legend"></div>
     <div class="card" id="card">
-      <svg id="chart" role="img" aria-label="选手 BT 分数随时间变化的折线图"></svg>
+      <svg id="chart" role="img" data-t-attr="aria-label:chartAria"></svg>
       <div class="tip" id="tip" hidden></div>
     </div>
   </section>
 
   <section aria-labelledby="h-board">
     <div class="sec-head">
-      <h2 id="h-board">实力榜</h2>
-      <p>按<b>排名分</b>（BT 分 − 1 个标准误）排序：长期不出赛，标准误变大，排名分就会往下掉；一直在打的选手几乎不受影响。灰色是半年以上没打官方赛的选手。点击一行，把选手加入或移出上方图表。</p>
+      <h2 id="h-board" data-t="hBoard"></h2>
+      <p data-lang="zh">按<b>排名分</b>（BT 分 − 1 个标准误）排序：长期不出赛，标准误变大，排名分就会往下掉；一直在打的选手几乎不受影响。灰色是 8 个月以上没打官方赛的选手。点击一行，把选手加入或移出上方图表。</p>
+      <p data-lang="en">Sorted by <b>rank score</b> (BT rating − 1 standard error): the longer a player sits out, the wider their uncertainty and the lower their rank score, while active players are barely affected. Greyed-out players have not played an official match for more than 8 months. Click a row to add or remove the player from the chart.</p>
     </div>
     <div class="controls">
       <div class="slider">
-        <label for="snap">截至 <b id="snap-label"></b></label>
+        <label for="snap"><span data-t="asOf"></span> <b id="snap-label"></b></label>
         <input type="range" id="snap" min="0" max="0" step="1">
       </div>
-      <select id="minres" aria-label="最少对局数">
-        <option value="1">全部选手</option>
-        <option value="10" selected>至少 10 场</option>
-        <option value="20">至少 20 场</option>
-        <option value="40">至少 40 场</option>
+      <select id="minres" data-t-attr="aria-label:minresAria">
+        <option value="1" data-t="minAll"></option>
+        <option value="10" selected data-t="min10"></option>
+        <option value="20" data-t="min20"></option>
+        <option value="40" data-t="min40"></option>
       </select>
     </div>
     <div class="tablewrap">
       <table>
         <thead><tr>
-          <th>#</th><th>选手</th><th class="num" title="BT 分 − 1 个标准误">排名分</th><th class="num">BT 分</th><th class="num">±</th>
-          <th class="hide-sm">区间（±1 标准误）</th><th class="num" title="排名分较上一站">较上站</th>
-          <th class="num hide-sm">对局</th><th class="hide-sm">最近参赛</th>
+          <th>#</th><th data-t="thPlayer"></th><th class="num" data-t="thScore" data-t-attr="title:thScoreTitle"></th><th class="num" data-t="thBT"></th><th class="num">±</th>
+          <th class="hide-sm" data-t="thRange"></th><th class="num" data-t="thDelta" data-t-attr="title:thDeltaTitle"></th>
+          <th class="num hide-sm" data-t="thMatches"></th><th class="hide-sm" data-t="thLast"></th>
         </tr></thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
-    <button type="button" class="more" id="more">显示更多</button>
+    <button type="button" class="more" id="more" data-t="more"></button>
   </section>
 
-  <section aria-labelledby="h-method" class="method">
+  <section aria-labelledby="h-method" class="method" data-lang="zh">
     <h2 id="h-method">怎么算的</h2>
     <p>每场比赛（一个 Bo3/Bo5 系列赛算一场）给出“谁赢了谁”。BT 模型假设：</p>
     <div class="formula">P(i 胜 j) = 1 / (1 + e<sup>−(β<sub>i</sub> − β<sub>j</sub>)</sup>)，　BT 分 = 1500 + β × 400 / ln 10</div>
@@ -212,7 +224,7 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
       <li><b>随时间变化</b>：每站比赛结束后和每月 1 日，用截至当时的全部对局重新拟合；距今 d 天的对局权重为 0.5<sup>d/240</sup>。</li>
       <li><b>先验</b>：β ~ N(0, 0.4²)，相当于每人先带一点“平均水平”的虚拟战绩，只打过两三场的人不会被冲到榜首。</li>
       <li><b>区间</b>：± 是拉普拉斯近似给出的 1 个标准误。场次越少，区间越宽。</li>
-      <li><b>参数怎么定的</b>：用每站赛前的分数预测这一站的胜负（清洗后 3,219 场），半衰期 240 天、先验 0.4 的 log loss 是 0.687（抛硬币是 0.693；预测准确率约 54%）。官方赛事的参赛者水平接近，胜负本来就难预测，分差小于 100 分的对局基本是五五开。按赛事级别加权、按参赛途径给新人不同起点、按 Bo3/Bo5 和 ban 位区分赛制，都检验过，样本外预测没有变好，所以没有采用。</li>
+      <li><b>参数怎么定的</b>：用每站赛前的分数预测这一站的胜负（清洗后 3,219 场），半衰期 240 天、先验 0.4 的 log loss 是 0.687（抛硬币是 0.693；预测准确率约 54%）。官方赛事的参赛者水平接近，胜负本来就难预测，分差小于 100 分的对局基本是五五开。按赛事级别加权、按 Bo3/Bo5 和 ban 位区分赛制，都检验过，样本外预测没有变好，所以没有采用。</li>
       <li><b>没打的比赛不算</b>：轮空、平台判负、Battlefy 只有一方签到后 10 分钟的自动判负、选手被标记 DQ 之后录入（或在 DQ 时被改写）的结果、start.gg 上只记胜负没有比分的缺席判负、管理员几秒内批量清掉的缺席选手对局，整场作废，对手的“胜场”也一起去掉。DQ 之前真打的比赛保留；瑞士轮和循环赛不按负场数判断；只要双方都在场、比分正常，录入再快也算真实对局。</li>
       <li><b>排名分</b>：榜单按 BT 分 − 1 个标准误排序。停赛后旧比赛的权重越来越小，标准误随之变大，排名分自然下降；BT 分本身仍是对实力的最佳估计。检验过“久未出赛直接扣分”：久未出赛的选手回来后反而赢得比模型预期多（停赛 120–240 天的实际胜率高出 6.8 个百分点），扣分只会让预测变差，所以只在排名上体现“不确定”，不改分数。</li>
       <li><b>新人起点</b>：第一次打官方赛的选手实际胜率约 42%，模型预测约 49%，确实被高估。检验过让新人从低于平均的位置起步：用 2024 年前数据选出的力度，放到 2024 年后反而更差（2024 年后的新人比早年强，修正量随时代变化），所以没有采用。</li>
@@ -221,11 +233,93 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
       <li><b>同一人跨平台</b>：按平台账号 + 游戏内 ID 合并，可在 <code>data/aliases.csv</code> 里手动补充。</li>
     </ul>
   </section>
+  <section aria-labelledby="h-method-en" class="method" data-lang="en">
+    <h2 id="h-method-en">How it works</h2>
+    <p>Each match (a Bo3/Bo5 series counts as one) tells us who beat whom. The Bradley–Terry model assumes:</p>
+    <div class="formula">P(i beats j) = 1 / (1 + e<sup>−(β<sub>i</sub> − β<sub>j</sub>)</sup>),　rating = 1500 + β × 400 / ln 10</div>
+    <ul>
+      <li><b>Changes over time</b>: after every event and on the 1st of each month, the model is refit on all matches so far; a match played d days earlier has weight 0.5<sup>d/240</sup>.</li>
+      <li><b>Prior</b>: β ~ N(0, 0.4²), like giving everyone a few virtual "average" results, so a player with two or three wins cannot jump to the top.</li>
+      <li><b>Uncertainty</b>: ± is one standard error from the Laplace approximation. Fewer matches, wider band.</li>
+      <li><b>How the settings were chosen</b>: each event is predicted from ratings computed before it started (3,219 matches after cleaning). With a 240-day half-life and prior 0.4 the log loss is 0.687 (a coin flip is 0.693; about 54% of winners predicted). Official fields are close in strength, so results are hard to predict: matches between players less than 100 points apart are close to 50/50. Weighting events by tier and treating Bo3/Bo5/ban formats differently were both tested; neither improved out-of-sample predictions, so neither is used.</li>
+      <li><b>Unplayed matches do not count</b>: byes, platform forfeits, Battlefy's automatic win 10 minutes after only one player checked in, results entered after (or rewritten at) a player's DQ, start.gg results with no score (the no-show convention), and no-show losses an admin cleared in bulk within seconds are voided, and so is the opponent's "win". Real matches played before a DQ are kept; Swiss and round-robin records are never judged by loss count; and a normally scored match between two present players counts however quickly it was reported.</li>
+      <li><b>Rank score</b>: the leaderboard is sorted by rating − 1 standard error. Once a player stops competing their old results lose weight, their uncertainty grows and the rank score falls; the rating itself remains the best estimate of strength. A direct penalty for inactivity was tested: players returning from a break actually win more than the model expects (6.8 points above prediction after a 120–240-day break), so a penalty would make predictions worse. Inactivity therefore shows up only as uncertainty in the ranking, not in the rating.</li>
+      <li><b>Newcomers</b>: first-time official players win about 42% of matches against a predicted 49%, so they are overrated. Starting newcomers below average was tested: the size of correction chosen on pre-2024 data made post-2024 predictions worse (newcomers since 2024 are much stronger than early ones), so it is not used.</li>
+      <li><b>Ladder invites</b>: OCC Top 8 players invited from the in-game ladder skip the qualifier, so each is credited with that month's median qualifier-advancer record (an invite is as hard to earn as a qualifier win), fading with a 120-day half-life.</li>
+      <li><b>Manual corrections</b>: <code>data/aliases.csv</code> merges one person's accounts, <code>data/overrides.csv</code> credits a substitute's results to the person who actually played, and <code>data/manual_matches.csv</code> adds grand finals published only in official news.</li>
+      <li><b>One person, several platforms</b>: accounts are merged by platform account and in-game ID, with manual additions in <code>data/aliases.csv</code>.</li>
+    </ul>
+  </section>
 </div>
-
 <script>
 const DATA = /*__DATA__*/null;
 const SLOTS = 8;
+
+// ---------- language (中文 / English); choice kept in the URL (?lang=en) and this browser
+const T = {
+  zh: {
+    title: "KARDS BT 实力榜", eyebrow: "KARDS · Bradley–Terry · 官方赛事", h1: "KARDS 赛事 BT 实力榜", scope: "数据范围",
+    hTrend: "分数走势", hBoard: "实力榜", searchPh: "搜索选手并加入图表", searchAria: "搜索选手", btnTop: "当期前 6 名", btnClear: "清空",
+    legend: "图例", chartAria: "选手 BT 分数随时间变化的折线图", asOf: "截至", minresAria: "最少对局数",
+    minAll: "全部选手", min10: "至少 10 场", min20: "至少 20 场", min40: "至少 40 场",
+    thPlayer: "选手", thScore: "排名分", thScoreTitle: "BT 分 − 1 个标准误", thBT: "BT 分", thRange: "区间（±1 标准误）",
+    thDelta: "较上站", thDeltaTitle: "排名分较上一站", thMatches: "对局", thLast: "最近参赛", more: "显示更多",
+    fRange: "时间范围", fEvents: "站比赛", fMatches: "场有效对局", fPlayers: "名选手",
+    full: n => `图表最多 ${n} 人，先移除一位`, inChart: "已在图中", sugMeta: (n, y) => `${n} 场 · ${y}`, noHit: "没有找到这位选手",
+    aka: "曾用名：", remove: "移除 ", emptyChart: "在上方搜索选手，或点“当期前 6 名”", keysAria: "用左右方向键逐站查看分数",
+    after: e => `${e} 之后`, monthStart: "月初", noRecord: "所选选手此时还没有比赛记录",
+    idle: m => `${m} 个月未出赛`, absent: "未出赛",
+    snapLabel: (d, e, k, n, c) => `${d} · ${e}（第 ${k}/${n} 站，本站 ${c} 场）`,
+    rowAria: (n, sel) => `${n}，${sel ? "已在图表中，按回车移除" : "按回车加入图表"}`,
+    isNew: "新", isNewTitle: "上一站时还没有记录", emptyBoard: "这一站还没有满足条件的选手，试试降低最少对局数。",
+    langBtn: "EN",
+  },
+  en: {
+    title: "KARDS BT Ratings", eyebrow: "KARDS · Bradley–Terry · official events", h1: "KARDS Esports BT Ratings", scope: "Coverage",
+    hTrend: "Rating history", hBoard: "Leaderboard", searchPh: "Search a player to add to the chart", searchAria: "Search players",
+    btnTop: "Current top 6", btnClear: "Clear", legend: "Legend", chartAria: "Line chart of player BT ratings over time",
+    asOf: "As of", minresAria: "Minimum matches",
+    minAll: "All players", min10: "10+ matches", min20: "20+ matches", min40: "40+ matches",
+    thPlayer: "Player", thScore: "Rank score", thScoreTitle: "BT rating − 1 standard error", thBT: "Rating", thRange: "Range (±1 SE)",
+    thDelta: "Change", thDeltaTitle: "Rank score change since the previous event", thMatches: "Matches", thLast: "Last played", more: "Show more",
+    fRange: "period", fEvents: "events", fMatches: "matches", fPlayers: "players",
+    full: n => `The chart holds ${n} players; remove one first`, inChart: "in chart", sugMeta: (n, y) => `${n} matches · ${y}`,
+    noHit: "No player found", aka: "Also known as: ", remove: "Remove ", emptyChart: "Search for players above, or tap “Current top 6”",
+    keysAria: "Use the left and right arrow keys to step through snapshots",
+    after: e => `after ${e}`, monthStart: "start of month", noRecord: "No results yet for the selected players",
+    idle: m => `idle ${m} mo`, absent: "did not play",
+    snapLabel: (d, e, k, n, c) => `${d} · ${e} (event ${k}/${n}, ${c} matches)`,
+    rowAria: (n, sel) => `${n}, ${sel ? "in chart, press Enter to remove" : "press Enter to add to chart"}`,
+    isNew: "new", isNewTitle: "No rating at the previous event", emptyBoard: "No players match at this event; try a lower minimum.",
+    langBtn: "中文",
+  },
+};
+let LANG = (() => {
+  const q = new URLSearchParams(location.search).get("lang");
+  if (q === "en" || q === "zh") return q;
+  try { const v = localStorage.getItem("kards-bt-lang"); if (v === "en" || v === "zh") return v; } catch (e) {}
+  return /^zh/i.test(navigator.language || "") ? "zh" : "en";
+})();
+const t = (k, ...a) => { const v = T[LANG][k]; return typeof v === "function" ? v(...a) : v; };
+// placement labels come from placements.py in Chinese, e.g. "16 强 · 第 2 名（3-1）", "瑞士轮 4-2", "第 5–8 名"
+const STAGE_EN = [["总决赛", "Grand final"], ["小组赛", "Groups"], ["瑞士轮", "Swiss"], ["资格赛", "Qualifier"], ["邀请赛", "Invitational"],
+  ["淘汰赛", "Playoffs"], ["正赛", "Main event"], ["32 强", "Top 32"], ["16 强", "Top 16"], ["8 强", "Top 8"], ["参赛", "Played"]];
+function placeText(label) {
+  if (LANG === "zh" || !label) return label;
+  let s = label;
+  for (const [zh, en] of STAGE_EN) s = s.replace(zh, en);
+  return s.replace(/第 (\d+)–(\d+) 名/, "#$1–$2").replace(/第 (\d+) 名/, "#$1").replace(/（(.*?)）/, " ($1)");
+}
+function applyLang() {
+  document.documentElement.lang = LANG === "zh" ? "zh-CN" : "en";
+  document.title = t("title");
+  document.querySelectorAll("[data-t]").forEach(el => { el.textContent = t(el.dataset.t); });
+  document.querySelectorAll("[data-t-attr]").forEach(el => {
+    for (const pair of el.dataset.tAttr.split(";")) { const [attr, key] = pair.split(":"); el.setAttribute(attr, t(key)); }
+  });
+  document.getElementById("lang").textContent = t("langBtn");
+}
+applyLang();
 const fmtDate = d => d.replace(/-/g, ".");
 const snaps = DATA.snaps;
 const players = DATA.players;
@@ -239,19 +333,20 @@ players.forEach(p => {
 });
 
 // B: past this many days without an official match, the line is dashed and the player greyed out
-const IDLE_DAYS = 180;
+const IDLE_DAYS = 240;
 const idleDays = (si, x) => (Date.parse(snaps[si].d) - Date.parse(x[4])) / 86400000;
 
 const state = { selected: [], slot: new Map(), focus: null, snap: evSnaps[evSnaps.length - 1], shown: 50, hover: null };
 
 // ---------- header facts
-(function facts() {
+function renderFacts() {
   const el = document.getElementById("facts");
+  el.replaceChildren();
   const items = [
-    [fmtDate(DATA.stats.first) + " – " + fmtDate(DATA.stats.last), "时间范围"],
-    [String(evSnaps.length), "站比赛"],
-    [DATA.stats.matches.toLocaleString(), "场有效对局"],
-    [DATA.stats.players.toLocaleString(), "名选手"],
+    [fmtDate(DATA.stats.first) + " – " + fmtDate(DATA.stats.last), t("fRange")],
+    [String(evSnaps.length), t("fEvents")],
+    [DATA.stats.matches.toLocaleString(), t("fMatches")],
+    [DATA.stats.players.toLocaleString(), t("fPlayers")],
   ];
   for (const [v, k] of items) {
     const s = document.createElement("span");
@@ -259,7 +354,8 @@ const state = { selected: [], slot: new Map(), focus: null, snap: evSnaps[evSnap
     s.append(b, document.createTextNode(k));
     el.append(s);
   }
-})();
+}
+renderFacts();
 
 // ---------- selection with stable color slots (color follows the player, never the rank)
 function colorOf(id) { return `var(--s${state.slot.get(id) + 1})`; }
@@ -281,8 +377,8 @@ function removePlayer(id) {
 function togglePlayer(id) { state.selected.includes(id) ? removePlayer(id) : addPlayer(id); }
 function flashFull() {
   const s = document.getElementById("search");
-  s.value = ""; s.placeholder = `图表最多 ${SLOTS} 人，先移除一位`;
-  setTimeout(() => { s.placeholder = "搜索选手并加入图表"; }, 2500);
+  s.value = ""; s.placeholder = t("full", SLOTS);
+  setTimeout(() => { s.placeholder = t("searchPh"); }, 2500);
 }
 
 function boardAt(si, minRes) {
@@ -326,13 +422,13 @@ function topIds(k) { return boardAt(evSnaps[evSnaps.length - 1], 20).slice(0, k)
       const nm = document.createElement("span"); nm.textContent = p.n;
       const meta = document.createElement("small");
       const last = latest.get(p.id);
-      meta.textContent = state.selected.includes(p.id) ? "已在图中" : `${last[3]} 场 · ${last[4].slice(0, 4)}`;
+      meta.textContent = state.selected.includes(p.id) ? t("inChart") : t("sugMeta", last[3], last[4].slice(0, 4));
       li.append(nm, meta);
       li.addEventListener("pointerdown", e => e.preventDefault()); // keep focus so the click lands
       li.addEventListener("click", () => pick(p));
       box.append(li);
     });
-    if (!hits.length) { const li = document.createElement("li"); li.className = "none"; li.textContent = "没有找到这位选手"; box.append(li); }
+    if (!hits.length) { const li = document.createElement("li"); li.className = "none"; li.textContent = t("noHit"); box.append(li); }
     box.hidden = false; input.setAttribute("aria-expanded", "true");
     if (active >= 0) input.setAttribute("aria-activedescendant", "sg-" + active); else input.removeAttribute("aria-activedescendant");
   };
@@ -368,14 +464,14 @@ function renderChips() {
     chip.style.color = colorOf(id);
     const key = document.createElement("span"); key.className = "key";
     const name = document.createElement("button");
-    name.type = "button"; name.textContent = p.n; name.title = p.a ? "曾用名：" + p.a : "";
+    name.type = "button"; name.textContent = p.n; name.title = p.a ? t("aka") + p.a : "";
     name.style.cssText = "border:0;padding:0;background:none;color:var(--ink);font:inherit;";
     name.setAttribute("aria-pressed", String(state.focus === id));
     name.addEventListener("click", () => { state.focus = state.focus === id ? null : id; renderChart(); renderChips(); });
     name.addEventListener("mouseenter", () => { state.focus = id; renderChart(); });
     name.addEventListener("mouseleave", () => { state.focus = null; renderChart(); });
     const x = document.createElement("button"); x.type = "button"; x.className = "x"; x.textContent = "×";
-    x.setAttribute("aria-label", "移除 " + p.n);
+    x.setAttribute("aria-label", t("remove") + p.n);
     x.addEventListener("click", () => removePlayer(id));
     chip.append(key, name, x);
     el.append(chip);
@@ -406,8 +502,8 @@ function renderChart() {
 
   const sel = state.selected.map(id => byId.get(id));
   if (!sel.length) {
-    const t = svgEl("text", { x: W / 2, y: H / 2, "text-anchor": "middle" }, svg);
-    t.textContent = "在上方搜索选手，或点“当期前 6 名”";
+    const msg = svgEl("text", { x: W / 2, y: H / 2, "text-anchor": "middle" }, svg);
+    msg.textContent = t("emptyChart");
     geom = null;
     return;
   }
@@ -482,7 +578,7 @@ function renderChart() {
   }
   // crosshair layer
   const cross = svgEl("line", { y1: m.t, y2: H - m.b, stroke: "var(--ink-2)", "stroke-width": 1, visibility: "hidden" }, svg);
-  const hit = svgEl("rect", { x: m.l - 10, y: 0, width: iw + 20, height: H, fill: "transparent", tabindex: 0, "aria-label": "用左右方向键逐站查看分数" }, svg);
+  const hit = svgEl("rect", { x: m.l - 10, y: 0, width: iw + 20, height: H, fill: "transparent", tabindex: 0, "aria-label": t("keysAria") }, svg);
   const show = si => {
     state.hover = si;
     cross.setAttribute("x1", X(tms[si])); cross.setAttribute("x2", X(tms[si]));
@@ -523,12 +619,12 @@ function showTip(si) {
   const tip = document.getElementById("tip");
   tip.replaceChildren();
   const head = document.createElement("div"); head.className = "t-head";
-  head.textContent = snaps[si].e ? `${fmtDate(snaps[si].d)} · ${snaps[si].e} 之后` : `${fmtDate(snaps[si].d)} · 月初`;
+  head.textContent = `${fmtDate(snaps[si].d)} · ` + (snaps[si].e ? t("after", snaps[si].e) : t("monthStart"));
   tip.append(head);
   const rows = state.selected.map(id => ({ p: byId.get(id), x: byId.get(id).at.get(si) })).filter(r => r.x).sort((a, b) => b.x[1] - a.x[1]);
   if (!rows.length) {
     const d = document.createElement("div"); d.className = "t-row"; d.style.color = "var(--muted)";
-    d.textContent = "所选选手此时还没有比赛记录"; tip.append(d);
+    d.textContent = t("noRecord"); tip.append(d);
   }
   for (const r of rows) {
     const row = document.createElement("div"); row.className = "t-row";
@@ -538,10 +634,10 @@ function showTip(si) {
     const place = r.p.played.get(si);
     const gap = idleDays(si, r.x);
     const se = document.createElement("small");
-    se.textContent = "±" + Math.round(r.x[2]) + (gap > IDLE_DAYS ? ` · ${Math.round(gap / 30.4)} 个月未出赛` : snaps[si].e && !place ? " · 未出赛" : "");
+    se.textContent = "±" + Math.round(r.x[2]) + (gap > IDLE_DAYS ? " · " + t("idle", Math.round(gap / 30.4)) : snaps[si].e && !place ? " · " + t("absent") : "");
     name.append(se);
     row.append(key, b, name);
-    if (place) { const pl = document.createElement("span"); pl.className = "place"; pl.textContent = place; row.append(pl); }
+    if (place) { const pl = document.createElement("span"); pl.className = "place"; pl.textContent = placeText(place); row.append(pl); }
     tip.append(row);
   }
   tip.hidden = false;
@@ -571,7 +667,7 @@ function setSnap(si) {
 function renderBoard() {
   const s = snaps[state.snap];
   const k = evSnaps.indexOf(state.snap);
-  document.getElementById("snap-label").textContent = `${fmtDate(s.d)} · ${s.e}（第 ${k + 1}/${evSnaps.length} 站，本站 ${s.n} 场）`;
+  document.getElementById("snap-label").textContent = t("snapLabel", fmtDate(s.d), s.e, k + 1, evSnaps.length, s.n);
   const minRes = +document.getElementById("minres").value;
   const rows = boardAt(state.snap, minRes);
   const lo = 1350, hi = 1750, sc = v => Math.max(0, Math.min(120, (v - lo) / (hi - lo) * 120));
@@ -582,17 +678,17 @@ function renderBoard() {
     tr.tabIndex = 0;
     if (r.idle) tr.className = "idle";
     const sel = state.selected.includes(r.p.id);
-    tr.setAttribute("aria-label", `${r.p.n}，${sel ? "已在图表中，按回车移除" : "按回车加入图表"}`);
+    tr.setAttribute("aria-label", t("rowAria", r.p.n, sel));
     const cell = (cls, text) => { const td = document.createElement("td"); if (cls) td.className = cls; if (text != null) td.textContent = text; tr.append(td); return td; };
     cell("rank", i + 1);
     const nm = cell("name");
     const sw = document.createElement("i"); sw.className = "sw";
     if (sel) { sw.style.background = colorOf(r.p.id); sw.style.borderColor = "transparent"; }
     const label = document.createElement("span"); label.textContent = r.p.n;
-    if (r.p.a && r.p.a !== r.p.n) nm.title = "曾用名：" + r.p.a;
+    if (r.p.a && r.p.a !== r.p.n) nm.title = t("aka") + r.p.a;
     const who = document.createElement("span"); who.className = "who";
     who.append(sw, label);
-    if (r.idle) { const sm = document.createElement("small"); sm.textContent = `${Math.round(idleDays(state.snap, [0, 0, 0, 0, r.last]) / 30.4)} 个月未出赛`; who.append(sm); }
+    if (r.idle) { const sm = document.createElement("small"); sm.textContent = t("idle", Math.round(idleDays(state.snap, [0, 0, 0, 0, r.last]) / 30.4)); who.append(sm); }
     nm.append(who);
     cell("num", Math.round(r.score));
     cell("num", Math.round(r.elo));
@@ -604,8 +700,8 @@ function renderBoard() {
     bar.append(ln, mk); rg.append(bar);
     const prev = k > 0 ? r.p.at.get(evSnaps[k - 1]) : null;
     const d = prev ? Math.round(r.score - (prev[1] - prev[2])) : null;
-    const dc = cell("num " + (d == null ? "new" : d > 0 ? "up" : d < 0 ? "down" : ""), d == null ? "新" : (d > 0 ? "▲ " : d < 0 ? "▼ " : "") + Math.abs(d));
-    if (d == null) dc.title = "上一站时还没有记录";
+    const dc = cell("num " + (d == null ? "new" : d > 0 ? "up" : d < 0 ? "down" : ""), d == null ? t("isNew") : (d > 0 ? "▲ " : d < 0 ? "▼ " : "") + Math.abs(d));
+    if (d == null) dc.title = t("isNewTitle");
     cell("num hide-sm", r.n);
     cell("hide-sm", fmtDate(r.last));
     tr.addEventListener("click", () => togglePlayer(r.p.id));
@@ -614,7 +710,7 @@ function renderBoard() {
   });
   if (!rows.length) {
     const tr = document.createElement("tr"); const td = document.createElement("td");
-    td.colSpan = 9; td.className = "empty"; td.textContent = "这一站还没有满足条件的选手，试试降低最少对局数。";
+    td.colSpan = 9; td.className = "empty"; td.textContent = t("emptyBoard");
     tr.append(td); tb.append(tr);
   }
   document.getElementById("more").hidden = rows.length <= state.shown;
@@ -627,5 +723,12 @@ topIds(6).forEach(id => { const used = new Set(state.slot.values()); let s = 0; 
 const me = players.find(p => p.n.toLowerCase() === "guorq123456");
 if (me && !state.selected.includes(me.id)) { state.slot.set(me.id, state.selected.length); state.selected.push(me.id); }
 renderAll();
+document.getElementById("lang").addEventListener("click", () => {
+  LANG = LANG === "zh" ? "en" : "zh";
+  try { localStorage.setItem("kards-bt-lang", LANG); } catch (e) {}
+  const u = new URL(location.href); u.searchParams.set("lang", LANG);
+  try { history.replaceState(null, "", u); } catch (e) {}
+  applyLang(); renderFacts(); renderAll();
+});
 let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(renderChart, 120); });
 </script>
