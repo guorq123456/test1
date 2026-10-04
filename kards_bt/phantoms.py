@@ -271,6 +271,8 @@ def battlefy_verdict(m):
         return None
     # Battlefy puts the DQ flag on a dropped player's LAST match, even when that match was played
     dq_side = win if win.get("disqualified") else lose
+    if dq_side is win or (dq_side.get("score") or 0) > 0:
+        return "real"  # the DQ'd side won the match or took a game: it was played (some brackets record no ready times)
     if rw and rl:
         later = max(rw, rl)
         if dq_side is win or (dq_side.get("score") or 0) > 0 or (_min(later, settled) or 0) >= PLAYED_MIN:
