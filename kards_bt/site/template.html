@@ -200,10 +200,6 @@ td.vs.hot { color: var(--up); font-weight: 600; } td.vs.cold { color: var(--down
       <p data-lang="zh">按<b>排名分</b>（BT 分 − 1 个标准误）排序：长期不出赛，标准误变大，排名分就会往下掉；一直在打的选手几乎不受影响。灰色是 8 个月以上没打官方赛的选手。点击一行，把选手加入或移出上方图表。</p>
       <p data-lang="en">Sorted by <b>rank score</b> (BT rating − 1 standard error): the longer a player sits out, the wider their uncertainty and the lower their rank score, while active players are barely affected. Greyed-out players have not played an official match for more than 8 months. Click a row to add or remove the player from the chart.</p>
       </div>
-      <div data-board="main" hidden>
-      <p data-lang="zh"><b>正赛榜</b>只用正赛阶段（8 强 / 16 强 / 淘汰赛 / 总决赛）的对局重新拟合，回答“谁在正赛里最硬”：这里每个对手都是打过预选上来的，没有预选刷分的空间。模型和当前榜一样（240 天半衰期、先验、新人起点），只是没有天梯直邀补偿（它补的是预选胜场，这里不计预选）。正赛总共只有约一千场，满 10 场的选手只有五十来人；样本外预测正赛胜负的效果和全量模型相当。截至最近一站。</p>
-      <p data-lang="en">The <b>main-stage board</b> is refit on main-stage matches only (Top 8 / Top 16 / playoffs / grand finals) and asks who is strongest once everyone in the room has come through a qualifier. Same model as the current board (240-day half-life, prior, newcomer start) without the ladder-invite credit, which compensates for qualifier wins that are not scored here. Main stages hold only about a thousand matches, so some fifty players reach the 10-match bar; out of sample it predicts main-stage results about as well as the full model. As of the latest event.</p>
-      </div>
       <div data-board="peak" hidden>
       <p data-lang="zh"><b>巅峰榜</b>看每个人状态最好时有多强。和当前榜不同，这里用了“事后诸葛亮”：估计某个时间点的实力时，前后的比赛都参考（离得越远权重越低，同样是 240 天半衰期），所以短时间的爆发会被完整计入，后来的下滑也会让当时的高分打折扣。只统计当时已打满 10 场官方赛的选手，按巅峰时的排名分排序。</p>
       <p data-lang="en">The <b>peak leaderboard</b> shows how strong each player was at their best. Unlike the current board it uses hindsight: strength at a date is estimated from results both before and after it (weighted by distance in time, the same 240-day half-life), so a short strong run gets full credit and a later slump tempers an earlier high. Players count once they have 10 official matches; sorted by rank score at their peak.</p>
@@ -212,7 +208,6 @@ td.vs.hot { color: var(--up); font-weight: 600; } td.vs.cold { color: var(--down
     <div class="controls">
       <div class="seg" role="group" data-t-attr="aria-label:modeAria">
         <button type="button" id="mode-cur" aria-pressed="true" data-t="modeCur"></button>
-        <button type="button" id="mode-main" aria-pressed="false" data-t="modeMain"></button>
         <button type="button" id="mode-peak" aria-pressed="false" data-t="modePeak"></button>
       </div>
       <div class="slider" data-board="current">
@@ -249,7 +244,6 @@ td.vs.hot { color: var(--up); font-weight: 600; } td.vs.cold { color: var(--down
       <li><b>新人起点</b>：第一次打官方赛的选手实际胜率约 42%，模型若按平均水平算会给到约 49%，被高估了。而且新人比平均弱多少随时代变化（2022 年约 46 分，2023–2025 年约 90 分，2026 年约 49 分）。所以每站赛前，用过去一年新人的实际表现估计这个差距，新人从这个位置起步（相当于 2 场虚拟的平局，按 240 天半衰期淡出）。2024 年后的检验里预测略有改善（log loss −0.0055），但还在误差范围内，属于有依据、待更多数据确认的修正。</li>
       <li><b>小样本和“赢家诅咒”</b>：分数几乎全来自预选的选手，到了正赛平均比预测少赢约 4 个百分点。能进正赛的人是被“预选打得好”筛出来的，其中一部分是手感和运气，进了正赛自然回落。降低预选权重检验过，修不好这一点，预测还变差，所以没有采用；更可靠的是看<b>排名分</b>，场次少的人标准误大，排名分会更保守。</li>
       <li><b>巅峰榜</b>：当前榜只用截至当天的比赛，会“滞后”：一段很短的爆发结束时只被计入一半，巅峰也是在后来的下滑发生前评出来的。巅峰榜用事后估计，在每站比赛的日期上，用前后所有比赛（按时间距离加权，240 天半衰期）重新拟合，新人起点和天梯直邀补偿也按同样方式计入，取每人排名分最高的那一站。巅峰榜里的直邀补偿按选手已有的真实场次递减（n0 = 20）：补偿本来是给“没有别的证据”的选手的，一年直邀十几次的老将再按每次全额计入，会让巅峰分里四成是补偿（Noein5 曾因此排到第 2，按真实比赛是第 3–4）。当前榜仍用统一补偿，两者样本外预测相同。它适合比较“谁状态最好时最强”，不能用来预测比赛（用到了未来的结果）。</li>
-      <li><b>正赛榜</b>：第三个榜，只用正赛阶段的对局重新拟合（不含直邀补偿），回答“谁在正赛里最硬”。检验过把 OCC 预选从主模型里去掉：预测变差、上榜人数砍半、只打 OCC 时代的老将被系统性低估，所以主模型保留预选；正赛视角作为单独的榜单提供。</li>
       <li><b>正赛胜率</b>：榜上另列每人在官方赛事正赛阶段（8 强 / 16 强 / 总决赛 / 邀请赛 / 淘汰赛）的生涯胜率，悬停看胜负场数。它只是参考，不参与排名：BT 分只看每场胜负，不区分决赛和资格赛，而“总能打进决赛”这件事在体感里的分量比模型里重。</li>
       <li><b>vs 预期</b>：模型压不住的强者怎么体现？分数这边试过放宽先验、重尾先验、按小局计分，都会让整体预测变差或者没有作用，所以不改分数，而是把证据列出来：每个人每场赛前的模型胜率加起来是“期望胜场”，和实际胜场相减就是这一列；超过 2 个标准差标 ▲（模型一直低估他）或 ▽（一直高估）。当前榜看近 24 个月，巅峰榜看生涯。</li>
       <li><b>直邀补偿按人校准</b>：检验过三种做法（按选手已有真实场次递减、门槛模型、按直邀后 8 强表现打折）。按 8 强表现打折几乎没有作用，因为直邀选手在 8 强的整体战绩和资格赛晋级者相当；另两种对 8 强对局的预测略好（约 −0.005），整体预测不变，都在误差范围内。当前榜保留统一补偿，巅峰榜用按证据递减（见上）。</li>
@@ -272,7 +266,6 @@ td.vs.hot { color: var(--up); font-weight: 600; } td.vs.cold { color: var(--down
       <li><b>Newcomers</b>: first-time official players win about 42% of matches, where an average starting point would predict about 49%. How far below average newcomers are changes with the era (about 46 points in 2022, about 90 in 2023–2025, about 49 in 2026), so before every event the gap is estimated from the past year's newcomers and debutants start there (the equivalent of two virtual draws, fading with the 240-day half-life). On post-2024 data it improves predictions slightly (log loss −0.0055), within the margin of error: a well-founded correction awaiting more data.</li>
       <li><b>Small samples and the winner's curse</b>: players whose rating comes almost entirely from qualifiers win about 4 points less than predicted once they reach a main stage. Players reach the main stage by doing well in qualifiers, partly through form and luck, so as a group they fall back. Down-weighting qualifier results was tested; it does not fix this and makes predictions worse, so it is not used. The <b>rank score</b> is the safer guide: few matches mean a wide standard error and a more cautious rank score.</li>
       <li><b>Peak leaderboard</b>: the current board uses only results up to each date, so it lags: a short strong run is only half credited when it ends, and a peak is judged before any slump that followed. The peak board uses hindsight: at every event date the model is refit on all results before and after it (weighted by distance in time, 240-day half-life), with the newcomer anchor and ladder-invite credit included the same way, and each player's highest rank score is kept. On the peak board the invite credit shrinks with the player's own real evidence (n0 = 20): the credit exists for players with little else, and counting a veteran's dozen invites a year in full made 40% of one peak rating virtual (Noein5 sat 2nd by it, 3rd–4th by real matches). The current board keeps the uniform credit; the two predict equally well out of sample. It compares how strong players were at their best; it cannot be used for prediction, since it looks at future results.</li>
-      <li><b>Main-stage board</b>: a third board refit on main-stage matches only (no invite credit), asking who is strongest in main stages. Dropping the OCC qualifiers from the main model was tested: prediction got worse, half the players fell off the board and OCC-era veterans were systematically underrated, so the main model keeps qualifiers and the main-stage view is offered as its own board.</li>
       <li><b>Main-stage win rate</b>: both boards also list each player's career win rate in main stages of official events (Top 8 / Top 16 / grand finals / invitationals / knockouts); hover for the record. It is a reference only and does not affect the ranking: the rating counts every match the same, a final no more than a qualifier, while "always reaching the final" weighs more in people's impressions than in the model.</li>
       <li><b>vs expected</b>: how to show players the prior keeps compressing? On the rating side a wider prior, a heavy-tailed prior and game-level scoring were all tested; each made overall prediction worse or did nothing, so the rating stays and the evidence is shown instead: summing the model's pre-match win probabilities gives each player's expected wins, and this column is actual minus expected; ▲ marks more than 2 standard errors above (the model has kept underrating them), ▽ below. The current board uses the last 24 months, the peak board the whole career.</li>
       <li><b>Calibrating the invite credit per player</b>: three variants were tested (shrinking with the player's own real evidence, a threshold model, discounting by Top 8 results after invites). Discounting by Top 8 results does almost nothing, because invitees' Top 8 record matches qualifier advancers'; the other two predict Top 8 matches slightly better (about −0.005) with overall prediction unchanged, within the margin of error. The current board keeps the uniform credit; the peak board uses the evidence-shrunk one (above).</li>
@@ -304,7 +297,7 @@ const T = {
     rowAria: (n, sel) => `${n}，${sel ? "已在图表中，按回车移除" : "按回车加入图表"}`,
     isNew: "新", isNewTitle: "上一站时还没有记录", emptyBoard: "这一站还没有满足条件的选手，试试降低最少对局数。",
     langBtn: "EN",
-    modeAria: "榜单类型", modeCur: "当前榜", modeMain: "正赛榜", modePeak: "巅峰榜", thMainMatches: "正赛对局", thMainRecord: "正赛战绩", thPeakScore: "巅峰排名分", thPeakTitle: "巅峰时的 BT 分 − 1 个标准误（前后比赛都参考）",
+    modeAria: "榜单类型", modeCur: "当前榜", modePeak: "巅峰榜", thPeakScore: "巅峰排名分", thPeakTitle: "巅峰时的 BT 分 − 1 个标准误（前后比赛都参考）",
     thVs: "vs 预期", thVsRecentTitle: "近 24 个月：实际胜场 − 模型赛前期望胜场。▲ / ▽ 表示超出 2 个标准差，即模型一直在低估 / 高估这位选手；不参与排名",
     thVsCareerTitle: "生涯：实际胜场 − 模型赛前期望胜场。▲ / ▽ 表示超出 2 个标准差；不参与排名", vsFew: "近 24 个月不足 10 场",
     thMain: "正赛胜率", thMainTitle: "官方赛事正赛阶段（8 强 / 16 强 / 总决赛 / 邀请赛 / 淘汰赛）的生涯战绩，不计资格赛、瑞士轮和小组赛；不参与排名",
@@ -328,7 +321,7 @@ const T = {
     rowAria: (n, sel) => `${n}, ${sel ? "in chart, press Enter to remove" : "press Enter to add to chart"}`,
     isNew: "new", isNewTitle: "No rating at the previous event", emptyBoard: "No players match at this event; try a lower minimum.",
     langBtn: "中文",
-    modeAria: "Leaderboard type", modeCur: "Current", modeMain: "Main stage", modePeak: "Peak", thMainMatches: "Main-stage matches", thMainRecord: "Main-stage record", thPeakScore: "Peak score", thPeakTitle: "Rating − 1 standard error at the peak, estimated with hindsight",
+    modeAria: "Leaderboard type", modeCur: "Current", modePeak: "Peak", thPeakScore: "Peak score", thPeakTitle: "Rating − 1 standard error at the peak, estimated with hindsight",
     thVs: "vs expected", thVsRecentTitle: "Last 24 months: actual wins minus the wins the model expected before each match. ▲ / ▽ marks more than 2 standard errors, i.e. the model has kept under- / overrating this player; not used for ranking",
     thVsCareerTitle: "Career: actual wins minus the model's pre-match expected wins. ▲ / ▽ marks more than 2 standard errors; not used for ranking", vsFew: "fewer than 10 matches in the last 24 months",
     thMain: "Main-stage", thMainTitle: "Career record in main stages of official events (Top 8 / Top 16 / grand finals / invitationals / knockouts), excluding qualifiers, Swiss and groups; not used for ranking",
@@ -698,7 +691,7 @@ snapInput.max = evSnaps.length - 1;
 snapInput.value = evSnaps.length - 1;
 snapInput.addEventListener("input", () => setSnap(evSnaps[+snapInput.value]));
 document.getElementById("minres").addEventListener("change", () => { state.shown = 50; renderBoard(); });
-for (const [id, mode] of [["mode-cur", "current"], ["mode-main", "main"], ["mode-peak", "peak"]]) {
+for (const [id, mode] of [["mode-cur", "current"], ["mode-peak", "peak"]]) {
   document.getElementById(id).addEventListener("click", () => { state.mode = mode; state.shown = 50; renderBoard(); });
 }
 document.getElementById("more").addEventListener("click", () => { state.shown += 50; renderBoard(); });
@@ -709,10 +702,7 @@ function setSnap(si) {
 }
 
 function renderHead() {
-  const cols = state.mode === "main"
-    ? [["#"], [t("thPlayer")], [t("thScore"), "num", t("thScoreTitle")], [t("thBT"), "num"], ["±", "num"], [t("thRange"), "hide-sm"],
-       [t("thMainRecord"), "num"], [t("thVs"), "num", t("thVsRecentTitle")], [t("thLast"), "hide-sm"]]
-    : state.mode === "peak"
+  const cols = state.mode === "peak"
     ? [["#"], [t("thPlayer")], [t("thPeakScore"), "num", t("thPeakTitle")], [t("thBT"), "num"], ["±", "num"], [t("thRange"), "hide-sm"],
        [t("thMain"), "num", t("thMainTitle")], [t("thVs"), "num", t("thVsCareerTitle")], [t("thPeakWhen")], [t("thRankThen"), "num", t("thRankThenTitle")], [t("thMatches"), "num hide-sm"]]
     : [["#"], [t("thPlayer")], [t("thScore"), "num", t("thScoreTitle")], [t("thBT"), "num"], ["±", "num"], [t("thRange"), "hide-sm"],
@@ -726,7 +716,6 @@ function renderHead() {
   document.getElementById("thead").replaceChildren(tr);
   document.querySelectorAll("[data-board]").forEach(el => { el.hidden = el.dataset.board !== state.mode; });
   document.getElementById("mode-cur").setAttribute("aria-pressed", String(state.mode === "current"));
-  document.getElementById("mode-main").setAttribute("aria-pressed", String(state.mode === "main"));
   document.getElementById("mode-peak").setAttribute("aria-pressed", String(state.mode === "peak"));
 }
 
@@ -768,40 +757,6 @@ function vsCell(tr, p, recent) {
   tr.append(td);
 }
 
-function renderMain() {
-  const minRes = +document.getElementById("minres").value;
-  const asOf = snaps[evSnaps[evSnaps.length - 1]].d;
-  const rows = players.filter(p => p.b && p.b[2] + p.b[3] >= minRes).sort((a, b) => (b.b[0] - b.b[1]) - (a.b[0] - a.b[1]));
-  const lo = 1350, hi = 1750, sc = v => Math.max(0, Math.min(120, (v - lo) / (hi - lo) * 120));
-  const tb = document.getElementById("tbody");
-  tb.replaceChildren();
-  rows.slice(0, state.shown).forEach((p, i) => {
-    const [elo, se, w, l, last] = p.b;
-    const idle = (Date.parse(asOf) - Date.parse(last)) / 86400000 > IDLE_DAYS;
-    const tr = document.createElement("tr"); tr.tabIndex = 0;
-    if (idle) tr.className = "idle";
-    tr.setAttribute("aria-label", t("rowAria", p.n, state.selected.includes(p.id)));
-    const cell = (cls, text) => { const td = document.createElement("td"); if (cls) td.className = cls; if (text != null) td.textContent = text; tr.append(td); return td; };
-    cell("rank", i + 1);
-    playerCell(tr, p, idle ? t("idle", Math.round((Date.parse(asOf) - Date.parse(last)) / 86400000 / 30.4)) : null);
-    cell("num", Math.round(elo - se));
-    cell("num", Math.round(elo));
-    cell("num", Math.round(se));
-    const rg = cell("hide-sm");
-    const bar = document.createElement("div"); bar.className = "range";
-    const ln = document.createElement("i"); ln.style.left = sc(elo - se) + "px"; ln.style.width = (sc(elo + se) - sc(elo - se)) + "px";
-    const mk = document.createElement("s"); mk.style.left = (sc(elo) - 1) + "px";
-    bar.append(ln, mk); rg.append(bar);
-    const rc = cell("num", `${w}-${l}`); rc.title = Math.round(100 * w / (w + l)) + "%";
-    vsCell(tr, p, true);
-    cell("hide-sm", fmtDate(last));
-    tr.addEventListener("click", () => togglePlayer(p.id));
-    tr.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); togglePlayer(p.id); } });
-    tb.append(tr);
-  });
-  document.getElementById("more").hidden = rows.length <= state.shown;
-}
-
 function renderPeak() {
   const minRes = +document.getElementById("minres").value;
   const rows = players.filter(p => p.k && p.k[6] >= minRes).sort((a, b) => b.k[0] - a.k[0]);
@@ -838,7 +793,6 @@ function renderPeak() {
 function renderBoard() {
   renderHead();
   if (state.mode === "peak") { renderPeak(); return; }
-  if (state.mode === "main") { renderMain(); return; }
   const s = snaps[state.snap];
   const k = evSnaps.indexOf(state.snap);
   document.getElementById("snap-label").textContent = t("snapLabel", fmtDate(s.d), s.e, k + 1, evSnaps.length, s.n);
