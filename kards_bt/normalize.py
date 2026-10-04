@@ -191,13 +191,20 @@ TAG = re.compile(r"\s*[\(\[](dq|cn)[\)\]]\s*", re.I)
 def load_manual(ids):
     """data/manual_matches.csv: results published only in official news (e.g. the 2021-2023 World Championship
     grand finals played at LAN), keyed to existing platform accounts so they join the right player."""
-    path = os.path.join(DATA, "manual_matches.csv")
-    if not os.path.exists(path):
-        return []
+    rows = []
+    for fname in ("manual_matches.csv", "occ_sheet_matches.csv"):  # the second comes from import_occ_sheet.py
+        path = os.path.join(DATA, fname)
+        if os.path.exists(path):
+            rows += _load_manual_file(ids, path)
+    return rows
+
+
+def _load_manual_file(ids, path):
     rows = []
     for m in csv.DictReader(open(path)):
         for side in ("1", "2"):
-            if m[f"p{side}_account"] not in ids.parent:
+            # "occsheet:" accounts are players who appear only in the community OCC results sheet
+            if m[f"p{side}_account"] not in ids.parent and not m[f"p{side}_account"].startswith("occsheet:"):
                 raise ValueError(f"manual match names an unknown account: {m}")
             ids.add(m[f"p{side}_account"], m[f"p{side}"], [], m["time"])
         s1, s2 = int(m["s1"]), int(m["s2"])
