@@ -12,6 +12,7 @@ import re
 import sys
 from collections import Counter, defaultdict
 
+import bt
 import invites
 from placements import stage_name
 
@@ -34,7 +35,7 @@ def main():
     pid = P["player_id"]
     names = {p["player_id"]: p["name"] for p in players}
     rows = load("ratings_timeline.csv")
-    ms = [m for m in load("matches.csv") if m["valid"] == "1" and m["category"] == "official"]
+    ms = [m for m in load("matches.csv") if m["valid"] == "1" and m["category"] in bt.RATED]
     peaks = load("peaks.csv")
     resid = {r["player_id"]: r for r in load("residuals.csv")}
     ev_start = {}

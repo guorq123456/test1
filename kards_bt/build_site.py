@@ -3,7 +3,8 @@ import csv
 import json
 import os
 import re
-from placements import stage_name
+from bt import RATED
+from placements import MAIN, stage_name
 from collections import Counter, defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -35,10 +36,9 @@ def main():
         ])
 
     # main-stage record (Top 8 / Top 16 / grand finals / invitationals / knockouts), official events only
-    MAIN = {"8 强", "16 强", "总决赛", "邀请赛", "32 强", "淘汰赛"}
     main_rec = defaultdict(lambda: [0, 0])
     for m in csv.DictReader(open(os.path.join(DATA, "matches.csv"))):
-        if m["valid"] == "1" and m["category"] == "official" and stage_name(m["event"], m["stage"], m["stage_type"]) in MAIN:
+        if m["valid"] == "1" and m["category"] in RATED and stage_name(m["event"], m["stage"], m["stage_type"]) in MAIN:
             w, l = (m["p1"], m["p2"]) if m["winner"] == "1" else (m["p2"], m["p1"])
             main_rec[w][0] += 1
             main_rec[l][1] += 1
@@ -57,7 +57,7 @@ def main():
                                      r["peak_date"], re.sub(r"^Kards ", "KARDS ", r["peak_event"]), int(r["rank_then"]), int(r["results"])]
 
     matches = [m for m in csv.DictReader(open(os.path.join(DATA, "matches.csv")))]
-    used = [m for m in matches if m["valid"] == "1" and m["category"] == "official"]
+    used = [m for m in matches if m["valid"] == "1" and m["category"] in RATED]
     per_event = Counter(m["event"] for m in used)
 
     payload = {

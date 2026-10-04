@@ -46,7 +46,7 @@ def main():
     pid = next(p["player_id"] for p in players
                if q in (p["player_id"].lower(), p["name"].lower()) or q in p["aliases"].lower().split(" / "))
 
-    cats = {"official"}
+    cats = set(bt.RATED)
     matches = bt.load_matches(cats, False)
     fit_before = lambda t: bt._fit_before(matches, t, args.half_life, args.prior_sd)  # noqa: E731
     credits = invites.credits(fit_before) + newcomers.anchors(matches, args.half_life, args.prior_sd, bt.fit_bt, args.newcomer_anchor)

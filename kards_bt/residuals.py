@@ -34,7 +34,7 @@ def main():
     ap.add_argument("--top", type=int, default=12)
     args = ap.parse_args()
 
-    ms = sorted(bt.load_matches({"official"}, False))
+    ms = sorted(bt.load_matches(set(bt.RATED), False))
     names = {r["player_id"]: r["name"] for r in csv.DictReader(open(os.path.join(bt.DATA, "players.csv")))}
     start = defaultdict(lambda: datetime.max)
     for m in ms:

@@ -29,10 +29,12 @@ def main():
     ap.add_argument("--prior-sd", type=float, default=0.4)
     ap.add_argument("--newcomer-anchor", type=float, default=2)
     ap.add_argument("--invite-half-life", type=float, default=120)
-    ap.add_argument("--invite-shrink", type=float, default=0, help="as in bt.py")
+    ap.add_argument("--invite-shrink", type=float, default=20,
+                    help="as in bt.py; the peak board shrinks each invite credit by n0/(n0 + real evidence) so repeat "
+                         "invitees are not carried by the credit (bt.py keeps the uniform credit: equal out of sample)")
     args = ap.parse_args()
 
-    ms = sorted(bt.load_matches({"official"}, False))
+    ms = sorted(bt.load_matches(set(bt.RATED), False))
     names = {r["player_id"]: r["name"] for r in csv.DictReader(open(os.path.join(bt.DATA, "players.csv")))}
     ids = sorted({p for m in ms for p in (m[1], m[2])})
     idx = {p: i for i, p in enumerate(ids)}

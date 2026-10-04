@@ -33,6 +33,41 @@ def category(name):
     return next(cat for cat, rx in CATEGORIES if rx.search(name.strip()))
 
 
+# stage labels (also used by placements.py and the site); MAIN = the stages that count as the main event
+def stage_name(event, stage, stype):
+    s = f"{stage or ''} {stype or ''}".lower()
+    wc = re.search(r"world championship (20\d\d)", event, re.I)
+    if wc:
+        if "grand final" in s:
+            return "总决赛"
+        if "group" in s or "round robin" in s:
+            return "小组赛"
+        if "swiss" in s:
+            return "瑞士轮"
+        if "double elimination" in s and int(wc.group(1)) <= 2023:
+            return "32 强"
+        return "16 强"
+    if "qualifier" in s:
+        return "资格赛"
+    if re.search(r"top ?8|final 8", s):
+        return "8 强"
+    if re.search(r"top ?16", s):
+        return "16 强"
+    if "ultimate" in event.lower():
+        return "邀请赛"
+    if "swiss" in s:
+        return "瑞士轮"
+    if "group" in s or "round robin" in s:
+        return "小组赛"
+    if re.search(r"top cut|elimination|elim", s):
+        return "淘汰赛"
+    return "正赛"
+
+
+DEPTH = {"总决赛": 7, "16 强": 6, "8 强": 6, "邀请赛": 6, "32 强": 5, "淘汰赛": 5, "正赛": 3, "瑞士轮": 2, "小组赛": 2, "资格赛": 1}
+MAIN = {"8 强", "16 强", "总决赛", "邀请赛", "32 强", "淘汰赛"}
+
+
 def norm_name(name):
     """'EFT | John_Px#3858' -> 'john_px'; 'xyloser#1918 | xyloser' -> 'xyloser'."""
     if not name:
@@ -411,6 +446,10 @@ def main():
     for r in rows:
         if r["p1"] == r["p2"]:
             r["valid"] = 0
+        # the Open series' qualifiers and Swiss have no entry bar and are not rated; its main stages (Top 16 /
+        # Top 8 / playoffs) are matches between players who came through them, and are rated like official events
+        if r["category"] in ("open", "open_special") and stage_name(r["event"], r["stage"] or "", r["stage_type"] or "") in MAIN:
+            r["category"] = "open_main"
     rows.sort(key=lambda r: (r["time"] or "", r["event"]))
 
     with open(os.path.join(DATA, "matches.csv"), "w", newline="") as f:

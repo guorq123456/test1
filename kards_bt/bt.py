@@ -46,6 +46,7 @@ def parse_time(s):
 
 
 OPEN = ("open", "open_special")
+RATED = ("official", "open_main")  # what the ratings use by default: official events + the Open series' main stages
 
 
 def load_matches(categories, use_games, open_weight=1.0):
@@ -217,7 +218,7 @@ def _snapshot_chunk(snaps):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--categories", default="official",
+    ap.add_argument("--categories", default=",".join(RATED),
                     help="comma list of match categories to use (open, open_special, community, official, ...)")
     ap.add_argument("--half-life", type=float, default=240, help="days; <=0 disables time decay")
     ap.add_argument("--prior-sd", type=float, default=0.4, help="prior sd of ratings in log-odds units (0.4 ~ 70 Elo)")
