@@ -68,7 +68,17 @@ input[type="search"], select {
   font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
   border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; min-width: 0;
 }
-input[type="search"] { width: min(260px, 100%); }
+input[type="search"] { width: 100%; }
+.search { position: relative; width: min(260px, 100%); }
+.suggest {
+  position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 5; margin: 0; padding: 4px; list-style: none;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  max-height: 40vh; overflow-y: auto;
+}
+.suggest li { padding: 7px 8px; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; gap: 10px; }
+.suggest li small { color: var(--muted); font: 12px var(--mono); white-space: nowrap; }
+.suggest li[aria-selected="true"], .suggest li:hover { background: var(--accent-wash); }
+.suggest li.none { color: var(--muted); cursor: default; background: none; }
 button {
   font: 500 13px var(--body); color: var(--ink-2); background: transparent; border: 1px solid var(--line);
   border-radius: 6px; padding: 7px 11px; cursor: pointer;
@@ -96,6 +106,7 @@ button:hover { background: var(--accent-wash); color: var(--ink); }
 .tip .t-row .key { height: 2px; border-radius: 1px; }
 .tip .t-row b { font: 500 13px var(--mono); color: var(--ink); }
 .tip .t-row span { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tip .t-row .place { grid-column: 2 / 4; color: var(--ink); font-size: 12px; margin: -2px 0 4px; white-space: normal; }
 .tip .t-row small { color: var(--muted); font-family: var(--mono); }
 .empty { padding: 40px 12px; text-align: center; color: var(--muted); }
 .slider { display: grid; gap: 6px; flex: 1 1 320px; min-width: 0; }
@@ -134,7 +145,7 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
   <header>
     <span class="eyebrow">KARDS · Bradley–Terry · 公开赛 + 官方赛事</span>
     <h1>KARDS 赛事 BT 实力榜</h1>
-    <p class="lede">用 Bradley–Terry 模型给每位选手估一个实力分（Elo 刻度）。1500 是<b>当时</b>参赛选手的平均水平，不是起点或保底：低于 1500 表示弱于平均，差 100 分约等于 64% 对 36% 的胜率。每站比赛结束后重新拟合一次，旧比赛按240 天半衰期逐渐降权，所以长期不参赛的选手会慢慢回到 1500 附近。2023 年起参赛选手整体更强，因此不同年份的分数只适合各自比较排名，不能直接比高低。</p>
+    <p class="lede">用 Bradley–Terry 模型给每位选手估一个实力分（Elo 刻度）。1500 是<b>当时</b>参赛选手的平均水平，不是起点或保底：低于 1500 表示弱于平均，差 100 分约等于 64% 对 36% 的胜率。每站比赛结束后（以及每月初）重新拟合一次，旧比赛按240 天半衰期逐渐降权，所以长期不参赛的选手会慢慢回到 1500 附近。2023 年起参赛选手整体更强，因此不同年份的分数只适合各自比较排名，不能直接比高低。</p>
     <div class="facts" id="facts"></div>
     <div class="notice"><span class="tag">数据范围</span><p>已收录 <b>KARDS Open 公开赛</b> #1 – XVI（Battlefy、start.gg、Challonge），以及 Challonge 上官方账号的全部对阵表：<b>OCC 月赛</b>（2021.05 – 2024.11，同月的资格赛和 Top 8 算一站）、<b>OCC Ultimate</b> I–III、<b>2021–2025 世界赛</b>、<b>2025 年四个扩展赛</b>和 <b>2026 年四季赛</b>；2021–2023 世界赛前 4 名线下总决赛按官方新闻补录。弃权、缺席、DQ 后被录入的结果整场作废，Pauper、Blitz 等特殊规则的社区赛不计入。</p></div>
   </header>
@@ -142,11 +153,14 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
   <section aria-labelledby="h-trend">
     <div class="sec-head">
       <h2 id="h-trend">分数走势</h2>
-      <p>圆点是本人出赛的那一站，其余时段的起伏来自旧比赛的时间衰减。悬停看每站后的分数；点选手名查看 ±1 标准误区间。</p>
+      <p>横轴是时间，可以直接看出一个选手强了多久。圆点是本人出赛的那一站，悬停可看该站名次；两站之间的起伏来自旧比赛的时间衰减。点选手名查看 ±1 标准误区间。</p>
     </div>
     <div class="controls">
-      <input type="search" id="search" list="names" placeholder="搜索选手并加入图表" autocomplete="off" aria-label="搜索选手">
-      <datalist id="names"></datalist>
+      <div class="search">
+        <input type="search" id="search" placeholder="搜索选手并加入图表" autocomplete="off" enterkeyhint="search"
+          role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggest" aria-label="搜索选手">
+        <ul class="suggest" id="suggest" role="listbox" hidden></ul>
+      </div>
       <button type="button" id="btn-top">当期前 6 名</button>
       <button type="button" id="btn-clear">清空</button>
     </div>
@@ -192,10 +206,10 @@ td.name .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; backgro
     <p>每场比赛（一个 Bo3/Bo5 系列赛算一场）给出“谁赢了谁”。BT 模型假设：</p>
     <div class="formula">P(i 胜 j) = 1 / (1 + e<sup>−(β<sub>i</sub> − β<sub>j</sub>)</sup>)，　BT 分 = 1500 + β × 400 / ln 10</div>
     <ul>
-      <li><b>随时间变化</b>：每站比赛结束后，用截至当天的全部对局重新拟合；距今 d 天的对局权重为 0.5<sup>d/240</sup>。</li>
+      <li><b>随时间变化</b>：每站比赛结束后和每月 1 日，用截至当时的全部对局重新拟合；距今 d 天的对局权重为 0.5<sup>d/240</sup>。</li>
       <li><b>先验</b>：β ~ N(0, 0.8²)，相当于每人先带一点“平均水平”的虚拟战绩，只打过两三场的人不会被冲到榜首。</li>
       <li><b>区间</b>：± 是拉普拉斯近似给出的 1 个标准误。场次越少，区间越宽。</li>
-      <li><b>参数怎么定的</b>：用每站赛前的分数预测这一站的胜负（清洗后 6,003 场），半衰期 240 天、先验 0.8 的 log loss 是 0.674（抛硬币是 0.693；预测准确率约 58%）。先验 0.6 略好（0.673），差距在误差范围内；新人起点、赛事级别等改进正在按预先定好的规则检验，结论出来后再调整。</li>
+      <li><b>参数怎么定的</b>：用每站赛前的分数预测这一站的胜负（清洗后 6,003 场），半衰期 240 天、先验 0.8 的 log loss 是 0.674（抛硬币是 0.693；预测准确率约 58%）。先验 0.6 略好（0.673），差距在误差范围内。按赛事级别加权、按参赛途径给新人不同起点、按 Bo3/Bo5 和 ban 位区分赛制，都检验过，样本外预测没有变好，所以没有采用。</li>
       <li><b>没打的比赛不算</b>：轮空、平台判负、Battlefy 只有一方签到后 10 分钟的自动判负、选手被标记 DQ 之后录入（或在 DQ 时被改写）的结果、start.gg 上只记胜负没有比分的缺席判负、管理员几秒内批量清掉的缺席选手对局，整场作废，对手的“胜场”也一起去掉。DQ 之前真打的比赛保留；瑞士轮和循环赛不按负场数判断；只要双方都在场、比分正常，录入再快也算真实对局。</li>
       <li><b>天梯直邀</b>：OCC 8 强里没打资格赛的直邀选手，记上当月资格赛晋级者的中位战绩（直邀和资格赛胜出一样难），按 120 天半衰期淡出。</li>
       <li><b>人工修正</b>：<code>data/aliases.csv</code> 合并同一人的不同账号，<code>data/overrides.csv</code> 把代打的结果记到实际上场的人名下，<code>data/manual_matches.csv</code> 补录只在官方新闻里公布的总决赛。</li>
@@ -211,20 +225,22 @@ const fmtDate = d => d.replace(/-/g, ".");
 const snaps = DATA.snaps;
 const players = DATA.players;
 const byId = new Map(players.map(p => [p.id, p]));
+// snapshots are events (e = event name) plus the 1st of every month (e = ""); the leaderboard steps through events only
+const evSnaps = snaps.map((s, i) => s.e ? i : -1).filter(i => i >= 0);
 players.forEach(p => {
   p.at = new Map(p.p.map(x => [x[0], x]));
-  // results gained at each snapshot: >0 means the player actually played in that event
-  p.played = new Map(p.p.map(x => { const prev = p.at.get(x[0] - 1); return [x[0], x[3] - (prev ? prev[3] : 0)]; }));
+  // x[5]: where the player finished in that event (truthy only if they played in it)
+  p.played = new Map(p.p.map(x => [x[0], x[5]]));
 });
 
-const state = { selected: [], slot: new Map(), focus: null, snap: snaps.length - 1, shown: 50, hover: null };
+const state = { selected: [], slot: new Map(), focus: null, snap: evSnaps[evSnaps.length - 1], shown: 50, hover: null };
 
 // ---------- header facts
 (function facts() {
   const el = document.getElementById("facts");
   const items = [
     [fmtDate(DATA.stats.first) + " – " + fmtDate(DATA.stats.last), "时间范围"],
-    [String(snaps.length), "站比赛"],
+    [String(evSnaps.length), "站比赛"],
     [DATA.stats.matches.toLocaleString(), "场有效对局"],
     [DATA.stats.players.toLocaleString(), "名选手"],
   ];
@@ -269,26 +285,59 @@ function boardAt(si, minRes) {
   out.sort((a, b) => b.elo - a.elo);
   return out;
 }
-function topIds(k) { return boardAt(snaps.length - 1, 20).slice(0, k).map(r => r.p.id); }
+function topIds(k) { return boardAt(evSnaps[evSnaps.length - 1], 20).slice(0, k).map(r => r.p.id); }
 
 // ---------- search
 (function search() {
-  const dl = document.getElementById("names");
-  const names = new Map();
-  for (const p of players) names.set(p.n, p.id);
-  [...names.keys()].sort((a, b) => a.localeCompare(b)).forEach(n => {
-    const o = document.createElement("option"); o.value = n; dl.append(o);
-  });
+  // a short suggestion list that only opens once something is typed, so on phones it never covers the keyboard
   const input = document.getElementById("search");
-  const lookup = q => {
-    q = q.trim().toLowerCase(); if (!q) return null;
-    const exact = players.find(p => p.n.toLowerCase() === q);
-    if (exact) return exact.id;
-    const hit = players.find(p => p.a.toLowerCase().split(" / ").includes(q)) || players.find(p => p.n.toLowerCase().includes(q));
-    return hit ? hit.id : null;
+  const box = document.getElementById("suggest");
+  const latest = new Map(players.map(p => [p.id, p.p[p.p.length - 1]]));
+  let hits = [], active = -1;
+  const find = q => {
+    q = q.trim().toLowerCase(); if (!q) return [];
+    const scored = [];
+    for (const p of players) {
+      const n = p.n.toLowerCase(), al = (p.a || "").toLowerCase();
+      const s = n === q ? 0 : n.startsWith(q) ? 1 : n.includes(q) ? 2 : al.includes(q) ? 3 : -1;
+      if (s >= 0) scored.push([s, -latest.get(p.id)[3], p]);
+    }
+    scored.sort((x, y) => x[0] - y[0] || x[1] - y[1]);
+    return scored.slice(0, 8).map(x => x[2]);
   };
-  input.addEventListener("change", () => { const id = lookup(input.value); if (id) { addPlayer(id); input.value = ""; } });
-  input.addEventListener("keydown", e => { if (e.key === "Enter") { const id = lookup(input.value); if (id) { addPlayer(id); input.value = ""; } } });
+  const close = () => { box.hidden = true; input.setAttribute("aria-expanded", "false"); input.removeAttribute("aria-activedescendant"); active = -1; };
+  const pick = p => { addPlayer(p.id); input.value = ""; close(); input.blur(); };
+  const render = () => {
+    box.replaceChildren();
+    if (!input.value.trim()) { close(); return; }
+    hits.forEach((p, i) => {
+      const li = document.createElement("li");
+      li.id = "sg-" + i; li.setAttribute("role", "option"); li.setAttribute("aria-selected", String(i === active));
+      const nm = document.createElement("span"); nm.textContent = p.n;
+      const meta = document.createElement("small");
+      const last = latest.get(p.id);
+      meta.textContent = state.selected.includes(p.id) ? "已在图中" : `${last[3]} 场 · ${last[4].slice(0, 4)}`;
+      li.append(nm, meta);
+      li.addEventListener("pointerdown", e => e.preventDefault()); // keep focus so the click lands
+      li.addEventListener("click", () => pick(p));
+      box.append(li);
+    });
+    if (!hits.length) { const li = document.createElement("li"); li.className = "none"; li.textContent = "没有找到这位选手"; box.append(li); }
+    box.hidden = false; input.setAttribute("aria-expanded", "true");
+    if (active >= 0) input.setAttribute("aria-activedescendant", "sg-" + active); else input.removeAttribute("aria-activedescendant");
+  };
+  input.addEventListener("input", () => { hits = find(input.value); active = -1; render(); });
+  input.addEventListener("keydown", e => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      if (!hits.length) return;
+      e.preventDefault();
+      active = (active + (e.key === "ArrowDown" ? 1 : -1) + hits.length) % hits.length; render();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const p = hits[active >= 0 ? active : 0]; if (p) pick(p);
+    } else if (e.key === "Escape") close();
+  });
+  input.addEventListener("blur", close);
   document.getElementById("btn-top").addEventListener("click", () => {
     state.selected = []; state.slot.clear(); state.focus = null;
     topIds(6).forEach(addPlayer); renderAll();
@@ -407,7 +456,7 @@ function renderChart() {
         fill: "none", stroke: colorOf(p.id), "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round",
       }, g);
       // dots only where the player actually played; between them the line is time decay alone
-      for (const x of seg) if (p.played.get(x[0]) > 0) svgEl("circle", { cx: X(tms[x[0]]), cy: Y(x[1]), r: 4, fill: colorOf(p.id), stroke: "var(--surface)", "stroke-width": 2 }, g);
+      for (const x of seg) if (p.played.get(x[0])) svgEl("circle", { cx: X(tms[x[0]]), cy: Y(x[1]), r: 4, fill: colorOf(p.id), stroke: "var(--surface)", "stroke-width": 2 }, g);
     }
   }
   // crosshair layer
@@ -453,7 +502,7 @@ function showTip(si) {
   const tip = document.getElementById("tip");
   tip.replaceChildren();
   const head = document.createElement("div"); head.className = "t-head";
-  head.textContent = `${fmtDate(snaps[si].d)} · ${snaps[si].e} 之后`;
+  head.textContent = snaps[si].e ? `${fmtDate(snaps[si].d)} · ${snaps[si].e} 之后` : `${fmtDate(snaps[si].d)} · 月初`;
   tip.append(head);
   const rows = state.selected.map(id => ({ p: byId.get(id), x: byId.get(id).at.get(si) })).filter(r => r.x).sort((a, b) => b.x[1] - a.x[1]);
   if (!rows.length) {
@@ -465,10 +514,11 @@ function showTip(si) {
     const key = document.createElement("i"); key.className = "key"; key.style.background = colorOf(r.p.id);
     const b = document.createElement("b"); b.textContent = Math.round(r.x[1]);
     const name = document.createElement("span"); name.textContent = r.p.n + " ";
-    const n = r.p.played.get(si);
-    const se = document.createElement("small"); se.textContent = "±" + Math.round(r.x[2]) + (n > 0 ? ` · 本站 ${n} 场` : " · 未出赛");
+    const place = r.p.played.get(si);
+    const se = document.createElement("small"); se.textContent = "±" + Math.round(r.x[2]) + (snaps[si].e && !place ? " · 未出赛" : "");
     name.append(se);
     row.append(key, b, name);
+    if (place) { const pl = document.createElement("span"); pl.className = "place"; pl.textContent = place; row.append(pl); }
     tip.append(row);
   }
   tip.hidden = false;
@@ -484,16 +534,21 @@ function showTip(si) {
 
 // ---------- leaderboard
 const snapInput = document.getElementById("snap");
-snapInput.max = snaps.length - 1;
-snapInput.value = state.snap;
-snapInput.addEventListener("input", () => setSnap(+snapInput.value));
+snapInput.max = evSnaps.length - 1;
+snapInput.value = evSnaps.length - 1;
+snapInput.addEventListener("input", () => setSnap(evSnaps[+snapInput.value]));
 document.getElementById("minres").addEventListener("change", () => { state.shown = 50; renderBoard(); });
 document.getElementById("more").addEventListener("click", () => { state.shown += 50; renderBoard(); });
-function setSnap(i) { state.snap = i; snapInput.value = i; state.shown = 50; renderBoard(); renderChart(); }
+// clicking the chart between events snaps the leaderboard to the latest event before that time
+function setSnap(si) {
+  let k = 0; evSnaps.forEach((e, j) => { if (e <= si) k = j; });
+  state.snap = evSnaps[k]; snapInput.value = k; state.shown = 50; renderBoard(); renderChart();
+}
 
 function renderBoard() {
   const s = snaps[state.snap];
-  document.getElementById("snap-label").textContent = `${fmtDate(s.d)} · ${s.e}（第 ${state.snap + 1}/${snaps.length} 站，本站 ${s.n} 场）`;
+  const k = evSnaps.indexOf(state.snap);
+  document.getElementById("snap-label").textContent = `${fmtDate(s.d)} · ${s.e}（第 ${k + 1}/${evSnaps.length} 站，本站 ${s.n} 场）`;
   const minRes = +document.getElementById("minres").value;
   const rows = boardAt(state.snap, minRes);
   const lo = 1300, hi = 1950, sc = v => Math.max(0, Math.min(120, (v - lo) / (hi - lo) * 120));
@@ -521,7 +576,7 @@ function renderBoard() {
     const ln = document.createElement("i"); ln.style.left = sc(r.elo - r.se) + "px"; ln.style.width = (sc(r.elo + r.se) - sc(r.elo - r.se)) + "px";
     const mk = document.createElement("s"); mk.style.left = (sc(r.elo) - 1) + "px";
     bar.append(ln, mk); rg.append(bar);
-    const prev = state.snap > 0 ? r.p.at.get(state.snap - 1) : null;
+    const prev = k > 0 ? r.p.at.get(evSnaps[k - 1]) : null;
     const d = prev ? Math.round(r.elo - prev[1]) : null;
     const dc = cell("num " + (d == null ? "new" : d > 0 ? "up" : d < 0 ? "down" : ""), d == null ? "新" : (d > 0 ? "▲ " : d < 0 ? "▼ " : "") + Math.abs(d));
     if (d == null) dc.title = "上一站时还没有记录";

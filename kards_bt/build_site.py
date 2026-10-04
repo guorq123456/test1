@@ -2,6 +2,7 @@
 import csv
 import json
 import os
+import re
 from collections import Counter, defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -21,10 +22,15 @@ def main():
                 snaps.append(key)
     snap_idx = {s: i for i, s in enumerate(snaps)}
 
+    # where the player finished in each event (placements.py); month-start snapshots have no event
+    place = {(r["event"], r["player_id"]): r["label"] for r in csv.DictReader(open(os.path.join(DATA, "placements.csv")))}
     series = defaultdict(list)
     for r in rows:
-        series[r["player_id"]].append([
-            snap_idx[(r["date"], r["event"])], float(r["elo"]), float(r["se"]), int(r["results"]), r["last_played"],
+        pts = series[r["player_id"]]
+        played = r["event"] and (not pts or int(r["results"]) > pts[-1][3])
+        label = (place.get((r["event"], r["player_id"]), "参赛") if played else 0)
+        pts.append([
+            snap_idx[(r["date"], r["event"])], round(float(r["elo"])), round(float(r["se"])), int(r["results"]), r["last_played"], label,
         ])
 
     matches = [m for m in csv.DictReader(open(os.path.join(DATA, "matches.csv")))]
@@ -32,7 +38,7 @@ def main():
     per_event = Counter(m["event"] for m in used)
 
     payload = {
-        "snaps": [{"d": d, "e": e, "n": per_event.get(e, 0)} for d, e in snaps],
+        "snaps": [{"d": d, "e": re.sub(r"^Kards ", "KARDS ", e), "n": per_event.get(e, 0)} for d, e in snaps],
         "players": [
             {"id": pid, "n": players[pid]["name"], "a": players[pid]["aliases"], "p": pts}
             for pid, pts in series.items()
@@ -48,7 +54,7 @@ def main():
     html = template.replace("/*__DATA__*/null", json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
     with open(os.path.join(SITE, "index.html"), "w") as f:
         f.write(html)
-    print(f"site/index.html: {len(html) / 1024:.0f} KB, {len(snaps)} snapshots, {len(series)} players")
+    print(f"site/index.html: {len(html) / 1024:.0f} KB, {sum(1 for _, e in snaps if e)} events, {len(snaps)} snapshots, {len(series)} players")
 
 
 if __name__ == "__main__":

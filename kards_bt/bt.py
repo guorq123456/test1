@@ -118,6 +118,20 @@ def event_snapshots(matches):
     return sorted((t, ev) for ev, t in end.items())
 
 
+def month_snapshots(matches):
+    """One snapshot at the start of every month (event ""), so a time axis shows decay between events."""
+    first, last = min(m[0] for m in matches), max(m[0] for m in matches)
+    out, y, mo = [], first.year, first.month + 1
+    while True:
+        if mo > 12:
+            y, mo = y + 1, 1
+        t = datetime(y, mo, 1)
+        if t > last:
+            return out
+        out.append((t, ""))
+        mo += 1
+
+
 _JOB = None  # (matches, names, half_life, prior_sd, active_days), inherited by forked workers
 
 
@@ -188,7 +202,7 @@ def main():
 
     matches = load_matches(set(args.categories.split(",")), args.games)
     names = {r["player_id"]: r["name"] for r in csv.DictReader(open(os.path.join(DATA, "players.csv")))}
-    snapshots = event_snapshots(matches)
+    snapshots = sorted(event_snapshots(matches) + month_snapshots(matches))
     print(f"{len(matches)} results, {len(snapshots)} snapshots")
 
     # snapshots are independent fits; split them into contiguous chunks, one per core, and warm-start
