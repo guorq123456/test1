@@ -59,7 +59,8 @@ def main():
     last = ts[-1]
     cur = board(max(r["date"] for r in rows if r["event"]))
     pk = max(ts, key=lambda r: float(r["elo"]))
-    best = min(((board(d).get(pid, 10 ** 6), d) for d in sorted({r["date"] for r in ts if r["event"]})), default=(None, None))
+    ranked = [(board(d)[pid], d) for d in sorted({r["date"] for r in ts if r["event"]}) if pid in board(d)]
+    best = min(ranked) if ranked else ("–", "未上榜")
     pkr = next(((i + 1, r) for i, r in enumerate(peaks) if r["player_id"] == pid), None)
     rs = resid.get(pid)
 
