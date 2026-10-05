@@ -621,8 +621,8 @@ class WorldOfGames(CardScript):
     def queue_condition(self, hook, ctx):
         # Checked as the card is played, before its own effect (official Q&A: a Divine
         # Thunder that destroys the only 4-cost follower still advances the count).
-        # UNSURE: does this amulet itself count as "a card on the field other than it"
-        # (so playing any 1-base-cost card advances it)? Implemented: yes.
+        # Confirmed by the player: this amulet itself counts as "a card on the field
+        # other than it", so playing any 1-base-cost card advances it.
         played = ctx.other
         cost = _played_base_cost(played, ctx.as_spell)
         return any(c is not played and c.defn.cost == cost for c in ctx.state.field_order())

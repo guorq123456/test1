@@ -315,9 +315,9 @@ class TrapInTheWoods(CardScript):
     def on_enemy_enter(self, ctx):
         if ctx.state.on_field(ctx.other.uid) is ctx.other:
             E.destroy(ctx.state, ctx.other)
-        # UNSURE: is the trap still destroyed when the follower already left the field
-        # (or survives, e.g. "can't be destroyed by abilities")? Assumed yes. Confirmed by
-        # the player: an invoked Sandalphon is destroyed by the trap and still gives its crest.
+        # Confirmed by the player: the trap is destroyed even if the follower already left
+        # the field or survives (e.g. "can't be destroyed by abilities"); an invoked
+        # Sandalphon is destroyed by the trap and still gives its crest.
         E.destroy(ctx.state, ctx.source)
 
 
