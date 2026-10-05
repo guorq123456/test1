@@ -7,7 +7,7 @@ from svsim.cards import common
 from svsim.cards.pool import card
 from svsim.core import effects as E
 from svsim.core.enums import Keyword
-from svsim.core.script import CardScript, Grant, Target, TargetSpec, prop, register, scripts_of
+from svsim.core.script import CardScript, Target, TargetSpec, prop, register, scripts_of
 
 MYSTERIA = "Mysteria"
 GOLEM = "Golem"
@@ -190,45 +190,13 @@ def _evolve_if_able(ctx, inst) -> None:
         E.evolve(ctx.state, inst)
 
 
-# Obsessed Test Subject counts the allied copies that entered the field this match.
-# PlayerState has no free-form storage, so the tally is stamped (keyed by player)
-# on every card that player owns; it survives clone() and any card leaving play.
-
-def _tally_key(player: int) -> str:
-    return f"test_subjects_entered_{player}"
-
-
-def _owned(state, player) -> list:
-    p = state.players[player]
-    return p.deck + p.hand + p.field + p.leader_area
-
-
 def entered_test_subjects(state, player: int) -> int:
     """Allied Obsessed Test Subjects that entered the field this match."""
-    key = _tally_key(player)
-    return max(((c.counters or {}).get(key, 0) for c in _owned(state, player)), default=0)
-
-
-def _test_subject_enters(state, inst) -> None:
-    """When an Obsessed Test Subject enters the field: +3/+3 if at least 5 other
-    allied copies entered before it this match (checked as it enters: official Q&A)."""
-    player = inst.owner
-    before = entered_test_subjects(state, player)
-    if before >= 5:
-        E.buff(state, inst, 3, 3)
-    for c in _owned(state, player):
-        E.counters(c)[_tally_key(player)] = before + 1
+    return state.players[player].entered.get(OBSESSED_TEST_SUBJECT.card_id, 0)
 
 
 def summon_test_subjects(ctx, n: int = 1) -> list:
-    """Summon Obsessed Test Subjects one at a time, each checking its own enter ability."""
-    summoned = []
-    for _ in range(n):
-        inst = E.summon(ctx.state, ctx.controller, OBSESSED_TEST_SUBJECT)
-        if inst is not None:
-            _test_subject_enters(ctx.state, inst)
-            summoned.append(inst)
-    return summoned
+    return _summon(ctx, OBSESSED_TEST_SUBJECT, n)
 
 
 class _CantAttack(CardScript):
@@ -272,17 +240,7 @@ class _CostDownOnEarthRite(CardScript):
         E.add_cost(ctx.source, -1)
 
 
-def remove_abilities(inst) -> None:
-    """"Remove all abilities": keywords and granted abilities go; stat changes stay.
-    APPROX: the engine has no way to switch off a card's own printed abilities
-    (its script's hooks and properties), so Last Words, Strike, turn abilities,
-    damage caps etc. printed on the card still work."""
-    inst.keywords = Keyword.NONE
-    if inst.grants:
-        inst.grants = [Grant(until_turn=g.until_turn, atk=g.atk, life=g.life)
-                       for g in inst.grants if g.atk or g.life] or None
-    inst.max_attacks = prop(inst, "attacks_per_turn")
-    E.counters(inst)["abilities_removed"] = True
+remove_abilities = E.silence   # "remove all abilities"
 
 
 # --- generated cards -------------------------------------------------------------------
@@ -451,12 +409,15 @@ class SephieCrest(CardScript):
 class ObsessedTestSubject(CardScript):
     """When this follower enters the field, if at least 5 other allied Obsessed Test
     Subjects entered the field this match, give it +3/+3. Rush.
-    APPROX: "enters the field" is caught when it is played from hand (this hook) and
-    when this module summons it (summon_test_subjects); copies put onto the field by
-    other effects (summon from deck, exact copies) neither check nor count."""
+    The count is checked as it enters (official Q&A: of two summoned together after
+    four, the first stays 2/2 and the second gets +3/+3)."""
+    queue_checks = ("on_enter",)
 
-    def fanfare(self, ctx):
-        _test_subject_enters(ctx.state, ctx.source)
+    def queue_condition(self, hook, ctx):
+        return entered_test_subjects(ctx.state, ctx.controller) - 1 >= 5
+
+    def on_enter(self, ctx):
+        E.buff(ctx.state, ctx.source, 3, 3)
 
 
 @register(KEY_SPIRIT.card_id)
@@ -530,7 +491,7 @@ class EcstaticScholar(CardScript):
     Super-Evolve: if a card was fused to this card, select an allied Obsessed Test
     Subject and give it Drain."""
     fuse_filter = staticmethod(lambda c: True)
-    evolve_targets = (TargetSpec(Target.ALLIED_FOLLOWER, filter=_is(OBSESSED_TEST_SUBJECT)),)
+    super_evolve_targets = (TargetSpec(Target.ALLIED_FOLLOWER, filter=_is(OBSESSED_TEST_SUBJECT)),)
 
     def fanfare(self, ctx):
         E.draw(ctx.state, ctx.controller, 2)
@@ -1190,7 +1151,7 @@ class Unleashed(CardScript):
 @register(ELMOTT.card_id)
 class Elmott(CardScript):
     """Fanfare: select an enemy follower, remove all its abilities, and deal it 3 damage.
-    Super-Evolve: gain Crest: Elmott. (APPROX: see remove_abilities.)"""
+    Super-Evolve: gain Crest: Elmott."""
     play_targets = common.ENEMY_FOLLOWER
 
     def fanfare(self, ctx):
@@ -1221,7 +1182,7 @@ class Wamdus(CardScript):
     """On Spellboost: give this card +1/+1. Fanfare: spellboost your hand. Super-Evolve:
     Mode: 1. Give all other allied followers Barrier. 2. Deal X damage split between all
     enemy followers (X = this follower's attack)."""
-    evolve_modes = (2, 1)     # only used by the Super-Evolve ability
+    super_evolve_modes = (2, 1)
 
     def on_spellboost(self, ctx):
         E.buff(ctx.state, ctx.source, 1, 1)
@@ -1301,7 +1262,7 @@ class TruthSummons(CardScript):
 class RemiAndRami(CardScript):
     """Fanfare: Earth Rite (1): summon a Guardian Golem. Super-Evolve: select an allied
     Golem follower, evolve it, and give it +3/+3."""
-    evolve_targets = (TargetSpec(Target.ALLIED_FOLLOWER, filter=_is_golem),)
+    super_evolve_targets = (TargetSpec(Target.ALLIED_FOLLOWER, filter=_is_golem),)
 
     def fanfare(self, ctx):
         if E.earth_rite(ctx.state, ctx.controller, 1):

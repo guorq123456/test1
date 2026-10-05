@@ -147,7 +147,6 @@ KEYWORD_ONLY = [AXE_WIELDING_DRAGONSLAYER, JOEL, FIRE_DRAKE_WHELP, VASTWING_DRAG
                 MAJESTIC_MEGALORCA]
 
 MARINE = "Marine"
-NO_LAST_WORDS = "no_last_words"   # counters flag: this card's Last Words were removed
 
 
 def _drain_one(ctx):
@@ -528,11 +527,9 @@ class RipperClawedThief(CardScript):
             E.give_keywords(ctx.source, Keyword.STORM)
 
     def last_words(self, ctx):
-        if (ctx.source.counters or {}).get(NO_LAST_WORDS):
-            return
         thief = E.add_to_hand(ctx.state, ctx.controller, RIPPER_CLAWED_THIEF)
         if thief:
-            E.counters(thief)[NO_LAST_WORDS] = True
+            E.remove_last_words(thief)
 
 
 @register(CAVE_DRAGON.card_id)
@@ -619,9 +616,6 @@ class Artiglio(CardScript):
 class Antemaria(CardScript):
     """Fanfare: if an allied follower attacked a leader on your last turn, gain Storm.
     Rush. Ignores Ward."""
-    # APPROX: the engine has no "Ignores Ward" (engine._attack_actions always
-    # enforces Ward), so enemy Ward followers still restrict this follower's
-    # attacks. The flag below documents the property for when it is supported.
     ignores_ward = True
 
     def fanfare(self, ctx):
@@ -707,15 +701,10 @@ class EphemeralFoxfire(CardScript):
 
 
 def _other_drache_entries(ctx) -> int:
-    """Other allied Drache & Aluzards that entered the field this match."""
-    # APPROX: the engine keeps no per-name log of field entries, so this counts
-    # the allied copies destroyed this match plus the other copies on the field
-    # now. Copies that left the field by being banished, returned to hand or
-    # transformed are missed.
-    me, cid = ctx.me, DRACHE_AND_ALUZARD.card_id
-    destroyed = sum(d.card_id == cid for d in me.destroyed)
-    on_field = sum(c.defn.card_id == cid and c is not ctx.source for c in me.field)
-    return destroyed + on_field
+    """Other allied Drache & Aluzards that entered the field this match (this one
+    has already entered when its Fanfare resolves)."""
+    entered = ctx.me.entered.get(DRACHE_AND_ALUZARD.card_id, 0)
+    return max(0, entered - 1)
 
 
 @register(DRACHE_AND_ALUZARD.card_id)
@@ -930,16 +919,11 @@ class BeheadingEldBlades(CardScript):
 class SpringwellSteward(CardScript):
     """Evolve: select an enemy follower and deal it 5 damage. Super-Evolve: select 2
     enemy followers instead."""
-    # APPROX: the engine offers one target list for both kinds of evolution, so two
-    # picks are always offered. A normal evolve hits only the first pick; a
-    # super-evolve hits both (picking the same follower twice hits it once).
-    evolve_targets = (TargetSpec(Target.ENEMY_FOLLOWER), TargetSpec(Target.ENEMY_FOLLOWER))
+    evolve_targets = (TargetSpec(Target.ENEMY_FOLLOWER),)
+    super_evolve_targets = (TargetSpec(Target.ENEMY_FOLLOWER, 2),)
 
     def on_evolve(self, ctx):
-        uids = ctx.targets if ctx.super_ else ctx.targets[:1]
-        victims = [f for f in (ctx.state.on_field(uid) for uid in dict.fromkeys(uids))
-                   if f is not None]
-        E.damage(ctx.state, victims, 5, ctx.source)
+        E.damage(ctx.state, ctx.chosen(), 5, ctx.source)
 
 
 @register(STORMY_SHAMISEN_SHREDDER.card_id)

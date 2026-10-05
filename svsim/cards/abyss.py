@@ -9,11 +9,10 @@ from svsim.cards import common
 from svsim.cards.pool import card
 from svsim.core import effects as E
 from svsim.core.enums import Craft, Keyword
-from svsim.core.script import CardScript, Target, TargetSpec, register, script_for, scripts_of
+from svsim.core.script import CardScript, Target, TargetSpec, register
 from svsim.core.state import leader_of
 
 DEPARTED = E.DEPARTED
-NO_LAST_WORDS = "no_last_words"      # counters flag: "remove Last Words from it"
 
 SUZY_HAND_FOLLOWER = (TargetSpec(Target.HAND_CARD, filter=lambda s, p, c: c.defn.is_follower),)
 TWO_ALLIED_FOLLOWERS = (TargetSpec(Target.ALLIED_FOLLOWER, 2),)
@@ -47,7 +46,7 @@ ISTYNDET_VS_MITILYKKET = card(10954110)  # 伊斯坦戴德 对 玛尔奇盖特
 GARODETH_VS_ZETH = card(10954120)  # 伽罗塔德 对 泽特
 
 # --- set 10008 ---
-ANISAGE = card(10851110)  # 通透的信念·安瑟珠 (BLOCKED: "Ignores Ward")
+ANISAGE = card(10851110)  # 通透的信念·安瑟珠
 LILITH_DEVILISH_CUTIE = card(10851120)  # 可爱恶魔·莉莉姆
 LIMIL = card(10851130)  # 兔耳恶魔·莉蜜儿
 FIOLE = card(10852110)  # 母爱恶魔·菲欧蕾
@@ -120,7 +119,7 @@ LEADER_AREA = [ISTYNDET_CREST, RIGOR_CREST, MILTEO_CREST, VALIANT_EDGE_CREST, CO
                BELIAL_CREST]
 ALTERNATE_FORMS = [VOID_COLONEL_CRYSTALLIZE]
 KEYWORD_ONLY = [MISTRESS_OF_THE_FANGED, SKELETON, BAT]   # no script needed
-BLOCKED = [ANISAGE]                                       # needs an engine feature (see report)
+BLOCKED: list = []
 
 
 # --- helpers -----------------------------------------------------------------------------
@@ -167,21 +166,8 @@ def is_departed(inst) -> bool:
     return inst.defn.is_follower and E.has_trait(inst, DEPARTED)
 
 
-def remove_last_words(inst) -> None:
-    """"Remove Last Words from it": the card's own Last Words (scripts in this
-    module check the flag); Last Words granted later still work."""
-    E.counters(inst)[NO_LAST_WORDS] = True
-
-
-def has_last_words(inst) -> bool:
-    base = script_for(inst.defn.card_id)
-    for s in scripts_of(inst):
-        if s.last_words is None:
-            continue
-        if s is base and (inst.counters or {}).get(NO_LAST_WORDS):
-            continue
-        return True
-    return False
+remove_last_words = E.remove_last_words
+has_last_words = E.has_last_words
 
 
 def in_hand(ctx) -> bool:
@@ -227,8 +213,6 @@ class RottingZombie(CardScript):
     """Last Words: summon a Rotting Zombie and remove Last Words from it."""
 
     def last_words(self, ctx):
-        if E.counters(ctx.source).get(NO_LAST_WORDS):
-            return
         zombie = E.summon(ctx.state, ctx.controller, ROTTING_ZOMBIE)
         if zombie:
             remove_last_words(zombie)
@@ -280,9 +264,7 @@ class RigorCrest(CardScript):
 class MilteoCrest(CardScript):
     """Allied followers' Fanfare and Enhance abilities don't activate. Whenever you
     play a follower, evolve it."""
-    # APPROX: the engine has no way to suppress a played card's Fanfare or Enhance
-    # (both are queued / paid before any listener runs), so they still activate and
-    # an affordable Enhance cost is still paid. Only the evolution is implemented.
+    suppresses_fanfare = True
 
     def on_play(self, ctx):
         played = ctx.other
@@ -340,8 +322,6 @@ class NetherworldLieutenant(CardScript):
     Last Words from it."""
 
     def last_words(self, ctx):
-        if E.counters(ctx.source).get(NO_LAST_WORDS):
-            return
         lieutenant = E.summon(ctx.state, ctx.controller, NETHERWORLD_LIEUTENANT)
         if lieutenant:
             E.buff(ctx.state, lieutenant, 1, 0)
@@ -454,8 +434,11 @@ class GarodethVsZeth(CardScript):
 
 
 # --- set 10008 ---------------------------------------------------------------------------
-# Anisage, Clear Resolve (Storm, "Ignores Ward") is BLOCKED: the engine's attack
-# targeting has no "ignores Ward" property, so it stays unscripted.
+@register(ANISAGE.card_id)
+class Anisage(CardScript):
+    """Storm. Ignores Ward."""
+    ignores_ward = True
+
 
 @register(LILITH_DEVILISH_CUTIE.card_id)
 class LilithDevilishCutie(CardScript):
@@ -681,8 +664,7 @@ class BeastmasterBones(CardScript):
     """Fanfare: summon a Rotting Zombie and a Skeleton. Whenever an allied Departed
     follower enters the field, give it Storm. Super-Evolve: select another allied
     follower; if you did, destroy it and a random enemy follower."""
-    # The selection is offered for normal evolutions too, where it does nothing.
-    evolve_targets = common.OTHER_ALLIED_FOLLOWER
+    super_evolve_targets = common.OTHER_ALLIED_FOLLOWER
 
     def fanfare(self, ctx):
         E.summon(ctx.state, ctx.controller, ROTTING_ZOMBIE)

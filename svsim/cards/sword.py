@@ -158,9 +158,7 @@ class UnkeiCrest(CardScript):
     """Countdown (4). At the end of your turn, add a Glittering Gold to your hand."""
 
     def on_turn_end(self, ctx):
-        gold = E.add_to_hand(ctx.state, ctx.controller, GLITTERING_GOLD)
-        if gold:     # remembered for Amphibian Goldmuncher's end-of-turn spell count (Q&A)
-            E.counters(ctx.source)["gold"] = (ctx.state.turn, gold.uid)
+        E.add_to_hand(ctx.state, ctx.controller, GLITTERING_GOLD)
 
 
 # --- deck cards --------------------------------------------------------------------
@@ -798,7 +796,7 @@ class Gildaria(CardScript):
 @register(CESAR.card_id)
 class Cesar(CardScript):
     """Fanfare: 2 Steelclads; other Swordcraft allies +1/+3, Ward. Super-Evolve: destroy an enemy."""
-    evolve_targets = common.ENEMY_FOLLOWER    # used by the Super-Evolve only
+    super_evolve_targets = common.ENEMY_FOLLOWER
 
     def fanfare(self, ctx):
         _summon(ctx, STEELCLAD_KNIGHT, 2)
@@ -972,27 +970,17 @@ class SwiftStaffmaster(CardScript):
         E.heal_leader(ctx.state, ctx.controller, 3)
 
 
-def _spells_in_hand_at_turn_end(ctx) -> int:
-    """Spells in hand for an end-of-turn condition, not counting the Glittering Gold
-    that Crest: Unkei added earlier in the same end of turn (official Q&A)."""
-    skip = None
-    crest = E.leader_area_card(ctx.state, ctx.controller, UNKEI_CREST)
-    if crest is not None and crest.counters:
-        mark = crest.counters.get("gold")
-        if mark and mark[0] == ctx.state.turn:
-            skip = mark[1]
-    return sum(c.defn.is_spell and c.uid != skip for c in ctx.me.hand)
-
-
 @register(AMPHIBIAN_GOLDMUNCHER.card_id)
 class AmphibianGoldmuncher(CardScript):
     """Your turn end: with 2+ spells in hand, 5 damage to all enemy followers. Evolve: add 2 Golds."""
+    queue_checks = ("on_turn_end",)
+
+    def queue_condition(self, hook, ctx):
+        # Checked as the turn ends: a Gold that Crest: Unkei adds then doesn't count (Q&A).
+        return sum(c.defn.is_spell for c in ctx.me.hand) >= 2
 
     def on_turn_end(self, ctx):
-        # APPROX: the condition is checked when this resolves; cards added to the hand
-        # earlier in the same end of turn still count, except Crest: Unkei's Gold (Q&A).
-        if _spells_in_hand_at_turn_end(ctx) >= 2:
-            _hit_all_enemies(ctx, 5)
+        _hit_all_enemies(ctx, 5)
 
     def on_evolve(self, ctx):
         _add(ctx, GLITTERING_GOLD, 2)

@@ -231,8 +231,7 @@ class Azvaldt(CardScript):
 
     def on_turn_end(self, ctx):
         # Official Q&A with Zerael: Azvaldt is destroyed, then Zerael is invoked, then this
-        # Last Words resolves. APPROX: the engine checks end-of-turn Invokes before turn-end
-        # abilities resolve, so on a full field (Azvaldt + 4 followers) Zerael isn't invoked.
+        # Last Words resolves (the engine checks end-of-turn Invokes in between).
         if _played_one_to_eight(ctx.me):
             E.destroy(ctx.state, ctx.source)
 
@@ -613,27 +612,19 @@ class WorldOfGames(CardScript):
     other than it with the same base cost, advance this amulet's count by 1.
     Last Words: draw 2 cards."""
 
-    def on_play(self, ctx):
-        played = ctx.other
-        cost = _played_base_cost(played, ctx.as_spell)
-        # The condition is checked as the card is played (official Q&A: a Divine Thunder
-        # that destroys the only 4-cost follower still advances the count), but this
-        # trigger resolves after the card's own effect. Cards destroyed since the play
-        # are recovered from this amulet's pending on_card_destroyed triggers, and cards
-        # that entered since a follower was played are ignored.
-        # APPROX: a card banished, transformed or returned to hand by the played card's own
-        # effect no longer counts, and cards summoned by a played spell do count.
-        gone = [t.ctx.other for t in ctx.state.queue
-                if t.hook == "on_card_destroyed" and t.ctx.source is ctx.source]
-        newer = None if ctx.as_spell else played.order
-        on_field = [c for c in ctx.state.field_order() if newer is None or c.order <= newer]
+    queue_checks = ("on_play",)
+
+    def queue_condition(self, hook, ctx):
+        # Checked as the card is played, before its own effect (official Q&A: a Divine
+        # Thunder that destroys the only 4-cost follower still advances the count).
         # UNSURE: does this amulet itself count as "a card on the field other than it"
         # (so playing any 1-base-cost card advances it)? Implemented: yes.
-        if any(c is not played and c.defn.cost == cost for c in on_field + gone):
-            E.advance_countdown(ctx.state, ctx.source, 1)
+        played = ctx.other
+        cost = _played_base_cost(played, ctx.as_spell)
+        return any(c is not played and c.defn.cost == cost for c in ctx.state.field_order())
 
-    def on_card_destroyed(self, ctx):
-        """Bookkeeping only: on_play reads these pending triggers (see above)."""
+    def on_play(self, ctx):
+        E.advance_countdown(ctx.state, ctx.source, 1)
 
     def last_words(self, ctx):
         E.draw(ctx.state, ctx.controller, 2)

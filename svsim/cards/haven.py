@@ -3,13 +3,12 @@
 Card stats come from the pool table (svsim/cards/pool.py); this module holds
 the abilities. Comments give the official Simplified Chinese names.
 """
-import dataclasses
 
 from svsim.cards import common
 from svsim.cards.pool import card
 from svsim.core import effects as E
 from svsim.core.enums import Craft, Keyword
-from svsim.core.script import CardScript, Grant, Target, TargetSpec, register, script_for
+from svsim.core.script import CardScript, Target, TargetSpec, register, script_for
 
 ENEMY = common.ENEMY_FOLLOWER
 HAND = common.HAND_CARD
@@ -194,14 +193,14 @@ def _evolve_self(ctx) -> None:
         E.evolve(ctx.state, ctx.source)
 
 
-def _evolved_when_turn_end_triggered(ctx) -> bool:
-    """For "At the end of your turn, if this follower is evolved": a follower evolved
-    by an earlier end-of-turn ability (e.g. Galleon's) doesn't count (official Q&A on
-    Lamretta). Such an evolution's "when this follower evolves" trigger (a no-op
-    on_evolved on the card) is still waiting in the queue behind this one."""
-    src = ctx.source
-    return src.evolved and not any(t.hook == "on_evolved" and t.ctx.source is src
-                                   for t in ctx.state.queue)
+class _IfEvolvedAtTurnEnd(CardScript):
+    """"At the end of your turn, if this follower is evolved": checked when the
+    ability triggers, so an evolution by an earlier end-of-turn ability (e.g.
+    Galleon's) doesn't count (official Q&A on Lamretta)."""
+    queue_checks = ("on_turn_end",)
+
+    def queue_condition(self, hook, ctx):
+        return ctx.source.evolved
 
 
 def _destroyed_last_words_amulets(player_state) -> list:
@@ -211,22 +210,7 @@ def _destroyed_last_words_amulets(player_state) -> list:
             if d.cost <= 2 and script_for(d.card_id).last_words is not None]
 
 
-def remove_all_abilities(inst) -> None:
-    """Remove all abilities from a follower: keywords, granted abilities and its
-    printed abilities. Stat changes stay.
-    APPROX: printed abilities are removed by swapping in a copy of its CardDef with
-    a negated card_id (so no script). If the card later leaves the field, that
-    copy is what reaches the cemetery list or the hand, still without abilities,
-    and card_id-based checks no longer recognise it (name-based ones do)."""
-    if inst.defn.card_id > 0:
-        inst.defn = dataclasses.replace(inst.defn, card_id=-inst.defn.card_id,
-                                        keywords=Keyword.NONE, text="")
-    inst.keywords = Keyword.NONE
-    if inst.grants:
-        kept = [Grant(until_turn=g.until_turn, atk=g.atk, life=g.life)
-                for g in inst.grants if g.atk or g.life]
-        inst.grants = kept or None
-    inst.max_attacks = 1
+remove_all_abilities = E.silence   # "remove all abilities"
 
 
 class _CantAttack(CardScript):
@@ -362,10 +346,7 @@ class CowardCrystallize(CardScript):
     """Crystallize (2): Countdown (3). Last Words: summon a Prostrating Coward."""
 
     def last_words(self, ctx):
-        coward = E.summon(ctx.state, ctx.controller, PROSTRATING_COWARD)
-        if coward is not None:
-            # Its "when this follower enters the field" ability (scripted as its fanfare).
-            E.enqueue(ctx.state, "fanfare", coward, ctx.controller)
+        E.summon(ctx.state, ctx.controller, PROSTRATING_COWARD)
 
 
 @register(DYER_CRYSTALLIZE.card_id)
@@ -561,16 +542,12 @@ class GrantHunterOfUndeath(CardScript):
 class Edeth(CardScript):
     """Ward, Aura. Last Words: summon an Edeth without Last Words.
     Super-Evolve: select an enemy follower and destroy it."""
-    evolve_targets = ENEMY
+    super_evolve_targets = ENEMY
 
     def last_words(self, ctx):
-        # APPROX: a removed Last Words is a counter flag, so the card still counts as
-        # having Last Words for other cards' checks.
-        if (ctx.source.counters or {}).get("no_last_words"):
-            return
         twin = E.summon(ctx.state, ctx.controller, EDETH)
         if twin is not None:
-            E.counters(twin)["no_last_words"] = True
+            E.remove_last_words(twin)
 
     def on_super_evolve(self, ctx):
         _destroy_chosen(ctx)
@@ -816,7 +793,7 @@ class Initia(_BanishAndMaybeHeal):
     """Fanfare: select an enemy follower and banish it; if there are at least 3
     allied amulets, restore 3 defense to your leader. Ward, Aura.
     Super-Evolve: replicate the Fanfare."""
-    evolve_targets = ENEMY
+    super_evolve_targets = ENEMY
 
     def on_super_evolve(self, ctx):
         self._banish(ctx)
@@ -828,10 +805,7 @@ class Initia(_BanishAndMaybeHeal):
 class ProstratingCoward(CardScript):
     """When this follower enters the field, restore 2 defense to your leader. Bane, Ward."""
 
-    # APPROX: there is no "enters the field" hook, so this is the fanfare (played from
-    # hand) and the Crystallize form's Last Words queues it for the summoned Coward;
-    # Cowards summoned or copied by other cards' effects don't restore defense.
-    def fanfare(self, ctx):
+    def on_enter(self, ctx):
         _heal(ctx, 2)
 
 
@@ -919,7 +893,7 @@ class Kandima(CardScript):
     Last Words and a base cost of 2 or less destroyed this match. Super-Evolve:
     select another card on the field and destroy it; if it was an allied amulet,
     deal 3 damage to all enemy followers."""
-    evolve_targets = ANOTHER_CARD
+    super_evolve_targets = ANOTHER_CARD
 
     def fanfare(self, ctx):
         eligible = _destroyed_last_words_amulets(ctx.me)
@@ -1067,7 +1041,7 @@ class ResolveOfTheMistbloom(CardScript):
 
 
 @register(SOFINA.card_id)
-class Sofina(CardScript):
+class Sofina(_IfEvolvedAtTurnEnd):
     """Fanfare: Mode: 1. Evolve this follower. 2. Evolve another random unevolved
     allied follower with Ward and give it +1/+1. Ward. At the end of your turn, if
     this follower is evolved, give all other followers -1/-1."""
@@ -1086,14 +1060,9 @@ class Sofina(CardScript):
     def on_turn_end(self, ctx):
         # UNSURE: like Lamretta (official Q&A), an evolution by an earlier end-of-turn
         # ability is taken not to count.
-        if _evolved_when_turn_end_triggered(ctx):
-            others = [f for f in ctx.state.field_order()
-                      if f.defn.is_follower and f is not ctx.source]
-            for f in others:
-                E.buff(ctx.state, f, -1, -1)
-
-    def on_evolved(self, ctx):
-        """No effect: lets the end-of-turn check see a pending evolution."""
+        others = [f for f in ctx.state.field_order() if f.defn.is_follower and f is not ctx.source]
+        for f in others:
+            E.buff(ctx.state, f, -1, -1)
 
 
 @register(KUKISHIRO.card_id)
@@ -1188,22 +1157,18 @@ class Troue(CardScript):
 
 
 @register(LAMRETTA.card_id)
-class Lamretta(CardScript):
+class Lamretta(_IfEvolvedAtTurnEnd):
     """At the end of your turn, if this follower is evolved, deal 2 damage to all
     followers (not if it was evolved by an earlier end-of-turn ability, such as
     Galleon's: official Q&A). Evolve: give this follower "Can't attack followers or
     leaders" until the end of the turn."""
 
     def on_turn_end(self, ctx):
-        if _evolved_when_turn_end_triggered(ctx):
-            everyone = [f for f in ctx.state.field_order() if f.defn.is_follower]
-            E.damage(ctx.state, everyone, 2, ctx.source)
+        everyone = [f for f in ctx.state.field_order() if f.defn.is_follower]
+        E.damage(ctx.state, everyone, 2, ctx.source)
 
     def on_evolve(self, ctx):
         E.grant(ctx.source, CANT_ATTACK, until_turn=common.end_of_turn(ctx))
-
-    def on_evolved(self, ctx):
-        """No effect: lets the end-of-turn check see a pending evolution."""
 
 
 @register(AWED_AND_INSPIRED.card_id)

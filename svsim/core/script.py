@@ -98,6 +98,7 @@ class CardScript:
     enhance: tuple[int, ...] = ()        # Enhance costs; the highest affordable one is paid
     modes: tuple[int, int] | None = None  # (number of options, how many to pick)
     evolve_modes: tuple[int, int] | None = None   # for "Evolve: replicate this card's Fanfare"
+    super_evolve_modes: tuple[int, int] | None = None   # None = same as evolve_modes
     engage_modes: tuple[int, int] | None = None
     modes_all_when_enhanced: bool = False          # "Enhance (N): Activate all of them instead"
 

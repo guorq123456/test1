@@ -152,6 +152,20 @@ def test_milteo_crest_evolves_played_followers():
     assert fiend.evolved and (fiend.atk, fiend.life) == (6, 5)
 
 
+def test_milteo_crest_switches_off_fanfare_and_enhance():
+    # Official Q&A (Mino, Shrewd Reaper): the Enhance doesn't activate, so only the cost is paid.
+    state = start()
+    E.add_to_leader_area(state, 0, abyss.MILTEO_CREST)
+    set_pp(state, 0, 6)
+    mage = give(state, 0, demo.MAGE)                    # Enhance (6): +3/+3
+    play(state, mage)
+    assert state.players[0].pp == 3 and mage.evolved and (mage.atk, mage.life) == (4, 4)
+    enemy = put(state, 1, demo.SHIELDBEARER)
+    archer = give(state, 0, demo.ARCHER)                # Fanfare: 1 damage
+    play(state, archer, targets=[enemy.uid])
+    assert enemy.life == 3
+
+
 def test_milteo_crest_ignores_amulets_played_by_crystallize():
     state = start()
     E.add_to_leader_area(state, 0, abyss.MILTEO_CREST)
@@ -381,8 +395,14 @@ def test_garodeth_modes():
 
 # --- set 10008 ------------------------------------------------------------------------------
 
-def test_anisage_is_blocked_and_unscripted():
-    assert not has_script(abyss.ANISAGE.card_id) and abyss.ANISAGE in abyss.BLOCKED
+def test_anisage_ignores_ward():
+    state = start()
+    set_pp(state, 0, 4)
+    anisage = give(state, 0, abyss.ANISAGE)
+    play(state, anisage)
+    put(state, 1, demo.SHIELDBEARER)
+    apply(state, Attack(anisage.uid, leader_uid(1)))
+    assert hp(state)[1] == 20 - anisage.atk
 
 
 def test_lilith_devilish_cutie_strike_and_last_words():

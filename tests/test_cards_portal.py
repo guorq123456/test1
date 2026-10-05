@@ -35,7 +35,11 @@ def highlander(state, player=0, extra=()):
 
 
 def artifacts_destroyed(state, player, *defns):
-    state.players[player].destroyed += list(defns)
+    """These followers entered the field earlier this match and were destroyed."""
+    p = state.players[player]
+    p.destroyed += list(defns)
+    for d in defns:
+        p.entered[d.card_id] = p.entered.get(d.card_id, 0) + 1
 
 
 THREE_ARTIFACTS = (P.ANCIENT_ARTIFACT, P.MYSTIC_ARTIFACT, P.RADIANT_ARTIFACT)
@@ -612,19 +616,16 @@ def test_freerunning_modes():
 
 
 def test_artifacts_that_left_the_field_still_count():
-    """Cards that ask note entering Artifacts from hand and deck, so banished ones count."""
+    """Artifacts that entered and then left the field without being destroyed count."""
     state = start()
     p = state.players[0]
     spell, = hand_only(state, 0, P.FREERUNNING)
-    reader = state.new_instance(P.WARP_SLASH, 0)
-    p.deck.append(reader)
     for defn in THREE_ARTIFACTS + (P.ANCIENT_ARTIFACT,):
         artifact = put(state, 0, defn)
         resolve_queue(state)
         E.banish(state, artifact)
     assert p.field == [] and p.destroyed == []
     assert P.artifacts_entered(state, 0) == 3
-    assert len(reader.counters[P.SEEN_ARTIFACTS]) == 3
     set_pp(state, 0, 1)
     assert [a.modes for a in plays(state, spell.uid)] == [(0, 1)]
     assert P.artifacts_entered(state, 1) == 0
@@ -1172,6 +1173,27 @@ def test_beelzebub_removes_abilities_and_deals_nine():
     play(state, beelzebub, (angel.uid, giant.uid))
     assert angel.fate == DESTROYED
     assert giant.life == 3 and giant.keywords == Keyword.NONE
+    assert state.players[1].extra_damage == 1
+
+
+def test_beelzebub_takes_more_damage_stacks():
+    # Official Q&A: copies stack, and a super-evolved follower's knockback deals 1 + 1.
+    state = start()
+    for _ in range(2):
+        beelzebub, = hand_only(state, 0, P.BEELZEBUB)
+        set_pp(state, 0, 9)
+        play(state, beelzebub, ())
+    assert state.players[1].extra_damage == 2
+    E.damage(state, [leader_uid(1)], 1)
+    assert state.players[1].leader_hp == 17
+    state = start()
+    state.players[1].extra_damage = 1
+    unlock_evolution(state, 0)
+    attacker = put(state, 0, demo.GIANT)
+    apply(state, Evolve(attacker.uid, super_=True))
+    victim = put(state, 1, demo.FOOTMAN)
+    apply(state, Attack(attacker.uid, victim.uid))
+    assert victim.fate == DESTROYED and state.players[1].leader_hp == 18
 
 
 # --- random games ----------------------------------------------------------------------------

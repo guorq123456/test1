@@ -147,12 +147,6 @@ def _combo_on_play(n: int, met: bool = True):
     return lambda state, player, c: (state.players[player].combo + 1 >= n) == met
 
 
-def _super_evolve_possible(state, player, c) -> bool:
-    """Target filter for Super-Evolve-only selections: skip them when super-evolving
-    isn't possible (they still show up on plain evolutions, unused)."""
-    return state.players[player].sep > 0 and E.super_evolution_unlocked(state, player)
-
-
 def _add(ctx, defn, n: int = 1) -> list:
     added = [E.add_to_hand(ctx.state, ctx.controller, defn) for _ in range(n)]
     return [c for c in added if c is not None]
@@ -753,7 +747,7 @@ class NurturingEldLance(CardScript):
 class Althenia(CardScript):
     """Fanfare: summon 3 Springbloom Fairies. Attacks twice a turn. Super-Evolve: destroy an enemy."""
     attacks_per_turn = 2
-    evolve_targets = (TargetSpec(Target.ENEMY_FOLLOWER, filter=_super_evolve_possible),)
+    super_evolve_targets = (TargetSpec(Target.ENEMY_FOLLOWER),)
 
     def fanfare(self, ctx):
         _summon(ctx, SPRINGBLOOM_FAIRY, 3)
@@ -1079,7 +1073,7 @@ class May(CardScript):
 @register(SELWYN.card_id)
 class Selwyn(CardScript):
     """Storm. Super-Evolve: return an enemy follower to its owner's hand."""
-    evolve_targets = (TargetSpec(Target.ENEMY_FOLLOWER, filter=_super_evolve_possible),)
+    super_evolve_targets = (TargetSpec(Target.ENEMY_FOLLOWER),)
 
     def on_super_evolve(self, ctx):
         for target in ctx.chosen():

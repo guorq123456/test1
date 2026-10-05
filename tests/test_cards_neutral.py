@@ -193,6 +193,19 @@ def test_azvaldt_last_words_buffs_the_invoked_zerael():
     assert count(p.field, demo.FOOTMAN) == 1
 
 
+def test_zerael_is_invoked_into_the_space_azvaldt_leaves():
+    state = fresh()
+    p = state.players[0]
+    put(state, 0, neutral.AZVALDT)
+    for _ in range(4):
+        put(state, 0, demo.FOOTMAN)
+    zerael = state.new_instance(neutral.ZERAEL, 0)
+    p.deck.insert(0, zerael)
+    p.played_base_costs = set(range(1, 9))
+    apply(state, EndTurn())
+    assert zerael in p.field
+
+
 # --- set 10008 ------------------------------------------------------------------------------
 
 def test_hamsa_evolve():

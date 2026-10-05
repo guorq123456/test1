@@ -57,7 +57,7 @@ def test_ripper_clawed_thief_storm_and_last_words():
     E.destroy(state, thief)
     resolve_queue(state)
     copy = p.hand[-1]
-    assert copy.defn == dragon.RIPPER_CLAWED_THIEF and copy.counters[dragon.NO_LAST_WORDS]
+    assert copy.defn == dragon.RIPPER_CLAWED_THIEF and not E.has_last_words(copy)
     set_pp(state, 0, 1)
     apply(state, PlayCard(copy.uid))
     E.destroy(state, copy)                     # the copy has no Last Words
@@ -261,6 +261,14 @@ def test_drache_and_aluzard_counts_other_copies():
     # X = 2 (one destroyed, one on the field): +2/+2, then evolved
     assert third.evolved and (third.atk, third.life) == (8, 8)
     assert count(p.leader_area, dragon.DRACHE_AND_ALUZARD_CREST) == 1
+
+
+def test_drache_and_aluzard_counts_copies_that_left_without_dying():
+    state = start()
+    first = play(state, dragon.DRACHE_AND_ALUZARD, pp=4)
+    E.return_to_hand(state, first)                       # entered once, not destroyed
+    second = play(state, dragon.DRACHE_AND_ALUZARD, pp=4)
+    assert (second.atk, second.life) == (5, 5)
 
 
 def test_drache_and_aluzard_crest_returns_a_cheap_copy():
@@ -511,7 +519,7 @@ def test_springwell_steward_evolve_and_super_evolve():
         unlock_evolution(state, 0)
         a, b = put(state, 1, demo.GIANT), put(state, 1, demo.GIANT)
         steward = put(state, 0, dragon.SPRINGWELL_STEWARD)
-        apply(state, Evolve(steward.uid, super_, (a.uid, b.uid)))
+        apply(state, Evolve(steward.uid, super_, (a.uid, b.uid) if super_ else (a.uid,)))
         assert a.fate == DESTROYED and sum(g.fate == DESTROYED for g in (a, b)) == destroyed
 
 
@@ -520,8 +528,9 @@ def test_springwell_steward_with_one_enemy():
     unlock_evolution(state, 0)
     giant = put(state, 1, demo.GIANT)
     steward = put(state, 0, dragon.SPRINGWELL_STEWARD)
-    assert {a.targets for a in evolves_of(state, steward.uid)} == {(giant.uid, giant.uid)}
-    apply(state, Evolve(steward.uid, True, (giant.uid, giant.uid)))
+    assert {(a.super_, a.targets) for a in evolves_of(state, steward.uid)} == {
+        (False, (giant.uid,)), (True, (giant.uid,))}
+    apply(state, Evolve(steward.uid, True, (giant.uid,)))
     assert giant.fate == DESTROYED
 
 

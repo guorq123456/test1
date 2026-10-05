@@ -232,13 +232,15 @@ def _evolve_actions(state: GameState, p: PlayerState) -> list[Action]:
         if f.evolved:
             continue
         script = script_for(f.defn.card_id)
-        mode_sets = _mode_sets(script.evolve_modes, False)
         for super_ in (False, True):
             if not (can_super if super_ else can_evolve):
                 continue
-            specs = script.evolve_targets
+            specs, modes = script.evolve_targets, script.evolve_modes
             if super_ and script.super_evolve_targets is not None:
                 specs = script.super_evolve_targets
+            if super_ and script.super_evolve_modes is not None:
+                modes = script.super_evolve_modes
+            mode_sets = _mode_sets(modes, False)
             for targets in _target_sets(state, p.index, specs, required=False, source=f.uid):
                 actions += [Evolve(f.uid, super_, targets, modes) for modes in mode_sets]
     return actions

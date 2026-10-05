@@ -966,6 +966,25 @@ def test_unleashed_modes():
     assert sum(5 - g.life for g in giants) == 4 + 2 * 4             # two different giants hit
 
 
+def test_elmott_removes_printed_last_words():
+    state = start(first=0)
+    bomber = put(state, 1, demo.BOMBER)                     # Last Words: 2 damage to my leader
+    E.buff(state, bomber, 0, 3)
+    set_pp(state, 0, 3)
+    apply(state, PlayCard(give(state, 0, rune.ELMOTT).uid, (bomber.uid,)))
+    E.destroy(state, bomber)
+    resolve_queue(state)
+    assert bomber.fate == DESTROYED and state.players[0].leader_hp == 20
+
+
+def test_obsessed_test_subject_counts_however_it_enters():
+    state = start()
+    state.players[0].entered[OTS.card_id] = 5
+    ots = E.summon(state, 0, OTS)                           # any summon, not just Rune's
+    resolve_queue(state)
+    assert (ots.atk, ots.life) == (5, 5) and rune.entered_test_subjects(state, 0) == 6
+
+
 def test_elmott_removes_abilities_and_crest():
     state = start(first=0)
     giant = put(state, 1, demo.GIANT)
@@ -1131,8 +1150,9 @@ def test_remi_and_rami():
     (golem,) = on_field(state, 0, rune.GUARDIAN_GOLEM)
     put(state, 0, demo.FOOTMAN)
     unlock_evolution(state, 0)
-    targets = {a.targets for a in legal_actions(state) if isinstance(a, Evolve) and a.uid == remi.uid}
-    assert targets == {(golem.uid,)}
+    options = {(a.super_, a.targets) for a in legal_actions(state)
+               if isinstance(a, Evolve) and a.uid == remi.uid}
+    assert options == {(False, ()), (True, (golem.uid,))}      # only the Super-Evolve selects
     apply(state, Evolve(remi.uid, True, (golem.uid,)))
     assert golem.evolved and (golem.atk, golem.life) == (8, 8)
 

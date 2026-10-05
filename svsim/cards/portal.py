@@ -2,29 +2,15 @@
 
 Card stats come from the pool table (svsim/cards/pool.py); this module holds
 the abilities. Comments give the official Simplified Chinese names.
-
-Two Portalcraft mechanics are built here from existing hooks:
-
-* "When this card enters the field" (Analyzing Artifact): a Fanfare covers
-  playing it, and the module's summon helpers queue it for summons.
-* "N differently named allied Artifact followers have entered the field this
-  match": the engine keeps no such history, so the cards that ask listen for
-  allied followers entering from the field, hand and deck and note Artifact
-  names in their counters. The count is the union of those notes, the allied
-  Artifact followers on the field and the ones destroyed this match.
 """
-from itertools import chain
-
 from svsim.cards import common
-from svsim.cards.pool import card
+from svsim.cards.pool import POOL, card
 from svsim.core import effects as E
 from svsim.core.enums import Craft, Keyword
-from svsim.core.script import CardScript, Target, TargetSpec, prop, register, script_for
-from svsim.core.state import FIELD_LIMIT
+from svsim.core.script import CardScript, Target, TargetSpec, prop, register
 
 ARTIFACT = "Artifact"
 PUPPETRY = "Puppetry"
-ALL_KEYWORDS = Keyword(sum(k for k in Keyword))
 
 # --- tokens ---
 PUPPET = card(90071110)  # 悬丝傀儡
@@ -187,31 +173,8 @@ def on_field(ctx) -> bool:
     return ctx.state.in_play(ctx.source.uid) is ctx.source
 
 
-def enter(state, inst):
-    """Put a new card on the field (if there's room), resolving "when this card
-    enters the field" before other cards react to a follower entering."""
-    if not E.enter_field(state, inst, notify=False):
-        return None
-    script = script_for(inst.defn.card_id)
-    if getattr(script, "when_enters", None) is not None:
-        E.enqueue(state, "when_enters", inst, inst.owner, script=script)
-    if inst.defn.is_follower:
-        E.notify_entered(state, inst)
-    return inst
-
-
-def summon(state, player: int, defn):
-    """effects.summon, plus "when this card enters the field"."""
-    if len(state.players[player].field) >= FIELD_LIMIT:
-        return None
-    return enter(state, state.new_instance(defn, player))
-
-
-def summon_copy(state, player: int, inst):
-    """effects.summon_copy, plus "when this card enters the field"."""
-    if len(state.players[player].field) >= FIELD_LIMIT:
-        return None
-    return enter(state, E.exact_copy(state, inst, player))
+summon = E.summon
+summon_copy = E.summon_copy
 
 
 def damage_random_enemy_followers(ctx, amount: int, times: int) -> None:
@@ -247,58 +210,21 @@ def lower_attack_until(state, inst, n: int, until_turn: int) -> None:
     E.buff(state, inst, -min(n, inst.atk), 0, until_turn=until_turn)
 
 
-def remove_all_abilities(inst) -> None:
-    """Remove keywords and granted abilities.
-    APPROX: the engine can't switch off a card's own scripted abilities (Last Words,
-    turn hooks, damage caps ...); they still work."""
-    E.remove_keywords(inst, ALL_KEYWORDS)
-    if inst.grants:
-        inst.grants = [g for g in inst.grants if g.script is None and not g.keywords] or None
-        inst.max_attacks = prop(inst, "attacks_per_turn")
-    E.counters(inst)["abilities_removed"] = True
+remove_all_abilities = E.silence
 
 
-# "Allied Artifact followers that have entered the field this match": see the module docstring.
-SEEN_ARTIFACTS = "artifacts_seen"
-
-
-def note_artifact(ctx) -> None:
-    """on_ally_enter: remember the entering follower's name if it's an Artifact."""
-    other = ctx.other
-    if other is not None and is_artifact_follower(other):
-        tag = f"{ctx.controller}:{other.defn.name}"
-        seen = E.counters(ctx.source).setdefault(SEEN_ARTIFACTS, [])
-        if tag not in seen:
-            seen.append(tag)
-
-
-def artifacts_entered(state, player: int, *extra) -> int:
-    """Differently named allied Artifact followers that entered the field this match.
-    APPROX: one that left the field without being destroyed (banished, returned,
-    transformed) is only counted if a card that asks noted it."""
-    p = state.players[player]
-    names = {d.name for d in p.destroyed if d.is_follower and ARTIFACT in d.traits}
-    names.update(c.defn.name for c in p.followers if E.has_trait(c, ARTIFACT))
-    prefix = f"{player}:"
-    for c in chain(p.hand, p.deck, p.field, p.leader_area, extra):
-        for tag in (c.counters or {}).get(SEEN_ARTIFACTS, ()):
-            if tag.startswith(prefix):
-                names.add(tag[len(prefix):])
+def artifacts_entered(state, player: int) -> int:
+    """Differently named allied Artifact followers that entered the field this match."""
+    names = set()
+    for cid in state.players[player].entered:
+        defn = POOL.get(cid)
+        if defn is not None and ARTIFACT in defn.traits:
+            names.add(defn.name)
     return len(names)
 
 
 def three_artifacts(ctx) -> bool:
-    return artifacts_entered(ctx.state, ctx.controller, ctx.source) >= 3
-
-
-class ArtifactCounter(CardScript):
-    """Base for cards that ask how many differently named Artifact followers entered:
-    they note entering Artifacts from wherever they are."""
-    listen_in_hand = True
-    listen_in_deck = True
-
-    def on_ally_enter(self, ctx):
-        note_artifact(ctx)
+    return artifacts_entered(ctx.state, ctx.controller) >= 3
 
 
 # --- tokens ------------------------------------------------------------------------------
@@ -313,14 +239,10 @@ class Puppet(CardScript):
 
 @register(ANALYZING_ARTIFACT.card_id)
 class AnalyzingArtifact(CardScript):
-    """When this card enters the field, draw a card.
-    APPROX: fires when played, and when summoned by this module's effects; a summon
-    by another craft's effect (which uses effects.summon) doesn't draw."""
+    """When this card enters the field, draw a card."""
 
-    def when_enters(self, ctx):
+    def on_enter(self, ctx):
         E.draw(ctx.state, ctx.controller)
-
-    fanfare = when_enters
 
 
 class Gear(CardScript):
@@ -670,12 +592,9 @@ class Kratos(CardScript):
     """Ward. Last Words: summon a Kratos, Everyday Joy and remove Last Words from it."""
 
     def last_words(self, ctx):
-        counters = ctx.source.counters or {}
-        if counters.get("no_last_words") or counters.get("abilities_removed"):
-            return
         kratos = summon(ctx.state, ctx.controller, KRATOS)
         if kratos is not None:
-            E.counters(kratos)["no_last_words"] = True
+            E.remove_last_words(kratos)
 
 
 @register(LEONA.card_id)
@@ -739,7 +658,7 @@ class Miriam(CardScript):
 
 
 @register(THE_JOURNEY_AHEAD.card_id)
-class TheJourneyAhead(ArtifactCounter):
+class TheJourneyAhead(CardScript):
     """Select an enemy follower and deal it 6 damage. If at least 3 differently named
     allied Artifact followers have entered the field this match, recover 1 evolution point."""
     play_targets = common.ENEMY_FOLLOWER
@@ -803,7 +722,7 @@ class BrusqueBarkeep(CardScript):
 
 
 @register(BEAT_BREAKER.card_id)
-class BeatBreaker(ArtifactCounter):
+class BeatBreaker(CardScript):
     """Fanfare: summon a Beat Breaker; if at least 3 differently named allied Artifact
     followers have entered the field this match, summon 2 instead. Rush."""
 
@@ -813,14 +732,14 @@ class BeatBreaker(ArtifactCounter):
 
 
 @register(FREERUNNING.card_id)
-class Freerunning(ArtifactCounter):
+class Freerunning(CardScript):
     """Mode: 1. Add an Analyzing Artifact to your hand. 2. Add an Ancient Artifact to
     your hand. If at least 3 differently named allied Artifact followers have entered
     the field this match, activate both instead."""
     modes = (2, 1)
 
     def all_modes(self, state, card, enhanced):
-        return artifacts_entered(state, card.owner, card) >= 3
+        return artifacts_entered(state, card.owner) >= 3
 
     def cast(self, ctx):
         if 0 in ctx.modes:
@@ -840,7 +759,7 @@ class CoolCourier(CardScript):
 
 
 @register(AUDACIOUS_ARTIST.card_id)
-class AudaciousArtist(ArtifactCounter):
+class AudaciousArtist(CardScript):
     """Fanfare: select an enemy follower and destroy it. If at least 3 differently named
     allied Artifact followers have entered the field this match, summon an Ancient
     Artifact and a Mystic Artifact."""
@@ -884,36 +803,35 @@ class BrazenBroadcaster(CardScript):
 
 
 @register(WARP_SLASH.card_id)
-class WarpSlash(ArtifactCounter):
+class WarpSlash(CardScript):
     """Deal X damage to all enemy followers, X = differently named allied Artifact
     followers that entered the field this match. Deal 1 damage to the enemy leader."""
 
     def cast(self, ctx):
-        x = artifacts_entered(ctx.state, ctx.controller, ctx.source)
+        x = artifacts_entered(ctx.state, ctx.controller)
         E.damage(ctx.state, list(ctx.opponent.followers), x, ctx.source)
         E.damage(ctx.state, [common.enemy_leader(ctx)], 1, ctx.source)
 
 
 @register(SCARLET.card_id)
-class Scarlet(ArtifactCounter):
+class Scarlet(CardScript):
     """Fanfare: deal X damage to all enemy followers, X = differently named allied
     Artifact followers that entered the field this match. Storm, Ward."""
 
     def fanfare(self, ctx):
-        x = artifacts_entered(ctx.state, ctx.controller, ctx.source)
+        x = artifacts_entered(ctx.state, ctx.controller)
         E.damage(ctx.state, list(ctx.opponent.followers), x, ctx.source)
 
 
 @register(MYUU.card_id)
-class Myuu(ArtifactCounter):
+class Myuu(CardScript):
     """Whenever an allied Artifact follower enters the field, deal 3 damage to a random
     enemy follower. Evolve: summon an Ancient Artifact. Super-Evolve: then, if at least
     3 differently named allied Artifact followers have entered the field this match,
     give this follower Storm."""
 
     def on_ally_enter(self, ctx):
-        note_artifact(ctx)
-        if on_field(ctx) and is_artifact_follower(ctx.other):
+        if is_artifact_follower(ctx.other):
             damage_random_enemy_followers(ctx, 3, 1)
 
     def on_evolve(self, ctx):
@@ -1379,5 +1297,4 @@ class Beelzebub(CardScript):
         for target in targets:
             remove_all_abilities(target)
         E.damage(ctx.state, targets, 9, ctx.source)
-        # APPROX: "Takes 1 more damage" is not applied: the engine has no hook that
-        # modifies damage dealt to a leader (only a damage cap).
+        ctx.opponent.extra_damage += 1      # stacks with each copy (official Q&A)

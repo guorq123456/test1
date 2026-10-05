@@ -517,6 +517,14 @@ def test_prostrating_coward_crystallize_summons_a_coward_that_heals():
     assert p.field[0].has(Keyword.WARD | Keyword.BANE)
 
 
+def test_prostrating_coward_heals_however_it_enters():
+    state = start()
+    hurt(state)
+    E.summon(state, 0, H.PROSTRATING_COWARD)
+    resolve_queue(state)
+    assert state.players[0].leader_hp == 12
+
+
 def test_unholy_water_last_words_and_engage():
     state = start()
     p = state.players[0]
