@@ -17,8 +17,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--games", type=int, default=1000)
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--decks", choices=("demo", "starter"), default="demo")
+    parser.add_argument("--decks", choices=("demo", "starter", "random"), default="demo")
     args = parser.parse_args()
+    if args.decks == "random":
+        run_random(args)
+        return
 
     if args.decks == "starter":
         names = ("Pirate Sword", "Ramp Dragon")
@@ -48,6 +51,26 @@ def main() -> None:
     print(f"avg turns {turns / args.games:.1f}, avg actions {actions / args.games:.1f}")
     print(f"{names[0]} {results[names[0]]}, {names[1]} {results[names[1]]}, "
           f"draws {results['draw']} | first player {results['first']}, second {results['second']}")
+
+
+def run_random(args) -> None:
+    """Random legal decks of random crafts against each other."""
+    from svsim.cards import library        # registers every card script
+    assert library.__all__
+    from svsim.core.enums import Craft
+    import random
+    crafts = [c for c in Craft if c != Craft.NEUTRAL]
+    rng = random.Random(args.seed)
+    wins, start = Counter(), time.perf_counter()
+    for g in range(args.games):
+        a, b = rng.choice(crafts), rng.choice(crafts)
+        state = new_game(decks.random_deck(a, rng), decks.random_deck(b, rng), seed=args.seed + g)
+        winner = play_game(state, [RandomAgent(2 * g, 0.2), RandomAgent(2 * g + 1, 0.2)])
+        if winner in (0, 1):
+            wins[(a, b)[winner].name] += 1
+    elapsed = time.perf_counter() - start
+    print(f"{args.games} games in {elapsed:.2f}s ({args.games / elapsed:.0f} games/s)")
+    print("wins by craft:", dict(wins.most_common()))
 
 
 if __name__ == "__main__":

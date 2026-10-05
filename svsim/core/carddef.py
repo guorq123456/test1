@@ -30,6 +30,7 @@ class CardDef:
     name_zh: str = ""                 # official Simplified Chinese name, for display
     card_set: int = 0                 # official card_set_id (10000 = Basic, 90000 = tokens)
     rotation: bool = False            # deck-buildable in Rotation
+    has_ability: bool = False         # has abilities beyond keywords, so it needs a script
 
     @property
     def is_follower(self) -> bool:

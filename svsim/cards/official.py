@@ -38,6 +38,12 @@ def parse_keywords(skill_text: str) -> Keyword:
     return result
 
 
+def has_ability(skill_text: str) -> bool:
+    """Whether the text has anything beyond keyword lines (so the card needs a script)."""
+    return any(line not in KEYWORD_NAMES for line in _segments(skill_text)) or \
+        bool(_EVOLVE_BLOCK.search(skill_text or ""))
+
+
 def parse_countdown(skill_text: str) -> int | None:
     for line in _segments(skill_text):
         match = _COUNTDOWN.match(line)
@@ -56,17 +62,18 @@ def special_from_record(special_id: int, info: dict, parent_name: str, craft: Cr
     skill = info.get("skill_text") or ""
     if kind == SPECIAL_CREST:
         return CardDef(special_id, f"Crest: {parent_name}", craft, CardType.CREST, 0,
-                       countdown=parse_countdown(skill), text=plain_text(skill))
+                       countdown=parse_countdown(skill), text=plain_text(skill),
+                       has_ability=has_ability(skill))
     if kind == SPECIAL_FAITH:
         return CardDef(special_id, f"Faith of {parent_name}", craft, CardType.FAITH, 0,
-                       text=plain_text(skill))
+                       text=plain_text(skill), has_ability=has_ability(skill))
     if kind == SPECIAL_ACCELERATE:
         return CardDef(special_id, f"{parent_name} (Accelerate)", craft, CardType.SPELL,
-                       info.get("cost") or 0, text=plain_text(skill))
+                       info.get("cost") or 0, text=plain_text(skill), has_ability=has_ability(skill))
     countdown = parse_countdown(skill)
     card_type = CardType.COUNTDOWN_AMULET if countdown else CardType.AMULET
     return CardDef(special_id, f"{parent_name} (Crystallize)", craft, card_type, info.get("cost") or 0,
-                   countdown=countdown, text=plain_text(skill))
+                   countdown=countdown, text=plain_text(skill), has_ability=has_ability(skill))
 
 
 def card_from_record(detail: dict, related: tuple[int, ...] = (),
@@ -93,6 +100,7 @@ def card_from_record(detail: dict, related: tuple[int, ...] = (),
         faith=faith,
         accelerate=accelerate,
         crystallize=crystallize,
+        has_ability=has_ability(skill),
     )
 
 

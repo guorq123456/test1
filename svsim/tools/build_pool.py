@@ -14,7 +14,7 @@ import argparse
 import json
 from pathlib import Path
 
-from svsim.cards.official import parse_countdown, parse_keywords
+from svsim.cards.official import has_ability, parse_countdown, parse_keywords
 from svsim.core.enums import KEYWORD_NAMES, CardType
 
 SPECIAL_TYPES = {1: "crest", 2: "crystallize", 3: "accelerate", 4: "faith"}
@@ -66,6 +66,7 @@ def build(raw_dir: Path) -> list[dict]:
             "token": bool(c.get("is_token")), "rot": bool(c.get("is_include_rotation")) and
             not c.get("is_token"), "set": c["card_set_id"], "rarity": c.get("rarity"),
             "related": sorted((links.get(cid) or {}).get("related_card_ids") or ()),
+            "ability": has_ability(skill),
         }
         for sid in (links.get(cid) or {}).get("specific_effect_card_ids") or ():
             info = specials.get(sid)
@@ -75,7 +76,8 @@ def build(raw_dir: Path) -> list[dict]:
             record[kind] = sid
             records.append({"id": sid, "special": kind, "parent": cid, "name": c["name"],
                             "zh": record["zh"], "craft": c["class"], "cost": info.get("cost") or 0,
-                            "cd": parse_countdown(info.get("skill_text") or "")})
+                            "cd": parse_countdown(info.get("skill_text") or ""),
+                            "ability": has_ability(info.get("skill_text") or "")})
         records.append(record)
     return sorted(records, key=lambda r: r["id"])
 

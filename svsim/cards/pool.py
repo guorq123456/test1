@@ -36,7 +36,8 @@ def _load() -> dict[int, CardDef]:
             if kind == "crystallize" and r["cd"]:
                 card_type = CardType.COUNTDOWN_AMULET
             cards[r["id"]] = CardDef(r["id"], _SPECIAL_NAMES[kind].format(r["name"]), Craft(r["craft"]),
-                                     card_type, r["cost"], countdown=r["cd"], name_zh=r["zh"])
+                                     card_type, r["cost"], countdown=r["cd"], name_zh=r["zh"],
+                                     has_ability=r["ability"])
     for r in records:
         if "special" in r:
             continue
@@ -45,7 +46,7 @@ def _load() -> dict[int, CardDef]:
             _keywords(r["kw"]), countdown=r["cd"], traits=tuple(r["traits"]), is_token=r["token"],
             related=tuple(r["related"]), faith=cards.get(r.get("faith")),
             accelerate=cards.get(r.get("accelerate")), crystallize=cards.get(r.get("crystallize")),
-            name_zh=r["zh"], card_set=r["set"], rotation=r["rot"])
+            name_zh=r["zh"], card_set=r["set"], rotation=r["rot"], has_ability=r["ability"])
     return cards
 
 

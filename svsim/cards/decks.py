@@ -4,13 +4,14 @@ The starter decklists are Game8's (Pirate Sword 2026-09-30, Ramp Dragon
 2026-10-05), decoded through the official deck API.
 """
 from collections import Counter
+import random
 
 from svsim.core.carddef import CardDef
 from svsim.core.enums import Craft
 from svsim.core.script import has_script
 
 from . import deckcode, dragon, neutral, sword
-from .pool import POOL
+from .pool import POOL, collectible
 
 DECK_SIZE = 40
 MAX_COPIES = 3
@@ -57,20 +58,31 @@ def validate(deck: list[CardDef], craft: Craft | None = None) -> list[str]:
             problems.append(f"{card.name} is a token")
         if card.craft not in (Craft.NEUTRAL, craft):
             problems.append(f"{card.name} is not {craft.name.title()} or Neutral")
+        if card.card_set and not card.rotation and not card.is_token:
+            problems.append(f"{card.name} is not legal in Rotation")
     return problems
 
 
-def unimplemented(deck: list[CardDef]) -> list[CardDef]:
+def unimplemented(cards) -> list[CardDef]:
     """Cards with abilities but no script. Keyword-only and vanilla cards are fine
     without one; anything else silently playing as a vanilla card would be wrong."""
-    return sorted({c for c in deck if c.text and not has_script(c.card_id)
-                   and not _keywords_only(c)}, key=lambda c: c.card_id)
+    return sorted({c for c in cards if c.has_ability and not has_script(c.card_id)},
+                  key=lambda c: c.card_id)
 
 
-def _keywords_only(card: CardDef) -> bool:
-    words = {w.strip() for w in card.text.replace("\n", "|").split("|") if w.strip()}
-    return all(w in ("Ward", "Storm", "Rush", "Bane", "Drain", "Ambush", "Barrier",
-                     "Intimidate", "Aura") for w in words)
+def random_deck(craft: Craft, rng: random.Random, implemented_only: bool = True) -> list[CardDef]:
+    """A random legal Rotation deck for `craft` (class and Neutral cards, up to 3
+    copies each). With `implemented_only`, cards still missing a script are left out."""
+    options = [c for c in collectible(craft)
+               if not (implemented_only and c.has_ability and not has_script(c.card_id))]
+    if len(options) * MAX_COPIES < DECK_SIZE:
+        raise ValueError(f"only {len(options)} usable {craft.name.title()} cards")
+    deck: list[CardDef] = []
+    while len(deck) < DECK_SIZE:
+        card = rng.choice(options)
+        if deck.count(card) < MAX_COPIES:
+            deck.append(card)
+    return deck
 
 
 def from_hash(deck_hash: str, pool: dict[int, CardDef] | None = None) -> list[CardDef]:
