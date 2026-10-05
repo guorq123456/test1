@@ -9,7 +9,11 @@ for each side and with opposite signs:
 - cards in hand, unused evolution points, max play points;
 - danger: whether the opponent's board could kill the player next turn (a big
   penalty), and pressure: whether the player's board threatens the same;
-- an empty deck (the next draw loses).
+- an empty deck (the next draw loses);
+- optionally (weights `setup`, `setup_lethal`, zero by default), the damage the
+  player's hand and board could deal on the next turn by the resource-flow
+  planner (search.combo.next_turn_damage), whatever the deck: a combo deck
+  that keeps its pieces for a lethal turn scores for it.
 
 The weights are hand-set starting values (`Weights`), meant to be tuned by
 self-play later; a learned value network can replace the whole function.
@@ -49,9 +53,15 @@ class Weights:
     danger: float = 12.0       # the opponent's board could kill the player next turn
     pressure: float = 4.0      # the player's board could kill the opponent the turn after
     deck_out: float = 30.0     # an empty deck
+    setup: float = 0.0         # per point of damage the player could deal next turn (planner), up to lethal
+    setup_lethal: float = 0.0  # that damage is lethal
+    setup_nodes: int = 300     # planner budget per position
+    setup_board: bool = True   # count the player's followers in it (else hand and amulets only)
 
 
 DEFAULT = Weights()
+THREAT = Weights(setup=0.5, setup_lethal=6.0)    # values the next turn's lethal potential
+THREAT_HAND = Weights(setup=0.5, setup_lethal=6.0, setup_board=False)   # ... from the hand and amulets
 
 
 def follower_value(c, w: Weights = DEFAULT) -> float:
@@ -121,6 +131,12 @@ def evaluate(state: GameState, player: int, w: Weights = DEFAULT,
         score -= danger
     if threat(state, player) >= opp.leader_hp:
         score += pressure
+    if w.setup or w.setup_lethal:
+        from svsim.search.combo import next_turn_damage
+        potential = next_turn_damage(state, player, w.setup_nodes, w.setup_board)
+        score += w.setup * min(potential, opp.leader_hp)
+        if potential >= opp.leader_hp:
+            score += w.setup_lethal
     return score
 
 

@@ -7,3 +7,6 @@ data/raw/
 
 # Agent worktrees
 .claude/worktrees/
+
+# Games saved by tools.play (share them by their replay code)
+replays/

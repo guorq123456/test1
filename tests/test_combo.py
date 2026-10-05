@@ -234,3 +234,36 @@ def test_formula_picks_filler_exactly():
     assert ("先打的垫牌 4 张（其中 0 费 1 张），每张 ×1", 4) in e.terms
     assert e.damage == 1 + 4 + 1                                 # Combo 5, Cairn engaged for +1
     assert plan(combo_position(30, 7, hand)).damage == 6
+
+
+def test_next_turn_potential_counts_what_the_hand_can_do():
+    from svsim.search.combo import next_turn_damage, next_turn_position
+    from svsim.search.evaluate import DEFAULT, THREAT, evaluate
+    hand = [U.FAIRY_CONVOCATION, U.FAIRY, U.FAIRY, U.KILLER_RHINOCEROACH, forest.BUG_ALERT]
+    state = combo_position(10, 9, hand)
+    state.players[0].max_pp = 9
+    pp, cap, combo = next_turn_position(state, 0)[:3]
+    assert (pp, cap, combo) == (10, 10, 0)                   # one more play point, Combo from 0
+    assert next_turn_damage(state, 0) == 10                  # the 10-damage loop needs all 10
+    # The evaluation can value it: 0.5 per point up to the defense, and 6 for lethal.
+    assert abs(evaluate(state, 0, THREAT) - evaluate(state, 0, DEFAULT) - (0.5 * 10 + 6.0)) < 1e-9
+    # A follower already on the field counts, unless only the hand is asked for.
+    put(state, 0, demo.GIANT).entered_turn = -1
+    assert next_turn_damage(state, 0) > next_turn_damage(state, 0, board=False) == 10
+
+
+def test_macro_agent_returns_legal_moves():
+    from svsim.agents.lethal_agent import LethalAgent
+    from svsim.agents.mcts_agent import MCTSAgent
+    from svsim.core.engine import legal_actions
+    from svsim.search.combo import _legal
+    hand = [U.FAIRY_CONVOCATION, U.FAIRY, U.FAIRY, U.KILLER_RHINOCEROACH, forest.BUG_ALERT]
+    state = combo_position(30, 10, hand)                     # no lethal: 30 defense
+    agent = LethalAgent(MCTSAgent(20, seed=1), max_nodes=300, planner=True, macro=True)
+    for _ in range(12):
+        if state.over or state.active != 0:
+            break
+        action = agent.act(state, legal_actions(state))
+        assert _legal(state, action)
+        apply(state, action)
+    assert agent.lethals == 0

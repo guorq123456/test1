@@ -8,7 +8,12 @@ lethal search), mcts:N (ISMCTS with N iterations per decision + lethal search),
 mcts-reply:N (the same, playing out the opponent's next turn at the leaves),
 greedy-raw / mcts-raw:N (without the lethal search). A "+plan" suffix
 (greedy+plan, mcts:200+plan) puts the resource-flow planner in front of the
-lethal search. Each pairing plays both seats and, for --decks starter or
+lethal search; "+threat" makes the evaluation value the next turn's lethal
+potential (evaluate.THREAT); "+hand" the same from the hand and amulets
+only, leaving out followers the opponent may remove (evaluate.THREAT_HAND);
+"+macro" lets the planner propose its most-damage line on turns without
+lethal, played when the search's evaluation prefers it (ISMCTS agents only).
+Combined: mcts:200+plan+macro+threat. Each pairing plays both seats and, for --decks starter or
 rhino, both decks equally often. --decks rhino is Rhinoceroach Forest
 (Unlimited) against Ramp Dragon. Prints win rates with a 95% margin, the
 average thinking time per decision and the lethals each agent found.
@@ -25,6 +30,7 @@ from svsim.agents.lethal_agent import LethalAgent
 from svsim.agents.mcts_agent import MCTSAgent
 from svsim.agents.random_agent import RandomAgent
 from svsim.cards import decks, library
+from svsim.search.evaluate import DEFAULT, THREAT, THREAT_HAND
 from svsim.core.engine import apply, legal_actions, new_game
 from svsim.core.enums import Craft
 
@@ -33,22 +39,25 @@ CRAFTS = [c for c in Craft if c != Craft.NEUTRAL]
 
 
 def make_agent(spec: str, seed: int):
-    spec, plus, extra = spec.partition("+")
-    if plus and extra != "plan":
-        raise ValueError(f"unknown agent option {extra!r}")
-    planner = bool(plus)
+    spec, *options = spec.split("+")
+    unknown = set(options) - {"plan", "threat", "hand", "macro"}
+    if unknown:
+        raise ValueError(f"unknown agent options {sorted(unknown)}")
+    planner = "plan" in options
+    weights = THREAT_HAND if "hand" in options else THREAT if "threat" in options else DEFAULT
     name, _, arg = spec.partition(":")
     if name == "random":
         return RandomAgent(seed, 0.2)
     if name == "lethal":
         return LethalAgent(RandomAgent(seed, 0.2), seed=seed, planner=planner)
     if name == "greedy-raw":
-        return GreedyAgent(seed)
+        return GreedyAgent(seed, weights=weights)
     if name == "greedy":
-        return LethalAgent(GreedyAgent(seed), seed=seed, planner=planner)
+        return LethalAgent(GreedyAgent(seed, weights=weights), seed=seed, planner=planner)
     if name in ("mcts", "mcts-raw", "mcts-reply"):
-        agent = MCTSAgent(int(arg or 400), seed=seed, reply=name == "mcts-reply")
-        return agent if name == "mcts-raw" else LethalAgent(agent, seed=seed, planner=planner)
+        agent = MCTSAgent(int(arg or 400), seed=seed, reply=name == "mcts-reply", weights=weights)
+        return agent if name == "mcts-raw" else LethalAgent(agent, seed=seed, planner=planner,
+                                                            macro="macro" in options)
     raise ValueError(f"unknown agent {spec!r}")
 
 

@@ -48,11 +48,11 @@ from svsim.cards.pool import POOL
 from svsim.core import effects as E
 from svsim.core.actions import Attack, Engage, Evolve, Fuse, Mulligan, PlayCard, UseBonusPP
 from svsim.core.carddef import CardDef
-from svsim.core.engine import (EVOLVE_TURN, SUPER_EVOLVE_TURN, _signature, apply, legal_actions, new_game,
-                               resolve_queue)
+from svsim.core.engine import (BONUS_REFRESH_TURN, EVOLVE_TURN, SUPER_EVOLVE_TURN, _signature, apply,
+                               legal_actions, new_game, resolve_queue)
 from svsim.core.enums import Keyword, Phase
 from svsim.core.script import prop, script_for
-from svsim.core.state import FIELD_LIMIT, HAND_LIMIT, CardInstance, GameState, leader_uid
+from svsim.core.state import FIELD_LIMIT, HAND_LIMIT, MAX_PP, CardInstance, GameState, leader_uid
 from svsim.search.lethal import LethalSearch, hidden_info
 
 
@@ -376,6 +376,8 @@ class _Abstract:
                     result = (gained + dmg, [step] + rest)
                     if result[0] >= self.target:
                         break
+                if self.nodes > self.max_nodes:      # out of budget: keep what was found
+                    break
         self.memo[pos] = result
         return result
 
@@ -609,12 +611,12 @@ def _abstract_position(state: GameState) -> tuple:
             tuple(enemies))
 
 
-def plan(state: GameState, max_nodes: int = 200000) -> Plan:
-    """The most damage the hand and board can deal this turn by the resource model,
-    with the plan that deals it (stopping once it reaches the enemy leader's defense)."""
-    opp = state.players[1 - state.active]
+def _search_for(state: GameState, side: int, max_nodes: int) -> _Abstract:
+    """An abstract search for `side` against the enemy leader, knowing every card
+    `side` has and can generate."""
+    opp = state.players[1 - side]
     search = _Abstract(opp.leader_hp, opp.extra_damage, max_nodes)
-    me = state.players[state.active]
+    me = state.players[side]
     for c in me.hand + me.field + me.leader_area:
         search.defs[c.defn.card_id] = c.defn
     pending = [d for d in search.defs.values() if d.goes_to_field or d.is_spell]
@@ -628,8 +630,64 @@ def plan(state: GameState, max_nodes: int = 200000) -> Plan:
                 if cid not in search.defs:
                     search.defs[cid] = POOL[cid]
                     pending.append(POOL[cid])
+    return search
+
+
+def plan(state: GameState, max_nodes: int = 200000) -> Plan:
+    """The most damage the hand and board can deal this turn by the resource model,
+    with the plan that deals it (stopping once it reaches the enemy leader's defense)."""
+    search = _search_for(state, state.active, max_nodes)
     dmg, steps = search.best(_abstract_position(state))
     return Plan(dmg, steps, search.nodes)
+
+
+def next_turn_position(state: GameState, side: int, board: bool = True) -> tuple:
+    """The abstract position at the start of `side`'s next turn if nothing changes
+    before it: one more max play point, Combo 0, every follower ready to attack,
+    evolution as it will be unlocked, the card drawn unknown. Without `board`,
+    `side`'s followers are left out (the opponent's turn may well remove them):
+    what the hand and amulets can do."""
+    p, opp = state.players[side], state.players[1 - side]
+    first = side == state.first
+    turns = p.turns_taken + 1
+    followers = tuple(sorted((f.defn.card_id, f.atk, f.life, max(1, f.max_attacks),
+                              0 if prop(f, "cant_attack") else 2, _evo(f)) for f in p.followers)) if board else ()
+    amulets = tuple(sorted(c.defn.card_id for c in p.field
+                           if c.defn.is_amulet and engage_profile(c.defn) is not None))
+    enemies = []
+    for f in opp.followers:
+        flags = UNREACHABLE if f.keywords & (Keyword.AMBUSH | Keyword.INTIMIDATE) else (
+            WARD if f.keywords & Keyword.WARD else 0)
+        enemies.append((f.atk, f.life, flags | (BARRIER if f.keywords & Keyword.BARRIER else 0)))
+    ep = p.ep > 0 and turns >= EVOLVE_TURN[first]
+    sep = p.sep > 0 and turns >= SUPER_EVOLVE_TURN[first]
+    hand = tuple(sorted(_hand_key(state, c) for c in p.hand))
+    if len(hand) < HAND_LIMIT:
+        hand = tuple(sorted(hand + (UNKNOWN,)))
+    pp = min(MAX_PP, p.max_pp + 1)
+    bonus = p.bonus_ready or p.bonus_active or (not first and turns == BONUS_REFRESH_TURN)
+    count = len(p.field) if board else len(p.field) - len(p.followers)
+    return (pp, pp, 0, hand, followers, amulets, bonus, (ep, sep) if ep or sep else None, count,
+            tuple(enemies))
+
+
+_NEXT_TURN: dict = {}
+
+
+def next_turn_damage(state: GameState, side: int, max_nodes: int = 2000, board: bool = True) -> int:
+    """The most damage `side` could deal on its next turn by the resource model, if
+    nothing changes before it (stops counting at the enemy leader's defense; with a
+    small `max_nodes` it is what the search found within that budget). Without
+    `board`: from the hand and amulets only."""
+    opp = state.players[1 - side]
+    pos = next_turn_position(state, side, board)
+    key = (pos, opp.leader_hp, opp.extra_damage, max_nodes)
+    hit = _NEXT_TURN.get(key)
+    if hit is None:
+        if len(_NEXT_TURN) > 50000:
+            _NEXT_TURN.clear()
+        hit = _NEXT_TURN[key] = _search_for(state, side, max_nodes).best(pos)[0]
+    return hit
 
 
 # --- back to real actions ----------------------------------------------------------------

@@ -137,7 +137,7 @@ def test_play_tool_runs_a_scripted_game():
     replies = iter(["0 1", "h", "l", "x"] + ["e"] * 200)
     out = []
     winner = run(load_deck("pirate"), load_deck("ramp"), ai_spec="greedy", seed=3, you_first=True,
-                 ask=lambda prompt: next(replies), say=out.append)
+                 ask=lambda prompt: next(replies), say=out.append, record_to=None)
     assert winner == 1                                      # ending every turn loses
     text = "\n".join(out)
     assert "AI 会这样走" in text and "AI：" in text and "AI 赢了" in text
@@ -162,7 +162,34 @@ def test_play_tool_with_the_rhinoceroach_deck():
     replies = iter(["", "l", "e", "l", "e", "l"] + ["e"] * 200)
     out = []
     run(load_deck("rhino"), load_deck("ramp"), ai_spec="greedy", seed=1, you_first=True,
-        ask=lambda prompt: next(replies), say=out.append)
+        ask=lambda prompt: next(replies), say=out.append, record_to=None)
     text = "\n".join(out)
     assert "这回合杀不了" in text or "有必杀" in text
     assert "速算" in text                                   # some turn had a Rhinoceroach in hand
+
+
+def test_games_are_recorded_and_can_be_reviewed(tmp_path):
+    from svsim.core.actions import from_dict
+    from svsim.core.engine import apply
+    from svsim.tools import records
+    from svsim.tools.play import load_deck, run
+    from svsim.tools.review import review
+    replies = iter(["0", "0", "e", "0", "e"] + ["e"] * 200)
+    out = []
+    winner = run(load_deck("rhino"), load_deck("ramp"), ai_spec="greedy", seed=7, you_first=True,
+                 ask=lambda prompt: next(replies), say=out.append, record_to=str(tmp_path))
+    saved = records.decode(str(next(tmp_path.iterdir())))
+    assert records.decode(out[-1].split("\n")[-1]) == saved     # the replay code is the same record
+    # Replaying follows the game exactly: every action is legal where it was taken,
+    # and the game ends with the same result.
+    for state, action in records.steps(saved):
+        assert action in legal_actions(state)
+    state = records.start(saved)
+    for data in saved["actions"]:
+        apply(state, from_dict(data))
+    assert state.over and state.winner == winner == saved["winner"]
+    text = []
+    stats = review(saved, "greedy", say=text.append)
+    assert stats["decisions"] > 0 and stats["same"] <= stats["decisions"]
+    joined = "\n".join(text)
+    assert "你：" in joined and "结果：AI 赢了" in joined and "AI 选得一样的" in joined
