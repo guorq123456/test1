@@ -155,3 +155,14 @@ def test_reply_mode_plays_out_the_opponent_turn():
     choice = search.choose(state)
     assert choice in legal_actions(state) and search.last_root is not root
     assert search.last_root.visits == 30
+
+
+def test_play_tool_with_the_rhinoceroach_deck():
+    from svsim.tools.play import load_deck, run
+    replies = iter(["", "l", "e", "l", "e", "l"] + ["e"] * 200)
+    out = []
+    run(load_deck("rhino"), load_deck("ramp"), ai_spec="greedy", seed=1, you_first=True,
+        ask=lambda prompt: next(replies), say=out.append)
+    text = "\n".join(out)
+    assert "这回合杀不了" in text or "有必杀" in text
+    assert "速算" in text                                   # some turn had a Rhinoceroach in hand

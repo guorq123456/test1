@@ -3,12 +3,15 @@
     python -m svsim.tools.play                         # you: Pirate Sword, AI: Ramp Dragon
     python -m svsim.tools.play --you ramp --ai mcts:1000
     python -m svsim.tools.play --you "<deck hash>" --opponent pirate
+    python -m svsim.tools.play --you rhino --ai mcts:400+plan   # Rhinoceroach Forest (Unlimited)
 
 On your turn, type the number of an action, or:
     e   end the turn          h   ask the AI what it would do
     l   look for lethal       q   quit
-Decks: pirate, ramp, or an official deck hash. AI: any agent from tools.arena
-(default mcts:400, ISMCTS plus lethal search).
+Decks: pirate, ramp, rhino, or an official deck hash. AI: any agent from
+tools.arena (default mcts:400, ISMCTS plus lethal search). "l" asks the
+resource-flow planner first (with the quick count for combo finishers), then
+exact search.
 """
 import argparse
 import random
@@ -17,6 +20,7 @@ from svsim.cards import decks, library
 from svsim.core.actions import EndTurn, Mulligan
 from svsim.core.engine import apply, legal_actions, new_game
 from svsim.core.enums import Phase
+from svsim.search.combo import solve
 from svsim.search.lethal import find_lethal
 from svsim.search.mcts import ISMCTS
 from svsim.tools.arena import make_agent
@@ -30,6 +34,8 @@ def load_deck(name: str) -> list:
         return decks.build(decks.PIRATE_SWORD)
     if name == "ramp":
         return decks.build(decks.RAMP_DRAGON)
+    if name == "rhino":
+        return decks.build(decks.RHINO_FOREST)
     return decks.from_hash(name)
 
 
@@ -67,6 +73,13 @@ def run(you_deck, ai_deck, ai_spec: str = "mcts:400", seed: int | None = None,
             say("  AI 会这样走：" + describe(state, ISMCTS(iterations=800).choose(state)))
             continue
         if reply == "l":
+            quick = solve(state, search_nodes=0)
+            if not quick.estimate.pattern.startswith("没有"):     # a combo finisher in hand: count first
+                hp = state.players[1 - state.active].leader_hp
+                say("  速算：" + quick.estimate.text(hp).replace("\n", "\n  "))
+            if quick.sure:
+                say("  有必杀：" + " → ".join(describe_line(state, quick.line)))
+                continue
             r = find_lethal(state)
             if r.sure:
                 say("  有必杀：" + " → ".join(describe_line(state, r.line)))
