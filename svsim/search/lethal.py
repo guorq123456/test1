@@ -148,12 +148,13 @@ def damage_estimate(state: GameState) -> float:
 
 class LethalSearch:
     def __init__(self, max_nodes: int = 20000, samples: int = 8, max_depth: int = 40,
-                 seed: int = 0, screen: int | None = None):
+                 seed: int = 0, screen: int | None = None, sure_only: bool = False):
         self.max_nodes = max_nodes
         self.samples = samples        # outcomes sampled at a chance node (halved at each nested one)
         self.max_depth = max_depth    # actions in one line
         self.seed = seed
         self.screen = screen          # node budget when damage_estimate falls short (None: off)
+        self.sure_only = sure_only    # only look for sure lethals: don't expand chance nodes
 
     def solve(self, state: GameState) -> LethalResult:
         if state.phase != Phase.MAIN or state.winner is not None:
@@ -204,6 +205,8 @@ class LethalSearch:
         apply(child, action)
         if hidden_info(child) == before:
             return self._search(child, depth + 1, chance_depth)
+        if self.sure_only:                # a line through a chance node is never sure
+            return 0.0, [], False
 
         def run(sample):
             apply(sample, action)
@@ -227,6 +230,8 @@ class LethalSearch:
         value = run(probe)
         if hidden_info(probe) == before:
             return value, [], value >= 1 - EPS
+        if self.sure_only:
+            return 0.0, [], False
         return self._chance(state, run, chance_depth, alpha), [], False
 
     def _chance(self, state, run, chance_depth, alpha) -> float:
