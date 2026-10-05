@@ -26,6 +26,10 @@ class CardDef:
     related: tuple[int, ...] = ()     # tokens this card can create (official related_card_ids)
     faith: "CardDef | None" = None    # faith put in the leader area at match start
     accelerate: "CardDef | None" = None  # spell form played when the normal cost can't be paid
+    crystallize: "CardDef | None" = None  # amulet form played when the normal cost can't be paid
+    name_zh: str = ""                 # official Simplified Chinese name, for display
+    card_set: int = 0                 # official card_set_id (10000 = Basic, 90000 = tokens)
+    rotation: bool = False            # deck-buildable in Rotation
 
     @property
     def is_follower(self) -> bool:
@@ -38,6 +42,9 @@ class CardDef:
     @property
     def is_spell(self) -> bool:
         return self.type == CardType.SPELL
+
+    def has_trait(self, trait: str) -> bool:
+        return trait in self.traits
 
     @property
     def goes_to_field(self) -> bool:

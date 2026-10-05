@@ -56,7 +56,8 @@ def test_spells_tick_flags_and_flags_burst():
 
 def test_barbaros_advances_every_flag_by_five():
     state = start()
-    a, b = put(state, 0, sword.DREAD_PIRATES_FLAG), put(state, 0, sword.DREAD_PIRATES_FLAG)
+    put(state, 0, sword.DREAD_PIRATES_FLAG)
+    b = put(state, 0, sword.DREAD_PIRATES_FLAG)
     b.countdown = 4
     set_pp(state, 0, 7)
     barbaros = give(state, 0, sword.BARBAROS)

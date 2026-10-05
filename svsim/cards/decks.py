@@ -10,6 +10,7 @@ from svsim.core.enums import Craft
 from svsim.core.script import has_script
 
 from . import deckcode, dragon, neutral, sword
+from .pool import POOL
 
 DECK_SIZE = 40
 MAX_COPIES = 3
@@ -30,12 +31,8 @@ RAMP_DRAGON = {
     dragon.BURNITE: 3, dragon.ERNTZ: 3,
 }
 
-# Every card the engine implements, by id (deck cards, tokens, leader-area objects).
-KNOWN: dict[int, CardDef] = {
-    c.card_id: c
-    for c in [*sword.CARDS, *sword.TOKENS, *sword.LEADER_AREA, *dragon.CARDS, *dragon.TOKENS,
-              *dragon.LEADER_AREA, *dragon.ALTERNATE_FORMS, *neutral.CARDS]
-}
+# Every card the simulator knows, by id (deck cards, tokens, leader-area objects).
+KNOWN: dict[int, CardDef] = POOL
 
 
 def build(counts: dict[CardDef, int]) -> list[CardDef]:

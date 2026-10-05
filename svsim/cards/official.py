@@ -60,10 +60,13 @@ def special_from_record(special_id: int, info: dict, parent_name: str, craft: Cr
     if kind == SPECIAL_FAITH:
         return CardDef(special_id, f"Faith of {parent_name}", craft, CardType.FAITH, 0,
                        text=plain_text(skill))
-    card_type = CardType.SPELL if kind == SPECIAL_ACCELERATE else CardType.AMULET
-    suffix = "Accelerate" if kind == SPECIAL_ACCELERATE else "Crystallize"
-    return CardDef(special_id, f"{parent_name} ({suffix})", craft, card_type, info.get("cost") or 0,
-                   text=plain_text(skill))
+    if kind == SPECIAL_ACCELERATE:
+        return CardDef(special_id, f"{parent_name} (Accelerate)", craft, CardType.SPELL,
+                       info.get("cost") or 0, text=plain_text(skill))
+    countdown = parse_countdown(skill)
+    card_type = CardType.COUNTDOWN_AMULET if countdown else CardType.AMULET
+    return CardDef(special_id, f"{parent_name} (Crystallize)", craft, card_type, info.get("cost") or 0,
+                   countdown=countdown, text=plain_text(skill))
 
 
 def card_from_record(detail: dict, related: tuple[int, ...] = (),
@@ -73,6 +76,7 @@ def card_from_record(detail: dict, related: tuple[int, ...] = (),
     skill = c.get("skill_text") or ""
     faith = next((d for d in specials if d.type == CardType.FAITH), None)
     accelerate = next((d for d in specials if d.type == CardType.SPELL), None)
+    crystallize = next((d for d in specials if d.is_amulet), None)
     return CardDef(
         card_id=c["card_id"],
         name=c["name"],
@@ -88,6 +92,7 @@ def card_from_record(detail: dict, related: tuple[int, ...] = (),
         related=related,
         faith=faith,
         accelerate=accelerate,
+        crystallize=crystallize,
     )
 
 

@@ -1,14 +1,11 @@
 """Neutral cards used by the starter decks. Comments give official Chinese names."""
+from svsim.cards.pool import card
 from svsim.core import effects as E
-from svsim.core.carddef import CardDef
-from svsim.core.enums import CardType, Craft, Keyword
 from svsim.core.script import CardScript, register
 from svsim.core.state import leader_uid
 
-LYRIA = CardDef(10403120, "Lyria, Skydestined", Craft.NEUTRAL, CardType.FOLLOWER, 2, 1, 1,
-                Keyword.BARRIER)                                    # 掌握天空命运的少女·露莉亚
-FATE_OF_THE_WORLD = CardDef(10503310, "Fate of the World", Craft.NEUTRAL, CardType.SPELL,
-                            5)                                      # 《世界》的呈现
+LYRIA = card(10403120)  # 掌握天空命运的少女·露莉亚
+FATE_OF_THE_WORLD = card(10503310)  # 《世界》的呈现
 
 CARDS = [LYRIA, FATE_OF_THE_WORLD]
 

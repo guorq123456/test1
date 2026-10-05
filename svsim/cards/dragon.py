@@ -1,45 +1,38 @@
 """Dragoncraft: the Ramp Dragon starter deck and its tokens.
 
-Only gameplay stats are hard-coded here (no card text or art); see sword.py.
-Comments give the official Simplified Chinese names.
+Card stats come from the pool table (svsim/cards/pool.py); this module holds
+the abilities. Comments give the official Simplified Chinese names.
 """
+from svsim.cards.pool import card
 from svsim.core import effects as E
-from svsim.core.carddef import CardDef
-from svsim.core.enums import CardType, Craft, Keyword
+from svsim.core.enums import Keyword
 from svsim.core.script import CardScript, Target, TargetSpec, register
 from svsim.core.state import leader_uid
 
-F, S = CardType.FOLLOWER, CardType.SPELL
-DR = Craft.DRAGON
 HAND = TargetSpec(Target.HAND_CARD)
 
 # --- generated cards ---
-DEPTHS_OF_THE_ELD_BLADES = CardDef(90044330, "Depths of the Eld Blades", DR, S, 2,
-                                   is_token=True)                                           # 天刀深渊
-SPILLING_RED = CardDef(10642310, "Spilling Red", DR, S, 1)       # 赤流 (also a collectible card)
+DEPTHS_OF_THE_ELD_BLADES = card(90044330)  # 天刀深渊
+SPILLING_RED = card(10642310)  # 赤流 (also a collectible card)
 
-# --- leader area / alternate forms (names are ours) ---
-BURNITE_CREST = CardDef(10744112, "Crest: Burnite, Anathema of Ash", DR, CardType.CREST, 0)
-LUMIORE_ACCELERATE = CardDef(10844122, "Lumiore & Argente, Shining Wings (Accelerate)",
-                            DR, S, 3)
+# --- leader area / alternate forms ---
+BURNITE_CREST = card(10744112)
+LUMIORE_ACCELERATE = card(10844122)
 
 # --- deck cards ---
-VORLALAI = CardDef(10644120, "Vorlalai, Eld Blades", DR, F, 2, 0, 2, Keyword.BANE)          # 古旧天刀·波菈莱
-DRAGONEWT_PROMOTER = CardDef(10741110, "Dragonewt Promoter", DR, F, 2, 2, 1, Keyword.RUSH)  # 宣扬的龙人
-KIMIKA = CardDef(10842120, "Kimika, Cook of Happiness", DR, F, 2, 2, 1)                     # 满面笑容的烹饪·琪米卡
-SLOTH_OF_THE_CRESTPETAL = CardDef(10543310, "Sloth of the Crestpetal", DR, S, 2)            # 懒惰的波摇花
-DRAGONSIGN = CardDef(10042310, "Dragonsign", DR, S, 3)                                      # 龙之启示
-LAZING_FLAME = CardDef(10742310, "Lazing Flame", DR, S, 3)                                  # 焦龙的午睡
-ROAR_OF_PROMINENCE = CardDef(10542310, "Roar of Prominence", DR, S, 4)                      # 日珥咆哮
-ZOOEY = CardDef(10444120, "Zooey, Ally of the World", DR, F, 5, 5, 5)                       # 世界的伙伴·佐伊
-SAGATSUMATSU = CardDef(10644110, "Sagatsumatsu, Fair Beheader", DR, F, 7, 5, 4,
-                       Keyword.STORM | Keyword.BANE | Keyword.AURA)                         # 断头的斩姬·相枛津
-NORMAGDALA = CardDef(10944120, "Normagdala, Ravening Revenant", DR, F, 7, 5, 6,
-                     Keyword.WARD)                                                          # 禁牙的变貌·诺玛格达拉
-LUMIORE_AND_ARGENTE = CardDef(10844120, "Lumiore & Argente, Shining Wings", DR, F, 8, 6, 6,
-                              accelerate=LUMIORE_ACCELERATE)                                # 金银绚烂·璐米欧儿&雅尔贞特
-BURNITE = CardDef(10744110, "Burnite, Anathema of Ash", DR, F, 9, 9, 9)                     # 焦灰的安纳提玛·班德奈特
-ERNTZ = CardDef(10544110, "Erntz, Governing Justice", DR, F, 10, 8, 8, Keyword.WARD)        # 约束的《正义》·伊兰翠
+VORLALAI = card(10644120)  # 古旧天刀·波菈莱
+DRAGONEWT_PROMOTER = card(10741110)  # 宣扬的龙人
+KIMIKA = card(10842120)  # 满面笑容的烹饪·琪米卡
+SLOTH_OF_THE_CRESTPETAL = card(10543310)  # 懒惰的波摇花
+DRAGONSIGN = card(10042310)  # 龙之启示
+LAZING_FLAME = card(10742310)  # 焦龙的午睡
+ROAR_OF_PROMINENCE = card(10542310)  # 日珥咆哮
+ZOOEY = card(10444120)  # 世界的伙伴·佐伊
+SAGATSUMATSU = card(10644110)  # 断头的斩姬·相枛津
+NORMAGDALA = card(10944120)  # 禁牙的变貌·诺玛格达拉
+LUMIORE_AND_ARGENTE = card(10844120)  # 金银绚烂·璐米欧儿&雅尔贞特
+BURNITE = card(10744110)  # 焦灰的安纳提玛·班德奈特
+ERNTZ = card(10544110)  # 约束的《正义》·伊兰翠
 
 CARDS = [VORLALAI, DRAGONEWT_PROMOTER, KIMIKA, SLOTH_OF_THE_CRESTPETAL, DRAGONSIGN,
          LAZING_FLAME, ROAR_OF_PROMINENCE, ZOOEY, SAGATSUMATSU, NORMAGDALA,
@@ -75,8 +68,8 @@ class SpillingRed(CardScript):
     play_targets = (HAND, TargetSpec(Target.ENEMY_FOLLOWER))
 
     def cast(self, ctx):
-        for card in ctx.chosen_hand():
-            E.discard(ctx.state, card)
+        for c in ctx.chosen_hand():
+            E.discard(ctx.state, c)
         for target in ctx.chosen():
             E.destroy(ctx.state, target)
 
@@ -148,8 +141,8 @@ class Kimika(CardScript):
         self._cook(ctx)
 
     def _cook(self, ctx):
-        for card in ctx.chosen_hand():
-            E.discard(ctx.state, card)
+        for c in ctx.chosen_hand():
+            E.discard(ctx.state, c)
         E.draw(ctx.state, ctx.controller)
         E.heal_leader(ctx.state, ctx.controller, 1)
 
@@ -218,8 +211,8 @@ class Sagatsumatsu(CardScript):
     play_targets = (HAND,)
 
     def fanfare(self, ctx):
-        for card in ctx.chosen_hand():
-            E.discard(ctx.state, card)
+        for c in ctx.chosen_hand():
+            E.discard(ctx.state, c)
         for _ in range(2):
             E.add_to_hand(ctx.state, ctx.controller, SPILLING_RED)
 
@@ -253,8 +246,8 @@ class LumioreAndArgente(CardScript):
     play_targets = (TargetSpec(Target.HAND_CARD, 2),)
 
     def fanfare(self, ctx):
-        for card in ctx.chosen_hand():
-            E.discard(ctx.state, card)
+        for c in ctx.chosen_hand():
+            E.discard(ctx.state, c)
         E.damage(ctx.state, list(ctx.opponent.followers) + [leader_uid(1 - ctx.controller)], 4,
                  ctx.source)
 

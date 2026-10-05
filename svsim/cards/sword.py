@@ -1,56 +1,46 @@
 """Swordcraft: the Pirate Sword starter deck and its tokens.
 
-Only gameplay stats are hard-coded here (no card text or art), so tests run
-without downloaded data; tests/test_card_data.py checks them against the
-official database when it has been fetched. Comments give the official
-Simplified Chinese names.
+Card stats come from the pool table (svsim/cards/pool.py); this module holds
+the abilities. Comments give the official Simplified Chinese names.
 """
+from svsim.cards.pool import card
 from svsim.core import effects as E
-from svsim.core.carddef import CardDef
-from svsim.core.enums import CardType, Craft, Keyword
+from svsim.core.enums import Keyword
 from svsim.core.script import CardScript, Target, TargetSpec, register
 from svsim.core.state import leader_uid
 
-F, CA, S = CardType.FOLLOWER, CardType.COUNTDOWN_AMULET, CardType.SPELL
-SW = Craft.SWORD
 ENEMY = (TargetSpec(Target.ENEMY_FOLLOWER),)
 ALLY = (TargetSpec(Target.ALLIED_FOLLOWER),)
 
 # --- tokens ---
-STEELCLAD_KNIGHT = CardDef(90021120, "Steelclad Knight", SW, F, 1, 2, 2, is_token=True)       # 铁甲骑士
-DEPTHS_OF_THE_ELD_SWORD = CardDef(90024320, "Depths of the Eld Sword", SW, S, 0, is_token=True)  # 天剑深渊
-DREAD_PIRATES_FLAG = CardDef(90021210, "Dread Pirate's Flag", SW, CA, 1, countdown=7,
-                             is_token=True)                                                 # 令人战栗的海盗旗
-GILDED_BLADE = CardDef(90021310, "Gilded Blade", SW, S, 1, is_token=True)                   # 黄金短剑
-GILDED_GOBLET = CardDef(90021320, "Gilded Goblet", SW, S, 1, is_token=True)                 # 黄金之杯
-GILDED_BOOTS = CardDef(90021330, "Gilded Boots", SW, S, 1, is_token=True)                   # 黄金之靴
-GILDED_NECKLACE = CardDef(90021340, "Gilded Necklace", SW, S, 1, is_token=True)             # 黄金项链
-GLITTERING_GOLD = CardDef(90021350, "Glittering Gold", SW, S, 0, is_token=True)             # 闪耀的金币
+STEELCLAD_KNIGHT = card(90021120)  # 铁甲骑士
+DEPTHS_OF_THE_ELD_SWORD = card(90024320)  # 天剑深渊
+DREAD_PIRATES_FLAG = card(90021210)  # 令人战栗的海盗旗
+GILDED_BLADE = card(90021310)  # 黄金短剑
+GILDED_GOBLET = card(90021320)  # 黄金之杯
+GILDED_BOOTS = card(90021330)  # 黄金之靴
+GILDED_NECKLACE = card(90021340)  # 黄金项链
+GLITTERING_GOLD = card(90021350)  # 闪耀的金币
 
-# --- leader area (names are ours: the official data gives these no name) ---
-ELD_SWORD_FAITH = CardDef(10624122, "Faith of Yidmetra, Eld Sword", SW, CardType.FAITH, 0)
-UNKEI_CREST = CardDef(10524122, "Crest: Unkei, Goldbloom", SW, CardType.CREST, 0, countdown=4)
+# --- leader area ---
+ELD_SWORD_FAITH = card(10624122)
+UNKEI_CREST = card(10524122)
 
 # --- deck cards ---
-FLASHSTEP_QUICKBLADER = CardDef(10021110, "Flashstep Quickblader", SW, F, 1, 1, 1,
-                                Keyword.STORM)                                              # 须臾剑士
-ORCHESTRATED_SILENCE = CardDef(10722310, "Orchestrated Silence", SW, S, 1)                  # 无音的包围
-YIDMETRA = CardDef(10624120, "Yidmetra, Eld Sword", SW, F, 2, 1, 2,
-                   faith=ELD_SWORD_FAITH)                                                   # 古旧天剑·伊德梅塔
-OPEN_SEA_SCOUT = CardDef(10921110, "Open-Sea Scout", SW, F, 2, 2, 2)                        # 海域斥候
-WHIRLPOOL_GUNNER = CardDef(10922110, "Whirlpool Gunner", SW, F, 3, 4, 2, Keyword.RUSH)      # 漩涡炮手
-SPLENDOR_OF_THE_GOLDBLOOM = CardDef(10523310, "Splendor of the Goldbloom", SW, S, 3)        # 荣耀的丽金花
-SEVERED_TIES = CardDef(10922310, "Severed Ties", SW, S, 3)                                  # 燃尽之缘
-ZETA_AND_BEA = CardDef(10424110, "Zeta & Bea, Crimson and Blue", SW, F, 4, 3, 2,
-                       Keyword.RUSH)                                                        # 真红与群青·塞达&贝阿朵丽丝
-LAGE_DOR = CardDef(10923310, "L'Age d'Or", SW, S, 4)                                       # 黄金时代
-UNKEI = CardDef(10524120, "Unkei, Goldbloom", SW, F, 5, 2, 4)                               # 丽金花·云庆
-ROUGHWATER_FIRST_MATE = CardDef(10923110, "Roughwater First Mate", SW, F, 5, 3, 3)          # 波涛副船长
-GOLDEN_KNIGHT = CardDef(10423110, "Golden Knight, True King's Blade", SW, F, 6, 6, 6)       # 真王之刃·黄金骑士
-BARBAROS = CardDef(10924110, "Barbaros, Rebellious Convict", SW, F, 7, 4, 3,
-                   Keyword.STORM)                                                           # 逆行的罪人·巴巴洛丝
-BELTEZORE = CardDef(10924120, "Beltezore, Valorous Revenant", SW, F, 10, 2, 12,
-                    Keyword.STORM | Keyword.BANE | Keyword.WARD | Keyword.AURA)            # 武皇的变貌·贝尔铁佐
+FLASHSTEP_QUICKBLADER = card(10021110)  # 须臾剑士
+ORCHESTRATED_SILENCE = card(10722310)  # 无音的包围
+YIDMETRA = card(10624120)  # 古旧天剑·伊德梅塔
+OPEN_SEA_SCOUT = card(10921110)  # 海域斥候
+WHIRLPOOL_GUNNER = card(10922110)  # 漩涡炮手
+SPLENDOR_OF_THE_GOLDBLOOM = card(10523310)  # 荣耀的丽金花
+SEVERED_TIES = card(10922310)  # 燃尽之缘
+ZETA_AND_BEA = card(10424110)  # 真红与群青·塞达&贝阿朵丽丝
+LAGE_DOR = card(10923310)  # 黄金时代
+UNKEI = card(10524120)  # 丽金花·云庆
+ROUGHWATER_FIRST_MATE = card(10923110)  # 波涛副船长
+GOLDEN_KNIGHT = card(10423110)  # 真王之刃·黄金骑士
+BARBAROS = card(10924110)  # 逆行的罪人·巴巴洛丝
+BELTEZORE = card(10924120)  # 武皇的变貌·贝尔铁佐
 
 CARDS = [FLASHSTEP_QUICKBLADER, ORCHESTRATED_SILENCE, YIDMETRA, OPEN_SEA_SCOUT,
          WHIRLPOOL_GUNNER, SPLENDOR_OF_THE_GOLDBLOOM, SEVERED_TIES, ZETA_AND_BEA, LAGE_DOR,
@@ -299,9 +289,9 @@ class RoughwaterFirstMate(CardScript):
 
     def on_super_evolve(self, ctx):
         for token in (GILDED_BLADE, GILDED_NECKLACE):
-            card = E.add_to_hand(ctx.state, ctx.controller, token)
-            if card:
-                card.cost = 0
+            added = E.add_to_hand(ctx.state, ctx.controller, token)
+            if added:
+                added.cost = 0
 
     def _raid(self, ctx):
         E.damage(ctx.state, ctx.chosen(), 3, ctx.source)
