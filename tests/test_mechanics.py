@@ -550,13 +550,19 @@ def test_silence_and_remove_last_words():
     assert E.destroy(state, golem)
 
 
-def test_barrier_survives_zero_damage_and_invincibility():
+def test_barrier_is_used_up_by_any_damage_event():
+    # Official Q&A: a super-evolved follower with Barrier loses it when it fights, though
+    # it takes 0 damage. A permanently given Barrier is forgotten once used up.
     state = start(first=0)
-    angel = put(state, 1, demo.ANGEL)
-    E.damage(state, [angel], 0)
-    assert angel.has(Keyword.BARRIER)
-    E.damage(state, [angel], 2)
-    assert not angel.has(Keyword.BARRIER) and angel.life == 3
+    unlock_evolution(state, 0)
+    angel = put(state, 0, demo.ANGEL)
+    apply(state, Evolve(angel.uid, True))
+    E.give_keywords(angel, Keyword.BARRIER, until_turn=state.turn)
+    footman = put(state, 1, demo.FOOTMAN)
+    apply(state, Attack(angel.uid, footman.uid))
+    assert not angel.has(Keyword.BARRIER) and angel.life == angel.max_life
+    apply(state, EndTurn())
+    assert not angel.has(Keyword.BARRIER)
 
 
 def test_timed_keywords_and_debuffs_expire_cleanly():

@@ -138,8 +138,8 @@ def hit_follower(state: GameState, inst: CardInstance, amount: int) -> int:
         amount = min(amount, cap)
     if is_invincible(state, inst):
         amount = 0
-    if amount > 0 and inst.keywords & Keyword.BARRIER:   # 0 damage doesn't use up Barrier
-        lose_keywords(inst, Keyword.BARRIER)
+    if inst.keywords & Keyword.BARRIER:     # any damage event uses it up, even 0 (official Q&A:
+        lose_keywords(inst, Keyword.BARRIER)  # a super-evolved follower's Barrier still goes)
         amount = 0
     inst.life -= amount
     enqueue(state, "on_damaged", inst, inst.owner, amount=amount)
