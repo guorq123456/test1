@@ -1,9 +1,9 @@
 """How cards plug abilities into the engine.
 
 A CardScript describes one card's behaviour: which choices it needs when
-played or evolved, and which hooks fire when. Scripts are stateless singletons
-registered by card_id; anything a card must remember goes in
-CardInstance.counters.
+played, evolved or engaged, which hooks fire when, and a few static
+properties. Scripts are stateless singletons registered by card_id; anything a
+card must remember goes in CardInstance.counters.
 
     @register(1234)
     class Archer(CardScript):
@@ -11,12 +11,18 @@ CardInstance.counters.
 
         def fanfare(self, ctx):
             effects.damage(ctx.state, ctx.chosen(), 1, ctx.source)
+
+Effects can also give a card extra abilities (a Grant), optionally until the
+end of a given turn; the engine treats a granted script's hooks and properties
+like the card's own.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
+
+from .enums import Keyword
 
 if TYPE_CHECKING:
     from .state import CardInstance, GameState, PlayerState
@@ -28,12 +34,18 @@ class Target(IntEnum):
     ANY_FOLLOWER = 3
     ENEMY_FOLLOWER_OR_LEADER = 4
     HAND_CARD = 5            # a card in the controller's hand (not the one being played)
+    ENEMY_CARD = 6           # an enemy follower or amulet on the field
+    ALLIED_CARD = 7          # an allied follower or amulet on the field
+    ANY_CARD = 8             # any card on the field
+    ALLIED_AMULET = 9
 
 
 @dataclass(frozen=True, slots=True)
 class TargetSpec:
     kind: Target
     count: int = 1
+    filter: Callable | None = None   # filter(state, chooser, card) -> bool, e.g. "costs 5 or less"
+    other: bool = False              # "another": exclude the card using the ability
 
 
 @dataclass(slots=True)
@@ -47,6 +59,10 @@ class Ctx:
     enhanced: int = 0                    # Enhance cost paid, 0 if not enhanced
     other: CardInstance | None = None    # the other card in Strike / Clash / listener hooks
     as_spell: bool = False               # on_play: the played card was played as a spell
+    super_: bool = False                 # evolve hooks: it was a super-evolution
+    cards: tuple = ()                    # cards involved, e.g. the ones fused
+    amount: int = 0                      # damage taken, defense restored, ...
+    target: int = 0                      # on_attack: what was attacked (uid or leader uid)
 
     @property
     def me(self) -> PlayerState:
@@ -74,40 +90,86 @@ class Ctx:
 
 
 class CardScript:
-    # Choices made when the card is played / evolved (folded into the action).
-    # Several specs combine, e.g. (HAND_CARD, ENEMY_FOLLOWER) for "discard a
-    # card, then destroy an enemy follower"; the action's targets list them in order.
+    # --- choices, folded into the action that uses them ---
     play_targets: tuple[TargetSpec, ...] = ()
     evolve_targets: tuple[TargetSpec, ...] = ()
+    engage_targets: tuple[TargetSpec, ...] = ()
     enhance: tuple[int, ...] = ()        # Enhance costs; the highest affordable one is paid
     modes: tuple[int, int] | None = None  # (number of options, how many to pick)
     evolve_modes: tuple[int, int] | None = None   # for "Evolve: replicate this card's Fanfare"
+    engage_modes: tuple[int, int] | None = None
     modes_all_when_enhanced: bool = False          # "Enhance (N): Activate all of them instead"
-    attacks_per_turn: int = 1
 
-    # Hooks. Each is either None or a method taking a Ctx.
+    # --- static properties ---
+    attacks_per_turn: int = 1
+    engage_cost: int | None = None       # Engage (N); None = no Engage ability
+    fuse_filter: Callable | None = None  # fuse_filter(card) -> bool: what can be fused to it
+    skybound: bool = False               # has a Skybound Art: count evolutions while in hand
+    listen_in_hand: bool = False         # "Activates in hand": listener hooks fire from hand
+    listen_in_deck: bool = False         # "Activates in deck"
+    invoke_at: str | None = None         # "turn_start" / "turn_end": when can_invoke is checked
+    unplayable: bool = False             # "Can't be played"
+    indestructible: bool = False         # "Can't be destroyed by abilities"
+    damage_cap: int | None = None        # "Can't take more than N damage at a time"
+    cant_attack: bool = False            # "Can't attack followers or leaders"
+    banish_on_leave: bool = False        # "When this card leaves the field, banish it"
+
+    def all_modes(self, state, card, enhanced: int) -> bool:
+        """Whether every mode activates ("... Activate all of them instead")."""
+        return self.modes_all_when_enhanced and bool(enhanced)
+
+    def can_invoke(self, state, card) -> bool:
+        return False
+
+    # --- hooks on the card itself (None, or a method taking a Ctx) ---
     fanfare = None           # follower / amulet played from hand
     cast = None              # spell played (or a card played in its Accelerate form)
     last_words = None        # destroyed (not banished)
-    on_evolve = None         # evolved or super-evolved with points
-    on_super_evolve = None   # super-evolved with points (fires after on_evolve)
-    strike = None            # this follower attacks a follower; ctx.other = defender
+    on_evolve = None         # "Evolve:" evolved or super-evolved with points
+    on_super_evolve = None   # "Super-Evolve:" super-evolved with points (after on_evolve)
+    on_evolved = None        # "When this follower evolves": any evolution; ctx.super_
+    strike = None            # this follower attacks (anything); ctx.other / ctx.target
+    follower_strike = None   # this follower attacks a follower; ctx.other = defender
+    leader_strike = None     # this follower attacks a leader
     clash = None             # this follower attacks or is attacked by a follower
+    engage = None            # the Engage ability (pay engage_cost first)
     on_turn_start = None     # start of controller's turn
     on_turn_end = None       # end of controller's turn
-    on_discard = None        # this card was discarded from hand
-    # Listener hooks, for cards on the field or in the leader area:
+    on_opponent_turn_start = None
+    on_opponent_turn_end = None
+    on_discard = None        # discarded from hand
+    on_drawn = None          # "When you draw this card"
+    on_spellboost = None     # spellboosted in hand
+    on_fuse = None           # cards were fused to this card; ctx.cards
+    on_invoked = None        # "When this card is Invoked"
+    on_buffed = None         # given +attack or +defense on the field
+    on_damaged = None        # took damage (even 0); ctx.amount
+
+    # --- listener hooks: cards in play (or in hand / deck if listen_in_*) ---
     on_play = None           # controller played another card; ctx.other, ctx.enhanced, ctx.as_spell
-    on_ally_enter = None     # another allied follower entered the field; ctx.other = it
-    on_leader_healed = None  # controller's leader had defense restored (even by 0)
+    on_ally_enter = None     # another allied follower entered the field; ctx.other
+    on_enemy_enter = None    # an enemy follower entered the field; ctx.other
+    on_ally_evolve = None    # another allied follower evolved; ctx.other, ctx.super_
+    on_attack = None         # a follower (either side) attacked; ctx.other = attacker, ctx.target
+    on_card_destroyed = None  # a card (either side) was destroyed; ctx.other
+    on_engage = None         # controller engaged an amulet; ctx.other
+    on_earth_rite = None     # controller performed an Earth Rite; ctx.amount = sigils spent
+    on_draw = None           # controller drew a card; ctx.other
+    on_leader_healed = None  # controller's leader had defense restored (even by 0); ctx.amount
 
 
-HOOKS = ("fanfare", "cast", "last_words", "on_evolve", "on_super_evolve", "strike",
-         "clash", "on_turn_start", "on_turn_end", "on_discard", "on_play", "on_ally_enter",
-         "on_leader_healed")
+HOOKS = ("fanfare", "cast", "last_words", "on_evolve", "on_super_evolve", "on_evolved", "strike",
+         "follower_strike", "leader_strike", "clash", "engage", "on_turn_start", "on_turn_end",
+         "on_opponent_turn_start", "on_opponent_turn_end", "on_discard", "on_drawn",
+         "on_spellboost", "on_fuse", "on_invoked", "on_buffed", "on_damaged", "on_play",
+         "on_ally_enter", "on_enemy_enter", "on_ally_evolve", "on_attack", "on_card_destroyed",
+         "on_engage", "on_earth_rite", "on_draw", "on_leader_healed")
 
 _EMPTY = CardScript()
 _SCRIPTS: dict[int, CardScript] = {}
+LISTEN_IN_HAND: set[int] = set()   # card ids whose listener hooks fire from hand
+LISTEN_IN_DECK: set[int] = set()
+INVOKERS: set[int] = set()         # card ids with an Invoke condition
 
 
 def register(*card_ids: int):
@@ -117,6 +179,12 @@ def register(*card_ids: int):
             if card_id in _SCRIPTS:
                 raise ValueError(f"card {card_id} already has a script")
             _SCRIPTS[card_id] = instance
+            if instance.listen_in_hand:
+                LISTEN_IN_HAND.add(card_id)
+            if instance.listen_in_deck:
+                LISTEN_IN_DECK.add(card_id)
+            if instance.invoke_at:
+                INVOKERS.add(card_id)
         return cls
     return decorate
 
@@ -129,8 +197,43 @@ def has_script(card_id: int) -> bool:
     return card_id in _SCRIPTS
 
 
+@dataclass(frozen=True, slots=True)
+class Grant:
+    """Something an effect gave a card: an ability (a script), stats, keywords.
+    until_turn: it lasts until the end of that global turn (None = permanently).
+    Stats and keywords are undone when it expires."""
+    script: CardScript | None = None
+    until_turn: int | None = None
+    atk: int = 0
+    life: int = 0
+    keywords: Keyword = Keyword.NONE
+
+
+def scripts_of(inst: CardInstance) -> list[CardScript]:
+    """The card's own script followed by any granted ones."""
+    base = script_for(inst.defn.card_id)
+    if not inst.grants:
+        return [base]
+    return [base] + [g.script for g in inst.grants if g.script is not None]
+
+
+def prop(inst: CardInstance, name: str):
+    """A static property of the card, counting granted scripts: the strongest
+    value for numbers, True if any script says so for flags."""
+    if not inst.grants:
+        return getattr(script_for(inst.defn.card_id), name)
+    values = [getattr(s, name) for s in scripts_of(inst)]
+    if name == "damage_cap":
+        caps = [v for v in values if v is not None]
+        return min(caps) if caps else None
+    if name == "attacks_per_turn":
+        return max(values)
+    return any(values)
+
+
 @dataclass(slots=True)
 class Trigger:
     hook: str
     ctx: Ctx
     script: CardScript   # resolved when queued, so alternate forms (Accelerate) can supply their own
+    zone: str | None = "play"   # where the source must still be when it resolves (None = anywhere)

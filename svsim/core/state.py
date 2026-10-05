@@ -49,7 +49,11 @@ class CardInstance:
     max_attacks: int = 1
     order: int = 0                # field entry sequence: lower = older = resolves first
     fate: int = IN_PLAY
+    engaged_turn: int = -1        # global turn of the last Engage
+    fused_turn: int = -1          # global turn of the last Fuse to this card
     counters: dict | None = None  # per-card script state (e.g. a stack count)
+    grants: list | None = None    # script.Grant: abilities and stats given by effects
+    cost_mods: list | None = None # (op, value, until_turn) cost changes, applied in order
 
     @classmethod
     def create(cls, uid: int, defn: CardDef, owner: int) -> "CardInstance":
@@ -60,7 +64,12 @@ class CardInstance:
     def copy(self) -> "CardInstance":
         clone = copy.copy(self)
         if self.counters is not None:
-            clone.counters = dict(self.counters)
+            clone.counters = {k: (list(v) if isinstance(v, list) else v)
+                              for k, v in self.counters.items()}
+        if self.grants is not None:
+            clone.grants = list(self.grants)
+        if self.cost_mods is not None:
+            clone.cost_mods = list(self.cost_mods)
         return clone
 
     def has(self, keyword: Keyword) -> bool:
@@ -91,7 +100,12 @@ class PlayerState:
     hand: list[CardInstance] = dc_field(default_factory=list)
     field: list[CardInstance] = dc_field(default_factory=list)  # oldest first
     leader_area: list[CardInstance] = dc_field(default_factory=list)  # crests and faiths, oldest first
-    destroyed: list[int] = dc_field(default_factory=list)       # card_ids of allied followers destroyed (Reanimate)
+    destroyed: list[CardDef] = dc_field(default_factory=list)   # allied followers destroyed (Reanimate)
+    destroyed_amulets: list[CardDef] = dc_field(default_factory=list)
+    played_base_costs: set[int] = dc_field(default_factory=set)  # base costs of cards played this match
+    evolutions: int = 0            # allied evolutions this match (any method)
+    attacked_leader_this_turn: bool = False
+    attacked_leader_last_turn: bool = False    # "if an allied follower attacked a leader on your last turn"
     damage_cap: int | None = None  # leader "can't take more than N damage at a time"
     damage_cap_until: int = 0      # global turn at whose end damage_cap expires
 
@@ -102,6 +116,8 @@ class PlayerState:
         clone.field = [c.copy() for c in self.field]
         clone.leader_area = [c.copy() for c in self.leader_area]
         clone.destroyed = list(self.destroyed)
+        clone.destroyed_amulets = list(self.destroyed_amulets)
+        clone.played_base_costs = set(self.played_base_costs)
         return clone
 
     @property
@@ -160,6 +176,15 @@ class GameState:
             if c.uid == uid:
                 return c
         return None
+
+    def in_zone(self, inst: CardInstance, zone: str | None) -> bool:
+        """Whether `inst` is still in `zone` ("play", "hand", "deck"; None = anywhere)."""
+        if zone is None:
+            return True
+        if zone == "play":
+            return self.in_play(inst.uid) is inst
+        cards = self.players[inst.owner].hand if zone == "hand" else self.players[inst.owner].deck
+        return any(c is inst for c in cards)
 
     def field_order(self) -> list[CardInstance]:
         """All field cards in trigger order: turn player first, oldest first."""

@@ -35,6 +35,19 @@ class Evolve:
 
 
 @dataclass(frozen=True, slots=True)
+class Engage:
+    uid: int                      # an allied amulet with an Engage ability
+    targets: tuple[int, ...] = ()
+    modes: tuple[int, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class Fuse:
+    uid: int                      # the card in hand being fused to
+    cards: tuple[int, ...] = ()   # the hand cards fused to it
+
+
+@dataclass(frozen=True, slots=True)
 class UseBonusPP:
     pass
 
@@ -44,4 +57,4 @@ class EndTurn:
     pass
 
 
-Action = Mulligan | PlayCard | Attack | Evolve | UseBonusPP | EndTurn
+Action = Mulligan | PlayCard | Attack | Evolve | Engage | Fuse | UseBonusPP | EndTurn

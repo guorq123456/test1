@@ -8,32 +8,45 @@ from __future__ import annotations
 
 from .carddef import CardDef
 from .enums import Keyword
-from .script import CardScript, Ctx, Trigger, script_for
+from .script import (LISTEN_IN_DECK, LISTEN_IN_HAND, CardScript, Ctx, Grant, Trigger, prop,
+                     script_for, scripts_of)
 from .state import (BANISHED, DESTROYED, FIELD_LIMIT, HAND_LIMIT, LEADER_AREA_LIMIT, MAX_PP,
-                    CardInstance, GameState, leader_of, leader_uid)
+                    CardInstance, GameState, PlayerState, leader_of, leader_uid)
 
 UNSELECTABLE = Keyword.AMBUSH | Keyword.AURA
 OVERFLOW_PP = 7
+EARTH_SIGIL = "Earth Sigil"
+DEPARTED = "Departed"
 
 
 # --- triggers -----------------------------------------------------------------
 
 def enqueue(state: GameState, hook: str, source: CardInstance, controller: int,
-            script: CardScript | None = None, **choices) -> None:
-    script = script or script_for(source.defn.card_id)
-    if getattr(script, hook) is not None:
-        state.queue.append(Trigger(hook, Ctx(state, source, controller, **choices), script))
+            script: CardScript | None = None, zone: str | None = "play", **choices) -> None:
+    """Queue `hook` on the card's scripts (its own and granted ones) that have it.
+    `zone` is where the card must still be when the trigger resolves."""
+    for s in ([script] if script is not None else scripts_of(source)):
+        if getattr(s, hook) is not None:
+            state.queue.append(Trigger(hook, Ctx(state, source, controller, **choices), s, zone))
 
 
 def emit(state: GameState, hook: str, player: int | None = None,
          exclude: CardInstance | None = None, **choices) -> None:
-    """Queue a listener hook on every card in play that has it, in trigger order
-    (turn player first, leader area before field, oldest first). `player`
-    limits it to one side."""
-    for inst in state.listeners():
-        if inst is exclude or (player is not None and inst.owner != player):
+    """Queue a listener hook on every card that has it, in trigger order: turn
+    player first; leader area, field, then hand and deck (only cards whose
+    script listens there); oldest first. `player` limits it to one side."""
+    order = (state.active, 1 - state.active)
+    for side in order:
+        if player is not None and side != player:
             continue
-        enqueue(state, hook, inst, inst.owner, **choices)
+        p = state.players[side]
+        for inst in p.leader_area + p.field:
+            if inst is not exclude:
+                enqueue(state, hook, inst, side, **choices)
+        for zone, cards, ids in (("hand", p.hand, LISTEN_IN_HAND), ("deck", p.deck, LISTEN_IN_DECK)):
+            if ids:
+                for inst in [c for c in cards if c.defn.card_id in ids and c is not exclude]:
+                    enqueue(state, hook, inst, side, zone=zone, **choices)
 
 
 # --- queries --------------------------------------------------------------------
@@ -44,9 +57,24 @@ def is_invincible(state: GameState, inst: CardInstance) -> bool:
     return inst.super_evolved and state.active == inst.owner
 
 
+def has_trait(inst: CardInstance, trait: str) -> bool:
+    return trait in inst.defn.traits or trait in ((inst.counters or {}).get("traits") or ())
+
+
+def add_trait(inst: CardInstance, trait: str) -> None:
+    traits = counters(inst).setdefault("traits", [])
+    if trait not in traits:
+        traits.append(trait)
+
+
+def unselectable(inst: CardInstance) -> bool:
+    """Can't be selected by enemy abilities: Ambush, Aura, Earth Sigil amulets."""
+    return bool(inst.keywords & UNSELECTABLE) or (inst.defn.is_amulet and has_trait(inst, EARTH_SIGIL))
+
+
 def selectable_enemies(state: GameState, chooser: int) -> list[CardInstance]:
-    """Enemy followers an ability may select (Ambush and Aura can't be selected)."""
-    return [c for c in state.players[1 - chooser].followers if not c.keywords & UNSELECTABLE]
+    """Enemy followers an ability may select."""
+    return [c for c in state.players[1 - chooser].followers if not unselectable(c)]
 
 
 def leaders_turn_order(state: GameState) -> list[int]:
@@ -58,14 +86,28 @@ def overflow(state: GameState, player: int) -> bool:
     return state.players[player].max_pp >= OVERFLOW_PP
 
 
+def super_evolution_unlocked(state: GameState, player: int) -> bool:
+    p = state.players[player]
+    return p.turns_taken >= (7 if player == state.first else 6)
+
+
 def random_sample(state: GameState, items: list, k: int) -> list:
-    return state.rng.sample(items, min(k, len(items)))
+    return state.rng.sample(list(items), min(k, len(items)))
 
 
 def counters(inst: CardInstance) -> dict:
     if inst.counters is None:
         inst.counters = {}
     return inst.counters
+
+
+def once_per_turn(ctx: Ctx, key: str = "once") -> bool:
+    """True the first time it's asked on a turn (per card and key), False after."""
+    c = counters(ctx.source)
+    if c.get(key) == ctx.state.turn:
+        return False
+    c[key] = ctx.state.turn
+    return True
 
 
 def leader_area_card(state: GameState, player: int, defn: CardDef) -> CardInstance | None:
@@ -75,17 +117,26 @@ def leader_area_card(state: GameState, player: int, defn: CardDef) -> CardInstan
     return None
 
 
+def no_duplicates_in_deck(p: PlayerState) -> bool:
+    ids = [c.defn.card_id for c in p.deck]
+    return len(ids) == len(set(ids))
+
+
 # --- damage, healing, stats -------------------------------------------------------
 
 def hit_follower(state: GameState, inst: CardInstance, amount: int) -> int:
     """Apply damage to one follower without the death check. Returns damage dealt."""
     amount = max(0, amount)
+    cap = prop(inst, "damage_cap")
+    if cap is not None:
+        amount = min(amount, cap)
     if is_invincible(state, inst):
         amount = 0
     if inst.keywords & Keyword.BARRIER:
         inst.keywords &= ~Keyword.BARRIER
         amount = 0
     inst.life -= amount
+    enqueue(state, "on_damaged", inst, inst.owner, amount=amount)
     return amount
 
 
@@ -116,11 +167,31 @@ def damage(state: GameState, targets: list, amount: int, source: CardInstance | 
     return total
 
 
+def split_damage(state: GameState, player: int, amount: int, source: CardInstance | None = None,
+                 followers_only: bool = True) -> None:
+    """Deal `amount` damage split between `player`'s followers, oldest first, each
+    taking up to its defense. Leftover goes to the leader, or to the last follower
+    if only followers are affected."""
+    followers = list(state.players[player].followers)
+    for i, f in enumerate(followers):
+        if amount <= 0:
+            break
+        last = i == len(followers) - 1
+        share = amount if (last and followers_only) else min(amount, max(f.life, 0))
+        hit_follower(state, f, share)
+        amount -= share
+    if amount > 0 and not followers_only:
+        hit_leader(state, player, amount)
+    if source is not None and source.keywords & Keyword.AMBUSH:
+        source.keywords &= ~Keyword.AMBUSH
+    check_deaths(state)
+
+
 def heal_leader(state: GameState, player: int, amount: int) -> int:
     p = state.players[player]
     restored = max(0, min(amount, p.leader_max_hp - p.leader_hp))
     p.leader_hp += restored
-    emit(state, "on_leader_healed", player=player)   # fires even when 0 is restored
+    emit(state, "on_leader_healed", player=player, amount=restored)   # fires even when 0 is restored
     return restored
 
 
@@ -130,21 +201,78 @@ def heal(inst: CardInstance, amount: int) -> int:
     return restored
 
 
-def buff(state: GameState, inst: CardInstance, atk: int, life: int) -> None:
-    """Give +X/+Y (or -X/-Y). Changes defense and max defense; not damage."""
+def buff(state: GameState, inst: CardInstance, atk: int, life: int,
+         until_turn: int | None = None) -> None:
+    """Give +X/+Y (or -X/-Y). Changes defense and max defense; not damage.
+    With `until_turn`, it's undone at the end of that global turn."""
     inst.atk = max(0, inst.atk + atk)
     inst.life += life
     inst.max_life += life
+    if until_turn is not None:
+        inst.grants = (inst.grants or []) + [Grant(until_turn=until_turn, atk=atk, life=life)]
+    if (atk > 0 or life > 0) and state.on_field(inst.uid) is inst:
+        enqueue(state, "on_buffed", inst, inst.owner)
     check_deaths(state)
 
 
-def evolve(state: GameState, inst: CardInstance, super_: bool = False) -> None:
-    """Evolve stats and flags only. Evolve / Super-Evolve abilities fire only for
-    point-based evolution, which the engine handles."""
+def give_keywords(inst: CardInstance, keywords: Keyword, until_turn: int | None = None) -> None:
+    inst.keywords |= keywords
+    if until_turn is not None:
+        inst.grants = (inst.grants or []) + [Grant(until_turn=until_turn, keywords=keywords)]
+
+
+def remove_keywords(inst: CardInstance, keywords: Keyword) -> None:
+    inst.keywords &= ~keywords
+
+
+def grant(inst: CardInstance, script: CardScript, until_turn: int | None = None) -> None:
+    """Give a card an ability: a script whose hooks and properties count as its own."""
+    inst.grants = (inst.grants or []) + [Grant(script=script, until_turn=until_turn)]
+    inst.max_attacks = max(inst.max_attacks, script.attacks_per_turn)
+
+
+def expire(state: GameState, turn: int) -> None:
+    """Undo grants and cost changes lasting until the end of `turn`."""
+    for p in state.players:
+        for inst in p.field + p.hand + p.leader_area + p.deck:
+            if inst.grants and any(g.until_turn is not None and g.until_turn <= turn for g in inst.grants):
+                kept = []
+                for g in inst.grants:
+                    if g.until_turn is not None and g.until_turn <= turn:
+                        inst.atk = max(0, inst.atk - g.atk)
+                        inst.max_life -= g.life
+                        inst.life = min(inst.life, inst.max_life)
+                        inst.keywords &= ~(g.keywords & ~inst.defn.keywords)
+                    else:
+                        kept.append(g)
+                inst.grants = kept or None
+                inst.max_attacks = prop(inst, "attacks_per_turn")
+            if inst.cost_mods and any(u is not None and u <= turn for _, _, u in inst.cost_mods):
+                inst.cost_mods = [m for m in inst.cost_mods if m[2] is None or m[2] > turn] or None
+                recompute_cost(inst)
+    check_deaths(state)
+
+
+def evolve(state: GameState, inst: CardInstance, super_: bool = False, notify: bool = True) -> None:
+    """Evolve stats and flags. Evolve / Super-Evolve abilities fire only for
+    point-based evolution, which the engine handles; "when this follower evolves"
+    and "whenever an allied follower evolves" fire for any evolution."""
     bonus = 3 if super_ else 2
     buff(state, inst, bonus, bonus)
     inst.evolved = True
     inst.super_evolved = super_
+    p = state.players[inst.owner]
+    p.evolutions += 1
+    for card in p.hand:                       # Skybound Art gauges count evolutions in hand
+        if prop(card, "skybound"):
+            counters(card)["skybound"] = counters(card).get("skybound", 0) + 1
+    if notify:
+        notify_evolved(state, inst, super_)
+
+
+def notify_evolved(state: GameState, inst: CardInstance, super_: bool) -> None:
+    enqueue(state, "on_evolved", inst, inst.owner, super_=super_)
+    emit(state, "on_ally_evolve", player=inst.owner, exclude=inst, other=inst, super_=super_)
 
 
 def set_leader_max_hp(state: GameState, player: int, value: int) -> None:
@@ -158,6 +286,38 @@ def give_leader_damage_cap(state: GameState, player: int, cap: int, until_turn: 
     p = state.players[player]
     p.damage_cap = cap
     p.damage_cap_until = until_turn
+
+
+# --- costs ---------------------------------------------------------------------------
+
+def recompute_cost(inst: CardInstance) -> None:
+    """Apply cost changes in the order received: +/-N, set to N, halve (rounding
+    up; 1 stays 1). Reductions can run below 0; the cost shown is never below 0."""
+    running = inst.defn.cost
+    for op, value, _ in inst.cost_mods or ():
+        if op == "add":
+            running += value
+        elif op == "set":
+            running = value
+        elif op == "half":
+            running = (max(running, 0) + 1) // 2
+    inst.cost = max(0, running)
+
+
+def add_cost(inst: CardInstance, n: int, until_turn: int | None = None) -> None:
+    """Increase (n > 0) or reduce (n < 0) a card's cost."""
+    inst.cost_mods = (inst.cost_mods or []) + [("add", n, until_turn)]
+    recompute_cost(inst)
+
+
+def set_cost(inst: CardInstance, n: int, until_turn: int | None = None) -> None:
+    inst.cost_mods = (inst.cost_mods or []) + [("set", n, until_turn)]
+    recompute_cost(inst)
+
+
+def halve_cost(inst: CardInstance, until_turn: int | None = None) -> None:
+    inst.cost_mods = (inst.cost_mods or []) + [("half", 0, until_turn)]
+    recompute_cost(inst)
 
 
 # --- zones -------------------------------------------------------------------------
@@ -178,18 +338,20 @@ def _remove_from_play(state: GameState, inst: CardInstance) -> bool:
     return False
 
 
-def _remove_from_hand(state: GameState, inst: CardInstance) -> bool:
-    hand = state.players[inst.owner].hand
-    for i, c in enumerate(hand):
+def _remove_from(cards: list, inst: CardInstance) -> bool:
+    for i, c in enumerate(cards):
         if c is inst:
-            del hand[i]
+            del cards[i]
             return True
     return False
 
 
 def destroy(state: GameState, inst: CardInstance, by_ability: bool = True) -> bool:
-    if by_ability and is_invincible(state, inst):
+    if by_ability and (is_invincible(state, inst) or prop(inst, "indestructible")
+                       or (inst.defn.is_amulet and has_trait(inst, EARTH_SIGIL))):
         return False
+    if prop(inst, "banish_on_leave"):
+        return banish(state, inst)
     if not _remove_from_play(state, inst):
         return False
     inst.fate = DESTROYED
@@ -197,21 +359,25 @@ def destroy(state: GameState, inst: CardInstance, by_ability: bool = True) -> bo
     if inst.defn.goes_to_field:          # followers and amulets leave a shadow; crests don't
         owner.shadows += 1
     if inst.defn.is_follower:
-        owner.destroyed.append(inst.defn.card_id)
-    enqueue(state, "last_words", inst, inst.owner)
+        owner.destroyed.append(inst.defn)
+    elif inst.defn.is_amulet:
+        owner.destroyed_amulets.append(inst.defn)
+    enqueue(state, "last_words", inst, inst.owner, zone=None)
+    emit(state, "on_card_destroyed", other=inst)
     return True
 
 
 def banish(state: GameState, inst: CardInstance) -> bool:
-    """Remove from play: no shadow, no Last Words."""
-    if not _remove_from_play(state, inst):
+    """Remove from play (or from hand or deck): no shadow, no Last Words."""
+    p = state.players[inst.owner]
+    if not (_remove_from_play(state, inst) or _remove_from(p.hand, inst) or _remove_from(p.deck, inst)):
         return False
     inst.fate = BANISHED
     return True
 
 
 def advance_countdown(state: GameState, inst: CardInstance, n: int = 1) -> None:
-    """Advance a countdown by n; the card is destroyed when it reaches 0."""
+    """Advance a countdown by n (negative n delays it); destroyed when it reaches 0."""
     if inst.countdown is None or state.in_play(inst.uid) is not inst:
         return
     inst.countdown -= n
@@ -227,14 +393,25 @@ def enter_field(state: GameState, inst: CardInstance, count_rally: bool = True,
     inst.entered_turn = state.turn
     inst.order = state.next_order
     state.next_order += 1
-    inst.max_attacks = max(inst.max_attacks, script_for(inst.defn.card_id).attacks_per_turn)
+    inst.max_attacks = max(inst.max_attacks, prop(inst, "attacks_per_turn"))
+    if inst.defn.is_amulet and has_trait(inst, EARTH_SIGIL):
+        sigils = counters(inst).get("sigils") or 1      # merge the earth sigils already on the field
+        for other in [c for c in p.field if c.defn.is_amulet and has_trait(c, EARTH_SIGIL)]:
+            sigils += counters(other).get("sigils", 0)
+            banish(state, other)
+        counters(inst)["sigils"] = sigils
     p.field.append(inst)
     if inst.defn.is_follower:
         if count_rally:
             p.rally += 1
         if notify:
-            emit(state, "on_ally_enter", player=inst.owner, exclude=inst, other=inst)
+            notify_entered(state, inst)
     return True
+
+
+def notify_entered(state: GameState, inst: CardInstance) -> None:
+    emit(state, "on_ally_enter", player=inst.owner, exclude=inst, other=inst)
+    emit(state, "on_enemy_enter", player=1 - inst.owner, other=inst)
 
 
 def summon(state: GameState, owner: int, defn: CardDef) -> CardInstance | None:
@@ -244,6 +421,45 @@ def summon(state: GameState, owner: int, defn: CardDef) -> CardInstance | None:
     inst = state.new_instance(defn, owner)
     enter_field(state, inst)
     return inst
+
+
+def exact_copy(state: GameState, inst: CardInstance, owner: int | None = None) -> CardInstance:
+    """A new card identical to `inst` (damage, buffs, evolution, granted abilities),
+    except for whether it attacked or engaged this turn."""
+    clone = inst.copy()
+    clone.uid = state.next_uid
+    state.next_uid += 1
+    clone.owner = inst.owner if owner is None else owner
+    clone.attacks_made = 0
+    clone.engaged_turn = -1
+    clone.fate = 0
+    return clone
+
+
+def summon_copy(state: GameState, owner: int, inst: CardInstance) -> CardInstance | None:
+    """Summon an exact copy of a card."""
+    if len(state.players[owner].field) >= FIELD_LIMIT:
+        return None
+    clone = exact_copy(state, inst, owner)
+    enter_field(state, clone)
+    return clone
+
+
+def summon_from_deck(state: GameState, player: int, predicate, k: int = 1,
+                     distinct_names: bool = False) -> list[CardInstance]:
+    """Summon k random cards from the deck that match `predicate`."""
+    p = state.players[player]
+    summoned = []
+    for _ in range(k):
+        names = {c.defn.name for c in summoned}
+        matches = [c for c in p.deck if predicate(c) and not (distinct_names and c.defn.name in names)]
+        if not matches or len(p.field) >= FIELD_LIMIT:
+            break
+        card = state.rng.choice(matches)
+        _remove_from(p.deck, card)
+        enter_field(state, card)
+        summoned.append(card)
+    return summoned
 
 
 def add_to_leader_area(state: GameState, player: int, defn: CardDef) -> CardInstance | None:
@@ -259,18 +475,80 @@ def add_to_leader_area(state: GameState, player: int, defn: CardDef) -> CardInst
     return inst
 
 
-def draw(state: GameState, player: int, n: int = 1) -> None:
+def transform(state: GameState, inst: CardInstance, defn: CardDef) -> CardInstance:
+    """Turn a card into another, wherever it is. It keeps its place (and uid) but
+    nothing else; on the field it can't attack until next turn. Not leaving the
+    field: no Last Words, no Fanfare."""
+    inst.defn = defn
+    inst.cost = defn.cost
+    inst.atk, inst.life, inst.max_life = defn.atk, defn.life, defn.life
+    inst.keywords = defn.keywords
+    inst.countdown = defn.countdown
+    inst.evolved = inst.super_evolved = False
+    inst.counters = inst.grants = inst.cost_mods = None
+    inst.attacks_made = 0
+    inst.max_attacks = script_for(defn.card_id).attacks_per_turn
+    inst.engaged_turn = -1
+    if state.on_field(inst.uid) is inst:
+        inst.entered_turn = state.turn
+    return inst
+
+
+def return_to_hand(state: GameState, inst: CardInstance) -> CardInstance | None:
+    """Return a card on the field to its owner's hand, as a fresh copy (damage,
+    buffs and cost changes are gone). A full hand destroys it (a shadow)."""
+    if prop(inst, "banish_on_leave"):
+        banish(state, inst)
+        return None
+    if not _remove_from_play(state, inst):
+        return None
+    p = state.players[inst.owner]
+    if len(p.hand) >= HAND_LIMIT:
+        p.shadows += 1
+        return None
+    fresh = state.new_instance(inst.defn, inst.owner)
+    p.hand.append(fresh)
+    return fresh
+
+
+def return_to_deck(state: GameState, inst: CardInstance) -> None:
+    """Put a card from hand into its owner's deck at a random place. It keeps its
+    cost changes and counters (spellboosts, Skybound gauge)."""
+    p = state.players[inst.owner]
+    if _remove_from(p.hand, inst):
+        p.deck.insert(state.rng.randrange(len(p.deck) + 1), inst)
+
+
+def put_into_deck(state: GameState, player: int, defn: CardDef) -> CardInstance:
     p = state.players[player]
+    inst = state.new_instance(defn, player)
+    p.deck.insert(state.rng.randrange(len(p.deck) + 1), inst)
+    return inst
+
+
+def _to_hand(state: GameState, player: int, card: CardInstance) -> CardInstance | None:
+    p = state.players[player]
+    if len(p.hand) >= HAND_LIMIT:
+        p.shadows += 1               # overdraw: the card is destroyed
+        return None
+    p.hand.append(card)
+    enqueue(state, "on_drawn", card, player, zone="hand")
+    emit(state, "on_draw", player=player, other=card)
+    return card
+
+
+def draw(state: GameState, player: int, n: int = 1) -> list[CardInstance]:
+    p = state.players[player]
+    drawn = []
     for _ in range(n):
         if not p.deck:
             if state.winner is None:
                 state.winner = 1 - player
-            return
-        card = p.deck.pop()
-        if len(p.hand) >= HAND_LIMIT:
-            p.shadows += 1          # overdraw: the card is destroyed
-        else:
-            p.hand.append(card)
+            return drawn
+        card = _to_hand(state, player, p.deck.pop())
+        if card:
+            drawn.append(card)
+    return drawn
 
 
 def draw_matching(state: GameState, player: int, predicate) -> CardInstance | None:
@@ -281,12 +559,8 @@ def draw_matching(state: GameState, player: int, predicate) -> CardInstance | No
     if not matches:
         return None
     card = state.rng.choice(matches)
-    p.deck.remove(card)
-    if len(p.hand) >= HAND_LIMIT:
-        p.shadows += 1
-        return None
-    p.hand.append(card)
-    return card
+    _remove_from(p.deck, card)
+    return _to_hand(state, player, card)
 
 
 def add_to_hand(state: GameState, player: int, defn: CardDef) -> CardInstance | None:
@@ -299,12 +573,128 @@ def add_to_hand(state: GameState, player: int, defn: CardDef) -> CardInstance | 
     return inst
 
 
+def add_copy_to_hand(state: GameState, player: int, inst: CardInstance) -> CardInstance | None:
+    """Add an exact copy of a card (anywhere) to a player's hand."""
+    p = state.players[player]
+    if len(p.hand) >= HAND_LIMIT:
+        p.shadows += 1
+        return None
+    clone = exact_copy(state, inst, player)
+    p.hand.append(clone)
+    return clone
+
+
 def discard(state: GameState, inst: CardInstance) -> bool:
     """Discard a card from hand: it leaves a shadow and its "when discarded" ability fires."""
-    if not _remove_from_hand(state, inst):
+    if not _remove_from(state.players[inst.owner].hand, inst):
         return False
     state.players[inst.owner].shadows += 1
-    enqueue(state, "on_discard", inst, inst.owner)
+    enqueue(state, "on_discard", inst, inst.owner, zone=None)
+    return True
+
+
+# --- class mechanics -----------------------------------------------------------------
+
+def spellboost(state: GameState, player: int, times: int = 1, cards: list | None = None) -> None:
+    """Spellboost the cards in a player's hand (or just `cards`)."""
+    for _ in range(times):
+        for card in list(state.players[player].hand if cards is None else cards):
+            counters(card)["spellboost"] = counters(card).get("spellboost", 0) + 1
+            enqueue(state, "on_spellboost", card, player, zone="hand")
+
+
+def skybound_gauge(state: GameState, card: CardInstance) -> int:
+    """Skybound Art gauge: the owner's turn count plus allied evolutions while the
+    card was in hand (plus any direct increases)."""
+    return state.players[card.owner].turns_taken + counters(card).get("skybound", 0)
+
+
+def skybound_art(ctx: Ctx) -> bool:
+    return skybound_gauge(ctx.state, ctx.source) >= 10
+
+
+def super_skybound_art(ctx: Ctx) -> bool:
+    return skybound_gauge(ctx.state, ctx.source) >= 15
+
+
+def earth_sigil_amulet(state: GameState, player: int) -> CardInstance | None:
+    for c in state.players[player].field:
+        if c.defn.is_amulet and has_trait(c, EARTH_SIGIL):
+            return c
+    return None
+
+
+def earth_sigils(state: GameState, player: int) -> int:
+    amulet = earth_sigil_amulet(state, player)
+    return counters(amulet).get("sigils", 0) if amulet else 0
+
+
+def gain_earth_sigils(state: GameState, player: int, n: int, sediment: CardDef) -> None:
+    """Add n earth sigils to the allied Earth Sigil amulet, or summon a Magic
+    Sediment (`sediment`) holding n if there isn't one."""
+    amulet = earth_sigil_amulet(state, player)
+    if amulet is not None:
+        counters(amulet)["sigils"] = counters(amulet).get("sigils", 0) + n
+        return
+    if len(state.players[player].field) < FIELD_LIMIT:
+        inst = state.new_instance(sediment, player)
+        counters(inst)["sigils"] = n
+        enter_field(state, inst)
+
+
+def earth_rite(state: GameState, player: int, n: int) -> bool:
+    """Earth Rite (n): spend n earth sigils if there are enough. Returns whether it happened."""
+    amulet = earth_sigil_amulet(state, player)
+    if amulet is None or counters(amulet).get("sigils", 0) < n:
+        return False
+    counters(amulet)["sigils"] -= n
+    if counters(amulet)["sigils"] <= 0:
+        destroy(state, amulet, by_ability=False)
+    emit(state, "on_earth_rite", player=player, amount=n)
+    return True
+
+
+def necromancy(state: GameState, player: int, n: int) -> bool:
+    """Necromancy (n): spend n shadows if there are enough."""
+    p = state.players[player]
+    if p.shadows < n:
+        return False
+    p.shadows -= n
+    return True
+
+
+def reanimate(state: GameState, player: int, n: int) -> CardInstance | None:
+    """Reanimate (n): summon a copy of the allied follower with the highest base
+    cost (n or less) destroyed this match, weighted by how often each was
+    destroyed. It gets the Departed trait."""
+    p = state.players[player]
+    eligible = [d for d in p.destroyed if d.cost <= n]
+    if not eligible or len(p.field) >= FIELD_LIMIT:
+        return None
+    top = max(d.cost for d in eligible)
+    defn = state.rng.choice([d for d in eligible if d.cost == top])
+    inst = state.new_instance(defn, player)
+    add_trait(inst, DEPARTED)
+    enter_field(state, inst)
+    return inst
+
+
+def faith_value(state: GameState, player: int, faith: CardDef) -> int:
+    inst = leader_area_card(state, player, faith)
+    return counters(inst).get("value", 0) if inst else 0
+
+
+def change_faith(state: GameState, player: int, faith: CardDef, n: int) -> None:
+    inst = leader_area_card(state, player, faith)
+    if inst is not None:
+        counters(inst)["value"] = counters(inst).get("value", 0) + n
+
+
+def spend_faith(state: GameState, player: int, faith: CardDef, n: int) -> bool:
+    """"Reduce your faith's value by n to ...": only if it has at least n."""
+    if faith_value(state, player, faith) < n:
+        return False
+    change_faith(state, player, faith, -n)
     return True
 
 
@@ -320,3 +710,13 @@ def recover_pp(state: GameState, player: int, n: int) -> None:
     p = state.players[player]
     cap = p.max_pp + (1 if p.bonus_active else 0)
     p.pp = min(cap, p.pp + n)
+
+
+def recover_ep(state: GameState, player: int, n: int = 1) -> None:
+    p = state.players[player]
+    p.ep = min(2, p.ep + n)
+
+
+def recover_sep(state: GameState, player: int, n: int = 1) -> None:
+    p = state.players[player]
+    p.sep = min(2, p.sep + n)

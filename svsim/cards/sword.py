@@ -230,7 +230,7 @@ class SeveredTies(CardScript):
         if ctx.source.cost == 3:
             copy = E.add_to_hand(ctx.state, ctx.controller, SEVERED_TIES)
             if copy:
-                copy.cost = 1
+                E.set_cost(copy, 1)
 
 
 @register(ZETA_AND_BEA.card_id)
@@ -291,7 +291,7 @@ class RoughwaterFirstMate(CardScript):
         for token in (GILDED_BLADE, GILDED_NECKLACE):
             added = E.add_to_hand(ctx.state, ctx.controller, token)
             if added:
-                added.cost = 0
+                E.set_cost(added, 0)
 
     def _raid(self, ctx):
         E.damage(ctx.state, ctx.chosen(), 3, ctx.source)
