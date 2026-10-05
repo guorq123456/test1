@@ -26,8 +26,14 @@ def enqueue(state: GameState, hook: str, source: CardInstance, controller: int,
     """Queue `hook` on the card's scripts (its own and granted ones) that have it.
     `zone` is where the card must still be when the trigger resolves."""
     for s in ([script] if script is not None else scripts_of(source)):
-        if getattr(s, hook) is not None:
-            state.queue.append(Trigger(hook, Ctx(state, source, controller, **choices), s, zone))
+        if getattr(s, hook, None) is None:
+            continue
+        if hook == "last_words" and source.no_last_words and s is script_for(source.defn.card_id):
+            continue                       # its own Last Words were removed; granted ones remain
+        ctx = Ctx(state, source, controller, **choices)
+        if hook in s.queue_checks and not s.queue_condition(hook, ctx):
+            continue
+        state.queue.append(Trigger(hook, ctx, s, zone))
 
 
 def emit(state: GameState, hook: str, player: int | None = None,
@@ -132,8 +138,8 @@ def hit_follower(state: GameState, inst: CardInstance, amount: int) -> int:
         amount = min(amount, cap)
     if is_invincible(state, inst):
         amount = 0
-    if inst.keywords & Keyword.BARRIER:
-        inst.keywords &= ~Keyword.BARRIER
+    if amount > 0 and inst.keywords & Keyword.BARRIER:   # 0 damage doesn't use up Barrier
+        lose_keywords(inst, Keyword.BARRIER)
         amount = 0
     inst.life -= amount
     enqueue(state, "on_damaged", inst, inst.owner, amount=amount)
@@ -143,6 +149,8 @@ def hit_follower(state: GameState, inst: CardInstance, amount: int) -> int:
 def hit_leader(state: GameState, player: int, amount: int) -> int:
     p = state.players[player]
     amount = max(0, amount)
+    if amount > 0:
+        amount += p.extra_damage           # "Takes N more damage"
     if p.damage_cap is not None:
         amount = min(amount, p.damage_cap)
     p.leader_hp -= amount
@@ -162,7 +170,7 @@ def damage(state: GameState, targets: list, amount: int, source: CardInstance | 
         elif state.on_field(target.uid) is target:
             total += hit_follower(state, target, amount)
     if source is not None and total > 0 and source.keywords & Keyword.AMBUSH:
-        source.keywords &= ~Keyword.AMBUSH
+        lose_keywords(source, Keyword.AMBUSH)
     check_deaths(state)
     return total
 
@@ -183,7 +191,7 @@ def split_damage(state: GameState, player: int, amount: int, source: CardInstanc
     if amount > 0 and not followers_only:
         hit_leader(state, player, amount)
     if source is not None and source.keywords & Keyword.AMBUSH:
-        source.keywords &= ~Keyword.AMBUSH
+        lose_keywords(source, Keyword.AMBUSH)
     check_deaths(state)
 
 
@@ -205,24 +213,62 @@ def buff(state: GameState, inst: CardInstance, atk: int, life: int,
          until_turn: int | None = None) -> None:
     """Give +X/+Y (or -X/-Y). Changes defense and max defense; not damage.
     With `until_turn`, it's undone at the end of that global turn."""
+    before = inst.atk
     inst.atk = max(0, inst.atk + atk)
     inst.life += life
     inst.max_life += life
-    if until_turn is not None:
-        inst.grants = (inst.grants or []) + [Grant(until_turn=until_turn, atk=atk, life=life)]
+    if until_turn is not None:              # undo only the attack actually lost (it floors at 0)
+        inst.grants = (inst.grants or []) + [Grant(until_turn=until_turn, atk=inst.atk - before,
+                                                   life=life)]
     if (atk > 0 or life > 0) and state.on_field(inst.uid) is inst:
         enqueue(state, "on_buffed", inst, inst.owner)
     check_deaths(state)
+
+
+PERMANENT_KEYWORDS = "kw"   # counters key: keywords given with no time limit
 
 
 def give_keywords(inst: CardInstance, keywords: Keyword, until_turn: int | None = None) -> None:
     inst.keywords |= keywords
     if until_turn is not None:
         inst.grants = (inst.grants or []) + [Grant(until_turn=until_turn, keywords=keywords)]
+    else:                           # remembered so an expiring copy of the keyword doesn't take it
+        c = counters(inst)
+        c[PERMANENT_KEYWORDS] = c.get(PERMANENT_KEYWORDS, 0) | int(keywords)
 
 
-def remove_keywords(inst: CardInstance, keywords: Keyword) -> None:
+def lose_keywords(inst: CardInstance, keywords: Keyword) -> None:
+    """The card loses keywords (removed, or used up like Barrier and Ambush)."""
     inst.keywords &= ~keywords
+    if inst.counters and inst.counters.get(PERMANENT_KEYWORDS):
+        inst.counters[PERMANENT_KEYWORDS] &= ~int(keywords)
+
+
+remove_keywords = lose_keywords
+
+
+def silence(inst: CardInstance) -> None:
+    """"Remove all abilities": keywords, its own abilities (Last Words included)
+    and abilities given to it so far. Stat changes stay; it can gain abilities again."""
+    inst.silenced = True
+    inst.keywords = Keyword.NONE
+    if inst.counters:
+        inst.counters.pop(PERMANENT_KEYWORDS, None)
+    if inst.grants:
+        inst.grants = [Grant(until_turn=g.until_turn, atk=g.atk, life=g.life)
+                       for g in inst.grants if g.atk or g.life] or None
+    inst.max_attacks = 1
+
+
+def remove_last_words(inst: CardInstance) -> None:
+    """"Remove Last Words from it": its own Last Words; ones given later still work."""
+    inst.no_last_words = True
+
+
+def has_last_words(inst: CardInstance) -> bool:
+    base = script_for(inst.defn.card_id)
+    return any(s.last_words is not None and not (s is base and inst.no_last_words)
+               for s in scripts_of(inst))
 
 
 def grant(inst: CardInstance, script: CardScript, until_turn: int | None = None) -> None:
@@ -236,15 +282,18 @@ def expire(state: GameState, turn: int) -> None:
     for p in state.players:
         for inst in p.field + p.hand + p.leader_area + p.deck:
             if inst.grants and any(g.until_turn is not None and g.until_turn <= turn for g in inst.grants):
-                kept = []
+                kept = [g for g in inst.grants if g.until_turn is None or g.until_turn > turn]
+                still = Keyword((inst.counters or {}).get(PERMANENT_KEYWORDS, 0))
+                if not inst.silenced:
+                    still |= inst.defn.keywords
+                for g in kept:
+                    still |= g.keywords
                 for g in inst.grants:
                     if g.until_turn is not None and g.until_turn <= turn:
                         inst.atk = max(0, inst.atk - g.atk)
                         inst.max_life -= g.life
                         inst.life = min(inst.life, inst.max_life)
-                        inst.keywords &= ~(g.keywords & ~inst.defn.keywords)
-                    else:
-                        kept.append(g)
+                        inst.keywords &= ~(g.keywords & ~still)
                 inst.grants = kept or None
                 inst.max_attacks = prop(inst, "attacks_per_turn")
             if inst.cost_mods and any(u is not None and u <= turn for _, _, u in inst.cost_mods):
@@ -256,7 +305,10 @@ def expire(state: GameState, turn: int) -> None:
 def evolve(state: GameState, inst: CardInstance, super_: bool = False, notify: bool = True) -> None:
     """Evolve stats and flags. Evolve / Super-Evolve abilities fire only for
     point-based evolution, which the engine handles; "when this follower evolves"
-    and "whenever an allied follower evolves" fire for any evolution."""
+    and "whenever an allied follower evolves" fire for any evolution. An evolved
+    follower can't evolve again."""
+    if inst.evolved:
+        return
     bonus = 3 if super_ else 2
     buff(state, inst, bonus, bonus)
     inst.evolved = True
@@ -279,6 +331,8 @@ def set_leader_max_hp(state: GameState, player: int, value: int) -> None:
     p = state.players[player]
     p.leader_max_hp = value
     p.leader_hp = min(p.leader_hp, value)
+    if p.leader_hp <= 0 and state.winner is None:
+        state.winner = 1 - player
 
 
 def give_leader_damage_cap(state: GameState, player: int, cap: int, until_turn: int) -> None:
@@ -347,6 +401,8 @@ def _remove_from(cards: list, inst: CardInstance) -> bool:
 
 
 def destroy(state: GameState, inst: CardInstance, by_ability: bool = True) -> bool:
+    if state.in_play(inst.uid) is not inst:
+        return False
     if by_ability and (is_invincible(state, inst) or prop(inst, "indestructible")
                        or (inst.defn.is_amulet and has_trait(inst, EARTH_SIGIL))):
         return False
@@ -402,6 +458,7 @@ def enter_field(state: GameState, inst: CardInstance, count_rally: bool = True,
         counters(inst)["sigils"] = sigils
     p.field.append(inst)
     if inst.defn.is_follower:
+        p.entered[inst.defn.card_id] = p.entered.get(inst.defn.card_id, 0) + 1
         if count_rally:
             p.rally += 1
         if notify:
@@ -410,6 +467,9 @@ def enter_field(state: GameState, inst: CardInstance, count_rally: bool = True,
 
 
 def notify_entered(state: GameState, inst: CardInstance) -> None:
+    """Queue reactions to a follower entering the field: its own "when this
+    follower enters the field", then other cards' "whenever ... enters"."""
+    enqueue(state, "on_enter", inst, inst.owner)
     emit(state, "on_ally_enter", player=inst.owner, exclude=inst, other=inst)
     emit(state, "on_enemy_enter", player=1 - inst.owner, other=inst)
 
@@ -485,6 +545,7 @@ def transform(state: GameState, inst: CardInstance, defn: CardDef) -> CardInstan
     inst.keywords = defn.keywords
     inst.countdown = defn.countdown
     inst.evolved = inst.super_evolved = False
+    inst.silenced = inst.no_last_words = False
     inst.counters = inst.grants = inst.cost_mods = None
     inst.attacks_made = 0
     inst.max_attacks = script_for(defn.card_id).attacks_per_turn
@@ -497,6 +558,8 @@ def transform(state: GameState, inst: CardInstance, defn: CardDef) -> CardInstan
 def return_to_hand(state: GameState, inst: CardInstance) -> CardInstance | None:
     """Return a card on the field to its owner's hand, as a fresh copy (damage,
     buffs and cost changes are gone). A full hand destroys it (a shadow)."""
+    if state.in_play(inst.uid) is not inst:
+        return None
     if prop(inst, "banish_on_leave"):
         banish(state, inst)
         return None

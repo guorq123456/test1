@@ -93,6 +93,7 @@ class CardScript:
     # --- choices, folded into the action that uses them ---
     play_targets: tuple[TargetSpec, ...] = ()
     evolve_targets: tuple[TargetSpec, ...] = ()
+    super_evolve_targets: tuple[TargetSpec, ...] | None = None   # None = same as evolve_targets
     engage_targets: tuple[TargetSpec, ...] = ()
     enhance: tuple[int, ...] = ()        # Enhance costs; the highest affordable one is paid
     modes: tuple[int, int] | None = None  # (number of options, how many to pick)
@@ -113,6 +114,15 @@ class CardScript:
     damage_cap: int | None = None        # "Can't take more than N damage at a time"
     cant_attack: bool = False            # "Can't attack followers or leaders"
     banish_on_leave: bool = False        # "When this card leaves the field, banish it"
+    ignores_ward: bool = False           # "Ignores Ward": can attack past enemy Ward
+    suppresses_fanfare: bool = False     # in play: allied followers' Fanfare and Enhance don't activate
+    queue_checks: tuple[str, ...] = ()   # hooks whose condition is checked when they trigger
+
+    def queue_condition(self, hook: str, ctx: Ctx) -> bool:
+        """For hooks in queue_checks: whether the ability triggers at all. Checked
+        when the trigger is queued ("At the end of your turn, if this follower is
+        evolved"), not when it resolves."""
+        return True
 
     def all_modes(self, state, card, enhanced: int) -> bool:
         """Whether every mode activates ("... Activate all of them instead")."""
@@ -144,6 +154,7 @@ class CardScript:
     on_invoked = None        # "When this card is Invoked"
     on_buffed = None         # given +attack or +defense on the field
     on_damaged = None        # took damage (even 0); ctx.amount
+    on_enter = None          # "When this card enters the field": played, summoned or invoked
 
     # --- listener hooks: cards in play (or in hand / deck if listen_in_*) ---
     on_play = None           # controller played another card; ctx.other, ctx.enhanced, ctx.as_spell
@@ -161,7 +172,7 @@ class CardScript:
 HOOKS = ("fanfare", "cast", "last_words", "on_evolve", "on_super_evolve", "on_evolved", "strike",
          "follower_strike", "leader_strike", "clash", "engage", "on_turn_start", "on_turn_end",
          "on_opponent_turn_start", "on_opponent_turn_end", "on_discard", "on_drawn",
-         "on_spellboost", "on_fuse", "on_invoked", "on_buffed", "on_damaged", "on_play",
+         "on_spellboost", "on_fuse", "on_invoked", "on_buffed", "on_damaged", "on_enter", "on_play",
          "on_ally_enter", "on_enemy_enter", "on_ally_evolve", "on_attack", "on_card_destroyed",
          "on_engage", "on_earth_rite", "on_draw", "on_leader_healed")
 
@@ -210,8 +221,9 @@ class Grant:
 
 
 def scripts_of(inst: CardInstance) -> list[CardScript]:
-    """The card's own script followed by any granted ones."""
-    base = script_for(inst.defn.card_id)
+    """The card's own script followed by any granted ones. A card whose abilities
+    were removed has no script of its own."""
+    base = _EMPTY if inst.silenced else script_for(inst.defn.card_id)
     if not inst.grants:
         return [base]
     return [base] + [g.script for g in inst.grants if g.script is not None]
@@ -220,7 +232,7 @@ def scripts_of(inst: CardInstance) -> list[CardScript]:
 def prop(inst: CardInstance, name: str):
     """A static property of the card, counting granted scripts: the strongest
     value for numbers, True if any script says so for flags."""
-    if not inst.grants:
+    if not inst.grants and not inst.silenced:
         return getattr(script_for(inst.defn.card_id), name)
     values = [getattr(s, name) for s in scripts_of(inst)]
     if name == "damage_cap":

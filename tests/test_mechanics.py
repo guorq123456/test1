@@ -422,3 +422,167 @@ def test_hand_cards_get_turn_hooks_when_active_in_hand():
     state.players[0].combo = 2
     apply(state, EndTurn())
     assert incense.cost == 3
+
+
+# --- Engine follow-ups: rules the full pool needs ------------------------------------------
+
+PIERCER = CardDef(7021, "Piercer", N, F, 2, 2, 2, Keyword.STORM)   # Ignores Ward
+HERALD = CardDef(7022, "Herald", N, F, 2, 1, 1)        # when this enters the field, log it
+CHOOSER = CardDef(7023, "Chooser", N, F, 3, 2, 2)      # Super-Evolve: select an enemy follower
+MUTER = CardDef(7024, "Muter Crest", N, CardType.CREST, 0)   # allied Fanfare / Enhance off
+LOOKOUT = CardDef(7025, "Lookout", N, F, 2, 2, 2)      # end of turn, if evolved: log it
+
+
+@register(PIERCER.card_id)
+class Piercer(CardScript):
+    ignores_ward = True
+
+
+@register(HERALD.card_id)
+class Herald(CardScript):
+    def on_enter(self, ctx):
+        LOG.append(("enters", ctx.source.uid))
+
+
+@register(CHOOSER.card_id)
+class Chooser(CardScript):
+    super_evolve_targets = (TargetSpec(Target.ENEMY_FOLLOWER),)
+
+    def on_super_evolve(self, ctx):
+        E.destroy(ctx.state, ctx.chosen()[0])
+
+
+@register(MUTER.card_id)
+class Muter(CardScript):
+    suppresses_fanfare = True
+
+
+@register(LOOKOUT.card_id)
+class Lookout(CardScript):
+    queue_checks = ("on_turn_end",)
+
+    def queue_condition(self, hook, ctx):
+        return ctx.source.evolved
+
+    def on_turn_end(self, ctx):
+        LOG.append("lookout")
+
+
+class EvolveOtherAtTurnEnd(CardScript):
+    def on_turn_end(self, ctx):
+        for f in ctx.me.followers:
+            E.evolve(ctx.state, f)
+
+
+def test_ignores_ward():
+    state = start(first=0)
+    piercer = put(state, 0, PIERCER, ready=False)
+    raider = put(state, 0, demo.RAIDER, ready=False)
+    footman = put(state, 1, demo.FOOTMAN)
+    wall = put(state, 1, demo.SHIELDBEARER)
+    attacks = {(a.attacker, a.target) for a in legal_actions(state) if isinstance(a, Attack)}
+    assert {(piercer.uid, footman.uid), (piercer.uid, wall.uid), (piercer.uid, leader_uid(1)),
+            (raider.uid, wall.uid)} == attacks
+
+
+def test_on_enter_fires_however_it_enters():
+    state = start(first=0)
+    set_pp(state, 0, 2)
+    played = give(state, 0, HERALD)
+    apply(state, PlayCard(played.uid))
+    summoned = E.summon(state, 0, HERALD)
+    resolve_queue(state)
+    assert LOG == [("enters", played.uid), ("enters", summoned.uid)]
+    assert state.players[0].entered[HERALD.card_id] == 2
+
+
+def test_super_evolve_only_targets():
+    state = start(first=0)
+    unlock_evolution(state, 0)
+    chooser = put(state, 0, CHOOSER)
+    enemy = put(state, 1, demo.FOOTMAN)
+    evolves = [a for a in legal_actions(state) if isinstance(a, Evolve)]
+    assert set(evolves) == {Evolve(chooser.uid, False, ()), Evolve(chooser.uid, True, (enemy.uid,))}
+    apply(state, Evolve(chooser.uid, True, (enemy.uid,)))
+    assert enemy.fate == DESTROYED
+
+
+def test_fanfare_and_enhance_suppressed():
+    state = start(first=0)
+    E.add_to_leader_area(state, 0, MUTER)
+    set_pp(state, 0, 6)
+    mage = give(state, 0, demo.MAGE)                       # Enhance (6): +3/+3
+    archer = give(state, 0, demo.ARCHER)                   # Fanfare: 1 damage
+    apply(state, PlayCard(mage.uid))
+    assert (mage.atk, mage.life, state.players[0].pp) == (2, 2, 3)   # paid 3, not 6
+    enemy = put(state, 1, demo.SHIELDBEARER)
+    apply(state, PlayCard(archer.uid, (enemy.uid,)))
+    assert enemy.life == 3
+
+
+def test_queue_checked_condition_uses_the_moment_it_triggers():
+    state = start(first=0)
+    lookout = put(state, 0, LOOKOUT)
+    E.grant(lookout, EvolveOtherAtTurnEnd())               # evolves it during the same end of turn
+    apply(state, EndTurn())
+    assert lookout.evolved and LOG == []
+    apply(state, EndTurn())
+    apply(state, EndTurn())
+    assert LOG == ["lookout"]
+
+
+def test_silence_and_remove_last_words():
+    state = start(first=0)
+    bomber = put(state, 1, demo.BOMBER)                    # Last Words: 2 damage to enemy leader
+    angel = put(state, 1, demo.ANGEL)                      # Barrier
+    E.buff(state, angel, 1, 1)
+    E.grant(angel, TwoAttacks())
+    E.silence(angel)
+    assert angel.keywords == Keyword.NONE and (angel.atk, angel.life) == (3, 4)
+    assert not E.has_last_words(angel) and E.has_last_words(bomber)
+    E.remove_last_words(bomber)
+    assert not E.has_last_words(bomber)
+    E.destroy(state, bomber)
+    resolve_queue(state)
+    assert state.players[0].leader_hp == 20
+    golem = put(state, 1, GOLEM)                           # damage cap 2, indestructible
+    E.silence(golem)
+    assert E.destroy(state, golem)
+
+
+def test_barrier_survives_zero_damage_and_invincibility():
+    state = start(first=0)
+    angel = put(state, 1, demo.ANGEL)
+    E.damage(state, [angel], 0)
+    assert angel.has(Keyword.BARRIER)
+    E.damage(state, [angel], 2)
+    assert not angel.has(Keyword.BARRIER) and angel.life == 3
+
+
+def test_timed_keywords_and_debuffs_expire_cleanly():
+    state = start(first=0)
+    footman = put(state, 0, demo.FOOTMAN)                  # 1/2
+    E.give_keywords(footman, Keyword.WARD, until_turn=state.turn)
+    E.give_keywords(footman, Keyword.WARD)                 # also permanently
+    E.buff(state, footman, -3, 0, until_turn=state.turn)   # attack floors at 0
+    apply(state, EndTurn())
+    assert footman.has(Keyword.WARD) and footman.atk == 1
+
+
+def test_leader_takes_extra_damage():
+    state = start(first=0)
+    state.players[1].extra_damage = 1
+    E.damage(state, [leader_uid(1)], 3)
+    E.damage(state, [leader_uid(1)], 0)
+    assert state.players[1].leader_hp == 16
+
+
+def test_buffed_hand_cards_are_not_merged():
+    state = start(first=0)
+    set_pp(state, 0, 1)
+    a, b = give(state, 0, demo.FOOTMAN), give(state, 0, demo.FOOTMAN)
+    for c in list(state.players[0].hand):
+        if c is not a and c is not b:
+            E.discard(state, c)
+    b.atk = 3
+    assert {x.uid for x in legal_actions(state) if isinstance(x, PlayCard)} == {a.uid, b.uid}

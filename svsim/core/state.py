@@ -51,6 +51,8 @@ class CardInstance:
     fate: int = IN_PLAY
     engaged_turn: int = -1        # global turn of the last Engage
     fused_turn: int = -1          # global turn of the last Fuse to this card
+    silenced: bool = False        # "remove all abilities": its own script no longer applies
+    no_last_words: bool = False   # "remove Last Words": its own Last Words don't activate
     counters: dict | None = None  # per-card script state (e.g. a stack count)
     grants: list | None = None    # script.Grant: abilities and stats given by effects
     cost_mods: list | None = None # (op, value, until_turn) cost changes, applied in order
@@ -108,6 +110,8 @@ class PlayerState:
     attacked_leader_last_turn: bool = False    # "if an allied follower attacked a leader on your last turn"
     damage_cap: int | None = None  # leader "can't take more than N damage at a time"
     damage_cap_until: int = 0      # global turn at whose end damage_cap expires
+    extra_damage: int = 0          # leader "takes N more damage"
+    entered: dict = dc_field(default_factory=dict)   # card_id -> allied follower entries this match
 
     def copy(self) -> "PlayerState":
         clone = copy.copy(self)
@@ -118,6 +122,7 @@ class PlayerState:
         clone.destroyed = list(self.destroyed)
         clone.destroyed_amulets = list(self.destroyed_amulets)
         clone.played_base_costs = set(self.played_base_costs)
+        clone.entered = dict(self.entered)
         return clone
 
     @property

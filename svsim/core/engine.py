@@ -18,7 +18,8 @@ from . import effects as E
 from .actions import Action, Attack, EndTurn, Engage, Evolve, Fuse, Mulligan, PlayCard, UseBonusPP
 from .carddef import CardDef
 from .enums import DRAW, Keyword, Phase
-from .script import INVOKERS, LISTEN_IN_HAND, CardScript, Target, TargetSpec, prop, script_for
+from .script import (INVOKERS, LISTEN_IN_HAND, CardScript, Ctx, Target, TargetSpec, Trigger, prop,
+                     script_for)
 from .state import (DESTROYED, FIELD_LIMIT, MAX_PP, CardInstance, GameState, PlayerState,
                     leader_of, leader_uid)
 
@@ -86,12 +87,19 @@ def play_form(p: PlayerState, card: CardInstance) -> PlayForm | None:
         return None
     if card.cost <= p.pp:
         enhanced = max((cost for cost in script.enhance if cost <= p.pp), default=0)
+        if enhanced and card.defn.is_follower and fanfare_suppressed(p):
+            enhanced = 0
         return PlayForm(enhanced or card.cost, script, enhanced, card.defn.is_spell, None)
     alts = [a for a in (card.defn.accelerate, card.defn.crystallize) if a is not None and a.cost <= p.pp]
     if alts:
         alt = max(alts, key=lambda a: a.cost)
         return PlayForm(alt.cost, script_for(alt.card_id), 0, alt.is_spell, alt)
     return None
+
+
+def fanfare_suppressed(p: PlayerState) -> bool:
+    """Whether the player's followers' Fanfare and Enhance abilities don't activate."""
+    return any(prop(c, "suppresses_fanfare") for c in p.leader_area + p.field)
 
 
 def selectable(state: GameState, chooser: int, spec: TargetSpec, source: int | None = None) -> list[int]:
@@ -131,7 +139,8 @@ def selectable(state: GameState, chooser: int, spec: TargetSpec, source: int | N
 def _signature(card: CardInstance) -> tuple:
     """Cards with the same signature are interchangeable for choosing actions."""
     extra = repr(sorted(card.counters.items())) if card.counters else ""
-    return card.defn.card_id, card.cost, int(card.keywords), extra, len(card.grants or ())
+    return (card.defn.card_id, card.cost, card.atk, card.life, int(card.keywords), extra,
+            len(card.grants or ()))
 
 
 def _distinct(state: GameState, chooser: int, combos: list) -> list:
@@ -197,16 +206,15 @@ def _attack_actions(state: GameState, p: PlayerState) -> list[Action]:
     attackable = [c for c in enemy.followers
                   if not c.keywords & (Keyword.AMBUSH | Keyword.INTIMIDATE)]
     wards = [c for c in attackable if c.keywords & Keyword.WARD]
-    if wards:
-        attackable = wards
     actions = []
     for f in p.followers:
         if f.attacks_made >= f.max_attacks or prop(f, "cant_attack"):
             continue
+        blocked = bool(wards) and not prop(f, "ignores_ward")
         fresh = f.entered_turn == state.turn
         if not fresh or f.evolved or f.keywords & (Keyword.STORM | Keyword.RUSH):
-            actions += [Attack(f.uid, t.uid) for t in attackable]
-        if not wards and (not fresh or f.keywords & Keyword.STORM):
+            actions += [Attack(f.uid, t.uid) for t in (wards if blocked else attackable)]
+        if not blocked and (not fresh or f.keywords & Keyword.STORM):
             actions.append(Attack(f.uid, leader_uid(enemy.index)))
     return actions
 
@@ -224,14 +232,15 @@ def _evolve_actions(state: GameState, p: PlayerState) -> list[Action]:
         if f.evolved:
             continue
         script = script_for(f.defn.card_id)
-        target_sets = _target_sets(state, p.index, script.evolve_targets, required=False, source=f.uid)
         mode_sets = _mode_sets(script.evolve_modes, False)
-        for targets in target_sets:
-            for modes in mode_sets:
-                if can_evolve:
-                    actions.append(Evolve(f.uid, False, targets, modes))
-                if can_super:
-                    actions.append(Evolve(f.uid, True, targets, modes))
+        for super_ in (False, True):
+            if not (can_super if super_ else can_evolve):
+                continue
+            specs = script.evolve_targets
+            if super_ and script.super_evolve_targets is not None:
+                specs = script.super_evolve_targets
+            for targets in _target_sets(state, p.index, specs, required=False, source=f.uid):
+                actions += [Evolve(f.uid, super_, targets, modes) for modes in mode_sets]
     return actions
 
 
@@ -334,6 +343,14 @@ def _turn_hooks(state: GameState, hook: str, p: PlayerState) -> None:
         E.enqueue(state, hook, card, p.index, zone="hand")
 
 
+class _EndOfTurnInvoke(CardScript):
+    def check(self, ctx):
+        _invoke(ctx.state, ctx.me, "turn_end")
+
+
+_END_OF_TURN_INVOKE = _EndOfTurnInvoke()
+
+
 def _invoke(state: GameState, p: PlayerState, when: str) -> None:
     """Invoke cards from the deck whose condition holds (one copy of each card)."""
     invoked = set()
@@ -381,7 +398,10 @@ def _end_turn(state: GameState) -> None:
     other = state.players[1 - state.active]
     _turn_hooks(state, "on_turn_end", p)
     _turn_hooks(state, "on_opponent_turn_end", other)
-    _invoke(state, p, "turn_end")
+    # End-of-turn Invokes are checked after the end-of-turn abilities resolve but
+    # before what they trigger (official Q&A: Azvaldt is destroyed, Zerael is
+    # invoked, then Azvaldt's Last Words resolve).
+    state.queue.append(Trigger("check", Ctx(state, None, p.index), _END_OF_TURN_INVOKE, None))
     resolve_queue(state)
     if p.bonus_active and p.pp >= 1:
         p.bonus_ready = True           # unspent: the use is cancelled, not consumed
@@ -426,7 +446,8 @@ def _play(state: GameState, action: PlayCard) -> None:
         return
     if form.alt is not None:           # Crystallize: it enters the field in its amulet form
         E.transform(state, card, form.alt)
-    E.enqueue(state, "fanfare", card, p.index, script=form.script, **choices)
+    if not (card.defn.is_follower and fanfare_suppressed(p)):
+        E.enqueue(state, "fanfare", card, p.index, script=form.script, **choices)
     E.enter_field(state, card, count_rally=False, notify=False)
     E.emit(state, "on_play", player=p.index, exclude=card, **played)
     if card.defn.is_follower:
@@ -440,7 +461,7 @@ def _attack(state: GameState, action: Attack) -> None:
     p = state.players[state.active]
     attacker = state.on_field(action.attacker)
     attacker.attacks_made += 1
-    attacker.keywords &= ~Keyword.AMBUSH
+    E.lose_keywords(attacker, Keyword.AMBUSH)
     enemy = 1 - p.index
 
     if leader_of(action.target) is not None:
