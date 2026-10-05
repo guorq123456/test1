@@ -10,3 +10,6 @@ data/raw/
 
 # Games saved by tools.play (share them by their replay code)
 replays/
+
+# Builds of the in-browser version (python -m svsim.tools.web --build)
+dist/
