@@ -57,7 +57,7 @@ def test_spell_needs_every_target():
 
 
 def test_reactions_are_queued_when_the_card_is_played():
-    """ASSUMPTION (to confirm): a flag summoned by L'Age d'Or doesn't see that spell."""
+    """Confirmed by a player: a flag summoned by L'Age d'Or isn't advanced by it."""
     state = start()
     old = put(state, 0, sword.DREAD_PIRATES_FLAG)
     set_pp(state, 0, 4)

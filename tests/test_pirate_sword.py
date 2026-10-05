@@ -248,7 +248,7 @@ def test_yidmetra_evolve_spends_five_faith_for_a_buff_ability():
 
 
 def test_yidmetra_evolve_without_five_faith_does_nothing():
-    """ASSUMPTION (to confirm): below 5 faith, nothing happens."""
+    """Confirmed by a player: below 5 faith, nothing happens."""
     state = start(deck=[sword.YIDMETRA] + [demo.FOOTMAN] * 39)
     faith = E.leader_area_card(state, 0, sword.ELD_SWORD_FAITH)
     E.counters(faith)["value"] = 4
@@ -256,6 +256,37 @@ def test_yidmetra_evolve_without_five_faith_does_nothing():
     yidmetra = put(state, 0, sword.YIDMETRA)
     apply(state, Evolve(yidmetra.uid))
     assert faith.counters == {"value": 4}
+
+
+def test_yidmetra_buff_abilities_stack():
+    """Confirmed by a player: two evolved Yidmetras give +2/+2 per Enhanced card."""
+    state = start(deck=[sword.YIDMETRA] + [demo.FOOTMAN] * 39)
+    faith = E.leader_area_card(state, 0, sword.ELD_SWORD_FAITH)
+    E.counters(faith)["value"] = 10
+    unlock_evolution(state, 0)
+    first, second = put(state, 0, sword.YIDMETRA), put(state, 0, sword.YIDMETRA)
+    apply(state, Evolve(first.uid))
+    apply(state, EndTurn())
+    apply(state, EndTurn())                          # one point evolution per turn
+    apply(state, Evolve(second.uid))
+    assert faith.counters == {"value": 0, "buffs": 2}
+    ally = put(state, 0, demo.FOOTMAN)               # 1/2
+    set_pp(state, 0, 5)
+    card = give(state, 0, sword.SPLENDOR_OF_THE_GOLDBLOOM)
+    apply(state, PlayCard(card.uid))
+    assert (ally.atk, ally.life) == (3, 4)
+
+
+def test_faith_buff_includes_the_enhanced_follower_itself():
+    """Confirmed by a player: the Enhanced follower that triggers the buff gets it too."""
+    state = start(deck=[sword.YIDMETRA] + [demo.FOOTMAN] * 39)
+    faith = E.leader_area_card(state, 0, sword.ELD_SWORD_FAITH)
+    E.counters(faith)["buffs"] = 1
+    set_pp(state, 0, 6)
+    zeta = give(state, 0, sword.ZETA_AND_BEA)
+    apply(state, PlayCard(zeta.uid))                 # Enhance (6)
+    twin = state.players[0].field[-1]
+    assert (zeta.atk, zeta.life) == (4, 3) and (twin.atk, twin.life) == (4, 3)
 
 
 def test_gilded_tokens():

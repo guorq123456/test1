@@ -147,7 +147,8 @@ class GlitteringGold(CardScript):
 class EldSwordFaith(CardScript):
     """Value starts at 0; +1 whenever you play an Enhanced card. Yidmetra's Evolve
     can give it "Whenever you play an Enhanced card, give all allied followers on
-    the field +1/+1" (counted in counters["buffs"])."""
+    the field +1/+1" (counted in counters["buffs"]; grants stack, and the Enhanced
+    follower that triggered it is buffed too: both confirmed by a player)."""
 
     def on_play(self, ctx):
         if not ctx.enhanced:
@@ -193,9 +194,9 @@ class Yidmetra(CardScript):
         if faith is None:
             return
         counters = E.counters(faith)
-        if counters.get("value", 0) >= 5:      # ASSUMPTION: nothing happens below 5
+        if counters.get("value", 0) >= 5:      # below 5 nothing happens (confirmed)
             counters["value"] -= 5
-            counters["buffs"] = counters.get("buffs", 0) + 1   # ASSUMPTION: grants stack
+            counters["buffs"] = counters.get("buffs", 0) + 1
 
 
 @register(OPEN_SEA_SCOUT.card_id)

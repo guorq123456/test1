@@ -303,7 +303,8 @@ def _play(state: GameState, action: PlayCard) -> None:
     """Order: the card's own ability, then cards reacting to "you played a card"
     (leader area before field), then reactions to a follower entering the field.
     Reactions are queued when the card is played, so cards that appear while it
-    resolves don't react to it."""
+    resolves don't react to it (confirmed: a flag summoned by L'Age d'Or isn't
+    advanced by that L'Age d'Or)."""
     p = state.players[state.active]
     card = state.in_hand(p.index, action.uid)
     paid, script, enhanced, as_spell = play_form(p, card)
