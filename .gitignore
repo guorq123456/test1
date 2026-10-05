@@ -4,3 +4,6 @@ __pycache__/
 *.egg-info/
 # Official card data is Cygames content: fetch it locally, don't commit it.
 data/raw/
+
+# Agent worktrees
+.claude/worktrees/
