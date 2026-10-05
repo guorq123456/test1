@@ -14,6 +14,7 @@ from .enums import Keyword, Phase
 
 HAND_LIMIT = 9
 FIELD_LIMIT = 5
+LEADER_AREA_LIMIT = 5
 MAX_PP = 10
 LEADER_HP = 20
 
@@ -89,13 +90,17 @@ class PlayerState:
     deck: list[CardInstance] = dc_field(default_factory=list)   # top of deck = last element
     hand: list[CardInstance] = dc_field(default_factory=list)
     field: list[CardInstance] = dc_field(default_factory=list)  # oldest first
+    leader_area: list[CardInstance] = dc_field(default_factory=list)  # crests and faiths, oldest first
     destroyed: list[int] = dc_field(default_factory=list)       # card_ids of allied followers destroyed (Reanimate)
+    damage_cap: int | None = None  # leader "can't take more than N damage at a time"
+    damage_cap_until: int = 0      # global turn at whose end damage_cap expires
 
     def copy(self) -> "PlayerState":
         clone = copy.copy(self)
         clone.deck = [c.copy() for c in self.deck]
         clone.hand = [c.copy() for c in self.hand]
         clone.field = [c.copy() for c in self.field]
+        clone.leader_area = [c.copy() for c in self.leader_area]
         clone.destroyed = list(self.destroyed)
         return clone
 
@@ -139,6 +144,17 @@ class GameState:
                     return c
         return None
 
+    def in_play(self, uid: int) -> CardInstance | None:
+        """A card on either field or in either leader area."""
+        for p in self.players:
+            for c in p.field:
+                if c.uid == uid:
+                    return c
+            for c in p.leader_area:
+                if c.uid == uid:
+                    return c
+        return None
+
     def in_hand(self, player: int, uid: int) -> CardInstance | None:
         for c in self.players[player].hand:
             if c.uid == uid:
@@ -150,6 +166,12 @@ class GameState:
         a = self.players[self.active].field
         b = self.players[1 - self.active].field
         return list(a) + list(b)
+
+    def listeners(self) -> list[CardInstance]:
+        """Everything that can react to an event, in trigger order: turn player's
+        leader area, then field, then the other player's leader area and field."""
+        a, b = self.players[self.active], self.players[1 - self.active]
+        return a.leader_area + a.field + b.leader_area + b.field
 
     @property
     def over(self) -> bool:

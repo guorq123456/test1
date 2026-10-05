@@ -17,14 +17,18 @@ def _card(c: CardInstance) -> dict:
                     keywords=str(c.keywords))
     if c.countdown is not None:
         info["countdown"] = c.countdown
+    if c.counters:
+        info["counters"] = dict(c.counters)
     return info
 
 
 def observe(state: GameState, player: int) -> dict:
     me, opp = state.players[player], state.players[1 - player]
-    side = lambda p: {"leader_hp": p.leader_hp, "pp": p.pp, "max_pp": p.max_pp, "ep": p.ep,
+    side = lambda p: {"leader_hp": p.leader_hp, "leader_max_hp": p.leader_max_hp,
+                      "damage_cap": p.damage_cap, "pp": p.pp, "max_pp": p.max_pp, "ep": p.ep,
                       "sep": p.sep, "deck": len(p.deck), "shadows": p.shadows,
-                      "field": [_card(c) for c in p.field]}
+                      "field": [_card(c) for c in p.field],
+                      "leader_area": [_card(c) for c in p.leader_area]}
     return {"turn": state.turn, "active": state.active, "you": player,
             "me": {**side(me), "hand": [_card(c) for c in me.hand]},
             "opponent": {**side(opp), "hand": len(opp.hand)}}

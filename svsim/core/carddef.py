@@ -24,6 +24,8 @@ class CardDef:
     is_token: bool = False
     text: str = ""                    # printed ability text, for display and review
     related: tuple[int, ...] = ()     # tokens this card can create (official related_card_ids)
+    faith: "CardDef | None" = None    # faith put in the leader area at match start
+    accelerate: "CardDef | None" = None  # spell form played when the normal cost can't be paid
 
     @property
     def is_follower(self) -> bool:
@@ -39,4 +41,4 @@ class CardDef:
 
     @property
     def goes_to_field(self) -> bool:
-        return self.type != CardType.SPELL
+        return self.type in (CardType.FOLLOWER, CardType.AMULET, CardType.COUNTDOWN_AMULET)

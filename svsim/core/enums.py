@@ -11,6 +11,10 @@ class CardType(IntEnum):
     AMULET = 2
     COUNTDOWN_AMULET = 3
     SPELL = 4
+    # Not official `type` values: leader-area objects, which the official data
+    # lists under `specific_effect_card_info` (1 = crest, 4 = faith).
+    CREST = 11
+    FAITH = 12
 
 
 class Craft(IntEnum):

@@ -43,7 +43,7 @@ BY_ID = {c.card_id: c for c in ALL}
 
 @register(ARCHER.card_id)
 class Archer(CardScript):
-    play_target = TargetSpec(Target.ENEMY_FOLLOWER)
+    play_targets = (TargetSpec(Target.ENEMY_FOLLOWER),)
 
     def fanfare(self, ctx):
         E.damage(ctx.state, ctx.chosen(), 1, ctx.source)
@@ -57,7 +57,7 @@ class Bomber(CardScript):
 
 @register(FIREBOLT.card_id)
 class Firebolt(CardScript):
-    play_target = TargetSpec(Target.ENEMY_FOLLOWER)
+    play_targets = (TargetSpec(Target.ENEMY_FOLLOWER),)
 
     def cast(self, ctx):
         E.damage(ctx.state, ctx.chosen(), 3, ctx.source)

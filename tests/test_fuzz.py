@@ -2,9 +2,10 @@
 import random
 
 from svsim.agents.random_agent import RandomAgent, play_game
+from svsim.cards import decks
 from svsim.cards.demo import demo_deck
 from svsim.core.engine import apply, legal_actions, new_game
-from svsim.core.state import FIELD_LIMIT, HAND_LIMIT, MAX_PP
+from svsim.core.state import FIELD_LIMIT, HAND_LIMIT, LEADER_AREA_LIMIT, MAX_PP
 from svsim.core.view import determinize
 
 
@@ -12,6 +13,8 @@ def check_invariants(state, action):
     assert not state.queue
     for p in state.players:
         assert len(p.field) <= FIELD_LIMIT and len(p.hand) <= HAND_LIMIT
+        assert len(p.leader_area) <= LEADER_AREA_LIMIT
+        assert p.leader_hp <= p.leader_max_hp
         assert 0 <= p.max_pp <= MAX_PP and 0 <= p.pp <= p.max_pp + 1
         assert p.ep >= 0 and p.sep >= 0
         assert all(c.life > 0 for c in p.followers), action
@@ -28,6 +31,25 @@ def test_random_games_hold_invariants():
         state = new_game(deck, deck, seed=g)
         winner = play_game(state, agents(g), on_action=check_invariants)
         assert winner in (0, 1, -1)
+
+
+def test_starter_decks_random_games():
+    pirate, ramp = decks.build(decks.PIRATE_SWORD), decks.build(decks.RAMP_DRAGON)
+    for g in range(150):
+        d0, d1 = (pirate, ramp) if g % 2 == 0 else (ramp, pirate)
+        state = new_game(d0, d1, seed=1000 + g)
+        assert play_game(state, agents(g), on_action=check_invariants) in (0, 1, -1)
+
+
+def test_starter_decks_replay_deterministically():
+    pirate, ramp = decks.build(decks.PIRATE_SWORD), decks.build(decks.RAMP_DRAGON)
+    logs = []
+    for _ in range(2):
+        log = []
+        state = new_game(pirate, ramp, seed=99)
+        play_game(state, agents(5), on_action=lambda s, a: log.append(a))
+        logs.append((log, state.winner, repr(state.players)))
+    assert logs[0] == logs[1]
 
 
 def test_same_seed_same_game():

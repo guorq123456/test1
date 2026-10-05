@@ -46,10 +46,33 @@ def parse_countdown(skill_text: str) -> int | None:
     return None
 
 
-def card_from_record(detail: dict, related: tuple[int, ...] = ()) -> CardDef:
+# specific_effect_type values in the official data
+SPECIAL_CREST, SPECIAL_CRYSTALLIZE, SPECIAL_ACCELERATE, SPECIAL_FAITH = 1, 2, 3, 4
+
+
+def special_from_record(special_id: int, info: dict, parent_name: str, craft: Craft) -> CardDef:
+    """A leader-area object or alternate play form listed under specific_effect_card_info."""
+    kind = info.get("specific_effect_type")
+    skill = info.get("skill_text") or ""
+    if kind == SPECIAL_CREST:
+        return CardDef(special_id, f"Crest: {parent_name}", craft, CardType.CREST, 0,
+                       countdown=parse_countdown(skill), text=plain_text(skill))
+    if kind == SPECIAL_FAITH:
+        return CardDef(special_id, f"Faith of {parent_name}", craft, CardType.FAITH, 0,
+                       text=plain_text(skill))
+    card_type = CardType.SPELL if kind == SPECIAL_ACCELERATE else CardType.AMULET
+    suffix = "Accelerate" if kind == SPECIAL_ACCELERATE else "Crystallize"
+    return CardDef(special_id, f"{parent_name} ({suffix})", craft, card_type, info.get("cost") or 0,
+                   text=plain_text(skill))
+
+
+def card_from_record(detail: dict, related: tuple[int, ...] = (),
+                     specials: tuple[CardDef, ...] = ()) -> CardDef:
     c = detail["common"]
     card_type = CardType(c["type"])
     skill = c.get("skill_text") or ""
+    faith = next((d for d in specials if d.type == CardType.FAITH), None)
+    accelerate = next((d for d in specials if d.type == CardType.SPELL), None)
     return CardDef(
         card_id=c["card_id"],
         name=c["name"],
@@ -63,11 +86,14 @@ def card_from_record(detail: dict, related: tuple[int, ...] = ()) -> CardDef:
         is_token=bool(c.get("is_token")),
         text=plain_text(skill),
         related=related,
+        faith=faith,
+        accelerate=accelerate,
     )
 
 
 def load_cards(paths) -> dict[int, CardDef]:
-    """Load CardDefs from saved card list responses (one or more files)."""
+    """Load CardDefs from saved card list responses (one or more files). Crests,
+    faiths and Accelerate / Crystallize forms are included under their own ids."""
     cards: dict[int, CardDef] = {}
     for path in paths:
         data = json.loads(Path(path).read_text(encoding="utf-8"))["data"]
@@ -75,8 +101,17 @@ def load_cards(paths) -> dict[int, CardDef]:
         if not isinstance(details, dict):      # sets with no cards come back as []
             continue
         links = data.get("cards") or {}
+        special_info = data.get("specific_effect_card_info") or {}
         for key, detail in details.items():
-            related = tuple((links.get(key) or {}).get("related_card_ids") or ())
-            card = card_from_record(detail, related)
+            link = links.get(key) or {}
+            common = detail["common"]
+            specials = tuple(
+                special_from_record(sid, special_info[str(sid)], common["name"],
+                                    Craft(common["class"]))
+                for sid in link.get("specific_effect_card_ids") or ()
+                if str(sid) in special_info)
+            card = card_from_record(detail, tuple(link.get("related_card_ids") or ()), specials)
             cards[card.card_id] = card
+            for special in specials:
+                cards[special.card_id] = special
     return cards

@@ -31,6 +31,7 @@ class Evolve:
     uid: int
     super_: bool = False
     targets: tuple[int, ...] = ()
+    modes: tuple[int, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
