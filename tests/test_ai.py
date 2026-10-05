@@ -1,0 +1,143 @@
+"""Evaluation, the greedy agent and ISMCTS. Synthetic cards use ids 7151+."""
+import random
+
+from svsim.agents.greedy_agent import GreedyAgent, mulligan
+from svsim.agents.mcts_agent import MCTSAgent, full_game_agent
+from svsim.cards import demo
+from svsim.core import effects as E
+from svsim.core.actions import Attack, EndTurn, Mulligan, PlayCard
+from svsim.core.carddef import CardDef
+from svsim.core.engine import legal_actions, new_game
+from svsim.core.enums import CardType, Craft
+from svsim.core.script import CardScript, register
+from svsim.core.state import leader_uid
+from svsim.core.view import determinize
+from svsim.search.evaluate import WIN, after_end_of_turn, evaluate, threat
+from svsim.search.lethal import state_key
+from svsim.search.mcts import ISMCTS, action_key
+
+from helpers import give, put, set_pp, start
+
+BEACON = CardDef(7151, "Beacon", Craft.NEUTRAL, CardType.AMULET, 2)   # end of turn: 3 to the enemy leader
+
+
+@register(BEACON.card_id)
+class Beacon(CardScript):
+    def on_turn_end(self, ctx):
+        E.damage(ctx.state, [leader_uid(1 - ctx.controller)], 3, ctx.source)
+
+
+def position(pp: int = 0):
+    state = start(first=0)
+    for p in state.players:
+        p.hand.clear()
+    set_pp(state, 0, pp)
+    return state
+
+
+def test_evaluation_prefers_more_board_and_fears_lethal():
+    state = position()
+    base = evaluate(state, 0)
+    put(state, 0, demo.GIANT)
+    assert evaluate(state, 0) > base and evaluate(state, 1) < evaluate(state, 0)
+    calm = evaluate(state, 0)
+    state.players[0].leader_hp = 4
+    put(state, 1, demo.GIANT)                               # 5 attack next turn: lethal
+    assert threat(state, 1) >= 4
+    assert evaluate(state, 0) < calm - 10
+    state.winner = 0
+    assert evaluate(state, 0) == WIN and evaluate(state, 1) == -WIN
+
+
+def test_end_of_turn_preview_stops_before_the_opponent_turn():
+    state = position()
+    put(state, 0, BEACON)
+    hand = len(state.players[1].hand)
+    after = after_end_of_turn(state)
+    assert after.players[1].leader_hp == 17 and not after.over
+    assert len(after.players[1].hand) == hand              # the opponent hasn't drawn
+    assert state.players[1].leader_hp == 20                # the original is untouched
+
+
+def test_greedy_takes_a_winning_attack_and_otherwise_ends_the_turn():
+    state = position()
+    state.players[1].leader_hp = 3
+    lancer = put(state, 0, demo.LANCER)
+    agent = GreedyAgent()
+    assert agent.act(state, legal_actions(state)) == Attack(lancer.uid, leader_uid(1))
+    state = position()
+    assert agent.act(state, legal_actions(state)) == EndTurn()
+
+
+def test_greedy_trades_into_a_threat():
+    state = position()
+    state.players[0].leader_hp = 5
+    giant = put(state, 1, demo.GIANT)                       # would kill next turn
+    assassin = put(state, 0, demo.ASSASSIN)                 # 1/1 Bane
+    agent = GreedyAgent()
+    assert agent.act(state, legal_actions(state)) == Attack(assassin.uid, giant.uid)
+
+
+def test_mulligan_redraws_expensive_cards():
+    state = new_game([demo.FOOTMAN] * 20 + [demo.GIANT] * 20, [demo.FOOTMAN] * 40, seed=1, first=0)
+    action = mulligan(state)
+    hand = state.players[0].hand
+    assert isinstance(action, Mulligan)
+    assert [hand[i].defn for i in action.indices] == [c.defn for c in hand if c.cost >= 5]
+
+
+def test_action_keys_match_across_determinizations():
+    state = position(pp=3)
+    card = give(state, 0, demo.FIREBOLT)
+    enemy = put(state, 1, demo.GIANT)
+    action = PlayCard(card.uid, (enemy.uid,))
+    rng = random.Random(0)
+    keys = {action_key(determinize(state, 0, rng), action) for _ in range(5)}
+    assert len(keys) == 1
+
+
+def test_ismcts_finds_the_kill_and_leaves_the_state_alone():
+    state = position()
+    state.players[1].leader_hp = 2
+    wall = put(state, 1, demo.SHIELDBEARER)                 # 1/3 Ward: the Giant clears it
+    giant, raider = put(state, 0, demo.GIANT), put(state, 0, demo.RAIDER)
+    before = state_key(state)
+    first = ISMCTS(iterations=300, seed=1).choose(state)
+    assert state_key(state) == before
+    assert first == Attack(giant.uid, wall.uid)             # then the Raider wins
+    assert raider.uid in (a.attacker for a in legal_actions(state) if isinstance(a, Attack))
+
+
+def test_ismcts_prefers_removing_a_lethal_threat():
+    state = position(pp=2)
+    state.players[0].leader_hp = 5
+    giant = put(state, 1, demo.GIANT)
+    firebolt = give(state, 0, demo.FIREBOLT)                # 3 damage: not enough alone
+    assassin = put(state, 0, demo.ASSASSIN)                 # Bane kills it
+    choice = ISMCTS(iterations=300, seed=2).choose(state)
+    assert choice == Attack(assassin.uid, giant.uid) or (
+        isinstance(choice, PlayCard) and choice.uid == firebolt.uid)
+
+
+def test_full_game_agent_plays_legal_moves_to_the_end():
+    state = new_game([demo.FOOTMAN, demo.LANCER, demo.GIANT, demo.FIREBOLT] * 10,
+                     [demo.FOOTMAN, demo.RAIDER, demo.SHIELDBEARER, demo.ARCHER] * 10, seed=4)
+    agents = [full_game_agent(iterations=20, seed=0), MCTSAgent(iterations=20, seed=1)]
+    from svsim.core.engine import apply
+    while not state.over:
+        actions = legal_actions(state)
+        action = agents[state.active].act(state, actions)
+        assert action in actions
+        apply(state, action)
+    assert state.winner in (0, 1, -1)
+
+
+def test_play_tool_runs_a_scripted_game():
+    from svsim.tools.play import load_deck, run
+    replies = iter(["0 1", "h", "l", "x"] + ["e"] * 200)
+    out = []
+    winner = run(load_deck("pirate"), load_deck("ramp"), ai_spec="greedy", seed=3, you_first=True,
+                 ask=lambda prompt: next(replies), say=out.append)
+    assert winner == 1                                      # ending every turn loses
+    text = "\n".join(out)
+    assert "AI 会这样走" in text and "AI：" in text and "AI 赢了" in text
