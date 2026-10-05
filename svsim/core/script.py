@@ -164,6 +164,7 @@ class CardScript:
     on_ally_evolve = None    # another allied follower evolved; ctx.other, ctx.super_
     on_attack = None         # a follower (either side) attacked; ctx.other = attacker, ctx.target
     on_card_destroyed = None  # a card (either side) was destroyed; ctx.other
+    on_ally_leave = None     # an allied follower left the field (destroyed, banished, returned); ctx.other
     on_engage = None         # controller engaged an amulet; ctx.other
     on_earth_rite = None     # controller performed an Earth Rite; ctx.amount = sigils spent
     on_draw = None           # controller drew a card; ctx.other
@@ -175,7 +176,7 @@ HOOKS = ("fanfare", "cast", "last_words", "on_evolve", "on_super_evolve", "on_ev
          "on_opponent_turn_start", "on_opponent_turn_end", "on_discard", "on_drawn",
          "on_spellboost", "on_fuse", "on_invoked", "on_buffed", "on_damaged", "on_enter", "on_play",
          "on_ally_enter", "on_enemy_enter", "on_ally_evolve", "on_attack", "on_card_destroyed",
-         "on_engage", "on_earth_rite", "on_draw", "on_leader_healed")
+         "on_ally_leave", "on_engage", "on_earth_rite", "on_draw", "on_leader_healed")
 
 _EMPTY = CardScript()
 _SCRIPTS: dict[int, CardScript] = {}

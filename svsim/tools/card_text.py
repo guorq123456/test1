@@ -14,7 +14,7 @@ import json
 from pathlib import Path
 import re
 
-from svsim.cards.pool import POOL
+from svsim.cards.pool import POOL, ROTATION_IDS
 from svsim.core.enums import KEYWORD_NAMES, CardType, Craft
 from svsim.core.script import has_script
 
@@ -82,12 +82,14 @@ def main() -> None:
     parser.add_argument("--craft", required=True, choices=[c.name.lower() for c in Craft])
     parser.add_argument("--set", type=int, help="only this card_set_id (e.g. 10009)")
     parser.add_argument("--todo", action="store_true", help="only cards without a script")
+    parser.add_argument("--unlimited", action="store_true", help="also list non-Rotation cards")
     parser.add_argument("--raw", type=Path, default=Path("data/raw"))
     args = parser.parse_args()
     register_all()
     details, specials = load(args.raw)
     craft = Craft[args.craft.upper()]
     cards = sorted((c for c in POOL.values() if c.craft == craft
+                    and (args.unlimited or c.card_id in ROTATION_IDS)
                     and c.type not in (CardType.CREST, CardType.FAITH) and c.card_set),
                    key=lambda c: (-c.card_set if c.card_set < 90000 else 0, c.card_id))
     shown = 0

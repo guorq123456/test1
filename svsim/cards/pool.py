@@ -1,8 +1,10 @@
-"""The Rotation card pool: gameplay stats for every card the simulator knows.
+"""The card pool: gameplay stats for every card the simulator knows.
 
-Loaded from data/rotation.json, which `python -m svsim.tools.build_pool`
+Loaded from data/rotation.json (the Rotation pool and what it generates) and
+data/unlimited.json (every other card), which `python -m svsim.tools.build_pool`
 generates from local official data. It has no ability text: abilities live in
-the per-craft script modules, registered by card id.
+the script modules, registered by card id. Every Rotation card has a script;
+Unlimited cards only have one where a supported Unlimited deck needs it.
 """
 import json
 from pathlib import Path
@@ -10,7 +12,7 @@ from pathlib import Path
 from svsim.core.carddef import CardDef
 from svsim.core.enums import KEYWORD_NAMES, CardType, Craft, Keyword
 
-_PATH = Path(__file__).with_name("data") / "rotation.json"
+_DATA = Path(__file__).with_name("data")
 _TYPES = {"follower": CardType.FOLLOWER, "amulet": CardType.AMULET,
           "countdown_amulet": CardType.COUNTDOWN_AMULET, "spell": CardType.SPELL}
 _SPECIAL_TYPES = {"crest": CardType.CREST, "faith": CardType.FAITH,
@@ -26,9 +28,9 @@ def _keywords(names: list[str]) -> Keyword:
     return result
 
 
-def _load() -> dict[int, CardDef]:
-    records = json.loads(_PATH.read_text(encoding="utf-8"))
-    cards: dict[int, CardDef] = {}
+def _load(path: Path, cards: dict[int, CardDef]) -> set[int]:
+    """Add one table's cards to `cards`; returns their ids."""
+    records = json.loads(path.read_text(encoding="utf-8"))
     for r in records:                       # special forms first: cards link to them
         if "special" in r:
             kind = r["special"]
@@ -47,10 +49,12 @@ def _load() -> dict[int, CardDef]:
             related=tuple(r["related"]), faith=cards.get(r.get("faith")),
             accelerate=cards.get(r.get("accelerate")), crystallize=cards.get(r.get("crystallize")),
             name_zh=r["zh"], card_set=r["set"], rotation=r["rot"], has_ability=r["ability"])
-    return cards
+    return {r["id"] for r in records}
 
 
-POOL: dict[int, CardDef] = _load()
+POOL: dict[int, CardDef] = {}
+ROTATION_IDS: frozenset[int] = frozenset(_load(_DATA / "rotation.json", POOL))
+UNLIMITED_IDS: frozenset[int] = frozenset(_load(_DATA / "unlimited.json", POOL))
 _BY_NAME = {c.name: c for c in POOL.values() if c.type not in (CardType.CREST, CardType.FAITH)}
 
 
@@ -62,9 +66,11 @@ def by_name(name: str) -> CardDef:
     return _BY_NAME[name]
 
 
-def collectible(craft: Craft | None = None) -> list[CardDef]:
-    """Deck-buildable Rotation cards, optionally for one craft (plus Neutral)."""
-    cards = [c for c in POOL.values() if c.rotation]
+def collectible(craft: Craft | None = None, unlimited: bool = False) -> list[CardDef]:
+    """Deck-buildable cards (Rotation, or every set with `unlimited`), optionally
+    for one craft (plus Neutral)."""
+    cards = [c for c in POOL.values() if c.rotation or (
+        unlimited and c.card_set and not c.is_token and c.type not in (CardType.CREST, CardType.FAITH))]
     if craft is not None:
         cards = [c for c in cards if c.craft in (craft, Craft.NEUTRAL)]
     return sorted(cards, key=lambda c: c.card_id)

@@ -4,7 +4,7 @@ import random
 
 from svsim.agents.random_agent import RandomAgent, play_game
 from svsim.cards import decks, library
-from svsim.cards.pool import POOL, collectible
+from svsim.cards.pool import POOL, ROTATION_IDS, collectible
 from svsim.core.engine import new_game
 from svsim.core.enums import Craft
 
@@ -15,7 +15,7 @@ assert library.__all__
 
 
 def test_every_card_with_abilities_has_a_script():
-    missing = decks.unimplemented(POOL.values())
+    missing = decks.unimplemented(POOL[i] for i in ROTATION_IDS)
     assert missing == [], [f"{c.card_id} {c.name}" for c in missing[:20]]
 
 

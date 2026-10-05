@@ -1,14 +1,17 @@
-"""Build svsim/cards/data/rotation.json: gameplay stats for the Rotation pool.
+"""Build svsim/cards/data/rotation.json (and unlimited.json): gameplay stats for
+the card pool.
 
     python -m svsim.tools.fetch_cards --lang en
     python -m svsim.tools.fetch_cards --lang chs
-    python -m svsim.tools.build_pool
+    python -m svsim.tools.build_pool                      # rotation.json
+    python -m svsim.tools.build_pool --format unlimited   # unlimited.json: the rest
 
 The table holds what the engine needs (cost, stats, keywords, traits, links to
 tokens and special forms) and display names, but no ability text or art. It
 covers every Rotation card, every card they can generate, and their crests,
-faiths and Accelerate / Crystallize forms. Rebuild after each set release or
-balance patch.
+faiths and Accelerate / Crystallize forms. The Unlimited table holds every other
+card (and what it can generate) that isn't already in the Rotation table.
+Rebuild after each set release or balance patch.
 """
 import argparse
 import json
@@ -42,14 +45,19 @@ def keyword_names(skill_text: str) -> list[str]:
     return [name for name, flag in KEYWORD_NAMES.items() if flags & flag]
 
 
-def build(raw_dir: Path) -> list[dict]:
+def build(raw_dir: Path, unlimited: bool = False) -> list[dict]:
     en, links, specials, tribes = load(raw_dir, "en")
     zh = load(raw_dir, "chs")[0]
-    pool = {cid for cid, c in en.items() if c.get("is_include_rotation") and not c.get("is_token")}
+    rotation = {cid for cid, c in en.items() if c.get("is_include_rotation") and not c.get("is_token")}
+    if unlimited:
+        known = {r["id"] for r in build(raw_dir)}
+        pool = {cid for cid, c in en.items() if not c.get("is_token") and cid not in known}
+    else:
+        known, pool = set(), rotation
     frontier = list(pool)
     while frontier:                      # everything those cards can create, transitively
         for related in (links.get(frontier.pop()) or {}).get("related_card_ids") or ():
-            if related in en and related not in pool:
+            if related in en and related not in pool and related not in known:
                 pool.add(related)
                 frontier.append(related)
     records = []
@@ -85,13 +93,15 @@ def build(raw_dir: Path) -> list[dict]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--raw", type=Path, default=Path("data/raw"))
-    parser.add_argument("--out", type=Path, default=Path("svsim/cards/data/rotation.json"))
+    parser.add_argument("--format", choices=("rotation", "unlimited"), default="rotation")
+    parser.add_argument("--out", type=Path)
     args = parser.parse_args()
-    records = build(args.raw)
+    out = args.out or Path(f"svsim/cards/data/{args.format}.json")
+    records = build(args.raw, unlimited=args.format == "unlimited")
     lines = ",\n".join(json.dumps(r, ensure_ascii=False, separators=(",", ":")) for r in records)
-    args.out.write_text("[\n" + lines + "\n]\n", encoding="utf-8")
+    out.write_text("[\n" + lines + "\n]\n", encoding="utf-8")
     specials = sum(1 for r in records if "special" in r)
-    print(f"{args.out}: {len(records) - specials} cards, {specials} special forms")
+    print(f"{out}: {len(records) - specials} cards, {specials} special forms")
 
 
 if __name__ == "__main__":

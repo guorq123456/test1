@@ -420,13 +420,24 @@ def destroy(state: GameState, inst: CardInstance, by_ability: bool = True) -> bo
         owner.destroyed_amulets.append(inst.defn)
     enqueue(state, "last_words", inst, inst.owner, zone=None)
     emit(state, "on_card_destroyed", other=inst)
+    _left_field(state, inst)
     return True
+
+
+def _left_field(state: GameState, inst: CardInstance) -> None:
+    """A follower left the field (not by transforming): tell its owner's cards."""
+    if inst.defn.is_follower:
+        emit(state, "on_ally_leave", player=inst.owner, other=inst)
 
 
 def banish(state: GameState, inst: CardInstance) -> bool:
     """Remove from play (or from hand or deck): no shadow, no Last Words."""
     p = state.players[inst.owner]
-    if not (_remove_from_play(state, inst) or _remove_from(p.hand, inst) or _remove_from(p.deck, inst)):
+    if _remove_from_play(state, inst):
+        inst.fate = BANISHED
+        _left_field(state, inst)
+        return True
+    if not (_remove_from(p.hand, inst) or _remove_from(p.deck, inst)):
         return False
     inst.fate = BANISHED
     return True
@@ -565,6 +576,7 @@ def return_to_hand(state: GameState, inst: CardInstance) -> CardInstance | None:
         return None
     if not _remove_from_play(state, inst):
         return None
+    _left_field(state, inst)
     p = state.players[inst.owner]
     if len(p.hand) >= HAND_LIMIT:
         p.shadows += 1

@@ -10,7 +10,7 @@ from svsim.core.carddef import CardDef
 from svsim.core.enums import Craft
 from svsim.core.script import has_script
 
-from . import deckcode, dragon, neutral, sword
+from . import deckcode, dragon, forest, neutral, sword, unlimited
 from .pool import POOL, collectible
 
 DECK_SIZE = 40
@@ -32,6 +32,18 @@ RAMP_DRAGON = {
     dragon.BURNITE: 3, dragon.ERNTZ: 3,
 }
 
+# Unlimited: "Rhinoceroach Forest" (破魔虫精灵), from the player's deck list (2026-10-05).
+# Killer Rhinoceroach gains +1 attack per card played this turn and has Storm; the
+# deck plays cheap cards and returns it to hand to play it again and again.
+RHINO_FOREST = {
+    neutral.WORLD_OF_GAMES: 3, forest.SPROUTING_INITIATE: 3, unlimited.FAIRY_CONVOCATION: 3,
+    unlimited.BABY_CARBUNCLE: 2, unlimited.GARDENS_ALLURE: 3, unlimited.KILLER_RHINOCEROACH: 3,
+    unlimited.GODWOOD_STAFF: 2, unlimited.BAYLE: 3, forest.SATHANID: 2, forest.BUG_ALERT: 3,
+    unlimited.ERADICATING_ARROW: 3, forest.VIRID_LIEUTENANT: 1, unlimited.LAMBENT_CAIRN: 3,
+    forest.MIROKU: 3, unlimited.GLADE: 3,
+}
+UNLIMITED_DECKS = {"rhino": RHINO_FOREST}
+
 # Every card the simulator knows, by id (deck cards, tokens, leader-area objects).
 KNOWN: dict[int, CardDef] = POOL
 
@@ -45,8 +57,9 @@ def craft_of(deck: list[CardDef]) -> Craft:
     return crafts.pop() if len(crafts) == 1 else Craft.NEUTRAL
 
 
-def validate(deck: list[CardDef], craft: Craft | None = None) -> list[str]:
-    """Problems that make a deck illegal (empty list = legal)."""
+def validate(deck: list[CardDef], craft: Craft | None = None, unlimited: bool = False) -> list[str]:
+    """Problems that make a deck illegal (empty list = legal) in Rotation, or in
+    Unlimited with `unlimited`."""
     craft = craft_of(deck) if craft is None else craft
     problems = []
     if len(deck) != DECK_SIZE:
@@ -58,7 +71,7 @@ def validate(deck: list[CardDef], craft: Craft | None = None) -> list[str]:
             problems.append(f"{card.name} is a token")
         if card.craft not in (Craft.NEUTRAL, craft):
             problems.append(f"{card.name} is not {craft.name.title()} or Neutral")
-        if card.card_set and not card.rotation and not card.is_token:
+        if card.card_set and not card.rotation and not card.is_token and not unlimited:
             problems.append(f"{card.name} is not legal in Rotation")
     return problems
 

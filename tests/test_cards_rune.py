@@ -3,7 +3,7 @@ import random
 
 from svsim.agents.random_agent import RandomAgent, play_game
 from svsim.cards import demo, rune
-from svsim.cards.pool import POOL, collectible
+from svsim.cards.pool import POOL, ROTATION_IDS, collectible
 from svsim.core import effects as E
 from svsim.core.actions import Attack, EndTurn, Engage, Evolve, Fuse, PlayCard
 from svsim.core.engine import apply, legal_actions, new_game, resolve_queue
@@ -53,7 +53,7 @@ class ThreeAttacks(CardScript):
 # --- coverage ------------------------------------------------------------------------------
 
 def test_every_rune_card_with_abilities_has_a_script():
-    rune_cards = [c for c in POOL.values() if c.craft == Craft.RUNE]
+    rune_cards = [POOL[i] for i in ROTATION_IDS if POOL[i].craft == Craft.RUNE]
     missing = [c.name for c in rune_cards if needs_script(c) and not has_script(c.card_id)]
     assert missing == []
     assert not any(has_script(i) for i in KEYWORDS_ONLY)
