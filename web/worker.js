@@ -6,6 +6,19 @@
 // calls Session.<method>(*args) and answers {id, result} as JSON text.
 "use strict";
 let call = null;
+let stdlibZip = null;          // the packed standard library, handed to Pyodide from memory
+const errors = [];             // Pyodide's error output, reported if loading fails
+
+// Pyodide fetches the standard library by URL. Strict hosts refuse fetching
+// blob: URLs, so the request is answered here from memory instead.
+const realFetch = self.fetch.bind(self);
+self.fetch = (input, init) => {
+  const url = input instanceof Request ? input.url : String(input);     // a string or a URL object
+  if (stdlibZip && url.endsWith("python_stdlib.zip")) {
+    return Promise.resolve(new Response(stdlibZip, {headers: {"Content-Type": "application/zip"}}));
+  }
+  return realFetch(input, init);
+};
 
 const CRC = new Uint32Array(256).map((_, n) => {
   let c = n;
@@ -52,9 +65,11 @@ async function json(url) {
 async function boot() {
   postMessage({type: "progress", text: "正在加载 Python 运行时（第一次约 20 MB，之后会快很多）……"});
   importScripts("pyodide/pyodide.js");
-  const stdlib = await json("pyodide/python_stdlib.json");
-  const stdLibURL = URL.createObjectURL(storedZip(stdlib));
-  const py = await loadPyodide({indexURL: new URL("pyodide/", self.location).href, stdLibURL});
+  stdlibZip = storedZip(await json("pyodide/python_stdlib.json"));
+  const py = await loadPyodide({
+    indexURL: new URL("pyodide/", self.location).href,
+    stderr: (line) => { errors.push(line); if (errors.length > 20) errors.shift(); },
+  });
   postMessage({type: "progress", text: "正在加载模拟器和卡池……"});
   const files = await json("svsim.json");
   for (const [path, text] of Object.entries(files)) {
@@ -74,7 +89,10 @@ def call(method, args_json):
   postMessage({type: "ready"});
 }
 
-const ready = boot().catch((e) => postMessage({type: "fatal", text: String(e && e.message || e)}));
+const ready = boot().catch((e) => {
+  const detail = errors.filter(Boolean).slice(-4).join(" / ");
+  postMessage({type: "fatal", text: String(e && e.message || e) + (detail ? `（${detail}）` : "")});
+});
 
 onmessage = async (ev) => {
   const {id, method, args} = ev.data;
