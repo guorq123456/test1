@@ -53,7 +53,7 @@ def run(you_deck, ai_deck, ai_spec: str = "mcts:400", seed: int | None = None,
     seed = random.randrange(10 ** 9) if seed is None else seed
     first = None if you_first is None else (0 if you_first else 1)
     state = new_game(you_deck, ai_deck, seed=seed, first=first)
-    record = records.new_record(you_deck, ai_deck, seed, state.first, ai_spec)
+    record = records.new_record(you_deck, ai_deck, seed, state.first, ai_spec, first_arg=first)
     ai = make_agent(ai_spec, seed)
     say(f"对局种子 {seed}；你{'先手' if state.first == 0 else '后手'}。")
 

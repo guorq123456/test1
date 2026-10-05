@@ -5,6 +5,7 @@ import threading
 import urllib.request
 import zipfile
 from http.server import HTTPServer
+from pathlib import Path
 
 from svsim.core.engine import legal_actions
 from svsim.tools import records
@@ -112,3 +113,89 @@ def test_the_build_has_the_page_the_package_and_pyodide(tmp_path):
     assert not any("__pycache__" in n for n in package)
     stdlib = json.loads((out / "pyodide" / "python_stdlib.json").read_text(encoding="utf-8"))
     assert stdlib == {"encodings/__init__.py": "# stdlib"}
+
+
+def _fingerprint(state) -> list:
+    return [[[c.uid for c in p.hand], [(c.uid, c.atk, c.life) for c in p.field], p.leader_hp, p.pp, len(p.deck)]
+            for p in state.players]
+
+
+def _half_game(first: str, level: str = "strong", turns: int = 6):
+    """A session part-way through a game, the player's moves picked at random."""
+    session, rng = Session(), random.Random(2)
+    view = session.start("rhino", "ramp", level, 195489856, first)
+    while not view["over"] and session.state.turn <= turns:
+        if view["active"] == 1:
+            view = session.ai_step()
+        elif view.get("mulligan"):
+            view = session.mulligan([1])
+        else:
+            moves = [a for a in view["actions"] if a["type"] != "EndTurn"]
+            end = next(a for a in view["actions"] if a["type"] == "EndTurn")
+            view = session.act((rng.choice(moves) if moves and rng.random() < 0.7 else end)["i"])
+    return session
+
+
+def _replay(record: dict):
+    """The final position of a replay, asserting every action was legal where it was taken."""
+    state = None
+    for state, action in records.steps(record):
+        assert action in legal_actions(state)
+    return state                          # steps() applies each action after yielding it, the last one too
+
+
+def test_a_game_with_a_random_first_player_replays():
+    # Drawing the first player uses up a random number: the replay must draw it too.
+    session = _half_game("random")
+    record = json.loads(json.dumps(session.record_data()))
+    assert record["first_arg"] is None
+    assert _fingerprint(_replay(record)) == _fingerprint(session.state)
+    # Records saved before first_arg existed (the first games played on the phone) still replay.
+    old = {k: v for k, v in record.items() if k != "first_arg"}
+    assert _fingerprint(_replay(old)) == _fingerprint(session.state)
+
+
+def test_replaying_in_a_fresh_python_process_gives_the_same_game(tmp_path):
+    # The replay must not depend on what else the process has loaded (it once missed
+    # the card scripts: Lambent Cairn then added no Fairy) or on string hashing.
+    import subprocess
+    import sys
+    session = _half_game("random")
+    path = tmp_path / "game.json"
+    path.write_text(json.dumps(session.record_data()))
+    code = ("import json, sys\n"
+            "from svsim.tools import records\n"
+            "from svsim.core.actions import from_dict\n"
+            "from svsim.core.engine import apply\n"
+            "rec = json.load(open(sys.argv[1]))\n"
+            "state = records.start(rec)\n"
+            "for data in rec['actions']:\n"
+            "    apply(state, from_dict(data))\n"
+            "print(json.dumps([[[c.uid for c in p.hand], [(c.uid, c.atk, c.life) for c in p.field], p.leader_hp, p.pp,"
+            " len(p.deck)] for p in state.players]))\n")
+    done = subprocess.run([sys.executable, "-c", code, str(path)], capture_output=True, text=True,
+                          env={"PYTHONHASHSEED": "123", "PYTHONPATH": str(Path(__file__).resolve().parents[1])})
+    assert done.returncode == 0, done.stderr
+    assert json.loads(done.stdout) == json.loads(json.dumps(_fingerprint(session.state)))
+
+
+def test_an_interrupted_game_resumes_where_it_stopped():
+    session = _half_game("random", level="fast")
+    record = json.loads(json.dumps(session.record_data()))         # as saved by the page
+    resumed = Session()
+    view = resumed.resume(record)
+    assert _fingerprint(resumed.state) == _fingerprint(session.state)
+    assert view["turn"] == session.state.turn and view["log"][0] == "继续之前没下完的对局。"
+    assert resumed.summary() == session.summary()
+    # ... and the game goes on to the end.
+    rng = random.Random(5)
+    for _ in range(3000):
+        if view["over"]:
+            break
+        if view["active"] == 1:
+            view = resumed.ai_step()
+        else:
+            moves = [a for a in view["actions"] if a["type"] != "EndTurn"]
+            end = next(a for a in view["actions"] if a["type"] == "EndTurn")
+            view = resumed.act((rng.choice(moves) if moves and rng.random() < 0.8 else end)["i"])
+    assert view["over"] and all(a in legal_actions(s) for s, a in records.steps(resumed.record_data()))

@@ -13,16 +13,21 @@ import os
 import time
 import zlib
 
+from svsim.cards import library
 from svsim.cards.pool import card
 from svsim.core.actions import from_dict, to_dict
-from svsim.core.engine import apply, new_game
+from svsim.core.engine import apply, legal_actions, new_game
 from svsim.core.state import GameState
 
 VERSION = 1
+assert library.__all__                 # card scripts registered: a replay needs every card's abilities
 
 
-def new_record(you_deck: list, ai_deck: list, seed: int, first: int, ai_spec: str) -> dict:
-    return {"version": VERSION, "seed": seed, "first": first, "ai": ai_spec,
+def new_record(you_deck: list, ai_deck: list, seed: int, first: int, ai_spec: str,
+               first_arg: int | None = None) -> dict:
+    """`first` is who went first; `first_arg` what new_game was asked for (None: at
+    random, which draws from the game's random numbers, so a replay must ask the same)."""
+    return {"version": VERSION, "seed": seed, "first": first, "first_arg": first_arg, "ai": ai_spec,
             "decks": [[c.card_id for c in you_deck], [c.card_id for c in ai_deck]],
             "actions": [], "winner": None, "date": time.strftime("%Y-%m-%d %H:%M")}
 
@@ -53,9 +58,29 @@ def save(record: dict, folder: str = "replays") -> str:
     return path
 
 
-def start(record: dict) -> GameState:
+def _new(record: dict, first_arg) -> GameState:
     d0, d1 = ([card(i) for i in ids] for ids in record["decks"])
-    return new_game(d0, d1, seed=record["seed"], first=record["first"])
+    return new_game(d0, d1, seed=record["seed"], first=first_arg)
+
+
+def _replays(record: dict, first_arg) -> bool:
+    state = _new(record, first_arg)
+    if state.first != record["first"]:
+        return False
+    for data in record["actions"]:
+        action = from_dict(data)
+        if action not in legal_actions(state):
+            return False
+        apply(state, action)
+    return True
+
+
+def start(record: dict) -> GameState:
+    """The game's opening position. Records from before `first_arg` was kept don't
+    say whether the first player was drawn at random: the one that replays wins."""
+    if "first_arg" in record:
+        return _new(record, record["first_arg"])
+    return _new(record, None if _replays(record, None) else record["first"])
 
 
 def steps(record: dict):

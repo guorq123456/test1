@@ -59,12 +59,35 @@ class Session:
         order = None if first in (None, "random") else (0 if first == "you" else 1)
         self.state = new_game(mine, theirs, seed=seed, first=order)
         spec = LEVELS.get(level, level)
-        self.record = records.new_record(mine, theirs, seed, self.state.first, spec)
+        self.record = records.new_record(mine, theirs, seed, self.state.first, spec, first_arg=order)
+        self.record["names"] = [you, opponent]
         from svsim.tools.arena import make_agent
         self.ai = make_agent(spec, seed)
         self.decks = (DECKS[you][0], DECKS[opponent][0])
         self.log = [f"对局开始：你用{self.decks[0]}，AI 用{self.decks[1]}；你{'先手' if self.state.first == 0 else '后手'}。"]
         return self.view()
+
+    def resume(self, record: dict) -> dict:
+        """Carry on a saved game: replay its actions (the engine is deterministic)."""
+        from svsim.core.actions import from_dict
+        from svsim.tools.arena import make_agent
+        names = record.get("names") or []
+        self.decks = tuple(DECKS[n][0] for n in names) if all(n in DECKS for n in names) and names else ("", "")
+        self.state = records.start(record)
+        self.record = {**record, "actions": [], "winner": None, "notes": list(record.get("notes", []))}
+        self.ai = make_agent(record["ai"], record["seed"])
+        self.log = ["继续之前没下完的对局。"]
+        for data in record["actions"]:
+            action = from_dict(data)
+            if action not in legal_actions(self.state):
+                raise ValueError("这局的记录对不上，没法继续")
+            self._apply(action, "你" if self.state.active == 0 else "AI")
+        return self.view()
+
+    def summary(self) -> dict:
+        """A line for "carry on" buttons: the turn and both leaders' defense."""
+        me, ai = self.state.players
+        return {"turn": self.state.turn, "you": me.leader_hp, "ai": ai.leader_hp, "over": self.state.over}
 
     def _apply(self, action, who: str) -> None:
         if self.state.phase == Phase.MAIN:

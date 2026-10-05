@@ -192,6 +192,10 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
         <button data-value="ai">我后手</button>
       </div>
     </div>
+    <div id="resume-box" class="field-group" hidden>
+      <span>没下完的对局</span>
+      <button class="primary" id="resume" type="button">继续上一局</button>
+    </div>
     <button class="primary" id="start" disabled>开始对局</button>
     <div id="status">正在加载模拟器……第一次打开大约需要十几秒。</div>
     <div id="saved-games"></div>
@@ -265,10 +269,13 @@ const Backend = {
 };
 
 // ---------------------------------------------------------------- saving
-// On the published page, games go to the page's own store, where Claude can
-// read them for review. Elsewhere the local server saves them to replays/.
+// Every move is saved twice: in this browser (so a game survives the page being
+// reloaded, e.g. after the phone puts it in the background) and, on the
+// published page, in the page's own store, where Claude can read it for review
+// and another device can carry it on. The local server also keeps replays/.
+const LOCAL_KEY = "svsim-current-game";
 const Store = {
-  db: null, gameId: null, chain: Promise.resolve(), saved: 0,
+  db: null, gameId: null, writing: false, pending: null,
   async init() {
     try {
       if (!window.claude || !window.claude.use) return;
@@ -284,14 +291,47 @@ const Store = {
         snap.size ? `这个页面已保存 ${snap.size} 局对局（${done} 局打完）。` : "";
     } catch (e) { /* the count is optional */ }
   },
-  save(record, finished) {
-    if (!this.db || !this.gameId || !record) return;
-    const body = {record, finished: !!finished, winner: record.winner ?? null,
-                  moves: record.actions.length, updated: new Date().toISOString()};
-    this.chain = this.chain.then(() => this.db.collection("games").doc(this.gameId).set(body))
-      .then(() => { this.saved++; }).catch(() => {});
+  loadLocal() {
+    try { const text = localStorage.getItem(LOCAL_KEY); return text ? JSON.parse(text) : null; }
+    catch (e) { return null; }
+  },
+  setLocal(entry) {
+    try { entry ? localStorage.setItem(LOCAL_KEY, JSON.stringify(entry)) : localStorage.removeItem(LOCAL_KEY); }
+    catch (e) { /* private window or storage blocked: the store still has it */ }
+  },
+  save(record, finished, summary, extra) {
+    if (!record || !this.gameId) return;
+    const body = {record, finished: !!finished, winner: record.winner ?? null, moves: record.actions.length,
+                  updated: new Date().toISOString(), turn: summary ? summary.turn : null,
+                  you_hp: summary ? summary.you : null, ai_hp: summary ? summary.ai : null, ...(extra || {})};
+    this.setLocal(finished ? null : {gameId: this.gameId, body});
+    if (!this.db) return;
+    this.pending = {id: this.gameId, body};        // one write at a time, the latest state wins
+    this.flush();
+  },
+  async flush() {
+    if (this.writing || !this.pending) return;
+    this.writing = true;
+    const {id, body} = this.pending; this.pending = null;
+    try { await this.db.collection("games").doc(id).set(body); } catch (e) { /* kept locally */ }
+    this.writing = false;
+    this.flush();
+  },
+  async unfinished() {
+    if (!this.db) return null;
+    try {
+      const snap = await this.db.collection("games").where("finished", "==", false)
+        .orderBy("updated", "desc").limit(1).get();
+      return snap.empty ? null : {gameId: snap.docs[0].id, body: snap.docs[0].data()};
+    } catch (e) { return null; }
   },
 };
+
+async function persist(finished, extra) {
+  if (!view) return;
+  const record = await safeRecord();
+  Store.save(record, finished, {turn: view.turn, you: view.you.hp, ai: view.ai.hp}, extra);
+}
 
 // ---------------------------------------------------------------- state
 let view = null, busy = false, selected = null, choice = {you: "rhino", opponent: "ramp", level: "normal", first: "random"};
@@ -501,6 +541,7 @@ async function act(index) {
   try { view = await Backend.call("act", index); } catch (e) { toast("出错了：" + e.message); }
   busy = false;
   render();
+  await persist(false);
   await afterMove();
 }
 
@@ -510,16 +551,17 @@ async function afterMove() {
   if (view.mulligan) { openMulligan(); return; }
   if (!view.over && view.active === 1) {
     busy = true; render();
-    Store.save(await safeRecord(), false);
+    await persist(false);
     while (view && !view.over && view.active === 1) {
       try { view = await Backend.call("ai_step"); } catch (e) { toast("AI 出错了：" + e.message); break; }
       render();
       await sleep(view.phase === "main" ? 350 : 0);
     }
     busy = false; render();
+    await persist(false);
     if (view.mulligan) { openMulligan(); return; }
   }
-  if (view.over) { Store.save(await safeRecord(), true); openEnd(); }
+  if (view.over) { await persist(true); openEnd(); }
 }
 
 async function safeRecord() { try { return await Backend.call("record_data"); } catch (e) { return null; } }
@@ -609,7 +651,7 @@ $("btn-note").addEventListener("click", () => {
   const ok = el("button", "primary", "保存备注"); ok.type = "button";
   ok.addEventListener("click", async () => {
     if (!ta.value.trim()) return;
-    view = await Backend.call("note", ta.value); closeSheet(); render();
+    view = await Backend.call("note", ta.value); closeSheet(); render(); await persist(false);
   });
   const close = el("button", "ghost", "取消"); close.type = "button"; close.addEventListener("click", closeSheet);
   row.append(ok, close); sheet.appendChild(row);
@@ -622,7 +664,7 @@ $("btn-menu").addEventListener("click", () => {
   const item = (text, fn) => { const b = el("button", null, text); b.type = "button"; b.addEventListener("click", fn); list.appendChild(b); };
   item("认输并结束这一局", async () => {
     closeSheet();
-    if (view && !view.over) { const rec = await safeRecord(); Store.save(rec, false); }
+    if (view && !view.over) await persist(true, {resigned: true});
     $("board").hidden = true; $("setup").hidden = false; view = null; Store.db && Store.refreshCount();
   });
   item("查看回放码", async () => {
@@ -634,13 +676,56 @@ $("btn-menu").addEventListener("click", () => {
   showSheet();
 });
 
+// ---------------------------------------------------------------- carrying on a game
+async function resumeGame(gameId, record) {
+  closeSheet();
+  status("正在恢复对局……");
+  try {
+    view = await Backend.call("resume", record);
+  } catch (e) {
+    status("没能恢复上一局：" + e.message + "。可以开始新的对局。", true);
+    if (Store.loadLocal() && Store.loadLocal().gameId === gameId) Store.setLocal(null);
+    return false;
+  }
+  Store.gameId = gameId;
+  $("resume-box").hidden = true;
+  $("setup").hidden = true; $("board").hidden = false;
+  render();
+  await afterMove();
+  return true;
+}
+
+function describeSaved(body) {
+  const when = body.updated ? new Date(body.updated).toLocaleString("zh-CN", {month: "numeric", day: "numeric",
+    hour: "2-digit", minute: "2-digit"}) : "";
+  const where = body.turn != null ? `第 ${body.turn} 回合，你 ${body.you_hp} 血 / AI ${body.ai_hp} 血` : `已走 ${body.moves} 步`;
+  return `继续上一局（${where}${when ? "，" + when : ""}）`;
+}
+
+// A game this browser was playing comes back by itself; one saved from
+// elsewhere is offered on the start screen.
+async function offerResume(dbReady) {
+  const local = Store.loadLocal();
+  if (local && local.body && local.body.record && !local.body.finished) {
+    if (await resumeGame(local.gameId, local.body.record)) return;
+  }
+  await dbReady;
+  const saved = await Store.unfinished();
+  if (!saved || view) return;                   // nothing saved, or a game is already on the table
+  const button = $("resume");
+  button.textContent = describeSaved(saved.body);
+  button.onclick = () => resumeGame(saved.gameId, saved.body.record);
+  $("resume-box").hidden = false;
+}
+
 // ---------------------------------------------------------------- boot
 (async () => {
-  Store.init();
+  const dbReady = Store.init();
   try {
     await Backend.init((text) => status(text));
     status(Backend.mode === "http" ? "已连接电脑上的模拟器。" : "模拟器已就绪。");
     $("start").disabled = false;
+    offerResume(dbReady);
   } catch (e) {
     status("模拟器没能在这个页面里启动：" + e.message +
       "\n可以改用电脑：在项目目录运行 python -m svsim.tools.web，然后用浏览器打开它给出的地址（手机连同一个 Wi-Fi 也能打开）。", true);

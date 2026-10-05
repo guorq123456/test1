@@ -32,7 +32,8 @@ SKELETON = ('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">'
             '<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>'
             '</head><body>{page}</body></html>')
 
-ALLOWED = {"start", "view", "act", "mulligan", "ai_step", "hint", "lethal", "note", "code", "record_data"}
+ALLOWED = {"start", "resume", "summary", "view", "act", "mulligan", "ai_step", "hint", "lethal", "note", "code",
+           "record_data"}
 
 
 def page_html() -> str:
@@ -115,7 +116,7 @@ class Handler(BaseHTTPRequestHandler):
             method, args = data["method"], data.get("args", [])
             if method not in ALLOWED:
                 raise ValueError(f"unknown method {method!r}")
-            if method == "start" or cls.session is None:
+            if method in ("start", "resume") or cls.session is None:
                 cls.session, cls.saved = Session(), False
             result = getattr(cls.session, method)(*args)
             state = cls.session.state
