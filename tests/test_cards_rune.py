@@ -499,6 +499,16 @@ def test_bottomless_gluttony():
     assert giant.fate == DESTROYED and sigils(state) == 2
 
 
+def test_lilanthim_evolve_performs_earth_rite_without_a_target():
+    # Confirmed by the player: the Earth Rite happens even with no enemy follower to select.
+    state = start()
+    unlock_evolution(state, 0)
+    lilanthim = put(state, 0, rune.LILANTHIM)
+    sigils(state, 0, 1)
+    apply(state, Evolve(lilanthim.uid))
+    assert sigils(state) == 0
+
+
 def test_lilanthim_crest_summons_an_evolved_copy_then_expires():
     state = start(first=0)
     p = state.players[0]

@@ -950,7 +950,8 @@ class BladeOfTheCrestpetal(CardScript):
         left = {id(c) for c in ctx.me.deck}
         drawn = [c for c in followers if id(c) not in left]
         if drawn:
-            # UNSURE: with a full hand the drawn card is destroyed; X still uses its cost.
+            # Confirmed by the player: with a full hand the drawn card is destroyed; X
+            # still uses its cost.
             E.damage(ctx.state, _random_enemy_follower(ctx), drawn[0].cost, ctx.source)
 
 

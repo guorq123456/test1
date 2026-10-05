@@ -345,7 +345,7 @@ class LhynkalCrest(CardScript):
             return
         foe = 1 - ctx.controller
         enemy = ctx.state.players[foe]
-        # UNSURE: can max defense drop to 0 (the leader then loses), or is there a floor of 1?
+        # Confirmed by the player: max defense can drop to 0, and the leader then loses.
         E.set_leader_max_hp(ctx.state, foe, max(0, enemy.leader_max_hp - 2))
         if enemy.leader_hp <= 0 and ctx.state.winner is None:
             ctx.state.winner = ctx.controller
@@ -522,7 +522,7 @@ class Sephie(CardScript):
 
     def on_fuse(self, ctx):
         # "Spend 2 play points to ...": nothing happens with fewer than 2.
-        # UNSURE: with a full field, are the 2 play points still spent? Here they are.
+        # Confirmed by the player: with a full field the 2 play points are still spent.
         if ctx.me.pp >= 2:
             ctx.me.pp -= 2
             summon_test_subjects(ctx)
@@ -790,11 +790,10 @@ class Lilanthim(CardScript):
             E.add_to_leader_area(ctx.state, ctx.controller, LILANTHIM_CREST)
 
     def on_evolve(self, ctx):
-        targets = ctx.chosen()
-        # UNSURE: with no enemy follower to select, is the Earth Rite still performed?
-        # Here it isn't (the sigil is kept).
-        if targets and E.earth_rite(ctx.state, ctx.controller, 1):
-            for target in targets:
+        # Confirmed by the player: the Earth Rite is performed even with no enemy
+        # follower to select.
+        if E.earth_rite(ctx.state, ctx.controller, 1):
+            for target in ctx.chosen():
                 E.destroy(ctx.state, target)
 
 

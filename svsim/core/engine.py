@@ -363,7 +363,9 @@ def _invoke(state: GameState, p: PlayerState, when: str) -> None:
             invoked.add(card.defn.card_id)
             p.deck.remove(card)
             E.enter_field(state, card)
-            E.enqueue(state, "on_invoked", card, p.index)
+            # Resolves even if the card has left the field by then (confirmed: a
+            # Sandalphon destroyed by Trap in the Woods still gives its crest).
+            E.enqueue(state, "on_invoked", card, p.index, zone=None)
 
 
 def _start_turn(state: GameState) -> None:

@@ -362,8 +362,8 @@ class CutthroatCrest(CardScript):
         other = ctx.other
         if ctx.as_spell or not other.defn.is_follower:
             return
-        # UNSURE: is the once-per-turn use spent when the follower can't be evolved
-        # (already evolved, or gone)? Here it is only spent on an actual evolution.
+        # Confirmed by the player: the once-per-turn use is only spent on an actual
+        # evolution (not when the follower is already evolved, or gone).
         if ctx.state.on_field(other.uid) is other and not other.evolved \
                 and E.once_per_turn(ctx, "cutthroat"):
             E.evolve(ctx.state, other)
@@ -500,7 +500,7 @@ class IronworkBodyguard(CardScript):
     def fanfare(self, ctx):
         if no_duplicates(ctx.state, ctx.controller):
             E.damage(ctx.state, ctx.chosen(), 4, ctx.source)
-            # UNSURE: is the defense still restored when there was no enemy follower to select?
+            # Confirmed by the player: the defense is restored even with no enemy follower.
             E.heal_leader(ctx.state, ctx.controller, 4)
 
 
@@ -613,8 +613,8 @@ class Zerk(CardScript):
     match to your hand."""
 
     def fanfare(self, ctx):
-        # UNSURE: random over destroyed cards (weighted by how often each was
-        # destroyed), or over distinct names? Weighted here, like Reanimate.
+        # Confirmed by the player: random over destroyed cards, weighted by how often each
+        # was destroyed, like Reanimate.
         destroyed = [d for d in ctx.me.destroyed if ARTIFACT in d.traits]
         if destroyed:
             E.add_to_hand(ctx.state, ctx.controller, ctx.state.rng.choice(destroyed))
@@ -1217,7 +1217,7 @@ class Eustace(CardScript):
         for f in ctx.chosen():
             if not f.evolved:
                 E.evolve(ctx.state, f)
-        # UNSURE: does this follower still evolve when there was no other follower to select?
+        # Confirmed by the player: it still evolves with no other follower to select.
         if on_field(ctx) and not ctx.source.evolved:
             E.evolve(ctx.state, ctx.source)
 

@@ -597,7 +597,7 @@ class Katze(CardScript):
     """Once on each of your turns, a spell you play deals 2 to a random enemy. Evolve: add a Gold."""
 
     def on_play(self, ctx):
-        # UNSURE: does the once-per-turn use count when there is no enemy follower to hit?
+        # Confirmed by the player: the once-per-turn use is spent even with no enemy follower.
         if ctx.as_spell and common.during_your_turn(ctx) and E.once_per_turn(ctx, "katze"):
             _hit_random_enemy(ctx, 2)
 

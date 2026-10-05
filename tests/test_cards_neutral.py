@@ -848,6 +848,37 @@ def test_sandalphon_invoked_returns_to_hand_with_its_cost_reset():
     assert len(p.hand) == 2 and p.followers == []          # plus the turn's draw
 
 
+def test_sandalphon_destroyed_by_trap_in_the_woods_still_gives_its_crest():
+    # Confirmed by the player: the trap destroys the invoked Sandalphon, and the crest comes anyway.
+    from svsim.cards import forest
+    state = fresh()
+    trap = put(state, 0, forest.TRAP_IN_THE_WOODS)
+    p = state.players[1]
+    sandalphon = state.new_instance(neutral.SANDALPHON, 1)
+    p.deck.append(sandalphon)
+    p.evolutions = 6
+    apply(state, EndTurn())
+    assert sandalphon.fate == DESTROYED and trap.fate == DESTROYED
+    assert E.leader_area_card(state, 1, neutral.SANDALPHON_CREST) is not None
+    assert not any(c.defn == neutral.SANDALPHON for c in p.hand)
+
+
+def test_azvaldt_favours_names_destroyed_more_often():
+    # Confirmed by the player: the more often a follower was destroyed, the likelier its name.
+    others = [demo.SHIELDBEARER, demo.RAIDER, demo.LANCER, demo.ASSASSIN, demo.LEECH]
+    footman_summoned = 0
+    for seed in range(200):
+        state = start(seed=seed)
+        p = state.players[0]
+        azvaldt = put(state, 0, neutral.AZVALDT)
+        p.destroyed = [demo.FOOTMAN] * 20 + others
+        E.destroy(state, azvaldt)
+        resolve_queue(state)
+        assert len({c.defn.name for c in p.followers}) == 4
+        footman_summoned += count(p.followers, demo.FOOTMAN)
+    assert footman_summoned >= 190                         # uniform by name would give ~133
+
+
 def test_sandalphon_super_skybound_art():
     state = fresh(pp=6)
     sandalphon = give(state, 0, neutral.SANDALPHON)

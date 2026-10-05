@@ -254,8 +254,8 @@ class DepthsOfTheEldTome(CardScript):
     play_targets = (TargetSpec(Target.ANY_CARD),)
 
     def cast(self, ctx):
-        # UNSURE: the Chinese text puts "add a Depths" in its own sentence; this follows
-        # the English, where it is part of the "if you selected an allied amulet" clause.
+        # Confirmed by the player: as in the English, "add a Depths" is part of the "if you
+        # selected an allied amulet" clause (the Chinese text puts it in its own sentence).
         for target in ctx.chosen():
             E.destroy(ctx.state, target)
             if _is_allied_amulet(ctx, target):
@@ -272,8 +272,8 @@ class ErraldeCrest(CardScript):
     your leader."""
 
     def on_turn_end(self, ctx):
-        # UNSURE: the Chinese text puts the heal in its own sentence; this follows the
-        # English, where it is part of the condition.
+        # Confirmed by the player: as in the English, the heal is part of the condition
+        # (the Chinese text puts it in its own sentence).
         if _base_cost_six(ctx.me):
             E.damage(ctx.state, [common.enemy_leader(ctx)], 1, ctx.source)
             _heal(ctx, 1)
@@ -631,7 +631,7 @@ class Zoe(CardScript):
     modes = (3, 1)
 
     def fanfare(self, ctx):
-        # UNSURE: whether the 3 self-damage comes before or after the chosen mode.
+        # Confirmed by the player: the 3 self-damage comes after the chosen mode.
         if 0 in ctx.modes:
             E.damage(ctx.state, _all_enemy_followers(ctx), 3, ctx.source)
         if 1 in ctx.modes:
@@ -748,8 +748,8 @@ class DeaconOfSecurity(CardScript):
     it Barrier. Ward. Last Words: restore 3 defense to your leader."""
 
     def fanfare(self, ctx):
-        # UNSURE: the Chinese text can be read as Barrier being unconditional; this
-        # follows the English ("evolve this follower and give it Barrier").
+        # Confirmed by the player: as in the English, Barrier is part of the condition
+        # ("evolve this follower and give it Barrier").
         if _three_amulets(ctx):
             _evolve_self(ctx)
             E.give_keywords(ctx.source, Keyword.BARRIER)
@@ -880,8 +880,8 @@ class SublimeEldTome(CardScript):
                 E.recover_pp(ctx.state, ctx.controller, 2)
 
     def last_words(self, ctx):
-        # UNSURE: picked per destruction (an amulet destroyed twice is twice as
-        # likely), like Reanimate, rather than uniformly by name.
+        # Confirmed by the player: picked per destruction (an amulet destroyed twice is
+        # twice as likely), like Reanimate, rather than uniformly by name.
         eligible = _destroyed_last_words_amulets(ctx.me)
         if eligible:
             E.summon(ctx.state, ctx.controller, ctx.state.rng.choice(eligible))
@@ -1058,8 +1058,8 @@ class Sofina(_IfEvolvedAtTurnEnd):
                 E.buff(ctx.state, f, 1, 1)
 
     def on_turn_end(self, ctx):
-        # UNSURE: like Lamretta (official Q&A), an evolution by an earlier end-of-turn
-        # ability is taken not to count.
+        # Confirmed by the player: like Lamretta (official Q&A), an evolution by an earlier
+        # end-of-turn ability doesn't count.
         others = [f for f in ctx.state.field_order() if f.defn.is_follower and f is not ctx.source]
         for f in others:
             E.buff(ctx.state, f, -1, -1)

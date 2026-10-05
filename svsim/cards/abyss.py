@@ -233,9 +233,9 @@ class IstyndetCrest(CardScript):
     """At the end of your turn, if an allied card on the field has Last Words, destroy
     a random allied card with Last Words and a random enemy follower."""
 
-    # UNSURE: if the random allied card can't be destroyed (e.g. "Can't be destroyed by
-    # abilities"), is the enemy follower still destroyed? Implemented: yes, and such
-    # cards stay among the random candidates.
+    # Confirmed by the player: if the random allied card can't be destroyed (e.g. "Can't
+    # be destroyed by abilities"), the enemy follower is still destroyed; such cards stay
+    # among the random candidates.
 
     def on_turn_end(self, ctx):
         with_lw = [c for c in ctx.me.field if has_last_words(c)]

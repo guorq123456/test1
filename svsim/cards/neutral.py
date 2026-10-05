@@ -192,7 +192,8 @@ class InitiationOfRebirth(CardScript):
         destroyed = ctx.me.destroyed
         if destroyed:
             top = max(d.cost for d in destroyed)
-            # UNSURE: weighted by how often each was destroyed (like Reanimate), or uniform by name?
+            # Weighted by how often each was destroyed, like Reanimate (the player confirmed
+            # this for Azvaldt).
             defn = ctx.state.rng.choice([d for d in destroyed if d.cost == top])
             E.put_into_deck(ctx.state, ctx.controller, defn)
         E.draw(ctx.state, ctx.controller)
@@ -236,12 +237,14 @@ class Azvaldt(CardScript):
             E.destroy(ctx.state, ctx.source)
 
     def last_words(self, ctx):
-        by_name = {}
-        for defn in ctx.me.destroyed:
-            by_name.setdefault(defn.name, defn)
-        # UNSURE: are the 4 names picked uniformly, or weighted by how often each was destroyed?
-        for defn in E.random_sample(ctx.state, list(by_name.values()), 4):
+        # Confirmed by the player: a name destroyed more often is more likely to be picked.
+        pool = list(ctx.me.destroyed)
+        for _ in range(4):
+            if not pool:
+                break
+            defn = ctx.state.rng.choice(pool)
             E.summon(ctx.state, ctx.controller, defn)
+            pool = [d for d in pool if d.name != defn.name]
         for f in list(ctx.me.followers):
             E.buff(ctx.state, f, 3, 3)
 
@@ -316,7 +319,8 @@ class Aika(CardScript):
         self._recall(ctx)
 
     def _recall(self, ctx):
-        # UNSURE: weighted by how often each was destroyed (like Reanimate), or uniform by name?
+        # Weighted by how often each was destroyed, like Reanimate (the player confirmed
+        # this for Azvaldt).
         if ctx.me.destroyed:
             E.add_to_hand(ctx.state, ctx.controller, ctx.state.rng.choice(ctx.me.destroyed))
 
@@ -433,7 +437,7 @@ class CityOfBabelon(CardScript):
     def engage(self, ctx):
         for c in ctx.chosen_hand():
             E.discard(ctx.state, c)
-        # UNSURE: does the delay still happen when no card could be discarded (empty hand)?
+        # Confirmed by the player: the delay still happens with an empty hand.
         E.advance_countdown(ctx.state, ctx.source, -1)
 
 
@@ -769,6 +773,8 @@ class Sandalphon(CardScript):
         return state.players[card.owner].evolutions >= 6
 
     def on_invoked(self, ctx):
+        # Confirmed by the player: if it was destroyed first (e.g. by Trap in the
+        # Woods), the crest is still gained; there is nothing left to return.
         E.add_to_leader_area(ctx.state, ctx.controller, SANDALPHON_CREST)
         E.return_to_hand(ctx.state, ctx.source)    # a fresh card: cost changes are gone (Q&A)
 

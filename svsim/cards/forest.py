@@ -316,7 +316,8 @@ class TrapInTheWoods(CardScript):
         if ctx.state.on_field(ctx.other.uid) is ctx.other:
             E.destroy(ctx.state, ctx.other)
         # UNSURE: is the trap still destroyed when the follower already left the field
-        # (or survives, e.g. "can't be destroyed by abilities")? Assumed yes.
+        # (or survives, e.g. "can't be destroyed by abilities")? Assumed yes. Confirmed by
+        # the player: an invoked Sandalphon is destroyed by the trap and still gives its crest.
         E.destroy(ctx.state, ctx.source)
 
 
@@ -466,8 +467,8 @@ class Moelle(CardScript):
 class Ruflet(CardScript):
     """Once per own turn, when buffed on the field, summon a Fairy. Last Words: add a Fairy to your hand."""
 
-    # UNSURE: does the +2/+2 (+3/+3) from evolving count as being "given + attack or
-    # defense"? The engine treats evolution bonuses as buffs, so it does here.
+    # Confirmed by the player: the +2/+2 (+3/+3) from evolving counts as being "given
+    # + attack or defense" (the engine treats evolution bonuses as buffs).
     def on_buffed(self, ctx):
         if common.during_your_turn(ctx) and E.once_per_turn(ctx, "ruflet"):
             _summon(ctx, FAIRY)
@@ -534,7 +535,7 @@ class Tia(CardScript):
         if ctx.enhanced:
             _buff_all_allies(ctx, 1, 1)
 
-    # UNSURE: as for Ruflet, evolving counts as being given + attack / defense here.
+    # Confirmed by the player: as for Ruflet, evolving counts as being given + attack / defense.
     def on_buffed(self, ctx):
         if common.during_your_turn(ctx) and E.once_per_turn(ctx, "tia"):
             _add(ctx, EVE)
@@ -722,7 +723,7 @@ class MercifulAttendant(CardScript):
     def on_ally_evolve(self, ctx):
         E.heal_leader(ctx.state, ctx.controller, 1)
 
-    # UNSURE: "an allied follower" is read as including this follower itself.
+    # Confirmed by the player: "an allied follower" includes this follower itself.
     def on_evolved(self, ctx):
         E.heal_leader(ctx.state, ctx.controller, 1)
 
@@ -960,7 +961,7 @@ class Cupitan(CardScript):
     """Fanfare: Skybound Art - evolve; Super Skybound Art - 3 to the enemy leader. Evolves: 7 random pings."""
     skybound = True
 
-    # UNSURE: at 15+ both the Skybound Art and the Super Skybound Art effects activate.
+    # Confirmed by the player: at 15+ both the Skybound Art and the Super Skybound Art activate.
     def fanfare(self, ctx):
         if E.skybound_art(ctx):
             _evolve(ctx, ctx.source)
