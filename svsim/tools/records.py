@@ -66,3 +66,11 @@ def steps(record: dict):
         action = from_dict(data)
         yield state, action
         apply(state, action)
+
+
+def notes_at(record: dict) -> dict:
+    """The player's notes by the index of the action they were written before."""
+    out: dict = {}
+    for note in record.get("notes", []):
+        out.setdefault(note["at"], []).append(note["text"])
+    return out

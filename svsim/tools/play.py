@@ -8,6 +8,7 @@
 On your turn, type the number of an action, or:
     e   end the turn          h   ask the AI what it would do
     l   look for lethal       q   quit
+    # <text>   a note on this position, saved with the game (why you play as you do)
 Decks: pirate, ramp, rhino, or an official deck hash. AI: any agent from
 tools.arena (default mcts:400, ISMCTS plus lethal search). "l" asks the
 resource-flow planner first (with the quick count for combo finishers), then
@@ -86,7 +87,12 @@ def run(you_deck, ai_deck, ai_spec: str = "mcts:400", seed: int | None = None,
         say("\n" + render_state(state, viewer=0))
         for i, a in enumerate(actions):
             say(f"  {i}. {describe(state, a)}")
-        reply = ask("你的选择（编号 / e 结束回合 / h 提示 / l 查斩杀 / q 退出）：").strip().lower()
+        reply = ask("你的选择（编号 / e 结束回合 / h 提示 / l 查斩杀 / # 备注 / q 退出）：").strip()
+        if reply.startswith("#"):
+            record.setdefault("notes", []).append({"at": len(record["actions"]), "text": reply[1:].strip()})
+            say("  备注已记下。")
+            continue
+        reply = reply.lower()
         if reply == "q":
             return finish(None)
         if reply == "h":

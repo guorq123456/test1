@@ -47,7 +47,8 @@ def review(record: dict, spec: str = "mcts:200+plan", human: int = 0, say=print,
     out = (lambda *a: None) if summary else say
     stats = {"decisions": 0, "same": 0, "gaps": []}
     turn, hp_at_start, best_this_turn = None, None, None
-    for state, action in records.steps(record):
+    notes = records.notes_at(record)
+    for index, (state, action) in enumerate(records.steps(record)):
         if state.active != human:
             if turn is not None and state.turn != turn:
                 dealt = hp_at_start - state.players[1 - human].leader_hp
@@ -69,6 +70,8 @@ def review(record: dict, spec: str = "mcts:200+plan", human: int = 0, say=print,
             best_this_turn = combo.plan(state, 20000).damage
             out(f"\n===== 第 {state.turn} 回合（你的第 {state.players[human].turns_taken} 回合）=====")
             out(render_state(state, viewer=human))
+        for text in notes.get(index, []):
+            out(f"  【你的备注】{text}")
         mine = describe(state, action)
         ai_action, values = ai_view(state, spec, record["seed"] * 1000 + stats["decisions"])
         stats["decisions"] += 1

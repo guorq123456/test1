@@ -174,7 +174,7 @@ def test_games_are_recorded_and_can_be_reviewed(tmp_path):
     from svsim.tools import records
     from svsim.tools.play import load_deck, run
     from svsim.tools.review import review
-    replies = iter(["0", "0", "e", "0", "e"] + ["e"] * 200)
+    replies = iter(["0", "# 先垫一张", "0", "e", "0", "e"] + ["e"] * 200)
     out = []
     winner = run(load_deck("rhino"), load_deck("ramp"), ai_spec="greedy", seed=7, you_first=True,
                  ask=lambda prompt: next(replies), say=out.append, record_to=str(tmp_path))
@@ -193,3 +193,5 @@ def test_games_are_recorded_and_can_be_reviewed(tmp_path):
     assert stats["decisions"] > 0 and stats["same"] <= stats["decisions"]
     joined = "\n".join(text)
     assert "你：" in joined and "结果：AI 赢了" in joined and "AI 选得一样的" in joined
+    # The note is kept before the first action of the turn (after both mulligans).
+    assert saved["notes"] == [{"at": 2, "text": "先垫一张"}] and "【你的备注】先垫一张" in joined
