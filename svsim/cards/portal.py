@@ -420,9 +420,9 @@ class SlausCrest(CardScript):
         wheel_of_fortune(ctx, SLAUS_BAD)
 
     def last_words(self, ctx):
-        # UNSURE: the engine destroys a countdown crest at 0 before its start-of-turn
-        # ability; Countdown (3) with three "not yet activated" options suggests the
-        # ability still activates on that last turn, so it does here.
+        # Confirmed by the player: the ability still activates on the turn the count
+        # reaches 0. The engine destroys a countdown crest at 0 before its start-of-turn
+        # ability would be queued, so its Last Words does it instead.
         if ctx.source.countdown is not None and ctx.source.countdown <= 0:
             wheel_of_fortune(ctx, SLAUS_BAD)
 
