@@ -5,6 +5,7 @@
 
 Agents: random, lethal (random + lethal search), greedy (one-ply greedy +
 lethal search), mcts:N (ISMCTS with N iterations per decision + lethal search),
+mcts-reply:N (the same, playing out the opponent's next turn at the leaves),
 greedy-raw / mcts-raw:N (without the lethal search). Each pairing plays both
 seats and, for --decks starter, both decks equally often. Prints win rates
 with a 95% margin and the average thinking time per decision.
@@ -38,8 +39,8 @@ def make_agent(spec: str, seed: int):
         return GreedyAgent(seed)
     if name == "greedy":
         return LethalAgent(GreedyAgent(seed), seed=seed)
-    if name in ("mcts", "mcts-raw"):
-        agent = MCTSAgent(int(arg or 400), seed=seed)
+    if name in ("mcts", "mcts-raw", "mcts-reply"):
+        agent = MCTSAgent(int(arg or 400), seed=seed, reply=name == "mcts-reply")
         return agent if name == "mcts-raw" else LethalAgent(agent, seed=seed)
     raise ValueError(f"unknown agent {spec!r}")
 

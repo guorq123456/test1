@@ -15,7 +15,10 @@ and walks one shared tree:
   leader, then cards, evolutions, other actions, attacks on followers, ending
   the turn), then the position is scored with `evaluate`, squashed to 0..1;
 - ending the turn resolves end-of-turn abilities but not the opponent's turn;
-  `evaluate` looks ahead to it through its danger term.
+  `evaluate` looks ahead to it through its danger term. With `reply=True` the
+  opponent's next turn is played out instead, by a greedy agent holding the
+  determinized hand, and the position is scored at the start of the searching
+  player's next turn.
 
 The move played is the most visited root action. Lethal is better left to the
 exact lethal search (agents wrap this one in LethalAgent).
@@ -27,7 +30,7 @@ import random
 import time
 
 from svsim.core.actions import (Attack, EndTurn, Engage, Evolve, Fuse, PlayCard, UseBonusPP)
-from svsim.core.engine import apply, legal_actions
+from svsim.core.engine import _start_turn, apply, legal_actions
 from svsim.core.enums import DRAW, Phase
 from svsim.core.state import GameState, leader_of
 from svsim.core.view import determinize
@@ -101,7 +104,8 @@ class Node:
 
 class ISMCTS:
     def __init__(self, iterations: int = 400, seconds: float | None = None, c: float = 0.5,
-                 scale: float = 8.0, max_depth: int = 30, seed: int = 0, weights=DEFAULT):
+                 scale: float = 8.0, max_depth: int = 30, seed: int = 0, weights=DEFAULT,
+                 reply: bool = False):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
         self.seconds = seconds
         self.c = c                     # exploration constant (values are in 0..1)
@@ -109,10 +113,14 @@ class ISMCTS:
         self.max_depth = max_depth
         self.rng = random.Random(seed)
         self.weights = weights
+        self.reply = reply             # play out the opponent's next turn at the leaves
         self.last_root: Node | None = None
+        if reply:
+            from svsim.agents.greedy_agent import GreedyAgent
+            self.opponent = GreedyAgent(seed=seed + 1, samples=1, weights=weights)
 
-    def value(self, state: GameState, me: int) -> float:
-        score = evaluate(state, me, self.weights)
+    def value(self, state: GameState, me: int, me_next: bool = False) -> float:
+        score = evaluate(state, me, self.weights, player_moves_next=me_next)
         return 1.0 / (1.0 + math.exp(-max(-60.0, min(60.0, score / self.scale))))
 
     def choose(self, state: GameState):
@@ -161,7 +169,13 @@ class ISMCTS:
             self._step(s, options[best])
             path.append(node)
             depth += 1
-        v = self.value(s, me)
+        me_next = False
+        if self.reply and not s.over and s.active != me:
+            _start_turn(s)                       # the opponent's turn, played greedily
+            while not s.over and s.active != me:
+                apply(s, self.opponent.act(s, legal_actions(s)))
+            me_next = not s.over
+        v = self.value(s, me, me_next)
         for n in path:
             n.visits += 1
             n.total += v
@@ -176,3 +190,4 @@ class ISMCTS:
         apply(s, action)
         if s.winner == DRAW and s.turn <= real_limit:
             s.winner, s.phase = None, Phase.MAIN
+        s.max_turns = real_limit

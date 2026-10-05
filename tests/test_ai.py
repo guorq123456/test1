@@ -141,3 +141,17 @@ def test_play_tool_runs_a_scripted_game():
     assert winner == 1                                      # ending every turn loses
     text = "\n".join(out)
     assert "AI 会这样走" in text and "AI：" in text and "AI 赢了" in text
+
+
+def test_reply_mode_plays_out_the_opponent_turn():
+    state = position()
+    put(state, 0, demo.GIANT)
+    put(state, 1, demo.LANCER)
+    search = ISMCTS(iterations=30, seed=3, reply=True)
+    s = determinize(state, 0, random.Random(0))
+    search._step(s, EndTurn())
+    assert s.active == 1 and not s.over and s.max_turns == state.max_turns
+    root = search.last_root
+    choice = search.choose(state)
+    assert choice in legal_actions(state) and search.last_root is not root
+    assert search.last_root.visits == 30

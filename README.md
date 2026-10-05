@@ -4,7 +4,7 @@
 
 > 非官方粉丝项目，与 Cygames 无关。游戏内容版权归 Cygames 所有。仓库里有一份指定系列的卡池数值表（卡号、名称、费用、身材、关键词等对战字段）和实现卡牌效果的脚本，不包含官方卡面文字、Q&A 和卡图。
 
-## 现状（v0.4）
+## 现状（v0.5）
 - **指定系列全卡池可以对战。** 516 张可用卡，加上衍生物、纹章、信仰、激奏 / 结晶形态，一共 586 个有能力的卡牌定义，全部写好了脚本；任意两套合法卡组都能完整对战。
 - **规则引擎**：
   - 基础：PP 和额外能量点、换牌、交战，九个静态关键词和无视守护，先进先出的触发队列，胜负判定；
@@ -21,6 +21,10 @@
   - 斩杀求解器：搜索本回合所有行动顺序，找出必杀路线。随机效果和抽牌当作运气处理，不偷看牌组顺序和随机数；带运气的斩杀给出概率；
   - 会斩杀的智能体：找到必杀就照着打完。随机智能体加上它，对纯随机智能体胜率 73%；
   - 斩杀练习题：从对局里挑出不容易看出来的必杀局面，用中文写出局面和答案。
+- **完整对局 AI**（v0.5 新增）：
+  - 局面评估函数、一步贪心智能体，以及 ISMCTS（信息集蒙特卡洛树搜索：每次模拟都把对手手牌、牌组顺序和随机结果重新打乱，不偷看）；
+  - ISMCTS 每步约 70 毫秒，对贪心胜率 73%（海盗 vs 龙，以及 7 职业随机卡组都是）；
+  - 可以在终端里和 AI 对战，随时要提示、查斩杀。
 - **裁定**：写卡时拿不准的地方已全部由玩家确认，记录在[架构设计 §13](docs/architecture.md#已确认的卡牌细节)。
 
 ## 快速开始
@@ -31,6 +35,8 @@ python -m pytest                                               # 运行测试
 python -m svsim.tools.selfplay --games 1000 --decks starter     # 海盗皇家 vs 跳费龙随机自对弈
 python -m svsim.tools.selfplay --games 1000 --decks random      # 随机职业、随机合法卡组
 python -m svsim.tools.coverage --games 5000 --decks random      # 哪些卡牌钩子从没触发过
+python -m svsim.tools.play                                      # 和 AI 对战（你：海盗皇家，AI：跳费龙）
+python -m svsim.tools.arena --agents greedy mcts:200 --games 100  # AI 循环赛
 python -m svsim.tools.lethal puzzles --count 5                  # 生成 5 道斩杀练习题
 python -m svsim.tools.lethal match --games 200                  # 会斩杀的智能体 vs 随机智能体
 python -m svsim.tools.fetch_cards --lang en                     # 拉取官方卡牌数据到 data/raw/（不会提交）

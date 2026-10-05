@@ -107,15 +107,20 @@ def threat(state: GameState, side: int) -> int:
     return max(damage, 0)
 
 
-def evaluate(state: GameState, player: int, w: Weights = DEFAULT) -> float:
+def evaluate(state: GameState, player: int, w: Weights = DEFAULT,
+             player_moves_next: bool = False) -> float:
+    """Score for `player`. By default the opponent moves next (the end of
+    `player`'s turn); with `player_moves_next` (the start of `player`'s turn)
+    danger and pressure swap weights."""
     if state.winner is not None:
         return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
     me, opp = state.players[player], state.players[1 - player]
     score = side_value(me, w) - side_value(opp, w)
+    danger, pressure = (w.pressure, w.danger) if player_moves_next else (w.danger, w.pressure)
     if threat(state, 1 - player) >= me.leader_hp:
-        score -= w.danger
+        score -= danger
     if threat(state, player) >= opp.leader_hp:
-        score += w.pressure
+        score += pressure
     return score
 
 
