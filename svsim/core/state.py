@@ -9,6 +9,8 @@ from dataclasses import dataclass, field as dc_field
 import copy
 import random
 
+_new_object = object.__new__
+
 from .carddef import CardDef
 from .enums import Keyword, Phase
 
@@ -64,7 +66,32 @@ class CardInstance:
                    countdown=defn.countdown)
 
     def copy(self) -> "CardInstance":
-        clone = copy.copy(self)
+        # Field by field: about 10x faster than copy.copy, and search clones a lot.
+        # tests/test_state.py checks that every field is copied.
+        clone = _new_object(CardInstance)
+        clone.uid = self.uid
+        clone.defn = self.defn
+        clone.owner = self.owner
+        clone.cost = self.cost
+        clone.atk = self.atk
+        clone.life = self.life
+        clone.max_life = self.max_life
+        clone.keywords = self.keywords
+        clone.countdown = self.countdown
+        clone.evolved = self.evolved
+        clone.super_evolved = self.super_evolved
+        clone.entered_turn = self.entered_turn
+        clone.attacks_made = self.attacks_made
+        clone.max_attacks = self.max_attacks
+        clone.order = self.order
+        clone.fate = self.fate
+        clone.engaged_turn = self.engaged_turn
+        clone.fused_turn = self.fused_turn
+        clone.silenced = self.silenced
+        clone.no_last_words = self.no_last_words
+        clone.counters = self.counters
+        clone.grants = self.grants
+        clone.cost_mods = self.cost_mods
         if self.counters is not None:
             clone.counters = {k: (list(v) if isinstance(v, list) else v)
                               for k, v in self.counters.items()}

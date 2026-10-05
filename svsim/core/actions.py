@@ -5,7 +5,7 @@ plays it, so the engine never pauses mid-resolution. Cards are referenced by
 uid, which survives GameState.clone(), so an action list can be replayed on a
 copy. Leaders use negative uids (state.leader_uid).
 """
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,3 +58,17 @@ class EndTurn:
 
 
 Action = Mulligan | PlayCard | Attack | Evolve | Engage | Fuse | UseBonusPP | EndTurn
+
+
+ACTION_TYPES = {cls.__name__: cls for cls in
+                (Mulligan, PlayCard, Attack, Evolve, Engage, Fuse, UseBonusPP, EndTurn)}
+
+
+def to_dict(action) -> dict:
+    """A JSON-friendly form of an action, for saving games and positions."""
+    return {"type": type(action).__name__, **asdict(action)}
+
+
+def from_dict(data: dict):
+    fields = {k: (tuple(v) if isinstance(v, list) else v) for k, v in data.items() if k != "type"}
+    return ACTION_TYPES[data["type"]](**fields)
