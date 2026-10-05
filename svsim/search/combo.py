@@ -442,15 +442,18 @@ class ComboResult:
     seconds: float
     plan_nodes: int = 0
     search_nodes: int = 0
+    estimate: object = None    # search.formula.Estimate: the quick count, with its breakdown
 
 
 def solve(state: GameState, search_nodes: int = 20000) -> ComboResult:
     """Plan first; if the plan wins in the engine without luck, that's the lethal.
     If the resource model can't reach the enemy leader's defense, report no
     lethal. Otherwise (a plan that fails, e.g. on Ward) fall back to exact search."""
+    from svsim.search.formula import estimate as quick_count
     start = time.perf_counter()
     me, hp = state.active, state.players[1 - state.active].leader_hp
-    p = plan(state)
+    count = quick_count(state)           # first: is the damage there at all (the player's formula)
+    p = plan(state)                      # then: how, exactly
     if p.damage >= hp and p.steps:
         line = realize(state, p.steps)
         if line is not None:
@@ -460,8 +463,11 @@ def solve(state: GameState, search_nodes: int = 20000) -> ComboResult:
                 apply(s, a)
                 lucky |= hidden_info(s) != before
             if s.winner == me and not lucky:
-                return ComboResult(True, line, p.damage, "plan", time.perf_counter() - start, p.nodes)
+                return ComboResult(True, line, p.damage, "plan", time.perf_counter() - start, p.nodes,
+                                   estimate=count)
     if p.damage < hp:
-        return ComboResult(False, [], p.damage, "ceiling", time.perf_counter() - start, p.nodes)
+        return ComboResult(False, [], p.damage, "ceiling", time.perf_counter() - start, p.nodes,
+                           estimate=count)
     r = LethalSearch(max_nodes=search_nodes, sure_only=True).solve(state)
-    return ComboResult(r.sure, r.line, p.damage, "search", time.perf_counter() - start, p.nodes, r.nodes)
+    return ComboResult(r.sure, r.line, p.damage, "search", time.perf_counter() - start, p.nodes, r.nodes,
+                       estimate=count)

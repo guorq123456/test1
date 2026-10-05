@@ -68,3 +68,30 @@ def test_falls_back_to_search_when_the_plan_meets_ward():
     put(state, 1, demo.SHIELDBEARER)                        # Ward: the planned line can't hit the leader
     result = solve(state, search_nodes=3000)
     assert result.decided_by == "search"
+
+
+def test_the_players_formula_counts_like_a_player():
+    from svsim.search.formula import estimate
+    hand = [U.FAIRY_CONVOCATION, U.FAIRY, U.FAIRY, U.KILLER_RHINOCEROACH, forest.BUG_ALERT]
+    e = estimate(combo_position(10, 10, hand))
+    assert e.damage == 10 and e.pattern == "2 虫（手出 1、回手 1）"
+    assert ("先打的垫牌 3 张（其中 0 费 0 张），每张 ×2", 6) in e.terms
+    # Two Rhinoceroaches from hand beat one returned to hand by 1 for the same play points.
+    two = estimate(combo_position(30, 10, [U.KILLER_RHINOCEROACH, U.KILLER_RHINOCEROACH] + [U.FAIRY] * 4))
+    loop = estimate(combo_position(30, 10, [U.KILLER_RHINOCEROACH, forest.BUG_ALERT] + [U.FAIRY] * 4))
+    assert (two.damage, loop.damage) == (11, 10)
+
+
+def test_formula_counts_evolving_the_last_rhinoceroach():
+    from svsim.search.formula import estimate
+    from helpers import unlock_evolution
+    state = combo_position(30, 10, [U.KILLER_RHINOCEROACH, U.KILLER_RHINOCEROACH] + [U.FAIRY] * 4)
+    unlock_evolution(state, 0)
+    e = estimate(state)
+    assert e.damage == 14 and ("超进化最后一只破魔虫", 3) in e.terms
+
+
+def test_solve_reports_the_quick_count():
+    hand = [U.FAIRY_CONVOCATION, U.FAIRY, U.FAIRY, U.KILLER_RHINOCEROACH, forest.BUG_ALERT]
+    result = solve(combo_position(10, 10, hand))
+    assert result.estimate.damage == 10 and "打得死" in result.estimate.text(10)
