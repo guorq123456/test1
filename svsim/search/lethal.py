@@ -20,6 +20,15 @@ Speed: positions reached by different orders of the same actions share one
 entry in a transposition table (keyed by everything that matters except card
 uids and the RNG state); attacks on the leader are tried first; the search
 stops at the first sure lethal, or when the node budget runs out.
+
+Screening (optional, `screen=N`): most positions have no lethal, and proving
+that is what costs time. `damage_estimate` guesses the most damage this turn
+(face attacks, plus each card, Engage or evolution tried on its own); when that
+falls short of the opponent's defense, only N nodes are searched. It is a guess,
+not a bound: combos (buffs that only pay off together, extra attacks, damage
+from effects other than hitting the leader) can beat it. Measured on 1,181
+positions with 122 sure lethals (found with 20,000 nodes): 2,000 nodes each
+missed 5 of them; with screen=200 it was about 5x faster and missed 7.
 """
 from __future__ import annotations
 
@@ -27,9 +36,10 @@ from dataclasses import dataclass
 import random
 import time
 
-from svsim.core.actions import Attack, EndTurn, Evolve, PlayCard
+from svsim.core.actions import Attack, EndTurn, Engage, Evolve, PlayCard, UseBonusPP
 from svsim.core.engine import apply, legal_actions
-from svsim.core.enums import DRAW, Phase
+from svsim.core.enums import DRAW, Keyword, Phase
+from svsim.core.script import prop
 from svsim.core.state import CardInstance, GameState
 
 EPS = 1e-9
@@ -43,6 +53,7 @@ class LethalResult:
     nodes: int           # positions searched
     complete: bool       # the search finished within its budget (else a lethal may be missed)
     seconds: float
+    screened: bool = False   # the damage estimate fell short, so only a quick search ran
 
     @property
     def found(self) -> bool:
@@ -86,26 +97,79 @@ def hidden_info(state: GameState) -> tuple:
             tuple(c.uid for c in state.players[1].deck))
 
 
+def face_damage(state: GameState, player: int) -> int:
+    """Attack damage `player`'s followers could still deal to the leader this turn,
+    ignoring Ward."""
+    total = 0
+    for f in state.players[player].followers:
+        left = f.max_attacks - f.attacks_made
+        if left <= 0 or prop(f, "cant_attack"):
+            continue
+        if f.entered_turn == state.turn and not f.keywords & Keyword.STORM:
+            continue
+        total += f.atk * left
+    return total
+
+
+def damage_estimate(state: GameState) -> float:
+    """A guess at the most damage the player to act can deal this turn: face
+    attacks, plus the best evolution and the best set of cards and Engages within
+    the play points, each tried on its own (direct damage plus new face attacks).
+    Not a bound: effects that only pay off together are missed."""
+    me, opp = state.active, 1 - state.active
+    if not state.players[opp].deck or state.players[opp].extra_damage:
+        return float("inf")              # deck-out at their draw; extra damage per hit
+    hp, face, pp = state.players[opp].leader_hp, face_damage(state, me), state.players[me].pp
+    items, evolve_best, bonus = {}, 0, 0
+    for action in legal_actions(state):
+        if isinstance(action, (Attack, EndTurn)):
+            continue
+        if isinstance(action, UseBonusPP):
+            bonus = 1
+            continue
+        s = state.clone()
+        apply(s, action)
+        if s.winner == me:
+            return float("inf")
+        gain = (hp - s.players[opp].leader_hp) + (face_damage(s, me) - face)
+        if isinstance(action, Evolve):
+            evolve_best = max(evolve_best, gain)
+            continue
+        key = (type(action) is Engage, action.uid)        # a card (played or fused to) or an amulet
+        if gain > items.get(key, (0, 0))[0]:
+            items[key] = (gain, max(0, pp - s.players[me].pp))
+    budget = pp + bonus
+    best = [0] * (budget + 1)            # 0/1 knapsack over play points
+    for gain, cost in items.values():
+        for b in range(budget, cost - 1, -1):
+            best[b] = max(best[b], best[b - cost] + gain)
+    return face + evolve_best + best[budget]
+
+
 class LethalSearch:
     def __init__(self, max_nodes: int = 20000, samples: int = 8, max_depth: int = 40,
-                 seed: int = 0):
+                 seed: int = 0, screen: int | None = None):
         self.max_nodes = max_nodes
         self.samples = samples        # outcomes sampled at a chance node (halved at each nested one)
         self.max_depth = max_depth    # actions in one line
         self.seed = seed
+        self.screen = screen          # node budget when damage_estimate falls short (None: off)
 
     def solve(self, state: GameState) -> LethalResult:
         if state.phase != Phase.MAIN or state.winner is not None:
             raise ValueError("lethal search needs a game in its main phase")
+        start = time.perf_counter()
+        screened = (self.screen is not None and
+                    damage_estimate(state) < state.players[1 - state.active].leader_hp)
+        self.budget = self.screen if screened else self.max_nodes
         self.me = state.active
         self.tt: dict = {}
         self.nodes = 0
         self.exhausted = False
         self.rng = random.Random(self.seed)
-        start = time.perf_counter()
         value, line, sure = self._search(state, 0, 0)
         return LethalResult(value, line, sure and value >= 1 - EPS, self.nodes,
-                            not self.exhausted, time.perf_counter() - start)
+                            not self.exhausted, time.perf_counter() - start, screened)
 
     # --- the search -----------------------------------------------------------------
 
@@ -118,7 +182,7 @@ class LethalSearch:
         hit = self.tt.get(key)
         if hit is not None:
             return hit
-        if self.nodes >= self.max_nodes or depth >= self.max_depth:
+        if self.nodes >= self.budget or depth >= self.max_depth:
             self.exhausted = True
             return 0.0, [], False
         self.nodes += 1
@@ -200,6 +264,6 @@ class LethalSearch:
 
 
 def find_lethal(state: GameState, max_nodes: int = 20000, samples: int = 8,
-                seed: int = 0) -> LethalResult:
+                seed: int = 0, screen: int | None = None) -> LethalResult:
     """Search the current player's turn for a lethal line."""
-    return LethalSearch(max_nodes=max_nodes, samples=samples, seed=seed).solve(state)
+    return LethalSearch(max_nodes=max_nodes, samples=samples, seed=seed, screen=screen).solve(state)

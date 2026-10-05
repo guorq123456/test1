@@ -15,9 +15,12 @@ from svsim.search.lethal import LethalSearch, hidden_info
 
 
 class LethalAgent:
-    def __init__(self, base, max_nodes: int = 2000, seed: int = 0):
+    """`screen`: node budget for positions whose damage estimate falls short of the
+    opponent's defense (see search.lethal); None searches every position fully."""
+
+    def __init__(self, base, max_nodes: int = 2000, screen: int | None = 200, seed: int = 0):
         self.base = base
-        self.search = LethalSearch(max_nodes=max_nodes, seed=seed)
+        self.search = LethalSearch(max_nodes=max_nodes, screen=screen, seed=seed)
         self.plan: list = []
         self.plan_turn = None
         self.checked = None          # (turn, hidden info) of the last search without a lethal

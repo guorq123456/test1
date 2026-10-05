@@ -2,6 +2,7 @@
 random play, or collect lethal puzzles to practise on.
 
     python -m svsim.tools.lethal bench   --games 30                # how often, how fast
+    python -m svsim.tools.lethal bench   --games 30 --screen 200   # ... with damage screening
     python -m svsim.tools.lethal match   --games 400               # LethalAgent vs RandomAgent
     python -m svsim.tools.lethal puzzles --count 5 --out puzzles.jsonl
 
@@ -91,13 +92,15 @@ def random_conversion(state, rollouts: int = 20, seed: int = 0) -> float:
 
 
 def bench(args) -> None:
-    search = LethalSearch(max_nodes=args.budget)
+    search = LethalSearch(max_nodes=args.budget, screen=args.screen)
     stats, times, converted = Counter(), [], []
+    screened = 0
     for state, _ in turn_starts(args.decks, args.games, args.seed):
         r = search.solve(state)
         times.append(r.seconds)
         stats["sure" if r.sure else "chance" if r.probability > 0 else "none"] += 1
         stats["incomplete"] += not r.complete
+        screened += r.screened
         if r.sure:
             converted.append(random_conversion(state))
     times.sort()
@@ -105,7 +108,8 @@ def bench(args) -> None:
     print(f"{n} positions: sure lethal {stats['sure']}, lethal only with luck {stats['chance']}, "
           f"none {stats['none']}; budget ran out {stats['incomplete']}")
     print(f"time per position: median {times[n // 2] * 1000:.0f} ms, "
-          f"95% {times[int(n * 0.95)] * 1000:.0f} ms, max {times[-1]:.1f} s")
+          f"95% {times[int(n * 0.95)] * 1000:.0f} ms, max {times[-1]:.1f} s, total {sum(times):.0f} s"
+          + (f"; {screened} screened to a quick search" if args.screen else ""))
     if converted:
         print(f"random play wins {sum(converted) / len(converted):.0%} of the sure lethals "
               f"(averaged over {len(converted)} positions, 20 tries each)")
@@ -118,7 +122,7 @@ def match(args) -> None:
         d0, d1 = deck_pair(args.decks, g, rng)
         smart = g % 2                       # alternate seats
         agents = [RandomAgent(2 * g, 0.2), RandomAgent(2 * g + 1, 0.2)]
-        agents[smart] = LethalAgent(agents[smart], max_nodes=args.budget, seed=g)
+        agents[smart] = LethalAgent(agents[smart], max_nodes=args.budget, screen=args.screen, seed=g)
         lethal_agents.append(agents[smart])
         winner = play_game(new_game(d0, d1, seed=args.seed + g), agents)
         wins["lethal agent" if winner == smart else "random" if winner in (0, 1) else "draw"] += 1
@@ -166,6 +170,10 @@ def main() -> None:
         p.add_argument("--decks", choices=("starter", "random"), default="starter")
         p.add_argument("--budget", type=int, default=budget, help="search nodes per position")
         p.add_argument("--seed", type=int, default=0)
+        if name != "puzzles":
+            p.add_argument("--screen", type=int, default=200 if name == "match" else None,
+                           help="quick-search budget when the damage estimate falls short "
+                                "(see search.lethal); 0 or less turns screening off")
         if name == "puzzles":
             p.add_argument("--count", type=int, default=5)
             p.add_argument("--min-len", type=int, default=3)
@@ -173,6 +181,8 @@ def main() -> None:
                            help="skip lethals random play finds more often than this")
             p.add_argument("--out", help="save puzzles as JSON lines")
     args = parser.parse_args()
+    if getattr(args, "screen", None) is not None and args.screen <= 0:
+        args.screen = None
     {"bench": bench, "match": match, "puzzles": puzzles}[args.command](args)
 
 

@@ -178,3 +178,27 @@ def test_saved_positions_replay_exactly():
         if i == 6:
             assert state_key(tool.replay(record)) == state_key(state)
             break
+
+
+def test_damage_estimate_counts_attacks_cards_and_evolution():
+    from svsim.search.lethal import damage_estimate
+    state = position(20, pp=2)
+    put(state, 0, demo.LANCER)                              # 3 to the face
+    put(state, 0, demo.LANCER, ready=False)                 # just played: can't hit the leader
+    give(state, 0, demo.RAIDER)                             # 2-cost 2/1 Storm: +2
+    assert damage_estimate(state) == 5
+    unlock_evolution(state, 0)
+    assert damage_estimate(state) == 8                      # super-evolving the ready Lancer: +3
+
+
+def test_screening_only_shortens_hopeless_searches():
+    state = position(2)
+    put(state, 0, demo.GIANT)
+    put(state, 0, demo.RAIDER)
+    put(state, 1, demo.SHIELDBEARER)
+    r = find_lethal(state, screen=50)
+    assert r.sure and not r.screened                        # 5 + 2 face damage >= 2
+    state = position(20)
+    put(state, 0, demo.LANCER)
+    r = find_lethal(state, screen=50)
+    assert r.screened and not r.sure and r.nodes <= 50
