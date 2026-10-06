@@ -20,6 +20,17 @@ and walks one shared tree:
   way): it compares how much better or worse each line leaves things, so an
   evaluation that thinks the game is already won or lost (scores far from 0,
   where the squash is flat) still tells a good line from a bad one;
+- values back up as the best of the player's own choices, averaged over luck:
+  inside one's own turn there is no opponent, so a move is worth the best that
+  can follow it, not the average of everything tried after it (which made moves
+  that pay off only with the right follow-up, evolving before attacking,
+  playing cheap cards for Combo, returning a card to play it again, look worse
+  than ending the turn). A node remembers which moves were open at it in each
+  determinization (hidden cards and random results can change them) and is
+  worth, averaged over those, the best current estimate among the open moves;
+  a node nothing was searched below is worth the average of its evaluations.
+  Luck is averaged, never maximised (`backup="mean"`: the plain average of
+  everything below, as before);
 - ending the turn resolves end-of-turn abilities but not the opponent's turn;
   `evaluate` looks ahead to it through its danger term. With `reply=True` the
   opponent's next turn is played out instead, by a greedy agent holding the
@@ -100,19 +111,21 @@ def _rank(state: GameState, action) -> tuple:
 
 
 class Node:
-    __slots__ = ("children", "visits", "total", "avail")
+    __slots__ = ("children", "visits", "total", "avail", "options", "value")
 
     def __init__(self):
         self.children: dict = {}
         self.visits = 0
-        self.total = 0.0
+        self.total = 0.0               # sum of leaf evaluations (a node not yet searched below)
         self.avail = 0
+        self.options = None            # {frozenset of open moves: times seen} once searched below
+        self.value = 0.0               # the node's estimate (see ISMCTS._refresh)
 
 
 class ISMCTS:
     def __init__(self, iterations: int = 400, seconds: float | None = None, c: float = 0.5,
                  scale: float = 8.0, max_depth: int = 30, seed: int = 0, weights=DEFAULT,
-                 reply: bool = False, center: bool = True, prune: bool = True):
+                 reply: bool = False, center: bool = True, prune: bool = True, backup: str = "max"):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
         self.seconds = seconds
         self.c = c                     # exploration constant (values are in 0..1)
@@ -123,6 +136,9 @@ class ISMCTS:
         self.reply = reply             # play out the opponent's next turn at the leaves
         self.centered = center         # squash relative to the starting position (False: absolute)
         self.prune = prune             # leave out dominated moves (search.moves)
+        if backup not in ("max", "mean"):
+            raise ValueError(f"unknown backup {backup!r}")
+        self.backup = backup           # "max": best own choice, luck averaged; "mean": plain average
         self.center = 0.0              # score of the position the search started from
         self.last_root: Node | None = None
         if reply:
@@ -152,12 +168,14 @@ class ISMCTS:
 
     def _iterate(self, s: GameState, me: int, root: Node) -> None:
         node, path, depth = root, [root], 0
+        offered = []                     # the moves open at each node on the path, this determinization
         while not s.over and s.active == me and depth < self.max_depth:
             where = _locator(s, me)
             options = {}
             legal = legal_actions(s)
             for a in sorted(worth_trying(s, legal) if self.prune else legal, key=lambda a: _rank(s, a)):
                 options.setdefault(action_key(s, a, where), a)
+            offered.append(options)
             fresh = None
             for k in options:
                 child = node.children.get(k)
@@ -175,8 +193,7 @@ class ISMCTS:
             best, best_ucb = None, -1.0
             for k in options:
                 child = node.children[k]
-                ucb = child.total / child.visits + self.c * math.sqrt(
-                    math.log(child.avail) / child.visits)
+                ucb = self.estimate(child) + self.c * math.sqrt(math.log(child.avail) / child.visits)
                 if ucb > best_ucb:
                     best, best_ucb = k, ucb
             node = node.children[best]
@@ -190,9 +207,42 @@ class ISMCTS:
                 apply(s, self.opponent.act(s, legal_actions(s)))
             me_next = not s.over
         v = self.value(s, me, me_next)
-        for n in path:
+        if self.backup == "mean":
+            for n in path:
+                n.visits += 1
+                n.total += v
+            return
+        leaf = path[-1]
+        leaf.visits += 1
+        leaf.total += v
+        self._refresh(leaf)
+        for n, options in zip(reversed(path[:-1]), reversed(offered)):
             n.visits += 1
-            n.total += v
+            if n.options is None:
+                n.options = {}
+            seen = frozenset(options)
+            n.options[seen] = n.options.get(seen, 0) + 1
+            self._refresh(n)
+
+    def estimate(self, node: Node) -> float:
+        """A node's value as this search backs up (see `backup`)."""
+        return node.value if self.backup == "max" else node.total / node.visits
+
+    @staticmethod
+    def _refresh(node: Node) -> None:
+        """A node's estimate: over the sets of moves open at it (weighted by how
+        often each was seen), the best current estimate among the open moves;
+        the average evaluation if nothing was searched below it yet."""
+        if not node.options:
+            node.value = node.total / node.visits
+            return
+        total = count = 0
+        for moves, times in node.options.items():
+            values = [node.children[k].value for k in moves if k in node.children and node.children[k].visits]
+            if values:
+                total += times * max(values)
+                count += times
+        node.value = total / count if count else node.total / max(node.visits, 1)
 
     @staticmethod
     def _step(s: GameState, action) -> None:

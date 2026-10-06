@@ -109,7 +109,7 @@ class LethalAgent:
         if not s.over:
             s = after_end_of_turn(s)
         best = max(root.children.values(), key=lambda n: n.visits)
-        return line if search.value(s, state.active) > best.total / best.visits else []
+        return line if search.value(s, state.active) > search.estimate(best) else []
 
     def _planned(self, state) -> tuple[list, bool]:
         """(the planner's checked lethal line or [], whether the model rules lethal out)."""

@@ -8,7 +8,7 @@ from svsim.core.actions import Attack, EndTurn, Evolve
 from svsim.core.engine import apply, legal_actions
 from svsim.core.state import leader_uid
 from svsim.search.evaluate import DEFAULT, evaluate
-from svsim.search.mcts import ISMCTS
+from svsim.search.mcts import ISMCTS, action_key
 from svsim.search.moves import dominated, worth_trying
 
 from helpers import put, start, unlock_evolution
@@ -82,3 +82,22 @@ def test_the_greedy_agent_never_evolves_a_follower_that_already_attacked():
     agent = GreedyAgent(seed=1)
     apply(state, Attack(saga.uid, leader_uid(1)))
     assert not isinstance(agent.act(state, legal_actions(state)), Evolve)
+
+
+def test_a_move_is_worth_the_best_line_after_it_not_the_average():
+    state, saga = _saga_ready()
+    best_line = state.clone()                            # evolve, attack, end the turn
+    apply(best_line, Evolve(saga.uid))
+    apply(best_line, Attack(saga.uid, leader_uid(1)))
+    estimates = {}
+    for backup in ("max", "mean"):
+        search = ISMCTS(iterations=300, seed=1, backup=backup, prune=False)
+        search.choose(state)
+        key = action_key(state, Evolve(saga.uid))
+        child = search.last_root.children[key]
+        ISMCTS._step(best_line_end := best_line.clone(), EndTurn())
+        estimates[backup] = (search.estimate(child), search.value(best_line_end, 0))
+    q, best = estimates["max"]
+    assert abs(q - best) < 1e-9                          # the best line below it, exactly
+    q_mean, _ = estimates["mean"]
+    assert q_mean < best - 1e-6                          # the average is dragged down by worse lines

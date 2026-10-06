@@ -37,7 +37,7 @@ def ai_view(state, spec: str, seed: int):
     root = getattr(search, "last_root", None)
     values = {}
     if root is not None:
-        values = {k: n.total / n.visits for k, n in root.children.items() if n.visits}
+        values = {k: search.estimate(n) for k, n in root.children.items() if n.visits}
     return action, values
 
 
