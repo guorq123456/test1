@@ -52,7 +52,7 @@ from svsim.core.enums import DRAW, Phase
 from svsim.core.state import GameState, leader_of
 from svsim.core.view import determinize
 from svsim.search.evaluate import DEFAULT, evaluate
-from svsim.search.moves import worth_trying
+from svsim.search.moves import reserved, worth_trying
 
 
 def _locator(state: GameState, me: int) -> dict:
@@ -125,7 +125,8 @@ class Node:
 class ISMCTS:
     def __init__(self, iterations: int = 400, seconds: float | None = None, c: float = 0.5,
                  scale: float = 8.0, max_depth: int = 30, seed: int = 0, weights=DEFAULT,
-                 reply: bool = False, center: bool = True, prune: bool = True, backup: str = "max"):
+                 reply: bool = False, center: bool = True, prune: bool = True, backup: str = "max",
+                 reserve: bool = False):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
         self.seconds = seconds
         self.c = c                     # exploration constant (values are in 0..1)
@@ -136,6 +137,7 @@ class ISMCTS:
         self.reply = reply             # play out the opponent's next turn at the leaves
         self.centered = center         # squash relative to the starting position (False: absolute)
         self.prune = prune             # leave out dominated moves (search.moves)
+        self.reserve = reserve         # keep the win condition for finishing turns (search.moves.reserved)
         if backup not in ("max", "mean"):
             raise ValueError(f"unknown backup {backup!r}")
         self.backup = backup           # "max": best own choice, luck averaged; "mean": plain average
@@ -173,6 +175,8 @@ class ISMCTS:
             where = _locator(s, me)
             options = {}
             legal = legal_actions(s)
+            if self.reserve:
+                legal = [a for a in legal if not reserved(s, a)] or legal
             for a in sorted(worth_trying(s, legal) if self.prune else legal, key=lambda a: _rank(s, a)):
                 options.setdefault(action_key(s, a, where), a)
             offered.append(options)

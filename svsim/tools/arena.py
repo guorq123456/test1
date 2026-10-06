@@ -14,7 +14,9 @@ only, leaving out followers the opponent may remove (evaluate.THREAT_HAND);
 "+macro" lets the planner propose its most-damage line on turns without
 lethal, played when the search's evaluation prefers it (ISMCTS agents only);
 "+burst" plays that line when the race clock says it sets up next turn's kill
-and holding doesn't (the player's "15 now, 5 next turn").
+and holding doesn't (the player's "15 now, 5 next turn"); "+reserve" keeps the
+search from spending the win condition (playing a finisher such as Killer
+Rhinoceroach, or trading it with a follower) outside lethal and burst lines.
 turn:N plans the whole turn (search.turnplan: the best line by the end-of-turn
 evaluation, luck averaged, N positions at most) and follows it.
 impact:N chooses each turn among the mcts:N agent's lines by their impact on
@@ -49,11 +51,14 @@ CRAFTS = [c for c in Craft if c != Craft.NEUTRAL]
 
 def make_agent(spec: str, seed: int):
     spec, *options = spec.split("+")
-    unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst"}
+    unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready"}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
     weights = THREAT_HAND if "hand" in options else THREAT if "threat" in options else DEFAULT
+    if "ready" in options:                         # the hand's next-turn damage by the player's formula
+        from dataclasses import replace
+        weights = replace(weights, ready=0.5, ready_lethal=6.0)
     if "learned" in options:                       # each deck's learned evaluation (svsim.learn)
         from svsim.learn.model import Learned
         weights = Learned(fallback=weights)
@@ -78,7 +83,8 @@ def make_agent(spec: str, seed: int):
         base = make_agent("+".join([f"mcts:{arg or 200}"] + options), seed)
         return ImpactAgent(base, seed=seed)
     if name in ("mcts", "mcts-raw", "mcts-reply"):
-        agent = MCTSAgent(int(arg or 400), seed=seed, reply=name == "mcts-reply", weights=weights)
+        agent = MCTSAgent(int(arg or 400), seed=seed, reply=name == "mcts-reply", weights=weights,
+                          reserve="reserve" in options)
         return agent if name == "mcts-raw" else LethalAgent(agent, seed=seed, planner=planner,
                                                             macro="macro" in options, burst="burst" in options)
     raise ValueError(f"unknown agent {spec!r}")

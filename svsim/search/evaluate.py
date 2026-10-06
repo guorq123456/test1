@@ -59,6 +59,8 @@ class Weights:
     setup_lethal: float = 0.0  # that damage is lethal
     setup_nodes: int = 300     # planner budget per position
     setup_board: bool = True   # count the player's followers in it (else hand and amulets only)
+    ready: float = 0.0         # per point the hand could deal next turn by the player's formula, up to lethal
+    ready_lethal: float = 0.0  # that is lethal
 
 
 DEFAULT = Weights()
@@ -177,6 +179,12 @@ def evaluate(state: GameState, player: int, w: Weights = DEFAULT,
         score -= danger
     if threat(state, player) >= opp.leader_hp:
         score += pressure
+    if w.ready or w.ready_lethal:
+        from svsim.search.formula import next_turn
+        potential = next_turn(state, player)
+        score += w.ready * min(potential, opp.leader_hp)
+        if potential >= opp.leader_hp:
+            score += w.ready_lethal
     if w.setup or w.setup_lethal:
         from svsim.search.combo import next_turn_damage
         potential = next_turn_damage(state, player, w.setup_nodes, w.setup_board)

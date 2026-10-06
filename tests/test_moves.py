@@ -101,3 +101,23 @@ def test_a_move_is_worth_the_best_line_after_it_not_the_average():
     assert abs(q - best) < 1e-9                          # the best line below it, exactly
     q_mean, _ = estimates["mean"]
     assert q_mean < best - 1e-6                          # the average is dragged down by worse lines
+
+
+def test_the_win_condition_is_kept_for_finishing_turns():
+    # The player: Rhinoceroach is the deck's only way to win; the AI kept trading it with
+    # followers and playing it early, and had nothing left to finish with.
+    from svsim.cards import demo, unlimited
+    from svsim.core.actions import PlayCard
+    from svsim.search.moves import finisher, reserved
+    from helpers import give
+    assert finisher(unlimited.KILLER_RHINOCEROACH) and not finisher(dragon.SAGATSUMATSU)
+    state = start()
+    rhino = give(state, 0, unlimited.KILLER_RHINOCEROACH)
+    raider = give(state, 0, demo.RAIDER)
+    state.players[0].pp = state.players[0].max_pp = 10
+    assert reserved(state, PlayCard(rhino.uid)) and not reserved(state, PlayCard(raider.uid))
+    on_board = put(state, 0, unlimited.KILLER_RHINOCEROACH)
+    foe = put(state, 1, demo.FOOTMAN)
+    assert reserved(state, Attack(on_board.uid, foe.uid)) and not reserved(state, Attack(on_board.uid, leader_uid(1)))
+    search = ISMCTS(iterations=50, seed=0, reserve=True)
+    assert not reserved(state, search.choose(state))             # never offered to the search

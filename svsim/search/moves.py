@@ -14,9 +14,9 @@ shouldn't be offered the worse order.
 """
 from __future__ import annotations
 
-from svsim.core.actions import Evolve
+from svsim.core.actions import Attack, Evolve, PlayCard
 from svsim.core.script import LISTEN_IN_DECK, LISTEN_IN_HAND, scripts_of
-from svsim.core.state import GameState
+from svsim.core.state import GameState, leader_of
 
 EVOLVE_HOOKS = ("on_evolve", "on_super_evolve", "on_evolved")
 
@@ -48,3 +48,32 @@ def worth_trying(state: GameState, actions: list) -> list:
     """The actions minus the dominated ones (never empty: ending the turn stays)."""
     kept = [a for a in actions if not dominated(state, a)]
     return kept or list(actions)
+
+
+_FINISHERS: dict = {}
+
+
+def finisher(defn) -> bool:
+    """A follower whose attack grows with Combo and that can hit the leader the
+    turn it is played (Killer Rhinoceroach), measured by search.formula."""
+    hit = _FINISHERS.get(defn.card_id)
+    if hit is None:
+        from svsim.search.formula import _finisher
+        hit = _FINISHERS[defn.card_id] = _finisher(defn) is not None
+    return hit
+
+
+def reserved(state: GameState, action) -> bool:
+    """Spending the win condition outside a finishing turn: playing a finisher, or
+    a finisher attacking a follower. The player's Rhinoceroaches (25 plays in ten
+    games) all went to the leader, 22 of 25 from their sixth turn on; the AI's
+    went early (22 of 56 before its sixth turn) and 22 of 56 traded with
+    followers, leaving nothing to finish with. Lethal and burst lines (the
+    lethal agent) still play them."""
+    if isinstance(action, PlayCard):
+        card = state.in_hand(state.active, action.uid)
+        return card is not None and finisher(card.defn)
+    if isinstance(action, Attack) and leader_of(action.target) is None:
+        attacker = state.on_field(action.attacker)
+        return attacker is not None and finisher(attacker.defn)
+    return False

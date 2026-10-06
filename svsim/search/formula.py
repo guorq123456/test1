@@ -401,3 +401,35 @@ def _count(me, base, per, h, b, used, cards, evo, evolving, rhino_hit, ward_life
         terms.append(("场上辉岩启动给破魔虫加攻", buffs))
     src = f"手出 {h}" + (f"、回手 {b}" if b else "")
     return Estimate(dmg, f"{plays} 虫（{src}）" + ("；对手有守护，先拆" if wards else ""), terms)
+
+
+_NEXT: dict = {}
+
+
+def next_turn(state: GameState, side: int) -> int:
+    """What `side`'s hand and amulets could deal on its next turn by this count:
+    one more play point, Combo 0, the followers now on the field left out (the
+    opponent's turn may remove them), the card it will draw unknown. The
+    player's Rhinoceroach turns build up this number turn after turn (in their
+    ten games: about 2 on their fourth turn, 7 on the sixth, 14 on the eighth,
+    17 on the ninth); the AI's stayed at 2 to 4."""
+    p, opp = state.players[side], state.players[1 - side]
+    pp = min(10, p.max_pp + 1)
+    first = side == state.first
+    key = (tuple(sorted((c.defn.card_id, c.cost, bool((c.counters or {}).get("fused"))) for c in p.hand)), pp,
+           tuple(sorted(c.defn.card_id for c in p.field if c.defn.is_amulet)),
+           p.ep > 0, p.sep > 0, p.turns_taken + 1 >= EVOLVE_TURN[first], p.turns_taken + 1 >= SUPER_EVOLVE_TURN[first],
+           tuple((f.atk, f.life, int(f.keywords)) for f in opp.followers), opp.leader_hp)
+    hit = _NEXT.get(key)
+    if hit is None:
+        s = state.clone()
+        s.active, s.turn = side, state.turn + 1
+        q = s.players[side]
+        q.pp, q.max_pp, q.combo = pp, pp, 0
+        q.evolved_this_turn = False
+        q.turns_taken += 1
+        q.field = [c for c in q.field if not c.defn.is_follower]
+        if len(_NEXT) > 100000:
+            _NEXT.clear()
+        hit = _NEXT[key] = estimate(s).damage
+    return hit

@@ -474,6 +474,21 @@ class _Abstract:
                             yield step + (target, hit_step), (
                                 new_pp, cap, new_combo, h2, tuple(sorted(f2)), tuple(sorted(new_a)),
                                 bonus, evolve, new_count - 1, new_enemies), e.face
+                    if e.bounce and not bounce_targets and defn.is_follower and count > len(followers):
+                        # No other follower, but an amulet: the engine makes the Fanfare select it, and
+                        # it goes back to hand (Baby Carbuncle with only Godwood Staff out).
+                        for k, acid in enumerate(new_a):
+                            if acid in new_a[:k]:
+                                continue
+                            yield step + (("A", acid), hit_step), (
+                                new_pp, cap, new_combo, self._returned(new_hand, acid), tuple(sorted(new_f)),
+                                tuple(sorted(new_a[:k] + new_a[k + 1:])), bonus, evolve, new_count - 1,
+                                new_enemies), e.face
+                        if count - len(followers) > len(amulets):    # one the plan doesn't track: lost to it
+                            yield step + (("A", None), hit_step), (
+                                new_pp, cap, new_combo, new_hand, tuple(sorted(new_f)), tuple(sorted(new_a)),
+                                bonus, evolve, new_count - 1, new_enemies), e.face
+                        continue
                     if not e.bounce or not bounce_targets:
                         yield step + (None, hit_step), (new_pp, cap, new_combo, new_hand, tuple(sorted(new_f)),
                                                         tuple(sorted(new_a)), bonus, evolve, new_count,
@@ -778,6 +793,11 @@ def realize(state: GameState, steps: list) -> list | None:
             chosen = next((a for a in legal if isinstance(a, UseBonusPP)), None)
         elif kind == "play":
             _, cid, cost, modes, bounce, hit = step
+            amulet_back = None
+            if bounce and bounce[0] == "A":              # an amulet goes back (see _Abstract.moves)
+                amulet_back = {c.uid for c in s.players[me].field
+                               if c.defn.is_amulet and (bounce[1] is None or c.defn.card_id == bounce[1])}
+                bounce = None
             allies = _followers_like(s, me, bounce) if bounce else []
             foes = _enemies_like(s, me, *hit) if hit else []
             best = None
@@ -795,6 +815,8 @@ def realize(state: GameState, steps: list) -> list | None:
                 rank = (min((_rank(allies, t) for t in a.targets), default=len(allies)) if bounce else 0,
                         min((_rank(foes, t) for t in a.targets), default=len(foes)) if hit else 0)
                 if (bounce and rank[0] >= len(allies)) or (hit and rank[1] >= len(foes)):
+                    continue
+                if amulet_back is not None and not any(t in amulet_back for t in a.targets):
                     continue
                 if best is None or rank < best[0]:
                     best = (rank, a)
