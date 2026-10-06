@@ -30,7 +30,7 @@ import statistics
 
 from svsim.ui.session import DECKS
 
-KINDS = {"attack": "随从攻击", "card": "卡牌效果", "end": "回合结束效果", "other": "其他"}
+KINDS = {"attack": "随从攻击", "card": "卡牌效果", "end": "回合交替时的效果", "other": "其他"}
 
 
 # --- goldfish ---------------------------------------------------------------------------------
@@ -86,7 +86,7 @@ def _label(state, action) -> tuple[str, str]:
 def game_facts(record: dict) -> dict:
     """One replay: per side, damage dealt to the enemy leader by source, healing, cards
     played (first own turn), evolutions, the winner and the turn the game ended on."""
-    from svsim.core.actions import Evolve, PlayCard, from_dict
+    from svsim.core.actions import EndTurn, Evolve, PlayCard, from_dict
     from svsim.core.engine import apply
     from svsim.core.enums import Phase
     from svsim.tools import records as R
@@ -124,8 +124,11 @@ def game_facts(record: dict) -> dict:
                 if dealer == me:
                     facts[dealer]["damage"][label] += -change
                     facts[dealer]["kinds"][kind] += -change
+                elif isinstance(action, EndTurn):        # the dealer's turn starting: countdowns, Last Words...
+                    facts[dealer]["damage"]["自己回合开始时的效果（倒数到期、亡语等）"] += -change
+                    facts[dealer]["kinds"]["end"] += -change
                 else:                                  # the side not acting: its effects on the other's turn
-                    facts[dealer]["damage"]["对方回合中的效果"] += -change
+                    facts[dealer]["damage"]["对方行动时触发的效果"] += -change
                     facts[dealer]["kinds"]["other"] += -change
     for side in (0, 1):
         facts[side]["won"] = state.winner == side
