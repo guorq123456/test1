@@ -253,3 +253,24 @@ def test_the_answers_are_learned_from_the_player_when_they_did_the_answering():
     assert by_player and pairs == [(mine, 1)]
     pairs, by_player = games([mine, ais], "rhino", "ramp")                     # the bot answers in every game
     assert not by_player and pairs == [(mine, 0), (ais, 1)]
+
+
+def test_the_fuel_agent_picks_a_line_and_plays_legal_moves():
+    from svsim.agents.fuel_agent import FuelAgent, fuel
+    from svsim.cards import decks
+    from svsim.core.actions import Mulligan
+    from svsim.core.engine import legal_actions, new_game
+    from svsim.tools.arena import make_agent
+    state = new_game(decks.build(decks.RHINO_FOREST), decks.build(decks.RAMP_DRAGON), seed=5, first=0)
+    apply(state, Mulligan(()))
+    apply(state, Mulligan(()))
+    assert fuel(state, 0) >= 0
+    agent = FuelAgent(make_agent("mcts:10+plan+reserve", 1), samples=1, seed=1)
+    for _ in range(40):
+        if state.over or state.active != 0:
+            break
+        actions = legal_actions(state)
+        action = agent.act(state, actions)
+        assert action in actions
+        apply(state, action)
+    assert sum(agent.picked.values()) == 1 and set(agent.scores) >= {"base", "pass"}

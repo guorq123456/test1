@@ -19,7 +19,11 @@ search from spending the win condition (playing a finisher such as Killer
 Rhinoceroach, or trading it with a follower) outside lethal and burst lines.
 turn:N plans the whole turn (search.turnplan: the best line by the end-of-turn
 evaluation, luck averaged, N positions at most) and follows it.
-impact:N chooses each turn among the mcts:N agent's lines by their impact on
+fuel:N plays each turn the line (the mcts:N agent's, digging first, the
+planner's burst, passing) that leaves the most fuel: the most damage one turn
+could deal after the opponent's reply and two more turns of digging
+(agents.fuel_agent; the yardstick that picked the player's turns over the
+AI's 39 to 16). impact:N chooses each turn among the mcts:N agent's lines by their impact on
 winning (agents.impact_agent: the opponent's answer sampled, then the race
 clocks); the other suffixes go to the mcts:N agent.
 "+learned" uses each deck's learned evaluation (svsim.learn, tools.learn) where
@@ -90,6 +94,10 @@ def make_agent(spec: str, seed: int):
         from svsim.agents.turns_agent import TurnsAgent
         base = make_agent("+".join([f"mcts:{arg or 200}"] + options), seed)
         return TurnsAgent(base, seed=seed)
+    if name == "fuel":                             # each turn's line by the fuel it leaves (agents.fuel_agent)
+        from svsim.agents.fuel_agent import FuelAgent
+        base = make_agent("+".join([f"mcts:{arg or 100}"] + options), seed)
+        return FuelAgent(base, seed=seed)
     if name == "impact":                           # turns chosen by their impact (agents.impact_agent)
         from svsim.agents.impact_agent import ImpactAgent
         base = make_agent("+".join([f"mcts:{arg or 200}"] + options), seed)
