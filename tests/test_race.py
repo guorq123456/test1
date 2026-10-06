@@ -190,3 +190,55 @@ def test_the_cross_turn_planner_picks_a_kind_of_turn_and_plays_legal_moves():
         action = agent.act(state, actions)
         assert action in actions
         apply(state, action)
+
+
+def test_assuming_the_opponent_answers_the_followers():
+    # The player's premise for a damage deck: don't count on the followers snowballing.
+    from svsim.learn.survival import LIVES, Removal, Survival
+    state = start()
+    _empty_hands(state)
+    put(state, 0, demo.RAIDER)                            # 2/1, hits for 2 this turn
+    state.players[1].leader_hp = 6
+    assert race.clock(state, 0).turns == 2                # unanswered: 2 + 2 + 2
+    assert race.clock(state, 0, removal=Removal()).turns == race.HORIZON + 1   # no games: answered at once
+    s = race.advance(state.clone(), 0, Removal())
+    assert not s.players[0].followers and s.players[1].leader_hp == 6
+    stays = Survival("x", "y")
+    for t in range(1, 3):                                 # 1-defense followers last the opponent's first two turns
+        stays.seen[t][1] = stays.kept[t][1] = 10
+    for t in range(3, 11):
+        stays.seen[t][1] = 10
+    assert stays.chance(1, 1) > 0.9 and stays.chance(3, 1) < 0.1
+    assert stays.chance(1, LIVES) > 0.5            # no 5-defense followers seen: the turn's rate
+
+    class Sure:                                           # a profile without chance
+        def chance(self, turn, life):
+            return 1.0 if turn <= 2 else 0.0
+
+    assert race.clock(state, 0, removal=Removal(Sure())).turns == 2   # the opponent's turns 1 and 2: it stays
+    state.players[1].leader_hp = 10
+    assert race.clock(state, 0, removal=Removal(Sure())).turns == race.HORIZON + 1   # 2 + 2 + 2, then gone
+
+
+def test_survival_is_counted_from_the_end_of_a_turn_to_the_start_of_the_next():
+    from svsim.core.actions import PlayCard
+    from svsim.core.engine import legal_actions
+    from svsim.learn.survival import Survival, count
+    state = start(deck=[demo.FOOTMAN] * 40, deck1=[demo.FIREBOLT] * 40)
+    play = "play"
+
+    def game():
+        for action in (play, EndTurn(),          # a Footman (1/2)
+                       EndTurn(),                # the opponent's turn 1: nothing
+                       play, EndTurn(),          # a second Footman
+                       play, EndTurn(),          # the opponent's turn 2: Firebolt kills one
+                       EndTurn()):
+            if action == play:
+                action = next(a for a in legal_actions(state) if isinstance(a, PlayCard))
+            yield state, action
+            apply(state, action)
+
+    s = Survival("footmen", "firebolts")
+    count(game(), 0, s)
+    assert (s.seen[1][2], s.kept[1][2]) == (1, 1)
+    assert (s.seen[2][2], s.kept[2][2]) == (2, 1)

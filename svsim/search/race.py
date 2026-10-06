@@ -35,6 +35,15 @@ Ward, healing and the damage they deal in between; cards drawn during the
 burst turn (unknown, never played); keeping the hand under the limit by
 cycling (the projection burns what doesn't fit, as the rules do). The
 opponent's answer is what `search.impact` adds, by playing their turn.
+
+One answer can be put in, the player's premise for a damage deck (2026-10-06):
+don't count on the followers snowballing, assume the opponent answers them.
+With `removal` (learn.survival.Removal), each skipped opponent turn destroys
+each of `side`'s followers unless it survives, with the chance followers of its
+defense survived that turn in the games of the matchup (against Ramp Dragon a
+1-defense follower of Rhinoceroach Forest lives through the opponent's turns 1
+to 5 about 40% of the time, through turns 6 to 9 0-26%); with no games for the
+matchup, every follower goes.
 """
 from __future__ import annotations
 
@@ -59,13 +68,18 @@ def _end_without_next(s: GameState) -> None:
     s.max_turns = real
 
 
-def advance(s: GameState, side: int) -> GameState:
+def advance(s: GameState, side: int, removal=None) -> GameState:
     """Start `side`'s next turn on `s` (modified and returned); if it is `side`'s
-    turn now, the opponent's turn in between passes with nothing happening."""
+    turn now, the opponent's turn in between passes with nothing happening (but
+    the `removal` assumed, if any)."""
     if s.active == side:
         _end_without_next(s)
         if s.over:
             return s
+        if removal is not None:
+            answer(s, side, removal)
+            if s.over:
+                return s
         s.turn += 1
         s.active = side
     else:
@@ -74,6 +88,19 @@ def advance(s: GameState, side: int) -> GameState:
             return s
     _start_turn(s)
     return s
+
+
+def answer(s: GameState, side: int, removal) -> None:
+    """The opponent's turn under way on `s` destroys `side`'s followers that the
+    `removal` doesn't expect to stay (their Last Words resolve)."""
+    from svsim.core import effects as E
+    from svsim.core.engine import resolve_queue
+    from svsim.learn.survival import own_turn
+    turn = own_turn(s, 1 - side, s.turn)
+    for f in list(s.players[side].followers):
+        if not removal.stays(f, turn):
+            E.destroy(s, f, by_ability=False)
+    resolve_queue(s)
 
 
 def board_chip(state: GameState, side: int) -> int:
@@ -188,7 +215,7 @@ class Clock:
     damage: list        # the burst found on each turn of the plain holding track
 
 
-def _chain(s: GameState, side: int, start: int, limit: int, nodes: int) -> int | None:
+def _chain(s: GameState, side: int, start: int, limit: int, nodes: int, removal=None) -> int | None:
     """From turn `start` (position `s`, modified): deal damage every turn; the
     turn the leader falls, if before `limit`."""
     for k in range(start, limit):
@@ -203,14 +230,15 @@ def _chain(s: GameState, side: int, start: int, limit: int, nodes: int) -> int |
             return None
         if t.over:
             return k if t.winner == side else None
-        s = advance(t, side)
+        s = advance(t, side, removal)
     return None
 
 
 def clock(state: GameState, side: int, horizon: int = HORIZON, nodes: int = 1000, ramp: bool = True,
-          digging: bool = False) -> Clock:
-    """`side`'s clock if nobody interferes (see the module docstring). If it is
-    `side`'s turn, turn 0 is this one as it stands; otherwise its next turn."""
+          digging: bool = False, removal=None) -> Clock:
+    """`side`'s clock if nobody interferes (see the module docstring) but the
+    `removal` assumed on the opponent's turns, if any. If it is `side`'s turn,
+    turn 0 is this one as it stands; otherwise its next turn."""
     start = state.clone()
     if not (start.active == side and start.phase == Phase.MAIN):
         advance(start, side)
@@ -228,7 +256,7 @@ def clock(state: GameState, side: int, horizon: int = HORIZON, nodes: int = 1000
                 continue
             if name == "hold":
                 found.append(burst(s, nodes))
-            k = _chain(s.clone(), side, j, best, nodes)
+            k = _chain(s.clone(), side, j, best, nodes, removal)
             if k is not None and k < best:
                 best, how = k, "now" if k == 0 else f"{name} {j}+{k - j}"
         if j + 1 >= best:
@@ -236,7 +264,7 @@ def clock(state: GameState, side: int, horizon: int = HORIZON, nodes: int = 1000
         for i, (name, s) in enumerate(tracks):
             if not s.over:
                 develop(s, side, ramp=name == "ramp", digging=name == "dig")
-                tracks[i] = (name, advance(s, side) if not s.over else s)
+                tracks[i] = (name, advance(s, side, removal) if not s.over else s)
     return Clock(best, how, found)
 
 
