@@ -641,12 +641,13 @@ def plan(state: GameState, max_nodes: int = 200000) -> Plan:
     return Plan(dmg, steps, search.nodes)
 
 
-def next_turn_position(state: GameState, side: int, board: bool = True) -> tuple:
+def next_turn_position(state: GameState, side: int, board: bool = True, pp: int | None = None) -> tuple:
     """The abstract position at the start of `side`'s next turn if nothing changes
     before it: one more max play point, Combo 0, every follower ready to attack,
     evolution as it will be unlocked, the card drawn unknown. Without `board`,
     `side`'s followers are left out (the opponent's turn may well remove them):
-    what the hand and amulets can do."""
+    what the hand and amulets can do. With `pp`, that many play points instead
+    (10: what the hand could do once the play points are all there)."""
     p, opp = state.players[side], state.players[1 - side]
     first = side == state.first
     turns = p.turns_taken + 1
@@ -664,7 +665,7 @@ def next_turn_position(state: GameState, side: int, board: bool = True) -> tuple
     hand = tuple(sorted(_hand_key(state, c) for c in p.hand))
     if len(hand) < HAND_LIMIT:
         hand = tuple(sorted(hand + (UNKNOWN,)))
-    pp = min(MAX_PP, p.max_pp + 1)
+    pp = min(MAX_PP, p.max_pp + 1) if pp is None else pp
     bonus = p.bonus_ready or p.bonus_active or (not first and turns == BONUS_REFRESH_TURN)
     count = len(p.field) if board else len(p.field) - len(p.followers)
     return (pp, pp, 0, hand, followers, amulets, bonus, (ep, sep) if ep or sep else None, count,
@@ -674,13 +675,14 @@ def next_turn_position(state: GameState, side: int, board: bool = True) -> tuple
 _NEXT_TURN: dict = {}
 
 
-def next_turn_damage(state: GameState, side: int, max_nodes: int = 2000, board: bool = True) -> int:
+def next_turn_damage(state: GameState, side: int, max_nodes: int = 2000, board: bool = True,
+                     pp: int | None = None) -> int:
     """The most damage `side` could deal on its next turn by the resource model, if
     nothing changes before it (stops counting at the enemy leader's defense; with a
     small `max_nodes` it is what the search found within that budget). Without
     `board`: from the hand and amulets only."""
     opp = state.players[1 - side]
-    pos = next_turn_position(state, side, board)
+    pos = next_turn_position(state, side, board, pp)
     key = (pos, opp.leader_hp, opp.extra_damage, max_nodes)
     hit = _NEXT_TURN.get(key)
     if hit is None:

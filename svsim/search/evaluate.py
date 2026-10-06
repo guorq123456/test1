@@ -122,6 +122,8 @@ def evaluate(state: GameState, player: int, w: Weights = DEFAULT,
     """Score for `player`. By default the opponent moves next (the end of
     `player`'s turn); with `player_moves_next` (the start of `player`'s turn)
     danger and pressure swap weights."""
+    if hasattr(w, "score"):                       # a learned evaluation (svsim.learn.model)
+        return w.score(state, player, player_moves_next)
     if state.winner is not None:
         return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
     me, opp = state.players[player], state.players[1 - player]

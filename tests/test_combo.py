@@ -267,3 +267,11 @@ def test_macro_agent_returns_legal_moves():
         assert _legal(state, action)
         apply(state, action)
     assert agent.lethals == 0
+
+
+def test_potential_with_all_ten_play_points_shows_what_the_hand_builds_towards():
+    from svsim.search.combo import next_turn_damage
+    hand = [U.FAIRY_CONVOCATION, U.FAIRY, U.FAIRY, U.KILLER_RHINOCEROACH, forest.BUG_ALERT]
+    state = combo_position(30, 3, hand)
+    state.players[0].max_pp = 3                              # next turn: 4 play points
+    assert next_turn_damage(state, 0, board=False) < next_turn_damage(state, 0, board=False, pp=10) == 10

@@ -13,7 +13,8 @@ potential (evaluate.THREAT); "+hand" the same from the hand and amulets
 only, leaving out followers the opponent may remove (evaluate.THREAT_HAND);
 "+macro" lets the planner propose its most-damage line on turns without
 lethal, played when the search's evaluation prefers it (ISMCTS agents only).
-Combined: mcts:200+plan+macro+threat. Each pairing plays both seats and, for --decks starter or
+"+learned" uses each deck's learned evaluation (svsim.learn, tools.learn) where
+there is one. Combined: mcts:200+plan+macro+threat. Each pairing plays both seats and, for --decks starter or
 rhino, both decks equally often. --decks rhino is Rhinoceroach Forest
 (Unlimited) against Ramp Dragon. Prints win rates with a 95% margin, the
 average thinking time per decision and the lethals each agent found.
@@ -40,11 +41,14 @@ CRAFTS = [c for c in Craft if c != Craft.NEUTRAL]
 
 def make_agent(spec: str, seed: int):
     spec, *options = spec.split("+")
-    unknown = set(options) - {"plan", "threat", "hand", "macro"}
+    unknown = set(options) - {"plan", "threat", "hand", "macro", "learned"}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
     weights = THREAT_HAND if "hand" in options else THREAT if "threat" in options else DEFAULT
+    if "learned" in options:                       # each deck's learned evaluation (svsim.learn)
+        from svsim.learn.model import Learned
+        weights = Learned(fallback=weights)
     name, _, arg = spec.partition(":")
     if name == "random":
         return RandomAgent(seed, 0.2)

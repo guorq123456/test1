@@ -1,0 +1,84 @@
+"""A learned linear evaluation, one per deck (keyed by the deck's craft).
+
+`LinearValue` turns features into a win probability: P(win) = logistic(coef .
+standardized features). Agents use it like the hand-set evaluate.Weights: an
+object with `score(state, player, player_moves_next)` returning a score on the
+same scale as evaluate (ISMCTS squashes score / 8 into 0..1, so score = 8 *
+logit). `Learned` picks each player's model by the craft of their deck and
+falls back to the hand-set evaluation for decks without one.
+"""
+from __future__ import annotations
+
+import json
+from collections import Counter
+from pathlib import Path
+
+from svsim.core.enums import Craft
+from svsim.core.state import GameState
+from svsim.learn.features import features, names
+
+WEIGHTS = Path(__file__).resolve().parent / "weights"
+SCALE = 8.0                      # ISMCTS's logistic squash: value = 1 / (1 + exp(-score / 8))
+
+
+class LinearValue:
+    def __init__(self, coef: list, mean: list, std: list, potential: bool, info: dict | None = None):
+        self.coef, self.mean, self.std, self.potential = coef, mean, std, potential
+        self.info = info or {}
+        assert len(coef) == len(mean) == len(std) == len(names(potential))
+
+    def logit(self, state: GameState, player: int) -> float:
+        x = features(state, player, self.potential)
+        return sum(c * ((v - m) / s) for c, v, m, s in zip(self.coef, x, self.mean, self.std))
+
+    def save(self, path: Path) -> None:
+        path.write_text(json.dumps({"names": names(self.potential), "coef": self.coef, "mean": self.mean,
+                                    "std": self.std, "potential": self.potential, "info": self.info},
+                                   ensure_ascii=False, indent=1), encoding="utf-8")
+
+    @classmethod
+    def load(cls, path: Path) -> "LinearValue":
+        d = json.loads(path.read_text(encoding="utf-8"))
+        return cls(d["coef"], d["mean"], d["std"], d["potential"], d.get("info"))
+
+    def weights_by_name(self) -> dict:
+        """Coefficients per raw (unstandardized) feature unit, for reading."""
+        return {n: c / s for n, c, s in zip(names(self.potential), self.coef, self.std)}
+
+
+def deck_craft(state: GameState, player: int) -> Craft:
+    p = state.players[player]
+    crafts = Counter(c.defn.craft for c in p.hand + p.deck + p.field if c.defn.craft != Craft.NEUTRAL)
+    return crafts.most_common(1)[0][0] if crafts else Craft.NEUTRAL
+
+
+class Learned:
+    """Evaluation with each deck's learned model (by craft); the hand-set one otherwise."""
+
+    def __init__(self, models: dict | None = None, fallback=None):
+        from svsim.search.evaluate import DEFAULT
+        self.models = models if models is not None else load_all()
+        self.fallback = fallback or DEFAULT
+
+    def score(self, state: GameState, player: int, player_moves_next: bool = False) -> float:
+        """Learned from end-of-turn positions, so `player_moves_next` doesn't change it."""
+        from svsim.search.evaluate import WIN, evaluate
+        if state.winner is not None:
+            return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
+        model = self.models.get(deck_craft(state, player))
+        if model is None:
+            return evaluate(state, player, self.fallback, player_moves_next)
+        return SCALE * model.logit(state, player)
+
+
+def load_all(folder: Path | None = None) -> dict:
+    """The models in `folder` (default: $SVSIM_WEIGHTS, else svsim/learn/weights)."""
+    import os
+    folder = folder or Path(os.environ.get("SVSIM_WEIGHTS") or WEIGHTS)
+    out = {}
+    for path in folder.glob("*.json"):
+        try:
+            out[Craft[path.stem.upper()]] = LinearValue.load(path)
+        except KeyError:
+            continue
+    return out

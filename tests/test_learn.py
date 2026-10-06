@@ -1,0 +1,109 @@
+"""Learning evaluations (svsim.learn): features, the fit, and agents using the result."""
+import json
+
+import numpy as np
+
+from svsim.cards import decks
+from svsim.core.engine import legal_actions, new_game
+from svsim.core.enums import Craft
+from svsim.learn import data, fit as F
+from svsim.learn.features import features, names
+from svsim.learn.model import Learned, LinearValue, deck_craft, load_all
+from svsim.search.evaluate import DEFAULT, evaluate
+
+
+def test_features_are_per_side_and_named():
+    state = new_game(decks.build(decks.RHINO_FOREST), decks.build(decks.RAMP_DRAGON), seed=1)
+    x = features(state, 0)
+    assert len(x) == len(names(True)) == 53 and x[-1] == 1.0
+    assert x[names(True).index("me_hand")] == len(state.players[0].hand)
+    assert len(features(state, 0, potential=False)) == len(names(False))
+    assert deck_craft(state, 0) == Craft.FOREST and deck_craft(state, 1) == Craft.DRAGON
+
+
+def test_the_fit_finds_the_weights_behind_outcomes_and_choices():
+    rng = np.random.default_rng(0)
+    true = np.array([1.5, -2.0, 0.0, 0.7])
+    X = np.c_[rng.normal(size=(4000, 3)), np.ones(4000)]
+    y = (rng.random(4000) < 1 / (1 + np.exp(-(X @ true)))).astype(float)
+    w, mean, std, report = F.fit(X, y, iters=2000)
+    assert np.allclose(w[:3] / std[:3], true[:3], atol=0.15) and report["value_accuracy"] > 0.7
+    # Choices: the chosen candidate always has the largest first feature; the fit learns
+    # to rank it first even with no outcomes at all.
+    prefs = []
+    for _ in range(60):
+        cands = np.c_[rng.normal(size=(5, 3)), np.ones(5)]
+        prefs.append((int(np.argmax(cands[:, 0])), cands.tolist()))
+    w, mean, std, report = F.fit(np.zeros((0, 4)), np.zeros(0), prefs, mean=np.zeros(4), std=np.ones(4), iters=1500)
+    assert report["choice_top1"] == 1.0 and w[0] > 0
+    # Ties for the top only get partial credit (all-zero weights: 1 in 5).
+    assert abs(F.top1(np.zeros(4), F.choice_groups(prefs, np.zeros(4), np.ones(4))) - 0.2) < 1e-9
+
+
+def test_a_recorded_game_gives_one_choice_per_decision():
+    from svsim.ui.session import Session
+    session = Session()
+    view = session.start("rhino", "ramp", "fast", 3, "you")
+    for _ in range(200):
+        if view["over"] or session.state.turn > 6:
+            break
+        if view["active"] == 1:
+            view = session.ai_step()
+        elif view.get("mulligan"):
+            view = session.mulligan([])
+        else:
+            view = session.act(view["actions"][0]["i"])
+    rows = data.choices(json.loads(json.dumps(session.record_data())), potential=False)
+    assert rows and all(0 <= k < len(c) for k, c in rows)
+    assert all(len(x) == len(names(False)) for _, c in rows for x in c)
+
+
+def test_whole_turns_are_compared_with_other_ways_of_playing_them():
+    from svsim.ui.session import Session
+    session = Session()
+    view = session.start("rhino", "ramp", "fast", 5, "you")
+    for _ in range(300):
+        if view["over"] or session.state.turn > 8:
+            break
+        if view["active"] == 1:
+            view = session.ai_step()
+        elif view.get("mulligan"):
+            view = session.mulligan([])
+        else:
+            plays = [a for a in view["actions"] if a["type"] == "PlayCard"]
+            end = next(a for a in view["actions"] if a["type"] == "EndTurn")
+            view = session.act((plays[0] if plays else end)["i"])
+    record = json.loads(json.dumps(session.record_data()))
+    turns = data.turn_choices(record, potential=False, alternatives=("end", "random", "random"))
+    assert turns and all(k == 0 and 2 <= len(c) <= 4 for k, c in turns)     # the player's turn comes first
+    assert all(len(x) == len(names(False)) for _, c in turns for x in c)
+
+
+def test_learned_models_are_used_per_deck_with_a_fallback(tmp_path):
+    n = len(names(False))
+    coef = [0.0] * n
+    coef[names(False).index("me_hand")] = 1.0              # a toy model: cards in hand are good
+    model = LinearValue(coef, [0.0] * n, [1.0] * n, potential=False)
+    model.save(tmp_path / "forest.json")
+    models = load_all(tmp_path)
+    assert set(models) == {Craft.FOREST}
+    learned = Learned(models)
+    state = new_game(decks.build(decks.RHINO_FOREST), decks.build(decks.RAMP_DRAGON), seed=2)
+    assert evaluate(state, 0, learned) == 8.0 * len(state.players[0].hand)       # Forest: the model
+    assert evaluate(state, 1, learned) == evaluate(state, 1, DEFAULT)            # Dragon: hand-set
+
+
+def test_learned_agents_play_legal_moves(tmp_path, monkeypatch):
+    n = len(names(False))
+    LinearValue([0.1] * n, [0.0] * n, [1.0] * n, potential=False).save(tmp_path / "forest.json")
+    monkeypatch.setenv("SVSIM_WEIGHTS", str(tmp_path))
+    from svsim.tools.arena import make_agent
+    agent = make_agent("mcts:20+learned", 1)
+    state = new_game(decks.build(decks.RHINO_FOREST), decks.build(decks.RAMP_DRAGON), seed=4, first=0)
+    from svsim.core.engine import apply
+    for _ in range(30):
+        if state.over:
+            break
+        action = agent.act(state, legal_actions(state)) if state.active == 0 else legal_actions(state)[-1]
+        assert action in legal_actions(state)
+        apply(state, action)

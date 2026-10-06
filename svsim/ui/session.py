@@ -21,7 +21,8 @@ assert library.__all__
 
 DECKS = {"rhino": ("破魔虫精灵", decks.RHINO_FOREST), "ramp": ("跳费龙", decks.RAMP_DRAGON),
          "pirate": ("海盗皇家", decks.PIRATE_SWORD)}
-LEVELS = {"fast": "greedy+plan", "normal": "mcts:100+plan", "strong": "mcts:200+plan"}
+# Every level uses a deck's learned evaluation where there is one (svsim/learn/weights).
+LEVELS = {"fast": "greedy+plan+learned", "normal": "mcts:100+plan+learned", "strong": "mcts:200+plan+learned"}
 
 
 def _kind(defn) -> str:
