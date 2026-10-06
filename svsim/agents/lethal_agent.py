@@ -38,7 +38,7 @@ class LethalAgent:
 
     def __init__(self, base, max_nodes: int = 2000, screen: int | None = 200, seed: int = 0,
                  planner: bool = False, plan_nodes: int = 20000, trust_planner: bool = False,
-                 macro: bool = False, burst: bool = False):
+                 macro: bool = False, burst: bool = False, burst_reply: int = 0):
         self.base = base
         self.search = LethalSearch(max_nodes=max_nodes, screen=screen, seed=seed)
         self.planner, self.plan_nodes, self.trust_planner = planner, plan_nodes, trust_planner
@@ -49,6 +49,7 @@ class LethalAgent:
         self.planned = 0             # ... of them found by the planner
         self.macro = macro
         self.burst = burst           # play the most-damage line when it sets up next turn's kill
+        self.burst_reply = burst_reply   # ... and it still does after this many sampled opponent turns
         self.bursts = 0
         self.macro_checked = None    # stamp of the last turn state the macro line was weighed on
         self.macros = 0              # macro lines played
@@ -145,7 +146,23 @@ class LethalAgent:
         after = after_end_of_turn(s)
         if after.over or race.clock(after, me, horizon=1).turns != 0:
             return []
-        return line if race.clock(held, me, horizon=1).turns != 0 else []
+        if race.clock(held, me, horizon=1).turns == 0:
+            return []
+        if self.burst_reply:
+            # The opponent gets a turn in between (healing, Ward, removal): the kill
+            # must survive it in every sample, the opponent played by a greedy agent.
+            from svsim.agents.greedy_agent import GreedyAgent
+            from svsim.search.impact import reply
+            for k in range(self.burst_reply):
+                t = determinize(s, me, self.rng)
+                t, _ = reply(t, me, GreedyAgent(seed=k, samples=1))
+                if t.over:
+                    if t.winner != me:
+                        return []
+                    continue
+                if race.clock(t, me, horizon=0).turns != 0:
+                    return []
+        return line
 
     def _planned(self, state) -> tuple[list, bool]:
         """(the planner's checked lethal line or [], whether the model rules lethal out)."""

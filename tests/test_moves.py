@@ -121,3 +121,17 @@ def test_the_win_condition_is_kept_for_finishing_turns():
     assert reserved(state, Attack(on_board.uid, foe.uid)) and not reserved(state, Attack(on_board.uid, leader_uid(1)))
     search = ISMCTS(iterations=50, seed=0, reserve=True)
     assert not reserved(state, search.choose(state))             # never offered to the search
+
+
+def test_a_combo_card_waits_for_its_combo():
+    # Sprouting Initiate draws at Combo 3: the player drew with it 23 times in 22 plays.
+    from svsim.cards import demo
+    from svsim.core.actions import PlayCard
+    from svsim.search.moves import wasted_combo
+    from helpers import give
+    state = start()
+    sprout = give(state, 0, forest.SPROUTING_INITIATE)
+    footman = give(state, 0, demo.FOOTMAN)
+    assert wasted_combo(state, PlayCard(sprout.uid)) and not wasted_combo(state, PlayCard(footman.uid))
+    state.players[0].combo = 2
+    assert not wasted_combo(state, PlayCard(sprout.uid))

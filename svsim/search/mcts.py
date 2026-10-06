@@ -95,6 +95,25 @@ def action_key(state: GameState, action, where: dict | None = None) -> tuple:
     return ("T",)
 
 
+_PAYOFF: dict = {}
+
+
+def _combo_payoff(defn) -> bool:
+    """Whether the card does more when played later in the turn (Combo): Sprouting
+    Initiate draws only at Combo 3. The player's drew a card 23 times in 22 plays,
+    the AI's 27 in 58, playing it first."""
+    hit = _PAYOFF.get(defn.card_id)
+    if hit is None:
+        from svsim.search.combo import at_combo, profile
+        hit = False
+        for v in profile(defn):
+            lo, hi = at_combo(v, 1), at_combo(v, 3)
+            if (hi.drawn, len(hi.added), hi.face, hi.hit) > (lo.drawn, len(lo.added), lo.face, lo.hit):
+                hit = True
+        _PAYOFF[defn.card_id] = hit
+    return hit
+
+
 def _rank(state: GameState, action) -> tuple:
     if isinstance(action, Attack):
         if action.target < 0:
@@ -102,6 +121,9 @@ def _rank(state: GameState, action) -> tuple:
             return 0, -(attacker.atk if attacker else 0)
         return 4, 0
     if isinstance(action, PlayCard):
+        card = state.in_hand(state.active, action.uid)
+        if card is not None and state.players[state.active].combo < 2 and _combo_payoff(card.defn):
+            return 1, 1              # a Combo card is better played after others: tried after them
         return 1, 0
     if isinstance(action, Evolve):
         return 2, 0
@@ -126,7 +148,7 @@ class ISMCTS:
     def __init__(self, iterations: int = 400, seconds: float | None = None, c: float = 0.5,
                  scale: float = 8.0, max_depth: int = 30, seed: int = 0, weights=DEFAULT,
                  reply: bool = False, center: bool = True, prune: bool = True, backup: str = "max",
-                 reserve: bool = False):
+                 reserve: bool = False, veto=None):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
         self.seconds = seconds
         self.c = c                     # exploration constant (values are in 0..1)
@@ -138,6 +160,7 @@ class ISMCTS:
         self.centered = center         # squash relative to the starting position (False: absolute)
         self.prune = prune             # leave out dominated moves (search.moves)
         self.reserve = reserve         # keep the win condition for finishing turns (search.moves.reserved)
+        self.veto = veto               # veto(state, action) -> True to leave the action out (e.g. learn.timing.Pace)
         if backup not in ("max", "mean"):
             raise ValueError(f"unknown backup {backup!r}")
         self.backup = backup           # "max": best own choice, luck averaged; "mean": plain average
@@ -177,6 +200,8 @@ class ISMCTS:
             legal = legal_actions(s)
             if self.reserve:
                 legal = [a for a in legal if not reserved(s, a)] or legal
+            if self.veto is not None:
+                legal = [a for a in legal if not self.veto(s, a)] or legal
             for a in sorted(worth_trying(s, legal) if self.prune else legal, key=lambda a: _rank(s, a)):
                 options.setdefault(action_key(s, a, where), a)
             offered.append(options)

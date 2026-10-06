@@ -51,7 +51,8 @@ CRAFTS = [c for c in Craft if c != Craft.NEUTRAL]
 
 def make_agent(spec: str, seed: int):
     spec, *options = spec.split("+")
-    unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready"}
+    unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
+                              "pace", "burst2", "patient"}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -83,10 +84,20 @@ def make_agent(spec: str, seed: int):
         base = make_agent("+".join([f"mcts:{arg or 200}"] + options), seed)
         return ImpactAgent(base, seed=seed)
     if name in ("mcts", "mcts-raw", "mcts-reply"):
+        vetoes = []
+        if "pace" in options:                      # not before the player's usual turn (learn.timing.Pace)
+            from svsim.learn.timing import Pace
+            vetoes.append(Pace())
+        if "patient" in options:                   # a Combo card waits for its Combo (search.moves.wasted_combo)
+            from svsim.search.moves import wasted_combo
+            vetoes.append(wasted_combo)
+        veto = (lambda s, a: any(v(s, a) for v in vetoes)) if vetoes else None
         agent = MCTSAgent(int(arg or 400), seed=seed, reply=name == "mcts-reply", weights=weights,
-                          reserve="reserve" in options)
+                          reserve="reserve" in options, veto=veto)
         return agent if name == "mcts-raw" else LethalAgent(agent, seed=seed, planner=planner,
-                                                            macro="macro" in options, burst="burst" in options)
+                                                            macro="macro" in options,
+                                                            burst="burst" in options or "burst2" in options,
+                                                            burst_reply=2 if "burst2" in options else 0)
     raise ValueError(f"unknown agent {spec!r}")
 
 

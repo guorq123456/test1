@@ -240,3 +240,31 @@ class Timed:
         if state.winner is not None or not self.weight:
             return value
         return value + self.weight * (self.hold(state, player) - self.hold(state, 1 - player))
+
+
+class Pace:
+    """A search filter from the profile: don't play a card on a turn the player
+    would still be holding it most of the time (Timing.hold above `limit`), on the
+    side whose deck and matchup have a profile. Bayle on turn 4 or 6 (held 82%
+    and 80% of the time) is left out; Sprouting Initiate never is."""
+
+    def __init__(self, limit: float = 0.7, profiles: dict | None = None):
+        self.limit = limit
+        self.profiles = profiles if profiles is not None else by_crafts()
+        self._side: dict = {}
+
+    def __call__(self, state, action) -> bool:
+        from svsim.core.actions import PlayCard
+        from svsim.learn.model import deck_craft
+        if not isinstance(action, PlayCard):
+            return False
+        side = state.active
+        key = (id(state.players[side].deck), side)
+        profile = self._side.get(key)
+        if profile is None:
+            profile = self._side[key] = self.profiles.get((deck_craft(state, side), deck_craft(state, 1 - side))) or False
+        if not profile:
+            return False
+        card = state.in_hand(side, action.uid)
+        p = state.players[side]
+        return card is not None and profile.hold(card.defn.card_id, max(1, p.turns_taken)) > self.limit

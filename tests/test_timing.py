@@ -66,3 +66,31 @@ def test_holding_a_card_before_its_time_is_worth_something():
     E.add_to_hand(holding_sprout, 0, forest.SPROUTING_INITIATE)
     assert timed.hold(holding_bayle, 0) > 0.5 > 0.05 > timed.hold(holding_sprout, 0)
     assert timed.score(holding_bayle, 0) > timed.score(holding_sprout, 0)
+
+
+def test_pace_leaves_out_a_card_the_player_would_still_hold():
+    from svsim.core.actions import Mulligan, PlayCard
+    from svsim.core.engine import apply
+    from svsim.core import effects as E
+    from svsim.core.enums import Craft
+    from svsim.learn.timing import Pace
+    t, early, late = _timing()
+    state = new_game(decks.build(decks.RHINO_FOREST), decks.build(decks.RAMP_DRAGON), seed=0, first=0)
+    apply(state, Mulligan(()))
+    apply(state, Mulligan(()))
+    state.players[0].turns_taken = 4
+    bayle = E.add_to_hand(state, 0, unlimited.BAYLE)
+    sprout = E.add_to_hand(state, 0, forest.SPROUTING_INITIATE)
+    pace = Pace(profiles={(Craft.FOREST, Craft.DRAGON): t})
+    assert pace(state, PlayCard(bayle.uid)) and not pace(state, PlayCard(sprout.uid))
+
+
+def test_digging_counts_cards_drawn_out_of_the_deck():
+    from dataclasses import replace
+    from svsim.search.evaluate import DEFAULT, evaluate
+    state = new_game(decks.build(decks.RHINO_FOREST), decks.build(decks.RAMP_DRAGON), seed=0, first=0)
+    dug = state.clone()
+    dug.players[0].deck = dug.players[0].deck[:-3]
+    w = replace(DEFAULT, dig=1.0)
+    assert evaluate(dug, 0, w) - evaluate(state, 0, w) == 3.0
+    assert evaluate(dug, 0) == evaluate(state, 0)

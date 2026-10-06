@@ -60,6 +60,7 @@ class Weights:
     setup_nodes: int = 300     # planner budget per position
     setup_board: bool = True   # count the player's followers in it (else hand and amulets only)
     ready: float = 0.0         # per point the hand could deal next turn by the player's formula, up to lethal
+    dig: float = 0.0           # per card drawn out of the deck (cards seen: the player digs for Rhinoceroaches)
     ready_lethal: float = 0.0  # that is lethal
 
 
@@ -139,6 +140,8 @@ def side_value(p: PlayerState, w: Weights = DEFAULT) -> float:
     value += w.crest * sum(c.defn.type == CardType.CREST for c in p.leader_area)
     value += w.hand * hand_count(p)
     value += w.ep * p.ep + w.sep * p.sep + w.max_pp * p.max_pp
+    if w.dig and len(p.deck) > 5:
+        value -= w.dig * len(p.deck)
     if not p.deck:
         value -= w.deck_out
     return value

@@ -77,3 +77,26 @@ def reserved(state: GameState, action) -> bool:
         attacker = state.on_field(action.attacker)
         return attacker is not None and finisher(attacker.defn)
     return False
+
+
+def wasted_combo(state: GameState, action) -> bool:
+    """Playing a Combo card before its Combo is reached: Sprouting Initiate (draws at
+    Combo 3) as the turn's first or second card. The player drew with it 23 times in
+    22 plays; the AI, 28 in 55."""
+    if not isinstance(action, PlayCard):
+        return False
+    card = state.in_hand(state.active, action.uid)
+    if card is None:
+        return False
+    from svsim.search.mcts import _combo_payoff
+    if not _combo_payoff(card.defn):
+        return False
+    from svsim.search.combo import at_combo, profile
+    combo = state.players[state.active].combo + 1
+    if combo >= 3:
+        return False
+    for v in profile(card.defn):
+        now, later = at_combo(v, combo), at_combo(v, 3)
+        if (later.drawn, len(later.added)) > (now.drawn, len(now.added)):
+            return True
+    return False
