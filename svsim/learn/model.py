@@ -1,7 +1,10 @@
-"""A learned linear evaluation, one per deck (keyed by the deck's craft).
+"""A learned evaluation, one per deck (keyed by the deck's craft) or matchup.
 
 `LinearValue` turns features into a win probability: P(win) = logistic(coef .
-standardized features). Agents use it like the hand-set evaluate.Weights: an
+standardized features), plus, optionally, one small hidden layer
+(w2 . tanh(W1 x + b1), x the standardized features), which lets the evaluation
+weigh things against each other (a big follower is worth more when the
+opponent has no removal left) where a sum of separate terms can't. Agents use it like the hand-set evaluate.Weights: an
 object with `score(state, player, player_moves_next)` returning a score on the
 same scale as evaluate (ISMCTS squashes score / 8 into 0..1, so score = 8 *
 logit). `Learned` picks each player's model by the craft of their deck and
@@ -23,26 +26,41 @@ SCALE = 8.0                      # ISMCTS's logistic squash: value = 1 / (1 + ex
 
 class LinearValue:
     def __init__(self, coef: list, mean: list, std: list, potential: bool, info: dict | None = None,
-                 version: int = 1):
+                 version: int = 1, hidden: dict | None = None):
         self.coef, self.mean, self.std, self.potential = coef, mean, std, potential
         self.info = info or {}
         self.version = version
+        self.hidden = hidden             # {"W1": [[per hidden unit] per feature], "b1": [...], "w2": [...]}
         assert len(coef) == len(mean) == len(std) == len(names(potential, version))
+        if hidden:
+            assert len(hidden["W1"]) == len(coef) and len(hidden["b1"]) == len(hidden["w2"])
 
     def logit(self, state: GameState, player: int) -> float:
-        x = features(state, player, self.potential, self.version)
-        return sum(c * ((v - m) / s) for c, v, m, s in zip(self.coef, x, self.mean, self.std))
+        x = [(v - m) / s for v, m, s in zip(features(state, player, self.potential, self.version), self.mean,
+                                             self.std)]
+        out = sum(c * v for c, v in zip(self.coef, x))
+        if self.hidden:
+            import math
+            h = list(self.hidden["b1"])
+            for v, row in zip(x, self.hidden["W1"]):
+                if v:
+                    for j, a in enumerate(row):
+                        h[j] += v * a
+            out += sum(b * math.tanh(a) for a, b in zip(h, self.hidden["w2"]))
+        return out
 
     def save(self, path: Path) -> None:
-        path.write_text(json.dumps({"names": names(self.potential, self.version), "coef": self.coef,
-                                    "mean": self.mean, "std": self.std, "potential": self.potential,
-                                    "version": self.version, "info": self.info},
-                                   ensure_ascii=False, indent=1), encoding="utf-8")
+        d = {"names": names(self.potential, self.version), "coef": self.coef, "mean": self.mean, "std": self.std,
+             "potential": self.potential, "version": self.version, "info": self.info}
+        if self.hidden:
+            d["hidden"] = self.hidden
+        path.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
 
     @classmethod
     def load(cls, path: Path) -> "LinearValue":
         d = json.loads(path.read_text(encoding="utf-8"))
-        return cls(d["coef"], d["mean"], d["std"], d["potential"], d.get("info"), d.get("version", 1))
+        return cls(d["coef"], d["mean"], d["std"], d["potential"], d.get("info"), d.get("version", 1),
+                   d.get("hidden"))
 
     def weights_by_name(self) -> dict:
         """Coefficients per raw (unstandardized) feature unit, for reading."""

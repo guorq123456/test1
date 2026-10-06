@@ -301,3 +301,21 @@ def test_a_matchup_model_is_used_where_there_is_one(tmp_path):
     other = new_game(ramp, rhino, seed=1, first=0)
     assert learned.score(mirror, 0) == SCALE * 2.0
     assert learned.score(other, 0) == SCALE * 1.0
+
+
+def test_a_hidden_layer_adds_to_the_linear_score(tmp_path):
+    import math
+    from svsim.cards import decks
+    from svsim.core.engine import new_game
+    from svsim.learn.features import features, names
+    from svsim.learn.model import LinearValue
+    n = len(names(False, 2))
+    hidden = {"W1": [[0.0, 0.0] for _ in range(n - 1)] + [[0.5, -1.0]], "b1": [0.25, 0.0], "w2": [2.0, 1.0]}
+    model = LinearValue([0.0] * (n - 1) + [0.5], [0.0] * n, [1.0] * n, False, version=2, hidden=hidden)
+    model.save(tmp_path / "m.json")
+    loaded = LinearValue.load(tmp_path / "m.json")
+    ramp = decks.build(decks.RAMP_DRAGON)
+    state = new_game(ramp, ramp, seed=1, first=0)
+    assert features(state, 0, False, 2)[-1] == 1.0                  # the bias feature drives the hidden units
+    want = 0.5 + 2.0 * math.tanh(0.75) + 1.0 * math.tanh(-1.0)
+    assert abs(loaded.logit(state, 0) - want) < 1e-9
