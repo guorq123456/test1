@@ -9,6 +9,11 @@ for each side and with opposite signs:
 - cards in hand (with the cards a field of replayable followers is worth to a
   deck that returns them to hand, `latent_cards`), unused evolution points,
   max play points;
+- a crest that hurts its holder (Burnite, Anathema of Ash's, given to the
+  opponent: 2 damage at the start of each of their turns) counts as the
+  defense it will take over the next `BURN_TURNS` turns, not as a crest
+  (`crest_burn`, measured in a sandbox; the player's Ramp mirror games turned
+  on it, and the AI had given that crest 1 time in 120 games);
 - danger: whether the opponent's board could kill the player next turn (a big
   penalty), and pressure: whether the player's board threatens the same;
 - an empty deck (the next draw loses);
@@ -31,6 +36,8 @@ from svsim.core.script import prop
 from svsim.core.state import GameState, PlayerState
 
 WIN = 1000.0
+BURN_TURNS = 3       # own turns a crest that hurts its holder is counted for
+CREST_EFFECTS = True # False: every crest counts for its holder, as before (for comparisons)
 
 
 @dataclass(frozen=True)
@@ -133,12 +140,49 @@ def hand_count(p: PlayerState) -> int:
     return min(len(p.hand) + latent_cards(p), 9)
 
 
+_BURN: dict = {}
+
+
+def crest_burn(defn) -> int:
+    """Damage a crest deals to its holder's leader at the start of each of the
+    holder's turns, measured in a sandbox (0 for a crest that doesn't hurt it)."""
+    hit = _BURN.get(defn.card_id)
+    if hit is None:
+        from svsim.core import effects as E
+        from svsim.core.actions import EndTurn
+        from svsim.core.engine import apply
+        from svsim.search.combo import _sandbox
+        state, _ = _sandbox(0)
+        E.add_to_leader_area(state, 1, defn)
+        hp = state.players[1].leader_hp
+        apply(state, EndTurn())
+        hit = _BURN[defn.card_id] = max(hp - state.players[1].leader_hp, 0)
+    return hit
+
+
+def burn(p: PlayerState) -> int:
+    """What the crests on `p`'s side take from its leader each of its turns."""
+    if not CREST_EFFECTS:
+        return 0
+    return sum(crest_burn(c.defn) for c in p.leader_area if c.defn.type == CardType.CREST)
+
+
+def good_crests(p: PlayerState) -> int:
+    """Crests on `p`'s side that don't hurt it."""
+    return sum(c.defn.type == CardType.CREST and not (CREST_EFFECTS and crest_burn(c.defn)) for c in p.leader_area)
+
+
+def effective_hp(p: PlayerState) -> int:
+    """Leader defense less what crests that hurt the leader will take over `BURN_TURNS` turns."""
+    return max(p.leader_hp - BURN_TURNS * burn(p), 0)
+
+
 def side_value(p: PlayerState, w: Weights = DEFAULT) -> float:
-    hp = max(p.leader_hp, 0)
+    hp = effective_hp(p)
     value = w.hp * hp + w.hp_sqrt * math.sqrt(hp)
     for c in p.field:
         value += follower_value(c, w) if c.defn.is_follower else w.amulet * c.defn.cost + 0.5
-    value += w.crest * sum(c.defn.type == CardType.CREST for c in p.leader_area)
+    value += w.crest * good_crests(p)
     value += w.hand * hand_count(p)
     value += w.ep * p.ep + w.sep * p.sep + w.max_pp * p.max_pp
     if w.dig and len(p.deck) > 5:

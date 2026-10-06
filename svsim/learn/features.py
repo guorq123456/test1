@@ -14,10 +14,10 @@ from __future__ import annotations
 
 import math
 
-from svsim.core.enums import CardType, Keyword
+from svsim.core.enums import Keyword
 from svsim.core.script import prop
 from svsim.core.state import GameState
-from svsim.search.evaluate import hand_count
+from svsim.search.evaluate import effective_hp, good_crests, hand_count
 
 SIDE = ["hp", "hp_sqrt", "hp_low", "followers", "atk", "life", "ward", "bane", "drain", "barrier", "evasive",
         "amulets", "amulet_cost", "crests", "hand", "ep", "sep", "max_pp", "deck_low", "deck_out",
@@ -60,7 +60,7 @@ def _board_threat(state: GameState, side: int) -> int:
 
 def side_features(state: GameState, side: int, potential: bool) -> list[float]:
     p, enemy = state.players[side], state.players[1 - side]
-    hp = max(p.leader_hp, 0)
+    hp = effective_hp(p)                 # a crest that hurts its holder: the defense it will take
     followers = p.followers
     k = [f.keywords for f in followers]
     threat = _board_threat(state, side)
@@ -72,7 +72,7 @@ def side_features(state: GameState, side: int, potential: bool) -> list[float]:
            sum(1 for x in k if x & Keyword.BARRIER),
            sum(1 for x in k if x & (Keyword.AMBUSH | Keyword.AURA | Keyword.INTIMIDATE)),
            sum(1 for c in p.field if c.defn.is_amulet), sum(c.defn.cost for c in p.field if c.defn.is_amulet),
-           sum(1 for c in p.leader_area if c.defn.type == CardType.CREST),
+           good_crests(p),
            hand_count(p), p.ep, p.sep, p.max_pp, float(len(p.deck) <= 3), float(not p.deck),
            min(threat, max(enemy.leader_hp, 0)), float(threat >= enemy.leader_hp)]
     if potential:

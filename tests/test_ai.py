@@ -253,3 +253,28 @@ def test_a_replayable_follower_counts_as_a_card_for_a_deck_that_returns_its_card
     plain = new_game(ramp, [demo.FOOTMAN] * 40, seed=3, first=0)          # nobody to return it: just a 1/1
     put(plain, 1, forest.SPROUTING_INITIATE)
     assert latent_cards(plain.players[1]) == 0
+
+
+def test_a_crest_that_hurts_its_holder_counts_against_it():
+    # The player's Ramp mirror games: super-evolving Burnite gives the opponent a crest that
+    # burns 2 a turn; the evaluation used to count it as a crest in the opponent's favour.
+    from svsim.cards import dragon
+    from svsim.core import effects as E
+    from svsim.learn.features import features
+    from svsim.search import evaluate as EV
+    from helpers import start
+    assert EV.crest_burn(dragon.BURNITE_CREST) == 2
+    state = start()
+    before = EV.evaluate(state, 0)
+    feats = features(state, 0, potential=False)
+    E.add_to_leader_area(state, 1, dragon.BURNITE_CREST)
+    assert EV.burn(state.players[1]) == 2
+    assert EV.effective_hp(state.players[1]) == state.players[1].leader_hp - 2 * EV.BURN_TURNS
+    assert EV.evaluate(state, 0) > before                     # good for the player who gave it
+    after = features(state, 0, potential=False)
+    assert after != feats and after[-1] == feats[-1]
+    EV.CREST_EFFECTS = False
+    try:
+        assert EV.evaluate(state, 0) < before                 # the old way: a crest for the opponent
+    finally:
+        EV.CREST_EFFECTS = True
