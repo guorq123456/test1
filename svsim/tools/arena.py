@@ -24,7 +24,10 @@ winning (agents.impact_agent: the opponent's answer sampled, then the race
 clocks); the other suffixes go to the mcts:N agent.
 "+learned" uses each deck's learned evaluation (svsim.learn, tools.learn) where
 there is one; "+timing" adds what holding a card is worth until the turn the
-player usually plays it (svsim.learn.timing, from their games). Combined: mcts:200+plan+macro+threat. Each pairing plays both seats and, for --decks starter or
+player usually plays it (svsim.learn.timing, from their games); "+priced"
+prices resources by what they buy (search.prices: the own followers at what
+survives the opponent's turn, "+survive" alone; unused evolution points at the
+damage they add to the next turn, "+points" alone). Combined: mcts:200+plan+macro+threat. Each pairing plays both seats and, for --decks starter or
 rhino, both decks equally often. --decks rhino is Rhinoceroach Forest
 (Unlimited) against Ramp Dragon. Prints win rates with a 95% margin, the
 average thinking time per decision and the lethals each agent found.
@@ -52,7 +55,7 @@ CRAFTS = [c for c in Craft if c != Craft.NEUTRAL]
 def make_agent(spec: str, seed: int):
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2"}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced"}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -66,6 +69,10 @@ def make_agent(spec: str, seed: int):
     if "timing" in options:                        # holding cards until the player would play them
         from svsim.learn.timing import Timed
         weights = Timed(base=weights)
+    if {"survive", "points", "priced"} & set(options):   # shadow prices (search.prices)
+        from svsim.search.prices import Priced
+        weights = Priced(base=weights, survival=bool({"survive", "priced"} & set(options)),
+                         points=bool({"points", "priced"} & set(options)))
     name, _, arg = spec.partition(":")
     if name == "random":
         return RandomAgent(seed, 0.2)
