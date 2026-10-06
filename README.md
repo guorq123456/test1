@@ -31,7 +31,7 @@
 - **图形界面（手机可用）**：点牌出牌的单屏牌桌。可以在电脑上开本地服务器（手机连同一个 Wi-Fi 打开），也可以打包成完全在浏览器里运行的版本（Pyodide），发布后手机直接打开；每局自动存档。
 - **学习评估函数**：用自对弈的胜负和玩家的对局给每套牌学一份局面评估（通用特征的逻辑回归，不针对卡组）。跳费龙学会了跳费，对破魔虫 AI 胜率 83% → 97%，网页里的 AI 已经换上；破魔虫学到了更像玩家的判断（整回合命中 23% → 55%），但实战还没提高，需要更多高手对局和非线性的价值网络。
 - **对局记录和复盘**：人机对战自动保存每一局，结束时给出回放码；复盘工具在你的每个决策点对比 AI 会怎么走、怎么估值。网页里可以逐步回放打完的对局，把自己的失误标出来、写备注，学习时会跳过这些操作。
-- **CR（职业积分）**：按玩家给的天梯规则（GM 底分、200 分匹配范围、每局 16 ± 差距/25、175 分以上 8/24）给 AI 的各个版本和玩家定分，附 90% 区间；用来衡量 AI 到底强不强，而不是只看像不像人。
+- **CR（职业积分）**：按玩家给的天梯规则（GM 底分、200 分匹配范围、每局 16 ± 差距/25、175 分以上 8/24）给 AI 的各个版本和玩家定分，附 90% 区间。现在还没有合适的基准，正式测算暂停。
 - **无限模式卡组**：支持玩家提供的「破魔虫精灵」（屠戮破魔虫连击卡组），为它补写了 9 张非指定系列的牌；卡池表也收录了其余所有牌的数值，方便以后加别的无限模式卡组。
 - **裁定**：写卡时拿不准的地方已全部由玩家确认，记录在[架构设计 §13](docs/architecture.md#已确认的卡牌细节)。
 
@@ -50,7 +50,7 @@ python -m svsim.tools.web                                       # 图形界面�
 python -m svsim.tools.web --build dist/web                      # 打包成完全在浏览器里运行的版本
 python -m svsim.tools.play --you rhino --ai mcts:400+plan       # 命令行版对战（自动保存，给回放码）
 python -m svsim.tools.learn --decks rhino ramp --games 400 --iterations 2  # 自对弈学评估（可加 --human replays/ 学玩家的对局）
-python -m svsim.tools.cr --games 100 --human replays/ --anchor 1600   # 给 AI 定 CR（以你的 CR 为基准）
+python -m svsim.tools.cr --games 100 --human replays/ --anchor 1600   # 给 AI 定 CR（以你的 CR 为基准；暂未正式使用）
 python -m svsim.tools.review replays/<文件名>.json               # 复盘：你的每一步和 AI 的选择对比
 python -m svsim.tools.lethal puzzles --count 5                  # 生成 5 道斩杀练习题
 python -m svsim.tools.lethal match --games 200                  # 会斩杀的智能体 vs 随机智能体
