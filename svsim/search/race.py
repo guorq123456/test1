@@ -18,10 +18,17 @@ on (0: it can kill on its current or next turn), if nobody interferes:
 - each turn, `burst` is the most damage `side` could deal: the player's
   formula (search.formula, for finishers whose attack grows with Combo) or the
   resource-flow planner (search.combo), whichever finds more;
-- two ways to get there: hold everything and burst on turn k (followers already
-  on the field hit the leader on the turns before), or deal the planner's most
-  damage on turn k (played in the engine) and finish on turn k+1 with what is
-  left and what is drawn (a 15-damage turn and a 5-damage turn).
+- the ways to get there, the fastest counts: spend the first j turns
+  developing, then deal damage every turn until the leader falls, for every
+  j. Developing means playing the cards that raise max play points (ramp,
+  told apart by playing them in the engine, not from a card list: Dragonsign,
+  Lumiore & Argente's Accelerate) and attacking the leader with the followers
+  already out; holding is the same without the ramp. A damage turn either
+  finishes (`burst`) or deals the planner's most damage, played in the engine,
+  and goes on to the next turn with what is left and what is drawn. So "hold
+  everything and burst on turn k", "15 damage now, 5 next turn" and "ramp 3
+  into 5 and 5 into 7, then damage turn after turn" (the player's words for
+  Ramp Dragon in this matchup) are all counted.
 
 What it leaves out, so read it as "if unanswered": the opponent's removal,
 Ward, healing and the damage they deal in between; cards drawn during the
@@ -108,38 +115,131 @@ def _two_turns(s: GameState, side: int, nodes: int) -> tuple[int, GameState | No
     return hp - t.players[1 - side].leader_hp, t
 
 
+def _attack_leader(s: GameState, side: int) -> None:
+    """Every allied follower that can hits the enemy leader (nothing if Ward is in the way)."""
+    from svsim.core.actions import Attack
+    from svsim.core.engine import legal_actions
+    from svsim.core.state import leader_uid
+    for _ in range(20):
+        if s.over:
+            return
+        attacks = [a for a in legal_actions(s) if isinstance(a, Attack) and a.target == leader_uid(1 - side)]
+        if not attacks:
+            return
+        apply(s, attacks[0])
+
+
+def develop(s: GameState, side: int, ramp: bool = True) -> None:
+    """A turn spent building up (modified in place): play the cards that raise
+    max play points, most points per play point paid first, then attack the leader."""
+    from svsim.core.actions import PlayCard
+    from svsim.core.engine import legal_actions
+    for _ in range(10 if ramp else 0):
+        if s.over:
+            return
+        best = None
+        for a in legal_actions(s):
+            if not isinstance(a, PlayCard):
+                continue
+            t = s.clone()
+            pp, max_pp = t.players[side].pp, t.players[side].max_pp
+            apply(t, a)
+            gain = t.players[side].max_pp - max_pp
+            if gain > 0 and not t.over:
+                key = (gain / max(pp - t.players[side].pp, 1), t.players[side].pp)
+                if best is None or key > best[0]:
+                    best = (key, a)
+        if best is None:
+            break
+        apply(s, best[1])
+    if not s.over:
+        _attack_leader(s, side)
+
+
 @dataclass
 class Clock:
     turns: int          # side's turns before the killing one (HORIZON + 1: not within the horizon)
-    how: str            # "now", "hold" (hold and burst), "two" (damage, then finish), ""
-    damage: list        # the burst found on each turn looked at
+    how: str            # "now"; "hold"/"ramp" with the turns developed and the damage turns, e.g. "ramp 2+1"
+    damage: list        # the burst found on each turn of the plain holding track
 
 
-def clock(state: GameState, side: int, horizon: int = HORIZON, nodes: int = 1000) -> Clock:
+def _chain(s: GameState, side: int, start: int, limit: int, nodes: int) -> int | None:
+    """From turn `start` (position `s`, modified): deal damage every turn; the
+    turn the leader falls, if before `limit`."""
+    for k in range(start, limit):
+        if s.over:
+            return k if s.winner == side else None
+        if burst(s, nodes) >= s.players[1 - side].leader_hp:
+            return k
+        if k + 1 >= limit:
+            return None
+        dealt, t = _two_turns(s, side, nodes)
+        if t is None:
+            return None
+        if t.over:
+            return k if t.winner == side else None
+        s = advance(t, side)
+    return None
+
+
+def clock(state: GameState, side: int, horizon: int = HORIZON, nodes: int = 1000, ramp: bool = True) -> Clock:
     """`side`'s clock if nobody interferes (see the module docstring). If it is
     `side`'s turn, turn 0 is this one as it stands; otherwise its next turn."""
-    s = state.clone()
-    if not (s.active == side and s.phase == Phase.MAIN):
-        advance(s, side)
-    chip = 0                       # damage the followers already out deal on the turns held
-    found = []
-    for k in range(horizon + 1):
-        if s.over:
-            won = s.winner == side
-            return Clock(k if won else horizon + 1, "now" if won else "", found)
-        hp = s.players[1 - side].leader_hp
-        dmg = burst(s, nodes)
-        found.append(dmg)
-        if dmg + chip >= hp:
-            return Clock(k, "now" if k == 0 else "hold", found)
-        if k < horizon:
-            dealt, t = _two_turns(s, side, nodes)
-            if t is not None and not t.over:
-                advance(t, side)
-                if not t.over and chip + dealt + burst(t, nodes) >= hp:
-                    return Clock(k + 1, "two", found)
-            elif t is not None and t.winner == side:
-                return Clock(k, "now", found)
-            chip += board_chip(s, side)
-            advance(s, side)
-    return Clock(horizon + 1, "", found)
+    start = state.clone()
+    if not (start.active == side and start.phase == Phase.MAIN):
+        advance(start, side)
+    best, how, found = horizon + 1, "", []
+    tracks = [("hold", start)] + ([("ramp", start.clone())] if ramp else [])
+    for j in range(horizon + 1):
+        if j >= best:
+            break
+        for name, s in tracks:
+            if name == "ramp" and j == 0:
+                continue                         # developing 0 turns: the same as holding
+            if s.over:
+                if s.winner == side and j < best:
+                    best, how = j, "now" if j == 0 else f"{name} {j}+0"
+                continue
+            if name == "hold":
+                found.append(burst(s, nodes))
+            k = _chain(s.clone(), side, j, best, nodes)
+            if k is not None and k < best:
+                best, how = k, "now" if k == 0 else f"{name} {j}+{k - j}"
+        if j + 1 >= best:
+            break
+        for i, (name, s) in enumerate(tracks):
+            if not s.over:
+                develop(s, side, ramp=name == "ramp")
+                tracks[i] = (name, advance(s, side) if not s.over else s)
+    return Clock(best, how, found)
+
+
+
+_RAMPS: dict = {}
+
+
+def ramps(defn) -> bool:
+    """Whether playing the card in the early game (1 to 7 play points) raises max
+    play points, measured in a sandbox (Dragonsign; Zooey; Lumiore & Argente,
+    whose Accelerate is what gets played then)."""
+    hit = _RAMPS.get(defn.card_id)
+    if hit is None:
+        hit = _RAMPS[defn.card_id] = _measure_ramp(defn)
+    return hit
+
+
+def _measure_ramp(defn) -> bool:
+    from svsim.core import effects as E
+    from svsim.core.actions import PlayCard
+    from svsim.core.engine import legal_actions
+    from svsim.search.combo import _sandbox
+    for pp in range(1, 8):
+        state, _ = _sandbox(0, pp)
+        card = E.add_to_hand(state, 0, defn)
+        for a in legal_actions(state):
+            if isinstance(a, PlayCard) and a.uid == card.uid:
+                t = state.clone()
+                apply(t, a)
+                if t.players[0].max_pp > pp:
+                    return True
+    return False

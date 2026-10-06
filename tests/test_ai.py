@@ -3,7 +3,7 @@ import random
 
 from svsim.agents.greedy_agent import GreedyAgent, mulligan
 from svsim.agents.mcts_agent import MCTSAgent, full_game_agent
-from svsim.cards import demo
+from svsim.cards import demo, dragon
 from svsim.core import effects as E
 from svsim.core.actions import Attack, EndTurn, Mulligan, PlayCard
 from svsim.core.carddef import CardDef
@@ -84,6 +84,23 @@ def test_mulligan_redraws_expensive_cards():
     hand = state.players[0].hand
     assert isinstance(action, Mulligan)
     assert [hand[i].defn for i in action.indices] == [c.defn for c in hand if c.cost >= 5]
+
+
+def test_a_ramp_deck_keeps_its_ramp_and_redraws_the_rest():
+    # The player: Ramp Dragon's opening hand is about ramp, often a full redraw to find it.
+    from svsim.cards import decks
+    from svsim.search.race import ramps
+    ramp, rhino = decks.build(decks.RAMP_DRAGON), decks.build(decks.RHINO_FOREST)
+    for seed in range(6):
+        state = new_game(ramp, rhino, seed=seed, first=0)
+        hand = state.players[0].hand
+        action = mulligan(state)
+        assert sorted(action.indices) == [i for i, c in enumerate(hand) if not ramps(c.defn)]
+        state = new_game(rhino, ramp, seed=seed, first=0)                # no ramp in the deck: by cost
+        hand = state.players[0].hand
+        assert [hand[i] for i in mulligan(state).indices] == [c for c in hand if c.cost >= 5]
+    assert ramps(dragon.DRAGONSIGN) and ramps(dragon.LUMIORE_AND_ARGENTE) and ramps(dragon.ZOOEY)
+    assert not ramps(dragon.SAGATSUMATSU) and not ramps(demo.FOOTMAN)
 
 
 def test_action_keys_match_across_determinizations():

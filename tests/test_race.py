@@ -106,3 +106,33 @@ def test_the_table_lists_every_dimension():
     text = impact.table(out)
     for _, label, _ in impact.DIMENSIONS:
         assert label in text
+
+
+def test_ramping_first_can_bring_the_kill_closer():
+    # The player on Ramp Dragon: "3 into 5, 5 into 7, then the damage comes turn after turn".
+    state = start()
+    _empty_hands(state)
+    state.players[1].leader_hp = 5
+    set_pp(state, 0, 3)
+    give(state, 0, dragon.DRAGONSIGN)                     # 3: gain 1 max play point
+    give(state, 0, dragon.SAGATSUMATSU)                   # 7: Storm, 5 attack
+    assert race.clock(state, 0, ramp=False).turns == 4     # 7 play points four turns from now
+    clock = race.clock(state, 0)
+    assert clock.turns == 3 and clock.how.startswith("ramp")
+    s = state.clone()
+    race.develop(s, 0)
+    assert s.players[0].max_pp == 4 and len(s.players[0].hand) == 1
+
+
+def test_an_accelerate_counts_as_ramp_when_it_is_the_way_the_card_is_played():
+    state = start()
+    _empty_hands(state)
+    set_pp(state, 0, 3)
+    give(state, 0, dragon.LUMIORE_AND_ARGENTE)            # 8 to play, Accelerate (3): gain 1 max play point
+    s = state.clone()
+    race.develop(s, 0)
+    assert s.players[0].max_pp == 4 and not s.players[0].hand
+    set_pp(state, 0, 8)                                    # at 8 it is the follower: not ramp
+    s = state.clone()
+    race.develop(s, 0)
+    assert s.players[0].max_pp == 8 and len(s.players[0].hand) == 1

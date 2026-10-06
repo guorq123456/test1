@@ -17,9 +17,17 @@ from svsim.search.moves import worth_trying
 
 
 def mulligan(state, threshold: int = 5) -> Mulligan:
-    """Redraw the opening-hand cards that cost `threshold` or more."""
-    hand = state.players[state.active].hand
-    return Mulligan(tuple(i for i, c in enumerate(hand) if c.cost >= threshold))
+    """Redraw the opening-hand cards that cost `threshold` or more. A deck built
+    around ramp (at least one card in eight raises max play points, search.race.ramps)
+    keeps the ramp and redraws everything else, all of it if there is none: the
+    player's way with Ramp Dragon against Rhinoceroach Forest ("留牌围着跳费走，
+    很多时候全换找跳费"; ramping 3 into 5 and 5 into 7 is what lines up the damage turns)."""
+    from svsim.search.race import ramps
+    p = state.players[state.active]
+    cards = p.hand + p.deck
+    if 8 * sum(ramps(c.defn) for c in cards) >= len(cards):
+        return Mulligan(tuple(i for i, c in enumerate(p.hand) if not ramps(c.defn)))
+    return Mulligan(tuple(i for i, c in enumerate(p.hand) if c.cost >= threshold))
 
 
 class GreedyAgent:
