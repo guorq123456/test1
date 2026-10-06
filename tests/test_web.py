@@ -10,6 +10,7 @@ from http.server import HTTPServer
 from pathlib import Path
 
 from svsim.core.engine import legal_actions
+from svsim.search import impact
 from svsim.tools import records
 from svsim.tools.web import Handler, build
 from svsim.ui.session import Session
@@ -276,3 +277,26 @@ def test_reviewing_on_the_local_server_saves_no_new_replay(tmp_path):
     finally:
         server.shutdown()
         Handler.session = None
+
+
+def test_a_reviewed_turn_is_compared_by_its_impact_on_winning_once():
+    session = Session()
+    play_out(lambda method, *args: getattr(session, method)(*args), seed=4)
+    record = json.loads(json.dumps(session.record_data()))
+    review = Session()
+    view = review.review(record)
+    assert "error" in Session().impact()                             # only when reviewing
+    ai_move = next(m for m in view["moves"] if m["who"] == "ai")
+    review.goto(ai_move["i"])
+    assert "error" in review.impact()                                # only at the player's moves
+    mine = [m for m in view["moves"] if m["who"] == "you" and m["text"] != "结束回合"]
+    review.goto(mine[2]["i"])
+    result = review.impact(samples=2)
+    if "error" not in result:
+        assert result["columns"] == ["你的打法", "AI的打法", "直接结束"]
+        assert [row[0] for row in result["rows"]] == [label for _, label, _ in impact.DIMENSIONS]
+        assert all(len(row) == 4 for row in result["rows"]) and result["reading"]
+        assert review.impact() is result                             # worked out once, kept in the record
+        saved = json.loads(json.dumps(review.record_data()))
+        assert saved["impact"][str(mine[2]["i"])]["rows"] == result["rows"]
+        assert Session().review(saved) and _fingerprint(_replay(saved)) == _fingerprint(_replay(record))

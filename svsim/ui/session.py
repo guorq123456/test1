@@ -171,6 +171,47 @@ class Session:
             lines.append("这回合杀不了。" + ("" if r.complete else "（没搜完）"))
         return "\n".join(lines)
 
+    def impact(self, samples: int = 4) -> dict:
+        """When reviewing, at one of your decisions: the rest of your turn as you
+        played it, the AI's way from here and ending the turn now, compared by
+        their impact on winning (search.impact). Kept in the record's "impact"
+        (by action index), so it is worked out once."""
+        from svsim.search import impact
+        from svsim.tools.impact import ai_turn
+        if not self.reviewing:
+            return {"error": "打完的对局在复盘里可以看每一步对胜负的影响。"}
+        at, state = self.review_at, self.state
+        if state.over or state.active != 0 or state.phase != Phase.MAIN:
+            return {"error": "翻到你自己回合里的一步再看。"}
+        cached = (self.record.get("impact") or {}).get(str(at))
+        if cached:
+            return cached
+        from svsim.core.actions import from_dict
+        end, played = None, 0
+        for i in range(at, len(self.positions) - 1):
+            action = from_dict(self.record["actions"][i])
+            pos = self.positions[i]
+            if pos.active != 0 or pos.turn != state.turn:
+                break
+            if isinstance(action, EndTurn):
+                end = pos
+                break
+            played += isinstance(action, PlayCard)
+        if end is None:
+            return {"error": "你在这回合赢了（或对局在这回合结束），不用比较。"}
+        ai_end, ai_played = ai_turn(state, "mcts:100+plan+learned", self.record["seed"] + at)
+        if ai_end.over:
+            return {"error": "AI 从这里能直接斩杀，你的打法没有斩杀。"}
+        labels = ["你的打法", "AI的打法", "直接结束"]
+        out = impact.assess(state, [end, ai_end, state], labels, [played, ai_played, 0], samples=samples,
+                            seed=at, opponent="greedy+plan+learned")
+        result = {"at": at, "turn": state.turn, "samples": samples, "columns": labels,
+                  "rows": [[label] + [impact.cell(i, key) for i in out] for key, label, _ in impact.DIMENSIONS],
+                  "reading": impact.reading(out[0], out[1]),
+                  "meaning": [[label, text] for _, label, text in impact.DIMENSIONS]}
+        self.record.setdefault("impact", {})[str(at)] = result
+        return result
+
     def note(self, text: str) -> dict:
         """A note before the next action (when reviewing: about the action on screen)."""
         text = text.strip()

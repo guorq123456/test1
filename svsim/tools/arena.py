@@ -15,6 +15,9 @@ only, leaving out followers the opponent may remove (evaluate.THREAT_HAND);
 lethal, played when the search's evaluation prefers it (ISMCTS agents only).
 turn:N plans the whole turn (search.turnplan: the best line by the end-of-turn
 evaluation, luck averaged, N positions at most) and follows it.
+impact:N chooses each turn among the mcts:N agent's lines by their impact on
+winning (agents.impact_agent: the opponent's answer sampled, then the race
+clocks); the other suffixes go to the mcts:N agent.
 "+learned" uses each deck's learned evaluation (svsim.learn, tools.learn) where
 there is one. Combined: mcts:200+plan+macro+threat. Each pairing plays both seats and, for --decks starter or
 rhino, both decks equally often. --decks rhino is Rhinoceroach Forest
@@ -64,6 +67,10 @@ def make_agent(spec: str, seed: int):
         from svsim.search.turnplan import TurnPlanAgent
         return LethalAgent(TurnPlanAgent(int(arg or 5000), seed=seed, weights=weights), seed=seed,
                            planner=planner)
+    if name == "impact":                           # turns chosen by their impact (agents.impact_agent)
+        from svsim.agents.impact_agent import ImpactAgent
+        base = make_agent("+".join([f"mcts:{arg or 200}"] + options), seed)
+        return ImpactAgent(base, seed=seed)
     if name in ("mcts", "mcts-raw", "mcts-reply"):
         agent = MCTSAgent(int(arg or 400), seed=seed, reply=name == "mcts-reply", weights=weights)
         return agent if name == "mcts-raw" else LethalAgent(agent, seed=seed, planner=planner,

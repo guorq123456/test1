@@ -38,22 +38,22 @@ from svsim.search.evaluate import DEFAULT, evaluate
 from svsim.search import race
 
 DIMENSIONS = [
-    # key, Chinese label, what it is
-    ("face", "本回合打脸", "damage to the enemy leader this turn"),
-    ("played", "出牌", "cards played this turn"),
-    ("drawn", "过牌", "cards that came to hand this turn"),
-    ("pp_left", "剩余PP", "play points left unused"),
-    ("hand", "手牌", "cards in hand at the end of the turn"),
-    ("killed", "被对手斩杀", "share of samples where the opponent kills on their turn"),
-    ("hit_back", "对手还击", "damage to the player's leader on the opponent's turn"),
-    ("answered", "被解场", "share of the player's board attack the opponent removed"),
-    ("their_spend", "对手花费PP", "play points the opponent spent"),
-    ("their_board", "对手场攻", "attack of the opponent's followers after their turn"),
-    ("lethal", "下回合斩杀", "share of samples where the player can kill on the next turn"),
-    ("my_clock", "我方时钟", "the player's race clock at the next turn (turns, if unanswered)"),
-    ("their_clock", "对方时钟", "the opponent's race clock then (turns, if unanswered)"),
-    ("race", "抢跑", "share of samples where the player's clock comes first"),
-    ("value", "估值胜率", "the evaluation's win probability at the start of the next turn"),
+    # key, label, what it means (shown on the page)
+    ("face", "本回合打脸", "这回合对对手主战者造成的伤害"),
+    ("played", "出牌", "这回合打出的牌数"),
+    ("drawn", "过牌", "这回合进手的牌数（抽牌、加入手牌）"),
+    ("pp_left", "剩余PP", "结束回合时没用掉的 PP"),
+    ("hand", "手牌", "结束回合时的手牌数"),
+    ("killed", "被对手斩杀", "对手的回合里把你打死的比例（对手手牌按没见过的牌重新抽样，由对手的 AI 来打）"),
+    ("hit_back", "对手还击", "对手回合里你掉的血"),
+    ("answered", "被解场", "你场上随从的攻击力被对手处理掉的比例（能不能解）"),
+    ("their_spend", "对手花费PP", "对手这回合花掉的 PP（要花多少）"),
+    ("their_board", "对手场攻", "对手回合结束后对手场上随从的总攻击力"),
+    ("lethal", "下回合斩杀", "到你下回合时能直接斩杀的比例"),
+    ("my_clock", "我方时钟", "你下回合开始时，还要再过几个自己的回合才能斩杀（0 = 下回合就能；假设对手不再处理）"),
+    ("their_clock", "对方时钟", "同一时刻对手还要几个回合能斩杀你（假设你不处理）"),
+    ("race", "时钟领先", "你的时钟先到的比例（你先动，所以一样快算你先）"),
+    ("value", "估值胜率", "现在的局面评估函数在你下回合开始时给的胜率，用来对照"),
 ]
 
 
@@ -192,3 +192,39 @@ def table(impacts: list[Impact], keys: list | None = None) -> str:
         cells = [_pad(f"{i[k]:.0%}" if k in percent else f"{i[k]:.1f}", width) for i in impacts]
         lines.append(_pad(labels[k], 12) + "".join(cells))
     return "\n".join(lines)
+
+
+PERCENT = {"killed", "answered", "lethal", "race", "value"}
+
+
+def cell(impact: Impact, key: str) -> str:
+    v = impact[key]
+    if key in PERCENT:
+        return f"{v:.0%}"
+    if key in ("my_clock", "their_clock") and impact.samples and all(
+            c[0 if key == "my_clock" else 1] > race.HORIZON for c in impact.clocks):
+        return f">{race.HORIZON}"
+    return f"{v:.1f}" if key in ("my_clock", "their_clock", "hit_back", "their_spend", "their_board") else f"{v:.0f}"
+
+
+def reading(mine: Impact, other: Impact, name: str = "AI") -> list[str]:
+    """The differences that matter most between the player's way and another, in words."""
+    out = []
+    if abs(mine["killed"] - other["killed"]) >= 0.2:
+        better = mine["killed"] < other["killed"]
+        out.append(f"被对手斩杀的机会：你 {mine['killed']:.0%}，{name} {other['killed']:.0%}"
+                   + ("，你的打法更安全" if better else "，你的打法更危险"))
+    if abs(mine["lethal"] - other["lethal"]) >= 0.2:
+        out.append(f"下回合能斩杀的机会：你 {mine['lethal']:.0%}，{name} {other['lethal']:.0%}")
+    d = other["my_clock"] - mine["my_clock"]
+    if abs(d) >= 0.5:
+        out.append(f"你的打法让自己的斩杀{'提前' if d > 0 else '推迟'}约 {abs(d):.1f} 个回合"
+                   f"（{mine['my_clock']:.1f} 对 {other['my_clock']:.1f}）")
+    d = mine["their_clock"] - other["their_clock"]
+    if abs(d) >= 0.5:
+        out.append(f"对手斩杀你的时间{'推后' if d > 0 else '提前'}约 {abs(d):.1f} 个回合")
+    if abs(mine["race"] - other["race"]) >= 0.15:
+        out.append(f"时钟领先（我方时钟先到）的比例：你 {mine['race']:.0%}，{name} {other['race']:.0%}")
+    if not out:
+        out.append("两种打法在这些维度上差别不大")
+    return out

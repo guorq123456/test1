@@ -151,6 +151,15 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
 .sheet .moves button.main { border-color: var(--accent); }
 .sheet .row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 .sheet pre, .sheet .text { white-space: pre-wrap; font-family: var(--font-body); font-size: 13px; line-height: 1.6; margin: 0; }
+.sheet table.impact { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.sheet table.impact th, .sheet table.impact td { padding: 5px 4px; border-bottom: 1px solid var(--line); text-align: right; }
+.sheet table.impact th:first-child, .sheet table.impact td:first-child { text-align: left; white-space: nowrap; }
+.sheet table.impact thead th { font-weight: 600; color: var(--muted); }
+.sheet ul.reading { margin: 0 0 10px; padding-left: 18px; font-size: 13px; line-height: 1.6; }
+.sheet details { margin-top: 10px; font-size: 12px; color: var(--muted); }
+.sheet details dl { margin: 6px 0 0; }
+.sheet details dt { font-weight: 600; color: var(--ink); margin-top: 6px; }
+.sheet details dd { margin: 0; }
 .sheet textarea { width: 100%; box-sizing: border-box; min-height: 90px; padding: 8px; border-radius: 8px;
   border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; }
 .mull { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 8px; margin: 6px 0 4px; }
@@ -231,6 +240,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
       <button id="rv-note" type="button">备注</button>
       <button id="rv-hint" type="button">AI 会怎么走</button>
       <button id="rv-lethal" type="button">查斩杀</button>
+      <button id="rv-impact" type="button">胜负影响</button>
       <button id="rv-exit" type="button">退出复盘</button>
     </nav>
   </section>
@@ -842,6 +852,43 @@ $("rv-lethal").addEventListener("click", async () => {
   toast("正在算……", "查斩杀");
   try { toast(await Backend.call("lethal"), "查斩杀"); } catch (e) { toast("出错了：" + e.message, "查斩杀"); }
 });
+$("rv-impact").addEventListener("click", async () => {
+  const m = view && view.review && view.review.move;
+  if (!m || m.who !== "you") return toast("翻到你自己回合里的一步再看。", "胜负影响");
+  toast("正在比较三种打法：你的、AI 的、直接结束。每种都让对手的 AI 在几种可能的手牌下回应一遍，再数双方还差几回合能斩杀。第一次算要半分钟左右……", "胜负影响");
+  let r;
+  try { r = await Backend.call("impact"); } catch (e) { return toast("出错了：" + e.message, "胜负影响"); }
+  if (r.error) return toast(r.error, "胜负影响");
+  openImpact(r);
+  await saveReview();                              // keep the result with the game
+});
+
+function openImpact(r) {
+  const sheet = $("sheet"); sheet.replaceChildren();
+  sheet.appendChild(el("h2", null, `第 ${r.turn} 回合：这回合剩下的部分怎么打`));
+  sheet.appendChild(el("div", "sub", `从这一步起到回合结束。对手的回应抽样 ${r.samples} 次，数字是平均。`));
+  const ul = el("ul", "reading");
+  r.reading.forEach(line => ul.appendChild(el("li", null, line)));
+  sheet.appendChild(ul);
+  const table = el("table", "impact");
+  const head = el("thead"); const hr = el("tr"); hr.appendChild(el("th", null, ""));
+  r.columns.forEach(c => hr.appendChild(el("th", null, c))); head.appendChild(hr); table.appendChild(head);
+  const body = el("tbody");
+  r.rows.forEach(row => {
+    const tr = el("tr");
+    row.forEach((v, i) => tr.appendChild(el(i ? "td" : "th", null, v)));
+    body.appendChild(tr);
+  });
+  table.appendChild(body); sheet.appendChild(table);
+  const details = el("details"); details.appendChild(el("summary", null, "每一行是什么意思"));
+  const dl = el("dl");
+  (r.meaning || []).forEach(([label, text]) => { dl.appendChild(el("dt", null, label)); dl.appendChild(el("dd", null, text)); });
+  details.appendChild(dl); sheet.appendChild(details);
+  const row = el("div", "row"); const close = el("button", "ghost", "关闭"); close.type = "button";
+  close.addEventListener("click", closeSheet); row.appendChild(close); sheet.appendChild(row);
+  showSheet();
+}
+
 $("rv-note").addEventListener("click", () => {
   const m = view && view.review && view.review.move;
   if (!m) return;
