@@ -154,3 +154,18 @@ def test_a_burst_that_sets_up_next_turns_kill_is_played():
     assert line and line[0].__class__.__name__ == "PlayCard"
     state.players[1].leader_hp = 9                        # out of reach next turn either way: hold
     assert agent._burst_line(state, legal_actions(state)) == []
+
+
+def test_the_digging_plan_plays_the_combo_card_last():
+    from svsim.cards import forest
+    from svsim.search import combo
+    state = start()
+    _empty_hands(state)
+    set_pp(state, 0, 3)
+    give(state, 0, forest.FAIRY)
+    give(state, 0, forest.FAIRY)
+    sprout = give(state, 0, forest.SPROUTING_INITIATE)      # Combo 3: draw a card
+    p = combo.dig(state, keep=set())
+    plays = [step for step in p.steps if step[0] == "play"]
+    assert p.damage == 1 and plays[-1][1] == sprout.defn.card_id and len(plays) == 3
+    assert combo.dig(state, keep={sprout.defn.card_id}).damage == 0

@@ -648,6 +648,34 @@ def _search_for(state: GameState, side: int, max_nodes: int) -> _Abstract:
     return search
 
 
+class _Digger(_Abstract):
+    """The same resources searched for the most cards drawn this turn, without
+    playing the cards in `keep` (the finishers) and without attacking: what a
+    setup turn of the player's looks like (they drew about four cards a turn,
+    the AI two to three)."""
+
+    def __init__(self, keep: set, max_nodes: int):
+        super().__init__(99, 0, max_nodes)
+        self.keep = keep
+
+    def moves(self, pos):
+        before = pos[3].count(UNKNOWN)
+        for step, nxt, _ in super().moves(pos):
+            if step[0] in ("attack", "strike") or (step[0] == "play" and abs(step[1]) in self.keep):
+                continue
+            yield step, nxt, nxt[3].count(UNKNOWN) - before
+
+
+def dig(state: GameState, keep: set, max_nodes: int = 2000) -> Plan:
+    """The line that draws the most cards this turn by the resource model, keeping
+    the cards in `keep` (card ids) in hand."""
+    base = _search_for(state, state.active, max_nodes)
+    digger = _Digger(keep, max_nodes)
+    digger.defs = base.defs
+    drawn, steps = digger.best(_abstract_position(state))
+    return Plan(drawn, steps, digger.nodes)
+
+
 def plan(state: GameState, max_nodes: int = 200000) -> Plan:
     """The most damage the hand and board can deal this turn by the resource model,
     with the plan that deals it (stopping once it reaches the enemy leader's defense)."""

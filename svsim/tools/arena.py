@@ -52,7 +52,7 @@ CRAFTS = [c for c in Craft if c != Craft.NEUTRAL]
 def make_agent(spec: str, seed: int):
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient"}
+                              "pace", "burst2", "patient", "dig", "dig2"}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -94,10 +94,16 @@ def make_agent(spec: str, seed: int):
         veto = (lambda s, a: any(v(s, a) for v in vetoes)) if vetoes else None
         agent = MCTSAgent(int(arg or 400), seed=seed, reply=name == "mcts-reply", weights=weights,
                           reserve="reserve" in options, veto=veto)
-        return agent if name == "mcts-raw" else LethalAgent(agent, seed=seed, planner=planner,
+        if name == "mcts-raw":
+            return agent
+        agent = LethalAgent(agent, seed=seed, planner=planner,
                                                             macro="macro" in options,
                                                             burst="burst" in options or "burst2" in options,
-                                                            burst_reply=2 if "burst2" in options else 0)
+                                                            burst_reply=2 if "burst2" in options else 0,
+                                                            dig="dig" in options or "dig2" in options)
+        if "dig2" in options:
+            agent.dig_slack = None
+        return agent
     raise ValueError(f"unknown agent {spec!r}")
 
 

@@ -38,7 +38,7 @@ class LethalAgent:
 
     def __init__(self, base, max_nodes: int = 2000, screen: int | None = 200, seed: int = 0,
                  planner: bool = False, plan_nodes: int = 20000, trust_planner: bool = False,
-                 macro: bool = False, burst: bool = False, burst_reply: int = 0):
+                 macro: bool = False, burst: bool = False, burst_reply: int = 0, dig: bool = False):
         self.base = base
         self.search = LethalSearch(max_nodes=max_nodes, screen=screen, seed=seed)
         self.planner, self.plan_nodes, self.trust_planner = planner, plan_nodes, trust_planner
@@ -51,6 +51,11 @@ class LethalAgent:
         self.burst = burst           # play the most-damage line when it sets up next turn's kill
         self.burst_reply = burst_reply   # ... and it still does after this many sampled opponent turns
         self.bursts = 0
+        self.burst_checked = None
+        self.dig = dig               # on setup turns, follow the planner's line that draws the most
+        self.dig_slack = 0.1         # ... unless the search rates its own best move this much higher (0..1);
+                                     # None: whenever it doesn't leave the leader in reach of the enemy board
+        self.digs = 0
         self.macro_checked = None    # stamp of the last turn state the macro line was weighed on
         self.macros = 0              # macro lines played
         self.rng = random.Random(seed)
@@ -78,13 +83,21 @@ class LethalAgent:
             self.checked = stamp
         me = state.players[state.active]
         progress = stamp + (me.pp, len(me.hand), len(me.field))
-        if self.burst and progress != self.macro_checked:
-            self.macro_checked = progress
+        if self.burst and progress != self.burst_checked:
+            self.burst_checked = progress
             line = self._burst_line(state, actions)
             if line:
                 self.bursts += 1
                 self.plan, self.plan_turn = list(line[1:]), state.turn
                 return combo.listed(state, line[0], actions)
+        if self.dig and progress != self.macro_checked:
+            self.macro_checked = progress
+            line = self._dig_line(state, actions)
+            if line:
+                self.digs += 1
+                self.plan, self.plan_turn = list(line[1:]), state.turn
+                return combo.listed(state, line[0], actions)
+            return self.base_choice
         if self.macro and progress != self.macro_checked:
             self.macro_checked = progress
             line = self._macro_line(state, actions)
@@ -120,6 +133,43 @@ class LethalAgent:
             s = after_end_of_turn(s)
         best = max(root.children.values(), key=lambda n: n.visits)
         return line if search.value(s, state.active) > search.estimate(best) else []
+
+    def _dig_line(self, state, actions) -> list:
+        """The planner's most-drawing line (finishers kept), if it draws two cards or
+        more and the search's evaluation rates its end no worse than its own best
+        move (kept in `base_choice`)."""
+        from svsim.search.moves import finisher
+        self.base_choice = self.base.act(state, actions)
+        search = getattr(self.base, "search", None)
+        root = getattr(search, "last_root", None)
+        if root is None or not root.children:
+            return []
+        keep = {c.defn.card_id for c in state.players[state.active].hand if finisher(c.defn)}
+        p = combo.dig(state, keep)
+        if p.damage < 2 or not p.steps:
+            return []
+        line = None
+        for n in range(len(p.steps), 0, -1):
+            line = combo.realize(state, p.steps[:n])
+            if line:
+                break
+        if not line or combo.listed(state, line[0], actions) is None:
+            return []
+        s = determinize(state, state.active, self.rng)
+        for a in line:
+            if s.over:
+                break
+            if not combo._legal(s, a):
+                return []
+            apply(s, a)
+        if s.over:
+            return line if s.winner == state.active else []
+        end = after_end_of_turn(s)
+        if self.dig_slack is None:                   # dig unless it leaves the leader in reach of the enemy board
+            from svsim.search.evaluate import threat
+            return line if end.over or threat(end, 1 - state.active) < end.players[state.active].leader_hp else []
+        best = max(root.children.values(), key=lambda n: n.visits)
+        return line if search.value(end, state.active) >= search.estimate(best) - self.dig_slack else []
 
     def _burst_line(self, state, actions) -> list:
         """The planner's most-damage line, when playing it now means the kill comes
