@@ -61,6 +61,7 @@ class Weights:
     setup_board: bool = True   # count the player's followers in it (else hand and amulets only)
     ready: float = 0.0         # per point the hand could deal next turn by the player's formula, up to lethal
     dig: float = 0.0           # per card drawn out of the deck (cards seen: the player digs for Rhinoceroaches)
+    own_board: float = 1.0     # scale on the player's own followers (a race deck facing board clears keeps few)
     ready_lethal: float = 0.0  # that is lethal
 
 
@@ -166,6 +167,20 @@ def threat(state: GameState, side: int) -> int:
     return max(damage, 0)
 
 
+_SCALED: dict = {}
+
+
+def _scaled_board(w: Weights) -> Weights:
+    hit = _SCALED.get(w)
+    if hit is None:
+        from dataclasses import replace
+        k = w.own_board
+        hit = _SCALED[w] = replace(w, atk=w.atk * k, life=w.life * k, ward=w.ward * k, bane=w.bane * k,
+                                   drain=w.drain * k, barrier=w.barrier * k, ambush=w.ambush * k, aura=w.aura * k,
+                                   intimidate=w.intimidate * k, own_board=1.0)
+    return hit
+
+
 def evaluate(state: GameState, player: int, w: Weights = DEFAULT,
              player_moves_next: bool = False) -> float:
     """Score for `player`. By default the opponent moves next (the end of
@@ -176,7 +191,8 @@ def evaluate(state: GameState, player: int, w: Weights = DEFAULT,
     if state.winner is not None:
         return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
     me, opp = state.players[player], state.players[1 - player]
-    score = side_value(me, w) - side_value(opp, w)
+    mine = w if w.own_board == 1.0 else _scaled_board(w)
+    score = side_value(me, mine) - side_value(opp, w)
     danger, pressure = (w.pressure, w.danger) if player_moves_next else (w.danger, w.pressure)
     if threat(state, 1 - player) >= me.leader_hp:
         score -= danger

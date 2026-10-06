@@ -649,21 +649,28 @@ def _search_for(state: GameState, side: int, max_nodes: int) -> _Abstract:
 
 
 class _Digger(_Abstract):
-    """The same resources searched for the most cards drawn this turn, without
-    playing the cards in `keep` (the finishers) and without attacking: what a
+    """The same resources searched for the most cards drawn this turn (plus play
+    points taken off cards that get cheaper when allied followers leave, such as
+    Bayle), without playing the cards in `keep` and without attacking: what a
     setup turn of the player's looks like (they drew about four cards a turn,
-    the AI two to three)."""
+    the AI two to three, and held Bayle until it cost 0 or 2)."""
 
     def __init__(self, keep: set, max_nodes: int):
         super().__init__(99, 0, max_nodes)
         self.keep = keep
 
+    def _discounted(self, hand: tuple) -> int:
+        """Play points the cards that get cheaper when allied followers leave (Bayle) still cost."""
+        return sum(cost for cid, cost in hand if cid and leave_discount(self.defs[abs(cid)]))
+
     def moves(self, pos):
         before = pos[3].count(UNKNOWN)
+        cost_before = self._discounted(pos[3])
         for step, nxt, _ in super().moves(pos):
             if step[0] in ("attack", "strike") or (step[0] == "play" and abs(step[1]) in self.keep):
                 continue
-            yield step, nxt, nxt[3].count(UNKNOWN) - before
+            # a card drawn, or a play point off Bayle (the player's lethal turns play two at 0)
+            yield step, nxt, nxt[3].count(UNKNOWN) - before + max(0, cost_before - self._discounted(nxt[3]))
 
 
 def dig(state: GameState, keep: set, max_nodes: int = 2000) -> Plan:

@@ -169,3 +169,24 @@ def test_the_digging_plan_plays_the_combo_card_last():
     plays = [step for step in p.steps if step[0] == "play"]
     assert p.damage == 1 and plays[-1][1] == sprout.defn.card_id and len(plays) == 3
     assert combo.dig(state, keep={sprout.defn.card_id}).damage == 0
+
+
+def test_the_cross_turn_planner_picks_a_kind_of_turn_and_plays_legal_moves():
+    from svsim.agents.turns_agent import KINDS, TurnsAgent
+    from svsim.core.engine import legal_actions
+    from svsim.tools.arena import make_agent
+    from svsim.cards import decks
+    from svsim.core.engine import new_game
+    from svsim.core.actions import Mulligan
+    state = new_game(decks.build(decks.RHINO_FOREST), decks.build(decks.RAMP_DRAGON), seed=5, first=0)
+    apply(state, Mulligan(()))
+    apply(state, Mulligan(()))
+    agent = TurnsAgent(make_agent("mcts:20+plan+reserve", 1), opponent="greedy", samples=1, horizon=1, seed=1)
+    assert agent.choose(state) in KINDS
+    for _ in range(6):
+        if state.over or state.active != 0:
+            break
+        actions = legal_actions(state)
+        action = agent.act(state, actions)
+        assert action in actions
+        apply(state, action)

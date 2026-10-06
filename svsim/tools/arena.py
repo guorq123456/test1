@@ -79,6 +79,10 @@ def make_agent(spec: str, seed: int):
         from svsim.search.turnplan import TurnPlanAgent
         return LethalAgent(TurnPlanAgent(int(arg or 5000), seed=seed, weights=weights), seed=seed,
                            planner=planner)
+    if name == "turns":                            # cross-turn planning (agents.turns_agent)
+        from svsim.agents.turns_agent import TurnsAgent
+        base = make_agent("+".join([f"mcts:{arg or 200}"] + options), seed)
+        return TurnsAgent(base, seed=seed)
     if name == "impact":                           # turns chosen by their impact (agents.impact_agent)
         from svsim.agents.impact_agent import ImpactAgent
         base = make_agent("+".join([f"mcts:{arg or 200}"] + options), seed)
