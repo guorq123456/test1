@@ -96,11 +96,28 @@ def test_a_ramp_deck_keeps_its_ramp_and_redraws_the_rest():
         hand = state.players[0].hand
         action = mulligan(state)
         assert sorted(action.indices) == [i for i, c in enumerate(hand) if not ramps(c.defn)]
-        state = new_game(rhino, ramp, seed=seed, first=0)                # no ramp in the deck: by cost
+        pirate = decks.build(decks.PIRATE_SWORD)                         # no ramp in the deck: by cost
+        state = new_game(pirate, ramp, seed=seed, first=0)
         hand = state.players[0].hand
         assert [hand[i] for i in mulligan(state).indices] == [c for c in hand if c.cost >= 5]
     assert ramps(dragon.DRAGONSIGN) and ramps(dragon.LUMIORE_AND_ARGENTE) and ramps(dragon.ZOOEY)
     assert not ramps(dragon.SAGATSUMATSU) and not ramps(demo.FOOTMAN)
+
+
+def test_rhinoceroach_forest_redraws_by_the_players_rules():
+    # The player: keep Glade; keep one Bayle, not two; Baby Carbuncle, Lambent Cairn, Eradicating
+    # Arrow and Virid Lieutenant look cheap but are mid-game cards.
+    from svsim.agents.mulligan import PLAYER_RULES, by_rules
+    from svsim.cards import decks, forest, unlimited
+    rules = PLAYER_RULES["rhino"]
+    hand = [type("C", (), {"defn": d, "cost": d.cost})() for d in (
+        unlimited.BAYLE, unlimited.GLADE, unlimited.BAYLE, unlimited.BABY_CARBUNCLE, forest.SPROUTING_INITIATE)]
+    assert by_rules(hand, rules) == (2, 3)
+    hand = [type("C", (), {"defn": d, "cost": d.cost})() for d in (
+        unlimited.LAMBENT_CAIRN, unlimited.ERADICATING_ARROW, forest.VIRID_LIEUTENANT, unlimited.KILLER_RHINOCEROACH)]
+    assert by_rules(hand, rules) == (0, 1, 2)
+    state = new_game(decks.build(decks.RHINO_FOREST), decks.build(decks.RAMP_DRAGON), seed=0, first=0)
+    assert mulligan(state).indices == by_rules(state.players[0].hand, rules)
 
 
 def test_action_keys_match_across_determinizations():
