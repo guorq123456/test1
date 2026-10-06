@@ -59,7 +59,7 @@ CRAFTS = [c for c in Craft if c != Craft.NEUTRAL]
 def make_agent(spec: str, seed: int):
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced"} - {o for o in options if o.startswith("hp")}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance"} - {o for o in options if o.startswith("hp")}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -111,6 +111,9 @@ def make_agent(spec: str, seed: int):
         if "patient" in options:                   # a Combo card waits for its Combo (search.moves.wasted_combo)
             from svsim.search.moves import wasted_combo
             vetoes.append(wasted_combo)
+        if "enhance" in options:                   # an Enhance card waits for its Enhance (search.moves.wasted_enhance)
+            from svsim.search.moves import wasted_enhance
+            vetoes.append(wasted_enhance)
         veto = (lambda s, a: any(v(s, a) for v in vetoes)) if vetoes else None
         agent = MCTSAgent(int(arg or 400), seed=seed, reply=name == "mcts-reply", weights=weights,
                           reserve="reserve" in options, veto=veto)

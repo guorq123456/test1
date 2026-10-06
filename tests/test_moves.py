@@ -135,3 +135,20 @@ def test_a_combo_card_waits_for_its_combo():
     assert wasted_combo(state, PlayCard(sprout.uid)) and not wasted_combo(state, PlayCard(footman.uid))
     state.players[0].combo = 2
     assert not wasted_combo(state, PlayCard(sprout.uid))
+
+
+def test_an_enhance_card_waits_when_its_enhance_is_worth_much_more_and_close():
+    # The player's Ramp mirror games: Lyria (Enhance 8: a big follower, 7 play points back)
+    # on their sixth turn; the bot played it on its third or fourth as a 1/1.
+    from svsim.cards import neutral
+    from svsim.core.actions import PlayCard
+    from svsim.search.moves import enhance_gain, wasted_enhance
+    from helpers import give, set_pp
+    assert enhance_gain(neutral.LYRIA, 8) >= 3.0           # 7 play points back
+    assert enhance_gain(dragon.ZOOEY, 10) == 0.0           # Storm and the damage cap aren't resources
+    state = start()
+    lyria = give(state, 0, neutral.LYRIA)
+    for max_pp, held in ((6, True), (5, False), (8, False)):
+        set_pp(state, 0, max_pp)
+        play = next(a for a in legal_actions(state) if isinstance(a, PlayCard) and a.uid == lyria.uid)
+        assert wasted_enhance(state, play) == held, max_pp

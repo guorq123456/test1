@@ -100,3 +100,57 @@ def wasted_combo(state: GameState, action) -> bool:
         if (later.drawn, len(later.added)) > (now.drawn, len(now.added)):
             return True
     return False
+
+
+_ENHANCE: dict = {}
+
+
+def enhance_gain(defn, cost: int) -> float:
+    """What a card's Enhance at `cost` adds to playing it without, measured in a sandbox:
+    cards drawn or added, play points recovered (half each), followers summoned,
+    and damage to enemies (a quarter each)."""
+    key = (defn.card_id, cost)
+    if key not in _ENHANCE:
+        _ENHANCE[key] = _play_measure(defn, cost) - _play_measure(defn, defn.cost)
+    return _ENHANCE[key]
+
+
+def _play_measure(defn, pp: int) -> float:
+    from svsim.core import effects as E
+    from svsim.core.engine import apply, legal_actions
+    from svsim.search.combo import _sandbox
+    state, _ = _sandbox(0, pp)
+    card = E.add_to_hand(state, 0, defn)
+    plays = [a for a in legal_actions(state) if isinstance(a, PlayCard) and a.uid == card.uid]
+    if not plays:
+        return 0.0
+    me, foe = state.players[0], state.players[1]
+    hand, followers = len(me.hand) - 1, len(me.followers)
+    damage = foe.leader_hp + sum(f.life for f in foe.followers)
+    best = 0.0
+    for a in plays[:6]:
+        t = state.clone()
+        paid = t.players[0].pp
+        apply(t, a)
+        m, f = t.players[0], t.players[1]
+        recovered = max(m.pp - (paid - (pp if defn.cost < pp else defn.cost)), 0)
+        value = ((len(m.hand) - hand) + 0.5 * recovered + (len(m.followers) - followers - (1 if defn.is_follower else 0))
+                 + 0.25 * (damage - f.leader_hp - sum(x.life for x in f.followers)))
+        best = max(best, value)
+    return best
+
+
+def wasted_enhance(state: GameState, action) -> bool:
+    """Playing a card without its Enhance when the Enhance is worth a lot more and the
+    play points for it come within two turns: Luria (Enhance 8: draw a big follower,
+    recover 7 play points), which the player plays on their sixth turn and the bot
+    on its third or fourth as a 1/1."""
+    if not isinstance(action, PlayCard):
+        return False
+    card = state.in_hand(state.active, action.uid)
+    if card is None:
+        return False
+    from svsim.core.script import script_for
+    p = state.players[state.active]
+    later = [c for c in script_for(card.defn.card_id).enhance if p.pp < c <= p.max_pp + 2]
+    return any(enhance_gain(card.defn, c) >= 2.0 for c in later)
