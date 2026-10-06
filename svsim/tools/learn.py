@@ -28,7 +28,7 @@ import numpy as np
 from svsim.cards import decks
 from svsim.core.enums import Craft
 from svsim.learn import data, fit as F
-from svsim.learn.features import names
+from svsim.learn.features import names, signs
 from svsim.learn.model import WEIGHTS, LinearValue
 
 DECKS = {"rhino": decks.RHINO_FOREST, "ramp": decks.RAMP_DRAGON, "pirate": decks.PIRATE_SWORD}
@@ -51,7 +51,8 @@ def load_records(paths: list[str]) -> list[dict]:
     return out
 
 
-def held_out_top1(steps_by_game: list, turns_by_game: list, repeat: int, X, y, lam: float, iters: int) -> tuple:
+def held_out_top1(steps_by_game: list, turns_by_game: list, repeat: int, X, y, lam: float, iters: int,
+                  potential: bool = True) -> tuple:
     """Train on all games but one, measure on that one: (moves, whole turns) where
     the player's choice ranks first, averaged over decisions."""
     hits = [0.0, 0.0]
@@ -59,7 +60,7 @@ def held_out_top1(steps_by_game: list, turns_by_game: list, repeat: int, X, y, l
     for k in range(len(steps_by_game)):
         train = [p for j, g in enumerate(steps_by_game) if j != k for p in g]
         train += [p for j, g in enumerate(turns_by_game) if j != k for p in g] * repeat
-        w, mean, std, _ = F.fit(X, y, train, lam=lam, iters=iters)
+        w, mean, std, _ = F.fit(X, y, train, lam=lam, iters=iters, signs=signs(potential))
         for i, test in enumerate((steps_by_game[k], turns_by_game[k] if turns_by_game else [])):
             if test:
                 hits[i] += F.top1(w, F.choice_groups(test, mean, std)) * len(test)
@@ -108,12 +109,12 @@ def main() -> None:
             prefs = None
             if name == args.human_deck:
                 prefs = [p for g in prefs_by_game for p in g] + [p for g in turns_by_game for p in g] * args.turn_weight
-            w, mean, std, report = F.fit(X, y, prefs, lam=args.lam, iters=args.iters)
+            w, mean, std, report = F.fit(X, y, prefs, lam=args.lam, iters=args.iters, signs=signs(potential))
             info = {"deck": name, "positions": len(mine), "win_rate": float(y.mean()) if len(y) else None,
                     "choices": len(prefs or []), "iteration": it + 1, **report}
             if prefs and len(human) > 1:
                 moves, turns = held_out_top1(prefs_by_game, turns_by_game, args.turn_weight, X, y, args.lam,
-                                             args.iters // 2)
+                                             args.iters // 2, potential)
                 info["choice_top1_held_out"], info["turn_top1_held_out"] = moves, turns
             model = LinearValue(w.tolist(), mean.tolist(), std.tolist(), potential, info)
             model.save(out / f"{craft.name.lower()}.json")

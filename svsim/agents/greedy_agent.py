@@ -13,6 +13,7 @@ from svsim.core.enums import Phase
 from svsim.core.view import determinize
 from svsim.search.evaluate import DEFAULT, after_end_of_turn, evaluate
 from svsim.search.lethal import hidden_info
+from svsim.search.moves import worth_trying
 
 
 def mulligan(state, threshold: int = 5) -> Mulligan:
@@ -47,7 +48,7 @@ class GreedyAgent:
         if state.phase != Phase.MAIN:
             return mulligan(state)
         best, best_score = None, None
-        for action in actions:
+        for action in worth_trying(state, actions):
             score = self.score(state, action)
             if best_score is None or score > best_score + 1e-9 or (
                     isinstance(action, EndTurn) and score >= best_score - 1e-9):

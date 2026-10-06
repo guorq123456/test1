@@ -1,0 +1,50 @@
+"""Moves a search can leave out because another order of the same moves is never worse.
+
+Evolving a follower after it has used up its attacks this turn: evolving it
+first and then attacking gives the same evolved follower, more damage, and more
+defense in the fight, so "attack, then evolve" is never better than "evolve,
+then attack". The order can matter when the evolution does something besides
+the stats (an Evolve or "when this follower evolves" ability on the card, or an
+allied card that reacts to evolutions), so those evolutions stay in.
+
+The player caught the AI attacking with Sagatsumatsu for 5 and evolving it
+afterwards, twice in one game: its learned evaluation, sure it was winning,
+couldn't tell the two orders apart. Whatever the evaluation, the search
+shouldn't be offered the worse order.
+"""
+from __future__ import annotations
+
+from svsim.core.actions import Evolve
+from svsim.core.script import LISTEN_IN_DECK, LISTEN_IN_HAND, scripts_of
+from svsim.core.state import GameState
+
+EVOLVE_HOOKS = ("on_evolve", "on_super_evolve", "on_evolved")
+
+
+def _listens(card, hooks) -> bool:
+    return any(getattr(s, h) is not None for s in scripts_of(card) for h in hooks)
+
+
+def _evolving_matters(state: GameState, follower) -> bool:
+    if _listens(follower, EVOLVE_HOOKS):
+        return True
+    p = state.players[follower.owner]
+    cards = p.leader_area + p.field + [c for c in p.hand if c.defn.card_id in LISTEN_IN_HAND] \
+        + [c for c in p.deck if c.defn.card_id in LISTEN_IN_DECK]
+    return any(c is not follower and _listens(c, ("on_ally_evolve",)) for c in cards)
+
+
+def dominated(state: GameState, action) -> bool:
+    """True for an evolution that evolving before attacking would have beaten."""
+    if not isinstance(action, Evolve):
+        return False
+    follower = next((c for c in state.players[state.active].field if c.uid == action.uid), None)
+    if follower is None or follower.attacks_made == 0 or follower.attacks_made < follower.max_attacks:
+        return False
+    return not _evolving_matters(state, follower)
+
+
+def worth_trying(state: GameState, actions: list) -> list:
+    """The actions minus the dominated ones (never empty: ending the turn stays)."""
+    kept = [a for a in actions if not dominated(state, a)]
+    return kept or list(actions)

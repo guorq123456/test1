@@ -117,3 +117,23 @@ def test_learned_agents_play_legal_moves(tmp_path, monkeypatch):
         action = agent.act(state, legal_actions(state)) if state.active == 0 else legal_actions(state)[-1]
         assert action in legal_actions(state)
         apply(state, action)
+
+
+def test_defense_and_lethal_features_keep_their_direction():
+    from svsim.learn.features import signs
+    s = dict(zip(names(False), signs(False)))
+    assert s["me_hp"] == s["me_hp_sqrt"] == 1 and s["me_hp_low"] == -1
+    assert s["op_hp"] == s["op_hp_sqrt"] == -1 and s["op_hp_low"] == 1
+    assert s["me_board_lethal"] == 1 and s["op_board_lethal"] == -1 and s["me_deck_out"] == -1
+    assert s["me_atk"] == 0 and s["bias"] == 0
+    # Data that says the opposite (winning more with the own leader low) can't flip them.
+    rng = np.random.default_rng(0)
+    X = np.column_stack([rng.normal(size=400), np.ones(400)])
+    y = (X[:, 0] < 0).astype(float)                         # more of feature 0, fewer wins
+    w_free, *_ = F.fit(X, y, iters=500)
+    w_kept, *_ = F.fit(X, y, iters=500, signs=[1, 0])
+    assert w_free[0] < -0.5 and w_kept[0] == 0.0
+    # The shipped models obey them.
+    for model in load_all().values():
+        coef = dict(zip(names(model.potential), model.coef))
+        assert all(c * sign >= 0 for (n, c), sign in zip(coef.items(), signs(model.potential)))

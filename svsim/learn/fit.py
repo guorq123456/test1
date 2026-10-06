@@ -20,8 +20,10 @@ def standardize(X: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
 
 def fit(X: np.ndarray, y: np.ndarray, prefs: list | None = None, lam: float = 1.0, l2: float = 1e-3,
-        iters: int = 3000, lr: float = 0.05, mean=None, std=None) -> tuple:
-    """Returns (coef, mean, std, report) for features standardized with mean, std."""
+        iters: int = 3000, lr: float = 0.05, mean=None, std=None, signs=None) -> tuple:
+    """Returns (coef, mean, std, report) for features standardized with mean, std.
+    `signs` (+1 / -1 / 0 per coefficient) keeps coefficients from turning negative /
+    positive (projected after every step)."""
     if mean is None:
         mean, std = standardize(X)
     Xs = (X - mean) / std if len(X) else np.zeros((0, len(mean)))
@@ -64,12 +66,20 @@ def fit(X: np.ndarray, y: np.ndarray, prefs: list | None = None, lam: float = 1.
         m = 0.9 * m + 0.1 * g
         v = 0.999 * v + 0.001 * g * g
         w -= lr * (m / (1 - 0.9 ** t)) / (np.sqrt(v / (1 - 0.999 ** t)) + 1e-8)
+        if signs is not None:
+            w = project(w, signs)
     report = {"loss": loss}
     if len(Xs):
         report["value_accuracy"] = float(np.mean(((Xs @ w) > 0) == (y > 0.5)))
     if groups is not None:
         report["choice_top1"] = top1(w, groups)
     return w, mean, std, report
+
+
+def project(w: np.ndarray, signs) -> np.ndarray:
+    """Coefficients with the wrong sign set to 0."""
+    s = np.asarray(signs)
+    return np.where(s * w < 0, 0.0, w)
 
 
 def top1(w, groups) -> float:

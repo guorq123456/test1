@@ -14,6 +14,12 @@ and walks one shared tree:
 - a new action is expanded in the order a player would try them (attacks on the
   leader, then cards, evolutions, other actions, attacks on followers, ending
   the turn), then the position is scored with `evaluate`, squashed to 0..1;
+  moves that another order of the same moves always beats are left out
+  (search.moves: evolving a follower after its attack);
+- the squash is centred on the position the search starts from (scored the same
+  way): it compares how much better or worse each line leaves things, so an
+  evaluation that thinks the game is already won or lost (scores far from 0,
+  where the squash is flat) still tells a good line from a bad one;
 - ending the turn resolves end-of-turn abilities but not the opponent's turn;
   `evaluate` looks ahead to it through its danger term. With `reply=True` the
   opponent's next turn is played out instead, by a greedy agent holding the
@@ -35,6 +41,7 @@ from svsim.core.enums import DRAW, Phase
 from svsim.core.state import GameState, leader_of
 from svsim.core.view import determinize
 from svsim.search.evaluate import DEFAULT, evaluate
+from svsim.search.moves import worth_trying
 
 
 def _locator(state: GameState, me: int) -> dict:
@@ -105,7 +112,7 @@ class Node:
 class ISMCTS:
     def __init__(self, iterations: int = 400, seconds: float | None = None, c: float = 0.5,
                  scale: float = 8.0, max_depth: int = 30, seed: int = 0, weights=DEFAULT,
-                 reply: bool = False):
+                 reply: bool = False, center: bool = True, prune: bool = True):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
         self.seconds = seconds
         self.c = c                     # exploration constant (values are in 0..1)
@@ -114,17 +121,23 @@ class ISMCTS:
         self.rng = random.Random(seed)
         self.weights = weights
         self.reply = reply             # play out the opponent's next turn at the leaves
+        self.centered = center         # squash relative to the starting position (False: absolute)
+        self.prune = prune             # leave out dominated moves (search.moves)
+        self.center = 0.0              # score of the position the search started from
         self.last_root: Node | None = None
         if reply:
             from svsim.agents.greedy_agent import GreedyAgent
             self.opponent = GreedyAgent(seed=seed + 1, samples=1, weights=weights)
 
     def value(self, state: GameState, me: int, me_next: bool = False) -> float:
-        score = evaluate(state, me, self.weights, player_moves_next=me_next)
+        score = evaluate(state, me, self.weights, player_moves_next=me_next) - self.center
         return 1.0 / (1.0 + math.exp(-max(-60.0, min(60.0, score / self.scale))))
 
     def choose(self, state: GameState):
         me, root = state.active, Node()
+        self.center = 0.0
+        if self.centered:
+            self.center = evaluate(state, me, self.weights)
         deadline = time.perf_counter() + self.seconds if self.seconds else None
         for i in range(self.iterations if deadline is None else 10 ** 9):
             if deadline is not None and time.perf_counter() > deadline and i > 0:
@@ -142,7 +155,8 @@ class ISMCTS:
         while not s.over and s.active == me and depth < self.max_depth:
             where = _locator(s, me)
             options = {}
-            for a in sorted(legal_actions(s), key=lambda a: _rank(s, a)):
+            legal = legal_actions(s)
+            for a in sorted(worth_trying(s, legal) if self.prune else legal, key=lambda a: _rank(s, a)):
                 options.setdefault(action_key(s, a, where), a)
             fresh = None
             for k in options:

@@ -28,6 +28,26 @@ def names(potential: bool) -> list[str]:
     return [f"me_{n}" for n in side] + [f"op_{n}" for n in side] + ["bias"]
 
 
+# Features whose direction isn't up to the data: more defense for my leader is
+# never worse (hp_low counts *low* defense, so it goes the other way), a sure
+# lethal on board is never worse, an empty deck never better. Learned from games
+# against one opponent, a model can pick up a confound (the learned Ramp model
+# liked its own leader at 5 defense or less, from a card that sets its max
+# defense to 1), so the fit keeps these signs (fit.fit, `signs`).
+MONOTONE = {"hp": 1, "hp_sqrt": 1, "hp_low": -1, "board_lethal": 1, "potential_lethal": 1,
+            "potential10_lethal": 1, "deck_out": -1}
+
+
+def signs(potential: bool) -> list[int]:
+    """+1 / -1 where a coefficient must not be negative / positive, 0 where it is free."""
+    out = []
+    for n in names(potential):
+        side, _, feature = n.partition("_")
+        s = MONOTONE.get(feature, 0)
+        out.append(s if side == "me" else -s if side == "op" else 0)
+    return out
+
+
 def _board_threat(state: GameState, side: int) -> int:
     """Attack `side`'s followers could put on the enemy leader next turn, minus enemy Ward defense."""
     p, enemy = state.players[side], state.players[1 - side]
