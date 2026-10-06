@@ -2,7 +2,8 @@
 
 Each side gets the same features (`me_*` for the player the position is scored
 for, `op_*` for the opponent): leader defense, the board (followers' attack,
-defense and keywords, amulets, crests), the hand, unused evolution points, max
+defense and keywords, amulets, crests), the hand (with what a field of
+replayable followers is worth to a deck that returns them, evaluate.hand_count), unused evolution points, max
 play points, the deck, how much the board threatens the enemy leader, and,
 optionally, how much the hand and amulets could deal next turn by the
 resource-flow planner (search.combo.next_turn_damage), and with all 10 play
@@ -16,6 +17,7 @@ import math
 from svsim.core.enums import CardType, Keyword
 from svsim.core.script import prop
 from svsim.core.state import GameState
+from svsim.search.evaluate import hand_count
 
 SIDE = ["hp", "hp_sqrt", "hp_low", "followers", "atk", "life", "ward", "bane", "drain", "barrier", "evasive",
         "amulets", "amulet_cost", "crests", "hand", "ep", "sep", "max_pp", "deck_low", "deck_out",
@@ -71,7 +73,7 @@ def side_features(state: GameState, side: int, potential: bool) -> list[float]:
            sum(1 for x in k if x & (Keyword.AMBUSH | Keyword.AURA | Keyword.INTIMIDATE)),
            sum(1 for c in p.field if c.defn.is_amulet), sum(c.defn.cost for c in p.field if c.defn.is_amulet),
            sum(1 for c in p.leader_area if c.defn.type == CardType.CREST),
-           min(len(p.hand), 9), p.ep, p.sep, p.max_pp, float(len(p.deck) <= 3), float(not p.deck),
+           hand_count(p), p.ep, p.sep, p.max_pp, float(len(p.deck) <= 3), float(not p.deck),
            min(threat, max(enemy.leader_hp, 0)), float(threat >= enemy.leader_hp)]
     if potential:
         from svsim.search.combo import next_turn_damage

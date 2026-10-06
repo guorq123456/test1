@@ -6,7 +6,9 @@ for each side and with opposite signs:
 
 - leader defense, worth more per point as it gets low;
 - followers (attack, defense and keywords), amulets and crests;
-- cards in hand, unused evolution points, max play points;
+- cards in hand (with the cards a field of replayable followers is worth to a
+  deck that returns them to hand, `latent_cards`), unused evolution points,
+  max play points;
 - danger: whether the opponent's board could kill the player next turn (a big
   penalty), and pressure: whether the player's board threatens the same;
 - an empty deck (the next draw loses);
@@ -85,13 +87,55 @@ def follower_value(c, w: Weights = DEFAULT) -> float:
     return value
 
 
+_REPLAY: dict = {}
+_BOUNCES: dict = {}
+
+
+def _replay_cards(defn) -> int:
+    """Cards a card on the field brings to hand when it is returned and played
+    again (Fanfare draws or adds, measured at Combo 3 by search.combo.profile)."""
+    hit = _REPLAY.get(defn.card_id)
+    if hit is None:
+        from svsim.search.combo import at_combo, profile
+        hit = _REPLAY[defn.card_id] = max((at_combo(v, 3).drawn + len(at_combo(v, 3).added)
+                                           for v in profile(defn)), default=0)
+    return hit
+
+
+def _bounces(defn) -> bool:
+    hit = _BOUNCES.get(defn.card_id)
+    if hit is None:
+        from svsim.search.combo import engage_profile, profile
+        eng = engage_profile(defn) if defn.is_amulet else None
+        hit = _BOUNCES[defn.card_id] = any(v[0].bounce for v in profile(defn)) or bool(eng and eng.bounce)
+    return hit
+
+
+def latent_cards(p: PlayerState) -> int:
+    """Cards `p`'s field is worth in hand to a deck that returns its own cards to
+    hand: a follower or amulet whose Fanfare draws or adds cards gives them again
+    when it is returned and replayed. The player's example: Sprouting Initiate
+    (Combo 3: draw a card) is the 1/1 to destroy first against Rhinoceroach
+    Forest, which returns it with Baby Carbuncle and replays it. Nothing for a
+    deck without such cards."""
+    field = [c for c in p.field if _replay_cards(c.defn)]
+    if not field or not any(_bounces(c.defn) for c in p.hand + p.deck):
+        return 0
+    return sum(_replay_cards(c.defn) for c in field)
+
+
+def hand_count(p: PlayerState) -> int:
+    """Cards in hand for the evaluation, with the cards waiting on the field (latent_cards)."""
+    return min(len(p.hand) + latent_cards(p), 9)
+
+
 def side_value(p: PlayerState, w: Weights = DEFAULT) -> float:
     hp = max(p.leader_hp, 0)
     value = w.hp * hp + w.hp_sqrt * math.sqrt(hp)
     for c in p.field:
         value += follower_value(c, w) if c.defn.is_follower else w.amulet * c.defn.cost + 0.5
     value += w.crest * sum(c.defn.type == CardType.CREST for c in p.leader_area)
-    value += w.hand * min(len(p.hand), 9)
+    value += w.hand * hand_count(p)
     value += w.ep * p.ep + w.sep * p.sep + w.max_pp * p.max_pp
     if not p.deck:
         value -= w.deck_out

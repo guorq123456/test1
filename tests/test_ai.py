@@ -7,7 +7,7 @@ from svsim.cards import demo, dragon
 from svsim.core import effects as E
 from svsim.core.actions import Attack, EndTurn, Mulligan, PlayCard
 from svsim.core.carddef import CardDef
-from svsim.core.engine import legal_actions, new_game
+from svsim.core.engine import apply, legal_actions, new_game
 from svsim.core.enums import CardType, Craft
 from svsim.core.script import CardScript, register
 from svsim.core.state import leader_uid
@@ -212,3 +212,29 @@ def test_games_are_recorded_and_can_be_reviewed(tmp_path):
     assert "你：" in joined and "结果：AI 赢了" in joined and "AI 选得一样的" in joined
     # The note is kept before the first action of the turn (after both mulligans).
     assert saved["notes"] == [{"at": 2, "text": "先垫一张"}] and "【你的备注】先垫一张" in joined
+
+
+def test_a_replayable_follower_counts_as_a_card_for_a_deck_that_returns_its_cards():
+    # The player: against Rhinoceroach Forest, Sprouting Initiate (Combo 3: draw) is the 1/1 to
+    # destroy first; Baby Carbuncle returns it to hand and it draws again when replayed.
+    from svsim.cards import decks, forest
+    from svsim.core import effects as E
+    from svsim.learn.model import Learned
+    from svsim.search.evaluate import evaluate, latent_cards
+    ramp, rhino = decks.build(decks.RAMP_DRAGON), decks.build(decks.RHINO_FOREST)
+    state = new_game(ramp, rhino, seed=3, first=0)
+    apply(state, Mulligan(()))
+    apply(state, Mulligan(()))
+    sprout = put(state, 1, forest.SPROUTING_INITIATE)
+    fairy = put(state, 1, forest.FAIRY)
+    put(state, 1, forest.SATHANID)
+    assert latent_cards(state.players[1]) == 1 and latent_cards(state.players[0]) == 0
+    for weights in (None, Learned()):
+        kept_sprout, kept_fairy = state.clone(), state.clone()
+        E.destroy(kept_sprout, kept_sprout.on_field(fairy.uid))
+        E.destroy(kept_fairy, kept_fairy.on_field(sprout.uid))
+        args = () if weights is None else (weights,)
+        assert evaluate(kept_fairy, 0, *args) > evaluate(kept_sprout, 0, *args)
+    plain = new_game(ramp, [demo.FOOTMAN] * 40, seed=3, first=0)          # nobody to return it: just a 1/1
+    put(plain, 1, forest.SPROUTING_INITIATE)
+    assert latent_cards(plain.players[1]) == 0
