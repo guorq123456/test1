@@ -26,7 +26,8 @@ from svsim.tools import records
 
 def selfplay_game(job) -> list:
     """One game; returns [(craft, features, won)] for every end of turn."""
-    deck_a, deck_b, spec_a, spec_b, seed, potential = job
+    deck_a, deck_b, spec_a, spec_b, seed, potential = job[:6]
+    version = job[6] if len(job) > 6 else 1
     from svsim.tools.arena import make_agent
     rng = random.Random(seed)
     swap = rng.random() < 0.5                        # seats and specs alternate with the seed
@@ -40,7 +41,8 @@ def selfplay_game(job) -> list:
         if isinstance(action, EndTurn) and state.phase == Phase.MAIN:
             end = after_end_of_turn(state)
             if not end.over:
-                rows.append((state.active, int(deck_craft(state, state.active)), features(end, state.active, potential)))
+                rows.append((state.active, int(deck_craft(state, state.active)),
+                             features(end, state.active, potential, version)))
         apply(state, action)
     if state.winner not in (0, 1):
         return []
@@ -48,8 +50,8 @@ def selfplay_game(job) -> list:
 
 
 def selfplay(deck_a, deck_b, spec_a: str, spec_b: str, games: int, seed: int = 0, potential: bool = True,
-             workers: int = 4) -> list:
-    jobs = [(deck_a, deck_b, spec_a, spec_b, seed + g, potential) for g in range(games)]
+             workers: int = 4, version: int = 1) -> list:
+    jobs = [(deck_a, deck_b, spec_a, spec_b, seed + g, potential, version) for g in range(games)]
     if workers <= 1:
         return [row for job in jobs for row in selfplay_game(job)]
     from multiprocessing import Pool
@@ -57,7 +59,7 @@ def selfplay(deck_a, deck_b, spec_a: str, spec_b: str, games: int, seed: int = 0
         return [row for part in pool.imap_unordered(selfplay_game, jobs) for row in part]
 
 
-def _after(state, action, player: int, potential: bool) -> list | None:
+def _after(state, action, player: int, potential: bool, version: int = 1) -> list | None:
     s = state.clone()
     if isinstance(action, EndTurn):
         s = after_end_of_turn(s)
@@ -65,10 +67,10 @@ def _after(state, action, player: int, potential: bool) -> list | None:
         apply(s, action)
     if s.over:
         return None
-    return features(s, player, potential)
+    return features(s, player, potential, version)
 
 
-def choices(record: dict, player: int = 0, potential: bool = True) -> list:
+def choices(record: dict, player: int = 0, potential: bool = True, version: int = 1) -> list:
     """[(chosen index, [candidate features])] for each decision of `player` in the
     main phase. Decisions where some move ends the game are left out (the lethal
     search decides those) and so are moves marked as mistakes."""
@@ -80,14 +82,14 @@ def choices(record: dict, player: int = 0, potential: bool = True) -> list:
         legal = legal_actions(state)
         if action not in legal:
             break
-        cands = [_after(state, a, player, potential) for a in legal]
+        cands = [_after(state, a, player, potential, version) for a in legal]
         if any(c is None for c in cands):
             continue
         out.append((legal.index(action), cands))
     return out
 
 
-def _line_end(state, agent, player: int, potential: bool, max_steps: int = 60) -> list | None:
+def _line_end(state, agent, player: int, potential: bool, max_steps: int = 60, version: int = 1) -> list | None:
     """Features at the end of the turn `agent` plays from `state` (None if the game ends)."""
     s = state.clone()
     for _ in range(max_steps):
@@ -100,11 +102,12 @@ def _line_end(state, agent, player: int, potential: bool, max_steps: int = 60) -
     if s.over:
         return None
     s = after_end_of_turn(s)
-    return None if s.over else features(s, player, potential)
+    return None if s.over else features(s, player, potential, version)
 
 
 def turn_choices(record: dict, player: int = 0, potential: bool = True, alternatives: tuple = ("end", "greedy",
-                 "mcts:50+plan", "random", "random", "random", "random", "random", "random"), seed: int = 0) -> list:
+                 "mcts:50+plan", "random", "random", "random", "random", "random", "random"), seed: int = 0,
+                 version: int = 1) -> list:
     """[(0, [features at the end of the player's turn, then at the end of the same
     turn played by each alternative])] for each turn of `player` that didn't end
     the game: the player's whole turn should score above the other ways of
@@ -124,7 +127,7 @@ def turn_choices(record: dict, player: int = 0, potential: bool = True, alternat
         if state.active == player and isinstance(action, EndTurn) and start is not None:
             end = after_end_of_turn(state)
             if not end.over:
-                cands = [features(end, player, potential)]
+                cands = [features(end, player, potential, version)]
                 for j, spec in enumerate(alternatives):
                     if spec == "end":
                         agent = _Ender()
@@ -132,7 +135,7 @@ def turn_choices(record: dict, player: int = 0, potential: bool = True, alternat
                         agent = RandomAgent(seed + 31 * k + j, 0.15)
                     else:
                         agent = make_agent(spec, seed + k)
-                    x = _line_end(start, agent, player, potential)
+                    x = _line_end(start, agent, player, potential, version=version)
                     if x is not None:
                         cands.append(x)
                 if len(cands) > 1:

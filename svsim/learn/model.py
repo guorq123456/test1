@@ -22,28 +22,31 @@ SCALE = 8.0                      # ISMCTS's logistic squash: value = 1 / (1 + ex
 
 
 class LinearValue:
-    def __init__(self, coef: list, mean: list, std: list, potential: bool, info: dict | None = None):
+    def __init__(self, coef: list, mean: list, std: list, potential: bool, info: dict | None = None,
+                 version: int = 1):
         self.coef, self.mean, self.std, self.potential = coef, mean, std, potential
         self.info = info or {}
-        assert len(coef) == len(mean) == len(std) == len(names(potential))
+        self.version = version
+        assert len(coef) == len(mean) == len(std) == len(names(potential, version))
 
     def logit(self, state: GameState, player: int) -> float:
-        x = features(state, player, self.potential)
+        x = features(state, player, self.potential, self.version)
         return sum(c * ((v - m) / s) for c, v, m, s in zip(self.coef, x, self.mean, self.std))
 
     def save(self, path: Path) -> None:
-        path.write_text(json.dumps({"names": names(self.potential), "coef": self.coef, "mean": self.mean,
-                                    "std": self.std, "potential": self.potential, "info": self.info},
+        path.write_text(json.dumps({"names": names(self.potential, self.version), "coef": self.coef,
+                                    "mean": self.mean, "std": self.std, "potential": self.potential,
+                                    "version": self.version, "info": self.info},
                                    ensure_ascii=False, indent=1), encoding="utf-8")
 
     @classmethod
     def load(cls, path: Path) -> "LinearValue":
         d = json.loads(path.read_text(encoding="utf-8"))
-        return cls(d["coef"], d["mean"], d["std"], d["potential"], d.get("info"))
+        return cls(d["coef"], d["mean"], d["std"], d["potential"], d.get("info"), d.get("version", 1))
 
     def weights_by_name(self) -> dict:
         """Coefficients per raw (unstandardized) feature unit, for reading."""
-        return {n: c / s for n, c, s in zip(names(self.potential), self.coef, self.std)}
+        return {n: c / s for n, c, s in zip(names(self.potential, self.version), self.coef, self.std)}
 
 
 def deck_craft(state: GameState, player: int) -> Craft:
