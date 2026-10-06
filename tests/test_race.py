@@ -242,3 +242,14 @@ def test_survival_is_counted_from_the_end_of_a_turn_to_the_start_of_the_next():
     count(game(), 0, s)
     assert (s.seen[1][2], s.kept[1][2]) == (1, 1)
     assert (s.seen[2][2], s.kept[2][2]) == (2, 1)
+
+
+def test_the_answers_are_learned_from_the_player_when_they_did_the_answering():
+    from svsim.learn.survival import games, human
+    mine = {"names": ["rhino", "ramp"], "decks": [[], []]}                      # the player (seat 0) on Rhino
+    ais = {"names": ["ramp", "rhino"], "decks": [[], []], "players": ["mcts:200", "mcts:100"]}
+    assert human(mine, 0) and not human(mine, 1) and not human(ais, 0)
+    pairs, by_player = games([mine, ais], "ramp", "rhino")                     # Ramp's followers, Rhino answering
+    assert by_player and pairs == [(mine, 1)]
+    pairs, by_player = games([mine, ais], "rhino", "ramp")                     # the bot answers in every game
+    assert not by_player and pairs == [(mine, 0), (ais, 1)]

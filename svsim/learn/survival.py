@@ -13,6 +13,13 @@ starts. `Survival.chance(turn, life)` is that fraction, smoothed towards the
 same turn over all defenses, and that towards 0: with no games at all,
 everything is answered (the player's premise).
 
+Who does the answering matters: when there are games where the opponent was
+played by the player, only those count. The AI's Rhinoceroach Forest leaves
+Ramp Dragon's big followers alone, the player doesn't: of Ramp's followers with
+5 or more defense at the end of its turn, 1 in 24 lived to Ramp's next turn in
+the player's ten games, 113 in 237 in 80 games of the AI (the player kills them
+with Mylo and Baby Carbuncle attacks, Glade, Arrow, Insect's Counsel).
+
 `Removal` is what the race clock (search.race) assumes on each opponent turn
 it skips: a follower stays with its chance of surviving that turn.
 """
@@ -47,6 +54,7 @@ class Survival:
     games: int = 0
     seen: list = field(default_factory=_grid)      # [opponent's turn][defense] followers on the field
     kept: list = field(default_factory=_grid)      # ... and still there at the deck's next turn
+    by_player: bool = False                        # the opponent was played by the player in these games
 
     def chance(self, turn: int, life: int) -> float:
         """Chance a follower with `life` defense survives the opponent's own turn `turn`."""
@@ -56,11 +64,11 @@ class Survival:
 
     def to_json(self) -> dict:
         return {"deck": self.deck, "opponent": self.opponent, "games": self.games,
-                "seen": self.seen, "kept": self.kept}
+                "seen": self.seen, "kept": self.kept, "by_player": self.by_player}
 
     @classmethod
     def from_json(cls, d: dict) -> "Survival":
-        return cls(d["deck"], d["opponent"], d["games"], d["seen"], d["kept"])
+        return cls(d["deck"], d["opponent"], d["games"], d["seen"], d["kept"], d.get("by_player", False))
 
     def save(self, folder: Path = FOLDER) -> Path:
         folder.mkdir(parents=True, exist_ok=True)
@@ -103,17 +111,33 @@ def count(steps, side: int, into: Survival) -> None:
                 pending = (own_turn(state, 1 - side, state.turn + 1), lives)
 
 
-def collect(records: list, deck: str, opponent: str) -> Survival:
-    """Count every record where `deck` played against `opponent` (either seat)."""
-    from svsim.tools import records as R
+def human(record: dict, seat: int) -> bool:
+    """Whether the player played `seat` (games against the AI: seat 0; games the AI
+    played against itself say so under "players")."""
+    players = record.get("players")
+    return players[seat] == "human" if players else seat == 0
+
+
+def games(records: list, deck: str, opponent: str) -> tuple[list, bool]:
+    """(record, side) for `deck`'s side in every game against `opponent`, only those
+    where the player answered (played `opponent`) if there are any; and whether so."""
     from svsim.ui.session import DECKS, deck_names
     names = {DECKS[k][0]: k for k in DECKS}
-    out = Survival(deck, opponent)
+    pairs = []
     for record in records:
         sides = [names.get(n) for n in deck_names(record)]
-        for side in (0, 1):
-            if sides[side] == deck and sides[1 - side] == opponent:
-                count(R.steps(record), side, out)
+        pairs += [(record, side) for side in (0, 1) if sides[side] == deck and sides[1 - side] == opponent]
+    answered = [(r, side) for r, side in pairs if human(r, 1 - side)]
+    return (answered, True) if answered else (pairs, False)
+
+
+def collect(records: list, deck: str, opponent: str) -> Survival:
+    """Count `deck`'s followers against `opponent` (see `games` for which games)."""
+    from svsim.tools import records as R
+    pairs, by_player = games(records, deck, opponent)
+    out = Survival(deck, opponent, by_player=by_player)
+    for record, side in pairs:
+        count(R.steps(record), side, out)
     return out
 
 

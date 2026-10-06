@@ -5,6 +5,7 @@
 
 Counts, from the games, how often each side's followers survive the other
 side's turns, by the turn and the follower's defense (svsim.learn.survival),
+(from the games where the player played the answering side, if there are any),
 prints the tables and saves them to svsim/learn/survival/<deck>-<opponent>.json
 and <opponent>-<deck>.json, where the race clock finds them. `--play N` adds N
 games of the AI against itself (the deck played by `--spec`, the opponent by
@@ -33,6 +34,7 @@ def play(job) -> dict:
     agents = [make_agent(s, seed * 1000 + g * 2 + i) for i, s in enumerate(specs)]
     state = new_game(cards[0], cards[1], seed=seed * 100003 + g)
     record = R.new_record(cards[0], cards[1], seed * 100003 + g, state.first, f"{specs[0]} / {specs[1]}")
+    record["players"] = specs
     while not state.over:
         action = agents[state.active].act(state, legal_actions(state))
         R.add(record, action)
@@ -42,7 +44,8 @@ def play(job) -> dict:
 
 
 def report(s, say=print) -> None:
-    say(f"{DECKS[s.deck][0]} 的随从，对 {DECKS[s.opponent][0]}（{s.games} 局）："
+    who = "玩家" if s.by_player else "AI"
+    say(f"{DECKS[s.deck][0]} 的随从，对 {DECKS[s.opponent][0]}（{s.games} 局，{DECKS[s.opponent][0]}由{who}操作）："
         f"对手第几回合过后还活着（活下来 / 场上有），以及时钟用的存活率")
     say("  对手回合  " + "  ".join(f"{l}{'+' if l == LIVES else ' '}血".rjust(13) for l in range(1, LIVES + 1)))
     for t in range(1, TURNS + 1):
