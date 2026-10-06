@@ -59,7 +59,7 @@ CRAFTS = [c for c in Craft if c != Craft.NEUTRAL]
 def make_agent(spec: str, seed: int):
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced"}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced"} - {o for o in options if o.startswith("hp")}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -96,8 +96,9 @@ def make_agent(spec: str, seed: int):
         return TurnsAgent(base, seed=seed)
     if name == "fuel":                             # each turn's line by the fuel it leaves (agents.fuel_agent)
         from svsim.agents.fuel_agent import FuelAgent
-        base = make_agent("+".join([f"mcts:{arg or 100}"] + options), seed)
-        return FuelAgent(base, seed=seed)
+        hp = [o for o in options if o.startswith("hp")]
+        base = make_agent("+".join([f"mcts:{arg or 100}"] + [o for o in options if o not in hp]), seed)
+        return FuelAgent(base, seed=seed, hp_weight=float(hp[0][2:]) if hp else 0.0)
     if name == "impact":                           # turns chosen by their impact (agents.impact_agent)
         from svsim.agents.impact_agent import ImpactAgent
         base = make_agent("+".join([f"mcts:{arg or 200}"] + options), seed)

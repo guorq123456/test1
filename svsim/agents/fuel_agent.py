@@ -59,8 +59,9 @@ def fuel(state, me: int, turns: int = 2, nodes: int = 600, seed: int = 0) -> flo
 
 class FuelAgent:
     def __init__(self, base, opponent: str = "greedy+plan+learned", samples: int = 3, turns: int = 2,
-                 seed: int = 0):
+                 hp_weight: float = 0.0, seed: int = 0):
         self.base = base
+        self.hp_weight = hp_weight
         self.opponent = opponent
         self.samples = samples
         self.turns = turns
@@ -118,7 +119,7 @@ class FuelAgent:
             if s.over:
                 total += WON if s.winner == me else LOST
                 continue
-            total += fuel(s, me, self.turns, seed=sd)
+            total += fuel(s, me, self.turns, seed=sd) + self.hp_weight * s.players[me].leader_hp
         return total / len(seeds)
 
     def choose(self, state) -> list:
