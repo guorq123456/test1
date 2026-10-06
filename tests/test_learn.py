@@ -5,11 +5,12 @@ import numpy as np
 
 from svsim.cards import decks
 from svsim.core.engine import legal_actions, new_game
-from svsim.core.enums import Craft
+from svsim.core.enums import Craft, Phase
 from svsim.learn import data, fit as F
 from svsim.learn.features import features, names
 from svsim.learn.model import Learned, LinearValue, deck_craft, load_all
 from svsim.search.evaluate import DEFAULT, evaluate
+from svsim.tools import records
 
 
 def test_features_are_per_side_and_named():
@@ -53,9 +54,14 @@ def test_a_recorded_game_gives_one_choice_per_decision():
             view = session.mulligan([])
         else:
             view = session.act(view["actions"][0]["i"])
-    rows = data.choices(json.loads(json.dumps(session.record_data())), potential=False)
+    record = json.loads(json.dumps(session.record_data()))
+    rows = data.choices(record, potential=False)
     assert rows and all(0 <= k < len(c) for k, c in rows)
     assert all(len(x) == len(names(False)) for _, c in rows for x in c)
+    # Moves the player marked as mistakes are not learned as good choices.
+    mine = [k for k, (state, _) in enumerate(records.steps(record)) if state.active == 0 and state.phase == Phase.MAIN]
+    assert len(data.choices({**record, "mistakes": mine[:1]}, potential=False)) == len(rows) - 1
+    assert data.choices({**record, "mistakes": mine}, potential=False) == []
 
 
 def test_whole_turns_are_compared_with_other_ways_of_playing_them():
@@ -77,6 +83,10 @@ def test_whole_turns_are_compared_with_other_ways_of_playing_them():
     turns = data.turn_choices(record, potential=False, alternatives=("end", "random", "random"))
     assert turns and all(k == 0 and 2 <= len(c) <= 4 for k, c in turns)     # the player's turn comes first
     assert all(len(x) == len(names(False)) for _, c in turns for x in c)
+    # A turn with a move marked as a mistake is not held up as the better way to play it.
+    first = next(k for k, (state, _) in enumerate(records.steps(record)) if state.active == 0 and state.phase == Phase.MAIN)
+    marked = data.turn_choices({**record, "mistakes": [first]}, potential=False, alternatives=("end", "random", "random"))
+    assert len(marked) == len(turns) - 1
 
 
 def test_learned_models_are_used_per_deck_with_a_fallback(tmp_path):

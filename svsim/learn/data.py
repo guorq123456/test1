@@ -6,6 +6,10 @@
 - `choices(record)`: at each decision of the recorded player, the features of the
   position after each legal action (scored as if the turn ended there, as
   ISMCTS scores its leaves) and which one the player chose.
+
+Moves the player marked as mistakes (the record's "mistakes": action indices,
+marked when reviewing a game on the web page) are not taken as good choices:
+`choices` skips them and `turn_choices` skips the turns they were made in.
 """
 from __future__ import annotations
 
@@ -67,10 +71,11 @@ def _after(state, action, player: int, potential: bool) -> list | None:
 def choices(record: dict, player: int = 0, potential: bool = True) -> list:
     """[(chosen index, [candidate features])] for each decision of `player` in the
     main phase. Decisions where some move ends the game are left out (the lethal
-    search decides those)."""
+    search decides those) and so are moves marked as mistakes."""
     out = []
-    for state, action in records.steps(record):
-        if state.active != player or state.phase != Phase.MAIN:
+    mistakes = set(record.get("mistakes", []))
+    for k, (state, action) in enumerate(records.steps(record)):
+        if state.active != player or state.phase != Phase.MAIN or k in mistakes:
             continue
         legal = legal_actions(state)
         if action not in legal:
@@ -103,15 +108,19 @@ def turn_choices(record: dict, player: int = 0, potential: bool = True, alternat
     """[(0, [features at the end of the player's turn, then at the end of the same
     turn played by each alternative])] for each turn of `player` that didn't end
     the game: the player's whole turn should score above the other ways of
-    playing it (ending it at once, the AI's ways, random orders)."""
+    playing it (ending it at once, the AI's ways, random orders). Turns with a
+    move marked as a mistake are left out."""
     from svsim.agents.random_agent import RandomAgent
     from svsim.tools.arena import make_agent
     out, start, turn = [], None, None
+    mistakes = set(record.get("mistakes", []))
     for k, (state, action) in enumerate(records.steps(record)):
         if state.phase != Phase.MAIN:
             continue
         if state.active == player and state.turn != turn:
             turn, start = state.turn, state.clone()
+        if k in mistakes:
+            start = None
         if state.active == player and isinstance(action, EndTurn) and start is not None:
             end = after_end_of_turn(state)
             if not end.over:

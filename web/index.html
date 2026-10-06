@@ -113,6 +113,16 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
   cursor: pointer; font-size: 13px; white-space: nowrap; }
 .my-controls .end { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
 .my-controls button:disabled { opacity: 0.4; cursor: default; }
+.my-controls .review-info { flex: 1; min-width: 0; font-size: 13px; line-height: 1.35; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.my-controls .review-info .who-ai { color: var(--foe); }
+.my-controls .mistake[aria-pressed="true"] { background: var(--foe); color: var(--panel); border-color: var(--foe); font-weight: 700; }
+#saved-games button { margin-top: 8px; }
+.steps .turn { color: var(--muted); font-size: 12px; margin-top: 8px; }
+.steps button.ai { color: var(--muted); }
+.steps button.here { border-color: var(--accent); }
+.steps .tag { margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--foe); color: var(--panel); font-size: 12px; }
+.steps .note { font-size: 12px; color: var(--muted); padding: 0 12px 4px; }
 
 #hand { display: flex; gap: 8px; overflow-x: auto; padding: 9px 4px 4px 8px; flex: none; }
 #hand .card { flex: 0 0 78px; min-height: 96px; }
@@ -209,12 +219,19 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
     <div class="leader" id="my-leader"></div>
     <div class="my-controls" id="controls"></div>
     <div id="hand"></div>
-    <nav class="toolbar">
+    <nav class="toolbar" id="play-tools">
       <button id="btn-hint" type="button">提示</button>
       <button id="btn-lethal" type="button">查斩杀</button>
       <button id="btn-note" type="button">备注</button>
       <button id="btn-log" type="button">记录</button>
       <button id="btn-menu" type="button">菜单</button>
+    </nav>
+    <nav class="toolbar" id="review-tools" hidden>
+      <button id="rv-steps" type="button">全部步骤</button>
+      <button id="rv-note" type="button">备注</button>
+      <button id="rv-hint" type="button">AI 会怎么走</button>
+      <button id="rv-lethal" type="button">查斩杀</button>
+      <button id="rv-exit" type="button">退出复盘</button>
     </nav>
   </section>
 </div>
@@ -287,9 +304,22 @@ const Store = {
     try {
       const snap = await this.db.collection("games").get();
       const done = snap.docs.filter(d => d.data() && d.data().finished).length;
-      document.getElementById("saved-games").textContent =
-        snap.size ? `这个页面已保存 ${snap.size} 局对局（${done} 局打完）。` : "";
+      const box = document.getElementById("saved-games"); box.replaceChildren();
+      if (snap.size) box.appendChild(el("div", null, `这个页面已保存 ${snap.size} 局对局（${done} 局打完）。`));
+      if (done) {
+        const b = el("button", "ghost", "复盘打完的对局，标出自己的失误"); b.type = "button";
+        b.addEventListener("click", openReviewList); box.appendChild(b);
+      }
     } catch (e) { /* the count is optional */ }
+  },
+  async finished() {
+    const snap = await this.db.collection("games").where("finished", "==", true).orderBy("updated", "desc").limit(50).get();
+    return snap.docs.map(d => ({gameId: d.id, body: d.data()})).filter(g => g.body && g.body.record);
+  },
+  write(id, body) {                                // a reviewed game goes back with its marks and notes
+    if (!this.db) return;
+    this.pending = {id, body};
+    this.flush();
   },
   loadLocal() {
     try { const text = localStorage.getItem(LOCAL_KEY); return text ? JSON.parse(text) : null; }
@@ -420,7 +450,7 @@ function cardNode(c, opts = {}) {
 }
 
 function actionsOf(uid) { return view.actions.filter(a => a.source === uid); }
-function myTurn() { return view && !view.over && view.active === 0 && view.phase === "main" && !busy; }
+function myTurn() { return view && !view.review && !view.over && view.active === 0 && view.phase === "main" && !busy; }
 
 function renderLane(node, cards, mine) {
   node.replaceChildren();
@@ -472,6 +502,7 @@ function render() {
   // ticker
   const t = $("ticker"); t.replaceChildren();
   view.log.slice(-3).forEach((line, i, arr) => t.appendChild(el("div", i === arr.length - 1 ? "last" : null, line)));
+  if (view.review) renderReviewControls();
 }
 
 // ---------------------------------------------------------------- input
@@ -674,6 +705,159 @@ $("btn-menu").addEventListener("click", () => {
   const row = el("div", "row"); const close = el("button", "ghost", "关闭"); close.type = "button";
   close.addEventListener("click", closeSheet); row.appendChild(close); sheet.appendChild(row);
   showSheet();
+});
+
+// ---------------------------------------------------------------- reviewing a finished game
+// Step through your own moves, mark the ones that were mistakes (learning leaves
+// them out) and note why; the marks are saved with the game.
+const DECK_NAMES = {rhino: "破魔虫精灵", ramp: "跳费龙", pirate: "海盗皇家"};
+let reviewing = null;                              // {gameId, body} of the game on screen
+
+function describeFinished(body) {
+  const when = body.updated ? new Date(body.updated).toLocaleString("zh-CN", {month: "numeric", day: "numeric",
+    hour: "2-digit", minute: "2-digit"}) : "";
+  const names = body.record.names ? body.record.names.map(n => DECK_NAMES[n] || n).join(" 对 ") + " · " : "";
+  const result = body.resigned ? "认输" : body.winner === 0 ? "你赢" : body.winner === 1 ? "AI 赢" : "平局";
+  const marks = (body.record.mistakes || []).length;
+  return `${when} · ${names}${result} · ${body.moves} 步` + (marks ? ` · 已标 ${marks} 处失误` : "");
+}
+
+async function openReviewList() {
+  const sheet = $("sheet"); sheet.replaceChildren();
+  sheet.appendChild(el("h2", null, "复盘"));
+  sheet.appendChild(el("div", "sub", "选一局，按“下一步”看你的每个操作；觉得是失误就点“失误”。学习时会跳过这些操作，不再当成好棋学。"));
+  const list = el("div", "moves"); sheet.appendChild(list);
+  const row = el("div", "row"); const close = el("button", "ghost", "关闭"); close.type = "button";
+  close.addEventListener("click", closeSheet); row.appendChild(close); sheet.appendChild(row);
+  showSheet();
+  try {
+    const games = await Store.finished();
+    if (!games.length) list.appendChild(el("div", "sub", "还没有打完的对局。"));
+    games.forEach(g => {
+      const b = el("button", null, describeFinished(g.body)); b.type = "button";
+      b.addEventListener("click", () => startReview(g.gameId, g.body)); list.appendChild(b);
+    });
+  } catch (e) { list.appendChild(el("div", "sub", "读不到保存的对局：" + e.message)); }
+}
+
+async function startReview(gameId, body) {
+  closeSheet();
+  status("正在打开这一局……");
+  try { view = await Backend.call("review", body.record); }
+  catch (e) { status("没能打开这一局：" + e.message, true); return; }
+  status("模拟器已就绪。");
+  reviewing = {gameId, body};
+  $("play-tools").hidden = true; $("review-tools").hidden = false;
+  $("setup").hidden = true; $("board").hidden = false;
+  selected = null; render();
+}
+
+function reviewTarget(step) {                      // the previous / next move of yours
+  const at = view.review.at, mine = view.moves.filter(m => m.who === "you");
+  if (step < 0) { const prev = mine.filter(m => m.i < at); return prev.length ? prev[prev.length - 1].i : null; }
+  const next = mine.find(m => m.i > at);
+  return next ? next.i : (at < view.review.end ? view.review.end : null);
+}
+
+async function reviewGo(at) {
+  if (at == null || busy) return;
+  busy = true;
+  try { view = await Backend.call("goto", at); } catch (e) { toast("出错了：" + e.message); }
+  busy = false; render();
+}
+
+function renderReviewControls() {
+  const controls = $("controls"); controls.replaceChildren();
+  const r = view.review, m = r.move;
+  const info = el("div", "review-info");
+  if (m) {
+    info.append(`第 ${m.turn} 回合 · `);
+    info.appendChild(el("span", m.who === "ai" ? "who-ai" : null, m.who === "you" ? "你" : "AI"));
+    info.append("：" + m.text);
+  } else {
+    info.textContent = "对局结束：" + (r.winner === 0 ? "你赢了" : r.winner === 1 ? "AI 赢了" : "平局");
+  }
+  controls.appendChild(info);
+  const prev = el("button", null, "◀"); prev.type = "button"; prev.setAttribute("aria-label", "你的上一步");
+  const before = reviewTarget(-1); prev.disabled = before == null;
+  prev.addEventListener("click", () => reviewGo(before));
+  const next = el("button", null, "▶"); next.type = "button"; next.setAttribute("aria-label", "你的下一步");
+  const after = reviewTarget(1); next.disabled = after == null;
+  next.addEventListener("click", () => reviewGo(after));
+  const flag = el("button", "mistake", m && m.mistake ? "失误 ✓" : "失误"); flag.type = "button";
+  flag.setAttribute("aria-pressed", String(!!(m && m.mistake)));
+  flag.disabled = !m || m.who !== "you";
+  flag.addEventListener("click", async () => {
+    busy = true;
+    try { view = await Backend.call("mark", !m.mistake); } catch (e) { toast("出错了：" + e.message); }
+    busy = false; render(); await saveReview();
+  });
+  controls.append(prev, next, flag);
+}
+
+async function saveReview() {
+  const record = await safeRecord();
+  if (!record || !reviewing) return;
+  reviewing.body = {...reviewing.body, record, reviewed: new Date().toISOString()};
+  Store.write(reviewing.gameId, reviewing.body);
+}
+
+function openSteps() {
+  const sheet = $("sheet"); sheet.replaceChildren();
+  sheet.appendChild(el("h2", null, "全部步骤"));
+  sheet.appendChild(el("div", "sub", "点一步跳到那里（看到的是这一步之前的局面）。"));
+  const list = el("div", "moves steps");
+  let turn = null, here = null;
+  view.moves.forEach(m => {
+    if (m.turn !== turn) { turn = m.turn; list.appendChild(el("div", "turn", `第 ${turn} 回合`)); }
+    const b = el("button", m.who === "ai" ? "ai" : null, (m.who === "you" ? "你：" : "AI：") + m.text); b.type = "button";
+    if (m.mistake) b.appendChild(el("span", "tag", "失误"));
+    if (m.i === view.review.at) { b.classList.add("here"); here = b; }
+    b.addEventListener("click", () => { closeSheet(); reviewGo(m.i); });
+    list.appendChild(b);
+    m.notes.forEach(text => list.appendChild(el("div", "note", "备注：" + text)));
+  });
+  sheet.appendChild(list);
+  const row = el("div", "row"); const close = el("button", "ghost", "关闭"); close.type = "button";
+  close.addEventListener("click", closeSheet); row.appendChild(close); sheet.appendChild(row);
+  showSheet();
+  if (here) here.scrollIntoView({block: "center"});
+}
+
+function exitReview() {
+  closeSheet();
+  reviewing = null; view = null;
+  $("review-tools").hidden = true; $("play-tools").hidden = false;
+  $("board").hidden = true; $("setup").hidden = false;
+  Store.db && Store.refreshCount();
+}
+
+$("rv-steps").addEventListener("click", () => view && view.review && openSteps());
+$("rv-exit").addEventListener("click", exitReview);
+$("rv-hint").addEventListener("click", async () => {
+  toast("AI 正在想……", "AI 会怎么走");
+  try { toast(await Backend.call("hint"), "AI 会怎么走"); } catch (e) { toast("出错了：" + e.message, "AI 会怎么走"); }
+});
+$("rv-lethal").addEventListener("click", async () => {
+  toast("正在算……", "查斩杀");
+  try { toast(await Backend.call("lethal"), "查斩杀"); } catch (e) { toast("出错了：" + e.message, "查斩杀"); }
+});
+$("rv-note").addEventListener("click", () => {
+  const m = view && view.review && view.review.move;
+  if (!m) return;
+  const sheet = $("sheet"); sheet.replaceChildren();
+  sheet.appendChild(el("h2", null, "给这一步写备注"));
+  sheet.appendChild(el("div", "sub", `${m.who === "you" ? "你" : "AI"}：${m.text}。比如为什么是失误、当时应该怎么打。`));
+  const ta = el("textarea"); ta.id = "note-text"; sheet.appendChild(ta);
+  const row = el("div", "row");
+  const ok = el("button", "primary", "保存备注"); ok.type = "button";
+  ok.addEventListener("click", async () => {
+    if (!ta.value.trim()) return;
+    view = await Backend.call("note", ta.value); closeSheet(); render(); await saveReview();
+  });
+  const close = el("button", "ghost", "取消"); close.type = "button"; close.addEventListener("click", closeSheet);
+  row.append(ok, close); sheet.appendChild(row);
+  showSheet(); ta.focus();
 });
 
 // ---------------------------------------------------------------- carrying on a game

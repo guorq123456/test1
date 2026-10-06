@@ -4,6 +4,8 @@ import random
 import threading
 import urllib.request
 import zipfile
+
+import pytest
 from http.server import HTTPServer
 from pathlib import Path
 
@@ -11,6 +13,7 @@ from svsim.core.engine import legal_actions
 from svsim.tools import records
 from svsim.tools.web import Handler, build
 from svsim.ui.session import Session
+from svsim.ui.text import describe
 
 
 def play_out(call, seed=0, max_steps=3000):
@@ -199,3 +202,77 @@ def test_an_interrupted_game_resumes_where_it_stopped():
             end = next(a for a in view["actions"] if a["type"] == "EndTurn")
             view = resumed.act((rng.choice(moves) if moves and rng.random() < 0.8 else end)["i"])
     assert view["over"] and all(a in legal_actions(s) for s, a in records.steps(resumed.record_data()))
+
+
+def test_a_finished_game_opens_for_review_and_keeps_the_marked_mistakes():
+    session = Session()
+    play_out(lambda method, *args: getattr(session, method)(*args), seed=4)
+    record = json.loads(json.dumps(session.record_data()))         # as saved by the page
+    review = Session()
+    view = review.review(record)
+    mine = [m for m in view["moves"] if m["who"] == "you"]
+    # It opens before the player's first move; nothing can be played on a review.
+    assert view["review"]["at"] == mine[0]["i"] and view["review"]["move"] == {**mine[0], "mistake": False, "notes": []}
+    assert view["actions"] == [] and "mulligan" not in view and "hand" not in view["ai"]
+    target = mine[3]["i"]
+    view = review.goto(target)
+    for k, (state, action) in enumerate(records.steps(record)):
+        if k == target:                                   # the position before that move, and the move
+            assert _fingerprint(review.state) == _fingerprint(state)
+            assert view["review"]["move"]["text"] in (describe(state, action), "结束回合")
+            break
+    assert view["log"][-1].startswith(("你：", "AI：")) and len(view["log"]) > 3
+    before = _fingerprint(review.state)
+    review.act(0)
+    review.ai_step()
+    review.mulligan([0])
+    assert _fingerprint(review.state) == before and review.record_data()["actions"] == record["actions"]
+    # Mark it (and write why), only the player's own moves.
+    view = review.mark(True)
+    assert view["review"]["move"]["mistake"] and review.record_data()["mistakes"] == [target]
+    view = review.note("这里应该憋着破魔虫")
+    assert view["review"]["move"]["notes"] == ["这里应该憋着破魔虫"]
+    assert review.record_data()["notes"][-1] == {"at": target, "text": "这里应该憋着破魔虫"}
+    ai_move = next(m for m in view["moves"] if m["who"] == "ai")
+    with pytest.raises(ValueError):
+        review.mark(True, ai_move["i"])
+    view = review.mark(True, mine[0]["i"])
+    assert review.record_data()["mistakes"] == sorted([mine[0]["i"], target])
+    review.mark(False, mine[0]["i"])
+    # The end of the game; the marked record still replays.
+    view = review.goto(len(record["actions"]))
+    assert view["over"] and view["review"]["move"] is None and view["review"]["winner"] == record["winner"]
+    saved = json.loads(json.dumps(review.record_data()))
+    assert saved["mistakes"] == [target] and _fingerprint(_replay(saved)) == _fingerprint(review.state)
+    # Opening it again shows the marks.
+    again = Session().review(saved)
+    assert [m["i"] for m in again["moves"] if m["mistake"]] == [target]
+
+
+def test_reviewing_on_the_local_server_saves_no_new_replay(tmp_path):
+    session = _half_game("you", level="fast", turns=3)
+    while not session.state.over:                       # finish it quickly: the player passes
+        session.ai_step() if session.state.active == 1 else session.act(
+            next(a["i"] for a in session.view()["actions"] if a["type"] == "EndTurn"))
+    record = json.loads(json.dumps(session.record_data()))
+    Handler.session, Handler.saved, Handler.replays = None, False, tmp_path
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{server.server_port}"
+    try:
+        def call(method, *args):
+            req = urllib.request.Request(base + "/api/call", json.dumps({"method": method, "args": list(args)}).encode(),
+                                         {"Content-Type": "application/json"})
+            data = json.loads(urllib.request.urlopen(req).read())
+            assert "error" not in data, data
+            return data["result"]
+
+        call("review", record)
+        view = call("goto", len(record["actions"]))
+        assert view["over"] and list(tmp_path.iterdir()) == []
+        view = call("goto", view["moves"][0]["i"])
+        call("mark", True)
+        assert call("record_data")["mistakes"] == [view["moves"][0]["i"]]
+    finally:
+        server.shutdown()
+        Handler.session = None

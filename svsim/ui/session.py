@@ -4,6 +4,11 @@ The front end only draws what `view()` returns and sends back the index of
 the action the player picked; all rules stay in the engine. The same session
 runs in the browser (Pyodide) and behind the local web server
 (tools/web.py). Every method returns plain JSON-friendly data.
+
+A finished game can also be opened for review (`review`): the front end steps
+through it (`goto`), the player marks their own moves as mistakes (`mark`, kept
+in the record's "mistakes" so learning leaves them out) and writes notes; the
+hint and lethal check answer for the position on screen.
 """
 from __future__ import annotations
 
@@ -23,6 +28,15 @@ DECKS = {"rhino": ("破魔虫精灵", decks.RHINO_FOREST), "ramp": ("跳费龙",
          "pirate": ("海盗皇家", decks.PIRATE_SWORD)}
 # Every level uses a deck's learned evaluation where there is one (svsim/learn/weights).
 LEVELS = {"fast": "greedy+plan+learned", "normal": "mcts:100+plan+learned", "strong": "mcts:200+plan+learned"}
+
+
+def deck_names(record: dict) -> tuple:
+    """Both decks' names (records from before "names" was kept: by their cards)."""
+    keys = list(record.get("names") or [])
+    if len(keys) != 2 or not all(k in DECKS for k in keys):
+        lists = {key: sorted(c.card_id for c in decks.build(listing)) for key, (_, listing) in DECKS.items()}
+        keys = [next((k for k, ids in lists.items() if ids == sorted(side)), None) for side in record["decks"]]
+    return tuple(DECKS[k][0] if k in DECKS else "" for k in keys)
 
 
 def _kind(defn) -> str:
@@ -50,6 +64,7 @@ class Session:
         self.log: list[str] = []
         self.record: dict | None = None
         self.ai = None
+        self.reviewing = False
 
     # --- game flow ------------------------------------------------------------------
 
@@ -59,6 +74,7 @@ class Session:
         mine, theirs = decks.build(DECKS[you][1]), decks.build(DECKS[opponent][1])
         order = None if first in (None, "random") else (0 if first == "you" else 1)
         self.state = new_game(mine, theirs, seed=seed, first=order)
+        self.reviewing = False
         spec = LEVELS.get(level, level)
         self.record = records.new_record(mine, theirs, seed, self.state.first, spec, first_arg=order)
         self.record["names"] = [you, opponent]
@@ -72,8 +88,8 @@ class Session:
         """Carry on a saved game: replay its actions (the engine is deterministic)."""
         from svsim.core.actions import from_dict
         from svsim.tools.arena import make_agent
-        names = record.get("names") or []
-        self.decks = tuple(DECKS[n][0] for n in names) if all(n in DECKS for n in names) and names else ("", "")
+        self.decks = deck_names(record)
+        self.reviewing = False
         self.state = records.start(record)
         self.record = {**record, "actions": [], "winner": None, "notes": list(record.get("notes", []))}
         self.ai = make_agent(record["ai"], record["seed"])
@@ -107,20 +123,20 @@ class Session:
 
     def act(self, index: int) -> dict:
         """Play the action at `index` in the last view's action list."""
-        if self.state.active != 0 or self.state.over or not 0 <= index < len(self.actions):
+        if self.reviewing or self.state.active != 0 or self.state.over or not 0 <= index < len(self.actions):
             return self.view()
         self._apply(self.actions[index], "你")
         return self.view()
 
     def mulligan(self, indices: list) -> dict:
-        if self.state.phase == Phase.MULLIGAN and self.state.active == 0:
+        if not self.reviewing and self.state.phase == Phase.MULLIGAN and self.state.active == 0:
             hand = self.state.players[0].hand
             self._apply(Mulligan(tuple(sorted({int(i) for i in indices if 0 <= int(i) < len(hand)}))), "你")
         return self.view()
 
     def ai_step(self) -> dict:
         """One action of the AI (it is the AI's turn or mulligan)."""
-        if self.state.over or self.state.active != 1:
+        if self.reviewing or self.state.over or self.state.active != 1:
             return self.view()
         action = self.ai.act(self.state, legal_actions(self.state))
         self._apply(action, "AI")
@@ -156,10 +172,13 @@ class Session:
         return "\n".join(lines)
 
     def note(self, text: str) -> dict:
+        """A note before the next action (when reviewing: about the action on screen)."""
         text = text.strip()
         if text:
-            self.record.setdefault("notes", []).append({"at": len(self.record["actions"]), "text": text})
-            self.log.append(f"备注：{text}")
+            at = self.review_at if self.reviewing else len(self.record["actions"])
+            self.record.setdefault("notes", []).append({"at": at, "text": text})
+            if not self.reviewing:
+                self.log.append(f"备注：{text}")
         return self.view()
 
     def code(self) -> str:
@@ -169,11 +188,70 @@ class Session:
         """The game record so far (for saving it outside the session)."""
         return self.record
 
+    # --- reviewing a finished game ------------------------------------------------------
+
+    def review(self, record: dict) -> dict:
+        """Open a saved game: the view shows the position before its first move by
+        the player, with `review` (that move, whether it is marked) and `moves`
+        (every move of the game, to jump to)."""
+        from svsim.core.actions import from_dict
+        self.decks = deck_names(record)
+        self.record = {**record, "mistakes": sorted(set(record.get("mistakes", []))),
+                       "notes": list(record.get("notes", []))}
+        self.ai, self.reviewing = None, True
+        state = records.start(record)
+        self.positions, self.moves = [], []
+        for i, data in enumerate(record["actions"]):
+            action = from_dict(data)
+            self.positions.append(state.clone())
+            if state.phase == Phase.MAIN:
+                text = "结束回合" if isinstance(action, EndTurn) else describe(state, action)
+                self.moves.append({"i": i, "turn": state.turn, "who": "you" if state.active == 0 else "ai",
+                                   "text": text})
+            apply(state, action)
+        self.positions.append(state)
+        first = next((m["i"] for m in self.moves if m["who"] == "you"), 0)
+        return self.goto(first)
+
+    def goto(self, at: int) -> dict:
+        """Show the position before action `at` (the number of actions: the end)."""
+        self.review_at = max(0, min(int(at), len(self.positions) - 1))
+        self.state = self.positions[self.review_at]
+        return self.view()
+
+    def mark(self, on: bool = True, at: int | None = None) -> dict:
+        """Mark the player's move (the one on screen, or action `at`) as a mistake, or unmark it."""
+        at = self.review_at if at is None else int(at)
+        move = next((m for m in self.moves if m["i"] == at), None)
+        if not self.reviewing or move is None or move["who"] != "you":
+            raise ValueError("只能标记你自己的操作")
+        marks = set(self.record["mistakes"])
+        (marks.add if on else marks.discard)(at)
+        self.record["mistakes"] = sorted(marks)
+        return self.view()
+
+    def _review_view(self, out: dict) -> None:
+        notes = records.notes_at(self.record)
+        marks = set(self.record["mistakes"])
+        lines, turn = [], None
+        for m in self.moves:
+            if m["i"] >= self.review_at:
+                break
+            if m["turn"] != turn:
+                turn = m["turn"]
+                lines.append(f"—— 第 {turn} 回合 ——")
+            lines.append(("你" if m["who"] == "you" else "AI") + "：" + m["text"])
+        out["log"] = lines[-60:]
+        out["moves"] = [{**m, "mistake": m["i"] in marks, "notes": notes.get(m["i"], [])} for m in self.moves]
+        move = next((m for m in out["moves"] if m["i"] == self.review_at), None)
+        out["review"] = {"at": self.review_at, "end": len(self.positions) - 1, "move": move,
+                         "winner": self.positions[-1].winner}
+
     # --- what the front end draws ------------------------------------------------------
 
     def view(self) -> dict:
         s = self.state
-        legal = legal_actions(s) if not s.over and s.active == 0 else []
+        legal = legal_actions(s) if not s.over and s.active == 0 and not self.reviewing else []
         self.actions = legal
         me, ai = s.players[0], s.players[1]
         out = {
@@ -196,10 +274,12 @@ class Session:
             elif isinstance(a, (Evolve, Engage, Fuse)):
                 entry["source"] = a.uid
             out["actions"].append(entry)
-        if s.phase == Phase.MULLIGAN and s.active == 0:
+        if s.phase == Phase.MULLIGAN and s.active == 0 and not self.reviewing:
             out["mulligan"] = True
         if s.over:
             out["code"] = self.code()
+        if self.reviewing:
+            self._review_view(out)
         return out
 
     def _side(self, p, mine: bool) -> dict:

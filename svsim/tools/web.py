@@ -33,7 +33,7 @@ SKELETON = ('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">'
             '</head><body>{page}</body></html>')
 
 ALLOWED = {"start", "resume", "summary", "view", "act", "mulligan", "ai_step", "hint", "lethal", "note", "code",
-           "record_data"}
+           "record_data", "review", "goto", "mark"}
 
 
 def page_html() -> str:
@@ -116,11 +116,11 @@ class Handler(BaseHTTPRequestHandler):
             method, args = data["method"], data.get("args", [])
             if method not in ALLOWED:
                 raise ValueError(f"unknown method {method!r}")
-            if method in ("start", "resume") or cls.session is None:
+            if method in ("start", "resume", "review") or cls.session is None:
                 cls.session, cls.saved = Session(), False
             result = getattr(cls.session, method)(*args)
             state = cls.session.state
-            if state is not None and state.over and not cls.saved:
+            if state is not None and state.over and not cls.saved and not cls.session.reviewing:
                 cls.saved = True
                 print("对局记录已保存：" + records.save(cls.session.record, str(cls.replays)))
             body = json.dumps({"result": result}, ensure_ascii=False)
