@@ -127,7 +127,7 @@ def _card(defn, cost_now: int, lone: bool, most_removal: bool = False) -> tuple:
 def _bundle(defn, cost_now: int, lone: bool) -> tuple:
     """(the card, the cards it adds) as filler."""
     card, e = _card(defn, cost_now, lone)
-    return card, tuple(_card(POOL[cid], cost, lone)[0] for cid, cost in e.added)
+    return card, tuple(_card(POOL[cid], cost, lone)[0] for cid, cost in e.added if profile(POOL[cid]))
 
 
 def _removal(cards: list, combo: int) -> int:
@@ -222,6 +222,8 @@ def estimate(state: GameState) -> Estimate:
             finishers.append((c, fin))
             continue
         variants = profile(c.defn)
+        if not variants:                       # can't be played without a target the sandbox lacks
+            continue
         if any(v[0].bounce for v in variants):
             bounces.append((c.cost, True, card_name(c.defn), c.uid))
             own[c.uid] = _card(c.defn, c.cost, lone)[0]

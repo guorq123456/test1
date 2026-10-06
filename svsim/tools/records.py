@@ -42,11 +42,13 @@ def encode(record: dict) -> str:
 
 
 def decode(text: str) -> dict:
-    """A record from a replay code or the path of a saved record."""
+    """A record from a replay code or the path of a saved record (or of a game
+    saved by the web page, which keeps the record under "record")."""
     text = text.strip()
     if os.path.exists(text):
         with open(text, encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+        return data["record"] if "decks" not in data and isinstance(data.get("record"), dict) else data
     return json.loads(zlib.decompress(base64.b64decode("".join(text.split()))))
 
 

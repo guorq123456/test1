@@ -153,4 +153,5 @@ def after_end_of_turn(state: GameState) -> GameState:
     apply(s, EndTurn())
     if s.winner == DRAW and state.turn < state.max_turns:
         s.winner, s.phase = None, Phase.MAIN
+    s.max_turns = state.max_turns
     return s
