@@ -188,6 +188,8 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
         <button data-value="rhino" aria-pressed="true">破魔虫精灵</button>
         <button data-value="ramp">跳费龙</button>
         <button data-value="pirate">海盗皇家</button>
+        <button data-value="combo">连击精灵</button>
+        <button data-value="face">快攻龙</button>
       </div>
     </div>
     <div class="field-group"><span>AI 的卡组</span>
@@ -195,6 +197,8 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
         <button data-value="ramp" aria-pressed="true">跳费龙</button>
         <button data-value="rhino">破魔虫精灵</button>
         <button data-value="pirate">海盗皇家</button>
+        <button data-value="combo">连击精灵</button>
+        <button data-value="face">快攻龙</button>
       </div>
     </div>
     <div class="field-group"><span>AI 强度</span>
@@ -720,7 +724,7 @@ $("btn-menu").addEventListener("click", () => {
 // ---------------------------------------------------------------- reviewing a finished game
 // Step through your own moves, mark the ones that were mistakes (learning leaves
 // them out) and note why; the marks are saved with the game.
-const DECK_NAMES = {rhino: "破魔虫精灵", ramp: "跳费龙", pirate: "海盗皇家"};
+const DECK_NAMES = {rhino: "破魔虫精灵", ramp: "跳费龙", pirate: "海盗皇家", combo: "连击精灵", face: "快攻龙"};
 let reviewing = null;                              // {gameId, body} of the game on screen
 
 function describeFinished(body) {

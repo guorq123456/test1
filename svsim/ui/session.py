@@ -25,7 +25,8 @@ from svsim.ui.text import _follower_status, card_name, describe, describe_line, 
 assert library.__all__
 
 DECKS = {"rhino": ("破魔虫精灵", decks.RHINO_FOREST), "ramp": ("跳费龙", decks.RAMP_DRAGON),
-         "pirate": ("海盗皇家", decks.PIRATE_SWORD)}
+         "pirate": ("海盗皇家", decks.PIRATE_SWORD), "combo": ("连击精灵", decks.COMBO_FOREST),
+         "face": ("快攻龙", decks.FACE_DRAGON)}
 # Every level uses a deck's learned evaluation where there is one (svsim/learn/weights).
 LEVELS = {"fast": "greedy+plan+learned", "normal": "mcts:100+plan+learned", "strong": "mcts:200+plan+learned"}
 

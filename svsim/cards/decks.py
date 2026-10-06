@@ -108,3 +108,26 @@ def from_hash(deck_hash: str, pool: dict[int, CardDef] | None = None) -> list[Ca
 
 def to_hash(deck: list[CardDef], battle_format: int = deckcode.ROTATION) -> str:
     return deckcode.encode_deck(battle_format, int(craft_of(deck)), [c.card_id for c in deck])
+
+
+# Rotation meta decks from Game8's tier list (Azvaldt Revenant, 2026-10-06), by their deck
+# codes: Combo Elf (Tier 1) and Face Dragon (Tier 2). Ramp Dragon and Pirate Royal (Tier 1)
+# match RAMP_DRAGON and PIRATE_SWORD card for card; the list's other decks use cards not
+# scripted yet.
+COMBO_FOREST_HASH = ("1.1.dhqc.e4Gg.e4Gg.e4Gg.e6FE.e6kU.e6x8.e6x8.e6x8.eVLe.eVLe.et1G.et4E.etl-.etl-.etl-.etm8."
+                     "etm8.etm8.fGAU.fGAU.fGAU.fds6.fds6.fds6.fe5k.fe5k.fe5k.fe8s.fe8s.fe8s.feLM.feLM.feLM.fea-.fea-."
+                     "fea-.feb8.feb8.feb8")
+FACE_DRAGON_HASH = ("1.4.eDme.eDme.eDme.eE3E.eE3E.eE3E.eb-U.eb-U.ecTk.ecTk.ecgE.ecgE.ecgE.ecgO.ecgO.ecgO.fN08.fN08."
+                    "fN08.flAs.flAs.flAs.flD-.flD-.flD-.flQU.flQU.flQU.flTc.flTc.flTc.flg6.flg6.flg6.fljE.fljE.fljE."
+                    "flvk.flvk.flvk")
+
+
+def _listing(deck_hash: str) -> dict[CardDef, int]:
+    out: dict[CardDef, int] = {}
+    for c in from_hash(deck_hash):
+        out[c] = out.get(c, 0) + 1
+    return out
+
+
+COMBO_FOREST = _listing(COMBO_FOREST_HASH)
+FACE_DRAGON = _listing(FACE_DRAGON_HASH)
