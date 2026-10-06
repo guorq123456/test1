@@ -129,11 +129,36 @@ def _attack_leader(s: GameState, side: int) -> None:
         apply(s, attacks[0])
 
 
-def develop(s: GameState, side: int, ramp: bool = True) -> None:
+def dig(s: GameState, side: int, nodes: int = 1000) -> None:
+    """A turn spent digging (modified in place): the resource planner's line that
+    draws the most cards (and takes most play points off cards like Bayle),
+    keeping the finishers and those cards in hand (search.combo.dig)."""
+    from svsim.search import combo
+    from svsim.search.moves import finisher
+    from svsim.core.engine import legal_actions
+    keep = {c.defn.card_id for c in s.players[side].hand if finisher(c.defn) or combo.leave_discount(c.defn)}
+    p = combo.dig(s, keep, nodes)
+    if p.damage <= 0:
+        return
+    for n in range(len(p.steps), 0, -1):
+        line = combo.realize(s, p.steps[:n])
+        if line:
+            for a in line:
+                if s.over or a not in legal_actions(s):
+                    return
+                apply(s, a)
+            return
+
+
+def develop(s: GameState, side: int, ramp: bool = True, digging: bool = False) -> None:
     """A turn spent building up (modified in place): play the cards that raise
-    max play points, most points per play point paid first, then attack the leader."""
+    max play points, most points per play point paid first (or, `digging`, the
+    line that draws the most), then attack the leader."""
     from svsim.core.actions import PlayCard
     from svsim.core.engine import legal_actions
+    if digging and not s.over:
+        dig(s, side)
+        ramp = False
     for _ in range(10 if ramp else 0):
         if s.over:
             return
@@ -182,19 +207,20 @@ def _chain(s: GameState, side: int, start: int, limit: int, nodes: int) -> int |
     return None
 
 
-def clock(state: GameState, side: int, horizon: int = HORIZON, nodes: int = 1000, ramp: bool = True) -> Clock:
+def clock(state: GameState, side: int, horizon: int = HORIZON, nodes: int = 1000, ramp: bool = True,
+          digging: bool = False) -> Clock:
     """`side`'s clock if nobody interferes (see the module docstring). If it is
     `side`'s turn, turn 0 is this one as it stands; otherwise its next turn."""
     start = state.clone()
     if not (start.active == side and start.phase == Phase.MAIN):
         advance(start, side)
     best, how, found = horizon + 1, "", []
-    tracks = [("hold", start)] + ([("ramp", start.clone())] if ramp else [])
+    tracks = [("hold", start)] + ([("ramp", start.clone())] if ramp else []) + ([("dig", start.clone())] if digging else [])
     for j in range(horizon + 1):
         if j >= best:
             break
         for name, s in tracks:
-            if name == "ramp" and j == 0:
+            if name != "hold" and j == 0:
                 continue                         # developing 0 turns: the same as holding
             if s.over:
                 if s.winner == side and j < best:
@@ -209,7 +235,7 @@ def clock(state: GameState, side: int, horizon: int = HORIZON, nodes: int = 1000
             break
         for i, (name, s) in enumerate(tracks):
             if not s.over:
-                develop(s, side, ramp=name == "ramp")
+                develop(s, side, ramp=name == "ramp", digging=name == "dig")
                 tracks[i] = (name, advance(s, side) if not s.over else s)
     return Clock(best, how, found)
 
