@@ -278,3 +278,26 @@ def test_a_crest_that_hurts_its_holder_counts_against_it():
         assert EV.evaluate(state, 0) < before                 # the old way: a crest for the opponent
     finally:
         EV.CREST_EFFECTS = True
+
+
+def test_a_matchup_model_is_used_where_there_is_one(tmp_path):
+    from svsim.cards import decks
+    from svsim.core.engine import new_game
+    from svsim.core.enums import Craft
+    from svsim.learn.features import names
+    from svsim.learn.model import SCALE, Learned, LinearValue, load_all
+
+    def constant(bias):
+        n = len(names(False, 2))
+        return LinearValue([0.0] * (n - 1) + [bias], [0.0] * n, [1.0] * n, False, version=2)
+
+    constant(1.0).save(tmp_path / "dragon.json")
+    constant(2.0).save(tmp_path / "dragon-dragon.json")
+    models = load_all(tmp_path)
+    assert set(models) == {Craft.DRAGON, (Craft.DRAGON, Craft.DRAGON)}
+    learned = Learned(models=models)
+    ramp, rhino = decks.build(decks.RAMP_DRAGON), decks.build(decks.RHINO_FOREST)
+    mirror = new_game(ramp, ramp, seed=1, first=0)
+    other = new_game(ramp, rhino, seed=1, first=0)
+    assert learned.score(mirror, 0) == SCALE * 2.0
+    assert learned.score(other, 0) == SCALE * 1.0

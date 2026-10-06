@@ -56,7 +56,9 @@ def deck_craft(state: GameState, player: int) -> Craft:
 
 
 class Learned:
-    """Evaluation with each deck's learned model (by craft); the hand-set one otherwise."""
+    """Evaluation with each deck's learned model: the one for the matchup (keyed by the
+    deck's craft and the opponent's) if there is one, else the deck's (by craft); the
+    hand-set one otherwise."""
 
     def __init__(self, models: dict | None = None, fallback=None):
         from svsim.search.evaluate import DEFAULT
@@ -68,20 +70,24 @@ class Learned:
         from svsim.search.evaluate import WIN, evaluate
         if state.winner is not None:
             return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
-        model = self.models.get(deck_craft(state, player))
+        mine = deck_craft(state, player)
+        model = self.models.get((mine, deck_craft(state, 1 - player))) or self.models.get(mine)
         if model is None:
             return evaluate(state, player, self.fallback, player_moves_next)
         return SCALE * model.logit(state, player)
 
 
 def load_all(folder: Path | None = None) -> dict:
-    """The models in `folder` (default: $SVSIM_WEIGHTS, else svsim/learn/weights)."""
+    """The models in `folder` (default: $SVSIM_WEIGHTS, else svsim/learn/weights):
+    <craft>.json for a deck, <craft>-<opponent craft>.json for a matchup."""
     import os
     folder = folder or Path(os.environ.get("SVSIM_WEIGHTS") or WEIGHTS)
     out = {}
     for path in folder.glob("*.json"):
         try:
-            out[Craft[path.stem.upper()]] = LinearValue.load(path)
+            crafts = [Craft[part.upper()] for part in path.stem.split("-")]
         except KeyError:
             continue
+        if len(crafts) in (1, 2):
+            out[crafts[0] if len(crafts) == 1 else tuple(crafts)] = LinearValue.load(path)
     return out
