@@ -38,7 +38,7 @@ class LethalAgent:
 
     def __init__(self, base, max_nodes: int = 2000, screen: int | None = 200, seed: int = 0,
                  planner: bool = False, plan_nodes: int = 20000, trust_planner: bool = False,
-                 macro: bool = False):
+                 macro: bool = False, burst: bool = False):
         self.base = base
         self.search = LethalSearch(max_nodes=max_nodes, screen=screen, seed=seed)
         self.planner, self.plan_nodes, self.trust_planner = planner, plan_nodes, trust_planner
@@ -48,6 +48,8 @@ class LethalAgent:
         self.lethals = 0             # sure lethals found (for statistics)
         self.planned = 0             # ... of them found by the planner
         self.macro = macro
+        self.burst = burst           # play the most-damage line when it sets up next turn's kill
+        self.bursts = 0
         self.macro_checked = None    # stamp of the last turn state the macro line was weighed on
         self.macros = 0              # macro lines played
         self.rng = random.Random(seed)
@@ -75,6 +77,13 @@ class LethalAgent:
             self.checked = stamp
         me = state.players[state.active]
         progress = stamp + (me.pp, len(me.hand), len(me.field))
+        if self.burst and progress != self.macro_checked:
+            self.macro_checked = progress
+            line = self._burst_line(state, actions)
+            if line:
+                self.bursts += 1
+                self.plan, self.plan_turn = list(line[1:]), state.turn
+                return combo.listed(state, line[0], actions)
         if self.macro and progress != self.macro_checked:
             self.macro_checked = progress
             line = self._macro_line(state, actions)
@@ -110,6 +119,33 @@ class LethalAgent:
             s = after_end_of_turn(s)
         best = max(root.children.values(), key=lambda n: n.visits)
         return line if search.value(s, state.active) > search.estimate(best) else []
+
+    def _burst_line(self, state, actions) -> list:
+        """The planner's most-damage line, when playing it now means the kill comes
+        next turn by the race clock and holding doesn't (the player's two-turn
+        finish: 15 damage now, 5 next turn), judged without seeing hidden cards."""
+        from svsim.search import race
+        me = state.active
+        p = combo.plan(state, self.plan_nodes)
+        if p.damage <= 0 or not p.steps:
+            return []
+        line = combo.realize(state, p.steps)
+        if not line or combo.listed(state, line[0], actions) is None:
+            return []
+        s = determinize(state, me, self.rng)
+        held = after_end_of_turn(s.clone())
+        for a in line:
+            if s.over:
+                break
+            if not combo._legal(s, a):
+                return []
+            apply(s, a)
+        if s.over:
+            return line if s.winner == me else []
+        after = after_end_of_turn(s)
+        if after.over or race.clock(after, me, horizon=1).turns != 0:
+            return []
+        return line if race.clock(held, me, horizon=1).turns != 0 else []
 
     def _planned(self, state) -> tuple[list, bool]:
         """(the planner's checked lethal line or [], whether the model rules lethal out)."""

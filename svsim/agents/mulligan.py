@@ -1,7 +1,11 @@
 """Opening-hand redraws (every agent uses `mulligan`).
 
-Three layers, the first that applies wins:
+The first layer that applies wins:
 
+0. What the player's games say (svsim.learn.timing, built by tools.timing for a
+   deck against an opponent deck): their own keeps and redraws, with their
+   words below as the prior and, for cards they said nothing about, how soon
+   they play a copy they hold.
 1. The player's rules for a deck they know (`PLAYER_RULES`, their words):
    Rhinoceroach Forest (2026-10-06): its only cards of 5 or more are Glade and
    Bayle. Glade draws, clears and evolves in one card (against midrange decks
@@ -68,9 +72,15 @@ def by_rules(hand, rules: Rules, threshold: int = 5) -> tuple:
 
 def mulligan(state, threshold: int = 5) -> Mulligan:
     from svsim.search.race import ramps
+    from svsim.learn.timing import load
     p = state.players[state.active]
     cards = p.hand + p.deck
-    rules = PLAYER_RULES.get(_deck_key(cards))
+    deck = _deck_key(cards)
+    rules = PLAYER_RULES.get(deck)
+    foe = state.players[1 - state.active]
+    timing = load(deck, _deck_key(foe.hand + foe.deck)) if deck else None
+    if timing is not None:
+        return Mulligan(timing.keep(p.hand, cards, rules))
     if rules is not None:
         return Mulligan(by_rules(p.hand, rules, threshold))
     if 8 * sum(ramps(c.defn) for c in cards) >= len(cards):

@@ -12,14 +12,17 @@ lethal search; "+threat" makes the evaluation value the next turn's lethal
 potential (evaluate.THREAT); "+hand" the same from the hand and amulets
 only, leaving out followers the opponent may remove (evaluate.THREAT_HAND);
 "+macro" lets the planner propose its most-damage line on turns without
-lethal, played when the search's evaluation prefers it (ISMCTS agents only).
+lethal, played when the search's evaluation prefers it (ISMCTS agents only);
+"+burst" plays that line when the race clock says it sets up next turn's kill
+and holding doesn't (the player's "15 now, 5 next turn").
 turn:N plans the whole turn (search.turnplan: the best line by the end-of-turn
 evaluation, luck averaged, N positions at most) and follows it.
 impact:N chooses each turn among the mcts:N agent's lines by their impact on
 winning (agents.impact_agent: the opponent's answer sampled, then the race
 clocks); the other suffixes go to the mcts:N agent.
 "+learned" uses each deck's learned evaluation (svsim.learn, tools.learn) where
-there is one. Combined: mcts:200+plan+macro+threat. Each pairing plays both seats and, for --decks starter or
+there is one; "+timing" adds what holding a card is worth until the turn the
+player usually plays it (svsim.learn.timing, from their games). Combined: mcts:200+plan+macro+threat. Each pairing plays both seats and, for --decks starter or
 rhino, both decks equally often. --decks rhino is Rhinoceroach Forest
 (Unlimited) against Ramp Dragon. Prints win rates with a 95% margin, the
 average thinking time per decision and the lethals each agent found.
@@ -46,7 +49,7 @@ CRAFTS = [c for c in Craft if c != Craft.NEUTRAL]
 
 def make_agent(spec: str, seed: int):
     spec, *options = spec.split("+")
-    unknown = set(options) - {"plan", "threat", "hand", "macro", "learned"}
+    unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst"}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -54,6 +57,9 @@ def make_agent(spec: str, seed: int):
     if "learned" in options:                       # each deck's learned evaluation (svsim.learn)
         from svsim.learn.model import Learned
         weights = Learned(fallback=weights)
+    if "timing" in options:                        # holding cards until the player would play them
+        from svsim.learn.timing import Timed
+        weights = Timed(base=weights)
     name, _, arg = spec.partition(":")
     if name == "random":
         return RandomAgent(seed, 0.2)
@@ -74,7 +80,7 @@ def make_agent(spec: str, seed: int):
     if name in ("mcts", "mcts-raw", "mcts-reply"):
         agent = MCTSAgent(int(arg or 400), seed=seed, reply=name == "mcts-reply", weights=weights)
         return agent if name == "mcts-raw" else LethalAgent(agent, seed=seed, planner=planner,
-                                                            macro="macro" in options)
+                                                            macro="macro" in options, burst="burst" in options)
     raise ValueError(f"unknown agent {spec!r}")
 
 

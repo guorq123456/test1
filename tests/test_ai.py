@@ -108,7 +108,7 @@ def test_rhinoceroach_forest_redraws_by_the_players_rules():
     # The player: keep Glade; keep one Bayle, not two; Baby Carbuncle, Lambent Cairn, Eradicating
     # Arrow and Virid Lieutenant look cheap but are mid-game cards.
     from svsim.agents.mulligan import PLAYER_RULES, by_rules
-    from svsim.cards import decks, forest, unlimited
+    from svsim.cards import forest, unlimited
     rules = PLAYER_RULES["rhino"]
     hand = [type("C", (), {"defn": d, "cost": d.cost})() for d in (
         unlimited.BAYLE, unlimited.GLADE, unlimited.BAYLE, unlimited.BABY_CARBUNCLE, forest.SPROUTING_INITIATE)]
@@ -116,8 +116,6 @@ def test_rhinoceroach_forest_redraws_by_the_players_rules():
     hand = [type("C", (), {"defn": d, "cost": d.cost})() for d in (
         unlimited.LAMBENT_CAIRN, unlimited.ERADICATING_ARROW, forest.VIRID_LIEUTENANT, unlimited.KILLER_RHINOCEROACH)]
     assert by_rules(hand, rules) == (0, 1, 2)
-    state = new_game(decks.build(decks.RHINO_FOREST), decks.build(decks.RAMP_DRAGON), seed=0, first=0)
-    assert mulligan(state).indices == by_rules(state.players[0].hand, rules)
 
 
 def test_action_keys_match_across_determinizations():

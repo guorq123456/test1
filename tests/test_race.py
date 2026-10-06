@@ -136,3 +136,21 @@ def test_an_accelerate_counts_as_ramp_when_it_is_the_way_the_card_is_played():
     s = state.clone()
     race.develop(s, 0)
     assert s.players[0].max_pp == 8 and len(s.players[0].hand) == 1
+
+
+def test_a_burst_that_sets_up_next_turns_kill_is_played():
+    # The player's two-turn finish: deal what you can now when it makes next turn's kill.
+    from svsim.agents.lethal_agent import LethalAgent
+    from svsim.agents.mcts_agent import MCTSAgent
+    from svsim.core.engine import legal_actions
+    state = start()
+    _empty_hands(state)
+    set_pp(state, 0, 2)
+    state.players[1].leader_hp = 4
+    give(state, 0, demo.RAIDER)                          # Storm 2/1 for 2: one now, the other next turn
+    give(state, 0, demo.RAIDER)
+    agent = LethalAgent(MCTSAgent(30, seed=1), seed=1, burst=True)
+    line = agent._burst_line(state, legal_actions(state))
+    assert line and line[0].__class__.__name__ == "PlayCard"
+    state.players[1].leader_hp = 9                        # out of reach next turn either way: hold
+    assert agent._burst_line(state, legal_actions(state)) == []
