@@ -367,7 +367,9 @@ def test_matchup_models_by_deck_come_before_the_class_pair(tmp_path):
     assert make_agent("mcts:5+plan+screen=1000", 1).search.screen == 1000      # the lethal search's screen budget
     assert make_agent("mcts:5+plan", 1).search.screen == 200
     near = make_agent("mcts:5+plan+screen=200:1000:4", 1).search            # ... and for a near miss
-    assert (near.screen, near.near) == (200, (1000, 4)) and make_agent("mcts:5+plan", 1).search.near is None
+    assert (near.screen, near.near) == (200, (1000, 4))
+    assert make_agent("mcts:5+plan", 1).search.near == (1000, 4)                # the default since 2026-10-07
+    assert make_agent("mcts:5+plan+screen=200", 1).search.near is None          # ... "+screen=N" the old way
     with pytest.raises(ValueError):
         make_agent("mcts:5+plan+screen=200:1000", 1)
 

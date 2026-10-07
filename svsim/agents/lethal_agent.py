@@ -32,13 +32,20 @@ from svsim.search.evaluate import after_end_of_turn
 from svsim.search.lethal import LethalSearch, hidden_info
 
 
+# The budget for a screened position whose estimate is short of the opponent's defense by 4 or less (the
+# architecture session, 2026-10-07): in the smoke games all eight screen misses that 1,000 nodes find were
+# 1 to 4 short; it costs 7.8% more time per turn (90th percentile +9.8%), about 0.3 points of win rate by the
+# planner's rate of iterations to strength, against about 1 to 1.5 points from the lethals it finds.
+NEAR = (1000, 4)
+
+
 class LethalAgent:
     """`screen`: node budget for positions whose damage estimate falls short of the
     opponent's defense (see search.lethal); None searches every position fully. `near`:
-    (nodes, K), the budget instead when the estimate is short by K or less."""
+    (nodes, K), the budget instead when the estimate is short by K or less (NEAR; None: off)."""
 
     def __init__(self, base, max_nodes: int = 2000, screen: int | None = 200, seed: int = 0,
-                 near: tuple[int, int] | None = None,
+                 near: tuple[int, int] | None = NEAR,
                  planner: bool = False, plan_nodes: int = 20000, trust_planner: bool = False,
                  macro: bool = False, burst: bool = False, burst_reply: int = 0, dig: bool = False):
         self.base = base
