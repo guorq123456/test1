@@ -41,6 +41,18 @@ def _rows(job) -> list:
             for phase, me, state, result, q in rows(record, with_search=True, start=start)]
 
 
+def folder_of(name: str) -> Path:
+    """A models folder by name: a path to one, else svsim/learn/phased_models/<name> (candidates kept beside
+    the installed models, which sit in phased_models itself)."""
+    path = Path(name)
+    if path.is_dir():
+        return path
+    path = Path(__file__).resolve().parent / "phased_models" / name
+    if not path.is_dir():
+        raise ValueError(f"no phased models folder {name}")
+    return path
+
+
 def load(folder: Path | None = None) -> dict:
     """{(deck, opponent deck, "act" | "ended"): LinearValue, or a learn.net.ValueNet from an .npz file
     (the same logit(state, player); the smooth network can stand in for either moment). Files are

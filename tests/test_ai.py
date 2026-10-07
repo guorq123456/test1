@@ -357,6 +357,14 @@ def test_matchup_models_by_deck_come_before_the_class_pair(tmp_path):
     assert phased.score(mirror, 0, player_moves_next=True) == SCALE * 5.0
     assert phased.score(other, 0) == learned.score(other, 0)  # no model for Face Dragon: the fallback
     assert phased.score(other, 0, player_moves_next=True) == SCALE * 5.0
+    from svsim.tools.arena import make_agent                  # phased=FOLDER: one agent's own models
+    own = make_agent(f"mcts:5+learned+phased={folder}", 1).base.search.weights
+    assert own.models.keys() == phased.models.keys() and own.score(mirror, 0) == SCALE * 4.0
+    assert make_agent("mcts:5+learned+phased", 1).base.search.weights.models.keys() == load().keys()
+    import pytest
+    with pytest.raises(ValueError):
+        make_agent("mcts:5+learned+phased=no-such-folder", 1)
+
 
 def test_a_hidden_layer_adds_to_the_linear_score(tmp_path):
     import math

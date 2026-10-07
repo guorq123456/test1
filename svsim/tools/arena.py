@@ -42,7 +42,8 @@ scores a position inside the turn as if the turn ended there (as the
 linear models do), except a turn start reached by playing out the reply;
 "+mean" backs values up as plain averages instead of the best own choice
 (search.mcts, backup="mean"); "+phased" linear models by moment (learn.phased:
-turn ends, and turn starts reached by playing out the reply); "+timing" adds what holding a card is worth until the turn the
+turn ends, and turn starts reached by playing out the reply; "+phased=NAME" this agent's models from
+the folder NAME, a path or svsim/learn/phased_models/NAME, learn.phased.folder_of); "+timing" adds what holding a card is worth until the turn the
 player usually plays it (svsim.learn.timing, from their games); "+priced"
 prices resources by what they buy (search.prices: the own followers at what
 survives the opponent's turn, "+survive" alone; unused evolution points at the
@@ -102,7 +103,7 @@ def make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross"))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "phased="))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -113,9 +114,12 @@ def make_agent(spec: str, seed: int):
     if "learned" in options:                       # each deck's learned evaluation (svsim.learn)
         from svsim.learn.model import Learned
         weights = Learned(fallback=weights)
-    if "phased" in options:                        # linear models by moment (learn.phased, $SVSIM_PHASED)
-        from svsim.learn.phased import PhasedLearned
-        weights = PhasedLearned(fallback=weights if "learned" in options else None)
+    phased = [o for o in options if o == "phased" or o.startswith("phased=")]
+    if phased:                                     # linear models by moment (learn.phased, $SVSIM_PHASED)
+        from svsim.learn.phased import PhasedLearned, folder_of, load
+        name = phased[0][len("phased="):]          # phased=NAME: that folder's models, for this agent only
+        weights = PhasedLearned(models=load(folder_of(name)) if name else None,
+                                fallback=weights if "learned" in options else None)
     if "net" in options:                           # the matchup's value network, any moment of a turn (learn.net)
         from svsim.learn.net import NetLearned
         gain = [float(o[4:]) for o in options if o.startswith("gain")]
