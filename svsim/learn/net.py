@@ -2,10 +2,12 @@
 
 `ValueNet`: standardized inputs -> tanh layer -> tanh layer -> logit of the
 win probability of the player the position is scored for, added to a prior:
-the installed linear model's logit (its coefficients are kept in the file),
-so the network starts as the linear model (the last layer starts at zero)
-and learns corrections where the data supports them; with few games it
-can't fall far below what it started from. Unlike the linear
+the installed linear model's logit (its coefficients are kept in the file)
+times a learned scale (the linear models are overconfident: their logits
+alone score a worse log loss than a coin flip, so without the scale the
+network spent itself shrinking them and lost their ranking), so the network
+starts as the linear model (the last layer starts at zero) and learns
+corrections where the data supports them. Unlike the linear
 models (learn.model), it is fitted on every position the search can be asked
 to score (learn.netdata.rows: each decision point and each turn's end), the
 moment being one of its inputs, so it can score the positions the search
@@ -55,7 +57,8 @@ class ValueNet:
         if not self.prior:
             return 0.0
         n = len(self.p["prior_coef"])
-        return ((X[..., :n] - self.p["prior_mean"]) / self.p["prior_std"]) @ self.p["prior_coef"]
+        scale = float(self.p["prior_scale"]) if "prior_scale" in self.p else 1.0
+        return scale * (((X[..., :n] - self.p["prior_mean"]) / self.p["prior_std"]) @ self.p["prior_coef"])
 
     def logit(self, state, player: int) -> float:
         x = E.vectorize(E.raw(state, player), self.vocab)
@@ -70,7 +73,7 @@ class ValueNet:
     @classmethod
     def load(cls, path: Path) -> "ValueNet":
         d = np.load(path, allow_pickle=False)
-        params = {k: d[k] for k in ("W1", "b1", "W2", "b2", "w3", "b3") + cls.PRIOR if k in d}
+        params = {k: d[k] for k in ("W1", "b1", "W2", "b2", "w3", "b3", "prior_scale") + cls.PRIOR if k in d}
         return cls(params, d["mean"], d["std"], d["vocab"].tolist(), json.loads(str(d["info"])))
 
     # --- training -----------------------------------------------------------------------------
@@ -93,21 +96,24 @@ class ValueNet:
         p = {"W1": rng.normal(0, 1 / np.sqrt(d), (d, h1)), "b1": np.zeros(h1),
              "W2": rng.normal(0, 1 / np.sqrt(h1), (h1, h2)), "b2": np.zeros(h2),
              "w3": np.zeros(h2) if prior is not None else rng.normal(0, 1 / np.sqrt(h2), h2), "b3": np.zeros(())}
+        if prior is not None:
+            p["prior_scale"] = np.ones(())
         fixed = {}
         if prior is not None:
             fixed = {"prior_coef": np.asarray(prior.coef, dtype=np.float64),
                      "prior_mean": np.asarray(prior.mean, dtype=np.float64),
                      "prior_std": np.asarray(prior.std, dtype=np.float64)}
-        base = cls(dict(p, **fixed), mean, std, vocab)
+        base = cls(dict(fixed, prior_scale=np.ones(())), mean, std, vocab) if fixed else None
         z0 = base.prior_logit(X) if fixed else np.zeros(len(X))
-        v0 = base.prior_logit(np.asarray(X_val, dtype=np.float64)) if fixed and X_val is not None else 0.0
+        v0 = base.prior_logit(np.asarray(X_val, dtype=np.float64)) if fixed and X_val is not None else np.zeros(
+            0 if X_val is None else len(X_val))
         m = {k: np.zeros_like(v) for k, v in p.items()}
         v2 = {k: np.zeros_like(v) for k, v in p.items()}
 
         def loss_of(A, t, params, offset):
             a1 = np.tanh(A @ params["W1"] + params["b1"])
             a2 = np.tanh(a1 @ params["W2"] + params["b2"])
-            z = a2 @ params["w3"] + params["b3"] + offset
+            z = a2 @ params["w3"] + params["b3"] + float(params.get("prior_scale", 1.0)) * offset
             return float(np.mean(np.logaddexp(0, z) - t * z))
 
         best, best_p, worse, step = float("inf"), None, 0, 0
@@ -118,9 +124,11 @@ class ValueNet:
                 A, t = Xs[idx], y[idx]
                 a1 = np.tanh(A @ p["W1"] + p["b1"])
                 a2 = np.tanh(a1 @ p["W2"] + p["b2"])
-                z = a2 @ p["w3"] + p["b3"] + z0[idx]
+                z = a2 @ p["w3"] + p["b3"] + float(p.get("prior_scale", 1.0)) * z0[idx]
                 dz = (1 / (1 + np.exp(-z)) - t) / len(idx)
                 g = {"w3": a2.T @ dz, "b3": dz.sum()}
+                if "prior_scale" in p:
+                    g["prior_scale"] = dz @ z0[idx]
                 d2 = np.outer(dz, p["w3"]) * (1 - a2 ** 2)
                 g["W2"], g["b2"] = a1.T @ d2, d2.sum(0)
                 d1 = (d2 @ p["W2"].T) * (1 - a1 ** 2)
@@ -132,11 +140,13 @@ class ValueNet:
                     v2[k] = 0.999 * v2[k] + 0.001 * gk * gk
                     p[k] = p[k] - lr * (m[k] / (1 - 0.9 ** step)) / (np.sqrt(v2[k] / (1 - 0.999 ** step)) + 1e-8)
             if epoch == 0 and fixed:
-                start = loss_of(Vs, np.asarray(y_val, dtype=np.float64), base.p, v0) if Vs is not None else None
+                start = loss_of(Vs, np.asarray(y_val, dtype=np.float64), dict(p, w3=np.zeros(h2)), v0) \
+                    if Vs is not None else None
                 say(f"  the prior alone: validation {start:.4f}" if start is not None else "  (prior)")
             train_loss = loss_of(Xs, y, p, z0)
             val_loss = loss_of(Vs, np.asarray(y_val, dtype=np.float64), p, v0) if Vs is not None else train_loss
-            say(f"  epoch {epoch + 1}: train {train_loss:.4f}, validation {val_loss:.4f}")
+            say(f"  epoch {epoch + 1}: train {train_loss:.4f}, validation {val_loss:.4f}"
+                + (f", prior scale {float(p['prior_scale']):.3f}" if "prior_scale" in p else ""))
             if val_loss < best - 1e-5:
                 best, best_p, worse = val_loss, {k: v.copy() for k, v in p.items()}, 0
             else:
