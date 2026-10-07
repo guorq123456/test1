@@ -97,6 +97,41 @@ def restricted_line(root, restriction: str, max_len: int = 40) -> list:
     return out
 
 
+def leaf_lines(root, estimate) -> list:
+    """Every line the tree has searched to its end: (the keys along it, the leaf's estimate), following
+    each child with visits from the root."""
+    out, stack = [], [(root, ())]
+    while stack:
+        node, keys = stack.pop()
+        kids = [(k, c) for k, c in node.children.items() if c.visits > 0]
+        if not kids:
+            if keys:
+                out.append((keys, estimate(node)))
+            continue
+        for k, c in kids:
+            stack.append((c, keys + (k,)))
+    return out
+
+
+def one_turn_q(lines: list, restriction: str) -> float | None:
+    """What the one-turn search thinks of a candidate (the test session's Q): the best searched line it
+    allows minus the best line that does what it forbids (for a forced start super:<id> / evo:<id> /
+    superany:<id>: the best line that super-evolves / evolves that card minus the best line that
+    doesn't); None if one side was never searched."""
+    kind = restriction.split(":")[0]
+    if kind in PREFIX:
+        cid, sup = int(restriction.split(":")[1]), kind != "evo"
+        hit = lambda keys: any(k[0] == "E" and k[2] is sup and k[1][-1] == cid for k in keys)
+        yes = [v for keys, v in lines if hit(keys)]
+        no = [v for keys, v in lines if not hit(keys)]
+    else:
+        no = [v for keys, v in lines if any(key_forbidden(restriction, k) for k in keys)]
+        yes = [v for keys, v in lines if not any(key_forbidden(restriction, k) for k in keys)]
+    if not yes or not no:
+        return None
+    return max(yes) - max(no)
+
+
 def _plain(part):
     """A key's part as JSON-friendly data."""
     return [_plain(x) for x in part] if isinstance(part, tuple) else part
@@ -209,7 +244,7 @@ class CrossTurnAgent:
     def __init__(self, base, policy=None, samples: int = 4, margin: float = 0.0, seed: int = 0,
                  max_steps: int = 40, next_turn: bool = False, z: float = 0.0, static: bool = False,
                  research: int = 0, next_search: int = 0, opp_search: int = 0, kinds=KINDS,
-                 max_keeps: int = 0, gap: float | None = None, pairs: int = 1):
+                 max_keeps: int = 0, gap: float | None = None, pairs: int = 1, qgap: float | None = None):
         self.base = base                     # an MCTSAgent (the lethal search stays outside)
         self.search: ISMCTS = base.search
         if policy is None:
@@ -234,6 +269,8 @@ class CrossTurnAgent:
         self.gap = gap                       # play out only if the root's two most visited moves are within
                                              # this much, or a resource decision is among the candidates
                                              # (None: every turn with candidates)
+        self.qgap = qgap                     # keep only candidates the one-turn search can't decide (its Q
+                                             # within this much; a forced start it never searched counts too)
         self.pairs = pairs                   # with next_turn: own turns played after the opponent's (each but
                                              # the last followed by another opponent turn) before scoring
         self._small = {}
@@ -243,7 +280,8 @@ class CrossTurnAgent:
         self.turn = None
         self.restriction = NONE
         self._veto = self.search.veto        # the base search's own veto, kept under a restriction
-        self.picked: dict = {}               # restriction kind -> turns (statistics)
+        self.turns = 0                       # own turns started (statistics)
+        self.picked: dict = {}               # restriction kind -> turns played out (statistics)
         self.values: dict = {}
         self.last_plan: dict | None = None   # the last turn start's measurements (learn.netdata records them)
 
@@ -484,6 +522,7 @@ class CrossTurnAgent:
             return self.base.act(state, actions)
         if state.turn != self.turn:
             self.turn = state.turn
+            self.turns += 1
             self._following = []
             self._set(NONE)
             if len(actions) == 1:
@@ -494,6 +533,15 @@ class CrossTurnAgent:
             root = self.search.last_root
             line = principal_line(root) if root is not None else []
             candidates = restrictions(line, self.kinds, self.max_keeps, self._supers(state))
+            if self.qgap is not None and len(candidates) > 1:
+                lines_seen = leaf_lines(root, self.search.estimate)
+                qs = {r: one_turn_q(lines_seen, r) for r in candidates if r != NONE}
+
+                def unsure(r):
+                    if qs[r] is None:              # a forced start the search never tried: the play-out judges it
+                        return r.split(":")[0] in PREFIX
+                    return abs(qs[r]) <= self.qgap
+                candidates = [NONE] + [r for r in candidates if r != NONE and unsure(r)]
             self._prefixes = {}
             for r in [r for r in candidates if r.split(":")[0] in PREFIX]:
                 start = self.prefix(state, r)

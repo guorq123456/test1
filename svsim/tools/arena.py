@@ -180,12 +180,13 @@ def make_agent(spec: str, seed: int):
             # ...rt: a restriction's turn from the base search's own tree; ...mN: keep candidates for the
             # line's N dearest cards only
             # ...k<letters>: n don't super-evolve, o super-evolve another follower instead; ...gG: play out only
-            # when the root's two best moves are within G or a resource decision is open; ...pP: P own turns
+            # when the root's two best moves are within G or a resource decision is open; ...pP: P own turns;
+            # ...qQ: only candidates whose one-turn Q (agents.crossturn_agent.one_turn_q) is within Q
             m = re.fullmatch(r"cross([ns]?)(\d*)(?:z([\d.]+))?(?:r(\d+|t))?(?:k([ksenoxvy]+))?(?:m(\d+))?"
-                             r"(?:g([\d.]+))?(?:p(\d+))?", cross[0])
+                             r"(?:g([\d.]+))?(?:p(\d+))?(?:q([\d.]+))?", cross[0])
             if m is None:
                 raise ValueError(f"unknown agent option {cross[0]!r}")
-            mode, k, z, r, only, most, gap, pairs = m.groups()
+            mode, k, z, r, only, most, gap, pairs, qgap = m.groups()
             # (x: play-and-super-evolve another follower first, v: play-and-evolve another first, y: play-and-
             # super-evolve a follower in a turn the line doesn't super-evolve in)
             kinds = [{"k": "keep", "s": "save", "e": "noevo", "n": "nosuper", "o": "superonly", "x": "super",
@@ -194,7 +195,8 @@ def make_agent(spec: str, seed: int):
             agent = CrossTurnAgent(agent, samples=int(k or 4), seed=seed, next_turn=mode == "n",
                                    static=mode == "s", z=float(z or 0), research="tree" if r == "t" else int(r or 0),
                                    max_keeps=int(most or 0), gap=float(gap) if gap else None,
-                                   pairs=int(pairs or 1), **({"kinds": kinds} if kinds else {}))
+                                   pairs=int(pairs or 1), qgap=float(qgap) if qgap else None,
+                                   **({"kinds": kinds} if kinds else {}))
         if name == "mcts-raw":
             return agent
         agent = LethalAgent(agent, seed=seed, planner=planner,

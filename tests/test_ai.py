@@ -467,6 +467,17 @@ def test_cross_turn_candidates_restrict_the_rest_of_the_turn():
     assert not key_forbidden("superonly:77", sup[0]) and not key_forbidden("keep:77", sup[0])
     assert "super:88" in restrictions(sup, ALL_KINDS, supers=[77, 88]) and not key_forbidden("super:88", sup[0])
     assert restrictions([("T",)], ALL_KINDS, supers=[77]) == [NONE, "superany:77"]
+    from svsim.agents.crossturn_agent import leaf_lines, one_turn_q
+    tree, a, b, c, d = Node(), Node(), Node(), Node(), Node()
+    play = ("P", ("H", True, 101, 2), (), ())
+    tree.children = {play: a, ("T",): b}
+    a.children, a.visits, b.visits, c.visits = {("E", ("F", True, 0, 77), True, (), ()): c}, 3, 2, 3
+    c.value, b.value = 0.6, 0.55
+    found = leaf_lines(tree, lambda n: n.value)
+    assert sorted(v for _, v in found) == [0.55, 0.6]
+    assert abs(one_turn_q(found, "keep:101") - (0.55 - 0.6)) < 1e-12        # keeping it: best without minus with
+    assert abs(one_turn_q(found, "superany:77") - (0.6 - 0.55)) < 1e-12
+    assert one_turn_q(found, "superany:88") is None and one_turn_q(found, "save") is None
 
 
 def test_a_forced_start_plays_a_card_and_super_evolves_it():
