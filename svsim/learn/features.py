@@ -184,13 +184,18 @@ def contexts(state: GameState, side: int, hidden: bool) -> tuple[list[float], li
     pp += 1 if p.bonus_ready else 0
     scale = 6.0                                    # payoff points to about 0..1
     best = [[0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]]   # per kind: face now, value now, face later, value later
+    mine = state.active == side
     for f in p.followers:                          # on the field, not yet evolved that way
         parts = both_parts(f.defn)
+        # can hit the enemy leader on the coming turn (this turn: not yet attacked, and not just played
+        # unless it has Storm; next turn: any): its plain attack gain is that much to the face
+        hits = not prop(f, "cant_attack") and (not mine or (
+            f.attacks_made == 0 and (f.entered_turn != state.turn or bool(f.keywords & Keyword.STORM))))
         for k, super_ in ((0, False), (1, True)):
             if f.super_evolved or (f.evolved and not super_):
                 continue
             face, value = parts[k]
-            if f.attacks_made == 0:                # can still hit the leader: the plain attack gain
+            if hits:
                 face = max(face, PLAIN[super_] / 2)
             b = best[k]
             b[0], b[1] = max(b[0], face), max(b[1], value)
