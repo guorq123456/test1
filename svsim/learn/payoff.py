@@ -12,12 +12,13 @@ super-evolved) with a point, the best of its target choices; what that does beyo
 evolution's stats (+2/+2, super +3/+3) is measured in the role units and summed with weights:
 damage to the enemy leader 1, enemy followers taken out 4 each (8 defense), defense healed 0.5,
 cards drawn 2, play points 2, extra attack and defense 1 each, plus what the field (crests it leaves
-included) does more in one round of turns afterwards (face 1, clear 4, heal 0.5). `tier(defn)`: 2 at
-PAYOFF or more, 1 at LIGHT or more.
+included) does more over the three rounds of turns afterwards (face 1, clear 4, heal 0.5): a lasting
+effect counts for three turns (the test session's grouping of the player's holds: Bandenat, whose crest
+burns 2 a turn, is the card they super-evolve most). `tier(defn)`: 2 at PAYOFF or more, 1 at LIGHT.
 """
 from __future__ import annotations
 
-PAYOFF = 4.0                         # points of measured effect beyond a plain evolution: pays off well
+PAYOFF = 5.0                         # points of measured effect beyond a plain evolution: pays off well
 LIGHT = 2.0                          # ... pays off some
 PLAIN = {False: 4, True: 6}          # attack + defense a plain evolution / super-evolution adds
 WEIGHTS = {"face": 1.0, "removal": 4.0, "heal": 0.5, "draw": 2.0, "ramp": 2.0}
@@ -67,15 +68,19 @@ def evolve_payoff(defn, super_: bool = False) -> float:
     return best
 
 
-def _round(state) -> tuple:
-    """(face, heal, clear) of one round of turns from `state` (the holder's end of turn, the opponent's turn,
-    the holder's turn starting), its followers kept from attacking: what the field and crests do alone."""
+ROUNDS = 3                           # lasting effects (crests, amulets, each-turn triggers) count this many rounds
+
+
+def _round(state, rounds: int = ROUNDS) -> tuple:
+    """(face, heal, clear) of `rounds` rounds of turns from `state` (the holder's end of turn, the opponent's
+    turn, the holder's turn starting, ...), its followers kept from attacking: what the field and crests do
+    alone, added up (Bandenat's crest deals 2 a turn: 6 over three rounds)."""
     from svsim.core.actions import EndTurn
     from svsim.core.engine import apply
     from svsim.learn.roles import _measure
     t = state.clone()
     before = t.clone()
-    for _ in range(2):
+    for _ in range(2 * rounds):
         if t.over:
             break
         apply(t, EndTurn())

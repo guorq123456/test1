@@ -121,8 +121,8 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None) ->
 
 def _fork_point(state):
     """("payoff", card id) if the side to act could evolve and has a payoff follower in hand out of reach;
-    ("deck", card id) if it has none in hand but a tier-2 one is at least 40% likely to be drawn within two
-    turns; ("unlock", None) in its first two turns of evolving; else None."""
+    ("deck", card id) if it has none in hand but a tier-2 one is at least 25% likely to be drawn within two
+    turns (one draw a turn); ("unlock", None) in its first two turns of evolving; else None."""
     from svsim.core.engine import EVOLVE_TURN
     from svsim.learn.payoff import tier
     p = state.players[state.active]
@@ -139,7 +139,7 @@ def _fork_point(state):
         best = None
         for cid in {c.defn.card_id for c in p.deck if tier(c.defn) == 2}:
             copies = sum(1 for c in p.deck if c.defn.card_id == cid)
-            if sum(first_draw(copies, len(p.deck), 2)) >= 0.4 and (best is None or copies > best[1]):
+            if sum(first_draw(copies, len(p.deck), 2)) >= 0.25 and (best is None or copies > best[1]):
                 best = (cid, copies)
         if best is not None:
             return "deck", best[0]
