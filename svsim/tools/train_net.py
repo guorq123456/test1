@@ -57,6 +57,8 @@ def main() -> None:
     parser.add_argument("--linear", default=str(WEIGHTS / "dragon-dragon.json"),
                         help="the linear model to compare with (and to start from, the prior)")
     parser.add_argument("--no-prior", action="store_true", help="don't start from the linear model")
+    parser.add_argument("--ended-weight", type=float, default=1.0,
+                        help="weight of the turn-end positions in the loss (a third of the rows)")
     args = parser.parse_args()
     t0 = time.time()
     lines = [line for path in args.games for line in open(path, encoding="utf-8")]
@@ -76,6 +78,7 @@ def main() -> None:
     lin = LinearValue.load(Path(args.linear))
     net = ValueNet.train(X[~val], y[~val], vocab, X[val], y[val], hidden=tuple(args.hidden), epochs=args.epochs,
                          l2=args.l2, lr=args.lr, prior=None if args.no_prior else lin,
+                         weights=np.where(phase[~val] == E.ENDED, args.ended_weight, 1.0),
                          info={"games": len(lines), "positions": int(len(X)), "files": args.games})
     net.save(Path(args.out))
     print(f"saved {args.out} ({time.time() - t0:.0f}s)")

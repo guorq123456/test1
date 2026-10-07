@@ -81,13 +81,15 @@ class ValueNet:
     @classmethod
     def train(cls, X, y, vocab: list, X_val=None, y_val=None, hidden=(128, 64), epochs: int = 40,
               batch: int = 512, lr: float = 1e-3, l2: float = 1e-4, patience: int = 4, seed: int = 0,
-              info: dict | None = None, prior=None, say=print) -> "ValueNet":
+              info: dict | None = None, prior=None, weights=None, say=print) -> "ValueNet":
         """Fits the logistic loss on soft labels y (1 win, 0 loss, 0.5 draw) by minibatch Adam,
         keeping the epoch with the lowest validation loss (stopping after `patience` worse ones).
-        `prior`: a LinearValue on the version-2 features (the first inputs) whose logit is added."""
+        `prior`: a LinearValue on the version-2 features (the first inputs) whose logit is added.
+        `weights`: a weight per training row (the loss is their weighted mean)."""
         rng = np.random.default_rng(seed)
         X = np.asarray(X, dtype=np.float64)
         y = np.asarray(y, dtype=np.float64)
+        wts = np.ones(len(X)) if weights is None else np.asarray(weights, dtype=np.float64) / np.mean(weights)
         mean, std = X.mean(axis=0), X.std(axis=0)
         std[std < 1e-3] = 1.0
         Xs = (X - mean) / std
@@ -125,7 +127,7 @@ class ValueNet:
                 a1 = np.tanh(A @ p["W1"] + p["b1"])
                 a2 = np.tanh(a1 @ p["W2"] + p["b2"])
                 z = a2 @ p["w3"] + p["b3"] + float(p.get("prior_scale", 1.0)) * z0[idx]
-                dz = (1 / (1 + np.exp(-z)) - t) / len(idx)
+                dz = wts[idx] * (1 / (1 + np.exp(-z)) - t) / len(idx)
                 g = {"w3": a2.T @ dz, "b3": dz.sum()}
                 if "prior_scale" in p:
                     g["prior_scale"] = dz @ z0[idx]
