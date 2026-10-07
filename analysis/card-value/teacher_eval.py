@@ -109,7 +109,7 @@ def control(search, root, restriction):
 
 
 def measure(job):
-    gid, at, seed, samples, research = job
+    gid, at, seed, samples, research, next_search, opp_search = job
     from svsim.agents.crossturn_agent import NONE, CrossTurnAgent, principal_line, restrictions
     from svsim.tools.arena import make_agent
     rec = GAMES[gid]
@@ -117,6 +117,8 @@ def measure(job):
     for a in rec["actions"][:at]:
         apply(st, from_dict(a))
     extra = {"research": research} if research else {}
+    if next_search or opp_search:              # svsim 1e5141d on: the play-outs by a small search
+        extra.update(next_search=next_search, opp_search=opp_search)
     agent = CrossTurnAgent(make_agent("mcts-raw:100+learned+phased", seed), samples=samples,
                            seed=seed, next_turn=True, **extra)
     agent.search.choose(st)
@@ -147,6 +149,10 @@ def main():
     p.add_argument("--probes", default=None)
     p.add_argument("--seeds", type=int, default=2)
     p.add_argument("--samples", type=int, default=8)
+    p.add_argument("--next-search", type=int, default=0,
+                   help="iterations of the search playing the own next turn in the play-outs (1e5141d on); 0: policy head")
+    p.add_argument("--opp-search", type=int, default=0,
+                   help="the same for the opponent's turn")
     p.add_argument("--research", type=int, default=0,
                    help="iterations of each restriction's own search (svsim f492ffe on); 0: the line minus it")
     p.add_argument("--workers", type=int, default=4)
@@ -157,7 +163,8 @@ def main():
     for gid in sorted(GAMES):
         for at, turn, after in salem_turns(gid):
             choices[(gid, at)] = (turn[0][0].players[0].turns_taken, salem_choice(turn, after))
-            jobs += [(gid, at, 700 + k, args.samples, args.research) for k in range(args.seeds)]
+            jobs += [(gid, at, 700 + k, args.samples, args.research, args.next_search, args.opp_search)
+                     for k in range(args.seeds)]
     rows = []
     with Pool(args.workers, initializer=GAMES.update, initargs=(GAMES,)) as pool:
         for gid, at, seed, res in pool.imap_unordered(measure, jobs):
@@ -174,6 +181,8 @@ def main():
         groups.append(("探针集（验收用的 20 个）的回合", [r for r in rows if (r["game"], r["at"]) in probe]))
     kinds = lambda r: "save" if r["restriction"] == "save" else "noevo" if r["restriction"] == "noevo" else "keep"
     how = f"每个限制重新搜索 {args.research} 次" if args.research else "限制那边用主线减去它"
+    how += "".join([f"，我方下回合用 {args.next_search} 次搜索" if args.next_search else "",
+                    f"，对手回合用 {args.opp_search} 次搜索" if args.opp_search else ""])
     print("老师：svsim.agents.crossturn_agent 的推演（mcts-raw:100+learned+phased 的主线，"
           f"{args.samples} 个确定化，推演到我方下回合，{how}）；对照：同一棵一回合搜索树的 Q 差")
     for title, rs in groups:
