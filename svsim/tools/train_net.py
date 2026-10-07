@@ -24,9 +24,9 @@ def _rows(line: str) -> list:
     from svsim.learn.netdata import rows
     record = json.loads(line)
     out = []
-    for phase, me, state, result in rows(record):
+    for phase, me, state, result, q in rows(record, with_search=True):
         dense, zones = E.raw(state, me)
-        out.append((record["g"], phase, state.players[me].turns_taken, dense, zones, result))
+        out.append((record["g"], phase, state.players[me].turns_taken, dense, zones, result, q))
     return out
 
 
@@ -59,6 +59,8 @@ def main() -> None:
     parser.add_argument("--no-prior", action="store_true", help="don't start from the linear model")
     parser.add_argument("--no-cards", action="store_true",
                         help="leave out which cards are where (a smoother network on the totals only)")
+    parser.add_argument("--q-weight", type=float, default=0.0,
+                        help="the label is (1 - w) * result + w * the search's value where the search decided")
     parser.add_argument("--ended-weight", type=float, default=1.0,
                         help="weight of the turn-end positions in the loss (a third of the rows)")
     args = parser.parse_args()
@@ -73,12 +75,16 @@ def main() -> None:
     for i, row in enumerate(data):
         E.vectorize((row[3], row[4]), index, out=X[i])
     y = np.array([row[5] for row in data])
+    qs = np.array([np.nan if row[6] is None else row[6] for row in data])
+    has_q = ~np.isnan(qs)
+    print(f"search values at {has_q.sum()} of {len(qs)} positions", flush=True)
+    target = np.where(has_q, (1 - args.q_weight) * y + args.q_weight * np.nan_to_num(qs), y)
     games = np.array([row[0] for row in data])
     phase = np.array([row[1] for row in data])
     turn = np.array([row[2] for row in data])
     val = games % 10 == 0
     lin = LinearValue.load(Path(args.linear))
-    net = ValueNet.train(X[~val], y[~val], vocab, X[val], y[val], hidden=tuple(args.hidden), epochs=args.epochs,
+    net = ValueNet.train(X[~val], target[~val], vocab, X[val], target[val], hidden=tuple(args.hidden), epochs=args.epochs,
                          l2=args.l2, lr=args.lr, prior=None if args.no_prior else lin,
                          weights=np.where(phase[~val] == E.ENDED, args.ended_weight, 1.0),
                          info={"games": len(lines), "positions": int(len(X)), "files": args.games})

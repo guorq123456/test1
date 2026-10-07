@@ -94,24 +94,41 @@ def _thought(state, legal, search):
     return {"visits": visits, "value": round(search.estimate(best), 5), "center": round(search.center, 4)}
 
 
-def rows(record: dict):
+def search_value(thought: dict | None, gain: float = 1.0) -> float | None:
+    """The search's win probability for the player to act, from a decision's record["search"] entry:
+    ISMCTS squashes (score - center) / 8 with score = 8 * gain * logit (models.SCALE), so the best
+    line's logit is logit(value) / gain + center / (8 * gain)."""
+    import math
+    if not thought:
+        return None
+    v = min(max(thought["value"], 1e-6), 1 - 1e-6)
+    z = math.log(v / (1 - v)) / gain + thought["center"] / (8.0 * gain)
+    return 1 / (1 + math.exp(-max(-30.0, min(30.0, z))))
+
+
+def rows(record: dict, with_search: bool = False):
     """(phase, player, state, result) for every position the search may score (see module docstring);
-    result is 1 for a win of `player`, 0 for a loss, 0.5 for a draw. The state is a copy."""
+    result is 1 for a win of `player`, 0 for a loss, 0.5 for a draw. The state is a copy. With
+    `with_search`, a fifth item: the search's win probability at that decision (search_value), None
+    for turn ends and decisions the search didn't make."""
     from svsim.core.actions import EndTurn
     from svsim.core.enums import Phase
     from svsim.search.evaluate import after_end_of_turn
     from svsim.tools import records as R
     winner = record["winner"]
     result = lambda p: 1.0 if winner == p else 0.0 if winner in (0, 1) else 0.5
-    for state, action in R.steps(record):
+    thoughts = record.get("search") or []
+    gain = record.get("gain", 1.0)
+    for i, (state, action) in enumerate(R.steps(record)):
         if state.phase != Phase.MAIN:
             continue
         me = state.active
-        yield ACT, me, state.clone(), result(me)
+        q = search_value(thoughts[i] if i < len(thoughts) else None, gain)
+        yield (ACT, me, state.clone(), result(me)) + ((q,) if with_search else ())
         if isinstance(action, EndTurn):
             ended = after_end_of_turn(state)
             if not ended.over:
-                yield ENDED, me, ended, result(me)
+                yield (ENDED, me, ended, result(me)) + ((None,) if with_search else ())
 
 
 def main() -> None:
