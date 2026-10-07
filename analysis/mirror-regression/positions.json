@@ -1,0 +1,6333 @@
+{
+ "source": "Salem's ramp-dragon mirror games against the web bot (mcts:200+plan+learned)",
+ "records": {
+  "1791304981889": {
+   "actions": [
+    {
+     "indices": [
+      0,
+      2
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "indices": [
+      0,
+      1
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 45
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "attacker": 45,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 32
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "attacker": 45,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 72
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 16
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 63
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 45
+    },
+    {
+     "attacker": 45,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 22
+    },
+    {
+     "modes": [],
+     "targets": [
+      5
+     ],
+     "type": "PlayCard",
+     "uid": 11
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 82
+    },
+    {
+     "attacker": 82,
+     "target": 45,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      81
+     ],
+     "type": "PlayCard",
+     "uid": 67
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 67
+    },
+    {
+     "attacker": 67,
+     "target": 11,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 3
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 9
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 33
+    },
+    {
+     "attacker": 9,
+     "target": 67,
+     "type": "Attack"
+    },
+    {
+     "attacker": 87,
+     "target": 67,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      77
+     ],
+     "type": "PlayCard",
+     "uid": 66
+    },
+    {
+     "modes": [],
+     "targets": [
+      79,
+      86
+     ],
+     "type": "PlayCard",
+     "uid": 84
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 66
+    },
+    {
+     "attacker": 66,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "modes": [],
+     "targets": [
+      78,
+      3
+     ],
+     "type": "PlayCard",
+     "uid": 85
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 38
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 38
+    },
+    {
+     "attacker": 38,
+     "target": 66,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 43
+    },
+    {
+     "modes": [],
+     "targets": [
+      80,
+      38
+     ],
+     "type": "PlayCard",
+     "uid": 88
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 48
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 74
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 43
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 36
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 36
+    },
+    {
+     "attacker": 36,
+     "target": 43,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      55,
+      36
+     ],
+     "type": "PlayCard",
+     "uid": 89
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 40
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 40
+    },
+    {
+     "type": "EndTurn"
+    }
+   ],
+   "ai": "mcts:200+plan+learned",
+   "date": "2026-10-06 12:43",
+   "decks": [
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ],
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ]
+   ],
+   "first": 0,
+   "first_arg": null,
+   "names": [
+    "ramp",
+    "ramp"
+   ],
+   "seed": 808790751,
+   "version": 1,
+   "winner": 0
+  },
+  "1791305120171": {
+   "actions": [
+    {
+     "indices": [
+      1,
+      2,
+      3
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "indices": [
+      1,
+      2,
+      3
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 41
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 73
+    },
+    {
+     "attacker": 41,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 33
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "attacker": 41,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 64
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 23
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 23
+    },
+    {
+     "attacker": 23,
+     "target": 64,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "attacker": 41,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 54
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 43
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 57
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 43
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      20
+     ],
+     "type": "PlayCard",
+     "uid": 27
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "modes": [],
+     "targets": [
+      19,
+      43
+     ],
+     "type": "PlayCard",
+     "uid": 81
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 27
+    },
+    {
+     "attacker": 27,
+     "target": -2,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 76
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 41
+    },
+    {
+     "attacker": 41,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 37
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 37
+    },
+    {
+     "attacker": 37,
+     "target": 41,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 79
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      38,
+      79
+     ],
+     "type": "PlayCard",
+     "uid": 82
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 6
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 6
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 84
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 85
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 86
+    },
+    {
+     "attacker": 37,
+     "target": -2,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    }
+   ],
+   "ai": "mcts:200+plan+learned",
+   "date": "2026-10-06 12:45",
+   "decks": [
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ],
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ]
+   ],
+   "first": 1,
+   "first_arg": null,
+   "names": [
+    "ramp",
+    "ramp"
+   ],
+   "seed": 859343308,
+   "version": 1,
+   "winner": 0
+  },
+  "1791305215412": {
+   "actions": [
+    {
+     "indices": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "indices": [
+      1,
+      2
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 42
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 3
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 49
+    },
+    {
+     "attacker": 42,
+     "target": 3,
+     "type": "Attack"
+    },
+    {
+     "attacker": 49,
+     "target": 3,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 15
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 73
+    },
+    {
+     "attacker": 42,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 25
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "attacker": 42,
+     "target": 25,
+     "type": "Attack"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 65
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 65
+    },
+    {
+     "attacker": 65,
+     "target": 25,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 16
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 9
+    },
+    {
+     "attacker": 9,
+     "target": 65,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 74
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 46
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 52
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 46
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 21
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 79
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 79
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      4
+     ],
+     "type": "PlayCard",
+     "uid": 11
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 84
+    },
+    {
+     "modes": [],
+     "targets": [
+      85
+     ],
+     "type": "PlayCard",
+     "uid": 26
+    },
+    {
+     "modes": [],
+     "targets": [
+      86,
+      79
+     ],
+     "type": "PlayCard",
+     "uid": 88
+    },
+    {
+     "attacker": 26,
+     "target": -2,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 44
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 83
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 44
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 60
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 90
+    },
+    {
+     "attacker": 44,
+     "target": 84,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 38
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 91
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 64
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 92
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 38
+    },
+    {
+     "attacker": 38,
+     "target": -2,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    }
+   ],
+   "ai": "mcts:200+plan+learned",
+   "date": "2026-10-06 12:46",
+   "decks": [
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ],
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ]
+   ],
+   "first": 0,
+   "first_arg": null,
+   "names": [
+    "ramp",
+    "ramp"
+   ],
+   "seed": 401257598,
+   "version": 1,
+   "winner": 0
+  },
+  "1791305347029": {
+   "actions": [
+    {
+     "indices": [
+      0,
+      2,
+      3
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "indices": [
+      1
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 42
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 17
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 57
+    },
+    {
+     "attacker": 42,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 34
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "attacker": 42,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 46
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 74
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      6
+     ],
+     "type": "PlayCard",
+     "uid": 11
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 7
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 81
+    },
+    {
+     "attacker": 81,
+     "target": 42,
+     "type": "Attack"
+    },
+    {
+     "attacker": 7,
+     "target": 46,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [
+      0
+     ],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 70
+    },
+    {
+     "modes": [
+      1
+     ],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 70
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [
+      0
+     ],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 29
+    },
+    {
+     "modes": [
+      1
+     ],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 29
+    },
+    {
+     "attacker": 29,
+     "target": 70,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      77
+     ],
+     "type": "PlayCard",
+     "uid": 68
+    },
+    {
+     "modes": [],
+     "targets": [
+      60,
+      29
+     ],
+     "type": "PlayCard",
+     "uid": 85
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 68
+    },
+    {
+     "attacker": 68,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 3
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "modes": [],
+     "targets": [
+      30,
+      84
+     ],
+     "type": "PlayCard",
+     "uid": 32
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 32
+    },
+    {
+     "attacker": 32,
+     "target": 68,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      49,
+      32
+     ],
+     "type": "PlayCard",
+     "uid": 86
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 43
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 54
+    },
+    {
+     "modes": [],
+     "targets": [
+      75
+     ],
+     "type": "PlayCard",
+     "uid": 50
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [
+      80
+     ],
+     "type": "Evolve",
+     "uid": 50
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 37
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 37
+    },
+    {
+     "attacker": 37,
+     "target": 43,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [
+      0
+     ],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 69
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 52
+    },
+    {
+     "modes": [
+      0
+     ],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 69
+    },
+    {
+     "attacker": 69,
+     "target": 37,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 2
+    },
+    {
+     "modes": [],
+     "targets": [
+      16
+     ],
+     "type": "PlayCard",
+     "uid": 27
+    },
+    {
+     "modes": [],
+     "targets": [
+      1,
+      69
+     ],
+     "type": "PlayCard",
+     "uid": 88
+    },
+    {
+     "attacker": 27,
+     "target": -2,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 41
+    },
+    {
+     "modes": [],
+     "targets": [
+      61,
+      56
+     ],
+     "type": "PlayCard",
+     "uid": 72
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 38
+    },
+    {
+     "attacker": 2,
+     "target": 41,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 78
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 22
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 53
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [
+      0
+     ],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 31
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 14
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 25
+    },
+    {
+     "attacker": 25,
+     "target": -2,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    }
+   ],
+   "ai": "mcts:200+plan+learned",
+   "date": "2026-10-06 12:49",
+   "decks": [
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ],
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ]
+   ],
+   "first": 1,
+   "first_arg": null,
+   "names": [
+    "ramp",
+    "ramp"
+   ],
+   "seed": 907275913,
+   "version": 1,
+   "winner": 0
+  },
+  "1791305539194": {
+   "actions": [
+    {
+     "indices": [
+      0,
+      1,
+      3
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "indices": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 33
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 73
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 8
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 54
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 47
+    },
+    {
+     "attacker": 47,
+     "target": 8,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 24
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 57
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 44
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 44
+    },
+    {
+     "attacker": 44,
+     "target": 24,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      35
+     ],
+     "type": "PlayCard",
+     "uid": 10
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 13
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      78
+     ],
+     "type": "PlayCard",
+     "uid": 68
+    },
+    {
+     "modes": [],
+     "targets": [
+      83,
+      10
+     ],
+     "type": "PlayCard",
+     "uid": 84
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 68
+    },
+    {
+     "attacker": 68,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 36
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 36
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      43
+     ],
+     "type": "PlayCard",
+     "uid": 51
+    },
+    {
+     "modes": [
+      1
+     ],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 71
+    },
+    {
+     "modes": [
+      0
+     ],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 71
+    },
+    {
+     "attacker": 71,
+     "target": 36,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [
+      0
+     ],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 30
+    },
+    {
+     "modes": [
+      1
+     ],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 30
+    },
+    {
+     "attacker": 30,
+     "target": 71,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      85,
+      63
+     ],
+     "type": "PlayCard",
+     "uid": 72
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 41
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 72
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 40
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 40
+    },
+    {
+     "attacker": 40,
+     "target": 72,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 76
+    },
+    {
+     "attacker": 41,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "EndTurn"
+    }
+   ],
+   "ai": "mcts:200+plan+learned",
+   "date": "2026-10-06 12:52",
+   "decks": [
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ],
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ]
+   ],
+   "first": 1,
+   "first_arg": null,
+   "names": [
+    "ramp",
+    "ramp"
+   ],
+   "seed": 404044581,
+   "version": 1,
+   "winner": 0
+  },
+  "1791306269709": {
+   "actions": [
+    {
+     "indices": [
+      0,
+      1,
+      3
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "indices": [
+      0,
+      2,
+      3
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 15
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 57
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 17
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 65
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 24
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 24
+    },
+    {
+     "attacker": 24,
+     "target": 65,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [
+      0
+     ],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 69
+    },
+    {
+     "modes": [
+      1
+     ],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 69
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 21
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 16
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 63
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 73
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 63
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 39
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 39
+    },
+    {
+     "attacker": 39,
+     "target": 63,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 78
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      4
+     ],
+     "type": "PlayCard",
+     "uid": 27
+    },
+    {
+     "modes": [],
+     "targets": [
+      5,
+      78
+     ],
+     "type": "PlayCard",
+     "uid": 81
+    },
+    {
+     "attacker": 39,
+     "target": -2,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    }
+   ],
+   "ai": "mcts:200+plan+learned",
+   "date": "2026-10-06 13:04",
+   "decks": [
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ],
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ]
+   ],
+   "first": 1,
+   "first_arg": null,
+   "names": [
+    "ramp",
+    "ramp"
+   ],
+   "seed": 17984253,
+   "version": 1,
+   "winner": 0
+  },
+  "1791306333962": {
+   "actions": [
+    {
+     "indices": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "indices": [
+      1,
+      2
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 7
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 74
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "attacker": 7,
+     "target": -2,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 54
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 9
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 55
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 23
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 9
+    },
+    {
+     "attacker": 9,
+     "target": -2,
+     "type": "Attack"
+    },
+    {
+     "attacker": 81,
+     "target": -2,
+     "type": "Attack"
+    },
+    {
+     "attacker": 82,
+     "target": -2,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [
+      0
+     ],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 69
+    },
+    {
+     "modes": [
+      1
+     ],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 69
+    },
+    {
+     "attacker": 69,
+     "target": 23,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      5
+     ],
+     "type": "PlayCard",
+     "uid": 28
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 85
+    },
+    {
+     "attacker": 85,
+     "target": 69,
+     "type": "Attack"
+    },
+    {
+     "attacker": 28,
+     "target": -2,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      75,
+      67
+     ],
+     "type": "PlayCard",
+     "uid": 72
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 72
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      86
+     ],
+     "type": "PlayCard",
+     "uid": 27
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 27
+    },
+    {
+     "attacker": 27,
+     "target": -2,
+     "type": "Attack"
+    }
+   ],
+   "ai": "mcts:200+plan+learned",
+   "date": "2026-10-06 13:05",
+   "decks": [
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ],
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ]
+   ],
+   "first": 0,
+   "first_arg": null,
+   "names": [
+    "ramp",
+    "ramp"
+   ],
+   "seed": 627656584,
+   "version": 1,
+   "winner": 0
+  },
+  "1791306396169": {
+   "actions": [
+    {
+     "indices": [
+      1,
+      2,
+      3
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "indices": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 46
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 9
+    },
+    {
+     "attacker": 9,
+     "target": 46,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 45
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 32
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "attacker": 45,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 55
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 21
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 49
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 49
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 7
+    },
+    {
+     "attacker": 84,
+     "target": 82,
+     "type": "Attack"
+    },
+    {
+     "attacker": 83,
+     "target": 81,
+     "type": "Attack"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 12
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 63
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 63
+    },
+    {
+     "attacker": 63,
+     "target": 7,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [
+      0
+     ],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 29
+    },
+    {
+     "modes": [
+      0
+     ],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 29
+    },
+    {
+     "attacker": 29,
+     "target": 63,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 53
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "modes": [],
+     "targets": [
+      78
+     ],
+     "type": "PlayCard",
+     "uid": 68
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 68
+    },
+    {
+     "attacker": 68,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 1
+    },
+    {
+     "modes": [
+      0
+     ],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 31
+    },
+    {
+     "modes": [
+      0
+     ],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 31
+    },
+    {
+     "attacker": 31,
+     "target": 68,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      74
+     ],
+     "type": "PlayCard",
+     "uid": 67
+    },
+    {
+     "modes": [],
+     "targets": [
+      86,
+      1
+     ],
+     "type": "PlayCard",
+     "uid": 85
+    },
+    {
+     "modes": [],
+     "targets": [
+      44,
+      31
+     ],
+     "type": "PlayCard",
+     "uid": 87
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 67
+    },
+    {
+     "attacker": 67,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 37
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 37
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [
+      0
+     ],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 71
+    },
+    {
+     "modes": [],
+     "targets": [
+      72,
+      37
+     ],
+     "type": "PlayCard",
+     "uid": 88
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 40
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 51
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 43
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 40
+    },
+    {
+     "attacker": 40,
+     "target": -2,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    }
+   ],
+   "ai": "mcts:200+plan+learned",
+   "date": "2026-10-06 13:06",
+   "decks": [
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ],
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ]
+   ],
+   "first": 0,
+   "first_arg": null,
+   "names": [
+    "ramp",
+    "ramp"
+   ],
+   "seed": 439739167,
+   "version": 1,
+   "winner": 0
+  },
+  "1791306497426": {
+   "actions": [
+    {
+     "indices": [
+      0,
+      1,
+      2
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "indices": [
+      1
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 16
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 41
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 33
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "attacker": 41,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 48
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      4
+     ],
+     "type": "PlayCard",
+     "uid": 10
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 83
+    },
+    {
+     "attacker": 83,
+     "target": 41,
+     "type": "Attack"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 32
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "attacker": 48,
+     "target": 10,
+     "type": "Attack"
+    },
+    {
+     "attacker": 81,
+     "target": 83,
+     "type": "Attack"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 65
+    },
+    {
+     "attacker": 82,
+     "target": 83,
+     "type": "Attack"
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 65
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      84
+     ],
+     "type": "PlayCard",
+     "uid": 11
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 12
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 14
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 13
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [
+      0
+     ],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 70
+    },
+    {
+     "modes": [
+      0
+     ],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 70
+    },
+    {
+     "attacker": 70,
+     "target": 11,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 35
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 35
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      76
+     ],
+     "type": "PlayCard",
+     "uid": 66
+    },
+    {
+     "modes": [],
+     "targets": [
+      63,
+      35
+     ],
+     "type": "PlayCard",
+     "uid": 86
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 66
+    },
+    {
+     "attacker": 66,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [
+      0
+     ],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 31
+    },
+    {
+     "modes": [
+      0
+     ],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 31
+    },
+    {
+     "attacker": 31,
+     "target": 66,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 64
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 64
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 52
+    },
+    {
+     "attacker": 64,
+     "target": 31,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 1
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 39
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 39
+    },
+    {
+     "attacker": 39,
+     "target": 64,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 79
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      30
+     ],
+     "type": "PlayCard",
+     "uid": 26
+    },
+    {
+     "modes": [],
+     "targets": [
+      36,
+      79
+     ],
+     "type": "PlayCard",
+     "uid": 88
+    },
+    {
+     "attacker": 26,
+     "target": -2,
+     "type": "Attack"
+    },
+    {
+     "attacker": 1,
+     "target": -2,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 80
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 37
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 62
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 18
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [
+      0
+     ],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 71
+    },
+    {
+     "modes": [],
+     "targets": [
+      49
+     ],
+     "type": "PlayCard",
+     "uid": 51
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 21
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 42
+    },
+    {
+     "modes": [],
+     "targets": [
+      87,
+      44
+     ],
+     "type": "PlayCard",
+     "uid": 73
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 24
+    },
+    {
+     "attacker": 24,
+     "target": -2,
+     "type": "Attack"
+    }
+   ],
+   "ai": "mcts:200+plan+learned",
+   "date": "2026-10-06 13:08",
+   "decks": [
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ],
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ]
+   ],
+   "first": 1,
+   "first_arg": null,
+   "names": [
+    "ramp",
+    "ramp"
+   ],
+   "seed": 903423223,
+   "version": 1,
+   "winner": 0
+  },
+  "1791306781701": {
+   "actions": [
+    {
+     "indices": [
+      1,
+      2,
+      3
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "indices": [
+      0,
+      1,
+      2
+     ],
+     "type": "Mulligan"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 41
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      20
+     ],
+     "type": "PlayCard",
+     "uid": 11
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 57
+    },
+    {
+     "attacker": 41,
+     "target": 11,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 32
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 61
+    },
+    {
+     "attacker": 41,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 24
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "attacker": 41,
+     "target": 24,
+     "type": "Attack"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 44
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 53
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 44
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "modes": [
+      0
+     ],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 29
+    },
+    {
+     "modes": [
+      1
+     ],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 29
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [
+      1
+     ],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 71
+    },
+    {
+     "modes": [
+      1
+     ],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 71
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 1
+    },
+    {
+     "modes": [],
+     "targets": [
+      5
+     ],
+     "type": "PlayCard",
+     "uid": 10
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 82
+    },
+    {
+     "attacker": 82,
+     "target": 71,
+     "type": "Attack"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 14
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 7
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 81
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 45
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 45
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 59
+    },
+    {
+     "attacker": 45,
+     "target": 1,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "type": "UseBonusPP"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 40
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 40
+    },
+    {
+     "attacker": 40,
+     "target": 45,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      78
+     ],
+     "type": "PlayCard",
+     "uid": 66
+    },
+    {
+     "modes": [],
+     "targets": [
+      68,
+      40
+     ],
+     "type": "PlayCard",
+     "uid": 89
+    },
+    {
+     "modes": [],
+     "super_": true,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 66
+    },
+    {
+     "attacker": 66,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 39
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      86,
+      39
+     ],
+     "type": "PlayCard",
+     "uid": 90
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 43
+    },
+    {
+     "modes": [
+      0
+     ],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 69
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      83
+     ],
+     "type": "PlayCard",
+     "uid": 26
+    },
+    {
+     "modes": [],
+     "targets": [
+      84,
+      69
+     ],
+     "type": "PlayCard",
+     "uid": 91
+    },
+    {
+     "modes": [],
+     "super_": false,
+     "targets": [],
+     "type": "Evolve",
+     "uid": 26
+    },
+    {
+     "attacker": 26,
+     "target": -2,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 77
+    },
+    {
+     "attacker": 43,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [
+      85,
+      77
+     ],
+     "type": "PlayCard",
+     "uid": 92
+    },
+    {
+     "modes": [
+      0
+     ],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 31
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 6
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 76
+    },
+    {
+     "attacker": 43,
+     "target": -1,
+     "type": "Attack"
+    },
+    {
+     "type": "EndTurn"
+    },
+    {
+     "modes": [],
+     "targets": [],
+     "type": "PlayCard",
+     "uid": 21
+    }
+   ],
+   "ai": "mcts:200+plan+learned",
+   "date": "2026-10-06 13:13",
+   "decks": [
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ],
+    [
+     10403120,
+     10403120,
+     10403120,
+     10644120,
+     10644120,
+     10644120,
+     10741110,
+     10741110,
+     10741110,
+     10842120,
+     10842120,
+     10543310,
+     10543310,
+     10543310,
+     10042310,
+     10042310,
+     10042310,
+     10742310,
+     10542310,
+     10542310,
+     10503310,
+     10503310,
+     10444120,
+     10444120,
+     10444120,
+     10644110,
+     10644110,
+     10644110,
+     10944120,
+     10944120,
+     10944120,
+     10844120,
+     10844120,
+     10844120,
+     10744110,
+     10744110,
+     10744110,
+     10544110,
+     10544110,
+     10544110
+    ]
+   ],
+   "first": 1,
+   "first_arg": null,
+   "names": [
+    "ramp",
+    "ramp"
+   ],
+   "seed": 219870625,
+   "version": 1,
+   "winner": 0
+  }
+ },
+ "positions": [
+  {
+   "id": "1791304981889-t5-discard",
+   "category": "discard",
+   "check": {
+    "never_discards": [
+     "焦灰的安纳提玛·班德奈特",
+     "约束的《正义》·伊兰翠"
+    ]
+   },
+   "why": "Salem discarded ['古旧天刀·波菈莱'] and kept ['焦灰的安纳提玛·班德奈特', '约束的《正义》·伊兰翠'].",
+   "game": "1791304981889",
+   "at": 20,
+   "context": {
+    "own_turn": 5,
+    "pp": "7/7",
+    "hp": 18,
+    "opp_hp": 20,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "《世界》的呈现",
+     "古旧天刀·波菈莱",
+     "约束的《正义》·伊兰翠",
+     "禁牙的变貌·诺玛格达拉",
+     "焦灰的安纳提玛·班德奈特",
+     "掌握天空命运的少女·露莉亚"
+    ],
+    "board": [],
+    "opp_board": [
+     "古旧天刀·波菈莱 2/4",
+     "世界的伙伴·佐伊 5/5"
+    ],
+    "opp_hand": 6,
+    "ep": 2,
+    "sep": 2,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 《世界》的呈现",
+    "play 满面笑容的烹饪·琪米卡 discard ['古旧天刀·波菈莱']",
+    "evolve 古旧天刀·波菈莱",
+    "古旧天刀·波菈莱 attacks 古旧天刀·波菈莱",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791304981889-t7-super_evolve",
+   "category": "super_evolve",
+   "check": {
+    "super_evolves": "约束的《正义》·伊兰翠"
+   },
+   "why": "Salem super-evolved 约束的《正义》·伊兰翠 here; opponent board ['断头的斩姬·相枛津 8/7'], 焦灰的安纳提玛·班德奈特 also in hand.",
+   "game": "1791304981889",
+   "at": 42,
+   "context": {
+    "own_turn": 7,
+    "pp": "10/10",
+    "hp": 10,
+    "opp_hp": 20,
+    "hand": [
+     "约束的《正义》·伊兰翠",
+     "禁牙的变貌·诺玛格达拉",
+     "焦灰的安纳提玛·班德奈特",
+     "焦龙的午睡",
+     "天刀深渊",
+     "约束的《正义》·伊兰翠",
+     "断头的斩姬·相枛津",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 8/7"
+    ],
+    "opp_hand": 4,
+    "ep": 1,
+    "sep": 2,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 约束的《正义》·伊兰翠",
+    "super-evolve 约束的《正义》·伊兰翠",
+    "约束的《正义》·伊兰翠 attacks 断头的斩姬·相枛津",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791304981889-t8-super_evolve",
+   "category": "super_evolve",
+   "check": {
+    "super_evolves": "焦灰的安纳提玛·班德奈特"
+   },
+   "why": "Salem super-evolved 焦灰的安纳提玛·班德奈特 here; opponent board ['掌握天空命运的少女·露莉亚 4/4', '宣扬的龙人 2/1', '宣扬的龙人 2/1', '宣扬的龙人 2/1'], 约束的《正义》·伊兰翠 also in hand.",
+   "game": "1791304981889",
+   "at": 52,
+   "context": {
+    "own_turn": 8,
+    "pp": "10/10",
+    "hp": 10,
+    "opp_hp": 11,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "焦灰的安纳提玛·班德奈特",
+     "焦龙的午睡",
+     "天刀深渊",
+     "约束的《正义》·伊兰翠",
+     "断头的斩姬·相枛津",
+     "禁牙的变貌·诺玛格达拉",
+     "宣扬的龙人"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 4/4",
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1"
+    ],
+    "opp_hand": 1,
+    "ep": 1,
+    "sep": 1,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 焦灰的安纳提玛·班德奈特",
+    "super-evolve 焦灰的安纳提玛·班德奈特",
+    "焦灰的安纳提玛·班德奈特 attacks 掌握天空命运的少女·露莉亚",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791304981889-t9-lethal",
+   "category": "lethal",
+   "check": {
+    "win_this_turn": true
+   },
+   "why": "Salem won on this turn (attacks, effects, or end-of-turn damage).",
+   "game": "1791304981889",
+   "at": 58,
+   "context": {
+    "own_turn": 9,
+    "pp": "10/10",
+    "hp": 10,
+    "opp_hp": 8,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "焦龙的午睡",
+     "天刀深渊",
+     "约束的《正义》·伊兰翠",
+     "断头的斩姬·相枛津",
+     "禁牙的变貌·诺玛格达拉",
+     "宣扬的龙人",
+     "掌握天空命运的少女·露莉亚"
+    ],
+    "board": [],
+    "opp_board": [],
+    "opp_hand": 0,
+    "ep": 1,
+    "sep": 0,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 约束的《正义》·伊兰翠",
+    "evolve 约束的《正义》·伊兰翠",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305120171-t1-bonus_keep",
+   "category": "bonus_keep",
+   "check": {
+    "keeps_bonus": true
+   },
+   "why": "Second player, own turn 1: Salem kept the bonus PP for a turn-2 ramp card.",
+   "game": "1791305120171",
+   "at": 3,
+   "context": {
+    "own_turn": 1,
+    "pp": "1/1",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "焦灰的安纳提玛·班德奈特",
+     "焦龙的午睡",
+     "世界的伙伴·佐伊",
+     "日珥咆哮"
+    ],
+    "board": [],
+    "opp_board": [],
+    "opp_hand": 5,
+    "ep": 2,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305120171-t5-discard",
+   "category": "discard",
+   "check": {
+    "never_discards": [
+     "焦灰的安纳提玛·班德奈特",
+     "约束的《正义》·伊兰翠"
+    ]
+   },
+   "why": "Salem discarded ['日珥咆哮', '日珥咆哮'] and kept ['焦灰的安纳提玛·班德奈特', '约束的《正义》·伊兰翠'].",
+   "game": "1791305120171",
+   "at": 25,
+   "context": {
+    "own_turn": 5,
+    "pp": "7/7",
+    "hp": 15,
+    "opp_hp": 20,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "焦龙的午睡",
+     "日珥咆哮",
+     "日珥咆哮",
+     "约束的《正义》·伊兰翠",
+     "《世界》的呈现",
+     "断头的斩姬·相枛津"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "掌握天空命运的少女·露莉亚 3/3"
+    ],
+    "opp_hand": 3,
+    "ep": 1,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "play 断头的斩姬·相枛津 discard ['日珥咆哮']",
+    "bonus PP",
+    "play 赤流 discard ['日珥咆哮'] -> ['掌握天空命运的少女·露莉亚']",
+    "evolve 断头的斩姬·相枛津",
+    "断头的斩姬·相枛津 attacks leader",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305120171-t5-red_target",
+   "category": "red_target",
+   "check": {
+    "red_targets_only_big": true
+   },
+   "why": "Salem's Spilling Red hit ['掌握天空命运的少女·露莉亚 3/3'].",
+   "game": "1791305120171",
+   "at": 25,
+   "context": {
+    "own_turn": 5,
+    "pp": "7/7",
+    "hp": 15,
+    "opp_hp": 20,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "焦龙的午睡",
+     "日珥咆哮",
+     "日珥咆哮",
+     "约束的《正义》·伊兰翠",
+     "《世界》的呈现",
+     "断头的斩姬·相枛津"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "掌握天空命运的少女·露莉亚 3/3"
+    ],
+    "opp_hand": 3,
+    "ep": 1,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "play 断头的斩姬·相枛津 discard ['日珥咆哮']",
+    "bonus PP",
+    "play 赤流 discard ['日珥咆哮'] -> ['掌握天空命运的少女·露莉亚']",
+    "evolve 断头的斩姬·相枛津",
+    "断头的斩姬·相枛津 attacks leader",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305120171-t6-super_evolve",
+   "category": "super_evolve",
+   "check": {
+    "super_evolves": "焦灰的安纳提玛·班德奈特"
+   },
+   "why": "Salem super-evolved 焦灰的安纳提玛·班德奈特 here; opponent board ['掌握天空命运的少女·露莉亚 3/3', '焦灰的安纳提玛·班德奈特 9/9'], 约束的《正义》·伊兰翠 also in hand.",
+   "game": "1791305120171",
+   "at": 35,
+   "context": {
+    "own_turn": 6,
+    "pp": "8/8",
+    "hp": 12,
+    "opp_hp": 13,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "焦龙的午睡",
+     "约束的《正义》·伊兰翠",
+     "《世界》的呈现",
+     "赤流",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 3/3",
+     "焦灰的安纳提玛·班德奈特 9/9"
+    ],
+    "opp_hand": 3,
+    "ep": 0,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "bonus PP",
+    "play 焦灰的安纳提玛·班德奈特",
+    "super-evolve 焦灰的安纳提玛·班德奈特",
+    "焦灰的安纳提玛·班德奈特 attacks 掌握天空命运的少女·露莉亚",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305120171-t7-lethal",
+   "category": "lethal",
+   "check": {
+    "win_this_turn": true
+   },
+   "why": "Salem won on this turn (attacks, effects, or end-of-turn damage).",
+   "game": "1791305120171",
+   "at": 42,
+   "context": {
+    "own_turn": 7,
+    "pp": "9/9",
+    "hp": 12,
+    "opp_hp": 17,
+    "hand": [
+     "焦龙的午睡",
+     "约束的《正义》·伊兰翠",
+     "《世界》的呈现",
+     "赤流",
+     "古旧天刀·波菈莱",
+     "约束的《正义》·伊兰翠"
+    ],
+    "board": [
+     "焦灰的安纳提玛·班德奈特 12/4"
+    ],
+    "opp_board": [
+     "约束的《正义》·伊兰翠 8/8"
+    ],
+    "opp_hand": 3,
+    "ep": 0,
+    "sep": 1,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 赤流 discard ['约束的《正义》·伊兰翠'] -> ['约束的《正义》·伊兰翠']",
+    "play 古旧天刀·波菈莱",
+    "super-evolve 古旧天刀·波菈莱",
+    "play 天刀深渊",
+    "play 天刀深渊",
+    "play 天刀深渊",
+    "焦灰的安纳提玛·班德奈特 attacks leader",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305120171-t7-red_target",
+   "category": "red_target",
+   "check": {
+    "red_targets_only_big": true
+   },
+   "why": "Salem's Spilling Red hit ['约束的《正义》·伊兰翠 8/8'].",
+   "game": "1791305120171",
+   "at": 42,
+   "context": {
+    "own_turn": 7,
+    "pp": "9/9",
+    "hp": 12,
+    "opp_hp": 17,
+    "hand": [
+     "焦龙的午睡",
+     "约束的《正义》·伊兰翠",
+     "《世界》的呈现",
+     "赤流",
+     "古旧天刀·波菈莱",
+     "约束的《正义》·伊兰翠"
+    ],
+    "board": [
+     "焦灰的安纳提玛·班德奈特 12/4"
+    ],
+    "opp_board": [
+     "约束的《正义》·伊兰翠 8/8"
+    ],
+    "opp_hand": 3,
+    "ep": 0,
+    "sep": 1,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 赤流 discard ['约束的《正义》·伊兰翠'] -> ['约束的《正义》·伊兰翠']",
+    "play 古旧天刀·波菈莱",
+    "super-evolve 古旧天刀·波菈莱",
+    "play 天刀深渊",
+    "play 天刀深渊",
+    "play 天刀深渊",
+    "焦灰的安纳提玛·班德奈特 attacks leader",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305215412-t7-discard",
+   "category": "discard",
+   "check": {
+    "never_discards": [
+     "焦灰的安纳提玛·班德奈特",
+     "约束的《正义》·伊兰翠"
+    ]
+   },
+   "why": "Salem discarded ['古旧天刀·波菈莱', '天刀深渊', '天刀深渊'] and kept ['焦灰的安纳提玛·班德奈特', '约束的《正义》·伊兰翠'].",
+   "game": "1791305215412",
+   "at": 39,
+   "context": {
+    "own_turn": 7,
+    "pp": "10/10",
+    "hp": 9,
+    "opp_hp": 20,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "日珥咆哮",
+     "约束的《正义》·伊兰翠",
+     "古旧天刀·波菈莱",
+     "焦灰的安纳提玛·班德奈特",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "满面笑容的烹饪·琪米卡"
+    ],
+    "board": [],
+    "opp_board": [
+     "约束的《正义》·伊兰翠 11/11"
+    ],
+    "opp_hand": 3,
+    "ep": 2,
+    "sep": 2,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 满面笑容的烹饪·琪米卡 discard ['古旧天刀·波菈莱']",
+    "super-evolve 古旧天刀·波菈莱",
+    "play 断头的斩姬·相枛津 discard ['天刀深渊']",
+    "play 赤流 discard ['天刀深渊'] -> ['约束的《正义》·伊兰翠']",
+    "断头的斩姬·相枛津 attacks leader",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305215412-t7-red_target",
+   "category": "red_target",
+   "check": {
+    "red_targets_only_big": true
+   },
+   "why": "Salem's Spilling Red hit ['约束的《正义》·伊兰翠 11/11'].",
+   "game": "1791305215412",
+   "at": 39,
+   "context": {
+    "own_turn": 7,
+    "pp": "10/10",
+    "hp": 9,
+    "opp_hp": 20,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "日珥咆哮",
+     "约束的《正义》·伊兰翠",
+     "古旧天刀·波菈莱",
+     "焦灰的安纳提玛·班德奈特",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "满面笑容的烹饪·琪米卡"
+    ],
+    "board": [],
+    "opp_board": [
+     "约束的《正义》·伊兰翠 11/11"
+    ],
+    "opp_hand": 3,
+    "ep": 2,
+    "sep": 2,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 满面笑容的烹饪·琪米卡 discard ['古旧天刀·波菈莱']",
+    "super-evolve 古旧天刀·波菈莱",
+    "play 断头的斩姬·相枛津 discard ['天刀深渊']",
+    "play 赤流 discard ['天刀深渊'] -> ['约束的《正义》·伊兰翠']",
+    "断头的斩姬·相枛津 attacks leader",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305215412-t8-red_hold",
+   "category": "red_hold",
+   "check": {
+    "no_red_on_small": true
+   },
+   "why": "Salem held Spilling Red against only small followers ['古旧天刀·波菈莱 3/5'].",
+   "game": "1791305215412",
+   "at": 52,
+   "context": {
+    "own_turn": 8,
+    "pp": "10/10",
+    "hp": 9,
+    "opp_hp": 15,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "日珥咆哮",
+     "约束的《正义》·伊兰翠",
+     "焦灰的安纳提玛·班德奈特",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "天刀深渊",
+     "赤流",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [
+     "古旧天刀·波菈莱 3/5"
+    ],
+    "opp_hand": 3,
+    "ep": 2,
+    "sep": 1,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 约束的《正义》·伊兰翠",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305215412-t8-erntz_unevolved",
+   "category": "erntz_unevolved",
+   "check": {
+    "plays_unevolved": "约束的《正义》·伊兰翠"
+   },
+   "why": "At 9 hp Salem played 约束的《正义》·伊兰翠 unevolved (heal 8) with evolution points left.",
+   "game": "1791305215412",
+   "at": 52,
+   "context": {
+    "own_turn": 8,
+    "pp": "10/10",
+    "hp": 9,
+    "opp_hp": 15,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "日珥咆哮",
+     "约束的《正义》·伊兰翠",
+     "焦灰的安纳提玛·班德奈特",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "天刀深渊",
+     "赤流",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [
+     "古旧天刀·波菈莱 3/5"
+    ],
+    "opp_hand": 3,
+    "ep": 2,
+    "sep": 1,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 约束的《正义》·伊兰翠",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305215412-t9-lethal",
+   "category": "lethal",
+   "check": {
+    "win_this_turn": true
+   },
+   "why": "Salem won on this turn (attacks, effects, or end-of-turn damage).",
+   "game": "1791305215412",
+   "at": 58,
+   "context": {
+    "own_turn": 9,
+    "pp": "10/10",
+    "hp": 15,
+    "opp_hp": 17,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "日珥咆哮",
+     "焦灰的安纳提玛·班德奈特",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "天刀深渊",
+     "赤流",
+     "禁牙的变貌·诺玛格达拉",
+     "世界的伙伴·佐伊"
+    ],
+    "board": [
+     "约束的《正义》·伊兰翠 8/8"
+    ],
+    "opp_board": [
+     "世界的伙伴·佐伊 5/5"
+    ],
+    "opp_hand": 1,
+    "ep": 2,
+    "sep": 1,
+    "bonus": false
+   },
+   "salem_turn": [
+    "super-evolve 约束的《正义》·伊兰翠",
+    "约束的《正义》·伊兰翠 attacks leader",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305215412-t9-super_evolve",
+   "category": "super_evolve",
+   "check": {
+    "super_evolves": "约束的《正义》·伊兰翠"
+   },
+   "why": "Salem super-evolved 约束的《正义》·伊兰翠 here; opponent board ['世界的伙伴·佐伊 5/5'], 焦灰的安纳提玛·班德奈特 also in hand.",
+   "game": "1791305215412",
+   "at": 58,
+   "context": {
+    "own_turn": 9,
+    "pp": "10/10",
+    "hp": 15,
+    "opp_hp": 17,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "日珥咆哮",
+     "焦灰的安纳提玛·班德奈特",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "天刀深渊",
+     "赤流",
+     "禁牙的变貌·诺玛格达拉",
+     "世界的伙伴·佐伊"
+    ],
+    "board": [
+     "约束的《正义》·伊兰翠 8/8"
+    ],
+    "opp_board": [
+     "世界的伙伴·佐伊 5/5"
+    ],
+    "opp_hand": 1,
+    "ep": 2,
+    "sep": 1,
+    "bonus": false
+   },
+   "salem_turn": [
+    "super-evolve 约束的《正义》·伊兰翠",
+    "约束的《正义》·伊兰翠 attacks leader",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305347029-t1-bonus_keep",
+   "category": "bonus_keep",
+   "check": {
+    "keeps_bonus": true
+   },
+   "why": "Second player, own turn 1: Salem kept the bonus PP for a turn-2 ramp card.",
+   "game": "1791305347029",
+   "at": 3,
+   "context": {
+    "own_turn": 1,
+    "pp": "1/1",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "满面笑容的烹饪·琪米卡",
+     "龙之启示",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [],
+    "opp_hand": 5,
+    "ep": 2,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305347029-t2-bonus_ramp",
+   "category": "bonus_ramp",
+   "check": {
+    "bonus_then_ramp": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "龙之启示"
+    ]
+   },
+   "why": "Second player, own turn 2: Salem spent the bonus PP on a 3-cost ramp card.",
+   "game": "1791305347029",
+   "at": 6,
+   "context": {
+    "own_turn": 2,
+    "pp": "2/2",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "满面笑容的烹饪·琪米卡",
+     "龙之启示",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1"
+    ],
+    "opp_hand": 5,
+    "ep": 2,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "bonus PP",
+    "play 龙之启示",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305347029-t7-super_evolve",
+   "category": "super_evolve",
+   "check": {
+    "super_evolves": "焦灰的安纳提玛·班德奈特"
+   },
+   "why": "Salem super-evolved 焦灰的安纳提玛·班德奈特 here; opponent board ['掌握天空命运的少女·露莉亚 1/1', '满面笑容的烹饪·琪米卡 5/4'], 约束的《正义》·伊兰翠 not in hand.",
+   "game": "1791305347029",
+   "at": 48,
+   "context": {
+    "own_turn": 7,
+    "pp": "9/9",
+    "hp": 12,
+    "opp_hp": 16,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "懒惰的波摇花",
+     "断头的斩姬·相枛津",
+     "掌握天空命运的少女·露莉亚",
+     "《世界》的呈现",
+     "掌握天空命运的少女·露莉亚",
+     "焦灰的安纳提玛·班德奈特",
+     "龙之启示"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "满面笑容的烹饪·琪米卡 5/4"
+    ],
+    "opp_hand": 1,
+    "ep": 0,
+    "sep": 1,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 焦灰的安纳提玛·班德奈特",
+    "super-evolve 焦灰的安纳提玛·班德奈特",
+    "焦灰的安纳提玛·班德奈特 attacks 掌握天空命运的少女·露莉亚",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305347029-t8-red_target",
+   "category": "red_target",
+   "check": {
+    "red_targets_only_big": true
+   },
+   "why": "Salem's Spilling Red hit ['禁牙的变貌·诺玛格达拉 8/9'].",
+   "game": "1791305347029",
+   "at": 57,
+   "context": {
+    "own_turn": 8,
+    "pp": "10/10",
+    "hp": 9,
+    "opp_hp": 18,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "懒惰的波摇花",
+     "断头的斩姬·相枛津",
+     "掌握天空命运的少女·露莉亚",
+     "《世界》的呈现",
+     "掌握天空命运的少女·露莉亚",
+     "龙之启示",
+     "懒惰的波摇花"
+    ],
+    "board": [],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 8/9"
+    ],
+    "opp_hand": 2,
+    "ep": 0,
+    "sep": 0,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 掌握天空命运的少女·露莉亚",
+    "play 断头的斩姬·相枛津 discard ['龙之启示']",
+    "play 赤流 discard ['掌握天空命运的少女·露莉亚'] -> ['禁牙的变貌·诺玛格达拉']",
+    "断头的斩姬·相枛津 attacks leader",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305347029-t12-lethal",
+   "category": "lethal",
+   "check": {
+    "win_this_turn": true
+   },
+   "why": "Salem won on this turn (attacks, effects, or end-of-turn damage).",
+   "game": "1791305347029",
+   "at": 78,
+   "context": {
+    "own_turn": 12,
+    "pp": "10/10",
+    "hp": 14,
+    "opp_hp": 6,
+    "hand": [
+     "懒惰的波摇花",
+     "赤流",
+     "宣扬的龙人",
+     "日珥咆哮",
+     "宣扬的龙人",
+     "《世界》的呈现",
+     "焦灰的安纳提玛·班德奈特",
+     "世界的伙伴·佐伊",
+     "世界的伙伴·佐伊"
+    ],
+    "board": [
+     "禁牙的变貌·诺玛格达拉 5/6"
+    ],
+    "opp_board": [],
+    "opp_hand": 1,
+    "ep": 0,
+    "sep": 0,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 世界的伙伴·佐伊",
+    "世界的伙伴·佐伊 attacks leader",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305539194-t1-bonus_keep",
+   "category": "bonus_keep",
+   "check": {
+    "keeps_bonus": true
+   },
+   "why": "Second player, own turn 1: Salem kept the bonus PP for a turn-2 ramp card.",
+   "game": "1791305539194",
+   "at": 3,
+   "context": {
+    "own_turn": 1,
+    "pp": "1/1",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "世界的伙伴·佐伊",
+     "约束的《正义》·伊兰翠",
+     "宣扬的龙人",
+     "金银绚烂·璐米欧儿&雅尔贞特"
+    ],
+    "board": [],
+    "opp_board": [],
+    "opp_hand": 5,
+    "ep": 2,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305539194-t2-bonus_ramp",
+   "category": "bonus_ramp",
+   "check": {
+    "bonus_then_ramp": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "龙之启示"
+    ]
+   },
+   "why": "Second player, own turn 2: Salem spent the bonus PP on a 3-cost ramp card.",
+   "game": "1791305539194",
+   "at": 5,
+   "context": {
+    "own_turn": 2,
+    "pp": "2/2",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "世界的伙伴·佐伊",
+     "约束的《正义》·伊兰翠",
+     "宣扬的龙人",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "懒惰的波摇花"
+    ],
+    "board": [],
+    "opp_board": [],
+    "opp_hand": 6,
+    "ep": 2,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "bonus PP",
+    "play 金银绚烂·璐米欧儿&雅尔贞特",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305539194-t6-super_evolve",
+   "category": "super_evolve",
+   "check": {
+    "super_evolves": "焦灰的安纳提玛·班德奈特"
+   },
+   "why": "Salem super-evolved 焦灰的安纳提玛·班德奈特 here; opponent board ['断头的斩姬·相枛津 7/6'], 约束的《正义》·伊兰翠 also in hand.",
+   "game": "1791305539194",
+   "at": 31,
+   "context": {
+    "own_turn": 6,
+    "pp": "8/8",
+    "hp": 12,
+    "opp_hp": 19,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "约束的《正义》·伊兰翠",
+     "焦灰的安纳提玛·班德奈特",
+     "日珥咆哮",
+     "《世界》的呈现"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 7/6"
+    ],
+    "opp_hand": 4,
+    "ep": 2,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "bonus PP",
+    "play 焦灰的安纳提玛·班德奈特",
+    "super-evolve 焦灰的安纳提玛·班德奈特",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305539194-t8-super_evolve",
+   "category": "super_evolve",
+   "check": {
+    "super_evolves": "约束的《正义》·伊兰翠"
+   },
+   "why": "Salem super-evolved 约束的《正义》·伊兰翠 here; opponent board ['金银绚烂·璐米欧儿&雅尔贞特 9/9', '掌握天空命运的少女·露莉亚 1/1'], 焦灰的安纳提玛·班德奈特 not in hand.",
+   "game": "1791305539194",
+   "at": 48,
+   "context": {
+    "own_turn": 8,
+    "pp": "10/10",
+    "hp": 10,
+    "opp_hp": 18,
+    "hand": [
+     "约束的《正义》·伊兰翠",
+     "日珥咆哮",
+     "《世界》的呈现",
+     "古旧天刀·波菈莱",
+     "古旧天刀·波菈莱",
+     "宣扬的龙人"
+    ],
+    "board": [],
+    "opp_board": [
+     "金银绚烂·璐米欧儿&雅尔贞特 9/9",
+     "掌握天空命运的少女·露莉亚 1/1"
+    ],
+    "opp_hand": 4,
+    "ep": 1,
+    "sep": 1,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 约束的《正义》·伊兰翠",
+    "super-evolve 约束的《正义》·伊兰翠",
+    "约束的《正义》·伊兰翠 attacks 金银绚烂·璐米欧儿&雅尔贞特",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791305539194-t9-lethal",
+   "category": "lethal",
+   "check": {
+    "win_this_turn": true
+   },
+   "why": "Salem won on this turn (attacks, effects, or end-of-turn damage).",
+   "game": "1791305539194",
+   "at": 55,
+   "context": {
+    "own_turn": 9,
+    "pp": "10/10",
+    "hp": 9,
+    "opp_hp": 7,
+    "hand": [
+     "日珥咆哮",
+     "《世界》的呈现",
+     "古旧天刀·波菈莱",
+     "古旧天刀·波菈莱",
+     "宣扬的龙人",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [
+     "约束的《正义》·伊兰翠 11/2"
+    ],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "焦灰的安纳提玛·班德奈特 9/9"
+    ],
+    "opp_hand": 4,
+    "ep": 1,
+    "sep": 0,
+    "bonus": false
+   },
+   "salem_turn": [
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306269709-t1-bonus_keep",
+   "category": "bonus_keep",
+   "check": {
+    "keeps_bonus": true
+   },
+   "why": "Second player, own turn 1: Salem kept the bonus PP for a turn-2 ramp card.",
+   "game": "1791306269709",
+   "at": 3,
+   "context": {
+    "own_turn": 1,
+    "pp": "1/1",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "世界的伙伴·佐伊",
+     "懒惰的波摇花",
+     "龙之启示",
+     "断头的斩姬·相枛津",
+     "《世界》的呈现"
+    ],
+    "board": [],
+    "opp_board": [],
+    "opp_hand": 5,
+    "ep": 2,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306269709-t2-bonus_ramp",
+   "category": "bonus_ramp",
+   "check": {
+    "bonus_then_ramp": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "龙之启示"
+    ]
+   },
+   "why": "Second player, own turn 2: Salem spent the bonus PP on a 3-cost ramp card.",
+   "game": "1791306269709",
+   "at": 5,
+   "context": {
+    "own_turn": 2,
+    "pp": "2/2",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "世界的伙伴·佐伊",
+     "懒惰的波摇花",
+     "龙之启示",
+     "断头的斩姬·相枛津",
+     "《世界》的呈现",
+     "龙之启示"
+    ],
+    "board": [],
+    "opp_board": [],
+    "opp_hand": 6,
+    "ep": 2,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "bonus PP",
+    "play 龙之启示",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306269709-t6-super_evolve",
+   "category": "super_evolve",
+   "check": {
+    "super_evolves": "约束的《正义》·伊兰翠"
+   },
+   "why": "Salem super-evolved 约束的《正义》·伊兰翠 here; opponent board ['世界的伙伴·佐伊 7/7'], 焦灰的安纳提玛·班德奈特 not in hand.",
+   "game": "1791306269709",
+   "at": 28,
+   "context": {
+    "own_turn": 6,
+    "pp": "10/10",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "懒惰的波摇花",
+     "断头的斩姬·相枛津",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "约束的《正义》·伊兰翠",
+     "掌握天空命运的少女·露莉亚",
+     "日珥咆哮",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "世界的伙伴·佐伊 7/7"
+    ],
+    "opp_hand": 6,
+    "ep": 1,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "play 约束的《正义》·伊兰翠",
+    "super-evolve 约束的《正义》·伊兰翠",
+    "约束的《正义》·伊兰翠 attacks 世界的伙伴·佐伊",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306269709-t7-lethal",
+   "category": "lethal",
+   "check": {
+    "win_this_turn": true
+   },
+   "why": "Salem won on this turn (attacks, effects, or end-of-turn damage).",
+   "game": "1791306269709",
+   "at": 34,
+   "context": {
+    "own_turn": 7,
+    "pp": "10/10",
+    "hp": 20,
+    "opp_hp": 19,
+    "hand": [
+     "懒惰的波摇花",
+     "断头的斩姬·相枛津",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "掌握天空命运的少女·露莉亚",
+     "日珥咆哮",
+     "古旧天刀·波菈莱",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [
+     "约束的《正义》·伊兰翠 11/3"
+    ],
+    "opp_board": [
+     "约束的《正义》·伊兰翠 8/8"
+    ],
+    "opp_hand": 6,
+    "ep": 1,
+    "sep": 1,
+    "bonus": true
+   },
+   "salem_turn": [
+    "play 断头的斩姬·相枛津 discard ['古旧天刀·波菈莱']",
+    "play 赤流 discard ['古旧天刀·波菈莱'] -> ['约束的《正义》·伊兰翠']",
+    "约束的《正义》·伊兰翠 attacks leader",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306269709-t7-red_target",
+   "category": "red_target",
+   "check": {
+    "red_targets_only_big": true
+   },
+   "why": "Salem's Spilling Red hit ['约束的《正义》·伊兰翠 8/8'].",
+   "game": "1791306269709",
+   "at": 34,
+   "context": {
+    "own_turn": 7,
+    "pp": "10/10",
+    "hp": 20,
+    "opp_hp": 19,
+    "hand": [
+     "懒惰的波摇花",
+     "断头的斩姬·相枛津",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "掌握天空命运的少女·露莉亚",
+     "日珥咆哮",
+     "古旧天刀·波菈莱",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [
+     "约束的《正义》·伊兰翠 11/3"
+    ],
+    "opp_board": [
+     "约束的《正义》·伊兰翠 8/8"
+    ],
+    "opp_hand": 6,
+    "ep": 1,
+    "sep": 1,
+    "bonus": true
+   },
+   "salem_turn": [
+    "play 断头的斩姬·相枛津 discard ['古旧天刀·波菈莱']",
+    "play 赤流 discard ['古旧天刀·波菈莱'] -> ['约束的《正义》·伊兰翠']",
+    "约束的《正义》·伊兰翠 attacks leader",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306333962-t6-discard",
+   "category": "discard",
+   "check": {
+    "never_discards": [
+     "约束的《正义》·伊兰翠"
+    ]
+   },
+   "why": "Salem discarded ['古旧天刀·波菈莱'] and kept ['约束的《正义》·伊兰翠'].",
+   "game": "1791306333962",
+   "at": 28,
+   "context": {
+    "own_turn": 6,
+    "pp": "7/7",
+    "hp": 20,
+    "opp_hp": 13,
+    "hand": [
+     "古旧天刀·波菈莱",
+     "断头的斩姬·相枛津",
+     "约束的《正义》·伊兰翠",
+     "日珥咆哮",
+     "《世界》的呈现",
+     "掌握天空命运的少女·露莉亚",
+     "断头的斩姬·相枛津"
+    ],
+    "board": [],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 7/3"
+    ],
+    "opp_hand": 6,
+    "ep": 1,
+    "sep": 2,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 断头的斩姬·相枛津 discard ['古旧天刀·波菈莱']",
+    "evolve 古旧天刀·波菈莱",
+    "古旧天刀·波菈莱 attacks 禁牙的变貌·诺玛格达拉",
+    "断头的斩姬·相枛津 attacks leader",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306333962-t7-lethal",
+   "category": "lethal",
+   "check": {
+    "win_this_turn": true
+   },
+   "why": "Salem won on this turn (attacks, effects, or end-of-turn damage).",
+   "game": "1791306333962",
+   "at": 37,
+   "context": {
+    "own_turn": 7,
+    "pp": "8/8",
+    "hp": 16,
+    "opp_hp": 8,
+    "hand": [
+     "约束的《正义》·伊兰翠",
+     "日珥咆哮",
+     "《世界》的呈现",
+     "掌握天空命运的少女·露莉亚",
+     "断头的斩姬·相枛津",
+     "赤流",
+     "赤流",
+     "天刀深渊",
+     "龙之启示"
+    ],
+    "board": [],
+    "opp_board": [
+     "金银绚烂·璐米欧儿&雅尔贞特 9/9"
+    ],
+    "opp_hand": 7,
+    "ep": 0,
+    "sep": 2,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 断头的斩姬·相枛津 discard ['天刀深渊']",
+    "super-evolve 断头的斩姬·相枛津",
+    "断头的斩姬·相枛津 attacks leader"
+   ]
+  },
+  {
+   "id": "1791306333962-t7-discard",
+   "category": "discard",
+   "check": {
+    "never_discards": [
+     "约束的《正义》·伊兰翠"
+    ]
+   },
+   "why": "Salem discarded ['天刀深渊'] and kept ['约束的《正义》·伊兰翠'].",
+   "game": "1791306333962",
+   "at": 37,
+   "context": {
+    "own_turn": 7,
+    "pp": "8/8",
+    "hp": 16,
+    "opp_hp": 8,
+    "hand": [
+     "约束的《正义》·伊兰翠",
+     "日珥咆哮",
+     "《世界》的呈现",
+     "掌握天空命运的少女·露莉亚",
+     "断头的斩姬·相枛津",
+     "赤流",
+     "赤流",
+     "天刀深渊",
+     "龙之启示"
+    ],
+    "board": [],
+    "opp_board": [
+     "金银绚烂·璐米欧儿&雅尔贞特 9/9"
+    ],
+    "opp_hand": 7,
+    "ep": 0,
+    "sep": 2,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 断头的斩姬·相枛津 discard ['天刀深渊']",
+    "super-evolve 断头的斩姬·相枛津",
+    "断头的斩姬·相枛津 attacks leader"
+   ]
+  },
+  {
+   "id": "1791306396169-t8-super_evolve",
+   "category": "super_evolve",
+   "check": {
+    "super_evolves": "焦灰的安纳提玛·班德奈特"
+   },
+   "why": "Salem super-evolved 焦灰的安纳提玛·班德奈特 here; opponent board ['断头的斩姬·相枛津 8/7', '古旧天刀·波菈莱 0/2'], 约束的《正义》·伊兰翠 also in hand.",
+   "game": "1791306396169",
+   "at": 51,
+   "context": {
+    "own_turn": 8,
+    "pp": "9/9",
+    "hp": 8,
+    "opp_hp": 19,
+    "hand": [
+     "古旧天刀·波菈莱",
+     "焦灰的安纳提玛·班德奈特",
+     "禁牙的变貌·诺玛格达拉",
+     "约束的《正义》·伊兰翠",
+     "掌握天空命运的少女·露莉亚",
+     "焦灰的安纳提玛·班德奈特",
+     "龙之启示",
+     "满面笑容的烹饪·琪米卡",
+     "宣扬的龙人"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 8/7",
+     "古旧天刀·波菈莱 0/2"
+    ],
+    "opp_hand": 1,
+    "ep": 1,
+    "sep": 1,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 焦灰的安纳提玛·班德奈特",
+    "super-evolve 焦灰的安纳提玛·班德奈特",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306396169-t9-erntz_unevolved",
+   "category": "erntz_unevolved",
+   "check": {
+    "plays_unevolved": "约束的《正义》·伊兰翠"
+   },
+   "why": "At 8 hp Salem played 约束的《正义》·伊兰翠 unevolved (heal 8) with evolution points left.",
+   "game": "1791306396169",
+   "at": 57,
+   "context": {
+    "own_turn": 9,
+    "pp": "10/10",
+    "hp": 8,
+    "opp_hp": 19,
+    "hand": [
+     "古旧天刀·波菈莱",
+     "禁牙的变貌·诺玛格达拉",
+     "约束的《正义》·伊兰翠",
+     "掌握天空命运的少女·露莉亚",
+     "焦灰的安纳提玛·班德奈特",
+     "龙之启示",
+     "满面笑容的烹饪·琪米卡",
+     "宣扬的龙人",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 5/6"
+    ],
+    "opp_hand": 0,
+    "ep": 1,
+    "sep": 0,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 约束的《正义》·伊兰翠",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306396169-t10-lethal",
+   "category": "lethal",
+   "check": {
+    "win_this_turn": true
+   },
+   "why": "Salem won on this turn (attacks, effects, or end-of-turn damage).",
+   "game": "1791306396169",
+   "at": 62,
+   "context": {
+    "own_turn": 10,
+    "pp": "10/10",
+    "hp": 16,
+    "opp_hp": 17,
+    "hand": [
+     "古旧天刀·波菈莱",
+     "禁牙的变貌·诺玛格达拉",
+     "掌握天空命运的少女·露莉亚",
+     "焦灰的安纳提玛·班德奈特",
+     "龙之启示",
+     "满面笑容的烹饪·琪米卡",
+     "宣扬的龙人",
+     "焦灰的安纳提玛·班德奈特",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [
+     "约束的《正义》·伊兰翠 8/8"
+    ],
+    "opp_board": [
+     "满面笑容的烹饪·琪米卡 2/1",
+     "掌握天空命运的少女·露莉亚 1/1"
+    ],
+    "opp_hand": 1,
+    "ep": 1,
+    "sep": 0,
+    "bonus": false
+   },
+   "salem_turn": [
+    "evolve 约束的《正义》·伊兰翠",
+    "约束的《正义》·伊兰翠 attacks leader",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306497426-t1-bonus_keep",
+   "category": "bonus_keep",
+   "check": {
+    "keeps_bonus": true
+   },
+   "why": "Second player, own turn 1: Salem kept the bonus PP for a turn-2 ramp card.",
+   "game": "1791306497426",
+   "at": 3,
+   "context": {
+    "own_turn": 1,
+    "pp": "1/1",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "满面笑容的烹饪·琪米卡",
+     "龙之启示",
+     "懒惰的波摇花",
+     "金银绚烂·璐米欧儿&雅尔贞特"
+    ],
+    "board": [],
+    "opp_board": [],
+    "opp_hand": 5,
+    "ep": 2,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306497426-t2-bonus_ramp",
+   "category": "bonus_ramp",
+   "check": {
+    "bonus_then_ramp": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "龙之启示"
+    ]
+   },
+   "why": "Second player, own turn 2: Salem spent the bonus PP on a 3-cost ramp card.",
+   "game": "1791306497426",
+   "at": 5,
+   "context": {
+    "own_turn": 2,
+    "pp": "2/2",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "满面笑容的烹饪·琪米卡",
+     "龙之启示",
+     "懒惰的波摇花",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [],
+    "opp_hand": 6,
+    "ep": 2,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "bonus PP",
+    "play 龙之启示",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306497426-t6-super_evolve",
+   "category": "super_evolve",
+   "check": {
+    "super_evolves": "焦灰的安纳提玛·班德奈特"
+   },
+   "why": "Salem super-evolved 焦灰的安纳提玛·班德奈特 here; opponent board ['禁牙的变貌·诺玛格达拉 7/6'], 约束的《正义》·伊兰翠 not in hand.",
+   "game": "1791306497426",
+   "at": 35,
+   "context": {
+    "own_turn": 6,
+    "pp": "9/9",
+    "hp": 20,
+    "opp_hp": 19,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "世界的伙伴·佐伊",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 7/6"
+    ],
+    "opp_hand": 8,
+    "ep": 1,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "play 焦灰的安纳提玛·班德奈特",
+    "super-evolve 焦灰的安纳提玛·班德奈特",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306497426-t9-red_target",
+   "category": "red_target",
+   "check": {
+    "red_targets_only_big": true
+   },
+   "why": "Salem's Spilling Red hit ['约束的《正义》·伊兰翠 8/8'].",
+   "game": "1791306497426",
+   "at": 60,
+   "context": {
+    "own_turn": 9,
+    "pp": "10/10",
+    "hp": 15,
+    "opp_hp": 11,
+    "hand": [
+     "世界的伙伴·佐伊",
+     "禁牙的变貌·诺玛格达拉",
+     "焦灰的安纳提玛·班德奈特",
+     "焦灰的安纳提玛·班德奈特",
+     "断头的斩姬·相枛津"
+    ],
+    "board": [
+     "掌握天空命运的少女·露莉亚 1/1"
+    ],
+    "opp_board": [
+     "约束的《正义》·伊兰翠 8/8"
+    ],
+    "opp_hand": 6,
+    "ep": 0,
+    "sep": 0,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 断头的斩姬·相枛津 discard ['禁牙的变貌·诺玛格达拉']",
+    "play 赤流 discard ['焦灰的安纳提玛·班德奈特'] -> ['约束的《正义》·伊兰翠']",
+    "断头的斩姬·相枛津 attacks leader",
+    "掌握天空命运的少女·露莉亚 attacks leader",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306497426-t13-lethal",
+   "category": "lethal",
+   "check": {
+    "win_this_turn": true
+   },
+   "why": "Salem won on this turn (attacks, effects, or end-of-turn damage).",
+   "game": "1791306497426",
+   "at": 81,
+   "context": {
+    "own_turn": 13,
+    "pp": "10/10",
+    "hp": 10,
+    "opp_hp": 3,
+    "hand": [
+     "世界的伙伴·佐伊",
+     "赤流",
+     "古旧天刀·波菈莱",
+     "世界的伙伴·佐伊",
+     "宣扬的龙人",
+     "日珥咆哮",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "金银绚烂·璐米欧儿&雅尔贞特 6/6",
+     "古旧天刀·波菈莱 0/2"
+    ],
+    "opp_hand": 6,
+    "ep": 0,
+    "sep": 0,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 世界的伙伴·佐伊",
+    "世界的伙伴·佐伊 attacks leader"
+   ]
+  },
+  {
+   "id": "1791306781701-t1-bonus_keep",
+   "category": "bonus_keep",
+   "check": {
+    "keeps_bonus": true
+   },
+   "why": "Second player, own turn 1: Salem kept the bonus PP for a turn-2 ramp card.",
+   "game": "1791306781701",
+   "at": 3,
+   "context": {
+    "own_turn": 1,
+    "pp": "1/1",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "满面笑容的烹饪·琪米卡",
+     "宣扬的龙人",
+     "世界的伙伴·佐伊",
+     "约束的《正义》·伊兰翠",
+     "日珥咆哮"
+    ],
+    "board": [],
+    "opp_board": [],
+    "opp_hand": 5,
+    "ep": 2,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306781701-t2-discard",
+   "category": "discard",
+   "check": {
+    "never_discards": [
+     "约束的《正义》·伊兰翠"
+    ]
+   },
+   "why": "Salem discarded ['日珥咆哮'] and kept ['约束的《正义》·伊兰翠'].",
+   "game": "1791306781701",
+   "at": 6,
+   "context": {
+    "own_turn": 2,
+    "pp": "2/2",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "满面笑容的烹饪·琪米卡",
+     "宣扬的龙人",
+     "世界的伙伴·佐伊",
+     "约束的《正义》·伊兰翠",
+     "日珥咆哮",
+     "金银绚烂·璐米欧儿&雅尔贞特"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1"
+    ],
+    "opp_hand": 5,
+    "ep": 2,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "play 满面笑容的烹饪·琪米卡 discard ['日珥咆哮']",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306781701-t6-discard",
+   "category": "discard",
+   "check": {
+    "never_discards": [
+     "约束的《正义》·伊兰翠"
+    ]
+   },
+   "why": "Salem discarded ['古旧天刀·波菈莱'] and kept ['约束的《正义》·伊兰翠'].",
+   "game": "1791306781701",
+   "at": 30,
+   "context": {
+    "own_turn": 6,
+    "pp": "8/8",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "宣扬的龙人",
+     "约束的《正义》·伊兰翠",
+     "古旧天刀·波菈莱",
+     "懒惰的波摇花",
+     "满面笑容的烹饪·琪米卡",
+     "禁牙的变貌·诺玛格达拉",
+     "掌握天空命运的少女·露莉亚"
+    ],
+    "board": [],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 7/8"
+    ],
+    "opp_hand": 7,
+    "ep": 1,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "play 掌握天空命运的少女·露莉亚",
+    "play 满面笑容的烹饪·琪米卡 discard ['古旧天刀·波菈莱']",
+    "super-evolve 古旧天刀·波菈莱",
+    "古旧天刀·波菈莱 attacks 禁牙的变貌·诺玛格达拉",
+    "play 懒惰的波摇花",
+    "play 宣扬的龙人",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306781701-t7-super_evolve",
+   "category": "super_evolve",
+   "check": {
+    "super_evolves": "约束的《正义》·伊兰翠"
+   },
+   "why": "Salem super-evolved 约束的《正义》·伊兰翠 here; opponent board ['古旧天刀·波菈莱 3/5'], 焦灰的安纳提玛·班德奈特 also in hand.",
+   "game": "1791306781701",
+   "at": 43,
+   "context": {
+    "own_turn": 7,
+    "pp": "9/9",
+    "hp": 18,
+    "opp_hp": 18,
+    "hand": [
+     "约束的《正义》·伊兰翠",
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉",
+     "约束的《正义》·伊兰翠",
+     "天刀深渊",
+     "天刀深渊",
+     "天刀深渊",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [
+     "古旧天刀·波菈莱 3/5"
+    ],
+    "opp_hand": 8,
+    "ep": 1,
+    "sep": 1,
+    "bonus": true
+   },
+   "salem_turn": [
+    "bonus PP",
+    "play 约束的《正义》·伊兰翠",
+    "super-evolve 约束的《正义》·伊兰翠",
+    "约束的《正义》·伊兰翠 attacks 古旧天刀·波菈莱",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306781701-t8-erntz_unevolved",
+   "category": "erntz_unevolved",
+   "check": {
+    "plays_unevolved": "约束的《正义》·伊兰翠"
+   },
+   "why": "At 10 hp Salem played 约束的《正义》·伊兰翠 unevolved (heal 8) with evolution points left.",
+   "game": "1791306781701",
+   "at": 53,
+   "context": {
+    "own_turn": 8,
+    "pp": "10/10",
+    "hp": 10,
+    "opp_hp": 9,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉",
+     "约束的《正义》·伊兰翠",
+     "天刀深渊",
+     "天刀深渊",
+     "天刀深渊",
+     "焦灰的安纳提玛·班德奈特",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 8/7"
+    ],
+    "opp_hand": 7,
+    "ep": 1,
+    "sep": 0,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 约束的《正义》·伊兰翠",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306781701-t9-discard",
+   "category": "discard",
+   "check": {
+    "never_discards": [
+     "焦灰的安纳提玛·班德奈特"
+    ]
+   },
+   "why": "Salem discarded ['天刀深渊', '天刀深渊'] and kept ['焦灰的安纳提玛·班德奈特'].",
+   "game": "1791306781701",
+   "at": 59,
+   "context": {
+    "own_turn": 9,
+    "pp": "10/10",
+    "hp": 17,
+    "opp_hp": 13,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉",
+     "天刀深渊",
+     "天刀深渊",
+     "天刀深渊",
+     "焦灰的安纳提玛·班德奈特",
+     "焦灰的安纳提玛·班德奈特",
+     "断头的斩姬·相枛津"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "禁牙的变貌·诺玛格达拉 5/6"
+    ],
+    "opp_hand": 6,
+    "ep": 1,
+    "sep": 0,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 断头的斩姬·相枛津 discard ['天刀深渊']",
+    "play 赤流 discard ['天刀深渊'] -> ['禁牙的变貌·诺玛格达拉']",
+    "evolve 断头的斩姬·相枛津",
+    "断头的斩姬·相枛津 attacks leader",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306781701-t9-red_target",
+   "category": "red_target",
+   "check": {
+    "red_targets_only_big": true
+   },
+   "why": "Salem's Spilling Red hit ['禁牙的变貌·诺玛格达拉 5/6'].",
+   "game": "1791306781701",
+   "at": 59,
+   "context": {
+    "own_turn": 9,
+    "pp": "10/10",
+    "hp": 17,
+    "opp_hp": 13,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉",
+     "天刀深渊",
+     "天刀深渊",
+     "天刀深渊",
+     "焦灰的安纳提玛·班德奈特",
+     "焦灰的安纳提玛·班德奈特",
+     "断头的斩姬·相枛津"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "禁牙的变貌·诺玛格达拉 5/6"
+    ],
+    "opp_hand": 6,
+    "ep": 1,
+    "sep": 0,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 断头的斩姬·相枛津 discard ['天刀深渊']",
+    "play 赤流 discard ['天刀深渊'] -> ['禁牙的变貌·诺玛格达拉']",
+    "evolve 断头的斩姬·相枛津",
+    "断头的斩姬·相枛津 attacks leader",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306781701-t10-discard",
+   "category": "discard",
+   "check": {
+    "never_discards": [
+     "焦灰的安纳提玛·班德奈特"
+    ]
+   },
+   "why": "Salem discarded ['天刀深渊'] and kept ['焦灰的安纳提玛·班德奈特'].",
+   "game": "1791306781701",
+   "at": 67,
+   "context": {
+    "own_turn": 10,
+    "pp": "10/10",
+    "hp": 18,
+    "opp_hp": 4,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉",
+     "天刀深渊",
+     "焦灰的安纳提玛·班德奈特",
+     "焦灰的安纳提玛·班德奈特",
+     "赤流",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "焦灰的安纳提玛·班德奈特 9/9"
+    ],
+    "opp_hand": 6,
+    "ep": 0,
+    "sep": 0,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 赤流 discard ['天刀深渊'] -> ['焦灰的安纳提玛·班德奈特']",
+    "play 禁牙的变貌·诺玛格达拉",
+    "play 古旧天刀·波菈莱",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306781701-t10-red_target",
+   "category": "red_target",
+   "check": {
+    "red_targets_only_big": true
+   },
+   "why": "Salem's Spilling Red hit ['焦灰的安纳提玛·班德奈特 9/9'].",
+   "game": "1791306781701",
+   "at": 67,
+   "context": {
+    "own_turn": 10,
+    "pp": "10/10",
+    "hp": 18,
+    "opp_hp": 4,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉",
+     "天刀深渊",
+     "焦灰的安纳提玛·班德奈特",
+     "焦灰的安纳提玛·班德奈特",
+     "赤流",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "焦灰的安纳提玛·班德奈特 9/9"
+    ],
+    "opp_hand": 6,
+    "ep": 0,
+    "sep": 0,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 赤流 discard ['天刀深渊'] -> ['焦灰的安纳提玛·班德奈特']",
+    "play 禁牙的变貌·诺玛格达拉",
+    "play 古旧天刀·波菈莱",
+    "end turn"
+   ]
+  },
+  {
+   "id": "1791306781701-t11-lethal",
+   "category": "lethal",
+   "check": {
+    "win_this_turn": true
+   },
+   "why": "Salem won on this turn (attacks, effects, or end-of-turn damage).",
+   "game": "1791306781701",
+   "at": 74,
+   "context": {
+    "own_turn": 11,
+    "pp": "10/10",
+    "hp": 19,
+    "opp_hp": 3,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "焦灰的安纳提玛·班德奈特",
+     "焦灰的安纳提玛·班德奈特",
+     "龙之启示",
+     "《世界》的呈现"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "焦灰的安纳提玛·班德奈特 9/9"
+    ],
+    "opp_hand": 6,
+    "ep": 0,
+    "sep": 0,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 《世界》的呈现"
+   ]
+  }
+ ]
+}
