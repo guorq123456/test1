@@ -13,7 +13,7 @@ round of work. This tool replaces the guess of how many games to play:
   seeds;
 - a sequential probability ratio test on the pair scores (each pair scores
   0, 0.25, 0.5, 0.75 or 1 for A): H0 = A scores --h0 (0.5: no change), H1 =
-  A scores --h1 (0.55, about +35 Elo), error rates --alpha / --beta (0.05);
+  A scores --h1 (0.55), error rates --alpha / --beta (0.05);
   the log-likelihood ratio uses the normal approximation with the pairs'
   observed variance (as engine testing does with pentanomial results). It
   stops as soon as either hypothesis is accepted, at --max games at most;
@@ -23,8 +23,18 @@ round of work. This tool replaces the guess of how many games to play:
 
 A's and B's matchup models can be replaced with --model-a / --model-b (a
 LinearValue JSON file used as the model for A's / B's deck against its
-opponent, as models.Learned looks it up). Reports A's score with a 95%
-interval, the Elo difference, and the test's verdict.
+opponent, as models.Learned looks it up). Reports A's score (per game, from
+the pairs) with a 95% interval and the test's verdict, nothing else.
+
+No Elo (the player, 2026-10-07): chess's 400-point logistic doesn't hold in a
+card game. Luck puts a ceiling on win rates (around 75%-85% however strong a
+side is), and the ladder only matches players within 200 points, so a rating
+difference is defined only inside that window: "82% means +263" is an
+extrapolation outside it, and such differences don't add up across pairs.
+A strength scale, when there is a pool of three or more versions that have
+all played each other, should be fitted on the pool's own games with its
+slope free (Bradley-Terry), or with a luck ceiling, and read only within the
+range that was measured.
 """
 from __future__ import annotations
 
@@ -35,11 +45,6 @@ import os
 import time
 from multiprocessing import Pool
 from pathlib import Path
-
-
-def elo(score: float) -> float:
-    score = min(max(score, 1e-6), 1 - 1e-6)
-    return -400 * math.log10(1 / score - 1)
 
 
 def llr(scores: list[float], h0: float, h1: float) -> float:
@@ -147,9 +152,9 @@ def main() -> None:
         value = llr(scores, args.h0, args.h1)
         mean, margin = summary(scores)
         verdict = "H1（A 更强）" if value >= hi else "H0（没有变强）" if value <= lo else None
-        line = (f"{2 * len(scores)} 局：A 得分 {mean:.1%} ± {margin:.1%}（Elo {elo(mean):+.0f}，"
-                f"区间 {elo(max(mean - margin, 1e-3)):+.0f}～{elo(min(mean + margin, 1 - 1e-3)):+.0f}），"
-                f"LLR {value:+.2f}（{lo:.2f}～{hi:.2f}）" + (f" → {verdict}" if verdict else ""))
+        line = (f"{2 * len(scores)} 局：A 得分 {mean:.1%} ± {margin:.1%}"
+                f"（95% 区间 {mean - margin:.1%}～{mean + margin:.1%}），"
+                f"LLR {value:+.2f}（判定线 {lo:.2f} / {hi:.2f}）→ {verdict or '未判定'}")
         if final or verdict:
             print(line, flush=True)
         return verdict

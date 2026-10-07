@@ -327,7 +327,8 @@ def test_the_gate_pairs_seats_and_tests_sequentially():
     assert round(hi, 3) == 2.944 and round(lo, 3) == -2.944
     assert gate.llr([0.5] * 10 + [0.75, 0.25] * 10, 0.5, 0.55) < 0          # an even score leans to H0
     assert gate.llr([0.75] * 30 + [0.5] * 10, 0.5, 0.55) > hi               # a clear edge is accepted
-    assert abs(gate.elo(0.5)) < 1e-9 and round(gate.elo(0.64)) == 100
+    mean, margin = gate.summary([0.5, 1.0, 0.5, 0.0])
+    assert mean == 0.5 and margin > 0
     pair = gate.play_pair((0, 5, "random", "random", None, None, "ramp", "ramp"))
     assert pair["k"] == 0 and len(pair["points"]) == 2 and all(p in (0.0, 0.5, 1.0) for p in pair["points"])
 
