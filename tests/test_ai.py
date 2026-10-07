@@ -462,7 +462,7 @@ def test_cross_turn_candidates_restrict_the_rest_of_the_turn():
     assert restrictions(line, kinds=("noevo",)) == [NONE, "noevo"]
     from svsim.agents.crossturn_agent import ALL_KINDS, key_forbidden
     sup = [("E", ("F", True, 0, 77), True, (), ()), ("T",)]
-    assert restrictions(sup, ALL_KINDS, supers=[77, 88]) == [NONE, "noevo", "nosuper", "superonly:88"]
+    assert restrictions(sup, ALL_KINDS, supers=[77, 88]) == [NONE, "noevo", "nosuper", "superonly:88", "super:88"]
     assert key_forbidden("superonly:88", sup[0]) and key_forbidden("nosuper", sup[0])
     assert not key_forbidden("superonly:77", sup[0]) and not key_forbidden("keep:77", sup[0])
     assert "super:88" in restrictions(sup, ALL_KINDS, supers=[77, 88]) and not key_forbidden("super:88", sup[0])
