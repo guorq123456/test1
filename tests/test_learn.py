@@ -157,6 +157,32 @@ def test_held_evolution_points_enter_by_context():
     assert all(v == 0 for v in held_points(state, 0, False)[:2 * len(CONTEXT)])
 
 
+def test_contexts_remember_the_unseen_cards_without_changing_a_value():
+    import random
+    from svsim.cards import decks
+    from svsim.core.engine import apply, legal_actions, new_game
+    from svsim.learn import features as F
+    ramp = decks.build(decks.RAMP_DRAGON)
+    state, rng, seen = new_game(ramp, ramp, seed=8, first=0), random.Random(8), []
+    while not state.over and len(seen) < 120:
+        seen.append(state.clone())
+        apply(state, rng.choice(legal_actions(state)))
+    def fresh(s, side, hidden):
+        F._UNSEEN.clear()
+        return F.contexts(s, side, hidden)
+    for s in seen:
+        for side in (0, 1):
+            for hidden in (False, True):
+                warm = F.contexts(s, side, hidden)
+                assert F.contexts(s, side, hidden) == warm == fresh(s, side, hidden)
+    p = seen[-1].players[1]
+    deck = list(p.deck)
+    assert F._fingerprint(deck) == F._fingerprint(deck[::-1])                # any order
+    cheaper = deck[0].copy()
+    cheaper.cost -= 1
+    assert F._fingerprint([cheaper] + deck[1:]) != F._fingerprint(deck)     # a cost change is another key
+
+
 def test_evolution_point_usage_is_read_from_a_record():
     import random
     from svsim.cards import decks

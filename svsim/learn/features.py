@@ -199,12 +199,58 @@ def contexts(state: GameState, side: int, hidden: bool) -> tuple[list[float], li
                 face = max(face, PLAIN[super_] / 2)
             b = best[k]
             b[0], b[1] = max(b[0], face), max(b[1], value)
-    if hidden:
+    if hidden:                                     # the unseen cards: the same all turn, whatever the deal
         pool = p.hand + p.deck
-        share = len(p.hand) / len(pool) if pool else 0.0
-        cards = [(c, share) for c in pool if c.defn.is_follower]
+        key = (True, len(pool), len(p.hand), pp, _fingerprint(pool))
+        hit = _UNSEEN.get(key)
+        if hit is None:
+            share = len(p.hand) / len(pool) if pool else 0.0
+            hit = _remember(key, (_from_cards([(c, share) for c in pool if c.defn.is_follower], pp),
+                                  deck_payoff(pool, pp, len(p.hand)) / 2.0))
+        from_cards, in_deck = hit
     else:
-        cards = [(c, 1.0) for c in p.hand if c.defn.is_follower]
+        from_cards = _from_cards([(c, 1.0) for c in p.hand if c.defn.is_follower], pp)
+        key = (False, len(p.deck), 0, pp, _fingerprint(p.deck))
+        in_deck = _UNSEEN.get(key)
+        if in_deck is None:
+            in_deck = _remember(key, deck_payoff(p.deck, pp) / 2.0)
+    for b, c in zip(best, from_cards):
+        b[:] = [max(x, y) for x, y in zip(b, c)]
+    hp, op_hp = effective_hp(p), effective_hp(enemy)
+    racing = float(op_hp <= 10 or threat(state, side) >= op_hp / 2)
+    long = (hp + op_hp) / 40.0
+    tail = [p.turns_taken / 10.0, hp / 20.0, op_hp / 20.0, (len(p.deck) + len(enemy.deck)) / 60.0,
+            (hp - op_hp) / 20.0]
+    out = []
+    for k, unlock in ((0, EVOLVE_TURN[first]), (1, SUPER_EVOLVE_TURN[first])):
+        fn, vn, fl, vl = (x / scale for x in best[k])
+        out.append([max(coming - unlock, 0) / 5.0 if coming >= unlock else 0.0,
+                    fn, fn * racing, vn, vn * long, fl, vl, in_deck] + tail)
+    return out[0], out[1]
+
+
+_UNSEEN: dict = {}                     # contexts' card parts by (hidden, cards, hand, pp, fingerprint)
+
+
+def _fingerprint(cards) -> int:
+    """Which cards (id and current cost) are in `cards`, in any order: equal for equal multisets."""
+    return sum(hash((c.defn.card_id, c.cost)) for c in cards)
+
+
+def _remember(key, value):
+    """Keep `value` for contexts (the search asks the same deck and unseen cards again and again: about
+    half of the version-3 features' time, docs/architecture.md §9.2 "留进化点")."""
+    if len(_UNSEEN) > 50000:
+        _UNSEEN.clear()
+    _UNSEEN[key] = value
+    return value
+
+
+def _from_cards(cards, pp: int) -> list[list[float]]:
+    """The best (face now, value now, face later, value later) over (card, weight) pairs, for evolving and
+    super-evolving: playable with `pp` play points counts now, the rest later, less the further away."""
+    from svsim.learn.payoff import both_parts
+    best = [[0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]]
     for c, w in cards:
         soon = 1.0 if c.cost <= pp else 1.0 / (c.cost - pp)
         parts = both_parts(c.defn)
@@ -215,19 +261,7 @@ def contexts(state: GameState, side: int, hidden: bool) -> tuple[list[float], li
                 b[0], b[1] = max(b[0], w * face), max(b[1], w * value)
             else:
                 b[2], b[3] = max(b[2], w * face * soon), max(b[3], w * value * soon)
-    hp, op_hp = effective_hp(p), effective_hp(enemy)
-    racing = float(op_hp <= 10 or threat(state, side) >= op_hp / 2)
-    long = (hp + op_hp) / 40.0
-    deck = (p.hand + p.deck) if hidden else p.deck
-    in_deck = deck_payoff(deck, pp, len(p.hand) if hidden else 0) / 2.0
-    tail = [p.turns_taken / 10.0, hp / 20.0, op_hp / 20.0, (len(p.deck) + len(enemy.deck)) / 60.0,
-            (hp - op_hp) / 20.0]
-    out = []
-    for k, unlock in ((0, EVOLVE_TURN[first]), (1, SUPER_EVOLVE_TURN[first])):
-        fn, vn, fl, vl = (x / scale for x in best[k])
-        out.append([max(coming - unlock, 0) / 5.0 if coming >= unlock else 0.0,
-                    fn, fn * racing, vn, vn * long, fl, vl, in_deck] + tail)
-    return out[0], out[1]
+    return best
 
 
 def first_draw(copies: int, size: int, turns: int = 3) -> list[float]:
