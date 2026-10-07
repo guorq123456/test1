@@ -4,7 +4,12 @@
 
 Games are stored as records (tools.records: the deal and the actions), one per
 line, so positions can be encoded again with other features without playing
-again. With probability `explore` a move is replaced by a random legal one, so
+again. Each decision the search made also keeps what the search thought
+(record["search"][i], aligned with record["actions"]; None where the lethal
+search or the planner chose): the visits of each legal move in
+legal_actions order ("visits"), and the search's value of its best move
+("value", squashed against the starting position's score "center"), the
+targets of a policy head and of a value trained on search values. With probability `explore` a move is replaced by a random legal one, so
 the network also sees the positions that bad moves lead to: the search scores
 every move it tries, most of them moves the bot would never play, and an
 evaluation that has only seen its own good positions guesses wildly there (the
@@ -47,15 +52,46 @@ def play(job) -> dict:
     state = new_game(cards[0], cards[1], seed=seed * 100003 + g)
     record = R.new_record(cards[0], cards[1], seed * 100003 + g, state.first, f"{spec} / {spec}")
     record["g"], record["explore"] = g, explore
+    record["search"] = []
     while not state.over:
         legal = legal_actions(state)
+        search = _search(agents[state.active])
+        if search is not None:
+            search.last_root = None
         action = agents[state.active].act(state, legal)
+        record["search"].append(_thought(state, legal, search))
         if explore and len(legal) > 1 and state.players[state.active].turns_taken >= 1 and rng.random() < explore:
             action = rng.choice(legal)
         R.add(record, action)
         apply(state, action)
     record["winner"] = state.winner
     return record
+
+
+def _search(agent):
+    """The ISMCTS inside an agent, if there is one."""
+    inner = agent
+    for _ in range(5):
+        if hasattr(inner, "search") and hasattr(inner.search, "last_root"):
+            return inner.search
+        inner = getattr(inner, "base", None)
+        if inner is None:
+            return None
+    return None
+
+
+def _thought(state, legal, search):
+    if search is None or search.last_root is None or not search.last_root.children:
+        return None
+    from svsim.search.mcts import _locator, action_key
+    where = _locator(state, state.active)
+    root = search.last_root
+    visits = []
+    for a in legal:
+        child = root.children.get(action_key(state, a, where))
+        visits.append(child.visits if child is not None else 0)
+    best = max(root.children.values(), key=lambda c: c.visits)
+    return {"visits": visits, "value": round(search.estimate(best), 5), "center": round(search.center, 4)}
 
 
 def rows(record: dict):
