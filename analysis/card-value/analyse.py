@@ -63,7 +63,7 @@ def logistic(X, y, iters=50):
     X = np.column_stack([np.ones(len(X)), X])
     w = np.zeros(X.shape[1])
     for _ in range(iters):
-        p = 1 / (1 + np.exp(-X @ w))
+        p = 1 / (1 + np.exp(-np.clip(X @ w, -30, 30)))
         W = p * (1 - p) + 1e-9
         H = X.T @ (X * W[:, None]) + 1e-6 * np.eye(X.shape[1])
         w += np.linalg.solve(H, X.T @ (y - p))
