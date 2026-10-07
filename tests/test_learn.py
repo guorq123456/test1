@@ -365,6 +365,7 @@ def test_a_torn_search_forks_and_its_branch_keeps_points_only_while_torn():
     from svsim.learn.netdata import _qgap_mode, play
     assert _qgap_mode("qgap") == (0.05, 2, "first", 0) and _qgap_mode("qgap:0.1:3") == (0.1, 3, "first", 0)
     assert _qgap_mode("qgap:0.05:2:random:1")[2:] == ("random", 1) and _qgap_mode("all") is None
+    assert _qgap_mode("qgap:0.05:2:weighted:1")[2] == "weighted"
     found = False
     for g in range(3):
         out = [json.loads(json.dumps(r)) for r in

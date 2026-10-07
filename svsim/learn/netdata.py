@@ -72,6 +72,7 @@ def play(job):
          fork_eps=qgap[0] if qgap else None, fork_pick=qgap[2] if qgap else "first",
          pick_rng=random.Random(seed * 104729 + g), fork_min_since=qgap[3] if qgap else 0)
     torn_points = snapshot.pop("_k", None)
+    snapshot.pop("_key", None)
     if not snapshot:
         return [record]
     branch = json.loads(json.dumps({k: v for k, v in snapshot["record"].items()}))
@@ -99,7 +100,8 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
     """Play `state` out, adding to `record`. `snapshot` (a dict): fill it at the first fork point (see
     play); with `fork_eps`, at the first decision where a fork point holds and the search itself is torn
     between evolving and not (_q_gap within fork_eps); `fork_pick` "random": at one of all such decisions of
-    the game, drawn evenly with `pick_rng` (reservoir sampling; snapshot["_k"] counts them), so that the
+    the game, drawn evenly with `pick_rng` (reservoir sampling; snapshot["_k"] counts them; "weighted": each in
+    proportion to its own turns since evolving unlocked, for later turns), so that the
     forks are not all at the unlock turn, where the search is torn first; `fork_min_since`: only at decisions at
     least that many own turns after evolving unlocked (1: never in the unlock turn itself). `keep`: the branch's side keeps its points (no
     evolving) as play describes (keep["mode"] "qgap": _qgap_keep)."""
@@ -130,7 +132,7 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
                 and keep.get("mode") != "qgap":
             _keep(state, search, vetoes[state.active], keep, record)
         torn = None
-        if snapshot is not None and (not snapshot or fork_pick == "random") and fork_eps is not None \
+        if snapshot is not None and (not snapshot or fork_pick != "first") and fork_eps is not None \
                 and state.phase.name == "MAIN" and _since_unlock(state) >= fork_min_since:
             torn = _fork_point(state, triggers, any_points=True)   # checked before the search, judged after it
             if torn is not None:
@@ -147,6 +149,12 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
             if take and fork_pick == "random":
                 snapshot["_k"] = snapshot.get("_k", 0) + 1
                 take = pick_rng.random() < 1.0 / snapshot["_k"]
+            elif take and fork_pick == "weighted":     # weighted reservoir (A-Res): key u ** (1 / weight)
+                snapshot["_k"] = snapshot.get("_k", 0) + 1
+                key = pick_rng.random() ** (1.0 / max(_since_unlock(state), 1))
+                take = key > snapshot.get("_key", -1.0)
+                if take:
+                    snapshot["_key"] = key
             if take:
                 (trigger, target), before, rec = torn
                 snapshot.update(state=before, rng=rng.getstate(), i=len(record["actions"]), player=state.active,
@@ -172,7 +180,7 @@ def _qgap_mode(mode: str):
         return None
     parts = mode.split(":")[1:]
     pick = parts[2] if len(parts) > 2 else "first"
-    if pick not in ("first", "random"):
+    if pick not in ("first", "random", "weighted"):
         raise ValueError(f"unknown fork pick {pick!r}")
     return (float(parts[0]) if parts else 0.05, int(parts[1]) if len(parts) > 1 else 2, pick,
             int(parts[3]) if len(parts) > 3 else 0)
