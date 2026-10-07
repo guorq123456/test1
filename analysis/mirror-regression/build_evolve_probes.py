@@ -8,6 +8,10 @@ For every turn of Salem (seat 0) in salem_games.json that did not win the game:
   check: the bot, playing the whole turn from its start, does not evolve either.
 - evolve_use: Salem evolved (or super-evolved) this turn. The check: the bot
   evolves too (any evolution), so that a bot that never evolves does not pass.
+- erntz_unevolved: a held turn on which Salem played Erntz and left it
+  unevolved. Salem (2026-10-07): Erntz unevolved is another way to use it, as
+  strong as evolving it, not a held point; so it is not an evolve_hold. The
+  check: the bot plays Erntz and does not evolve it.
 The two together reward evolving at Salem's moments, not holding as such
 (the architecture thread, 2026-10-07: the bot spends its points as soon as they
 unlock and runs dry in long games). Records stay in salem_games.json.
@@ -23,7 +27,7 @@ from svsim.core.engine import apply, legal_actions
 from svsim.tools import records
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
-from build_positions import name  # noqa: E402
+from build_positions import ERNTZ, name  # noqa: E402
 from glossary import labelled  # noqa: E402
 
 
@@ -70,13 +74,19 @@ def main(path):
             if used:
                 cat, check = "evolve_use", {"evolves": True}
                 why = f"Salem {'、'.join(k + ' ' + c for k, c in used)}（还剩 ep {p.ep} / sep {p.sep}）。"
+            elif any(type(a).__name__ == "PlayCard" and name(s.in_hand(0, a.uid)) == ERNTZ for s, a in turn):
+                # Salem (2026-10-07): Erntz played unevolved is another way to use it, as strong as
+                # evolving it (8 to two followers, heal 8), not a held point: a probe of its own
+                cat, check = "erntz_unevolved", {"plays_unevolved": ERNTZ}
+                why = (f"Salem 这回合出了{labelled(ERNTZ)}、用不进化那面（回合结束打两个随从各 8、回 8 血），"
+                       f"没进化任何随从（ep {p.ep} / sep {p.sep}）。")
             else:
                 cat, check = "evolve_hold", {"no_evolve": True}
                 why = f"Salem 能进化（ep {p.ep} / sep {p.sep}）但这回合没进化，也没在这回合赢。"
             out.append({"id": f"{gid}-t{p.turns_taken}-{cat}", "category": cat, "check": check,
                         "confidence": "中", "why": why, "game": gid, "at": start, "context": ctx,
                         "batch": meta.get("batch"), "salem_turn": [type(a).__name__ for _, a in turn]})
-    json.dump({"source": "Salem's turns in salem_games.json where evolving was possible (held) or done (used)",
+    json.dump({"source": "Salem's turns in salem_games.json where evolving was possible (held, Erntz unevolved) or done (used)",
                "records_file": "salem_games.json", "positions": out}, sys.stdout, ensure_ascii=False, indent=1)
 
 

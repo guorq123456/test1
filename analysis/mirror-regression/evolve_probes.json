@@ -1,5 +1,5 @@
 {
- "source": "Salem's turns in salem_games.json where evolving was possible (held) or done (used)",
+ "source": "Salem's turns in salem_games.json where evolving was possible (held, Erntz unevolved) or done (used)",
  "records_file": "salem_games.json",
  "positions": [
   {
@@ -407,13 +407,13 @@
    ]
   },
   {
-   "id": "1791305215412-t8-evolve_hold",
-   "category": "evolve_hold",
+   "id": "1791305215412-t8-erntz_unevolved",
+   "category": "erntz_unevolved",
    "check": {
-    "no_evolve": true
+    "plays_unevolved": "约束的《正义》·伊兰翠"
    },
    "confidence": "中",
-   "why": "Salem 能进化（ep 2 / sep 1）但这回合没进化，也没在这回合赢。",
+   "why": "Salem 这回合出了正义（10费 8/8）、用不进化那面（回合结束打两个随从各 8、回 8 血），没进化任何随从（ep 2 / sep 1）。",
    "game": "1791305215412",
    "at": 52,
    "context": {
@@ -1186,13 +1186,13 @@
    ]
   },
   {
-   "id": "1791306396169-t9-evolve_hold",
-   "category": "evolve_hold",
+   "id": "1791306396169-t9-erntz_unevolved",
+   "category": "erntz_unevolved",
    "check": {
-    "no_evolve": true
+    "plays_unevolved": "约束的《正义》·伊兰翠"
    },
    "confidence": "中",
-   "why": "Salem 能进化（ep 1 / sep 0）但这回合没进化，也没在这回合赢。",
+   "why": "Salem 这回合出了正义（10费 8/8）、用不进化那面（回合结束打两个随从各 8、回 8 血），没进化任何随从（ep 1 / sep 0）。",
    "game": "1791306396169",
    "at": 57,
    "context": {
@@ -1611,13 +1611,13 @@
    ]
   },
   {
-   "id": "1791306781701-t8-evolve_hold",
-   "category": "evolve_hold",
+   "id": "1791306781701-t8-erntz_unevolved",
+   "category": "erntz_unevolved",
    "check": {
-    "no_evolve": true
+    "plays_unevolved": "约束的《正义》·伊兰翠"
    },
    "confidence": "中",
-   "why": "Salem 能进化（ep 1 / sep 0）但这回合没进化，也没在这回合赢。",
+   "why": "Salem 这回合出了正义（10费 8/8）、用不进化那面（回合结束打两个随从各 8、回 8 血），没进化任何随从（ep 1 / sep 0）。",
    "game": "1791306781701",
    "at": 53,
    "context": {
@@ -1903,13 +1903,13 @@
    ]
   },
   {
-   "id": "1791315717152-t9-evolve_hold",
-   "category": "evolve_hold",
+   "id": "1791315717152-t9-erntz_unevolved",
+   "category": "erntz_unevolved",
    "check": {
-    "no_evolve": true
+    "plays_unevolved": "约束的《正义》·伊兰翠"
    },
    "confidence": "中",
-   "why": "Salem 能进化（ep 1 / sep 0）但这回合没进化，也没在这回合赢。",
+   "why": "Salem 这回合出了正义（10费 8/8）、用不进化那面（回合结束打两个随从各 8、回 8 血），没进化任何随从（ep 1 / sep 0）。",
    "game": "1791315717152",
    "at": 54,
    "context": {
@@ -2025,13 +2025,13 @@
    ]
   },
   {
-   "id": "1791316090276-t7-evolve_hold",
-   "category": "evolve_hold",
+   "id": "1791316090276-t7-erntz_unevolved",
+   "category": "erntz_unevolved",
    "check": {
-    "no_evolve": true
+    "plays_unevolved": "约束的《正义》·伊兰翠"
    },
    "confidence": "中",
-   "why": "Salem 能进化（ep 2 / sep 1）但这回合没进化，也没在这回合赢。",
+   "why": "Salem 这回合出了正义（10费 8/8）、用不进化那面（回合结束打两个随从各 8、回 8 血），没进化任何随从（ep 2 / sep 1）。",
    "game": "1791316090276",
    "at": 35,
    "context": {
@@ -2711,13 +2711,13 @@
    ]
   },
   {
-   "id": "1791316974098-t8-evolve_hold",
-   "category": "evolve_hold",
+   "id": "1791316974098-t8-erntz_unevolved",
+   "category": "erntz_unevolved",
    "check": {
-    "no_evolve": true
+    "plays_unevolved": "约束的《正义》·伊兰翠"
    },
    "confidence": "中",
-   "why": "Salem 能进化（ep 2 / sep 1）但这回合没进化，也没在这回合赢。",
+   "why": "Salem 这回合出了正义（10费 8/8）、用不进化那面（回合结束打两个随从各 8、回 8 血），没进化任何随从（ep 2 / sep 1）。",
    "game": "1791316974098",
    "at": 46,
    "context": {
@@ -2752,13 +2752,13 @@
    ]
   },
   {
-   "id": "1791316974098-t9-evolve_hold",
-   "category": "evolve_hold",
+   "id": "1791316974098-t9-erntz_unevolved",
+   "category": "erntz_unevolved",
    "check": {
-    "no_evolve": true
+    "plays_unevolved": "约束的《正义》·伊兰翠"
    },
    "confidence": "中",
-   "why": "Salem 能进化（ep 2 / sep 1）但这回合没进化，也没在这回合赢。",
+   "why": "Salem 这回合出了正义（10费 8/8）、用不进化那面（回合结束打两个随从各 8、回 8 血），没进化任何随从（ep 2 / sep 1）。",
    "game": "1791316974098",
    "at": 53,
    "context": {
@@ -3057,13 +3057,13 @@
    ]
   },
   {
-   "id": "1791317238047-t8-evolve_hold",
-   "category": "evolve_hold",
+   "id": "1791317238047-t8-erntz_unevolved",
+   "category": "erntz_unevolved",
    "check": {
-    "no_evolve": true
+    "plays_unevolved": "约束的《正义》·伊兰翠"
    },
    "confidence": "中",
-   "why": "Salem 能进化（ep 0 / sep 2）但这回合没进化，也没在这回合赢。",
+   "why": "Salem 这回合出了正义（10费 8/8）、用不进化那面（回合结束打两个随从各 8、回 8 血），没进化任何随从（ep 0 / sep 2）。",
    "game": "1791317238047",
    "at": 49,
    "context": {
@@ -3531,13 +3531,13 @@
    ]
   },
   {
-   "id": "1791384258804-t8-evolve_hold",
-   "category": "evolve_hold",
+   "id": "1791384258804-t8-erntz_unevolved",
+   "category": "erntz_unevolved",
    "check": {
-    "no_evolve": true
+    "plays_unevolved": "约束的《正义》·伊兰翠"
    },
    "confidence": "中",
-   "why": "Salem 能进化（ep 1 / sep 1）但这回合没进化，也没在这回合赢。",
+   "why": "Salem 这回合出了正义（10费 8/8）、用不进化那面（回合结束打两个随从各 8、回 8 血），没进化任何随从（ep 1 / sep 1）。",
    "game": "1791384258804",
    "at": 47,
    "context": {
@@ -4183,13 +4183,13 @@
    ]
   },
   {
-   "id": "1791385824342-t8-evolve_hold",
-   "category": "evolve_hold",
+   "id": "1791385824342-t8-erntz_unevolved",
+   "category": "erntz_unevolved",
    "check": {
-    "no_evolve": true
+    "plays_unevolved": "约束的《正义》·伊兰翠"
    },
    "confidence": "中",
-   "why": "Salem 能进化（ep 1 / sep 1）但这回合没进化，也没在这回合赢。",
+   "why": "Salem 这回合出了正义（10费 8/8）、用不进化那面（回合结束打两个随从各 8、回 8 血），没进化任何随从（ep 1 / sep 1）。",
    "game": "1791385824342",
    "at": 50,
    "context": {
@@ -4223,13 +4223,13 @@
    ]
   },
   {
-   "id": "1791385824342-t9-evolve_hold",
-   "category": "evolve_hold",
+   "id": "1791385824342-t9-erntz_unevolved",
+   "category": "erntz_unevolved",
    "check": {
-    "no_evolve": true
+    "plays_unevolved": "约束的《正义》·伊兰翠"
    },
    "confidence": "中",
-   "why": "Salem 能进化（ep 1 / sep 1）但这回合没进化，也没在这回合赢。",
+   "why": "Salem 这回合出了正义（10费 8/8）、用不进化那面（回合结束打两个随从各 8、回 8 血），没进化任何随从（ep 1 / sep 1）。",
    "game": "1791385824342",
    "at": 58,
    "context": {
@@ -4848,13 +4848,13 @@
    ]
   },
   {
-   "id": "1791387437959-t8-evolve_hold",
-   "category": "evolve_hold",
+   "id": "1791387437959-t8-erntz_unevolved",
+   "category": "erntz_unevolved",
    "check": {
-    "no_evolve": true
+    "plays_unevolved": "约束的《正义》·伊兰翠"
    },
    "confidence": "中",
-   "why": "Salem 能进化（ep 1 / sep 1）但这回合没进化，也没在这回合赢。",
+   "why": "Salem 这回合出了正义（10费 8/8）、用不进化那面（回合结束打两个随从各 8、回 8 血），没进化任何随从（ep 1 / sep 1）。",
    "game": "1791387437959",
    "at": 52,
    "context": {

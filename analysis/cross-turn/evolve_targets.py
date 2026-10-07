@@ -20,6 +20,8 @@ payoff follower in the next two own turns. With --results (check.py output
 for evolve_probes.json), the bot's pass rate by class. With --selfplay LABEL
 FILE instead, the same held / used table for both seats of self-play records
 (each class's share among held and used turns, and the class's hold rate).
+The tables leave out the held turns where Erntz was played unevolved (Salem,
+2026-10-07: another way to use Erntz, as strong as evolving it, not a held point).
 """
 import json
 import re
@@ -31,6 +33,7 @@ from svsim.core.actions import Evolve, from_dict
 from svsim.core.engine import apply, legal_actions
 from svsim.tools import records
 
+ERNTZ = "约束的《正义》·伊兰翠"
 PAYOFF = {"焦灰的安纳提玛·班德奈特", "约束的《正义》·伊兰翠", "金银绚烂·璐米欧儿&雅尔贞特", "古旧天刀·波菈莱",
           "禁牙的变貌·诺玛格达拉", "满面笑容的烹饪·琪米卡",
           "断头的斩姬·相枛津"}           # Sagatsumatsu ("754"): Storm, so its evolution is 2 to the face now (Salem)
@@ -102,7 +105,10 @@ def turn_row(turn):
         return None
     cls, _ = classify_seat(turn)
     normal_only = not any(a.super_ for _, a in legal)
-    return {"held": not used, "class": cls, "normal_only": normal_only}
+    # Salem (2026-10-07): Erntz played unevolved is another way to use it, not a held point
+    erntz_plain = not used and any(type(a).__name__ == "PlayCard" and name(s.in_hand(s.active, a.uid)) == ERNTZ
+                                   for s, a in turn)
+    return {"held": not used, "class": cls, "normal_only": normal_only, "erntz_plain": erntz_plain}
 
 
 def classify_seat(turn):
@@ -121,6 +127,9 @@ def classify_seat(turn):
 
 
 def table(label, rows):
+    plain = sum(r.get("erntz_plain", False) for r in rows)
+    rows = [r for r in rows if not r.get("erntz_plain")]
+    label += f"（不含出正义不进化的 {plain} 个回合）"
     held = [r for r in rows if r["held"]]
     used = [r for r in rows if not r["held"]]
     print(f"\n{label}：能进化的回合 {len(rows)} 个，忍住 {len(held)}（{len(held) / len(rows):.0%}）")

@@ -52,10 +52,15 @@ def cell(turn, tier):
 
 
 def rows_of(turns, tier):
+    """The turns where evolving was possible; not the held turns where Erntz came down unevolved (Salem: another way
+    to use it, not a held point)."""
     out = []
     for turn in turns:
         could = any(isinstance(a, Evolve) for s, _ in turn for a in legal_actions(s))
         used = any(isinstance(a, Evolve) for _, a in turn)
+        if not used and any(type(a).__name__ == "PlayCard" and
+                            (s.in_hand(s.active, a.uid).defn.name_zh or "") == "约束的《正义》·伊兰翠" for s, a in turn):
+            continue
         if could or used:
             c, better = cell(turn, tier)
             out.append({"cell": c, "better_in_hand": better, "held": not used})

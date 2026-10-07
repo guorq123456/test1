@@ -1,0 +1,16 @@
+1791305215412-t8-erntz_unevolved         5/5
+1791306396169-t9-erntz_unevolved         0/5
+1791306781701-t8-erntz_unevolved         5/5
+1791315717152-t9-erntz_unevolved         5/5
+1791316090276-t7-erntz_unevolved         5/5
+1791316974098-t8-erntz_unevolved         5/5
+1791316974098-t9-erntz_unevolved         5/5
+1791317238047-t8-erntz_unevolved         0/5
+1791384258804-t8-erntz_unevolved         0/5
+1791385824342-t8-erntz_unevolved         5/5
+1791385824342-t9-erntz_unevolved         5/5
+1791387437959-t8-erntz_unevolved         5/5
+
+by category:
+  erntz_unevolved  45/60
+  total            45/60
