@@ -519,3 +519,20 @@ def test_card_stats_and_keywords():
     assert FLAG.type == CardType.COUNTDOWN_AMULET and FLAG.countdown == 7
     assert sword.UNKEI_CREST.countdown == 4
     assert sword.STEELCLAD_KNIGHT.has_trait(sword.OFFICER) and sword.KNIGHT.has_trait(sword.OFFICER)
+
+
+def test_dread_pirates_flag_destroyed_still_hits_banished_does_not():
+    # Meta line correction (2026-10-07): a Pirate Flag destroyed by an effect still deals its 2 to the
+    # enemy leader (Last Words); only banishing it removes it without damage.
+    state = fresh_state()
+    enemy = state.players[1]
+    flag = put(state, 0, FLAG)
+    hp = enemy.leader_hp
+    assert E.destroy(state, flag)
+    resolve_queue(state)
+    assert flag.fate == DESTROYED and enemy.leader_hp == hp - 2
+    other = put(state, 0, FLAG)
+    hp = enemy.leader_hp
+    assert E.banish(state, other)
+    resolve_queue(state)
+    assert other.fate == BANISHED and enemy.leader_hp == hp
