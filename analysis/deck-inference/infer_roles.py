@@ -43,7 +43,14 @@ def records_of(path):
         out = [json.loads(line) for line in gzip.open(path, "rt", encoding="utf-8") if line.strip()]
     else:
         out = games_of(path)
-    return [r.get("record", r) for r in out]
+    recs, seen = [], set()
+    for r in out:                     # a game replayed move for move (the first league run's mirrors) counts once
+        r = r.get("record", r)
+        key = json.dumps([r.get("seed"), r["actions"]])
+        if key not in seen:
+            seen.add(key)
+            recs.append(r)
+    return recs
 
 
 def roles_of(cid):
@@ -196,7 +203,7 @@ def main():
             errs = " ".join(f"{ROLES[i]} {s[f'err_{i}'] / n:.3f}" for i in range(6))
             print(f"  {t:>6}   {n:>5}   {s['post'] / n:.3f}（{s['post'] / max(s['size'], 1e-9):.1%}）"
                   f"      {s['prior'] / n:.3f}        {s['map'] / n:.3f}      {s['top1'] / n:>5.0%}   {s['sure'] / n:>5.0%}    {errs}")
-        curves[f"{deck} {'先' if first else '后'}手"] = {t: s["post"] / s["n"] for t, s in by_t.items() if s["n"] >= 10}
+        curves[f"{deck} 观察方{'先' if first else '后'}手"] = {t: s["post"] / s["n"] for t, s in by_t.items() if s["n"] >= 10}
         print()
     if args.svg:
         svg_curves(curves, args.svg, args.max_turn)
