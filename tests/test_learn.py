@@ -137,3 +137,39 @@ def test_defense_and_lethal_features_keep_their_direction():
     for model in load_all().values():
         coef = dict(zip(names(model.potential), model.coef))
         assert all(c * sign >= 0 for (n, c), sign in zip(coef.items(), signs(model.potential)))
+
+
+def test_held_evolution_points_enter_by_context():
+    from svsim.cards import decks
+    from svsim.core.engine import new_game
+    from svsim.learn.features import CONTEXT, SIDE3, features, held_points, names
+    state = new_game(decks.build(decks.RAMP_DRAGON), decks.build(decks.RAMP_DRAGON), seed=4, first=0)
+    assert len(features(state, 0, False, 3)) == len(names(False, 3)) == len(names(False, 2)) + 2 * len(SIDE3)
+    assert features(state, 0, False, 3)[:len(names(False, 2)) - 1] == features(state, 0, False, 2)[:-1]
+    from svsim.learn.features import context
+    held, ctx, p = held_points(state, 0, False), context(state, 0, False), state.players[0]
+    assert held[:len(CONTEXT)] == [p.ep * c for c in ctx] and held[len(CONTEXT):2 * len(CONTEXT)] == [p.sep * c for c in ctx]
+    state.players[0].ep, state.players[0].sep = 0, 0
+    assert all(v == 0 for v in held_points(state, 0, False)[:2 * len(CONTEXT)])
+
+
+def test_evolution_point_usage_is_read_from_a_record():
+    import random
+    from svsim.cards import decks
+    from svsim.core.engine import apply, legal_actions, new_game
+    from svsim.tools import records as R
+    from svsim.tools.evo_usage import usage
+    ramp = decks.build(decks.RAMP_DRAGON)
+    rng = random.Random(3)
+    state = new_game(ramp, ramp, seed=3, first=0)
+    record = R.new_record(ramp, ramp, 3, state.first, "random / random", first_arg=0)
+    while not state.over:
+        a = rng.choice(legal_actions(state))
+        R.add(record, a)
+        apply(state, a)
+    record["winner"] = state.winner
+    for side, u in enumerate(usage(record)):
+        p = state.players[side]
+        assert u["left"] == p.ep + p.sep and u["turns"] == p.turns_taken
+        assert all(1 <= t <= p.turns_taken for t in u["spent"])
+        assert u["spent"] == sorted(u["spent"])

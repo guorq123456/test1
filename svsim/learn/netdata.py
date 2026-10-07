@@ -43,7 +43,8 @@ def play(job) -> dict:
     from svsim.tools import records as R
     from svsim.tools.arena import make_agent
     from svsim.ui.session import DECKS
-    g, seed, deck, opponent, spec, explore = job
+    g, seed, deck, opponent, spec, explore = job[:6]
+    hold = job[6] if len(job) > 6 else 0.0
     rng = random.Random(seed * 7919 + g)
     seat = g % 2
     cards = [None, None]
@@ -54,9 +55,13 @@ def play(job) -> dict:
     record["g"], record["explore"] = g, explore
     record["names"] = [deck, opponent] if seat == 0 else [opponent, deck]   # ui.session.DECKS keys by seat
     record["search"] = []
+    held = {}                                       # (player, turn) -> the restriction held this turn
+    vetoes = [_search(a).veto if _search(a) is not None else None for a in agents]
     while not state.over:
         legal = legal_actions(state)
         search = _search(agents[state.active])
+        if hold and search is not None and state.phase.name == "MAIN":
+            _hold(state, search, vetoes[state.active], held, hold, rng, record)
         if search is not None:
             search.last_root = None
         planner = _planner(agents[state.active])
@@ -73,6 +78,33 @@ def play(job) -> dict:
         apply(state, action)
     record["winner"] = state.winner
     return record
+
+
+def _hold(state, search, own_veto, held, rate, rng, record) -> None:
+    """Exploration of keeping evolution points: at the start of a turn in which the player could evolve,
+    with probability `rate` the search may not evolve (or, half the time if it could super-evolve, not
+    super-evolve) for the rest of the turn; record["holds"] lists them. Any position, ahead or behind,
+    so the evaluation sees what points held later are worth in each."""
+    from svsim.core.actions import Evolve
+    from svsim.core.engine import EVOLVE_TURN, SUPER_EVOLVE_TURN
+    key = (state.active, state.turn)
+    if key not in held:
+        p = state.players[state.active]
+        first = state.first == state.active
+        can_evolve = p.ep > 0 and p.turns_taken >= EVOLVE_TURN[first]
+        can_super = p.sep > 0 and p.turns_taken >= SUPER_EVOLVE_TURN[first]
+        choice = None
+        if (can_evolve or can_super) and rng.random() < rate:
+            choice = "nosuper" if can_super and (not can_evolve or rng.random() < 0.5) else "noevo"
+            record.setdefault("holds", []).append({"i": len(record["actions"]), "player": state.active,
+                                                   "turn": state.turn, "hold": choice})
+        held[key] = choice
+        if choice is None:
+            search.veto = own_veto
+        else:
+            extra = (lambda s, a: isinstance(a, Evolve) and a.super_) if choice == "nosuper" else \
+                (lambda s, a: isinstance(a, Evolve))
+            search.veto = extra if own_veto is None else (lambda s, a: own_veto(s, a) or extra(s, a))
 
 
 def _planner(agent):
@@ -179,12 +211,15 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=20261007)
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--out", required=True)
+    parser.add_argument("--hold", type=float, default=0.0,
+                        help="chance, at the start of a turn the player could evolve in, of not evolving (or not "
+                             "super-evolving) for the rest of it (record['holds'])")
     args = parser.parse_args()
     done = set()
     if os.path.exists(args.out):
         for line in open(args.out, encoding="utf-8"):
             done.add(json.loads(line)["g"])
-    todo = [(g, args.seed, args.deck, args.opponent, args.agent, args.explore)
+    todo = [(g, args.seed, args.deck, args.opponent, args.agent, args.explore, args.hold)
             for g in range(args.games) if g not in done]
     t0 = time.time()
     with Pool(args.workers) as pool, open(args.out, "a", encoding="utf-8") as fh:

@@ -36,9 +36,22 @@ SIDE2 = ["hand_face", "hand_removal", "hand_heal", "hand_draw", "hand_ramp", "ha
          "rec_face", "rec_heal", "rec_clear", "lasts"]
 
 
+# Version 3 (2026-10-07; the player: the bot spends its evolution points as soon as it can and runs
+# out in the long games): what an unused evolution / super-evolution point is worth depends on the
+# game, so each side's points also enter multiplied by the context (CONTEXT): how long the game
+# still looks (own turns, both leaders' defense, both decks), whether evolving is unlocked yet, what
+# could use the points (followers on the field not evolved yet, followers in hand: counts, never
+# card ids), and who is ahead (leader defense and board gaps, the enemy's threat next turn). When
+# behind, a point held is worth little; in a long, even game, more. Plus those context terms alone.
+CONTEXT = ["turn", "hp", "op_hp", "decks", "unlocked", "field_targets", "hand_targets", "hp_lead",
+           "board_lead", "danger"]
+SIDE3 = [f"{pt}_x_{c}" for pt in ("ep", "sep") for c in CONTEXT] + ["field_targets", "hand_targets", "danger"]
+
+
 def names(potential: bool, version: int = 1) -> list[str]:
     side = SIDE + (POTENTIAL if potential else []) + (SIDE2 if version >= 2 else [])
-    return [f"me_{n}" for n in side] + [f"op_{n}" for n in side] + ["bias"]
+    extra = [f"me_{n}" for n in SIDE3] + [f"op_{n}" for n in SIDE3] if version >= 3 else []
+    return [f"me_{n}" for n in side] + [f"op_{n}" for n in side] + extra + ["bias"]
 
 
 # Features whose direction isn't up to the data: more defense for my leader is
@@ -135,7 +148,34 @@ def side_features(state: GameState, side: int, potential: bool, version: int = 1
     return out
 
 
+def context(state: GameState, side: int, hidden: bool) -> list[float]:
+    """The CONTEXT values of `side` (each about 0..1); `hidden`: its hand is unknown to the scorer."""
+    from svsim.core.engine import EVOLVE_TURN
+    from svsim.search.evaluate import threat
+    p, enemy = state.players[side], state.players[1 - side]
+    hp, op_hp = effective_hp(p), effective_hp(enemy)
+    board = lambda q: sum(f.atk + max(f.life, 0) for f in q.followers)
+    if hidden:
+        pool = p.hand + p.deck
+        hand_targets = sum(1 for c in pool if c.defn.is_follower) * (len(p.hand) / len(pool) if pool else 0.0)
+    else:
+        hand_targets = sum(1 for c in p.hand if c.defn.is_follower)
+    field_targets = sum(1 for f in p.followers if not f.evolved and not f.super_evolved)
+    return [p.turns_taken / 10.0, hp / 20.0, op_hp / 20.0, (len(p.deck) + len(enemy.deck)) / 60.0,
+            float(p.turns_taken >= EVOLVE_TURN[state.first == side]), field_targets / 5.0, hand_targets / 5.0,
+            (hp - op_hp) / 20.0, (board(p) - board(enemy)) / 20.0,
+            min(threat(state, 1 - side) / max(hp, 1), 2.0)]
+
+
+def held_points(state: GameState, side: int, hidden: bool) -> list[float]:
+    """The version-3 features of `side` (SIDE3)."""
+    p = state.players[side]
+    ctx = context(state, side, hidden)
+    return [p.ep * c for c in ctx] + [p.sep * c for c in ctx] + [ctx[5], ctx[6], ctx[9]]
+
+
 def features(state: GameState, player: int, potential: bool = True, version: int = 1) -> list[float]:
     """The features of `state` scored for `player` (the opponent moves next)."""
+    extra = held_points(state, player, False) + held_points(state, 1 - player, True) if version >= 3 else []
     return (side_features(state, player, potential, version) +
-            side_features(state, 1 - player, potential, version, hidden=True) + [1.0])
+            side_features(state, 1 - player, potential, version, hidden=True) + extra + [1.0])

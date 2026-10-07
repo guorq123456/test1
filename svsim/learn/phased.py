@@ -28,11 +28,12 @@ from svsim.learn.model import SCALE, Learned, LinearValue, matchup_keys, parse_k
 STOCK = ("me_hand_", "me_pool_")
 
 
-def _rows(line: str) -> list:
+def _rows(job) -> list:
     from svsim.learn.features import features
     from svsim.learn.netdata import rows
+    line, version = job if isinstance(job, tuple) else (job, 2)
     record = json.loads(line)
-    return [(record["g"], phase, features(state, me, False, 2), result, q)
+    return [(record.get("g", 0), phase, features(state, me, False, version), result, q)
             for phase, me, state, result, q in rows(record, with_search=True)]
 
 
@@ -88,11 +89,14 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=2)
     parser.add_argument("--q-weight", type=float, default=0.0,
                         help="label = (1 - w) * result + w * the search's value where the search decided")
+    parser.add_argument("--version", type=int, default=2, help="features version (3: held evolution points "
+                        "by context, learn.features.SIDE3)")
     args = parser.parse_args()
     lines = [line for path in args.games for line in open(path, encoding="utf-8")]
     with Pool(args.workers) as pool:
-        data = [r for part in pool.imap(_rows, lines, chunksize=4) for r in part]
-    N = names(False, 2)
+        data = [r for part in pool.imap(_rows, [(line, args.version) for line in lines], chunksize=4)
+                for r in part]
+    N = names(False, args.version)
     keep = np.array([0.0 if n.startswith(STOCK) else 1.0 for n in N])
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -101,13 +105,13 @@ def main() -> None:
         X = np.array([r[2] for r in rows], float)
         y = np.array([r[3] if r[4] is None else (1 - args.q_weight) * r[3] + args.q_weight * r[4]
                       for r in rows], float)
-        w, mean, std, report = F.fit(X * keep, y, None, iters=2500, signs=signs(False, 2))
+        w, mean, std, report = F.fit(X * keep, y, None, iters=2500, signs=signs(False, args.version))
         w = w * keep
         mine, theirs = args.matchup.split("-")
         LinearValue([float(v) for v in w], [float(v) for v in mean], [float(v) for v in std], False,
                     {"deck": mine, "opponent": theirs, "moment": label, "positions": len(X),
                      "q_weight": args.q_weight, "games": args.games,
-                     "report": {k: float(v) for k, v in report.items()}}, version=2
+                     "report": {k: float(v) for k, v in report.items()}}, version=args.version
                     ).save(out / f"{args.matchup}-{label}.json")
         print(f"{label}: {len(X)} positions, {report}", flush=True)
 
