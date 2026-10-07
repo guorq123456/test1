@@ -39,17 +39,23 @@ def _rows(line: str) -> list:
 
 
 def load(folder: Path | None = None) -> dict:
-    """{(craft, opponent craft, "act" | "ended"): LinearValue}"""
+    """{(craft, opponent craft, "act" | "ended"): LinearValue, or a learn.net.ValueNet from an .npz file
+    (the same logit(state, player); the smooth network can stand in for either moment)}"""
     folder = folder or Path(os.environ.get("SVSIM_PHASED") or Path(__file__).resolve().parent / "phased_models")
     out = {}
     if not folder.is_dir():
         return out
-    for path in folder.glob("*-*-*.json"):
+    for path in sorted(folder.glob("*-*-*.json")) + sorted(folder.glob("*-*-*.npz")):
         mine, theirs, moment = path.stem.split("-")
         try:
-            out[(Craft[mine.upper()], Craft[theirs.upper()], moment)] = LinearValue.load(path)
+            key = (Craft[mine.upper()], Craft[theirs.upper()], moment)
         except KeyError:
             continue
+        if path.suffix == ".npz":
+            from svsim.learn.net import ValueNet
+            out[key] = ValueNet.load(path)                # a network overrides a linear model of the same name
+        else:
+            out.setdefault(key, LinearValue.load(path))
     return out
 
 
