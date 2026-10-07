@@ -2,13 +2,18 @@
 
     python -m svsim.tools.smoke --deck elf-t --opponent ramp-t --games 100 --out smoke-elf.jsonl
     python -m svsim.tools.smoke --report smoke-elf.jsonl smoke-ramp.jsonl
+    python -m svsim.tools.smoke --recheck 50000 smoke-elf.jsonl ...     # the turns the probe didn't finish
 
 Games come in pairs on one seed with the seats swapped (as tools.gate), both sides `--agent`. For
 each own turn of each side it keeps the wall time of the side's decisions, the most legal actions
 at one decision, and a lethal probe: at the start of the turn search.lethal.LethalSearch with
 PROBE_NODES (more than the agents' own) looks for a sure lethal (one that wins whatever the deck
 order and random results, so the real state is fair to search); a turn the probe found one and the
-side did not win in is a missed lethal. A game that raises is kept with its traceback and the run
+side did not win in is a missed lethal. Each game keeps its record (tools.records) and each turn the
+action it starts at, so `--recheck NODES` can search again, with a bigger budget, only the turns whose
+probe ran out of nodes (the architecture session: the probe budget below the agents' own catches the
+lethals the agent could have found and didn't, not the ones a budget misses); the report then has two
+columns of missed lethals, found by the probe and found only on the recheck. A game that raises is kept with its traceback and the run
 goes on; a decision over SLOW seconds or a game over LONG seconds is counted as a timeout. The
 condition is tools.gate's: the opponent's 40-card list is known (order and hand not).
 """
@@ -32,6 +37,7 @@ def play_pair(job) -> list[dict]:
     from svsim.core.engine import apply, legal_actions, new_game
     from svsim.core.enums import Phase
     from svsim.search.lethal import LethalSearch
+    from svsim.tools import records as R
     from svsim.tools.arena import make_agent
     from svsim.ui.session import DECKS
     k, seed, deck, opponent, spec = job[:5]
@@ -47,6 +53,8 @@ def play_pair(job) -> list[dict]:
         try:
             agents = [make_agent(spec, 2 * seed + i) for i in (0, 1)]
             state = new_game(cards[0], cards[1], seed=seed)
+            record = R.new_record(cards[0], cards[1], seed, state.first, f"{spec} / {spec}")
+            result["record"] = record
             probe = LethalSearch(max_nodes=nodes, seed=seed)
             turn = None
             while not state.over:
@@ -57,7 +65,8 @@ def play_pair(job) -> list[dict]:
                     p = state.active
                     found = probe.solve(state.clone())
                     turn = {"turn": state.turn, "player": p, "deck": names[p], "ms": 0.0, "max_legal": 0,
-                            "decisions": 0, "lethal": bool(found.sure), "probe_complete": bool(found.complete)}
+                            "decisions": 0, "lethal": bool(found.sure), "probe_complete": bool(found.complete),
+                            "i": len(record["actions"])}
                 legal = legal_actions(state)
                 t = time.perf_counter()
                 action = agents[state.active].act(state, legal)
@@ -67,6 +76,7 @@ def play_pair(job) -> list[dict]:
                     turn["ms"] += 1000 * dt
                     turn["max_legal"] = max(turn["max_legal"], len(legal))
                     turn["decisions"] += 1
+                R.add(record, action)
                 apply(state, action)
             if turn is not None:
                 turn["won"] = state.winner == turn["player"]
@@ -77,6 +87,28 @@ def play_pair(job) -> list[dict]:
         result["seconds"] = time.perf_counter() - t_game
         out.append(result)
     return out
+
+
+def recheck(result: dict, nodes: int) -> int:
+    """Search again with `nodes` the turns of `result` whose probe ran out of nodes without a lethal
+    (turn["recheck"]: a sure lethal found then); the number of turns searched again."""
+    from svsim.search.lethal import LethalSearch
+    from svsim.tools import records as R
+    todo = {t["i"]: t for t in result["turns"] if not t["probe_complete"] and not t["lethal"] and "i" in t}
+    if not todo or "record" not in result:
+        return 0
+    probe = LethalSearch(max_nodes=nodes, seed=result["seed"])
+    for i, (state, _) in enumerate(R.steps(result["record"])):
+        if i in todo:
+            todo[i]["recheck"] = bool(probe.solve(state.clone()).sure)
+    return sum(1 for t in result["turns"] if "recheck" in t)
+
+
+def _recheck_job(job):
+    line, nodes = job
+    result = json.loads(line)
+    recheck(result, nodes)
+    return json.dumps(result)
 
 
 def _pct(xs, q):
@@ -103,11 +135,16 @@ def report(results: list[dict]) -> str:
         legal = [t["max_legal"] for t in turns]
         lethal = [t for t in turns if t["lethal"]]
         missed = [t for t in lethal if not t["won"]]
+        rechecked = [t for t in turns if "recheck" in t]
+        late = [t for t in rechecked if t["recheck"] and not t["won"]]
         lines.append(f"{deck}：{len(turns)} 个回合，每回合用时中位数 {statistics.median(ms):.0f} ms、"
                      f"90% {_pct(ms, 0.9):.0f} ms、最长 {max(ms):.0f} ms；每回合最多候选行动 中位数 "
                      f"{statistics.median(legal):.0f}、90% {_pct(legal, 0.9)}、最大 {max(legal)}；"
                      f"探针找到必杀 {len(lethal)} 回合，没杀 {len(missed)} 回合"
-                     f"（探针没搜完的回合 {sum(not t['probe_complete'] for t in turns)}）")
+                     f"（探针没搜完的回合 {sum(not t['probe_complete'] for t in turns)}"
+                     + (f"，其中补搜了 {len(rechecked)} 回合，补搜才找到必杀 "
+                        f"{sum(1 for t in rechecked if t['recheck'])} 回合、其中没杀 {len(late)} 回合" if rechecked else "")
+                     + "）")
     return "\n".join(lines)
 
 
@@ -122,7 +159,20 @@ def main() -> None:
     parser.add_argument("--probe-nodes", type=int, default=PROBE_NODES)
     parser.add_argument("--out", default=None)
     parser.add_argument("--report", nargs="+", default=None, help="only print the report of these files")
+    parser.add_argument("--recheck", nargs="+", default=None, metavar="NODES FILE",
+                        help="search again with NODES the turns the probe didn't finish, in these files (rewritten)")
     args = parser.parse_args()
+    if args.recheck:
+        nodes, paths = int(args.recheck[0]), args.recheck[1:]
+        for path in paths:
+            lines = open(path, encoding="utf-8").read().splitlines()
+            with Pool(args.workers) as pool:
+                done = list(pool.imap(_recheck_job, [(line, nodes) for line in lines]))
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write("\n".join(done) + "\n")
+            print(path)
+            print(report([json.loads(line) for line in done]))
+        return
     if args.report:
         for path in args.report:
             print(path)
