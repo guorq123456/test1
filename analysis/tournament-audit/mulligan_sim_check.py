@@ -13,10 +13,15 @@ side, the same N determinizations for every subset).
 - --regret: whether the two runs' disagreement is between subsets about as good (the architecture
   thread to decide on C): the play-out loop of agents.sim_mulligan.simulated, repeated here (it returns
   only the best subset) to keep every subset's mean; per hand two runs at --n (seeds 1 and 2) and a
-  referee run at 4 x --n (seed 3), all with their own worlds; reported: how often the two runs agree,
-  the referee's value of each run's choice against the referee's best (regret) and against the
-  spread of the 16 subsets (best minus worst, by the referee), and the referee's standard error of a
-  subset's mean, in the evaluation's own units.
+  referee run at 4 x --n (seed 3), all with their own worlds. Each run picks by the mean raw score, as C
+  does (8 x logit; a play-out that ends the game scores +-1000). For reading, every play-out is also
+  turned into a win chance (1 / (1 + exp(-score / 8)), 1 or 0 for a finished game), so the regret is in
+  win-rate points: the referee's best subset minus the referee's value of each run's pick. Also: the
+  signal-to-noise per hand, the referee's gap between its best and second-best subsets over the
+  standard error of one subset's mean at --n (the decision's own noise); and how often a play-out
+  ended the game. The thread's reading, fixed beforehand: a median regret under 1 win-rate point
+  means C sways between near-ties at little cost (C: not worth the compute); a large regret means
+  real noise; C's gates stay shelved either way.
 - --behaviour: the three ways on the same hands (C at --n): how often each card is kept when dealt,
   the mean number redrawn, the C-R and C-D agreement (same subset), and each deck's goal as in
   mulligan_check.py (after the mulligans both sides pass, the hand read at each own turn start).
@@ -42,7 +47,9 @@ def stability_job(job):
 
 
 def subset_values(state, n, horizon=5, seed=0):
-    """agents.sim_mulligan.simulated's loop, keeping each redraw's mean and its standard error."""
+    """agents.sim_mulligan.simulated's loop, keeping each redraw's mean raw score (what C ranks by) and its
+    mean win chance with that mean's standard error, and how many play-outs ended the game."""
+    import math
     import random
     from itertools import combinations
     from svsim.agents.greedy_agent import GreedyAgent
@@ -60,20 +67,26 @@ def subset_values(state, n, horizon=5, seed=0):
     worlds = [rng.getrandbits(64) for _ in range(n)]
     weights = PhasedLearned(fallback=Learned())
     play = Learned(fallback=DEFAULT)
-    out = {}
+    out, ended = {}, 0
     for redraw in subsets:
-        vals = []
+        raw, win = [], []
         for w in worlds:
             s = determinize(state, me, random.Random(w))
             apply(s, Mulligan(redraw))
             agents = [GreedyAgent(w % 100003 + i, samples=1, weights=play) for i in (0, 1)]
             while not s.over and s.turn <= 2 * horizon:
                 apply(s, agents[s.active].act(s, _legal(s)))
-            vals.append(evaluate(s, me, weights, player_moves_next=(s.active == me)))
-        m = sum(vals) / n
-        se = (sum((v - m) ** 2 for v in vals) / max(n - 1, 1) / n) ** 0.5
-        out[redraw] = (m, se)
-    return out
+            v = evaluate(s, me, weights, player_moves_next=(s.active == me))
+            raw.append(v)
+            if s.over:
+                ended += 1
+                win.append(1.0 if s.winner == me else 0.0 if s.winner == 1 - me else 0.5)
+            else:
+                win.append(1 / (1 + math.exp(-max(min(v / 8.0, 50.0), -50.0))))
+        m = sum(win) / n
+        se = (sum((x - m) ** 2 for x in win) / max(n - 1, 1) / n) ** 0.5
+        out[redraw] = (sum(raw) / n, m, se)
+    return out, ended / (n * len(subsets))
 
 
 def regret_job(job):
@@ -81,12 +94,15 @@ def regret_job(job):
     deck, opp, first, seed, n = job
     st = opening(deck, opp, first, seed)
     runs = [subset_values(st.clone(), k, seed=sd) for k, sd in ((n, 1), (n, 2), (4 * n, 3))]
-    picks = [max(r, key=lambda c: r[c][0]) for r in runs[:2]]
-    ref = runs[2]
-    best = max(v for v, _ in ref.values())
-    worst = min(v for v, _ in ref.values())
-    se = sum(e for _, e in ref.values()) / len(ref)
-    return deck, picks[0] == picks[1], [best - ref[p][0] for p in picks], best - worst, se
+    ended = sum(e for _, e in runs) / 3
+    vals = [r for r, _ in runs]
+    picks = [max(r, key=lambda c: r[c][0]) for r in vals[:2]]          # by mean raw score, as C picks
+    ref = vals[2]
+    by_win = sorted((v[1] for v in ref.values()), reverse=True)
+    best, second, worst = by_win[0], by_win[1], by_win[-1]
+    se_n = sum(v[2] for v in vals[0].values()) / len(vals[0])          # one subset's mean at --n
+    regrets = [100 * (best - ref[p][1]) for p in picks]                 # win-rate points
+    return deck, picks[0] == picks[1], regrets, 100 * (best - worst), (best - second) / max(se_n, 1e-9), 100 * se_n, ended
 
 
 def behaviour_job(job):
@@ -154,21 +170,24 @@ def main():
             for r in pool.imap_unordered(regret_job, jobs, chunksize=1):
                 res.append(r)
         n = len(res)
+        med = lambda xs: sorted(xs)[len(xs) // 2]
         regrets = [x for r in res for x in r[2]]
-        spread = sum(r[3] for r in res) / n
-        se = sum(r[4] for r in res) / n
-        mean_r = sum(regrets) / len(regrets)
-        rel = sum(x / r[3] for r in res for x in r[2] if r[3] > 0) / len(regrets)
-        print(f"  --regret，N={args.n}（裁判 N={4 * args.n}），{n} 手：两次选中同一组合 {sum(r[1] for r in res) / n:.0%}")
-        print(f"  选中组合的遗憾（裁判眼里比最好组合差多少）：平均 {mean_r:.3f}，中位 {sorted(regrets)[len(regrets) // 2]:.3f}，"
-              f"占 16 个组合最好减最差的 {rel:.0%}")
-        print(f"  16 个组合最好减最差（裁判）：平均 {spread:.3f}；裁判单个组合均值的标准误：平均 {se:.3f}（评估器自己的单位）")
+        snr = [r[4] for r in res]
+        print(f"  --regret，N={args.n}（裁判 N={4 * args.n}），{n} 手；两次选中同一组合 {sum(r[1] for r in res) / n:.0%}")
+        print(f"  遗憾（胜率点；裁判的最好组合减去裁判对所选组合的估值）：中位 {med(regrets):.2f}，平均 {sum(regrets) / len(regrets):.2f}，"
+              f"超过 1 点的 {sum(x > 1 for x in regrets) / len(regrets):.0%}，超过 3 点的 {sum(x > 3 for x in regrets) / len(regrets):.0%}")
+        print(f"  16 个组合最好减最差（裁判，胜率点）：中位 {med([r[3] for r in res]):.1f}；"
+              f"单个组合均值的标准误（N={args.n}，胜率点）：平均 {sum(r[5] for r in res) / n:.1f}")
+        print(f"  信噪比（裁判的最好减第二好 ÷ N={args.n} 的标准误）：中位 {med(snr):.2f}，"
+              f"大于 1 的手 {sum(x > 1 for x in snr) / n:.0%}，大于 2 的手 {sum(x > 2 for x in snr) / n:.0%}")
+        print(f"  推演里对局提前结束的比例：{sum(r[6] for r in res) / n:.1%}")
+        print(f"  读法（架构线程事先定的）：遗憾中位 < 1 个胜率点 → 摇摆、代价小；否则是真噪声。两种都不重开 C 的闸门。")
         for d in DECKS_T:
             sub = [r for r in res if r[0] == d]
             if sub:
                 rr = [x for r in sub for x in r[2]]
-                print(f"    {d}：一致 {sum(r[1] for r in sub) / len(sub):.0%}，平均遗憾 {sum(rr) / len(rr):.3f}，"
-                      f"最好减最差 {sum(r[3] for r in sub) / len(sub):.3f}")
+                print(f"    {d}：一致 {sum(r[1] for r in sub) / len(sub):.0%}，遗憾中位 {med(rr):.2f}，"
+                      f"信噪比中位 {med([r[4] for r in sub]):.2f}，提前结束 {sum(r[6] for r in sub) / len(sub):.1%}")
     if args.behaviour:
         jobs = [(d, o, f, args.seed + h, args.n) for d in DECKS_T for o in DECKS_T for f in (True, False)
                 for h in range(args.hands)]
