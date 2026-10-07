@@ -25,11 +25,13 @@ A's and B's matchup models can be replaced with --model-a / --model-b (a
 LinearValue JSON file used as the model for A's / B's deck against its
 opponent, as models.Learned looks it up). Reports A's score (per game, from
 the pairs) with a 95% interval and the test's verdict; beside them, the gap
-in class rating (CR, the ladder's rating: learn.rating) at which that score
-keeps a player's CR steady, 800 x (score - 1/2), with its interval, given
-only inside the ladder's matching window (a score of 28%-72%, a gap of
-175 CR at most); past it the stronger side keeps climbing until nobody is in
-reach, and the rules can't say by how much more ("out of the window").
+in class rating (CR, the ladder's rating: learn.rating) on the player's own
+scale, 236 per logit of the score (200 CR is about 70%), with its interval,
+and in brackets the gap at which that score keeps a player's CR steady, 800 x
+(score - 1/2), given only inside the ladder's matching window (a score of
+28%-72%, a gap of 175 CR at most); past it the stronger side keeps climbing
+until nobody is in reach, and the rules can't say by how much more ("out of
+the window").
 
 No Elo (the player, 2026-10-07; class rating is the yardstick instead): chess's
 400-point logistic doesn't hold in a card game. Luck puts a ceiling on win rates (around 75%-85% however strong a
@@ -76,12 +78,18 @@ def cr_gap(score: float) -> float | None:
 
 
 def cr_text(score: float, margin: float) -> str:
+    """The CR gap on the player's scale (learn.rating.salem_gap, 236 per logit) with its interval, and in
+    brackets the ladder's steady formula 800 x (score - 1/2), whose matching window (+-175) still decides
+    whether the gap means anything on the ladder."""
+    from svsim.learn.rating import salem_gap
+    show_s = lambda p: "−∞" if p <= 0 else "+∞" if p >= 1 else f"{salem_gap(p):+.0f}"
+    main = f"CR 分差约 {show_s(score)}（{show_s(score - margin)}～{show_s(score + margin)}；"
     gap = cr_gap(score)
     if gap is None:
-        return f"CR 分差超出匹配窗口（{'>+175' if score > 0.5 else '<−175'}）"
+        return main + f"游戏稳态公式超出匹配窗口 {'>+175' if score > 0.5 else '<−175'}）"
     lo, hi = cr_gap(score - margin), cr_gap(score + margin)
     show = lambda g, side: f"{g:+.0f}" if g is not None else ("<−175" if side < 0 else ">+175")
-    return f"CR 分差约 {gap:+.0f}（区间 {show(lo, -1)}～{show(hi, 1)}，窗口内）"
+    return main + f"游戏稳态公式 {gap:+.0f}，{show(lo, -1)}～{show(hi, 1)}，窗口内）"
 
 
 def summary(scores: list[float]) -> tuple[float, float]:
