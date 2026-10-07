@@ -37,15 +37,21 @@ SIDE2 = ["hand_face", "hand_removal", "hand_heal", "hand_draw", "hand_ramp", "ha
 
 
 # Version 3 (2026-10-07; the player: the bot spends its evolution points as soon as it can and runs
-# out in the long games): what an unused evolution / super-evolution point is worth depends on the
-# game, so each side's points also enter multiplied by the context (CONTEXT): how long the game
-# still looks (own turns, both leaders' defense, both decks), whether evolving is unlocked yet, what
-# could use the points (followers on the field not evolved yet, followers in hand: counts, never
-# card ids), and who is ahead (leader defense and board gaps, the enemy's threat next turn). When
-# behind, a point held is worth little; in a long, even game, more. Plus those context terms alone.
-CONTEXT = ["turn", "hp", "op_hp", "decks", "unlocked", "field_targets", "hand_targets", "hp_lead",
-           "board_lead", "danger"]
-SIDE3 = [f"{pt}_x_{c}" for pt in ("ep", "sep") for c in CONTEXT] + ["field_targets", "hand_targets", "danger"]
+# out in the long games; the test session's count of the player's games: they keep a point when a
+# card that pays off an evolution is in hand but out of reach this turn, and spend it on that card
+# within two turns, ahead or behind alike): each side's unused evolution and super-evolution points
+# also enter multiplied by their context:
+# - turns since that kind of evolution unlocked;
+# - the best payoff (learn.payoff.tier: measured from what evolving the card does, never a card list)
+#   of a follower the points could go to on the coming turn (on the field, not yet evolved that way,
+#   or in hand and affordable then);
+# - the best payoff of a follower in hand that is out of reach on the coming turn;
+# - how long the game still looks (own turns, both leaders' defense, both decks);
+# - and, as a minor term, the leader-defense gap.
+# The coming turn: the current one if it is the side's, else the next (one more play point). No term
+# for the hand alone: cards in hand get no value of their own (docs/architecture.md, §9.2).
+CONTEXT = ["since_unlock", "payoff_now", "payoff_later", "turn", "hp", "op_hp", "decks", "hp_lead"]
+SIDE3 = [f"{pt}_x_{c}" for pt in ("ep", "sep") for c in CONTEXT]
 
 
 def names(potential: bool, version: int = 1) -> list[str]:
@@ -148,30 +154,36 @@ def side_features(state: GameState, side: int, potential: bool, version: int = 1
     return out
 
 
-def context(state: GameState, side: int, hidden: bool) -> list[float]:
-    """The CONTEXT values of `side` (each about 0..1); `hidden`: its hand is unknown to the scorer."""
-    from svsim.core.engine import EVOLVE_TURN
-    from svsim.search.evaluate import threat
+def context(state: GameState, side: int, hidden: bool, super_: bool = False) -> list[float]:
+    """The CONTEXT values of `side`'s evolution points (super-evolution points with `super_`), each about
+    0..1; `hidden`: its hand is unknown to the scorer (its share of the cards not seen yet stands in)."""
+    from svsim.core.engine import EVOLVE_TURN, SUPER_EVOLVE_TURN
+    from svsim.learn.payoff import tier
     p, enemy = state.players[side], state.players[1 - side]
-    hp, op_hp = effective_hp(p), effective_hp(enemy)
-    board = lambda q: sum(f.atk + max(f.life, 0) for f in q.followers)
+    first = state.first == side
+    unlock = (SUPER_EVOLVE_TURN if super_ else EVOLVE_TURN)[first]
+    coming = p.turns_taken + (0 if state.active == side else 1)
+    pp = p.max_pp if state.active == side else min(p.max_pp + 1, 10)
+    pp += 1 if p.bonus_ready else 0
+    on_field = [tier(f.defn) for f in p.followers if not (f.super_evolved or (f.evolved and not super_))]
     if hidden:
         pool = p.hand + p.deck
-        hand_targets = sum(1 for c in pool if c.defn.is_follower) * (len(p.hand) / len(pool) if pool else 0.0)
+        share = len(p.hand) / len(pool) if pool else 0.0
+        now = max([t for t in on_field] + [share * tier(c.defn) for c in pool if c.cost <= pp], default=0)
+        later = max([share * tier(c.defn) for c in pool if c.cost > pp], default=0)
     else:
-        hand_targets = sum(1 for c in p.hand if c.defn.is_follower)
-    field_targets = sum(1 for f in p.followers if not f.evolved and not f.super_evolved)
-    return [p.turns_taken / 10.0, hp / 20.0, op_hp / 20.0, (len(p.deck) + len(enemy.deck)) / 60.0,
-            float(p.turns_taken >= EVOLVE_TURN[state.first == side]), field_targets / 5.0, hand_targets / 5.0,
-            (hp - op_hp) / 20.0, (board(p) - board(enemy)) / 20.0,
-            min(threat(state, 1 - side) / max(hp, 1), 2.0)]
+        now = max(on_field + [tier(c.defn) for c in p.hand if c.cost <= pp], default=0)
+        later = max([tier(c.defn) for c in p.hand if c.cost > pp], default=0)
+    hp, op_hp = effective_hp(p), effective_hp(enemy)
+    return [max(coming - unlock, 0) / 5.0 if coming >= unlock else 0.0, now / 2.0, later / 2.0,
+            p.turns_taken / 10.0, hp / 20.0, op_hp / 20.0, (len(p.deck) + len(enemy.deck)) / 60.0,
+            (hp - op_hp) / 20.0]
 
 
 def held_points(state: GameState, side: int, hidden: bool) -> list[float]:
     """The version-3 features of `side` (SIDE3)."""
     p = state.players[side]
-    ctx = context(state, side, hidden)
-    return [p.ep * c for c in ctx] + [p.sep * c for c in ctx] + [ctx[5], ctx[6], ctx[9]]
+    return [p.ep * c for c in context(state, side, hidden)] + [p.sep * c for c in context(state, side, hidden, True)]
 
 
 def features(state: GameState, player: int, potential: bool = True, version: int = 1) -> list[float]:

@@ -147,8 +147,12 @@ def test_held_evolution_points_enter_by_context():
     assert len(features(state, 0, False, 3)) == len(names(False, 3)) == len(names(False, 2)) + 2 * len(SIDE3)
     assert features(state, 0, False, 3)[:len(names(False, 2)) - 1] == features(state, 0, False, 2)[:-1]
     from svsim.learn.features import context
-    held, ctx, p = held_points(state, 0, False), context(state, 0, False), state.players[0]
-    assert held[:len(CONTEXT)] == [p.ep * c for c in ctx] and held[len(CONTEXT):2 * len(CONTEXT)] == [p.sep * c for c in ctx]
+    held, p = held_points(state, 0, False), state.players[0]
+    assert held[:len(CONTEXT)] == [p.ep * c for c in context(state, 0, False)]
+    assert held[len(CONTEXT):] == [p.sep * c for c in context(state, 0, False, True)]
+    from svsim.cards import library
+    from svsim.learn.payoff import tier
+    assert tier(next(c for c in decks.RAMP_DRAGON if c.card_id == 10544110)) == 2      # Justice: measured, not listed
     state.players[0].ep, state.players[0].sep = 0, 0
     assert all(v == 0 for v in held_points(state, 0, False)[:2 * len(CONTEXT)])
 

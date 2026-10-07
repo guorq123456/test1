@@ -80,11 +80,16 @@ def play(job) -> dict:
     return record
 
 
+EARLY_HOLD = 0.4        # the chance in the first turns after unlocking (the bot spends at once; the player not)
+LATER_HOLD = 0.5        # ... when a card that pays off an evolution is in hand but out of reach this turn
+
+
 def _hold(state, search, own_veto, held, rate, rng, record) -> None:
     """Exploration of keeping evolution points: at the start of a turn in which the player could evolve,
-    with probability `rate` the search may not evolve (or, half the time if it could super-evolve, not
-    super-evolve) for the rest of the turn; record["holds"] lists them. Any position, ahead or behind,
-    so the evaluation sees what points held later are worth in each."""
+    the search may not evolve (or, half the time if it could super-evolve, not super-evolve) for the rest
+    of the turn, with probability `rate`, at least EARLY_HOLD within two turns of the unlock, at least
+    LATER_HOLD with a payoff card (learn.payoff) in hand out of reach; record["holds"] lists them. Any
+    position, ahead or behind, so the evaluation sees what points held later are worth in each."""
     from svsim.core.actions import Evolve
     from svsim.core.engine import EVOLVE_TURN, SUPER_EVOLVE_TURN
     key = (state.active, state.turn)
@@ -94,6 +99,13 @@ def _hold(state, search, own_veto, held, rate, rng, record) -> None:
         can_evolve = p.ep > 0 and p.turns_taken >= EVOLVE_TURN[first]
         can_super = p.sep > 0 and p.turns_taken >= SUPER_EVOLVE_TURN[first]
         choice = None
+        if can_evolve or can_super:
+            from svsim.learn.features import context
+            ctx = context(state, state.active, False, super_=can_super and not can_evolve)
+            if ctx[0] <= 2 / 5.0:
+                rate = max(rate, EARLY_HOLD)
+            if ctx[2] > 0:
+                rate = max(rate, LATER_HOLD)
         if (can_evolve or can_super) and rng.random() < rate:
             choice = "nosuper" if can_super and (not can_evolve or rng.random() < 0.5) else "noevo"
             record.setdefault("holds", []).append({"i": len(record["actions"]), "player": state.active,

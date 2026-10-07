@@ -1,0 +1,100 @@
+"""Which followers pay off an evolution point: measured from what evolving them does, never listed by hand.
+
+The player's games (the test session's count, 2026-10-07): they keep their evolution points when a
+card that does much more when evolved is in hand but can't be played or evolved this turn, and spend
+them on it within two turns; the bot spends points as soon as it can. A held point is worth what it
+can be spent on, so the evaluation needs to know which cards are worth spending one on, for any
+deck: no table of cards (the player's rule, docs/architecture.md §9.2).
+
+`evolve_payoff(defn, super_)`: in the roles sandbox (learn.roles: 10 play points, two enemy
+followers of 8 defense, the enemy leader at 10), the follower is put on the field and evolved (or
+super-evolved) with a point, the best of its target choices; what that does beyond a plain
+evolution's stats (+2/+2, super +3/+3) is measured in the role units and summed with weights:
+damage to the enemy leader 1, enemy followers taken out 4 each (8 defense), defense healed 0.5,
+cards drawn 2, play points 2, extra attack and defense 1 each, plus what the field (crests it leaves
+included) does more in one round of turns afterwards (face 1, clear 4, heal 0.5). `tier(defn)`: 2 at
+PAYOFF or more, 1 at LIGHT or more.
+"""
+from __future__ import annotations
+
+PAYOFF = 4.0                         # points of measured effect beyond a plain evolution: pays off well
+LIGHT = 2.0                          # ... pays off some
+PLAIN = {False: 4, True: 6}          # attack + defense a plain evolution / super-evolution adds
+WEIGHTS = {"face": 1.0, "removal": 4.0, "heal": 0.5, "draw": 2.0, "ramp": 2.0}
+_CACHE: dict = {}
+
+
+def evolve_payoff(defn, super_: bool = False) -> float:
+    key = (defn.card_id, super_)
+    hit = _CACHE.get(key)
+    if hit is not None:
+        return hit
+    from svsim.core import effects as E
+    from svsim.core.actions import Evolve
+    from svsim.core.engine import apply, legal_actions
+    from svsim.learn.roles import _measure, _sandbox
+    best = 0.0
+    if defn.is_follower:
+        try:
+            state = _sandbox()
+            me = state.players[0]
+            me.ep, me.sep = 2, 2
+            inst = E.summon(state, 0, defn)
+            inst.entered_turn = -1
+            evolves = [a for a in legal_actions(state) if isinstance(a, Evolve) and a.uid == inst.uid
+                       and a.super_ == super_]
+            plain = _round(state)                    # one round of turns without the evolution
+            for action in evolves[:8]:
+                t = state.clone()
+                m0 = t.players[0]
+                hand, max_pp, pp = len(m0.hand), m0.max_pp, m0.pp
+                body0 = sum(f.atk + max(f.life, 0) for f in m0.followers)
+                apply(t, action)
+                m = t.players[0]
+                got = _measure(state, t)
+                got["draw"] = max(len(m.hand) - hand, 0)
+                got["ramp"] = max(m.max_pp - max_pp, 0) + 0.5 * max(m.pp - pp, 0)
+                body = sum(f.atk + max(f.life, 0) for f in m.followers) - body0
+                value = sum(WEIGHTS[k] * float(got[k]) for k in WEIGHTS) + max(body - PLAIN[super_], 0)
+                if not t.over:                       # what the field (crests included) does each round now
+                    after = _round(t)
+                    value += max(after[0] - plain[0], 0) + 4.0 * max(after[2] - plain[2], 0) + \
+                        0.5 * max(after[1] - plain[1], 0)
+                best = max(best, value)
+        except Exception:                            # a card the sandbox can't evolve: no payoff
+            best = 0.0
+    _CACHE[key] = best
+    return best
+
+
+def _round(state) -> tuple:
+    """(face, heal, clear) of one round of turns from `state` (the holder's end of turn, the opponent's turn,
+    the holder's turn starting), its followers kept from attacking: what the field and crests do alone."""
+    from svsim.core.actions import EndTurn
+    from svsim.core.engine import apply
+    from svsim.learn.roles import _measure
+    t = state.clone()
+    before = t.clone()
+    for _ in range(2):
+        if t.over:
+            break
+        apply(t, EndTurn())
+    got = _measure(before, t)
+    return float(got["face"]), float(got["heal"]), float(got["removal"])
+
+
+def payoff(defn) -> float:
+    """The larger of the evolution's and the super-evolution's measured payoff."""
+    return max(evolve_payoff(defn, False), evolve_payoff(defn, True))
+
+
+def tier(defn) -> int:
+    """2: pays off an evolution point well (PAYOFF or more), 1: some (LIGHT or more), 0: no more than stats."""
+    if not defn.is_follower:
+        return 0
+    v = payoff(defn)
+    return 2 if v >= PAYOFF else 1 if v >= LIGHT else 0
+
+
+def is_payoff(defn) -> bool:
+    return tier(defn) > 0
