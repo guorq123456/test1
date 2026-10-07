@@ -197,6 +197,23 @@ def test_a_forked_game_keeps_its_evolution_points_in_the_branch():
     assert found
 
 
+def test_a_deck_fork_waits_for_any_tier_two_card_and_only_fires_when_asked():
+    from svsim.cards import decks
+    from svsim.core.engine import EVOLVE_TURN, new_game
+    from svsim.learn.netdata import _fork_point
+    from svsim.learn.payoff import tier
+    state = new_game(decks.build(decks.RAMP_DRAGON), decks.build(decks.RAMP_DRAGON), seed=4, first=0)
+    p = state.players[state.active]
+    p.turns_taken, p.ep, p.max_pp = EVOLVE_TURN[state.first == state.active], 2, 10
+    p.deck.extend(c for c in p.hand if tier(c.defn) > 0)          # nothing to evolve for in hand
+    p.hand[:] = [c for c in p.hand if tier(c.defn) == 0]
+    assert sum(1 for c in p.deck if tier(c.defn) == 2) >= 3
+    assert _fork_point(state, ("deck",)) == ("deck", "tier2")
+    assert _fork_point(state, ("payoff",)) is None
+    p.deck[:] = [c for c in p.deck if tier(c.defn) < 2]            # none left to draw
+    assert _fork_point(state, ("deck",)) is None
+
+
 def test_a_payoff_card_still_in_the_deck_counts_by_its_draw_chances():
     from svsim.cards import decks
     from svsim.core.engine import new_game

@@ -50,6 +50,7 @@ def play(job):
     g, seed, deck, opponent, spec, explore = job[:6]
     hold = job[6] if len(job) > 6 else 0.0
     fork = job[7] if len(job) > 7 else False
+    triggers = tuple(job[8]) if len(job) > 8 and job[8] else ("payoff", "deck", "unlock")
     rng = random.Random(seed * 7919 + g)
     seat = g % 2
     cards = [None, None]
@@ -64,7 +65,7 @@ def play(job):
         _run(state, agents, record, rng, explore, hold)
         return record
     snapshot = {}
-    _run(state, agents, record, rng, explore, 0.0, snapshot=snapshot)
+    _run(state, agents, record, rng, explore, 0.0, snapshot=snapshot, triggers=triggers)
     if not snapshot:
         return [record]
     branch = json.loads(json.dumps({k: v for k, v in snapshot["record"].items()}))
@@ -78,7 +79,8 @@ def play(job):
     return [record, branch]
 
 
-def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None) -> None:
+def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
+         triggers=("payoff", "deck", "unlock")) -> None:
     """Play `state` out, adding to `record`. `snapshot` (a dict): fill it at the first fork point (see
     play). `keep`: the branch's side keeps its points (no evolving) as play describes."""
     from svsim.core.engine import apply, legal_actions
@@ -95,7 +97,7 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None) ->
         if hold and search is not None and state.phase.name == "MAIN":
             _hold(state, search, vetoes[state.active], held, hold, rng, record)
         if snapshot is not None and not snapshot and start:
-            trigger = _fork_point(state)
+            trigger = _fork_point(state, triggers)
             if trigger is not None:
                 snapshot.update(state=state.clone(), rng=rng.getstate(), i=len(record["actions"]),
                                 player=state.active, turn=state.turn, trigger=trigger[0], target=trigger[1],
@@ -119,10 +121,10 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None) ->
     record["winner"] = state.winner
 
 
-def _fork_point(state):
+def _fork_point(state, triggers=("payoff", "deck", "unlock")):
     """("payoff", card id) if the side to act could evolve and has a payoff follower in hand out of reach;
-    ("deck", card id) if it has none in hand but a tier-2 one is at least 25% likely to be drawn within two
-    turns (one draw a turn); ("unlock", None) in its first two turns of evolving; else None."""
+    ("deck", "tier2") if it has no tier-2 one in hand but drawing one (any) within two turns is at least 25%
+    likely (one draw a turn); ("unlock", None) in its first two turns of evolving; else None."""
     from svsim.core.engine import EVOLVE_TURN
     from svsim.learn.payoff import tier
     p = state.players[state.active]
@@ -132,18 +134,14 @@ def _fork_point(state):
     pp = p.max_pp + (1 if p.bonus_ready else 0)
     later = sorted((c for c in p.hand if tier(c.defn) > 0 and c.cost > pp),
                    key=lambda c: (-tier(c.defn), c.cost))
-    if later:
+    if later and "payoff" in triggers:
         return "payoff", later[0].defn.card_id
-    if not any(tier(c.defn) > 0 for c in p.hand):     # waiting for a payoff card still in the deck
+    if "deck" in triggers and not any(tier(c.defn) == 2 for c in p.hand):  # waiting for one still in the deck
         from svsim.learn.features import first_draw
-        best = None
-        for cid in {c.defn.card_id for c in p.deck if tier(c.defn) == 2}:
-            copies = sum(1 for c in p.deck if c.defn.card_id == cid)
-            if sum(first_draw(copies, len(p.deck), 2)) >= 0.25 and (best is None or copies > best[1]):
-                best = (cid, copies)
-        if best is not None:
-            return "deck", best[0]
-    if p.turns_taken - EVOLVE_TURN[first] <= 1:
+        copies = sum(1 for c in p.deck if tier(c.defn) == 2)
+        if copies and sum(first_draw(copies, len(p.deck), 2)) >= 0.25:
+            return "deck", "tier2"
+    if "unlock" in triggers and p.turns_taken - EVOLVE_TURN[first] <= 1:
         return "unlock", None
     return None
 
@@ -151,11 +149,13 @@ def _fork_point(state):
 def _keep(state, search, own_veto, keep, record) -> None:
     """At the start of the branch side's turn: no evolving this turn while its target is out of reach."""
     from svsim.core.actions import Evolve
+    from svsim.learn.payoff import tier
     p = state.players[state.active]
     pp = p.max_pp + (1 if p.bonus_ready else 0)
-    reached = keep["target"] is not None and (
-        any(c.defn.card_id == keep["target"] and c.cost <= pp for c in p.hand) or
-        any(f.defn.card_id == keep["target"] for f in p.field))
+    target = keep["target"]
+    wanted = (lambda d: tier(d) == 2) if target == "tier2" else (lambda d: d.card_id == target)
+    reached = target is not None and (any(wanted(c.defn) and c.cost <= pp for c in p.hand) or
+                                      any(wanted(f.defn) for f in p.field))
     limit = 2 if keep["trigger"] == "unlock" else 3
     if reached or keep["held"] >= limit or keep["held"] < 0:
         keep["held"] = -1                          # done: the search plays on as usual
@@ -314,6 +314,8 @@ def main() -> None:
     parser.add_argument("--fork", action="store_true",
                         help="each game also as a branch keeping evolution points from its first fork point "
                              "(see play); both records are written")
+    parser.add_argument("--fork-triggers", nargs="+", default=None, choices=("payoff", "deck", "unlock"),
+                        help="with --fork: only these fork points (default all)")
     parser.add_argument("--hold", type=float, default=0.0,
                         help="chance, at the start of a turn the player could evolve in, of not evolving (or not "
                              "super-evolving) for the rest of it (record['holds'])")
@@ -322,8 +324,8 @@ def main() -> None:
     if os.path.exists(args.out):
         for line in open(args.out, encoding="utf-8"):
             done.add(json.loads(line)["g"])
-    todo = [(g, args.seed, args.deck, args.opponent, args.agent, args.explore, args.hold, args.fork)
-            for g in range(args.games) if g not in done]
+    todo = [(g, args.seed, args.deck, args.opponent, args.agent, args.explore, args.hold, args.fork,
+             args.fork_triggers) for g in range(args.games) if g not in done]
     t0 = time.time()
     with Pool(args.workers) as pool, open(args.out, "a", encoding="utf-8") as fh:
         for k, result in enumerate(pool.imap_unordered(play, todo), 1):
