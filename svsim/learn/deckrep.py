@@ -9,7 +9,10 @@ a deck no one has fitted still gets some (docs/universal-bot-plan.md):
 - `card_vector(defn)`: cost and stats, card type, keywords, the roles sandbox (learn.roles: what
   playing it does; what it does by itself on the field each round, plain and evolved), what evolving
   and super-evolving it with a point adds (learn.payoff), and which kinds of ability its script has
-  (Fanfare, Last Words, Evolve, listeners, Engage, Enhance, Invoke, Accelerate, tokens it makes...).
+  (Fanfare, Last Words, Evolve, listeners, Engage, Enhance, Invoke, Accelerate, tokens it makes...),
+  and `engine(defn)`: what it does over four rounds of turns with allies on the field (step 1 found 42
+  of 516 Rotation cards measuring nothing in the roles sandbox, all conditional amulets and spells:
+  countdowns, buffs for allies, conditions; a combo deck's engine is exactly those cards).
   No card id, no name, no class.
 - `deck_static(cards)`: the 40 cards' vectors pooled: their mean, the count and mean roles of each
   cost band, and how much the cards share traits (a tribe deck holds together, a toolbox does not).
@@ -46,7 +49,11 @@ BANDS = ((0, 2), (3, 4), (5, 6), (7, 99))
 
 CARD_NAMES = (["cost", "atk", "life"] + [f"type_{t.name.lower()}" for t in TYPES] + [f"kw_{k.lower()}" for k in KEYWORDS]
               + [f"role_{r}" for r in ROLES] + [f"rec_{r}" for r in RECURRING] + [f"rec_evo_{r}" for r in RECURRING]
-              + ["evo_face", "evo_value", "sevo_face", "sevo_value"] + [f"tag_{t}" for t in TAGS] + [f"tag_{t}" for t in EXTRA])
+              + ["evo_face", "evo_value", "sevo_face", "sevo_value"] + [f"tag_{t}" for t in TAGS] + [f"tag_{t}" for t in EXTRA]
+              + [f"eng_{r}" for r in ROLES])
+ROUNDS = 4                      # rounds of turns `engine` watches (a countdown of 3 ends in its 3rd)
+ALLIES = 2                      # extra allied 1/2 followers on the field for `engine`
+_ENGINE: dict = {}
 
 _CARD: dict = {}
 
@@ -79,8 +86,76 @@ def card_vector(defn) -> np.ndarray:
           1.0 if sc.fuse_filter is not None else 0.0,
           float(min(len(defn.related), 3)),
           1.0 if (sc.modes or sc.play_targets) else 0.0]
+    v += list(engine(defn))
     out = _CARD[defn.card_id] = np.array(v, dtype=float)
     return out
+
+
+def _side(state, me: int = 0) -> dict:
+    p, e = state.players[me], state.players[1 - me]
+    return {"op_hp": e.leader_hp, "hp": p.leader_hp, "foes": {f.uid: f.life for f in e.followers},
+            "hand": len(p.hand), "max_pp": p.max_pp,
+            "body": sum(f.atk + max(f.life, 0) for f in p.followers)}
+
+
+def _delta(a: dict, b: dict) -> dict:
+    gone = 0.0
+    for uid, life in a["foes"].items():
+        now = b["foes"].get(uid)
+        gone += 1.0 if now is None else min(max(life - now, 0), 8) / 8
+    return {"face": max(a["op_hp"] - b["op_hp"], 0), "removal": gone, "heal": max(b["hp"] - a["hp"], 0),
+            "draw": b["hand"] - a["hand"], "ramp": b["max_pp"] - a["max_pp"], "body": b["body"] - a["body"]}
+
+
+def _rounds(state):
+    from svsim.core.actions import EndTurn
+    from svsim.core.engine import apply
+    for _ in range(ROUNDS):
+        for _ in range(2):                   # my end of turn, the opponent's whole turn (it does nothing)
+            if state.over:
+                return
+            apply(state, EndTurn())
+
+
+def engine(defn) -> tuple:
+    """(face, removal, heal, draw, ramp, body): what playing `defn` changes over ROUNDS rounds of turns
+    with ALLIES more allied followers on the field, against the same rounds without it (the roles
+    sandbox otherwise: 10 play points, two 0/8 enemies, the enemy leader at 10). Cards in hand are
+    counted at the end, so a card's own copy leaving the hand is +1 here; body counts buffs, followers
+    summoned later and the card's own body. The best play of each kind, as learn.roles does."""
+    hit = _ENGINE.get(defn.card_id)
+    if hit is not None:
+        return hit
+    from svsim.cards import demo
+    from svsim.core import effects as E
+    from svsim.core.actions import PlayCard
+    from svsim.core.engine import apply, legal_actions
+    from svsim.learn.roles import _sandbox
+    best = dict.fromkeys(ROLES, 0.0)
+    try:
+        state = _sandbox()
+        for _ in range(ALLIES):
+            E.summon(state, 0, demo.FOOTMAN).entered_turn = -1
+        for _ in range(3):
+            E.add_to_hand(state, 0, demo.FOOTMAN)    # something to discard, fuse or boost
+        card = E.add_to_hand(state, 0, defn)
+        base = state.clone()
+        start = _side(base)
+        _rounds(base)
+        without = _delta(start, _side(base))
+        without["draw"] -= 1                          # the card itself stays in hand without the play
+        plays = [a for a in legal_actions(state) if isinstance(a, PlayCard) and a.uid == card.uid]
+        for action in plays[:8]:
+            t = state.clone()
+            apply(t, action)
+            _rounds(t)
+            got = _delta(start, _side(t))
+            for k in ROLES:
+                best[k] = max(best[k], float(got[k] - without[k]))
+    except Exception:
+        pass
+    hit = _ENGINE[defn.card_id] = tuple(best[k] for k in ROLES)
+    return hit
 
 
 def _roles_index():
