@@ -189,7 +189,12 @@ def main():
         if not starts:
             continue
         jobs.append((games[g], starts[int(u * len(starts))], args.seed * 100000 + n, args.k, cfg))
-    done = 0
+    import os
+    seen = set()
+    if os.path.exists(args.out):                  # resume: the positions already measured are skipped
+        seen = {json.loads(line)["seed"] for line in open(args.out, encoding="utf-8") if line.strip()}
+    jobs = [j for j in jobs if j[2] not in seen]
+    done = len(seen)
     with Pool(args.workers) as pool, open(args.out, "a", encoding="utf-8") as fh:
         for row in pool.imap_unordered(measure, jobs, chunksize=1):
             if row is None:
