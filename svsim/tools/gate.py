@@ -24,10 +24,15 @@ round of work. This tool replaces the guess of how many games to play:
 A's and B's matchup models can be replaced with --model-a / --model-b (a
 LinearValue JSON file used as the model for A's / B's deck against its
 opponent, as models.Learned looks it up). Reports A's score (per game, from
-the pairs) with a 95% interval and the test's verdict, nothing else.
+the pairs) with a 95% interval and the test's verdict; beside them, the gap
+in class rating (CR, the ladder's rating: learn.rating) at which that score
+keeps a player's CR steady, 800 x (score - 1/2), with its interval, given
+only inside the ladder's matching window (a score of 28%-72%, a gap of
+175 CR at most); past it the stronger side keeps climbing until nobody is in
+reach, and the rules can't say by how much more ("out of the window").
 
-No Elo (the player, 2026-10-07): chess's 400-point logistic doesn't hold in a
-card game. Luck puts a ceiling on win rates (around 75%-85% however strong a
+No Elo (the player, 2026-10-07; class rating is the yardstick instead): chess's
+400-point logistic doesn't hold in a card game. Luck puts a ceiling on win rates (around 75%-85% however strong a
 side is), and the ladder only matches players within 200 points, so a rating
 difference is defined only inside that window: "82% means +263" is an
 extrapolation outside it, and such differences don't add up across pairs.
@@ -60,6 +65,23 @@ def llr(scores: list[float], h0: float, h1: float) -> float:
 
 def bounds(alpha: float, beta: float) -> tuple[float, float]:
     return math.log(beta / (1 - alpha)), math.log((1 - beta) / alpha)
+
+
+def cr_gap(score: float) -> float | None:
+    """The CR gap at which `score` keeps a player's CR steady (learn.rating), or None outside
+    the matching window (|gap| > 175)."""
+    from svsim.learn.rating import CAP
+    gap = 800 * (score - 0.5)
+    return gap if abs(gap) <= CAP else None
+
+
+def cr_text(score: float, margin: float) -> str:
+    gap = cr_gap(score)
+    if gap is None:
+        return f"CR 分差超出匹配窗口（{'>+175' if score > 0.5 else '<−175'}）"
+    lo, hi = cr_gap(score - margin), cr_gap(score + margin)
+    show = lambda g, side: f"{g:+.0f}" if g is not None else ("<−175" if side < 0 else ">+175")
+    return f"CR 分差约 {gap:+.0f}（区间 {show(lo, -1)}～{show(hi, 1)}，窗口内）"
 
 
 def summary(scores: list[float]) -> tuple[float, float]:
@@ -153,7 +175,7 @@ def main() -> None:
         mean, margin = summary(scores)
         verdict = "H1（A 更强）" if value >= hi else "H0（没有变强）" if value <= lo else None
         line = (f"{2 * len(scores)} 局：A 得分 {mean:.1%} ± {margin:.1%}"
-                f"（95% 区间 {mean - margin:.1%}～{mean + margin:.1%}），"
+                f"（95% 区间 {mean - margin:.1%}～{mean + margin:.1%}），{cr_text(mean, margin)}，"
                 f"LLR {value:+.2f}（判定线 {lo:.2f} / {hi:.2f}）→ {verdict or '未判定'}")
         if final or verdict:
             print(line, flush=True)
