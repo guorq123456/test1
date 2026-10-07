@@ -1,0 +1,18 @@
+版本                                           局数     强度 logit             95% 区间       CR            CR 区间
+strong 候选 mcts:200+phased                   750       +0.680      +0.494～+0.868      136           99～174
+normal 候选 mcts:100+phased                   750       +0.301      +0.171～+0.433       60            34～87
+v1                                         1600       +0.294      +0.189～+0.399       59            38～80
+strong mcts:200                            1500       +0.280      +0.135～+0.421       56            27～84
+现装 normal mcts:100                         2000       +0.000      +0.000～+0.000        0              0～0
+greedy                                      400       -2.145      -2.516～-1.867     -429        -503～-373
+斜率 200 CR/logit，相对 现装 normal mcts:100（记作 0）
+  v1 对 现装 normal mcts:100：250 局，v1 得分 58.0%
+  v1 对 现装 normal mcts:100：600 局，v1 得分 57.7%
+  v1 对 greedy：200 局，v1 得分 92.5%
+  现装 normal mcts:100 对 greedy：200 局，现装 normal mcts:100 得分 89.0%
+  v1 对 strong mcts:200：550 局，v1 得分 49.5%
+  现装 normal mcts:100 对 strong mcts:200：200 局，现装 normal mcts:100 得分 45.5%
+  normal 候选 mcts:100+phased 对 现装 normal mcts:100：150 局，normal 候选 mcts:100+phased 得分 60.0%
+  normal 候选 mcts:100+phased 对 现装 normal mcts:100：600 局，normal 候选 mcts:100+phased 得分 56.8%
+  strong 候选 mcts:200+phased 对 strong mcts:200：150 局，strong 候选 mcts:200+phased 得分 60.7%
+  strong 候选 mcts:200+phased 对 strong mcts:200：600 局，strong 候选 mcts:200+phased 得分 59.7%

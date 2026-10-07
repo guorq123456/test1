@@ -1,0 +1,63 @@
+1791304981889-t5-discard                 3/3
+1791304981889-t7-super_evolve            0/3
+1791304981889-t8-super_evolve            3/3
+1791304981889-t9-lethal                  3/3
+1791305120171-t1-bonus_keep              0/3
+1791305120171-t5-discard                 3/3
+1791305120171-t5-answer_threat           3/3
+1791305120171-t6-super_evolve            0/3
+1791305120171-t7-lethal                  0/3
+1791305120171-t7-answer_threat           3/3
+1791305215412-t7-discard                 3/3
+1791305215412-t7-answer_threat           0/3
+1791305215412-t8-red_hold                3/3
+1791305215412-t8-erntz_unevolved         3/3
+1791305215412-t9-lethal                  3/3
+1791305215412-t9-super_evolve            3/3
+1791305347029-t1-bonus_keep              0/3
+1791305347029-t2-bonus_ramp              3/3
+1791305347029-t7-super_evolve            1/3
+1791305347029-t8-answer_threat           3/3
+1791305347029-t12-lethal                 3/3
+1791305539194-t1-bonus_keep              0/3
+1791305539194-t2-bonus_ramp              3/3
+1791305539194-t6-super_evolve            0/3
+1791305539194-t8-super_evolve            3/3
+1791305539194-t9-lethal                  3/3
+1791306269709-t1-bonus_keep              0/3
+1791306269709-t2-bonus_ramp              3/3
+1791306269709-t6-super_evolve            0/3
+1791306269709-t7-lethal                  3/3
+1791306269709-t7-answer_threat           3/3
+1791306333962-t6-discard                 3/3
+1791306333962-t7-lethal                  3/3
+1791306333962-t7-discard                 3/3
+1791306396169-t8-super_evolve            3/3
+1791306396169-t9-erntz_unevolved         0/3
+1791306396169-t10-lethal                 3/3
+1791306497426-t1-bonus_keep              0/3
+1791306497426-t2-bonus_ramp              3/3
+1791306497426-t6-super_evolve            3/3
+1791306497426-t9-answer_threat           3/3
+1791306497426-t13-lethal                 3/3
+1791306781701-t1-bonus_keep              0/3
+1791306781701-t2-discard                 3/3
+1791306781701-t6-discard                 3/3
+1791306781701-t7-super_evolve            3/3
+1791306781701-t8-erntz_unevolved         3/3
+1791306781701-t9-discard                 3/3
+1791306781701-t9-answer_threat           0/3
+1791306781701-t10-discard                3/3
+1791306781701-t10-answer_threat          3/3
+1791306781701-t11-lethal                 3/3
+
+by category:
+  answer_threat    18/24
+  bonus_keep       0/18
+  bonus_ramp       12/12
+  discard          27/27
+  erntz_unevolved  6/9
+  lethal           27/30
+  red_hold         3/3
+  super_evolve     19/33
+  total            112/156

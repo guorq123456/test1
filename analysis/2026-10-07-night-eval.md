@@ -23,7 +23,7 @@ test1 会话在 Salem 睡觉期间、按架构线程的安排跑的评测。代�
 | 4 | `mcts:100+plan+learned+phased`（不推演） | 现装 normal | 49 / 59 ms | SPRT | 150 | 60.0% ± 7.0% → H1 | +80 |
 | 5 | 同 4 | 现装 normal | 同上 | 固定 | 600 | **56.8% ± 3.5%**（53.3～60.3） | +55 |
 | 6 | `mcts:200+plan+learned+phased`（不推演） | strong | 96 / 91 ms | SPRT | 150 | 60.7% ± 6.8% → H1 | +85 |
-| 7 | 同 6 | strong | 同上 | 固定 | 600 | STRONG_CONFIRM | |
+| 7 | 同 6 | strong | 同上 | 固定 | 600 | **59.7% ± 3.5%**（56.1～63.2） | +77 |
 | 8 | v1 | `greedy+plan+learned` | | 固定 | 200 | 92.5% ± 3.5% | |
 | 9 | 现装 normal | `greedy+plan+learned` | | 固定 | 200 | 89.0% ± 4.1% | |
 | 10 | 现装 normal | strong | 59 / 95 ms | 固定 | 200 | 45.5% ± 4.8% | −36 |
@@ -31,18 +31,21 @@ test1 会话在 Salem 睡觉期间、按架构线程的安排跑的评测。代�
 读法：
 - **v1 对现装的 +60 CR（第 2 行），和"迭代翻倍"相当（第 10 行：strong 对现装约 +36～+56）。** 同算力对 strong 档打平（第 3 行），所以不该因为 v1 换陪练台。
 - **增益来源。** 不推演时 `+phased` 只用到回合结束模型（推演不发生，`player_moves_next` 总是 False），所以第 4、5 行测的就是"新的回合结束模型对装着的模型"。同算力 +55 CR，和 v1 几乎一样。v1 的增益基本全来自这个模型。
-- **strong 档升级（第 6、7 行）** 是"可以上陪练台"的候选，复核见第 7 行。上不上由 Salem 决定。
+- **strong 档升级（第 6、7 行）** 是"可以上陪练台"的候选：同算力对现在的 strong 档，固定 600 局 59.7% ± 3.5%，下限 56.1%，约 +77 CR，先手 58.0%、后手 61.3%。上不上由 Salem 决定。
 - **先后手。** v1 对 strong 先手 54.5%、后手 44.4%；第 5 行反过来，先手 52.3%、后手 61.3%。方向不一致，更像噪声，记录在案，没有调参。
 
 ## 联赛表（`python -m svsim.tools.league`，现装 normal 记作 0，斜率 200 CR/logit，1000 次重抽）
 
 | 版本 | 局数 | 强度 logit | 95% 区间 | 相对 CR |
 |---|---|---|---|---|
-| `mcts:100+plan+learned+phased` | 750 | LEAGUE_P100 | | |
-| v1 | 1600 | LEAGUE_V1 | | |
-| strong `mcts:200` | 750 | LEAGUE_S | | |
-| 现装 normal `mcts:100` | | 0 | — | 0 |
-| greedy | 400 | LEAGUE_G | | |
+| strong 候选 `mcts:200+plan+learned+phased` | 750 | +0.680 | +0.494～+0.868 | +136 |
+| normal 候选 `mcts:100+plan+learned+phased` | 750 | +0.301 | +0.171～+0.433 | +60 |
+| v1 | 1600 | +0.294 | +0.189～+0.399 | +59 |
+| strong `mcts:200+plan+learned`（陪练台现在的 strong 档） | 1500 | +0.280 | +0.135～+0.421 | +56 |
+| 现装 normal `mcts:100+plan+learned` | 2000 | 0 | — | 0 |
+| `greedy+plan+learned` | 400 | −2.145 | −2.516～−1.867 | −429 |
+
+strong 候选只和 strong 档打过，它的位置等于 strong 档的位置加上两者之间的差，区间里包含了这两段的不确定性。原始输出见 `gate-runs/league_2026-10-07.txt`。
 
 一致性检验：
 - **v1、现装、greedy 环**：预测 v1 对 greedy 91.7%，实际 92.5%，差 +0.11 logit，约 0.3 个标准误。

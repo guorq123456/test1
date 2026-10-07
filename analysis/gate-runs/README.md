@@ -11,6 +11,8 @@
 | `sprt_phasedonly_vs_installed_seed7000000.jsonl` | `mcts:100+plan+learned+phased`（不推演：只用到新的 ENDED 模型） | `mcts:100+plan+learned` | 7000000 | SPRT | 150 局判 H1：60.0% ± 7.0% |
 | `fixed600_phasedonly_vs_installed_seed9000000.jsonl` | 同上 | 同上 | 9000000 | 固定 600 局 | 56.8% ± 3.5%（53.3%～60.3%），CR 约 +55；先手 52.3%，后手 61.3% |
 | `fixed200_installed_vs_mcts200_seed8000000.jsonl` | `mcts:100+plan+learned` | `mcts:200+plan+learned` | 8000000 | 固定 200 局 | 45.5% ± 4.8% |
+| `sprt_strong_phased_vs_strong_seed10000000.jsonl` | `mcts:200+plan+learned+phased`（不推演） | `mcts:200+plan+learned` | 10000000 | SPRT | 150 局判 H1：60.7% ± 6.8% |
+| `fixed600_strong_phased_vs_strong_seed11000000.jsonl` | 同上 | 同上 | 11000000 | 固定 600 局 | 59.7% ± 3.5%（56.1%～63.2%），CR 约 +77；先手 58.0%，后手 61.3% |
 | `fixed200_installed_vs_greedy_seed6000000.jsonl` | `mcts:100+plan+learned` | `greedy+plan+learned` | 6000000 | 固定 200 局 | 89.0% ± 4.1%；先手 88.0%，后手 90.0% |
 
 `fixed_run.py` 用评测台自己的 `play_pair`，只是不按 SPRT 提前停，所以给的区间没有提前停带来的偏差。
