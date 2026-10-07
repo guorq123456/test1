@@ -46,3 +46,14 @@ v1 对陪练台 strong 档 `mcts:200+plan+learned`：550 局，49.5% ± 3.7%，�
 同算力只换 ENDED 线性模型（`mcts:100+plan+learned+phased`，不推演时 `+phased` 只用到 `dragon-dragon-ended.json`）：对现装 56.8% ± 3.5%，约 +55 CR。v1 用约 2.2 倍算力拿到 57.7%，`mcts:200` 对现装 54.5%。所以 v1 的增益基本来自新拟合的 ENDED 模型，推演对手回合在这套设置下没有可测的贡献。每步用时（空闲插桩）：`mcts:100+phased` 49 ms，`mcts:100` 59 ms，`mcts:200` 91～95 ms，v1 137 ms。
 
 近强度环（v1、strong、现装）：预测 v1 对 strong 53.3%，实际 49.5%，差 −0.154 logit，约 1.1 个标准误，自洽。
+
+## 非镜像安全检查（2026-10-07，任务 8）
+
+A = `mcts:100+plan+learned+phased`，B = `mcts:100+plan+learned`，--seed 13000000，每种卡组分配固定 200 局（`fixed200_nonmirror_phased_<A 的卡组>_vs_<B 的卡组>_seed13000000.jsonl`）。A 两种卡组各坐一次，两次平均抵消卡组强弱。
+
+| 对局 | A 拿前一个卡组 | A 拿后一个卡组 | 平均（A 的增益） |
+|---|---|---|---|
+| 跳费龙 / 破魔虫（职业不同：回退到 Learned） | 93.5% ± 3.6% | 5.5% ± 3.1% | 49.5% ± 2.4% |
+| 跳费龙 / 快攻龙（同为龙族：硬套镜像模型） | 48.0% ± 7.5% | 63.5% ± 7.4% | 55.8% ± 5.3% |
+
+`learn.phased` 按 (deck_craft, deck_craft, moment) 认模型，不认卡组：职业不同的对局完全回退到 Learned，和现装一样；同职业、不同卡组（跳费龙对快攻龙）会套用镜像模型（现装的 `dragon-dragon.json` 也一样）。实测两种都没有变差。长期建议按卡组认模型。
