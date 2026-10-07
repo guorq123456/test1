@@ -23,7 +23,7 @@ import json
 import os
 from pathlib import Path
 
-from svsim.learn.model import SCALE, Learned, LinearValue, matchup_keys, split_keys
+from svsim.learn.model import ALIASES, SCALE, Learned, LinearValue, matchup_keys, split_keys
 
 STOCK = ("me_hand_", "me_pool_")
 
@@ -89,7 +89,7 @@ def load(folder: Path | None = None) -> dict:
 
 
 class PhasedLearned:
-    def __init__(self, models: dict | None = None, fallback=None, aliases: dict | None = None):
+    def __init__(self, models: dict | None = None, fallback=None, aliases: dict | None = ALIASES):
         self.models = models if models is not None else load()
         self.fallback = fallback or Learned(aliases=aliases)
         self.aliases = aliases                     # learn.model.ALIASES: a mirror's stand-in models

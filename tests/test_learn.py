@@ -398,7 +398,7 @@ def test_a_torn_search_forks_and_its_branch_keeps_points_only_while_torn():
     assert found
 
 
-def test_the_tournament_ramp_mirror_can_borrow_the_game8_mirror_models_when_asked():
+def test_the_tournament_ramp_mirror_borrows_the_game8_mirror_models_unless_told_not_to():
     from svsim.agents.mulligan import opening
     from svsim.core.enums import Craft
     from svsim.learn.model import ALIASES, matchup_keys
@@ -407,8 +407,9 @@ def test_the_tournament_ramp_mirror_can_borrow_the_game8_mirror_models_when_aske
     assert matchup_keys(mirror, 0) == [("ramp-t", "ramp-t"), (Craft.DRAGON, Craft.DRAGON)]
     assert matchup_keys(mirror, 0, ALIASES)[1] == ("ramp", "ramp")
     assert matchup_keys(other, 0, ALIASES) == matchup_keys(other, 0)          # a mirror only
-    on = make_agent("mcts:5+plan+learned+phased+alias", 1).base.search.weights
-    off = make_agent("mcts:5+plan+learned+phased", 1).base.search.weights
+    on = make_agent("mcts:5+plan+learned+phased", 1).base.search.weights     # on by default
+    off = make_agent("mcts:5+plan+learned+phased+noalias", 1).base.search.weights
+    assert make_agent("v2+alias", 1).base.search.weights.aliases == on.aliases == ALIASES and off.aliases is None
     ramp = opening("ramp", "ramp", True, 3)
     assert on.score(ramp, 0) == off.score(ramp, 0)                            # the Game8 mirror as before
     assert on.score(mirror, 0) != off.score(mirror, 0)

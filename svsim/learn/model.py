@@ -85,8 +85,10 @@ def deck_key(state: GameState, player: int) -> str | None:
 
 # Stand-ins for a mirror without models of its own (the architecture session, 2026-10-07): the
 # tournament Ramp Dragon plays the Game8 build's mirror models (the features are functional and
-# positional, no card ids). Off unless an evaluation is made with aliases=ALIASES (arena "+alias"),
-# and only when both decks have the same stand-in; other pairings keep the class fallback.
+# positional, no card ids). Only when both decks have the same stand-in; other pairings keep the
+# class fallback. On by default since the gate (v2 with it against v2 without, ramp-t mirror: 67.3% +-
+# 3.6% over a fixed 600 games); aliases=None turns it off (arena "+noalias", for ablations). A stopgap:
+# the mirror's own fitted models, when they come, are gated against this, not against the class fallback.
 ALIASES = {"ramp-t": "ramp"}
 
 
@@ -131,7 +133,7 @@ class Learned:
     of named decks, else the pair of classes) if there is one, else the deck's (by craft); the
     hand-set one otherwise."""
 
-    def __init__(self, models: dict | None = None, fallback=None, aliases: dict | None = None):
+    def __init__(self, models: dict | None = None, fallback=None, aliases: dict | None = ALIASES):
         from svsim.search.evaluate import DEFAULT
         self.models = models if models is not None else load_all()
         self.fallback = fallback or DEFAULT

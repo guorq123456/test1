@@ -44,9 +44,9 @@ linear models do), except a turn start reached by playing out the reply;
 (search.mcts, backup="mean"); "+phased" linear models by moment (learn.phased:
 turn ends, and turn starts reached by playing out the reply; "+phased=NAME" this agent's models from
 the folder NAME, a path or svsim/learn/phased_models/NAME, learn.phased.folder_of; "+screen=N" the lethal search's budget for a position whose damage estimate falls short (default
-200, agents.lethal_agent; the estimate is no bound, search.lethal.damage_estimate); "+alias" a mirror
-without models of its own uses its stand-in's, learn.model.ALIASES: the tournament Ramp Dragon's the Game8
-build's); "+timing" adds what holding a card is worth until the turn the
+200, agents.lethal_agent; the estimate is no bound, search.lethal.damage_estimate); a mirror without
+models of its own uses its stand-in's, learn.model.ALIASES (the tournament Ramp Dragon's the Game8 build's),
+on by default, "+noalias" off, "+alias" kept as a no-op); "+timing" adds what holding a card is worth until the turn the
 player usually plays it (svsim.learn.timing, from their games); "+priced"
 prices resources by what they buy (search.prices: the own followers at what
 survives the opponent's turn, "+survive" alone; unused evolution points at the
@@ -118,7 +118,7 @@ def _make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "phased=", "screen="))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "phased=", "screen="))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -127,7 +127,7 @@ def _make_agent(spec: str, seed: int):
         from dataclasses import replace
         weights = replace(weights, ready=0.5, ready_lethal=6.0)
     from svsim.learn.model import ALIASES
-    aliases = ALIASES if "alias" in options else None    # a mirror without models plays its stand-in's
+    aliases = None if "noalias" in options else ALIASES    # a mirror without models plays its stand-in's
     if "learned" in options:                       # each deck's learned evaluation (svsim.learn)
         from svsim.learn.model import Learned
         weights = Learned(fallback=weights, aliases=aliases)
