@@ -10,12 +10,20 @@ Resumes from --out.
 import argparse
 import inspect
 import json
+import math
 import os
 import random
 import time
 from multiprocessing import Pool
 
 from svsim.tools.gate import cr_text, play_pair, summary
+
+SALEM_CR_PER_LOGIT = 236.0     # Salem: a 200 CR gap wins about 70% (the report scale since 2026-10-07)
+
+
+def salem_cr(p: float) -> float:
+    p = min(max(p, 1e-6), 1 - 1e-6)
+    return SALEM_CR_PER_LOGIT * math.log(p / (1 - p))
 
 
 def first_seat(seed: int) -> int:
@@ -51,8 +59,9 @@ def main():
         s_first = sum(d["points"][f] for d, f in zip(rows, firsts)) / len(rows)
         s_second = sum(d["points"][1 - f] for d, f in zip(rows, firsts)) / len(rows)
         print(f"{2 * len(rows)} 局（{len(rows)} 对）：A 得分 {mean:.1%} ± {margin:.1%}"
-              f"（95% 区间 {mean - margin:.1%}～{mean + margin:.1%}），{cr_text(mean, margin)}；"
-              f"A 先手 {s_first:.1%}、后手 {s_second:.1%}", flush=True)
+              f"（95% 区间 {mean - margin:.1%}～{mean + margin:.1%}），"
+              f"CR 约 {salem_cr(mean):+.0f}（{salem_cr(mean - margin):+.0f}～{salem_cr(mean + margin):+.0f}，Salem 刻度；"
+              f"稳态式：{cr_text(mean, margin)}）；A 先手 {s_first:.1%}、后手 {s_second:.1%}", flush=True)
 
     # the gate's pair job gained two fields (each side's +phased model folder) in later svsim
     extra = (None, None) if "phased_a" in inspect.getsource(play_pair) else ()
