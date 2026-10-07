@@ -67,7 +67,9 @@ def tables(model, records) -> dict:
             since = round(ctx[0] * 5)
             hp_sum = effective_hp(p) + effective_hp(op)
             add("since x length", (_cell(SINCE, since), _cell(LENGTH, hp_sum)), e, s)
-            add("payoff", "reachable" if ctx[1] > 0 else "out of reach" if ctx[2] > 0 else "neither", e, s)
+            reachable = max(ctx[1], ctx[3]) >= 2 / 6.0          # a payoff of 2 or more within reach
+            later = max(ctx[5], ctx[6]) > 0
+            add("payoff", "reachable" if reachable else "out of reach" if later else "neither", e, s)
             add("gap", _cell(GAP, effective_hp(p) - effective_hp(op)), e, s)
             pp = p.max_pp + 1 + (1 if p.bonus_ready else 0)          # the coming turn's play points
             for cid in {c.defn.card_id for c in p.hand if c.cost > pp}:  # by card: in hand, out of reach

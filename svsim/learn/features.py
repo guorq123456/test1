@@ -42,12 +42,16 @@ SIDE2 = ["hand_face", "hand_removal", "hand_heal", "hand_draw", "hand_ramp", "ha
 # within two turns, ahead or behind alike): each side's unused evolution and super-evolution points
 # also enter multiplied by their context:
 # - turns since that kind of evolution unlocked;
-# - the best payoff (learn.payoff.tier: measured from what evolving the card does, never a card list)
-#   of a follower the points could go to on the coming turn (on the field, not yet evolved that way,
-#   or in hand and affordable then);
-# - the best payoff of a follower in hand that is out of reach on the coming turn, divided by the
-#   turns until it comes within reach (one play point a turn): a point is worth keeping most when
-#   the card can be played the turn after;
+# - what spending the points on the coming turn could buy, split by kind (learn.payoff.evolve_parts:
+#   measured from what evolving the card does, never a card list; the player: evolving a Storm
+#   follower is 2 to the face, worth a lot when racing): the best face payoff and the best value
+#   payoff of a follower the points could go to (on the field, not yet evolved that way, or in hand
+#   and affordable then; a follower on the field that can still attack the leader gains its plain
+#   attack), the face one also times "racing" (the enemy leader at 10 or less, or the board threatening
+#   half its defense) and the value one also times the game's length (both leaders' defense);
+# - the same for a follower in hand out of reach on the coming turn, divided by the turns until it
+#   comes within reach (one play point a turn): a point is worth keeping most when the card can be
+#   played the turn after;
 # - a payoff follower still in the deck (the player: a point is also kept for a card not drawn yet):
 #   over the next three turns, the chance it is first drawn that turn (one draw a turn, from the deck's
 #   known contents; the opponent's from its cards not seen yet) times its payoff, times 1 if it is
@@ -57,7 +61,8 @@ SIDE2 = ["hand_face", "hand_removal", "hand_heal", "hand_draw", "hand_ramp", "ha
 # - and, as a minor term, the leader-defense gap.
 # The coming turn: the current one if it is the side's, else the next (one more play point). No term
 # for the hand alone: cards in hand get no value of their own (docs/architecture.md, §9.2).
-CONTEXT = ["since_unlock", "payoff_now", "payoff_later", "payoff_deck", "turn", "hp", "op_hp", "decks", "hp_lead"]
+CONTEXT = ["since_unlock", "face_now", "face_now_race", "value_now", "value_now_long", "face_later",
+           "value_later", "payoff_deck", "turn", "hp", "op_hp", "decks", "hp_lead"]
 SIDE3 = [f"{pt}_x_{c}" for pt in ("ep", "sep") for c in CONTEXT]
 
 
@@ -164,30 +169,60 @@ def side_features(state: GameState, side: int, potential: bool, version: int = 1
 def context(state: GameState, side: int, hidden: bool, super_: bool = False) -> list[float]:
     """The CONTEXT values of `side`'s evolution points (super-evolution points with `super_`), each about
     0..1; `hidden`: its hand is unknown to the scorer (its share of the cards not seen yet stands in)."""
+    return contexts(state, side, hidden)[1 if super_ else 0]
+
+
+def contexts(state: GameState, side: int, hidden: bool) -> tuple[list[float], list[float]]:
+    """context() for the evolution points and for the super-evolution points, in one pass."""
     from svsim.core.engine import EVOLVE_TURN, SUPER_EVOLVE_TURN
-    from svsim.learn.payoff import tier
+    from svsim.learn.payoff import PLAIN, both_parts
+    from svsim.search.evaluate import threat
     p, enemy = state.players[side], state.players[1 - side]
     first = state.first == side
-    unlock = (SUPER_EVOLVE_TURN if super_ else EVOLVE_TURN)[first]
     coming = p.turns_taken + (0 if state.active == side else 1)
     pp = p.max_pp if state.active == side else min(p.max_pp + 1, 10)
     pp += 1 if p.bonus_ready else 0
-    on_field = [tier(f.defn) for f in p.followers if not (f.super_evolved or (f.evolved and not super_))]
-    soon = lambda c: 1.0 / (c.cost - pp)       # out of reach: worth most when it comes within reach next turn
+    scale = 6.0                                    # payoff points to about 0..1
+    best = [[0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]]   # per kind: face now, value now, face later, value later
+    for f in p.followers:                          # on the field, not yet evolved that way
+        parts = both_parts(f.defn)
+        for k, super_ in ((0, False), (1, True)):
+            if f.super_evolved or (f.evolved and not super_):
+                continue
+            face, value = parts[k]
+            if f.attacks_made == 0:                # can still hit the leader: the plain attack gain
+                face = max(face, PLAIN[super_] / 2)
+            b = best[k]
+            b[0], b[1] = max(b[0], face), max(b[1], value)
     if hidden:
         pool = p.hand + p.deck
         share = len(p.hand) / len(pool) if pool else 0.0
-        now = max([t for t in on_field] + [share * tier(c.defn) for c in pool if c.cost <= pp], default=0)
-        later = max([share * tier(c.defn) * soon(c) for c in pool if c.cost > pp], default=0)
+        cards = [(c, share) for c in pool if c.defn.is_follower]
     else:
-        now = max(on_field + [tier(c.defn) for c in p.hand if c.cost <= pp], default=0)
-        later = max([tier(c.defn) * soon(c) for c in p.hand if c.cost > pp], default=0)
+        cards = [(c, 1.0) for c in p.hand if c.defn.is_follower]
+    for c, w in cards:
+        soon = 1.0 if c.cost <= pp else 1.0 / (c.cost - pp)
+        parts = both_parts(c.defn)
+        for k in (0, 1):
+            face, value = parts[k]
+            b = best[k]
+            if c.cost <= pp:
+                b[0], b[1] = max(b[0], w * face), max(b[1], w * value)
+            else:
+                b[2], b[3] = max(b[2], w * face * soon), max(b[3], w * value * soon)
     hp, op_hp = effective_hp(p), effective_hp(enemy)
+    racing = float(op_hp <= 10 or threat(state, side) >= op_hp / 2)
+    long = (hp + op_hp) / 40.0
     deck = (p.hand + p.deck) if hidden else p.deck
-    in_deck = deck_payoff(deck, pp, len(p.hand) if hidden else 0)
-    return [max(coming - unlock, 0) / 5.0 if coming >= unlock else 0.0, now / 2.0, later / 2.0, in_deck / 2.0,
-            p.turns_taken / 10.0, hp / 20.0, op_hp / 20.0, (len(p.deck) + len(enemy.deck)) / 60.0,
+    in_deck = deck_payoff(deck, pp, len(p.hand) if hidden else 0) / 2.0
+    tail = [p.turns_taken / 10.0, hp / 20.0, op_hp / 20.0, (len(p.deck) + len(enemy.deck)) / 60.0,
             (hp - op_hp) / 20.0]
+    out = []
+    for k, unlock in ((0, EVOLVE_TURN[first]), (1, SUPER_EVOLVE_TURN[first])):
+        fn, vn, fl, vl = (x / scale for x in best[k])
+        out.append([max(coming - unlock, 0) / 5.0 if coming >= unlock else 0.0,
+                    fn, fn * racing, vn, vn * long, fl, vl, in_deck] + tail)
+    return out[0], out[1]
 
 
 def first_draw(copies: int, size: int, turns: int = 3) -> list[float]:
@@ -230,7 +265,8 @@ def deck_payoff(deck, pp: int, skip: int = 0, turns: int = 3, discount: float = 
 def held_points(state: GameState, side: int, hidden: bool) -> list[float]:
     """The version-3 features of `side` (SIDE3)."""
     p = state.players[side]
-    return [p.ep * c for c in context(state, side, hidden)] + [p.sep * c for c in context(state, side, hidden, True)]
+    evo, sup = contexts(state, side, hidden)
+    return [p.ep * c for c in evo] + [p.sep * c for c in sup]
 
 
 def features(state: GameState, player: int, potential: bool = True, version: int = 1) -> list[float]:

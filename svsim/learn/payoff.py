@@ -12,8 +12,9 @@ super-evolved) with a point, the best of its target choices; what that does beyo
 evolution's stats (+2/+2, super +3/+3) is measured in the role units and summed with weights:
 damage to the enemy leader 1, enemy followers taken out 4 each (8 defense), defense healed 0.5,
 cards drawn 2, play points 2, extra attack and defense 1 each, plus what the field (crests it leaves
-included) does more over the three rounds of turns afterwards (face 1, clear 4, heal 0.5): a lasting
-effect counts for three turns (the test session's grouping of the player's holds: Bandenat, whose crest
+included) does more over the three rounds of turns afterwards (face 1, clear 4, heal 0.5), plus a
+Storm follower's attack gain; kept apart as face and value (`evolve_parts`): a lasting effect counts
+for three turns (the test session's grouping of the player's holds: Bandenat, whose crest
 burns 2 a turn, is the card they super-evolve most). `tier(defn)`: 2 at PAYOFF or more, 1 at LIGHT.
 """
 from __future__ import annotations
@@ -22,19 +23,26 @@ PAYOFF = 5.0                         # points of measured effect beyond a plain 
 LIGHT = 2.0                          # ... pays off some
 PLAIN = {False: 4, True: 6}          # attack + defense a plain evolution / super-evolution adds
 WEIGHTS = {"face": 1.0, "removal": 4.0, "heal": 0.5, "draw": 2.0, "ramp": 2.0}
-_CACHE: dict = {}
+_PARTS: dict = {}
 
 
-def evolve_payoff(defn, super_: bool = False) -> float:
+def evolve_parts(defn, super_: bool = False) -> tuple[float, float]:
+    """(face, value): what evolving (super-evolving) `defn` with a point does beyond a plain evolution,
+    split by kind (the player: evolving Sagatsumatsu, a 5/4 with Storm, is 2 to the face at least, which
+    is worth a lot when racing; an evolution that draws or clears is worth more the longer the game):
+    face = damage to the enemy leader now and from the field over three rounds, plus the plain attack gain
+    (2, super 3) if it can attack the leader the turn it is played (Storm); value = everything else
+    (removal, draw, play points, heal, extra stats, the field's clearing and healing over three rounds)."""
     key = (defn.card_id, super_)
-    hit = _CACHE.get(key)
+    hit = _PARTS.get(key)
     if hit is not None:
         return hit
     from svsim.core import effects as E
     from svsim.core.actions import Evolve
     from svsim.core.engine import apply, legal_actions
+    from svsim.core.enums import Keyword
     from svsim.learn.roles import _measure, _sandbox
-    best = 0.0
+    best = (0.0, 0.0)
     if defn.is_follower:
         try:
             state = _sandbox()
@@ -44,7 +52,8 @@ def evolve_payoff(defn, super_: bool = False) -> float:
             inst.entered_turn = -1
             evolves = [a for a in legal_actions(state) if isinstance(a, Evolve) and a.uid == inst.uid
                        and a.super_ == super_]
-            plain = _round(state)                    # one round of turns without the evolution
+            plain = _round(state)                    # rounds of turns without the evolution
+            storm = PLAIN[super_] / 2 if defn.keywords & Keyword.STORM else 0.0
             for action in evolves[:8]:
                 t = state.clone()
                 m0 = t.players[0]
@@ -56,16 +65,29 @@ def evolve_payoff(defn, super_: bool = False) -> float:
                 got["draw"] = max(len(m.hand) - hand, 0)
                 got["ramp"] = max(m.max_pp - max_pp, 0) + 0.5 * max(m.pp - pp, 0)
                 body = sum(f.atk + max(f.life, 0) for f in m.followers) - body0
-                value = sum(WEIGHTS[k] * float(got[k]) for k in WEIGHTS) + max(body - PLAIN[super_], 0)
-                if not t.over:                       # what the field (crests included) does each round now
+                face = WEIGHTS["face"] * float(got["face"]) + storm
+                value = sum(WEIGHTS[k] * float(got[k]) for k in WEIGHTS if k != "face") + \
+                    max(body - PLAIN[super_], 0)
+                if not t.over:                       # what the field (crests included) does more afterwards
                     after = _round(t)
-                    value += max(after[0] - plain[0], 0) + 4.0 * max(after[2] - plain[2], 0) + \
-                        0.5 * max(after[1] - plain[1], 0)
-                best = max(best, value)
+                    face += max(after[0] - plain[0], 0)
+                    value += 4.0 * max(after[2] - plain[2], 0) + 0.5 * max(after[1] - plain[1], 0)
+                if face + value > sum(best):
+                    best = (face, value)
         except Exception:                            # a card the sandbox can't evolve: no payoff
-            best = 0.0
-    _CACHE[key] = best
+            best = (0.0, 0.0)
+    _PARTS[key] = best
     return best
+
+
+def evolve_payoff(defn, super_: bool = False) -> float:
+    """The whole measured payoff (face + value)."""
+    return sum(evolve_parts(defn, super_))
+
+
+def parts(defn) -> tuple[float, float]:
+    """(face, value) of the evolution or the super-evolution, whichever pays off more."""
+    return max(evolve_parts(defn, False), evolve_parts(defn, True), key=sum)
 
 
 ROUNDS = 3                           # lasting effects (crests, amulets, each-turn triggers) count this many rounds
@@ -93,12 +115,25 @@ def payoff(defn) -> float:
     return max(evolve_payoff(defn, False), evolve_payoff(defn, True))
 
 
+_TIERS: dict = {}
+_BOTH: dict = {}
+
+
+def both_parts(defn) -> tuple:
+    """(evolve_parts(defn, False), evolve_parts(defn, True)), cached by card."""
+    hit = _BOTH.get(defn.card_id)
+    if hit is None:
+        hit = _BOTH[defn.card_id] = (evolve_parts(defn, False), evolve_parts(defn, True))
+    return hit
+
+
 def tier(defn) -> int:
     """2: pays off an evolution point well (PAYOFF or more), 1: some (LIGHT or more), 0: no more than stats."""
-    if not defn.is_follower:
-        return 0
-    v = payoff(defn)
-    return 2 if v >= PAYOFF else 1 if v >= LIGHT else 0
+    hit = _TIERS.get(defn.card_id)
+    if hit is None:
+        v = payoff(defn) if defn.is_follower else 0.0
+        hit = _TIERS[defn.card_id] = 2 if v >= PAYOFF else 1 if v >= LIGHT else 0
+    return hit
 
 
 def is_payoff(defn) -> bool:

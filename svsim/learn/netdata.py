@@ -192,7 +192,7 @@ def _hold(state, search, own_veto, held, rate, rng, record) -> None:
             ctx = context(state, state.active, False, super_=can_super and not can_evolve)
             if ctx[0] <= 2 / 5.0:
                 rate = max(rate, EARLY_HOLD)
-            if ctx[2] > 0:
+            if ctx[5] > 0 or ctx[6] > 0:              # a payoff follower in hand out of reach
                 rate = max(rate, LATER_HOLD)
         if (can_evolve or can_super) and rng.random() < rate:
             choice = "nosuper" if can_super and (not can_evolve or rng.random() < 0.5) else "noevo"
