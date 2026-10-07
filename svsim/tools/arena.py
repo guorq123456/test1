@@ -67,7 +67,16 @@ assert library.__all__
 CRAFTS = [c for c in Craft if c != Craft.NEUTRAL]
 
 
+# Named versions (the gate's version table, docs/architecture.md): each passed the gate against the one before.
+VERSIONS = {
+    "v1": "mcts-reply:100+plan+learned+phased+lazy+focus",     # 2026-10-07: 58.0% +- 5.5% over 250 games
+}                                                              # against mcts:100+plan+learned (the installed bot)
+
+
 def make_agent(spec: str, seed: int):
+    if spec.split("+")[0] in VERSIONS:                         # v1+X: the version with X added
+        head, *rest = spec.split("+")
+        spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
                               "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased"} - {o for o in options if o.startswith(("hp", "gain"))}
