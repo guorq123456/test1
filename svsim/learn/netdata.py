@@ -121,7 +121,8 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None) ->
 
 def _fork_point(state):
     """("payoff", card id) if the side to act could evolve and has a payoff follower in hand out of reach;
-    ("unlock", None) in its first two turns of evolving; else None."""
+    ("deck", card id) if it has none in hand but a tier-2 one is at least 40% likely to be drawn within two
+    turns; ("unlock", None) in its first two turns of evolving; else None."""
     from svsim.core.engine import EVOLVE_TURN
     from svsim.learn.payoff import tier
     p = state.players[state.active]
@@ -133,6 +134,15 @@ def _fork_point(state):
                    key=lambda c: (-tier(c.defn), c.cost))
     if later:
         return "payoff", later[0].defn.card_id
+    if not any(tier(c.defn) > 0 for c in p.hand):     # waiting for a payoff card still in the deck
+        from svsim.learn.features import first_draw
+        best = None
+        for cid in {c.defn.card_id for c in p.deck if tier(c.defn) == 2}:
+            copies = sum(1 for c in p.deck if c.defn.card_id == cid)
+            if sum(first_draw(copies, len(p.deck), 2)) >= 0.4 and (best is None or copies > best[1]):
+                best = (cid, copies)
+        if best is not None:
+            return "deck", best[0]
     if p.turns_taken - EVOLVE_TURN[first] <= 1:
         return "unlock", None
     return None
@@ -146,7 +156,7 @@ def _keep(state, search, own_veto, keep, record) -> None:
     reached = keep["target"] is not None and (
         any(c.defn.card_id == keep["target"] and c.cost <= pp for c in p.hand) or
         any(f.defn.card_id == keep["target"] for f in p.field))
-    limit = 3 if keep["trigger"] == "payoff" else 2
+    limit = 2 if keep["trigger"] == "unlock" else 3
     if reached or keep["held"] >= limit or keep["held"] < 0:
         keep["held"] = -1                          # done: the search plays on as usual
         search.veto = own_veto

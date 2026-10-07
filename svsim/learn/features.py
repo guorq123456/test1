@@ -48,11 +48,16 @@ SIDE2 = ["hand_face", "hand_removal", "hand_heal", "hand_draw", "hand_ramp", "ha
 # - the best payoff of a follower in hand that is out of reach on the coming turn, divided by the
 #   turns until it comes within reach (one play point a turn): a point is worth keeping most when
 #   the card can be played the turn after;
+# - a payoff follower still in the deck (the player: a point is also kept for a card not drawn yet):
+#   over the next three turns, the chance it is first drawn that turn (one draw a turn, from the deck's
+#   known contents; the opponent's from its cards not seen yet) times its payoff, times 1 if it is
+#   affordable then (one more play point a turn) or 1 / the turns still missing, discounted 0.7 a turn;
+#   the best such card;
 # - how long the game still looks (own turns, both leaders' defense, both decks);
 # - and, as a minor term, the leader-defense gap.
 # The coming turn: the current one if it is the side's, else the next (one more play point). No term
 # for the hand alone: cards in hand get no value of their own (docs/architecture.md, §9.2).
-CONTEXT = ["since_unlock", "payoff_now", "payoff_later", "turn", "hp", "op_hp", "decks", "hp_lead"]
+CONTEXT = ["since_unlock", "payoff_now", "payoff_later", "payoff_deck", "turn", "hp", "op_hp", "decks", "hp_lead"]
 SIDE3 = [f"{pt}_x_{c}" for pt in ("ep", "sep") for c in CONTEXT]
 
 
@@ -178,9 +183,48 @@ def context(state: GameState, side: int, hidden: bool, super_: bool = False) -> 
         now = max(on_field + [tier(c.defn) for c in p.hand if c.cost <= pp], default=0)
         later = max([tier(c.defn) * soon(c) for c in p.hand if c.cost > pp], default=0)
     hp, op_hp = effective_hp(p), effective_hp(enemy)
-    return [max(coming - unlock, 0) / 5.0 if coming >= unlock else 0.0, now / 2.0, later / 2.0,
+    deck = (p.hand + p.deck) if hidden else p.deck
+    in_deck = deck_payoff(deck, pp, len(p.hand) if hidden else 0)
+    return [max(coming - unlock, 0) / 5.0 if coming >= unlock else 0.0, now / 2.0, later / 2.0, in_deck / 2.0,
             p.turns_taken / 10.0, hp / 20.0, op_hp / 20.0, (len(p.deck) + len(enemy.deck)) / 60.0,
             (hp - op_hp) / 20.0]
+
+
+def first_draw(copies: int, size: int, turns: int = 3) -> list[float]:
+    """The chance that the first of `copies` cards in a deck of `size` comes on each of the next `turns`
+    draws (one a turn)."""
+    out, none_yet = [], 1.0
+    for k in range(turns):
+        left = size - k
+        if left <= 0 or none_yet <= 0:
+            out.append(0.0)
+            continue
+        p = min(copies / left, 1.0)
+        out.append(none_yet * p)
+        none_yet *= 1 - p
+    return out
+
+
+def deck_payoff(deck, pp: int, skip: int = 0, turns: int = 3, discount: float = 0.7) -> float:
+    """The best payoff follower still to be drawn from `deck` (see CONTEXT's payoff_deck): over the next
+    `turns` turns, the chance it is first drawn then times its tier times its affordability then, discounted.
+    `skip`: draws already known to go elsewhere (a hidden hand's cards among the unseen ones)."""
+    from svsim.learn.payoff import tier
+    counts = {}
+    for c in deck:
+        t = tier(c.defn)
+        if t > 0:
+            key = c.defn.card_id
+            counts[key] = (counts[key][0] + 1, t, c.cost) if key in counts else (1, t, c.cost)
+    best = 0.0
+    size = len(deck) - skip
+    for copies, t, cost in counts.values():
+        value = 0.0
+        for k, chance in enumerate(first_draw(copies, max(size, copies), turns)):
+            short = cost - (pp + k)
+            value += discount ** k * chance * t * (1.0 if short <= 0 else 1.0 / short)
+        best = max(best, value)
+    return best
 
 
 def held_points(state: GameState, side: int, hidden: bool) -> list[float]:

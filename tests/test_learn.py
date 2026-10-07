@@ -195,3 +195,15 @@ def test_a_forked_game_keeps_its_evolution_points_in_the_branch():
         found = True
         break
     assert found
+
+
+def test_a_payoff_card_still_in_the_deck_counts_by_its_draw_chances():
+    from svsim.cards import decks
+    from svsim.core.engine import new_game
+    from svsim.learn.features import deck_payoff, first_draw
+    assert abs(first_draw(2, 30)[0] - 2 / 30) < 1e-12 and abs(sum(first_draw(30, 30, 3)) - 1.0) < 1e-12
+    state = new_game(decks.build(decks.RAMP_DRAGON), decks.build(decks.RAMP_DRAGON), seed=4, first=0)
+    p = state.players[0]
+    justice = [c for c in p.deck if c.defn.card_id == 10544110]            # 10 play points, tier 2
+    assert justice and deck_payoff(justice, 10) > deck_payoff(justice, 1) > 0    # out of reach counts less
+    assert deck_payoff([c for c in p.deck if c.defn.cost <= 1], 10) == 0.0
