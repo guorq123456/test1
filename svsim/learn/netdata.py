@@ -52,7 +52,7 @@ def play(job):
     fork = job[7] if len(job) > 7 else False
     triggers = tuple(job[8]) if len(job) > 8 and job[8] else ("payoff", "deck", "unlock")
     mode = job[9] if len(job) > 9 and job[9] else "all"          # the branch's hold: see _keep, _qgap_keep
-    qgap = _qgap_mode(mode)                                       # (eps, cap, pick) for "qgap[:EPS[:CAP[:PICK]]]"
+    qgap = _qgap_mode(mode)                     # (eps, cap, pick, min_since) for "qgap[:EPS[:CAP[:PICK[:MINSINCE]]]]"
     rng = random.Random(seed * 7919 + g)
     seat = g % 2
     cards = [None, None]
@@ -70,7 +70,7 @@ def play(job):
     snapshot = {}
     _run(state, agents, record, rng, explore, 0.0, snapshot=snapshot, triggers=triggers,
          fork_eps=qgap[0] if qgap else None, fork_pick=qgap[2] if qgap else "first",
-         pick_rng=random.Random(seed * 104729 + g))
+         pick_rng=random.Random(seed * 104729 + g), fork_min_since=qgap[3] if qgap else 0)
     torn_points = snapshot.pop("_k", None)
     if not snapshot:
         return [record]
@@ -94,12 +94,14 @@ def play(job):
 
 
 def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
-         triggers=("payoff", "deck", "unlock"), fork_eps=None, fork_pick="first", pick_rng=None) -> None:
+         triggers=("payoff", "deck", "unlock"), fork_eps=None, fork_pick="first", pick_rng=None,
+         fork_min_since=0) -> None:
     """Play `state` out, adding to `record`. `snapshot` (a dict): fill it at the first fork point (see
     play); with `fork_eps`, at the first decision where a fork point holds and the search itself is torn
     between evolving and not (_q_gap within fork_eps); `fork_pick` "random": at one of all such decisions of
     the game, drawn evenly with `pick_rng` (reservoir sampling; snapshot["_k"] counts them), so that the
-    forks are not all at the unlock turn, where the search is torn first. `keep`: the branch's side keeps its points (no
+    forks are not all at the unlock turn, where the search is torn first; `fork_min_since`: only at decisions at
+    least that many own turns after evolving unlocked (1: never in the unlock turn itself). `keep`: the branch's side keeps its points (no
     evolving) as play describes (keep["mode"] "qgap": _qgap_keep)."""
     from svsim.core.engine import apply, legal_actions
     from svsim.tools import records as R
@@ -129,8 +131,8 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
             _keep(state, search, vetoes[state.active], keep, record)
         torn = None
         if snapshot is not None and (not snapshot or fork_pick == "random") and fork_eps is not None \
-                and state.phase.name == "MAIN":
-            torn = _fork_point(state, triggers)           # checked before the search, judged after it
+                and state.phase.name == "MAIN" and _since_unlock(state) >= fork_min_since:
+            torn = _fork_point(state, triggers, any_points=True)   # checked before the search, judged after it
             if torn is not None:
                 torn = (torn, state.clone(), json.loads(json.dumps(record)))
         if search is not None:
@@ -164,15 +166,23 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
 
 
 def _qgap_mode(mode: str):
-    """(eps, cap, pick) for a "qgap[:EPS[:CAP[:PICK]]]" hold (defaults 0.05, 2 turns, "first"; PICK "random":
-    see _run), else None."""
+    """(eps, cap, pick, min_since) for a "qgap[:EPS[:CAP[:PICK[:MINSINCE]]]]" hold (defaults 0.05, 2 turns,
+    "first", 0; PICK "random" and MINSINCE: see _run), else None."""
     if not mode.startswith("qgap"):
         return None
     parts = mode.split(":")[1:]
     pick = parts[2] if len(parts) > 2 else "first"
     if pick not in ("first", "random"):
         raise ValueError(f"unknown fork pick {pick!r}")
-    return (float(parts[0]) if parts else 0.05, int(parts[1]) if len(parts) > 1 else 2, pick)
+    return (float(parts[0]) if parts else 0.05, int(parts[1]) if len(parts) > 1 else 2, pick,
+            int(parts[3]) if len(parts) > 3 else 0)
+
+
+def _since_unlock(state) -> int:
+    """Own turns of the side to act since evolving unlocked for it (0: the unlock turn; negative: before)."""
+    from svsim.core.engine import EVOLVE_TURN
+    p = state.players[state.active]
+    return p.turns_taken - EVOLVE_TURN[state.first == state.active]
 
 
 def _q_gap(state, legal, search):
@@ -255,16 +265,19 @@ def _identity(record, cards, rng_seed: int, agent_seeds: list) -> None:
     record["rng_seed"], record["agent_seeds"] = rng_seed, agent_seeds
 
 
-def _fork_point(state, triggers=("payoff", "deck", "unlock")):
+def _fork_point(state, triggers=("payoff", "deck", "unlock"), any_points: bool = False):
     """("payoff", card id) if the side to act could evolve and has a payoff follower in hand out of reach;
     ("deck", "tier2") if it has no tier-2 one in hand but drawing one (any) within two turns is at least 25%
-    likely (one draw a turn); ("unlock", None) in its first two turns of evolving; else None."""
-    from svsim.core.engine import EVOLVE_TURN
+    likely (one draw a turn); ("unlock", None) in its first two turns of evolving; ("any", None) with "any" in
+    `triggers` whenever a point can be spent (for the torn-search forks: the search's doubt alone); else None."""
+    from svsim.core.engine import EVOLVE_TURN, SUPER_EVOLVE_TURN
     from svsim.learn.payoff import tier
     p = state.players[state.active]
     first = state.first == state.active
-    if p.ep <= 0 or p.turns_taken < EVOLVE_TURN[first]:
-        return None
+    evolve = p.ep > 0 and p.turns_taken >= EVOLVE_TURN[first]
+    super_ = any_points and p.sep > 0 and p.turns_taken >= SUPER_EVOLVE_TURN[first]
+    if not (evolve or super_):                    # any_points: a super-evolution point left counts too (the
+        return None                               # torn-search forks, after the evolution points are gone)
     pp = p.max_pp + (1 if p.bonus_ready else 0)
     later = sorted((c for c in p.hand if tier(c.defn) > 0 and c.cost > pp),
                    key=lambda c: (-tier(c.defn), c.cost))
@@ -277,6 +290,8 @@ def _fork_point(state, triggers=("payoff", "deck", "unlock")):
             return "deck", "tier2"
     if "unlock" in triggers and p.turns_taken - EVOLVE_TURN[first] <= 1:
         return "unlock", None
+    if "any" in triggers:
+        return "any", None
     return None
 
 
@@ -466,13 +481,14 @@ def main() -> None:
     parser.add_argument("--fork", action="store_true",
                         help="each game also as a branch keeping evolution points from its first fork point "
                              "(see play); both records are written")
-    parser.add_argument("--fork-triggers", nargs="+", default=None, choices=("payoff", "deck", "unlock"),
+    parser.add_argument("--fork-triggers", nargs="+", default=None, choices=("payoff", "deck", "unlock", "any"),
                         help="with --fork: only these fork points (default all)")
     parser.add_argument("--fork-hold", default="all",
                         help="with --fork: the branch keeps all its points (all), only keeps them from tier-0 and "
                              "tier-1 targets (selective; see _keep), or forks where the search is torn and keeps "
-                             "them while it stays torn (qgap[:EPS[:CAP[:PICK]]], default 0.05, 2 turns and the first torn decision, "
-                             "PICK random: one of them all; _qgap_keep)")
+                             "them while it stays torn (qgap[:EPS[:CAP[:PICK[:MINSINCE]]]], default 0.05, 2 turns, the first torn "
+                             "decision, any turn; PICK random: one of them all; MINSINCE 1: not in the unlock "
+                             "turn; _qgap_keep)")
     parser.add_argument("--hold", type=float, default=0.0,
                         help="chance, at the start of a turn the player could evolve in, of not evolving (or not "
                              "super-evolving) for the rest of it (record['holds'])")

@@ -363,8 +363,8 @@ def test_a_card_that_does_something_on_entering_can_be_measured():
 def test_a_torn_search_forks_and_its_branch_keeps_points_only_while_torn():
     import json
     from svsim.learn.netdata import _qgap_mode, play
-    assert _qgap_mode("qgap") == (0.05, 2, "first") and _qgap_mode("qgap:0.1:3") == (0.1, 3, "first")
-    assert _qgap_mode("qgap:0.05:2:random")[2] == "random" and _qgap_mode("all") is None
+    assert _qgap_mode("qgap") == (0.05, 2, "first", 0) and _qgap_mode("qgap:0.1:3") == (0.1, 3, "first", 0)
+    assert _qgap_mode("qgap:0.05:2:random:1")[2:] == ("random", 1) and _qgap_mode("all") is None
     found = False
     for g in range(3):
         out = [json.loads(json.dumps(r)) for r in
