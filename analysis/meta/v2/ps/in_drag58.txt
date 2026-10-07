@@ -1,0 +1,6 @@
+PS5b(pack8) LVH|1.4.cJl6.cJl6.cJl6.dJfu.dJfu.dJfu.dTQu.dTQu.dTQu.dhqm.dhqm.dhqm.drrE.drrE.drrE.drrO.drrO.drrO.eDpc.eDpc.eE3E.eE3E.eE3E.eEFk.eEFk.eEFk.ecgE.ecgE.ecgE.ecgO.ecgO.ecgO.e-Ls.e-Ls.e-Ls.e_4k.e_4k.fNVO.fNVO.fNVO
+PS5b(pack8) DFM|1.4.cJl6.cJl6.cJl6.dJfu.dJfu.dJfu.dTQu.dTQu.dTQu.dhqm.dhqm.drrE.drrE.drrE.drrO.drrO.drrO.eDpc.eDpc.eE3E.eE3E.eE3E.eEFk.eEFk.eEFk.ecgE.ecgE.ecgE.ecgO.ecgO.ecgO.e-Ls.e-Ls.e-Ls.e_4k.e_4k.fN08.fNVO.fNVO.fNVO
+PS5b(pack8) VARREL|1.4.cJl6.cJl6.cJl6.dJfu.dJfu.dJfu.dTQu.dTQu.dTQu.dhqm.dhqm.dhqm.drrE.drrE.drrO.drrO.drrO.eDpc.eE3E.eE3E.eE3E.eEFk.eEFk.eEFk.ecgE.ecgE.ecgE.ecgO.ecgO.ecgO.e-Ls.e-Ls.e-Ls.e_4k.e_4k.fNIk.fNIk.fNVO.fNVO.fNVO
+PS5b(pack8) ZETA|1.4.cJl6.cJl6.cJl6.dJfu.dJfu.dJfu.dTQu.dTQu.dTQu.dhqm.dhqm.drrE.drrE.drrO.drrO.drrO.eDpc.eDpc.eDpc.eE3E.eE3E.eE3E.eEFk.eEFk.eEFk.ecgE.ecgE.ecgE.ecgO.ecgO.ecgO.e-Ls.e-Ls.e-ec.e-ec.e_4k.e_4k.fNVO.fNVO.fNVO
+PS8b DFM mil|1.4.cJl6.cJl6.cJl6.dhqm.dhqm.dhqm.drrE.drrE.drrE.drrO.drrO.drrO.eDpc.eE3E.eE3E.eE3E.eEFk.eEFk.eEFk.ecgE.ecgE.ecgE.ecgO.ecgO.ecgO.e-Ls.e-Ls.e-Ls.e_4k.e_4k.e_4k.fDkE.fN08.fNIk.fNVO.fNVO.fNVO.flvu.flvu.flvu
+PS8b ZETA negima|1.4.cJl6.cJl6.cJl6.dhqm.dhqm.dhqm.drrO.drrO.drrO.eE3E.eE3E.eE3E.eEFk.eEFk.eEFk.eShA.eShA.ecgE.ecgE.ecgE.ecgO.ecgO.ecgO.e-Ls.e-Ls.e-Ls.e_4k.e_4k.e_4k.fN08.fN08.fN08.fNIk.fNIk.fNVO.fNVO.fNVO.flvu.flvu.flvu
