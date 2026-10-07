@@ -16,7 +16,10 @@ known 40 cards, the random numbers; the same 2 x k determinizations and agent se
   (no evolution if he held);
 - branch 2, the other class by the bot: v2s's search with evolving vetoed if Salem evolved, or made
   to evolve (ending the turn vetoed while an evolution is legal and none was made) if he held;
-then v2 against v2 to the end. Per turn: mean of (branch 1 - branch 2) over the determinizations, a
+the constraints hold for that one turn only; then v2 against v2, free, to the end (if the bot
+spends a kept point on a poor target the next turn, that is part of what is measured). Kept per
+turn: the target branch 2 evolved (its tier by the standard table's grouping) and the A cards in
+Salem's hand. Per turn: mean of (branch 1 - branch 2) over the determinizations, a
 win-rate difference (positive: Salem's choice did better), and its 95% interval; over all turns the
 mean ± 95% (turns resampled), and by Salem's choice (held / spent).
 Condition: the opponent's 40-card list is known (order and hand not).
@@ -27,6 +30,7 @@ import math
 import os
 import random
 import sys
+from collections import Counter
 from multiprocessing import Pool
 
 from svsim.cards import library, decks  # noqa: F401
@@ -35,7 +39,7 @@ from svsim.core.engine import apply, legal_actions
 
 V2, V2S = "mcts:100+plan+learned+phased", "mcts:200+plan+learned+phased"
 CELL = "2 档在手够不着"
-GAMES, TURNS = {}, {}
+GAMES, TURNS, INFO = {}, {}, {}
 
 
 def vetoing(spec, seed, veto):
@@ -81,11 +85,17 @@ def branch_salem(base, me, actions, held, sd):
 
 
 def branch_other(base, me, held, sd):
+    """The other class by v2s, for this one turn only; returns the result and what it evolved (name, tier) if any."""
+    from evolve_hold_review import TIER
     st = base.clone()
     agent = vetoing(V2S, sd, must_evolve if held else no_evolve)
+    evolved = None
     while not st.over and st.active == me:
-        apply(st, agent.act(st, legal_actions(st)))
-    evolved = st.players[me].evolved_this_turn if not st.over else None
+        a = agent.act(st, legal_actions(st))
+        if isinstance(a, Evolve):
+            c = st.on_field(a.uid)
+            evolved = (c.defn.name_zh or c.defn.name, TIER(c.defn), a.super_)
+        apply(st, a)
     return (finish(st, me, sd) if not st.over else (1.0 if st.winner == me else 0.0)), evolved
 
 
@@ -94,7 +104,7 @@ def measure(job):
     key, k, seed = job
     st0, actions, held = TURNS[key]
     me = st0.active
-    diffs, div, other_evolved = [], 0, 0
+    diffs, div, other_evolved, targets = [], 0, 0, []
     for j in range(2 * k):
         base = determinize(st0, me, random.Random(seed * 1000 + j))
         sd = seed * 1000 + 10 * j
@@ -102,12 +112,14 @@ def measure(job):
         r2, ev = branch_other(base, me, held, sd)
         diffs.append(r1 - r2)
         div += d
-        other_evolved += bool(ev)
-    return {"key": key, "held": held, "diffs": diffs, "diverged": div, "other_evolved": other_evolved}
+        other_evolved += ev is not None
+        targets.append(ev)
+    return {"key": key, "held": held, "diffs": diffs, "diverged": div, "other_evolved": other_evolved,
+            "targets": targets, **INFO[key]}
 
 
 def load_turns(games_path, probes_path):
-    from evolve_hold_review import standard_row
+    from evolve_hold_review import TIER, standard_row
     from evolve_targets import salem_turns
     games = json.load(open(games_path, encoding="utf-8"))["records"]
     probes = json.load(open(probes_path, encoding="utf-8"))["positions"]
@@ -122,29 +134,58 @@ def load_turns(games_path, probes_path):
             continue
         key = f"{p['game']}@{p['at']}"
         out[key] = (turn[0][0], [a for _, a in turn], p["category"] == "evolve_hold", p)
+        st0 = turn[0][0]
+        evo = [("超进化 " if a.super_ else "进化 ") + (s.on_field(a.uid).defn.name_zh or "") for s, a in turn
+               if isinstance(a, Evolve)]
+        INFO[key] = {"own_turn": p["context"]["own_turn"], "first": p["context"]["first"],
+                     "salem_action": "、".join(evo) if evo else "不进化",
+                     "a_in_hand": sorted({c.defn.name_zh for c in st0.players[0].hand if TIER(c.defn) == 2})}
     return out
 
 
-def report(path, probes_path=None):
+def report(path):
+    from glossary import common, label_first
     rows = [json.loads(line) for line in open(path, encoding="utf-8") if line.strip()]
     def ci(xs):
         m = sum(xs) / len(xs)
         se = math.sqrt(sum((x - m) ** 2 for x in xs) / max(len(xs) - 1, 1) / len(xs))
         return m, 1.96 * se
-    print("条件：对手卡表已知（牌序、手牌未知）。差 = Salem 的打法 − 另一类里 bot 的最好打法（正数：Salem 的选择打到终局更好）。\n")
-    print(f"{'回合':<22}{'Salem':>6}  {'胜率差':>8} ± 95%     分支 1 走偏  分支 2 进化了")
+    print("条件：对手卡表已知（牌序、手牌未知）。约束只管 Salem 做决定的那一回合，之后两边都由 v2 自由打到终局。")
+    print("差 = Salem 的打法 − 另一类里 bot 的最好打法（正数：Salem 的选择打到终局更好），每行 32 次配对。\n")
+    print("| 对局 | 回合 | 手里的 A 档 | Salem 的动作 | 另一类（bot）的动作 | 胜率差 ± 95% | 分支 1 走偏 |")
+    print("|---|---|---|---|---|---|---|")
     for r in sorted(rows, key=lambda r: r["key"]):
         m, h = ci(r["diffs"])
         n = len(r["diffs"])
-        print(f"{r['key']:<22}{'留' if r['held'] else '花':>6}  {m:+8.3f} ± {h:.3f}    {r['diverged']:>3}/{n}      {r['other_evolved']:>3}/{n}")
+        game = r["key"].split("@")[0]
+        evs = [t for t in r["targets"] if t]
+        if r["held"]:
+            tiers = Counter(t[1] for t in evs)
+            names = Counter(common(t[0]) for t in evs)
+            other = (f"必须进化：{len(evs)}/{n} 次进化了，" + "、".join(f"{k}×{v}" for k, v in names.most_common(3))
+                     + "（档位 " + "、".join(f"{k} 档 {v}" for k, v in sorted(tiers.items(), reverse=True)) + "）")
+        else:
+            other = "不进化"
+        hand = "、".join(common(x) for x in r["a_in_hand"]) or "无"
+        line = (f"| {game} | 第 {r['own_turn']} 回合（{'先' if r['first'] else '后'}手） | {hand} | "
+                f"{'留' if r['held'] else '花'}：{rename_action(r['salem_action'], common)} | {other} | {m:+.3f} ± {h:.3f} | {r['diverged']}/{n} |")
+        print(label_first(line))
     rng = random.Random(19)
+    print()
     for title, sub in (("全部", rows), ("Salem 留的", [r for r in rows if r["held"]]), ("Salem 花的", [r for r in rows if not r["held"]])):
         if not sub:
             continue
         means = [sum(r["diffs"]) / len(r["diffs"]) for r in sub]
         m = sum(means) / len(means)
         bs = sorted(sum(means[rng.randrange(len(means))] for _ in means) / len(means) for _ in range(4000))
-        print(f"\n{title}：{len(sub)} 个回合，平均 {m:+.3f}（95% {bs[100]:+.3f}～{bs[3899]:+.3f}，回合重抽）")
+        print(f"{title}：{len(sub)} 个回合，平均 {m:+.3f}（95% {bs[100]:+.3f}～{bs[3899]:+.3f}，回合重抽）")
+
+
+def rename_action(text, common):
+    for word in ("超进化 ", "进化 "):
+        if text.startswith(word):
+            return word + common(text[len(word):])
+    return text
 
 
 def main():
