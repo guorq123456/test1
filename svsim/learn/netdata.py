@@ -84,6 +84,8 @@ def play(job):
     keep = dict(info, held=0, mode=mode) if not qgap else dict(info, held=0, mode="qgap", eps=qgap[0], cap=qgap[1],
                                                                    turns=set())
     _run(snapshot["state"], branch_agents, branch, branch_rng, explore, 0.0, keep=keep)
+    if qgap:
+        branch["branch"].setdefault("end", "game over")
     return [record, branch]
 
 
@@ -185,25 +187,45 @@ def _q_gap(state, legal, search):
 def _qgap_keep(state, legal, search, action, keep, record):
     """The third round's branch (the architecture session, 2026-10-07): the side keeps its points while the
     search is torn. When the search picked an evolving move within keep["eps"] of the best other move, play
-    that other move instead; when it wants to evolve by more, let it and the hold ends; at most keep["cap"]
-    own turns from the fork. A move not chosen by the search (the lethal search, the planner) stands."""
+    that other move instead; when it wants to evolve by more, let it and the hold ends ("released"); it
+    ends too once the fork's target is playable or on the field ("reached") and after keep["cap"] own turns
+    from the fork ("cap"). record["branch"]["end"] says which (play: "game over" if none did first). A
+    move not chosen by the search (the lethal search, the planner) stands."""
     from svsim.core.actions import Evolve
     if keep["held"] < 0:
         return action
+
+    def end(reason):
+        keep["held"] = -1
+        record["branch"]["end"] = reason
+        return action
     keep["turns"].add(state.turn)
     if len(keep["turns"]) > keep["cap"]:
-        keep["held"] = -1
-        return action
+        return end("cap")
+    if _reached(state, keep["target"]):
+        return end("reached")
     if not isinstance(action, Evolve):
         return action
     gap = _q_gap(state, legal, search)
     if gap is None or gap[0] >= keep["eps"]:
-        keep["held"] = -1                          # the search clearly wants to evolve: the branch plays on
-        return action
+        return end("released")                     # the search clearly wants to evolve: the branch plays on
     keep["held"] += 1
     record.setdefault("holds", []).append({"i": len(record["actions"]), "player": state.active, "turn": state.turn,
                                            "hold": "torn", "branch": True, "q_gap": round(gap[0], 4)})
     return gap[2]
+
+
+def _reached(state, target) -> bool:
+    """The fork's target (a card id, "tier2": any tier-2 follower, None: none) playable this turn from the
+    hand of the side to act, or on its field not yet super-evolved."""
+    from svsim.learn.payoff import tier
+    if target is None:
+        return False
+    p = state.players[state.active]
+    pp = p.pp + (1 if p.bonus_ready and not p.bonus_active else 0)
+    wanted = (lambda d: tier(d) == 2) if target == "tier2" else (lambda d: d.card_id == target)
+    return any(wanted(c.defn) and c.cost <= pp for c in p.hand) or \
+        any(wanted(f.defn) and not f.super_evolved for f in p.followers)
 
 
 def _identity(record, cards, rng_seed: int, agent_seeds: list) -> None:

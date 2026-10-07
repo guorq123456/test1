@@ -83,13 +83,22 @@ def deck_key(state: GameState, player: int) -> str | None:
     return identify(p.hand + p.deck + p.field + p.leader_area)
 
 
-def matchup_keys(state: GameState, player: int) -> list:
+# Stand-ins for a mirror without models of its own (the architecture session, 2026-10-07): the
+# tournament Ramp Dragon plays the Game8 build's mirror models (the features are functional and
+# positional, no card ids). Off unless an evaluation is made with aliases=ALIASES (arena "+alias"),
+# and only when both decks have the same stand-in; other pairings keep the class fallback.
+ALIASES = {"ramp-t": "ramp"}
+
+
+def matchup_keys(state: GameState, player: int, aliases: dict | None = None) -> list:
     """The keys a matchup's model may be filed under, most specific first: the pair of named decks,
-    then the pair of classes."""
+    with `aliases` the pair of their stand-ins for a mirror (ALIASES), then the pair of classes."""
     out = []
     mine, theirs = deck_key(state, player), deck_key(state, 1 - player)
     if mine is not None and theirs is not None:
         out.append((mine, theirs))
+        if aliases and mine == theirs and mine in aliases:
+            out.append((aliases[mine], aliases[theirs]))
     out.append((deck_craft(state, player), deck_craft(state, 1 - player)))
     return out
 
@@ -122,17 +131,18 @@ class Learned:
     of named decks, else the pair of classes) if there is one, else the deck's (by craft); the
     hand-set one otherwise."""
 
-    def __init__(self, models: dict | None = None, fallback=None):
+    def __init__(self, models: dict | None = None, fallback=None, aliases: dict | None = None):
         from svsim.search.evaluate import DEFAULT
         self.models = models if models is not None else load_all()
         self.fallback = fallback or DEFAULT
+        self.aliases = aliases                     # ALIASES: a mirror without models plays its stand-in's
 
     def score(self, state: GameState, player: int, player_moves_next: bool = False) -> float:
         """Learned from end-of-turn positions, so `player_moves_next` doesn't change it."""
         from svsim.search.evaluate import WIN, evaluate
         if state.winner is not None:
             return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
-        model = next((self.models[k] for k in matchup_keys(state, player) if k in self.models), None) \
+        model = next((self.models[k] for k in matchup_keys(state, player, self.aliases) if k in self.models), None) \
             or self.models.get(deck_craft(state, player))
         if model is None:
             return evaluate(state, player, self.fallback, player_moves_next)

@@ -377,9 +377,29 @@ def test_a_torn_search_forks_and_its_branch_keeps_points_only_while_torn():
         for h in branch.get("holds", []):
             assert h["hold"] == "torn" and h["q_gap"] < 0.05 and h["i"] >= i
         turns = {h["turn"] for h in branch.get("holds", [])}
-        assert len(turns) <= 2
+        assert len(turns) <= 2 and branch["branch"]["end"] in ("released", "reached", "cap", "game over")
         found = True
     assert found
+
+
+def test_the_tournament_ramp_mirror_can_borrow_the_game8_mirror_models_when_asked():
+    from svsim.agents.mulligan import opening
+    from svsim.core.enums import Craft
+    from svsim.learn.model import ALIASES, matchup_keys
+    from svsim.tools.arena import make_agent
+    mirror, other = opening("ramp-t", "ramp-t", True, 3), opening("ramp-t", "elf-t", True, 3)
+    assert matchup_keys(mirror, 0) == [("ramp-t", "ramp-t"), (Craft.DRAGON, Craft.DRAGON)]
+    assert matchup_keys(mirror, 0, ALIASES)[1] == ("ramp", "ramp")
+    assert matchup_keys(other, 0, ALIASES) == matchup_keys(other, 0)          # a mirror only
+    on = make_agent("mcts:5+plan+learned+phased+alias", 1).base.search.weights
+    off = make_agent("mcts:5+plan+learned+phased", 1).base.search.weights
+    ramp = opening("ramp", "ramp", True, 3)
+    assert on.score(ramp, 0) == off.score(ramp, 0)                            # the Game8 mirror as before
+    assert on.score(mirror, 0) != off.score(mirror, 0)
+    swap = ramp.clone()
+    for p, q in zip(swap.players, mirror.players):                            # same position, other deck name
+        p.deck_name = q.deck_name
+    assert on.score(swap, 0) == off.score(ramp, 0)
 
 
 def test_a_payoff_card_still_in_the_deck_counts_by_its_draw_chances():

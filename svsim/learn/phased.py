@@ -79,16 +79,18 @@ def load(folder: Path | None = None) -> dict:
 
 
 class PhasedLearned:
-    def __init__(self, models: dict | None = None, fallback=None):
+    def __init__(self, models: dict | None = None, fallback=None, aliases: dict | None = None):
         self.models = models if models is not None else load()
-        self.fallback = fallback or Learned()
+        self.fallback = fallback or Learned(aliases=aliases)
+        self.aliases = aliases                     # learn.model.ALIASES: a mirror's stand-in models
 
     def score(self, state, player: int, player_moves_next: bool = False) -> float:
         from svsim.search.evaluate import WIN
         if state.winner is not None:
             return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
         moment = "act" if player_moves_next else "ended"
-        model = next((self.models[k + (moment,)] for k in matchup_keys(state, player) if k + (moment,) in self.models),
+        model = next((self.models[k + (moment,)] for k in matchup_keys(state, player, self.aliases)
+                      if k + (moment,) in self.models),
                      None)
         if model is None:
             return self.fallback.score(state, player, player_moves_next)
