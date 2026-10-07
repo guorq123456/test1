@@ -92,6 +92,22 @@ def summary(scores: list[float]) -> tuple[float, float]:
     return mean, 1.96 * math.sqrt(var / n)
 
 
+
+def first_split(results, deck: str, opponent: str) -> dict[str, list[float]]:
+    """A's points by who really went first: the seed picks the first seat and a pair plays the seed
+    with A in seat 0, then in seat 1 (in a mirror A goes first in exactly one game of each pair)."""
+    from svsim.cards import decks
+    from svsim.core.engine import new_game
+    from svsim.ui.session import DECKS
+    mine, theirs = decks.build(DECKS[deck][1]), decks.build(DECKS[opponent][1])
+    out = {"先手": [], "后手": []}
+    for r in results:
+        for seat, p in zip((0, 1), r["points"]):
+            cards = (mine, theirs) if seat == 0 else (theirs, mine)
+            first = new_game(cards[0], cards[1], seed=r["seed"]).first
+            out["先手" if first == seat else "后手"].append(p)
+    return out
+
 # What the agents know (the architecture session, 2026-10-07): the search deals the opponent's unseen
 # cards from their real 40-card list (search.view.determinize reshuffles hand and deck together), so
 # every result says so; on the ladder the list is not known.
@@ -246,6 +262,9 @@ def main() -> None:
                         pool.terminate()
                         break
     report(final=True)
+    split = first_split(done.values(), args.deck, args.opponent)
+    print("按真实先后手：" + "；".join(f"A {k} {len(v)} 局 {summary(v)[0]:.1%} ± {summary(v)[1]:.1%}"
+                                   for k, v in split.items() if v), flush=True)
 
 
 if __name__ == "__main__":
