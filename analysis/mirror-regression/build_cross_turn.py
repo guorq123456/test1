@@ -8,10 +8,16 @@ Salem's 10 games, with v2 and v2s playing the same starts). The positions and
 their reasons are chosen by hand below, from reading every turn side by side;
 the file adds each position's start, Salem's turn and the bots' most common
 turn. Checks use check.py's conditions (all of a check's conditions must hold).
+The text fields name the cards the way Salem reads them (glossary.py: common name with cost and stats;
+Salem's words in 「」 as they are); the checks keep the simulator's names.
 """
 import json
+import os
 import sys
 from collections import Counter
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from glossary import for_salem  # noqa: E402
 
 ERNTZ, BURNITE, RED = "约束的《正义》·伊兰翠", "焦灰的安纳提玛·班德奈特", "赤流"
 VORLALAI, ZOOEY = "古旧天刀·波菈莱", "世界的伙伴·佐伊"
@@ -67,12 +73,13 @@ PROBES = [
     ("1791305539194", 7, "keep_sep", {"no_super_evolve": True, "removes_biggest": True}, "高",
      "对面诺玛 8/9：Salem 下诺玛，用普通进化（不是超进化）解掉它，超进化点和波菈莱都留着。"
      "下回合超进化伊兰翠撞璐米欧儿 9/9。bot 这回合就把超进化点用在诺玛或波菈莱上，下回合没得用。"),
-    # --- evolve next turn, not this one -----------------------------------------------------
-    ("1791306396169", 9, "evolve_timing", {"plays_unevolved": ERNTZ}, "中",
-     "8 血：Salem 白板下伊兰翠，回合结束回 8 血，对诺玛打 8；下回合进化后攻击，加上回合结束的 8 点，斩杀。"
-     "bot 当回合进化伊兰翠，不回血，进化点也用完了。"),
-    ("1791305215412", 8, "evolve_timing", {"plays_unevolved": ERNTZ}, "中",
-     "9 血：Salem 白板下伊兰翠回 8 血；下回合超进化它直接斩杀。v2 下班德并超进化，不回血。"),
+    # --- Erntz on its unevolved side (were evolve_timing; recategorized after the planner was sealed, on
+    #     Salem's ruling of 2026-10-07 17:14Z that unevolved Erntz is an equal way to use it) -------------
+    ("1791306396169", 9, "erntz_unevolved", {"plays_unevolved": ERNTZ}, "中",
+     "8 血：Salem 白板下伊兰翠，回合结束回 8 血、对诺玛打 8。白板正义是等价用法（Salem 17:14Z）。"
+     "bot 当回合进化伊兰翠，不回血。"),
+    ("1791305215412", 8, "erntz_unevolved", {"plays_unevolved": ERNTZ}, "中",
+     "9 血：Salem 白板下伊兰翠回 8 血。白板正义是等价用法（Salem 17:14Z）。v2 下班德并超进化，不回血。"),
     # --- super-evolve the card whose damage keeps coming -------------------------------------
     ("1791305539194", 6, "super_evolve_clock", {"super_evolves": BURNITE}, "中",
      "班德下场 9 点全场伤害解掉相枛津，超进化给对面纹章（对面每回合开始扣 2，回血时再扣 1），之后每个回合都在扣血。"
@@ -92,8 +99,9 @@ PROBES = [
     # planner's belief sampling, which reweights redraws by what the opponent has not played) -----
     ("1791304981889", 7, "belief", {"super_evolves": ERNTZ}, "belief",
      "10 血，对面相枛津 8/7：Salem 超进化伊兰翠撞死相枛津，回合结束打对面 8（19→11）。"
-     "Salem 的理由（原话）：判断对方手里没有相枛津 / 赤流时，超进化正义是更好的进攻手段；10 血很难一回合暴毙；"
-     "对方用《世界》解正义等于亏轮次，解不掉就直接赢。bot 白板下伊兰翠（回合结束 8 点打死相枛津，回 8 血）。"
+     "Salem 的理由（原话）：「我不清楚那局具体发生了什么，但这个决定是根据复杂情况判断的，如果判断对方手里没有754/赤流的"
+     "情况下超进化正义反而是更好的进攻手段：10血很难一回合内暴毙，如果对方用世界解正义等于亏轮次，解不掉正义我直接赢」。"
+     "bot 白板下伊兰翠（回合结束 8 点打死相枛津，回 8 血）。"
      "这局对面其实有赤流，下回合用它解了伊兰翠。"),
 ]
 
@@ -116,7 +124,7 @@ def main(positions_path, turns_path):
                     "salem_turn": r["salem"]["moves"], "bot_turn": bots, "related": related})
     json.dump({"source": "Salem's 10 Ramp mirror games (positions.json records); bots' turns from "
                          "analysis/cross-turn/play_turns.py at svsim e8d190a, 5 seeds",
-               "positions": out}, sys.stdout, ensure_ascii=False, indent=1)
+               "positions": [for_salem(p) for p in out]}, sys.stdout, ensure_ascii=False, indent=1)
 
 
 if __name__ == "__main__":

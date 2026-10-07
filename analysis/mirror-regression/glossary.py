@@ -41,8 +41,61 @@ def labelled(full):
 
 
 def label_first(text):
-    """Each card's first mention in the text (by common name) with its cost and stats."""
-    firsts = sorted(((text.find(n), n, s) for n, s in COMMON.values() if s and n in text), reverse=True)
+    """Each card's first mention in the text (by common name, outside Salem's words in 「」) with its cost and stats."""
+    masked = list(text)
+    inside = False
+    for i, ch in enumerate(text):                  # blank out quoted words so they are never matched
+        if ch == "「":
+            inside = True
+        elif ch == "」":
+            inside = False
+        elif inside:
+            masked[i] = "\0"
+    masked = "".join(masked)
+    firsts = sorted(((masked.find(n), n, s) for n, s in COMMON.values() if s and n in masked), reverse=True)
     for i, n, s in firsts:
         text = text[:i] + f"{n}（{s}）" + text[i + len(n):]
     return text
+
+
+# short forms the older notes used, after the full names are replaced (Salem's words in 「」 are kept as they are)
+SHORT = (("璐米欧儿&雅尔贞特", "金银"), ("璐米欧儿", "金银"), ("诺玛格达拉", "牢头"), ("诺玛", "牢头"),
+         ("伊兰翠", "正义"), ("相枛津", "口人魔"), ("班德奈特", "班德"))
+
+
+def rename(text):
+    """Common names for every card in free text; quoted words (「…」) untouched."""
+    parts = text.split("「")
+    out = [_rename(parts[0])]
+    for p in parts[1:]:
+        quote, _, rest = p.partition("」")
+        out.append("「" + quote + "」" + _rename(rest) if _ else "「" + p)
+    return "".join(out)
+
+
+def _rename(s):
+    for full, (n, _) in sorted(COMMON.items(), key=lambda kv: -len(kv[0])):
+        s = s.replace(full, n)
+    for a, b in SHORT:
+        s = s.replace(a, b)
+    return s
+
+
+def for_salem(probe):
+    """A probe's text fields the way Salem reads them: names in why / turns / context; checks keep the simulator's names."""
+    p = dict(probe)
+    p["why"] = label_first(rename(p["why"]))
+    if "salem_turn" in p:
+        p["salem_turn"] = [rename(m) for m in p["salem_turn"]]
+    if "bot_turn" in p:
+        p["bot_turn"] = {k: {**v, "most_common": rename(v["most_common"])} for k, v in p["bot_turn"].items()}
+    ctx = dict(p.get("context") or {})
+    if "hand" in ctx:
+        ctx["hand"] = [labelled(n) for n in ctx["hand"]]
+    for k in ("board", "opp_board"):
+        if k in ctx:
+            ctx[k] = [f"{labelled(e.rsplit(' ', 1)[0])} 现 {e.rsplit(' ', 1)[1]}" if " " in e else labelled(e)
+                      for e in ctx[k]]
+    if ctx:
+        p["context"] = ctx
+    return p

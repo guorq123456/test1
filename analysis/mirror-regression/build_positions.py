@@ -6,8 +6,12 @@ are tests of whether a bot reproduces a choice a strong player made in that
 spot; they are not rules for the bot.
 
     cd <svsim checkout> && PYTHONPATH=. python3 <this> GAME_JSON... > positions.json
+
+The text fields (why, salem_turn, context) name the cards the way Salem reads them (glossary.py);
+the checks keep the simulator's names.
 """
 import json
+import os
 import sys
 
 from svsim.cards import library, decks  # noqa: F401  (registers card scripts)
@@ -15,6 +19,9 @@ from svsim.core.actions import from_dict
 from svsim.core.engine import apply
 from svsim.core.state import leader_uid
 from svsim.tools import records
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from glossary import for_salem  # noqa: E402
 
 ERNTZ, BURNITE = "约束的《正义》·伊兰翠", "焦灰的安纳提玛·班德奈特"
 RED = "赤流"
@@ -134,7 +141,7 @@ def main(paths):
         recs[gid] = rec
     json.dump({"source": "Salem's ramp-dragon mirror games against the web bot (mcts:200+plan+learned)",
                "records": {g: r for g, r in recs.items() if any(o_["game"] == g for o_ in out)},
-               "positions": out}, sys.stdout, ensure_ascii=False, indent=1)
+               "positions": [for_salem(p) for p in out]}, sys.stdout, ensure_ascii=False, indent=1)
 
 
 if __name__ == "__main__":

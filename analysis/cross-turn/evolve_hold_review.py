@@ -1,7 +1,8 @@
 """Salem's held turns one by one: what could be evolved, what was kept, what came of it.
 
     cd <svsim checkout> && PYTHONPATH=. python3 <this> analysis/mirror-regression/salem_games.json \
-        analysis/mirror-regression/evolve_probes.json [--md OUT.md] [--results v2=FILE ...]
+        analysis/mirror-regression/evolve_probes.json [--md OUT.md] [--results v2=FILE ...] \
+        [--selfplay LABEL FILE]
 
 The method rule, in Salem's words (2026-10-07): 「噪声行号我不回——因为我也无法判断是否为噪声，复杂局面下
 不进化和进化往往都是从大量变量下得出的结论，不能简单下定论」. No single turn is judged; only whole cells
@@ -11,9 +12,11 @@ and not a held point; it keeps its row in the table, marked 不计入, and is le
 Sensitivity check only, never used for conclusions or acceptance: the turns whose first evolution in
 the next two own turns was a follower that had already lived through an opponent's turn (its payoff
 needed the opponent to leave it standing), listed after the table with the baseline without them.
-Reported: the Salem baseline (hold rate overall and in the two acceptance cells, "收益牌在手、本回合
-够不着" and "只能普通进化"), and each --results file's evolve_hold pass rate (and the erntz_unevolved
-probe's, for a run of it).
+Reported, in the standard cells of evolve_hold (overall; by tier: an A card reachable, only B reachable,
+an A card in hand out of reach; and the two acceptance cells "收益牌在手、本回合够不着" and "只能普通
+进化"): the Salem baseline, each --results file's evolve_hold pass rate (and the erntz_unevolved
+probe's, for a run of it), and with --selfplay LABEL FILE the hold rates of both seats of self-play
+records on the same terms (without the turns where Erntz came down unevolved).
 """
 import json
 import os
@@ -23,7 +26,8 @@ from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "mirror-regression"))
-from evolve_targets import PAYOFF, name, salem_turns, turn_row  # noqa: E402
+from evolve_by_tier import cell as tier_cell, tier_fn  # noqa: E402
+from evolve_targets import PAYOFF, name, player_turns, salem_turns, turn_row  # noqa: E402
 from glossary import common, label_first  # noqa: E402
 from svsim.core.actions import Evolve  # noqa: E402
 from svsim.core.engine import apply, legal_actions  # noqa: E402
@@ -117,7 +121,7 @@ def review(games, probe, cache):
     return {"id": probe["id"], "game": gid, "own_turn": ctx["own_turn"], "first": ctx["first"], "s754": s754,
             "hp": f"{ctx['hp']}/{ctx['opp_hp']}", "targets": "、".join(sorted(set(targets.values()))), "survivor": survivor,
             "super": supers, "kept": kept, "later": "；".join(later),
-            "erntz_plain": erntz_plain, "row": turn_row(turn)}
+            "erntz_plain": erntz_plain, "row": standard_row(turn)}
 
 
 def old_id(i):
@@ -125,16 +129,28 @@ def old_id(i):
     return i.replace("-erntz_unevolved", "-evolve_hold")
 
 
+TIER = tier_fn("mine")      # A = 2: Burnite, Erntz, Lumiore & Argente; B = 1: Vorlalai, Normagdala, Kimika, Sagatsumatsu
+# the standard cells of evolve_hold (the architecture thread, 2026-10-07): the three by tier, then the two acceptance cells
+CELLS = (("总体", lambda x: True),
+         ("A 档够得着", lambda x: x["tier"] == "够得着 2 档"),
+         ("最好只够得着 B 档", lambda x: x["tier"] == "够得着 1 档"),
+         ("A 档在手、够不着", lambda x: x["tier"] == "2 档在手够不着"),
+         ("收益牌在手、本回合够不着", lambda x: x["class"] == "收益牌在手、本回合够不着"),
+         ("只能普通进化", lambda x: x["normal_only"]))
+
+
+def standard_row(turn):
+    """The held / used row of a turn (evolve_targets.turn_row) with its tier cell."""
+    row = turn_row(turn)
+    if row is not None:
+        row["tier"] = tier_cell(turn, TIER)[0]
+    return row
+
+
 def rates(rows, drop):
     keep = [r for r in rows if r["id"] not in drop]
-    out = {}
-    held = [r for r in keep if r["row"]["held"]]
-    out["总体"] = (len(held), len(keep))
-    for key, sel in (("收益牌在手、本回合够不着", lambda x: x["class"] == "收益牌在手、本回合够不着"),
-                     ("只能普通进化", lambda x: x["normal_only"])):
-        sub = [r for r in keep if sel(r["row"])]
-        out[key] = (sum(r["row"]["held"] for r in sub), len(sub))
-    return out
+    return {key: (sum(r["row"]["held"] for r in keep if sel(r["row"])), sum(1 for r in keep if sel(r["row"])))
+            for key, sel in CELLS}
 
 
 def main():
@@ -200,16 +216,40 @@ def main():
         # the evolve_hold check (no evolution) of each held turn; the Erntz turns were run under their old id
         got = {r["id"]: res.get(r["id"]) or res.get(old_id(r["id"])) for r in holds}
         print(f"\n{label} 的 evolve_hold 通过率（不进化）：")
-        for key, sel in (("总体", lambda x: True), ("收益牌在手、本回合够不着", lambda x: x["class"] == "收益牌在手、本回合够不着"),
-                         ("只能普通进化", lambda x: x["normal_only"])):
+        for key, sel in CELLS:
             cells = []
             for title, drop in drops:
                 ids = [r["id"] for r in holds if r["id"] not in drop and sel(r["row"]) and got[r["id"]]]
                 ok, n = sum(got[j][0] for j in ids), sum(got[j][1] for j in ids)
                 cells.append(f"{title} {ok}/{n}（{ok / max(n, 1):.0%}）")
             print(f"  {key:<14} " + "  ".join(cells))
-        use = [j for j in res if j.endswith("evolve_use")]
-        print(f"  evolve_use（不变）{sum(res[j][0] for j in use)}/{sum(res[j][1] for j in use)}")
+        # the A-reachable cell has no held turn of Salem's: there the measure is whether the bot evolves when Salem did
+        uses = [r for r in rows if r["id"].endswith("evolve_use") and r["id"] in res]
+        print(f"{label} 的 evolve_use 通过率（也进化）：")
+        for key, sel in CELLS:
+            sub = [r["id"] for r in uses if sel(r["row"])]
+            ok, n = sum(res[j][0] for j in sub), sum(res[j][1] for j in sub)
+            print(f"  {key:<14} {ok}/{n}（{ok / max(n, 1):.0%}）")
+    for i, x in enumerate(args):
+        if x != "--selfplay":
+            continue
+        import gzip
+        label, path = args[i + 1], args[i + 2]
+        opener = gzip.open if path.endswith(".gz") else open
+        rows_sp = []
+        with opener(path, "rt", encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    for _, turn in player_turns(json.loads(line)):
+                        r = standard_row(turn)
+                        if r and not r["erntz_plain"]:
+                            rows_sp.append(r)
+        print(f"\n{label}（两边，不含出正义不进化的回合）：")
+        for key, sel in CELLS:
+            sub = [r for r in rows_sp if sel(r)]
+            h = sum(r["held"] for r in sub)
+            print(f"  {key:<14} 忍住 {h}/{len(sub)}（{h / max(len(sub), 1):.0%}）")
+
 
 if __name__ == "__main__":
     main()
