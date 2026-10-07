@@ -1,0 +1,38 @@
+lists: 133 (dropped for unknown cards: 0; 0 card ids)
+archetypes: {'af': 4, 'bishop': 17, 'crystal': 9, 'cut': 9, 'drag58': 6, 'dragon': 21, 'elf': 29, 'exp': 4, 'nm': 11, 'pirate': 9, 'spell': 3, 'synergy': 8, 'witch': 2, 'wrinkle-witch': 1}
+vector: 74 of 79 dimensions vary
+measured description   class not given  top-1 122/132 = 92.4%
+measured description   within class     top-1 122/132 = 92.4%
+card ids (reference)   class not given  top-1 123/132 = 93.2%
+card ids (reference)   within class     top-1 123/132 = 93.2%
+misses (class not given): dragon->drag58 4, drag58->dragon 2, exp->witch 2, witch->exp 2, wrinkle-witch->spell 1
+closest archetype of another class (centroid distance):
+  af         -> synergy 10.8, nm 10.9, witch 11.5
+  bishop     -> nm 11.0, elf 11.7, crystal 12.4
+  crystal    -> elf 10.3, pirate 11.1, nm 11.3
+  cut        -> elf 10.4, nm 10.4, synergy 10.6
+  drag58     -> nm 12.5, elf 12.8, pirate 12.9
+  dragon     -> nm 13.2, pirate 13.2, elf 13.4
+  elf        -> nm 10.1, crystal 10.3, cut 10.4
+  exp        -> pirate 10.0, cut 11.5, af 11.8
+  nm         -> elf 10.1, cut 10.4, synergy 10.6
+  pirate     -> witch 9.8, exp 10.0, elf 10.4
+  spell      -> pirate 11.1, elf 11.3, nm 12.2
+  synergy    -> cut 10.6, nm 10.6, af 10.8
+  witch      -> pirate 9.8, cut 10.9, elf 11.1
+  wrinkle-witch -> pirate 11.1, elf 11.3, nm 12.1
+each archetype's most distinctive dimensions (z of its centroid):
+  af         mean_tag_accelerate +3.7, mean_tag_invoke +3.4, mean_tag_listener +3.1, band5-6_share +2.2, band7+_body +2.0, mean_tag_skybound +1.8
+  bishop     mean_tag_engage +2.6, mean_type_amulet +2.5, mean_type_countdown_amulet +2.5, mean_tag_crystallize +2.3, band5-6_heal +2.0, mean_tag_turn +2.0
+  crystal    trait_cohesion +2.8, mean_type_spell +2.3, mean_tag_cast +2.3, mean_tag_in_hand +2.1, mean_tag_fanfare -1.8, mean_life -1.6
+  cut        mean_kw_ambush +3.7, distinct_share +3.7, mean_tag_skybound +2.9, mean_tag_invoke +2.6, band5-6_removal +1.4, band7+_body +1.4
+  drag58     mean_kw_intimidate +2.3, band7+_face +2.1, band0-2_ramp +2.0, band0-2_face +2.0, mean_rec_evo_face +2.0, mean_rec_heal +2.0
+  dragon     band7+_draw +2.0, mean_role_face +2.0, mean_rec_evo_face +2.0, mean_rec_heal +2.0, mean_sevo_face +2.0, mean_evo_face +1.9
+  elf        band3-4_ramp +1.9, mean_rec_evo_clear +1.7, band5-6_draw +1.6, mean_tag_fanfare +1.5, mean_kw_drain +1.4, band0-2_share +1.4
+  exp        mean_tag_fuse +4.6, band0-2_removal +2.2, mean_evo_value -1.9, mean_type_spell +1.9, mean_tag_cast +1.9, mean_sevo_value -1.7
+  nm         mean_tag_strike +3.0, mean_tag_last_words +1.8, band0-2_draw -1.8, mean_role_draw -1.7, band0-2_share -1.6, mean_kw_rush -1.3
+  pirate     mean_kw_storm +2.4, mean_tag_makes_tokens +2.1, mean_tag_enhance +2.1, band5-6_heal +2.0, mean_kw_rush +1.8, band5-6_removal +1.7
+  spell      mean_tag_in_hand +3.7, band3-4_draw +3.1, band0-2_heal +3.0, band0-2_body -1.9, mean_type_spell +1.8, mean_tag_cast +1.8
+  synergy    mean_tag_choice -2.7, mean_sevo_value +2.4, band7+_body +2.3, mean_role_body +2.2, band5-6_body +2.1, mean_tag_evolve +2.1
+  witch      mean_tag_fuse +4.6, mean_evo_value -1.9, mean_sevo_value -1.7, mean_tag_choice -1.6, mean_kw_ward -1.6, band7+_removal -1.6
+  wrinkle-witch mean_tag_in_hand +3.7, band3-4_draw +3.1, band0-2_heal +3.0, band0-2_body -1.9, mean_type_spell +1.8, mean_tag_cast +1.8
