@@ -202,3 +202,8 @@ def test_screening_only_shortens_hopeless_searches():
     put(state, 0, demo.LANCER)
     r = find_lethal(state, screen=50)
     assert r.screened and not r.sure and r.nodes <= 50
+    from svsim.search.lethal import LethalSearch, damage_estimate
+    short = 20 - damage_estimate(state)                     # a near miss gets the larger budget
+    for k, budget in ((short, 500), (short - 1, 50)):
+        search = LethalSearch(max_nodes=2000, screen=50, near=(500, k))
+        assert search.solve(state).screened and search.budget == budget

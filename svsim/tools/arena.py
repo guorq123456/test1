@@ -44,7 +44,8 @@ linear models do), except a turn start reached by playing out the reply;
 (search.mcts, backup="mean"); "+phased" linear models by moment (learn.phased:
 turn ends, and turn starts reached by playing out the reply; "+phased=NAME" this agent's models from
 the folder NAME, a path or svsim/learn/phased_models/NAME, learn.phased.folder_of; "+screen=N" the lethal search's budget for a position whose damage estimate falls short (default
-200, agents.lethal_agent; the estimate is no bound, search.lethal.damage_estimate); a mirror without
+200, agents.lethal_agent; the estimate is no bound, search.lethal.damage_estimate); "+screen=N:N2:K" ... and N2
+nodes when the estimate is short by K or less; a mirror without
 models of its own uses its stand-in's, learn.model.ALIASES (the tournament Ramp Dragon's the Game8 build's),
 on by default, "+noalias" off, "+alias" kept as a no-op); "+timing" adds what holding a card is worth until the turn the
 player usually plays it (svsim.learn.timing, from their games); "+priced"
@@ -226,8 +227,11 @@ def _make_agent(spec: str, seed: int):
                                    **({"kinds": kinds} if kinds else {}))
         if name == "mcts-raw":
             return agent
-        screen = [int(o[len("screen="):]) for o in options if o.startswith("screen=")]
-        agent = LethalAgent(agent, seed=seed, planner=planner, **({"screen": screen[0]} if screen else {}),
+        screen = [[int(x) for x in o[len("screen="):].split(":")] for o in options if o.startswith("screen=")]
+        if screen and len(screen[0]) not in (1, 3):
+            raise ValueError("screen=N or screen=N:N2:K")
+        agent = LethalAgent(agent, seed=seed, planner=planner, **({"screen": screen[0][0]} if screen else {}),
+                            **({"near": tuple(screen[0][1:])} if screen and len(screen[0]) == 3 else {}),
                                                             macro="macro" in options,
                                                             burst="burst" in options or "burst2" in options,
                                                             burst_reply=2 if "burst2" in options else 0,

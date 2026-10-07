@@ -366,6 +366,10 @@ def test_matchup_models_by_deck_come_before_the_class_pair(tmp_path):
         make_agent("mcts:5+learned+phased=no-such-folder", 1)
     assert make_agent("mcts:5+plan+screen=1000", 1).search.screen == 1000      # the lethal search's screen budget
     assert make_agent("mcts:5+plan", 1).search.screen == 200
+    near = make_agent("mcts:5+plan+screen=200:1000:4", 1).search            # ... and for a near miss
+    assert (near.screen, near.near) == (200, (1000, 4)) and make_agent("mcts:5+plan", 1).search.near is None
+    with pytest.raises(ValueError):
+        make_agent("mcts:5+plan+screen=200:1000", 1)
 
 
 def test_a_hidden_layer_adds_to_the_linear_score(tmp_path):

@@ -34,13 +34,15 @@ from svsim.search.lethal import LethalSearch, hidden_info
 
 class LethalAgent:
     """`screen`: node budget for positions whose damage estimate falls short of the
-    opponent's defense (see search.lethal); None searches every position fully."""
+    opponent's defense (see search.lethal); None searches every position fully. `near`:
+    (nodes, K), the budget instead when the estimate is short by K or less."""
 
     def __init__(self, base, max_nodes: int = 2000, screen: int | None = 200, seed: int = 0,
+                 near: tuple[int, int] | None = None,
                  planner: bool = False, plan_nodes: int = 20000, trust_planner: bool = False,
                  macro: bool = False, burst: bool = False, burst_reply: int = 0, dig: bool = False):
         self.base = base
-        self.search = LethalSearch(max_nodes=max_nodes, screen=screen, seed=seed)
+        self.search = LethalSearch(max_nodes=max_nodes, screen=screen, seed=seed, near=near)
         self.planner, self.plan_nodes, self.trust_planner = planner, plan_nodes, trust_planner
         self.plan: list = []
         self.plan_turn = None

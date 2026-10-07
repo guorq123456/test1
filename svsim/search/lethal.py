@@ -29,6 +29,10 @@ not a bound: combos (buffs that only pay off together, extra attacks, damage
 from effects other than hitting the leader) can beat it. Measured on 1,181
 positions with 122 sure lethals (found with 20,000 nodes): 2,000 nodes each
 missed 5 of them; with screen=200 it was about 5x faster and missed 7.
+`near=(N2, K)`: a screened position whose estimate falls short by K or less gets
+N2 nodes instead (the architecture session, 2026-10-07: the smoke games' screen
+misses that 1,000 nodes find were all 1 to 4 short; screening everything at
+1,000 cost 81%-95% more time per turn).
 """
 from __future__ import annotations
 
@@ -148,21 +152,25 @@ def damage_estimate(state: GameState) -> float:
 
 class LethalSearch:
     def __init__(self, max_nodes: int = 20000, samples: int = 8, max_depth: int = 40,
-                 seed: int = 0, screen: int | None = None, sure_only: bool = False):
+                 seed: int = 0, screen: int | None = None, sure_only: bool = False,
+                 near: tuple[int, int] | None = None):
         self.max_nodes = max_nodes
         self.samples = samples        # outcomes sampled at a chance node (halved at each nested one)
         self.max_depth = max_depth    # actions in one line
         self.seed = seed
         self.screen = screen          # node budget when damage_estimate falls short (None: off)
         self.sure_only = sure_only    # only look for sure lethals: don't expand chance nodes
+        self.near = near              # (nodes, K): the budget when the estimate is short by K or less
 
     def solve(self, state: GameState) -> LethalResult:
         if state.phase != Phase.MAIN or state.winner is not None:
             raise ValueError("lethal search needs a game in its main phase")
         start = time.perf_counter()
-        screened = (self.screen is not None and
-                    damage_estimate(state) < state.players[1 - state.active].leader_hp)
-        self.budget = self.screen if screened else self.max_nodes
+        short = (state.players[1 - state.active].leader_hp - damage_estimate(state)
+                 if self.screen is not None else 0)
+        screened = short > 0
+        self.budget = (self.max_nodes if not screened else
+                       self.near[0] if self.near is not None and short <= self.near[1] else self.screen)
         self.me = state.active
         self.tt: dict = {}
         self.nodes = 0
