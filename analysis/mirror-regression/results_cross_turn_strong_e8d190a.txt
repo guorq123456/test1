@@ -1,0 +1,33 @@
+1791305347029-t1-bonus_keep              5/5
+1791305539194-t1-bonus_keep              5/5
+1791306497426-t1-bonus_keep              5/5
+1791306781701-t1-bonus_keep              5/5
+1791304981889-t4-ramp_first              0/5
+1791305347029-t3-ramp_first              0/5
+1791306781701-t3-ramp_first              0/5
+1791306269709-t5-ramp_first              0/5
+1791304981889-t2-keep_card               0/5
+1791306333962-t2-keep_card               0/5
+1791304981889-t6-keep_card               0/5
+1791305215412-t6-keep_card               0/5
+1791306781701-t9-keep_card               0/5
+1791305347029-t10-keep_card              0/5
+1791306497426-t10-keep_card              5/5
+1791305539194-t7-keep_sep                0/5
+1791306396169-t9-evolve_timing           0/5
+1791305215412-t8-evolve_timing           0/5
+1791305539194-t6-super_evolve_clock      0/5
+1791305120171-t6-super_evolve_clock      0/5
+1791306269709-t6-super_evolve_clock      0/5
+1791304981889-t8-super_evolve_clock      5/5
+1791305347029-t7-super_evolve_clock      2/5
+1791306781701-t7-super_evolve_clock      5/5
+
+by category:
+  bonus_keep       20/20
+  evolve_timing    0/10
+  keep_card        5/35
+  keep_sep         0/5
+  ramp_first       0/20
+  super_evolve_clock 12/30
+  total            37/120

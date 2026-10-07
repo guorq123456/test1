@@ -8,6 +8,7 @@ played, so the score's interval is not biased by stopping at a boundary.
 Resumes from --out.
 """
 import argparse
+import inspect
 import json
 import os
 import time
@@ -44,7 +45,9 @@ def main():
               f"（95% 区间 {mean - margin:.1%}～{mean + margin:.1%}），{cr_text(mean, margin)}；"
               f"A 先手 {s0:.1%}、后手 {s1:.1%}", flush=True)
 
-    todo = [(k, args.seed + k, args.a, args.b, None, None, args.deck, args.opponent)
+    # the gate's pair job gained two fields (each side's +phased model folder) in later svsim
+    extra = (None, None) if "phased_a" in inspect.getsource(play_pair) else ()
+    todo = [(k, args.seed + k, args.a, args.b, None, None, args.deck, args.opponent) + extra
             for k in range(args.pairs) if k not in done]
     t0 = time.time()
     with Pool(args.workers) as pool, open(args.out, "a", encoding="utf-8") as fh:

@@ -5,10 +5,13 @@
 AGENT is an arena spec (e.g. "mcts:200+plan+learned"), or "salem" to replay
 Salem's own turn (every check should pass: this validates the checks). The
 agent plays seat 0 from the start of the turn until the turn ends; the check
-is a predicate on that whole turn. Set SVSIM_WEIGHTS to choose the learned
-models (as the arena does).
+is a predicate on that whole turn (a check with several conditions passes when
+all of them hold). Set SVSIM_WEIGHTS to choose the learned models (as the arena
+does). A file without "records" (cross_turn.json) uses the games in the
+positions.json next to it.
 """
 import json
+import os
 import sys
 from collections import defaultdict
 
@@ -48,7 +51,7 @@ def play_turn(pos, spec, seed):
         agent = make_agent(spec, seed)
     biggest_uid = max(st.players[1].followers, key=lambda f: f.atk + f.life, default=None)
     biggest_uid = biggest_uid.uid if biggest_uid else None
-    turn = []
+    turn = [("start", dict(max_pp=st.players[0].max_pp))]
     while st.active == 0 and not st.over:
         legal = legal_actions(st)
         a = next(nxt) if agent is None else agent.act(st, legal)
@@ -76,30 +79,47 @@ def big(t):
 
 
 def passes(check, turn, after, biggest_gone=False):
+    """Every condition in the check holds for the turn (a check may have several)."""
     plays = [d for k, d in turn if k == "play"]
     reds = [d for d in plays if d["card"] == RED]
     won = after.over and after.winner == 0
     if check.get("win_this_turn") or (won and not ({"keeps_bonus", "bonus_then_ramp"} & set(check))):
         return won      # winning the turn answers every other question
-    if "super_evolves" in check:
-        return any(k == "se" and d["card"] == check["super_evolves"] for k, d in turn)
-    if "never_discards" in check:
-        return not any(x in check["never_discards"] for d in plays for x in d["discards"])
-    if check.get("removes_biggest"):
-        # the biggest enemy follower at the start of the turn is gone at its end (by any means),
-        # and every Spilling Red that is cast goes at the biggest enemy follower at that moment
-        return biggest_gone and all(d["target_is_biggest"] for d in reds)
-    if check.get("no_red_on_small"):
-        return not any(not big(t) for d in reds for t in d["targets"])
-    if "plays_unevolved" in check:
-        card = check["plays_unevolved"]
-        return any(d["card"] == card for d in plays) and \
-            not any(k in ("se", "evo") and d["card"] == card for k, d in turn)
-    if check.get("keeps_bonus"):
-        return not any(k == "bonus" for k, _ in turn)
-    if "bonus_then_ramp" in check:
-        return any(k == "bonus" for k, _ in turn) and any(d["card"] in RAMPS for d in plays)
-    raise ValueError(check)
+    hand = [name(c) for c in after.players[0].hand]
+
+    def holds(key, want):
+        if key == "super_evolves":
+            return any(k == "se" and d["card"] == want for k, d in turn)
+        if key == "no_super_evolve":
+            return not any(k == "se" for k, _ in turn)
+        if key == "never_discards":
+            return not any(x in want for d in plays for x in d["discards"])
+        if key == "removes_biggest":
+            # the biggest enemy follower at the start of the turn is gone at its end (by any means),
+            # and every Spilling Red that is cast goes at the biggest enemy follower at that moment
+            return biggest_gone and all(d["target_is_biggest"] for d in reds)
+        if key == "no_red_on_small":
+            return not any(not big(t) for d in reds for t in d["targets"])
+        if key == "plays_unevolved":
+            return any(d["card"] == want for d in plays) and \
+                not any(k in ("se", "evo") and d["card"] == want for k, d in turn)
+        if key == "keeps_bonus":
+            # the bonus PP is still there after the turn: never pressed, or pressed and left
+            # unspent (the engine gives an unspent bonus PP back at the end of the turn)
+            return not won and after.players[0].bonus_ready
+        if key == "bonus_then_ramp":
+            return any(k == "bonus" for k, _ in turn) and any(d["card"] in RAMPS for d in plays)
+        if key == "never_plays":
+            return not any(d["card"] in want for d in plays)
+        if key == "ramps":
+            # ends the turn with more max play points than it started with (Dragonsign, Lumiore's
+            # Accelerate, Zooey's Fanfare)
+            return after.players[0].max_pp > turn[0][1]["max_pp"]
+        if key == "keeps_card":
+            return all(hand.count(card) >= n for card, n in want.items())
+        raise ValueError(key)
+
+    return all(holds(k, v) for k, v in check.items())
 
 
 def main():
@@ -111,7 +131,9 @@ def main():
     path, spec = args[0], args[1]
     seeds = int(args[2]) if len(args) > 2 else 1
     data = json.load(open(path))
-    RECORDS.update(data["records"])
+    # a subset file (e.g. cross_turn.json) refers to the games kept in positions.json next to it
+    RECORDS.update(data.get("records") or
+                   json.load(open(os.path.join(os.path.dirname(os.path.abspath(path)), "positions.json")))["records"])
     positions = data["positions"]
     by_cat = defaultdict(lambda: [0, 0])
     rows = []

@@ -1,0 +1,1254 @@
+{
+ "source": "Salem's 10 Ramp mirror games (positions.json records); bots' turns from analysis/cross-turn/play_turns.py at svsim e8d190a, 5 seeds",
+ "positions": [
+  {
+   "id": "1791305347029-t1-bonus_keep",
+   "category": "bonus_keep",
+   "check": {
+    "keeps_bonus": true
+   },
+   "confidence": "高",
+   "why": "额外 PP 在自己第 6 回合前只能用一次。Salem 留到第 2 回合，2+1 PP 打 3 费的龙之启示，提前一回合跳费。bot 第 1 回合用掉额外 PP 打琪米卡，还把龙之启示弃了：第 2 回合既没额外 PP，也没有跳费牌。",
+   "game": "1791305347029",
+   "at": 3,
+   "own_turn": 1,
+   "first": false,
+   "context": {
+    "pp": "1/1",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "满面笑容的烹饪·琪米卡",
+     "龙之启示",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [],
+    "opp_hand": 5,
+    "ep": 2,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "bonus PP | play 满面笑容的烹饪·琪米卡 discard ['龙之启示'] | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "bonus PP | play 满面笑容的烹饪·琪米卡 discard ['龙之启示'] | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": [
+    "1791305347029-t1-bonus_keep"
+   ]
+  },
+  {
+   "id": "1791305539194-t1-bonus_keep",
+   "category": "bonus_keep",
+   "check": {
+    "keeps_bonus": true
+   },
+   "confidence": "高",
+   "why": "同上：Salem 第 2 回合用额外 PP 打璐米欧儿加速（3 费，+1 PP 上限）。bot 第 1 回合用额外 PP 下龙人，第 2 回合就跳不了费。",
+   "game": "1791305539194",
+   "at": 3,
+   "own_turn": 1,
+   "first": false,
+   "context": {
+    "pp": "1/1",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "世界的伙伴·佐伊",
+     "约束的《正义》·伊兰翠",
+     "宣扬的龙人",
+     "金银绚烂·璐米欧儿&雅尔贞特"
+    ],
+    "board": [],
+    "opp_board": [],
+    "opp_hand": 5,
+    "ep": 2,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "bonus PP | play 宣扬的龙人 | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "bonus PP | play 宣扬的龙人 | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": [
+    "1791305539194-t1-bonus_keep"
+   ]
+  },
+  {
+   "id": "1791306497426-t1-bonus_keep",
+   "category": "bonus_keep",
+   "check": {
+    "keeps_bonus": true
+   },
+   "confidence": "高",
+   "why": "同上：Salem 第 2 回合额外 PP + 龙之启示。bot 第 1 回合用额外 PP 打琪米卡，弃掉一张璐米欧儿。",
+   "game": "1791306497426",
+   "at": 3,
+   "own_turn": 1,
+   "first": false,
+   "context": {
+    "pp": "1/1",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "满面笑容的烹饪·琪米卡",
+     "龙之启示",
+     "懒惰的波摇花",
+     "金银绚烂·璐米欧儿&雅尔贞特"
+    ],
+    "board": [],
+    "opp_board": [],
+    "opp_hand": 5,
+    "ep": 2,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "bonus PP | play 满面笑容的烹饪·琪米卡 discard ['金银绚烂·璐米欧儿&雅尔贞特'] | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "bonus PP | play 满面笑容的烹饪·琪米卡 discard ['金银绚烂·璐米欧儿&雅尔贞特'] | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": [
+    "1791306497426-t1-bonus_keep"
+   ]
+  },
+  {
+   "id": "1791306781701-t1-bonus_keep",
+   "category": "bonus_keep",
+   "check": {
+    "keeps_bonus": true
+   },
+   "confidence": "高",
+   "why": "Salem 第 1 回合不用额外 PP（第 2 回合打了琪米卡，第 3 回合用 3 PP 打璐米欧儿加速，额外 PP 一直留着）。bot 第 1 回合用额外 PP 打琪米卡。代价要到第 2、3 回合才看得见。",
+   "game": "1791306781701",
+   "at": 3,
+   "own_turn": 1,
+   "first": false,
+   "context": {
+    "pp": "1/1",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "满面笑容的烹饪·琪米卡",
+     "宣扬的龙人",
+     "世界的伙伴·佐伊",
+     "约束的《正义》·伊兰翠",
+     "日珥咆哮"
+    ],
+    "board": [],
+    "opp_board": [],
+    "opp_hand": 5,
+    "ep": 2,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "bonus PP | play 满面笑容的烹饪·琪米卡 discard ['宣扬的龙人'] | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "bonus PP | play 满面笑容的烹饪·琪米卡 discard ['宣扬的龙人'] | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": [
+    "1791306781701-t1-bonus_keep"
+   ]
+  },
+  {
+   "id": "1791304981889-t4-ramp_first",
+   "category": "ramp_first",
+   "check": {
+    "ramps": true
+   },
+   "confidence": "高",
+   "why": "先手第 4 回合 5 PP：Salem 打龙之启示（+1 上限，剩 2 PP，手里的波菈莱不下）。bot 打《世界》的呈现（抽 2，破坏对面 0/2 的波菈莱），PP 用满但不跳费。跳费的回报在之后每个回合。",
+   "game": "1791304981889",
+   "at": 14,
+   "own_turn": 4,
+   "first": true,
+   "context": {
+    "pp": "5/5",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "《世界》的呈现",
+     "古旧天刀·波菈莱",
+     "约束的《正义》·伊兰翠",
+     "禁牙的变貌·诺玛格达拉",
+     "焦灰的安纳提玛·班德奈特",
+     "龙之启示"
+    ],
+    "board": [],
+    "opp_board": [
+     "古旧天刀·波菈莱 0/2"
+    ],
+    "opp_hand": 5,
+    "ep": 2,
+    "sep": 2,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 龙之启示",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 《世界》的呈现 | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "play 《世界》的呈现 | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": []
+  },
+  {
+   "id": "1791305347029-t3-ramp_first",
+   "category": "ramp_first",
+   "check": {
+    "ramps": true
+   },
+   "confidence": "高",
+   "why": "后手第 3 回合 4 PP：Salem 打璐米欧儿加速（+1 上限，剩 1 PP）。bot 打琪米卡（弃波菈莱）+ 龙人，PP 用满但不跳费。",
+   "game": "1791305347029",
+   "at": 12,
+   "own_turn": 3,
+   "first": false,
+   "context": {
+    "pp": "4/4",
+    "hp": 19,
+    "opp_hp": 20,
+    "hand": [
+     "满面笑容的烹饪·琪米卡",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉",
+     "古旧天刀·波菈莱",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1"
+    ],
+    "opp_hand": 5,
+    "ep": 2,
+    "sep": 2,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 金银绚烂·璐米欧儿&雅尔贞特",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 满面笑容的烹饪·琪米卡 discard ['古旧天刀·波菈莱'] | play 宣扬的龙人 | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "play 满面笑容的烹饪·琪米卡 discard ['古旧天刀·波菈莱'] | play 宣扬的龙人 | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": []
+  },
+  {
+   "id": "1791306781701-t3-ramp_first",
+   "category": "ramp_first",
+   "check": {
+    "ramps": true
+   },
+   "confidence": "高",
+   "why": "后手第 3 回合 3 PP：Salem 打璐米欧儿加速，额外 PP 继续留着。bot 用额外 PP 打强化龙人（3 个 2/1），不跳费。",
+   "game": "1791306781701",
+   "at": 11,
+   "own_turn": 3,
+   "first": false,
+   "context": {
+    "pp": "3/3",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "宣扬的龙人",
+     "世界的伙伴·佐伊",
+     "约束的《正义》·伊兰翠",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "古旧天刀·波菈莱",
+     "懒惰的波摇花"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1"
+    ],
+    "opp_hand": 5,
+    "ep": 2,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "play 金银绚烂·璐米欧儿&雅尔贞特",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "bonus PP | play 宣扬的龙人 | 宣扬的龙人 attacks 掌握天空命运的少女·露莉亚 | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "bonus PP | play 宣扬的龙人 | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": []
+  },
+  {
+   "id": "1791306269709-t5-ramp_first",
+   "category": "ramp_first",
+   "check": {
+    "ramps": true
+   },
+   "confidence": "中",
+   "why": "后手第 5 回合 8 PP，对面诺玛 7/8：Salem 用《世界》的呈现破坏诺玛并抽 2，再打龙之启示到 9 上限，下回合 10 PP 超进化伊兰翠。v2s 用相枛津 + 赤流（把《世界》的呈现弃了）解诺玛，不跳费；v2 打波摇花 +《世界》的呈现，剩 1 PP。",
+   "game": "1791306269709",
+   "at": 21,
+   "own_turn": 5,
+   "first": false,
+   "context": {
+    "pp": "8/8",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "懒惰的波摇花",
+     "断头的斩姬·相枛津",
+     "《世界》的呈现",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "约束的《正义》·伊兰翠",
+     "龙之启示"
+    ],
+    "board": [],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 7/8"
+    ],
+    "opp_hand": 7,
+    "ep": 1,
+    "sep": 2,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 《世界》的呈现",
+    "play 龙之启示",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 懒惰的波摇花 | play 《世界》的呈现 | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "play 断头的斩姬·相枛津 discard ['懒惰的波摇花'] | play 赤流 discard ['《世界》的呈现'] -> ['禁牙的变貌·诺玛格达拉'] | evolve 断头的斩姬·相枛津 | 断头的斩姬·相枛津 attacks leader | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": []
+  },
+  {
+   "id": "1791304981889-t2-keep_card",
+   "category": "keep_card",
+   "check": {
+    "never_plays": [
+     "古旧天刀·波菈莱"
+    ]
+   },
+   "confidence": "中",
+   "why": "波菈莱被弃时会召唤一张自己，进化拿 1 张深渊，超进化拿 3 张。Salem 把它留在手里，等琪米卡、相枛津、赤流、璐米欧儿弃牌时免费上场；先手第 2 回合宁可空过。bot 直接花 2 PP 下。",
+   "game": "1791304981889",
+   "at": 6,
+   "own_turn": 2,
+   "first": true,
+   "context": {
+    "pp": "2/2",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "《世界》的呈现",
+     "古旧天刀·波菈莱",
+     "约束的《正义》·伊兰翠",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [
+     "古旧天刀·波菈莱 0/2"
+    ],
+    "opp_hand": 4,
+    "ep": 2,
+    "sep": 2,
+    "bonus": false
+   },
+   "salem_turn": [
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 古旧天刀·波菈莱 | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "play 古旧天刀·波菈莱 | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": []
+  },
+  {
+   "id": "1791306333962-t2-keep_card",
+   "category": "keep_card",
+   "check": {
+    "never_plays": [
+     "古旧天刀·波菈莱"
+    ]
+   },
+   "confidence": "中",
+   "why": "同上：两张 2 费里 Salem 下龙人，留波菈莱当以后的弃牌。bot 下波菈莱。",
+   "game": "1791306333962",
+   "at": 5,
+   "own_turn": 2,
+   "first": true,
+   "context": {
+    "pp": "2/2",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "古旧天刀·波菈莱",
+     "宣扬的龙人",
+     "宣扬的龙人",
+     "断头的斩姬·相枛津",
+     "约束的《正义》·伊兰翠",
+     "世界的伙伴·佐伊"
+    ],
+    "board": [],
+    "opp_board": [],
+    "opp_hand": 5,
+    "ep": 2,
+    "sep": 2,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 宣扬的龙人",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 古旧天刀·波菈莱 | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "play 古旧天刀·波菈莱 | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": []
+  },
+  {
+   "id": "1791304981889-t6-keep_card",
+   "category": "keep_card",
+   "check": {
+    "never_discards": [
+     "约束的《正义》·伊兰翠",
+     "焦灰的安纳提玛·班德奈特"
+    ]
+   },
+   "confidence": "中",
+   "why": "先手第 6 回合 8 PP，对面相枛津 7/4：Salem 用露莉亚和龙人解掉它，再打璐米欧儿加速，两张伊兰翠都留着。bot 打璐米欧儿本体，弃掉伊兰翠和诺玛。伊兰翠的价值在之后的 10 PP 回合。",
+   "game": "1791304981889",
+   "at": 29,
+   "own_turn": 6,
+   "first": true,
+   "context": {
+    "pp": "8/8",
+    "hp": 18,
+    "opp_hp": 20,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "约束的《正义》·伊兰翠",
+     "禁牙的变貌·诺玛格达拉",
+     "焦灰的安纳提玛·班德奈特",
+     "掌握天空命运的少女·露莉亚",
+     "焦龙的午睡",
+     "宣扬的龙人",
+     "天刀深渊",
+     "约束的《正义》·伊兰翠"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 7/4"
+    ],
+    "opp_hand": 7,
+    "ep": 1,
+    "sep": 2,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 掌握天空命运的少女·露莉亚",
+    "play 宣扬的龙人",
+    "play 金银绚烂·璐米欧儿&雅尔贞特",
+    "宣扬的龙人 attacks 断头的斩姬·相枛津",
+    "宣扬的龙人 attacks 断头的斩姬·相枛津",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 金银绚烂·璐米欧儿&雅尔贞特 discard ['约束的《正义》·伊兰翠', '禁牙的变貌·诺玛格达拉'] | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "play 金银绚烂·璐米欧儿&雅尔贞特 discard ['约束的《正义》·伊兰翠', '禁牙的变貌·诺玛格达拉'] | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": []
+  },
+  {
+   "id": "1791305215412-t6-keep_card",
+   "category": "keep_card",
+   "check": {
+    "never_plays": [
+     "焦灰的安纳提玛·班德奈特"
+    ]
+   },
+   "confidence": "中",
+   "why": "先手第 6 回合 9 PP，对面只有一个 2/4：Salem 只打《世界》的呈现（破坏它、抽 2），剩 4 PP，把班德留到下回合（先手第 7 回合才能超进化）。bot 9 PP 下班德，9 点全场伤害只打一个 2/4，下回合也没有班德可超进化。",
+   "game": "1791305215412",
+   "at": 33,
+   "own_turn": 6,
+   "first": true,
+   "context": {
+    "pp": "9/9",
+    "hp": 17,
+    "opp_hp": 20,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "日珥咆哮",
+     "约束的《正义》·伊兰翠",
+     "《世界》的呈现",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "古旧天刀·波菈莱 2/4"
+    ],
+    "opp_hand": 3,
+    "ep": 2,
+    "sep": 2,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 《世界》的呈现",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 焦灰的安纳提玛·班德奈特 | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "play 焦灰的安纳提玛·班德奈特 | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": []
+  },
+  {
+   "id": "1791306781701-t9-keep_card",
+   "category": "keep_card",
+   "check": {
+    "removes_biggest": true,
+    "keeps_card": {
+     "赤流": 1
+    }
+   },
+   "confidence": "高",
+   "why": "相枛津给 2 张赤流。Salem 只用一张打诺玛 5/6，另一张留着（下回合正好用它解对面的班德 9/9）。bot 两张都用，一张打在 1/1 的露莉亚上。",
+   "game": "1791306781701",
+   "at": 59,
+   "own_turn": 9,
+   "first": false,
+   "context": {
+    "pp": "10/10",
+    "hp": 17,
+    "opp_hp": 13,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉",
+     "天刀深渊",
+     "天刀深渊",
+     "天刀深渊",
+     "焦灰的安纳提玛·班德奈特",
+     "焦灰的安纳提玛·班德奈特",
+     "断头的斩姬·相枛津"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "禁牙的变貌·诺玛格达拉 5/6"
+    ],
+    "opp_hand": 6,
+    "ep": 1,
+    "sep": 0,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 断头的斩姬·相枛津 discard ['天刀深渊']",
+    "play 赤流 discard ['天刀深渊'] -> ['禁牙的变貌·诺玛格达拉']",
+    "evolve 断头的斩姬·相枛津",
+    "断头的斩姬·相枛津 attacks leader",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 断头的斩姬·相枛津 discard ['天刀深渊'] | play 赤流 discard ['天刀深渊'] -> ['掌握天空命运的少女·露莉亚'] | play 赤流 discard ['天刀深渊'] -> ['禁牙的变貌·诺玛格达拉'] | evolve 断头的斩姬·相枛津 | 断头的斩姬·相枛津 attacks leader | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "play 断头的斩姬·相枛津 discard ['天刀深渊'] | play 赤流 discard ['天刀深渊'] -> ['掌握天空命运的少女·露莉亚'] | play 赤流 discard ['天刀深渊'] -> ['禁牙的变貌·诺玛格达拉'] | evolve 断头的斩姬·相枛津 | 断头的斩姬·相枛津 attacks leader | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": [
+    "1791306781701-t9-discard",
+    "1791306781701-t9-answer_threat"
+   ]
+  },
+  {
+   "id": "1791305347029-t10-keep_card",
+   "category": "keep_card",
+   "check": {
+    "removes_biggest": true,
+    "keeps_card": {
+     "赤流": 1
+    }
+   },
+   "confidence": "中",
+   "why": "对面白板伊兰翠 8/8：Salem 用《世界》的呈现破坏它（还抽 2），赤流留着。bot 用赤流解它，弃掉《世界》的呈现。",
+   "game": "1791305347029",
+   "at": 70,
+   "own_turn": 10,
+   "first": false,
+   "context": {
+    "pp": "10/10",
+    "hp": 13,
+    "opp_hp": 16,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "懒惰的波摇花",
+     "《世界》的呈现",
+     "懒惰的波摇花",
+     "赤流",
+     "宣扬的龙人",
+     "日珥咆哮"
+    ],
+    "board": [],
+    "opp_board": [
+     "约束的《正义》·伊兰翠 8/8"
+    ],
+    "opp_hand": 0,
+    "ep": 0,
+    "sep": 0,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 《世界》的呈现",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 禁牙的变貌·诺玛格达拉 | play 懒惰的波摇花 | play 赤流 discard ['《世界》的呈现'] -> ['约束的《正义》·伊兰翠'] | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "play 禁牙的变貌·诺玛格达拉 | play 懒惰的波摇花 | play 赤流 discard ['《世界》的呈现'] -> ['约束的《正义》·伊兰翠'] | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": []
+  },
+  {
+   "id": "1791306497426-t10-keep_card",
+   "category": "keep_card",
+   "check": {
+    "removes_biggest": true,
+    "keeps_card": {
+     "赤流": 1
+    }
+   },
+   "confidence": "中",
+   "why": "对面白板伊兰翠 8/8：Salem 下班德，9 点全场伤害解掉它，赤流留着。v2s 5 次里 3 次用赤流解它，再下午睡和佐伊。",
+   "game": "1791306497426",
+   "at": 67,
+   "own_turn": 10,
+   "first": false,
+   "context": {
+    "pp": "10/10",
+    "hp": 15,
+    "opp_hp": 10,
+    "hand": [
+     "世界的伙伴·佐伊",
+     "焦灰的安纳提玛·班德奈特",
+     "赤流",
+     "焦龙的午睡"
+    ],
+    "board": [],
+    "opp_board": [
+     "约束的《正义》·伊兰翠 8/8"
+    ],
+    "opp_hand": 6,
+    "ep": 0,
+    "sep": 0,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 焦灰的安纳提玛·班德奈特",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 焦灰的安纳提玛·班德奈特 | end turn",
+     "times": "4/5"
+    },
+    "v2s": {
+     "most_common": "play 赤流 discard ['焦灰的安纳提玛·班德奈特'] -> ['约束的《正义》·伊兰翠'] | play 焦龙的午睡 | play 世界的伙伴·佐伊 | end turn",
+     "times": "2/5"
+    }
+   },
+   "related": []
+  },
+  {
+   "id": "1791305539194-t7-keep_sep",
+   "category": "keep_sep",
+   "check": {
+    "no_super_evolve": true,
+    "removes_biggest": true
+   },
+   "confidence": "高",
+   "why": "对面诺玛 8/9：Salem 下诺玛，用普通进化（不是超进化）解掉它，超进化点和波菈莱都留着。下回合超进化伊兰翠撞璐米欧儿 9/9。bot 这回合就把超进化点用在诺玛或波菈莱上，下回合没得用。",
+   "game": "1791305539194",
+   "at": 40,
+   "own_turn": 7,
+   "first": false,
+   "context": {
+    "pp": "9/9",
+    "hp": 11,
+    "opp_hp": 20,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "约束的《正义》·伊兰翠",
+     "日珥咆哮",
+     "《世界》的呈现",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "满面笑容的烹饪·琪米卡 2/1",
+     "禁牙的变貌·诺玛格达拉 8/9"
+    ],
+    "opp_hand": 4,
+    "ep": 2,
+    "sep": 1,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 禁牙的变貌·诺玛格达拉",
+    "evolve 禁牙的变貌·诺玛格达拉",
+    "禁牙的变貌·诺玛格达拉 attacks 禁牙的变貌·诺玛格达拉",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 禁牙的变貌·诺玛格达拉 | super-evolve 禁牙的变貌·诺玛格达拉 | play 古旧天刀·波菈莱 | 禁牙的变貌·诺玛格达拉 attacks 禁牙的变貌·诺玛格达拉 | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "play 禁牙的变貌·诺玛格达拉 | play 古旧天刀·波菈莱 | super-evolve 古旧天刀·波菈莱 | 古旧天刀·波菈莱 attacks 禁牙的变貌·诺玛格达拉 | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": []
+  },
+  {
+   "id": "1791306396169-t9-evolve_timing",
+   "category": "evolve_timing",
+   "check": {
+    "plays_unevolved": "约束的《正义》·伊兰翠"
+   },
+   "confidence": "中",
+   "why": "8 血：Salem 白板下伊兰翠，回合结束回 8 血，对诺玛打 8；下回合进化后攻击，加上回合结束的 8 点，斩杀。bot 当回合进化伊兰翠，不回血，进化点也用完了。",
+   "game": "1791306396169",
+   "at": 57,
+   "own_turn": 9,
+   "first": true,
+   "context": {
+    "pp": "10/10",
+    "hp": 8,
+    "opp_hp": 19,
+    "hand": [
+     "古旧天刀·波菈莱",
+     "禁牙的变貌·诺玛格达拉",
+     "约束的《正义》·伊兰翠",
+     "掌握天空命运的少女·露莉亚",
+     "焦灰的安纳提玛·班德奈特",
+     "龙之启示",
+     "满面笑容的烹饪·琪米卡",
+     "宣扬的龙人",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 5/6"
+    ],
+    "opp_hand": 0,
+    "ep": 1,
+    "sep": 0,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 约束的《正义》·伊兰翠",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 约束的《正义》·伊兰翠 | evolve 约束的《正义》·伊兰翠 | 约束的《正义》·伊兰翠 attacks 禁牙的变貌·诺玛格达拉 | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "play 约束的《正义》·伊兰翠 | evolve 约束的《正义》·伊兰翠 | 约束的《正义》·伊兰翠 attacks 禁牙的变貌·诺玛格达拉 | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": [
+    "1791306396169-t9-erntz_unevolved"
+   ]
+  },
+  {
+   "id": "1791305215412-t8-evolve_timing",
+   "category": "evolve_timing",
+   "check": {
+    "plays_unevolved": "约束的《正义》·伊兰翠"
+   },
+   "confidence": "中",
+   "why": "9 血：Salem 白板下伊兰翠回 8 血；下回合超进化它直接斩杀。v2 下班德并超进化，不回血。",
+   "game": "1791305215412",
+   "at": 52,
+   "own_turn": 8,
+   "first": true,
+   "context": {
+    "pp": "10/10",
+    "hp": 9,
+    "opp_hp": 15,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "日珥咆哮",
+     "约束的《正义》·伊兰翠",
+     "焦灰的安纳提玛·班德奈特",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "天刀深渊",
+     "赤流",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [
+     "古旧天刀·波菈莱 3/5"
+    ],
+    "opp_hand": 3,
+    "ep": 2,
+    "sep": 1,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 约束的《正义》·伊兰翠",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 焦灰的安纳提玛·班德奈特 | super-evolve 焦灰的安纳提玛·班德奈特 | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "play 约束的《正义》·伊兰翠 | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": [
+    "1791305215412-t8-red_hold",
+    "1791305215412-t8-erntz_unevolved"
+   ]
+  },
+  {
+   "id": "1791305539194-t6-super_evolve_clock",
+   "category": "super_evolve_clock",
+   "check": {
+    "super_evolves": "焦灰的安纳提玛·班德奈特"
+   },
+   "confidence": "中",
+   "why": "班德下场 9 点全场伤害解掉相枛津，超进化给对面纹章（对面每回合开始扣 2，回血时再扣 1），之后每个回合都在扣血。bot 超进化诺玛去撞相枛津。",
+   "game": "1791305539194",
+   "at": 31,
+   "own_turn": 6,
+   "first": false,
+   "context": {
+    "pp": "8/8",
+    "hp": 12,
+    "opp_hp": 19,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "约束的《正义》·伊兰翠",
+     "焦灰的安纳提玛·班德奈特",
+     "日珥咆哮",
+     "《世界》的呈现"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 7/6"
+    ],
+    "opp_hand": 4,
+    "ep": 2,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "bonus PP",
+    "play 焦灰的安纳提玛·班德奈特",
+    "super-evolve 焦灰的安纳提玛·班德奈特",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 禁牙的变貌·诺玛格达拉 | super-evolve 禁牙的变貌·诺玛格达拉 | bonus PP | play 古旧天刀·波菈莱 | 禁牙的变貌·诺玛格达拉 attacks 断头的斩姬·相枛津 | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "play 禁牙的变貌·诺玛格达拉 | super-evolve 禁牙的变貌·诺玛格达拉 | bonus PP | play 古旧天刀·波菈莱 | 禁牙的变貌·诺玛格达拉 attacks 断头的斩姬·相枛津 | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": [
+    "1791305539194-t6-super_evolve"
+   ]
+  },
+  {
+   "id": "1791305120171-t6-super_evolve_clock",
+   "category": "super_evolve_clock",
+   "check": {
+    "super_evolves": "焦灰的安纳提玛·班德奈特"
+   },
+   "confidence": "中",
+   "why": "同样是班德全场 9 点解场 + 纹章，赤流留着，下回合用赤流解对面伊兰翠斩杀。v2s 用赤流解 3/3、超进化波菈莱拿深渊，班德留在手里。",
+   "game": "1791305120171",
+   "at": 35,
+   "own_turn": 6,
+   "first": false,
+   "context": {
+    "pp": "8/8",
+    "hp": 12,
+    "opp_hp": 13,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "焦龙的午睡",
+     "约束的《正义》·伊兰翠",
+     "《世界》的呈现",
+     "赤流",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 3/3",
+     "焦灰的安纳提玛·班德奈特 9/9"
+    ],
+    "opp_hand": 3,
+    "ep": 0,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "bonus PP",
+    "play 焦灰的安纳提玛·班德奈特",
+    "super-evolve 焦灰的安纳提玛·班德奈特",
+    "焦灰的安纳提玛·班德奈特 attacks 掌握天空命运的少女·露莉亚",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 《世界》的呈现 | play 焦龙的午睡 | bonus PP | play 赤流 discard ['古旧天刀·波菈莱'] -> ['掌握天空命运的少女·露莉亚'] | super-evolve 古旧天刀·波菈莱 | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "play 赤流 discard ['古旧天刀·波菈莱'] -> ['掌握天空命运的少女·露莉亚'] | super-evolve 古旧天刀·波菈莱 | play 焦龙的午睡 | play 天刀深渊 | play 天刀深渊 | 古旧天刀·波菈莱 attacks 焦灰的安纳提玛·班德奈特 | bonus PP | end turn",
+     "times": "4/5"
+    }
+   },
+   "related": [
+    "1791305120171-t6-super_evolve"
+   ]
+  },
+  {
+   "id": "1791306269709-t6-super_evolve_clock",
+   "category": "super_evolve_clock",
+   "check": {
+    "super_evolves": "约束的《正义》·伊兰翠"
+   },
+   "confidence": "中",
+   "why": "超进化伊兰翠撞佐伊 7/7，活下来以后每个回合结束打对面 8，下回合配赤流斩杀。bot 打璐米欧儿本体并超进化它抽 3。平滑网络能修好这一个，说明换评分也能补。",
+   "game": "1791306269709",
+   "at": 28,
+   "own_turn": 6,
+   "first": false,
+   "context": {
+    "pp": "10/10",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "懒惰的波摇花",
+     "断头的斩姬·相枛津",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "约束的《正义》·伊兰翠",
+     "掌握天空命运的少女·露莉亚",
+     "日珥咆哮",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "世界的伙伴·佐伊 7/7"
+    ],
+    "opp_hand": 6,
+    "ep": 1,
+    "sep": 2,
+    "bonus": true
+   },
+   "salem_turn": [
+    "play 约束的《正义》·伊兰翠",
+    "super-evolve 约束的《正义》·伊兰翠",
+    "约束的《正义》·伊兰翠 attacks 世界的伙伴·佐伊",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 金银绚烂·璐米欧儿&雅尔贞特 discard ['断头的斩姬·相枛津', '古旧天刀·波菈莱'] | play 懒惰的波摇花 | evolve 古旧天刀·波菈莱 | bonus PP | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "play 金银绚烂·璐米欧儿&雅尔贞特 discard ['断头的斩姬·相枛津', '掌握天空命运的少女·露莉亚'] | super-evolve 金银绚烂·璐米欧儿&雅尔贞特 | 金银绚烂·璐米欧儿&雅尔贞特 attacks 世界的伙伴·佐伊 | play 懒惰的波摇花 | bonus PP | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": [
+    "1791306269709-t6-super_evolve"
+   ]
+  },
+  {
+   "id": "1791304981889-t8-super_evolve_clock",
+   "category": "super_evolve_clock",
+   "check": {
+    "super_evolves": "焦灰的安纳提玛·班德奈特"
+   },
+   "confidence": "中",
+   "why": "班德全场 9 点 + 纹章。v2s 和 Salem 一样，v2 下诺玛 + 午睡，班德留在手里。",
+   "game": "1791304981889",
+   "at": 52,
+   "own_turn": 8,
+   "first": true,
+   "context": {
+    "pp": "10/10",
+    "hp": 10,
+    "opp_hp": 11,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "焦灰的安纳提玛·班德奈特",
+     "焦龙的午睡",
+     "天刀深渊",
+     "约束的《正义》·伊兰翠",
+     "断头的斩姬·相枛津",
+     "禁牙的变貌·诺玛格达拉",
+     "宣扬的龙人"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 4/4",
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1"
+    ],
+    "opp_hand": 1,
+    "ep": 1,
+    "sep": 1,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 焦灰的安纳提玛·班德奈特",
+    "super-evolve 焦灰的安纳提玛·班德奈特",
+    "焦灰的安纳提玛·班德奈特 attacks 掌握天空命运的少女·露莉亚",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 禁牙的变貌·诺玛格达拉 | play 焦龙的午睡 | evolve 禁牙的变貌·诺玛格达拉 | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "play 焦灰的安纳提玛·班德奈特 | super-evolve 焦灰的安纳提玛·班德奈特 | 焦灰的安纳提玛·班德奈特 attacks 掌握天空命运的少女·露莉亚 | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": [
+    "1791304981889-t8-super_evolve"
+   ]
+  },
+  {
+   "id": "1791305347029-t7-super_evolve_clock",
+   "category": "super_evolve_clock",
+   "check": {
+    "super_evolves": "焦灰的安纳提玛·班德奈特"
+   },
+   "confidence": "中",
+   "why": "班德全场 9 点 + 纹章。bot 5 次里 2 次超进化诺玛去撞琪米卡。",
+   "game": "1791305347029",
+   "at": 48,
+   "own_turn": 7,
+   "first": false,
+   "context": {
+    "pp": "9/9",
+    "hp": 12,
+    "opp_hp": 16,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "懒惰的波摇花",
+     "断头的斩姬·相枛津",
+     "掌握天空命运的少女·露莉亚",
+     "《世界》的呈现",
+     "掌握天空命运的少女·露莉亚",
+     "焦灰的安纳提玛·班德奈特",
+     "龙之启示"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "满面笑容的烹饪·琪米卡 5/4"
+    ],
+    "opp_hand": 1,
+    "ep": 0,
+    "sep": 1,
+    "bonus": false
+   },
+   "salem_turn": [
+    "play 焦灰的安纳提玛·班德奈特",
+    "super-evolve 焦灰的安纳提玛·班德奈特",
+    "焦灰的安纳提玛·班德奈特 attacks 掌握天空命运的少女·露莉亚",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 焦灰的安纳提玛·班德奈特 | super-evolve 焦灰的安纳提玛·班德奈特 | 焦灰的安纳提玛·班德奈特 attacks 掌握天空命运的少女·露莉亚 | end turn",
+     "times": "3/5"
+    },
+    "v2s": {
+     "most_common": "play 焦灰的安纳提玛·班德奈特 | super-evolve 焦灰的安纳提玛·班德奈特 | 焦灰的安纳提玛·班德奈特 attacks 掌握天空命运的少女·露莉亚 | end turn",
+     "times": "3/5"
+    }
+   },
+   "related": [
+    "1791305347029-t7-super_evolve"
+   ]
+  },
+  {
+   "id": "1791306781701-t7-super_evolve_clock",
+   "category": "super_evolve_clock",
+   "check": {
+    "super_evolves": "约束的《正义》·伊兰翠"
+   },
+   "confidence": "中",
+   "why": "超进化伊兰翠撞波菈莱 3/5，之后每回合打 8。v2s 和 Salem 一样，v2 超进化班德。",
+   "game": "1791306781701",
+   "at": 43,
+   "own_turn": 7,
+   "first": false,
+   "context": {
+    "pp": "9/9",
+    "hp": 18,
+    "opp_hp": 18,
+    "hand": [
+     "约束的《正义》·伊兰翠",
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉",
+     "约束的《正义》·伊兰翠",
+     "天刀深渊",
+     "天刀深渊",
+     "天刀深渊",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [
+     "古旧天刀·波菈莱 3/5"
+    ],
+    "opp_hand": 8,
+    "ep": 1,
+    "sep": 1,
+    "bonus": true
+   },
+   "salem_turn": [
+    "bonus PP",
+    "play 约束的《正义》·伊兰翠",
+    "super-evolve 约束的《正义》·伊兰翠",
+    "约束的《正义》·伊兰翠 attacks 古旧天刀·波菈莱",
+    "end turn"
+   ],
+   "bot_turn": {
+    "v2": {
+     "most_common": "play 焦灰的安纳提玛·班德奈特 | super-evolve 焦灰的安纳提玛·班德奈特 | bonus PP | end turn",
+     "times": "5/5"
+    },
+    "v2s": {
+     "most_common": "bonus PP | play 约束的《正义》·伊兰翠 | super-evolve 约束的《正义》·伊兰翠 | 约束的《正义》·伊兰翠 attacks 古旧天刀·波菈莱 | end turn",
+     "times": "5/5"
+    }
+   },
+   "related": [
+    "1791306781701-t7-super_evolve"
+   ]
+  }
+ ]
+}
