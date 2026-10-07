@@ -9,7 +9,10 @@ start, two coarse ways:
 - life: own leader defense minus the opponent's: ahead at +4 or more, behind
   at -4 or less, even between;
 - board: the sum of attack + defense of own followers minus the opponent's:
-  ahead at +5 or more, behind at -5 or less, even between.
+  ahead at +5 or more, behind at -5 or less, even between; at the turn's
+  start, and (board_prev) at the end of the player's previous turn, before
+  the opponent acted;
+- hand: own hand size minus the opponent's: ahead at +2, behind at -2.
 Reported: the share of such turns where the player held (did not evolve), by
 situation, with 95% Wilson intervals; the situation of the turns where the
 player spent the very first point on the turn it unlocked; and holds by life
@@ -23,7 +26,7 @@ import math
 from collections import defaultdict
 
 from svsim.cards import library, decks  # noqa: F401
-from svsim.core.actions import Evolve, from_dict
+from svsim.core.actions import EndTurn, Evolve, from_dict
 from svsim.core.engine import apply, legal_actions
 from svsim.tools import records
 
@@ -34,12 +37,18 @@ def lines_of(path):
         return [line for line in f if line.strip()]
 
 
+def cut(v, k):
+    return "领先" if v >= k else "落后" if v <= -k else "均势"
+
+
+def board_diff(st, me):
+    p, o = st.players[me], st.players[1 - me]
+    return sum(f.atk + f.life for f in p.followers) - sum(f.atk + f.life for f in o.followers)
+
+
 def situation(st, me):
     p, o = st.players[me], st.players[1 - me]
-    life = p.leader_hp - o.leader_hp
-    board = sum(f.atk + f.life for f in p.followers) - sum(f.atk + f.life for f in o.followers)
-    cut = lambda v, k: "领先" if v >= k else "落后" if v <= -k else "均势"
-    return cut(life, 4), cut(board, 5)
+    return cut(p.leader_hp - o.leader_hp, 4), cut(board_diff(st, me), 5), cut(len(p.hand) - len(o.hand), 2)
 
 
 def turns(record, seats):
@@ -47,14 +56,18 @@ def turns(record, seats):
     st = records.start(record)
     out = []
     cur = None
+    prev_end = {0: None, 1: None}       # board difference at the end of each player's previous turn
     for data in record["actions"]:
         a = from_dict(data)
+        if isinstance(a, EndTurn) and st.phase.name == "MAIN":
+            prev_end[st.active] = board_diff(st, st.active)
         if st.phase.name == "MAIN" and (cur is None or (st.turn, st.active) != cur["key"]):
             if cur is not None and cur["seat"] in seats and not (st.over and st.winner == cur["seat"]):
                 out.append(cur)
             p = st.players[st.active]
             cur = {"key": (st.turn, st.active), "seat": st.active, "own_turn": p.turns_taken,
                    "first": st.first == st.active, "sit": situation(st, st.active), "could": False,
+                   "board_prev": None if prev_end[st.active] is None else cut(prev_end[st.active], 5),
                    "evolved": False, "points": p.ep + p.sep}
         if cur is not None and st.active == cur["seat"] and not cur["could"]:
             cur["could"] = any(isinstance(x, Evolve) for x in legal_actions(st))
@@ -74,6 +87,7 @@ def turns(record, seats):
             continue
         unlock = 5 if t["first"] else 4
         rows.append({"seat": t["seat"], "own_turn": t["own_turn"], "life": t["sit"][0], "board": t["sit"][1],
+                     "hand": t["sit"][2], "board_prev": t["board_prev"],
                      "evolved": t["evolved"], "points": t["points"],
                      "first_point_at_unlock": t["evolved"] and t["own_turn"] == unlock and t["points"] == 4})
     return rows
@@ -108,7 +122,8 @@ def main():
             groups.append((f"{k}（对 Salem）", v))
     for label, path in args.selfplay:
         groups.append((label, [r for line in lines_of(path) for r in turns(json.loads(line), (0, 1))]))
-    for axis, title in (("life", "按血量差"), ("board", "按场面差")):
+    for axis, title in (("life", "按血量差"), ("board", "按场面差（回合开头）"), ("board_prev", "按场面差（自己上回合结束时）"),
+                        ("hand", "按手牌数差（±2）")):
         print(f"\n能进化的回合里没进化的比例，{title}（领先 / 均势 / 落后）")
         for label, rows in groups:
             cells = []
