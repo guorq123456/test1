@@ -51,6 +51,7 @@ def play(job):
     hold = job[6] if len(job) > 6 else 0.0
     fork = job[7] if len(job) > 7 else False
     triggers = tuple(job[8]) if len(job) > 8 and job[8] else ("payoff", "deck", "unlock")
+    mode = job[9] if len(job) > 9 and job[9] else "all"          # the branch's hold: see _keep
     rng = random.Random(seed * 7919 + g)
     seat = g % 2
     cards = [None, None]
@@ -75,7 +76,8 @@ def play(job):
     info = {k: snapshot[k] for k in ("i", "player", "turn", "trigger", "target")}
     record["branch"] = dict(info, kind="control")
     branch["branch"] = dict(info, kind="hold")
-    _run(snapshot["state"], branch_agents, branch, branch_rng, explore, 0.0, keep=dict(info, held=0))
+    branch["branch"]["hold"] = mode
+    _run(snapshot["state"], branch_agents, branch, branch_rng, explore, 0.0, keep=dict(info, held=0, mode=mode))
     return [record, branch]
 
 
@@ -147,15 +149,25 @@ def _fork_point(state, triggers=("payoff", "deck", "unlock")):
 
 
 def _keep(state, search, own_veto, keep, record) -> None:
-    """At the start of the branch side's turn: no evolving this turn while its target is out of reach."""
+    """At the start of the branch side's turn: no evolving this turn while its target is out of reach.
+    keep["mode"] "selective" (the architecture session's second round, 2026-10-07): evolving and
+    super-evolving stay allowed on tier-2 followers (learn.payoff) and only spending a point on a tier-0 or
+    tier-1 one is not, until some tier-2 follower is playable this turn or on the field: the branch then
+    compares spending on a poor target with keeping the point for a good one, as the player does, not
+    evolving with not evolving."""
     from svsim.core.actions import Evolve
     from svsim.learn.payoff import tier
     p = state.players[state.active]
     pp = p.max_pp + (1 if p.bonus_ready else 0)
     target = keep["target"]
-    wanted = (lambda d: tier(d) == 2) if target == "tier2" else (lambda d: d.card_id == target)
+    selective = keep.get("mode", "all") == "selective"
+    if selective:
+        wanted, target = (lambda d: tier(d) == 2), "tier2"
+    else:
+        wanted = (lambda d: tier(d) == 2) if target == "tier2" else (lambda d: d.card_id == target)
+    on_field = (lambda f: wanted(f.defn) and not f.super_evolved) if selective else (lambda f: wanted(f.defn))
     reached = target is not None and (any(wanted(c.defn) and c.cost <= pp for c in p.hand) or
-                                      any(wanted(f.defn) for f in p.field))
+                                      any(on_field(f) for f in (p.followers if selective else p.field)))
     limit = 2 if keep["trigger"] == "unlock" else 3
     if reached or keep["held"] >= limit or keep["held"] < 0:
         keep["held"] = -1                          # done: the search plays on as usual
@@ -163,8 +175,16 @@ def _keep(state, search, own_veto, keep, record) -> None:
         return
     keep["held"] += 1
     record.setdefault("holds", []).append({"i": len(record["actions"]), "player": state.active,
-                                           "turn": state.turn, "hold": "noevo", "branch": True})
-    extra = lambda s, a: isinstance(a, Evolve)
+                                           "turn": state.turn, "hold": "poor" if selective else "noevo",
+                                           "branch": True})
+    if selective:
+        def extra(s, a):
+            if not isinstance(a, Evolve):
+                return False
+            f = next((f for f in s.players[s.active].field if f.uid == a.uid), None)
+            return f is None or tier(f.defn) < 2
+    else:
+        extra = lambda s, a: isinstance(a, Evolve)
     search.veto = extra if own_veto is None else (lambda s, a: own_veto(s, a) or extra(s, a))
 
 
@@ -316,6 +336,9 @@ def main() -> None:
                              "(see play); both records are written")
     parser.add_argument("--fork-triggers", nargs="+", default=None, choices=("payoff", "deck", "unlock"),
                         help="with --fork: only these fork points (default all)")
+    parser.add_argument("--fork-hold", default="all", choices=("all", "selective"),
+                        help="with --fork: the branch keeps all its points (all), or only keeps them from tier-0 "
+                             "and tier-1 targets (selective; see _keep)")
     parser.add_argument("--hold", type=float, default=0.0,
                         help="chance, at the start of a turn the player could evolve in, of not evolving (or not "
                              "super-evolving) for the rest of it (record['holds'])")
@@ -325,7 +348,7 @@ def main() -> None:
         for line in open(args.out, encoding="utf-8"):
             done.add(json.loads(line)["g"])
     todo = [(g, args.seed, args.deck, args.opponent, args.agent, args.explore, args.hold, args.fork,
-             args.fork_triggers) for g in range(args.games) if g not in done]
+             args.fork_triggers, args.fork_hold) for g in range(args.games) if g not in done]
     t0 = time.time()
     with Pool(args.workers) as pool, open(args.out, "a", encoding="utf-8") as fh:
         for k, result in enumerate(pool.imap_unordered(play, todo), 1):

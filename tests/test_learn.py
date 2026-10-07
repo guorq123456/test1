@@ -240,6 +240,40 @@ def test_a_deck_fork_waits_for_any_tier_two_card_and_only_fires_when_asked():
     assert _fork_point(state, ("deck",)) is None
 
 
+def test_a_selective_hold_only_keeps_points_from_poor_targets():
+    from types import SimpleNamespace
+    from svsim.cards import decks
+    from svsim.core import effects as E
+    from svsim.core.actions import Evolve
+    from svsim.core.engine import EVOLVE_TURN, new_game
+    from svsim.learn.netdata import _keep
+    from svsim.learn.payoff import tier
+    state = new_game(decks.build(decks.RAMP_DRAGON), decks.build(decks.RAMP_DRAGON), seed=4, first=0)
+    me = state.active
+    p = state.players[me]
+    p.turns_taken, p.ep, p.max_pp = EVOLVE_TURN[state.first == me], 2, 3
+    pool = {c.defn.card_id: c.defn for c in p.deck + p.hand}
+    good = next(d for d in pool.values() if d.is_follower and tier(d) == 2)
+    poor = next(d for d in pool.values() if d.is_follower and tier(d) < 2)
+    p.hand[:] = [c for c in p.hand if tier(c.defn) < 2]                   # no tier 2 playable
+    g, q = E.summon(state, me, good), E.summon(state, me, poor)
+    p.max_pp = 1
+    for f in (g, q):
+        f.entered_turn = -1
+    search, record = SimpleNamespace(veto=None), {"actions": []}
+    keep = {"player": me, "trigger": "payoff", "target": poor.card_id, "held": 0, "mode": "selective"}
+    _keep(state, search, None, keep, record)
+    assert keep["held"] == -1 and search.veto is None                     # a tier-2 follower on the field: done
+    g.super_evolved = True                                                 # nothing left to spend on it
+    keep["held"] = 0
+    _keep(state, search, None, keep, record)
+    assert keep["held"] == 1 and record["holds"][-1]["hold"] == "poor"
+    assert search.veto(state, Evolve(q.uid)) and not search.veto(state, Evolve(g.uid, super_=True))
+    keep = {"player": me, "trigger": "payoff", "target": poor.card_id, "held": 0}   # the old hold: no evolving
+    _keep(state, search, None, keep, record)
+    assert keep["held"] == -1                                              # (its target, the poor one, is on the field)
+
+
 def test_a_payoff_card_still_in_the_deck_counts_by_its_draw_chances():
     from svsim.cards import decks
     from svsim.core.engine import new_game
