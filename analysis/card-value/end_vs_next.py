@@ -48,6 +48,11 @@ def numbers(rows):
         out[f"{tag} r(G_end1,G_end2)"] = e12
         out[f"{tag} r(G1,G2)"] = n12
         out[f"{tag} 真值相关(G_end,G_next)"] = cross / math.sqrt(e12 * n12) if e12 > 0 and n12 > 0 else float("nan")
+        # the formula as first set (raw correlation of the full measures over their stepped-up reliabilities):
+        # not valid here, the shared determinizations put shared noise in the raw correlation
+        re_, rn = 2 * e12 / (1 + e12), 2 * n12 / (1 + n12)
+        out[f"{tag} 原式 r/√(rel_end·rel_next)（无效，见上）"] = (out[f"{tag} r(G_end,G_next) 同一批确定化"] / math.sqrt(re_ * rn)
+                                                     if re_ > 0 and rn > 0 else float("nan"))
         t_end = (r(col("T"), col("G_end1")) + r(col("T"), col("G_end2"))) / 2
         t_next = (r(col("T"), col("G1")) + r(col("T"), col("G2"))) / 2
         out[f"{tag} r(T,G_end 半组)"] = t_end
