@@ -85,7 +85,7 @@ def subset_values(state, n, horizon=5, seed=0):
                 win.append(1 / (1 + math.exp(-max(min(v / 8.0, 50.0), -50.0))))
         m = sum(win) / n
         se = (sum((x - m) ** 2 for x in win) / max(n - 1, 1) / n) ** 0.5
-        out[redraw] = (sum(raw) / n, m, se)
+        out[redraw] = (sum(raw) / n, m, se, win)
     return out, ended / (n * len(subsets))
 
 
@@ -101,8 +101,24 @@ def regret_job(job):
     by_win = sorted((v[1] for v in ref.values()), reverse=True)
     best, second, worst = by_win[0], by_win[1], by_win[-1]
     se_n = sum(v[2] for v in vals[0].values()) / len(vals[0])          # one subset's mean at --n
-    regrets = [100 * (best - ref[p][1]) for p in picks]                 # win-rate points
-    return deck, picks[0] == picks[1], regrets, 100 * (best - worst), (best - second) / max(se_n, 1e-9), 100 * se_n, ended
+    regrets = [100 * (best - ref[p][1]) for p in picks]                 # win-rate points (the max is biased up)
+    # without the selection bias: the referee's worlds in two halves, the best picked on one half and the
+    # pick valued against it on the other, both ways round
+    half = 2 * n
+    mean = lambda c, a, b: sum(ref[c][3][a:b]) / (b - a)
+    split = []
+    for (a1, b1), (a2, b2) in (((0, half), (half, 2 * half)), ((half, 2 * half), (0, half))):
+        top = max(ref, key=lambda c: mean(c, a1, b1))
+        split += [100 * (mean(top, a2, b2) - mean(p, a2, b2)) for p in picks]
+    # the noise that matters for ranking: the two best subsets share their worlds, so their paired difference
+    r1 = vals[0]
+    order = sorted(r1, key=lambda c: -r1[c][1])
+    diffs = [x - y for x, y in zip(r1[order[0]][3], r1[order[1]][3])]
+    md = sum(diffs) / n
+    se_pair = (sum((x - md) ** 2 for x in diffs) / max(n - 1, 1) / n) ** 0.5
+    ref_gap = (best - second) / max(se_pair, 1e-9)
+    return (deck, picks[0] == picks[1], regrets, 100 * (best - worst), (best - second) / max(se_n, 1e-9), 100 * se_n,
+            ended, split, ref_gap, 100 * se_pair, 100 * abs(ref[picks[0]][1] - ref[picks[1]][1]))
 
 
 def behaviour_job(job):
@@ -181,6 +197,12 @@ def main():
         print(f"  信噪比（裁判的最好减第二好 ÷ N={args.n} 的标准误）：中位 {med(snr):.2f}，"
               f"大于 1 的手 {sum(x > 1 for x in snr) / n:.0%}，大于 2 的手 {sum(x > 2 for x in snr) / n:.0%}")
         print(f"  推演里对局提前结束的比例：{sum(r[6] for r in res) / n:.1%}")
+        split = [x for r in res for x in r[7]]
+        print(f"  去掉选择偏差的遗憾（裁判的世界分两半：一半挑最好，另一半估值，两个方向都算）：中位 {med(split):.2f}，"
+              f"平均 {sum(split) / len(split):.2f}，超过 1 点的 {sum(x > 1 for x in split) / len(split):.0%}")
+        print(f"  两次所选组合在裁判眼里的差 |裁判(第一次) − 裁判(第二次)|：中位 {med([r[10] for r in res]):.2f}")
+        print(f"  配对信噪比（裁判的最好减第二好 ÷ N={args.n} 时这两个组合配对差的标准误 {sum(r[9] for r in res) / n:.1f} 点）："
+              f"中位 {med([r[8] for r in res]):.2f}，大于 1 的手 {sum(r[8] > 1 for r in res) / n:.0%}")
         print(f"  读法（架构线程事先定的）：遗憾中位 < 1 个胜率点 → 摇摆、代价小；否则是真噪声。两种都不重开 C 的闸门。")
         for d in DECKS_T:
             sub = [r for r in res if r[0] == d]
