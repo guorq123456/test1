@@ -63,6 +63,34 @@ def principal_line(root, max_len: int = 40) -> list:
     return out
 
 
+def key_forbidden(restriction: str, key) -> bool:
+    """Whether a restriction leaves out a move given by its key (search.mcts.action_key)."""
+    if restriction == NONE:
+        return False
+    if restriction == "save":
+        return key == ("B",)
+    if restriction == "noevo":
+        return key[0] == "E"
+    cid = int(restriction.split(":")[1])
+    return key[0] == "P" and key[1][0] == "H" and key[1][2] == cid
+
+
+def restricted_line(root, restriction: str, max_len: int = 40) -> list:
+    """The principal line among the moves a restriction allows, from a search's tree as it is (the most
+    visited allowed key at each node; no new search)."""
+    out, node = [], root
+    while node is not None and node.children and len(out) < max_len:
+        allowed = [(k, c) for k, c in node.children.items() if not key_forbidden(restriction, k) and c.visits > 0]
+        if not allowed:
+            break
+        key, child = max(allowed, key=lambda kc: kc[1].visits)
+        out.append(key)
+        if key == ("T",):
+            break
+        node = child
+    return out
+
+
 def _plain(part):
     """A key's part as JSON-friendly data."""
     return [_plain(x) for x in part] if isinstance(part, tuple) else part
@@ -96,11 +124,19 @@ def keep_value(state, player: int, card_uid: int, agent=None, samples: int = 8) 
 KINDS = ("keep", "save", "noevo")
 
 
-def restrictions(line: list, kinds=KINDS) -> list:
+def restrictions(line: list, kinds=KINDS, max_keeps: int = 0) -> list:
     """The candidates' restrictions for a principal line: none, keep each card it plays, keep the bonus
-    play point, don't evolve (only those of `kinds`)."""
-    out = _restrictions(line)
-    return [r for r in out if r == NONE or r.split(":")[0] in kinds]
+    play point, don't evolve (only those of `kinds`; with `max_keeps`, keep only the line's that many
+    dearest cards)."""
+    out = [r for r in _restrictions(line) if r == NONE or r.split(":")[0] in kinds]
+    if max_keeps:
+        cost = {}
+        for key in line:
+            if key[0] == "P" and key[1][0] == "H":
+                cost[f"keep:{key[1][2]}"] = max(cost.get(f"keep:{key[1][2]}", 0), key[1][3])
+        keeps = sorted((r for r in out if r.startswith("keep:")), key=lambda r: -cost.get(r, 0))[:max_keeps]
+        out = [r for r in out if not r.startswith("keep:") or r in keeps]
+    return out
 
 
 def _restrictions(line: list) -> list:
@@ -139,7 +175,8 @@ def forbids(restriction: str):
 class CrossTurnAgent:
     def __init__(self, base, policy=None, samples: int = 4, margin: float = 0.0, seed: int = 0,
                  max_steps: int = 40, next_turn: bool = False, z: float = 0.0, static: bool = False,
-                 research: int = 0, next_search: int = 0, opp_search: int = 0, kinds=KINDS):
+                 research: int = 0, next_search: int = 0, opp_search: int = 0, kinds=KINDS,
+                 max_keeps: int = 0):
         self.base = base                     # an MCTSAgent (the lethal search stays outside)
         self.search: ISMCTS = base.search
         if policy is None:
@@ -153,12 +190,14 @@ class CrossTurnAgent:
         self.next_turn = next_turn           # score after the own next turn (policy head) with the ENDED model
         self.static = static                 # control: score each candidate's own turn end (ENDED), no play-out
         self.research = research             # a restriction's turn from a new search with it, this many iterations
-                                             # (0: the principal line without the restricted moves)
+                                             # (0: the principal line without the restricted moves; "tree": the
+                                             # restricted principal line of the base search's own tree)
         self._roots: dict = {}
         # the play-outs' own next turn / the opponent's turn by a small search of this many iterations
         # (0: the policy head's top move)
         self.next_search, self.opp_search = next_search, opp_search
         self.kinds = tuple(kinds)            # which restrictions to try (KINDS)
+        self.max_keeps = max_keeps           # keep at most this many of the line's dearest cards (0: all)
         self._small = {}
         self.rng = random.Random(seed)
         self.turn = None
@@ -263,6 +302,9 @@ class CrossTurnAgent:
         own search's principal line (the best turn that keeps the card, not the line without it)."""
         lines = {r: line for r in candidates}
         self._roots = {}
+        if self.research == "tree":                # from the base search's own tree, no new search
+            root = self.search.last_root
+            return {r: line if r == NONE else restricted_line(root, r) for r in candidates}
         if not self.research:
             return lines
         root, iterations = self.search.last_root, self.search.iterations
@@ -337,7 +379,7 @@ class CrossTurnAgent:
             choice = self.base.act(state, actions)
             root = self.search.last_root
             line = principal_line(root) if root is not None else []
-            candidates = restrictions(line, self.kinds)
+            candidates = restrictions(line, self.kinds, self.max_keeps)
             if len(candidates) == 1:
                 return choice
             lines = self.lines_for(state, line, candidates)

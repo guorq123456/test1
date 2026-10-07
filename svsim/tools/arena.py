@@ -176,14 +176,16 @@ def make_agent(spec: str, seed: int):
             # (a control); ...zZ: switch only past Z standard errors; ...rN: a restriction's turn from its own
             # search of N iterations
             # ...k<letters>: only these restrictions (k keep a card, s keep the bonus PP, e don't evolve)
-            m = re.fullmatch(r"cross([ns]?)(\d*)(?:z([\d.]+))?(?:r(\d+))?(?:k([kse]+))?", cross[0])
+            # ...rt: a restriction's turn from the base search's own tree; ...mN: keep candidates for the
+            # line's N dearest cards only
+            m = re.fullmatch(r"cross([ns]?)(\d*)(?:z([\d.]+))?(?:r(\d+|t))?(?:k([kse]+))?(?:m(\d+))?", cross[0])
             if m is None:
                 raise ValueError(f"unknown agent option {cross[0]!r}")
-            mode, k, z, r, only = m.groups()
+            mode, k, z, r, only, most = m.groups()
             kinds = [{"k": "keep", "s": "save", "e": "noevo"}[c] for c in only] if only else None
             agent = CrossTurnAgent(agent, samples=int(k or 4), seed=seed, next_turn=mode == "n",
-                                   static=mode == "s", z=float(z or 0), research=int(r or 0),
-                                   **({"kinds": kinds} if kinds else {}))
+                                   static=mode == "s", z=float(z or 0), research="tree" if r == "t" else int(r or 0),
+                                   max_keeps=int(most or 0), **({"kinds": kinds} if kinds else {}))
         if name == "mcts-raw":
             return agent
         agent = LethalAgent(agent, seed=seed, planner=planner,

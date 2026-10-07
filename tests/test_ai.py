@@ -456,6 +456,10 @@ def test_cross_turn_candidates_restrict_the_rest_of_the_turn():
     a.children = {("T",): c}
     c.visits = 4
     assert principal_line(root) == [("B",), ("T",)]
+    from svsim.agents.crossturn_agent import restricted_line
+    assert restricted_line(root, "save") == [("T",)] and restricted_line(root, NONE) == [("B",), ("T",)]
+    assert restrictions(line, max_keeps=1) == [NONE, "keep:101", "save", "noevo"]
+    assert restrictions(line, kinds=("noevo",)) == [NONE, "noevo"]
 
 
 def test_keep_value_and_the_planners_records():
