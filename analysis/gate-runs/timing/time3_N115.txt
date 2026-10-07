@@ -1,0 +1,2 @@
+mcts:115+plan+learned+phased+crossn8z1r50: 236 步，平均 69.7 ms，中位数 39.5 ms
+mcts:200+plan+learned+phased: 236 步，平均 65.3 ms，中位数 63.3 ms
