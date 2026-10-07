@@ -7,7 +7,9 @@ Each player has 2 evolution and 2 super-evolution points (4 in all); one
 evolution a turn, from own turn 5 (going first) / 4 (second), super-evolution
 from 7 / 6. Per game and side:
 - uses: the own turns on which a point was spent (an Evolve action);
-- t4: the own turn of the 4th point (None if fewer than 4 were spent);
+- t4: the own turn of the 4th point (None if fewer than 4 were spent); reported over the games that
+  spent all four, and over all games with an unspent 4th point counted as one turn after the side's
+  last own turn (so more games spending all four can't move it by itself);
 - left8: points left at the start of own turn 8 (games that reached it);
 - unused: points left when the game ended;
 - dry: own turns played after the last point was spent (0 if points remain).
@@ -69,7 +71,11 @@ def summary(rows):
     t4 = [r["t4"] for r in rows if r["t4"] is not None]
     l8 = [r["left8"] for r in rows if r["left8"] is not None]
     gap = [r["uses"][3] - r["uses"][0] for r in rows if len(r["uses"]) >= 4]
+    # over every game: a side that did not spend its 4th point counts as reaching it one turn after its last
+    # (not reached), so a change in how many games spend all four does not move the mean by itself
+    t4_all = [r["t4"] if r["t4"] is not None else r["own_turns"] + 1 for r in rows]
     return {"games": len(rows), "all4": len(t4) / len(rows), "t4": statistics.mean(t4) if t4 else float("nan"),
+            "t4_all": statistics.mean(t4_all),
             "gap": statistics.mean(gap) if gap else float("nan"),
             "left8": statistics.mean(l8) if l8 else float("nan"), "n8": len(l8),
             "unused": statistics.mean(r["unused"] for r in rows),
@@ -99,14 +105,15 @@ def main():
     for label, path in args.selfplay:
         rows = [r for line in lines_of(path) for r in pacing(json.loads(line))]
         groups.append((f"{label}（{len(rows) // 2} 局）", rows))
-    print(f"{'来源':<28}{'组':>6}{'局×方':>7}{'4点用完':>8}{'第4点回合':>10}{'1→4间隔':>9}{'第8回合剩点':>12}{'(n)':>5}"
+    print(f"{'来源':<28}{'组':>6}{'局×方':>7}{'4点用完':>8}{'第4点回合':>10}{'(全部局)':>9}{'1→4间隔':>9}{'第8回合剩点':>12}{'(n)':>5}"
           f"{'终局剩点':>9}{'用完后空转回合':>14}{'首次用点晚几回合':>16}")
     for label, rows in groups:
         for g, sub in (("全部", rows), (f"长局", [r for r in rows if r["turns"] >= LONG])):
             s = summary(sub)
             if s is None:
                 continue
-            print(f"{label:<28}{g:>6}{s['games']:>7}{s['all4']:>8.0%}{s['t4']:>10.1f}{s['gap']:>9.1f}{s['left8']:>12.2f}"
+            print(f"{label:<28}{g:>6}{s['games']:>7}{s['all4']:>8.0%}{s['t4']:>10.1f}{s['t4_all']:>9.1f}{s['gap']:>9.1f}"
+                  f"{s['left8']:>12.2f}"
                   f"{s['n8']:>5}{s['unused']:>9.2f}{s['dry']:>14.2f}{s['first_use']:>16.2f}")
     if args.json:
         json.dump({label: rows for label, rows in groups}, open(args.json, "w"), ensure_ascii=False)
