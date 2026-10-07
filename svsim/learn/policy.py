@@ -123,12 +123,24 @@ class PolicyNet:
         h = np.tanh(((X - self.mean) / self.std) @ self.p["W1"] + self.p["b1"])
         return h @ self.p["w2"] + self.p["b2"]
 
+    def scores(self, state, actions) -> np.ndarray:
+        """The scores of `actions` (legal moves of the player to act). The first layer is split into the
+        position's part, computed once, and each move's part (the same numbers as scores_of)."""
+        from svsim.learn import encode as E
+        dense = np.asarray(E.raw(state, state.active)[0], dtype=np.float64)
+        n = len(dense)
+        if not hasattr(self, "_split"):
+            W1 = self.p["W1"]
+            self._split = (W1[:n] / self.std[:n, None], W1[n:] / self.std[n:, None],
+                           self.p["b1"] - (self.mean / self.std) @ W1)
+        top, bottom, bias = self._split
+        moves = np.array([move_features(state, a, self.vocab) for a in actions], dtype=np.float64)
+        h = np.tanh(dense @ top + moves @ bottom + bias)
+        return h @ self.p["w2"] + self.p["b2"]
+
     def priors(self, state, actions) -> np.ndarray:
         """The softmax over `actions` (legal moves of the player to act)."""
-        from svsim.learn import encode as E
-        dense = E.raw(state, state.active)[0]
-        X = np.array([dense + move_features(state, a, self.vocab) for a in actions], dtype=np.float64)
-        z = self.scores_of(X)
+        z = self.scores(state, actions)
         z = np.exp(z - z.max())
         return z / z.sum()
 
@@ -241,7 +253,18 @@ class MatchupPrior:
                     continue
                 self.nets[key] = PolicyNet.load(path)
 
-    def priors(self, state, actions):
+    def net_for(self, state):
         from svsim.learn.model import matchup_keys
-        net = next((self.nets[k] for k in matchup_keys(state, state.active) if k in self.nets), None)
+        return next((self.nets[k] for k in matchup_keys(state, state.active) if k in self.nets), None)
+
+    def priors(self, state, actions):
+        net = self.net_for(state)
         return None if net is None else net.priors(state, actions)
+
+    def top(self, state, actions):
+        """The highest-scoring of `actions`, or None in a matchup without a policy head."""
+        net = self.net_for(state)
+        if net is None:
+            return None
+        z = net.scores(state, actions)
+        return actions[int(np.argmax(z))]

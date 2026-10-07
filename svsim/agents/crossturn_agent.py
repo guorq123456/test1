@@ -171,6 +171,8 @@ class CrossTurnAgent:
     # --- the play-outs ------------------------------------------------------------------------
 
     def _top(self, s, allowed):
+        if hasattr(self.policy, "top"):
+            return self.policy.top(s, allowed)
         probs = self.policy.priors(s, allowed)
         if probs is None:
             return None
