@@ -160,7 +160,7 @@ Shared by all lists (same count): [2] 古旧天刀·波菈莱 / Vorlalai, Eld Bl
   - In pack 8 every PS team ran 1–3 copies (see §5).
   - The post-patch field moved to Pirate Royal, which pressures with **amulets** (海賊旗) plus a few rush bodies and Barbaros/Beltezore storm, and to Cutthroat Nemesis. Against that, X is small, and the card neither touches flags nor stops burst. That fits the PS8b and JCS lists cutting it to 0–1. [INF]
   - Wilnas (8 damage to one follower + Intimidate; evolve repeats it) and 狐火 (1 damage to a follower or the leader, shuffles itself back, draws in Overflow) are what replaced the slot. Both are good against small-board or tall threats. 狐火 also thins and cycles. [INF from card text]
-  - 味噌日's own mulligan advice (in elf-dragon.md) is to keep HP at 7 or more so an early Wilnas survives. That points to Wilnas as the key midgame card vs aggro.
+  - 味噌日's matchup section (vs Midrange Nightmare, in elf-dragon.md; NOT mulligan advice) says: land Wilnas early, and if **Wilnas's own health** stays at 7 or more it very likely survives on board (「ウィルナスの体力を7以上でキープできると…盤面に残存」). That is in-game play, about Wilnas's HP after its evolve/buffs, not the leader's HP. It points to Wilnas as the key midgame card vs wide boards. [corrected 10-07 18:10Z; earlier text misread it as a mulligan/leader-HP rule]
 - **The 6-cost 6/9 (隔断的龙斗士 / Impeding Pugilist, 守護 + バリア):** 0 copies in all 18 Dragon lists here and in pack 8. [INF] The 6–7 curve is already full with proactive threats (相枛津, ノマグダラ, ウィルナス). Ramp's plan is to skip ahead in PP, not to stall, and a Ward body does nothing against flag burst or Storm.
 - Kimika 1–3 and Lyria 2–3 vary by player. ZETA ねぎま's list is the most "anti-aggro": Kimika 3, 闇の次元 2, no Wilnas.
 

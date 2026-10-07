@@ -104,7 +104,7 @@ No source states a rule directly. Here is what the sources do say:
 - Matchup notes from the opponents' guides (Nightmare's perspective, [INF] inverted):
   - **vs Pirate Royal** (もとやしき, pre-patch): the Pirate plan is to hit face early and swing back with アージュドール, and to answer 淵底の大佐 with ウンケイ (banish, so its LW doesn't trigger).
     - So for Nightmare: Ward bodies and Last Words stickiness blunt Pirate's board, but keep HP above Barbaros range. Banish (ウンケイ) is the specific counter to 大佐 and イステンデッド value.
-  - **vs Ramp Dragon** (味噌日, 09-17): Dragon's plan is an early 炎の理・ウィルナス (keep HP ≥7 so it survives), else race with サガツマツ before the long game.
+  - **vs Ramp Dragon** (味噌日, 09-17): Dragon's plan is an early 炎の理・ウィルナス (in-game: if Wilnas's own health is kept at 7+, it very likely survives on board; not a mulligan rule) [corrected 10-07 18:10Z], else race with サガツマツ before the long game.
     - So for Nightmare: kill or chump Wilnas fast. Dragon keeps 波揺花 on the draw vs Nightmare. Ramp keeps 狐火陽炎 as a 1-cost removal for Nightmare's 1-HP bodies.
   - **vs Combo Elf** (yukki note, 2026-08-31): 「ミッドレンジナイトメアに対しても10戦して5勝5敗でした。」 hqzuki: Hien's only clear use is vs Nightmare.
     - So Elf with ヒエン builds is the version Nightmare should fear. Spicies says vs midrange the Elf player saves super-evolve and sweeps with マガチヨ.

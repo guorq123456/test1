@@ -102,10 +102,10 @@ Intro: 「禁牙の変貌・ノマグダラ」の追加によって、pp加速�
 - 最優先: 「竜の啓示」と「金銀絢爛・リュミオール＆アルジャンテ」は常に探索対象 (always hunt these two).
 - 「世界の味方・ゾーイ」：先攻のみ単独でキープします。後攻はエクストラppの存在や盤面処理の要求が高いことから、キープせずに返します。 (Zooey: solo keep on play only; mulligan it on the draw because of extra-PP and board-clear demands.)
 - 「笑顔の調理・キミカ」と「旧き天刀・ヴォーラライ」はセットでキープし、エルフ対面後攻・ドラゴン対面・ビショップ対面以外で採用します。 (Kimika+Vorlalai as a pair, except Elf-on-the-draw, Dragon mirror, Bishop.)
-- 3コストブーストが揃っている場合、先攻でドラゴン・ビショップ以外ならキープ候補となります。 (If you already have a 3-cost boost, extra keeps OK on play except vs Dragon/Bishop.)
+- ３コストブーストが引けている場合：「空の命運を握る少女・ルリア」「笑顔の調理・キミカ」「旧き天刀・ヴォーラライ」。先攻であれば、ドラゴン・ビショップ対面以外でキープします。 (If you have drawn the 3-cost boost, i.e. 竜の啓示 / 龙之启示 Dragonsign, the only 3-cost PP boost in this list: also keep 露莉亚 Lyria, 琪米卡 Kimika and 旧き天刀・ヴォーラライ, on play, except vs Dragon/Bishop.) [re-fetched verbatim 10-07 18:10Z, two fetches agree; the earlier line was a subject-less paraphrase. Source is the beyond-dexel article R3, not a video. Same section: Kimika+Vorlalai pair reads 「セットでのキープ。揃った場合は、エルフ対面後攻、ドラゴン対面、ビショップ対面以外ではキープします。」]
 - 「喧伝の竜人」は後攻かつエルフ・ネメシス対面、「怠惰なる波揺花」は後攻かつエルフ・ナイトメア対面でキープします。 (Promoter: on the draw vs Elf/Nemesis. Crestpetal: on the draw vs Elf/Nightmare.)
 **対面ごとの立ち回り**
-- ミッドレンジナイトメア戦: 「炎の理・ウィルナス」の早期着地を軸に戦います。ウィルナスの体力を7以上でキープできると高確率で盤面に残存します。着地に失敗した場合は「断頭の斬姫・サガツマツ」の疾走で積極的に攻め、長期戦になる前に決着をつけることが重要です。
+- [matchup play, not mulligan; 「ウィルナスの体力」 = Wilnas's own health] ミッドレンジナイトメア戦: 「炎の理・ウィルナス」の早期着地を軸に戦います。ウィルナスの体力を7以上でキープできると高確率で盤面に残存します。着地に失敗した場合は「断頭の斬姫・サガツマツ」の疾走で積極的に攻め、長期戦になる前に決着をつけることが重要です。
 - ダストデイズエルフ戦: 同じくウィルナスが強力ですが、相手の回答札が複数存在するため、ウィルナス単独では勝ち切れない場合があります。サガツマツで相手の「離合の有終・セタス＆メイシア」を妨害しながら継続的に攻める意識が必要です。
 - 進化ネメシス戦: 「劣悪の純心・カミシラ」の盤面が非常に重く、常に対応できる手札を整えることが肝要です。進化権の温存を優先し、不用意に消費してはいけません。ウィルナスで最速のカミシラを1ターン牽制する選択肢も有効です。 (Save evolve points.)
 - No mirror section, no turn-by-turn section, no mention of バーンドナイト/イランツァ/超進化 (verified by direct question).
