@@ -12,7 +12,9 @@ roles left out as in the installed model, so their scores compare.
 
     python -m svsim.learn.phased --games games.jsonl --out folder
 writes <craft>-<craft>-ended.json and <craft>-<craft>-act.json into folder;
-agents load them from $SVSIM_PHASED (`+phased`).
+agents load them from $SVSIM_PHASED, else svsim/learn/phased_models (`+phased`;
+the Ramp mirror's, fitted on 2000 self-play games of the installed bot, are
+there).
 """
 from __future__ import annotations
 
@@ -38,9 +40,9 @@ def _rows(line: str) -> list:
 
 def load(folder: Path | None = None) -> dict:
     """{(craft, opponent craft, "act" | "ended"): LinearValue}"""
-    folder = folder or Path(os.environ.get("SVSIM_PHASED", ""))
+    folder = folder or Path(os.environ.get("SVSIM_PHASED") or Path(__file__).resolve().parent / "phased_models")
     out = {}
-    if not folder or not folder.is_dir():
+    if not folder.is_dir():
         return out
     for path in folder.glob("*-*-*.json"):
         mine, theirs, moment = path.stem.split("-")
