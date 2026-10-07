@@ -1,6 +1,6 @@
 """Tables for realized.py's rows: does the teacher's T explain the realized G beyond the control Q?
 
-    python3 analyse.py ROWS.jsonl [--boot 2000]
+    python3 analyse.py ROWS.jsonl [--boot 2000] [--target G_end]
 
 For all items and by own turn (1-3, 4-6, 7+):
 - Spearman rank correlations T~G and Q~G;
@@ -84,10 +84,13 @@ def cv_auc(features, y, folds=5, seed=0):
     return auc(score, y)
 
 
+TARGET = "G"
+
+
 def stats(rows):
     t = np.array([r["T"] for r in rows])
     q = np.array([r["Q"] for r in rows])
-    g = np.array([r["G"] for r in rows])
+    g = np.array([r[TARGET] for r in rows])
     y = (g > 0).astype(float)
     z = lambda v: (ranks(v) - (len(v) - 1) / 2) / max(len(v), 1)
     fq = z(q)[:, None]
@@ -99,17 +102,20 @@ def stats(rows):
 
 def ceiling(rows):
     """Agreement of the two independent halves of G, and what it allows for G (the mean of both)."""
-    r = spearman([x["G1"] for x in rows], [x["G2"] for x in rows])
+    r = spearman([x[TARGET + "1"] for x in rows], [x[TARGET + "2"] for x in rows])
     rel = 2 * r / (1 + r) if r > -1 else float("nan")       # Spearman-Brown: the mean of the two halves
     return r, rel, math.sqrt(rel) if rel > 0 else float("nan")
 
 
 def main():
+    global TARGET
     path = sys.argv[1]
+    if "--target" in sys.argv:                  # G_end: realized_end.py's real game results
+        TARGET = sys.argv[sys.argv.index("--target") + 1]
     boots = int(sys.argv[sys.argv.index("--boot") + 1]) if "--boot" in sys.argv else 1000
     rows = [json.loads(l) for l in open(path, encoding="utf-8") if l.strip()]
     rows = [r for r in rows if r["Q"] is not None]
-    if rows and "G1" in rows[0]:
+    if rows and TARGET + "1" in rows[0]:
         r, rel, top = ceiling(rows)
         print(f"噪声天花板：两组独立确定化的 G 之间 Spearman {r:+.3f}；两组平均后的信度 {rel:.3f}，"
               f"任何预测和 G 的相关最多约 {top:.3f}")
