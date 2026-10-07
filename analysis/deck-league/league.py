@@ -11,7 +11,10 @@ pair and second in the other), both sides the same agent (arena spec or version 
 2s+1), the same seeds s = --seed + k for every pairing. In a mirror the two decks are the same, so
 the second game of a pair swaps the agents' seeds (2s+1 in seat 0, 2s in seat 1); otherwise it would
 replay the first game move for move (it did in the first run at f631e14: --mirror-second plays those
-second games again, into a separate file, and the report counts a repeated game once). Each game is kept as a full record
+second games again, into a separate file). Even swapped, a quarter to over half of the mirror pairs still replay
+move for move (the agent is nearly deterministic given the deal), and the two games of a pair are not
+independent anyway, so the report takes the mirrors by pair: a pair's distinct games averaged, the
+interval over pairs. Each game is kept as a full record
 (svsim.tools.records format, plus the pairing and the seat of the first deck) for later use (deck
 inference, teacher data). Condition: the opponent's 40-card list is known (order and hand not), as in
 tools.gate.
@@ -119,18 +122,20 @@ def report(paths, boots):
         a, b = pair.split("/")
         tag = "（镜像：先手胜率）" if a == b else ""
         if a == b:
-            # a pair whose two games are the same game move for move (the first run's mirrors) counts once
-            distinct = []
+            # the unit is the pair: its two games share the deal, and with the same agent on both sides they are
+            # often the same game move for move (always in the first run, a quarter to over half of the pairs even
+            # with the agents' seeds swapped), so a pair's distinct games are averaged and the interval is over pairs
+            fw = lambda g: 1.0 if g["winner"] == g["first"] else 0.5 if g["winner"] is None else 0.0
+            per, nd = [], 0
             for gs in ks.values():
                 if len(gs) == 2 and gs[0]["record"]["actions"] == gs[1]["record"]["actions"]:
-                    distinct.append(gs[0])
-                else:
-                    distinct.extend(gs)
-            nd = len(distinct)
-            fr = sum(1.0 if g["winner"] == g["first"] else 0.5 if g["winner"] is None else 0.0 for g in distinct) / nd
-            half = 1.96 * math.sqrt(fr * (1 - fr) / nd)
-            print(f"{pair:<22}{nd:>6}  先手胜率 {fr:.1%} ± {half:.1%}{tag}"
-                  + (f"（{len(allg) - nd} 局是同一局的重复，只算一次）" if nd < len(allg) else ""))
+                    gs = gs[:1]
+                nd += len(gs)
+                per.append(sum(fw(g) for g in gs) / len(gs))
+            fr = sum(per) / len(per)
+            half = 1.96 * math.sqrt(sum((x - fr) ** 2 for x in per) / max(len(per) - 1, 1) / len(per))
+            print(f"{pair:<22}{len(allg):>6}  先手胜率 {fr:.1%} ± {half:.1%}{tag}"
+                  f"（{len(per)} 对里不重复的对局 {nd} 局，区间按对算）")
             continue
         print(f"{pair:<22}{n:>6}  {m:.1%} ± {1.96 * se:.1%}          {sum(first) / len(first):.1%} / {sum(second) / len(second):.1%}")
         pair_scores[pair] = per_pair
