@@ -8,9 +8,11 @@ the evolution targets of the turn, by role (cards.dragon / neutral scripts):
 - payoff: an evolution with a lasting or card-advantage effect: Burnite
   (super: the crest), Erntz (evolved: 8 to the enemy leader every turn),
   Lumiore & Argente (super: draw 3), Vorlalai (Depths of the Eld Blades: 1, or 3
-  on a super), Normagdala (the Fanfare again), Kimika (the Fanfare again);
+  on a super), Normagdala (the Fanfare again), Kimika (the Fanfare again),
+  Sagatsumatsu ("754": no evolve ability, but Storm, so the evolution is 2 to
+  the face on the turn it lands; added on Salem's word, 2026-10-07);
 - plain: a follower whose evolution only adds stats (Lyria, Dragonewt
-  Promoter, Zooey, Sagatsumatsu, tokens).
+  Promoter, Zooey, tokens).
 Classes of the turn: "收益牌可进化" (a payoff follower could be evolved at some
 decision of the turn), "收益牌在手、本回合够不着" (none could, but one is in
 hand), "只有普通随从" (neither). For held turns, whether Salem evolved a
@@ -30,7 +32,8 @@ from svsim.core.engine import apply, legal_actions
 from svsim.tools import records
 
 PAYOFF = {"焦灰的安纳提玛·班德奈特", "约束的《正义》·伊兰翠", "金银绚烂·璐米欧儿&雅尔贞特", "古旧天刀·波菈莱",
-          "禁牙的变貌·诺玛格达拉", "满面笑容的烹饪·琪米卡"}
+          "禁牙的变貌·诺玛格达拉", "满面笑容的烹饪·琪米卡",
+          "断头的斩姬·相枛津"}           # Sagatsumatsu ("754"): Storm, so its evolution is 2 to the face now (Salem)
 
 
 def name(c):

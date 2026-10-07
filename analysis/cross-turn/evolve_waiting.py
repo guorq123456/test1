@@ -7,7 +7,8 @@ Payoff cards in two tiers (by what their evolution does, cards.dragon):
 - tier A: Burnite (super: the crest), Erntz (evolved: 8 to the enemy leader
   every turn), Lumiore & Argente (super: draw 3);
 - tier B: Vorlalai (Depths of the Eld Blades), Normagdala and Kimika (the
-  Fanfare again).
+  Fanfare again), Sagatsumatsu ("754": Storm, its evolution is 2 to the face
+  on the turn it lands; Salem, 2026-10-07).
 For each of Salem's turns in evolve_probes.json: what could be evolved (the
 best tier among legal Evolve targets of the turn), the payoff cards in hand,
 those left in the deck (the deck's actual contents, which Salem knows: the
@@ -28,7 +29,7 @@ from svsim.core.engine import apply, legal_actions
 from svsim.tools import records
 
 TIER_A = {"焦灰的安纳提玛·班德奈特", "约束的《正义》·伊兰翠", "金银绚烂·璐米欧儿&雅尔贞特"}
-TIER_B = {"古旧天刀·波菈莱", "禁牙的变貌·诺玛格达拉", "满面笑容的烹饪·琪米卡"}
+TIER_B = {"古旧天刀·波菈莱", "禁牙的变貌·诺玛格达拉", "满面笑容的烹饪·琪米卡", "断头的斩姬·相枛津"}
 
 
 def name(c):

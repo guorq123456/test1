@@ -33,6 +33,22 @@ from svsim.core.actions import Evolve  # noqa: E402
 from svsim.core.engine import apply, legal_actions  # noqa: E402
 
 ERNTZ = "约束的《正义》·伊兰翠"
+SAGATSUMATSU = "断头的斩姬·相枛津"
+# Salem doesn't know the simulator's full Chinese names (the community uses cost/attack/defense or
+# nicknames): every card's first mention in the table for Salem reads "name (cost/atk/def, English)"
+LABELS = {"正义": "正义（伊兰翠，10/8/8，Erntz）", "班德奈特": "班德奈特（9/9/9，Burnite）",
+          "璐米欧儿": "璐米欧儿&雅尔贞特（8/6/6，Lumiore & Argente）", "诺玛格达拉": "诺玛格达拉（7/5/6，Normagdala）",
+          "波菈莱": "波菈莱（2/0/2，Vorlalai）", "琪米卡": "琪米卡（2/2/1，Kimika）",
+          "相枛津": "相枛津（7/5/4，Sagatsumatsu，即「754」）", "露莉亚": "露莉亚（2/1/1，Lyria）",
+          "宣扬的龙人": "宣扬的龙人（2/2/1，Dragonewt Promoter）", "佐伊": "佐伊（5/5/5，Zooey）"}
+
+
+def label_first(text):
+    """Each card's first mention in the text in full (name, cost/atk/def, English name)."""
+    firsts = sorted(((text.find(k), k) for k in LABELS if k in text), reverse=True)
+    for i, k in firsts:
+        text = text[:i] + LABELS[k] + text[i + len(k):]
+    return text
 HEADER = """# Salem 能进化却没进化的 36 个回合
 
 这些回合是 evolve_hold 探针的来源：bot 在同一局面下也不进化，才算通过。表里的"标记"是按一条规则自动打的，请 Salem 直接改。
@@ -130,7 +146,9 @@ def review(games, probe, cache):
     else:
         mark, why = "保留", f"之后进化的是后来抽到或新上场的 {short_name(first[1])}"
     ctx = probe["context"]
-    return {"id": probe["id"], "game": gid, "own_turn": ctx["own_turn"], "first": ctx["first"],
+    s754 = {"hand": any(name(c) == SAGATSUMATSU for c in st0.players[0].hand),
+            "field": any(name(c) == SAGATSUMATSU for c in st0.players[0].followers)}
+    return {"id": probe["id"], "game": gid, "own_turn": ctx["own_turn"], "first": ctx["first"], "s754": s754,
             "hp": f"{ctx['hp']}/{ctx['opp_hp']}", "targets": "、".join(sorted(set(targets.values()))),
             "super": supers, "kept": kept, "later": "；".join(later), "mark": mark, "why": why,
             "row": turn_row(turn)}
@@ -163,14 +181,22 @@ def main():
         json.dump({r["id"]: {"mark": r["mark"], "why": r["why"]} for r in holds},
                   open(args[args.index("--marks") + 1], "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     if "--md" in args:
+        s7 = {cat: [r for r in rows if r["id"].endswith(cat)] for cat in ("evolve_hold", "evolve_use")}
+        count = lambda cat, k: sum(r["s754"][k] for r in s7[cat])
+        either = lambda cat: sum(r["s754"]["hand"] or r["s754"]["field"] for r in s7[cat])
+        line754 = (f"**相枛津**：没进化的 {len(s7['evolve_hold'])} 个回合里，回合开头手里有它的 {count('evolve_hold', 'hand')} 个、"
+                   f"场上有它的 {count('evolve_hold', 'field')} 个（手里或场上 {either('evolve_hold')} 个）；进化了的 "
+                   f"{len(s7['evolve_use'])} 个回合里分别是 {count('evolve_use', 'hand')}、{count('evolve_use', 'field')}"
+                   f"（{either('evolve_use')}）。它已加进收益牌清单。\n\n")
+        body = HEADER + line754
+        body += ("| # | 对局 | 回合（先/后手，血 我/对） | 当时能进化的目标 | Salem 留下的 | 之后两回合 | 标记 |\n"
+                 "|---|---|---|---|---|---|---|\n")
+        for i, r in enumerate(holds, 1):
+            body += (f"| {i} | {r['game']} | 第 {r['own_turn']} 回合（{'先' if r['first'] else '后'}手，{r['hp']}） | "
+                     f"{r['targets']}{'；能超进化' if r['super'] else '；只能普通进化'} | {r['kept']} | {r['later']} | "
+                     f"**{r['mark']}**：{r['why']} |\n")
         with open(args[args.index("--md") + 1], "w", encoding="utf-8") as f:
-            f.write(HEADER)
-            f.write("| # | 对局 | 回合（先/后手，血 我/对） | 当时能进化的目标 | Salem 留下的 | 之后两回合 | 标记 |\n"
-                    "|---|---|---|---|---|---|---|\n")
-            for i, r in enumerate(holds, 1):
-                f.write(f"| {i} | {r['game']} | 第 {r['own_turn']} 回合（{'先' if r['first'] else '后'}手，{r['hp']}） | "
-                        f"{r['targets']}{'；能超进化' if r['super'] else '；只能普通进化'} | {r['kept']} | {r['later']} | "
-                        f"**{r['mark']}**：{r['why']} |\n")
+            f.write(label_first(body))
     print("标记：" + "，".join(f"{k} {n}" for k, n in Counter(r["mark"] for r in holds).items()))
     for r in holds:
         if r["mark"] == "疑似噪声":

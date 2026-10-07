@@ -6,7 +6,7 @@
 
 Tierings (2 pays off well, 1 some, 0 plain):
 - mine: the grouping in evolve_waiting.py by what the evolution does (A = 2: Burnite, Erntz,
-  Lumiore & Argente; B = 1: Vorlalai, Normagdala, Kimika);
+  Lumiore & Argente; B = 1: Vorlalai, Normagdala, Kimika, Sagatsumatsu);
 - payoff: `svsim.learn.payoff.tier(defn)` of the simulator branch (measured in its sandbox, no card
   list; needs a checkout that has it).
 Every turn of the player at whose decisions an evolution was legal at least once (not won that turn)
@@ -28,7 +28,8 @@ from svsim.core.actions import Evolve  # noqa: E402
 from svsim.core.engine import legal_actions  # noqa: E402
 
 MINE = {"焦灰的安纳提玛·班德奈特": 2, "约束的《正义》·伊兰翠": 2, "金银绚烂·璐米欧儿&雅尔贞特": 2,
-        "古旧天刀·波菈莱": 1, "禁牙的变貌·诺玛格达拉": 1, "满面笑容的烹饪·琪米卡": 1}
+        "古旧天刀·波菈莱": 1, "禁牙的变貌·诺玛格达拉": 1, "满面笑容的烹饪·琪米卡": 1,
+        "断头的斩姬·相枛津": 1}
 CELLS = ("够得着 2 档", "够得着 1 档", "2 档在手够不着", "1 档在手够不着", "只有 0 档")
 
 
