@@ -52,7 +52,8 @@ def play(job):
     fork = job[7] if len(job) > 7 else False
     triggers = tuple(job[8]) if len(job) > 8 and job[8] else ("payoff", "deck", "unlock")
     mode = job[9] if len(job) > 9 and job[9] else "all"          # the branch's hold: see _keep, _qgap_keep
-    qgap = _qgap_mode(mode)                     # (eps, cap, pick, min_since) for "qgap[:EPS[:CAP[:PICK[:MINSINCE]]]]"
+    qgap = _qgap_mode(mode) or _evolve_mode(mode)   # (eps, cap, pick, min_since): "qgap[:EPS[:CAP[:PICK[:MINSINCE]]]]",
+    force = mode.startswith("evolve")               # or the reverse, "evolve[:EPS[:PICK[:MINSINCE]]]" (_evolve_force)
     rng = random.Random(seed * 7919 + g)
     seat = g % 2
     cards = [None, None]
@@ -70,7 +71,8 @@ def play(job):
     snapshot = {}
     _run(state, agents, record, rng, explore, 0.0, snapshot=snapshot, triggers=triggers,
          fork_eps=qgap[0] if qgap else None, fork_pick=qgap[2] if qgap else "first",
-         pick_rng=random.Random(seed * 104729 + g), fork_min_since=qgap[3] if qgap else 0)
+         pick_rng=random.Random(seed * 104729 + g), fork_min_since=qgap[3] if qgap else 0,
+         fork_unevolved=force)
     torn_points = snapshot.pop("_k", None)
     snapshot.pop("_key", None)
     if not snapshot:
@@ -88,6 +90,8 @@ def play(job):
     branch["branch"]["hold"] = mode
     keep = dict(info, held=0, mode=mode) if not qgap else dict(info, held=0, mode="qgap", eps=qgap[0], cap=qgap[1],
                                                                    turns=set())
+    if force:
+        keep = dict(info, held=0, mode="evolve")
     _run(snapshot["state"], branch_agents, branch, branch_rng, explore, 0.0, keep=keep)
     if qgap:
         branch["branch"].setdefault("end", "game over")
@@ -96,15 +100,17 @@ def play(job):
 
 def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
          triggers=("payoff", "deck", "unlock"), fork_eps=None, fork_pick="first", pick_rng=None,
-         fork_min_since=0) -> None:
+         fork_min_since=0, fork_unevolved=False) -> None:
     """Play `state` out, adding to `record`. `snapshot` (a dict): fill it at the first fork point (see
     play); with `fork_eps`, at the first decision where a fork point holds and the search itself is torn
     between evolving and not (_q_gap within fork_eps); `fork_pick` "random": at one of all such decisions of
     the game, drawn evenly with `pick_rng` (reservoir sampling; snapshot["_k"] counts them; "weighted": each in
     proportion to its own turns since evolving unlocked, for later turns), so that the
     forks are not all at the unlock turn, where the search is torn first; `fork_min_since`: only at decisions at
-    least that many own turns after evolving unlocked (1: never in the unlock turn itself). `keep`: the branch's side keeps its points (no
-    evolving) as play describes (keep["mode"] "qgap": _qgap_keep)."""
+    least that many own turns after evolving unlocked (1: never in the unlock turn itself); `fork_unevolved`: only
+    at torn decisions where the side chose not to evolve (the reverse forks). `keep`: the branch's side keeps its points (no
+    evolving) as play describes (keep["mode"] "qgap": _qgap_keep; "evolve": it evolves instead, _evolve_force)."""
+    from svsim.core.actions import Evolve
     from svsim.core.engine import apply, legal_actions
     from svsim.tools import records as R
     held = {}                                       # (player, turn) -> the restriction held this turn
@@ -129,7 +135,7 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
                                 player=state.active, turn=state.turn, trigger=trigger[0], target=trigger[1],
                                 record=json.loads(json.dumps(record)))
         if keep is not None and start and state.active == keep["player"] and search is not None \
-                and keep.get("mode") != "qgap":
+                and keep.get("mode") not in ("qgap", "evolve"):
             _keep(state, search, vetoes[state.active], keep, record)
         torn = None
         if snapshot is not None and (not snapshot or fork_pick != "first") and fork_eps is not None \
@@ -145,7 +151,7 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
         action = agents[state.active].act(state, legal)
         if torn is not None:
             gap = _q_gap(state, legal, search)
-            take = gap is not None and abs(gap[0]) < fork_eps
+            take = gap is not None and abs(gap[0]) < fork_eps and not (fork_unevolved and isinstance(action, Evolve))
             if take and fork_pick == "random":
                 snapshot["_k"] = snapshot.get("_k", 0) + 1
                 take = pick_rng.random() < 1.0 / snapshot["_k"]
@@ -162,11 +168,15 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
                                 q_gap=round(gap[0], 4), q_moves=[R.to_dict(gap[1]), R.to_dict(gap[2])])
         if keep is not None and keep.get("mode") == "qgap" and state.active == keep["player"]:
             action = _qgap_keep(state, legal, search, action, keep, record)
+        forced = False
+        if keep is not None and keep.get("mode") == "evolve" and state.active == keep["player"] and keep["held"] >= 0:
+            action, forced = _evolve_force(state, legal, search, action, keep, record), True
         record["search"].append(_thought(state, legal, search))
         if planner is not None and planner.last_plan is not None:      # a cross-turn planner measured
             record.setdefault("plans", []).append(_plan(state, len(record["actions"]), planner.last_plan,
                                                         record["names"]))
-        if explore and len(legal) > 1 and state.players[state.active].turns_taken >= 1 and rng.random() < explore:
+        if explore and not forced and len(legal) > 1 and state.players[state.active].turns_taken >= 1 \
+                and rng.random() < explore:
             action = rng.choice(legal)
         R.add(record, action)
         apply(state, action)
@@ -184,6 +194,41 @@ def _qgap_mode(mode: str):
         raise ValueError(f"unknown fork pick {pick!r}")
     return (float(parts[0]) if parts else 0.05, int(parts[1]) if len(parts) > 1 else 2, pick,
             int(parts[3]) if len(parts) > 3 else 0)
+
+
+def _evolve_mode(mode: str):
+    """(eps, 0, pick, min_since) for the reverse forks' "evolve[:EPS[:PICK[:MINSINCE]]]" (defaults 0.05, "first",
+    0; as _qgap_mode), else None."""
+    if not mode.startswith("evolve"):
+        return None
+    parts = mode.split(":")[1:]
+    pick = parts[1] if len(parts) > 1 else "first"
+    if pick not in ("first", "random", "weighted"):
+        raise ValueError(f"unknown fork pick {pick!r}")
+    return float(parts[0]) if parts else 0.05, 0, pick, int(parts[2]) if len(parts) > 2 else 0
+
+
+def _evolve_force(state, legal, search, action, keep, record):
+    """The reverse forks' branch (the architecture session, 2026-10-07): at the torn decision where the side
+    chose not to evolve, it plays the best evolving move instead (by its own search's Q, else the control's),
+    that one move only, then plays on freely (no random move on it). record["branch"]["end"] "forced", with the
+    move, and whether the branch's own search had picked an evolving move anyway ("chose_evolve")."""
+    from svsim.core.actions import Evolve
+    from svsim.tools import records as R
+    keep["held"] = -1
+    gap = _q_gap(state, legal, search)
+    move, source = (gap[1], "branch") if gap is not None else (None, None)
+    if move is None:
+        wanted = keep.get("q_moves", [None])[0]
+        move = next((a for a in legal if isinstance(a, Evolve) and R.to_dict(a) == wanted), None)
+        source = "control" if move is not None else None
+    if move is None:
+        record["branch"]["end"] = "not forced"
+        return action
+    record["branch"].update(end="forced", forced=R.to_dict(move), source=source,
+                            chose_evolve=isinstance(action, Evolve),
+                            branch_q_gap=round(gap[0], 4) if gap is not None else None)
+    return move
 
 
 def _since_unlock(state) -> int:
@@ -496,7 +541,9 @@ def main() -> None:
                              "tier-1 targets (selective; see _keep), or forks where the search is torn and keeps "
                              "them while it stays torn (qgap[:EPS[:CAP[:PICK[:MINSINCE]]]], default 0.05, 2 turns, the first torn "
                              "decision, any turn; PICK random: one of them all; MINSINCE 1: not in the unlock "
-                             "turn; _qgap_keep)")
+                             "turn; _qgap_keep), or the reverse: forks at torn decisions where the side chose not to "
+                             "evolve, whose branch plays the best evolving move there instead "
+                             "(evolve[:EPS[:PICK[:MINSINCE]]]; _evolve_force)")
     parser.add_argument("--hold", type=float, default=0.0,
                         help="chance, at the start of a turn the player could evolve in, of not evolving (or not "
                              "super-evolving) for the rest of it (record['holds'])")

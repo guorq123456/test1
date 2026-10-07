@@ -398,6 +398,28 @@ def test_a_torn_search_forks_and_its_branch_keeps_points_only_while_torn():
     assert found
 
 
+def test_a_reverse_fork_evolves_where_the_torn_search_chose_not_to():
+    import json
+    from svsim.core.actions import Evolve, from_dict
+    from svsim.learn.netdata import _evolve_mode, play
+    assert _evolve_mode("evolve") == (0.05, 0, "first", 0) and _evolve_mode("evolve:0.05:random:1") == (0.05, 0, "random", 1)
+    assert _evolve_mode("qgap") is None
+    found = False
+    for g in range(4):
+        out = [json.loads(json.dumps(r)) for r in
+               play((g, 78, "ramp", "ramp", "mcts:30+plan+learned+phased", 0.0, 0.0, True, None, "evolve:0.05"))]
+        if len(out) < 2:
+            continue
+        control, branch = out
+        i = control["branch"]["i"]
+        assert control["actions"][:i] == branch["actions"][:i] and abs(control["branch"]["q_gap"]) < 0.05
+        assert not isinstance(from_dict(control["actions"][i]), Evolve)          # the side chose not to evolve
+        assert branch["branch"]["end"] == "forced" and branch["actions"][i] == branch["branch"]["forced"]
+        assert isinstance(from_dict(branch["actions"][i]), Evolve) and branch["branch"]["source"] in ("branch", "control")
+        found = True
+    assert found
+
+
 def test_the_tournament_ramp_mirror_borrows_the_game8_mirror_models_unless_told_not_to():
     from svsim.agents.mulligan import opening
     from svsim.core.enums import Craft
