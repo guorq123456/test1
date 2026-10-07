@@ -402,6 +402,21 @@ def test_the_tournament_ramp_mirror_can_borrow_the_game8_mirror_models_when_aske
     assert on.score(swap, 0) == off.score(ramp, 0)
 
 
+def test_a_keeping_branch_can_be_left_out_of_the_in_turn_model_only():
+    import json
+    from svsim.learn.netdata import ACT, ENDED, play
+    from svsim.learn.phased import _rows
+    for g in range(4):
+        out = play((g, 13, "ramp", "ramp", "mcts:15+plan+learned+phased", 0.0, 0.0, True))
+        if len(out) == 2:
+            break
+    control, branch = (json.dumps(r) for r in out)
+    full, without = _rows((branch, 3, 1.0, 1.0, 1.0)), _rows((branch, 3, 1.0, 1.0, 0.0))
+    assert not any(r[1] == ACT for r in without) and any(r[1] == ACT for r in full)
+    assert sum(r[1] == ENDED for r in without) == sum(r[1] == ENDED for r in full) > 0
+    assert len(_rows((control, 3, 1.0, 1.0, 0.0))) == len(_rows((control, 3, 1.0, 1.0, 1.0)))
+
+
 def test_a_payoff_card_still_in_the_deck_counts_by_its_draw_chances():
     from svsim.cards import decks
     from svsim.core.engine import new_game

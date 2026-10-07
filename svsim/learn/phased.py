@@ -31,14 +31,21 @@ STOCK = ("me_hand_", "me_pool_")
 def _rows(job) -> list:
     from svsim.learn.features import features
     from svsim.learn.netdata import rows
-    line, version, weight, unlock = (job + (1.0,))[:4] if isinstance(job, tuple) else (job, 2, 1.0, 1.0)
+    from svsim.learn.netdata import ACT
+    line, version, weight, unlock, act_hold = (job + (1.0, 1.0))[:5] if isinstance(job, tuple) else \
+        (job, 2, 1.0, 1.0, 1.0)
     record = json.loads(line)
     branch = record.get("branch") or {}
-    start = branch.get("i", 0) if branch.get("kind") == "hold" else 0   # the shared start counts once
+    hold = branch.get("kind") == "hold"
+    start = branch.get("i", 0) if hold else 0     # the shared start counts once
     if branch.get("trigger") == "unlock":          # a third of these kept points for a follower already on the field
         weight *= unlock
-    return [(record.get("g", 0), phase, features(state, me, False, version), result, q, weight)
-            for phase, me, state, result, q in rows(record, with_search=True, start=start)]
+    out = []
+    for phase, me, state, result, q in rows(record, with_search=True, start=start):
+        w = weight * (act_hold if hold and phase == ACT else 1.0)
+        if w > 0:
+            out.append((record.get("g", 0), phase, features(state, me, False, version), result, q, w))
+    return out
 
 
 def folder_of(name: str) -> Path:
@@ -116,10 +123,15 @@ def main() -> None:
                         help="a weight for each --games file's positions (default 1 each)")
     parser.add_argument("--unlock-weight", type=float, default=1.0,
                         help="weight of the forked games started at an evolution unlock (learn.netdata --fork)")
+    parser.add_argument("--act-hold-weight", type=float, default=1.0,
+                        help="weight of a fork's keeping branch in the in-turn (act) model, 0 to leave it out: a "
+                             "branch made to keep its points loses more, which the in-turn model may pin on what "
+                             "the keeping made it play (the architecture session's F3b); the turn-end model "
+                             "keeps it all")
     args = parser.parse_args()
     weights = args.file_weights or [1.0] * len(args.games)
     assert len(weights) == len(args.games)
-    jobs = [(line, args.version, w, args.unlock_weight) for path, w in zip(args.games, weights)
+    jobs = [(line, args.version, w, args.unlock_weight, args.act_hold_weight) for path, w in zip(args.games, weights)
             for line in open(path, encoding="utf-8")]
     with Pool(args.workers) as pool:
         data = [r for part in pool.imap(_rows, jobs, chunksize=4) for r in part]
@@ -140,7 +152,7 @@ def main() -> None:
         LinearValue([float(v) for v in w], [float(v) for v in mean], [float(v) for v in std], False,
                     {"deck": mine, "opponent": theirs, "moment": label, "positions": len(X),
                      "q_weight": args.q_weight, "games": args.games, "file_weights": weights,
-                     "unlock_weight": args.unlock_weight,
+                     "unlock_weight": args.unlock_weight, "act_hold_weight": args.act_hold_weight,
                      "report": {k: float(v) for k, v in report.items()}}, version=args.version
                     ).save(out / f"{args.matchup}-{label}.json")
         print(f"{label}: {len(X)} positions, {report}", flush=True)
