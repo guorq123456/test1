@@ -181,12 +181,15 @@ def make_agent(spec: str, seed: int):
             # line's N dearest cards only
             # ...k<letters>: n don't super-evolve, o super-evolve another follower instead; ...gG: play out only
             # when the root's two best moves are within G or a resource decision is open; ...pP: P own turns
-            m = re.fullmatch(r"cross([ns]?)(\d*)(?:z([\d.]+))?(?:r(\d+|t))?(?:k([kseno]+))?(?:m(\d+))?"
+            m = re.fullmatch(r"cross([ns]?)(\d*)(?:z([\d.]+))?(?:r(\d+|t))?(?:k([ksenoxvy]+))?(?:m(\d+))?"
                              r"(?:g([\d.]+))?(?:p(\d+))?", cross[0])
             if m is None:
                 raise ValueError(f"unknown agent option {cross[0]!r}")
             mode, k, z, r, only, most, gap, pairs = m.groups()
-            kinds = [{"k": "keep", "s": "save", "e": "noevo", "n": "nosuper", "o": "superonly"}[c]
+            # (x: play-and-super-evolve another follower first, v: play-and-evolve another first, y: play-and-
+            # super-evolve a follower in a turn the line doesn't super-evolve in)
+            kinds = [{"k": "keep", "s": "save", "e": "noevo", "n": "nosuper", "o": "superonly", "x": "super",
+                      "v": "evo", "y": "superany"}[c]
                      for c in only] if only else None
             agent = CrossTurnAgent(agent, samples=int(k or 4), seed=seed, next_turn=mode == "n",
                                    static=mode == "s", z=float(z or 0), research="tree" if r == "t" else int(r or 0),

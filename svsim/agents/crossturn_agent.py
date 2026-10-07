@@ -74,6 +74,8 @@ def key_forbidden(restriction: str, key) -> bool:
     if restriction == "nosuper":
         return key[0] == "E" and key[2] is True
     kind, cid = restriction.split(":")[0], int(restriction.split(":")[1])
+    if kind in PREFIX:
+        return False
     if kind == "superonly":                        # super-evolve only this card (key: ("E", ("F", mine, i, id), ...))
         return key[0] == "E" and key[2] is True and key[1][-1] != cid
     return key[0] == "P" and key[1][0] == "H" and key[1][2] == cid
@@ -126,8 +128,11 @@ def keep_value(state, player: int, card_uid: int, agent=None, samples: int = 8) 
 
 
 KINDS = ("keep", "save", "noevo")                       # the default candidates
-ALL_KINDS = KINDS + ("nosuper", "superonly")           # ... and the super-evolution choices
-RESOURCE = ("save", "noevo", "nosuper", "superonly")   # decisions about keeping a resource (adaptive trigger)
+ALL_KINDS = KINDS + ("nosuper", "superonly", "super", "evo", "superany")   # ... the evolution choices
+RESOURCE = ("save", "noevo", "nosuper", "superonly", "super", "evo", "superany")   # resource decisions
+PREFIX = ("super", "evo", "superany")                  # candidates that are a forced start of the turn:
+                                                       # super:<id> / evo:<id> = play that card if it is in hand,
+                                                       # then (super-)evolve it, then the search
 
 
 def restrictions(line: list, kinds=KINDS, max_keeps: int = 0, supers=()) -> list:
@@ -162,6 +167,12 @@ def _restrictions(line: list, supers=()) -> list:
     if chosen:
         out.append("nosuper")
         out += [f"superonly:{cid}" for cid in sorted(set(supers) - chosen)]
+        out += [f"super:{cid}" for cid in supers if cid not in chosen]
+    evolved = {key[1][-1] for key in line if key[0] == "E" and key[2] is False}
+    if evolved:
+        out += [f"evo:{cid}" for cid in supers if cid not in evolved]
+    if not chosen and supers:                      # a turn the line doesn't super-evolve in (kind superany)
+        out += [f"superany:{cid}" for cid in supers]
     return out
 
 
@@ -176,6 +187,8 @@ def forbids(restriction: str):
     if restriction == "nosuper":
         return lambda s, a: isinstance(a, Evolve) and a.super_
     kind, cid = restriction.split(":")[0], int(restriction.split(":")[1])
+    if kind in PREFIX:
+        return None
     if kind == "superonly":
         def only(s, a):
             if not (isinstance(a, Evolve) and a.super_):
@@ -224,6 +237,8 @@ class CrossTurnAgent:
         self.pairs = pairs                   # with next_turn: own turns played after the opponent's (each but
                                              # the last followed by another opponent turn) before scoring
         self._small = {}
+        self._prefixes: dict = {}            # prefix candidate -> its forced actions (this turn)
+        self._following: list = []           # the chosen prefix's actions still to play
         self.rng = random.Random(seed)
         self.turn = None
         self.restriction = NONE
@@ -341,6 +356,45 @@ class CrossTurnAgent:
                 out.append(c.defn.card_id)
         return out[:most]
 
+    def prefix(self, state, restriction: str):
+        """The forced start of a prefix candidate (super:<id> / evo:<id>) as actions on `state`: play that
+        card if it is in hand (the policy head's choice of targets), then (super-)evolve it; None if it
+        can't be done or if it would reveal anything (random numbers, a card from a deck): only moves
+        whose result every determinization agrees on are forced."""
+        from svsim.search.lethal import hidden_info
+        kind, cid = restriction.split(":")[0], int(restriction.split(":")[1])
+        me, s, out = state.active, state.clone(), []
+        before = hidden_info(s)
+        on_field = [c for c in s.players[me].field if c.defn.card_id == cid]
+        if not on_field:
+            def plays():
+                return [a for a in legal_actions(s) if isinstance(a, PlayCard)
+                        and (s.in_hand(me, a.uid) is not None and s.in_hand(me, a.uid).defn.card_id == cid)]
+            if not plays() and UseBonusPP() in legal_actions(s) and \
+                    any(c.defn.card_id == cid for c in s.players[me].hand):
+                out.append(UseBonusPP())          # one play point short: the bonus play point first
+                apply(s, UseBonusPP())
+            plays = plays()
+            if not plays:
+                return None
+            a = self._top(s, plays) or plays[0]
+            out.append(a)
+            apply(s, a)
+            if s.over or s.active != me:
+                return None
+            on_field = [c for c in s.players[me].field if c.defn.card_id == cid]
+        uids = {c.uid for c in on_field}
+        evolves = [a for a in legal_actions(s) if isinstance(a, Evolve) and a.uid in uids
+                   and a.super_ == (kind != "evo")]
+        if not evolves:
+            return None
+        a = self._top(s, evolves) or evolves[0]
+        out.append(a)
+        apply(s, a)
+        if hidden_info(s) != before or s.over:
+            return None
+        return out
+
     def _unsure(self, root) -> bool:
         """Whether the root's two most visited moves are within `gap` of each other (the search's estimates)."""
         top = sorted((c for c in root.children.values() if c.visits), key=lambda c: -c.visits)[:2]
@@ -353,14 +407,23 @@ class CrossTurnAgent:
         self._roots = {}
         if self.research == "tree":                # from the base search's own tree, no new search
             root = self.search.last_root
-            return {r: line if r == NONE else restricted_line(root, r) for r in candidates}
-        if not self.research:
-            return lines
+            lines = {r: line if r == NONE else restricted_line(root, r) for r in candidates}
         root, iterations, kept = self.search.last_root, self.search.iterations, getattr(self.search, "_next", None)
         try:
-            self.search.iterations = self.research
+            self.search.iterations = self.research if isinstance(self.research, int) and self.research else \
+                max(20, iterations // 2)
             for r in candidates:
                 if r == NONE:
+                    continue
+                if r.split(":")[0] in PREFIX:      # the forced start, then a search from after it
+                    s, keys = state.clone(), []
+                    for a in self._prefixes[r]:
+                        keys.append(action_key(s, a, _locator(s, state.active)))
+                        apply(s, a)
+                    self.search.choose(s)
+                    lines[r] = keys + principal_line(self.search.last_root)
+                    continue
+                if not isinstance(self.research, int) or not self.research:
                     continue
                 self._set(r)
                 self.search.choose(state)
@@ -421,6 +484,7 @@ class CrossTurnAgent:
             return self.base.act(state, actions)
         if state.turn != self.turn:
             self.turn = state.turn
+            self._following = []
             self._set(NONE)
             if len(actions) == 1:
                 return actions[0]
@@ -430,6 +494,13 @@ class CrossTurnAgent:
             root = self.search.last_root
             line = principal_line(root) if root is not None else []
             candidates = restrictions(line, self.kinds, self.max_keeps, self._supers(state))
+            self._prefixes = {}
+            for r in [r for r in candidates if r.split(":")[0] in PREFIX]:
+                start = self.prefix(state, r)
+                if start is None:
+                    candidates.remove(r)
+                else:
+                    self._prefixes[r] = start
             if len(candidates) == 1:
                 return choice
             if self.gap is not None and not self._unsure(root) and \
@@ -451,6 +522,9 @@ class CrossTurnAgent:
                 return choice
             kind = best.split(":")[0]
             self.picked[kind] = self.picked.get(kind, 0) + 1
+            if kind in PREFIX:                     # play the forced start, then the search as usual
+                self._following = list(self._prefixes[best][1:])
+                return self._prefixes[best][0]
             self._set(best)
             veto = forbids(best)
             if not veto(state, choice):
@@ -462,6 +536,11 @@ class CrossTurnAgent:
             allowed = {action_key(state, a, where): a for a in actions if not veto(state, a)}
             ranked = sorted((k for k in allowed if k in root.children), key=lambda k: -root.children[k].visits)
             return allowed[ranked[0]] if ranked else next(iter(allowed.values()), choice)
+        if self._following:
+            a = self._following.pop(0)
+            if a in actions:
+                return a
+            self._following = []
         if len(actions) == 1:
             return actions[0]
         return self.base.act(state, actions)

@@ -465,6 +465,41 @@ def test_cross_turn_candidates_restrict_the_rest_of_the_turn():
     assert restrictions(sup, ALL_KINDS, supers=[77, 88]) == [NONE, "noevo", "nosuper", "superonly:88"]
     assert key_forbidden("superonly:88", sup[0]) and key_forbidden("nosuper", sup[0])
     assert not key_forbidden("superonly:77", sup[0]) and not key_forbidden("keep:77", sup[0])
+    assert "super:88" in restrictions(sup, ALL_KINDS, supers=[77, 88]) and not key_forbidden("super:88", sup[0])
+    assert restrictions([("T",)], ALL_KINDS, supers=[77]) == [NONE, "superany:77"]
+
+
+def test_a_forced_start_plays_a_card_and_super_evolves_it():
+    import random
+    from svsim.agents.crossturn_agent import CrossTurnAgent
+    from svsim.cards import decks
+    from svsim.core.actions import Evolve, PlayCard, UseBonusPP
+    from svsim.core.engine import apply, legal_actions, new_game
+    from svsim.search.lethal import hidden_info
+    from svsim.tools.arena import make_agent
+    ramp = decks.build(decks.RAMP_DRAGON)
+    planner = CrossTurnAgent(make_agent("mcts-raw:10+learned+phased", 1))
+    found = 0
+    for seed in range(30):
+        state, rng = new_game(ramp, ramp, seed=seed, first=0), random.Random(seed)
+        while not state.over and state.turn < 16:
+            if state.phase.name == "MAIN" and state.active == 0 and state.players[0].sep > 0:
+                for cid in CrossTurnAgent._supers(state):
+                    start = planner.prefix(state, f"superany:{cid}")
+                    if start is None:
+                        continue
+                    found += 1
+                    assert isinstance(start[-1], Evolve) and start[-1].super_
+                    assert all(isinstance(a, (PlayCard, UseBonusPP, Evolve)) for a in start)
+                    s, before = state.clone(), hidden_info(state)
+                    for a in start:
+                        assert a in legal_actions(s)
+                        apply(s, a)
+                    assert hidden_info(s) == before and s.in_play(start[-1].uid).defn.card_id == cid
+            apply(state, rng.choice(legal_actions(state)))
+        if found >= 3:
+            break
+    assert found >= 3
 
 
 def test_keep_value_and_the_planners_records():
