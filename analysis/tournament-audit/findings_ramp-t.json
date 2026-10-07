@@ -1,0 +1,182 @@
+[
+ {
+  "id": 10543310,
+  "common": "懒惰的波摇花",
+  "zh": "懒惰的波摇花",
+  "core": true,
+  "status": "ok",
+  "detail": "2 次「随机敌方随从 2 伤」逐次重新随机（第一下打死后在剩余随从里选，可打到灵气随从、同一随从可吃两次），觉醒（PP 上限≥7）再对敌方主战者 2 伤，与官方一致。",
+  "test": "test_sloth_of_the_crestpetal"
+ },
+ {
+  "id": 10644120,
+  "common": "波菈莱",
+  "zh": "古旧天刀·波菈莱",
+  "core": true,
+  "status": "ok",
+  "detail": "被舍弃时召唤 1 个波菈莱（场满则无效）；毁灭；0/2、侵蚀者种族正确。进化时 1 张天刀深渊，超进化时引擎同样触发「进化时」，脚本按 super_evolved 改为共 3 张（不是 1+3），符合官方 Q&A「进化时能力在 EP/SEP 进化时都发动」。衍生卡天刀深渊（使用/被舍弃各：敌方主战者 1 伤 + 回复 1）脚本也正确（test_depths_of_the_eld_blades）。",
+  "test": "test_vorlalai_eld_blades"
+ },
+ {
+  "id": 10741110,
+  "common": "宣扬的龙人",
+  "zh": "宣扬的龙人",
+  "core": true,
+  "status": "ok",
+  "detail": "爆能强化 4（PP 足够强制支付）召唤 2 个宣扬的龙人，召唤出的也有突进（当回合只能打随从），场满只召唤放得下的，与官方一致。",
+  "test": "test_dragonewt_promoter"
+ },
+ {
+  "id": 10042310,
+  "common": "龙之启示",
+  "zh": "龙之启示",
+  "core": true,
+  "status": "ok",
+  "detail": "PP 上限 +1（新增的一点为空），之后上限为 10 则抽 1；上限已是 10 时仍抽牌，与官方一致。",
+  "test": "test_dragonsign"
+ },
+ {
+  "id": 10444120,
+  "common": "佐伊",
+  "zh": "世界的伙伴·佐伊",
+  "core": true,
+  "status": "ok",
+  "detail": "入场曲 PP 上限 +1；爆能强化 10：疾驰、主战者生命上限变 1、到对手回合结束前受到的伤害变 0。上限效果永久，伤害上限在对手回合结束的结算之后才到期（符合 Q&A：对手回合结束时的纹章伤害也挡住）。小瑕疵（不影响实战）：疾驰是直接写 keywords，没记成永久关键词，若之后又获得并到期一个临时疾驰会被一起移除。",
+  "test": "test_zooey_ally_of_the_world"
+ },
+ {
+  "id": 10644110,
+  "common": "口人魔",
+  "zh": "断头的斩姬·相枛津",
+  "core": true,
+  "status": "ok",
+  "detail": "入场曲选 1 张手牌（不能选自己）舍弃，再加 2 张赤流；没有其他手牌也能打、照样加赤流。疾驰/毁灭/灵气正确（灵气：敌方能力选不到，但可被攻击）。赤流脚本：先舍弃再破坏，两项目标缺一不能使用（官方 Q&A），灵气随从选不到，正确（test_spilling_red）。",
+  "test": "test_sagatsumatsu_fair_beheader"
+ },
+ {
+  "id": 10944120,
+  "common": "牢头",
+  "zh": "禁牙的变貌·诺玛格达拉",
+  "core": true,
+  "status": "ok",
+  "detail": "入场曲模式（1）抽 1 + 回复 3 /（2）敌方全体 -0/-4；守护；进化时（含超进化）重新选模式再发动，符合 Q&A「复制模式类入场曲可以重新选」。备注：-0/-4 逐个结算并逐个判死，谢幕曲入队顺序可能与同时结算略有差别，不影响一般对局。",
+  "test": "test_normagdala_ravening_revenant"
+ },
+ {
+  "id": 10844120,
+  "common": "金银",
+  "zh": "金银绚烂·璐米欧儿&雅尔贞特",
+  "core": true,
+  "status": "ok",
+  "detail": "入场曲选 2 张手牌舍弃（不足 2 张时尽量多选，仍造成伤害），对敌方全体随从和主战者 4 伤；只有超进化时抽 3，普通进化无效果。官方数据里的激奏（3）（specific_effect 10844122：PP 上限 +1）已实现：PP 不足 8 时以 3 费当法术使用，正确。被舍弃卡的「被舍弃时」在入场曲结算完后才结算（队列规则），不影响结果。",
+  "test": "test_lumiore_and_argente_shining_wings"
+ },
+ {
+  "id": 10744110,
+  "common": "班德",
+  "zh": "焦灰的安纳提玛·班德奈特",
+  "core": true,
+  "status": "ok",
+  "detail": "入场曲对敌方全体随从 9 伤（含灵气）；只有超进化时给对手纹章，普通进化不给；同名纹章不重复（Q&A）。纹章：对手回合开始对其主战者 2 伤；对手自己回合内主战者回复（含回复 0，一弹同文 Q&A）时每回合 1 次 1 伤，我方回合内回复不触发，正确（test_burnite_crest）。",
+  "test": "test_burnite_anathema_of_ash"
+ },
+ {
+  "id": 10544110,
+  "common": "正义",
+  "zh": "约束的《正义》·伊兰翠",
+  "core": true,
+  "status": "ok",
+  "detail": "守护；回合结束时进化前：随机 2 个敌方随从 8 伤（只有 1 个就打 1 个）并回复 8；进化后（含超进化）：打敌方主战者 8、不回复；进化时失去守护获得威慑（威慑后敌方随从不能攻击它）。简中文案「回复8点」断句略含糊，英文明确只在进化前回复，脚本按英文实现。",
+  "test": "test_erntz_governing_justice"
+ },
+ {
+  "id": 10843310,
+  "common": "狐火",
+  "zh": "狐火蜃景",
+  "core": false,
+  "status": "ok",
+  "detail": "选敌方随从或敌方主战者 1 伤（灵气/潜行随从选不到，主战者总能选）；随机位置加 1 张狐火进牌组；觉醒时抽 1，与官方一致。",
+  "test": "test_ephemeral_foxfire"
+ },
+ {
+  "id": 10403120,
+  "common": "露莉亚",
+  "zh": "掌握天空命运的少女·露莉亚",
+  "core": false,
+  "status": "ok",
+  "detail": "爆能强化 8：从牌组随机抽 1 张费用≥7 的随从（法术不算），回复 7 PP（上限封顶，10 PP 时剩 9）；屏障；不足 8 PP 时只付 2 费无效果，正确。",
+  "test": "test_lyria_skydestined"
+ },
+ {
+  "id": 10842120,
+  "common": "琪米卡",
+  "zh": "满面笑容的烹饪·琪米卡",
+  "core": false,
+  "status": "ok",
+  "detail": "入场曲：选 1 张手牌舍弃、抽 1、回复 1；空手也能打并照样抽牌回复；进化时（含超进化）复制同样效果，正确。",
+  "test": "test_kimika_cook_of_happiness"
+ },
+ {
+  "id": 10444110,
+  "common": "火龙",
+  "zh": "炎之法则·威尔纳斯",
+  "core": false,
+  "status": "ok",
+  "detail": "入场曲选 1 个敌方随从 8 伤（灵气选不到）；威慑；进化时（含超进化）再选 1 个 8 伤，正确。",
+  "test": "test_wilnas_flame_personified"
+ },
+ {
+  "id": 10804110,
+  "common": "巴哈",
+  "zh": "阿尔比昂巴哈姆特",
+  "core": false,
+  "status": "ok",
+  "detail": "入场曲模式：（1）双方其他随从全部消失（无谢幕曲、无墓场、不触发被舍弃）；（2）双方护符消失；（3）双方纹章消失、不含信仰（官方 Q&A），正确。",
+  "test": "test_alabaster_bahamut"
+ },
+ {
+  "id": 10542120,
+  "common": "水母舞姬",
+  "zh": "水母舞姬",
+  "core": false,
+  "status": "ok",
+  "detail": "入场曲加 1 张大海虎鲸（2/2 突进 海洋，无脚本的关键词卡，身材正确）；己方海洋随从进场（打出或召唤）时本随从获得突进和毁灭，正确。",
+  "test": "test_jellyfish_dancer"
+ },
+ {
+  "id": 10542310,
+  "common": "日珥咆哮",
+  "zh": "日珥咆哮",
+  "core": false,
+  "status": "ok",
+  "detail": "X = 结算时双方场上随从总数（含灵气），一次算定后对所有随从造成 X 伤，正确。",
+  "test": "test_roar_of_prominence"
+ },
+ {
+  "id": 10603210,
+  "common": "黑暗次元",
+  "zh": "黑暗次元",
+  "core": false,
+  "status": "ok",
+  "detail": "吟唱 2（打出当回合与下个己方回合各结算一次，再下个己方回合开始时破坏）；只在自己回合结束时对双方所有非侵蚀者随从 2 伤，正确。",
+  "test": "test_dark_dimensions"
+ },
+ {
+  "id": 10503310,
+  "common": "《世界》的呈现",
+  "zh": "《世界》的呈现",
+  "core": false,
+  "status": "ok",
+  "detail": "抽 2；在攻击力最高的敌方随从中随机破坏 1 个（并列时随机，灵气可被选中）；爆能强化 10 再对敌方全体与主战者 4 伤，顺序与卡面一致。",
+  "test": "test_fate_of_the_world"
+ },
+ {
+  "id": 10743310,
+  "common": "黑炎的奔流",
+  "zh": "黑炎的奔流",
+  "core": false,
+  "status": "ok",
+  "detail": "敌方全体随从 5 伤（含灵气）、敌方主战者 3 伤，己方不受影响，正确。",
+  "test": "test_blackflame_deluge"
+ }
+]
