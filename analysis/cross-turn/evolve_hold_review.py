@@ -212,7 +212,8 @@ def main():
             e = [j for j in res if j.endswith("erntz_unevolved")]
             ok, n = sum(res[j][0] for j in e), sum(res[j][1] for j in e)
             print(f"\n{label} 的 erntz_unevolved 通过率（也出正义、也不进化它）：{ok}/{n}（{ok / max(n, 1):.0%}）")
-            continue
+            if not any(j.endswith(("evolve_hold", "evolve_use")) for j in res):     # a run of that probe only
+                continue
         # the evolve_hold check (no evolution) of each held turn; the Erntz turns were run under their old id
         got = {r["id"]: res.get(r["id"]) or res.get(old_id(r["id"])) for r in holds}
         print(f"\n{label} 的 evolve_hold 通过率（不进化）：")
