@@ -1,0 +1,16 @@
+[project]
+name = "svsim"
+version = "0.1.0"
+description = "Shadowverse: Worlds Beyond rules simulator for training AI practice partners"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+include = ["svsim*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "tests"]

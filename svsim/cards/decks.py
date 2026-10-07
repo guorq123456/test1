@@ -1,0 +1,133 @@
+"""Decklists and deck validation.
+
+The starter decklists are Game8's (Pirate Sword 2026-09-30, Ramp Dragon
+2026-10-05), decoded through the official deck API.
+"""
+from collections import Counter
+import random
+
+from svsim.core.carddef import CardDef
+from svsim.core.enums import Craft
+from svsim.core.script import has_script
+
+from . import deckcode, dragon, forest, neutral, sword, unlimited
+from .pool import POOL, collectible
+
+DECK_SIZE = 40
+MAX_COPIES = 3
+
+PIRATE_SWORD = {
+    sword.FLASHSTEP_QUICKBLADER: 3, sword.ORCHESTRATED_SILENCE: 3, sword.YIDMETRA: 3,
+    sword.OPEN_SEA_SCOUT: 3, sword.WHIRLPOOL_GUNNER: 3, sword.SPLENDOR_OF_THE_GOLDBLOOM: 3,
+    sword.SEVERED_TIES: 3, sword.ZETA_AND_BEA: 3, sword.LAGE_DOR: 3, sword.UNKEI: 3,
+    sword.ROUGHWATER_FIRST_MATE: 3, sword.GOLDEN_KNIGHT: 3, sword.BARBAROS: 3,
+    sword.BELTEZORE: 1,
+}
+
+RAMP_DRAGON = {
+    neutral.LYRIA: 3, dragon.VORLALAI: 3, dragon.DRAGONEWT_PROMOTER: 3, dragon.KIMIKA: 2,
+    dragon.SLOTH_OF_THE_CRESTPETAL: 3, dragon.DRAGONSIGN: 3, dragon.LAZING_FLAME: 1,
+    dragon.ROAR_OF_PROMINENCE: 2, neutral.FATE_OF_THE_WORLD: 2, dragon.ZOOEY: 3,
+    dragon.SAGATSUMATSU: 3, dragon.NORMAGDALA: 3, dragon.LUMIORE_AND_ARGENTE: 3,
+    dragon.BURNITE: 3, dragon.ERNTZ: 3,
+}
+
+# Unlimited: "Rhinoceroach Forest" (破魔虫精灵), from the player's deck list (2026-10-05).
+# Killer Rhinoceroach gains +1 attack per card played this turn and has Storm; the
+# deck plays cheap cards and returns it to hand to play it again and again.
+RHINO_FOREST = {
+    neutral.WORLD_OF_GAMES: 3, forest.SPROUTING_INITIATE: 3, unlimited.FAIRY_CONVOCATION: 3,
+    unlimited.BABY_CARBUNCLE: 2, unlimited.GARDENS_ALLURE: 3, unlimited.KILLER_RHINOCEROACH: 3,
+    unlimited.GODWOOD_STAFF: 2, unlimited.BAYLE: 3, forest.SATHANID: 2, forest.BUG_ALERT: 3,
+    unlimited.ERADICATING_ARROW: 3, forest.VIRID_LIEUTENANT: 1, unlimited.LAMBENT_CAIRN: 3,
+    forest.MIROKU: 3, unlimited.GLADE: 3,
+}
+UNLIMITED_DECKS = {"rhino": RHINO_FOREST}
+
+# Every card the simulator knows, by id (deck cards, tokens, leader-area objects).
+KNOWN: dict[int, CardDef] = POOL
+
+
+def build(counts: dict[CardDef, int]) -> list[CardDef]:
+    return [card for card, n in counts.items() for _ in range(n)]
+
+
+def craft_of(deck: list[CardDef]) -> Craft:
+    crafts = {c.craft for c in deck} - {Craft.NEUTRAL}
+    return crafts.pop() if len(crafts) == 1 else Craft.NEUTRAL
+
+
+def validate(deck: list[CardDef], craft: Craft | None = None, unlimited: bool = False) -> list[str]:
+    """Problems that make a deck illegal (empty list = legal) in Rotation, or in
+    Unlimited with `unlimited`."""
+    craft = craft_of(deck) if craft is None else craft
+    problems = []
+    if len(deck) != DECK_SIZE:
+        problems.append(f"{len(deck)} cards, need {DECK_SIZE}")
+    for card, n in Counter(deck).items():
+        if n > MAX_COPIES:
+            problems.append(f"{n} copies of {card.name}")
+        if card.is_token:
+            problems.append(f"{card.name} is a token")
+        if card.craft not in (Craft.NEUTRAL, craft):
+            problems.append(f"{card.name} is not {craft.name.title()} or Neutral")
+        if card.card_set and not card.rotation and not card.is_token and not unlimited:
+            problems.append(f"{card.name} is not legal in Rotation")
+    return problems
+
+
+def unimplemented(cards) -> list[CardDef]:
+    """Cards with abilities but no script. Keyword-only and vanilla cards are fine
+    without one; anything else silently playing as a vanilla card would be wrong."""
+    return sorted({c for c in cards if c.has_ability and not has_script(c.card_id)},
+                  key=lambda c: c.card_id)
+
+
+def random_deck(craft: Craft, rng: random.Random, implemented_only: bool = True) -> list[CardDef]:
+    """A random legal Rotation deck for `craft` (class and Neutral cards, up to 3
+    copies each). With `implemented_only`, cards still missing a script are left out."""
+    options = [c for c in collectible(craft)
+               if not (implemented_only and c.has_ability and not has_script(c.card_id))]
+    if len(options) * MAX_COPIES < DECK_SIZE:
+        raise ValueError(f"only {len(options)} usable {craft.name.title()} cards")
+    deck: list[CardDef] = []
+    while len(deck) < DECK_SIZE:
+        card = rng.choice(options)
+        if deck.count(card) < MAX_COPIES:
+            deck.append(card)
+    return deck
+
+
+def from_hash(deck_hash: str, pool: dict[int, CardDef] | None = None) -> list[CardDef]:
+    """Build a deck from an official deck hash. Card ids missing from `pool`
+    (default: the implemented cards) raise KeyError."""
+    pool = KNOWN if pool is None else pool
+    _, _, ids = deckcode.decode_deck(deck_hash)
+    return [pool[i] for i in ids]
+
+
+def to_hash(deck: list[CardDef], battle_format: int = deckcode.ROTATION) -> str:
+    return deckcode.encode_deck(battle_format, int(craft_of(deck)), [c.card_id for c in deck])
+
+
+# Rotation meta decks from Game8's tier list (Azvaldt Revenant, 2026-10-06), by their deck
+# codes: Combo Elf (Tier 1) and Face Dragon (Tier 2). Ramp Dragon and Pirate Royal (Tier 1)
+# match RAMP_DRAGON and PIRATE_SWORD card for card; the list's other decks use cards not
+# scripted yet.
+COMBO_FOREST_HASH = ("1.1.dhqc.e4Gg.e4Gg.e4Gg.e6FE.e6kU.e6x8.e6x8.e6x8.eVLe.eVLe.et1G.et4E.etl-.etl-.etl-.etm8."
+                     "etm8.etm8.fGAU.fGAU.fGAU.fds6.fds6.fds6.fe5k.fe5k.fe5k.fe8s.fe8s.fe8s.feLM.feLM.feLM.fea-.fea-."
+                     "fea-.feb8.feb8.feb8")
+FACE_DRAGON_HASH = ("1.4.eDme.eDme.eDme.eE3E.eE3E.eE3E.eb-U.eb-U.ecTk.ecTk.ecgE.ecgE.ecgE.ecgO.ecgO.ecgO.fN08.fN08."
+                    "fN08.flAs.flAs.flAs.flD-.flD-.flD-.flQU.flQU.flQU.flTc.flTc.flTc.flg6.flg6.flg6.fljE.fljE.fljE."
+                    "flvk.flvk.flvk")
+
+
+def _listing(deck_hash: str) -> dict[CardDef, int]:
+    out: dict[CardDef, int] = {}
+    for c in from_hash(deck_hash):
+        out[c] = out.get(c, 0) + 1
+    return out
+
+
+COMBO_FOREST = _listing(COMBO_FOREST_HASH)
+FACE_DRAGON = _listing(FACE_DRAGON_HASH)
