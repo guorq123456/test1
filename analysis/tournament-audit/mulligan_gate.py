@@ -104,7 +104,7 @@ def report(paths):
             ma, ha = ci(a)
             mb, hb = ci(b)
             base = sum(r[f"seat{x}"]["D"]["points"] for r in sub for x in (0, 1)) / (2 * len(sub))   # D's own score
-            print(f"  {opp:<12}{len(sub):>5}  {ma:+.1%} ± {ha:.1%}（CR {salem_cr(ma, base):+.0f}，D 自己 {base:.0%}）"
+            print(f"  {opp:<12}{len(sub):>5}  {ma:+.1%} ± {ha:.1%}（CR {salem_cr(ma, base):+.0f}，稳态式 {800 * ma:+.0f}；D 自己 {base:.0%}）"
                   f"          {mb:+.1%} ± {hb:.1%}（{len(b)} 对）          {len(b) / max(len(sub), 1):.0%}")
         for first in (True, False):
             xs = [r[f"seat{s}"]["R"]["points"] - r[f"seat{s}"]["D"]["points"] for r in rows for s in (0, 1)
