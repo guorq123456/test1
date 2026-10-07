@@ -31,10 +31,12 @@ STOCK = ("me_hand_", "me_pool_")
 def _rows(job) -> list:
     from svsim.learn.features import features
     from svsim.learn.netdata import rows
-    line, version, weight = job if isinstance(job, tuple) else (job, 2, 1.0)
+    line, version, weight, unlock = (job + (1.0,))[:4] if isinstance(job, tuple) else (job, 2, 1.0, 1.0)
     record = json.loads(line)
     branch = record.get("branch") or {}
     start = branch.get("i", 0) if branch.get("kind") == "hold" else 0   # the shared start counts once
+    if branch.get("trigger") == "unlock":          # a third of these kept points for a follower already on the field
+        weight *= unlock
     return [(record.get("g", 0), phase, features(state, me, False, version), result, q, weight)
             for phase, me, state, result, q in rows(record, with_search=True, start=start)]
 
@@ -95,10 +97,13 @@ def main() -> None:
                         "by context, learn.features.SIDE3)")
     parser.add_argument("--file-weights", type=float, nargs="+", default=None,
                         help="a weight for each --games file's positions (default 1 each)")
+    parser.add_argument("--unlock-weight", type=float, default=1.0,
+                        help="weight of the forked games started at an evolution unlock (learn.netdata --fork)")
     args = parser.parse_args()
     weights = args.file_weights or [1.0] * len(args.games)
     assert len(weights) == len(args.games)
-    jobs = [(line, args.version, w) for path, w in zip(args.games, weights) for line in open(path, encoding="utf-8")]
+    jobs = [(line, args.version, w, args.unlock_weight) for path, w in zip(args.games, weights)
+            for line in open(path, encoding="utf-8")]
     with Pool(args.workers) as pool:
         data = [r for part in pool.imap(_rows, jobs, chunksize=4) for r in part]
     N = names(False, args.version)
@@ -118,6 +123,7 @@ def main() -> None:
         LinearValue([float(v) for v in w], [float(v) for v in mean], [float(v) for v in std], False,
                     {"deck": mine, "opponent": theirs, "moment": label, "positions": len(X),
                      "q_weight": args.q_weight, "games": args.games, "file_weights": weights,
+                     "unlock_weight": args.unlock_weight,
                      "report": {k: float(v) for k, v in report.items()}}, version=args.version
                     ).save(out / f"{args.matchup}-{label}.json")
         print(f"{label}: {len(X)} positions, {report}", flush=True)
