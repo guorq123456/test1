@@ -98,7 +98,7 @@ def make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross"))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross"))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -167,6 +167,7 @@ def make_agent(spec: str, seed: int):
                           reserve="reserve" in options, veto=veto, reply_after=1 if "lazy" in options else 0,
                           reply_top=3 if "focus" in options else 0, reply_budget=20 if "focus" in options else 0,
                           average=next((int(o[3:]) for o in options if o.startswith("avg")), 1),
+                          reuse="reuse" in options,
                           **_prior_options(options))
         cross = [o for o in options if o.startswith("cross")]
         if cross:                                  # keep a card / PP / evolution for later (agents.crossturn_agent)

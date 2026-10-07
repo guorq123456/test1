@@ -307,7 +307,7 @@ class CrossTurnAgent:
             return {r: line if r == NONE else restricted_line(root, r) for r in candidates}
         if not self.research:
             return lines
-        root, iterations = self.search.last_root, self.search.iterations
+        root, iterations, kept = self.search.last_root, self.search.iterations, getattr(self.search, "_next", None)
         try:
             self.search.iterations = self.research
             for r in candidates:
@@ -321,6 +321,7 @@ class CrossTurnAgent:
             self.search.iterations = iterations
             self._set(NONE)
             self.search.last_root = root
+            self.search._next = kept               # a reused subtree must come from the turn's own search
         return lines
 
     def outcomes(self, state, line, candidates: list) -> dict:

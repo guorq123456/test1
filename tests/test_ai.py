@@ -487,3 +487,38 @@ def test_keep_value_and_the_planners_records():
     plan = record["plans"][0]
     assert plan["samples"]["line"] and len(plan["samples"]["line"]) == 2 and plan["deck"] == "ramp"
     assert all(0 <= p["i"] < len(record["actions"]) for p in record["plans"])
+
+
+def test_the_search_reuses_its_subtree_after_a_move_that_reveals_nothing():
+    import random
+    from svsim.agents.mcts_agent import MCTSAgent
+    from svsim.cards import decks
+    from svsim.core.actions import EndTurn
+    from svsim.core.engine import apply, legal_actions, new_game
+    from svsim.search.lethal import hidden_info
+    ramp = decks.build(decks.RAMP_DRAGON)
+    rng, reused, checked = random.Random(2), 0, 0
+    for seed in range(6):
+        state = new_game(ramp, ramp, seed=seed, first=0)
+        agent = MCTSAgent(30, seed=seed, reuse=True, min_new=5)
+        direct = False                              # the position right after the agent's own move
+        while not state.over and state.turn < 12:
+            legal = legal_actions(state)
+            if state.active == 0 and state.phase.name == "MAIN" and len(legal) > 1:
+                pending = agent.search._next
+                before = hidden_info(state)
+                action = agent.act(state, legal)
+                if pending is not None and direct:
+                    checked += 1
+                    if agent.search.last_root is pending[1]:
+                        reused += 1
+                        assert agent.search.last_root.visits >= 5       # new iterations on the kept subtree
+                expected = agent.search._next
+                apply(state, action)
+                direct = True
+                if expected is not None:            # only moves that reveal nothing are expected to be reused
+                    assert hidden_info(state) == before and not isinstance(action, EndTurn)
+            else:
+                apply(state, rng.choice(legal))
+                direct = False
+    assert reused > 0 and reused == checked

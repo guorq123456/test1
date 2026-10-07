@@ -149,7 +149,8 @@ class ISMCTS:
                  scale: float = 8.0, max_depth: int = 30, seed: int = 0, weights=DEFAULT,
                  reply: bool = False, center: bool = True, prune: bool = True, backup: str = "max",
                  reserve: bool = False, veto=None, reply_after: int = 0, reply_top: int = 0,
-                 reply_budget: int = 0, average: int = 1, prior=None, c_prior: float = 0.3):
+                 reply_budget: int = 0, average: int = 1, prior=None, c_prior: float = 0.3,
+                 reuse: bool = False, min_new: int = 20):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
         self.seconds = seconds
         self.c = c                     # exploration constant (values are in 0..1)
@@ -169,6 +170,9 @@ class ISMCTS:
         self.average = average         # score a leaf as the mean over this many draws of the cards drawn this turn
         self._root_deck: set = set()   # uids in the player's deck at the root (what a draw this turn came from)
         self.centered = center         # squash relative to the starting position (False: absolute)
+        self.reuse = reuse             # keep the chosen move's subtree for the next decision of the turn
+        self.min_new = min_new         # ... and search at least this many new iterations there
+        self._next = None              # (key of the expected next position, subtree, center) when reusing
         self.prune = prune             # leave out dominated moves (search.moves)
         self.reserve = reserve         # keep the win condition for finishing turns (search.moves.reserved)
         self.veto = veto               # veto(state, action) -> True to leave the action out (e.g. learn.timing.Pace)
@@ -209,10 +213,21 @@ class ISMCTS:
         return total / self.average
 
     def choose(self, state: GameState):
-        me, root = state.active, Node()
-        self.center = 0.0
-        if self.centered:
-            self.center = evaluate(state, me, self.weights)
+        me, root = state.active, None
+        if self.reuse and self._next is not None:
+            from svsim.search.lethal import state_key
+            key, subtree, center = self._next
+            if key == state_key(state):            # the move was played and nothing hidden came out
+                root, self.center = subtree, center
+        self._next = None
+        iterations = self.iterations
+        if root is None:
+            root = Node()
+            self.center = 0.0
+            if self.centered:
+                self.center = evaluate(state, me, self.weights)
+        else:                                      # the subtree's values keep the turn start's centre
+            iterations = max(self.min_new, self.iterations - root.visits)
         deadline = time.perf_counter() + self.seconds if self.seconds else None
         self._replies = 0
         self._root_deck = {c.uid for c in state.players[me].deck}
@@ -225,7 +240,7 @@ class ISMCTS:
                 for a, pr in zip(moves, probs):
                     key = action_key(state, a, where0)
                     self._root_prior[key] = self._root_prior.get(key, 0.0) + float(pr)
-        for i in range(self.iterations if deadline is None else 10 ** 9):
+        for i in range(iterations if deadline is None else 10 ** 9):
             if deadline is not None and time.perf_counter() > deadline and i > 0:
                 break
             self._iterate(determinize(state, me, self.rng), me, root)
@@ -234,7 +249,20 @@ class ISMCTS:
         legal = {action_key(state, a, where): a for a in legal_actions(state)}
         best = max((k for k in legal if k in root.children),
                    key=lambda k: root.children[k].visits, default=None)
-        return legal[best] if best is not None else next(iter(legal.values()))
+        if best is None:
+            return next(iter(legal.values()))
+        if self.reuse and not isinstance(legal[best], EndTurn):
+            self._expect(state, legal[best], root.children[best])
+        return legal[best]
+
+    def _expect(self, state: GameState, action, subtree: Node) -> None:
+        """Keep `subtree` for the next decision if `action` reveals nothing (no random numbers, no card
+        from a deck): the position after it is then the one every determinization reached."""
+        from svsim.search.lethal import hidden_info, state_key
+        after = state.clone()
+        apply(after, action)
+        if hidden_info(after) == hidden_info(state) and not after.over and after.active == state.active:
+            self._next = (state_key(after), subtree, self.center)
 
     def _iterate(self, s: GameState, me: int, root: Node) -> None:
         node, path, depth = root, [root], 0
