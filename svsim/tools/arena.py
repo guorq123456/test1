@@ -171,9 +171,12 @@ def make_agent(spec: str, seed: int):
         cross = [o for o in options if o.startswith("cross")]
         if cross:                                  # keep a card / PP / evolution for later (agents.crossturn_agent)
             from svsim.agents.crossturn_agent import CrossTurnAgent
-            dear = cross[0].startswith("crossn")       # +crossnK: score after the own next turn (ENDED model)
-            k, _, z = cross[0][6 if dear else 5:].partition("z")    # +crossK zZ: switch only past Z std. errors
-            agent = CrossTurnAgent(agent, samples=int(k or 4), seed=seed, next_turn=dear, z=float(z or 0))
+            mode = cross[0][5:6] if cross[0][5:6] in ("n", "s") else ""
+            # +crossnK: score after the own next turn (ENDED model); +crosssK: no play-out, the own turn's end
+            # (a control); ...zZ: switch only past Z standard errors
+            k, _, z = cross[0][5 + len(mode):].partition("z")
+            agent = CrossTurnAgent(agent, samples=int(k or 4), seed=seed, next_turn=mode == "n",
+                                   static=mode == "s", z=float(z or 0))
         if name == "mcts-raw":
             return agent
         agent = LethalAgent(agent, seed=seed, planner=planner,

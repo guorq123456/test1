@@ -130,7 +130,7 @@ def forbids(restriction: str):
 
 class CrossTurnAgent:
     def __init__(self, base, policy=None, samples: int = 4, margin: float = 0.0, seed: int = 0,
-                 max_steps: int = 40, next_turn: bool = False, z: float = 0.0):
+                 max_steps: int = 40, next_turn: bool = False, z: float = 0.0, static: bool = False):
         self.base = base                     # an MCTSAgent (the lethal search stays outside)
         self.search: ISMCTS = base.search
         if policy is None:
@@ -142,6 +142,7 @@ class CrossTurnAgent:
         self.z = z                           # ... and by more than z standard errors of the paired difference
         self.max_steps = max_steps
         self.next_turn = next_turn           # score after the own next turn (policy head) with the ENDED model
+        self.static = static                 # control: score each candidate's own turn end (ENDED), no play-out
         self.rng = random.Random(seed)
         self.turn = None
         self.restriction = NONE
@@ -189,6 +190,17 @@ class CrossTurnAgent:
             a = self._top(s, legal) if len(legal) > 1 else legal[0]
             apply(s, a if a is not None else legal[-1])
 
+    def _ended(self, s, me: int) -> float:
+        """The end of the own turn as the one-turn search scores it (the ENDED model)."""
+        from svsim.learn.model import SCALE
+        from svsim.search.evaluate import evaluate
+        if not s.over and s.active == me:
+            ISMCTS._step(s, EndTurn())
+        if s.over:
+            return 1.0 if s.winner == me else 0.0 if s.winner == 1 - me else 0.5
+        score = evaluate(s, me, self.search.weights)
+        return 1.0 / (1.0 + math.exp(-max(-60.0, min(60.0, score / SCALE))))
+
     def _value(self, s, me: int) -> float:
         from svsim.learn.model import SCALE
         from svsim.search.evaluate import evaluate
@@ -213,6 +225,9 @@ class CrossTurnAgent:
             for r in candidates:
                 s = base.clone()
                 self._own_turn(s, me, line, forbids(r))
+                if self.static:
+                    out[r].append(self._ended(s, me))
+                    continue
                 self._their_turn(s, me)
                 out[r].append(self._value(s, me))
         return out
@@ -264,7 +279,8 @@ class CrossTurnAgent:
             if best != NONE and not self._better(samples[best], samples[NONE]):
                 best = NONE
             self.last_plan = {"turn": state.turn, "line": [list(map(_plain, k)) for k in line],
-                              "samples": samples, "chosen": best, "next_turn": self.next_turn}
+                              "samples": samples, "chosen": best,
+                              "next_turn": self.next_turn, "static": self.static}
             if best == NONE:
                 self.picked[NONE] = self.picked.get(NONE, 0) + 1
                 return choice

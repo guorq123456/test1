@@ -138,21 +138,37 @@ def play_pair(job) -> dict:
     """Seed `seed` twice, A in seat 0 then in seat 1; A's points (win 1, draw 0.5)."""
     from svsim.cards import decks
     from svsim.core.engine import apply, legal_actions, new_game
+    from svsim.learn.netdata import _plan, _planner
+    from svsim.tools import records as R
     from svsim.ui.session import DECKS
     k, seed, a, b, model_a, model_b, deck, opponent, phased_a, phased_b = job
     mine, theirs = decks.build(DECKS[deck][1]), decks.build(DECKS[opponent][1])
-    points = []
+    points, games = [], []
     for seat in (0, 1):
         agents = [None, None]
         agents[seat] = _agent(a, 2 * seed + seat, model_a, phased_a)
         agents[1 - seat] = _agent(b, 2 * seed + 1 - seat + 7919, model_b, phased_b)
+        planners = [_planner(x) for x in agents]
         cards = [None, None]
         cards[seat], cards[1 - seat] = mine, theirs
         state = new_game(cards[0], cards[1], seed=seed)
+        record = R.new_record(cards[0], cards[1], seed, state.first, f"{a} / {b}" if seat == 0 else f"{b} / {a}")
+        record["names"] = [deck, opponent] if seat == 0 else [opponent, deck]
         while not state.over:
-            apply(state, agents[state.active].act(state, legal_actions(state)))
+            planner = planners[state.active]
+            if planner is not None:
+                planner.last_plan = None
+            action = agents[state.active].act(state, legal_actions(state))
+            if planner is not None and planner.last_plan is not None:   # the planner's measurements, kept
+                record.setdefault("plans", []).append(_plan(state, len(record["actions"]), planner.last_plan,
+                                                            record["names"]))
+            R.add(record, action)
+            apply(state, action)
+        record["winner"] = state.winner
+        if record.get("plans"):
+            games.append(record)
         points.append(1.0 if state.winner == seat else 0.5 if state.winner not in (0, 1) else 0.0)
-    return {"k": k, "seed": seed, "points": points}
+    return {"k": k, "seed": seed, "points": points, "games": games}
 
 
 def main() -> None:
@@ -206,8 +222,14 @@ def main() -> None:
         todo = [(k, args.seed + k, args.a, args.b, args.model_a, args.model_b, args.deck, args.opponent,
                  args.phased_a, args.phased_b)
                 for k in range(pairs) if k not in done]
+        side = out[:-len(".jsonl")] if out.endswith(".jsonl") else out
         with Pool(args.workers) as pool, open(out, "a", encoding="utf-8") as fh:
             for res in pool.imap_unordered(play_pair, todo):
+                games = res.pop("games", [])
+                if games:                                  # games with a cross-turn planner's measurements
+                    with open(side + ".records.jsonl", "a", encoding="utf-8") as rf:
+                        for g in games:
+                            rf.write(json.dumps(g) + "\n")
                 done[res["k"]] = res
                 fh.write(json.dumps(res) + "\n")
                 fh.flush()

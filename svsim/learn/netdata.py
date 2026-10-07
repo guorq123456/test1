@@ -101,7 +101,7 @@ def _plan(state, i: int, plan: dict, names: list) -> dict:
             "hand": [c.defn.card_id for c in p.hand], "board": side(p.field), "opp_board": side(o.field),
             "hp": p.leader_hp, "opp_hp": o.leader_hp, "opp_hand": len(o.hand), "deck": names[me],
             "opp_deck": names[1 - me], "line": plan["line"], "chosen": plan["chosen"],
-            "next_turn": plan["next_turn"],
+            "next_turn": plan["next_turn"], "static": plan.get("static", False),
             "samples": {r: [round(v, 5) for v in vs] for r, vs in plan["samples"].items()}}
 
 
