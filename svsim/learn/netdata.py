@@ -59,14 +59,50 @@ def play(job) -> dict:
         search = _search(agents[state.active])
         if search is not None:
             search.last_root = None
+        planner = _planner(agents[state.active])
+        if planner is not None:
+            planner.last_plan = None
         action = agents[state.active].act(state, legal)
         record["search"].append(_thought(state, legal, search))
+        if planner is not None and planner.last_plan is not None:      # a cross-turn planner measured
+            record.setdefault("plans", []).append(_plan(state, len(record["actions"]), planner.last_plan,
+                                                        record["names"]))
         if explore and len(legal) > 1 and state.players[state.active].turns_taken >= 1 and rng.random() < explore:
             action = rng.choice(legal)
         R.add(record, action)
         apply(state, action)
     record["winner"] = state.winner
     return record
+
+
+def _planner(agent):
+    """The cross-turn planner inside an agent (agents.crossturn_agent), if there is one."""
+    inner = agent
+    for _ in range(5):
+        if hasattr(inner, "last_plan"):
+            return inner
+        inner = getattr(inner, "base", None)
+        if inner is None:
+            return None
+    return None
+
+
+def _plan(state, i: int, plan: dict, names: list) -> dict:
+    """A turn start's measurements by the cross-turn planner, with the position's context: the
+    value of each candidate (the search's line, keep a card, keep the bonus play point, don't evolve)
+    on each determinization, in record["plans"] (the position itself is record["actions"][:i]
+    replayed). keep:<card id> minus line is the card's keep value (agents.crossturn_agent.keep_value)."""
+    me = state.active
+    p, o = state.players[me], state.players[1 - me]
+    side = lambda cards: [[c.defn.card_id, c.atk, c.life, 2 if c.super_evolved else 1 if c.evolved else 0]
+                          for c in cards if c.defn.is_follower]
+    return {"i": i, "player": me, "turn": state.turn, "own_turn": p.turns_taken,
+            "pp": p.max_pp, "next_pp": min(p.max_pp + 1, 10), "bonus": p.bonus_ready, "ep": p.ep, "sep": p.sep,
+            "hand": [c.defn.card_id for c in p.hand], "board": side(p.field), "opp_board": side(o.field),
+            "hp": p.leader_hp, "opp_hp": o.leader_hp, "opp_hand": len(o.hand), "deck": names[me],
+            "opp_deck": names[1 - me], "line": plan["line"], "chosen": plan["chosen"],
+            "next_turn": plan["next_turn"],
+            "samples": {r: [round(v, 5) for v in vs] for r, vs in plan["samples"].items()}}
 
 
 def _search(agent):

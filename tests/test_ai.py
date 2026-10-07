@@ -438,3 +438,44 @@ def test_a_value_net_trains_saves_and_scores_its_matchup(tmp_path):
     assert abs(weights.score(mirror, 0) - SCALE * again.logit(mirror, 0)) < 1e-9
     other = new_game(rhino, ramp, seed=1, first=0)
     assert weights.score(other, 0) == Learned(models={}).score(other, 0)       # no net: the fallback
+
+
+def test_cross_turn_candidates_restrict_the_rest_of_the_turn():
+    from svsim.agents.crossturn_agent import NONE, forbids, principal_line, restrictions
+    from svsim.core.actions import EndTurn, Evolve, PlayCard, UseBonusPP
+    from svsim.search.mcts import Node
+    line = [("B",), ("P", ("H", True, 101, 2), (), ()), ("E", ("F", True, 0, 102), False, (), ()),
+            ("P", ("H", True, 101, 2), (), ()), ("T",)]
+    assert restrictions(line) == [NONE, "keep:101", "save", "noevo"]
+    assert restrictions([("T",)]) == [NONE] and forbids(NONE) is None
+    assert forbids("save")(None, UseBonusPP()) and not forbids("save")(None, EndTurn())
+    assert forbids("noevo")(None, Evolve(5)) and not forbids("noevo")(None, PlayCard(5))
+    root, a, b, c = Node(), Node(), Node(), Node()
+    root.children = {("B",): a, ("T",): b}
+    a.visits, b.visits = 5, 3
+    a.children = {("T",): c}
+    c.visits = 4
+    assert principal_line(root) == [("B",), ("T",)]
+
+
+def test_keep_value_and_the_planners_records():
+    import random
+    from svsim.agents.crossturn_agent import CrossTurnAgent, keep_value
+    from svsim.cards import decks
+    from svsim.core.actions import PlayCard
+    from svsim.core.engine import apply, legal_actions, new_game
+    from svsim.learn.netdata import play
+    from svsim.tools.arena import make_agent
+    ramp = decks.build(decks.RAMP_DRAGON)
+    state, rng = new_game(ramp, ramp, seed=8, first=0), random.Random(0)
+    while state.phase.name != "MAIN" or state.players[state.active].turns_taken < 3:
+        apply(state, rng.choice(legal_actions(state)))
+    agent = CrossTurnAgent(make_agent("mcts-raw:30+learned+phased", 1), samples=2, next_turn=True)
+    values = [keep_value(state, state.active, c.uid, agent) for c in state.players[state.active].hand]
+    assert all(v is None or -1.0 <= v <= 1.0 for v in values)
+    assert keep_value(state, 1 - state.active, state.players[state.active].hand[0].uid, agent) is None
+    record = play((0, 3, "ramp", "ramp", "mcts:20+plan+learned+phased+crossn2", 0.0))
+    assert record["names"] == ["ramp", "ramp"] and record["plans"]
+    plan = record["plans"][0]
+    assert plan["samples"]["line"] and len(plan["samples"]["line"]) == 2 and plan["deck"] == "ramp"
+    assert all(0 <= p["i"] < len(record["actions"]) for p in record["plans"])

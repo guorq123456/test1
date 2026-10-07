@@ -63,6 +63,36 @@ def principal_line(root, max_len: int = 40) -> list:
     return out
 
 
+def _plain(part):
+    """A key's part as JSON-friendly data."""
+    return [_plain(x) for x in part] if isinstance(part, tuple) else part
+
+
+def keep_value(state, player: int, card_uid: int, agent=None, samples: int = 8) -> float | None:
+    """What keeping a card in hand this turn is worth, against the search's own line that plays it now:
+    the mean, over `samples` determinizations, of (keep it this turn, the opponent's turn by the policy
+    head, the own next turn by the policy head, which can play it then; ENDED model) minus (the same
+    after the line). A win probability difference; None if the line doesn't play the card (or it isn't
+    in `player`'s hand, or it isn't their decision). Hand values come only from such plans
+    (docs/architecture.md, §9.2: no fixed value per card)."""
+    if state.active != player or state.phase != Phase.MAIN:
+        return None
+    card = state.in_hand(player, card_uid)
+    if card is None:
+        return None
+    if agent is None:
+        from svsim.tools.arena import make_agent
+        agent = make_agent("mcts-raw:100+learned+phased", 0)
+        agent = CrossTurnAgent(agent, samples=samples, next_turn=True)
+    agent.search.choose(state)
+    line = principal_line(agent.search.last_root)
+    keep = f"keep:{card.defn.card_id}"
+    if keep not in restrictions(line):
+        return None
+    out = agent.outcomes(state, line, [NONE, keep])
+    return sum(a - b for a, b in zip(out[keep], out[NONE])) / len(out[NONE])
+
+
 def restrictions(line: list) -> list:
     """The candidates' restrictions for a principal line: none, keep each card it plays, keep the bonus
     play point, don't evolve."""
@@ -100,7 +130,7 @@ def forbids(restriction: str):
 
 class CrossTurnAgent:
     def __init__(self, base, policy=None, samples: int = 4, margin: float = 0.0, seed: int = 0,
-                 max_steps: int = 40, next_turn: bool = False):
+                 max_steps: int = 40, next_turn: bool = False, z: float = 0.0):
         self.base = base                     # an MCTSAgent (the lethal search stays outside)
         self.search: ISMCTS = base.search
         if policy is None:
@@ -108,7 +138,8 @@ class CrossTurnAgent:
             policy = MatchupPrior()
         self.policy = policy
         self.samples = samples
-        self.margin = margin
+        self.margin = margin                 # a restriction must beat the line by more than this ...
+        self.z = z                           # ... and by more than z standard errors of the paired difference
         self.max_steps = max_steps
         self.next_turn = next_turn           # score after the own next turn (policy head) with the ENDED model
         self.rng = random.Random(seed)
@@ -117,6 +148,7 @@ class CrossTurnAgent:
         self._veto = self.search.veto        # the base search's own veto, kept under a restriction
         self.picked: dict = {}               # restriction kind -> turns (statistics)
         self.values: dict = {}
+        self.last_plan: dict | None = None   # the last turn start's measurements (learn.netdata records them)
 
     # --- the play-outs ------------------------------------------------------------------------
 
@@ -171,18 +203,30 @@ class CrossTurnAgent:
         score = evaluate(s, me, self.search.weights, player_moves_next=moves_next)
         return 1.0 / (1.0 + math.exp(-max(-60.0, min(60.0, score / SCALE))))
 
-    def assess(self, state, line: list, candidates: list) -> dict:
+    def outcomes(self, state, line: list, candidates: list) -> dict:
+        """{restriction: [value on each determinization]} (the same determinizations for all)."""
         me = state.active
         seeds = [self.rng.getrandbits(64) for _ in range(self.samples)]
-        totals = {r: 0.0 for r in candidates}
+        out = {r: [] for r in candidates}
         for sd in seeds:
             base = determinize(state, me, random.Random(sd))
             for r in candidates:
                 s = base.clone()
                 self._own_turn(s, me, line, forbids(r))
                 self._their_turn(s, me)
-                totals[r] += self._value(s, me)
-        return {r: v / len(seeds) for r, v in totals.items()}
+                out[r].append(self._value(s, me))
+        return out
+
+    def assess(self, state, line: list, candidates: list) -> dict:
+        return {r: sum(v) / len(v) for r, v in self.outcomes(state, line, candidates).items()}
+
+    def _better(self, values: list, base: list) -> bool:
+        """Whether a restriction's values beat the line's by more than the margin and z standard errors."""
+        diffs = [a - b for a, b in zip(values, base)]
+        n = len(diffs)
+        mean = sum(diffs) / n
+        se = math.sqrt(sum((d - mean) ** 2 for d in diffs) / max(n - 1, 1) / n) if n > 1 else 0.0
+        return mean > self.margin and mean > self.z * se
 
     # --- playing ------------------------------------------------------------------------------
 
@@ -213,10 +257,15 @@ class CrossTurnAgent:
             candidates = restrictions(line)
             if len(candidates) == 1:
                 return choice
-            values = self.assess(state, line, candidates)
+            samples = self.outcomes(state, line, candidates)
+            values = {r: sum(v) / len(v) for r, v in samples.items()}
             self.values = values
             best = max(candidates, key=lambda r: (values[r], r == NONE))
-            if best == NONE or values[best] <= values[NONE] + self.margin:
+            if best != NONE and not self._better(samples[best], samples[NONE]):
+                best = NONE
+            self.last_plan = {"turn": state.turn, "line": [list(map(_plain, k)) for k in line],
+                              "samples": samples, "chosen": best, "next_turn": self.next_turn}
+            if best == NONE:
                 self.picked[NONE] = self.picked.get(NONE, 0) + 1
                 return choice
             kind = best.split(":")[0]
