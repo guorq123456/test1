@@ -232,9 +232,11 @@ def contexts(state: GameState, side: int, hidden: bool) -> tuple[list[float], li
 _UNSEEN: dict = {}                     # contexts' card parts by (hidden, cards, hand, pp, fingerprint)
 
 
-def _fingerprint(cards) -> int:
-    """Which cards (id and current cost) are in `cards`, in any order: equal for equal multisets."""
-    return sum(hash((c.defn.card_id, c.cost)) for c in cards)
+def _fingerprint(cards) -> tuple:
+    """Which cards (id and current cost) are in `cards`, in any order: equal exactly for equal multisets.
+    (A sum of tuple hashes was not: two Ramp decks of 31 differing in four cards each summed alike, and the
+    cache gave one the other's value, 2026-10-07.)"""
+    return tuple(sorted(c.defn.card_id * 1024 + c.cost for c in cards))
 
 
 def _remember(key, value):
@@ -288,7 +290,7 @@ def deck_payoff(deck, pp: int, skip: int = 0, turns: int = 3, discount: float = 
     for c in deck:
         t = tier(c.defn)
         if t > 0:
-            key = c.defn.card_id
+            key = (c.defn.card_id, c.cost)          # copies at another cost count apart: any order, the same
             counts[key] = (counts[key][0] + 1, t, c.cost) if key in counts else (1, t, c.cost)
     best = 0.0
     size = len(deck) - skip

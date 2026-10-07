@@ -181,6 +181,20 @@ def test_contexts_remember_the_unseen_cards_without_changing_a_value():
     cheaper = deck[0].copy()
     cheaper.cost -= 1
     assert F._fingerprint([cheaper] + deck[1:]) != F._fingerprint(deck)     # a cost change is another key
+    from svsim.cards.pool import POOL                                         # two different multisets whose
+    from svsim.core.state import CardInstance                                 # tuple hashes summed alike
+    def cards(spec):
+        out = []
+        for cid, cost, n in spec:
+            for _ in range(n):
+                c = CardInstance.create(len(out) + 1, POOL[cid], 0)
+                c.cost = cost
+                out.append(c)
+        return out
+    a = cards([(10944120, 7, 2), (10644110, 7, 1), (10042310, 3, 1)])
+    b = cards([(10844120, 8, 1), (10544110, 10, 1), (10644120, 2, 1), (10542310, 4, 1)])
+    assert sum(hash((c.defn.card_id, c.cost)) for c in a) == sum(hash((c.defn.card_id, c.cost)) for c in b)
+    assert F._fingerprint(a) != F._fingerprint(b)
 
 
 def test_evolution_point_usage_is_read_from_a_record():
@@ -417,6 +431,20 @@ def test_a_keeping_branch_can_be_left_out_of_the_in_turn_model_only():
     assert not any(r[1] == ACT for r in without) and any(r[1] == ACT for r in full)
     assert sum(r[1] == ENDED for r in without) == sum(r[1] == ENDED for r in full) > 0
     assert len(_rows((control, 3, 1.0, 1.0, 0.0))) == len(_rows((control, 3, 1.0, 1.0, 1.0)))
+
+
+def test_a_deck_s_payoff_does_not_depend_on_its_order():
+    from svsim.cards import decks
+    from svsim.core.engine import new_game
+    from svsim.learn.features import deck_payoff
+    state = new_game(decks.build(decks.RAMP_DRAGON), decks.build(decks.RAMP_DRAGON), seed=4, first=0)
+    pool = state.players[0].hand + state.players[0].deck
+    justice = [c for c in pool if c.defn.card_id == 10544110][:2]
+    justice[0].cost -= 3                                     # one copy made cheaper: 7 and 10
+    filler = [c for c in pool if c.cost <= 1][:10]
+    deck = justice + filler
+    values = {round(deck_payoff(order, 6), 12) for order in (deck, deck[::-1], [justice[1]] + filler + [justice[0]])}
+    assert len(values) == 1
 
 
 def test_a_payoff_card_still_in_the_deck_counts_by_its_draw_chances():
