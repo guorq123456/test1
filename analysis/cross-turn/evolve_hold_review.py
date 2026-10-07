@@ -1,28 +1,19 @@
-"""Salem's evolve_hold turns one by one: what could be evolved, what was kept, what came of it; noise marked.
+"""Salem's held turns one by one: what could be evolved, what was kept, what came of it.
 
     cd <svsim checkout> && PYTHONPATH=. python3 <this> analysis/mirror-regression/salem_games.json \
-        analysis/mirror-regression/evolve_probes.json [--md OUT.md] [--marks OUT.json] \
-        [--use-marks MARKS.json] [--results v2=FILE ...]
+        analysis/mirror-regression/evolve_probes.json [--md OUT.md] [--results v2=FILE ...]
 
-Salem on the holds (2026-10-07, through the architecture thread): some are noise. Holding Erntz on
-the field unevolved to evolve it next turn only works because the web bot did not answer it; a
-normal opponent never lets it live to the next turn. The same logic for every hold: if what the hold
-paid for only came about because the opponent did not remove a follower already on Salem's field,
-the hold is marked "疑似噪声" (suspected noise). By the first evolution in Salem's next two own
-turns:
-- it evolved a follower that was on Salem's field at the end of the hold turn, or one played on the
-  turn after and evolved the turn after that (either way it lived through an opponent's turn): 疑似噪声;
-- it evolved a card that was in Salem's hand at the end of the hold turn, on the turn it was played:
-  保留 (kept for a card in hand);
-- it evolved a card drawn or summoned later, on the turn it was played: 保留;
-- no evolution in the next two own turns: 看不出 (counted as kept; for Salem to look at).
-Turns where Erntz came down unevolved (erntz_unevolved in the probes: Salem ruled it another way to use
-Erntz, as strong as evolving it, not a held point) keep their rows in the table, marked 不计入, and
-are left out of the baseline. The marks are written to --marks; Salem's corrections go back in
-through --use-marks. Reported: the
-Salem baseline (hold rate overall and in the two acceptance cells, "收益牌在手、本回合够不着" and
-"只能普通进化") and each --results file's evolve_hold pass rate, with every turn and after dropping
-the noise.
+The method rule, in Salem's words (2026-10-07): 「噪声行号我不回——因为我也无法判断是否为噪声，复杂局面下
+不进化和进化往往都是从大量变量下得出的结论，不能简单下定论」. No single turn is judged; only whole cells
+are read. So every held turn counts. The exception is a turn where Erntz came down unevolved
+(erntz_unevolved in the probes). Salem ruled that another way to use Erntz, as strong as evolving it,
+and not a held point; it keeps its row in the table, marked 不计入, and is left out of the baseline.
+Sensitivity check only, never used for conclusions or acceptance: the turns whose first evolution in
+the next two own turns was a follower that had already lived through an opponent's turn (its payoff
+needed the opponent to leave it standing), listed after the table with the baseline without them.
+Reported: the Salem baseline (hold rate overall and in the two acceptance cells, "收益牌在手、本回合
+够不着" and "只能普通进化"), and each --results file's evolve_hold pass rate (and the erntz_unevolved
+probe's, for a run of it).
 """
 import json
 import os
@@ -41,16 +32,11 @@ ERNTZ = "约束的《正义》·伊兰翠"
 SAGATSUMATSU = "断头的斩姬·相枛津"
 HEADER = """# Salem 能进化却没进化的 36 个回合
 
-这些回合是 evolve_hold 探针的来源：bot 在同一局面下也不进化，才算通过。表里的"标记"是按一条规则自动打的，请 Salem 直接改。
+这些回合是 evolve_hold 探针的来源：bot 在同一局面下也不进化，才算通过。
 
-**规则**：看之后两个自己的回合里第一次进化的是哪张。
-- 那张在进化前已经在场、扛过了对手一个回合（例如"正义先不进化、下回合再进化"），记**疑似噪声**：要对手没解掉它才兑现，正常对手不会让它活下来。
-- 那张是从手里打出、当回合就进化的，记**保留**。
-- 之后两回合没进化，记**看不出**。
+**方法规矩**（Salem 原话，2026-10-07）：「噪声行号我不回——因为我也无法判断是否为噪声，复杂局面下不进化和进化往往都是从大量变量下得出的结论，不能简单下定论」。所以不对单个局面的进化与否下定论，只看整格统计：下面每一行都计入，表里不写对单个回合的判断。
 
-**怎么改**：觉得是噪声的行，把标记改成"噪声"或直接划掉；觉得不是噪声的，改成"保留"。理由写一句就够了。
-
-**正义不进化面**：Salem 裁定（2026-10-07）"正义不主动进化在多数情况下是另一种用法，和进化一样强力"。所以正义当回合打出、没进化的 12 行标"不计入"，不算留点，另做一个探针（erntz_unevolved：bot 在同一局面也出正义、不进化它）。行号不变。
+**正义不进化面**：Salem 裁定（2026-10-07）"正义不主动进化在多数情况下是另一种用法，和进化一样强力"。所以正义当回合打出、没进化的 12 行标"不计入"，不算留点，另做一个探针（erntz_unevolved：bot 在同一局面也出正义、不进化它）。evolve_hold 的样本是 36 − 12 = 24 行，全部计入。行号不变。
 
 """
 
@@ -121,25 +107,16 @@ def review(games, probe, cache):
             later.append(f"{'下回合' if j == 0 else '再下回合'}：{'、'.join(evo) if evo else '没进化'}")
     else:
         later.append("对局在对手回合结束")
-    if first is None:
-        mark, why = "看不出", "之后两回合没进化"
-    elif first[0] == "这回合场上那张":
-        mark = "疑似噪声"
-        why = "正义先不进化、下回合再进化" if first[1] == ERNTZ else \
-            f"下回合进化的是场上那张 {short_name(first[1])}，要对手没解掉它才兑现"
-    elif first[2]:
-        mark = "疑似噪声"
-        why = f"进化的 {short_name(first[1])} 是前一回合出的，要对手没解掉它才兑现"
-    elif first[0] == "这回合手里那张":
-        mark, why = "保留", f"留给手里的 {short_name(first[1])}"
-    else:
-        mark, why = "保留", f"之后进化的是后来抽到或新上场的 {short_name(first[1])}"
+    # sensitivity check only: the first evolution after the hold went to a follower that had lived through an
+    # opponent's turn (on the field at the end of the hold turn, or played the turn after and evolved the turn
+    # after that), so what the hold paid for needed the opponent to leave it standing
+    survivor = first is not None and (first[0] == "这回合场上那张" or first[2])
     ctx = probe["context"]
     s754 = {"hand": any(name(c) == SAGATSUMATSU for c in st0.players[0].hand),
             "field": any(name(c) == SAGATSUMATSU for c in st0.players[0].followers)}
     return {"id": probe["id"], "game": gid, "own_turn": ctx["own_turn"], "first": ctx["first"], "s754": s754,
-            "hp": f"{ctx['hp']}/{ctx['opp_hp']}", "targets": "、".join(sorted(set(targets.values()))),
-            "super": supers, "kept": kept, "later": "；".join(later), "mark": mark, "why": why,
+            "hp": f"{ctx['hp']}/{ctx['opp_hp']}", "targets": "、".join(sorted(set(targets.values()))), "survivor": survivor,
+            "super": supers, "kept": kept, "later": "；".join(later),
             "erntz_plain": erntz_plain, "row": turn_row(turn)}
 
 
@@ -171,17 +148,8 @@ def main():
     holds = [r for r in rows if r["id"].endswith(("evolve_hold", "erntz_unevolved"))]
     plain = {r["id"] for r in holds if r["id"].endswith("erntz_unevolved")}
     for r in holds:
-        if r["id"] in plain:
-            r["mark"], r["why"] = "不计入", "正义不进化面（Salem 裁定：和进化一样强力的另一种用法，不是留点）"
-    if "--use-marks" in args:
-        marks = json.load(open(args[args.index("--use-marks") + 1], encoding="utf-8"))
-        for r in holds:
-            m = marks.get(r["id"]) or marks.get(old_id(r["id"]))
-            if m and r["id"] not in plain:
-                r["mark"] = m["mark"]
-    if "--marks" in args:
-        json.dump({r["id"]: {"mark": r["mark"], "why": r["why"]} for r in holds},
-                  open(args[args.index("--marks") + 1], "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        r["mark"] = "不计入：正义不进化面（Salem 裁定：和进化一样强力的另一种用法，不是留点）" if r["id"] in plain else "计入"
+    survivors = [i for i, r in enumerate(holds, 1) if r["survivor"] and r["id"] not in plain]
     if "--md" in args:
         s7 = {"hold": holds, "use": [r for r in rows if r["id"].endswith("evolve_use")]}
         count = lambda cat, k: sum(r["s754"][k] for r in s7[cat])
@@ -196,15 +164,20 @@ def main():
         for i, r in enumerate(holds, 1):
             body += label_first(f"| {i} | {r['game']} | 第 {r['own_turn']} 回合（{'先' if r['first'] else '后'}手，{r['hp']}） | "
                      f"{r['targets']}{'；能超进化' if r['super'] else '；只能普通进化'} | {r['kept']} | {r['later']} | "
-                     f"**{r['mark']}**：{r['why']} |\n")
+                     f"{r['mark']} |\n")
+        t_all, t_s = rates(rows, plain), rates(rows, plain | {holds[i - 1]["id"] for i in survivors})
+        pct = lambda t, k: f"{t[k][0]}/{t[k][1]}（{t[k][0] / max(t[k][1], 1):.0%}）"
+        body += ("\n**附：敏感性对照**（不用于结论和验收）。之后第一次进化的那张，进化前已经扛过对手一个回合的行："
+                 + ("、".join(f"第 {i} 行" for i in survivors) or "无")
+                 + f"。24 行全量：忍住率总体 {pct(t_all, '总体')}、只能普通进化 {pct(t_all, '只能普通进化')}、"
+                 f"收益牌在手够不着 {pct(t_all, '收益牌在手、本回合够不着')}；去掉这些行：总体 {pct(t_s, '总体')}、"
+                 f"只能普通进化 {pct(t_s, '只能普通进化')}、收益牌在手够不着 {pct(t_s, '收益牌在手、本回合够不着')}。\n")
         with open(args[args.index("--md") + 1], "w", encoding="utf-8") as f:
             f.write(body)
-    print("标记：" + "，".join(f"{k} {n}" for k, n in Counter(r["mark"] for r in holds).items()))
-    for r in holds:
-        if "噪声" in r["mark"]:
-            print(f"  {r['id']}：{r['why']}")
-    noise = {r["id"] for r in holds if "噪声" in r["mark"]}        # "疑似噪声", or Salem's "噪声"
-    drops = (("旧：含正义不进化面", set()), ("(b) 基线：去掉正义不进化面", plain), ("再去掉疑似噪声", noise | plain))
+    print(f"evolve_hold 样本 {len(holds) - len(plain)} 条全部计入；正义不进化面 {len(plain)} 条不计入")
+    sens = {holds[i - 1]["id"] for i in survivors}
+    print(f"敏感性对照（不用于结论）：之后进化的那张已扛过对手一个回合的行 {survivors}")
+    drops = (("旧：含正义不进化面", set()), ("(b) 基线：24 条全量", plain), ("敏感性：再去掉上面几行", sens | plain))
     print("\nSalem 基线（能进化的回合里忍住的比例）：")
     tables = [(title, rates(rows, d)) for title, d in drops]
     for key in tables[0][1]:
