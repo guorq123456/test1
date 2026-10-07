@@ -32,6 +32,7 @@ MAX_FUSE_CHOICES = 32                     # cap on distinct fuse combinations of
 
 def new_game(deck0: list[CardDef], deck1: list[CardDef], seed: int | None = None,
              first: int | None = None, max_turns: int = 60) -> GameState:
+    from svsim.cards.decks import identify
     rng = random.Random(seed)
     if first is None:
         first = rng.randrange(2)
@@ -40,6 +41,7 @@ def new_game(deck0: list[CardDef], deck1: list[CardDef], seed: int | None = None
     for i, deck in enumerate((deck0, deck1)):
         p = state.players[i]
         p.deck = [state.new_instance(defn, i) for defn in deck]
+        p.deck_name = identify(deck) or ""
         rng.shuffle(p.deck)
         p.hand = [p.deck.pop() for _ in range(OPENING_HAND)]
         faiths = {d.faith.card_id: d.faith for d in deck if d.faith is not None}

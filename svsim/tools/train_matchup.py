@@ -56,7 +56,7 @@ def main() -> None:
     args = parser.parse_args()
     mine, theirs = decks.build(DECKS[args.deck][1]), decks.build(DECKS[args.opponent][1])
     craft, op_craft = decks.craft_of(mine), decks.craft_of(theirs)
-    out = WEIGHTS / f"{craft.name.lower()}-{op_craft.name.lower()}.json"
+    out = WEIGHTS / f"{args.deck}-{args.opponent}.json"             # filed under the named decks
     folder = Path(tempfile.mkdtemp())
     for f in WEIGHTS.glob("*.json"):
         shutil.copy(f, folder / f.name)

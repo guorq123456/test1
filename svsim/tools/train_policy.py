@@ -1,6 +1,6 @@
 """Train the policy head (learn.policy) on the visit counts recorded in self-play (learn.netdata).
 
-    python -m svsim.tools.train_policy --games games_v1.jsonl --out svsim/learn/policies/dragon-dragon.npz
+    python -m svsim.tools.train_policy --games games_v1.jsonl --out svsim/learn/policies/ramp-ramp.npz
 
 A tenth of the games is held out; the report gives how often the head's top
 move is the search's most-visited one there (at the turn's first decision

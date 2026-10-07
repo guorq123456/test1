@@ -303,6 +303,61 @@ def test_a_matchup_model_is_used_where_there_is_one(tmp_path):
     assert learned.score(other, 0) == SCALE * 1.0
 
 
+def test_decks_are_known_by_name_through_the_game():
+    from svsim.cards import decks
+    from svsim.core.engine import new_game
+    from svsim.learn.model import deck_key, matchup_keys
+    from svsim.core.enums import Craft
+    ramp, face, rhino = (decks.build(decks.NAMED[k]) for k in ("ramp", "face", "rhino"))
+    assert decks.identify(ramp) == "ramp" and decks.identify(face) == "face" and decks.identify(rhino) == "rhino"
+    state = new_game(ramp, face, seed=3, first=0)
+    assert [p.deck_name for p in state.players] == ["ramp", "face"]
+    copy = state.clone()
+    copy.players[0].deck.extend(copy.players[0].deck[:4])  # more copies than the list has (Dragonewt Promoter)
+    assert decks.identify(copy.players[0].deck) is None
+    assert deck_key(copy, 0) == "ramp"                       # the registered deck still counts
+    assert matchup_keys(copy, 1) == [("face", "ramp"), (Craft.DRAGON, Craft.DRAGON)]
+    other = new_game(ramp, ramp[:-1] + rhino[:1], seed=3, first=0)
+    assert other.players[1].deck_name == "" and deck_key(other, 1) is None
+    assert matchup_keys(other, 0) == [(Craft.DRAGON, Craft.DRAGON)]
+
+
+def test_matchup_models_by_deck_come_before_the_class_pair(tmp_path):
+    from svsim.cards import decks
+    from svsim.core.engine import new_game
+    from svsim.core.enums import Craft
+    from svsim.learn.features import names
+    from svsim.learn.model import SCALE, Learned, LinearValue, load_all
+    from svsim.learn.phased import PhasedLearned, load
+
+    def constant(bias):
+        n = len(names(False, 2))
+        return LinearValue([0.0] * (n - 1) + [bias], [0.0] * n, [1.0] * n, False, version=2)
+
+    constant(1.0).save(tmp_path / "dragon.json")
+    constant(2.0).save(tmp_path / "ramp-ramp.json")
+    constant(3.0).save(tmp_path / "dragon-dragon.json")       # an old file by classes still reads
+    models = load_all(tmp_path)
+    assert set(models) == {Craft.DRAGON, ("ramp", "ramp"), (Craft.DRAGON, Craft.DRAGON)}
+    ramp, face, rhino = (decks.build(decks.NAMED[k]) for k in ("ramp", "face", "rhino"))
+    learned = Learned(models=models)
+    assert learned.score(new_game(ramp, ramp, seed=1, first=0), 0) == SCALE * 2.0
+    assert learned.score(new_game(face, ramp, seed=1, first=0), 0) == SCALE * 3.0
+    assert learned.score(new_game(ramp, rhino, seed=1, first=0), 0) == SCALE * 1.0
+    del models[(Craft.DRAGON, Craft.DRAGON)]
+    assert learned.score(new_game(face, ramp, seed=1, first=0), 0) == SCALE * 1.0
+    folder = tmp_path / "phased"
+    folder.mkdir()
+    constant(4.0).save(folder / "ramp-ramp-ended.json")
+    constant(5.0).save(folder / "dragon-dragon-act.json")
+    phased = PhasedLearned(models=load(folder), fallback=learned)
+    assert set(phased.models) == {("ramp", "ramp", "ended"), (Craft.DRAGON, Craft.DRAGON, "act")}
+    mirror, other = new_game(ramp, ramp, seed=1, first=0), new_game(face, ramp, seed=1, first=0)
+    assert phased.score(mirror, 0) == SCALE * 4.0
+    assert phased.score(mirror, 0, player_moves_next=True) == SCALE * 5.0
+    assert phased.score(other, 0) == learned.score(other, 0)  # no model for Face Dragon: the fallback
+    assert phased.score(other, 0, player_moves_next=True) == SCALE * 5.0
+
 def test_a_hidden_layer_adds_to_the_linear_score(tmp_path):
     import math
     from svsim.cards import decks
@@ -374,7 +429,7 @@ def test_a_value_net_trains_saves_and_scores_its_matchup(tmp_path):
                          say=lambda s: None)
     z = net.forward(X[1600:])
     assert np.mean((z > 0) == (y[1600:] > 0.5)) > 0.8
-    net.save(tmp_path / "dragon-dragon.npz")
+    net.save(tmp_path / "ramp-ramp.npz")
     again = load_nets(tmp_path)[next(iter(load_nets(tmp_path)))]
     assert np.allclose(again.forward(X[:5]), net.forward(X[:5]))
     ramp, rhino = decks.build(decks.RAMP_DRAGON), decks.build(decks.RHINO_FOREST)

@@ -21,11 +21,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from multiprocessing import Pool
 from pathlib import Path
 
-from svsim.core.enums import Craft
-from svsim.learn.model import SCALE, Learned, LinearValue, deck_craft
+from svsim.learn.model import SCALE, Learned, LinearValue, matchup_keys, parse_key
 
 STOCK = ("me_hand_", "me_pool_")
 
@@ -39,8 +37,9 @@ def _rows(line: str) -> list:
 
 
 def load(folder: Path | None = None) -> dict:
-    """{(craft, opponent craft, "act" | "ended"): LinearValue, or a learn.net.ValueNet from an .npz file
-    (the same logit(state, player); the smooth network can stand in for either moment)}"""
+    """{(deck, opponent deck, "act" | "ended"): LinearValue, or a learn.net.ValueNet from an .npz file
+    (the same logit(state, player); the smooth network can stand in for either moment). Files are
+    <deck>-<deck>-<moment> for named decks (cards.decks.NAMED) or <craft>-<craft>-<moment>."""
     folder = folder or Path(os.environ.get("SVSIM_PHASED") or Path(__file__).resolve().parent / "phased_models")
     out = {}
     if not folder.is_dir():
@@ -48,7 +47,7 @@ def load(folder: Path | None = None) -> dict:
     for path in sorted(folder.glob("*-*-*.json")) + sorted(folder.glob("*-*-*.npz")):
         mine, theirs, moment = path.stem.split("-")
         try:
-            key = (Craft[mine.upper()], Craft[theirs.upper()], moment)
+            key = (parse_key(mine), parse_key(theirs), moment)
         except KeyError:
             continue
         if path.suffix == ".npz":
@@ -68,8 +67,9 @@ class PhasedLearned:
         from svsim.search.evaluate import WIN
         if state.winner is not None:
             return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
-        key = (deck_craft(state, player), deck_craft(state, 1 - player))
-        model = self.models.get(key + ("act" if player_moves_next else "ended",))
+        moment = "act" if player_moves_next else "ended"
+        model = next((self.models[k + (moment,)] for k in matchup_keys(state, player) if k + (moment,) in self.models),
+                     None)
         if model is None:
             return self.fallback.score(state, player, player_moves_next)
         return SCALE * model.logit(state, player)
@@ -77,13 +77,14 @@ class PhasedLearned:
 
 def main() -> None:
     import numpy as np
+    from multiprocessing import Pool
     from svsim.learn import fit as F
     from svsim.learn.encode import ACT, ENDED
     from svsim.learn.features import names, signs
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--games", nargs="+", required=True)
     parser.add_argument("--out", required=True)
-    parser.add_argument("--matchup", default="dragon-dragon")
+    parser.add_argument("--matchup", default="ramp-ramp", help="<deck>-<deck> (cards.decks.NAMED keys)")
     parser.add_argument("--workers", type=int, default=2)
     parser.add_argument("--q-weight", type=float, default=0.0,
                         help="label = (1 - w) * result + w * the search's value where the search decided")

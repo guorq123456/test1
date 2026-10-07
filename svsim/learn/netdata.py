@@ -52,6 +52,7 @@ def play(job) -> dict:
     state = new_game(cards[0], cards[1], seed=seed * 100003 + g)
     record = R.new_record(cards[0], cards[1], seed * 100003 + g, state.first, f"{spec} / {spec}")
     record["g"], record["explore"] = g, explore
+    record["names"] = [deck, opponent] if seat == 0 else [opponent, deck]   # ui.session.DECKS keys by seat
     record["search"] = []
     while not state.over:
         legal = legal_actions(state)

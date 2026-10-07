@@ -73,9 +73,36 @@ def deck_craft(state: GameState, player: int) -> Craft:
     return crafts.most_common(1)[0][0] if crafts else Craft.NEUTRAL
 
 
+def deck_key(state: GameState, player: int) -> str | None:
+    """The named deck (cards.decks.NAMED) `player` registered (engine.new_game files it), else the one
+    the cards they have fit (a position built by hand); None for another deck."""
+    p = state.players[player]
+    if p.deck_name is not None:
+        return p.deck_name or None
+    from svsim.cards.decks import identify
+    return identify(p.hand + p.deck + p.field + p.leader_area)
+
+
+def matchup_keys(state: GameState, player: int) -> list:
+    """The keys a matchup's model may be filed under, most specific first: the pair of named decks,
+    then the pair of classes."""
+    out = []
+    mine, theirs = deck_key(state, player), deck_key(state, 1 - player)
+    if mine is not None and theirs is not None:
+        out.append((mine, theirs))
+    out.append((deck_craft(state, player), deck_craft(state, 1 - player)))
+    return out
+
+
+def parse_key(part: str):
+    """A file-name part: a named deck's key (cards.decks.NAMED) or a class name."""
+    from svsim.cards.decks import NAMED
+    return part if part in NAMED else Craft[part.upper()]
+
+
 class Learned:
-    """Evaluation with each deck's learned model: the one for the matchup (keyed by the
-    deck's craft and the opponent's) if there is one, else the deck's (by craft); the
+    """Evaluation with each deck's learned model: the one for the matchup (filed under the pair
+    of named decks, else the pair of classes) if there is one, else the deck's (by craft); the
     hand-set one otherwise."""
 
     def __init__(self, models: dict | None = None, fallback=None):
@@ -88,8 +115,8 @@ class Learned:
         from svsim.search.evaluate import WIN, evaluate
         if state.winner is not None:
             return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
-        mine = deck_craft(state, player)
-        model = self.models.get((mine, deck_craft(state, 1 - player))) or self.models.get(mine)
+        model = next((self.models[k] for k in matchup_keys(state, player) if k in self.models), None) \
+            or self.models.get(deck_craft(state, player))
         if model is None:
             return evaluate(state, player, self.fallback, player_moves_next)
         return SCALE * model.logit(state, player)
@@ -97,15 +124,18 @@ class Learned:
 
 def load_all(folder: Path | None = None) -> dict:
     """The models in `folder` (default: $SVSIM_WEIGHTS, else svsim/learn/weights):
-    <craft>.json for a deck, <craft>-<opponent craft>.json for a matchup."""
+    <craft>.json for a deck, <deck>-<opponent deck>.json (named decks, cards.decks.NAMED) or
+    <craft>-<opponent craft>.json for a matchup."""
     import os
     folder = folder or Path(os.environ.get("SVSIM_WEIGHTS") or WEIGHTS)
     out = {}
     for path in folder.glob("*.json"):
         try:
-            crafts = [Craft[part.upper()] for part in path.stem.split("-")]
+            keys = [parse_key(part) for part in path.stem.split("-")]
         except KeyError:
             continue
-        if len(crafts) in (1, 2):
-            out[crafts[0] if len(crafts) == 1 else tuple(crafts)] = LinearValue.load(path)
+        if len(keys) == 1 and isinstance(keys[0], Craft):
+            out[keys[0]] = LinearValue.load(path)
+        elif len(keys) == 2 and isinstance(keys[0], Craft) == isinstance(keys[1], Craft):
+            out[tuple(keys)] = LinearValue.load(path)
     return out

@@ -29,7 +29,7 @@ import numpy as np
 
 from svsim.core.enums import Craft
 from svsim.learn import encode as E
-from svsim.learn.model import SCALE, Learned, deck_craft
+from svsim.learn.model import SCALE, Learned, matchup_keys, parse_key
 
 NETS = Path(__file__).resolve().parent / "nets"
 
@@ -160,14 +160,15 @@ class ValueNet:
 
 
 def load_nets(folder: Path | None = None) -> dict:
-    """{(craft, opponent craft): ValueNet} from <craft>-<craft>.npz files."""
+    """{(deck, opponent deck) or (craft, opponent craft): ValueNet} from <deck>-<deck>.npz or
+    <craft>-<craft>.npz files."""
     folder = folder or Path(os.environ.get("SVSIM_NETS") or NETS)
     out = {}
     if not folder.exists():
         return out
     for path in folder.glob("*.npz"):
         try:
-            mine, theirs = (Craft[part.upper()] for part in path.stem.split("-"))
+            mine, theirs = (parse_key(part) for part in path.stem.split("-"))
         except (KeyError, ValueError):
             continue
         out[(mine, theirs)] = ValueNet.load(path)
@@ -190,7 +191,7 @@ class NetLearned:
         from svsim.search.evaluate import WIN
         if state.winner is not None:
             return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
-        net = self.nets.get((deck_craft(state, player), deck_craft(state, 1 - player)))
+        net = next((self.nets[k] for k in matchup_keys(state, player) if k in self.nets), None)
         if net is None:
             return self.fallback.score(state, player, player_moves_next)
         if self.end_now and state.active == player and not player_moves_next:

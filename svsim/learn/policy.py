@@ -230,19 +230,18 @@ class MatchupPrior:
 
     def __init__(self, folder: Path | None = None):
         import os
-        from svsim.core.enums import Craft
+        from svsim.learn.model import parse_key
         folder = folder or Path(os.environ.get("SVSIM_POLICY") or POLICIES)
         self.nets = {}
         if folder.is_dir():
             for path in folder.glob("*.npz"):
                 try:
-                    key = tuple(Craft[part.upper()] for part in path.stem.split("-"))
+                    key = tuple(parse_key(part) for part in path.stem.split("-"))
                 except KeyError:
                     continue
                 self.nets[key] = PolicyNet.load(path)
 
     def priors(self, state, actions):
-        from svsim.learn.model import deck_craft
-        me = state.active
-        net = self.nets.get((deck_craft(state, me), deck_craft(state, 1 - me)))
+        from svsim.learn.model import matchup_keys
+        net = next((self.nets[k] for k in matchup_keys(state, state.active) if k in self.nets), None)
         return None if net is None else net.priors(state, actions)

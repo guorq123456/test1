@@ -139,6 +139,7 @@ class PlayerState:
     damage_cap_until: int = 0      # global turn at whose end damage_cap expires
     extra_damage: int = 0          # leader "takes N more damage"
     entered: dict = dc_field(default_factory=dict)   # card_id -> allied follower entries this match
+    deck_name: str | None = None   # the named deck registered (cards.decks.NAMED), "" for another; set by new_game
 
     def copy(self) -> "PlayerState":
         clone = copy.copy(self)

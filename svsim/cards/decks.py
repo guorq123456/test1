@@ -131,3 +131,35 @@ def _listing(deck_hash: str) -> dict[CardDef, int]:
 
 COMBO_FOREST = _listing(COMBO_FOREST_HASH)
 FACE_DRAGON = _listing(FACE_DRAGON_HASH)
+
+
+# The decks the tools know by name (ui.session.DECKS uses the same keys). A learned evaluation
+# is kept per pair of these (learn.model, learn.phased): two decks of one class can want
+# different evaluations (Ramp Dragon's mirror model must not score Face Dragon's games).
+NAMED = {"rhino": RHINO_FOREST, "ramp": RAMP_DRAGON, "pirate": PIRATE_SWORD, "combo": COMBO_FOREST,
+         "face": FACE_DRAGON}
+_NAMED_IDS: dict | None = None
+
+
+def identify(cards) -> str | None:
+    """The named deck these cards (CardDefs or CardInstances: a deck list at the start of a game,
+    which engine.new_game files as PlayerState.deck_name; tokens ignored) can all come from: the
+    one they fit with the fewest cards to spare, or None. Mid-game the cards a player has left
+    may not fit (Dragonewt Promoter adds copies of itself), so read deck_name then."""
+    global _NAMED_IDS
+    if _NAMED_IDS is None:
+        _NAMED_IDS = {key: {c.card_id: n for c, n in listing.items()} for key, listing in NAMED.items()}
+    counts: dict[int, int] = {}
+    for c in cards:
+        defn = getattr(c, "defn", c)
+        if not defn.is_token:
+            counts[defn.card_id] = counts.get(defn.card_id, 0) + 1
+    if not counts:
+        return None
+    best, spare = None, None
+    for key, ids in _NAMED_IDS.items():
+        if all(ids.get(cid, 0) >= n for cid, n in counts.items()):
+            left = sum(ids.values()) - sum(counts.values())
+            if spare is None or left < spare:
+                best, spare = key, left
+    return best

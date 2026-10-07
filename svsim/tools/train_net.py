@@ -1,6 +1,6 @@
 """Train a matchup's value network (learn.net) on self-play records (learn.netdata).
 
-    python -m svsim.tools.train_net --games games.jsonl --out svsim/learn/nets/dragon-dragon.npz
+    python -m svsim.tools.train_net --games games.jsonl --out svsim/learn/nets/ramp-ramp.npz
 
 Every position the search may score is a row (each decision point for the
 player to act, each turn's end for the player who ended it), labelled with
@@ -54,7 +54,7 @@ def main() -> None:
     parser.add_argument("--l2", type=float, default=1e-4)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--workers", type=int, default=4)
-    parser.add_argument("--linear", default=str(WEIGHTS / "dragon-dragon.json"),
+    parser.add_argument("--linear", default=str(WEIGHTS / "ramp-ramp.json"),
                         help="the linear model to compare with (and to start from, the prior)")
     parser.add_argument("--no-prior", action="store_true", help="don't start from the linear model")
     parser.add_argument("--no-cards", action="store_true",

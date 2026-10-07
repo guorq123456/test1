@@ -118,11 +118,20 @@ def _agent(spec: str, seed: int, model: str | None, phased: str | None = None):
 
 
 def _keys(model) -> list:
+    """The keys a model file stands for: a pair of named decks, or its classes and every pair of
+    named decks of those classes (as Learned looked up a class pair before decks were told apart)."""
+    from svsim.cards import decks
     from svsim.core.enums import Craft
     deck, opp = model.info.get("deck"), model.info.get("opponent")
     if not deck:
         return []
-    return [(Craft[deck.upper()], Craft[opp.upper()])] if opp else [Craft[deck.upper()]]
+    if deck in decks.NAMED and opp in decks.NAMED:
+        return [(deck, opp)]
+    if not opp:
+        return [Craft[deck.upper()]]
+    mine, theirs = Craft[deck.upper()], Craft[opp.upper()]
+    named = {k: decks.craft_of(decks.build(listing)) for k, listing in decks.NAMED.items()}
+    return [(mine, theirs)] + [(a, b) for a in named for b in named if named[a] == mine and named[b] == theirs]
 
 
 def play_pair(job) -> dict:
