@@ -69,8 +69,13 @@ CRAFTS = [c for c in Craft if c != Craft.NEUTRAL]
 
 # Named versions (the gate's version table, docs/architecture.md): each passed the gate against the one before.
 VERSIONS = {
-    "v1": "mcts-reply:100+plan+learned+phased+lazy+focus",     # 2026-10-07: 58.0% +- 5.5% over 250 games
-}                                                              # against mcts:100+plan+learned (the installed bot)
+    # 2026-10-07, against the installed mcts:100+plan+learned: 57.7% +- 3.3% over 600 games; but only even
+    # with mcts:200 (49.5% +- 3.7%) at about 1.4x its time: the pipeline's baseline, the reply not shown to help
+    "v1": "mcts-reply:100+plan+learned+phased+lazy+focus",
+    # the gain of v1 without the reply (the refitted turn-end model, learn.phased), at equal time:
+    "v2": "mcts:100+plan+learned+phased",      # vs mcts:100+plan+learned: 56.8% +- 3.5% over 600 games
+    "v2s": "mcts:200+plan+learned+phased",     # vs mcts:200+plan+learned: 60.7% +- 6.8% over 150 games (SPRT)
+}
 
 
 def make_agent(spec: str, seed: int):
