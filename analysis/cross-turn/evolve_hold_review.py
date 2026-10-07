@@ -17,9 +17,19 @@ an A card in hand out of reach; and the two acceptance cells "收益牌在手、
 进化"): the Salem baseline, each --results file's evolve_hold pass rate (and the erntz_unevolved
 probe's, for a run of it), and with --selfplay LABEL FILE the hold rates of both seats of self-play
 records on the same terms (without the turns where Erntz came down unevolved).
+Discrimination (the architecture thread, 18:51Z, part of acceptance): per cell, the hold rate on the
+turns Salem held minus the hold rate on the turns Salem evolved, i.e. evolve_hold − (100 − evolve_use),
+on the 24 counted turns. Salem's own is 100 by construction; the baseline is v2. With several --results
+the first is the baseline, and each later one gets probe-paired differences (evolve_hold, evolve_use,
+discrimination; 95% from resampling the probes of the cell, 4000 times). A candidate must beat v2's
+discrimination clearly in the key cell ("A 档在手、够不着"); holding more across the whole cell is not
+enough. Hard rule on the self-play side: the hold rate in "A 档够得着" must not be above v2's (16% in
+1 号's 200 games, 17% in test1's 120); with several --selfplay the first is the baseline it is checked
+against, otherwise the 16%.
 """
 import json
 import os
+import random
 import re
 import sys
 from collections import Counter
@@ -33,6 +43,7 @@ from svsim.core.actions import Evolve  # noqa: E402
 from svsim.core.engine import apply, legal_actions  # noqa: E402
 
 ERNTZ = "约束的《正义》·伊兰翠"
+V2_SELFPLAY_A = 16          # v2's self-play hold rate in "A 档够得着" (1 号, 200 games): the hard rule's ceiling
 SAGATSUMATSU = "断头的斩姬·相枛津"
 HEADER = """# Salem 能进化却没进化的 36 个回合
 
@@ -153,6 +164,58 @@ def rates(rows, drop):
             for key, sel in CELLS}
 
 
+def wilson(k, n, z=1.96):
+    if n == 0:
+        return 0.0, 1.0
+    p = k / n
+    c = (p + z * z / (2 * n)) / (1 + z * z / n)
+    h = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5) / (1 + z * z / n)
+    return max(c - h, 0.0), min(c + h, 1.0)
+
+
+def signed(x):
+    return f"{round(x) + 0:+d}"
+
+
+def discrimination(runs, holds, uses, boots=4000):
+    """Per cell and run: evolve_hold − (100 − evolve_use); later runs against the first, paired by probe."""
+    def rate(res, ids):
+        ok, n = sum(res[j][0] for j in ids), sum(res[j][1] for j in ids)
+        return 100 * ok / n if n else None
+
+    def disc(res, h, u):
+        a, b = rate(res, h), rate(res, u)
+        return None if a is None or b is None else a - (100 - b)
+
+    print("\n分辨力 = Salem 忍的回合的忍住率 − Salem 用的回合的忍住率 = evolve_hold − (100 − evolve_use)"
+          "（24 条全量；Salem 自己按定义是 100）：")
+    for key, sel in CELLS:
+        h = [r["id"] for r in holds if sel(r["row"]) and all(r["id"] in res for _, res in runs)]
+        u = [r["id"] for r in uses if sel(r["row"]) and all(r["id"] in res for _, res in runs)]
+        if not h or not u:
+            print(f"  {key:<14} —（Salem 在这一格没有{'忍' if not h else '用'}的回合）")
+            continue
+        cells = [f"{label} {rate(res, h):.0f} − {100 - rate(res, u):.0f} = {signed(disc(res, h, u))}" for label, res in runs]
+        print(f"  {key:<14} " + "；".join(cells) + f"（忍 {len(h)} 条、用 {len(u)} 条）")
+        base_label, base = runs[0]
+        rng = random.Random(23)
+        for label, res in runs[1:]:
+            draws = {"evolve_hold": [], "evolve_use": [], "分辨力": []}
+            for _ in range(boots):
+                hs = [h[rng.randrange(len(h))] for _ in h]
+                us = [u[rng.randrange(len(u))] for _ in u]
+                draws["evolve_hold"].append(rate(res, hs) - rate(base, hs))
+                draws["evolve_use"].append(rate(res, us) - rate(base, us))
+                draws["分辨力"].append(disc(res, hs, us) - disc(base, hs, us))
+            point = {"evolve_hold": rate(res, h) - rate(base, h), "evolve_use": rate(res, u) - rate(base, u),
+                     "分辨力": disc(res, h, u) - disc(base, h, u)}
+            parts = []
+            for name_, xs in draws.items():
+                xs.sort()
+                parts.append(f"{name_} {signed(point[name_])}（{signed(xs[int(0.025 * boots)])}～{signed(xs[int(0.975 * boots) - 1])}）")
+            print(f"  {'':<14}   {label} − {base_label}：" + "，".join(parts))
+
+
 def main():
     args = sys.argv
     games = json.load(open(args[1], encoding="utf-8"))["records"]
@@ -199,6 +262,7 @@ def main():
     for key in tables[0][1]:
         print(f"  {key:<14} " + "  ".join(f"{title} {t[key][0]}/{t[key][1]}（{t[key][0] / max(t[key][1], 1):.0%}）"
                                          for title, t in tables))
+    runs = []
     for i, x in enumerate(args):
         if x != "--results":
             continue
@@ -231,6 +295,11 @@ def main():
             sub = [r["id"] for r in uses if sel(r["row"])]
             ok, n = sum(res[j][0] for j in sub), sum(res[j][1] for j in sub)
             print(f"  {key:<14} {ok}/{n}（{ok / max(n, 1):.0%}）")
+        runs.append((label, {**{j: v for j, v in got.items() if v}, **{r["id"]: res[r["id"]] for r in uses}}))
+    if runs:
+        discrimination(runs, [r for r in holds if r["id"] not in plain],
+                       [r for r in rows if r["id"].endswith("evolve_use")])
+    sp_a = []
     for i, x in enumerate(args):
         if x != "--selfplay":
             continue
@@ -250,6 +319,15 @@ def main():
             sub = [r for r in rows_sp if sel(r)]
             h = sum(r["held"] for r in sub)
             print(f"  {key:<14} 忍住 {h}/{len(sub)}（{h / max(len(sub), 1):.0%}）")
+            if key == "A 档够得着":
+                sp_a.append((label, h, len(sub)))
+    if sp_a:
+        base_label, bh, bn = sp_a[0] if len(sp_a) > 1 else ("v2（1 号 200 局）", V2_SELFPLAY_A, 100)
+        print(f"\n硬规则：自对弈「A 档够得着」忍住率不得高于 {base_label} 的 {bh / max(bn, 1):.0%}")
+        for label, h, n in (sp_a[1:] if len(sp_a) > 1 else sp_a):
+            lo, hi = wilson(h, n)
+            verdict = "过" if h / max(n, 1) <= bh / max(bn, 1) else "不过"
+            print(f"  {label}：{h}/{n}（{h / max(n, 1):.0%}，95% {lo:.0%}～{hi:.0%}）→ {verdict}")
 
 
 if __name__ == "__main__":
