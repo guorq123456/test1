@@ -16,7 +16,9 @@ one card c the line plays is picked at random. Three numbers:
      c; v2 plays the opponent's turn; at the start of the own next turn
      mcts-raw:400+learned+phased searches, and its best move's value (made
      absolute: the search squashes relative to the root) is turned into a win
-     probability; G = mean over determinizations of (keep arm - line arm).
+     probability; G = mean over determinizations of (keep arm - line arm),
+     measured on two independent sets of k determinizations (G1, G2: their
+     agreement is the noise ceiling; G is the mean of both).
 The test (analyse.py): does T explain G once Q is known (partial rank
 correlation, the AUC for the sign of G from Q against Q and T), with intervals
 from resampling positions, by own turn.
@@ -149,13 +151,14 @@ def measure(job):
     q = TE.control(teacher.search, root, r)
     cid = int(r.split(":")[1])
     gs = []
-    for j in range(k):
+    for j in range(2 * k):                    # two independent sets of k determinizations: G and G2
         base = determinize(st, me, random.Random(seed * 1000 + j))
         sd = seed * 1000 + 10 * j
         gs.append(arm(base, me, keeps_card(cid), sd) - arm(base, me, None, sd))
     p = st.players[me]
     return {"seed": seed, "i": i, "turn": st.turn, "own_turn": p.turns_taken, "first": st.first == me,
-            "card": cid, "T": t, "se": se, "Q": q, "G": sum(gs) / k, "G_samples": gs}
+            "card": cid, "T": t, "se": se, "Q": q, "G": sum(gs) / len(gs),
+            "G1": sum(gs[:k]) / k, "G2": sum(gs[k:]) / k, "G_samples": gs}
 
 
 def main():

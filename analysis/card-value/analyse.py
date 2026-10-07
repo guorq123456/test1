@@ -9,7 +9,10 @@ For all items and by own turn (1-3, 4-6, 7+):
 - AUC for "keeping c pays" (G > 0) from Q alone and from Q and T together (a
   logistic fit on standardized ranks, scored by 5-fold cross-validation), and
   the gain;
-with 95% intervals from resampling items.
+with 95% intervals from resampling items. Also for the third of items with the
+smallest |Q| (where the one-turn search hesitates: where a teacher should help),
+and the noise ceiling: the rank agreement of G measured on two independent sets
+of determinizations (G1, G2), and what that allows for their mean.
 """
 import json
 import math
@@ -94,14 +97,28 @@ def stats(rows):
             "AUC_Q": a_q, "AUC_QT": a_qt, "gain": a_qt - a_q, "pays": float(y.mean())}
 
 
+def ceiling(rows):
+    """Agreement of the two independent halves of G, and what it allows for G (the mean of both)."""
+    r = spearman([x["G1"] for x in rows], [x["G2"] for x in rows])
+    rel = 2 * r / (1 + r) if r > -1 else float("nan")       # Spearman-Brown: the mean of the two halves
+    return r, rel, math.sqrt(rel) if rel > 0 else float("nan")
+
+
 def main():
     path = sys.argv[1]
     boots = int(sys.argv[sys.argv.index("--boot") + 1]) if "--boot" in sys.argv else 1000
     rows = [json.loads(l) for l in open(path, encoding="utf-8") if l.strip()]
     rows = [r for r in rows if r["Q"] is not None]
+    if rows and "G1" in rows[0]:
+        r, rel, top = ceiling(rows)
+        print(f"噪声天花板：两组独立确定化的 G 之间 Spearman {r:+.3f}；两组平均后的信度 {rel:.3f}，"
+              f"任何预测和 G 的相关最多约 {top:.3f}")
+    absq = sorted(abs(r["Q"]) for r in rows)
+    cut = absq[len(absq) // 3] if absq else 0.0
     groups = [("全部", rows)] + [(b, [r for r in rows if (r["own_turn"] <= 3 if b == "1-3" else
                                                        4 <= r["own_turn"] <= 6 if b == "4-6" else r["own_turn"] >= 7)])
                                 for b in ("1-3", "4-6", "7+")]
+    groups.append((f"|Q|小", [r for r in rows if abs(r["Q"]) <= cut]))   # the third where the one-turn search hesitates
     keys = ("TG", "QG", "TG|Q", "AUC_Q", "AUC_QT", "gain")
     print(f"{'组':<5}{'项':>6}{'留了更好':>9}" + "".join(f"{k:>22}" for k in keys))
     for title, rs in groups:
