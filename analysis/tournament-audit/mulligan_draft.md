@@ -229,7 +229,23 @@
 - **「没有跳费就全换」**（`need_one_of`）：
   - 来源是你的「很多时候全换找跳费」（〔MU〕L21）、いろは的「至少 1 张」（〔ED〕L119），以及〔V1〕D8 L157：全换找跳费的成本很低，第 3 回合前拿到的概率约 88%。
   - 基础规则本来就把非跳费牌全换掉，这个开关只在扩展留下龙人、波摇花或成对的琪米卡和波菈莱时才起作用。你说的是「很多时候」，不是「总是」，所以我写成**可选开关，建议 A/B**。把握中低。
-- **编不进去的一句**：味噌日的「3コストブーストが揃っている場合、先攻でドラゴン・ビショップ以外ならキープ候補となります」（〔ED〕L105）**没写主语**，看不出是哪几张牌。没有写进规则，**请你判**。
+- **原来编不进去的那句，有出处了**（架构线程 18:06Z 转来，见 3.6）：主语不明的那句出自 beyond-dexel 的文章（R3），原文写明了是哪几张牌。
+
+### 3.6 R3 的两条（beyond-dexel 文章，架构线程 18:06Z 转来；Meta 线程已核原文）
+- **有 3 费跳费时多留三张**：「３コストブーストが引けている場合：『空の命運を握る少女・ルリア』『笑顔の調理・キミカ』『旧き天刀・ヴォーラライ』。先攻であれば、ドラゴン・ビショップ対面以外でキープします。」
+  - 3 费跳费在这套里只有龙之启示（3费 法术）一张。金银的激奏 3 是不是也算"3 コストブースト"，原文没说，这里只按龙之启示写。
+  - 规则：手里有龙之启示、先手、对手不是龙或主教时，另外留露莉亚（2费 1/1）、琪米卡（2费 2/1）、波菈莱（2费 0/2）。四套里就是对连击妖、机锋、旗皇时。
+- **琪米卡和波菈莱成对留**：「セットでのキープ。揃った場合は、エルフ対面後攻、ドラゴン対面、ビショップ対面以外ではキープします。」
+  - 规则：起手同时有琪米卡和波菈莱时两张都留。例外是对精灵后手、对龙（镜像）、对主教。四套里就是：对机锋、旗皇时先后手都留；对连击妖只在先手留；镜像不留。
+  - 和味噌日〔ED〕L104 的说法一致，现在有了第二个来源。
+- **用扩展怎么写**（E1 先后手、E2 按对手、E3 搭档）：
+  - E3 的 `needs` 改成"留下的牌里有任意一张搭档就留"；搭档是空集，表示单靠基础规则不留（只有叠加层给了搭档才留）。
+  - 叠加的优先级：按对手 > 先后手 > 基础；同一张牌后面的覆盖前面的。
+  - 基础：琪米卡需要波菈莱、波菈莱需要琪米卡（成对）。
+  - 先手：琪米卡需要 {波菈莱, 龙之启示}，波菈莱需要 {琪米卡, 龙之启示}，露莉亚需要 {龙之启示}。
+  - 对连击妖后手：琪米卡、波菈莱都换。
+  - 镜像：琪米卡、波菈莱、露莉亚都换。
+- 把握：中。只有 R3 一个来源，加上味噌日对成对那一条的旁证，都是天梯层级。
 
 ### 3.5 把握和层级
 - **跳费优先是高**：C 级原话、你的原话、文档的蒙特卡洛假设三者一致，D 级的 Game8（〔ED〕L52–53）和 GameWith（〔ED〕L84–85）也这么说。
@@ -238,7 +254,7 @@
 - D 级和 C 级打架的地方，按〔M〕L62 不采纳 D 级：
   - Game8 说龙人「全対面キープ」（〔ED〕L52）。
   - GameWith 说对皇家留解场牌（〔ED〕L86）。
-- **研究笔记里有一处误读，提醒一下。**
+- **研究笔记里有一处误读，Meta 线程已改**（pro-lists.md:163、t1-deep.md:107、elf-dragon.md:105–108，架构线程 18:06Z）：
   - 〔PL〕L163 和〔T1〕L107 把味噌日的「ウィルナスの体力を7以上でキープ」写成了「留牌建议／保持自己体力 ≥7」。
   - 原文（〔ED〕L108）在「対面ごとの立ち回り」里，意思是火龙**自己的**体力保持在 7 以上就能留在场上。
   - 它不是留牌规则，本稿没有用。
@@ -395,6 +411,11 @@ def by_rules(hand, rules: Rules, threshold: int = 5) -> tuple:
 
 ---
 
+## 5b. 可切换的变体（架构线程 18:02Z 定：两个版本都实现成开关，等算力闸门分别对默认起手跑）
+- **连击妖·曲千代（3费 2/2）**：默认换掉，因为没有任何来源留它。变体"对旗皇留 1 张"：`vs={"pirate-t": Rules(keep={曲千代}, at_most={曲千代: 1})}`。闸门在 normal 档、成对座位，先 SPRT，哪个高用哪个；Salem 答了以他为准，闸门只做确认。
+- **机锋·多留一张低费**：机锋（1费 1/1）第 1 回合下不下是局中决策，搜索自己定，不进起手规则。起手上只做两个变体："多留一张低费"（5 费阈值之外，再留一张 2 费以下的随从）和"不多留"（默认），由闸门定。
+- **跳费龙·没有跳费就全换（E4）**：原来就是可选开关，同样交闸门。
+
 ## 6. 卡组运转里必须靠局中判断、不是留牌的事（只记下来，不进规则）
 - 机锋什么时候下（2.4 的冲突）。
 - 旗皇的法术留到 bbls 那一回合再打（〔V1〕P2 L232）。
@@ -463,18 +484,22 @@ PLAYER_RULES.update({
         vs={"elf-t": Rules(keep=frozenset({ENCROACHED}))}),   # 〔M〕L300，只抬先验
         # need_one_of=frozenset({CUTTHROAT, BANISHMENT}),     # 低：只有 Game8＋模型假设，A/B 再说
     "ramp-t": Rules(
-        keep=frozenset({DRAGONSIGN, LUMIORE, ZOOEY, KIMIKA, VORLALAI}),
-        redraw=frozenset({PROMOTER, CRESTPETAL, LYRIA, FOXFIRE}),
-        needs={KIMIKA: frozenset({VORLALAI}), VORLALAI: frozenset({KIMIKA})},
+        keep=frozenset({DRAGONSIGN, LUMIORE, ZOOEY, KIMIKA, VORLALAI, LYRIA}),
+        redraw=frozenset({PROMOTER, CRESTPETAL, FOXFIRE}),
+        # 成对留（味噌日〔ED〕L104、R3）；露莉亚只在先手有龙之启示时留（R3）
+        needs={KIMIKA: frozenset({VORLALAI}), VORLALAI: frozenset({KIMIKA}), LYRIA: frozenset()},
+        first=Rules(needs={KIMIKA: frozenset({VORLALAI, DRAGONSIGN}),        # R3：有 3 费跳费，先手多留
+                           VORLALAI: frozenset({KIMIKA, DRAGONSIGN}),
+                           LYRIA: frozenset({DRAGONSIGN})}),
         second=Rules(redraw=frozenset({ZOOEY})),              # 味噌日：后手不留佐伊
         # need_one_of=frozenset({DRAGONSIGN, LUMIORE, ZOOEY}),  # 可选：「很多时候全换找跳费」
         vs={
             "elf-t": Rules(second=Rules(keep=frozenset({PROMOTER, CRESTPETAL}),
-                                        redraw=frozenset({KIMIKA, VORLALAI}))),
+                                        redraw=frozenset({KIMIKA, VORLALAI}))),   # R3：对精灵后手不成对留
             "nemesis-t": Rules(second=Rules(keep=frozenset({PROMOTER}))),
             # "nemesis-t" 候选（低）：keep=frozenset({FOXFIRE})，〔M〕D8 L210
-            "ramp-t": Rules(redraw=frozenset({KIMIKA, VORLALAI})),  # 镜像不成对留
-            # "pirate-t"：和基础规则相同（〔V1〕D9）
+            "ramp-t": Rules(redraw=frozenset({KIMIKA, VORLALAI, LYRIA})),  # 镜像：不成对留，R3 的多留也除外
+            # "pirate-t"：和基础规则相同（〔V1〕D9）；R3 的两条照常生效
         }),
     "pirate-t": Rules(
         keep=frozenset(EARLY),
