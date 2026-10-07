@@ -177,9 +177,11 @@ def load_nets(folder: Path | None = None) -> dict:
 class NetLearned:
     """The matchup's value network where there is one; `fallback` (the learned linear models) otherwise."""
 
-    def __init__(self, nets: dict | None = None, fallback=None):
+    def __init__(self, nets: dict | None = None, fallback=None, gain: float = 1.0):
         self.nets = nets if nets is not None else load_nets()
         self.fallback = fallback or Learned()
+        self.gain = gain               # the network is calibrated, so its score differences are smaller than
+                                       # the overconfident linear models' the search was tuned with
 
     def score(self, state, player: int, player_moves_next: bool = False) -> float:
         from svsim.search.evaluate import WIN
@@ -188,4 +190,4 @@ class NetLearned:
         net = self.nets.get((deck_craft(state, player), deck_craft(state, 1 - player)))
         if net is None:
             return self.fallback.score(state, player, player_moves_next)
-        return SCALE * net.logit(state, player)
+        return SCALE * self.gain * net.logit(state, player)

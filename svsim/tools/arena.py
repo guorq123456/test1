@@ -31,7 +31,9 @@ there is one; "+net" the matchup's value network where there is one (learn.net:
 fitted on every position the search scores, inside a turn and at its end);
 "+lazy" (with mcts-reply) plays the opponent's turn out only from a turn-end
 leaf's second visit on, scoring it as it stands the first time; "+focus" only
-below the root's 3 most-visited moves and at most 20 times a decision; "+timing" adds what holding a card is worth until the turn the
+below the root's 3 most-visited moves and at most 20 times a decision;
+"+gainK" multiplies the network's scores by K (it is calibrated, so its
+differences between moves are smaller than the linear models'); "+timing" adds what holding a card is worth until the turn the
 player usually plays it (svsim.learn.timing, from their games); "+priced"
 prices resources by what they buy (search.prices: the own followers at what
 survives the opponent's turn, "+survive" alone; unused evolution points at the
@@ -63,7 +65,7 @@ CRAFTS = [c for c in Craft if c != Craft.NEUTRAL]
 def make_agent(spec: str, seed: int):
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus"} - {o for o in options if o.startswith("hp")}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus"} - {o for o in options if o.startswith(("hp", "gain"))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -76,7 +78,8 @@ def make_agent(spec: str, seed: int):
         weights = Learned(fallback=weights)
     if "net" in options:                           # the matchup's value network, any moment of a turn (learn.net)
         from svsim.learn.net import NetLearned
-        weights = NetLearned(fallback=weights if "learned" in options else None)
+        gain = [float(o[4:]) for o in options if o.startswith("gain")]
+        weights = NetLearned(fallback=weights if "learned" in options else None, gain=gain[0] if gain else 1.0)
     if "timing" in options:                        # holding cards until the player would play them
         from svsim.learn.timing import Timed
         weights = Timed(base=weights)
