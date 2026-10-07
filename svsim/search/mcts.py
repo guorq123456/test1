@@ -149,7 +149,7 @@ class ISMCTS:
                  scale: float = 8.0, max_depth: int = 30, seed: int = 0, weights=DEFAULT,
                  reply: bool = False, center: bool = True, prune: bool = True, backup: str = "max",
                  reserve: bool = False, veto=None, reply_after: int = 0, reply_top: int = 0,
-                 reply_budget: int = 0):
+                 reply_budget: int = 0, average: int = 1):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
         self.seconds = seconds
         self.c = c                     # exploration constant (values are in 0..1)
@@ -163,6 +163,8 @@ class ISMCTS:
         self.reply_top = reply_top     # ... only below the root's this many most-visited moves (0: all)
         self.reply_budget = reply_budget   # ... at most this many times per decision (0: no limit)
         self._replies = 0
+        self.average = average         # score a leaf as the mean over this many draws of the cards drawn this turn
+        self._root_deck: set = set()   # uids in the player's deck at the root (what a draw this turn came from)
         self.centered = center         # squash relative to the starting position (False: absolute)
         self.prune = prune             # leave out dominated moves (search.moves)
         self.reserve = reserve         # keep the win condition for finishing turns (search.moves.reserved)
@@ -177,8 +179,31 @@ class ISMCTS:
             self.opponent = GreedyAgent(seed=seed + 1, samples=1, weights=weights)
 
     def value(self, state: GameState, me: int, me_next: bool = False) -> float:
-        score = evaluate(state, me, self.weights, player_moves_next=me_next) - self.center
+        score = self._score(state, me, me_next) - self.center
         return 1.0 / (1.0 + math.exp(-max(-60.0, min(60.0, score / self.scale))))
+
+    def _score(self, state: GameState, me: int, me_next: bool) -> float:
+        """The evaluation, averaged over `average` redraws of the cards drawn from the deck this turn
+        that are still in hand (an evaluation that reads the hand card by card moves with what was
+        drawn, and taking the best own choice at each node would take that luck for a better line)."""
+        score = evaluate(state, me, self.weights, player_moves_next=me_next)
+        if self.average <= 1 or state.over or me_next:
+            return score
+        p = state.players[me]
+        drawn = [i for i, c in enumerate(p.hand) if c.uid in self._root_deck]
+        if not drawn or not p.deck:
+            return score
+        total = score
+        for _ in range(self.average - 1):
+            t = state.clone()
+            q = t.players[me]
+            pool = [q.hand[i] for i in drawn] + q.deck
+            self.rng.shuffle(pool)
+            for j, i in enumerate(drawn):
+                q.hand[i] = pool[j]
+            q.deck = pool[len(drawn):]
+            total += evaluate(t, me, self.weights, player_moves_next=me_next)
+        return total / self.average
 
     def choose(self, state: GameState):
         me, root = state.active, Node()
@@ -187,6 +212,7 @@ class ISMCTS:
             self.center = evaluate(state, me, self.weights)
         deadline = time.perf_counter() + self.seconds if self.seconds else None
         self._replies = 0
+        self._root_deck = {c.uid for c in state.players[me].deck}
         for i in range(self.iterations if deadline is None else 10 ** 9):
             if deadline is not None and time.perf_counter() > deadline and i > 0:
                 break
