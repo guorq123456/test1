@@ -5,15 +5,15 @@
 | 文件 | A | B | 种子库起点 | 停止方式 | 结果 |
 |---|---|---|---|---|---|
 | `sprt_reply_phased_vs_installed_seed1000000.jsonl` | `mcts-reply:100+plan+learned+phased+lazy+focus` | `mcts:100+plan+learned` | 1000000 | SPRT（H0 50% / H1 55%，α=β=0.05） | 250 局判 H1：58.0% ± 5.5% |
-| `fixed600_reply_phased_vs_installed_seed2000000.jsonl` | 同上 | 同上 | 2000000 | 固定 600 局 | 57.7% ± 3.3%（54.3%～61.0%），CR 约 +61；先手 57.0%，后手 58.3% |
-| `fixed200_reply_phased_vs_greedy_seed4000000.jsonl` | 同上 | `greedy+plan+learned` | 4000000 | 固定 200 局 | 92.5% ± 3.5%；先手 91.0%，后手 94.0% |
-| `sprt_v1_vs_mcts200_seed5000000.jsonl` | 同上（v1） | `mcts:200+plan+learned`（陪练台 strong 档） | 5000000 | SPRT | 550 局判 H0：49.5% ± 3.7%；先手 54.5%，后手 44.4% |
+| `fixed600_reply_phased_vs_installed_seed2000000.jsonl` | 同上 | 同上 | 2000000 | 固定 600 局 | 57.7% ± 3.3%（54.3%～61.0%），CR 约 +61；A 先手 61.0%，后手 54.3% |
+| `fixed200_reply_phased_vs_greedy_seed4000000.jsonl` | 同上 | `greedy+plan+learned` | 4000000 | 固定 200 局 | 92.5% ± 3.5%；A 先手 95.0%，后手 90.0% |
+| `sprt_v1_vs_mcts200_seed5000000.jsonl` | 同上（v1） | `mcts:200+plan+learned`（陪练台 strong 档） | 5000000 | SPRT | 550 局判 H0：49.5% ± 3.7%；A 先手 61.5%，后手 37.5% |
 | `sprt_phasedonly_vs_installed_seed7000000.jsonl` | `mcts:100+plan+learned+phased`（不推演：只用到新的 ENDED 模型） | `mcts:100+plan+learned` | 7000000 | SPRT | 150 局判 H1：60.0% ± 7.0% |
-| `fixed600_phasedonly_vs_installed_seed9000000.jsonl` | 同上 | 同上 | 9000000 | 固定 600 局 | 56.8% ± 3.5%（53.3%～60.3%），CR 约 +55；先手 52.3%，后手 61.3% |
+| `fixed600_phasedonly_vs_installed_seed9000000.jsonl` | 同上 | 同上 | 9000000 | 固定 600 局 | 56.8% ± 3.5%（53.3%～60.3%），CR 约 +55；A 先手 66.3%，后手 47.3% |
 | `fixed200_installed_vs_mcts200_seed8000000.jsonl` | `mcts:100+plan+learned` | `mcts:200+plan+learned` | 8000000 | 固定 200 局 | 45.5% ± 4.8% |
 | `sprt_strong_phased_vs_strong_seed10000000.jsonl` | `mcts:200+plan+learned+phased`（不推演） | `mcts:200+plan+learned` | 10000000 | SPRT | 150 局判 H1：60.7% ± 6.8% |
-| `fixed600_strong_phased_vs_strong_seed11000000.jsonl` | 同上 | 同上 | 11000000 | 固定 600 局 | 59.7% ± 3.5%（56.1%～63.2%），CR 约 +77；先手 58.0%，后手 61.3% |
-| `fixed200_installed_vs_greedy_seed6000000.jsonl` | `mcts:100+plan+learned` | `greedy+plan+learned` | 6000000 | 固定 200 局 | 89.0% ± 4.1%；先手 88.0%，后手 90.0% |
+| `fixed600_strong_phased_vs_strong_seed11000000.jsonl` | 同上 | 同上 | 11000000 | 固定 600 局 | 59.7% ± 3.5%（56.1%～63.2%），CR 约 +77；A 先手 70.0%，后手 49.3% |
+| `fixed200_installed_vs_greedy_seed6000000.jsonl` | `mcts:100+plan+learned` | `greedy+plan+learned` | 6000000 | 固定 200 局 | 89.0% ± 4.1%；A 先手 93.0%，后手 85.0% |
 
 `fixed_run.py` 用评测台自己的 `play_pair`，只是不按 SPRT 提前停，所以给的区间没有提前停带来的偏差。
 
@@ -57,3 +57,24 @@ A = `mcts:100+plan+learned+phased`，B = `mcts:100+plan+learned`，--seed 130000
 | 跳费龙 / 快攻龙（同为龙族：硬套镜像模型） | 48.0% ± 7.5% | 63.5% ± 7.4% | 55.8% ± 5.3% |
 
 `learn.phased` 按 (deck_craft, deck_craft, moment) 认模型，不认卡组：职业不同的对局完全回退到 Learned，和现装一样；同职业、不同卡组（跳费龙对快攻龙）会套用镜像模型（现装的 `dragon-dragon.json` 也一样）。实测两种都没有变差。长期建议按卡组认模型。
+
+## 更正（2026-10-07 下午）：先手 / 后手
+
+上面表里原来写的"先手 / 后手"，其实是 A 坐 0 号位 / 1 号位。评测台每个种子打两局，A 两个座位各坐一次；谁先手由种子决定（`engine.new_game` 不指定 first 时，取 `random.Random(seed)` 的第一个数），和座位无关。所以原来的拆分把先手局和后手局混在了一起。表里的数字已经按真实的先手方重算（`fixed_run.py` 也改了）。
+
+参照：跳费龙内战 v2 对 v2，先手方赢 59.2% ± 3.9%（下面"额外 PP"那组里 A 先手的 600 局，规则不起作用，就是 v2 对 v2）。按这个参照：
+- v2s 对 strong：A 先手 70.0%、后手 49.3%，两边都比参照（59% / 41%）高 8～11 个百分点。
+- `+phased` 对现装：A 先手 66.3%、后手 47.3%，两边都高 6～7 个百分点。
+
+夜间汇总里"方向不一致，更像噪声"那句是根据错的拆分写的，已删。
+
+## 额外 PP 值多少胜率（2026-10-07 下午）
+
+`keep_bonus_run.py`：A = v2 加一个外层过滤，不许在自己后手第 1 回合按额外 PP；B = v2。同算力，固定 600 对（1200 局），种子 17000000（`fixed1200_keepbonus_v2_seed17000000.jsonl`）。
+
+- A 得分 **50.9% ± 2.2%**（48.7%～53.2%），CR 约 +7（−11～+25）。
+- A 先手 59.2% ± 3.9%：A 先手时规则不起作用，这 600 局就是 v2 对 v2。
+- A 后手 42.7% ± 4.0%。参照是 1 − 59.2% = 40.8%。
+- 规则起作用的后手局里，留额外 PP 值 **+1.9 ± 4.4 个百分点**（等于两倍的"A 得分 − 50%"）。
+
+结论：和零分不开。v2 现在第 1 回合用掉额外 PP 的打法，评测台上看不出吃亏，和 Salem 说的"看局面"一致。区间上限大约 +6 个百分点，所以就算有好处，也不大。

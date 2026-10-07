@@ -11,10 +11,17 @@ import argparse
 import inspect
 import json
 import os
+import random
 import time
 from multiprocessing import Pool
 
 from svsim.tools.gate import cr_text, play_pair, summary
+
+
+def first_seat(seed: int) -> int:
+    """The seat that goes first in the gate's games of this seed: engine.new_game with first=None
+    draws it as the first number of random.Random(seed)."""
+    return random.Random(seed).randrange(2)
 
 
 def main():
@@ -39,11 +46,13 @@ def main():
         rows = [d for _, d in sorted(done.items())]
         scores = [sum(d["points"]) / 2 for d in rows]
         mean, margin = summary(scores)
-        s0 = sum(d["points"][0] for d in rows) / len(rows)
-        s1 = sum(d["points"][1] for d in rows) / len(rows)
+        # points[i] is A in seat i; who goes first comes from the seed, not the seat
+        firsts = [first_seat(d["seed"]) for d in rows]
+        s_first = sum(d["points"][f] for d, f in zip(rows, firsts)) / len(rows)
+        s_second = sum(d["points"][1 - f] for d, f in zip(rows, firsts)) / len(rows)
         print(f"{2 * len(rows)} 局（{len(rows)} 对）：A 得分 {mean:.1%} ± {margin:.1%}"
               f"（95% 区间 {mean - margin:.1%}～{mean + margin:.1%}），{cr_text(mean, margin)}；"
-              f"A 先手 {s0:.1%}、后手 {s1:.1%}", flush=True)
+              f"A 先手 {s_first:.1%}、后手 {s_second:.1%}", flush=True)
 
     # the gate's pair job gained two fields (each side's +phased model folder) in later svsim
     extra = (None, None) if "phased_a" in inspect.getsource(play_pair) else ()
