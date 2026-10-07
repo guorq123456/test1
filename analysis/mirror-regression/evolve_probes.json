@@ -1,0 +1,4938 @@
+{
+ "source": "Salem's turns in salem_games.json where evolving was possible (held) or done (used)",
+ "records_file": "salem_games.json",
+ "positions": [
+  {
+   "id": "1791304981889-t5-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 古旧天刀·波菈莱（还剩 ep 2 / sep 2）。",
+   "game": "1791304981889",
+   "at": 20,
+   "context": {
+    "own_turn": 5,
+    "first": true,
+    "pp": "7/7",
+    "hp": 18,
+    "opp_hp": 20,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "《世界》的呈现",
+     "古旧天刀·波菈莱",
+     "约束的《正义》·伊兰翠",
+     "禁牙的变貌·诺玛格达拉",
+     "焦灰的安纳提玛·班德奈特",
+     "掌握天空命运的少女·露莉亚"
+    ],
+    "board": [],
+    "opp_board": [
+     "古旧天刀·波菈莱 2/4",
+     "世界的伙伴·佐伊 5/5"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 9
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791304981889-t6-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 1 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791304981889",
+   "at": 29,
+   "context": {
+    "own_turn": 6,
+    "first": true,
+    "pp": "8/8",
+    "hp": 18,
+    "opp_hp": 20,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "约束的《正义》·伊兰翠",
+     "禁牙的变貌·诺玛格达拉",
+     "焦灰的安纳提玛·班德奈特",
+     "掌握天空命运的少女·露莉亚",
+     "焦龙的午睡",
+     "宣扬的龙人",
+     "天刀深渊",
+     "约束的《正义》·伊兰翠"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 7/4"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 2,
+    "turns_so_far": 11
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "PlayCard",
+    "Attack",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791304981889-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 约束的《正义》·伊兰翠（还剩 ep 1 / sep 2）。",
+   "game": "1791304981889",
+   "at": 42,
+   "context": {
+    "own_turn": 7,
+    "first": true,
+    "pp": "10/10",
+    "hp": 10,
+    "opp_hp": 20,
+    "hand": [
+     "约束的《正义》·伊兰翠",
+     "禁牙的变貌·诺玛格达拉",
+     "焦灰的安纳提玛·班德奈特",
+     "焦龙的午睡",
+     "天刀深渊",
+     "约束的《正义》·伊兰翠",
+     "断头的斩姬·相枛津",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 8/7"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 1,
+    "turns_so_far": 13
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791304981889-t8-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 焦灰的安纳提玛·班德奈特（还剩 ep 1 / sep 1）。",
+   "game": "1791304981889",
+   "at": 52,
+   "context": {
+    "own_turn": 8,
+    "first": true,
+    "pp": "10/10",
+    "hp": 10,
+    "opp_hp": 11,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "焦灰的安纳提玛·班德奈特",
+     "焦龙的午睡",
+     "天刀深渊",
+     "约束的《正义》·伊兰翠",
+     "断头的斩姬·相枛津",
+     "禁牙的变貌·诺玛格达拉",
+     "宣扬的龙人"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 4/4",
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1"
+    ],
+    "ep": 1,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 15
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791305120171-t4-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 世界的伙伴·佐伊（还剩 ep 2 / sep 2）。",
+   "game": "1791305120171",
+   "at": 15,
+   "context": {
+    "own_turn": 4,
+    "first": false,
+    "pp": "5/5",
+    "hp": 18,
+    "opp_hp": 20,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "焦龙的午睡",
+     "世界的伙伴·佐伊",
+     "日珥咆哮",
+     "日珥咆哮",
+     "约束的《正义》·伊兰翠",
+     "《世界》的呈现"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "世界的伙伴·佐伊 5/5"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 8
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791305120171-t5-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 断头的斩姬·相枛津（还剩 ep 1 / sep 2）。",
+   "game": "1791305120171",
+   "at": 25,
+   "context": {
+    "own_turn": 5,
+    "first": false,
+    "pp": "7/7",
+    "hp": 15,
+    "opp_hp": 20,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "焦龙的午睡",
+     "日珥咆哮",
+     "日珥咆哮",
+     "约束的《正义》·伊兰翠",
+     "《世界》的呈现",
+     "断头的斩姬·相枛津"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "掌握天空命运的少女·露莉亚 3/3"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 10
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "UseBonusPP",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791305120171-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 焦灰的安纳提玛·班德奈特（还剩 ep 0 / sep 2）。",
+   "game": "1791305120171",
+   "at": 35,
+   "context": {
+    "own_turn": 6,
+    "first": false,
+    "pp": "8/8",
+    "hp": 12,
+    "opp_hp": 13,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "焦龙的午睡",
+     "约束的《正义》·伊兰翠",
+     "《世界》的呈现",
+     "赤流",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 3/3",
+     "焦灰的安纳提玛·班德奈特 9/9"
+    ],
+    "ep": 0,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 2,
+    "turns_so_far": 12
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "UseBonusPP",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791305215412-t5-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 2 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791305215412",
+   "at": 24,
+   "context": {
+    "own_turn": 5,
+    "first": true,
+    "pp": "7/7",
+    "hp": 19,
+    "opp_hp": 20,
+    "hand": [
+     "宣扬的龙人",
+     "焦灰的安纳提玛·班德奈特",
+     "日珥咆哮",
+     "约束的《正义》·伊兰翠",
+     "《世界》的呈现",
+     "龙之启示"
+    ],
+    "board": [],
+    "opp_board": [
+     "世界的伙伴·佐伊 7/2"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 9
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791305215412-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 古旧天刀·波菈莱（还剩 ep 2 / sep 2）。",
+   "game": "1791305215412",
+   "at": 39,
+   "context": {
+    "own_turn": 7,
+    "first": true,
+    "pp": "10/10",
+    "hp": 9,
+    "opp_hp": 20,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "日珥咆哮",
+     "约束的《正义》·伊兰翠",
+     "古旧天刀·波菈莱",
+     "焦灰的安纳提玛·班德奈特",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "满面笑容的烹饪·琪米卡"
+    ],
+    "board": [],
+    "opp_board": [
+     "约束的《正义》·伊兰翠 11/11"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 1,
+    "turns_so_far": 13
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "PlayCard",
+    "PlayCard",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791305215412-t8-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 2 / sep 1）但这回合没进化，也没在这回合赢。",
+   "game": "1791305215412",
+   "at": 52,
+   "context": {
+    "own_turn": 8,
+    "first": true,
+    "pp": "10/10",
+    "hp": 9,
+    "opp_hp": 15,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "日珥咆哮",
+     "约束的《正义》·伊兰翠",
+     "焦灰的安纳提玛·班德奈特",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "天刀深渊",
+     "赤流",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [
+     "古旧天刀·波菈莱 3/5"
+    ],
+    "ep": 2,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 15
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791305347029-t4-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 古旧天刀·波菈莱（还剩 ep 2 / sep 2）。",
+   "game": "1791305347029",
+   "at": 18,
+   "context": {
+    "own_turn": 4,
+    "first": false,
+    "pp": "6/6",
+    "hp": 18,
+    "opp_hp": 20,
+    "hand": [
+     "满面笑容的烹饪·琪米卡",
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉",
+     "古旧天刀·波菈莱",
+     "禁牙的变貌·诺玛格达拉",
+     "宣扬的龙人"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "古旧天刀·波菈莱 0/2"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 8
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791305347029-t5-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 禁牙的变貌·诺玛格达拉（还剩 ep 1 / sep 2）。",
+   "game": "1791305347029",
+   "at": 27,
+   "context": {
+    "own_turn": 5,
+    "first": false,
+    "pp": "7/7",
+    "hp": 19,
+    "opp_hp": 20,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉",
+     "懒惰的波摇花",
+     "天刀深渊",
+     "掌握天空命运的少女·露莉亚"
+    ],
+    "board": [],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 7/8"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 10
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791305347029-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 金银绚烂·璐米欧儿&雅尔贞特（还剩 ep 0 / sep 2）。",
+   "game": "1791305347029",
+   "at": 36,
+   "context": {
+    "own_turn": 6,
+    "first": false,
+    "pp": "8/8",
+    "hp": 13,
+    "opp_hp": 20,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉",
+     "懒惰的波摇花",
+     "天刀深渊",
+     "掌握天空命运的少女·露莉亚",
+     "断头的斩姬·相枛津",
+     "掌握天空命运的少女·露莉亚"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 7/6"
+    ],
+    "ep": 0,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 2,
+    "turns_so_far": 12
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "UseBonusPP",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791305347029-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 焦灰的安纳提玛·班德奈特（还剩 ep 0 / sep 1）。",
+   "game": "1791305347029",
+   "at": 48,
+   "context": {
+    "own_turn": 7,
+    "first": false,
+    "pp": "9/9",
+    "hp": 12,
+    "opp_hp": 16,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "懒惰的波摇花",
+     "断头的斩姬·相枛津",
+     "掌握天空命运的少女·露莉亚",
+     "《世界》的呈现",
+     "掌握天空命运的少女·露莉亚",
+     "焦灰的安纳提玛·班德奈特",
+     "龙之启示"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "满面笑容的烹饪·琪米卡 5/4"
+    ],
+    "ep": 0,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 1,
+    "turns_so_far": 14
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791305539194-t4-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 2 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791305539194",
+   "at": 16,
+   "context": {
+    "own_turn": 4,
+    "first": false,
+    "pp": "5/5",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "世界的伙伴·佐伊",
+     "约束的《正义》·伊兰翠",
+     "懒惰的波摇花",
+     "焦灰的安纳提玛·班德奈特",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 8
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791305539194-t5-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 2 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791305539194",
+   "at": 23,
+   "context": {
+    "own_turn": 5,
+    "first": false,
+    "pp": "7/7",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "约束的《正义》·伊兰翠",
+     "懒惰的波摇花",
+     "焦灰的安纳提玛·班德奈特",
+     "焦灰的安纳提玛·班德奈特",
+     "满面笑容的烹饪·琪米卡"
+    ],
+    "board": [],
+    "opp_board": [],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 10
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791305539194-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 焦灰的安纳提玛·班德奈特（还剩 ep 2 / sep 2）。",
+   "game": "1791305539194",
+   "at": 31,
+   "context": {
+    "own_turn": 6,
+    "first": false,
+    "pp": "8/8",
+    "hp": 12,
+    "opp_hp": 19,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "约束的《正义》·伊兰翠",
+     "焦灰的安纳提玛·班德奈特",
+     "日珥咆哮",
+     "《世界》的呈现"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 7/6"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 2,
+    "turns_so_far": 12
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "UseBonusPP",
+    "PlayCard",
+    "Evolve",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791305539194-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 禁牙的变貌·诺玛格达拉（还剩 ep 2 / sep 1）。",
+   "game": "1791305539194",
+   "at": 40,
+   "context": {
+    "own_turn": 7,
+    "first": false,
+    "pp": "9/9",
+    "hp": 11,
+    "opp_hp": 20,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "约束的《正义》·伊兰翠",
+     "日珥咆哮",
+     "《世界》的呈现",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "满面笑容的烹饪·琪米卡 2/1",
+     "禁牙的变貌·诺玛格达拉 8/9"
+    ],
+    "ep": 2,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 1,
+    "turns_so_far": 14
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791305539194-t8-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 约束的《正义》·伊兰翠（还剩 ep 1 / sep 1）。",
+   "game": "1791305539194",
+   "at": 48,
+   "context": {
+    "own_turn": 8,
+    "first": false,
+    "pp": "10/10",
+    "hp": 10,
+    "opp_hp": 18,
+    "hand": [
+     "约束的《正义》·伊兰翠",
+     "日珥咆哮",
+     "《世界》的呈现",
+     "古旧天刀·波菈莱",
+     "古旧天刀·波菈莱",
+     "宣扬的龙人"
+    ],
+    "board": [],
+    "opp_board": [
+     "金银绚烂·璐米欧儿&雅尔贞特 9/9",
+     "掌握天空命运的少女·露莉亚 1/1"
+    ],
+    "ep": 1,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 16
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306269709-t4-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 世界的伙伴·佐伊（还剩 ep 2 / sep 2）。",
+   "game": "1791306269709",
+   "at": 14,
+   "context": {
+    "own_turn": 4,
+    "first": false,
+    "pp": "6/6",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "世界的伙伴·佐伊",
+     "懒惰的波摇花",
+     "断头的斩姬·相枛津",
+     "《世界》的呈现",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "约束的《正义》·伊兰翠"
+    ],
+    "board": [],
+    "opp_board": [
+     "世界的伙伴·佐伊 5/5"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 8
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306269709-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 约束的《正义》·伊兰翠（还剩 ep 1 / sep 2）。",
+   "game": "1791306269709",
+   "at": 28,
+   "context": {
+    "own_turn": 6,
+    "first": false,
+    "pp": "10/10",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "懒惰的波摇花",
+     "断头的斩姬·相枛津",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "约束的《正义》·伊兰翠",
+     "掌握天空命运的少女·露莉亚",
+     "日珥咆哮",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "世界的伙伴·佐伊 7/7"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 2,
+    "turns_so_far": 12
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306333962-t5-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 宣扬的龙人（还剩 ep 2 / sep 2）。",
+   "game": "1791306333962",
+   "at": 18,
+   "context": {
+    "own_turn": 5,
+    "first": true,
+    "pp": "5/5",
+    "hp": 20,
+    "opp_hp": 18,
+    "hand": [
+     "古旧天刀·波菈莱",
+     "断头的斩姬·相枛津",
+     "约束的《正义》·伊兰翠",
+     "世界的伙伴·佐伊",
+     "日珥咆哮",
+     "《世界》的呈现",
+     "掌握天空命运的少女·露莉亚"
+    ],
+    "board": [
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1"
+    ],
+    "opp_board": [],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 9
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "Attack",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306333962-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 古旧天刀·波菈莱（还剩 ep 1 / sep 2）。",
+   "game": "1791306333962",
+   "at": 28,
+   "context": {
+    "own_turn": 6,
+    "first": true,
+    "pp": "7/7",
+    "hp": 20,
+    "opp_hp": 13,
+    "hand": [
+     "古旧天刀·波菈莱",
+     "断头的斩姬·相枛津",
+     "约束的《正义》·伊兰翠",
+     "日珥咆哮",
+     "《世界》的呈现",
+     "掌握天空命运的少女·露莉亚",
+     "断头的斩姬·相枛津"
+    ],
+    "board": [],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 7/3"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 11
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306396169-t5-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 2 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791306396169",
+   "at": 21,
+   "context": {
+    "own_turn": 5,
+    "first": true,
+    "pp": "6/6",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "古旧天刀·波菈莱",
+     "宣扬的龙人",
+     "焦灰的安纳提玛·班德奈特",
+     "禁牙的变貌·诺玛格达拉",
+     "掌握天空命运的少女·露莉亚",
+     "禁牙的变貌·诺玛格达拉",
+     "约束的《正义》·伊兰翠",
+     "懒惰的波摇花"
+    ],
+    "board": [],
+    "opp_board": [
+     "宣扬的龙人 4/3",
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 9
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "Attack",
+    "Attack",
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306396169-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 禁牙的变貌·诺玛格达拉（还剩 ep 2 / sep 2）。",
+   "game": "1791306396169",
+   "at": 30,
+   "context": {
+    "own_turn": 6,
+    "first": true,
+    "pp": "7/7",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "古旧天刀·波菈莱",
+     "焦灰的安纳提玛·班德奈特",
+     "禁牙的变貌·诺玛格达拉",
+     "掌握天空命运的少女·露莉亚",
+     "禁牙的变貌·诺玛格达拉",
+     "约束的《正义》·伊兰翠",
+     "掌握天空命运的少女·露莉亚"
+    ],
+    "board": [],
+    "opp_board": [
+     "世界的伙伴·佐伊 7/5"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 2,
+    "turns_so_far": 11
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306396169-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 禁牙的变貌·诺玛格达拉（还剩 ep 1 / sep 2）。",
+   "game": "1791306396169",
+   "at": 40,
+   "context": {
+    "own_turn": 7,
+    "first": true,
+    "pp": "8/8",
+    "hp": 10,
+    "opp_hp": 20,
+    "hand": [
+     "古旧天刀·波菈莱",
+     "焦灰的安纳提玛·班德奈特",
+     "禁牙的变貌·诺玛格达拉",
+     "掌握天空命运的少女·露莉亚",
+     "约束的《正义》·伊兰翠",
+     "掌握天空命运的少女·露莉亚",
+     "焦灰的安纳提玛·班德奈特",
+     "龙之启示",
+     "满面笑容的烹饪·琪米卡"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 8/7"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 1,
+    "turns_so_far": 13
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306396169-t8-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 焦灰的安纳提玛·班德奈特（还剩 ep 1 / sep 1）。",
+   "game": "1791306396169",
+   "at": 51,
+   "context": {
+    "own_turn": 8,
+    "first": true,
+    "pp": "9/9",
+    "hp": 8,
+    "opp_hp": 19,
+    "hand": [
+     "古旧天刀·波菈莱",
+     "焦灰的安纳提玛·班德奈特",
+     "禁牙的变貌·诺玛格达拉",
+     "约束的《正义》·伊兰翠",
+     "掌握天空命运的少女·露莉亚",
+     "焦灰的安纳提玛·班德奈特",
+     "龙之启示",
+     "满面笑容的烹饪·琪米卡",
+     "宣扬的龙人"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 8/7",
+     "古旧天刀·波菈莱 0/2"
+    ],
+    "ep": 1,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 15
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306396169-t9-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 1 / sep 0）但这回合没进化，也没在这回合赢。",
+   "game": "1791306396169",
+   "at": 57,
+   "context": {
+    "own_turn": 9,
+    "first": true,
+    "pp": "10/10",
+    "hp": 8,
+    "opp_hp": 19,
+    "hand": [
+     "古旧天刀·波菈莱",
+     "禁牙的变貌·诺玛格达拉",
+     "约束的《正义》·伊兰翠",
+     "掌握天空命运的少女·露莉亚",
+     "焦灰的安纳提玛·班德奈特",
+     "龙之启示",
+     "满面笑容的烹饪·琪米卡",
+     "宣扬的龙人",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 5/6"
+    ],
+    "ep": 1,
+    "sep": 0,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 17
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306497426-t4-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 古旧天刀·波菈莱（还剩 ep 2 / sep 2）。",
+   "game": "1791306497426",
+   "at": 15,
+   "context": {
+    "own_turn": 4,
+    "first": false,
+    "pp": "6/6",
+    "hp": 19,
+    "opp_hp": 20,
+    "hand": [
+     "满面笑容的烹饪·琪米卡",
+     "懒惰的波摇花",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "禁牙的变貌·诺玛格达拉",
+     "世界的伙伴·佐伊",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 8
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306497426-t5-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 1 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791306497426",
+   "at": 26,
+   "context": {
+    "own_turn": 5,
+    "first": false,
+    "pp": "8/8",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "懒惰的波摇花",
+     "禁牙的变貌·诺玛格达拉",
+     "世界的伙伴·佐伊",
+     "懒惰的波摇花",
+     "天刀深渊",
+     "满面笑容的烹饪·琪米卡"
+    ],
+    "board": [],
+    "opp_board": [
+     "世界的伙伴·佐伊 7/7"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 10
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "PlayCard",
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306497426-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 焦灰的安纳提玛·班德奈特（还剩 ep 1 / sep 2）。",
+   "game": "1791306497426",
+   "at": 35,
+   "context": {
+    "own_turn": 6,
+    "first": false,
+    "pp": "9/9",
+    "hp": 20,
+    "opp_hp": 19,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "世界的伙伴·佐伊",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 7/6"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 2,
+    "turns_so_far": 12
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306497426-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 禁牙的变貌·诺玛格达拉（还剩 ep 1 / sep 1）。",
+   "game": "1791306497426",
+   "at": 43,
+   "context": {
+    "own_turn": 7,
+    "first": false,
+    "pp": "10/10",
+    "hp": 12,
+    "opp_hp": 17,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "世界的伙伴·佐伊",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 8/7"
+    ],
+    "ep": 1,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 1,
+    "turns_so_far": 14
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306497426-t8-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 约束的《正义》·伊兰翠（还剩 ep 1 / sep 0）。",
+   "game": "1791306497426",
+   "at": 52,
+   "context": {
+    "own_turn": 8,
+    "first": false,
+    "pp": "10/10",
+    "hp": 15,
+    "opp_hp": 14,
+    "hand": [
+     "世界的伙伴·佐伊",
+     "禁牙的变貌·诺玛格达拉",
+     "掌握天空命运的少女·露莉亚",
+     "焦灰的安纳提玛·班德奈特",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [
+     "世界的伙伴·佐伊 8/8"
+    ],
+    "ep": 1,
+    "sep": 0,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 16
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "UseBonusPP",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306781701-t4-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 2 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791306781701",
+   "at": 16,
+   "context": {
+    "own_turn": 4,
+    "first": false,
+    "pp": "5/5",
+    "hp": 19,
+    "opp_hp": 20,
+    "hand": [
+     "宣扬的龙人",
+     "世界的伙伴·佐伊",
+     "约束的《正义》·伊兰翠",
+     "古旧天刀·波菈莱",
+     "懒惰的波摇花",
+     "满面笑容的烹饪·琪米卡"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 8
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306781701-t5-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 禁牙的变貌·诺玛格达拉（还剩 ep 2 / sep 2）。",
+   "game": "1791306781701",
+   "at": 23,
+   "context": {
+    "own_turn": 5,
+    "first": false,
+    "pp": "7/7",
+    "hp": 19,
+    "opp_hp": 20,
+    "hand": [
+     "宣扬的龙人",
+     "约束的《正义》·伊兰翠",
+     "古旧天刀·波菈莱",
+     "懒惰的波摇花",
+     "满面笑容的烹饪·琪米卡",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [
+     "古旧天刀·波菈莱 2/4"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 10
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "UseBonusPP",
+    "PlayCard",
+    "Evolve",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306781701-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 古旧天刀·波菈莱（还剩 ep 1 / sep 2）。",
+   "game": "1791306781701",
+   "at": 30,
+   "context": {
+    "own_turn": 6,
+    "first": false,
+    "pp": "8/8",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "宣扬的龙人",
+     "约束的《正义》·伊兰翠",
+     "古旧天刀·波菈莱",
+     "懒惰的波摇花",
+     "满面笑容的烹饪·琪米卡",
+     "禁牙的变貌·诺玛格达拉",
+     "掌握天空命运的少女·露莉亚"
+    ],
+    "board": [],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 7/8"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 2,
+    "turns_so_far": 12
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "PlayCard",
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306781701-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 约束的《正义》·伊兰翠（还剩 ep 1 / sep 1）。",
+   "game": "1791306781701",
+   "at": 43,
+   "context": {
+    "own_turn": 7,
+    "first": false,
+    "pp": "9/9",
+    "hp": 18,
+    "opp_hp": 18,
+    "hand": [
+     "约束的《正义》·伊兰翠",
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉",
+     "约束的《正义》·伊兰翠",
+     "天刀深渊",
+     "天刀深渊",
+     "天刀深渊",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [
+     "古旧天刀·波菈莱 3/5"
+    ],
+    "ep": 1,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 1,
+    "turns_so_far": 14
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "UseBonusPP",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306781701-t8-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 1 / sep 0）但这回合没进化，也没在这回合赢。",
+   "game": "1791306781701",
+   "at": 53,
+   "context": {
+    "own_turn": 8,
+    "first": false,
+    "pp": "10/10",
+    "hp": 10,
+    "opp_hp": 9,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉",
+     "约束的《正义》·伊兰翠",
+     "天刀深渊",
+     "天刀深渊",
+     "天刀深渊",
+     "焦灰的安纳提玛·班德奈特",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 8/7"
+    ],
+    "ep": 1,
+    "sep": 0,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 16
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791306781701-t9-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 断头的斩姬·相枛津（还剩 ep 1 / sep 0）。",
+   "game": "1791306781701",
+   "at": 59,
+   "context": {
+    "own_turn": 9,
+    "first": false,
+    "pp": "10/10",
+    "hp": 17,
+    "opp_hp": 13,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "禁牙的变貌·诺玛格达拉",
+     "天刀深渊",
+     "天刀深渊",
+     "天刀深渊",
+     "焦灰的安纳提玛·班德奈特",
+     "焦灰的安纳提玛·班德奈特",
+     "断头的斩姬·相枛津"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "禁牙的变貌·诺玛格达拉 5/6"
+    ],
+    "ep": 1,
+    "sep": 0,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 18
+   },
+   "batch": "2026-10-06-afternoon",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791315717152-t4-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 2 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791315717152",
+   "at": 13,
+   "context": {
+    "own_turn": 4,
+    "first": false,
+    "pp": "5/5",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "世界的伙伴·佐伊",
+     "满面笑容的烹饪·琪米卡",
+     "断头的斩姬·相枛津",
+     "古旧天刀·波菈莱",
+     "约束的《正义》·伊兰翠",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 8
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791315717152-t5-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 断头的斩姬·相枛津（还剩 ep 2 / sep 2）。",
+   "game": "1791315717152",
+   "at": 19,
+   "context": {
+    "own_turn": 5,
+    "first": false,
+    "pp": "7/7",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "满面笑容的烹饪·琪米卡",
+     "断头的斩姬·相枛津",
+     "古旧天刀·波菈莱",
+     "约束的《正义》·伊兰翠",
+     "焦灰的安纳提玛·班德奈特",
+     "龙之启示"
+    ],
+    "board": [],
+    "opp_board": [
+     "世界的伙伴·佐伊 7/2"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 10
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "UseBonusPP",
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791315717152-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 焦灰的安纳提玛·班德奈特（还剩 ep 1 / sep 2）。",
+   "game": "1791315717152",
+   "at": 29,
+   "context": {
+    "own_turn": 6,
+    "first": false,
+    "pp": "8/8",
+    "hp": 20,
+    "opp_hp": 19,
+    "hand": [
+     "满面笑容的烹饪·琪米卡",
+     "约束的《正义》·伊兰翠",
+     "焦灰的安纳提玛·班德奈特",
+     "赤流",
+     "焦龙的午睡"
+    ],
+    "board": [
+     "古旧天刀·波菈莱 0/2"
+    ],
+    "opp_board": [],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 2,
+    "turns_so_far": 12
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "UseBonusPP",
+    "PlayCard",
+    "Evolve",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791315717152-t7-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 1 / sep 1）但这回合没进化，也没在这回合赢。",
+   "game": "1791315717152",
+   "at": 37,
+   "context": {
+    "own_turn": 7,
+    "first": false,
+    "pp": "9/9",
+    "hp": 15,
+    "opp_hp": 17,
+    "hand": [
+     "满面笑容的烹饪·琪米卡",
+     "约束的《正义》·伊兰翠",
+     "赤流",
+     "焦龙的午睡",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [
+     "金银绚烂·璐米欧儿&雅尔贞特 9/9"
+    ],
+    "ep": 1,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 1,
+    "turns_so_far": 14
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791315717152-t8-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 禁牙的变貌·诺玛格达拉（还剩 ep 1 / sep 1）。",
+   "game": "1791315717152",
+   "at": 44,
+   "context": {
+    "own_turn": 8,
+    "first": false,
+    "pp": "10/10",
+    "hp": 17,
+    "opp_hp": 15,
+    "hand": [
+     "约束的《正义》·伊兰翠",
+     "禁牙的变貌·诺玛格达拉",
+     "龙之启示"
+    ],
+    "board": [],
+    "opp_board": [
+     "焦灰的安纳提玛·班德奈特 12/12"
+    ],
+    "ep": 1,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 16
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791315717152-t9-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 1 / sep 0）但这回合没进化，也没在这回合赢。",
+   "game": "1791315717152",
+   "at": 54,
+   "context": {
+    "own_turn": 9,
+    "first": false,
+    "pp": "10/10",
+    "hp": 12,
+    "opp_hp": 12,
+    "hand": [
+     "约束的《正义》·伊兰翠",
+     "掌握天空命运的少女·露莉亚",
+     "《世界》的呈现",
+     "断头的斩姬·相枛津"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 5/4",
+     "古旧天刀·波菈莱 0/2"
+    ],
+    "ep": 1,
+    "sep": 0,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 18
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316090276-t5-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 2 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791316090276",
+   "at": 21,
+   "context": {
+    "own_turn": 5,
+    "first": false,
+    "pp": "8/8",
+    "hp": 8,
+    "opp_hp": 20,
+    "hand": [
+     "断头的斩姬·相枛津",
+     "焦龙的午睡",
+     "日珥咆哮",
+     "日珥咆哮",
+     "断头的斩姬·相枛津",
+     "《世界》的呈现"
+    ],
+    "board": [],
+    "opp_board": [
+     "世界的伙伴·佐伊 5/5",
+     "断头的斩姬·相枛津 7/6"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 10
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316090276-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 焦灰的安纳提玛·班德奈特（还剩 ep 2 / sep 2）。",
+   "game": "1791316090276",
+   "at": 27,
+   "context": {
+    "own_turn": 6,
+    "first": false,
+    "pp": "9/9",
+    "hp": 4,
+    "opp_hp": 20,
+    "hand": [
+     "焦龙的午睡",
+     "断头的斩姬·相枛津",
+     "《世界》的呈现",
+     "赤流",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [
+     "金银绚烂·璐米欧儿&雅尔贞特 6/6"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 12
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316090276-t7-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 2 / sep 1）但这回合没进化，也没在这回合赢。",
+   "game": "1791316090276",
+   "at": 35,
+   "context": {
+    "own_turn": 7,
+    "first": false,
+    "pp": "10/10",
+    "hp": 1,
+    "opp_hp": 18,
+    "hand": [
+     "焦龙的午睡",
+     "断头的斩姬·相枛津",
+     "《世界》的呈现",
+     "赤流",
+     "约束的《正义》·伊兰翠"
+    ],
+    "board": [],
+    "opp_board": [
+     "世界的伙伴·佐伊 8/8"
+    ],
+    "ep": 2,
+    "sep": 1,
+    "opp_ep": 1,
+    "opp_sep": 1,
+    "turns_so_far": 14
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316350693-t5-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 掌握天空命运的少女·露莉亚（还剩 ep 2 / sep 2）。",
+   "game": "1791316350693",
+   "at": 20,
+   "context": {
+    "own_turn": 5,
+    "first": true,
+    "pp": "5/5",
+    "hp": 20,
+    "opp_hp": 19,
+    "hand": [
+     "约束的《正义》·伊兰翠",
+     "禁牙的变貌·诺玛格达拉",
+     "焦灰的安纳提玛·班德奈特",
+     "禁牙的变貌·诺玛格达拉",
+     "断头的斩姬·相枛津",
+     "约束的《正义》·伊兰翠"
+    ],
+    "board": [
+     "掌握天空命运的少女·露莉亚 1/1"
+    ],
+    "opp_board": [
+     "世界的伙伴·佐伊 5/5"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 9
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316411815-t4-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 2 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791316411815",
+   "at": 13,
+   "context": {
+    "own_turn": 4,
+    "first": false,
+    "pp": "5/5",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "世界的伙伴·佐伊",
+     "掌握天空命运的少女·露莉亚",
+     "宣扬的龙人",
+     "懒惰的波摇花",
+     "约束的《正义》·伊兰翠",
+     "宣扬的龙人"
+    ],
+    "board": [],
+    "opp_board": [
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 8
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "Attack",
+    "Attack",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316411815-t5-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 世界的伙伴·佐伊（还剩 ep 2 / sep 2）。",
+   "game": "1791316411815",
+   "at": 20,
+   "context": {
+    "own_turn": 5,
+    "first": false,
+    "pp": "6/6",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "世界的伙伴·佐伊",
+     "掌握天空命运的少女·露莉亚",
+     "懒惰的波摇花",
+     "约束的《正义》·伊兰翠",
+     "宣扬的龙人",
+     "断头的斩姬·相枛津"
+    ],
+    "board": [],
+    "opp_board": [
+     "世界的伙伴·佐伊 5/5"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 10
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316411815-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 断头的斩姬·相枛津（还剩 ep 1 / sep 2）。",
+   "game": "1791316411815",
+   "at": 27,
+   "context": {
+    "own_turn": 6,
+    "first": false,
+    "pp": "8/8",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "掌握天空命运的少女·露莉亚",
+     "懒惰的波摇花",
+     "约束的《正义》·伊兰翠",
+     "宣扬的龙人",
+     "断头的斩姬·相枛津",
+     "断头的斩姬·相枛津"
+    ],
+    "board": [],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 7/8"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 12
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316411815-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 约束的《正义》·伊兰翠（还剩 ep 0 / sep 2）。",
+   "game": "1791316411815",
+   "at": 36,
+   "context": {
+    "own_turn": 7,
+    "first": false,
+    "pp": "9/9",
+    "hp": 15,
+    "opp_hp": 13,
+    "hand": [
+     "懒惰的波摇花",
+     "约束的《正义》·伊兰翠",
+     "断头的斩姬·相枛津",
+     "赤流",
+     "龙之启示"
+    ],
+    "board": [],
+    "opp_board": [
+     "金银绚烂·璐米欧儿&雅尔贞特 9/9"
+    ],
+    "ep": 0,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 1,
+    "turns_so_far": 14
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "UseBonusPP",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316540438-t4-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 2 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791316540438",
+   "at": 16,
+   "context": {
+    "own_turn": 4,
+    "first": false,
+    "pp": "5/5",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "世界的伙伴·佐伊",
+     "古旧天刀·波菈莱",
+     "禁牙的变貌·诺玛格达拉",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "断头的斩姬·相枛津"
+    ],
+    "board": [],
+    "opp_board": [],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 8
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316540438-t5-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 古旧天刀·波菈莱（还剩 ep 2 / sep 2）。",
+   "game": "1791316540438",
+   "at": 25,
+   "context": {
+    "own_turn": 5,
+    "first": false,
+    "pp": "7/7",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "古旧天刀·波菈莱",
+     "禁牙的变貌·诺玛格达拉",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "断头的斩姬·相枛津",
+     "掌握天空命运的少女·露莉亚"
+    ],
+    "board": [],
+    "opp_board": [
+     "宣扬的龙人 2/1",
+     "掌握天空命运的少女·露莉亚 3/3"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 10
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316540438-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 金银绚烂·璐米欧儿&雅尔贞特（还剩 ep 1 / sep 2）。",
+   "game": "1791316540438",
+   "at": 34,
+   "context": {
+    "own_turn": 6,
+    "first": false,
+    "pp": "8/8",
+    "hp": 18,
+    "opp_hp": 18,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "禁牙的变貌·诺玛格达拉",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "掌握天空命运的少女·露莉亚",
+     "赤流",
+     "赤流",
+     "天刀深渊",
+     "《世界》的呈现"
+    ],
+    "board": [],
+    "opp_board": [
+     "宣扬的龙人 2/1",
+     "禁牙的变貌·诺玛格达拉 7/8"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 2,
+    "turns_so_far": 12
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316540438-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 约束的《正义》·伊兰翠（还剩 ep 1 / sep 1）。",
+   "game": "1791316540438",
+   "at": 42,
+   "context": {
+    "own_turn": 7,
+    "first": false,
+    "pp": "9/9",
+    "hp": 14,
+    "opp_hp": 12,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "掌握天空命运的少女·露莉亚",
+     "赤流",
+     "赤流",
+     "《世界》的呈现",
+     "古旧天刀·波菈莱",
+     "约束的《正义》·伊兰翠",
+     "日珥咆哮",
+     "断头的斩姬·相枛津"
+    ],
+    "board": [],
+    "opp_board": [
+     "金银绚烂·璐米欧儿&雅尔贞特 9/9"
+    ],
+    "ep": 1,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 1,
+    "turns_so_far": 14
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "UseBonusPP",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316841837-t5-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 满面笑容的烹饪·琪米卡（还剩 ep 2 / sep 2）。",
+   "game": "1791316841837",
+   "at": 21,
+   "context": {
+    "own_turn": 5,
+    "first": true,
+    "pp": "7/7",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "懒惰的波摇花",
+     "古旧天刀·波菈莱",
+     "满面笑容的烹饪·琪米卡",
+     "约束的《正义》·伊兰翠",
+     "世界的伙伴·佐伊",
+     "世界的伙伴·佐伊"
+    ],
+    "board": [],
+    "opp_board": [],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 9
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316841837-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 世界的伙伴·佐伊（还剩 ep 1 / sep 2）。",
+   "game": "1791316841837",
+   "at": 27,
+   "context": {
+    "own_turn": 6,
+    "first": true,
+    "pp": "9/9",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "懒惰的波摇花",
+     "约束的《正义》·伊兰翠",
+     "世界的伙伴·佐伊",
+     "掌握天空命运的少女·露莉亚",
+     "龙之启示"
+    ],
+    "board": [
+     "世界的伙伴·佐伊 5/2"
+    ],
+    "opp_board": [],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 11
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316841837-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 约束的《正义》·伊兰翠（还剩 ep 0 / sep 2）。",
+   "game": "1791316841837",
+   "at": 37,
+   "context": {
+    "own_turn": 7,
+    "first": true,
+    "pp": "10/10",
+    "hp": 20,
+    "opp_hp": 13,
+    "hand": [
+     "懒惰的波摇花",
+     "约束的《正义》·伊兰翠",
+     "世界的伙伴·佐伊",
+     "龙之启示",
+     "古旧天刀·波菈莱",
+     "懒惰的波摇花"
+    ],
+    "board": [
+     "掌握天空命运的少女·露莉亚 1/1"
+    ],
+    "opp_board": [],
+    "ep": 0,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 13
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316974098-t4-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 2 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791316974098",
+   "at": 14,
+   "context": {
+    "own_turn": 4,
+    "first": false,
+    "pp": "4/4",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "宣扬的龙人",
+     "《世界》的呈现",
+     "古旧天刀·波菈莱",
+     "古旧天刀·波菈莱",
+     "约束的《正义》·伊兰翠",
+     "世界的伙伴·佐伊"
+    ],
+    "board": [
+     "古旧天刀·波菈莱 0/2"
+    ],
+    "opp_board": [
+     "世界的伙伴·佐伊 5/5"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 8
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "UseBonusPP",
+    "PlayCard",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316974098-t6-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 2 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791316974098",
+   "at": 25,
+   "context": {
+    "own_turn": 6,
+    "first": false,
+    "pp": "7/7",
+    "hp": 16,
+    "opp_hp": 20,
+    "hand": [
+     "宣扬的龙人",
+     "古旧天刀·波菈莱",
+     "古旧天刀·波菈莱",
+     "约束的《正义》·伊兰翠",
+     "掌握天空命运的少女·露莉亚",
+     "龙之启示",
+     "焦灰的安纳提玛·班德奈特",
+     "金银绚烂·璐米欧儿&雅尔贞特"
+    ],
+    "board": [],
+    "opp_board": [
+     "金银绚烂·璐米欧儿&雅尔贞特 6/6"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 12
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Attack",
+    "Attack",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316974098-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 古旧天刀·波菈莱（还剩 ep 2 / sep 2）。",
+   "game": "1791316974098",
+   "at": 34,
+   "context": {
+    "own_turn": 7,
+    "first": false,
+    "pp": "9/9",
+    "hp": 14,
+    "opp_hp": 20,
+    "hand": [
+     "古旧天刀·波菈莱",
+     "古旧天刀·波菈莱",
+     "约束的《正义》·伊兰翠",
+     "掌握天空命运的少女·露莉亚",
+     "焦灰的安纳提玛·班德奈特",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "约束的《正义》·伊兰翠"
+    ],
+    "board": [],
+    "opp_board": [
+     "焦灰的安纳提玛·班德奈特 12/12"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 1,
+    "turns_so_far": 14
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "UseBonusPP",
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316974098-t8-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 2 / sep 1）但这回合没进化，也没在这回合赢。",
+   "game": "1791316974098",
+   "at": 46,
+   "context": {
+    "own_turn": 8,
+    "first": false,
+    "pp": "10/10",
+    "hp": 5,
+    "opp_hp": 13,
+    "hand": [
+     "古旧天刀·波菈莱",
+     "约束的《正义》·伊兰翠",
+     "掌握天空命运的少女·露莉亚",
+     "焦灰的安纳提玛·班德奈特",
+     "约束的《正义》·伊兰翠",
+     "天刀深渊",
+     "约束的《正义》·伊兰翠"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 8/7"
+    ],
+    "ep": 2,
+    "sep": 1,
+    "opp_ep": 2,
+    "opp_sep": 0,
+    "turns_so_far": 16
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316974098-t9-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 2 / sep 1）但这回合没进化，也没在这回合赢。",
+   "game": "1791316974098",
+   "at": 53,
+   "context": {
+    "own_turn": 9,
+    "first": false,
+    "pp": "10/10",
+    "hp": 10,
+    "opp_hp": 16,
+    "hand": [
+     "古旧天刀·波菈莱",
+     "约束的《正义》·伊兰翠",
+     "掌握天空命运的少女·露莉亚",
+     "焦灰的安纳提玛·班德奈特",
+     "天刀深渊",
+     "约束的《正义》·伊兰翠",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [],
+    "ep": 2,
+    "sep": 1,
+    "opp_ep": 1,
+    "opp_sep": 0,
+    "turns_so_far": 18
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316974098-t10-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 焦灰的安纳提玛·班德奈特（还剩 ep 2 / sep 1）。",
+   "game": "1791316974098",
+   "at": 57,
+   "context": {
+    "own_turn": 10,
+    "first": false,
+    "pp": "10/10",
+    "hp": 15,
+    "opp_hp": 16,
+    "hand": [
+     "古旧天刀·波菈莱",
+     "约束的《正义》·伊兰翠",
+     "掌握天空命运的少女·露莉亚",
+     "焦灰的安纳提玛·班德奈特",
+     "天刀深渊",
+     "禁牙的变貌·诺玛格达拉",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [
+     "焦灰的安纳提玛·班德奈特 9/9"
+    ],
+    "ep": 2,
+    "sep": 1,
+    "opp_ep": 1,
+    "opp_sep": 0,
+    "turns_so_far": 20
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791316974098-t11-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 古旧天刀·波菈莱（还剩 ep 2 / sep 0）。",
+   "game": "1791316974098",
+   "at": 66,
+   "context": {
+    "own_turn": 11,
+    "first": false,
+    "pp": "10/10",
+    "hp": 13,
+    "opp_hp": 19,
+    "hand": [
+     "古旧天刀·波菈莱",
+     "约束的《正义》·伊兰翠",
+     "天刀深渊",
+     "禁牙的变貌·诺玛格达拉",
+     "焦灰的安纳提玛·班德奈特",
+     "断头的斩姬·相枛津",
+     "断头的斩姬·相枛津"
+    ],
+    "board": [
+     "掌握天空命运的少女·露莉亚 1/1"
+    ],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "禁牙的变貌·诺玛格达拉 7/8"
+    ],
+    "ep": 2,
+    "sep": 0,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 22
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "PlayCard",
+    "Attack",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791317238047-t4-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 世界的伙伴·佐伊（还剩 ep 2 / sep 2）。",
+   "game": "1791317238047",
+   "at": 17,
+   "context": {
+    "own_turn": 4,
+    "first": false,
+    "pp": "5/5",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "世界的伙伴·佐伊",
+     "焦龙的午睡",
+     "断头的斩姬·相枛津",
+     "断头的斩姬·相枛津",
+     "约束的《正义》·伊兰翠",
+     "金银绚烂·璐米欧儿&雅尔贞特"
+    ],
+    "board": [
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1"
+    ],
+    "opp_board": [
+     "世界的伙伴·佐伊 5/5"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 8
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "Attack",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791317238047-t5-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 1 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791317238047",
+   "at": 26,
+   "context": {
+    "own_turn": 5,
+    "first": false,
+    "pp": "7/7",
+    "hp": 20,
+    "opp_hp": 19,
+    "hand": [
+     "焦龙的午睡",
+     "断头的斩姬·相枛津",
+     "断头的斩姬·相枛津",
+     "约束的《正义》·伊兰翠",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "满面笑容的烹饪·琪米卡"
+    ],
+    "board": [],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 7/8"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 10
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791317238047-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 断头的斩姬·相枛津（还剩 ep 1 / sep 2）。",
+   "game": "1791317238047",
+   "at": 33,
+   "context": {
+    "own_turn": 6,
+    "first": false,
+    "pp": "8/8",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "焦龙的午睡",
+     "断头的斩姬·相枛津",
+     "约束的《正义》·伊兰翠",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "赤流",
+     "赤流",
+     "懒惰的波摇花"
+    ],
+    "board": [],
+    "opp_board": [
+     "满面笑容的烹饪·琪米卡 2/1"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 12
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791317238047-t7-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 0 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791317238047",
+   "at": 42,
+   "context": {
+    "own_turn": 7,
+    "first": false,
+    "pp": "9/9",
+    "hp": 11,
+    "opp_hp": 13,
+    "hand": [
+     "约束的《正义》·伊兰翠",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "懒惰的波摇花",
+     "赤流",
+     "赤流",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [
+     "约束的《正义》·伊兰翠 11/11"
+    ],
+    "ep": 0,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 1,
+    "turns_so_far": 14
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791317238047-t8-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 0 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791317238047",
+   "at": 49,
+   "context": {
+    "own_turn": 8,
+    "first": false,
+    "pp": "10/10",
+    "hp": 5,
+    "opp_hp": 13,
+    "hand": [
+     "约束的《正义》·伊兰翠",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "懒惰的波摇花",
+     "赤流",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "约束的《正义》·伊兰翠 11/11"
+    ],
+    "ep": 0,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 0,
+    "turns_so_far": 16
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "UseBonusPP",
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791317238047-t9-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 焦灰的安纳提玛·班德奈特（还剩 ep 0 / sep 2）。",
+   "game": "1791317238047",
+   "at": 55,
+   "context": {
+    "own_turn": 9,
+    "first": false,
+    "pp": "10/10",
+    "hp": 9,
+    "opp_hp": 13,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "懒惰的波摇花",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [],
+    "ep": 0,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 0,
+    "turns_so_far": 18
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791317476826-t4-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 世界的伙伴·佐伊（还剩 ep 2 / sep 2）。",
+   "game": "1791317476826",
+   "at": 19,
+   "context": {
+    "own_turn": 4,
+    "first": false,
+    "pp": "5/5",
+    "hp": 18,
+    "opp_hp": 20,
+    "hand": [
+     "世界的伙伴·佐伊",
+     "宣扬的龙人",
+     "《世界》的呈现",
+     "断头的斩姬·相枛津",
+     "《世界》的呈现",
+     "宣扬的龙人"
+    ],
+    "board": [
+     "宣扬的龙人 2/1"
+    ],
+    "opp_board": [
+     "世界的伙伴·佐伊 5/5"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 8
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791317476826-t5-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 1 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791317476826",
+   "at": 29,
+   "context": {
+    "own_turn": 5,
+    "first": false,
+    "pp": "7/7",
+    "hp": 18,
+    "opp_hp": 18,
+    "hand": [
+     "宣扬的龙人",
+     "《世界》的呈现",
+     "断头的斩姬·相枛津",
+     "《世界》的呈现",
+     "宣扬的龙人",
+     "日珥咆哮"
+    ],
+    "board": [],
+    "opp_board": [
+     "宣扬的龙人 2/1"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 10
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791317476826-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 古旧天刀·波菈莱（还剩 ep 1 / sep 2）。",
+   "game": "1791317476826",
+   "at": 34,
+   "context": {
+    "own_turn": 6,
+    "first": false,
+    "pp": "8/8",
+    "hp": 18,
+    "opp_hp": 18,
+    "hand": [
+     "宣扬的龙人",
+     "断头的斩姬·相枛津",
+     "《世界》的呈现",
+     "日珥咆哮",
+     "世界的伙伴·佐伊",
+     "断头的斩姬·相枛津",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "焦灰的安纳提玛·班德奈特 9/9"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 12
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "UseBonusPP",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791317476826-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 断头的斩姬·相枛津（还剩 ep 1 / sep 1）。",
+   "game": "1791317476826",
+   "at": 43,
+   "context": {
+    "own_turn": 7,
+    "first": false,
+    "pp": "9/9",
+    "hp": 18,
+    "opp_hp": 20,
+    "hand": [
+     "断头的斩姬·相枛津",
+     "《世界》的呈现",
+     "日珥咆哮",
+     "世界的伙伴·佐伊",
+     "赤流",
+     "赤流",
+     "天刀深渊",
+     "天刀深渊",
+     "天刀深渊"
+    ],
+    "board": [
+     "断头的斩姬·相枛津 5/4"
+    ],
+    "opp_board": [
+     "约束的《正义》·伊兰翠 8/8"
+    ],
+    "ep": 1,
+    "sep": 1,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 14
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791317687161-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 掌握天空命运的少女·露莉亚（还剩 ep 2 / sep 2）。",
+   "game": "1791317687161",
+   "at": 24,
+   "context": {
+    "own_turn": 6,
+    "first": true,
+    "pp": "9/9",
+    "hp": 18,
+    "opp_hp": 20,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "掌握天空命运的少女·露莉亚",
+     "掌握天空命运的少女·露莉亚",
+     "懒惰的波摇花",
+     "焦龙的午睡",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [
+     "满面笑容的烹饪·琪米卡 2/1",
+     "古旧天刀·波菈莱 2/4"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 11
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "PlayCard",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791317687161-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 焦灰的安纳提玛·班德奈特（还剩 ep 1 / sep 2）。",
+   "game": "1791317687161",
+   "at": 35,
+   "context": {
+    "own_turn": 7,
+    "first": true,
+    "pp": "10/10",
+    "hp": 16,
+    "opp_hp": 15,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "懒惰的波摇花",
+     "焦灰的安纳提玛·班德奈特",
+     "赤流",
+     "满面笑容的烹饪·琪米卡"
+    ],
+    "board": [],
+    "opp_board": [
+     "焦灰的安纳提玛·班德奈特 12/12"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 1,
+    "turns_so_far": 13
+   },
+   "batch": "2026-10-06-evening-vs-old-bot",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791384258804-t5-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 古旧天刀·波菈莱（还剩 ep 2 / sep 2）。",
+   "game": "1791384258804",
+   "at": 19,
+   "context": {
+    "own_turn": 5,
+    "first": true,
+    "pp": "7/7",
+    "hp": 20,
+    "opp_hp": 20,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "掌握天空命运的少女·露莉亚",
+     "宣扬的龙人",
+     "断头的斩姬·相枛津",
+     "古旧天刀·波菈莱",
+     "龙之启示"
+    ],
+    "board": [],
+    "opp_board": [
+     "世界的伙伴·佐伊 7/2"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 9
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791384258804-t6-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 1 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791384258804",
+   "at": 27,
+   "context": {
+    "own_turn": 6,
+    "first": true,
+    "pp": "8/8",
+    "hp": 20,
+    "opp_hp": 18,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "掌握天空命运的少女·露莉亚",
+     "宣扬的龙人",
+     "龙之启示",
+     "赤流",
+     "赤流",
+     "天刀深渊",
+     "金银绚烂·璐米欧儿&雅尔贞特"
+    ],
+    "board": [],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 7/8"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 2,
+    "turns_so_far": 11
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791384258804-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 金银绚烂·璐米欧儿&雅尔贞特（还剩 ep 1 / sep 2）。",
+   "game": "1791384258804",
+   "at": 36,
+   "context": {
+    "own_turn": 7,
+    "first": true,
+    "pp": "9/9",
+    "hp": 15,
+    "opp_hp": 18,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "赤流",
+     "天刀深渊",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "断头的斩姬·相枛津",
+     "懒惰的波摇花"
+    ],
+    "board": [],
+    "opp_board": [
+     "金银绚烂·璐米欧儿&雅尔贞特 9/9"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 1,
+    "turns_so_far": 13
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791384258804-t8-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 1 / sep 1）但这回合没进化，也没在这回合赢。",
+   "game": "1791384258804",
+   "at": 47,
+   "context": {
+    "own_turn": 8,
+    "first": true,
+    "pp": "10/10",
+    "hp": 6,
+    "opp_hp": 12,
+    "hand": [
+     "赤流",
+     "断头的斩姬·相枛津",
+     "懒惰的波摇花",
+     "约束的《正义》·伊兰翠",
+     "焦灰的安纳提玛·班德奈特",
+     "焦龙的午睡",
+     "满面笑容的烹饪·琪米卡"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 8/7"
+    ],
+    "ep": 1,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 15
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791384258804-t9-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 焦灰的安纳提玛·班德奈特（还剩 ep 1 / sep 1）。",
+   "game": "1791384258804",
+   "at": 51,
+   "context": {
+    "own_turn": 9,
+    "first": true,
+    "pp": "10/10",
+    "hp": 14,
+    "opp_hp": 20,
+    "hand": [
+     "赤流",
+     "断头的斩姬·相枛津",
+     "懒惰的波摇花",
+     "焦灰的安纳提玛·班德奈特",
+     "焦龙的午睡",
+     "满面笑容的烹饪·琪米卡",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [
+     "约束的《正义》·伊兰翠 8/8"
+    ],
+    "ep": 1,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 17
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791384258804-t10-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 1 / sep 0）但这回合没进化，也没在这回合赢。",
+   "game": "1791384258804",
+   "at": 59,
+   "context": {
+    "own_turn": 10,
+    "first": true,
+    "pp": "10/10",
+    "hp": 14,
+    "opp_hp": 18,
+    "hand": [
+     "赤流",
+     "断头的斩姬·相枛津",
+     "懒惰的波摇花",
+     "焦龙的午睡",
+     "满面笑容的烹饪·琪米卡",
+     "禁牙的变貌·诺玛格达拉",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1",
+     "古旧天刀·波菈莱 0/2"
+    ],
+    "ep": 1,
+    "sep": 0,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 19
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791384258804-t11-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 古旧天刀·波菈莱（还剩 ep 1 / sep 0）。",
+   "game": "1791384258804",
+   "at": 66,
+   "context": {
+    "own_turn": 11,
+    "first": true,
+    "pp": "10/10",
+    "hp": 10,
+    "opp_hp": 16,
+    "hand": [
+     "赤流",
+     "断头的斩姬·相枛津",
+     "懒惰的波摇花",
+     "焦龙的午睡",
+     "世界的伙伴·佐伊",
+     "断头的斩姬·相枛津"
+    ],
+    "board": [
+     "满面笑容的烹饪·琪米卡 2/1",
+     "古旧天刀·波菈莱 0/2"
+    ],
+    "opp_board": [
+     "断头的斩姬·相枛津 5/4",
+     "古旧天刀·波菈莱 0/2"
+    ],
+    "ep": 1,
+    "sep": 0,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 21
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "PlayCard",
+    "Attack",
+    "Attack",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791385092476-t4-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 世界的伙伴·佐伊（还剩 ep 2 / sep 2）。",
+   "game": "1791385092476",
+   "at": 18,
+   "context": {
+    "own_turn": 4,
+    "first": false,
+    "pp": "5/5",
+    "hp": 17,
+    "opp_hp": 20,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "禁牙的变貌·诺玛格达拉",
+     "懒惰的波摇花",
+     "宣扬的龙人",
+     "宣扬的龙人",
+     "世界的伙伴·佐伊"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "满面笑容的烹饪·琪米卡 2/1"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 8
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791385092476-t5-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 1 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791385092476",
+   "at": 27,
+   "context": {
+    "own_turn": 5,
+    "first": false,
+    "pp": "7/7",
+    "hp": 16,
+    "opp_hp": 20,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "禁牙的变貌·诺玛格达拉",
+     "懒惰的波摇花",
+     "宣扬的龙人",
+     "宣扬的龙人",
+     "日珥咆哮"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 10
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "UseBonusPP",
+    "PlayCard",
+    "Attack",
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791385092476-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 焦灰的安纳提玛·班德奈特（还剩 ep 1 / sep 2）。",
+   "game": "1791385092476",
+   "at": 35,
+   "context": {
+    "own_turn": 6,
+    "first": false,
+    "pp": "8/8",
+    "hp": 16,
+    "opp_hp": 20,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "禁牙的变貌·诺玛格达拉",
+     "懒惰的波摇花",
+     "日珥咆哮",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [],
+    "opp_board": [
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 12
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "UseBonusPP",
+    "PlayCard",
+    "Evolve",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791385092476-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 禁牙的变貌·诺玛格达拉（还剩 ep 1 / sep 1）。",
+   "game": "1791385092476",
+   "at": 43,
+   "context": {
+    "own_turn": 7,
+    "first": false,
+    "pp": "9/9",
+    "hp": 13,
+    "opp_hp": 18,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "懒惰的波摇花",
+     "日珥咆哮",
+     "禁牙的变貌·诺玛格达拉",
+     "焦龙的午睡"
+    ],
+    "board": [],
+    "opp_board": [
+     "焦灰的安纳提玛·班德奈特 12/12"
+    ],
+    "ep": 1,
+    "sep": 1,
+    "opp_ep": 1,
+    "opp_sep": 1,
+    "turns_so_far": 14
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "PlayCard",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791385225044-t5-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 禁牙的变貌·诺玛格达拉（还剩 ep 2 / sep 2）。",
+   "game": "1791385225044",
+   "at": 23,
+   "context": {
+    "own_turn": 5,
+    "first": true,
+    "pp": "7/7",
+    "hp": 16,
+    "opp_hp": 20,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "满面笑容的烹饪·琪米卡",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "宣扬的龙人",
+     "禁牙的变貌·诺玛格达拉",
+     "断头的斩姬·相枛津",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 3/3",
+     "世界的伙伴·佐伊 5/5"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 9
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791385225044-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 断头的斩姬·相枛津（还剩 ep 1 / sep 2）。",
+   "game": "1791385225044",
+   "at": 30,
+   "context": {
+    "own_turn": 6,
+    "first": true,
+    "pp": "8/8",
+    "hp": 19,
+    "opp_hp": 20,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "满面笑容的烹饪·琪米卡",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "宣扬的龙人",
+     "断头的斩姬·相枛津",
+     "古旧天刀·波菈莱",
+     "满面笑容的烹饪·琪米卡",
+     "宣扬的龙人"
+    ],
+    "board": [],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 7/8"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 2,
+    "turns_so_far": 11
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791385225044-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 焦灰的安纳提玛·班德奈特（还剩 ep 0 / sep 2）。",
+   "game": "1791385225044",
+   "at": 42,
+   "context": {
+    "own_turn": 7,
+    "first": true,
+    "pp": "9/9",
+    "hp": 18,
+    "opp_hp": 19,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "满面笑容的烹饪·琪米卡",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "宣扬的龙人",
+     "满面笑容的烹饪·琪米卡",
+     "赤流",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 8/9"
+    ],
+    "ep": 0,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 1,
+    "turns_so_far": 13
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791385225044-t8-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 0 / sep 1）但这回合没进化，也没在这回合赢。",
+   "game": "1791385225044",
+   "at": 49,
+   "context": {
+    "own_turn": 8,
+    "first": true,
+    "pp": "10/10",
+    "hp": 15,
+    "opp_hp": 17,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "满面笑容的烹饪·琪米卡",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "宣扬的龙人",
+     "满面笑容的烹饪·琪米卡",
+     "赤流",
+     "焦灰的安纳提玛·班德奈特"
+    ],
+    "board": [],
+    "opp_board": [
+     "焦灰的安纳提玛·班德奈特 12/12"
+    ],
+    "ep": 0,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 15
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791385225044-t9-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 金银绚烂·璐米欧儿&雅尔贞特（还剩 ep 0 / sep 1）。",
+   "game": "1791385225044",
+   "at": 55,
+   "context": {
+    "own_turn": 9,
+    "first": true,
+    "pp": "10/10",
+    "hp": 14,
+    "opp_hp": 19,
+    "hand": [
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "焦灰的安纳提玛·班德奈特",
+     "禁牙的变貌·诺玛格达拉",
+     "日珥咆哮"
+    ],
+    "board": [],
+    "opp_board": [
+     "约束的《正义》·伊兰翠 8/8"
+    ],
+    "ep": 0,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 17
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791385824342-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 掌握天空命运的少女·露莉亚（还剩 ep 2 / sep 2）。",
+   "game": "1791385824342",
+   "at": 28,
+   "context": {
+    "own_turn": 6,
+    "first": true,
+    "pp": "8/8",
+    "hp": 14,
+    "opp_hp": 20,
+    "hand": [
+     "懒惰的波摇花",
+     "焦灰的安纳提玛·班德奈特",
+     "焦灰的安纳提玛·班德奈特",
+     "掌握天空命运的少女·露莉亚",
+     "约束的《正义》·伊兰翠",
+     "满面笑容的烹饪·琪米卡"
+    ],
+    "board": [],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 7/8"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 2,
+    "turns_so_far": 11
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "Attack",
+    "Attack",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791385824342-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 焦灰的安纳提玛·班德奈特（还剩 ep 1 / sep 2）。",
+   "game": "1791385824342",
+   "at": 40,
+   "context": {
+    "own_turn": 7,
+    "first": true,
+    "pp": "9/9",
+    "hp": 11,
+    "opp_hp": 20,
+    "hand": [
+     "懒惰的波摇花",
+     "焦灰的安纳提玛·班德奈特",
+     "约束的《正义》·伊兰翠",
+     "断头的斩姬·相枛津",
+     "约束的《正义》·伊兰翠"
+    ],
+    "board": [],
+    "opp_board": [
+     "金银绚烂·璐米欧儿&雅尔贞特 6/6",
+     "古旧天刀·波菈莱 0/2"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 2,
+    "turns_so_far": 13
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791385824342-t8-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 1 / sep 1）但这回合没进化，也没在这回合赢。",
+   "game": "1791385824342",
+   "at": 50,
+   "context": {
+    "own_turn": 8,
+    "first": true,
+    "pp": "10/10",
+    "hp": 3,
+    "opp_hp": 18,
+    "hand": [
+     "懒惰的波摇花",
+     "约束的《正义》·伊兰翠",
+     "断头的斩姬·相枛津",
+     "约束的《正义》·伊兰翠",
+     "断头的斩姬·相枛津"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "断头的斩姬·相枛津 8/7"
+    ],
+    "ep": 1,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 1,
+    "turns_so_far": 15
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791385824342-t9-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 1 / sep 1）但这回合没进化，也没在这回合赢。",
+   "game": "1791385824342",
+   "at": 58,
+   "context": {
+    "own_turn": 9,
+    "first": true,
+    "pp": "10/10",
+    "hp": 5,
+    "opp_hp": 16,
+    "hand": [
+     "懒惰的波摇花",
+     "约束的《正义》·伊兰翠",
+     "断头的斩姬·相枛津",
+     "断头的斩姬·相枛津",
+     "掌握天空命运的少女·露莉亚"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 4/4",
+     "禁牙的变貌·诺玛格达拉 5/6"
+    ],
+    "ep": 1,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 17
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791385824342-t10-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 禁牙的变貌·诺玛格达拉（还剩 ep 1 / sep 1）。",
+   "game": "1791385824342",
+   "at": 66,
+   "context": {
+    "own_turn": 10,
+    "first": true,
+    "pp": "10/10",
+    "hp": 8,
+    "opp_hp": 16,
+    "hand": [
+     "懒惰的波摇花",
+     "断头的斩姬·相枛津",
+     "断头的斩姬·相枛津",
+     "掌握天空命运的少女·露莉亚",
+     "《世界》的呈现"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 5/4"
+    ],
+    "ep": 1,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 19
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791385824342-t11-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 1 / sep 0）但这回合没进化，也没在这回合赢。",
+   "game": "1791385824342",
+   "at": 77,
+   "context": {
+    "own_turn": 11,
+    "first": true,
+    "pp": "10/10",
+    "hp": 9,
+    "opp_hp": 11,
+    "hand": [
+     "懒惰的波摇花",
+     "断头的斩姬·相枛津",
+     "断头的斩姬·相枛津",
+     "《世界》的呈现",
+     "日珥咆哮",
+     "金银绚烂·璐米欧儿&雅尔贞特"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 5/4"
+    ],
+    "ep": 1,
+    "sep": 0,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 21
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791387075633-t5-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 世界的伙伴·佐伊（还剩 ep 2 / sep 2）。",
+   "game": "1791387075633",
+   "at": 25,
+   "context": {
+    "own_turn": 5,
+    "first": true,
+    "pp": "6/6",
+    "hp": 13,
+    "opp_hp": 20,
+    "hand": [
+     "断头的斩姬·相枛津",
+     "世界的伙伴·佐伊",
+     "古旧天刀·波菈莱",
+     "禁牙的变貌·诺玛格达拉",
+     "焦灰的安纳提玛·班德奈特",
+     "懒惰的波摇花",
+     "约束的《正义》·伊兰翠"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 3/3",
+     "古旧天刀·波菈莱 0/2"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 9
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791387075633-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 禁牙的变貌·诺玛格达拉（还剩 ep 1 / sep 2）。",
+   "game": "1791387075633",
+   "at": 33,
+   "context": {
+    "own_turn": 6,
+    "first": true,
+    "pp": "8/8",
+    "hp": 10,
+    "opp_hp": 20,
+    "hand": [
+     "断头的斩姬·相枛津",
+     "古旧天刀·波菈莱",
+     "禁牙的变貌·诺玛格达拉",
+     "焦灰的安纳提玛·班德奈特",
+     "懒惰的波摇花",
+     "约束的《正义》·伊兰翠",
+     "金银绚烂·璐米欧儿&雅尔贞特"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 3/3",
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 11
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791387075633-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 断头的斩姬·相枛津（还剩 ep 0 / sep 2）。",
+   "game": "1791387075633",
+   "at": 38,
+   "context": {
+    "own_turn": 7,
+    "first": true,
+    "pp": "9/9",
+    "hp": 13,
+    "opp_hp": 20,
+    "hand": [
+     "断头的斩姬·相枛津",
+     "古旧天刀·波菈莱",
+     "焦灰的安纳提玛·班德奈特",
+     "懒惰的波摇花",
+     "约束的《正义》·伊兰翠",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "宣扬的龙人",
+     "懒惰的波摇花"
+    ],
+    "board": [
+     "禁牙的变貌·诺玛格达拉 7/8"
+    ],
+    "opp_board": [],
+    "ep": 0,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 13
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791387160337-t4-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 世界的伙伴·佐伊（还剩 ep 2 / sep 2）。",
+   "game": "1791387160337",
+   "at": 16,
+   "context": {
+    "own_turn": 4,
+    "first": false,
+    "pp": "5/5",
+    "hp": 18,
+    "opp_hp": 20,
+    "hand": [
+     "世界的伙伴·佐伊",
+     "断头的斩姬·相枛津",
+     "日珥咆哮",
+     "古旧天刀·波菈莱",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "宣扬的龙人",
+     "龙之启示"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "满面笑容的烹饪·琪米卡 2/1",
+     "古旧天刀·波菈莱 0/2"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 2,
+    "opp_sep": 2,
+    "turns_so_far": 8
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791387160337-t5-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 1 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791387160337",
+   "at": 26,
+   "context": {
+    "own_turn": 5,
+    "first": false,
+    "pp": "7/7",
+    "hp": 10,
+    "opp_hp": 20,
+    "hand": [
+     "断头的斩姬·相枛津",
+     "日珥咆哮",
+     "古旧天刀·波菈莱",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "宣扬的龙人",
+     "龙之启示",
+     "宣扬的龙人"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "断头的斩姬·相枛津 7/6"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 10
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Attack",
+    "Attack",
+    "Attack",
+    "UseBonusPP",
+    "PlayCard",
+    "Attack",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791387160337-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 古旧天刀·波菈莱（还剩 ep 1 / sep 2）。",
+   "game": "1791387160337",
+   "at": 37,
+   "context": {
+    "own_turn": 6,
+    "first": false,
+    "pp": "8/8",
+    "hp": 6,
+    "opp_hp": 20,
+    "hand": [
+     "断头的斩姬·相枛津",
+     "日珥咆哮",
+     "古旧天刀·波菈莱",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "龙之启示",
+     "懒惰的波摇花"
+    ],
+    "board": [],
+    "opp_board": [
+     "金银绚烂·璐米欧儿&雅尔贞特 6/6"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 12
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "PlayCard",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791387160337-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 金银绚烂·璐米欧儿&雅尔贞特（还剩 ep 1 / sep 1）。",
+   "game": "1791387160337",
+   "at": 46,
+   "context": {
+    "own_turn": 7,
+    "first": false,
+    "pp": "9/9",
+    "hp": 2,
+    "opp_hp": 14,
+    "hand": [
+     "日珥咆哮",
+     "金银绚烂·璐米欧儿&雅尔贞特",
+     "龙之启示",
+     "懒惰的波摇花",
+     "赤流",
+     "天刀深渊",
+     "天刀深渊",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "金银绚烂·璐米欧儿&雅尔贞特 9/9"
+    ],
+    "ep": 1,
+    "sep": 1,
+    "opp_ep": 1,
+    "opp_sep": 1,
+    "turns_so_far": 14
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791387160337-t8-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 古旧天刀·波菈莱（还剩 ep 1 / sep 0）。",
+   "game": "1791387160337",
+   "at": 56,
+   "context": {
+    "own_turn": 8,
+    "first": false,
+    "pp": "10/10",
+    "hp": 3,
+    "opp_hp": 11,
+    "hand": [
+     "日珥咆哮",
+     "龙之启示",
+     "懒惰的波摇花",
+     "赤流",
+     "古旧天刀·波菈莱",
+     "约束的《正义》·伊兰翠",
+     "掌握天空命运的少女·露莉亚",
+     "断头的斩姬·相枛津",
+     "满面笑容的烹饪·琪米卡"
+    ],
+    "board": [],
+    "opp_board": [
+     "掌握天空命运的少女·露莉亚 1/1",
+     "禁牙的变貌·诺玛格达拉 8/9",
+     "满面笑容的烹饪·琪米卡 2/1",
+     "古旧天刀·波菈莱 0/2"
+    ],
+    "ep": 1,
+    "sep": 0,
+    "opp_ep": 1,
+    "opp_sep": 0,
+    "turns_so_far": 16
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "UseBonusPP",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791387437959-t5-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 禁牙的变貌·诺玛格达拉（还剩 ep 2 / sep 2）。",
+   "game": "1791387437959",
+   "at": 22,
+   "context": {
+    "own_turn": 5,
+    "first": true,
+    "pp": "7/7",
+    "hp": 14,
+    "opp_hp": 20,
+    "hand": [
+     "禁牙的变貌·诺玛格达拉",
+     "焦灰的安纳提玛·班德奈特",
+     "约束的《正义》·伊兰翠",
+     "焦灰的安纳提玛·班德奈特",
+     "禁牙的变貌·诺玛格达拉"
+    ],
+    "board": [
+     "掌握天空命运的少女·露莉亚 1/1"
+    ],
+    "opp_board": [
+     "满面笑容的烹饪·琪米卡 4/3",
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1",
+     "宣扬的龙人 2/1"
+    ],
+    "ep": 2,
+    "sep": 2,
+    "opp_ep": 1,
+    "opp_sep": 2,
+    "turns_so_far": 9
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791387437959-t6-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 1 / sep 2）但这回合没进化，也没在这回合赢。",
+   "game": "1791387437959",
+   "at": 33,
+   "context": {
+    "own_turn": 6,
+    "first": true,
+    "pp": "8/8",
+    "hp": 17,
+    "opp_hp": 20,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "约束的《正义》·伊兰翠",
+     "焦灰的安纳提玛·班德奈特",
+     "禁牙的变貌·诺玛格达拉",
+     "日珥咆哮",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [
+     "掌握天空命运的少女·露莉亚 1/1"
+    ],
+    "opp_board": [
+     "宣扬的龙人 2/1"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 2,
+    "turns_so_far": 11
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791387437959-t7-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem super-evolve 焦灰的安纳提玛·班德奈特（还剩 ep 1 / sep 2）。",
+   "game": "1791387437959",
+   "at": 41,
+   "context": {
+    "own_turn": 7,
+    "first": true,
+    "pp": "9/9",
+    "hp": 19,
+    "opp_hp": 20,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "约束的《正义》·伊兰翠",
+     "焦灰的安纳提玛·班德奈特",
+     "日珥咆哮",
+     "古旧天刀·波菈莱",
+     "龙之启示",
+     "掌握天空命运的少女·露莉亚"
+    ],
+    "board": [
+     "掌握天空命运的少女·露莉亚 1/1"
+    ],
+    "opp_board": [
+     "禁牙的变貌·诺玛格达拉 8/9"
+    ],
+    "ep": 1,
+    "sep": 2,
+    "opp_ep": 0,
+    "opp_sep": 1,
+    "turns_so_far": 13
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791387437959-t8-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "confidence": "中",
+   "why": "Salem 能进化（ep 1 / sep 1）但这回合没进化，也没在这回合赢。",
+   "game": "1791387437959",
+   "at": 52,
+   "context": {
+    "own_turn": 8,
+    "first": true,
+    "pp": "10/10",
+    "hp": 13,
+    "opp_hp": 17,
+    "hand": [
+     "约束的《正义》·伊兰翠",
+     "焦灰的安纳提玛·班德奈特",
+     "日珥咆哮",
+     "古旧天刀·波菈莱",
+     "龙之启示",
+     "掌握天空命运的少女·露莉亚",
+     "懒惰的波摇花"
+    ],
+    "board": [],
+    "opp_board": [
+     "断头的斩姬·相枛津 5/4",
+     "古旧天刀·波菈莱 3/5"
+    ],
+    "ep": 1,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 15
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "EndTurn"
+   ]
+  },
+  {
+   "id": "1791387437959-t9-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "confidence": "中",
+   "why": "Salem evolve 断头的斩姬·相枛津（还剩 ep 1 / sep 1）。",
+   "game": "1791387437959",
+   "at": 57,
+   "context": {
+    "own_turn": 9,
+    "first": true,
+    "pp": "10/10",
+    "hp": 20,
+    "opp_hp": 19,
+    "hand": [
+     "焦灰的安纳提玛·班德奈特",
+     "日珥咆哮",
+     "古旧天刀·波菈莱",
+     "龙之启示",
+     "掌握天空命运的少女·露莉亚",
+     "懒惰的波摇花",
+     "古旧天刀·波菈莱"
+    ],
+    "board": [],
+    "opp_board": [
+     "约束的《正义》·伊兰翠 8/8"
+    ],
+    "ep": 1,
+    "sep": 1,
+    "opp_ep": 0,
+    "opp_sep": 0,
+    "turns_so_far": 17
+   },
+   "batch": "2026-10-07-vs-v2s",
+   "salem_turn": [
+    "PlayCard",
+    "PlayCard",
+    "PlayCard",
+    "Evolve",
+    "Attack",
+    "EndTurn"
+   ]
+  }
+ ]
+}

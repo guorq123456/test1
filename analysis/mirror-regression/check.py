@@ -90,6 +90,10 @@ def passes(check, turn, after, biggest_gone=False):
     def holds(key, want):
         if key == "super_evolves":
             return any(k == "se" and d["card"] == want for k, d in turn)
+        if key == "no_evolve":
+            return not any(k in ("se", "evo") for k, _ in turn)
+        if key == "evolves":
+            return any(k in ("se", "evo") for k, _ in turn)
         if key == "no_super_evolve":
             return not any(k == "se" for k, _ in turn)
         if key == "never_discards":
@@ -131,9 +135,11 @@ def main():
     path, spec = args[0], args[1]
     seeds = int(args[2]) if len(args) > 2 else 1
     data = json.load(open(path))
-    # a subset file (e.g. cross_turn.json) refers to the games kept in positions.json next to it
+    # a subset file (e.g. cross_turn.json) refers to the games kept in positions.json next to it, or in the
+    # file its "records_file" names (evolve_probes.json: salem_games.json)
+    here = os.path.dirname(os.path.abspath(path))
     RECORDS.update(data.get("records") or
-                   json.load(open(os.path.join(os.path.dirname(os.path.abspath(path)), "positions.json")))["records"])
+                   json.load(open(os.path.join(here, data.get("records_file", "positions.json"))))["records"])
     positions = data["positions"]
     by_cat = defaultdict(lambda: [0, 0])
     rows = []
