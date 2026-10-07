@@ -360,6 +360,28 @@ def test_a_card_that_does_something_on_entering_can_be_measured():
     recurring(d)
 
 
+def test_a_torn_search_forks_and_its_branch_keeps_points_only_while_torn():
+    import json
+    from svsim.learn.netdata import _qgap_mode, play
+    assert _qgap_mode("qgap") == (0.05, 2) and _qgap_mode("qgap:0.1:3") == (0.1, 3) and _qgap_mode("all") is None
+    found = False
+    for g in range(3):
+        out = [json.loads(json.dumps(r)) for r in
+               play((g, 77, "ramp", "ramp", "mcts:30+plan+learned+phased", 0.0, 0.0, True, None, "qgap:0.05:2"))]
+        if len(out) < 2:
+            continue
+        control, branch = out
+        i = control["branch"]["i"]
+        assert control["actions"][:i] == branch["actions"][:i] and abs(control["branch"]["q_gap"]) < 0.05
+        assert branch["branch"]["hold"] == "qgap:0.05:2"
+        for h in branch.get("holds", []):
+            assert h["hold"] == "torn" and h["q_gap"] < 0.05 and h["i"] >= i
+        turns = {h["turn"] for h in branch.get("holds", [])}
+        assert len(turns) <= 2
+        found = True
+    assert found
+
+
 def test_a_payoff_card_still_in_the_deck_counts_by_its_draw_chances():
     from svsim.cards import decks
     from svsim.core.engine import new_game

@@ -51,7 +51,8 @@ def play(job):
     hold = job[6] if len(job) > 6 else 0.0
     fork = job[7] if len(job) > 7 else False
     triggers = tuple(job[8]) if len(job) > 8 and job[8] else ("payoff", "deck", "unlock")
-    mode = job[9] if len(job) > 9 and job[9] else "all"          # the branch's hold: see _keep
+    mode = job[9] if len(job) > 9 and job[9] else "all"          # the branch's hold: see _keep, _qgap_keep
+    qgap = _qgap_mode(mode)                                       # (eps, cap) for "qgap[:EPS[:CAP]]"
     rng = random.Random(seed * 7919 + g)
     seat = g % 2
     cards = [None, None]
@@ -67,26 +68,31 @@ def play(job):
         _run(state, agents, record, rng, explore, hold)
         return record
     snapshot = {}
-    _run(state, agents, record, rng, explore, 0.0, snapshot=snapshot, triggers=triggers)
+    _run(state, agents, record, rng, explore, 0.0, snapshot=snapshot, triggers=triggers,
+         fork_eps=qgap[0] if qgap else None)
     if not snapshot:
         return [record]
     branch = json.loads(json.dumps({k: v for k, v in snapshot["record"].items()}))
     branch_agents = [make_agent(spec, seed * 1000 + 2 * g + i + 500000) for i in (0, 1)]
     branch_rng = random.Random()
     branch_rng.setstate(snapshot["rng"])
-    info = {k: snapshot[k] for k in ("i", "player", "turn", "trigger", "target")}
+    info = {k: snapshot[k] for k in ("i", "player", "turn", "trigger", "target") + (("q_gap", "q_moves") if qgap else ())}
     record["branch"] = dict(info, kind="control")
     branch["branch"] = dict(info, kind="hold", agent_seeds=[seed * 1000 + 2 * g + i + 500000 for i in (0, 1)],
                             rng_state=snapshot["rng"])   # random.Random().setstate((3, tuple(x[1]), None))
     branch["branch"]["hold"] = mode
-    _run(snapshot["state"], branch_agents, branch, branch_rng, explore, 0.0, keep=dict(info, held=0, mode=mode))
+    keep = dict(info, held=0, mode=mode) if not qgap else dict(info, held=0, mode="qgap", eps=qgap[0], cap=qgap[1],
+                                                                   turns=set())
+    _run(snapshot["state"], branch_agents, branch, branch_rng, explore, 0.0, keep=keep)
     return [record, branch]
 
 
 def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
-         triggers=("payoff", "deck", "unlock")) -> None:
+         triggers=("payoff", "deck", "unlock"), fork_eps=None) -> None:
     """Play `state` out, adding to `record`. `snapshot` (a dict): fill it at the first fork point (see
-    play). `keep`: the branch's side keeps its points (no evolving) as play describes."""
+    play); with `fork_eps`, at the first decision where a fork point holds and the search itself is torn
+    between evolving and not (_q_gap within fork_eps). `keep`: the branch's side keeps its points (no
+    evolving) as play describes (keep["mode"] "qgap": _qgap_keep)."""
     from svsim.core.engine import apply, legal_actions
     from svsim.tools import records as R
     held = {}                                       # (player, turn) -> the restriction held this turn
@@ -104,20 +110,35 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
                                                          "deck": [c.uid for c in p.deck]})
         if hold and search is not None and state.phase.name == "MAIN":
             _hold(state, search, vetoes[state.active], held, hold, rng, record)
-        if snapshot is not None and not snapshot and start:
+        if snapshot is not None and not snapshot and start and fork_eps is None:
             trigger = _fork_point(state, triggers)
             if trigger is not None:
                 snapshot.update(state=state.clone(), rng=rng.getstate(), i=len(record["actions"]),
                                 player=state.active, turn=state.turn, trigger=trigger[0], target=trigger[1],
                                 record=json.loads(json.dumps(record)))
-        if keep is not None and start and state.active == keep["player"] and search is not None:
+        if keep is not None and start and state.active == keep["player"] and search is not None \
+                and keep.get("mode") != "qgap":
             _keep(state, search, vetoes[state.active], keep, record)
+        torn = None
+        if snapshot is not None and not snapshot and fork_eps is not None and state.phase.name == "MAIN":
+            torn = _fork_point(state, triggers)           # checked before the search, judged after it
+            if torn is not None:
+                torn = (torn, state.clone(), json.loads(json.dumps(record)))
         if search is not None:
             search.last_root = None
         planner = _planner(agents[state.active])
         if planner is not None:
             planner.last_plan = None
         action = agents[state.active].act(state, legal)
+        if torn is not None:
+            gap = _q_gap(state, legal, search)
+            if gap is not None and abs(gap[0]) < fork_eps:
+                (trigger, target), before, rec = torn
+                snapshot.update(state=before, rng=rng.getstate(), i=len(record["actions"]), player=state.active,
+                                turn=state.turn, trigger=trigger, target=target, record=rec,
+                                q_gap=round(gap[0], 4), q_moves=[R.to_dict(gap[1]), R.to_dict(gap[2])])
+        if keep is not None and keep.get("mode") == "qgap" and state.active == keep["player"]:
+            action = _qgap_keep(state, legal, search, action, keep, record)
         record["search"].append(_thought(state, legal, search))
         if planner is not None and planner.last_plan is not None:      # a cross-turn planner measured
             record.setdefault("plans", []).append(_plan(state, len(record["actions"]), planner.last_plan,
@@ -127,6 +148,62 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
         R.add(record, action)
         apply(state, action)
     record["winner"] = state.winner
+
+
+def _qgap_mode(mode: str):
+    """(eps, cap) for a "qgap[:EPS[:CAP]]" hold (defaults 0.05 and 2 turns), else None."""
+    if not mode.startswith("qgap"):
+        return None
+    parts = mode.split(":")[1:]
+    return (float(parts[0]) if parts else 0.05, int(parts[1]) if len(parts) > 1 else 2)
+
+
+def _q_gap(state, legal, search):
+    """(Q of the best evolving move - Q of the best other move, that evolving move, that other move) at the
+    search's root for this decision (search.estimate of each child: 0..1 around the turn's start), or None
+    without both kinds searched."""
+    from svsim.core.actions import Evolve
+    from svsim.search.mcts import _locator, action_key
+    root = search.last_root if search is not None else None
+    if root is None or not root.children:
+        return None
+    where = _locator(state, state.active)
+    best = {True: None, False: None}
+    for a in legal:
+        child = root.children.get(action_key(state, a, where))
+        if child is None or child.visits == 0:
+            continue
+        q = search.estimate(child)
+        kind = isinstance(a, Evolve)
+        if best[kind] is None or q > best[kind][0]:
+            best[kind] = (q, a)
+    if best[True] is None or best[False] is None:
+        return None
+    return best[True][0] - best[False][0], best[True][1], best[False][1]
+
+
+def _qgap_keep(state, legal, search, action, keep, record):
+    """The third round's branch (the architecture session, 2026-10-07): the side keeps its points while the
+    search is torn. When the search picked an evolving move within keep["eps"] of the best other move, play
+    that other move instead; when it wants to evolve by more, let it and the hold ends; at most keep["cap"]
+    own turns from the fork. A move not chosen by the search (the lethal search, the planner) stands."""
+    from svsim.core.actions import Evolve
+    if keep["held"] < 0:
+        return action
+    keep["turns"].add(state.turn)
+    if len(keep["turns"]) > keep["cap"]:
+        keep["held"] = -1
+        return action
+    if not isinstance(action, Evolve):
+        return action
+    gap = _q_gap(state, legal, search)
+    if gap is None or gap[0] >= keep["eps"]:
+        keep["held"] = -1                          # the search clearly wants to evolve: the branch plays on
+        return action
+    keep["held"] += 1
+    record.setdefault("holds", []).append({"i": len(record["actions"]), "player": state.active, "turn": state.turn,
+                                           "hold": "torn", "branch": True, "q_gap": round(gap[0], 4)})
+    return gap[2]
 
 
 def _identity(record, cards, rng_seed: int, agent_seeds: list) -> None:
@@ -354,9 +431,10 @@ def main() -> None:
                              "(see play); both records are written")
     parser.add_argument("--fork-triggers", nargs="+", default=None, choices=("payoff", "deck", "unlock"),
                         help="with --fork: only these fork points (default all)")
-    parser.add_argument("--fork-hold", default="all", choices=("all", "selective"),
-                        help="with --fork: the branch keeps all its points (all), or only keeps them from tier-0 "
-                             "and tier-1 targets (selective; see _keep)")
+    parser.add_argument("--fork-hold", default="all",
+                        help="with --fork: the branch keeps all its points (all), only keeps them from tier-0 and "
+                             "tier-1 targets (selective; see _keep), or forks where the search is torn and keeps "
+                             "them while it stays torn (qgap[:EPS[:CAP]], default 0.05 and 2 turns; _qgap_keep)")
     parser.add_argument("--hold", type=float, default=0.0,
                         help="chance, at the start of a turn the player could evolve in, of not evolving (or not "
                              "super-evolving) for the rest of it (record['holds'])")
