@@ -177,9 +177,12 @@ def load_nets(folder: Path | None = None) -> dict:
 class NetLearned:
     """The matchup's value network where there is one; `fallback` (the learned linear models) otherwise."""
 
-    def __init__(self, nets: dict | None = None, fallback=None, gain: float = 1.0):
+    def __init__(self, nets: dict | None = None, fallback=None, gain: float = 1.0, end_now: bool = False):
         self.nets = nets if nets is not None else load_nets()
         self.fallback = fallback or Learned()
+        self.end_now = end_now         # score a position inside the scoring player's turn as if they ended
+                                       # it there (as the linear models do), except at the start of a turn
+                                       # the search reached by playing the opponent's turn out
         self.gain = gain               # the network is calibrated, so its score differences are smaller than
                                        # the overconfident linear models' the search was tuned with
 
@@ -190,4 +193,10 @@ class NetLearned:
         net = self.nets.get((deck_craft(state, player), deck_craft(state, 1 - player)))
         if net is None:
             return self.fallback.score(state, player, player_moves_next)
+        if self.end_now and state.active == player and not player_moves_next:
+            from svsim.search.evaluate import after_end_of_turn
+            ended = after_end_of_turn(state)
+            if ended.winner is not None:
+                return WIN if ended.winner == player else (-WIN if ended.winner == 1 - player else 0.0)
+            return SCALE * self.gain * net.logit(ended, player)
         return SCALE * self.gain * net.logit(state, player)
