@@ -54,6 +54,30 @@ def test_spells_tick_flags_and_flags_burst():
     assert sword.flags(state.players[0]) == [] and state.players[1].leader_hp == 14
 
 
+def test_a_flag_destroyed_by_the_enemy_still_deals_its_damage():
+    from svsim.core.engine import resolve_queue
+    state = start(first=1)                           # the enemy's turn: its effect destroys the flag
+    p = state.players[0]
+    flag = put(state, 0, sword.DREAD_PIRATES_FLAG)
+    shadows, gone = p.shadows, len(p.destroyed_amulets)
+    assert E.destroy(state, flag)                    # by an ability (e.g. a spell that destroys an amulet)
+    resolve_queue(state)
+    assert flag.fate == DESTROYED and state.players[1].leader_hp == 18          # Last Words: 2 to the enemy leader
+    assert p.shadows == shadows + 1 and len(p.destroyed_amulets) == gone + 1
+
+
+def test_a_banished_flag_deals_nothing_and_leaves_no_shadow():
+    from svsim.core.engine import resolve_queue
+    state = start(first=1)
+    p = state.players[0]
+    flag = put(state, 0, sword.DREAD_PIRATES_FLAG)
+    shadows, gone = p.shadows, len(p.destroyed_amulets)
+    assert E.banish(state, flag)                     # banishing is the only way past its Last Words
+    resolve_queue(state)
+    assert flag.fate == BANISHED and state.players[1].leader_hp == 20
+    assert p.shadows == shadows and len(p.destroyed_amulets) == gone and sword.flags(p) == []
+
+
 def test_barbaros_advances_every_flag_by_five():
     state = start()
     put(state, 0, sword.DREAD_PIRATES_FLAG)
