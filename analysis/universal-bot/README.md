@@ -24,3 +24,10 @@ Leave-one-out nearest neighbour over the standardized deck vector (85 dimensions
 
 ## What this does not show
 Separating lists only says the description is distinct; whether weights built on it play well is step B (shared evaluator vs specialist, equal compute) and C (leave one deck out).
+
+## Goldfish profiles (`svsim/learn/goldfish.py`, `goldfish_run.py`; greedy agent, 300–400 games per deck)
+
+- **Plain goldfish is useless here**: against an opponent that does nothing, all seven decks (four tournament standards, three Game8 builds) kill on own turn 5–6 (means 5.4–6.3; `goldfish_greedy_400.json`). An unopposed board kills before any deck's plan matters.
+- **Wall** (enemy leader at 200, ten own turns; `goldfish_greedy_wall.json`): ramp shows its play points (5.6 at turn 5, 8.9 at turn 8 vs 5.0 / 8.0) and the biggest single turn (28.6), but board snowballing still dominates.
+- **Wall + wipe** (the opponent destroys the deck's followers every turn, so a turn brings only what comes from hand; `goldfish_greedy_wipe.json`): the decks separate. Damage by turn 10: pirate-t 18.5 (burst 9.8), elf-t 7.9, nemesis-t 8.0, ramp-t 7.6 (+0.7 play points from turn 5). Cards played a turn at turn 8: elf-t 2.7, nemesis-t 2.1, pirate-t 1.8, ramp-t 1.3.
+- **The agent's blind spot shows directly**: elf-t (tournament combo elf) and combo(G8) get the same profile; the greedy agent doesn't play the combo turn, so the combo deck's reach reads as 8. This is the risk the plan names: a profile is only as good as the agent playing it. Next: the same wipe profile with the v2 search (mcts:100+plan+learned+phased).
