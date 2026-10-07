@@ -259,6 +259,8 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=1_000_000, help="first seed of the bank")
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--out", default=None, help="results file (JSON lines; resumed if it exists)")
+    parser.add_argument("--fixed", action="store_true",
+                        help="play all --max games: the test's verdict is reported, never stops the run")
     parser.add_argument("--versus", default=None,
                         help="for a matchup that isn't a mirror: this third agent plays --opponent, A and B "
                              "both play --deck against it on the same deals (play_pair, pair_score)")
@@ -296,7 +298,7 @@ def main() -> None:
               f"一对的得分 = 0.5 + A 的得分 − B 的得分），{CONDITION}", flush=True)
     else:
         print(f"条件：{args.deck} 对 {args.opponent}，{CONDITION}", flush=True)
-    if not report(final=True):
+    if not report(final=True) or args.fixed:
         todo = [(k, args.seed + k, args.a, args.b, args.model_a, args.model_b, args.deck, args.opponent,
                  args.phased_a, args.phased_b, args.versus)
                 for k in range(pairs) if k not in done]
@@ -313,7 +315,7 @@ def main() -> None:
                 fh.flush()
                 if len(done) % 25 == 0:
                     print(f"  …{per * len(done)} 局 {time.time() - t0:.0f}s", flush=True)
-                    if report(final=True):
+                    if report(final=True) and not args.fixed:
                         pool.terminate()
                         break
     report(final=True)

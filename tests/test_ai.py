@@ -414,6 +414,18 @@ def test_the_gate_pairs_seats_and_tests_sequentially():
     assert sorted(split["先手"] + split["后手"]) == sorted(pair["points"])
 
 
+def test_search_cost_times_a_models_folder_against_the_installed_ones(tmp_path):
+    import json
+    from svsim.learn.netdata import play
+    from svsim.tools import search_cost
+    path = tmp_path / "games.jsonl"
+    path.write_text(json.dumps(play((0, 3, "ramp", "ramp", "mcts:5+plan", 0.0))) + "\n")
+    states = search_cost.positions(str(path), 3)
+    assert 0 < len(states) and all(s.phase.name == "MAIN" for s in states)
+    v2, new = search_cost.cost(search_cost.Path("svsim/learn/phased_models/b1"), states[:2], 5)
+    assert v2 > 0 and new > 0
+
+
 def test_the_encoding_knows_the_moment_and_counts_cards():
     from svsim.cards import decks
     from svsim.core.engine import apply, legal_actions, new_game
