@@ -274,6 +274,79 @@ def test_a_selective_hold_only_keeps_points_from_poor_targets():
     assert keep["held"] == -1                                              # (its target, the poor one, is on the field)
 
 
+def test_tournament_decks_are_registered_everywhere_and_files_name_them():
+    from svsim.agents.mulligan import _deck_key
+    from svsim.cards import decks
+    from svsim.core.engine import new_game
+    from svsim.core.enums import Craft
+    from svsim.learn.model import split_keys
+    from svsim.tools.learn import DECKS as LEARN_DECKS
+    from svsim.ui.session import DECKS
+    hashes = {"elf-t": decks.ELF_T_HASH, "nemesis-t": decks.NEMESIS_T_HASH, "ramp-t": decks.RAMP_T_HASH,
+              "pirate-t": decks.PIRATE_T_HASH}
+    crafts = {"elf-t": Craft.FOREST, "nemesis-t": Craft.PORTAL, "ramp-t": Craft.DRAGON, "pirate-t": Craft.SWORD}
+    for key, h in hashes.items():
+        cards = decks.from_hash(h)
+        assert len(cards) == 40 and decks.to_hash(cards) == h and decks.validate(cards) == []
+        assert decks.craft_of(cards) == crafts[key] and not decks.unimplemented(cards)
+        assert sorted(c.card_id for c in decks.build(decks.NAMED[key])) == sorted(c.card_id for c in cards)
+        assert decks.identify(cards) == key and key in DECKS and key in LEARN_DECKS
+        state = new_game(cards, decks.build(decks.RAMP_DRAGON), seed=1, first=0)
+        assert state.players[0].deck_name == key and state.players[1].deck_name == "ramp"
+        assert _deck_key(state.players[0].hand + state.players[0].deck) == key
+    assert split_keys("elf-t-ramp-t") == ["elf-t", "ramp-t"] and split_keys("ramp-ramp") == ["ramp", "ramp"]
+    assert split_keys("ramp-t-ramp") == ["ramp-t", "ramp"] and split_keys("dragon-forest") == [Craft.DRAGON, Craft.FOREST]
+    import pytest
+    with pytest.raises(KeyError):
+        split_keys("elf-x")
+
+
+def test_tournament_matchup_models_load_by_file_name(tmp_path):
+    from svsim.learn.features import names
+    from svsim.learn.model import LinearValue, load_all
+    from svsim.learn.phased import load
+    n = len(names(False, 2))
+    model = LinearValue([0.0] * n, [0.0] * n, [1.0] * n, False, version=2)
+    model.save(tmp_path / "elf-t-ramp-t-ended.json")
+    model.save(tmp_path / "ramp-t-ramp-t-act.json")
+    model.save(tmp_path / "nemesis-t-elf-t.json")
+    assert set(load(tmp_path)) == {("elf-t", "ramp-t", "ended"), ("ramp-t", "ramp-t", "act")}
+    assert set(load_all(tmp_path)) == {("nemesis-t", "elf-t")}
+
+
+def test_a_self_play_record_keeps_what_a_paired_play_out_needs():
+    from svsim.cards import decks
+    from svsim.core.enums import Phase
+    from svsim.learn.netdata import play
+    from svsim.tools import records as R
+    record = play((3, 11, "elf-t", "ramp-t", "mcts:5+learned", 0.0))
+    assert record["deck_keys"] == (["elf-t", "ramp-t"] if 3 % 2 == 0 else ["ramp-t", "elf-t"])
+    assert [sorted(c.card_id for c in decks.from_hash(h)) for h in record["deck_hashes"]] == \
+        [sorted(ids) for ids in record["decks"]]
+    assert record["rng_seed"] == 11 * 7919 + 3 and record["agent_seeds"] == [11 * 1000 + 6, 11 * 1000 + 7]
+    starts = {t["i"]: t for t in record["turn_starts"]}
+    seen = 0
+    for i, (state, _) in enumerate(R.steps(record)):
+        if i in starts and state.phase == Phase.MAIN:
+            p = state.players[starts[i]["player"]]
+            assert starts[i]["hand"] == [c.uid for c in p.hand] and starts[i]["deck"] == [c.uid for c in p.deck]
+            seen += 1
+    assert seen == len(starts) > 4
+
+
+def test_cards_are_named_for_the_player_by_the_glossary():
+    from svsim.cards import decks
+    from svsim.tools.glossary import GLOSSARY, common, names
+    assert GLOSSARY.exists() and len(names()) > 200
+    by_name = {c.name_zh: c for c in decks.build(decks.RAMP_T)}
+    assert common(by_name["断头的斩姬·相枛津"]) == "口人魔（7费 5/4）"
+    assert common(by_name["禁牙的变貌·诺玛格达拉"]) == "牢头（7费 5/6）"
+    assert common(by_name["约束的《正义》·伊兰翠"]) == "正义（10费 8/8）"
+    from dataclasses import replace
+    unknown = replace(by_name["断头的斩姬·相枛津"], name_zh="某个新卡·试作品")      # not in the glossary
+    assert common(unknown) == "试作品（7费 5/4）"
+
+
 def test_a_payoff_card_still_in_the_deck_counts_by_its_draw_chances():
     from svsim.cards import decks
     from svsim.core.engine import new_game

@@ -100,6 +100,23 @@ def parse_key(part: str):
     return part if part in NAMED else Craft[part.upper()]
 
 
+def split_keys(stem: str) -> list:
+    """A file name's keys (parse_key), joined by "-": a named deck's key may have "-" in it (elf-t), so
+    each part is the longest known name from the left. KeyError if some part is no known name."""
+    from svsim.cards.decks import NAMED
+    parts, out, i = stem.split("-"), [], 0
+    while i < len(parts):
+        for j in range(len(parts), i, -1):
+            name = "-".join(parts[i:j])
+            if name in NAMED or name.upper() in Craft.__members__:
+                out.append(parse_key(name))
+                i = j
+                break
+        else:
+            raise KeyError(stem)
+    return out
+
+
 class Learned:
     """Evaluation with each deck's learned model: the one for the matchup (filed under the pair
     of named decks, else the pair of classes) if there is one, else the deck's (by craft); the
@@ -131,7 +148,7 @@ def load_all(folder: Path | None = None) -> dict:
     out = {}
     for path in folder.glob("*.json"):
         try:
-            keys = [parse_key(part) for part in path.stem.split("-")]
+            keys = split_keys(path.stem)
         except KeyError:
             continue
         if len(keys) == 1 and isinstance(keys[0], Craft):

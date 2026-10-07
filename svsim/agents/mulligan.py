@@ -49,9 +49,7 @@ _DECK_KEYS: dict = {}
 def _deck_key(cards) -> str | None:
     """Which of the known decks these 40 cards are, if any."""
     if not _DECK_KEYS:
-        listings = {"rhino": decks.RHINO_FOREST, "ramp": decks.RAMP_DRAGON, "pirate": decks.PIRATE_SWORD,
-                    "combo": decks.COMBO_FOREST, "face": decks.FACE_DRAGON}
-        for key, listing in listings.items():
+        for key, listing in decks.NAMED.items():                # every named deck (the tournament ones too)
             _DECK_KEYS[tuple(sorted(c.card_id for c in decks.build(listing)))] = key
     return _DECK_KEYS.get(tuple(sorted(c.defn.card_id for c in cards)))
 

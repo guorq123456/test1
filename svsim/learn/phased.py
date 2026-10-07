@@ -23,7 +23,7 @@ import json
 import os
 from pathlib import Path
 
-from svsim.learn.model import SCALE, Learned, LinearValue, matchup_keys, parse_key
+from svsim.learn.model import SCALE, Learned, LinearValue, matchup_keys, split_keys
 
 STOCK = ("me_hand_", "me_pool_")
 
@@ -62,11 +62,14 @@ def load(folder: Path | None = None) -> dict:
     if not folder.is_dir():
         return out
     for path in sorted(folder.glob("*-*-*.json")) + sorted(folder.glob("*-*-*.npz")):
-        mine, theirs, moment = path.stem.split("-")
+        pair, _, moment = path.stem.rpartition("-")
         try:
-            key = (parse_key(mine), parse_key(theirs), moment)
+            keys = split_keys(pair)
         except KeyError:
             continue
+        if len(keys) != 2:
+            continue
+        key = (keys[0], keys[1], moment)
         if path.suffix == ".npz":
             from svsim.learn.net import ValueNet
             out[key] = ValueNet.load(path)                # a network overrides a linear model of the same name
@@ -131,7 +134,7 @@ def main() -> None:
         w, mean, std, report = F.fit(X * keep, y, None, iters=2500, signs=signs(False, args.version),
                                      weights=None if np.all(rw == 1.0) else rw)
         w = w * keep
-        mine, theirs = args.matchup.split("-")
+        mine, theirs = (k if isinstance(k, str) else k.name.lower() for k in split_keys(args.matchup))
         LinearValue([float(v) for v in w], [float(v) for v in mean], [float(v) for v in std], False,
                     {"deck": mine, "opponent": theirs, "moment": label, "positions": len(X),
                      "q_weight": args.q_weight, "games": args.games, "file_weights": weights,

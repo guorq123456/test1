@@ -29,7 +29,7 @@ import numpy as np
 
 from svsim.core.enums import Craft
 from svsim.learn import encode as E
-from svsim.learn.model import SCALE, Learned, matchup_keys, parse_key
+from svsim.learn.model import SCALE, Learned, matchup_keys, split_keys
 
 NETS = Path(__file__).resolve().parent / "nets"
 
@@ -168,7 +168,7 @@ def load_nets(folder: Path | None = None) -> dict:
         return out
     for path in folder.glob("*.npz"):
         try:
-            mine, theirs = (parse_key(part) for part in path.stem.split("-"))
+            mine, theirs = split_keys(path.stem)
         except (KeyError, ValueError):
             continue
         out[(mine, theirs)] = ValueNet.load(path)

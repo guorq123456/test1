@@ -26,7 +26,9 @@ assert library.__all__
 
 DECKS = {"rhino": ("破魔虫精灵", decks.RHINO_FOREST), "ramp": ("跳费龙", decks.RAMP_DRAGON),
          "pirate": ("海盗皇家", decks.PIRATE_SWORD), "combo": ("连击精灵", decks.COMBO_FOREST),
-         "face": ("快攻龙", decks.FACE_DRAGON)}
+         "face": ("快攻龙", decks.FACE_DRAGON), "elf-t": ("连击妖（比赛版）", decks.ELF_T),
+         "nemesis-t": ("机锋（比赛版）", decks.NEMESIS_T), "ramp-t": ("跳费龙（比赛版）", decks.RAMP_T),
+         "pirate-t": ("旗皇（比赛版）", decks.PIRATE_T)}
 # Every level uses a deck's learned evaluation where there is one (svsim/learn/weights); normal and
 # strong are arena.VERSIONS v2 and v2s (the refitted turn-end model, learn.phased), which beat the
 # levels they replace at equal time (56.8% and 59.7% over 600 games, 2026-10-07).

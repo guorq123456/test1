@@ -242,13 +242,13 @@ class MatchupPrior:
 
     def __init__(self, folder: Path | None = None):
         import os
-        from svsim.learn.model import parse_key
+        from svsim.learn.model import split_keys
         folder = folder or Path(os.environ.get("SVSIM_POLICY") or POLICIES)
         self.nets = {}
         if folder.is_dir():
             for path in folder.glob("*.npz"):
                 try:
-                    key = tuple(parse_key(part) for part in path.stem.split("-"))
+                    key = tuple(split_keys(path.stem))
                 except KeyError:
                     continue
                 self.nets[key] = PolicyNet.load(path)

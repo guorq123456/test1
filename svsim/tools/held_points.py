@@ -88,12 +88,13 @@ def report(model, records) -> str:
     lines.append("gap:     " + "   ".join(f"{k} {f(acc['gap'].get(k))}" for k, _, _ in GAP))
     from svsim.cards.pool import POOL
     from svsim.learn.payoff import tier
+    from svsim.tools.glossary import common
     by_id = POOL                                     # card id -> CardDef
     lines.append("in hand, out of reach, by card:")
     for cid, a in sorted(acc["card"].items(), key=lambda kv: -kv[1][2]):
         d = by_id.get(cid)
         if d is not None and d.is_follower:
-            lines.append(f"  tier {tier(d)}  {f(a)}  {d.name_zh or d.name}")
+            lines.append(f"  tier {tier(d)}  {f(a)}  {common(d)}")     # the player's names (tools.glossary)
     return "\n".join(lines)
 
 

@@ -132,12 +132,35 @@ def _listing(deck_hash: str) -> dict[CardDef, int]:
 COMBO_FOREST = _listing(COMBO_FOREST_HASH)
 FACE_DRAGON = _listing(FACE_DRAGON_HASH)
 
+# Tournament decks (the architecture session's import list, 2026-10-07: JCS season 3 and the pro
+# league's lists, analysis/tournament-decks-2026-10-07.md on claude/bot-architecture-design): for each
+# archetype the full 40 that the most tournament lists share. Combo Elf (连击妖), Nemesis puppets
+# (机锋), Ramp Dragon's tournament build (2 Kitsunebi, 2 Fire Dragon, 1 Bahamut; no Solar Flare, Dragon's
+# Nap or World) and Pirate Royal's (3 Listening Spy, 2 Martial Emperor; no Silent Siege). The Game8
+# decks above stay: saved games refer to them.
+ELF_T_HASH = ("1.1.dhqm.dhqm.dkWe.e4Gg.e4Gg.e4Gg.e6kU.e6x8.e6x8.e6x8.eVLe.eVLe.eVLe.etGk.etGk.etGk.etl-.etl-."
+              "etl-.etm8.etm8.fFRw.fFRw.fFRw.fGAU.fGAU.fGAU.fds6.fds6.fds6.fe5k.fe5k.fe5k.feLM.feLM.feLM.feOU."
+              "fea-.fea-.fea-")
+NEMESIS_T_HASH = ("1.7.cQnG.cR2I.dhLM.dhqc.dhqm.di4E.dyR6.dyRQ.dyzU.dz9-.eKrc.eL5E.eLN-.eLaU.eLae.eSRY.ej--.ej_8."
+                  "eqqU.f5gc.f5jk.f5wE.f69s.f6PU.f6Pe.fDUc.fU5Q.fUKu.fUp-.fUq8.fsVc.fsVm.fslE.fsoM.fs-s.ft1-.ftEU."
+                  "ftEU.ftEU.ftEe")
+RAMP_T_HASH = ("1.4.cJl6.cJl6.cJl6.dhqm.dhqm.drrE.drrE.drrO.drrO.drrO.eE3E.eE3E.eE3E.eEFk.eEFk.eEFk.ecgE.ecgE."
+               "ecgE.ecgO.ecgO.ecgO.e-Ls.e-Ls.e-Ls.e_4k.e_4k.e_4k.fDkE.fN08.fN08.fN08.fNIk.fNIk.fNVO.fNVO.fNVO."
+               "flvu.flvu.flvu")
+PIRATE_T_HASH = ("1.2.cEZs.cEZs.dmj6.dmj6.dmj6.dmyk.dmyk.dmyk.e9Ak.e9Ak.e9Ak.e9NO.e9NO.e9NO.eXnu.eXnu.eXnu.evi-."
+                 "evi-.evi-.fgIM.fgIM.fgIM.fgX-.fgX-.fgX-.fgb6.fgb6.fgb6.fgnc.fgnc.fgnc.fgqk.fgqk.fgqk.fh1E.fh1E."
+                 "fh1E.fh1O.fh1O")
+ELF_T = _listing(ELF_T_HASH)
+NEMESIS_T = _listing(NEMESIS_T_HASH)
+RAMP_T = _listing(RAMP_T_HASH)
+PIRATE_T = _listing(PIRATE_T_HASH)
+
 
 # The decks the tools know by name (ui.session.DECKS uses the same keys). A learned evaluation
 # is kept per pair of these (learn.model, learn.phased): two decks of one class can want
 # different evaluations (Ramp Dragon's mirror model must not score Face Dragon's games).
 NAMED = {"rhino": RHINO_FOREST, "ramp": RAMP_DRAGON, "pirate": PIRATE_SWORD, "combo": COMBO_FOREST,
-         "face": FACE_DRAGON}
+         "face": FACE_DRAGON, "elf-t": ELF_T, "nemesis-t": NEMESIS_T, "ramp-t": RAMP_T, "pirate-t": PIRATE_T}
 _NAMED_IDS: dict | None = None
 
 

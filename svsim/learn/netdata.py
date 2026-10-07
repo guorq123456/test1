@@ -61,6 +61,7 @@ def play(job):
     record = R.new_record(cards[0], cards[1], seed * 100003 + g, state.first, f"{spec} / {spec}")
     record["g"], record["explore"] = g, explore
     record["names"] = [deck, opponent] if seat == 0 else [opponent, deck]   # ui.session.DECKS keys by seat
+    _identity(record, cards, seed * 7919 + g, [seed * 1000 + 2 * g + i for i in (0, 1)])
     record["search"] = []
     if not fork:
         _run(state, agents, record, rng, explore, hold)
@@ -75,7 +76,8 @@ def play(job):
     branch_rng.setstate(snapshot["rng"])
     info = {k: snapshot[k] for k in ("i", "player", "turn", "trigger", "target")}
     record["branch"] = dict(info, kind="control")
-    branch["branch"] = dict(info, kind="hold")
+    branch["branch"] = dict(info, kind="hold", agent_seeds=[seed * 1000 + 2 * g + i + 500000 for i in (0, 1)],
+                            rng_state=snapshot["rng"])   # random.Random().setstate((3, tuple(x[1]), None))
     branch["branch"]["hold"] = mode
     _run(snapshot["state"], branch_agents, branch, branch_rng, explore, 0.0, keep=dict(info, held=0, mode=mode))
     return [record, branch]
@@ -96,6 +98,10 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
         start = state.phase.name == "MAIN" and (state.active, state.turn) not in starts
         if start:
             starts.add((state.active, state.turn))
+            p = state.players[state.active]             # the root hand and deck of the turn (search._root_deck)
+            record.setdefault("turn_starts", []).append({"i": len(record["actions"]), "player": state.active,
+                                                         "hand": [c.uid for c in p.hand],
+                                                         "deck": [c.uid for c in p.deck]})
         if hold and search is not None and state.phase.name == "MAIN":
             _hold(state, search, vetoes[state.active], held, hold, rng, record)
         if snapshot is not None and not snapshot and start:
@@ -121,6 +127,18 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
         R.add(record, action)
         apply(state, action)
     record["winner"] = state.winner
+
+
+def _identity(record, cards, rng_seed: int, agent_seeds: list) -> None:
+    """What a later pairing of play-outs (the hand-value thread's G_end) and the deck-profile work need
+    besides the deal and the actions (docs/architecture.md §10): each seat's named deck (cards.decks.NAMED,
+    "" for another) and deck hash (cards in id order), the seed of the exploration's random numbers and the agents' seeds;
+    record["turn_starts"] adds each turn's hand and deck (card uids) as the search's root saw them, and a
+    fork branch its agents' seeds and the random numbers' state it continued from."""
+    from svsim.cards import decks
+    record["deck_keys"] = [decks.identify(c) or "" for c in cards]
+    record["deck_hashes"] = [decks.to_hash(sorted(c, key=lambda d: d.card_id)) for c in cards]   # canonical
+    record["rng_seed"], record["agent_seeds"] = rng_seed, agent_seeds
 
 
 def _fork_point(state, triggers=("payoff", "deck", "unlock")):

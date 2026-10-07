@@ -725,7 +725,8 @@ $("btn-menu").addEventListener("click", () => {
 // ---------------------------------------------------------------- reviewing a finished game
 // Step through your own moves, mark the ones that were mistakes (learning leaves
 // them out) and note why; the marks are saved with the game.
-const DECK_NAMES = {rhino: "破魔虫精灵", ramp: "跳费龙", pirate: "海盗皇家", combo: "连击精灵", face: "快攻龙"};
+const DECK_NAMES = {rhino: "破魔虫精灵", ramp: "跳费龙", pirate: "海盗皇家", combo: "连击精灵", face: "快攻龙",
+  "elf-t": "连击妖（比赛版）", "nemesis-t": "机锋（比赛版）", "ramp-t": "跳费龙（比赛版）", "pirate-t": "旗皇（比赛版）"};
 let reviewing = null;                              // {gameId, body} of the game on screen
 
 function describeFinished(body) {

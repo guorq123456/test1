@@ -92,6 +92,12 @@ def summary(scores: list[float]) -> tuple[float, float]:
     return mean, 1.96 * math.sqrt(var / n)
 
 
+# What the agents know (the architecture session, 2026-10-07): the search deals the opponent's unseen
+# cards from their real 40-card list (search.view.determinize reshuffles hand and deck together), so
+# every result says so; on the ladder the list is not known.
+CONDITION = "对手卡表已知（牌序、手牌未知）"
+
+
 def _agent(spec: str, seed: int, model: str | None, phased: str | None = None):
     from svsim.tools.arena import make_agent
     agent = make_agent(spec, seed)
@@ -218,6 +224,7 @@ def main() -> None:
             print(line, flush=True)
         return verdict
 
+    print(f"条件：{args.deck} 对 {args.opponent}，{CONDITION}", flush=True)
     if not report(final=True):
         todo = [(k, args.seed + k, args.a, args.b, args.model_a, args.model_b, args.deck, args.opponent,
                  args.phased_a, args.phased_b)
