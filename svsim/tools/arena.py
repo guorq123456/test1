@@ -74,7 +74,7 @@ VERSIONS = {
     "v1": "mcts-reply:100+plan+learned+phased+lazy+focus",
     # the gain of v1 without the reply (the refitted turn-end model, learn.phased), at equal time:
     "v2": "mcts:100+plan+learned+phased",      # vs mcts:100+plan+learned: 56.8% +- 3.5% over 600 games
-    "v2s": "mcts:200+plan+learned+phased",     # vs mcts:200+plan+learned: 60.7% +- 6.8% over 150 games (SPRT)
+    "v2s": "mcts:200+plan+learned+phased",     # vs mcts:200+plan+learned: 59.7% +- 3.5% over 600 games
 }
 
 
