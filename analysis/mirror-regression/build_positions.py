@@ -115,8 +115,9 @@ def main(paths):
                 add("discard", {"never_discards": sorted(held)},
                     f"Salem discarded {discards} and kept {sorted(held)}.")
             if reds:
-                add("red_target", {"red_targets_only_big": True},
-                    f"Salem's Spilling Red hit {[f'{name(t)} {t.atk}/{t.life}' for t in reds]}.")
+                add("answer_threat", {"removes_biggest": True},
+                    f"Salem's Spilling Red hit {[f'{name(t)} {t.atk}/{t.life}' for t in reds]}: "
+                    "the biggest enemy follower goes this turn (by any means), and no Red is spent on a smaller one.")
             elif RED in ctx["hand"] and o.followers and not any(big(c) for c in o.followers):
                 add("red_hold", {"no_red_on_small": True},
                     f"Salem held Spilling Red against only small followers {ctx['opp_board']}.")

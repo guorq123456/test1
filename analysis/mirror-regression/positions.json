@@ -4522,12 +4522,12 @@
    ]
   },
   {
-   "id": "1791305120171-t5-red_target",
-   "category": "red_target",
+   "id": "1791305120171-t5-answer_threat",
+   "category": "answer_threat",
    "check": {
-    "red_targets_only_big": true
+    "removes_biggest": true
    },
-   "why": "Salem's Spilling Red hit ['掌握天空命运的少女·露莉亚 3/3'].",
+   "why": "Salem's Spilling Red hit ['掌握天空命运的少女·露莉亚 3/3']: the biggest enemy follower goes this turn (by any means), and no Red is spent on a smaller one.",
    "game": "1791305120171",
    "at": 25,
    "context": {
@@ -4648,12 +4648,12 @@
    ]
   },
   {
-   "id": "1791305120171-t7-red_target",
-   "category": "red_target",
+   "id": "1791305120171-t7-answer_threat",
+   "category": "answer_threat",
    "check": {
-    "red_targets_only_big": true
+    "removes_biggest": true
    },
-   "why": "Salem's Spilling Red hit ['约束的《正义》·伊兰翠 8/8'].",
+   "why": "Salem's Spilling Red hit ['约束的《正义》·伊兰翠 8/8']: the biggest enemy follower goes this turn (by any means), and no Red is spent on a smaller one.",
    "game": "1791305120171",
    "at": 42,
    "context": {
@@ -4736,12 +4736,12 @@
    ]
   },
   {
-   "id": "1791305215412-t7-red_target",
-   "category": "red_target",
+   "id": "1791305215412-t7-answer_threat",
+   "category": "answer_threat",
    "check": {
-    "red_targets_only_big": true
+    "removes_biggest": true
    },
-   "why": "Salem's Spilling Red hit ['约束的《正义》·伊兰翠 11/11'].",
+   "why": "Salem's Spilling Red hit ['约束的《正义》·伊兰翠 11/11']: the biggest enemy follower goes this turn (by any means), and no Red is spent on a smaller one.",
    "game": "1791305215412",
    "at": 39,
    "context": {
@@ -5048,12 +5048,12 @@
    ]
   },
   {
-   "id": "1791305347029-t8-red_target",
-   "category": "red_target",
+   "id": "1791305347029-t8-answer_threat",
+   "category": "answer_threat",
    "check": {
-    "red_targets_only_big": true
+    "removes_biggest": true
    },
-   "why": "Salem's Spilling Red hit ['禁牙的变貌·诺玛格达拉 8/9'].",
+   "why": "Salem's Spilling Red hit ['禁牙的变貌·诺玛格达拉 8/9']: the biggest enemy follower goes this turn (by any means), and no Red is spent on a smaller one.",
    "game": "1791305347029",
    "at": 57,
    "context": {
@@ -5463,12 +5463,12 @@
    ]
   },
   {
-   "id": "1791306269709-t7-red_target",
-   "category": "red_target",
+   "id": "1791306269709-t7-answer_threat",
+   "category": "answer_threat",
    "check": {
-    "red_targets_only_big": true
+    "removes_biggest": true
    },
-   "why": "Salem's Spilling Red hit ['约束的《正义》·伊兰翠 8/8'].",
+   "why": "Salem's Spilling Red hit ['约束的《正义》·伊兰翠 8/8']: the biggest enemy follower goes this turn (by any means), and no Red is spent on a smaller one.",
    "game": "1791306269709",
    "at": 34,
    "context": {
@@ -5855,12 +5855,12 @@
    ]
   },
   {
-   "id": "1791306497426-t9-red_target",
-   "category": "red_target",
+   "id": "1791306497426-t9-answer_threat",
+   "category": "answer_threat",
    "check": {
-    "red_targets_only_big": true
+    "removes_biggest": true
    },
-   "why": "Salem's Spilling Red hit ['约束的《正义》·伊兰翠 8/8'].",
+   "why": "Salem's Spilling Red hit ['约束的《正义》·伊兰翠 8/8']: the biggest enemy follower goes this turn (by any means), and no Red is spent on a smaller one.",
    "game": "1791306497426",
    "at": 60,
    "context": {
@@ -6171,12 +6171,12 @@
    ]
   },
   {
-   "id": "1791306781701-t9-red_target",
-   "category": "red_target",
+   "id": "1791306781701-t9-answer_threat",
+   "category": "answer_threat",
    "check": {
-    "red_targets_only_big": true
+    "removes_biggest": true
    },
-   "why": "Salem's Spilling Red hit ['禁牙的变貌·诺玛格达拉 5/6'].",
+   "why": "Salem's Spilling Red hit ['禁牙的变貌·诺玛格达拉 5/6']: the biggest enemy follower goes this turn (by any means), and no Red is spent on a smaller one.",
    "game": "1791306781701",
    "at": 59,
    "context": {
@@ -6255,12 +6255,12 @@
    ]
   },
   {
-   "id": "1791306781701-t10-red_target",
-   "category": "red_target",
+   "id": "1791306781701-t10-answer_threat",
+   "category": "answer_threat",
    "check": {
-    "red_targets_only_big": true
+    "removes_biggest": true
    },
-   "why": "Salem's Spilling Red hit ['焦灰的安纳提玛·班德奈特 9/9'].",
+   "why": "Salem's Spilling Red hit ['焦灰的安纳提玛·班德奈特 9/9']: the biggest enemy follower goes this turn (by any means), and no Red is spent on a smaller one.",
    "game": "1791306781701",
    "at": 67,
    "context": {

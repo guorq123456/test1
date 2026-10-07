@@ -36,7 +36,8 @@ def start_state(pos):
 
 
 def play_turn(pos, spec, seed):
-    """The turn as a list of (kind, details) and the state after it."""
+    """The turn as a list of (kind, details), the state after it, and whether the
+    biggest enemy follower at the start of the turn is gone at its end."""
     st = start_state(pos)
     if spec == "salem":
         acts = [from_dict(a) for a in RECORDS[pos["game"]]["actions"][pos["at"]:]]
@@ -45,6 +46,8 @@ def play_turn(pos, spec, seed):
     else:
         from svsim.tools.arena import make_agent
         agent = make_agent(spec, seed)
+    biggest_uid = max(st.players[1].followers, key=lambda f: f.atk + f.life, default=None)
+    biggest_uid = biggest_uid.uid if biggest_uid else None
     turn = []
     while st.active == 0 and not st.over:
         legal = legal_actions(st)
@@ -64,25 +67,28 @@ def play_turn(pos, spec, seed):
         elif k == "UseBonusPP":
             turn.append(("bonus", {}))
         apply(st, a)
-    return turn, st
+    gone = biggest_uid is not None and all(f.uid != biggest_uid for f in st.players[1].field)
+    return turn, st, gone
 
 
 def big(t):
     return t[1] >= 5 or t[2] >= 6
 
 
-def passes(check, turn, after):
+def passes(check, turn, after, biggest_gone=False):
     plays = [d for k, d in turn if k == "play"]
     reds = [d for d in plays if d["card"] == RED]
-    if check.get("win_this_turn"):
-        return after.over and after.winner == 0
+    won = after.over and after.winner == 0
+    if check.get("win_this_turn") or (won and not ({"keeps_bonus", "bonus_then_ramp"} & set(check))):
+        return won      # winning the turn answers every other question
     if "super_evolves" in check:
         return any(k == "se" and d["card"] == check["super_evolves"] for k, d in turn)
     if "never_discards" in check:
         return not any(x in check["never_discards"] for d in plays for x in d["discards"])
-    if check.get("red_targets_only_big"):
-        # Salem used Spilling Red on the biggest threat: cast one, at the biggest enemy follower
-        return bool(reds) and all(d["target_is_biggest"] for d in reds)
+    if check.get("removes_biggest"):
+        # the biggest enemy follower at the start of the turn is gone at its end (by any means),
+        # and every Spilling Red that is cast goes at the biggest enemy follower at that moment
+        return biggest_gone and all(d["target_is_biggest"] for d in reds)
     if check.get("no_red_on_small"):
         return not any(not big(t) for d in reds for t in d["targets"])
     if "plays_unevolved" in check:
@@ -111,8 +117,8 @@ def main():
             continue
         ok = 0
         for s in range(seeds if spec != "salem" else 1):
-            turn, after = play_turn(pos, spec, 1000 + s)
-            ok += passes(pos["check"], turn, after)
+            turn, after, gone = play_turn(pos, spec, 1000 + s)
+            ok += passes(pos["check"], turn, after, gone)
         n = seeds if spec != "salem" else 1
         by_cat[pos["category"]][0] += ok
         by_cat[pos["category"]][1] += n
