@@ -32,8 +32,9 @@ def _rows(job) -> list:
     from svsim.learn.features import features
     from svsim.learn.netdata import rows
     from svsim.learn.netdata import ACT
-    line, version, weight, unlock, act_hold = (job + (1.0, 1.0))[:5] if isinstance(job, tuple) else \
-        (job, 2, 1.0, 1.0, 1.0)
+    defaults = (None, 2, 1.0, 1.0, 1.0, None)      # line, version, weight, unlock, act_hold, phases
+    job = tuple(job) + defaults[len(job):] if isinstance(job, tuple) else (job,) + defaults[1:]
+    line, version, weight, unlock, act_hold, phases = job[:6]
     record = json.loads(line)
     branch = record.get("branch") or {}
     hold = branch.get("kind") == "hold"
@@ -42,6 +43,8 @@ def _rows(job) -> list:
         weight *= unlock
     out = []
     for phase, me, state, result, q in rows(record, with_search=True, start=start):
+        if phases is not None and phase not in phases:   # a moment not being fitted: no features
+            continue
         w = weight * (act_hold if hold and phase == ACT else 1.0)
         if w > 0:
             out.append((record.get("g", 0), phase, features(state, me, False, version), result, q, w))
@@ -123,6 +126,9 @@ def main() -> None:
                         help="a weight for each --games file's positions (default 1 each)")
     parser.add_argument("--unlock-weight", type=float, default=1.0,
                         help="weight of the forked games started at an evolution unlock (learn.netdata --fork)")
+    parser.add_argument("--moments", nargs="+", default=["ended", "act"], choices=("ended", "act"),
+                        help="the models to fit (the architecture session's F4 refits only the turn-end one and keeps "
+                             "the installed in-turn model)")
     parser.add_argument("--act-hold-weight", type=float, default=1.0,
                         help="weight of a fork's keeping branch in the in-turn (act) model, 0 to leave it out: a "
                              "branch made to keep its points loses more, which the in-turn model may pin on what "
@@ -131,8 +137,9 @@ def main() -> None:
     args = parser.parse_args()
     weights = args.file_weights or [1.0] * len(args.games)
     assert len(weights) == len(args.games)
-    jobs = [(line, args.version, w, args.unlock_weight, args.act_hold_weight) for path, w in zip(args.games, weights)
-            for line in open(path, encoding="utf-8")]
+    phases = tuple({"ended": ENDED, "act": ACT}[m] for m in args.moments)
+    jobs = [(line, args.version, w, args.unlock_weight, args.act_hold_weight, phases)
+            for path, w in zip(args.games, weights) for line in open(path, encoding="utf-8")]
     with Pool(args.workers) as pool:
         data = [r for part in pool.imap(_rows, jobs, chunksize=4) for r in part]
     N = names(False, args.version)
@@ -140,6 +147,8 @@ def main() -> None:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     for phase, label in ((ENDED, "ended"), (ACT, "act")):
+        if label not in args.moments:
+            continue
         rows = [r for r in data if r[1] == phase and r[3] != 0.5]
         X = np.array([r[2] for r in rows], float)
         y = np.array([r[3] if r[4] is None else (1 - args.q_weight) * r[3] + args.q_weight * r[4]

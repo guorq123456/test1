@@ -431,6 +431,9 @@ def test_a_keeping_branch_can_be_left_out_of_the_in_turn_model_only():
     assert not any(r[1] == ACT for r in without) and any(r[1] == ACT for r in full)
     assert sum(r[1] == ENDED for r in without) == sum(r[1] == ENDED for r in full) > 0
     assert len(_rows((control, 3, 1.0, 1.0, 0.0))) == len(_rows((control, 3, 1.0, 1.0, 1.0)))
+    ended_only = _rows((control, 3, 1.0, 1.0, 1.0, (ENDED,)))          # --moments ended: no in-turn features
+    assert ended_only and all(r[1] == ENDED for r in ended_only)
+    assert len(ended_only) == sum(r[1] == ENDED for r in _rows((control, 3, 1.0, 1.0, 1.0)))
 
 
 def test_a_deck_s_payoff_does_not_depend_on_its_order():
