@@ -474,6 +474,10 @@ def test_keep_value_and_the_planners_records():
     values = [keep_value(state, state.active, c.uid, agent) for c in state.players[state.active].hand]
     assert all(v is None or -1.0 <= v <= 1.0 for v in values)
     assert keep_value(state, 1 - state.active, state.players[state.active].hand[0].uid, agent) is None
+    searched = CrossTurnAgent(make_agent("mcts-raw:30+learned+phased", 1), samples=2, next_turn=True, research=10,
+                              next_search=5, opp_search=5)
+    values = [keep_value(state, state.active, c.uid, searched) for c in state.players[state.active].hand]
+    assert all(v is None or -1.0 <= v <= 1.0 for v in values)
     record = play((0, 3, "ramp", "ramp", "mcts:20+plan+learned+phased+crossn2", 0.0))
     assert record["names"] == ["ramp", "ramp"] and record["plans"]
     plan = record["plans"][0]

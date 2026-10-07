@@ -131,7 +131,7 @@ def forbids(restriction: str):
 class CrossTurnAgent:
     def __init__(self, base, policy=None, samples: int = 4, margin: float = 0.0, seed: int = 0,
                  max_steps: int = 40, next_turn: bool = False, z: float = 0.0, static: bool = False,
-                 research: int = 0):
+                 research: int = 0, next_search: int = 0, opp_search: int = 0):
         self.base = base                     # an MCTSAgent (the lethal search stays outside)
         self.search: ISMCTS = base.search
         if policy is None:
@@ -147,6 +147,10 @@ class CrossTurnAgent:
         self.research = research             # a restriction's turn from a new search with it, this many iterations
                                              # (0: the principal line without the restricted moves)
         self._roots: dict = {}
+        # the play-outs' own next turn / the opponent's turn by a small search of this many iterations
+        # (0: the policy head's top move)
+        self.next_search, self.opp_search = next_search, opp_search
+        self._small = {}
         self.rng = random.Random(seed)
         self.turn = None
         self.restriction = NONE
@@ -184,9 +188,30 @@ class CrossTurnAgent:
                 return
             apply(s, a)
 
+    def _searcher(self, iterations: int) -> ISMCTS:
+        if iterations not in self._small:
+            self._small[iterations] = ISMCTS(iterations=iterations, seed=self.rng.getrandbits(32),
+                                             weights=self.search.weights)
+        return self._small[iterations]
+
+    def _searched_turn(self, s, player: int, iterations: int, end: bool) -> None:
+        """`player`'s turn by a small search; ends the turn (starting the next) only if `end`."""
+        search = self._searcher(iterations)
+        for _ in range(self.max_steps):
+            if s.over or s.active != player:
+                return
+            legal = legal_actions(s)
+            a = legal[0] if len(legal) == 1 else search.choose(s)
+            if isinstance(a, EndTurn) and not end:
+                return
+            apply(s, a)
+
     def _their_turn(self, s, me: int) -> None:
         if not s.over and s.active == me:
             apply(s, EndTurn())
+        if self.opp_search and not s.over:
+            self._searched_turn(s, 1 - me, self.opp_search, end=True)
+            return
         for _ in range(self.max_steps * 2):
             if s.over or s.active == me:
                 return
@@ -210,7 +235,10 @@ class CrossTurnAgent:
         from svsim.search.evaluate import evaluate
         moves_next = True                          # the start of the own next turn: the ACT model (+phased)
         if self.next_turn and not s.over:          # ... or play it with the policy head: the ENDED model
-            self._own_turn(s, me, [], None)
+            if self.next_search:
+                self._searched_turn(s, me, self.next_search, end=False)
+            else:
+                self._own_turn(s, me, [], None)
             if not s.over and s.active == me:
                 ISMCTS._step(s, EndTurn())         # end-of-turn effects, not the opponent's turn
             moves_next = False
