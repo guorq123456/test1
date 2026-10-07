@@ -1,6 +1,6 @@
 # 交给 Salem 本机跑的三个起手闸门（R 对 D，混池）
 
-架构线程 23:24Z 定的：连击妖那个闸门在云端跑；下面三个转给本机（20 核 Windows）。顺序随意，互相独立。
+架构线程 23:24Z 定的：连击妖第一库在云端跑；下面 1～3 三个闸门，加上第 4 项连击妖第二库，转给本机（20 核 Windows）。顺序随意，互相独立。
 
 **条件**：对手卡表已知（牌序、手牌未知）。
 
@@ -90,6 +90,25 @@ python ..\test1-analysis\analysis\tournament-audit\mulligan_gate.py --deck nemes
 ```
 python ..\test1-analysis\analysis\tournament-audit\mulligan_gate.py --deck nemesis-t --way rules:nem4 --opponents elf-t nemesis-t ramp-t pirate-t --phase fixed --pairs 300 --seed 41500000 --workers 16 --out ..\test1-analysis\analysis\tournament-audit\local\mull_nemesis_fixed600.jsonl
 ```
+
+## 4. 连击妖 对 四套：第二个种子库，定长 600 对（架构线程 23:39Z）
+
+- 第一个种子库（38000000）在云端跑满 600 对，SPRT 没有判定：R − D = +2.9% ± 3.0%。
+- 这一轮换新种子库，同一个混池，**定长 600 对、不早停**。
+- 读法事先登记在 `README.md`（"连击妖第二库"一节），跑完不改。
+
+```
+python ..\test1-analysis\analysis\tournament-audit\mulligan_gate.py --deck elf-t --way rules --opponents elf-t nemesis-t ramp-t pirate-t --phase fixed --pairs 600 --seed 38500000 --workers 16 --out ..\test1-analysis\analysis\tournament-audit\local\mull_elf_fixed600b.jsonl
+```
+
+两库并成一张表（1200 对；第一库的文件已经在分支里）：
+
+```
+python ..\test1-analysis\analysis\tournament-audit\mulligan_gate.py --report ..\test1-analysis\analysis\tournament-audit\mull_gate_elf_sprt_c962055.jsonl ..\test1-analysis\analysis\tournament-audit\local\mull_elf_fixed600b.jsonl --pool
+```
+
+- 不带 `--pool` 时，每个文件各出一节，可以用来看两库各自的数。
+- 预计 2400 局，16 个进程约 15 分钟。
 
 ## 中断和续跑
 

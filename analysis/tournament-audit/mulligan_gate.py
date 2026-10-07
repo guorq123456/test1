@@ -3,7 +3,8 @@
     cd <svsim checkout at c962055 or later> && PYTHONPATH=. python3 <this> --deck elf-t \
         --opponents elf-t nemesis-t ramp-t pirate-t --phase sprt --seed 38000000 --out sprt.jsonl
     ... --phase fixed --pairs 300 --seed 38500000 --out fixed.jsonl
-    python3 <this> --report sprt.jsonl [fixed.jsonl]
+    python3 <this> --report sprt.jsonl [fixed.jsonl]          # one section per file
+    python3 <this> --report a.jsonl b.jsonl --pool            # the files as one sample (no early stop in either)
 
 The architecture thread (22:22Z): one gate a deck, the opponents in one pool (they take turns along one
 seed bank: seed k meets opponents[k % n]), the table split by opponent; v2s on both sides; SPRT 50 / 55
@@ -87,13 +88,19 @@ def salem_cr(delta, base=0.5):
     return SALEM_CR_PER_LOGIT * (math.log(p / (1 - p)) - math.log(base / (1 - base)))
 
 
-def report(paths):
+def report(paths, pool=False):
+    """One section per file, or with `pool` all the files as one sample (seed banks run without an early
+    stop, so their pairs can be put together)."""
+    groups = []
     for path in paths:
         rows = [json.loads(line) for line in open(path, encoding="utf-8") if line.strip()]
-        if not rows:
-            continue
+        if rows:
+            groups.append((os.path.basename(path), rows))
+    if pool and groups:
+        groups = [("合并：" + " + ".join(t for t, _ in groups), [r for _, rows in groups for r in rows])]
+    for title, rows in groups:
         deck = rows[0].get("deck", "?")
-        print(f"== {os.path.basename(path)}：{deck}，{len(rows)} 对（每对 R、D 各 2 局）")
+        print(f"== {title}：{deck}，{len(rows)} 对（每对 R、D 各 2 局）")
         print(f"条件：{CONDITION}。d = 同一副发牌上 R 的得分 − D 的得分（两个座位平均）；区间按对算。")
         opps = sorted({r["opp"] for r in rows})
         print(f"  {'对手':<12}{'对数':>5}  (a) 全部对：R − D（95%）          (b) 至少一边 R≠D 的对：R − D（95%）   R≠D 的对占")
@@ -118,7 +125,7 @@ def report(paths):
 
 def main():
     if "--report" in sys.argv:
-        report(sys.argv[sys.argv.index("--report") + 1:])
+        report([a for a in sys.argv[sys.argv.index("--report") + 1:] if not a.startswith("--")], pool="--pool" in sys.argv)
         return
     ap = argparse.ArgumentParser()
     ap.add_argument("--deck", required=True)
