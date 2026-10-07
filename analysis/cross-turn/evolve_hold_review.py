@@ -108,7 +108,8 @@ def review(games, probe, cache):
     hand_end = {c.uid: name(c) for c in me.hand}
     kept = f"进化点 {me.ep}、超进化点 {me.sep}；场上没进化：{counted(n for u, n in field_end.items() if not end.on_field(u).evolved)}" \
            f"；手里的随从：{counted(c.defn.name_zh or c.defn.name for c in me.hand if c.defn.is_follower)}"
-    if any(name(c) == ERNTZ and not c.evolved and c.uid not in field0 for c in me.followers):
+    erntz_plain = any(name(c) == ERNTZ and not c.evolved and c.uid not in field0 for c in me.followers)
+    if erntz_plain:
         kept += "；正义用的是不进化那面（回合结束打两个随从各 8、回 8 血）"
     later, first = [], None
     if k + 1 < len(turns):
@@ -151,7 +152,7 @@ def review(games, probe, cache):
     return {"id": probe["id"], "game": gid, "own_turn": ctx["own_turn"], "first": ctx["first"], "s754": s754,
             "hp": f"{ctx['hp']}/{ctx['opp_hp']}", "targets": "、".join(sorted(set(targets.values()))),
             "super": supers, "kept": kept, "later": "；".join(later), "mark": mark, "why": why,
-            "row": turn_row(turn)}
+            "erntz_plain": erntz_plain, "row": turn_row(turn)}
 
 
 def rates(rows, drop):
@@ -194,7 +195,7 @@ def main():
         for i, r in enumerate(holds, 1):
             body += (f"| {i} | {r['game']} | 第 {r['own_turn']} 回合（{'先' if r['first'] else '后'}手，{r['hp']}） | "
                      f"{r['targets']}{'；能超进化' if r['super'] else '；只能普通进化'} | {r['kept']} | {r['later']} | "
-                     f"**{r['mark']}**：{r['why']} |\n")
+                     f"**{r['mark']}**：{r['why']}{'；标签：正义不进化面' if r['erntz_plain'] else ''} |\n")
         with open(args[args.index("--md") + 1], "w", encoding="utf-8") as f:
             f.write(label_first(body))
     print("标记：" + "，".join(f"{k} {n}" for k, n in Counter(r["mark"] for r in holds).items()))
@@ -202,11 +203,15 @@ def main():
         if r["mark"] == "疑似噪声":
             print(f"  {r['id']}：{r['why']}")
     noise = {r["id"] for r in holds if "噪声" in r["mark"]}        # "疑似噪声", or Salem's "噪声"
+    # the holds where Erntz came down and stayed unevolved (its unevolved side: 8 to two followers, heal 8)
+    plain = {r["id"] for r in holds if r["erntz_plain"]}
+    print(f"标签「正义不进化面」：{len(plain)} 条（其中疑似噪声 {len(plain & noise)} 条）")
+    drops = (("全部", set()), ("去掉疑似噪声", noise), ("去掉正义不进化面", plain), ("两者都去掉", noise | plain))
     print("\nSalem 基线（能进化的回合里忍住的比例）：")
-    a, b = rates(rows, set()), rates(rows, noise)
-    for key in a:
-        print(f"  {key:<14} 全部 {a[key][0]}/{a[key][1]}（{a[key][0] / max(a[key][1], 1):.0%}）  "
-              f"去掉疑似噪声 {b[key][0]}/{b[key][1]}（{b[key][0] / max(b[key][1], 1):.0%}）")
+    tables = [(title, rates(rows, d)) for title, d in drops]
+    for key in tables[0][1]:
+        print(f"  {key:<14} " + "  ".join(f"{title} {t[key][0]}/{t[key][1]}（{t[key][0] / max(t[key][1], 1):.0%}）"
+                                         for title, t in tables))
     by_id = {r["id"]: r for r in rows}
     for i, x in enumerate(args):
         if x != "--results":
@@ -221,7 +226,7 @@ def main():
         for key, sel in (("总体", lambda x: True), ("收益牌在手、本回合够不着", lambda x: x["class"] == "收益牌在手、本回合够不着"),
                          ("只能普通进化", lambda x: x["normal_only"])):
             cells = []
-            for title, drop in (("全部", set()), ("去掉疑似噪声", noise)):
+            for title, drop in drops:
                 ids = [r["id"] for r in holds if r["id"] not in drop and sel(r["row"]) and r["id"] in res]
                 ok, n = sum(res[j][0] for j in ids), sum(res[j][1] for j in ids)
                 cells.append(f"{title} {ok}/{n}（{ok / max(n, 1):.0%}）")
