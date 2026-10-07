@@ -52,7 +52,7 @@ def play(job):
     fork = job[7] if len(job) > 7 else False
     triggers = tuple(job[8]) if len(job) > 8 and job[8] else ("payoff", "deck", "unlock")
     mode = job[9] if len(job) > 9 and job[9] else "all"          # the branch's hold: see _keep, _qgap_keep
-    qgap = _qgap_mode(mode)                                       # (eps, cap) for "qgap[:EPS[:CAP]]"
+    qgap = _qgap_mode(mode)                                       # (eps, cap, pick) for "qgap[:EPS[:CAP[:PICK]]]"
     rng = random.Random(seed * 7919 + g)
     seat = g % 2
     cards = [None, None]
@@ -69,7 +69,9 @@ def play(job):
         return record
     snapshot = {}
     _run(state, agents, record, rng, explore, 0.0, snapshot=snapshot, triggers=triggers,
-         fork_eps=qgap[0] if qgap else None)
+         fork_eps=qgap[0] if qgap else None, fork_pick=qgap[2] if qgap else "first",
+         pick_rng=random.Random(seed * 104729 + g))
+    torn_points = snapshot.pop("_k", None)
     if not snapshot:
         return [record]
     branch = json.loads(json.dumps({k: v for k, v in snapshot["record"].items()}))
@@ -77,6 +79,8 @@ def play(job):
     branch_rng = random.Random()
     branch_rng.setstate(snapshot["rng"])
     info = {k: snapshot[k] for k in ("i", "player", "turn", "trigger", "target") + (("q_gap", "q_moves") if qgap else ())}
+    if torn_points is not None:
+        info["torn_points"] = torn_points          # the game's torn decisions the fork was drawn from
     record["branch"] = dict(info, kind="control")
     branch["branch"] = dict(info, kind="hold", agent_seeds=[seed * 1000 + 2 * g + i + 500000 for i in (0, 1)],
                             rng_state=snapshot["rng"])   # random.Random().setstate((3, tuple(x[1]), None))
@@ -90,10 +94,12 @@ def play(job):
 
 
 def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
-         triggers=("payoff", "deck", "unlock"), fork_eps=None) -> None:
+         triggers=("payoff", "deck", "unlock"), fork_eps=None, fork_pick="first", pick_rng=None) -> None:
     """Play `state` out, adding to `record`. `snapshot` (a dict): fill it at the first fork point (see
     play); with `fork_eps`, at the first decision where a fork point holds and the search itself is torn
-    between evolving and not (_q_gap within fork_eps). `keep`: the branch's side keeps its points (no
+    between evolving and not (_q_gap within fork_eps); `fork_pick` "random": at one of all such decisions of
+    the game, drawn evenly with `pick_rng` (reservoir sampling; snapshot["_k"] counts them), so that the
+    forks are not all at the unlock turn, where the search is torn first. `keep`: the branch's side keeps its points (no
     evolving) as play describes (keep["mode"] "qgap": _qgap_keep)."""
     from svsim.core.engine import apply, legal_actions
     from svsim.tools import records as R
@@ -122,7 +128,8 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
                 and keep.get("mode") != "qgap":
             _keep(state, search, vetoes[state.active], keep, record)
         torn = None
-        if snapshot is not None and not snapshot and fork_eps is not None and state.phase.name == "MAIN":
+        if snapshot is not None and (not snapshot or fork_pick == "random") and fork_eps is not None \
+                and state.phase.name == "MAIN":
             torn = _fork_point(state, triggers)           # checked before the search, judged after it
             if torn is not None:
                 torn = (torn, state.clone(), json.loads(json.dumps(record)))
@@ -134,7 +141,11 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
         action = agents[state.active].act(state, legal)
         if torn is not None:
             gap = _q_gap(state, legal, search)
-            if gap is not None and abs(gap[0]) < fork_eps:
+            take = gap is not None and abs(gap[0]) < fork_eps
+            if take and fork_pick == "random":
+                snapshot["_k"] = snapshot.get("_k", 0) + 1
+                take = pick_rng.random() < 1.0 / snapshot["_k"]
+            if take:
                 (trigger, target), before, rec = torn
                 snapshot.update(state=before, rng=rng.getstate(), i=len(record["actions"]), player=state.active,
                                 turn=state.turn, trigger=trigger, target=target, record=rec,
@@ -153,11 +164,15 @@ def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None,
 
 
 def _qgap_mode(mode: str):
-    """(eps, cap) for a "qgap[:EPS[:CAP]]" hold (defaults 0.05 and 2 turns), else None."""
+    """(eps, cap, pick) for a "qgap[:EPS[:CAP[:PICK]]]" hold (defaults 0.05, 2 turns, "first"; PICK "random":
+    see _run), else None."""
     if not mode.startswith("qgap"):
         return None
     parts = mode.split(":")[1:]
-    return (float(parts[0]) if parts else 0.05, int(parts[1]) if len(parts) > 1 else 2)
+    pick = parts[2] if len(parts) > 2 else "first"
+    if pick not in ("first", "random"):
+        raise ValueError(f"unknown fork pick {pick!r}")
+    return (float(parts[0]) if parts else 0.05, int(parts[1]) if len(parts) > 1 else 2, pick)
 
 
 def _q_gap(state, legal, search):
@@ -456,7 +471,8 @@ def main() -> None:
     parser.add_argument("--fork-hold", default="all",
                         help="with --fork: the branch keeps all its points (all), only keeps them from tier-0 and "
                              "tier-1 targets (selective; see _keep), or forks where the search is torn and keeps "
-                             "them while it stays torn (qgap[:EPS[:CAP]], default 0.05 and 2 turns; _qgap_keep)")
+                             "them while it stays torn (qgap[:EPS[:CAP[:PICK]]], default 0.05, 2 turns and the first torn decision, "
+                             "PICK random: one of them all; _qgap_keep)")
     parser.add_argument("--hold", type=float, default=0.0,
                         help="chance, at the start of a turn the player could evolve in, of not evolving (or not "
                              "super-evolving) for the rest of it (record['holds'])")
