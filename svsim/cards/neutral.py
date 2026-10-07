@@ -307,6 +307,7 @@ class LegacyOfTheBrave(CardScript):
         E.draw(ctx.state, ctx.controller)
 
 
+# 玩家确认的解读（官方原文没写明，测试会话 2026-10-07 的核对标出）：随机加入手牌时按被破坏的次数加权。
 @register(AIKA.card_id)
 class Aika(CardScript):
     """Fanfare: add a copy of a random allied follower destroyed this match to your
@@ -610,6 +611,7 @@ def _top_three_base_costs(hand) -> int:
     return sum(sorted((c.defn.cost for c in hand), reverse=True)[:3])
 
 
+# 玩家确认的解读（官方原文没写明，测试会话 2026-10-07 的核对标出）：大游戏世界自己也算「战场上的其他卡牌」，打出任何原始费用 1 的卡都推进倒数。
 @register(WORLD_OF_GAMES.card_id)
 class WorldOfGames(CardScript):
     """Countdown (5). Whenever you play another card, if there's a card on the field

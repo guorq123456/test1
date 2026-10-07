@@ -296,6 +296,7 @@ class RoarOfProminence(CardScript):
         E.damage(ctx.state, everyone, len(everyone), ctx.source)
 
 
+# TODO（测试会话 2026-10-07 的核对）：关键词直接写进 keywords，没走 give_keywords；以后若同名关键词被限时给予又到期，会被一起删掉。现在卡池里没有限时关键词，不影响对局。
 @register(ZOOEY.card_id)
 class Zooey(CardScript):
     """Fanfare: gain 1 max play point. Enhance (10): give this follower Storm, set
@@ -374,6 +375,7 @@ class Burnite(CardScript):
         E.add_to_leader_area(ctx.state, 1 - ctx.controller, BURNITE_CREST)
 
 
+# TODO（测试会话 2026-10-07 的核对）：关键词直接写进 keywords，没走 give_keywords；以后若同名关键词被限时给予又到期，会被一起删掉。现在卡池里没有限时关键词，不影响对局。
 @register(ERNTZ.card_id)
 class Erntz(CardScript):
     """Ward. At the end of your turn: if unevolved, deal 8 damage to 2 random enemy

@@ -354,6 +354,7 @@ class DepthsOfTheEldAxe(CardScript):
 
 # --- leader area / alternate forms ---------------------------------------------------------
 
+# 玩家确认的解读（官方原文没写明，测试会话 2026-10-07 的核对标出）：机锋的纹章只在真的进化了随从时才消耗「每回合一次」。
 @register(CUTTHROAT_CREST.card_id)
 class CutthroatCrest(CardScript):
     """Once on each of your turns, when you play a follower, evolve it."""
@@ -410,6 +411,7 @@ SLAUS_BAD = (_hand_cost(1), _all_allies(-2),
              lambda ctx: E.damage(ctx.state, [common.own_leader(ctx)], 3, ctx.source))
 
 
+# 玩家确认的解读（官方原文没写明，测试会话 2026-10-07 的核对标出）：斯洛士给对手的纹章在吟唱归零那回合仍发动第 3 项。
 @register(SLAUS_CREST.card_id)
 class SlausCrest(CardScript):
     """Countdown (3). At the start of your turn, activate a random one not yet activated
@@ -491,6 +493,7 @@ class DimensionalSelection(CardScript):
                 summon(ctx.state, ctx.controller, MYSTIC_ARTIFACT)
 
 
+# 玩家确认的解读（官方原文没写明，测试会话 2026-10-07 的核对标出）：锻磨保镖没有可选随从时照样回复 4 点。
 @register(IRONWORK_BODYGUARD.card_id)
 class IronworkBodyguard(CardScript):
     """Fanfare: if there are no duplicates in your deck, select an enemy follower, deal
@@ -607,6 +610,7 @@ class Leona(CardScript):
             E.give_keywords(f, Keyword.AMBUSH)
 
 
+# 玩家确认的解读（官方原文没写明，测试会话 2026-10-07 的核对标出）：随机加入手牌时按被破坏的次数加权。
 @register(ZERK.card_id)
 class Zerk(CardScript):
     """Fanfare: add a card named like a random allied Artifact follower destroyed this

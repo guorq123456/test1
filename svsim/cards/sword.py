@@ -99,6 +99,7 @@ class GildedGoblet(CardScript):
         E.heal_leader(ctx.state, ctx.controller, 2)
 
 
+# TODO（测试会话 2026-10-07 的核对）：关键词直接写进 keywords，没走 give_keywords；以后若同名关键词被限时给予又到期，会被一起删掉。现在卡池里没有限时关键词，不影响对局。
 @register(GILDED_BOOTS.card_id)
 class GildedBoots(CardScript):
     """Select an allied follower and give it +1/+0 and Rush."""
@@ -110,6 +111,7 @@ class GildedBoots(CardScript):
             f.keywords |= Keyword.RUSH
 
 
+# TODO（测试会话 2026-10-07 的核对）：关键词直接写进 keywords，没走 give_keywords；以后若同名关键词被限时给予又到期，会被一起删掉。现在卡池里没有限时关键词，不影响对局。
 @register(GILDED_NECKLACE.card_id)
 class GildedNecklace(CardScript):
     """Select an allied follower and give it +0/+1 and Ward."""
@@ -163,6 +165,7 @@ class UnkeiCrest(CardScript):
 
 # --- deck cards --------------------------------------------------------------------
 
+# TODO（测试会话 2026-10-07 的核对）：关键词直接写进 keywords，没走 give_keywords；以后若同名关键词被限时给予又到期，会被一起删掉。现在卡池里没有限时关键词，不影响对局。
 @register(ORCHESTRATED_SILENCE.card_id)
 class OrchestratedSilence(CardScript):
     """Add a Steelclad Knight to your hand and give it Rush. Rally (10): add 2 instead."""
@@ -236,6 +239,7 @@ class SeveredTies(CardScript):
                 E.set_cost(copy, 1)
 
 
+# TODO（测试会话 2026-10-07 的核对）：关键词直接写进 keywords，没走 give_keywords；以后若同名关键词被限时给予又到期，会被一起删掉。现在卡池里没有限时关键词，不影响对局。
 @register(ZETA_AND_BEA.card_id)
 class ZetaAndBea(CardScript):
     """Fanfare: summon a Zeta & Bea. Enhance (6): give it Bane and this follower Storm. Rush."""

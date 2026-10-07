@@ -526,6 +526,7 @@ class SetusAndMaisha(CardScript):
         _buff_all_allies(ctx, 1, 1, exclude=ctx.source)
 
 
+# 玩家确认的解读（官方原文没写明，测试会话 2026-10-07 的核对标出）：蒂亚进化的 +2/+2 也算「获得增加」。
 @register(TIA.card_id)
 class Tia(CardScript):
     """Enhance (4): allied followers +1/+1. Rush. Once per own turn, when buffed on the field, add an Eve."""
