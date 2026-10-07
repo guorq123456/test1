@@ -43,7 +43,8 @@ linear models do), except a turn start reached by playing out the reply;
 "+mean" backs values up as plain averages instead of the best own choice
 (search.mcts, backup="mean"); "+phased" linear models by moment (learn.phased:
 turn ends, and turn starts reached by playing out the reply; "+phased=NAME" this agent's models from
-the folder NAME, a path or svsim/learn/phased_models/NAME, learn.phased.folder_of; "+alias" a mirror
+the folder NAME, a path or svsim/learn/phased_models/NAME, learn.phased.folder_of; "+screen=N" the lethal search's budget for a position whose damage estimate falls short (default
+200, agents.lethal_agent; the estimate is no bound, search.lethal.damage_estimate); "+alias" a mirror
 without models of its own uses its stand-in's, learn.model.ALIASES: the tournament Ramp Dragon's the Game8
 build's); "+timing" adds what holding a card is worth until the turn the
 player usually plays it (svsim.learn.timing, from their games); "+priced"
@@ -117,7 +118,7 @@ def _make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "phased="))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "phased=", "screen="))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -225,7 +226,8 @@ def _make_agent(spec: str, seed: int):
                                    **({"kinds": kinds} if kinds else {}))
         if name == "mcts-raw":
             return agent
-        agent = LethalAgent(agent, seed=seed, planner=planner,
+        screen = [int(o[len("screen="):]) for o in options if o.startswith("screen=")]
+        agent = LethalAgent(agent, seed=seed, planner=planner, **({"screen": screen[0]} if screen else {}),
                                                             macro="macro" in options,
                                                             burst="burst" in options or "burst2" in options,
                                                             burst_reply=2 if "burst2" in options else 0,
