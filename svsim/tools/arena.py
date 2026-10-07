@@ -35,7 +35,9 @@ below the root's 3 most-visited moves and at most 20 times a decision;
 "+gainK" multiplies the network's scores by K (it is calibrated, so its
 differences between moves are smaller than the linear models'); "+avgK"
 scores a leaf as the mean over K redraws of the cards drawn this turn
-(search.mcts, average); "+endnow"
+(search.mcts, average); "+prior" (or "+priorC") orders and weights the
+root's moves by the matchup's policy head (learn.policy, bonus weight C,
+0.3 by default); "+endnow"
 scores a position inside the turn as if the turn ended there (as the
 linear models do), except a turn start reached by playing out the reply;
 "+mean" backs values up as plain averages instead of the best own choice
@@ -80,13 +82,23 @@ VERSIONS = {
 }
 
 
+def _prior_options(options) -> dict:
+    """+prior (or +priorC: weight C of the bonus): the matchup's policy head as the root prior."""
+    chosen = [o for o in options if o.startswith("prior")]
+    if not chosen:
+        return {}
+    from svsim.learn.policy import MatchupPrior
+    rest = chosen[0][5:]
+    return {"prior": MatchupPrior(), **({"c_prior": float(rest)} if rest else {})}
+
+
 def make_agent(spec: str, seed: int):
     if spec.split("+")[0] in VERSIONS:                         # v1+X: the version with X added
         head, *rest = spec.split("+")
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased"} - {o for o in options if o.startswith(("hp", "gain", "avg"))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior"))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -154,7 +166,8 @@ def make_agent(spec: str, seed: int):
                           backup="mean" if "mean" in options else "max",
                           reserve="reserve" in options, veto=veto, reply_after=1 if "lazy" in options else 0,
                           reply_top=3 if "focus" in options else 0, reply_budget=20 if "focus" in options else 0,
-                          average=next((int(o[3:]) for o in options if o.startswith("avg")), 1))
+                          average=next((int(o[3:]) for o in options if o.startswith("avg")), 1),
+                          **_prior_options(options))
         if name == "mcts-raw":
             return agent
         agent = LethalAgent(agent, seed=seed, planner=planner,

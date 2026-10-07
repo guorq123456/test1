@@ -149,7 +149,7 @@ class ISMCTS:
                  scale: float = 8.0, max_depth: int = 30, seed: int = 0, weights=DEFAULT,
                  reply: bool = False, center: bool = True, prune: bool = True, backup: str = "max",
                  reserve: bool = False, veto=None, reply_after: int = 0, reply_top: int = 0,
-                 reply_budget: int = 0, average: int = 1):
+                 reply_budget: int = 0, average: int = 1, prior=None, c_prior: float = 0.3):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
         self.seconds = seconds
         self.c = c                     # exploration constant (values are in 0..1)
@@ -163,6 +163,9 @@ class ISMCTS:
         self.reply_top = reply_top     # ... only below the root's this many most-visited moves (0: all)
         self.reply_budget = reply_budget   # ... at most this many times per decision (0: no limit)
         self._replies = 0
+        self.prior = prior             # prior.priors(state, legal) -> probabilities (learn.policy), at the root
+        self.c_prior = c_prior         # weight of the prior's bonus: c * P * sqrt(root visits) / (1 + visits)
+        self._root_prior: dict = {}
         self.average = average         # score a leaf as the mean over this many draws of the cards drawn this turn
         self._root_deck: set = set()   # uids in the player's deck at the root (what a draw this turn came from)
         self.centered = center         # squash relative to the starting position (False: absolute)
@@ -213,6 +216,15 @@ class ISMCTS:
         deadline = time.perf_counter() + self.seconds if self.seconds else None
         self._replies = 0
         self._root_deck = {c.uid for c in state.players[me].deck}
+        self._root_prior = {}
+        if self.prior is not None:
+            moves = legal_actions(state)
+            probs = self.prior.priors(state, moves)
+            if probs is not None:
+                where0 = _locator(state, me)
+                for a, pr in zip(moves, probs):
+                    key = action_key(state, a, where0)
+                    self._root_prior[key] = self._root_prior.get(key, 0.0) + float(pr)
         for i in range(self.iterations if deadline is None else 10 ** 9):
             if deadline is not None and time.perf_counter() > deadline and i > 0:
                 break
@@ -237,6 +249,9 @@ class ISMCTS:
                 legal = [a for a in legal if not self.veto(s, a)] or legal
             for a in sorted(worth_trying(s, legal) if self.prune else legal, key=lambda a: _rank(s, a)):
                 options.setdefault(action_key(s, a, where), a)
+            prior = self._root_prior if depth == 0 and self._root_prior else None
+            if prior is not None:                       # the root's moves in the prior's order
+                options = dict(sorted(options.items(), key=lambda kv: -prior.get(kv[0], 0.0)))
             offered.append(options)
             fresh = None
             for k in options:
@@ -256,6 +271,8 @@ class ISMCTS:
             for k in options:
                 child = node.children[k]
                 ucb = self.estimate(child) + self.c * math.sqrt(math.log(child.avail) / child.visits)
+                if prior is not None:
+                    ucb += self.c_prior * prior.get(k, 0.0) * math.sqrt(node.visits + 1) / (1 + child.visits)
                 if ucb > best_ucb:
                     best, best_ucb = k, ucb
             node = node.children[best]
