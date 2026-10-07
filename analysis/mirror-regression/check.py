@@ -1,6 +1,6 @@
 """Run an agent on the regression positions and report which checks it passes.
 
-    cd <svsim checkout> && PYTHONPATH=. python3 <this> positions.json AGENT [SEEDS] [--only CATEGORY]
+    cd <svsim checkout> && PYTHONPATH=. python3 <this> positions.json AGENT [SEEDS] [--only CATEGORY] [--ids ID,ID]
 
 AGENT is an arena spec (e.g. "mcts:200+plan+learned"), or "salem" to replay
 Salem's own turn (every check should pass: this validates the checks). The
@@ -103,8 +103,11 @@ def passes(check, turn, after, biggest_gone=False):
 
 
 def main():
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    flags_with_value = {"--only", "--ids"}
+    args = [a for i, a in enumerate(sys.argv[1:], 1)
+            if not a.startswith("--") and sys.argv[i - 1] not in flags_with_value]
     only = sys.argv[sys.argv.index("--only") + 1] if "--only" in sys.argv else None
+    ids = set(sys.argv[sys.argv.index("--ids") + 1].split(",")) if "--ids" in sys.argv else None
     path, spec = args[0], args[1]
     seeds = int(args[2]) if len(args) > 2 else 1
     data = json.load(open(path))
@@ -114,6 +117,8 @@ def main():
     rows = []
     for pos in positions:
         if only and pos["category"] != only:
+            continue
+        if ids and pos["id"] not in ids:
             continue
         ok = 0
         for s in range(seeds if spec != "salem" else 1):
