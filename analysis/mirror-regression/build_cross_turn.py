@@ -18,16 +18,18 @@ VORLALAI, ZOOEY = "古旧天刀·波菈莱", "世界的伙伴·佐伊"
 BOTS = {"v2": "mcts:100+plan+learned+phased", "v2s": "mcts:200+plan+learned+phased"}
 
 # (game, own turn, category, check, confidence, why it takes more than this turn to see)
+# confidence: 高 / 中; "看局面" for the turn-1 bonus PP: Salem says spending it on turn 1 is
+# sometimes better (six games are too few), so those four are observed, not required.
 PROBES = [
-    # --- the bonus PP: second player's own turn 1 -----------------------------------------
-    ("1791305347029", 1, "bonus_keep", {"keeps_bonus": True}, "高",
+    # --- the bonus PP: second player's own turn 1 (observed, not required) ----------------
+    ("1791305347029", 1, "bonus_keep", {"keeps_bonus": True}, "看局面",
      "额外 PP 在自己第 6 回合前只能用一次。Salem 留到第 2 回合，2+1 PP 打 3 费的龙之启示，提前一回合跳费。"
      "bot 第 1 回合用掉额外 PP 打琪米卡，还把龙之启示弃了：第 2 回合既没额外 PP，也没有跳费牌。"),
-    ("1791305539194", 1, "bonus_keep", {"keeps_bonus": True}, "高",
+    ("1791305539194", 1, "bonus_keep", {"keeps_bonus": True}, "看局面",
      "同上：Salem 第 2 回合用额外 PP 打璐米欧儿加速（3 费，+1 PP 上限）。bot 第 1 回合用额外 PP 下龙人，第 2 回合就跳不了费。"),
-    ("1791306497426", 1, "bonus_keep", {"keeps_bonus": True}, "高",
+    ("1791306497426", 1, "bonus_keep", {"keeps_bonus": True}, "看局面",
      "同上：Salem 第 2 回合额外 PP + 龙之启示。bot 第 1 回合用额外 PP 打琪米卡，弃掉一张璐米欧儿。"),
-    ("1791306781701", 1, "bonus_keep", {"keeps_bonus": True}, "高",
+    ("1791306781701", 1, "bonus_keep", {"keeps_bonus": True}, "看局面",
      "Salem 第 1 回合不用额外 PP（第 2 回合打了琪米卡，第 3 回合用 3 PP 打璐米欧儿加速，额外 PP 一直留着）。"
      "bot 第 1 回合用额外 PP 打琪米卡。代价要到第 2、3 回合才看得见。"),
     # --- ramp now, the payoff comes later ---------------------------------------------------

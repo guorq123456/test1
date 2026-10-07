@@ -7,7 +7,7 @@
    "check": {
     "keeps_bonus": true
    },
-   "confidence": "高",
+   "confidence": "看局面",
    "why": "额外 PP 在自己第 6 回合前只能用一次。Salem 留到第 2 回合，2+1 PP 打 3 费的龙之启示，提前一回合跳费。bot 第 1 回合用掉额外 PP 打琪米卡，还把龙之启示弃了：第 2 回合既没额外 PP，也没有跳费牌。",
    "game": "1791305347029",
    "at": 3,
@@ -54,7 +54,7 @@
    "check": {
     "keeps_bonus": true
    },
-   "confidence": "高",
+   "confidence": "看局面",
    "why": "同上：Salem 第 2 回合用额外 PP 打璐米欧儿加速（3 费，+1 PP 上限）。bot 第 1 回合用额外 PP 下龙人，第 2 回合就跳不了费。",
    "game": "1791305539194",
    "at": 3,
@@ -101,7 +101,7 @@
    "check": {
     "keeps_bonus": true
    },
-   "confidence": "高",
+   "confidence": "看局面",
    "why": "同上：Salem 第 2 回合额外 PP + 龙之启示。bot 第 1 回合用额外 PP 打琪米卡，弃掉一张璐米欧儿。",
    "game": "1791306497426",
    "at": 3,
@@ -148,7 +148,7 @@
    "check": {
     "keeps_bonus": true
    },
-   "confidence": "高",
+   "confidence": "看局面",
    "why": "Salem 第 1 回合不用额外 PP（第 2 回合打了琪米卡，第 3 回合用 3 PP 打璐米欧儿加速，额外 PP 一直留着）。bot 第 1 回合用额外 PP 打琪米卡。代价要到第 2、3 回合才看得见。",
    "game": "1791306781701",
    "at": 3,
