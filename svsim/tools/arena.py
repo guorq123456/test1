@@ -175,12 +175,15 @@ def make_agent(spec: str, seed: int):
             # +crossnK: score after the own next turn (ENDED model); +crosssK: no play-out, the own turn's end
             # (a control); ...zZ: switch only past Z standard errors; ...rN: a restriction's turn from its own
             # search of N iterations
-            m = re.fullmatch(r"cross([ns]?)(\d*)(?:z([\d.]+))?(?:r(\d+))?", cross[0])
+            # ...k<letters>: only these restrictions (k keep a card, s keep the bonus PP, e don't evolve)
+            m = re.fullmatch(r"cross([ns]?)(\d*)(?:z([\d.]+))?(?:r(\d+))?(?:k([kse]+))?", cross[0])
             if m is None:
                 raise ValueError(f"unknown agent option {cross[0]!r}")
-            mode, k, z, r = m.groups()
+            mode, k, z, r, only = m.groups()
+            kinds = [{"k": "keep", "s": "save", "e": "noevo"}[c] for c in only] if only else None
             agent = CrossTurnAgent(agent, samples=int(k or 4), seed=seed, next_turn=mode == "n",
-                                   static=mode == "s", z=float(z or 0), research=int(r or 0))
+                                   static=mode == "s", z=float(z or 0), research=int(r or 0),
+                                   **({"kinds": kinds} if kinds else {}))
         if name == "mcts-raw":
             return agent
         agent = LethalAgent(agent, seed=seed, planner=planner,

@@ -93,9 +93,17 @@ def keep_value(state, player: int, card_uid: int, agent=None, samples: int = 8) 
     return sum(a - b for a, b in zip(out[keep], out[NONE])) / len(out[NONE])
 
 
-def restrictions(line: list) -> list:
+KINDS = ("keep", "save", "noevo")
+
+
+def restrictions(line: list, kinds=KINDS) -> list:
     """The candidates' restrictions for a principal line: none, keep each card it plays, keep the bonus
-    play point, don't evolve."""
+    play point, don't evolve (only those of `kinds`)."""
+    out = _restrictions(line)
+    return [r for r in out if r == NONE or r.split(":")[0] in kinds]
+
+
+def _restrictions(line: list) -> list:
     out, kept = [NONE], set()
     for key in line:
         if key[0] == "P" and key[1][0] == "H":
@@ -131,7 +139,7 @@ def forbids(restriction: str):
 class CrossTurnAgent:
     def __init__(self, base, policy=None, samples: int = 4, margin: float = 0.0, seed: int = 0,
                  max_steps: int = 40, next_turn: bool = False, z: float = 0.0, static: bool = False,
-                 research: int = 0, next_search: int = 0, opp_search: int = 0):
+                 research: int = 0, next_search: int = 0, opp_search: int = 0, kinds=KINDS):
         self.base = base                     # an MCTSAgent (the lethal search stays outside)
         self.search: ISMCTS = base.search
         if policy is None:
@@ -150,6 +158,7 @@ class CrossTurnAgent:
         # the play-outs' own next turn / the opponent's turn by a small search of this many iterations
         # (0: the policy head's top move)
         self.next_search, self.opp_search = next_search, opp_search
+        self.kinds = tuple(kinds)            # which restrictions to try (KINDS)
         self._small = {}
         self.rng = random.Random(seed)
         self.turn = None
@@ -326,7 +335,7 @@ class CrossTurnAgent:
             choice = self.base.act(state, actions)
             root = self.search.last_root
             line = principal_line(root) if root is not None else []
-            candidates = restrictions(line)
+            candidates = restrictions(line, self.kinds)
             if len(candidates) == 1:
                 return choice
             lines = self.lines_for(state, line, candidates)
