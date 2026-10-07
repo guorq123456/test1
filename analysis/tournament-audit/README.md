@@ -59,6 +59,8 @@ cd <1 号分支的 checkout> && python3 -m pytest -c pyproject.toml --rootdir . 
 
 ## 起手的行为检查：D / R-A / R-B，2000 手（`mulligan_check.py`）
 
+**1 号实现的参考**：`mulligan_check.py` 里的 `RULES_A`、`rules_b`、`layer` 和 `decide_b`（test1 38b62fc），按草案的语义实现了 §7.1 和 §7.2 的扩展：先后手、按对手、搭档、叠加优先级，以及 §5b 的条件变体。
+
 - **条件**：对手卡表已知（牌序、手牌未知）。只比起手，不打对局。
 - **做法**：每套卡组 × 4 个对手 × 先后手，各 250 手，用引擎发牌（每手一个种子）。三种换牌方式在同一个种子上比较：
   - D：现在 bot 用的默认起手；
