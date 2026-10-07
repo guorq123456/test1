@@ -39,7 +39,7 @@ def evolve_parts(defn, super_: bool = False) -> tuple[float, float]:
         return hit
     from svsim.core import effects as E
     from svsim.core.actions import Evolve
-    from svsim.core.engine import apply, legal_actions
+    from svsim.core.engine import apply, legal_actions, resolve_queue
     from svsim.core.enums import Keyword
     from svsim.learn.roles import _measure, _sandbox
     best = (0.0, 0.0)
@@ -49,6 +49,7 @@ def evolve_parts(defn, super_: bool = False) -> tuple[float, float]:
             me = state.players[0]
             me.ep, me.sep = 2, 2
             inst = E.summon(state, 0, defn)
+            resolve_queue(state)                     # entering effects first (Analyzing Artifact draws)
             inst.entered_turn = -1
             evolves = [a for a in legal_actions(state) if isinstance(a, Evolve) and a.uid == inst.uid
                        and a.super_ == super_]

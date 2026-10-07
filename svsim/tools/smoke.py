@@ -1,0 +1,147 @@
+"""Smoke test of a deck pairing: errors, time per turn, legal moves per decision, missed lethals.
+
+    python -m svsim.tools.smoke --deck elf-t --opponent ramp-t --games 100 --out smoke-elf.jsonl
+    python -m svsim.tools.smoke --report smoke-elf.jsonl smoke-ramp.jsonl
+
+Games come in pairs on one seed with the seats swapped (as tools.gate), both sides `--agent`. For
+each own turn of each side it keeps the wall time of the side's decisions, the most legal actions
+at one decision, and a lethal probe: at the start of the turn search.lethal.LethalSearch with
+PROBE_NODES (more than the agents' own) looks for a sure lethal (one that wins whatever the deck
+order and random results, so the real state is fair to search); a turn the probe found one and the
+side did not win in is a missed lethal. A game that raises is kept with its traceback and the run
+goes on; a decision over SLOW seconds or a game over LONG seconds is counted as a timeout. The
+condition is tools.gate's: the opponent's 40-card list is known (order and hand not).
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import statistics
+import time
+import traceback
+from multiprocessing import Pool
+
+PROBE_NODES = 50000     # the agents' own lethal search: 20000
+SLOW = 10.0             # seconds for one decision
+LONG = 600.0            # seconds for one game
+
+
+def play_pair(job) -> list[dict]:
+    """Seed `seed` twice, `deck` in seat 0 then in seat 1: one result per game."""
+    from svsim.cards import decks
+    from svsim.core.engine import apply, legal_actions, new_game
+    from svsim.core.enums import Phase
+    from svsim.search.lethal import LethalSearch
+    from svsim.tools.arena import make_agent
+    from svsim.ui.session import DECKS
+    k, seed, deck, opponent, spec = job[:5]
+    nodes = job[5] if len(job) > 5 else PROBE_NODES
+    out = []
+    for seat in (0, 1):
+        cards = [None, None]
+        cards[seat], cards[1 - seat] = decks.build(DECKS[deck][1]), decks.build(DECKS[opponent][1])
+        names = [deck, opponent] if seat == 0 else [opponent, deck]
+        result = {"k": k, "seed": seed, "seat": seat, "names": names, "turns": [], "error": None,
+                  "winner": None, "slow": 0}
+        t_game = time.perf_counter()
+        try:
+            agents = [make_agent(spec, 2 * seed + i) for i in (0, 1)]
+            state = new_game(cards[0], cards[1], seed=seed)
+            probe = LethalSearch(max_nodes=nodes, seed=seed)
+            turn = None
+            while not state.over:
+                if state.phase == Phase.MAIN and (turn is None or turn["turn"] != state.turn):
+                    if turn is not None:
+                        turn["won"] = False
+                        result["turns"].append(turn)
+                    p = state.active
+                    found = probe.solve(state.clone())
+                    turn = {"turn": state.turn, "player": p, "deck": names[p], "ms": 0.0, "max_legal": 0,
+                            "decisions": 0, "lethal": bool(found.sure), "probe_complete": bool(found.complete)}
+                legal = legal_actions(state)
+                t = time.perf_counter()
+                action = agents[state.active].act(state, legal)
+                dt = time.perf_counter() - t
+                result["slow"] += dt > SLOW
+                if state.phase == Phase.MAIN and turn is not None:
+                    turn["ms"] += 1000 * dt
+                    turn["max_legal"] = max(turn["max_legal"], len(legal))
+                    turn["decisions"] += 1
+                apply(state, action)
+            if turn is not None:
+                turn["won"] = state.winner == turn["player"]
+                result["turns"].append(turn)
+            result["winner"] = state.winner
+        except Exception:
+            result["error"] = traceback.format_exc()
+        result["seconds"] = time.perf_counter() - t_game
+        out.append(result)
+    return out
+
+
+def _pct(xs, q):
+    xs = sorted(xs)
+    return xs[min(len(xs) - 1, int(q * len(xs)))] if xs else float("nan")
+
+
+def report(results: list[dict]) -> str:
+    """Per deck (the side that played it): games, errors, timeouts, time per turn, legal moves, lethals."""
+    lines = ["条件：对手卡表已知（牌序、手牌未知）"]
+    games = len(results)
+    errors = [r for r in results if r["error"]]
+    long = sum(r["seconds"] > LONG for r in results)
+    lines.append(f"{games} 局：异常 {len(errors)}，超时（单步 >{SLOW:.0f}s 的步数 {sum(r['slow'] for r in results)}，"
+                 f"单局 >{LONG:.0f}s 的局数 {long}）")
+    for r in errors[:3]:
+        lines.append("  异常：" + r["error"].strip().splitlines()[-1])
+    by = {}
+    for r in results:
+        for t in r["turns"]:
+            by.setdefault(t["deck"], []).append(t)
+    for deck, turns in sorted(by.items()):
+        ms = [t["ms"] for t in turns]
+        legal = [t["max_legal"] for t in turns]
+        lethal = [t for t in turns if t["lethal"]]
+        missed = [t for t in lethal if not t["won"]]
+        lines.append(f"{deck}：{len(turns)} 个回合，每回合用时中位数 {statistics.median(ms):.0f} ms、"
+                     f"90% {_pct(ms, 0.9):.0f} ms、最长 {max(ms):.0f} ms；每回合最多候选行动 中位数 "
+                     f"{statistics.median(legal):.0f}、90% {_pct(legal, 0.9)}、最大 {max(legal)}；"
+                     f"探针找到必杀 {len(lethal)} 回合，没杀 {len(missed)} 回合"
+                     f"（探针没搜完的回合 {sum(not t['probe_complete'] for t in turns)}）")
+    return "\n".join(lines)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--deck", default="elf-t")
+    parser.add_argument("--opponent", default="ramp-t")
+    parser.add_argument("--games", type=int, default=100)
+    parser.add_argument("--agent", default="mcts:100+plan+learned+phased")
+    parser.add_argument("--seed", type=int, default=24000000)
+    parser.add_argument("--workers", type=int, default=4)
+    parser.add_argument("--probe-nodes", type=int, default=PROBE_NODES)
+    parser.add_argument("--out", default=None)
+    parser.add_argument("--report", nargs="+", default=None, help="only print the report of these files")
+    args = parser.parse_args()
+    if args.report:
+        for path in args.report:
+            print(path)
+            print(report([json.loads(line) for line in open(path, encoding="utf-8")]))
+        return
+    jobs = [(k, args.seed + k, args.deck, args.opponent, args.agent, args.probe_nodes) for k in range(args.games // 2)]
+    results = []
+    fh = open(args.out, "w", encoding="utf-8") if args.out else None
+    with Pool(args.workers) as pool:
+        for pair in pool.imap_unordered(play_pair, jobs):
+            for r in pair:
+                results.append(r)
+                if fh:
+                    fh.write(json.dumps(r) + "\n")
+                    fh.flush()
+    if fh:
+        fh.close()
+    print(report(results))
+
+
+if __name__ == "__main__":
+    main()

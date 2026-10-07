@@ -114,7 +114,7 @@ def recurring(defn, evolved: bool = False) -> tuple:
         return hit
     from svsim.core import effects as E
     from svsim.core.actions import EndTurn
-    from svsim.core.engine import apply
+    from svsim.core.engine import apply, resolve_queue
     from svsim.core.enums import CardType
     out = (0.0, 0.0, 0.0)
     try:
@@ -125,6 +125,7 @@ def recurring(defn, evolved: bool = False) -> tuple:
             inst = E.summon(state, 0, defn)
             if evolved and defn.is_follower:
                 E.evolve(state, inst, False)
+        resolve_queue(state)                         # entering and evolving effects first
         before = state.clone()
         for _ in range(2):                           # my end of turn, the opponent's turn, my turn starting
             if state.over:

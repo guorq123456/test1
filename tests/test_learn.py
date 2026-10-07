@@ -347,6 +347,19 @@ def test_cards_are_named_for_the_player_by_the_glossary():
     assert common(unknown) == "试作品（7费 5/4）"
 
 
+def test_a_card_that_does_something_on_entering_can_be_measured():
+    import svsim.cards.library  # noqa: F401  (the scripts: Analyzing Artifact draws when it enters)
+    from svsim.cards import portal
+    from svsim.learn.payoff import evolve_parts
+    from svsim.learn.roles import recurring
+    from svsim.search import combo
+    d = portal.ANALYZING_ARTIFACT          # made by Nemesis cards mid-game: the planner met it in a smoke game
+    combo.evolve_profile.cache_clear()
+    assert combo.evolve_profile(d, False) and combo.evolve_profile(d, True)
+    evolve_parts(d, False)
+    recurring(d)
+
+
 def test_a_payoff_card_still_in_the_deck_counts_by_its_draw_chances():
     from svsim.cards import decks
     from svsim.core.engine import new_game

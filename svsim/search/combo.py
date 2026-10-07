@@ -246,6 +246,7 @@ def engage_profile(defn: CardDef) -> Effect | None:
         return None
     state, anchor = _sandbox(0)
     amulet = E.summon(state, 0, defn)
+    resolve_queue(state)                    # what entering does (Analyzing Artifact draws) first
     best = None
     for action in legal_actions(state):
         if not isinstance(action, Engage) or action.uid != amulet.uid:
@@ -272,6 +273,7 @@ def evolve_profile(defn: CardDef, super_: bool) -> tuple[Effect, ...]:
         state, anchor = _sandbox(0, hand=hand)
         state.players[0].pp = 0             # room to recover play points
         inst = E.summon(state, 0, defn)
+        resolve_queue(state)                # its entering effects first: a state is cloned between actions
         inst.entered_turn = -1
         found = {}
         for action in legal_actions(state):
