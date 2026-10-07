@@ -10,6 +10,13 @@ side, the same N determinizations for every subset).
 - --stability: per deck x opponent x seat, --hands hands; C decides twice with two seeds; reported
   is how often the two runs choose the same subset, for each N, and the mean milliseconds per
   decision (measure on an idle machine). The N to use is the smallest with agreement >= 90%.
+- --regret: whether the two runs' disagreement is between subsets about as good (the architecture
+  thread to decide on C): the play-out loop of agents.sim_mulligan.simulated, repeated here (it returns
+  only the best subset) to keep every subset's mean; per hand two runs at --n (seeds 1 and 2) and a
+  referee run at 4 x --n (seed 3), all with their own worlds; reported: how often the two runs agree,
+  the referee's value of each run's choice against the referee's best (regret) and against the
+  spread of the 16 subsets (best minus worst, by the referee), and the referee's standard error of a
+  subset's mean, in the evaluation's own units.
 - --behaviour: the three ways on the same hands (C at --n): how often each card is kept when dealt,
   the mean number redrawn, the C-R and C-D agreement (same subset), and each deck's goal as in
   mulligan_check.py (after the mulligans both sides pass, the hand read at each own turn start).
@@ -32,6 +39,54 @@ def stability_job(job):
     ms = 1000 * (time.perf_counter() - t)
     b = tuple(sorted(decide(st.clone(), f"sim:{n}:5", seed=2)))
     return deck, n, a == b, ms
+
+
+def subset_values(state, n, horizon=5, seed=0):
+    """agents.sim_mulligan.simulated's loop, keeping each redraw's mean and its standard error."""
+    import random
+    from itertools import combinations
+    from svsim.agents.greedy_agent import GreedyAgent
+    from svsim.agents.sim_mulligan import _legal
+    from svsim.core.actions import Mulligan
+    from svsim.core.engine import apply
+    from svsim.core.view import determinize
+    from svsim.learn.model import Learned
+    from svsim.learn.phased import PhasedLearned
+    from svsim.search.evaluate import DEFAULT, evaluate
+    me = state.active
+    size = len(state.players[me].hand)
+    subsets = [c for k in range(size + 1) for c in combinations(range(size), k)]
+    rng = random.Random(seed * 7919 + state.turn)
+    worlds = [rng.getrandbits(64) for _ in range(n)]
+    weights = PhasedLearned(fallback=Learned())
+    play = Learned(fallback=DEFAULT)
+    out = {}
+    for redraw in subsets:
+        vals = []
+        for w in worlds:
+            s = determinize(state, me, random.Random(w))
+            apply(s, Mulligan(redraw))
+            agents = [GreedyAgent(w % 100003 + i, samples=1, weights=play) for i in (0, 1)]
+            while not s.over and s.turn <= 2 * horizon:
+                apply(s, agents[s.active].act(s, _legal(s)))
+            vals.append(evaluate(s, me, weights, player_moves_next=(s.active == me)))
+        m = sum(vals) / n
+        se = (sum((v - m) ** 2 for v in vals) / max(n - 1, 1) / n) ** 0.5
+        out[redraw] = (m, se)
+    return out
+
+
+def regret_job(job):
+    from svsim.agents.mulligan import opening
+    deck, opp, first, seed, n = job
+    st = opening(deck, opp, first, seed)
+    runs = [subset_values(st.clone(), k, seed=sd) for k, sd in ((n, 1), (n, 2), (4 * n, 3))]
+    picks = [max(r, key=lambda c: r[c][0]) for r in runs[:2]]
+    ref = runs[2]
+    best = max(v for v, _ in ref.values())
+    worst = min(v for v, _ in ref.values())
+    se = sum(e for _, e in ref.values()) / len(ref)
+    return deck, picks[0] == picks[1], [best - ref[p][0] for p in picks], best - worst, se
 
 
 def behaviour_job(job):
@@ -68,6 +123,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--stability", action="store_true")
     ap.add_argument("--behaviour", action="store_true")
+    ap.add_argument("--regret", action="store_true")
     ap.add_argument("--hands", type=int, default=50)
     ap.add_argument("--ns", type=int, nargs="+", default=[4, 8, 16])
     ap.add_argument("--n", type=int, default=8)
@@ -90,6 +146,29 @@ def main():
             tot = [sum(res[(d, n)][i] for d in DECKS_T) for i in range(3)]
             print(f"  N={n:<3} 两次运行选中同一换牌组合：{tot[1] / tot[0]:.0%}（" + "，".join(cells) +
                   f"），每次起手平均 {tot[2] / tot[0]:.0f} ms")
+    if args.regret:
+        jobs = [(d, o, f, args.seed + 500 + h, args.n) for d in DECKS_T for o in DECKS_T for f in (True, False)
+                for h in range(args.hands // 32 or 1)]
+        res = []
+        with Pool(args.workers) as pool:
+            for r in pool.imap_unordered(regret_job, jobs, chunksize=1):
+                res.append(r)
+        n = len(res)
+        regrets = [x for r in res for x in r[2]]
+        spread = sum(r[3] for r in res) / n
+        se = sum(r[4] for r in res) / n
+        mean_r = sum(regrets) / len(regrets)
+        rel = sum(x / r[3] for r in res for x in r[2] if r[3] > 0) / len(regrets)
+        print(f"  --regret，N={args.n}（裁判 N={4 * args.n}），{n} 手：两次选中同一组合 {sum(r[1] for r in res) / n:.0%}")
+        print(f"  选中组合的遗憾（裁判眼里比最好组合差多少）：平均 {mean_r:.3f}，中位 {sorted(regrets)[len(regrets) // 2]:.3f}，"
+              f"占 16 个组合最好减最差的 {rel:.0%}")
+        print(f"  16 个组合最好减最差（裁判）：平均 {spread:.3f}；裁判单个组合均值的标准误：平均 {se:.3f}（评估器自己的单位）")
+        for d in DECKS_T:
+            sub = [r for r in res if r[0] == d]
+            if sub:
+                rr = [x for r in sub for x in r[2]]
+                print(f"    {d}：一致 {sum(r[1] for r in sub) / len(sub):.0%}，平均遗憾 {sum(rr) / len(rr):.3f}，"
+                      f"最好减最差 {sum(r[3] for r in sub) / len(sub):.3f}")
     if args.behaviour:
         jobs = [(d, o, f, args.seed + h, args.n) for d in DECKS_T for o in DECKS_T for f in (True, False)
                 for h in range(args.hands)]
