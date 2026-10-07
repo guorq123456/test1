@@ -1,0 +1,361 @@
+{
+ "ai_hp": 0,
+ "finished": true,
+ "moves": 48,
+ "record": {
+  "actions": [
+   {
+    "indices": [
+     1,
+     2
+    ],
+    "type": "Mulligan"
+   },
+   {
+    "indices": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "type": "Mulligan"
+   },
+   {
+    "type": "EndTurn"
+   },
+   {
+    "type": "UseBonusPP"
+   },
+   {
+    "modes": [],
+    "targets": [],
+    "type": "PlayCard",
+    "uid": 45
+   },
+   {
+    "type": "EndTurn"
+   },
+   {
+    "modes": [],
+    "targets": [],
+    "type": "PlayCard",
+    "uid": 9
+   },
+   {
+    "attacker": 9,
+    "target": 45,
+    "type": "Attack"
+   },
+   {
+    "type": "EndTurn"
+   },
+   {
+    "type": "EndTurn"
+   },
+   {
+    "modes": [],
+    "targets": [],
+    "type": "PlayCard",
+    "uid": 34
+   },
+   {
+    "type": "EndTurn"
+   },
+   {
+    "modes": [],
+    "targets": [],
+    "type": "PlayCard",
+    "uid": 73
+   },
+   {
+    "type": "EndTurn"
+   },
+   {
+    "modes": [],
+    "targets": [],
+    "type": "PlayCard",
+    "uid": 25
+   },
+   {
+    "type": "EndTurn"
+   },
+   {
+    "modes": [],
+    "targets": [],
+    "type": "PlayCard",
+    "uid": 48
+   },
+   {
+    "attacker": 48,
+    "target": 25,
+    "type": "Attack"
+   },
+   {
+    "attacker": 81,
+    "target": 25,
+    "type": "Attack"
+   },
+   {
+    "attacker": 82,
+    "target": 25,
+    "type": "Attack"
+   },
+   {
+    "type": "EndTurn"
+   },
+   {
+    "modes": [],
+    "targets": [
+     5
+    ],
+    "type": "PlayCard",
+    "uid": 10
+   },
+   {
+    "modes": [],
+    "targets": [],
+    "type": "PlayCard",
+    "uid": 23
+   },
+   {
+    "modes": [],
+    "super_": false,
+    "targets": [
+     20
+    ],
+    "type": "Evolve",
+    "uid": 10
+   },
+   {
+    "type": "EndTurn"
+   },
+   {
+    "modes": [],
+    "targets": [],
+    "type": "PlayCard",
+    "uid": 60
+   },
+   {
+    "type": "EndTurn"
+   },
+   {
+    "modes": [],
+    "targets": [],
+    "type": "PlayCard",
+    "uid": 2
+   },
+   {
+    "modes": [
+     0
+    ],
+    "targets": [],
+    "type": "PlayCard",
+    "uid": 30
+   },
+   {
+    "modes": [],
+    "super_": false,
+    "targets": [],
+    "type": "Evolve",
+    "uid": 23
+   },
+   {
+    "attacker": 23,
+    "target": -2,
+    "type": "Attack"
+   },
+   {
+    "type": "EndTurn"
+   },
+   {
+    "modes": [],
+    "targets": [
+     56
+    ],
+    "type": "PlayCard",
+    "uid": 68
+   },
+   {
+    "attacker": 68,
+    "target": 30,
+    "type": "Attack"
+   },
+   {
+    "type": "UseBonusPP"
+   },
+   {
+    "modes": [],
+    "targets": [
+     57,
+     23
+    ],
+    "type": "PlayCard",
+    "uid": 84
+   },
+   {
+    "type": "EndTurn"
+   },
+   {
+    "modes": [],
+    "targets": [],
+    "type": "PlayCard",
+    "uid": 40
+   },
+   {
+    "modes": [],
+    "super_": true,
+    "targets": [],
+    "type": "Evolve",
+    "uid": 40
+   },
+   {
+    "attacker": 2,
+    "target": -2,
+    "type": "Attack"
+   },
+   {
+    "type": "EndTurn"
+   },
+   {
+    "modes": [],
+    "targets": [],
+    "type": "PlayCard",
+    "uid": 61
+   },
+   {
+    "modes": [],
+    "targets": [],
+    "type": "PlayCard",
+    "uid": 44
+   },
+   {
+    "modes": [],
+    "super_": true,
+    "targets": [],
+    "type": "Evolve",
+    "uid": 44
+   },
+   {
+    "attacker": 44,
+    "target": 2,
+    "type": "Attack"
+   },
+   {
+    "type": "EndTurn"
+   },
+   {
+    "modes": [],
+    "targets": [],
+    "type": "PlayCard",
+    "uid": 13
+   },
+   {
+    "modes": [],
+    "targets": [],
+    "type": "PlayCard",
+    "uid": 12
+   }
+  ],
+  "ai": "mcts:200+plan+learned",
+  "date": "2026-10-06 16:00",
+  "decks": [
+   [
+    10403120,
+    10403120,
+    10403120,
+    10644120,
+    10644120,
+    10644120,
+    10741110,
+    10741110,
+    10741110,
+    10842120,
+    10842120,
+    10543310,
+    10543310,
+    10543310,
+    10042310,
+    10042310,
+    10042310,
+    10742310,
+    10542310,
+    10542310,
+    10503310,
+    10503310,
+    10444120,
+    10444120,
+    10444120,
+    10644110,
+    10644110,
+    10644110,
+    10944120,
+    10944120,
+    10944120,
+    10844120,
+    10844120,
+    10844120,
+    10744110,
+    10744110,
+    10744110,
+    10544110,
+    10544110,
+    10544110
+   ],
+   [
+    10403120,
+    10403120,
+    10403120,
+    10644120,
+    10644120,
+    10644120,
+    10741110,
+    10741110,
+    10741110,
+    10842120,
+    10842120,
+    10543310,
+    10543310,
+    10543310,
+    10042310,
+    10042310,
+    10042310,
+    10742310,
+    10542310,
+    10542310,
+    10503310,
+    10503310,
+    10444120,
+    10444120,
+    10444120,
+    10644110,
+    10644110,
+    10644110,
+    10944120,
+    10944120,
+    10944120,
+    10844120,
+    10844120,
+    10844120,
+    10744110,
+    10744110,
+    10744110,
+    10544110,
+    10544110,
+    10544110
+   ]
+  ],
+  "first": 0,
+  "first_arg": null,
+  "names": [
+   "ramp",
+   "ramp"
+  ],
+  "seed": 393492821,
+  "version": 1,
+  "winner": 0
+ },
+ "turn": 15,
+ "updated": "2026-10-06T20:02:53.193Z",
+ "winner": 0,
+ "you_hp": 19
+}
