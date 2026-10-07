@@ -2,12 +2,16 @@
 
     cd <svsim checkout> && PYTHONPATH=. python3 <this> --decks elf-t nemesis-t ramp-t pirate-t --pairs 150 \
         --agent v2s --seed 25000000 --workers 4 --out league.jsonl.gz
-    python3 <this> --report league.jsonl.gz [--boot 2000]
+    python3 <this> --report league.jsonl.gz [more.jsonl.gz ...] [--boot 2000]
+    (later files replace a game of the same pairing, pair and seat: e.g. the mirrors' second games, --mirror-second)
 
 Every pairing of the decks (the mirrors too) plays --pairs pairs of games: seed s twice, the first deck in
 seat 0 then in seat 1 (who goes first comes from the seed, so the first deck goes first in one game of a
 pair and second in the other), both sides the same agent (arena spec or version name, seeds 2s and
-2s+1), the same seeds s = --seed + k for every pairing. Each game is kept as a full record
+2s+1), the same seeds s = --seed + k for every pairing. In a mirror the two decks are the same, so
+the second game of a pair swaps the agents' seeds (2s+1 in seat 0, 2s in seat 1); otherwise it would
+replay the first game move for move (it did in the first run at f631e14: --mirror-second plays those
+second games again, into a separate file, and the report counts a repeated game once). Each game is kept as a full record
 (svsim.tools.records format, plus the pairing and the seat of the first deck) for later use (deck
 inference, teacher data). Condition: the opponent's 40-card list is known (order and hand not), as in
 tools.gate.
@@ -31,7 +35,7 @@ from multiprocessing import Pool
 SALEM_CR_PER_LOGIT = 236.0
 
 
-def play_pair(job):
+def play_pair(job, seats=(0, 1)):
     from svsim.cards import decks
     from svsim.core.engine import apply, legal_actions, new_game
     from svsim.tools import records
@@ -40,10 +44,11 @@ def play_pair(job):
     a, b, k, seed, spec = job
     spec = VERSIONS.get(spec, spec)
     out = []
-    for seat_a in (0, 1):
+    for seat_a in seats:
         names = [a, b] if seat_a == 0 else [b, a]
         cards = [decks.build(DECKS[n][1]) for n in names]
-        agents = [make_agent(spec, 2 * seed + i) for i in (0, 1)]
+        swap = a == b and seat_a == 1               # a mirror's second game: otherwise the same game again
+        agents = [make_agent(spec, 2 * seed + (1 - i if swap else i)) for i in (0, 1)]
         t0 = time.perf_counter()
         state = new_game(cards[0], cards[1], seed=seed)
         rec = records.new_record(cards[0], cards[1], seed, state.first, f"{spec} / {spec}")
@@ -54,9 +59,14 @@ def play_pair(job):
             apply(state, action)
         rec["winner"] = state.winner
         out.append({"pair": f"{a}/{b}", "k": k, "seed": seed, "seat_a": seat_a, "first": state.first,
+                    "agent_seeds": [2 * seed + (1 - i if swap else i) for i in (0, 1)],
                     "winner": state.winner, "turns": state.turn, "seconds": time.perf_counter() - t0,
                     "record": rec})
     return out
+
+
+def mirror_second(job):
+    return play_pair(job, seats=(1,))
 
 
 def score_a(g):
@@ -82,8 +92,13 @@ def bt_fit(counts, decks_, iters=2000):
     return theta
 
 
-def report(path, boots):
-    games = [json.loads(line) for line in gzip.open(path, "rt", encoding="utf-8")]
+def report(paths, boots):
+    latest = {}
+    for path in paths:                                       # a later file replaces the same game slot
+        for line in gzip.open(path, "rt", encoding="utf-8"):
+            g = json.loads(line)
+            latest[(g["pair"], g["k"], g["seat_a"])] = g
+    games = list(latest.values())
     by_pair = defaultdict(lambda: defaultdict(list))         # pairing -> k -> games
     for g in games:
         by_pair[g["pair"]][g["k"]].append(g)
@@ -104,8 +119,18 @@ def report(path, boots):
         a, b = pair.split("/")
         tag = "（镜像：先手胜率）" if a == b else ""
         if a == b:
-            fr = sum(1.0 if g["winner"] == g["first"] else 0.5 if g["winner"] is None else 0.0 for g in allg) / len(allg)
-            print(f"{pair:<22}{n:>6}  先手胜率 {fr:.1%}{tag}")
+            # a pair whose two games are the same game move for move (the first run's mirrors) counts once
+            distinct = []
+            for gs in ks.values():
+                if len(gs) == 2 and gs[0]["record"]["actions"] == gs[1]["record"]["actions"]:
+                    distinct.append(gs[0])
+                else:
+                    distinct.extend(gs)
+            nd = len(distinct)
+            fr = sum(1.0 if g["winner"] == g["first"] else 0.5 if g["winner"] is None else 0.0 for g in distinct) / nd
+            half = 1.96 * math.sqrt(fr * (1 - fr) / nd)
+            print(f"{pair:<22}{nd:>6}  先手胜率 {fr:.1%} ± {half:.1%}{tag}"
+                  + (f"（{len(allg) - nd} 局是同一局的重复，只算一次）" if nd < len(allg) else ""))
             continue
         print(f"{pair:<22}{n:>6}  {m:.1%} ± {1.96 * se:.1%}          {sum(first) / len(first):.1%} / {sum(second) / len(second):.1%}")
         pair_scores[pair] = per_pair
@@ -139,7 +164,9 @@ def report(path, boots):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--report", default=None)
+    ap.add_argument("--report", nargs="+", default=None)
+    ap.add_argument("--mirror-second", action="store_true",
+                    help="play only the mirrors' second games (seat-swapped agent seeds), e.g. to complete the first run")
     ap.add_argument("--boot", type=int, default=2000)
     ap.add_argument("--decks", nargs="+", default=["elf-t", "nemesis-t", "ramp-t", "pirate-t"])
     ap.add_argument("--pairs", type=int, default=150)
@@ -158,10 +185,12 @@ def main():
             g = json.loads(line)
             done.add((g["pair"], g["k"]))
     jobs = [(a, b, k, args.seed + k, args.agent) for k in range(args.pairs)
-            for a, b in combinations_with_replacement(args.decks, 2) if (f"{a}/{b}", k) not in done]
+            for a, b in combinations_with_replacement(args.decks, 2)
+            if (f"{a}/{b}", k) not in done and (a == b or not args.mirror_second)]
     t0 = time.perf_counter()
     with Pool(args.workers) as pool, gzip.open(args.out, "at", encoding="utf-8") as fh:
-        for n, pair in enumerate(pool.imap_unordered(play_pair, jobs, chunksize=1), 1):
+        for n, pair in enumerate(pool.imap_unordered(mirror_second if args.mirror_second else play_pair, jobs,
+                                                     chunksize=1), 1):
             for g in pair:
                 fh.write(json.dumps(g) + "\n")
             fh.flush()
