@@ -91,8 +91,9 @@ def rules_b(deck, opp, first, variants):
         return layer(base, seat, vs), None
     base = {"keep": EARLY, "redraw": {SEVERED_TIES, ZETA_BEA}, "at_most": {FIRST_MATE: 1},
             "needs": {SPLENDOR: EARLY, LAGE_DOR: EARLY}}
-    vs = ({"keep": {ZETA_BEA, BARBAROS}, "at_most": {BARBAROS: 1}, "needs": {ZETA_BEA: TWO_DROPS, BARBAROS: LOW_FOLLOWERS}}
-          if opp == "ramp-t" else None)
+    vs = {"ramp-t": {"keep": {ZETA_BEA, BARBAROS}, "at_most": {BARBAROS: 1},
+                     "needs": {ZETA_BEA: TWO_DROPS, BARBAROS: LOW_FOLLOWERS}},
+          "nemesis-t": {"keep": {SEVERED_TIES}, "needs": {SEVERED_TIES: TWO_DROPS}}}.get(opp)
     return layer(base, vs), None
 
 
@@ -106,7 +107,7 @@ def decide_b(hand, deck, opp, first, variants, threshold=5):
             continue
         if cid in at_most and counts[cid] >= at_most[cid]:
             continue
-        if cid in keep or (c.cost < threshold and cid not in needs):
+        if cid in keep or c.cost < threshold:           # a card with partners is a candidate too; partners checked below
             keep_idx.add(i)
             counts[cid] += 1
     changed = True                                       # partners: drop a kept card whose partners are all gone
@@ -119,8 +120,8 @@ def decide_b(hand, deck, opp, first, variants, threshold=5):
                 keep_idx.discard(i)
                 changed = True
                 break
-    if variants and deck == "elf-t":                     # 曲千代 needs two other cards of cost 1-2 kept
-        cheap = sum(1 for i in keep_idx if hand[i].cost <= 2 and hand[i].defn.card_id != KUCHIYO)
+    if variants and deck == "elf-t":                     # 曲千代 needs two other cards of cost 1-2 in the opening hand
+        cheap = sum(1 for c in hand if c.cost <= 2 and c.defn.card_id != KUCHIYO)
         if cheap < 2:
             keep_idx -= {i for i in keep_idx if hand[i].defn.card_id == KUCHIYO}
     if variants and deck == "nemesis-t":                 # no play for turns 1-2 but 机锋: 4-costs go back too
