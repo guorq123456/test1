@@ -15,7 +15,9 @@ Classes of the turn: "收益牌可进化" (a payoff follower could be evolved at
 decision of the turn), "收益牌在手、本回合够不着" (none could, but one is in
 hand), "只有普通随从" (neither). For held turns, whether Salem evolved a
 payoff follower in the next two own turns. With --results (check.py output
-for evolve_probes.json), the bot's pass rate by class.
+for evolve_probes.json), the bot's pass rate by class. With --selfplay LABEL
+FILE instead, the same held / used table for both seats of self-play records
+(each class's share among held and used turns, and the class's hold rate).
 """
 import json
 import re
@@ -67,7 +69,85 @@ def classify(turn):
     return "只有普通随从", targets
 
 
+def player_turns(rec, seats=(0, 1)):
+    """(seat, the turn's (state, action) pairs) for every turn of the given seats that did not win the game."""
+    acts = [from_dict(a) for a in rec["actions"]]
+    st = records.start(rec)
+    out, cur, seat = [], [], None
+    for a in acts:
+        if st.phase.name != "MAIN":
+            apply(st, a)
+            continue
+        if seat is None:
+            seat = st.active
+        cur.append((st.clone(), a))
+        apply(st, a)
+        if st.over or st.active != seat:
+            if seat in seats and not (st.over and st.winner == seat):
+                out.append((seat, cur))
+            cur, seat = [], None
+        if st.over:
+            break
+    return out
+
+
+def turn_row(turn):
+    """The held / used table's row for one turn where evolving was possible, else None."""
+    legal = [(s, a) for s, _ in turn for a in legal_actions(s) if isinstance(a, Evolve)]
+    used = [a for _, a in turn if isinstance(a, Evolve)]
+    if not legal and not used:
+        return None
+    cls, _ = classify_seat(turn)
+    normal_only = not any(a.super_ for _, a in legal)
+    return {"held": not used, "class": cls, "normal_only": normal_only}
+
+
+def classify_seat(turn):
+    me = turn[0][0].active
+    targets = set()
+    for s, _ in turn:
+        for a in legal_actions(s):
+            if isinstance(a, Evolve):
+                targets.add(name(s.on_field(a.uid)))
+    hand = {name(c) for c in turn[0][0].players[me].hand}
+    if targets & PAYOFF:
+        return "收益牌可进化", targets
+    if hand & PAYOFF:
+        return "收益牌在手、本回合够不着", targets
+    return "只有普通随从", targets
+
+
+def table(label, rows):
+    held = [r for r in rows if r["held"]]
+    used = [r for r in rows if not r["held"]]
+    print(f"\n{label}：能进化的回合 {len(rows)} 个，忍住 {len(held)}（{len(held) / len(rows):.0%}）")
+    for k in ("收益牌可进化", "收益牌在手、本回合够不着", "只有普通随从"):
+        h = sum(r["class"] == k for r in held)
+        u = sum(r["class"] == k for r in used)
+        print(f"  {k:<14} 占忍住 {h / max(len(held), 1):.0%}  占用了 {u / max(len(used), 1):.0%}  这一格的忍住率 {h}/{h + u}"
+              f"（{h / max(h + u, 1):.0%}）")
+    h = sum(r["normal_only"] for r in held)
+    u = sum(r["normal_only"] for r in used)
+    print(f"  {'只能普通进化':<14} 占忍住 {h / max(len(held), 1):.0%}  占用了 {u / max(len(used), 1):.0%}  这一格的忍住率 {h}/{h + u}"
+          f"（{h / max(h + u, 1):.0%}）")
+
+
 def main():
+    if "--selfplay" in sys.argv:              # the same table for both seats of self-play records
+        import gzip
+        i = sys.argv.index("--selfplay")
+        label, path = sys.argv[i + 1], sys.argv[i + 2]
+        opener = gzip.open if path.endswith(".gz") else open
+        rows = []
+        with opener(path, "rt", encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    for _, turn in player_turns(json.loads(line)):
+                        r = turn_row(turn)
+                        if r:
+                            rows.append(r)
+        table(label, rows)
+        return
     games = json.load(open(sys.argv[1], encoding="utf-8"))["records"]
     probes_path = sys.argv[sys.argv.index("--probes") + 1] if "--probes" in sys.argv else None
     probes = json.load(open(probes_path, encoding="utf-8"))["positions"] if probes_path else []
@@ -85,6 +165,13 @@ def main():
         later = [name(s.on_field(a.uid)) for st_ in starts[k + 1:k + 3] for s, a in turns[st_] if isinstance(a, Evolve)]
         rows[p["id"]] = {"category": p["category"], "class": cls, "evolved": evolved, "later": later,
                          "later_payoff": bool(set(later) & PAYOFF)}
+    salem_rows = []
+    for gid, rec in games.items():
+        for seat, turn in player_turns(rec, (0,)):
+            r = turn_row(turn)
+            if r:
+                salem_rows.append(r)
+    table("Salem（全部能进化的回合，含当回合没有探针的）", salem_rows)
     for cat in ("evolve_hold", "evolve_use"):
         sub = [r for r in rows.values() if r["category"] == cat]
         c = Counter(r["class"] for r in sub)
