@@ -92,9 +92,18 @@ def summary(scores: list[float]) -> tuple[float, float]:
     return mean, 1.96 * math.sqrt(var / n)
 
 
-def _agent(spec: str, seed: int, model: str | None):
+def _agent(spec: str, seed: int, model: str | None, phased: str | None = None):
     from svsim.tools.arena import make_agent
     agent = make_agent(spec, seed)
+    if phased:                                     # the agent's linear models by moment from this folder
+        from svsim.learn.phased import PhasedLearned, load
+        inner = agent
+        while not (hasattr(inner, "search") and hasattr(inner.search, "weights")):
+            inner = inner.base
+        if isinstance(inner.search.weights, PhasedLearned):
+            inner.search.weights.models = load(Path(phased))
+            if inner.search.reply:
+                inner.search.opponent.weights = inner.search.weights
     if model:
         from svsim.learn.model import Learned, LinearValue, load_all
         inner = agent
@@ -121,13 +130,13 @@ def play_pair(job) -> dict:
     from svsim.cards import decks
     from svsim.core.engine import apply, legal_actions, new_game
     from svsim.ui.session import DECKS
-    k, seed, a, b, model_a, model_b, deck, opponent = job
+    k, seed, a, b, model_a, model_b, deck, opponent, phased_a, phased_b = job
     mine, theirs = decks.build(DECKS[deck][1]), decks.build(DECKS[opponent][1])
     points = []
     for seat in (0, 1):
         agents = [None, None]
-        agents[seat] = _agent(a, 2 * seed + seat, model_a)
-        agents[1 - seat] = _agent(b, 2 * seed + 1 - seat + 7919, model_b)
+        agents[seat] = _agent(a, 2 * seed + seat, model_a, phased_a)
+        agents[1 - seat] = _agent(b, 2 * seed + 1 - seat + 7919, model_b, phased_b)
         cards = [None, None]
         cards[seat], cards[1 - seat] = mine, theirs
         state = new_game(cards[0], cards[1], seed=seed)
@@ -144,6 +153,8 @@ def main() -> None:
     parser.add_argument("--b", required=True, help="the agent it must beat")
     parser.add_argument("--model-a", default=None)
     parser.add_argument("--model-b", default=None)
+    parser.add_argument("--phased-a", default=None, help="folder of A's linear models by moment (+phased)")
+    parser.add_argument("--phased-b", default=None)
     parser.add_argument("--deck", default="ramp", choices=sorted(DECKS), help="A's deck")
     parser.add_argument("--opponent", default="ramp", choices=sorted(DECKS), help="B's deck")
     parser.add_argument("--h0", type=float, default=0.5)
@@ -156,7 +167,8 @@ def main() -> None:
     parser.add_argument("--out", default=None, help="results file (JSON lines; resumed if it exists)")
     args = parser.parse_args()
     import hashlib
-    key = json.dumps([args.a, args.b, args.model_a, args.model_b, args.deck, args.opponent, args.seed])
+    key = json.dumps([args.a, args.b, args.model_a, args.model_b, args.deck, args.opponent, args.seed,
+                      args.phased_a, args.phased_b])
     out = args.out or f"gate-{hashlib.sha1(key.encode()).hexdigest()[:10]}.jsonl"
     done = {}
     if os.path.exists(out):
@@ -182,7 +194,8 @@ def main() -> None:
         return verdict
 
     if not report(final=True):
-        todo = [(k, args.seed + k, args.a, args.b, args.model_a, args.model_b, args.deck, args.opponent)
+        todo = [(k, args.seed + k, args.a, args.b, args.model_a, args.model_b, args.deck, args.opponent,
+                 args.phased_a, args.phased_b)
                 for k in range(pairs) if k not in done]
         with Pool(args.workers) as pool, open(out, "a", encoding="utf-8") as fh:
             for res in pool.imap_unordered(play_pair, todo):

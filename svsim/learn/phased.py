@@ -34,8 +34,8 @@ def _rows(line: str) -> list:
     from svsim.learn.features import features
     from svsim.learn.netdata import rows
     record = json.loads(line)
-    return [(record["g"], phase, features(state, me, False, 2), result)
-            for phase, me, state, result in rows(record)]
+    return [(record["g"], phase, features(state, me, False, 2), result, q)
+            for phase, me, state, result, q in rows(record, with_search=True)]
 
 
 def load(folder: Path | None = None) -> dict:
@@ -79,6 +79,8 @@ def main() -> None:
     parser.add_argument("--out", required=True)
     parser.add_argument("--matchup", default="dragon-dragon")
     parser.add_argument("--workers", type=int, default=2)
+    parser.add_argument("--q-weight", type=float, default=0.0,
+                        help="label = (1 - w) * result + w * the search's value where the search decided")
     args = parser.parse_args()
     lines = [line for path in args.games for line in open(path, encoding="utf-8")]
     with Pool(args.workers) as pool:
@@ -90,12 +92,14 @@ def main() -> None:
     for phase, label in ((ENDED, "ended"), (ACT, "act")):
         rows = [r for r in data if r[1] == phase and r[3] != 0.5]
         X = np.array([r[2] for r in rows], float)
-        y = np.array([r[3] for r in rows], float)
+        y = np.array([r[3] if r[4] is None else (1 - args.q_weight) * r[3] + args.q_weight * r[4]
+                      for r in rows], float)
         w, mean, std, report = F.fit(X * keep, y, None, iters=2500, signs=signs(False, 2))
         w = w * keep
         mine, theirs = args.matchup.split("-")
         LinearValue([float(v) for v in w], [float(v) for v in mean], [float(v) for v in std], False,
                     {"deck": mine, "opponent": theirs, "moment": label, "positions": len(X),
+                     "q_weight": args.q_weight, "games": args.games,
                      "report": {k: float(v) for k, v in report.items()}}, version=2
                     ).save(out / f"{args.matchup}-{label}.json")
         print(f"{label}: {len(X)} positions, {report}", flush=True)
