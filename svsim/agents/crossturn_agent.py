@@ -244,7 +244,8 @@ class CrossTurnAgent:
     def __init__(self, base, policy=None, samples: int = 4, margin: float = 0.0, seed: int = 0,
                  max_steps: int = 40, next_turn: bool = False, z: float = 0.0, static: bool = False,
                  research: int = 0, next_search: int = 0, opp_search: int = 0, kinds=KINDS,
-                 max_keeps: int = 0, gap: float | None = None, pairs: int = 1, qgap: float | None = None):
+                 max_keeps: int = 0, gap: float | None = None, pairs: int = 1, qgap: float | None = None,
+                 confirm: float = 0.0):
         self.base = base                     # an MCTSAgent (the lethal search stays outside)
         self.search: ISMCTS = base.search
         if policy is None:
@@ -269,6 +270,9 @@ class CrossTurnAgent:
         self.gap = gap                       # play out only if the root's two most visited moves are within
                                              # this much, or a resource decision is among the candidates
                                              # (None: every turn with candidates)
+        self.confirm = confirm               # > 0: the best candidate must beat the line again on new
+                                             # determinizations by this many standard errors (the first pick of
+                                             # the best of several is biased upwards)
         self.qgap = qgap                     # keep only candidates the one-turn search can't decide (its Q
                                              # within this much; a forced start it never searched counts too)
         self.pairs = pairs                   # with next_turn: own turns played after the opponent's (each but
@@ -562,6 +566,15 @@ class CrossTurnAgent:
             best = max(candidates, key=lambda r: (values[r], r == NONE))
             if best != NONE and not self._better(samples[best], samples[NONE]):
                 best = NONE
+            if best != NONE and self.confirm:          # a second, independent look at the winner
+                again = self.outcomes(state, {r: lines[r] for r in (NONE, best)}, [NONE, best])
+                z, self.z = self.z, self.confirm
+                try:
+                    if not self._better(again[best], again[NONE]):
+                        best = NONE
+                finally:
+                    self.z = z
+                samples = dict(samples, **{f"{r}#2": v for r, v in again.items()})
             self.last_plan = {"turn": state.turn, "line": [list(map(_plain, k)) for k in line],
                               "samples": samples, "chosen": best,
                               "next_turn": self.next_turn, "static": self.static, "research": self.research}

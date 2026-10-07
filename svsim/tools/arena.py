@@ -79,6 +79,10 @@ VERSIONS = {
     # the gain of v1 without the reply (the refitted turn-end model, learn.phased), at equal time:
     "v2": "mcts:100+plan+learned+phased",      # vs mcts:100+plan+learned: 56.8% +- 3.5% over 600 games
     "v2s": "mcts:200+plan+learned+phased",     # vs mcts:200+plan+learned: 59.7% +- 3.5% over 600 games
+    # v2 with the search's subtree kept between the moves of a turn (+reuse), at v2's time per move (115
+    # iterations): vs v2 53.3% +- 2.8% over a fixed 600 games (after the sequential test's H1 at 150);
+    # the same at strong (mcts:230+reuse vs v2s) is even (49.2% +- 2.2%), so there is no v2sr
+    "v2r": "mcts:115+plan+learned+phased+reuse",
 }
 
 
@@ -181,12 +185,13 @@ def make_agent(spec: str, seed: int):
             # line's N dearest cards only
             # ...k<letters>: n don't super-evolve, o super-evolve another follower instead; ...gG: play out only
             # when the root's two best moves are within G or a resource decision is open; ...pP: P own turns;
-            # ...qQ: only candidates whose one-turn Q (agents.crossturn_agent.one_turn_q) is within Q
+            # ...qQ: only candidates whose one-turn Q (agents.crossturn_agent.one_turn_q) is within Q;
+            # ...cC: the winner must beat the line again on new determinizations by C standard errors
             m = re.fullmatch(r"cross([ns]?)(\d*)(?:z([\d.]+))?(?:r(\d+|t))?(?:k([ksenoxvy]+))?(?:m(\d+))?"
-                             r"(?:g([\d.]+))?(?:p(\d+))?(?:q([\d.]+))?", cross[0])
+                             r"(?:g([\d.]+))?(?:p(\d+))?(?:q([\d.]+))?(?:c([\d.]+))?", cross[0])
             if m is None:
                 raise ValueError(f"unknown agent option {cross[0]!r}")
-            mode, k, z, r, only, most, gap, pairs, qgap = m.groups()
+            mode, k, z, r, only, most, gap, pairs, qgap, confirm = m.groups()
             # (x: play-and-super-evolve another follower first, v: play-and-evolve another first, y: play-and-
             # super-evolve a follower in a turn the line doesn't super-evolve in)
             kinds = [{"k": "keep", "s": "save", "e": "noevo", "n": "nosuper", "o": "superonly", "x": "super",
@@ -196,6 +201,7 @@ def make_agent(spec: str, seed: int):
                                    static=mode == "s", z=float(z or 0), research="tree" if r == "t" else int(r or 0),
                                    max_keeps=int(most or 0), gap=float(gap) if gap else None,
                                    pairs=int(pairs or 1), qgap=float(qgap) if qgap else None,
+                                   confirm=float(confirm or 0),
                                    **({"kinds": kinds} if kinds else {}))
         if name == "mcts-raw":
             return agent
