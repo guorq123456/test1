@@ -319,3 +319,14 @@ def test_a_hidden_layer_adds_to_the_linear_score(tmp_path):
     assert features(state, 0, False, 2)[-1] == 1.0                  # the bias feature drives the hidden units
     want = 0.5 + 2.0 * math.tanh(0.75) + 1.0 * math.tanh(-1.0)
     assert abs(loaded.logit(state, 0) - want) < 1e-9
+
+
+def test_the_gate_pairs_seats_and_tests_sequentially():
+    from svsim.tools import gate
+    lo, hi = gate.bounds(0.05, 0.05)
+    assert round(hi, 3) == 2.944 and round(lo, 3) == -2.944
+    assert gate.llr([0.5] * 10 + [0.75, 0.25] * 10, 0.5, 0.55) < 0          # an even score leans to H0
+    assert gate.llr([0.75] * 30 + [0.5] * 10, 0.5, 0.55) > hi               # a clear edge is accepted
+    assert abs(gate.elo(0.5)) < 1e-9 and round(gate.elo(0.64)) == 100
+    pair = gate.play_pair((0, 5, "random", "random", None, None, "ramp", "ramp"))
+    assert pair["k"] == 0 and len(pair["points"]) == 2 and all(p in (0.0, 0.5, 1.0) for p in pair["points"])
