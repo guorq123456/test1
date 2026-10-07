@@ -42,6 +42,8 @@ def play_pair(job) -> list[dict]:
     from svsim.ui.session import DECKS
     k, seed, deck, opponent, spec = job[:5]
     nodes = job[5] if len(job) > 5 else PROBE_NODES
+    screen = job[6] if len(job) > 6 else None      # search.lethal's screen: a small budget when the damage
+                                                   # estimate falls short (the agents' lethal search does too)
     out = []
     for seat in (0, 1):
         cards = [None, None]
@@ -55,7 +57,7 @@ def play_pair(job) -> list[dict]:
             state = new_game(cards[0], cards[1], seed=seed)
             record = R.new_record(cards[0], cards[1], seed, state.first, f"{spec} / {spec}")
             result["record"] = record
-            probe = LethalSearch(max_nodes=nodes, seed=seed)
+            probe = LethalSearch(max_nodes=nodes, seed=seed, screen=screen)
             turn = None
             while not state.over:
                 if state.phase == Phase.MAIN and (turn is None or turn["turn"] != state.turn):
@@ -66,6 +68,7 @@ def play_pair(job) -> list[dict]:
                     found = probe.solve(state.clone())
                     turn = {"turn": state.turn, "player": p, "deck": names[p], "ms": 0.0, "max_legal": 0,
                             "decisions": 0, "lethal": bool(found.sure), "probe_complete": bool(found.complete),
+                            "screened": bool(found.screened),
                             "i": len(record["actions"])}
                 legal = legal_actions(state)
                 t = time.perf_counter()
@@ -89,12 +92,14 @@ def play_pair(job) -> list[dict]:
     return out
 
 
-def recheck(result: dict, nodes: int) -> int:
+def recheck(result: dict, nodes: int, only=None) -> int:
     """Search again with `nodes` the turns of `result` whose probe ran out of nodes without a lethal
-    (turn["recheck"]: a sure lethal found then); the number of turns searched again."""
+    (turn["recheck"]: a sure lethal found then), or only those whose start `i` is in `only`; the number of
+    turns searched again."""
     from svsim.search.lethal import LethalSearch
     from svsim.tools import records as R
-    todo = {t["i"]: t for t in result["turns"] if not t["probe_complete"] and not t["lethal"] and "i" in t}
+    todo = {t["i"]: t for t in result["turns"] if not t["probe_complete"] and not t["lethal"] and "i" in t
+            and (only is None or t["i"] in only)}
     if not todo or "record" not in result:
         return 0
     probe = LethalSearch(max_nodes=nodes, seed=result["seed"])
@@ -105,9 +110,10 @@ def recheck(result: dict, nodes: int) -> int:
 
 
 def _recheck_job(job):
-    line, nodes = job
+    line, nodes, only = job
     result = json.loads(line)
-    recheck(result, nodes)
+    if only is None or only:
+        recheck(result, nodes, only)
     return json.dumps(result)
 
 
@@ -135,6 +141,7 @@ def report(results: list[dict]) -> str:
         legal = [t["max_legal"] for t in turns]
         lethal = [t for t in turns if t["lethal"]]
         missed = [t for t in lethal if not t["won"]]
+        unfinished = [t for t in turns if not t["probe_complete"] and not t["lethal"]]
         rechecked = [t for t in turns if "recheck" in t]
         late = [t for t in rechecked if t["recheck"] and not t["won"]]
         lines.append(f"{deck}：{len(turns)} 个回合，每回合用时中位数 {statistics.median(ms):.0f} ms、"
@@ -142,7 +149,7 @@ def report(results: list[dict]) -> str:
                      f"{statistics.median(legal):.0f}、90% {_pct(legal, 0.9)}、最大 {max(legal)}；"
                      f"探针找到必杀 {len(lethal)} 回合，没杀 {len(missed)} 回合"
                      f"（探针没搜完的回合 {sum(not t['probe_complete'] for t in turns)}"
-                     + (f"，其中补搜了 {len(rechecked)} 回合，补搜才找到必杀 "
+                     + (f"，其中补搜了 {len(rechecked)} / {len(unfinished)} 回合，补搜才找到必杀 "
                         f"{sum(1 for t in rechecked if t['recheck'])} 回合、其中没杀 {len(late)} 回合" if rechecked else "")
                      + "）")
     return "\n".join(lines)
@@ -157,17 +164,30 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=24000000)
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--probe-nodes", type=int, default=PROBE_NODES)
+    parser.add_argument("--probe-screen", type=int, default=None,
+                        help="nodes for a turn whose damage estimate falls short (search.lethal screen; default off)")
     parser.add_argument("--out", default=None)
     parser.add_argument("--report", nargs="+", default=None, help="only print the report of these files")
     parser.add_argument("--recheck", nargs="+", default=None, metavar="NODES FILE",
                         help="search again with NODES the turns the probe didn't finish, in these files (rewritten)")
+    parser.add_argument("--recheck-sample", type=int, default=None,
+                        help="with --recheck: only this many of a file's unfinished turns, drawn at random (seeded)")
     args = parser.parse_args()
     if args.recheck:
         nodes, paths = int(args.recheck[0]), args.recheck[1:]
         for path in paths:
             lines = open(path, encoding="utf-8").read().splitlines()
+            picks = [None] * len(lines)
+            if args.recheck_sample is not None:     # a random sample of the unfinished turns, the same each run
+                import random
+                spots = [(k, t["i"]) for k, line in enumerate(lines) for t in json.loads(line)["turns"]
+                         if not t["probe_complete"] and not t["lethal"] and "i" in t]
+                chosen = random.Random(len(spots)).sample(spots, min(args.recheck_sample, len(spots)))
+                picks = [set() for _ in lines]
+                for k, i in chosen:
+                    picks[k].add(i)
             with Pool(args.workers) as pool:
-                done = list(pool.imap(_recheck_job, [(line, nodes) for line in lines]))
+                done = list(pool.imap(_recheck_job, [(line, nodes, pick) for line, pick in zip(lines, picks)]))
             with open(path, "w", encoding="utf-8") as fh:
                 fh.write("\n".join(done) + "\n")
             print(path)
@@ -178,7 +198,8 @@ def main() -> None:
             print(path)
             print(report([json.loads(line) for line in open(path, encoding="utf-8")]))
         return
-    jobs = [(k, args.seed + k, args.deck, args.opponent, args.agent, args.probe_nodes) for k in range(args.games // 2)]
+    jobs = [(k, args.seed + k, args.deck, args.opponent, args.agent, args.probe_nodes, args.probe_screen)
+            for k in range(args.games // 2)]
     results = []
     fh = open(args.out, "w", encoding="utf-8") if args.out else None
     with Pool(args.workers) as pool:
