@@ -83,13 +83,13 @@ def keep_value(state, player: int, card_uid: int, agent=None, samples: int = 8) 
     if agent is None:
         from svsim.tools.arena import make_agent
         agent = make_agent("mcts-raw:100+learned+phased", 0)
-        agent = CrossTurnAgent(agent, samples=samples, next_turn=True)
+        agent = CrossTurnAgent(agent, samples=samples, next_turn=True, research=100)
     agent.search.choose(state)
     line = principal_line(agent.search.last_root)
     keep = f"keep:{card.defn.card_id}"
     if keep not in restrictions(line):
         return None
-    out = agent.outcomes(state, line, [NONE, keep])
+    out = agent.outcomes(state, agent.lines_for(state, line, [NONE, keep]), [NONE, keep])
     return sum(a - b for a, b in zip(out[keep], out[NONE])) / len(out[NONE])
 
 
@@ -130,7 +130,8 @@ def forbids(restriction: str):
 
 class CrossTurnAgent:
     def __init__(self, base, policy=None, samples: int = 4, margin: float = 0.0, seed: int = 0,
-                 max_steps: int = 40, next_turn: bool = False, z: float = 0.0, static: bool = False):
+                 max_steps: int = 40, next_turn: bool = False, z: float = 0.0, static: bool = False,
+                 research: int = 0):
         self.base = base                     # an MCTSAgent (the lethal search stays outside)
         self.search: ISMCTS = base.search
         if policy is None:
@@ -143,6 +144,9 @@ class CrossTurnAgent:
         self.max_steps = max_steps
         self.next_turn = next_turn           # score after the own next turn (policy head) with the ENDED model
         self.static = static                 # control: score each candidate's own turn end (ENDED), no play-out
+        self.research = research             # a restriction's turn from a new search with it, this many iterations
+                                             # (0: the principal line without the restricted moves)
+        self._roots: dict = {}
         self.rng = random.Random(seed)
         self.turn = None
         self.restriction = NONE
@@ -215,16 +219,41 @@ class CrossTurnAgent:
         score = evaluate(s, me, self.search.weights, player_moves_next=moves_next)
         return 1.0 / (1.0 + math.exp(-max(-60.0, min(60.0, score / SCALE))))
 
-    def outcomes(self, state, line: list, candidates: list) -> dict:
-        """{restriction: [value on each determinization]} (the same determinizations for all)."""
+    def lines_for(self, state, line: list, candidates: list) -> dict:
+        """Each candidate's turn as a line of keys: the principal line; with `research`, a restriction's
+        own search's principal line (the best turn that keeps the card, not the line without it)."""
+        lines = {r: line for r in candidates}
+        self._roots = {}
+        if not self.research:
+            return lines
+        root, iterations = self.search.last_root, self.search.iterations
+        try:
+            self.search.iterations = self.research
+            for r in candidates:
+                if r == NONE:
+                    continue
+                self._set(r)
+                self.search.choose(state)
+                self._roots[r] = self.search.last_root
+                lines[r] = principal_line(self.search.last_root)
+        finally:
+            self.search.iterations = iterations
+            self._set(NONE)
+            self.search.last_root = root
+        return lines
+
+    def outcomes(self, state, line, candidates: list) -> dict:
+        """{restriction: [value on each determinization]} (the same determinizations for all); `line`
+        is the line for all candidates, or {restriction: line} (lines_for)."""
         me = state.active
+        lines = line if isinstance(line, dict) else {r: line for r in candidates}
         seeds = [self.rng.getrandbits(64) for _ in range(self.samples)]
         out = {r: [] for r in candidates}
         for sd in seeds:
             base = determinize(state, me, random.Random(sd))
             for r in candidates:
                 s = base.clone()
-                self._own_turn(s, me, line, forbids(r))
+                self._own_turn(s, me, lines[r], forbids(r))
                 if self.static:
                     out[r].append(self._ended(s, me))
                     continue
@@ -272,7 +301,8 @@ class CrossTurnAgent:
             candidates = restrictions(line)
             if len(candidates) == 1:
                 return choice
-            samples = self.outcomes(state, line, candidates)
+            lines = self.lines_for(state, line, candidates)
+            samples = self.outcomes(state, lines, candidates)
             values = {r: sum(v) / len(v) for r, v in samples.items()}
             self.values = values
             best = max(candidates, key=lambda r: (values[r], r == NONE))
@@ -280,7 +310,7 @@ class CrossTurnAgent:
                 best = NONE
             self.last_plan = {"turn": state.turn, "line": [list(map(_plain, k)) for k in line],
                               "samples": samples, "chosen": best,
-                              "next_turn": self.next_turn, "static": self.static}
+                              "next_turn": self.next_turn, "static": self.static, "research": self.research}
             if best == NONE:
                 self.picked[NONE] = self.picked.get(NONE, 0) + 1
                 return choice
@@ -290,8 +320,10 @@ class CrossTurnAgent:
             veto = forbids(best)
             if not veto(state, choice):
                 return choice
-            # the search's move is now left out: the most visited root move that is allowed
+            # the search's move is now left out: the restricted search's move, else the most visited allowed
             where = _locator(state, state.active)
+            if best in self._roots:
+                root = self._roots[best]
             allowed = {action_key(state, a, where): a for a in actions if not veto(state, a)}
             ranked = sorted((k for k in allowed if k in root.children), key=lambda k: -root.children[k].visits)
             return allowed[ranked[0]] if ranked else next(iter(allowed.values()), choice)
