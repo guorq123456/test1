@@ -1,7 +1,7 @@
 """Is the planner's keep value (the teacher) right about what Salem kept? Against the one-turn search's Q.
 
     cd <svsim checkout at f5441df or later> && PYTHONPATH=. python3 <this> POSITIONS_JSON \
-        [--probes CROSS_TURN_JSON] [--seeds 2] [--samples 8] [--workers 4] [--out rows.json]
+        [--probes CROSS_TURN_JSON] [--seeds 2] [--samples 8] [--research 100] [--workers 4] [--out rows.json]
 
 At the start of each of Salem's turns (Salem's 10 Ramp mirror games), the
 planner of svsim.agents.crossturn_agent (base search mcts-raw:100+learned+
@@ -12,7 +12,10 @@ each restriction against the line on the same determinizations:
   save         keep the bonus play point it presses (Salem's bonus PP still there after the turn)
   noevo        don't evolve                         (Salem didn't evolve this turn)
 Teacher's value: mean over determinizations of (restriction - line), a win
-probability difference; z = mean / its paired standard error.
+probability difference; z = mean / its paired standard error. The restriction's
+turn is the line with the restricted moves left out (f5441df), or with
+--research N the principal line of a new N-iteration search under the
+restriction (f492ffe).
 Control (the same search tree, no look past the turn): the best value of a
 line in the tree that obeys the restriction minus the best of one that breaks
 it (the search's own estimates; lines run through every visited node to a leaf).
@@ -106,20 +109,22 @@ def control(search, root, restriction):
 
 
 def measure(job):
-    gid, at, seed, samples = job
+    gid, at, seed, samples, research = job
     from svsim.agents.crossturn_agent import NONE, CrossTurnAgent, principal_line, restrictions
     from svsim.tools.arena import make_agent
     rec = GAMES[gid]
     st = records.start(rec)
     for a in rec["actions"][:at]:
         apply(st, from_dict(a))
+    extra = {"research": research} if research else {}
     agent = CrossTurnAgent(make_agent("mcts-raw:100+learned+phased", seed), samples=samples,
-                           seed=seed, next_turn=True)
+                           seed=seed, next_turn=True, **extra)
     agent.search.choose(st)
-    root = agent.search.last_root
+    root = agent.search.last_root              # the control reads this tree (kept before any re-search)
     line = principal_line(root)
     cands = restrictions(line)
-    out = agent.outcomes(st, line, cands)
+    # with research (svsim f492ffe on): each restriction's turn from its own search under it
+    out = agent.outcomes(st, agent.lines_for(st, line, cands) if research else line, cands)
     res = {}
     for r in cands:
         if r == NONE:
@@ -142,6 +147,8 @@ def main():
     p.add_argument("--probes", default=None)
     p.add_argument("--seeds", type=int, default=2)
     p.add_argument("--samples", type=int, default=8)
+    p.add_argument("--research", type=int, default=0,
+                   help="iterations of each restriction's own search (svsim f492ffe on); 0: the line minus it")
     p.add_argument("--workers", type=int, default=4)
     p.add_argument("--out", default=None)
     args = p.parse_args()
@@ -150,7 +157,7 @@ def main():
     for gid in sorted(GAMES):
         for at, turn, after in salem_turns(gid):
             choices[(gid, at)] = (turn[0][0].players[0].turns_taken, salem_choice(turn, after))
-            jobs += [(gid, at, 700 + k, args.samples) for k in range(args.seeds)]
+            jobs += [(gid, at, 700 + k, args.samples, args.research) for k in range(args.seeds)]
     rows = []
     with Pool(args.workers, initializer=GAMES.update, initargs=(GAMES,)) as pool:
         for gid, at, seed, res in pool.imap_unordered(measure, jobs):
@@ -166,8 +173,9 @@ def main():
     if probe:
         groups.append(("探针集（验收用的 20 个）的回合", [r for r in rows if (r["game"], r["at"]) in probe]))
     kinds = lambda r: "save" if r["restriction"] == "save" else "noevo" if r["restriction"] == "noevo" else "keep"
+    how = f"每个限制重新搜索 {args.research} 次" if args.research else "限制那边用主线减去它"
     print("老师：svsim.agents.crossturn_agent 的推演（mcts-raw:100+learned+phased 的主线，"
-          f"{args.samples} 个确定化，推演到我方下回合）；对照：同一棵一回合搜索树的 Q 差")
+          f"{args.samples} 个确定化，推演到我方下回合，{how}）；对照：同一棵一回合搜索树的 Q 差")
     for title, rs in groups:
         print(f"\n{title}：{len(rs)} 次测量（{len({(r['game'], r['at']) for r in rs})} 个回合 × {args.seeds} 个种子）")
         by = defaultdict(list)
