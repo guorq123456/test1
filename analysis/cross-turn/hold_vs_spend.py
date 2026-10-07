@@ -200,7 +200,7 @@ def report(paths):
         return m, 1.96 * se
     print("条件：对手卡表已知（牌序、手牌未知）。约束只管 Salem 做决定的那一回合，之后两边都由 v2 自由打到终局。")
     print("差 = Salem 的打法 − 另一类里 bot 的最好打法（正数：Salem 的选择打到终局更好），每行 32 次配对。\n")
-    print("| 对局 | 回合 | 手里的 A 档 | Salem 的动作 | 另一类（bot）的动作 | 胜率差 ± 95% | 分支 1 走偏 | 新定义下的格 |")
+    print("| 对局 | 回合 | 手里的 A 档 | Salem 的动作 | 另一类（bot）的动作 | 胜率差 ± 95% | 分支 1 走偏 | 按局面可能的格 |")
     print("|---|---|---|---|---|---|---|---|")
     for r in sorted(rows, key=lambda r: r["key"]):
         m, h = ci(r["diffs"])
@@ -219,7 +219,7 @@ def report(paths):
                 f"{'留' if r['held'] else '花'}：{rename_action(r['salem_action'], common)} | {other} | {m:+.3f} ± {h:.3f} | "
                 f"{r['diverged']}/{n} | {LABEL[r['cell_new']]} |")
         print(label_first(line))
-    for cell_key, title in (("cell_old", "旧定义（按 Salem 实际那条线）"), ("cell_new", "新定义（本回合任何合法出法都够不着）")):
+    for cell_key, title in (("cell_old", "按实际出法（Salem 那条线上够不着；原 21 行）"), ("cell_new", "按局面可能（本回合任何合法出法都够不着）")):
         print(f"\n{title}：")
         for fin, name in ((V2, "v2 续打"), (V2S, "v2s 续打")):
             got = [r for r in by_finish.get(fin, {}).values() if r[cell_key] == CELL]
