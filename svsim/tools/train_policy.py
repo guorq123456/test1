@@ -16,31 +16,28 @@ from multiprocessing import Pool
 import numpy as np
 
 
-def _rows(line: str) -> list:
+def _ids(line: str) -> set:
+    """Card ids that are a move's source or target in a game's decisions (the vocabulary)."""
+    from svsim.learn.policy import _source, _target, decisions
+    out = set()
+    for state, legal, pi, start in decisions(json.loads(line)):
+        for a in legal:
+            src = _source(state, a)
+            _, tgt = _target(state, a)
+            out.update(c.defn.card_id for c in (src, tgt) if c is not None)
+    return out
+
+
+def _features(job) -> list:
     from svsim.learn import encode as E
-    from svsim.learn.policy import decisions
+    from svsim.learn.policy import decisions, move_features
+    line, vocab = job
     record = json.loads(line)
     out = []
     for state, legal, pi, start in decisions(record):
         dense = E.raw(state, state.active)[0]
-        moves = []
-        for a in legal:
-            src = None
-            from svsim.learn.policy import _source, _target
-            s = _source(state, a)
-            _, t = _target(state, a)
-            moves.append((a, s.defn.card_id if s is not None else None, t.defn.card_id if t is not None else None))
-        out.append((record["g"], start, dense, [(a, state) for a, _, _ in moves], pi,
-                    {c for _, sc, tc in moves for c in (sc, tc) if c is not None}))
-    return out
-
-
-def _features(job):
-    from svsim.learn.policy import move_features
-    rows, vocab = job
-    out = []
-    for g, start, dense, moves, pi, _ in rows:
-        out.append((g, start, [dense + move_features(state, a, vocab) for a, state in moves], pi))
+        out.append((record["g"], start, np.array([dense + move_features(state, a, vocab) for a in legal],
+                                                 dtype=np.float32), pi))
     return out
 
 
@@ -57,15 +54,13 @@ def main() -> None:
     t0 = time.time()
     lines = [line for path in args.games for line in open(path, encoding="utf-8")]
     with Pool(args.workers) as pool:
-        parts = pool.map(_rows, lines, chunksize=8)
-    vocab_ids = sorted({c for part in parts for row in part for c in row[5]})
-    vocab = {c: i for i, c in enumerate(vocab_ids)}
-    with Pool(args.workers) as pool:
-        feats = [r for part in pool.map(_features, [(p, vocab) for p in parts], chunksize=8) for r in part]
+        vocab_ids = sorted(set().union(*pool.map(_ids, lines, chunksize=8)))
+        vocab = {c: i for i, c in enumerate(vocab_ids)}
+        feats = [r for part in pool.imap(_features, [(line, vocab) for line in lines], chunksize=4) for r in part]
     print(f"{len(lines)} games, {len(feats)} decisions ({time.time() - t0:.0f}s)", flush=True)
 
     def pack(rows):
-        X = np.array([f for _, _, fs, _ in rows for f in fs], dtype=np.float64)
+        X = np.vstack([fs for _, _, fs, _ in rows]).astype(np.float64)
         target = np.array([x for _, _, _, pi in rows for x in pi], dtype=np.float64)
         starts = np.cumsum([0] + [len(fs) for _, _, fs, _ in rows[:-1]])
         return X, starts, target
