@@ -50,7 +50,7 @@ def tables(model, records) -> dict:
     from svsim.learn.features import context
     from svsim.learn.netdata import rows
     from svsim.search.evaluate import effective_hp
-    acc = {"since x length": {}, "payoff": {}, "gap": {}}
+    acc = {"since x length": {}, "payoff": {}, "gap": {}, "card": {}}
 
     def add(table, key, e, s):
         a = acc[table].setdefault(key, [0.0, 0.0, 0])
@@ -69,6 +69,9 @@ def tables(model, records) -> dict:
             add("since x length", (_cell(SINCE, since), _cell(LENGTH, hp_sum)), e, s)
             add("payoff", "reachable" if ctx[1] > 0 else "out of reach" if ctx[2] > 0 else "neither", e, s)
             add("gap", _cell(GAP, effective_hp(p) - effective_hp(op)), e, s)
+            pp = p.max_pp + 1 + (1 if p.bonus_ready else 0)          # the coming turn's play points
+            for cid in {c.defn.card_id for c in p.hand if c.cost > pp}:  # by card: in hand, out of reach
+                add("card", cid, e, s)
     return acc
 
 
@@ -81,6 +84,14 @@ def report(model, records) -> str:
         lines.append(f"{s:<13}" + "".join(f"{f(acc['since x length'].get((s, n))):>24}" for n, _, _ in LENGTH))
     lines.append("payoff:  " + "   ".join(f"{k} {f(acc['payoff'].get(k))}" for k in PAYOFF))
     lines.append("gap:     " + "   ".join(f"{k} {f(acc['gap'].get(k))}" for k, _, _ in GAP))
+    from svsim.cards.pool import POOL
+    from svsim.learn.payoff import tier
+    by_id = POOL                                     # card id -> CardDef
+    lines.append("in hand, out of reach, by card:")
+    for cid, a in sorted(acc["card"].items(), key=lambda kv: -kv[1][2]):
+        d = by_id.get(cid)
+        if d is not None and d.is_follower:
+            lines.append(f"  tier {tier(d)}  {f(a)}  {d.name_zh or d.name}")
     return "\n".join(lines)
 
 
