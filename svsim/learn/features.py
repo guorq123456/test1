@@ -45,7 +45,9 @@ SIDE2 = ["hand_face", "hand_removal", "hand_heal", "hand_draw", "hand_ramp", "ha
 # - the best payoff (learn.payoff.tier: measured from what evolving the card does, never a card list)
 #   of a follower the points could go to on the coming turn (on the field, not yet evolved that way,
 #   or in hand and affordable then);
-# - the best payoff of a follower in hand that is out of reach on the coming turn;
+# - the best payoff of a follower in hand that is out of reach on the coming turn, divided by the
+#   turns until it comes within reach (one play point a turn): a point is worth keeping most when
+#   the card can be played the turn after;
 # - how long the game still looks (own turns, both leaders' defense, both decks);
 # - and, as a minor term, the leader-defense gap.
 # The coming turn: the current one if it is the side's, else the next (one more play point). No term
@@ -166,14 +168,15 @@ def context(state: GameState, side: int, hidden: bool, super_: bool = False) -> 
     pp = p.max_pp if state.active == side else min(p.max_pp + 1, 10)
     pp += 1 if p.bonus_ready else 0
     on_field = [tier(f.defn) for f in p.followers if not (f.super_evolved or (f.evolved and not super_))]
+    soon = lambda c: 1.0 / (c.cost - pp)       # out of reach: worth most when it comes within reach next turn
     if hidden:
         pool = p.hand + p.deck
         share = len(p.hand) / len(pool) if pool else 0.0
         now = max([t for t in on_field] + [share * tier(c.defn) for c in pool if c.cost <= pp], default=0)
-        later = max([share * tier(c.defn) for c in pool if c.cost > pp], default=0)
+        later = max([share * tier(c.defn) * soon(c) for c in pool if c.cost > pp], default=0)
     else:
         now = max(on_field + [tier(c.defn) for c in p.hand if c.cost <= pp], default=0)
-        later = max([tier(c.defn) for c in p.hand if c.cost > pp], default=0)
+        later = max([tier(c.defn) * soon(c) for c in p.hand if c.cost > pp], default=0)
     hp, op_hp = effective_hp(p), effective_hp(enemy)
     return [max(coming - unlock, 0) / 5.0 if coming >= unlock else 0.0, now / 2.0, later / 2.0,
             p.turns_taken / 10.0, hp / 20.0, op_hp / 20.0, (len(p.deck) + len(enemy.deck)) / 60.0,

@@ -36,15 +36,20 @@ from multiprocessing import Pool
 ACT, ENDED = 0, 1
 
 
-def play(job) -> dict:
-    """One self-play game (`spec` on both sides) as a record, with exploration."""
+def play(job):
+    """One self-play game (`spec` on both sides) as a record, with exploration. With `fork` (job[7]), a
+    list of two records instead: the game, and a branch of it from the first turn a side could keep its
+    evolution points for a payoff card out of reach (or had just unlocked evolving) in which it keeps
+    them until the card comes within reach (at most 3 turns; 2 after an unlock), then plays on;
+    record["branch"] says which is which, from which action ("i") and for which side."""
     from svsim.cards import decks
-    from svsim.core.engine import apply, legal_actions, new_game
+    from svsim.core.engine import new_game
     from svsim.tools import records as R
     from svsim.tools.arena import make_agent
     from svsim.ui.session import DECKS
     g, seed, deck, opponent, spec, explore = job[:6]
     hold = job[6] if len(job) > 6 else 0.0
+    fork = job[7] if len(job) > 7 else False
     rng = random.Random(seed * 7919 + g)
     seat = g % 2
     cards = [None, None]
@@ -55,13 +60,48 @@ def play(job) -> dict:
     record["g"], record["explore"] = g, explore
     record["names"] = [deck, opponent] if seat == 0 else [opponent, deck]   # ui.session.DECKS keys by seat
     record["search"] = []
+    if not fork:
+        _run(state, agents, record, rng, explore, hold)
+        return record
+    snapshot = {}
+    _run(state, agents, record, rng, explore, 0.0, snapshot=snapshot)
+    if not snapshot:
+        return [record]
+    branch = json.loads(json.dumps({k: v for k, v in snapshot["record"].items()}))
+    branch_agents = [make_agent(spec, seed * 1000 + 2 * g + i + 500000) for i in (0, 1)]
+    branch_rng = random.Random()
+    branch_rng.setstate(snapshot["rng"])
+    info = {k: snapshot[k] for k in ("i", "player", "turn", "trigger", "target")}
+    record["branch"] = dict(info, kind="control")
+    branch["branch"] = dict(info, kind="hold")
+    _run(snapshot["state"], branch_agents, branch, branch_rng, explore, 0.0, keep=dict(info, held=0))
+    return [record, branch]
+
+
+def _run(state, agents, record, rng, explore, hold, snapshot=None, keep=None) -> None:
+    """Play `state` out, adding to `record`. `snapshot` (a dict): fill it at the first fork point (see
+    play). `keep`: the branch's side keeps its points (no evolving) as play describes."""
+    from svsim.core.engine import apply, legal_actions
+    from svsim.tools import records as R
     held = {}                                       # (player, turn) -> the restriction held this turn
     vetoes = [_search(a).veto if _search(a) is not None else None for a in agents]
+    starts = set()
     while not state.over:
         legal = legal_actions(state)
         search = _search(agents[state.active])
+        start = state.phase.name == "MAIN" and (state.active, state.turn) not in starts
+        if start:
+            starts.add((state.active, state.turn))
         if hold and search is not None and state.phase.name == "MAIN":
             _hold(state, search, vetoes[state.active], held, hold, rng, record)
+        if snapshot is not None and not snapshot and start:
+            trigger = _fork_point(state)
+            if trigger is not None:
+                snapshot.update(state=state.clone(), rng=rng.getstate(), i=len(record["actions"]),
+                                player=state.active, turn=state.turn, trigger=trigger[0], target=trigger[1],
+                                record=json.loads(json.dumps(record)))
+        if keep is not None and start and state.active == keep["player"] and search is not None:
+            _keep(state, search, vetoes[state.active], keep, record)
         if search is not None:
             search.last_root = None
         planner = _planner(agents[state.active])
@@ -77,7 +117,45 @@ def play(job) -> dict:
         R.add(record, action)
         apply(state, action)
     record["winner"] = state.winner
-    return record
+
+
+def _fork_point(state):
+    """("payoff", card id) if the side to act could evolve and has a payoff follower in hand out of reach;
+    ("unlock", None) in its first two turns of evolving; else None."""
+    from svsim.core.engine import EVOLVE_TURN
+    from svsim.learn.payoff import tier
+    p = state.players[state.active]
+    first = state.first == state.active
+    if p.ep <= 0 or p.turns_taken < EVOLVE_TURN[first]:
+        return None
+    pp = p.max_pp + (1 if p.bonus_ready else 0)
+    later = sorted((c for c in p.hand if tier(c.defn) > 0 and c.cost > pp),
+                   key=lambda c: (-tier(c.defn), c.cost))
+    if later:
+        return "payoff", later[0].defn.card_id
+    if p.turns_taken - EVOLVE_TURN[first] <= 1:
+        return "unlock", None
+    return None
+
+
+def _keep(state, search, own_veto, keep, record) -> None:
+    """At the start of the branch side's turn: no evolving this turn while its target is out of reach."""
+    from svsim.core.actions import Evolve
+    p = state.players[state.active]
+    pp = p.max_pp + (1 if p.bonus_ready else 0)
+    reached = keep["target"] is not None and (
+        any(c.defn.card_id == keep["target"] and c.cost <= pp for c in p.hand) or
+        any(f.defn.card_id == keep["target"] for f in p.field))
+    limit = 3 if keep["trigger"] == "payoff" else 2
+    if reached or keep["held"] >= limit or keep["held"] < 0:
+        keep["held"] = -1                          # done: the search plays on as usual
+        search.veto = own_veto
+        return
+    keep["held"] += 1
+    record.setdefault("holds", []).append({"i": len(record["actions"]), "player": state.active,
+                                           "turn": state.turn, "hold": "noevo", "branch": True})
+    extra = lambda s, a: isinstance(a, Evolve)
+    search.veto = extra if own_veto is None else (lambda s, a: own_veto(s, a) or extra(s, a))
 
 
 EARLY_HOLD = 0.4        # the chance in the first turns after unlocking (the bot spends at once; the player not)
@@ -187,7 +265,7 @@ def search_value(thought: dict | None, gain: float = 1.0) -> float | None:
     return 1 / (1 + math.exp(-max(-30.0, min(30.0, z))))
 
 
-def rows(record: dict, with_search: bool = False):
+def rows(record: dict, with_search: bool = False, start: int = 0):
     """(phase, player, state, result) for every position the search may score (see module docstring);
     result is 1 for a win of `player`, 0 for a loss, 0.5 for a draw. The state is a copy. With
     `with_search`, a fifth item: the search's win probability at that decision (search_value), None
@@ -201,7 +279,7 @@ def rows(record: dict, with_search: bool = False):
     thoughts = record.get("search") or []
     gain = record.get("gain", 1.0)
     for i, (state, action) in enumerate(R.steps(record)):
-        if state.phase != Phase.MAIN:
+        if state.phase != Phase.MAIN or i < start:       # `start`: from that action on (a branch's own part)
             continue
         me = state.active
         q = search_value(thoughts[i] if i < len(thoughts) else None, gain)
@@ -223,6 +301,9 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=20261007)
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--out", required=True)
+    parser.add_argument("--fork", action="store_true",
+                        help="each game also as a branch keeping evolution points from its first fork point "
+                             "(see play); both records are written")
     parser.add_argument("--hold", type=float, default=0.0,
                         help="chance, at the start of a turn the player could evolve in, of not evolving (or not "
                              "super-evolving) for the rest of it (record['holds'])")
@@ -231,12 +312,13 @@ def main() -> None:
     if os.path.exists(args.out):
         for line in open(args.out, encoding="utf-8"):
             done.add(json.loads(line)["g"])
-    todo = [(g, args.seed, args.deck, args.opponent, args.agent, args.explore, args.hold)
+    todo = [(g, args.seed, args.deck, args.opponent, args.agent, args.explore, args.hold, args.fork)
             for g in range(args.games) if g not in done]
     t0 = time.time()
     with Pool(args.workers) as pool, open(args.out, "a", encoding="utf-8") as fh:
-        for k, record in enumerate(pool.imap_unordered(play, todo), 1):
-            fh.write(json.dumps(record) + "\n")
+        for k, result in enumerate(pool.imap_unordered(play, todo), 1):
+            for record in (result if isinstance(result, list) else [result]):
+                fh.write(json.dumps(record) + "\n")
             fh.flush()
             if k % 100 == 0:
                 print(f"{len(done) + k} games, {time.time() - t0:.0f}s", flush=True)

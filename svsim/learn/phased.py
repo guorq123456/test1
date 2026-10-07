@@ -31,10 +31,12 @@ STOCK = ("me_hand_", "me_pool_")
 def _rows(job) -> list:
     from svsim.learn.features import features
     from svsim.learn.netdata import rows
-    line, version = job if isinstance(job, tuple) else (job, 2)
+    line, version, weight = job if isinstance(job, tuple) else (job, 2, 1.0)
     record = json.loads(line)
-    return [(record.get("g", 0), phase, features(state, me, False, version), result, q)
-            for phase, me, state, result, q in rows(record, with_search=True)]
+    branch = record.get("branch") or {}
+    start = branch.get("i", 0) if branch.get("kind") == "hold" else 0   # the shared start counts once
+    return [(record.get("g", 0), phase, features(state, me, False, version), result, q, weight)
+            for phase, me, state, result, q in rows(record, with_search=True, start=start)]
 
 
 def load(folder: Path | None = None) -> dict:
@@ -91,11 +93,14 @@ def main() -> None:
                         help="label = (1 - w) * result + w * the search's value where the search decided")
     parser.add_argument("--version", type=int, default=2, help="features version (3: held evolution points "
                         "by context, learn.features.SIDE3)")
+    parser.add_argument("--file-weights", type=float, nargs="+", default=None,
+                        help="a weight for each --games file's positions (default 1 each)")
     args = parser.parse_args()
-    lines = [line for path in args.games for line in open(path, encoding="utf-8")]
+    weights = args.file_weights or [1.0] * len(args.games)
+    assert len(weights) == len(args.games)
+    jobs = [(line, args.version, w) for path, w in zip(args.games, weights) for line in open(path, encoding="utf-8")]
     with Pool(args.workers) as pool:
-        data = [r for part in pool.imap(_rows, [(line, args.version) for line in lines], chunksize=4)
-                for r in part]
+        data = [r for part in pool.imap(_rows, jobs, chunksize=4) for r in part]
     N = names(False, args.version)
     keep = np.array([0.0 if n.startswith(STOCK) else 1.0 for n in N])
     out = Path(args.out)
@@ -105,12 +110,14 @@ def main() -> None:
         X = np.array([r[2] for r in rows], float)
         y = np.array([r[3] if r[4] is None else (1 - args.q_weight) * r[3] + args.q_weight * r[4]
                       for r in rows], float)
-        w, mean, std, report = F.fit(X * keep, y, None, iters=2500, signs=signs(False, args.version))
+        rw = np.array([r[5] for r in rows], float)
+        w, mean, std, report = F.fit(X * keep, y, None, iters=2500, signs=signs(False, args.version),
+                                     weights=None if np.all(rw == 1.0) else rw)
         w = w * keep
         mine, theirs = args.matchup.split("-")
         LinearValue([float(v) for v in w], [float(v) for v in mean], [float(v) for v in std], False,
                     {"deck": mine, "opponent": theirs, "moment": label, "positions": len(X),
-                     "q_weight": args.q_weight, "games": args.games,
+                     "q_weight": args.q_weight, "games": args.games, "file_weights": weights,
                      "report": {k: float(v) for k, v in report.items()}}, version=args.version
                     ).save(out / f"{args.matchup}-{label}.json")
         print(f"{label}: {len(X)} positions, {report}", flush=True)

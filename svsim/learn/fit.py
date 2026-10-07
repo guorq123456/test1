@@ -20,10 +20,10 @@ def standardize(X: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
 
 def fit(X: np.ndarray, y: np.ndarray, prefs: list | None = None, lam: float = 1.0, l2: float = 1e-3,
-        iters: int = 3000, lr: float = 0.05, mean=None, std=None, signs=None) -> tuple:
+        iters: int = 3000, lr: float = 0.05, mean=None, std=None, signs=None, weights=None) -> tuple:
     """Returns (coef, mean, std, report) for features standardized with mean, std.
     `signs` (+1 / -1 / 0 per coefficient) keeps coefficients from turning negative /
-    positive (projected after every step)."""
+    positive (projected after every step); `weights`: a weight per row (default all 1)."""
     if mean is None:
         mean, std = standardize(X)
     Xs = (X - mean) / std if len(X) else np.zeros((0, len(mean)))
@@ -45,8 +45,13 @@ def fit(X: np.ndarray, y: np.ndarray, prefs: list | None = None, lam: float = 1.
         if len(Xs):
             z = Xs @ w
             p = 1 / (1 + np.exp(-z))
-            loss += float(np.mean(np.logaddexp(0, z) - y * z))
-            grad = grad + Xs.T @ (p - y) / len(Xs)
+            if weights is None:
+                loss += float(np.mean(np.logaddexp(0, z) - y * z))
+                grad = grad + Xs.T @ (p - y) / len(Xs)
+            else:
+                total = float(np.sum(weights))
+                loss += float(np.sum(weights * (np.logaddexp(0, z) - y * z)) / total)
+                grad = grad + Xs.T @ (weights * (p - y)) / total
         if groups is not None:
             Cs, starts, chosen = groups
             z = Cs @ w

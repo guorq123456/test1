@@ -177,3 +177,21 @@ def test_evolution_point_usage_is_read_from_a_record():
         assert u["left"] == p.ep + p.sep and u["turns"] == p.turns_taken
         assert all(1 <= t <= p.turns_taken for t in u["spent"])
         assert u["spent"] == sorted(u["spent"])
+
+
+def test_a_forked_game_keeps_its_evolution_points_in_the_branch():
+    import json
+    from svsim.learn.netdata import play, rows
+    found = False
+    for g in range(4):
+        out = play((g, 13, "ramp", "ramp", "mcts:15+plan+learned+phased", 0.0, 0.0, True))
+        if len(out) < 2:
+            continue
+        control, branch = (json.loads(json.dumps(r)) for r in out)
+        i = control["branch"]["i"]
+        assert control["branch"]["kind"] == "control" and branch["branch"]["kind"] == "hold"
+        assert control["actions"][:i] == branch["actions"][:i] and branch["holds"][0]["i"] == i
+        assert sum(1 for _ in rows(branch, start=i)) < sum(1 for _ in rows(branch))
+        found = True
+        break
+    assert found
