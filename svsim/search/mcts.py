@@ -148,7 +148,8 @@ class ISMCTS:
     def __init__(self, iterations: int = 400, seconds: float | None = None, c: float = 0.5,
                  scale: float = 8.0, max_depth: int = 30, seed: int = 0, weights=DEFAULT,
                  reply: bool = False, center: bool = True, prune: bool = True, backup: str = "max",
-                 reserve: bool = False, veto=None, reply_after: int = 0):
+                 reserve: bool = False, veto=None, reply_after: int = 0, reply_top: int = 0,
+                 reply_budget: int = 0):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
         self.seconds = seconds
         self.c = c                     # exploration constant (values are in 0..1)
@@ -159,6 +160,9 @@ class ISMCTS:
         self.reply = reply             # play out the opponent's next turn at the leaves
         self.reply_after = reply_after # ... only at a turn-end leaf visited this many times already
                                        # (before that it is scored as it stands: learn.net scores both)
+        self.reply_top = reply_top     # ... only below the root's this many most-visited moves (0: all)
+        self.reply_budget = reply_budget   # ... at most this many times per decision (0: no limit)
+        self._replies = 0
         self.centered = center         # squash relative to the starting position (False: absolute)
         self.prune = prune             # leave out dominated moves (search.moves)
         self.reserve = reserve         # keep the win condition for finishing turns (search.moves.reserved)
@@ -182,6 +186,7 @@ class ISMCTS:
         if self.centered:
             self.center = evaluate(state, me, self.weights)
         deadline = time.perf_counter() + self.seconds if self.seconds else None
+        self._replies = 0
         for i in range(self.iterations if deadline is None else 10 ** 9):
             if deadline is not None and time.perf_counter() > deadline and i > 0:
                 break
@@ -232,7 +237,8 @@ class ISMCTS:
             path.append(node)
             depth += 1
         me_next = False
-        if self.reply and not s.over and s.active != me and path[-1].visits >= self.reply_after:
+        if self.reply and not s.over and s.active != me and self._reply_here(root, path):
+            self._replies += 1
             _start_turn(s)                       # the opponent's turn, played greedily
             while not s.over and s.active != me:
                 apply(s, self.opponent.act(s, legal_actions(s)))
@@ -254,6 +260,20 @@ class ISMCTS:
             seen = frozenset(options)
             n.options[seen] = n.options.get(seen, 0) + 1
             self._refresh(n)
+
+    def _reply_here(self, root: Node, path: list) -> bool:
+        """Whether to play the opponent's turn out at this turn-end leaf (see reply_after, reply_top,
+        reply_budget)."""
+        if path[-1].visits < self.reply_after:
+            return False
+        if self.reply_budget and self._replies >= self.reply_budget:
+            return False
+        if self.reply_top and len(path) > 1:
+            first = path[1]
+            above = sum(1 for c in root.children.values() if c is not first and c.visits > first.visits)
+            if above >= self.reply_top:
+                return False
+        return True
 
     def estimate(self, node: Node) -> float:
         """A node's value as this search backs up (see `backup`)."""
