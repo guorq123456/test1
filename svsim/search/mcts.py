@@ -148,7 +148,7 @@ class ISMCTS:
     def __init__(self, iterations: int = 400, seconds: float | None = None, c: float = 0.5,
                  scale: float = 8.0, max_depth: int = 30, seed: int = 0, weights=DEFAULT,
                  reply: bool = False, center: bool = True, prune: bool = True, backup: str = "max",
-                 reserve: bool = False, veto=None):
+                 reserve: bool = False, veto=None, reply_after: int = 0):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
         self.seconds = seconds
         self.c = c                     # exploration constant (values are in 0..1)
@@ -157,6 +157,8 @@ class ISMCTS:
         self.rng = random.Random(seed)
         self.weights = weights
         self.reply = reply             # play out the opponent's next turn at the leaves
+        self.reply_after = reply_after # ... only at a turn-end leaf visited this many times already
+                                       # (before that it is scored as it stands: learn.net scores both)
         self.centered = center         # squash relative to the starting position (False: absolute)
         self.prune = prune             # leave out dominated moves (search.moves)
         self.reserve = reserve         # keep the win condition for finishing turns (search.moves.reserved)
@@ -230,7 +232,7 @@ class ISMCTS:
             path.append(node)
             depth += 1
         me_next = False
-        if self.reply and not s.over and s.active != me:
+        if self.reply and not s.over and s.active != me and path[-1].visits >= self.reply_after:
             _start_turn(s)                       # the opponent's turn, played greedily
             while not s.over and s.active != me:
                 apply(s, self.opponent.act(s, legal_actions(s)))
