@@ -98,6 +98,18 @@ def _prior_options(options) -> dict:
 
 
 def make_agent(spec: str, seed: int):
+    """The agent `spec` names; "+mull=WAY" redraws its opening hand that way (agents.mulligan.decide:
+    default, rules[:VARIANT,...], sim[:N[:H]]) and changes nothing else."""
+    parts = spec.split("+")
+    mull = [p[len("mull="):] for p in parts if p.startswith("mull=")]
+    agent = _make_agent("+".join(p for p in parts if not p.startswith("mull=")), seed)
+    if mull:
+        from svsim.agents.mulligan import MulliganMode
+        agent = MulliganMode(agent, mull[0], seed)
+    return agent
+
+
+def _make_agent(spec: str, seed: int):
     if spec.split("+")[0] in VERSIONS:                         # v1+X: the version with X added
         head, *rest = spec.split("+")
         spec = "+".join([VERSIONS[head]] + rest)
