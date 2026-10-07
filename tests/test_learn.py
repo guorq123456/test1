@@ -459,6 +459,17 @@ def test_a_keeping_branch_can_be_left_out_of_the_in_turn_model_only():
     assert len(ended_only) == sum(r[1] == ENDED for r in _rows((control, 3, 1.0, 1.0, 1.0)))
 
 
+def test_a_matchup_of_two_named_decks_is_fitted_on_its_own_side_only():
+    import json
+    from svsim.learn.netdata import play
+    from svsim.learn.phased import _rows
+    line = json.dumps(play((0, 5, "elf-t", "ramp-t", "mcts:5+plan", 0.0)))
+    every = _rows((line, 2))
+    elf, ramp = _rows((line, 2, 1.0, 1.0, 1.0, None, ("elf-t", "ramp-t"))), _rows((line, 2, 1.0, 1.0, 1.0, None, ("ramp-t", "elf-t")))
+    assert elf and ramp and len(elf) + len(ramp) == len(every)
+    assert not _rows((line, 2, 1.0, 1.0, 1.0, None, ("elf-t", "elf-t")))
+
+
 def test_a_deck_s_payoff_does_not_depend_on_its_order():
     from svsim.cards import decks
     from svsim.core.engine import new_game
