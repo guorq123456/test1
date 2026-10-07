@@ -57,6 +57,8 @@ def main() -> None:
     parser.add_argument("--linear", default=str(WEIGHTS / "dragon-dragon.json"),
                         help="the linear model to compare with (and to start from, the prior)")
     parser.add_argument("--no-prior", action="store_true", help="don't start from the linear model")
+    parser.add_argument("--no-cards", action="store_true",
+                        help="leave out which cards are where (a smoother network on the totals only)")
     parser.add_argument("--ended-weight", type=float, default=1.0,
                         help="weight of the turn-end positions in the loss (a third of the rows)")
     args = parser.parse_args()
@@ -65,7 +67,7 @@ def main() -> None:
     with Pool(args.workers) as pool:
         data = [r for part in pool.imap(_rows, lines, chunksize=4) for r in part]
     print(f"{len(lines)} games, {len(data)} positions ({time.time() - t0:.0f}s)", flush=True)
-    vocab = sorted({cid for row in data for zone in row[4] for cid in zone})
+    vocab = [] if args.no_cards else sorted({cid for row in data for zone in row[4] for cid in zone})
     index = {c: i for i, c in enumerate(vocab)}
     X = np.zeros((len(data), E.width(index)), dtype=np.float32)
     for i, row in enumerate(data):
