@@ -8,6 +8,9 @@
 | `fixed600_reply_phased_vs_installed_seed2000000.jsonl` | 同上 | 同上 | 2000000 | 固定 600 局 | 57.7% ± 3.3%（54.3%～61.0%），CR 约 +61；先手 57.0%，后手 58.3% |
 | `fixed200_reply_phased_vs_greedy_seed4000000.jsonl` | 同上 | `greedy+plan+learned` | 4000000 | 固定 200 局 | 92.5% ± 3.5%；先手 91.0%，后手 94.0% |
 | `sprt_v1_vs_mcts200_seed5000000.jsonl` | 同上（v1） | `mcts:200+plan+learned`（陪练台 strong 档） | 5000000 | SPRT | 550 局判 H0：49.5% ± 3.7%；先手 54.5%，后手 44.4% |
+| `sprt_phasedonly_vs_installed_seed7000000.jsonl` | `mcts:100+plan+learned+phased`（不推演：只用到新的 ENDED 模型） | `mcts:100+plan+learned` | 7000000 | SPRT | 150 局判 H1：60.0% ± 7.0% |
+| `fixed600_phasedonly_vs_installed_seed9000000.jsonl` | 同上 | 同上 | 9000000 | 固定 600 局 | 56.8% ± 3.5%（53.3%～60.3%），CR 约 +55；先手 52.3%，后手 61.3% |
+| `fixed200_installed_vs_mcts200_seed8000000.jsonl` | `mcts:100+plan+learned` | `mcts:200+plan+learned` | 8000000 | 固定 200 局 | 45.5% ± 4.8% |
 | `fixed200_installed_vs_greedy_seed6000000.jsonl` | `mcts:100+plan+learned` | `greedy+plan+learned` | 6000000 | 固定 200 局 | 89.0% ± 4.1%；先手 88.0%，后手 90.0% |
 
 `fixed_run.py` 用评测台自己的 `play_pair`，只是不按 SPRT 提前停，所以给的区间没有提前停带来的偏差。
@@ -35,3 +38,9 @@ v1 对陪练台 strong 档 `mcts:200+plan+learned`：550 局，49.5% ± 3.7%，�
 | `greedy+plan+learned` | 400 | −2.135 | −2.486～−1.854 | −427 |
 
 一致性：v1 对现装 +0.314、现装对 greedy +2.091，两者之和 +2.405（预测 91.7%）；v1 对 greedy 直接观测 +2.512（92.5%），差 +0.107 logit，约 0.3 个标准误，自洽。greedy 离得太远，这个检验说服力有限。
+
+## 增益从哪来（2026-10-07）
+
+同算力只换 ENDED 线性模型（`mcts:100+plan+learned+phased`，不推演时 `+phased` 只用到 `dragon-dragon-ended.json`）：对现装 56.8% ± 3.5%，约 +55 CR。v1 用约 2.2 倍算力拿到 57.7%，`mcts:200` 对现装 54.5%。所以 v1 的增益基本来自新拟合的 ENDED 模型，推演对手回合在这套设置下没有可测的贡献。每步用时（空闲插桩）：`mcts:100+phased` 49 ms，`mcts:100` 59 ms，`mcts:200` 91～95 ms，v1 137 ms。
+
+近强度环（v1、strong、现装）：预测 v1 对 strong 53.3%，实际 49.5%，差 −0.154 logit，约 1.1 个标准误，自洽。
