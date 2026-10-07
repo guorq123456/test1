@@ -330,3 +330,53 @@ def test_the_gate_pairs_seats_and_tests_sequentially():
     assert abs(gate.elo(0.5)) < 1e-9 and round(gate.elo(0.64)) == 100
     pair = gate.play_pair((0, 5, "random", "random", None, None, "ramp", "ramp"))
     assert pair["k"] == 0 and len(pair["points"]) == 2 and all(p in (0.0, 0.5, 1.0) for p in pair["points"])
+
+
+def test_the_encoding_knows_the_moment_and_counts_cards():
+    from svsim.cards import decks
+    from svsim.core.engine import apply, legal_actions, new_game
+    from svsim.core.enums import Phase
+    from svsim.learn import encode as E
+    from svsim.search.evaluate import after_end_of_turn
+    ramp = decks.build(decks.RAMP_DRAGON)
+    state = new_game(ramp, ramp, seed=3, first=0)
+    while state.phase != Phase.MAIN:
+        apply(state, legal_actions(state)[0])
+    me = state.active
+    vocab = {c.defn.card_id: i for i, c in enumerate({c.defn.card_id: c for c in state.players[me].hand}.values())}
+    x = E.encode(state, me, vocab)
+    names = E.dense_names()
+    assert len(x) == E.width(vocab) == len(names) + len(E.ZONES) * len(vocab)
+    assert x[names.index("phase_act")] == 1.0 and x[names.index("phase_ended")] == 0.0
+    hand = x[len(names):len(names) + len(vocab)]                      # the first zone: my hand
+    assert sum(hand) == len(state.players[me].hand)
+    ended = after_end_of_turn(state)
+    y = E.encode(ended, me, vocab)
+    assert E.phase(ended, me) == E.ENDED and y[names.index("phase_ended")] == 1.0
+
+
+def test_a_value_net_trains_saves_and_scores_its_matchup(tmp_path):
+    import numpy as np
+    from svsim.cards import decks
+    from svsim.core.engine import new_game
+    from svsim.learn import encode as E
+    from svsim.learn.model import SCALE, Learned
+    from svsim.learn.net import NetLearned, ValueNet, load_nets
+    rng = np.random.default_rng(0)
+    vocab = [101, 102]
+    d = E.width({c: i for i, c in enumerate(vocab)})
+    X = rng.normal(size=(2000, d))
+    y = (X[:, 0] > 0).astype(float)
+    net = ValueNet.train(X[:1600], y[:1600], vocab, X[1600:], y[1600:], hidden=(8, 4), epochs=30, lr=1e-2, batch=64,
+                         say=lambda s: None)
+    z = net.forward(X[1600:])
+    assert np.mean((z > 0) == (y[1600:] > 0.5)) > 0.8
+    net.save(tmp_path / "dragon-dragon.npz")
+    again = load_nets(tmp_path)[next(iter(load_nets(tmp_path)))]
+    assert np.allclose(again.forward(X[:5]), net.forward(X[:5]))
+    ramp, rhino = decks.build(decks.RAMP_DRAGON), decks.build(decks.RHINO_FOREST)
+    weights = NetLearned(nets=load_nets(tmp_path), fallback=Learned(models={}))
+    mirror = new_game(ramp, ramp, seed=1, first=0)
+    assert abs(weights.score(mirror, 0) - SCALE * again.logit(mirror, 0)) < 1e-9
+    other = new_game(rhino, ramp, seed=1, first=0)
+    assert weights.score(other, 0) == Learned(models={}).score(other, 0)       # no net: the fallback

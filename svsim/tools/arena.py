@@ -27,7 +27,8 @@ AI's 39 to 16). impact:N chooses each turn among the mcts:N agent's lines by the
 winning (agents.impact_agent: the opponent's answer sampled, then the race
 clocks); the other suffixes go to the mcts:N agent.
 "+learned" uses each deck's learned evaluation (svsim.learn, tools.learn) where
-there is one; "+timing" adds what holding a card is worth until the turn the
+there is one; "+net" the matchup's value network where there is one (learn.net:
+fitted on every position the search scores, inside a turn and at its end); "+timing" adds what holding a card is worth until the turn the
 player usually plays it (svsim.learn.timing, from their games); "+priced"
 prices resources by what they buy (search.prices: the own followers at what
 survives the opponent's turn, "+survive" alone; unused evolution points at the
@@ -59,7 +60,7 @@ CRAFTS = [c for c in Craft if c != Craft.NEUTRAL]
 def make_agent(spec: str, seed: int):
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance"} - {o for o in options if o.startswith("hp")}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net"} - {o for o in options if o.startswith("hp")}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -70,6 +71,9 @@ def make_agent(spec: str, seed: int):
     if "learned" in options:                       # each deck's learned evaluation (svsim.learn)
         from svsim.learn.model import Learned
         weights = Learned(fallback=weights)
+    if "net" in options:                           # the matchup's value network, any moment of a turn (learn.net)
+        from svsim.learn.net import NetLearned
+        weights = NetLearned(fallback=weights if "learned" in options else None)
     if "timing" in options:                        # holding cards until the player would play them
         from svsim.learn.timing import Timed
         weights = Timed(base=weights)
