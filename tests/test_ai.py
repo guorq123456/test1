@@ -404,6 +404,7 @@ def test_the_gate_pairs_seats_and_tests_sequentially():
     assert "超出匹配窗口" in gate.cr_text(0.82, 0.1) and "-56" in gate.cr_text(0.43, 0.07)
     pair = gate.play_pair((0, 5, "random", "random", None, None, "ramp", "ramp", None, None))
     assert pair["k"] == 0 and len(pair["points"]) == 2 and all(p in (0.0, 0.5, 1.0) for p in pair["points"])
+    assert pair["same"] in (True, False)                                  # both games went move for move alike
     split = gate.first_split([pair], "ramp", "ramp")                      # by who really went first
     assert len(split["先手"]) == len(split["后手"]) == 1
     assert sorted(split["先手"] + split["后手"]) == sorted(pair["points"])

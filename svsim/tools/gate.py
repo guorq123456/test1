@@ -85,7 +85,8 @@ def cr_text(score: float, margin: float) -> str:
 
 
 def summary(scores: list[float]) -> tuple[float, float]:
-    """A's mean score per game and the 95% margin, from the pairs."""
+    """A's mean score per game and the 95% margin, from the pairs (each pair's score is the mean of its two
+    games, so a pair whose games went alike counts once: the margin is over pairs, not games)."""
     n = len(scores)
     mean = sum(scores) / n
     var = sum((x - mean) ** 2 for x in scores) / max(n - 1, 1)
@@ -165,7 +166,7 @@ def play_pair(job) -> dict:
     from svsim.ui.session import DECKS
     k, seed, a, b, model_a, model_b, deck, opponent, phased_a, phased_b = job
     mine, theirs = decks.build(DECKS[deck][1]), decks.build(DECKS[opponent][1])
-    points, games = [], []
+    points, games, moves = [], [], []
     for seat in (0, 1):
         agents = [None, None]
         agents[seat] = _agent(a, 2 * seed + seat, model_a, phased_a)
@@ -190,7 +191,9 @@ def play_pair(job) -> dict:
         if record.get("plans"):
             games.append(record)
         points.append(1.0 if state.winner == seat else 0.5 if state.winner not in (0, 1) else 0.0)
-    return {"k": k, "seed": seed, "points": points, "games": games}
+        moves.append(record["actions"])
+    # the same moves in both games (both agents chose alike all game): the pair adds nothing but its draw
+    return {"k": k, "seed": seed, "points": points, "games": games, "same": moves[0] == moves[1]}
 
 
 def main() -> None:
@@ -233,7 +236,7 @@ def main() -> None:
         value = llr(scores, args.h0, args.h1)
         mean, margin = summary(scores)
         verdict = "H1（A 更强）" if value >= hi else "H0（没有变强）" if value <= lo else None
-        line = (f"{2 * len(scores)} 局：A 得分 {mean:.1%} ± {margin:.1%}"
+        line = (f"{len(scores)} 对（{2 * len(scores)} 局）：A 得分 {mean:.1%} ± {margin:.1%}"
                 f"（95% 区间 {mean - margin:.1%}～{mean + margin:.1%}），{cr_text(mean, margin)}，"
                 f"LLR {value:+.2f}（判定线 {lo:.2f} / {hi:.2f}）→ {verdict or '未判定'}")
         if final or verdict:
@@ -265,6 +268,9 @@ def main() -> None:
     split = first_split(done.values(), args.deck, args.opponent)
     print("按真实先后手：" + "；".join(f"A {k} {len(v)} 局 {summary(v)[0]:.1%} ± {summary(v)[1]:.1%}"
                                    for k, v in split.items() if v), flush=True)
+    same = [d["same"] for d in done.values() if "same" in d]
+    if same:
+        print(f"两局着法完全一样的对：{sum(same)} / {len(same)}（{sum(same) / len(same):.0%}）", flush=True)
 
 
 if __name__ == "__main__":
