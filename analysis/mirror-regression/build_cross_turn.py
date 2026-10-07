@@ -19,7 +19,8 @@ BOTS = {"v2": "mcts:100+plan+learned+phased", "v2s": "mcts:200+plan+learned+phas
 
 # (game, own turn, category, check, confidence, why it takes more than this turn to see)
 # confidence: 高 / 中; "看局面" for the turn-1 bonus PP: Salem says spending it on turn 1 is
-# sometimes better (six games are too few), so those four are observed, not required.
+# sometimes better (six games are too few), so those four are observed, not required; "belief"
+# for a choice that rests on what the opponent is believed to hold (not counted either).
 PROBES = [
     # --- the bonus PP: second player's own turn 1 (observed, not required) ----------------
     ("1791305347029", 1, "bonus_keep", {"keeps_bonus": True}, "看局面",
@@ -87,6 +88,13 @@ PROBES = [
      "班德全场 9 点 + 纹章。bot 5 次里 2 次超进化诺玛去撞琪米卡。"),
     ("1791306781701", 7, "super_evolve_clock", {"super_evolves": ERNTZ}, "中",
      "超进化伊兰翠撞波菈莱 3/5，之后每回合打 8。v2s 和 Salem 一样，v2 超进化班德。"),
+    # --- depends on what the opponent is believed to hold (not in the acceptance total: for the
+    # planner's belief sampling, which reweights redraws by what the opponent has not played) -----
+    ("1791304981889", 7, "belief", {"super_evolves": ERNTZ}, "belief",
+     "10 血，对面相枛津 8/7：Salem 超进化伊兰翠撞死相枛津，回合结束打对面 8（19→11）。"
+     "Salem 的理由（原话）：判断对方手里没有相枛津 / 赤流时，超进化正义是更好的进攻手段；10 血很难一回合暴毙；"
+     "对方用《世界》解正义等于亏轮次，解不掉就直接赢。bot 白板下伊兰翠（回合结束 8 点打死相枛津，回 8 血）。"
+     "这局对面其实有赤流，下回合用它解了伊兰翠。"),
 ]
 
 
