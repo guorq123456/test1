@@ -27,8 +27,26 @@ assert library.__all__
 DECKS = {"rhino": ("破魔虫精灵", decks.RHINO_FOREST), "ramp": ("跳费龙", decks.RAMP_DRAGON),
          "pirate": ("海盗皇家", decks.PIRATE_SWORD), "combo": ("连击精灵", decks.COMBO_FOREST),
          "face": ("快攻龙", decks.FACE_DRAGON)}
-# Every level uses a deck's learned evaluation where there is one (svsim/learn/weights).
-LEVELS = {"fast": "greedy+plan+learned", "normal": "mcts:100+plan+learned", "strong": "mcts:200+plan+learned"}
+# Every level uses a deck's learned evaluation where there is one (svsim/learn/weights); normal and
+# strong are arena.VERSIONS v2 and v2s (the refitted turn-end model, learn.phased), which beat the
+# levels they replace at equal time (56.8% and 59.7% over 600 games, 2026-10-07).
+LEVELS = {"fast": "greedy+plan+learned", "normal": "mcts:100+plan+learned+phased",
+          "strong": "mcts:200+plan+learned+phased"}
+
+
+def bot_info(level: str, spec: str) -> dict:
+    """What played the AI's side, for the record: the level picked, the version's name in
+    arena.VERSIONS (None if the spec isn't one), the spec and the commit of the build."""
+    from svsim.build import commit
+    from svsim.tools.arena import VERSIONS
+    return {"level": level if level in LEVELS else None,
+            "version": next((k for k, v in VERSIONS.items() if v == spec or k == spec), None),
+            "spec": spec, "build": commit()}
+
+
+def bot_of(record: dict) -> dict:
+    """A record's bot_info; records from before it was kept give their spec only."""
+    return record.get("bot") or {"level": None, "version": None, "spec": record.get("ai"), "build": None}
 
 
 def deck_names(record: dict) -> tuple:
@@ -79,6 +97,7 @@ class Session:
         spec = LEVELS.get(level, level)
         self.record = records.new_record(mine, theirs, seed, self.state.first, spec, first_arg=order)
         self.record["names"] = [you, opponent]
+        self.record["bot"] = bot_info(level, spec)
         from svsim.tools.arena import make_agent
         self.ai = make_agent(spec, seed)
         self.decks = (DECKS[you][0], DECKS[opponent][0])
@@ -93,6 +112,9 @@ class Session:
         self.reviewing = False
         self.state = records.start(record)
         self.record = {**record, "actions": [], "winner": None, "notes": list(record.get("notes", []))}
+        from svsim.build import commit
+        if record.get("bot") and record["bot"].get("build") != commit():   # carried on by another build
+            self.record["bot"] = {**record["bot"], "resumed_build": commit()}
         self.ai = make_agent(record["ai"], record["seed"])
         self.log = ["继续之前没下完的对局。"]
         for data in record["actions"]:

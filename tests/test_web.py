@@ -115,9 +115,34 @@ def test_the_build_has_the_page_the_package_and_pyodide(tmp_path):
     package = json.loads((out / "svsim.json").read_text(encoding="utf-8"))
     assert "svsim/ui/session.py" in package and "svsim/cards/data/unlimited.json" in package
     assert not any("__pycache__" in n for n in package)
+    from svsim.build import git_commit                 # the build says which commit it came from
+    namespace = {}
+    exec(package["svsim/build.py"], namespace)
+    assert namespace["COMMIT"] == (git_commit() or "unknown") and namespace["commit"]() == namespace["COMMIT"]
     stdlib = json.loads((out / "pyodide" / "python_stdlib.json").read_text(encoding="utf-8"))
     assert stdlib == {"encodings/__init__.py": "# stdlib"}
 
+
+def test_records_say_which_bot_played_and_old_records_still_read():
+    from svsim.build import commit
+    from svsim.tools.arena import VERSIONS
+    from svsim.ui.session import LEVELS, bot_of
+    assert LEVELS["normal"] == VERSIONS["v2"] and LEVELS["strong"] == VERSIONS["v2s"]
+    session = Session()
+    session.start("rhino", "ramp", "normal", 3, "you")
+    assert session.record["bot"] == {"level": "normal", "version": "v2", "spec": VERSIONS["v2"], "build": commit()}
+    session.start("rhino", "ramp", "fast", 3, "you")
+    assert session.record["bot"]["version"] is None and session.record["bot"]["level"] == "fast"
+    old = json.loads(json.dumps(session.record_data()))
+    del old["bot"]                                     # a game saved before the bot was kept
+    old["ai"] = "mcts:100+plan+learned"
+    assert bot_of(old) == {"level": None, "version": None, "spec": "mcts:100+plan+learned", "build": None}
+    resumed = Session()
+    resumed.resume(old)
+    assert "bot" not in resumed.record and resumed.record["ai"] == "mcts:100+plan+learned"
+    elsewhere = dict(session.record_data(), bot=dict(session.record["bot"], build="0000000"))
+    resumed.resume(json.loads(json.dumps(elsewhere)))
+    assert resumed.record["bot"]["build"] == "0000000" and resumed.record["bot"]["resumed_build"] == commit()
 
 def _fingerprint(state) -> list:
     return [[[c.uid for c in p.hand], [(c.uid, c.atk, c.life) for c in p.field], p.leader_hp, p.pp, len(p.deck)]

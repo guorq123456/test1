@@ -42,11 +42,17 @@ def page_html() -> str:
     return SKELETON.replace("{page}", (WEB / "index.html").read_text(encoding="utf-8"))
 
 
-def package_sources() -> dict:
-    """The svsim package (sources and card tables) as {path: text}."""
-    return {f.relative_to(ROOT).as_posix(): f.read_text(encoding="utf-8")
-            for f in sorted(PACKAGE.rglob("*"))
-            if f.suffix in (".py", ".json") and "__pycache__" not in f.parts}
+def package_sources(commit: str | None = None) -> dict:
+    """The svsim package (sources and card tables) as {path: text}; with `commit`, svsim/build.py
+    says it was built from that commit (the page has no git)."""
+    out = {f.relative_to(ROOT).as_posix(): f.read_text(encoding="utf-8")
+           for f in sorted(PACKAGE.rglob("*"))
+           if f.suffix in (".py", ".json") and "__pycache__" not in f.parts}
+    if commit is not None:
+        line = "COMMIT = None "
+        assert out["svsim/build.py"].count(line) == 1
+        out["svsim/build.py"] = out["svsim/build.py"].replace(line, f"COMMIT = {commit!r} ")
+    return out
 
 
 def stdlib_sources(stdlib_zip: Path) -> dict:
@@ -60,7 +66,9 @@ def build(out: Path, pyodide_from: Path | None = None) -> None:
     (out / "page.html").write_text((WEB / "index.html").read_text(encoding="utf-8"), encoding="utf-8")
     (out / "index.html").write_text(page_html(), encoding="utf-8")
     (out / "worker.js").write_text((WEB / "worker.js").read_text(encoding="utf-8"), encoding="utf-8")
-    (out / "svsim.json").write_text(json.dumps(package_sources(), ensure_ascii=False), encoding="utf-8")
+    from svsim.build import git_commit
+    commit = git_commit(ROOT) or "unknown"
+    (out / "svsim.json").write_text(json.dumps(package_sources(commit), ensure_ascii=False), encoding="utf-8")
     pyo = out / "pyodide"
     pyo.mkdir(exist_ok=True)
     for name in PYODIDE_FILES:
@@ -75,6 +83,7 @@ def build(out: Path, pyodide_from: Path | None = None) -> None:
         with urllib.request.urlopen(url) as r:
             target.write_bytes(r.read())
     (pyo / "python_stdlib.json").write_text(json.dumps(stdlib_sources(pyo / "python_stdlib.zip")), encoding="utf-8")
+    print(f"版本：提交 {commit}" + ("（有未提交的改动）" if commit.endswith("+") else ""))
     print(f"已生成 {out}：page.html（发布到 claude.ai 用）、index.html（任何静态网站都能放）、worker.js、"
           "svsim.json、pyodide/（python_stdlib.zip 只用来生成 python_stdlib.json，不必发布）")
 
