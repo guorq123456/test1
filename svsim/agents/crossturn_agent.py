@@ -71,7 +71,11 @@ def key_forbidden(restriction: str, key) -> bool:
         return key == ("B",)
     if restriction == "noevo":
         return key[0] == "E"
-    cid = int(restriction.split(":")[1])
+    if restriction == "nosuper":
+        return key[0] == "E" and key[2] is True
+    kind, cid = restriction.split(":")[0], int(restriction.split(":")[1])
+    if kind == "superonly":                        # super-evolve only this card (key: ("E", ("F", mine, i, id), ...))
+        return key[0] == "E" and key[2] is True and key[1][-1] != cid
     return key[0] == "P" and key[1][0] == "H" and key[1][2] == cid
 
 
@@ -121,14 +125,17 @@ def keep_value(state, player: int, card_uid: int, agent=None, samples: int = 8) 
     return sum(a - b for a, b in zip(out[keep], out[NONE])) / len(out[NONE])
 
 
-KINDS = ("keep", "save", "noevo")
+KINDS = ("keep", "save", "noevo")                       # the default candidates
+ALL_KINDS = KINDS + ("nosuper", "superonly")           # ... and the super-evolution choices
+RESOURCE = ("save", "noevo", "nosuper", "superonly")   # decisions about keeping a resource (adaptive trigger)
 
 
-def restrictions(line: list, kinds=KINDS, max_keeps: int = 0) -> list:
+def restrictions(line: list, kinds=KINDS, max_keeps: int = 0, supers=()) -> list:
     """The candidates' restrictions for a principal line: none, keep each card it plays, keep the bonus
-    play point, don't evolve (only those of `kinds`; with `max_keeps`, keep only the line's that many
-    dearest cards)."""
-    out = [r for r in _restrictions(line) if r == NONE or r.split(":")[0] in kinds]
+    play point, don't evolve; if it super-evolves a follower: don't super-evolve, or super-evolve one of
+    the other followers that can (`supers`: their card ids) instead (only those of `kinds`; with
+    `max_keeps`, keep only the line's that many dearest cards)."""
+    out = [r for r in _restrictions(line, supers) if r == NONE or r.split(":")[0] in kinds]
     if max_keeps:
         cost = {}
         for key in line:
@@ -139,7 +146,7 @@ def restrictions(line: list, kinds=KINDS, max_keeps: int = 0) -> list:
     return out
 
 
-def _restrictions(line: list) -> list:
+def _restrictions(line: list, supers=()) -> list:
     out, kept = [NONE], set()
     for key in line:
         if key[0] == "P" and key[1][0] == "H":
@@ -151,6 +158,10 @@ def _restrictions(line: list) -> list:
         out.append("save")
     if any(key[0] == "E" for key in line):
         out.append("noevo")
+    chosen = {key[1][-1] for key in line if key[0] == "E" and key[2] is True}
+    if chosen:
+        out.append("nosuper")
+        out += [f"superonly:{cid}" for cid in sorted(set(supers) - chosen)]
     return out
 
 
@@ -162,7 +173,16 @@ def forbids(restriction: str):
         return lambda s, a: isinstance(a, UseBonusPP)
     if restriction == "noevo":
         return lambda s, a: isinstance(a, Evolve)
-    cid = int(restriction.split(":")[1])
+    if restriction == "nosuper":
+        return lambda s, a: isinstance(a, Evolve) and a.super_
+    kind, cid = restriction.split(":")[0], int(restriction.split(":")[1])
+    if kind == "superonly":
+        def only(s, a):
+            if not (isinstance(a, Evolve) and a.super_):
+                return False
+            card = s.in_play(a.uid)
+            return card is None or card.defn.card_id != cid
+        return only
 
     def keep(s, a):
         if not isinstance(a, PlayCard):
@@ -176,7 +196,7 @@ class CrossTurnAgent:
     def __init__(self, base, policy=None, samples: int = 4, margin: float = 0.0, seed: int = 0,
                  max_steps: int = 40, next_turn: bool = False, z: float = 0.0, static: bool = False,
                  research: int = 0, next_search: int = 0, opp_search: int = 0, kinds=KINDS,
-                 max_keeps: int = 0):
+                 max_keeps: int = 0, gap: float | None = None, pairs: int = 1):
         self.base = base                     # an MCTSAgent (the lethal search stays outside)
         self.search: ISMCTS = base.search
         if policy is None:
@@ -198,6 +218,11 @@ class CrossTurnAgent:
         self.next_search, self.opp_search = next_search, opp_search
         self.kinds = tuple(kinds)            # which restrictions to try (KINDS)
         self.max_keeps = max_keeps           # keep at most this many of the line's dearest cards (0: all)
+        self.gap = gap                       # play out only if the root's two most visited moves are within
+                                             # this much, or a resource decision is among the candidates
+                                             # (None: every turn with candidates)
+        self.pairs = pairs                   # with next_turn: own turns played after the opponent's (each but
+                                             # the last followed by another opponent turn) before scoring
         self._small = {}
         self.rng = random.Random(seed)
         self.turn = None
@@ -285,10 +310,15 @@ class CrossTurnAgent:
         from svsim.search.evaluate import evaluate
         moves_next = True                          # the start of the own next turn: the ACT model (+phased)
         if self.next_turn and not s.over:          # ... or play it with the policy head: the ENDED model
-            if self.next_search:
-                self._searched_turn(s, me, self.next_search, end=False)
-            else:
-                self._own_turn(s, me, [], None)
+            for k in range(self.pairs):
+                if self.next_search:
+                    self._searched_turn(s, me, self.next_search, end=False)
+                else:
+                    self._own_turn(s, me, [], None)
+                if k < self.pairs - 1 and not s.over:
+                    self._their_turn(s, me)
+                if s.over:
+                    break
             if not s.over and s.active == me:
                 ISMCTS._step(s, EndTurn())         # end-of-turn effects, not the opponent's turn
             moves_next = False
@@ -296,6 +326,25 @@ class CrossTurnAgent:
             return 1.0 if s.winner == me else 0.0 if s.winner == 1 - me else 0.5
         score = evaluate(s, me, self.search.weights, player_moves_next=moves_next)
         return 1.0 / (1.0 + math.exp(-max(-60.0, min(60.0, score / SCALE))))
+
+    @staticmethod
+    def _supers(state, most: int = 3) -> list:
+        """The followers that could be super-evolved this turn, on the field or still in hand (they can be
+        played first): their card ids, the dearest `most`."""
+        p = state.players[state.active]
+        if p.sep <= 0:
+            return []
+        cards = sorted((c for c in p.field + p.hand if c.defn.is_follower), key=lambda c: -c.defn.cost)
+        out = []
+        for c in cards:
+            if c.defn.card_id not in out:
+                out.append(c.defn.card_id)
+        return out[:most]
+
+    def _unsure(self, root) -> bool:
+        """Whether the root's two most visited moves are within `gap` of each other (the search's estimates)."""
+        top = sorted((c for c in root.children.values() if c.visits), key=lambda c: -c.visits)[:2]
+        return len(top) == 2 and abs(self.search.estimate(top[0]) - self.search.estimate(top[1])) < self.gap
 
     def lines_for(self, state, line: list, candidates: list) -> dict:
         """Each candidate's turn as a line of keys: the principal line; with `research`, a restriction's
@@ -380,8 +429,12 @@ class CrossTurnAgent:
             choice = self.base.act(state, actions)
             root = self.search.last_root
             line = principal_line(root) if root is not None else []
-            candidates = restrictions(line, self.kinds, self.max_keeps)
+            candidates = restrictions(line, self.kinds, self.max_keeps, self._supers(state))
             if len(candidates) == 1:
+                return choice
+            if self.gap is not None and not self._unsure(root) and \
+                    not any(r.split(":")[0] in RESOURCE for r in candidates):
+                self.picked["skip"] = self.picked.get("skip", 0) + 1
                 return choice
             lines = self.lines_for(state, line, candidates)
             samples = self.outcomes(state, lines, candidates)

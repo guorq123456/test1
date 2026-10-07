@@ -460,6 +460,11 @@ def test_cross_turn_candidates_restrict_the_rest_of_the_turn():
     assert restricted_line(root, "save") == [("T",)] and restricted_line(root, NONE) == [("B",), ("T",)]
     assert restrictions(line, max_keeps=1) == [NONE, "keep:101", "save", "noevo"]
     assert restrictions(line, kinds=("noevo",)) == [NONE, "noevo"]
+    from svsim.agents.crossturn_agent import ALL_KINDS, key_forbidden
+    sup = [("E", ("F", True, 0, 77), True, (), ()), ("T",)]
+    assert restrictions(sup, ALL_KINDS, supers=[77, 88]) == [NONE, "noevo", "nosuper", "superonly:88"]
+    assert key_forbidden("superonly:88", sup[0]) and key_forbidden("nosuper", sup[0])
+    assert not key_forbidden("superonly:77", sup[0]) and not key_forbidden("keep:77", sup[0])
 
 
 def test_keep_value_and_the_planners_records():

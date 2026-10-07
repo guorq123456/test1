@@ -179,14 +179,19 @@ def make_agent(spec: str, seed: int):
             # ...k<letters>: only these restrictions (k keep a card, s keep the bonus PP, e don't evolve)
             # ...rt: a restriction's turn from the base search's own tree; ...mN: keep candidates for the
             # line's N dearest cards only
-            m = re.fullmatch(r"cross([ns]?)(\d*)(?:z([\d.]+))?(?:r(\d+|t))?(?:k([kse]+))?(?:m(\d+))?", cross[0])
+            # ...k<letters>: n don't super-evolve, o super-evolve another follower instead; ...gG: play out only
+            # when the root's two best moves are within G or a resource decision is open; ...pP: P own turns
+            m = re.fullmatch(r"cross([ns]?)(\d*)(?:z([\d.]+))?(?:r(\d+|t))?(?:k([kseno]+))?(?:m(\d+))?"
+                             r"(?:g([\d.]+))?(?:p(\d+))?", cross[0])
             if m is None:
                 raise ValueError(f"unknown agent option {cross[0]!r}")
-            mode, k, z, r, only, most = m.groups()
-            kinds = [{"k": "keep", "s": "save", "e": "noevo"}[c] for c in only] if only else None
+            mode, k, z, r, only, most, gap, pairs = m.groups()
+            kinds = [{"k": "keep", "s": "save", "e": "noevo", "n": "nosuper", "o": "superonly"}[c]
+                     for c in only] if only else None
             agent = CrossTurnAgent(agent, samples=int(k or 4), seed=seed, next_turn=mode == "n",
                                    static=mode == "s", z=float(z or 0), research="tree" if r == "t" else int(r or 0),
-                                   max_keeps=int(most or 0), **({"kinds": kinds} if kinds else {}))
+                                   max_keeps=int(most or 0), gap=float(gap) if gap else None,
+                                   pairs=int(pairs or 1), **({"kinds": kinds} if kinds else {}))
         if name == "mcts-raw":
             return agent
         agent = LethalAgent(agent, seed=seed, planner=planner,
