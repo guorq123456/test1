@@ -155,7 +155,8 @@ class ISMCTS:
                  reply: bool = False, center: bool = True, prune: bool = True, backup: str = "max",
                  reserve: bool = False, veto=None, reply_after: int = 0, reply_top: int = 0,
                  reply_budget: int = 0, average: int = 1, prior=None, c_prior: float = 0.3,
-                 reuse: bool = False, min_new: int = 20, alloc: tuple | None = None, infer: tuple | None = None):
+                 reuse: bool = False, min_new: int = 20, alloc: tuple | None = None, infer: tuple | None = None,
+                 oracle: bool = False):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
         self.alloc = alloc             # ("legal", K, LO, HI): clip(K x legal moves, LO, HI) per decision instead;
                                        # ("bank", CHUNK, STOP, CAP, HI): see _bank_budget
@@ -163,6 +164,7 @@ class ISMCTS:
         self._seen_n, self._seen_k, self._seen_turn = 0, 0, -1     # alloc=self: this game's searched decisions
         self.infer = infer             # (ALPHA, TAU): the opponent's hand drawn by search.infer's weights
         self._hand_weights, self._infer_turn = None, None
+        self.oracle = oracle           # an experiment: the opponent's real hand in every determinization (core.view)
         self.last_iterations = None    # the iterations the last decision searched
         self.seconds = seconds
         self.c = c                     # exploration constant (values are in 0..1)
@@ -272,8 +274,11 @@ class ISMCTS:
         for i in range(iterations if deadline is None else 10 ** 9):
             if deadline is not None and time.perf_counter() > deadline and i > 0:
                 break
-            self._iterate(determinize(state, me, self.rng, hand) if hand else determinize(state, me, self.rng),
-                          me, root)
+            if self.oracle:
+                s = determinize(state, me, self.rng, oracle=True)
+            else:
+                s = determinize(state, me, self.rng, hand) if hand else determinize(state, me, self.rng)
+            self._iterate(s, me, root)
             done += 1
             if banked and done % self.alloc[1] == 0 and self._settled(root, iterations - done):
                 break
