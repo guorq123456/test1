@@ -893,3 +893,46 @@ def test_gate_pairs_carry_each_side_s_wall_time_on_the_moves_it_searched():
     assert len(out["ms"]) == len(out["ms_b"]) == len(out["iterations"]) == 2
     for ms, its in zip(out["ms"] + out["ms_b"], out["iterations"] + out["iterations_b"]):
         assert ms["n"] == its["n"] > 0 and ms["total"] > 0 and abs(ms["mean"] * ms["n"] - ms["total"]) < 0.2
+
+
+def test_alloc_self_scales_by_legal_moves_against_the_game_s_own_mean():
+    """Line B1, second try (2026-10-08): +alloc=self:C[:W:LO:HI] gives clip(round(C x N x n / m), LO, HI), m this
+    game's mean of legal moves so far with a prior of SELF_M0 weighing W decisions; a new game starts over."""
+    import pytest
+    from svsim.agents.mulligan import opening
+    from svsim.agents.random_agent import RandomAgent
+    from svsim.core.engine import apply, legal_actions
+    from svsim.core.enums import Phase
+    from svsim.search.mcts import SELF_M0
+    from svsim.tools.arena import _alloc_option, make_agent
+    from svsim.tools.gate import _search
+    assert _alloc_option(["alloc=self:0.8"]) == ("self", 0.8, 10.0, 50, 800)
+    assert _alloc_option(["alloc=self:1:4:20:300"]) == ("self", 1.0, 4.0, 20, 300)
+    with pytest.raises(ValueError):
+        _alloc_option(["alloc=self:1:4"])
+    state = opening("ramp-t", "elf-t", True, 3)
+    bot = RandomAgent(seed=2)
+    while state.phase != Phase.MAIN:
+        apply(state, bot.act(state, legal_actions(state)))
+    n = len(legal_actions(state))
+    search = _search(make_agent("mcts:40+plan+learned+phased+alloc=self:1:2:1:1000", 3))
+    search.choose(state)                           # m = the prior
+    assert search.last_iterations == round(40 * n / SELF_M0)
+    search.choose(state)                           # m = (2 x M0 + n) / 3
+    assert search.last_iterations == round(40 * n / ((2 * SELF_M0 + n) / 3))
+    assert (search._seen_n, search._seen_k) == (2 * n, 2)
+    later = state.clone()
+    later.players[later.active].turns_taken += 2   # the same game, later: the mean carries on
+    search.choose(later)
+    assert search._seen_k == 3
+    search.choose(state)                           # own turns went back: a new game, the prior again
+    assert search._seen_k == 1 and search.last_iterations == round(40 * n / SELF_M0)
+    plain, fixed = make_agent("mcts:25+plan+learned+phased", 5), make_agent("mcts:25+plan+learned+phased+alloc=self:1:10:25:25", 5)
+    a, b = state.clone(), state.clone()
+    for _ in range(5):                             # LO = HI: the fixed count, move for move
+        if a.over:
+            break
+        x, y = plain.act(a, legal_actions(a)), fixed.act(b, legal_actions(b))
+        assert repr(x) == repr(y)
+        apply(a, x)
+        apply(b, y)

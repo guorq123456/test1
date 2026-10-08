@@ -129,16 +129,21 @@ def _alloc_option(options) -> tuple | None:
     """+alloc=legal:K[:LO:HI]: each decision searches clip(round(K x legal moves), LO, HI) iterations (LO 50, HI
     800) instead of the spec's fixed count, the same compute on average once K is set by tools.search_cost.
     +alloc=bank[:CHUNK:STOP:CAP]: the spec's count per decision, in chunks, stopping once settled and keeping
-    what's left for the turn's later decisions (search.mcts ISMCTS._bank_budget); N set by search_cost --games."""
+    what's left for the turn's later decisions (search.mcts ISMCTS._bank_budget); N set by search_cost --games.
+    +alloc=self:C[:W:LO:HI]: C x N x legal moves / this game's mean so far (search.mcts ISMCTS._self_budget)."""
     chosen = [o[len("alloc="):] for o in options if o.startswith("alloc=")]
     if not chosen:
         return None
     kind, *args = chosen[0].split(":")
+    if kind == "self" and len(args) in (1, 4):     # +alloc=self:C[:W:LO:HI] (W 10, LO 50, HI 800)
+        w, lo, hi = (float(args[1]), int(args[2]), int(args[3])) if len(args) == 4 else (10.0, 50, 800)
+        return ("self", float(args[0]), w, lo, hi)
     if kind == "bank" and len(args) in (0, 3):     # +alloc=bank[:CHUNK:STOP:CAP] (50, 0.8, 400; at most 800)
         chunk, stop, cap = (int(args[0]), float(args[1]), int(args[2])) if args else (50, 0.8, 400)
         return ("bank", chunk, stop, cap, 800)
     if kind != "legal" or len(args) not in (1, 3):
-        raise ValueError(f"alloc=legal:K[:LO:HI] or alloc=bank[:CHUNK:STOP:CAP], not {chosen[0]!r}")
+        raise ValueError(f"alloc=legal:K[:LO:HI], alloc=self:C[:W:LO:HI] or alloc=bank[:CHUNK:STOP:CAP], "
+                         f"not {chosen[0]!r}")
     lo, hi = (int(args[1]), int(args[2])) if len(args) == 3 else (50, 800)
     return ("legal", float(args[0]), lo, hi)
 
