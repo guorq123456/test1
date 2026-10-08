@@ -31,6 +31,7 @@ def names() -> list[str]:
 
 
 _CACHE: dict = {}
+_BY_NAME: dict = {}
 
 
 def describe(listing: dict) -> list[float]:
@@ -66,11 +67,11 @@ def describe(listing: dict) -> list[float]:
 
 def of_player(state, player: int) -> list[float]:
     """The vector of the deck `player` started with (zeros for a deck that isn't registered)."""
-    from svsim.cards.decks import NAMED
     name = state.players[player].deck_name
-    if name in NAMED:
-        return describe(NAMED[name])
-    return [0.0] * len(names())
+    if name not in _BY_NAME:                       # once per deck: the search asks for it at every leaf
+        from svsim.cards.decks import NAMED
+        _BY_NAME[name] = describe(NAMED[name]) if name in NAMED else [0.0] * len(names())
+    return _BY_NAME[name]
 
 
 def pair(state, me: int) -> list[float]:
