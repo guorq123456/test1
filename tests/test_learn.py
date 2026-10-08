@@ -880,3 +880,16 @@ def test_hand_inference_weights_only_what_they_could_and_should_have_played_and_
         hand = {c.uid for c in determinize(state, me, rng, {u: 0.01 for u in light}).players[1 - me].hand}
         hits += len(hand & light)
     assert hits / 300 < len(them.hand) * len(light) / len(pool)
+
+
+def test_gate_pairs_carry_each_side_s_wall_time_on_the_moves_it_searched():
+    """Line B (2026-10-08): with allocations that change the time per iteration, compute is matched by wall time:
+    each pair carries A's and B's ms per searched decision (n = 1 moves left out) next to their iterations."""
+    from svsim.tools.gate import ms_summary, play_pair
+    assert ms_summary([]) == {"n": 0, "mean": 0.0, "total": 0.0}
+    assert ms_summary([0.002, 0.004]) == {"n": 2, "mean": 3.0, "total": 6.0}
+    out = play_pair((0, 11, "mcts:6+plan+learned+phased", "mcts:6+plan+learned+phased+alloc=legal:2:6:12", None,
+                     None, "ramp-t", "ramp-t", None, None))
+    assert len(out["ms"]) == len(out["ms_b"]) == len(out["iterations"]) == 2
+    for ms, its in zip(out["ms"] + out["ms_b"], out["iterations"] + out["iterations_b"]):
+        assert ms["n"] == its["n"] > 0 and ms["total"] > 0 and abs(ms["mean"] * ms["n"] - ms["total"]) < 0.2
