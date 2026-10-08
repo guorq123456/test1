@@ -605,12 +605,12 @@ def test_the_ruler_s_models_are_frozen_and_found_from_any_directory(tmp_path, mo
     from pathlib import Path
     from svsim.learn.phased import folder_of, load
     from svsim.tools.arena import VERSIONS
-    assert VERSIONS["ruler20261008"] == "mcts:200+plan+learned+phased=ruler_models/20261008"
-    monkeypatch.chdir(tmp_path)                    # the folder resolves from the repository root
-    folder = folder_of("ruler_models/20261008")
+    assert VERSIONS["ruler20261008"] == "mcts:200+plan+learned+phased=ruler-20261008"
+    monkeypatch.chdir(tmp_path)                    # found by name from any directory
+    folder = folder_of("ruler-20261008")
     assert len(load(folder)) == 20
     readme = (folder / "README.md").read_text(encoding="utf-8")
     sums = dict(line.split()[::-1] for line in readme.splitlines() if line.endswith(".json") and len(line) > 64)
     assert len(sums) == 20 and all(hashlib.sha256((folder / name).read_bytes()).hexdigest() == digest
                                    for name, digest in sums.items())
-    assert Path(folder).name == "20261008"
+    assert Path(folder).name == "ruler-20261008"

@@ -59,6 +59,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
 #status { color: var(--muted); font-size: 13px; line-height: 1.6; white-space: pre-wrap; min-height: 1.6em; }
 #status.error { color: var(--foe); }
 #saved-games { font-size: 13px; color: var(--muted); }
+.level-info { font-size: 12px; color: var(--muted); min-height: 1.4em; }
 
 /* ---- board ---- */
 #board { flex: 1; display: flex; flex-direction: column; gap: 6px; padding-block: 8px; min-height: 0; }
@@ -216,6 +217,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
         <button data-value="strong">强</button>
         <button data-value="original">原始版</button>
       </div>
+      <div class="level-info" id="level-info"></div>
     </div>
     <div class="field-group"><span>先后手</span>
       <div class="seg" data-name="first">
@@ -401,8 +403,21 @@ document.querySelectorAll(".seg").forEach(seg => {
     const b = ev.target.closest("button"); if (!b) return;
     seg.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
     choice[seg.dataset.name] = b.dataset.value;
+    if (seg.dataset.name === "level") showLevelInfo();
   });
 });
+
+// Each level's class rating, measured against the anchor (the ruler's strong level, CR 1300).
+const LEVEL_NAMES = {fast: "快速", normal: "普通", strong: "强", original: "原始版"};
+let ratings = null;
+function showLevelInfo() {
+  const box = $("level-info");
+  if (!ratings) { box.textContent = ""; return; }
+  const t = ratings.tiers[choice.level] || {};
+  const cr = t.cr != null ? `CR ${t.cr}` + (t.ci != null ? ` ± ${t.ci}` : "") + (t.anchor ? "（锚）" : "") : "CR 待标定";
+  box.textContent = `${LEVEL_NAMES[choice.level] || choice.level}档 · 版本 ${ratings.version} · ${ratings.commit} · ${cr}`;
+  box.title = t.note || "";
+}
 
 $("start").addEventListener("click", startGame);
 
@@ -973,6 +988,8 @@ async function offerResume(dbReady) {
     await Backend.init((text) => status(text));
     status(Backend.mode === "http" ? "已连接电脑上的模拟器。" : "模拟器已就绪。");
     $("start").disabled = false;
+    try { ratings = await Backend.call("ratings"); } catch (e) { ratings = null; }
+    showLevelInfo();
     offerResume(dbReady);
   } catch (e) {
     status("模拟器没能在这个页面里启动：" + e.message +

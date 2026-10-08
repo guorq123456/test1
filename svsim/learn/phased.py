@@ -56,7 +56,7 @@ def _rows(job) -> list:
 
 def folder_of(name: str) -> Path:
     """A models folder by name: a path to one (relative paths also from the repository root, e.g.
-    ruler_models/20261008), else svsim/learn/phased_models/<name> (candidates kept beside the installed
+    analysis/<folder>), else svsim/learn/phased_models/<name> (candidates kept beside the installed
     models, which sit in phased_models itself)."""
     path = Path(name)
     if path.is_dir():

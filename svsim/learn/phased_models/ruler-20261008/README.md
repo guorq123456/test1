@@ -1,9 +1,9 @@
 # 尺子的模型（2026-10-08，永远不动）
 
-「尺子」= `ruler20261008`（`svsim/tools/arena.py` 的 VERSIONS）= `mcts:200+plan+learned+phased=ruler_models/20261008`：跳费龙 bot 的强档（v2s 的搜索），评估器用的是这里冻结的模型。CR 标定赛的固定参照（Salem 2026-10-08 04:29Z：以目前的跳费龙为 CR 基准，定 1300）。
+「尺子」= `ruler20261008`（`svsim/tools/arena.py` 的 VERSIONS）= `mcts:200+plan+learned+phased=ruler-20261008`：跳费龙 bot 的强档（v2s 的搜索），评估器用的是这里冻结的模型。CR 标定赛的固定参照（Salem 2026-10-08 04:29Z：以目前的跳费龙为 CR 基准，定 1300）。
 
 - 来源：提交 20bcfbe 时 `svsim/learn/phased_models/` 顶层的全部 20 个文件，原样复制（`git show 20bcfbe:svsim/learn/phased_models/<文件>`）。共 10 个评估器，每个由回合结束和回合中两个文件组成：9 个按组合新拟的，加上原版跳费龙镜像的 ramp-ramp（ramp-t 镜像通过别名借用它）。
-- 这个目录不会被默认加载（默认只读 `phased_models` 顶层），只有写 `+phased=ruler_models/20261008` 才用。相对路径从仓库根解析（`learn.phased.folder_of`），所以在别的目录启动、或本机检出，都能找到。
+- 这个目录不会被默认加载（默认只读 `phased_models` 顶层），只有写 `+phased=ruler-20261008` 才用（`learn.phased.folder_of` 按名字找 `phased_models/<名字>`，在哪个目录启动都一样）。网页包不带它。以后每次发布同样快照一份 `phased_models/ref-<7 位提交>/`；这一份就是 ref-20bcfbe，名字保留不改。
 - 核对：同种子（616161）`ruler20261008` 和当时的 `v2s` 逐步相同（ramp-t 镜像 61 步、elf-t 对 ramp-t 43 步）。
 - 只冻结了模型，搜索、规则和换牌的代码仍是当前检出的。连击妖起手用规则换牌（R，7d219cc）早于 20bcfbe，是代码里的默认，不在这里。一旦改了搜索或换牌代码，尺子就得跑在冻结的检出里，才能保证还是同一个 bot。
 

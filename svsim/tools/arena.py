@@ -89,9 +89,9 @@ VERSIONS = {
     # iterations): vs v2 53.3% +- 2.8% over a fixed 600 games (after the sequential test's H1 at 150);
     # the same at strong (mcts:230+reuse vs v2s) is even (49.2% +- 2.2%), so there is no v2sr
     "v2r": "mcts:115+plan+learned+phased+reuse",
-    # the ruler (2026-10-08): v2s with the models installed at 20bcfbe, frozen in ruler_models/20261008 (the
+    # the ruler (2026-10-08): v2s with the models installed at 20bcfbe, frozen in phased_models/ruler-20261008 (the
     # CR calibration's fixed reference, never changed; the search code is the current one, see its README)
-    "ruler20261008": "mcts:200+plan+learned+phased=ruler_models/20261008",
+    "ruler20261008": "mcts:200+plan+learned+phased=ruler-20261008",
 }
 
 
