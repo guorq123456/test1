@@ -10,8 +10,13 @@ have (95% interval over pairs), the score when the first deck went first and whe
 game length (turns, both sides). Effects, each a paired difference over the same seeds with its 95% interval and
 the CR it is worth (Salem's scale, 236 a logit, from the cell it starts from; the steady-state figure 800 x
 difference in brackets): a with b off (10 - 00), a with b on (11 - 01), b with a off (01 - 00), b with a on
-(11 - 10), both (11 - 00), and the interaction (11 - 10 - 01 + 00, per pair). Condition: the opponent's 40-card
-list is known (order and hand not).
+(11 - 10), both (11 - 00), and the interaction (11 - 10 - 01 + 00, per pair). Each interval two ways: paired by
+seed (the seed fixes the deal and who goes first, so a seed's pairs in two cells are the same deal played under two
+conditions; the variance of the per-seed difference), and as independent samples (each cell's own variance over
+pairs, added: wider when the cells are positively correlated by seed, as they are). Also: how many games are
+move for move the same between each two cells, and the time per turn (the games' wall time over their turns, both
+sides; over all pairs and over the first 20 seeds, comparable only for runs on one machine at one load).
+Condition: the opponent's 40-card list is known (order and hand not).
 """
 import argparse
 import gzip
@@ -70,16 +75,31 @@ def main():
         m, h = ci(list(score[c].values()))
         t, ht = ci([(cells[c][k][0]["turns"] + cells[c][k][1]["turns"]) / 2 for k in ks])
         print(f"| {c}（{name[c]}） | {m:.1%} ± {h:.1%} | {sum(f) / len(f):.1%} / {sum(s) / len(s):.1%} | {t:.1f} ± {ht:.1f} |")
-    print(f"\n效应（同一批种子的配对差，95% 区间按对算；CR 按 Salem 刻度，从起点那格自己的得分算，括号里是稳态式 800 × 差）：")
+    var = {c: ci(list(score[c].values()))[1] ** 2 for c in score}          # (1.96 se)^2 of each cell's mean
+    print(f"\n效应（95% 区间两种算法：独立样本 = 两格各自按对的方差相加；按种子配对 = 每个种子两格之差的方差。"
+          f"CR 按 Salem 刻度，从起点那格自己的得分算，括号里是稳态式 800 × 差）：")
     for label, hi, lo in ((f"{args.a}，{args.b}关（10 − 00）", "10", "00"), (f"{args.a}，{args.b}开（11 − 01）", "11", "01"),
                           (f"{args.b}，{args.a}关（01 − 00）", "01", "00"), (f"{args.b}，{args.a}开（11 − 10）", "11", "10"),
                           (f"两样一起（11 − 00）", "11", "00")):
         d, h = ci([score[hi][k] - score[lo][k] for k in ks])
         base = sum(score[lo].values()) / len(ks)
-        print(f"  {label}：{d:+.1%} ± {h:.1%}（CR {SALEM * (logit(base + d) - logit(base)):+.0f}，稳态式 {800 * d:+.0f}）")
+        print(f"  {label}：{d:+.1%}，独立样本 ± {math.sqrt(var[hi] + var[lo]):.1%}，按种子配对 ± {h:.1%}"
+              f"（CR {SALEM * (logit(base + d) - logit(base)):+.0f}，稳态式 {800 * d:+.0f}）")
     d, h = ci([score["11"][k] - score["10"][k] - score["01"][k] + score["00"][k] for k in ks])
-    print(f"  交互（11 − 10 − 01 + 00）：{d:+.1%} ± {h:.1%}")
-
+    print(f"  交互（11 − 10 − 01 + 00）：{d:+.1%}，独立样本 ± {math.sqrt(sum(var.values())):.1%}，按种子配对 ± {h:.1%}")
+    print("\n两格之间逐步相同的局（共 " + str(2 * len(ks)) + " 局）：")
+    cs = ("00", "10", "01", "11")
+    for i, x in enumerate(cs):
+        for y in cs[i + 1:]:
+            same = sum(cells[x][k][s]["record"]["actions"] == cells[y][k][s]["record"]["actions"] for k in ks for s in (0, 1))
+            print(f"  {x} 和 {y}：{same}")
+    print("\n每回合用时（整局墙钟 ÷ 回合数，双方合计）：")
+    for c in cs:
+        out = []
+        for sub in (ks, [k for k in ks if k < 20]):
+            games = [g for k in sub for g in cells[c][k]]
+            out.append(1000 * sum(g["seconds"] for g in games) / sum(g["turns"] for g in games))
+        print(f"  {c}：全部 {out[0]:.0f} ms，前 20 个种子 {out[1]:.0f} ms")
 
 if __name__ == "__main__":
     main()
