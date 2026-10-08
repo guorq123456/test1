@@ -142,3 +142,39 @@ python ..\test1-analysis\analysis\tournament-audit\mulligan_gate.py --report ..\
 ## 跑完以后
 
 把 `local\` 里的 `.jsonl` 和报告输出交回来，交给架构线程转，或者直接发给 test1 会话都行。test1 会话负责写进 README，和云端的连击妖闸门并排。
+
+## 5. 连击妖 R 部署态重过门（架构线程 03:38Z）
+
+- **为什么重过**：联赛重跑里旗皇对连击妖那格的 2×2 显示，旗皇装模型以后 R 的效应是 +0.0，触发了架构线程的预登记。架构线程决定把连击妖的 R 放在部署态整体重过一次门；原来那 1200 对的结论作废，由这次的结果替代。
+- **原来那 1200 对的装机态**：两库都在 **c962055** 上跑（第一库云端，第二库本机）。
+  - 那时一个比赛卡组的对局模型都没装：顶层只有 Game8 跳费龙的 `ramp-ramp`，比赛卡组用不到它，因为借用要等 abd8678 才有。
+  - 双方都回退到通用评分；致命检查是旧默认（af086ee 之前）；特征缓存键也是旧的（35e2e99 之前）。
+  - 对手一律 D，连击妖镜像里的对手也是 D。
+- **这次**：在合并后的构建分支 **9a6ea1c** 上跑，全装机态。
+  - 四个对手各一段，每段固定 300 对，各用一个新种子库。42000000～43500000 这四个库没在任何门、联赛、E0 里用过；已用的种子库最高到 41500000。
+  - 每对 4 局：连击妖坐两个座位，各按 R、D 打一局。
+- **脚本要用 ba1e496 以后的 `mulligan_gate.py`**：
+  - 从 7d219cc 起，智能体自己的起手对连击妖就是 R（`agents.mulligan.BY_DECK`）。旧脚本里 D 那局不加后缀，在新代码上会打成 R，于是 R 对 R，差恒为 0。
+  - 新脚本把 D 写明为 `+mull=default`。我在 c962055 上用新脚本重放了第一库的 8 对（32 局），和原文件逐局相同，所以旧结果不受影响。
+  - 对手用 `--opp-way own`（默认）：按部署态自己的起手。镜像那段的对手连击妖因此是 R，其他三套是 D。若要像原来一样让对手一律 D，就加 `--opp-way default`。
+- **判定**（架构线程定死）：四段合并 1200 对，下沿 > 0 保留 R，否则连击妖回默认 D。
+
+准备：在 `svsim-9a6ea1c` 目录（合并后的构建分支，提交 9a6ea1c）里，`test1-analysis` 拉到 ba1e496 或以后；环境变量同上。
+
+```
+python ..\test1-analysis\analysis\tournament-audit\mulligan_gate.py --deck elf-t --way rules --opponents elf-t --phase fixed --pairs 300 --seed 42000000 --workers 16 --out ..\test1-analysis\analysis\tournament-audit\local\mull_elf_deployed_vs_elf.jsonl
+python ..\test1-analysis\analysis\tournament-audit\mulligan_gate.py --deck elf-t --way rules --opponents ramp-t --phase fixed --pairs 300 --seed 42500000 --workers 16 --out ..\test1-analysis\analysis\tournament-audit\local\mull_elf_deployed_vs_ramp.jsonl
+python ..\test1-analysis\analysis\tournament-audit\mulligan_gate.py --deck elf-t --way rules --opponents pirate-t --phase fixed --pairs 300 --seed 43000000 --workers 16 --out ..\test1-analysis\analysis\tournament-audit\local\mull_elf_deployed_vs_pirate.jsonl
+```
+
+对机锋那段，等配对 4 定下来再跑：
+
+```
+python ..\test1-analysis\analysis\tournament-audit\mulligan_gate.py --deck elf-t --way rules --opponents nemesis-t --phase fixed --pairs 300 --seed 43500000 --workers 16 --out ..\test1-analysis\analysis\tournament-audit\local\mull_elf_deployed_vs_nemesis.jsonl
+```
+
+合并四段：
+
+```
+python ..\test1-analysis\analysis\tournament-audit\mulligan_gate.py --report ..\test1-analysis\analysis\tournament-audit\local\mull_elf_deployed_vs_elf.jsonl ..\test1-analysis\analysis\tournament-audit\local\mull_elf_deployed_vs_ramp.jsonl ..\test1-analysis\analysis\tournament-audit\local\mull_elf_deployed_vs_pirate.jsonl ..\test1-analysis\analysis\tournament-audit\local\mull_elf_deployed_vs_nemesis.jsonl --pool
+```
