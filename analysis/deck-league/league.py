@@ -68,6 +68,37 @@ def play_pair(job, seats=(0, 1)):
     return out
 
 
+def salvage(path, per_pair):
+    """The pairs already in `path`, after a container restart that may have cut the gzip stream or left a
+    pair half written: the readable complete lines are kept, a pair without all its games is dropped, and
+    the file is rewritten clean (so appending to it works again)."""
+    import os
+    import zlib
+    lines = []
+    try:
+        with gzip.open(path, "rt", encoding="utf-8") as f:
+            for line in f:
+                lines.append(line)
+    except (EOFError, OSError, zlib.error):
+        pass
+    games = []
+    for line in lines:
+        try:
+            games.append((json.loads(line), line if line.endswith("\n") else line + "\n"))
+        except json.JSONDecodeError:
+            break
+    count = defaultdict(int)
+    for g, _ in games:
+        count[(g["pair"], g["k"])] += 1
+    keep = {key for key, n in count.items() if n >= per_pair}
+    with gzip.open(path + ".tmp", "wt", encoding="utf-8") as f:
+        for g, line in games:
+            if (g["pair"], g["k"]) in keep:
+                f.write(line)
+    os.replace(path + ".tmp", path)
+    return keep
+
+
 def mirror_second(job):
     return play_pair(job, seats=(1,))
 
@@ -170,6 +201,7 @@ def report(paths, boots):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--report", nargs="+", default=None)
+    ap.add_argument("--pairings", nargs="*", default=None, help="only these pairings, e.g. elf-t/ramp-t (a rerun of one cell)")
     ap.add_argument("--mirror-second", action="store_true",
                     help="play only the mirrors' second games (seat-swapped agent seeds), e.g. to complete the first run")
     ap.add_argument("--boot", type=int, default=2000)
@@ -186,12 +218,11 @@ def main():
     import os
     done = set()
     if os.path.exists(args.out):                        # resume: pairs already played are skipped
-        for line in gzip.open(args.out, "rt", encoding="utf-8"):
-            g = json.loads(line)
-            done.add((g["pair"], g["k"]))
+        done = salvage(args.out, 1 if args.mirror_second else 2)
     jobs = [(a, b, k, args.seed + k, args.agent) for k in range(args.pairs)
             for a, b in combinations_with_replacement(args.decks, 2)
-            if (f"{a}/{b}", k) not in done and (a == b or not args.mirror_second)]
+            if (f"{a}/{b}", k) not in done and (a == b or not args.mirror_second)
+            and (not args.pairings or f"{a}/{b}" in args.pairings)]
     t0 = time.perf_counter()
     with Pool(args.workers) as pool, gzip.open(args.out, "at", encoding="utf-8") as fh:
         for n, pair in enumerate(pool.imap_unordered(mirror_second if args.mirror_second else play_pair, jobs,
