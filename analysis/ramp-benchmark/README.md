@@ -90,6 +90,32 @@
      python -m svsim.tools.gate --a level-strong --b ruler20261008 --versus ruler20261008 --deck ramp-t --opponent ramp-t --fixed --max 200 --seed 60500000 --out analysis/calibration/round5/ramp-t_vs_ramp-t.jsonl
      ```
   - 我这边读：`calibrate.py analysis/calibration/round5-identity --identity`，再 `calibrate.py analysis/calibration/round5 --ref 20bcfbe --ref-cr ramp-t=1300 elf-t=1366 nemesis-t=1300 pirate-t=1300`（缺的 15 格按 0）。
+- **扩成三格**（架构线程 10:2x；写在第 5 轮任何数据之前，取代上面「只跑一格」和「我这边读」两条）：
+  - **起因**：C2 推广门里，连击妖镜像、连击妖对机锋过了，并进同一个装机提交（顶层 28 个文件）；连击妖对跳费龙没过，不装。所以装机后变了三格，其余 13 格逐对恒等记 0。
+  - **三格**，都是 A = 装机后的 `level-strong`，B = C = `ruler20261008`，`--versus`：
+    - 跳费龙对跳费龙：种子 60500000，50 对（`--max 200`），照原样。
+    - 连击妖对连击妖：种子 **61400000**，**150 对**（`--max 600`）。
+    - 连击妖对机锋：种子 **61500000**，**150 对**（`--max 600`）。
+    - 架构线程建议的 60600000 / 60700000 已经分给通用 bot 线程的留一卡组门（09:4x），所以改用 61400000 / 61500000。
+    - 连击妖两格用 150 对，是为了和连击妖另外两格（第 3、4 轮合并，各 150 对）一样精度，免得新量的两格把连击妖 CR 的误差拉大。跳费龙另外三格是精确的 0，50 对就够（约 ±24）。
+  - **CR 怎么算**（每格的 ΔCR 都是对尺子量的）：
+    - 跳费龙 CR = 1300 + Δ(跳费龙镜像) ÷ 4。
+    - 连击妖 CR = 1300 + [Δ₅(镜像) + Δ₅(对机锋) + Δ₃₊₄(对跳费龙) + Δ₃₊₄(对旗皇)] ÷ 4 = 1300 + [Δ₅(镜像) + Δ₅(对机锋) − 22 + 62] ÷ 4。
+    - 新量的两格是**换掉**第 3、4 轮那两格（−32、+88），不是叠加。架构线程写的「1324 + (Δ镜像 + Δ对机锋) ÷ 4」只在 B = 装机前的版本时才对；这里 B 是尺子，那样会把旧的两格算两遍。等价写法：1324 + [Δ₅(镜像) + 32 + Δ₅(对机锋) − 88] ÷ 4。
+  - **恒等抽查两格**（各 10 对、40 局，重用第 1 轮同一格的种子，恒等校验不占库）：
+    - 跳费龙对连击妖，照旧：A = 装机后，B = 尺子。跳费龙这一边什么都没变，应和尺子逐步相同。
+    - **连击妖对跳费龙**（代替连击妖对旗皇）：A = 装机后，**B = `ref5558960`（装机前的快照）**，C = 尺子。连击妖这几格本来就和尺子不同（起手 D 对 R），只能和装机前比。选这一格，是因为它有一个没过门的候选文件，正好核对它没被误装。有一对不同就停下，先报。
+  - **装机后先核哈希**：顶层的 `ramp-t-ramp-t-*`、`elf-t-elf-t-*`、`elf-t-nemesis-t-*` 和各自候选目录里的同名文件相同；`elf-t-ramp-t-*` 仍和 `ref-5558960/` 里的相同。
+  - **命令**（拉下装机提交以后，在仓库根目录跑）：
+    ```
+    python -m svsim.tools.gate --a level-strong --b ruler20261008 --versus ruler20261008 --deck ramp-t --opponent elf-t --fixed --max 40 --seed 49100000 --out analysis/calibration/round5-identity/ramp-t_vs_elf-t.jsonl
+    python -m svsim.tools.gate --a level-strong --b ref5558960 --versus ruler20261008 --deck elf-t --opponent ramp-t --fixed --max 40 --seed 49400000 --out analysis/calibration/round5-identity/elf-t_vs_ramp-t.jsonl
+    python -m svsim.tools.gate --a level-strong --b ruler20261008 --versus ruler20261008 --deck ramp-t --opponent ramp-t --fixed --max 200 --seed 60500000 --out analysis/calibration/round5/ramp-t_vs_ramp-t.jsonl
+    python -m svsim.tools.gate --a level-strong --b ruler20261008 --versus ruler20261008 --deck elf-t --opponent elf-t --fixed --max 600 --seed 61400000 --out analysis/calibration/round5/elf-t_vs_elf-t.jsonl
+    python -m svsim.tools.gate --a level-strong --b ruler20261008 --versus ruler20261008 --deck elf-t --opponent nemesis-t --fixed --max 600 --seed 61500000 --out analysis/calibration/round5/elf-t_vs_nemesis-t.jsonl
+    ```
+  - **我这边读**：先 `calibrate.py analysis/calibration/round5-identity --identity`。再把第 3、4 轮合并的「连击妖对跳费龙」「连击妖对旗皇」两格和第 5 轮三格放进同一个文件夹，`calibrate.py <那个文件夹> --ref 20bcfbe`：连击妖四格都在，跳费龙缺的三格按 0。
+  - **读法提醒**照旧：装机后强档跑的是 `mcts:200`，这几格和推广门（等算力 N、直接或 --versus 对现装）不是同一个量，不拿来互相核对。
 
 **各档 CR**（陪练台每个档位旁显示的数；建造线写进 `svsim/ui/ratings.json`，显示版本、提交和 CR）：
 - 三档：原始版 `mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default`、普通 `v2r` = `mcts:115+plan+learned+phased+reuse`、快速 `greedy+plan+learned`；强档 = `mcts:200+plan+learned+phased`，就是当前装机态的 v2s。
