@@ -429,8 +429,9 @@ def test_the_tournament_ramp_mirror_borrows_the_game8_mirror_models_unless_told_
     assert matchup_keys(mirror, 0) == [("ramp-t", "ramp-t"), (Craft.DRAGON, Craft.DRAGON)]
     assert matchup_keys(mirror, 0, ALIASES)[1] == ("ramp", "ramp")
     assert matchup_keys(other, 0, ALIASES) == matchup_keys(other, 0)          # a mirror only
-    on = make_agent("mcts:5+plan+learned+phased", 1).base.search.weights     # on by default
-    off = make_agent("mcts:5+plan+learned+phased+noalias", 1).base.search.weights
+    # a folder without a ramp-t mirror of its own (Version 15's, frozen): the stand-in is on by default
+    on = make_agent("mcts:5+plan+learned+phased=ref-5558960", 1).base.search.weights
+    off = make_agent("mcts:5+plan+learned+phased=ref-5558960+noalias", 1).base.search.weights
     assert make_agent("v2+alias", 1).base.search.weights.aliases == on.aliases == ALIASES and off.aliases is None
     ramp = opening("ramp", "ramp", True, 3)
     assert on.score(ramp, 0) == off.score(ramp, 0)                            # the Game8 mirror as before
@@ -439,6 +440,9 @@ def test_the_tournament_ramp_mirror_borrows_the_game8_mirror_models_unless_told_
     for p, q in zip(swap.players, mirror.players):                            # same position, other deck name
         p.deck_name = q.deck_name
     assert on.score(swap, 0) == off.score(ramp, 0)
+    installed = make_agent("mcts:5+plan+learned+phased", 1).base.search.weights   # since C2: its own file first
+    assert installed.score(mirror, 0) == make_agent("mcts:5+plan+learned+phased+noalias", 1).base.search.weights.score(
+        mirror, 0) != on.score(mirror, 0)
 
 
 def test_a_keeping_branch_can_be_left_out_of_the_in_turn_model_only():
@@ -619,6 +623,11 @@ def test_the_ruler_s_models_are_frozen_and_found_from_any_directory(tmp_path, mo
     sums = dict(line.split()[::-1] for line in (ref / "README.md").read_text(encoding="utf-8").splitlines()
                 if line.endswith(".json") and len(line) > 64)
     assert len(sums) == 22 and all(hashlib.sha256((ref / n).read_bytes()).hexdigest() == d for n, d in sums.items())
+    ref = folder_of("ref-352ae51")                 # after C2 went in (352ae51), the same way
+    assert VERSIONS["ref352ae51"] == "mcts:200+plan+learned+phased=ref-352ae51+mull=default" and len(load(ref)) == 24
+    sums = dict(line.split()[::-1] for line in (ref / "README.md").read_text(encoding="utf-8").splitlines()
+                if line.endswith(".json") and len(line) > 64)
+    assert len(sums) == 24 and all(hashlib.sha256((ref / n).read_bytes()).hexdigest() == d for n, d in sums.items())
 
 
 def test_the_named_feature_sets_by_hand_and_models_without_them_unchanged(tmp_path):
@@ -696,3 +705,70 @@ def test_the_hand_feature_set_kept_by_hand_is_bit_for_bit_the_plain_sum(monkeypa
     got = FT.playable_hand_roles(state, 0)
     got[0] += 1.0                                                   # callers get their own list
     assert bits(FT.playable_hand_roles(state, 0)) == bits(plain(state, 0))
+
+
+def test_c2_is_installed_in_the_three_pairings_that_passed_and_nothing_else_moved():
+    """2026-10-08: C2 (the hand feature set) passed its gates in the ramp-t mirror, the elf-t mirror and elf-t vs
+    nemesis-t; those three pairs of files are the candidates' bytes, the other 18 installed files are as before, a
+    pairing's own file comes before the ramp mirror's stand-in (ramp-ramp, kept for the Game8 deck and the
+    snapshots), and the normal level stays on Version 15's frozen models."""
+    import hashlib
+    from pathlib import Path
+    from svsim.core.engine import new_game as start
+    from svsim.learn.model import ALIASES, matchup_keys
+    from svsim.learn.phased import PhasedLearned, folder_of
+    from svsim.tools.arena import VERSIONS
+    from svsim.ui.session import LEVELS
+    installed = Path(__file__).resolve().parents[1] / "svsim" / "learn" / "phased_models"
+    pins = {
+        "elf-t-elf-t-act.json": "d895d212e537dd0d2a822740cdc1b1f177f223909cf041171eb21bf68a6da906",
+        "elf-t-elf-t-ended.json": "e8509021f50b024aac3bbbf88b889250967f6f713ba126aa32c8324abcb064dc",
+        "elf-t-nemesis-t-act.json": "ca6a4f2faa82ea504f194db699411af38d44b40cf4e315b15e32846de977ee86",
+        "elf-t-nemesis-t-ended.json": "e9a27705f12c7c521d47421e79d42243c99be039ac34b55edabcc8d95097c329",
+        "elf-t-ramp-t-act.json": "df7e7bff1452d0eccf7e4f23c92c1ed596fa65cc77eee7e5c9c4dc16d38bc64e",
+        "elf-t-ramp-t-ended.json": "8be505d77b9c630631686f89c574c4977053daaa460779af1a797103ab567bb0",
+        "nemesis-t-elf-t-act.json": "3ff16f2022a5839eca3731dfabbf2e507bbd46cd5fd814d384474aab7ce221b8",
+        "nemesis-t-elf-t-ended.json": "85a74b7ff825cacdcfcfd7379e49cd26eee29baf11f485cea829ba5436bc1b41",
+        "nemesis-t-ramp-t-act.json": "daafbf1b6831148faf817e16780cbfc08b4230c4670fccbe892188d044ba5ca3",
+        "nemesis-t-ramp-t-ended.json": "a16ecfe405bfec08849a3d0c9d7db216d9e0d929eb33d8f54d02046c9a29b6a7",
+        "pirate-t-elf-t-act.json": "9500ec681feee9bc27a6105758b4d2e743e04d47322f54c9d9b2e42f97e635c1",
+        "pirate-t-elf-t-ended.json": "9142f45909e6f93dfa350c16b9cb71c600ec3c26028e86dbda42dd6b3e156af2",
+        "pirate-t-pirate-t-act.json": "865a1a022449cbae35d396cf56a4b53bd7bb1666244e91df7b398f058e11a972",
+        "pirate-t-pirate-t-ended.json": "114e08c70989c30a689902999fc705289fd1e2a41ac2800c2991832d366ddb5e",
+        "ramp-ramp-act.json": "f6638159fa561712c03f29f3e0c51a9519e3a543227112887731fcca831cd0c2",
+        "ramp-ramp-ended.json": "97b0a8f2e747fe2509906c70595ecd702d9805ba2111e08eb52d3c8314bb100e",
+        "ramp-t-elf-t-act.json": "9fea10f191afa715d7633a9bca77978b1325cabc84faafd03dd74220de50f865",
+        "ramp-t-elf-t-ended.json": "b2f24b13bd13d0711a3c531c7505a92e2b9d384e1d7cbb5ed64fba7e3dcd1b27",
+        "ramp-t-nemesis-t-act.json": "719ddf1233ad42406cf60dab06e0ea7465d8b12048c73beb2e62ae1d7c57ff69",
+        "ramp-t-nemesis-t-ended.json": "0e76127c561695699e24edd9bd32d940d20094a12f768b135078465795cd01ed",
+        "ramp-t-pirate-t-act.json": "836a671948cf8386573bb58088c25355aa87c72922cd282fcb62840752b52b71",
+        "ramp-t-pirate-t-ended.json": "d575a8ad8d802bbfdf875eff165e3dd68462dbdf1dbc8a88d41d95f1e70dd23f",
+        "ramp-t-ramp-t-act.json": "094ff4452d602df4130e66aec3de2828a3efe8408ea05c76165ce2bee3fe6f37",
+        "ramp-t-ramp-t-ended.json": "244341725b14bfd4f64adfa1fe93c9f3c0d52f21d68de756f52e133fcc918dbe",
+    }
+    assert {f.name: hashlib.sha256(f.read_bytes()).hexdigest() for f in installed.glob("*.json")} == pins
+    for pairing, folder in (("ramp-t-ramp-t", "cand-c2-hand-ramp"), ("elf-t-elf-t", "cand-c2-hand-elf-t-elf-t"),
+                            ("elf-t-nemesis-t", "cand-c2-hand-elf-t-nemesis-t")):
+        for moment in ("act", "ended"):
+            name = f"{pairing}-{moment}.json"
+            assert (installed / name).read_bytes() == (installed / folder / name).read_bytes()
+    models = PhasedLearned().models
+    named = {"ramp-t": decks.RAMP_T, "elf-t": decks.ELF_T, "nemesis-t": decks.NEMESIS_T, "pirate-t": decks.PIRATE_T,
+             "ramp": decks.RAMP_DRAGON}
+    for mine, theirs, key, extras in (("ramp-t", "ramp-t", ("ramp-t", "ramp-t"), ("hand",)),
+                                      ("elf-t", "elf-t", ("elf-t", "elf-t"), ("hand",)),
+                                      ("elf-t", "nemesis-t", ("elf-t", "nemesis-t"), ("hand",)),
+                                      ("nemesis-t", "elf-t", ("nemesis-t", "elf-t"), ()),
+                                      ("elf-t", "ramp-t", ("elf-t", "ramp-t"), ()),
+                                      ("ramp-t", "elf-t", ("ramp-t", "elf-t"), ()),
+                                      ("ramp", "ramp", ("ramp", "ramp"), ())):
+        state = start(decks.build(named[mine]), decks.build(named[theirs]), seed=1)
+        hit = next(k for k in matchup_keys(state, 0, ALIASES) if k + ("ended",) in models)
+        assert hit == key and models[hit + ("ended",)].extras == extras
+    assert LEVELS["normal"] == VERSIONS["v2r5558960"] == "mcts:115+plan+learned+phased=ref-5558960+reuse+mull=default"
+    assert LEVELS["strong"] == VERSIONS["v2s"] == "mcts:200+plan+learned+phased"
+    before = {n: d for n, d in pins.items() if not n.startswith(("ramp-t-ramp-t", "elf-t-elf-t", "elf-t-nemesis-t"))}
+    ref = folder_of("ref-5558960")                 # normal's models: the installed set before C2, file for file
+    assert {f.name for f in ref.glob("*.json")} == set(before) | {f"{p}-{m}.json" for p in ("elf-t-elf-t",
+                                                                   "elf-t-nemesis-t") for m in ("act", "ended")}
+    assert all(hashlib.sha256((ref / n).read_bytes()).hexdigest() == d for n, d in before.items())

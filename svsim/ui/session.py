@@ -37,7 +37,10 @@ DECKS = {"rhino": ("破魔虫精灵", decks.RHINO_FOREST), "ramp": ("跳费龙",
 # games, 2026-10-07). Both use the per-pairing models in svsim/learn/phased_models where one is installed.
 # normal = arena.VERSIONS["v2r"]: 115 iterations with +reuse is v2's time per move (2026-10-07, idle machine, the
 # same games: mcts:115+...+reuse 53.1 ms against v2's 53.4 ms per move; docs/architecture.md, 搜索树复用).
-LEVELS = {"fast": "greedy+plan+learned", "normal": "mcts:115+plan+learned+phased+reuse",
+# Since C2 (the hand feature set) went into the ramp-t mirror, the elf-t mirror and elf-t vs nemesis-t (2026-10-08,
+# gated at the strong level only), normal plays v2r on Version 15's frozen models (arena.VERSIONS["v2r5558960"]):
+# the same bot as before and its CR still good, until the hand models pass a gate at 115 iterations.
+LEVELS = {"fast": "greedy+plan+learned", "normal": "mcts:115+plan+learned+phased=ref-5558960+reuse+mull=default",
           "strong": "mcts:200+plan+learned+phased",
           # the bot before 2026-10-08's improvements (f631e14, also the normal level of the build published
           # before, 5175def): its models (phased_models/orig-f631e14: the Game8 Ramp mirror's only), no mirror
