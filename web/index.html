@@ -618,25 +618,20 @@ function openCard(c, moves, inHand) {
   showCardInfo(details, c.uid);
 }
 
-// The card's text and what the engine is counting for it, read from the game state (Session.card_info).
+// The card's text and the counts its own effect reads, from the game state (Session.card_info).
 async function showCardInfo(box, uid) {
   let info;
   try { info = await Backend.call("card_info", uid); } catch (e) { return; }
   if (!info || info.error || !box.isConnected) return;
   box.replaceChildren();
-  box.appendChild(el("div", "info-head", "效果"));
   info.text.forEach(t => box.appendChild(el("p", "info-text", t)));
   if (info.related.length) box.appendChild(el("p", "info-note", "相关的卡：" + info.related.join("、")));
-  const table = (title, rows, fmt) => {
-    if (!rows.length) return;
-    box.appendChild(el("div", "info-head", title));
+  if (info.counters.length) {
     const t = el("table", "info-table");
-    rows.forEach(([k, v]) => { const tr = el("tr"); tr.append(el("th", null, k), el("td", null, fmt ? fmt(v) : String(v))); t.appendChild(tr); });
+    info.counters.forEach(([k, v]) => { const tr = el("tr"); tr.append(el("th", null, k), el("td", null, String(v))); t.appendChild(tr); });
     box.appendChild(t);
-  };
-  table("这张卡的计数", info.counters);
-  table("条件（引擎此刻的判定）", info.conditions, v => v ? "已满足" : "未满足");
-  table("全局计数（" + (info.owner === "you" ? "你" : "AI") + "这一方，整局 / 本回合）", info.match);
+  }
+  if (info.play) box.appendChild(el("p", "info-note", info.play));
 }
 
 function showSheet() { $("sheet").hidden = false; $("scrim").hidden = false; }

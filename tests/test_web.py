@@ -343,7 +343,7 @@ def test_a_reviewed_turn_is_compared_by_its_impact_on_winning_once():
         assert Session().review(saved) and _fingerprint(_replay(saved)) == _fingerprint(_replay(record))
 
 
-def test_a_card_s_details_are_read_from_the_game_state():
+def test_a_card_s_details_show_only_what_its_own_effect_reads():
     from svsim.cards import library  # noqa: F401  (every card's script registered)
     from svsim.cards.pool import POOL
     from svsim.core import effects as E
@@ -352,18 +352,20 @@ def test_a_card_s_details_are_read_from_the_game_state():
     session.start("ramp-t", "elf-t", "fast", 4, "you")
     state = session.state
     me = state.players[0]
-    card = me.hand[0]
-    info = session.card_info(card.uid)
-    assert info["where"] == "hand" and info["text"] and info["english"] == card.defn.name
-    assert dict(info["match"])["进化点 / 超进化点"] == f"{me.ep} / {me.sep}"
+    plain = next(c for c in me.hand if c.defn.name == "Erntz, Governing Justice") if any(
+        c.defn.name == "Erntz, Governing Justice" for c in me.hand) else me.hand[0]
+    info = session.card_info(plain.uid)
+    assert info["where"] == "hand" and info["text"] and info["english"] == plain.defn.name
     assert session.card_info(state.players[1].hand[0].uid) == {"error": "看不到这张卡"}   # the AI's hand is hidden
-    skybound = state.new_instance(POOL[10454120], 0)          # a Skybound Art card in hand: the engine's gauge
+    skybound = state.new_instance(POOL[10454120], 0)          # a Skybound Art card: its gauge, nothing global
     me.hand.append(skybound)
     E.counters(skybound)["skybound"] = 3
     me.turns_taken = 7
-    info = card_info(state, skybound.uid)
-    assert dict(info["counters"])["奥义计量（自己的回合数 + 在手时己方进化次数）"] == f"{E.skybound_gauge(state, skybound)} / 10（超奥义 15）"
-    assert dict(info["conditions"])["奥义（计量 ≥ 10）"] is True and dict(info["conditions"])["超奥义（计量 ≥ 15）"] is False
-    me.entered[90071130] = 2                                   # two of one Artifact: one name
+    rows = dict(card_info(state, skybound.uid)["counters"])
+    assert rows["奥义计量（自己的回合数 + 在手时己方进化次数）"] == f"{E.skybound_gauge(state, skybound)} / 10"
+    assert rows["奥义"] == "已满足" and "墓地" not in rows and "连击（本回合己方使用的卡数）" not in rows
+    artist = state.new_instance(next(d for d in POOL.values() if d.name == "Audacious Artist"), 0)
+    me.hand.append(artist)                                    # an Artifact-counting card: just the count
+    me.entered[90071130] = 2                                  # two of one Artifact: one name
     me.entered[90071140] = 1
-    assert dict(card_info(state, skybound.uid)["match"])["本局进场的不同名造物"] == 2
+    assert dict(card_info(state, artist.uid)["counters"]) == {"本局进场的不同名造物": 2}

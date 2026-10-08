@@ -406,18 +406,46 @@ class Session:
         return out
 
 
-COUNTER_NAMES = {"spellboost": "魔力增幅（这张卡被增幅的次数）", "sigils": "土之印层数", "value": "这张卡自己的计数",
-                 "traits": "获得的种族", "fused": "已融合进来的卡", "wheel": "已用过的选项",
-                 "ghosts": "它召唤、等它离场时处理的随从数", "hand_stats": "在手里时的攻击 / 生命"}
-_INTERNAL = {"skybound"}                           # shown through the gauge below
+# What a card's script reads, found in its source (the class and the module's functions it names, so a shared
+# condition like portal.three_artifacts counts): the card details show these and nothing else.
+REFERENCES = {
+    "skybound": r"skybound", "spellboost": r"spellboost", "sigils": r"sigil", "value": r'"value"',
+    "fused": r"\bfused\b", "traits": r'"traits"|has_trait|add_trait', "combo": r"\.combo\b|\bcombo\(",
+    "rally": r"\.rally\b", "evolutions": r"\.evolutions\b", "artifacts": r"artifacts_entered|three_artifacts",
+    "shadows": r"\.shadows\b", "destroyed": r"\.destroyed\b", "once": r"once_per_turn",
+}
+_REFERENCED: dict = {}
+
+
+def referenced(script) -> set:
+    """The counters and conditions a card script reads (REFERENCES), from its source; empty if unreadable."""
+    import inspect
+    import re
+    cls = type(script)
+    if cls.__module__ == "svsim.core.script":       # no script of its own (the base class lists every attribute)
+        return set()
+    if cls not in _REFERENCED:
+        try:
+            src = inspect.getsource(cls)
+            module = inspect.getmodule(cls)
+            for name in set(re.findall(r"\b([A-Za-z_]\w*)\b", src)):
+                fn = getattr(module, name, None)
+                if inspect.isfunction(fn) and fn.__module__ == module.__name__:
+                    src += inspect.getsource(fn)
+            _REFERENCED[cls] = {key for key, pattern in REFERENCES.items() if re.search(pattern, src)}
+        except (OSError, TypeError):
+            _REFERENCED[cls] = set()
+    return _REFERENCED[cls]
 
 
 def card_info(state: GameState, uid: int, viewer: int = 0) -> dict:
-    """A card on the table as the engine has it: its text (the card scripts' own text, its granted abilities
-    too), every counter the engine keeps on it (CardInstance.counters and fields) and on its owner (the
-    match-wide ones, marked as such), and the conditions the engine itself judges for it now (Skybound Art,
-    the way it would be played, the moves it has). Nothing is worked out again here. Cards `viewer` can't
-    see (the other hand, the decks) aren't given."""
+    """A card on the table as the engine has it, kept to what its own effect is about: its text (the card
+    scripts' text, its granted abilities too) and the counts and conditions its scripts read (referenced:
+    the Skybound Art gauge, spellboosts, earth sigils, its own count, gained traits, fused cards, combo, rally,
+    evolutions this match, differently named Artifacts, cemetery, destroyed followers, a once-a-turn
+    trigger), each the engine's own value; a countdown; and, only when it matters, how a card in
+    hand would be played (not at all, or Enhanced / Accelerated / Crystallized). Cards `viewer` can't see
+    (the other hand, the decks) aren't given."""
     from svsim.core import effects as E
     from svsim.core.script import has_script, prop, scripts_of
     from svsim.cards.pool import POOL
@@ -430,8 +458,9 @@ def card_info(state: GameState, uid: int, viewer: int = 0) -> dict:
     if c is None:
         return {"error": "看不到这张卡"}
     owner = state.players[c.owner]
+    scripts = scripts_of(c)
     texts = []
-    for k, sc in enumerate(scripts_of(c)):
+    for k, sc in enumerate(scripts):
         doc = " ".join((type(sc).__doc__ or "").split())
         if doc and not doc.startswith("A card's abilities"):
             texts.append(("获得的能力：" if k else "") + doc)
@@ -439,57 +468,52 @@ def card_info(state: GameState, uid: int, viewer: int = 0) -> dict:
         texts.append(c.defn.text)
     if c.silenced:
         texts.insert(0, "能力已被移除。")
-    counters, other = [], []
-    for key, value in sorted((c.counters or {}).items(), key=lambda kv: str(kv[0])):
-        if key in _INTERNAL or not isinstance(key, str):
-            continue
-        if key == "fused":
-            value = "、".join(card_name(POOL[i]) if i in POOL else str(i) for i in (value or ()))
-        elif key == "ghosts":
-            value = len(value or ())
-        elif key == "traits":
-            value = "、".join(value or ())
-        elif key == "hand_stats":
-            value = f"{value[0]}/{value[1]}"
-        if key in COUNTER_NAMES:
-            counters.append([COUNTER_NAMES[key], value])
-        elif value == state.turn:
-            other.append([f"本回合已触发过（{key}）", "是"])
-        else:
-            other.append([f"引擎计数 {key}", value])
-    conditions = []
-    if prop(c, "skybound"):
+    refs = set().union(*(referenced(sc) for sc in scripts))
+    mine = c.counters or {}
+    rows = []
+    if "skybound" in refs or prop(c, "skybound"):
         gauge = E.skybound_gauge(state, c)
-        counters.insert(0, ["奥义计量（自己的回合数 + 在手时己方进化次数）", f"{gauge} / 10（超奥义 15）"])
-        conditions.append(["奥义（计量 ≥ 10）", gauge >= 10])
-        conditions.append(["超奥义（计量 ≥ 15）", gauge >= 15])
+        rows.append(["奥义计量（自己的回合数 + 在手时己方进化次数）", f"{gauge} / 10"])
+        rows.append(["奥义", "已满足" if gauge >= 10 else "未满足"])
+        if "super_skybound" in "".join(type(sc).__name__ for sc in scripts) or gauge >= 10:
+            rows.append(["超奥义（计量 ≥ 15）", "已满足" if gauge >= 15 else "未满足"])
+    if "spellboost" in refs:
+        rows.append(["魔力增幅（这张卡被增幅的次数）", mine.get("spellboost", 0)])
+    if "sigils" in refs and "sigils" in mine:
+        rows.append(["土之印层数", mine["sigils"]])
+    if "value" in refs:
+        rows.append(["这张卡自己的计数", mine.get("value", 0)])
+    if "fused" in refs and mine.get("fused"):
+        rows.append(["已融合进来的卡", "、".join(card_name(POOL[i]) if i in POOL else str(i) for i in mine["fused"])])
+    if "traits" in refs and mine.get("traits"):
+        rows.append(["获得的种族", "、".join(mine["traits"])])
     if c.countdown is not None:
-        counters.append(["吟唱", c.countdown])
-    if c.defn.is_follower and where == "field":
-        counters.append(["本回合已攻击", f"{c.attacks_made} / {c.max_attacks}"])
-    if where == "hand" and c.owner == state.active:
+        rows.append(["吟唱", c.countdown])
+    if "combo" in refs:
+        rows.append(["连击（本回合己方使用的卡数）", owner.combo])
+    if "rally" in refs:
+        rows.append(["联合（本局进场的己方随从数）", owner.rally])
+    if "evolutions" in refs:
+        rows.append(["本局己方进化次数", owner.evolutions])
+    if "artifacts" in refs:
+        names = {POOL[i].name for i in owner.entered if i in POOL and "Artifact" in POOL[i].traits}
+        rows.append(["本局进场的不同名造物", len(names)])
+    if "shadows" in refs:
+        rows.append(["墓地", owner.shadows])
+    if "destroyed" in refs:
+        rows.append(["本局被破坏的己方随从", len(owner.destroyed)])
+    if "once" in refs and where != "hand":
+        rows.append(["本回合已触发过", "是" if state.turn in mine.values() else "否"])
+    play = None
+    if where == "hand" and c.owner == state.active and state.phase == Phase.MAIN:
         form = play_form(owner, c)
-        if form is not None:
-            how = ("激奏" if form.as_spell else "结晶") if form.alt is not None else \
-                f"爆能强化 {form.enhanced}" if form.enhanced else "正常使用"
-            conditions.append([f"现在打出的方式：{how}", True])
-        else:
-            conditions.append(["现在打得出", False])
-    if c.owner == state.active and state.phase == Phase.MAIN:
-        mine = [a for a in legal_actions(state) if getattr(a, "uid", None) == uid or getattr(a, "attacker", None) == uid]
-        kinds = sorted({type(a).__name__ for a in mine})
-        names = {"PlayCard": "使用", "Evolve": "进化 / 超进化", "Attack": "攻击", "Engage": "启动", "Fuse": "融合"}
-        conditions.append(["现在能做：" + ("、".join(names.get(k, k) for k in kinds) if kinds else "没有"), bool(kinds)])
-    match = [["连击（本回合己方使用的卡数）", owner.combo], ["联合（本局进场的己方随从数）", owner.rally],
-             ["本局己方进化次数", owner.evolutions], ["墓地", owner.shadows],
-             ["自己的回合数", owner.turns_taken], ["进化点 / 超进化点", f"{owner.ep} / {owner.sep}"],
-             ["这张卡本局进场次数", owner.entered.get(c.defn.card_id, 0)],
-             ["本局被破坏的己方随从", len(owner.destroyed)]]
-    artifacts = {POOL[i].name for i in owner.entered if i in POOL and "Artifact" in POOL[i].traits}
-    if artifacts or "Artifact" in c.defn.traits:
-        match.append(["本局进场的不同名造物", len(artifacts)])
+        if form is None:
+            play = "现在打不出"
+        elif form.alt is not None:
+            play = "现在会以" + ("激奏" if form.as_spell else "结晶") + "打出"
+        elif form.enhanced:
+            play = f"现在会以爆能强化 {form.enhanced} 打出"
     related = [card_name(POOL[i]) for i in c.defn.related if i in POOL]
-    return {"uid": uid, "where": where, "owner": "you" if c.owner == viewer else "ai", "card": card_view(state, c, where == "hand"),
-            "english": c.defn.name, "traits": list(c.defn.traits), "text": texts or ["没有特殊能力。"],
-            "scripted": has_script(c.defn.card_id), "counters": counters + other, "match": match,
-            "conditions": conditions, "related": related}
+    return {"uid": uid, "where": where, "owner": "you" if c.owner == viewer else "ai",
+            "card": card_view(state, c, where == "hand"), "english": c.defn.name, "text": texts or ["没有特殊能力。"],
+            "scripted": has_script(c.defn.card_id), "counters": rows, "play": play, "related": related}
