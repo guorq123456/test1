@@ -18,10 +18,12 @@ pooled, B's own score on the same deals the zero; 95% bootstrap interval (pairs 
 Beside it, in brackets for the first rounds, the registered first form CR_ref + 236 logit p_A: outside the mirror
 the reference's ramp-t does not score 50% against the reference's other decks (ramp-t against pirate-t is about
 40%), so with A = B it puts the reference itself near 1262 instead of 1300.
-Round 1 (A = B = 20bcfbe) is the known-answer test: the ramp-t total should come out 1300 +- 47 and each cell
-+- 95. With the same agent seeds for A and B (tools.gate) the two play the same games, so A - B is exactly 0 and
-the decided CR is 1300 by construction: the real check is the column of games A and B played move for move
-alike (all of them, or the agents are not deterministic) and the registered form's offset (the decks' gap).
+Round 1 (A = B = 20bcfbe) is an identity check, not a statistical one (04:49Z): A runs the top-level "+phased"
+models of a checkout that has `phased_models/ruler-20261008/`, B and C "+phased=ruler-20261008"; with the same
+seeds and the same models, every pair must come out A - B = 0 with every game move for move alike, and the CR
+exactly 1300.0; 10 pairs a cell (--max 40). Any pair whose moves differ raises the alarm. (Before running, the
+snapshot's files are checked with sha256sum against the hashes in its README.) The first real link of the chain
+is the next install, at 50 pairs a cell.
 Per cell: A's and B's score against C (95% over pairs), A - B paired, who went first, and the CR of A - B on
 Salem's scale (the steady-state figure 800 x difference in brackets). Sizes: 100 games a cell is about +-10 points
 (+-95 CR); 400 about +-5 points (+-47 CR); about 360 games a cell for +-50 CR (before the pairing narrows A - B).
@@ -102,12 +104,19 @@ def cell_rows(cells, deck_of):
 def report_cr(label, cells, ref, nboot, round1):
     (adj, reg), (ia, ir) = cr_two_ways(cells, ref), boot(cells, ref, nboot)
     games = sum(2 * len(r) for r in cells.values())
-    line = (f"  {label}：**{adj:.0f}**（{ia[0]:.0f}～{ia[1]:.0f}）；A 对 C {pooled(cells, 'points'):.1%}、B 对 C "
+    fmt = ".1f" if round1 else ".0f"
+    line = (f"  {label}：**{adj:{fmt}}**（{ia[0]:.0f}～{ia[1]:.0f}）；A 对 C {pooled(cells, 'points'):.1%}、B 对 C "
             f"{pooled(cells, 'b_points'):.1%}，A {games} 局［照登记的算法 {reg:.0f}（{ir[0]:.0f}～{ir[1]:.0f}）］")
     if round1:
-        tol = 47 if games >= 400 else 95
-        line += f"；已知答案 {ref:.0f} ± {tol}：{'在圈内' if abs(adj - ref) <= tol else '出圈，查流程'}"
+        line += f"；恒等校验要求正好 {ref:.1f}：{'对' if abs(adj - ref) < 0.05 else '不对，报警'}"
     print(line)
+
+
+def identity_check(cells):
+    """Round 1: every pair A - B = 0 and every game move for move alike; the pairs that are not."""
+    bad = [(f"{d}_vs_{o}", r["k"]) for (d, o), rows in cells.items() for r in rows
+           if r["points"] != r["b_points"] or not all(r.get("same") or [False])]
+    return bad
 
 
 def main():
@@ -127,7 +136,7 @@ def main():
     round1 = ref == "20bcfbe" and "--not-control" not in sys.argv
     print(f"条件：对手卡表已知（牌序、手牌未知）。{folder}：A = 新版本，B = 参考版本 {ref}，C = 参考版本打对手卡组。"
           f"CR = 参考 CR + 236·(logit p_A − logit p_B)，区间 95%（按对的自助法）。"
-          + ("第 1 轮 A = B，是已知答案测试。" if round1 else "") + "\n")
+          + ("第 1 轮 A = B，是恒等校验：每对 A − B 必须为 0、着法全同，CR 正好是参考值。" if round1 else "") + "\n")
     if ramp:
         print(f"**① 跳费龙 bot 的 CR**（参考 {refcr['ramp-t']:.0f}）\n")
         cell_rows(ramp, None)
@@ -141,6 +150,11 @@ def main():
         print()
         for (d, o), rows in other.items():
             report_cr(f"{NAMES[d]}（参考 {refcr[d]:.0f}）", {(d, o): rows}, refcr[d], nboot, round1)
+    if round1:
+        bad = identity_check({**ramp, **other})
+        n = sum(len(r) for r in {**ramp, **other}.values())
+        print(f"\n**恒等校验**（第 1 轮，A = B）：{n} 对里 A − B ≠ 0 或着法不同的 {len(bad)} 对"
+              + ("：通过" if not bad else "：**报警**，" + "、".join(f"{c} 第 {k} 对" for c, k in bad[:20])))
     print("\n规模：每格 100 局约 ±10 个百分点（约 ±95 CR）；合计 400 局约 ±5 个百分点（约 ±47 CR）；"
           "每格要压到 ±50 CR 约需 360 局（A − B 配对后会窄一些）。")
 
