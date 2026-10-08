@@ -41,6 +41,7 @@ def cost(folder: Path, states: list, iterations: int) -> tuple[float, float]:
     best = {}
     for name in ("v2", "new", "v2", "new"):
         F._UNSEEN.clear()
+        getattr(F, "_HAND_MEMO", {}).clear()       # each pass starts cold: the second would see the first's hands
         search = ISMCTS(iterations=iterations, seed=1, weights=PhasedLearned(models=models[name], fallback=Learned()))
         t = time.perf_counter()
         for state in states:
