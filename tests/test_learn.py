@@ -605,7 +605,7 @@ def test_the_ruler_s_models_are_frozen_and_found_from_any_directory(tmp_path, mo
     from pathlib import Path
     from svsim.learn.phased import folder_of, load
     from svsim.tools.arena import VERSIONS
-    assert VERSIONS["ruler20261008"] == "mcts:200+plan+learned+phased=ruler-20261008"
+    assert VERSIONS["ruler20261008"] == "mcts:200+plan+learned+phased=ruler-20261008+mull=by:elf-t=rules"
     monkeypatch.chdir(tmp_path)                    # found by name from any directory
     folder = folder_of("ruler-20261008")
     assert len(load(folder)) == 20

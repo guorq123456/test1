@@ -135,6 +135,7 @@ def test_records_say_which_bot_played_and_old_records_still_read():
     from svsim.tools.arena import VERSIONS
     from svsim.ui.session import LEVELS, bot_of
     assert LEVELS["normal"] == VERSIONS["v2r"] and LEVELS["strong"] == VERSIONS["v2s"]
+    assert {f"level-{k}": v for k, v in LEVELS.items()} == {k: v for k, v in VERSIONS.items() if k.startswith("level-")}
     assert LEVELS["original"] == "mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default"
     session = Session()
     session.start("rhino", "ramp", "normal", 3, "you")

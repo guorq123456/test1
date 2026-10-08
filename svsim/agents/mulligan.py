@@ -222,12 +222,16 @@ def by_rules(hand, rules: Rules, threshold: int = 5) -> tuple:
 
 def decide(state, spec: str = "default", threshold: int = 5, seed: int = 0) -> tuple:
     """The hand positions to redraw for the player to act in `state` (at the mulligan), by `spec`:
-    "default", "rules[:VARIANT,...]" or "sim[:N[:H]]" (see the module's docstring). Plays no game: the
+    "default", "rules[:VARIANT,...]", "sim[:N[:H]]" (see the module's docstring) or "by:DECK=SPEC/DECK=SPEC" (one
+    of those per deck key, "default" for the decks not named). Plays no game: the
     test session compares the ways on fixed opening hands with it (`opening` deals one)."""
     kind, _, arg = spec.partition(":")
     if kind == "default":
         return mulligan(state, threshold).indices
     p = state.players[state.active]
+    if kind == "by":                               # by:DECK=SPEC/DECK=SPEC: per deck, the default for the others
+        ways = dict(part.split("=", 1) for part in arg.split("/") if part)
+        return decide(state, ways.get(_deck_key(p.hand + p.deck), "default"), threshold, seed)
     if kind == "rules":
         foe = state.players[1 - state.active]
         rules = draft_rules(_deck_key(p.hand + p.deck), state.active == state.first, _deck_key(foe.hand + foe.deck),
@@ -240,12 +244,13 @@ def decide(state, spec: str = "default", threshold: int = 5, seed: int = 0) -> t
     raise ValueError(f"unknown mulligan {spec!r}")
 
 
-# The opening redraw a deck uses by default where it isn't the agents' own (mulligan): the drafted
-# rules for the tournament Combo Forest (the local machine's runs, 2026-10-08 02:43Z: R - D +2.7% +- 2.1%
-# over 1200 pairs against a pool of the four tournament decks, the lower end above 0 as registered at
-# 23:40Z). The other three keep the default (pirate-t pooled lower end -0.5, ramp-t and nemesis-t H0).
-# Chosen by the deck's name: a way to redraw, not a feature of the evaluation. arena "+mull=default" turns it off.
-BY_DECK = {"elf-t": "rules"}
+# The opening redraw a deck uses by default where it isn't the agents' own (mulligan). None since
+# 2026-10-08 05:27Z: the tournament Combo Forest had the drafted rules from 02:46Z (R - D +2.7% +- 2.1%
+# over 1200 pairs against a pool of the four tournament decks), but the re-gate at the deployed state
+# (four parts pooled, 1200 pairs) gave R - D +0.5% +- 2.0%, lower end -1.5% <= 0, so it went back to the
+# default by the registered rule. Bots measured while it held pin it with "+mull=by:elf-t=rules" (the
+# ruler, ruler20261008). Chosen by the deck's name: a way to redraw, not a feature of the evaluation.
+BY_DECK: dict = {}
 
 
 def opening_redraw(state) -> Mulligan:
@@ -272,7 +277,13 @@ class MulliganMode:
 def decide_spec_ok(spec: str) -> None:
     """ValueError for a mulligan spec decide would not take."""
     kind, _, arg = spec.partition(":")
-    if kind == "rules":
+    if kind == "by":
+        for part in arg.split("/"):
+            deck, eq, way = part.partition("=")
+            if not eq or not deck or way.startswith("by"):
+                raise ValueError(f"mulligan by takes by:DECK=SPEC/DECK=SPEC, not {spec!r}")
+            decide_spec_ok(way)
+    elif kind == "rules":
         bad = [v for v in arg.split(",") if v and v not in VARIANTS]
         if bad:
             raise ValueError(f"unknown mulligan variants {bad}")

@@ -13,11 +13,14 @@
   "fast": {
    "decks": {
     "ramp-t": {
-     "cr": null,
-     "ci": null,
-     "games": 0,
-     "measured_vs": null,
-     "note": "待标定"
+     "cr": 945,
+     "ci": [
+      865,
+      1007
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "greedy+plan+learned 打尺子的四套牌，每格 50 对；对尺子只拿 10%～24% 的分，超出稳态式的适用范围，区间按对自助法算"
     },
     "elf-t": {
      "cr": null,
@@ -45,11 +48,14 @@
   "normal": {
    "decks": {
     "ramp-t": {
-     "cr": null,
-     "ci": null,
-     "games": 0,
-     "measured_vs": null,
-     "note": "待标定"
+     "cr": 1295,
+     "ci": [
+      1254,
+      1335
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "v2r 打尺子的四套牌，每格 50 对"
     },
     "elf-t": {
      "cr": null,
@@ -92,7 +98,7 @@
      ],
      "games": 200,
      "measured_vs": "20bcfbe",
-     "note": "第 2 轮：连击妖对机锋一格 ΔCR +107，其余三格模型没变、记 0，四格平均 +27"
+     "note": "R 下测（连击妖规则换牌），代码默认已改回 D，待第 3 轮。第 2 轮：连击妖对机锋一格 ΔCR +107，其余三格模型没变、记 0，四格平均 +27"
     },
     "nemesis-t": {
      "cr": 1300,

@@ -108,21 +108,44 @@ def test_the_simulated_redraw_is_a_subset_and_repeats_with_its_seed():
     assert set(a) <= set(range(len(s.players[s.active].hand))) and a == M.decide(s, "sim:1:1", seed=2)
 
 
-def test_the_tournament_combo_forest_redraws_by_its_rules_by_default():
+def test_every_deck_redraws_by_default_and_the_ruler_keeps_elf_t_s_rules():
     from svsim.agents.greedy_agent import mulligan as agents_redraw
     from svsim.agents.mulligan import BY_DECK, decide, opening
+    from svsim.core.engine import legal_actions
     from svsim.tools.arena import make_agent
-    assert BY_DECK == {"elf-t": "rules"}
+    assert BY_DECK == {}                           # elf-t back to the default (05:27Z, the re-gate)
     differs = 0
     for seed in range(40):
         for first in (True, False):
             elf = opening("elf-t", "ramp-t", first, seed)
-            assert agents_redraw(elf).indices == decide(elf, "rules")             # elf-t: the rules
-            differs += agents_redraw(elf).indices != decide(elf, "default")
-            ramp = opening("ramp-t", "elf-t", first, seed)
-            assert agents_redraw(ramp).indices == decide(ramp, "default")         # the others as before
+            assert agents_redraw(elf).indices == decide(elf, "default")
+            differs += decide(elf, "rules") != decide(elf, "default")
     assert differs > 0
-    state = opening("elf-t", "ramp-t", True, 3)
+    state = opening("elf-t", "ramp-t", True, 3)    # the ruler pins the rules it played with (by version name)
+    for seed in range(40):
+        state = opening("elf-t", "ramp-t", True, seed)
+        if decide(state, "rules") != decide(state, "default"):
+            break
+    ruler = make_agent("ruler20261008", 1).act(state, legal_actions(state))
+    assert ruler.indices == decide(state, "rules") != decide(state, "default")
+    ramp = opening("ramp-t", "elf-t", True, 3)
+    assert make_agent("ruler20261008", 1).act(ramp, legal_actions(ramp)).indices == decide(ramp, "default")
+
+
+def test_a_mulligan_by_deck_pins_one_deck_s_way_and_leaves_the_others_at_the_default():
+    from svsim.agents.mulligan import decide, decide_spec_ok, opening
     from svsim.core.engine import legal_actions
-    off = make_agent("mcts:5+plan+mull=default", 1).act(state, legal_actions(state))
-    assert off.indices == decide(state, "default")                                 # "+mull=default": off
+    from svsim.tools.arena import make_agent
+    for seed in range(20):
+        for first in (True, False):
+            elf = opening("elf-t", "ramp-t", first, seed)
+            assert decide(elf, "by:elf-t=rules") == decide(elf, "rules")
+            ramp = opening("ramp-t", "elf-t", first, seed)
+            assert decide(ramp, "by:elf-t=rules") == decide(ramp, "default")
+            assert decide(ramp, "by:elf-t=rules/ramp-t=rules") == decide(ramp, "rules")
+    state = opening("elf-t", "ramp-t", True, 3)          # as an agent option (the ruler's pinned redraw)
+    pinned = make_agent("mcts:5+plan+mull=by:elf-t=rules", 1).act(state, legal_actions(state))
+    assert pinned.indices == decide(state, "rules")
+    for bad in ("by:elf-t", "by:elf-t=nope", "by:elf-t=by:x=rules"):
+        with pytest.raises(ValueError):
+            decide_spec_ok(bad)

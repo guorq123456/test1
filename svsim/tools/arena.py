@@ -90,9 +90,14 @@ VERSIONS = {
     # the same at strong (mcts:230+reuse vs v2s) is even (49.2% +- 2.2%), so there is no v2sr
     "v2r": "mcts:115+plan+learned+phased+reuse",
     # the ruler (2026-10-08): v2s with the models installed at 20bcfbe, frozen in phased_models/ruler-20261008 (the
-    # CR calibration's fixed reference, never changed; the search code is the current one, see its README)
-    "ruler20261008": "mcts:200+plan+learned+phased=ruler-20261008",
+    # CR calibration's fixed reference, never changed; the search code is the current one, see its README), with
+    # the opening redraw it had then (elf-t by the rules; the code default went back at 05:27Z)
+    "ruler20261008": "mcts:200+plan+learned+phased=ruler-20261008+mull=by:elf-t=rules",
 }
+# The trainer's levels by name (level-fast / level-normal / level-strong / level-original): the specs in
+# svsim.ui.session.LEVELS themselves, so a gate or the CR calibration can't play a hand-copied variant.
+from svsim.ui.session import LEVELS as _LEVELS    # noqa: E402  (session imports this module only lazily)
+VERSIONS.update({f"level-{level}": spec for level, spec in _LEVELS.items()})
 
 
 def _prior_options(options) -> dict:
@@ -115,6 +120,8 @@ def make_agent(spec: str, seed: int):
     """The agent `spec` names; "+mull=WAY" redraws its opening hand that way (agents.mulligan.decide:
     default, rules[:VARIANT,...], sim[:N[:H]]) and changes nothing else."""
     parts = spec.split("+")
+    if parts[0] in VERSIONS:                       # a version first: its own options may set the redraw (the ruler)
+        parts = VERSIONS[parts[0]].split("+") + parts[1:]
     mull = [p[len("mull="):] for p in parts if p.startswith("mull=")]
     agent = _make_agent("+".join(p for p in parts if not p.startswith("mull=")), seed)
     if mull:

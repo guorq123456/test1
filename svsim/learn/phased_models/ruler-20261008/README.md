@@ -1,11 +1,15 @@
 # 尺子的模型（2026-10-08，永远不动）
 
-「尺子」= `ruler20261008`（`svsim/tools/arena.py` 的 VERSIONS）= `mcts:200+plan+learned+phased=ruler-20261008`：跳费龙 bot 的强档（v2s 的搜索），评估器用的是这里冻结的模型。CR 标定赛的固定参照（Salem 2026-10-08 04:29Z：以目前的跳费龙为 CR 基准，定 1300）。
+「尺子」= `ruler20261008`（`svsim/tools/arena.py` 的 VERSIONS）= `mcts:200+plan+learned+phased=ruler-20261008+mull=by:elf-t=rules`：跳费龙 bot 的强档（v2s 的搜索），评估器用的是这里冻结的模型。CR 标定赛的固定参照（Salem 2026-10-08 04:29Z：以目前的跳费龙为 CR 基准，定 1300）。
 
 - 来源：提交 20bcfbe 时 `svsim/learn/phased_models/` 顶层的全部 20 个文件，原样复制（`git show 20bcfbe:svsim/learn/phased_models/<文件>`）。共 10 个评估器，每个由回合结束和回合中两个文件组成：9 个按组合新拟的，加上原版跳费龙镜像的 ramp-ramp（ramp-t 镜像通过别名借用它）。
 - 这个目录不会被默认加载（默认只读 `phased_models` 顶层），只有写 `+phased=ruler-20261008` 才用（`learn.phased.folder_of` 按名字找 `phased_models/<名字>`，在哪个目录启动都一样）。网页包不带它。以后每次发布同样快照一份 `phased_models/ref-<7 位提交>/`；这一份就是 ref-20bcfbe，名字保留不改。
 - 核对：同种子（616161）`ruler20261008` 和当时的 `v2s` 逐步相同（ramp-t 镜像 61 步、elf-t 对 ramp-t 43 步）。
-- 只冻结了模型，搜索、规则和换牌的代码仍是当前检出的。连击妖起手用规则换牌（R，7d219cc）早于 20bcfbe，是代码里的默认，不在这里。一旦改了搜索或换牌代码，尺子就得跑在冻结的检出里，才能保证还是同一个 bot。
+- 起手换牌：20bcfbe 时连击妖用规则换牌（R，7d219cc 起是代码默认），其余三套用默认。2026-10-08 05:27Z 代码默认改回 D（R 在部署态重过门，四段合并 R − D = +0.5% ± 2.0%，下沿 ≤ 0），所以尺子的串里钉了 `+mull=by:elf-t=rules`。
+  - 核对：同种子 919191 打 8 局（elf-t 对 ramp-t、nemesis-t 对 elf-t、elf-t 对 pirate-t、elf-t 镜像各 2 局）。钉住后的尺子和改默认之前检出里的尺子逐步相同，8 局都一样。不钉的话，同样 8 局全都不同。
+  - 以后每个 `ref-<sha>` 别名，都要带那个版本当时生效的起手写法：模型快照之外，只有它会漂。
+  - 手写串时要用别名 `ruler20261008`。手写的 `+phased=ruler-20261008` 不带起手，打连击妖就不是尺子了。
+- 只冻结了模型和起手，搜索和规则的代码仍是当前检出的。一旦改了搜索代码，尺子就得跑在冻结的检出里，才能保证还是同一个 bot。
 
 （.gitattributes 让这些文件检出时不转换换行；2026-10-08 之前的 Windows 检出可能是 CRLF，要先去掉 \r 再核对，或者重新检出。）
 
