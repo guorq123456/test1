@@ -18,7 +18,9 @@ quarter of that (about +-24), four changed cells about +-47.
 
 --identity (the identity check, 04:49Z): every pair must come out A - B = 0 with every game move for move alike
 (A the top-level models, B and C the ruler snapshot `ruler-20261008`, alias ruler20261008; the snapshot's files
-checked with sha256sum against its README first); any pair that is not raises the alarm.
+checked with sha256sum against its README first); any pair that is not raises the alarm. On a Windows checkout
+with core.autocrlf=true the files on disk carry \r\n and none of the hashes match: hash them with the \r
+removed (or from `git show <commit>:<path>`), as the local machine found (05:02Z).
 
 --levels: the sparring table's levels against the ruler, files `<level>_<deck>_vs_<opponent>.jsonl`, level x deck x
 the four; each level gets one CR per deck, 1300 + the mean of that deck's four cells' dCR (for svsim/ui/ratings.json).
