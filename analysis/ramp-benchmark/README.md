@@ -74,6 +74,23 @@
 6. 联赛里含连击妖的格（镜像、对机锋、对旗皇、对跳费龙），也在 `benchmark/20261008-3` 上用 25000000 重跑。
 - **强档连击妖的 1327 是在 R 下量的**；第 3 轮已重量，结果见「每轮结果」第 3 轮那一行（1366）。
 
+**第 5 轮：装机 C2（跳费龙镜像 hand 特征）**（架构线程 08:2x；第 4 轮的编号留给预留的连击妖加跑，59000000～59300000，跑不跑看 34 格）：
+- 起因：C2 过了装机门（`analysis/refit-200/README.md`「C2 装机门（正式，N = 179）」），建造线把它装到跳费龙镜像，训练基准 `benchmark/20261008-4`。
+- **只跑一格**：跳费龙对跳费龙（`ramp-t_vs_ramp-t`），A = 装机后的 `level-strong`，B = C = `ruler20261008`，种子 60500000，定长 50 对（`--max 200`），和第 3 轮相同。其余 15 格的模型没变，逐对恒等记 0（J4）；跳费龙 CR = 1300 + 这一格的 ΔCR ÷ 4，误差约 ±24。
+- **读法提醒**：装机后陪练台强档跑的是 `mcts:200`，所以这一格量的是「装机 C2 在 200 次」对尺子，比装机门（C2 179 次对现装 200 次，+41）多约 12% 算力（按 J2 约 +2 CR），而且是 `--versus` 对尺子、每格 50 对（约 ±95）。两个数不是同一个量，不拿来互相核对。
+- **本机排队的命令**（拉下装机提交以后，在仓库根目录跑）：
+  1. 先核对：尺子快照照第 1 轮的办法核 sha256（Windows 检出用 `git show` 取原样内容算）；再核装机后顶层 `svsim/learn/phased_models/ramp-t-ramp-t-ended.json`、`-act.json` 和 `cand-c2-hand-ramp/` 里的同名文件 sha256 相同。
+  2. 恒等抽查（10 对、40 局，约一分钟；装机提交动了特征代码时防别的格被带着变）：
+     ```
+     python -m svsim.tools.gate --a level-strong --b ruler20261008 --versus ruler20261008 --deck ramp-t --opponent elf-t --fixed --max 40 --seed 49100000 --out analysis/calibration/round5-identity/ramp-t_vs_elf-t.jsonl
+     ```
+     种子用第 1 轮同一格的 49100000～49100009，恒等校验不是统计量，重用不占库。预期 10 对 A − B 全为 0、着法全同；有一对不同就停下，先报我和架构线程，标定格不跑。
+  3. 标定格：
+     ```
+     python -m svsim.tools.gate --a level-strong --b ruler20261008 --versus ruler20261008 --deck ramp-t --opponent ramp-t --fixed --max 200 --seed 60500000 --out analysis/calibration/round5/ramp-t_vs_ramp-t.jsonl
+     ```
+  - 我这边读：`calibrate.py analysis/calibration/round5-identity --identity`，再 `calibrate.py analysis/calibration/round5 --ref 20bcfbe --ref-cr ramp-t=1300 elf-t=1366 nemesis-t=1300 pirate-t=1300`（缺的 15 格按 0）。
+
 **各档 CR**（陪练台每个档位旁显示的数；建造线写进 `svsim/ui/ratings.json`，显示版本、提交和 CR）：
 - 三档：原始版 `mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default`、普通 `v2r` = `mcts:115+plan+learned+phased+reuse`、快速 `greedy+plan+learned`；强档 = `mcts:200+plan+learned+phased`，就是当前装机态的 v2s。
 - **规矩**（架构线程 05:24Z）：各档的串以陪练台 `svsim.ui.session.LEVELS` 为准，命令里不手写。建造线会给每档加 `VERSIONS` 别名（`level-fast`、`level-normal`、`level-strong`、`level-original`，从 `LEVELS` 生成），以后命令写别名。这一次快速档原来登记成带 `+phased`，是手写串写错了，已更正。
