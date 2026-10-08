@@ -1,6 +1,7 @@
 """The ramp depth curve: the score of mcts:N against v2 by iteration count, read as a curve.
 
-    cd <svsim checkout> && PYTHONPATH=. python3 <this> 50=gate_50.jsonl 200=gate_200.jsonl ... [--deck ramp-t]
+    cd <svsim checkout> && PYTHONPATH=. python3 <this> 50=gate_50.jsonl 200=gate_200.jsonl ... [--deck ramp-t] \
+        [cell:ramp-t/elf-t=gate.jsonl ...]       # --versus cells: DECK/OPPONENT, A and B both play DECK against C
 
 Each file is a tools.gate result (one line a pair: A's points in seat 0 and seat 1; with --versus, `b_points` too
 and the pair's score is 0.5 + A's mean - B's). Per iteration count: the score (pairs averaged, 95% interval over
@@ -36,12 +37,13 @@ def mean_var(xs):
     return m, sum((x - m) ** 2 for x in xs) / max(n - 1, 1) / n          # the mean and its variance
 
 
-def first_of(seed, deck):
+def first_of(seed, deck, opp=None):
+    """Who goes first on `seed` with `deck` in seat 0 (tools.gate builds the seat-1 game with the decks swapped
+    on the same seed; the first player comes from the seed alone)."""
     from svsim.cards import decks
     from svsim.core.engine import new_game
     from svsim.ui.session import DECKS
-    cards = decks.build(DECKS[deck][1])
-    return new_game(cards, list(cards), seed=seed).first
+    return new_game(decks.build(DECKS[deck][1]), decks.build(DECKS[opp or deck][1]), seed=seed).first
 
 
 def wls(xs, ys, ws):
@@ -54,7 +56,8 @@ def wls(xs, ys, ws):
 
 
 def main():
-    args = [a for a in sys.argv[1:] if "=" in a and not a.startswith("--")]
+    args = [a for a in sys.argv[1:] if "=" in a and not a.startswith("--") and not a.startswith("cell:")]
+    cell_args = [a[5:] for a in sys.argv[1:] if a.startswith("cell:")]
     deck = sys.argv[sys.argv.index("--deck") + 1] if "--deck" in sys.argv else "ramp-t"
     rows = {}
     for a in args:
@@ -104,6 +107,24 @@ def main():
         dcr = SALEM * (lx[800] - lx[400])
         se = SALEM * math.sqrt(1 / lw[800] + 1 / lw[400])
         print(f"400 → 800：{dcr:+.0f} ± {1.96 * se:.0f} CR")
+    if cell_args:
+        print("\n--versus 的格（A、B 都打前一个卡组，C 打后一个；一对的得分 = 0.5 + A 的平均 − B 的平均）：\n")
+        print("| 格 | 对数 | 一对的得分 | CR（稳态式） | A 对 C | B 对 C | A 先手 / 后手 |")
+        print("|---|---|---|---|---|---|---|")
+        for a in cell_args:
+            label, path = a.split("=", 1)
+            d1, d2 = label.split("/")
+            rs = [json.loads(line) for line in open(path, encoding="utf-8") if line.strip()]
+            m, v = mean_var([pair_score(d) for d in rs])
+            pa = sum(x for d in rs for x in d["points"]) / (2 * len(rs))
+            pb = sum(x for d in rs for x in d["b_points"]) / (2 * len(rs))
+            firsts, seconds = [], []
+            for d in rs:
+                f = first_of(d["seed"], d1, d2)
+                for seat in (0, 1):
+                    (firsts if seat == f else seconds).append(d["points"][seat])
+            print(f"| {label} | {len(rs)} | {m:.1%} ± {1.96 * math.sqrt(v):.1%} | {SALEM * logit(m):+.0f}（{800 * (m - 0.5):+.0f}） | "
+                  f"{pa:.1%} | {pb:.1%} | {sum(firsts) / len(firsts):.1%} / {sum(seconds) / len(seconds):.1%} |")
 
 
 if __name__ == "__main__":
