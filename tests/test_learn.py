@@ -494,3 +494,36 @@ def test_a_payoff_card_still_in_the_deck_counts_by_its_draw_chances():
     justice = [c for c in p.deck if c.defn.card_id == 10544110]            # 10 play points, tier 2
     assert justice and deck_payoff(justice, 10) > deck_payoff(justice, 1) > 0    # out of reach counts less
     assert deck_payoff([c for c in p.deck if c.defn.cost <= 1], 10) == 0.0
+
+
+def test_the_mimic_prior_mixes_two_heads_without_card_ids(tmp_path):
+    import numpy as np
+    from svsim.cards import decks
+    from svsim.core.actions import EndTurn, Mulligan
+    from svsim.core.engine import apply, legal_actions, new_game
+    from svsim.learn.mimic import MOVE_WIDTH, MimicNet, MimicPrior, position, rows
+
+    def opening(a, b):
+        state = new_game(decks.build(decks.NAMED[a]), decks.build(decks.NAMED[b]), seed=3)
+        apply(state, Mulligan(()))
+        apply(state, Mulligan(()))
+        p = state.players[state.active]
+        p.pp = p.max_pp = 6                                                  # a choice of plays
+        return state
+    state = opening("ramp", "ramp")
+    assert len(legal_actions(state)) > 2
+    legal = legal_actions(state)
+    X = rows(state, legal)
+    assert X.shape == (len(legal), len(position(state)) + MOVE_WIDTH)
+    end = X[[i for i, a in enumerate(legal) if isinstance(a, EndTurn)][0]]
+    assert end[len(position(state)) + 4] == 1.0                           # the end-turn kind, no card one-hot
+    rng = np.random.default_rng(0)
+    for name in ("player", "selfplay"):
+        params = {"W1": rng.normal(size=(X.shape[1], 4)), "b1": np.zeros(4), "w2": rng.normal(size=4), "b2": np.zeros(())}
+        MimicNet(params, np.zeros(X.shape[1]), np.ones(X.shape[1]), info={"matchup": "ramp-ramp"}).save(tmp_path / f"{name}.npz")
+    mixed = MimicPrior(0.3, tmp_path).priors(state, legal)
+    alone = MimicPrior(0.0, tmp_path).priors(state, legal)
+    selfplay = MimicNet.load(tmp_path / "selfplay.npz").priors(state, legal)
+    assert abs(mixed.sum() - 1) < 1e-9 and np.allclose(alone, selfplay) and not np.allclose(mixed, alone)
+    other = opening("elf-t", "ramp-t")
+    assert MimicPrior(0.3, tmp_path).priors(other, legal_actions(other)) is None   # its matchup only
