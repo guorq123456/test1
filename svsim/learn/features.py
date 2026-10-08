@@ -331,11 +331,16 @@ EXTRAS = {
     "tempo": ["me_tempo", "me_tempo_x_mid", "me_tempo_x_late"],
     "hand": [f"me_handplay_{r}" for r in ("face", "removal", "heal", "draw", "ramp", "body")],
     "board": ["me_pressure", "me_hp_early", "me_hp_mid", "op_pressure", "op_hp_early", "op_hp_mid"],
+    "hpphase": ["me_hp_early", "me_hp_mid", "op_hp_early", "op_hp_mid"],
 }
 # - "board" (6, C3, the analysis thread's analysis/c3-threat/README.md section 4, 09f7ca2): for each side s (mine,
 #   then the opponent's; e its enemy) pressure = min(_board_threat(e) / max(s's leader HP, 1), 1.5), then s's leader
 #   HP x [the scored player's own turn <= 4] and x [5 <= that turn <= 7] (both sides by the scored player's turn).
 #   The residuals: the existing features take HP and the incoming threat linearly, while their worth isn't.
+#   Superseded by "hpphase" (analysis 3e6b4f2, section 6: with the existing board terms in the regression the
+#   pressure slopes go away); kept for the cand-c3-board-* folders, for reference only.
+# - "hpphase" (4, C3 revised): board without the two pressures: my HP x [the scored player's own turn <= 4] and
+#   x [5 <= that turn <= 7], then the opponent's.
 
 
 def extra_names(extras) -> list[str]:
@@ -402,7 +407,15 @@ def _board_values(state: GameState, player: int) -> list[float]:
     return out
 
 
-EXTRA_FNS = {"tempo": _tempo_values, "hand": playable_hand_roles, "board": _board_values}
+def _hpphase_values(state: GameState, player: int) -> list[float]:
+    turn = state.players[player].turns_taken
+    early, mid = float(turn <= 4), float(5 <= turn <= 7)
+    me, op = state.players[player].leader_hp, state.players[1 - player].leader_hp
+    return [me * early, me * mid, op * early, op * mid]
+
+
+EXTRA_FNS = {"tempo": _tempo_values, "hand": playable_hand_roles, "board": _board_values,
+             "hpphase": _hpphase_values}
 
 
 def extra_features(state: GameState, player: int, extras) -> list[float]:
