@@ -8,8 +8,10 @@ Each file is a tools.gate --versus run (a line a pair: A's points in seat 0 and 
 the same C on the same deals). Per gate: the pair score 0.5 + A - B with its 95% interval (pairs), CR on Salem's
 scale (236 a logit; steady state 800 x difference in brackets), the verdict (lower end > 50%: passes), A and B
 against C, A's score when it went first and second (who goes first comes from the seed), games A and B played
-move for move alike. B's own games are checked across the files: on the same seeds with the same B and C they must
-be the same games (same points in every seat) - when two gates share B. Then for each requested pair X-Y of
+move for move alike. B's own games are checked across the files: a --versus pair is A's two games against C and
+B's two against C on the same deal, so B's games do not involve A at all; on the same seeds with the same B, C and
+code they must be the same games (same points in every seat). Only gates sharing B are compared (A200, A', A100 share
+B = level-strong; C1, C2 share B = A200); a difference means B, C or the code differed between the runs. Then for each requested pair X-Y of
 candidates on the same seeds: (A_X - A_Y) per seed, both against the same C, with its interval - B drops out;
 for a C gate whose B is A200, X-B is already that difference.
 Condition: the opponent's 40-card list is known (order and hand not).
