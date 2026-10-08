@@ -34,12 +34,19 @@ def observe(state: GameState, player: int) -> dict:
             "opponent": {**side(opp), "hand": len(opp.hand)}}
 
 
-def determinize(state: GameState, player: int, rng: random.Random, weights: dict | None = None) -> GameState:
+def determinize(state: GameState, player: int, rng: random.Random, weights: dict | None = None,
+                oracle: bool = False) -> GameState:
     """One guess at what `player` can't see. With `weights` ({uid: weight}, 1 if absent; search.infer), the
-    opponent's hand is drawn by weight without replacement (Efraimidis-Spirakis keys) instead of uniformly."""
+    opponent's hand is drawn by weight without replacement (Efraimidis-Spirakis keys) instead of uniformly. With
+    `oracle` (an experiment: what knowing it is worth) the opponent's hand is their real one and only their deck's
+    order is guessed."""
     s = state.clone()
     me, opp = s.players[player], s.players[1 - player]
     rng.shuffle(me.deck)
+    if oracle:
+        rng.shuffle(opp.deck)
+        s.rng.seed(rng.getrandbits(64))
+        return s
     pool = opp.hand + opp.deck
     if weights:
         keys = [rng.random() ** (1.0 / weights.get(c.uid, 1.0)) for c in pool]

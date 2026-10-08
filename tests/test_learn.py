@@ -947,3 +947,46 @@ def test_whole_game_cost_counts_only_the_searched_decisions():
     r = game_cost("mcts:5+plan+learned+phased", "ramp-t", "ramp-t", 1, 3)
     assert r["searched_per_game"] == searched and r["decisions_per_game"] == decisions
     assert abs(r["s_per_decision"] * searched - r["search_s_per_game"]) < 1e-9
+
+
+def test_oracle_sees_the_opponent_s_real_hand_and_off_draws_as_before():
+    """+oracle (2026-10-08, an experiment: what knowing the opponent's hand is worth): the drawn hand is their real
+    hand and only their deck is shuffled; off, determinize uses the random numbers exactly as before."""
+    import random
+    from svsim.agents.mulligan import opening
+    from svsim.agents.random_agent import RandomAgent
+    from svsim.core.engine import apply, legal_actions
+    from svsim.core.enums import Phase
+    from svsim.core.view import determinize
+    from svsim.tools.arena import make_agent
+    from svsim.tools.gate import _search
+
+    def before(state, player, rng):               # the definition before weights and oracle (2026-10-08)
+        s = state.clone()
+        me, opp = s.players[player], s.players[1 - player]
+        rng.shuffle(me.deck)
+        pool = opp.hand + opp.deck
+        rng.shuffle(pool)
+        opp.hand, opp.deck = pool[:len(opp.hand)], pool[len(opp.hand):]
+        s.rng.seed(rng.getrandbits(64))
+        return s
+
+    state = opening("ramp-t", "elf-t", True, 3)
+    bot = RandomAgent(seed=2)
+    while state.phase != Phase.MAIN:
+        apply(state, bot.act(state, legal_actions(state)))
+    me = state.active
+    them = state.players[1 - me]
+    for seed in range(5):
+        a, b = determinize(state, me, random.Random(seed)), before(state, me, random.Random(seed))
+        for x, y in zip(a.players, b.players):
+            assert [c.uid for c in x.hand] == [c.uid for c in y.hand] and [c.uid for c in x.deck] == [c.uid for c in y.deck]
+        assert a.rng.random() == b.rng.random()
+        o = determinize(state, me, random.Random(seed), oracle=True)
+        assert [c.uid for c in o.players[1 - me].hand] == [c.uid for c in them.hand]
+        assert sorted(c.uid for c in o.players[1 - me].deck) == sorted(c.uid for c in them.deck)
+    shuffled = [[c.uid for c in determinize(state, me, random.Random(s), oracle=True).players[1 - me].deck]
+                for s in range(4)]
+    assert len({tuple(d) for d in shuffled}) > 1                  # the deck's order is still a guess
+    assert _search(make_agent("mcts:5+plan+learned+phased+oracle", 1)).oracle is True
+    assert _search(make_agent("level-strong", 1)).oracle is False
