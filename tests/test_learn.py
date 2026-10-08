@@ -614,3 +614,8 @@ def test_the_ruler_s_models_are_frozen_and_found_from_any_directory(tmp_path, mo
     assert len(sums) == 20 and all(hashlib.sha256((folder / name).read_bytes()).hexdigest() == digest
                                    for name, digest in sums.items())
     assert Path(folder).name == "ruler-20261008"
+    ref = folder_of("ref-5558960")                 # Version 15's reference, the same way
+    assert VERSIONS["ref5558960"] == "mcts:200+plan+learned+phased=ref-5558960+mull=default" and len(load(ref)) == 22
+    sums = dict(line.split()[::-1] for line in (ref / "README.md").read_text(encoding="utf-8").splitlines()
+                if line.endswith(".json") and len(line) > 64)
+    assert len(sums) == 22 and all(hashlib.sha256((ref / n).read_bytes()).hexdigest() == d for n, d in sums.items())
