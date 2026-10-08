@@ -81,6 +81,19 @@ def main():
         print(f"| {n} | {sum(1 for x, _ in v if x < 0)} / {sum(1 for x, _ in v if x > 0)} | "
               f"{sum(1 for x, s in v if s and x < 0)} / {sum(1 for x, s in v if s and x > 0)} |")
 
+    hp4 = SIX[2:]
+    print("\n**4 维 hpphase 逐个一方**（在现有特征之上，只放 4 维 HP × 回合段；95% 区间，粗体 = 不含 0）\n")
+    print("| 一方（对手） | " + " | ".join(n for n, _ in hp4) + " |")
+    print("|---|" + "---|" * len(hp4))
+    for side in sorted({(x["deck"], x["opp"]) for x in pts}):
+        sub = [x for x in pts if (x["deck"], x["opp"]) == side]
+        bb, ll, hh = _fit(sub, hp4 + FEAT, nboot)
+        cells = []
+        for j in range(len(hp4)):
+            mark = "**" if ll[j] > 0 or hh[j] < 0 else ""
+            cells.append(f"{mark}{bb[j]:+.4f}（{ll[j]:+.4f}～{hh[j]:+.4f}）{mark}")
+        print(f"| {side[0]}（对 {side[1]}） | " + " | ".join(cells) + " |")
+
     print("\n**现有线性项本身的残差斜率**（不加 6 维；全部一方一起拟合，再逐个一方的符号）\n")
     b, lo, hi = _fit(pts, LINEAR, nboot)
     per = {n: [] for n, _ in LINEAR}

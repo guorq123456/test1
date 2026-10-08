@@ -21,6 +21,8 @@ def pair(row):
 def ms(row):
     """(A's ms total, searched decisions), (B's): direct rows keep B in ms_b; --versus rows keep A vs C then B vs C
     in ms (games 0-1 A's, 2-3 B's), A / B the side under test in each game, so only the A or B seat counts."""
+    if "ms" not in row:
+        return (0.0, 0), (0.0, 0)
     if "ms_b" in row:
         return (sum(x["total"] for x in row["ms"]), sum(x["n"] for x in row["ms"])), \
                (sum(x["total"] for x in row["ms_b"]), sum(x["n"] for x in row["ms_b"]))
@@ -43,8 +45,8 @@ def main():
         sd = (sum((x - m) ** 2 for x in xs) / (n - 1)) ** 0.5
         h = 1.96 * sd / n ** 0.5
         a = [ms(r) for r in rows]
-        ma = sum(x[0][0] for x in a) / sum(x[0][1] for x in a)
-        mb = sum(x[1][0] for x in a) / sum(x[1][1] for x in a)
+        ma = sum(x[0][0] for x in a) / max(sum(x[0][1] for x in a), 1)
+        mb = sum(x[1][0] for x in a) / max(sum(x[1][1] for x in a), 1) or float("nan")
         print(f"{path}: {n} pairs, seeds {min(r['seed'] for r in rows)}..{max(r['seed'] for r in rows)}, "
               f"{m:.1%} ± {h:.1%} ({m - h:.1%}..{m + h:.1%}), CR {cr(m):+.0f} ({cr(m - h):+.0f}..{cr(m + h):+.0f}; "
               f"steady-state {800 * (m - 0.5):+.0f}); ms per searched decision A {ma:.2f} / B {mb:.2f} = {ma / mb:.3f}")
