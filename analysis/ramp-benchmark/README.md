@@ -178,7 +178,12 @@
   - 和第 5 轮这一格比（+4.0% → +13.0%，+9.0 个点）：两轮不同种子、不配对，差的区间约 −2～+20，**方向和装机门一致，但两轮之间分不开**。
   - 读法提醒照旧：这是强档 200 次对尺子，和门（等算力直接对打现装，+60）不是同一个量。
   - 强档跳费龙 1309 → **1331**，交建造线填 `ratings.json`（第 20 版）。
-- **第二格：连击妖镜像**（17:1x 补；hpphase 第 2 门连击妖镜像也过了，见 c3-threat 第十节。17:23 架构线程定「装 C3」一次装两个配对；**17:29 实际只装了跳费龙镜像**，这一格等连击妖镜像装机后再跑）：
+- **第二格：连击妖镜像**（17:1x 补；hpphase 第 2 门连击妖镜像也过了，见 c3-threat 第十节。17:23 架构线程定「装 C3」一次装两个配对；17:29 第 20 版只装了跳费龙镜像；**18:12 第 22 版装了连击妖镜像，这一格现在跑**）：
+  - **装机提交到了，哈希我在云端核过**（协调线 18:12 报：Salem 在建造会话说「装上连击妖镜像吧～」，第 22 版；装机 96790ad，快照 b9f2aca 的 `ref-96790ad/`，别名 `ref96790ad`，指针 `backup/trainer-release-20261008-v22` → b9f2aca）。都用 git 的 blob 比：
+    - 顶层 `elf-t-elf-t-*` 和 `cand-c3-hpphase-elf-t-elf-t/` 里的相同；`ramp-t-ramp-t-*` 仍和 `cand-c3-hpphase-ramp-t-ramp-t/` 里的相同。
+    - 其余 20 个顶层模型文件和 `ref-352ae51/` 相同。
+    - `ref-96790ad/` 的 24 个文件和 96790ad 的顶层相同。
+    - `LEVELS["strong"]` 没变。
   - 种子 **65100000**，150 对（`--max 600`），和第 5 轮这一格同精度：
     ```
     python -m svsim.tools.gate --a level-strong --b ruler20261008 --versus ruler20261008 --deck elf-t --opponent elf-t --fixed --max 600 --seed 65100000 --out analysis/calibration/round6/elf-t_vs_elf-t.jsonl
