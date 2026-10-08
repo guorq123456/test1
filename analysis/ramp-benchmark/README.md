@@ -228,6 +228,16 @@
     - **结论：仍分不开。** 照 06:08Z / 06:10Z 定的规则，第 4 轮（59000000～59300000，连击妖四格各加 100 对）的条件成立。
     - **排程**（架构线程 08:4x）：余下的普通、快速格子 → 第 5 轮（装机提交到了就插进来）→ 通用 bot 后半 → **第 4 轮** → C2 推广 10 组的门。Salem 早上可以把第 4 轮提前。
   - 原始版三套牌的 CR 已交建造线填 `ratings.json`。
+  - **第 4 轮的命令**（和第 3 轮合并成每格 150 对，所以 A 必须和第 3 轮是同一个 bot）：
+    - A = `ref5558960`（`mcts:200+plan+learned+phased=ref-5558960+mull=default`），也就是第 3 轮的装机态（Version 15，模型钉在快照，连击妖打 D）。钉快照是为了以后不管装了什么，A 都还是第 3 轮那个 bot。`=<目录>` 和顶层同文件时着法逐步相同，第 1 轮的恒等校验已经验过（140 / 140）。C2 装机只改 `ramp-t-ramp-t`，这四格用不到，所以用 `level-strong` 在连击妖模型没变之前也等价。
+    - B = C = `ruler20261008`，`--versus`，每格 100 对（`--max 400`）：
+      ```
+      python -m svsim.tools.gate --a ref5558960 --b ruler20261008 --versus ruler20261008 --deck elf-t --opponent ramp-t --fixed --max 400 --seed 59000000 --out analysis/calibration/round4/elf-t_vs_ramp-t.jsonl
+      python -m svsim.tools.gate --a ref5558960 --b ruler20261008 --versus ruler20261008 --deck elf-t --opponent elf-t --fixed --max 400 --seed 59100000 --out analysis/calibration/round4/elf-t_vs_elf-t.jsonl
+      python -m svsim.tools.gate --a ref5558960 --b ruler20261008 --versus ruler20261008 --deck elf-t --opponent nemesis-t --fixed --max 400 --seed 59200000 --out analysis/calibration/round4/elf-t_vs_nemesis-t.jsonl
+      python -m svsim.tools.gate --a ref5558960 --b ruler20261008 --versus ruler20261008 --deck elf-t --opponent pirate-t --fixed --max 400 --seed 59300000 --out analysis/calibration/round4/elf-t_vs_pirate-t.jsonl
+      ```
+    - 我这边读：第 3、4 轮同一格的对合在一起（种子不重叠），每格 150 对，再算连击妖 CR。第 4 轮单独的数也列出来。
 - **普通 · 第二批**（本机 176c395 + 4b1f9ac，`analysis/calibration/levels/normal_{elf-t,nemesis-t,pirate-t}_vs_*.jsonl`，串 `v2r`；装机前它和新串 `v2r5558960` 是同一个 bot，上面核过。每格 50 对，种子 56600000～57700000，和 05:4x 分配的逐个对上；代码 83f65e3。176c395 的提交说明误写成「orig」，内容是普通档连击妖的 3 格，已请协调线提醒本机。输出在 `analysis/calibration/levels_report.txt`）：
 
   | 格 | A（普通）对 C | B（尺子）对 C | A − B（配对） | ΔCR（稳态式） | A 先手 / 后手 |
