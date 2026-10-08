@@ -573,3 +573,28 @@ def test_the_mlp_fit_starts_at_the_linear_model_and_learns_what_it_cannot():
     assert report["held_out_positions"] == 400 and report["train_positions"] == 3600
     assert report["linear"]["accuracy"] < 0.6 < 0.85 < report["network"]["accuracy"]
     assert len(model.hidden["w2"]) == 8 and model.version == 2
+
+
+def test_a_deck_description_is_what_its_cards_do_and_a_shared_model_reads_both_decks(tmp_path):
+    from svsim.cards import decks
+    from svsim.core.engine import new_game
+    from svsim.learn import deckdesc
+    from svsim.learn.features import names
+    from svsim.learn.model import LinearValue
+    ramp, elf = deckdesc.describe(decks.RAMP_T), deckdesc.describe(decks.ELF_T)
+    assert len(ramp) == len(elf) == len(deckdesc.names()) and ramp != elf
+    at = deckdesc.names().index
+    assert ramp[at("cost_mean")] > elf[at("cost_mean")] and ramp[at("cost_ge8")] > elf[at("cost_ge8")]
+    # the same cards in another order, or under another deck's name, describe the same
+    assert deckdesc.describe(dict(reversed(list(decks.RAMP_T.items())))) == ramp
+    state = new_game(decks.build(decks.ELF_T), decks.build(decks.RAMP_T), seed=3, first=0)
+    assert deckdesc.pair(state, 0) == elf + ramp and deckdesc.pair(state, 1) == ramp + elf
+    n = len(names(False, 2)) + 2 * len(deckdesc.names())
+    coef = [0.0] * n
+    coef[len(names(False, 2)) + at("cost_mean")] = 1.0      # the logit is my deck's mean cost
+    model = LinearValue(coef, [0.0] * n, [1.0] * n, False, version=2, deck_desc=True)
+    model.save(tmp_path / "m.json")
+    loaded = LinearValue.load(tmp_path / "m.json")
+    assert loaded.deck_desc and len(loaded.names()) == n
+    assert abs(loaded.logit(state, 0) - elf[at("cost_mean")]) < 1e-9
+    assert abs(loaded.logit(state, 1) - ramp[at("cost_mean")]) < 1e-9

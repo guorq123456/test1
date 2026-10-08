@@ -45,6 +45,33 @@ def collect(paths: list, matchup: str, version: int = 2, weights=None, workers: 
         return pool.map(_rows, jobs, chunksize=8)
 
 
+def _shared_rows(job):
+    """Both players' positions of one game, each with both decks' learn.deckdesc vectors after the features;
+    in-turn positions thinned to one in `act_stride` (the shared data is ten pairings)."""
+    from svsim.learn import deckdesc
+    from svsim.learn.features import features
+    from svsim.learn.netdata import ACT, rows
+    gid, line, version, act_stride = job
+    record = json.loads(line)
+    out, k = [], 0
+    for phase, me, state, result, q in rows(record, with_search=True, start=0):
+        if phase == ACT:
+            k += 1
+            if k % act_stride:
+                continue
+        x = np.asarray(list(features(state, me, False, version)) + deckdesc.pair(state, me), np.float32)
+        out.append((record.get("g", 0), phase, x, result, q, 1.0))
+    return gid, out
+
+
+def collect_shared(paths: list, version: int = 2, workers: int = 4, act_stride: int = 1) -> list:
+    """collect() for a model shared by every pairing: all the games of `paths`, both sides."""
+    jobs = [((f, i), line, version, act_stride) for f, path in enumerate(paths)
+            for i, line in enumerate(open(path, encoding="utf-8"))]
+    with Pool(workers) as pool:
+        return pool.map(_shared_rows, jobs, chunksize=8)
+
+
 def held_out(gid) -> bool:
     return gid[1] % 10 == 0
 
@@ -61,7 +88,7 @@ def _accuracy(z, y):
 
 def fit_moment(games: list, phase, version: int = 2, hidden: int = 64, epochs: int = 40, lr: float = 1e-3,
                l2: float = 1e-4, batch: int = 2048, seed: int = 0, patience: int = 4, min_epochs: int = 8,
-               say=print):
+               say=print, deck_desc: bool = False):
     """(LinearValue with a hidden layer, report) for one moment from collect()'s games."""
     from svsim.learn import fit as F
     from svsim.learn.features import names, signs
@@ -78,9 +105,12 @@ def fit_moment(games: list, phase, version: int = 2, hidden: int = 64, epochs: i
     Xv = np.array([r[2] for r in va], np.float64)
     yv = np.array([r[3] for r in va], np.float64)
     wv = np.array([r[5] for r in va], np.float64)
-    N = names(False, version)
+    N, S = names(False, version), list(signs(False, version))
+    if deck_desc:                                  # the decks' vectors: no sign constraint, never zeroed
+        from svsim.learn import deckdesc
+        N, S = N + ["deck"] * 2 * len(deckdesc.names()), S + [0] * 2 * len(deckdesc.names())
     keep = np.array([0.0 if n.startswith(STOCK) else 1.0 for n in N])
-    coef, mean, std, report = F.fit(X * keep, y, None, iters=2500, signs=signs(False, version),
+    coef, mean, std, report = F.fit(X * keep, y, None, iters=2500, signs=S,
                                     weights=None if np.all(w == 1.0) else w)
     coef = np.asarray(coef) * keep
     mean, std = np.asarray(mean), np.asarray(std)
@@ -130,7 +160,7 @@ def fit_moment(games: list, phase, version: int = 2, hidden: int = 64, epochs: i
     model = LinearValue([float(x) for x in best_p["c"] * keep], [float(x) for x in mean], [float(x) for x in std],
                         False, {}, version=version,
                         hidden={"W1": (best_p["W1"] * keep[:, None]).tolist(), "b1": best_p["b1"].tolist(),
-                                "w2": best_p["w2"].tolist()})
+                                "w2": best_p["w2"].tolist()}, deck_desc=deck_desc)
     return model, {"train_positions": len(X), "held_out_positions": len(Xv), "linear": lin, "network": net,
                    "linear_train": {k: float(v) for k, v in report.items()}}
 
@@ -151,11 +181,16 @@ def main() -> None:
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--batch", type=int, default=2048)
     parser.add_argument("--cache", default=None, help="a pickle of the collected rows: written once, then read")
+    parser.add_argument("--shared", action="store_true",
+                        help="one model for every pairing: all games, both sides, with both decks' learn.deckdesc "
+                             "vectors as inputs; saved under --matchup's file names")
+    parser.add_argument("--act-stride", type=int, default=1, help="--shared: keep one in-turn position in N")
     args = parser.parse_args()
     if args.cache and Path(args.cache).exists():
         games = pickle.loads(Path(args.cache).read_bytes())
     else:
-        games = collect(args.games, args.matchup, 2, args.file_weights, args.workers)
+        games = (collect_shared(args.games, 2, args.workers, args.act_stride) if args.shared else
+                 collect(args.games, args.matchup, 2, args.file_weights, args.workers))
         if args.cache:
             Path(args.cache).write_bytes(pickle.dumps(games))
     print(f"{len(games)} games, held out {sum(held_out(g) for g, _ in games)} (one in ten by line)", flush=True)
@@ -165,8 +200,10 @@ def main() -> None:
     for label in args.moments:
         print(f"{label}:", flush=True)
         model, report = fit_moment(games, {"ended": ENDED, "act": ACT}[label], 2, args.hidden, args.epochs, args.lr,
-                                   batch=args.batch, seed=args.seed, say=lambda t: print(t, flush=True))
-        model.info = {"deck": mine, "opponent": theirs, "moment": label, "kind": "mlp", "hidden": args.hidden,
+                                   batch=args.batch, seed=args.seed, say=lambda t: print(t, flush=True),
+                                   deck_desc=args.shared)
+        model.info = {"deck": mine, "opponent": theirs, "moment": label, "kind": "mlp-shared" if args.shared else "mlp",
+                      "hidden": args.hidden, "act_stride": args.act_stride,
                       "epochs": args.epochs, "lr": args.lr, "batch": args.batch,
                       "games": args.games, "file_weights": args.file_weights, "held_out": "line % 10 == 0",
                       "report": report}
