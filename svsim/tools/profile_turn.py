@@ -1,18 +1,45 @@
 """Where v2's time goes in a self-play game (default: the tournament Ramp mirror): own time (tottime) under cProfile
-summed by component (module path), per decision."""
+summed by component (module path), per decision.
+
+    python svsim/tools/profile_turn.py [GAMES] [DECK OPPONENT [--side]]
+
+With --side only DECK's moves are profiled and counted (elf-t's share of an elf-t vs ramp-t game)."""
 import cProfile, pstats, sys, collections, time
-sys.path.insert(0, "/home/user/test1")
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from svsim.learn.netdata import play
+from svsim.tools import arena
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 3
+DECK, OPP = (sys.argv[2], sys.argv[3]) if len(sys.argv) > 3 else ("ramp-t", "ramp-t")
+SIDE = "--side" in sys.argv
 pr = cProfile.Profile()
-t0 = time.perf_counter()
-decisions = 0
-pr.enable()
+counts = {"decisions": 0, "seconds": 0.0}
+make = arena.make_agent
+
+
+def profiled(spec, seed):                          # profile the moves of DECK's player only (or every move)
+    agent = make(spec, seed)
+    act = agent.act
+
+    def timed(state, legal):
+        if SIDE and state.players[state.active].deck_name != DECK:
+            return act(state, legal)
+        t = time.perf_counter()
+        pr.enable()
+        try:
+            return act(state, legal)
+        finally:
+            pr.disable()
+            counts["decisions"] += 1
+            counts["seconds"] += time.perf_counter() - t
+    agent.act = timed
+    return agent
+
+
+arena.make_agent = profiled
 for g in range(N):
-    rec = play((g, 424242, "ramp-t", "ramp-t", "v2", 0.0))
-    decisions += sum(1 for x in rec["search"] if x is not None) + 0
-pr.disable()
-wall = time.perf_counter() - t0
+    play((g, 424242, DECK, OPP, "v2", 0.0))
+decisions, wall = counts["decisions"], counts["seconds"]
 st = pstats.Stats(pr)
 GROUPS = [("斩杀检查与规划器", ("search/lethal.py", "agents/lethal_agent.py", "search/combo.py", "search/planner", "search/plan", "search/race.py")),
           ("确定化（重发看不见的牌）", ("search/view.py", "core/view.py")),
@@ -38,7 +65,7 @@ for (path, line, fn), (cc, nc, tt, ct, callers) in st.stats.items():
             by[group(cpath) or "其他（记录、其余）"] += tt * v[2] / share
     else:
         by[g or "其他（记录、其余）"] += tt
-print(f"{N} 局，{decisions} 个搜索决定，墙钟 {wall:.1f} s（剖析开着，约慢 1.5～2 倍）；剖析内合计 {total:.1f} s")
+print(f"{N} 局 {DECK} 对 {OPP}，{'只算 ' + DECK + ' 一方' if SIDE else '两方'}的 {decisions} 步（act 调用），墙钟 {wall:.1f} s（剖析开着，约慢 1.5～2 倍）；剖析内合计 {total:.1f} s")
 print("| 组件 | 占比 | 每个决定（ms） |\n|---|---|---|")
 for name, t in by.most_common():
     print(f"| {name} | {t / total:.0%} | {1000 * t / max(decisions, 1):.1f} |")
