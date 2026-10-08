@@ -176,6 +176,29 @@ def sample_salem(path, out):
     print(f"{len(points)} 个点写到 {out}（Salem {len(salem)}，bot {len(points) - len(salem)}）")
 
 
+def sample_ctrl(path, out, n_stage=QUOTA2):
+    """The third design's deck control: bot-vs-bot decisions of the original ramp mirror (either seat)."""
+    rng = random.Random(SAMPLE_SEED + 5)
+    games = [json.loads(line) for line in gzip.open(path, "rt", encoding="utf-8")]
+    rng.shuffle(games)
+    need, points = dict(n_stage), []
+    for rec in games:
+        if not any(need.values()):
+            break
+        by_stage = {}
+        for i, sd, own in candidates(rec, {0, 1}):
+            by_stage.setdefault(stage_of(own), []).append((i, sd, own))
+        for name in n_stage:
+            if need[name] and by_stage.get(name):
+                i, sd, own = rng.choice(by_stage[name])
+                points.append({"id": len(points), "who": "ctrl", "source": "distill-mcts400",
+                               "ref": {"seed": rec["seed"], "g": rec.get("g")}, "at": i, "side": sd, "own_turn": own,
+                               "stage": name, "record": rec})
+                need[name] -= 1
+    json.dump(points, open(out, "w", encoding="utf-8"))
+    print(f"{len(points)} 个点写到 {out}")
+
+
 # ---------------------------------------------------------------- one point
 
 def inner_search(agent):
@@ -550,7 +573,7 @@ def report3(rows, gl_path, top10=None):
     lo_ref, hi_ref = wilson(*RAMP_CONTROL)
     print(f"基准：联赛那版的跳费龙对照组 {RAMP_CONTROL[0]} / {RAMP_CONTROL[1]}（Wilson {lo_ref:.1%}～{hi_ref:.1%}）；"
           f"联赛 400 点合计 {LEAGUE_ALL[0] / LEAGUE_ALL[1]:.1%}（{wilson(*LEAGUE_ALL)[0]:.1%}～{wilson(*LEAGUE_ALL)[1]:.1%}），只作参考。\n")
-    for who in ("Salem", "bot"):
+    for who in ("Salem", "bot", "ctrl"):
         sub = [r for r in rows if r["who"] == who]
         if not sub:
             print(f"{who}：还没有点\n")
@@ -558,7 +581,8 @@ def report3(rows, gl_path, top10=None):
         k = sum(r["differ"] for r in sub)
         lo, hi = wilson(k, len(sub))
         m, h = mean_ci([r["regret"] for r in sub])
-        print(f"{'Salem 的座位' if who == 'Salem' else 'bot 的座位'}：{len(sub)} 个点，分歧 {k}（{k / len(sub):.1%}，{lo:.1%}～{hi:.1%}），"
+        label = {"Salem": "Salem 的座位", "bot": "bot 的座位", "ctrl": "卡表对照（原版跳费龙镜像，bot 对 bot）"}[who]
+        print(f"{label}：{len(sub)} 个点，分歧 {k}（{k / len(sub):.1%}，{lo:.1%}～{hi:.1%}），"
               f"平均遗憾 {m:+.4f} ± {h:.4f}，有分歧的点平均 {sum(r['regret'] for r in sub if r['differ']) / max(k, 1):+.3f}，"
               f"≥ 0.10 的 {sum(r['regret'] >= 0.10 for r in sub)} 个")
         for name, _, _ in STAGES:
@@ -568,8 +592,18 @@ def report3(rows, gl_path, top10=None):
                 a, b = wilson(kk, len(ss))
                 print(f"    {name}：分歧 {kk} / {len(ss)}（{kk / len(ss):.0%}，{a:.0%}～{b:.0%}），平均遗憾 "
                       f"{sum(r['regret'] for r in ss) / len(ss):+.4f}，≥ 0.10 的 {sum(r['regret'] >= 0.10 for r in ss)} 个")
-        verdict_ = "高手分布下浅搜更不够" if lo > hi_ref else "分布不同但深度无关"
-        print(f"  预登记：Wilson 下沿 {lo:.1%} {'>' if lo > hi_ref else '≤'} 基准上沿 {hi_ref:.1%} → {verdict_}")
+        if who == "ctrl":
+            rate = k / len(sub)
+            if rate >= 0.18:
+                v = "20.7% 归因于「原版卡表」，或卡表和局面分不开"
+            elif lo <= hi_ref and lo < 0.16:
+                v = "20.7% 归因于「高手局面」"
+            else:
+                v = "分不开"
+            print(f"  卡表对照的预登记：点估计 {rate:.1%}，区间 {lo:.1%}～{hi:.1%}（联赛跳费龙 {lo_ref:.1%}～{hi_ref:.1%}）→ {v}")
+        else:
+            verdict_ = "高手分布下浅搜更不够" if lo > hi_ref else "分布不同但深度无关"
+            print(f"  预登记：Wilson 下沿 {lo:.1%} {'>' if lo > hi_ref else '≤'} 基准上沿 {hi_ref:.1%} → {verdict_}")
         if who == "Salem" and "actual" in sub[0]:
             same_d = sum(r["actual_is_deep"] for r in sub)
             same_s = sum(r["actual_is_shallow"] for r in sub)
@@ -595,8 +629,9 @@ def report3(rows, gl_path, top10=None):
         if sub:
             print(f"  {c}：{len(sub)} 个，平均遗憾 {sum(sub) / len(sub):+.3f}，≥ 0.10 的 {sum(x >= 0.10 for x in sub)} 个")
     if top10:
-        pick = sorted((r for r in rows if r["differ"]), key=lambda r: -r["regret"])[:10]
-        write_top10(pick, gl_path, top10, salem=sorted({r["ref"]["game"] for r in rows}))
+        game_rows = [r for r in rows if r["who"] in ("Salem", "bot")]
+        pick = sorted((r for r in game_rows if r["differ"]), key=lambda r: -r["regret"])[:10]
+        write_top10(pick, gl_path, top10, salem=sorted({r["ref"]["game"] for r in game_rows}))
 
 
 def write_top10(rows, gl_path, out, by_deck=False, salem=False):
@@ -657,6 +692,13 @@ def main():
         ap.add_argument("--out", required=True)
         a = ap.parse_args()
         sample(a.mirror, a.league, a.out)
+        return
+    if "--sample-ctrl" in sys.argv:
+        ap = argparse.ArgumentParser()
+        ap.add_argument("--sample-ctrl", required=True)
+        ap.add_argument("--out", required=True)
+        a = ap.parse_args()
+        sample_ctrl(a.sample_ctrl, a.out)
         return
     if "--sample-salem" in sys.argv:
         ap = argparse.ArgumentParser()
