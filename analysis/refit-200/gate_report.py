@@ -49,8 +49,8 @@ def main():
     deck, opp = arg("--deck", "ramp-t"), arg("--opponent", "ramp-t")
     files = {a.split("=", 1)[0]: a.split("=", 1)[1] for a in sys.argv[1:] if "=" in a and not a.startswith("--")}
     rows = {n: {d["seed"]: d for d in map(json.loads, open(p, encoding="utf-8")) if d} for n, p in files.items()}
-    print(f"条件：对手卡表已知（牌序、手牌未知）。{deck} 对 {opp}，每道门一对的得分 = 0.5 + A − B（A、B 在同一副发牌上打同一个 C）；"
-          "区间 95%，按对算；CR 按 Salem 刻度，括号里是稳态式；通过 = 下沿 > 50%。\n")
+    print(f"条件：对手卡表已知（牌序、手牌未知）。{deck} 对 {opp}；一对的得分：直接对打的门是 A 两局的平均（A 先后坐两个座位、同一副发牌），"
+          "带 --versus 的门是 0.5 + A − B（A、B 在同一副发牌上打同一个 C）；区间 95%，按对算；CR 按 Salem 刻度，括号里是稳态式；通过 = 下沿 > 50%。\n")
     print("| 门 | 对数 | 一对的得分（95%） | CR（稳态式） | 判定 | A 的得分 | B 的得分（直接对打时是 1 − A） | A 先手 / 后手 | 逐局相同 |")
     print("|---|---|---|---|---|---|---|---|---|")
     def score(d):
