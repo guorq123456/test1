@@ -64,12 +64,12 @@
 - 其余 15 格记 0。所以连击妖 bot 的 CR = 1300 + 这一格的 ΔCR ÷ 4，其他三套牌仍是 1300。
 
 **各档 CR**（陪练台每个档位旁显示的数；建造线写进 `svsim/ui/ratings.json`，显示版本、提交和 CR）：
-- 三档：原始版 `mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default`、普通 `v2r`、快速 `greedy+plan+learned+phased`。
+- 三档：原始版 `mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default`、普通 `v2r` = `mcts:115+plan+learned+phased+reuse`、快速 `greedy+plan+learned`。串以陪练台 `ui.session.LEVELS` 为准（本机 fe3b0a0；快速档原来登记成带 `+phased`，已更正）。
 - 按「档 × 卡组 × 四家」跑：每档拿一套卡组打尺子的四家，B = C = ruler20261008，每格 50 对。**每档每套牌一个 CR** = 1300 + 那套牌四格 ΔCR 的平均（`calibrate.py analysis/calibration/levels --levels`）。
 - 档不是尺子，没跑的格不能记 0：不满四格的卡组先不给 CR。
 - 文件：`analysis/calibration/levels/<档>_<卡组>_vs_<对手>.jsonl`，档名用 `orig`、`normal`、`fast`。
 - **分批**：
-  - 第一批，三档拿跳费龙的 12 格。种子库：原始版 49800000～50100000，普通 50200000～50500000，快速 50600000～50900000。
+  - 第一批，三档拿跳费龙的 12 格。种子库：原始版 49800000～50100000，普通 50200000～50500000，快速 54000000～54300000（第一次用错串跑的 50600000～50900000 只作参考）。
   - 第二批，三档其余 36 格（连击妖、机锋、旗皇各对四家），排在联赛第 3 部分之后，到时再分种子库。
 
 **读法**（`calibrate.py <round 文件夹> [--ref <sha>] [--ref-cr ramp-t=… elf-t=… nemesis-t=… pirate-t=…] [--identity]`）：
@@ -106,7 +106,7 @@
 |---|---|---|---|---|---|---|
 | 原始版 | `mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default` | **1136**（1084～1183） | 待跑（第二批） | 待跑（第二批） | 待跑（第二批） | 2026-10-08（跳费龙） |
 | 普通 | `v2r` = `mcts:115+plan+learned+phased+reuse` | **1295**（1254～1335） | 待跑（第二批） | 待跑（第二批） | 待跑（第二批） | 2026-10-08（跳费龙） |
-| 快速 | `greedy+plan+learned+phased` | 待跑（第一批） | 待跑（第二批） | 待跑（第二批） | 待跑（第二批） | — |
+| 快速 | `greedy+plan+learned`（`LEVELS["fast"]`） | 待跑（第一批） | 待跑（第二批） | 待跑（第二批） | 待跑（第二批） | — |
 | 尺子（强） | `ruler20261008`（20bcfbe 的 v2s） | 1300（定义） | 1300（定义） | 1300（定义） | 1300（定义） | 2026-10-08 |
 
 - **原始版 · 跳费龙**（本机 f18a011，`analysis/calibration/levels/orig_ramp-t_vs_*.jsonl`，每格 50 对，种子 49800000～50100000；输出在 `analysis/calibration/levels_report.txt`）：
@@ -122,7 +122,8 @@
   - 四格都在 −154～−187 之间，互相分不开，方向一致。
   - 原始版和尺子差了好几样：搜索 100 次对 200 次；跳费龙没有配对模型（`orig-f631e14` 只有 ramp-ramp 两个文件，又是 `+noalias`，所以四格都走回退链）；斩杀筛和起手也按旧版。这 4 格分不开是哪一样起的作用。
   - 可选，不排队（架构线程 05:11Z）：拆开原始版低在哪里，比如「原始版模型 + 200 次」「原始版 + 别名」各跑一组。
-- **普通 · 跳费龙**（本机 0939e49，`analysis/calibration/levels/normal_ramp-t_vs_*.jsonl`，每格 50 对，种子 50200000～50500000；输出同上）：
+- **普通 · 跳费龙**（本机 0939e49，`analysis/calibration/levels/normal_ramp-t_vs_*.jsonl`；本机 fe3b0a0 改名为 `normal-v2r_ramp-t_vs_*.jsonl`；每格 50 对，种子 50200000～50500000；输出同上）：
+  - **串是对的**：本机跑的是 `--a v2r`。在 2653d69（含 08a02d0）里 `arena.VERSIONS["v2r"]` = `mcts:115+plan+learned+phased+reuse`，`_make_agent` 先展开，和陪练台 `LEVELS["normal"]` 一字不差，是同一个 agent。本机 fe3b0a0 把它记成「写错的串」，这一点不对，这 4 格有效，不用重跑（05:2x 已告诉协调会话和架构线程）。
 
   | 格 | A（普通）对 C | B（尺子）对 C | A − B（配对） | ΔCR（稳态式） | A 先手 / 后手 | A、B 逐局相同 |
   |---|---|---|---|---|---|---|
@@ -134,7 +135,7 @@
   - 普通档跳费龙的 CR = 1300 + 四格 ΔCR 的平均（−5）= **1295**（1254～1335），和尺子（强档，1300）分不开。
   - 四格有正有负，单格都跨 0。
   - 普通档和尺子在跳费龙这四格用的是同一套模型，差别只在搜索：115 次加树重用，对 200 次。A、B 有 11～21% 的局逐局相同。
-- **快速档的串要先核对**：这里登记的是 `greedy+plan+learned+phased`，但 08a02d0 陪练台 `ui.session.LEVELS["fast"]` 是 `greedy+plan+learned`，不带 `phased`。CR 应该量陪练台实际用的那个串。快速档的文件到了，我先核对本机跑的是哪个。
+- **快速档的串错了，要重跑**：本机第一次跑的是 `greedy+plan+learned+phased`（文件改名为 `fast-phased_…`，种子 50600000～50900000，只作参考）；陪练台 `LEVELS["fast"]` 是 `greedy+plan+learned`，不带 `phased`。以后各档的串以 `LEVELS` 为准。重跑用新种子库 54000000、54100000、54200000、54300000（对跳费龙、连击妖、机锋、旗皇），文件 `fast_ramp-t_vs_<对手>.jsonl`。
 
 ## 数据指引（给 Salem：自己上手看数据）
 
