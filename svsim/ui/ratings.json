@@ -1,0 +1,13 @@
+{
+ "version": 15,
+ "commit": null,
+ "published_at": null,
+ "anchor": {"name": "ruler20261008", "commit": "20bcfbe", "level": "strong", "cr": 1300},
+ "tiers": {
+  "fast": {"cr": null, "ci": null, "measured_vs": null, "games": 0, "note": "待标定"},
+  "normal": {"cr": null, "ci": null, "measured_vs": null, "games": 0, "note": "待标定"},
+  "strong": {"cr": null, "ci": null, "measured_vs": null, "games": 0,
+             "note": "待标定：比尺子（20bcfbe 的强档，CR 1300）多装了 elf-t 对 nemesis-t 的模型"},
+  "original": {"cr": null, "ci": null, "measured_vs": null, "games": 0, "note": "待标定（f631e14 的 bot）"}
+ }
+}

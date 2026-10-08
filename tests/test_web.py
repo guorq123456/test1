@@ -115,6 +115,13 @@ def test_the_build_has_the_page_the_package_and_pyodide(tmp_path):
     package = json.loads((out / "svsim.json").read_text(encoding="utf-8"))
     assert "svsim/ui/session.py" in package and "svsim/cards/data/unlimited.json" in package
     assert not any("__pycache__" in n for n in package)
+    models = [n for n in package if n.startswith("svsim/learn/phased_models/")]   # installed ones, no candidates
+    assert "svsim/learn/phased_models/elf-t-ramp-t-ended.json" in models    # ... but the original level's folder
+    assert {n.rsplit("/", 1)[0] for n in models} == {"svsim/learn/phased_models", "svsim/learn/phased_models/orig-f631e14"}
+    from svsim.build import git_commit
+    shipped = json.loads((out / "ratings.json").read_text(encoding="utf-8"))
+    assert shipped["commit"] == (git_commit() or "unknown") and shipped["published_at"].endswith("Z")
+    assert json.loads(package["svsim/ui/ratings.json"])["commit"] == shipped["commit"]
     from svsim.build import git_commit                 # the build says which commit it came from
     namespace = {}
     exec(package["svsim/build.py"], namespace)
@@ -127,10 +134,15 @@ def test_records_say_which_bot_played_and_old_records_still_read():
     from svsim.build import commit
     from svsim.tools.arena import VERSIONS
     from svsim.ui.session import LEVELS, bot_of
-    assert LEVELS["normal"] == VERSIONS["v2"] and LEVELS["strong"] == VERSIONS["v2s"]
+    assert LEVELS["normal"] == VERSIONS["v2r"] and LEVELS["strong"] == VERSIONS["v2s"]
+    assert LEVELS["original"] == "mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default"
     session = Session()
     session.start("rhino", "ramp", "normal", 3, "you")
-    assert session.record["bot"] == {"level": "normal", "version": "v2", "spec": VERSIONS["v2"], "build": commit()}
+    assert session.record["bot"] == {"level": "normal", "version": "v2r", "spec": VERSIONS["v2r"], "build": commit(),
+                                     "commit": commit(), "cr": None}
+    ratings = session.ratings()                    # each level's CR for the start screen, "待标定" until measured
+    assert set(ratings["tiers"]) >= set(LEVELS) and ratings["tiers"]["strong"]["spec"] == LEVELS["strong"]
+    assert ratings["anchor"] == {"name": "ruler20261008", "commit": "20bcfbe", "level": "strong", "cr": 1300}
     session.start("rhino", "ramp", "fast", 3, "you")
     assert session.record["bot"]["version"] is None and session.record["bot"]["level"] == "fast"
     old = json.loads(json.dumps(session.record_data()))

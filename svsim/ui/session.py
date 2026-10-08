@@ -12,7 +12,9 @@ hint and lethal check answer for the position on screen.
 """
 from __future__ import annotations
 
+import json
 import random
+from pathlib import Path
 
 from svsim.cards import decks, library
 from svsim.core.actions import Attack, EndTurn, Engage, Evolve, Fuse, Mulligan, PlayCard
@@ -30,10 +32,29 @@ DECKS = {"rhino": ("破魔虫精灵", decks.RHINO_FOREST), "ramp": ("跳费龙",
          "nemesis-t": ("机锋（比赛版）", decks.NEMESIS_T), "ramp-t": ("跳费龙（比赛版）", decks.RAMP_T),
          "pirate-t": ("旗皇（比赛版）", decks.PIRATE_T)}
 # Every level uses a deck's learned evaluation where there is one (svsim/learn/weights); normal and
-# strong are arena.VERSIONS v2 and v2s (the refitted turn-end model, learn.phased), which beat the
-# levels they replace at equal time (56.8% and 59.7% over 600 games, 2026-10-07).
-LEVELS = {"fast": "greedy+plan+learned", "normal": "mcts:100+plan+learned+phased",
-          "strong": "mcts:200+plan+learned+phased"}
+# strong are arena.VERSIONS v2r and v2s (the refitted turn-end model, learn.phased; normal also keeps
+# its search tree between the moves of a turn, at v2's time per move: 53.3% over v2 in a fixed 600
+# games, 2026-10-07). Both use the per-pairing models in svsim/learn/phased_models where one is installed.
+LEVELS = {"fast": "greedy+plan+learned", "normal": "mcts:115+plan+learned+phased+reuse",
+          "strong": "mcts:200+plan+learned+phased",
+          # the bot before 2026-10-08's improvements (f631e14, also the normal level of the build published
+          # before, 5175def): its models (phased_models/orig-f631e14: the Game8 Ramp mirror's only), no mirror
+          # alias, the lethal screen it had (200 iterations, no near-lethal deepening), the plain mulligan; on
+          # the same seeds it plays both builds move for move, so the player can play the old bot to compare
+          "original": "mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default"}
+RATINGS = Path(__file__).resolve().parent / "ratings.json"
+
+
+def ratings() -> dict:
+    """Each level's measured class rating (svsim/ui/ratings.json, kept by the CR calibration: every level against
+    the anchor, the ruler's strong level at 1300), with the level's spec and the build's commit filled in."""
+    from svsim.build import commit
+    data = json.loads(RATINGS.read_text(encoding="utf-8"))
+    data["commit"] = data.get("commit") or commit()
+    for level, spec in LEVELS.items():
+        data["tiers"].setdefault(level, {"cr": None, "ci": None, "measured_vs": None, "games": 0, "note": "待标定"})
+        data["tiers"][level]["spec"] = spec
+    return data
 
 
 def bot_info(level: str, spec: str) -> dict:
@@ -41,9 +62,11 @@ def bot_info(level: str, spec: str) -> dict:
     arena.VERSIONS (None if the spec isn't one), the spec and the commit of the build."""
     from svsim.build import commit
     from svsim.tools.arena import VERSIONS
+    info = ratings()
+    tier = info["tiers"].get(level, {}) if level in LEVELS else {}
     return {"level": level if level in LEVELS else None,
             "version": next((k for k, v in VERSIONS.items() if v == spec or k == spec), None),
-            "spec": spec, "build": commit()}
+            "spec": spec, "build": commit(), "commit": info["commit"], "cr": tier.get("cr")}
 
 
 def bot_of(record: dict) -> dict:
@@ -246,6 +269,10 @@ class Session:
             if not self.reviewing:
                 self.log.append(f"备注：{text}")
         return self.view()
+
+    def ratings(self) -> dict:
+        """The levels' class ratings for the start screen (see ratings())."""
+        return ratings()
 
     def code(self) -> str:
         return records.encode(self.record)

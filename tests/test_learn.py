@@ -548,3 +548,69 @@ def test_the_mimic_fit_leaves_out_or_weights_flagged_decisions(tmp_path):
     X, starts, target, weights = stack(kept)
     net = PolicyNet.train(X, starts, target, [], hidden=4, epochs=2, weights=weights, say=lambda *_: None)
     assert np.isfinite(net.info["cross_entropy"])
+
+
+def test_the_mlp_fit_starts_at_the_linear_model_and_learns_what_it_cannot():
+    import numpy as np
+    from svsim.learn import mlp
+    from svsim.learn.features import names, signs
+    from svsim.learn.netdata import ACT, ENDED
+    from svsim.learn.phased import STOCK
+    N, sg = names(False, 2), signs(False, 2)
+    a, b = [i for i, n in enumerate(N[:-1]) if not n.startswith(STOCK) and sg[i] == 0][:2]
+    rng = np.random.default_rng(1)
+    games = []
+    for g in range(400):                           # win iff the two features agree in sign: no linear model can
+        rows = []
+        for _ in range(10):
+            x = [0.0] * len(N)
+            x[-1], x[a], x[b] = 1.0, rng.normal(), rng.normal()
+            rows += [(g, ENDED, x, 1.0 if x[a] * x[b] > 0 else 0.0, None, 1.0), (g, ACT, x, 0.5, None, 1.0)]
+        games.append(((0, g), rows))
+    assert sum(mlp.held_out(gid) for gid, _ in games) == 40
+    model, report = mlp.fit_moment(games, ENDED, hidden=8, epochs=60, lr=1e-2, batch=128, min_epochs=40,
+                                   say=lambda _: None)
+    assert report["held_out_positions"] == 400 and report["train_positions"] == 3600
+    assert report["linear"]["accuracy"] < 0.6 < 0.85 < report["network"]["accuracy"]
+    assert len(model.hidden["w2"]) == 8 and model.version == 2
+
+
+def test_a_deck_description_is_what_its_cards_do_and_a_shared_model_reads_both_decks(tmp_path):
+    from svsim.cards import decks
+    from svsim.core.engine import new_game
+    from svsim.learn import deckdesc
+    from svsim.learn.features import names
+    from svsim.learn.model import LinearValue
+    ramp, elf = deckdesc.describe(decks.RAMP_T), deckdesc.describe(decks.ELF_T)
+    assert len(ramp) == len(elf) == len(deckdesc.names()) and ramp != elf
+    at = deckdesc.names().index
+    assert ramp[at("cost_mean")] > elf[at("cost_mean")] and ramp[at("cost_ge8")] > elf[at("cost_ge8")]
+    # the same cards in another order, or under another deck's name, describe the same
+    assert deckdesc.describe(dict(reversed(list(decks.RAMP_T.items())))) == ramp
+    state = new_game(decks.build(decks.ELF_T), decks.build(decks.RAMP_T), seed=3, first=0)
+    assert deckdesc.pair(state, 0) == elf + ramp and deckdesc.pair(state, 1) == ramp + elf
+    n = len(names(False, 2)) + 2 * len(deckdesc.names())
+    coef = [0.0] * n
+    coef[len(names(False, 2)) + at("cost_mean")] = 1.0      # the logit is my deck's mean cost
+    model = LinearValue(coef, [0.0] * n, [1.0] * n, False, version=2, deck_desc=True)
+    model.save(tmp_path / "m.json")
+    loaded = LinearValue.load(tmp_path / "m.json")
+    assert loaded.deck_desc and len(loaded.names()) == n
+    assert abs(loaded.logit(state, 0) - elf[at("cost_mean")]) < 1e-9
+    assert abs(loaded.logit(state, 1) - ramp[at("cost_mean")]) < 1e-9
+
+
+def test_the_ruler_s_models_are_frozen_and_found_from_any_directory(tmp_path, monkeypatch):
+    import hashlib
+    from pathlib import Path
+    from svsim.learn.phased import folder_of, load
+    from svsim.tools.arena import VERSIONS
+    assert VERSIONS["ruler20261008"] == "mcts:200+plan+learned+phased=ruler-20261008"
+    monkeypatch.chdir(tmp_path)                    # found by name from any directory
+    folder = folder_of("ruler-20261008")
+    assert len(load(folder)) == 20
+    readme = (folder / "README.md").read_text(encoding="utf-8")
+    sums = dict(line.split()[::-1] for line in readme.splitlines() if line.endswith(".json") and len(line) > 64)
+    assert len(sums) == 20 and all(hashlib.sha256((folder / name).read_bytes()).hexdigest() == digest
+                                   for name, digest in sums.items())
+    assert Path(folder).name == "ruler-20261008"

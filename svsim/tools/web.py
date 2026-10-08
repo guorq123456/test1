@@ -19,6 +19,7 @@ import json
 import socket
 import urllib.request
 import zipfile
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
@@ -33,7 +34,7 @@ SKELETON = ('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">'
             '</head><body>{page}</body></html>')
 
 ALLOWED = {"start", "resume", "summary", "view", "act", "mulligan", "ai_step", "hint", "lethal", "note", "code",
-           "record_data", "review", "goto", "mark", "impact"}
+           "record_data", "review", "goto", "mark", "impact", "ratings"}
 
 
 def page_html() -> str:
@@ -42,16 +43,29 @@ def page_html() -> str:
     return SKELETON.replace("{page}", (WEB / "index.html").read_text(encoding="utf-8"))
 
 
+def _candidate(f: Path) -> bool:
+    """A model kept beside the installed ones (phased_models/<folder>/), which only "+phased=FOLDER" loads,
+    and no level of the page names (the original level plays phased_models/orig-f631e14)."""
+    from svsim.ui.session import LEVELS
+    models = PACKAGE / "learn" / "phased_models"
+    named = {part[len("phased="):] for spec in LEVELS.values() for part in spec.split("+") if part.startswith("phased=")}
+    return models in f.parents and f.parent != models and f.parent.name not in named
+
+
 def package_sources(commit: str | None = None) -> dict:
     """The svsim package (sources and card tables) as {path: text}; with `commit`, svsim/build.py
     says it was built from that commit (the page has no git)."""
     out = {f.relative_to(ROOT).as_posix(): f.read_text(encoding="utf-8")
            for f in sorted(PACKAGE.rglob("*"))
-           if f.suffix in (".py", ".json") and "__pycache__" not in f.parts}
+           if f.suffix in (".py", ".json") and "__pycache__" not in f.parts and not _candidate(f)}
     if commit is not None:
         line = "COMMIT = None "
         assert out["svsim/build.py"].count(line) == 1
         out["svsim/build.py"] = out["svsim/build.py"].replace(line, f"COMMIT = {commit!r} ")
+        ratings = json.loads(out["svsim/ui/ratings.json"])     # the levels' ratings say which build they ship in
+        ratings["commit"] = commit
+        ratings["published_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        out["svsim/ui/ratings.json"] = json.dumps(ratings, ensure_ascii=False, indent=1)
     return out
 
 
@@ -68,7 +82,13 @@ def build(out: Path, pyodide_from: Path | None = None) -> None:
     (out / "worker.js").write_text((WEB / "worker.js").read_text(encoding="utf-8"), encoding="utf-8")
     from svsim.build import git_commit
     commit = git_commit(ROOT) or "unknown"
-    (out / "svsim.json").write_text(json.dumps(package_sources(commit), ensure_ascii=False), encoding="utf-8")
+    package = package_sources(commit)
+    (out / "svsim.json").write_text(json.dumps(package, ensure_ascii=False), encoding="utf-8")
+    from svsim.ui.session import LEVELS                # ratings.json beside the page, specs filled in, for readers
+    ratings = json.loads(package["svsim/ui/ratings.json"])
+    for level, spec in LEVELS.items():
+        ratings["tiers"].setdefault(level, {})["spec"] = spec
+    (out / "ratings.json").write_text(json.dumps(ratings, ensure_ascii=False, indent=1), encoding="utf-8")
     pyo = out / "pyodide"
     pyo.mkdir(exist_ok=True)
     for name in PYODIDE_FILES:
@@ -85,7 +105,7 @@ def build(out: Path, pyodide_from: Path | None = None) -> None:
     (pyo / "python_stdlib.json").write_text(json.dumps(stdlib_sources(pyo / "python_stdlib.zip")), encoding="utf-8")
     print(f"版本：提交 {commit}" + ("（有未提交的改动）" if commit.endswith("+") else ""))
     print(f"已生成 {out}：page.html（发布到 claude.ai 用）、index.html（任何静态网站都能放）、worker.js、"
-          "svsim.json、pyodide/（python_stdlib.zip 只用来生成 python_stdlib.json，不必发布）")
+          "svsim.json、ratings.json、pyodide/（python_stdlib.zip 只用来生成 python_stdlib.json，不必发布）")
 
 
 class Handler(BaseHTTPRequestHandler):
