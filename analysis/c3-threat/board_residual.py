@@ -12,7 +12,8 @@ as in analysis/evaluator-gaps/calibration.py. Each point keeps board quantities 
 opponent moves next): followers, the attack they can make next turn (not "can't attack"; a follower's extra attacks
 counted), their total defense, Wards, the board threat as learn.features computes it (attack past the enemy's Ward
 defense), leader HP, and the removal role of the player's own hand (learn.roles), plus controls (seat, own turn,
-cards in hand, cards it cannot pay for next turn).
+cards in hand, cards it cannot pay for next turn), and since the bonus-PP check (the architecture thread 17:44) each
+side's bonus play point still available (`bonus`) and the player's own cards in hand costing 2 or less (`cheap`).
 The report regresses the residual on each quantity's slope in each stage of the game (1-4, 5-7, 8+) with the
 own turn and the side (deck, opponent) held fixed, then on derived candidates; 95% intervals, games resampled.
 Only sides with a pairing model (the 11 of analysis/evaluator-gaps) are used.
@@ -41,7 +42,7 @@ def _side(st, side, prop, Keyword, threat):
     return {"hp": p.leader_hp, "n": len(fs),
             "atk": sum(f.atk * max(1, f.max_attacks) for f in fs if not prop(f, "cant_attack")),
             "life": sum(max(f.life, 0) for f in fs), "ward": sum(1 for f in fs if f.keywords & Keyword.WARD),
-            "threat": threat(st, side)}
+            "threat": threat(st, side), "bonus": int(p.bonus_ready)}
 
 
 def game_points(g):
@@ -76,7 +77,8 @@ def game_points(g):
             x = {"pair": g["pair"], "k": g["k"], "seat_a": g["seat_a"], "deck": names[p], "opp": names[1 - p],
                  "first": int(st.first == p), "own_turn": me.turns_taken, "p": prob, "result": result,
                  "hand": len(me.hand), "dead": sum(1 for c in me.hand if c.defn.cost > me.max_pp + 1),
-                 "removal": sum(card_roles(c.defn)[1] for c in me.hand)}
+                 "removal": sum(card_roles(c.defn)[1] for c in me.hand),
+                 "cheap": sum(1 for c in me.hand if c.cost <= 2)}
             x.update({f"my_{k}": v for k, v in mine.items()})
             x.update({f"op_{k}": v for k, v in theirs.items()})
             out.append(x)
