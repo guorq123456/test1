@@ -273,15 +273,23 @@ def report(path, top15=None):
         print(f"    {g}：{len(sub)} 个决策，F1 {len({r['global_turn'] for r in sub if r['F1']})} 回合，F2 {sum(r['F2'] for r in sub)}")
     if top15:
         games = sorted({r["game"] for r in rows})
-        top = sorted((r for r in rows if r["F2"]), key=lambda r: -r["regret"])[:15]
+        top = sorted((r for r in rows if not r["about_evolving"] and r["regret"] is not None),
+                     key=lambda r: -r["regret"])[:15]
+        nf2 = sum(r["F2"] for r in rows)
         lines = ["# Salem 那 27 局里 bot 认为差得最多的 15 步（请确认）", "",
-                 "条件：对手卡表已知（牌序、手牌未知）。每一步都在同一个局面上，用 v2s 搜 8 次取平均。",
-                 "「差多少」是 bot 估的胜率差：它自己选的那步，减去你走的那步。只列非进化类的步骤，进化相关的不在这里。",
-                 "bot 也会看错，所以这只是请你确认：哪些是真失误、哪些是 bot 没看懂。", ""]
+                 "条件：对手卡表已知（牌序、手牌未知）。",
+                 "做法：在同一个局面上，你走的那步和 bot 想走的那步各走一遍，后面这一回合都由 v2s 打完，比回合结束时的胜率。对手没见过的牌按已知卡表发 8 次，取平均。",
+                 "「差多少」是 bot 估的胜率差：它想走的那步，减去你走的那步。只列非进化类的步骤，进化相关的不在这里。",
+                 f"bot 估差 15 个胜率点以上的只有 {nf2} 步，标了「≥15」；其余是没到这条线、但在剩下的步骤里差得最多的。",
+                 "bot 也会看错，所以这只是请你确认：哪些是真失误，哪些是 bot 没看懂。", ""]
         for n, r in enumerate(top, 1):
-            lines.append(f"{n}. 第 {games.index(r['game']) + 1} 局（{r['game']}）你的第 {r['own_turn']} 回合："
+            mark = "【≥15】" if r["F2"] else ""
+            lines.append(f"{n}. {mark}第 {games.index(r['game']) + 1} 局（{r['game']}）你的第 {r['own_turn']} 回合："
                          f"你 {r['his']}；bot 想 {r['best']}；差 {r['regret']:.0f} 个胜率点。")
-        open(top15, "w", encoding="utf-8").write("\n".join(lines) + "\n")
+        from glossary import label_first
+        head = lines[:8]
+        body = label_first("\n".join(lines[8:]))           # each card's first mention: 常用名（费用身材）
+        open(top15, "w", encoding="utf-8").write("\n".join(head) + "\n" + body + "\n")
 
 
 def main():
