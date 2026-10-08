@@ -150,6 +150,8 @@ def main() -> None:
                              "tempo, hand); the models record them")
     parser.add_argument("--hold-out-every", type=int, default=0,
                         help="leave out every game whose line number %% K == 0 (refit-200: K = 11, 400 of 4400)")
+    parser.add_argument("--l2", type=float, default=1e-3,
+                        help="L2 on the standardized coefficients (learn.fit.fit; C4 tries 1e-4)")
     args = parser.parse_args()
     extras = tuple(e for e in args.features.split(",") if e)
     weights = args.file_weights or [1.0] * len(args.games)
@@ -175,7 +177,7 @@ def main() -> None:
         y = np.array([r[3] if r[4] is None else (1 - args.q_weight) * r[3] + args.q_weight * r[4]
                       for r in rows], float)
         rw = np.array([r[5] for r in rows], float)
-        w, mean, std, report = F.fit(X * keep, y, None, iters=2500,
+        w, mean, std, report = F.fit(X * keep, y, None, iters=2500, l2=args.l2,
                                      signs=list(signs(False, args.version)) + [0] * len(extra_names(extras)),
                                      weights=None if np.all(rw == 1.0) else rw)
         w = w * keep
@@ -184,7 +186,7 @@ def main() -> None:
                     {"deck": mine, "opponent": theirs, "moment": label, "positions": len(X),
                      "q_weight": args.q_weight, "games": args.games, "file_weights": weights,
                      "unlock_weight": args.unlock_weight, "act_hold_weight": args.act_hold_weight,
-                     "hold_out_every": args.hold_out_every,
+                     "hold_out_every": args.hold_out_every, "l2": args.l2,
                      "report": {k: float(v) for k, v in report.items()}}, version=args.version, extras=extras
                     ).save(out / f"{args.matchup}-{label}.json")
         print(f"{label}: {len(X)} positions, {report}", flush=True)
