@@ -244,12 +244,13 @@ def decide(state, spec: str = "default", threshold: int = 5, seed: int = 0) -> t
     raise ValueError(f"unknown mulligan {spec!r}")
 
 
-# The opening redraw a deck uses by default where it isn't the agents' own (mulligan): the drafted
-# rules for the tournament Combo Forest (the local machine's runs, 2026-10-08 02:43Z: R - D +2.7% +- 2.1%
-# over 1200 pairs against a pool of the four tournament decks, the lower end above 0 as registered at
-# 23:40Z). The other three keep the default (pirate-t pooled lower end -0.5, ramp-t and nemesis-t H0).
-# Chosen by the deck's name: a way to redraw, not a feature of the evaluation. arena "+mull=default" turns it off.
-BY_DECK = {"elf-t": "rules"}
+# The opening redraw a deck uses by default where it isn't the agents' own (mulligan). None since
+# 2026-10-08 05:27Z: the tournament Combo Forest had the drafted rules from 02:46Z (R - D +2.7% +- 2.1%
+# over 1200 pairs against a pool of the four tournament decks), but the re-gate at the deployed state
+# (four parts pooled, 1200 pairs) gave R - D +0.5% +- 2.0%, lower end -1.5% <= 0, so it went back to the
+# default by the registered rule. Bots measured while it held pin it with "+mull=by:elf-t=rules" (the
+# ruler, ruler20261008). Chosen by the deck's name: a way to redraw, not a feature of the evaluation.
+BY_DECK: dict = {}
 
 
 def opening_redraw(state) -> Mulligan:
