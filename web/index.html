@@ -214,6 +214,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
         <button data-value="fast">快速</button>
         <button data-value="normal" aria-pressed="true">普通</button>
         <button data-value="strong">强</button>
+        <button data-value="original">原始版</button>
       </div>
     </div>
     <div class="field-group"><span>先后手</span>
@@ -743,7 +744,7 @@ function describeFinished(body) {
   const names = body.record.names ? body.record.names.map(n => DECK_NAMES[n] || n).join(" 对 ") + " · " : "";
   const result = body.resigned ? "认输" : body.winner === 0 ? "你赢" : body.winner === 1 ? "AI 赢" : "平局";
   const marks = (body.record.mistakes || []).length;
-  const bot = body.record.bot, level = bot && {fast: "快速", normal: "普通", strong: "强"}[bot.level];
+  const bot = body.record.bot, level = bot && {fast: "快速", normal: "普通", strong: "强", original: "原始版"}[bot.level];
   const ai = level ? ` · AI ${level}${bot.version ? "（" + bot.version + "）" : ""}` : "";
   return `${when} · ${names}${result}${ai} · ${body.moves} 步` + (marks ? ` · 已标 ${marks} 处失误` : "");
 }

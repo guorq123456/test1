@@ -34,7 +34,10 @@ DECKS = {"rhino": ("破魔虫精灵", decks.RHINO_FOREST), "ramp": ("跳费龙",
 # its search tree between the moves of a turn, at v2's time per move: 53.3% over v2 in a fixed 600
 # games, 2026-10-07). Both use the per-pairing models in svsim/learn/phased_models where one is installed.
 LEVELS = {"fast": "greedy+plan+learned", "normal": "mcts:115+plan+learned+phased+reuse",
-          "strong": "mcts:200+plan+learned+phased"}
+          "strong": "mcts:200+plan+learned+phased",
+          # the normal level of the build published before (5175def): v2 with the lethal screen it had then
+          # (200 iterations, no near-lethal deepening); to play against the old bot for comparison
+          "original": "mcts:100+plan+learned+phased+screen=200"}
 
 
 def bot_info(level: str, spec: str) -> dict:
