@@ -122,6 +122,7 @@
     - `ref-352ae51/` 的 24 个文件和 352ae51 的顶层相同。
     - `LEVELS["strong"]` 仍是 `mcts:200+plan+learned+phased`；普通档改成钉在 ref-5558960（`v2r5558960`），建造线说同种子逐步核过。
     - 所以命令里第 0 步的模型哈希核对已经做完，本机只要合并 352ae51（或 e434e24）就能直接跑恒等抽查和三格。
+    - **装机态记作 352ae51 / 快照 e434e24**（架构线程 12:5x：Salem 在建造会话确认装机；1051 个测试通过；训练基准 `benchmark/20261008-4` → e434e24）。第 5 轮出数后，建造线据此填评级，发陪练台第 19 版（发布由架构线程定）。
 
 **各档 CR**（陪练台每个档位旁显示的数；建造线写进 `svsim/ui/ratings.json`，显示版本、提交和 CR）：
 - 三档：原始版 `mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default`、普通 `v2r` = `mcts:115+plan+learned+phased+reuse`、快速 `greedy+plan+learned`；强档 = `mcts:200+plan+learned+phased`，就是当前装机态的 v2s。
