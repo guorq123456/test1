@@ -659,7 +659,7 @@ def write_top10(rows, gl_path, out, by_deck=False, salem=False):
         if salem:
             gid = r["ref"]["game"]                  # numbered as in the top-15 file: the 27 game ids sorted
             whose = "你那步的局面" if r["who"] == "Salem" else "bot 那步的局面"
-            body += [f"## {n}. 第 {salem.index(gid) + 1} 局（{gid}），{'你' if r['who'] == 'Salem' else 'bot'}的第 {r['own_turn']} 回合（{whose}），"
+            body += [f"## {n}. 第 {salem.index(gid) + 1} 局（{gid}），{'你' if r['who'] == 'Salem' else 'bot '}的第 {r['own_turn']} 回合（{whose}），"
                      f"差 {100 * r['regret']:.0f} 个胜率点"]
         else:
             me = NAMES.get(r.get("deck"), "跳费龙")
