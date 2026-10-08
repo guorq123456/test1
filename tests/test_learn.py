@@ -527,3 +527,24 @@ def test_the_mimic_prior_mixes_two_heads_without_card_ids(tmp_path):
     assert abs(mixed.sum() - 1) < 1e-9 and np.allclose(alone, selfplay) and not np.allclose(mixed, alone)
     other = opening("elf-t", "ramp-t")
     assert MimicPrior(0.3, tmp_path).priors(other, legal_actions(other)) is None   # its matchup only
+
+
+def test_the_mimic_fit_leaves_out_or_weights_flagged_decisions(tmp_path):
+    import json
+    import numpy as np
+    from svsim.learn.mimic import decision_weights, player_decisions, stack
+    from svsim.learn.netdata import play
+    from svsim.learn.policy import PolicyNet
+    record = play((0, 4, "ramp", "ramp", "mcts:5+plan", 0.0))
+    every = player_decisions(record, 0)
+    assert every and all(w == 1.0 for _, _, w in every)
+    ks = [k for k in range(len(record["actions"]))]
+    path = tmp_path / "mistakes.jsonl"
+    path.write_text("\n".join(json.dumps({"game": "g", "at": k, "regret": 0.2, "flags": ["F1"] if k % 2 else [],
+                                          "evolve": False}) for k in ks))
+    table = decision_weights(str(path), drop_flags=["F1"], soft=0.1)
+    kept = player_decisions(record, 0, lambda k: table.get(("g", k), 1.0))
+    assert 0 < len(kept) < len(every) and all(abs(w - np.exp(-2.0)) < 1e-9 for _, _, w in kept)
+    X, starts, target, weights = stack(kept)
+    net = PolicyNet.train(X, starts, target, [], hidden=4, epochs=2, weights=weights, say=lambda *_: None)
+    assert np.isfinite(net.info["cross_entropy"])

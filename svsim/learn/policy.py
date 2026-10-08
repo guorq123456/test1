@@ -157,9 +157,11 @@ class PolicyNet:
     @classmethod
     def train(cls, X, starts, target, vocab, X_val=None, starts_val=None, target_val=None, hidden: int = 64,
               epochs: int = 30, lr: float = 2e-3, l2: float = 1e-4, groups_per_batch: int = 256, seed: int = 0,
-              info: dict | None = None, say=print) -> "PolicyNet":
+              info: dict | None = None, say=print, weights=None, weights_val=None) -> "PolicyNet":
         """Cross entropy between π (`target`, per row, summing to 1 within each decision) and the
-        softmax of the scores within each decision; decisions are the row ranges starting at `starts`."""
+        softmax of the scores within each decision; decisions are the row ranges starting at `starts`.
+        `weights` (one per decision, default 1): each decision's share of the loss (learn.mimic: a player's
+        moves that look like slips count less)."""
         rng = np.random.default_rng(seed)
         mean, std = X.mean(axis=0), X.std(axis=0)
         std[std < 1e-3] = 1.0
@@ -171,12 +173,16 @@ class PolicyNet:
         v = {k: np.zeros_like(x) for k, x in p.items()}
         ends = np.append(starts[1:], len(X))
 
-        def loss_of(A, st, tg, params):
+        dw = np.ones(len(starts)) if weights is None else np.asarray(weights, dtype=np.float64)
+
+        def loss_of(A, st, tg, params, w=None):
             z = np.tanh(A @ params["W1"] + params["b1"]) @ params["w2"] + params["b2"]
             zmax = np.maximum.reduceat(z, st)
             sizes = np.diff(np.append(st, len(z)))
             lse = np.log(np.add.reduceat(np.exp(z - np.repeat(zmax, sizes)), st)) + zmax
-            return float(np.sum(tg * (np.repeat(lse, sizes) - z)) / len(st))
+            per = np.add.reduceat(tg * (np.repeat(lse, sizes) - z), st)
+            w = np.ones(len(st)) if w is None else np.asarray(w, dtype=np.float64)
+            return float(np.sum(w * per) / np.sum(w))
 
         best, best_p, step, worse = float("inf"), None, 0, 0
         Vs = (X_val - mean) / std if X_val is not None else None
@@ -193,7 +199,8 @@ class PolicyNet:
                 zmax = np.repeat(np.maximum.reduceat(z, st), sizes)
                 e = np.exp(z - zmax)
                 soft = e / np.repeat(np.add.reduceat(e, st), sizes)
-                dz = (soft - tg) / len(gs)
+                wr = np.repeat(dw[gs], sizes)
+                dz = wr * (soft - tg) / dw[gs].sum()
                 g = {"w2": h.T @ dz, "b2": dz.sum()}
                 dh = np.outer(dz, p["w2"]) * (1 - h ** 2)
                 g["W1"], g["b1"] = A.T @ dh, dh.sum(0)
@@ -203,7 +210,8 @@ class PolicyNet:
                     m[k] = 0.9 * m[k] + 0.1 * gk
                     v[k] = 0.999 * v[k] + 0.001 * gk * gk
                     p[k] = p[k] - lr * (m[k] / (1 - 0.9 ** step)) / (np.sqrt(v[k] / (1 - 0.999 ** step)) + 1e-8)
-            val = loss_of(Vs, starts_val, target_val, p) if Vs is not None else loss_of(Xs, starts, target, p)
+            val = (loss_of(Vs, starts_val, target_val, p, weights_val) if Vs is not None
+                   else loss_of(Xs, starts, target, p, dw))
             say(f"  epoch {epoch + 1}: held-out cross entropy {val:.4f}")
             if val < best - 1e-5:
                 best, best_p, worse = val, {k: x.copy() for k, x in p.items()}, 0

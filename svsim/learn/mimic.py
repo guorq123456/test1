@@ -146,9 +146,10 @@ def selfplay_decisions(line: str) -> list:
     return [(rows(state, legal), np.asarray(pi)) for state, legal, pi, _ in decisions(record)]
 
 
-def player_decisions(record: dict, player: int = 0) -> list:
-    """(rows, one-hot of the move made) for each of `player`'s main-phase decisions with a choice, in one
-    record; moves marked as mistakes (record["mistakes"]) are left out, as learn.data.choices does."""
+def player_decisions(record: dict, player: int = 0, weight_of=None) -> list:
+    """(rows, one-hot of the move made, weight) for each of `player`'s main-phase decisions with a choice, in
+    one record; moves marked as mistakes (record["mistakes"]) are left out, as learn.data.choices does.
+    `weight_of(k)`: the weight of the decision at action index k (0: left out; see `decision_weights`)."""
     from svsim.core.engine import legal_actions
     from svsim.core.enums import Phase
     from svsim.tools import records as R
@@ -162,18 +163,39 @@ def player_decisions(record: dict, player: int = 0) -> list:
             break
         if len(legal) < 2:
             continue
+        w = 1.0 if weight_of is None else weight_of(k)
+        if w <= 0:
+            continue
         target = np.zeros(len(legal))
         target[legal.index(action)] = 1.0
-        out.append((rows(state, legal), target))
+        out.append((rows(state, legal), target, w))
+    return out
+
+
+def decision_weights(path: str, drop_flags=(), soft: float | None = None) -> dict:
+    """{(record id, action index): weight} from a JSON-lines file of the player's decisions (the analysis
+    session's salem_mistakes.jsonl: "game", "at", "regret" as a share of win rate, "flags", "evolve"):
+    0 for a decision carrying any of `drop_flags`, exp(-regret / soft) with `soft` for one that isn't an
+    evolution decision; 1 otherwise (and for decisions not in the file)."""
+    out = {}
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            d = json.loads(line)
+            key = (str(d["game"]), int(d["at"]))
+            if set(d.get("flags") or ()) & set(drop_flags):
+                out[key] = 0.0
+            elif soft and not d.get("evolve") and d.get("regret") is not None:
+                out[key] = float(np.exp(-max(float(d["regret"]), 0.0) / soft))
     return out
 
 
 def stack(items: list):
-    """(X, starts, target) for PolicyNet.train from [(rows, target)]."""
-    X = np.concatenate([r for r, _ in items])
-    target = np.concatenate([t for _, t in items])
-    starts = np.cumsum([0] + [len(r) for r, _ in items[:-1]])
-    return X, starts, target
+    """(X, starts, target, weights) for PolicyNet.train from [(rows, target[, weight])]."""
+    X = np.concatenate([it[0] for it in items])
+    target = np.concatenate([it[1] for it in items])
+    starts = np.cumsum([0] + [len(it[0]) for it in items[:-1]])
+    weights = np.array([it[2] if len(it) > 2 else 1.0 for it in items])
+    return X, starts, target, weights
 
 
 # --- the prior ---------------------------------------------------------------------------
@@ -220,6 +242,11 @@ def main() -> None:
     parser.add_argument("--matchup", default="ramp-ramp")
     parser.add_argument("--player", type=int, default=0, help="the player's seat in the records")
     parser.add_argument("--leave-out", nargs="*", default=[], help="record ids not to fit on (held-out folds)")
+    parser.add_argument("--decisions", default=None,
+                        help="player: JSON lines of the player's decisions with flags and regret (decision_weights)")
+    parser.add_argument("--drop-flags", nargs="*", default=[], help="player: leave out decisions with these flags")
+    parser.add_argument("--soft", type=float, default=None,
+                        help="player: weight exp(-regret / SOFT) for decisions that aren't evolution decisions")
     parser.add_argument("--limit", type=int, default=600, help="selfplay: games at most")
     parser.add_argument("--hidden", type=int, default=32)
     parser.add_argument("--workers", type=int, default=4)
@@ -255,23 +282,27 @@ def main() -> None:
                 for i, line in enumerate(text.splitlines()):
                     records[f"{Path(path).stem}:{i}"] = json.loads(line)
         ids = [k for k in records if k not in set(args.leave_out)]
-        per_game = [player_decisions(records[k], args.player) for k in ids]
+        table = decision_weights(args.decisions, args.drop_flags, args.soft) if args.decisions else {}
+        per_game = [player_decisions(records[k], args.player, lambda i, g=k: table.get((g, i), 1.0)) for k in ids]
     rng = np.random.default_rng(args.seed)                # held-out decisions for early stopping: by game
     order = rng.permutation(len(per_game))
     val_games = set(order[:max(1, len(per_game) // 8)].tolist())
     fit = [d for g, ds in enumerate(per_game) if g not in val_games for d in ds]
     val = [d for g, ds in enumerate(per_game) if g in val_games for d in ds]
-    X, starts, target = stack(fit)
-    Xv, sv, tv = stack(val)
+    X, starts, target, weights = stack(fit)
+    Xv, sv, tv, wv = stack(val)
     print(f"{args.head}: {len(per_game)} games, {len(fit)} decisions to fit, {len(val)} held out, {X.shape[1]} inputs",
           flush=True)
     net = MimicNet.train(X, starts, target, [], Xv, sv, tv, hidden=args.hidden, seed=args.seed,
+                         weights=weights, weights_val=wv,
                          info={"head": args.head, "matchup": args.matchup, "games": args.games,
-                               "left_out": args.leave_out, "decisions": len(fit) + len(val)})
+                               "left_out": args.leave_out, "decisions": len(fit) + len(val),
+                               "decisions_file": args.decisions, "drop_flags": args.drop_flags, "soft": args.soft,
+                               "mistakes_filtered": bool(args.decisions)})
     net.__class__ = MimicNet
     name = "player" if args.head == "player" else "selfplay"
     net.save(out / f"{name}.npz")
-    top = np.mean([int(np.argmax(net.scores_of(r)) == int(np.argmax(t))) for r, t in val]) if val else float("nan")
+    top = np.mean([int(np.argmax(net.scores_of(d[0])) == int(np.argmax(d[1]))) for d in val]) if val else float("nan")
     print(f"saved {out / (name + '.npz')}: held-out cross entropy {net.info['cross_entropy']:.4f}, "
           f"top choice = the target's {top:.1%}", flush=True)
 
