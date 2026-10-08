@@ -378,16 +378,25 @@ def _hand_sums(hand, pp: int) -> tuple:
     return tuple(out)
 
 
+def _tempo_values(state: GameState, player: int) -> list[float]:
+    t = float(tempo_gap(state, player))
+    turn = state.players[player].turns_taken
+    return [t, t * (5 <= turn <= 7), t * (turn >= 8)]
+
+
+# Each named set's values for `player`, in the order of its names in EXTRAS. A new set (C3's "board", once the
+# analysis thread fixes its dimensions) is one function here and its names in EXTRAS: learn.phased --features,
+# LinearValue.extras (recorded with the model and read back by name) and the hold-out split need nothing more.
+EXTRA_FNS = {"tempo": _tempo_values, "hand": playable_hand_roles}
+
+
 def extra_features(state: GameState, player: int, extras) -> list[float]:
     """The named feature sets' values for `player` (EXTRAS), in the order of extra_names."""
     out = []
     for e in extras:
-        if e == "tempo":
-            t = float(tempo_gap(state, player))
-            turn = state.players[player].turns_taken
-            out += [t, t * (5 <= turn <= 7), t * (turn >= 8)]
-        elif e == "hand":
-            out += playable_hand_roles(state, player)
-        else:
+        if e not in EXTRA_FNS:
             raise ValueError(f"unknown feature set {e!r}")
+        values = EXTRA_FNS[e](state, player)
+        assert len(values) == len(EXTRAS[e]), e
+        out += values
     return out

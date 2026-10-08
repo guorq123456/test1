@@ -990,3 +990,32 @@ def test_oracle_sees_the_opponent_s_real_hand_and_off_draws_as_before():
     assert len({tuple(d) for d in shuffled}) > 1                  # the deck's order is still a guess
     assert _search(make_agent("mcts:5+plan+learned+phased+oracle", 1)).oracle is True
     assert _search(make_agent("level-strong", 1)).oracle is False
+
+
+def test_a_new_named_feature_set_needs_only_its_function_and_names(monkeypatch, tmp_path):
+    """C3 "board" (dimensions to come from the analysis thread) will be one function in EXTRA_FNS and its names
+    in EXTRAS: learn.phased's rows, the model's extras and its inputs pick it up by name, after "hand" as given."""
+    import json
+    from svsim.learn import features as FT
+    from svsim.learn.model import LinearValue
+    from svsim.learn.netdata import play
+    from svsim.learn.phased import _rows
+    monkeypatch.setitem(FT.EXTRAS, "probe", ["probe_followers", "probe_hp"])
+    monkeypatch.setitem(FT.EXTRA_FNS, "probe", lambda state, player: [float(len(state.players[1 - player].followers)),
+                                                                     float(state.players[player].leader_hp)])
+    record = play((0, 13, "ramp", "ramp", "mcts:5+plan+learned+phased", 0.0, 0.0, False))
+    n = len(FT.names(False, 2))
+    rows = _rows((json.dumps(record), 2, 1.0, 1.0, 1.0, None, None, ("hand", "probe")))
+    assert rows and all(len(r[2]) == n + 6 + 2 for r in rows)
+    assert FT.extra_names(("hand", "probe"))[-2:] == ["probe_followers", "probe_hp"]
+    m = n + 8
+    model = LinearValue([0.0] * (n + 7) + [1.0], [0.0] * m, [1.0] * m, False, version=2, extras=("hand", "probe"))
+    model.save(tmp_path / "x.json")
+    loaded = LinearValue.load(tmp_path / "x.json")
+    from svsim.agents.mulligan import opening
+    state = opening("ramp-t", "elf-t", True, 3)
+    assert loaded.extras == ("hand", "probe") and loaded.names()[-1] == "probe_hp"
+    assert loaded.logit(state, 0) == float(state.players[0].leader_hp)
+    import pytest
+    with pytest.raises(ValueError):
+        FT.extra_features(state, 0, ("board",))       # not defined yet
