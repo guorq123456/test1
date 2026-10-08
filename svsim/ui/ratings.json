@@ -45,11 +45,14 @@
   "normal": {
    "decks": {
     "ramp-t": {
-     "cr": null,
-     "ci": null,
-     "games": 0,
-     "measured_vs": null,
-     "note": "待标定"
+     "cr": 1295,
+     "ci": [
+      1254,
+      1335
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "v2r 打尺子的四套牌，每格 50 对"
     },
     "elf-t": {
      "cr": null,
