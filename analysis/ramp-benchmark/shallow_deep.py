@@ -2,6 +2,8 @@
 
     python3 <this> --sample --mirror SELFPLAY.jsonl.gz --league PART1.jsonl.gz+PART2.jsonl.gz --out points.json
     python3 <this> --sample2 --league PART1.jsonl.gz+PART2.jsonl.gz --out points2.json     # the second design
+    python3 <this> --sample-salem analysis/mirror-regression/salem_games.json --out points3.json   # the third
+    ... points3.json --who Salem --out results3.jsonl     (then --who bot into the same file)
     cd <svsim checkout at 9a6ea1c> && PYTHONPATH=. python3 <this> points.json --workers 4 --out results.jsonl
     python3 <this> --report results.jsonl --glossary card-glossary.md [--top10 OUT.md]
 
@@ -20,6 +22,9 @@ The second design (the architecture thread, 03:48Z: the ramp bot as the ruler of
 league rerun's three pairings against ramp-t, 100 decisions of each other deck (its own side, 34 / 33 / 33 by
 stage) and 100 of ramp-t as the control, from the games those 300 didn't use; the same method; the report
 ranks the decks by disagreement rate and mean regret, and the top 10 is each deck's 3 worst and ramp-t's 1.
+The third design (04:11Z, Salem: the league's positions are not ones strong players reach): every decision of
+both seats in Salem's 27 games (seat 0 Salem, seat 1 the bot of the time), the same method; Salem's points
+also carry the move he made; the report splits by seat and stage, and the top 10 is the 27 games' 10 worst.
 Condition: the opponent's 40-card list is known (order and hand not).
 """
 import argparse
@@ -156,6 +161,21 @@ def sample2(league, out):
     print(f"{len(points)} 个点写到 {out}")
 
 
+def sample_salem(path, out):
+    recs = json.load(open(path, encoding="utf-8"))["records"]
+    points = []
+    for who, side in (("Salem", 0), ("bot", 1)):
+        for gid in sorted(recs):
+            for i, sd, own in candidates(recs[gid], {side}):
+                points.append({"id": len(points), "who": who, "source": "salem27", "ref": {"game": gid}, "at": i,
+                               "side": sd, "own_turn": own, "stage": stage_of(own), "record": recs[gid]})
+    salem = [p["id"] for p in points if p["who"] == "Salem"]
+    for j in random.Random(SAMPLE_SEED + 4).sample(salem, NOISE):
+        points[j]["noise"] = True
+    json.dump(points, open(out, "w", encoding="utf-8"))
+    print(f"{len(points)} 个点写到 {out}（Salem {len(salem)}，bot {len(points) - len(salem)}）")
+
+
 # ---------------------------------------------------------------- one point
 
 def inner_search(agent):
@@ -283,9 +303,14 @@ def job(pt):
     deep = make_agent(DEEP, 2 * seed + 1).act(st.clone(), legal)
     finish = make_agent(FINISH, 7)
     search = inner_search(finish)
-    out = {k: pt[k] for k in ("id", "deck", "source", "ref", "at", "side", "own_turn", "stage") if k in pt}
+    out = {k: pt[k] for k in ("id", "deck", "who", "source", "ref", "at", "side", "own_turn", "stage") if k in pt}
     out.update(legal=len(legal), position=position(st, p, plain_name), shallow=describe(st, shallow, plain_name),
                deep=describe(st, deep, plain_name), differ=action_key(st, shallow, where) != action_key(st, deep, where))
+    if "who" in pt:                                 # the move actually made in the game
+        made = from_dict(rec["actions"][pt["at"]])
+        out.update(actual=describe(st, made, plain_name),
+                   actual_is_deep=action_key(st, made, where) == action_key(st, deep, where),
+                   actual_is_shallow=action_key(st, made, where) == action_key(st, shallow, where))
     if out["differ"]:
         vs, vd, ls, ld = paired(finish, search, st, p, shallow, deep, seed, lines=True)
         out.update(v_shallow=vs, v_deep=vd, regret=vd - vs, category=category(st, shallow, deep),
@@ -379,6 +404,8 @@ def summary(label, regs):
 
 def report(path, gl_path, top10=None):
     rows = [json.loads(line) for line in open(path, encoding="utf-8") if line.strip()]
+    if rows and "who" in rows[0]:
+        return report3(rows, gl_path, top10)
     if rows and "deck" in rows[0]:
         return report2(rows, gl_path, top10)
     print(f"条件：对手卡表已知（牌序、手牌未知）。{len(rows)} 个跳费龙决策点；浅 = {SHALLOW}，深 = {DEEP}，"
@@ -512,14 +539,77 @@ def report2(rows, gl_path, top10=None):
         write_top10(pick, gl_path, top10, by_deck=True)
 
 
-def write_top10(rows, gl_path, out, by_deck=False):
+RAMP_CONTROL = (9, 100)          # the second design's ramp-t control: 9 of 100 disagree (Wilson 4.8%-16.2%)
+LEAGUE_ALL = (59, 400)           # the second design, all 400 points
+
+
+def report3(rows, gl_path, top10=None):
+    print(f"条件：对手卡表已知（牌序、手牌未知）。Salem 的 27 局（原版跳费龙镜像，卡组键 ramp；座位 0 = Salem，座位 1 = 当时的 bot），"
+          f"两边的决策点；浅 = {SHALLOW}，深 = {DEEP}，不同时在同 {K} 个确定化上各走一遍，余下这一回合由 {FINISH} 打完，"
+          f"遗憾 = 深 − 浅（胜率，0.10 = 10 点）。\n")
+    lo_ref, hi_ref = wilson(*RAMP_CONTROL)
+    print(f"基准：联赛那版的跳费龙对照组 {RAMP_CONTROL[0]} / {RAMP_CONTROL[1]}（Wilson {lo_ref:.1%}～{hi_ref:.1%}）；"
+          f"联赛 400 点合计 {LEAGUE_ALL[0] / LEAGUE_ALL[1]:.1%}（{wilson(*LEAGUE_ALL)[0]:.1%}～{wilson(*LEAGUE_ALL)[1]:.1%}），只作参考。\n")
+    for who in ("Salem", "bot"):
+        sub = [r for r in rows if r["who"] == who]
+        if not sub:
+            print(f"{who}：还没有点\n")
+            continue
+        k = sum(r["differ"] for r in sub)
+        lo, hi = wilson(k, len(sub))
+        m, h = mean_ci([r["regret"] for r in sub])
+        print(f"{'Salem 的座位' if who == 'Salem' else 'bot 的座位'}：{len(sub)} 个点，分歧 {k}（{k / len(sub):.1%}，{lo:.1%}～{hi:.1%}），"
+              f"平均遗憾 {m:+.4f} ± {h:.4f}，有分歧的点平均 {sum(r['regret'] for r in sub if r['differ']) / max(k, 1):+.3f}，"
+              f"≥ 0.10 的 {sum(r['regret'] >= 0.10 for r in sub)} 个")
+        for name, _, _ in STAGES:
+            ss = [r for r in sub if r["stage"] == name]
+            if ss:
+                kk = sum(r["differ"] for r in ss)
+                a, b = wilson(kk, len(ss))
+                print(f"    {name}：分歧 {kk} / {len(ss)}（{kk / len(ss):.0%}，{a:.0%}～{b:.0%}），平均遗憾 "
+                      f"{sum(r['regret'] for r in ss) / len(ss):+.4f}，≥ 0.10 的 {sum(r['regret'] >= 0.10 for r in ss)} 个")
+        verdict_ = "高手分布下浅搜更不够" if lo > hi_ref else "分布不同但深度无关"
+        print(f"  预登记：Wilson 下沿 {lo:.1%} {'>' if lo > hi_ref else '≤'} 基准上沿 {hi_ref:.1%} → {verdict_}")
+        if who == "Salem" and "actual" in sub[0]:
+            same_d = sum(r["actual_is_deep"] for r in sub)
+            same_s = sum(r["actual_is_shallow"] for r in sub)
+            dv = [r for r in sub if r["differ"]]
+            print(f"  他实际的走法：和深搜第一步相同 {same_d} / {len(sub)}（{same_d / len(sub):.0%}），和浅搜相同 {same_s}"
+                  f"（{same_s / len(sub):.0%}）；浅深分歧的 {len(dv)} 个点里，他走的是深搜那步 {sum(r['actual_is_deep'] for r in dv)} 个，"
+                  f"浅搜那步 {sum(r['actual_is_shallow'] for r in dv)} 个，两步都不是 {sum(not r['actual_is_deep'] and not r['actual_is_shallow'] for r in dv)} 个")
+        print()
+    noise = [r for r in rows if "noise_regret" in r]
+    if noise:
+        print(f"噪声底（{len(noise)} 个 Salem 座位的点，两个不同种子的深搜）：分歧 {sum(r['noise_differ'] for r in noise)} / {len(noise)}；"
+              f"同样这些点上浅深分歧 {sum(r['differ'] for r in noise)} / {len(noise)}")
+        print(summary("深 − 深，取绝对值", [abs(r["noise_regret"]) for r in noise]))
+    big = [r for r in rows if r["regret"] >= 0.10]
+    print(f"\n遗憾 ≥ 0.10 的点：{len(big)} 个，按类型：")
+    for c in CATS:
+        sub = [r["regret"] for r in big if r["category"] == c]
+        print(f"  {c}：{len(sub)} 个（{len(sub) / max(len(big), 1):.0%}）" + (f"，平均遗憾 {sum(sub) / len(sub):.3f}" if sub else "")
+              + f"；Salem {sum(r['category'] == c and r['who'] == 'Salem' for r in big)}、bot {sum(r['category'] == c and r['who'] == 'bot' for r in big)}")
+    print("所有有分歧的点按类型：")
+    for c in CATS:
+        sub = [r["regret"] for r in rows if r["differ"] and r["category"] == c]
+        if sub:
+            print(f"  {c}：{len(sub)} 个，平均遗憾 {sum(sub) / len(sub):+.3f}，≥ 0.10 的 {sum(x >= 0.10 for x in sub)} 个")
+    if top10:
+        pick = sorted((r for r in rows if r["differ"]), key=lambda r: -r["regret"])[:10]
+        write_top10(pick, gl_path, top10, salem=sorted({r["ref"]["game"] for r in rows}))
+
+
+def write_top10(rows, gl_path, out, by_deck=False, salem=False):
     gl = glossary(gl_path)
     stats_of = card_stats()
     opp = {"ramp-t/ramp-t": "跳费龙", "elf-t/ramp-t": "连击妖", "nemesis-t/ramp-t": "机锋", "ramp-t/pirate-t": "旗皇"}
     top = rows if by_deck else sorted((r for r in rows if r["differ"]), key=lambda r: -r["regret"])[:10]
-    title = ("# 三套牌对跳费龙：浅搜和深搜走法不同、差得最多的局面（每套牌 3 个，跳费龙 1 个，请你判断）" if by_deck
+    title = ("# 你那 27 局里：浅搜和深搜走法不同、差得最多的 10 个局面（请你判断）" if salem else
+             "# 三套牌对跳费龙：浅搜和深搜走法不同、差得最多的局面（每套牌 3 个，跳费龙 1 个，请你判断）" if by_deck
              else "# 跳费龙：浅搜和深搜走法不同、差得最多的 10 个局面（请你判断）")
-    where = ("局面来自 400 个决策点：连击妖、机锋、旗皇在联赛里对跳费龙的局各 100 个，跳费龙自己 100 个作对照（全装机态）。"
+    where = ("局面来自你和 bot 的 27 局（原版跳费龙镜像）：你的每个决策点和 bot 的每个决策点都算了一遍。"
+             "每个局面写明是你那步还是 bot 那步；你那步的局面也写出你实际怎么走的。" if salem else
+             "局面来自 400 个决策点：连击妖、机锋、旗皇在联赛里对跳费龙的局各 100 个，跳费龙自己 100 个作对照（全装机态）。"
              if by_deck else "局面来自约 300 个跳费龙决策点（跳费龙镜像自对弈，加上联赛里跳费龙对连击妖、机锋、旗皇各 75 个）。")
     head = [title, "",
             "条件：对手卡表已知（牌序、手牌未知）。",
@@ -531,9 +621,16 @@ def write_top10(rows, gl_path, out, by_deck=False):
     body = []
     for n, r in enumerate(top, 1):
         q = r["position"]
-        me = NAMES.get(r.get("deck"), "跳费龙")
-        them = "跳费龙" if me != "跳费龙" else opp.get(r["source"], r["source"])
-        body += [f"## {n}. {me}对{them}，{me}的第 {r['own_turn']} 回合，差 {100 * r['regret']:.0f} 个胜率点",
+        if salem:
+            gid = r["ref"]["game"]                  # numbered as in the top-15 file: the 27 game ids sorted
+            whose = "你那步的局面" if r["who"] == "Salem" else "bot 那步的局面"
+            body += [f"## {n}. 第 {salem.index(gid) + 1} 局（{gid}），{'你' if r['who'] == 'Salem' else 'bot'}的第 {r['own_turn']} 回合（{whose}），"
+                     f"差 {100 * r['regret']:.0f} 个胜率点"]
+        else:
+            me = NAMES.get(r.get("deck"), "跳费龙")
+            them = "跳费龙" if me != "跳费龙" else opp.get(r["source"], r["source"])
+            body += [f"## {n}. {me}对{them}，{me}的第 {r['own_turn']} 回合，差 {100 * r['regret']:.0f} 个胜率点"]
+        body += [
                  "",
                  f"- 局面：PP {q['pp']}，进化点 {q['ep']}、超进化点 {q['sep']}；自己主战者 {q['hp']} 血，对手 {q['opp_hp']} 血；"
                  f"自己牌库 {q['deck']} 张，对手手牌 {q['opp_hand']} 张。",
@@ -543,6 +640,8 @@ def write_top10(rows, gl_path, out, by_deck=False):
                  f"- 浅搜：{r['shallow']}" + (f"；后面这样打：{' → '.join(r['line_shallow'])}" if r.get("line_shallow") else ""),
                  f"- 深搜：{r['deep']}" + (f"；后面这样打：{' → '.join(r['line_deep'])}" if r.get("line_deep") else ""),
                  f"- bot 估的胜率：浅搜那步之后 {100 * r['v_shallow']:.0f}%，深搜那步之后 {100 * r['v_deep']:.0f}%。",
+                 ] + ([f"- 你实际：{r['actual']}" + ("（和深搜一样）" if r.get("actual_is_deep") else "（和浅搜一样）" if r.get("actual_is_shallow") else "（两步都不是）")]
+                      if salem and r["who"] == "Salem" else [f"- 当时 bot 实际：{r['actual']}"] if salem else []) + [
                  f"- 出处：{r['source']}，{json.dumps(r['ref'], ensure_ascii=False)}，第 {r['at']} 步。", ""]
     text = "\n".join(head) + "\n" + salem_text("\n".join(body), gl, stats_of)
     open(out, "w", encoding="utf-8").write(text)
@@ -558,6 +657,13 @@ def main():
         ap.add_argument("--out", required=True)
         a = ap.parse_args()
         sample(a.mirror, a.league, a.out)
+        return
+    if "--sample-salem" in sys.argv:
+        ap = argparse.ArgumentParser()
+        ap.add_argument("--sample-salem", required=True)
+        ap.add_argument("--out", required=True)
+        a = ap.parse_args()
+        sample_salem(a.sample_salem, a.out)
         return
     if "--sample2" in sys.argv:
         ap = argparse.ArgumentParser()
@@ -579,9 +685,12 @@ def main():
     ap.add_argument("points")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--only", type=int, nargs="*", default=None)
+    ap.add_argument("--who", default=None, help="third design: only Salem's or only the bot's points")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     pts = json.load(open(a.points, encoding="utf-8"))
+    if a.who:
+        pts = [p for p in pts if p.get("who") == a.who]
     import os
     done = {r["id"] for r in read_clean(a.out)} if os.path.exists(a.out) else set()
     jobs = [p for p in pts if p["id"] not in done and (a.only is None or p["id"] in a.only)]
