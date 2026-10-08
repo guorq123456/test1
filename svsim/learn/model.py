@@ -18,7 +18,7 @@ from pathlib import Path
 
 from svsim.core.enums import Craft
 from svsim.core.state import GameState
-from svsim.learn.features import features, names
+from svsim.learn.features import extra_features, features, names
 
 WEIGHTS = Path(__file__).resolve().parent / "weights"
 SCALE = 8.0                      # ISMCTS's logistic squash: value = 1 / (1 + exp(-score / 8))
@@ -53,7 +53,6 @@ class LinearValue:
             from svsim.learn import deckdesc
             x = list(x) + deckdesc.pair(state, player)
         if self.extras:
-            from svsim.learn.features import extra_features
             x = list(x) + extra_features(state, player, self.extras)
         return x
 
