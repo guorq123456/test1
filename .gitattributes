@@ -1,0 +1,2 @@
+# model snapshots are hashed (README sha256, tests): never convert their line endings on checkout
+svsim/learn/phased_models/**/*.json -text
