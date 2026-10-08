@@ -150,11 +150,13 @@ class ISMCTS:
                  reply: bool = False, center: bool = True, prune: bool = True, backup: str = "max",
                  reserve: bool = False, veto=None, reply_after: int = 0, reply_top: int = 0,
                  reply_budget: int = 0, average: int = 1, prior=None, c_prior: float = 0.3,
-                 reuse: bool = False, min_new: int = 20, alloc: tuple | None = None):
+                 reuse: bool = False, min_new: int = 20, alloc: tuple | None = None, infer: tuple | None = None):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
         self.alloc = alloc             # ("legal", K, LO, HI): clip(K x legal moves, LO, HI) per decision instead;
                                        # ("bank", CHUNK, STOP, CAP, HI): see _bank_budget
         self._bank, self._bank_turn = 0, None
+        self.infer = infer             # (ALPHA, TAU): the opponent's hand drawn by search.infer's weights
+        self._hand_weights, self._infer_turn = None, None
         self.last_iterations = None    # the iterations the last decision searched
         self.seconds = seconds
         self.c = c                     # exploration constant (values are in 0..1)
@@ -251,11 +253,19 @@ class ISMCTS:
                 for a, pr in zip(moves, probs):
                     key = action_key(state, a, where0)
                     self._root_prior[key] = self._root_prior.get(key, 0.0) + float(pr)
+        hand = None
+        if self.infer is not None:                 # once per turn, on its first decision (search.infer)
+            turn = (me, state.players[me].turns_taken)
+            if turn != self._infer_turn:
+                from svsim.search.infer import unplayed_weights
+                self._hand_weights, self._infer_turn = unplayed_weights(state, me, *self.infer, self.weights), turn
+            hand = self._hand_weights
         done = 0
         for i in range(iterations if deadline is None else 10 ** 9):
             if deadline is not None and time.perf_counter() > deadline and i > 0:
                 break
-            self._iterate(determinize(state, me, self.rng), me, root)
+            self._iterate(determinize(state, me, self.rng, hand) if hand else determinize(state, me, self.rng),
+                          me, root)
             done += 1
             if banked and done % self.alloc[1] == 0 and self._settled(root, iterations - done):
                 break

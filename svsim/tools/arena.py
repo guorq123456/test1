@@ -143,6 +143,15 @@ def _alloc_option(options) -> tuple | None:
     return ("legal", float(args[0]), lo, hi)
 
 
+def _infer_option(options) -> tuple | None:
+    """+infer=ALPHA[:TAU]: the opponent's hand drawn with weight ALPHA on what they could and clearly should have
+    played last turn (search.infer; TAU in evaluation points, default 0)."""
+    chosen = [o[len("infer="):].split(":") for o in options if o.startswith("infer=")]
+    if not chosen:
+        return None
+    return (float(chosen[0][0]), float(chosen[0][1]) if len(chosen[0]) > 1 else 0.0)
+
+
 def make_agent(spec: str, seed: int):
     """The agent `spec` names; "+mull=WAY" redraws its opening hand that way (agents.mulligan.decide:
     default, rules[:VARIANT,...], sim[:N[:H]]) and changes nothing else."""
@@ -163,7 +172,7 @@ def _make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "phased=", "screen=", "mimic=", "alloc="))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "phased=", "screen=", "mimic=", "alloc=", "infer="))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -237,7 +246,7 @@ def _make_agent(spec: str, seed: int):
                           reserve="reserve" in options, veto=veto, reply_after=1 if "lazy" in options else 0,
                           reply_top=3 if "focus" in options else 0, reply_budget=20 if "focus" in options else 0,
                           average=next((int(o[3:]) for o in options if o.startswith("avg")), 1),
-                          reuse="reuse" in options, alloc=_alloc_option(options),
+                          reuse="reuse" in options, alloc=_alloc_option(options), infer=_infer_option(options),
                           **_prior_options(options))
         cross = [o for o in options if o.startswith("cross")]
         if cross:                                  # keep a card / PP / evolution for later (agents.crossturn_agent)

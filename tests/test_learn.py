@@ -835,3 +835,48 @@ def test_alloc_bank_stops_once_settled_and_keeps_the_rest_for_the_turn():
     big = _search(make_agent("mcts:700+plan+learned+phased+alloc=bank:50:1.1:400", 3))
     big._bank, big._bank_turn = 400, (state.active, state.players[state.active].turns_taken)
     assert big._bank_budget(state, state.active) == 800                    # 700 + 400, at most 800
+
+
+def test_hand_inference_weights_only_what_they_could_and_should_have_played_and_is_off_by_default():
+    """search.infer (2026-10-08): the opponent's left play points are still in `pp` on my turn; a kind they could
+    pay for and that scores above passing for them gets ALPHA; determinize draws by weight; off, as before."""
+    import random
+    from svsim.agents.mulligan import opening
+    from svsim.core.view import determinize
+    from svsim.learn.model import Learned
+    from svsim.learn.phased import PhasedLearned
+    from svsim.search.infer import unplayed_gains, unplayed_weights
+    from svsim.tools.arena import _infer_option, make_agent
+    from svsim.tools.gate import _search
+    assert _infer_option(["plan"]) is None and _infer_option(["infer=0.3"]) == (0.3, 0.0)
+    assert _infer_option(["infer=0.3:1.5"]) == (0.3, 1.5)
+    assert _search(make_agent("level-strong", 1)).infer is None
+    from svsim.agents.random_agent import RandomAgent
+    from svsim.core.engine import apply, legal_actions
+    from svsim.core.enums import Phase
+    state = opening("ramp-t", "elf-t", True, 3)
+    bot = RandomAgent(seed=2)
+    while state.phase != Phase.MAIN:               # past the redraws
+        apply(state, bot.act(state, legal_actions(state)))
+    me = state.active
+    them = state.players[1 - me]
+    weights = PhasedLearned(fallback=Learned())
+    them.pp = 0                                    # nothing left: nothing they could have played but 0-cost cards
+    assert all(next(c for c in them.hand + them.deck if c.defn.card_id == cid).cost == 0
+               for cid in unplayed_gains(state, me, weights))
+    them.pp = 10
+    gains = unplayed_gains(state, me, weights)
+    assert gains and all(isinstance(g, float) for g in gains.values())
+    w = unplayed_weights(state, me, 0.25, -1e9, weights)        # every playable kind flagged
+    assert w and set(w.values()) == {0.25} and unplayed_weights(state, me, 1.0, 0.0, weights) == {}
+    a, b = determinize(state, me, random.Random(4)), determinize(state, me, random.Random(4), None)
+    assert [c.uid for c in a.players[1 - me].hand] == [c.uid for c in b.players[1 - me].hand]   # off: as before
+    pool = sorted(c.uid for c in them.hand + them.deck)
+    drawn = determinize(state, me, random.Random(5), w)
+    assert sorted(c.uid for c in drawn.players[1 - me].hand + drawn.players[1 - me].deck) == pool
+    assert len(drawn.players[1 - me].hand) == len(them.hand)
+    rng, hits, light = random.Random(6), 0, set(pool[::4])          # a quarter of the cards made light
+    for _ in range(300):                           # the flagged cards come up less often than the others
+        hand = {c.uid for c in determinize(state, me, rng, {u: 0.01 for u in light}).players[1 - me].hand}
+        hits += len(hand & light)
+    assert hits / 300 < len(them.hand) * len(light) / len(pool)
