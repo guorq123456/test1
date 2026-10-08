@@ -711,7 +711,8 @@ def test_c2_is_installed_in_the_three_pairings_that_passed_and_nothing_else_move
     """2026-10-08: C2 (the hand feature set) passed its gates in the ramp-t mirror, the elf-t mirror and elf-t vs
     nemesis-t; those three pairs of files are the candidates' bytes, the other 18 installed files are as before, a
     pairing's own file comes before the ramp mirror's stand-in (ramp-ramp, kept for the Game8 deck and the
-    snapshots), and the normal level stays on Version 15's frozen models."""
+    snapshots), and the normal level stays on Version 15's frozen models. Since C3 (hpphase on top of hand) passed in the
+    ramp-t mirror (analysis a5a5a73: 56.3% over the installed, +60 CR) that pairing's pair is cand-c3-hpphase-ramp-t-ramp-t's."""
     import hashlib
     from pathlib import Path
     from svsim.core.engine import new_game as start
@@ -743,11 +744,11 @@ def test_c2_is_installed_in_the_three_pairings_that_passed_and_nothing_else_move
         "ramp-t-nemesis-t-ended.json": "0e76127c561695699e24edd9bd32d940d20094a12f768b135078465795cd01ed",
         "ramp-t-pirate-t-act.json": "836a671948cf8386573bb58088c25355aa87c72922cd282fcb62840752b52b71",
         "ramp-t-pirate-t-ended.json": "d575a8ad8d802bbfdf875eff165e3dd68462dbdf1dbc8a88d41d95f1e70dd23f",
-        "ramp-t-ramp-t-act.json": "094ff4452d602df4130e66aec3de2828a3efe8408ea05c76165ce2bee3fe6f37",
-        "ramp-t-ramp-t-ended.json": "244341725b14bfd4f64adfa1fe93c9f3c0d52f21d68de756f52e133fcc918dbe",
+        "ramp-t-ramp-t-act.json": "d6067af776b82fb41de63f5c4d859ea1512642eaca706113fabdf77d6d427d81",
+        "ramp-t-ramp-t-ended.json": "dfca8b1c34cc65f6fd9309721f351a7f3eb4b990bd3dcfaafdc963d2705267b4",
     }
     assert {f.name: hashlib.sha256(f.read_bytes()).hexdigest() for f in installed.glob("*.json")} == pins
-    for pairing, folder in (("ramp-t-ramp-t", "cand-c2-hand-ramp"), ("elf-t-elf-t", "cand-c2-hand-elf-t-elf-t"),
+    for pairing, folder in (("ramp-t-ramp-t", "cand-c3-hpphase-ramp-t-ramp-t"), ("elf-t-elf-t", "cand-c2-hand-elf-t-elf-t"),
                             ("elf-t-nemesis-t", "cand-c2-hand-elf-t-nemesis-t")):
         for moment in ("act", "ended"):
             name = f"{pairing}-{moment}.json"
@@ -755,7 +756,7 @@ def test_c2_is_installed_in_the_three_pairings_that_passed_and_nothing_else_move
     models = PhasedLearned().models
     named = {"ramp-t": decks.RAMP_T, "elf-t": decks.ELF_T, "nemesis-t": decks.NEMESIS_T, "pirate-t": decks.PIRATE_T,
              "ramp": decks.RAMP_DRAGON}
-    for mine, theirs, key, extras in (("ramp-t", "ramp-t", ("ramp-t", "ramp-t"), ("hand",)),
+    for mine, theirs, key, extras in (("ramp-t", "ramp-t", ("ramp-t", "ramp-t"), ("hand", "hpphase")),
                                       ("elf-t", "elf-t", ("elf-t", "elf-t"), ("hand",)),
                                       ("elf-t", "nemesis-t", ("elf-t", "nemesis-t"), ("hand",)),
                                       ("nemesis-t", "elf-t", ("nemesis-t", "elf-t"), ()),
