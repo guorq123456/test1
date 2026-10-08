@@ -623,6 +623,11 @@ def test_the_ruler_s_models_are_frozen_and_found_from_any_directory(tmp_path, mo
     sums = dict(line.split()[::-1] for line in (ref / "README.md").read_text(encoding="utf-8").splitlines()
                 if line.endswith(".json") and len(line) > 64)
     assert len(sums) == 22 and all(hashlib.sha256((ref / n).read_bytes()).hexdigest() == d for n, d in sums.items())
+    ref = folder_of("ref-96790ad")                 # after C3 went into the elf-t mirror (96790ad), the same way
+    assert VERSIONS["ref96790ad"] == "mcts:200+plan+learned+phased=ref-96790ad+mull=default" and len(load(ref)) == 24
+    sums = dict(line.split()[::-1] for line in (ref / "README.md").read_text(encoding="utf-8").splitlines()
+                if line.endswith(".json") and len(line) > 64)
+    assert len(sums) == 24 and all(hashlib.sha256((ref / n).read_bytes()).hexdigest() == d for n, d in sums.items())
     ref = folder_of("ref-a6fdf0a")                 # after C3 went into the ramp-t mirror (a6fdf0a), the same way
     assert VERSIONS["refa6fdf0a"] == "mcts:200+plan+learned+phased=ref-a6fdf0a+mull=default" and len(load(ref)) == 24
     sums = dict(line.split()[::-1] for line in (ref / "README.md").read_text(encoding="utf-8").splitlines()
