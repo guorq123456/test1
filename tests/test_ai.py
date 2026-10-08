@@ -402,12 +402,28 @@ def test_the_gate_pairs_seats_and_tests_sequentially():
     assert mean == 0.5 and margin > 0
     assert round(gate.cr_gap(0.43)) == -56 and gate.cr_gap(0.82) is None    # class rating, inside the window only
     assert "超出匹配窗口" in gate.cr_text(0.82, 0.1) and "-56" in gate.cr_text(0.43, 0.07)
+    assert gate.cr_text(0.595, 0.035).startswith("CR 分差约 +91（+57～+126；游戏稳态公式 +76，+48～+104")   # the player's scale first
     pair = gate.play_pair((0, 5, "random", "random", None, None, "ramp", "ramp", None, None))
     assert pair["k"] == 0 and len(pair["points"]) == 2 and all(p in (0.0, 0.5, 1.0) for p in pair["points"])
     assert pair["same"] in (True, False)                                  # both games went move for move alike
+    both = gate.play_pair((0, 5, "random", "random", None, None, "elf-t", "ramp-t", None, None, "random"))
+    assert len(both["points"]) == len(both["b_points"]) == 2           # A and B each from both seats vs a third
+    assert both["same"] == [True, True] and gate.pair_score(both) == 0.5   # the same agent: the same games
     split = gate.first_split([pair], "ramp", "ramp")                      # by who really went first
     assert len(split["先手"]) == len(split["后手"]) == 1
     assert sorted(split["先手"] + split["后手"]) == sorted(pair["points"])
+
+
+def test_search_cost_times_a_models_folder_against_the_installed_ones(tmp_path):
+    import json
+    from svsim.learn.netdata import play
+    from svsim.tools import search_cost
+    path = tmp_path / "games.jsonl"
+    path.write_text(json.dumps(play((0, 3, "ramp", "ramp", "mcts:5+plan", 0.0))) + "\n")
+    states = search_cost.positions(str(path), 3)
+    assert 0 < len(states) and all(s.phase.name == "MAIN" for s in states)
+    v2, new = search_cost.cost(search_cost.Path("svsim/learn/phased_models/b1"), states[:2], 5)
+    assert v2 > 0 and new > 0
 
 
 def test_the_encoding_knows_the_moment_and_counts_cards():

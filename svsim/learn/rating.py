@@ -25,6 +25,7 @@ what the games allow (few games: wide intervals).
 """
 from __future__ import annotations
 
+import math
 import random
 
 START = {"diamond": 1600, "sapphire": 1550, "ruby": 1500, "钻石": 1600, "蓝宝石": 1550, "红宝石": 1500}
@@ -69,6 +70,16 @@ def steady_rate(gap: float) -> float:
     if gap < -CAP:
         return 0.25
     return 0.5 + gap / 800
+
+
+# The player's own scale (the architecture session, 2026-10-07 16:14Z): a CR gap of 236 per logit of the
+# win rate, so 200 CR is about 70%; the main number in reports, with the ladder's steady formula beside it.
+SALEM_PER_LOGIT = 236
+
+
+def salem_gap(p: float) -> float:
+    """The CR gap on the player's scale for a win rate `p` (0 < p < 1): 236 x ln(p / (1 - p))."""
+    return SALEM_PER_LOGIT * math.log(p / (1 - p))
 
 
 def steady_gap(p: float) -> float:

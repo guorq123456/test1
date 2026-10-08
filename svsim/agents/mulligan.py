@@ -240,6 +240,21 @@ def decide(state, spec: str = "default", threshold: int = 5, seed: int = 0) -> t
     raise ValueError(f"unknown mulligan {spec!r}")
 
 
+# The opening redraw a deck uses by default where it isn't the agents' own (mulligan): the drafted
+# rules for the tournament Combo Forest (the local machine's runs, 2026-10-08 02:43Z: R - D +2.7% +- 2.1%
+# over 1200 pairs against a pool of the four tournament decks, the lower end above 0 as registered at
+# 23:40Z). The other three keep the default (pirate-t pooled lower end -0.5, ramp-t and nemesis-t H0).
+# Chosen by the deck's name: a way to redraw, not a feature of the evaluation. arena "+mull=default" turns it off.
+BY_DECK = {"elf-t": "rules"}
+
+
+def opening_redraw(state) -> Mulligan:
+    """The agents' own opening redraw: BY_DECK's way for the deck the player to act plays, else mulligan."""
+    p = state.players[state.active]
+    spec = BY_DECK.get(_deck_key(p.hand + p.deck))
+    return Mulligan(decide(state, spec)) if spec else mulligan(state)
+
+
 class MulliganMode:
     """`base` with its opening redraw by `spec` (decide); every other decision is `base`'s."""
 
