@@ -147,7 +147,7 @@ def main() -> None:
                              "keeps it all")
     parser.add_argument("--features", default="",
                         help="named feature sets added to the version's, comma-separated (learn.features.EXTRAS: "
-                             "tempo, hand, handsplit); the models record them")
+                             "tempo, hand); the models record them")
     parser.add_argument("--hold-out-every", type=int, default=0,
                         help="leave out every game whose line number %% K == 0 (refit-200: K = 11, 400 of 4400)")
     args = parser.parse_args()
