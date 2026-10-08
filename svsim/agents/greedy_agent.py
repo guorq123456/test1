@@ -18,9 +18,10 @@ from svsim.search.moves import worth_trying
 
 def mulligan(state, threshold: int = 5) -> Mulligan:
     """The opening redraw (agents.mulligan: the player's rules for decks they
-    know, ramp first for ramp decks, else cards costing `threshold` or more)."""
-    from svsim.agents.mulligan import mulligan as choose
-    return choose(state, threshold)
+    know, ramp first for ramp decks, else cards costing `threshold` or more; a deck
+    in agents.mulligan.BY_DECK redraws its own way, agents.mulligan.opening_redraw)."""
+    from svsim.agents.mulligan import mulligan as choose, opening_redraw
+    return opening_redraw(state) if threshold == 5 else choose(state, threshold)
 
 
 class GreedyAgent:

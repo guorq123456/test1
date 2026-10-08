@@ -106,3 +106,23 @@ def test_the_simulated_redraw_is_a_subset_and_repeats_with_its_seed():
     s = M.opening("ramp-t", "elf-t", True, 4)
     a = M.decide(s, "sim:1:1", seed=2)
     assert set(a) <= set(range(len(s.players[s.active].hand))) and a == M.decide(s, "sim:1:1", seed=2)
+
+
+def test_the_tournament_combo_forest_redraws_by_its_rules_by_default():
+    from svsim.agents.greedy_agent import mulligan as agents_redraw
+    from svsim.agents.mulligan import BY_DECK, decide, opening
+    from svsim.tools.arena import make_agent
+    assert BY_DECK == {"elf-t": "rules"}
+    differs = 0
+    for seed in range(40):
+        for first in (True, False):
+            elf = opening("elf-t", "ramp-t", first, seed)
+            assert agents_redraw(elf).indices == decide(elf, "rules")             # elf-t: the rules
+            differs += agents_redraw(elf).indices != decide(elf, "default")
+            ramp = opening("ramp-t", "elf-t", first, seed)
+            assert agents_redraw(ramp).indices == decide(ramp, "default")         # the others as before
+    assert differs > 0
+    state = opening("elf-t", "ramp-t", True, 3)
+    from svsim.core.engine import legal_actions
+    off = make_agent("mcts:5+plan+mull=default", 1).act(state, legal_actions(state))
+    assert off.indices == decide(state, "default")                                 # "+mull=default": off
