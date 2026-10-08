@@ -1,5 +1,5 @@
 {
- "version": 19,
+ "version": 21,
  "commit": null,
  "published_at": null,
  "anchor": {
@@ -101,11 +101,14 @@
   "strong": {
    "decks": {
     "ramp-t": {
-     "cr": null,
-     "ci": null,
-     "games": 0,
-     "measured_vs": null,
-     "note": "待重标：跳费龙镜像装了 C3（hand 之上加 hpphase：双方 HP × 回合段；门 56.3% ± 3.1% 对第 19 版现装，+60 CR，分析线 a5a5a73）；原 1309 不再适用"
+     "cr": 1331,
+     "ci": [
+      1314,
+      1349
+     ],
+     "games": 200,
+     "measured_vs": "20bcfbe",
+     "note": "第 6 轮（分析线 4501f69 / 本机 c1d07dc）：装 C3（a6fdf0a，第 20 版）后，跳费龙镜像 50 对 ΔCR +126，其余三格与尺子同模型、恒 0；替换第 5 轮的 1309"
     },
     "elf-t": {
      "cr": 1348,
