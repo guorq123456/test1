@@ -1,35 +1,42 @@
-"""CR calibration round: a new bot against the ruler on the four tournament decks, read on Salem's CR scale.
+"""CR calibration round: a new version against the reference version on seven cells, read on Salem's CR scale.
 
-    cd <svsim checkout> && PYTHONPATH=. python3 <this> ramp-t=gate_ramp.jsonl elf-t=gate_elf.jsonl \
-        nemesis-t=gate_nemesis.jsonl pirate-t=gate_pirate.jsonl [--anchor 1300] [--boot 4000]
+    cd <svsim checkout> && PYTHONPATH=. python3 <this> analysis/calibration/round1 [--ref 20bcfbe] \
+        [--ref-cr ramp-t=1300 elf-t=1300 nemesis-t=1300 pirate-t=1300] [--boot 4000]
 
-Salem (2026-10-08 04:29Z): after every update of the algorithm, the new bot plays the four tournament decks, and
-its CR is read against the ramp-t bot of the ruler (ruler/ramp-20261008 @ 20bcfbe, v2s) anchored at 1300. Each
-file is one tools.gate run with --versus: --deck ramp-t, --opponent one of the four decks, A = the new bot, B = the
-ruler, C = the ruler playing the opponent's deck; a pair is one seed, A's two games (seat 0, seat 1) and B's two
-on the same deals against the same C (`points`, `b_points`). B against C is the ruler against the ruler.
+Salem (2026-10-08 04:29Z, 04:30Z) and the coordinating session: after every install the new version plays the
+current reference version (the first is the ruler, ruler/ramp-20261008 @ 20bcfbe, at 1300 CR) on seven cells,
+its CR is read, it goes to the sparring table with that CR, and it becomes the next round's reference. Each cell
+is one tools.gate run with --versus, a file `<deck>_vs_<opponent>.jsonl` in the round's folder:
+- ramp-t_vs_{ramp-t, elf-t, nemesis-t, pirate-t}: A (the new version) and B (the reference) play ramp-t, C (the
+  reference) plays the opponent's deck: the ramp-t bot's CR, one number from the four cells;
+- {elf-t, nemesis-t, pirate-t}_vs_ramp-t: A and B play that deck, C (the reference) plays ramp-t: each of those
+  bots' own CR, one chain per deck, each starting at 1300 at 20bcfbe, never compared across decks.
+A pair is one seed: A's two games (seat 0, seat 1) and B's two on the same deals against the same C.
 
-Per cell: A's and B's score against C (a pair's two games averaged, 95% interval over pairs), A - B paired, who
-went first (by game; svsim.core.engine.new_game as tools.gate builds the game), and the CR on Salem's scale (236 a
-logit; the steady-state figure 800 x difference in brackets). Then the new bot's CR, two ways, each with a 95%
-bootstrap interval (pairs resampled within each cell):
-- as registered (04:33Z): 1300 + 236 logit(p), p = A's score against C over the four cells pooled;
-- adjusted for the decks: 1300 + 236 (logit(p_A) - logit(p_B)), B's own score on the same deals as the zero.
-  Outside the mirror the ruler's ramp-t does not score 50% against the ruler's other decks (ramp-t against
-  pirate-t is about 40%), so the first way puts the ruler itself below 1300; the second does not.
-And the mirror cell alone, both ways (the most direct comparison with the ruler).
-Sizes: 100 games a cell is about +-10 points (about +-95 CR) at 95%; 400 games about +-5 points (+-47 CR); about
-360 games a cell for +-50 CR in each cell (before the pairing, which narrows A - B).
+The CR, as decided (04:43Z): CR_new = CR_ref + 236 (logit p_A - logit p_B), p the score against C over the cells
+pooled, B's own score on the same deals the zero; 95% bootstrap interval (pairs resampled within each cell).
+Beside it, in brackets for the first rounds, the registered first form CR_ref + 236 logit p_A: outside the mirror
+the reference's ramp-t does not score 50% against the reference's other decks (ramp-t against pirate-t is about
+40%), so with A = B it puts the reference itself near 1262 instead of 1300.
+Round 1 (A = B = 20bcfbe) is the known-answer test: the ramp-t total should come out 1300 +- 47 and each cell
++- 95. With the same agent seeds for A and B (tools.gate) the two play the same games, so A - B is exactly 0 and
+the decided CR is 1300 by construction: the real check is the column of games A and B played move for move
+alike (all of them, or the agents are not deterministic) and the registered form's offset (the decks' gap).
+Per cell: A's and B's score against C (95% over pairs), A - B paired, who went first, and the CR of A - B on
+Salem's scale (the steady-state figure 800 x difference in brackets). Sizes: 100 games a cell is about +-10 points
+(+-95 CR); 400 about +-5 points (+-47 CR); about 360 games a cell for +-50 CR (before the pairing narrows A - B).
 Condition: the opponent's 40-card list is known (order and hand not).
 """
 import json
 import math
+import os
 import random
 import sys
 
 SALEM = 236.0
-ORDER = ["ramp-t", "elf-t", "nemesis-t", "pirate-t"]
-NAMES = {"ramp-t": "跳费龙（镜像）", "elf-t": "连击妖", "nemesis-t": "机锋", "pirate-t": "旗皇"}
+RAMP_CELLS = ["ramp-t", "elf-t", "nemesis-t", "pirate-t"]          # ramp-t_vs_<these>
+OTHER_DECKS = ["elf-t", "nemesis-t", "pirate-t"]                     # <these>_vs_ramp-t
+NAMES = {"ramp-t": "跳费龙", "elf-t": "连击妖", "nemesis-t": "机锋", "pirate-t": "旗皇"}
 
 
 def logit(p):
@@ -44,7 +51,7 @@ def ci(xs):
 
 
 def first_seat(seed, deck, opp):
-    """Who goes first on `seed` (the same in both seat orders as long as the decks only swap seats)."""
+    """Who goes first on `seed` (tools.gate plays both seats on the same seed; the first player comes from it)."""
     from svsim.cards import decks
     from svsim.core.engine import new_game
     from svsim.ui.session import DECKS
@@ -56,56 +63,84 @@ def pooled(cells, key):
     return sum(games) / len(games)
 
 
-def cr_two_ways(cells, anchor):
+def cr_two_ways(cells, ref):
     pa, pb = pooled(cells, "points"), pooled(cells, "b_points")
-    return anchor + SALEM * logit(pa), anchor + SALEM * (logit(pa) - logit(pb))
+    return ref + SALEM * (logit(pa) - logit(pb)), ref + SALEM * logit(pa)
 
 
-def boot(cells, anchor, n, seed=17):
+def boot(cells, ref, n, seed=17):
     rng = random.Random(seed)
     a, b = [], []
     for _ in range(n):
         res = {c: [rows[rng.randrange(len(rows))] for _ in rows] for c, rows in cells.items()}
-        x, y = cr_two_ways(res, anchor)
+        x, y = cr_two_ways(res, ref)
         a.append(x)
         b.append(y)
     q = lambda xs: (sorted(xs)[int(0.025 * len(xs))], sorted(xs)[int(0.975 * len(xs)) - 1])
     return q(a), q(b)
 
 
-def main():
-    files = dict(a.split("=", 1) for a in sys.argv[1:] if "=" in a and not a.startswith("--"))
-    anchor = float(sys.argv[sys.argv.index("--anchor") + 1]) if "--anchor" in sys.argv else 1300.0
-    nboot = int(sys.argv[sys.argv.index("--boot") + 1]) if "--boot" in sys.argv else 4000
-    cells = {c: [json.loads(line) for line in open(files[c], encoding="utf-8") if line.strip()]
-             for c in ORDER if c in files}
-    print(f"条件：对手卡表已知（牌序、手牌未知）。A = 新 bot，B = 尺子（20bcfbe，v2s），都打 ramp-t；C = 尺子打对手卡组。"
-          f"锚点：尺子 = {anchor:.0f} CR。区间 95%，按对算；CR 按 Salem 刻度（236 / logit），括号里是稳态式。\n")
-    print("| 对手 | 对数 | A 对 C | B 对 C | A − B（配对） | A − B 的 CR（稳态式） | A 先手 / 后手 | B 先手 / 后手 |")
-    print("|---|---|---|---|---|---|---|---|")
-    for c, rows in cells.items():
+def cell_rows(cells, deck_of):
+    print("| 格 | 对数 | A 对 C | B 对 C | A − B（配对） | A − B 的 CR（稳态式） | A 先手 / 后手 | B 先手 / 后手 | A、B 逐局相同 |")
+    print("|---|---|---|---|---|---|---|---|---|")
+    for (deck, opp), rows in cells.items():
         ma, ha = ci([sum(d["points"]) / 2 for d in rows])
         mb, hb = ci([sum(d["b_points"]) / 2 for d in rows])
         md, hd = ci([(sum(d["points"]) - sum(d["b_points"])) / 2 for d in rows])
         split = {"points": ([], []), "b_points": ([], [])}
         for d in rows:
-            f = first_seat(d["seed"], "ramp-t", c)
+            f = first_seat(d["seed"], deck, opp)
             for key in split:
                 for seat in (0, 1):
                     split[key][0 if seat == f else 1].append(d[key][seat])
         fs = lambda key: f"{sum(split[key][0]) / len(split[key][0]):.0%} / {sum(split[key][1]) / len(split[key][1]):.0%}"
-        print(f"| {NAMES[c]} | {len(rows)} | {ma:.1%} ± {ha:.1%} | {mb:.1%} ± {hb:.1%} | {md:+.1%} ± {hd:.1%} | "
-              f"{SALEM * (logit(ma) - logit(mb)):+.0f}（{800 * md:+.0f}） | {fs('points')} | {fs('b_points')} |")
-    if len(cells) > 1:
-        (na, nb), (ia, ib) = cr_two_ways(cells, anchor), boot(cells, anchor, nboot)
-        print(f"\n合计（{len(cells)} 格，A {sum(2 * len(r) for r in cells.values())} 局）：A 对 C {pooled(cells, 'points'):.1%}，"
-              f"B 对 C {pooled(cells, 'b_points'):.1%}")
-        print(f"  新 bot 的 CR，照登记的算法（1300 + 236·logit(p_A)）：{na:.0f}（{ia[0]:.0f}～{ia[1]:.0f}）")
-        print(f"  新 bot 的 CR，扣掉卡组差（1300 + 236·(logit(p_A) − logit(p_B))）：{nb:.0f}（{ib[0]:.0f}～{ib[1]:.0f}）")
-    if "ramp-t" in cells:
-        m = {"ramp-t": cells["ramp-t"]}
-        (na, nb), (ia, ib) = cr_two_ways(m, anchor), boot(m, anchor, nboot)
-        print(f"镜像格单独：照登记的算法 {na:.0f}（{ia[0]:.0f}～{ia[1]:.0f}），扣掉卡组差 {nb:.0f}（{ib[0]:.0f}～{ib[1]:.0f}）")
+        print(f"| {NAMES[deck]}对{NAMES[opp]} | {len(rows)} | {ma:.1%} ± {ha:.1%} | {mb:.1%} ± {hb:.1%} | {md:+.1%} ± {hd:.1%} | "
+              f"{SALEM * (logit(ma) - logit(mb)):+.0f}（{800 * md:+.0f}） | {fs('points')} | {fs('b_points')} | "
+              f"{sum(sum(d.get('same') or [False, False]) for d in rows)} / {2 * len(rows)} |")
+
+
+def report_cr(label, cells, ref, nboot, round1):
+    (adj, reg), (ia, ir) = cr_two_ways(cells, ref), boot(cells, ref, nboot)
+    games = sum(2 * len(r) for r in cells.values())
+    line = (f"  {label}：**{adj:.0f}**（{ia[0]:.0f}～{ia[1]:.0f}）；A 对 C {pooled(cells, 'points'):.1%}、B 对 C "
+            f"{pooled(cells, 'b_points'):.1%}，A {games} 局［照登记的算法 {reg:.0f}（{ir[0]:.0f}～{ir[1]:.0f}）］")
+    if round1:
+        tol = 47 if games >= 400 else 95
+        line += f"；已知答案 {ref:.0f} ± {tol}：{'在圈内' if abs(adj - ref) <= tol else '出圈，查流程'}"
+    print(line)
+
+
+def main():
+    folder = next(a for a in sys.argv[1:] if not a.startswith("--") and "=" not in a)
+    ref = sys.argv[sys.argv.index("--ref") + 1] if "--ref" in sys.argv else "20bcfbe"
+    nboot = int(sys.argv[sys.argv.index("--boot") + 1]) if "--boot" in sys.argv else 4000
+    refcr = {d: 1300.0 for d in NAMES}
+    if "--ref-cr" in sys.argv:
+        for a in sys.argv[sys.argv.index("--ref-cr") + 1:]:
+            if "=" not in a or a.startswith("--"):
+                break
+            d, v = a.split("=")
+            refcr[d] = float(v)
+    load = lambda name: [json.loads(line) for line in open(os.path.join(folder, name), encoding="utf-8") if line.strip()]
+    ramp = {("ramp-t", o): load(f"ramp-t_vs_{o}.jsonl") for o in RAMP_CELLS if os.path.exists(os.path.join(folder, f"ramp-t_vs_{o}.jsonl"))}
+    other = {(d, "ramp-t"): load(f"{d}_vs_ramp-t.jsonl") for d in OTHER_DECKS if os.path.exists(os.path.join(folder, f"{d}_vs_ramp-t.jsonl"))}
+    round1 = ref == "20bcfbe" and "--not-control" not in sys.argv
+    print(f"条件：对手卡表已知（牌序、手牌未知）。{folder}：A = 新版本，B = 参考版本 {ref}，C = 参考版本打对手卡组。"
+          f"CR = 参考 CR + 236·(logit p_A − logit p_B)，区间 95%（按对的自助法）。"
+          + ("第 1 轮 A = B，是已知答案测试。" if round1 else "") + "\n")
+    if ramp:
+        print(f"**① 跳费龙 bot 的 CR**（参考 {refcr['ramp-t']:.0f}）\n")
+        cell_rows(ramp, None)
+        print()
+        report_cr(f"合计（{len(ramp)} 格）", ramp, refcr["ramp-t"], nboot, round1)
+        if ("ramp-t", "ramp-t") in ramp:
+            report_cr("镜像格单独", {("ramp-t", "ramp-t"): ramp[("ramp-t", "ramp-t")]}, refcr["ramp-t"], nboot, round1)
+    if other:
+        print("\n**② 连击妖 / 机锋 / 旗皇 bot 各自的 CR**（每套牌一条链，各自从 20bcfbe = 1300 起算，不跨卡组比）\n")
+        cell_rows(other, None)
+        print()
+        for (d, o), rows in other.items():
+            report_cr(f"{NAMES[d]}（参考 {refcr[d]:.0f}）", {(d, o): rows}, refcr[d], nboot, round1)
     print("\n规模：每格 100 局约 ±10 个百分点（约 ±95 CR）；合计 400 局约 ±5 个百分点（约 ±47 CR）；"
           "每格要压到 ±50 CR 约需 360 局（A − B 配对后会窄一些）。")
 
