@@ -30,6 +30,96 @@
   - 但旗皇的差距区间跨 0，人类数只有 10 局；机锋没有人类数，排不进来。所以这个排序的把握很低。
   - 要让这一列能用，需要更多人类对位数据（例如 Salem 自己的对局记录，或比赛的对局统计）。
 
+## 数据指引（给 Salem：自己上手看数据）
+
+Salem 03:52Z：「具体水平问题你到时候指引我去对应的分支，我去分析数据」。这一节随数据更新，每次报「水平」都会引用它。
+
+**条件**：所有对局都是对手卡表已知（牌序、手牌未知）。
+
+### 拉数据
+
+```
+git fetch origin ccr-da4857cc-rkpgwr local/pairings-20261008 local/mull-20261008 local/data-pairings-20261008 data/pairings-20261008
+git checkout ccr-da4857cc-rkpgwr
+```
+
+- 第二行检出的是 test1 的分支，脚本和云端跑的数据都在里面。
+- 其他分支的文件不用检出，用 `git show 分支:路径 > 本地文件名` 取出来就行，例如：
+  `git show origin/local/pairings-20261008:analysis/local-runs/league-after-20261008-part1.jsonl.gz > part1.jsonl.gz`
+
+### 每份数据
+
+| 用途 | 分支 | 提交 | 路径 |
+|---|---|---|---|
+| 联赛基线：f631e14 的 bot，10 格 × 300 局 | ccr-da4857cc-rkpgwr | f1ab6d3，镜像第二局 17d294d | `analysis/deck-league/league_v2s_f631e14.jsonl.gz`、`league_v2s_f631e14_mirror2.jsonl.gz` |
+| **联赛重跑，装机态（尺子表用的）** | local/pairings-20261008 | 8a3b0c0 | `analysis/local-runs/league-after-20261008-part1.jsonl.gz`（8 格）、`-part2.jsonl.gz`（跳费龙对旗皇） |
+| 用时基线：本机 f631e14，每格 20 对 | local/pairings-20261008 | 352dd60 | `analysis/local-runs/league-base-timing-20261008.jsonl.gz` |
+| 2×2：旗皇对连击妖，模型 × 起手 | local/pairings-20261008 | 233f391 | `analysis/local-runs/league-after-20261008-x-nomodel-R.jsonl.gz`、`-x-model-D.jsonl.gz` |
+| 云端单格重跑：连击妖镜像、旗皇镜像、连击妖对跳费龙 | ccr-da4857cc-rkpgwr | 1497eb0、b1f7241、c150726 | `analysis/deck-league/league_v2s_3effa47_*.jsonl.gz`、`league_v2s_81c4660_*`、`league_v2s_d9b26e7_*` |
+| 起手门（R 对 D），云端 | ccr-da4857cc-rkpgwr | ade248f | `analysis/tournament-audit/mull_gate_elf_sprt_c962055.jsonl` |
+| 起手门，本机 | local/mull-20261008 | cd65fed | `analysis/tournament-audit/local/mull_*.jsonl`（同目录有各自的 report） |
+| 配对模型门，本机 | local/pairings-20261008 | 8a3b0c0 | `analysis/local-runs/<卡组>_<对手>[.0/.1].sprt`、`.fixed`（结果表在同目录的 README.md） |
+| 早期评测台（v1、v2 的门） | ccr-da4857cc-rkpgwr | — | `analysis/gate-runs/*.jsonl`（README.md 里有每个文件的 A、B、种子和结果） |
+| 自对弈，云端：4 个配对 × 2000 局，v2 | data/pairings-20261008 | b0a37df | `data/pairings-20261008/*.jsonl.gz`（同目录 README.md） |
+| 自对弈，本机：7 份 × 2000 局，v2 | local/data-pairings-20261008 | d58a27c | `data/pairings-20261008/*.jsonl.gz`（README.md 写了每份的种子、当时的构建提交、拟合出的模型） |
+| 本节的审计：抽的点和结果 | ccr-da4857cc-rkpgwr | — | `analysis/ramp-benchmark/` |
+| 种子库登记 | ccr-da4857cc-rkpgwr | — | `analysis/seed-banks.md` |
+
+### 记录格式
+
+**联赛**（`league_*.jsonl.gz` 和 `league-after-*.jsonl.gz`，gzip，一行一局）：
+- `pair`：「前一个卡组/后一个卡组」，例如 `elf-t/ramp-t`。
+- `k`：第几对，0～149。种子 `seed` = 25000000 + k。
+- `seat_a`：前一个卡组坐的座位（0 或 1）。一对就是同一个种子打两局，换座位；镜像的第二局还交换双方 agent 的种子。
+- `first`：先手的座位。
+- `winner`：赢家的座位；null 是平局。前一个卡组的得分：`winner == seat_a` 记 1，平局记 0.5。
+- `turns`：总回合数，双方合计。`seconds`：这局的墙钟秒数。`agent_seeds`：两个座位 agent 的种子。
+- `record`：完整对局：
+  - `names`：两个座位的卡组名；`decks`：两个座位的 40 张卡号；
+  - `ai`：「座位 0 的 agent 串 / 座位 1 的」，v2s = `mcts:200+plan+learned+phased`；
+  - `actions`：每一步动作，按顺序。`Mulligan` 的 `indices` 是换掉的手牌位置；`PlayCard` 的 `uid` 是出的牌，`targets` 是目标；`Attack` 是 `attacker` 打 `target`；`Evolve` 的 `super_` 为真表示超进化；还有 `EndTurn`、`UseBonusPP` 等。目标是负数时指主战者：−1 是座位 0，−2 是座位 1。
+  - 用 `svsim.tools.records.start(record)` 可以得到开局局面，再按 `actions` 一步步走，就能复盘任何一步。
+
+**起手门**（`mull_*.jsonl`，一行一对）：
+- `k`、`seed`、`opp`（对手）、`opp_way`（对手的起手方式）、`deck`（被测卡组）；
+- `seat0`、`seat1`：被测卡组坐这个座位时的两局，R 和 D 各一局，各有 `points`（得分）、`first`（是否先手）、`turns`、`seconds`、`redraw`（[R 换的位置, D 换的位置]）；
+- `differ`：这个座位上 R 和 D 换的牌是否不同。
+
+**配对模型门和评测台**（`*.sprt`、`*.fixed`、`gate-runs/*.jsonl`，一行一对）：
+- `k`、`seed`；
+- `points`：A 在两局里的得分；
+- `b_points`：用 `--versus` 时 B 在同样两局里的得分（A、B 都打同一个 C）；
+- `same`：A、B 在同一副发牌、同一座位上着法是否完全一样。
+
+**自对弈**（`data/pairings-20261008/*.jsonl.gz`，`learn.netdata` 的输出，一行一局）：
+- 和联赛的 `record` 字段一样：`seed`、`first`、`decks`、`actions`、`winner`、`ai`。另外还有：
+- `names`：两个座位的卡组名。`deck_keys`：查对局模型用的卡组键。
+- `search`：和 `actions` 一一对应。
+  - null：这一步没有搜索，比如换牌、只有一个合法动作，或者由必杀检查、规划器直接给出；
+  - 否则是这一步搜索的根：`visits` 是各候选动作的访问次数，`value` 是根的胜率估计，`center` 是评估的中心值。
+- `turn_starts`：每个回合开始时的快照。`i` 是这回合第一步在 `actions` 里的位置，`player` 是谁的回合，`hand` 是手牌 uid，`deck` 是牌库 uid（最后一个是牌库顶）。
+- `g`：第几局。`explore`：随机探索比例，0.03 表示 3% 的步随机走。`agent_seeds`、`rng_seed`、`deck_hashes`（卡组哈希）、`date`。
+
+### 复现命令
+
+下面三个脚本只用标准库，不需要 svsim。在 test1 分支的根目录执行：
+
+```
+# 尺子表的一行，以连击妖为例
+python3 analysis/deck-league/compare_cell.py --pair elf-t/ramp-t 重跑=part1.jsonl.gz
+# 旗皇那格写作 ramp-t/pirate-t，报的是跳费龙的得分：旗皇的得分 = 100% − 它，先手、后手也要对调
+python3 analysis/deck-league/compare_cell.py --pair ramp-t/pirate-t 重跑=part2.jsonl.gz
+
+# 格级对照表：重跑对基线，连击妖几格注明起手 D→R，用时对本机的用时基线
+python3 analysis/deck-league/compare_league.py 基线=analysis/deck-league/league_v2s_f631e14.jsonl.gz+analysis/deck-league/league_v2s_f631e14_mirror2.jsonl.gz 重跑=part1.jsonl.gz+part2.jsonl.gz --note "elf-t=起手 D→R" --timing-base timing.jsonl.gz
+
+# 起手门：几份合成一个样本
+python3 analysis/tournament-audit/mulligan_gate.py --report 第一份.jsonl 第二份.jsonl --pool
+```
+
+- `part1.jsonl.gz`、`part2.jsonl.gz`、`timing.jsonl.gz` 是用上面的 `git show` 从本机分支取出来的文件。
+- 要复盘某一局的某一步，需要 svsim：检出构建提交（例如 9a6ea1c），在那个目录里 `PYTHONPATH=.`，用 `svsim.tools.records`。
+
 ## 深搜 vs 浅搜分歧审计（2026-10-08）
 
 ### 第二版设计（架构线程 03:48Z，现行）
