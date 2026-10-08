@@ -2,15 +2,16 @@
 
     cd <svsim checkout> && PYTHONPATH=. python3 <this> analysis/calibration/round2 [--ref <sha>] \
         [--ref-cr ramp-t=1300 elf-t=1300 nemesis-t=1300 pirate-t=1300] [--boot 4000] [--identity]
-    ... <this> analysis/calibration/levels --levels      # each sparring level against the ruler
+    ... <this> analysis/calibration/levels --levels      # each sparring level x deck against the ruler
 
 Salem (2026-10-08 04:29Z, 04:30Z), the coordinating session and the architecture thread (04:52Z): four decks x
 four opponents (the mirror included) = 16 cells. A cell `<deck>_vs_<opponent>.jsonl` is one tools.gate run with
 --versus: A (the new version) and B (the reference) play <deck>, C (the reference) plays <opponent>; a pair is one
 seed, A's two games and B's two on the same deals against the same C. Per cell dCR = 236 (logit p_A - logit p_B),
-p the score against C; each deck's bot gets CR_new = CR_ref + the mean of its four cells' dCR. A cell whose
-models did not change is not run: A and B play it pair for pair alike, so its dCR is 0, marked "models unchanged,
-identical pair for pair". The ramp-t bot's CR is the mean of its four cells, the ones Salem named. Each deck's
+p the score against C; each deck gets one CR against the four (Salem 04:54Z: "是新bot用一套卡组打四套卡组各100局，
+评估单卡组策略cr"): CR_new = CR_ref + the mean of its four cells' dCR. A cell whose models did not change is not
+run: A and B play it pair for pair alike, so its dCR is 0 (as if played: 50%), marked "models unchanged, identical
+pair for pair, counted 0". The ramp-t bot's CR is the mean of its four cells, the ones Salem named. Each deck's
 chain starts at 20bcfbe = 1300 and is never compared across decks. Intervals: 95% bootstrap, pairs resampled within
 each cell that was run. Error: a cell is about +-95 CR at 50 pairs; one changed cell moves its deck's CR by a
 quarter of that (about +-24), four changed cells about +-47.
@@ -19,8 +20,9 @@ quarter of that (about +-24), four changed cells about +-47.
 (A the top-level models, B and C the ruler snapshot `ruler-20261008`, alias ruler20261008; the snapshot's files
 checked with sha256sum against its README first); any pair that is not raises the alarm.
 
---levels: the sparring table's levels against the ruler, files `<level>_ramp-t_vs_<opponent>.jsonl`; each level's
-CR = 1300 + the mean of its four cells' dCR (for svsim/ui/ratings.json).
+--levels: the sparring table's levels against the ruler, files `<level>_<deck>_vs_<opponent>.jsonl`, level x deck x
+the four; each level gets one CR per deck, 1300 + the mean of that deck's four cells' dCR (for svsim/ui/ratings.json).
+A level is not the ruler, so a cell not yet run is not 0: a deck with fewer than four cells gets no CR yet.
 Condition: the opponent's 40-card list is known (order and hand not).
 """
 import json
@@ -76,7 +78,7 @@ def cell_table(label_of, cells, opps, deck_of):
     print("|---|---|---|---|---|---|---|---|")
     for o in opps:
         if o not in cells:
-            print(f"| {label_of(o)} | — | — | — | — | 0（模型未变，逐对恒等，没跑） | — | — |")
+            print(f"| {label_of(o)} | — | — | — | — | 0（模型未变，逐对恒等记 0，等于打了也是 50%） | — | — |")
             continue
         rows = cells[o]
         ma, ha = ci([sum(d["points"]) / 2 for d in rows])
@@ -119,25 +121,39 @@ def main():
             refcr[d] = float(v)
     identity = "--identity" in sys.argv
     if "--levels" in sys.argv:
-        files = load_folder(folder, lambda n: "_ramp-t_vs_" in n)
-        levels = sorted({n.split("_ramp-t_vs_")[0] for n in files})
-        print(f"条件：对手卡表已知（牌序、手牌未知）。{folder}：各档 A 打 ramp-t，B = C = 尺子（ruler20261008）；"
-              f"每档 CR = 1300 + 四格 ΔCR 的平均，区间 95%（按对的自助法）。\n")
-        for lv in levels:
-            cells = {n.split("_ramp-t_vs_")[1]: rows for n, rows in files.items() if n.startswith(lv + "_ramp-t_vs_")}
-            print(f"**{lv}**\n")
-            cell_table(lambda o: f"跳费龙对{NAMES[o]}", cells, DECKS, lambda o: "ramp-t")
-            lo, hi = boot(cells, DECKS, nboot)
-            print(f"\n  {lv} 的 CR：**{1300 + mean_dcr(cells, DECKS):.0f}**（{1300 + lo:.0f}～{1300 + hi:.0f}），"
-                  f"跑了 {len(cells)} / 4 格\n")
+        files = load_folder(folder, lambda n: "_vs_" in n)
+        keys = {}
+        for n in files:                                    # <level>_<deck>_vs_<opponent>
+            head, opp = n.rsplit("_vs_", 1)
+            lv, deck = next((head[:-len(d) - 1], d) for d in DECKS if head.endswith("_" + d))
+            keys.setdefault((lv, deck), {})[opp] = files[n]
+        print(f"条件：对手卡表已知（牌序、手牌未知）。{folder}：各档拿一套卡组打尺子（ruler20261008）的四家，"
+              f"B = C = 尺子；每档每套牌一个 CR = 1300 + 四格 ΔCR 的平均，区间 95%（按对的自助法）。"
+              f"档不是尺子，没跑的格不能记 0：不满四格的卡组先不给 CR。\n")
+        summary = []
+        for (lv, deck) in sorted(keys):
+            cells = keys[(lv, deck)]
+            print(f"**{lv} · {NAMES[deck]}**\n")
+            cell_table(lambda o, deck=deck: f"{NAMES[deck]}对{NAMES[o]}", {o: c for o, c in cells.items()},
+                       [o for o in DECKS if o in cells], lambda o, deck=deck: deck)
+            if len(cells) == 4:
+                lo, hi = boot(cells, DECKS, nboot)
+                summary.append((lv, deck, f"**{1300 + mean_dcr(cells, DECKS):.0f}**（{1300 + lo:.0f}～{1300 + hi:.0f}）"))
+            else:
+                summary.append((lv, deck, f"待跑（{len(cells)} / 4 格）"))
+            print()
+        print("| 档 | 套牌 | CR（对四家） |")
+        print("|---|---|---|")
+        for lv, deck, cr in summary:
+            print(f"| {lv} | {NAMES[deck]} | {cr} |")
         return
     files = load_folder(folder, lambda n: "_vs_" in n)
     digits = 1 if identity else 0
     print(f"条件：对手卡表已知（牌序、手牌未知）。{folder}：A = 新版本，B = 参考版本 {ref}，C = 参考版本打对手卡组。"
-          f"每格 ΔCR = 236·(logit p_A − logit p_B)；每套牌 CR = 参考 CR + 四个对手格 ΔCR 的平均（没跑的格按 0："
-          f"模型未变、逐对恒等）；各套牌一条链，不跨卡组比；区间 95%（按对的自助法）。"
+          f"每格 ΔCR = 236·(logit p_A − logit p_B)；每套牌一个 CR（对四家）= 参考 CR + 四个对手格 ΔCR 的平均"
+          f"（没跑的格：模型未变，逐对恒等记 0，等于打了也是 50%）；各套牌一条链，不跨卡组比；区间 95%（按对的自助法）。"
           + ("恒等校验：每对 A − B 必须为 0、着法全同。" if identity else "") + "\n")
-    print("| 套牌 bot | 参考 CR | 跑了几格 | 新 CR（95%） | 变化 |")
+    print("| 套牌 bot | 参考 CR | 跑了几格 | 新 CR，对四家（95%） | 变化 |")
     print("|---|---|---|---|---|")
     per_deck = {}
     for d in DECKS:

@@ -44,8 +44,8 @@
 - **定义**：
   - 四套牌 × 四个对手（含镜像）= 16 格。格 `<deck>_vs_<opponent>`：A、B 打 deck，C = 参考版本打 opponent。每格一次 `tools.gate --versus`，定长 50 对（`--max 200`）。
   - 每格 ΔCR = 236·(logit p_A − logit p_B)，p 是对 C 的得分；B 在同样发牌上的得分作零点（04:43Z 拍板）。
-  - 每套牌 bot 的 CR_新 = CR_参考 + 四个对手格 ΔCR 的平均。跳费龙 bot 的 CR，就是 Salem 原话说的那 4 格的平均。
-- **懒惰**：模型没变的格不跑。A、B 在那一格逐对恒等，ΔCR 记 0，表里注「模型未变，逐对恒等」。
+  - **每套牌一个 CR（对四家）**：CR_新 = CR_参考 + 四个对手格 ΔCR 的平均。Salem 04:54Z 原话：「是新bot用一套卡组打四套卡组各100局，评估单卡组策略cr」。跳费龙 bot 的 CR，就是它那 4 格的平均。
+- **懒惰**：模型没变的格不跑。A、B 在那一格逐对恒等，表里写「模型未变，逐对恒等记 0（等于打了也是 50%）」。
 - 各套牌一条链，都从 20bcfbe = 1300 起，不跨卡组比，沿用「尺子表不跨卡组读」的决定。
 - **误差**：每格 50 对约 ±95 CR。只有一格变了，那套牌 CR 的误差约是它的 1/4（约 ±24）；四格都变约 ±47。
 - **文件**：`analysis/calibration/round<N>/<deck>_vs_<opponent>.jsonl`。缺的格按 0 处理，并在表里标注。
@@ -64,13 +64,16 @@
 - 其余 15 格记 0。所以连击妖 bot 的 CR = 1300 + 这一格的 ΔCR ÷ 4，其他三套牌仍是 1300。
 
 **各档 CR**（陪练台每个档位旁显示的数；建造线写进 `svsim/ui/ratings.json`，显示版本、提交和 CR）：
-- 原始版 `mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default`、普通 `v2r`、快速 `greedy+plan+learned+phased`，各打跳费龙对四家。B = C = ruler20261008，每格 50 对。
-- 每档 CR = 1300 + 四格 ΔCR 的平均（`calibrate.py analysis/calibration/levels --levels`）。
-- 文件：`analysis/calibration/levels/<档>_ramp-t_vs_<对手>.jsonl`，档名用 `orig`、`normal`、`fast`。
-- 种子库：原始版 49800000～50100000，普通 50200000～50500000，快速 50600000～50900000。
+- 三档：原始版 `mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default`、普通 `v2r`、快速 `greedy+plan+learned+phased`。
+- 按「档 × 卡组 × 四家」跑：每档拿一套卡组打尺子的四家，B = C = ruler20261008，每格 50 对。**每档每套牌一个 CR** = 1300 + 那套牌四格 ΔCR 的平均（`calibrate.py analysis/calibration/levels --levels`）。
+- 档不是尺子，没跑的格不能记 0：不满四格的卡组先不给 CR。
+- 文件：`analysis/calibration/levels/<档>_<卡组>_vs_<对手>.jsonl`，档名用 `orig`、`normal`、`fast`。
+- **分批**：
+  - 第一批，三档拿跳费龙的 12 格。种子库：原始版 49800000～50100000，普通 50200000～50500000，快速 50600000～50900000。
+  - 第二批，三档其余 36 格（连击妖、机锋、旗皇各对四家），排在联赛第 3 部分之后，到时再分种子库。
 
 **读法**（`calibrate.py <round 文件夹> [--ref <sha>] [--ref-cr ramp-t=… elf-t=… nemesis-t=… pirate-t=…] [--identity]`）：
-- 先给一张总表：套牌 bot、参考 CR、跑了几格、新 CR（95%）、变化；
+- 先给一张总表：套牌 bot、参考 CR、跑了几格、新 CR（对四家，95%）、变化；
 - 再给每套牌的格：A 对 C、B 对 C、A − B、ΔCR（括号里是稳态式）、先后手、A、B 逐局相同的局数；
 - 区间是按对的自助法，只在跑了的格里重抽。
 
@@ -88,14 +91,14 @@
 | 1（恒等校验，7 格 × 10 对） | 20bcfbe（顶层 = 快照 ruler-20261008） | — | 20bcfbe | 1300 | 7 格 | 待跑（应为 1300.0） | 待跑 | 待跑 | 待跑 | —（本轮就是锚点） | 2026-10-08 |
 | 2 | 08a02d0 | benchmark/20261008-2 | 20bcfbe | 1300 | 连击妖对机锋 1 格 | 1300（四格未变） | 待跑 | 1300（四格未变） | 1300（四格未变） | — | 2026-10-08 |
 
-**各档 CR**：
+**各档 CR**（每档每套牌一个，对四家）：
 
-| 档 | 串 | 四格 ΔCR | CR | 日期 |
-|---|---|---|---|---|
-| 原始版 | `mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default` | 待跑 | 待跑 | — |
-| 普通 | `v2r` | 待跑 | 待跑 | — |
-| 快速 | `greedy+plan+learned+phased` | 待跑 | 待跑 | — |
-| 尺子（强） | `ruler20261008`（20bcfbe 的 v2s） | 0（定义） | 1300 | 2026-10-08 |
+| 档 | 串 | 跳费龙 | 连击妖 | 机锋 | 旗皇 | 日期 |
+|---|---|---|---|---|---|---|
+| 原始版 | `mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default` | 待跑（第一批） | 待跑（第二批） | 待跑（第二批） | 待跑（第二批） | — |
+| 普通 | `v2r` | 待跑（第一批） | 待跑（第二批） | 待跑（第二批） | 待跑（第二批） | — |
+| 快速 | `greedy+plan+learned+phased` | 待跑（第一批） | 待跑（第二批） | 待跑（第二批） | 待跑（第二批） | — |
+| 尺子（强） | `ruler20261008`（20bcfbe 的 v2s） | 1300（定义） | 1300（定义） | 1300（定义） | 1300（定义） | 2026-10-08 |
 
 ## 数据指引（给 Salem：自己上手看数据）
 
