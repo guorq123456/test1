@@ -35,6 +35,8 @@ DECKS = {"rhino": ("破魔虫精灵", decks.RHINO_FOREST), "ramp": ("跳费龙",
 # strong are arena.VERSIONS v2r and v2s (the refitted turn-end model, learn.phased; normal also keeps
 # its search tree between the moves of a turn, at v2's time per move: 53.3% over v2 in a fixed 600
 # games, 2026-10-07). Both use the per-pairing models in svsim/learn/phased_models where one is installed.
+# normal = arena.VERSIONS["v2r"]: 115 iterations with +reuse is v2's time per move (2026-10-07, idle machine, the
+# same games: mcts:115+...+reuse 53.1 ms against v2's 53.4 ms per move; docs/architecture.md, 搜索树复用).
 LEVELS = {"fast": "greedy+plan+learned", "normal": "mcts:115+plan+learned+phased+reuse",
           "strong": "mcts:200+plan+learned+phased",
           # the bot before 2026-10-08's improvements (f631e14, also the normal level of the build published
@@ -76,7 +78,8 @@ def bot_info(level: str, spec: str, deck: str | None = None) -> dict:
     from svsim.tools.arena import VERSIONS
     info = ratings()
     return {"level": level if level in LEVELS else None,
-            "version": next((k for k, v in VERSIONS.items() if v == spec or k == spec), None),
+            "version": next((k for k, v in VERSIONS.items()
+                             if (v == spec or k == spec) and not k.startswith("level-")), None),
             "spec": spec, "build": commit(), "commit": info["commit"],
             "cr": rating_of(level, deck) if level in LEVELS and deck else None}
 

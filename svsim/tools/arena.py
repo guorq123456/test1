@@ -93,6 +93,10 @@ VERSIONS = {
     # CR calibration's fixed reference, never changed; the search code is the current one, see its README)
     "ruler20261008": "mcts:200+plan+learned+phased=ruler-20261008",
 }
+# The trainer's levels by name (level-fast / level-normal / level-strong / level-original): the specs in
+# svsim.ui.session.LEVELS themselves, so a gate or the CR calibration can't play a hand-copied variant.
+from svsim.ui.session import LEVELS as _LEVELS    # noqa: E402  (session imports this module only lazily)
+VERSIONS.update({f"level-{level}": spec for level, spec in _LEVELS.items()})
 
 
 def _prior_options(options) -> dict:
