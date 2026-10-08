@@ -123,6 +123,23 @@ def report(paths, pool=False):
         print(f"  R=D 却胜负不同的座位：{same}（agent 种子相同，几乎确定，应接近 0）\n")
 
 
+
+def read_clean(path):
+    """The rows of a JSON-lines file we append to, after a container restart may have cut its last line:
+    the complete lines are kept and the file is rewritten without the broken tail."""
+    good = []
+    for line in open(path, encoding="utf-8"):
+        if not line.strip():
+            continue
+        try:
+            json.loads(line)
+        except json.JSONDecodeError:
+            break
+        good.append(line if line.endswith("\n") else line + "\n")
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.writelines(good)
+    return [json.loads(line) for line in good]
+
 def main():
     if "--report" in sys.argv:
         report([a for a in sys.argv[sys.argv.index("--report") + 1:] if not a.startswith("--")], pool="--pool" in sys.argv)
@@ -141,7 +158,7 @@ def main():
     from svsim.tools.gate import bounds, llr
     rows = []
     if os.path.exists(args.out):
-        rows = [json.loads(line) for line in open(args.out, encoding="utf-8") if line.strip()]
+        rows = read_clean(args.out)
     done = {r["k"] for r in rows}
     lo, hi = bounds(0.05, 0.05)
     jobs = [(k, args.seed + k, args.deck, args.opponents[k % len(args.opponents)], args.way, args.agent)

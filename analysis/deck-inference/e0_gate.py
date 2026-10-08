@@ -212,6 +212,23 @@ def report(paths):
         print(f"  思考时间 A / B = {ta / max(tb, 1e-9):.3f}（同搜索同迭代数；比值只报告，不调）\n")
 
 
+
+def read_clean(path):
+    """The rows of a JSON-lines file we append to, after a container restart may have cut its last line:
+    the complete lines are kept and the file is rewritten without the broken tail."""
+    good = []
+    for line in open(path, encoding="utf-8"):
+        if not line.strip():
+            continue
+        try:
+            json.loads(line)
+        except json.JSONDecodeError:
+            break
+        good.append(line if line.endswith("\n") else line + "\n")
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.writelines(good)
+    return [json.loads(line) for line in good]
+
 def main():
     if "--report" in sys.argv:
         report(sys.argv[sys.argv.index("--report") + 1:])
@@ -229,7 +246,7 @@ def main():
     from svsim.tools.gate import bounds, llr
     rows = []
     if os.path.exists(args.out):
-        rows = [json.loads(line) for line in open(args.out, encoding="utf-8") if line.strip()]
+        rows = read_clean(args.out)
     done = {r["k"] for r in rows}
     lo, hi = bounds(0.05, 0.05)
     jobs = [(k, args.seed + k, args.agent, args.lists, args.records) for k in range(args.pairs) if k not in done]

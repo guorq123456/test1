@@ -50,6 +50,23 @@ def measure(job):
             "G_end_samples": outs}
 
 
+
+def read_clean(path):
+    """The rows of a JSON-lines file we append to, after a container restart may have cut its last line:
+    the complete lines are kept and the file is rewritten without the broken tail."""
+    good = []
+    for line in open(path, encoding="utf-8"):
+        if not line.strip():
+            continue
+        try:
+            json.loads(line)
+        except json.JSONDecodeError:
+            break
+        good.append(line if line.endswith("\n") else line + "\n")
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.writelines(good)
+    return [json.loads(line) for line in good]
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("records", nargs="+")
@@ -80,7 +97,7 @@ def main():
         jobs.append((games[g], i, seed, args.k, row))
     import os
     if os.path.exists(args.out):                  # resume (the container restarts): rows already measured are skipped
-        done = {json.loads(l)["seed"] for l in open(args.out, encoding="utf-8") if l.strip()}
+        done = {r["seed"] for r in read_clean(args.out)}
         jobs = [j for j in jobs if j[2] not in done]
     with Pool(args.workers) as pool, open(args.out, "a", encoding="utf-8") as fh:
         for out in pool.imap_unordered(measure, jobs):

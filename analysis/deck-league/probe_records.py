@@ -90,6 +90,23 @@ def report(paths):
               f"{sum(r['probed'] for r in rows)}")
 
 
+
+def read_clean(path):
+    """The rows of a JSON-lines file we append to, after a container restart may have cut its last line:
+    the complete lines are kept and the file is rewritten without the broken tail."""
+    good = []
+    for line in open(path, encoding="utf-8"):
+        if not line.strip():
+            continue
+        try:
+            json.loads(line)
+        except json.JSONDecodeError:
+            break
+        good.append(line if line.endswith("\n") else line + "\n")
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.writelines(good)
+    return [json.loads(line) for line in good]
+
 def main():
     if "--report" in sys.argv:
         report(sys.argv[sys.argv.index("--report") + 1:])
@@ -111,7 +128,7 @@ def main():
         games = [g for g in games if (g["k"], g["seat_a"]) in keep]
     import os
     if os.path.exists(args.out):                      # resume: the games already probed are skipped
-        done = {(r["k"], r["seat_a"]) for r in (json.loads(x) for x in open(args.out, encoding="utf-8") if x.strip())}
+        done = {(r["k"], r["seat_a"]) for r in read_clean(args.out)}
         games = [g for g in games if (g["k"], g["seat_a"]) not in done]
     with Pool(args.workers) as pool, open(args.out, "a", encoding="utf-8") as fh:
         for r in pool.imap_unordered(job, games, chunksize=1):

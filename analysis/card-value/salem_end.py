@@ -128,6 +128,23 @@ def report(rows_path, teacher_path, boots):
         print(f"  差 {k:<10} {point[a] - point[b]:+.3f}（{lo:+.3f}～{hi:+.3f}）")
 
 
+
+def read_clean(path):
+    """The rows of a JSON-lines file we append to, after a container restart may have cut its last line:
+    the complete lines are kept and the file is rewritten without the broken tail."""
+    good = []
+    for line in open(path, encoding="utf-8"):
+        if not line.strip():
+            continue
+        try:
+            json.loads(line)
+        except json.JSONDecodeError:
+            break
+        good.append(line if line.endswith("\n") else line + "\n")
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.writelines(good)
+    return [json.loads(line) for line in good]
+
 def main():
     if "--report" in __import__("sys").argv:
         ap = argparse.ArgumentParser()
@@ -151,7 +168,7 @@ def main():
     import os
     done = set()
     if os.path.exists(args.out):
-        done = {json.loads(line)["seed"] for line in open(args.out, encoding="utf-8") if line.strip()}
+        done = {r["seed"] for r in read_clean(args.out)}
     jobs = [j for j in jobs if j[4] not in done]
     print(f"{len(items)} 个留牌项，要量 {len(jobs)} 个（已完成 {len(done)}）", flush=True)
     with Pool(args.workers) as pool, open(args.out, "a", encoding="utf-8") as fh:
