@@ -936,3 +936,14 @@ def test_alloc_self_scales_by_legal_moves_against_the_game_s_own_mean():
         assert repr(x) == repr(y)
         apply(a, x)
         apply(b, y)
+
+
+def test_whole_game_cost_counts_only_the_searched_decisions():
+    """search_cost --whole-games times per searched decision (the search ran), gate's ms definition, and reports
+    searched next to all decisions."""
+    from svsim.tools.search_cost import _whole_game, game_cost
+    secs, searched, decisions, iterations, all_s = _whole_game(("mcts:5+plan+learned+phased", "ramp-t", "ramp-t", 3))
+    assert 0 < searched < decisions and iterations == 5 * searched and 0 < secs <= all_s
+    r = game_cost("mcts:5+plan+learned+phased", "ramp-t", "ramp-t", 1, 3)
+    assert r["searched_per_game"] == searched and r["decisions_per_game"] == decisions
+    assert abs(r["s_per_decision"] * searched - r["search_s_per_game"]) < 1e-9

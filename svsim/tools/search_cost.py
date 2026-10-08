@@ -96,7 +96,9 @@ def fit_alloc(states: list, iterations: int, lo: int = 50, hi: int = 800, tol: f
 
 
 def _whole_game(job) -> tuple:
-    """One self-play game of `spec` on `seed`: (search seconds, decisions, iterations searched)."""
+    """One self-play game of `spec` on `seed`: (seconds on searched decisions, searched decisions, all decisions,
+    iterations searched, seconds on all decisions). A searched decision is one the search ran (search.last_iterations
+    set), as gate's ms / ms_b count: moves with one legal action and lethal-check returns are left out."""
     spec, deck, opponent, seed = job
     from svsim.cards import decks
     from svsim.core.engine import apply, legal_actions, new_game
@@ -106,23 +108,28 @@ def _whole_game(job) -> tuple:
     agents = [make_agent(spec, 2 * seed + i) for i in range(2)]
     searches = [_search(a) for a in agents]
     state = new_game(decks.build(DECKS[deck][1]), decks.build(DECKS[opponent][1]), seed=seed)
-    seconds, decisions, iterations = 0.0, 0, 0
+    searched_s, searched, decisions, iterations, all_s = 0.0, 0, 0, 0, 0.0
     while not state.over:
         search = searches[state.active]
         if search is not None:
             search.last_iterations = None
         t = time.perf_counter()
         action = agents[state.active].act(state, legal_actions(state))
-        seconds += time.perf_counter() - t
+        took = time.perf_counter() - t
+        all_s += took
         decisions += 1
-        iterations += (search.last_iterations or 0) if search is not None else 0
+        if search is not None and search.last_iterations is not None:
+            searched_s += took
+            searched += 1
+            iterations += search.last_iterations
         apply(state, action)
-    return seconds, decisions, iterations
+    return searched_s, searched, decisions, iterations, all_s
 
 
 def game_cost(spec: str, deck: str, opponent: str, games: int, seed: int, workers: int = 1) -> dict:
-    """Whole self-play games of `spec` (both seats) on seeds seed .. seed + games - 1: seconds per decision and
-    per game, decisions and iterations per game. For allocations that carry over between decisions
+    """Whole self-play games of `spec` (both seats) on seeds seed .. seed + games - 1: seconds per searched decision
+    (the search ran: gate's ms definition), seconds per game searching and in all, searched and all decisions and
+    iterations per game. For allocations that carry over between decisions
     (alloc=bank), which single positions can't show; run it on an idle machine."""
     from multiprocessing import Pool
     jobs = [(spec, deck, opponent, seed + g) for g in range(games)]
@@ -131,9 +138,10 @@ def game_cost(spec: str, deck: str, opponent: str, games: int, seed: int, worker
             out = pool.map(_whole_game, jobs)
     else:
         out = [_whole_game(j) for j in jobs]
-    secs, decs, its = (sum(x[i] for x in out) for i in range(3))
-    return {"spec": spec, "games": games, "s_per_decision": secs / decs, "s_per_game": secs / games,
-            "decisions_per_game": decs / games, "iterations_per_game": its / games}
+    secs, searched, decs, its, all_s = (sum(x[i] for x in out) for i in range(5))
+    return {"spec": spec, "games": games, "s_per_decision": secs / max(1, searched), "s_per_game": all_s / games,
+            "searched_per_game": searched / games, "decisions_per_game": decs / games,
+            "iterations_per_game": its / games, "search_s_per_game": secs / games}
 
 
 def main() -> None:
@@ -159,10 +167,11 @@ def main() -> None:
         for spec in args.spec:
             r = game_cost(spec, args.deck, args.opponent, args.whole_games, args.seed, args.workers)
             base = base or r
-            print(f"{spec}: {r['s_per_decision'] * 1000:.1f} ms per decision "
-                  f"({r['s_per_decision'] / base['s_per_decision'] - 1:+.1%}), {r['s_per_game']:.1f} s per game "
-                  f"({r['s_per_game'] / base['s_per_game'] - 1:+.1%}), {r['decisions_per_game']:.1f} decisions and "
-                  f"{r['iterations_per_game']:.0f} iterations per game ({args.whole_games} games, {args.deck} vs "
+            print(f"{spec}: {r['s_per_decision'] * 1000:.1f} ms per searched decision "
+                  f"({r['s_per_decision'] / base['s_per_decision'] - 1:+.1%}); per game {r['search_s_per_game']:.1f} s "
+                  f"searching ({r['search_s_per_game'] / base['search_s_per_game'] - 1:+.1%}), {r['s_per_game']:.1f} s "
+                  f"in all, {r['searched_per_game']:.1f} searched of {r['decisions_per_game']:.1f} decisions, "
+                  f"{r['iterations_per_game']:.0f} iterations ({args.whole_games} games, {args.deck} vs "
                   f"{args.opponent}, seeds {args.seed}..)", flush=True)
         return
     if args.alloc or args.fit_alloc:
