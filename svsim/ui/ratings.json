@@ -58,25 +58,34 @@
      "note": "v2r 打尺子的四套牌，每格 50 对"
     },
     "elf-t": {
-     "cr": null,
-     "ci": null,
-     "games": 0,
-     "measured_vs": null,
-     "note": "待标定"
+     "cr": 1317,
+     "ci": [
+      1254,
+      1378
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "分析线 090c8be / 本机 176c395 + 4b1f9ac，尺子 20bcfbe；v2r（装机前与 v2r5558960 同一 bot）打尺子四家各 50 对，ΔCR 对跳费龙 −85、镜像 +67、对机锋 +166、对旗皇 −79"
     },
     "nemesis-t": {
-     "cr": null,
-     "ci": null,
-     "games": 0,
-     "measured_vs": null,
-     "note": "待标定"
+     "cr": 1220,
+     "ci": [
+      1177,
+      1260
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "分析线 090c8be / 本机 176c395 + 4b1f9ac，尺子 20bcfbe；v2r（装机前与 v2r5558960 同一 bot）打尺子四家各 50 对，ΔCR 对跳费龙 −19、对连击妖 −84、镜像 −105、对旗皇 −111"
     },
     "pirate-t": {
-     "cr": null,
-     "ci": null,
-     "games": 0,
-     "measured_vs": null,
-     "note": "待标定"
+     "cr": 1232,
+     "ci": [
+      1189,
+      1274
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "分析线 090c8be / 本机 176c395 + 4b1f9ac，尺子 20bcfbe；v2r（装机前与 v2r5558960 同一 bot）打尺子四家各 50 对，ΔCR 对跳费龙 −19、对连击妖 −113、对机锋 −91、镜像 −47"
     }
    }
   },
