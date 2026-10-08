@@ -150,9 +150,13 @@ class ISMCTS:
                  reply: bool = False, center: bool = True, prune: bool = True, backup: str = "max",
                  reserve: bool = False, veto=None, reply_after: int = 0, reply_top: int = 0,
                  reply_budget: int = 0, average: int = 1, prior=None, c_prior: float = 0.3,
-                 reuse: bool = False, min_new: int = 20, alloc: tuple | None = None):
+                 reuse: bool = False, min_new: int = 20, alloc: tuple | None = None, infer: tuple | None = None):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
-        self.alloc = alloc             # ("legal", K, LO, HI): clip(K x legal moves, LO, HI) per decision instead
+        self.alloc = alloc             # ("legal", K, LO, HI): clip(K x legal moves, LO, HI) per decision instead;
+                                       # ("bank", CHUNK, STOP, CAP, HI): see _bank_budget
+        self._bank, self._bank_turn = 0, None
+        self.infer = infer             # (ALPHA, TAU): the opponent's hand drawn by search.infer's weights
+        self._hand_weights, self._infer_turn = None, None
         self.last_iterations = None    # the iterations the last decision searched
         self.seconds = seconds
         self.c = c                     # exploration constant (values are in 0..1)
@@ -226,6 +230,9 @@ class ISMCTS:
         if self.alloc is not None and self.alloc[0] == "legal":    # the same compute on average, given by moves
             _, k, lo, hi = self.alloc
             iterations = min(hi, max(lo, round(k * len(legal_actions(state)))))
+        banked = self.alloc is not None and self.alloc[0] == "bank"
+        if banked:
+            iterations = self._bank_budget(state, me)
         full = iterations
         if root is None:
             root = Node()
@@ -246,12 +253,24 @@ class ISMCTS:
                 for a, pr in zip(moves, probs):
                     key = action_key(state, a, where0)
                     self._root_prior[key] = self._root_prior.get(key, 0.0) + float(pr)
+        hand = None
+        if self.infer is not None:                 # once per turn, on its first decision (search.infer)
+            turn = (me, state.players[me].turns_taken)
+            if turn != self._infer_turn:
+                from svsim.search.infer import unplayed_weights
+                self._hand_weights, self._infer_turn = unplayed_weights(state, me, *self.infer, self.weights), turn
+            hand = self._hand_weights
         done = 0
         for i in range(iterations if deadline is None else 10 ** 9):
             if deadline is not None and time.perf_counter() > deadline and i > 0:
                 break
-            self._iterate(determinize(state, me, self.rng), me, root)
+            self._iterate(determinize(state, me, self.rng, hand) if hand else determinize(state, me, self.rng),
+                          me, root)
             done += 1
+            if banked and done % self.alloc[1] == 0 and self._settled(root, iterations - done):
+                break
+        if banked:                                 # what this decision didn't use, for the turn's later ones
+            self._bank = min(self.alloc[3], max(0, self._bank + self.iterations - done))
         self.last_iterations = done
         self.last_root = root
         where = _locator(state, me)
@@ -263,6 +282,23 @@ class ISMCTS:
         if self.reuse and not isinstance(legal[best], EndTurn):
             self._expect(state, legal[best], root.children[best])
         return legal[best]
+
+    def _bank_budget(self, state: GameState, me: int) -> int:
+        """Line B2: this decision may search the spec's iterations plus what the turn's earlier decisions left
+        (the account, at most CAP, emptied when a new turn starts), at most HI; it searches in chunks of CHUNK and
+        stops once settled (_settled)."""
+        turn = (me, state.players[me].turns_taken)
+        if turn != self._bank_turn:
+            self._bank, self._bank_turn = 0, turn
+        return min(self.alloc[4], self.iterations + self._bank)
+
+    def _settled(self, root: Node, left: int) -> bool:
+        """The root's most visited move has STOP of the visits, or the second can't catch it in what is left."""
+        visits = sorted((c.visits for c in root.children.values()), reverse=True)
+        if not visits or not sum(visits):
+            return False
+        second = visits[1] if len(visits) > 1 else 0
+        return visits[0] >= self.alloc[2] * sum(visits) or visits[0] - second > left
 
     def _expect(self, state: GameState, action, subtree: Node) -> None:
         """Keep `subtree` for the next decision if `action` reveals nothing (no random numbers, no card

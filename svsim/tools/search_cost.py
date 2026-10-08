@@ -3,7 +3,9 @@ than with the installed ones (v2), on the same positions, and the iteration coun
 
     python -m svsim.tools.search_cost svsim/learn/phased_models/<folder> <self-play>.jsonl
     python -m svsim.tools.search_cost <folder> <games>.jsonl --positions 180 --iterations 100 200
-    python -m svsim.tools.search_cost - <games>.jsonl --iterations 200 --fit-alloc     (alloc=legal:K's K)
+    python -m svsim.tools.search_cost - <games>.jsonl [<more>.jsonl] --iterations 200 --fit-alloc   (alloc=legal:K)
+    python -m svsim.tools.search_cost - - --whole-games 40 --spec "mcts:200+plan+learned+phased" \
+        "mcts:N+plan+learned+phased+alloc=bank" --deck ramp-t --opponent ramp-t       (alloc=bank's N)
 
 The way b1's gate was set (2026-10-07): every 7th main-phase step of the self-play records until there
 are --positions of them, a bare ISMCTS (no planner, no lethal check) with each set of models, each timed
@@ -93,19 +95,79 @@ def fit_alloc(states: list, iterations: int, lo: int = 50, hi: int = 800, tol: f
     return k
 
 
+def _whole_game(job) -> tuple:
+    """One self-play game of `spec` on `seed`: (search seconds, decisions, iterations searched)."""
+    spec, deck, opponent, seed = job
+    from svsim.cards import decks
+    from svsim.core.engine import apply, legal_actions, new_game
+    from svsim.tools.arena import make_agent
+    from svsim.tools.gate import _search
+    from svsim.ui.session import DECKS
+    agents = [make_agent(spec, 2 * seed + i) for i in range(2)]
+    searches = [_search(a) for a in agents]
+    state = new_game(decks.build(DECKS[deck][1]), decks.build(DECKS[opponent][1]), seed=seed)
+    seconds, decisions, iterations = 0.0, 0, 0
+    while not state.over:
+        search = searches[state.active]
+        if search is not None:
+            search.last_iterations = None
+        t = time.perf_counter()
+        action = agents[state.active].act(state, legal_actions(state))
+        seconds += time.perf_counter() - t
+        decisions += 1
+        iterations += (search.last_iterations or 0) if search is not None else 0
+        apply(state, action)
+    return seconds, decisions, iterations
+
+
+def game_cost(spec: str, deck: str, opponent: str, games: int, seed: int, workers: int = 1) -> dict:
+    """Whole self-play games of `spec` (both seats) on seeds seed .. seed + games - 1: seconds per decision and
+    per game, decisions and iterations per game. For allocations that carry over between decisions
+    (alloc=bank), which single positions can't show; run it on an idle machine."""
+    from multiprocessing import Pool
+    jobs = [(spec, deck, opponent, seed + g) for g in range(games)]
+    if workers > 1:
+        with Pool(workers) as pool:
+            out = pool.map(_whole_game, jobs)
+    else:
+        out = [_whole_game(j) for j in jobs]
+    secs, decs, its = (sum(x[i] for x in out) for i in range(3))
+    return {"spec": spec, "games": games, "s_per_decision": secs / decs, "s_per_game": secs / games,
+            "decisions_per_game": decs / games, "iterations_per_game": its / games}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("folder")
-    parser.add_argument("games", help="self-play records (learn.netdata) of the pairing the folder is for")
+    parser.add_argument("games", nargs="+", help="self-play records (learn.netdata) of the pairing the folder is "
+                        "for; with several files, --positions from each")
     parser.add_argument("--positions", type=int, default=180)
     parser.add_argument("--iterations", type=int, nargs="+", default=[100])
     parser.add_argument("--alloc", help="legal:K[:LO:HI]: time it against uniform --iterations (the folder unused)")
     parser.add_argument("--fit-alloc", action="store_true", help="find the K of alloc=legal:K that matches "
                         "uniform --iterations within 3%% (the folder unused)")
+    parser.add_argument("--whole-games", type=int, metavar="N", help="time N whole self-play games of each --spec "
+                        "(both seats) on the same seeds instead (the folder and records unused; alloc=bank's N)")
+    parser.add_argument("--spec", nargs="+", default=[], help="with --whole-games: arena specs to compare")
+    parser.add_argument("--deck", default="ramp-t")
+    parser.add_argument("--opponent", default="ramp-t")
+    parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--workers", type=int, default=1, help="with --whole-games (1 for the cleanest timing)")
     args = parser.parse_args()
+    if args.whole_games:
+        base = None
+        for spec in args.spec:
+            r = game_cost(spec, args.deck, args.opponent, args.whole_games, args.seed, args.workers)
+            base = base or r
+            print(f"{spec}: {r['s_per_decision'] * 1000:.1f} ms per decision "
+                  f"({r['s_per_decision'] / base['s_per_decision'] - 1:+.1%}), {r['s_per_game']:.1f} s per game "
+                  f"({r['s_per_game'] / base['s_per_game'] - 1:+.1%}), {r['decisions_per_game']:.1f} decisions and "
+                  f"{r['iterations_per_game']:.0f} iterations per game ({args.whole_games} games, {args.deck} vs "
+                  f"{args.opponent}, seeds {args.seed}..)", flush=True)
+        return
     if args.alloc or args.fit_alloc:
         from svsim.tools.arena import _alloc_option
-        states = positions(args.games, args.positions)
+        states = [x for path in args.games for x in positions(path, args.positions)]
         its = args.iterations[0]
         if args.fit_alloc:
             lo, hi = _alloc_option([f"alloc={args.alloc}"])[2:] if args.alloc else (50, 800)
@@ -116,7 +178,7 @@ def main() -> None:
                   f"({alloc / uniform - 1:+.1%}), mean {mean:.0f} iterations", flush=True)
         return
     folder = Path(args.folder)
-    states = positions(args.games, args.positions)
+    states = [x for path in args.games for x in positions(path, args.positions)]
     for its in args.iterations:
         v2, new = cost(folder, states, its)
         print(f"{its} iterations ({len(states)} positions): v2 {v2 * 1000:.1f} ms, {folder.name} {new * 1000:.1f} ms "

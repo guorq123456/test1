@@ -34,12 +34,18 @@ def observe(state: GameState, player: int) -> dict:
             "opponent": {**side(opp), "hand": len(opp.hand)}}
 
 
-def determinize(state: GameState, player: int, rng: random.Random) -> GameState:
+def determinize(state: GameState, player: int, rng: random.Random, weights: dict | None = None) -> GameState:
+    """One guess at what `player` can't see. With `weights` ({uid: weight}, 1 if absent; search.infer), the
+    opponent's hand is drawn by weight without replacement (Efraimidis-Spirakis keys) instead of uniformly."""
     s = state.clone()
     me, opp = s.players[player], s.players[1 - player]
     rng.shuffle(me.deck)
     pool = opp.hand + opp.deck
-    rng.shuffle(pool)
+    if weights:
+        keys = [rng.random() ** (1.0 / weights.get(c.uid, 1.0)) for c in pool]
+        pool = [c for _, c in sorted(zip(keys, pool), key=lambda kc: -kc[0])]
+    else:
+        rng.shuffle(pool)
     opp.hand, opp.deck = pool[:len(opp.hand)], pool[len(opp.hand):]
     s.rng.seed(rng.getrandbits(64))   # future random effects are unknown too
     return s
