@@ -432,6 +432,8 @@ python3 analysis/tournament-audit/mulligan_gate.py --report 第一份.jsonl 第�
 
 ### 第三版：Salem 自己的 27 局（架构线程 04:11Z；预登记，开跑前写下）
 
+> **人类参考分两档**（Salem 07:03Z，架构线程 07:08Z 转）：正常参考 = Salem 用主打卡组（原版跳费龙、破魔虫）的局；弱参考（熟练度约 1700 CR）= 宇宙鱼（推断是 nemesis-t，待确认）和旗皇（pirate-t）的局。以后任何对人的胜率表、分歧率、局面抽样都按两档分开，不并入主数。这里的 27 局全是正常参考，结论不变。新导出的 10 局（建造线 98c3068，`analysis/salem-games/db-export-2026-10-08b/`）全是弱参考，要做审计时单列一行。
+
 **来由**：Salem 04:09Z 原话：「这 10 个局面在高手对局中几乎都不太会出现，所以我判断不了」。也就是说，bot 对 bot 的联赛局面偏离了高手对局的分布。所以局面改从 Salem 自己的 27 局里取。
 
 **局面**：`analysis/mirror-regression/salem_games.json`，座位 0 是 Salem，座位 1 是 bot（当时的 `mcts:200+plan+learned`）。
