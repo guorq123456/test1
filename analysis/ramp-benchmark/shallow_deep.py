@@ -333,16 +333,18 @@ def glossary(path):
 
 
 def salem_text(text, gl, stats_of):
-    """Every full card name in `text` as its common name, the first mention of each with its cost and stats."""
+    """Every full card name in `text` as its common name, the first mention of each with its cost and stats; a card
+    the glossary doesn't list keeps its official name, marked for Salem to name (only he edits the glossary)."""
     seen = set()
 
     def sub(m):
         full = m.group(0)
-        common, stats = gl.get(full, (full.split("·")[-1], stats_of.get(full, "")))
+        listed = full in gl
+        common, stats = gl.get(full, (full, stats_of.get(full, "")))   # not in the glossary: the official name
         if common in seen or not stats:
             return common
         seen.add(common)
-        return f"{common}（{stats}）"
+        return f"{common}（{stats}）" if listed else f"{common}（{stats}；词表无此牌，译名待 Salem 定）"
     names = sorted(set(gl) | set(stats_of), key=len, reverse=True)
     pattern = re.compile("|".join(re.escape(n) for n in names if n))
     return pattern.sub(sub, text)
