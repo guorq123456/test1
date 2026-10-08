@@ -170,6 +170,7 @@ def report(paths, boots):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--report", nargs="+", default=None)
+    ap.add_argument("--pairings", nargs="*", default=None, help="only these pairings, e.g. elf-t/ramp-t (a rerun of one cell)")
     ap.add_argument("--mirror-second", action="store_true",
                     help="play only the mirrors' second games (seat-swapped agent seeds), e.g. to complete the first run")
     ap.add_argument("--boot", type=int, default=2000)
@@ -191,7 +192,8 @@ def main():
             done.add((g["pair"], g["k"]))
     jobs = [(a, b, k, args.seed + k, args.agent) for k in range(args.pairs)
             for a, b in combinations_with_replacement(args.decks, 2)
-            if (f"{a}/{b}", k) not in done and (a == b or not args.mirror_second)]
+            if (f"{a}/{b}", k) not in done and (a == b or not args.mirror_second)
+            and (not args.pairings or f"{a}/{b}" in args.pairings)]
     t0 = time.perf_counter()
     with Pool(args.workers) as pool, gzip.open(args.out, "at", encoding="utf-8") as fh:
         for n, pair in enumerate(pool.imap_unordered(mirror_second if args.mirror_second else play_pair, jobs,
