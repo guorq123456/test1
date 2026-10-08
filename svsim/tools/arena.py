@@ -37,8 +37,8 @@ differences between moves are smaller than the linear models'); "+avgK"
 scores a leaf as the mean over K redraws of the cards drawn this turn
 (search.mcts, average); "+prior" (or "+priorC") orders and weights the
 root's moves by the matchup's policy head (learn.policy, bonus weight C,
-0.3 by default); "+mimic=W" (or "+mimic=W:FOLDER") the same with learn.mimic's
-prior, W x the player's head + (1 - W) x the self-play head; "+endnow"
+0.3 by default); "+mimic=W" (or "+mimic=W:FOLDER", "+mimic=W:FOLDER:C") the same with learn.mimic's
+prior, W x the player's head + (1 - W) x the self-play head (bonus weight C; an empty FOLDER is the installed one); "+endnow"
 scores a position inside the turn as if the turn ended there (as the
 linear models do), except a turn start reached by playing out the reply;
 "+mean" backs values up as plain averages instead of the best own choice
@@ -94,12 +94,12 @@ VERSIONS = {
 
 def _prior_options(options) -> dict:
     """+prior (or +priorC: weight C of the bonus): the matchup's policy head as the root prior.
-    +mimic=W (or +mimic=W:FOLDER): learn.mimic's mixture, W the player's share, as the root prior."""
+    +mimic=W[:FOLDER[:C]]: learn.mimic's mixture, W the player's share, as the root prior (bonus weight C)."""
     mimic = [o for o in options if o.startswith("mimic=")]
     if mimic:
         from svsim.learn.mimic import MimicPrior
-        w, _, folder = mimic[0][len("mimic="):].partition(":")
-        return {"prior": MimicPrior(float(w), folder or None)}
+        w, folder, c = (mimic[0][len("mimic="):].split(":") + ["", ""])[:3]
+        return {"prior": MimicPrior(float(w), folder or None), **({"c_prior": float(c)} if c else {})}
     chosen = [o for o in options if o.startswith("prior")]
     if not chosen:
         return {}
