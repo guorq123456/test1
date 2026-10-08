@@ -11,7 +11,9 @@ B differ, the game and C are copied and each line goes on alone, until the oppon
 row (that this side-by-side play reproduces the gate). Run it in a checkout of the code the gate ran on.
 
     cd <checkout> && PYTHONPATH=. python3 <this> --rows GATE.jsonl --a SPEC --out games.jsonl.gz
-                                               [--workers 4] [--full] [--pairs K]
+                                               [--workers 4] [--full] [--pairs K] [--deck D --opp O]
+    cd <checkout> && PYTHONPATH=. python3 <this> --seed S --pairs K --a SPEC --out games.jsonl.gz [--deck D --opp O]
+        (the pre-gate check of ../c3-threat/README.md section 14: no gate yet, every seat of seeds S..S+K-1)
 
 Condition: the opponent's 40-card list is known (order and hand not).
 """
@@ -28,13 +30,13 @@ OPP_TURNS = 2
 
 
 def job(args):
-    k, seed, seat, spec, full = args
+    k, seed, seat, spec, full, deck, opp = args
     from svsim.cards import decks
     from svsim.core.actions import EndTurn, to_dict
     from svsim.core.engine import apply, legal_actions, new_game
     from svsim.tools.gate import _agent
     from svsim.ui.session import DECKS
-    mine, theirs = decks.build(DECKS[DECK][1]), decks.build(DECKS[OPP][1])
+    mine, theirs = decks.build(DECKS[deck][1]), decks.build(DECKS[opp][1])
     cards = [None, None]
     cards[seat], cards[1 - seat] = mine, theirs
     a, b = _agent(spec, 2 * seed + seat, None, None), _agent(B, 2 * seed + seat, None, None)
@@ -75,20 +77,26 @@ def job(args):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--rows", required=True)
+    ap.add_argument("--rows", default=None, help="the gate's rows (seats to replay, points to check)")
+    ap.add_argument("--seed", type=int, default=None, help="without --rows: the first seed (pre-gate check)")
+    ap.add_argument("--deck", default=DECK)
+    ap.add_argument("--opp", default=OPP)
     ap.add_argument("--a", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--full", action="store_true")
     ap.add_argument("--pairs", type=int, default=None, help="only pairs k < K")
     args = ap.parse_args()
-    rows = {r["k"]: r for r in (json.loads(x) for x in open(args.rows, encoding="utf-8") if x.strip())}
+    if args.rows:
+        rows = {r["k"]: r for r in (json.loads(x) for x in open(args.rows, encoding="utf-8") if x.strip())}
+    else:                                              # pre-gate check: every seat, nothing to check against
+        rows = {k: {"k": k, "seed": args.seed + k, "same": [False, False]} for k in range(args.pairs)}
     done = set()
     if os.path.exists(args.out):
         for line in gzip.open(args.out, "rt", encoding="utf-8"):
             d = json.loads(line)
             done.add((d["k"], d["seat"]))
-    todo = [(k, r["seed"], seat, args.a, args.full) for k, r in sorted(rows.items())
+    todo = [(k, r["seed"], seat, args.a, args.full, args.deck, args.opp) for k, r in sorted(rows.items())
             if args.pairs is None or k < args.pairs
             for seat in (0, 1) if not r["same"][seat] and (k, seat) not in done]
     print(f"{len(rows)} 对；要重放 {len(todo)} 个座位（已有 {len(done)}）", flush=True)
@@ -98,7 +106,7 @@ def main():
             r = rows[d["k"]]
             nosplit += d["at"] is None
             for side, key in (("A", "points"), ("B", "b_points")):
-                if side + "_points" in d and args.full:
+                if side + "_points" in d and args.full and key in r:
                     d[side + "_matches_gate"] = d[side + "_points"] == r[key][d["seat"]]
                     bad += not d[side + "_matches_gate"]
             fh.write(json.dumps(d, separators=(",", ":")) + "\n")

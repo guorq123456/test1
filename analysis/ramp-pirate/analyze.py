@@ -2,8 +2,9 @@
 pirate-t, what the rest of that turn does differently, which features push A there, and what pirate-t does to
 ramp-t's leader in the next two turns on each line (the architecture thread 18:39; numbers only).
 
-    cd <checkout the gate ran on> && PYTHONPATH=. python3 <this> rows --games games.jsonl.gz --rows GATE.jsonl
-         --cand FOLDER --bank NAME --out div.jsonl          (games from replay.py)
+    cd <checkout the gate ran on> && PYTHONPATH=. python3 <this> rows --games games.jsonl.gz [--rows GATE.jsonl]
+         --cand FOLDER --bank NAME --out div.jsonl [--deck D --opp O]     (games from replay.py; without --rows,
+         the pre-gate check: no points, every score column reads 0 and is not to be read)
     python3 <this> report div1.jsonl[.gz] div2.jsonl[.gz] ...
 
 Per first split (one per seed and seat whose A and B games differ): the position (own turn, both leaders'
@@ -84,15 +85,18 @@ def rows(args):
     from svsim.search.mcts import ISMCTS
     from svsim.ui.session import DECKS
     games = args[args.index("--games") + 1]
-    gate = {r["k"]: r for r in (json.loads(x) for x in open(args[args.index("--rows") + 1], encoding="utf-8"))}
+    gate = {r["k"]: r for r in (json.loads(x) for x in open(args[args.index("--rows") + 1], encoding="utf-8"))} \
+        if "--rows" in args else None
+    deck = args[args.index("--deck") + 1] if "--deck" in args else DECK
+    opp = args[args.index("--opp") + 1] if "--opp" in args else OPP
     cand = args[args.index("--cand") + 1]
     bank = args[args.index("--bank") + 1]
     out = open(args[args.index("--out") + 1], "w", encoding="utf-8")
-    ma = LinearValue.load(folder_of(cand) / f"{DECK}-{OPP}-ended.json")
-    mb = LinearValue.load(Path(folder_of(cand)).parent / f"{DECK}-{OPP}-ended.json")
+    ma = LinearValue.load(folder_of(cand) / f"{deck}-{opp}-ended.json")
+    mb = LinearValue.load(Path(folder_of(cand)).parent / f"{deck}-{opp}-ended.json")
     names_a, names_b = ma.names(), mb.names()
     new = [n for n in names_a if n not in names_b]
-    mine, theirs = decks.build(DECKS[DECK][1]), decks.build(DECKS[OPP][1])
+    mine, theirs = decks.build(DECKS[deck][1]), decks.build(DECKS[opp][1])
     n = 0
     for g in _games(games):
         if g["at"] is None:
@@ -108,7 +112,8 @@ def rows(args):
         pos["own_turn"] = st0.players[seat].turns_taken
         pos["went_first"] = st0.first == seat
         row = {"bank": bank, "k": g["k"], "seat": seat, "seed": seed, "pos": pos, "new": new,
-               "a_pts": gate[g["k"]]["points"][seat], "b_pts": gate[g["k"]]["b_points"][seat]}
+               "a_pts": gate[g["k"]]["points"][seat] if gate else None,
+               "b_pts": gate[g["k"]]["b_points"][seat] if gate else None}
         ends = {}
         for side in ("A", "B"):
             moves = g[side]
@@ -203,6 +208,10 @@ def _fmt(t):
 def report(paths):
     opener = lambda p: gzip.open(p, "rt", encoding="utf-8") if p.endswith(".gz") else open(p, encoding="utf-8")
     R = [json.loads(x) for p in paths for x in opener(p)]
+    if any(r["a_pts"] is None for r in R):             # the pre-gate check: no gate, no points
+        print("**门前检查：没有门的得分。下面所有「A − B 得分」列都记成 0，不读。**\n")
+        for r in R:
+            r["a_pts"] = r["b_pts"] = 0.0
     names = {}
     for r in R:
         if r["names_a"]:
