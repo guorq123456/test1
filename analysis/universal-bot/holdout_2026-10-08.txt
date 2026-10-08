@@ -1,0 +1,41 @@
+positions 1624902, held out 324052; decks [np.str_('elf-t'), np.str_('nemesis-t'), np.str_('pirate-t'), np.str_('ramp-t')]
+
+== ended: 100000 positions (held out 20071); held-out log loss / accuracy, lower loss is better
+my deck    opponent        n         specialist             single           additive      single-noramp    additive-noramp
+elf-t      elf-t        1983     0.6056 / 0.635     0.6104 / 0.634     0.6127 / 0.630                                      
+elf-t      nemesis-t     931     0.5939 / 0.653     0.5993 / 0.634     0.5927 / 0.648                                      
+elf-t      pirate-t     1006     0.5243 / 0.729     0.5456 / 0.722     0.5223 / 0.732                                      
+elf-t      ramp-t        984     0.5631 / 0.692     0.5760 / 0.688     0.5639 / 0.706     0.6729 / 0.608     0.8635 / 0.572
+nemesis-t  elf-t         967     0.5970 / 0.634     0.5946 / 0.641     0.5982 / 0.659                                      
+nemesis-t  nemesis-t    1858     0.5551 / 0.700     0.5749 / 0.668     0.5744 / 0.667                                      
+nemesis-t  pirate-t     1044     0.5897 / 0.666     0.5826 / 0.669     0.5980 / 0.666                                      
+nemesis-t  ramp-t       1031     0.5673 / 0.687     0.5799 / 0.680     0.5741 / 0.689     0.6842 / 0.590     0.7597 / 0.563
+pirate-t   elf-t         958     0.5166 / 0.744     0.5435 / 0.736     0.5167 / 0.758                                      
+pirate-t   nemesis-t     991     0.5788 / 0.667     0.5843 / 0.683     0.5822 / 0.674                                      
+pirate-t   pirate-t     2106     0.6207 / 0.643     0.6300 / 0.618     0.6451 / 0.603                                      
+pirate-t   ramp-t       1059     0.5568 / 0.686     0.5766 / 0.685     0.5595 / 0.695     0.6661 / 0.602     0.8674 / 0.627
+ramp-t     elf-t         920     0.5785 / 0.683     0.5806 / 0.684     0.5684 / 0.676     0.6726 / 0.614     0.6315 / 0.605
+ramp-t     nemesis-t    1022     0.5679 / 0.671     0.5715 / 0.676     0.5744 / 0.672     0.6357 / 0.660     0.6334 / 0.627
+ramp-t     pirate-t     1047     0.5808 / 0.689     0.5912 / 0.674     0.6159 / 0.665     0.6575 / 0.654     0.6723 / 0.639
+ramp-t     ramp-t       2164     0.5681 / 0.691     0.5768 / 0.689     0.5766 / 0.682     0.7547 / 0.597     0.6706 / 0.595
+position-weighted log loss over the pairings each model was scored on: specialist 0.5759, single 0.5857, additive 0.5847, single-noramp 0.6883, additive-noramp 0.7214
+
+== act: 100000 positions (held out 20265); held-out log loss / accuracy, lower loss is better
+my deck    opponent        n         specialist             single           additive      single-noramp    additive-noramp
+elf-t      elf-t        2183     0.5911 / 0.667     0.6011 / 0.660     0.5916 / 0.669                                      
+elf-t      nemesis-t    1039     0.6161 / 0.646     0.6076 / 0.660     0.6066 / 0.645                                      
+elf-t      pirate-t     1061     0.5549 / 0.704     0.5674 / 0.699     0.5562 / 0.711                                      
+elf-t      ramp-t       1070     0.5727 / 0.700     0.5794 / 0.691     0.5651 / 0.695     0.6759 / 0.624     0.6186 / 0.662
+nemesis-t  elf-t        1066     0.5830 / 0.660     0.5797 / 0.664     0.5690 / 0.691                                      
+nemesis-t  nemesis-t    1988     0.5747 / 0.681     0.5874 / 0.661     0.5779 / 0.678                                      
+nemesis-t  pirate-t     1036     0.5986 / 0.664     0.6003 / 0.654     0.5907 / 0.660                                      
+nemesis-t  ramp-t       1075     0.5606 / 0.705     0.5732 / 0.687     0.5660 / 0.694     0.6802 / 0.609     0.7841 / 0.584
+pirate-t   elf-t        1088     0.5002 / 0.752     0.5274 / 0.741     0.5034 / 0.764                                      
+pirate-t   nemesis-t    1067     0.5487 / 0.724     0.5585 / 0.693     0.5500 / 0.714                                      
+pirate-t   pirate-t     2067     0.6410 / 0.628     0.6425 / 0.603     0.6392 / 0.626                                      
+pirate-t   ramp-t       1069     0.5852 / 0.678     0.5851 / 0.684     0.5860 / 0.688     0.6637 / 0.612     0.6338 / 0.668
+ramp-t     elf-t         827     0.5447 / 0.700     0.5463 / 0.707     0.5389 / 0.723     0.5942 / 0.644     0.5978 / 0.659
+ramp-t     nemesis-t     851     0.5775 / 0.683     0.5805 / 0.672     0.5751 / 0.683     0.6132 / 0.667     0.7122 / 0.603
+ramp-t     pirate-t      901     0.5733 / 0.683     0.5839 / 0.686     0.5748 / 0.677     0.6237 / 0.656     0.6541 / 0.643
+ramp-t     ramp-t       1877     0.5810 / 0.675     0.5860 / 0.676     0.5916 / 0.668     0.7283 / 0.615     0.6787 / 0.602
+position-weighted log loss over the pairings each model was scored on: specialist 0.5797, single 0.5864, additive 0.5792, single-noramp 0.6657, additive-noramp 0.6710

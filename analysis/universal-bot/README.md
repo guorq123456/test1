@@ -33,3 +33,11 @@ Separating lists only says the description is distinct; whether weights built on
 - **The agent's blind spot shows directly**: elf-t (tournament combo elf) and combo(G8) get the same profile; the greedy agent doesn't play the combo turn, so the combo deck's reach reads as 8. This is the risk the plan names: a profile is only as good as the agent playing it. Next: the same wipe profile with the v2 search (mcts:100+plan+learned+phased).
 - **With the v2 search** (mcts:100+plan+learned+phased, 100 games per deck, wall + wipe; `goldfish_v2_wipe.json`) the profile changes a lot: ramp-t reaches 7.1 play points at turn 5 and 9.9 at turn 8 (greedy: 5.7 / 8.7), damage by turn 10 rises for every deck (pirate-t 23.4, ramp-t 15.9, elf-t 12.1, nemesis-t 9.4). elf-t still shows no combo-sized turn (largest turn 6.3), so either the search misses it or the tournament elf's damage comes from its board, which the wipe removes; this run can't tell which.
 - **Conclusion for the plan**: a goldfish profile depends on the agent as much as on the deck (ramp's turn-5 play points +1.4 from greedy to v2). It must be measured with the agent that will use it and re-measured when the agent changes, and it can't stand alone: the static half (deckrep) is the part that doesn't move with the agent.
+
+## Held-out log loss, one evaluator per pairing vs shared linear (2026-10-08, holdout_2026-10-08.txt)
+
+On the 11 pairing self-play sets (v2, 100 level; one game in five held out; 100k positions per moment). Seen decks: shared linear
+(one model for all, or additive w0+a_me+b_op) is within 0.01 of the per-pairing specialist (ENDED 0.5759 / 0.5857 / 0.5847; ACT
+0.5797 / 0.5864 / 0.5792). With ramp-t never seen ("-noramp", scored only on ramp-t pairings) the shared linear models fall to
+0.67–0.72, about a coin flip (0.693): a linear evaluator learnt on four decks says nothing useful about a fifth. That is what the
+deck descriptions in the shared MLP (X1) and the leave-one-deck-out gates are for.
