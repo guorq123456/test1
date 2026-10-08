@@ -164,7 +164,7 @@
   - 先 `calibrate.py analysis/calibration/round6-identity --identity`，再 `calibrate.py analysis/calibration/round6 --ref 20bcfbe`（缺的格按 0）。
   - **跳费龙 CR = 1300 + Δ₆(镜像) ÷ 4**。新量的镜像格换掉第 5 轮那一格（+38），不叠加。50 对一格约 ±95，折到 CR 约 ±24。连击妖、机锋、旗皇的 CR 不变。
 - **读法提醒**照旧：这一格是强档 200 次对尺子，和门（等算力 N = 198，直接对打现装）不是同一个量，不拿来互相核对。
-- **有条件的第二格：连击妖镜像**（17:1x 补；hpphase 第 2 门连击妖镜像也过了，见 c3-threat 第十节）。只在连击妖镜像的 hpphase 也装机时才跑：
+- **第二格：连击妖镜像**（17:1x 补；hpphase 第 2 门连击妖镜像也过了，见 c3-threat 第十节。**17:23 起不再有条件**：架构线程定「装 C3」一次装两个配对，跳费龙镜像 + 连击妖镜像，装后两格都重标）：
   - 种子 **65100000**，150 对（`--max 600`），和第 5 轮这一格同精度：
     ```
     python -m svsim.tools.gate --a level-strong --b ruler20261008 --versus ruler20261008 --deck elf-t --opponent elf-t --fixed --max 600 --seed 65100000 --out analysis/calibration/round6/elf-t_vs_elf-t.jsonl
@@ -173,7 +173,8 @@
     ```
     python -m svsim.tools.gate --a level-strong --b ref352ae51 --versus ruler20261008 --deck elf-t --opponent ramp-t --fixed --max 40 --seed 49400000 --out analysis/calibration/round6-identity/elf-t_vs_ramp-t.jsonl
     ```
-  - 哈希：顶层 `elf-t-elf-t-*` 和 `cand-c3-hpphase-elf-t-elf-t/` 里的相同。
+  - 哈希：顶层 `elf-t-elf-t-*` 和 `cand-c3-hpphase-elf-t-elf-t/` 里的相同；两格都装时，第 1 步改成「顶层 `ramp-t-ramp-t-*`、`elf-t-elf-t-*` 各和候选目录相同，其余 20 个和 `ref-352ae51/` 相同」。
+  - 其余 14 格的模型没变，逐对恒等，记 0（J4）。两道恒等抽查照跑：不是统计量，不占库，防装机提交把别的格带着变。
   - **连击妖 CR = 1300 + [Δ₆(镜像) + 41 − 22 + 62] ÷ 4**，新量的镜像格换掉第 5 轮的 +111；对机锋（+41）、对跳费龙（−22）、对旗皇（+62）不变。
 
 **各档 CR**（陪练台每个档位旁显示的数；建造线写进 `svsim/ui/ratings.json`，显示版本、提交和 CR）：
