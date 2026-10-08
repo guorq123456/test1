@@ -269,6 +269,8 @@ def main() -> None:
     key = json.dumps([args.a, args.b, args.model_a, args.model_b, args.deck, args.opponent, args.seed,
                       args.phased_a, args.phased_b] + ([args.versus] if args.versus else []))
     out = args.out or f"gate-{hashlib.sha1(key.encode()).hexdigest()[:10]}.jsonl"
+    if os.path.dirname(out):
+        os.makedirs(os.path.dirname(out), exist_ok=True)
     done = {}
     if os.path.exists(out):
         for line in open(out, encoding="utf-8"):
