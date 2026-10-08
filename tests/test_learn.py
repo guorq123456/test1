@@ -1018,4 +1018,24 @@ def test_a_new_named_feature_set_needs_only_its_function_and_names(monkeypatch, 
     assert loaded.logit(state, 0) == float(state.players[0].leader_hp)
     import pytest
     with pytest.raises(ValueError):
-        FT.extra_features(state, 0, ("board",))       # not defined yet
+        FT.extra_features(state, 0, ("nothing",))
+
+
+def test_the_board_set_is_pressure_and_hp_by_turn_for_both_sides():
+    """C3 "board" (analysis/c3-threat section 4): per side, min(enemy board threat / own HP, 1.5) and own HP in the
+    scored player's turns 1-4 and 5-7; mine first, then the opponent's."""
+    from svsim.agents.mulligan import opening
+    from svsim.learn.features import EXTRAS, _board_threat, extra_features
+    state = opening("ramp-t", "elf-t", True, 3)
+    me, op = state.players[0], state.players[1]
+    assert EXTRAS["board"] == ["me_pressure", "me_hp_early", "me_hp_mid", "op_pressure", "op_hp_early", "op_hp_mid"]
+    me.leader_hp, op.leader_hp, me.turns_taken = 12, 17, 3
+    got = extra_features(state, 0, ("board",))
+    assert got == [min(_board_threat(state, 1) / 12, 1.5), 12.0, 0.0, min(_board_threat(state, 0) / 17, 1.5), 17.0, 0.0]
+    me.turns_taken, op.turns_taken = 6, 9               # the scored player's turn for both sides
+    assert extra_features(state, 0, ("board",))[1:3] == [0.0, 12.0] and extra_features(state, 0, ("board",))[4:6] == [0.0, 17.0]
+    me.turns_taken = 9
+    assert extra_features(state, 0, ("board",))[1:3] == [0.0, 0.0]
+    me.leader_hp = 0                                    # no division by zero, capped at 1.5
+    assert 0 <= extra_features(state, 0, ("board",))[0] <= 1.5
+    assert len(extra_features(state, 1, ("hand", "board"))) == 12
