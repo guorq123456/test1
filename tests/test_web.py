@@ -127,10 +127,10 @@ def test_records_say_which_bot_played_and_old_records_still_read():
     from svsim.build import commit
     from svsim.tools.arena import VERSIONS
     from svsim.ui.session import LEVELS, bot_of
-    assert LEVELS["normal"] == VERSIONS["v2"] and LEVELS["strong"] == VERSIONS["v2s"]
+    assert LEVELS["normal"] == VERSIONS["v2r"] and LEVELS["strong"] == VERSIONS["v2s"]
     session = Session()
     session.start("rhino", "ramp", "normal", 3, "you")
-    assert session.record["bot"] == {"level": "normal", "version": "v2", "spec": VERSIONS["v2"], "build": commit()}
+    assert session.record["bot"] == {"level": "normal", "version": "v2r", "spec": VERSIONS["v2r"], "build": commit()}
     session.start("rhino", "ramp", "fast", 3, "you")
     assert session.record["bot"]["version"] is None and session.record["bot"]["level"] == "fast"
     old = json.loads(json.dumps(session.record_data()))

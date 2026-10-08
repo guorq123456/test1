@@ -30,9 +30,10 @@ DECKS = {"rhino": ("破魔虫精灵", decks.RHINO_FOREST), "ramp": ("跳费龙",
          "nemesis-t": ("机锋（比赛版）", decks.NEMESIS_T), "ramp-t": ("跳费龙（比赛版）", decks.RAMP_T),
          "pirate-t": ("旗皇（比赛版）", decks.PIRATE_T)}
 # Every level uses a deck's learned evaluation where there is one (svsim/learn/weights); normal and
-# strong are arena.VERSIONS v2 and v2s (the refitted turn-end model, learn.phased), which beat the
-# levels they replace at equal time (56.8% and 59.7% over 600 games, 2026-10-07).
-LEVELS = {"fast": "greedy+plan+learned", "normal": "mcts:100+plan+learned+phased",
+# strong are arena.VERSIONS v2r and v2s (the refitted turn-end model, learn.phased; normal also keeps
+# its search tree between the moves of a turn, at v2's time per move: 53.3% over v2 in a fixed 600
+# games, 2026-10-07). Both use the per-pairing models in svsim/learn/phased_models where one is installed.
+LEVELS = {"fast": "greedy+plan+learned", "normal": "mcts:115+plan+learned+phased+reuse",
           "strong": "mcts:200+plan+learned+phased"}
 
 
