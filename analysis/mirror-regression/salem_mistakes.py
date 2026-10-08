@@ -19,8 +19,16 @@ is not a decision):
   their known 40 at every iteration) is run K times on the position with K seeds; each root move's value is
   turned back into a win chance (the search keeps sigmoid((score - centre) / scale); the evaluation's score
   is 8 x logit) and averaged over the runs. The best move is the one the runs visited most (the search's
-  own choice; taking the highest average value would pick noise). Regret = Q(best) - Q(his move), in
-  win-rate points (negative when his move averaged higher than the bot's choice).
+  own choice; taking the highest average value would pick noise).
+- Regret, paired: the root values of that first search are not comparable between a move the search
+  visited a lot (its value is the best line found below it) and one it barely tried (little more than
+  the position right after the move, the rest of the turn unplayed): ranked by them, the moves Salem made
+  that the bot rarely tried came out 20-90 points worse. So on the same K determinizations both his move
+  and the bot's are played, v2s (the whole agent) plays the rest of the turn, and the end of the turn
+  actually reached is valued once by the evaluation (the game's result if it ends). Regret =
+  value after the bot's move - value after his, in win-rate points (negative when his move came out
+  ahead); 0 when his move is the bot's. The root-value difference is kept beside it (root_regret) for
+  reference only.
 - At the start of each of his turns, search.lethal's LethalSearch with 5000 nodes and no screen (as the
   smoke probe) looks for a sure lethal.
 Flags: F1 (a hard mistake) on every decision of a turn that started with a sure lethal he did not take
@@ -114,6 +122,36 @@ def search_values(search, s, legal, k, seed):
     return keys, {key: sum(v) / len(v) for key, v in acc.items()}, visits
 
 
+def after_value(agent, search, s, move, seed):
+    """Salem's win chance after `move` on the determinized position `s`, the rest of the turn played by v2s
+    (the whole agent: lethal check, planner, search), valued once at the turn's end by the evaluation (the
+    game's result if it ends). His move and the bot's are valued the same way, both by one evaluation of
+    the end of the turn actually reached (a search's root value would be a max over noisy values)."""
+    from svsim.core.engine import apply, legal_actions
+    from svsim.search.evaluate import evaluate
+    t = s.clone()
+    apply(t, move)
+    search.rng = random.Random(seed)
+    search._next = None
+    while not t.over and t.active == 0:
+        apply(t, agent.act(t, legal_actions(t)))
+    if t.over:
+        return 1.0 if t.winner == 0 else 0.0 if t.winner == 1 else 0.5
+    score = evaluate(t, 0, search.weights, player_moves_next=False)
+    return 1 / (1 + math.exp(-max(min(score / 8.0, 60.0), -60.0)))
+
+
+def paired(agent, search, s, his, best, k, seed):
+    import random as _r
+    from svsim.core.view import determinize
+    vh, vb = [], []
+    for j in range(k):
+        d = determinize(s, 0, _r.Random(seed * 1000 + 500 + j))
+        vh.append(after_value(agent, search, d, his, seed * 1000 + 700 + j))
+        vb.append(after_value(agent, search, d, best, seed * 1000 + 700 + j))
+    return sum(vh) / k, sum(vb) / k
+
+
 def game_job(job):
     gid, rec, k = job
     from svsim.core.actions import from_dict
@@ -153,13 +191,21 @@ def game_job(job):
                 where = _locator(st, 0)
                 his = action_key(st, a, where)
                 best = max(visits, key=visits.get) if visits else None
-                regret = 100 * (q[best] - q[his]) if best is not None and his in q else None
+                root_regret = 100 * (q[best] - q[his]) if best is not None and his in q else None
+                if best is None:
+                    p_his = p_best = regret = None
+                elif best == his:
+                    p_his = p_best = None
+                    regret = 0.0
+                else:
+                    p_his, p_best = paired(agent, search, st, a, keys[best], k, rec["seed"] + i)
+                    regret = 100 * (p_best - p_his)
                 turn_rows.append({
                     "game": gid, "global_turn": st.turn, "own_turn": st.players[0].turns_taken,
                     "action_index": i, "turn_start": turn_start, "category": cat, "about_evolving": evo,
                     "his": describe(st, a), "best": describe(st, keys[best]) if best is not None else None,
                     "same": best == his, "q_his": q.get(his), "q_best": q.get(best) if best is not None else None,
-                    "regret": regret, "legal": len(legal), "visits_his": visits.get(his, 0),
+                    "root_regret": root_regret, "p_his": p_his, "p_best": p_best, "regret": regret, "legal": len(legal), "visits_his": visits.get(his, 0),
                     "visits_best": visits.get(best, 0), "lethal_at_turn_start": lethal_turn,
                     "F2": (not evo) and regret is not None and regret >= F2_POINTS})
         apply(st, a)
@@ -188,6 +234,8 @@ def finalize(raw, out):
                 "regret_points": None if r["regret"] is None else round(r["regret"], 2),
                 "own_turn": r["own_turn"], "global_turn": r["global_turn"], "turn_start": r["turn_start"],
                 "q_his": r["q_his"], "q_best": r["q_best"], "legal": r["legal"],
+                "p_his": r.get("p_his"), "p_best": r.get("p_best"),
+                "root_regret_points": None if r.get("root_regret") is None else round(r["root_regret"], 2),
                 "visits_his": r["visits_his"], "visits_best": r["visits_best"],
                 "lethal_at_turn_start": r["lethal_at_turn_start"]}, ensure_ascii=False) + "\n")
     print(f"{len(rows)} 个决策写到 {out}")
@@ -200,6 +248,7 @@ def report(path, top15=None):
             r = json.loads(line)
             r.update({"regret": r["regret_points"], "F1": "F1" in r["flags"], "F2": "F2" in r["flags"],
                       "about_evolving": r["evolve"], "same": r["regret_points"] == 0})
+            rows.append(r)
     pct = lambda xs, q: sorted(xs)[min(len(xs) - 1, int(q * len(xs)))] if xs else float("nan")
     reg = [r["regret"] for r in rows if r["regret"] is not None]
     print(f"条件：对手卡表已知（牌序、手牌未知）。{len(rows)} 个决策（只有一个合法动作的不算），"
