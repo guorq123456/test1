@@ -598,3 +598,19 @@ def test_a_deck_description_is_what_its_cards_do_and_a_shared_model_reads_both_d
     assert loaded.deck_desc and len(loaded.names()) == n
     assert abs(loaded.logit(state, 0) - elf[at("cost_mean")]) < 1e-9
     assert abs(loaded.logit(state, 1) - ramp[at("cost_mean")]) < 1e-9
+
+
+def test_the_ruler_s_models_are_frozen_and_found_from_any_directory(tmp_path, monkeypatch):
+    import hashlib
+    from pathlib import Path
+    from svsim.learn.phased import folder_of, load
+    from svsim.tools.arena import VERSIONS
+    assert VERSIONS["ruler20261008"] == "mcts:200+plan+learned+phased=ruler_models/20261008"
+    monkeypatch.chdir(tmp_path)                    # the folder resolves from the repository root
+    folder = folder_of("ruler_models/20261008")
+    assert len(load(folder)) == 20
+    readme = (folder / "README.md").read_text(encoding="utf-8")
+    sums = dict(line.split()[::-1] for line in readme.splitlines() if line.endswith(".json") and len(line) > 64)
+    assert len(sums) == 20 and all(hashlib.sha256((folder / name).read_bytes()).hexdigest() == digest
+                                   for name, digest in sums.items())
+    assert Path(folder).name == "20261008"

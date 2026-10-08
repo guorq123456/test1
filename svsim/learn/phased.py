@@ -55,11 +55,14 @@ def _rows(job) -> list:
 
 
 def folder_of(name: str) -> Path:
-    """A models folder by name: a path to one, else svsim/learn/phased_models/<name> (candidates kept beside
-    the installed models, which sit in phased_models itself)."""
+    """A models folder by name: a path to one (relative paths also from the repository root, e.g.
+    ruler_models/20261008), else svsim/learn/phased_models/<name> (candidates kept beside the installed
+    models, which sit in phased_models itself)."""
     path = Path(name)
     if path.is_dir():
         return path
+    if not path.is_absolute() and (Path(__file__).resolve().parents[2] / path).is_dir():
+        return Path(__file__).resolve().parents[2] / path
     path = Path(__file__).resolve().parent / "phased_models" / name
     if not path.is_dir():
         raise ValueError(f"no phased models folder {name}")
