@@ -805,3 +805,33 @@ def test_alloc_legal_gives_each_decision_k_times_its_legal_moves_and_changes_not
     assert _search(plain).alloc is None and _search(make_agent("level-strong", 1)).alloc is None
     assert iteration_summary([50, 200, 120, 800]) == {"n": 4, "median": 200, "p90": 800, "total": 1170}
     assert iteration_summary([]) == {"n": 0, "median": 0, "p90": 0, "total": 0}
+
+
+def test_alloc_bank_stops_once_settled_and_keeps_the_rest_for_the_turn():
+    """Line B2 (2026-10-08): +alloc=bank[:CHUNK:STOP:CAP] searches the spec's count plus the turn's account in
+    chunks, stops once the most visited move has STOP of the visits (or can't be caught), and keeps what's left
+    for the turn's later decisions, at most CAP, emptied when a new turn starts."""
+    import pytest
+    from svsim.agents.mulligan import opening
+    from svsim.tools.arena import _alloc_option, make_agent
+    from svsim.tools.gate import _search
+    assert _alloc_option(["alloc=bank"]) == ("bank", 50, 0.8, 400, 800)
+    assert _alloc_option(["alloc=bank:25:0.9:300"]) == ("bank", 25, 0.9, 300, 800)
+    with pytest.raises(ValueError):
+        _alloc_option(["alloc=bank:25"])
+    state = opening("ramp-t", "elf-t", True, 3)
+    search = _search(make_agent("mcts:200+plan+learned+phased+alloc=bank:50:0:300", 3))   # STOP 0: one chunk
+    search.choose(state)
+    assert search.last_iterations == 50 and search._bank == 150
+    search.choose(state)                           # the same turn: 200 + 150 to spend, one chunk again
+    assert search.last_iterations == 50 and search._bank == 300            # 150 + 150, capped at 300
+    later = state.clone()
+    later.players[later.active].turns_taken += 1   # a new turn: the account starts empty
+    search.choose(later)
+    assert search.last_iterations == 50 and search._bank == 150
+    never = _search(make_agent("mcts:120+plan+learned+phased+alloc=bank:40:1.1:400", 3))  # STOP above 1
+    never.choose(state)
+    assert never.last_iterations in (40, 80, 120) and never._bank == 120 - never.last_iterations
+    big = _search(make_agent("mcts:700+plan+learned+phased+alloc=bank:50:1.1:400", 3))
+    big._bank, big._bank_turn = 400, (state.active, state.players[state.active].turns_taken)
+    assert big._bank_budget(state, state.active) == 800                    # 700 + 400, at most 800

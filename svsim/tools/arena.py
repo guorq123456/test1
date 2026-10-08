@@ -127,13 +127,18 @@ def _prior_options(options) -> dict:
 
 def _alloc_option(options) -> tuple | None:
     """+alloc=legal:K[:LO:HI]: each decision searches clip(round(K x legal moves), LO, HI) iterations (LO 50, HI
-    800) instead of the spec's fixed count, the same compute on average once K is set by tools.search_cost."""
+    800) instead of the spec's fixed count, the same compute on average once K is set by tools.search_cost.
+    +alloc=bank[:CHUNK:STOP:CAP]: the spec's count per decision, in chunks, stopping once settled and keeping
+    what's left for the turn's later decisions (search.mcts ISMCTS._bank_budget); N set by search_cost --games."""
     chosen = [o[len("alloc="):] for o in options if o.startswith("alloc=")]
     if not chosen:
         return None
     kind, *args = chosen[0].split(":")
+    if kind == "bank" and len(args) in (0, 3):     # +alloc=bank[:CHUNK:STOP:CAP] (50, 0.8, 400; at most 800)
+        chunk, stop, cap = (int(args[0]), float(args[1]), int(args[2])) if args else (50, 0.8, 400)
+        return ("bank", chunk, stop, cap, 800)
     if kind != "legal" or len(args) not in (1, 3):
-        raise ValueError(f"alloc=legal:K or alloc=legal:K:LO:HI, not {chosen[0]!r}")
+        raise ValueError(f"alloc=legal:K[:LO:HI] or alloc=bank[:CHUNK:STOP:CAP], not {chosen[0]!r}")
     lo, hi = (int(args[1]), int(args[2])) if len(args) == 3 else (50, 800)
     return ("legal", float(args[0]), lo, hi)
 
