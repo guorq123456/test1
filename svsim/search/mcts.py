@@ -144,6 +144,11 @@ class Node:
         self.value = 0.0               # the node's estimate (see ISMCTS._refresh)
 
 
+# alloc=self's prior mean of legal moves at a searched decision (two or more legal moves): 5.83 over the 13388 such
+# decisions of analysis/search-sharpness's ramp-t s200 games (300 games, seed 54800000; median 4 as in its table).
+SELF_M0 = 5.83
+
+
 class ISMCTS:
     def __init__(self, iterations: int = 400, seconds: float | None = None, c: float = 0.5,
                  scale: float = 8.0, max_depth: int = 30, seed: int = 0, weights=DEFAULT,
@@ -155,6 +160,7 @@ class ISMCTS:
         self.alloc = alloc             # ("legal", K, LO, HI): clip(K x legal moves, LO, HI) per decision instead;
                                        # ("bank", CHUNK, STOP, CAP, HI): see _bank_budget
         self._bank, self._bank_turn = 0, None
+        self._seen_n, self._seen_k, self._seen_turn = 0, 0, -1     # alloc=self: this game's searched decisions
         self.infer = infer             # (ALPHA, TAU): the opponent's hand drawn by search.infer's weights
         self._hand_weights, self._infer_turn = None, None
         self.last_iterations = None    # the iterations the last decision searched
@@ -230,6 +236,8 @@ class ISMCTS:
         if self.alloc is not None and self.alloc[0] == "legal":    # the same compute on average, given by moves
             _, k, lo, hi = self.alloc
             iterations = min(hi, max(lo, round(k * len(legal_actions(state)))))
+        if self.alloc is not None and self.alloc[0] == "self":
+            iterations = self._self_budget(state, me)
         banked = self.alloc is not None and self.alloc[0] == "bank"
         if banked:
             iterations = self._bank_budget(state, me)
@@ -282,6 +290,21 @@ class ISMCTS:
         if self.reuse and not isinstance(legal[best], EndTurn):
             self._expect(state, legal[best], root.children[best])
         return legal[best]
+
+    def _self_budget(self, state: GameState, me: int) -> int:
+        """Line B1, second try (alloc=self:C:W:LO:HI): clip(round(C x N x n / m), LO, HI), n this decision's legal
+        moves and m the mean over this game's earlier searched decisions with a prior of M0 weighing W decisions,
+        so the game's iterations average about C x N whatever the deck; C corrects for wide positions costing more
+        per iteration (set by tools.search_cost --whole-games). A new game (own turns going back) starts over."""
+        _, c, w, lo, hi = self.alloc
+        turns = state.players[me].turns_taken
+        if turns < self._seen_turn:
+            self._seen_n, self._seen_k = 0, 0
+        self._seen_turn = turns
+        n = len(legal_actions(state))
+        m = (SELF_M0 * w + self._seen_n) / (w + self._seen_k)
+        self._seen_n, self._seen_k = self._seen_n + n, self._seen_k + 1
+        return min(hi, max(lo, round(c * self.iterations * n / m)))
 
     def _bank_budget(self, state: GameState, me: int) -> int:
         """Line B2: this decision may search the spec's iterations plus what the turn's earlier decisions left
