@@ -1,0 +1,4 @@
+223 points, 27 games; base 0.161; flagged per point 1.35, in hand 0.083
+overlap alpha 1 0.3085, alpha 0.1 0.3141, diff +0.0056 (+1.8%)
+diff 95% (games resampled, MC noise included): +0.0018 .. +0.0104
+points with >= 1 flagged card: 24 (10.8%); overlap 0.2992 -> 0.3531 (+0.0539)
