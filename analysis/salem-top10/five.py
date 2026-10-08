@@ -247,6 +247,7 @@ def part3b(pos):
     made = __import__("svsim.core.actions", fromlist=["from_dict"]).from_dict(rec["actions"][at])
     lines = {"Salem：赤流 → 口人魔，然后结束回合（不攻击）": ("strict", [red, ogre]),
              "Salem：赤流 → 口人魔，然后由 v2s 打完这回合": ("finish", [red, ogre]),
+             "Salem（17:21Z 确认的读法）：赤流 → 口人魔，v2s 打完这回合但不进化、不用额外 PP": ("restricted", [red, ogre]),
              "bot 当时：口人魔弃班德，然后 v2s 打完": ("finish", [describe(st, made)]),
              "深搜：用额外 PP，然后 v2s 打完": ("finish", [row["deep"]])}
     res = {}
@@ -273,7 +274,10 @@ def part3b(pos):
                     search.rng = random.Random(35700 + j)
                     search._next = None
                     while not t.over and t.active == p:
-                        apply(t, agent.act(t, legal_actions(t)))
+                        legal = legal_actions(t)
+                        if how == "restricted":
+                            legal = [a for a in legal if type(a).__name__ not in ("Evolve", "UseBonusPP")]
+                        apply(t, agent.act(t, legal))
                 ps.append((1.0 if t.winner == p else 0.0) if t.over else prob(ev.score(t, p, False)))
             res[(col, lab)] = (sum(ps) / len(ps), len(ps)) if ps else (float("nan"), 0)
     for lab in lines:
