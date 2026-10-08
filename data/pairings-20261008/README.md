@@ -19,3 +19,11 @@
 拟合（各组合的专用模型，`svsim/learn/phased_models/<卡组>-<对手>-{ended,act}.json`）：
 - `python -m svsim.learn.phased --games <文件> --matchup <卡组>-<对手> --out <目录>`，版本 2 特征，回合结束和回合中模型在同一份数据上一起拟合；两边是不同命名卡组时，每个模型只用自己那一方的局面（`learn/phased.py` 的 `_rows`，`side` 过滤，e59a9c0）。
 - 没有留出划分：`learn.fit.fit`（`svsim/learn/fit.py:22`，由 `svsim/learn/phased.py:162` 调用）用全部局面拟合，日志里的 loss / value_accuracy 是训练集上的数。模型好不好由等算力闸门判（SPRT 种子 27xxxxxx、定长 28xxxxxx，和自对弈种子 2026110x 不重叠），见 `docs/architecture.md` 的逐组合表。
+
+## 原版跳费龙镜像的训练数据：`ramp-t_ramp-t_original-3e58415.jsonl.gz`
+
+- 来源：拟现装原版 `ramp-ramp-{ended,act}.json` 的那份 netdata。模型在 3e58415 入库，当时文件名叫 `dragon-dragon`。卡组是原版 `ramp`（cards.decks.NAMED 的 `ramp`），不是比赛版 ramp-t；文件名沿用架构线指定的名字。
+- 内容：2000 局自对弈，两边都是 `mcts:100+plan+learned`，explore 0.03，Phase 1 生成（2026-10-07）。记录是早期格式：没有 `names`、`search`、`turn_starts`，所以镜像两边的局面都用。
+- 校验：解压后 sha256 `87c8a60d0887a0f5c5fdd1ddd0723e262023433f7253de7b989b6ee00b3045b8`，7,753,646 字节，2000 行。gz 的 sha256 在 `SHA256SUMS`；解压后的那一行以 `#` 开头，`sha256sum -c` 会跳过它。
+- 核对：用今天的代码在全量数据上重拟（`--matchup ramp-ramp`，不留出、不加特征），系数与现装逐位相同。
+- 用途：fd64ea6 的 `cand-bprime-ramp-ramp`（不加特征）和 `cand-c3-hpphase-ramp-ramp`（`--features hpphase`）都用这份数据拟合，`--hold-out-every 11`（行号 % 11 == 0 的 182 局留出）。
