@@ -7,7 +7,8 @@ Positions: in the held-out games (line number % every == 0), every moment where 
 side is about to end its turn (the record's EndTurn, both seats taking turns as the evaluated side). At each, K
 determinizations from the evaluated side's view (its own deck order and the opponent's hand reshuffled,
 svsim.core.view.determinize), the opponent's EndTurn applied (the evaluated side's turn starts and it draws),
-and every evaluator's "act" model gives the evaluated side a win chance; the standard deviation over the K is
+and every evaluator's model of the chosen moment (--moment, default "ended": the one v2s's search reads at turn
+ends and inside a turn; "act" is read only by the reply-playing search) gives the evaluated side a win chance; the standard deviation over the K is
 that position's jitter. Reported: each evaluator's mean jitter over all positions, and each minus the first
 (paired on the same positions and determinizations), games resampled for the interval. A diagnostic only.
 Condition: the opponent's 40-card list is known (order and hand not).
@@ -23,10 +24,13 @@ from multiprocessing import Pool
 _M = None
 
 
-def load(prefix):
+MOMENT = "ended"
+
+
+def load(prefix, moment):
     from pathlib import Path
     from svsim.learn.model import LinearValue
-    return LinearValue.load(Path(f"{prefix}-act.json"))
+    return LinearValue.load(Path(f"{prefix}-{moment}.json"))
 
 
 def game(job):
@@ -34,10 +38,10 @@ def game(job):
     from svsim.core.engine import apply
     from svsim.core.view import determinize
     from svsim.tools import records
-    line, specs, k = job
+    line, specs, k, moment = job
     global _M
     if _M is None:
-        _M = {n: load(p) for n, p in specs}
+        _M = {n: load(p, moment) for n, p in specs}
     rec = json.loads(line)
     st = records.start(rec)
     out = []
@@ -64,12 +68,13 @@ def main():
     arg = lambda key, d=None: sys.argv[sys.argv.index(key) + 1] if key in sys.argv else d
     specs = [tuple(a.split("=", 1)) for a in sys.argv[1:] if "=" in a and not a.startswith("--")]
     every, k, nboot = int(arg("--every", "11")), int(arg("--k", "8")), int(arg("--boot", "1000"))
+    moment = arg("--moment", MOMENT)
     lines = [l for i, l in enumerate(gzip.open(arg("--games"), "rt", encoding="utf-8")) if every and i % every == 0]
     with Pool(int(arg("--workers", "4"))) as pool:
-        rows = [r for part in pool.imap(game, [(l, specs, k) for l in lines], chunksize=2) for r in part]
+        rows = [r for part in pool.imap(game, [(l, specs, k, moment) for l in lines], chunksize=2) for r in part]
     names = [n for n, _ in specs]
     print(f"条件：对手卡表已知（牌序、手牌未知）。留出 {len(lines)} 局，{len(rows)} 个「对手正要结束回合」的局面；"
-          f"每个局面 {k} 个确定化（自己牌库顺序和对手手牌重洗），对手结束回合、被评估方开回合抽牌后用 act 模型估胜率，取标准差。"
+          f"每个局面 {k} 个确定化（自己牌库顺序和对手手牌重洗），对手结束回合、被评估方开回合抽牌后用 {moment} 模型估胜率，取标准差。"
           f"只作诊断。区间 95%，按局重抽 {nboot} 次。\n")
     print("| 评估器 | 平均标准差 | 减 " + names[0] + "（95%） |")
     print("|---|---|---|")
