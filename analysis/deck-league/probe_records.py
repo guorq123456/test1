@@ -2,6 +2,7 @@
 
     cd <svsim checkout> && PYTHONPATH=. python3 <this> --pair elf-t/elf-t --workers 2 --out probe.jsonl FILE[+FILE...]
     python3 <this> --report probe_a.jsonl probe_b.jsonl
+    python3 <this> --combined --pair P base=LEAGUE[+LEAGUE]@PROBE nomodel=LEAGUE@PROBE_OF_THE_GAMES_THAT_DIFFER ...
 
 The architecture thread (23:01Z): with the elf-t mirror rerun, the cost of 1 号's new default of the
 agents' lethal check (af086ee, screen 200:1000:4) on this mirror, as the smoke runs measured it. At the
@@ -91,6 +92,45 @@ def report(paths):
 
 
 
+def combined(pairing, versions):
+    """Per version, the count over its own distinct games when a version probed only the games that differ:
+    a game is looked up by its seed and moves among the probe rows of every version (the probe is
+    deterministic given the record), so the games a version shares with another take that one's rows."""
+    import hashlib
+
+    def key(g):
+        return hashlib.md5(json.dumps([g["record"]["seed"], g["record"]["actions"]]).encode()).hexdigest()
+
+    vs, pool = [], {}
+    for v in versions:
+        label, rest = v.split("=", 1)
+        leagues, probes = rest.split("@")
+        latest = {}
+        for path in leagues.split("+"):
+            for line in gzip.open(path, "rt", encoding="utf-8"):
+                g = json.loads(line)
+                if g["pair"] == pairing:
+                    latest[(g["k"], g["seat_a"])] = g
+        for path in probes.split("+"):
+            for line in open(path, encoding="utf-8"):
+                if line.strip():
+                    r = json.loads(line)
+                    pool[key(latest[(r["k"], r["seat_a"])])] = r
+        vs.append((label, latest))
+    print("条件：对手卡表已知（牌序、手牌未知）。每个版本按它自己的不重复局计（同一对两局逐步相同算一局）；"
+          "和别的版本逐步相同的局沿用那个版本的探针结果。")
+    for label, latest in vs:
+        distinct = {}
+        for (k, _), g in sorted(latest.items()):
+            distinct.setdefault((k, key(g)), g)
+        rows = [(g, pool.get(h)) for (_, h), g in distinct.items()]
+        gone = sum(r is None for _, r in rows)
+        rows = [(g, r) for g, r in rows if r is not None]
+        missed = sorted(f"k{g['k']}:{g['seat_a']}" + (f"×{r['missed']}" if r["missed"] > 1 else "") for g, r in rows if r["missed"])
+        print(f"  {label}：{len(rows)} 局（没探到 {gone}），{sum(r['probed'] for _, r in rows)} 回合；探针找到必杀 "
+              f"{sum(r['lethal'] for _, r in rows)} 回合，没杀 {sum(r['missed'] for _, r in rows)} 回合（{len(missed)} 局：{' '.join(missed)}）")
+
+
 def read_clean(path):
     """The rows of a JSON-lines file we append to, after a container restart may have cut its last line:
     the complete lines are kept and the file is rewritten without the broken tail."""
@@ -110,6 +150,11 @@ def read_clean(path):
 def main():
     if "--report" in sys.argv:
         report(sys.argv[sys.argv.index("--report") + 1:])
+        return
+    if "--combined" in sys.argv:
+        rest = [a for a in sys.argv[1:] if a != "--combined"]
+        i = rest.index("--pair")
+        combined(rest[i + 1], rest[:i] + rest[i + 2:])
         return
     ap = argparse.ArgumentParser()
     ap.add_argument("files")
