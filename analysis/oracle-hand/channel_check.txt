@@ -1,0 +1,2 @@
+ramp-t vs ramp-t: 462 position pairs, the sampled hand equal to the real one in 0; largest |score(sampled) - score(oracle)| over ended and act (score / 8 = logit): root 0; turn, same random effects 0; turn, as searched 0.226
+elf-t vs nemesis-t: 576 position pairs, the sampled hand equal to the real one in 0; largest |score(sampled) - score(oracle)| over ended and act (score / 8 = logit): root 0; turn, same random effects 0; turn, as searched 3.6
