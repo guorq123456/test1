@@ -13,11 +13,14 @@
   "fast": {
    "decks": {
     "ramp-t": {
-     "cr": null,
-     "ci": null,
-     "games": 0,
-     "measured_vs": null,
-     "note": "待标定"
+     "cr": 945,
+     "ci": [
+      865,
+      1007
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "greedy+plan+learned 打尺子的四套牌，每格 50 对；对尺子只拿 10%～24% 的分，超出稳态式的适用范围，区间按对自助法算"
     },
     "elf-t": {
      "cr": null,
