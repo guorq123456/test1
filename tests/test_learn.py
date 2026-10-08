@@ -623,6 +623,11 @@ def test_the_ruler_s_models_are_frozen_and_found_from_any_directory(tmp_path, mo
     sums = dict(line.split()[::-1] for line in (ref / "README.md").read_text(encoding="utf-8").splitlines()
                 if line.endswith(".json") and len(line) > 64)
     assert len(sums) == 22 and all(hashlib.sha256((ref / n).read_bytes()).hexdigest() == d for n, d in sums.items())
+    ref = folder_of("ref-352ae51")                 # after C2 went in (352ae51), the same way
+    assert VERSIONS["ref352ae51"] == "mcts:200+plan+learned+phased=ref-352ae51+mull=default" and len(load(ref)) == 24
+    sums = dict(line.split()[::-1] for line in (ref / "README.md").read_text(encoding="utf-8").splitlines()
+                if line.endswith(".json") and len(line) > 64)
+    assert len(sums) == 24 and all(hashlib.sha256((ref / n).read_bytes()).hexdigest() == d for n, d in sums.items())
 
 
 def test_the_named_feature_sets_by_hand_and_models_without_them_unchanged(tmp_path):

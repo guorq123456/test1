@@ -100,6 +100,8 @@ VERSIONS = {
     # strong level only): v2r on Version 15's frozen models and redraw, the same bot as before, until it is gated
     # at 115 iterations
     "v2r5558960": "mcts:115+plan+learned+phased=ref-5558960+reuse+mull=default",
+    # the reference after C2 went in (352ae51): the strong level's 24 models frozen in phased_models/ref-352ae51
+    "ref352ae51": "mcts:200+plan+learned+phased=ref-352ae51+mull=default",
 }
 # The trainer's levels by name (level-fast / level-normal / level-strong / level-original): the specs in
 # svsim.ui.session.LEVELS themselves, so a gate or the CR calibration can't play a hand-copied variant.
