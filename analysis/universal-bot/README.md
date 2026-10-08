@@ -41,3 +41,12 @@ On the 11 pairing self-play sets (v2, 100 level; one game in five held out; 100k
 0.5797 / 0.5864 / 0.5792). With ramp-t never seen ("-noramp", scored only on ramp-t pairings) the shared linear models fall to
 0.67–0.72, about a coin flip (0.693): a linear evaluator learnt on four decks says nothing useful about a fifth. That is what the
 deck descriptions in the shared MLP (X1) and the leave-one-deck-out gates are for.
+
+## X1 on a pairing it never saw (2026-10-08, gates/x1loo_elframp.*)
+
+X1 retrained without the elf-t vs ramp-t data (phased_models/cand-mlp-x1-loo-elframp-20261008), elf-t side, 200 level, fixed
+300 pairs, seeds 37000000+: A = mcts:188+plan+learned+phased=<that folder> vs B = v2s (the specialist linear fitted on that
+pairing), both against C = v2s on ramp-t (its ramp-t-elf-t models are byte-identical to ruler-20261008, so C is the ruler).
+A 51.2% ± 4.1% (47.1–55.2), CR +11 (−27..+50); A first 64.3%, second 42.0%; B first 64.3%, second 39.7%. Against the ruler:
+A 53.2%, B 52.0% (600 games each). The shared MLP that never saw this pairing ties the specialist that was fitted on it,
+same as X1 with the data (49.5% ± 4.1%). One cell; the pooled non-inferiority bar of the plan (lower bound ≥ 47.5%) needs more cells.
