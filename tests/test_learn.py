@@ -717,7 +717,7 @@ def test_c2_is_installed_in_the_three_pairings_that_passed_and_nothing_else_move
     nemesis-t; those three pairs of files are the candidates' bytes, the other 18 installed files are as before, a
     pairing's own file comes before the ramp mirror's stand-in (ramp-ramp, kept for the Game8 deck and the
     snapshots), and the normal level stays on Version 15's frozen models. Since C3 (hpphase on top of hand) passed in the
-    ramp-t mirror (analysis a5a5a73: 56.3% over the installed, +60 CR) that pairing's pair is cand-c3-hpphase-ramp-t-ramp-t's."""
+    ramp-t mirror (analysis a5a5a73: 56.3% over the installed, +60 CR) that pairing's pair is cand-c3-hpphase-ramp-t-ramp-t's.; the elf-t mirror's (d043630: 53.7%, +35 CR) is cand-c3-hpphase-elf-t-elf-t's."""
     import hashlib
     from pathlib import Path
     from svsim.core.engine import new_game as start
@@ -727,8 +727,8 @@ def test_c2_is_installed_in_the_three_pairings_that_passed_and_nothing_else_move
     from svsim.ui.session import LEVELS
     installed = Path(__file__).resolve().parents[1] / "svsim" / "learn" / "phased_models"
     pins = {
-        "elf-t-elf-t-act.json": "d895d212e537dd0d2a822740cdc1b1f177f223909cf041171eb21bf68a6da906",
-        "elf-t-elf-t-ended.json": "e8509021f50b024aac3bbbf88b889250967f6f713ba126aa32c8324abcb064dc",
+        "elf-t-elf-t-act.json": "706cf1368b776280980902d1744e4ca385b0e1338671899fb7194051b61987f7",
+        "elf-t-elf-t-ended.json": "f0bc7e4e42dd9c81533d5284f2be8f1f28d1f747170f5b7e0d52744158af9386",
         "elf-t-nemesis-t-act.json": "ca6a4f2faa82ea504f194db699411af38d44b40cf4e315b15e32846de977ee86",
         "elf-t-nemesis-t-ended.json": "e9a27705f12c7c521d47421e79d42243c99be039ac34b55edabcc8d95097c329",
         "elf-t-ramp-t-act.json": "df7e7bff1452d0eccf7e4f23c92c1ed596fa65cc77eee7e5c9c4dc16d38bc64e",
@@ -753,7 +753,7 @@ def test_c2_is_installed_in_the_three_pairings_that_passed_and_nothing_else_move
         "ramp-t-ramp-t-ended.json": "dfca8b1c34cc65f6fd9309721f351a7f3eb4b990bd3dcfaafdc963d2705267b4",
     }
     assert {f.name: hashlib.sha256(f.read_bytes()).hexdigest() for f in installed.glob("*.json")} == pins
-    for pairing, folder in (("ramp-t-ramp-t", "cand-c3-hpphase-ramp-t-ramp-t"), ("elf-t-elf-t", "cand-c2-hand-elf-t-elf-t"),
+    for pairing, folder in (("ramp-t-ramp-t", "cand-c3-hpphase-ramp-t-ramp-t"), ("elf-t-elf-t", "cand-c3-hpphase-elf-t-elf-t"),
                             ("elf-t-nemesis-t", "cand-c2-hand-elf-t-nemesis-t")):
         for moment in ("act", "ended"):
             name = f"{pairing}-{moment}.json"
@@ -762,7 +762,7 @@ def test_c2_is_installed_in_the_three_pairings_that_passed_and_nothing_else_move
     named = {"ramp-t": decks.RAMP_T, "elf-t": decks.ELF_T, "nemesis-t": decks.NEMESIS_T, "pirate-t": decks.PIRATE_T,
              "ramp": decks.RAMP_DRAGON}
     for mine, theirs, key, extras in (("ramp-t", "ramp-t", ("ramp-t", "ramp-t"), ("hand", "hpphase")),
-                                      ("elf-t", "elf-t", ("elf-t", "elf-t"), ("hand",)),
+                                      ("elf-t", "elf-t", ("elf-t", "elf-t"), ("hand", "hpphase")),
                                       ("elf-t", "nemesis-t", ("elf-t", "nemesis-t"), ("hand",)),
                                       ("nemesis-t", "elf-t", ("nemesis-t", "elf-t"), ()),
                                       ("elf-t", "ramp-t", ("elf-t", "ramp-t"), ()),
