@@ -772,3 +772,36 @@ def test_c2_is_installed_in_the_three_pairings_that_passed_and_nothing_else_move
     assert {f.name for f in ref.glob("*.json")} == set(before) | {f"{p}-{m}.json" for p in ("elf-t-elf-t",
                                                                    "elf-t-nemesis-t") for m in ("act", "ended")}
     assert all(hashlib.sha256((ref / n).read_bytes()).hexdigest() == d for n, d in before.items())
+
+
+def test_alloc_legal_gives_each_decision_k_times_its_legal_moves_and_changes_nothing_when_off():
+    """Line B1 (2026-10-08): +alloc=legal:K[:LO:HI] searches clip(round(K x legal moves), LO, HI) iterations per
+    decision; with LO = HI it is the fixed count, move for move; off, the agent is as before."""
+    import pytest
+    from svsim.agents.mulligan import opening
+    from svsim.core.engine import apply, legal_actions
+    from svsim.tools.arena import _alloc_option, make_agent
+    from svsim.tools.gate import _search, iteration_summary
+    assert _alloc_option(["plan"]) is None and _alloc_option(["alloc=legal:16"]) == ("legal", 16.0, 50, 800)
+    assert _alloc_option(["alloc=legal:2.5:10:90"]) == ("legal", 2.5, 10, 90)
+    with pytest.raises(ValueError):
+        _alloc_option(["alloc=bank:50"])
+    state = opening("ramp-t", "elf-t", True, 3)
+    n = len(legal_actions(state))
+    for k, lo, hi in ((7, 1, 1000), (1, 30, 1000), (500, 1, 40)):
+        agent = make_agent(f"mcts:200+plan+learned+phased+alloc=legal:{k}:{lo}:{hi}", 3)
+        search = _search(agent)                    # under the lethal check
+        search.choose(state)
+        assert search.last_iterations == min(hi, max(lo, round(k * n)))
+    plain, fixed = make_agent("mcts:25+plan+learned+phased", 5), make_agent("mcts:25+plan+learned+phased+alloc=legal:9:25:25", 5)
+    a, b = state.clone(), state.clone()
+    for _ in range(6):                             # the same moves: LO = HI is the fixed count
+        if a.over:
+            break
+        x, y = plain.act(a, legal_actions(a)), fixed.act(b, legal_actions(b))
+        assert repr(x) == repr(y)
+        apply(a, x)
+        apply(b, y)
+    assert _search(plain).alloc is None and _search(make_agent("level-strong", 1)).alloc is None
+    assert iteration_summary([50, 200, 120, 800]) == {"n": 4, "median": 200, "p90": 800, "total": 1170}
+    assert iteration_summary([]) == {"n": 0, "median": 0, "p90": 0, "total": 0}
