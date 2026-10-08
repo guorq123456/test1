@@ -14,7 +14,8 @@ Salem's scale.
 The pairing. R and D are two ways for the same deck, so they are compared on the same deals rather than
 against each other: seed s, the deck in seat 0 and then in seat 1 (who goes first comes from the seed),
 and in each seat one game with the deck's agent redrawing by R (`+mull=rules[:VARIANTS]`) and one by D
-(the default), the opponent always by D, the agents' seeds by seat (2s, 2s+1) in all four games. A
+(the default, spelled out as `+mull=default`), the opponent by its agent's own redraw (--opp-way own: D for every
+deck before 7d219cc, R for elf-t from it) or by a given way, the agents' seeds by seat (2s, 2s+1) in all four games. A
 pair's score is R's points minus D's, averaged over the two seats (d); the SPRT runs on 0.5 + d with H0
 0.50 and H1 0.55 (tools.gate's normal approximation): H1 is "R lifts the deck's score by 5 points".
 When R and D redraw the same cards, the two games are the same game (the agent is nearly deterministic
@@ -36,8 +37,9 @@ CONDITION = "对手卡表已知（牌序、手牌未知）"
 SALEM_CR_PER_LOGIT = 236.0
 
 
-def play(seed, deck, opp, seat, way, spec):
-    """One game: `deck` in `seat` redrawing by `way` ("rules[...]" or "default"), `opp` by default."""
+def play(seed, deck, opp, seat, way, spec, opp_way="own"):
+    """One game: `deck` in `seat` redrawing by `way` ("rules[...]" or "default"), `opp` by `opp_way` ("own": its
+    agent's own redraw; else a +mull= spec)."""
     from svsim.agents.mulligan import decide
     from svsim.cards import decks
     from svsim.core.engine import apply, legal_actions, new_game
@@ -45,8 +47,11 @@ def play(seed, deck, opp, seat, way, spec):
     from svsim.ui.session import DECKS
     names = [deck, opp] if seat == 0 else [opp, deck]
     cards = [decks.build(DECKS[n][1]) for n in names]
-    agents = [make_agent(spec + (f"+mull={way}" if i == seat and way != "default" else ""), 2 * seed + i)
-              for i in (0, 1)]
+    # The tested deck's way is always spelled out, D included: from 7d219cc an agent's own redraw for elf-t is
+    # R (agents.mulligan.BY_DECK), so a bare spec would no longer be D. Before it, "+mull=default" and the bare
+    # spec redraw alike (checked on the first bank's rows at c962055).
+    agents = [make_agent(spec + (f"+mull={way}" if i == seat else "" if opp_way == "own" else f"+mull={opp_way}"),
+                         2 * seed + i) for i in (0, 1)]
     state = new_game(cards[0], cards[1], seed=seed)
     ways = None
     t0 = time.perf_counter()
@@ -60,11 +65,11 @@ def play(seed, deck, opp, seat, way, spec):
 
 
 def play_seed(job):
-    k, seed, deck, opp, way, spec = job
-    out = {"k": k, "seed": seed, "opp": opp}
+    k, seed, deck, opp, way, spec, opp_way = job
+    out = {"k": k, "seed": seed, "opp": opp, "opp_way": opp_way}
     for seat in (0, 1):
-        r = play(seed, deck, opp, seat, way, spec)
-        d = play(seed, deck, opp, seat, "default", spec)
+        r = play(seed, deck, opp, seat, way, spec, opp_way)
+        d = play(seed, deck, opp, seat, "default", spec, opp_way)
         out[f"seat{seat}"] = {"R": r, "D": d, "differ": r["redraw"][0] != r["redraw"][1]}
     return out
 
@@ -149,6 +154,8 @@ def main():
     ap.add_argument("--opponents", nargs="+", required=True)
     ap.add_argument("--way", default="rules", help="R's spec for +mull=, e.g. rules or rules:nem4")
     ap.add_argument("--agent", default=V2S)
+    ap.add_argument("--opp-way", default="own", help="the opponent's redraw: own (its agent's own; from 7d219cc elf-t's is R) "
+                    "or a +mull= spec such as default")
     ap.add_argument("--phase", choices=("sprt", "fixed"), required=True)
     ap.add_argument("--pairs", type=int, default=600, help="pairs at most (sprt: 1200 R games) or exactly (fixed)")
     ap.add_argument("--seed", type=int, required=True)
@@ -161,7 +168,7 @@ def main():
         rows = read_clean(args.out)
     done = {r["k"] for r in rows}
     lo, hi = bounds(0.05, 0.05)
-    jobs = [(k, args.seed + k, args.deck, args.opponents[k % len(args.opponents)], args.way, args.agent)
+    jobs = [(k, args.seed + k, args.deck, args.opponents[k % len(args.opponents)], args.way, args.agent, args.opp_way)
             for k in range(args.pairs) if k not in done]
     print(f"条件：{CONDITION}；{args.deck} 对 {args.opponents}，R = +mull={args.way}，{args.phase}", flush=True)
 
