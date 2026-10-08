@@ -31,10 +31,11 @@ DECKS = {"rhino": ("破魔虫精灵", decks.RHINO_FOREST), "ramp": ("跳费龙",
          "face": ("快攻龙", decks.FACE_DRAGON), "elf-t": ("连击妖（比赛版）", decks.ELF_T),
          "nemesis-t": ("机锋（比赛版）", decks.NEMESIS_T), "ramp-t": ("跳费龙（比赛版）", decks.RAMP_T),
          "pirate-t": ("旗皇（比赛版）", decks.PIRATE_T),
-         "bishop-t": ("主教（比赛版）", decks.HAVEN_T),
-         "nm-t": ("梦魇（比赛版）", decks.ABYSS_T),
-         "crystal-t": ("晶体法（比赛版）", decks.RUNE_T),
-         "synergy-t": ("连携皇（比赛版）", decks.SWORD2_T)}
+         "bishop-t": ("康蒂玛控制教（比赛版）", decks.HAVEN_T),
+         "nm-t": ("中速梦（比赛版）", decks.ABYSS_T),
+         "crystal-t": ("魔手法（补丁前）", decks.RUNE_T),
+         "synergy-t": ("连携皇家（补丁前）", decks.SWORD2_T),
+         "exp-t": ("实验体法（比赛版）", decks.EXP_T)}
 # Every level uses a deck's learned evaluation where there is one (svsim/learn/weights); normal and
 # strong are arena.VERSIONS v2r and v2s (the refitted turn-end model, learn.phased; normal also keeps
 # its search tree between the moves of a turn, at v2's time per move: 53.3% over v2 in a fixed 600

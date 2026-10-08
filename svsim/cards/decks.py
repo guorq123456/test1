@@ -163,16 +163,18 @@ PIRATE_T = _listing(PIRATE_T_HASH)
 # archetype of the meta research's tournament lists, the list sharing the most cards with the others (medoid).
 HAVEN_T_HASH = "1.6.cOc2.cOc2.cOc2.dw0Q.dwU6.dwU6.dwU6.eShA.eShA.egps.egps.egps.egrQ.egrQ.egrQ.eh52.eh52.eh52.ehKg.ehKg.ehKg.ehYk.ehYk.ehYk.ehYu.ehYu.ehYu.f3Fw.f3Fw.f3Fw.f3lA.f3lA.f3lA.f3zO.f3zO.fS9g.fS9g.fS9g.fqaA.fqaA"   # bishop, PS8a MRG toby
 ABYSS_T_HASH = "1.5.dhqc.dhqc.dtoY.dtoY.dtoY.eGCk.eGCk.eegM.ef6e.ef6e.f0oG.f0oG.f0oG.f11k.f11k.f11k.f1KU.f1KU.f1KU.f1W-.f1W-.f1W-.f1X8.f1X8.f1X8.fPCm.fPCm.fPCm.fPxU.fndG.fndG.fndG.fnsk.fnsk.foL-.foL-.foL-.foM8.foM8.foM8"   # nm, PS8a RID deko
-RUNE_T_HASH = "1.3.cH3E.cH3E.cH3E.cfTu.cfTu.cfTu.e4Gg.e4Gg.e4Gg.eBpe.eBpe.eZV6.eZV6.eZYE.eZYE.eZYE.eZns.eZns.eZns.ea1U.ea1U.ea1U.eaD-.eaD-.eaD-.eaE8.eaE8.eaE8.fDXk.fDXk.fDXk.fKZk.fKZk.fKpM.fKpM.fKpM.fKsU.fKsU.fKsU.fL2-"   # crystal, PS7b MRG
-SWORD2_T_HASH = "1.2.cEZs.cEZs.cEZs.cEaA.dhqm.dmyk.dmyk.dmyk.eXnu.eXnu.eXnu.evTW.evTW.evTW.evi-.evi-.evi-.evj8.evj8.evj8.evm6.evm6.evm6.evyc.evyc.evyc.ewCE.ewCE.ewCE.ewCO.ewCO.ewCO.fHts.fHts.fIck.fIck.fIck.fIcu.fIcu.fIcu"   # synergy, PS7b RJ
+RUNE_T_HASH = "1.3.cH3E.cH3E.cH3E.cfTu.cfTu.cfTu.e4Gg.e4Gg.e4Gg.eBpe.eBpe.eZV6.eZV6.eZYE.eZYE.eZYE.eZns.eZns.eZns.ea1U.ea1U.ea1U.eaD-.eaD-.eaD-.eaE8.eaE8.eaE8.fDXk.fDXk.fDXk.fKZk.fKZk.fKpM.fKpM.fKpM.fKsU.fKsU.fKsU.fL2-"   # crystal (魔手法), PS7b MRG — before the 09-29 patch: label results "补丁前样本"
+SWORD2_T_HASH = "1.2.cEZs.cEZs.cEZs.cEaA.dhqm.dmyk.dmyk.dmyk.eXnu.eXnu.eXnu.evTW.evTW.evTW.evi-.evi-.evi-.evj8.evj8.evj8.evm6.evm6.evm6.evyc.evyc.evyc.ewCE.ewCE.ewCE.ewCO.ewCO.ewCO.fHts.fHts.fIck.fIck.fIck.fIcu.fIcu.fIcu"   # synergy (连携皇家), PS7b RJ — before the 09-29 patch: label results "补丁前样本"
+EXP_T_HASH = "1.3.cH3E.cH3E.cfTu.cfTu.cfTu.dpCU.dpCU.dpCU.fDXk.fDXk.fDXk.fKpM.fKpM.fKpM.fKsU.fKsU.fKsU.fL2-.fL2-.fL2-.fikc.fikc.fikc.fink.fink.fi-E.fi-E.fi-E.fj1M.fj1M.fj1M.fjDs.fjDs.fjDs.fjG-.fjG-.fjG-.fjTU.fjTU.fjTU"   # experiment (实验体法, Sephie), PS8b VL monakawan — after the 09-29 patch, medoid of 5 post-patch lists
 HAVEN_T = _listing(HAVEN_T_HASH)
 ABYSS_T = _listing(ABYSS_T_HASH)
 RUNE_T = _listing(RUNE_T_HASH)
 SWORD2_T = _listing(SWORD2_T_HASH)
+EXP_T = _listing(EXP_T_HASH)
 
 NAMED = {"rhino": RHINO_FOREST, "ramp": RAMP_DRAGON, "pirate": PIRATE_SWORD, "combo": COMBO_FOREST,
          "face": FACE_DRAGON, "elf-t": ELF_T, "nemesis-t": NEMESIS_T, "ramp-t": RAMP_T, "pirate-t": PIRATE_T,
-         "bishop-t": HAVEN_T, "nm-t": ABYSS_T, "crystal-t": RUNE_T, "synergy-t": SWORD2_T}
+         "bishop-t": HAVEN_T, "nm-t": ABYSS_T, "crystal-t": RUNE_T, "synergy-t": SWORD2_T, "exp-t": EXP_T}
 _NAMED_IDS: dict | None = None
 
 

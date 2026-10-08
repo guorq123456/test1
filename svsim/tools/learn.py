@@ -33,7 +33,7 @@ from svsim.learn.model import WEIGHTS, LinearValue
 
 DECKS = {"rhino": decks.RHINO_FOREST, "ramp": decks.RAMP_DRAGON, "pirate": decks.PIRATE_SWORD,
          "elf-t": decks.ELF_T, "nemesis-t": decks.NEMESIS_T, "ramp-t": decks.RAMP_T, "pirate-t": decks.PIRATE_T,
-         "bishop-t": decks.HAVEN_T, "nm-t": decks.ABYSS_T, "crystal-t": decks.RUNE_T, "synergy-t": decks.SWORD2_T}
+         "bishop-t": decks.HAVEN_T, "nm-t": decks.ABYSS_T, "crystal-t": decks.RUNE_T, "synergy-t": decks.SWORD2_T, "exp-t": decks.EXP_T}
 
 
 def deck_craft_of(name: str) -> Craft:
