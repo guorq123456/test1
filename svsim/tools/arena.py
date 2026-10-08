@@ -125,6 +125,19 @@ def _prior_options(options) -> dict:
     return {"prior": MatchupPrior(), **({"c_prior": float(rest)} if rest else {})}
 
 
+def _alloc_option(options) -> tuple | None:
+    """+alloc=legal:K[:LO:HI]: each decision searches clip(round(K x legal moves), LO, HI) iterations (LO 50, HI
+    800) instead of the spec's fixed count, the same compute on average once K is set by tools.search_cost."""
+    chosen = [o[len("alloc="):] for o in options if o.startswith("alloc=")]
+    if not chosen:
+        return None
+    kind, *args = chosen[0].split(":")
+    if kind != "legal" or len(args) not in (1, 3):
+        raise ValueError(f"alloc=legal:K or alloc=legal:K:LO:HI, not {chosen[0]!r}")
+    lo, hi = (int(args[1]), int(args[2])) if len(args) == 3 else (50, 800)
+    return ("legal", float(args[0]), lo, hi)
+
+
 def make_agent(spec: str, seed: int):
     """The agent `spec` names; "+mull=WAY" redraws its opening hand that way (agents.mulligan.decide:
     default, rules[:VARIANT,...], sim[:N[:H]]) and changes nothing else."""
@@ -145,7 +158,7 @@ def _make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "phased=", "screen=", "mimic="))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "phased=", "screen=", "mimic=", "alloc="))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -219,7 +232,7 @@ def _make_agent(spec: str, seed: int):
                           reserve="reserve" in options, veto=veto, reply_after=1 if "lazy" in options else 0,
                           reply_top=3 if "focus" in options else 0, reply_budget=20 if "focus" in options else 0,
                           average=next((int(o[3:]) for o in options if o.startswith("avg")), 1),
-                          reuse="reuse" in options,
+                          reuse="reuse" in options, alloc=_alloc_option(options),
                           **_prior_options(options))
         cross = [o for o in options if o.startswith("cross")]
         if cross:                                  # keep a card / PP / evolution for later (agents.crossturn_agent)

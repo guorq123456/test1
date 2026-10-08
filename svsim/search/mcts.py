@@ -150,8 +150,10 @@ class ISMCTS:
                  reply: bool = False, center: bool = True, prune: bool = True, backup: str = "max",
                  reserve: bool = False, veto=None, reply_after: int = 0, reply_top: int = 0,
                  reply_budget: int = 0, average: int = 1, prior=None, c_prior: float = 0.3,
-                 reuse: bool = False, min_new: int = 20):
+                 reuse: bool = False, min_new: int = 20, alloc: tuple | None = None):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
+        self.alloc = alloc             # ("legal", K, LO, HI): clip(K x legal moves, LO, HI) per decision instead
+        self.last_iterations = None    # the iterations the last decision searched
         self.seconds = seconds
         self.c = c                     # exploration constant (values are in 0..1)
         self.scale = scale             # evaluation points per unit of the logistic squash
@@ -221,13 +223,17 @@ class ISMCTS:
                 root, self.center = subtree, center
         self._next = None
         iterations = self.iterations
+        if self.alloc is not None and self.alloc[0] == "legal":    # the same compute on average, given by moves
+            _, k, lo, hi = self.alloc
+            iterations = min(hi, max(lo, round(k * len(legal_actions(state)))))
+        full = iterations
         if root is None:
             root = Node()
             self.center = 0.0
             if self.centered:
                 self.center = evaluate(state, me, self.weights)
         else:                                      # the subtree's values keep the turn start's centre
-            iterations = max(self.min_new, self.iterations - root.visits)
+            iterations = max(self.min_new, full - root.visits)
         deadline = time.perf_counter() + self.seconds if self.seconds else None
         self._replies = 0
         self._root_deck = {c.uid for c in state.players[me].deck}
@@ -240,10 +246,13 @@ class ISMCTS:
                 for a, pr in zip(moves, probs):
                     key = action_key(state, a, where0)
                     self._root_prior[key] = self._root_prior.get(key, 0.0) + float(pr)
+        done = 0
         for i in range(iterations if deadline is None else 10 ** 9):
             if deadline is not None and time.perf_counter() > deadline and i > 0:
                 break
             self._iterate(determinize(state, me, self.rng), me, root)
+            done += 1
+        self.last_iterations = done
         self.last_root = root
         where = _locator(state, me)
         legal = {action_key(state, a, where): a for a in legal_actions(state)}

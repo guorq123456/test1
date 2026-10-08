@@ -165,6 +165,26 @@ def _keys(model) -> list:
     return [(mine, theirs)] + [(a, b) for a in named for b in named if named[a] == mine and named[b] == theirs]
 
 
+def _search(agent):
+    """The agent's ISMCTS under its wrappers (mulligan, lethal check), or None."""
+    for _ in range(8):
+        if agent is None or hasattr(agent, "last_iterations"):
+            return agent
+        found = getattr(agent, "search", None)            # LethalAgent.search is its lethal solver: not this
+        if hasattr(found, "last_iterations"):
+            return found
+        agent = getattr(agent, "base", None)
+    return None
+
+
+def iteration_summary(counts: list) -> dict:
+    """Where a game's search went: decisions searched, iterations per decision (median, 90th percentile), total."""
+    if not counts:
+        return {"n": 0, "median": 0, "p90": 0, "total": 0}
+    s = sorted(counts)
+    return {"n": len(s), "median": s[len(s) // 2], "p90": s[min(len(s) - 1, int(0.9 * len(s)))], "total": sum(s)}
+
+
 def _game(deck_cards, opponent_cards, seat: int, mine, theirs, seed: int, label: str, names: list):
     """One game on `seed`: `mine` plays `deck_cards` in `seat`, `theirs` the opponent; (points of `mine`
     (win 1, draw 0.5), the record)."""
@@ -179,17 +199,24 @@ def _game(deck_cards, opponent_cards, seat: int, mine, theirs, seed: int, label:
     state = new_game(cards[0], cards[1], seed=seed)
     record = R.new_record(cards[0], cards[1], seed, state.first, label)
     record["names"] = names if seat == 0 else names[::-1]
+    searches, counts = [_search(x) for x in agents], ([], [])
     while not state.over:
         planner = planners[state.active]
         if planner is not None:
             planner.last_plan = None
+        search = searches[state.active]
+        if search is not None:
+            search.last_iterations = None
         action = agents[state.active].act(state, legal_actions(state))
+        if search is not None and search.last_iterations is not None:
+            counts[state.active].append(search.last_iterations)
         if planner is not None and planner.last_plan is not None:   # the planner's measurements, kept
             record.setdefault("plans", []).append(_plan(state, len(record["actions"]), planner.last_plan,
                                                         record["names"]))
         R.add(record, action)
         apply(state, action)
     record["winner"] = state.winner
+    record["iterations"] = [iteration_summary(c) for c in counts]     # by seat: where each side's search went
     return 1.0 if state.winner == seat else 0.5 if state.winner not in (0, 1) else 0.0, record
 
 
@@ -211,23 +238,27 @@ def play_pair(job) -> dict:
                                     _agent(versus, 2 * seed + 1 - seat + 7919, None), seed,
                                     f"{spec} / {versus}" if seat == 0 else f"{versus} / {spec}", [deck, opponent])
                 out[side].append(pts)
+                out.setdefault("iterations", []).append(record["iterations"][seat])   # A's, then B's, by seat
                 if record.get("plans"):
                     out["games"].append(record)
                 moves[(side, seat)] = record["actions"]
         # per seat: A's game went move for move as B's (the models changed nothing on that deal)
         out["same"] = [moves[("points", s)] == moves[("b_points", s)] for s in (0, 1)]
         return out
-    points, games, moves = [], [], []
+    points, games, moves, iterations, iterations_b = [], [], [], [], []
     for seat in (0, 1):
         pts, record = _game(mine, theirs, seat, _agent(a, 2 * seed + seat, model_a, phased_a),
                             _agent(b, 2 * seed + 1 - seat + 7919, model_b, phased_b), seed,
                             f"{a} / {b}" if seat == 0 else f"{b} / {a}", [deck, opponent])
         points.append(pts)
+        iterations.append(record["iterations"][seat])      # A's search, by seat (B's is the other seat's)
+        iterations_b.append(record["iterations"][1 - seat])
         if record.get("plans"):
             games.append(record)
         moves.append(record["actions"])
     # the same moves in both games (both agents chose alike all game): the pair adds nothing but its draw
-    return {"k": k, "seed": seed, "points": points, "games": games, "same": moves[0] == moves[1]}
+    return {"k": k, "seed": seed, "points": points, "games": games, "same": moves[0] == moves[1],
+            "iterations": iterations, "iterations_b": iterations_b}
 
 
 def pair_score(d: dict) -> float:
