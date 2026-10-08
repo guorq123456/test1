@@ -1,0 +1,903 @@
+{
+ "condition": "对手卡表已知（牌序、手牌未知）",
+ "games_file": "analysis/mirror-regression/salem_games.json",
+ "probes_file": "analysis/mirror-regression/evolve_probes.json",
+ "salem_seat": 0,
+ "state": "records.start(records[game]) then records[game]['actions'][:at] applied; seat 0 (Salem) to act",
+ "positions": [
+  {
+   "group": "留点（24）",
+   "probe_id": "1791304981889-t6-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791304981889",
+   "at": 29,
+   "own_turn": 6,
+   "first": true,
+   "global_turn": 11,
+   "pp": "8/8",
+   "ep_sep": [
+    1,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "正义",
+    "班德",
+    "金银"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "A 档够得着",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791305215412-t5-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791305215412",
+   "at": 24,
+   "own_turn": 5,
+   "first": true,
+   "global_turn": 9,
+   "pp": "7/7",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "正义",
+    "班德"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "A 档在手、够不着",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791305539194-t4-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791305539194",
+   "at": 16,
+   "own_turn": 4,
+   "first": false,
+   "global_turn": 8,
+   "pp": "5/5",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "正义",
+    "班德"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "A 档在手、够不着",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791305539194-t5-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791305539194",
+   "at": 23,
+   "own_turn": 5,
+   "first": false,
+   "global_turn": 10,
+   "pp": "7/7",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "正义",
+    "班德"
+   ],
+   "cell_by_line_played": "最好只够得着 B 档",
+   "cell_by_position": "最好只够得着 B 档",
+   "payoff_in_hand_out_of_reach": false,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791306396169-t5-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791306396169",
+   "at": 21,
+   "own_turn": 5,
+   "first": true,
+   "global_turn": 9,
+   "pp": "6/6",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "正义",
+    "班德"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "最好只够得着 B 档",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791306497426-t5-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791306497426",
+   "at": 26,
+   "own_turn": 5,
+   "first": false,
+   "global_turn": 10,
+   "pp": "8/8",
+   "ep_sep": [
+    1,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [],
+   "cell_by_line_played": "最好只够得着 B 档",
+   "cell_by_position": "最好只够得着 B 档",
+   "payoff_in_hand_out_of_reach": false,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791306781701-t4-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791306781701",
+   "at": 16,
+   "own_turn": 4,
+   "first": false,
+   "global_turn": 8,
+   "pp": "5/5",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "正义"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "最好只够得着 B 档",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791315717152-t4-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791315717152",
+   "at": 13,
+   "own_turn": 4,
+   "first": false,
+   "global_turn": 8,
+   "pp": "5/5",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "正义",
+    "班德"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "最好只够得着 B 档",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791315717152-t7-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791315717152",
+   "at": 37,
+   "own_turn": 7,
+   "first": false,
+   "global_turn": 14,
+   "pp": "9/9",
+   "ep_sep": [
+    1,
+    1
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "正义"
+   ],
+   "cell_by_line_played": "最好只够得着 B 档",
+   "cell_by_position": "最好只够得着 B 档",
+   "payoff_in_hand_out_of_reach": false,
+   "normal_only": false
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791316090276-t5-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791316090276",
+   "at": 21,
+   "own_turn": 5,
+   "first": false,
+   "global_turn": 10,
+   "pp": "8/8",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [],
+   "cell_by_line_played": "最好只够得着 B 档",
+   "cell_by_position": "最好只够得着 B 档",
+   "payoff_in_hand_out_of_reach": false,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791316411815-t4-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791316411815",
+   "at": 13,
+   "own_turn": 4,
+   "first": false,
+   "global_turn": 8,
+   "pp": "5/5",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "正义"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "A 档在手、够不着",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791316540438-t4-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791316540438",
+   "at": 16,
+   "own_turn": 4,
+   "first": false,
+   "global_turn": 8,
+   "pp": "5/5",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "金银"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "最好只够得着 B 档",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791316974098-t4-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791316974098",
+   "at": 14,
+   "own_turn": 4,
+   "first": false,
+   "global_turn": 8,
+   "pp": "4/4",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "正义"
+   ],
+   "cell_by_line_played": "最好只够得着 B 档",
+   "cell_by_position": "最好只够得着 B 档",
+   "payoff_in_hand_out_of_reach": false,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791316974098-t6-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791316974098",
+   "at": 25,
+   "own_turn": 6,
+   "first": false,
+   "global_turn": 12,
+   "pp": "7/7",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "正义",
+    "班德",
+    "金银"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "A 档够得着",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": false
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791317238047-t5-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791317238047",
+   "at": 26,
+   "own_turn": 5,
+   "first": false,
+   "global_turn": 10,
+   "pp": "7/7",
+   "ep_sep": [
+    1,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "正义",
+    "金银"
+   ],
+   "cell_by_line_played": "最好只够得着 B 档",
+   "cell_by_position": "最好只够得着 B 档",
+   "payoff_in_hand_out_of_reach": false,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791317238047-t7-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791317238047",
+   "at": 42,
+   "own_turn": 7,
+   "first": false,
+   "global_turn": 14,
+   "pp": "9/9",
+   "ep_sep": [
+    0,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "正义",
+    "金银"
+   ],
+   "cell_by_line_played": "最好只够得着 B 档",
+   "cell_by_position": "A 档够得着",
+   "payoff_in_hand_out_of_reach": false,
+   "normal_only": false
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791317476826-t5-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791317476826",
+   "at": 29,
+   "own_turn": 5,
+   "first": false,
+   "global_turn": 10,
+   "pp": "7/7",
+   "ep_sep": [
+    1,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [],
+   "cell_by_line_played": "B 档在手、够不着",
+   "cell_by_position": "最好只够得着 B 档",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791384258804-t6-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791384258804",
+   "at": 27,
+   "own_turn": 6,
+   "first": true,
+   "global_turn": 11,
+   "pp": "8/8",
+   "ep_sep": [
+    1,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "金银"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "A 档够得着",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791384258804-t10-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791384258804",
+   "at": 59,
+   "own_turn": 10,
+   "first": true,
+   "global_turn": 19,
+   "pp": "10/10",
+   "ep_sep": [
+    1,
+    0
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [],
+   "cell_by_line_played": "最好只够得着 B 档",
+   "cell_by_position": "最好只够得着 B 档",
+   "payoff_in_hand_out_of_reach": false,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791385092476-t5-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791385092476",
+   "at": 27,
+   "own_turn": 5,
+   "first": false,
+   "global_turn": 10,
+   "pp": "7/7",
+   "ep_sep": [
+    1,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "班德"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "最好只够得着 B 档",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791385225044-t8-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791385225044",
+   "at": 49,
+   "own_turn": 8,
+   "first": true,
+   "global_turn": 15,
+   "pp": "10/10",
+   "ep_sep": [
+    0,
+    1
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "班德",
+    "金银"
+   ],
+   "cell_by_line_played": "最好只够得着 B 档",
+   "cell_by_position": "A 档够得着",
+   "payoff_in_hand_out_of_reach": false,
+   "normal_only": false
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791385824342-t11-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791385824342",
+   "at": 77,
+   "own_turn": 11,
+   "first": true,
+   "global_turn": 21,
+   "pp": "10/10",
+   "ep_sep": [
+    1,
+    0
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "金银"
+   ],
+   "cell_by_line_played": "最好只够得着 B 档",
+   "cell_by_position": "A 档够得着",
+   "payoff_in_hand_out_of_reach": false,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791387160337-t5-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791387160337",
+   "at": 26,
+   "own_turn": 5,
+   "first": false,
+   "global_turn": 10,
+   "pp": "7/7",
+   "ep_sep": [
+    1,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "金银"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "A 档够得着",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "留点（24）",
+   "probe_id": "1791387437959-t6-evolve_hold",
+   "category": "evolve_hold",
+   "check": {
+    "no_evolve": true
+   },
+   "game": "1791387437959",
+   "at": 33,
+   "own_turn": 6,
+   "first": true,
+   "global_turn": 11,
+   "pp": "8/8",
+   "ep_sep": [
+    1,
+    2
+   ],
+   "salem": "留（不进化）",
+   "a_cards_in_hand": [
+    "正义",
+    "班德"
+   ],
+   "cell_by_line_played": "最好只够得着 B 档",
+   "cell_by_position": "最好只够得着 B 档",
+   "payoff_in_hand_out_of_reach": false,
+   "normal_only": true
+  },
+  {
+   "group": "关键格的花点（9）",
+   "probe_id": "1791305120171-t4-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "game": "1791305120171",
+   "at": 15,
+   "own_turn": 4,
+   "first": false,
+   "global_turn": 8,
+   "pp": "5/5",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "花：进化 佐伊",
+   "a_cards_in_hand": [
+    "正义",
+    "班德"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "A 档在手、够不着",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "关键格的花点（9）",
+   "probe_id": "1791306269709-t4-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "game": "1791306269709",
+   "at": 14,
+   "own_turn": 4,
+   "first": false,
+   "global_turn": 8,
+   "pp": "6/6",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "花：进化 佐伊",
+   "a_cards_in_hand": [
+    "正义",
+    "金银"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "A 档在手、够不着",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "关键格的花点（9）",
+   "probe_id": "1791306333962-t5-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "game": "1791306333962",
+   "at": 18,
+   "own_turn": 5,
+   "first": true,
+   "global_turn": 9,
+   "pp": "5/5",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "花：进化 宣扬的龙人",
+   "a_cards_in_hand": [
+    "正义"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "最好只够得着 B 档",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "关键格的花点（9）",
+   "probe_id": "1791316350693-t5-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "game": "1791316350693",
+   "at": 20,
+   "own_turn": 5,
+   "first": true,
+   "global_turn": 9,
+   "pp": "5/5",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "花：进化 露莉亚",
+   "a_cards_in_hand": [
+    "正义",
+    "班德"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "A 档在手、够不着",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "关键格的花点（9）",
+   "probe_id": "1791316411815-t5-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "game": "1791316411815",
+   "at": 20,
+   "own_turn": 5,
+   "first": false,
+   "global_turn": 10,
+   "pp": "6/6",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "花：进化 佐伊",
+   "a_cards_in_hand": [
+    "正义"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "最好只够得着 B 档",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "关键格的花点（9）",
+   "probe_id": "1791317238047-t4-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "game": "1791317238047",
+   "at": 17,
+   "own_turn": 4,
+   "first": false,
+   "global_turn": 8,
+   "pp": "5/5",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "花：进化 佐伊",
+   "a_cards_in_hand": [
+    "正义",
+    "金银"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "A 档在手、够不着",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "关键格的花点（9）",
+   "probe_id": "1791385092476-t4-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "game": "1791385092476",
+   "at": 18,
+   "own_turn": 4,
+   "first": false,
+   "global_turn": 8,
+   "pp": "5/5",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "花：进化 佐伊",
+   "a_cards_in_hand": [
+    "班德"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "A 档在手、够不着",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "关键格的花点（9）",
+   "probe_id": "1791387075633-t5-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "game": "1791387075633",
+   "at": 25,
+   "own_turn": 5,
+   "first": true,
+   "global_turn": 9,
+   "pp": "6/6",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "花：进化 佐伊",
+   "a_cards_in_hand": [
+    "正义",
+    "班德"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "最好只够得着 B 档",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "关键格的花点（9）",
+   "probe_id": "1791387160337-t4-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "game": "1791387160337",
+   "at": 16,
+   "own_turn": 4,
+   "first": false,
+   "global_turn": 8,
+   "pp": "5/5",
+   "ep_sep": [
+    2,
+    2
+   ],
+   "salem": "花：进化 佐伊",
+   "a_cards_in_hand": [
+    "金银"
+   ],
+   "cell_by_line_played": "A 档在手、够不着",
+   "cell_by_position": "最好只够得着 B 档",
+   "payoff_in_hand_out_of_reach": true,
+   "normal_only": true
+  },
+  {
+   "group": "只在按局面可能下进关键格的花点（1）",
+   "probe_id": "1791316841837-t6-evolve_use",
+   "category": "evolve_use",
+   "check": {
+    "evolves": true
+   },
+   "game": "1791316841837",
+   "at": 27,
+   "own_turn": 6,
+   "first": true,
+   "global_turn": 11,
+   "pp": "9/9",
+   "ep_sep": [
+    1,
+    2
+   ],
+   "salem": "花：进化 佐伊",
+   "a_cards_in_hand": [
+    "正义"
+   ],
+   "cell_by_line_played": "最好只够得着 B 档",
+   "cell_by_position": "A 档在手、够不着",
+   "payoff_in_hand_out_of_reach": false,
+   "normal_only": true
+  }
+ ]
+}
