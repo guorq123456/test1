@@ -101,14 +101,11 @@
   "strong": {
    "decks": {
     "ramp-t": {
-     "cr": 1309,
-     "ci": [
-      1288,
-      1331
-     ],
-     "games": 200,
-     "measured_vs": "20bcfbe",
-     "note": "第 5 轮（分析线 a625b1f / 本机 e86abb3）：装 C2（352ae51）后，跳费龙镜像 50 对 ΔCR +38，其余三格与尺子同模型、恒 0"
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待重标：跳费龙镜像装了 C3（hand 之上加 hpphase：双方 HP × 回合段；门 56.3% ± 3.1% 对第 19 版现装，+60 CR，分析线 a5a5a73）；原 1309 不再适用"
     },
     "elf-t": {
      "cr": 1348,
