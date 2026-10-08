@@ -228,6 +228,59 @@ def part3(pos):
     print("\n（回合剩下的由 v2s 打完，评估器分别换成该列的那套；8 次确定化取平均。）")
 
 
+def part3b(pos):
+    """#4: Salem's own line (16:49Z): Spilling Red discarding my Lyria and destroying theirs, then the Ogre
+    discarding a Spilling Red, no evolve; valued as part3 (installed and C2), against the bot's move and deep."""
+    from svsim.core.engine import apply, legal_actions
+    from svsim.core.view import determinize
+    from svsim.learn.model import LinearValue
+    from svsim.learn.phased import PhasedLearned
+    gid, at, rec, st, row = pos[3]
+    p = st.active
+    red = "出 赤流，目标 掌握天空命运的少女·露莉亚、掌握天空命运的少女·露莉亚"
+    ogre = "出 断头的斩姬·相枛津，目标 赤流"
+    folder = __import__("pathlib").Path(__import__("svsim.learn.phased", fromlist=["x"]).__file__).parent / "phased_models"
+    c2 = {("ramp", "ramp", m): LinearValue.load(folder / f"ramp-t-ramp-t-{m}.json") for m in ("ended", "act")}
+    print("\n**#4 Salem 自己的走法**（赤流：弃我方露莉亚、破对方露莉亚 → 口人魔弃赤流，不进化），和 bot 当时那步、深搜比：\n")
+    print("| 走法 | 装机 ramp-ramp | C2（跨卡组） |")
+    print("|---|---|---|")
+    made = __import__("svsim.core.actions", fromlist=["from_dict"]).from_dict(rec["actions"][at])
+    lines = {"Salem：赤流 → 口人魔，然后结束回合（不攻击）": ("strict", [red, ogre]),
+             "Salem：赤流 → 口人魔，然后由 v2s 打完这回合": ("finish", [red, ogre]),
+             "bot 当时：口人魔弃班德，然后 v2s 打完": ("finish", [describe(st, made)]),
+             "深搜：用额外 PP，然后 v2s 打完": ("finish", [row["deep"]])}
+    res = {}
+    for col, w in (("inst", None), ("c2", PhasedLearned(models=c2))):
+        agent, search = finish_agent(w)
+        ev = w or PhasedLearned()
+        for lab, (how, seq) in lines.items():
+            ps = []
+            for j in range(K):
+                t = determinize(st, p, random.Random(35000 + j))
+                ok = True
+                for text in seq:
+                    hit = [a for a in legal_actions(t) if describe(t, a) == text]
+                    if not hit:
+                        ok = False
+                        break
+                    apply(t, hit[0])
+                if not ok:
+                    continue
+                if how == "strict":
+                    from svsim.core.actions import EndTurn
+                    apply(t, EndTurn())
+                else:
+                    search.rng = random.Random(35700 + j)
+                    search._next = None
+                    while not t.over and t.active == p:
+                        apply(t, agent.act(t, legal_actions(t)))
+                ps.append((1.0 if t.winner == p else 0.0) if t.over else prob(ev.score(t, p, False)))
+            res[(col, lab)] = (sum(ps) / len(ps), len(ps)) if ps else (float("nan"), 0)
+    for lab in lines:
+        a, b = res[("inst", lab)], res[("c2", lab)]
+        print(f"| {lab} | {a[0]:.0%}（{a[1]} 次） | {b[0]:.0%}（{b[1]} 次） |")
+
+
 def part4(pos):
     from svsim.core.actions import from_dict
     from svsim.core.engine import apply
@@ -289,6 +342,7 @@ def main():
     part1(pos)
     part2(pos)
     part3(pos)
+    part3b(pos)
     part4(pos)
 
 
