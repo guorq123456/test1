@@ -12,7 +12,7 @@ feature's standard deviation in the base's training data (logit per SD) so the s
   x2        same sign, |candidate| > 2 |base| or < |base| / 2.
 A flip triggers step 2 (the architecture thread 19:51) only if B' (the base's own features refitted on the
 candidate's data with the same L2: the noise reference) does not flip the same coefficient, and the larger of
-the base's and the candidate's sizes is >= 0.02 logit per SD; every other row is listed and triggers nothing.
+the base's and the candidate's sizes is >= THRESHOLD (0.015) logit per SD; every other row is listed and triggers nothing.
 
 Condition: the opponent's 40-card list is known (order and hand not).
 """
@@ -20,6 +20,8 @@ import argparse
 
 from svsim.learn.model import LinearValue
 from svsim.learn.phased import folder_of
+
+THRESHOLD = 0.015          # logit per SD, the larger side of a flip (the architecture thread 19:54; was 0.02)
 
 
 def main():
@@ -66,7 +68,7 @@ def main():
             if kind != "翻号" or wp is None:
                 return None
             p_flip = wp.get(n, 0.0) * x < 0
-            big = max(abs(x), abs(y)) * sdv >= 0.02
+            big = max(abs(x), abs(y)) * sdv >= THRESHOLD
             return (not p_flip) and big, p_flip
         n_trig = sum(1 for r in flips if trig(r) and trig(r)[0])
         total_trig += n_trig
@@ -81,7 +83,7 @@ def main():
                 kind, n, x, y, sdv = r
                 t = trig(r)
                 pc = f"{wp.get(n, 0.0):+.4f}（{wp.get(n, 0.0) * sdv:+.3f}）" if wp is not None else "—"
-                tt = "—" if t is None else ("**是**" if t[0] else ("否（B′ 也翻）" if t[1] else "否（< 0.02）"))
+                tt = "—" if t is None else ("**是**" if t[0] else ("否（B′ 也翻）" if t[1] else f"否（< {THRESHOLD}）"))
                 print(f"| {kind} | {n} | {x:+.4f}（{x * sdv:+.3f}） | {y:+.4f}（{y * sdv:+.3f}） | {pc} | {tt} |")
             print()
     if args.bprime:
