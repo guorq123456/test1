@@ -3,7 +3,8 @@ game's result only, with game-resampled intervals for the differences.
 
     cd <svsim checkout with learn.netdata.rows and the models> && PYTHONPATH=. python3 <this> \
         --games ramp-t_ramp-t-s200.jsonl.gz --every 11 \
-        B=svsim/learn/phased_models/ramp-ramp  A200=<dir>/ramp-t-ramp-t ... [--boot 2000] [--out rows.jsonl]
+        B=svsim/learn/phased_models/ramp-ramp  A200=<dir>/ramp-t-ramp-t ... [--boot 2000] [--out rows.jsonl] \
+        [--side elf-t-nemesis-t]
 
 Each NAME=PREFIX names an evaluator by its two files PREFIX-ended.json and PREFIX-act.json (learn.model
 .LinearValue; a model with "extras" reads its named feature sets itself). Every held-out game is replayed with
@@ -11,6 +12,9 @@ learn.netdata.rows (the same positions the fit uses: both seats, the turn's end 
 position is scored by every evaluator, p = 1 / (1 + exp(-logit)), against the result (draws left out, as in the
 fit). Reported per evaluator and moment: positions, log loss, accuracy; then each evaluator minus the first, the
 difference of log loss with its 95% interval (games resampled).
+--side <mine>-<theirs> (a pairing that is not a mirror, or to be explicit): only the positions of the seat that
+played <mine> against <theirs>, by the record's "names", as learn.phased --matchup keeps for the fit; without it
+both seats count (the ramp-t mirror).
 Condition: the opponent's 40-card list is known (order and hand not).
 """
 import gzip
@@ -34,14 +38,17 @@ def load(prefix):
 
 def game_rows(job):
     from svsim.learn.netdata import ACT, rows
-    line, specs = job
+    line, specs, side = job
     global _MODELS
     if _MODELS is None:
         _MODELS = {name: load(prefix) for name, prefix in specs}
     rec = json.loads(line)
     out = []
+    names = rec.get("names")
     for phase, me, state, result, q in rows(rec, with_search=True):
         if result not in (0, 1, 0.0, 1.0):
+            continue
+        if side is not None and names and (names[me], names[1 - me]) != side:
             continue
         moment = "act" if phase == ACT else "ended"
         ps = {}
@@ -67,15 +74,21 @@ def main():
     specs = [tuple(a.split("=", 1)) for a in sys.argv[1:] if "=" in a and not a.startswith("--")]
     every = int(arg("--every", "11"))
     nboot = int(arg("--boot", "2000"))
+    side = None
+    if arg("--side"):
+        from svsim.learn.model import split_keys
+        side = tuple(split_keys(arg("--side")))
+        assert all(isinstance(k, str) for k in side), "--side takes two named decks"
     lines = [l for i, l in enumerate(gzip.open(arg("--games"), "rt", encoding="utf-8")) if every and i % every == 0]
     with Pool(int(arg("--workers", "4"))) as pool:
-        rows = [r for part in pool.imap(game_rows, [(l, specs) for l in lines], chunksize=4) for r in part]
+        rows = [r for part in pool.imap(game_rows, [(l, specs, side) for l in lines], chunksize=4) for r in part]
     if arg("--out"):
         with open(arg("--out"), "w", encoding="utf-8") as f:
             for r in rows:
                 f.write(json.dumps(r) + "\n")
     names = [n for n, _ in specs]
-    print(f"条件：对手卡表已知（牌序、手牌未知）。留出 {len(lines)} 局（行号 % {every} == 0），按终局胜负算，平局不计；区间 95%，按局重抽 {nboot} 次。\n")
+    who = f"只取 {side[0]} 对 {side[1]} 那一侧；" if side else ""
+    print(f"条件：对手卡表已知（牌序、手牌未知）。留出 {len(lines)} 局（行号 % {every} == 0），{who}按终局胜负算，平局不计；区间 95%，按局重抽 {nboot} 次。\n")
     print("| 评估器 | 时刻 | 局面数 | 对数损失 | 判对率 |")
     print("|---|---|---|---|---|")
     for moment in ("ended", "act"):
