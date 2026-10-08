@@ -77,6 +77,7 @@ def main():
         sga = np.concatenate([sg[:-1], np.zeros(Xa.shape[1] - len(sg)), sg[-1:]])
         n = len(yp)
         preds = {m: np.full(n, np.nan) for m in ("specialist", "single", "additive", "single-noramp", "additive-noramp")}
+        print(label, "fitting", n, flush=True)
         preds["single"][te] = fitpred(Xp[tr], yp[tr], Xp[te], sg, a.iters)
         preds["additive"][te] = fitpred(Xa[tr], yp[tr], Xa[te], sga, a.iters)
         noramp = tr & (mp != ramp) & (op_ != ramp)
