@@ -34,7 +34,7 @@ SKELETON = ('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">'
             '</head><body>{page}</body></html>')
 
 ALLOWED = {"start", "resume", "summary", "view", "act", "mulligan", "ai_step", "hint", "lethal", "note", "code",
-           "record_data", "review", "goto", "mark", "impact", "ratings"}
+           "record_data", "review", "goto", "mark", "impact", "ratings", "card_info"}
 
 
 def page_html() -> str:

@@ -18,7 +18,7 @@ from pathlib import Path
 
 from svsim.cards import decks, library
 from svsim.core.actions import Attack, EndTurn, Engage, Evolve, Fuse, Mulligan, PlayCard
-from svsim.core.engine import apply, legal_actions, new_game
+from svsim.core.engine import apply, legal_actions, new_game, play_form
 from svsim.core.enums import CardType, Phase
 from svsim.core.state import CardInstance, GameState, leader_of
 from svsim.tools import records
@@ -206,6 +206,10 @@ class Session:
         return self.view()
 
     # --- help -------------------------------------------------------------------------
+
+    def card_info(self, uid: int) -> dict:
+        """What a card on the table is and what the engine is counting for it (see card_info)."""
+        return card_info(self.state, uid, viewer=0)
 
     def hint(self) -> str:
         from svsim.search.mcts import ISMCTS
@@ -400,3 +404,92 @@ class Session:
         if mine:
             out["hand"] = [card_view(s, c, in_hand=True) for c in p.hand]
         return out
+
+
+COUNTER_NAMES = {"spellboost": "魔力增幅（这张卡被增幅的次数）", "sigils": "土之印层数", "value": "这张卡自己的计数",
+                 "traits": "获得的种族", "fused": "已融合进来的卡", "wheel": "已用过的选项",
+                 "ghosts": "它召唤、等它离场时处理的随从数", "hand_stats": "在手里时的攻击 / 生命"}
+_INTERNAL = {"skybound"}                           # shown through the gauge below
+
+
+def card_info(state: GameState, uid: int, viewer: int = 0) -> dict:
+    """A card on the table as the engine has it: its text (the card scripts' own text, its granted abilities
+    too), every counter the engine keeps on it (CardInstance.counters and fields) and on its owner (the
+    match-wide ones, marked as such), and the conditions the engine itself judges for it now (Skybound Art,
+    the way it would be played, the moves it has). Nothing is worked out again here. Cards `viewer` can't
+    see (the other hand, the decks) aren't given."""
+    from svsim.core import effects as E
+    from svsim.core.script import has_script, prop, scripts_of
+    from svsim.cards.pool import POOL
+    where, c = None, None
+    for i, p in enumerate(state.players):
+        for zone, cards in (("hand", p.hand), ("field", p.field), ("leader_area", p.leader_area)):
+            for x in cards:
+                if x.uid == uid and (zone != "hand" or i == viewer):
+                    where, c = zone, x
+    if c is None:
+        return {"error": "看不到这张卡"}
+    owner = state.players[c.owner]
+    texts = []
+    for k, sc in enumerate(scripts_of(c)):
+        doc = " ".join((type(sc).__doc__ or "").split())
+        if doc and not doc.startswith("A card's abilities"):
+            texts.append(("获得的能力：" if k else "") + doc)
+    if not texts and c.defn.text:
+        texts.append(c.defn.text)
+    if c.silenced:
+        texts.insert(0, "能力已被移除。")
+    counters, other = [], []
+    for key, value in sorted((c.counters or {}).items(), key=lambda kv: str(kv[0])):
+        if key in _INTERNAL or not isinstance(key, str):
+            continue
+        if key == "fused":
+            value = "、".join(card_name(POOL[i]) if i in POOL else str(i) for i in (value or ()))
+        elif key == "ghosts":
+            value = len(value or ())
+        elif key == "traits":
+            value = "、".join(value or ())
+        elif key == "hand_stats":
+            value = f"{value[0]}/{value[1]}"
+        if key in COUNTER_NAMES:
+            counters.append([COUNTER_NAMES[key], value])
+        elif value == state.turn:
+            other.append([f"本回合已触发过（{key}）", "是"])
+        else:
+            other.append([f"引擎计数 {key}", value])
+    conditions = []
+    if prop(c, "skybound"):
+        gauge = E.skybound_gauge(state, c)
+        counters.insert(0, ["奥义计量（自己的回合数 + 在手时己方进化次数）", f"{gauge} / 10（超奥义 15）"])
+        conditions.append(["奥义（计量 ≥ 10）", gauge >= 10])
+        conditions.append(["超奥义（计量 ≥ 15）", gauge >= 15])
+    if c.countdown is not None:
+        counters.append(["吟唱", c.countdown])
+    if c.defn.is_follower and where == "field":
+        counters.append(["本回合已攻击", f"{c.attacks_made} / {c.max_attacks}"])
+    if where == "hand" and c.owner == state.active:
+        form = play_form(owner, c)
+        if form is not None:
+            how = ("激奏" if form.as_spell else "结晶") if form.alt is not None else \
+                f"爆能强化 {form.enhanced}" if form.enhanced else "正常使用"
+            conditions.append([f"现在打出的方式：{how}", True])
+        else:
+            conditions.append(["现在打得出", False])
+    if c.owner == state.active and state.phase == Phase.MAIN:
+        mine = [a for a in legal_actions(state) if getattr(a, "uid", None) == uid or getattr(a, "attacker", None) == uid]
+        kinds = sorted({type(a).__name__ for a in mine})
+        names = {"PlayCard": "使用", "Evolve": "进化 / 超进化", "Attack": "攻击", "Engage": "启动", "Fuse": "融合"}
+        conditions.append(["现在能做：" + ("、".join(names.get(k, k) for k in kinds) if kinds else "没有"), bool(kinds)])
+    match = [["连击（本回合己方使用的卡数）", owner.combo], ["联合（本局进场的己方随从数）", owner.rally],
+             ["本局己方进化次数", owner.evolutions], ["墓地", owner.shadows],
+             ["自己的回合数", owner.turns_taken], ["进化点 / 超进化点", f"{owner.ep} / {owner.sep}"],
+             ["这张卡本局进场次数", owner.entered.get(c.defn.card_id, 0)],
+             ["本局被破坏的己方随从", len(owner.destroyed)]]
+    artifacts = {POOL[i].name for i in owner.entered if i in POOL and "Artifact" in POOL[i].traits}
+    if artifacts or "Artifact" in c.defn.traits:
+        match.append(["本局进场的不同名造物", len(artifacts)])
+    related = [card_name(POOL[i]) for i in c.defn.related if i in POOL]
+    return {"uid": uid, "where": where, "owner": "you" if c.owner == viewer else "ai", "card": card_view(state, c, where == "hand"),
+            "english": c.defn.name, "traits": list(c.defn.traits), "text": texts or ["没有特殊能力。"],
+            "scripted": has_script(c.defn.card_id), "counters": counters + other, "match": match,
+            "conditions": conditions, "related": related}
