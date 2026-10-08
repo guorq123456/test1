@@ -142,6 +142,87 @@
 - 老师和终局的真值相关（0.58）与老师和 G_next 的（0.62）差不多，所以老师不是只在自家评估世界里有效。但 G_end 噪声大，这个区间很宽。
 - 用 G_end 做标签时，AUC（只用 Q → Q+T）全部条目是 0.46 → 0.58，增益 +0.117（−0.003～+0.234），区间刚好碰到 0。G_end 每条只有 8 局、信度 0.28，AUC 被压得很低，这一列要等 K=32。
 
+## 分辨实验：每张能出的牌，留着 / 用掉，各打到终局（预注册，架构线程 18:44 布置；写在任何对局之前）
+
+**状态**：
+- 只写方案，不开跑。架构线程在问 Salem 选不选这条线，等那边定了再跑。
+- 跑在 RC 本机，16 个进程。
+- 代码 `salem_discrim.py`。冒烟测试只用了库外的种子（1000 起，4 项 × 每项 4 局），对局数一个都没看。
+
+**为什么**：设计文档 §6（`docs/hand-value-design.md`，架构分支）。老师在 Salem 的 80 个回合上留牌只有 62～66%，比单回合 Q 的 70% 低；可它在自对弈里和终局胜负又有关系（真值相关 0.58）。这个实验分开两种解释：
+- 「尺子太小」；
+- 「bot 的世界和 Salem 的不一样」。
+
+**局面和项**：
+- **Salem 的 80 个回合**：
+  - 来源：前 10 局（`salem_games_10.json`，从 `../mirror-regression/salem_games.json` 摘出），取老师行里的 89 个回合开头，去掉 Salem 当回合斩杀的 9 个。
+  - 其中 79 个回合手里至少有一张能出的牌。
+- **项**：行动方手里每一张能出的牌，按卡号算，同名几张算一张。「能出」指回合开头有合法的 `PlayCard`，或者按下没用过的额外 PP 以后才有。
+  - 共 **313 项**：开头就能出 293，要按额外 PP 才能出 20。
+  - Salem 用掉（打出或弃掉）103，留着 210。
+  - 老师主线上的有 105 项，只有这些项有 T。
+- **再加前十题 #3、#4**（都是 bot 的局面），标签按 Salem 说的走法。只逐项报，不并入 AUC：
+  - #3（1791317238047 第 53 步）5 项：出《世界》的呈现，其余留着；
+  - #4（1791304981889 第 35 步）4 项：赤流、露莉亚（被弃）、口人魔用掉，班德留着（班德要按额外 PP 才能出）。
+- `python3 salem_discrim.py items …` 会列出全部项。项编号 0～312、400～408。
+
+**两支**（从同一个确定化出发，共用随机数；之后都由 bot 自己对打到终局）：
+- 确定化从行动方的座位做：自己的手牌已知；自己的牌序、对手的手牌和牌库按已知的 40 张重洗；随机数重抽。两支用同一个确定化、同一组 bot 种子。
+- **留**：这回合剩下的由 bot 打，c 不许出。
+- **用**：这回合剩下的由 bot 打，但必须把 c 用掉。规则是：回合开头手里那几张 c 一张都没离手、而且出得起的时候（费用 ≤ PP + 没用过的额外 PP）：
+  - 不许结束回合；
+  - 不许出会让 PP 不够出 c 的别的牌。
+  - 有一张 c 离手以后就不再限制。
+- 冒烟测试 4 项：「用」那支每次都用掉了 c，「留」那支一次都没用。
+- bot = `mcts:100+plan+learned+phased`，就是 `realized_end.py` 的 G_end 用的那个；那里 G_end 和 G_next 的真值相关 0.82，过了判据。用 RC 当时的检出，提交号记进结果。
+- **G_end = 平均（留那支的胜负 − 用那支的胜负）**，是胜率差，正数表示留着更好。
+- **K = 32**：每项 2 组 × 16 个确定化。两组之间的一致度给出噪声。
+
+**种子（库 65500000）**：第 n 项、第 j 个确定化（j = 0～31）：
+- 确定化用 65500000 + 100n + j；
+- bot 种子用这个数 × 10（再按 `realized_end.play_out` 加 1、加 3）。
+- 实际用到 65500000～65540899。整个 65500000～65599999 都留给这个实验；下一个空位 65600000。
+
+**对照**（同一份检出，同一批回合；种子照这两个脚本原来的 700+、500+，不占库）：
+- **T**：`teacher_eval.py salem_games_10.json --seeds 2 --samples 8 --research 100 --next-search 30`，也就是 1e5141d 的 n30 版老师。两个种子取平均。只有老师主线上的牌有 T，因为老师的限制只能加在它主线要出的牌上。
+  - 备用：如果在 RC 的检出上跑不了，就用已有的 `teacher_rows_1e5141d_n30.json`，并注明。我在 b9f2aca 上用 1 局试跑过，能跑，8 个回合 × 2 个种子 5 秒。
+- **Q**：`q_baseline.py salem_games_10.json --agent mcts:400+plan+learned+phased --seeds 2`，覆盖开头就能出的每一张牌。要按额外 PP 才能出的 20 项没有 Q。
+  - 老师行里自带的对照（同一棵 100 次的树）作为副读，和以前的 70% 接得上。
+
+**报什么**（`salem_discrim.py report`；区间 95%，按 Salem 的回合重抽 2000 次）：
+- **AUC：价值高的一边是不是 Salem 留下的那张**，G_end、T、Q 各一个，再报差：G_end − T、G_end − Q。
+  - **主口径「按牌」**：同一张牌，在 Salem 留它的回合和用它的回合之间配对。这就是当初 T 62～66% 对 Q 70% 用的口径（`report.py`）。
+  - 副口径：「同回合」（同一回合里一张留的配一张用的，`q_baseline.py` 的口径）和「合并」。
+- 分两组报：全部项，和老师主线上的项（有 T 的那些）。
+- G_end 两组的一致度（秩相关）。
+- 「用」那支有一半以上的确定化没用掉 c 的项，单独列出来，不算进去。
+- #3、#4 逐项报 G_end 和区间，看它的正负是不是和 Salem 一致。
+
+**读法（照 §6 写在前面，主口径「按牌」）**：
+1. **全部项上，G_end 的 AUC 下沿 ≤ 0.5（和 Salem 不一致）→ 分布问题**：bot 的世界（它自己怎么打后面的回合、它当对手怎么打）和 Salem 的不一样。
+   - 按 §6 处理：学生仍用自对弈的终局当真值训练；Salem 这把尺子降为次要检查；同时把 Salem 27 局里他留牌以后的实际走法拿来对照，看 bot 的推演能不能复现。
+   - 上沿也 < 0.5 时注明「方向相反」。
+2. **G_end 的 AUC 下沿 > 0.5，并且在老师主线的项上 G_end − T 的下沿 > 0 → 老师的近似有问题**：两回合推演太短，或者下回合搜索太弱。在老师上加深推演。
+3. **G_end 的 AUC 下沿 > 0.5，并且 G_end − T 的区间含 0 → 尺子问题**：80 个回合分不开 G_end 和老师。换更大的尺子：把 Salem 新对局里每个回合的留牌都纳入，按回合报区间。
+   - 如果全部项上 G_end 下沿 > 0.5，但在老师主线那 105 项上 G_end 的区间含 0.5，第 2 条就证明不了，也按这一条读。
+- G_end − Q 照报，不进判读。
+
+**算力**（我这边容器里测的）：
+- `mcts:100` 从 Salem 的回合开头打到终局，每局 2.3 秒（6 个局面的平均）；冒烟测试连进程启动算在内，每局 3.6 秒。
+- 合计 322 项 × 32 × 2 = **20,608 局**，约 13～20 CPU 小时。**在 16 个进程上约 1～1.5 小时**（如果 RC 单进程和我这边差不多快）。
+- T、Q 两个对照加起来几分钟。所以从开跑到出数约 1.5 小时。
+
+**给 RC 的命令**（检出 = 本机当前 head；先把本分支 `analysis/card-value/` 下的 `salem_discrim.py`、`realized.py`、`realized_end.py`、`teacher_eval.py`、`q_baseline.py`、`salem_games_10.json`、`teacher_rows_1e5141d_n30.json` 取过去，再加上 `analysis/mirror-regression/salem_games.json`）：
+```
+PYTHONPATH=.:analysis/card-value python3 analysis/card-value/salem_discrim.py items analysis/mirror-regression/salem_games.json analysis/card-value/teacher_rows_1e5141d_n30.json
+#   必须打出：79 个回合，313 项（留 210、用 103；只有按额外 PP 才打得出 20；老师主线上的 105）；#3 5 项、#4 4 项；种子 65500000～65540899
+PYTHONPATH=.:analysis/card-value python3 analysis/card-value/salem_discrim.py run analysis/mirror-regression/salem_games.json analysis/card-value/teacher_rows_1e5141d_n30.json --k 16 --workers 16 --out analysis/card-value/discrim/g_end.jsonl
+PYTHONPATH=.:analysis/card-value python3 analysis/card-value/teacher_eval.py analysis/card-value/salem_games_10.json --seeds 2 --samples 8 --research 100 --next-search 30 --workers 16 --out analysis/card-value/discrim/teacher_rows.json
+PYTHONPATH=.:analysis/card-value python3 analysis/card-value/q_baseline.py analysis/card-value/salem_games_10.json --agent mcts:400+plan+learned+phased --seeds 2 --workers 16 --out analysis/card-value/discrim/q_rows.json
+```
+- `run` 可以断点续跑。
+- 出数后由我读：`salem_discrim.py report g_end.jsonl --t teacher_rows.json --q q_rows.json`。
+
 ## 文件
 
 - `teacher_eval.py`：老师和对照的测量，输出每一项。
@@ -153,3 +234,4 @@
 - `teacher_*_1e5141d_n30*`：推演换成小搜索的两次重测（n30：我方下回合；n30o30：两个回合都换）。
 - `realized.py`、`analyse.py`：大样本的干预式检验（老师 T、对照 Q、真实兑现 G）。
 - `realized_interim407_1e5141d.*`：407 条时的中期数；`realized_1200_1e5141d.*`：1200 条的最终数。
+- `salem_discrim.py`、`salem_games_10.json`：分辨实验（每张能出的牌，留 / 用打到终局；预注册在上面）。`salem_end.py` 是只看老师主线那 111 项的早先版本，没跑完，不再用。
