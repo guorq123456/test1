@@ -48,6 +48,12 @@ EXTRA_FROM = 400                        # item numbers of #3 / #4 start here
 GAMES = {}
 
 
+def _init_games(games):
+    """Pool initializer: fill this module's GAMES in each worker (under spawn, as on Windows, a bound
+    GAMES.update would only update a pickled copy)."""
+    GAMES.update(games)
+
+
 def state_at(rec, at):
     st = records.start(rec)
     for a in rec["actions"][:at]:
@@ -181,7 +187,7 @@ def run(args):
         done = {json.loads(x)["n"] for x in open(args.out, encoding="utf-8") if x.strip()}
     jobs = [(it, args.k, args.seed_base) for it in todo if it["n"] not in done]
     print(f"{len(todo)} 项，要量 {len(jobs)} 项（已完成 {len(done)}），每项 2 × {args.k} 个确定化 × 2 支", flush=True)
-    with Pool(args.workers, initializer=GAMES.update, initargs=(GAMES,)) as pool, \
+    with Pool(args.workers, initializer=_init_games, initargs=(GAMES,)) as pool, \
             open(args.out, "a", encoding="utf-8") as fh:
         for i, row in enumerate(pool.imap_unordered(measure, jobs, chunksize=1), 1):
             fh.write(json.dumps(row, ensure_ascii=False) + "\n")
@@ -294,6 +300,31 @@ def report(args):
                 cells.append(f"{a:+.3f}（{lo:+.3f}～{hi:+.3f}）")
             print(f"| {how}{'（主）' if how == '按牌' else ''} | " + " | ".join(cells) + " |")
         print()
+    # the reading, as pre-registered (README: three outcomes of design section 6, then the two additions written
+    # after the start and before any data, the architecture thread 19:47); order 1 -> (4 -> 2 -> 3)
+    how = "按牌"
+    aG = auc(clean, "G_end", how)[0]
+    loG, hiG = boot(clean, lambda x: auc(x, "G_end", how)[0])
+    withq = [d for d in clean if d["Q"] is not None]
+    aQ = auc(withq, "Q", how)[0]
+    lineG = auc(line, "G_end", how)[0]
+    loGl, hiGl = boot(line, lambda x: auc(x, "G_end", how)[0])
+    dGT = lineG - auc(line, "T", how)[0]
+    lo_d, hi_d = boot(line, lambda x: auc(x, "G_end", how)[0] - auc(x, "T", how)[0])
+    print(f"**判读（主口径「按牌」）**：全部项 G_end {aG:.3f}（{loG:.3f}～{hiG:.3f}），同表 Q 的点估计 {aQ:.3f}；"
+          f"主线项 G_end {lineG:.3f}（{loGl:.3f}～{hiGl:.3f}），G_end − T {dGT:+.3f}（{lo_d:+.3f}～{hi_d:+.3f}）")
+    if loG <= 0.5:
+        if hiG < aQ:
+            print(f"→ 第 1 条：分布问题{'（方向相反：上沿 < 0.5）' if hiG < 0.5 else ''}")
+        else:
+            print("→ 分不开：分布问题或尺子太小（区间含 0.5，上沿 ≥ Q 的点估计），按第 3 条")
+    elif hi_d < 0:
+        print("→ 第 4 条：老师比终局更像 Salem，不加深老师；记「Salem 的留牌更像短视界判断，或 G_end 噪声」，按第 3 条换大尺子")
+    elif lo_d > 0 and loGl > 0.5:
+        print("→ 第 2 条：老师的近似有问题，加深老师")
+    else:
+        print("→ 第 3 条：尺子太小")
+    print()
     for tag in ("#3", "#4"):
         ex = [d for d in data if d["set"] == tag]
         if not ex:

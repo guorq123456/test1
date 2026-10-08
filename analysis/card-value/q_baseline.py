@@ -33,6 +33,12 @@ from svsim.tools import records
 GAMES = {}
 
 
+def _init_games(games):
+    """Pool initializer: fill this module's GAMES in each worker (under spawn, as on Windows, a bound
+    GAMES.update would only update a pickled copy)."""
+    GAMES.update(games)
+
+
 def salem_turns(gid):
     """(index of the turn's first action, state then, Salem's actions of the turn) for seat 0."""
     rec = GAMES[gid]
@@ -162,7 +168,7 @@ def main():
                 turns[(gid, at)] = {"game": gid, "at": at, "own_turn": snap.players[0].turns_taken,
                                     "labels": lab, "runs": []}
                 jobs += [(gid, at, args.agent, 500 + k) for k in range(args.seeds)]
-    with Pool(args.workers, initializer=GAMES.update, initargs=(GAMES,)) as pool:
+    with Pool(args.workers, initializer=_init_games, initargs=(GAMES,)) as pool:
         for gid, at, seed, vals in pool.imap_unordered(values, jobs):
             turns[(gid, at)]["runs"].append(vals)
     rows = []
