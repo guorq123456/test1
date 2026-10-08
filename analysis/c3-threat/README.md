@@ -431,7 +431,8 @@
   - 它没装 hpphase，是 L2 1e-4 不和 C3 重叠的最干净的一格；
   - 留出也是 −.0024；
   - 它是 Salem 陪练用的配对。
-- 门：A = `mcts:N+plan+learned+phased=cand-c4-l2-ramp-ramp`（底是现装的 original ramp-ramp，v2、不带 extras），B = `level-strong`，`--deck ramp --opponent ramp` 直接对打 `--fixed --max 600`，下沿 > 50% 才装；N 照第七节第 4 条复核；输出 `../gates/c4-l2/ramp_ramp.jsonl`。
+- 门：A = `mcts:200+plan+learned+phased=cand-c4-l2-ramp-ramp`（底是现装的 original ramp-ramp，v2、不带 extras），B = `level-strong`（现装 original ramp-ramp）。两边特征集相同，只差 L2，都用 200 次，毫秒比照报。`--deck ramp --opponent ramp` 直接对打 `--fixed --max 600`，下沿 > 50% 才装；输出 `../gates/c4-l2/ramp_ramp.jsonl`。
+- 队列（协调线 18:00）：C3 第 7 门（在跑）→ 第 8～11 门 → C4 original ramp-ramp（候选一到，就插在下一个格子边界）→ 63600000。
 - **二项判读按实际跑的 2 格报**：Bin(2, 0.025) 下 P(≥1) = 4.9%。
   - 它若过（1 / 2）：按「过 1 道」的规矩，暂定装机，再在新库加一道确认门（库到时分）。
   - 它不过（0 / 2）：关 C4，结论写「L2 1e-4 的留出改善没有转成棋力，未测出」。
