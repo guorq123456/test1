@@ -99,12 +99,16 @@ def main():
     ap.add_argument("--pair", required=True)
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--cheap", action="store_true")
+    ap.add_argument("--only", nargs="*", default=None, help="K:SEAT_A of the games to probe (e.g. the ones that differ)")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
     global SCREEN
     if args.cheap:
         SCREEN = (1000, (50000, 4))
     games = load(args.files.split("+"), args.pair)
+    if args.only:
+        keep = {tuple(int(x) for x in o.split(":")) for o in args.only}
+        games = [g for g in games if (g["k"], g["seat_a"]) in keep]
     with Pool(args.workers) as pool, open(args.out, "w", encoding="utf-8") as fh:
         for r in pool.imap_unordered(job, games, chunksize=1):
             fh.write(json.dumps(r) + "\n")
