@@ -315,3 +315,74 @@ def features(state: GameState, player: int, potential: bool = True, version: int
     extra = held_points(state, player, False) + held_points(state, 1 - player, True) if version >= 3 else []
     return (side_features(state, player, potential, version) +
             side_features(state, 1 - player, potential, version, hidden=True) + extra + [1.0])
+
+
+# Feature sets added by name (the C track, 2026-10-08, from the analysis thread's audit of where the installed
+# evaluators miss: the side to move second is overrated by about 9 points in the middle and late game, every
+# card in hand that can't be paid next turn by about 2). Outside every version: a model that uses one records
+# it (LinearValue.extras) and is encoded with it; models without it are unchanged. Both only read the position.
+# - "tempo": the opponent's maximum play points on their coming turn minus mine this turn (0 at the end of the
+#   first player's turn, +1 at the end of the second player's; the engine's cap of 10), and that gap times each
+#   stage of the game by my own turn count (1-4, 5-7, 8+, the audit's stages).
+# - "hand": the hand's roles (learn.roles) with each card discounted by whether it can be played next turn:
+#   times min(1, (maximum play points + 1) / its cost), the play points capped at 10; the opponent's hand as its
+#   share of the cards not seen yet, as for the version-2 hand roles.
+# - "handsplit": the same roles split into the cards payable next turn (cost <= maximum play points + 1) and the
+#   others, instead of discounting.
+STAGES = (("early", 1, 4), ("mid", 5, 7), ("late", 8, 99))
+ROLE_NAMES = ("face", "removal", "heal", "draw", "ramp", "body")
+EXTRAS = {
+    "tempo": ["tempo"] + [f"tempo_x_{s}" for s, _, _ in STAGES],
+    "hand": [f"{side}_handplay_{r}" for side in ("me", "op") for r in ROLE_NAMES],
+    "handsplit": [f"{side}_hand{kind}_{r}" for side in ("me", "op") for kind in ("now", "later") for r in ROLE_NAMES],
+}
+
+
+def extra_names(extras) -> list[str]:
+    return [n for e in extras for n in EXTRAS[e]]
+
+
+def tempo_gap(state: GameState, player: int) -> int:
+    from svsim.core.state import MAX_PP
+    me, op = state.players[player], state.players[1 - player]
+    return min(op.max_pp + 1, MAX_PP) - me.max_pp
+
+
+def _next_pp(p) -> int:
+    from svsim.core.state import MAX_PP
+    return min(p.max_pp + 1, MAX_PP)
+
+
+def _hand_roles(state: GameState, side: int, hidden: bool, split: bool) -> list[float]:
+    from svsim.learn.roles import card_roles
+    p = state.players[side]
+    pp = _next_pp(p)
+    cards, scale = (p.hand + p.deck, len(p.hand) / max(len(p.hand) + len(p.deck), 1)) if hidden else (p.hand, 1.0)
+    now, later = [0.0] * 6, [0.0] * 6
+    for c in cards:
+        roles = card_roles(c.defn)
+        if split:
+            target = now if c.cost <= pp else later
+            for i, v in enumerate(roles):
+                target[i] += v * scale
+        else:
+            f = 1.0 if c.cost <= 0 else min(1.0, pp / c.cost)
+            for i, v in enumerate(roles):
+                now[i] += v * f * scale
+    return now + later if split else now
+
+
+def extra_features(state: GameState, player: int, extras) -> list[float]:
+    """The named feature sets' values for `player` (EXTRAS), in the order of extra_names."""
+    out = []
+    for e in extras:
+        if e == "tempo":
+            gap = tempo_gap(state, player)
+            turn = state.players[player].turns_taken
+            out += [float(gap)] + [float(gap) * (lo <= turn <= hi) for _, lo, hi in STAGES]
+        elif e in ("hand", "handsplit"):
+            out += _hand_roles(state, player, False, e == "handsplit") + _hand_roles(state, 1 - player, True,
+                                                                                      e == "handsplit")
+        else:
+            raise ValueError(f"unknown feature set {e!r}")
+    return out
