@@ -947,3 +947,28 @@ def test_random_neutral_games():
         agents = [RandomAgent(g, end_turn_weight=0.2), RandomAgent(g + 1, end_turn_weight=0.2)]
         assert play_game(state, agents, on_action=check_invariants) in (0, 1, -1)
         assert state.over
+
+
+def test_the_start_of_turn_resolves_in_the_order_of_sandalphon_s_official_q_and_a():
+    # Official Q&A on Sandalphon, Primarch Successor (its card page), with a Serene Sanctuary at count 1: "First,
+    # Serene Sanctuary's count falls to 0 and it is destroyed. Then, Sandalphon's Invoke ability summons him to
+    # your field. Next, Serene Sanctuary's Last Words ability activates and you draw 2 cards. Sandalphon's 'When
+    # this card is invoked' ability then returns him to your hand. Finally, you'll draw your card for the turn."
+    # (Every answer there ends with the turn's draw: Invocation comes before it.) Serene Sanctuary has no script
+    # here; Scripture of Salvation (Countdown, Last Words: draw 2 cards, ...) stands in for it.
+    from svsim.cards import library  # noqa: F401  (every card's script registered)
+    from svsim.cards.pool import POOL
+    state = fresh()
+    p = state.players[0]
+    sanctuary = put(state, 0, POOL[10662210])                               # Scripture of Salvation
+    sanctuary.countdown = 1                                                 # falls to 0 at my next turn's start
+    sandalphon = state.new_instance(neutral.SANDALPHON, 0)
+    p.deck.append(sandalphon)                                               # on top: the draw would take it
+    below = list(p.deck[-4:-1])                                             # the next cards under it
+    p.evolutions = 6
+    p.hand.clear()
+    end_round(state)
+    assert p.hand[:2] == [below[-1], below[-2]]                             # the Last Words' 2 cards
+    assert p.hand[2].defn == neutral.SANDALPHON                             # back to hand when invoked
+    assert p.hand[3] is below[-3] and len(p.hand) == 4                      # the turn's draw, last
+    assert E.leader_area_card(state, 0, neutral.SANDALPHON_CREST) is not None and sanctuary not in p.field
