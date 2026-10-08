@@ -26,45 +26,59 @@ SCALE = 8.0                      # ISMCTS's logistic squash: value = 1 / (1 + ex
 
 class LinearValue:
     def __init__(self, coef: list, mean: list, std: list, potential: bool, info: dict | None = None,
-                 version: int = 1, hidden: dict | None = None):
+                 version: int = 1, hidden: dict | None = None, deck_desc: bool = False):
         self.coef, self.mean, self.std, self.potential = coef, mean, std, potential
         self.info = info or {}
         self.version = version
         self.hidden = hidden             # {"W1": [[per hidden unit] per feature], "b1": [...], "w2": [...]}
-        assert len(coef) == len(mean) == len(std) == len(names(potential, version))
+        self.deck_desc = deck_desc       # both decks' learn.deckdesc vectors after the features (a shared model)
+        assert len(coef) == len(mean) == len(std) == len(self.names())
         if hidden:
             assert len(hidden["W1"]) == len(coef) and len(hidden["b1"]) == len(hidden["w2"])
 
+    def names(self) -> list[str]:
+        out = names(self.potential, self.version)
+        if self.deck_desc:
+            from svsim.learn import deckdesc
+            out = out + [f"deck_me_{n}" for n in deckdesc.names()] + [f"deck_op_{n}" for n in deckdesc.names()]
+        return out
+
+    def inputs(self, state: GameState, player: int) -> list:
+        x = features(state, player, self.potential, self.version)
+        if self.deck_desc:
+            from svsim.learn import deckdesc
+            x = list(x) + deckdesc.pair(state, player)
+        return x
+
     def logit(self, state: GameState, player: int) -> float:
-        x = [(v - m) / s for v, m, s in zip(features(state, player, self.potential, self.version), self.mean,
-                                             self.std)]
+        x = [(v - m) / s for v, m, s in zip(self.inputs(state, player), self.mean, self.std)]
         out = sum(c * v for c, v in zip(self.coef, x))
-        if self.hidden:
-            import math
-            h = list(self.hidden["b1"])
-            for v, row in zip(x, self.hidden["W1"]):
-                if v:
-                    for j, a in enumerate(row):
-                        h[j] += v * a
-            out += sum(b * math.tanh(a) for a, b in zip(h, self.hidden["w2"]))
+        if self.hidden:                  # numpy: 64 hidden units over ~200 features is too slow as Python loops
+            import numpy as np
+            if not hasattr(self, "_hidden_np"):
+                self._hidden_np = tuple(np.asarray(self.hidden[k], dtype=np.float64) for k in ("W1", "b1", "w2"))
+            W1, b1, w2 = self._hidden_np
+            out += float(np.tanh(np.asarray(x) @ W1 + b1) @ w2)
         return out
 
     def save(self, path: Path) -> None:
-        d = {"names": names(self.potential, self.version), "coef": self.coef, "mean": self.mean, "std": self.std,
+        d = {"names": self.names(), "coef": self.coef, "mean": self.mean, "std": self.std,
              "potential": self.potential, "version": self.version, "info": self.info}
         if self.hidden:
             d["hidden"] = self.hidden
+        if self.deck_desc:
+            d["deck_desc"] = True
         path.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
 
     @classmethod
     def load(cls, path: Path) -> "LinearValue":
         d = json.loads(path.read_text(encoding="utf-8"))
         return cls(d["coef"], d["mean"], d["std"], d["potential"], d.get("info"), d.get("version", 1),
-                   d.get("hidden"))
+                   d.get("hidden"), d.get("deck_desc", False))
 
     def weights_by_name(self) -> dict:
         """Coefficients per raw (unstandardized) feature unit, for reading."""
-        return {n: c / s for n, c, s in zip(names(self.potential, self.version), self.coef, self.std)}
+        return {n: c / s for n, c, s in zip(self.names(), self.coef, self.std)}
 
 
 def deck_craft(state: GameState, player: int) -> Craft:

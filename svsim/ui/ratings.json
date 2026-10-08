@@ -1,0 +1,151 @@
+{
+ "version": 15,
+ "commit": null,
+ "published_at": null,
+ "anchor": {
+  "name": "ruler20261008",
+  "commit": "20bcfbe",
+  "level": "strong",
+  "cr": 1300,
+  "note": "每套牌各自独立起算，不跨卡组比：一套牌的 CR = 用它打尺子的四套牌各 100 局"
+ },
+ "tiers": {
+  "fast": {
+   "decks": {
+    "ramp-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    },
+    "elf-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    },
+    "nemesis-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    },
+    "pirate-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    }
+   }
+  },
+  "normal": {
+   "decks": {
+    "ramp-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    },
+    "elf-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    },
+    "nemesis-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    },
+    "pirate-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    }
+   }
+  },
+  "strong": {
+   "decks": {
+    "ramp-t": {
+     "cr": 1300,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "等于尺子（20bcfbe 的强档）的这套牌：定义值 1300，各卡组独立起算",
+     "anchor": true
+    },
+    "elf-t": {
+     "cr": 1327,
+     "ci": [
+      1302,
+      1353
+     ],
+     "games": 200,
+     "measured_vs": "20bcfbe",
+     "note": "第 2 轮：连击妖对机锋一格 ΔCR +107，其余三格模型没变、记 0，四格平均 +27"
+    },
+    "nemesis-t": {
+     "cr": 1300,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "等于尺子（20bcfbe 的强档）的这套牌：定义值 1300，各卡组独立起算",
+     "anchor": true
+    },
+    "pirate-t": {
+     "cr": 1300,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "等于尺子（20bcfbe 的强档）的这套牌：定义值 1300，各卡组独立起算",
+     "anchor": true
+    }
+   }
+  },
+  "original": {
+   "decks": {
+    "ramp-t": {
+     "cr": 1136,
+     "ci": [
+      1084,
+      1183
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "四格 ΔCR −187 / −159 / −154 / −158。与尺子差：100 对 200 次迭代、只有 ramp-ramp 且 noalias、旧斩杀筛和起手，归因分不开"
+    },
+    "elf-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定（f631e14 的 bot）"
+    },
+    "nemesis-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定（f631e14 的 bot）"
+    },
+    "pirate-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定（f631e14 的 bot）"
+    }
+   }
+  }
+ }
+}

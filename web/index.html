@@ -59,6 +59,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
 #status { color: var(--muted); font-size: 13px; line-height: 1.6; white-space: pre-wrap; min-height: 1.6em; }
 #status.error { color: var(--foe); }
 #saved-games { font-size: 13px; color: var(--muted); }
+.level-info { font-size: 12px; color: var(--muted); min-height: 1.4em; }
 
 /* ---- board ---- */
 #board { flex: 1; display: flex; flex-direction: column; gap: 6px; padding-block: 8px; min-height: 0; }
@@ -190,6 +191,10 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
         <button data-value="pirate">海盗皇家</button>
         <button data-value="combo">连击精灵</button>
         <button data-value="face">快攻龙</button>
+        <button data-value="elf-t">连击妖（比赛版）</button>
+        <button data-value="nemesis-t">机锋（比赛版）</button>
+        <button data-value="ramp-t">跳费龙（比赛版）</button>
+        <button data-value="pirate-t">旗皇（比赛版）</button>
       </div>
     </div>
     <div class="field-group"><span>AI 的卡组</span>
@@ -199,6 +204,10 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
         <button data-value="pirate">海盗皇家</button>
         <button data-value="combo">连击精灵</button>
         <button data-value="face">快攻龙</button>
+        <button data-value="elf-t">连击妖（比赛版）</button>
+        <button data-value="nemesis-t">机锋（比赛版）</button>
+        <button data-value="ramp-t">跳费龙（比赛版）</button>
+        <button data-value="pirate-t">旗皇（比赛版）</button>
       </div>
     </div>
     <div class="field-group"><span>AI 强度</span>
@@ -206,7 +215,9 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
         <button data-value="fast">快速</button>
         <button data-value="normal" aria-pressed="true">普通</button>
         <button data-value="strong">强</button>
+        <button data-value="original">原始版</button>
       </div>
+      <div class="level-info" id="level-info"></div>
     </div>
     <div class="field-group"><span>先后手</span>
       <div class="seg" data-name="first">
@@ -392,8 +403,25 @@ document.querySelectorAll(".seg").forEach(seg => {
     const b = ev.target.closest("button"); if (!b) return;
     seg.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
     choice[seg.dataset.name] = b.dataset.value;
+    if (seg.dataset.name === "level" || seg.dataset.name === "opponent") showLevelInfo();
   });
 });
+
+// The AI's class rating with the level and deck picked: each deck counted on its own from the anchor
+// (the ruler's strong level, CR 1300), measured by 100 games against each of the ruler's four decks.
+const LEVEL_NAMES = {fast: "快速档", normal: "普通档", strong: "强档", original: "原始版"};
+let ratings = null;
+function showLevelInfo() {
+  const box = $("level-info");
+  if (!ratings) { box.textContent = ""; return; }
+  const decks = (ratings.tiers[choice.level] || {}).decks || {}, t = decks[choice.opponent];
+  const deck = DECK_NAMES[choice.opponent] || choice.opponent;
+  const cr = !t ? "CR 只标定比赛卡组" : t.cr != null ?
+    `CR ${t.cr}` + (Array.isArray(t.ci) ? `（${t.ci[0]}～${t.ci[1]}）` : t.ci != null ? ` ± ${t.ci}` : "") +
+    (t.anchor ? "（锚）" : "") : "CR 待标定";
+  box.textContent = `${LEVEL_NAMES[choice.level] || choice.level} · ${deck} · 版本 ${ratings.version} · ${ratings.commit} · ${cr}`;
+  box.title = (t && t.note) || "";
+}
 
 $("start").addEventListener("click", startGame);
 
@@ -735,7 +763,7 @@ function describeFinished(body) {
   const names = body.record.names ? body.record.names.map(n => DECK_NAMES[n] || n).join(" 对 ") + " · " : "";
   const result = body.resigned ? "认输" : body.winner === 0 ? "你赢" : body.winner === 1 ? "AI 赢" : "平局";
   const marks = (body.record.mistakes || []).length;
-  const bot = body.record.bot, level = bot && {fast: "快速", normal: "普通", strong: "强"}[bot.level];
+  const bot = body.record.bot, level = bot && {fast: "快速", normal: "普通", strong: "强", original: "原始版"}[bot.level];
   const ai = level ? ` · AI ${level}${bot.version ? "（" + bot.version + "）" : ""}` : "";
   return `${when} · ${names}${result}${ai} · ${body.moves} 步` + (marks ? ` · 已标 ${marks} 处失误` : "");
 }
@@ -964,6 +992,8 @@ async function offerResume(dbReady) {
     await Backend.init((text) => status(text));
     status(Backend.mode === "http" ? "已连接电脑上的模拟器。" : "模拟器已就绪。");
     $("start").disabled = false;
+    try { ratings = await Backend.call("ratings"); } catch (e) { ratings = null; }
+    showLevelInfo();
     offerResume(dbReady);
   } catch (e) {
     status("模拟器没能在这个页面里启动：" + e.message +
