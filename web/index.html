@@ -79,7 +79,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
 .pp-pips i.on { background: var(--gold); }
 .thinking { margin-left: auto; font-size: 12px; color: var(--foe); }
 .leader-area { display: flex; flex-wrap: wrap; gap: 4px; flex: 1 0 100%; }
-.chip { font-size: 11px; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.chip { font-size: 11px; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); background: transparent; cursor: pointer; }
 
 .lane { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 6px; border-radius: 10px;
   background: var(--lane); min-height: 92px; flex: 1 1 0; max-height: 200px; }
@@ -158,6 +158,13 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
 .sheet table.impact thead th { font-weight: 600; color: var(--muted); }
 .sheet ul.reading { margin: 0 0 10px; padding-left: 18px; font-size: 13px; line-height: 1.6; }
 .sheet details { margin-top: 10px; font-size: 12px; color: var(--muted); }
+.card-info { margin-top: 12px; }
+.card-info .info-head { font-size: 12px; color: var(--muted); letter-spacing: 0.06em; margin: 10px 0 4px; }
+.card-info .info-text { margin: 0 0 6px; font-size: 13px; line-height: 1.6; }
+.card-info .info-note { margin: 0 0 6px; font-size: 12px; color: var(--muted); }
+.card-info .info-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.card-info .info-table th { text-align: left; font-weight: 400; color: var(--muted); padding: 3px 8px 3px 0; }
+.card-info .info-table td { text-align: right; padding: 3px 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .sheet details dl { margin: 6px 0 0; }
 .sheet details dt { font-weight: 600; color: var(--ink); margin-top: 6px; }
 .sheet details dd { margin: 0; }
@@ -463,7 +470,11 @@ function renderLeader(node, side, mine) {
   node.appendChild(sideStats(side, mine));
   if (side.leader_area.length) {
     const area = el("div", "leader-area");
-    side.leader_area.forEach(c => area.appendChild(el("span", "chip", c.name + (c.countdown != null ? ` ${c.countdown}` : ""))));
+    side.leader_area.forEach(c => {
+      const chip = el("button", "chip", c.name + (c.countdown != null ? ` ${c.countdown}` : "")); chip.type = "button";
+      chip.addEventListener("click", (ev) => { ev.stopPropagation(); openCard(c, [], false); });
+      area.appendChild(chip);
+    });
     node.appendChild(area);
   }
 }
@@ -599,10 +610,28 @@ function openCard(c, moves, inHand) {
   });
   if (!moves.length) list.appendChild(el("div", "sub", view && view.active === 0 ? "现在没有可以对这张牌做的操作。" : "现在是 AI 的回合。"));
   sheet.appendChild(list);
+  const details = el("div", "card-info"); sheet.appendChild(details);
   const row = el("div", "row"); const close = el("button", "ghost", "关闭"); close.type = "button";
   close.addEventListener("click", () => { selected = null; closeSheet(); render(); });
   row.appendChild(close); sheet.appendChild(row);
   showSheet();
+  showCardInfo(details, c.uid);
+}
+
+// The card's text and the counts its own effect reads, from the game state (Session.card_info).
+async function showCardInfo(box, uid) {
+  let info;
+  try { info = await Backend.call("card_info", uid); } catch (e) { return; }
+  if (!info || info.error || !box.isConnected) return;
+  box.replaceChildren();
+  info.text.forEach(t => box.appendChild(el("p", "info-text", t)));
+  if (info.related.length) box.appendChild(el("p", "info-note", "相关的卡：" + info.related.join("、")));
+  if (info.counters.length) {
+    const t = el("table", "info-table");
+    info.counters.forEach(([k, v]) => { const tr = el("tr"); tr.append(el("th", null, k), el("td", null, String(v))); t.appendChild(tr); });
+    box.appendChild(t);
+  }
+  if (info.play) box.appendChild(el("p", "info-note", info.play));
 }
 
 function showSheet() { $("sheet").hidden = false; $("scrim").hidden = false; }

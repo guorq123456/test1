@@ -614,3 +614,43 @@ def test_the_ruler_s_models_are_frozen_and_found_from_any_directory(tmp_path, mo
     assert len(sums) == 20 and all(hashlib.sha256((folder / name).read_bytes()).hexdigest() == digest
                                    for name, digest in sums.items())
     assert Path(folder).name == "ruler-20261008"
+    ref = folder_of("ref-5558960")                 # Version 15's reference, the same way
+    assert VERSIONS["ref5558960"] == "mcts:200+plan+learned+phased=ref-5558960+mull=default" and len(load(ref)) == 22
+    sums = dict(line.split()[::-1] for line in (ref / "README.md").read_text(encoding="utf-8").splitlines()
+                if line.endswith(".json") and len(line) > 64)
+    assert len(sums) == 22 and all(hashlib.sha256((ref / n).read_bytes()).hexdigest() == d for n, d in sums.items())
+
+
+def test_the_named_feature_sets_by_hand_and_models_without_them_unchanged(tmp_path):
+    from svsim.cards import decks
+    from svsim.core.engine import new_game
+    from svsim.learn.features import extra_features, extra_names, features, names
+    from svsim.learn.model import LinearValue
+    from svsim.learn.roles import card_roles
+    state = new_game(decks.build(decks.RAMP_T), decks.build(decks.ELF_T), seed=5, first=1)
+    me, op = state.players[0], state.players[1]
+    me.max_pp, op.max_pp, me.turns_taken = 3, 3, 6           # I move second: the opponent goes to 4 next, I'm at 3
+    assert extra_features(state, 0, ("tempo",)) == [1.0, 1.0, 0.0]               # t = 1, my turn 6 (5-7)
+    me.turns_taken = 9
+    assert extra_features(state, 0, ("tempo",)) == [1.0, 0.0, 1.0]               # turn 8 or later
+    op.max_pp = 2
+    assert extra_features(state, 0, ("tempo",))[0] == 0.0                         # moving first: no gap
+    me.max_pp = op.max_pp = 10
+    assert extra_features(state, 0, ("tempo",))[0] == 0.0                         # the cap of 10
+    me.max_pp = 3                                            # next turn: 4 play points
+    cheap, dear = me.hand[0], me.hand[1]
+    cheap.cost, dear.cost = 2, 8
+    me.hand[:] = [cheap, dear]
+    want = [a + 0.5 * b for a, b in zip(card_roles(cheap.defn), card_roles(dear.defn))]   # 4 / 8 = 0.5
+    got = extra_features(state, 0, ("hand",))
+    assert len(got) == 6 and all(abs(g - w) < 1e-9 for g, w in zip(got, want))
+    assert extra_names(("tempo", "hand")) == ["me_tempo", "me_tempo_x_mid", "me_tempo_x_late"] + \
+        [f"me_handplay_{r}" for r in ("face", "removal", "heal", "draw", "ramp", "body")]
+    n = len(names(False, 2))                                 # a model without them reads exactly the version's features
+    plain = LinearValue([0.1] * n, [0.0] * n, [1.0] * n, False, version=2)
+    assert plain.inputs(state, 0) == features(state, 0, False, 2) and plain.names() == names(False, 2)
+    m = n + 3                                                # ... and one with them records and reads them by name
+    tempo = LinearValue([0.0] * n + [1.0, 0.0, 0.0], [0.0] * m, [1.0] * m, False, version=2, extras=("tempo",))
+    tempo.save(tmp_path / "t.json")
+    loaded = LinearValue.load(tmp_path / "t.json")
+    assert loaded.extras == ("tempo",) and abs(loaded.logit(state, 0) - extra_features(state, 0, ("tempo",))[0]) < 1e-9

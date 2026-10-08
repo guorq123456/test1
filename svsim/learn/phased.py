@@ -32,9 +32,10 @@ def _rows(job) -> list:
     from svsim.learn.features import features
     from svsim.learn.netdata import rows
     from svsim.learn.netdata import ACT
-    defaults = (None, 2, 1.0, 1.0, 1.0, None, None)   # line, version, weight, unlock, act_hold, phases, side
+    defaults = (None, 2, 1.0, 1.0, 1.0, None, None, ())   # line, version, weight, unlock, act_hold, phases, side,
+    #                                                       extras (named feature sets, learn.features.EXTRAS)
     job = tuple(job) + defaults[len(job):] if isinstance(job, tuple) else (job,) + defaults[1:]
-    line, version, weight, unlock, act_hold, phases, side = job[:7]
+    line, version, weight, unlock, act_hold, phases, side, extras = job[:8]
     record = json.loads(line)
     names = record.get("names")                    # the named decks by seat: `side` keeps (mine, theirs) only
     branch = record.get("branch") or {}
@@ -50,7 +51,11 @@ def _rows(job) -> list:
             continue
         w = weight * (act_hold if hold and phase == ACT else 1.0)
         if w > 0:
-            out.append((record.get("g", 0), phase, features(state, me, False, version), result, q, w))
+            x = features(state, me, False, version)
+            if extras:
+                from svsim.learn.features import extra_features
+                x = list(x) + extra_features(state, me, extras)
+            out.append((record.get("g", 0), phase, x, result, q, w))
     return out
 
 
@@ -140,17 +145,25 @@ def main() -> None:
                              "branch made to keep its points loses more, which the in-turn model may pin on what "
                              "the keeping made it play (the architecture session's F3b); the turn-end model "
                              "keeps it all")
+    parser.add_argument("--features", default="",
+                        help="named feature sets added to the version's, comma-separated (learn.features.EXTRAS: "
+                             "tempo, hand); the models record them")
+    parser.add_argument("--hold-out-every", type=int, default=0,
+                        help="leave out every game whose line number %% K == 0 (refit-200: K = 11, 400 of 4400)")
     args = parser.parse_args()
+    extras = tuple(e for e in args.features.split(",") if e)
     weights = args.file_weights or [1.0] * len(args.games)
     assert len(weights) == len(args.games)
     phases = tuple({"ended": ENDED, "act": ACT}[m] for m in args.moments)
     keys = split_keys(args.matchup)                # named decks: only that side's positions (elf-t-ramp-t: the
     side = tuple(keys) if all(isinstance(k, str) for k in keys) else None   # elf-t player's, against ramp-t)
-    jobs = [(line, args.version, w, args.unlock_weight, args.act_hold_weight, phases, side)
-            for path, w in zip(args.games, weights) for line in open(path, encoding="utf-8")]
+    jobs = [(line, args.version, w, args.unlock_weight, args.act_hold_weight, phases, side, extras)
+            for path, w in zip(args.games, weights) for i, line in enumerate(open(path, encoding="utf-8"))
+            if not (args.hold_out_every and i % args.hold_out_every == 0)]
     with Pool(args.workers) as pool:
         data = [r for part in pool.imap(_rows, jobs, chunksize=4) for r in part]
-    N = names(False, args.version)
+    from svsim.learn.features import extra_names
+    N = names(False, args.version) + extra_names(extras)
     keep = np.array([0.0 if n.startswith(STOCK) else 1.0 for n in N])
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -162,7 +175,8 @@ def main() -> None:
         y = np.array([r[3] if r[4] is None else (1 - args.q_weight) * r[3] + args.q_weight * r[4]
                       for r in rows], float)
         rw = np.array([r[5] for r in rows], float)
-        w, mean, std, report = F.fit(X * keep, y, None, iters=2500, signs=signs(False, args.version),
+        w, mean, std, report = F.fit(X * keep, y, None, iters=2500,
+                                     signs=list(signs(False, args.version)) + [0] * len(extra_names(extras)),
                                      weights=None if np.all(rw == 1.0) else rw)
         w = w * keep
         mine, theirs = (k if isinstance(k, str) else k.name.lower() for k in split_keys(args.matchup))
@@ -170,7 +184,8 @@ def main() -> None:
                     {"deck": mine, "opponent": theirs, "moment": label, "positions": len(X),
                      "q_weight": args.q_weight, "games": args.games, "file_weights": weights,
                      "unlock_weight": args.unlock_weight, "act_hold_weight": args.act_hold_weight,
-                     "report": {k: float(v) for k, v in report.items()}}, version=args.version
+                     "hold_out_every": args.hold_out_every,
+                     "report": {k: float(v) for k, v in report.items()}}, version=args.version, extras=extras
                     ).save(out / f"{args.matchup}-{label}.json")
         print(f"{label}: {len(X)} positions, {report}", flush=True)
 

@@ -93,6 +93,9 @@ VERSIONS = {
     # CR calibration's fixed reference, never changed; the search code is the current one, see its README), with
     # the opening redraw it had then (elf-t by the rules; the code default went back at 05:27Z)
     "ruler20261008": "mcts:200+plan+learned+phased=ruler-20261008+mull=by:elf-t=rules",
+    # the reference rolled with each trainer release (drift checks, comparisons three releases on): Version 15's
+    # strong level, its models frozen in phased_models/ref-5558960 and its redraw (the default, elf-t D) pinned
+    "ref5558960": "mcts:200+plan+learned+phased=ref-5558960+mull=default",
 }
 # The trainer's levels by name (level-fast / level-normal / level-strong / level-original): the specs in
 # svsim.ui.session.LEVELS themselves, so a gate or the CR calibration can't play a hand-copied variant.

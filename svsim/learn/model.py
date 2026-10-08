@@ -26,12 +26,13 @@ SCALE = 8.0                      # ISMCTS's logistic squash: value = 1 / (1 + ex
 
 class LinearValue:
     def __init__(self, coef: list, mean: list, std: list, potential: bool, info: dict | None = None,
-                 version: int = 1, hidden: dict | None = None, deck_desc: bool = False):
+                 version: int = 1, hidden: dict | None = None, deck_desc: bool = False, extras: tuple = ()):
         self.coef, self.mean, self.std, self.potential = coef, mean, std, potential
         self.info = info or {}
         self.version = version
         self.hidden = hidden             # {"W1": [[per hidden unit] per feature], "b1": [...], "w2": [...]}
         self.deck_desc = deck_desc       # both decks' learn.deckdesc vectors after the features (a shared model)
+        self.extras = tuple(extras)      # named feature sets after those (learn.features.EXTRAS), by name
         assert len(coef) == len(mean) == len(std) == len(self.names())
         if hidden:
             assert len(hidden["W1"]) == len(coef) and len(hidden["b1"]) == len(hidden["w2"])
@@ -41,6 +42,9 @@ class LinearValue:
         if self.deck_desc:
             from svsim.learn import deckdesc
             out = out + [f"deck_me_{n}" for n in deckdesc.names()] + [f"deck_op_{n}" for n in deckdesc.names()]
+        if self.extras:
+            from svsim.learn.features import extra_names
+            out = out + extra_names(self.extras)
         return out
 
     def inputs(self, state: GameState, player: int) -> list:
@@ -48,6 +52,9 @@ class LinearValue:
         if self.deck_desc:
             from svsim.learn import deckdesc
             x = list(x) + deckdesc.pair(state, player)
+        if self.extras:
+            from svsim.learn.features import extra_features
+            x = list(x) + extra_features(state, player, self.extras)
         return x
 
     def logit(self, state: GameState, player: int) -> float:
@@ -68,13 +75,15 @@ class LinearValue:
             d["hidden"] = self.hidden
         if self.deck_desc:
             d["deck_desc"] = True
+        if self.extras:
+            d["extras"] = list(self.extras)
         path.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
 
     @classmethod
     def load(cls, path: Path) -> "LinearValue":
         d = json.loads(path.read_text(encoding="utf-8"))
         return cls(d["coef"], d["mean"], d["std"], d["potential"], d.get("info"), d.get("version", 1),
-                   d.get("hidden"), d.get("deck_desc", False))
+                   d.get("hidden"), d.get("deck_desc", False), tuple(d.get("extras", ())))
 
     def weights_by_name(self) -> dict:
         """Coefficients per raw (unstandardized) feature unit, for reading."""
