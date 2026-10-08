@@ -417,7 +417,8 @@ function showLevelInfo() {
   const decks = (ratings.tiers[choice.level] || {}).decks || {}, t = decks[choice.opponent];
   const deck = DECK_NAMES[choice.opponent] || choice.opponent;
   const cr = !t ? "CR 只标定比赛卡组" : t.cr != null ?
-    `CR ${t.cr}` + (t.ci != null ? ` ± ${t.ci}` : "") + (t.anchor ? "（锚）" : "") : "CR 待标定";
+    `CR ${t.cr}` + (Array.isArray(t.ci) ? `（${t.ci[0]}～${t.ci[1]}）` : t.ci != null ? ` ± ${t.ci}` : "") +
+    (t.anchor ? "（锚）" : "") : "CR 待标定";
   box.textContent = `${LEVEL_NAMES[choice.level] || choice.level} · ${deck} · 版本 ${ratings.version} · ${ratings.commit} · ${cr}`;
   box.title = (t && t.note) || "";
 }

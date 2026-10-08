@@ -85,11 +85,14 @@
      "anchor": true
     },
     "elf-t": {
-     "cr": null,
-     "ci": null,
-     "games": 0,
-     "measured_vs": null,
-     "note": "待标定：比尺子多装了 elf-t 对 nemesis-t 的模型（第 2 轮那一格）"
+     "cr": 1327,
+     "ci": [
+      1302,
+      1353
+     ],
+     "games": 200,
+     "measured_vs": "20bcfbe",
+     "note": "第 2 轮：连击妖对机锋一格 ΔCR +107，其余三格模型没变、记 0，四格平均 +27"
     },
     "nemesis-t": {
      "cr": 1300,
@@ -112,11 +115,14 @@
   "original": {
    "decks": {
     "ramp-t": {
-     "cr": null,
-     "ci": null,
-     "games": 0,
-     "measured_vs": null,
-     "note": "待标定（f631e14 的 bot）"
+     "cr": 1136,
+     "ci": [
+      1084,
+      1183
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "四格 ΔCR −187 / −159 / −154 / −158。与尺子差：100 对 200 次迭代、只有 ramp-ramp 且 noalias、旧斩杀筛和起手，归因分不开"
     },
     "elf-t": {
      "cr": null,
