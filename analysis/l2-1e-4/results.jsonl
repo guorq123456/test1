@@ -1,0 +1,12 @@
+{"matchup": "ramp-t-ramp-t", "extras": ["hand"], "train": 67564, "n": 6735, "games": 400, "l2_1e-3": 0.5827, "l2_1e-4": 0.5803, "diff": -0.0024, "lo": -0.0048, "hi": 0.0001}
+{"matchup": "elf-t-elf-t", "extras": ["hand"], "train": 27716, "n": 2734, "games": 182, "l2_1e-3": 0.5933, "l2_1e-4": 0.5929, "diff": -0.0003, "lo": -0.0019, "hi": 0.0015}
+{"matchup": "elf-t-nemesis-t", "extras": ["hand"], "train": 13016, "n": 1333, "games": 182, "l2_1e-3": 0.5538, "l2_1e-4": 0.555, "diff": 0.0012, "lo": -0.0018, "hi": 0.0042}
+{"matchup": "ramp-t-nemesis-t", "extras": [], "train": 14175, "n": 1481, "games": 182, "l2_1e-3": 0.5573, "l2_1e-4": 0.5576, "diff": 0.0003, "lo": -0.0041, "hi": 0.0043}
+{"matchup": "pirate-t-elf-t", "extras": [], "train": 14092, "n": 1400, "games": 182, "l2_1e-3": 0.5685, "l2_1e-4": 0.5714, "diff": 0.0029, "lo": -0.001, "hi": 0.0068}
+{"matchup": "ramp-t-elf-t", "extras": [], "train": 13483, "n": 1369, "games": 182, "l2_1e-3": 0.6053, "l2_1e-4": 0.604, "diff": -0.0012, "lo": -0.0059, "hi": 0.0039}
+{"matchup": "elf-t-ramp-t", "extras": [], "train": 13435, "n": 1360, "games": 182, "l2_1e-3": 0.593, "l2_1e-4": 0.5921, "diff": -0.0009, "lo": -0.0058, "hi": 0.0042}
+{"matchup": "pirate-t-pirate-t", "extras": [], "train": 28764, "n": 2884, "games": 182, "l2_1e-3": 0.5972, "l2_1e-4": 0.5973, "diff": 0.0001, "lo": -0.0017, "hi": 0.0019}
+{"matchup": "nemesis-t-ramp-t", "extras": [], "train": 14019, "n": 1476, "games": 182, "l2_1e-3": 0.5684, "l2_1e-4": 0.5699, "diff": 0.0015, "lo": -0.0029, "hi": 0.006}
+{"matchup": "nemesis-t-elf-t", "extras": [], "train": 13014, "n": 1327, "games": 182, "l2_1e-3": 0.5667, "l2_1e-4": 0.5675, "diff": 0.0008, "lo": -0.0018, "hi": 0.0035}
+{"matchup": "ramp-t-pirate-t", "extras": [], "train": 14749, "n": 1477, "games": 182, "l2_1e-3": 0.5943, "l2_1e-4": 0.5951, "diff": 0.0008, "lo": -0.0032, "hi": 0.0051}
+{"matchup": "ramp-ramp", "extras": [], "train": 32426, "n": 3175, "games": 182, "l2_1e-3": 0.6009, "l2_1e-4": 0.5985, "diff": -0.0024, "lo": -0.0057, "hi": 0.0009}
