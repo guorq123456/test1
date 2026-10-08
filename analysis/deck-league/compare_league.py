@@ -86,7 +86,7 @@ def main():
     ap.add_argument("versions", nargs=2, help="label=file[+file...], the base first")
     ap.add_argument("--note", nargs="*", default=[], help="DECK=text, printed beside every pairing with that deck")
     ap.add_argument("--timing-base", default=None, help="the base's code run on the new version's machine: file[+file...]")
-    ap.add_argument("--timing-label", default="本机 f631e14 每格 20 对")
+    ap.add_argument("--timing-label", default="本机 f631e14 每格 20 对，与重跑同机同进程数")
     args = ap.parse_args()
     (la, fa), (lb, fb) = (v.split("=", 1) for v in args.versions)
     a, b = load(fa.split("+")), load(fb.split("+"))
