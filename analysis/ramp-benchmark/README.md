@@ -141,6 +141,30 @@
   - 读法提醒照旧：这几格是强档 200 次对尺子，和推广门（等算力 N、对现装）不是同一个量。跳费龙镜像的 +38 和装机门的 +41 方向一致，但不拿来互相核对。
   - 强档跳费龙 1300 → **1309**，连击妖 1324 → **1348**，交建造线填 ratings、发第 19 版（发布由架构线程定）。
 
+
+**第 6 轮：装机 C3 hpphase（跳费龙镜像）**（预注册，写在任何第 6 轮数据之前；协调线 16:59 转架构线程定的流程：Salem 说「装」→ 建造线装机提交 → RC 立刻重标这一格 → 再继续 C3 其余十格）：
+- **起因**：hpphase 第 1 门（跳费龙镜像，62600000）过了，见 `analysis/c3-threat/README.md` 第十节。装机只换 `ramp-t-ramp-t-{ended,act}.json` 这一对。
+- **只重标一格**：跳费龙对跳费龙。
+  - 懒惰循环赛的规矩：只跑模型变了的格。跳费龙一方的另外三格（对连击妖、对机锋、对旗皇）用的是 `ramp-t-elf-t` 等模型，这次不动，和尺子逐对恒等，记 0（J4）；其余 12 格同理。
+  - 协调线转的是「4 个赛事卡组各 100 局」。我读作「跳费龙 bot 的 4 格、每格 100 局 = 50 对」，其中只有镜像这一格变了，所以只跑这一格。
+- **种子：新分 63800000，不复用第 5 轮的 60500000。**
+  - 规矩（架构线程 04:33Z）是每一轮每格用一个新库，不复用上一轮的。
+  - 复用就成了和第 5 轮按种子配对比较，那是「有意复用」的另一种设计。可我们要的是新 bot 对尺子的一次独立测量；「hpphase 在 C2 之上值多少」，配对的增量门已经给了（+60）。
+- **命令**（拉下装机提交以后，在仓库根目录跑；A = 装机后的 `level-strong`，B = C = `ruler20261008`，`--versus`，规格和第 5 轮这一格相同）：
+  1. 先核哈希（git blob）：顶层 `ramp-t-ramp-t-ended.json`、`-act.json` 和 `cand-c3-hpphase-ramp-t-ramp-t/` 里的同名文件相同；其余 22 个顶层模型文件和 `ref-352ae51/` 相同。不对就停下，先报。
+  2. 恒等抽查：10 对、40 局，重用第 1 轮同一格的 49100000～49100009。恒等校验不是统计量，不占库。预期 A − B 全为 0、着法全同；有一对不同就停下，先报我和架构线程。
+     ```
+     python -m svsim.tools.gate --a level-strong --b ruler20261008 --versus ruler20261008 --deck ramp-t --opponent elf-t --fixed --max 40 --seed 49100000 --out analysis/calibration/round6-identity/ramp-t_vs_elf-t.jsonl
+     ```
+  3. 标定格：50 对（`--max 200`）。
+     ```
+     python -m svsim.tools.gate --a level-strong --b ruler20261008 --versus ruler20261008 --deck ramp-t --opponent ramp-t --fixed --max 200 --seed 63800000 --out analysis/calibration/round6/ramp-t_vs_ramp-t.jsonl
+     ```
+- **我这边读**：
+  - 先 `calibrate.py analysis/calibration/round6-identity --identity`，再 `calibrate.py analysis/calibration/round6 --ref 20bcfbe`（缺的格按 0）。
+  - **跳费龙 CR = 1300 + Δ₆(镜像) ÷ 4**。新量的镜像格换掉第 5 轮那一格（+38），不叠加。50 对一格约 ±95，折到 CR 约 ±24。连击妖、机锋、旗皇的 CR 不变。
+- **读法提醒**照旧：这一格是强档 200 次对尺子，和门（等算力 N = 198，直接对打现装）不是同一个量，不拿来互相核对。
+
 **各档 CR**（陪练台每个档位旁显示的数；建造线写进 `svsim/ui/ratings.json`，显示版本、提交和 CR）：
 - 三档：原始版 `mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default`、普通 `v2r` = `mcts:115+plan+learned+phased+reuse`、快速 `greedy+plan+learned`；强档 = `mcts:200+plan+learned+phased`，就是当前装机态的 v2s。
 - **规矩**（架构线程 05:24Z）：各档的串以陪练台 `svsim.ui.session.LEVELS` 为准，命令里不手写。建造线会给每档加 `VERSIONS` 别名（`level-fast`、`level-normal`、`level-strong`、`level-original`，从 `LEVELS` 生成），以后命令写别名。这一次快速档原来登记成带 `+phased`，是手写串写错了，已更正。
