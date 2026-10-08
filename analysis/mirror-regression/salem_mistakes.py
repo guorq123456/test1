@@ -2,7 +2,14 @@
 
     cd <svsim checkout> && PYTHONPATH=.:<test1>/analysis/mirror-regression python3 <this> \
         analysis/mirror-regression/salem_games.json --k 8 --workers 4 --out salem_mistakes.jsonl
-    python3 <this> --report salem_mistakes.jsonl [--top15 OUT.md]
+    python3 <this> --finalize raw.jsonl analysis/mirror-regression/salem_mistakes.jsonl
+    python3 <this> --report analysis/mirror-regression/salem_mistakes.jsonl [--top15 OUT.md]
+
+The final file is what the build session reads (6c1a03c), one decision a line: "game" (the key in
+salem_games.json's records), "at" (the decision's index in the record's actions: the same numbering as the
+probes' "at"), "regret" (a fraction of a win: 0.15 = 15 points; null when his move was not in the search's
+tree), "flags" (["F1"], ["F2"], both or none), "evolve" (a decision about evolving: never F2); and, for
+reading, his move, the bot's move, the category, the regret in points, the turn and the visits.
 
 The architecture thread (2026-10-08 00:03Z): Salem did not mark mistakes in these games ("应该有部分失误和噪声，
 可能需要你自己进行数据分析"), and the build session's B (imitating his games) wants them filtered. For every
@@ -167,15 +174,38 @@ def game_job(job):
     return rows
 
 
+def finalize(raw, out):
+    rows = [json.loads(line) for line in open(raw, encoding="utf-8") if line.strip()]
+    rows.sort(key=lambda r: (r["game"], r["action_index"]))
+    with open(out, "w", encoding="utf-8") as fh:
+        for r in rows:
+            flags = [f for f in ("F1", "F2") if r[f]]
+            fh.write(json.dumps({
+                "game": r["game"], "at": r["action_index"],
+                "regret": None if r["regret"] is None else round(r["regret"] / 100, 4),
+                "flags": flags, "evolve": r["about_evolving"],
+                "category": r["category"], "his": r["his"], "best": r["best"],
+                "regret_points": None if r["regret"] is None else round(r["regret"], 2),
+                "own_turn": r["own_turn"], "global_turn": r["global_turn"], "turn_start": r["turn_start"],
+                "q_his": r["q_his"], "q_best": r["q_best"], "legal": r["legal"],
+                "visits_his": r["visits_his"], "visits_best": r["visits_best"],
+                "lethal_at_turn_start": r["lethal_at_turn_start"]}, ensure_ascii=False) + "\n")
+    print(f"{len(rows)} 个决策写到 {out}")
+
+
 def report(path, top15=None):
-    from glossary import common  # noqa: F401
-    rows = [json.loads(line) for line in open(path, encoding="utf-8") if line.strip()]
+    rows = []
+    for line in open(path, encoding="utf-8"):
+        if line.strip():
+            r = json.loads(line)
+            r.update({"regret": r["regret_points"], "F1": "F1" in r["flags"], "F2": "F2" in r["flags"],
+                      "about_evolving": r["evolve"], "same": r["regret_points"] == 0})
     pct = lambda xs, q: sorted(xs)[min(len(xs) - 1, int(q * len(xs)))] if xs else float("nan")
     reg = [r["regret"] for r in rows if r["regret"] is not None]
     print(f"条件：对手卡表已知（牌序、手牌未知）。{len(rows)} 个决策（只有一个合法动作的不算），"
           f"{len({r['game'] for r in rows})} 局。遗憾 = Q(v2s 选的) − Q(他的)，胜率点。")
     print(f"  遗憾：中位 {statistics.median(reg):.1f}，p90 {pct(reg, 0.9):.1f}，平均 {sum(reg) / len(reg):.1f}；"
-          f"和 v2s 选的一样 {sum(r['same'] for r in rows) / len(rows):.0%}")
+          f"和 v2s 选的一样或平局（遗憾 0）{sum(r['same'] for r in rows) / len(rows):.0%}")
     print(f"  F1（回合开始有必杀没杀）{sum(r['F1'] for r in rows)} 个决策，"
           f"{len({(r['game'], r['global_turn']) for r in rows if r['F1']})} 个回合；F2（非进化类遗憾 ≥ {F2_POINTS:.0f}）"
           f"{sum(r['F2'] for r in rows)} 个决策")
@@ -200,12 +230,16 @@ def report(path, top15=None):
                  "「差多少」是 bot 估的胜率差：它自己选的那步，减去你走的那步。只列非进化类的步骤，进化相关的不在这里。",
                  "bot 也会看错，所以这只是请你确认：哪些是真失误、哪些是 bot 没看懂。", ""]
         for n, r in enumerate(top, 1):
-            lines.append(f"{n}. 第 {games.index(r['game']) + 1} 局（{r['game']}）你的第 {r['own_turn'] + 1} 回合："
+            lines.append(f"{n}. 第 {games.index(r['game']) + 1} 局（{r['game']}）你的第 {r['own_turn']} 回合："
                          f"你 {r['his']}；bot 想 {r['best']}；差 {r['regret']:.0f} 个胜率点。")
         open(top15, "w", encoding="utf-8").write("\n".join(lines) + "\n")
 
 
 def main():
+    if "--finalize" in sys.argv:
+        i = sys.argv.index("--finalize")
+        finalize(sys.argv[i + 1], sys.argv[i + 2])
+        return
     if "--report" in sys.argv:
         args = sys.argv[sys.argv.index("--report") + 1:]
         top = args[args.index("--top15") + 1] if "--top15" in args else None
