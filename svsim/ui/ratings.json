@@ -131,25 +131,34 @@
      "note": "四格 ΔCR −187 / −159 / −154 / −158。与尺子差：100 对 200 次迭代、只有 ramp-ramp 且 noalias、旧斩杀筛和起手，归因分不开"
     },
     "elf-t": {
-     "cr": null,
-     "ci": null,
-     "games": 0,
-     "measured_vs": null,
-     "note": "待标定（f631e14 的 bot）"
+     "cr": 1179,
+     "ci": [
+      1114,
+      1239
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "分析线 083044a / 本机 5a6bbc1，尺子 20bcfbe（起手钉 R）；f631e14 的 bot 打尺子四家各 50 对，ΔCR 对跳费龙 −28、镜像 −278、对机锋 −106、对旗皇 −71"
     },
     "nemesis-t": {
-     "cr": null,
-     "ci": null,
-     "games": 0,
-     "measured_vs": null,
-     "note": "待标定（f631e14 的 bot）"
+     "cr": 1206,
+     "ci": [
+      1154,
+      1255
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "分析线 083044a / 本机 5a6bbc1，尺子 20bcfbe（起手钉 R）；f631e14 的 bot 打尺子四家各 50 对，ΔCR 对跳费龙 −10、对连击妖 −182、镜像 −66、对旗皇 −117"
     },
     "pirate-t": {
-     "cr": null,
-     "ci": null,
-     "games": 0,
-     "measured_vs": null,
-     "note": "待标定（f631e14 的 bot）"
+     "cr": 1126,
+     "ci": [
+      1070,
+      1172
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "分析线 083044a / 本机 5a6bbc1，尺子 20bcfbe（起手钉 R）；f631e14 的 bot 打尺子四家各 50 对，ΔCR 对跳费龙 −39、对连击妖 −298、对机锋 −127、镜像 −232"
     }
    }
   }
