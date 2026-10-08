@@ -1039,3 +1039,16 @@ def test_the_board_set_is_pressure_and_hp_by_turn_for_both_sides():
     me.leader_hp = 0                                    # no division by zero, capped at 1.5
     assert 0 <= extra_features(state, 0, ("board",))[0] <= 1.5
     assert len(extra_features(state, 1, ("hand", "board"))) == 12
+
+
+def test_hpphase_is_board_without_the_pressures():
+    """C3 revised (analysis 3e6b4f2): hpphase = board's four HP-by-turn values, same order, no pressure."""
+    from svsim.agents.mulligan import opening
+    from svsim.learn.features import EXTRAS, extra_features
+    state = opening("ramp-t", "elf-t", True, 3)
+    assert EXTRAS["hpphase"] == ["me_hp_early", "me_hp_mid", "op_hp_early", "op_hp_mid"]
+    for turn in (2, 6, 9):
+        state.players[0].turns_taken = turn
+        state.players[0].leader_hp, state.players[1].leader_hp = 13, 7
+        b = extra_features(state, 0, ("board",))
+        assert extra_features(state, 0, ("hpphase",)) == [b[1], b[2], b[4], b[5]]
