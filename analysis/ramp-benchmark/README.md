@@ -164,7 +164,13 @@
   - 先 `calibrate.py analysis/calibration/round6-identity --identity`，再 `calibrate.py analysis/calibration/round6 --ref 20bcfbe`（缺的格按 0）。
   - **跳费龙 CR = 1300 + Δ₆(镜像) ÷ 4**。新量的镜像格换掉第 5 轮那一格（+38），不叠加。50 对一格约 ±95，折到 CR 约 ±24。连击妖、机锋、旗皇的 CR 不变。
 - **读法提醒**照旧：这一格是强档 200 次对尺子，和门（等算力 N = 198，直接对打现装）不是同一个量，不拿来互相核对。
-- **第二格：连击妖镜像**（17:1x 补；hpphase 第 2 门连击妖镜像也过了，见 c3-threat 第十节。**17:23 起不再有条件**：架构线程定「装 C3」一次装两个配对，跳费龙镜像 + 连击妖镜像，装后两格都重标）：
+- **装机提交到了，哈希我在云端核过**（协调线 17:29 报：Salem 在建造会话说「装c3」，第 20 版；装机 a6fdf0a，快照 68d81ee 的 `ref-a6fdf0a/`，别名 `refa6fdf0a`，指针 `backup/trainer-release-20261008-v20`）。都用 git 的 blob 比：
+  - 顶层 `ramp-t-ramp-t-ended.json`、`-act.json` 和 `cand-c3-hpphase-ramp-t-ramp-t/` 里的同名文件逐字节相同。
+  - 其余 22 个顶层模型文件和 `ref-352ae51/` 相同。
+  - `ref-a6fdf0a/` 的 24 个文件和 a6fdf0a 的顶层相同。
+  - `LEVELS["strong"]` 仍是 `mcts:200+plan+learned+phased`；`ratings.json` 里强档 ramp-t 的 CR 改成「待重标」。
+  - **这次只装了跳费龙镜像**，连击妖镜像还没装（架构线程在核 Salem 那句是否覆盖两格）。所以第 6 轮先只跑 63800000 这一格，第 1 步的哈希核对按「其余 22 个和 `ref-352ae51/` 相同」，本机合并 a6fdf0a 以后就能直接跑恒等抽查和标定格。65100000 那格等第二次装机。
+- **第二格：连击妖镜像**（17:1x 补；hpphase 第 2 门连击妖镜像也过了，见 c3-threat 第十节。17:23 架构线程定「装 C3」一次装两个配对；**17:29 实际只装了跳费龙镜像**，这一格等连击妖镜像装机后再跑）：
   - 种子 **65100000**，150 对（`--max 600`），和第 5 轮这一格同精度：
     ```
     python -m svsim.tools.gate --a level-strong --b ruler20261008 --versus ruler20261008 --deck elf-t --opponent elf-t --fixed --max 600 --seed 65100000 --out analysis/calibration/round6/elf-t_vs_elf-t.jsonl
