@@ -116,6 +116,12 @@
     ```
   - **我这边读**：先 `calibrate.py analysis/calibration/round5-identity --identity`。再把第 3、4 轮合并的「连击妖对跳费龙」「连击妖对旗皇」两格和第 5 轮三格放进同一个文件夹，`calibrate.py <那个文件夹> --ref 20bcfbe`：连击妖四格都在，跳费龙缺的三格按 0。
   - **读法提醒**照旧：装机后强档跑的是 `mcts:200`，这几格和推广门（等算力 N、直接或 --versus 对现装）不是同一个量，不拿来互相核对。
+  - **装机提交到了，哈希我在云端核过**（建造线 352ae51，快照 e434e24 的 `ref-352ae51/`，别名 `ref352ae51`；12:53Z 报）。都用 git 的 blob 比，和换行设置无关：
+    - 顶层 24 个模型文件。`ramp-t-ramp-t-*`（新增）、`elf-t-elf-t-*`、`elf-t-nemesis-t-*` 和各自的候选目录逐字节相同。
+    - 和 `ref-5558960/` 比只有这 6 个文件不同；`elf-t-ramp-t-*`（没过门的那组）没动。借来的 `ramp-ramp-*` 还在，镜像现在先找到 `ramp-t-ramp-t`。
+    - `ref-352ae51/` 的 24 个文件和 352ae51 的顶层相同。
+    - `LEVELS["strong"]` 仍是 `mcts:200+plan+learned+phased`；普通档改成钉在 ref-5558960（`v2r5558960`），建造线说同种子逐步核过。
+    - 所以命令里第 0 步的模型哈希核对已经做完，本机只要合并 352ae51（或 e434e24）就能直接跑恒等抽查和三格。
 
 **各档 CR**（陪练台每个档位旁显示的数；建造线写进 `svsim/ui/ratings.json`，显示版本、提交和 CR）：
 - 三档：原始版 `mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default`、普通 `v2r` = `mcts:115+plan+learned+phased+reuse`、快速 `greedy+plan+learned`；强档 = `mcts:200+plan+learned+phased`，就是当前装机态的 v2s。
