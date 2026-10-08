@@ -548,3 +548,28 @@ def test_the_mimic_fit_leaves_out_or_weights_flagged_decisions(tmp_path):
     X, starts, target, weights = stack(kept)
     net = PolicyNet.train(X, starts, target, [], hidden=4, epochs=2, weights=weights, say=lambda *_: None)
     assert np.isfinite(net.info["cross_entropy"])
+
+
+def test_the_mlp_fit_starts_at_the_linear_model_and_learns_what_it_cannot():
+    import numpy as np
+    from svsim.learn import mlp
+    from svsim.learn.features import names, signs
+    from svsim.learn.netdata import ACT, ENDED
+    from svsim.learn.phased import STOCK
+    N, sg = names(False, 2), signs(False, 2)
+    a, b = [i for i, n in enumerate(N[:-1]) if not n.startswith(STOCK) and sg[i] == 0][:2]
+    rng = np.random.default_rng(1)
+    games = []
+    for g in range(400):                           # win iff the two features agree in sign: no linear model can
+        rows = []
+        for _ in range(10):
+            x = [0.0] * len(N)
+            x[-1], x[a], x[b] = 1.0, rng.normal(), rng.normal()
+            rows += [(g, ENDED, x, 1.0 if x[a] * x[b] > 0 else 0.0, None, 1.0), (g, ACT, x, 0.5, None, 1.0)]
+        games.append(((0, g), rows))
+    assert sum(mlp.held_out(gid) for gid, _ in games) == 40
+    model, report = mlp.fit_moment(games, ENDED, hidden=8, epochs=60, lr=1e-2, batch=128, min_epochs=40,
+                                   say=lambda _: None)
+    assert report["held_out_positions"] == 400 and report["train_positions"] == 3600
+    assert report["linear"]["accuracy"] < 0.6 < 0.85 < report["network"]["accuracy"]
+    assert len(model.hidden["w2"]) == 8 and model.version == 2

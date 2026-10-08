@@ -39,14 +39,12 @@ class LinearValue:
         x = [(v - m) / s for v, m, s in zip(features(state, player, self.potential, self.version), self.mean,
                                              self.std)]
         out = sum(c * v for c, v in zip(self.coef, x))
-        if self.hidden:
-            import math
-            h = list(self.hidden["b1"])
-            for v, row in zip(x, self.hidden["W1"]):
-                if v:
-                    for j, a in enumerate(row):
-                        h[j] += v * a
-            out += sum(b * math.tanh(a) for a, b in zip(h, self.hidden["w2"]))
+        if self.hidden:                  # numpy: 64 hidden units over ~200 features is too slow as Python loops
+            import numpy as np
+            if not hasattr(self, "_hidden_np"):
+                self._hidden_np = tuple(np.asarray(self.hidden[k], dtype=np.float64) for k in ("W1", "b1", "w2"))
+            W1, b1, w2 = self._hidden_np
+            out += float(np.tanh(np.asarray(x) @ W1 + b1) @ w2)
         return out
 
     def save(self, path: Path) -> None:
