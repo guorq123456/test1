@@ -285,6 +285,72 @@ PYTHONPATH=.:analysis/card-value python3 analysis/card-value/q_baseline.py analy
 - `run` 可以断点续跑。
 - 出数后由我读：`salem_discrim.py report g_end.jsonl --t teacher_rows.json --q q_rows.json`。
 
+## 分辨实验第二批：Salem 另外 17 局（预注册，架构线程 20:45 布置；写在任何第二批对局之前）
+
+**状态**：预注册，写好后经协调线交 RC 本机跑。第二批的对局一局都还没打，我只用第一批的数推算了区间宽度（见下）。
+
+**为什么**：第一批落在第 3 条「尺子太小」：G_end 和老师在 80 个回合上分不开。按 §6，先用手上现成的尺子：`salem_games.json` 里另外 17 局还没用过，不用等 Salem 的新对局。
+
+**先查卡组**：另外 17 局两边都是 original 跳费龙镜像（记录里的 `names` 全是 `["ramp", "ramp"]`）。没有宇宙鱼或旗皇的局，没有要单列的。
+
+**方法和第一批完全一样**，所以 27 局可以合起来读：项的定义、两支、K = 32、bot（`mcts:100+plan+learned+phased`）、排除规则（「用」那支一半以上没用掉 c 的不算）都不变。只有两处是第二批才碰到的：
+- **回合**：17 局里 Salem 的每个回合开头，和 `teacher_eval.salem_turns` 一样（第一批的回合集就等于这样数出来，再去掉没有能出的牌的回合，核过）。去掉他当回合斩杀的回合，再去掉记录停在回合中间的回合。两局没有胜负（1791316350693、1791385092476），残局里停在回合中间的那一个回合，标签不是 Salem 完整的选择。
+- **项**：共 **141 个回合、581 项**（留 371、用 210；要按额外 PP 才能出 37）。用 `salem_discrim.py items … --batch 2` 列出来。
+
+**种子（库 65600000）**：第 n 项（0～580）、第 j 个确定化，用 65600000 + 100n + j；bot 种子同第一批的算法。实际用到 65600000～65658099。整块 65600000～65699999 留给第二批和下面的副读；下一个空位 **65700000**。
+
+**T、Q**：同一个 n30 老师在 17 局上跑 `teacher_eval.py`，参数同第一批；Q 是 `q_baseline.py` 的 mcts:400，2 个种子。输入是 17 局的 `salem_games_17.json`。
+
+**主读数**：两批合并（27 局）的按牌 AUC。区间照旧按 Salem 的回合重抽 2000 次，两批的回合放在一起抽。第二批单独的数也报。
+
+**读法（写在任何第二批数据之前）**：
+- 合并以后，照第一批的顺序判：1 → 4 → 2 → 3（e475f29），「分不开」算第 3 条。
+- **新加一条**：合并以后落在第 3 条，并且 G_end − T 的区间半宽 ≤ 0.12，就读作「在 Salem 的对局能分辨的精度上，老师 ≈ 终局真值，可以当学生的目标」。学生线做不做，改由成本（每个配对 13～15 小时）和一道门来定，不再靠这把尺子。
+  - 半宽 > 0.12，仍是「尺子太小」。
+  - 只在 G_end 下沿 > 0.5 的那条路上落到第 3 条时，这一条才适用；「分不开」落到第 3 条的不适用。
+- **27 局时 G_end − T 的半宽，先推算过**：拿第一批主线项的数，按回合有放回地抽到 221 个回合（79 + 142），重抽 2000 次。
+  - 推算半宽 **0.097**（−0.094～+0.100）。第一批本身是 0.174～0.180，按 √(79/221) 缩放是 0.104，两种算法对得上。
+  - ≤ 0.12，所以照架构线程的规矩可以开跑。
+  - 这假设第二批每个回合的主线项和第一批差不多多，我只能按第一批 105 / 313 推。
+
+**副读（不进主读数）**：
+1. **修好的两支**。查了第一批排除的 32 项为什么「用」那支用不掉，是脚本的毛病，有两层：
+   - 「用」那支的限制拿 c 的**原价**和 PP 比。可是增幅会自动多花 PP：《世界》的呈现在 10 PP 时自动增幅，一次花掉 10。加速、结晶这类替代费用，以及攻击把目标打没了、场上满了，也都会让 c 出不了，而限制看不出来。
+   - **搜索不理会交给 `act()` 的合法动作清单**：它从局面自己取合法动作，只认搜索树里的 veto。所以只在根上过滤是没用的。
+   - **修法**：把精确检查放进搜索自己的 veto，每个节点都管用。
+     - 「用」那支：把动作在一份拷贝上走一遍，c 原来出得了、走完出不了的动作不许做；c 出得了时不许结束回合（算上没按的额外 PP）。c 以任何方式离手（打出或被弃）以后就不再限制。
+     - 「留」那支：任何会让 c 离手的动作都不许做，包括别的牌的效果把它弃掉（琪米卡、口人魔等）。
+   - 冒烟测试，库外种子：第一批 9 个原来失败的项（Lumiore、Vorlalai、Spilling Red、Dragonsign、Sloth、Normagdala、Promoter 等），「用」那支 4/4 都用掉了，「留」那支 0 次离手。每局只慢三成左右。
+   - **只重跑有标记的项**：在原来的运行里「用」那支有任何一次没用掉，或者「留」那支有任何一次 c 离手的项，两批都算。种子用该项原来的种子，所以确定化相同，只换了两支。报表里把这些项换成修好的版本再算一遍。
+2. **去噪后的 AUC（推算）**：
+   - 信度用两组一致度按 Spearman–Brown 折成 32 个确定化。
+   - 去衰减：AUC* = Φ(Φ⁻¹(AUC) ÷ √信度)，也就是把 AUC 当成两个正态分布之间的分离度，按信度放大。
+   - 只对 G_end 做，T、Q 的噪声这里量不出，所以和它们比时只作参考。
+   - 第一批这样推算是 0.631 → 约 0.66。
+3. 第二批单独的数；按牌以外的两个口径。
+
+**算力**（RC 第一批的实测：322 项 51.4 分钟）：
+- 第二批 581 项约 1.5 小时；
+- 修好的两支，大约 250 个有标记的项（第一批 88 个，第二批按比例约 160 个），约 50 分钟；
+- T、Q 几分钟；
+- 合计约 2.5 小时。
+
+**给 RC 的命令**（检出 = 本机当前 head；从本分支取 `analysis/card-value/` 下的 `salem_discrim.py`、`realized.py`、`realized_end.py`、`teacher_eval.py`、`q_baseline.py`、`salem_games_17.json`，再加上 `analysis/mirror-regression/salem_games.json`，第一批的 `discrim/g_end.jsonl` 已经在本机）：
+```
+PYTHONPATH=.:analysis/card-value python3 analysis/card-value/salem_discrim.py items analysis/mirror-regression/salem_games.json --batch 2
+#   必须打出：第二批（另外 17 局）：141 个回合，581 项（留 371、用 210；只有按额外 PP 才打得出 37）；项编号 0～580；种子 65600000～65658099
+PYTHONPATH=.:analysis/card-value python3 analysis/card-value/salem_discrim.py run analysis/mirror-regression/salem_games.json --batch 2 --k 16 --workers 16 --out analysis/card-value/discrim/g_end2.jsonl
+PYTHONPATH=.:analysis/card-value python3 analysis/card-value/teacher_eval.py analysis/card-value/salem_games_17.json --seeds 2 --samples 8 --research 100 --next-search 30 --workers 16 --out analysis/card-value/discrim/teacher_rows2.json
+PYTHONPATH=.:analysis/card-value python3 analysis/card-value/q_baseline.py analysis/card-value/salem_games_17.json --agent mcts:400+plan+learned+phased --seeds 2 --workers 16 --out analysis/card-value/discrim/q_rows2.json
+#   g_end2.jsonl 跑完以后再跑副读（两批有标记的项，各用原来的种子）：
+PYTHONPATH=.:analysis/card-value python3 analysis/card-value/salem_discrim.py run analysis/mirror-regression/salem_games.json --variant fixed --redo analysis/card-value/discrim/g_end.jsonl analysis/card-value/discrim/g_end2.jsonl --k 16 --workers 16 --out analysis/card-value/discrim/g_end_fixed.jsonl
+```
+- 五个输出都推上来，我来读：
+  ```
+  salem_discrim.py report discrim/g_end.jsonl discrim/g_end2.jsonl --t discrim/teacher_rows.json --t discrim/teacher_rows2.json --q discrim/q_rows.json --q discrim/q_rows2.json --fixed discrim/g_end_fixed.jsonl
+  ```
+- 第一批的判读重算出来，和 71f584b 的数逐位相同（核过）。
+
 ## 文件
 
 - `teacher_eval.py`：老师和对照的测量，输出每一项。
@@ -296,4 +362,4 @@ PYTHONPATH=.:analysis/card-value python3 analysis/card-value/q_baseline.py analy
 - `teacher_*_1e5141d_n30*`：推演换成小搜索的两次重测（n30：我方下回合；n30o30：两个回合都换）。
 - `realized.py`、`analyse.py`：大样本的干预式检验（老师 T、对照 Q、真实兑现 G）。
 - `realized_interim407_1e5141d.*`：407 条时的中期数；`realized_1200_1e5141d.*`：1200 条的最终数。
-- `salem_discrim.py`、`salem_games_10.json`：分辨实验（每张能出的牌，留 / 用打到终局；预注册在上面）。`salem_end.py` 是只看老师主线那 111 项的早先版本，没跑完，不再用。
+- `salem_discrim.py`、`salem_games_10.json`、`salem_games_17.json`：分辨实验两批（每张能出的牌，留 / 用打到终局；预注册在上面）。`discrim/`：第一批的三个输出和报表。`salem_end.py` 是只看老师主线那 111 项的早先版本，没跑完，不再用。

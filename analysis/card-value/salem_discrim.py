@@ -45,6 +45,12 @@ V2 = "mcts:100+plan+learned+phased"
 EXTRA = {("1791317238047", 53): ("#3", {"Fate of the World"}),
          ("1791304981889", 35): ("#4", {"Spilling Red", "Lyria, Skydestined", "Sagatsumatsu, Fair Beheader"})}
 EXTRA_FROM = 400                        # item numbers of #3 / #4 start here
+# batch 2 (the architecture thread 20:45, pre-registered before its games): Salem's other 17 games, all the
+# original Ramp mirror; the same items, arms, k, bot and exclusion; bank 65600000
+BANK2 = 65600000
+BATCH2 = ["1791315717152", "1791316090276", "1791316350693", "1791316411815", "1791316540438", "1791316841837",
+          "1791316974098", "1791317238047", "1791317476826", "1791317687161", "1791384258804", "1791385092476",
+          "1791385225044", "1791385824342", "1791387075633", "1791387160337", "1791387437959"]
 GAMES = {}
 
 
@@ -74,6 +80,35 @@ def used_this_turn(rec, at):
         still = {c.uid for c in st.players[me].hand}
         used |= {cid for uid, cid in before.items() if uid not in still}
     return used, st.over and st.winner == me
+
+
+def turn_complete(rec, at):
+    """Whether the record goes on past the end of this turn (a game left unfinished can stop inside a turn,
+    and then the turn's labels are not Salem's whole choice)."""
+    st = state_at(rec, at)
+    me = st.active
+    for a in rec["actions"][at:]:
+        if st.over or st.active != me:
+            return True
+        apply(st, from_dict(a))
+    return st.over or st.active != me
+
+
+def salem_turn_starts(rec):
+    """The action index of the first decision of each of Salem's (seat 0) turns, as teacher_eval.salem_turns."""
+    st = records.start(rec)
+    acts = [from_dict(a) for a in rec["actions"]]
+    i, out = 0, []
+    while i < len(acts) and not st.over:
+        if st.active != 0 or type(acts[i]).__name__ == "Mulligan":
+            apply(st, acts[i])
+            i += 1
+            continue
+        out.append(i)
+        while i < len(acts) and st.active == 0 and not st.over:
+            apply(st, acts[i])
+            i += 1
+    return out
 
 
 def playable(st):
@@ -119,6 +154,27 @@ def items(games, teacher_rows):
     return out
 
 
+def items2(games):
+    """Batch 2: every turn start of Salem's in the 17 games (his winning turns, and a turn the record stops
+    inside, left out), the same items as items(); numbered from 0 in their own bank."""
+    out = []
+    for g in BATCH2:
+        for at in salem_turn_starts(games[g]):
+            used, won = used_this_turn(games[g], at)
+            if won or not turn_complete(games[g], at):
+                continue
+            st = state_at(games[g], at)
+            now, later = playable(st)
+            names = {c.defn.card_id: c.defn.name for c in st.players[st.active].hand}
+            for cid in sorted(now | later):
+                out.append({"set": "salem17", "game": g, "at": at, "card": cid, "name": names[cid],
+                            "label": "used" if cid in used else "kept", "bonus_only": cid in later,
+                            "line": None, "own_turn": st.players[st.active].turns_taken})
+    for n, it in enumerate(out):
+        it["n"] = n
+    return out
+
+
 def uses_card(cid, me):
     """The use arm's veto (module docstring): c must leave the hand this turn while it is affordable."""
     def veto(s, a):
@@ -142,6 +198,79 @@ def uses_card(cid, me):
     return veto
 
 
+def _c_playable(s, me, uids):
+    """A copy of c held at the turn start can be played now, or after pressing the unused bonus point."""
+    def now(t):
+        return any(isinstance(a, PlayCard) and a.uid in uids for a in legal_actions(t))
+    if now(s):
+        return True
+    if any(isinstance(a, UseBonusPP) for a in legal_actions(s)):
+        t = s.clone()
+        apply(t, UseBonusPP())
+        return now(t)
+    return False
+
+
+def root_use(uids, me):
+    """The fixed use arm's check on the actual decision (side reading): an action is vetoed if c is playable
+    now and would not be after it (playing the action on a copy of the state: enhanced or alternative costs,
+    targets that go away, a full board), and ending the turn is vetoed while c is playable; a copy of c
+    leaving the hand any way (played or discarded) frees the turn."""
+    def veto(s, a):
+        hand = {c.uid for c in s.players[me].hand}
+        if s.active != me or not uids <= hand:
+            return False
+        if isinstance(a, PlayCard) and a.uid in uids:
+            return False
+        if isinstance(a, EndTurn):
+            return _c_playable(s, me, uids)
+        t = s.clone()
+        apply(t, a)
+        if not uids <= {c.uid for c in t.players[me].hand}:
+            return False
+        return _c_playable(s, me, uids) and not _c_playable(t, me, uids)
+    return veto
+
+
+def root_keep(uids, me):
+    """The fixed keep arm's check on the actual decision (side reading): no copy of c may leave the hand this
+    turn, played or discarded by another card's effect."""
+    def veto(s, a):
+        if s.active != me:
+            return False
+        if isinstance(a, PlayCard) and a.uid in uids:
+            return True
+        t = s.clone()
+        apply(t, a)
+        return not uids <= {c.uid for c in t.players[me].hand}
+    return veto
+
+
+def play_out_fixed(base, me, arm, seed, cid):
+    """play_out with the fixed arms: the exact checks (root_use / root_keep) are the search's own veto, so
+    they hold at every node of its tree (the search picks its move among its root's children, built through
+    the veto; a filter on the legal list handed to act() does nothing, which is why the first version's
+    affordability check, on the base cost, let enhanced or alternative-cost plays through)."""
+    from svsim.tools.arena import make_agent
+    st = base.clone()
+    start = {c.uid for c in st.players[me].hand if c.defn.card_id == cid}
+    root = root_keep(start, me) if arm == "keep" else root_use(start, me)
+    agent = make_agent(V2, seed)
+    inner = agent
+    while not (hasattr(inner, "search") and hasattr(inner.search, "veto")):
+        inner = inner.base
+    old = inner.search.veto
+    inner.search.veto = (lambda s, a: root(s, a) or old(s, a)) if old else root
+    while not st.over and st.active == me:
+        legal = legal_actions(st)
+        apply(st, agent.act(st, [a for a in legal if not root(st, a)] or legal))
+    left = not start <= {c.uid for c in st.players[me].hand}
+    agents = {me: make_agent(V2, seed + 3), 1 - me: make_agent(V2, seed + 1)}
+    while not st.over:
+        apply(st, agents[st.active].act(st, legal_actions(st)))
+    return (1.0 if st.winner == me else 0.0 if st.winner == 1 - me else 0.5), left
+
+
 def play_out(base, me, veto, seed, cid):
     """realized_end.play_out, also returning whether a copy of `cid` left the hand during this turn."""
     from svsim.tools.arena import make_agent
@@ -161,31 +290,51 @@ def play_out(base, me, veto, seed, cid):
 
 def measure(job):
     from svsim.core.view import determinize
-    it, k, bank = job
+    it, k, bank = job[:3]
+    variant = job[3] if len(job) > 3 else "plain"
     st = state_at(GAMES[it["game"]], it["at"])
     me = st.active
     diffs, used_keep, used_use = [], 0, 0
     for j in range(2 * k):
         s = bank + 100 * it["n"] + j
         base = determinize(st, me, random.Random(s))
-        keep, lk = play_out(base, me, R.keeps_card(it["card"]), 10 * s, it["card"])
-        use, lu = play_out(base, me, uses_card(it["card"], me), 10 * s, it["card"])
+        if variant == "fixed":
+            keep, lk = play_out_fixed(base, me, "keep", 10 * s, it["card"])
+            use, lu = play_out_fixed(base, me, "use", 10 * s, it["card"])
+        else:
+            keep, lk = play_out(base, me, R.keeps_card(it["card"]), 10 * s, it["card"])
+            use, lu = play_out(base, me, uses_card(it["card"], me), 10 * s, it["card"])
         diffs.append(keep - use)
         used_keep += lk
         used_use += lu
-    return {**it, "k": k, "G_end": sum(diffs) / len(diffs), "G_end1": sum(diffs[:k]) / k,
+    return {**it, "k": k, "variant": variant, "G_end": sum(diffs) / len(diffs), "G_end1": sum(diffs[:k]) / k,
             "G_end2": sum(diffs[k:]) / k, "samples": diffs, "keep_arm_used": used_keep, "use_arm_used": used_use}
+
+
+ITEM_KEYS = ("set", "game", "at", "card", "name", "label", "bonus_only", "line", "own_turn", "n")
 
 
 def run(args):
     GAMES.update(json.load(open(args.games, encoding="utf-8"))["records"])
-    todo = items(GAMES, json.load(open(args.teacher, encoding="utf-8")))
+    if args.redo:                      # the fixed side reading: the flagged items of finished runs, their own seeds
+        todo = []
+        for path in args.redo:
+            for x in open(path, encoding="utf-8"):
+                if x.strip():
+                    r = json.loads(x)
+                    if r["use_arm_used"] < 2 * r["k"] or r["keep_arm_used"] > 0:
+                        todo.append({k: v for k, v in r.items() if k in ITEM_KEYS})
+    elif args.batch == 2:
+        todo = items2(GAMES)
+    else:
+        todo = items(GAMES, json.load(open(args.teacher, encoding="utf-8")))
     if args.first is not None:
         todo = todo[:args.first]
     done = set()
     if os.path.exists(args.out):
-        done = {json.loads(x)["n"] for x in open(args.out, encoding="utf-8") if x.strip()}
-    jobs = [(it, args.k, args.seed_base) for it in todo if it["n"] not in done]
+        done = {(json.loads(x)["set"], json.loads(x)["n"]) for x in open(args.out, encoding="utf-8") if x.strip()}
+    bank = lambda it: args.seed_base if args.seed_base is not None else BANK2 if it["set"] == "salem17" else BANK
+    jobs = [(it, args.k, bank(it), args.variant) for it in todo if (it["set"], it["n"]) not in done]
     print(f"{len(todo)} 项，要量 {len(jobs)} 项（已完成 {len(done)}），每项 2 × {args.k} 个确定化 × 2 支", flush=True)
     with Pool(args.workers, initializer=_init_games, initargs=(GAMES,)) as pool, \
             open(args.out, "a", encoding="utf-8") as fh:
@@ -241,29 +390,40 @@ def spearman(x, y):
 
 
 def report(args):
-    rows = [json.loads(x) for x in open(args.rows, encoding="utf-8") if x.strip()]
+    from statistics import NormalDist
+    rows = [json.loads(x) for path in args.rows for x in open(path, encoding="utf-8") if x.strip()]
     T = defaultdict(list)
-    for r in json.load(open(args.t, encoding="utf-8")) if args.t else []:
-        if r["restriction"].startswith("keep:"):
-            T[(r["game"], r["at"], int(r["restriction"].split(":")[1]))].append(r["teacher"])
+    for path in args.t or []:
+        for r in json.load(open(path, encoding="utf-8")):
+            if r["restriction"].startswith("keep:"):
+                T[(r["game"], r["at"], int(r["restriction"].split(":")[1]))].append(r["teacher"])
     Q = {}
-    for r in json.load(open(args.q, encoding="utf-8")) if args.q else []:
-        for cid, (lab, v) in r["value"].items():
-            Q[(r["game"], r["at"], int(cid))] = v
-    data = []
-    for r in rows:
-        key = (r["game"], r["at"], r["card"])
-        data.append({**r, "T": sum(T[key]) / len(T[key]) if T.get(key) else None, "Q": Q.get(key)})
-    main = [d for d in data if d["set"] == "salem80"]
-    clean = [d for d in main if d["use_arm_used"] >= d["k"]]           # the use arm used c in >= half
+    for path in args.q or []:
+        for r in json.load(open(path, encoding="utf-8")):
+            for cid, (lab, v) in r["value"].items():
+                Q[(r["game"], r["at"], int(cid))] = v
+
+    def attach(rs):
+        out = []
+        for r in rs:
+            key = (r["game"], r["at"], r["card"])
+            out.append({**r, "T": sum(T[key]) / len(T[key]) if T.get(key) else None, "Q": Q.get(key)})
+        return out
+    data = attach(rows)
+    sets = [x for x in ("salem80", "salem17") if any(d["set"] == x for d in data)]
+    names_ = {"salem80": "第一批（前 10 局，80 个回合）", "salem17": "第二批（另外 17 局）"}
+    main = [d for d in data if d["set"] in sets]
+    clean = [d for d in main if d["use_arm_used"] >= d["k"]]
     line = [d for d in clean if d["T"] is not None]
-    print(f"条件：对手卡表已知（牌序、手牌未知）。Salem 80 个回合：{len(main)} 项（留 {sum(d['label'] == 'kept' for d in main)}，"
-          f"用 {sum(d['label'] == 'used' for d in main)}）；「用」那支有一半以上确定化没用掉 c 的 {len(main) - len(clean)} 项不算；"
-          f"老师主线上的 {len(line)} 项有 T。区间 95%，按 Salem 的回合重抽 {args.boot} 次。\n")
-    g1 = [d["G_end1"] for d in clean]
-    g2 = [d["G_end2"] for d in clean]
-    rel = spearman(g1, g2)
-    print(f"G_end 两组（各 {clean[0]['k'] if clean else 0} 个确定化）的一致度（秩）：{rel:.3f}\n")
+    print("条件：对手卡表已知（牌序、手牌未知）。" + "；".join(
+        f"{names_[x]}：{sum(d['set'] == x for d in main)} 项（留 {sum(d['set'] == x and d['label'] == 'kept' for d in main)}，"
+        f"用 {sum(d['set'] == x and d['label'] == 'used' for d in main)}），「用」那支有一半以上确定化没用掉 c 的 "
+        f"{sum(d['set'] == x and d['use_arm_used'] < d['k'] for d in main)} 项不算" for x in sets) +
+        f"；老师主线上的 {len(line)} 项有 T。区间 95%，按 Salem 的回合重抽 {args.boot} 次。\n")
+    rel = spearman([d["G_end1"] for d in clean], [d["G_end2"] for d in clean])
+    rel32 = 2 * rel / (1 + rel)
+    print(f"G_end 两组（各 {clean[0]['k'] if clean else 0} 个确定化）的一致度（秩）：{rel:.3f}；"
+          f"折成 32 个确定化的信度（Spearman–Brown）{rel32:.3f}\n")
     turns = sorted({(d["game"], d["at"]) for d in main})
     rng = random.Random(13)
     picks = [[turns[rng.randrange(len(turns))] for _ in turns] for _ in range(args.boot)]
@@ -274,45 +434,54 @@ def report(args):
             by[(d["game"], d["at"])].append(d)
         vals = []
         for pick in picks:
-            s = [d for t in pick for d in by.get(t, [])]
-            v = f(s)
+            s_ = [d for t in pick for d in by.get(t, [])]
+            v = f(s_)
             if v == v:
                 vals.append(v)
         vals.sort()
         return (vals[int(0.025 * len(vals))], vals[int(0.975 * len(vals)) - 1]) if vals else (float("nan"),) * 2
 
-    for title, sub, keys in (("全部项（主读：G_end 和 Salem 一致不一致）", clean, ("G_end", "Q")),
-                             ("老师主线上的项（主读：G_end 和 T 比）", line, ("G_end", "T", "Q"))):
+    def table(title, sub, keys, hows=("按牌", "同回合", "合并")):
         print(f"**{title}**：{len(sub)} 项\n")
         print("| AUC 口径 | " + " | ".join(keys) + " | " + " | ".join(f"G_end − {k}" for k in keys[1:]) + " |")
         print("|---|" + "---|" * (2 * len(keys) - 1))
-        for how in ("按牌", "同回合", "合并"):
+        for how in hows:
             cells = []
             for k in keys:
-                s = [d for d in sub if d[k] is not None]
-                a, n = auc(s, k, how)
-                lo, hi = boot(s, lambda x, k=k: auc(x, k, how)[0])
+                s_ = [d for d in sub if d[k] is not None]
+                a, n = auc(s_, k, how)
+                lo, hi = boot(s_, lambda x, k=k: auc(x, k, how)[0])
                 cells.append(f"{a:.3f}（{lo:.3f}～{hi:.3f}；{n} 对）")
             for k in keys[1:]:
-                s = [d for d in sub if d[k] is not None]
-                a = auc(s, "G_end", how)[0] - auc(s, k, how)[0]
-                lo, hi = boot(s, lambda x, k=k: auc(x, "G_end", how)[0] - auc(x, k, how)[0])
+                s_ = [d for d in sub if d[k] is not None]
+                a = auc(s_, "G_end", how)[0] - auc(s_, k, how)[0]
+                lo, hi = boot(s_, lambda x, k=k: auc(x, "G_end", how)[0] - auc(x, k, how)[0])
                 cells.append(f"{a:+.3f}（{lo:+.3f}～{hi:+.3f}）")
             print(f"| {how}{'（主）' if how == '按牌' else ''} | " + " | ".join(cells) + " |")
         print()
-    # the reading, as pre-registered (README: three outcomes of design section 6, then the two additions written
-    # after the start and before any data, the architecture thread 19:47); order 1 -> (4 -> 2 -> 3)
+
+    both = len(sets) > 1
+    tag = "两批合并" if both else names_[sets[0]]
+    table(f"{tag}，全部项（主读：G_end 和 Salem 一致不一致）", clean, ("G_end", "Q"))
+    table(f"{tag}，老师主线上的项（主读：G_end 和 T 比）", line, ("G_end", "T", "Q"))
+    if both:
+        for x in sets:
+            table(f"{names_[x]}单独，全部项", [d for d in clean if d["set"] == x], ("G_end", "Q"), ("按牌",))
+            table(f"{names_[x]}单独，老师主线上的项", [d for d in line if d["set"] == x], ("G_end", "T", "Q"), ("按牌",))
+
+    # the reading, as pre-registered (README: the three outcomes of design section 6; the additions written after
+    # the start and before any data, 19:47; for the merged 27 games the half-width rule, 20:45); order 1 -> 4 -> 2 -> 3
     how = "按牌"
     aG = auc(clean, "G_end", how)[0]
     loG, hiG = boot(clean, lambda x: auc(x, "G_end", how)[0])
-    withq = [d for d in clean if d["Q"] is not None]
-    aQ = auc(withq, "Q", how)[0]
+    aQ = auc([d for d in clean if d["Q"] is not None], "Q", how)[0]
     lineG = auc(line, "G_end", how)[0]
     loGl, hiGl = boot(line, lambda x: auc(x, "G_end", how)[0])
     dGT = lineG - auc(line, "T", how)[0]
     lo_d, hi_d = boot(line, lambda x: auc(x, "G_end", how)[0] - auc(x, "T", how)[0])
-    print(f"**判读（主口径「按牌」）**：全部项 G_end {aG:.3f}（{loG:.3f}～{hiG:.3f}），同表 Q 的点估计 {aQ:.3f}；"
-          f"主线项 G_end {lineG:.3f}（{loGl:.3f}～{hiGl:.3f}），G_end − T {dGT:+.3f}（{lo_d:+.3f}～{hi_d:+.3f}）")
+    half = (hi_d - lo_d) / 2
+    print(f"**判读（{tag}，主口径「按牌」）**：全部项 G_end {aG:.3f}（{loG:.3f}～{hiG:.3f}），同表 Q 的点估计 {aQ:.3f}；"
+          f"主线项 G_end {lineG:.3f}（{loGl:.3f}～{hiGl:.3f}），G_end − T {dGT:+.3f}（{lo_d:+.3f}～{hi_d:+.3f}，半宽 {half:.3f}）")
     if loG <= 0.5:
         if hiG < aQ:
             print(f"→ 第 1 条：分布问题{'（方向相反：上沿 < 0.5）' if hiG < 0.5 else ''}")
@@ -322,22 +491,46 @@ def report(args):
         print("→ 第 4 条：老师比终局更像 Salem，不加深老师；记「Salem 的留牌更像短视界判断，或 G_end 噪声」，按第 3 条换大尺子")
     elif lo_d > 0 and loGl > 0.5:
         print("→ 第 2 条：老师的近似有问题，加深老师")
+    elif both and half <= 0.12:
+        print("→ 第 3 条，并且半宽 ≤ 0.12：在 Salem 的对局能分辨的精度上，老师 ≈ 终局真值，可以当学生的目标"
+              "（学生线做不做改由成本和一道门来定）")
     else:
-        print("→ 第 3 条：尺子太小")
+        print("→ 第 3 条：尺子太小" + ("（半宽 > 0.12）" if both else ""))
     print()
-    for tag in ("#3", "#4"):
-        ex = [d for d in data if d["set"] == tag]
+
+    # side readings, not part of the reading
+    if args.fixed:
+        fixed = {(r["set"], r["n"]): r for r in attach([json.loads(x) for path in args.fixed
+                                                         for x in open(path, encoding="utf-8") if x.strip()])}
+        swapped = [fixed.get((d["set"], d["n"]), d) for d in main]
+        fclean = [d for d in swapped if d["use_arm_used"] >= d["k"]]
+        fline = [d for d in fclean if d["T"] is not None]
+        n_sw = sum(1 for d in main if (d["set"], d["n"]) in fixed)
+        print(f"**副读：修好的两支**（{n_sw} 个有标记的项换成修好的版本，同样的种子；换完以后「用」那支仍有一半以上没用掉的 "
+              f"{len(swapped) - len(fclean)} 项不算；「留」那支仍有 c 离手的 {sum(1 for d in fclean if d['keep_arm_used'] > 0)} 项）\n")
+        a1 = auc(fclean, "G_end", how)[0]
+        l1, h1 = boot(fclean, lambda x: auc(x, "G_end", how)[0])
+        a2 = auc(fline, "G_end", how)[0] - auc(fline, "T", how)[0]
+        l2, h2 = boot(fline, lambda x: auc(x, "G_end", how)[0] - auc(x, "T", how)[0])
+        print(f"- 全部项 G_end 按牌 AUC {a1:.3f}（{l1:.3f}～{h1:.3f}；{len(fclean)} 项）；主线项 G_end − T {a2:+.3f}（{l2:+.3f}～{h2:+.3f}；{len(fline)} 项）\n")
+    nd = NormalDist()
+    deatt = lambda a: nd.cdf(nd.inv_cdf(min(max(a, 1e-6), 1 - 1e-6)) / rel32 ** 0.5) if rel32 > 0 else float("nan")
+    print(f"**副读：去噪后的 AUC（推算）**：按 AUC = Φ(d′/√2)、d′ 按信度 {rel32:.3f} 去衰减（AUC* = Φ(Φ⁻¹(AUC) ÷ √信度)）："
+          f"全部项 G_end {aG:.3f} → {deatt(aG):.3f}，主线项 G_end {lineG:.3f} → {deatt(lineG):.3f}。"
+          f"T、Q 不做这一步（它们的噪声这里量不出），所以和它们比时只作参考。\n")
+    for tag_ in ("#3", "#4"):
+        ex = [d for d in data if d["set"] == tag_]
         if not ex:
             continue
-        print(f"**{tag}**（bot 的局面，标签是 Salem 说的走法；不并入 AUC）\n")
+        print(f"**{tag_}**（bot 的局面，标签是 Salem 说的走法；不并入 AUC）\n")
         print("| 牌 | Salem | G_end（留 − 用） | 95% | 「用」那支用掉 c 的确定化 |")
         print("|---|---|---|---|---|")
         for d in ex:
-            s = d["samples"]
-            m = sum(s) / len(s)
-            se = (sum((x - m) ** 2 for x in s) / (len(s) - 1) / len(s)) ** 0.5
+            s_ = d["samples"]
+            m = sum(s_) / len(s_)
+            se = (sum((x - m) ** 2 for x in s_) / (len(s_) - 1) / len(s_)) ** 0.5
             print(f"| {d['name']} | {'留' if d['label'] == 'kept' else '用'} | {m:+.3f} | {m - 1.96 * se:+.3f}～{m + 1.96 * se:+.3f} | "
-                  f"{d['use_arm_used']} / {len(s)} |")
+                  f"{d['use_arm_used']} / {len(s_)} |")
         print()
 
 
@@ -346,22 +539,33 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
     a = sub.add_parser("items")
     a.add_argument("games")
-    a.add_argument("teacher")
+    a.add_argument("teacher", nargs="?", default=None)
+    a.add_argument("--batch", type=int, default=1, choices=(1, 2))
     b = sub.add_parser("run")
     b.add_argument("games")
-    b.add_argument("teacher")
+    b.add_argument("teacher", nargs="?", default=None, help="batch 1's turns and line flags (not used by batch 2)")
     b.add_argument("--out", required=True)
     b.add_argument("--k", type=int, default=16)
     b.add_argument("--workers", type=int, default=16)
     b.add_argument("--first", type=int, default=None)
-    b.add_argument("--seed-base", type=int, default=BANK, help="smoke tests only: seeds off the bank")
+    b.add_argument("--batch", type=int, default=1, choices=(1, 2))
+    b.add_argument("--variant", default="plain", choices=("plain", "fixed"))
+    b.add_argument("--redo", nargs="+", default=None, help="fixed side reading: the flagged items of these rows")
+    b.add_argument("--seed-base", type=int, default=None, help="smoke tests only: seeds off the banks")
     c = sub.add_parser("report")
-    c.add_argument("rows")
-    c.add_argument("--t", default=None)
-    c.add_argument("--q", default=None)
+    c.add_argument("rows", nargs="+")
+    c.add_argument("--t", action="append", default=None)
+    c.add_argument("--q", action="append", default=None)
+    c.add_argument("--fixed", action="append", default=None, help="rows of the fixed side reading")
     c.add_argument("--boot", type=int, default=2000)
     args = ap.parse_args()
-    if args.cmd == "items":
+    if args.cmd == "items" and args.batch == 2:
+        its = items2(json.load(open(args.games, encoding="utf-8"))["records"])
+        print(f"第二批（另外 17 局）：{len({(i['game'], i['at']) for i in its})} 个回合，{len(its)} 项"
+              f"（留 {sum(i['label'] == 'kept' for i in its)}、用 {sum(i['label'] == 'used' for i in its)}；"
+              f"只有按额外 PP 才打得出 {sum(i['bonus_only'] for i in its)}）；项编号 0～{len(its) - 1}；"
+              f"种子 {BANK2}～{BANK2 + 100 * len(its) - 1}")
+    elif args.cmd == "items":
         games = json.load(open(args.games, encoding="utf-8"))["records"]
         its = items(games, json.load(open(args.teacher, encoding="utf-8")))
         main80 = [i for i in its if i["set"] == "salem80"]
