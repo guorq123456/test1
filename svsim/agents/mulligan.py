@@ -222,12 +222,16 @@ def by_rules(hand, rules: Rules, threshold: int = 5) -> tuple:
 
 def decide(state, spec: str = "default", threshold: int = 5, seed: int = 0) -> tuple:
     """The hand positions to redraw for the player to act in `state` (at the mulligan), by `spec`:
-    "default", "rules[:VARIANT,...]" or "sim[:N[:H]]" (see the module's docstring). Plays no game: the
+    "default", "rules[:VARIANT,...]", "sim[:N[:H]]" (see the module's docstring) or "by:DECK=SPEC/DECK=SPEC" (one
+    of those per deck key, "default" for the decks not named). Plays no game: the
     test session compares the ways on fixed opening hands with it (`opening` deals one)."""
     kind, _, arg = spec.partition(":")
     if kind == "default":
         return mulligan(state, threshold).indices
     p = state.players[state.active]
+    if kind == "by":                               # by:DECK=SPEC/DECK=SPEC: per deck, the default for the others
+        ways = dict(part.split("=", 1) for part in arg.split("/") if part)
+        return decide(state, ways.get(_deck_key(p.hand + p.deck), "default"), threshold, seed)
     if kind == "rules":
         foe = state.players[1 - state.active]
         rules = draft_rules(_deck_key(p.hand + p.deck), state.active == state.first, _deck_key(foe.hand + foe.deck),
@@ -272,7 +276,13 @@ class MulliganMode:
 def decide_spec_ok(spec: str) -> None:
     """ValueError for a mulligan spec decide would not take."""
     kind, _, arg = spec.partition(":")
-    if kind == "rules":
+    if kind == "by":
+        for part in arg.split("/"):
+            deck, eq, way = part.partition("=")
+            if not eq or not deck or way.startswith("by"):
+                raise ValueError(f"mulligan by takes by:DECK=SPEC/DECK=SPEC, not {spec!r}")
+            decide_spec_ok(way)
+    elif kind == "rules":
         bad = [v for v in arg.split(",") if v and v not in VARIANTS]
         if bad:
             raise ValueError(f"unknown mulligan variants {bad}")

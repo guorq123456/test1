@@ -126,3 +126,22 @@ def test_the_tournament_combo_forest_redraws_by_its_rules_by_default():
     from svsim.core.engine import legal_actions
     off = make_agent("mcts:5+plan+mull=default", 1).act(state, legal_actions(state))
     assert off.indices == decide(state, "default")                                 # "+mull=default": off
+
+
+def test_a_mulligan_by_deck_pins_one_deck_s_way_and_leaves_the_others_at_the_default():
+    from svsim.agents.mulligan import decide, decide_spec_ok, opening
+    from svsim.core.engine import legal_actions
+    from svsim.tools.arena import make_agent
+    for seed in range(20):
+        for first in (True, False):
+            elf = opening("elf-t", "ramp-t", first, seed)
+            assert decide(elf, "by:elf-t=rules") == decide(elf, "rules")
+            ramp = opening("ramp-t", "elf-t", first, seed)
+            assert decide(ramp, "by:elf-t=rules") == decide(ramp, "default")
+            assert decide(ramp, "by:elf-t=rules/ramp-t=rules") == decide(ramp, "rules")
+    state = opening("elf-t", "ramp-t", True, 3)          # as an agent option (the ruler's pinned redraw)
+    pinned = make_agent("mcts:5+plan+mull=by:elf-t=rules", 1).act(state, legal_actions(state))
+    assert pinned.indices == decide(state, "rules")
+    for bad in ("by:elf-t", "by:elf-t=nope", "by:elf-t=by:x=rules"):
+        with pytest.raises(ValueError):
+            decide_spec_ok(bad)
