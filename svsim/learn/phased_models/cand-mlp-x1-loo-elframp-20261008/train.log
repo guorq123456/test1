@@ -1,0 +1,34 @@
+20000 games, held out 2000 (one in ten by line)
+ended:
+  linear: train 280017 positions, held-out 31055: loss 0.5863, accuracy 0.6698
+  epoch 1: held-out loss 0.5851
+  epoch 2: held-out loss 0.5824
+  epoch 3: held-out loss 0.5791
+  epoch 4: held-out loss 0.5778
+  epoch 5: held-out loss 0.5786
+  epoch 6: held-out loss 0.5769
+  epoch 7: held-out loss 0.5761
+  epoch 8: held-out loss 0.5762
+  epoch 9: held-out loss 0.5793
+  epoch 10: held-out loss 0.5766
+  epoch 11: held-out loss 0.5778
+  network: held-out loss 0.5761, accuracy 0.6812 (train loss 0.5833)
+{"train_positions": 280017, "held_out_positions": 31055, "linear": {"loss": 0.5863184376905557, "accuracy": 0.6697794236032845}, "network": {"loss": 0.5760977458531744, "accuracy": 0.6812429560457254, "train_loss": 0.5832998651772009}, "linear_train": {"loss": 0.5959400932417392, "value_accuracy": 0.6629276079666592}}
+act:
+  linear: train 594317 positions, held-out 65858: loss 0.5893, accuracy 0.6710
+  epoch 1: held-out loss 0.5820
+  epoch 2: held-out loss 0.5790
+  epoch 3: held-out loss 0.5748
+  epoch 4: held-out loss 0.5782
+  epoch 5: held-out loss 0.5754
+  epoch 6: held-out loss 0.5735
+  epoch 7: held-out loss 0.5727
+  epoch 8: held-out loss 0.5736
+  epoch 9: held-out loss 0.5724
+  epoch 10: held-out loss 0.5716
+  epoch 11: held-out loss 0.5730
+  epoch 12: held-out loss 0.5716
+  epoch 13: held-out loss 0.5748
+  epoch 14: held-out loss 0.5729
+  network: held-out loss 0.5716, accuracy 0.6872 (train loss 0.5770)
+{"train_positions": 594317, "held_out_positions": 65858, "linear": {"loss": 0.5892558314573925, "accuracy": 0.6709739135716238}, "network": {"loss": 0.5715650686674998, "accuracy": 0.6871754380637128, "train_loss": 0.5769776627157184}, "linear_train": {"loss": 0.5978181603949562, "value_accuracy": 0.6649683586368891}}
