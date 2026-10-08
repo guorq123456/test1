@@ -30,3 +30,21 @@
 - **其余组合：**
   - 连击妖镜像、连击妖对机锋：已装 C2，用 `hand,board`；
   - 其他组合用 `board`，数据同 C2 推广时各组合用的那份（见各 cand-c2-hand-<组合>/README.md）。
+
+## 出目录顺序与每格的特征（架构线 16:2x）
+
+同 C2：按配对拟合，`--hold-out-every 11`，先出留出表，再出 cand 目录。
+
+| # | 组合 | features | 数据 | 对照 |
+|---|---|---|---|---|
+| 1 | ramp-t-pirate-t | board | pirate-t_ramp-t | cand-bprime-ramp-t-pirate-t |
+| 2 | ramp-t-ramp-t | hand,board | selfplay-s200 ramp-t_ramp-t | cand-c2-hand-ramp |
+| 3 | elf-t-elf-t | hand,board | elf-t_elf-t | cand-c2-hand-elf-t-elf-t |
+| 4 | elf-t-nemesis-t | hand,board | nemesis-t_elf-t | cand-c2-hand-elf-t-nemesis-t |
+| 5 | ramp-t-nemesis-t | board | nemesis-t_ramp-t | cand-bprime-ramp-t-nemesis-t |
+| 6 | pirate-t-elf-t | board | pirate-t_elf-t | cand-bprime-pirate-t-elf-t |
+| 7 | ramp-t-elf-t | board | elf-t_ramp-t | cand-bprime-ramp-t-elf-t |
+| 8 | elf-t-ramp-t | board | elf-t_ramp-t | cand-bprime-elf-t-ramp-t |
+| 9 | pirate-t-pirate-t | board | pirate-t_pirate-t | cand-bprime-pirate-t-pirate-t |
+| 10 | nemesis-t-ramp-t | board | nemesis-t_ramp-t | cand-bprime-nemesis-t-ramp-t |
+| 11 | nemesis-t-elf-t | board | nemesis-t_elf-t | cand-bprime-nemesis-t-elf-t |
