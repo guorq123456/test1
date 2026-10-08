@@ -115,6 +115,8 @@ def test_the_build_has_the_page_the_package_and_pyodide(tmp_path):
     package = json.loads((out / "svsim.json").read_text(encoding="utf-8"))
     assert "svsim/ui/session.py" in package and "svsim/cards/data/unlimited.json" in package
     assert not any("__pycache__" in n for n in package)
+    models = [n for n in package if n.startswith("svsim/learn/phased_models/")]   # installed ones, no candidates
+    assert "svsim/learn/phased_models/elf-t-ramp-t-ended.json" in models and all(n.count("/") == 3 for n in models)
     from svsim.build import git_commit                 # the build says which commit it came from
     namespace = {}
     exec(package["svsim/build.py"], namespace)

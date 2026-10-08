@@ -42,12 +42,18 @@ def page_html() -> str:
     return SKELETON.replace("{page}", (WEB / "index.html").read_text(encoding="utf-8"))
 
 
+def _candidate(f: Path) -> bool:
+    """A model kept beside the installed ones (phased_models/<folder>/): only "+phased=FOLDER" loads those."""
+    models = PACKAGE / "learn" / "phased_models"
+    return models in f.parents and f.parent != models
+
+
 def package_sources(commit: str | None = None) -> dict:
     """The svsim package (sources and card tables) as {path: text}; with `commit`, svsim/build.py
     says it was built from that commit (the page has no git)."""
     out = {f.relative_to(ROOT).as_posix(): f.read_text(encoding="utf-8")
            for f in sorted(PACKAGE.rglob("*"))
-           if f.suffix in (".py", ".json") and "__pycache__" not in f.parts}
+           if f.suffix in (".py", ".json") and "__pycache__" not in f.parts and not _candidate(f)}
     if commit is not None:
         line = "COMMIT = None "
         assert out["svsim/build.py"].count(line) == 1
