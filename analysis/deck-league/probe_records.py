@@ -78,8 +78,8 @@ def load(paths, pairing):
 
 
 def report(paths):
-    print("条件：对手卡表已知（牌序、手牌未知）。探针 = tools.smoke 的 LethalSearch（50000 节点，不设筛选）；"
-          "每回合用时 = 整局墙钟 ÷ 回合数（双方合计）。")
+    print("条件：对手卡表已知（牌序、手牌未知）。探针 = tools.smoke 的 LethalSearch（50000 节点；--cheap 跑的文件按 1 号的分档："
+          "估计伤害差 4 以上的局面只给 1000 节点，所以「没搜完」多半是这些局面）；每回合用时 = 整局墙钟 ÷ 回合数（双方合计）。")
     for path in paths:
         rows = [json.loads(line) for line in open(path, encoding="utf-8") if line.strip()]
         secs = sum(r["seconds"] for r in rows)
