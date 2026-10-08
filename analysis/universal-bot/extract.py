@@ -41,7 +41,7 @@ def main():
     decks = sorted({r[3] for r in data} | {r[4] for r in data})
     np.savez_compressed(out, X=np.array([r[6] for r in data], np.float32), y=np.array([r[5] for r in data], np.int8),
                         phase=np.array([r[2] for r in data], np.int8), me=np.array([decks.index(r[3]) for r in data]),
-                        op=np.array([decks.index(r[4]) for r in data]), file=np.array([r[0] for r in data]),
+                        op=np.array([decks.index(r[4]) for r in data]), fileidx=np.array([r[0] for r in data]),
                         game=np.array([r[1] for r in data]), decks=np.array(decks), files=np.array(files))
     print(len(data), "positions", decks)
 
