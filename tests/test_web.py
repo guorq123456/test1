@@ -140,9 +140,12 @@ def test_records_say_which_bot_played_and_old_records_still_read():
     session.start("rhino", "ramp", "normal", 3, "you")
     assert session.record["bot"] == {"level": "normal", "version": "v2r", "spec": VERSIONS["v2r"], "build": commit(),
                                      "commit": commit(), "cr": None}
-    ratings = session.ratings()                    # each level's CR for the start screen, "待标定" until measured
+    ratings = session.ratings()                    # each level's CR per deck for the start screen, "待标定" until measured
     assert set(ratings["tiers"]) >= set(LEVELS) and ratings["tiers"]["strong"]["spec"] == LEVELS["strong"]
-    assert ratings["anchor"] == {"name": "ruler20261008", "commit": "20bcfbe", "level": "strong", "cr": 1300}
+    assert ratings["anchor"]["commit"] == "20bcfbe" and ratings["anchor"]["cr"] == 1300
+    assert all(set(t["decks"]) == {"ramp-t", "elf-t", "nemesis-t", "pirate-t"} for t in ratings["tiers"].values())
+    session.start("rhino", "ramp-t", "strong", 3, "you")          # the AI's deck's CR goes with the record
+    assert session.record["bot"]["cr"] == ratings["tiers"]["strong"]["decks"]["ramp-t"]["cr"] == 1300
     session.start("rhino", "ramp", "fast", 3, "you")
     assert session.record["bot"]["version"] is None and session.record["bot"]["level"] == "fast"
     old = json.loads(json.dumps(session.record_data()))

@@ -2,12 +2,144 @@
  "version": 15,
  "commit": null,
  "published_at": null,
- "anchor": {"name": "ruler20261008", "commit": "20bcfbe", "level": "strong", "cr": 1300},
+ "anchor": {
+  "name": "ruler20261008",
+  "commit": "20bcfbe",
+  "level": "strong",
+  "cr": 1300,
+  "note": "每套牌各自独立起算，不跨卡组比：一套牌的 CR = 用它打尺子的四套牌各 100 局"
+ },
  "tiers": {
-  "fast": {"cr": null, "ci": null, "measured_vs": null, "games": 0, "note": "待标定"},
-  "normal": {"cr": null, "ci": null, "measured_vs": null, "games": 0, "note": "待标定"},
-  "strong": {"cr": null, "ci": null, "measured_vs": null, "games": 0,
-             "note": "待标定：比尺子（20bcfbe 的强档，CR 1300）多装了 elf-t 对 nemesis-t 的模型"},
-  "original": {"cr": null, "ci": null, "measured_vs": null, "games": 0, "note": "待标定（f631e14 的 bot）"}
+  "fast": {
+   "decks": {
+    "ramp-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    },
+    "elf-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    },
+    "nemesis-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    },
+    "pirate-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    }
+   }
+  },
+  "normal": {
+   "decks": {
+    "ramp-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    },
+    "elf-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    },
+    "nemesis-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    },
+    "pirate-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    }
+   }
+  },
+  "strong": {
+   "decks": {
+    "ramp-t": {
+     "cr": 1300,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "等于尺子（20bcfbe 的强档）的这套牌：定义值 1300，各卡组独立起算",
+     "anchor": true
+    },
+    "elf-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定：比尺子多装了 elf-t 对 nemesis-t 的模型（第 2 轮那一格）"
+    },
+    "nemesis-t": {
+     "cr": 1300,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "等于尺子（20bcfbe 的强档）的这套牌：定义值 1300，各卡组独立起算",
+     "anchor": true
+    },
+    "pirate-t": {
+     "cr": 1300,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "等于尺子（20bcfbe 的强档）的这套牌：定义值 1300，各卡组独立起算",
+     "anchor": true
+    }
+   }
+  },
+  "original": {
+   "decks": {
+    "ramp-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定（f631e14 的 bot）"
+    },
+    "elf-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定（f631e14 的 bot）"
+    },
+    "nemesis-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定（f631e14 的 bot）"
+    },
+    "pirate-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定（f631e14 的 bot）"
+    }
+   }
+  }
  }
 }

@@ -45,28 +45,40 @@ LEVELS = {"fast": "greedy+plan+learned", "normal": "mcts:115+plan+learned+phased
 RATINGS = Path(__file__).resolve().parent / "ratings.json"
 
 
+CALIBRATED = ("ramp-t", "elf-t", "nemesis-t", "pirate-t")   # the decks the CR calibration measures
+
+
 def ratings() -> dict:
-    """Each level's measured class rating (svsim/ui/ratings.json, kept by the CR calibration: every level against
-    the anchor, the ruler's strong level at 1300), with the level's spec and the build's commit filled in."""
+    """Each level's measured class rating per deck (svsim/ui/ratings.json, kept by the CR calibration: a level
+    playing one deck, 100 games against each of the ruler's four decks; each deck counted on its own from the
+    anchor, the ruler's strong level at 1300), with the levels' specs and the build's commit filled in."""
     from svsim.build import commit
     data = json.loads(RATINGS.read_text(encoding="utf-8"))
     data["commit"] = data.get("commit") or commit()
     for level, spec in LEVELS.items():
-        data["tiers"].setdefault(level, {"cr": None, "ci": None, "measured_vs": None, "games": 0, "note": "待标定"})
-        data["tiers"][level]["spec"] = spec
+        tier = data["tiers"].setdefault(level, {})
+        tier["spec"] = spec
+        for deck in CALIBRATED:
+            tier.setdefault("decks", {}).setdefault(deck, {"cr": None, "ci": None, "games": 0, "measured_vs": None,
+                                                          "note": "待标定"})
     return data
 
 
-def bot_info(level: str, spec: str) -> dict:
+def rating_of(level: str, deck: str):
+    """The CR of `level` playing `deck` (None: not measured, or not a calibrated deck)."""
+    return ratings()["tiers"].get(level, {}).get("decks", {}).get(deck, {}).get("cr")
+
+
+def bot_info(level: str, spec: str, deck: str | None = None) -> dict:
     """What played the AI's side, for the record: the level picked, the version's name in
     arena.VERSIONS (None if the spec isn't one), the spec and the commit of the build."""
     from svsim.build import commit
     from svsim.tools.arena import VERSIONS
     info = ratings()
-    tier = info["tiers"].get(level, {}) if level in LEVELS else {}
     return {"level": level if level in LEVELS else None,
             "version": next((k for k, v in VERSIONS.items() if v == spec or k == spec), None),
-            "spec": spec, "build": commit(), "commit": info["commit"], "cr": tier.get("cr")}
+            "spec": spec, "build": commit(), "commit": info["commit"],
+            "cr": rating_of(level, deck) if level in LEVELS and deck else None}
 
 
 def bot_of(record: dict) -> dict:
@@ -122,7 +134,7 @@ class Session:
         spec = LEVELS.get(level, level)
         self.record = records.new_record(mine, theirs, seed, self.state.first, spec, first_arg=order)
         self.record["names"] = [you, opponent]
-        self.record["bot"] = bot_info(level, spec)
+        self.record["bot"] = bot_info(level, spec, opponent)     # the AI plays `opponent`
         from svsim.tools.arena import make_agent
         self.ai = make_agent(spec, seed)
         self.decks = (DECKS[you][0], DECKS[opponent][0])

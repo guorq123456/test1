@@ -403,20 +403,23 @@ document.querySelectorAll(".seg").forEach(seg => {
     const b = ev.target.closest("button"); if (!b) return;
     seg.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
     choice[seg.dataset.name] = b.dataset.value;
-    if (seg.dataset.name === "level") showLevelInfo();
+    if (seg.dataset.name === "level" || seg.dataset.name === "opponent") showLevelInfo();
   });
 });
 
-// Each level's class rating, measured against the anchor (the ruler's strong level, CR 1300).
+// The AI's class rating with the level and deck picked: each deck counted on its own from the anchor
+// (the ruler's strong level, CR 1300), measured by 100 games against each of the ruler's four decks.
 const LEVEL_NAMES = {fast: "快速档", normal: "普通档", strong: "强档", original: "原始版"};
 let ratings = null;
 function showLevelInfo() {
   const box = $("level-info");
   if (!ratings) { box.textContent = ""; return; }
-  const t = ratings.tiers[choice.level] || {};
-  const cr = t.cr != null ? `CR ${t.cr}` + (t.ci != null ? ` ± ${t.ci}` : "") + (t.anchor ? "（锚）" : "") : "CR 待标定";
-  box.textContent = `${LEVEL_NAMES[choice.level] || choice.level} · 版本 ${ratings.version} · ${ratings.commit} · ${cr}`;
-  box.title = t.note || "";
+  const decks = (ratings.tiers[choice.level] || {}).decks || {}, t = decks[choice.opponent];
+  const deck = (DECK_NAMES[choice.opponent] || choice.opponent).replace("（比赛版）", "");
+  const cr = !t ? "CR 只标定比赛卡组" : t.cr != null ?
+    `CR ${t.cr}` + (t.ci != null ? ` ± ${t.ci}` : "") + (t.anchor ? "（锚）" : "") : "CR 待标定";
+  box.textContent = `${LEVEL_NAMES[choice.level] || choice.level} · ${deck} · 版本 ${ratings.version} · ${ratings.commit} · ${cr}`;
+  box.title = (t && t.note) || "";
 }
 
 $("start").addEventListener("click", startGame);
