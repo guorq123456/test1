@@ -654,3 +654,45 @@ def test_the_named_feature_sets_by_hand_and_models_without_them_unchanged(tmp_pa
     tempo.save(tmp_path / "t.json")
     loaded = LinearValue.load(tmp_path / "t.json")
     assert loaded.extras == ("tempo",) and abs(loaded.logit(state, 0) - extra_features(state, 0, ("tempo",))[0]) < 1e-9
+
+
+def test_the_hand_feature_set_kept_by_hand_is_bit_for_bit_the_plain_sum(monkeypatch):
+    """playable_hand_roles is kept by (play points, each card's id and cost): the same floats as summing the hand
+    card by card from 0.0, warm or cold, and after the memo is cleared at its cap."""
+    import struct
+    from svsim.agents.random_agent import RandomAgent
+    from svsim.core.engine import apply
+    from svsim.core.state import MAX_PP
+    from svsim.learn import features as FT
+    from svsim.learn.roles import card_roles
+
+    def plain(state, player):                     # the definition before the memo (2026-10-08, 94dd88e)
+        p = state.players[player]
+        pp = min(p.max_pp + 1, MAX_PP)
+        out = [0.0] * 6
+        for c in p.hand:
+            f = 1.0 if c.cost <= 0 else min(1.0, pp / c.cost)
+            for i, v in enumerate(card_roles(c.defn)):
+                out[i] += v * f
+        return out
+
+    bits = lambda xs: [struct.pack("<d", x) for x in xs]          # noqa: E731
+    monkeypatch.setattr(FT, "_HAND_MEMO_MAX", 50)                 # cleared many times over
+    seen = 0
+    for d0, d1, seed in ((decks.RAMP_T, decks.ELF_T, 3), (decks.PIRATE_T, decks.NEMESIS_T, 4)):
+        state = new_game(decks.build(d0), decks.build(d1), seed=seed)
+        agents = [RandomAgent(seed=seed), RandomAgent(seed=seed + 1)]
+        while not state.over:
+            for player in (0, 1):
+                want = bits(plain(state, player))
+                assert bits(FT.playable_hand_roles(state, player)) == want      # cold or warm
+                assert bits(FT.playable_hand_roles(state, player)) == want      # warm
+                seen += 1
+            apply(state, agents[state.active].act(state, legal_actions(state)))
+        if state.players[0].hand:
+            state.players[0].hand[0].cost += 3                         # a cost change is a new key
+        assert bits(FT.playable_hand_roles(state, 0)) == bits(plain(state, 0))
+    assert seen > 100 and len(FT._HAND_MEMO) <= 50
+    got = FT.playable_hand_roles(state, 0)
+    got[0] += 1.0                                                   # callers get their own list
+    assert bits(FT.playable_hand_roles(state, 0)) == bits(plain(state, 0))

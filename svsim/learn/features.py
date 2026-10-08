@@ -16,7 +16,7 @@ import math
 
 from svsim.core.enums import Keyword
 from svsim.core.script import prop
-from svsim.core.state import GameState
+from svsim.core.state import MAX_PP, GameState
 from svsim.search.evaluate import effective_hp, good_crests, hand_count
 
 SIDE = ["hp", "hp_sqrt", "hp_low", "followers", "atk", "life", "ward", "bane", "drain", "barrier", "evasive",
@@ -343,17 +343,39 @@ def tempo_gap(state: GameState, player: int) -> int:
     return min(op.max_pp + 1, MAX_PP) - me.max_pp
 
 
+_HAND_MEMO: dict = {}               # (play points, card id, cost, card id, cost, ...) -> the six sums
+_HAND_MEMO_MAX = 200_000
+
+
 def playable_hand_roles(state: GameState, player: int) -> list[float]:
-    from svsim.core.state import MAX_PP
-    from svsim.learn.roles import card_roles
+    """Read at every leaf of the search, and a hand changes little within a decision: kept by (play points, each
+    card's id and current cost in hand order), which is all the sums read. Summed in hand order from 0.0 as
+    before, so the values are bit for bit the same (tests/test_learn.py)."""
     p = state.players[player]
-    pp = min(p.max_pp + 1, MAX_PP)
-    out = [0.0] * 6
+    pp = p.max_pp + 1
+    if pp > MAX_PP:
+        pp = MAX_PP
+    key = [pp]
     for c in p.hand:
+        key.append(c.defn.card_id)
+        key.append(c.cost)
+    key = tuple(key)
+    hit = _HAND_MEMO.get(key)
+    if hit is None:
+        if len(_HAND_MEMO) >= _HAND_MEMO_MAX:
+            _HAND_MEMO.clear()
+        hit = _HAND_MEMO[key] = _hand_sums(p.hand, pp)
+    return list(hit)
+
+
+def _hand_sums(hand, pp: int) -> tuple:
+    from svsim.learn.roles import card_roles
+    out = [0.0] * 6
+    for c in hand:
         f = 1.0 if c.cost <= 0 else min(1.0, pp / c.cost)
         for i, v in enumerate(card_roles(c.defn)):
             out[i] += v * f
-    return out
+    return tuple(out)
 
 
 def extra_features(state: GameState, player: int, extras) -> list[float]:
