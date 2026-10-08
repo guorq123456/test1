@@ -109,7 +109,11 @@ def main():
     if args.only:
         keep = {tuple(int(x) for x in o.split(":")) for o in args.only}
         games = [g for g in games if (g["k"], g["seat_a"]) in keep]
-    with Pool(args.workers) as pool, open(args.out, "w", encoding="utf-8") as fh:
+    import os
+    if os.path.exists(args.out):                      # resume: the games already probed are skipped
+        done = {(r["k"], r["seat_a"]) for r in (json.loads(x) for x in open(args.out, encoding="utf-8") if x.strip())}
+        games = [g for g in games if (g["k"], g["seat_a"]) not in done]
+    with Pool(args.workers) as pool, open(args.out, "a", encoding="utf-8") as fh:
         for r in pool.imap_unordered(job, games, chunksize=1):
             fh.write(json.dumps(r) + "\n")
             fh.flush()

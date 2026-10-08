@@ -78,7 +78,11 @@ def main():
         row = want.pop(seed)
         assert row["i"] == i, (seed, row["i"], i)
         jobs.append((games[g], i, seed, args.k, row))
-    with Pool(args.workers) as pool, open(args.out, "w", encoding="utf-8") as fh:
+    import os
+    if os.path.exists(args.out):                  # resume (the container restarts): rows already measured are skipped
+        done = {json.loads(l)["seed"] for l in open(args.out, encoding="utf-8") if l.strip()}
+        jobs = [j for j in jobs if j[2] not in done]
+    with Pool(args.workers) as pool, open(args.out, "a", encoding="utf-8") as fh:
         for out in pool.imap_unordered(measure, jobs):
             fh.write(json.dumps(out) + "\n")
             fh.flush()
