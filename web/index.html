@@ -408,14 +408,14 @@ document.querySelectorAll(".seg").forEach(seg => {
 });
 
 // Each level's class rating, measured against the anchor (the ruler's strong level, CR 1300).
-const LEVEL_NAMES = {fast: "快速", normal: "普通", strong: "强", original: "原始版"};
+const LEVEL_NAMES = {fast: "快速档", normal: "普通档", strong: "强档", original: "原始版"};
 let ratings = null;
 function showLevelInfo() {
   const box = $("level-info");
   if (!ratings) { box.textContent = ""; return; }
   const t = ratings.tiers[choice.level] || {};
   const cr = t.cr != null ? `CR ${t.cr}` + (t.ci != null ? ` ± ${t.ci}` : "") + (t.anchor ? "（锚）" : "") : "CR 待标定";
-  box.textContent = `${LEVEL_NAMES[choice.level] || choice.level}档 · 版本 ${ratings.version} · ${ratings.commit} · ${cr}`;
+  box.textContent = `${LEVEL_NAMES[choice.level] || choice.level} · 版本 ${ratings.version} · ${ratings.commit} · ${cr}`;
   box.title = t.note || "";
 }
 
