@@ -8,7 +8,7 @@ read through learn.features.extra_features, so the checks need nothing from the 
     ... <this> fidelity --selfplay selfplay.jsonl --positions positions.jsonl --teacher teacher.jsonl
                         [--gend val_gend.jsonl]
     ... <this> salem --games SALEM_GAMES --rows g_end.jsonl g_end2.jsonl --t teacher_rows.json --t teacher_rows2.json
-    ... <this> pacing --a SPEC --b level-strong [--games 200] [--workers 16]
+    ... <this> pacing --a SPEC --b level-strong [--games 200] [--workers 12]
 
 1 (stops the gate) unit: the refitted coefficient of hand_value must be > 0 (the architecture thread 02:19; else
   no gate: check first whether it is collinear with me_hand, --selfplay --positions); and Salem's top-10 #3 (1791317238047, action 53; the bot's seat, the original Ramp mirror),
@@ -312,7 +312,7 @@ def main():
     d.add_argument("--b", default="level-strong")
     d.add_argument("--deck", default="ramp")
     d.add_argument("--games", type=int, default=200)
-    d.add_argument("--workers", type=int, default=16)
+    d.add_argument("--workers", type=int, default=12)
     d.add_argument("--seed", type=int, default=PACING_SEED, help="65890000 for the student, 65990000 for the value net")
     args = ap.parse_args()
     {"unit": unit, "fidelity": fidelity, "salem": salem, "pacing": pacing}[args.cmd](args)

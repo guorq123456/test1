@@ -119,28 +119,34 @@
 - **J21**：Salem 和 bot 打法不同的回合里，G_end 偏向 Salem 的打法的比例 ≥ 55%。置信 60%。
 - **J22**：第 1 步的回合级评估（线性版）在原版跳费龙镜像的等算力门上过（下沿 > 50%）。置信 40%。
 
-## 算力估计（RC 16 进程；冒烟实测后重估）
+## 算力估计（RC 12 进程；冒烟实测后重估）
+
+> **规矩变更，不是方法变更**（Salem 06:19Z，经架构线程转来）：本机所有任务合计最多 12 个进程，一律不占用 CPU0，以低于正常的优先级启动。下面的命令和用时都照这个改了。按 16 进程估的用时乘约 1.3。结果不受进程数影响：每个任务的种子都按它的编号派生，进程数只改变输出文件里行的先后。
 
 | 步 | 估计 | 依据 |
 |---|---|---|
-| 自对弈 150 局 | 约 1 分钟 | 每局约 4 CPU 秒（学生数据的冒烟测试） |
-| 生成候选（535 个开头） | 约 1～2 分钟 | 冒烟实测每个开头 0.9～3.7 CPU 秒，平均 2.0 |
-| 老师 T（535 个开头 × 2 个种子） | 约 2～3 分钟 | 冒烟实测每个（开头 × 种子）0.6～4.4 CPU 秒，平均 2.0；含复现失败时 bot 接手 |
-| G_end（150 个开头 × 约 5.2 个候选 × 32 局） | **约 40～60 分钟** | 冒烟实测每局 1.5 CPU 秒（0.3～2.7，看开头早晚）；分辨实验是 2.4。合计约 2.5 万局 |
-| **合计** | **约 1～1.2 小时** | 满载会慢一些；大头是 G_end |
+| 自对弈 150 局 | 约 1～2 分钟 | 每局约 4 CPU 秒（学生数据的冒烟测试） |
+| 生成候选（535 个开头） | 约 2 分钟 | 冒烟实测每个开头 0.9～3.7 CPU 秒，平均 2.0 |
+| 老师 T（535 个开头 × 2 个种子） | 约 3～4 分钟 | 冒烟实测每个（开头 × 种子）0.6～4.4 CPU 秒，平均 2.0；含复现失败时 bot 接手 |
+| G_end（150 个开头 × 约 5.2 个候选 × 32 局） | **约 50～80 分钟** | 冒烟实测每局 1.5 CPU 秒（0.3～2.7，看开头早晚）；分辨实验是 2.4。合计约 2.5 万局 |
+| **合计** | **约 1.3～1.6 小时** | 大头是 G_end（原来按 16 进程估约 1～1.2 小时） |
 
-## RC 的命令（库 65900000；svsim 用建造线 ce6f95a 或之后）
+## RC 的命令（库 65900000；svsim 用建造线 ce6f95a 或之后；12 进程、不占 CPU0、低优先级）
+
+每条命令都这样启动（多进程的子进程会继承优先级和核的限制，RC 开跑后在任务管理器里看一眼）：
+- Windows（cmd）：`start "" /wait /belownormal /affinity <掩码> python ...`。掩码是「除 CPU0 以外的核」，比如 16 个逻辑核就是 FFFE。
+- Linux：`nice -n 10 taskset -c 1-<最后一个核> python ...`
 
 ```
 cd <svsim checkout>
 python -m svsim.learn.netdata --games 150 --deck ramp --opponent ramp --agent level-strong --explore 0 \
-    --seed 65900000 --workers 16 --out selfplay.jsonl
+    --seed 65900000 --workers 12 --out selfplay.jsonl
 set PYTHONPATH=.;<分析线分支>/analysis/turn-level;<分析线分支>/analysis/card-value     (Windows；Linux 用 export 和冒号)
 python <分析线分支>/analysis/turn-level/turn_level.py starts selfplay.jsonl --out starts.jsonl
-python <…>/turn_level.py plans selfplay.jsonl starts.jsonl --out plans.jsonl --workers 16
-python <…>/turn_level.py teacher selfplay.jsonl starts.jsonl plans.jsonl --out teacher.jsonl --workers 16
+python <…>/turn_level.py plans selfplay.jsonl starts.jsonl --out plans.jsonl --workers 12
+python <…>/turn_level.py teacher selfplay.jsonl starts.jsonl plans.jsonl --out teacher.jsonl --workers 12
 python <…>/turn_level.py pickgend starts.jsonl plans.jsonl --out gend_starts.jsonl
-python <…>/turn_level.py gend selfplay.jsonl starts.jsonl plans.jsonl gend_starts.jsonl --out gend.jsonl --k 16 --workers 16
+python <…>/turn_level.py gend selfplay.jsonl starts.jsonl plans.jsonl gend_starts.jsonl --out gend.jsonl --k 16 --workers 12
 ```
 
 - 推这 6 个文件：selfplay.jsonl、starts.jsonl、plans.jsonl、teacher.jsonl、gend_starts.jsonl、gend.jsonl。

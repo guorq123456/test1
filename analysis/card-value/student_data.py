@@ -2,16 +2,16 @@
 2026-10-09 02:10: route A, the teacher's T as the training label, 400 G_end items as the validation set).
 
     python -m svsim.learn.netdata --games 1000 --deck ramp --opponent ramp --agent level-strong --explore 0 \\
-        --seed 65800000 --workers 16 --out selfplay_raw.jsonl                               (1. self-play)
+        --seed 65800000 --workers 12 --out selfplay_raw.jsonl                               (1. self-play)
     python3 <this> sort selfplay_raw.jsonl --out selfplay.jsonl      (netdata writes games as they finish: sorted by
                                                                       g, a game's line in the file is its g)
     cd <svsim checkout> && PYTHONPATH=.:<this folder> python3 <this> positions selfplay.jsonl --out positions.jsonl
     cd <svsim checkout> && PYTHONPATH=.:<this folder> python3 <this> teacher selfplay.jsonl positions.jsonl \\
-        --out teacher.jsonl [--workers 16]
+        --out teacher.jsonl [--workers 12]
     cd <svsim checkout> && PYTHONPATH=.:<this folder> python3 <this> valitems selfplay.jsonl positions.jsonl \\
         teacher.jsonl --out val_items.jsonl
     cd <svsim checkout> && PYTHONPATH=.:<this folder> python3 <this> gend selfplay.jsonl val_items.jsonl \\
-        --out val_gend.jsonl [--k 16] [--workers 16]
+        --out val_gend.jsonl [--k 16] [--workers 12]
     cd <svsim checkout> && PYTHONPATH=.:<this folder> python3 <this> labels selfplay.jsonl positions.jsonl \\
         teacher.jsonl --out labels.jsonl        (the student's labels, learn.handvalue.examples_from's format)
     cd <svsim checkout> && PYTHONPATH=.:<this folder> python3 <this> check selfplay.jsonl positions.jsonl \\
@@ -346,7 +346,7 @@ def main():
     b.add_argument("selfplay")
     b.add_argument("positions")
     b.add_argument("--out", required=True)
-    b.add_argument("--workers", type=int, default=16)
+    b.add_argument("--workers", type=int, default=12)
     b.add_argument("--first", type=int, default=None)
     c = sub.add_parser("valitems")
     c.add_argument("selfplay")
@@ -358,7 +358,7 @@ def main():
     d.add_argument("items")
     d.add_argument("--out", required=True)
     d.add_argument("--k", type=int, default=16)
-    d.add_argument("--workers", type=int, default=16)
+    d.add_argument("--workers", type=int, default=12)
     d.add_argument("--first", type=int, default=None)
     e = sub.add_parser("sort")
     e.add_argument("raw")

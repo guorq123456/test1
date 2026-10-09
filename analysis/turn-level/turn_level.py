@@ -15,10 +15,10 @@ starts.jsonl, one line per turn start, numbered k:
   {"k", "src": "selfplay" | "salem", "game": g (self-play) or the game id, "at": the action index, "seat",
    "own_turn": the mover's turns taken, "batch": 1 (the 10 games) | 2 (the 17) | null}
 
-    ... plans selfplay.jsonl starts.jsonl --out plans.jsonl [--workers 16] [--only K,K,...]
-    ... teacher selfplay.jsonl starts.jsonl plans.jsonl --out teacher.jsonl [--workers 16]
+    ... plans selfplay.jsonl starts.jsonl --out plans.jsonl [--workers 12] [--only K,K,...]
+    ... teacher selfplay.jsonl starts.jsonl plans.jsonl --out teacher.jsonl [--workers 12]
     ... pickgend starts.jsonl plans.jsonl --out gend_starts.jsonl
-    ... gend selfplay.jsonl starts.jsonl plans.jsonl gend_starts.jsonl --out gend.jsonl [--k 16] [--workers 16]
+    ... gend selfplay.jsonl starts.jsonl plans.jsonl gend_starts.jsonl --out gend.jsonl [--k 16] [--workers 12]
 
 plans: the build line's search.candidates.generate (ce6f95a) at each start, the bot level-strong (v2s), seed
 65960000 + k; at Salem's starts his own turn as the "salem" kind. Each plan is kept as its actions on the real
@@ -571,14 +571,14 @@ def main():
     a.add_argument("selfplay")
     a.add_argument("starts")
     a.add_argument("--out", required=True)
-    a.add_argument("--workers", type=int, default=16)
+    a.add_argument("--workers", type=int, default=12)
     a.add_argument("--only", default=None, help="only these k (comma-separated)")
     a = sub.add_parser("teacher")
     a.add_argument("selfplay")
     a.add_argument("starts")
     a.add_argument("plans")
     a.add_argument("--out", required=True)
-    a.add_argument("--workers", type=int, default=16)
+    a.add_argument("--workers", type=int, default=12)
     a = sub.add_parser("pickgend")
     a.add_argument("starts")
     a.add_argument("plans")
@@ -590,7 +590,7 @@ def main():
     a.add_argument("gend_starts")
     a.add_argument("--out", required=True)
     a.add_argument("--k", type=int, default=16, help="determinizations per group (2 groups)")
-    a.add_argument("--workers", type=int, default=16)
+    a.add_argument("--workers", type=int, default=12)
     a = sub.add_parser("report")
     a.add_argument("starts")
     a.add_argument("plans")
