@@ -1,0 +1,7 @@
+# Turn-level step 1 gate read (RC 36b23c5); python3 analysis/oracle-hand/pooled.py <file>
+## N check (N = 208)
+analysis/gates/step1/ncheck_ramp_ramp.jsonl: 20 pairs, seeds 66099000..66099019, 57.5% ± 10.7% (46.8%..68.2%), CR +71 (-30..+180; steady-state +60); ms per searched decision A 165.02 / B 158.67 = 1.040
+pooled pair by pair (20 pairs, stratified bootstrap 4000): 57.5% (47.5%..67.5%), CR +71 (-24..+172; steady-state +60)
+## gate (N = 200)
+analysis/gates/step1/ramp_ramp.jsonl: 300 pairs, seeds 66000000..66000299, 52.8% ± 3.4% (49.4%..56.2%), CR +27 (-5..+59; steady-state +23); ms per searched decision A 152.57 / B 152.95 = 0.997
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 52.8% (49.5%..56.3%), CR +27 (-5..+60; steady-state +23)
