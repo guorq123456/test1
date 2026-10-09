@@ -14,6 +14,10 @@
         --out val_gend.jsonl [--k 16] [--workers 16]
     cd <svsim checkout> && PYTHONPATH=.:<this folder> python3 <this> labels selfplay.jsonl positions.jsonl \\
         teacher.jsonl --out labels.jsonl        (the student's labels, learn.handvalue.examples_from's format)
+    cd <svsim checkout> && PYTHONPATH=.:<this folder> python3 <this> check selfplay.jsonl positions.jsonl \\
+        teacher.jsonl val_items.jsonl val_gend.jsonl labels.jsonl      (the analysis line, before reading: counts,
+                                                                        seeds, and positions / valitems / labels
+                                                                        recomputed and compared)
 
 The labels (the build line's learn.handvalue.examples_from, 5a250ce): one JSON line per keep:<card> of a position's
 principal line whose card is in the mover's hand at the turn start: {"g": the game's line in selfplay.jsonl (= its
@@ -258,6 +262,80 @@ def labels(args):
           f"占这两类以外的 {null / max(out + null, 1):.1%}，也去掉了）")
 
 
+def check(args):
+    """The six files as RC pushes them, checked before anything reads them: counts, seeds, splits, and the steps
+    that are pure functions of earlier files (positions, valitems, labels) recomputed here and compared."""
+    import tempfile
+    from collections import Counter
+    from types import SimpleNamespace as NS
+    bad = []
+
+    def say(ok, text):
+        print(("- " if ok else "- **不对**：") + text)
+        if not ok:
+            bad.append(text)
+    print("条件：对手卡表已知（牌序、手牌未知）。学生数据六个文件的核对（读之前）\n")
+    games = _lines(args.selfplay)
+    gs = [r["g"] for r in games]
+    say(gs == list(range(len(gs))), f"自对弈 {len(games)} 局，按 g 排好、第 n 行就是 g = n：{gs == list(range(len(gs)))}")
+    win0 = Counter(r.get("winner") for r in games)
+    lens = [len(r["actions"]) for r in games]
+    print(f"- 胜者分布 {dict(win0)}；每局动作数中位 {sorted(lens)[len(lens) // 2]}（{min(lens)}～{max(lens)}）")
+    pos = _lines(args.positions)
+    with tempfile.TemporaryDirectory() as tmp:
+        again = os.path.join(tmp, "positions.jsonl")
+        positions(NS(selfplay=args.selfplay, out=again))
+        say(_lines(again) == pos, f"局面 {len(pos)} 个，照 Random({BANK + 10000}) 重算一遍完全一样："
+                                  f"{_lines(again) == pos}")
+    split = Counter(p["split"] for p in pos)
+    print(f"- 留出 {split.get('val', 0)}、训练 {split.get('train', 0)}（留出占 {split.get('val', 0) / max(len(pos), 1):.1%}，"
+          f"按局 g % {HOLD_OUT} == 0 应在 9% 上下）；自己第几回合 {dict(sorted(Counter(p['own_turn'] for p in pos).items()))}")
+    rows = _lines(args.teacher)
+    keys = Counter((r["n"], r["s"]) for r in rows)
+    want = {(p["n"], s) for p in pos for s in (0, 1)}
+    say(set(keys) == want and max(keys.values()) == 1,
+        f"老师 {len(rows)} 行，每个（局面 × 种子）正好一行：{set(keys) == want and max(keys.values()) == 1}"
+        f"（缺 {len(want - set(keys))}，多出 {len(set(keys) - want)}，重复 {sum(v > 1 for v in keys.values())}）")
+    seeds_ok = all(r["seed"] == BANK + 20000 + 2 * r["n"] + r["s"] for r in rows)
+    say(seeds_ok, f"老师的种子都是 {BANK + 20000} + 2n + s：{seeds_ok}")
+    kinds = Counter(k.split(":")[0] for r in rows for k in r["res"])
+    empty = sum(not r["res"] for r in rows)
+    print(f"- 限制的种类 {dict(kinds)}；一个限制都没有的行 {empty}（主线什么都没出、没进化、没用额外 PP）")
+    with tempfile.TemporaryDirectory() as tmp:
+        lab = os.path.join(tmp, "labels.jsonl")
+        labels(NS(selfplay=args.selfplay, positions=args.positions, teacher=args.teacher, out=lab))
+        mine = _lines(lab)
+        theirs = _lines(args.labels)
+        say(mine == theirs, f"标签 {len(theirs)} 个，用现在的脚本（62185dc 起）重出一份完全一样：{mine == theirs}"
+                            + ("" if mine == theirs else f"（重出的是 {len(mine)} 个；RC 用了旧脚本的话，用重出的这份）"))
+        items = _lines(args.val_items)
+        again = os.path.join(tmp, "val_items.jsonl")
+        valitems(NS(selfplay=args.selfplay, positions=args.positions, teacher=args.teacher, out=again))
+        say(_lines(again) == items, f"验证项 {len(items)} 个，照 Random({BANK + 80000}) 重算一遍完全一样："
+                                    f"{_lines(again) == items}")
+    by_n = {p["n"]: p for p in pos}
+    say(all(by_n[it["n"]]["split"] == "val" for it in items), "验证项全在留出局面里："
+        f"{all(by_n[it['n']]['split'] == 'val' for it in items)}")
+    ge = _lines(args.val_gend)
+    got = Counter(r["i"] for r in ge)
+    say(set(got) == {it["i"] for it in items} and max(got.values(), default=0) == 1,
+        f"G_end {len(ge)} 行，每个验证项正好一行：{set(got) == {it['i'] for it in items}}"
+        f"（缺 {len({it['i'] for it in items} - set(got))}，重复 {sum(v > 1 for v in got.values())}）")
+    ks = Counter(r["k"] for r in ge)
+    say(set(ks) == {16} and all(len(r["samples"]) == 32 for r in ge),
+        f"每项 K = 32（2 组 × 16）：{dict(ks)}，样本数都是 32：{all(len(r['samples']) == 32 for r in ge)}")
+    leak, n_games = sum(r["keep_arm_left"] for r in ge), sum(len(r["samples"]) for r in ge)
+    say(leak <= 0.01 * max(n_games, 1), f"留那一支里 c 还是离手的局：{leak} / {n_games}"
+        "（精确检查在搜索的 veto 里，应该几乎是 0）")
+    import numpy as np
+    if len(ge) > 2:
+        a, b = np.array([r["G_end1"] for r in ge]), np.array([r["G_end2"] for r in ge])
+        r12 = float(np.corrcoef(a, b)[0, 1]) if a.std() > 0 and b.std() > 0 else float("nan")
+        print(f"- G_end 均值 {np.mean([r['G_end'] for r in ge]):+.3f}；两组之间的相关 {r12:.3f}"
+              f"（折成 32 局的信度 {2 * r12 / (1 + r12):.3f}，Spearman-Brown）")
+    print("\n" + ("**全部对上。**" if not bad else f"**{len(bad)} 处不对，先别读，查清楚再说。**"))
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -290,9 +368,12 @@ def main():
     f.add_argument("positions")
     f.add_argument("teacher")
     f.add_argument("--out", required=True)
+    h = sub.add_parser("check")
+    for name in ("selfplay", "positions", "teacher", "val_items", "val_gend", "labels"):
+        h.add_argument(name)
     args = ap.parse_args()
     {"positions": positions, "teacher": teacher, "valitems": valitems, "gend": gend, "sort": sort,
-     "labels": labels}[args.cmd](args)
+     "labels": labels, "check": check}[args.cmd](args)
 
 
 if __name__ == "__main__":
