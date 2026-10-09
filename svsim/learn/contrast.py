@@ -67,10 +67,10 @@ class ContrastLinear:
         return (np.asarray(X, float) - self.mean) / self.std
 
     def forward(self, Xs):
-        return Xs @ self.w
+        return (Xs @ self.w.astype(Xs.dtype)).astype(float)
 
     def backward(self, Xs, dz):
-        return Xs.T @ dz
+        return (Xs.T @ np.asarray(dz, Xs.dtype)).astype(float)
 
 
 def contrast_loss(model: ContrastLinear, A, B, dT, w, C=None, y=None, mu: float = 0.0, l2: float = 0.0,
@@ -115,15 +115,17 @@ def fit_contrast(XA, XB, dT, w=None, XC=None, yc=None, mu: float = 0.1, l2: floa
     `keep`: a 0/1 mask of features to use (learn.phased.STOCK zeroed). `init`: (coef, mean, std) of a model to
     start from (start_from; e.g. the installed turn-end model), else zeros."""
     from svsim.learn.fit import project, standardize
-    XA, XB = np.asarray(XA, float), np.asarray(XB, float)
+    dtype = np.float32 if getattr(XA, "dtype", None) == np.float32 else float   # float32 input stays float32
+    XA, XB = np.asarray(XA, dtype), np.asarray(XB, dtype)
     n = XA.shape[1]
     bias = bias % n
     keep = np.ones(n) if keep is None else np.asarray(keep, float)
-    pool = np.vstack([XA, XB] + ([np.asarray(XC, float)] if XC is not None and len(XC) else []))
-    mean, std = standardize(pool * keep, bias)
+    pool = np.vstack([XA, XB] + ([np.asarray(XC, dtype)] if XC is not None and len(XC) else []))
+    mean, std = standardize(np.asarray(pool * keep, float), bias)
     model = ContrastLinear(n, bias, mean, std)
-    A, B = model.standardize(XA * keep), model.standardize(XB * keep)
-    C = model.standardize(np.asarray(XC, float) * keep) if XC is not None and len(XC) else None
+    cast = lambda X: model.standardize(X * keep).astype(dtype)
+    A, B = cast(XA), cast(XB)
+    C = cast(np.asarray(XC, dtype)) if XC is not None and len(XC) else None
     y = np.asarray(yc, float) if yc is not None else None
     dT = np.asarray(dT, float)
     w = np.ones(len(dT)) if w is None else np.asarray(w, float)
