@@ -246,7 +246,7 @@ def root_keep(uids, me):
     return veto
 
 
-def play_out_fixed(base, me, arm, seed, cid):
+def play_out_fixed(base, me, arm, seed, cid, strict=False):
     """play_out with the fixed arms: the exact checks (root_use / root_keep) are the search's own veto, so
     they hold at every node of its tree (the search picks its move among its root's children, built through
     the veto; a filter on the legal list handed to act() does nothing, which is why the first version's
@@ -261,14 +261,26 @@ def play_out_fixed(base, me, arm, seed, cid):
         inner = inner.base
     old = inner.search.veto
     inner.search.veto = (lambda s, a: root(s, a) or old(s, a)) if old else root
+    overridden = 0
     while not st.over and st.active == me:
         legal = legal_actions(st)
-        apply(st, agent.act(st, [a for a in legal if not root(st, a)] or legal))
+        allowed = [a for a in legal if not root(st, a)]
+        a = agent.act(st, allowed or legal)
+        if strict and allowed and a not in allowed:
+            # the lethal planner (agents.lethal_agent) plays its line's step whenever it is legal, listed or not
+            # (search.combo.listed), so a lethal with c went past the check: under `strict` the inner search
+            # chooses instead, its root built through the veto (the student's validation set, 2026-10-09)
+            a = inner.act(st, allowed)
+            overridden += 1
+            if a not in allowed:
+                a = next((x for x in allowed if type(x).__name__ == "EndTurn"), allowed[0])
+        apply(st, a)
     left = not start <= {c.uid for c in st.players[me].hand}
     agents = {me: make_agent(V2, seed + 3), 1 - me: make_agent(V2, seed + 1)}
     while not st.over:
         apply(st, agents[st.active].act(st, legal_actions(st)))
-    return (1.0 if st.winner == me else 0.0 if st.winner == 1 - me else 0.5), left
+    result = 1.0 if st.winner == me else 0.0 if st.winner == 1 - me else 0.5
+    return (result, left, overridden) if strict else (result, left)
 
 
 def play_out(base, me, veto, seed, cid):

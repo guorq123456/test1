@@ -180,19 +180,27 @@ def valitems(args):
 def _gend_job(job):
     from svsim.core.view import determinize
     import salem_discrim as D
-    it, k = job
+    it, k = job[:2]
+    strict = len(job) > 2 and job[2]
     st = _state_at(GAMES[str(it["g"])], it["at"])
     me = st.active
-    diffs, leak = [], 0
+    diffs, leak, over = [], 0, 0
     for j in range(2 * k):
         s = BANK + 40000 + 100 * it["i"] + j
         base = determinize(st, me, random.Random(s))
-        keep, lk = D.play_out_fixed(base, me, "keep", 10 * s, it["card"])
+        if strict:
+            keep, lk, ov = D.play_out_fixed(base, me, "keep", 10 * s, it["card"], strict=True)
+            over += ov
+        else:
+            keep, lk = D.play_out_fixed(base, me, "keep", 10 * s, it["card"])
         line, _ = D.play_out(base, me, None, 10 * s, it["card"])
         diffs.append(keep - line)
         leak += lk
-    return {**it, "k": k, "G_end": sum(diffs) / len(diffs), "G_end1": sum(diffs[:k]) / k,
-            "G_end2": sum(diffs[k:]) / k, "samples": diffs, "keep_arm_left": leak}
+    out = {**it, "k": k, "G_end": sum(diffs) / len(diffs), "G_end1": sum(diffs[:k]) / k,
+           "G_end2": sum(diffs[k:]) / k, "samples": diffs, "keep_arm_left": leak}
+    if strict:
+        out.update(strict=True, lethal_overridden=over)
+    return out
 
 
 def gend(args):
@@ -201,9 +209,12 @@ def gend(args):
     done = set()
     if os.path.exists(args.out):
         done = {r["i"] for r in _lines(args.out)}
-    jobs = [(it, args.k) for it in items if it["i"] not in done]
+    jobs = [(it, args.k, args.strict) for it in items if it["i"] not in done]
     if args.first is not None:                      # smoke tests only
         jobs = [j for j in jobs if j[0]["i"] < args.first]
+    if args.only:                                   # a re-run of some items (e.g. --strict for the leaked ones)
+        want = {int(x) for x in args.only.split(",")}
+        jobs = [j for j in jobs if j[0]["i"] in want]
     print(f"{len(items)} 项，要量 {len(jobs)}（已完成 {len(done)}），每项 2 × {args.k} 个确定化 × 2 支", flush=True)
     with Pool(args.workers, initializer=_init_games, initargs=(games,)) as pool, \
             open(args.out, "a", encoding="utf-8") as fh:
@@ -336,6 +347,73 @@ def check(args):
     print("\n" + ("**全部对上。**" if not bad else f"**{len(bad)} 处不对，先别读，查清楚再说。**"))
 
 
+def _ranks(x):
+    import numpy as np
+    x = np.asarray(x, dtype=float)
+    order = np.argsort(x, kind="mergesort")
+    r = np.empty(len(x))
+    r[order] = np.arange(1, len(x) + 1)
+    for v in np.unique(x):
+        tie = x == v
+        r[tie] = r[tie].mean()
+    return r
+
+
+def _sp(a, b):
+    import numpy as np
+    ra, rb = _ranks(a), _ranks(b)
+    return float(np.corrcoef(ra, rb)[0, 1]) if ra.std() > 0 and rb.std() > 0 else float("nan")
+
+
+def summary(args):
+    """The data read before any student (the labels, the teacher's own reliability, the weights, the validation
+    set's G_end and how T agrees with it); with --strict, G_end with the strict keep arm's re-run items in place."""
+    import numpy as np
+    labs = _lines(args.labels)
+    print("条件：对手卡表已知（牌序、手牌未知）。学生数据的读数（任何学生之前）\n")
+    split = {k: sum(x["split"] == k for x in labs) for k in ("train", "val")}
+    t = np.array([x["t"] for x in labs])
+    print(f"- 标签 {len(labs)} 个（训练 {split['train']}、留出 {split['val']}）；T 均值 {t.mean():+.4f}、标准差 {t.std():.4f}；"
+          f"T > 0（留着比照主线打好）{(t > 0).mean():.1%}，T < 0 {(t < 0).mean():.1%}")
+    two = [x for x in labs if len(x["seeds"]) == 2]
+    s0, s1 = [x["seeds"][0] for x in two], [x["seeds"][1] for x in two]
+    r = _sp(s0, s1)
+    print(f"- 老师自身的一致度（两个种子都有的 {len(two)} 个标签；另 {len(labs) - len(two)} 个只在一个种子的主线上）："
+          f"种子之间 Spearman {r:.3f}，两个种子平均后的信度 {2 * r / (1 + r):.3f}（Spearman-Brown）"
+          f"→ 第 2 条的提议门槛 0.8 × 信度 = {0.8 * 2 * r / (1 + r):.3f}")
+    w = np.array([1 / max(x["var"], 1e-5) for x in labs])
+    ess = float(w.sum() ** 2 / np.sum(w * w)) / len(w)
+    print(f"- 1 / var 权重的有效样本量占 {ess:.1%}（var 撞到下限 1e-5 的 {np.mean([x['var'] <= 1e-5 for x in labs]):.1%}）"
+          f"→ 建造线的 fit {'退回等权' if ess < 0.3 else '照用权重'}")
+    T = {}
+    for row in _lines(args.teacher):
+        for key, v in row["res"].items():
+            if key.startswith("keep:"):
+                T.setdefault((row["n"], int(key.split(":")[1])), []).append(v["teacher"])
+    base = {g["i"]: g for g in _lines(args.val_gend)}
+    versions = [("RC 原版", base)]
+    if args.strict:
+        fixed = dict(base)
+        strict = {g["i"]: g for g in _lines(args.strict)}
+        fixed.update(strict)
+        versions.append((f"严格的留（{len(strict)} 项重跑替换）", fixed))
+    for name, ge in versions:
+        rows = sorted(ge.values(), key=lambda g: g["i"])
+        g = np.array([x["G_end"] for x in rows])
+        a, b = np.array([x["G_end1"] for x in rows]), np.array([x["G_end2"] for x in rows])
+        rh = _sp(a, b)
+        rel_g = 2 * rh / (1 + rh)
+        leak = sum(x["keep_arm_left"] for x in rows)
+        tv = [(np.mean(T[(x["n"], x["card"])]), x["G_end"]) for x in rows if (x["n"], x["card"]) in T]
+        rtg = _sp([u for u, _ in tv], [v for _, v in tv])
+        rel_t = 2 * r / (1 + r)
+        print(f"\n**G_end，{name}**（{len(rows)} 项 × 32 局）")
+        print(f"- 均值 {g.mean():+.3f}；G_end < 0（留着比照主线打差）{(g < 0).mean():.1%}；留那一支里 c 还是离手的局 {leak}")
+        print(f"- 两组之间 Spearman {rh:.3f}，32 局的信度 {rel_g:.3f}")
+        print(f"- 副读：老师 T 对 G_end，Spearman {rtg:.3f}（{len(tv)} 项）；按两边的信度折算（{rel_t:.3f}、{rel_g:.3f}）"
+              f"约 {rtg / (rel_t * rel_g) ** 0.5:.3f}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -360,6 +438,9 @@ def main():
     d.add_argument("--k", type=int, default=16)
     d.add_argument("--workers", type=int, default=12)
     d.add_argument("--first", type=int, default=None)
+    d.add_argument("--only", default=None, help="only these items (comma-separated i)")
+    d.add_argument("--strict", action="store_true",
+                   help="the keep arm holds against the lethal planner too (salem_discrim.play_out_fixed strict)")
     e = sub.add_parser("sort")
     e.add_argument("raw")
     e.add_argument("--out", required=True)
@@ -368,12 +449,17 @@ def main():
     f.add_argument("positions")
     f.add_argument("teacher")
     f.add_argument("--out", required=True)
+    m = sub.add_parser("summary")
+    m.add_argument("labels")
+    m.add_argument("teacher")
+    m.add_argument("val_gend")
+    m.add_argument("--strict", default=None, help="the strict keep arm's re-run rows, put in place of theirs")
     h = sub.add_parser("check")
     for name in ("selfplay", "positions", "teacher", "val_items", "val_gend", "labels"):
         h.add_argument(name)
     args = ap.parse_args()
     {"positions": positions, "teacher": teacher, "valitems": valitems, "gend": gend, "sort": sort,
-     "labels": labels, "check": check}[args.cmd](args)
+     "labels": labels, "check": check, "summary": summary}[args.cmd](args)
 
 
 if __name__ == "__main__":
