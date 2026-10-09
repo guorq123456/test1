@@ -333,6 +333,7 @@ EXTRAS = {
     "board": ["me_pressure", "me_hp_early", "me_hp_mid", "op_pressure", "op_hp_early", "op_hp_mid"],
     "hpphase": ["me_hp_early", "me_hp_mid", "op_hp_early", "op_hp_mid"],
     "hand_value": ["hand_value"],     # not me_hand_*: learn.phased.STOCK zeroes that prefix
+    "clock": ["me_burst", "op_burst", "me_clock", "op_clock", "clock_lead"],
 }
 # - "board" (6, C3, the analysis thread's analysis/c3-threat/README.md section 4, 09f7ca2): for each side s (mine,
 #   then the opponent's; e its enemy) pressure = min(_board_threat(e) / max(s's leader HP, 1), 1.5), then s's leader
@@ -432,6 +433,61 @@ def _hand_value(state: GameState, player: int, hv=None) -> list[float]:
 
 
 EXTRA_FNS["hand_value"] = _hand_value
+
+
+# - "clock" (5, turn-level step 1, the architecture thread 2026-10-09 11:12Z): each side's burst on its next turn,
+#   roughly - the attack of its followers that can attack, plus the most direct damage (learn.roles' face value,
+#   plus a Storm follower's attack) it can pay for with next turn's play points: mine from my hand (a knapsack over
+#   at most 9 cards and 10 points), the opponent's as their hand size times the mean affordable direct damage of
+#   their unseen pool (their hand and deck as one pool: never the determinized hand), capped at 20; then the turns
+#   each side needs to kill at that rate (the other leader's HP / the burst, at most 10) and the lead (the
+#   opponent's turns minus mine). No search; a few microseconds a leaf.
+_DIRECT: dict = {}
+
+
+def _direct(defn) -> float:
+    hit = _DIRECT.get(defn.card_id)
+    if hit is None:
+        from svsim.core.enums import Keyword
+        from svsim.learn.roles import card_roles
+        hit = float(card_roles(defn)[0])
+        if defn.is_follower and defn.keywords & Keyword.STORM:
+            hit += defn.atk
+        _DIRECT[defn.card_id] = hit
+    return hit
+
+
+def _best_direct(cards, budget: int) -> float:
+    """The most direct damage of a subset of (cost, damage) whose costs fit the budget (0/1 knapsack)."""
+    best = [0.0] * (budget + 1)
+    for cost, dmg in cards:
+        if dmg <= 0 or cost > budget:
+            continue
+        cost = max(cost, 0)
+        for b in range(budget, cost - 1, -1):
+            v = best[b - cost] + dmg
+            if v > best[b]:
+                best[b] = v
+    return best[budget]
+
+
+def _clock_values(state: GameState, player: int) -> list[float]:
+    from svsim.core.script import prop
+    me, op = state.players[player], state.players[1 - player]
+    board = lambda p: float(sum(f.atk for f in p.followers if not prop(f, "cant_attack")))
+    me_burst = board(me) + _best_direct([(c.cost, _direct(c.defn)) for c in me.hand], min(me.max_pp + 1, MAX_PP))
+    pool = op.hand + op.deck
+    op_burst = board(op)
+    if pool and op.hand:
+        budget = min(op.max_pp + 1, MAX_PP)
+        mean = sum(_direct(c.defn) for c in pool if c.cost <= budget) / len(pool)
+        op_burst += min(len(op.hand) * mean, 20.0)
+    me_clock = min(op.leader_hp / max(me_burst, 1.0), 10.0)
+    op_clock = min(me.leader_hp / max(op_burst, 1.0), 10.0)
+    return [me_burst, op_burst, me_clock, op_clock, op_clock - me_clock]
+
+
+EXTRA_FNS["clock"] = _clock_values
 
 
 def extra_features(state: GameState, player: int, extras, hv=None) -> list[float]:
