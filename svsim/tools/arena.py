@@ -182,7 +182,7 @@ def _make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet="))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet="))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -299,6 +299,22 @@ def _make_agent(spec: str, seed: int):
                                    pairs=int(pairs or 1), qgap=float(qgap) if qgap else None,
                                    confirm=float(confirm or 0),
                                    **({"kinds": kinds} if kinds else {}))
+        pick = [o for o in options if o.startswith("pick")]
+        if pick:                                   # the whole turn picked among plans (agents.turnpick_agent)
+            from svsim.agents.turnpick_agent import TurnPickAgent
+            import re
+            # +pick[dD][iI][mM][zZ][k<letters>]: D shared determinizations (8), the plans' own searches of I
+            # iterations (100), switch past margin M (0) and Z paired standard errors (1); kinds beside "bot":
+            # s second, t third, r race (default str), k keep a card, p keep the bonus PP, e don't evolve
+            m = re.fullmatch(r"pick(?:d(\d+))?(?:i(\d+))?(?:m([\d.]+))?(?:z([\d.]+))?(?:k([strkpe]+))?", pick[0])
+            if m is None or cross:
+                raise ValueError(f"unknown agent option {pick[0]!r}" if m is None else "+pick and +cross together")
+            d, it, margin, z, only = m.groups()
+            letters = {"s": "second", "t": "third", "r": "race", "k": "keep", "p": "save", "e": "noevo"}
+            kinds = ("bot",) + tuple(letters[c] for c in (only or "str"))
+            plan_spec = "+".join([f"mcts:{int(it or 100)}"] + [o for o in options if not o.startswith(("pick", "cross"))])
+            agent = TurnPickAgent(agent, plan_spec, samples=int(d or 8), margin=float(margin or 0), z=float(z or 1),
+                                  kinds=kinds, seed=seed)
         if name == "mcts-raw":
             return agent
         screen = [[int(x) for x in o[len("screen="):].split(":")] for o in options if o.startswith("screen=")]
