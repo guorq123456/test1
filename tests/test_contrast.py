@@ -167,6 +167,9 @@ def test_teacher_end_pairs_per_determinization_or_averaged(tmp_path):
     positions, _ = _positions()
     (s0, p0), (s1, p1) = positions[8], positions[10]
     e0, e1 = after_end_of_turn(s0), after_end_of_turn(s1)
+    over = e1.clone()
+    from svsim.core.enums import Phase
+    over.winner, over.phase = p1, Phase.OVER                           # a lethal during the turn: left out
     calls = []
 
     def pairs(path, starts, end_of_turn=False, keep_same=False):
@@ -174,6 +177,7 @@ def test_teacher_end_pairs_per_determinization_or_averaged(tmp_path):
         items = [{"start": 0, "s": 0, "j": j, "r": "keep:1", "a": e1 if j else e0, "b": e0, "dT": 0.1 * j,
                   "weight": 1.0} for j in range(3)]                     # j = 0: the same end as the line
         items += [{"start": 1, "s": 0, "j": 0, "r": "save", "a": e1, "b": e0, "dT": 0.5, "weight": 1.0}]
+        items += [{"start": 1, "s": 0, "j": 1, "r": "noevo", "a": over, "b": e0, "dT": 0.9, "weight": 1.0}]
         return [it for it in items if keep_same or it["a"] is not it["b"]]
     TE = SimpleNamespace(Starts=lambda selfplay: None, pairs=pairs)
     pos = tmp_path / "positions.jsonl"

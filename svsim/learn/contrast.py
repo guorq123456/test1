@@ -269,7 +269,9 @@ def teacher_end_pairs(ends, selfplay, positions, module=None, analysis_dir=None,
     restricted line's end a, of the principal line's end b, dT, weight). mode "det": one item per determinization
     (their default, determinizations where both lines took the same actions left out); "mean": one per (position,
     seed, restriction), dT the mean over all 8 determinizations (identical ones included, as the teacher's T), with
-    the first determinization's pair whose actions differ (none: left out). The features are the mover's
+    the first determinization's pair whose actions differ (none: left out). Pairs with a turn end where the game
+    is over (a lethal during the turn; their turn_end returns it as it is since 9999f81) are left out: the
+    evaluation gives the result there, not E. The features are the mover's
     (positions.jsonl's seat). split: "train" (games g % hold_out_every != 0), "val" (== 0) or None (both)."""
     TE = module if module is not None else _teacher_ends_module(analysis_dir)
     starts = TE.Starts(selfplay)
@@ -290,6 +292,8 @@ def teacher_end_pairs(ends, selfplay, positions, module=None, analysis_dir=None,
 
     if mode == "det":
         for it in TE.pairs(ends, starts, end_of_turn=True):
+            if it["a"].over or it["b"].over:           # the game ended during the turn: E is not asked there
+                continue
             if wanted(pos[it["start"]][0]):
                 yield item(it["start"], it["a"], it["b"], it["dT"], it["weight"])
         return
@@ -299,7 +303,7 @@ def teacher_end_pairs(ends, selfplay, positions, module=None, analysis_dir=None,
 
     def flush(group):
         diffs = [it["dT"] for it in group]
-        pick = next((it for it in group if not _same_end(it)), None)
+        pick = next((it for it in group if not (it["a"].over or it["b"].over) and not _same_end(it)), None)
         if pick is not None and wanted(pos[pick["start"]][0]):
             return item(pick["start"], pick["a"], pick["b"], sum(diffs) / len(diffs), 1.0)
         return None
