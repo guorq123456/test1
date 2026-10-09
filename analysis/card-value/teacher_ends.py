@@ -163,7 +163,9 @@ class Starts:
 def turn_end(row, starts: Starts, end_of_turn: bool = False):
     """The row's own-turn end, rebuilt: the start position determinized with det_seed, the actions applied; the
     summary checked (ValueError if it doesn't match). end_of_turn: also resolve the end-of-turn abilities, as the
-    ENDED model sees it (search.evaluate.after_end_of_turn), without starting the opponent's turn."""
+    ENDED model sees it (search.evaluate.after_end_of_turn), without starting the opponent's turn - unless the game
+    ended during the turn (a lethal, as a rule): then the finished position comes back as it is (`.over` set; the
+    evaluation gives the result itself). The build line 09:43Z: 7,177 of the 250,458 pairs have such an end."""
     from svsim.core.actions import from_dict
     from svsim.core.engine import apply
     from svsim.core.view import determinize
@@ -176,7 +178,7 @@ def turn_end(row, starts: Starts, end_of_turn: bool = False):
     if got != row["summary"]:
         raise ValueError(f"turn end of n={row['n']} s={row['s']} j={row['j']} r={row['r']} rebuilt as {got}, "
                          f"recorded {row['summary']}")
-    if end_of_turn:
+    if end_of_turn and not s.over:
         from svsim.search.evaluate import after_end_of_turn
         s = after_end_of_turn(s)
     return s
@@ -214,7 +216,8 @@ def teacher_values(d) -> dict:
 def pairs(path, starts: Starts, end_of_turn: bool = False, keep_same: bool = False):
     """The step-1 trainer's items, streamed: {"start": n, "s", "j", "r", "a": the restricted line's turn end
     (State), "b": the principal line's (State), "dT": value(a) - value(b), "weight": 1.0}. Determinizations where
-    both lines took the same actions (the same turn end) are left out unless keep_same."""
+    both lines took the same actions (the same turn end) are left out unless keep_same. A turn end where the game
+    is already over comes as the finished position (`.over`); whether to keep such a pair is the trainer's call."""
     for (n, s), d in groups(path):
         line = d["line"]
         for r, rs in sorted(d.items()):
