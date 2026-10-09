@@ -217,7 +217,7 @@ python -m svsim.tools.host turn_level gend selfplay.jsonl starts.jsonl plans.jso
 | race | 535 | 12.5% | 6.0% |
 | end | 535 | 2.4% | 0.7% |
 
-- 并进 bot 的候选按「不大于」算。race 常常和 bot 走到同一个回合末（535 个里只有少数单独成一个候选），所以它的比例低。
+- 并进 bot 的候选按「不大于」算。race 在 535 个开头里有 345 个（64%）和 bot 走到同一个回合末、并进了 bot，35 个并进了 second / third，单独成一个候选的只有 155 个（29%），所以它的比例低。
 
 **3. J21：Salem 和 bot 打法不同的回合**（85 个）
 - T 偏向 Salem：54.1%（43.5～63.5）。
