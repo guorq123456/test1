@@ -133,6 +133,7 @@
   - 落实的地方：`student_data.py labels`，会打出去掉了几个、占多少；`student_checks.py fidelity` 也照这个规矩，不算这些标签。建造线的 `examples_from_teacher` 由架构线程转告，照同一规矩改。
   - 验证项（`valitems`）不动：那边的真值是 G_end，不是老师。
   - 冒烟数据：70 个里去掉 6 个（8.6%），剩 64 个。剩下的按 se 算，有效样本量占 15%，fit 仍然退回等权。
+  - 建造线 4b6b7c7 照同一规矩改了 `examples_from_teacher`，去掉的数写进训练报告的 left_out。冒烟数据上核过：它和读 labels.jsonl 的 `examples_from` 都剩 64 个，(t, 权重) 一一对上。
 
 **我照记的一条（已由上面「系数挡门」处理）**：
 - 第 1 条测的是学生的 ΔH，可评估器里实际加上去的是「拟合系数 × ΔH」。如果 `learn.phased` 拟出来的 `hand_value` 系数 ≤ 0，ΔH 的符号对了反而说明评估器的方向错了。
