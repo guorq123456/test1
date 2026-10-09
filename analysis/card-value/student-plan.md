@@ -110,7 +110,18 @@
    - 门过（下沿 > 50%），置信 35%；
    - A 的得分点估计落在 51%～54%，置信 55%。
 
-**我照记的一条（不改上面的决定）**：
+**数据开跑前、任何学生和门之前补的两条**（架构线程 02:19、02:20）：
+- **系数挡门**：`unit --cand` 里 `hand_value` 的拟合系数必须 > 0，并且「系数 × ΔH」的符号要和 Salem 一致（系数 > 0 时，这等于 ΔH 的符号对）。
+  - 系数 ≤ 0 就不开门，先查它和 me_hand 张数是不是共线，把数报给架构线程。
+  - 脚本：`unit --cand … --selfplay … --positions …` 打出 hand_value 和 me_hand 的相关，以及它对全部现有回合末特征回归的 R²。
+- **标签格式对上建造线的学生**（5a250ce，`learn.handvalue.examples_from`）：
+  - `student_data.py labels` 每行一个标签：`{"g": 局在 selfplay.jsonl 里的行号, "i", "player", "uid", "t", "seeds"}`；
+  - 自对弈先按 g 排序，`sort` 这一步，让「第 n 行就是 g = n」；
+  - 留出规矩和 `examples_from(every=11)` 相同。
+  - 冒烟测试：建造线的 `examples_from` 读进了全部 70 个标签，留出 14、训练 56，和我这边的切分一致。
+  - 照记：两个种子的方差很小，权重都撞到 1 / 1e-3 = 1000 的上限，所以实际上是等权。
+
+**我照记的一条（已由上面「系数挡门」处理）**：
 - 第 1 条测的是学生的 ΔH，可评估器里实际加上去的是「拟合系数 × ΔH」。如果 `learn.phased` 拟出来的 `hand_value` 系数 ≤ 0，ΔH 的符号对了反而说明评估器的方向错了。
 - 所以 `student_checks.py unit --cand` 会同时打出系数和「系数 × ΔH」。系数 ≤ 0 时会特别标出来，交架构线程定。
 
@@ -120,11 +131,12 @@
 
 | 步 | 命令要点 | 种子 | 估时（RC 16 进程） |
 |---|---|---|---|
-| 1 自对弈 | `python -m svsim.learn.netdata --games 1000 --deck ramp --opponent ramp --agent level-strong --explore 0 --seed 65800000` | netdata 由 65800000 派生 | 约 5 分钟（实测每局约 4 CPU 秒） |
+| 1 自对弈 | `python -m svsim.learn.netdata --games 1000 --deck ramp --opponent ramp --agent level-strong --explore 0 --seed 65800000`，再 `student_data.py sort` 按 g 排序 | netdata 由 65800000 派生 | 约 5 分钟（实测每局约 4 CPU 秒） |
 | 2 抽局面 | `student_data.py positions`：所有自己回合的开头，打乱后取 10,000 个；`g % 11 == 0` 的局留出 | Random(65810000) | 几秒 |
 | 3 老师 | `student_data.py teacher`：每个局面 2 个种子，n30 老师，主线上的每个限制（keep:<牌>、save、noevo） | 65820000 + 2n + s | 约 15 分钟（实测每次约 0.7 CPU 秒） |
 | 4 验证项 | `student_data.py valitems`：留出局面里，主线上有「回合开头就在手里的牌」的，打乱取 400 个，每个一张牌 | Random(65880000) | 几秒 |
 | 5 验证集 G_end | `student_data.py gend`：留（c 这回合不许离手，精确检查放在搜索的 veto 里）对照主线（bot 自由打），K = 32，打到终局 | 65840000 + 100i + j | 约 65 分钟 |
+| 6 标签 | `student_data.py labels`：建造线学生的格式（见上） | — | 几秒 |
 
 - 合计约 1.5 小时。和学生无关，可以先跑。
 - 第 5 步的对照和老师的 keep:<牌> 一样，是「留着 c」减「照主线打」，所以 ΔH、T、G_end 量的是同一件事。

@@ -10,7 +10,8 @@ read through learn.features.extra_features, so the checks need nothing from the 
     ... <this> salem --games SALEM_GAMES --rows g_end.jsonl g_end2.jsonl --t teacher_rows.json --t teacher_rows2.json
     ... <this> pacing --a SPEC --b level-strong [--games 200] [--workers 16]
 
-1 (stops the gate) unit: Salem's top-10 #3 (1791317238047, action 53; the bot's seat, the original Ramp mirror),
+1 (stops the gate) unit: the refitted coefficient of hand_value must be > 0 (the architecture thread 02:19; else
+  no gate: check first whether it is collinear with me_hand, --selfplay --positions); and Salem's top-10 #3 (1791317238047, action 53; the bot's seat, the original Ramp mirror),
   dH must have G_end's sign there (the fixed arms, the same as Salem's choice): Sagatsumatsu, Burnite, Sloth of the
   Crestpetal, Dragonewt Promoter kept (+), Fate of the World used (-); and each of the five cards' dH must differ
   between maximum play points 2 and 9 (the same position, play points set to 2 / 9). Also reported: the refitted
@@ -117,10 +118,42 @@ def unit(args):
         print(f"| {name} | {'+（留着更好）' if want > 0 else '−（用掉更好）'} | {d:+.4f} | "
               f"{(coef * d) if coef is not None else float('nan'):+.4f} | {'是' if good else '**否**'} | "
               f"{d2:+.4f} / {d9:+.4f} | {'是' if diff else '**否**'} |")
-    print(f"\n符号五项全对：{'通过' if ok_sign else '**不通过**'}；2 PP 和 9 PP 五项都不同：{'通过' if ok_pp else '**不通过**'}"
-          f" → 第 1 条{'通过' if ok_sign and ok_pp else '**不通过（挡门）**'}")
-    if coef is not None and coef <= 0:
-        print("注意：hand_value 的拟合系数 ≤ 0，评估器里实际加上去的是 系数 × ΔH，符号和 ΔH 相反。")
+    ok_coef = coef is not None and coef > 0           # the architecture thread 02:19: part of the stop (with
+    #                                                    coef > 0, coef x dH has dH's signs, so they match Salem's)
+    print(f"\n符号五项全对：{'通过' if ok_sign else '**不通过**'}；2 PP 和 9 PP 五项都不同：{'通过' if ok_pp else '**不通过**'}；"
+          f"拟合系数 > 0：{'通过' if ok_coef else ('**不通过**' if coef is not None else '**没给 --cand，判不了**')}"
+          f" → 第 1 条{'通过' if ok_sign and ok_pp and ok_coef else '**不通过（挡门）**'}")
+    if args.selfplay and args.positions:
+        collinear(args)
+    elif coef is not None and coef <= 0:
+        print("系数 ≤ 0：按规矩先查它和 me_hand 张数是不是共线，请加 --selfplay --positions 再跑一次。")
+
+
+def collinear(args):
+    """hand_value against the base features on the training positions: its correlation with me_hand (cards in
+    hand) and the R^2 of hand_value on all the base turn-end features (how much of it they already hold)."""
+    import numpy as np
+    from svsim.learn.features import features, names
+    games = {str(r["g"]): r for r in (json.loads(x) for x in open(args.selfplay, encoding="utf-8") if x.strip())}
+    pos = [p for p in (json.loads(x) for x in open(args.positions, encoding="utf-8") if x.strip())
+           if p["split"] == "train"][:args.max_positions]
+    hv, X = [], []
+    for p in pos:
+        st = _state_at(games[str(p["g"])], p["at"])
+        me = st.active
+        hv.append(hand_value(st, me))
+        X.append(features(st, me, False, 2))
+    hv, X = np.array(hv), np.array(X, dtype=float)
+    cols = names(False, 2)
+    i_hand = cols.index("me_hand")
+    r_hand = float(np.corrcoef(hv, X[:, i_hand])[0, 1])
+    keep = X.std(axis=0) > 0
+    A = np.column_stack([X[:, keep], np.ones(len(X))])
+    beta, *_ = np.linalg.lstsq(A, hv, rcond=None)
+    r2 = 1 - float(np.sum((hv - A @ beta) ** 2) / np.sum((hv - hv.mean()) ** 2))
+    print(f"\n**共线检查**（训练局面 {len(pos)} 个）：hand_value 和 me_hand（手牌张数）的相关 {r_hand:+.3f}；"
+          f"hand_value 对全部现有回合末特征回归的 R² {r2:.3f}（越接近 1，它能给的新信息越少，系数越容易被挤成 ≤ 0）"
+          + ("；局面数不到特征数的 5 倍，R² 不可信" if len(pos) < 5 * A.shape[1] else ""))
 
 
 def fidelity(args):
@@ -256,6 +289,9 @@ def main():
     a.add_argument("--games", default="analysis/mirror-regression/salem_games.json")
     a.add_argument("--cand", default=None)
     a.add_argument("--pair", default="ramp-ramp")
+    a.add_argument("--selfplay", default=None, help="with --positions: the collinearity check")
+    a.add_argument("--positions", default=None)
+    a.add_argument("--max-positions", type=int, default=3000)
     b = sub.add_parser("fidelity")
     b.add_argument("--selfplay", required=True)
     b.add_argument("--positions", required=True)

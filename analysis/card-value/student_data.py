@@ -2,7 +2,9 @@
 2026-10-09 02:10: route A, the teacher's T as the training label, 400 G_end items as the validation set).
 
     python -m svsim.learn.netdata --games 1000 --deck ramp --opponent ramp --agent level-strong --explore 0 \\
-        --seed 65800000 --workers 16 --out selfplay.jsonl                                   (1. self-play)
+        --seed 65800000 --workers 16 --out selfplay_raw.jsonl                               (1. self-play)
+    python3 <this> sort selfplay_raw.jsonl --out selfplay.jsonl      (netdata writes games as they finish: sorted by
+                                                                      g, a game's line in the file is its g)
     cd <svsim checkout> && PYTHONPATH=.:<this folder> python3 <this> positions selfplay.jsonl --out positions.jsonl
     cd <svsim checkout> && PYTHONPATH=.:<this folder> python3 <this> teacher selfplay.jsonl positions.jsonl \\
         --out teacher.jsonl [--workers 16]
@@ -10,6 +12,14 @@
         teacher.jsonl --out val_items.jsonl
     cd <svsim checkout> && PYTHONPATH=.:<this folder> python3 <this> gend selfplay.jsonl val_items.jsonl \\
         --out val_gend.jsonl [--k 16] [--workers 16]
+    cd <svsim checkout> && PYTHONPATH=.:<this folder> python3 <this> labels selfplay.jsonl positions.jsonl \\
+        teacher.jsonl --out labels.jsonl        (the student's labels, learn.handvalue.examples_from's format)
+
+The labels (the build line's learn.handvalue.examples_from, 5a250ce): one JSON line per keep:<card> of a position's
+principal line whose card is in the mover's hand at the turn start: {"g": the game's line in selfplay.jsonl (= its
+g), "i": the action index, "player", "uid": the card (its first copy in hand order), "t": the mean of the two seeds'
+T, "seeds": [each seed's T], "se": [each seed's standard error], "split"}. The hold-out split is the same as
+examples_from(every=11): a game's line % 11 == 0.
 
 Seeds, all in the data bank 65800000-65899999:
   self-play         netdata --seed 65800000 (its games and agents derive their seeds from it);
@@ -197,6 +207,43 @@ def gend(args):
                 print(f"  {i} / {len(jobs)}", flush=True)
 
 
+def sort(args):
+    games = sorted(_lines(args.raw), key=lambda r: r["g"])
+    gs = [r["g"] for r in games]
+    assert gs == list(range(len(gs))), f"games missing or repeated: {len(gs)} lines, g from {gs[0]} to {gs[-1]}"
+    with open(args.out, "w", encoding="utf-8") as fh:
+        for r in games:
+            fh.write(json.dumps(r) + "\n")
+    print(f"{len(games)} 局，按 g 排好：第 n 行就是 g = n")
+
+
+def labels(args):
+    games = _lines(args.selfplay)
+    assert all(r["g"] == n for n, r in enumerate(games)), "selfplay.jsonl must be sorted by g (the sort step)"
+    pos = {p["n"]: p for p in _lines(args.positions)}
+    per = {}
+    for r in _lines(args.teacher):
+        for key, v in r["res"].items():
+            if key.startswith("keep:"):
+                per.setdefault((r["n"], int(key.split(":")[1])), {})[r["s"]] = v
+    out = absent = 0
+    with open(args.out, "w", encoding="utf-8") as fh:
+        for (n, cid), by_seed in sorted(per.items()):
+            p = pos[n]
+            st = _state_at(games[p["g"]], p["at"])
+            me = st.active
+            copy = next((c for c in st.players[me].hand if c.defn.card_id == cid), None)
+            if copy is None:              # drawn or made during the turn: not a card of the turn-start hand
+                absent += 1
+                continue
+            seeds = [by_seed[s]["teacher"] for s in sorted(by_seed)]
+            fh.write(json.dumps({"g": p["g"], "i": p["at"], "player": me, "uid": copy.uid, "card": cid,
+                                 "t": sum(seeds) / len(seeds), "seeds": seeds,
+                                 "se": [by_seed[s]["se"] for s in sorted(by_seed)], "split": p["split"]}) + "\n")
+            out += 1
+    print(f"{out} 个标签（回合开头不在手里的牌 {absent} 个，去掉了）")
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -221,8 +268,17 @@ def main():
     d.add_argument("--k", type=int, default=16)
     d.add_argument("--workers", type=int, default=16)
     d.add_argument("--first", type=int, default=None)
+    e = sub.add_parser("sort")
+    e.add_argument("raw")
+    e.add_argument("--out", required=True)
+    f = sub.add_parser("labels")
+    f.add_argument("selfplay")
+    f.add_argument("positions")
+    f.add_argument("teacher")
+    f.add_argument("--out", required=True)
     args = ap.parse_args()
-    {"positions": positions, "teacher": teacher, "valitems": valitems, "gend": gend}[args.cmd](args)
+    {"positions": positions, "teacher": teacher, "valitems": valitems, "gend": gend, "sort": sort,
+     "labels": labels}[args.cmd](args)
 
 
 if __name__ == "__main__":
