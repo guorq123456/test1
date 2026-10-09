@@ -376,6 +376,14 @@ def examples_from(records_path, labels_path, model: HandValue, every: int = 0, k
     return out
 
 
+def _no_change(rows: list, cid: int) -> bool:
+    """Every seed's keep:<cid> is exactly 0 with se 0: the restriction played the line itself on every
+    determinization. That says it changed nothing, not that the card is worth exactly 0 (the architecture
+    thread 02:38Z): such labels are left out."""
+    got = [r["res"][f"keep:{cid}"] for r in rows if f"keep:{cid}" in r["res"]]
+    return bool(got) and all(x.get("teacher") == 0 and x.get("se", 0.0) == 0 for x in got)
+
+
 def _teacher_label(rows: list, cid: int):
     """(T, var) of keep:<cid> over a position's teacher rows (one per seed): T the mean of the seeds' "teacher",
     var the mean of their se^2 over the number of seeds (floored at VAR_FLOOR); None if no seed has it."""
@@ -387,14 +395,16 @@ def _teacher_label(rows: list, cid: int):
     return t, max(var, VAR_FLOOR)
 
 
-def examples_from_teacher(model: HandValue, selfplay, positions, teacher, split: str | None = "train") -> list:
+def examples_from_teacher(model: HandValue, selfplay, positions, teacher, split: str | None = "train",
+                          stats: dict | None = None) -> list:
     """Training examples from the analysis line's student data (analysis/card-value/student_data.py): the
     self-play records, positions.jsonl ({"n", "g", "at", "seat", "split"}: own-turn starts) and teacher.jsonl
     ({"n", "s", "res": {"keep:<card id>": {"teacher", "se", ...}}}, a row per seed). Games are matched by their
     records' "g", not by line (netdata writes games as they finish). T(c) = keep:<c>, one copy of
     c taken out of the hand (the first), weight 1 / var. Only cards in hand at the turn start: the teacher's line
-    can also play a card drawn or made during the turn, which the student doesn't price. `split`: "train", "val"
-    or None (both)."""
+    can also play a card drawn or made during the turn, which the student doesn't price; labels whose restriction
+    changed nothing (_no_change) are left out too. `split`: "train", "val" or None (both); `stats`, if given,
+    counts what was left out ("not_in_hand", "no_change")."""
     from svsim.tools import records as R
     from svsim.core.actions import from_dict
     from svsim.core.engine import apply
@@ -416,6 +426,9 @@ def examples_from_teacher(model: HandValue, selfplay, positions, teacher, split:
             if r["n"] in pos:
                 rows.setdefault(r["n"], []).append(r)
     out = []
+    stats = stats if stats is not None else {}
+    stats.setdefault("not_in_hand", 0)
+    stats.setdefault("no_change", 0)
     for n in sorted(rows):
         p = pos[n]
         state = R.start(games[p["g"]])
@@ -427,6 +440,10 @@ def examples_from_teacher(model: HandValue, selfplay, positions, teacher, split:
         for cid in cids:
             card = next((c for c in hand if c.defn.card_id == cid), None)
             if card is None:                       # drawn or made during the turn: not this hand's
+                stats["not_in_hand"] += 1
+                continue
+            if _no_change(rows[n], cid):
+                stats["no_change"] += 1
                 continue
             label = _teacher_label(rows[n], cid)
             if label is not None:
@@ -479,14 +496,16 @@ def main() -> None:
            for k in ("selfplay", "positions", "teacher")}
     model = HandValue(sorted(vocab), args.embed, args.width, args.hidden, args.seed,
                       info={"data": sha, "iters": args.iters, "lr": args.lr, "l2": args.l2, "batch": args.batch})
-    train = examples_from_teacher(model, args.selfplay, args.positions, args.teacher, "train")
-    val = examples_from_teacher(model, args.selfplay, args.positions, args.teacher, "val")
+    left_out = {"train": {}, "val": {}}
+    train = examples_from_teacher(model, args.selfplay, args.positions, args.teacher, "train", left_out["train"])
+    val = examples_from_teacher(model, args.selfplay, args.positions, args.teacher, "val", left_out["val"])
     report = model.fit([e[:4] for e in train], args.iters, args.lr, args.l2, args.batch, args.seed,
                        holdout=[e[:4] for e in val] or None)
     for name, ex in (("train", train), ("val", val)):
         if ex:
             report[f"spearman_{name}"] = spearman(predictions(model, ex), np.array([e[2] for e in ex]))
             report[f"{name}_labels"] = len(ex)
+    report["left_out"] = left_out
     model.info["report"] = report
     model.save(args.out)
     print(json.dumps(report, ensure_ascii=False))

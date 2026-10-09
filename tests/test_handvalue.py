@@ -325,12 +325,18 @@ def test_the_analysis_line_s_teacher_data_reads_into_examples(tmp_path):
             res1 = {f"keep:{cid}": {"teacher": 0.4, "se": 0.3}}
             if not any(h.defn.card_id == absent for h in hand):
                 res0[f"keep:{absent}"] = {"teacher": 9.0, "se": 0.1}       # drawn during the turn: dropped
+            if len(hand) >= 2 and hand[1].defn.card_id != cid:          # the restriction changed nothing: dropped
+                same = {"teacher": 0.0, "se": 0.0}
+                res0[f"keep:{hand[1].defn.card_id}"] = res1[f"keep:{hand[1].defn.card_id}"] = same
             teach_rows += [{"n": n, "s": 0, "res": res0}, {"n": n, "s": 1, "res": res1}]
             n += 1
     (tmp_path / "positions.jsonl").write_text("\n".join(json.dumps(p) for p in pos_rows) + "\n", encoding="utf-8")
     (tmp_path / "teacher.jsonl").write_text("\n".join(json.dumps(t) for t in teach_rows) + "\n", encoding="utf-8")
     student = _student(seed=10)
-    train = examples_from_teacher(student, sp, tmp_path / "positions.jsonl", tmp_path / "teacher.jsonl", "train")
+    stats = {}
+    train = examples_from_teacher(student, sp, tmp_path / "positions.jsonl", tmp_path / "teacher.jsonl", "train",
+                                  stats)
+    assert stats["no_change"] > 0
     val = examples_from_teacher(student, sp, tmp_path / "positions.jsonl", tmp_path / "teacher.jsonl", "val")
     assert len(train) == sum(p["split"] == "train" for p in pos_rows)
     assert len(val) == sum(p["split"] == "val" for p in pos_rows)
@@ -347,6 +353,7 @@ def test_the_analysis_line_s_teacher_data_reads_into_examples(tmp_path):
                            "--out", str(out), "--iters", "20"], check=True, capture_output=True, text=True)
     report = json.loads(done.stdout.strip().splitlines()[-1])
     assert report["train_labels"] == len(train) and report["val_labels"] == len(val) and out.is_file()
+    assert report["left_out"]["train"]["no_change"] == stats["no_change"]
 
 
 def test_weights_carried_by_a_few_examples_fall_back_to_equal():
