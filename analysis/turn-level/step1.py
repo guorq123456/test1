@@ -496,6 +496,73 @@ def holdout(args):
                       f"（{np.nanpercentile(bs[(a, b)], 2.5):+.3f}～{np.nanpercentile(bs[(a, b)], 97.5):+.3f}）")
 
 
+# --- appendix: the evaluation's own favourite plan (README "第 1 步附录"; fixed before its numbers) ------------
+
+def diag(args):
+    """Per start and evaluator: V(c) = the mean win probability of plan c over its 16 T turn ends; c* = argmax V.
+    The share where c* is the bot's plan; c*'s and the bot's T regret by cross-seed (V_A and T_A choose, T_B
+    measures; both directions averaged); how often c* beats the bot's plan by T; c*'s kind. Held-out and
+    training starts on their own lines; intervals by resampling starts (2000, seed 0); points in win percent."""
+    import numpy as np
+    from collections import Counter
+    from svsim.tools.arena import make_agent
+    from svsim.tools.gate import _search
+    specs = {"installed": args.installed, "new": args.new}
+    W = {name: _search(make_agent(spec, 0)).weights for name, spec in specs.items()}
+    starts_rows = {r["k"]: r for r in SD._lines(args.starts)}
+    order = {r["k"]: [p["kind"] for p in r["plans"]] for r in SD._lines(args.plans)}
+    T = {}
+    for r in SD._lines(args.teacher):
+        for kind, v in r["values"].items():
+            T.setdefault(r["k"], {}).setdefault(kind, {})[r["s"]] = v
+    V = {e: {} for e in W}
+    starts_ = TEN.Starts(args.selfplay)
+    for row in TEN.rows(args.teacher_ends_s1):
+        st = TEN.turn_end(row, starts_, end_of_turn=True)
+        for e in W:
+            V[e].setdefault((row["n"], row["r"], row["s"]), []).append(_win(st, row["seat"], W[e]))
+    mean = lambda x: sum(x) / len(x)                                          # noqa: E731
+
+    def per_start(k, e):
+        kinds = order[k]
+        vfull = {c: mean(V[e][(k, c, 0)] + V[e][(k, c, 1)]) for c in kinds}
+        cstar = max(kinds, key=lambda c: vfull[c])                         # ties: the earlier plan (bot first)
+        t16 = {c: mean(T[k][c][0] + T[k][c][1]) for c in kinds}
+        reg_c, reg_b, gain, beat = [], [], [], []
+        for a, b in ((0, 1), (1, 0)):
+            ca = max(kinds, key=lambda c: mean(V[e][(k, c, a)]))
+            best = max(kinds, key=lambda c: mean(T[k][c][a]))
+            tb = {c: mean(T[k][c][b]) for c in kinds}
+            reg_c.append(tb[best] - tb[ca])
+            reg_b.append(tb[best] - tb["bot"])
+            gain.append(tb[ca] - tb["bot"])
+            if ca != "bot":
+                beat.append(1.0 if tb[ca] > tb["bot"] else 0.5 if tb[ca] == tb["bot"] else 0.0)
+        return {"k": k, "n": len(kinds), "cstar": cstar, "kind": cstar.split(":")[0], "is_bot": cstar == "bot",
+                "reg_c": 100 * mean(reg_c), "reg_b": 100 * mean(reg_b), "gain": 100 * mean(gain),
+                "beat_x": beat, "beat_full": (None if cstar == "bot" else
+                                              1.0 if t16[cstar] > t16["bot"] else 0.5 if t16[cstar] == t16["bot"]
+                                              else 0.0)}
+    rng = np.random.default_rng(0)
+    print("条件：对手卡表已知（牌序、手牌未知）。第 1 步附录：评估器自己最喜欢的打法（诊断，不判门）\n")
+    for split, label in (("val", "留出开头"), ("train", "训练开头（候选在这里是样本内）")):
+        ks = sorted(k for k in starts_rows if starts_rows[k]["split"] == split and k in T and k in order)
+        print(f"**{label}**：{len(ks)} 个（只有 1 个候选的 {sum(len(order[k]) == 1 for k in ks)} 个）")
+        for e in W:
+            rows = [per_start(k, e) for k in ks]
+            g = np.array([r["gain"] for r in rows])
+            bs = [g[rng.integers(0, len(g), len(g))].mean() for _ in range(2000)]
+            bx = [x for r in rows for x in r["beat_x"]]
+            bf = [r["beat_full"] for r in rows if r["beat_full"] is not None]
+            kinds = Counter(r["kind"] for r in rows if not r["is_bot"])
+            print(f"- {e}（`{specs[e]}`）：c* 是 bot 的打法 {np.mean([r['is_bot'] for r in rows]):.1%}；"
+                  f"交叉种子后悔：c* {np.mean([r['reg_c'] for r in rows]):.2f}、bot {np.mean([r['reg_b'] for r in rows]):.2f}"
+                  f" 个百分点，bot − c* = {g.mean():+.2f}（{np.percentile(bs, 2.5):+.2f}～{np.percentile(bs, 97.5):+.2f}）")
+            print(f"  - c* 不是 bot 时按 T 胜过 bot：交叉种子 {np.mean(bx) if bx else float('nan'):.1%}（{len(bx)} 次），"
+                  f"16 个合起来 {np.mean(bf) if bf else float('nan'):.1%}（{len(bf)} 个开头）")
+            print(f"  - c* 不是 bot 时落在：" + "、".join(f"{k} {v}" for k, v in kinds.most_common()))
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -530,12 +597,20 @@ def main():
     a.add_argument("--new", required=True, help="the candidate's agent string")
     a.add_argument("--installed", default="v2s")
     a.add_argument("--also", nargs="*", default=None, help="more evaluators set beside them (e.g. B')")
+    a = sub.add_parser("diag")
+    a.add_argument("selfplay")
+    a.add_argument("starts")
+    a.add_argument("plans")
+    a.add_argument("teacher")
+    a.add_argument("teacher_ends_s1")
+    a.add_argument("--new", required=True)
+    a.add_argument("--installed", default="v2s")
     for sp in sub.choices.values():
         sp.add_argument("--bank", type=int, default=BANK, help="the seed bank (another only for smoke tests)")
     args = ap.parse_args()
     _set_bank(args.bank)
     {"starts": starts, "plans": plans, "teacher": teacher, "gend": gend, "labels": labels,
-     "holdout": holdout}[args.cmd](args)
+     "holdout": holdout, "diag": diag}[args.cmd](args)
 
 
 if __name__ == "__main__":
