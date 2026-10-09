@@ -508,6 +508,13 @@ def report(args):
         failed = [x for x in f if x is not None]
         print(f"- {kind}：{len(failed)}/{len(f)}（{len(failed) / len(f):.1%}）"
               + (f"，其中第一步就对不上的 {sum(x == 0 for x in failed)}" if failed else ""))
+    if args.selfplay:
+        print("\n**留资源类守没守住自己的限制**（在真实局面的打法上查；生成器的 veto 只挂在内层搜索上，"
+              "斩杀规划器不看它；只报、不重跑，> 20% 时这类的结论不算数，第 1 步前先修）")
+        what = {"keep": "c 本回合离了手", "save": "用了额外 PP", "noevo": "进化了"}
+        for base, (n, br, into_bot) in sorted(resource_breaches(args.selfplay, starts_by_k, plans_rows).items()):
+            print(f"- {base}：{n} 个，{what[base]} {br}（{br / n:.1%}{'，超过 20%' if br / n > 0.2 else ''}），"
+                  f"其中因此并进 bot 打法的 {into_bot}")
     salem_diff = [r for r in rows if r["src"] == "salem" and "salem" in r["T"]]
     print(f"\n**3. Salem 和 bot 打法不同的回合**（{len(salem_diff)} 个）")
     if salem_diff:
@@ -556,6 +563,40 @@ def report(args):
                                          for kind, f in sorted(gf.items())))
 
 
+def resource_breaches(selfplay, starts_by_k, plans_rows):
+    """The resource kinds' plans checked against their own restriction on the real position (the architecture thread
+    07:16Z: the generator puts the veto on the inner search only, and level-strong's lethal planner doesn't look at
+    it): keep:<id> - a copy of the card held at the start left the hand this turn; save - the bonus play point was
+    used; noevo - something evolved. A kind merged into another plan is checked on that plan's actions (the same
+    turn end, so the same answer). {kind: [plans, breached, breached and merged into the bot's plan]}."""
+    from svsim.core.actions import EndTurn, Evolve, UseBonusPP, from_dict
+    from svsim.core.engine import apply
+    REC.update(_records(selfplay))
+    out = {}
+    for k, row in plans_rows.items():
+        state, _ = _start_state(starts_by_k[k])
+        me = state.active
+        by_kind = {p["kind"]: p for p in row["plans"]}
+        for kind, holder in _kind_of(row["plans"]).items():
+            base = kind.split(":")[0]
+            if base not in RESTRICTED:
+                continue
+            s, breached = state.clone(), False
+            start = {c.uid for c in s.players[me].hand if base == "keep" and c.defn.card_id == int(kind.split(":")[1])}
+            for a in (from_dict(x) for x in by_kind[holder]["actions"]):
+                if isinstance(a, EndTurn) or s.over or s.active != me:
+                    break
+                breached |= (base == "save" and isinstance(a, UseBonusPP)) or (base == "noevo" and isinstance(a, Evolve))
+                apply(s, a)
+            if base == "keep":
+                breached = not start <= {c.uid for c in s.players[me].hand}
+            c = out.setdefault(base, [0, 0, 0])
+            c[0] += 1
+            c[1] += breached
+            c[2] += breached and holder == "bot"
+    return out
+
+
 def Counter_(it):
     from collections import Counter
     return Counter(it)
@@ -596,6 +637,7 @@ def main():
     a.add_argument("plans")
     a.add_argument("teacher")
     a.add_argument("--gend", default=None)
+    a.add_argument("--selfplay", default=None, help="with it: the resource kinds checked against their restriction")
     for sp in sub.choices.values():
         sp.add_argument("--bank", type=int, default=BANK, help="the seed bank (another only for smoke tests)")
     args = ap.parse_args()
