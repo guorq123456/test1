@@ -1,0 +1,5 @@
+条件：对手卡表已知（牌序、手牌未知）。整回合耗时（单进程，种子 7，第 1 步前 60 个训练开头）
+- `mcts:200+plan+learned+phased+pickd8i200m0z1kstr`：每回合 1326 ms（中位 1089）；换了打法的回合 7/60
+- `mcts:200+plan+learned+phased`：每回合 306 ms（中位 296）；A ÷ 它 = 4.333，配平的 N = round(200 × 4.333) = 867
+- `mcts:800+plan+learned+phased`：每回合 1058 ms（中位 1016）；A ÷ 它 = 1.253，配平的 N = round(800 × 1.253) = 1002
+- `mcts:900+plan+learned+phased`：每回合 1195 ms（中位 1110）；A ÷ 它 = 1.110，配平的 N = round(900 × 1.110) = 999

@@ -61,6 +61,8 @@ def main():
     for sp in specs:                                  # warm-up (models load), not counted
         turn(sp, games, starts[args.n])
     rows = {sp: [] for sp in specs}
+    if args.out and os.path.dirname(args.out):
+        os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fh = open(args.out, "w", encoding="utf-8") if args.out else None
     for st in starts[:args.n]:
         for sp in specs:

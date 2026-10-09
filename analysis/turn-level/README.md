@@ -623,3 +623,74 @@ python -m svsim.tools.host step1 gendmore %D%/selfplay.jsonl %D%/starts.jsonl %D
   - 两批对得上：只看补充的 12 局 +6.11，只看原来的 4 局 +2.79，区间重叠；合并值就是两者按局数的加权平均（(4 × 2.79 + 12 × 6.11) / 16 = 5.28）。
   - 候选那一行每项平均 11.7 对局：它的 c* 有的不在补的打法里，那些项只有原来的 4 局。
   - 换算到每个自己回合的开头：c* ≠ bot 的方向占 14.3%，乘上每次 +5.3，平均每个回合开头约 +0.75 个百分点（见下一节定参数的表）。
+
+## turnpick 的等算力门（预注册；架构线程 23:20Z、23:41Z 布置；参数写死在任何门的对局之前）
+
+**条件**：对手卡表已知（牌序、手牌未知）。agent 是建造线 c4b887f 的 `+pick`（`agents/turnpick_agent.py`，说明在建造线 `analysis/turnpick/README.md`）。
+
+**A 和 B**
+- **A** = `mcts:200+plan+learned+phased+pickd8i200m0z1kstr`：现装 `level-strong`（`mcts:200+plan+learned+phased`）加上整回合挑选。
+  - 每个自己回合的第一个决策：用候选生成器出几种整回合打法；
+  - 在 D = 8 个共用的确定化上，用现装 ENDED 模型给每种打法的回合末打分；
+  - 最好的那种比 bot 的打法高出 M = 0、而且超过 Z = 1 个配对标准误，才换；否则这一回合照 `level-strong` 原样走。
+  - 打法自己的搜索 I = 200 次，类别 bot 加 second、third、race。
+- **B** = `mcts:N_B+plan+learned+phased`：`level-strong` 只加迭代次数，**N_B = 1000**（等算力，见下）。
+- svsim 用建造线 c4b887f 或之后。
+
+**参数为什么这样定**（看门之前定；用的都是第 1 步训练开头上已有的数）
+- **I = 200**：诊断（附录、附录二、附录三）的打法是 200 次的生成器（`level-strong`）出的。I 小了，候选里「bot」那条线比 `level-strong` 自己的回合弱，换的次数会虚高（建造线测的：i50 换 5/20，i200 换 2/20）。
+- **D = 8**：附录二、三里交叉种子的 c*_A 就是在一个种子的 8 个回合末上挑的，和验证过的做法一致。
+- **类别 str（second、third、race）**：
+  - 附录三里 c* 的 520 项，这三类占 431 项（83%），合并后 second +6.6、third +6.2 的区间都不含 0，race +4.1 跨 0（但留出上 +12.2、只看补充的局 +6.0，都不含 0）。
+  - keep（80 项）+4.8、区间跨 0，还要每回合多出一种打法的成本；save、noevo 合起来 9 项，noevo 是负的。都不要。
+- **M = 0、Z = 1**：架构线程的倾向。数据上 Z 几乎不影响结果。
+- **定参数用的检查**（不是读数；`turnpick_params.py`，输出 `step1_read/turnpick_params.txt`）：在第 1 步的 1821 个训练开头上，照 turnpick 的规则（在一个种子的 8 个回合末上挑，超过 Z 个配对标准误才换），用附录三合并后的 G_end 量收益，没换的算 0。平均每个自己回合的开头：
+
+| 类别 | Z = 0 | Z = 0.5 | **Z = 1** | Z = 1.5 | 换的比例（Z = 1） |
+|---|---|---|---|---|---|
+| **str** | +0.67 | +0.68 | **+0.66（+0.33～+1.01）** | +0.67 | 11.8% |
+| strk | +0.77 | +0.76 | +0.73（+0.37～+1.10） | +0.73 | 13.2% |
+| 全部 | +0.75 | +0.76 | +0.73（+0.38～+1.09） | +0.74 | 13.4% |
+
+  - 单位：胜率百分点。
+  - 选参数和量收益用的是同一批数，所以这张表偏乐观，只用来比较几种选法，不当效果的估计。
+  - 几种选法的区间大量重叠。str 比 strk 少约 0.07～0.1，换来的是每回合少一种打法。
+
+**等算力**
+- 量的是**整回合的毫秒数**（含挑选本身），用本线的 `turn_cost.py`：第 1 步前 60 个训练开头，从开头的真实局面把这一回合走完，单进程，种子 7，A 和 B 在每个开头上轮流走。
+- 不用门自己的毫秒数复核。原因：`tools.gate` 只记基础搜索跑过的那几步；turnpick 换了打法的回合是照着挑中的打法走的，基础搜索不跑，那一回合的挑选时间（A 每回合约八成的时间）就没记上。照这个复核，会把 A 算便宜、把 B 的 N 压低，对 A 有利。门行里照报门的毫秒比，只作参考。
+- 本机测（空机，单进程，60 个开头；`turnpick/cost_local.txt`）：
+  - A 每回合 1326 ms，换了打法的回合 7/60；
+  - B 在 200、800、900 次时每回合 306、1058、1195 ms，A ÷ B = 4.333、1.253、1.110；
+  - 800 次和 900 次两点配平的 N 都在 1000 左右（1002、999；两点间插值 997），**N_B 定为 1000**；
+  - 从 200 次按线性外推只有 867：迭代越多，每次迭代越便宜（或有不随迭代变的固定开销），所以在 800～900 次附近实测。
+- **RC 复核**：同一个命令在 RC 上跑，A 对 B（N_B）。A ÷ B 落在 0.97～1.03 之外，就修一次 N_B = round(N_B × A ÷ B)（工具直接打出「配平的 N」）。门行里报复核的比值和最后用的 N_B。
+
+**门**
+- 原版跳费龙镜像直接对打，`--fixed --max 600`，**定长 300 对**，种子 **66300000～66300299**（库 66300000）。
+- **判定**：单门规矩，下沿 > 50%。**没有确认门**。装机要 Salem 本人的话。
+- J 由架构线程给，写在看门之前。
+- 另报：A 先手、后手的分数；`turn_cost` 里 A 换了打法的回合数。
+
+**算力**：第 1 步的门（两边都是 200 次左右）在 RC 上记下的搜索时间合计约 4000 进程秒。这次两边都约是 `level-strong` 的 4.3 倍，约 1.7 万进程秒，12 进程约 25 分钟，加上开销约半小时到 40 分钟。复核约 5 分钟。
+
+**种子**：库 66300000～66399999，门用 66300000～66300299；`turn_cost` 不走种子库（种子 7，只量时间）。下一个空位 **66400000**。
+
+**RC 的命令**（svsim 用建造线 c4b887f 或之后；分析线分支 ccr-da4857cc-rkpgwr 在这份预注册的提交或之后）
+
+```
+cd <svsim checkout>
+set PYTHONPATH=.;<分析线分支>/analysis/turn-level;<分析线分支>/analysis/card-value     (Linux: export，用冒号)
+set D=<local/pairings-20261008>/analysis/turn-level/step1
+mkdir analysis\gates\turnpick                                                          (Linux: mkdir -p analysis/gates/turnpick)
+python -m svsim.tools.host turn_cost %D% --n 60 --a "mcts:200+plan+learned+phased+pickd8i200m0z1kstr" ^
+    --b "mcts:1000+plan+learned+phased" --out analysis/gates/turnpick/ncheck_cost.jsonl
+```
+- 看最后一行「A ÷ 它 = …，配平的 N = …」：比值在 0.97～1.03 之内，N_B 就用 1000；在外面就用它打出的「配平的 N」。
+
+```
+python -m svsim.tools.host svsim.tools.gate --a "mcts:200+plan+learned+phased+pickd8i200m0z1kstr" ^
+    --b "mcts:<N_B>+plan+learned+phased" --deck ramp --opponent ramp --fixed --max 600 --seed 66300000 ^
+    --workers 12 --out analysis/gates/turnpick/ramp_ramp.jsonl
+```
+- 推 2 个文件：`analysis/gates/turnpick/ncheck_cost.jsonl`、`analysis/gates/turnpick/ramp_ramp.jsonl`，复核打出的那几行也一起发回来。
