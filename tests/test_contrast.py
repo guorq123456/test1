@@ -132,3 +132,26 @@ def test_teacher_pairs_keep_the_card_and_replay_from_the_record(tmp_path):
     models = load(out)
     ended = next(m for k, m in models.items() if k[2] == "ended")
     assert len(models) == 2 and ended.info["contrast"] is True and ended.info["report"]["pairs"] == 1
+
+
+def test_features_of_a_determinized_turn_end_ignore_the_opponent_s_sampled_hand():
+    """The analysis line stores pairs per determinization; a determinization samples the opponent's hand, which
+    must not reach the features (only its size does): the version-2 features and every named set read the
+    opponent's hand and deck as one pool."""
+    import random
+    from svsim.core.view import determinize
+    from svsim.learn.contrast import features_of
+    from svsim.search.evaluate import after_end_of_turn
+    positions, _ = _positions(n_games=2)
+    changed = 0
+    for s, p in positions[4:]:
+        e = after_end_of_turn(s)
+        if e.over:
+            continue
+        base = features_of(e, p, 2, ("tempo", "hand", "board", "hpphase"))
+        for k in range(2):
+            d = determinize(e, p, random.Random(k))
+            if [c.defn.card_id for c in d.players[1 - p].hand] != [c.defn.card_id for c in e.players[1 - p].hand]:
+                changed += 1
+                assert features_of(d, p, 2, ("tempo", "hand", "board", "hpphase")) == base
+    assert changed > 10
