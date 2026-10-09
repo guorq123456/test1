@@ -211,8 +211,9 @@ def _veto(kind):
     return forbids(kind) if kind.split(":")[0] in RESTRICTED else None
 
 
-def finisher(kind, me, seed):
-    """finish(s): the rest of `me`'s turn by the plan kind's own policy (as search.candidates.generate plays it)."""
+def finisher(kind, me, seed, taken=None):
+    """finish(s): the rest of `me`'s turn by the plan kind's own policy (as search.candidates.generate plays it).
+    `taken`: a list the applied actions are appended to (to_dict), for step 1's turn ends."""
     from svsim.core.actions import EndTurn
     from svsim.core.engine import apply, legal_actions
     from svsim.search import candidates as C
@@ -236,14 +237,18 @@ def finisher(kind, me, seed):
                 a = EndTurn()
             if isinstance(a, EndTurn):
                 return                              # the caller ends the turn
+            if taken is not None:
+                from svsim.core.actions import to_dict
+                taken.append(to_dict(a))
             apply(s, a)
     return finish
 
 
-def replay(s, me, keys, veto, finish) -> int | None:
+def replay(s, me, keys, veto, finish, taken=None) -> int | None:
     """Play a plan's keys on `s` (the mover `me`), stopping at its end of turn (the turn is left for the caller to
     end). A key with no legal match, or one `veto` forbids: finish(s) plays the rest of the turn, and the key's
-    index is returned; None if the plan went through."""
+    index is returned; None if the plan went through. `taken`: a list the applied actions are appended to (pass the
+    same list to the finisher)."""
     from svsim.core.engine import apply, legal_actions
     for i, key in enumerate(keys):
         if s.over or s.active != me:
@@ -254,6 +259,9 @@ def replay(s, me, keys, veto, finish) -> int | None:
         if match is None or (veto is not None and veto(s, match)):
             finish(s)
             return i
+        if taken is not None:
+            from svsim.core.actions import to_dict
+            taken.append(to_dict(match))
         apply(s, match)
     if not s.over and s.active == me:                # a plan without its end of turn (not expected)
         finish(s)
