@@ -155,3 +155,34 @@ def test_features_of_a_determinized_turn_end_ignore_the_opponent_s_sampled_hand(
                 changed += 1
                 assert features_of(d, p, 2, ("tempo", "hand", "board", "hpphase")) == base
     assert changed > 10
+
+
+def test_teacher_end_pairs_per_determinization_or_averaged(tmp_path):
+    """The analysis line's reader (stood in for here with their documented interface: Starts(selfplay),
+    pairs(path, starts, end_of_turn, keep_same)): per determinization by default, identical ones left out;
+    averaged over all of them in "mean", with one differing pair; the mover's features; the split by game."""
+    from types import SimpleNamespace
+    from svsim.learn.contrast import features_of, teacher_end_pairs
+    from svsim.search.evaluate import after_end_of_turn
+    positions, _ = _positions()
+    (s0, p0), (s1, p1) = positions[8], positions[10]
+    e0, e1 = after_end_of_turn(s0), after_end_of_turn(s1)
+    calls = []
+
+    def pairs(path, starts, end_of_turn=False, keep_same=False):
+        calls.append((end_of_turn, keep_same))
+        items = [{"start": 0, "s": 0, "j": j, "r": "keep:1", "a": e1 if j else e0, "b": e0, "dT": 0.1 * j,
+                  "weight": 1.0} for j in range(3)]                     # j = 0: the same end as the line
+        items += [{"start": 1, "s": 0, "j": 0, "r": "save", "a": e1, "b": e0, "dT": 0.5, "weight": 1.0}]
+        return [it for it in items if keep_same or it["a"] is not it["b"]]
+    TE = SimpleNamespace(Starts=lambda selfplay: None, pairs=pairs)
+    pos = tmp_path / "positions.jsonl"
+    pos.write_text(json.dumps({"n": 0, "g": 3, "seat": p0}) + "\n" + json.dumps({"n": 1, "g": 11, "seat": p1}) + "\n",
+                   encoding="utf-8")
+    det = list(teacher_end_pairs("ends", "sp", pos, module=TE, split=None))
+    assert [d[4] for d in det] == [0.1, 0.2, 0.5] and calls[-1] == (True, False)
+    assert det[0][2] == features_of(e1, p0) and det[0][3] == features_of(e0, p0)
+    mean = list(teacher_end_pairs("ends", "sp", pos, module=TE, mode="mean", split=None))
+    assert [round(m[4], 6) for m in mean] == [0.1, 0.5] and calls[-1] == (True, True)
+    train = list(teacher_end_pairs("ends", "sp", pos, module=TE, split="train"))
+    assert {d[0] for d in train} == {0}                               # g 11 is held out (11 % 11 == 0)

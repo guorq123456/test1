@@ -13,7 +13,11 @@ Two parts:
   contrasts barely see it (it moves both ends alike), so it is held at `fix_bias` (default 0, or the base model's).
   A network can stand in for the linear model later through the same loss (ContrastLinear's forward / backward);
   not written yet.
-- the replay (`teacher_lines`, `replay_turn`, the `pairs` command): the teacher's lines for a turn start rebuilt as
+- the teacher's pairs, from the analysis line's re-run (`teacher_end_pairs`, the fit command's --teacher-ends:
+  their teacher_ends.py's `pairs`, one machine and one run for labels and turn ends, per determinization or
+  averaged over them); the features are the mover's and read nothing of the opponent's sampled hand (tested).
+- the replay (`teacher_lines`, `replay_turn`, the `pairs` command; for the candidate generator's plans, and as a
+  fallback): the teacher's lines for a turn start rebuilt as
   the teacher built them (analysis/card-value/teacher_eval.measure: CrossTurnAgent over mcts-raw:100+learned+phased,
   8 determinizations, each restriction re-searched with 100 iterations, the own next turn by a 30-iteration search,
   the row's seed), then each line played on the real position by its action keys up to the end of the turn; where a
@@ -248,6 +252,77 @@ def turn_end_of(record, at: int, actions: list):
     return s
 
 
+def _teacher_ends_module(analysis_dir):
+    """The analysis line's analysis/card-value/teacher_ends.py (and its student_data.py) from a folder."""
+    import importlib
+    import sys
+    folder = str(Path(analysis_dir).resolve())
+    if folder not in sys.path:
+        sys.path.insert(0, folder)
+    return importlib.import_module("teacher_ends")
+
+
+def teacher_end_pairs(ends, selfplay, positions, module=None, analysis_dir=None, mode: str = "det",
+                      hold_out_every: int = 11, split: str = "train", version: int = 2, extras=(), hv=None):
+    """Contrast items from the analysis line's teacher re-run (teacher_ends.jsonl.gz; their `pairs` and `Starts`,
+    turn ends with the end-of-turn abilities resolved, as the ENDED model sees them): (start n, g, features of the
+    restricted line's end a, of the principal line's end b, dT, weight). mode "det": one item per determinization
+    (their default, determinizations where both lines took the same actions left out); "mean": one per (position,
+    seed, restriction), dT the mean over all 8 determinizations (identical ones included, as the teacher's T), with
+    the first determinization's pair whose actions differ (none: left out). The features are the mover's
+    (positions.jsonl's seat). split: "train" (games g % hold_out_every != 0), "val" (== 0) or None (both)."""
+    TE = module if module is not None else _teacher_ends_module(analysis_dir)
+    starts = TE.Starts(selfplay)
+    pos = {}
+    for line in open(positions, encoding="utf-8"):
+        if line.strip():
+            p = json.loads(line)
+            pos[p["n"]] = (p["g"], p["seat"])
+
+    def wanted(g):
+        if split is None or not hold_out_every:
+            return True
+        return (g % hold_out_every == 0) == (split == "val")
+
+    def item(n, a, b, dT, w):
+        g, seat = pos[n]
+        return n, g, features_of(a, seat, version, extras, hv), features_of(b, seat, version, extras, hv), dT, w
+
+    if mode == "det":
+        for it in TE.pairs(ends, starts, end_of_turn=True):
+            if wanted(pos[it["start"]][0]):
+                yield item(it["start"], it["a"], it["b"], it["dT"], it["weight"])
+        return
+    if mode != "mean":
+        raise ValueError(f"unknown mode {mode!r}")
+    key, group = None, []
+
+    def flush(group):
+        diffs = [it["dT"] for it in group]
+        pick = next((it for it in group if not _same_end(it)), None)
+        if pick is not None and wanted(pos[pick["start"]][0]):
+            return item(pick["start"], pick["a"], pick["b"], sum(diffs) / len(diffs), 1.0)
+        return None
+    for it in TE.pairs(ends, starts, end_of_turn=True, keep_same=True):
+        k = (it["start"], it["s"], it["r"])
+        if k != key and group:
+            out = flush(group)
+            if out is not None:
+                yield out
+            group = []
+        key = k
+        group.append(it)
+    if group:
+        out = flush(group)
+        if out is not None:
+            yield out
+
+
+def _same_end(it) -> bool:
+    from svsim.search.lethal import state_key
+    return state_key(it["a"]) == state_key(it["b"])
+
+
 def main() -> None:
     import argparse
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -260,7 +335,12 @@ def main() -> None:
     p.add_argument("--limit", type=int, default=None, help="the first N positions only (smoke runs)")
     p.add_argument("--workers", type=int, default=1)
     f = sub.add_parser("fit", help="pairs (+ self-play calibration) -> a candidate folder's turn-end model")
-    f.add_argument("--pairs", required=True)
+    f.add_argument("--pairs", default=None, help="this module's pairs (JSON lines); or --teacher-ends")
+    f.add_argument("--teacher-ends", default=None, help="the analysis line's teacher_ends.jsonl.gz")
+    f.add_argument("--analysis-dir", default=None, help="the folder with their teacher_ends.py and student_data.py")
+    f.add_argument("--positions", default=None, help="positions.jsonl (the movers, the games), with --teacher-ends")
+    f.add_argument("--mode", default="det", choices=("det", "mean"),
+                   help="with --teacher-ends: a pair per determinization (det), or dT averaged over them (mean)")
     f.add_argument("--selfplay", required=True)
     f.add_argument("--matchup", default="ramp-ramp")
     f.add_argument("--out", required=True)
@@ -318,15 +398,25 @@ def _fit_command(args):
     names = feature_names(2, extras)
     games = {r["g"]: r for r in _load_lines(args.selfplay)}
     k = args.hold_out_every
-    pairs = [p for p in _load_lines(args.pairs) if not (k and p["g"] % k == 0)]
     XA, XB, dT, w = [], [], [], []
-    for p in pairs:
-        a = turn_end_of(games[p["g"]], p["at"], p["a"])
-        b = turn_end_of(games[p["g"]], p["at"], p["b"])
-        XA.append(features_of(a, p["player"], 2, extras))
-        XB.append(features_of(b, p["player"], 2, extras))
-        dT.append(p["dT"])
-        w.append(1.0)
+    if args.teacher_ends:
+        for _, _, xa, xb, d, wt in teacher_end_pairs(args.teacher_ends, args.selfplay, args.positions,
+                                                     analysis_dir=args.analysis_dir, mode=args.mode,
+                                                     hold_out_every=k, split="train", extras=extras):
+            XA.append(xa)
+            XB.append(xb)
+            dT.append(d)
+            w.append(wt)
+        source = args.teacher_ends
+    else:
+        for p in (p for p in _load_lines(args.pairs) if not (k and p["g"] % k == 0)):
+            a = turn_end_of(games[p["g"]], p["at"], p["a"])
+            b = turn_end_of(games[p["g"]], p["at"], p["b"])
+            XA.append(features_of(a, p["player"], 2, extras))
+            XB.append(features_of(b, p["player"], 2, extras))
+            dT.append(p["dT"])
+            w.append(1.0)
+        source = args.pairs
     XC, yc = [], []
     for g, rec in games.items():
         if k and g % k == 0:
@@ -342,7 +432,8 @@ def _fit_command(args):
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     info = {"moment": "ended", "contrast": True, "mu": args.mu, "l2": args.l2, "iters": args.iters,
-            "hold_out_every": k, "pairs": hashlib.sha256(Path(args.pairs).read_bytes()).hexdigest(),
+            "hold_out_every": k, "pairs": hashlib.sha256(Path(source).read_bytes()).hexdigest(),
+            "pairs_from": "teacher_ends" if args.teacher_ends else "pairs", "mode": args.mode,
             "selfplay": hashlib.sha256(Path(args.selfplay).read_bytes()).hexdigest(), "report": report}
     to_linear_value(model, 2, extras, info).save(out / f"{args.matchup}-ended.json")
     if args.act_from:
