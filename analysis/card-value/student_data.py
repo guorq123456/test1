@@ -18,7 +18,9 @@
 The labels (the build line's learn.handvalue.examples_from, 5a250ce): one JSON line per keep:<card> of a position's
 principal line whose card is in the mover's hand at the turn start: {"g": the game's line in selfplay.jsonl (= its
 g), "i": the action index, "player", "uid": the card (its first copy in hand order), "t": the mean of the two seeds'
-T, "seeds": [each seed's T], "se": [each seed's standard error], "split"}. The hold-out split is the same as
+T, "var": the mean of the seeds' se^2 over the number of seeds (as learn.handvalue._teacher_label; examples_from
+weights by 1 / var, so not by the two seeds' own variance), "seeds": [each seed's T], "se": [each seed's standard
+error], "split"}. The hold-out split is the same as
 examples_from(every=11): a game's line % 11 == 0.
 
 Seeds, all in the data bank 65800000-65899999:
@@ -237,9 +239,13 @@ def labels(args):
                 absent += 1
                 continue
             seeds = [by_seed[s]["teacher"] for s in sorted(by_seed)]
+            ses = [by_seed[s]["se"] for s in sorted(by_seed)]
+            # var as in learn.handvalue._teacher_label (the reader floors it): the variance of two seeds' values
+            # alone is a one-degree-of-freedom estimate, too noisy to weight by
+            var = sum(x * x for x in ses) / len(ses) / len(ses)
             fh.write(json.dumps({"g": p["g"], "i": p["at"], "player": me, "uid": copy.uid, "card": cid,
-                                 "t": sum(seeds) / len(seeds), "seeds": seeds,
-                                 "se": [by_seed[s]["se"] for s in sorted(by_seed)], "split": p["split"]}) + "\n")
+                                 "t": sum(seeds) / len(seeds), "var": var, "seeds": seeds, "se": ses,
+                                 "split": p["split"]}) + "\n")
             out += 1
     print(f"{out} 个标签（回合开头不在手里的牌 {absent} 个，去掉了）")
 
