@@ -1,0 +1,12 @@
+str   Z 0.0: switch 455/3642 (12.5%), gain per switch +5.34, per turn start +0.668 (+0.335..+1.011) kinds {'second': 194, 'race': 160, 'third': 101}
+str   Z 0.5: switch 446/3642 (12.2%), gain per switch +5.52, per turn start +0.676 (+0.353..+1.037) kinds {'second': 190, 'race': 156, 'third': 100}
+str   Z 1.0: switch 430/3642 (11.8%), gain per switch +5.57, per turn start +0.657 (+0.331..+1.006) kinds {'second': 184, 'race': 149, 'third': 97}
+str   Z 1.5: switch 421/3642 (11.6%), gain per switch +5.80, per turn start +0.671 (+0.338..+1.006) kinds {'second': 179, 'race': 148, 'third': 94}
+strk  Z 0.0: switch 513/3642 (14.1%), gain per switch +5.48, per turn start +0.772 (+0.432..+1.134) kinds {'second': 182, 'race': 151, 'third': 99, 'keep': 81}
+strk  Z 0.5: switch 500/3642 (13.7%), gain per switch +5.56, per turn start +0.764 (+0.403..+1.124) kinds {'second': 179, 'race': 147, 'third': 99, 'keep': 75}
+strk  Z 1.0: switch 482/3642 (13.2%), gain per switch +5.54, per turn start +0.733 (+0.372..+1.097) kinds {'second': 173, 'race': 142, 'third': 96, 'keep': 71}
+strk  Z 1.5: switch 470/3642 (12.9%), gain per switch +5.68, per turn start +0.733 (+0.378..+1.112) kinds {'second': 168, 'race': 141, 'third': 93, 'keep': 68}
+all   Z 0.0: switch 520/3642 (14.3%), gain per switch +5.28, per turn start +0.753 (+0.388..+1.127) kinds {'second': 181, 'race': 151, 'third': 99, 'keep': 80, 'save': 5, 'noevo': 4}
+all   Z 0.5: switch 506/3642 (13.9%), gain per switch +5.43, per turn start +0.755 (+0.400..+1.129) kinds {'second': 178, 'race': 147, 'third': 99, 'keep': 74, 'save': 5, 'noevo': 3}
+all   Z 1.0: switch 489/3642 (13.4%), gain per switch +5.41, per turn start +0.726 (+0.379..+1.085) kinds {'second': 173, 'race': 142, 'third': 96, 'keep': 70, 'save': 5, 'noevo': 3}
+all   Z 1.5: switch 474/3642 (13.0%), gain per switch +5.67, per turn start +0.738 (+0.400..+1.098) kinds {'second': 168, 'race': 141, 'third': 93, 'keep': 67, 'save': 4, 'noevo': 1}
