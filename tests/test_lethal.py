@@ -207,3 +207,38 @@ def test_screening_only_shortens_hopeless_searches():
     for k, budget in ((short, 500), (short - 1, 50)):
         search = LethalSearch(max_nodes=2000, screen=50, near=(500, k))
         assert search.solve(state).screened and search.budget == budget
+
+
+class _Restricted:
+    """A base agent whose search carries a veto (as ISMCTS.veto does); it ends the turn itself."""
+
+    def __init__(self, veto):
+        from types import SimpleNamespace
+        self.search = SimpleNamespace(veto=veto)
+
+    def act(self, state, actions):
+        return EndTurn()
+
+
+def test_a_lethal_line_obeys_the_search_s_veto():
+    """keep:<Raider> forbids playing it: the lethal line through it isn't taken, the search decides (the analysis
+    line 2026-10-09: kept cards went out in lethal lines); without a veto the line is played as before."""
+    from svsim.agents.crossturn_agent import forbids
+    state = position(2, pp=2)
+    raider = give(state, 0, demo.RAIDER)
+    agent = LethalAgent(_Restricted(forbids(f"keep:{demo.RAIDER.card_id}")))
+    s = state.clone()
+    while not s.over and s.active == 0:
+        a = agent.act(s, legal_actions(s))
+        assert not (isinstance(a, PlayCard) and a.uid == raider.uid)
+        apply(s, a)
+    assert s.winner is None and any(c.uid == raider.uid for c in s.players[0].hand)
+    free = LethalAgent(_Restricted(None))
+    plain = LethalAgent(Passer())
+    s1, s2 = state.clone(), state.clone()
+    while not s1.over and s1.active == 0:
+        a1, a2 = free.act(s1, legal_actions(s1)), plain.act(s2, legal_actions(s2))
+        assert a1 == a2
+        apply(s1, a1)
+        apply(s2, a2)
+    assert s1.winner == 0

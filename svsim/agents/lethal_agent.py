@@ -69,9 +69,34 @@ class LethalAgent:
         self.macros = 0              # macro lines played
         self.rng = random.Random(seed)
 
+    def _veto(self):
+        """The wrapped search's veto (search.mcts.ISMCTS.veto: a restriction such as crossturn_agent's keep:<card>),
+        if any. A line this agent plays must obey it too, or a kept card goes out in a lethal line (the analysis
+        line, 2026-10-09: 15 of 400 validation items)."""
+        agent = self.base
+        for _ in range(4):
+            search = getattr(agent, "search", None)
+            veto = getattr(search, "veto", None)
+            if veto is not None:
+                return veto
+            agent = getattr(agent, "base", None)
+            if agent is None:
+                break
+        return None
+
     def act(self, state, actions):
         if state.phase != Phase.MAIN:
             return self.base.act(state, actions)
+        veto = self._veto()
+        if veto is None:
+            return self._act(state, actions)
+        step = self._act(state, actions)                # a line's step the restriction forbids: the search decides
+        if step is not None and veto(state, step):
+            self.plan = []
+            return self.base.act(state, actions)
+        return step
+
+    def _act(self, state, actions):
         if self.plan and self.plan_turn == state.turn:
             step = combo.listed(state, self.plan[0], actions)
             if step is not None:
