@@ -625,10 +625,11 @@ def delta_agreement(per, G, plans_rows):
             v = _agreement(ps)
             if v is not None and np.isfinite(v[3]):
                 bs.append(v[3])
-        ci = f"（{np.percentile(bs, 2.5):.2f}～{np.percentile(bs, 97.5):.2f}）" if bs else ""
+        lo, hi = (float(np.percentile(bs, 2.5)), float(np.percentile(bs, 97.5))) if bs else (None, None)
+        ci = f"（{lo:.2f}～{hi:.2f}）" if bs else ""
         print(f"- {label}：{len(sel_pairs)} 对，Spearman {r:.3f}；信度 ΔT {rel_t:.3f}、ΔG_end {rel_g:.3f}；"
               f"折算后 **{c:.3f}**{ci}（折算值可以超过 1，信度低时尤其如此）")
-        return c
+        return c, lo, hi
     c_all = line("全部类别合起来（含 end）", pairs, ks)
     no_end = [p for p in pairs if p[0] != "end"]
     keep_by_k = dict(by_k)
@@ -638,12 +639,21 @@ def delta_agreement(per, G, plans_rows):
     for kind in sorted({p[0] for p in pairs}):
         sel = [p for p in pairs if p[0] == kind]
         line(kind, sel, [k for k in ks if any(p[0] == kind for p in by_k[k])], kind)
-    for label, c in (("含 end", c_all), ("不含 end", c_no_end)):
-        if c is not None and np.isfinite(c):
-            verdict = ("≥ 0.7：第 1 步照原计划主要用 T" if c >= 0.7 else
-                       "0.5～0.7：第 1 步的标签改成 T 和 G_end 混合，G_end 的份额按两边信度定" if c >= 0.5 else
-                       "< 0.5：第 1 步不用 T 当主标签，先想更长视野的老师")
-            print(f"- **读法**（{label}，合起来的点估计）：{c:.3f} → {verdict}")
+    def verdict(c):
+        return ("≥ 0.7：第 1 步照原计划主要用 T" if c >= 0.7 else
+                "0.5～0.7：第 1 步的标签改成 T 和 G_end 混合，G_end 的份额按两边信度定" if c >= 0.5 else
+                "< 0.5：第 1 步不用 T 当主标签，先想更长视野的老师")
+    if c_all is not None and np.isfinite(c_all[0]):
+        print(f"- 含 end（只报）：点估计 {c_all[0]:.3f} → 若按它读是「{verdict(c_all[0])}」")
+    if c_no_end is not None and np.isfinite(c_no_end[0]):
+        c, lo, hi = c_no_end
+        band = lambda v: 2 if v >= 0.7 else 1 if v >= 0.5 else 0         # noqa: E731
+        if lo is not None and band(lo) != band(hi):
+            mid = (lo + hi) / 2
+            print(f"- **读法**（不含 end，架构线程 07:22Z 定的）：区间 {lo:.2f}～{hi:.2f} **区间跨档**，按区间中点 {mid:.3f} 定 → "
+                  f"{verdict(mid)}（点估计 {c:.3f}）")
+        else:
+            print(f"- **读法**（不含 end，架构线程 07:22Z 定的）：{c:.3f}（区间不跨档）→ {verdict(c)}")
 
 
 def resource_breaches(selfplay, starts_by_k, plans_rows):
