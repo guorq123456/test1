@@ -555,12 +555,95 @@ def report(args):
         if rho_half:
             print(f"- G_end 两组之间（噪声的参照）：{boot(rho_half, lambda sel: float(np.mean(sel)))}"
                   f"（{len(rho_half)} 个开头）")
+        delta_agreement(per, G, plans_rows)
         gf = {}
         for g in G.values():
             for kind, f in g["failed"].items():
                 gf.setdefault(kind.split(":")[0], []).extend(f)
         print("- G_end 的复现失败：" + "，".join(f"{kind} {sum(x is not None for x in f)}/{len(f)}"
                                          for kind, f in sorted(gf.items())))
+
+
+def _delta_pairs(per, G, ks):
+    """For the starts `ks`: every kept plan other than the bot's against the bot's, as
+    (kind, dT, dT seed a, dT seed b, dG, dG group 1, dG group 2)."""
+    import numpy as np
+    out = []
+    for k in ks:
+        g, t = G[k], per[k]
+        K = g["K"]
+        for kind in g["results"]:
+            if kind == "bot" or kind not in t or "bot" not in t:
+                continue
+            ta, tb = np.array(t[kind]) - np.array(t["bot"]), None
+            ga = np.array(g["results"][kind]) - np.array(g["results"]["bot"])
+            out.append((kind.split(":")[0], ta.mean(), ta[:8].mean(), ta[8:].mean(),
+                        ga.mean(), ga[:K // 2].mean(), ga[K // 2:].mean()))
+    return out
+
+
+def _agreement(pairs):
+    """(Spearman(dT, dG), the reliability of dT, of dG, the corrected value) over `pairs`."""
+    if len(pairs) < 5:
+        return None
+    r = _spearman([p[1] for p in pairs], [p[4] for p in pairs])
+    rt = _spearman([p[2] for p in pairs], [p[3] for p in pairs])
+    rg = _spearman([p[5] for p in pairs], [p[6] for p in pairs])
+    if r is None or rt is None or rg is None or rt <= -1 or rg <= -1:
+        return None
+    rel_t, rel_g = 2 * rt / (1 + rt), 2 * rg / (1 + rg)
+    corrected = r / (rel_t * rel_g) ** 0.5 if rel_t > 0 and rel_g > 0 else float("nan")
+    return r, rel_t, rel_g, corrected
+
+
+def delta_agreement(per, G, plans_rows):
+    """The architecture thread 07:19Z, before step 0's data: on the G_end starts, plan minus the bot's plan within a
+    start, dT against dG_end: Spearman, each side's reliability (dT: seed against seed, dG_end: group against group,
+    Spearman-Brown to the whole) and the corrected value, pooled and by kind; the interval by resampling starts.
+    The reading (the architecture thread's): corrected >= 0.7, step 1 uses T as planned; 0.5-0.7, a T and G_end
+    mix, G_end's share by the two reliabilities; < 0.5, T isn't step 1's main label (a longer-sighted teacher first)."""
+    import numpy as np
+    ks = sorted(k for k in G if k in per and all(len(v) == 16 for v in per[k].values()))
+    pairs = _delta_pairs(per, G, ks)
+    print("\n**5. 同一开头两种打法之差：ΔT 对 ΔG_end**（每个没合并的打法减 bot 的打法；"
+          "架构线程 07:19Z 定的读法，第 0 步数据之前写入）")
+    rng = np.random.default_rng(1)
+    by_k = {}
+    for k in ks:
+        by_k[k] = _delta_pairs(per, G, [k])
+
+    def line(label, sel_pairs, sel_ks, kind=None):
+        got = _agreement(sel_pairs)
+        if got is None:
+            print(f"- {label}：{len(sel_pairs)} 对，太少，不算")
+            return None
+        r, rel_t, rel_g, c = got
+        bs = []
+        for _ in range(2000):
+            pick = rng.integers(0, len(sel_ks), len(sel_ks))
+            ps = [p for i in pick for p in by_k[sel_ks[i]] if kind is None or p[0] == kind]
+            v = _agreement(ps)
+            if v is not None and np.isfinite(v[3]):
+                bs.append(v[3])
+        ci = f"（{np.percentile(bs, 2.5):.2f}～{np.percentile(bs, 97.5):.2f}）" if bs else ""
+        print(f"- {label}：{len(sel_pairs)} 对，Spearman {r:.3f}；信度 ΔT {rel_t:.3f}、ΔG_end {rel_g:.3f}；"
+              f"折算后 **{c:.3f}**{ci}（折算值可以超过 1，信度低时尤其如此）")
+        return c
+    c_all = line("全部类别合起来（含 end）", pairs, ks)
+    no_end = [p for p in pairs if p[0] != "end"]
+    keep_by_k = dict(by_k)
+    by_k.update({k: [p for p in v if p[0] != "end"] for k, v in keep_by_k.items()})
+    c_no_end = line("不含 end（直接结束差得太明显，会把相关抬高）", no_end, [k for k in ks if by_k[k]])
+    by_k.update(keep_by_k)
+    for kind in sorted({p[0] for p in pairs}):
+        sel = [p for p in pairs if p[0] == kind]
+        line(kind, sel, [k for k in ks if any(p[0] == kind for p in by_k[k])], kind)
+    for label, c in (("含 end", c_all), ("不含 end", c_no_end)):
+        if c is not None and np.isfinite(c):
+            verdict = ("≥ 0.7：第 1 步照原计划主要用 T" if c >= 0.7 else
+                       "0.5～0.7：第 1 步的标签改成 T 和 G_end 混合，G_end 的份额按两边信度定" if c >= 0.5 else
+                       "< 0.5：第 1 步不用 T 当主标签，先想更长视野的老师")
+            print(f"- **读法**（{label}，合起来的点估计）：{c:.3f} → {verdict}")
 
 
 def resource_breaches(selfplay, starts_by_k, plans_rows):
