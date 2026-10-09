@@ -344,7 +344,8 @@ EXTRAS = {
 #   x [5 <= that turn <= 7], then the opponent's.
 # - "hand_value" (1, the hand-value line, 2026-10-09): the student's H of my hand (learn.handvalue), the cards the
 #   search can't know priced as one of their pool. It needs the student: the model that uses it carries one
-#   (LinearValue.hv, read from <pairing>-hv.npz beside the model's file), and learn.phased --hand-value for fitting.
+#   (LinearValue.hv, read from <pairing>-hv.npz beside the model's file), learn.phased --hand-value for fitting;
+#   called without one (extra_features(state, me, ("hand_value",))), SVSIM_HV names it (learn.handvalue.default_student).
 
 
 def extra_names(extras) -> list[str]:
@@ -423,8 +424,9 @@ EXTRA_FNS = {"tempo": _tempo_values, "hand": playable_hand_roles, "board": _boar
 
 
 def _hand_value(state: GameState, player: int, hv=None) -> list[float]:
-    if hv is None:
-        raise ValueError("the hand_value feature needs a student (learn.handvalue): none was given")
+    if hv is None:                                 # called without a model (the analysis line's checks)
+        from svsim.learn.handvalue import default_student
+        hv = default_student(state, player)
     return [hv.value(state, player)]
 
 

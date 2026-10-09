@@ -274,3 +274,70 @@ def test_fitting_reads_the_draws_of_the_turn_as_unknown(tmp_path):
                          "留 Sloth +0.53, 留 Promoter +0.31 positive; 《世界》的呈现 -0.50 negative")
 def test_the_trained_student_agrees_in_sign_on_the_top_ten_position_3():
     pass
+
+
+def test_the_feature_without_a_model_reads_svsim_hv(tmp_path, monkeypatch):
+    """The analysis line's checks call extra_features(state, me, ("hand_value",)) alone: SVSIM_HV names the
+    student, a file or a models folder holding <pairing>-hv.npz."""
+    from svsim.learn.features import extra_features
+    student = _student(seed=9)
+    positions, _ = _positions()
+    state, player = positions[6]
+    student.save(tmp_path / "ramp-ramp-hv.npz")
+    for where in (tmp_path / "ramp-ramp-hv.npz", tmp_path):
+        monkeypatch.setenv("SVSIM_HV", str(where))
+        assert extra_features(state, player, ("hand_value",)) == [pytest.approx(student.value(state, player))]
+    monkeypatch.setenv("SVSIM_HV", str(tmp_path / "nowhere"))
+    with pytest.raises(ValueError):
+        extra_features(state, player, ("hand_value",))
+
+
+def test_the_analysis_line_s_teacher_data_reads_into_examples(tmp_path):
+    """student_data.py's files: positions at own-turn starts, a teacher row per seed with keep:<card id>. T is the
+    seeds' mean, the weight 1 / (mean se^2 / seeds); a card not in hand at the turn start (drawn or made during
+    the turn) is left out; the split follows positions.jsonl. The fit command runs on them."""
+    import subprocess
+    import sys
+    from svsim.learn.handvalue import examples_from_teacher
+    positions, records = _positions(n_games=2)
+    records = [dict(r, g=g) for g, r in enumerate(records)]
+    sp = tmp_path / "selfplay.jsonl"
+    sp.write_text("\n".join(json.dumps(r) for r in records) + "\n", encoding="utf-8")
+    from svsim.tools import records as R
+    pos_rows, teach_rows, n = [], [], 0
+    absent = None
+    for rec in records:
+        seen = set()
+        for i, (state, _) in enumerate(R.steps(rec)):
+            key = (state.active, state.turn)
+            if state.phase.name != "MAIN" or key in seen:
+                continue
+            seen.add(key)
+            hand = state.players[state.active].hand
+            if not hand:
+                continue
+            absent = absent or next(c.defn.card_id for c in state.players[state.active].deck
+                                    if c.defn.card_id not in {h.defn.card_id for h in hand})
+            pos_rows.append({"n": n, "g": rec["g"], "at": i, "seat": state.active,
+                             "split": "val" if n % 3 == 0 else "train"})
+            cid = hand[0].defn.card_id
+            res0 = {f"keep:{cid}": {"teacher": 0.2, "se": 0.1}}
+            res1 = {f"keep:{cid}": {"teacher": 0.4, "se": 0.3}}
+            if not any(h.defn.card_id == absent for h in hand):
+                res0[f"keep:{absent}"] = {"teacher": 9.0, "se": 0.1}       # drawn during the turn: dropped
+            teach_rows += [{"n": n, "s": 0, "res": res0}, {"n": n, "s": 1, "res": res1}]
+            n += 1
+    (tmp_path / "positions.jsonl").write_text("\n".join(json.dumps(p) for p in pos_rows) + "\n", encoding="utf-8")
+    (tmp_path / "teacher.jsonl").write_text("\n".join(json.dumps(t) for t in teach_rows) + "\n", encoding="utf-8")
+    student = _student(seed=10)
+    train = examples_from_teacher(student, sp, tmp_path / "positions.jsonl", tmp_path / "teacher.jsonl", "train")
+    val = examples_from_teacher(student, sp, tmp_path / "positions.jsonl", tmp_path / "teacher.jsonl", "val")
+    assert len(train) == sum(p["split"] == "train" for p in pos_rows)
+    assert len(val) == sum(p["split"] == "val" for p in pos_rows)
+    assert all(e[2] == pytest.approx(0.3) and e[3] == pytest.approx(1 / ((0.01 + 0.09) / 2 / 2)) for e in train)
+    out = tmp_path / "student.npz"
+    done = subprocess.run([sys.executable, "-m", "svsim.learn.handvalue", "--selfplay", str(sp), "--positions",
+                           str(tmp_path / "positions.jsonl"), "--teacher", str(tmp_path / "teacher.jsonl"),
+                           "--out", str(out), "--iters", "20"], check=True, capture_output=True, text=True)
+    report = json.loads(done.stdout.strip().splitlines()[-1])
+    assert report["train_labels"] == len(train) and report["val_labels"] == len(val) and out.is_file()

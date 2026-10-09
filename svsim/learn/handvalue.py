@@ -307,6 +307,26 @@ def load_cached(path) -> HandValue:
     return _LOADED[key]
 
 
+def default_student(state, player: int) -> HandValue:
+    """The student for `extra_features(state, me, ("hand_value",))` called without one: SVSIM_HV, a student file or
+    a models folder (its <pairing>-hv.npz, by the pairing's keys as the models are found), else the installed
+    folder's. None found: ValueError."""
+    import os
+    from svsim.learn.model import ALIASES, matchup_keys
+    where = os.environ.get("SVSIM_HV")
+    if where and Path(where).is_file():
+        return load_cached(where)
+    folders = [Path(where)] if where else []
+    folders.append(Path(__file__).resolve().parent / "phased_models")
+    for folder in folders:
+        for k in matchup_keys(state, player, ALIASES):
+            names = [x if isinstance(x, str) else x.name.lower() for x in k]
+            path = folder / f"{names[0]}-{names[1]}-hv.npz"
+            if path.is_file():
+                return load_cached(path)
+    raise ValueError("the hand_value feature found no student: set SVSIM_HV to a student file or a models folder")
+
+
 def examples_from(records_path, labels_path, model: HandValue, every: int = 0, keep_out: bool = False) -> list:
     """Training examples from game records (JSON lines) and labels (JSON lines, one per (position, card)):
     {"g": the game's line in the records file, "i": the action index the position is before, "player",
@@ -343,3 +363,122 @@ def examples_from(records_path, labels_path, model: HandValue, every: int = 0, k
             if i >= max(want):
                 break
     return out
+
+
+def _teacher_label(rows: list, cid: int):
+    """(T, var) of keep:<cid> over a position's teacher rows (one per seed): T the mean of the seeds' "teacher",
+    var the mean of their se^2 over the number of seeds (floored at 1e-4); None if no seed has it."""
+    got = [r["res"][f"keep:{cid}"] for r in rows if f"keep:{cid}" in r["res"]]
+    if not got:
+        return None
+    t = float(np.mean([x["teacher"] for x in got]))
+    var = float(np.mean([x.get("se", 0.0) ** 2 for x in got])) / len(got)
+    return t, max(var, 1e-4)
+
+
+def examples_from_teacher(model: HandValue, selfplay, positions, teacher, split: str | None = "train") -> list:
+    """Training examples from the analysis line's student data (analysis/card-value/student_data.py): the
+    self-play records, positions.jsonl ({"n", "g", "at", "seat", "split"}: own-turn starts) and teacher.jsonl
+    ({"n", "s", "res": {"keep:<card id>": {"teacher", "se", ...}}}, a row per seed). T(c) = keep:<c>, one copy of
+    c taken out of the hand (the first), weight 1 / var. Only cards in hand at the turn start: the teacher's line
+    can also play a card drawn or made during the turn, which the student doesn't price. `split`: "train", "val"
+    or None (both)."""
+    from svsim.tools import records as R
+    from svsim.core.actions import from_dict
+    from svsim.core.engine import apply
+    games = {}
+    for line in open(selfplay, encoding="utf-8"):
+        if line.strip():
+            rec = json.loads(line)
+            games[rec["g"]] = rec
+    pos = {}
+    for line in open(positions, encoding="utf-8"):
+        if line.strip():
+            p = json.loads(line)
+            if split is None or p.get("split") == split:
+                pos[p["n"]] = p
+    rows: dict = {}
+    for line in open(teacher, encoding="utf-8"):
+        if line.strip():
+            r = json.loads(line)
+            if r["n"] in pos:
+                rows.setdefault(r["n"], []).append(r)
+    out = []
+    for n in sorted(rows):
+        p = pos[n]
+        state = R.start(games[p["g"]])
+        for a in games[p["g"]]["actions"][:p["at"]]:
+            apply(state, from_dict(a))
+        me = p["seat"]
+        hand = state.players[me].hand
+        cids = sorted({int(k.split(":")[1]) for r in rows[n] for k in r["res"] if k.startswith("keep:")})
+        for cid in cids:
+            card = next((c for c in hand if c.defn.card_id == cid), None)
+            if card is None:                       # drawn or made during the turn: not this hand's
+                continue
+            label = _teacher_label(rows[n], cid)
+            if label is not None:
+                ex = model.example(state, me, card.uid, label[0], 1.0 / label[1], None)
+                out.append(ex + (n,))
+    return out
+
+
+def spearman(x, y) -> float:
+    rx = np.argsort(np.argsort(x, kind="stable"), kind="stable").astype(float)
+    ry = np.argsort(np.argsort(y, kind="stable"), kind="stable").astype(float)
+    if np.std(rx) == 0 or np.std(ry) == 0:
+        return float("nan")
+    return float(np.corrcoef(rx, ry)[0, 1])
+
+
+def predictions(model: HandValue, examples) -> np.ndarray:
+    """dH of each example's removed card."""
+    out = []
+    for (D, Xs, Xq, z), r, _, _ in (e[:4] for e in examples):
+        U = model.units(D, Xs, Xq, z)
+        S = U.sum(axis=0)
+        out.append(model.head(S) - model.head(S - U[r]))
+    return np.array(out)
+
+
+def main() -> None:
+    import argparse
+    import hashlib
+    parser = argparse.ArgumentParser(description="Fit the hand-value student on the analysis line's student data.")
+    parser.add_argument("--selfplay", required=True)
+    parser.add_argument("--positions", required=True)
+    parser.add_argument("--teacher", required=True)
+    parser.add_argument("--out", required=True, help="the student file (.npz)")
+    parser.add_argument("--embed", type=int, default=8)
+    parser.add_argument("--width", type=int, default=16)
+    parser.add_argument("--hidden", type=int, default=16)
+    parser.add_argument("--iters", type=int, default=3000)
+    parser.add_argument("--lr", type=float, default=0.01)
+    parser.add_argument("--l2", type=float, default=1e-4)
+    parser.add_argument("--batch", type=int, default=256)
+    parser.add_argument("--seed", type=int, default=0)
+    args = parser.parse_args()
+    vocab = set()
+    for line in open(args.selfplay, encoding="utf-8"):
+        if line.strip():
+            for deck in json.loads(line)["decks"]:
+                vocab.update(int(c) for c in deck)
+    sha = {k: hashlib.sha256(Path(getattr(args, k)).read_bytes()).hexdigest()
+           for k in ("selfplay", "positions", "teacher")}
+    model = HandValue(sorted(vocab), args.embed, args.width, args.hidden, args.seed,
+                      info={"data": sha, "iters": args.iters, "lr": args.lr, "l2": args.l2, "batch": args.batch})
+    train = examples_from_teacher(model, args.selfplay, args.positions, args.teacher, "train")
+    val = examples_from_teacher(model, args.selfplay, args.positions, args.teacher, "val")
+    report = model.fit([e[:4] for e in train], args.iters, args.lr, args.l2, args.batch, args.seed,
+                       holdout=[e[:4] for e in val] or None)
+    for name, ex in (("train", train), ("val", val)):
+        if ex:
+            report[f"spearman_{name}"] = spearman(predictions(model, ex), np.array([e[2] for e in ex]))
+            report[f"{name}_labels"] = len(ex)
+    model.info["report"] = report
+    model.save(args.out)
+    print(json.dumps(report, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()
