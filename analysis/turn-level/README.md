@@ -131,22 +131,24 @@
 | G_end（150 个开头 × 约 5.2 个候选 × 32 局） | **约 50～80 分钟** | 冒烟实测每局 1.5 CPU 秒（0.3～2.7，看开头早晚）；分辨实验是 2.4。合计约 2.5 万局 |
 | **合计** | **约 1.3～1.6 小时** | 大头是 G_end（原来按 16 进程估约 1～1.2 小时） |
 
-## RC 的命令（库 65900000；svsim 用建造线 ce6f95a 或之后；12 进程、不占 CPU0、低优先级）
+## RC 的命令（库 65900000；svsim 用建造线 42e187a 或之后：要 ce6f95a 的生成器和 42e187a 的启动器）
 
-每条命令都这样启动（多进程的子进程会继承优先级和核的限制，RC 开跑后在任务管理器里看一眼）：
-- Windows（cmd）：`start "" /wait /belownormal /affinity <掩码> python ...`。掩码是「除 CPU0 以外的核」，比如 16 个逻辑核就是 FFFE。
-- Linux：`nice -n 10 taskset -c 1-<最后一个核> python ...`
+- 用建造线的启动器 `python -m svsim.tools.host <模块> [参数]`：它会自动降优先级、避开 CPU0，并把 --workers 压到 12 以内，子进程都继承。
+- 我的脚本放在 PYTHONPATH 上，就能当模块交给它（`turn_level`）。
+- 在这边强制用 spawn（Windows 的方式）、经启动器跑了 plans 和 teacher 两步，结果和直接跑的逐个相同。
+- 启动器要是在 Windows 上不灵，备用写法：`start "" /wait /belownormal /affinity <除 CPU0 外的掩码，16 个逻辑核是 FFFE> python ...`。
 
 ```
 cd <svsim checkout>
-python -m svsim.learn.netdata --games 150 --deck ramp --opponent ramp --agent level-strong --explore 0 \
-    --seed 65900000 --workers 12 --out selfplay.jsonl
 set PYTHONPATH=.;<分析线分支>/analysis/turn-level;<分析线分支>/analysis/card-value     (Windows；Linux 用 export 和冒号)
-python <分析线分支>/analysis/turn-level/turn_level.py starts selfplay.jsonl --out starts.jsonl
-python <…>/turn_level.py plans selfplay.jsonl starts.jsonl --out plans.jsonl --workers 12
-python <…>/turn_level.py teacher selfplay.jsonl starts.jsonl plans.jsonl --out teacher.jsonl --workers 12
-python <…>/turn_level.py pickgend starts.jsonl plans.jsonl --out gend_starts.jsonl
-python <…>/turn_level.py gend selfplay.jsonl starts.jsonl plans.jsonl gend_starts.jsonl --out gend.jsonl --k 16 --workers 12
+python -m svsim.tools.host svsim.learn.netdata --games 150 --deck ramp --opponent ramp --agent level-strong \
+    --explore 0 --seed 65900000 --workers 12 --out selfplay.jsonl
+python -m svsim.tools.host turn_level starts selfplay.jsonl --out starts.jsonl
+python -m svsim.tools.host turn_level plans selfplay.jsonl starts.jsonl --out plans.jsonl --workers 12
+python -m svsim.tools.host turn_level teacher selfplay.jsonl starts.jsonl plans.jsonl --out teacher.jsonl --workers 12
+python -m svsim.tools.host turn_level pickgend starts.jsonl plans.jsonl --out gend_starts.jsonl
+python -m svsim.tools.host turn_level gend selfplay.jsonl starts.jsonl plans.jsonl gend_starts.jsonl --out gend.jsonl \
+    --k 16 --workers 12
 ```
 
 - 推这 6 个文件：selfplay.jsonl、starts.jsonl、plans.jsonl、teacher.jsonl、gend_starts.jsonl、gend.jsonl。
