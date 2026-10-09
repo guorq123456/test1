@@ -250,3 +250,89 @@ python -m svsim.tools.host turn_level gend selfplay.jsonl starts.jsonl plans.jso
 - 第 4 节「每个开头里候选之间」的 Spearman：T 对 G_end 0.649（0.592～0.705，139 个开头），G_end 两组之间 0.610（0.532～0.680）。也就是说，T 和 G_end 的一致程度，与 G_end 自己两半之间的一致程度相当。
 
 **复现失败**（打法在某一步对不上、由这类候选自己的策略接着打；T 里 / G_end 里）：bot 5.2% / 10.0%，second 7.2% / 10.8%，third 7.3% / 7.2%，race 14.4% / 16.3%，keep 11.5% / 19.1%，noevo 8.6% / 12.2%，save 2.7% / 4.6%，salem 15.1% / 14.7%，end 0。没有一次是在第一步就对不上。
+
+## 第 1 步：对比训练的回合末评估（预注册；架构线程 09:45Z 布置；写在任何第 1 步的对局和结果之前）
+
+**条件**：对手卡表已知（牌序、手牌未知）。代码 `step1.py`（数据、标签、留出读数），训练器是建造线的 `learn.contrast`。
+
+### 数据
+- **自对弈**：原版跳费龙镜像，`level-strong`，explore 0，**1000 局**，netdata `--seed 66100000`。svsim 用建造线 842654e 或之后的版本（斩杀规划器守 veto；生成器 ce6f95a；启动器 3dc566e）。
+- **开头**：1000 局里所有自己回合的开头，按 (g, 动作下标, 座位) 排好，用 Random(66110000) 打乱，取前 **2000 个**（平均每局 2 个）。**g % 11 == 0 的局留出**，约 9%，大约 180 个开头。
+- **候选**：照第 0 步的生成器，各类都要（bot、second、third、race、keep、save、noevo、end），去重规矩不变。复现规矩照第 0 步：照动作键走，对不上就交给这类候选自己的策略。
+- **T**：全做，每个开头 2 个种子 × 8 个确定化，老师和第 0 步一样。
+- **G_end**：同一开头的所有候选共用确定化和 bot 种子（配对）。**训练开头 K = 4**（2 组 × 2），**留出开头 K = 16**（2 组 × 8，留出读数要用）。
+  - 理由（照架构线程）：标签噪声是无偏的，回归会自己平均，所以开头多、K 小更划算。留出要逐对比符号，噪声得小一些，所以 K 大。
+- **每个确定化上的回合末都记下来**：T 和 G_end 各一份，行格式和 `analysis/card-value/teacher_ends.py` 一样，用它的 `turn_end` 重建并核对摘要。所以训练时的每个例子，都是同一个确定化上的一对回合末（候选的、bot 的）。
+
+### 标签：T 和 G_end 混合（逐对收缩；架构线程让我提，我选这一种）
+- **对子**：每个开头里，每个没合并的候选对 bot 的打法。ΔT = 16 个确定化上 value(候选) − value(bot) 的平均；ΔG = K 个配对结果差的平均。
+- **校准**（只用训练开头、不含 end 的对子）：
+  - b：过原点回归 ΔG ≈ b · ΔT，把 T 的差换算到终局胜率差的尺度；
+  - s²_G：每局结果差的方差（逐对算样本方差，再在对子之间平均）；
+  - τ²：真实 ΔG 里 b · ΔT 解释不了的那部分方差，用矩估计：mean((ΔG − bΔT)²) − mean(s²_G / K) − b² · mean(vT)，vT 是 16 个 T 差的方差 ÷ 16。下限 1e-4，撞下限时照报。
+- **每对的标签和权重**：
+  - w = τ² / (τ² + s²_G / K)；
+  - 标签 L = bΔT + w · (ΔG − bΔT)：以 T 的换算值为底，按 G_end 的可靠程度往 G_end 拉；
+  - 方差 V = (1 − w)² · (τ² + b² vT) + w² · s²_G / K，权重 = 1 / V。
+  - 份额由噪声定，等价于按两边的信度定：K = 4 时 ΔG_end 的单对信度很低（按第 0 步的 0.70 @ K = 32 用 Spearman-Brown 换算，约 0.23），所以 w 小，主要靠 T；K 越大，w 越大。
+- **只有 T 的对子**（`card-value/student_read/teacher_ends.jsonl.gz` 的 25 万个确定化对；架构线程要并进来）：每个（局面, 限制）两个种子的 16 个差平均成 ΔT，L = bΔT，V = τ² + b² vT。按学生数据的局面切分（g % 11）留出。
+- **没有可比的对子不进标签**：16 个 T 差全为 0（这个打法在每个 T 确定化上都和 bot 走成一样），同 02:38Z 的规矩。老师重跑那批照办。各自计数报出来。
+- **end**：保留，但把它的总权重压到第 1 步对子总权重的 **10%**（训练开头）。
+- **例子**：一个对子的标签 L 和权重 W，平均分给它所有确定化上的回合末对：T 的 16 个加 G_end 的 K 个。两条线动作完全相同的确定化不要；回合中途终局的那一端由训练器定（建造线现在是排除并计数）。
+- **另一种不选**：两个损失项（T 对、G_end 对）各自加权。T 和 G_end 不在同一个尺度上（b 不是 1），也不是同一个量（第 0 步折算后相关 0.64）。收缩法先把 T 换算到 G_end 的尺度，再按噪声把两者合成一个标签，训练器只要一个损失项。
+- 训练标签权重的有效样本量照报；建造线的 fit 有自己的等权退路（ESS < 30%）。
+- 命令 `step1.py labels`，写出 `labels.jsonl`：第一行是校准，其后每对一行。
+
+### 训练器
+- 建造线的 `learn.contrast.fit_contrast`：线性的回合末模型（ENDED），特征同现装原版跳费龙镜像的 phased 模型。损失 = Σ w (σ(E(a)) − σ(E(b)) − L)² / Σ w + μ × 自对弈回合末的对数损失（保持校准）+ L2。
+- μ、L2、迭代次数、截距的处理、起点模型由建造线**在看任何留出读数之前**定下，写进候选目录的 README。ACT 模型不动。
+
+### 留出读数（只报，判定看门；J6）
+- 留出开头上，每个没合并的候选对 bot：dE = 它所有确定化（T 的 16 个、G_end 的 16 个）上 σ(E(候选的回合末)) − σ(E(bot 的)) 的平均；E 是评估器的回合末模型，回合末效果结算后、对手行动前。
+- 报 **dE 和 ΔG_end（K = 16）同号的比例**（ΔG_end = 0 的不算，dE = 0 算一半），新评估器和现装并列，新 − 现装的区间按开头重抽 2000 次（种子 0）。
+- **不含 end 为主**（同第 0 步的读法），含 end 的也报；再报一份和 ΔT 同号的比例。
+- 命令 `step1.py holdout … --new <候选的串> --installed v2s`。
+
+### 门
+- A = `level-strong` 换上对比训练的回合末模型（`mcts:N+plan+learned+phased=<候选目录>`），B = 现装 `level-strong`。原版跳费龙镜像直接对打，`--fixed --max 600`，**定长 300 对**，种子 66000000～66000299（库 66000000）。
+- **等算力**：N 照复核规矩；特征和现装相同的话，每决策毫秒应该一样。用门命令复核：`--fixed --max 40`，20 对，种子 66099000 起，A ÷ B 毫秒比超出 ±3% 就修一次 N = round(N ÷ 毫秒比)。门行里毫秒比照报。
+- **判定**：单门规矩，下沿 > 50%。**没有确认门**。装机要 Salem 本人的话。
+- **J22**（架构线程原文，写在第 0 步之前）：第 1 步的回合级评估（线性版）在原版跳费龙镜像的等算力门上过（下沿 > 50%），置信 40%。
+
+### 种子（库 66100000～66199999）
+
+| 用途 | 种子 |
+|---|---|
+| 自对弈 1000 局 | netdata `--seed 66100000` |
+| 挑 2000 个开头 | Random(66110000) |
+| 生成候选，第 k 个开头 | 66120000 + k |
+| 老师 T，第 k 个开头、第 s 个种子 | 66130000 + 2k + s；复现失败时接手的策略：10 × 它 + 确定化序号 |
+| G_end，第 k 个开头、第 j 个确定化 | 66140000 + 20k + j；复现失败时接手：10 × 它；之后的 bot：10 × 它 + 3（我方）、+ 1（对手） |
+| 留出读数的重抽 | 种子 0（只是分析） |
+| 门 | 库 66000000（66000000～66000299；N 复核 66099000 起） |
+
+- 下一个空位：**66200000**。
+
+### 算力（RC 12 进程；按第 0 步 RC 实测的单位成本）
+- RC 每进程实测：生成候选 2.40 CPU 秒 / 开头，老师 2.92 / （开头 × 种子），G_end 2.78 / 局；自对弈约 7.6 / 局（学生数据）。每个开头平均 4.68 个候选。
+- 合计：自对弈 7.6k、候选 4.8k、T 11.7k、G_end 约 4.75 万局 × 2.78 ≈ 132k，共约 156k CPU 秒。12 进程约 3.6 小时，加上第 0 步那样的调度开销（×1.15），**约 4.2 小时**。
+- 冒烟（库外种子 99800000，4 个开头，其中 1 个留出；强制 spawn、经启动器）：三步都跑通；两份回合末文件逐行重建、摘要全对；`labels` 和 `holdout` 能跑（新旧用同一个模型时同号率相同、差为 0）。冒烟的数不当结果。
+
+### RC 的命令（svsim 用建造线 842654e 或之后；分析线分支见提交号）
+
+```
+cd <svsim checkout>
+set PYTHONPATH=.;<分析线分支>/analysis/turn-level;<分析线分支>/analysis/card-value     (Linux: export，用冒号)
+python -m svsim.tools.host svsim.learn.netdata --games 1000 --deck ramp --opponent ramp --agent level-strong \
+    --explore 0 --seed 66100000 --workers 12 --out selfplay.jsonl
+python -m svsim.tools.host step1 starts selfplay.jsonl --out starts.jsonl
+python -m svsim.tools.host step1 plans selfplay.jsonl starts.jsonl --out plans.jsonl --workers 12
+python -m svsim.tools.host step1 teacher selfplay.jsonl starts.jsonl plans.jsonl --out teacher.jsonl \
+    --ends teacher_ends.jsonl.gz --workers 12
+python -m svsim.tools.host step1 gend selfplay.jsonl starts.jsonl plans.jsonl --out gend.jsonl \
+    --ends gend_ends.jsonl.gz --workers 12
+```
+
+- `starts` 应该打出「取 2000 个（留出约 180）」。
+- 推 7 个文件：selfplay.jsonl、starts.jsonl、plans.jsonl、teacher.jsonl、teacher_ends.jsonl.gz、gend.jsonl、gend_ends.jsonl.gz。
+- 标签（`labels`）和留出读数（`holdout`）由分析线在本机跑。
