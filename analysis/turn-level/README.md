@@ -138,6 +138,7 @@
 - 在这边强制用 spawn（Windows 的方式）、经启动器跑了 plans 和 teacher 两步，结果和直接跑的逐个相同。
 - 启动器要是在 Windows 上不灵，备用写法：`start "" /wait /belownormal /affinity <除 CPU0 外的掩码，16 个逻辑核是 FFFE> python ...`。
 - **照记（06:29Z，协调线转 RC 的实测）**：42e187a 的启动器在 Salem 的 Windows 上没生效，进程树仍是 affinity 0xFFFFF、优先级 Normal，已转建造线修。所以 RC 第 0 步不经启动器跑：先把启动用的 PowerShell 设成 BelowNormal、affinity 0xFFFFE（子进程继承，RC 验证过），再直接跑下面的命令，去掉 `-m svsim.tools.host`，脚本用路径 `<分析线分支>/analysis/turn-level/turn_level.py`，--workers 12。方法、种子、顺序都不变；结果不受启动方式影响（上一条）。
+  - 启动器后来在 3dc566e 修好了，06:35Z 在 Windows 上实机核验通过。架构线程定的是：已经排好的第 0 步照旧用 PowerShell 继承，不改；以后的新命令（第 1 步等）才用启动器。
 
 ```
 cd <svsim checkout>
