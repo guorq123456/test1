@@ -444,6 +444,8 @@ def holdout(args):
     from svsim.tools.arena import make_agent
     from svsim.tools.gate import _search
     specs = {"new": args.new, "installed": args.installed}
+    for i, spec in enumerate(args.also or []):
+        specs[f"also{i + 1}"] = spec
     W = {name: _search(make_agent(spec, 0)).weights for name, spec in specs.items()}
     val = {r["k"] for r in SD._lines(args.starts) if r["split"] == "val"}
     pairs = [p for p in step1_pairs(args.starts, args.plans, args.teacher, args.gend) if p["k"] in val]
@@ -468,22 +470,30 @@ def holdout(args):
         return float(np.mean(got)) if got else float("nan"), len(got)
     rng = np.random.default_rng(0)
     print("条件：对手卡表已知（牌序、手牌未知）。第 1 步留出读数（只报；判定看门）\n")
-    print(f"- 新：`{args.new}`；现装：`{args.installed}`；留出开头 {len(val)} 个，对子 {len(per)} 个")
+    print(f"- 新：`{args.new}`；现装：`{args.installed}`"
+          + "".join(f"；also{i + 1}：`{sp}`" for i, sp in enumerate(args.also or []))
+          + f"；留出开头 {len(val)} 个，对子 {len(per)} 个")
+    names = list(specs)
+    contrasts = [("new", "installed")] + [(n, "installed") for n in names if n.startswith("also")] + \
+                [("new", n) for n in names if n.startswith("also")]
     for label, rows in (("不含 end", [r for r in per if r["kind"] != "end"]), ("含 end", per)):
         ks = sorted({r["k"] for r in rows})
         by_k = {}
         for r in rows:
             by_k.setdefault(r["k"], []).append(r)
         for target, name in (("dG", "ΔG_end（K = 16）"), ("dT", "ΔT")):
-            a_new, n = agree(rows, "new", target)
-            a_old, _ = agree(rows, "installed", target)
-            bs = []
+            point = {e: agree(rows, e, target) for e in names}
+            bs = {c: [] for c in contrasts}
             for _ in range(2000):
                 pick = rng.choice(ks, len(ks))
                 sel = [r for k in pick for r in by_k[k]]
-                bs.append(agree(sel, "new", target)[0] - agree(sel, "installed", target)[0])
-            print(f"- {label}，和 {name} 同号：新 {a_new:.3f}、现装 {a_old:.3f}（{n} 对），新 − 现装 {a_new - a_old:+.3f}"
-                  f"（{np.nanpercentile(bs, 2.5):+.3f}～{np.nanpercentile(bs, 97.5):+.3f}）")
+                got = {e: agree(sel, e, target)[0] for e in names}
+                for a, b in contrasts:
+                    bs[(a, b)].append(got[a] - got[b])
+            print(f"- {label}，和 {name} 同号（{point['new'][1]} 对）：" + "、".join(f"{e} {point[e][0]:.3f}" for e in names))
+            for a, b in contrasts:
+                print(f"  - {a} − {b} {point[a][0] - point[b][0]:+.3f}"
+                      f"（{np.nanpercentile(bs[(a, b)], 2.5):+.3f}～{np.nanpercentile(bs[(a, b)], 97.5):+.3f}）")
 
 
 def main():
@@ -519,6 +529,7 @@ def main():
     a.add_argument("gend_ends")
     a.add_argument("--new", required=True, help="the candidate's agent string")
     a.add_argument("--installed", default="v2s")
+    a.add_argument("--also", nargs="*", default=None, help="more evaluators set beside them (e.g. B')")
     for sp in sub.choices.values():
         sp.add_argument("--bank", type=int, default=BANK, help="the seed bank (another only for smoke tests)")
     args = ap.parse_args()

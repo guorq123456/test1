@@ -1,0 +1,19 @@
+条件：对手卡表已知（牌序、手牌未知）。第 1 步留出读数（只报；判定看门）
+
+- 新：`mcts:200+plan+learned+phased=cand-tl-ramp-ramp`；现装：`v2s`；also1：`mcts:200+plan+learned+phased=cand-tl-ramp-ramp-bprime`；留出开头 179 个，对子 573 个
+- 不含 end，和 ΔG_end（K = 16） 同号（332 对）：new 0.685、installed 0.679、also1 0.655
+  - new − installed +0.006（-0.026～+0.036）
+  - also1 − installed -0.024（-0.081～+0.034）
+  - new − also1 +0.030（-0.029～+0.086）
+- 不含 end，和 ΔT 同号（442 对）：new 0.785、installed 0.787、also1 0.717
+  - new − installed -0.002（-0.024～+0.020）
+  - also1 − installed -0.070（-0.119～-0.023）
+  - new − also1 +0.068（+0.021～+0.115）
+- 含 end，和 ΔG_end（K = 16） 同号（452 对）：new 0.751、installed 0.747、also1 0.727
+  - new − installed +0.004（-0.018～+0.026）
+  - also1 − installed -0.020（-0.064～+0.021）
+  - new − also1 +0.024（-0.018～+0.068）
+- 含 end，和 ΔT 同号（573 对）：new 0.832、installed 0.834、also1 0.778
+  - new − installed -0.002（-0.020～+0.014）
+  - also1 − installed -0.056（-0.092～-0.019）
+  - new − also1 +0.054（+0.016～+0.090）
