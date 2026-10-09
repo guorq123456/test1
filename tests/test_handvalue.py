@@ -335,9 +335,29 @@ def test_the_analysis_line_s_teacher_data_reads_into_examples(tmp_path):
     assert len(train) == sum(p["split"] == "train" for p in pos_rows)
     assert len(val) == sum(p["split"] == "val" for p in pos_rows)
     assert all(e[2] == pytest.approx(0.3) and e[3] == pytest.approx(1 / ((0.01 + 0.09) / 2 / 2)) for e in train)
+    shuffled = tmp_path / "selfplay_unsorted.jsonl"      # netdata writes games as they finish: by "g", not line
+    shuffled.write_text("\n".join(json.dumps(r) for r in reversed(records)) + "\n", encoding="utf-8")
+    again = examples_from_teacher(student, shuffled, tmp_path / "positions.jsonl", tmp_path / "teacher.jsonl",
+                                  "train")
+    assert [(e[1], e[2], e[3], e[4]) for e in again] == [(e[1], e[2], e[3], e[4]) for e in train]
+    assert all(np.array_equal(x[0][k], y[0][k]) for x, y in zip(again, train) for k in range(4))
     out = tmp_path / "student.npz"
     done = subprocess.run([sys.executable, "-m", "svsim.learn.handvalue", "--selfplay", str(sp), "--positions",
                            str(tmp_path / "positions.jsonl"), "--teacher", str(tmp_path / "teacher.jsonl"),
                            "--out", str(out), "--iters", "20"], check=True, capture_output=True, text=True)
     report = json.loads(done.stdout.strip().splitlines()[-1])
     assert report["train_labels"] == len(train) and report["val_labels"] == len(val) and out.is_file()
+
+
+def test_weights_carried_by_a_few_examples_fall_back_to_equal():
+    """The effective sample size (sum w)^2 / sum w^2 of the 1 / var weights: under 30% of the examples, the fit
+    uses equal weights and says so; otherwise the weights stand."""
+    student = _student(seed=11)
+    positions, _ = _positions()
+    ex = [student.example(s, p, s.players[p].hand[0].uid, 0.1) for s, p in positions if s.players[p].hand]
+    even = [(e[0], e[1], e[2], 1.0 + 0.1 * (i % 3)) for i, e in enumerate(ex)]
+    skew = [(e[0], e[1], e[2], 1e5 if i == 0 else 1.0) for i, e in enumerate(ex)]
+    r_even = _student(seed=11).fit(even, iters=2)
+    r_skew = _student(seed=11).fit(skew, iters=2)
+    assert not r_even["equal_weights"] and r_even["ess_share"] > 0.9
+    assert r_skew["equal_weights"] and r_skew["ess_share"] < 0.3

@@ -37,6 +37,8 @@ CARD = ("face", "removal", "heal", "draw", "ramp", "body", "base_cost", "unknown
 FIT = ("cost", "playable_now", "playable_next", "turns_to_play")
 ROLE_SCALE = (8.0, 2.0, 8.0, 3.0, 3.0, 12.0)
 MAX_PP = 10
+VAR_FLOOR = 1e-5                  # the teacher's own se^2 is about 1e-4 (the architecture thread 02:25Z)
+ESS_SHARE = 0.3                   # 1 / var weights whose effective sample size is below this share: equal weights
 
 _ROOT: tuple | None = None        # (player, frozenset of the uids in that player's deck at the search's root)
 
@@ -254,10 +256,14 @@ class HandValue:
     def fit(self, examples, iters: int = 2000, lr: float = 0.01, l2: float = 1e-4, batch: int = 256,
             seed: int = 0, holdout=None) -> dict:
         """Adam on the weighted differential loss. `examples`: from `example`; `holdout`: examples scored, not fitted.
-        The weights are normalized to mean 1."""
+        The weights are normalized to mean 1; if their effective sample size (sum w)^2 / sum w^2 is below ESS_SHARE
+        of the examples, they are all set to 1 instead (the report says which, and the ESS)."""
         rng = np.random.default_rng(seed)
-        mean_w = float(np.mean([e[3] for e in examples])) or 1.0
-        examples = [(e[0], e[1], e[2], e[3] / mean_w) for e in examples]
+        w = np.array([e[3] for e in examples], dtype=float)
+        ess = float(w.sum() ** 2 / np.sum(w * w))
+        equal = ess < ESS_SHARE * len(w)           # a few examples would carry the fit: equal weights instead
+        mean_w = float(np.mean(w)) or 1.0
+        examples = [(e[0], e[1], e[2], 1.0 if equal else e[3] / mean_w) for e in examples]
         m = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
         v = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
         b1, b2, eps = 0.9, 0.999, 1e-8
@@ -271,7 +277,8 @@ class HandValue:
                 setattr(self, k, getattr(self, k) - upd)
             self.E[0] = 0.0
         self._memo.clear()
-        report = {"train_loss": self.loss_and_grads(*self.batch(examples))[0], "examples": len(examples)}
+        report = {"train_loss": self.loss_and_grads(*self.batch(examples))[0], "examples": len(examples),
+                  "ess": ess, "ess_share": ess / len(w), "equal_weights": bool(equal)}
         if holdout:
             mw = float(np.mean([e[3] for e in holdout])) or 1.0
             report["holdout_loss"] = self.loss_and_grads(*self.batch([(e[0], e[1], e[2], e[3] / mw)
@@ -329,12 +336,16 @@ def default_student(state, player: int) -> HandValue:
 
 def examples_from(records_path, labels_path, model: HandValue, every: int = 0, keep_out: bool = False) -> list:
     """Training examples from game records (JSON lines) and labels (JSON lines, one per (position, card)):
-    {"g": the game's line in the records file, "i": the action index the position is before, "player",
+    {"g": the game's "g" (its line if the record has none), "i": the action index the position is before, "player",
     "uid": the card, "t": T(c | s), and "var" (or "seeds": the per-seed T, whose variance is used, floored at
-    1e-3)}. The weight is 1 / var. Cards drawn this turn are unknown as in the search (the record's turn_starts).
+    VAR_FLOOR)}. The weight is 1 / var. Cards drawn this turn are unknown as in the search (the record's turn_starts).
     `every` > 0: only games whose line % every != 0 (keep_out: only those == 0), the hold-out split."""
     from svsim.tools import records as R
-    lines = open(records_path, encoding="utf-8").read().splitlines()
+    games = {}
+    for n, line in enumerate(open(records_path, encoding="utf-8")):
+        if line.strip():
+            rec = json.loads(line)
+            games[rec.get("g", n)] = rec
     by_game: dict = {}
     for line in open(labels_path, encoding="utf-8"):
         lab = json.loads(line)
@@ -343,7 +354,7 @@ def examples_from(records_path, labels_path, model: HandValue, every: int = 0, k
         by_game.setdefault(lab["g"], []).append(lab)
     out = []
     for g, labs in sorted(by_game.items()):
-        record = json.loads(lines[g])
+        record = games[g]
         want = {}
         for lab in labs:
             want.setdefault(lab["i"], []).append(lab)
@@ -358,7 +369,7 @@ def examples_from(records_path, labels_path, model: HandValue, every: int = 0, k
                 var = lab.get("var")
                 if var is None and lab.get("seeds"):
                     var = float(np.var(lab["seeds"], ddof=1)) if len(lab["seeds"]) > 1 else 1.0
-                w = 1.0 / max(var if var is not None else 1.0, 1e-3)
+                w = 1.0 / max(var if var is not None else 1.0, VAR_FLOOR)
                 out.append(model.example(state, lab["player"], lab["uid"], lab["t"], w, unknown))
             if i >= max(want):
                 break
@@ -367,19 +378,20 @@ def examples_from(records_path, labels_path, model: HandValue, every: int = 0, k
 
 def _teacher_label(rows: list, cid: int):
     """(T, var) of keep:<cid> over a position's teacher rows (one per seed): T the mean of the seeds' "teacher",
-    var the mean of their se^2 over the number of seeds (floored at 1e-4); None if no seed has it."""
+    var the mean of their se^2 over the number of seeds (floored at VAR_FLOOR); None if no seed has it."""
     got = [r["res"][f"keep:{cid}"] for r in rows if f"keep:{cid}" in r["res"]]
     if not got:
         return None
     t = float(np.mean([x["teacher"] for x in got]))
     var = float(np.mean([x.get("se", 0.0) ** 2 for x in got])) / len(got)
-    return t, max(var, 1e-4)
+    return t, max(var, VAR_FLOOR)
 
 
 def examples_from_teacher(model: HandValue, selfplay, positions, teacher, split: str | None = "train") -> list:
     """Training examples from the analysis line's student data (analysis/card-value/student_data.py): the
     self-play records, positions.jsonl ({"n", "g", "at", "seat", "split"}: own-turn starts) and teacher.jsonl
-    ({"n", "s", "res": {"keep:<card id>": {"teacher", "se", ...}}}, a row per seed). T(c) = keep:<c>, one copy of
+    ({"n", "s", "res": {"keep:<card id>": {"teacher", "se", ...}}}, a row per seed). Games are matched by their
+    records' "g", not by line (netdata writes games as they finish). T(c) = keep:<c>, one copy of
     c taken out of the hand (the first), weight 1 / var. Only cards in hand at the turn start: the teacher's line
     can also play a card drawn or made during the turn, which the student doesn't price. `split`: "train", "val"
     or None (both)."""
