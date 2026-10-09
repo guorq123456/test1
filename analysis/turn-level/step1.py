@@ -471,13 +471,16 @@ def holdout(args):
     print(f"- 新：`{args.new}`；现装：`{args.installed}`；留出开头 {len(val)} 个，对子 {len(per)} 个")
     for label, rows in (("不含 end", [r for r in per if r["kind"] != "end"]), ("含 end", per)):
         ks = sorted({r["k"] for r in rows})
+        by_k = {}
+        for r in rows:
+            by_k.setdefault(r["k"], []).append(r)
         for target, name in (("dG", "ΔG_end（K = 16）"), ("dT", "ΔT")):
             a_new, n = agree(rows, "new", target)
             a_old, _ = agree(rows, "installed", target)
             bs = []
             for _ in range(2000):
                 pick = rng.choice(ks, len(ks))
-                sel = [r for k in pick for r in rows if r["k"] == k]
+                sel = [r for k in pick for r in by_k[k]]
                 bs.append(agree(sel, "new", target)[0] - agree(sel, "installed", target)[0])
             print(f"- {label}，和 {name} 同号：新 {a_new:.3f}、现装 {a_old:.3f}（{n} 对），新 − 现装 {a_new - a_old:+.3f}"
                   f"（{np.nanpercentile(bs, 2.5):+.3f}～{np.nanpercentile(bs, 97.5):+.3f}）")
