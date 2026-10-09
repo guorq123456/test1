@@ -552,6 +552,7 @@ python -m svsim.tools.host step1 gend selfplay.jsonl starts.jsonl plans.jsonl --
 - 合并后在**现装那一行**（训练开头），ΔG_end(c* − bot) 的区间不含 0、点估计 > 0 → 请建造线开 turnpick 的等算力门；
 - 仍然跨 0 → 记作「方向一致、不足以开门」，这条线暂停。
 - 按类别的拆分只报。
+- **J23**（架构线程 23:41Z 补的，在 RC 的补充对局推上来之后、分析线算任何数之前写进来）：合并后现装那一行的区间不含 0，置信 55%。
 
 **怎么算**（`step1.py diag … --gend gend.jsonl --gend-more gendmore.jsonl`）
 - 同附录二：项 = （开头，方向 A），只算 c*_A ≠ bot 的；每项的 ΔG_end 是 c*_A 和 bot 配对结果差的平均，合并后每项 16 对（补的局接在原来的 4 局后面，按确定化配对）。
