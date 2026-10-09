@@ -217,9 +217,9 @@ def _pace_job(job):
     from svsim.core.engine import new_game
     from svsim.tools.arena import make_agent
     from svsim.ui.session import DECKS
-    spec, deck, g = job
+    spec, deck, g, base = job
     cards = decks.build(DECKS[deck][1])
-    seed = PACING_SEED + g
+    seed = base + g
     st = new_game(cards, decks.build(DECKS[deck][1]), seed=seed)
     agents = [make_agent(spec, 10 * seed + i) for i in (0, 1)]
     plays, evos = [0, 0], [0, 0]
@@ -232,7 +232,7 @@ def _pace_job(job):
 
 
 def pacing(args):
-    jobs = [(spec, args.deck, g) for spec in (args.a, args.b) for g in range(args.games)]
+    jobs = [(spec, args.deck, g, args.seed) for spec in (args.a, args.b) for g in range(args.games)]
     acc = {args.a: [[], []], args.b: [[], []]}
     with Pool(args.workers) as pool:
         for spec, g, plays, evos in pool.imap_unordered(_pace_job, jobs, chunksize=2):
@@ -243,7 +243,7 @@ def pacing(args):
     pb, eb = mean(acc[args.b][0]), mean(acc[args.b][1])
     ok = pa >= 0.95 * pb and ea >= 0.95 * eb
     print(f"条件：对手卡表已知（牌序、手牌未知）。第 4 条（挡门）：{args.deck} 镜像自对弈各 {args.games} 局，同样的种子"
-          f"（{PACING_SEED}～{PACING_SEED + args.games - 1}）\n")
+          f"（{args.seed}～{args.seed + args.games - 1}）\n")
     print(f"- 每方每局出牌：A {pa:.2f}，B {pb:.2f}（A ÷ B = {pa / pb:.3f}）")
     print(f"- 每方每局进化：A {ea:.2f}，B {eb:.2f}（A ÷ B = {ea / eb if eb else float('nan'):.3f}）")
     print(f"→ 第 4 条{'通过' if ok else '**不通过（挡门）：A 比 B 少超过 5%**'}")
@@ -272,6 +272,7 @@ def main():
     d.add_argument("--deck", default="ramp")
     d.add_argument("--games", type=int, default=200)
     d.add_argument("--workers", type=int, default=16)
+    d.add_argument("--seed", type=int, default=PACING_SEED, help="65890000 for the student, 65990000 for the value net")
     args = ap.parse_args()
     {"unit": unit, "fidelity": fidelity, "salem": salem, "pacing": pacing}[args.cmd](args)
 
