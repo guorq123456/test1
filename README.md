@@ -62,6 +62,17 @@ python -m svsim.tools.fetch_cards --lang en                     # 拉取官方�
 python -m svsim.tools.card_text --craft forest --todo           # 对照卡面文字检查脚本（需要上一步的数据）
 ```
 
+### 在 Salem 的电脑上跑多进程的工具
+
+规矩（2026-10-09）：所有工具合计最多 12 个进程、不占用 CPU0、用低于正常的优先级。工具自己的默认值都不超过 4 个进程（`--workers`）。跑长任务时用启动器包一层，它会把进程放到低于正常的优先级、从 CPU0 移开（之后开的子进程都会继承），并把 `--workers` 压到 12 以内、且不超过剩下的核数：
+
+```bash
+python -m svsim.tools.host svsim.tools.gate --a ... --b ... --workers 12
+python -m svsim.tools.host svsim.learn.netdata --games 1000 --workers 12 --out games.jsonl
+```
+
+Windows 和 Linux 都能用，不需要额外依赖。几个工具同时跑时，`--workers` 加起来不要超过 12。
+
 ## 文档
 - [架构设计](docs/architecture.md)：分层、数据模型、行动模型、触发系统、卡牌脚本、AI 接口、路线图、待确认的裁定
 - [规则摘要](docs/rules-reference.md)：面向实现的规则整理，标注了来源和实现状态

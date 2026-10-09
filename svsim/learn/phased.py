@@ -36,6 +36,10 @@ def _rows(job) -> list:
     #                                                       extras (named feature sets, learn.features.EXTRAS)
     job = tuple(job) + defaults[len(job):] if isinstance(job, tuple) else (job,) + defaults[1:]
     line, version, weight, unlock, act_hold, phases, side, extras = job[:8]
+    hv = None
+    if "hand_value" in extras:                     # the student (learn.handvalue), path as the ninth item
+        from svsim.learn.handvalue import load_cached
+        hv = load_cached(job[8])
     record = json.loads(line)
     names = record.get("names")                    # the named decks by seat: `side` keeps (mine, theirs) only
     branch = record.get("branch") or {}
@@ -44,7 +48,8 @@ def _rows(job) -> list:
     if branch.get("trigger") == "unlock":          # a third of these kept points for a follower already on the field
         weight *= unlock
     out = []
-    for phase, me, state, result, q in rows(record, with_search=True, start=start):
+    starts = record.get("turn_starts") or []
+    for i, (phase, me, state, result, q) in rows(record, with_search=True, start=start, index=True):
         if phases is not None and phase not in phases:   # a moment not being fitted: no features
             continue
         if side is not None and names and (names[me], names[1 - me]) != tuple(side):
@@ -54,7 +59,17 @@ def _rows(job) -> list:
             x = features(state, me, False, version)
             if extras:
                 from svsim.learn.features import extra_features
-                x = list(x) + extra_features(state, me, extras)
+                if hv is None:
+                    x = list(x) + extra_features(state, me, extras)
+                else:                              # what the search knows: the turn's draws are unknown
+                    from svsim.learn.handvalue import root
+                    start_ = max((s for s in starts if s["player"] == me and s["i"] <= i), key=lambda s: s["i"],
+                                 default=None)
+                    if start_ is None:
+                        x = list(x) + extra_features(state, me, extras, hv)
+                    else:
+                        with root(me, start_["deck"]):
+                            x = list(x) + extra_features(state, me, extras, hv)
             out.append((record.get("g", 0), phase, x, result, q, w))
     return out
 
@@ -84,6 +99,8 @@ def load(folder: Path | None = None) -> dict:
         return out
     for path in sorted(folder.glob("*-*-*.json")) + sorted(folder.glob("*-*-*.npz")):
         pair, _, moment = path.stem.rpartition("-")
+        if moment == "hv":                         # a hand-value student, read by the models that use it
+            continue
         try:
             keys = split_keys(pair)
         except KeyError:
@@ -150,6 +167,9 @@ def main() -> None:
                              "tempo, hand); the models record them")
     parser.add_argument("--hold-out-every", type=int, default=0,
                         help="leave out every game whose line number %% K == 0 (refit-200: K = 11, 400 of 4400)")
+    parser.add_argument("--hand-value", default=None,
+                        help="the hand-value student (learn.handvalue, .npz) the hand_value feature reads; copied "
+                             "into --out as <matchup>-hv.npz beside the models")
     parser.add_argument("--l2", type=float, default=1e-3,
                         help="L2 on the standardized coefficients (learn.fit.fit; C4 tries 1e-4)")
     args = parser.parse_args()
@@ -159,7 +179,9 @@ def main() -> None:
     phases = tuple({"ended": ENDED, "act": ACT}[m] for m in args.moments)
     keys = split_keys(args.matchup)                # named decks: only that side's positions (elf-t-ramp-t: the
     side = tuple(keys) if all(isinstance(k, str) for k in keys) else None   # elf-t player's, against ramp-t)
-    jobs = [(line, args.version, w, args.unlock_weight, args.act_hold_weight, phases, side, extras)
+    if ("hand_value" in extras) != (args.hand_value is not None):
+        parser.error("--hand-value goes with --features hand_value, and only with it")
+    jobs = [(line, args.version, w, args.unlock_weight, args.act_hold_weight, phases, side, extras, args.hand_value)
             for path, w in zip(args.games, weights) for i, line in enumerate(open(path, encoding="utf-8"))
             if not (args.hold_out_every and i % args.hold_out_every == 0)]
     with Pool(args.workers) as pool:
@@ -169,6 +191,16 @@ def main() -> None:
     keep = np.array([0.0 if n.startswith(STOCK) else 1.0 for n in N])
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
+    hv, hv_sha = None, None
+    if args.hand_value:
+        import hashlib
+        import shutil
+        from svsim.learn.handvalue import load_cached
+        hv = load_cached(args.hand_value)
+        target = out / f"{args.matchup}-hv.npz"
+        if Path(args.hand_value).resolve() != target.resolve():
+            shutil.copy(args.hand_value, target)
+        hv_sha = hashlib.sha256(target.read_bytes()).hexdigest()
     for phase, label in ((ENDED, "ended"), (ACT, "act")):
         if label not in args.moments:
             continue
@@ -187,8 +219,9 @@ def main() -> None:
                      "q_weight": args.q_weight, "games": args.games, "file_weights": weights,
                      "unlock_weight": args.unlock_weight, "act_hold_weight": args.act_hold_weight,
                      "hold_out_every": args.hold_out_every, "l2": args.l2,
-                     "report": {k: float(v) for k, v in report.items()}}, version=args.version, extras=extras
-                    ).save(out / f"{args.matchup}-{label}.json")
+                     **({"hand_value": {"file": f"{args.matchup}-hv.npz", "sha256": hv_sha}} if hv else {}),
+                     "report": {k: float(v) for k, v in report.items()}}, version=args.version, extras=extras,
+                    hv=hv).save(out / f"{args.matchup}-{label}.json")
         print(f"{label}: {len(X)} positions, {report}", flush=True)
 
 

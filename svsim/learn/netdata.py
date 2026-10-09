@@ -495,11 +495,11 @@ def search_value(thought: dict | None, gain: float = 1.0) -> float | None:
     return 1 / (1 + math.exp(-max(-30.0, min(30.0, z))))
 
 
-def rows(record: dict, with_search: bool = False, start: int = 0):
+def rows(record: dict, with_search: bool = False, start: int = 0, index: bool = False):
     """(phase, player, state, result) for every position the search may score (see module docstring);
     result is 1 for a win of `player`, 0 for a loss, 0.5 for a draw. The state is a copy. With
     `with_search`, a fifth item: the search's win probability at that decision (search_value), None
-    for turn ends and decisions the search didn't make."""
+    for turn ends and decisions the search didn't make. With `index`: (action index, that tuple)."""
     from svsim.core.actions import EndTurn
     from svsim.core.enums import Phase
     from svsim.search.evaluate import after_end_of_turn
@@ -513,11 +513,13 @@ def rows(record: dict, with_search: bool = False, start: int = 0):
             continue
         me = state.active
         q = search_value(thoughts[i] if i < len(thoughts) else None, gain)
-        yield (ACT, me, state.clone(), result(me)) + ((q,) if with_search else ())
+        row = (ACT, me, state.clone(), result(me)) + ((q,) if with_search else ())
+        yield (i, row) if index else row
         if isinstance(action, EndTurn):
             ended = after_end_of_turn(state)
             if not ended.over:
-                yield (ENDED, me, ended, result(me)) + ((None,) if with_search else ())
+                row = (ENDED, me, ended, result(me)) + ((None,) if with_search else ())
+                yield (i, row) if index else row
 
 
 def main() -> None:

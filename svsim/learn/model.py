@@ -26,13 +26,15 @@ SCALE = 8.0                      # ISMCTS's logistic squash: value = 1 / (1 + ex
 
 class LinearValue:
     def __init__(self, coef: list, mean: list, std: list, potential: bool, info: dict | None = None,
-                 version: int = 1, hidden: dict | None = None, deck_desc: bool = False, extras: tuple = ()):
+                 version: int = 1, hidden: dict | None = None, deck_desc: bool = False, extras: tuple = (),
+                 hv=None):
         self.coef, self.mean, self.std, self.potential = coef, mean, std, potential
         self.info = info or {}
         self.version = version
         self.hidden = hidden             # {"W1": [[per hidden unit] per feature], "b1": [...], "w2": [...]}
         self.deck_desc = deck_desc       # both decks' learn.deckdesc vectors after the features (a shared model)
         self.extras = tuple(extras)      # named feature sets after those (learn.features.EXTRAS), by name
+        self.hv = hv                     # the hand-value student "hand_value" reads (learn.handvalue), if used
         assert len(coef) == len(mean) == len(std) == len(self.names())
         if hidden:
             assert len(hidden["W1"]) == len(coef) and len(hidden["b1"]) == len(hidden["w2"])
@@ -53,7 +55,7 @@ class LinearValue:
             from svsim.learn import deckdesc
             x = list(x) + deckdesc.pair(state, player)
         if self.extras:
-            x = list(x) + extra_features(state, player, self.extras)
+            x = list(x) + extra_features(state, player, self.extras, self.hv)
         return x
 
     def logit(self, state: GameState, player: int) -> float:
@@ -81,8 +83,13 @@ class LinearValue:
     @classmethod
     def load(cls, path: Path) -> "LinearValue":
         d = json.loads(path.read_text(encoding="utf-8"))
+        extras = tuple(d.get("extras", ()))
+        hv = None
+        if "hand_value" in extras:       # its student sits beside it: <pairing>-hv.npz for <pairing>-<moment>.json
+            from svsim.learn.handvalue import load_cached
+            hv = load_cached(path.with_name(path.name.rsplit("-", 1)[0] + "-hv.npz"))
         return cls(d["coef"], d["mean"], d["std"], d["potential"], d.get("info"), d.get("version", 1),
-                   d.get("hidden"), d.get("deck_desc", False), tuple(d.get("extras", ())))
+                   d.get("hidden"), d.get("deck_desc", False), extras, hv)
 
     def weights_by_name(self) -> dict:
         """Coefficients per raw (unstandardized) feature unit, for reading."""

@@ -42,7 +42,8 @@ prior, W x the player's head + (1 - W) x the self-play head (bonus weight C; an 
 scores a position inside the turn as if the turn ended there (as the
 linear models do), except a turn start reached by playing out the reply;
 "+mean" backs values up as plain averages instead of the best own choice
-(search.mcts, backup="mean"); "+phased" linear models by moment (learn.phased:
+(search.mcts, backup="mean"); "+vnet" turn ends scored by the pairing's value network (learn.vnet, from
+svsim/learn/vnets; "+vnet=FOLDER" another folder's <deck>-<deck>-vnet.npz), the in-turn score unchanged; "+phased" linear models by moment (learn.phased:
 turn ends, and turn starts reached by playing out the reply; "+phased=NAME" this agent's models from
 the folder NAME, a path or svsim/learn/phased_models/NAME, learn.phased.folder_of; "+screen=N" the lethal search's budget for a position whose damage estimate falls short (the
 estimate is no bound, search.lethal.damage_estimate), "+screen=N:N2:K" ... and N2 nodes when it is short by K or
@@ -181,7 +182,7 @@ def _make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "phased=", "screen=", "mimic=", "alloc=", "infer="))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet="))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -205,6 +206,16 @@ def _make_agent(spec: str, seed: int):
         gain = [float(o[4:]) for o in options if o.startswith("gain")]
         weights = NetLearned(fallback=weights if "learned" in options else None, gain=gain[0] if gain else 1.0,
                              end_now="endnow" in options)
+    vnet = [o for o in options if o == "vnet" or o.startswith("vnet=")]
+    if vnet:                                       # turn ends by the pairing's value network (learn.vnet); the
+        from svsim.learn.vnet import VNETS, VNetEnded, load_vnets   # in-turn score as before
+        name = vnet[0][len("vnet="):]
+        if name:
+            from svsim.learn.phased import folder_of
+            nets = load_vnets(folder_of(name))
+        else:
+            nets = load_vnets(VNETS)
+        weights = VNetEnded(weights, nets, aliases)
     if "timing" in options:                        # holding cards until the player would play them
         from svsim.learn.timing import Timed
         weights = Timed(base=weights)
