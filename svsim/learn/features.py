@@ -332,6 +332,7 @@ EXTRAS = {
     "hand": [f"me_handplay_{r}" for r in ("face", "removal", "heal", "draw", "ramp", "body")],
     "board": ["me_pressure", "me_hp_early", "me_hp_mid", "op_pressure", "op_hp_early", "op_hp_mid"],
     "hpphase": ["me_hp_early", "me_hp_mid", "op_hp_early", "op_hp_mid"],
+    "hand_value": ["me_hand_value"],
 }
 # - "board" (6, C3, the analysis thread's analysis/c3-threat/README.md section 4, 09f7ca2): for each side s (mine,
 #   then the opponent's; e its enemy) pressure = min(_board_threat(e) / max(s's leader HP, 1), 1.5), then s's leader
@@ -341,6 +342,9 @@ EXTRAS = {
 #   pressure slopes go away); kept for the cand-c3-board-* folders, for reference only.
 # - "hpphase" (4, C3 revised): board without the two pressures: my HP x [the scored player's own turn <= 4] and
 #   x [5 <= that turn <= 7], then the opponent's.
+# - "hand_value" (1, the hand-value line, 2026-10-09): the student's H of my hand (learn.handvalue), the cards the
+#   search can't know priced as one of their pool. It needs the student: the model that uses it carries one
+#   (LinearValue.hv, read from <pairing>-hv.npz beside the model's file), and learn.phased --hand-value for fitting.
 
 
 def extra_names(extras) -> list[str]:
@@ -418,13 +422,23 @@ EXTRA_FNS = {"tempo": _tempo_values, "hand": playable_hand_roles, "board": _boar
              "hpphase": _hpphase_values}
 
 
-def extra_features(state: GameState, player: int, extras) -> list[float]:
-    """The named feature sets' values for `player` (EXTRAS), in the order of extra_names."""
+def _hand_value(state: GameState, player: int, hv=None) -> list[float]:
+    if hv is None:
+        raise ValueError("the hand_value feature needs a student (learn.handvalue): none was given")
+    return [hv.value(state, player)]
+
+
+EXTRA_FNS["hand_value"] = _hand_value
+
+
+def extra_features(state: GameState, player: int, extras, hv=None) -> list[float]:
+    """The named feature sets' values for `player` (EXTRAS), in the order of extra_names. `hv`: the student
+    "hand_value" reads (learn.handvalue.HandValue)."""
     out = []
     for e in extras:
         if e not in EXTRA_FNS:
             raise ValueError(f"unknown feature set {e!r}")
-        values = EXTRA_FNS[e](state, player)
+        values = EXTRA_FNS[e](state, player, hv) if e == "hand_value" else EXTRA_FNS[e](state, player)
         assert len(values) == len(EXTRAS[e]), e
         out += values
     return out

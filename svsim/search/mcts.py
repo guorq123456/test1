@@ -227,6 +227,13 @@ class ISMCTS:
         return total / self.average
 
     def choose(self, state: GameState):
+        """The search's move. While it runs, learn.handvalue knows its root: the cards drawn from here on, and the
+        opponent's hand, are unknown to the hand-value student."""
+        from svsim.learn.handvalue import root
+        with root(state.active, [c.uid for c in state.players[state.active].deck]):
+            return self._choose(state)
+
+    def _choose(self, state: GameState):
         me, root = state.active, None
         if self.reuse and self._next is not None:
             from svsim.search.lethal import state_key

@@ -1,0 +1,345 @@
+"""The hand-value student: H(hand | position), a price for the whole hand that depends on the position.
+
+The hand-value line (Salem 2026-10-09 02:01Z; design: docs/hand-value-design.md section 2 on the
+claude/bot-architecture-design branch, the analysis line's analysis/card-value/student-plan.md): the teacher
+measures T(c | s), how much more holding card c is worth than not holding it in position s; the student learns a
+value of the hand such that H(hand) - H(hand without c) ~ T(c | s). Salem's rule: no fixed score per card. The
+structure keeps it so: a card's own inputs (its id's embedding, what it does: learn.roles, its base cost) reach the
+output only multiplied by a gate read from the position and from how the card fits it (its cost against the play
+points now and next turn), and the cards are summed before a small network (DeepSets), so two cards can be worth
+more together and nine of a kind less than nine times one.
+
+Inputs never include a deck id, a deck key or the pairing (a model file per pairing is fine): the position (CTX),
+and per card its id (an embedding over the card ids seen in training; one never seen gets the zero row and lives on
+its roles), its roles and costs (CARD, FIT).
+
+Cards the search can't know are priced as one of the pool they came from: a card drawn after the search's root
+(mcts.ISMCTS sets the root, as its `_root_deck`) and every card of a hand that isn't the root player's are encoded
+as the mean of the cards in that hand-and-deck pool, so the value doesn't move with what a determinization drew.
+Outside a search (fitting, analysis) every card in hand is known, unless `root` says otherwise.
+
+Plain numpy, no other dependency. Fitting: HandValue.fit on (hand, removed card, T, weight) examples, the weight
+1 / the variance of T. Used by the evaluation as the named feature set "hand_value" (learn.features), whose
+coefficient learn.phased fits like any other.
+"""
+from __future__ import annotations
+
+import json
+import math
+from contextlib import contextmanager
+from pathlib import Path
+
+import numpy as np
+
+CTX = ("turn", "pp", "max_pp", "next_pp", "bonus", "me_hp", "op_hp", "me_followers", "op_followers", "me_deck",
+       "op_deck", "ep", "sep", "hand_size")
+CARD = ("face", "removal", "heal", "draw", "ramp", "body", "base_cost", "unknown")
+FIT = ("cost", "playable_now", "playable_next", "turns_to_play")
+ROLE_SCALE = (8.0, 2.0, 8.0, 3.0, 3.0, 12.0)
+MAX_PP = 10
+
+_ROOT: tuple | None = None        # (player, frozenset of the uids in that player's deck at the search's root)
+
+
+@contextmanager
+def root(player: int, deck_uids):
+    """While a search decides for `player`: cards drawn from `deck_uids` (the deck at the root), and every card
+    in the other player's hand, are unknown to it."""
+    global _ROOT
+    before = _ROOT
+    _ROOT = (player, frozenset(deck_uids))
+    try:
+        yield
+    finally:
+        _ROOT = before
+
+
+def unknown_uids(state, player: int):
+    """None: every card in `player`'s hand is known; else the set of its uids that aren't (or "all")."""
+    if _ROOT is None:
+        return None
+    if _ROOT[0] != player:
+        return "all"
+    return _ROOT[1]
+
+
+def context(state, player: int) -> np.ndarray:
+    p, o = state.players[player], state.players[1 - player]
+    nxt = min(p.max_pp + 1, MAX_PP)
+    return np.array([p.turns_taken / 10, p.pp / 10, p.max_pp / 10, nxt / 10, float(p.bonus_ready),
+                     p.leader_hp / 20, o.leader_hp / 20, len(p.followers) / 5, len(o.followers) / 5,
+                     len(p.deck) / 40, len(o.deck) / 40, p.ep / 2, p.sep / 2, len(p.hand) / 9], dtype=float)
+
+
+def _card_static(defn) -> tuple:
+    from svsim.learn.roles import card_roles
+    r = card_roles(defn)
+    return tuple(v / s for v, s in zip(r, ROLE_SCALE)) + (defn.cost / 10, 0.0)
+
+
+def _card_fit(cost: int, pp: int, nxt: int) -> tuple:
+    return (cost / 10, float(cost <= pp), float(cost <= nxt), max(0, cost - nxt) / 10)
+
+
+class HandValue:
+    """H(hand | position) = w2 . tanh(W1 S + b1), S = sum over the cards of tanh(Wa [E d_c, card_c] + ba) *
+    sigmoid(Wg [ctx, fit_c] + bg): d_c is the card's one-hot over `vocab` (the pool's frequencies for an unknown
+    card), E the embedding."""
+
+    PARAMS = ("E", "Wa", "ba", "Wg", "bg", "W1", "b1", "w2")
+
+    def __init__(self, vocab, embed: int = 8, width: int = 16, hidden: int = 16, seed: int = 0, info=None):
+        self.vocab = [int(v) for v in vocab]
+        self.index = {v: i + 1 for i, v in enumerate(self.vocab)}     # 0: a card id never seen in training
+        self.embed, self.width, self.hidden = embed, width, hidden
+        self.info = dict(info or {})
+        rng = np.random.default_rng(seed)
+        V, fa, fg = len(self.vocab) + 1, embed + len(CARD), len(CTX) + len(FIT)
+        self.E = rng.normal(0, 0.3, (V, embed))
+        self.E[0] = 0.0
+        self.Wa = rng.normal(0, 1 / math.sqrt(fa), (fa, width))
+        self.ba = np.zeros(width)
+        self.Wg = rng.normal(0, 1 / math.sqrt(fg), (fg, width))
+        self.bg = np.zeros(width)
+        self.W1 = rng.normal(0, 1 / math.sqrt(width), (width, hidden))
+        self.b1 = np.zeros(hidden)
+        self.w2 = rng.normal(0, 1 / math.sqrt(hidden), hidden)
+        self._memo: dict = {}
+
+    # --- encoding -------------------------------------------------------------------------------------------
+    def encode(self, state, player: int, unknown="search"):
+        """(D [n, V], Xs [n, CARD], Xq [n, FIT], z [CTX]) for `player`'s hand. `unknown`: "search" (the root set
+        by `root`, if any), None (all known), "all", or a set of uids."""
+        if unknown == "search":
+            unknown = unknown_uids(state, player)
+        p = state.players[player]
+        nxt = min(p.max_pp + 1, MAX_PP)
+        V = len(self.vocab) + 1
+        hidden = [c for c in p.hand if unknown == "all" or (unknown is not None and c.uid in unknown)]
+        known = [c for c in p.hand if not (unknown == "all" or (unknown is not None and c.uid in unknown))]
+        rows_d, rows_s, rows_q = [], [], []
+        for c in known:
+            d = np.zeros(V)
+            d[self.index.get(c.defn.card_id, 0)] = 1.0
+            rows_d.append(d)
+            rows_s.append(_card_static(c.defn))
+            rows_q.append(_card_fit(c.cost, p.pp, nxt))
+        if hidden:                                 # one of the pool they came from, each
+            pool = hidden + list(p.deck)
+            d = np.zeros(V)
+            for c in pool:
+                d[self.index.get(c.defn.card_id, 0)] += 1.0 / len(pool)
+            s = np.mean([_card_static(c.defn) for c in pool], axis=0)
+            s[-1] = 1.0
+            q = np.mean([_card_fit(c.cost, p.pp, nxt) for c in pool], axis=0)
+            for _ in hidden:
+                rows_d.append(d)
+                rows_s.append(s)
+                rows_q.append(q)
+        n = len(rows_d)
+        if n == 0:
+            return np.zeros((0, V)), np.zeros((0, len(CARD))), np.zeros((0, len(FIT))), context(state, player)
+        return np.array(rows_d), np.array(rows_s, dtype=float), np.array(rows_q, dtype=float), context(state, player)
+
+    # --- forward --------------------------------------------------------------------------------------------
+    def units(self, D, Xs, Xq, z) -> np.ndarray:
+        """Each card's contribution to S, [n, width]."""
+        if len(D) == 0:
+            return np.zeros((0, self.width))
+        A = np.tanh(np.concatenate([D @ self.E, Xs], axis=1) @ self.Wa + self.ba)
+        G = 1 / (1 + np.exp(-(np.concatenate([np.repeat(z[None, :], len(D), axis=0), Xq], axis=1) @ self.Wg
+                              + self.bg)))
+        return A * G
+
+    def head(self, S: np.ndarray) -> float:
+        return float(np.tanh(S @ self.W1 + self.b1) @ self.w2)
+
+    def h(self, enc) -> float:
+        return self.head(self.units(*enc).sum(axis=0))
+
+    def value(self, state, player: int) -> float:
+        """H of `player`'s hand as the search sees it (learn.features "hand_value")."""
+        unknown = unknown_uids(state, player)
+        p = state.players[player]
+        hidden = [c for c in p.hand if unknown == "all" or (unknown is not None and c.uid in unknown)]
+        gone = {c.uid for c in hidden}
+        key = (tuple(np.round(context(state, player), 6)),
+               tuple((c.defn.card_id, c.cost) for c in p.hand if c.uid not in gone),
+               len(hidden), tuple(sorted((c.defn.card_id, c.cost) for c in hidden + list(p.deck))) if hidden else ())
+        hit = self._memo.get(key)
+        if hit is None:
+            if len(self._memo) >= 100_000:
+                self._memo.clear()
+            hit = self._memo[key] = self.h(self.encode(state, player))
+        return hit
+
+    def delta(self, state, player: int, uid: int, unknown=None) -> float:
+        """H(hand) - H(hand without the card `uid`): the card's worth in this hand and position."""
+        D, Xs, Xq, z = self.encode(state, player, unknown)
+        U = self.units(D, Xs, Xq, z)
+        i = self._slot(state, player, uid, unknown)
+        S = U.sum(axis=0)
+        return self.head(S) - self.head(S - U[i])
+
+    def _slot(self, state, player, uid, unknown) -> int:
+        """Where `uid` sits in encode's rows (known cards first, in hand order, then the unknown ones)."""
+        p = state.players[player]
+        is_hidden = lambda c: unknown == "all" or (unknown is not None and c.uid in unknown)
+        order = [c.uid for c in p.hand if not is_hidden(c)] + [c.uid for c in p.hand if is_hidden(c)]
+        return order.index(uid)
+
+    # --- fitting --------------------------------------------------------------------------------------------
+    def example(self, state, player: int, uid: int, t: float, weight: float = 1.0, unknown=None):
+        """One training example: the hand's encoding, the removed card's row, the label and its weight."""
+        enc = self.encode(state, player, unknown)
+        return enc, self._slot(state, player, uid, unknown), float(t), float(weight)
+
+    @staticmethod
+    def batch(examples):
+        """Stack examples, padded to the largest hand: D [B, N, V], Xs, Xq, Z [B, CTX], M [B, N], R, T, W."""
+        B = len(examples)
+        N = max(1, max(len(e[0][0]) for e in examples))
+        V, fs, fq = examples[0][0][0].shape[1], len(CARD), len(FIT)
+        D, Xs, Xq = np.zeros((B, N, V)), np.zeros((B, N, fs)), np.zeros((B, N, fq))
+        Z, M = np.zeros((B, len(CTX))), np.zeros((B, N))
+        R, T, W = np.zeros(B, dtype=int), np.zeros(B), np.zeros(B)
+        for b, ((d, s, q, z), r, t, w) in enumerate(examples):
+            n = len(d)
+            D[b, :n], Xs[b, :n], Xq[b, :n], Z[b], M[b, :n] = d, s, q, z, 1.0
+            R[b], T[b], W[b] = r, t, w
+        return D, Xs, Xq, Z, M, R, T, W
+
+    def loss_and_grads(self, D, Xs, Xq, Z, M, R, T, W, l2: float = 0.0):
+        """Weighted mean of (H(hand) - H(hand without the removed card) - T)^2, plus l2 on the weights; the
+        gradients by name."""
+        B, N, _ = D.shape
+        de = self.embed
+        EMB = D @ self.E                                          # [B, N, de]
+        IA = np.concatenate([EMB, Xs], axis=2)
+        A = np.tanh(IA @ self.Wa + self.ba)
+        IG = np.concatenate([np.repeat(Z[:, None, :], N, axis=1), Xq], axis=2)
+        G = 1 / (1 + np.exp(-(IG @ self.Wg + self.bg)))
+        U = A * G * M[:, :, None]
+        S1 = U.sum(axis=1)
+        Ur = U[np.arange(B), R]
+        S0 = S1 - Ur
+        H1h = np.tanh(S1 @ self.W1 + self.b1)
+        H0h = np.tanh(S0 @ self.W1 + self.b1)
+        d = H1h @ self.w2 - H0h @ self.w2 - T
+        params = [getattr(self, k) for k in self.PARAMS if k != "E"] + [self.E[1:]]
+        loss = float(np.mean(W * d * d)) + l2 * sum(float(np.sum(P * P)) for P in params)
+        g = {}
+        dH1 = 2 * W * d / B
+        dH0 = -dH1
+        g["w2"] = H1h.T @ dH1 + H0h.T @ dH0 + 2 * l2 * self.w2
+        dP1 = (dH1[:, None] * self.w2) * (1 - H1h ** 2)
+        dP0 = (dH0[:, None] * self.w2) * (1 - H0h ** 2)
+        g["W1"] = S1.T @ dP1 + S0.T @ dP0 + 2 * l2 * self.W1
+        g["b1"] = dP1.sum(axis=0) + dP0.sum(axis=0)
+        dS1, dS0 = dP1 @ self.W1.T, dP0 @ self.W1.T
+        dU = np.repeat((dS1 + dS0)[:, None, :], N, axis=1)
+        dU[np.arange(B), R] -= dS0
+        dU *= M[:, :, None]
+        dPA = dU * G * (1 - A ** 2)
+        dPG = dU * A * G * (1 - G)
+        g["Wa"] = IA.reshape(-1, IA.shape[2]).T @ dPA.reshape(-1, self.width) + 2 * l2 * self.Wa
+        g["ba"] = dPA.sum(axis=(0, 1))
+        g["Wg"] = IG.reshape(-1, IG.shape[2]).T @ dPG.reshape(-1, self.width) + 2 * l2 * self.Wg
+        g["bg"] = dPG.sum(axis=(0, 1))
+        dEMB = (dPA @ self.Wa.T)[:, :, :de]
+        g["E"] = np.einsum("bnv,bnd->vd", D, dEMB) + 2 * l2 * self.E
+        g["E"][0] = 0.0                                            # the never-seen row stays zero
+        return loss, g
+
+    def fit(self, examples, iters: int = 2000, lr: float = 0.01, l2: float = 1e-4, batch: int = 256,
+            seed: int = 0, holdout=None) -> dict:
+        """Adam on the weighted differential loss. `examples`: from `example`; `holdout`: examples scored, not fitted.
+        The weights are normalized to mean 1."""
+        rng = np.random.default_rng(seed)
+        mean_w = float(np.mean([e[3] for e in examples])) or 1.0
+        examples = [(e[0], e[1], e[2], e[3] / mean_w) for e in examples]
+        m = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
+        v = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
+        b1, b2, eps = 0.9, 0.999, 1e-8
+        for step in range(1, iters + 1):
+            pick = rng.choice(len(examples), size=min(batch, len(examples)), replace=False)
+            _, g = self.loss_and_grads(*self.batch([examples[i] for i in pick]), l2=l2)
+            for k in self.PARAMS:
+                m[k] = b1 * m[k] + (1 - b1) * g[k]
+                v[k] = b2 * v[k] + (1 - b2) * g[k] ** 2
+                upd = lr * (m[k] / (1 - b1 ** step)) / (np.sqrt(v[k] / (1 - b2 ** step)) + eps)
+                setattr(self, k, getattr(self, k) - upd)
+            self.E[0] = 0.0
+        self._memo.clear()
+        report = {"train_loss": self.loss_and_grads(*self.batch(examples))[0], "examples": len(examples)}
+        if holdout:
+            mw = float(np.mean([e[3] for e in holdout])) or 1.0
+            report["holdout_loss"] = self.loss_and_grads(*self.batch([(e[0], e[1], e[2], e[3] / mw)
+                                                                        for e in holdout]))[0]
+        return report
+
+    # --- files ----------------------------------------------------------------------------------------------
+    def save(self, path) -> None:
+        meta = {"vocab": self.vocab, "embed": self.embed, "width": self.width, "hidden": self.hidden,
+                "ctx": list(CTX), "card": list(CARD), "fit": list(FIT), "info": self.info}
+        with open(path, "wb") as f:
+            np.savez(f, meta=np.array(json.dumps(meta, ensure_ascii=False)),
+                     **{k: getattr(self, k) for k in self.PARAMS})
+
+    @classmethod
+    def load(cls, path) -> "HandValue":
+        with np.load(Path(path), allow_pickle=False) as z:
+            meta = json.loads(str(z["meta"]))
+            assert meta["ctx"] == list(CTX) and meta["card"] == list(CARD) and meta["fit"] == list(FIT), path
+            out = cls(meta["vocab"], meta["embed"], meta["width"], meta["hidden"], info=meta.get("info"))
+            for k in cls.PARAMS:
+                setattr(out, k, np.array(z[k], dtype=float))
+        return out
+
+
+_LOADED: dict = {}
+
+
+def load_cached(path) -> HandValue:
+    key = str(Path(path).resolve())
+    if key not in _LOADED:
+        _LOADED[key] = HandValue.load(key)
+    return _LOADED[key]
+
+
+def examples_from(records_path, labels_path, model: HandValue, every: int = 0, keep_out: bool = False) -> list:
+    """Training examples from game records (JSON lines) and labels (JSON lines, one per (position, card)):
+    {"g": the game's line in the records file, "i": the action index the position is before, "player",
+    "uid": the card, "t": T(c | s), and "var" (or "seeds": the per-seed T, whose variance is used, floored at
+    1e-3)}. The weight is 1 / var. Cards drawn this turn are unknown as in the search (the record's turn_starts).
+    `every` > 0: only games whose line % every != 0 (keep_out: only those == 0), the hold-out split."""
+    from svsim.tools import records as R
+    lines = open(records_path, encoding="utf-8").read().splitlines()
+    by_game: dict = {}
+    for line in open(labels_path, encoding="utf-8"):
+        lab = json.loads(line)
+        if every and ((lab["g"] % every == 0) != keep_out):
+            continue
+        by_game.setdefault(lab["g"], []).append(lab)
+    out = []
+    for g, labs in sorted(by_game.items()):
+        record = json.loads(lines[g])
+        want = {}
+        for lab in labs:
+            want.setdefault(lab["i"], []).append(lab)
+        starts = record.get("turn_starts") or []
+        for i, (state, _) in enumerate(R.steps(record)):
+            if i not in want:
+                continue
+            for lab in want[i]:
+                start = max((s for s in starts if s["player"] == lab["player"] and s["i"] <= i),
+                            key=lambda s: s["i"], default=None)
+                unknown = set(start["deck"]) if start else None
+                var = lab.get("var")
+                if var is None and lab.get("seeds"):
+                    var = float(np.var(lab["seeds"], ddof=1)) if len(lab["seeds"]) > 1 else 1.0
+                w = 1.0 / max(var if var is not None else 1.0, 1e-3)
+                out.append(model.example(state, lab["player"], lab["uid"], lab["t"], w, unknown))
+            if i >= max(want):
+                break
+    return out
