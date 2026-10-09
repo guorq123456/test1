@@ -67,10 +67,10 @@ class ContrastLinear:
         return (np.asarray(X, float) - self.mean) / self.std
 
     def forward(self, Xs):
-        return Xs @ self.w
+        return (Xs @ self.w.astype(Xs.dtype)).astype(float)
 
     def backward(self, Xs, dz):
-        return Xs.T @ dz
+        return (Xs.T @ np.asarray(dz, Xs.dtype)).astype(float)
 
 
 def contrast_loss(model: ContrastLinear, A, B, dT, w, C=None, y=None, mu: float = 0.0, l2: float = 0.0,
@@ -96,27 +96,43 @@ def contrast_loss(model: ContrastLinear, A, B, dT, w, C=None, y=None, mu: float 
     return loss, g
 
 
+def start_from(model, coef, mean, std, bias: int) -> np.ndarray:
+    """Another linear model's coefficients (coef over (x - mean) / std, its bias at the same index) in `model`'s
+    standardization: the same E(x), so a fit can start where that model is."""
+    coef, mean, std = (np.asarray(v, float) for v in (coef, mean, std))
+    w = coef * model.std / std
+    others = np.arange(len(coef)) != bias
+    w[bias] = coef[bias] + float(np.sum((coef * (model.mean - mean) / std)[others]))
+    return w
+
+
 def fit_contrast(XA, XB, dT, w=None, XC=None, yc=None, mu: float = 0.1, l2: float = 1e-3, iters: int = 3000,
-                 lr: float = 0.05, signs=None, bias: int = -1, fix_bias: float | None = None, keep=None):
+                 lr: float = 0.05, signs=None, bias: int = -1, fix_bias: float | None = None, keep=None,
+                 init=None):
     """(ContrastLinear, report). XA / XB: the two turn ends' features per pair; dT: the teacher's difference (a
     minus b); w: pair weights (default 1); XC / yc: calibration turn ends and their game results (mu > 0).
     The intercept is fitted only with calibration data; with mu = 0 (or none) it is held at `fix_bias` (default 0).
-    `keep`: a 0/1 mask of features to use (learn.phased.STOCK zeroed)."""
+    `keep`: a 0/1 mask of features to use (learn.phased.STOCK zeroed). `init`: (coef, mean, std) of a model to
+    start from (start_from; e.g. the installed turn-end model), else zeros."""
     from svsim.learn.fit import project, standardize
-    XA, XB = np.asarray(XA, float), np.asarray(XB, float)
+    dtype = np.float32 if getattr(XA, "dtype", None) == np.float32 else float   # float32 input stays float32
+    XA, XB = np.asarray(XA, dtype), np.asarray(XB, dtype)
     n = XA.shape[1]
     bias = bias % n
     keep = np.ones(n) if keep is None else np.asarray(keep, float)
-    pool = np.vstack([XA, XB] + ([np.asarray(XC, float)] if XC is not None and len(XC) else []))
-    mean, std = standardize(pool * keep, bias)
+    pool = np.vstack([XA, XB] + ([np.asarray(XC, dtype)] if XC is not None and len(XC) else []))
+    mean, std = standardize(np.asarray(pool * keep, float), bias)
     model = ContrastLinear(n, bias, mean, std)
-    A, B = model.standardize(XA * keep), model.standardize(XB * keep)
-    C = model.standardize(np.asarray(XC, float) * keep) if XC is not None and len(XC) else None
+    cast = lambda X: model.standardize(X * keep).astype(dtype)
+    A, B = cast(XA), cast(XB)
+    C = cast(np.asarray(XC, dtype)) if XC is not None and len(XC) else None
     y = np.asarray(yc, float) if yc is not None else None
     dT = np.asarray(dT, float)
     w = np.ones(len(dT)) if w is None else np.asarray(w, float)
     calibrated = C is not None and mu > 0
     fixed = [i for i in range(n) if keep[i] == 0 and i != bias]
+    if init is not None:
+        model.w = start_from(model, *init, bias) * np.where(np.arange(n) == bias, 1.0, keep)
     if not calibrated:
         model.w[bias] = 0.0 if fix_bias is None else fix_bias
         fixed.append(bias)

@@ -1,0 +1,6 @@
+{"mu": 0.03, "l2": 0.0, "start": "zero", "intercept": -0.4985, "mse": 0.034272, "sign": 0.7253, "calib": 0.5923}
+{"mu": 0.01, "l2": 0.0, "start": "zero", "intercept": -0.4989, "mse": 0.0342, "sign": 0.7246, "calib": 0.5918}
+{"mu": 0.01, "l2": 1e-05, "start": "zero", "intercept": -0.4928, "mse": 0.034164, "sign": 0.7247, "calib": 0.592}
+{"mu": 0.01, "l2": 0.0001, "start": "zero", "intercept": -0.4641, "mse": 0.034038, "sign": 0.7221, "calib": 0.5948}
+{"mu": 0.03, "l2": 1e-05, "start": "zero", "intercept": -0.491, "mse": 0.034201, "sign": 0.724, "calib": 0.5922}
+{"mu": 0.03, "l2": 0.0001, "start": "zero", "intercept": -0.4573, "mse": 0.034148, "sign": 0.7239, "calib": 0.5942}
