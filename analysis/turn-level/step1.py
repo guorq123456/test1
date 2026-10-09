@@ -522,6 +522,10 @@ def diag(args):
         for e in W:
             V[e].setdefault((row["n"], row["r"], row["s"]), []).append(_win(st, row["seat"], W[e]))
     mean = lambda x: sum(x) / len(x)                                          # noqa: E731
+    G = {}
+    if args.gend:
+        for r in SD._lines(args.gend):
+            G[r["k"]] = r["results"]
 
     def per_start(k, e):
         kinds = order[k]
@@ -561,6 +565,54 @@ def diag(args):
             print(f"  - c* 不是 bot 时按 T 胜过 bot：交叉种子 {np.mean(bx) if bx else float('nan'):.1%}（{len(bx)} 次），"
                   f"16 个合起来 {np.mean(bf) if bf else float('nan'):.1%}（{len(bf)} 个开头）")
             print(f"  - c* 不是 bot 时落在：" + "、".join(f"{k} {v}" for k, v in kinds.most_common()))
+            if G:
+                gend_check(ks, e, V, G, order, rng, mean)
+
+
+def gend_check(ks, e, V, G, order, rng, mean):
+    """Appendix 2: over (start, direction) items where the cross-seed c*_A (V on seed A's 8 turn ends) is not the
+    bot's plan, dG_end(c*_A - bot) = the mean of the K paired result differences; and the same with c* chosen on
+    all 16 turn ends. Intervals by resampling starts (2000); by c*'s kind."""
+    import numpy as np
+    from collections import defaultdict
+    items, full = defaultdict(list), {}
+    for k in ks:
+        if k not in G:
+            continue
+        kinds = order[k]
+        for a in (0, 1):
+            ca = max(kinds, key=lambda c: mean(V[e][(k, c, a)]))
+            if ca != "bot":
+                items[k].append((ca, 100 * mean([x - y for x, y in zip(G[k][ca], G[k]["bot"])])))
+        cf = max(kinds, key=lambda c: mean(V[e][(k, c, 0)] + V[e][(k, c, 1)]))
+        if cf != "bot":
+            full[k] = (cf, 100 * mean([x - y for x, y in zip(G[k][cf], G[k]["bot"])]))
+
+    def boot(by_start):
+        keys = sorted(by_start)
+        if not keys:
+            return float("nan"), float("nan"), float("nan")
+        vals = [v for k in keys for v in by_start[k]]
+        bs = []
+        for _ in range(2000):
+            pick = rng.integers(0, len(keys), len(keys))
+            sel = [v for i in pick for v in by_start[keys[i]]]
+            bs.append(np.mean(sel) if sel else np.nan)
+        return float(np.mean(vals)), float(np.nanpercentile(bs, 2.5)), float(np.nanpercentile(bs, 97.5))
+    m, lo, hi = boot({k: [d for _, d in v] for k, v in items.items()})
+    n_items = sum(len(v) for v in items.values())
+    print(f"  - **ΔG_end(c* − bot)**（交叉种子选 c*；{len(items)} 个开头、{n_items} 项）：{m:+.2f}（{lo:+.2f}～{hi:+.2f}）个百分点")
+    mf, lof, hif = boot({k: [d] for k, (_, d) in full.items()})
+    print(f"    - 副读，16 个回合末一起选 c*（{len(full)} 个开头）：{mf:+.2f}（{lof:+.2f}～{hif:+.2f}）")
+    by_kind = defaultdict(lambda: defaultdict(list))
+    for k, v in items.items():
+        for c, d in v:
+            by_kind[c.split(":")[0]][k].append(d)
+    parts = []
+    for kind, bk in sorted(by_kind.items(), key=lambda kv: -sum(len(x) for x in kv[1].values())):
+        km, klo, khi = boot(dict(bk))
+        parts.append(f"{kind} {km:+.1f}（{klo:+.1f}～{khi:+.1f}，{sum(len(x) for x in bk.values())} 项）")
+    print("    - 按 c* 的类别：" + "；".join(parts))
 
 
 def main():
@@ -605,6 +657,7 @@ def main():
     a.add_argument("teacher_ends_s1")
     a.add_argument("--new", required=True)
     a.add_argument("--installed", default="v2s")
+    a.add_argument("--gend", default=None, help="step 1's gend.jsonl: appendix 2 (dG_end of c* against the bot)")
     for sp in sub.choices.values():
         sp.add_argument("--bank", type=int, default=BANK, help="the seed bank (another only for smoke tests)")
     args = ap.parse_args()
