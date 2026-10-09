@@ -132,7 +132,7 @@ def test_removing_or_swapping_a_card_moves_the_score_where_the_installed_model_d
     with_hv = LinearValue(list(installed.coef) + [1.0], list(installed.mean) + [0.0], list(installed.std) + [1.0],
                           installed.potential, version=installed.version, extras=installed.extras + ("hand_value",),
                           hv=student)
-    assert len(with_hv.names()) == n + 1 and with_hv.names()[-1] == "me_hand_value"
+    assert len(with_hv.names()) == n + 1 and with_hv.names()[-1] == "hand_value"
     assert abs((with_hv.logit(a, player) - with_hv.logit(b, player)) - (ha - hb)) < 1e-9
 
 
@@ -263,6 +263,11 @@ def test_fitting_reads_the_draws_of_the_turn_as_unknown(tmp_path):
                    check=True, capture_output=True)
     assert (out / "ramp-ramp-hv.npz").read_bytes() == path.read_bytes()
     d = json.loads((out / "ramp-ramp-ended.json").read_text(encoding="utf-8"))
+    from svsim.learn.phased import STOCK
+    assert not d["names"][-1].startswith(STOCK)                # fitting would zero it (its coefficient stuck at 0)
+    assert d["coef"][-1] != 0.0
+    i = d["names"].index("bias")                               # the intercept kept (learn.fit's bias column)
+    assert d["mean"][i] == 0.0 and d["std"][i] == 1.0 and d["std"][-1] != 1.0
     assert d["extras"] == ["hand_value"] and d["info"]["hand_value"]["file"] == "ramp-ramp-hv.npz"
     bad = subprocess.run([sys.executable, "-m", "svsim.learn.phased", "--games", str(games), "--matchup",
                           "ramp-ramp", "--features", "hand_value", "--out", str(out)], capture_output=True)

@@ -209,7 +209,7 @@ def main() -> None:
         y = np.array([r[3] if r[4] is None else (1 - args.q_weight) * r[3] + args.q_weight * r[4]
                       for r in rows], float)
         rw = np.array([r[5] for r in rows], float)
-        w, mean, std, report = F.fit(X * keep, y, None, iters=2500, l2=args.l2,
+        w, mean, std, report = F.fit(X * keep, y, None, iters=2500, l2=args.l2, bias=N.index("bias"),
                                      signs=list(signs(False, args.version)) + [0] * len(extra_names(extras)),
                                      weights=None if np.all(rw == 1.0) else rw)
         w = w * keep

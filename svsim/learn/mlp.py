@@ -110,7 +110,7 @@ def fit_moment(games: list, phase, version: int = 2, hidden: int = 64, epochs: i
         from svsim.learn import deckdesc
         N, S = N + ["deck"] * 2 * len(deckdesc.names()), S + [0] * 2 * len(deckdesc.names())
     keep = np.array([0.0 if n.startswith(STOCK) else 1.0 for n in N])
-    coef, mean, std, report = F.fit(X * keep, y, None, iters=2500, signs=S,
+    coef, mean, std, report = F.fit(X * keep, y, None, iters=2500, signs=S, bias=N.index("bias"),
                                     weights=None if np.all(w == 1.0) else w)
     coef = np.asarray(coef) * keep
     mean, std = np.asarray(mean), np.asarray(std)

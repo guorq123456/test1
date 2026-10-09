@@ -332,7 +332,7 @@ EXTRAS = {
     "hand": [f"me_handplay_{r}" for r in ("face", "removal", "heal", "draw", "ramp", "body")],
     "board": ["me_pressure", "me_hp_early", "me_hp_mid", "op_pressure", "op_hp_early", "op_hp_mid"],
     "hpphase": ["me_hp_early", "me_hp_mid", "op_hp_early", "op_hp_mid"],
-    "hand_value": ["me_hand_value"],
+    "hand_value": ["hand_value"],     # not me_hand_*: learn.phased.STOCK zeroes that prefix
 }
 # - "board" (6, C3, the analysis thread's analysis/c3-threat/README.md section 4, 09f7ca2): for each side s (mine,
 #   then the opponent's; e its enemy) pressure = min(_board_threat(e) / max(s's leader HP, 1), 1.5), then s's leader
@@ -342,7 +342,8 @@ EXTRAS = {
 #   pressure slopes go away); kept for the cand-c3-board-* folders, for reference only.
 # - "hpphase" (4, C3 revised): board without the two pressures: my HP x [the scored player's own turn <= 4] and
 #   x [5 <= that turn <= 7], then the opponent's.
-# - "hand_value" (1, the hand-value line, 2026-10-09): the student's H of my hand (learn.handvalue), the cards the
+# - "hand_value" (1, the hand-value line, 2026-10-09; named hand_value, not me_hand_value, which STOCK's
+#   me_hand_ prefix would zero in fitting): the student's H of my hand (learn.handvalue), the cards the
 #   search can't know priced as one of their pool. It needs the student: the model that uses it carries one
 #   (LinearValue.hv, read from <pairing>-hv.npz beside the model's file), learn.phased --hand-value for fitting;
 #   called without one (extra_features(state, me, ("hand_value",))), SVSIM_HV names it (learn.handvalue.default_student).

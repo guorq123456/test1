@@ -12,20 +12,25 @@ from __future__ import annotations
 import numpy as np
 
 
-def standardize(X: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def standardize(X: np.ndarray, bias: int = -1) -> tuple[np.ndarray, np.ndarray]:
     mean, std = X.mean(axis=0), X.std(axis=0)
     std[std < 1e-9] = 1.0
-    mean[-1], std[-1] = 0.0, 1.0                # the bias column stays a constant 1
+    mean[bias], std[bias] = 0.0, 1.0            # the bias column stays a constant 1
     return mean, std
 
 
 def fit(X: np.ndarray, y: np.ndarray, prefs: list | None = None, lam: float = 1.0, l2: float = 1e-3,
-        iters: int = 3000, lr: float = 0.05, mean=None, std=None, signs=None, weights=None) -> tuple:
+        iters: int = 3000, lr: float = 0.05, mean=None, std=None, signs=None, weights=None,
+        bias: int = -1) -> tuple:
     """Returns (coef, mean, std, report) for features standardized with mean, std.
     `signs` (+1 / -1 / 0 per coefficient) keeps coefficients from turning negative /
-    positive (projected after every step); `weights`: a weight per row (default all 1)."""
+    positive (projected after every step); `weights`: a weight per row (default all 1).
+    `bias`: the column of the constant 1 (not standardized, no l2): the last by default; a model with
+    feature sets appended after the version's features (learn.features.EXTRAS, deck descriptions) must
+    give where "bias" is, or the last appended feature takes its place and the intercept is lost (found
+    2026-10-09: every fit with extras before this had no intercept)."""
     if mean is None:
-        mean, std = standardize(X)
+        mean, std = standardize(X, bias)
     Xs = (X - mean) / std if len(X) else np.zeros((0, len(mean)))
     groups = None
     if prefs:
@@ -37,7 +42,7 @@ def fit(X: np.ndarray, y: np.ndarray, prefs: list | None = None, lam: float = 1.
     w = np.zeros(Xs.shape[1])
     m, v = np.zeros_like(w), np.zeros_like(w)
     mask = np.ones_like(w)
-    mask[-1] = 0.0
+    mask[bias] = 0.0
 
     def loss_grad(w):
         loss, grad = 0.0, l2 * 2 * w * mask
