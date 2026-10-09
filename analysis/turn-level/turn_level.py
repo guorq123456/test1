@@ -633,7 +633,7 @@ def delta_agreement(per, G, plans_rows):
     no_end = [p for p in pairs if p[0] != "end"]
     keep_by_k = dict(by_k)
     by_k.update({k: [p for p in v if p[0] != "end"] for k, v in keep_by_k.items()})
-    c_no_end = line("不含 end（直接结束差得太明显，会把相关抬高）", no_end, [k for k in ks if by_k[k]])
+    c_no_end = line("不含 end（直接结束的差又大又容易，会主导合起来的相关）", no_end, [k for k in ks if by_k[k]])
     by_k.update(keep_by_k)
     for kind in sorted({p[0] for p in pairs}):
         sel = [p for p in pairs if p[0] == kind]
