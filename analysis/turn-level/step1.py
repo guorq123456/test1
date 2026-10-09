@@ -11,6 +11,11 @@ written before any of its games). Condition: the opponent's deck list is known (
     python -m svsim.tools.host step1 gend selfplay.jsonl starts.jsonl plans.jsonl --out gend.jsonl \\
         --ends gend_ends.jsonl.gz --workers 12
 
+Appendix 3 (the extra G_end; bank 66200000): `picks` (analysis line) fixes the plans, then on RC
+    python -m svsim.tools.host step1 gendmore selfplay.jsonl starts.jsonl plans.jsonl picks.jsonl \\
+        --out gendmore.jsonl --ends gendmore_ends.jsonl.gz --gend gend.jsonl --workers 12
+and `morecheck`, `diag ... --gend gend.jsonl --gend-more gendmore.jsonl` here.
+
 Seeds (bank 66100000-66199999): self-play netdata --seed 66100000; the starts Random(66110000); the plans
 66120000 + k; T 66130000 + 2k + s (a failed replay's policy 10 x that + the determinization); G_end determinization
 j of start k 66140000 + 20k + j (its failed replay's policy 10 x that, then the G_end bot 10 x that + 3 for the
@@ -46,6 +51,8 @@ N_STARTS = 2000
 HOLD_OUT = 11
 K_TRAIN, K_VAL = 2, 8            # determinizations per group (2 groups)
 END_SHARE = 0.10                 # the "end" pairs' share of the step-1 pairs' total weight
+MORE_BANK = 66200000             # the extra G_end (README, appendix 3): determinization j' of start k 66200000 + 20k + j'
+K_MORE = 12
 TAU2_FLOOR = 1e-4
 
 
@@ -175,20 +182,27 @@ def teacher(args):
 
 def _gend_job(st_row):
     import time
+    k = st_row["k"]
+    t = time.process_time()
+    out, failed, ends = _gend_games(st_row, TL.PLANS[k]["plans"],
+                                    [(j, BANK + 40000 + 20 * k + j) for j in range(st_row["K"])])
+    return ({"k": k, "K": st_row["K"], "split": st_row["split"], "cpu": time.process_time() - t,
+             "results": out, "failed": failed}, ends)
+
+
+def _gend_games(st_row, plans_k, seeds):
+    """G_end on (determinization index j, its seed) for each plan: the replay rule and its finisher (10 x the seed),
+    the rest of the game by GEND_BOT (10 x the seed + 3 for the mover, + 1 for the opponent)."""
     from svsim.core.actions import EndTurn
     from svsim.core.engine import apply, legal_actions
     from svsim.core.view import determinize
     from svsim.tools.arena import make_agent
-    k = st_row["k"]
     state, _ = TL._start_state(st_row)
     me = state.active
-    plans_k = TL.PLANS[k]["plans"]
     out = {p["kind"]: [] for p in plans_k}
     failed = {p["kind"]: [] for p in plans_k}
     ends = []
-    t = time.process_time()
-    for j in range(st_row["K"]):
-        sd = BANK + 40000 + 20 * k + j
+    for j, sd in seeds:
         base = determinize(state, me, random.Random(sd))
         for p in plans_k:
             s = base.clone()
@@ -205,8 +219,7 @@ def _gend_job(st_row):
             res = 1.0 if s.winner == me else 0.0 if s.winner == 1 - me else 0.5
             out[p["kind"]].append(res)
             ends.append(_end_row(st_row, me, None, j, sd, p["kind"], taken, res, end_summary_state))
-    return ({"k": k, "K": st_row["K"], "split": st_row["split"], "cpu": time.process_time() - t,
-             "results": out, "failed": failed}, ends)
+    return out, failed, ends
 
 
 def gend(args):
@@ -221,6 +234,98 @@ def gend(args):
             if n % 50 == 0:
                 print(f"{n}/{len(rows)}", flush=True)
     print(f"{len(rows)} 个开头的 G_end 写进了 {args.out}，回合末写进了 {args.ends}")
+
+
+def _gendmore_job(job):
+    """The extra G_end on one start (README, appendix 3): only the picked plans (the bot's and the installed
+    evaluation's cross-seed c*), K_MORE determinizations BANK + 20k + j' (j' < K_MORE), numbered on from the start's
+    own K (j = K + j'); the same replay rule, finisher and bot seeds as `gend`. With `recheck`, the start's original
+    determinizations (orig_bank + 40000 + 20k + j, j < K) are played again on the same plans, to be set beside
+    gend.jsonl (same machine, same svsim: they should come out the same)."""
+    import time
+    st_row, kinds, recheck, orig_bank = job
+    k = st_row["k"]
+    plans_k = [p for p in TL.PLANS[k]["plans"] if p["kind"] in kinds]
+    t = time.process_time()
+    out, failed, ends = _gend_games(st_row, plans_k,
+                                    [(st_row["K"] + j, BANK + 20 * k + j) for j in range(K_MORE)])
+    row = {"k": k, "K": K_MORE, "j0": st_row["K"], "split": st_row["split"], "cpu": time.process_time() - t,
+           "results": out, "failed": failed}
+    if recheck:
+        row["recheck"], _, _ = _gend_games(st_row, plans_k,
+                                           [(j, orig_bank + 40000 + 20 * k + j) for j in range(st_row["K"])])
+    return row, ends
+
+
+def gendmore(args):
+    picks_ = {r["k"]: r["plans"] for r in SD._lines(args.picks)}
+    plans_rows = {r["k"]: r for r in SD._lines(args.plans) if r["k"] in picks_}
+    rows = sorted((r for r in SD._lines(args.starts) if r["k"] in picks_), key=lambda r: r["k"])
+    assert len(rows) == len(picks_) == len(plans_rows), "picks, starts and plans don't cover the same starts"
+    for r in rows:
+        kinds = {p["kind"] for p in plans_rows[r["k"]]["plans"]}
+        assert "bot" in picks_[r["k"]] and set(picks_[r["k"]]) <= kinds, f"start {r['k']}: picks not among its plans"
+    recheck = set(sorted(picks_)[:args.recheck])
+    jobs = [(r, picks_[r["k"]], r["k"] in recheck, args.orig_bank) for r in rows]
+    n_plans = sum(len(v) for v in picks_.values())
+    print(f"{len(rows)} 个开头、{n_plans} 条打法，每条 K = {K_MORE}：{n_plans * K_MORE} 局"
+          f"（另复核原来的 G_end：{len(recheck)} 个开头）", flush=True)
+    done = []
+    with _pool(args, plans_rows) as pool, \
+            open(args.out, "w", encoding="utf-8") as fh, gzip.open(args.ends, "wt", encoding="utf-8") as fe:
+        for n, (out, ends) in enumerate(pool.imap_unordered(_gendmore_job, jobs), 1):
+            fh.write(json.dumps(out) + "\n")
+            for e in ends:
+                fe.write(json.dumps(e, separators=(",", ":")) + "\n")
+            done.append(out)
+            if n % 25 == 0:
+                print(f"{n}/{len(rows)}", flush=True)
+    n_failed = sum(x is not None for out in done for v in out["failed"].values() for x in v)
+    print(f"{len(rows)} 个开头的补充 G_end 写进了 {args.out}，回合末写进了 {args.ends}；复现失败交给接手策略 {n_failed} 次")
+    if args.gend:
+        orig = {r["k"]: r["results"] for r in SD._lines(args.gend)}
+        n = same = 0
+        for out in done:
+            for kind, res in out.get("recheck", {}).items():
+                for x, y in zip(res, orig[out["k"]][kind]):
+                    n += 1
+                    same += x == y
+        print(f"复核原来的 G_end：{n} 局，结果相同 {same} 局")
+
+
+def morecheck(args):
+    """The extra G_end read back: every picked plan with K_MORE results, every turn end rebuilt from selfplay.jsonl
+    (summary checked) with its result as in gendmore.jsonl, the seeds as set, and the recheck beside gend.jsonl."""
+    picks_ = {r["k"]: r["plans"] for r in SD._lines(args.picks)}
+    more = {r["k"]: r for r in SD._lines(args.gendmore)}
+    orig = {r["k"]: r for r in SD._lines(args.gend)}
+    complete = set(more) == set(picks_) and all(
+        set(more[k]["results"]) == set(picks_[k]) and all(len(v) == K_MORE for v in more[k]["results"].values())
+        for k in more)
+    starts_ = TEN.Starts(args.selfplay)
+    n = bad = wrong = seeds = 0
+    for row in TEN.rows(args.ends):
+        n += 1
+        k, j = row["n"], row["j"]
+        j0 = more[k]["j0"]
+        seeds += row["det_seed"] != BANK + 20 * k + (j - j0)
+        wrong += row["value"] != more[k]["results"][row["r"]][j - j0]
+        try:
+            TEN.turn_end(row, starts_)
+        except ValueError:
+            bad += 1
+    rn = rsame = 0
+    for k, r in more.items():
+        for kind, res in r.get("recheck", {}).items():
+            for x, y in zip(res, orig[k]["results"][kind]):
+                rn += 1
+                rsame += x == y
+    n_failed = sum(x is not None for r in more.values() for v in r["failed"].values() for x in v)
+    print("条件：对手卡表已知（牌序、手牌未知）。第 1 步附录三：补充 G_end 的核对\n")
+    print(f"- {len(more)} 个开头（挑出的 {len(picks_)} 个），每条挑出的打法 {K_MORE} 局都齐：{complete}")
+    print(f"- 回合末 {n} 行（应为 {sum(len(v) for v in picks_.values()) * K_MORE}）：重建后摘要不符 {bad}，"
+          f"和 gendmore.jsonl 的结果不符 {wrong}，种子不符 {seeds}")
+    print(f"- 复现失败交给接手策略 {n_failed} 次；复核原来的 G_end：{rn} 局，结果相同 {rsame} 局")
 
 
 # --- labels (README "第 1 步", 标签; fixed before any step-1 data) -------------------------------------------
@@ -425,6 +530,49 @@ def items(labels_path, s1_teacher_ends, s1_gend_ends, s1_selfplay, cv_teacher_en
 
 # --- the held-out reading (README "第 1 步", 留出; fixed before any step-1 data) -------------------------------
 
+def _weights(specs):
+    from svsim.tools.arena import make_agent
+    from svsim.tools.gate import _search
+    return {name: _search(make_agent(spec, 0)).weights for name, spec in specs.items()}
+
+
+def _turn_end_values(selfplay, teacher_ends, W):
+    """{evaluator: {(start, plan kind, T seed): [win probability of each of its 8 turn ends]}}: the turn end rebuilt
+    with its end-of-turn abilities resolved (before the opponent acts), as the holdout reading."""
+    V = {e: {} for e in W}
+    starts_ = TEN.Starts(selfplay)
+    for row in TEN.rows(teacher_ends):
+        st = TEN.turn_end(row, starts_, end_of_turn=True)
+        for e in W:
+            V[e].setdefault((row["n"], row["r"], row["s"]), []).append(_win(st, row["seat"], W[e]))
+    return V
+
+
+def picks(args):
+    """Appendix 3's plans: on the training starts, the installed evaluation's cross-seed c*_A for both directions,
+    chosen exactly as appendix 2 did; the starts where some c*_A is not the bot's plan, each with the bot's plan and
+    those c*s (in plan order)."""
+    W = _weights({"installed": args.installed})
+    starts_rows = {r["k"]: r for r in SD._lines(args.starts)}
+    order = {r["k"]: [p["kind"] for p in r["plans"]] for r in SD._lines(args.plans)}
+    teacher_ks = {r["k"] for r in SD._lines(args.teacher)}
+    V = _turn_end_values(args.selfplay, args.teacher_ends_s1, W)["installed"]
+    ks = sorted(k for k in starts_rows if starts_rows[k]["split"] == "train" and k in teacher_ks and k in order)
+    n_rows = n_items = n_plans = 0
+    with open(args.out, "w", encoding="utf-8") as fh:
+        for k in ks:
+            cs = [_cross_star(V, k, order[k], a) for a in (0, 1)]
+            if all(c == "bot" for c in cs):
+                continue
+            plans_k = [c for c in order[k] if c == "bot" or c in cs]
+            fh.write(json.dumps({"k": k, "cstar": cs, "plans": plans_k}) + "\n")
+            n_rows += 1
+            n_items += sum(c != "bot" for c in cs)
+            n_plans += len(plans_k)
+    print(f"训练开头 {len(ks)} 个，现装（`{args.installed}`）的交叉种子 c* ≠ bot：{n_rows} 个开头、{n_items} 项；"
+          f"要补的打法 {n_plans} 条（含 bot），K = {K_MORE} 共 {n_plans * K_MORE} 局 → {args.out}")
+
+
 def _win(state, me, weights):
     from svsim.learn.model import SCALE
     from svsim.search.evaluate import evaluate
@@ -505,27 +653,28 @@ def diag(args):
     training starts on their own lines; intervals by resampling starts (2000, seed 0); points in win percent."""
     import numpy as np
     from collections import Counter
-    from svsim.tools.arena import make_agent
-    from svsim.tools.gate import _search
     specs = {"installed": args.installed, "new": args.new}
-    W = {name: _search(make_agent(spec, 0)).weights for name, spec in specs.items()}
+    W = _weights(specs)
     starts_rows = {r["k"]: r for r in SD._lines(args.starts)}
     order = {r["k"]: [p["kind"] for p in r["plans"]] for r in SD._lines(args.plans)}
     T = {}
     for r in SD._lines(args.teacher):
         for kind, v in r["values"].items():
             T.setdefault(r["k"], {}).setdefault(kind, {})[r["s"]] = v
-    V = {e: {} for e in W}
-    starts_ = TEN.Starts(args.selfplay)
-    for row in TEN.rows(args.teacher_ends_s1):
-        st = TEN.turn_end(row, starts_, end_of_turn=True)
-        for e in W:
-            V[e].setdefault((row["n"], row["r"], row["s"]), []).append(_win(st, row["seat"], W[e]))
+    V = _turn_end_values(args.selfplay, args.teacher_ends_s1, W)
     mean = lambda x: sum(x) / len(x)                                          # noqa: E731
-    G = {}
+    G, more = {}, {}
     if args.gend:
         for r in SD._lines(args.gend):
             G[r["k"]] = r["results"]
+    for path in args.gend_more or []:
+        for r in SD._lines(path):
+            assert "bot" in r["results"] and r["k"] not in more
+            more[r["k"]] = r["results"]
+    if more:
+        # appendix 3: the extra games appended after each plan's original K, the bot's too, so the paired
+        # differences (zip with the bot's) stay on the same determinizations; plans without extra games keep K
+        G = {k: {c: v + more.get(k, {}).get(c, []) for c, v in g.items()} for k, g in G.items()}
 
     def per_start(k, e):
         kinds = order[k]
@@ -566,26 +715,41 @@ def diag(args):
                   f"16 个合起来 {np.mean(bf) if bf else float('nan'):.1%}（{len(bf)} 个开头）")
             print(f"  - c* 不是 bot 时落在：" + "、".join(f"{k} {v}" for k, v in kinds.most_common()))
             if G:
-                gend_check(ks, e, V, G, order, rng, mean)
+                gend_check(ks, e, V, G, order, rng, mean,
+                           "ΔG_end(c* − bot)" + ("，合并原来的和补充的局" if more else ""))
+                if more and e == "installed":
+                    gend_check(ks, e, V, more, order, rng, mean, "只看补充的局")
 
 
-def gend_check(ks, e, V, G, order, rng, mean):
+def _cross_star(V, k, kinds, a):
+    """c*_A: the plan with the best mean win probability over seed A's 8 T turn ends (ties: the earlier plan)."""
+    return max(kinds, key=lambda c: sum(V[(k, c, a)]) / len(V[(k, c, a)]))
+
+
+def gend_check(ks, e, V, G, order, rng, mean, title="ΔG_end(c* − bot)"):
     """Appendix 2: over (start, direction) items where the cross-seed c*_A (V on seed A's 8 turn ends) is not the
     bot's plan, dG_end(c*_A - bot) = the mean of the K paired result differences; and the same with c* chosen on
-    all 16 turn ends. Intervals by resampling starts (2000); by c*'s kind."""
+    all 16 turn ends. Intervals by resampling starts (2000); by c*'s kind. Plans without G_end games in G (G from
+    appendix 3's extra games alone) are skipped and counted."""
     import numpy as np
     from collections import defaultdict
     items, full = defaultdict(list), {}
+    n_pairs, skipped = [], 0
     for k in ks:
         if k not in G:
             continue
         kinds = order[k]
         for a in (0, 1):
-            ca = max(kinds, key=lambda c: mean(V[e][(k, c, a)]))
+            ca = _cross_star(V[e], k, kinds, a)
             if ca != "bot":
-                items[k].append((ca, 100 * mean([x - y for x, y in zip(G[k][ca], G[k]["bot"])])))
+                if ca not in G[k]:
+                    skipped += 1
+                    continue
+                d = [x - y for x, y in zip(G[k][ca], G[k]["bot"])]
+                items[k].append((ca, 100 * mean(d)))
+                n_pairs.append(len(d))
         cf = max(kinds, key=lambda c: mean(V[e][(k, c, 0)] + V[e][(k, c, 1)]))
-        if cf != "bot":
+        if cf != "bot" and cf in G[k]:
             full[k] = (cf, 100 * mean([x - y for x, y in zip(G[k][cf], G[k]["bot"])]))
 
     def boot(by_start):
@@ -601,7 +765,9 @@ def gend_check(ks, e, V, G, order, rng, mean):
         return float(np.mean(vals)), float(np.nanpercentile(bs, 2.5)), float(np.nanpercentile(bs, 97.5))
     m, lo, hi = boot({k: [d for _, d in v] for k, v in items.items()})
     n_items = sum(len(v) for v in items.values())
-    print(f"  - **ΔG_end(c* − bot)**（交叉种子选 c*；{len(items)} 个开头、{n_items} 项）：{m:+.2f}（{lo:+.2f}～{hi:+.2f}）个百分点")
+    print(f"  - **{title}**（交叉种子选 c*；{len(items)} 个开头、{n_items} 项，每项平均 "
+          f"{np.mean(n_pairs) if n_pairs else float('nan'):.1f} 对局"
+          + (f"，没有局的 c* {skipped} 项不算" if skipped else "") + f"）：{m:+.2f}（{lo:+.2f}～{hi:+.2f}）个百分点")
     mf, lof, hif = boot({k: [d] for k, (_, d) in full.items()})
     print(f"    - 副读，16 个回合末一起选 c*（{len(full)} 个开头）：{mf:+.2f}（{lof:+.2f}～{hif:+.2f}）")
     by_kind = defaultdict(lambda: defaultdict(list))
@@ -621,7 +787,7 @@ def main():
     a = sub.add_parser("starts")
     a.add_argument("selfplay")
     a.add_argument("--out", required=True)
-    for name in ("plans", "teacher", "gend"):
+    for name in ("plans", "teacher", "gend", "gendmore"):
         a = sub.add_parser(name)
         a.add_argument("selfplay")
         a.add_argument("starts")
@@ -630,6 +796,20 @@ def main():
             a.add_argument("--ends", required=True)
         a.add_argument("--out", required=True)
         a.add_argument("--workers", type=int, default=12)
+    a = sub.choices["gendmore"]
+    a.add_argument("picks", help="the picks file (step1_read/picks.jsonl)")
+    a.add_argument("--recheck", type=int, default=20, help="replay the original G_end on this many starts")
+    a.add_argument("--orig-bank", type=int, default=BANK, help="the original G_end's bank (66100000)")
+    a.add_argument("--gend", default=None, help="the original gend.jsonl, to set the recheck beside it")
+    a = sub.add_parser("picks")
+    for x in ("selfplay", "starts", "plans", "teacher", "teacher_ends_s1"):
+        a.add_argument(x)
+    a.add_argument("--installed", default="v2s")
+    a.add_argument("--out", required=True)
+    a = sub.add_parser("morecheck")
+    for x in ("selfplay", "picks", "gend", "gendmore"):
+        a.add_argument(x)
+    a.add_argument("ends", help="gendmore_ends.jsonl.gz")
     a = sub.add_parser("labels")
     a.add_argument("starts")
     a.add_argument("plans")
@@ -658,12 +838,15 @@ def main():
     a.add_argument("--new", required=True)
     a.add_argument("--installed", default="v2s")
     a.add_argument("--gend", default=None, help="step 1's gend.jsonl: appendix 2 (dG_end of c* against the bot)")
+    a.add_argument("--gend-more", nargs="*", default=None, help="appendix 3's gendmore.jsonl, merged with --gend")
     for sp in sub.choices.values():
         sp.add_argument("--bank", type=int, default=BANK, help="the seed bank (another only for smoke tests)")
+    for name in ("gendmore", "morecheck"):
+        sub.choices[name].set_defaults(bank=MORE_BANK)
     args = ap.parse_args()
     _set_bank(args.bank)
-    {"starts": starts, "plans": plans, "teacher": teacher, "gend": gend, "labels": labels,
-     "holdout": holdout, "diag": diag}[args.cmd](args)
+    {"starts": starts, "plans": plans, "teacher": teacher, "gend": gend, "gendmore": gendmore, "picks": picks,
+     "morecheck": morecheck, "labels": labels, "holdout": holdout, "diag": diag}[args.cmd](args)
 
 
 if __name__ == "__main__":
