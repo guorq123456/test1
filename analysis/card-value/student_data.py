@@ -20,7 +20,8 @@ principal line whose card is in the mover's hand at the turn start: {"g": the ga
 g), "i": the action index, "player", "uid": the card (its first copy in hand order), "t": the mean of the two seeds'
 T, "var": the mean of the seeds' se^2 over the number of seeds (as learn.handvalue._teacher_label; examples_from
 weights by 1 / var, so not by the two seeds' own variance), "seeds": [each seed's T], "se": [each seed's standard
-error], "split"}. The hold-out split is the same as
+error], "split"}. Left out: a keep:<card> whose two seeds both have se 0 and T 0 (the restriction changed nothing
+on any determinization; the architecture thread 02:38Z, before the data run). The hold-out split is the same as
 examples_from(every=11): a game's line % 11 == 0.
 
 Seeds, all in the data bank 65800000-65899999:
@@ -228,7 +229,7 @@ def labels(args):
         for key, v in r["res"].items():
             if key.startswith("keep:"):
                 per.setdefault((r["n"], int(key.split(":")[1])), {})[r["s"]] = v
-    out = absent = 0
+    out = absent = null = 0
     with open(args.out, "w", encoding="utf-8") as fh:
         for (n, cid), by_seed in sorted(per.items()):
             p = pos[n]
@@ -240,6 +241,12 @@ def labels(args):
                 continue
             seeds = [by_seed[s]["teacher"] for s in sorted(by_seed)]
             ses = [by_seed[s]["se"] for s in sorted(by_seed)]
+            if all(x == 0 for x in ses) and all(t == 0 for t in seeds):
+                # the restriction changed nothing on any determinization of either seed (or both lines won on
+                # every one): no information about c, and T = 0 would teach "keeping c is worth 0" (the
+                # architecture thread 02:38Z, before the data run)
+                null += 1
+                continue
             # var as in learn.handvalue._teacher_label (the reader floors it): the variance of two seeds' values
             # alone is a one-degree-of-freedom estimate, too noisy to weight by
             var = sum(x * x for x in ses) / len(ses) / len(ses)
@@ -247,7 +254,8 @@ def labels(args):
                                  "t": sum(seeds) / len(seeds), "var": var, "seeds": seeds, "se": ses,
                                  "split": p["split"]}) + "\n")
             out += 1
-    print(f"{out} 个标签（回合开头不在手里的牌 {absent} 个，去掉了）")
+    print(f"{out} 个标签（回合开头不在手里的牌 {absent} 个，去掉了；限制什么都没改变的 {null} 个，"
+          f"占这两类以外的 {null / max(out + null, 1):.1%}，也去掉了）")
 
 
 def main():

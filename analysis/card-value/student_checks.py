@@ -163,10 +163,10 @@ def fidelity(args):
     for r in (json.loads(x) for x in open(args.teacher, encoding="utf-8") if x.strip()):
         for key, v in r["res"].items():
             if key.startswith("keep:"):
-                T[(r["n"], int(key.split(":")[1]))].append(v["teacher"])
+                T[(r["n"], int(key.split(":")[1]))].append((v["teacher"], v.get("se", 1.0)))
     out = {"train": ([], []), "val": ([], [])}
-    cache, absent = {}, 0
-    for (n, cid), ts in sorted(T.items()):
+    cache, absent, null = {}, 0, 0
+    for (n, cid), tse in sorted(T.items()):
         p = pos[n]
         if n not in cache:
             cache[n] = _state_at(games[str(p["g"])], p["at"])
@@ -174,10 +174,15 @@ def fidelity(args):
         if not any(c.defn.card_id == cid for c in st.players[st.active].hand):
             absent += 1                     # drawn or made during the turn: the student values the turn-start hand
             continue
+        if all(t == 0 and se == 0 for t, se in tse):
+            null += 1                       # the restriction changed nothing: left out as in the labels (02:38Z)
+            continue
+        ts = [t for t, _ in tse]
         out[p["split"]][0].append(marginal(st, st.active, cid))
         out[p["split"]][1].append(sum(ts) / len(ts))
     print("条件：对手卡表已知（牌序、手牌未知）。第 2 条（只报不挡）：学生的 ΔH 对老师 T（两个种子的平均）；"
-          f"老师主线上、但回合开头不在手里的牌（本回合抽到或生成的）{absent} 个标签不算\n")
+          f"老师主线上、但回合开头不在手里的牌（本回合抽到或生成的）{absent} 个标签不算；"
+          f"限制什么都没改变的（两个种子 se 和 T 都是 0）{null} 个也不算，同学生的标签\n")
     for split, (d, t) in out.items():
         print(f"- {'留出局面' if split == 'val' else '训练局面'}：{len(d)} 个（局面 × 牌）标签，Spearman(ΔH, T) = "
               f"{_spearman(d, t):.3f}" + ("（提议门槛 0.72，只报不挡；低于它建造线可以先改一轮学生）" if split == "val" else ""))
