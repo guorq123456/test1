@@ -350,6 +350,79 @@ def labels(args):
           f"{w.sum() ** 2 / np.sum(w * w) / len(w):.1%}（建造线的 fit 有自己的等权退路）")
 
 
+# --- the trainer's items ---------------------------------------------------------------------------------------
+
+def _label_table(labels_path):
+    out = {}
+    with open(labels_path, encoding="utf-8") as fh:
+        next(fh)                                   # the calibration line
+        for line in fh:
+            r = json.loads(line)
+            out[(r["source"], r["k"], r["plan"])] = r
+    return out
+
+
+def _det_pairs(path, source, table):
+    """((source, k, plan), det id, the plan's row, the bot's / line's row) over one turn-end file, streamed by its
+    groups (each job's rows are written together); determinizations where both lines took the same actions are
+    left out (no contrast)."""
+    base_kind = "line" if source == "teacher_ends" else "bot"
+    for _, d in TEN.groups(path) if source == "teacher_ends" else _groups_by_start(path):
+        base = d.get(base_kind)
+        if base is None:
+            continue
+        for plan, rows in d.items():
+            if plan == base_kind:
+                continue
+            for x, b in zip(rows, base):
+                if x is None or b is None or x["actions"] == b["actions"]:
+                    continue
+                key = (source, x["n"], plan)
+                if key in table:
+                    yield key, (x.get("s"), x["j"]), x, b
+
+
+def _groups_by_start(path):
+    """Step 1's turn-end files: ((k, s), {plan: [row per determinization]}), streamed (T rows come per (start,
+    seed), G_end rows per start with s None)."""
+    key, d = None, {}
+    for row in TEN.rows(path):
+        k = (row["n"], row["s"])
+        if k != key and d:
+            yield key, d
+            d = {}
+        key = k
+        n_det = row["j"] + 1
+        lst = d.setdefault(row["r"], [])
+        lst.extend([None] * (n_det - len(lst)))
+        lst[row["j"]] = row
+    if d:
+        yield key, d
+
+
+def items(labels_path, s1_teacher_ends, s1_gend_ends, s1_selfplay, cv_teacher_ends=None, cv_selfplay=None,
+          split="train", end_of_turn=True):
+    """The step-1 trainer's examples: {"source", "k", "plan", "kind", "det": (seed or None, j), "a": the plan's
+    turn end (State), "b": the bot's (or the teacher line's), "label": the pair's L, "weight": its W split evenly
+    over its determinizations with a contrast, "split"}. Two passes over the files (count, then yield). A turn end
+    where the game is already over comes as the finished position (`.over`); the trainer decides."""
+    table = {k: v for k, v in _label_table(labels_path).items() if split is None or v["split"] == split}
+    sources = [("step1", s1_teacher_ends, s1_selfplay), ("step1", s1_gend_ends, s1_selfplay)]
+    if cv_teacher_ends:
+        sources.append(("teacher_ends", cv_teacher_ends, cv_selfplay))
+    count = {}
+    for source, path, _ in sources:
+        for key, _, _, _ in _det_pairs(path, source, table):
+            count[key] = count.get(key, 0) + 1
+    for source, path, selfplay in sources:
+        starts_ = TEN.Starts(selfplay)
+        for key, det, x, b in _det_pairs(path, source, table):
+            lab = table[key]
+            yield {"source": source, "k": key[1], "plan": key[2], "kind": lab["kind"], "det": det,
+                   "a": TEN.turn_end(x, starts_, end_of_turn), "b": TEN.turn_end(b, starts_, end_of_turn),
+                   "label": lab["label"], "weight": lab["weight"] / count[key], "split": lab["split"]}
+
+
 # --- the held-out reading (README "第 1 步", 留出; fixed before any step-1 data) -------------------------------
 
 def _win(state, me, weights):
