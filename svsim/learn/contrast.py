@@ -96,12 +96,24 @@ def contrast_loss(model: ContrastLinear, A, B, dT, w, C=None, y=None, mu: float 
     return loss, g
 
 
+def start_from(model, coef, mean, std, bias: int) -> np.ndarray:
+    """Another linear model's coefficients (coef over (x - mean) / std, its bias at the same index) in `model`'s
+    standardization: the same E(x), so a fit can start where that model is."""
+    coef, mean, std = (np.asarray(v, float) for v in (coef, mean, std))
+    w = coef * model.std / std
+    others = np.arange(len(coef)) != bias
+    w[bias] = coef[bias] + float(np.sum((coef * (model.mean - mean) / std)[others]))
+    return w
+
+
 def fit_contrast(XA, XB, dT, w=None, XC=None, yc=None, mu: float = 0.1, l2: float = 1e-3, iters: int = 3000,
-                 lr: float = 0.05, signs=None, bias: int = -1, fix_bias: float | None = None, keep=None):
+                 lr: float = 0.05, signs=None, bias: int = -1, fix_bias: float | None = None, keep=None,
+                 init=None):
     """(ContrastLinear, report). XA / XB: the two turn ends' features per pair; dT: the teacher's difference (a
     minus b); w: pair weights (default 1); XC / yc: calibration turn ends and their game results (mu > 0).
     The intercept is fitted only with calibration data; with mu = 0 (or none) it is held at `fix_bias` (default 0).
-    `keep`: a 0/1 mask of features to use (learn.phased.STOCK zeroed)."""
+    `keep`: a 0/1 mask of features to use (learn.phased.STOCK zeroed). `init`: (coef, mean, std) of a model to
+    start from (start_from; e.g. the installed turn-end model), else zeros."""
     from svsim.learn.fit import project, standardize
     XA, XB = np.asarray(XA, float), np.asarray(XB, float)
     n = XA.shape[1]
@@ -117,6 +129,8 @@ def fit_contrast(XA, XB, dT, w=None, XC=None, yc=None, mu: float = 0.1, l2: floa
     w = np.ones(len(dT)) if w is None else np.asarray(w, float)
     calibrated = C is not None and mu > 0
     fixed = [i for i in range(n) if keep[i] == 0 and i != bias]
+    if init is not None:
+        model.w = start_from(model, *init, bias) * np.where(np.arange(n) == bias, 1.0, keep)
     if not calibrated:
         model.w[bias] = 0.0 if fix_bias is None else fix_bias
         fixed.append(bias)

@@ -190,3 +190,16 @@ def test_teacher_end_pairs_per_determinization_or_averaged(tmp_path):
     assert [round(m[4], 6) for m in mean] == [0.1, 0.5] and calls[-1] == (True, True)
     train = list(teacher_end_pairs("ends", "sp", pos, module=TE, split="train"))
     assert {d[0] for d in train} == {0}                               # g 11 is held out (11 % 11 == 0)
+
+
+def test_a_fit_can_start_where_another_model_is():
+    """start_from rewrites a model's coefficients in the fit's standardization: the same E(x)."""
+    from svsim.learn.contrast import ContrastLinear, start_from
+    rng = np.random.default_rng(3)
+    X = rng.normal([1, 0, 1, 4], [2, 1, 0.0001, 3], size=(50, 4))
+    X[:, 2] = 1.0
+    coef, mean, std = np.array([0.4, -0.2, 0.7, 0.1]), np.array([0.5, 0.1, 0.0, 3.0]), np.array([1.5, 0.8, 1.0, 2.0])
+    target = ((X - mean) / std) @ coef
+    m = ContrastLinear(4, 2, X.mean(axis=0) * np.array([1, 1, 0, 1]), np.where(np.arange(4) == 2, 1.0, X.std(axis=0)))
+    m.w = start_from(m, coef, mean, std, 2)
+    assert np.allclose(m.forward(m.standardize(X)), target)
