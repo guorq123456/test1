@@ -162,6 +162,7 @@ class ISMCTS:
                                        # ("bank", CHUNK, STOP, CAP, HI): see _bank_budget
         self._bank, self._bank_turn = 0, None
         self._seen_n, self._seen_k, self._seen_turn = 0, 0, -1     # alloc=self: this game's searched decisions
+        self._cx_turn, self._cx_moves = None, 0   # alloc=complex: this turn and its legal moves at its first search
         self.infer = infer             # (ALPHA, TAU): the opponent's hand drawn by search.infer's weights
         self._hand_weights, self._infer_turn = None, None
         self.oracle = oracle           # an experiment: the opponent's real hand in every determinization (core.view)
@@ -247,6 +248,8 @@ class ISMCTS:
             iterations = min(hi, max(lo, round(k * len(legal_actions(state)))))
         if self.alloc is not None and self.alloc[0] == "self":
             iterations = self._self_budget(state, me)
+        if self.alloc is not None and self.alloc[0] == "complex":
+            iterations = self._complex_budget(state, me)
         banked = self.alloc is not None and self.alloc[0] == "bank"
         if banked:
             iterations = self._bank_budget(state, me)
@@ -306,6 +309,18 @@ class ISMCTS:
         if self.reuse and not isinstance(legal[best], EndTurn):
             self._expect(state, legal[best], root.children[best])
         return legal[best]
+
+    def _complex_budget(self, state: GameState, me: int) -> int:
+        """+complex (alloc=complex:K:BETA:LO:HI; the architecture thread 2026-10-10 08:58Z): compute moved to the
+        complex turns. clip(round(K x max(n, BETA x n0)), LO, HI), n this decision's legal moves and n0 those at
+        the turn's first searched decision: a turn that starts wide keeps a share of its budget on its later, narrower
+        decisions (the operations puzzle k 518 loses at its second decision). K is set so a game's mean compute is
+        level-strong's (analysis/puzzles3)."""
+        _, k, beta, lo, hi = self.alloc
+        n = len(legal_actions(state))
+        if self._cx_turn != (state.turn, me):
+            self._cx_turn, self._cx_moves = (state.turn, me), n
+        return min(hi, max(lo, round(k * max(n, beta * self._cx_moves))))
 
     def _self_budget(self, state: GameState, me: int) -> int:
         """Line B1, second try (alloc=self:C:W:LO:HI): clip(round(C x N x n / m), LO, HI), n this decision's legal

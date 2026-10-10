@@ -143,11 +143,14 @@ def _alloc_option(options) -> tuple | None:
     if kind == "self" and len(args) in (1, 4):     # +alloc=self:C[:W:LO:HI] (W 10, LO 50, HI 800)
         w, lo, hi = (float(args[1]), int(args[2]), int(args[3])) if len(args) == 4 else (10.0, 50, 800)
         return ("self", float(args[0]), w, lo, hi)
+    if kind == "complex" and len(args) in (2, 4):  # +alloc=complex:K:BETA[:LO:HI] (LO 50, HI 1500)
+        lo, hi = (int(args[2]), int(args[3])) if len(args) == 4 else (50, 1500)
+        return ("complex", float(args[0]), float(args[1]), lo, hi)
     if kind == "bank" and len(args) in (0, 3):     # +alloc=bank[:CHUNK:STOP:CAP] (50, 0.8, 400; at most 800)
         chunk, stop, cap = (int(args[0]), float(args[1]), int(args[2])) if args else (50, 0.8, 400)
         return ("bank", chunk, stop, cap, 800)
     if kind != "legal" or len(args) not in (1, 3):
-        raise ValueError(f"alloc=legal:K[:LO:HI], alloc=self:C[:W:LO:HI] or alloc=bank[:CHUNK:STOP:CAP], "
+        raise ValueError(f"alloc=legal:K[:LO:HI], alloc=self:C[:W:LO:HI], alloc=complex:K:BETA[:LO:HI] or alloc=bank[:CHUNK:STOP:CAP], "
                          f"not {chosen[0]!r}")
     lo, hi = (int(args[1]), int(args[2])) if len(args) == 3 else (50, 800)
     return ("legal", float(args[0]), lo, hi)
