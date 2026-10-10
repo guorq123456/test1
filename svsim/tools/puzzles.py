@@ -39,7 +39,7 @@ def facts(state, me: int) -> dict:
     """The end of our turn as the answers state it."""
     p, o = state.players[me], state.players[1 - me]
     return {"won": state.winner == me, "enemy_hp": max(o.leader_hp, 0), "pp_left": p.pp, "hand": len(p.hand),
-            "enemy_followers": len(o.followers), "our_hp": p.leader_hp}
+            "enemy_followers": len(o.followers), "our_hp": p.leader_hp, "ep": p.ep, "sep": p.sep}
 
 
 def judge(answer: dict, f: dict):

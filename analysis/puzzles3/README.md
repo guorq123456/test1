@@ -84,3 +84,29 @@
   - level-strong: 0/6
   - mcts:600: 5/6
 - **Default unchanged:** golden identical.
+
+## k 329 and 455 (the architecture thread 09:45Z): evaluation
+
+The same breakdown (`ops.py --ks 329 455`; data/rows_329_455.jsonl, read_329_455.txt).
+
+| start | installed evaluation of the turn end: Salem / bot | G_end re-test: Salem / bot | level-strong / 1043 / 3000 (8 seeds each) | class |
+|---|---|---|---|---|
+| 329 | 0.651 / **0.690** | 1.000 / 0.854 | the bot's end, 24/24 (0.690) | **evaluation** |
+| 455 | 0.272 / **0.32–0.38** | 0.583 / 0.125 | 10+ different ends, none Salem's (mean 0.335 / 0.338 / 0.356) | **evaluation** |
+
+**329.**
+- The search does see Salem's first move: Lyria with Enhance is rank 5–6 at the root, with value 0.93–0.95. Its continuations score lower.
+- Salem keeps a fuller hand: the 7-cost follower Lyria draws, plus Normagdala. He also leaves a Lyria (Barrier) on the field.
+- The bot deals 2 more to the face (the enemy at 9 against 11).
+- The evaluation pays more for the face damage than for the hand. Largest differences, Salem − bot: op_hp_sqrt −0.23, op_hp_low −0.22, me_barrier +0.15, me_hand +0.10.
+- **J51 right.**
+
+**455.**
+- Salem's first move (Roar of Prominence) is rank 10–16 at the root, with value 0.57–0.63.
+- His end has the enemy at 6, their board empty, and an evolution point kept. The bot's ends have us at 14 with an evolved Kimika on the field.
+- The evaluation prefers our defense and board. Largest differences, Salem − bot: op_hp_sqrt +0.21, me_ep +0.20, me_hp_sqrt −0.17, me_hp −0.15, me_atk −0.14.
+
+**The bank:**
+- `ramp-lyria-crest` (329): expected the enemy board empty and 6 or more cards in hand.
+- `ramp-saga-lyria` (455): expected the enemy board empty, the enemy at 6 or less, and an evolution point kept. tools.puzzles facts now include ep and sep.
+- Seeds 1–3: level-strong 0/6, mcts:1043 0/6.
