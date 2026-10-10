@@ -1,0 +1,8 @@
+{"model": "linear", "mse": 0.033685, "sign": 0.7252, "calib": 0.5932, "by_kind": {"keep": 0.721, "noevo": 0.7583, "save": 0.6819}}
+{"model": "linear+clock", "mse": 0.033643, "sign": 0.7249, "calib": 0.5898, "by_kind": {"keep": 0.7224, "noevo": 0.7554, "save": 0.6708}, "vs_linear_95": {"mse": [-0.000211, 0.000114], "sign": [-0.0054, 0.0045], "calib": [-0.0066, -0.0004]}}
+{"model": "network s0", "mse": 0.033658, "sign": 0.728, "calib": 0.5905, "by_kind": {"keep": 0.7253, "noevo": 0.7564, "save": 0.6826}, "vs_linear_95": {"mse": [-0.000348, 0.000286], "sign": [-0.0045, 0.0097], "calib": [-0.0073, 0.0016]}}
+{"model": "network s1", "mse": 0.033575, "sign": 0.7278, "calib": 0.5883, "by_kind": {"keep": 0.7249, "noevo": 0.7559, "save": 0.6847}, "vs_linear_95": {"mse": [-0.000427, 0.000196], "sign": [-0.0038, 0.0088], "calib": [-0.009, -0.001]}}
+{"model": "network s2", "mse": 0.033549, "sign": 0.7285, "calib": 0.5878, "by_kind": {"keep": 0.7254, "noevo": 0.7612, "save": 0.6757}, "vs_linear_95": {"mse": [-0.00043, 0.00016], "sign": [-0.0042, 0.0105], "calib": [-0.0101, -0.0009]}}
+{"model": "network mean of 3", "mse": 0.033553, "sign": 0.7265, "calib": 0.5883, "by_kind": {"keep": 0.7239, "noevo": 0.7562, "save": 0.6764}, "vs_linear_95": {"mse": [-0.000438, 0.000159], "sign": [-0.0057, 0.0077], "calib": [-0.0087, -0.0013]}}
+{"held_out": {"pairs": 22491, "nonzero": 20102, "games": 91, "calibration_rows": 1583}}
+{"cost_us": {"linear_features": 112.9, "with_clock": 121.9, "network_on_top": 265.7}, "ends": 57}

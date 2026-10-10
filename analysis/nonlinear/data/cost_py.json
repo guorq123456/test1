@@ -1,0 +1,19 @@
+{
+ "turn ends": 718,
+ "us per evaluation (median)": {
+  "installed": 86.4,
+  "cand-kc": 100.1,
+  "cand-nl": 166.8
+ },
+ "installed iterations per second (bench.py)": 2137.0,
+ "iterations per second if only the evaluation changes": {
+  "installed": 2137,
+  "cand-kc": 2076,
+  "cand-nl": 1824
+ },
+ "change": {
+  "installed": "+0.0%",
+  "cand-kc": "-2.8%",
+  "cand-nl": "-14.7%"
+ }
+}

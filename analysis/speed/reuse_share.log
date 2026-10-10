@@ -1,0 +1,70 @@
+{
+ "turns": 116,
+ "searched_decisions": 308,
+ "searched_per_turn": 2.66,
+ "all_searched_steps": {
+  "n": 308,
+  "mean": 0.429,
+  "q1": 0.201,
+  "median": 0.4,
+  "q3": 0.605
+ },
+ "followed_by_a_search_this_turn": {
+  "n": 199,
+  "mean": 0.343,
+  "q1": 0.17,
+  "median": 0.28,
+  "q3": 0.49
+ },
+ "followed_and_reveals_nothing (reusable)": {
+  "n": 146,
+  "mean": 0.363,
+  "q1": 0.18,
+  "median": 0.29,
+  "q3": 0.535
+ },
+ "followed_but_reveals (a draw or random: not reusable)": {
+  "n": 53,
+  "mean": 0.285,
+  "q1": 0.155,
+  "median": 0.235,
+  "q3": 0.358
+ },
+ "by_step_k (followed, reusable)": {
+  "0": {
+   "n": 62,
+   "mean": 0.314,
+   "q1": 0.155,
+   "median": 0.24,
+   "q3": 0.516
+  },
+  "1": {
+   "n": 38,
+   "mean": 0.369,
+   "q1": 0.2,
+   "median": 0.32,
+   "q3": 0.535
+  },
+  "2": {
+   "n": 25,
+   "mean": 0.397,
+   "q1": 0.21,
+   "median": 0.315,
+   "q3": 0.547
+  },
+  "3": {
+   "n": 16,
+   "mean": 0.412,
+   "q1": 0.228,
+   "median": 0.468,
+   "q3": 0.489
+  },
+  "4": {
+   "n": 5,
+   "mean": 0.613,
+   "q1": 0.522,
+   "median": 0.57,
+   "q3": 0.725
+  }
+ }
+}

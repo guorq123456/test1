@@ -1,0 +1,39 @@
+{
+ "pirate-t mirror (80 games, direct)": {
+  "starts": 1389,
+  "sure (find_lethal)": 70,
+  "missed at start (level-strong)": 13,
+  "not realized in play": 4,
+  "not realized and missed at start": 4,
+  "lethal2 finds": 69,
+  "lethal2 recovers": 12,
+  "lethal2 recovers of the unrealized": 4,
+  "lethal2 loses": 0,
+  "found by the ticker planner": 14,
+  "starts with tickers": 804,
+  "sure keys matched": "70/70",
+  "ms per start now: mean / p90": [
+   81.1,
+   140.1
+  ],
+  "added ms per start: mean / p90": [
+   7.8,
+   23.0
+  ]
+ }
+}
+{
+ "ramp mirror 6f11111 (budget model)": {
+  "starts": 18892,
+  "sure": 789,
+  "missed at start": 86,
+  "lethal2 recovers": 17,
+  "of the 27 unrealized": 7,
+  "added ms per start: mean / p90": [
+   12.0,
+   0.0
+  ],
+  "ms per node": 0.416,
+  "tickers among the Ramp deck's cards and what they summon": []
+ }
+}

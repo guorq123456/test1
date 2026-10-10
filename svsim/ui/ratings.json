@@ -1,0 +1,219 @@
+{
+ "version": 23,
+ "commit": null,
+ "published_at": null,
+ "anchor": {
+  "name": "ruler20261008",
+  "commit": "20bcfbe",
+  "level": "strong",
+  "cr": 1300,
+  "note": "每套牌各自独立起算，不跨卡组比：一套牌的 CR = 用它打尺子的四套牌各 100 局"
+ },
+ "tiers": {
+  "fast": {
+   "decks": {
+    "ramp-t": {
+     "cr": 945,
+     "ci": [
+      865,
+      1007
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "greedy+plan+learned 打尺子的四套牌，每格 50 对；对尺子只拿 10%～24% 的分，超出稳态式的适用范围，区间按对自助法算"
+    },
+    "elf-t": {
+     "cr": 893,
+     "ci": [
+      753,
+      984
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "分析线 1b2a670 / 本机 0709284，尺子 20bcfbe；greedy+plan+learned 打尺子四家各 50 对，ΔCR 对跳费龙 −327、镜像 −413、对机锋 −426、对旗皇 −463。区间按半局截断；登记算法的区间 274～981 见分析线 README（对旗皇格 A 只拿 3/100 分，重抽到 0 胜时 logit 截断把下沿拉到不可用）"
+    },
+    "nemesis-t": {
+     "cr": 860,
+     "ci": [
+      778,
+      921
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "分析线 1b2a670 / 本机 0709284，尺子 20bcfbe；greedy+plan+learned 打尺子四家各 50 对，ΔCR 对跳费龙 −313、对连击妖 −428、镜像 −531、对旗皇 −487"
+    },
+    "pirate-t": {
+     "cr": 926,
+     "ci": [
+      852,
+      987
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "分析线 1b2a670 / 本机 0709284，尺子 20bcfbe；greedy+plan+learned 打尺子四家各 50 对，ΔCR 对跳费龙 −285、对连击妖 −404、对机锋 −368、镜像 −439"
+    }
+   }
+  },
+  "normal": {
+   "decks": {
+    "ramp-t": {
+     "cr": 1295,
+     "ci": [
+      1254,
+      1335
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "v2r 打尺子的四套牌，每格 50 对"
+    },
+    "elf-t": {
+     "cr": 1317,
+     "ci": [
+      1254,
+      1378
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "分析线 090c8be / 本机 176c395 + 4b1f9ac，尺子 20bcfbe；v2r（装机前与 v2r5558960 同一 bot）打尺子四家各 50 对，ΔCR 对跳费龙 −85、镜像 +67、对机锋 +166、对旗皇 −79"
+    },
+    "nemesis-t": {
+     "cr": 1220,
+     "ci": [
+      1177,
+      1260
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "分析线 090c8be / 本机 176c395 + 4b1f9ac，尺子 20bcfbe；v2r（装机前与 v2r5558960 同一 bot）打尺子四家各 50 对，ΔCR 对跳费龙 −19、对连击妖 −84、镜像 −105、对旗皇 −111"
+    },
+    "pirate-t": {
+     "cr": 1232,
+     "ci": [
+      1189,
+      1274
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "分析线 090c8be / 本机 176c395 + 4b1f9ac，尺子 20bcfbe；v2r（装机前与 v2r5558960 同一 bot）打尺子四家各 50 对，ΔCR 对跳费龙 −19、对连击妖 −113、对机锋 −91、镜像 −47"
+    }
+   }
+  },
+  "strong": {
+   "decks": {
+    "ramp-t": {
+     "cr": 1331,
+     "ci": [
+      1314,
+      1349
+     ],
+     "games": 200,
+     "measured_vs": "20bcfbe",
+     "note": "第 6 轮（分析线 4501f69 / 本机 c1d07dc）：装 C3（a6fdf0a，第 20 版）后，跳费龙镜像 50 对 ΔCR +126，其余三格与尺子同模型、恒 0；替换第 5 轮的 1309"
+    },
+    "elf-t": {
+     "cr": 1340,
+     "ci": [
+      1306,
+      1373
+     ],
+     "games": 300,
+     "measured_vs": "20bcfbe",
+     "note": "第 6 轮（分析线 3837111 / 本机 RC 8c3ede2）：装 C3（96790ad，第 22 版）后，镜像 150 对 ΔCR +79；对机锋 +41（第 5 轮）、对跳费龙 −22、对旗皇 +62（第 3、4 轮合并，模型未变）；替换第 5 轮的 1348"
+    },
+    "nemesis-t": {
+     "cr": 1300,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "等于尺子（20bcfbe 的强档）的这套牌：定义值 1300，各卡组独立起算",
+     "anchor": true
+    },
+    "pirate-t": {
+     "cr": 1300,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "等于尺子（20bcfbe 的强档）的这套牌：定义值 1300，各卡组独立起算",
+     "anchor": true
+    }
+   }
+  },
+  "max": {
+   "note": "原版跳费龙镜像对强档 56.5%（53.5～59.5），约 +62 CR，300 对，2026-10-10；比赛卡组待标定",
+   "decks": {
+    "ramp-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    },
+    "elf-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    },
+    "nemesis-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    },
+    "pirate-t": {
+     "cr": null,
+     "ci": null,
+     "games": 0,
+     "measured_vs": null,
+     "note": "待标定"
+    }
+   }
+  },
+  "original": {
+   "decks": {
+    "ramp-t": {
+     "cr": 1136,
+     "ci": [
+      1084,
+      1183
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "四格 ΔCR −187 / −159 / −154 / −158。与尺子差：100 对 200 次迭代、只有 ramp-ramp 且 noalias、旧斩杀筛和起手，归因分不开"
+    },
+    "elf-t": {
+     "cr": 1179,
+     "ci": [
+      1114,
+      1239
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "分析线 083044a / 本机 5a6bbc1，尺子 20bcfbe（起手钉 R）；f631e14 的 bot 打尺子四家各 50 对，ΔCR 对跳费龙 −28、镜像 −278、对机锋 −106、对旗皇 −71"
+    },
+    "nemesis-t": {
+     "cr": 1206,
+     "ci": [
+      1154,
+      1255
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "分析线 083044a / 本机 5a6bbc1，尺子 20bcfbe（起手钉 R）；f631e14 的 bot 打尺子四家各 50 对，ΔCR 对跳费龙 −10、对连击妖 −182、镜像 −66、对旗皇 −117"
+    },
+    "pirate-t": {
+     "cr": 1126,
+     "ci": [
+      1070,
+      1172
+     ],
+     "games": 800,
+     "measured_vs": "20bcfbe",
+     "note": "分析线 083044a / 本机 5a6bbc1，尺子 20bcfbe（起手钉 R）；f631e14 的 bot 打尺子四家各 50 对，ΔCR 对跳费龙 −39、对连击妖 −298、对机锋 −127、镜像 −232"
+    }
+   }
+  }
+ }
+}

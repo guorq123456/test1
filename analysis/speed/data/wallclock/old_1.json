@@ -1,0 +1,34 @@
+{
+ "mcts:200+plan+learned+phased": {
+  "ms per decision (median)": 137.7,
+  "rounds": [
+   140.3,
+   135.0
+  ],
+  "iterations per decision": 185.7
+ },
+ "mcts:1043+plan+learned+phased": {
+  "ms per decision (median)": 612.1,
+  "rounds": [
+   626.9,
+   597.2
+  ],
+  "iterations per decision": 968.5
+ },
+ "mcts:200+plan+learned+phased=cand-kc-ramp-ramp": {
+  "ms per decision (median)": 145.1,
+  "rounds": [
+   149.2,
+   141.1
+  ],
+  "iterations per decision": 185.7
+ },
+ "mcts:1043+plan+learned+phased=cand-kc-ramp-ramp": {
+  "ms per decision (median)": 638.3,
+  "rounds": [
+   621.4,
+   655.2
+  ],
+  "iterations per decision": 968.5
+ }
+}

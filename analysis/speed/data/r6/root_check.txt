@@ -1,0 +1,23 @@
+{
+ "roots compared": 462991,
+ "differences": 0,
+ "by part (compared, differences)": {
+  "self": [
+   401500,
+   0
+  ],
+  "bench": [
+   5572,
+   0
+  ],
+  "puzzles": [
+   55919,
+   0
+  ]
+ },
+ "jobs": 764,
+ "distinct cards seen at compared roots": 347,
+ "implemented pool": 982,
+ "share of the pool seen": 0.3534,
+ "first differences": []
+}

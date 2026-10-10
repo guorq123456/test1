@@ -1,0 +1,28 @@
+{
+ "positions": 28,
+ "iterations": 200,
+ "iterations per second (median)": {
+  "installed": 1910,
+  "cand-kc": 1847,
+  "cand-nl": 1736
+ },
+ "rounds": {
+  "installed": [
+   2086,
+   1733
+  ],
+  "cand-kc": [
+   2056,
+   1637
+  ],
+  "cand-nl": [
+   1689,
+   1783
+  ]
+ },
+ "vs installed": {
+  "installed": "+0.0%",
+  "cand-kc": "-3.3%",
+  "cand-nl": "-9.1%"
+ }
+}

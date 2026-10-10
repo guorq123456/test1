@@ -1,0 +1,19 @@
+{
+ "positions": 96,
+ "installed": {
+  "ACT mean": 3.341,
+  "ENDED mean": -1.811,
+  "ENDED - ACT mean": -5.152,
+  "ENDED - ACT sd": 7.11
+ },
+ "cand-kc": {
+  "ACT mean": 3.341,
+  "ENDED mean": -2.339,
+  "ENDED - ACT mean": -5.681,
+  "ENDED - ACT sd": 7.058
+ },
+ "cand-kc ENDED - installed ENDED": {
+  "mean": -0.528,
+  "sd": 1.379
+ }
+}
