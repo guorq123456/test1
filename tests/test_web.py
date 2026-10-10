@@ -370,3 +370,27 @@ def test_a_card_s_details_show_only_what_its_own_effect_reads():
     me.entered[90071130] = 2                                  # two of one Artifact: one name
     me.entered[90071140] = 1
     assert dict(card_info(state, artist.uid)["counters"]) == {"本局进场的不同名造物": 2}
+
+
+def test_the_strongest_level_is_strongs_bot_with_more_iterations_and_listed_after_strong():
+    from pathlib import Path
+    from svsim.tools.arena import VERSIONS, make_agent
+    from svsim.tools.gate import _search
+    from svsim.ui.session import LEVELS
+    assert LEVELS["max"] == VERSIONS["level-max"] == "mcts:1043+plan+learned+phased"
+    assert list(LEVELS).index("max") == list(LEVELS).index("strong") + 1
+    assert LEVELS["strong"] == "mcts:200+plan+learned+phased" and LEVELS["fast"] == "greedy+plan+learned"
+    assert _search(make_agent("level-max", 0)).iterations == 1043
+    page = (Path(__file__).resolve().parents[1] / "web" / "index.html").read_text(encoding="utf-8")
+    assert page.index('data-value="strong">强<') < page.index('data-value="max">最强<') < page.index('data-value="original"')
+    assert 'max: "最强档"' in page and 'max: "最强"' in page
+    tier = Session().ratings()["tiers"]["max"]
+    assert tier["spec"] == LEVELS["max"] and "+62 CR" in tier["note"]
+    assert all(d["cr"] is None and d["note"] == "待标定" for d in tier["decks"].values())
+
+
+def test_a_game_at_the_strongest_level_runs_and_replays():
+    session = _half_game("you", level="max", turns=3)
+    assert session.record["bot"]["level"] == "max" and session.record["bot"]["spec"] == "mcts:1043+plan+learned+phased"
+    record = json.loads(json.dumps(session.record_data()))
+    assert _fingerprint(_replay(record)) == _fingerprint(session.state)

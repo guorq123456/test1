@@ -44,7 +44,8 @@ from svsim.core.actions import Attack, EndTurn, Engage, Evolve, PlayCard, UseBon
 from svsim.core.engine import apply, legal_actions
 from svsim.core.enums import DRAW, Keyword, Phase
 from svsim.core.script import prop
-from svsim.core.state import CardInstance, GameState
+from svsim.core.state import CHECK as COW_CHECK, CardInstance, GameState, sweep
+from svsim.core.view import shuffle
 
 EPS = 1e-9
 
@@ -89,7 +90,7 @@ def state_key(state: GameState) -> tuple:
             tuple(_card_key(c, turn) for c in p.field),
             tuple(_card_key(c, turn) for c in p.leader_area),
             tuple(sorted(_card_key(c, turn) for c in p.hand)),
-            tuple(sorted(c.defn.card_id for c in p.deck)),
+            tuple(sorted(c.defn.card_id for c in p.deck_view())),
         ))
     return state.turn, state.active, tuple(sides)
 
@@ -97,8 +98,8 @@ def state_key(state: GameState) -> tuple:
 def hidden_info(state: GameState) -> tuple:
     """What a player can't know: the RNG state and the deck order. If an action
     changes it, its result depended on luck or on hidden cards."""
-    return (state.rng.getstate(), tuple(c.uid for c in state.players[0].deck),
-            tuple(c.uid for c in state.players[1].deck))
+    return (state.rng.getstate(), tuple(c.uid for c in state.players[0].deck_view()),
+            tuple(c.uid for c in state.players[1].deck_view()))
 
 
 def face_damage(state: GameState, player: int) -> int:
@@ -121,7 +122,7 @@ def damage_estimate(state: GameState) -> float:
     the play points, each tried on its own (direct damage plus new face attacks).
     Not a bound: effects that only pay off together are missed."""
     me, opp = state.active, 1 - state.active
-    if not state.players[opp].deck or state.players[opp].extra_damage:
+    if not state.players[opp].deck_view() or state.players[opp].extra_damage:
         return float("inf")              # deck-out at their draw; extra damage per hit
     hp, face, pp = state.players[opp].leader_hp, face_damage(state, me), state.players[me].pp
     items, evolve_best, bonus = {}, 0, 0
@@ -177,6 +178,8 @@ class LethalSearch:
         self.exhausted = False
         self.rng = random.Random(self.seed)
         value, line, sure = self._search(state, 0, 0)
+        if COW_CHECK:                              # check mode (core.state): no shared deck card changed
+            sweep(keep=state)
         return LethalResult(value, line, sure and value >= 1 - EPS, self.nodes,
                             not self.exhausted, time.perf_counter() - start, screened)
 
@@ -196,8 +199,9 @@ class LethalSearch:
             return 0.0, [], False
         self.nodes += 1
         best = (0.0, [], False)
+        info = hidden_info(state)          # what every child starts from (a clone has the same)
         for action in self._ordered(state):
-            value, line, sure = self._evaluate(state, action, depth, chance_depth, best[0])
+            value, line, sure = self._evaluate(state, action, depth, chance_depth, best[0], info)
             if value > best[0] + EPS or (sure and not best[2] and value >= best[0] - EPS):
                 best = (value, [action] + line, sure)
                 if sure and value >= 1 - EPS:
@@ -205,11 +209,12 @@ class LethalSearch:
         self.tt[key] = best
         return best
 
-    def _evaluate(self, state, action, depth, chance_depth, alpha) -> tuple:
+    def _evaluate(self, state, action, depth, chance_depth, alpha, before=None) -> tuple:
         if isinstance(action, EndTurn):
-            return self._end_turn(state, chance_depth, alpha)
+            return self._end_turn(state, chance_depth, alpha, before)
         child = state.clone()
-        before = hidden_info(child)
+        if before is None:
+            before = hidden_info(child)
         apply(child, action)
         if hidden_info(child) == before:
             return self._search(child, depth + 1, chance_depth)
@@ -221,7 +226,7 @@ class LethalSearch:
             return self._search(sample, depth + 1, chance_depth + 1)[0]
         return self._chance(state, run, chance_depth, alpha), [], False
 
-    def _end_turn(self, state, chance_depth, alpha) -> tuple:
+    def _end_turn(self, state, chance_depth, alpha, before=None) -> tuple:
         """Ending the turn wins if end-of-turn abilities finish the opponent, or if
         the opponent then has to draw from an empty deck."""
         def run(sample) -> float:
@@ -230,11 +235,12 @@ class LethalSearch:
             if sample.winner == self.me:
                 return 1.0
             if sample.winner == DRAW and state.turn < state.max_turns:
-                return 1.0 if not sample.players[1 - self.me].deck else 0.0
+                return 1.0 if not sample.players[1 - self.me].deck_view() else 0.0
             return 0.0
 
         probe = state.clone()
-        before = hidden_info(probe)
+        if before is None:
+            before = hidden_info(probe)
         value = run(probe)
         if hidden_info(probe) == before:
             return value, [], value >= 1 - EPS
@@ -250,10 +256,10 @@ class LethalSearch:
         for i in range(k):
             if (total + (k - i)) / k <= alpha + EPS:
                 break
-            sample = state.clone()
+            sample = state.clone(copy_rng=False)          # seeded at once
             sample.rng.seed(self.rng.getrandbits(64))
             for p in sample.players:
-                sample.rng.shuffle(p.deck)
+                shuffle(sample.rng, p._deck)               # core.view: rng.shuffle, written out (the clone's own list)
             total += run(sample)
         return total / k
 

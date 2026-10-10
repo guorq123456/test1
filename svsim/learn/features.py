@@ -101,12 +101,22 @@ def _board_threat(state: GameState, side: int) -> int:
 
 
 def _roles_sum(cards) -> list[float]:
-    from svsim.learn.roles import card_roles
-    out = [0.0] * 6
+    from svsim.learn.roles import _ROLES, card_roles
+    # unrolled, the additions in the same order as a loop over the six (the same floats bit for bit)
+    a0 = a1 = a2 = a3 = a4 = a5 = 0.0
+    get = _ROLES.get
     for c in cards:
-        for i, v in enumerate(card_roles(c.defn)):
-            out[i] += v
-    return out
+        d = c.defn
+        r = get(d.card_id)
+        if r is None:
+            r = card_roles(d)
+        a0 += r[0]
+        a1 += r[1]
+        a2 += r[2]
+        a3 += r[3]
+        a4 += r[4]
+        a5 += r[5]
+    return [a0, a1, a2, a3, a4, a5]
 
 
 def recurring_sum(p) -> list[float]:
@@ -126,12 +136,12 @@ def resources(state: GameState, side: int, hidden: bool) -> list[float]:
     from svsim.search.evaluate import burn, effective_hp
     p, enemy = state.players[side], state.players[1 - side]
     if hidden:
-        pool = p.hand + p.deck
+        pool = p.hand + p.deck_view()
         total = _roles_sum(pool)
         share = len(p.hand) / len(pool) if pool else 0.0
         hand = [v * share for v in total]
     else:
-        hand, total = _roles_sum(p.hand), _roles_sum(p.deck)
+        hand, total = _roles_sum(p.hand), _roles_sum(p.deck_view())
     rec = recurring_sum(p)
     incoming = _board_threat(state, 1 - side) + recurring_sum(enemy)[0] + burn(p)
     lasts = min(effective_hp(p) / max(incoming, 1.0), 10.0)
@@ -153,7 +163,7 @@ def side_features(state: GameState, side: int, potential: bool, version: int = 1
            sum(1 for x in k if x & (Keyword.AMBUSH | Keyword.AURA | Keyword.INTIMIDATE)),
            sum(1 for c in p.field if c.defn.is_amulet), sum(c.defn.cost for c in p.field if c.defn.is_amulet),
            good_crests(p),
-           hand_count(p), p.ep, p.sep, p.max_pp, float(len(p.deck) <= 3), float(not p.deck),
+           hand_count(p), p.ep, p.sep, p.max_pp, float(len(p.deck_view()) <= 3), float(not p.deck_view()),
            min(threat, max(enemy.leader_hp, 0)), float(threat >= enemy.leader_hp)]
     if potential:
         from svsim.search.combo import next_turn_damage
@@ -200,7 +210,7 @@ def contexts(state: GameState, side: int, hidden: bool) -> tuple[list[float], li
             b = best[k]
             b[0], b[1] = max(b[0], face), max(b[1], value)
     if hidden:                                     # the unseen cards: the same all turn, whatever the deal
-        pool = p.hand + p.deck
+        pool = p.hand + p.deck_view()
         key = (True, len(pool), len(p.hand), pp, _fingerprint(pool))
         hit = _UNSEEN.get(key)
         if hit is None:
@@ -210,16 +220,16 @@ def contexts(state: GameState, side: int, hidden: bool) -> tuple[list[float], li
         from_cards, in_deck = hit
     else:
         from_cards = _from_cards([(c, 1.0) for c in p.hand if c.defn.is_follower], pp)
-        key = (False, len(p.deck), 0, pp, _fingerprint(p.deck))
+        key = (False, len(p.deck_view()), 0, pp, _fingerprint(p.deck_view()))
         in_deck = _UNSEEN.get(key)
         if in_deck is None:
-            in_deck = _remember(key, deck_payoff(p.deck, pp) / 2.0)
+            in_deck = _remember(key, deck_payoff(p.deck_view(), pp) / 2.0)
     for b, c in zip(best, from_cards):
         b[:] = [max(x, y) for x, y in zip(b, c)]
     hp, op_hp = effective_hp(p), effective_hp(enemy)
     racing = float(op_hp <= 10 or threat(state, side) >= op_hp / 2)
     long = (hp + op_hp) / 40.0
-    tail = [p.turns_taken / 10.0, hp / 20.0, op_hp / 20.0, (len(p.deck) + len(enemy.deck)) / 60.0,
+    tail = [p.turns_taken / 10.0, hp / 20.0, op_hp / 20.0, (len(p.deck_view()) + len(enemy.deck_view())) / 60.0,
             (hp - op_hp) / 20.0]
     out = []
     for k, unlock in ((0, EVOLVE_TURN[first]), (1, SUPER_EVOLVE_TURN[first])):
@@ -476,7 +486,7 @@ def _clock_values(state: GameState, player: int) -> list[float]:
     me, op = state.players[player], state.players[1 - player]
     board = lambda p: float(sum(f.atk for f in p.followers if not prop(f, "cant_attack")))
     me_burst = board(me) + _best_direct([(c.cost, _direct(c.defn)) for c in me.hand], min(me.max_pp + 1, MAX_PP))
-    pool = op.hand + op.deck
+    pool = op.hand + op.deck_view()
     op_burst = board(op)
     if pool and op.hand:
         budget = min(op.max_pp + 1, MAX_PP)

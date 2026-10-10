@@ -203,7 +203,7 @@ def profile(defn: CardDef, fused: bool = False) -> tuple[tuple[Effect, ...], ...
             if not isinstance(action, PlayCard) or action.uid != card.uid:
                 continue
             s = state.clone()
-            deck = {c.uid for c in s.players[0].deck}
+            deck = {c.uid for c in s.players[0].deck_view()}
             pp = s.players[0].pp
             apply(s, action)
             m = _measure(state, s, anchor, deck, card, action.targets)
@@ -252,7 +252,7 @@ def engage_profile(defn: CardDef) -> Effect | None:
         if not isinstance(action, Engage) or action.uid != amulet.uid:
             continue
         s = state.clone()
-        deck = {c.uid for c in s.players[0].deck}
+        deck = {c.uid for c in s.players[0].deck_view()}
         apply(s, action)
         m = _measure(state, s, anchor, deck, None, action.targets)
         e = Effect(script.engage_cost, 0, m["added"], m["bounce"], m["face"], buff=m["buff"],
@@ -280,7 +280,7 @@ def evolve_profile(defn: CardDef, super_: bool) -> tuple[Effect, ...]:
             if not isinstance(action, Evolve) or action.uid != inst.uid or action.super_ != super_:
                 continue
             s = state.clone()
-            deck = {c.uid for c in s.players[0].deck}
+            deck = {c.uid for c in s.players[0].deck_view()}
             apply(s, action)
             m = _measure(state, s, anchor, deck, None, action.targets)
             m["pierce"] = m["hit"] > 0 and _pierces(state, action)
@@ -810,7 +810,7 @@ def realize(state: GameState, steps: list) -> list | None:
     step has no matching legal action. Cards drawn on the way are never used:
     the plan doesn't know them."""
     s, me, actions = state.clone(), state.active, []
-    unknown = {c.uid for p in s.players for c in p.deck}
+    unknown = {c.uid for p in s.players for c in p.deck_view()}
     for step in steps:
         legal = legal_actions(s)
         chosen = None

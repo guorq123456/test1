@@ -116,20 +116,38 @@ def load(folder: Path | None = None) -> dict:
     return out
 
 
+_MISSING = object()
+
+
 class PhasedLearned:
     def __init__(self, models: dict | None = None, fallback=None, aliases: dict | None = ALIASES):
         self.models = models if models is not None else load()
         self.fallback = fallback or Learned(aliases=aliases)
         self.aliases = aliases                     # learn.model.ALIASES: a mirror's stand-in models
+        self._named, self._named_for = {}, None     # (deck, deck, moment) -> model or None (score)
 
     def score(self, state, player: int, player_moves_next: bool = False) -> float:
         from svsim.search.evaluate import WIN
         if state.winner is not None:
             return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
         moment = "act" if player_moves_next else "ended"
-        model = next((self.models[k + (moment,)] for k in matchup_keys(state, player, self.aliases)
-                      if k + (moment,) in self.models),
-                     None)
+        mine, theirs = state.players[player].deck_name, state.players[1 - player].deck_name
+        model = None
+        if mine and theirs:                        # two named decks: their own (or stand-in) model, looked up once
+            if self._named_for is not self.models:
+                self._named, self._named_for = {}, self.models
+            key = (mine, theirs, moment)
+            model = self._named.get(key, _MISSING)
+            if model is _MISSING:
+                pairs = [(mine, theirs)]
+                if self.aliases and mine == theirs and mine in self.aliases:
+                    pairs.append((self.aliases[mine], self.aliases[theirs]))
+                model = self._named[key] = next((self.models[k + (moment,)] for k in pairs
+                                                 if k + (moment,) in self.models), None)
+        if model is None:                          # as matchup_keys orders them (the class pair last)
+            model = next((self.models[k + (moment,)] for k in matchup_keys(state, player, self.aliases)
+                          if k + (moment,) in self.models),
+                         None)
         if model is None:
             return self.fallback.score(state, player, player_moves_next)
         return SCALE * model.logit(state, player)

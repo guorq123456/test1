@@ -45,6 +45,27 @@ class Keyword(IntFlag):
     INTIMIDATE = 1 << 7
     AURA = 1 << 8
 
+    # & and | by table (_KW): the same members IntFlag's own operators return (checked over every pair,
+    # tests/test_enums.py), several times faster in Python 3.11, and search tests keywords a lot.
+    def __and__(self, other):
+        if other.__class__ is Keyword or other.__class__ is int:
+            return _KW[int.__and__(self, other)]     # self >= 0: the bits are a subset of self's
+        return IntFlag.__and__(self, other)
+
+    __rand__ = __and__
+
+    def __or__(self, other):
+        if other.__class__ is Keyword or other.__class__ is int:
+            v = int.__or__(self, other)
+            if 0 <= v < len(_KW):
+                return _KW[v]
+        return IntFlag.__or__(self, other)
+
+    __ror__ = __or__
+
+
+_KW = [Keyword(i) for i in range(1 << 9)]   # every combination of the nine keywords
+
 
 # English keyword names as they appear in official card text.
 KEYWORD_NAMES = {

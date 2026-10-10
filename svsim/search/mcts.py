@@ -49,7 +49,7 @@ import time
 from svsim.core.actions import (Attack, EndTurn, Engage, Evolve, Fuse, PlayCard, UseBonusPP)
 from svsim.core.engine import _start_turn, apply, legal_actions
 from svsim.core.enums import DRAW, Phase
-from svsim.core.state import GameState, leader_of
+from svsim.core.state import CHECK as COW_CHECK, GameState, leader_of, sweep, verify_state
 from svsim.core.view import determinize
 from svsim.search.evaluate import DEFAULT, evaluate
 from svsim.search.moves import reserved, worth_trying
@@ -230,7 +230,7 @@ class ISMCTS:
         """The search's move. While it runs, learn.handvalue knows its root: the cards drawn from here on, and the
         opponent's hand, are unknown to the hand-value student."""
         from svsim.learn.handvalue import root
-        with root(state.active, [c.uid for c in state.players[state.active].deck]):
+        with root(state.active, [c.uid for c in state.players[state.active].deck_view()]):
             return self._choose(state)
 
     def _choose(self, state: GameState):
@@ -260,7 +260,7 @@ class ISMCTS:
             iterations = max(self.min_new, full - root.visits)
         deadline = time.perf_counter() + self.seconds if self.seconds else None
         self._replies = 0
-        self._root_deck = {c.uid for c in state.players[me].deck}
+        self._root_deck = {c.uid for c in state.players[me].deck_view()}
         self._root_prior = {}
         if self.prior is not None:
             moves = legal_actions(state)
@@ -286,6 +286,8 @@ class ISMCTS:
             else:
                 s = determinize(state, me, self.rng, hand) if hand else determinize(state, me, self.rng)
             self._iterate(s, me, root)
+            if COW_CHECK:                          # check mode (core.state): no shared deck card changed
+                verify_state(state)
             done += 1
             if banked and done % self.alloc[1] == 0 and self._settled(root, iterations - done):
                 break
@@ -293,6 +295,8 @@ class ISMCTS:
             self._bank = min(self.alloc[3], max(0, self._bank + self.iterations - done))
         self.last_iterations = done
         self.last_root = root
+        if COW_CHECK:
+            sweep(keep=state)
         where = _locator(state, me)
         legal = {action_key(state, a, where): a for a in legal_actions(state)}
         best = max((k for k in legal if k in root.children),
