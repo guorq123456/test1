@@ -1,4 +1,4 @@
-"""The lethal-fix gate's companion (README-lethal2.md here): the gate's 300 pairs played again with the gate's own
+"""The lethal-fix gates' companion (README-lethal2.md, README-lethal3.md here): the gate's 300 pairs played again with the gate's own
 game function and agent seeds (tools.gate._game / _agent: A seeded 2 x seed + seat, B 2 x seed + 1 - seat + 7919),
 so on the machine that ran the gate the games are the same; their records kept (the gate keeps none here). Then:
 - every pair's points set beside the gate's rows (they should all match);
@@ -68,6 +68,30 @@ def check(state, tickers: bool, near, max_nodes):
     return r.sure, (time.perf_counter() - t) * 1000
 
 
+# +lethal3's checks (the builder's analysis/speed/lethal3_eval.py, 715230d): the planner via combo.planned_lethal
+# (tickers / plannerfix / eot), else the screened search; level-strong's (NOW) and the package's (NEW)
+NOW3 = dict(tickers=False, fix=False, eot=False, max_nodes=2000, near=(1000, 4))
+NEW3 = dict(tickers=True, fix=True, eot=True, max_nodes=3000, near=(2000, 4))
+PACKAGE = "lethal2"
+
+
+def check3(state, tickers, fix, eot, max_nodes, near):
+    from svsim.search import combo
+    from svsim.search.lethal import LethalSearch
+    t = time.perf_counter()
+    line, _ = combo.planned_lethal(state, 20000, tickers=tickers, fix=fix, eot=eot)
+    if line:
+        return True, (time.perf_counter() - t) * 1000
+    r = LethalSearch(max_nodes=max_nodes, screen=200, near=near, seed=0).solve(state.clone())
+    return r.sure, (time.perf_counter() - t) * 1000
+
+
+def _checks(state, package):
+    if package == "lethal3":
+        return check3(state, **NOW3), check3(state, **NEW3)
+    return check(state, False, (1000, 4), 2000), check(state, True, (2000, 4), 3000)
+
+
 def _game_facts(g):
     """Replay one game: who won and whether during its own turn; at A's own-turn starts the tickers and both checks."""
     from svsim.core.actions import from_dict
@@ -84,7 +108,7 @@ def _game_facts(g):
     for data in g["actions"]:
         if st.phase == Phase.MAIN and st.active == a and (st.turn, st.active) not in seen:
             seen.add((st.turn, st.active))
-            old, new = check(st, False, (1000, 4), 2000), check(st, True, (2000, 4), 3000)
+            old, new = _checks(st, g.get("package", "lethal2"))
             starts.append({"tickers": len(tickers_of(st)), "old": old, "new": new})
         last_mover = st.active
         apply(st, from_dict(data))
@@ -95,7 +119,7 @@ def _game_facts(g):
 
 def read(args):
     from multiprocessing import Pool
-    games = [json.loads(x) for x in open(args.records, encoding="utf-8") if x.strip()]
+    games = [dict(json.loads(x), package=args.package) for x in open(args.records, encoding="utf-8") if x.strip()]
     gate = {json.loads(x)["k"]: json.loads(x) for x in open(args.gate, encoding="utf-8") if x.strip()}
     with Pool(args.workers) as pool:
         facts = pool.map(_game_facts, games)
@@ -110,8 +134,8 @@ def read(args):
     print(f"- 重打的 {n} 局，和门的记录逐局比：得分不同 {mismatch} 局")
     print(f"- 在自己回合里赢下的局（斩杀兑现），每 100 局：A {100 * la / n:.1f}（{la} 局），B {100 * lb / n:.1f}（{lb} 局）")
     print(f"- A 的自己回合开头 {len(starts)} 个：场上有 ticker 的 {sum(s['tickers'] > 0 for s in starts) / max(len(starts), 1):.1%}")
-    print(f"- 开头的检查找到斩杀：+lethal2 {sum(s['new'][0] for s in starts)}，level-strong 的 {sum(s['old'][0] for s in starts)}；"
-          f"只有 +lethal2 找到 {sum(s['new'][0] and not s['old'][0] for s in starts)}，只有 level-strong 找到 "
+    print(f"- 开头的检查找到斩杀：+{args.package} {sum(s['new'][0] for s in starts)}，level-strong 的 {sum(s['old'][0] for s in starts)}；"
+          f"只有 +{args.package} 找到 {sum(s['new'][0] and not s['old'][0] for s in starts)}，只有 level-strong 找到 "
           f"{sum(s['old'][0] and not s['new'][0] for s in starts)}")
     print(f"- A 每个回合开头多花的毫秒：平均 {statistics.mean(added):+.1f}，p90 {p90:+.1f}"
           f"（level-strong 的检查平均 {statistics.mean(s['old'][1] for s in starts):.1f} ms）")
@@ -132,6 +156,8 @@ def main():
     a = sub.add_parser("read")
     a.add_argument("records")
     a.add_argument("gate", help="the gate's results file (same seeds)")
+    a.add_argument("--package", default="lethal2", choices=("lethal2", "lethal3"),
+                   help="which turn-start checks to time: +lethal2's (23b317d) or +lethal3's (715230d)")
     a.add_argument("--workers", type=int, default=12)
     args = ap.parse_args()
     {"play": play, "read": read}[args.cmd](args)
