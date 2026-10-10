@@ -30,7 +30,7 @@ def _evolving_matters(state: GameState, follower) -> bool:
         return True
     p = state.players[follower.owner]
     cards = p.leader_area + p.field + [c for c in p.hand if c.defn.card_id in LISTEN_IN_HAND] \
-        + [c for c in p.deck if c.defn.card_id in LISTEN_IN_DECK]
+        + [c for c in p.deck_view() if c.defn.card_id in LISTEN_IN_DECK]
     return any(c is not follower and _listens(c, ("on_ally_evolve",)) for c in cards)
 
 

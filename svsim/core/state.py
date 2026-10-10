@@ -6,6 +6,7 @@ for search, and a seed plus an action list is enough to replay one.
 """
 from collections import deque
 from dataclasses import dataclass, field as dc_field
+import os
 import random
 
 _new_object = object.__new__
@@ -104,6 +105,59 @@ class CardInstance:
         return f"<{self.defn.name}#{self.uid}{stats}>"
 
 
+# Copy on write of deck cards, checked (SVSIM_COW_CHECK=1): every card is fingerprinted when it is first shared,
+# and the fingerprint is verified when its deck is cloned or copied, at the end of every search iteration and in a
+# sweep after every decision (search.mcts, search.lethal). A shared card must never change: whoever changes one must
+# own its deck first (PlayerState.deck).
+CHECK = bool(os.environ.get("SVSIM_COW_CHECK"))
+_SHARED: dict = {}                     # id(card) -> (card, fingerprint)
+
+
+def fingerprint(c: CardInstance) -> tuple:
+    return (id(c.defn), c.uid, c.owner, c.cost, c.atk, c.life, c.max_life, int(c.keywords), c.countdown,
+            c.evolved, c.super_evolved, c.entered_turn, c.attacks_made, c.max_attacks, c.order, c.fate,
+            c.engaged_turn, c.fused_turn, c.silenced, c.no_last_words,
+            None if c.counters is None else repr(sorted(c.counters.items())),
+            None if c.grants is None else tuple(c.grants),
+            None if c.cost_mods is None else tuple(c.cost_mods))
+
+
+def _register(cards) -> None:
+    for c in cards:
+        hit = _SHARED.get(id(c))
+        if hit is None:
+            _SHARED[id(c)] = (c, fingerprint(c))
+        elif hit[1] != fingerprint(c):
+            raise AssertionError(f"shared deck card {c!r} changed")
+
+
+def _verify(cards) -> None:
+    for c in cards:
+        hit = _SHARED.get(id(c))
+        if hit is not None and hit[1] != fingerprint(c):
+            raise AssertionError(f"shared deck card {c!r} changed")
+
+
+def verify_state(state) -> None:
+    """Check mode: the cards in `state`'s decks are as they were when shared."""
+    if CHECK:
+        for p in state.players:
+            _verify(p._deck)
+
+
+def sweep(keep=None) -> None:
+    """Check mode: every card shared so far is as it was; then forget all but `keep`'s deck cards (a state still
+    in use, verified too), so the record doesn't grow without end."""
+    if not CHECK:
+        return
+    for c, f in _SHARED.values():
+        if fingerprint(c) != f:
+            raise AssertionError(f"shared deck card {c!r} changed")
+    kept = {} if keep is None else {id(c): _SHARED[id(c)] for p in keep.players for c in p._deck if id(c) in _SHARED}
+    _SHARED.clear()
+    _SHARED.update(kept)
+
+
 @dataclass(slots=True)
 class PlayerState:
     index: int
@@ -120,7 +174,7 @@ class PlayerState:
     combo: int = 0                # cards played this turn
     rally: int = 0                # allied followers that entered the field this match
     shadows: int = 0              # cemetery count
-    deck: list[CardInstance] = dc_field(default_factory=list)   # top of deck = last element
+    _deck: list[CardInstance] = dc_field(default_factory=list)  # top of deck = last element (`deck`)
     hand: list[CardInstance] = dc_field(default_factory=list)
     field: list[CardInstance] = dc_field(default_factory=list)  # oldest first
     leader_area: list[CardInstance] = dc_field(default_factory=list)  # crests and faiths, oldest first
@@ -135,6 +189,7 @@ class PlayerState:
     extra_damage: int = 0          # leader "takes N more damage"
     entered: dict = dc_field(default_factory=dict)   # card_id -> allied follower entries this match
     deck_name: str | None = None   # the named deck registered (cards.decks.NAMED), "" for another; set by new_game
+    _deck_shared: bool = dc_field(default=False, compare=False, repr=False)   # see `deck`
 
     def copy(self) -> "PlayerState":
         # Field by field, as CardInstance.copy (copy.copy goes through __reduce_ex__: several times slower);
@@ -154,7 +209,11 @@ class PlayerState:
         clone.combo = self.combo
         clone.rally = self.rally
         clone.shadows = self.shadows
-        clone.deck = [c.copy() for c in self.deck]
+        # the deck's cards are shared, copied on write (`deck`): most clones never touch a card in a deck
+        clone._deck = list(self._deck)
+        clone._deck_shared = self._deck_shared = True
+        if CHECK:
+            _register(self._deck)
         clone.hand = [c.copy() for c in self.hand]
         clone.field = [c.copy() for c in self.field]
         clone.leader_area = [c.copy() for c in self.leader_area]
@@ -170,6 +229,39 @@ class PlayerState:
         clone.entered = dict(self.entered)
         clone.deck_name = self.deck_name
         return clone
+
+    @property
+    def deck(self) -> list[CardInstance]:
+        """The deck (top = last), this player's own to change: cards it still shares with a clone or the state it
+        was cloned from (`copy`) are copied first. Code that only reads, and keeps nothing, may use `deck_view`."""
+        if self._deck_shared:
+            self._own_deck()
+        return self._deck
+
+    @deck.setter
+    def deck(self, cards: list[CardInstance]) -> None:
+        self._deck = cards
+        self._deck_shared = False
+
+    def deck_view(self) -> list[CardInstance]:
+        """The deck without copying shared cards: to read only (neither the list nor its cards may change, and
+        no card may be kept or moved elsewhere)."""
+        return self._deck
+
+    def draw_top(self) -> CardInstance:
+        """deck.pop(), copying only the card taken if it is shared (the rest of the deck stays shared)."""
+        if not self._deck_shared:
+            return self._deck.pop()
+        card = self._deck.pop()                   # the list is this player's own; the card may be shared
+        if CHECK:
+            _verify((card,))
+        return card.copy()
+
+    def _own_deck(self) -> None:
+        if CHECK:
+            _verify(self._deck)
+        self._deck = [c.copy() for c in self._deck]
+        self._deck_shared = False
 
     @property
     def followers(self) -> list[CardInstance]:
@@ -194,6 +286,9 @@ class GameState:
         """An independent copy. copy_rng=False leaves the copy's generator unseeded, for a caller that seeds it
         at once (core.view.determinize): copying a state the seed then overwrites is wasted time."""
         assert not self.queue, "clone only between actions"
+        if CHECK:
+            for p in self.players:
+                _verify(p._deck)
         rng = _new_random(random.Random)          # not random.Random(): that seeds itself from the OS first
         if copy_rng:
             rng.setstate(self.rng.getstate())

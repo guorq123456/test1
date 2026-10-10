@@ -78,17 +78,22 @@ def determinize(state: GameState, player: int, rng: random.Random, weights: dict
     order is guessed."""
     s = state.clone(copy_rng=False)     # seeded below: nothing of the real generator is kept
     me, opp = s.players[player], s.players[1 - player]
-    shuffle(rng, me.deck)
+    # The decks' lists are the clone's own but their cards are shared (state.PlayerState.deck, copy on write): the
+    # lists are reordered here without copying; a card that goes from a deck into a hand is copied.
+    shuffle(rng, me._deck)
     if oracle:
-        shuffle(rng, opp.deck)
+        shuffle(rng, opp._deck)
         s.rng.seed(rng.getrandbits(64))
         return s
-    pool = opp.hand + opp.deck
+    in_deck = {id(c) for c in opp._deck} if opp._deck_shared else ()
+    pool = opp.hand + opp._deck
     if weights:
         keys = [rng.random() ** (1.0 / weights.get(c.uid, 1.0)) for c in pool]
         pool = [c for _, c in sorted(zip(keys, pool), key=lambda kc: -kc[0])]
     else:
         shuffle(rng, pool)
-    opp.hand, opp.deck = pool[:len(opp.hand)], pool[len(opp.hand):]
+    n = len(opp.hand)
+    opp.hand = [c.copy() if id(c) in in_deck else c for c in pool[:n]]
+    opp._deck = pool[n:]
     s.rng.seed(rng.getrandbits(64))   # future random effects are unknown too
     return s

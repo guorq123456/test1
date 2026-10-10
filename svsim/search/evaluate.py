@@ -130,7 +130,7 @@ def latent_cards(p: PlayerState) -> int:
     Forest, which returns it with Baby Carbuncle and replays it. Nothing for a
     deck without such cards."""
     field = [c for c in p.field if _replay_cards(c.defn)]
-    if not field or not any(_bounces(c.defn) for c in p.hand + p.deck):
+    if not field or not any(_bounces(c.defn) for c in p.hand + p.deck_view()):
         return 0
     return sum(_replay_cards(c.defn) for c in field)
 
@@ -185,9 +185,9 @@ def side_value(p: PlayerState, w: Weights = DEFAULT) -> float:
     value += w.crest * good_crests(p)
     value += w.hand * hand_count(p)
     value += w.ep * p.ep + w.sep * p.sep + w.max_pp * p.max_pp
-    if w.dig and len(p.deck) > 5:
-        value -= w.dig * len(p.deck)
-    if not p.deck:
+    if w.dig and len(p.deck_view()) > 5:
+        value -= w.dig * len(p.deck_view())
+    if not p.deck_view():
         value -= w.deck_out
     return value
 

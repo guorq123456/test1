@@ -355,6 +355,8 @@ _END_OF_TURN_INVOKE = _EndOfTurnInvoke()
 
 def _invoke(state: GameState, p: PlayerState, when: str) -> None:
     """Invoke cards from the deck whose condition holds (one copy of each card)."""
+    if not any(c.defn.card_id in INVOKERS for c in p.deck_view()):    # none: the deck isn't touched
+        return
     invoked = set()
     for card in [c for c in p.deck if c.defn.card_id in INVOKERS]:
         script = script_for(card.defn.card_id)

@@ -58,7 +58,10 @@ def emit(state: GameState, hook: str, player: int | None = None,
         for inst in p.leader_area + p.field:
             if inst is not exclude:
                 enqueue(state, hook, inst, side, **choices)
-        for zone, cards, ids in (("hand", p.hand, LISTEN_IN_HAND), ("deck", p.deck, LISTEN_IN_DECK)):
+        # the deck only when a card in it listens (reading it first without copying shared cards: state.deck)
+        listening = bool(LISTEN_IN_DECK) and any(c.defn.card_id in LISTEN_IN_DECK for c in p.deck_view())
+        for zone, cards, ids in (("hand", p.hand, LISTEN_IN_HAND),
+                                 ("deck", p.deck if listening else (), LISTEN_IN_DECK)):
             if ids:
                 for inst in [c for c in cards if c.defn.card_id in ids and c is not exclude]:
                     enqueue(state, hook, inst, side, zone=zone, **choices)
@@ -289,7 +292,9 @@ def grant(inst: CardInstance, script: CardScript, until_turn: int | None = None)
 def expire(state: GameState, turn: int) -> None:
     """Undo grants and cost changes lasting until the end of `turn`."""
     for p in state.players:
-        for inst in p.field + p.hand + p.leader_area + p.deck:
+        # a card in the deck changes here only if it has grants or cost changes (else its deck is left shared)
+        touched = any(c.grants or c.cost_mods for c in p.deck_view())
+        for inst in p.field + p.hand + p.leader_area + (p.deck if touched else []):
             if inst.grants and any(g.until_turn is not None and g.until_turn <= turn for g in inst.grants):
                 kept = [g for g in inst.grants if g.until_turn is None or g.until_turn > turn]
                 still = Keyword((inst.counters or {}).get(PERMANENT_KEYWORDS, 0))
@@ -625,11 +630,11 @@ def draw(state: GameState, player: int, n: int = 1) -> list[CardInstance]:
     p = state.players[player]
     drawn = []
     for _ in range(n):
-        if not p.deck:
+        if not p.deck_view():
             if state.winner is None:
                 state.winner = 1 - player
             return drawn
-        card = _to_hand(state, player, p.deck.pop())
+        card = _to_hand(state, player, p.draw_top())
         if card:
             drawn.append(card)
     return drawn
