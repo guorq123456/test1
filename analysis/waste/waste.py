@@ -255,6 +255,23 @@ def read(args):
         cs = [mean(per[(k, s)]["conserve"] for k in sel) for s in ("level-strong", top)]
         print(f"| {c} | {len(sel)} | " + " | ".join(f"{v:+.2f}" for v in rs)
               + f" | {lo} / {hi} / {len(sel) - lo - hi} | {cs[0]:.0%} → {cs[1]:.0%} |")
+    import random
+    rng = random.Random(0)
+    print("\n**分资源：Salem − 该规格（种子平均），以及 3000 − strong 的配对差和区间（按开头重抽 2000 次，种子 0）**\n")
+    print("| 类 | 资源 | " + " | ".join(s.split("+")[0] for s in specs) + " | 3000 − strong [95%] |\n|---|---|"
+          + "---|" * len(specs) + "---|")
+    for c in ("conserve", "mixed", "全部"):
+        sel = [k for k in ks if (c == "全部" or m3[k]["class"] == c) and all((k, s) in per for s in specs)]
+        if not sel:
+            continue
+        for f, w in CONSERVE + (("R", None),):
+            def val(k, s):
+                return per[(k, s)]["R"] if f == "R" else per[(k, s)]["d"][f]
+            vals = [mean(val(k, s) for k in sel) for s in specs]
+            diffs = [val(k, "level-strong") - val(k, top) for k in sel]      # > 0: 3000 closer to Salem (kept more)
+            boots = sorted(mean(rng.choice(diffs) for _ in diffs) for _ in range(2000))
+            print(f"| {c} | {f} | " + " | ".join(f"{v:+.2f}" for v in vals)
+                  + f" | {-mean(diffs):+.2f} [{-boots[1949]:+.2f}, {-boots[50]:+.2f}] |")
     print("\n**多花的是什么**（每回合平均次数；Salem 的线一列）\n")
     print("| 事件 | Salem | " + " | ".join(specs) + " |\n|---|---|" + "---|" * len(specs))
     for t in TAGS:
