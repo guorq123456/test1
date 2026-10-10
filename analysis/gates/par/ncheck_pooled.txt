@@ -1,0 +1,2 @@
+/home/user/test1/analysis/gates/par/ncheck.jsonl: 20 pairs, seeds 67499000..67499019, 50.0% ± 7.1% (42.9%..57.1%), CR +0 (-68..+68; steady-state +0); ms per searched decision A 104.63 / B 85.14 = 1.229
+pooled pair by pair (20 pairs, stratified bootstrap 4000): 50.0% (42.5%..57.5%), CR +0 (-71..+71; steady-state +0)
