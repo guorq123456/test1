@@ -90,3 +90,23 @@ the position it leads to). **Cut:** the share of legal moves removed.
     pooled, passing) leans Salem's way, but does not settle it.
 - **A next step, not done:** a position that separates the two habits directly. A wide discard decision where the
   strongest tier discards a big card and Salem's rule would keep it, played out both ways on many seeds.
+
+## Which discard habit is right? (J84; `habit.py`; set up before the run)
+
+The architecture thread 18:45Z.
+- **Positions:** the 45 wide decisions above where the strongest tier chose a discard and xprune=3:3:cost cuts it.
+- **Branches:**
+  - (a) the strongest tier's move;
+  - (b) mcts:1043+plan+learned+phased+xprune=3:3:cost re-choosing on the same position (the collection's seed).
+  - (a) = (b) by position is left out.
+- **Play-out:**
+  - K = 32 worlds per position, shared by both branches: seed 68600000 + 1000 j + k (bank 68600000, the next free in
+    analysis/seed-banks.md as of 18:46Z).
+  - Each world draws the hidden cards from the mover's view (core.view.determinize, as opsgap's direction_rollout).
+  - Then the branch's move is applied, and both sides play on with level-strong to the end.
+- **Report:**
+  - mean (b) − (a) over positions, 95% interval from 2000 position resamples (seed 0);
+  - the same in two groups fixed here: "big" (the strongest tier's discard includes a card of cost ≥ 7) and the
+    others;
+  - the 3 positions with the largest |difference|.
+- **J84** (the architecture thread): (b) − (a) > 0 on the point estimate, 55%.
