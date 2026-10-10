@@ -59,3 +59,75 @@ machine).
   stays out of a no-change round.
 - **What is left is spread thin**: legal actions, the features' remaining sums, action keys and engine resolution.
   Each is a few percent, within the noise.
+
+## Round 2 (the architecture thread 01:40Z): lethal search, deck copy on write, the reuse measurement
+
+The same rules: golden record bit-identical, cmp_roots hash equal, the full suite, no float `sum()` swapped, no
+gate. Condition: 对手卡表已知（牌序、手牌未知）.
+
+| alternating, this container | previous round (c5413b3) | this round | original (cefd7c1) |
+|---|---|---|---|
+| iterations per second | 1920 / 2056 / 2017 (median 2017) | 2112 / 2251 / 2186 (median 2186) | 1458 |
+| ms per decision, whole agent | 149.6 / 148.4 / 142.2 (median 148.4) | 129.8 / 119.8 / 121.2 (median 121.2) | 192.7 |
+
+Overall since cefd7c1: ×1.50 iterations per second, −37% time per decision. Outside ISMCTS.choose: the previous
+round about 148 − 200/2017×1000 ≈ 49 ms, now about 121 − 91 ≈ 30 ms.
+
+1. **Lethal search.** On the 116 starts, 19 of 50 s of the whole agent's profile, mostly cloning (one clone per
+   action tried) and `hidden_info` (two RNG `getstate` per action).
+   - No early exit or pruning: the search has node budgets (200 / 1000 / 2000), so anything that changes which
+     positions are visited can change the verdict.
+   - Exact changes only:
+     - the hidden information before an action is the parent's, computed once per node;
+     - a chance sample is cloned without copying the generator it reseeds at once;
+     - the decks are reshuffled with core.view's written-out shuffle;
+     - deck copy on write (2.) helps most, since the search clones constantly.
+   - **tests/test_lethal_same.py**: tests/lethal_reference.py is a frozen copy of the search as of cefd7c1. Old and
+     new run side by side under three settings: the agent's (2000, screen 200, near 1000/4), 400 nodes unscreened,
+     and sure-only 300. They are compared on probability, line (repr), sure, nodes, completeness and screening, on
+     every main-phase decision of the golden games and on the 116 starts ($SVSIM_STEP1_DIR): all equal, in both
+     modes.
+2. **Deck cards copied on write.**
+   - `PlayerState.deck` is a property. A clone shares the deck's cards; whoever reads `deck` copies them first, so
+     an unaudited site can only cost time, never change play.
+   - `deck_view()` is for audited read-only code: features, evaluate, the lethal search's keys, uid sets in the
+     search and the planner, `moves._evolving_matters`.
+   - Exact special cases:
+     - `emit` touches the deck only when a card in it listens;
+     - `expire` touches it only when a card in it has grants or cost changes;
+     - `_invoke` returns at once when no invoker is in the deck;
+     - `draw` copies only the card it takes (`draw_top`);
+     - determinize reorders the lists without copying and copies a card that goes from the deck into the hand.
+   - Card copies per profiled run: 1.28 million to 0.28 million.
+   - **Check mode** `SVSIM_COW_CHECK=1`:
+     - every card is fingerprinted (all fields, with counters, grants and cost changes) when first shared;
+     - fingerprints are verified at every clone, before a deck is copied, on every draw from a shared deck, at the
+       end of every search iteration, and in a sweep after every ISMCTS decision and lethal search;
+     - tests/test_cow.py checks that the guard fires on a change made through the view.
+   - Results in both modes:
+     - golden identical;
+     - cmp_roots 142cc567…2b9adf;
+     - test_lethal_same green;
+     - full suite 1126 passed, 2 skipped (the skips: a pre-existing one, and the step-1 test without its data);
+     - the guard never fired.
+3. **Tree reuse, measurement only** (`reuse_share.py`, `reuse_share.log`).
+   - Every decision starts from a fresh tree: ISMCTS.reuse is off in v2s. `+plan` is the lethal planner, not a turn
+     plan, so later steps are searched like the first unless a lethal line is being played.
+   - Whole turns from the 116 starts: 308 searched decisions, 2.66 a turn.
+   - For a searched step k, the visits its chosen child already held, as a share of 200 (mean / median /
+     quartiles):
+
+| | n | mean | median | quartiles |
+|---|---|---|---|---|
+| all searched steps | 308 | 0.429 | 0.400 | 0.201 to 0.605 |
+| followed by another searched decision this turn | 199 | 0.343 | 0.280 | 0.170 to 0.490 |
+| ... the move reveals nothing (reusable, as ISMCTS._expect requires) | 146 | 0.363 | 0.290 | 0.180 to 0.535 |
+| ... the move reveals something (a draw, randomness: not reusable) | 53 | 0.285 | 0.235 | 0.155 to 0.358 |
+
+   By step, reusable ones: k = 0 mean 0.31 (n 62), k = 1 0.37 (38), k = 2 0.40 (25), k = 3 0.41 (16), k = 4 0.61
+   (5). So reuse would hand a later decision about a third of its 200 iterations on average, at 73% of the decisions
+   that follow a search. It changes play, so it isn't done here.
+
+**What's left** (the search's profile): legal actions about 3.9 s of 17 (play_form, target sets, signatures), the
+features about 2.7, engine resolution about 2.0, action keys about 1.0, sorting by rank about 0.8, card copies 0.8
+(hand and field now), the two shuffles 0.65. Each is a few percent.
