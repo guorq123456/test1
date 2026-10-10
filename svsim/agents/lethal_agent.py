@@ -49,13 +49,14 @@ class LethalAgent:
                  planner: bool = False, plan_nodes: int = 20000, trust_planner: bool = False,
                  macro: bool = False, burst: bool = False, burst_reply: int = 0, dig: bool = False,
                  tickers: bool = False, plannerfix: bool = False,
-                 eot: bool = False):
+                 eot: bool = False, discard: bool = False):
         self.base = base
         self.search = LethalSearch(max_nodes=max_nodes, screen=screen, seed=seed, near=near)
         self.planner, self.plan_nodes, self.trust_planner = planner, plan_nodes, trust_planner
         self.tickers = tickers           # the planner models allied countdown amulets (search.combo, ticker_profile)
         self.plannerfix = plannerfix     # the plain planner measures cards at the play points there, aims face first
         self.eot = eot                   # the planner counts allied followers' end-of-turn damage
+        self.discard = discard           # the planner picks the card a play discards (and its discard damage)
         self.plan: list = []
         self.plan_turn = None
         self.checked = None          # (turn, hidden info) of the last search without a lethal
@@ -258,7 +259,8 @@ class LethalAgent:
         if not self.planner:
             return [], False
         hp = state.players[1 - state.active].leader_hp
-        line, p = combo.planned_lethal(state, self.plan_nodes, tickers=self.tickers, fix=self.plannerfix, eot=self.eot)
+        line, p = combo.planned_lethal(state, self.plan_nodes, tickers=self.tickers, fix=self.plannerfix,
+                                       eot=self.eot, discard=self.discard)
         if line:
             self.planned += 1
             return line, False

@@ -78,6 +78,10 @@ class Effect:
     hit_per_hand: int = 0
     spread: str = ""          # how it lands: "target", "split" (oldest first), "all", "random"
     pierce: bool = False      # it lowers defense without dealing damage, so Barrier doesn't stop it
+    discards: int = 0         # cards it discards from hand as it is played (+discard: profile_at's discard rows)
+    needs_foe: bool = False   # (+discard) it has no play without an enemy follower to select (Spilling Red)
+    bare_hand: bool = False   # (+discard) this way of playing it (discarding nothing) only exists with an empty hand:
+                              #   with a card in hand the discard is compulsory (Sagatsumatsu's Fanfare)
 
 
 # --- profiling -------------------------------------------------------------------------
@@ -198,36 +202,52 @@ def profile(defn: CardDef, fused: bool = False) -> tuple[tuple[Effect, ...], ...
 
 
 @lru_cache(maxsize=None)
-def profile_at(defn: CardDef, fused: bool, pp: int, cap: int = 10) -> tuple[tuple[Effect, ...], ...]:
+def profile_at(defn: CardDef, fused: bool, pp: int, cap: int = 10, discard: bool = False) -> tuple[tuple[Effect, ...], ...]:
     """`profile` measured with `pp` play points (at most 10), its play points as the engine spends them: Enhance
     is forced when affordable, so a 0-cost card with Enhance (1) costs 1 and does its enhanced effect when there is
     a play point, and its plain one when there isn't (`recovered` goes below 0 for the extra paid). The ticker
     search's (_Tickers); the plain search keeps `profile`. `cap`: the maximum play points (Overflow and the like
-    read it, not the play points left)."""
-    return _profile(defn, fused, max(0, min(pp, 10)), False, min(max(cap, pp), 10))
+    read it, not the play points left). `discard` (+discard): also the plays that discard a card from hand, measured
+    with a filler card in hand (Effect.discards; the sandbox's hand is empty otherwise, so a card that must discard
+    has no play there: Spilling Red)."""
+    return _profile(defn, fused, max(0, min(pp, 10)), False, min(max(cap, pp), 10), discard)
 
 
-def _profile(defn: CardDef, fused: bool, pp_avail: int, clamp: bool, max_pp: int | None = None):
+def _profile(defn: CardDef, fused: bool, pp_avail: int, clamp: bool, max_pp: int | None = None,
+             discard: bool = False):
     measured = []
+    compulsory = False                   # (discard) with a card in hand, every play discards one
     for combo_after in COMBO_STEPS:
-        state, anchor = _sandbox(combo_after - 1, pp_avail, max_pp=max_pp)
-        card = E.add_to_hand(state, 0, defn)
-        if fused and not _fuse_copy(state, card):
-            return _profile(defn, False, pp_avail, clamp, max_pp)
         rows = {}
-        for action in legal_actions(state):
-            if not isinstance(action, PlayCard) or action.uid != card.uid:
-                continue
-            s = state.clone()
-            deck = {c.uid for c in s.players[0].deck_view()}
-            pp = s.players[0].pp
-            apply(s, action)
-            m = _measure(state, s, anchor, deck, card, action.targets)
-            m["pierce"] = m["hit"] > 0 and _pierces(state, action)
-            m["paid"] = card.cost
-            m["recovered"] = max(0, s.players[0].pp - (pp - card.cost)) if clamp else s.players[0].pp - (pp - card.cost)
-            rows[(action.modes, action.targets)] = m
+        for filler in ((False, True) if discard else (False,)):
+            state, anchor = _sandbox(combo_after - 1, pp_avail, hand=1 if filler else 0, max_pp=max_pp)
+            spare = state.players[0].hand[0].uid if filler else None
+            card = E.add_to_hand(state, 0, defn)
+            if fused and not _fuse_copy(state, card):
+                return _profile(defn, False, pp_avail, clamp, max_pp, discard)
+            if filler:
+                plays = [a for a in legal_actions(state) if isinstance(a, PlayCard) and a.uid == card.uid]
+                compulsory = bool(plays) and all(spare in a.targets for a in plays)
+            for action in legal_actions(state):
+                if not isinstance(action, PlayCard) or action.uid != card.uid:
+                    continue
+                if filler and spare not in action.targets:
+                    continue                 # the filler run adds only the plays that discard it
+                s = state.clone()
+                deck = {c.uid for c in s.players[0].deck_view()}
+                pp = s.players[0].pp
+                apply(s, action)
+                m = _measure(state, s, anchor, deck, card, action.targets)
+                m["pierce"] = m["hit"] > 0 and _pierces(state, action)
+                m["paid"] = card.cost
+                m["recovered"] = max(0, s.players[0].pp - (pp - card.cost)) if clamp else s.players[0].pp - (pp - card.cost)
+                if filler:
+                    m["discards"] = int(s.in_hand(0, spare) is None)
+                    rows[(action.modes, ("D",) + tuple(t for t in action.targets if t != spare))] = m
+                else:
+                    rows[(action.modes, action.targets)] = m
         measured.append(rows)
+    needs_foe = discard and not _plays_without_foes(defn, pp_avail, max_pp)
     out = []
     for key, first in measured[0].items():
         ms = [rows.get(key, first) for rows in measured]
@@ -235,15 +255,37 @@ def _profile(defn: CardDef, fused: bool, pp_avail: int, clamp: bool, max_pp: int
         per_combo = _slope([f[0] for f in fs]) if all(fs) else 0
         hit_per_combo = _slope([m["hit"] for m in ms])
         variants = []
+        bare = compulsory and key[1][:1] != ("D",)
         for combo_after, m, f in zip(COMBO_STEPS, ms, fs):
             variants.append(Effect(
                 m["paid"], m["recovered"], m["added"], m["bounce"], m["face"],
                 base=(f[0] - per_combo * combo_after) if f else 0, per_combo=per_combo if f else 0,
                 attacks=f[2] if f else 0, buff=m["buff"], modes=key[0], life=f[1] if f else 0,
                 reach=f[3] if f else 0, drawn=m["drawn"], hit=m["hit"] - hit_per_combo * combo_after,
-                hit_per_combo=hit_per_combo, spread=m["spread"], pierce=m["pierce"]))
+                hit_per_combo=hit_per_combo, spread=m["spread"], pierce=m["pierce"],
+                discards=m.get("discards", 0), needs_foe=needs_foe, bare_hand=bare))
         out.append(tuple(variants))
     return tuple(dict.fromkeys(out))
+
+
+def _plays_without_foes(defn: CardDef, pp: int, max_pp: int | None) -> bool:
+    """Whether the card has a legal play in the sandbox with no enemy follower (and a filler card in hand)."""
+    state, _ = _sandbox(0, pp, hand=1, max_pp=max_pp)
+    state.players[1].field.clear()
+    card = E.add_to_hand(state, 0, defn)
+    return any(isinstance(a, PlayCard) and a.uid == card.uid for a in legal_actions(state))
+
+
+@lru_cache(maxsize=None)
+def discard_face(defn: CardDef) -> int:
+    """Damage to the enemy leader when this card is discarded from hand (its "when discarded" ability), measured in
+    the sandbox (+discard; Depths of the Eld Blades: 1)."""
+    state, _ = _sandbox(0)
+    card = E.add_to_hand(state, 0, defn)
+    hp = state.players[1].leader_hp
+    E.discard(state, card)
+    resolve_queue(state)
+    return max(0, hp - state.players[1].leader_hp)
 
 
 def at_combo(variants: tuple[Effect, ...], combo_after: int) -> Effect:
@@ -435,6 +477,7 @@ class Plan:
     nodes: int = 0
     tickers: bool = False      # planned by the ticker search
     face_first: bool = False   # realize it with face_first (the ticker search's, and the fixed one's)
+    discard: bool = False      # realize it with discard (+discard: plays pick the hand card the plan discards)
 
 
 def _damage(enemies: tuple, j: int, amount: int, pierce: bool = False) -> tuple:
@@ -556,50 +599,10 @@ class _Abstract:
             new_combo = combo + 1
             for variants in self._profiles(defn, cid < 0, pp, cap):
                 e = at_combo(variants, new_combo)
-                new_pp = min(cap, pp - cost + e.recovered)
-                new_hand = self._add(rest_hand, e.added, e.drawn)
-                new_f, new_a, new_count = list(followers), list(amulets), count
-                if defn.is_follower:
-                    new_f.append((abs(cid), e.base + e.per_combo * new_combo, e.life, e.attacks, e.reach, 0))
-                    new_count += 1
-                elif defn.is_amulet:
-                    if engage_profile(defn) is not None:
-                        new_a.append(abs(cid))
-                    new_count += 1
-                step = ("play", cid, cost, e.modes)
-                bounce_targets = new_f[:-1] if defn.is_follower else new_f
-                if e.bounce and not bounce_targets and defn.is_spell:
-                    continue                 # a spell needs its target
-                hit = e.hit + e.hit_per_combo * new_combo
-                for new_enemies, hit_step in self._hits(enemies, hit, e.spread, e.pierce):
-                    if e.bounce:
-                        for j, target in enumerate(bounce_targets):
-                            if target in bounce_targets[:j]:
-                                continue
-                            f2 = new_f[:j] + new_f[j + 1:]
-                            h2 = self._returned(self._left(new_hand), target[0])
-                            yield step + (target, hit_step), (
-                                new_pp, cap, new_combo, h2, tuple(sorted(f2)), tuple(sorted(new_a)),
-                                bonus, evolve, new_count - 1, new_enemies), e.face
-                    if e.bounce and not bounce_targets and defn.is_follower and count > len(followers):
-                        # No other follower, but an amulet: the engine makes the Fanfare select it, and
-                        # it goes back to hand (Baby Carbuncle with only Godwood Staff out).
-                        for k, acid in enumerate(new_a):
-                            if acid in new_a[:k]:
-                                continue
-                            yield step + (("A", acid), hit_step), (
-                                new_pp, cap, new_combo, self._returned(new_hand, acid), tuple(sorted(new_f)),
-                                tuple(sorted(new_a[:k] + new_a[k + 1:])), bonus, evolve, new_count - 1,
-                                new_enemies), e.face
-                        if count - len(followers) > len(amulets):    # one the plan doesn't track: lost to it
-                            yield step + (("A", None), hit_step), (
-                                new_pp, cap, new_combo, new_hand, tuple(sorted(new_f)), tuple(sorted(new_a)),
-                                bonus, evolve, new_count - 1, new_enemies), e.face
-                        continue
-                    if not e.bounce or not bounce_targets:
-                        yield step + (None, hit_step), (new_pp, cap, new_combo, new_hand, tuple(sorted(new_f)),
-                                                        tuple(sorted(new_a)), bonus, evolve, new_count,
-                                                        new_enemies), e.face
+                if e.bare_hand and rest_hand:
+                    continue                 # with cards in hand it must discard one (its discarding variant)
+                for dkey, kept, dface in self._discards(rest_hand, e.discards):
+                    yield from self._play(pos, cid, cost, defn, e, new_combo, kept, dkey, dface)
         for i, cid in enumerate(amulets):
             e = engage_profile(self.defs[cid])
             if e is None or e.paid > pp or (i > 0 and amulets[i - 1] == cid):
@@ -642,6 +645,73 @@ class _Abstract:
                             yield ("evolve", f, super_, e.modes, hit_step), (
                                 min(cap, pp + e.recovered), cap, combo, h2, f2, amulets, bonus, None, count,
                                 new_enemies), e.face
+
+
+    def _discards(self, hand: tuple, n: int):
+        """(the discarded card's key or None, the hand after, its "when discarded" damage) for each way to pay a play
+        that discards `n` cards (one card at most, as measured): every distinct card in hand, a drawn one included
+        (its ability unknown: 0)."""
+        if not n:
+            yield None, hand, 0
+            return
+        for k, key in enumerate(hand):
+            if key in hand[:k]:
+                continue
+            cid = key[0]
+            yield key, hand[:k] + hand[k + 1:], (discard_face(self.defs[abs(cid)]) + self.extra
+                                                 if cid and discard_face(self.defs[abs(cid)]) > 0 else 0)
+
+    def _play(self, pos, cid, cost, defn, e, new_combo, rest_hand, dkey, dface):
+        """The moves of playing hand card (cid, cost) as measured by `e` (with `dkey` discarded, if it discards)."""
+        pp, cap, combo, hand, followers, amulets, bonus, evolve, count, enemies = pos
+        if e.needs_foe and not any(not fl & UNREACHABLE for _, _, fl in enemies):
+            return                   # nothing it could select
+        new_pp = min(cap, pp - cost + e.recovered)
+        new_hand = self._add(rest_hand, e.added, e.drawn)
+        new_f, new_a, new_count = list(followers), list(amulets), count
+        if defn.is_follower:
+            new_f.append((abs(cid), e.base + e.per_combo * new_combo, e.life, e.attacks, e.reach, 0))
+            new_count += 1
+        elif defn.is_amulet:
+            if engage_profile(defn) is not None:
+                new_a.append(abs(cid))
+            new_count += 1
+        step = ("play", cid, cost, e.modes)
+        tail = (dkey,) if e.discards else ()
+        face = e.face + dface
+        bounce_targets = new_f[:-1] if defn.is_follower else new_f
+        if e.bounce and not bounce_targets and defn.is_spell:
+            return                   # a spell needs its target
+        hit = e.hit + e.hit_per_combo * new_combo
+        for new_enemies, hit_step in self._hits(enemies, hit, e.spread, e.pierce):
+            if e.bounce:
+                for j, target in enumerate(bounce_targets):
+                    if target in bounce_targets[:j]:
+                        continue
+                    f2 = new_f[:j] + new_f[j + 1:]
+                    h2 = self._returned(self._left(new_hand), target[0])
+                    yield step + (target, hit_step) + tail, (
+                        new_pp, cap, new_combo, h2, tuple(sorted(f2)), tuple(sorted(new_a)),
+                        bonus, evolve, new_count - 1, new_enemies), face
+            if e.bounce and not bounce_targets and defn.is_follower and count > len(followers):
+                # No other follower, but an amulet: the engine makes the Fanfare select it, and
+                # it goes back to hand (Baby Carbuncle with only Godwood Staff out).
+                for k, acid in enumerate(new_a):
+                    if acid in new_a[:k]:
+                        continue
+                    yield step + (("A", acid), hit_step) + tail, (
+                        new_pp, cap, new_combo, self._returned(new_hand, acid), tuple(sorted(new_f)),
+                        tuple(sorted(new_a[:k] + new_a[k + 1:])), bonus, evolve, new_count - 1,
+                        new_enemies), face
+                if count - len(followers) > len(amulets):    # one the plan doesn't track: lost to it
+                    yield step + (("A", None), hit_step) + tail, (
+                        new_pp, cap, new_combo, new_hand, tuple(sorted(new_f)), tuple(sorted(new_a)),
+                        bonus, evolve, new_count - 1, new_enemies), face
+                continue
+            if not e.bounce or not bounce_targets:
+                yield step + (None, hit_step) + tail, (new_pp, cap, new_combo, new_hand, tuple(sorted(new_f)),
+                                                tuple(sorted(new_a)), bonus, evolve, new_count,
+                                                new_enemies), face
 
     def _profiles(self, defn: CardDef, fused: bool, pp: int, cap: int):
         """The ways of playing a card (profile); the ticker and fixed searches measure them at the play points they
@@ -890,6 +960,27 @@ class _Tickers(_Abstract):
             yield step, nxt[:8] + (count,) + nxt[9:] + (tuple(sorted(t)),), gained
 
 
+class _Discard:
+    """Mixed into a search (+discard): cards that discard a card from hand as they are played can be played (the
+    sandbox measures them with a filler in hand: profile_at's `discard`), the search picks which card goes (every
+    distinct card in hand) and counts its "when discarded" damage to the enemy leader (discard_face). The step
+    carries the discarded card's key; realize discards that card."""
+
+    def _profiles(self, defn: CardDef, fused: bool, pp: int, cap: int):
+        return profile_at(defn, fused, pp, cap, True)
+
+
+_DISCARD_CLASSES: dict = {}
+
+
+def _with_discard(cls):
+    """`cls` with the discard choice (_Discard first in its bases)."""
+    hit = _DISCARD_CLASSES.get(cls)
+    if hit is None:
+        hit = _DISCARD_CLASSES[cls] = type(f"_Discard{cls.__name__}", (_Discard, cls), {})
+    return hit
+
+
 _EOT_CLASSES: dict = {}
 
 
@@ -919,42 +1010,47 @@ def dig(state: GameState, keep: set, max_nodes: int = 2000) -> Plan:
 
 
 def plan(state: GameState, max_nodes: int = 200000, tickers: bool = False, fix: bool = False,
-         eot: bool = False) -> Plan:
+         eot: bool = False, discard: bool = False) -> Plan:
     """The most damage the hand and board can deal this turn by the resource model,
     with the plan that deals it (stopping once it reaches the enemy leader's defense).
     With `tickers`, allied countdown amulets that hit the enemy leader (ticker_profile) are modelled too, when
     there are any on the field; otherwise the search is the plain one. With `fix` (+plannerfix), the plain search
     measures cards at the play points it has (profile_at) and its plan is realized face first, as the ticker search
-    does. With `eot` (+eot), ending the turn counts the allied followers' end-of-turn damage to the enemy leader."""
+    does. With `eot` (+eot), ending the turn counts the allied followers' end-of-turn damage to the enemy leader.
+    With `discard` (+discard, on the fixed measurement), cards that discard from hand are planned with the card
+    they discard (_Discard)."""
     ticking = tickers_of(state) if tickers else ()
     if ticking:
-        search = _search_for(state, state.active, max_nodes, _with_eot(_Tickers) if eot else _Tickers)
+        cls = _with_discard(_Tickers) if discard else _Tickers
+        search = _search_for(state, state.active, max_nodes, _with_eot(cls) if eot else cls)
         dmg, steps = search.best(_abstract_position(state) + (ticking,))
-        return Plan(dmg, steps, search.nodes, tickers=True, face_first=True)
-    cls = _Fixed if fix else None
+        return Plan(dmg, steps, search.nodes, tickers=True, face_first=True, discard=discard)
+    cls = _Fixed if fix or discard else None
+    if discard:
+        cls = _with_discard(cls)
     if eot:
         cls = _with_eot(cls or _Abstract)
     search = _search_for(state, state.active, max_nodes, cls)
     dmg, steps = search.best(_abstract_position(state))
-    return Plan(dmg, steps, search.nodes, face_first=fix)
+    return Plan(dmg, steps, search.nodes, face_first=fix or discard, discard=discard)
 
 
 def planned_lethal(state: GameState, max_nodes: int = 20000, tickers: bool = False, fix: bool = False,
-                   eot: bool = False) -> tuple:
+                   eot: bool = False, discard: bool = False) -> tuple:
     """(the planner's lethal line, realized and checked in the engine, or None; the plan searched first). A ticker
     plan that doesn't realize or check falls back to the search without tickers (the countdown model can be wrong
     where the plain one is right: pirate-t g14 turn 19, analysis/speed/LETHAL.md); without tickers on the field
     this is one plan, as before."""
     hp = state.players[1 - state.active].leader_hp
-    first = p = plan(state, max_nodes, tickers=tickers, fix=fix, eot=eot)
+    first = p = plan(state, max_nodes, tickers=tickers, fix=fix, eot=eot, discard=discard)
     while True:
         if p.damage >= hp and p.steps:
-            line = realize(state, p.steps, face_first=p.face_first)
+            line = realize(state, p.steps, face_first=p.face_first, discard=p.discard)
             if line and verify(state, line):
                 return line, first
         if not p.tickers:
             return None, first
-        p = plan(state, max_nodes, fix=fix, eot=eot)
+        p = plan(state, max_nodes, fix=fix, eot=eot, discard=discard)
 
 
 def next_turn_position(state: GameState, side: int, board: bool = True, pp: int | None = None) -> tuple:
@@ -1075,12 +1171,14 @@ def listed(state: GameState, action, actions: list):
     return action if _legal(state, action) else None
 
 
-def realize(state: GameState, steps: list, face_first: bool = False) -> list | None:
+def realize(state: GameState, steps: list, face_first: bool = False, discard: bool = False) -> list | None:
     """Turn abstract steps into real actions, playing them on a copy; None if a
     step has no matching legal action. Cards drawn on the way are never used:
     the plan doesn't know them. With `face_first` (a ticker plan's), a play that hits no enemy follower in the
     plan takes the enemy leader as its target when it can (the plan counted that way's damage), and allied
-    followers are matched on the attacks they have left too (_followers_like's `exact`)."""
+    followers are matched on the attacks they have left too (_followers_like's `exact`). With `discard` (+discard),
+    a play step that names a discarded card (its key, last) discards a card of that key, a drawn one for UNKNOWN;
+    one that names none discards nothing when it can."""
     s, me, actions = state.clone(), state.active, []
     unknown = {c.uid for p in s.players for c in p.deck_view()}
     for step in steps:
@@ -1103,7 +1201,13 @@ def realize(state: GameState, steps: list, face_first: bool = False) -> list | N
         elif kind == "end":                      # the plan ends the turn for its end-of-turn damage (+eot)
             chosen = next((a for a in legal if isinstance(a, EndTurn)), None)
         elif kind == "play":
-            _, cid, cost, modes, bounce, hit = step
+            _, cid, cost, modes, bounce, hit = step[:6]
+            dkey = step[6] if len(step) > 6 else None
+            hand_uids = {c.uid for c in s.players[me].hand}
+            drop = None
+            if dkey is not None:
+                drop = {c.uid for c in s.players[me].hand
+                        if (c.uid in unknown if dkey == UNKNOWN else c.uid not in unknown and _hand_key(s, c) == dkey)}
             amulet_back = None
             if bounce and bounce[0] == "A":              # an amulet goes back (see _Abstract.moves)
                 amulet_back = {c.uid for c in s.players[me].field
@@ -1123,9 +1227,16 @@ def realize(state: GameState, steps: list, face_first: bool = False) -> list | N
                 if _hand_key(s, card) != (cid, cost) or _signature(card) not in known:
                     continue
                 a = PlayCard(known[_signature(card)], listed.targets, listed.modes)
+                if discard and a.uid in a.targets:           # the known copy is the card it discards: keep the listed
+                    a = listed
                 rank = (min((_rank(allies, t) for t in a.targets), default=len(allies)) if bounce else 0,
                         min((_rank(foes, t) for t in a.targets), default=len(foes)) if hit else 0,
                         0 if not face_first or hit or leader_uid(1 - me) in a.targets else 1)
+                if discard:
+                    gone = [t for t in a.targets if t in hand_uids and t != a.uid]
+                    if drop is not None and not any(t in drop for t in gone):
+                        continue
+                    rank = rank + (len(gone) if drop is None else 0,)
                 if (bounce and rank[0] >= len(allies)) or (hit and rank[1] >= len(foes)):
                     continue
                 if amulet_back is not None and not any(t in amulet_back for t in a.targets):
