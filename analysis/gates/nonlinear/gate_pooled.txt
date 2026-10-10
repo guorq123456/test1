@@ -1,0 +1,2 @@
+/home/user/test1/analysis/gates/nonlinear/gate.jsonl: 300 pairs, seeds 67800000..67800299, 53.5% ± 3.4% (50.1%..56.9%), CR +33 (+1..+65; steady-state +28); ms per searched decision A 85.07 / B 83.57 = 1.018
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 53.5% (50.2%..56.8%), CR +33 (+2..+65; steady-state +28)
