@@ -81,9 +81,11 @@ the position it leads to). **Cut:** the share of legal moves removed.
   | the strongest tier (this data) | 159 | 36% | 21% | 0.38 |
   | Salem (his Ramp-mirror games, analysis/xprune) | 94 | 45% | 5% | 0.23 |
 
-  - Both discard Vorlalai and its Depths of the Eld Blades most.
-  - Then the strongest tier discards Erntz (15) and Burnite (12); Salem discards Roar of Prominence (13) and
-    Dragonewt Promoter (7).
+  - Both discard 波菈莱 (Vorlalai) and 天刀深渊 (Depths of the Eld Blades, card id 90044330) most. 天刀深渊 is the
+    token 波菈莱's evolve adds to hand, and it also triggers when discarded.
+  - Then the strongest tier discards 正义 (Erntz, 15) and 班德 (Burnite, 12); Salem discards 日珥咆哮 (Roar of
+    Prominence, 13) and 宣扬的龙人 (Dragonewt Promoter, 7).
+  - Common names as in analysis/card-glossary.md.
   - Which is right is the open question (the architecture thread 17:40Z). The +xprune confirmation gate (52.4%
     pooled, passing) leans Salem's way, but does not settle it.
 - **A next step, not done:** a position that separates the two habits directly. A wide discard decision where the
