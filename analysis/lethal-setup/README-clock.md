@@ -94,3 +94,13 @@
   - 留出 ΔT 同号率 73.30%，比现装高 0.23 个百分点（−2.24～+2.32）；ΔG_end 同号率 63.72%；
   - 算力 1.004 倍；题库 1 / 15。
 - J55 的门开不开，等架构线程定。
+
+## 架构线程 12:03Z：照记和加报（在排序集打分和门的任何对局之前）
+
+- **候选细节**：flag `kclock`，7 列，默认关闭。329 / 455 上的差距比现装小，但几乎都来自 cand-tl 那套拟合；时钟列只贡献 logit −0.005 / +0.004。
+- **门照开**：J54 不是开门条件；题 2、题 3 仍排对，留出 ΔT 同号率 73.30% 对 73.08%，都过了。排在 `+par=4` 的门之后，设计照上面。
+- **排序集 J56**：`+par=4` 的门跑完后，`ranking.py score … --spec mcts:200+plan+learned+phased=cand-kc-ramp-ramp --name clock`，再 `read --vs clock`。
+- **加报（只作描述，不进判定）**：时钟列系数很小，这个候选基本就是 cand-tl 再加一点点，所以这道门也是 cand-tl 那套配方的第二次独立读数。
+  - cand-tl 的第 1 步门：`analysis/gates/step1/ramp_ramp.jsonl`，52.8%（49.4%～56.2%），种子 66000000 起。
+  - 两门合并：`pooled.py analysis/gates/step1/ramp_ramp.jsonl analysis/gates/clock/gate.jsonl`，按门分层，逐对重抽 4000 次。
+  - 照记：两门的 B 都是 `level-strong`，A 的 N 各按各的复核定；两个候选的模型不同（cand-tl 对 cand-kc），合并读数只说明这套配方大致的位置。
