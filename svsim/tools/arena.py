@@ -130,6 +130,11 @@ def _prior_options(options) -> dict:
     return {"prior": MatchupPrior(), **({"c_prior": float(rest)} if rest else {})}
 
 
+# +complex's calibration (analysis/puzzles3/README.md): K so a turn's compute matches level-strong's (whole turns on
+# 300 step-1 starts 1.023, 20 gate pairs 0.993), BETA the share of the turn's first width its later decisions keep.
+COMPLEX_K, COMPLEX_BETA = 21.4, 0.4
+
+
 def _alloc_option(options) -> tuple | None:
     """+alloc=legal:K[:LO:HI]: each decision searches clip(round(K x legal moves), LO, HI) iterations (LO 50, HI
     800) instead of the spec's fixed count, the same compute on average once K is set by tools.search_cost.
@@ -137,6 +142,8 @@ def _alloc_option(options) -> tuple | None:
     what's left for the turn's later decisions (search.mcts ISMCTS._bank_budget); N set by search_cost --games.
     +alloc=self:C[:W:LO:HI]: C x N x legal moves / this game's mean so far (search.mcts ISMCTS._self_budget)."""
     chosen = [o[len("alloc="):] for o in options if o.startswith("alloc=")]
+    if not chosen and "complex" in options:        # +complex: alloc=complex at its calibration (analysis/puzzles3)
+        return ("complex", COMPLEX_K, COMPLEX_BETA, 50, 1500)
     if not chosen:
         return None
     kind, *args = chosen[0].split(":")
@@ -185,7 +192,7 @@ def _make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "lethal3", "plannerfix", "eot", "discard", "adaptive"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet="))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "lethal3", "plannerfix", "eot", "discard", "adaptive", "abs", "complex"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet="))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -271,6 +278,7 @@ def _make_agent(spec: str, seed: int):
                           average=next((int(o[3:]) for o in options if o.startswith("avg")), 1),
                           reuse="reuse" in options, alloc=_alloc_option(options), infer=_infer_option(options),
                           oracle="oracle" in options,          # an experiment only: sees the opponent's hand
+                          **({"center": False, "normalize": True} if "abs" in options else {}),   # +abs
                           **_prior_options(options))
         cross = [o for o in options if o.startswith("cross")]
         if cross:                                  # keep a card / PP / evolution for later (agents.crossturn_agent)

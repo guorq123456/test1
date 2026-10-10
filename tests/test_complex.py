@@ -12,6 +12,7 @@ def test_the_option_parses_and_is_off_by_default():
     with pytest.raises(ValueError):
         _alloc_option(["alloc=complex:20"])
     assert _search(make_agent("level-strong", 0)).alloc is None
+    assert _search(make_agent("level-strong+complex", 0)).alloc == ("complex", 21.4, 0.4, 50, 1500)
 
 
 def test_a_wide_turn_keeps_its_budget_on_its_narrower_decisions():

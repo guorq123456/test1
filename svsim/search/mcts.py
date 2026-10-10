@@ -156,8 +156,12 @@ class ISMCTS:
                  reserve: bool = False, veto=None, reply_after: int = 0, reply_top: int = 0,
                  reply_budget: int = 0, average: int = 1, prior=None, c_prior: float = 0.3,
                  reuse: bool = False, min_new: int = 20, alloc: tuple | None = None, infer: tuple | None = None,
-                 oracle: bool = False):
+                 oracle: bool = False, normalize: bool = False):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
+        self.normalize = normalize     # (+abs) selection on Q min-max normalized over this search's tree (MuZero):
+                                       # with absolute values (center=False) a lost or won position's values sit
+                                       # near 0 or 1, and the normalization keeps the selection's resolution
+        self._qmin = self._qmax = None
         self.alloc = alloc             # ("legal", K, LO, HI): clip(K x legal moves, LO, HI) per decision instead;
                                        # ("bank", CHUNK, STOP, CAP, HI): see _bank_budget
         self._bank, self._bank_turn = 0, None
@@ -254,6 +258,8 @@ class ISMCTS:
         if banked:
             iterations = self._bank_budget(state, me)
         full = iterations
+        if self.normalize:
+            self._qmin = self._qmax = None          # each search normalizes over its own tree
         if root is None:
             root = Node()
             self.center = 0.0
@@ -394,10 +400,13 @@ class ISMCTS:
                 self._step(s, options[fresh])
                 path.append(child)
                 break
-            best, best_ucb = None, -1.0
+            best, best_ucb = None, -math.inf
             for k in options:
                 child = node.children[k]
-                ucb = self.estimate(child) + self.c * math.sqrt(math.log(child.avail) / child.visits)
+                q = self.estimate(child)
+                if self.normalize and self._qmax is not None and self._qmax - self._qmin > 1e-9:
+                    q = (q - self._qmin) / (self._qmax - self._qmin)
+                ucb = q + self.c * math.sqrt(math.log(child.avail) / child.visits)
                 if prior is not None:
                     ucb += self.c_prior * prior.get(k, 0.0) * math.sqrt(node.visits + 1) / (1 + child.visits)
                 if ucb > best_ucb:
@@ -414,6 +423,9 @@ class ISMCTS:
                 apply(s, self.opponent.act(s, legal_actions(s)))
             me_next = not s.over
         v = self.value(s, me, me_next)
+        if self.normalize:
+            self._qmin = v if self._qmin is None else min(self._qmin, v)
+            self._qmax = v if self._qmax is None else max(self._qmax, v)
         if self.backup == "mean":
             for n in path:
                 n.visits += 1

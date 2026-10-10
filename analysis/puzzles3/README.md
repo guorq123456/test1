@@ -58,3 +58,29 @@
   - level-strong: 0 / 6 solved.
   - mcts:600+plan+learned+phased: 5 / 6 (puzzle 2 fails on seed 3).
   - Puzzle 1: every spec plays Erntz and ends.
+
+## +complex: compute moved to complex turns (the architecture thread 08:58Z; not in any level)
+
+- **(a) Merging exactly equivalent moves: nothing to merge.** The search keys a hand card by (card id, cost), so the
+  copies of one card already share a child. Puzzle 2's 56 legal moves are 56 children with 9 different cards in
+  hand, and puzzle 3's Lumiore pairs are combinations, not orders.
+- **(b) Iterations by complexity.** `alloc=complex:K:BETA[:LO:HI]` (search.mcts `_complex_budget`); `+complex` is
+  K 21.4, BETA 0.4, LO 50, HI 1500.
+  - Formula: clip(K × max(n, BETA × n0)), where n is this decision's legal moves and n0 those at the turn's first
+    searched decision.
+  - A wide turn keeps a share of its budget on its later, narrower decisions. Puzzle 2 loses at its second decision.
+  - Per-turn allocation alone (K × n0, any power) gives puzzle 3 only about 290 iterations: complex turns also have
+    more decisions.
+- **Calibration.** On 200 step-1 games, the iterations the formula gives equal level-strong's at K 28.25. Each
+  iteration costs more in complex positions, so K was set by milliseconds.
+  - Whole turns on 300 step-1 starts (turn_cost.py), A ÷ level-strong:
+    - K 24.5: 1.156
+    - K 22.9: 1.076
+    - **K 21.4: 1.023** (iterations 0.817)
+  - **20 gate pairs at K 21.4** (seeds 68930000–019, private, not a bank's): total ms **0.993**, per searched
+    decision **1.007**.
+- **Puzzles 2 and 3 (seeds 1–3):**
+  - +complex at K 28.25 / 24.5 / 22.9 / **21.4**: 6/6, 5/6, 6/6, **6/6**
+  - level-strong: 0/6
+  - mcts:600: 5/6
+- **Default unchanged:** golden identical.
