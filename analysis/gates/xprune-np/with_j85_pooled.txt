@@ -1,0 +1,5 @@
+/home/user/test1/analysis/gates/xprune-np/gate_nemesis-t_vs_pirate-t.jsonl: 100 pairs, seeds 68800000..68800099, 33.5% ± 6.8% (26.7%..40.3%), CR -162 (-239..-92; steady-state -132); ms per searched decision A 85.63 / B 90.18 = 0.950
+/home/user/test1/analysis/gates/xprune-np/gate_pirate-t_vs_nemesis-t.jsonl: 100 pairs, seeds 68801000..68801099, 67.5% ± 6.4% (61.1%..73.9%), CR +172 (+106..+246; steady-state +140); ms per searched decision A 92.07 / B 85.86 = 1.072
+/home/user/test1/analysis/gates/xprune-cross/gate_nemesis-t_vs_pirate-t.jsonl: 25 pairs, seeds 68706000..68706024, 36.0% ± 15.5% (20.5%..51.5%), CR -136 (-320..+14; steady-state -112); ms per searched decision A 86.53 / B 83.90 = 1.031
+/home/user/test1/analysis/gates/xprune-cross/gate_pirate-t_vs_nemesis-t.jsonl: 25 pairs, seeds 68707000..68707024, 42.0% ± 14.6% (27.4%..56.6%), CR -76 (-230..+63; steady-state -64); ms per searched decision A 86.28 / B 87.82 = 0.983
+pooled pair by pair (250 pairs, stratified bootstrap 4000): 48.2% (43.8%..52.6%), CR -17 (-59..+25; steady-state -14)
