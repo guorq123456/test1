@@ -1036,20 +1036,23 @@ def plan(state: GameState, max_nodes: int = 200000, tickers: bool = False, fix: 
 
 
 def planned_lethal(state: GameState, max_nodes: int = 20000, tickers: bool = False, fix: bool = False,
-                   eot: bool = False, discard: bool = False) -> tuple:
+                   eot: bool = False, discard: bool = False, adaptive: bool = False, want_plan: bool = False) -> tuple:
     """(the planner's lethal line, realized and checked in the engine, or None; the plan searched first). A ticker
     plan that doesn't realize or check falls back to the search without tickers (the countdown model can be wrong
     where the plain one is right: pirate-t g14 turn 19, analysis/speed/LETHAL.md); without tickers on the field
-    this is one plan, as before."""
+    this is one plan, as before. With `adaptive` (+adaptive), a line that fails verify only because a random
+    outcome breaks its fixed targets is kept when the plan passes verify_steps. `want_plan`: also return the plan the
+    line realizes (None without a line)."""
     hp = state.players[1 - state.active].leader_hp
     first = p = plan(state, max_nodes, tickers=tickers, fix=fix, eot=eot, discard=discard)
     while True:
         if p.damage >= hp and p.steps:
             line = realize(state, p.steps, face_first=p.face_first, discard=p.discard)
-            if line and verify(state, line):
-                return line, first
+            if line and (verify(state, line) or adaptive and verify_steps(state, p.steps, line, p.face_first,
+                                                                          p.discard)):
+                return (line, first, p) if want_plan else (line, first)
         if not p.tickers:
-            return None, first
+            return (None, first, None) if want_plan else (None, first)
         p = plan(state, max_nodes, fix=fix, eot=eot, discard=discard)
 
 
@@ -1313,6 +1316,40 @@ def verify(state: GameState, line: list, samples: int = 16, seed: int = 0) -> bo
         for p in t.players:
             t.rng.shuffle(p.deck)
         if not wins(t):
+            return False
+    return True
+
+
+def verify_steps(state: GameState, steps: list, line: list, face_first: bool = False, discard: bool = False,
+                 samples: int = 16, seed: int = 0) -> bool:
+    """Plan-level check (+adaptive): the line wins on the real position, and on each of verify's `samples` other
+    deck orders and random outcomes the plan's steps, realized again there, win too. A line whose fixed targets a
+    random effect can kill (Ramp g109: Sloth of the Crestpetal's damage to a random enemy follower) passes when the
+    plan still wins whatever the outcome; the agent then realizes the rest of the plan again as it goes."""
+    me = state.active
+    s = state.clone()
+    for a in line:
+        if s.over:
+            break
+        if not _legal(s, a):
+            return False
+        apply(s, a)
+    if s.winner != me:
+        return False
+    rng = random.Random(seed)
+    for _ in range(samples):
+        t = state.clone()
+        t.rng.seed(rng.getrandbits(64))
+        for pl in t.players:
+            t.rng.shuffle(pl.deck)
+        lt = realize(t, steps, face_first=face_first, discard=discard)
+        if not lt:
+            return False
+        for a in lt:
+            if t.over:
+                break
+            apply(t, a)
+        if t.winner != me:
             return False
     return True
 

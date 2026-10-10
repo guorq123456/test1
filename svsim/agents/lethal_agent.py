@@ -49,7 +49,7 @@ class LethalAgent:
                  planner: bool = False, plan_nodes: int = 20000, trust_planner: bool = False,
                  macro: bool = False, burst: bool = False, burst_reply: int = 0, dig: bool = False,
                  tickers: bool = False, plannerfix: bool = False,
-                 eot: bool = False, discard: bool = False):
+                 eot: bool = False, discard: bool = False, adaptive: bool = False):
         self.base = base
         self.search = LethalSearch(max_nodes=max_nodes, screen=screen, seed=seed, near=near)
         self.planner, self.plan_nodes, self.trust_planner = planner, plan_nodes, trust_planner
@@ -57,6 +57,8 @@ class LethalAgent:
         self.plannerfix = plannerfix     # the plain planner measures cards at the play points there, aims face first
         self.eot = eot                   # the planner counts allied followers' end-of-turn damage
         self.discard = discard           # the planner picks the card a play discards (and its discard damage)
+        self.adaptive = adaptive         # plan-level check, and the rest of a planner line realized again each step
+        self.plan_steps = None           # (adaptive) the planner's remaining abstract steps and realize's options
         self.plan: list = []
         self.plan_turn = None
         self.checked = None          # (turn, hidden info) of the last search without a lethal
@@ -103,6 +105,14 @@ class LethalAgent:
         return step
 
     def _act(self, state, actions):
+        if self.plan_steps is not None and self.plan_turn == state.turn:
+            steps, face_first, discard = self.plan_steps
+            line = combo.realize(state, steps, face_first=face_first, discard=discard) if steps else None
+            step = combo.listed(state, line[0], actions) if line else None
+            if step is not None:                         # the rest of the plan, realized on what happened
+                self.plan, self.plan_steps = list(line[1:]), (steps[1:], face_first, discard)
+                return step
+        self.plan_steps = None
         if self.plan and self.plan_turn == state.turn:
             step = combo.listed(state, self.plan[0], actions)
             if step is not None:
@@ -120,6 +130,7 @@ class LethalAgent:
                 self.lethals += 1
                 self.plan, self.plan_turn = list(line[1:]), state.turn
                 return step
+            self.plan_steps = None
             self.checked = stamp
         me = state.players[state.active]
         progress = stamp + (me.pp, len(me.hand), len(me.field))
@@ -259,9 +270,12 @@ class LethalAgent:
         if not self.planner:
             return [], False
         hp = state.players[1 - state.active].leader_hp
-        line, p = combo.planned_lethal(state, self.plan_nodes, tickers=self.tickers, fix=self.plannerfix,
-                                       eot=self.eot, discard=self.discard)
+        line, p, used = combo.planned_lethal(state, self.plan_nodes, tickers=self.tickers, fix=self.plannerfix,
+                                             eot=self.eot, discard=self.discard, adaptive=self.adaptive,
+                                             want_plan=True)
         if line:
             self.planned += 1
+            if self.adaptive:
+                self.plan_steps = (list(used.steps[1:]), used.face_first, used.discard)
             return line, False
         return [], self.trust_planner and p.damage < hp

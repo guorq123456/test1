@@ -182,7 +182,7 @@ def _make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "lethal3", "plannerfix", "eot", "discard"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet="))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "lethal3", "plannerfix", "eot", "discard", "adaptive"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet="))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -333,6 +333,7 @@ def _make_agent(spec: str, seed: int):
                             plannerfix="plannerfix" in options or lethal3,
                             eot="eot" in options or lethal3,            # +eot: the planner counts end-of-turn damage
                             discard="discard" in options,               # +discard: plays that discard pick the card
+                            adaptive="adaptive" in options,             # +adaptive: plan-level check, re-realized
                             **({"max_nodes": 3000, "near": (2000, 4)} if lethal2 else {}),
                             **({"screen": screen[0][0]} if screen else {}),
                             **({"near": tuple(screen[0][1:]) if len(screen[0]) == 3 else None} if screen else {}),
