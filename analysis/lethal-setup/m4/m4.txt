@@ -1,0 +1,25 @@
+条件：对手卡表已知（牌序、手牌未知）。M4：按方向打到终局
+
+- 开头 85 个（两条线、四个方向都齐的）
+- **分数偏向 Salem**（各方向胜率取最大，严格更高算 1，相等算一半）：56.5%（47.6%～64.7%）；T 偏向 Salem 54.1%
+- **配对差**（分数偏向 − T 偏向）：+0.024（-0.094～+0.135）
+- **J32**（> 54.1%，置信 55%）→ 对（看点估计）
+- 和第 0 步 G_end 胜者的一致：74.1%（两边都不打平的 54 个开头）；只用 default 方向时偏向 Salem 53.5%
+
+各方向的平均胜率（Salem 的线 / bot 的线）：
+- default：0.625 / 0.602
+- race：0.606 / 0.547
+- clear：0.599 / 0.533
+- conserve：0.492 / 0.405
+
+选中的方向（Salem 的线 / bot 的线）：default 57 / 62；race 14 / 14；clear 5 / 8；conserve 9 / 1
+
+和 M3 归类的交叉（每类：个数、分数偏向 Salem、Salem 的线选中的方向）：
+- race：3；50.0%；default 3
+- clear：2；75.0%；default 1、race 1
+- develop：6；50.0%；default 3、race 2、conserve 1
+- conserve：30；53.3%；default 19、conserve 5、race 3、clear 3
+- mixed：31；64.5%；default 24、race 5、conserve 1、clear 1
+- small：13；46.2%；default 7、race 3、conserve 2、clear 1
+
+每个全局回合的毫秒数（含对手；对手在各方向相同）：default 231；race 232；clear 211；conserve 231
