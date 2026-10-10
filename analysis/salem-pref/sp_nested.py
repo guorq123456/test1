@@ -10,7 +10,8 @@ turns; the other pairings are not fitted). What changes is the folding and the l
   marked in_top), an end identical to his (same state_key) left out; a higher score for Salem's counts 1, equal 0.5.
   Pairs of every pairing count (each turn's ends read with the Ramp-mirror models).
 - **The final model:** lambda chosen the same way by 4 folds over all games, then one fit on all Ramp-mirror turns:
-  svsim/learn/phased_models/cand-sp-ramp-ramp (replaces sp_fit.py's model).
+  svsim/learn/phased_models/cand-sp2-ramp-ramp (a new folder: sp_fit.py's cand-sp-ramp-ramp stays as it is, the
+  analysis line's gate runs on it).
 - **Out:** per outer held-out turn, every candidate's score under cand-sp (that outer fold's model), cand-kc and the
   installed Ramp-mirror ENDED model (all three are Ramp-mirror models, also on the other pairings' turns); the
   readings are the analysis line's.
@@ -156,7 +157,7 @@ def main():
     out["val_mse"] = {"cand-kc": round(vk, 6), "outer folds": {k: v["val_mse"] for k, v in out["outer"].items()}}
     # the final model
     from svsim.learn.model import LinearValue
-    dst = Path(args.out_root) / "cand-sp-ramp-ramp"
+    dst = Path(args.out_root) / "cand-sp2-ramp-ramp"
     dst.mkdir(parents=True, exist_ok=True)
     sha = lambda p: hashlib.sha256(Path(p).read_bytes()).hexdigest()   # noqa: E731
     vf = F._val_mse(w_final)
