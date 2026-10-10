@@ -25,12 +25,9 @@ def check(state, tickers, fix, eot, max_nodes, near) -> list:
     from svsim.search import combo
     from svsim.search.lethal import LethalSearch
     t = time.perf_counter()
-    hp = state.players[1 - state.active].leader_hp
-    p = combo.plan(state, 20000, tickers=tickers, fix=fix, eot=eot)
-    if p.damage >= hp and p.steps:
-        line = combo.realize(state, p.steps, face_first=p.face_first)
-        if line and combo.verify(state, line):
-            return [True, "planner", round((time.perf_counter() - t) * 1000, 2)]
+    line, _ = combo.planned_lethal(state, 20000, tickers=tickers, fix=fix, eot=eot)
+    if line:
+        return [True, "planner", round((time.perf_counter() - t) * 1000, 2)]
     r = LethalSearch(max_nodes=max_nodes, screen=200, near=near, seed=0).solve(state.clone())
     return [r.sure, "search" if r.sure else None, round((time.perf_counter() - t) * 1000, 2)]
 

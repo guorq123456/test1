@@ -258,10 +258,8 @@ class LethalAgent:
         if not self.planner:
             return [], False
         hp = state.players[1 - state.active].leader_hp
-        p = combo.plan(state, self.plan_nodes, tickers=self.tickers, fix=self.plannerfix, eot=self.eot)
-        if p.damage >= hp and p.steps:
-            line = combo.realize(state, p.steps, face_first=p.face_first)
-            if line and combo.verify(state, line):
-                self.planned += 1
-                return line, False
+        line, p = combo.planned_lethal(state, self.plan_nodes, tickers=self.tickers, fix=self.plannerfix, eot=self.eot)
+        if line:
+            self.planned += 1
+            return line, False
         return [], self.trust_planner and p.damage < hp

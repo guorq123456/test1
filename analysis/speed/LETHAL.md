@@ -170,3 +170,48 @@ loses its planner lethal under the fix, but the screened search still finds it, 
 
 Re-run of +lethal2 with the corrected measurement (data/lethal2_eval.log): pirate sample unchanged in verdicts (12/13
 recovered, 4/4 unrealized, 0 lost); added time +7.8 / +23.0 ms mean / p90 (this run shared the machine with tests).
+
+## +lethal3: the package (the architecture thread 2026-10-10 06:27Z; not in any level)
+
+**Condition:** the opponent's deck list is known (deck order and hand unknown).
+
+- **Spec:** `level-strong+lethal3` (any mcts spec + `lethal3`). It is +lethal2 (the planner's countdown amulets,
+  near-lethal 2000 nodes within 4, 3000 unscreened) with +plannerfix and +eot, behind one flag. It sets its own
+  screen, so `screen=` with it is an error.
+- **Fallback, found while measuring.** On the pirate sample one start was lost (g14 turn 19). The ticker search
+  planned 10 through the flags, and the engine can't play that line: Roughwater First Mate dies striking the Golden
+  Knight, so Severed Ties has no ally to take. Meanwhile the plain plan (Beltezore, 12) checks. +lethal2 had the
+  same loss; it went uncounted because find_lethal wasn't sure there (incomplete at 20,000 nodes).
+  - Fix: `combo.planned_lethal`. A ticker plan that doesn't realize or check falls back to the planner without
+    tickers. Without tickers on the field it is one plan, as before. LethalAgent uses it, so +tick and +lethal2 get
+    it too.
+  - Test: the position is rebuilt in tests/test_lethal3.py.
+- **Tests** (tests/test_lethal3.py):
+  - the flag sets the package;
+  - the puzzle bank on seeds 1-3: pirate-flags-lethal is solved, and pirate-flags-setup still has none played;
+  - an end-of-turn lethal (Erntz) is played by the agent and missed by the plain planner;
+  - the fallback;
+  - with step 1's data: the 20 Ramp misses replayed. +lethal3's check finds exactly the 14 classified as planner
+    measurement (9) or end of turn (5); the plain check finds none of the 20.
+
+### Offline, directly at every turn start (lethal3_eval.py; data/lethal3_eval.log, data/lethal3.jsonl.gz)
+
+Both checks run on the real position as LethalAgent runs them (planner, realize, verify, else the screened search),
+and both are timed. This is no budget model.
+
+| | Ramp 6f11111, 18,892 starts | Pirate-t sample, 1,389 starts |
+|---|---|---|
+| sure (find_lethal 20000) | 789 | 70 |
+| found: level-strong's check / +lethal3 | 755 / **904** | 60 / **76** |
+| gained, find_lethal sure / gained beyond it | 76 / 73 | 12 / 4 |
+| **lost** | **0** | **0** |
+| sure lethals still missed: now / +lethal3 | 86 / 10 | 13 / 1 |
+| unrealized in play: recovered / missed by both | **21 / 6** of 27 | **4 / 0** of 4 |
+| by the planner: now / +lethal3 | 485 / 862 | 32 / 56 |
+| ms per turn start, now: mean / p90 | 58.2 / 107.1 | 84.1 / 142.5 |
+| ms per turn start, +lethal3: mean / p90 | 63.3 / 104.6 | 91.0 / 141.6 |
+| **added ms per turn start: mean / p90** | **+5.1 / +8.1** | **+6.9 / +21.8** |
+
+The 6 unrealized Ramp lethals still missed are the unfixed classes above: 3 discard-cost spells and 3 other planner
+gaps. Timing was measured with 3 workers on 4 cores. The pirate cell's re-run (after the fallback) shared the
+machine with the resource-waste diagnostic (analysis/waste), so its milliseconds are noisier.

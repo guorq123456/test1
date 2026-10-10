@@ -939,6 +939,24 @@ def plan(state: GameState, max_nodes: int = 200000, tickers: bool = False, fix: 
     return Plan(dmg, steps, search.nodes, face_first=fix)
 
 
+def planned_lethal(state: GameState, max_nodes: int = 20000, tickers: bool = False, fix: bool = False,
+                   eot: bool = False) -> tuple:
+    """(the planner's lethal line, realized and checked in the engine, or None; the plan searched first). A ticker
+    plan that doesn't realize or check falls back to the search without tickers (the countdown model can be wrong
+    where the plain one is right: pirate-t g14 turn 19, analysis/speed/LETHAL.md); without tickers on the field
+    this is one plan, as before."""
+    hp = state.players[1 - state.active].leader_hp
+    first = p = plan(state, max_nodes, tickers=tickers, fix=fix, eot=eot)
+    while True:
+        if p.damage >= hp and p.steps:
+            line = realize(state, p.steps, face_first=p.face_first)
+            if line and verify(state, line):
+                return line, first
+        if not p.tickers:
+            return None, first
+        p = plan(state, max_nodes, fix=fix, eot=eot)
+
+
 def next_turn_position(state: GameState, side: int, board: bool = True, pp: int | None = None) -> tuple:
     """The abstract position at the start of `side`'s next turn if nothing changes
     before it: one more max play point, Combo 0, every follower ready to attack,
