@@ -131,7 +131,7 @@ def _job(job):
 
 def run(args):
     from multiprocessing import Pool
-    jobs = [(k, spec, j) for spec in SPECS for k in KS for j in range(args.seeds)]
+    jobs = [(k, spec, j) for spec in SPECS for k in args.ks for j in range(args.seeds)]
     with Pool(args.workers, initializer=_init, initargs=(args.step0, args.ana)) as pool, \
             open(args.out, "w", encoding="utf-8") as fh:
         for r in pool.imap_unordered(_job, jobs):
@@ -152,7 +152,7 @@ def read(args):
     rows = [json.loads(x) for x in open(args.read) if x.strip()]
     out = ["条件：对手卡表已知（牌序、手牌未知）。三道运营局面题：拆解\n"]
     verdicts = {}
-    for k in KS:
+    for k in args.ks:
         st = G["starts"][k]
         state, rec = TL._start_state(st)
         me = state.active
@@ -204,6 +204,7 @@ def main():
     ap.add_argument("--seeds", type=int, default=8)
     ap.add_argument("--workers", type=int, default=3)
     ap.add_argument("--read")
+    ap.add_argument("--ks", type=int, nargs="+", default=list(KS), help="step-0 starts (k) to take apart")
     args = ap.parse_args()
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
     _paths(args.ana)
