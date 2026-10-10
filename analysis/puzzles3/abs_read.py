@@ -1,7 +1,8 @@
 """+abs's pre-gate reading (the architecture thread 2026-10-10 09:01Z): how often its root choice differs from the
 installed search's, by the position's absolute win probability. At each of the first N step-1 turn starts (6f11111;
 the turn's first decision), level-strong and level-strong+abs choose with the same seed; the start's absolute win
-probability is the installed evaluation's sigma(score / 8) with the player to move (the ACT model). Buckets:
+probability is the installed evaluation's sigma(score / 8) with the player to move (the ACT model); the noise floor
+is the installed search against itself on another seed. Buckets:
 < 0.15, 0.15-0.85, > 0.85. Condition: the opponent's deck list is known (order and hand not).
 usage: abs_read.py STEP1_DIR [N] [WORKERS]"""
 import json, math, sys
@@ -35,8 +36,9 @@ def job(item):
         return None
     me, where = s.active, _locator(s, s.active)
     out = {"i": i}
-    for name, spec in (("installed", "level-strong"), ("abs", "level-strong+abs")):
-        agent = make_agent(spec, 7000 + i)
+    for name, spec, seed in (("installed", "level-strong", 7000 + i), ("abs", "level-strong+abs", 7000 + i),
+                             ("installed2", "level-strong", 90000 + i)):
+        agent = make_agent(spec, seed)
         out[name] = repr(action_key(s, agent.act(s.clone(), legal), where))
     w = _search(make_agent("level-strong", 0)).weights
     out["p"] = 1.0 / (1.0 + math.exp(-max(-60.0, min(60.0, evaluate(s, me, w, True) / 8.0))))
@@ -52,7 +54,10 @@ if __name__ == "__main__":
     for name, lo, hi in (("< 0.15", 0, 0.15), ("0.15-0.85", 0.15, 0.85), ("> 0.85", 0.85, 1.01)):
         sel = [r for r in rows if lo <= r["p"] < hi]
         diff = sum(r["installed"] != r["abs"] for r in sel)
-        out[name] = {"decisions": len(sel), "different": diff, "share": round(diff / len(sel), 4) if sel else None}
+        noise = sum(r["installed"] != r["installed2"] for r in sel)
+        out[name] = {"decisions": len(sel), "different": diff, "share": round(diff / len(sel), 4) if sel else None,
+                     "installed vs itself, another seed": round(noise / len(sel), 4) if sel else None}
     out["all"] = {"decisions": len(rows), "different": sum(r["installed"] != r["abs"] for r in rows),
-                  "share": round(sum(r["installed"] != r["abs"] for r in rows) / len(rows), 4)}
+                  "share": round(sum(r["installed"] != r["abs"] for r in rows) / len(rows), 4),
+                  "installed vs itself, another seed": round(sum(r["installed"] != r["installed2"] for r in rows) / len(rows), 4)}
     print(json.dumps(out, indent=1))
