@@ -110,3 +110,15 @@ python -m svsim.tools.puzzles --spec "level-strong+lethal3" level-strong --seeds
   - 照规矩修一次：**N_B = round(203 × 1.062) = 216**，不再复核。
   - 这 20 对的得分 55.0%（45.2%～64.8%），不进判定。
   - 原样输出在 `analysis/gates/lethal3/ncheck_ramp_ramp.jsonl`。
+- **跳费龙镜像的门**（`mcts:216+plan+learned+phased`，300 对，种子 66700000～66700299）：
+  - A **49.5%**（正态区间 47.1%～51.9%；`pooled.py` 逐对重抽 47.2%～51.8%），CR 约 −5。
+  - 门里每搜索决策毫秒比 0.972，在 0.97～1.03 之内。
+  - A 先手 63.7%、后手 35.3%；两局走法完全相同的对 14 / 300。用时 781 秒。
+  - 这一格的下沿 47.1% ≥ 46%，(NI) 的逐格那一条过。
+- **跳费龙镜像的附带计数**（`lethal2_games.py play` 重打 788 秒，`read --package lethal3` 189 秒；原样在 `analysis/gates/lethal3/companion_ramp.txt`）：
+  - 重打 600 局和门逐局比：得分不同 **0** 局。
+  - 在自己回合里赢下的局，每 100 局：A 49.5（297 局），B 50.5（303 局）。这一格几乎每局都在某一方自己的回合里结束。
+  - A 的自己回合开头 5564 个，场上有 ticker 的 0.0%（预计近 0）。
+  - 开头的检查找到斩杀：+lethal3 260 个，level-strong 的 227 个；只有 +lethal3 找到 33 个，只有 level-strong 找到 0 个。
+  - A 每个回合开头多花的毫秒：平均 +5.7，p90 +5.2（level-strong 的检查平均 43.9 ms）。p90 比平均小，是因为多花的集中在少数开头。
+  - 每局进化次数：A 3.44 / B 3.44，比值 0.999。
