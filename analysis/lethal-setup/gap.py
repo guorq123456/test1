@@ -135,8 +135,15 @@ def t2read(args):
     out.append("")
     out.append(f"- 最高档 ÷ 最低档 = {ratio:.2f}（按决策点重抽 2000 次 {bs[49]:.2f}～{bs[1949]:.2f}）")
     out.append(f"- **J50**（最高档 ≥ 2 × 最低档，置信 70%）→ {'对' if ratio >= 2 else '错'}（看点估计）")
-    out.append(f"- 照报：level-strong 这次的选择和记录里当时的走法相同 {sum(r['record'] for r in rows) / len(rows):.1%}"
-               f"（同一个智能体换了种子，作为同档自身的噪声参考）")
+    if args.step0:
+        # the record's own move (level-strong, another seed): compared in JSON form (to_dict gives tuples, the
+        # record lists, so the row's "record" field is always false and is not used)
+        acts = {r["g"]: r["actions"] for r in SP._lines(os.path.join(args.step0, "selfplay.jsonl"))}
+        same_rec = [acts[r["g"]][r["at"]] == r["strong"] for r in rows]
+        out.append(f"- 照报：level-strong 这次的选择和记录里当时的走法（同一个智能体、另一个种子）相同 "
+                   f"{sum(same_rec) / len(same_rec):.1%}，即同档换种子的不同比例 {1 - sum(same_rec) / len(same_rec):.1%}；"
+                   "分档：" + "、".join(f"第 {b + 1} 档 {1 - sum(x for x, r in zip(same_rec, rows) if _bin(r['legal'], q) == b) / len(by[b]):.1%}"
+                                     for b in range(4)))
     text = "\n".join(out)
     open(args.out, "w", encoding="utf-8").write(text + "\n")
     print(text)
@@ -276,6 +283,7 @@ def main():
     a.add_argument("rows")
     a.add_argument("--sample", required=True)
     a.add_argument("--out", required=True)
+    a.add_argument("--step0", default=None, help="stage-0 dir: also compare with the record's own move")
     a = sub.add_parser("t1run")
     a.add_argument("step0")
     a.add_argument("--out", required=True)
