@@ -236,3 +236,48 @@ machine with the resource-waste diagnostic (analysis/waste), so its milliseconds
     unrealized recovered, +5.0 / +7.5 ms.
   - Pirate: unchanged in verdicts (76 found, 0 lost, 4/4). Its milliseconds are not usable from this run: the
     machine was busy with the evaluator fit, p90 +63.6. Use the earlier +6.9 / +21.8.
+
+## +discard and +adaptive: the planner's hidden mechanics (the architecture thread 2026-10-10 08:30Z; not in any level)
+
+**Condition:** the opponent's deck list is known (deck order and hand unknown).
+
+- **g546 corrected.** It is not a cost cut. Sagatsumatsu's Fanfare discards a hand card, and Depths of the Eld Blades
+  deals 1 when discarded. So g546 and the discard-cost spells (Spilling Red) are one mechanism: choosing the discard.
+- **+discard** (search.combo; discard mode only, the plain planner unchanged):
+  - **Measuring.** Plays that discard are measured with a filler card in the sandbox (Effect.discards). Also measured:
+    - a play that can't be made without an enemy follower to select (needs_foe: Spilling Red);
+    - a discard that is compulsory once the hand isn't empty (bare_hand: Sagatsumatsu);
+    - the damage a card deals when discarded (discard_face: Depths, 1).
+  - **Searching.** The search picks which card goes; the step carries its key, and realize discards that card.
+    - Cards drawn this turn are never the planned discard: the line couldn't name them on other deck orders.
+    - Aura followers can't be selected by targeted effects (UNTARGETABLE).
+    - A discard plan that fails falls back to the planner without discards, so +discard finds everything the planner
+      found without it.
+- **+adaptive** (verify_steps): a plan-level check.
+  - The plan is realized again on each of verify's sampled outcomes and must win on each.
+  - The agent realizes the rest of the plan again at every step.
+  - This recovers g109: Sloth's random follower hit breaks a fixed target, and with +adaptive all 8 outcomes are
+    played to the win.
+- **Default unchanged:** golden identical, cmp_roots 142cc567….
+
+### Offline (discard_eval.py, adaptive_eval.py; data/discard_eval.log, adaptive_eval.log)
+
+| | Ramp 6f11111, 18,892 starts | Pirate-t sample, 1,389 starts |
+|---|---|---|
+| found: +lethal3 / +lethal3+discard / +adaptive on top | 905 / **920** / **921** | 76 / 77 / 77 |
+| +discard: gained where find_lethal is sure / gained beyond it / lost | 6 / 9 / **0** | 0 / 1 / **0** |
+| sure lethals still missed: +lethal3 / +discard | 9 / 3 | 1 / 1 |
+| unrealized recovered by +discard / by +adaptive | 4 / 1 (g109) | 0 / 0 |
+| added ms per start, +discard: mean / p90 | +3.3 / +19.5 | +8.7 / +27.6 |
+| starts with a discarding card in hand | 14,509 (77%) | 0 |
+| verified planner lines that discard (per 100 games) | 356 (35.6) | 0 |
+| lethals the mechanism added (per 100 games) | 15 (1.5) by +discard, 1 (0.1) by +adaptive | 1 by +discard (a planning fix it brings, not a discard) |
+
+- **History of the first offline run.** +discard lost 19 Ramp starts on that run. The causes:
+  - Aura targets;
+  - a drawn card as the discard;
+  - discard plans breaking under random follower hits.
+
+  All three are fixed as above, and the re-run has none lost.
+- **+adaptive's ms** in the table is the planner re-run on the starts not found yet, so it is an upper bound (4.3 ms
+  per start over all starts). The agent itself only adds verify_steps when verify fails.

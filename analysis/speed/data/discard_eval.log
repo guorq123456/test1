@@ -1,0 +1,68 @@
+{
+ "ramp mirror 6f11111": {
+  "starts": 18892,
+  "sure (find_lethal 20000)": 789,
+  "found +lethal3": 905,
+  "found +lethal3+discard": 920,
+  "gained, find_lethal sure": 6,
+  "gained beyond find_lethal": 9,
+  "lost": 0,
+  "sure missed +lethal3": 9,
+  "sure missed +lethal3+discard": 3,
+  "same verdict, other line": 32,
+  "starts with a discarding card in hand": 14509,
+  "lethals whose planner line discards": 356,
+  "unrealized": 27,
+  "unrealized recovered": 4,
+  "unrealized missed by both": 1,
+  "by the planner +lethal3 / +discard": [
+   863,
+   910
+  ],
+  "ms per start +lethal3: mean / p90": [
+   77.6,
+   148.6
+  ],
+  "ms per start +discard: mean / p90": [
+   80.9,
+   159.0
+  ],
+  "added ms per start: mean / p90": [
+   3.3,
+   19.5
+  ]
+ },
+ "pirate-t mirror (80 games)": {
+  "starts": 1389,
+  "sure (find_lethal 20000)": 70,
+  "found +lethal3": 76,
+  "found +lethal3+discard": 77,
+  "gained, find_lethal sure": 0,
+  "gained beyond find_lethal": 1,
+  "lost": 0,
+  "sure missed +lethal3": 1,
+  "sure missed +lethal3+discard": 1,
+  "same verdict, other line": 3,
+  "starts with a discarding card in hand": 0,
+  "lethals whose planner line discards": 0,
+  "unrealized": 4,
+  "unrealized recovered": 0,
+  "unrealized missed by both": 0,
+  "by the planner +lethal3 / +discard": [
+   56,
+   60
+  ],
+  "ms per start +lethal3: mean / p90": [
+   91.4,
+   144.7
+  ],
+  "ms per start +discard: mean / p90": [
+   100.1,
+   167.2
+  ],
+  "added ms per start: mean / p90": [
+   8.7,
+   27.6
+  ]
+ }
+}
