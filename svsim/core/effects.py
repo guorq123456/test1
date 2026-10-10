@@ -9,7 +9,7 @@ from __future__ import annotations
 from .carddef import CardDef
 from .enums import Keyword
 from .script import (LISTEN_IN_DECK, LISTEN_IN_HAND, CardScript, Ctx, Grant, Trigger, prop,
-                     script_for, scripts_of)
+                     _EMPTY, script_for, scripts_of)
 from .state import (BANISHED, DESTROYED, FIELD_LIMIT, HAND_LIMIT, LEADER_AREA_LIMIT, MAX_PP,
                     CardInstance, GameState, PlayerState, leader_of, leader_uid)
 
@@ -25,7 +25,16 @@ def enqueue(state: GameState, hook: str, source: CardInstance, controller: int,
             script: CardScript | None = None, zone: str | None = "play", **choices) -> None:
     """Queue `hook` on the card's scripts (its own and granted ones) that have it.
     `zone` is where the card must still be when the trigger resolves."""
-    for s in ([script] if script is not None else scripts_of(source)):
+    if script is not None:
+        scripts = (script,)
+    elif not source.grants:                # the common case: one script, mostly without this hook
+        own = _EMPTY if source.silenced else script_for(source.defn.card_id)
+        if getattr(own, hook, None) is None:
+            return
+        scripts = (own,)
+    else:
+        scripts = scripts_of(source)
+    for s in scripts:
         if getattr(s, hook, None) is None:
             continue
         if hook == "last_words" and source.no_last_words and s is script_for(source.defn.card_id):

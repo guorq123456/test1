@@ -107,23 +107,21 @@ def fanfare_suppressed(p: PlayerState) -> bool:
 def selectable(state: GameState, chooser: int, spec: TargetSpec, source: int | None = None) -> list[int]:
     """Uids a player may select for `spec`; `source` is the card using the ability."""
     me = state.players[chooser]
-    enemies = E.selectable_enemies(state, chooser)
-    enemy_cards = [c for c in state.players[1 - chooser].field if not E.unselectable(c)]
-    kind = spec.kind
+    kind = spec.kind                       # (the enemy lists only for the kinds that read them)
     if kind == Target.HAND_CARD:
         cards = [c for c in me.hand if c.uid != source]
     elif kind in (Target.ENEMY_FOLLOWER, Target.ENEMY_FOLLOWER_OR_LEADER):
-        cards = enemies
+        cards = E.selectable_enemies(state, chooser)
     elif kind == Target.ALLIED_FOLLOWER:
         cards = me.followers
     elif kind == Target.ANY_FOLLOWER:
-        cards = me.followers + enemies
+        cards = me.followers + E.selectable_enemies(state, chooser)
     elif kind == Target.ENEMY_CARD:
-        cards = enemy_cards
+        cards = [c for c in state.players[1 - chooser].field if not E.unselectable(c)]
     elif kind == Target.ALLIED_CARD:
         cards = list(me.field)
     elif kind == Target.ANY_CARD:
-        cards = list(me.field) + enemy_cards
+        cards = list(me.field) + [c for c in state.players[1 - chooser].field if not E.unselectable(c)]
     elif kind == Target.ALLIED_AMULET:
         cards = [c for c in me.field if c.defn.is_amulet]
     else:
