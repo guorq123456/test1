@@ -730,3 +730,47 @@ python -m svsim.tools.host svsim.tools.gate --a "mcts:200+plan+learned+phased+pi
   - 每回合算力相同的条件下，「在几种整回合打法里由评估器挑」和「把同样的时间花在约 5 倍的迭代上」分不出高低：点估计 −0.5 个百分点，区间 ±2.8。
   - 门只说明 A ≈ B，没说明两边各自比 `level-strong` 涨了多少。那由下面的拆分测量来量。
   - 种子库 66300000 用完。
+
+## 拆分测量：挑打法和多给迭代各值多少（预注册；架构线程 00:32Z；写在任何数据之前；只报，不装）
+
+**条件**：对手卡表已知（牌序、手牌未知）。
+
+**起因**：turnpick 门只说明 A ≈ B（49.5%），没说明两边各自比 `level-strong` 涨了多少。要知道「挑打法」和「多给迭代」各值多少；这也关系到 Salem 的陪练 bot 值不值得放慢、换强度。
+
+**两组**（原版跳费龙镜像直接对打，`--fixed --max 600`，各**定长 300 对**，**不等算力**）
+- **R1**：A = `mcts:200+plan+learned+phased+pickd8i200m0z1kstr`（turnpick，参数同门），B = `level-strong`。
+- **R2**：A = `mcts:1043+plan+learned+phased`（门里的 B），B = `level-strong`。
+- **两组用同一批种子 66400000～66400299**：发牌相同，`level-strong` 一方的随机数也相同（`tools.gate` 用对局种子和座位给 agent 定种子）。所以 R1 和 R2 能按种子逐对配对，R1 − R2 的噪声比两组独立时小。
+- svsim 用和门同一版（5683dcf）或之后。
+
+**报什么**（`split_read.py`；另用 `analysis/oracle-hand/pooled.py` 各读一遍，报门的毫秒比）
+- 每组：A 的对分和 95% 区间（正态，同 `tools.gate`）、CR（236 / logit）和稳态式、A 先手 / 后手的分数（RC 报）。
+- **R1 − R2**：按种子配对的对分差，正态区间和重抽区间（按种子重抽 4000 次，种子 0）。
+- **每回合的慢多少**（给 Salem 看「放慢换强度」）：RC 上用 `turn_cost` 量一次 turnpick、`level-strong`、`mcts:1043` 三个的整回合毫秒（60 个训练开头，单进程，种子 7）。报 turnpick ÷ `level-strong` 和 `mcts:1043` ÷ `level-strong`。门自己的毫秒比只作参考：turnpick 换了打法的回合记不全。
+- 照记，不判：如果分数在 logit 上可加，R1 − R2 应该接近门里的 −0.5 个百分点。三者不一定传递（门是 A 对 1043 次直接对打，这里两边都对 `level-strong`）。
+
+**判断**（架构线程 00:32Z 给的，写在任何数据之前）
+- **J27**：R1 中 A 的点估计 ≥ 52%，置信 65%。
+- **J28**：R2 的点估计 ≥ 52%，置信 55%。
+- **J29**：R1 和 R2 的点估计相差不超过 3 个百分点，置信 60%。
+
+**算力**：第 1 步的门（两边都约 `level-strong`）在 RC 上记下的搜索时间约 4000 进程秒。R1 一边约 4.9 倍、一边 1 倍，约 1.2 万进程秒；R2 差不多，约 1.1 万。两组合计约 2.3 万进程秒，12 进程约 35 分钟，加上开销约 45 分钟到 1 小时。`turn_cost` 约 4 分钟。
+
+**种子**：库 66400000～66499999，R1 和 R2 都用 66400000～66400299；`turn_cost` 不走种子库。下一个空位 **66500000**。
+
+**RC 的命令**（svsim 5683dcf 或之后；分析线分支 ccr-da4857cc-rkpgwr 在这份预注册的提交或之后）
+
+```
+cd <svsim checkout>
+set PYTHONPATH=.;<分析线分支>/analysis/turn-level;<分析线分支>/analysis/card-value     (Linux: export，用冒号)
+set D=<local/pairings-20261008>/analysis/turn-level/step1
+python -m svsim.tools.host turn_cost %D% --n 60 --a "mcts:200+plan+learned+phased+pickd8i200m0z1kstr" ^
+    --b level-strong "mcts:1043+plan+learned+phased" --out analysis/gates/turnpick/split_cost.jsonl
+python -m svsim.tools.host svsim.tools.gate --a "mcts:200+plan+learned+phased+pickd8i200m0z1kstr" ^
+    --b level-strong --deck ramp --opponent ramp --fixed --max 600 --seed 66400000 ^
+    --workers 12 --out analysis/gates/turnpick/r1_ramp_ramp.jsonl
+python -m svsim.tools.host svsim.tools.gate --a "mcts:1043+plan+learned+phased" ^
+    --b level-strong --deck ramp --opponent ramp --fixed --max 600 --seed 66400000 ^
+    --workers 12 --out analysis/gates/turnpick/r2_ramp_ramp.jsonl
+```
+- 推 3 个文件：`analysis/gates/turnpick/split_cost.jsonl`、`r1_ramp_ramp.jsonl`、`r2_ramp_ramp.jsonl`。`turn_cost` 打出的那几行也一起发回来。
