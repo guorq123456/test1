@@ -1,0 +1,2 @@
+/home/user/test1/analysis/gates/abs/gate.jsonl: 300 pairs, seeds 67200000..67200299, 48.0% ± 2.9% (45.1%..50.9%), CR -19 (-47..+9; steady-state -16); ms per searched decision A 81.34 / B 81.40 = 0.999
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 48.0% (45.2%..51.0%), CR -19 (-46..+9; steady-state -16)
