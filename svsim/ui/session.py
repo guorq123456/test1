@@ -42,6 +42,11 @@ DECKS = {"rhino": ("破魔虫精灵", decks.RHINO_FOREST), "ramp": ("跳费龙",
 # the same bot as before and its CR still good, until the hand models pass a gate at 115 iterations.
 LEVELS = {"fast": "greedy+plan+learned", "normal": "mcts:115+plan+learned+phased=ref-5558960+reuse+mull=default",
           "strong": "mcts:200+plan+learned+phased",
+          # 最强 (Salem, 2026-10-10 01:45Z): strong's bot with the iterations raised to 1043 and nothing else, the
+          # split measurement's arm (analysis line 552156e): 56.5% (53.5-59.5) over strong in the original Ramp
+          # mirror, about +62 CR, 300 pairs; about 4.4x strong's time per turn before the 2026-10-10 speed-up
+          # (Salem's machine: 1661 ms a turn then, 1204 ms after it). The tournament decks' CR: not calibrated yet
+          "max": "mcts:1043+plan+learned+phased",
           # the bot before 2026-10-08's improvements (f631e14, also the normal level of the build published
           # before, 5175def): its models (phased_models/orig-f631e14: the Game8 Ramp mirror's only), no mirror
           # alias, the lethal screen it had (200 iterations, no near-lethal deepening), the plain mulligan; on
