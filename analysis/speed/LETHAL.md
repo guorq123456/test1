@@ -73,3 +73,48 @@ Move order (spells first, leader-aimed ones first) at the agent's settings finds
    the countdown amulets whose Last Words hit the enemy leader, advanced one count per spell; its lines are checked
    in the engine before they are played, so a model error can't make a wrong play. It costs only when such an
    amulet is on our field (about 50 ms a planner call). This is the fix aimed at the Pirate deck's complex turns.
+
+## The packaged change: `+lethal2` (the architecture thread 04:57Z; not in any level)
+
+`+lethal2` on an mcts agent = `+tick` and a deeper screen (LethalAgent `near=(2000, 4)`, `max_nodes=3000`).
+
+**`+tick`**: the resource-flow planner models allied countdown amulets that hit the enemy leader (search/combo.py,
+"countdown amulets").
+- **Tickers, measured in the sandbox like the rest of the planner** (no table per card), `ticker_profile`: how far
+  one play of a spell, a follower or an amulet advances the count, and the damage to the enemy leader when the
+  amulet is destroyed. Dread Pirate's Flag measures as spell 1, follower 0, amulet 0, pop 2. Demo Totem (a countdown
+  that doesn't hurt the leader) is no ticker.
+- **Summons, measured too** (`summons`, `evolve_summons`): Roughwater First Mate's Fanfare and Evolve summon a flag.
+  Field slots decide which plays are possible: a full field blocks a summon, and a ticker that pops frees its slot.
+- **The search** (`_Tickers`, a subclass of the plain search) works on the plain position plus the tickers.
+  - After every play, the play's kind advances the tickers; one at 0 pops (its damage counts, its slot frees).
+  - What a play or an evolution summons takes a free slot, and a summoned ticker joins in.
+  - Cards are measured at the play points actually there (`profile_at`): Enhance is forced when affordable, so a
+    0-cost card with Enhance (1) costs 1 when a play point is there. The plain `profile` measures at 10 play points
+    and so takes the Depths of the Eld Sword's enhanced 3 damage as free.
+  - `realize(face_first=True)`: a ticker plan's play that hits no enemy follower takes the enemy leader as its
+    target (a Gilded Blade aimed at the leader). The plain realize takes the first target listed.
+- **Scope.** Used only with the flag, and only when a ticker is on the mover's field. Everything else is the plain
+  planner: the golden record is identical, cmp_roots is still 142cc567…, the full suite passes. The plan is checked
+  in the engine before it is played, as always.
+- **On the puzzle bank:**
+  - pirate-flags-lethal: planned (10) and verified in about 70 ms; level-strong+tick and +lethal2 win it on seeds
+    1-3, level-strong doesn't;
+  - pirate-flags-setup: the ticker planner's most is 9, no lethal; the turn played is level-strong's.
+
+**Offline evaluation** (lethal2_eval.py; output in data/lethal2_eval.log). Pirate is measured directly: the same 80
+games replayed (all 70 sure starts matched) and both checks timed on each real position. Ramp uses the budget model:
+neither the Ramp deck's cards nor what they summon are tickers, so only the budget differs there.
+
+| | pirate-t mirror, 80 games | Ramp mirror, 6f11111 |
+|---|---|---|
+| turn starts | 1,389 (804 with a ticker on the mover's field) | 18,892 |
+| find_lethal sure | 70 | 789 |
+| missed by level-strong's check at the start | 13 | 86 |
+| not realized in play | 4 (all 4 missed at the start) | 27 (all missed at the start) |
+| **+lethal2 recovers, of the start misses** | **12 of 13** (none lost) | **17 of 86** |
+| **... of the unrealized** | **4 of 4** | **7 of 27** |
+| added ms per turn start: mean / p90 | **+5.3 / +13.3** (level-strong's check: 78.0 / 133.5) | **+12.0 / 0** (3.2% of starts pay, up to +416; p99 +416) |
+
+In the Pirate mirror the ticker planner finds 14 lethals the plain check found by search or not at all. That is why
+its added time is low: a planned lethal costs less than the search it replaces.

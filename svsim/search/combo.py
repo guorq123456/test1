@@ -192,12 +192,25 @@ def profile(defn: CardDef, fused: bool = False) -> tuple[tuple[Effect, ...], ...
     measured at Combo 1, 3 and 5 in a sandbox with 10 play points, so Combo
     thresholds and Combo scaling show up. Use `at_combo` to pick one. With
     `fused`, the card has had a card fused to it first."""
+    return _profile(defn, fused, 10, True)
+
+
+@lru_cache(maxsize=None)
+def profile_at(defn: CardDef, fused: bool, pp: int) -> tuple[tuple[Effect, ...], ...]:
+    """`profile` measured with `pp` play points (at most 10), its play points as the engine spends them: Enhance
+    is forced when affordable, so a 0-cost card with Enhance (1) costs 1 and does its enhanced effect when there is
+    a play point, and its plain one when there isn't (`recovered` goes below 0 for the extra paid). The ticker
+    search's (_Tickers); the plain search keeps `profile`."""
+    return _profile(defn, fused, max(0, min(pp, 10)), False)
+
+
+def _profile(defn: CardDef, fused: bool, pp_avail: int, clamp: bool) -> tuple[tuple[Effect, ...], ...]:
     measured = []
     for combo_after in COMBO_STEPS:
-        state, anchor = _sandbox(combo_after - 1)
+        state, anchor = _sandbox(combo_after - 1, pp_avail)
         card = E.add_to_hand(state, 0, defn)
         if fused and not _fuse_copy(state, card):
-            return profile(defn)
+            return _profile(defn, False, pp_avail, clamp)
         rows = {}
         for action in legal_actions(state):
             if not isinstance(action, PlayCard) or action.uid != card.uid:
@@ -209,7 +222,7 @@ def profile(defn: CardDef, fused: bool = False) -> tuple[tuple[Effect, ...], ...
             m = _measure(state, s, anchor, deck, card, action.targets)
             m["pierce"] = m["hit"] > 0 and _pierces(state, action)
             m["paid"] = card.cost
-            m["recovered"] = max(0, s.players[0].pp - (pp - card.cost))
+            m["recovered"] = max(0, s.players[0].pp - (pp - card.cost)) if clamp else s.players[0].pp - (pp - card.cost)
             rows[(action.modes, action.targets)] = m
         measured.append(rows)
     out = []
@@ -323,6 +336,89 @@ def fuses(card: CardDef, fodder: CardDef) -> bool:
     return bool(script.fuse_filter(E.add_to_hand(state, 0, fodder)))
 
 
+# --- countdown amulets (opt-in: plan(..., tickers=True)) -------------------------------------
+# An allied countdown amulet whose Last Words hit the enemy leader, and whose count our own plays advance (Dread
+# Pirate's Flag: each spell played advances it by 1; at 0 it is destroyed and deals 2 to the enemy leader): a
+# "ticker". Measured like everything here, in the sandbox, not written per card: how far one play of a spell, a
+# follower or an amulet advances its count, and what destroying it does to the enemy leader. With it, what cards
+# summon onto the allied field (Roughwater First Mate's Fanfare summons a flag) is measured too, because field
+# slots decide which plays are possible (a full field blocks the summon; a ticker that pops frees its slot).
+
+@dataclass(frozen=True)
+class Ticker:
+    spell: int                # count advanced by playing a spell
+    follower: int             # ... a follower
+    amulet: int               # ... an amulet
+    pop: int                  # damage to the enemy leader when it is destroyed
+
+
+@lru_cache(maxsize=None)
+def ticker_profile(defn: CardDef) -> Ticker | None:
+    """The amulet as a ticker, or None if it isn't one (no countdown, its count doesn't move with our plays, or
+    its destruction doesn't hurt the enemy leader)."""
+    if not defn.is_amulet or defn.countdown is None:
+        return None
+    advance = {}
+    for kind, card in (("spell", demo.BACKFIRE), ("follower", demo.FOOTMAN), ("amulet", demo.TOTEM)):
+        state, _ = _sandbox(0)
+        inst = E.summon(state, 0, defn)
+        resolve_queue(state)
+        inst.countdown = 50
+        c = E.add_to_hand(state, 0, card)
+        play = next((a for a in legal_actions(state) if isinstance(a, PlayCard) and a.uid == c.uid), None)
+        if play is None:
+            advance[kind] = 0
+            continue
+        apply(state, play)
+        now = state.in_play(inst.uid)
+        advance[kind] = 50 - now.countdown if now is not None and now.countdown is not None else 0
+    state, _ = _sandbox(0)
+    inst = E.summon(state, 0, defn)
+    resolve_queue(state)
+    hp = state.players[1].leader_hp
+    E.destroy(state, inst, by_ability=False)
+    resolve_queue(state)
+    pop = hp - state.players[1].leader_hp
+    if pop <= 0 or not any(v > 0 for v in advance.values()):
+        return None
+    return Ticker(advance["spell"], advance["follower"], advance["amulet"], pop)
+
+
+def _summoned(before: GameState, after: GameState, exclude: set) -> tuple:
+    """(card id, countdown) of the cards that came onto the allied field, the played card and the anchor aside."""
+    old = {c.uid for c in before.players[0].field} | exclude
+    return tuple(sorted((c.defn.card_id, c.countdown if c.countdown is not None else -1)
+                        for c in after.players[0].field if c.uid not in old))
+
+
+@lru_cache(maxsize=None)
+def summons(defn: CardDef, modes: tuple = ()) -> tuple:
+    """What playing `defn` (in these modes) summons onto the allied field, besides itself."""
+    state, anchor = _sandbox(1)
+    card = E.add_to_hand(state, 0, defn)
+    for action in legal_actions(state):
+        if isinstance(action, PlayCard) and action.uid == card.uid and action.modes == modes:
+            s = state.clone()
+            apply(s, action)
+            return _summoned(state, s, {card.uid, anchor.uid})
+    return ()
+
+
+@lru_cache(maxsize=None)
+def evolve_summons(defn: CardDef, super_: bool, modes: tuple = ()) -> tuple:
+    """What evolving (super_: super-evolving) a follower of this kind summons onto the allied field."""
+    state, anchor = _sandbox(0)
+    inst = E.summon(state, 0, defn)
+    resolve_queue(state)
+    inst.entered_turn = -1
+    for action in legal_actions(state):
+        if isinstance(action, Evolve) and action.uid == inst.uid and action.super_ == super_ and action.modes == modes:
+            s = state.clone()
+            apply(s, action)
+            return _summoned(state, s, {inst.uid, anchor.uid})
+    return ()
+
+
 # --- the abstract position -------------------------------------------------------------
 
 UNKNOWN = (0, 99)            # a drawn card: takes a hand slot, never played
@@ -334,6 +430,7 @@ class Plan:
     damage: int                # most damage the abstract search found
     steps: list = field(default_factory=list)   # abstract actions, in order
     nodes: int = 0
+    tickers: bool = False      # planned by the ticker search (realize it with face_first)
 
 
 def _damage(enemies: tuple, j: int, amount: int, pierce: bool = False) -> tuple:
@@ -449,7 +546,7 @@ class _Abstract:
                 continue
             rest_hand = hand[:i] + hand[i + 1:]
             new_combo = combo + 1
-            for variants in profile(defn, cid < 0):
+            for variants in self._profiles(defn, cid < 0, pp):
                 e = at_combo(variants, new_combo)
                 new_pp = min(cap, pp - cost + e.recovered)
                 new_hand = self._add(rest_hand, e.added, e.drawn)
@@ -537,6 +634,10 @@ class _Abstract:
                             yield ("evolve", f, super_, e.modes, hit_step), (
                                 min(cap, pp + e.recovered), cap, combo, h2, f2, amulets, bonus, None, count,
                                 new_enemies), e.face
+
+    def _profiles(self, defn: CardDef, fused: bool, pp: int):
+        """The ways of playing a card (profile); the ticker search measures them at the play points it has."""
+        return profile(defn, fused)
 
     @staticmethod
     def _hits(enemies: tuple, amount: int, spread: str, pierce: bool):
@@ -628,11 +729,11 @@ def _abstract_position(state: GameState) -> tuple:
             tuple(enemies))
 
 
-def _search_for(state: GameState, side: int, max_nodes: int) -> _Abstract:
+def _search_for(state: GameState, side: int, max_nodes: int, cls=None) -> _Abstract:
     """An abstract search for `side` against the enemy leader, knowing every card
     `side` has and can generate."""
     opp = state.players[1 - side]
-    search = _Abstract(opp.leader_hp, opp.extra_damage, max_nodes)
+    search = (cls or _Abstract)(opp.leader_hp, opp.extra_damage, max_nodes)
     me = state.players[side]
     for c in me.hand + me.field + me.leader_area:
         search.defs[c.defn.card_id] = c.defn
@@ -675,6 +776,68 @@ class _Digger(_Abstract):
             yield step, nxt, nxt[3].count(UNKNOWN) - before + max(0, cost_before - self._discounted(nxt[3]))
 
 
+class _Tickers(_Abstract):
+    """The resource search with allied tickers (ticker_profile): a position is the base search's ten fields plus
+    the tickers as a sorted tuple of (count, card id). After every play its kind (spell, follower, amulet)
+    advances each ticker; one that reaches 0 pops (its damage counts, its field slot frees), and what the play
+    summons takes a slot if one is free (a summoned ticker joins in). Evolving summons too (Roughwater First Mate's
+    Evolve replicates its Fanfare). The engine still checks every plan (realize, verify)."""
+
+    def _profiles(self, defn: CardDef, fused: bool, pp: int):
+        return profile_at(defn, fused, pp)
+
+    def _defn(self, cid: int) -> CardDef:
+        d = self.defs.get(cid)
+        if d is None:
+            d = self.defs[cid] = POOL[cid]
+        return d
+
+    def _advance(self, tickers: list, kind: str) -> tuple:
+        """(tickers left, damage of those that popped, slots freed)."""
+        left, damage, freed = [], 0, 0
+        for count, cid in tickers:
+            tp = ticker_profile(self._defn(cid))
+            count -= getattr(tp, kind)
+            if count <= 0:
+                damage += tp.pop + self.extra
+                freed += 1
+            else:
+                left.append((count, cid))
+        return left, damage, freed
+
+    def _summon(self, tickers: list, count: int, summoned: tuple) -> tuple:
+        for cid, countdown in summoned:
+            if count >= FIELD_LIMIT:
+                break
+            count += 1
+            if countdown > 0 and ticker_profile(self._defn(cid)) is not None:
+                tickers.append((countdown, cid))
+        return tickers, count
+
+    def moves(self, pos):
+        base, tickers = pos[:10], pos[10]
+        for step, nxt, gained in super().moves(base):
+            kind = step[0]
+            t, count = list(tickers), nxt[8]
+            if kind == "play":
+                defn = self._defn(abs(step[1]))
+                t, count = self._summon(t, count, summons(defn, step[3]))
+                t, damage, freed = self._advance(t, "spell" if defn.is_spell else
+                                                 "follower" if defn.is_follower else "amulet")
+                gained += damage
+                count -= freed
+            elif kind == "evolve":
+                t, count = self._summon(t, count, evolve_summons(self._defn(step[1][0]), step[2], step[3]))
+            yield step, nxt[:8] + (count,) + nxt[9:] + (tuple(sorted(t)),), gained
+
+
+def tickers_of(state: GameState) -> tuple:
+    """The allied tickers on the field as (count, card id), sorted."""
+    me = state.players[state.active]
+    return tuple(sorted((c.countdown, c.defn.card_id) for c in me.field
+                        if c.defn.is_amulet and c.countdown is not None and ticker_profile(c.defn) is not None))
+
+
 def dig(state: GameState, keep: set, max_nodes: int = 2000) -> Plan:
     """The line that draws the most cards this turn by the resource model, keeping
     the cards in `keep` (card ids) in hand."""
@@ -685,9 +848,16 @@ def dig(state: GameState, keep: set, max_nodes: int = 2000) -> Plan:
     return Plan(drawn, steps, digger.nodes)
 
 
-def plan(state: GameState, max_nodes: int = 200000) -> Plan:
+def plan(state: GameState, max_nodes: int = 200000, tickers: bool = False) -> Plan:
     """The most damage the hand and board can deal this turn by the resource model,
-    with the plan that deals it (stopping once it reaches the enemy leader's defense)."""
+    with the plan that deals it (stopping once it reaches the enemy leader's defense).
+    With `tickers`, allied countdown amulets that hit the enemy leader (ticker_profile) are modelled too, when
+    there are any on the field; otherwise the search is the plain one."""
+    ticking = tickers_of(state) if tickers else ()
+    if ticking:
+        search = _search_for(state, state.active, max_nodes, _Tickers)
+        dmg, steps = search.best(_abstract_position(state) + (ticking,))
+        return Plan(dmg, steps, search.nodes, tickers=True)
     search = _search_for(state, state.active, max_nodes)
     dmg, steps = search.best(_abstract_position(state))
     return Plan(dmg, steps, search.nodes)
@@ -805,10 +975,11 @@ def listed(state: GameState, action, actions: list):
     return action if _legal(state, action) else None
 
 
-def realize(state: GameState, steps: list) -> list | None:
+def realize(state: GameState, steps: list, face_first: bool = False) -> list | None:
     """Turn abstract steps into real actions, playing them on a copy; None if a
     step has no matching legal action. Cards drawn on the way are never used:
-    the plan doesn't know them."""
+    the plan doesn't know them. With `face_first` (a ticker plan's), a play that hits no enemy follower in the
+    plan takes the enemy leader as its target when it can (the plan counted that way's damage)."""
     s, me, actions = state.clone(), state.active, []
     unknown = {c.uid for p in s.players for c in p.deck_view()}
     for step in steps:
@@ -850,7 +1021,8 @@ def realize(state: GameState, steps: list) -> list | None:
                     continue
                 a = PlayCard(known[_signature(card)], listed.targets, listed.modes)
                 rank = (min((_rank(allies, t) for t in a.targets), default=len(allies)) if bounce else 0,
-                        min((_rank(foes, t) for t in a.targets), default=len(foes)) if hit else 0)
+                        min((_rank(foes, t) for t in a.targets), default=len(foes)) if hit else 0,
+                        0 if not face_first or hit or leader_uid(1 - me) in a.targets else 1)
                 if (bounce and rank[0] >= len(allies)) or (hit and rank[1] >= len(foes)):
                     continue
                 if amulet_back is not None and not any(t in amulet_back for t in a.targets):

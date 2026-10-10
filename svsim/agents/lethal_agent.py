@@ -47,10 +47,12 @@ class LethalAgent:
     def __init__(self, base, max_nodes: int = 2000, screen: int | None = 200, seed: int = 0,
                  near: tuple[int, int] | None = NEAR,
                  planner: bool = False, plan_nodes: int = 20000, trust_planner: bool = False,
-                 macro: bool = False, burst: bool = False, burst_reply: int = 0, dig: bool = False):
+                 macro: bool = False, burst: bool = False, burst_reply: int = 0, dig: bool = False,
+                 tickers: bool = False):
         self.base = base
         self.search = LethalSearch(max_nodes=max_nodes, screen=screen, seed=seed, near=near)
         self.planner, self.plan_nodes, self.trust_planner = planner, plan_nodes, trust_planner
+        self.tickers = tickers           # the planner models allied countdown amulets (search.combo, ticker_profile)
         self.plan: list = []
         self.plan_turn = None
         self.checked = None          # (turn, hidden info) of the last search without a lethal
@@ -253,9 +255,9 @@ class LethalAgent:
         if not self.planner:
             return [], False
         hp = state.players[1 - state.active].leader_hp
-        p = combo.plan(state, self.plan_nodes)
+        p = combo.plan(state, self.plan_nodes, tickers=self.tickers)
         if p.damage >= hp and p.steps:
-            line = combo.realize(state, p.steps)
+            line = combo.realize(state, p.steps, face_first=p.tickers)
             if line and combo.verify(state, line):
                 self.planned += 1
                 return line, False
