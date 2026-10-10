@@ -9,6 +9,8 @@ visits summed, the most visited move chosen. The wall time per decision is about
   search as before); only ISMCTS.choose is spread.
 - Each decision records the trees' CPU seconds summed (`last_cpu`) and their iterations summed
   (`last_iterations`).
+- A script that uses it must keep its work under `if __name__ == "__main__":`: spawned workers import the main
+  module, and without the guard each would run the script again (its pool's workers die and are restarted forever).
 """
 from __future__ import annotations
 
@@ -73,7 +75,8 @@ def choose(search, state):
     root.visits = sum(v for v, _ in merged.values())
     search.last_root = root
     search.last_iterations = sum(it for _, it, _ in results)
-    search.last_cpu = sum(cpu for _, _, cpu in results)
+    search.last_tree_cpu = [cpu for _, _, cpu in results]
+    search.last_cpu = sum(search.last_tree_cpu)
     where = _locator(state, state.active)
     legal = {action_key(state, a, where): a for a in legal_actions(state)}
     best = max((k for k in legal if k in merged), key=lambda k: merged[k][0], default=None)

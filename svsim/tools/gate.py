@@ -369,7 +369,10 @@ def main() -> None:
                  args.phased_a, args.phased_b, args.versus)
                 for k in range(pairs) if k not in done]
         side = out[:-len(".jsonl")] if out.endswith(".jsonl") else out
-        with Pool(args.workers) as pool, open(out, "a", encoding="utf-8") as fh:
+        # one worker: the pairs are played in this process (a pool's workers are daemons, and +par's search
+        # starts its own worker processes, which a daemon can't)
+        with (Pool(args.workers) if args.workers > 1 else _InProcess()) as pool, \
+                open(out, "a", encoding="utf-8") as fh:
             for res in pool.imap_unordered(play_pair, todo):
                 games = res.pop("games", [])
                 if games:                                  # games with a cross-turn planner's measurements
@@ -404,6 +407,22 @@ def main() -> None:
         same = [d["same"] for d in done.values() if "same" in d]
         if same:
             print(f"两局着法完全一样的对：{sum(same)} / {len(same)}（{sum(same) / len(same):.0%}）", flush=True)
+
+
+
+class _InProcess:
+    """Pool's interface for --workers 1: the pairs one after another in this process."""
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def imap_unordered(self, fn, items):
+        return map(fn, items)
+
+    def terminate(self):
+        pass
 
 
 if __name__ == "__main__":
