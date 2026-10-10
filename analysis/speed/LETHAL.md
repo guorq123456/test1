@@ -215,3 +215,24 @@ and both are timed. This is no budget model.
 The 6 unrealized Ramp lethals still missed are the unfixed classes above: 3 discard-cost spells and 3 other planner
 gaps. Timing was measured with 3 workers on 4 cores. The pirate cell's re-run (after the fallback) shared the
 machine with the resource-waste diagnostic (analysis/waste), so its milliseconds are noisier.
+
+### The two remaining Ramp classes (the architecture thread 07:06Z, low priority)
+
+- **The 3 other planner gaps.**
+  - **g127, fixed.** Four identical Dragonewt Promoters. The plan's evolution went to one that had already
+    attacked, because realize matched followers by card and stats only. The fixed realize (the one +plannerfix,
+    +tick, +lethal2 and +lethal3 use) now also matches the attacks a follower has left and its reach. The plain
+    realize is unchanged. Test: tests/test_lethal3.py.
+  - **g109, not fixed.** The line is right on the real position. Sloth of the Crestpetal's damage to an enemy
+    follower is random, though, so on other random outcomes the fixed attack target is already dead and verify
+    rejects the line. Fixing it needs plan-level verification: realize again on each sample, and re-realize while
+    playing.
+  - **g546, not fixed.** The lethal needs Sagatsumatsu's fanfare to cut a hand card's cost (Depths 2 → 1). The
+    planner doesn't model effects that target hand cards.
+- **Discard-cost spells (3), not done.** Measuring with a hand in the sandbox is easy. The planner would then need a
+  discard step that chooses which card to give up, which is not cheap.
+- **+lethal3 re-run with the fixed realize** (data/lethal3_realize.log, .jsonl.gz):
+  - Ramp: 905 found (+1, g127), 77 gained where find_lethal is sure, 73 gained beyond it, 0 lost, 22/27
+    unrealized recovered, +5.0 / +7.5 ms.
+  - Pirate: unchanged in verdicts (76 found, 0 lost, 4/4). Its milliseconds are not usable from this run: the
+    machine was busy with the evaluator fit, p90 +63.6. Use the earlier +6.9 / +21.8.
