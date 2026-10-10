@@ -17,7 +17,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "analysis/puzzles3"))
 EVALS = {"installed": "level-strong",
          "cand-tl": "mcts:200+plan+learned+phased=cand-tl-ramp-ramp",
-         "cand-kc": "mcts:200+plan+learned+phased=cand-kc-ramp-ramp"}
+         "cand-kc": "mcts:200+plan+learned+phased=cand-kc-ramp-ramp",
+         "cand-nl": "mcts:200+plan+learned+phased=cand-nl-ramp-ramp"}
 KS = {329: "evaluation (check 1)", 455: "evaluation (check 1)", 518: "puzzle 2 (check 2)", 445: "puzzle 3 (check 2)"}
 
 

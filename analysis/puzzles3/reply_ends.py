@@ -13,9 +13,15 @@ distinct end of the eight mcts:1043+plan+learned+phased runs in rows_329_455.jso
 - when my turn comes (or the game is over), the installed evaluation scores it for me: sigma(evaluate(.., me,
   weights, True) / SCALE) (the model for the player to move), 1 / 0 for a won / lost game;
 - "cleared": I had a follower at my turn end and none when my turn comes.
-Means with a 95% interval (normal), and Salem − bot paired by j.
+- `pe_<name>` (every evaluator, the installed one too): the same reply scored at the opponent's turn end with the
+  turn-end (ENDED) model, from the opponent's side: 1 - sigma(evaluate(.., opponent, weights, False) / SCALE) at
+  search.evaluate.after_end_of_turn of the position where the opponent ends the turn. The candidates replace only
+  the ENDED model, so `p` (the model for the player to move, ACT) is the same for all of them.
+Means with a 95% interval (normal), and Salem − bot paired by j. `--evals name=spec ...`: score the same positions
+with these evaluators too (the opponent's play doesn't change: the greedy reply keeps the installed weights).
 
     python3 reply_ends.py STEP0_DIR ANA_DIR ROWS_329_455.jsonl [--dets 16] [--workers 4] [--out rows.jsonl]
+                          [--evals name=spec ...]
 """
 import argparse
 import json
@@ -33,10 +39,11 @@ BOT = "mcts:1043+plan+learned+phased"
 G = {}
 
 
-def _init(step0, ana, rows_path):
+def _init(step0, ana, rows_path, evals=()):
     import ops
     ops._init(step0, ana)
     G["rows"] = [json.loads(x) for x in open(rows_path) if x.strip()]
+    G["evals"] = dict(evals)
 
 
 def _ends(k):
@@ -80,30 +87,45 @@ def _job(job):
     from svsim.agents.greedy_agent import GreedyAgent
     from svsim.core.engine import _start_turn, apply, legal_actions
     from svsim.learn.model import SCALE
-    from svsim.search.evaluate import evaluate
+    from svsim.core.actions import EndTurn
+    from svsim.search.evaluate import after_end_of_turn, evaluate
     from svsim.tools.arena import make_agent
     from svsim.tools.gate import _search
     k, label, j, kind = job
     if "ends" not in G:
         G["ends"] = {kk: _ends(kk) for kk in KS}
         G["W"] = _search(make_agent("level-strong", 0)).weights
+        G["EW"] = {name: _search(make_agent(spec, 0)).weights for name, spec in G["evals"].items()}
     W = G["W"]
     _, me, ends = G["ends"][k]
     end = next(e for lab, e, _ in ends if lab == label)
     s = _deal(end, me, j)
     had = len(s.players[me].followers)
+    e2 = None                                   # the opponent's turn end (ENDED scoring from their side)
     if not s.over and s.active != me:
         _start_turn(s)
         agent = (GreedyAgent(seed=SEED + j + 1, samples=1, weights=W) if kind == "greedy"
                  else make_agent(BOT, SEED + j))
         while not s.over and s.active != me:
-            apply(s, agent.act(s, legal_actions(s)))
-    if s.over:
-        p = 1.0 if s.winner == me else 0.0 if s.winner == 1 - me else 0.5
-    else:
-        z = evaluate(s, me, W, True)
-        p = 1.0 / (1.0 + math.exp(-max(-60.0, min(60.0, z / SCALE))))
-    return {"k": k, "end": label, "j": j, "reply": kind, "p": p, "had_followers": had,
+            a = agent.act(s, legal_actions(s))
+            if isinstance(a, EndTurn):
+                e2 = after_end_of_turn(s)
+            apply(s, a)
+    def score(weights):
+        if s.over:
+            return 1.0 if s.winner == me else 0.0 if s.winner == 1 - me else 0.5
+        z = evaluate(s, me, weights, True)
+        return 1.0 / (1.0 + math.exp(-max(-60.0, min(60.0, z / SCALE))))
+    def score_ended(weights):
+        t = e2 if e2 is not None else s
+        if t.over:
+            return 1.0 if t.winner == me else 0.0 if t.winner == 1 - me else 0.5
+        z = evaluate(t, 1 - me, weights, False)
+        return 1.0 - 1.0 / (1.0 + math.exp(-max(-60.0, min(60.0, z / SCALE))))
+    p = score(W)
+    extra = {f"p_{name}": score(w) for name, w in G["EW"].items()}
+    extra.update({"pe_installed": score_ended(W)}, **{f"pe_{name}": score_ended(w) for name, w in G["EW"].items()})
+    return {"k": k, "end": label, "j": j, "reply": kind, "p": p, **extra, "had_followers": had,
             "cleared": had > 0 and len(s.players[me].followers) == 0, "over": s.over,
             "our_hp": s.players[me].leader_hp, "enemy_hp": s.players[1 - me].leader_hp}
 
@@ -124,12 +146,14 @@ def main():
     ap.add_argument("--dets", type=int, default=16)
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--out")
+    ap.add_argument("--evals", nargs="*", default=[])
     args = ap.parse_args()
-    _init(args.step0, args.ana, args.rows)
+    evals = [tuple(e.split("=", 1)) for e in args.evals]
+    _init(args.step0, args.ana, args.rows, evals)
     labels = {k: [(lab, runs) for lab, _, runs in _ends(k)[2]] for k in KS}
     jobs = [(k, lab, j, kind) for k in KS for lab, _ in labels[k] for kind in ("greedy", "mcts1043")
             for j in range(args.dets)]
-    with Pool(args.workers, initializer=_init, initargs=(args.step0, args.ana, args.rows)) as pool:
+    with Pool(args.workers, initializer=_init, initargs=(args.step0, args.ana, args.rows, evals)) as pool:
         rows = pool.map(_job, jobs, chunksize=1)
     if args.out:
         with open(args.out, "w") as fh:
@@ -140,8 +164,10 @@ def main():
     for k in KS:
         print(f"\nk {k}（1043 的 8 次运行有 {len(labels[k]) - 1} 个不同回合末："
               + "，".join(f"{lab} × {runs}" for lab, runs in labels[k][1:]) + "）")
-        for kind in ("greedy", "mcts1043"):
-            sel = [r for r in rows if r["k"] == k and r["reply"] == kind]
+        for (ev, pk), kind in [(e, kd) for e in [("installed", "p")] + [(n, f"p_{n}") for n, _ in evals]
+                               + [(f"{n} ENDED", f"pe_{n}") for n in ["installed"] + [n for n, _ in evals]]
+                               for kd in ("greedy", "mcts1043")]:
+            sel = [dict(r, p=r[pk]) for r in rows if r["k"] == k and r["reply"] == kind]
             sal = {r["j"]: r for r in sel if r["end"] == "salem"}
             ms, hs = _ci([r["p"] for r in sal.values()])
             # the bot's: each run's end weighted by its runs, paired by j
@@ -157,10 +183,10 @@ def main():
                 rr = [r for r in sel if r["end"] == lab and r["had_followers"]]
                 clr[lab] = (sum(r["cleared"] for r in rr), len(rr))
             per_end = {lab: round(sum(r["p"] for r in sel if r["end"] == lab) / args.dets, 3) for lab, _ in labels[k]}
-            print(f"  应手 {kind:8s}：Salem {ms:.3f} ± {hs:.3f}，bot {mb:.3f} ± {hb:.3f}，差 {md:+.3f} ± {hd:.3f} → "
+            print(f"  {ev:9s} 应手 {kind:8s}：Salem {ms:.3f} ± {hs:.3f}，bot {mb:.3f} ± {hb:.3f}，差 {md:+.3f} ± {hd:.3f} → "
                   f"{'Salem 在前' if md > 0 else 'bot 在前'}；清场 " + "，".join(f"{lab} {a}/{b}" for lab, (a, b) in clr.items())
                   + f"；各回合末均值 {per_end}")
-            out.setdefault(k, {})[kind] = {"salem": [round(ms, 4), round(hs, 4)], "bot": [round(mb, 4), round(hb, 4)],
+            out.setdefault(k, {}).setdefault(ev, {})[kind] = {"salem": [round(ms, 4), round(hs, 4)], "bot": [round(mb, 4), round(hb, 4)],
                                            "diff": [round(md, 4), round(hd, 4)], "cleared": clr, "per_end": per_end}
     print("\n" + json.dumps(out, ensure_ascii=False))
 
