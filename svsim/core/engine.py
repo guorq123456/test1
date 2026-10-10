@@ -143,9 +143,10 @@ def _signature(card: CardInstance) -> tuple:
             len(card.grants or ()))
 
 
-def _distinct(state: GameState, chooser: int, combos: list) -> list:
-    """Drop combinations of hand cards that are interchangeable with an earlier one."""
-    by_uid = {c.uid: _signature(c) for c in state.players[chooser].hand}
+def _distinct(state: GameState, chooser: int, combos: list, sigs: dict | None = None) -> list:
+    """Drop combinations of hand cards that are interchangeable with an earlier one. `sigs`: the chooser's hand's
+    signatures by uid, when the caller has them already."""
+    by_uid = sigs if sigs is not None else {c.uid: _signature(c) for c in state.players[chooser].hand}
     seen, distinct = set(), []
     for combo in combos:
         key = tuple(sorted(by_uid[uid] for uid in combo))
@@ -156,7 +157,7 @@ def _distinct(state: GameState, chooser: int, combos: list) -> list:
 
 
 def _target_sets(state: GameState, chooser: int, specs: tuple[TargetSpec, ...],
-                 required: bool, source: int | None = None) -> list[tuple[int, ...]]:
+                 required: bool, source: int | None = None, sigs: dict | None = None) -> list[tuple[int, ...]]:
     """Ways to choose targets for each spec, concatenated in spec order. Spells need
     every target; Fanfares, Evolves and Engages pick as many as possible, so with
     no candidates they pick none. Interchangeable hand cards count once."""
@@ -167,7 +168,7 @@ def _target_sets(state: GameState, chooser: int, specs: tuple[TargetSpec, ...],
             return []
         combos = list(combinations(candidates, min(spec.count, len(candidates))))
         if spec.kind == Target.HAND_CARD:
-            combos = _distinct(state, chooser, combos)
+            combos = _distinct(state, chooser, combos, sigs)
         groups.append(combos)
     return [tuple(chain.from_iterable(parts)) for parts in product(*groups)]
 
@@ -183,8 +184,9 @@ def _mode_sets(modes: tuple[int, int] | None, all_modes: bool) -> list[tuple[int
 
 def _play_actions(state: GameState, p: PlayerState) -> list[Action]:
     actions, seen = [], set()
+    sigs = {c.uid: _signature(c) for c in p.hand}       # each hand card's signature, once
     for card in p.hand:
-        signature = _signature(card)
+        signature = sigs[card.uid]
         if signature in seen:              # identical copies give identical actions
             continue
         seen.add(signature)
@@ -195,7 +197,7 @@ def _play_actions(state: GameState, p: PlayerState) -> list[Action]:
             continue
         script = form.script
         target_sets = _target_sets(state, p.index, script.play_targets, required=form.as_spell,
-                                   source=card.uid)
+                                   source=card.uid, sigs=sigs)
         mode_sets = _mode_sets(script.modes, script.all_modes(state, card, form.enhanced))
         actions += [PlayCard(card.uid, t, m) for t in target_sets for m in mode_sets]
     return actions

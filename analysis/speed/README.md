@@ -148,3 +148,56 @@ The golden record holds root values bit for bit, which depend on the Python vers
 `sum`) and on the C math library (`math.exp` / `math.log` are not correctly rounded alike everywhere): it was frozen
 on Linux under 3.11. On another machine compare old against new there (cmp_roots, or the golden games' own hash),
 not against this record.
+
+## Round 3 (the architecture thread 10:38Z): small exact changes
+
+Same rules as rounds 1 and 2: golden record identical, cmp_roots hash equal, no float `sum()` swapped, no gate.
+Condition: 对手卡表已知（牌序、手牌未知）.
+
+**Where an iteration's time goes now** (real time, no profiler; level-strong's search on 28 step-1 starts, 552 µs per
+iteration with the timers on):
+
+| part | µs per iteration | share |
+|---|---|---|
+| legal actions | 137.5 | 24.9% |
+| evaluation (ENDED model, features about 80 µs) | 120.3 | 21.8% |
+| applying moves | 81.9 | 14.8% |
+| determinize | 50.9 | 9.2% |
+| action keys | 34.4 | 6.2% |
+
+The big parts were already cut in rounds 1 and 2; what is left is spread thin. Three exact changes:
+
+1. **Role sums by multiset** (`learn.features._roles_sum`). Every role value is a multiple of 1/8, by
+   construction in learn.roles: face, heal, draw and body are whole numbers, ramp counts halves, and removal counts
+   eighths (FOE_LIFE = 8).
+   - Adding such numbers is exact in any order. So the sum doesn't depend on the cards' order, and it is kept by
+     the sorted card ids. A reshuffled deck, or the opponent's unseen pool in any determinization, sums the same.
+   - Each card's values are checked once (`_in_eighths`). A set with a card that isn't in eighths is summed in its
+     own order as before, and not kept.
+   - `recurring_sum` is kept by its cards' (id, evolved) in order: the same additions in the same order.
+2. **Hand signatures once per call** (`engine._play_actions`): `_distinct` takes them instead of recomputing the
+   whole hand's for every hand-card target spec. Legal actions went from 56.9 to 46.7 µs on 690 states sampled from
+   the search.
+3. **`action_key` without closures**: the two nested functions it built on every call are now one module function
+   (`_loc`), with the same keys.
+
+Tried and dropped: numbering the signatures with small ints for `_distinct` (no measurable gain).
+
+**Result** (bench.py, 30 starts, old = 3e9a331 in a worktree, alternating):
+
+| | old | new |
+|---|---|---|
+| iterations per second | 1951 / 2057 / 2010 (median 2010) | 1991 / 2146 / 2137 (median 2137) |
+| ms per decision, whole agent | 139.5 / 133.5 / 134.7 (median 134.7) | 134.5 / 129.3 / 133.5 (median 133.5) |
+
+That is +6% iterations per second (medians). Per decision the gain is within the noise, since the lethal search and
+the rest outside the search didn't change.
+
+**Checks:**
+- tests/test_golden_search.py identical;
+- cmp_roots 142cc567…2b9adf;
+- test_lethal_same green;
+- the full suite with the step-1 data: 1161 passed, 1 skipped.
+  - It turned up a stale expectation, not a change of play: test_lethal3's Ramp misses replay now finds
+    g127 too, since the fixed realize (9c1bb01); the old code fails the same way.
+  - The test skips without $SVSIM_STEP1_DIR, so it went unseen. FOUND is updated.

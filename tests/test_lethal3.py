@@ -62,8 +62,9 @@ def test_the_agent_wins_by_an_allied_followers_end_of_turn_damage():
 
 # The 20 Ramp starts +lethal2 still missed (analysis/speed/LETHAL.md): the lethal check of +lethal3 finds these, and
 # the plain one (level-strong's) finds none of the 20 (analysis/speed/lethal3_eval.py, the same check).
-FOUND = {60, 132, 151, 246, 329, 347, 361, 397, 400, 449, 451, 533, 806, 985}   # 9 planner measurement + 5 end of
-# turn; the six left: discard-cost spells (181, 482, 658) and other planner gaps (109, 127, 546)
+FOUND = {60, 127, 132, 151, 246, 329, 347, 361, 397, 400, 449, 451, 533, 806, 985}   # 9 planner measurement + 5 end
+# of turn + g127 (the fixed realize, 9c1bb01); the five left: discard-cost spells (181, 482, 658) and other planner
+# gaps (109, 546)
 
 
 def _check(state, spec):

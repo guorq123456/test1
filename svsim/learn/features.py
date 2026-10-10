@@ -100,7 +100,7 @@ def _board_threat(state: GameState, side: int) -> int:
     return max(damage, 0)
 
 
-def _roles_sum(cards) -> list[float]:
+def _roles_sum_ordered(cards) -> list[float]:
     from svsim.learn.roles import _ROLES, card_roles
     # unrolled, the additions in the same order as a loop over the six (the same floats bit for bit)
     a0 = a1 = a2 = a3 = a4 = a5 = 0.0
@@ -119,15 +119,59 @@ def _roles_sum(cards) -> list[float]:
     return [a0, a1, a2, a3, a4, a5]
 
 
+# _roles_sum by the multiset of card ids (speed round 3). Exact: every role value is a multiple of 1/8 (learn.roles:
+# face, heal, draw and body are whole numbers, ramp counts halves, removal eighths, FOE_LIFE = 8), and adding such
+# numbers well below 2**49 is exact in any order, so the sum doesn't depend on the cards' order (a deck reshuffled
+# by determinize sums the same). _EIGHTHS checks each card's values once; a set with a card that isn't in eighths
+# is summed in its own order as before and not kept.
+_ROLE_SUMS: dict = {}
+_ROLE_SUMS_MAX = 100_000
+_EIGHTHS: dict = {}                   # card id -> whether its role values are multiples of 1/8 (and small)
+
+
+def _in_eighths(defn) -> bool:
+    hit = _EIGHTHS.get(defn.card_id)
+    if hit is None:
+        from svsim.learn.roles import card_roles
+        hit = _EIGHTHS[defn.card_id] = all(abs(v) < 2 ** 20 and (v * 8).is_integer() for v in card_roles(defn))
+    return hit
+
+
+def _roles_sum(cards) -> list[float]:
+    ids = [c.defn.card_id for c in cards]
+    ids.sort()
+    key = tuple(ids)
+    hit = _ROLE_SUMS.get(key)
+    if hit is None:
+        hit = _roles_sum_ordered(cards)
+        if all(_in_eighths(c.defn) for c in cards):
+            if len(_ROLE_SUMS) >= _ROLE_SUMS_MAX:
+                _ROLE_SUMS.clear()
+            _ROLE_SUMS[key] = tuple(hit)
+        return hit
+    return list(hit)
+
+
+_RECURRING_SUMS: dict = {}           # (card id, evolved) of the field and crests, in order -> the sums
+
+
 def recurring_sum(p) -> list[float]:
-    """What `p`'s field and crests do by themselves each round: (face, heal, clear)."""
+    """What `p`'s field and crests do by themselves each round: (face, heal, clear). Kept by the cards' ids and
+    evolved flags in order, which is all it reads (the same additions in the same order)."""
     from svsim.core.enums import CardType
-    from svsim.learn.roles import recurring
-    out = [0.0, 0.0, 0.0]
-    for c in list(p.field) + [c for c in p.leader_area if c.defn.type == CardType.CREST]:
-        for i, v in enumerate(recurring(c.defn, bool(getattr(c, "evolved", False)))):
-            out[i] += v
-    return out
+    cards = list(p.field) + [c for c in p.leader_area if c.defn.type == CardType.CREST]
+    key = tuple((c.defn.card_id, bool(getattr(c, "evolved", False))) for c in cards)
+    hit = _RECURRING_SUMS.get(key)
+    if hit is None:
+        from svsim.learn.roles import recurring
+        out = [0.0, 0.0, 0.0]
+        for cid_evolved, c in zip(key, cards):
+            for i, v in enumerate(recurring(c.defn, cid_evolved[1])):
+                out[i] += v
+        if len(_RECURRING_SUMS) >= 50_000:
+            _RECURRING_SUMS.clear()
+        hit = _RECURRING_SUMS[key] = tuple(out)
+    return list(hit)
 
 
 def resources(state: GameState, side: int, hidden: bool) -> list[float]:

@@ -49,7 +49,7 @@ import time
 from svsim.core.actions import (Attack, EndTurn, Engage, Evolve, Fuse, PlayCard, UseBonusPP)
 from svsim.core.engine import _start_turn, apply, legal_actions
 from svsim.core.enums import DRAW, Phase
-from svsim.core.state import CHECK as COW_CHECK, GameState, leader_of, sweep, verify_state
+from svsim.core.state import CHECK as COW_CHECK, GameState, sweep, verify_state
 from svsim.core.view import determinize
 from svsim.search.evaluate import DEFAULT, evaluate
 from svsim.search.moves import reserved, worth_trying
@@ -69,27 +69,27 @@ def _locator(state: GameState, me: int) -> dict:
     return where
 
 
+def _loc(uid: int, me: int, where: dict) -> tuple:
+    if uid < 0:                                       # a leader (state.leader_of)
+        return ("L", -uid - 1 == me)
+    return where.get(uid, ("?", uid))
+
+
 def action_key(state: GameState, action, where: dict | None = None) -> tuple:
     """An action described by card ids and positions rather than uids."""
     me = state.active
     where = where if where is not None else _locator(state, me)
-
-    def loc(uid):
-        side = leader_of(uid)
-        return ("L", side == me) if side is not None else where.get(uid, ("?", uid))
-
-    def locs(uids):
-        return tuple(loc(u) for u in uids)
     if isinstance(action, PlayCard):
-        return ("P", loc(action.uid), locs(action.targets), action.modes)
+        return ("P", _loc(action.uid, me, where), tuple([_loc(u, me, where) for u in action.targets]), action.modes)
     if isinstance(action, Attack):
-        return ("A", loc(action.attacker), loc(action.target))
+        return ("A", _loc(action.attacker, me, where), _loc(action.target, me, where))
     if isinstance(action, Evolve):
-        return ("E", loc(action.uid), action.super_, locs(action.targets), action.modes)
+        return ("E", _loc(action.uid, me, where), action.super_, tuple([_loc(u, me, where) for u in action.targets]),
+                action.modes)
     if isinstance(action, Engage):
-        return ("G", loc(action.uid), locs(action.targets), action.modes)
+        return ("G", _loc(action.uid, me, where), tuple([_loc(u, me, where) for u in action.targets]), action.modes)
     if isinstance(action, Fuse):
-        return ("U", loc(action.uid), tuple(sorted(locs(action.cards))))
+        return ("U", _loc(action.uid, me, where), tuple(sorted([_loc(u, me, where) for u in action.cards])))
     if isinstance(action, UseBonusPP):
         return ("B",)
     return ("T",)
