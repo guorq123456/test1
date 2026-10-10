@@ -123,3 +123,41 @@ of habit.py):
    level-strong's play-out on the same positions.
    - Seeds: 68650000 + 1000 j + k (j < 45, k < 8), i.e. 68650000–68694007.
    - The main run uses 68600000–68644031.
+
+### J84 results (`habit.py`, 2026-10-10 18:53–19:26Z; data/habit.json)
+
+**Condition:** 对手卡表已知（牌序、手牌未知）.
+- **Setup:** 4 processes, svsim as at 32eb2db (plus the cand-sp2 model folder).
+- **Positions:** 45; at 1 of them (a) and (b) lead to the same position, so it is left out. 44 compared, 32 worlds
+  each per branch.
+- **What (b) chose:** at 33 of the 44 it discards another card, at 11 a move that discards nothing.
+  - The strongest tier's (a) discards: 班德 7, 正义 6, 相枛津 5, 焦龙的午睡 (Lazing Flame) 5, 金银 3,
+    诺玛格达拉 2, …
+  - (b)'s: 莉莉亚 (Lyria) 6, 佐伊 (Zooey) 4, 龙之启示 3, …
+
+| (b) − (a), the discarding side's final win rate | mean | 95% interval (2000 position resamples) | positions |
+|---|---|---|---|
+| **all** | **+0.037** | +0.009 to +0.072 | 44 |
+| "big" (a's discard includes cost ≥ 7) | +0.041 | −0.001 to +0.085 | 30 |
+| the others | +0.029 | +0.005 to +0.056 | 14 |
+
+- Mean final win rate: (a) 0.487, (b) 0.523.
+- **J84 is right:** (b) − (a) > 0 on the point estimate, and the interval for all 44 is above 0.
+- **Check on the big group** (not part of J84): played on from the next turn by mcts:1043 on both sides, K = 8:
+  +0.008 (−0.042 to +0.054, 30 positions). The same direction as level-strong's play-out on the same positions
+  (+0.041, +0.001 to +0.089), but smaller, and its interval covers 0.
+- **The 3 largest differences:**
+
+  | game, turn | (a) discards | (b) discards | (a) | (b) |
+  |---|---|---|---|---|
+  | 133, turn 11 | 班德 + 相枛津 | 焦龙的午睡 | 0.44 | 0.94 |
+  | 764, turn 9 | 相枛津 | 佐伊 | 0.44 | 0.69 |
+  | 890, turn 11 | 班德 | (no discard) | 0.25 | 0.47 |
+
+**Reading:**
+- Where the strongest tier's discard is one Salem's rule would never make, keeping the big card and discarding a
+  cheaper one (or not discarding) wins about 3.7 points more over the rest of the game.
+- This is under level-strong's play-out. With mcts:1043 playing on, the big group's gain is smaller and not clear
+  of 0 on 8 worlds.
+- This is evidence for Salem's habit, but not proof that the strongest tier's discards are mistakes at its own
+  level of play.
