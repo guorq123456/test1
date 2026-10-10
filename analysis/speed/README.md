@@ -258,3 +258,39 @@ measure. data/r4/.
 - Puzzle bank, seeds 1–8 (7 puzzles, 56 runs each): every end the same, old against new.
   - Installed 0/40, cand-kc 3/40, cand-nl 4/40.
 - Full suite with the step-1 data: 1161 passed, 1 skipped.
+
+## Round 5 (the architecture thread 14:10Z): profiled, stopped
+
+The rule this round: if what is left is spread thin, with no single place over 3%, stop rather than squeeze.
+Condition: 对手卡表已知（牌序、手牌未知）.
+
+**Real time per iteration** (no profiler, timers around the parts; 28 step-1 starts; 511.5 µs per iteration with
+the timers on):
+
+| part | µs | share |
+|---|---|---|
+| legal actions | 130.5 | 25.5% |
+| evaluation | 94.4 | 18.5% |
+| applying moves | 84.2 | 16.5% |
+| determinize | 53.9 | 10.5% |
+| action keys | 23.4 | 4.6% |
+
+**Self time by function** (cProfile on bench.py, 16.2 s): only three functions are over 3%, and each is already the
+written-out form.
+- `_iterate`'s own loop: 4.5%.
+- `CardInstance.copy`: 4.1%. It is already field by field.
+- `_inline_shuffle`: 3.1%. Its draws must stay the generator's own, so it can't take fewer.
+- Everything else is under 2.6%: `_play_actions` 2.6, `play_form` 2.2, dict.get 2.1, `emit` 2.0, `action_key` 1.9,
+  sorted 1.8, `_loc` 1.7, logit's generator 1.7, `_rank` 1.6, `enqueue` 1.5, `script_for` 1.5, `side_features` 1.4.
+
+**The big parts are many small functions** (cumulative): legal actions 20.8%, moves 19.8%, logit 14.4%,
+determinize 10.8%, side_features 9.9%. No single exact change there is worth 3%, so **round 5 stops** with no code
+changed. J65 is not reached.
+
+**Two structural changes could save more, but neither is exact by construction:**
+1. **The root's moves, computed once per decision instead of once per iteration** (about 10% of the time: the
+   root's legal actions, sorting and keys). Determinize changes only hidden cards. But card scripts' target filters
+   and `all_modes` are arbitrary functions, and one reading a deck's order or the opponent's hand would make it
+   unsafe. It needs an audit of every script, or a check mode like the deck's copy on write.
+2. **Hand and field cards copied on write**, as the decks' already are (clone is 8.7%). It needs every path that
+   changes a card in hand or on the field covered. Those are many more than the deck's nine.
