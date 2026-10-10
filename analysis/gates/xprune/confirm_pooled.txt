@@ -1,0 +1,2 @@
+/home/user/test1/analysis/gates/xprune/confirm.jsonl: 300 pairs, seeds 68300000..68300299, 52.0% ± 2.7% (49.3%..54.7%), CR +19 (-7..+44; steady-state +16); ms per searched decision A 71.26 / B 70.92 = 1.005
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 52.0% (49.2%..54.7%), CR +19 (-8..+44; steady-state +16)
