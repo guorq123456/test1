@@ -110,3 +110,36 @@ The same breakdown (`ops.py --ks 329 455`; data/rows_329_455.jsonl, read_329_455
 - `ramp-lyria-crest` (329): expected the enemy board empty and 6 or more cards in hand.
 - `ramp-saga-lyria` (455): expected the enemy board empty, the enemy at 6 or less, and an evolution point kept. tools.puzzles facts now include ep and sep.
 - Seeds 1–3: level-strong 0/6, mcts:1043 0/6.
+
+## mcts-reply against mcts:1043 (the architecture thread 12:28Z; J57)
+
+**Question:** in 329, Salem keeps cards because the opponent can clear the board next turn. Neither the strong nor
+the strongest level searches the opponent's turn. At 1043's budget, does spending part of it on the opponent's turn
+(mcts-reply) find Salem's line?
+
+**Matching the wall clock** (turn_cost.py, whole turns from step-1 turn starts, A ÷ mcts:1043+plan+learned+phased):
+- 100 starts, three runs side by side: N 700 → 0.920, N 850 → 1.031, N 1000 → 1.188.
+- **N 810 on 300 starts, run alone: ms 1.016** (1278.0 vs 1257.4 ms per turn); iterations 0.764.
+- So they can be matched on the same machine.
+- On the four puzzle positions the mean ms per turn is 3227 vs 2966 (1.09): these turns are more complex than
+  average.
+
+**Spec:** `mcts-reply:810+plan+learned+phased+lazy+focus`.
+- `+lazy`: the opponent's turn is played out (greedily) only from a turn-end leaf's second visit.
+- `+focus`: only under the top three first moves, and at most 20 times a decision.
+
+**Puzzle bank, seeds 1–8** (tools.puzzles --only; data/reply/), solved by the bank's expected conditions:
+
+| puzzle | mcts-reply:810 | mcts:1043 |
+|---|---|---|
+| 329 (ramp-lyria-crest) | **0/8** (the same end every seed: enemy 11, us 9, 5 cards) | 0/8 (the same end) |
+| 455 (ramp-saga-lyria) | **0/8** (enemy 4–6, no evolution point kept) | 0/8 (the same kind of ends) |
+| puzzle 2 (ramp-erntz-normagdala) | 1/8 (7 ends at us 3–4) | **8/8** |
+| puzzle 3 (ramp-erntz-spilling) | 8/8 | 8/8 |
+
+**Reading:**
+- **J57 wrong:** mcts-reply finds Salem's line in neither 329 nor 455. In 329 it ends exactly where 1043 does.
+- **Puzzle 2 gets worse** (8/8 → 1/8). It needs depth in our own turn, and mcts-reply has 24% fewer of our own
+  iterations at the same wall clock.
+- **One caveat:** with `+focus`, at most 20 leaves a decision see the opponent's turn, and only through a greedy
+  reply. That is a narrow look at "can they clear my board".
