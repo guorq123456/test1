@@ -9,7 +9,8 @@ Exactly M5's column (c) (the analysis line's prices.py, 533a6aa), for several ev
 - the prices are prices.fit's regression of 100 x dV on the regressors, through the origin.
 Read on the held-out starts (the main check) and the training starts; G_end (WLS on K, appendix 3's extra games
 merged) and T on the same pairs for reference. dT-sign agreement: the share of pairs (dT != 0) where dV has dT's
-sign. Intervals: 2000 resamples of starts, seed 0.
+sign. Intervals: 2000 resamples of starts, seed 0. Besides the five resources, the own follower count's
+coefficient (a control in M5; candidate B corrects it).
 
     python3 check_h.py STEP1_DIR GENDMORE ANA_DIR --out rows.jsonl [--workers 4] [--eval name=spec ...]
     python3 check_h.py --read rows.jsonl
@@ -22,7 +23,8 @@ from collections import defaultdict
 
 EVALS = {"installed": "level-strong",
          "cand-tl": "mcts:200+plan+learned+phased=cand-tl-ramp-ramp",
-         "cand-th": "mcts:200+plan+learned+phased=cand-th-ramp-ramp"}
+         "cand-th": "mcts:200+plan+learned+phased=cand-th-ramp-ramp",
+         "cand-thf": "mcts:200+plan+learned+phased=cand-thf-ramp-ramp"}
 RES = ("ep", "sep", "max_pp", "pp_left", "hand")
 CTRL = ("enemy_hp", "own_hp", "own_followers", "own_stats", "enemy_followers", "enemy_stats", "own_amulets",
         "enemy_amulets")
@@ -119,7 +121,7 @@ def _fit(pairs, y, weights=None):
         w = np.sqrt(np.asarray(weights, float))
         X, y = X * w[:, None], y * w
     beta, *_ = np.linalg.lstsq(X, y, rcond=None)
-    return beta[:len(RES)]
+    return beta[[*range(len(RES)), len(RES) + CTRL.index("own_followers")]]
 
 
 def read(args):
@@ -160,7 +162,7 @@ def read(args):
         print(f"**{title}**：{len(pairs)} 对、{len(ks)} 个开头，不含 end（价格：每多一单位，胜率百分点）\n")
         print("| 资源 | G_end | T | " + " | ".join(evals) + " | " + " | ".join(f"{e} − installed" for e in evals if e != "installed")
               + " |\n|---|---|---|" + "---|" * len(evals) + "---|" * (len(evals) - 1))
-        for i, f in enumerate(RES):
+        for i, f in enumerate(RES + ("own_followers",)):
             cells = [f"{E['G_end'][i]:+.2f}", f"{E['T'][i]:+.2f}"] + [f"{E[e][i]:+.2f}" for e in evals]
             for e in evals:
                 if e == "installed":
