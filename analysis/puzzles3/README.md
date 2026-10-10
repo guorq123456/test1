@@ -180,3 +180,82 @@ G_end gives 1.000 / 0.854 and 0.583 / 0.125.
 - So the gap is in how the position is priced, not in seeing the opponent's turn. The evaluation still pays for the
   face damage, and our defense, more than for Salem's hand and the board that survives. G_end prefers Salem's end
   by far.
+
+## Why cand-kc and cand-nl lose puzzles 2 and 3 (the architecture thread 15:13Z; the analysis line's a993938; J72)
+
+**Scripts:** `regress.py` (data/regress/*.jsonl) and `act_ended.py`. Diagnostic only; nothing installed changed.
+
+**Reproduced** (the puzzle bank, seeds 1–8):
+
+| | puzzle 2 (normagdala) | puzzle 3 (spilling) |
+|---|---|---|
+| installed mcts:1043 | 8/8 | 8/8 |
+| cand-kc mcts:997 | 0/8 | 0/8 |
+
+Every run of a spec plays the same line.
+
+**1. The root's children.**
+- Puzzle 2, cand-kc. After Erntz, the bonus play point (B, Salem's next move) and evolving Erntz (E) end exactly
+  level: 453 / 453 visits, value 0.9647 each. The tie goes to E, and the bad line follows.
+  - The installed model takes B: 569 visits at 0.9804, against E's 373 at 0.9664.
+  - cand-kc's 0.9647, unsquashed, is −1.678: exactly its score for the bad end. Under max backup, the best leaf
+    found under B is the bad end too (B can still evolve Erntz later).
+  - Salem's end scores −0.244 under cand-kc (value 0.9703, above both). So it was not found within 997 iterations.
+- Puzzle 3, cand-kc: the same tie (E 485 / B 484 at 0.9925), then super-evolving Erntz.
+
+**The search's own scores** for each line's turn end (seed 1):
+
+| | installed | cand-kc | cand-nl |
+|---|---|---|---|
+| puzzle 2: Salem's end | **2.295** | **−0.244** | **1.045** |
+| puzzle 2: cand-kc's end | −2.999 | −1.678 | −2.725 |
+| puzzle 2: cand-nl's end | −3.513 | −4.424 | −1.739 |
+| puzzle 3: Salem's end | **6.485** | 0.602 | 1.072 |
+| puzzle 3: cand-kc's end | 4.112 | **2.5** | 0.912 |
+| puzzle 3: cand-nl's end | 5.582 | 0.716 | **1.944** |
+
+- **Puzzle 2 is search.** Every model rates Salem's end highest; the candidates don't find it.
+- **Puzzle 3 is the evaluation.** Both candidates rate their own end above Salem's on the bank's position.
+  - The bad line super-evolves Erntz, which takes both leaders from 13 to 5; Salem's keeps both at 13 and a
+    super-evolution point.
+  - The installed model weighs our defense a little over theirs (logit Salem − bad +0.297).
+  - cand-kc weighs the enemy's defense more (op_hp −0.635 against the installed −0.372) and prefers the face damage
+    (−0.237).
+  - The offline check on the record's position (k 445, 0.517 / 0.373) compared Salem's end with step 0's bot line
+    (Lumiore's discards), not this line.
+
+**2. ACT against ENDED.**
+- Within our own turn every leaf of the search is a turn end, scored with ENDED.
+- ACT scores only the reply leaves (mcts-reply). The centre is ENDED on the decision's position.
+- So "end the turn now" and "play on" are both ENDED scores. A shift of the ENDED model changes nothing: the centre
+  shifts with it.
+- On the same positions (`act_ended.py`: the last decision before End Turn, level-strong's turns from 60 step-1
+  starts and the bank's Ramp positions, 96 in all):
+
+| | ACT before | ENDED after | ENDED − ACT |
+|---|---|---|---|
+| installed | 3.341 | −1.811 | −5.152 (sd 7.11) |
+| cand-kc | 3.341 | −2.339 | −5.681 (sd 7.06) |
+
+- cand-kc's ENDED sits 0.53 below the installed model's (sd 1.38). Their spreads over 718 turn ends are 6.96 and
+  7.81.
+- Side finding: cand-kc's folder holds only ramp-ramp models. On the bank's pirate positions it falls back to
+  another model (its ACT reads −14.3 where the installed one reads +14.5). That only matters if it were installed as
+  a whole level.
+
+**3. More iterations** (cand-kc, seeds 1–8; data/regress/more.jsonl):
+
+| | puzzle 2 | puzzle 3 |
+|---|---|---|
+| mcts:1450 | **8/8** | 0/8 |
+| mcts:2000 | **8/8** | 0/8 |
+| mcts:997 +abs0 (no centre) | 0/8 | 0/8 |
+
+Puzzle 2 comes back with budget. Puzzle 3 doesn't: it is the value.
+
+**4. J72: wrong.**
+- A shift is exactly a no-op, as above.
+- Scaling cand-kc's score differences to the installed model's spread is the same as the search's squash scale
+  8 → 7.14. It leaves both puzzles at 0/8 (data/regress/scale.jsonl).
+- The regression is search budget in puzzle 2 and cand-kc's own pricing (enemy defense over ours) in puzzle 3. It
+  is not an ACT / ENDED scale mismatch.
