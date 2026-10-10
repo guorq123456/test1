@@ -1,0 +1,22 @@
+# Lethal-fix gate (+lethal2), analysis container, 3 workers, svsim 23b317d
+## timing check (N_B = 203)
+analysis/gates/lethal2/ncheck_pirate_pirate.jsonl: 20 pairs, seeds 66699000..66699019, 50.0% ± 0.0% (50.0%..50.0%), CR +0 (+0..+0; steady-state +0); ms per searched decision A 94.72 / B 94.73 = 1.000
+pooled pair by pair (20 pairs, stratified bootstrap 4000): 50.0% (50.0%..50.0%), CR +0 (+0..+0; steady-state +0)
+## gate
+analysis/gates/lethal2/pirate_pirate.jsonl: 300 pairs, seeds 66600000..66600299, 50.2% ± 1.8% (48.4%..51.9%), CR +2 (-15..+18; steady-state +1); ms per searched decision A 88.24 / B 86.60 = 1.019
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 50.2% (48.5%..52.0%), CR +2 (-14..+19; steady-state +1)
+300 对（600 局）：A 得分 50.2% ± 1.8%（95% 区间 48.4%～51.9%），CR 分差约 +2（-15～+18；游戏稳态公式 +1，-13～+15，窗口内），LLR -14.48（判定线 -2.94 / 2.94）→ H0（没有变强）
+两局着法完全一样的对：12 / 300（4%）
+按真实先后手：A 先手 300 局 57.0% ± 5.6%；A 后手 300 局 43.3% ± 5.6%
+## puzzle (svsim.tools.puzzles, pirate-flags-lethal, seeds 1-3)
+{"spec": "level-strong+lethal2", "summary": "3/3 solved", "puzzles": 1, "seeds": [1, 2, 3], "ms_mean": 31}
+{"spec": "level-strong", "summary": "0/3 solved", "puzzles": 1, "seeds": [1, 2, 3], "ms_mean": 838}
+## companion (lethal2_games.py)
+条件：对手卡表已知（牌序、手牌未知）。斩杀修正门的附带计数
+
+- 重打的 600 局，和门的记录逐局比：得分不同 0 局
+- 在自己回合里赢下的局（斩杀兑现），每 100 局：A 49.3（296 局），B 48.7（292 局）
+- A 的自己回合开头 5307 个：场上有 ticker 的 62.0%
+- 开头的检查找到斩杀：+lethal2 274，level-strong 的 246；只有 +lethal2 找到 28，只有 level-strong 找到 0
+- A 每个回合开头多花的毫秒：平均 +5.9，p90 +7.1（level-strong 的检查平均 53.2 ms）
+
