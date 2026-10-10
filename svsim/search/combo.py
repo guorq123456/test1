@@ -468,6 +468,7 @@ def evolve_summons(defn: CardDef, super_: bool, modes: tuple = ()) -> tuple:
 
 UNKNOWN = (0, 99)            # a drawn card: takes a hand slot, never played
 WARD, UNREACHABLE, BARRIER = 1, 2, 4   # enemy follower flags (UNREACHABLE: can't be attacked or selected)
+UNTARGETABLE = 8                        # (+discard) Aura: can be attacked, not selected by an effect
 
 
 @dataclass
@@ -649,14 +650,14 @@ class _Abstract:
 
     def _discards(self, hand: tuple, n: int):
         """(the discarded card's key or None, the hand after, its "when discarded" damage) for each way to pay a play
-        that discards `n` cards (one card at most, as measured): every distinct card in hand, a drawn one included
-        (its ability unknown: 0)."""
+        that discards `n` cards (one card at most, as measured): every distinct card in hand but the ones drawn this
+        turn (the line couldn't name them on other deck orders)."""
         if not n:
             yield None, hand, 0
             return
         for k, key in enumerate(hand):
-            if key in hand[:k]:
-                continue
+            if key in hand[:k] or key == UNKNOWN:
+                continue                     # a card drawn this turn is a different card on each deck order
             cid = key[0]
             yield key, hand[:k] + hand[k + 1:], (discard_face(self.defs[abs(cid)]) + self.extra
                                                  if cid and discard_face(self.defs[abs(cid)]) > 0 else 0)
@@ -664,7 +665,7 @@ class _Abstract:
     def _play(self, pos, cid, cost, defn, e, new_combo, rest_hand, dkey, dface):
         """The moves of playing hand card (cid, cost) as measured by `e` (with `dkey` discarded, if it discards)."""
         pp, cap, combo, hand, followers, amulets, bonus, evolve, count, enemies = pos
-        if e.needs_foe and not any(not fl & UNREACHABLE for _, _, fl in enemies):
+        if e.needs_foe and not any(not fl & (UNREACHABLE | UNTARGETABLE) for _, _, fl in enemies):
             return                   # nothing it could select
         new_pp = min(cap, pp - cost + e.recovered)
         new_hand = self._add(rest_hand, e.added, e.drawn)
@@ -785,7 +786,7 @@ def _hand_key(state: GameState, c: CardInstance) -> tuple:
     return (-c.defn.card_id if fused else c.defn.card_id), c.cost
 
 
-def _abstract_position(state: GameState) -> tuple:
+def _abstract_position(state: GameState, aura: bool = False) -> tuple:
     me, opp = state.players[state.active], state.players[1 - state.active]
     first = state.active == state.first
     followers = tuple(sorted((f.defn.card_id, f.atk, f.life, max(0, f.max_attacks - f.attacks_made),
@@ -800,6 +801,8 @@ def _abstract_position(state: GameState) -> tuple:
             flags = WARD if f.keywords & Keyword.WARD else 0
         if f.keywords & Keyword.BARRIER:
             flags |= BARRIER
+        if aura and f.keywords & Keyword.AURA:
+            flags |= UNTARGETABLE
         enemies.append((f.atk, f.life, flags))
     evolve = None
     if not me.evolved_this_turn:
@@ -969,6 +972,20 @@ class _Discard:
     def _profiles(self, defn: CardDef, fused: bool, pp: int, cap: int):
         return profile_at(defn, fused, pp, cap, True)
 
+    @staticmethod
+    def _hits(enemies: tuple, amount: int, spread: str, pierce: bool):
+        """As _Abstract._hits, but a selected target is never one with Aura (UNTARGETABLE)."""
+        if spread == "target" and amount > 0 and enemies:
+            seen = set()
+            for j, e in enumerate(enemies):
+                if not e[2] & (UNREACHABLE | UNTARGETABLE) and e not in seen:
+                    seen.add(e)
+                    yield _damage(enemies, j, amount, pierce), (j, e)
+            if not seen:
+                yield enemies, None
+            return
+        yield from _Abstract._hits(enemies, amount, spread, pierce)
+
 
 _DISCARD_CLASSES: dict = {}
 
@@ -1023,7 +1040,7 @@ def plan(state: GameState, max_nodes: int = 200000, tickers: bool = False, fix: 
     if ticking:
         cls = _with_discard(_Tickers) if discard else _Tickers
         search = _search_for(state, state.active, max_nodes, _with_eot(cls) if eot else cls)
-        dmg, steps = search.best(_abstract_position(state) + (ticking,))
+        dmg, steps = search.best(_abstract_position(state, discard) + (ticking,))
         return Plan(dmg, steps, search.nodes, tickers=True, face_first=True, discard=discard)
     cls = _Fixed if fix or discard else None
     if discard:
@@ -1031,7 +1048,7 @@ def plan(state: GameState, max_nodes: int = 200000, tickers: bool = False, fix: 
     if eot:
         cls = _with_eot(cls or _Abstract)
     search = _search_for(state, state.active, max_nodes, cls)
-    dmg, steps = search.best(_abstract_position(state))
+    dmg, steps = search.best(_abstract_position(state, discard))
     return Plan(dmg, steps, search.nodes, face_first=fix or discard, discard=discard)
 
 
@@ -1042,7 +1059,8 @@ def planned_lethal(state: GameState, max_nodes: int = 20000, tickers: bool = Fal
     where the plain one is right: pirate-t g14 turn 19, analysis/speed/LETHAL.md); without tickers on the field
     this is one plan, as before. With `adaptive` (+adaptive), a line that fails verify only because a random
     outcome breaks its fixed targets is kept when the plan passes verify_steps. `want_plan`: also return the plan the
-    line realizes (None without a line)."""
+    line realizes (None without a line). With `discard`, a discard plan that doesn't realize or check falls back to
+    the same search without discards (+discard finds every lethal the planner finds without it)."""
     hp = state.players[1 - state.active].leader_hp
     first = p = plan(state, max_nodes, tickers=tickers, fix=fix, eot=eot, discard=discard)
     while True:
@@ -1052,8 +1070,13 @@ def planned_lethal(state: GameState, max_nodes: int = 20000, tickers: bool = Fal
                                                                           p.discard)):
                 return (line, first, p) if want_plan else (line, first)
         if not p.tickers:
-            return (None, first, None) if want_plan else (None, first)
+            break
         p = plan(state, max_nodes, fix=fix, eot=eot, discard=discard)
+    if discard:                      # a discard plan that fails falls back to the planner without discards
+        line, _, used = planned_lethal(state, max_nodes, tickers, fix, eot, False, adaptive, True)
+        if line:
+            return (line, first, used) if want_plan else (line, first)
+    return (None, first, None) if want_plan else (None, first)
 
 
 def next_turn_position(state: GameState, side: int, board: bool = True, pp: int | None = None) -> tuple:
