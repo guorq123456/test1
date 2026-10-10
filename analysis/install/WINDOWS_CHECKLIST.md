@@ -101,3 +101,55 @@ nemesis-t|pirate-t|105 40 c95bc23d4d17a38ca068ea2299cf7674ca0e851755dbb34d93bae7
   - cand-kc：门前检查 (1) 没过，见 cand-kc README。
   - cand-nl：对 level-strong 的门已由分析线预注册，在跑。
   - 两者在题 3 那类局面都偏向打脸（analysis/puzzles3/README.md 末节）。
+
+## 6. 强档 + 弃牌剪枝（只准备，不装；架构线程 21:09Z）
+
+**内容**
+- 强档配置从 `mcts:200+plan+learned+phased` 改成 `mcts:200+plan+learned+phased+xprune=3:3:cost`。
+- 次数不改，评估器文件不动，「最强」档不加。
+- 依据：+xprune 的门和确认门合并 52.4%（50.3～54.5），见 analysis/xprune/README.md 和分析线 4d24188。
+
+**要改的文件和配置行**：由 `analysis/install/strong_xprune.py apply` 做精确文本替换，每处原文必须正好出现一次，否则一个字都不写。
+| 文件 | 改前 | 改后 |
+|---|---|---|
+| svsim/ui/session.py | `"strong": "mcts:200+plan+learned+phased",` | `"strong": "mcts:200+plan+learned+phased+xprune=3:3:cost",`（上方加一行注释） |
+| svsim/tools/arena.py | （无） | VERSIONS 加 `"v2sx": "mcts:200+plan+learned+phased+xprune=3:3:cost"`，让对局记录里写得出版本名 |
+| tests/test_web.py | 两处断言写死旧的强档配置 | 改成新配置 / `v2sx` |
+| tests/test_learn.py | 一处同上 | 同上 |
+
+**改前改后的哈希**
+- 档位哈希 = `sha256(json.dumps(LEVELS, sort_keys=True))`，`strong_xprune.py check` 会打印。这个值不受换行符影响，各机器一样：
+  - 改前：`d1eb81d0896bb431dedba8ac511b157a5aff9f1b1f116c31174d20b381eaea10`
+  - 改后：`d0801b946b6a927f9b2d32310556b51d894f7095948ac2091e22ac195ecd8bc5`
+- cmp_roots 装前装后都应该是 **755a0bba…96a6**（Windows）：它写死 `mcts:200+plan+learned+phased`，不读档位。装后它不变，说明搜索代码没动；变了就停下。
+- 这边（Linux）在独立 worktree 里核过：apply 之后 test_web、test_learn、test_xprune、test_golden_search 共 70 项全过；冒烟测试 OK；revert 之后 git 工作区干净。
+
+**装之前要知道的两件事**
+- **`level-strong` 的意思会变。** arena 的 `level-strong` 就是 `LEVELS["strong"]`。装后，所有拿 `level-strong` 当对照的门、标定都是对新强档。要和旧强档比，就写明 `mcts:200+plan+learned+phased`（即 `v2s`）。
+- **强档的 CR 是旧 bot 测的。** ratings.json 里强档各卡组的 CR（跳费龙 1331、连击妖 1340 等）是装前的值。装后在重新标定之前，开局界面显示的仍是旧值。要不要把它标成「待标定」，由 Salem 定；这个包不动 ratings.json。
+
+**装（Salem 点头、电脑连上以后）**：在仓库根目录、cmd 里一行（低于正常优先级，掩码 0xFFFFE 不用 CPU0，最多 3 个进程）：
+
+```
+start "" /WAIT /BELOWNORMAL /AFFINITY FFFFE cmd /c "python analysis\install\strong_xprune.py check && python analysis\install\strong_xprune.py apply && python -m svsim.tools.host analysis.install.strong_xprune_smoke --workers 3 && python -m pytest -q tests\test_web.py tests\test_learn.py tests\test_xprune.py && python -m svsim.tools.host svsim.tools.gate --help >NUL && echo INSTALLED"
+```
+
+- 预期：
+  - check 打印 `"state": "not installed"` 和改前哈希；
+  - apply 打印 before / after 两个哈希，和上面一致；
+  - 冒烟测试打印 6 局（跳费龙镜像 2 对、机锋打旗皇 1 对），都分出胜负，跳费龙那几局的 `cut` > 0，最后一行 `OK`；
+  - pytest 全过；
+  - 最后打印 `INSTALLED`。
+- 任何一步失败，`&&` 会停在那里，不往下做。如果失败发生在 apply 之后，就照下面回退。
+
+**装后冒烟测试单独跑**：`python -m svsim.tools.host analysis.install.strong_xprune_smoke --workers 3`（同上，看最后一行 `OK`）。
+
+**回退**
+
+```
+start "" /WAIT /BELOWNORMAL /AFFINITY FFFFE cmd /c "python analysis\install\strong_xprune.py revert && python analysis\install\strong_xprune.py check && python -m pytest -q tests\test_web.py tests\test_learn.py"
+```
+
+- 预期：check 打印 `"state": "not installed"` 和改前哈希 d1eb81d0…ea10；pytest 全过。
+- 也可以直接 `git checkout -- svsim/ui/session.py svsim/tools/arena.py tests/test_web.py tests/test_learn.py`。
+- 已经打出的对局记录里写着 `v2sx`，回退后照样能读。
