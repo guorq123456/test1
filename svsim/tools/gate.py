@@ -209,6 +209,7 @@ def _game(deck_cards, opponent_cards, seat: int, mine, theirs, seed: int, label:
     record["names"] = names if seat == 0 else names[::-1]
     from svsim.core.actions import Evolve
     searches, counts, times = [_search(x) for x in agents], ([], []), ([], [])
+    cpus = ([], [])                                  # (+par) the trees' CPU seconds per searched decision
     evolves = [[0, 0], [0, 0]]
     while not state.over:
         planner = planners[state.active]
@@ -223,6 +224,9 @@ def _game(deck_cards, opponent_cards, seat: int, mine, theirs, seed: int, label:
         if search is not None and search.last_iterations is not None:
             counts[state.active].append(search.last_iterations)
             times[state.active].append(took)
+            if getattr(search, "last_cpu", None) is not None:
+                cpus[state.active].append(search.last_cpu)
+                search.last_cpu = None
         if planner is not None and planner.last_plan is not None:   # the planner's measurements, kept
             record.setdefault("plans", []).append(_plan(state, len(record["actions"]), planner.last_plan,
                                                         record["names"]))
@@ -234,6 +238,8 @@ def _game(deck_cards, opponent_cards, seat: int, mine, theirs, seed: int, label:
     record["evolves"] = evolves                                           # by seat: [normal, super]
     record["iterations"] = [iteration_summary(c) for c in counts]     # by seat: where each side's search went
     record["ms"] = [ms_summary(t) for t in times]                         # by seat: its wall time on those moves
+    if any(cpus):
+        record["cpu"] = [ms_summary(c) for c in cpus]                     # by seat: (+par) the trees' CPU, in ms
     return 1.0 if state.winner == seat else 0.5 if state.winner not in (0, 1) else 0.0, record
 
 
@@ -264,7 +270,7 @@ def play_pair(job) -> dict:
         out["same"] = [moves[("points", s)] == moves[("b_points", s)] for s in (0, 1)]
         return out
     points, games, moves, iterations, iterations_b, ms, ms_b = [], [], [], [], [], [], []
-    evolves, evolves_b = [], []
+    evolves, evolves_b, cpu, cpu_b = [], [], [], []
     for seat in (0, 1):
         pts, record = _game(mine, theirs, seat, _agent(a, 2 * seed + seat, model_a, phased_a),
                             _agent(b, 2 * seed + 1 - seat + 7919, model_b, phased_b), seed,
@@ -276,13 +282,16 @@ def play_pair(job) -> dict:
         ms_b.append(record["ms"][1 - seat])
         evolves.append(record["evolves"][seat])          # A's [normal, super] in this game, by A's seat
         evolves_b.append(record["evolves"][1 - seat])
+        if "cpu" in record:
+            cpu.append(record["cpu"][seat])
+            cpu_b.append(record["cpu"][1 - seat])
         if record.get("plans"):
             games.append(record)
         moves.append(record["actions"])
     # the same moves in both games (both agents chose alike all game): the pair adds nothing but its draw
     return {"k": k, "seed": seed, "points": points, "games": games, "same": moves[0] == moves[1],
             "iterations": iterations, "iterations_b": iterations_b, "ms": ms, "ms_b": ms_b,
-            "evolves": evolves, "evolves_b": evolves_b}
+            "evolves": evolves, "evolves_b": evolves_b, **({"cpu": cpu, "cpu_b": cpu_b} if cpu else {})}
 
 
 def pair_score(d: dict) -> float:

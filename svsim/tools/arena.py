@@ -135,6 +135,16 @@ def _prior_options(options) -> dict:
 COMPLEX_K, COMPLEX_BETA = 21.4, 0.4
 
 
+def _par_options(name: str, options) -> dict:
+    """+par=K: the search runs K root-parallel trees in a resident process pool, each built from the same spec
+    without +par (search.parallel)."""
+    par = [o for o in options if o.startswith("par=")]
+    if not par:
+        return {}
+    k = int(par[0][len("par="):])
+    return {"parallel": k, "par_spec": "+".join([name] + [o for o in options if not o.startswith("par=")])}
+
+
 def _alloc_option(options) -> tuple | None:
     """+alloc=legal:K[:LO:HI]: each decision searches clip(round(K x legal moves), LO, HI) iterations (LO 50, HI
     800) instead of the spec's fixed count, the same compute on average once K is set by tools.search_cost.
@@ -192,7 +202,7 @@ def _make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "lethal3", "plannerfix", "eot", "discard", "adaptive", "abs", "complex"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet="))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "lethal3", "plannerfix", "eot", "discard", "adaptive", "abs", "abs0", "complex"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet=", "par="))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -279,6 +289,8 @@ def _make_agent(spec: str, seed: int):
                           reuse="reuse" in options, alloc=_alloc_option(options), infer=_infer_option(options),
                           oracle="oracle" in options,          # an experiment only: sees the opponent's hand
                           **({"center": False, "normalize": True} if "abs" in options else {}),   # +abs
+                          **({"center": False} if "abs0" in options else {}),   # +abs0: absolute values only
+                          **_par_options(spec, options),       # +par=K: K root-parallel trees (search.parallel)
                           **_prior_options(options))
         cross = [o for o in options if o.startswith("cross")]
         if cross:                                  # keep a card / PP / evolution for later (agents.crossturn_agent)

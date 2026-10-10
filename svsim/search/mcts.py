@@ -156,12 +156,14 @@ class ISMCTS:
                  reserve: bool = False, veto=None, reply_after: int = 0, reply_top: int = 0,
                  reply_budget: int = 0, average: int = 1, prior=None, c_prior: float = 0.3,
                  reuse: bool = False, min_new: int = 20, alloc: tuple | None = None, infer: tuple | None = None,
-                 oracle: bool = False, normalize: bool = False):
+                 oracle: bool = False, normalize: bool = False, parallel: int = 0, par_spec: str | None = None):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
         self.normalize = normalize     # (+abs) selection on Q min-max normalized over this search's tree (MuZero):
                                        # with absolute values (center=False) a lost or won position's values sit
                                        # near 0 or 1, and the normalization keeps the selection's resolution
         self._qmin = self._qmax = None
+        self.parallel, self.par_spec = parallel, par_spec   # (+par=K) K root-parallel trees (search.parallel)
+        self.last_cpu = None           # (+par) the trees' CPU seconds of the last decision, summed
         self.alloc = alloc             # ("legal", K, LO, HI): clip(K x legal moves, LO, HI) per decision instead;
                                        # ("bank", CHUNK, STOP, CAP, HI): see _bank_budget
         self._bank, self._bank_turn = 0, None
@@ -234,6 +236,9 @@ class ISMCTS:
     def choose(self, state: GameState):
         """The search's move. While it runs, learn.handvalue knows its root: the cards drawn from here on, and the
         opponent's hand, are unknown to the hand-value student."""
+        if self.parallel > 1:
+            from svsim.search import parallel
+            return parallel.choose(self, state)
         from svsim.learn.handvalue import root
         with root(state.active, [c.uid for c in state.players[state.active].deck_view()]):
             return self._choose(state)
