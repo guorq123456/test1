@@ -37,8 +37,10 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "analysis/widecut"))
 BANK, K = 68600000, 32
+CHECK_BANK, CHECK_K = 68650000, 8
 PLAY = "mcts:200+plan+learned+phased"
-PICK = "mcts:1043+plan+learned+phased+xprune=3:3:cost"
+MAX = "mcts:1043+plan+learned+phased"
+PICK = MAX + "+xprune=3:3:cost"
 STEP1 = None
 GAMES = {}
 
@@ -79,19 +81,26 @@ def _pick(job):
 
 
 def _world(job):
-    """One world k of position j, branch move `act`: the discarding side's result."""
+    """One world k of position j, branch move `act`: the discarding side's result. The rest of this turn is played
+    by the branch's own agent (MAX for (a), PICK for (b)); from the next turn on both sides play `play`."""
     from rules import rebuild
     from svsim.core.actions import from_dict
     from svsim.core.engine import apply, legal_actions
     from svsim.core.view import determinize
     from svsim.tools.arena import make_agent
-    j, row, act, branch, k = job
+    j, row, act, branch, k, play, bank = job
     s = rebuild(STEP1, GAMES, row)
     me = s.active
-    sd = BANK + 1000 * j + k
+    sd = bank + 1000 * j + k
     w = determinize(s, me, random.Random(sd))
+    turn = w.turn
     apply(w, from_dict(act))
-    agents = {me: make_agent(PLAY, sd), 1 - me: make_agent(PLAY, sd + 500)}
+    mine = make_agent(MAX if branch == "a" else PICK, sd)
+    n = 0
+    while not w.over and w.active == me and w.turn == turn and n < 300:
+        apply(w, mine.act(w, legal_actions(w)))
+        n += 1
+    agents = {me: make_agent(play, sd), 1 - me: make_agent(play, sd + 500)}
     n = 0
     while not w.over and n < 3000:
         apply(w, agents[w.active].act(w, legal_actions(w)))
@@ -105,15 +114,23 @@ def main():
     step1, out = sys.argv[1], sys.argv[2]
     workers = int(sys.argv[sys.argv.index("--workers") + 1]) if "--workers" in sys.argv else 9
     k = int(sys.argv[sys.argv.index("--k") + 1]) if "--k" in sys.argv else K
+    check = "--no-check" not in sys.argv
     _init(step1)
     pos = _positions()
     with Pool(workers, initializer=_init, initargs=(step1,)) as pool:
         picks = pool.map(_pick, list(enumerate(pos)), chunksize=1)
         live = [p for p in picks if not p["same"]]
-        jobs = [(p["j"], pos[p["j"]], p[br], br, kk) for p in live for br in ("a", "b") for kk in range(k)]
+        jobs = [(p["j"], pos[p["j"]], p[br], br, kk, PLAY, BANK) for p in live for br in ("a", "b") for kk in range(k)]
         res = {}
-        for j, br, kk, r in pool.imap_unordered(_world, jobs, chunksize=2):
+        for j, br, kk, r in pool.imap_unordered(_world, jobs, chunksize=1):
             res.setdefault(j, {}).setdefault(br, {})[kk] = r
+        Path(out + ".main.json").write_text(json.dumps({str(j): v for j, v in res.items()}))
+        big = [p for p in live if p["big"]] if check else []
+        jobs = [(p["j"], pos[p["j"]], p[br], br, kk, MAX, CHECK_BANK) for p in big for br in ("a", "b")
+                for kk in range(CHECK_K)]
+        chk = {}
+        for j, br, kk, r in pool.imap_unordered(_world, jobs, chunksize=1):
+            chk.setdefault(j, {}).setdefault(br, {})[kk] = r
     for p in live:
         ra, rb = res[p["j"]]["a"], res[p["j"]]["b"]
         p["a_win"] = sum(ra.values()) / k
@@ -137,10 +154,14 @@ def main():
                "b_minus_a_other": boot([p["diff"] for p in live if not p["big"]]),
                "a_win_mean": round(sum(p["a_win"] for p in live) / len(live), 4) if live else None,
                "b_win_mean": round(sum(p["b_win"] for p in live) / len(live), 4) if live else None,
+               "check_big_mcts1043_playout": boot([sum(chk[j]["b"].values()) / CHECK_K - sum(chk[j]["a"].values()) / CHECK_K
+                                                   for j in chk]),
+               "check_big_same_positions_level_strong": boot([p["diff"] for p in live if p["j"] in chk]),
                "largest": [{k2: p[k2] for k2 in ("game", "turn", "start", "discarded", "b_discarded", "a_win",
                                                  "b_win", "diff")}
                            for p in sorted(live, key=lambda p: -abs(p["diff"]))[:3]]}
-    Path(out).write_text(json.dumps({"summary": summary, "positions": picks}, ensure_ascii=False, indent=1))
+    Path(out).write_text(json.dumps({"summary": summary, "positions": picks,
+                                     "check": {str(j): v for j, v in chk.items()}}, ensure_ascii=False, indent=1))
     print(json.dumps(summary, ensure_ascii=False, indent=1))
 
 

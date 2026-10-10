@@ -110,3 +110,16 @@ The architecture thread 18:45Z.
     others;
   - the 3 positions with the largest |difference|.
 - **J84** (the architecture thread): (b) − (a) > 0 on the point estimate, 55%.
+
+**Changes after the setup above, before any data** (the architecture thread 18:51Z, from the analysis line's reading
+of habit.py):
+1. **The rest of the discarding turn is played by the branch's own agent:** mcts:1043+plan+learned+phased for (a),
+   the same + xprune=3:3:cost for (b). Level-strong plays both sides only from the next turn on.
+   - Reason: the strongest tier's discard is often one step of a line, so handing the turn to level-strong would
+     favour (b).
+   - The worlds and agent seeds stay shared by both branches.
+2. **A small check, not part of J84:** on the "big" group, K = 8 per position, from the next turn on both sides play
+   mcts:1043+plan+learned+phased instead. Report (b) − (a), its interval, and whether it points the same way as
+   level-strong's play-out on the same positions.
+   - Seeds: 68650000 + 1000 j + k (j < 45, k < 8), i.e. 68650000–68694007.
+   - The main run uses 68600000–68644031.
