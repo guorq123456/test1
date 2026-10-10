@@ -122,6 +122,100 @@ def SP_acts(actions):
     return [from_dict(a) if isinstance(a, dict) else a for a in actions]
 
 
+P1_K, P1_BANK, P1_START = 48, 67100000, 320
+SPEC = "mcts:100+plan+learned+phased"
+
+
+def _p1_seeds(bank, k):
+    rng = random.Random(bank)
+    return [rng.randrange(2 ** 31) for _ in range(k)]
+
+
+def _p1_job(job):
+    """Puzzle 1's Kimika line, one game: determinize (Salem's deck re-shuffled, so Kimika's draw is re-dealt), play
+    Salem's first action (Kimika choosing Vorlalai), level-strong finishes the turn, default to the end."""
+    from svsim.core.engine import apply, legal_actions
+    from svsim.core.view import determinize
+    from svsim.search.foresight import direction_rollout
+    from svsim.tools.arena import make_agent
+    from svsim.ui import text as T
+    j, sd, st = job
+    state, rec = TL._start_state(st)
+    me = state.active
+    first = TL._salem_turn(rec, st["at"])[0]
+    s = determinize(state, me, random.Random(sd))
+    before = {c.uid for c in s.players[me].hand}
+    apply(s, first)
+    new_cards = [c for c in s.players[me].hand if c.uid not in before]
+    sag = any("相枛津" in (c.defn.name_zh or "") for c in new_cards)
+    _names()
+    drawn = [T.card_name(c.defn) for c in new_cards]
+    agent, n = make_agent("level-strong", sd), 0
+    while not s.over and s.active == me and n < 200:
+        apply(s, agent.act(s, legal_actions(s)))
+        n += 1
+    erntz = [c for c in s.players[1 - me].field if (c.defn.name_zh or "").endswith("伊兰翠")]
+    out = direction_rollout(s, direction="default", k=1, seed=sd, opp_spec=SPEC, our_spec=SPEC)["default"]
+    return {"j": j, "seed": sd, "drawn": drawn, "sag": sag, "enemy_erntz_left": bool(erntz), "over_in_turn": s.over,
+            "my_hp": s.players[me].leader_hp, "enemy_hp": s.players[1 - me].leader_hp, "result": out["samples"][0]}
+
+
+def _p1_bot_job(job):
+    from svsim.search.foresight import direction_rollout
+    st, plans_k, bank, k = job
+    state, _ = TL._start_state(st)
+    acts = next(p for p in plans_k["plans"] if p["kind"] == "bot")["actions"]
+    status, end = SP.turn_end(state, acts)
+    return direction_rollout(end, direction="default", k=k, seed=bank, opp_spec=SPEC, our_spec=SPEC)["default"]
+
+
+def p1run(args):
+    from multiprocessing import Pool
+    recs = TL._records(os.path.join(args.step0, "selfplay.jsonl"))
+    starts, plans = SP._starts(args.step0)
+    st = next(x for x in starts if x["k"] == P1_START)
+    seeds = _p1_seeds(args.bank, args.k)
+    with Pool(args.workers, initializer=SP._init, initargs=(recs,)) as pool, \
+            open(args.out, "w", encoding="utf-8") as fh:
+        for row in pool.imap(_p1_job, [(j, sd, st) for j, sd in enumerate(seeds)]):
+            fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+            fh.flush()
+        if not args.no_bot:
+            bot = pool.apply(_p1_bot_job, ((st, plans[P1_START], args.bank, args.k),))
+            fh.write(json.dumps({"bot_line": True, "seed": args.bank, "samples": bot["samples"]}) + "\n")
+    print(f"写进了 {args.out}")
+
+
+def p1read(args):
+    from collections import Counter
+    rows = SP._lines(args.rows)
+    kim = sorted([r for r in rows if "j" in r], key=lambda r: r["j"])
+    bot_new = next((r["samples"] for r in rows if r.get("bot_line")), None)
+    old = next(r for r in SP._lines(args.retest_rows) if r["k"] == P1_START and r["line"] == "bot")
+    assert len(kim) == P1_K and [r["seed"] for r in kim] == _p1_seeds(P1_BANK, P1_K) and len(old["samples"]) == P1_K
+    res = [r["result"] for r in kim]
+    m, lo, hi = _paired(res, old["samples"])
+    out = ["条件：对手卡表已知（牌序、手牌未知）。运营局面题 题 1（k = 320）的复测：先下琪米卡、抽牌重新发（README-puzzles.md）\n",
+           f"- 先下琪米卡这条线 {len(kim)} 局：胜率 {sum(res) / len(res):.3f}（{sum(r == 1.0 for r in res)} 胜）",
+           f"- **主读数**：对 bot 原来那条线（复测 {sum(old['samples']):.0f} / {len(old['samples'])}，种子 {old['seed']} 派生）逐局配对，"
+           f"配对差 **{m:+.3f}（{lo:+.3f}～{hi:+.3f}）**",
+           f"- **J46**（配对差区间不含 0，且 > 0，置信 65%）→ {'对' if lo > 0 else '错'}"]
+    if bot_new:
+        m2, lo2, hi2 = _paired(res, bot_new)
+        out.append(f"- 另报：bot 的线用这次的种子再打 {len(bot_new)} 局，胜率 {sum(bot_new) / len(bot_new):.3f}；"
+                   f"和琪米卡线逐局配对，差 {m2:+.3f}（{lo2:+.3f}～{hi2:+.3f}）")
+    drawn = Counter(d for r in kim for d in r["drawn"])
+    sag = [r for r in kim if r["sag"]]
+    out.append(f"- 琪米卡抽到的牌：" + "、".join(f"{k} {v}" for k, v in drawn.most_common()))
+    out.append(f"- 抽到口人魔的 {len(sag)} 局：胜率 {sum(r['result'] for r in sag) / len(sag) if sag else float('nan'):.3f}；"
+               f"没抽到的 {len(kim) - len(sag)} 局：胜率 "
+               f"{sum(r['result'] for r in kim if r not in sag) / max(1, len(kim) - len(sag)):.3f}")
+    out.append(f"- level-strong 打完这回合，对手的正义还在场上：{sum(r['enemy_erntz_left'] for r in kim)} / {len(kim)} 局")
+    text = "\n".join(out)
+    open(args.out, "w", encoding="utf-8").write(text + "\n")
+    print(text)
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -134,8 +228,19 @@ def main():
     a.add_argument("--retest", required=True)
     a.add_argument("--out", required=True)
     a.add_argument("--all", action="store_true", help="all 6 candidates, not only the puzzles")
+    a = sub.add_parser("p1run")
+    a.add_argument("step0")
+    a.add_argument("--out", required=True)
+    a.add_argument("--bank", type=int, default=P1_BANK)
+    a.add_argument("--k", type=int, default=P1_K)
+    a.add_argument("--workers", type=int, default=1)
+    a.add_argument("--no-bot", action="store_true")
+    a = sub.add_parser("p1read")
+    a.add_argument("rows")
+    a.add_argument("--retest-rows", required=True)
+    a.add_argument("--out", required=True)
     args = ap.parse_args()
-    {"read": read, "show": show}[args.cmd](args)
+    {"read": read, "show": show, "p1run": p1run, "p1read": p1read}[args.cmd](args)
 
 
 if __name__ == "__main__":
