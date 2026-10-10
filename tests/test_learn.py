@@ -906,6 +906,31 @@ def test_gate_pairs_carry_each_side_s_wall_time_on_the_moves_it_searched():
         assert ms["n"] == its["n"] > 0 and ms["total"] > 0 and abs(ms["mean"] * ms["n"] - ms["total"]) < 0.2
 
 
+def test_gate_pairs_count_each_side_s_evolutions():
+    """The horizon gates (2026-10-10): each pair carries A's and B's evolutions per game, [normal, super], by A's
+    seat, counted from the game's own actions."""
+    from svsim.core.actions import Evolve, from_dict
+    from svsim.tools.gate import _agent, _game, play_pair
+    from svsim.cards import decks
+    from svsim.ui.session import DECKS
+    out = play_pair((0, 11, "mcts:6+plan+learned+phased", "mcts:6+plan+learned+phased", None, None, "ramp", "ramp",
+                     None, None))
+    assert len(out["evolves"]) == len(out["evolves_b"]) == 2
+    assert all(len(e) == 2 and min(e) >= 0 for e in out["evolves"] + out["evolves_b"])
+    deck = decks.build(DECKS["ramp"][1])
+    _, record = _game(deck, deck, 0, _agent("mcts:6+plan+learned+phased", 22, None),
+                      _agent("mcts:6+plan+learned+phased", 7942, None), 11, "x", ["ramp", "ramp"])
+    counted = [[0, 0], [0, 0]]
+    from svsim.core.engine import apply, new_game
+    state = new_game(deck, deck, seed=11)
+    for a in record["actions"]:
+        a = from_dict(a)
+        if isinstance(a, Evolve):
+            counted[state.active][1 if a.super_ else 0] += 1
+        apply(state, a)
+    assert record["evolves"] == counted
+
+
 def test_alloc_self_scales_by_legal_moves_against_the_game_s_own_mean():
     """Line B1, second try (2026-10-08): +alloc=self:C[:W:LO:HI] gives clip(round(C x N x n / m), LO, HI), m this
     game's mean of legal moves so far with a prior of SELF_M0 weighing W decisions; a new game starts over."""

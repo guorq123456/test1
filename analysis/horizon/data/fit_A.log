@@ -1,115 +1,95 @@
 {
  "train": {
-  "contrast_mse_w": 0.008736,
-  "sign_w": 0.7512,
-  "sign_w_vs_original_labels": 0.7313,
+  "contrast_mse_w": 0.008687,
+  "sign_w": 0.7509,
+  "sign_w_vs_original_labels": 0.7381,
   "calib_logloss": 0.5946
  },
- "intercept": -0.3215,
- "seconds": 229,
+ "intercept": -0.3218,
+ "seconds": 253,
  "prices": {
-  "0": {
+  "half0": {
    "G": {
-    "ep": -1.4414,
-    "sep": 0.1501,
-    "max_pp": 9.2111,
-    "pp_left": -0.5519,
-    "hand": 3.5504,
-    "enemy_hp": -2.063,
-    "own_hp": 0.5637,
-    "own_followers": 0.7373,
-    "own_stats": 0.5105,
-    "enemy_followers": -3.9423,
-    "enemy_stats": -0.7498,
-    "own_amulets": 0.0,
-    "enemy_amulets": 0.0
+    "ep": -1.1872,
+    "sep": -0.6058,
+    "max_pp": 12.271,
+    "pp_left": -0.6687,
+    "hand": 3.956
    },
    "T": {
-    "ep": -0.7428,
-    "sep": 0.978,
-    "max_pp": 6.2352,
-    "pp_left": -0.4112,
-    "hand": 1.8955,
-    "enemy_hp": -2.4334,
-    "own_hp": 0.258,
-    "own_followers": -0.3283,
-    "own_stats": 0.7951,
-    "enemy_followers": -4.124,
-    "enemy_stats": -0.4782,
-    "own_amulets": 0.0,
-    "enemy_amulets": 0.0
+    "ep": -0.4779,
+    "sep": 1.7619,
+    "max_pp": 6.6294,
+    "pp_left": -0.8457,
+    "hand": 2.2092
    },
    "gap_prob": {
-    "max_pp": 0.029759,
-    "hand": 0.016549,
-    "sep": -0.008279
+    "max_pp": 0.056416,
+    "hand": 0.017468,
+    "sep": -0.023677
    },
-   "pairs": 2488,
-   "starts": 874
+   "pairs": 2443,
+   "starts": 871
   },
-  "1": {
+  "half1": {
    "G": {
-    "ep": 2.6594,
-    "sep": 0.3153,
-    "max_pp": 14.6306,
-    "pp_left": -1.1659,
-    "hand": 3.1352,
-    "enemy_hp": -2.2438,
-    "own_hp": 2.101,
-    "own_followers": 1.4404,
-    "own_stats": 0.5058,
-    "enemy_followers": -8.2854,
-    "enemy_stats": -0.3159,
-    "own_amulets": 0.0,
-    "enemy_amulets": 0.0
+    "ep": 2.285,
+    "sep": 0.4663,
+    "max_pp": 11.448,
+    "pp_left": -0.9316,
+    "hand": 2.7279
    },
    "T": {
-    "ep": 1.3015,
-    "sep": 1.0729,
-    "max_pp": 6.5884,
-    "pp_left": -1.3402,
-    "hand": 2.1959,
-    "enemy_hp": -2.2939,
-    "own_hp": 0.5591,
-    "own_followers": -0.1057,
-    "own_stats": 0.772,
-    "enemy_followers": -5.443,
-    "enemy_stats": -0.2332,
-    "own_amulets": 0.0,
-    "enemy_amulets": 0.0
+    "ep": 1.0466,
+    "sep": 0.1087,
+    "max_pp": 6.2797,
+    "pp_left": -0.806,
+    "hand": 1.9493
    },
    "gap_prob": {
-    "max_pp": 0.080422,
-    "hand": 0.009393,
-    "sep": -0.007576
+    "max_pp": 0.051683,
+    "hand": 0.007786,
+    "sep": 0.003576
    },
-   "pairs": 2385,
-   "starts": 837
+   "pairs": 2430,
+   "starts": 840
   },
-  "teacher_re_run_gap_prob": {
-   "max_pp": 0.05509,
-   "hand": 0.012971,
-   "sep": -0.007928
+  "all": {
+   "G": {
+    "ep": 0.3801,
+    "sep": 0.0583,
+    "max_pp": 11.6469,
+    "pp_left": -0.7751,
+    "hand": 3.2773
+   },
+   "T": {
+    "ep": 0.2099,
+    "sep": 1.0185,
+    "max_pp": 6.3572,
+    "pp_left": -0.8193,
+    "hand": 2.0494
+   },
+   "gap_prob": {
+    "max_pp": 0.052897,
+    "hand": 0.012279,
+    "sep": -0.009603
+   },
+   "pairs": 4873,
+   "starts": 1711
   }
  },
- "variance": {
+ "correction": {
   "step1": {
-   "n": 5453,
-   "var_L": 0.0226064,
-   "var_correction": 0.0009211,
-   "share": 0.0407,
-   "share_unweighted": 0.0309,
-   "mean_correction": -0.004306,
-   "mean_abs_correction": 0.019227
+   "examples": 108686,
+   "mean": -0.00393,
+   "mean_abs": 0.01967,
+   "nonzero": 79480
   },
   "teacher_ends": {
-   "n": 211696,
-   "var_L": 0.0144713,
-   "var_correction": 0.0009233,
-   "share": 0.0638,
-   "share_unweighted": 0.0585,
-   "mean_correction": -0.001103,
-   "mean_abs_correction": 0.021755
+   "examples": 211696,
+   "mean": -0.00113,
+   "mean_abs": 0.02105,
+   "nonzero": 162664
   }
  },
  "counts": {

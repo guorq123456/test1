@@ -1,32 +1,30 @@
-"""Horizon-corrected labels and the candidates they train (the architecture thread 2026-10-10 07:18Z and 07:33Z, from
-the analysis line's M5: 7a68636, the per-half prices ef6e3f0, the gates pre-registered in README-horizon.md, a5bd580).
-Condition: the opponent's deck list is known (order and hand not).
+"""Horizon-corrected labels and the candidate they train (the architecture thread 2026-10-10 07:18Z, from the
+analysis line's M5, 7a68636 / pre-registration 2240556). Condition: the opponent's deck list is known (order and hand
+not).
 
 Each step-1 contrast label L (labels.jsonl, c661c8a: the shrinkage label the step-1 candidate trained on) gets
-    L'' = L + sum_r (price_G,r - price_T,r) x dr,
-- candidate A: r in {max PP, hand, SEP}; candidate B (--followers): A plus the own follower count;
-- prices in win probability per unit (M5's points / 100; the labels are differences of win probabilities, as
-  learn.contrast's loss).
-- **Step-1 labels.** dr is the pair's M5 regressor: the mean over the plan's 16 T turn ends minus the bot's
-  (check_h.py's rows, the same numbers as m5_pairs.jsonl: checked on 6840/6840 pairs).
-  - Prices are cross-fitted by the analysis line's halves: game % 2 of the start (starts.jsonl), training starts,
-    end pairs out. A label of a start in one half takes the other half's prices.
-  - The five resources' prices are read from m5_halves.json. The own follower count's (B) come from the same
-    regression on the same halves (prices.py's fit, every coefficient); this script recomputes the five resources
-    too and asserts they match the file.
-- **Teacher re-run labels** (other starts, not in M5; 69% of the training weight). They have no M5 pair, so dr is
-  the example's own turn-end difference in the version-2 features (me_max_pp, me_hand, me_sep, me_followers; the
-  plan's end minus the line's, the same determinization). The price is the mean of the two halves'.
+    L'' = L + sum_r (price_G,r - price_T,r) x dr,   r in {max PP, hand, SEP},
+dr the example's resource difference (the plan's turn end minus the bot's / the line's, the same determinization;
+the version-2 features me_max_pp, me_hand, me_sep of s1_extract.py's examples), the prices in win probability per
+unit (M5's points / 100; the labels are differences of win probabilities, as learn.contrast's loss).
+- **Prices, cross-fitted.** M5's regression (its prices.py `fit`: through the origin, five resources and eight
+  controls; G_end by WLS on K, T by OLS) on M5's own pairs (m5_pairs.jsonl), end pairs out (its main read),
+  training starts only (no held-out start's outcome enters any price).
+  - The training starts are split in two halves by k % 2. A step-1 example of a start in one half is corrected with
+    the prices estimated on the other half, so no pair's correction uses its own outcome.
+  - The teacher re-run's examples (other starts, not in M5) take the prices of all training starts.
 - **Fit.** The step-1 candidate's own recipe (analysis/step1-candidate/s1_fit.py, cand-tl-ramp-ramp):
   learn.contrast.fit_contrast with mu 0.03, L2 1e-4, start at zero, 3000 iterations, lr 0.05, version-2 features
   with the version's signs, the stock prefixes held at zero, the intercept free; the same examples, weights and
   calibration rows. Only the labels differ, so cand-tl-ramp-ramp is the control.
-- **Output:** <OUT_ROOT>/<name>/ramp-ramp-ended.json. ramp-ramp-act.json is copied from cand-tl-ramp-ramp (= the
-  installed ACT, unchanged).
-- **Reported:** the share of L's variance the correction adds, Var(correction) / Var(L), over the training labels
-  (step 1: per label; teacher re-run: per example), weighted by the label weights.
+- **The candidate dir:** cand-th-ramp-ramp. ramp-ramp-ended.json is fit here; ramp-ramp-act.json is copied from
+  cand-tl-ramp-ramp (= the installed ACT, unchanged).
 
-usage: fit_h.py LABELS S1_DATA.npz CHECK_ROWS STARTS M5_PAIRS M5_HALVES OUT_ROOT NAME [--followers]"""
+- **Candidate B** (the architecture thread 07:33Z / 07:41Z): `--followers` adds the own follower count (me_followers;
+  its G_end - T price from the same regressions, a control there), everything else as A, the same k % 2 halves, so
+  A and B differ in that one term. Output dir: NAME (cand-thf-ramp-ramp).
+
+usage: fit_h.py LABELS S1_DATA.npz M5_PAIRS OUT_ROOT [NAME] [--followers]"""
 import hashlib, json, shutil, sys, time
 from collections import defaultdict
 from pathlib import Path
@@ -41,7 +39,7 @@ RES = ("ep", "sep", "max_pp", "pp_left", "hand")
 CTRL = ("enemy_hp", "own_hp", "own_followers", "own_stats", "enemy_followers", "enemy_stats", "own_amulets",
         "enemy_amulets")
 CORRECT = {"max_pp": "me_max_pp", "hand": "me_hand", "sep": "me_sep"}
-FOLLOWERS = {"own_followers": "me_followers"}
+FOLLOWERS = {"own_followers": "me_followers"}       # candidate B (--followers): A plus the own follower count
 
 
 def m5_fit(pairs, label, weighted):
@@ -55,30 +53,21 @@ def m5_fit(pairs, label, weighted):
     return dict(zip(RES + CTRL, beta))
 
 
-def prices(pairs, correct):
+def prices(pairs, correct=CORRECT):
     g, t = m5_fit(pairs, "dG", True), m5_fit(pairs, "dT", False)
     return {"G": g, "T": t, "gap": {r: (g[r] - t[r]) / 100.0 for r in correct}, "pairs": len(pairs),
             "starts": len({p["k"] for p in pairs})}
 
 
 def main():
-    labels_path, data_path, rows_path, starts_path, m5_path, halves_path, root, name = sys.argv[1:9]
+    labels_path, data_path, m5_path, root = sys.argv[1:5]
+    name = sys.argv[5] if len(sys.argv) > 5 and not sys.argv[5].startswith("--") else "cand-th-ramp-ramp"
     correct = dict(CORRECT, **(FOLLOWERS if "--followers" in sys.argv else {}))
-    game = {r["k"]: r["game"] for r in (json.loads(l) for l in open(starts_path)) if "k" in r}
     pairs = [json.loads(l) for l in open(m5_path) if l.strip()]
     main_pairs = [p for p in pairs if p["kind"] != "end" and p["split"] == "train"]
-    P = {h: prices([p for p in main_pairs if game[p["k"]] % 2 == h], correct) for h in (0, 1)}
-    filed = json.load(open(halves_path))["halves"]
-    for h in (0, 1):                                  # the five resources as the analysis line filed them
-        for lab, key in (("G", "G_end"), ("T", "T")):
-            for r in RES:
-                assert abs(P[h][lab][r] - filed[str(h)][key][r]) < 1e-6, (h, lab, r)
-    mean_gap = {r: (P[0]["gap"][r] + P[1]["gap"][r]) / 2 for r in correct}
-    dr = {}                                           # (k, plan) -> the pair's M5 regressors
-    for l in open(rows_path):
-        if l.strip():
-            q = json.loads(l)
-            dr[(q["k"], q["plan"])] = q["x"]
+    P = {"half0": prices([p for p in main_pairs if p["k"] % 2 == 0], correct),
+         "half1": prices([p for p in main_pairs if p["k"] % 2 == 1], correct),
+         "all": prices(main_pairs, correct)}
     lab = [json.loads(l) for l in open(labels_path) if l.strip()]
     header, lab = lab[0], lab[1:]
     z = np.load(data_path)
@@ -94,9 +83,9 @@ def main():
         by_key[k].append(i)
     kidx = {k: i for i, k in enumerate(keys)}
     src_of = {"step1": "step1", "teacher_ends": "old"}
-    rows, L0, L, w = [], [], [], []
+    rows, L0, L, w, srcs = [], [], [], [], []
     count = defaultdict(int)
-    var_parts = {"step1": ([], [], []), "teacher_ends": ([], [], [])}     # (L, correction, weight)
+    shift = defaultdict(list)
     for r in lab:
         if r["split"] != "train":
             continue
@@ -106,34 +95,12 @@ def main():
             continue
         count[f"{r['source']}_labels"] += 1
         count[f"{r['source']}_examples"] += len(ex)
-        if r["source"] == "step1":
-            x = dr.get((r["k"], r["plan"]))
-            if x is None:
-                count["step1_no_m5_pair"] += 1
-                d = 0.0
-            else:
-                gap = P[1 - game[r["k"]] % 2]["gap"]
-                d = sum(gap[res] * x[res] for res in correct)
-            var_parts["step1"][0].append(r["label"]); var_parts["step1"][1].append(d)
-            var_parts["step1"][2].append(r["weight"])
+        gap = (P["half1"] if r["k"] % 2 == 0 else P["half0"])["gap"] if r["source"] == "step1" else P["all"]["gap"]
         for i in ex:
-            if r["source"] != "step1":
-                d = sum(mean_gap[res] * float(X[ia[i], c] - X[ib[i], c]) for res, c in col.items())
-                var_parts["teacher_ends"][0].append(r["label"]); var_parts["teacher_ends"][1].append(d)
-                var_parts["teacher_ends"][2].append(r["weight"] / len(ex))
+            d = sum(gap[res] * float(X[ia[i], c] - X[ib[i], c]) for res, c in col.items())
             rows.append(i); L0.append(r["label"]); L.append(r["label"] + d); w.append(r["weight"] / len(ex))
-
-    def wvar(v, wt):
-        v, wt = np.asarray(v, float), np.asarray(wt, float)
-        m = np.sum(wt * v) / wt.sum()
-        return float(np.sum(wt * (v - m) ** 2) / wt.sum())
-    variance = {}
-    for s_, (lv, cv, wv) in var_parts.items():
-        variance[s_] = {"n": len(lv), "var_L": round(wvar(lv, wv), 7), "var_correction": round(wvar(cv, wv), 7),
-                        "share": round(wvar(cv, wv) / wvar(lv, wv), 4),
-                        "share_unweighted": round(float(np.var(cv) / np.var(lv)), 4),
-                        "mean_correction": round(float(np.average(cv, weights=wv)), 6),
-                        "mean_abs_correction": round(float(np.average(np.abs(cv), weights=wv)), 6)}
+            srcs.append(r["source"])
+            shift[r["source"]].append(d)
     rows, L0, L, w = np.array(rows), np.array(L0), np.array(L), np.array(w)
     XA, XB = X[ia[rows]].astype(np.float32), X[ib[rows]].astype(np.float32)
     ctr = np.where(z["Cg"] % 11 != 0)[0]
@@ -150,26 +117,26 @@ def main():
              "sign_w": round(float(np.sum(w * (np.sign(d) == np.sign(L))) / w.sum()), 4),
              "sign_w_vs_original_labels": round(float(np.sum(w * (np.sign(d) == np.sign(L0))) / w.sum()), 4),
              "calib_logloss": round(float(np.mean(np.logaddexp(0, zc) - yc * zc)), 4)}
+    corr = {s_: {"examples": len(v), "mean": round(float(np.mean(v)), 5), "mean_abs": round(float(np.mean(np.abs(v))), 5),
+                 "nonzero": int(np.sum(np.abs(np.array(v)) > 1e-12))} for s_, v in shift.items()}
     sha = lambda p: hashlib.sha256(Path(p).read_bytes()).hexdigest()   # noqa: E731
     rnd = lambda d_: {k: (round(v, 4) if isinstance(v, float) else v) for k, v in d_.items()}   # noqa: E731
     price_info = {h: {"G": rnd({k: float(v) for k, v in p["G"].items()}), "T": rnd({k: float(v) for k, v in p["T"].items()}),
                       "gap_prob": {k: round(float(v), 6) for k, v in p["gap"].items()}, "pairs": p["pairs"],
                       "starts": p["starts"]} for h, p in P.items()}
-    price_info["teacher_re_run_gap_prob"] = {k: round(float(v), 6) for k, v in mean_gap.items()}
     out = Path(root) / name
     out.mkdir(parents=True, exist_ok=True)
     info = {"moment": "ended", "contrast": True, "horizon_corrected": sorted(correct), "mu": MU, "l2": L2,
             "iters": ITERS, "lr": LR, "start": "zero", "labels": sha(labels_path), "m5_pairs": sha(m5_path),
-            "m5_halves": sha(halves_path), "halves": "game % 2 of the start",
             "label_calibration": header, "data_commit": "6f11111", "hold_out_every": 11, "version": 2,
             "stock_zeroed": list(STOCK), "calibration_rows": int(len(ctr)), "examples": int(len(rows)),
-            "counts": dict(count), "prices": price_info, "variance": variance,
+            "counts": dict(count), "prices": price_info, "correction": corr,
             "report": {k: (round(v, 6) if isinstance(v, float) else v) for k, v in report.items()},
             "train": train, "seconds": secs}
     to_linear_value(model, 2, (), info).save(out / "ramp-ramp-ended.json")
     shutil.copy(ROOT / "svsim/learn/phased_models/cand-tl-ramp-ramp/ramp-ramp-act.json", out / "ramp-ramp-act.json")
     print(json.dumps({"train": train, "intercept": round(float(model.w[bias]), 4), "seconds": secs,
-                      "prices": price_info, "variance": variance, "counts": dict(count)}, ensure_ascii=False, indent=1))
+                      "prices": price_info, "correction": corr, "counts": dict(count)}, ensure_ascii=False, indent=1))
 
 
 if __name__ == "__main__":

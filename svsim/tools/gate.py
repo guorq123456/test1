@@ -207,7 +207,9 @@ def _game(deck_cards, opponent_cards, seat: int, mine, theirs, seed: int, label:
     state = new_game(cards[0], cards[1], seed=seed)
     record = R.new_record(cards[0], cards[1], seed, state.first, label)
     record["names"] = names if seat == 0 else names[::-1]
+    from svsim.core.actions import Evolve
     searches, counts, times = [_search(x) for x in agents], ([], []), ([], [])
+    evolves = [[0, 0], [0, 0]]
     while not state.over:
         planner = planners[state.active]
         if planner is not None:
@@ -224,9 +226,12 @@ def _game(deck_cards, opponent_cards, seat: int, mine, theirs, seed: int, label:
         if planner is not None and planner.last_plan is not None:   # the planner's measurements, kept
             record.setdefault("plans", []).append(_plan(state, len(record["actions"]), planner.last_plan,
                                                         record["names"]))
+        if isinstance(action, Evolve):                  # evolutions per side (normal, super): counted, nothing else
+            evolves[state.active][1 if action.super_ else 0] += 1
         R.add(record, action)
         apply(state, action)
     record["winner"] = state.winner
+    record["evolves"] = evolves                                           # by seat: [normal, super]
     record["iterations"] = [iteration_summary(c) for c in counts]     # by seat: where each side's search went
     record["ms"] = [ms_summary(t) for t in times]                         # by seat: its wall time on those moves
     return 1.0 if state.winner == seat else 0.5 if state.winner not in (0, 1) else 0.0, record
@@ -259,6 +264,7 @@ def play_pair(job) -> dict:
         out["same"] = [moves[("points", s)] == moves[("b_points", s)] for s in (0, 1)]
         return out
     points, games, moves, iterations, iterations_b, ms, ms_b = [], [], [], [], [], [], []
+    evolves, evolves_b = [], []
     for seat in (0, 1):
         pts, record = _game(mine, theirs, seat, _agent(a, 2 * seed + seat, model_a, phased_a),
                             _agent(b, 2 * seed + 1 - seat + 7919, model_b, phased_b), seed,
@@ -268,12 +274,15 @@ def play_pair(job) -> dict:
         iterations_b.append(record["iterations"][1 - seat])
         ms.append(record["ms"][seat])
         ms_b.append(record["ms"][1 - seat])
+        evolves.append(record["evolves"][seat])          # A's [normal, super] in this game, by A's seat
+        evolves_b.append(record["evolves"][1 - seat])
         if record.get("plans"):
             games.append(record)
         moves.append(record["actions"])
     # the same moves in both games (both agents chose alike all game): the pair adds nothing but its draw
     return {"k": k, "seed": seed, "points": points, "games": games, "same": moves[0] == moves[1],
-            "iterations": iterations, "iterations_b": iterations_b, "ms": ms, "ms_b": ms_b}
+            "iterations": iterations, "iterations_b": iterations_b, "ms": ms, "ms_b": ms_b,
+            "evolves": evolves, "evolves_b": evolves_b}
 
 
 def pair_score(d: dict) -> float:
