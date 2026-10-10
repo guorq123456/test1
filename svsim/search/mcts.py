@@ -121,9 +121,10 @@ def _rank(state: GameState, action) -> tuple:
             return 0, -(attacker.atk if attacker else 0)
         return 4, 0
     if isinstance(action, PlayCard):
-        card = state.in_hand(state.active, action.uid)
-        if card is not None and state.players[state.active].combo < 2 and _combo_payoff(card.defn):
-            return 1, 1              # a Combo card is better played after others: tried after them
+        if state.players[state.active].combo < 2:     # (checked first: no hand lookup once Combo is 2)
+            card = state.in_hand(state.active, action.uid)
+            if card is not None and _combo_payoff(card.defn):
+                return 1, 1          # a Combo card is better played after others: tried after them
         return 1, 0
     if isinstance(action, Evolve):
         return 2, 0
@@ -406,14 +407,17 @@ class ISMCTS:
                 path.append(child)
                 break
             best, best_ucb = None, -math.inf
+            children, c, log, sqrt = node.children, self.c, math.log, math.sqrt
+            scaled = self.normalize and self._qmax is not None and self._qmax - self._qmin > 1e-9
+            by_max = self.backup == "max"            # self.estimate, inline
             for k in options:
-                child = node.children[k]
-                q = self.estimate(child)
-                if self.normalize and self._qmax is not None and self._qmax - self._qmin > 1e-9:
+                child = children[k]
+                q = child.value if by_max else child.total / child.visits
+                if scaled:
                     q = (q - self._qmin) / (self._qmax - self._qmin)
-                ucb = q + self.c * math.sqrt(math.log(child.avail) / child.visits)
+                ucb = q + c * sqrt(log(child.avail) / child.visits)
                 if prior is not None:
-                    ucb += self.c_prior * prior.get(k, 0.0) * math.sqrt(node.visits + 1) / (1 + child.visits)
+                    ucb += self.c_prior * prior.get(k, 0.0) * sqrt(node.visits + 1) / (1 + child.visits)
                 if ucb > best_ucb:
                     best, best_ucb = k, ucb
             node = node.children[best]

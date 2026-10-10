@@ -174,9 +174,9 @@ def recurring_sum(p) -> list[float]:
     return list(hit)
 
 
-def resources(state: GameState, side: int, hidden: bool) -> list[float]:
+def resources(state: GameState, side: int, hidden: bool, incoming_threat: int | None = None) -> list[float]:
     """The version-2 features of `side` (see SIDE2); `hidden`: its hand is unknown to the
-    player the position is scored for."""
+    player the position is scored for. `incoming_threat`: _board_threat(state, 1 - side), when the caller has it."""
     from svsim.search.evaluate import burn, effective_hp
     p, enemy = state.players[side], state.players[1 - side]
     if hidden:
@@ -187,27 +187,52 @@ def resources(state: GameState, side: int, hidden: bool) -> list[float]:
     else:
         hand, total = _roles_sum(p.hand), _roles_sum(p.deck_view())
     rec = recurring_sum(p)
-    incoming = _board_threat(state, 1 - side) + recurring_sum(enemy)[0] + burn(p)
+    if incoming_threat is None:
+        incoming_threat = _board_threat(state, 1 - side)
+    incoming = incoming_threat + recurring_sum(enemy)[0] + burn(p)
     lasts = min(effective_hp(p) / max(incoming, 1.0), 10.0)
     return hand + total + rec + [lasts]
 
 
-def side_features(state: GameState, side: int, potential: bool, version: int = 1, hidden: bool = False) -> list[float]:
+_WARD, _BANE, _DRAIN, _BARRIER = Keyword.WARD, Keyword.BANE, Keyword.DRAIN, Keyword.BARRIER
+_UNSEEN_KW = Keyword.AMBUSH | Keyword.AURA | Keyword.INTIMIDATE
+
+
+def side_features(state: GameState, side: int, potential: bool, version: int = 1, hidden: bool = False,
+                  threats: tuple | None = None) -> list[float]:
+    """`threats`: (_board_threat(state, side), _board_threat(state, 1 - side)), when the caller has them."""
     p, enemy = state.players[side], state.players[1 - side]
     hp = effective_hp(p)                 # a crest that hurts its holder: the defense it will take
     followers = p.followers
-    k = [f.keywords for f in followers]
-    threat = _board_threat(state, side)
+    if threats is None:
+        threats = (_board_threat(state, side), _board_threat(state, 1 - side))
+    threat = threats[0]
+    # the whole-number counts in one pass (integers: the same values in any order); the float sum stays a sum()
+    life = ward = bane = drain = barrier = unseen = 0
+    for f in followers:
+        x = f.keywords
+        life += max(f.life, 0)
+        if x & _WARD:
+            ward += 1
+        if x & _BANE:
+            bane += 1
+        if x & _DRAIN:
+            drain += f.atk
+        if x & _BARRIER:
+            barrier += 1
+        if x & _UNSEEN_KW:
+            unseen += 1
+    amulets = amulet_cost = 0
+    for c in p.field:
+        if c.defn.is_amulet:
+            amulets += 1
+            amulet_cost += c.defn.cost
+    deck = p.deck_view()
     out = [hp, math.sqrt(hp), float(hp <= 5), len(followers),
            sum(f.atk * (0.3 if prop(f, "cant_attack") else 1.0) for f in followers),
-           sum(max(f.life, 0) for f in followers),
-           sum(1 for x in k if x & Keyword.WARD), sum(1 for x in k if x & Keyword.BANE),
-           sum(f.atk for f in followers if f.keywords & Keyword.DRAIN),
-           sum(1 for x in k if x & Keyword.BARRIER),
-           sum(1 for x in k if x & (Keyword.AMBUSH | Keyword.AURA | Keyword.INTIMIDATE)),
-           sum(1 for c in p.field if c.defn.is_amulet), sum(c.defn.cost for c in p.field if c.defn.is_amulet),
+           life, ward, bane, drain, barrier, unseen, amulets, amulet_cost,
            good_crests(p),
-           hand_count(p), p.ep, p.sep, p.max_pp, float(len(p.deck_view()) <= 3), float(not p.deck_view()),
+           hand_count(p), p.ep, p.sep, p.max_pp, float(len(deck) <= 3), float(not deck),
            min(threat, max(enemy.leader_hp, 0)), float(threat >= enemy.leader_hp)]
     if potential:
         from svsim.search.combo import next_turn_damage
@@ -216,7 +241,7 @@ def side_features(state: GameState, side: int, potential: bool, version: int = 1
         full = next_turn_damage(state, side, 300, board=False, pp=10)
         out += [min(dmg, hp), float(dmg >= hp), min(full, hp), float(full >= hp)]
     if version >= 2:
-        out += resources(state, side, hidden)
+        out += resources(state, side, hidden, threats[1])
     return out
 
 
@@ -367,8 +392,9 @@ def held_points(state: GameState, side: int, hidden: bool) -> list[float]:
 def features(state: GameState, player: int, potential: bool = True, version: int = 1) -> list[float]:
     """The features of `state` scored for `player` (the opponent moves next)."""
     extra = held_points(state, player, False) + held_points(state, 1 - player, True) if version >= 3 else []
-    return (side_features(state, player, potential, version) +
-            side_features(state, 1 - player, potential, version, hidden=True) + extra + [1.0])
+    mine, theirs = _board_threat(state, player), _board_threat(state, 1 - player)   # each side's, once
+    return (side_features(state, player, potential, version, threats=(mine, theirs)) +
+            side_features(state, 1 - player, potential, version, hidden=True, threats=(theirs, mine)) + extra + [1.0])
 
 
 # Feature sets added by name (the C track, 2026-10-08, as registered in the analysis thread's audit of where the

@@ -201,3 +201,60 @@ the rest outside the search didn't change.
   - It turned up a stale expectation, not a change of play: test_lethal3's Ramp misses replay now finds
     g127 too, since the fixed realize (9c1bb01); the old code fails the same way.
   - The test skips without $SVSIM_STEP1_DIR, so it went unseen. FOUND is updated.
+
+## Round 4 (the architecture thread 13:53Z; J64)
+
+Same rules: golden record identical, cmp_roots hash equal, no float `sum()` swapped for a loop, no gate. Also
+required this time: cand-kc's and cand-nl's logits bit-identical (or within 1e-12), and the same play on the puzzle
+bank, seeds 1–8. Condition: 对手卡表已知（牌序、手牌未知）.
+
+**Changes** (all exact):
+1. **`side_features`.** The whole-number counts (defense, Ward, Bane, Drain attack, Barrier, hidden keywords,
+   amulets and their cost) are added in one pass over the followers and the field, instead of eight generator
+   sums. They are integers, so the order doesn't matter. The one float sum (attack, × 0.3 if it can't attack) stays a
+   `sum()`.
+   - `features` computes each side's `_board_threat` once and passes it on. It used to be computed twice per side,
+     in side_features and in resources.
+2. **`model.logit` without a hidden layer** sums `c × ((v − m) / s)` in one generator: the same products in the same
+   order, without the intermediate list.
+3. **`engine.play_form`.**
+   - It takes prop's fast path inline (no grants and not silenced: the card's own script).
+   - It skips the generator for a card with no Enhance.
+4. **`mcts._rank`.** It checks Combo < 2 before looking the card up in the hand: the same rank.
+5. **The UCB loop in `_iterate`.**
+   - Locals for math.log / sqrt and the exploration constant.
+   - `estimate` inline: the node's value for max backup, total / visits for mean.
+   - The normalize test once per node instead of once per child. The same float operations in the same order.
+
+**Result** (bench.py, the same 28 step-1 starts; old = afc85df in a worktree; three alternating rounds):
+
+| | old | new |
+|---|---|---|
+| iterations per second | 2113.8 / 2058.5 / 2130.7 (median 2113.8) | 2292.9 / 2160.5 / 2300.3 (median 2292.9) |
+| ms per decision, whole agent | 130.7 / 136.6 / 134.7 | 120.8 / 129.7 / 121.0 |
+
+**+8.5% iterations per second (medians): J64 right.**
+
+**Each model's rate** (nl_speed.py, ISMCTS.choose; old and new runs interleaved, two runs of two rounds each,
+median of four):
+
+| | old | new |
+|---|---|---|
+| installed | 1932 | 2239 |
+| cand-kc | 2024 | 2118 (+4.6%) |
+| cand-nl | 1706 | 1828 (+7.2%) |
+
+The installed model's old rounds include one low outlier (1733), so bench.py's alternating read above is the J64
+measure. data/r4/.
+
+**Checks:**
+- Golden identical.
+- **cmp_roots 142cc567…2b9adf (unchanged).**
+  - No float sum changed form: the integer counts are exact on any Python, and logit's sum is still `sum()` over
+    the same terms in the same order.
+  - So the hash Salem's Windows machine checks shouldn't change either.
+- Logits of the installed model, cand-kc and cand-nl on 718 turn ends: bit-identical, old against new
+  (`logits_dump.py`, run from each checkout).
+- Puzzle bank, seeds 1–8 (7 puzzles, 56 runs each): every end the same, old against new.
+  - Installed 0/40, cand-kc 3/40, cand-nl 4/40.
+- Full suite with the step-1 data: 1161 passed, 1 skipped.

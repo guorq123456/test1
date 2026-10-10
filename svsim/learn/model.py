@@ -62,11 +62,11 @@ class LinearValue:
         return x
 
     def logit(self, state: GameState, player: int) -> float:
+        if not self.hidden:              # the same products summed in the same order, without the list
+            return sum(c * ((v - m) / s) for c, v, m, s in zip(self.coef, self.inputs(state, player), self.mean,
+                                                               self.std))
         x = [(v - m) / s for v, m, s in zip(self.inputs(state, player), self.mean, self.std)]
-        out = sum(c * v for c, v in zip(self.coef, x))
-        if self.hidden:
-            out += self._hidden_out(x)
-        return out
+        return sum(c * v for c, v in zip(self.coef, x)) + self._hidden_out(x)
 
     # A small hidden layer (at most _PY_HIDDEN weights that can be nonzero, e.g. cand-nl's 16 units over 71 inputs)
     # is summed in plain Python (2026-10-10): numpy in the search's hot path cost more than the layer itself, the

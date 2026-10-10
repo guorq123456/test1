@@ -85,10 +85,10 @@ def play_form(p: PlayerState, card: CardInstance) -> PlayForm | None:
     forced when affordable; Accelerate / Crystallize only when the normal cost
     can't be paid, using the highest payable one."""
     script = script_for(card.defn.card_id)
-    if prop(card, "unplayable"):
-        return None
+    if (script.unplayable if not card.grants and not card.silenced else prop(card, "unplayable")):  # prop's fast
+        return None                                                                               # path inline
     if card.cost <= p.pp:
-        enhanced = max((cost for cost in script.enhance if cost <= p.pp), default=0)
+        enhanced = max((cost for cost in script.enhance if cost <= p.pp), default=0) if script.enhance else 0
         if enhanced and card.defn.is_follower and fanfare_suppressed(p):
             enhanced = 0
         return PlayForm(enhanced or card.cost, script, enhanced, card.defn.is_spell, None)
