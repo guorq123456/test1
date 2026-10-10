@@ -96,3 +96,13 @@ python -m svsim.tools.host lethal2_games read analysis/gates/lethal2/records.jso
 - 推：`analysis/gates/lethal2/` 下的 ncheck_pirate_pirate.jsonl、pirate_pirate.jsonl、records.jsonl（约几 MB）。
 - 谜题那一行和 `lethal2_games read` 打出的几行也一起发回来。
 - 算力：门约 10 分钟，附带脚本重打约 10 分钟，计时约几分钟，合计约半小时。
+
+## 换机器：改在分析线的容器里跑（架构线程 05:17Z：Salem 的机器从 02:37Z 起整台离线，没有回来的时间，改在分析线自己的容器里跑。在任何运行之前标在这里）
+- **机器**：分析线的云容器（Linux，4 个 CPU，15 GB 内存）。
+- **进程数**：3 个 worker（核数减一），经 `svsim.tools.host`（CPU0 留空、低优先级）。
+- **svsim**：建造线 23b317d（含 dcb9159、d7aa1ad）。
+- **其余一概不变**：种子、K、nodes、门槛、读法都照原来的预注册。这是执行上的改动，不是方法上的。
+- 数据在同一台机器上产生、在同一台机器上读。
+- **等算力在下棋的地方量**：决定 B 迭代次数的 20 对复核，和门本身在同一个容器、同样 3 个进程下跑。附带脚本的重打和计时也在这里。
+- 谜题那一条也在这台机器上跑。
+- 估计约 45 分钟。
