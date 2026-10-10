@@ -125,7 +125,8 @@ nemesis-t|pirate-t|105 40 c95bc23d4d17a38ca068ea2299cf7674ca0e851755dbb34d93bae7
 - 这边（Linux）在独立 worktree 里核过：apply 之后 test_web、test_learn、test_xprune、test_golden_search 共 70 项全过；冒烟测试 OK；revert 之后 git 工作区干净。
 
 **装之前要知道的两件事**
-- **`level-strong` 的意思会变。** arena 的 `level-strong` 就是 `LEVELS["strong"]`。装后，所有拿 `level-strong` 当对照的门、标定都是对新强档。要和旧强档比，就写明 `mcts:200+plan+learned+phased`（即 `v2s`）。
+- **`level-strong` 的意思会变。** arena 的 `level-strong` 就是 `LEVELS["strong"]`。装后，所有拿 `level-strong` 当对照的门、标定都是对新强档。
+  - 架构线程 21:14Z 定：装后要和旧强档比的门和标定，一律写明 `v2s`；新强档写 `v2sx`。
 - **强档的 CR 是旧 bot 测的。** ratings.json 里强档各卡组的 CR（跳费龙 1331、连击妖 1340 等）是装前的值。装后在重新标定之前，开局界面显示的仍是旧值。要不要把它标成「待标定」，由 Salem 定；这个包不动 ratings.json。
 
 **装（Salem 点头、电脑连上以后）**：在仓库根目录、cmd 里一行（低于正常优先级，掩码 0xFFFFE 不用 CPU0，最多 3 个进程）：
@@ -153,3 +154,7 @@ start "" /WAIT /BELOWNORMAL /AFFINITY FFFFE cmd /c "python analysis\install\stro
 - 预期：check 打印 `"state": "not installed"` 和改前哈希 d1eb81d0…ea10；pytest 全过。
 - 也可以直接 `git checkout -- svsim/ui/session.py svsim/tools/arena.py tests/test_web.py tests/test_learn.py`。
 - 已经打出的对局记录里写着 `v2sx`，回退后照样能读。
+- **强档的 CR**（架构线程 21:14Z 定）：ratings.json 不动。
+  - 强档的 CR 是加剪枝之前测的。
+  - 门里跳费龙镜像约 +23 CR，其他对位约 0。
+  - 要不要重新标定，等 Salem 定。
