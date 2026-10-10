@@ -139,6 +139,111 @@ def m3(args):
         print(f"- {f}：{statistics.mean(v):+.2f} / {statistics.median(v):+.1f} / {sum(1 for x in v if x)}")
 
 
+# --- M4: direction-conditioned play to the end (README M4) ----------------------------------------------------------
+SPEC = "mcts:100+plan+learned+phased"           # the stage-0 G_end bot: the opponent and under every direction
+ORDER = ("default", "race", "clear", "conserve")  # ties in the best direction go to the earlier one
+
+
+def _m3_starts(step0):
+    """The 85 stage-0 starts where Salem's line is its own candidate with G_end, sorted by k (i = 0..84)."""
+    starts, plans = SP._starts(step0)
+    G = {r["k"]: r["results"] for r in SP._lines(os.path.join(step0, "gend.jsonl"))}
+    out = [st for st in starts if "salem" in [p["kind"] for p in plans[st["k"]]["plans"]]
+           and st["k"] in G and "salem" in G[st["k"]]]
+    return out, plans
+
+
+def _m4_job(job):
+    import time
+    from svsim.search.foresight import direction_rollout
+    i, st, plans_k, line, d, k, nodes, bank = job
+    state, rec = TL._start_state(st)
+    acts = TL._salem_turn(rec, st["at"]) if line == "salem" else \
+        next(p for p in plans_k["plans"] if p["kind"] == "bot")["actions"]
+    status, end = SP.turn_end(state, acts)
+    t = time.perf_counter()
+    if status != "ended":
+        return {"i": i, "k": st["k"], "line": line, "direction": d, "status": status}
+    out = direction_rollout(end, direction=d, k=k, seed=bank + 500 * i, opp_spec=SPEC, our_spec=SPEC,
+                            nodes=nodes)[d]
+    return {"i": i, "k": st["k"], "own_turn": st["own_turn"], "line": line, "direction": d, "status": status,
+            "seed": bank + 500 * i, "win": out["win"], "samples": out["samples"], "turns": out["turns"],
+            "ms": out["ms"], "wall": round(time.perf_counter() - t, 1)}
+
+
+def m4run(args):
+    from multiprocessing import Pool
+    recs = TL._records(os.path.join(args.step0, "selfplay.jsonl"))
+    starts, plans = _m3_starts(args.step0)
+    dirs = args.directions or list(ORDER)
+    jobs = [(i, st, plans[st["k"]], line, d, args.k, args.nodes, args.bank) for i, st in enumerate(starts)
+            if not args.ks or st["k"] in args.ks for line in ("salem", "bot") for d in dirs]
+    print(f"{len(jobs) // (2 * len(dirs))} 个开头 × 2 条线 × {len(dirs)} 个方向，每格 K = {args.k}，nodes = {args.nodes}："
+          f"{len(jobs) * args.k} 局", flush=True)
+    with Pool(args.workers, initializer=SP._init, initargs=(recs,)) as pool, \
+            open(args.out, "w", encoding="utf-8") as fh:
+        for n, row in enumerate(pool.imap_unordered(_m4_job, jobs), 1):
+            fh.write(json.dumps(row) + "\n")
+            fh.flush()
+            if n % 40 == 0:
+                print(f"{n}/{len(jobs)}", flush=True)
+    print(f"写进了 {args.out}")
+
+
+def m4read(args):
+    import numpy as np
+    from collections import Counter, defaultdict
+    rows = [r for r in SP._lines(args.rows) if r.get("status") == "ended"]
+    m3 = {r["k"]: r for r in SP._lines(args.m3)}
+    W = defaultdict(dict)
+    for r in rows:
+        W[(r["k"], r["line"])][r["direction"]] = r["win"]
+    ks = sorted({k for k, _ in W if len(W[(k, "salem")]) == len(ORDER) and len(W[(k, "bot")]) == len(ORDER)})
+
+    def best(w):
+        top = max(w.values())
+        return top, next(d for d in ORDER if w[d] == top)
+    per = []
+    for k in ks:
+        (ss, cs), (sb, cb) = best(W[(k, "salem")]), best(W[(k, "bot")])
+        fav = 1.0 if ss > sb else 0.5 if ss == sb else 0.0
+        ds, db = W[(k, "salem")]["default"], W[(k, "bot")]["default"]
+        per.append({"k": k, "score_s": ss, "score_b": sb, "choice_s": cs, "choice_b": cb, "fav": fav,
+                    "fav_default": 1.0 if ds > db else 0.5 if ds == db else 0.0,
+                    "t": float(m3[k]["t_favours_salem"]), "g": m3[k]["g_favours_salem"], "cls": m3[k]["class"]})
+    rng = np.random.default_rng(0)
+    fav = np.array([p["fav"] for p in per])
+    diff = np.array([p["fav"] - p["t"] for p in per])
+    bs = [diff[rng.integers(0, len(diff), len(diff))].mean() for _ in range(2000)]
+    bf = [fav[rng.integers(0, len(fav), len(fav))].mean() for _ in range(2000)]
+    print("条件：对手卡表已知（牌序、手牌未知）。M4：按方向打到终局\n")
+    print(f"- 开头 {len(per)} 个（两条线、四个方向都齐的）")
+    print(f"- **分数偏向 Salem**（各方向胜率取最大，严格更高算 1，相等算一半）：{fav.mean():.1%}"
+          f"（{np.percentile(bf, 2.5):.1%}～{np.percentile(bf, 97.5):.1%}）；T 偏向 Salem {np.mean([p['t'] for p in per]):.1%}")
+    print(f"- **配对差**（分数偏向 − T 偏向）：{diff.mean():+.3f}（{np.percentile(bs, 2.5):+.3f}～{np.percentile(bs, 97.5):+.3f}）")
+    print(f"- **J32**（> 54.1%，置信 55%）→ {'对' if fav.mean() > 0.541 else '错'}（看点估计）")
+    agree = [p for p in per if p["fav"] != 0.5 and p["g"] != 0.5]
+    print(f"- 和第 0 步 G_end 胜者的一致：{np.mean([(p['fav'] > 0.5) == (p['g'] > 0.5) for p in agree]):.1%}"
+          f"（两边都不打平的 {len(agree)} 个开头）；只用 default 方向时偏向 Salem {np.mean([p['fav_default'] for p in per]):.1%}")
+    print("\n各方向的平均胜率（Salem 的线 / bot 的线）：")
+    for d in ORDER:
+        print(f"- {d}：{np.mean([W[(k, 'salem')][d] for k in ks]):.3f} / {np.mean([W[(k, 'bot')][d] for k in ks]):.3f}")
+    print("\n选中的方向（Salem 的线 / bot 的线）：" + "；".join(
+        f"{d} {sum(p['choice_s'] == d for p in per)} / {sum(p['choice_b'] == d for p in per)}" for d in ORDER))
+    print("\n和 M3 归类的交叉（每类：个数、分数偏向 Salem、Salem 的线选中的方向）：")
+    for c in ("race", "clear", "develop", "conserve", "mixed", "small"):
+        sel = [p for p in per if p["cls"] == c]
+        if sel:
+            print(f"- {c}：{len(sel)}；{np.mean([p['fav'] for p in sel]):.1%}；"
+                  + "、".join(f"{d} {n}" for d, n in Counter(p["choice_s"] for p in sel).most_common()))
+    turns = defaultdict(list)
+    for r in rows:
+        if r["turns"]:
+            turns[r["direction"]].append(r["ms"] / (len(r["samples"]) * r["turns"]))
+    print("\n每个全局回合的毫秒数（含对手；对手在各方向相同）：" + "；".join(
+        f"{d} {np.mean(turns[d]):.0f}" for d in ORDER if turns[d]))
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -146,8 +251,20 @@ def main():
     a.add_argument("step0")
     a.add_argument("--out", required=True)
     a.add_argument("--m2", default=None, help="M2's rows (setup_prob.py run): adds the setup class")
+    a = sub.add_parser("m4run")
+    a.add_argument("step0")
+    a.add_argument("--out", required=True)
+    a.add_argument("--k", type=int, default=12)
+    a.add_argument("--nodes", type=int, required=True, help="the biased directions' planner nodes (fixed in the smoke)")
+    a.add_argument("--bank", type=int, default=66540000)
+    a.add_argument("--workers", type=int, default=12)
+    a.add_argument("--ks", type=int, nargs="*", default=None, help="only these step-0 k (smoke tests)")
+    a.add_argument("--directions", nargs="*", default=None)
+    a = sub.add_parser("m4read")
+    a.add_argument("rows")
+    a.add_argument("--m3", required=True, help="m3_rows.jsonl")
     args = ap.parse_args()
-    {"m3": m3}[args.cmd](args)
+    {"m3": m3, "m4run": m4run, "m4read": m4read}[args.cmd](args)
 
 
 if __name__ == "__main__":

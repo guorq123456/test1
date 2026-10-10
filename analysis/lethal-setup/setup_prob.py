@@ -92,20 +92,20 @@ def check(args):
 
 
 def _job(job):
-    i, st_row, plans_k, fn_path = job
+    i, st_row, plans_k, fn_path, bank = job
     mod, name = fn_path.split(":")
     nlp = getattr(importlib.import_module(mod), name)
     _, (fs, ss), (fb, sb), same = _both(st_row, {st_row["k"]: plans_k})
-    seed = BANK + 100 * i
+    seed = bank + 100 * i
 
     def p_nl(status, s):
+        """(P_NL, the tool's detail): a line that won during its own turn 1 with no detail; the tool's "p" else."""
         if status == "won":
             return 1.0, None
         if status != "ended":
             return None, None
         out = nlp(s, K, seed, reply_spec="level-strong")
-        return (out if isinstance(out, (int, float)) else out["mean"]), (None if isinstance(out, (int, float))
-                                                                         else out)
+        return out["p"], out
     ps, ds = p_nl(fs, ss)
     pb, db = (ps, ds) if same else p_nl(fb, sb)
     return {"i": i, "k": st_row["k"], "own_turn": st_row["own_turn"], "seed": seed, "same": same,
@@ -116,7 +116,8 @@ def run(args):
     from multiprocessing import Pool
     recs = TL._records(os.path.join(args.step0, "selfplay.jsonl"))
     starts, plans = _starts(args.step0)
-    jobs = [(i, st, plans[st["k"]], args.fn) for i, st in enumerate(starts)][:args.limit or None]
+    jobs = [(i, st, plans[st["k"]], args.fn, args.bank) for i, st in enumerate(starts)
+            if not args.ks or st["k"] in args.ks][:args.limit or None]
     with Pool(args.workers, initializer=_init, initargs=(recs,)) as pool, open(args.out, "w", encoding="utf-8") as fh:
         for n, row in enumerate(pool.imap_unordered(_job, jobs), 1):
             fh.write(json.dumps(row) + "\n")
@@ -131,8 +132,17 @@ def read(args):
     rows = [r for r in _lines(args.rows) if r["salem"] is not None and r["bot"] is not None]
     rng = np.random.default_rng(0)
 
-    def boot(sel):
-        d = np.array([r["salem"] - r["bot"] for r in sel])
+    def excl(p, d):
+        """P_NL with the incomplete find_lethal samples left out (they are always 0): sum / (k - incomplete)."""
+        if d is None:
+            return p
+        n = len(d["samples"]) - d["incomplete"]
+        return sum(d["samples"]) / n if n > 0 else None
+    for r in rows:
+        r["salem_x"], r["bot_x"] = excl(r["salem"], r["salem_detail"]), excl(r["bot"], r["bot_detail"])
+
+    def boot(sel, a="salem", b="bot"):
+        d = np.array([r[a] - r[b] for r in sel])
         if not len(d):
             return float("nan"), float("nan"), float("nan")
         bs = [d[rng.integers(0, len(d), len(d))].mean() for _ in range(2000)]
@@ -152,7 +162,16 @@ def read(args):
     dropped = len(_lines(args.rows)) - len(rows)
     print(f"- 复现失败、不算的开头 {dropped} 个；bot 的线当回合就赢的 {sum(r['bot_status'] == 'won' for r in rows)} 个，"
           f"Salem 的 {sum(r['salem_status'] == 'won' for r in rows)} 个")
+    dets = [d for r in rows for d in {id(r["salem_detail"]): r["salem_detail"], id(r["bot_detail"]): r["bot_detail"]}.values() if d]
+    searched = sum(e in ("lethal", "no lethal") for d in dets for e in d["ends"])
+    inc = sum(d["incomplete"] for d in dets)
+    print(f"- find_lethal 没跑完（没找到 sure 且撞到节点上限）：{inc} / {searched}（{inc / max(searched, 1):.1%}）")
+    print(f"- 两条线 P_NL 都 ≥ 0.9 的开头：{np.mean([min(r['salem'], r['bot']) >= 0.9 for r in rows]):.1%}")
     print(line("**全部（主读数）**", rows))
+    xs = [r for r in rows if r["salem_x"] is not None and r["bot_x"] is not None]
+    m, lo, hi = boot(xs, "salem_x", "bot_x")
+    print(f"- 去掉没跑完的样本：{len(xs)} 个开头；P_NL Salem {np.mean([r['salem_x'] for r in xs]):.3f}、"
+          f"bot {np.mean([r['bot_x'] for r in xs]):.3f}；差 {m:+.3f}（{lo:+.3f}～{hi:+.3f}）")
     print(line("两条线不同的", [r for r in rows if not r["same"]]))
     print(line("去掉当回合就赢的", [r for r in rows if "won" not in (r["salem_status"], r["bot_status"])]))
     print(line("前期（自己第 1～3 回合）", [r for r in rows if r["own_turn"] in EARLY]))
@@ -170,10 +189,12 @@ def main():
     a.add_argument("step0", help="turn-level step 0's data folder (RC 84d735e: selfplay, starts, plans)")
     a = sub.add_parser("run")
     a.add_argument("step0")
-    a.add_argument("--fn", default="svsim.search.lethal:next_lethal_prob", help="module:function of the builder's tool")
+    a.add_argument("--fn", default="svsim.search.foresight:next_lethal_prob", help="module:function of the builder's tool")
     a.add_argument("--out", required=True)
     a.add_argument("--workers", type=int, default=12)
     a.add_argument("--limit", type=int, default=0, help="only the first N starts (smoke tests)")
+    a.add_argument("--ks", type=int, nargs="*", default=None, help="only these step-0 k (smoke tests)")
+    a.add_argument("--bank", type=int, default=BANK, help="the seed bank (another only for smoke tests)")
     a = sub.add_parser("read")
     a.add_argument("rows")
     args = ap.parse_args()
