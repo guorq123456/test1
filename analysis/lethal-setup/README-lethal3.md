@@ -102,3 +102,11 @@ python analysis/oracle-hand/pooled.py analysis/gates/lethal3/ramp_ramp.jsonl ana
 python -m svsim.tools.puzzles --spec "level-strong+lethal3" level-strong --seeds 1,2,3
 ```
 - 算力估计：每格复核约 2 分钟、门约 15～20 分钟、附带重打约 15～20 分钟、计时约 4 分钟；两格合计约 1.3 小时。
+
+## 运行记录（本容器，3 个进程，svsim 850237d）
+
+- **跳费龙镜像的复核**（08:2xZ，在这一格门的对局之前）：20 对，种子 66790000～66790019，`--fixed --max 40`。
+  - 每搜索决策毫秒 A 82.67 / B 77.84，比值 **1.062**，在 0.97～1.03 之外。
+  - 照规矩修一次：**N_B = round(203 × 1.062) = 216**，不再复核。
+  - 这 20 对的得分 55.0%（45.2%～64.8%），不进判定。
+  - 原样输出在 `analysis/gates/lethal3/ncheck_ramp_ramp.jsonl`。
