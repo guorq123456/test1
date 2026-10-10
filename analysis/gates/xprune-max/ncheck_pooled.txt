@@ -1,0 +1,2 @@
+/home/user/test1/analysis/gates/xprune-max/ncheck.jsonl: 20 pairs, seeds 68599000..68599019, 45.0% ± 6.7% (38.3%..51.7%), CR -47 (-113..+16; steady-state -40); ms per searched decision A 285.62 / B 282.28 = 1.012
+pooled pair by pair (20 pairs, stratified bootstrap 4000): 45.0% (37.5%..50.0%), CR -47 (-121..+0; steady-state -40)
