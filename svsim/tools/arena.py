@@ -53,7 +53,11 @@ on by default, "+noalias" off, "+alias" kept as a no-op); "+timing" adds what ho
 player usually plays it (svsim.learn.timing, from their games); "+priced"
 prices resources by what they buy (search.prices: the own followers at what
 survives the opponent's turn, "+survive" alone; unused evolution points at the
-damage they add to the next turn, "+points" alone). Combined: mcts:200+plan+macro+threat. Each pairing plays both seats and, for --decks starter or
+damage they add to the next turn, "+points" alone); "+xprune" (or "+xprune=M:H:ORDER") keeps the search's
+discard choices ("select a card in your hand and discard it") to the M most discardable hand cards (2; M + K - 1
+for a choice of K) by a cross-turn judgment over H turns (3) of the play-point curve, ORDER when / cost / value
+(search.xprune), off by
+default. Combined: mcts:200+plan+macro+threat. Each pairing plays both seats and, for --decks starter or
 rhino, both decks equally often. --decks rhino is Rhinoceroach Forest
 (Unlimited) against Ramp Dragon. Prints win rates with a 95% margin, the
 average thinking time per decision and the lethals each agent found.
@@ -202,7 +206,7 @@ def _make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "lethal3", "plannerfix", "eot", "discard", "adaptive", "abs", "abs0", "complex"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet=", "par="))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "lethal3", "plannerfix", "eot", "discard", "adaptive", "abs", "abs0", "complex", "xprune"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet=", "par=", "xprune="))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -280,6 +284,11 @@ def _make_agent(spec: str, seed: int):
         if "enhance" in options:                   # an Enhance card waits for its Enhance (search.moves.wasted_enhance)
             from svsim.search.moves import wasted_enhance
             vetoes.append(wasted_enhance)
+        xprune = [o for o in options if o == "xprune" or o.startswith("xprune=")]
+        if xprune:                                 # discard choices kept to the most discardable cards (search.xprune)
+            from svsim.search.xprune import XPrune
+            parts = xprune[0][len("xprune="):].split(":") if "=" in xprune[0] else []
+            vetoes.append(XPrune(*[int(x) if i < 2 else x for i, x in enumerate(parts)]))   # M:H:ORDER
         veto = (lambda s, a: any(v(s, a) for v in vetoes)) if vetoes else None
         agent = MCTSAgent(int(arg or 400), seed=seed, reply=name == "mcts-reply", weights=weights,
                           backup="mean" if "mean" in options else "max",

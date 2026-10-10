@@ -1,0 +1,40 @@
+{
+ "28 starts": {
+  "mcts:200+plan+learned+phased": {
+   "ms_per_decision": 62.4,
+   "decisions": [
+    96,
+    96,
+    96
+   ]
+  },
+  "mcts:200+plan+learned+phased+xprune=3:3:cost": {
+   "ms_per_decision": 66.5,
+   "decisions": [
+    99,
+    99,
+    99
+   ]
+  },
+  "ratio": 1.066
+ },
+ "puzzles 2 and 3, seeds 1-8": {
+  "mcts:200+plan+learned+phased": {
+   "ms_per_decision": 111.4,
+   "decisions": [
+    80,
+    80,
+    80
+   ]
+  },
+  "mcts:200+plan+learned+phased+xprune=3:3:cost": {
+   "ms_per_decision": 128.9,
+   "decisions": [
+    80,
+    80,
+    80
+   ]
+  },
+  "ratio": 1.157
+ }
+}
