@@ -121,3 +121,34 @@ Intervals: 2000 resamples of games.
 followers (+56%) and his own defense. That is the 329 kind of turn. But they push the enemy's defense up too
 (op_hp −0.469 → −0.600). So the puzzle 3 kind of turn, where he gives up face damage to keep his own defense, stays
 wrong.
+
+## 4. Refit under the analysis line's nested folds (`sp_nested.py`; cand-sp2-ramp-ramp)
+
+The analysis line's pre-registration (c8a04a0, analysis/lethal-setup/README-sp.md), via the architecture thread
+16:50Z.
+- **Folds:** outer 5 (all 47 games by id, j mod 5); inner 4 over the outer fold's training games, used only to
+  choose λ from the same grid (0 included).
+- **λ rule:** the highest inner pairwise accuracy, ties to the smaller. Pairwise means Salem's end against each of
+  the installed 1043's top 8, an identical end left out, a tie counted half.
+- **Fitting:** the same objective, data (the Ramp-mirror turns only) and form as §2. The other pairings' turns are
+  scored, with the Ramp-mirror models, but not fitted.
+
+**λ chosen:** 0.3 in every outer fold, and 0.3 for the final model (inner accuracies in data/nested.json).
+- 0.3 is the grid's top, so accuracy may keep rising past it.
+- The self-play contrast error rises with λ (no limit in this rule): outer folds 0.0199–0.0224; final 0.020337,
+  1.83 × cand-kc's 0.011104.
+
+**The builder's own pooled readings** (outer held-out games; the analysis line's readings are the ones that count):
+
+| | cand-sp2 (outer fold) | cand-kc | installed | pairs / turns / games |
+|---|---|---|---|---|
+| all | 83.7% | 80.1% | 78.6% | 2664 / 399 / 47 |
+| Ramp mirror | 86.1% | 81.7% | 79.5% | 1538 / 243 / 27 |
+| other pairings | 80.4% | 78.0% | 77.3% | 1126 / 156 / 20 |
+
+**Handed to the analysis line:** data/nested_scores.jsonl (sha256 baa31db9…ddcd1). One row per turn with its outer
+fold and λ, and every candidate's flags (salem, in_top, bot), visits and three scores: cand-sp2 by the outer fold's
+model, cand-kc, and the installed Ramp-mirror ENDED.
+
+The final model: svsim/learn/phased_models/cand-sp2-ramp-ramp (ENDED sha256 caf02e3a…c5ab). cand-sp-ramp-ramp (§2)
+is kept as it is.
