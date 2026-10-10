@@ -137,3 +137,23 @@ def test_a_ticker_plan_the_engine_cant_play_falls_back_to_the_plain_plan():
     line, first = combo.planned_lethal(st, 20000, tickers=True, fix=True, eot=True)
     assert first.tickers and line and combo.verify(st, line)
     assert combo.planned_lethal(st, 20000)[0] == combo.planned_lethal(st, 20000, tickers=True)[0]
+
+
+def test_the_fixed_realize_evolves_the_follower_that_has_not_attacked():
+    """Ramp g127's shape: four identical ready Dragonewt Promoters, the enemy at 10: three hit the leader, the fourth
+    is evolved and hits for 4. The plain realize gives the evolution to the first Promoter, which has attacked."""
+    from svsim.cards import dragon
+    from svsim.search import combo
+    from helpers import put, set_pp, start
+    s = start()
+    s.turn, s.players[0].turns_taken = 13, 7
+    for _ in range(4):
+        put(s, 0, dragon.DRAGONEWT_PROMOTER)
+    s.players[0].ep = 1
+    set_pp(s, 0, 0)
+    s.players[1].leader_hp = 10
+    p = combo.plan(s, 20000, fix=True)
+    assert p.damage >= 10
+    line = combo.realize(s, p.steps, face_first=True)
+    assert line and combo.verify(s, line)
+    assert combo.planned_lethal(s, 20000, fix=True)[0]

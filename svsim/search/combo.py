@@ -1010,10 +1010,16 @@ def next_turn_damage(state: GameState, side: int, max_nodes: int = 2000, board: 
 
 # --- back to real actions ----------------------------------------------------------------
 
-def _followers_like(state: GameState, me: int, key: tuple) -> list:
-    """Allied followers of the key's card, the closest match first."""
+def _followers_like(state: GameState, me: int, key: tuple, exact: bool = False) -> list:
+    """Allied followers of the key's card, the closest match first. With `exact` (the fixed realize), the attacks
+    it has left and its reach come first: of identical followers, the one the plan means is the one that hasn't
+    attacked yet (Ramp g127: an evolution went to a Promoter that had attacked)."""
     cid, atk, life, left, reach, evo = key
     found = [f for f in state.players[me].followers if f.defn.card_id == cid]
+    if exact:
+        return sorted(found, key=lambda f: (max(0, f.max_attacks - f.attacks_made) != left,
+                                            _reach(state, f) != reach, f.atk != atk, _evo(f) != evo,
+                                            f.life != life))
     return sorted(found, key=lambda f: (f.atk != atk, _evo(f) != evo, f.life != life))
 
 
@@ -1073,7 +1079,8 @@ def realize(state: GameState, steps: list, face_first: bool = False) -> list | N
     """Turn abstract steps into real actions, playing them on a copy; None if a
     step has no matching legal action. Cards drawn on the way are never used:
     the plan doesn't know them. With `face_first` (a ticker plan's), a play that hits no enemy follower in the
-    plan takes the enemy leader as its target when it can (the plan counted that way's damage)."""
+    plan takes the enemy leader as its target when it can (the plan counted that way's damage), and allied
+    followers are matched on the attacks they have left too (_followers_like's `exact`)."""
     s, me, actions = state.clone(), state.active, []
     unknown = {c.uid for p in s.players for c in p.deck_view()}
     for step in steps:
@@ -1082,12 +1089,12 @@ def realize(state: GameState, steps: list, face_first: bool = False) -> list | N
         kind = step[0]
         if kind == "attack":
             ready = {a.attacker for a in legal if isinstance(a, Attack) and a.target == leader_uid(1 - me)}
-            f = next((f for f in _followers_like(s, me, step[1]) if f.uid in ready), None)
+            f = next((f for f in _followers_like(s, me, step[1], face_first) if f.uid in ready), None)
             chosen = Attack(f.uid, leader_uid(1 - me)) if f else None
         elif kind == "strike":
             attacks = {(a.attacker, a.target) for a in legal if isinstance(a, Attack)}
             for foe in _enemies_like(s, me, step[2], step[3]):
-                f = next((f for f in _followers_like(s, me, step[1]) if (f.uid, foe.uid) in attacks), None)
+                f = next((f for f in _followers_like(s, me, step[1], face_first) if (f.uid, foe.uid) in attacks), None)
                 if f is not None:
                     chosen = Attack(f.uid, foe.uid)
                     break
@@ -1102,7 +1109,7 @@ def realize(state: GameState, steps: list, face_first: bool = False) -> list | N
                 amulet_back = {c.uid for c in s.players[me].field
                                if c.defn.is_amulet and (bounce[1] is None or c.defn.card_id == bounce[1])}
                 bounce = None
-            allies = _followers_like(s, me, bounce) if bounce else []
+            allies = _followers_like(s, me, bounce, face_first) if bounce else []
             foes = _enemies_like(s, me, *hit) if hit else []
             best = None
             known = {}                   # the engine lists one of identical cards; use a known copy
@@ -1140,13 +1147,13 @@ def realize(state: GameState, steps: list, face_first: bool = False) -> list | N
                 if not _fuse_legal(s, chosen):
                     chosen = None
         elif kind == "engage":
-            allies = _followers_like(s, me, step[2])
+            allies = _followers_like(s, me, step[2], face_first)
             options = [a for a in legal if isinstance(a, Engage) and s.on_field(a.uid).defn.card_id == step[1]]
             options.sort(key=lambda a: min((_rank(allies, t) for t in a.targets), default=len(allies)))
             chosen = options[0] if options else None
         elif kind == "evolve":
             _, key, super_, modes, hit = step
-            uids = [f.uid for f in _followers_like(s, me, key)]
+            uids = [f.uid for f in _followers_like(s, me, key, face_first)]
             foes = _enemies_like(s, me, *hit) if hit else []
             options = [a for a in legal if isinstance(a, Evolve) and a.super_ == super_ and a.modes == modes
                        and a.uid in uids]
