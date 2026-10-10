@@ -13,25 +13,25 @@
 ```
 第 13 回合（你的回合）
 对手：主战者 20/20  PP 0/9  进化点 0  超进化点 1  牌组 30  墓场 7  手牌 3
-  战场：「约束的《正义》·伊兰翠（Erntz, Governing Justice）」 11/11 威慑 超进化
+  战场：「正义」 11/11 威慑 超进化
 你：主战者 9/20  PP 10/10  进化点 2  超进化点 2  牌组 27  墓场 8
   战场：（空）
-  手牌：「焦灰的安纳提玛·班德奈特（Burnite, Anathema of Ash）」 9费 9/9；「日珥咆哮（Roar of Prominence）」 4费；「约束的《正义》·伊兰翠（Erntz, Governing Justice）」 10费 8/8 守护；「古旧天刀·波菈莱（Vorlalai, Eld Blades）」 2费 0/2 毁灭；「焦灰的安纳提玛·班德奈特（Burnite, Anathema of Ash）」 9费 9/9；「金银绚烂·璐米欧儿&雅尔贞特（Lumiore & Argente, Shining Wings）」 8费 6/6；「满面笑容的烹饪·琪米卡（Kimika, Cook of Happiness）」 2费 2/1
-  对手手牌（Salem 当时看不到）：「古旧天刀·波菈莱（Vorlalai, Eld Blades）」 2费 0/2 毁灭；「日珥咆哮（Roar of Prominence）」 4费；「天刀深渊（Depths of the Eld Blades）」 2费
+  手牌：「班德」 9费 9/9；「日珥咆哮」 4费；「正义」 10费 8/8 守护；「波菈莱」 2费 0/2 毁灭；「班德」 9费 9/9；「金银」 8费 6/6；「琪米卡」 2费 2/1
+  对手手牌（Salem 当时看不到）：「波菈莱」 2费 0/2 毁灭；「日珥咆哮」 4费；「天刀深渊」 2费
 ```
 
 **Salem 这回合的打法**
 
-1. 使用「满面笑容的烹饪·琪米卡（Kimika, Cook of Happiness）」，选择 己方手牌中的「古旧天刀·波菈莱（Vorlalai, Eld Blades）」
-2. 超进化「古旧天刀·波菈莱（Vorlalai, Eld Blades）」
-3. 使用「断头的斩姬·相枛津（Sagatsumatsu, Fair Beheader）」，选择 己方手牌中的「天刀深渊（Depths of the Eld Blades）」
-4. 使用「赤流（Spilling Red）」，选择 己方手牌中的「天刀深渊（Depths of the Eld Blades）」、敌方场上的「约束的《正义》·伊兰翠（Erntz, Governing Justice）」
-5. 「断头的斩姬·相枛津（Sagatsumatsu, Fair Beheader）」攻击敌方主战者
+1. 使用「琪米卡」，选择 己方手牌中的「波菈莱」
+2. 超进化「波菈莱」
+3. 使用「口人魔」，选择 己方手牌中的「天刀深渊」
+4. 使用「赤流」，选择 己方手牌中的「天刀深渊」、敌方场上的「正义」
+5. 「口人魔」攻击敌方主战者
 6. 结束回合
 
 **bot（`mcts:100+plan+learned+phased`，第 0 步的计划）这回合的打法**
 
-1. 使用「约束的《正义》·伊兰翠（Erntz, Governing Justice）」
+1. 使用「正义」
 2. 结束回合
 
 **Salem 的线打完以后**（ended；Salem 视角，对手要行动）
@@ -41,8 +41,8 @@
 对手：主战者 13/20  PP 10/10  进化点 0  超进化点 1  牌组 29  墓场 8  手牌 4
   战场：（空）
 你：主战者 12/20  PP 0/10  进化点 2  超进化点 1  牌组 26  墓场 12
-  战场：「满面笑容的烹饪·琪米卡（Kimika, Cook of Happiness）」 2/1；「古旧天刀·波菈莱（Vorlalai, Eld Blades）」 3/5 毁灭 超进化；「断头的斩姬·相枛津（Sagatsumatsu, Fair Beheader）」 5/4 疾驰、毁灭、灵气
-  手牌：「焦灰的安纳提玛·班德奈特（Burnite, Anathema of Ash）」 9费 9/9；「日珥咆哮（Roar of Prominence）」 4费；「约束的《正义》·伊兰翠（Erntz, Governing Justice）」 10费 8/8 守护；「焦灰的安纳提玛·班德奈特（Burnite, Anathema of Ash）」 9费 9/9；「金银绚烂·璐米欧儿&雅尔贞特（Lumiore & Argente, Shining Wings）」 8费 6/6；「天刀深渊（Depths of the Eld Blades）」 2费；「赤流（Spilling Red）」 1费
+  战场：「琪米卡」 2/1；「波菈莱」 3/5 毁灭 超进化；「口人魔」 5/4 疾驰、毁灭、灵气
+  手牌：「班德」 9费 9/9；「日珥咆哮」 4费；「正义」 10费 8/8 守护；「班德」 9费 9/9；「金银」 8费 6/6；「天刀深渊」 2费；「赤流」 1费
 ```
 
 **bot 的线打完以后**（ended；Salem 视角，对手要行动）
@@ -50,10 +50,10 @@
 ```
 第 14 回合（对手的回合）
 对手：主战者 20/20  PP 10/10  进化点 0  超进化点 1  牌组 29  墓场 7  手牌 4
-  战场：「约束的《正义》·伊兰翠（Erntz, Governing Justice）」 11/3（上限 11） 威慑 超进化 可攻击
+  战场：「正义」 11/3（上限 11） 威慑 超进化 可攻击
 你：主战者 17/20  PP 0/10  进化点 2  超进化点 2  牌组 27  墓场 8
-  战场：「约束的《正义》·伊兰翠（Erntz, Governing Justice）」 8/8 守护
-  手牌：「焦灰的安纳提玛·班德奈特（Burnite, Anathema of Ash）」 9费 9/9；「日珥咆哮（Roar of Prominence）」 4费；「古旧天刀·波菈莱（Vorlalai, Eld Blades）」 2费 0/2 毁灭；「焦灰的安纳提玛·班德奈特（Burnite, Anathema of Ash）」 9费 9/9；「金银绚烂·璐米欧儿&雅尔贞特（Lumiore & Argente, Shining Wings）」 8费 6/6；「满面笑容的烹饪·琪米卡（Kimika, Cook of Happiness）」 2费 2/1
+  战场：「正义」 8/8 守护
+  手牌：「班德」 9费 9/9；「日珥咆哮」 4费；「波菈莱」 2费 0/2 毁灭；「班德」 9费 9/9；「金银」 8费 6/6；「琪米卡」 2费 2/1
 ```
 
 ## 题 2：k = 518
@@ -67,27 +67,27 @@
 ```
 第 16 回合（你的回合）
 对手：主战者 11/20  PP 0/10  进化点 1  超进化点 0  牌组 21  墓场 15  手牌 4
-  战场：「掌握天空命运的少女·露莉亚（Lyria, Skydestined）」 1/1 屏障；「禁牙的变貌·诺玛格达拉（Normagdala, Ravening Revenant）」 8/9 守护 超进化；「满面笑容的烹饪·琪米卡（Kimika, Cook of Happiness）」 2/1；「古旧天刀·波菈莱（Vorlalai, Eld Blades）」 0/2 毁灭
+  战场：「露莉亚」 1/1 屏障；「牢头」 8/9 守护 超进化；「琪米卡」 2/1；「波菈莱」 0/2 毁灭
 你：主战者 3/20  PP 10/10  进化点 1  超进化点 0  牌组 25  墓场 16
   战场：（空）
-  手牌：「日珥咆哮（Roar of Prominence）」 4费；「龙之启示（Dragonsign）」 3费；「懒惰的波摇花（Sloth of the Crestpetal）」 2费；「赤流（Spilling Red）」 1费；「古旧天刀·波菈莱（Vorlalai, Eld Blades）」 2费 0/2 毁灭；「约束的《正义》·伊兰翠（Erntz, Governing Justice）」 10费 8/8 守护；「掌握天空命运的少女·露莉亚（Lyria, Skydestined）」 2费 1/1 屏障；「断头的斩姬·相枛津（Sagatsumatsu, Fair Beheader）」 7费 5/4 疾驰、毁灭、灵气；「满面笑容的烹饪·琪米卡（Kimika, Cook of Happiness）」 2费 2/1
-  对手手牌（Salem 当时看不到）：「宣扬的龙人（Dragonewt Promoter）」 2费 2/1 突进；「宣扬的龙人（Dragonewt Promoter）」 2费 2/1 突进；「约束的《正义》·伊兰翠（Erntz, Governing Justice）」 10费 8/8 守护；「世界的伙伴·佐伊（Zooey, Ally of the World）」 5费 5/5
+  手牌：「日珥咆哮」 4费；「龙之启示」 3费；「懒惰的波摇花」 2费；「赤流」 1费；「波菈莱」 2费 0/2 毁灭；「正义」 10费 8/8 守护；「露莉亚」 2费 1/1 屏障；「口人魔」 7费 5/4 疾驰、毁灭、灵气；「琪米卡」 2费 2/1
+  对手手牌（Salem 当时看不到）：「宣扬的龙人」 2费 2/1 突进；「宣扬的龙人」 2费 2/1 突进；「正义」 10费 8/8 守护；「佐伊」 5费 5/5
 ```
 
 **Salem 这回合的打法**
 
-1. 使用「约束的《正义》·伊兰翠（Erntz, Governing Justice）」
+1. 使用「正义」
 2. 使用额外能量点
-3. 使用「赤流（Spilling Red）」，选择 己方手牌中的「古旧天刀·波菈莱（Vorlalai, Eld Blades）」、敌方场上的「禁牙的变貌·诺玛格达拉（Normagdala, Ravening Revenant）」
-4. 进化「古旧天刀·波菈莱（Vorlalai, Eld Blades）」
-5. 「古旧天刀·波菈莱（Vorlalai, Eld Blades）」攻击敌方场上的「掌握天空命运的少女·露莉亚（Lyria, Skydestined）」
+3. 使用「赤流」，选择 己方手牌中的「波菈莱」、敌方场上的「牢头」
+4. 进化「波菈莱」
+5. 「波菈莱」攻击敌方场上的「露莉亚」
 6. 结束回合
 
 **bot（`mcts:100+plan+learned+phased`，第 0 步的计划）这回合的打法**
 
-1. 使用「约束的《正义》·伊兰翠（Erntz, Governing Justice）」
-2. 进化「约束的《正义》·伊兰翠（Erntz, Governing Justice）」
-3. 「约束的《正义》·伊兰翠（Erntz, Governing Justice）」攻击敌方场上的「禁牙的变貌·诺玛格达拉（Normagdala, Ravening Revenant）」
+1. 使用「正义」
+2. 进化「正义」
+3. 「正义」攻击敌方场上的「牢头」
 4. 结束回合
 
 **Salem 的线打完以后**（ended；Salem 视角，对手要行动）
@@ -97,8 +97,8 @@
 对手：主战者 11/20  PP 10/10  进化点 1  超进化点 0  牌组 20  墓场 19  手牌 5
   战场：（空）
 你：主战者 11/20  PP 0/10  进化点 0  超进化点 0  牌组 25  墓场 18
-  战场：「约束的《正义》·伊兰翠（Erntz, Governing Justice）」 8/8 守护；「古旧天刀·波菈莱（Vorlalai, Eld Blades）」 2/3（上限 4） 毁灭 已进化
-  手牌：「日珥咆哮（Roar of Prominence）」 4费；「龙之启示（Dragonsign）」 3费；「懒惰的波摇花（Sloth of the Crestpetal）」 2费；「掌握天空命运的少女·露莉亚（Lyria, Skydestined）」 2费 1/1 屏障；「断头的斩姬·相枛津（Sagatsumatsu, Fair Beheader）」 7费 5/4 疾驰、毁灭、灵气；「满面笑容的烹饪·琪米卡（Kimika, Cook of Happiness）」 2费 2/1；「天刀深渊（Depths of the Eld Blades）」 2费
+  战场：「正义」 8/8 守护；「波菈莱」 2/3（上限 4） 毁灭 已进化
+  手牌：「日珥咆哮」 4费；「龙之启示」 3费；「懒惰的波摇花」 2费；「露莉亚」 2费 1/1 屏障；「口人魔」 7费 5/4 疾驰、毁灭、灵气；「琪米卡」 2费 2/1；「天刀深渊」 2费
 ```
 
 **bot 的线打完以后**（ended；Salem 视角，对手要行动）
@@ -106,10 +106,10 @@
 ```
 第 17 回合（对手的回合）
 对手：主战者 3/20  PP 10/10  进化点 1  超进化点 0  牌组 20  墓场 16  手牌 5
-  战场：「掌握天空命运的少女·露莉亚（Lyria, Skydestined）」 1/1 屏障 可攻击；「满面笑容的烹饪·琪米卡（Kimika, Cook of Happiness）」 2/1 可攻击；「古旧天刀·波菈莱（Vorlalai, Eld Blades）」 0/2 毁灭 可攻击
+  战场：「露莉亚」 1/1 屏障 可攻击；「琪米卡」 2/1 可攻击；「波菈莱」 0/2 毁灭 可攻击
 你：主战者 3/20  PP 0/10  进化点 0  超进化点 0  牌组 25  墓场 16
-  战场：「约束的《正义》·伊兰翠（Erntz, Governing Justice）」 10/2（上限 10） 威慑 已进化
-  手牌：「日珥咆哮（Roar of Prominence）」 4费；「龙之启示（Dragonsign）」 3费；「懒惰的波摇花（Sloth of the Crestpetal）」 2费；「赤流（Spilling Red）」 1费；「古旧天刀·波菈莱（Vorlalai, Eld Blades）」 2费 0/2 毁灭；「掌握天空命运的少女·露莉亚（Lyria, Skydestined）」 2费 1/1 屏障；「断头的斩姬·相枛津（Sagatsumatsu, Fair Beheader）」 7费 5/4 疾驰、毁灭、灵气；「满面笑容的烹饪·琪米卡（Kimika, Cook of Happiness）」 2费 2/1
+  战场：「正义」 10/2（上限 10） 威慑 已进化
+  手牌：「日珥咆哮」 4费；「龙之启示」 3费；「懒惰的波摇花」 2费；「赤流」 1费；「波菈莱」 2费 0/2 毁灭；「露莉亚」 2费 1/1 屏障；「口人魔」 7费 5/4 疾驰、毁灭、灵气；「琪米卡」 2费 2/1
 ```
 
 ## 题 3：k = 445
@@ -123,27 +123,27 @@
 ```
 第 16 回合（你的回合）
 对手：主战者 13/20  PP 0/10  进化点 1  超进化点 0  牌组 25  墓场 9  手牌 5
-  战场：「约束的《正义》·伊兰翠（Erntz, Governing Justice）」 11/11 威慑 超进化
+  战场：「正义」 11/11 威慑 超进化
 你：主战者 5/20  PP 10/10  进化点 0  超进化点 2  牌组 27  墓场 14
   战场：（空）
-  手牌：「约束的《正义》·伊兰翠（Erntz, Governing Justice）」 10费 8/8 守护；「金银绚烂·璐米欧儿&雅尔贞特（Lumiore & Argente, Shining Wings）」 8费 6/6；「懒惰的波摇花（Sloth of the Crestpetal）」 2费；「赤流（Spilling Red）」 1费；「古旧天刀·波菈莱（Vorlalai, Eld Blades）」 2费 0/2 毁灭
-  对手手牌（Salem 当时看不到）：「《世界》的呈现（Fate of the World）」 5费；「宣扬的龙人（Dragonewt Promoter）」 2费 2/1 突进；「焦灰的安纳提玛·班德奈特（Burnite, Anathema of Ash）」 9费 9/9；「宣扬的龙人（Dragonewt Promoter）」 2费 2/1 突进；「断头的斩姬·相枛津（Sagatsumatsu, Fair Beheader）」 7费 5/4 疾驰、毁灭、灵气
+  手牌：「正义」 10费 8/8 守护；「金银」 8费 6/6；「懒惰的波摇花」 2费；「赤流」 1费；「波菈莱」 2费 0/2 毁灭
+  对手手牌（Salem 当时看不到）：「《世界》的呈现」 5费；「宣扬的龙人」 2费 2/1 突进；「班德」 9费 9/9；「宣扬的龙人」 2费 2/1 突进；「口人魔」 7费 5/4 疾驰、毁灭、灵气
 ```
 
 **Salem 这回合的打法**
 
-1. 使用「赤流（Spilling Red）」，选择 己方手牌中的「古旧天刀·波菈莱（Vorlalai, Eld Blades）」、敌方场上的「约束的《正义》·伊兰翠（Erntz, Governing Justice）」
+1. 使用「赤流」，选择 己方手牌中的「波菈莱」、敌方场上的「正义」
 2. 使用额外能量点
-3. 使用「约束的《正义》·伊兰翠（Erntz, Governing Justice）」
+3. 使用「正义」
 4. 结束回合
 
 **bot（`mcts:100+plan+learned+phased`，第 0 步的计划）这回合的打法**
 
-1. 使用「金银绚烂·璐米欧儿&雅尔贞特（Lumiore & Argente, Shining Wings）」，选择 己方手牌中的「约束的《正义》·伊兰翠（Erntz, Governing Justice）」、己方手牌中的「懒惰的波摇花（Sloth of the Crestpetal）」
-2. 使用「赤流（Spilling Red）」，选择 己方手牌中的「古旧天刀·波菈莱（Vorlalai, Eld Blades）」、敌方场上的「约束的《正义》·伊兰翠（Erntz, Governing Justice）」
-3. 超进化「古旧天刀·波菈莱（Vorlalai, Eld Blades）」
+1. 使用「金银」，选择 己方手牌中的「正义」、己方手牌中的「懒惰的波摇花」
+2. 使用「赤流」，选择 己方手牌中的「波菈莱」、敌方场上的「正义」
+3. 超进化「波菈莱」
 4. 使用额外能量点
-5. 使用「天刀深渊（Depths of the Eld Blades）」
+5. 使用「天刀深渊」
 6. 结束回合
 
 **Salem 的线打完以后**（ended；Salem 视角，对手要行动）
@@ -153,8 +153,8 @@
 对手：主战者 13/20  PP 10/10  进化点 1  超进化点 0  牌组 24  墓场 10  手牌 6
   战场：（空）
 你：主战者 13/20  PP 0/10  进化点 0  超进化点 2  牌组 27  墓场 16
-  战场：「古旧天刀·波菈莱（Vorlalai, Eld Blades）」 0/2 毁灭；「约束的《正义》·伊兰翠（Erntz, Governing Justice）」 8/8 守护
-  手牌：「金银绚烂·璐米欧儿&雅尔贞特（Lumiore & Argente, Shining Wings）」 8费 6/6；「懒惰的波摇花（Sloth of the Crestpetal）」 2费
+  战场：「波菈莱」 0/2 毁灭；「正义」 8/8 守护
+  手牌：「金银」 8费 6/6；「懒惰的波摇花」 2费
 ```
 
 **bot 的线打完以后**（ended；Salem 视角，对手要行动）
@@ -164,7 +164,7 @@
 对手：主战者 8/20  PP 10/10  进化点 1  超进化点 0  牌组 24  墓场 10  手牌 6
   战场：（空）
 你：主战者 6/20  PP 0/10  进化点 0  超进化点 1  牌组 27  墓场 19
-  战场：「金银绚烂·璐米欧儿&雅尔贞特（Lumiore & Argente, Shining Wings）」 6/6；「古旧天刀·波菈莱（Vorlalai, Eld Blades）」 3/5 毁灭 超进化
-  手牌：「天刀深渊（Depths of the Eld Blades）」 2费；「天刀深渊（Depths of the Eld Blades）」 2费
+  战场：「金银」 6/6；「波菈莱」 3/5 毁灭 超进化
+  手牌：「天刀深渊」 2费；「天刀深渊」 2费
 ```
 

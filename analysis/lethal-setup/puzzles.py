@@ -57,14 +57,23 @@ def read(args):
 
 
 def _names():
-    """Card names as players call them: the Chinese name with the English one after it."""
+    """Card names as players call them: analysis/card-glossary.md's common name (the architecture session's
+    naming thread; the same parse as svsim.tools.glossary), else the part of the official name after "·"."""
+    import re
     from svsim.ui import text as T
+    row = re.compile(r"^\|\s*\*\*(?P<common>[^*]+)\*\*\s*\|\s*(?P<stats>[^|]+?)\s*\|\s*(?P<full>[^|]+?)\s*\|")
+    names = {}
+    for line in open(os.path.join(HERE, "..", "card-glossary.md"), encoding="utf-8"):
+        m = row.match(line)
+        if m:
+            names[m["full"]] = m["common"].strip()
     plain = T.card_name
 
-    def both(defn):
-        zh = plain(defn)
-        return zh if not defn.name or defn.name in zh else f"{zh}（{defn.name}）"
-    T.card_name = both
+    def common(defn):
+        full = defn.name_zh or defn.name
+        name = names.get(full, full.split("·")[-1].strip())
+        return plain(defn).replace(full, name)
+    T.card_name = common
     return T
 
 
