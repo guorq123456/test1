@@ -1,0 +1,2 @@
+control_nemesis-t_vs_pirate-t.jsonl: 100 pairs, seeds 68800000..68800099, 36.0% ± 7.4% (28.6%..43.4%), CR -136 (-216..-63; steady-state -112); ms per searched decision A 94.22 / B 101.06 = 0.932
+pooled pair by pair (100 pairs, stratified bootstrap 4000): 36.0% (28.5%..43.5%), CR -136 (-217..-62; steady-state -112)
