@@ -1,0 +1,47 @@
+条件：对手卡表已知（牌序、手牌未知）。M3：Salem 和 bot 打法不同的回合，往哪个方向走
+
+- 开头 85 个（第 0 步 Salem 的线自成候选、有 G_end 的）
+
+**归类（不含 setup）**
+
+| 类 | 个数 | T 偏向 Salem | G_end 偏向 Salem |
+|---|---|---|---|
+| race | 3 | 100.0% | 83.3% |
+| clear | 2 | 0.0% | 25.0% |
+| develop | 6 | 33.3% | 66.7% |
+| conserve | 30 | 50.0% | 51.7% |
+| mixed | 31 | 71.0% | 71.0% |
+| small | 13 | 30.8% | 46.2% |
+| 全部 | 85 | 54.1% | 59.4% |
+- mixed 的组合：develop+conserve 14、race+conserve 5、race+develop 4、race+develop+conserve 3、clear+conserve 2、clear+develop 2、race+clear+develop+conserve 1
+
+**归类（加上 setup，M2 的 P_NL 差 ≥ 0.125）**
+
+| 类 | 个数 | T 偏向 Salem | G_end 偏向 Salem |
+|---|---|---|---|
+| race | 2 | 100.0% | 100.0% |
+| clear | 2 | 0.0% | 25.0% |
+| develop | 6 | 33.3% | 66.7% |
+| conserve | 30 | 50.0% | 51.7% |
+| setup | 1 | 0.0% | 0.0% |
+| mixed | 32 | 71.9% | 70.3% |
+| small | 12 | 33.3% | 50.0% |
+| 全部 | 85 | 54.1% | 59.4% |
+- mixed 的组合：develop+conserve 13、race+conserve 4、race+develop+setup 2、race+develop 2、clear+conserve 2、clear+develop 2、race+develop+conserve 2、race+clear+develop+conserve+setup 1、race+setup 1、develop+conserve+setup 1、race+develop+conserve+setup 1、race+conserve+setup 1
+
+**各字段的差（Salem − bot）**：平均 / 中位 / 非零的个数
+- enemy_hp：+0.22 / +0.0 / 50
+- enemy_followers：+0.02 / +0.0 / 14
+- enemy_stats：-0.04 / +0.0 / 14
+- enemy_amulets：+0.00 / +0.0 / 0
+- own_followers：-0.04 / +0.0 / 42
+- own_stats：-1.04 / +0.0 / 68
+- own_amulets：+0.00 / +0.0 / 0
+- hand：+0.38 / +0.0 / 54
+- pp_left：+0.44 / +0.0 / 36
+- ep：+0.16 / +0.0 / 30
+- sep：-0.06 / +0.0 / 13
+- shadows：-0.04 / +0.0 / 52
+- evolutions：-0.11 / +0.0 / 25
+- own_countdowns：+0.00 / +0.0 / 0
+- leader_area：+0.00 / +0.0 / 0
