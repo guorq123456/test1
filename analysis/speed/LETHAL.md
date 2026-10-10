@@ -118,3 +118,55 @@ neither the Ramp deck's cards nor what they summon are tickers, so only the budg
 
 In the Pirate mirror the ticker planner finds 14 lethals the plain check found by search or not at all. That is why
 its added time is low: a planned lethal costs less than the search it replaces.
+
+## The Ramp misses +lethal2 leaves, and +plannerfix / +eot (the architecture thread 05:58Z; not in any level)
+
+### What the 20 are (ramp_misses.py; data/ramp_misses.jsonl)
+
+6f11111 has 27 unrealized lethals; +lethal2 recovers 7. For each of the other 20, find_lethal's line was followed
+step by step (where the enemy leader's defense went), next to the damage estimate and the planner's figure.
+
+| cause, described generically | count | generic fix |
+|---|---|---|
+| The planner measures cards at 10 play points, so an Enhance card does its enhanced effect for free and Overflow always holds; the plan it builds fails in the engine (a card it can't pay, an effect it doesn't get) | **9** | **+plannerfix** recovers all 9 |
+| End-of-turn ability of an allied follower that hits the enemy leader (Erntz, evolved: 8). Neither the planner nor the estimate sees end-of-turn effects, and the search tries EndTurn last (2,200-10,000 nodes) | **5** | **+eot** recovers all 5 |
+| A spell that needs a card in hand to discard as a cost (Spilling Red: discard + destroy, used to clear Ward before a Storm attack). The planner's sandbox has an empty hand, so the card has no legal play there and the planner never plays it | 3 | not done: the planner would need a discard step (which card to give up) |
+| Other gaps of the planner's model (its line fails in the engine for other reasons) | 3 | not done |
+
+Budget alone: all 20 need more than +lethal2's budgets (2,200-19,000 nodes); the smallest budget per case is in the
+rows.
+
+### The fixes (search/combo.py; flags +plannerfix and +eot on an mcts agent)
+
+- **`+plannerfix`.** The plain planner's two latent inaccuracies, fixed behind the flag.
+  - Cards are measured at the play points left *and* the maximum (`profile_at(defn, fused, pp, cap)`): Enhance is
+    forced when affordable, and Overflow reads the maximum.
+  - Its plan is realized face first: a planned play that hits no enemy follower aims at the enemy leader.
+  - While evaluating, measuring with the maximum set to the play points left lost Sloth of the Crestpetal's Overflow
+    damage. The cap fixed that, and the same correction now applies to the ticker search (+tick / +lethal2).
+- **`+eot`.** Ending the turn counts what allied followers' end-of-turn abilities deal to the enemy leader
+  (`end_turn_damage(defn, evo)`, measured in the sandbox over two random seeds, the smaller kept). It is a final
+  step `("end",)` that realize plays as EndTurn.
+- **Default unchanged:** golden identical, cmp_roots 142cc567…, full suite 1143 passed.
+
+### Offline, at every turn start (plannerfix_eval.py, plannerfix_agent.py; data/plannerfix*.log, .jsonl.gz)
+
+The planner step of the lethal agent (plan, realize, verify) in three modes at each start, read at the agent's level:
+the agent finds a lethal by its planner, or failing that by its screened search, which the flags don't change.
+
+| | Ramp 6f11111, 18,892 starts | Pirate-t sample, 1,389 starts |
+|---|---|---|
+| agent finds, plain | 755 | 60 |
+| **+plannerfix**: finds / gained (find_lethal sure) / gained beyond find_lethal / lost | 843 / 41 / 47 / **0** | 66 / 6 / 0 / **0** |
+| of the 27 unrealized | 13 | – |
+| **+plannerfix+eot**: finds / gained / beyond / lost | 902 / 74 / 73 / **0** | 66 / 6 / 0 / **0** |
+| of the 27 unrealized | **19** | – |
+| same verdict, other line (+plannerfix / +plannerfix+eot) | 6 / 52 | 2 / 2 |
+| added ms per turn start (+plannerfix / +plannerfix+eot) | +0.2 / +0.05 | −1.5 / −3.9 |
+
+"Beyond find_lethal": verified lethals (checked in the engine, on 16 deck orders and random outcomes when luck is
+involved) at starts where find_lethal at its defaults found none within 20,000 nodes. On the pirate sample one start
+loses its planner lethal under the fix, but the screened search still finds it, so the agent loses nothing.
+
+Re-run of +lethal2 with the corrected measurement (data/lethal2_eval.log): pirate sample unchanged in verdicts (12/13
+recovered, 4/4 unrealized, 0 lost); added time +7.8 / +23.0 ms mean / p90 (this run shared the machine with tests).

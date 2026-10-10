@@ -48,11 +48,14 @@ class LethalAgent:
                  near: tuple[int, int] | None = NEAR,
                  planner: bool = False, plan_nodes: int = 20000, trust_planner: bool = False,
                  macro: bool = False, burst: bool = False, burst_reply: int = 0, dig: bool = False,
-                 tickers: bool = False):
+                 tickers: bool = False, plannerfix: bool = False,
+                 eot: bool = False):
         self.base = base
         self.search = LethalSearch(max_nodes=max_nodes, screen=screen, seed=seed, near=near)
         self.planner, self.plan_nodes, self.trust_planner = planner, plan_nodes, trust_planner
         self.tickers = tickers           # the planner models allied countdown amulets (search.combo, ticker_profile)
+        self.plannerfix = plannerfix     # the plain planner measures cards at the play points there, aims face first
+        self.eot = eot                   # the planner counts allied followers' end-of-turn damage
         self.plan: list = []
         self.plan_turn = None
         self.checked = None          # (turn, hidden info) of the last search without a lethal
@@ -255,9 +258,9 @@ class LethalAgent:
         if not self.planner:
             return [], False
         hp = state.players[1 - state.active].leader_hp
-        p = combo.plan(state, self.plan_nodes, tickers=self.tickers)
+        p = combo.plan(state, self.plan_nodes, tickers=self.tickers, fix=self.plannerfix, eot=self.eot)
         if p.damage >= hp and p.steps:
-            line = combo.realize(state, p.steps, face_first=p.tickers)
+            line = combo.realize(state, p.steps, face_first=p.face_first)
             if line and combo.verify(state, line):
                 self.planned += 1
                 return line, False

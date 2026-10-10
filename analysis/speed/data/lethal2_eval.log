@@ -13,12 +13,12 @@
   "starts with tickers": 804,
   "sure keys matched": "70/70",
   "ms per start now: mean / p90": [
-   78.0,
-   133.5
+   81.1,
+   140.1
   ],
   "added ms per start: mean / p90": [
-   5.3,
-   13.3
+   7.8,
+   23.0
   ]
  }
 }

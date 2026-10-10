@@ -46,7 +46,7 @@ import time
 from svsim.cards import demo
 from svsim.cards.pool import POOL
 from svsim.core import effects as E
-from svsim.core.actions import Attack, Engage, Evolve, Fuse, Mulligan, PlayCard, UseBonusPP
+from svsim.core.actions import Attack, EndTurn, Engage, Evolve, Fuse, Mulligan, PlayCard, UseBonusPP
 from svsim.core.carddef import CardDef
 from svsim.core.engine import (BONUS_REFRESH_TURN, EVOLVE_TURN, SUPER_EVOLVE_TURN, _signature, apply,
                                legal_actions, new_game, resolve_queue)
@@ -82,7 +82,7 @@ class Effect:
 
 # --- profiling -------------------------------------------------------------------------
 
-def _sandbox(combo: int, pp: int = 10, hand: int = 0):
+def _sandbox(combo: int, pp: int = 10, hand: int = 0, max_pp: int | None = None):
     """Player 0 to act with `pp` play points, an allied follower to return to hand
     (the anchor), two harmless enemy followers (0/30, oldest first) to see how
     damage to followers lands, and `hand` cards in hand."""
@@ -93,6 +93,8 @@ def _sandbox(combo: int, pp: int = 10, hand: int = 0):
     p.hand.clear()
     state.players[1].hand.clear()
     p.max_pp = p.pp = pp
+    if max_pp is not None:                 # play points left below the maximum (profile_at: Overflow reads the max)
+        p.max_pp = max(max_pp, pp)
     p.combo = combo
     p.turns_taken = 10                     # evolution unlocked
     anchor = E.summon(state, 0, demo.FOOTMAN)
@@ -196,21 +198,22 @@ def profile(defn: CardDef, fused: bool = False) -> tuple[tuple[Effect, ...], ...
 
 
 @lru_cache(maxsize=None)
-def profile_at(defn: CardDef, fused: bool, pp: int) -> tuple[tuple[Effect, ...], ...]:
+def profile_at(defn: CardDef, fused: bool, pp: int, cap: int = 10) -> tuple[tuple[Effect, ...], ...]:
     """`profile` measured with `pp` play points (at most 10), its play points as the engine spends them: Enhance
     is forced when affordable, so a 0-cost card with Enhance (1) costs 1 and does its enhanced effect when there is
     a play point, and its plain one when there isn't (`recovered` goes below 0 for the extra paid). The ticker
-    search's (_Tickers); the plain search keeps `profile`."""
-    return _profile(defn, fused, max(0, min(pp, 10)), False)
+    search's (_Tickers); the plain search keeps `profile`. `cap`: the maximum play points (Overflow and the like
+    read it, not the play points left)."""
+    return _profile(defn, fused, max(0, min(pp, 10)), False, min(max(cap, pp), 10))
 
 
-def _profile(defn: CardDef, fused: bool, pp_avail: int, clamp: bool) -> tuple[tuple[Effect, ...], ...]:
+def _profile(defn: CardDef, fused: bool, pp_avail: int, clamp: bool, max_pp: int | None = None):
     measured = []
     for combo_after in COMBO_STEPS:
-        state, anchor = _sandbox(combo_after - 1, pp_avail)
+        state, anchor = _sandbox(combo_after - 1, pp_avail, max_pp=max_pp)
         card = E.add_to_hand(state, 0, defn)
         if fused and not _fuse_copy(state, card):
-            return _profile(defn, False, pp_avail, clamp)
+            return _profile(defn, False, pp_avail, clamp, max_pp)
         rows = {}
         for action in legal_actions(state):
             if not isinstance(action, PlayCard) or action.uid != card.uid:
@@ -430,7 +433,8 @@ class Plan:
     damage: int                # most damage the abstract search found
     steps: list = field(default_factory=list)   # abstract actions, in order
     nodes: int = 0
-    tickers: bool = False      # planned by the ticker search (realize it with face_first)
+    tickers: bool = False      # planned by the ticker search
+    face_first: bool = False   # realize it with face_first (the ticker search's, and the fixed one's)
 
 
 def _damage(enemies: tuple, j: int, amount: int, pierce: bool = False) -> tuple:
@@ -464,7 +468,11 @@ class _Abstract:
         if hit is not None:
             return hit
         self.nodes += 1
-        result = (0, [])
+        end = self._terminal(pos)               # ending the turn here (0 in the plain search: nothing to add)
+        result = (end, [("end",)]) if end > 0 else (0, [])
+        if end >= self.target:
+            self.memo[pos] = result
+            return result
         if self.nodes <= self.max_nodes:
             for step, nxt, gained in self.moves(pos):
                 if gained >= self.target:
@@ -546,7 +554,7 @@ class _Abstract:
                 continue
             rest_hand = hand[:i] + hand[i + 1:]
             new_combo = combo + 1
-            for variants in self._profiles(defn, cid < 0, pp):
+            for variants in self._profiles(defn, cid < 0, pp, cap):
                 e = at_combo(variants, new_combo)
                 new_pp = min(cap, pp - cost + e.recovered)
                 new_hand = self._add(rest_hand, e.added, e.drawn)
@@ -635,9 +643,14 @@ class _Abstract:
                                 min(cap, pp + e.recovered), cap, combo, h2, f2, amulets, bonus, None, count,
                                 new_enemies), e.face
 
-    def _profiles(self, defn: CardDef, fused: bool, pp: int):
-        """The ways of playing a card (profile); the ticker search measures them at the play points it has."""
+    def _profiles(self, defn: CardDef, fused: bool, pp: int, cap: int):
+        """The ways of playing a card (profile); the ticker and fixed searches measure them at the play points they
+        have (profile_at)."""
         return profile(defn, fused)
+
+    def _terminal(self, pos) -> int:
+        """Damage to the enemy leader from ending the turn in `pos` (the +eot searches: _EndOfTurn)."""
+        return 0
 
     @staticmethod
     def _hits(enemies: tuple, amount: int, spread: str, pierce: bool):
@@ -776,6 +789,52 @@ class _Digger(_Abstract):
             yield step, nxt, nxt[3].count(UNKNOWN) - before + max(0, cost_before - self._discounted(nxt[3]))
 
 
+@lru_cache(maxsize=None)
+def end_turn_damage(defn: CardDef, evo: int) -> int:
+    """Damage an allied follower of this kind (evo: 0 unevolved, 1 evolved, 2 super-evolved) deals to the enemy
+    leader when the turn ends, measured in the sandbox (search.evaluate.after_end_of_turn); one that depends on
+    luck counts its smaller outcome over two random seeds (Erntz: evolved, 8; unevolved, its 8 go to random enemy
+    followers: 0)."""
+    from svsim.search.evaluate import after_end_of_turn
+    if not defn.is_follower:
+        return 0
+    state, _ = _sandbox(0)
+    inst = E.summon(state, 0, defn)
+    resolve_queue(state)
+    if evo:
+        E.evolve(state, inst, super_=evo == 2)
+        resolve_queue(state)
+    hp = state.players[1].leader_hp
+    outcomes = []
+    for seed in (1, 2):
+        s = state.clone()
+        s.rng.seed(seed)
+        s = after_end_of_turn(s)
+        outcomes.append(hp - s.players[1].leader_hp if s.winner != 1 else 0)
+    return max(0, min(outcomes))
+
+
+class _EndOfTurn:
+    """Mixed into a search (+eot): ending the turn counts what the allied followers' end-of-turn abilities deal to
+    the enemy leader (end_turn_damage), as a last step ("end",) that realize plays as EndTurn."""
+
+    def _terminal(self, pos) -> int:
+        total = 0
+        for cid, atk, life, left, reach, evo in pos[4]:
+            d = self.defs.get(cid) or POOL.get(cid)
+            dmg = end_turn_damage(d, evo) if d is not None else 0
+            total += dmg + self.extra if dmg > 0 else 0
+        return total
+
+
+class _Fixed(_Abstract):
+    """The plain search with its cards measured at the play points it has (profile_at: a 0-cost card with Enhance
+    costs its Enhance when it can be paid, and does its plain effect when it can't): +plannerfix."""
+
+    def _profiles(self, defn: CardDef, fused: bool, pp: int, cap: int):
+        return profile_at(defn, fused, pp, cap)
+
+
 class _Tickers(_Abstract):
     """The resource search with allied tickers (ticker_profile): a position is the base search's ten fields plus
     the tickers as a sorted tuple of (count, card id). After every play its kind (spell, follower, amulet)
@@ -783,8 +842,8 @@ class _Tickers(_Abstract):
     summons takes a slot if one is free (a summoned ticker joins in). Evolving summons too (Roughwater First Mate's
     Evolve replicates its Fanfare). The engine still checks every plan (realize, verify)."""
 
-    def _profiles(self, defn: CardDef, fused: bool, pp: int):
-        return profile_at(defn, fused, pp)
+    def _profiles(self, defn: CardDef, fused: bool, pp: int, cap: int):
+        return profile_at(defn, fused, pp, cap)
 
     def _defn(self, cid: int) -> CardDef:
         d = self.defs.get(cid)
@@ -831,6 +890,17 @@ class _Tickers(_Abstract):
             yield step, nxt[:8] + (count,) + nxt[9:] + (tuple(sorted(t)),), gained
 
 
+_EOT_CLASSES: dict = {}
+
+
+def _with_eot(cls):
+    """`cls` with end-of-turn damage counted (_EndOfTurn first in its bases)."""
+    hit = _EOT_CLASSES.get(cls)
+    if hit is None:
+        hit = _EOT_CLASSES[cls] = type(f"_EndOfTurn{cls.__name__}", (_EndOfTurn, cls), {})
+    return hit
+
+
 def tickers_of(state: GameState) -> tuple:
     """The allied tickers on the field as (count, card id), sorted."""
     me = state.players[state.active]
@@ -848,19 +918,25 @@ def dig(state: GameState, keep: set, max_nodes: int = 2000) -> Plan:
     return Plan(drawn, steps, digger.nodes)
 
 
-def plan(state: GameState, max_nodes: int = 200000, tickers: bool = False) -> Plan:
+def plan(state: GameState, max_nodes: int = 200000, tickers: bool = False, fix: bool = False,
+         eot: bool = False) -> Plan:
     """The most damage the hand and board can deal this turn by the resource model,
     with the plan that deals it (stopping once it reaches the enemy leader's defense).
     With `tickers`, allied countdown amulets that hit the enemy leader (ticker_profile) are modelled too, when
-    there are any on the field; otherwise the search is the plain one."""
+    there are any on the field; otherwise the search is the plain one. With `fix` (+plannerfix), the plain search
+    measures cards at the play points it has (profile_at) and its plan is realized face first, as the ticker search
+    does. With `eot` (+eot), ending the turn counts the allied followers' end-of-turn damage to the enemy leader."""
     ticking = tickers_of(state) if tickers else ()
     if ticking:
-        search = _search_for(state, state.active, max_nodes, _Tickers)
+        search = _search_for(state, state.active, max_nodes, _with_eot(_Tickers) if eot else _Tickers)
         dmg, steps = search.best(_abstract_position(state) + (ticking,))
-        return Plan(dmg, steps, search.nodes, tickers=True)
-    search = _search_for(state, state.active, max_nodes)
+        return Plan(dmg, steps, search.nodes, tickers=True, face_first=True)
+    cls = _Fixed if fix else None
+    if eot:
+        cls = _with_eot(cls or _Abstract)
+    search = _search_for(state, state.active, max_nodes, cls)
     dmg, steps = search.best(_abstract_position(state))
-    return Plan(dmg, steps, search.nodes)
+    return Plan(dmg, steps, search.nodes, face_first=fix)
 
 
 def next_turn_position(state: GameState, side: int, board: bool = True, pp: int | None = None) -> tuple:
@@ -999,6 +1075,8 @@ def realize(state: GameState, steps: list, face_first: bool = False) -> list | N
                     break
         elif kind == "bonus":
             chosen = next((a for a in legal if isinstance(a, UseBonusPP)), None)
+        elif kind == "end":                      # the plan ends the turn for its end-of-turn damage (+eot)
+            chosen = next((a for a in legal if isinstance(a, EndTurn)), None)
         elif kind == "play":
             _, cid, cost, modes, bounce, hit = step
             amulet_back = None

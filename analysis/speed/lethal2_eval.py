@@ -24,7 +24,7 @@ def check(state, tickers: bool, near, max_nodes) -> tuple:
     hp = state.players[1 - state.active].leader_hp
     p = combo.plan(state, 20000, tickers=tickers)
     if p.damage >= hp and p.steps:
-        line = combo.realize(state, p.steps, face_first=p.tickers)
+        line = combo.realize(state, p.steps, face_first=p.face_first)
         if line and combo.verify(state, line):
             return True, "planner", (time.perf_counter() - t) * 1000
     r = LethalSearch(max_nodes=max_nodes, screen=200, near=near, seed=0).solve(state.clone())

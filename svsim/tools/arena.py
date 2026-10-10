@@ -182,7 +182,7 @@ def _make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet="))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "plannerfix", "eot"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet="))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -326,7 +326,10 @@ def _make_agent(spec: str, seed: int):
         lethal2 = "lethal2" in options
         if lethal2 and screen:
             raise ValueError("+lethal2 sets the screen itself")
+        # +plannerfix: the plain planner's two fixes (cards at the play points there, face-first realize)
         agent = LethalAgent(agent, seed=seed, planner=planner, tickers="tick" in options or lethal2,
+                            plannerfix="plannerfix" in options,
+                            eot="eot" in options,                       # +eot: the planner counts end-of-turn damage
                             **({"max_nodes": 3000, "near": (2000, 4)} if lethal2 else {}),
                             **({"screen": screen[0][0]} if screen else {}),
                             **({"near": tuple(screen[0][1:]) if len(screen[0]) == 3 else None} if screen else {}),
