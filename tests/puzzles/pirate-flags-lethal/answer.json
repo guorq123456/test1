@@ -1,0 +1,6 @@
+{
+ "kind": "lethal",
+ "expected": {"enemy_hp": 0},
+ "source": "Salem's Pirate Royal puzzle (the puzzle thread at c5413b3; the architecture thread 2026-10-10 02:11Z)",
+ "notes": "find_lethal at its defaults finds it (5441 nodes); level-strong's screen does not (damage estimate 2 of 10: the flags' Last Words, advanced by spells, are outside it; budget 200)."
+}

@@ -4,11 +4,16 @@ the golden games (tests/golden_search.py) with the lethal agent's settings, and 
 data is at hand ($SVSIM_STEP1_DIR: RC 6f11111's analysis/turn-level/step1 with the analysis line's readers in ana/)."""
 import os
 import sys
+from pathlib import Path
 
 import pytest
 
-import lethal_reference as REF
-from golden_search import GAMES
+for _p in (Path(__file__).resolve().parents[1], Path(__file__).resolve().parent):   # standalone runs too
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
+
+import lethal_reference as REF  # noqa: E402
+from golden_search import GAMES  # noqa: E402
 
 SETTINGS = [dict(max_nodes=2000, screen=200, near=(1000, 4)), dict(max_nodes=400, screen=None),
             dict(max_nodes=300, sure_only=True)]
@@ -63,3 +68,11 @@ def test_the_lethal_search_is_unchanged_on_step_1s_turn_starts():
             _same(state, k)
             n += 1
     assert n == 116
+
+
+if __name__ == "__main__":
+    # standalone, any OS: python tests/test_lethal_same.py [STEP1_DIR] [pytest options]
+    # (with SVSIM_COW_CHECK=1 in the environment for the copy-on-write check mode)
+    if len(sys.argv) > 1 and not sys.argv[1].startswith("-"):
+        os.environ["SVSIM_STEP1_DIR"] = sys.argv.pop(1)
+    raise SystemExit(pytest.main([__file__, "-q", "-p", "no:cacheprovider"] + sys.argv[1:]))

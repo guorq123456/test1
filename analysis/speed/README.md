@@ -131,3 +131,20 @@ round about 148 − 200/2017×1000 ≈ 49 ms, now about 121 − 91 ≈ 30 ms.
 **What's left** (the search's profile): legal actions about 3.9 s of 17 (play_form, target sets, signatures), the
 features about 2.7, engine resolution about 2.0, action keys about 1.0, sorting by rank about 0.8, card copies 0.8
 (hand and field now), the two shuffles 0.65. Each is a few percent.
+
+## Running the checks on another machine (Windows included)
+
+From the repository root, with `D` the folder holding step 1's data (RC 6f11111's analysis/turn-level/step1, with
+the analysis line's student_data.py and teacher_ends.py in `D\ana`):
+
+```
+python tests\test_lethal_same.py D                  (or: set SVSIM_STEP1_DIR=D, then python -m pytest tests\test_lethal_same.py)
+python -m pytest tests\test_golden_search.py tests\test_cow.py
+python analysis\speed\cmp_roots.py D                 (prints the 116 starts' hash: compare old and new code on the same machine)
+set SVSIM_COW_CHECK=1                                 (check mode, read when svsim.core.state is imported; then rerun the lines above)
+```
+
+The golden record holds root values bit for bit, which depend on the Python version (3.12's compensated float
+`sum`) and on the C math library (`math.exp` / `math.log` are not correctly rounded alike everywhere): it was frozen
+on Linux under 3.11. On another machine compare old against new there (cmp_roots, or the golden games' own hash),
+not against this record.
