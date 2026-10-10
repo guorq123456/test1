@@ -220,3 +220,40 @@
   - 偏向 Salem 的集中在 mixed（31 个，两把尺子都是 71%），也就是 Salem 在同一回合里同时多做了两件事（多铺场又多留资源、多打脸又多留资源）。这更像 bot 在这些回合**用资源的效率低**，而不是选错了大方向。
   - 纯 race、clear、develop 都只有 2～6 个，太少，不读。
 - **局限**：阈值是事先拍的，类别的边界粗；只用了通用字段，不知道留下的是哪张牌；85 个开头分到 7 类，每类都小，比例没有区间，不当结论用。setup 那一版等 M2。
+
+## 冒烟（库外种子 99600000；本机，svsim 建造线 486741e，含 dcb9159 / d7aa1ad；强制 spawn、经启动器、3 个 worker；数不当结果）
+
+**M2**（4 个开头：k = 386、388、390、393，自己第 3、5、7、10 回合）
+- 128 个样本，墙钟 207 秒，平均每样本约 3.1 秒。
+- 没跑完的 `find_lethal` 39 / 128（30.5%），几乎都在前期和中盘、对手血量还高的局面上。所以主读数（记 0）和去掉没跑完的两种都报（同上），没跑完的比例照报。
+- 读数脚本能跑。
+- RC 上的估计：不同的回合末约 396 个 × 16 × 3.1 秒 × 1.2 ≈ 2.4 万进程秒，12 进程约 35 分钟。
+
+**M4**（3 个开头：k = 305、319、337，中盘；每格 K = 2）
+- 四个方向都能跑完。每局约 1.7～3.2 秒。
+- **配平 `nodes`**：每个全局回合的毫秒数（含对手；对手在各方向相同），default 232：
+
+| nodes | race | clear | conserve | 三者平均 | ÷ default |
+|---|---|---|---|---|---|
+| 100 | 245 | 229 | 213 | 229 | 0.99 |
+| **150** | 257 | 217 | 222 | **232** | **1.00** |
+| 200 | 262 | 239 | 240 | 247 | 1.07 |
+| 300 | 293 | 249 | 265 | 269 | 1.16 |
+| 500 | 346 | 268 | 340 | 318 | 1.37 |
+
+- **照事先的规矩定 `nodes = 150`**。
+- RC 上的估计：8160 局 × 约 2.2 秒 × 1.2 ≈ 2.2 万进程秒，12 进程约 30 分钟。在 75 分钟以内，K = 12 不变。
+
+## RC 的命令（先 M2，后 M4，一个跑完再跑另一个；svsim 用建造线 d7aa1ad 或之后；分析线分支 ccr-da4857cc-rkpgwr 在这份提交或之后）
+
+```
+cd <svsim checkout>
+set PYTHONPATH=.;<分析线分支>/analysis/lethal-setup;<分析线分支>/analysis/turn-level;<分析线分支>/analysis/card-value     (Linux: export，用冒号)
+set D0=<local/pairings-20261008>/analysis/turn-level/step0                     (第 0 步的数据，RC 84d735e)
+mkdir analysis\lethal-setup                                                    (Linux: mkdir -p analysis/lethal-setup)
+python -m svsim.tools.host setup_prob run %D0% --workers 12 --out analysis/lethal-setup/m2_rows.jsonl
+python -m svsim.tools.host direction m4run %D0% --k 12 --nodes 150 --workers 12 --out analysis/lethal-setup/m4_rows.jsonl
+```
+- M2 应该写出 235 行，M4 应该写出 680 行（85 × 2 × 4）。
+- 第二条开头应打出「85 个开头 × 2 条线 × 4 个方向，每格 K = 12，nodes = 150：8160 局」。
+- 推 2 个文件：`analysis/lethal-setup/m2_rows.jsonl`、`m4_rows.jsonl`。核对和读数由分析线在本机跑。
