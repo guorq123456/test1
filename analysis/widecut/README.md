@@ -85,7 +85,7 @@ the position it leads to). **Cut:** the share of legal moves removed.
     token 波菈莱's evolve adds to hand, and it also triggers when discarded.
   - Then the strongest tier discards 正义 (Erntz, 15) and 班德 (Burnite, 12); Salem discards 日珥咆哮 (Roar of
     Prominence, 13) and 宣扬的龙人 (Dragonewt Promoter, 7).
-  - Common names as in analysis/card-glossary.md.
+  - Common names as in analysis/card-glossary.md (口人魔 = Sagatsumatsu, 牢头 = Normagdala, 露莉亚 = Lyria, Skydestined).
   - Which is right is the open question (the architecture thread 17:40Z). The +xprune confirmation gate (52.4%
     pooled, passing) leans Salem's way, but does not settle it.
 - **A next step, not done:** a position that separates the two habits directly. A wide discard decision where the
@@ -131,9 +131,9 @@ of habit.py):
 - **Positions:** 45; at 1 of them (a) and (b) lead to the same position, so it is left out. 44 compared, 32 worlds
   each per branch.
 - **What (b) chose:** at 33 of the 44 it discards another card, at 11 a move that discards nothing.
-  - The strongest tier's (a) discards: 班德 7, 正义 6, 相枛津 5, 焦龙的午睡 (Lazing Flame) 5, 金银 3,
-    诺玛格达拉 2, …
-  - (b)'s: 莉莉亚 (Lyria) 6, 佐伊 (Zooey) 4, 龙之启示 3, …
+  - The strongest tier's (a) discards: 班德 7, 正义 6, 口人魔 5, 焦龙的午睡 (Lazing Flame) 5, 金银 3,
+    牢头 (Normagdala) 2, …
+  - (b)'s: 露莉亚 (Lyria, Skydestined, card id 10403120) 6, 佐伊 (Zooey) 4, 龙之启示 3, …
 
 | (b) − (a), the discarding side's final win rate | mean | 95% interval (2000 position resamples) | positions |
 |---|---|---|---|
@@ -150,8 +150,8 @@ of habit.py):
 
   | game, turn | (a) discards | (b) discards | (a) | (b) |
   |---|---|---|---|---|
-  | 133, turn 11 | 班德 + 相枛津 | 焦龙的午睡 | 0.44 | 0.94 |
-  | 764, turn 9 | 相枛津 | 佐伊 | 0.44 | 0.69 |
+  | 133, turn 11 | 班德 + 口人魔 | 焦龙的午睡 | 0.44 | 0.94 |
+  | 764, turn 9 | 口人魔 | 佐伊 | 0.44 | 0.69 |
   | 890, turn 11 | 班德 | (no discard) | 0.25 | 0.47 |
 
 **Reading:**

@@ -22,7 +22,7 @@ position).
 **Report:**
 - The mean over positions of (b) - (a), with a 95% interval from 2000 resamples of positions (seed 0).
 - The same in two groups, fixed before the run: "big" where the strongest tier's discard includes a card of cost 7
-  or more (正义 / 班德 / 诺玛格达拉 / 相枛津 / 金银 class), and the others.
+  or more (正义 / 班德 / 牢头 / 口人魔 / 金银 class), and the others.
 - The 3 positions with the largest |(b) - (a)| (game, turn).
 - J84 (the architecture thread): (b) - (a) > 0 on the point estimate, 55%.
 
