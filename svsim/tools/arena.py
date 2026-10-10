@@ -182,7 +182,7 @@ def _make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "plannerfix", "eot"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet="))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "lethal3", "plannerfix", "eot"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet="))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -323,13 +323,15 @@ def _make_agent(spec: str, seed: int):
         # +tick: the planner models allied countdown amulets that hit the enemy leader (search.combo tickers);
         # +lethal2 (the architecture thread 2026-10-10 04:57Z; analysis/speed/LETHAL.md): +tick, and a deeper screen:
         # near-lethal 2000 nodes within 4, 3000 nodes unscreened (not in any level: a gate first)
-        lethal2 = "lethal2" in options
+        # +lethal3 (the architecture thread 2026-10-10 06:27Z): the lethal package, +lethal2 with +plannerfix and +eot
+        lethal3 = "lethal3" in options
+        lethal2 = "lethal2" in options or lethal3
         if lethal2 and screen:
-            raise ValueError("+lethal2 sets the screen itself")
+            raise ValueError("+lethal2 / +lethal3 set the screen themselves")
         # +plannerfix: the plain planner's two fixes (cards at the play points there, face-first realize)
         agent = LethalAgent(agent, seed=seed, planner=planner, tickers="tick" in options or lethal2,
-                            plannerfix="plannerfix" in options,
-                            eot="eot" in options,                       # +eot: the planner counts end-of-turn damage
+                            plannerfix="plannerfix" in options or lethal3,
+                            eot="eot" in options or lethal3,            # +eot: the planner counts end-of-turn damage
                             **({"max_nodes": 3000, "near": (2000, 4)} if lethal2 else {}),
                             **({"screen": screen[0][0]} if screen else {}),
                             **({"near": tuple(screen[0][1:]) if len(screen[0]) == 3 else None} if screen else {}),
