@@ -13,6 +13,8 @@ falls back to the hand-set evaluation for decks without one.
 from __future__ import annotations
 
 import json
+import math
+import operator
 from collections import Counter
 from pathlib import Path
 
@@ -21,6 +23,7 @@ from svsim.core.state import GameState
 from svsim.learn.features import extra_features, features, names
 
 WEIGHTS = Path(__file__).resolve().parent / "weights"
+_mul, _tanh = operator.mul, math.tanh
 SCALE = 8.0                      # ISMCTS's logistic squash: value = 1 / (1 + exp(-score / 8))
 
 
@@ -61,13 +64,33 @@ class LinearValue:
     def logit(self, state: GameState, player: int) -> float:
         x = [(v - m) / s for v, m, s in zip(self.inputs(state, player), self.mean, self.std)]
         out = sum(c * v for c, v in zip(self.coef, x))
-        if self.hidden:                  # numpy: 64 hidden units over ~200 features is too slow as Python loops
-            import numpy as np
-            if not hasattr(self, "_hidden_np"):
-                self._hidden_np = tuple(np.asarray(self.hidden[k], dtype=np.float64) for k in ("W1", "b1", "w2"))
-            W1, b1, w2 = self._hidden_np
-            out += float(np.tanh(np.asarray(x) @ W1 + b1) @ w2)
+        if self.hidden:
+            out += self._hidden_out(x)
         return out
+
+    # A small hidden layer (at most _PY_HIDDEN weights that can be nonzero, e.g. cand-nl's 16 units over 71 inputs)
+    # is summed in plain Python (2026-10-10): numpy in the search's hot path cost more than the layer itself, the
+    # whole search slowing by about 15% beyond it (analysis/nonlinear/README.md). A larger one keeps numpy, as
+    # before. Rows of W1 that are all zero (inputs that don't feed the layer) are skipped.
+    _PY_HIDDEN = 4096
+
+    def _hidden_out(self, x: list) -> float:
+        plan = self.__dict__.get("_hidden_plan")
+        if plan is None:
+            W1, b1, w2 = self.hidden["W1"], self.hidden["b1"], self.hidden["w2"]
+            rows = [i for i, row in enumerate(W1) if any(row)]
+            if len(rows) * len(b1) <= self._PY_HIDDEN:
+                plan = ("py", rows, [tuple(W1[i][j] for i in rows) for j in range(len(b1))], list(b1), list(w2))
+            else:                        # numpy: 64 hidden units over ~200 features is too slow as Python loops
+                import numpy as np
+                plan = ("np", np) + tuple(np.asarray(self.hidden[k], dtype=np.float64) for k in ("W1", "b1", "w2"))
+            self._hidden_plan = plan
+        if plan[0] == "py":
+            _, rows, cols, b1, w2 = plan
+            xr = [x[i] for i in rows]
+            return sum(map(_mul, [_tanh(b + sum(map(_mul, xr, col))) for b, col in zip(b1, cols)], w2))
+        _, np, W1, b1, w2 = plan
+        return float(np.tanh(np.asarray(x) @ W1 + b1) @ w2)
 
     def save(self, path: Path) -> None:
         d = {"names": self.names(), "coef": self.coef, "mean": self.mean, "std": self.std,

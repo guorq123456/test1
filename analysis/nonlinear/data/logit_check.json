@@ -1,0 +1,23 @@
+{
+ "turn ends": 718,
+ "installed": {
+  "bit-identical": true,
+  "max |old - new|": 0.0
+ },
+ "cand-kc": {
+  "bit-identical": true,
+  "max |old - new|": 0.0
+ },
+ "cand-nl": {
+  "bit-identical": false,
+  "max |old - new|": 1.1102230246251565e-15
+ },
+ "us per logit (median)": {
+  "installed old": 68.5,
+  "installed new": 67.2,
+  "cand-kc old": 95.0,
+  "cand-kc new": 93.3,
+  "cand-nl old": 177.5,
+  "cand-nl new": 142.1
+ }
+}

@@ -99,3 +99,36 @@ Intervals: 2000 resamples of starts.
 - The contrast loss drops 7.5%, with an interval clear of 0.
 - At the turn end, 329 and 455 are nearly level (gaps 0.006 and 0.002); after a reply, 329 turns right.
 - It costs about 21% of the iterations at equal wall clock as it stands.
+
+## 4. The hidden layer made cheaper (the architecture thread 13:36Z; `learn.model.LinearValue._hidden_out`)
+
+**The change** (model.py only; the search code is unchanged):
+- A small hidden layer is now summed in plain Python. "Small" means at most 4096 weights that can be nonzero:
+  cand-nl's 16 units over 71 inputs, skipping W1's all-zero rows.
+- A larger layer keeps the old numpy code. The linear part is the old Python sum for every model.
+
+**Why Python and not numpy:** numpy in the search's hot path costs more than the layer itself.
+- As a test, I added a dummy numpy layer of cand-nl's size to the installed model's evaluation, leaving the value
+  unchanged. The evaluation took about 44 µs longer per iteration, and the rest of the search took 55–110 µs longer.
+- In the search, with cand-nl: numpy written as one pass ran 1498–1530 iterations a second; plain Python 1751–1766.
+
+**Checks** (data/logit_check.json, pz_old.txt / pz_new.txt):
+- Installed and cand-kc: logits bit-identical on the 718 turn ends. Golden record identical; cmp_roots
+  142cc567…2b9adf.
+- The two old MLP candidates (cand-mlp-e2 / x1, 64 units: the numpy path) stay bit-identical.
+- cand-nl: largest |old − new| logit 1.1e-15 (the hidden sums run in another order).
+- Puzzle bank, seeds 1–8 (7 puzzles, 56 runs): every end the same, old code against new (4/40 solved either way).
+- Full suite with the step-1 data: 1161 passed, 1 skipped.
+
+**Speed** (nl_speed.py: ISMCTS.choose on 28 step-1 starts, 4 alternating rounds, median; data/speed_py.json):
+
+| | iterations per second | vs installed |
+|---|---|---|
+| installed | 2145 | — |
+| cand-kc | 2040 | −4.9% |
+| cand-nl, plain Python (now) | **1766** | **−17.7%** |
+| cand-nl, numpy (before) | 1498 | −29.3% |
+
+- Per evaluation (nl_cost.py, data/cost_py.json): 205.4 → 166.8 µs for cand-nl. Installed: 86 µs, cand-kc: 100 µs.
+- The iteration count is fixed, so the rate carries over to mcts:1043 (the same evaluation per iteration). At equal
+  wall clock, cand-nl gets about 82% of the installed search's iterations.
