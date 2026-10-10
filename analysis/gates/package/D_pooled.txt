@@ -1,0 +1,2 @@
+analysis/gates/package/D.jsonl: 300 pairs, seeds 68030000..68030299, 50.8% ± 2.0% (48.8%..52.9%), CR +8 (-11..+27; steady-state +7); ms per searched decision A 547.30 / B 392.72 = 1.394
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 50.8% (48.7%..52.8%), CR +8 (-13..+27; steady-state +7)
