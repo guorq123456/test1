@@ -1,0 +1,2 @@
+/home/user/test1/analysis/gates/clock/max_gate.jsonl: 300 pairs, seeds 67700000..67700299, 53.5% ± 3.0% (50.5%..56.5%), CR +33 (+4..+62; steady-state +28); ms per searched decision A 413.83 / B 402.49 = 1.028
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 53.5% (50.5%..56.5%), CR +33 (+5..+62; steady-state +28)
