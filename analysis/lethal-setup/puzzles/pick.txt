@@ -1,0 +1,21 @@
+条件：对手卡表已知（牌序、手牌未知）。运营局面题：从 M4 的 default 方向挑 6 个候选（README-puzzles.md 第 1 步）
+
+排序前 15（d = Salem 的线 − bot 的线，K = 12）：
+  k= 320 i= 7 第 7 回合 mixed     Salem 0.917 bot 0.000 d +0.917
+  k= 313 i= 5 第 6 回合 develop   Salem 0.750 bot 0.167 d +0.583
+  k= 445 i=55 第 8 回合 conserve  Salem 0.500 bot 0.083 d +0.417
+  k= 455 i=60 第 9 回合 mixed     Salem 0.500 bot 0.083 d +0.417
+  k= 329 i= 9 第 8 回合 mixed     Salem 1.000 bot 0.667 d +0.333
+  k= 518 i=79 第 8 回合 mixed     Salem 0.333 bot 0.000 d +0.333
+  k= 346 i=16 第 6 回合 mixed     Salem 0.917 bot 0.667 d +0.250
+  k= 412 i=42 第 7 回合 mixed     Salem 1.000 bot 0.750 d +0.250
+  k= 469 i=63 第 7 回合 mixed     Salem 1.000 bot 0.750 d +0.250
+  k= 411 i=41 第 6 回合 small     Salem 0.667 bot 0.417 d +0.250
+  k= 418 i=43 第 6 回合 mixed     Salem 0.833 bot 0.667 d +0.167
+  k= 432 i=48 第 6 回合 conserve  Salem 0.833 bot 0.667 d +0.167
+  k= 468 i=62 第 6 回合 mixed     Salem 0.833 bot 0.667 d +0.167
+  k= 349 i=17 第 3 回合 conserve  Salem 0.500 bot 0.333 d +0.167
+  k= 433 i=49 第 7 回合 race      Salem 0.500 bot 0.333 d +0.167
+
+d6 = +0.333；直接入选 4 个；接近的（|d − d6| < 1/12）2 个，补 2 个
+入选：k=320（i=7，mixed，d +0.917）、k=313（i=5，develop，d +0.583）、k=445（i=55，conserve，d +0.417）、k=455（i=60，mixed，d +0.417）、k=329（i=9，mixed，d +0.333）、k=518（i=79，mixed，d +0.333）
