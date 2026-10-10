@@ -1,0 +1,2 @@
+/home/user/test1/analysis/gates/clock/max_ncheck.jsonl: 20 pairs, seeds 67799000..67799019, 45.0% ± 6.7% (38.3%..51.7%), CR -47 (-113..+16; steady-state -40); ms per searched decision A 372.52 / B 384.85 = 0.968
+pooled pair by pair (20 pairs, stratified bootstrap 4000): 45.0% (37.5%..50.0%), CR -47 (-121..+0; steady-state -40)
