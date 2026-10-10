@@ -1,0 +1,1 @@
+pooled pair by pair (900 pairs, stratified bootstrap 4000): 52.9% (51.0%..54.8%), CR +27 (+9..+45; steady-state +23)

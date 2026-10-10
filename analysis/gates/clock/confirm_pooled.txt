@@ -1,0 +1,2 @@
+/home/user/test1/analysis/gates/clock/confirm.jsonl: 300 pairs, seeds 67600000..67600299, 52.0% ± 3.2% (48.8%..55.2%), CR +19 (-11..+49; steady-state +16); ms per searched decision A 85.99 / B 85.71 = 1.003
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 52.0% (48.8%..55.3%), CR +19 (-11..+51; steady-state +16)
