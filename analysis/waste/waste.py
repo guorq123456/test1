@@ -11,14 +11,16 @@ and each line's actions are tagged with generic events (no table per card):
 - evolve_no_kill: an evolution after which neither the evolve nor that follower's attacks this turn destroyed an
   enemy follower, on a turn not won (split: the follower then hit the leader / it didn't attack at all);
 - overkill: attacks on a follower that died, the attack above its defense (sum, and the attacks with any);
-- play_no_change: a card played that changed neither board nor either leader's defense (split: drew a card / nothing
-  visible);
+- max_pp_gain: maximum play points gained by cards played (ramp);
+- play_no_change: a card played that changed neither board nor either leader's defense nor the maximum play points
+  (split: drew a card / nothing visible);
 - counts: cards played, PP spent, evolutions, super-evolutions, attacks on the leader and on followers, enemy
   followers destroyed.
 The resource gap R (Salem - line) in M3's conserve units: a card in hand, 2 PP, an EP, a SEP each count 1.
 
     python3 waste.py run STEP0_DIR ANA_DIR M3_ROWS --out ROWS.jsonl [--seeds 4] [--workers 3]
-    python3 waste.py read ROWS.jsonl M3_ROWS
+    python3 waste.py read ROWS.jsonl M3_ROWS --ana ANA_DIR
+    python3 waste.py retag ROWS.jsonl STEP0_DIR ANA_DIR      (the tags again from the stored actions, no search)
 (ANA_DIR: the analysis line's analysis/ folder, with lethal-setup/, turn-level/ and card-value/.)
 """
 import argparse
@@ -66,7 +68,7 @@ def tags(state, actions) -> dict:
             break
         mine, theirs = s.players[me], s.players[1 - me]
         before = (board(mine), board(theirs), mine.leader_hp, theirs.leader_hp)
-        hand0 = len(mine.hand)
+        hand0, max0 = len(mine.hand), mine.max_pp
         enemy0 = {c.uid: c.life for c in theirs.followers}
         hp0 = theirs.leader_hp
         atk = tgt_life = None
@@ -80,7 +82,9 @@ def tags(state, actions) -> dict:
         t["kills"] += len(killed)
         if isinstance(a, PlayCard):
             t["plays"] += 1
-            if (board(mine), board(theirs), mine.leader_hp, theirs.leader_hp) == before:
+            if mine.max_pp > max0:
+                t["max_pp_gain"] += mine.max_pp - max0
+            elif (board(mine), board(theirs), mine.leader_hp, theirs.leader_hp) == before:
                 t["play_no_change"] += 1
                 t["play_no_change_drew" if len(mine.hand) >= hand0 else "play_no_change_nothing"] += 1
         elif isinstance(a, Evolve):
@@ -188,6 +192,22 @@ def run(args):
                 print(f"{n}/{len(jobs)}", flush=True)
 
 
+def retag(args):
+    """Recompute every row's tags from its stored actions (Salem's from the record), no search."""
+    import turn_level as TL
+    from svsim.core.actions import from_dict
+    _init(args.step0, args.ana)
+    rows = [json.loads(x) for x in open(args.rows) if x.strip()]
+    for r in rows:
+        st = G["starts"][r["k"]]
+        state, rec = TL._start_state(st)
+        actions = TL._salem_turn(rec, st["at"]) if r["spec"] == "salem" else [from_dict(a) for a in r["actions"]]
+        r["tags"] = tags(state, actions)
+    with open(args.rows, "w", encoding="utf-8") as fh:
+        for r in rows:
+            fh.write(json.dumps(r) + "\n")
+
+
 def read(args):
     import direction as DR
     rows = [json.loads(x) for x in open(args.rows) if x.strip()]
@@ -292,7 +312,7 @@ def read(args):
 
 TAGS = ("plays", "pp_spent", "evolves", "super_evolves", "face_attacks", "follower_attacks", "kills",
         "evolve_no_kill", "evolve_no_kill_face", "evolve_no_kill_no_attack", "evolve_no_kill_other", "overkill",
-        "overkill_attacks", "play_no_change", "play_no_change_drew", "play_no_change_nothing")
+        "overkill_attacks", "max_pp_gain", "play_no_change", "play_no_change_drew", "play_no_change_nothing")
 
 
 def main():
@@ -306,6 +326,10 @@ def main():
     a.add_argument("--seeds", type=int, default=4)
     a.add_argument("--workers", type=int, default=3)
     a.add_argument("--specs", nargs="+", default=list(SPECS))
+    c = sub.add_parser("retag")
+    c.add_argument("rows")
+    c.add_argument("step0")
+    c.add_argument("ana")
     b = sub.add_parser("read")
     b.add_argument("rows")
     b.add_argument("m3")
@@ -313,7 +337,7 @@ def main():
     args = ap.parse_args()
     _ana(args.ana)
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
-    {"run": run, "read": read}[args.cmd](args)
+    {"run": run, "read": read, "retag": retag}[args.cmd](args)
 
 
 if __name__ == "__main__":
