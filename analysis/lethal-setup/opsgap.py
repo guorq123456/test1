@@ -96,13 +96,58 @@ def run(args):
     print(f"写进了 {args.out}")
 
 
+def add(args):
+    """One more setting on the same starts and seeds (README-sp.md's second read): its turns, Salem's end recomputed
+    here to share his number, new ends numbered from 1000 per start and played out with the same per-start seeds
+    (an end identical to an earlier setting's gets the same samples again: the playout depends only on the end and
+    the seed)."""
+    from multiprocessing import Pool
+    import direction
+    from svsim.search.lethal import state_key
+    recs = TL._records(os.path.join(args.step0, "selfplay.jsonl"))
+    TL.REC.update(recs)
+    old = SP._lines(args.rows)
+    salem_id = {r["k"]: r["key"] for r in old if r.get("turn") and r["setting"] == "salem"}
+    starts = [r for r in _starts() if r["k"] in salem_id]
+    st_rows = {st["k"]: st for st in direction._m3_starts(args.step0)[0]}
+    jobs = [(r["k"], st_rows[r["k"]], args.name, args.spec, TURN_BANK + 100 * r["i"] + j)
+            for r in starts for j in range(SEEDS)]
+    with Pool(args.workers, initializer=SP._init, initargs=(recs,)) as pool:
+        turns = pool.map(_turn, jobs, chunksize=1)
+        salem_key = {}
+        for r in starts:
+            state, rec = TL._start_state(st_rows[r["k"]])
+            status, end = SP.turn_end(state, TL._salem_turn(rec, st_rows[r["k"]]["at"]))
+            salem_key[r["k"]] = state_key(end)
+        ids, ends, rows = {}, {}, []
+        for k, name, seed, key, end in turns:
+            if key == salem_key[k]:
+                kid = salem_id[k]
+            else:
+                if (k, key) not in ids:
+                    ids[(k, key)] = 1000 + sum(1 for x in ids if x[0] == k)
+                    ends[(k, ids[(k, key)])] = end
+                kid = ids[(k, key)]
+            rows.append({"turn": True, "k": k, "setting": name, "seed": seed, "key": kid})
+        i_of = {r["k"]: r["i"] for r in starts}
+        gjobs = [(k, kid, end, END_BANK + 500 * i_of[k], K) for (k, kid), end in ends.items()]
+        print(f"{len(turns)} 个回合，新的回合末 {len(gjobs)} 个要打到终局（K = {K}）", flush=True)
+        gends = pool.map(_gend, gjobs, chunksize=1)
+    with open(args.out, "w") as fh:
+        for row in rows:
+            fh.write(json.dumps(row) + "\n")
+        for k, kid, samples in gends:
+            fh.write(json.dumps({"gend": True, "k": k, "key": kid, "samples": samples}) + "\n")
+    print(f"写进了 {args.out}")
+
+
 def read(args):
-    rows = SP._lines(args.rows)
+    rows = [r for path in args.rows for r in SP._lines(path)]
     g = {(r["k"], r["key"]): sum(r["samples"]) / len(r["samples"]) for r in rows if r.get("gend")}
     turns = [r for r in rows if r.get("turn")]
     ks = sorted({r["k"] for r in turns})
     salem = {r["k"]: r["key"] for r in turns if r["setting"] == "salem"}
-    names = [n for n, _ in SETTINGS]
+    names = [n for n, _ in SETTINGS] + sorted({r["setting"] for r in turns} - {n for n, _ in SETTINGS} - {"salem"})
     val = {n: {k: [g[(k, r["key"])] for r in turns if r["k"] == k and r["setting"] == n] for k in ks} for n in names}
     per = {n: {k: sum(v) / len(v) for k, v in val[n].items()} for n in names}
     per["salem"] = {k: g[(k, salem[k])] for k in ks}
@@ -130,6 +175,10 @@ def read(args):
                 f"**J67**（> 0，置信 60%）→ {'对' if d1[0] > 0 else '错'}",
             f"- cand-nl − cand-kc：{d2[0]:+.3f}（{d2[1]:+.3f}～{d2[2]:+.3f}）；**J68**（> 0，置信 40%）→ {'对' if d2[0] > 0 else '错'}",
             f"- 另：cand-nl − 现装 {diff('nl', 'installed')[0]:+.3f}；Salem − 现装 {diff('salem', 'installed')[0]:+.3f}"]
+    if "sp" in names:
+        d3 = diff("sp", "kc")
+        out += [f"- cand-sp − cand-kc：{d3[0]:+.3f}（{d3[1]:+.3f}～{d3[2]:+.3f}）；**J77**（> 0，置信 50%）→ {'对' if d3[0] > 0 else '错'}；"
+                f"cand-sp − 现装 {diff('sp', 'installed')[0]:+.3f}"]
     out += ["", "**四道题**（每个设置：8 次回合末的平均 G_end；出现最多的回合末的次数；和 Salem 的一样几次）", "",
             "| 题 | Salem | " + " | ".join(names) + " |", "|---|---|" + "---|" * len(names)]
     for k in PUZZLES:
@@ -156,11 +205,18 @@ def main():
     a.add_argument("--ks", type=int, nargs="*", default=None, help="only these starts (smoke)")
     a.add_argument("--seeds", type=int, default=None, help="fewer turn seeds (smoke)")
     a.add_argument("--smoke", action="store_true", help="off-bank seeds 99800000 / 99850000 and K = 4")
+    a = sub.add_parser("add")
+    a.add_argument("step0")
+    a.add_argument("--rows", required=True, help="the first run's rows (Salem's end numbers)")
+    a.add_argument("--name", required=True)
+    a.add_argument("--spec", required=True)
+    a.add_argument("--out", required=True)
+    a.add_argument("--workers", type=int, default=3)
     a = sub.add_parser("read")
-    a.add_argument("rows")
+    a.add_argument("rows", nargs="+")
     a.add_argument("--out", required=True)
     args = ap.parse_args()
-    {"run": run, "read": read}[args.cmd](args)
+    {"run": run, "add": add, "read": read}[args.cmd](args)
 
 
 if __name__ == "__main__":
