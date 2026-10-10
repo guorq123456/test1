@@ -143,3 +143,40 @@ the strongest level searches the opponent's turn. At 1043's budget, does spendin
   iterations at the same wall clock.
 - **One caveat:** with `+focus`, at most 20 leaves a decision see the opponent's turn, and only through a greedy
   reply. That is a narrow look at "can they clear my board".
+
+## The opponent's turn played out from both turn ends (the architecture thread 13:15Z; J60)
+
+**Script:** `reply_ends.py` (data/reply/reply_ends.txt, .jsonl). Diagnostic only; the search is unchanged.
+
+**Method:**
+- Start from Salem's turn end and from each distinct end of the eight mcts:1043 runs: 329 has one; 455 has seven,
+  weighted by their runs.
+- 16 determinizations. They are the same for every end of a start: the opponent's hand is dealt from their sorted
+  unseen pool with seed j.
+- The opponent's turn is played to its end by the search's greedy reply, and separately by
+  mcts:1043+plan+learned+phased.
+- When my turn comes, the installed evaluation scores it for me (the model for the player to move).
+
+**Win probability after the opponent's reply** (mean ± 95%; the difference is paired by determinization):
+
+| | reply | Salem | bot (1043) | Salem − bot | board cleared: Salem / bot |
+|---|---|---|---|---|---|
+| 329 | greedy | 0.727 ± 0.043 | 0.775 ± 0.036 | −0.048 ± 0.020 | 2/16 / 13/16 |
+| 329 | mcts:1043 | 0.715 ± 0.042 | 0.751 ± 0.038 | **−0.036 ± 0.009** | 3/16 / 16/16 |
+| 455 | greedy | 0.286 ± 0.039 | 0.311 ± 0.025 | −0.025 ± 0.028 | (no follower) / 14–16 of 16 |
+| 455 | mcts:1043 | 0.254 ± 0.029 | 0.262 ± 0.021 | **−0.008 ± 0.022** | (no follower) / 16/16 |
+
+For comparison, at the turn end itself: the installed evaluation gives 329 0.651 / 0.690 and 455 0.272 / 0.32–0.38;
+G_end gives 1.000 / 0.854 and 0.583 / 0.125.
+
+**Reading:**
+- **J60 wrong.** In neither puzzle does the installed evaluation rank Salem's end first after the reply. 455's
+  difference is within its interval, but its point estimate still has the bot ahead.
+- **The reply does what Salem expected.** The opponent clears the bot's board almost every time (16/16 at 1043) and
+  Salem's rarely (3/16 in 329).
+- **The evaluation still prefers the bot's positions after that.** The opponent's mean HP when my turn comes:
+  - 329: 10.8 after the bot's line against 12.8 after Salem's (mcts:1043 reply);
+  - 455: 9.4 against 8.3, with our HP 11.2 against 7.6.
+- So the gap is in how the position is priced, not in seeing the opponent's turn. The evaluation still pays for the
+  face damage, and our defense, more than for Salem's hand and the board that survives. G_end prefers Salem's end
+  by far.
