@@ -1,0 +1,6 @@
+# Turnpick equal-compute gate read (RC 6e61d99); python3 analysis/oracle-hand/pooled.py <file>
+analysis/gates/turnpick/ramp_ramp.jsonl: 300 pairs, seeds 66300000..66300299, 49.5% ± 2.8% (46.7%..52.3%), CR -5 (-31..+22; steady-state -4); ms per searched decision A 761.37 / B 689.33 = 1.105
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 49.5% (46.7%..52.2%), CR -5 (-32..+20; steady-state -4)
+## cost check (turn_cost, RC, 60 training starts, one process, seed 7)
+A mcts:200+plan+learned+phased+pickd8i200m0z1kstr: 1495 ms per turn (median 1285), switched 7/60 (second 3, race 2, third 2; the same choices as the local run on all 60)
+B mcts:1000+plan+learned+phased: 1433 ms per turn (median 1342); A / B = 1.043 -> N_B = 1043
