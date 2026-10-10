@@ -16,6 +16,7 @@ Condition: the opponent's deck list is known (order and hand not).
 import argparse
 import json
 import math
+import random
 import statistics
 import time
 
@@ -87,6 +88,8 @@ def check3(state, tickers, fix, eot, max_nodes, near):
 
 
 def _checks(state, package):
+    if package == "none":
+        return (False, 0.0), (False, 0.0)
     if package == "lethal3":
         return check3(state, **NOW3), check3(state, **NEW3)
     return check(state, False, (1000, 4), 2000), check(state, True, (2000, 4), 3000)
@@ -103,18 +106,28 @@ def _game_facts(g):
     cards = [None, None]
     cards[a], cards[1 - a] = mine, theirs
     st = new_game(cards[0], cards[1], seed=g["seed"])
+    from svsim.core.actions import Evolve
     seen, starts = set(), []
     last_mover = None
+    evolves = {"A": 0, "B": 0, "A_super": 0, "B_super": 0}
+    package = g.get("package", "lethal2")
     for data in g["actions"]:
         if st.phase == Phase.MAIN and st.active == a and (st.turn, st.active) not in seen:
             seen.add((st.turn, st.active))
-            old, new = _checks(st, g.get("package", "lethal2"))
-            starts.append({"tickers": len(tickers_of(st)), "old": old, "new": new})
+            if package != "none":
+                old, new = _checks(st, package)
+                starts.append({"tickers": len(tickers_of(st)), "old": old, "new": new})
         last_mover = st.active
-        apply(st, from_dict(data))
+        act = from_dict(data)
+        if isinstance(act, Evolve):
+            side = "A" if st.active == a else "B"
+            evolves[side] += 1
+            evolves[side + "_super"] += bool(act.super_)
+        apply(st, act)
     own_turn_win = st.over and st.winner in (0, 1) and st.winner == last_mover
     return {"k": g["k"], "a_seat": a, "points": g["points"], "winner": st.winner,
-            "lethal_by": ("A" if st.winner == a else "B") if own_turn_win else None, "starts": starts}
+            "lethal_by": ("A" if st.winner == a else "B") if own_turn_win else None, "starts": starts,
+            "evolves": evolves}
 
 
 def read(args):
@@ -127,12 +140,31 @@ def read(args):
     n = len(facts)
     la = sum(f["lethal_by"] == "A" for f in facts)
     lb = sum(f["lethal_by"] == "B" for f in facts)
+    ea, eb = sum(f["evolves"]["A"] for f in facts), sum(f["evolves"]["B"] for f in facts)
+    rng = random.Random(0)
+    by = {}
+    for f in facts:
+        by.setdefault(f["k"], [0, 0])
+        by[f["k"]][0] += f["evolves"]["A"]
+        by[f["k"]][1] += f["evolves"]["B"]
+    ks = sorted(by)
+    bs = []
+    for _ in range(2000):
+        pick = [by[ks[rng.randrange(len(ks))]] for _ in ks]
+        tb = sum(x[1] for x in pick)
+        bs.append(sum(x[0] for x in pick) / tb if tb else float("nan"))
+    bs.sort()
     starts = [s for f in facts for s in f["starts"]]
     added = [s["new"][1] - s["old"][1] for s in starts]
     p90 = sorted(added)[min(len(added) - 1, int(math.ceil(0.9 * len(added))) - 1)] if added else float("nan")
     print("条件：对手卡表已知（牌序、手牌未知）。斩杀修正门的附带计数\n")
     print(f"- 重打的 {n} 局，和门的记录逐局比：得分不同 {mismatch} 局")
     print(f"- 在自己回合里赢下的局（斩杀兑现），每 100 局：A {100 * la / n:.1f}（{la} 局），B {100 * lb / n:.1f}（{lb} 局）")
+    print(f"- 每局进化次数：A {ea / n:.2f}（超进化 {sum(f['evolves']['A_super'] for f in facts) / n:.2f}），"
+          f"B {eb / n:.2f}（超进化 {sum(f['evolves']['B_super'] for f in facts) / n:.2f}）；"
+          f"A ÷ B = {ea / eb if eb else float('nan'):.3f}（按对重抽 {bs[49]:.3f}～{bs[1949]:.3f}）")
+    if not starts:
+        return
     print(f"- A 的自己回合开头 {len(starts)} 个：场上有 ticker 的 {sum(s['tickers'] > 0 for s in starts) / max(len(starts), 1):.1%}")
     print(f"- 开头的检查找到斩杀：+{args.package} {sum(s['new'][0] for s in starts)}，level-strong 的 {sum(s['old'][0] for s in starts)}；"
           f"只有 +{args.package} 找到 {sum(s['new'][0] and not s['old'][0] for s in starts)}，只有 level-strong 找到 "
@@ -156,7 +188,7 @@ def main():
     a = sub.add_parser("read")
     a.add_argument("records")
     a.add_argument("gate", help="the gate's results file (same seeds)")
-    a.add_argument("--package", default="lethal2", choices=("lethal2", "lethal3"),
+    a.add_argument("--package", default="lethal2", choices=("lethal2", "lethal3", "none"),
                    help="which turn-start checks to time: +lethal2's (23b317d) or +lethal3's (715230d)")
     a.add_argument("--workers", type=int, default=12)
     args = ap.parse_args()
