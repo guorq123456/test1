@@ -118,7 +118,14 @@ def run(args):
     starts, plans = _starts(args.step0)
     jobs = [(i, st, plans[st["k"]], args.fn, args.bank) for i, st in enumerate(starts)
             if not args.ks or st["k"] in args.ks][:args.limit or None]
-    with Pool(args.workers, initializer=_init, initargs=(recs,)) as pool, open(args.out, "w", encoding="utf-8") as fh:
+    mode = "w"
+    if args.resume and os.path.exists(args.out):
+        # each row depends only on its start and seed: rows already written are kept, the rest computed and appended
+        done = {r["k"] for r in _lines(args.out)}
+        jobs = [j for j in jobs if j[1]["k"] not in done]
+        mode = "a"
+        print(f"接着跑：已有 {len(done)} 个开头，还剩 {len(jobs)} 个", flush=True)
+    with Pool(args.workers, initializer=_init, initargs=(recs,)) as pool, open(args.out, mode, encoding="utf-8") as fh:
         for n, row in enumerate(pool.imap_unordered(_job, jobs), 1):
             fh.write(json.dumps(row) + "\n")
             fh.flush()
@@ -195,6 +202,7 @@ def main():
     a.add_argument("--limit", type=int, default=0, help="only the first N starts (smoke tests)")
     a.add_argument("--ks", type=int, nargs="*", default=None, help="only these step-0 k (smoke tests)")
     a.add_argument("--bank", type=int, default=BANK, help="the seed bank (another only for smoke tests)")
+    a.add_argument("--resume", action="store_true", help="keep the rows already in --out, compute the rest")
     a = sub.add_parser("read")
     a.add_argument("rows")
     args = ap.parse_args()

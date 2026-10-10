@@ -180,8 +180,15 @@ def m4run(args):
             if not args.ks or st["k"] in args.ks for line in ("salem", "bot") for d in dirs]
     print(f"{len(jobs) // (2 * len(dirs))} 个开头 × 2 条线 × {len(dirs)} 个方向，每格 K = {args.k}，nodes = {args.nodes}："
           f"{len(jobs) * args.k} 局", flush=True)
+    mode = "w"
+    if args.resume and os.path.exists(args.out):
+        # each cell depends only on its start, line, direction and seed: cells already written are kept
+        done = {(r["k"], r["line"], r["direction"]) for r in SP._lines(args.out)}
+        jobs = [j for j in jobs if (j[1]["k"], j[3], j[4]) not in done]
+        mode = "a"
+        print(f"接着跑：已有 {len(done)} 格，还剩 {len(jobs)} 格", flush=True)
     with Pool(args.workers, initializer=SP._init, initargs=(recs,)) as pool, \
-            open(args.out, "w", encoding="utf-8") as fh:
+            open(args.out, mode, encoding="utf-8") as fh:
         for n, row in enumerate(pool.imap_unordered(_m4_job, jobs), 1):
             fh.write(json.dumps(row) + "\n")
             fh.flush()
@@ -260,6 +267,7 @@ def main():
     a.add_argument("--workers", type=int, default=12)
     a.add_argument("--ks", type=int, nargs="*", default=None, help="only these step-0 k (smoke tests)")
     a.add_argument("--directions", nargs="*", default=None)
+    a.add_argument("--resume", action="store_true", help="keep the cells already in --out, compute the rest")
     a = sub.add_parser("m4read")
     a.add_argument("rows")
     a.add_argument("--m3", required=True, help="m3_rows.jsonl")
