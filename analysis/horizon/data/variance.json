@@ -1,0 +1,54 @@
+{
+ "A": {
+  "step1": {
+   "n": 108686,
+   "share": 0.0361,
+   "share_unweighted": 0.0272,
+   "corr_L_correction": 0.0013
+  },
+  "all": {
+   "n": 320382,
+   "share": 0.0491,
+   "share_unweighted": 0.0395,
+   "corr_L_correction": 0.049
+  },
+  "teacher_ends": {
+   "n": 211696,
+   "share": 0.0591,
+   "share_unweighted": 0.0542,
+   "corr_L_correction": 0.0696
+  },
+  "step1_per_label": {
+   "n": 5453,
+   "share": 0.0348,
+   "share_unweighted": 0.0263,
+   "corr_L_correction": 0.0023
+  }
+ },
+ "B": {
+  "step1": {
+   "n": 108686,
+   "share": 0.0362,
+   "share_unweighted": 0.0273,
+   "corr_L_correction": 0.126
+  },
+  "all": {
+   "n": 320382,
+   "share": 0.0471,
+   "share_unweighted": 0.0382,
+   "corr_L_correction": 0.1198
+  },
+  "teacher_ends": {
+   "n": 211696,
+   "share": 0.0556,
+   "share_unweighted": 0.0511,
+   "corr_L_correction": 0.0998
+  },
+  "step1_per_label": {
+   "n": 5453,
+   "share": 0.0349,
+   "share_unweighted": 0.0263,
+   "corr_L_correction": 0.129
+  }
+ }
+}
