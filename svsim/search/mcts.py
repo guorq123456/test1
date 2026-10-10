@@ -54,6 +54,29 @@ from svsim.core.view import determinize
 from svsim.search.evaluate import DEFAULT, evaluate
 from svsim.search.moves import reserved, worth_trying
 
+# The root's moves once per decision (the architecture thread 2026-10-10 14:11Z). Every iteration starts from a new
+# determinization of the same root, which changes only what the player to move can't see (the opponent's hand, the
+# decks' order); the moves open there, their order and their keys (legal actions, reserve / veto / prune, _rank,
+# action_key, the prior's order) depend only on what that player sees, so they are computed on the first iteration
+# and kept for the decision. Check mode (SVSIM_ROOT_CHECK=1): every iteration computes them again and compares, key,
+# action and order; a difference is recorded in ROOT_MISMATCHES (with the cards in play) and that iteration uses its
+# own. ROOT_RECOMPUTE: card ids whose scripts read hidden information there (none found); with one of them in a
+# hand or in play, the root's moves are computed every iteration as before.
+import os as _os
+ROOT_CHECK = _os.environ.get("SVSIM_ROOT_CHECK", "") not in ("", "0")
+ROOT_MISMATCHES: list = []
+ROOT_SEEN: set = set()                  # (check mode) card ids in a hand or in play at checked roots
+ROOT_CHECKS = [0]                       # (check mode) roots compared
+ROOT_RECOMPUTE: frozenset = frozenset()
+
+
+def _root_cache_ok(state: GameState, me: int) -> bool:
+    if not ROOT_RECOMPUTE:
+        return True
+    p, q = state.players[me], state.players[1 - me]
+    cards = p.hand + p.field + p.leader_area + q.field + q.leader_area
+    return not any(c.defn.card_id in ROOT_RECOMPUTE for c in cards)
+
 
 def _locator(state: GameState, me: int) -> dict:
     """uid -> a key that identifies the card the same way in every determinization."""
@@ -195,6 +218,7 @@ class ISMCTS:
         self.reuse = reuse             # keep the chosen move's subtree for the next decision of the turn
         self.min_new = min_new         # ... and search at least this many new iterations there
         self._next = None              # (key of the expected next position, subtree, center) when reusing
+        self._root_options, self._root_cache = None, False   # the root's moves for the decision (_choose)
         self.prune = prune             # leave out dominated moves (search.moves)
         self.reserve = reserve         # keep the win condition for finishing turns (search.moves.reserved)
         self.veto = veto               # veto(state, action) -> True to leave the action out (e.g. learn.timing.Pace)
@@ -275,6 +299,8 @@ class ISMCTS:
             iterations = max(self.min_new, full - root.visits)
         deadline = time.perf_counter() + self.seconds if self.seconds else None
         self._replies = 0
+        self._root_options = None                  # the root's moves, kept after the first iteration
+        self._root_cache = _root_cache_ok(state, me)
         self._root_deck = {c.uid for c in state.players[me].deck_view()}
         self._root_prior = {}
         if self.prior is not None:
@@ -379,18 +405,26 @@ class ISMCTS:
         node, path, depth = root, [root], 0
         offered = []                     # the moves open at each node on the path, this determinization
         while not s.over and s.active == me and depth < self.max_depth:
-            where = _locator(s, me)
-            options = {}
-            legal = legal_actions(s)
-            if self.reserve:
-                legal = [a for a in legal if not reserved(s, a)] or legal
-            if self.veto is not None:
-                legal = [a for a in legal if not self.veto(s, a)] or legal
-            for a in sorted(worth_trying(s, legal) if self.prune else legal, key=lambda a: _rank(s, a)):
-                options.setdefault(action_key(s, a, where), a)
             prior = self._root_prior if depth == 0 and self._root_prior else None
-            if prior is not None:                       # the root's moves in the prior's order
-                options = dict(sorted(options.items(), key=lambda kv: -prior.get(kv[0], 0.0)))
+            kept = self._root_options if depth == 0 else None
+            if kept is not None and not ROOT_CHECK:
+                options = kept
+            else:
+                options = self._options(s, me, prior)
+                if depth == 0 and self._root_cache:
+                    if kept is None:
+                        self._root_options = options
+                    else:                               # check mode: the same moves, keys and order
+                        ROOT_CHECKS[0] += 1
+                        p, q = s.players[me], s.players[1 - me]
+                        ROOT_SEEN.update(c.defn.card_id for c in p.hand + p.field + p.leader_area + q.field
+                                         + q.leader_area)
+                        if list(options.items()) != list(kept.items()):
+                            ROOT_MISMATCHES.append({
+                                "turn": s.turn, "kept": [repr(k) for k in kept], "now": [repr(k) for k in options],
+                                "hand": [c.defn.card_id for c in p.hand], "field": [c.defn.card_id for c in p.field],
+                                "enemy_field": [c.defn.card_id for c in q.field],
+                                "enemy_hand": [c.defn.card_id for c in q.hand]})
             offered.append(options)
             fresh = None
             for k in options:
@@ -451,6 +485,21 @@ class ISMCTS:
             seen = frozenset(options)
             n.options[seen] = n.options.get(seen, 0) + 1
             self._refresh(n)
+
+    def _options(self, s: GameState, me: int, prior) -> dict:
+        """The moves open in `s`, {action_key: action}, in the order they are tried."""
+        where = _locator(s, me)
+        options = {}
+        legal = legal_actions(s)
+        if self.reserve:
+            legal = [a for a in legal if not reserved(s, a)] or legal
+        if self.veto is not None:
+            legal = [a for a in legal if not self.veto(s, a)] or legal
+        for a in sorted(worth_trying(s, legal) if self.prune else legal, key=lambda a: _rank(s, a)):
+            options.setdefault(action_key(s, a, where), a)
+        if prior is not None:                           # the root's moves in the prior's order
+            options = dict(sorted(options.items(), key=lambda kv: -prior.get(kv[0], 0.0)))
+        return options
 
     def _reply_here(self, root: Node, path: list) -> bool:
         """Whether to play the opponent's turn out at this turn-end leaf (see reply_after, reply_top,

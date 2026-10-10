@@ -294,3 +294,54 @@ changed. J65 is not reached.
    unsafe. It needs an audit of every script, or a check mode like the deck's copy on write.
 2. **Hand and field cards copied on write**, as the decks' already are (clone is 8.7%). It needs every path that
    changes a card in hand or on the field covered. Those are many more than the deck's nine.
+
+## Round 6 (the architecture thread 14:11Z; J66): the root's moves once per decision
+
+**The change** (`search.mcts`):
+- Every iteration starts from a new determinization of the same root. A determinization changes only what the player
+  to move can't see: the opponent's hand and the decks' order.
+- The moves open at the root are computed on a decision's first iteration and kept for the decision: legal actions,
+  reserve / veto / prune, `_rank`'s order, `action_key`, the prior's order (`ISMCTS._options`).
+- In real play these can depend only on what the player to move sees. A script that read hidden information there
+  would be a leak in the simulator.
+- `ROOT_RECOMPUTE` lists card ids whose scripts do (none were found). With one of them in a hand or in play, the
+  root's moves are computed every iteration as before.
+
+**Check mode** (`SVSIM_ROOT_CHECK=1`; `root_check.py`, data/r6/root_check.*): every iteration computes the root's
+moves again and compares them with the kept ones (keys, actions, order).
+
+| part | roots compared | differences |
+|---|---|---|
+| bench: the 30 step-1 starts, level-strong | 5,572 | 0 |
+| puzzle bank, level-strong, seeds 1–8 | 55,919 | 0 |
+| self-play: every ordered pair of the 9 named decks × 2 games, plus 600 games of random legal decks from the whole pool (every craft), mcts:12 | 401,500 | 0 |
+| **total** | **462,991** | **0** |
+
+**Coverage:**
+- At the compared roots, in a hand or in play: all 253 collectible Rotation cards random_deck draws from, all 235 of
+  them with a script, and all 110 cards of the named decks.
+- 347 distinct ids in all. The implemented pool's 982 also counts tokens and Unlimited cards.
+
+**Behavior unchanged:**
+- Golden identical.
+- **cmp_roots 142cc567…2b9adf (unchanged).** No random draw and no order changed.
+- Logits of the installed model, cand-kc and cand-nl bit-identical: the evaluation wasn't touched.
+- Puzzle bank seeds 1–8: all 56 ends the same for each of the three models.
+- tests/test_root_cache.py: the same search roots with and without the cache, and check mode clean.
+- Full suite with the step-1 data: 1163 passed, 1 skipped.
+
+**Speed:**
+- bench.py, the same 28 starts, old = 6073fb4, alternating: iterations per second 2154.3 / 2125.4 / 2156.2 →
+  2536.6 / 3116.9 / 2978.9, **medians 2154 → 2979 (+38%)**. ms per decision, whole agent: 131.6 → 106.3 (medians).
+- **J66 right.**
+- nl_speed.py, interleaved, median of four:
+
+| | old | new |
+|---|---|---|
+| installed | 2142 | 3012 (+40.6%) |
+| cand-kc | 2076 | 2852 (+37.4%) |
+| cand-nl | 1712 | 2224 (+29.9%) |
+
+The root's step was much more of an iteration than the profile's share for legal actions suggested. At the root, all
+of these run on the widest position every iteration: the legal actions, `worth_trying`'s dominance checks, the sort
+and the keys.
