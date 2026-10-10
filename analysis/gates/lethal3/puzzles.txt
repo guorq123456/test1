@@ -1,0 +1,14 @@
+{"spec": "level-strong+lethal3", "puzzle": "pirate-flags-lethal", "kind": "lethal", "seed": 1, "solved": true, "won": true, "enemy_hp": 0, "pp_left": 0, "hand": 1, "enemy_followers": 0, "our_hp": 12, "ms": 68}
+{"spec": "level-strong+lethal3", "puzzle": "pirate-flags-lethal", "kind": "lethal", "seed": 2, "solved": true, "won": true, "enemy_hp": 0, "pp_left": 0, "hand": 1, "enemy_followers": 0, "our_hp": 12, "ms": 17}
+{"spec": "level-strong+lethal3", "puzzle": "pirate-flags-lethal", "kind": "lethal", "seed": 3, "solved": true, "won": true, "enemy_hp": 0, "pp_left": 0, "hand": 1, "enemy_followers": 0, "our_hp": 12, "ms": 17}
+{"spec": "level-strong+lethal3", "puzzle": "pirate-flags-setup", "kind": "setup", "seed": 1, "solved": "open", "won": false, "enemy_hp": 5, "pp_left": 0, "hand": 4, "enemy_followers": 0, "our_hp": 12, "ms": 1005}
+{"spec": "level-strong+lethal3", "puzzle": "pirate-flags-setup", "kind": "setup", "seed": 2, "solved": "open", "won": false, "enemy_hp": 5, "pp_left": 0, "hand": 4, "enemy_followers": 0, "our_hp": 12, "ms": 882}
+{"spec": "level-strong+lethal3", "puzzle": "pirate-flags-setup", "kind": "setup", "seed": 3, "solved": "open", "won": false, "enemy_hp": 5, "pp_left": 0, "hand": 4, "enemy_followers": 0, "our_hp": 12, "ms": 892}
+{"spec": "level-strong+lethal3", "summary": "3/3 solved", "puzzles": 2, "seeds": [1, 2, 3], "ms_mean": 480}
+{"spec": "level-strong", "puzzle": "pirate-flags-lethal", "kind": "lethal", "seed": 1, "solved": false, "won": false, "enemy_hp": 4, "pp_left": 2, "hand": 3, "enemy_followers": 0, "our_hp": 12, "ms": 915}
+{"spec": "level-strong", "puzzle": "pirate-flags-lethal", "kind": "lethal", "seed": 2, "solved": false, "won": false, "enemy_hp": 4, "pp_left": 2, "hand": 3, "enemy_followers": 0, "our_hp": 12, "ms": 761}
+{"spec": "level-strong", "puzzle": "pirate-flags-lethal", "kind": "lethal", "seed": 3, "solved": false, "won": false, "enemy_hp": 4, "pp_left": 2, "hand": 3, "enemy_followers": 0, "our_hp": 12, "ms": 1061}
+{"spec": "level-strong", "puzzle": "pirate-flags-setup", "kind": "setup", "seed": 1, "solved": "open", "won": false, "enemy_hp": 5, "pp_left": 0, "hand": 4, "enemy_followers": 0, "our_hp": 12, "ms": 1064}
+{"spec": "level-strong", "puzzle": "pirate-flags-setup", "kind": "setup", "seed": 2, "solved": "open", "won": false, "enemy_hp": 5, "pp_left": 0, "hand": 4, "enemy_followers": 0, "our_hp": 12, "ms": 858}
+{"spec": "level-strong", "puzzle": "pirate-flags-setup", "kind": "setup", "seed": 3, "solved": "open", "won": false, "enemy_hp": 5, "pp_left": 0, "hand": 4, "enemy_followers": 0, "our_hp": 12, "ms": 759}
+{"spec": "level-strong", "summary": "0/3 solved", "puzzles": 2, "seeds": [1, 2, 3], "ms_mean": 903}
