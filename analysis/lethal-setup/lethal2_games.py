@@ -189,7 +189,7 @@ def main():
     a.add_argument("records")
     a.add_argument("gate", help="the gate's results file (same seeds)")
     a.add_argument("--package", default="lethal2", choices=("lethal2", "lethal3", "none"),
-                   help="which turn-start checks to time: +lethal2's (23b317d) or +lethal3's (715230d)")
+                   help="which turn-start checks to time: +lethal2's (23b317d) or +lethal3's (715230d; the gate runs on 850237d)")
     a.add_argument("--workers", type=int, default=12)
     args = ap.parse_args()
     {"play": play, "read": read}[args.cmd](args)
