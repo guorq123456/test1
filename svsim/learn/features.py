@@ -101,12 +101,22 @@ def _board_threat(state: GameState, side: int) -> int:
 
 
 def _roles_sum(cards) -> list[float]:
-    from svsim.learn.roles import card_roles
-    out = [0.0] * 6
+    from svsim.learn.roles import _ROLES, card_roles
+    # unrolled, the additions in the same order as a loop over the six (the same floats bit for bit)
+    a0 = a1 = a2 = a3 = a4 = a5 = 0.0
+    get = _ROLES.get
     for c in cards:
-        for i, v in enumerate(card_roles(c.defn)):
-            out[i] += v
-    return out
+        d = c.defn
+        r = get(d.card_id)
+        if r is None:
+            r = card_roles(d)
+        a0 += r[0]
+        a1 += r[1]
+        a2 += r[2]
+        a3 += r[3]
+        a4 += r[4]
+        a5 += r[5]
+    return [a0, a1, a2, a3, a4, a5]
 
 
 def recurring_sum(p) -> list[float]:

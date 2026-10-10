@@ -6,10 +6,10 @@ for search, and a seed plus an action list is enough to replay one.
 """
 from collections import deque
 from dataclasses import dataclass, field as dc_field
-import copy
 import random
 
 _new_object = object.__new__
+_new_random = random.Random.__new__
 
 from .carddef import CardDef
 from .enums import Keyword, Phase
@@ -89,16 +89,11 @@ class CardInstance:
         clone.fused_turn = self.fused_turn
         clone.silenced = self.silenced
         clone.no_last_words = self.no_last_words
-        clone.counters = self.counters
-        clone.grants = self.grants
-        clone.cost_mods = self.cost_mods
-        if self.counters is not None:
-            clone.counters = {k: (list(v) if isinstance(v, list) else v)
-                              for k, v in self.counters.items()}
-        if self.grants is not None:
-            clone.grants = list(self.grants)
-        if self.cost_mods is not None:
-            clone.cost_mods = list(self.cost_mods)
+        counters, grants, cost_mods = self.counters, self.grants, self.cost_mods
+        clone.counters = None if counters is None else {k: (list(v) if isinstance(v, list) else v)
+                                                        for k, v in counters.items()}
+        clone.grants = None if grants is None else list(grants)
+        clone.cost_mods = None if cost_mods is None else list(cost_mods)
         return clone
 
     def has(self, keyword: Keyword) -> bool:
@@ -142,7 +137,23 @@ class PlayerState:
     deck_name: str | None = None   # the named deck registered (cards.decks.NAMED), "" for another; set by new_game
 
     def copy(self) -> "PlayerState":
-        clone = copy.copy(self)
+        # Field by field, as CardInstance.copy (copy.copy goes through __reduce_ex__: several times slower);
+        # tests/test_state.py checks that every field is copied.
+        clone = _new_object(PlayerState)
+        clone.index = self.index
+        clone.leader_hp = self.leader_hp
+        clone.leader_max_hp = self.leader_max_hp
+        clone.max_pp = self.max_pp
+        clone.pp = self.pp
+        clone.ep = self.ep
+        clone.sep = self.sep
+        clone.turns_taken = self.turns_taken
+        clone.evolved_this_turn = self.evolved_this_turn
+        clone.bonus_ready = self.bonus_ready
+        clone.bonus_active = self.bonus_active
+        clone.combo = self.combo
+        clone.rally = self.rally
+        clone.shadows = self.shadows
         clone.deck = [c.copy() for c in self.deck]
         clone.hand = [c.copy() for c in self.hand]
         clone.field = [c.copy() for c in self.field]
@@ -150,7 +161,14 @@ class PlayerState:
         clone.destroyed = list(self.destroyed)
         clone.destroyed_amulets = list(self.destroyed_amulets)
         clone.played_base_costs = set(self.played_base_costs)
+        clone.evolutions = self.evolutions
+        clone.attacked_leader_this_turn = self.attacked_leader_this_turn
+        clone.attacked_leader_last_turn = self.attacked_leader_last_turn
+        clone.damage_cap = self.damage_cap
+        clone.damage_cap_until = self.damage_cap_until
+        clone.extra_damage = self.extra_damage
         clone.entered = dict(self.entered)
+        clone.deck_name = self.deck_name
         return clone
 
     @property
@@ -172,10 +190,13 @@ class GameState:
     max_turns: int = 60           # safety cap on global turns (draw); not a confirmed game rule
     queue: deque = dc_field(default_factory=deque)  # pending triggers; always empty between actions
 
-    def clone(self) -> "GameState":
+    def clone(self, copy_rng: bool = True) -> "GameState":
+        """An independent copy. copy_rng=False leaves the copy's generator unseeded, for a caller that seeds it
+        at once (core.view.determinize): copying a state the seed then overwrites is wasted time."""
         assert not self.queue, "clone only between actions"
-        rng = random.Random()
-        rng.setstate(self.rng.getstate())
+        rng = _new_random(random.Random)          # not random.Random(): that seeds itself from the OS first
+        if copy_rng:
+            rng.setstate(self.rng.getstate())
         return GameState(players=[p.copy() for p in self.players], rng=rng, first=self.first,
                          active=self.active, turn=self.turn, phase=self.phase,
                          winner=self.winner, next_uid=self.next_uid,
