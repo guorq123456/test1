@@ -1,0 +1,955 @@
+{"turn": true, "k": 304, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 312, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 313, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 320, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 327, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 329, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 337, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 339, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 345, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 346, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 349, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 366, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 375, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 377, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 385, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 388, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 399, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 411, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 412, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 418, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 432, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 433, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 443, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 445, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 449, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 451, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 455, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 468, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 469, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 497, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 516, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 518, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 519, "setting": "salem", "seed": null, "key": 0}
+{"turn": true, "k": 304, "setting": "installed", "seed": 67900100, "key": 1}
+{"turn": true, "k": 304, "setting": "installed", "seed": 67900101, "key": 1}
+{"turn": true, "k": 304, "setting": "installed", "seed": 67900102, "key": 1}
+{"turn": true, "k": 304, "setting": "installed", "seed": 67900103, "key": 1}
+{"turn": true, "k": 304, "setting": "installed", "seed": 67900104, "key": 1}
+{"turn": true, "k": 304, "setting": "installed", "seed": 67900105, "key": 1}
+{"turn": true, "k": 304, "setting": "installed", "seed": 67900106, "key": 1}
+{"turn": true, "k": 304, "setting": "installed", "seed": 67900107, "key": 1}
+{"turn": true, "k": 304, "setting": "kc", "seed": 67900100, "key": 1}
+{"turn": true, "k": 304, "setting": "kc", "seed": 67900101, "key": 1}
+{"turn": true, "k": 304, "setting": "kc", "seed": 67900102, "key": 1}
+{"turn": true, "k": 304, "setting": "kc", "seed": 67900103, "key": 1}
+{"turn": true, "k": 304, "setting": "kc", "seed": 67900104, "key": 1}
+{"turn": true, "k": 304, "setting": "kc", "seed": 67900105, "key": 1}
+{"turn": true, "k": 304, "setting": "kc", "seed": 67900106, "key": 1}
+{"turn": true, "k": 304, "setting": "kc", "seed": 67900107, "key": 1}
+{"turn": true, "k": 304, "setting": "nl", "seed": 67900100, "key": 1}
+{"turn": true, "k": 304, "setting": "nl", "seed": 67900101, "key": 1}
+{"turn": true, "k": 304, "setting": "nl", "seed": 67900102, "key": 1}
+{"turn": true, "k": 304, "setting": "nl", "seed": 67900103, "key": 1}
+{"turn": true, "k": 304, "setting": "nl", "seed": 67900104, "key": 1}
+{"turn": true, "k": 304, "setting": "nl", "seed": 67900105, "key": 1}
+{"turn": true, "k": 304, "setting": "nl", "seed": 67900106, "key": 1}
+{"turn": true, "k": 304, "setting": "nl", "seed": 67900107, "key": 1}
+{"turn": true, "k": 312, "setting": "installed", "seed": 67900400, "key": 1}
+{"turn": true, "k": 312, "setting": "installed", "seed": 67900401, "key": 1}
+{"turn": true, "k": 312, "setting": "installed", "seed": 67900402, "key": 1}
+{"turn": true, "k": 312, "setting": "installed", "seed": 67900403, "key": 1}
+{"turn": true, "k": 312, "setting": "installed", "seed": 67900404, "key": 1}
+{"turn": true, "k": 312, "setting": "installed", "seed": 67900405, "key": 1}
+{"turn": true, "k": 312, "setting": "installed", "seed": 67900406, "key": 1}
+{"turn": true, "k": 312, "setting": "installed", "seed": 67900407, "key": 1}
+{"turn": true, "k": 312, "setting": "kc", "seed": 67900400, "key": 1}
+{"turn": true, "k": 312, "setting": "kc", "seed": 67900401, "key": 1}
+{"turn": true, "k": 312, "setting": "kc", "seed": 67900402, "key": 1}
+{"turn": true, "k": 312, "setting": "kc", "seed": 67900403, "key": 1}
+{"turn": true, "k": 312, "setting": "kc", "seed": 67900404, "key": 1}
+{"turn": true, "k": 312, "setting": "kc", "seed": 67900405, "key": 1}
+{"turn": true, "k": 312, "setting": "kc", "seed": 67900406, "key": 1}
+{"turn": true, "k": 312, "setting": "kc", "seed": 67900407, "key": 1}
+{"turn": true, "k": 312, "setting": "nl", "seed": 67900400, "key": 1}
+{"turn": true, "k": 312, "setting": "nl", "seed": 67900401, "key": 1}
+{"turn": true, "k": 312, "setting": "nl", "seed": 67900402, "key": 1}
+{"turn": true, "k": 312, "setting": "nl", "seed": 67900403, "key": 1}
+{"turn": true, "k": 312, "setting": "nl", "seed": 67900404, "key": 1}
+{"turn": true, "k": 312, "setting": "nl", "seed": 67900405, "key": 1}
+{"turn": true, "k": 312, "setting": "nl", "seed": 67900406, "key": 1}
+{"turn": true, "k": 312, "setting": "nl", "seed": 67900407, "key": 1}
+{"turn": true, "k": 313, "setting": "installed", "seed": 67900500, "key": 0}
+{"turn": true, "k": 313, "setting": "installed", "seed": 67900501, "key": 0}
+{"turn": true, "k": 313, "setting": "installed", "seed": 67900502, "key": 0}
+{"turn": true, "k": 313, "setting": "installed", "seed": 67900503, "key": 0}
+{"turn": true, "k": 313, "setting": "installed", "seed": 67900504, "key": 0}
+{"turn": true, "k": 313, "setting": "installed", "seed": 67900505, "key": 0}
+{"turn": true, "k": 313, "setting": "installed", "seed": 67900506, "key": 0}
+{"turn": true, "k": 313, "setting": "installed", "seed": 67900507, "key": 0}
+{"turn": true, "k": 313, "setting": "kc", "seed": 67900500, "key": 0}
+{"turn": true, "k": 313, "setting": "kc", "seed": 67900501, "key": 0}
+{"turn": true, "k": 313, "setting": "kc", "seed": 67900502, "key": 0}
+{"turn": true, "k": 313, "setting": "kc", "seed": 67900503, "key": 0}
+{"turn": true, "k": 313, "setting": "kc", "seed": 67900504, "key": 0}
+{"turn": true, "k": 313, "setting": "kc", "seed": 67900505, "key": 0}
+{"turn": true, "k": 313, "setting": "kc", "seed": 67900506, "key": 0}
+{"turn": true, "k": 313, "setting": "kc", "seed": 67900507, "key": 0}
+{"turn": true, "k": 313, "setting": "nl", "seed": 67900500, "key": 0}
+{"turn": true, "k": 313, "setting": "nl", "seed": 67900501, "key": 0}
+{"turn": true, "k": 313, "setting": "nl", "seed": 67900502, "key": 0}
+{"turn": true, "k": 313, "setting": "nl", "seed": 67900503, "key": 0}
+{"turn": true, "k": 313, "setting": "nl", "seed": 67900504, "key": 0}
+{"turn": true, "k": 313, "setting": "nl", "seed": 67900505, "key": 0}
+{"turn": true, "k": 313, "setting": "nl", "seed": 67900506, "key": 0}
+{"turn": true, "k": 313, "setting": "nl", "seed": 67900507, "key": 0}
+{"turn": true, "k": 320, "setting": "installed", "seed": 67900700, "key": 1}
+{"turn": true, "k": 320, "setting": "installed", "seed": 67900701, "key": 1}
+{"turn": true, "k": 320, "setting": "installed", "seed": 67900702, "key": 1}
+{"turn": true, "k": 320, "setting": "installed", "seed": 67900703, "key": 1}
+{"turn": true, "k": 320, "setting": "installed", "seed": 67900704, "key": 1}
+{"turn": true, "k": 320, "setting": "installed", "seed": 67900705, "key": 1}
+{"turn": true, "k": 320, "setting": "installed", "seed": 67900706, "key": 1}
+{"turn": true, "k": 320, "setting": "installed", "seed": 67900707, "key": 1}
+{"turn": true, "k": 320, "setting": "kc", "seed": 67900700, "key": 1}
+{"turn": true, "k": 320, "setting": "kc", "seed": 67900701, "key": 1}
+{"turn": true, "k": 320, "setting": "kc", "seed": 67900702, "key": 1}
+{"turn": true, "k": 320, "setting": "kc", "seed": 67900703, "key": 1}
+{"turn": true, "k": 320, "setting": "kc", "seed": 67900704, "key": 1}
+{"turn": true, "k": 320, "setting": "kc", "seed": 67900705, "key": 1}
+{"turn": true, "k": 320, "setting": "kc", "seed": 67900706, "key": 1}
+{"turn": true, "k": 320, "setting": "kc", "seed": 67900707, "key": 1}
+{"turn": true, "k": 320, "setting": "nl", "seed": 67900700, "key": 2}
+{"turn": true, "k": 320, "setting": "nl", "seed": 67900701, "key": 2}
+{"turn": true, "k": 320, "setting": "nl", "seed": 67900702, "key": 2}
+{"turn": true, "k": 320, "setting": "nl", "seed": 67900703, "key": 2}
+{"turn": true, "k": 320, "setting": "nl", "seed": 67900704, "key": 2}
+{"turn": true, "k": 320, "setting": "nl", "seed": 67900705, "key": 2}
+{"turn": true, "k": 320, "setting": "nl", "seed": 67900706, "key": 2}
+{"turn": true, "k": 320, "setting": "nl", "seed": 67900707, "key": 2}
+{"turn": true, "k": 327, "setting": "installed", "seed": 67900800, "key": 1}
+{"turn": true, "k": 327, "setting": "installed", "seed": 67900801, "key": 1}
+{"turn": true, "k": 327, "setting": "installed", "seed": 67900802, "key": 1}
+{"turn": true, "k": 327, "setting": "installed", "seed": 67900803, "key": 1}
+{"turn": true, "k": 327, "setting": "installed", "seed": 67900804, "key": 1}
+{"turn": true, "k": 327, "setting": "installed", "seed": 67900805, "key": 1}
+{"turn": true, "k": 327, "setting": "installed", "seed": 67900806, "key": 1}
+{"turn": true, "k": 327, "setting": "installed", "seed": 67900807, "key": 1}
+{"turn": true, "k": 327, "setting": "kc", "seed": 67900800, "key": 2}
+{"turn": true, "k": 327, "setting": "kc", "seed": 67900801, "key": 2}
+{"turn": true, "k": 327, "setting": "kc", "seed": 67900802, "key": 2}
+{"turn": true, "k": 327, "setting": "kc", "seed": 67900803, "key": 2}
+{"turn": true, "k": 327, "setting": "kc", "seed": 67900804, "key": 2}
+{"turn": true, "k": 327, "setting": "kc", "seed": 67900805, "key": 2}
+{"turn": true, "k": 327, "setting": "kc", "seed": 67900806, "key": 2}
+{"turn": true, "k": 327, "setting": "kc", "seed": 67900807, "key": 2}
+{"turn": true, "k": 327, "setting": "nl", "seed": 67900800, "key": 2}
+{"turn": true, "k": 327, "setting": "nl", "seed": 67900801, "key": 2}
+{"turn": true, "k": 327, "setting": "nl", "seed": 67900802, "key": 2}
+{"turn": true, "k": 327, "setting": "nl", "seed": 67900803, "key": 2}
+{"turn": true, "k": 327, "setting": "nl", "seed": 67900804, "key": 2}
+{"turn": true, "k": 327, "setting": "nl", "seed": 67900805, "key": 2}
+{"turn": true, "k": 327, "setting": "nl", "seed": 67900806, "key": 2}
+{"turn": true, "k": 327, "setting": "nl", "seed": 67900807, "key": 2}
+{"turn": true, "k": 329, "setting": "installed", "seed": 67900900, "key": 1}
+{"turn": true, "k": 329, "setting": "installed", "seed": 67900901, "key": 1}
+{"turn": true, "k": 329, "setting": "installed", "seed": 67900902, "key": 1}
+{"turn": true, "k": 329, "setting": "installed", "seed": 67900903, "key": 1}
+{"turn": true, "k": 329, "setting": "installed", "seed": 67900904, "key": 1}
+{"turn": true, "k": 329, "setting": "installed", "seed": 67900905, "key": 1}
+{"turn": true, "k": 329, "setting": "installed", "seed": 67900906, "key": 1}
+{"turn": true, "k": 329, "setting": "installed", "seed": 67900907, "key": 1}
+{"turn": true, "k": 329, "setting": "kc", "seed": 67900900, "key": 1}
+{"turn": true, "k": 329, "setting": "kc", "seed": 67900901, "key": 1}
+{"turn": true, "k": 329, "setting": "kc", "seed": 67900902, "key": 1}
+{"turn": true, "k": 329, "setting": "kc", "seed": 67900903, "key": 1}
+{"turn": true, "k": 329, "setting": "kc", "seed": 67900904, "key": 1}
+{"turn": true, "k": 329, "setting": "kc", "seed": 67900905, "key": 1}
+{"turn": true, "k": 329, "setting": "kc", "seed": 67900906, "key": 1}
+{"turn": true, "k": 329, "setting": "kc", "seed": 67900907, "key": 1}
+{"turn": true, "k": 329, "setting": "nl", "seed": 67900900, "key": 1}
+{"turn": true, "k": 329, "setting": "nl", "seed": 67900901, "key": 1}
+{"turn": true, "k": 329, "setting": "nl", "seed": 67900902, "key": 1}
+{"turn": true, "k": 329, "setting": "nl", "seed": 67900903, "key": 1}
+{"turn": true, "k": 329, "setting": "nl", "seed": 67900904, "key": 1}
+{"turn": true, "k": 329, "setting": "nl", "seed": 67900905, "key": 1}
+{"turn": true, "k": 329, "setting": "nl", "seed": 67900906, "key": 1}
+{"turn": true, "k": 329, "setting": "nl", "seed": 67900907, "key": 1}
+{"turn": true, "k": 337, "setting": "installed", "seed": 67901300, "key": 1}
+{"turn": true, "k": 337, "setting": "installed", "seed": 67901301, "key": 1}
+{"turn": true, "k": 337, "setting": "installed", "seed": 67901302, "key": 1}
+{"turn": true, "k": 337, "setting": "installed", "seed": 67901303, "key": 1}
+{"turn": true, "k": 337, "setting": "installed", "seed": 67901304, "key": 1}
+{"turn": true, "k": 337, "setting": "installed", "seed": 67901305, "key": 1}
+{"turn": true, "k": 337, "setting": "installed", "seed": 67901306, "key": 1}
+{"turn": true, "k": 337, "setting": "installed", "seed": 67901307, "key": 1}
+{"turn": true, "k": 337, "setting": "kc", "seed": 67901300, "key": 2}
+{"turn": true, "k": 337, "setting": "kc", "seed": 67901301, "key": 3}
+{"turn": true, "k": 337, "setting": "kc", "seed": 67901302, "key": 4}
+{"turn": true, "k": 337, "setting": "kc", "seed": 67901303, "key": 5}
+{"turn": true, "k": 337, "setting": "kc", "seed": 67901304, "key": 6}
+{"turn": true, "k": 337, "setting": "kc", "seed": 67901305, "key": 6}
+{"turn": true, "k": 337, "setting": "kc", "seed": 67901306, "key": 6}
+{"turn": true, "k": 337, "setting": "kc", "seed": 67901307, "key": 3}
+{"turn": true, "k": 337, "setting": "nl", "seed": 67901300, "key": 7}
+{"turn": true, "k": 337, "setting": "nl", "seed": 67901301, "key": 8}
+{"turn": true, "k": 337, "setting": "nl", "seed": 67901302, "key": 7}
+{"turn": true, "k": 337, "setting": "nl", "seed": 67901303, "key": 7}
+{"turn": true, "k": 337, "setting": "nl", "seed": 67901304, "key": 9}
+{"turn": true, "k": 337, "setting": "nl", "seed": 67901305, "key": 10}
+{"turn": true, "k": 337, "setting": "nl", "seed": 67901306, "key": 11}
+{"turn": true, "k": 337, "setting": "nl", "seed": 67901307, "key": 12}
+{"turn": true, "k": 339, "setting": "installed", "seed": 67901400, "key": 1}
+{"turn": true, "k": 339, "setting": "installed", "seed": 67901401, "key": 1}
+{"turn": true, "k": 339, "setting": "installed", "seed": 67901402, "key": 1}
+{"turn": true, "k": 339, "setting": "installed", "seed": 67901403, "key": 1}
+{"turn": true, "k": 339, "setting": "installed", "seed": 67901404, "key": 1}
+{"turn": true, "k": 339, "setting": "installed", "seed": 67901405, "key": 1}
+{"turn": true, "k": 339, "setting": "installed", "seed": 67901406, "key": 1}
+{"turn": true, "k": 339, "setting": "installed", "seed": 67901407, "key": 1}
+{"turn": true, "k": 339, "setting": "kc", "seed": 67901400, "key": 1}
+{"turn": true, "k": 339, "setting": "kc", "seed": 67901401, "key": 1}
+{"turn": true, "k": 339, "setting": "kc", "seed": 67901402, "key": 1}
+{"turn": true, "k": 339, "setting": "kc", "seed": 67901403, "key": 1}
+{"turn": true, "k": 339, "setting": "kc", "seed": 67901404, "key": 1}
+{"turn": true, "k": 339, "setting": "kc", "seed": 67901405, "key": 1}
+{"turn": true, "k": 339, "setting": "kc", "seed": 67901406, "key": 1}
+{"turn": true, "k": 339, "setting": "kc", "seed": 67901407, "key": 1}
+{"turn": true, "k": 339, "setting": "nl", "seed": 67901400, "key": 2}
+{"turn": true, "k": 339, "setting": "nl", "seed": 67901401, "key": 2}
+{"turn": true, "k": 339, "setting": "nl", "seed": 67901402, "key": 2}
+{"turn": true, "k": 339, "setting": "nl", "seed": 67901403, "key": 2}
+{"turn": true, "k": 339, "setting": "nl", "seed": 67901404, "key": 2}
+{"turn": true, "k": 339, "setting": "nl", "seed": 67901405, "key": 2}
+{"turn": true, "k": 339, "setting": "nl", "seed": 67901406, "key": 2}
+{"turn": true, "k": 339, "setting": "nl", "seed": 67901407, "key": 2}
+{"turn": true, "k": 345, "setting": "installed", "seed": 67901500, "key": 1}
+{"turn": true, "k": 345, "setting": "installed", "seed": 67901501, "key": 1}
+{"turn": true, "k": 345, "setting": "installed", "seed": 67901502, "key": 1}
+{"turn": true, "k": 345, "setting": "installed", "seed": 67901503, "key": 1}
+{"turn": true, "k": 345, "setting": "installed", "seed": 67901504, "key": 1}
+{"turn": true, "k": 345, "setting": "installed", "seed": 67901505, "key": 1}
+{"turn": true, "k": 345, "setting": "installed", "seed": 67901506, "key": 1}
+{"turn": true, "k": 345, "setting": "installed", "seed": 67901507, "key": 1}
+{"turn": true, "k": 345, "setting": "kc", "seed": 67901500, "key": 2}
+{"turn": true, "k": 345, "setting": "kc", "seed": 67901501, "key": 2}
+{"turn": true, "k": 345, "setting": "kc", "seed": 67901502, "key": 2}
+{"turn": true, "k": 345, "setting": "kc", "seed": 67901503, "key": 2}
+{"turn": true, "k": 345, "setting": "kc", "seed": 67901504, "key": 2}
+{"turn": true, "k": 345, "setting": "kc", "seed": 67901505, "key": 2}
+{"turn": true, "k": 345, "setting": "kc", "seed": 67901506, "key": 2}
+{"turn": true, "k": 345, "setting": "kc", "seed": 67901507, "key": 2}
+{"turn": true, "k": 345, "setting": "nl", "seed": 67901500, "key": 1}
+{"turn": true, "k": 345, "setting": "nl", "seed": 67901501, "key": 1}
+{"turn": true, "k": 345, "setting": "nl", "seed": 67901502, "key": 1}
+{"turn": true, "k": 345, "setting": "nl", "seed": 67901503, "key": 1}
+{"turn": true, "k": 345, "setting": "nl", "seed": 67901504, "key": 1}
+{"turn": true, "k": 345, "setting": "nl", "seed": 67901505, "key": 1}
+{"turn": true, "k": 345, "setting": "nl", "seed": 67901506, "key": 1}
+{"turn": true, "k": 345, "setting": "nl", "seed": 67901507, "key": 1}
+{"turn": true, "k": 346, "setting": "installed", "seed": 67901600, "key": 1}
+{"turn": true, "k": 346, "setting": "installed", "seed": 67901601, "key": 1}
+{"turn": true, "k": 346, "setting": "installed", "seed": 67901602, "key": 1}
+{"turn": true, "k": 346, "setting": "installed", "seed": 67901603, "key": 1}
+{"turn": true, "k": 346, "setting": "installed", "seed": 67901604, "key": 1}
+{"turn": true, "k": 346, "setting": "installed", "seed": 67901605, "key": 1}
+{"turn": true, "k": 346, "setting": "installed", "seed": 67901606, "key": 1}
+{"turn": true, "k": 346, "setting": "installed", "seed": 67901607, "key": 1}
+{"turn": true, "k": 346, "setting": "kc", "seed": 67901600, "key": 1}
+{"turn": true, "k": 346, "setting": "kc", "seed": 67901601, "key": 1}
+{"turn": true, "k": 346, "setting": "kc", "seed": 67901602, "key": 1}
+{"turn": true, "k": 346, "setting": "kc", "seed": 67901603, "key": 1}
+{"turn": true, "k": 346, "setting": "kc", "seed": 67901604, "key": 1}
+{"turn": true, "k": 346, "setting": "kc", "seed": 67901605, "key": 1}
+{"turn": true, "k": 346, "setting": "kc", "seed": 67901606, "key": 1}
+{"turn": true, "k": 346, "setting": "kc", "seed": 67901607, "key": 1}
+{"turn": true, "k": 346, "setting": "nl", "seed": 67901600, "key": 1}
+{"turn": true, "k": 346, "setting": "nl", "seed": 67901601, "key": 1}
+{"turn": true, "k": 346, "setting": "nl", "seed": 67901602, "key": 1}
+{"turn": true, "k": 346, "setting": "nl", "seed": 67901603, "key": 1}
+{"turn": true, "k": 346, "setting": "nl", "seed": 67901604, "key": 1}
+{"turn": true, "k": 346, "setting": "nl", "seed": 67901605, "key": 1}
+{"turn": true, "k": 346, "setting": "nl", "seed": 67901606, "key": 1}
+{"turn": true, "k": 346, "setting": "nl", "seed": 67901607, "key": 1}
+{"turn": true, "k": 349, "setting": "installed", "seed": 67901700, "key": 1}
+{"turn": true, "k": 349, "setting": "installed", "seed": 67901701, "key": 1}
+{"turn": true, "k": 349, "setting": "installed", "seed": 67901702, "key": 1}
+{"turn": true, "k": 349, "setting": "installed", "seed": 67901703, "key": 1}
+{"turn": true, "k": 349, "setting": "installed", "seed": 67901704, "key": 1}
+{"turn": true, "k": 349, "setting": "installed", "seed": 67901705, "key": 1}
+{"turn": true, "k": 349, "setting": "installed", "seed": 67901706, "key": 1}
+{"turn": true, "k": 349, "setting": "installed", "seed": 67901707, "key": 1}
+{"turn": true, "k": 349, "setting": "kc", "seed": 67901700, "key": 1}
+{"turn": true, "k": 349, "setting": "kc", "seed": 67901701, "key": 1}
+{"turn": true, "k": 349, "setting": "kc", "seed": 67901702, "key": 1}
+{"turn": true, "k": 349, "setting": "kc", "seed": 67901703, "key": 1}
+{"turn": true, "k": 349, "setting": "kc", "seed": 67901704, "key": 1}
+{"turn": true, "k": 349, "setting": "kc", "seed": 67901705, "key": 1}
+{"turn": true, "k": 349, "setting": "kc", "seed": 67901706, "key": 1}
+{"turn": true, "k": 349, "setting": "kc", "seed": 67901707, "key": 1}
+{"turn": true, "k": 349, "setting": "nl", "seed": 67901700, "key": 2}
+{"turn": true, "k": 349, "setting": "nl", "seed": 67901701, "key": 2}
+{"turn": true, "k": 349, "setting": "nl", "seed": 67901702, "key": 2}
+{"turn": true, "k": 349, "setting": "nl", "seed": 67901703, "key": 2}
+{"turn": true, "k": 349, "setting": "nl", "seed": 67901704, "key": 2}
+{"turn": true, "k": 349, "setting": "nl", "seed": 67901705, "key": 2}
+{"turn": true, "k": 349, "setting": "nl", "seed": 67901706, "key": 2}
+{"turn": true, "k": 349, "setting": "nl", "seed": 67901707, "key": 2}
+{"turn": true, "k": 366, "setting": "installed", "seed": 67902200, "key": 0}
+{"turn": true, "k": 366, "setting": "installed", "seed": 67902201, "key": 0}
+{"turn": true, "k": 366, "setting": "installed", "seed": 67902202, "key": 1}
+{"turn": true, "k": 366, "setting": "installed", "seed": 67902203, "key": 0}
+{"turn": true, "k": 366, "setting": "installed", "seed": 67902204, "key": 2}
+{"turn": true, "k": 366, "setting": "installed", "seed": 67902205, "key": 0}
+{"turn": true, "k": 366, "setting": "installed", "seed": 67902206, "key": 3}
+{"turn": true, "k": 366, "setting": "installed", "seed": 67902207, "key": 0}
+{"turn": true, "k": 366, "setting": "kc", "seed": 67902200, "key": 2}
+{"turn": true, "k": 366, "setting": "kc", "seed": 67902201, "key": 0}
+{"turn": true, "k": 366, "setting": "kc", "seed": 67902202, "key": 4}
+{"turn": true, "k": 366, "setting": "kc", "seed": 67902203, "key": 4}
+{"turn": true, "k": 366, "setting": "kc", "seed": 67902204, "key": 0}
+{"turn": true, "k": 366, "setting": "kc", "seed": 67902205, "key": 4}
+{"turn": true, "k": 366, "setting": "kc", "seed": 67902206, "key": 4}
+{"turn": true, "k": 366, "setting": "kc", "seed": 67902207, "key": 0}
+{"turn": true, "k": 366, "setting": "nl", "seed": 67902200, "key": 0}
+{"turn": true, "k": 366, "setting": "nl", "seed": 67902201, "key": 5}
+{"turn": true, "k": 366, "setting": "nl", "seed": 67902202, "key": 2}
+{"turn": true, "k": 366, "setting": "nl", "seed": 67902203, "key": 5}
+{"turn": true, "k": 366, "setting": "nl", "seed": 67902204, "key": 5}
+{"turn": true, "k": 366, "setting": "nl", "seed": 67902205, "key": 5}
+{"turn": true, "k": 366, "setting": "nl", "seed": 67902206, "key": 4}
+{"turn": true, "k": 366, "setting": "nl", "seed": 67902207, "key": 5}
+{"turn": true, "k": 375, "setting": "installed", "seed": 67902700, "key": 1}
+{"turn": true, "k": 375, "setting": "installed", "seed": 67902701, "key": 1}
+{"turn": true, "k": 375, "setting": "installed", "seed": 67902702, "key": 1}
+{"turn": true, "k": 375, "setting": "installed", "seed": 67902703, "key": 1}
+{"turn": true, "k": 375, "setting": "installed", "seed": 67902704, "key": 1}
+{"turn": true, "k": 375, "setting": "installed", "seed": 67902705, "key": 1}
+{"turn": true, "k": 375, "setting": "installed", "seed": 67902706, "key": 1}
+{"turn": true, "k": 375, "setting": "installed", "seed": 67902707, "key": 1}
+{"turn": true, "k": 375, "setting": "kc", "seed": 67902700, "key": 1}
+{"turn": true, "k": 375, "setting": "kc", "seed": 67902701, "key": 1}
+{"turn": true, "k": 375, "setting": "kc", "seed": 67902702, "key": 1}
+{"turn": true, "k": 375, "setting": "kc", "seed": 67902703, "key": 1}
+{"turn": true, "k": 375, "setting": "kc", "seed": 67902704, "key": 1}
+{"turn": true, "k": 375, "setting": "kc", "seed": 67902705, "key": 1}
+{"turn": true, "k": 375, "setting": "kc", "seed": 67902706, "key": 1}
+{"turn": true, "k": 375, "setting": "kc", "seed": 67902707, "key": 1}
+{"turn": true, "k": 375, "setting": "nl", "seed": 67902700, "key": 1}
+{"turn": true, "k": 375, "setting": "nl", "seed": 67902701, "key": 1}
+{"turn": true, "k": 375, "setting": "nl", "seed": 67902702, "key": 1}
+{"turn": true, "k": 375, "setting": "nl", "seed": 67902703, "key": 1}
+{"turn": true, "k": 375, "setting": "nl", "seed": 67902704, "key": 1}
+{"turn": true, "k": 375, "setting": "nl", "seed": 67902705, "key": 1}
+{"turn": true, "k": 375, "setting": "nl", "seed": 67902706, "key": 1}
+{"turn": true, "k": 375, "setting": "nl", "seed": 67902707, "key": 1}
+{"turn": true, "k": 377, "setting": "installed", "seed": 67902800, "key": 1}
+{"turn": true, "k": 377, "setting": "installed", "seed": 67902801, "key": 1}
+{"turn": true, "k": 377, "setting": "installed", "seed": 67902802, "key": 1}
+{"turn": true, "k": 377, "setting": "installed", "seed": 67902803, "key": 1}
+{"turn": true, "k": 377, "setting": "installed", "seed": 67902804, "key": 2}
+{"turn": true, "k": 377, "setting": "installed", "seed": 67902805, "key": 1}
+{"turn": true, "k": 377, "setting": "installed", "seed": 67902806, "key": 1}
+{"turn": true, "k": 377, "setting": "installed", "seed": 67902807, "key": 1}
+{"turn": true, "k": 377, "setting": "kc", "seed": 67902800, "key": 2}
+{"turn": true, "k": 377, "setting": "kc", "seed": 67902801, "key": 2}
+{"turn": true, "k": 377, "setting": "kc", "seed": 67902802, "key": 2}
+{"turn": true, "k": 377, "setting": "kc", "seed": 67902803, "key": 2}
+{"turn": true, "k": 377, "setting": "kc", "seed": 67902804, "key": 2}
+{"turn": true, "k": 377, "setting": "kc", "seed": 67902805, "key": 2}
+{"turn": true, "k": 377, "setting": "kc", "seed": 67902806, "key": 2}
+{"turn": true, "k": 377, "setting": "kc", "seed": 67902807, "key": 2}
+{"turn": true, "k": 377, "setting": "nl", "seed": 67902800, "key": 1}
+{"turn": true, "k": 377, "setting": "nl", "seed": 67902801, "key": 3}
+{"turn": true, "k": 377, "setting": "nl", "seed": 67902802, "key": 4}
+{"turn": true, "k": 377, "setting": "nl", "seed": 67902803, "key": 1}
+{"turn": true, "k": 377, "setting": "nl", "seed": 67902804, "key": 4}
+{"turn": true, "k": 377, "setting": "nl", "seed": 67902805, "key": 1}
+{"turn": true, "k": 377, "setting": "nl", "seed": 67902806, "key": 4}
+{"turn": true, "k": 377, "setting": "nl", "seed": 67902807, "key": 4}
+{"turn": true, "k": 385, "setting": "installed", "seed": 67903200, "key": 1}
+{"turn": true, "k": 385, "setting": "installed", "seed": 67903201, "key": 1}
+{"turn": true, "k": 385, "setting": "installed", "seed": 67903202, "key": 1}
+{"turn": true, "k": 385, "setting": "installed", "seed": 67903203, "key": 1}
+{"turn": true, "k": 385, "setting": "installed", "seed": 67903204, "key": 1}
+{"turn": true, "k": 385, "setting": "installed", "seed": 67903205, "key": 1}
+{"turn": true, "k": 385, "setting": "installed", "seed": 67903206, "key": 1}
+{"turn": true, "k": 385, "setting": "installed", "seed": 67903207, "key": 1}
+{"turn": true, "k": 385, "setting": "kc", "seed": 67903200, "key": 1}
+{"turn": true, "k": 385, "setting": "kc", "seed": 67903201, "key": 1}
+{"turn": true, "k": 385, "setting": "kc", "seed": 67903202, "key": 1}
+{"turn": true, "k": 385, "setting": "kc", "seed": 67903203, "key": 1}
+{"turn": true, "k": 385, "setting": "kc", "seed": 67903204, "key": 1}
+{"turn": true, "k": 385, "setting": "kc", "seed": 67903205, "key": 1}
+{"turn": true, "k": 385, "setting": "kc", "seed": 67903206, "key": 1}
+{"turn": true, "k": 385, "setting": "kc", "seed": 67903207, "key": 1}
+{"turn": true, "k": 385, "setting": "nl", "seed": 67903200, "key": 1}
+{"turn": true, "k": 385, "setting": "nl", "seed": 67903201, "key": 1}
+{"turn": true, "k": 385, "setting": "nl", "seed": 67903202, "key": 1}
+{"turn": true, "k": 385, "setting": "nl", "seed": 67903203, "key": 1}
+{"turn": true, "k": 385, "setting": "nl", "seed": 67903204, "key": 1}
+{"turn": true, "k": 385, "setting": "nl", "seed": 67903205, "key": 1}
+{"turn": true, "k": 385, "setting": "nl", "seed": 67903206, "key": 1}
+{"turn": true, "k": 385, "setting": "nl", "seed": 67903207, "key": 1}
+{"turn": true, "k": 388, "setting": "installed", "seed": 67903300, "key": 1}
+{"turn": true, "k": 388, "setting": "installed", "seed": 67903301, "key": 1}
+{"turn": true, "k": 388, "setting": "installed", "seed": 67903302, "key": 1}
+{"turn": true, "k": 388, "setting": "installed", "seed": 67903303, "key": 1}
+{"turn": true, "k": 388, "setting": "installed", "seed": 67903304, "key": 1}
+{"turn": true, "k": 388, "setting": "installed", "seed": 67903305, "key": 1}
+{"turn": true, "k": 388, "setting": "installed", "seed": 67903306, "key": 1}
+{"turn": true, "k": 388, "setting": "installed", "seed": 67903307, "key": 1}
+{"turn": true, "k": 388, "setting": "kc", "seed": 67903300, "key": 1}
+{"turn": true, "k": 388, "setting": "kc", "seed": 67903301, "key": 1}
+{"turn": true, "k": 388, "setting": "kc", "seed": 67903302, "key": 1}
+{"turn": true, "k": 388, "setting": "kc", "seed": 67903303, "key": 1}
+{"turn": true, "k": 388, "setting": "kc", "seed": 67903304, "key": 1}
+{"turn": true, "k": 388, "setting": "kc", "seed": 67903305, "key": 1}
+{"turn": true, "k": 388, "setting": "kc", "seed": 67903306, "key": 1}
+{"turn": true, "k": 388, "setting": "kc", "seed": 67903307, "key": 1}
+{"turn": true, "k": 388, "setting": "nl", "seed": 67903300, "key": 1}
+{"turn": true, "k": 388, "setting": "nl", "seed": 67903301, "key": 1}
+{"turn": true, "k": 388, "setting": "nl", "seed": 67903302, "key": 1}
+{"turn": true, "k": 388, "setting": "nl", "seed": 67903303, "key": 1}
+{"turn": true, "k": 388, "setting": "nl", "seed": 67903304, "key": 1}
+{"turn": true, "k": 388, "setting": "nl", "seed": 67903305, "key": 1}
+{"turn": true, "k": 388, "setting": "nl", "seed": 67903306, "key": 1}
+{"turn": true, "k": 388, "setting": "nl", "seed": 67903307, "key": 1}
+{"turn": true, "k": 399, "setting": "installed", "seed": 67903800, "key": 1}
+{"turn": true, "k": 399, "setting": "installed", "seed": 67903801, "key": 2}
+{"turn": true, "k": 399, "setting": "installed", "seed": 67903802, "key": 2}
+{"turn": true, "k": 399, "setting": "installed", "seed": 67903803, "key": 2}
+{"turn": true, "k": 399, "setting": "installed", "seed": 67903804, "key": 2}
+{"turn": true, "k": 399, "setting": "installed", "seed": 67903805, "key": 1}
+{"turn": true, "k": 399, "setting": "installed", "seed": 67903806, "key": 1}
+{"turn": true, "k": 399, "setting": "installed", "seed": 67903807, "key": 1}
+{"turn": true, "k": 399, "setting": "kc", "seed": 67903800, "key": 3}
+{"turn": true, "k": 399, "setting": "kc", "seed": 67903801, "key": 3}
+{"turn": true, "k": 399, "setting": "kc", "seed": 67903802, "key": 3}
+{"turn": true, "k": 399, "setting": "kc", "seed": 67903803, "key": 3}
+{"turn": true, "k": 399, "setting": "kc", "seed": 67903804, "key": 3}
+{"turn": true, "k": 399, "setting": "kc", "seed": 67903805, "key": 3}
+{"turn": true, "k": 399, "setting": "kc", "seed": 67903806, "key": 3}
+{"turn": true, "k": 399, "setting": "kc", "seed": 67903807, "key": 3}
+{"turn": true, "k": 399, "setting": "nl", "seed": 67903800, "key": 4}
+{"turn": true, "k": 399, "setting": "nl", "seed": 67903801, "key": 5}
+{"turn": true, "k": 399, "setting": "nl", "seed": 67903802, "key": 4}
+{"turn": true, "k": 399, "setting": "nl", "seed": 67903803, "key": 4}
+{"turn": true, "k": 399, "setting": "nl", "seed": 67903804, "key": 5}
+{"turn": true, "k": 399, "setting": "nl", "seed": 67903805, "key": 5}
+{"turn": true, "k": 399, "setting": "nl", "seed": 67903806, "key": 5}
+{"turn": true, "k": 399, "setting": "nl", "seed": 67903807, "key": 4}
+{"turn": true, "k": 411, "setting": "installed", "seed": 67904100, "key": 1}
+{"turn": true, "k": 411, "setting": "installed", "seed": 67904101, "key": 1}
+{"turn": true, "k": 411, "setting": "installed", "seed": 67904102, "key": 1}
+{"turn": true, "k": 411, "setting": "installed", "seed": 67904103, "key": 1}
+{"turn": true, "k": 411, "setting": "installed", "seed": 67904104, "key": 1}
+{"turn": true, "k": 411, "setting": "installed", "seed": 67904105, "key": 1}
+{"turn": true, "k": 411, "setting": "installed", "seed": 67904106, "key": 1}
+{"turn": true, "k": 411, "setting": "installed", "seed": 67904107, "key": 1}
+{"turn": true, "k": 411, "setting": "kc", "seed": 67904100, "key": 2}
+{"turn": true, "k": 411, "setting": "kc", "seed": 67904101, "key": 2}
+{"turn": true, "k": 411, "setting": "kc", "seed": 67904102, "key": 2}
+{"turn": true, "k": 411, "setting": "kc", "seed": 67904103, "key": 2}
+{"turn": true, "k": 411, "setting": "kc", "seed": 67904104, "key": 2}
+{"turn": true, "k": 411, "setting": "kc", "seed": 67904105, "key": 2}
+{"turn": true, "k": 411, "setting": "kc", "seed": 67904106, "key": 2}
+{"turn": true, "k": 411, "setting": "kc", "seed": 67904107, "key": 2}
+{"turn": true, "k": 411, "setting": "nl", "seed": 67904100, "key": 3}
+{"turn": true, "k": 411, "setting": "nl", "seed": 67904101, "key": 3}
+{"turn": true, "k": 411, "setting": "nl", "seed": 67904102, "key": 3}
+{"turn": true, "k": 411, "setting": "nl", "seed": 67904103, "key": 3}
+{"turn": true, "k": 411, "setting": "nl", "seed": 67904104, "key": 3}
+{"turn": true, "k": 411, "setting": "nl", "seed": 67904105, "key": 3}
+{"turn": true, "k": 411, "setting": "nl", "seed": 67904106, "key": 3}
+{"turn": true, "k": 411, "setting": "nl", "seed": 67904107, "key": 3}
+{"turn": true, "k": 412, "setting": "installed", "seed": 67904200, "key": 1}
+{"turn": true, "k": 412, "setting": "installed", "seed": 67904201, "key": 1}
+{"turn": true, "k": 412, "setting": "installed", "seed": 67904202, "key": 1}
+{"turn": true, "k": 412, "setting": "installed", "seed": 67904203, "key": 1}
+{"turn": true, "k": 412, "setting": "installed", "seed": 67904204, "key": 1}
+{"turn": true, "k": 412, "setting": "installed", "seed": 67904205, "key": 1}
+{"turn": true, "k": 412, "setting": "installed", "seed": 67904206, "key": 1}
+{"turn": true, "k": 412, "setting": "installed", "seed": 67904207, "key": 1}
+{"turn": true, "k": 412, "setting": "kc", "seed": 67904200, "key": 2}
+{"turn": true, "k": 412, "setting": "kc", "seed": 67904201, "key": 2}
+{"turn": true, "k": 412, "setting": "kc", "seed": 67904202, "key": 2}
+{"turn": true, "k": 412, "setting": "kc", "seed": 67904203, "key": 2}
+{"turn": true, "k": 412, "setting": "kc", "seed": 67904204, "key": 2}
+{"turn": true, "k": 412, "setting": "kc", "seed": 67904205, "key": 2}
+{"turn": true, "k": 412, "setting": "kc", "seed": 67904206, "key": 2}
+{"turn": true, "k": 412, "setting": "kc", "seed": 67904207, "key": 2}
+{"turn": true, "k": 412, "setting": "nl", "seed": 67904200, "key": 2}
+{"turn": true, "k": 412, "setting": "nl", "seed": 67904201, "key": 2}
+{"turn": true, "k": 412, "setting": "nl", "seed": 67904202, "key": 2}
+{"turn": true, "k": 412, "setting": "nl", "seed": 67904203, "key": 2}
+{"turn": true, "k": 412, "setting": "nl", "seed": 67904204, "key": 2}
+{"turn": true, "k": 412, "setting": "nl", "seed": 67904205, "key": 2}
+{"turn": true, "k": 412, "setting": "nl", "seed": 67904206, "key": 2}
+{"turn": true, "k": 412, "setting": "nl", "seed": 67904207, "key": 2}
+{"turn": true, "k": 418, "setting": "installed", "seed": 67904300, "key": 1}
+{"turn": true, "k": 418, "setting": "installed", "seed": 67904301, "key": 1}
+{"turn": true, "k": 418, "setting": "installed", "seed": 67904302, "key": 1}
+{"turn": true, "k": 418, "setting": "installed", "seed": 67904303, "key": 1}
+{"turn": true, "k": 418, "setting": "installed", "seed": 67904304, "key": 1}
+{"turn": true, "k": 418, "setting": "installed", "seed": 67904305, "key": 1}
+{"turn": true, "k": 418, "setting": "installed", "seed": 67904306, "key": 1}
+{"turn": true, "k": 418, "setting": "installed", "seed": 67904307, "key": 1}
+{"turn": true, "k": 418, "setting": "kc", "seed": 67904300, "key": 2}
+{"turn": true, "k": 418, "setting": "kc", "seed": 67904301, "key": 2}
+{"turn": true, "k": 418, "setting": "kc", "seed": 67904302, "key": 1}
+{"turn": true, "k": 418, "setting": "kc", "seed": 67904303, "key": 2}
+{"turn": true, "k": 418, "setting": "kc", "seed": 67904304, "key": 2}
+{"turn": true, "k": 418, "setting": "kc", "seed": 67904305, "key": 2}
+{"turn": true, "k": 418, "setting": "kc", "seed": 67904306, "key": 2}
+{"turn": true, "k": 418, "setting": "kc", "seed": 67904307, "key": 1}
+{"turn": true, "k": 418, "setting": "nl", "seed": 67904300, "key": 2}
+{"turn": true, "k": 418, "setting": "nl", "seed": 67904301, "key": 2}
+{"turn": true, "k": 418, "setting": "nl", "seed": 67904302, "key": 2}
+{"turn": true, "k": 418, "setting": "nl", "seed": 67904303, "key": 2}
+{"turn": true, "k": 418, "setting": "nl", "seed": 67904304, "key": 2}
+{"turn": true, "k": 418, "setting": "nl", "seed": 67904305, "key": 2}
+{"turn": true, "k": 418, "setting": "nl", "seed": 67904306, "key": 2}
+{"turn": true, "k": 418, "setting": "nl", "seed": 67904307, "key": 2}
+{"turn": true, "k": 432, "setting": "installed", "seed": 67904800, "key": 1}
+{"turn": true, "k": 432, "setting": "installed", "seed": 67904801, "key": 1}
+{"turn": true, "k": 432, "setting": "installed", "seed": 67904802, "key": 1}
+{"turn": true, "k": 432, "setting": "installed", "seed": 67904803, "key": 1}
+{"turn": true, "k": 432, "setting": "installed", "seed": 67904804, "key": 1}
+{"turn": true, "k": 432, "setting": "installed", "seed": 67904805, "key": 1}
+{"turn": true, "k": 432, "setting": "installed", "seed": 67904806, "key": 1}
+{"turn": true, "k": 432, "setting": "installed", "seed": 67904807, "key": 1}
+{"turn": true, "k": 432, "setting": "kc", "seed": 67904800, "key": 1}
+{"turn": true, "k": 432, "setting": "kc", "seed": 67904801, "key": 1}
+{"turn": true, "k": 432, "setting": "kc", "seed": 67904802, "key": 1}
+{"turn": true, "k": 432, "setting": "kc", "seed": 67904803, "key": 1}
+{"turn": true, "k": 432, "setting": "kc", "seed": 67904804, "key": 1}
+{"turn": true, "k": 432, "setting": "kc", "seed": 67904805, "key": 1}
+{"turn": true, "k": 432, "setting": "kc", "seed": 67904806, "key": 1}
+{"turn": true, "k": 432, "setting": "kc", "seed": 67904807, "key": 1}
+{"turn": true, "k": 432, "setting": "nl", "seed": 67904800, "key": 2}
+{"turn": true, "k": 432, "setting": "nl", "seed": 67904801, "key": 2}
+{"turn": true, "k": 432, "setting": "nl", "seed": 67904802, "key": 2}
+{"turn": true, "k": 432, "setting": "nl", "seed": 67904803, "key": 2}
+{"turn": true, "k": 432, "setting": "nl", "seed": 67904804, "key": 2}
+{"turn": true, "k": 432, "setting": "nl", "seed": 67904805, "key": 2}
+{"turn": true, "k": 432, "setting": "nl", "seed": 67904806, "key": 2}
+{"turn": true, "k": 432, "setting": "nl", "seed": 67904807, "key": 2}
+{"turn": true, "k": 433, "setting": "installed", "seed": 67904900, "key": 1}
+{"turn": true, "k": 433, "setting": "installed", "seed": 67904901, "key": 1}
+{"turn": true, "k": 433, "setting": "installed", "seed": 67904902, "key": 1}
+{"turn": true, "k": 433, "setting": "installed", "seed": 67904903, "key": 1}
+{"turn": true, "k": 433, "setting": "installed", "seed": 67904904, "key": 1}
+{"turn": true, "k": 433, "setting": "installed", "seed": 67904905, "key": 1}
+{"turn": true, "k": 433, "setting": "installed", "seed": 67904906, "key": 1}
+{"turn": true, "k": 433, "setting": "installed", "seed": 67904907, "key": 1}
+{"turn": true, "k": 433, "setting": "kc", "seed": 67904900, "key": 2}
+{"turn": true, "k": 433, "setting": "kc", "seed": 67904901, "key": 2}
+{"turn": true, "k": 433, "setting": "kc", "seed": 67904902, "key": 2}
+{"turn": true, "k": 433, "setting": "kc", "seed": 67904903, "key": 2}
+{"turn": true, "k": 433, "setting": "kc", "seed": 67904904, "key": 2}
+{"turn": true, "k": 433, "setting": "kc", "seed": 67904905, "key": 2}
+{"turn": true, "k": 433, "setting": "kc", "seed": 67904906, "key": 2}
+{"turn": true, "k": 433, "setting": "kc", "seed": 67904907, "key": 2}
+{"turn": true, "k": 433, "setting": "nl", "seed": 67904900, "key": 3}
+{"turn": true, "k": 433, "setting": "nl", "seed": 67904901, "key": 4}
+{"turn": true, "k": 433, "setting": "nl", "seed": 67904902, "key": 2}
+{"turn": true, "k": 433, "setting": "nl", "seed": 67904903, "key": 2}
+{"turn": true, "k": 433, "setting": "nl", "seed": 67904904, "key": 2}
+{"turn": true, "k": 433, "setting": "nl", "seed": 67904905, "key": 5}
+{"turn": true, "k": 433, "setting": "nl", "seed": 67904906, "key": 4}
+{"turn": true, "k": 433, "setting": "nl", "seed": 67904907, "key": 3}
+{"turn": true, "k": 443, "setting": "installed", "seed": 67905300, "key": 1}
+{"turn": true, "k": 443, "setting": "installed", "seed": 67905301, "key": 1}
+{"turn": true, "k": 443, "setting": "installed", "seed": 67905302, "key": 1}
+{"turn": true, "k": 443, "setting": "installed", "seed": 67905303, "key": 1}
+{"turn": true, "k": 443, "setting": "installed", "seed": 67905304, "key": 1}
+{"turn": true, "k": 443, "setting": "installed", "seed": 67905305, "key": 1}
+{"turn": true, "k": 443, "setting": "installed", "seed": 67905306, "key": 1}
+{"turn": true, "k": 443, "setting": "installed", "seed": 67905307, "key": 1}
+{"turn": true, "k": 443, "setting": "kc", "seed": 67905300, "key": 2}
+{"turn": true, "k": 443, "setting": "kc", "seed": 67905301, "key": 2}
+{"turn": true, "k": 443, "setting": "kc", "seed": 67905302, "key": 3}
+{"turn": true, "k": 443, "setting": "kc", "seed": 67905303, "key": 2}
+{"turn": true, "k": 443, "setting": "kc", "seed": 67905304, "key": 2}
+{"turn": true, "k": 443, "setting": "kc", "seed": 67905305, "key": 2}
+{"turn": true, "k": 443, "setting": "kc", "seed": 67905306, "key": 3}
+{"turn": true, "k": 443, "setting": "kc", "seed": 67905307, "key": 3}
+{"turn": true, "k": 443, "setting": "nl", "seed": 67905300, "key": 4}
+{"turn": true, "k": 443, "setting": "nl", "seed": 67905301, "key": 4}
+{"turn": true, "k": 443, "setting": "nl", "seed": 67905302, "key": 4}
+{"turn": true, "k": 443, "setting": "nl", "seed": 67905303, "key": 4}
+{"turn": true, "k": 443, "setting": "nl", "seed": 67905304, "key": 4}
+{"turn": true, "k": 443, "setting": "nl", "seed": 67905305, "key": 4}
+{"turn": true, "k": 443, "setting": "nl", "seed": 67905306, "key": 4}
+{"turn": true, "k": 443, "setting": "nl", "seed": 67905307, "key": 4}
+{"turn": true, "k": 445, "setting": "installed", "seed": 67905500, "key": 1}
+{"turn": true, "k": 445, "setting": "installed", "seed": 67905501, "key": 1}
+{"turn": true, "k": 445, "setting": "installed", "seed": 67905502, "key": 1}
+{"turn": true, "k": 445, "setting": "installed", "seed": 67905503, "key": 1}
+{"turn": true, "k": 445, "setting": "installed", "seed": 67905504, "key": 1}
+{"turn": true, "k": 445, "setting": "installed", "seed": 67905505, "key": 1}
+{"turn": true, "k": 445, "setting": "installed", "seed": 67905506, "key": 1}
+{"turn": true, "k": 445, "setting": "installed", "seed": 67905507, "key": 1}
+{"turn": true, "k": 445, "setting": "kc", "seed": 67905500, "key": 2}
+{"turn": true, "k": 445, "setting": "kc", "seed": 67905501, "key": 2}
+{"turn": true, "k": 445, "setting": "kc", "seed": 67905502, "key": 2}
+{"turn": true, "k": 445, "setting": "kc", "seed": 67905503, "key": 2}
+{"turn": true, "k": 445, "setting": "kc", "seed": 67905504, "key": 2}
+{"turn": true, "k": 445, "setting": "kc", "seed": 67905505, "key": 2}
+{"turn": true, "k": 445, "setting": "kc", "seed": 67905506, "key": 2}
+{"turn": true, "k": 445, "setting": "kc", "seed": 67905507, "key": 2}
+{"turn": true, "k": 445, "setting": "nl", "seed": 67905500, "key": 2}
+{"turn": true, "k": 445, "setting": "nl", "seed": 67905501, "key": 2}
+{"turn": true, "k": 445, "setting": "nl", "seed": 67905502, "key": 2}
+{"turn": true, "k": 445, "setting": "nl", "seed": 67905503, "key": 2}
+{"turn": true, "k": 445, "setting": "nl", "seed": 67905504, "key": 2}
+{"turn": true, "k": 445, "setting": "nl", "seed": 67905505, "key": 2}
+{"turn": true, "k": 445, "setting": "nl", "seed": 67905506, "key": 2}
+{"turn": true, "k": 445, "setting": "nl", "seed": 67905507, "key": 2}
+{"turn": true, "k": 449, "setting": "installed", "seed": 67905600, "key": 1}
+{"turn": true, "k": 449, "setting": "installed", "seed": 67905601, "key": 1}
+{"turn": true, "k": 449, "setting": "installed", "seed": 67905602, "key": 1}
+{"turn": true, "k": 449, "setting": "installed", "seed": 67905603, "key": 1}
+{"turn": true, "k": 449, "setting": "installed", "seed": 67905604, "key": 1}
+{"turn": true, "k": 449, "setting": "installed", "seed": 67905605, "key": 1}
+{"turn": true, "k": 449, "setting": "installed", "seed": 67905606, "key": 1}
+{"turn": true, "k": 449, "setting": "installed", "seed": 67905607, "key": 1}
+{"turn": true, "k": 449, "setting": "kc", "seed": 67905600, "key": 0}
+{"turn": true, "k": 449, "setting": "kc", "seed": 67905601, "key": 0}
+{"turn": true, "k": 449, "setting": "kc", "seed": 67905602, "key": 0}
+{"turn": true, "k": 449, "setting": "kc", "seed": 67905603, "key": 0}
+{"turn": true, "k": 449, "setting": "kc", "seed": 67905604, "key": 0}
+{"turn": true, "k": 449, "setting": "kc", "seed": 67905605, "key": 0}
+{"turn": true, "k": 449, "setting": "kc", "seed": 67905606, "key": 0}
+{"turn": true, "k": 449, "setting": "kc", "seed": 67905607, "key": 0}
+{"turn": true, "k": 449, "setting": "nl", "seed": 67905600, "key": 0}
+{"turn": true, "k": 449, "setting": "nl", "seed": 67905601, "key": 0}
+{"turn": true, "k": 449, "setting": "nl", "seed": 67905602, "key": 0}
+{"turn": true, "k": 449, "setting": "nl", "seed": 67905603, "key": 0}
+{"turn": true, "k": 449, "setting": "nl", "seed": 67905604, "key": 0}
+{"turn": true, "k": 449, "setting": "nl", "seed": 67905605, "key": 0}
+{"turn": true, "k": 449, "setting": "nl", "seed": 67905606, "key": 0}
+{"turn": true, "k": 449, "setting": "nl", "seed": 67905607, "key": 0}
+{"turn": true, "k": 451, "setting": "installed", "seed": 67905700, "key": 1}
+{"turn": true, "k": 451, "setting": "installed", "seed": 67905701, "key": 1}
+{"turn": true, "k": 451, "setting": "installed", "seed": 67905702, "key": 1}
+{"turn": true, "k": 451, "setting": "installed", "seed": 67905703, "key": 1}
+{"turn": true, "k": 451, "setting": "installed", "seed": 67905704, "key": 1}
+{"turn": true, "k": 451, "setting": "installed", "seed": 67905705, "key": 1}
+{"turn": true, "k": 451, "setting": "installed", "seed": 67905706, "key": 1}
+{"turn": true, "k": 451, "setting": "installed", "seed": 67905707, "key": 1}
+{"turn": true, "k": 451, "setting": "kc", "seed": 67905700, "key": 1}
+{"turn": true, "k": 451, "setting": "kc", "seed": 67905701, "key": 1}
+{"turn": true, "k": 451, "setting": "kc", "seed": 67905702, "key": 1}
+{"turn": true, "k": 451, "setting": "kc", "seed": 67905703, "key": 1}
+{"turn": true, "k": 451, "setting": "kc", "seed": 67905704, "key": 1}
+{"turn": true, "k": 451, "setting": "kc", "seed": 67905705, "key": 1}
+{"turn": true, "k": 451, "setting": "kc", "seed": 67905706, "key": 1}
+{"turn": true, "k": 451, "setting": "kc", "seed": 67905707, "key": 1}
+{"turn": true, "k": 451, "setting": "nl", "seed": 67905700, "key": 1}
+{"turn": true, "k": 451, "setting": "nl", "seed": 67905701, "key": 1}
+{"turn": true, "k": 451, "setting": "nl", "seed": 67905702, "key": 1}
+{"turn": true, "k": 451, "setting": "nl", "seed": 67905703, "key": 1}
+{"turn": true, "k": 451, "setting": "nl", "seed": 67905704, "key": 1}
+{"turn": true, "k": 451, "setting": "nl", "seed": 67905705, "key": 1}
+{"turn": true, "k": 451, "setting": "nl", "seed": 67905706, "key": 1}
+{"turn": true, "k": 451, "setting": "nl", "seed": 67905707, "key": 1}
+{"turn": true, "k": 455, "setting": "installed", "seed": 67906000, "key": 1}
+{"turn": true, "k": 455, "setting": "installed", "seed": 67906001, "key": 2}
+{"turn": true, "k": 455, "setting": "installed", "seed": 67906002, "key": 3}
+{"turn": true, "k": 455, "setting": "installed", "seed": 67906003, "key": 4}
+{"turn": true, "k": 455, "setting": "installed", "seed": 67906004, "key": 5}
+{"turn": true, "k": 455, "setting": "installed", "seed": 67906005, "key": 6}
+{"turn": true, "k": 455, "setting": "installed", "seed": 67906006, "key": 2}
+{"turn": true, "k": 455, "setting": "installed", "seed": 67906007, "key": 2}
+{"turn": true, "k": 455, "setting": "kc", "seed": 67906000, "key": 7}
+{"turn": true, "k": 455, "setting": "kc", "seed": 67906001, "key": 1}
+{"turn": true, "k": 455, "setting": "kc", "seed": 67906002, "key": 7}
+{"turn": true, "k": 455, "setting": "kc", "seed": 67906003, "key": 7}
+{"turn": true, "k": 455, "setting": "kc", "seed": 67906004, "key": 7}
+{"turn": true, "k": 455, "setting": "kc", "seed": 67906005, "key": 7}
+{"turn": true, "k": 455, "setting": "kc", "seed": 67906006, "key": 8}
+{"turn": true, "k": 455, "setting": "kc", "seed": 67906007, "key": 7}
+{"turn": true, "k": 455, "setting": "nl", "seed": 67906000, "key": 9}
+{"turn": true, "k": 455, "setting": "nl", "seed": 67906001, "key": 10}
+{"turn": true, "k": 455, "setting": "nl", "seed": 67906002, "key": 11}
+{"turn": true, "k": 455, "setting": "nl", "seed": 67906003, "key": 12}
+{"turn": true, "k": 455, "setting": "nl", "seed": 67906004, "key": 13}
+{"turn": true, "k": 455, "setting": "nl", "seed": 67906005, "key": 14}
+{"turn": true, "k": 455, "setting": "nl", "seed": 67906006, "key": 15}
+{"turn": true, "k": 455, "setting": "nl", "seed": 67906007, "key": 12}
+{"turn": true, "k": 468, "setting": "installed", "seed": 67906200, "key": 1}
+{"turn": true, "k": 468, "setting": "installed", "seed": 67906201, "key": 1}
+{"turn": true, "k": 468, "setting": "installed", "seed": 67906202, "key": 1}
+{"turn": true, "k": 468, "setting": "installed", "seed": 67906203, "key": 1}
+{"turn": true, "k": 468, "setting": "installed", "seed": 67906204, "key": 1}
+{"turn": true, "k": 468, "setting": "installed", "seed": 67906205, "key": 1}
+{"turn": true, "k": 468, "setting": "installed", "seed": 67906206, "key": 1}
+{"turn": true, "k": 468, "setting": "installed", "seed": 67906207, "key": 1}
+{"turn": true, "k": 468, "setting": "kc", "seed": 67906200, "key": 2}
+{"turn": true, "k": 468, "setting": "kc", "seed": 67906201, "key": 2}
+{"turn": true, "k": 468, "setting": "kc", "seed": 67906202, "key": 2}
+{"turn": true, "k": 468, "setting": "kc", "seed": 67906203, "key": 2}
+{"turn": true, "k": 468, "setting": "kc", "seed": 67906204, "key": 2}
+{"turn": true, "k": 468, "setting": "kc", "seed": 67906205, "key": 2}
+{"turn": true, "k": 468, "setting": "kc", "seed": 67906206, "key": 2}
+{"turn": true, "k": 468, "setting": "kc", "seed": 67906207, "key": 2}
+{"turn": true, "k": 468, "setting": "nl", "seed": 67906200, "key": 3}
+{"turn": true, "k": 468, "setting": "nl", "seed": 67906201, "key": 4}
+{"turn": true, "k": 468, "setting": "nl", "seed": 67906202, "key": 4}
+{"turn": true, "k": 468, "setting": "nl", "seed": 67906203, "key": 4}
+{"turn": true, "k": 468, "setting": "nl", "seed": 67906204, "key": 4}
+{"turn": true, "k": 468, "setting": "nl", "seed": 67906205, "key": 3}
+{"turn": true, "k": 468, "setting": "nl", "seed": 67906206, "key": 4}
+{"turn": true, "k": 468, "setting": "nl", "seed": 67906207, "key": 4}
+{"turn": true, "k": 469, "setting": "installed", "seed": 67906300, "key": 1}
+{"turn": true, "k": 469, "setting": "installed", "seed": 67906301, "key": 2}
+{"turn": true, "k": 469, "setting": "installed", "seed": 67906302, "key": 1}
+{"turn": true, "k": 469, "setting": "installed", "seed": 67906303, "key": 1}
+{"turn": true, "k": 469, "setting": "installed", "seed": 67906304, "key": 1}
+{"turn": true, "k": 469, "setting": "installed", "seed": 67906305, "key": 2}
+{"turn": true, "k": 469, "setting": "installed", "seed": 67906306, "key": 1}
+{"turn": true, "k": 469, "setting": "installed", "seed": 67906307, "key": 2}
+{"turn": true, "k": 469, "setting": "kc", "seed": 67906300, "key": 1}
+{"turn": true, "k": 469, "setting": "kc", "seed": 67906301, "key": 1}
+{"turn": true, "k": 469, "setting": "kc", "seed": 67906302, "key": 1}
+{"turn": true, "k": 469, "setting": "kc", "seed": 67906303, "key": 1}
+{"turn": true, "k": 469, "setting": "kc", "seed": 67906304, "key": 1}
+{"turn": true, "k": 469, "setting": "kc", "seed": 67906305, "key": 1}
+{"turn": true, "k": 469, "setting": "kc", "seed": 67906306, "key": 1}
+{"turn": true, "k": 469, "setting": "kc", "seed": 67906307, "key": 1}
+{"turn": true, "k": 469, "setting": "nl", "seed": 67906300, "key": 3}
+{"turn": true, "k": 469, "setting": "nl", "seed": 67906301, "key": 3}
+{"turn": true, "k": 469, "setting": "nl", "seed": 67906302, "key": 3}
+{"turn": true, "k": 469, "setting": "nl", "seed": 67906303, "key": 3}
+{"turn": true, "k": 469, "setting": "nl", "seed": 67906304, "key": 3}
+{"turn": true, "k": 469, "setting": "nl", "seed": 67906305, "key": 3}
+{"turn": true, "k": 469, "setting": "nl", "seed": 67906306, "key": 3}
+{"turn": true, "k": 469, "setting": "nl", "seed": 67906307, "key": 3}
+{"turn": true, "k": 497, "setting": "installed", "seed": 67907100, "key": 1}
+{"turn": true, "k": 497, "setting": "installed", "seed": 67907101, "key": 1}
+{"turn": true, "k": 497, "setting": "installed", "seed": 67907102, "key": 1}
+{"turn": true, "k": 497, "setting": "installed", "seed": 67907103, "key": 1}
+{"turn": true, "k": 497, "setting": "installed", "seed": 67907104, "key": 1}
+{"turn": true, "k": 497, "setting": "installed", "seed": 67907105, "key": 1}
+{"turn": true, "k": 497, "setting": "installed", "seed": 67907106, "key": 1}
+{"turn": true, "k": 497, "setting": "installed", "seed": 67907107, "key": 1}
+{"turn": true, "k": 497, "setting": "kc", "seed": 67907100, "key": 2}
+{"turn": true, "k": 497, "setting": "kc", "seed": 67907101, "key": 2}
+{"turn": true, "k": 497, "setting": "kc", "seed": 67907102, "key": 2}
+{"turn": true, "k": 497, "setting": "kc", "seed": 67907103, "key": 2}
+{"turn": true, "k": 497, "setting": "kc", "seed": 67907104, "key": 2}
+{"turn": true, "k": 497, "setting": "kc", "seed": 67907105, "key": 2}
+{"turn": true, "k": 497, "setting": "kc", "seed": 67907106, "key": 2}
+{"turn": true, "k": 497, "setting": "kc", "seed": 67907107, "key": 2}
+{"turn": true, "k": 497, "setting": "nl", "seed": 67907100, "key": 2}
+{"turn": true, "k": 497, "setting": "nl", "seed": 67907101, "key": 2}
+{"turn": true, "k": 497, "setting": "nl", "seed": 67907102, "key": 2}
+{"turn": true, "k": 497, "setting": "nl", "seed": 67907103, "key": 2}
+{"turn": true, "k": 497, "setting": "nl", "seed": 67907104, "key": 2}
+{"turn": true, "k": 497, "setting": "nl", "seed": 67907105, "key": 2}
+{"turn": true, "k": 497, "setting": "nl", "seed": 67907106, "key": 2}
+{"turn": true, "k": 497, "setting": "nl", "seed": 67907107, "key": 2}
+{"turn": true, "k": 516, "setting": "installed", "seed": 67907700, "key": 1}
+{"turn": true, "k": 516, "setting": "installed", "seed": 67907701, "key": 1}
+{"turn": true, "k": 516, "setting": "installed", "seed": 67907702, "key": 1}
+{"turn": true, "k": 516, "setting": "installed", "seed": 67907703, "key": 1}
+{"turn": true, "k": 516, "setting": "installed", "seed": 67907704, "key": 1}
+{"turn": true, "k": 516, "setting": "installed", "seed": 67907705, "key": 1}
+{"turn": true, "k": 516, "setting": "installed", "seed": 67907706, "key": 1}
+{"turn": true, "k": 516, "setting": "installed", "seed": 67907707, "key": 1}
+{"turn": true, "k": 516, "setting": "kc", "seed": 67907700, "key": 2}
+{"turn": true, "k": 516, "setting": "kc", "seed": 67907701, "key": 2}
+{"turn": true, "k": 516, "setting": "kc", "seed": 67907702, "key": 2}
+{"turn": true, "k": 516, "setting": "kc", "seed": 67907703, "key": 2}
+{"turn": true, "k": 516, "setting": "kc", "seed": 67907704, "key": 2}
+{"turn": true, "k": 516, "setting": "kc", "seed": 67907705, "key": 2}
+{"turn": true, "k": 516, "setting": "kc", "seed": 67907706, "key": 2}
+{"turn": true, "k": 516, "setting": "kc", "seed": 67907707, "key": 2}
+{"turn": true, "k": 516, "setting": "nl", "seed": 67907700, "key": 1}
+{"turn": true, "k": 516, "setting": "nl", "seed": 67907701, "key": 1}
+{"turn": true, "k": 516, "setting": "nl", "seed": 67907702, "key": 1}
+{"turn": true, "k": 516, "setting": "nl", "seed": 67907703, "key": 1}
+{"turn": true, "k": 516, "setting": "nl", "seed": 67907704, "key": 1}
+{"turn": true, "k": 516, "setting": "nl", "seed": 67907705, "key": 1}
+{"turn": true, "k": 516, "setting": "nl", "seed": 67907706, "key": 1}
+{"turn": true, "k": 516, "setting": "nl", "seed": 67907707, "key": 1}
+{"turn": true, "k": 518, "setting": "installed", "seed": 67907900, "key": 0}
+{"turn": true, "k": 518, "setting": "installed", "seed": 67907901, "key": 0}
+{"turn": true, "k": 518, "setting": "installed", "seed": 67907902, "key": 0}
+{"turn": true, "k": 518, "setting": "installed", "seed": 67907903, "key": 0}
+{"turn": true, "k": 518, "setting": "installed", "seed": 67907904, "key": 0}
+{"turn": true, "k": 518, "setting": "installed", "seed": 67907905, "key": 0}
+{"turn": true, "k": 518, "setting": "installed", "seed": 67907906, "key": 0}
+{"turn": true, "k": 518, "setting": "installed", "seed": 67907907, "key": 0}
+{"turn": true, "k": 518, "setting": "kc", "seed": 67907900, "key": 1}
+{"turn": true, "k": 518, "setting": "kc", "seed": 67907901, "key": 1}
+{"turn": true, "k": 518, "setting": "kc", "seed": 67907902, "key": 1}
+{"turn": true, "k": 518, "setting": "kc", "seed": 67907903, "key": 1}
+{"turn": true, "k": 518, "setting": "kc", "seed": 67907904, "key": 1}
+{"turn": true, "k": 518, "setting": "kc", "seed": 67907905, "key": 1}
+{"turn": true, "k": 518, "setting": "kc", "seed": 67907906, "key": 1}
+{"turn": true, "k": 518, "setting": "kc", "seed": 67907907, "key": 1}
+{"turn": true, "k": 518, "setting": "nl", "seed": 67907900, "key": 2}
+{"turn": true, "k": 518, "setting": "nl", "seed": 67907901, "key": 2}
+{"turn": true, "k": 518, "setting": "nl", "seed": 67907902, "key": 2}
+{"turn": true, "k": 518, "setting": "nl", "seed": 67907903, "key": 2}
+{"turn": true, "k": 518, "setting": "nl", "seed": 67907904, "key": 2}
+{"turn": true, "k": 518, "setting": "nl", "seed": 67907905, "key": 2}
+{"turn": true, "k": 518, "setting": "nl", "seed": 67907906, "key": 2}
+{"turn": true, "k": 518, "setting": "nl", "seed": 67907907, "key": 2}
+{"turn": true, "k": 519, "setting": "installed", "seed": 67908000, "key": 1}
+{"turn": true, "k": 519, "setting": "installed", "seed": 67908001, "key": 1}
+{"turn": true, "k": 519, "setting": "installed", "seed": 67908002, "key": 1}
+{"turn": true, "k": 519, "setting": "installed", "seed": 67908003, "key": 1}
+{"turn": true, "k": 519, "setting": "installed", "seed": 67908004, "key": 2}
+{"turn": true, "k": 519, "setting": "installed", "seed": 67908005, "key": 1}
+{"turn": true, "k": 519, "setting": "installed", "seed": 67908006, "key": 2}
+{"turn": true, "k": 519, "setting": "installed", "seed": 67908007, "key": 1}
+{"turn": true, "k": 519, "setting": "kc", "seed": 67908000, "key": 3}
+{"turn": true, "k": 519, "setting": "kc", "seed": 67908001, "key": 4}
+{"turn": true, "k": 519, "setting": "kc", "seed": 67908002, "key": 3}
+{"turn": true, "k": 519, "setting": "kc", "seed": 67908003, "key": 3}
+{"turn": true, "k": 519, "setting": "kc", "seed": 67908004, "key": 4}
+{"turn": true, "k": 519, "setting": "kc", "seed": 67908005, "key": 4}
+{"turn": true, "k": 519, "setting": "kc", "seed": 67908006, "key": 3}
+{"turn": true, "k": 519, "setting": "kc", "seed": 67908007, "key": 3}
+{"turn": true, "k": 519, "setting": "nl", "seed": 67908000, "key": 4}
+{"turn": true, "k": 519, "setting": "nl", "seed": 67908001, "key": 4}
+{"turn": true, "k": 519, "setting": "nl", "seed": 67908002, "key": 4}
+{"turn": true, "k": 519, "setting": "nl", "seed": 67908003, "key": 4}
+{"turn": true, "k": 519, "setting": "nl", "seed": 67908004, "key": 4}
+{"turn": true, "k": 519, "setting": "nl", "seed": 67908005, "key": 4}
+{"turn": true, "k": 519, "setting": "nl", "seed": 67908006, "key": 4}
+{"turn": true, "k": 519, "setting": "nl", "seed": 67908007, "key": 4}
+{"gend": true, "k": 304, "key": 0, "samples": [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0]}
+{"gend": true, "k": 312, "key": 0, "samples": [1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0]}
+{"gend": true, "k": 313, "key": 0, "samples": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0]}
+{"gend": true, "k": 320, "key": 0, "samples": [1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 327, "key": 0, "samples": [1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 329, "key": 0, "samples": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0]}
+{"gend": true, "k": 337, "key": 0, "samples": [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 339, "key": 0, "samples": [1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0]}
+{"gend": true, "k": 345, "key": 0, "samples": [1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 346, "key": 0, "samples": [0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 349, "key": 0, "samples": [0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0]}
+{"gend": true, "k": 366, "key": 0, "samples": [0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 375, "key": 0, "samples": [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]}
+{"gend": true, "k": 377, "key": 0, "samples": [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0]}
+{"gend": true, "k": 385, "key": 0, "samples": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 388, "key": 0, "samples": [1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 399, "key": 0, "samples": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 411, "key": 0, "samples": [1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 412, "key": 0, "samples": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 418, "key": 0, "samples": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0]}
+{"gend": true, "k": 432, "key": 0, "samples": [0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 433, "key": 0, "samples": [1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0]}
+{"gend": true, "k": 443, "key": 0, "samples": [1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0]}
+{"gend": true, "k": 445, "key": 0, "samples": [1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0]}
+{"gend": true, "k": 449, "key": 0, "samples": [1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 451, "key": 0, "samples": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]}
+{"gend": true, "k": 455, "key": 0, "samples": [1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 468, "key": 0, "samples": [1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0]}
+{"gend": true, "k": 469, "key": 0, "samples": [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0]}
+{"gend": true, "k": 497, "key": 0, "samples": [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0]}
+{"gend": true, "k": 516, "key": 0, "samples": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 518, "key": 0, "samples": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0]}
+{"gend": true, "k": 519, "key": 0, "samples": [1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0]}
+{"gend": true, "k": 304, "key": 1, "samples": [0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0]}
+{"gend": true, "k": 312, "key": 1, "samples": [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0]}
+{"gend": true, "k": 320, "key": 1, "samples": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 320, "key": 2, "samples": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 327, "key": 1, "samples": [1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0]}
+{"gend": true, "k": 327, "key": 2, "samples": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0]}
+{"gend": true, "k": 329, "key": 1, "samples": [0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0]}
+{"gend": true, "k": 337, "key": 1, "samples": [0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 337, "key": 2, "samples": [0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 337, "key": 3, "samples": [0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0]}
+{"gend": true, "k": 337, "key": 4, "samples": [0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 337, "key": 5, "samples": [0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0]}
+{"gend": true, "k": 337, "key": 6, "samples": [1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0]}
+{"gend": true, "k": 337, "key": 7, "samples": [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0]}
+{"gend": true, "k": 337, "key": 8, "samples": [1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 337, "key": 9, "samples": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0]}
+{"gend": true, "k": 337, "key": 10, "samples": [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0]}
+{"gend": true, "k": 337, "key": 11, "samples": [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 337, "key": 12, "samples": [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0]}
+{"gend": true, "k": 339, "key": 1, "samples": [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 339, "key": 2, "samples": [0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 345, "key": 1, "samples": [0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 345, "key": 2, "samples": [0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 346, "key": 1, "samples": [0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 349, "key": 1, "samples": [1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 349, "key": 2, "samples": [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0]}
+{"gend": true, "k": 366, "key": 1, "samples": [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 366, "key": 2, "samples": [0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 366, "key": 3, "samples": [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 366, "key": 4, "samples": [0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 366, "key": 5, "samples": [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 375, "key": 1, "samples": [0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 377, "key": 1, "samples": [0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0]}
+{"gend": true, "k": 377, "key": 2, "samples": [1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0]}
+{"gend": true, "k": 377, "key": 3, "samples": [1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 377, "key": 4, "samples": [1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 385, "key": 1, "samples": [1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 388, "key": 1, "samples": [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 399, "key": 1, "samples": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 399, "key": 2, "samples": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 399, "key": 3, "samples": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 399, "key": 4, "samples": [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 399, "key": 5, "samples": [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 411, "key": 1, "samples": [1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0]}
+{"gend": true, "k": 411, "key": 2, "samples": [1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0]}
+{"gend": true, "k": 411, "key": 3, "samples": [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0]}
+{"gend": true, "k": 412, "key": 1, "samples": [1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0]}
+{"gend": true, "k": 412, "key": 2, "samples": [1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0]}
+{"gend": true, "k": 418, "key": 1, "samples": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0]}
+{"gend": true, "k": 418, "key": 2, "samples": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0]}
+{"gend": true, "k": 432, "key": 1, "samples": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0]}
+{"gend": true, "k": 432, "key": 2, "samples": [0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]}
+{"gend": true, "k": 433, "key": 1, "samples": [0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 433, "key": 2, "samples": [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0]}
+{"gend": true, "k": 433, "key": 3, "samples": [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 433, "key": 4, "samples": [1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0]}
+{"gend": true, "k": 433, "key": 5, "samples": [1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0]}
+{"gend": true, "k": 443, "key": 1, "samples": [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 443, "key": 2, "samples": [1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0]}
+{"gend": true, "k": 443, "key": 3, "samples": [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 443, "key": 4, "samples": [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 445, "key": 1, "samples": [1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0]}
+{"gend": true, "k": 445, "key": 2, "samples": [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 449, "key": 1, "samples": [1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 451, "key": 1, "samples": [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 455, "key": 1, "samples": [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 455, "key": 2, "samples": [0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 455, "key": 3, "samples": [0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 455, "key": 4, "samples": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0]}
+{"gend": true, "k": 455, "key": 5, "samples": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0]}
+{"gend": true, "k": 455, "key": 6, "samples": [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0]}
+{"gend": true, "k": 455, "key": 7, "samples": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 455, "key": 8, "samples": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 455, "key": 9, "samples": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 455, "key": 10, "samples": [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 455, "key": 11, "samples": [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 455, "key": 12, "samples": [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 455, "key": 13, "samples": [0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0]}
+{"gend": true, "k": 455, "key": 14, "samples": [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 455, "key": 15, "samples": [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 468, "key": 1, "samples": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0]}
+{"gend": true, "k": 468, "key": 2, "samples": [1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0]}
+{"gend": true, "k": 468, "key": 3, "samples": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0]}
+{"gend": true, "k": 468, "key": 4, "samples": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0]}
+{"gend": true, "k": 469, "key": 1, "samples": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 469, "key": 2, "samples": [1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 469, "key": 3, "samples": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0]}
+{"gend": true, "k": 497, "key": 1, "samples": [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 497, "key": 2, "samples": [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}
+{"gend": true, "k": 516, "key": 1, "samples": [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]}
+{"gend": true, "k": 516, "key": 2, "samples": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 518, "key": 1, "samples": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 518, "key": 2, "samples": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+{"gend": true, "k": 519, "key": 1, "samples": [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0]}
+{"gend": true, "k": 519, "key": 2, "samples": [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0]}
+{"gend": true, "k": 519, "key": 3, "samples": [0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0]}
+{"gend": true, "k": 519, "key": 4, "samples": [1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0]}
