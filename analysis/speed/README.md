@@ -345,3 +345,47 @@ moves again and compares them with the kept ones (keys, actions, order).
 The root's step was much more of an iteration than the profile's share for legal actions suggested. At the root, all
 of these run on the widest position every iteration: the legal actions, `worth_trying`'s dominance checks, the sort
 and the keys.
+
+## Round 7 (the architecture thread 14:36Z; J69): moves kept below the root — stopped, not merged
+
+**Tried** (not merged; the root's cache from round 6 stays):
+- Keep the moves at my nodes below the root when the path from the root revealed nothing in this iteration. "Revealed
+  nothing" meant two things:
+  - the game's generator wasn't used (first via its state, `getstate`, 12 µs a step; then via a generator subclass
+    marked on any draw);
+  - no card went into or out of a deck or the opponent's hand (their sizes unchanged).
+- Golden and cmp_roots stayed the same, and bench.py gave about +10% (medians 3108 → 3432; pairs 1.09 / 1.10 / 1.21).
+
+**Check mode found differences** (root_check.py, the same coverage as round 6; data/r7/):
+
+| part | nodes compared | differences |
+|---|---|---|
+| bench | 9,885 | 0 |
+| puzzle bank | 119,646 | 0 |
+| self-play (named pairs + 600 random-deck games) | 499,919 | **173** |
+
+**The cause:**
+- All 20 differences recorded in full (depth 1–2) have Behemoth General on my side of the field.
+- Its Evolve compares the three highest base costs in my hand with **the opponent's hand** and, if mine are higher,
+  destroys every enemy follower.
+- That reads the opponent's hidden hand without using the generator or moving a card. So across determinizations
+  the same evolution leaves the enemy board destroyed in some and standing in others, and the moves at the next node
+  differ.
+- This is the card's rule, not a leak in the simulator: in a real game the outcome becomes visible once the
+  evolution resolves. The path condition can't see it.
+
+**Why the path condition can't be made clean cheaply:**
+- Other effects read hidden zones without the generator: portal.py's script at line 1287 goes through the
+  opponent's hand's followers.
+- Cards waiting in the opponent's hand or deck can answer my actions (scripts that listen in hand or in deck). In a
+  determinization those are guessed cards, and their effect needn't move a card or draw a random number.
+- A sound test would compare the visible position itself at each node. Making that key is about as costly as the
+  moves it saves, and leaving out one visible field would break exactness without a word.
+- Another option is a blocklist: no caching below the root when a card that reads hidden zones, or one that listens
+  in hand or in deck, is in the opponent's deck list or in play. It needs an audit of every script, and it would turn
+  the cache off in many matchups.
+
+**Per the architecture thread's rule** (stop if the path condition can't be judged cleanly), this round stops and the
+code is back to 0e038cb's. **J69 not reached.**
+- The root's cache is unaffected: the moves open at the root are computed before any step.
+- Round 6's 462,991 roots, and this round's root comparisons, showed no difference.
