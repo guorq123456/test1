@@ -1,0 +1,2 @@
+/home/user/test1/analysis/gates/complex/gate.jsonl: 300 pairs, seeds 66900000..66900299, 48.5% ± 3.0% (45.5%..51.5%), CR -14 (-42..+14; steady-state -12); ms per searched decision A 79.41 / B 82.41 = 0.964
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 48.5% (45.5%..51.5%), CR -14 (-43..+14; steady-state -12)
