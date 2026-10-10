@@ -62,3 +62,47 @@ def test_the_same_seed_gives_the_same_samples():
     a = next_lethal_prob(s, k=4, seed=7, reply_spec="greedy")
     b = next_lethal_prob(s, k=4, seed=7, reply_spec="greedy")
     assert a["samples"] == b["samples"] and a["ends"] == b["ends"]
+
+
+def _crossroads():
+    """Our turn: a ready Lancer, two Footmen in hand and 2 play points; the enemy at 12 with two small followers."""
+    from svsim.cards import demo as D
+    s = start()
+    s.turn, s.players[0].turns_taken = 7, 4
+    put(s, 0, D.LANCER)
+    put(s, 1, D.FOOTMAN)
+    put(s, 1, D.ASSASSIN)
+    give(s, 0, D.FOOTMAN)
+    give(s, 0, D.FOOTMAN)
+    set_pp(s, 0, 2)
+    s.players[1].leader_hp = 12
+    return s
+
+
+def test_each_direction_plays_its_own_way():
+    from svsim.search.candidates import play_turn
+    from svsim.search.foresight import DIRECTIONS, direction_agent
+    ends = {}
+    for d in DIRECTIONS:
+        agent = direction_agent(d, "greedy", 3, nodes=200)
+        _, ends[d] = play_turn(_crossroads(), lambda st, legal: agent.act(st, legal))
+    stats = {d: sum(f.atk + f.life for f in e.players[1].followers) for d, e in ends.items()}
+    assert ends["race"].players[1].leader_hp < 12                        # race hits the leader
+    assert stats["clear"] < stats["race"]                                 # clear leaves their board weaker
+    me_c, me_d = ends["conserve"].players[0], ends["default"].players[0]
+    assert len(me_c.hand) > len(me_d.hand) and me_c.pp > me_d.pp          # conserve keeps cards and play points
+
+
+def test_rollouts_repeat_for_a_seed_and_a_won_position_is_won():
+    from svsim.search.foresight import direction_rollout
+    s = _crossroads()
+    _ended(s)
+    a = direction_rollout(s, ["race", "default"], k=2, seed=3, opp_spec="greedy", our_spec="greedy", nodes=60)
+    b = direction_rollout(s, ["race", "default"], k=2, seed=3, opp_spec="greedy", our_spec="greedy", nodes=60)
+    assert {d: (r["samples"], r["turns"]) for d, r in a.items()} == {d: (r["samples"], r["turns"]) for d, r in b.items()}
+    assert all(0.0 <= r["win"] <= 1.0 and r["turns"] > 0 for r in a.values())
+    s = _crossroads()
+    s.players[1].deck = []                   # they lose at their own draw
+    won = direction_rollout(after_end_of_turn(s), "all", k=2, seed=1, opp_spec="greedy", our_spec="greedy",
+                            opponent_started=False, nodes=60)
+    assert all(r["win"] == 1.0 and r["samples"] == [1.0, 1.0] for r in won.values())

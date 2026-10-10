@@ -76,3 +76,119 @@ def next_lethal_prob(state, k: int = 16, seed: int = 0, reply_spec: str = "level
         incomplete += (not r.sure) and (not r.complete)
     return {"p": sum(samples) / len(samples) if samples else 0.0, "samples": samples, "ends": ends,
             "incomplete": incomplete, "ms": round((time.perf_counter() - t0) * 1000, 1)}
+
+
+# --- playing the game out with a direction ----------------------------------------------------------------------
+# `direction_rollout` (the architecture thread 02:17Z, M4 of the analysis line; Salem 02:16Z: 运营 is mostly
+# judging the game's direction, the likeliest way to win): from a position where our turn has just ended, the game
+# is played to its end on k determinizations, the opponent by `opp_spec`, our side on every own turn with a bias:
+# - "race": the lethal-clock line (search.candidates.ClockScore: fewer turns to my lethal first, as candidates'
+#   "race" plan);
+# - "clear": the line that leaves the enemy board weakest (ClearScore: the enemy followers' attack plus defense
+#   first, from the cards' own fields, no table per card);
+# - "conserve": the base evaluation with a small bonus for cards kept in hand, play points and evolution points
+#   unused (ConserveScore: keep and save where it costs little);
+# - "default": the base agent (`our_spec`) unchanged.
+# The three biased ones play each turn by the whole-turn planner (search.turnplan, `nodes` per plan) under the
+# lethal agent (a lethal is always taken), scored by the bias over our_spec's own evaluation. All directions use the
+# same sample seeds (paired).
+DIRECTIONS = ("race", "clear", "conserve", "default")
+
+
+class ClearScore:
+    """Minus `per_stat` x the enemy followers' attack plus defense, plus `tiebreak` x the base evaluation."""
+
+    def __init__(self, base, per_stat: float = 8.0, tiebreak: float = 0.25):
+        self.base, self.per_stat, self.tiebreak = base, per_stat, tiebreak
+
+    def score(self, state, player: int, player_moves_next: bool = False) -> float:
+        from svsim.search.evaluate import WIN, evaluate
+        if state.winner is not None:
+            return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
+        enemy = sum(f.atk + max(f.life, 0) for f in state.players[1 - player].followers)
+        return -self.per_stat * enemy + self.tiebreak * evaluate(state, player, self.base, player_moves_next)
+
+
+class ConserveScore:
+    """The base evaluation plus `per_card` per card in hand, `per_pp` per play point left and `per_ep` per
+    evolution and super-evolution point left: small, so it only tips lines that are nearly even."""
+
+    def __init__(self, base, per_card: float = 2.0, per_pp: float = 1.0, per_ep: float = 4.0):
+        self.base, self.per_card, self.per_pp, self.per_ep = base, per_card, per_pp, per_ep
+
+    def score(self, state, player: int, player_moves_next: bool = False) -> float:
+        from svsim.search.evaluate import WIN, evaluate
+        if state.winner is not None:
+            return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
+        p = state.players[player]
+        return (evaluate(state, player, self.base, player_moves_next) + self.per_card * len(p.hand)
+                + self.per_pp * p.pp + self.per_ep * (p.ep + p.sep))
+
+
+def _weights_of(agent):
+    """The evaluation an agent searches with (its search's, else its own), or the default."""
+    from svsim.search.evaluate import DEFAULT
+    for _ in range(5):
+        if agent is None:
+            break
+        search = getattr(agent, "search", None)
+        if search is not None and hasattr(search, "weights") and not hasattr(search, "solve"):
+            return search.weights
+        if hasattr(agent, "weights"):
+            return agent.weights
+        agent = getattr(agent, "base", None)
+    return DEFAULT
+
+
+def direction_agent(direction: str, our_spec: str, seed: int, nodes: int = 300, clock_nodes: int = 200):
+    """The agent that plays our turns in `direction` (DIRECTIONS)."""
+    from svsim.agents.lethal_agent import LethalAgent
+    from svsim.search.candidates import ClockScore
+    from svsim.search.turnplan import TurnPlanAgent
+    from svsim.tools.arena import make_agent
+    if direction == "default":
+        return make_agent(our_spec, seed)
+    base = _weights_of(make_agent(our_spec, seed))
+    score = {"race": lambda: ClockScore(base, nodes=clock_nodes), "clear": lambda: ClearScore(base),
+             "conserve": lambda: ConserveScore(base)}[direction]()
+    return LethalAgent(TurnPlanAgent(max_nodes=nodes, samples=2, seed=seed, weights=score), seed=seed, planner=True)
+
+
+def direction_rollout(state, direction="all", k: int = 8, seed: int = 0, opp_spec: str = "level-strong",
+                      our_spec: str = "level-strong", opponent_started: bool = True, nodes: int = 300,
+                      max_actions: int = 3000) -> dict:
+    """{direction: {"win": our mean result (win 1, draw 0.5), "samples": [...], "turns": the mean global turns
+    played to the end, "ms": wall time}} for `direction` ("all", one of DIRECTIONS or a list). We are the player
+    who just ended the turn (1 - state.active); the position's two forms as next_lethal_prob's."""
+    from svsim.tools.arena import make_agent
+    me = 1 - state.active
+    directions = list(DIRECTIONS) if direction == "all" else [direction] if isinstance(direction, str) else list(direction)
+    rng = random.Random(seed)
+    seeds = [rng.randrange(2 ** 31) for _ in range(k)]
+    out = {}
+    for d in directions:
+        t0 = time.perf_counter()
+        samples, turns = [], []
+        for sd in seeds:
+            if state.over:
+                samples.append(1.0 if state.winner == me else 0.0 if state.winner == 1 - me else 0.5)
+                turns.append(0)
+                continue
+            s = determinize(state, me, random.Random(sd))
+            if not opponent_started:
+                from svsim.core.engine import _start_turn
+                _start_turn(s)
+                if s.winner is not None:
+                    from svsim.core.enums import Phase
+                    s.phase = Phase.OVER
+            agents = {me: direction_agent(d, our_spec, sd, nodes), 1 - me: make_agent(opp_spec, sd)}
+            n = 0
+            while not s.over and n < max_actions:
+                apply(s, agents[s.active].act(s, legal_actions(s)))
+                n += 1
+            samples.append(1.0 if s.winner == me else 0.0 if s.winner == 1 - me else 0.5)
+            turns.append(s.turn - state.turn)
+        out[d] = {"win": sum(samples) / len(samples) if samples else 0.0, "samples": samples,
+                  "turns": sum(turns) / len(turns) if turns else 0.0,
+                  "ms": round((time.perf_counter() - t0) * 1000, 1)}
+    return out
