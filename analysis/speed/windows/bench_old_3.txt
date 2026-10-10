@@ -1,0 +1,1 @@
+﻿{"positions": 28, "iterations_per_second": 1668.0, "ms_per_decision": 172.6, "rounds": [[1668.0, 173.0], [1667.0, 170.6], [1679.4, 172.6]]}

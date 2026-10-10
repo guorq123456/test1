@@ -1,0 +1,84 @@
+﻿..FFFF.                                                                  [100%]
+================================== FAILURES ===================================
+________ test_the_search_plays_and_counts_as_frozen[ramp-ramp-101-60] _________
+
+deck = 'ramp', opponent = 'ramp', seed = 101, limit = 60
+
+    @pytest.mark.parametrize("deck,opponent,seed,limit", GAMES)
+    def test_the_search_plays_and_counts_as_frozen(deck, opponent, seed, limit):
+        want = json.loads(GOLDEN.read_text())[f"{deck}|{opponent}|{seed}"]
+        got = play(deck, opponent, seed, limit)
+        for i, (g, w) in enumerate(zip(got, want)):
+>           assert g == w, f"decision {i} of {deck} vs {opponent} (seed {seed}) differs"
+E           AssertionError: decision 6 of ramp vs ramp (seed 101) differs
+E           assert {'seat': 0, '..., 14, '0.5']]} == {'seat': 0, '..., 14, '0.5']]}
+E             
+E             Omitting 3 identical items, use -vv to show
+E             Differing items:
+E             {'children': [["('P', ('H', True, 10543310, 2), (), ())", 16, '0.5201229937250504'], ["('T',)", 14, '0.5']]} != {'children': [["('P', ('H', True, 10543310, 2), (), ())", 16, '0.5201229937250506'], ["('T',)", 14, '0.5']]}
+E             Use -v to get more diff
+
+tests\test_golden_search.py:15: AssertionError
+______ test_the_search_plays_and_counts_as_frozen[ramp-t-ramp-t-102-50] _______
+
+deck = 'ramp-t', opponent = 'ramp-t', seed = 102, limit = 50
+
+    @pytest.mark.parametrize("deck,opponent,seed,limit", GAMES)
+    def test_the_search_plays_and_counts_as_frozen(deck, opponent, seed, limit):
+        want = json.loads(GOLDEN.read_text())[f"{deck}|{opponent}|{seed}"]
+        got = play(deck, opponent, seed, limit)
+        for i, (g, w) in enumerate(zip(got, want)):
+>           assert g == w, f"decision {i} of {deck} vs {opponent} (seed {seed}) differs"
+E           AssertionError: decision 6 of ramp-t vs ramp-t (seed 102) differs
+E           assert {'seat': 0, '...", 9, '0.5']]} == {'seat': 0, '...", 9, '0.5']]}
+E             
+E             Omitting 3 identical items, use -vv to show
+E             Differing items:
+E             {'children': [["('P', ('H', True, 10543310, 2), (), ())", 13, '0.5422174837455195'], ["('P', ('H', True, 10741110, 2), (), ())", 8, '0.47507809849896104'], ["('T',)", 9, '0.5']]} != {'children': [["('P', ('H', True, 10543310, 2), (), ())", 13, '0.5422174837455194'], ["('P', ('H', True, 10741110, 2), (), ())", 8, '0.47507809849896104'], ["('T',)", 9, '0.5']]}
+E             Use -v to get more diff
+
+tests\test_golden_search.py:15: AssertionError
+_______ test_the_search_plays_and_counts_as_frozen[elf-t-elf-t-103-50] ________
+
+deck = 'elf-t', opponent = 'elf-t', seed = 103, limit = 50
+
+    @pytest.mark.parametrize("deck,opponent,seed,limit", GAMES)
+    def test_the_search_plays_and_counts_as_frozen(deck, opponent, seed, limit):
+        want = json.loads(GOLDEN.read_text())[f"{deck}|{opponent}|{seed}"]
+        got = play(deck, opponent, seed, limit)
+        for i, (g, w) in enumerate(zip(got, want)):
+>           assert g == w, f"decision {i} of {deck} vs {opponent} (seed {seed}) differs"
+E           AssertionError: decision 4 of elf-t vs elf-t (seed 103) differs
+E           assert {'seat': 0, '...", 5, '0.5']]} == {'seat': 0, '...", 5, '0.5']]}
+E             
+E             Omitting 3 identical items, use -vv to show
+E             Differing items:
+E             {'children': [["('B',)", 8, '0.5956579858940815'], ["('P', ('H', True, 10503210, 1), (), ())", 8, '0.58313761072133'], ["('P', ('H', True, 10911110, 1), (), ())", 9, '0.5956579858940816'], ["('T',)", 5, '0.5']]} != {'children': [["('B',)", 8, '0.5956579858940815'], ["('P', ('H', True, 10503210, 1), (), ())", 8, '0.5831376107213299'], ["('P', ('H', True, 10911110, 1), (), ())", 9, '0.5956579858940816'], ["('T',)", 5, '0.5']]}
+E             Use -v to get more diff
+
+tests\test_golden_search.py:15: AssertionError
+_______ test_the_search_plays_and_counts_as_frozen[elf-t-ramp-t-104-50] _______
+
+deck = 'elf-t', opponent = 'ramp-t', seed = 104, limit = 50
+
+    @pytest.mark.parametrize("deck,opponent,seed,limit", GAMES)
+    def test_the_search_plays_and_counts_as_frozen(deck, opponent, seed, limit):
+        want = json.loads(GOLDEN.read_text())[f"{deck}|{opponent}|{seed}"]
+        got = play(deck, opponent, seed, limit)
+        for i, (g, w) in enumerate(zip(got, want)):
+>           assert g == w, f"decision {i} of {deck} vs {opponent} (seed {seed}) differs"
+E           AssertionError: decision 8 of elf-t vs ramp-t (seed 104) differs
+E           assert {'seat': 0, '...", 5, '0.5']]} == {'seat': 0, '...", 5, '0.5']]}
+E             
+E             Omitting 3 identical items, use -vv to show
+E             Differing items:
+E             {'children': [["('P', ('H', True, 10403120, 2), (), ())", 5, '0.4989408232495514'], ["('P', ('H', True, 10712110, 2), ...324'], ["('P', ('H', True, 10811130, 1), (('H', True, 10914110, 3),), ())", 5, '0.50632793695'], ["('T',)", 5, '0.5']]} != {'children': [["('P', ('H', True, 10403120, 2), (), ())", 5, '0.4989408232495513'], ["('P', ('H', True, 10712110, 2), ..., ["('P', ('H', True, 10811130, 1), (('H', True, 10914110, 3),), ())", 5, '0.5063279369499999'], ["('T',)", 5, '0.5']]}
+E             Use -v to get more diff
+
+tests\test_golden_search.py:15: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_golden_search.py::test_the_search_plays_and_counts_as_frozen[ramp-ramp-101-60]
+FAILED tests/test_golden_search.py::test_the_search_plays_and_counts_as_frozen[ramp-t-ramp-t-102-50]
+FAILED tests/test_golden_search.py::test_the_search_plays_and_counts_as_frozen[elf-t-elf-t-103-50]
+FAILED tests/test_golden_search.py::test_the_search_plays_and_counts_as_frozen[elf-t-ramp-t-104-50]
+4 failed, 3 passed in 9.88s
