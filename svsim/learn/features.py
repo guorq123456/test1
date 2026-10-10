@@ -344,6 +344,8 @@ EXTRAS = {
     "hpphase": ["me_hp_early", "me_hp_mid", "op_hp_early", "op_hp_mid"],
     "hand_value": ["hand_value"],     # not me_hand_*: learn.phased.STOCK zeroes that prefix
     "clock": ["me_burst", "op_burst", "me_clock", "op_clock", "clock_lead"],
+    "kclock": ["me_kill_turns", "op_kill_turns", "kill_lead", "op_hp_x_kill_lead", "me_hp_x_kill_lead",
+               "op_hp_x_me_near", "me_hp_x_op_near"],
 }
 # - "board" (6, C3, the analysis thread's analysis/c3-threat/README.md section 4, 09f7ca2): for each side s (mine,
 #   then the opponent's; e its enemy) pressure = min(_board_threat(e) / max(s's leader HP, 1), 1.5), then s's leader
@@ -498,6 +500,68 @@ def _clock_values(state: GameState, player: int) -> list[float]:
 
 
 EXTRA_FNS["clock"] = _clock_values
+
+
+# - "kclock" (7, the lethal clock, the architecture thread 2026-10-10 10:38Z; the scored player has just ended the
+#   turn, so the opponent's turn comes first): the turns each side needs to kill the other at its next turn's damage,
+#   the difference, and crosses with the leaders' defense, so a point of face damage is worth more or less with the
+#   clock. No card ids and no card values set by hand: a card's damage is the planner's own measurement of it
+#   (search.combo.profile_at: face damage, and a Storm follower's attacks). The planner's whole search
+#   (combo.next_turn_damage) costs about 0.85 ms a turn end at 300 nodes, ten times the version-2 features, so it is
+#   not used here.
+#   - A side's damage: the attack of its followers that can attack, less the defense of the enemy's Ward followers,
+#     plus the hand's: mine, the most direct damage of a subset of my hand I can pay for next turn (a knapsack, as
+#     "clock"); the opponent's, their hand size times the mean direct damage of the cards of their unseen pool (hand
+#     and deck as one pool, never the determinized hand) they could pay for, capped at 20.
+#   - turns = the other leader's defense / max(damage, 1), at most 10; lead = the opponent's turns - mine; then each
+#     leader's defense x lead, and each leader's defense x near(the turns the other side needs to kill it), with
+#     near(t) = min(max(3 - t, 0), 2) / 2 (1 at one turn or less, 0 from three turns on).
+_FACE_AT: dict = {}
+
+
+def _face_at(defn, pp: int) -> float:
+    """The most direct damage to the enemy leader of one play of `defn` with `pp` play points (combo.profile_at)."""
+    key = (defn.card_id, pp)
+    hit = _FACE_AT.get(key)
+    if hit is None:
+        from svsim.search.combo import COMBO_STEPS, profile_at
+        hit = 0.0
+        for variants in profile_at(defn, False, pp):
+            e = variants[0]
+            storm = (e.base + e.per_combo * COMBO_STEPS[0]) * max(e.attacks, 1) if e.reach == 2 else 0
+            hit = max(hit, float(e.face + max(storm, 0)))
+        _FACE_AT[key] = hit
+    return hit
+
+
+def _near(t: float) -> float:
+    return min(max(3.0 - t, 0.0), 2.0) / 2.0
+
+
+def _board_damage(p, enemy) -> float:
+    atk = sum(f.atk for f in p.followers if not prop(f, "cant_attack"))
+    wall = sum(max(f.life, 0) for f in enemy.followers if f.keywords & Keyword.WARD)
+    return float(max(atk - wall, 0))
+
+
+def _kclock_values(state: GameState, player: int) -> list[float]:
+    me, op = state.players[player], state.players[1 - player]
+    me_hp, op_hp = float(max(effective_hp(me), 0)), float(max(effective_hp(op), 0))
+    budget = min(me.max_pp + 1, MAX_PP)
+    me_dmg = _board_damage(me, op) + _best_direct([(c.cost, _face_at(c.defn, budget)) for c in me.hand], budget)
+    op_dmg = _board_damage(op, me)
+    pool = op.hand + op.deck_view()
+    if pool and op.hand:
+        budget = min(op.max_pp + 1, MAX_PP)
+        mean = sum(_face_at(c.defn, budget) for c in pool if c.cost <= budget) / len(pool)
+        op_dmg += min(len(op.hand) * mean, 20.0)
+    me_turns = min(op_hp / max(me_dmg, 1.0), 10.0)
+    op_turns = min(me_hp / max(op_dmg, 1.0), 10.0)
+    lead = op_turns - me_turns
+    return [me_turns, op_turns, lead, op_hp * lead, me_hp * lead, op_hp * _near(me_turns), me_hp * _near(op_turns)]
+
+
+EXTRA_FNS["kclock"] = _kclock_values
 
 
 def extra_features(state: GameState, player: int, extras, hv=None) -> list[float]:
