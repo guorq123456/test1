@@ -102,7 +102,7 @@ nemesis-t|pirate-t|105 40 c95bc23d4d17a38ca068ea2299cf7674ca0e851755dbb34d93bae7
   - cand-nl：对 level-strong 的门已由分析线预注册，在跑。
   - 两者在题 3 那类局面都偏向打脸（analysis/puzzles3/README.md 末节）。
 
-## 6. 强档 + 弃牌剪枝（只准备，不装；架构线程 21:09Z）
+## 6. 强档 + 弃牌剪枝（只准备，不装；架构线程 21:09Z）——**已被第 7 节取代，不要再装这一节**
 
 **内容**
 - 强档配置从 `mcts:200+plan+learned+phased` 改成 `mcts:200+plan+learned+phased+xprune=3:3:cost`。
@@ -158,3 +158,80 @@ start "" /WAIT /BELOWNORMAL /AFFINITY FFFFE cmd /c "python analysis\install\stro
   - 强档的 CR 是加剪枝之前测的。
   - 门里跳费龙镜像约 +23 CR，其他对位约 0。
   - 要不要重新标定，等 Salem 定。
+
+## 7. 「最强」档 + 强档合并包（加时钟评估器 + 弃牌剪枝）（只准备，不装；架构线程 2026-10-11 18:47Z）
+
+**先后顺序**：第一步装「最强」档（b215e3d），第二步装强档合并包。两步各自可以单独回退。
+
+**内容**
+- 「最强」：`LEVELS["max"] = mcts:1043+plan+learned+phased`，是新增的一档，不替换任何档。b215e3d 起已经在代码里。
+- 强档：`mcts:200+plan+learned+phased` 改成 `mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost`，次数 200 不改，和叠加门 J81 的写法一样。版本名 `v2skx`。
+- 只装合并包，不要再装第 6 节。如果第 6 节已经装了，先用第 6 节的回退命令退掉；合并包的 apply 要求强档是旧配置，否则一个字都不写。
+
+**加时钟包只影响强档，已经核实**（这边，2026-10-11）
+- `phased=pkg-kc-ramp-ramp` 只给点名它的那个智能体单独加载这个目录（arena.make_agent → learn.phased.load(folder_of(name))），共用的 `svsim/learn/phased_models/ramp-ramp-ended.json` 不改。
+  - 这份文件的 sha256 是 97b0a8f2…100e，从 491c6aa 起没变过。
+- 「最强」档读的仍是这份原文件；强档读包里的那份（95acaf1e…a125，cand-kc 的）。
+- 两边比过全部配对：只有 (ramp, ramp, ended) 不同，其他配对的评估器完全一样。
+- 训练器网页的构建（tools.web）会因为有一档点名了 `pkg-kc-ramp-ramp`，自动把这个目录打进包里；合并包同时改了 test_web 里列出已打包目录的那条断言。
+
+**pkg-kc-ramp-ramp 目录要随仓库到 Windows**
+- 26 个文件，由 3eab414 生成，用 `PACKAGE.json` 记来源。
+- 目录摘要 = 对按文件名排序的「文件名 sha256」逐行算 sha256，CRLF 当 LF 算，所以 Windows 换行转换不影响：
+  - `1e7bc6f82c2515a2d06dfb4803e25997c3324374e4c9ba312d0dc3bf23bc5675`
+- `strong_kc_xprune.py check / apply` 都会核这个摘要；不对，apply 就一个字都不写。
+- 其中被替换的 `ramp-ramp-ended.json`：95acaf1e5c27a6d83eb342be32564cc1e9bec61ad512028b922694fae300a125。
+
+**哈希**
+- 档位哈希（`sha256(json.dumps(LEVELS, sort_keys=True))`，各机器一样）：
+  - 改前：`d1eb81d0896bb431dedba8ac511b157a5aff9f1b1f116c31174d20b381eaea10`（已含「最强」档）
+  - 合并包装后：`c0125dc5a06aaf7fa3f885ed6708c43df4e2f6a338c839834de00805376d9ea9`
+- cmp_roots 两步前后都应该是 **755a0bba…96a6**（Windows）：它写死旧强档配置，不读档位。变了就停下。
+- 这边（Linux）在独立 worktree 里走过一遍：
+  - apply → test_web、test_learn、test_xprune、test_golden_search、test_install_packages 共 77 项全过；
+  - 冒烟 OK：强档读 pkg-kc、「最强」读原文件；6 局都打完；跳费龙那几局剪枝起作用上千次；
+  - revert → git 工作区干净；
+  - 全量 `pytest -q`（apply 之后）：1171 通过、7 跳过；
+  - 第一步的「最强」冒烟命令在这边跑了 14 秒，2 局都打完。
+
+**第一步：「最强」档（b215e3d）**，在仓库根目录、cmd 里：
+- check：
+  ```
+  start "" /WAIT /BELOWNORMAL /AFFINITY FFFFE cmd /c "git merge-base --is-ancestor b215e3d HEAD && python analysis\install\strong_kc_xprune.py check"
+  ```
+  预期 `"max": "mcts:1043+plan+learned+phased"`、`"strong": "mcts:200+plan+learned+phased"`。如果 git 那一步失败，说明检出的代码早于 b215e3d，要先更新分支。
+- apply：不用改文件，检出的代码在 b215e3d 之后就已经包含它；训练器里会多出「最强」一档。
+- 冒烟（1 对，「最强」对强档，跳费龙镜像，大约几分钟）：
+  ```
+  start "" /WAIT /BELOWNORMAL /AFFINITY FFFFE cmd /c "python -m svsim.tools.host svsim.tools.gate --a level-max --b level-strong --deck ramp --opponent ramp --fixed --max 2 --seed 69900010 --workers 2 --out max_smoke.jsonl"
+  ```
+  预期 2 局都打完，打印 2 局的得分行。胜负不作判定，只看能不能跑完。
+- 回退：「最强」是新增的一档，不选它就等于没装。要从代码里拿掉，要 revert b215e3d（它改了 session.py、ratings.json、test_web.py、index.html，之后的提交也改过这几个文件），请先问建造线。
+
+**第二步：强档合并包**
+- check：
+  ```
+  start "" /WAIT /BELOWNORMAL /AFFINITY FFFFE cmd /c "python analysis\install\strong_kc_xprune.py check"
+  ```
+  预期：`"state": "not installed"`，改前哈希 d1eb81d0…ea10，`"package": {... "ok": true}`。
+- apply + 冒烟 + 测试（一行；任何一步失败都会停下）：
+  ```
+  start "" /WAIT /BELOWNORMAL /AFFINITY FFFFE cmd /c "python analysis\install\strong_kc_xprune.py apply && python -m svsim.tools.host analysis.install.strong_kc_xprune_smoke --workers 3 && python -m pytest -q tests\test_web.py tests\test_learn.py tests\test_xprune.py tests\test_install_packages.py && echo INSTALLED"
+  ```
+  - 预期：apply 打印 before d1eb81d0…ea10 / after c0125dc5…9ea9，`package.ok` 为 true；
+  - 冒烟第一行是 `"ramp_ramp_ended_read_by": {"strong": "pkg-kc-ramp-ramp", "max": "installed"}`，接着 6 局都分出胜负，跳费龙那几局 `cut` > 0，最后一行 `OK`；
+  - pytest 全过；最后打印 `INSTALLED`。
+- 冒烟单独跑：`python -m svsim.tools.host analysis.install.strong_kc_xprune_smoke --workers 3`。
+- 回退：
+  ```
+  start "" /WAIT /BELOWNORMAL /AFFINITY FFFFE cmd /c "python analysis\install\strong_kc_xprune.py revert && python analysis\install\strong_kc_xprune.py check && python -m pytest -q tests\test_web.py tests\test_learn.py"
+  ```
+  - 预期：check 回到 `"state": "not installed"`、改前哈希 d1eb81d0…ea10；pytest 全过。
+  - 也可以直接 `git checkout -- svsim/ui/session.py svsim/tools/arena.py tests/test_web.py tests/test_learn.py`。
+  - pkg-kc-ramp-ramp 目录留着无害：没有档位点名它，就没有任何东西读它，网页构建也不会打包它。
+  - 对局记录里写着 `v2skx` 的照样能读。
+
+**装后的名字和段位**
+- 装后 `level-strong` 指新强档。要和旧强档比的门和标定，一律写明 `v2s`；新强档写 `v2skx`（同第 6 节的约定）。
+- 强档的 CR（ratings.json，跳费龙 1331 等）是改前测的。这个包不动 ratings.json，要不要重新标定，等 Salem 定。
+

@@ -54,9 +54,9 @@ def levels():
     return json.loads(out.stdout)
 
 
-def _edit(reverse: bool):
+def _edit(reverse: bool, edits=None):
     texts = {}
-    for path, old, new in EDITS:
+    for path, old, new in edits or EDITS:
         a, b = (new, old) if reverse else (old, new)
         text = texts.get(path) or (ROOT / path).read_text(encoding="utf-8")
         if text.count(a) != 1:
