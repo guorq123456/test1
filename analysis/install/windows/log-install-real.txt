@@ -1,0 +1,72 @@
+﻿install start 2026-10-13T19:37:35 on 7f2c751
+=== cmp_roots_before ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+116 755a0bba6cfb1119729e19b4af0484d6a583854d678b1697cd91fb39f63596a6
+cmp_roots_before done in 0.1 min; exit 0
+=== golden_hash ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+ramp|ramp|101 60 a7931afcd4a73429fe64635130c6c4fa18ede47c35667c7343458d4b069742e9
+ramp-t|ramp-t|102 50 a36de586a1707d1a854d6866213d30cc51458c1618787f32b39a38be5d5e40b8
+elf-t|elf-t|103 50 57ff48df94e64a69b36878c091623b5060c5d514566e861e739e6be3a47b4800
+elf-t|ramp-t|104 50 81cd3e3bae72d0c5c4d3ac8366351515720104b1b6dd9976710785ac6086f8c5
+nemesis-t|pirate-t|105 40 c95bc23d4d17a38ca068ea2299cf7674ca0e851755dbb34d93bae72494f7785a
+golden_hash done in 0.1 min; exit 0
+=== max_smoke ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+条件：ramp 对 ramp，对手卡表已知（牌序、手牌未知）
+1 对（2 局）：A 得分 50.0% ± 0.0%（95% 区间 50.0%～50.0%），CR 分差约 +0（+0～+0；游戏稳态公式 +0，+0～+0，窗口内），LLR +0.00（判定线 -2.94 / 2.94）→ 未判定
+按真实先后手：A 先手 1 局 0.0% ± 0.0%；A 后手 1 局 100.0% ± 0.0%
+两局着法完全一样的对：0 / 1（0%）
+max_smoke done in 0.1 min; exit 0
+=== apply ===
+{
+ "done": "apply",
+ "before": [
+  "mcts:200+plan+learned+phased",
+  "d1eb81d0896bb431dedba8ac511b157a5aff9f1b1f116c31174d20b381eaea10"
+ ],
+ "after": [
+  "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost",
+  "c0125dc5a06aaf7fa3f885ed6708c43df4e2f6a338c839834de00805376d9ea9"
+ ],
+ "package": {
+  "folder": "svsim\\learn\\phased_models\\pkg-kc-ramp-ramp",
+  "digest": "1e7bc6f82c2515a2d06dfb4803e25997c3324374e4c9ba312d0dc3bf23bc5675",
+  "ok": true
+ }
+}
+apply done in 0 min; exit 0
+=== smoke ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+{"strong_spec": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost", "max_spec": "mcts:1043+plan+learned+phased", "ramp_ramp_ended_read_by": {"strong": "pkg-kc-ramp-ramp", "max": "installed"}}
+{"pairing": "ramp / ramp", "seed": 69900001, "seat": 0, "points": 1.0, "winner": 0, "actions": 45, "cut": 1349, "strong": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost"}
+{"pairing": "ramp / ramp", "seed": 69900001, "seat": 1, "points": 0.0, "winner": 0, "actions": 45, "cut": 1395, "strong": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost"}
+{"pairing": "ramp / ramp", "seed": 69900002, "seat": 0, "points": 1.0, "winner": 0, "actions": 59, "cut": 3307, "strong": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost"}
+{"pairing": "ramp / ramp", "seed": 69900002, "seat": 1, "points": 0.0, "winner": 0, "actions": 59, "cut": 3252, "strong": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost"}
+{"pairing": "nemesis-t / pirate-t", "seed": 69900003, "seat": 0, "points": 1.0, "winner": 0, "actions": 77, "cut": 64, "strong": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost"}
+{"pairing": "nemesis-t / pirate-t", "seed": 69900003, "seat": 1, "points": 0.0, "winner": 0, "actions": 108, "cut": 302, "strong": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost"}
+OK
+smoke done in 0.1 min; exit 0
+=== pytest_pkg ===
+........................................................................ [100%]
+72 passed in 21.90s
+pytest_pkg done in 0.4 min; exit 0
+INSTALLED
+=== check_after ===
+{
+ "strong": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost",
+ "max": "mcts:1043+plan+learned+phased",
+ "levels_sha256": "c0125dc5a06aaf7fa3f885ed6708c43df4e2f6a338c839834de00805376d9ea9",
+ "state": "installed",
+ "package": {
+  "folder": "svsim\\learn\\phased_models\\pkg-kc-ramp-ramp",
+  "digest": "1e7bc6f82c2515a2d06dfb4803e25997c3324374e4c9ba312d0dc3bf23bc5675",
+  "ok": true
+ }
+}
+check_after done in 0 min; exit 0
+=== cmp_roots_after ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+116 755a0bba6cfb1119729e19b4af0484d6a583854d678b1697cd91fb39f63596a6
+cmp_roots_after done in 0.1 min; exit 0
+install end 2026-10-13T19:38:31

@@ -1,0 +1,4 @@
+﻿host: priority below normal, mask 0xffffe, 19 CPUs
+条件：对手卡表已知（牌序、手牌未知）。整回合耗时（单进程，种子 7，第 1 步前 60 个训练开头）
+- `level-max`：每回合 1099 ms（中位 1019）；换了打法的回合 0/60
+- `level-strong`：每回合 238 ms（中位 221）；A ÷ 它 = 4.627

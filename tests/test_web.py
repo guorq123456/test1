@@ -118,7 +118,8 @@ def test_the_build_has_the_page_the_package_and_pyodide(tmp_path):
     models = [n for n in package if n.startswith("svsim/learn/phased_models/")]   # installed ones, no candidates
     assert "svsim/learn/phased_models/elf-t-ramp-t-ended.json" in models    # ... but the original level's folder
     assert {n.rsplit("/", 1)[0] for n in models} == {"svsim/learn/phased_models", "svsim/learn/phased_models/orig-f631e14",
-                                                     "svsim/learn/phased_models/ref-5558960"}   # normal's frozen models
+                                                     "svsim/learn/phased_models/ref-5558960",   # normal's frozen models
+                                                     "svsim/learn/phased_models/pkg-kc-ramp-ramp"}   # strong's package
     from svsim.build import git_commit
     shipped = json.loads((out / "ratings.json").read_text(encoding="utf-8"))
     assert shipped["commit"] == (git_commit() or "unknown") and shipped["published_at"].endswith("Z")
@@ -135,7 +136,7 @@ def test_records_say_which_bot_played_and_old_records_still_read():
     from svsim.build import commit
     from svsim.tools.arena import VERSIONS
     from svsim.ui.session import LEVELS, bot_of
-    assert LEVELS["normal"] == VERSIONS["v2r5558960"] and LEVELS["strong"] == VERSIONS["v2s"]
+    assert LEVELS["normal"] == VERSIONS["v2r5558960"] and LEVELS["strong"] == VERSIONS["v2skx"]
     assert {f"level-{k}": v for k, v in LEVELS.items()} == {k: v for k, v in VERSIONS.items() if k.startswith("level-")}
     assert LEVELS["original"] == "mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default"
     session = Session()
@@ -379,7 +380,7 @@ def test_the_strongest_level_is_strongs_bot_with_more_iterations_and_listed_afte
     from svsim.ui.session import LEVELS
     assert LEVELS["max"] == VERSIONS["level-max"] == "mcts:1043+plan+learned+phased"
     assert list(LEVELS).index("max") == list(LEVELS).index("strong") + 1
-    assert LEVELS["strong"] == "mcts:200+plan+learned+phased" and LEVELS["fast"] == "greedy+plan+learned"
+    assert LEVELS["strong"] == "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost" and LEVELS["fast"] == "greedy+plan+learned"
     assert _search(make_agent("level-max", 0)).iterations == 1043
     page = (Path(__file__).resolve().parents[1] / "web" / "index.html").read_text(encoding="utf-8")
     assert page.index('data-value="strong">强<') < page.index('data-value="max">最强<') < page.index('data-value="original"')

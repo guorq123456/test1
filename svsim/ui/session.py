@@ -41,7 +41,9 @@ DECKS = {"rhino": ("破魔虫精灵", decks.RHINO_FOREST), "ramp": ("跳费龙",
 # gated at the strong level only), normal plays v2r on Version 15's frozen models (arena.VERSIONS["v2r5558960"]):
 # the same bot as before and its CR still good, until the hand models pass a gate at 115 iterations.
 LEVELS = {"fast": "greedy+plan+learned", "normal": "mcts:115+plan+learned+phased=ref-5558960+reuse+mull=default",
-          "strong": "mcts:200+plan+learned+phased",
+          # strong + the lethal-clock evaluator (pkg-kc-ramp-ramp: cand-kc's Ramp-mirror turn-end model, the
+          # other pairings as installed) + discard pruning (+xprune=3:3:cost); the stacked gate J81
+          "strong": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost",
           # 最强 (Salem, 2026-10-10 01:45Z): strong's bot with the iterations raised to 1043 and nothing else, the
           # split measurement's arm (analysis line 552156e): 56.5% (53.5-59.5) over strong in the original Ramp
           # mirror, about +62 CR, 300 pairs; about 4.4x strong's time per turn before the 2026-10-10 speed-up

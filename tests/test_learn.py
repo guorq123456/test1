@@ -777,7 +777,7 @@ def test_c2_is_installed_in_the_three_pairings_that_passed_and_nothing_else_move
         hit = next(k for k in matchup_keys(state, 0, ALIASES) if k + ("ended",) in models)
         assert hit == key and models[hit + ("ended",)].extras == extras
     assert LEVELS["normal"] == VERSIONS["v2r5558960"] == "mcts:115+plan+learned+phased=ref-5558960+reuse+mull=default"
-    assert LEVELS["strong"] == VERSIONS["v2s"] == "mcts:200+plan+learned+phased"
+    assert LEVELS["strong"] == VERSIONS["v2skx"] == "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost"
     before = {n: d for n, d in pins.items() if not n.startswith(("ramp-t-ramp-t", "elf-t-elf-t", "elf-t-nemesis-t"))}
     ref = folder_of("ref-5558960")                 # normal's models: the installed set before C2, file for file
     assert {f.name for f in ref.glob("*.json")} == set(before) | {f"{p}-{m}.json" for p in ("elf-t-elf-t",

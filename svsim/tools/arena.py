@@ -90,6 +90,9 @@ VERSIONS = {
     # the gain of v1 without the reply (the refitted turn-end model, learn.phased), at equal time:
     "v2": "mcts:100+plan+learned+phased",      # vs mcts:100+plan+learned: 56.8% +- 3.5% over 600 games
     "v2s": "mcts:200+plan+learned+phased",     # vs mcts:200+plan+learned: 59.7% +- 3.5% over 600 games
+    # v2s with cand-kc's Ramp-mirror turn-end model (package pkg-kc-ramp-ramp) and discard pruning
+    # (search.xprune): 53.0% over v2s in the stacked gate (analysis/stack)
+    "v2skx": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost",
     # v2 with the search's subtree kept between the moves of a turn (+reuse), at v2's time per move (115
     # iterations): vs v2 53.3% +- 2.8% over a fixed 600 games (after the sequential test's H1 at 150);
     # the same at strong (mcts:230+reuse vs v2s) is even (49.2% +- 2.2%), so there is no v2sr

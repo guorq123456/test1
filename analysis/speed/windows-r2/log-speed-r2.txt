@@ -1,0 +1,178 @@
+﻿python / _INLINE (new): 3.12.10 True
+r2 check start 2026-10-09T22:26:22; old C:\claude\test1-speed-new (c5413b3), new C:\claude\test1-speed-r2 (b215e3d)
+=== cmp_roots_old (C:\claude\test1-speed-new) ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+116 755a0bba6cfb1119729e19b4af0484d6a583854d678b1697cd91fb39f63596a6
+cmp_roots_old done in 0.3 min; exit 0
+=== cmp_roots_new (C:\claude\test1-speed-r2) ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+116 755a0bba6cfb1119729e19b4af0484d6a583854d678b1697cd91fb39f63596a6
+cmp_roots_new done in 0.3 min; exit 0
+=== golden_hash_old (C:\claude\test1-speed-new) ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+ramp|ramp|101 60 a7931afcd4a73429fe64635130c6c4fa18ede47c35667c7343458d4b069742e9
+ramp-t|ramp-t|102 50 a36de586a1707d1a854d6866213d30cc51458c1618787f32b39a38be5d5e40b8
+elf-t|elf-t|103 50 57ff48df94e64a69b36878c091623b5060c5d514566e861e739e6be3a47b4800
+elf-t|ramp-t|104 50 81cd3e3bae72d0c5c4d3ac8366351515720104b1b6dd9976710785ac6086f8c5
+nemesis-t|pirate-t|105 40 c95bc23d4d17a38ca068ea2299cf7674ca0e851755dbb34d93bae72494f7785a
+golden_hash_old done in 0.1 min; exit 0
+=== golden_hash_new (C:\claude\test1-speed-r2) ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+ramp|ramp|101 60 a7931afcd4a73429fe64635130c6c4fa18ede47c35667c7343458d4b069742e9
+ramp-t|ramp-t|102 50 a36de586a1707d1a854d6866213d30cc51458c1618787f32b39a38be5d5e40b8
+elf-t|elf-t|103 50 57ff48df94e64a69b36878c091623b5060c5d514566e861e739e6be3a47b4800
+elf-t|ramp-t|104 50 81cd3e3bae72d0c5c4d3ac8366351515720104b1b6dd9976710785ac6086f8c5
+nemesis-t|pirate-t|105 40 c95bc23d4d17a38ca068ea2299cf7674ca0e851755dbb34d93bae72494f7785a
+golden_hash_new done in 0.1 min; exit 0
+=== cmp_roots_new_cow (C:\claude\test1-speed-r2) ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+116 755a0bba6cfb1119729e19b4af0484d6a583854d678b1697cd91fb39f63596a6
+cmp_roots_new_cow done in 0.4 min; exit 0
+=== golden_hash_new_cow (C:\claude\test1-speed-r2) ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+ramp|ramp|101 60 a7931afcd4a73429fe64635130c6c4fa18ede47c35667c7343458d4b069742e9
+ramp-t|ramp-t|102 50 a36de586a1707d1a854d6866213d30cc51458c1618787f32b39a38be5d5e40b8
+elf-t|elf-t|103 50 57ff48df94e64a69b36878c091623b5060c5d514566e861e739e6be3a47b4800
+elf-t|ramp-t|104 50 81cd3e3bae72d0c5c4d3ac8366351515720104b1b6dd9976710785ac6086f8c5
+nemesis-t|pirate-t|105 40 c95bc23d4d17a38ca068ea2299cf7674ca0e851755dbb34d93bae72494f7785a
+golden_hash_new_cow done in 0.2 min; exit 0
+=== tests_lethal_enums_cow (C:\claude\test1-speed-r2) ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+...........                                                              [100%]
+11 passed in 98.04s (0:01:38)
+tests_lethal_enums_cow done in 1.6 min; exit 0
+=== tests_full (C:\claude\test1-speed-r2) ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+...................................ss................................... [  6%]
+........................................................................ [ 12%]
+........................................................................ [ 19%]
+........................................................................ [ 25%]
+........................................................................ [ 31%]
+........................................................................ [ 38%]
+........................................................................ [ 44%]
+........................................................................ [ 50%]
+........................................................................ [ 57%]
+........................................................................ [ 63%]
+............FFFF...........s....s....................................... [ 70%]
+........................................................................ [ 76%]
+..s..................................................................... [ 82%]
+........................................................................ [ 89%]
+........................................................................ [ 95%]
+..................................................                       [100%]
+================================== FAILURES ===================================
+________ test_the_search_plays_and_counts_as_frozen[ramp-ramp-101-60] _________
+
+deck = 'ramp', opponent = 'ramp', seed = 101, limit = 60
+
+    @pytest.mark.parametrize("deck,opponent,seed,limit", GAMES)
+    def test_the_search_plays_and_counts_as_frozen(deck, opponent, seed, limit):
+        want = json.loads(GOLDEN.read_text())[f"{deck}|{opponent}|{seed}"]
+        got = play(deck, opponent, seed, limit)
+        for i, (g, w) in enumerate(zip(got, want)):
+>           assert g == w, f"decision {i} of {deck} vs {opponent} (seed {seed}) differs"
+E           AssertionError: decision 6 of ramp vs ramp (seed 101) differs
+E           assert {'seat': 0, '..., 14, '0.5']]} == {'seat': 0, '..., 14, '0.5']]}
+E             
+E             Omitting 3 identical items, use -vv to show
+E             Differing items:
+E             {'children': [["('P', ('H', True, 10543310, 2), (), ())", 16, '0.5201229937250504'], ["('T',)", 14, '0.5']]} != {'children': [["('P', ('H', True, 10543310, 2), (), ())", 16, '0.5201229937250506'], ["('T',)", 14, '0.5']]}
+E             Use -v to get more diff
+
+tests\test_golden_search.py:15: AssertionError
+______ test_the_search_plays_and_counts_as_frozen[ramp-t-ramp-t-102-50] _______
+
+deck = 'ramp-t', opponent = 'ramp-t', seed = 102, limit = 50
+
+    @pytest.mark.parametrize("deck,opponent,seed,limit", GAMES)
+    def test_the_search_plays_and_counts_as_frozen(deck, opponent, seed, limit):
+        want = json.loads(GOLDEN.read_text())[f"{deck}|{opponent}|{seed}"]
+        got = play(deck, opponent, seed, limit)
+        for i, (g, w) in enumerate(zip(got, want)):
+>           assert g == w, f"decision {i} of {deck} vs {opponent} (seed {seed}) differs"
+E           AssertionError: decision 6 of ramp-t vs ramp-t (seed 102) differs
+E           assert {'seat': 0, '...", 9, '0.5']]} == {'seat': 0, '...", 9, '0.5']]}
+E             
+E             Omitting 3 identical items, use -vv to show
+E             Differing items:
+E             {'children': [["('P', ('H', True, 10543310, 2), (), ())", 13, '0.5422174837455195'], ["('P', ('H', True, 10741110, 2), (), ())", 8, '0.47507809849896104'], ["('T',)", 9, '0.5']]} != {'children': [["('P', ('H', True, 10543310, 2), (), ())", 13, '0.5422174837455194'], ["('P', ('H', True, 10741110, 2), (), ())", 8, '0.47507809849896104'], ["('T',)", 9, '0.5']]}
+E             Use -v to get more diff
+
+tests\test_golden_search.py:15: AssertionError
+_______ test_the_search_plays_and_counts_as_frozen[elf-t-elf-t-103-50] ________
+
+deck = 'elf-t', opponent = 'elf-t', seed = 103, limit = 50
+
+    @pytest.mark.parametrize("deck,opponent,seed,limit", GAMES)
+    def test_the_search_plays_and_counts_as_frozen(deck, opponent, seed, limit):
+        want = json.loads(GOLDEN.read_text())[f"{deck}|{opponent}|{seed}"]
+        got = play(deck, opponent, seed, limit)
+        for i, (g, w) in enumerate(zip(got, want)):
+>           assert g == w, f"decision {i} of {deck} vs {opponent} (seed {seed}) differs"
+E           AssertionError: decision 4 of elf-t vs elf-t (seed 103) differs
+E           assert {'seat': 0, '...", 5, '0.5']]} == {'seat': 0, '...", 5, '0.5']]}
+E             
+E             Omitting 3 identical items, use -vv to show
+E             Differing items:
+E             {'children': [["('B',)", 8, '0.5956579858940815'], ["('P', ('H', True, 10503210, 1), (), ())", 8, '0.58313761072133'], ["('P', ('H', True, 10911110, 1), (), ())", 9, '0.5956579858940816'], ["('T',)", 5, '0.5']]} != {'children': [["('B',)", 8, '0.5956579858940815'], ["('P', ('H', True, 10503210, 1), (), ())", 8, '0.5831376107213299'], ["('P', ('H', True, 10911110, 1), (), ())", 9, '0.5956579858940816'], ["('T',)", 5, '0.5']]}
+E             Use -v to get more diff
+
+tests\test_golden_search.py:15: AssertionError
+_______ test_the_search_plays_and_counts_as_frozen[elf-t-ramp-t-104-50] _______
+
+deck = 'elf-t', opponent = 'ramp-t', seed = 104, limit = 50
+
+    @pytest.mark.parametrize("deck,opponent,seed,limit", GAMES)
+    def test_the_search_plays_and_counts_as_frozen(deck, opponent, seed, limit):
+        want = json.loads(GOLDEN.read_text())[f"{deck}|{opponent}|{seed}"]
+        got = play(deck, opponent, seed, limit)
+        for i, (g, w) in enumerate(zip(got, want)):
+>           assert g == w, f"decision {i} of {deck} vs {opponent} (seed {seed}) differs"
+E           AssertionError: decision 8 of elf-t vs ramp-t (seed 104) differs
+E           assert {'seat': 0, '...", 5, '0.5']]} == {'seat': 0, '...", 5, '0.5']]}
+E             
+E             Omitting 3 identical items, use -vv to show
+E             Differing items:
+E             {'children': [["('P', ('H', True, 10403120, 2), (), ())", 5, '0.4989408232495514'], ["('P', ('H', True, 10712110, 2), ...324'], ["('P', ('H', True, 10811130, 1), (('H', True, 10914110, 3),), ())", 5, '0.50632793695'], ["('T',)", 5, '0.5']]} != {'children': [["('P', ('H', True, 10403120, 2), (), ())", 5, '0.4989408232495513'], ["('P', ('H', True, 10712110, 2), ..., ["('P', ('H', True, 10811130, 1), (('H', True, 10914110, 3),), ())", 5, '0.5063279369499999'], ["('T',)", 5, '0.5']]}
+E             Use -v to get more diff
+
+tests\test_golden_search.py:15: AssertionError
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_card_data.py:26: official card data not fetched
+SKIPPED [1] tests\test_card_data.py:36: official card data not fetched
+SKIPPED [1] tests\test_handvalue.py:277: waits for the trained student and the analysis line's data for the top-ten #3 position (discrimination experiment, 1791317238047 step 53): 留口人魔 +0.69, 留班德 +0.41, 留 Sloth +0.53, 留 Promoter +0.31 positive; 《世界》的呈现 -0.50 negative
+SKIPPED [1] tests\test_host.py:17: needs Linux affinity and two CPUs
+SKIPPED [1] tests\test_official_loader.py:23: official card data not fetched
+4 failed, 1121 passed, 5 skipped in 237.63s (0:03:57)
+tests_full done in 4 min; exit 1
+tests_full exit 1 (recorded, continuing)
+=== bench_old_1 (C:\claude\test1-speed-new) ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+{"positions": 28, "iterations_per_second": 2277.8, "ms_per_decision": 132.7, "rounds": [[2289.9, 132.7], [2277.8, 130.7], [2266.0, 134.5]]}
+bench_old_1 done in 0.5 min; exit 0
+=== bench_new_1 (C:\claude\test1-speed-r2) ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+{"positions": 28, "iterations_per_second": 2423.3, "ms_per_decision": 111.4, "rounds": [[2395.2, 111.4], [2423.3, 114.4], [2441.3, 111.0]]}
+bench_new_1 done in 0.4 min; exit 0
+=== bench_old_2 (C:\claude\test1-speed-new) ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+{"positions": 28, "iterations_per_second": 2285.6, "ms_per_decision": 132.9, "rounds": [[2290.5, 132.9], [2285.6, 129.7], [2280.0, 133.4]]}
+bench_old_2 done in 0.5 min; exit 0
+=== bench_new_2 (C:\claude\test1-speed-r2) ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+{"positions": 28, "iterations_per_second": 2446.2, "ms_per_decision": 110.4, "rounds": [[2430.0, 110.3], [2462.2, 113.3], [2446.2, 110.4]]}
+bench_new_2 done in 0.4 min; exit 0
+=== bench_old_3 (C:\claude\test1-speed-new) ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+{"positions": 28, "iterations_per_second": 2266.4, "ms_per_decision": 134.1, "rounds": [[2266.4, 134.5], [2266.1, 131.0], [2295.1, 134.1]]}
+bench_old_3 done in 0.5 min; exit 0
+=== bench_new_3 (C:\claude\test1-speed-r2) ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+{"positions": 28, "iterations_per_second": 2547.6, "ms_per_decision": 107.1, "rounds": [[2547.6, 107.1], [2530.3, 110.7], [2574.8, 107.0]]}
+bench_new_3 done in 0.4 min; exit 0
+=== turn_cost_new (C:\claude\test1-speed-r2) ===
+host: priority below normal, mask 0xffffe, 19 CPUs
+条件：对手卡表已知（牌序、手牌未知）。整回合耗时（单进程，种子 7，第 1 步前 60 个训练开头）
+- `level-max`：每回合 281482 ms（中位 981）；换了打法的回合 0/60
+- `level-strong`：每回合 380 ms（中位 212）；A ÷ 它 = 740.108
+turn_cost_new done in 282 min; exit 0
+r2 check end 2026-10-10T03:18:10

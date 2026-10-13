@@ -1,0 +1,9 @@
+﻿host: priority below normal, mask 0xffffe, 19 CPUs
+{"strong_spec": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost", "max_spec": "mcts:1043+plan+learned+phased", "ramp_ramp_ended_read_by": {"strong": "pkg-kc-ramp-ramp", "max": "installed"}}
+{"pairing": "ramp / ramp", "seed": 69900001, "seat": 0, "points": 1.0, "winner": 0, "actions": 45, "cut": 1349, "strong": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost"}
+{"pairing": "ramp / ramp", "seed": 69900001, "seat": 1, "points": 0.0, "winner": 0, "actions": 45, "cut": 1395, "strong": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost"}
+{"pairing": "ramp / ramp", "seed": 69900002, "seat": 0, "points": 1.0, "winner": 0, "actions": 59, "cut": 3307, "strong": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost"}
+{"pairing": "ramp / ramp", "seed": 69900002, "seat": 1, "points": 0.0, "winner": 0, "actions": 59, "cut": 3252, "strong": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost"}
+{"pairing": "nemesis-t / pirate-t", "seed": 69900003, "seat": 0, "points": 1.0, "winner": 0, "actions": 77, "cut": 64, "strong": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost"}
+{"pairing": "nemesis-t / pirate-t", "seed": 69900003, "seat": 1, "points": 0.0, "winner": 0, "actions": 108, "cut": 302, "strong": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost"}
+OK

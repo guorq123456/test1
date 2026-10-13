@@ -1,0 +1,11 @@
+﻿{
+ "strong": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost",
+ "max": "mcts:1043+plan+learned+phased",
+ "levels_sha256": "c0125dc5a06aaf7fa3f885ed6708c43df4e2f6a338c839834de00805376d9ea9",
+ "state": "installed",
+ "package": {
+  "folder": "svsim\\learn\\phased_models\\pkg-kc-ramp-ramp",
+  "digest": "1e7bc6f82c2515a2d06dfb4803e25997c3324374e4c9ba312d0dc3bf23bc5675",
+  "ok": true
+ }
+}
