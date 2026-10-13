@@ -53,7 +53,11 @@ on by default, "+noalias" off, "+alias" kept as a no-op); "+timing" adds what ho
 player usually plays it (svsim.learn.timing, from their games); "+priced"
 prices resources by what they buy (search.prices: the own followers at what
 survives the opponent's turn, "+survive" alone; unused evolution points at the
-damage they add to the next turn, "+points" alone). Combined: mcts:200+plan+macro+threat. Each pairing plays both seats and, for --decks starter or
+damage they add to the next turn, "+points" alone); "+xprune" (or "+xprune=M:H:ORDER") keeps the search's
+discard choices ("select a card in your hand and discard it") to the M most discardable hand cards (2; M + K - 1
+for a choice of K) by a cross-turn judgment over H turns (3) of the play-point curve, ORDER when / cost / value
+(search.xprune), off by
+default. Combined: mcts:200+plan+macro+threat. Each pairing plays both seats and, for --decks starter or
 rhino, both decks equally often. --decks rhino is Rhinoceroach Forest
 (Unlimited) against Ramp Dragon. Prints win rates with a 95% margin, the
 average thinking time per decision and the lethals each agent found.
@@ -130,6 +134,21 @@ def _prior_options(options) -> dict:
     return {"prior": MatchupPrior(), **({"c_prior": float(rest)} if rest else {})}
 
 
+# +complex's calibration (analysis/puzzles3/README.md): K so a turn's compute matches level-strong's (whole turns on
+# 300 step-1 starts 1.023, 20 gate pairs 0.993), BETA the share of the turn's first width its later decisions keep.
+COMPLEX_K, COMPLEX_BETA = 21.4, 0.4
+
+
+def _par_options(name: str, options) -> dict:
+    """+par=K: the search runs K root-parallel trees in a resident process pool, each built from the same spec
+    without +par (search.parallel)."""
+    par = [o for o in options if o.startswith("par=")]
+    if not par:
+        return {}
+    k = int(par[0][len("par="):])
+    return {"parallel": k, "par_spec": "+".join([name] + [o for o in options if not o.startswith("par=")])}
+
+
 def _alloc_option(options) -> tuple | None:
     """+alloc=legal:K[:LO:HI]: each decision searches clip(round(K x legal moves), LO, HI) iterations (LO 50, HI
     800) instead of the spec's fixed count, the same compute on average once K is set by tools.search_cost.
@@ -137,17 +156,22 @@ def _alloc_option(options) -> tuple | None:
     what's left for the turn's later decisions (search.mcts ISMCTS._bank_budget); N set by search_cost --games.
     +alloc=self:C[:W:LO:HI]: C x N x legal moves / this game's mean so far (search.mcts ISMCTS._self_budget)."""
     chosen = [o[len("alloc="):] for o in options if o.startswith("alloc=")]
+    if not chosen and "complex" in options:        # +complex: alloc=complex at its calibration (analysis/puzzles3)
+        return ("complex", COMPLEX_K, COMPLEX_BETA, 50, 1500)
     if not chosen:
         return None
     kind, *args = chosen[0].split(":")
     if kind == "self" and len(args) in (1, 4):     # +alloc=self:C[:W:LO:HI] (W 10, LO 50, HI 800)
         w, lo, hi = (float(args[1]), int(args[2]), int(args[3])) if len(args) == 4 else (10.0, 50, 800)
         return ("self", float(args[0]), w, lo, hi)
+    if kind == "complex" and len(args) in (2, 4):  # +alloc=complex:K:BETA[:LO:HI] (LO 50, HI 1500)
+        lo, hi = (int(args[2]), int(args[3])) if len(args) == 4 else (50, 1500)
+        return ("complex", float(args[0]), float(args[1]), lo, hi)
     if kind == "bank" and len(args) in (0, 3):     # +alloc=bank[:CHUNK:STOP:CAP] (50, 0.8, 400; at most 800)
         chunk, stop, cap = (int(args[0]), float(args[1]), int(args[2])) if args else (50, 0.8, 400)
         return ("bank", chunk, stop, cap, 800)
     if kind != "legal" or len(args) not in (1, 3):
-        raise ValueError(f"alloc=legal:K[:LO:HI], alloc=self:C[:W:LO:HI] or alloc=bank[:CHUNK:STOP:CAP], "
+        raise ValueError(f"alloc=legal:K[:LO:HI], alloc=self:C[:W:LO:HI], alloc=complex:K:BETA[:LO:HI] or alloc=bank[:CHUNK:STOP:CAP], "
                          f"not {chosen[0]!r}")
     lo, hi = (int(args[1]), int(args[2])) if len(args) == 3 else (50, 800)
     return ("legal", float(args[0]), lo, hi)
@@ -182,7 +206,7 @@ def _make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet="))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "lethal3", "plannerfix", "eot", "discard", "adaptive", "abs", "abs0", "complex", "xprune"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet=", "par=", "xprune="))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -260,6 +284,11 @@ def _make_agent(spec: str, seed: int):
         if "enhance" in options:                   # an Enhance card waits for its Enhance (search.moves.wasted_enhance)
             from svsim.search.moves import wasted_enhance
             vetoes.append(wasted_enhance)
+        xprune = [o for o in options if o == "xprune" or o.startswith("xprune=")]
+        if xprune:                                 # discard choices kept to the most discardable cards (search.xprune)
+            from svsim.search.xprune import XPrune
+            parts = xprune[0][len("xprune="):].split(":") if "=" in xprune[0] else []
+            vetoes.append(XPrune(*[int(x) if i < 2 else x for i, x in enumerate(parts)]))   # M:H:ORDER
         veto = (lambda s, a: any(v(s, a) for v in vetoes)) if vetoes else None
         agent = MCTSAgent(int(arg or 400), seed=seed, reply=name == "mcts-reply", weights=weights,
                           backup="mean" if "mean" in options else "max",
@@ -268,6 +297,9 @@ def _make_agent(spec: str, seed: int):
                           average=next((int(o[3:]) for o in options if o.startswith("avg")), 1),
                           reuse="reuse" in options, alloc=_alloc_option(options), infer=_infer_option(options),
                           oracle="oracle" in options,          # an experiment only: sees the opponent's hand
+                          **({"center": False, "normalize": True} if "abs" in options else {}),   # +abs
+                          **({"center": False} if "abs0" in options else {}),   # +abs0: absolute values only
+                          **_par_options(spec, options),       # +par=K: K root-parallel trees (search.parallel)
                           **_prior_options(options))
         cross = [o for o in options if o.startswith("cross")]
         if cross:                                  # keep a card / PP / evolution for later (agents.crossturn_agent)
@@ -320,7 +352,22 @@ def _make_agent(spec: str, seed: int):
         screen = [[int(x) for x in o[len("screen="):].split(":")] for o in options if o.startswith("screen=")]
         if screen and len(screen[0]) not in (1, 3):
             raise ValueError("screen=N or screen=N:N2:K")
-        agent = LethalAgent(agent, seed=seed, planner=planner, **({"screen": screen[0][0]} if screen else {}),
+        # +tick: the planner models allied countdown amulets that hit the enemy leader (search.combo tickers);
+        # +lethal2 (the architecture thread 2026-10-10 04:57Z; analysis/speed/LETHAL.md): +tick, and a deeper screen:
+        # near-lethal 2000 nodes within 4, 3000 nodes unscreened (not in any level: a gate first)
+        # +lethal3 (the architecture thread 2026-10-10 06:27Z): the lethal package, +lethal2 with +plannerfix and +eot
+        lethal3 = "lethal3" in options
+        lethal2 = "lethal2" in options or lethal3
+        if lethal2 and screen:
+            raise ValueError("+lethal2 / +lethal3 set the screen themselves")
+        # +plannerfix: the plain planner's two fixes (cards at the play points there, face-first realize)
+        agent = LethalAgent(agent, seed=seed, planner=planner, tickers="tick" in options or lethal2,
+                            plannerfix="plannerfix" in options or lethal3,
+                            eot="eot" in options or lethal3,            # +eot: the planner counts end-of-turn damage
+                            discard="discard" in options,               # +discard: plays that discard pick the card
+                            adaptive="adaptive" in options,             # +adaptive: plan-level check, re-realized
+                            **({"max_nodes": 3000, "near": (2000, 4)} if lethal2 else {}),
+                            **({"screen": screen[0][0]} if screen else {}),
                             **({"near": tuple(screen[0][1:]) if len(screen[0]) == 3 else None} if screen else {}),
                                                             macro="macro" in options,
                                                             burst="burst" in options or "burst2" in options,

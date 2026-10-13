@@ -148,12 +148,12 @@ def test_features_of_a_determinized_turn_end_ignore_the_opponent_s_sampled_hand(
         e = after_end_of_turn(s)
         if e.over:
             continue
-        base = features_of(e, p, 2, ("tempo", "hand", "board", "hpphase", "clock"))
+        base = features_of(e, p, 2, ("tempo", "hand", "board", "hpphase", "clock", "kclock"))
         for k in range(2):
             d = determinize(e, p, random.Random(k))
             if [c.defn.card_id for c in d.players[1 - p].hand] != [c.defn.card_id for c in e.players[1 - p].hand]:
                 changed += 1
-                assert features_of(d, p, 2, ("tempo", "hand", "board", "hpphase", "clock")) == base
+                assert features_of(d, p, 2, ("tempo", "hand", "board", "hpphase", "clock", "kclock")) == base
     assert changed > 10
 
 

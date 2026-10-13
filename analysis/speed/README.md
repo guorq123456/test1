@@ -131,3 +131,261 @@ round about 148 − 200/2017×1000 ≈ 49 ms, now about 121 − 91 ≈ 30 ms.
 **What's left** (the search's profile): legal actions about 3.9 s of 17 (play_form, target sets, signatures), the
 features about 2.7, engine resolution about 2.0, action keys about 1.0, sorting by rank about 0.8, card copies 0.8
 (hand and field now), the two shuffles 0.65. Each is a few percent.
+
+## Running the checks on another machine (Windows included)
+
+From the repository root, with `D` the folder holding step 1's data (RC 6f11111's analysis/turn-level/step1, with
+the analysis line's student_data.py and teacher_ends.py in `D\ana`):
+
+```
+python tests\test_lethal_same.py D                  (or: set SVSIM_STEP1_DIR=D, then python -m pytest tests\test_lethal_same.py)
+python -m pytest tests\test_golden_search.py tests\test_cow.py
+python analysis\speed\cmp_roots.py D                 (prints the 116 starts' hash: compare old and new code on the same machine)
+set SVSIM_COW_CHECK=1                                 (check mode, read when svsim.core.state is imported; then rerun the lines above)
+```
+
+The golden record holds root values bit for bit, which depend on the Python version (3.12's compensated float
+`sum`) and on the C math library (`math.exp` / `math.log` are not correctly rounded alike everywhere): it was frozen
+on Linux under 3.11. On another machine compare old against new there (cmp_roots, or the golden games' own hash),
+not against this record.
+
+## Round 3 (the architecture thread 10:38Z): small exact changes
+
+Same rules as rounds 1 and 2: golden record identical, cmp_roots hash equal, no float `sum()` swapped, no gate.
+Condition: 对手卡表已知（牌序、手牌未知）.
+
+**Where an iteration's time goes now** (real time, no profiler; level-strong's search on 28 step-1 starts, 552 µs per
+iteration with the timers on):
+
+| part | µs per iteration | share |
+|---|---|---|
+| legal actions | 137.5 | 24.9% |
+| evaluation (ENDED model, features about 80 µs) | 120.3 | 21.8% |
+| applying moves | 81.9 | 14.8% |
+| determinize | 50.9 | 9.2% |
+| action keys | 34.4 | 6.2% |
+
+The big parts were already cut in rounds 1 and 2; what is left is spread thin. Three exact changes:
+
+1. **Role sums by multiset** (`learn.features._roles_sum`). Every role value is a multiple of 1/8, by
+   construction in learn.roles: face, heal, draw and body are whole numbers, ramp counts halves, and removal counts
+   eighths (FOE_LIFE = 8).
+   - Adding such numbers is exact in any order. So the sum doesn't depend on the cards' order, and it is kept by
+     the sorted card ids. A reshuffled deck, or the opponent's unseen pool in any determinization, sums the same.
+   - Each card's values are checked once (`_in_eighths`). A set with a card that isn't in eighths is summed in its
+     own order as before, and not kept.
+   - `recurring_sum` is kept by its cards' (id, evolved) in order: the same additions in the same order.
+2. **Hand signatures once per call** (`engine._play_actions`): `_distinct` takes them instead of recomputing the
+   whole hand's for every hand-card target spec. Legal actions went from 56.9 to 46.7 µs on 690 states sampled from
+   the search.
+3. **`action_key` without closures**: the two nested functions it built on every call are now one module function
+   (`_loc`), with the same keys.
+
+Tried and dropped: numbering the signatures with small ints for `_distinct` (no measurable gain).
+
+**Result** (bench.py, 30 starts, old = 3e9a331 in a worktree, alternating):
+
+| | old | new |
+|---|---|---|
+| iterations per second | 1951 / 2057 / 2010 (median 2010) | 1991 / 2146 / 2137 (median 2137) |
+| ms per decision, whole agent | 139.5 / 133.5 / 134.7 (median 134.7) | 134.5 / 129.3 / 133.5 (median 133.5) |
+
+That is +6% iterations per second (medians). Per decision the gain is within the noise, since the lethal search and
+the rest outside the search didn't change.
+
+**Checks:**
+- tests/test_golden_search.py identical;
+- cmp_roots 142cc567…2b9adf;
+- test_lethal_same green;
+- the full suite with the step-1 data: 1161 passed, 1 skipped.
+  - It turned up a stale expectation, not a change of play: test_lethal3's Ramp misses replay now finds
+    g127 too, since the fixed realize (9c1bb01); the old code fails the same way.
+  - The test skips without $SVSIM_STEP1_DIR, so it went unseen. FOUND is updated.
+
+## Round 4 (the architecture thread 13:53Z; J64)
+
+Same rules: golden record identical, cmp_roots hash equal, no float `sum()` swapped for a loop, no gate. Also
+required this time: cand-kc's and cand-nl's logits bit-identical (or within 1e-12), and the same play on the puzzle
+bank, seeds 1–8. Condition: 对手卡表已知（牌序、手牌未知）.
+
+**Changes** (all exact):
+1. **`side_features`.** The whole-number counts (defense, Ward, Bane, Drain attack, Barrier, hidden keywords,
+   amulets and their cost) are added in one pass over the followers and the field, instead of eight generator
+   sums. They are integers, so the order doesn't matter. The one float sum (attack, × 0.3 if it can't attack) stays a
+   `sum()`.
+   - `features` computes each side's `_board_threat` once and passes it on. It used to be computed twice per side,
+     in side_features and in resources.
+2. **`model.logit` without a hidden layer** sums `c × ((v − m) / s)` in one generator: the same products in the same
+   order, without the intermediate list.
+3. **`engine.play_form`.**
+   - It takes prop's fast path inline (no grants and not silenced: the card's own script).
+   - It skips the generator for a card with no Enhance.
+4. **`mcts._rank`.** It checks Combo < 2 before looking the card up in the hand: the same rank.
+5. **The UCB loop in `_iterate`.**
+   - Locals for math.log / sqrt and the exploration constant.
+   - `estimate` inline: the node's value for max backup, total / visits for mean.
+   - The normalize test once per node instead of once per child. The same float operations in the same order.
+
+**Result** (bench.py, the same 28 step-1 starts; old = afc85df in a worktree; three alternating rounds):
+
+| | old | new |
+|---|---|---|
+| iterations per second | 2113.8 / 2058.5 / 2130.7 (median 2113.8) | 2292.9 / 2160.5 / 2300.3 (median 2292.9) |
+| ms per decision, whole agent | 130.7 / 136.6 / 134.7 | 120.8 / 129.7 / 121.0 |
+
+**+8.5% iterations per second (medians): J64 right.**
+
+**Each model's rate** (nl_speed.py, ISMCTS.choose; old and new runs interleaved, two runs of two rounds each,
+median of four):
+
+| | old | new |
+|---|---|---|
+| installed | 1932 | 2239 |
+| cand-kc | 2024 | 2118 (+4.6%) |
+| cand-nl | 1706 | 1828 (+7.2%) |
+
+The installed model's old rounds include one low outlier (1733), so bench.py's alternating read above is the J64
+measure. data/r4/.
+
+**Checks:**
+- Golden identical.
+- **cmp_roots 142cc567…2b9adf (unchanged).**
+  - No float sum changed form: the integer counts are exact on any Python, and logit's sum is still `sum()` over
+    the same terms in the same order.
+  - So the hash Salem's Windows machine checks shouldn't change either.
+- Logits of the installed model, cand-kc and cand-nl on 718 turn ends: bit-identical, old against new
+  (`logits_dump.py`, run from each checkout).
+- Puzzle bank, seeds 1–8 (7 puzzles, 56 runs each): every end the same, old against new.
+  - Installed 0/40, cand-kc 3/40, cand-nl 4/40.
+- Full suite with the step-1 data: 1161 passed, 1 skipped.
+
+## Round 5 (the architecture thread 14:10Z): profiled, stopped
+
+The rule this round: if what is left is spread thin, with no single place over 3%, stop rather than squeeze.
+Condition: 对手卡表已知（牌序、手牌未知）.
+
+**Real time per iteration** (no profiler, timers around the parts; 28 step-1 starts; 511.5 µs per iteration with
+the timers on):
+
+| part | µs | share |
+|---|---|---|
+| legal actions | 130.5 | 25.5% |
+| evaluation | 94.4 | 18.5% |
+| applying moves | 84.2 | 16.5% |
+| determinize | 53.9 | 10.5% |
+| action keys | 23.4 | 4.6% |
+
+**Self time by function** (cProfile on bench.py, 16.2 s): only three functions are over 3%, and each is already the
+written-out form.
+- `_iterate`'s own loop: 4.5%.
+- `CardInstance.copy`: 4.1%. It is already field by field.
+- `_inline_shuffle`: 3.1%. Its draws must stay the generator's own, so it can't take fewer.
+- Everything else is under 2.6%: `_play_actions` 2.6, `play_form` 2.2, dict.get 2.1, `emit` 2.0, `action_key` 1.9,
+  sorted 1.8, `_loc` 1.7, logit's generator 1.7, `_rank` 1.6, `enqueue` 1.5, `script_for` 1.5, `side_features` 1.4.
+
+**The big parts are many small functions** (cumulative): legal actions 20.8%, moves 19.8%, logit 14.4%,
+determinize 10.8%, side_features 9.9%. No single exact change there is worth 3%, so **round 5 stops** with no code
+changed. J65 is not reached.
+
+**Two structural changes could save more, but neither is exact by construction:**
+1. **The root's moves, computed once per decision instead of once per iteration** (about 10% of the time: the
+   root's legal actions, sorting and keys). Determinize changes only hidden cards. But card scripts' target filters
+   and `all_modes` are arbitrary functions, and one reading a deck's order or the opponent's hand would make it
+   unsafe. It needs an audit of every script, or a check mode like the deck's copy on write.
+2. **Hand and field cards copied on write**, as the decks' already are (clone is 8.7%). It needs every path that
+   changes a card in hand or on the field covered. Those are many more than the deck's nine.
+
+## Round 6 (the architecture thread 14:11Z; J66): the root's moves once per decision
+
+**The change** (`search.mcts`):
+- Every iteration starts from a new determinization of the same root. A determinization changes only what the player
+  to move can't see: the opponent's hand and the decks' order.
+- The moves open at the root are computed on a decision's first iteration and kept for the decision: legal actions,
+  reserve / veto / prune, `_rank`'s order, `action_key`, the prior's order (`ISMCTS._options`).
+- In real play these can depend only on what the player to move sees. A script that read hidden information there
+  would be a leak in the simulator.
+- `ROOT_RECOMPUTE` lists card ids whose scripts do (none were found). With one of them in a hand or in play, the
+  root's moves are computed every iteration as before.
+
+**Check mode** (`SVSIM_ROOT_CHECK=1`; `root_check.py`, data/r6/root_check.*): every iteration computes the root's
+moves again and compares them with the kept ones (keys, actions, order).
+
+| part | roots compared | differences |
+|---|---|---|
+| bench: the 30 step-1 starts, level-strong | 5,572 | 0 |
+| puzzle bank, level-strong, seeds 1–8 | 55,919 | 0 |
+| self-play: every ordered pair of the 9 named decks × 2 games, plus 600 games of random legal decks from the whole pool (every craft), mcts:12 | 401,500 | 0 |
+| **total** | **462,991** | **0** |
+
+**Coverage:**
+- At the compared roots, in a hand or in play: all 253 collectible Rotation cards random_deck draws from, all 235 of
+  them with a script, and all 110 cards of the named decks.
+- 347 distinct ids in all. The implemented pool's 982 also counts tokens and Unlimited cards.
+
+**Behavior unchanged:**
+- Golden identical.
+- **cmp_roots 142cc567…2b9adf (unchanged).** No random draw and no order changed.
+- Logits of the installed model, cand-kc and cand-nl bit-identical: the evaluation wasn't touched.
+- Puzzle bank seeds 1–8: all 56 ends the same for each of the three models.
+- tests/test_root_cache.py: the same search roots with and without the cache, and check mode clean.
+- Full suite with the step-1 data: 1163 passed, 1 skipped.
+
+**Speed:**
+- bench.py, the same 28 starts, old = 6073fb4, alternating: iterations per second 2154.3 / 2125.4 / 2156.2 →
+  2536.6 / 3116.9 / 2978.9, **medians 2154 → 2979 (+38%)**. ms per decision, whole agent: 131.6 → 106.3 (medians).
+- **J66 right.**
+- nl_speed.py, interleaved, median of four:
+
+| | old | new |
+|---|---|---|
+| installed | 2142 | 3012 (+40.6%) |
+| cand-kc | 2076 | 2852 (+37.4%) |
+| cand-nl | 1712 | 2224 (+29.9%) |
+
+The root's step was much more of an iteration than the profile's share for legal actions suggested. At the root, all
+of these run on the widest position every iteration: the legal actions, `worth_trying`'s dominance checks, the sort
+and the keys.
+
+## Round 7 (the architecture thread 14:36Z; J69): moves kept below the root — stopped, not merged
+
+**Tried** (not merged; the root's cache from round 6 stays):
+- Keep the moves at my nodes below the root when the path from the root revealed nothing in this iteration. "Revealed
+  nothing" meant two things:
+  - the game's generator wasn't used (first via its state, `getstate`, 12 µs a step; then via a generator subclass
+    marked on any draw);
+  - no card went into or out of a deck or the opponent's hand (their sizes unchanged).
+- Golden and cmp_roots stayed the same, and bench.py gave about +10% (medians 3108 → 3432; pairs 1.09 / 1.10 / 1.21).
+
+**Check mode found differences** (root_check.py, the same coverage as round 6; data/r7/):
+
+| part | nodes compared | differences |
+|---|---|---|
+| bench | 9,885 | 0 |
+| puzzle bank | 119,646 | 0 |
+| self-play (named pairs + 600 random-deck games) | 499,919 | **173** |
+
+**The cause:**
+- All 20 differences recorded in full (depth 1–2) have Behemoth General on my side of the field.
+- Its Evolve compares the three highest base costs in my hand with **the opponent's hand** and, if mine are higher,
+  destroys every enemy follower.
+- That reads the opponent's hidden hand without using the generator or moving a card. So across determinizations
+  the same evolution leaves the enemy board destroyed in some and standing in others, and the moves at the next node
+  differ.
+- This is the card's rule, not a leak in the simulator: in a real game the outcome becomes visible once the
+  evolution resolves. The path condition can't see it.
+
+**Why the path condition can't be made clean cheaply:**
+- Other effects read hidden zones without the generator: portal.py's script at line 1287 goes through the
+  opponent's hand's followers.
+- Cards waiting in the opponent's hand or deck can answer my actions (scripts that listen in hand or in deck). In a
+  determinization those are guessed cards, and their effect needn't move a card or draw a random number.
+- A sound test would compare the visible position itself at each node. Making that key is about as costly as the
+  moves it saves, and leaving out one visible field would break exactness without a word.
+- Another option is a blocklist: no caching below the root when a card that reads hidden zones, or one that listens
+  in hand or in deck, is in the opponent's deck list or in play. It needs an audit of every script, and it would turn
+  the cache off in many matchups.
+
+**Per the architecture thread's rule** (stop if the path condition can't be judged cleanly), this round stops and the
+code is back to 0e038cb's. **J69 not reached.**
+- The root's cache is unaffected: the moves open at the root are computed before any step.
+- Round 6's 462,991 roots, and this round's root comparisons, showed no difference.

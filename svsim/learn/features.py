@@ -100,7 +100,7 @@ def _board_threat(state: GameState, side: int) -> int:
     return max(damage, 0)
 
 
-def _roles_sum(cards) -> list[float]:
+def _roles_sum_ordered(cards) -> list[float]:
     from svsim.learn.roles import _ROLES, card_roles
     # unrolled, the additions in the same order as a loop over the six (the same floats bit for bit)
     a0 = a1 = a2 = a3 = a4 = a5 = 0.0
@@ -119,20 +119,64 @@ def _roles_sum(cards) -> list[float]:
     return [a0, a1, a2, a3, a4, a5]
 
 
+# _roles_sum by the multiset of card ids (speed round 3). Exact: every role value is a multiple of 1/8 (learn.roles:
+# face, heal, draw and body are whole numbers, ramp counts halves, removal eighths, FOE_LIFE = 8), and adding such
+# numbers well below 2**49 is exact in any order, so the sum doesn't depend on the cards' order (a deck reshuffled
+# by determinize sums the same). _EIGHTHS checks each card's values once; a set with a card that isn't in eighths
+# is summed in its own order as before and not kept.
+_ROLE_SUMS: dict = {}
+_ROLE_SUMS_MAX = 100_000
+_EIGHTHS: dict = {}                   # card id -> whether its role values are multiples of 1/8 (and small)
+
+
+def _in_eighths(defn) -> bool:
+    hit = _EIGHTHS.get(defn.card_id)
+    if hit is None:
+        from svsim.learn.roles import card_roles
+        hit = _EIGHTHS[defn.card_id] = all(abs(v) < 2 ** 20 and (v * 8).is_integer() for v in card_roles(defn))
+    return hit
+
+
+def _roles_sum(cards) -> list[float]:
+    ids = [c.defn.card_id for c in cards]
+    ids.sort()
+    key = tuple(ids)
+    hit = _ROLE_SUMS.get(key)
+    if hit is None:
+        hit = _roles_sum_ordered(cards)
+        if all(_in_eighths(c.defn) for c in cards):
+            if len(_ROLE_SUMS) >= _ROLE_SUMS_MAX:
+                _ROLE_SUMS.clear()
+            _ROLE_SUMS[key] = tuple(hit)
+        return hit
+    return list(hit)
+
+
+_RECURRING_SUMS: dict = {}           # (card id, evolved) of the field and crests, in order -> the sums
+
+
 def recurring_sum(p) -> list[float]:
-    """What `p`'s field and crests do by themselves each round: (face, heal, clear)."""
+    """What `p`'s field and crests do by themselves each round: (face, heal, clear). Kept by the cards' ids and
+    evolved flags in order, which is all it reads (the same additions in the same order)."""
     from svsim.core.enums import CardType
-    from svsim.learn.roles import recurring
-    out = [0.0, 0.0, 0.0]
-    for c in list(p.field) + [c for c in p.leader_area if c.defn.type == CardType.CREST]:
-        for i, v in enumerate(recurring(c.defn, bool(getattr(c, "evolved", False)))):
-            out[i] += v
-    return out
+    cards = list(p.field) + [c for c in p.leader_area if c.defn.type == CardType.CREST]
+    key = tuple((c.defn.card_id, bool(getattr(c, "evolved", False))) for c in cards)
+    hit = _RECURRING_SUMS.get(key)
+    if hit is None:
+        from svsim.learn.roles import recurring
+        out = [0.0, 0.0, 0.0]
+        for cid_evolved, c in zip(key, cards):
+            for i, v in enumerate(recurring(c.defn, cid_evolved[1])):
+                out[i] += v
+        if len(_RECURRING_SUMS) >= 50_000:
+            _RECURRING_SUMS.clear()
+        hit = _RECURRING_SUMS[key] = tuple(out)
+    return list(hit)
 
 
-def resources(state: GameState, side: int, hidden: bool) -> list[float]:
+def resources(state: GameState, side: int, hidden: bool, incoming_threat: int | None = None) -> list[float]:
     """The version-2 features of `side` (see SIDE2); `hidden`: its hand is unknown to the
-    player the position is scored for."""
+    player the position is scored for. `incoming_threat`: _board_threat(state, 1 - side), when the caller has it."""
     from svsim.search.evaluate import burn, effective_hp
     p, enemy = state.players[side], state.players[1 - side]
     if hidden:
@@ -143,27 +187,52 @@ def resources(state: GameState, side: int, hidden: bool) -> list[float]:
     else:
         hand, total = _roles_sum(p.hand), _roles_sum(p.deck_view())
     rec = recurring_sum(p)
-    incoming = _board_threat(state, 1 - side) + recurring_sum(enemy)[0] + burn(p)
+    if incoming_threat is None:
+        incoming_threat = _board_threat(state, 1 - side)
+    incoming = incoming_threat + recurring_sum(enemy)[0] + burn(p)
     lasts = min(effective_hp(p) / max(incoming, 1.0), 10.0)
     return hand + total + rec + [lasts]
 
 
-def side_features(state: GameState, side: int, potential: bool, version: int = 1, hidden: bool = False) -> list[float]:
+_WARD, _BANE, _DRAIN, _BARRIER = Keyword.WARD, Keyword.BANE, Keyword.DRAIN, Keyword.BARRIER
+_UNSEEN_KW = Keyword.AMBUSH | Keyword.AURA | Keyword.INTIMIDATE
+
+
+def side_features(state: GameState, side: int, potential: bool, version: int = 1, hidden: bool = False,
+                  threats: tuple | None = None) -> list[float]:
+    """`threats`: (_board_threat(state, side), _board_threat(state, 1 - side)), when the caller has them."""
     p, enemy = state.players[side], state.players[1 - side]
     hp = effective_hp(p)                 # a crest that hurts its holder: the defense it will take
     followers = p.followers
-    k = [f.keywords for f in followers]
-    threat = _board_threat(state, side)
+    if threats is None:
+        threats = (_board_threat(state, side), _board_threat(state, 1 - side))
+    threat = threats[0]
+    # the whole-number counts in one pass (integers: the same values in any order); the float sum stays a sum()
+    life = ward = bane = drain = barrier = unseen = 0
+    for f in followers:
+        x = f.keywords
+        life += max(f.life, 0)
+        if x & _WARD:
+            ward += 1
+        if x & _BANE:
+            bane += 1
+        if x & _DRAIN:
+            drain += f.atk
+        if x & _BARRIER:
+            barrier += 1
+        if x & _UNSEEN_KW:
+            unseen += 1
+    amulets = amulet_cost = 0
+    for c in p.field:
+        if c.defn.is_amulet:
+            amulets += 1
+            amulet_cost += c.defn.cost
+    deck = p.deck_view()
     out = [hp, math.sqrt(hp), float(hp <= 5), len(followers),
            sum(f.atk * (0.3 if prop(f, "cant_attack") else 1.0) for f in followers),
-           sum(max(f.life, 0) for f in followers),
-           sum(1 for x in k if x & Keyword.WARD), sum(1 for x in k if x & Keyword.BANE),
-           sum(f.atk for f in followers if f.keywords & Keyword.DRAIN),
-           sum(1 for x in k if x & Keyword.BARRIER),
-           sum(1 for x in k if x & (Keyword.AMBUSH | Keyword.AURA | Keyword.INTIMIDATE)),
-           sum(1 for c in p.field if c.defn.is_amulet), sum(c.defn.cost for c in p.field if c.defn.is_amulet),
+           life, ward, bane, drain, barrier, unseen, amulets, amulet_cost,
            good_crests(p),
-           hand_count(p), p.ep, p.sep, p.max_pp, float(len(p.deck_view()) <= 3), float(not p.deck_view()),
+           hand_count(p), p.ep, p.sep, p.max_pp, float(len(deck) <= 3), float(not deck),
            min(threat, max(enemy.leader_hp, 0)), float(threat >= enemy.leader_hp)]
     if potential:
         from svsim.search.combo import next_turn_damage
@@ -172,7 +241,7 @@ def side_features(state: GameState, side: int, potential: bool, version: int = 1
         full = next_turn_damage(state, side, 300, board=False, pp=10)
         out += [min(dmg, hp), float(dmg >= hp), min(full, hp), float(full >= hp)]
     if version >= 2:
-        out += resources(state, side, hidden)
+        out += resources(state, side, hidden, threats[1])
     return out
 
 
@@ -323,8 +392,9 @@ def held_points(state: GameState, side: int, hidden: bool) -> list[float]:
 def features(state: GameState, player: int, potential: bool = True, version: int = 1) -> list[float]:
     """The features of `state` scored for `player` (the opponent moves next)."""
     extra = held_points(state, player, False) + held_points(state, 1 - player, True) if version >= 3 else []
-    return (side_features(state, player, potential, version) +
-            side_features(state, 1 - player, potential, version, hidden=True) + extra + [1.0])
+    mine, theirs = _board_threat(state, player), _board_threat(state, 1 - player)   # each side's, once
+    return (side_features(state, player, potential, version, threats=(mine, theirs)) +
+            side_features(state, 1 - player, potential, version, hidden=True, threats=(theirs, mine)) + extra + [1.0])
 
 
 # Feature sets added by name (the C track, 2026-10-08, as registered in the analysis thread's audit of where the
@@ -344,6 +414,8 @@ EXTRAS = {
     "hpphase": ["me_hp_early", "me_hp_mid", "op_hp_early", "op_hp_mid"],
     "hand_value": ["hand_value"],     # not me_hand_*: learn.phased.STOCK zeroes that prefix
     "clock": ["me_burst", "op_burst", "me_clock", "op_clock", "clock_lead"],
+    "kclock": ["me_kill_turns", "op_kill_turns", "kill_lead", "op_hp_x_kill_lead", "me_hp_x_kill_lead",
+               "op_hp_x_me_near", "me_hp_x_op_near"],
 }
 # - "board" (6, C3, the analysis thread's analysis/c3-threat/README.md section 4, 09f7ca2): for each side s (mine,
 #   then the opponent's; e its enemy) pressure = min(_board_threat(e) / max(s's leader HP, 1), 1.5), then s's leader
@@ -498,6 +570,68 @@ def _clock_values(state: GameState, player: int) -> list[float]:
 
 
 EXTRA_FNS["clock"] = _clock_values
+
+
+# - "kclock" (7, the lethal clock, the architecture thread 2026-10-10 10:38Z; the scored player has just ended the
+#   turn, so the opponent's turn comes first): the turns each side needs to kill the other at its next turn's damage,
+#   the difference, and crosses with the leaders' defense, so a point of face damage is worth more or less with the
+#   clock. No card ids and no card values set by hand: a card's damage is the planner's own measurement of it
+#   (search.combo.profile_at: face damage, and a Storm follower's attacks). The planner's whole search
+#   (combo.next_turn_damage) costs about 0.85 ms a turn end at 300 nodes, ten times the version-2 features, so it is
+#   not used here.
+#   - A side's damage: the attack of its followers that can attack, less the defense of the enemy's Ward followers,
+#     plus the hand's: mine, the most direct damage of a subset of my hand I can pay for next turn (a knapsack, as
+#     "clock"); the opponent's, their hand size times the mean direct damage of the cards of their unseen pool (hand
+#     and deck as one pool, never the determinized hand) they could pay for, capped at 20.
+#   - turns = the other leader's defense / max(damage, 1), at most 10; lead = the opponent's turns - mine; then each
+#     leader's defense x lead, and each leader's defense x near(the turns the other side needs to kill it), with
+#     near(t) = min(max(3 - t, 0), 2) / 2 (1 at one turn or less, 0 from three turns on).
+_FACE_AT: dict = {}
+
+
+def _face_at(defn, pp: int) -> float:
+    """The most direct damage to the enemy leader of one play of `defn` with `pp` play points (combo.profile_at)."""
+    key = (defn.card_id, pp)
+    hit = _FACE_AT.get(key)
+    if hit is None:
+        from svsim.search.combo import COMBO_STEPS, profile_at
+        hit = 0.0
+        for variants in profile_at(defn, False, pp):
+            e = variants[0]
+            storm = (e.base + e.per_combo * COMBO_STEPS[0]) * max(e.attacks, 1) if e.reach == 2 else 0
+            hit = max(hit, float(e.face + max(storm, 0)))
+        _FACE_AT[key] = hit
+    return hit
+
+
+def _near(t: float) -> float:
+    return min(max(3.0 - t, 0.0), 2.0) / 2.0
+
+
+def _board_damage(p, enemy) -> float:
+    atk = sum(f.atk for f in p.followers if not prop(f, "cant_attack"))
+    wall = sum(max(f.life, 0) for f in enemy.followers if f.keywords & Keyword.WARD)
+    return float(max(atk - wall, 0))
+
+
+def _kclock_values(state: GameState, player: int) -> list[float]:
+    me, op = state.players[player], state.players[1 - player]
+    me_hp, op_hp = float(max(effective_hp(me), 0)), float(max(effective_hp(op), 0))
+    budget = min(me.max_pp + 1, MAX_PP)
+    me_dmg = _board_damage(me, op) + _best_direct([(c.cost, _face_at(c.defn, budget)) for c in me.hand], budget)
+    op_dmg = _board_damage(op, me)
+    pool = op.hand + op.deck_view()
+    if pool and op.hand:
+        budget = min(op.max_pp + 1, MAX_PP)
+        mean = sum(_face_at(c.defn, budget) for c in pool if c.cost <= budget) / len(pool)
+        op_dmg += min(len(op.hand) * mean, 20.0)
+    me_turns = min(op_hp / max(me_dmg, 1.0), 10.0)
+    op_turns = min(me_hp / max(op_dmg, 1.0), 10.0)
+    lead = op_turns - me_turns
+    return [me_turns, op_turns, lead, op_hp * lead, me_hp * lead, op_hp * _near(me_turns), me_hp * _near(op_turns)]
+
+
+EXTRA_FNS["kclock"] = _kclock_values
 
 
 def extra_features(state: GameState, player: int, extras, hv=None) -> list[float]:

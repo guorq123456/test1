@@ -1,0 +1,106 @@
+{
+ "package": "pkg-nl-ramp-ramp",
+ "candidate": "cand-nl-ramp-ramp",
+ "replaced": [
+  "ramp-ramp-ended.json"
+ ],
+ "rule": "every other file is the installed one, byte for byte",
+ "files": {
+  "elf-t-elf-t-act.json": {
+   "from": "phased_models/elf-t-elf-t-act.json",
+   "sha256": "706cf1368b776280980902d1744e4ca385b0e1338671899fb7194051b61987f7"
+  },
+  "elf-t-elf-t-ended.json": {
+   "from": "phased_models/elf-t-elf-t-ended.json",
+   "sha256": "f0bc7e4e42dd9c81533d5284f2be8f1f28d1f747170f5b7e0d52744158af9386"
+  },
+  "elf-t-nemesis-t-act.json": {
+   "from": "phased_models/elf-t-nemesis-t-act.json",
+   "sha256": "ca6a4f2faa82ea504f194db699411af38d44b40cf4e315b15e32846de977ee86"
+  },
+  "elf-t-nemesis-t-ended.json": {
+   "from": "phased_models/elf-t-nemesis-t-ended.json",
+   "sha256": "e9a27705f12c7c521d47421e79d42243c99be039ac34b55edabcc8d95097c329"
+  },
+  "elf-t-ramp-t-act.json": {
+   "from": "phased_models/elf-t-ramp-t-act.json",
+   "sha256": "df7e7bff1452d0eccf7e4f23c92c1ed596fa65cc77eee7e5c9c4dc16d38bc64e"
+  },
+  "elf-t-ramp-t-ended.json": {
+   "from": "phased_models/elf-t-ramp-t-ended.json",
+   "sha256": "8be505d77b9c630631686f89c574c4977053daaa460779af1a797103ab567bb0"
+  },
+  "nemesis-t-elf-t-act.json": {
+   "from": "phased_models/nemesis-t-elf-t-act.json",
+   "sha256": "3ff16f2022a5839eca3731dfabbf2e507bbd46cd5fd814d384474aab7ce221b8"
+  },
+  "nemesis-t-elf-t-ended.json": {
+   "from": "phased_models/nemesis-t-elf-t-ended.json",
+   "sha256": "85a74b7ff825cacdcfcfd7379e49cd26eee29baf11f485cea829ba5436bc1b41"
+  },
+  "nemesis-t-ramp-t-act.json": {
+   "from": "phased_models/nemesis-t-ramp-t-act.json",
+   "sha256": "daafbf1b6831148faf817e16780cbfc08b4230c4670fccbe892188d044ba5ca3"
+  },
+  "nemesis-t-ramp-t-ended.json": {
+   "from": "phased_models/nemesis-t-ramp-t-ended.json",
+   "sha256": "a16ecfe405bfec08849a3d0c9d7db216d9e0d929eb33d8f54d02046c9a29b6a7"
+  },
+  "pirate-t-elf-t-act.json": {
+   "from": "phased_models/pirate-t-elf-t-act.json",
+   "sha256": "9500ec681feee9bc27a6105758b4d2e743e04d47322f54c9d9b2e42f97e635c1"
+  },
+  "pirate-t-elf-t-ended.json": {
+   "from": "phased_models/pirate-t-elf-t-ended.json",
+   "sha256": "9142f45909e6f93dfa350c16b9cb71c600ec3c26028e86dbda42dd6b3e156af2"
+  },
+  "pirate-t-pirate-t-act.json": {
+   "from": "phased_models/pirate-t-pirate-t-act.json",
+   "sha256": "865a1a022449cbae35d396cf56a4b53bd7bb1666244e91df7b398f058e11a972"
+  },
+  "pirate-t-pirate-t-ended.json": {
+   "from": "phased_models/pirate-t-pirate-t-ended.json",
+   "sha256": "114e08c70989c30a689902999fc705289fd1e2a41ac2800c2991832d366ddb5e"
+  },
+  "ramp-ramp-act.json": {
+   "from": "phased_models/ramp-ramp-act.json",
+   "sha256": "f6638159fa561712c03f29f3e0c51a9519e3a543227112887731fcca831cd0c2"
+  },
+  "ramp-ramp-ended.json": {
+   "from": "phased_models/cand-nl-ramp-ramp/ramp-ramp-ended.json",
+   "sha256": "2e151816768efea6463e5591a5e04e9fe1033c2833be2534f73fef26c951f655"
+  },
+  "ramp-t-elf-t-act.json": {
+   "from": "phased_models/ramp-t-elf-t-act.json",
+   "sha256": "9fea10f191afa715d7633a9bca77978b1325cabc84faafd03dd74220de50f865"
+  },
+  "ramp-t-elf-t-ended.json": {
+   "from": "phased_models/ramp-t-elf-t-ended.json",
+   "sha256": "b2f24b13bd13d0711a3c531c7505a92e2b9d384e1d7cbb5ed64fba7e3dcd1b27"
+  },
+  "ramp-t-nemesis-t-act.json": {
+   "from": "phased_models/ramp-t-nemesis-t-act.json",
+   "sha256": "719ddf1233ad42406cf60dab06e0ea7465d8b12048c73beb2e62ae1d7c57ff69"
+  },
+  "ramp-t-nemesis-t-ended.json": {
+   "from": "phased_models/ramp-t-nemesis-t-ended.json",
+   "sha256": "0e76127c561695699e24edd9bd32d940d20094a12f768b135078465795cd01ed"
+  },
+  "ramp-t-pirate-t-act.json": {
+   "from": "phased_models/ramp-t-pirate-t-act.json",
+   "sha256": "836a671948cf8386573bb58088c25355aa87c72922cd282fcb62840752b52b71"
+  },
+  "ramp-t-pirate-t-ended.json": {
+   "from": "phased_models/ramp-t-pirate-t-ended.json",
+   "sha256": "d575a8ad8d802bbfdf875eff165e3dd68462dbdf1dbc8a88d41d95f1e70dd23f"
+  },
+  "ramp-t-ramp-t-act.json": {
+   "from": "phased_models/ramp-t-ramp-t-act.json",
+   "sha256": "d6067af776b82fb41de63f5c4d859ea1512642eaca706113fabdf77d6d427d81"
+  },
+  "ramp-t-ramp-t-ended.json": {
+   "from": "phased_models/ramp-t-ramp-t-ended.json",
+   "sha256": "dfca8b1c34cc65f6fd9309721f351a7f3eb4b990bd3dcfaafdc963d2705267b4"
+  }
+ }
+}

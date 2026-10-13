@@ -1,0 +1,41 @@
+iter 1 loss 0.027830 (0s)
+iter 100 loss 0.026115 (32s)
+iter 200 loss 0.025617 (63s)
+iter 300 loss 0.025487 (93s)
+iter 400 loss 0.025448 (123s)
+iter 500 loss 0.025456 (154s)
+iter 600 loss 0.025425 (185s)
+iter 700 loss 0.025418 (216s)
+iter 800 loss 0.025418 (247s)
+iter 900 loss 0.025416 (277s)
+iter 1000 loss 0.025416 (309s)
+iter 1100 loss 0.025420 (339s)
+iter 1200 loss 0.025417 (370s)
+iter 1300 loss 0.025416 (401s)
+iter 1400 loss 0.025415 (432s)
+iter 1500 loss 0.025415 (463s)
+{
+ "train": {
+  "contrast_mse_w": 0.006841,
+  "sign_w": 0.7636,
+  "examples": 320382
+ },
+ "train_cand_kc": {
+  "contrast_mse_w": 0.008476,
+  "sign_w": 0.7495,
+  "examples": 320382
+ },
+ "held_out_val": {
+  "contrast_mse_w": 0.010274,
+  "sign_w": 0.7437,
+  "examples": 39219
+ },
+ "held_out_val_cand_kc": {
+  "contrast_mse_w": 0.011104,
+  "sign_w": 0.7388,
+  "examples": 39219
+ },
+ "calib_logloss": 0.5908,
+ "hidden_output_scale": 0.6817,
+ "seconds": 463
+}

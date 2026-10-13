@@ -1,0 +1,9 @@
+{
+ "kind": "setup",
+ "expected": {
+  "enemy_followers_at_most": 0,
+  "hand_at_least": 6
+ },
+ "source": "Operations puzzle k = 329 (the analysis line's candidates_all.md, puzzle 5; the architecture thread 2026-10-10 09:45Z)",
+ "notes": "An evaluation puzzle: every spec (level-strong, mcts:1043, mcts:3000; 8 seeds) plays the bot's end, which the installed evaluation rates 0.690 against Salem's 0.651; G_end re-test: Salem 1.000, the bot 0.854. Salem keeps a fuller hand (6, one drawn by Lyria's Enhance) and a Lyria on the field; the bot deals 2 more to the face."
+}

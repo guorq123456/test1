@@ -1,0 +1,4 @@
+{"deck": "ramp", "mode": "fix", "agent finds, plain": 755, "agent finds, fix": 843, "gained, find_lethal sure": 41, "gained beyond find_lethal (it found none within 20000 nodes)": 47, "lost": 0, "of the 27 unrealized": 13}
+{"deck": "ramp", "mode": "fix+eot", "agent finds, plain": 755, "agent finds, fix+eot": 902, "gained, find_lethal sure": 74, "gained beyond find_lethal (it found none within 20000 nodes)": 73, "lost": 0, "of the 27 unrealized": 19}
+{"deck": "pirate", "mode": "fix", "agent finds, plain": 60, "agent finds, fix": 66, "gained, find_lethal sure": 6, "gained beyond find_lethal (it found none within 20000 nodes)": 0, "lost": 0}
+{"deck": "pirate", "mode": "fix+eot", "agent finds, plain": 60, "agent finds, fix+eot": 66, "gained, find_lethal sure": 6, "gained beyond find_lethal (it found none within 20000 nodes)": 0, "lost": 0}

@@ -1,0 +1,55 @@
+{
+ "kind": "setup",
+ "expected": {},
+ "lethal_exists": false,
+ "source": "Salem's Pirate Royal puzzle with its original card, Ruthless Eld Sword (the architecture thread 2026-10-10 02:16Z; the puzzle thread's full enumeration finds no lethal)",
+ "notes": "find_lethal at its defaults: no sure lethal, budget exhausted (20000 nodes): the full enumeration, not find_lethal, says there is none. Which line is better is open: level-strong set up (enemy at 5, two flags at countdown 1, Yidmetra held: 4 unstoppable next turn); mcts:1000/3000 dealt 9 (enemy at 1). P_NL (2026-10-10): 1.0 for both lines, 16 of 16 each: this first data point doesn't separate them.",
+ "lines": {
+  "level-strong seed 1": {
+   "end": {
+    "won": false,
+    "enemy_hp": 5,
+    "pp_left": 0,
+    "hand": 4,
+    "enemy_followers": 0,
+    "our_hp": 12,
+    "flags": [
+     1,
+     1,
+     5,
+     5
+    ],
+    "hand_cards": [
+     "Beltezore, Valorous Revenant",
+     "Flashstep Quickblader",
+     "Yidmetra, Eld Sword",
+     "Zeta & Bea, Crimson and Blue"
+    ]
+   },
+   "P_NL": 1.0,
+   "P_NL_samples": "16/16",
+   "P_NL_settings": "search.foresight.next_lethal_prob(end, k=16, seed=0, reply_spec='level-strong', opponent_started=False), dcb9159"
+  },
+  "mcts:1000+plan+learned+phased seed 1": {
+   "end": {
+    "won": false,
+    "enemy_hp": 1,
+    "pp_left": 0,
+    "hand": 3,
+    "enemy_followers": 0,
+    "our_hp": 12,
+    "flags": [
+     2
+    ],
+    "hand_cards": [
+     "Beltezore, Valorous Revenant",
+     "Flashstep Quickblader",
+     "Zeta & Bea, Crimson and Blue"
+    ]
+   },
+   "P_NL": 1.0,
+   "P_NL_samples": "16/16",
+   "P_NL_settings": "search.foresight.next_lethal_prob(end, k=16, seed=0, reply_spec='level-strong', opponent_started=False), dcb9159"
+  }
+ }
+}

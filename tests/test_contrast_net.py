@@ -83,3 +83,27 @@ def test_the_clock_features_are_cheap_and_bounded():
     for s, p in positions * 3:
         features(s, p, False, 2)
     assert tc < (time.perf_counter() - t)                              # cheaper than the version-2 features
+
+
+def test_the_lethal_clock_features_are_bounded_and_cheap():
+    import time
+    from svsim.learn.features import _near, extra_features, features
+    from svsim.search.evaluate import effective_hp
+    positions, _ = _positions(n_games=2)
+    for s, p in positions:
+        mt, ot, lead, op_lead, me_lead, op_near, me_near = extra_features(s, p, ("kclock",))
+        me_hp, op_hp = max(effective_hp(s.players[p]), 0), max(effective_hp(s.players[1 - p]), 0)
+        assert 0 <= mt <= 10 and 0 <= ot <= 10 and lead == pytest.approx(ot - mt)
+        assert op_lead == pytest.approx(op_hp * lead) and me_lead == pytest.approx(me_hp * lead)
+        assert op_near == pytest.approx(op_hp * _near(mt)) and me_near == pytest.approx(me_hp * _near(ot))
+    assert (_near(0.5), _near(2.0), _near(3.0)) == (1.0, 0.5, 0.0)
+    for s, p in positions:                                             # measure the cards first
+        extra_features(s, p, ("kclock",))
+    t = time.perf_counter()
+    for s, p in positions * 3:
+        extra_features(s, p, ("kclock",))
+    tc = time.perf_counter() - t
+    t = time.perf_counter()
+    for s, p in positions * 3:
+        features(s, p, False, 2)
+    assert tc < (time.perf_counter() - t)                              # cheaper than the version-2 features

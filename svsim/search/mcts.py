@@ -49,10 +49,33 @@ import time
 from svsim.core.actions import (Attack, EndTurn, Engage, Evolve, Fuse, PlayCard, UseBonusPP)
 from svsim.core.engine import _start_turn, apply, legal_actions
 from svsim.core.enums import DRAW, Phase
-from svsim.core.state import CHECK as COW_CHECK, GameState, leader_of, sweep, verify_state
+from svsim.core.state import CHECK as COW_CHECK, GameState, sweep, verify_state
 from svsim.core.view import determinize
 from svsim.search.evaluate import DEFAULT, evaluate
 from svsim.search.moves import reserved, worth_trying
+
+# The root's moves once per decision (the architecture thread 2026-10-10 14:11Z). Every iteration starts from a new
+# determinization of the same root, which changes only what the player to move can't see (the opponent's hand, the
+# decks' order); the moves open there, their order and their keys (legal actions, reserve / veto / prune, _rank,
+# action_key, the prior's order) depend only on what that player sees, so they are computed on the first iteration
+# and kept for the decision. Check mode (SVSIM_ROOT_CHECK=1): every iteration computes them again and compares, key,
+# action and order; a difference is recorded in ROOT_MISMATCHES (with the cards in play) and that iteration uses its
+# own. ROOT_RECOMPUTE: card ids whose scripts read hidden information there (none found); with one of them in a
+# hand or in play, the root's moves are computed every iteration as before.
+import os as _os
+ROOT_CHECK = _os.environ.get("SVSIM_ROOT_CHECK", "") not in ("", "0")
+ROOT_MISMATCHES: list = []
+ROOT_SEEN: set = set()                  # (check mode) card ids in a hand or in play at checked roots
+ROOT_CHECKS = [0]                       # (check mode) roots compared
+ROOT_RECOMPUTE: frozenset = frozenset()
+
+
+def _root_cache_ok(state: GameState, me: int) -> bool:
+    if not ROOT_RECOMPUTE:
+        return True
+    p, q = state.players[me], state.players[1 - me]
+    cards = p.hand + p.field + p.leader_area + q.field + q.leader_area
+    return not any(c.defn.card_id in ROOT_RECOMPUTE for c in cards)
 
 
 def _locator(state: GameState, me: int) -> dict:
@@ -69,27 +92,27 @@ def _locator(state: GameState, me: int) -> dict:
     return where
 
 
+def _loc(uid: int, me: int, where: dict) -> tuple:
+    if uid < 0:                                       # a leader (state.leader_of)
+        return ("L", -uid - 1 == me)
+    return where.get(uid, ("?", uid))
+
+
 def action_key(state: GameState, action, where: dict | None = None) -> tuple:
     """An action described by card ids and positions rather than uids."""
     me = state.active
     where = where if where is not None else _locator(state, me)
-
-    def loc(uid):
-        side = leader_of(uid)
-        return ("L", side == me) if side is not None else where.get(uid, ("?", uid))
-
-    def locs(uids):
-        return tuple(loc(u) for u in uids)
     if isinstance(action, PlayCard):
-        return ("P", loc(action.uid), locs(action.targets), action.modes)
+        return ("P", _loc(action.uid, me, where), tuple([_loc(u, me, where) for u in action.targets]), action.modes)
     if isinstance(action, Attack):
-        return ("A", loc(action.attacker), loc(action.target))
+        return ("A", _loc(action.attacker, me, where), _loc(action.target, me, where))
     if isinstance(action, Evolve):
-        return ("E", loc(action.uid), action.super_, locs(action.targets), action.modes)
+        return ("E", _loc(action.uid, me, where), action.super_, tuple([_loc(u, me, where) for u in action.targets]),
+                action.modes)
     if isinstance(action, Engage):
-        return ("G", loc(action.uid), locs(action.targets), action.modes)
+        return ("G", _loc(action.uid, me, where), tuple([_loc(u, me, where) for u in action.targets]), action.modes)
     if isinstance(action, Fuse):
-        return ("U", loc(action.uid), tuple(sorted(locs(action.cards))))
+        return ("U", _loc(action.uid, me, where), tuple(sorted([_loc(u, me, where) for u in action.cards])))
     if isinstance(action, UseBonusPP):
         return ("B",)
     return ("T",)
@@ -121,9 +144,10 @@ def _rank(state: GameState, action) -> tuple:
             return 0, -(attacker.atk if attacker else 0)
         return 4, 0
     if isinstance(action, PlayCard):
-        card = state.in_hand(state.active, action.uid)
-        if card is not None and state.players[state.active].combo < 2 and _combo_payoff(card.defn):
-            return 1, 1              # a Combo card is better played after others: tried after them
+        if state.players[state.active].combo < 2:     # (checked first: no hand lookup once Combo is 2)
+            card = state.in_hand(state.active, action.uid)
+            if card is not None and _combo_payoff(card.defn):
+                return 1, 1          # a Combo card is better played after others: tried after them
         return 1, 0
     if isinstance(action, Evolve):
         return 2, 0
@@ -156,12 +180,19 @@ class ISMCTS:
                  reserve: bool = False, veto=None, reply_after: int = 0, reply_top: int = 0,
                  reply_budget: int = 0, average: int = 1, prior=None, c_prior: float = 0.3,
                  reuse: bool = False, min_new: int = 20, alloc: tuple | None = None, infer: tuple | None = None,
-                 oracle: bool = False):
+                 oracle: bool = False, normalize: bool = False, parallel: int = 0, par_spec: str | None = None):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
+        self.normalize = normalize     # (+abs) selection on Q min-max normalized over this search's tree (MuZero):
+                                       # with absolute values (center=False) a lost or won position's values sit
+                                       # near 0 or 1, and the normalization keeps the selection's resolution
+        self._qmin = self._qmax = None
+        self.parallel, self.par_spec = parallel, par_spec   # (+par=K) K root-parallel trees (search.parallel)
+        self.last_cpu = None           # (+par) the trees' CPU seconds of the last decision, summed
         self.alloc = alloc             # ("legal", K, LO, HI): clip(K x legal moves, LO, HI) per decision instead;
                                        # ("bank", CHUNK, STOP, CAP, HI): see _bank_budget
         self._bank, self._bank_turn = 0, None
         self._seen_n, self._seen_k, self._seen_turn = 0, 0, -1     # alloc=self: this game's searched decisions
+        self._cx_turn, self._cx_moves = None, 0   # alloc=complex: this turn and its legal moves at its first search
         self.infer = infer             # (ALPHA, TAU): the opponent's hand drawn by search.infer's weights
         self._hand_weights, self._infer_turn = None, None
         self.oracle = oracle           # an experiment: the opponent's real hand in every determinization (core.view)
@@ -187,6 +218,7 @@ class ISMCTS:
         self.reuse = reuse             # keep the chosen move's subtree for the next decision of the turn
         self.min_new = min_new         # ... and search at least this many new iterations there
         self._next = None              # (key of the expected next position, subtree, center) when reusing
+        self._root_options, self._root_cache = None, False   # the root's moves for the decision (_choose)
         self.prune = prune             # leave out dominated moves (search.moves)
         self.reserve = reserve         # keep the win condition for finishing turns (search.moves.reserved)
         self.veto = veto               # veto(state, action) -> True to leave the action out (e.g. learn.timing.Pace)
@@ -229,6 +261,9 @@ class ISMCTS:
     def choose(self, state: GameState):
         """The search's move. While it runs, learn.handvalue knows its root: the cards drawn from here on, and the
         opponent's hand, are unknown to the hand-value student."""
+        if self.parallel > 1:
+            from svsim.search import parallel
+            return parallel.choose(self, state)
         from svsim.learn.handvalue import root
         with root(state.active, [c.uid for c in state.players[state.active].deck_view()]):
             return self._choose(state)
@@ -247,10 +282,14 @@ class ISMCTS:
             iterations = min(hi, max(lo, round(k * len(legal_actions(state)))))
         if self.alloc is not None and self.alloc[0] == "self":
             iterations = self._self_budget(state, me)
+        if self.alloc is not None and self.alloc[0] == "complex":
+            iterations = self._complex_budget(state, me)
         banked = self.alloc is not None and self.alloc[0] == "bank"
         if banked:
             iterations = self._bank_budget(state, me)
         full = iterations
+        if self.normalize:
+            self._qmin = self._qmax = None          # each search normalizes over its own tree
         if root is None:
             root = Node()
             self.center = 0.0
@@ -260,6 +299,8 @@ class ISMCTS:
             iterations = max(self.min_new, full - root.visits)
         deadline = time.perf_counter() + self.seconds if self.seconds else None
         self._replies = 0
+        self._root_options = None                  # the root's moves, kept after the first iteration
+        self._root_cache = _root_cache_ok(state, me)
         self._root_deck = {c.uid for c in state.players[me].deck_view()}
         self._root_prior = {}
         if self.prior is not None:
@@ -307,6 +348,18 @@ class ISMCTS:
             self._expect(state, legal[best], root.children[best])
         return legal[best]
 
+    def _complex_budget(self, state: GameState, me: int) -> int:
+        """+complex (alloc=complex:K:BETA:LO:HI; the architecture thread 2026-10-10 08:58Z): compute moved to the
+        complex turns. clip(round(K x max(n, BETA x n0)), LO, HI), n this decision's legal moves and n0 those at
+        the turn's first searched decision: a turn that starts wide keeps a share of its budget on its later, narrower
+        decisions (the operations puzzle k 518 loses at its second decision). K is set so a game's mean compute is
+        level-strong's (analysis/puzzles3)."""
+        _, k, beta, lo, hi = self.alloc
+        n = len(legal_actions(state))
+        if self._cx_turn != (state.turn, me):
+            self._cx_turn, self._cx_moves = (state.turn, me), n
+        return min(hi, max(lo, round(k * max(n, beta * self._cx_moves))))
+
     def _self_budget(self, state: GameState, me: int) -> int:
         """Line B1, second try (alloc=self:C:W:LO:HI): clip(round(C x N x n / m), LO, HI), n this decision's legal
         moves and m the mean over this game's earlier searched decisions with a prior of M0 weighing W decisions,
@@ -352,18 +405,26 @@ class ISMCTS:
         node, path, depth = root, [root], 0
         offered = []                     # the moves open at each node on the path, this determinization
         while not s.over and s.active == me and depth < self.max_depth:
-            where = _locator(s, me)
-            options = {}
-            legal = legal_actions(s)
-            if self.reserve:
-                legal = [a for a in legal if not reserved(s, a)] or legal
-            if self.veto is not None:
-                legal = [a for a in legal if not self.veto(s, a)] or legal
-            for a in sorted(worth_trying(s, legal) if self.prune else legal, key=lambda a: _rank(s, a)):
-                options.setdefault(action_key(s, a, where), a)
             prior = self._root_prior if depth == 0 and self._root_prior else None
-            if prior is not None:                       # the root's moves in the prior's order
-                options = dict(sorted(options.items(), key=lambda kv: -prior.get(kv[0], 0.0)))
+            kept = self._root_options if depth == 0 else None
+            if kept is not None and not ROOT_CHECK:
+                options = kept
+            else:
+                options = self._options(s, me, prior)
+                if depth == 0 and self._root_cache:
+                    if kept is None:
+                        self._root_options = options
+                    else:                               # check mode: the same moves, keys and order
+                        ROOT_CHECKS[0] += 1
+                        p, q = s.players[me], s.players[1 - me]
+                        ROOT_SEEN.update(c.defn.card_id for c in p.hand + p.field + p.leader_area + q.field
+                                         + q.leader_area)
+                        if list(options.items()) != list(kept.items()):
+                            ROOT_MISMATCHES.append({
+                                "turn": s.turn, "kept": [repr(k) for k in kept], "now": [repr(k) for k in options],
+                                "hand": [c.defn.card_id for c in p.hand], "field": [c.defn.card_id for c in p.field],
+                                "enemy_field": [c.defn.card_id for c in q.field],
+                                "enemy_hand": [c.defn.card_id for c in q.hand]})
             offered.append(options)
             fresh = None
             for k in options:
@@ -379,12 +440,18 @@ class ISMCTS:
                 self._step(s, options[fresh])
                 path.append(child)
                 break
-            best, best_ucb = None, -1.0
+            best, best_ucb = None, -math.inf
+            children, c, log, sqrt = node.children, self.c, math.log, math.sqrt
+            scaled = self.normalize and self._qmax is not None and self._qmax - self._qmin > 1e-9
+            by_max = self.backup == "max"            # self.estimate, inline
             for k in options:
-                child = node.children[k]
-                ucb = self.estimate(child) + self.c * math.sqrt(math.log(child.avail) / child.visits)
+                child = children[k]
+                q = child.value if by_max else child.total / child.visits
+                if scaled:
+                    q = (q - self._qmin) / (self._qmax - self._qmin)
+                ucb = q + c * sqrt(log(child.avail) / child.visits)
                 if prior is not None:
-                    ucb += self.c_prior * prior.get(k, 0.0) * math.sqrt(node.visits + 1) / (1 + child.visits)
+                    ucb += self.c_prior * prior.get(k, 0.0) * sqrt(node.visits + 1) / (1 + child.visits)
                 if ucb > best_ucb:
                     best, best_ucb = k, ucb
             node = node.children[best]
@@ -399,6 +466,9 @@ class ISMCTS:
                 apply(s, self.opponent.act(s, legal_actions(s)))
             me_next = not s.over
         v = self.value(s, me, me_next)
+        if self.normalize:
+            self._qmin = v if self._qmin is None else min(self._qmin, v)
+            self._qmax = v if self._qmax is None else max(self._qmax, v)
         if self.backup == "mean":
             for n in path:
                 n.visits += 1
@@ -415,6 +485,21 @@ class ISMCTS:
             seen = frozenset(options)
             n.options[seen] = n.options.get(seen, 0) + 1
             self._refresh(n)
+
+    def _options(self, s: GameState, me: int, prior) -> dict:
+        """The moves open in `s`, {action_key: action}, in the order they are tried."""
+        where = _locator(s, me)
+        options = {}
+        legal = legal_actions(s)
+        if self.reserve:
+            legal = [a for a in legal if not reserved(s, a)] or legal
+        if self.veto is not None:
+            legal = [a for a in legal if not self.veto(s, a)] or legal
+        for a in sorted(worth_trying(s, legal) if self.prune else legal, key=lambda a: _rank(s, a)):
+            options.setdefault(action_key(s, a, where), a)
+        if prior is not None:                           # the root's moves in the prior's order
+            options = dict(sorted(options.items(), key=lambda kv: -prior.get(kv[0], 0.0)))
+        return options
 
     def _reply_here(self, root: Node, path: list) -> bool:
         """Whether to play the opponent's turn out at this turn-end leaf (see reply_after, reply_top,

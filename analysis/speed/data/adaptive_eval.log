@@ -1,0 +1,26 @@
+{
+ "ramp": {
+  "starts": 18892,
+  "found +lethal3+discard": 920,
+  "found +adaptive": 921,
+  "gained, find_lethal sure": 1,
+  "gained beyond find_lethal": 0,
+  "gained among the unrealized": 1,
+  "lost": 0,
+  "mechanism used (starts)": 1,
+  "per 100 games": 0.1,
+  "extra ms on the starts run again, mean": 4.32
+ },
+ "pirate": {
+  "starts": 1389,
+  "found +lethal3+discard": 77,
+  "found +adaptive": 77,
+  "gained, find_lethal sure": 0,
+  "gained beyond find_lethal": 0,
+  "gained among the unrealized": 0,
+  "lost": 0,
+  "mechanism used (starts)": 0,
+  "per 100 games": 0.0,
+  "extra ms on the starts run again, mean": 22.05
+ }
+}
