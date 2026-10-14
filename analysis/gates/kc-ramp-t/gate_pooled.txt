@@ -1,0 +1,2 @@
+/home/user/test1/analysis/gates/kc-ramp-t/gate.jsonl: 300 pairs, seeds 70000000..70000299, 50.7% ± 3.5% (47.2%..54.2%), CR +6 (-27..+39; steady-state +5); ms per searched decision A 85.61 / B 85.18 = 1.005
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 50.7% (47.2%..54.3%), CR +6 (-27..+41; steady-state +5)
