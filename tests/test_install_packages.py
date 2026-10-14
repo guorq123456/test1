@@ -1,5 +1,6 @@
-"""Install packages (analysis/install/make_pkg.py): every installed model file byte for byte, only the Ramp mirror's
-ENDED file replaced by the candidate's; and loaded, every pairing's model the installed one but that file's."""
+"""Install packages (analysis/install/make_pkg.py): every installed model file byte for byte, only the files the
+manifest lists as replaced (the Ramp mirror's ENDED file, or several) taken from their candidates; and loaded, every
+pairing's model the installed one but those files'."""
 import json
 from pathlib import Path
 
@@ -20,14 +21,27 @@ def test_there_are_packages():
     assert {p.name for p in PACKAGES} >= {"pkg-kc-ramp-ramp", "pkg-nl-ramp-ramp"}
 
 
+def _replaced(manifest) -> dict:
+    """{file name: its candidate folder} (older manifests: one candidate, the Ramp mirror's ENDED file)."""
+    return manifest.get("candidates") or {REPLACED: manifest["candidate"]}
+
+
+def _key(file_name):
+    from svsim.learn.model import split_keys
+    pair, _, moment = file_name[:-len(".json")].rpartition("-")
+    return tuple(split_keys(pair)) + (moment,)
+
+
 @pytest.mark.parametrize("pkg", PACKAGES, ids=lambda p: p.name)
-def test_files_are_the_installed_ones_but_the_ramp_mirror_ended(pkg):
+def test_files_are_the_installed_ones_but_the_replaced(pkg):
     manifest = json.loads((pkg / "PACKAGE.json").read_text())
+    replaced = _replaced(manifest)
+    assert sorted(replaced) == sorted(manifest["replaced"])
     names = sorted(p.name for p in pkg.iterdir() if p.suffix in (".json", ".npz") and p.name != "PACKAGE.json")
     assert names == _installed_files()
     for name in names:
-        if name == REPLACED:
-            cand = MODELS / manifest["candidate"] / REPLACED
+        if name in replaced:
+            cand = MODELS / replaced[name] / name
             assert (pkg / name).read_bytes() == cand.read_bytes()
             assert (pkg / name).read_bytes() != (MODELS / name).read_bytes()
         else:
@@ -40,12 +54,13 @@ def _model_json(m):
 
 
 @pytest.mark.parametrize("pkg", PACKAGES, ids=lambda p: p.name)
-def test_loaded_models_are_the_installed_ones_but_the_ramp_mirror_ended(pkg):
+def test_loaded_models_are_the_installed_ones_but_the_replaced(pkg):
     installed, packaged = load(MODELS), load(pkg)
+    changed = {_key(f) for f in _replaced(json.loads((pkg / "PACKAGE.json").read_text()))}
     assert set(installed) == set(packaged)
     for key in installed:
         same = _model_json(installed[key]) == _model_json(packaged[key])
-        assert same == (key != ("ramp", "ramp", "ended")), key
+        assert same == (key not in changed), key
 
 
 @pytest.mark.parametrize("pkg", PACKAGES, ids=lambda p: p.name)

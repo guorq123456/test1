@@ -6,6 +6,8 @@ Nothing is installed by this: a package is used only by naming it (`mcts:N+plan+
 which level uses what is Salem's decision. Condition: the opponent's deck list is known (order and hand not).
 
     python3 make_pkg.py CANDIDATE_FOLDER PACKAGE_NAME      (both under svsim/learn/phased_models)
+    python3 make_pkg.py PACKAGE_NAME --replace FOLDER:FILE [--replace FOLDER:FILE ...]
+                                                           (several files, each from its candidate folder)
 
 Writes svsim/learn/phased_models/PACKAGE_NAME/ with the files and PACKAGE.json (the source of every file and its
 sha256); tests/test_install_packages.py checks every package against the installed folder."""
@@ -25,8 +27,12 @@ def sha(path: Path) -> str:
 
 
 def main():
-    cand, name = sys.argv[1], sys.argv[2]
-    src = MODELS / cand
+    args = sys.argv[1:]
+    if "--replace" in args:                        # PACKAGE_NAME --replace FOLDER:FILE ...
+        name = args[0]
+        pairs = [args[i + 1].split(":", 1) for i, a in enumerate(args) if a == "--replace"]
+    else:                                          # CANDIDATE_FOLDER PACKAGE_NAME: the Ramp mirror's ENDED file
+        name, pairs = args[1], [[args[0], REPLACED]]
     out = MODELS / name
     if out.exists():
         shutil.rmtree(out)
@@ -36,13 +42,17 @@ def main():
     for p in installed:
         shutil.copyfile(p, out / p.name)
         files[p.name] = {"from": f"phased_models/{p.name}", "sha256": sha(p)}
-    shutil.copyfile(src / REPLACED, out / REPLACED)
-    files[REPLACED] = {"from": f"phased_models/{cand}/{REPLACED}", "sha256": sha(src / REPLACED)}
-    manifest = {"package": name, "candidate": cand, "replaced": [REPLACED],
+    for cand, fname in pairs:
+        if not (MODELS / fname).is_file():
+            raise SystemExit(f"{fname} is not an installed file")
+        shutil.copyfile(MODELS / cand / fname, out / fname)
+        files[fname] = {"from": f"phased_models/{cand}/{fname}", "sha256": sha(MODELS / cand / fname)}
+    manifest = {"package": name, "candidate": pairs[0][0] if len(pairs) == 1 else None,
+                "candidates": {fname: cand for cand, fname in pairs}, "replaced": [f for _, f in pairs],
                 "rule": "every other file is the installed one, byte for byte", "files": files}
     (out / "PACKAGE.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n")
-    print(json.dumps({"package": name, "files": len(files), "replaced": REPLACED,
-                      "sha256": files[REPLACED]["sha256"]}, indent=1))
+    print(json.dumps({"package": name, "files": len(files),
+                      "replaced": {f: files[f]["sha256"] for _, f in pairs}}, indent=1))
 
 
 if __name__ == "__main__":
