@@ -14,3 +14,10 @@
   - `gend_odd.jsonl`：1000 行，正好是 starts.jsonl 里的全部 k 奇数开头，不重不漏。训练 916 个（K = 4），留出 84 个（K = 16）。sha256 047ff8bb…10be。
   - `gend_odd_ends.jsonl.gz`：22372 行回合末，每个开头的条数都和它结果行里的局数相等。sha256 902574f4…9162。
 - k 偶数那半在建造线跑，两半由建造线合并、核对 2000 个开头不重不漏。
+
+## k 偶数那半的后 9 批（建造线容器重启后分给分析线；2026-10-14 05:3xZ）
+
+- **输入**：建造线 da18c2b 的 `analysis/kc-ramp-t/data/even_rest/starts_09.jsonl`～`starts_17.jsonl`，sha256 前缀逐个核过（合起来那份 0a2243f8 也对）。共 335 个开头，k 1330～1998，全是偶数，不重，和 k 奇数那半没有交集。
+- **命令**（每批）：`step1_rampt gend selfplay.jsonl starts_XX.jsonl plans.jsonl --out gend_XX.jsonl --ends gend_XX_ends.jsonl.gz --shard 0/2 --bank 69900000 --workers 3`，svsim 32eb2db，按批顺序，共 3757 秒，没有中断。
+- **输出**：`even_09_17/` 下每批两个文件，sha256 在 `even_09_17/SHA256SUMS`。逐批核过：开头和该批 starts 一一对上，每个开头的回合末条数等于它结果行里的局数。
+- 前 9 批（00～08，360 个开头）在建造线跑，合并由建造线做。
