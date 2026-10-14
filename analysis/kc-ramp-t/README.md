@@ -68,7 +68,8 @@ by resampling starts.
 
 - The new model follows the teacher T better, clear of zero.
 - Against the games played out (ΔG_end) it is level with the installed model: −1.4, interval across zero.
-- cand-kc's reading on the original mirror was similar: ΔT same-sign +0.2 there, ΔG_end +1.8.
+- For reference only: cand-kc's own held-out check on the original mirror (check_h.py, a different reading on
+  other starts) gave ΔT same-sign +0.2 and ΔG_end +1.8 over the installed model there.
 
 **Clock coefficients** (standardized), all small:
 - me_kill_turns +0.021, op_kill_turns +0.011, kill_lead −0.011;
