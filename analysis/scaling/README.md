@@ -362,3 +362,27 @@ exactly D1's agent.
   run. The e30b882 cache is taken out again; setnet.py is 69e3ad2's.
 - The gates set N from their own 20-pair check on real games, so they are not affected. J100's check measured
   1.219 there.
+
+## 10⁵: where each shard comes from (the architecture thread 23:34Z)
+
+| shards k | games | played on | code | where the files are |
+|---|---|---|---|---|
+| 0–4 | 5000 | the analysis line, cloud Linux | 4d7214d | its branch, analysis/scaling/data/rec/ |
+| 5–9 | 5000 | this line, cloud Linux | 4d7214d | data/rec/ |
+| **10–82** | **73,000** | **Salem's computer, Windows** (11 workers, below normal, mask 0xffffe) | 4d7214d | branch `local/scaling-20261015`, 5434c6d, analysis/scaling/rec/ |
+| 83–90 | 8000 | the analysis line, cloud Linux (after J98) | play path as 4d7214d | to come |
+| 91–99 | 9000 | this line, cloud Linux | 69e3ad2 (play path as 4d7214d) | to come |
+
+**About Salem's computer:**
+- Salem stopped the run at 23:31Z. The shard that was open then was not committed; k83–99 are played in the cloud
+  instead.
+- **Checks on k10–82 (here, 23:40Z):**
+  - 73 files, one per s = 70100020 … 70100164;
+  - every shard has 1000 games with g = 0–999 once;
+  - for every game: deal seed = s × 100003 + g, agent seeds = [s × 1000 + 2g, +1], explore 0, both sides v2skx;
+  - no draws; first player won 44,845 (61.4%);
+  - 2.62 CPU seconds a game on that machine.
+
+**Why every shard has one source:** cmp_roots differs between Linux (142cc567…2b9adf) and Windows (755a0bba…96a6),
+so the same seeds give different games on the two systems. If both systems played the same shard, only one copy
+would be kept.
