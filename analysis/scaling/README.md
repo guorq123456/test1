@@ -33,7 +33,8 @@ hpphase).
   - k = 10–99: Salem's computer.
 - **Sizes:** 10³ = shard 0, 10⁴ = shards 0–9, 10⁵ = all.
 - **Smoke:** s = 70100200 (shard index 100), g < 200. Not part of the data.
-- **Holdout:** 5000 games, s = 70200000, g = 0 … 4999: `--base 70200000 --shards 0 1 --per-shard 5000`.
+- **Holdout:** 5 shards of 1000 games, s_h = 70200000 + 2h (h = 0–4): `--base 70200000 --stride 2 --shards 0 5`
+  (the architecture thread and the analysis line, 17:45Z). This line plays it after k = 5–9.
 - **Gates:** 70300000 / 70400000 / 70500000.
 
 **Files:**

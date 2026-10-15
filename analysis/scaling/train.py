@@ -1,6 +1,6 @@
 """Scaling test, step 2: the DeepSets value net (learn.setnet) and the linear refits at 10^3 / 10^4 / 10^5 games,
 scored on the same game-split holdout (the analysis line's 2f981bb: shards s_k = 70100000 + 2k of 1000 games;
-10^3 = shard 0, 10^4 = shards 0-9, 10^5 = all 100; holdout s = 70200000, 5000 games).
+10^3 = shard 0, 10^4 = shards 0-9, 10^5 = all 100; holdout: 5 shards of 1000 games, s_h = 70200000 + 2h).
 Condition: the opponent's deck list is known (order and hand not).
 
 Positions: every turn end (learn.netdata.rows phase ENDED: EndTurn and after_end_of_turn), seen by the player who
@@ -52,7 +52,8 @@ sys.path.insert(0, str(ROOT))
 
 from svsim.learn.setnet import NZ, Data, SetNet, score  # noqa: E402
 
-BASE, STRIDE, HOLDOUT = 70100000, 2, 70200000
+BASE, STRIDE, HOLDOUT_BASE = 70100000, 2, 70200000
+HOLDOUT = [HOLDOUT_BASE + STRIDE * h for h in range(5)]
 SIZES = {1000: 1, 10000: 10, 100000: 100}
 INSTALLED = ROOT / "svsim/learn/phased_models/ramp-t-ramp-t-ended.json"
 
@@ -97,9 +98,9 @@ def net_main(args) -> None:
               "batch": args.batch, "fit_s": round(time.time() - t0), "epochs": len(net.info["history"]),
               "train": score(net.predict(train), train.result), "valid": score(net.predict(valid), valid.result),
               "train_installed_linear": score(1 / (1 + np.exp(-train.linear)), train.result)}
-    hold = tok / f"tok-{HOLDOUT}.npz"
-    if hold.exists():
-        h = _align(net, Data([hold], tok / "cards.npz"))
+    hold = [tok / f"tok-{s}.npz" for s in HOLDOUT]
+    if all(f.exists() for f in hold):
+        h = _align(net, Data(hold, tok / "cards.npz"))
         p = net.predict(h)
         report["holdout"] = score(p, h.result)
         report["holdout_installed_linear"] = score(1 / (1 + np.exp(-h.linear)), h.result)
@@ -172,18 +173,19 @@ def holdout_linear_main(args) -> None:
         if p.exists():
             names.append(f"lin-{size}")
             paths.append(str(p))
-    hold = _files(args.records, [HOLDOUT], "rec-", ".jsonl.gz")
+    hold = _files(args.records, HOLDOUT, "rec-", ".jsonl.gz")
     keys, logits = _score_games(list(_lines(hold)), paths, args.workers)
     probs = 1 / (1 + np.exp(-logits))
     report = {"models": names, "holdout": {n: score(probs[:, i], keys[:, 3]) for i, n in enumerate(names)}}
-    tok = Path(args.tokens) / f"tok-{HOLDOUT}.npz"
-    if tok.exists():                                 # the same positions as the nets', in the same order
-        z = np.load(tok)
-        same = (len(z["result"]) == len(keys) and np.array_equal(z["seed"], keys[:, 0])
-                and np.array_equal(z["g"], keys[:, 1]) and np.array_equal(z["turn"], keys[:, 2]))
+    toks = [Path(args.tokens) / f"tok-{s}.npz" for s in HOLDOUT]
+    if all(f.exists() for f in toks):                # the same positions as the nets', in the same order
+        zs = [np.load(f) for f in toks]
+        cat = {k: np.concatenate([z[k] for z in zs]) for k in ("seed", "g", "turn", "linear", "result")}
+        same = (len(cat["result"]) == len(keys) and np.array_equal(cat["seed"], keys[:, 0])
+                and np.array_equal(cat["g"], keys[:, 1]) and np.array_equal(cat["turn"], keys[:, 2]))
         report["aligned_with_tokens"] = bool(same)
         if same:
-            report["installed_matches_token_label"] = float(np.max(np.abs(z["linear"] - logits[:, 0])))
+            report["installed_matches_token_label"] = float(np.max(np.abs(cat["linear"] - logits[:, 0])))
     report["train_sample"] = {}
     rng = np.random.default_rng(0)
     for i, n in enumerate(names[1:], 1):
@@ -229,7 +231,7 @@ def contributions(net: SetNet, data: Data, idx, zones=(0, 1, 4)) -> list:
 def contrib_main(args) -> None:
     tok = Path(args.tokens)
     net = SetNet.load(HERE / f"models/net-{args.size}.npz")
-    h = _align(net, Data([tok / f"tok-{HOLDOUT}.npz"], tok / "cards.npz"))
+    h = _align(net, Data([tok / f"tok-{s}.npz" for s in HOLDOUT], tok / "cards.npz"))
     rng = np.random.default_rng(0)
     idx = rng.choice(h.n, size=min(args.sample, h.n), replace=False)
     rows = contributions(net, h, idx)
