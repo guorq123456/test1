@@ -29,5 +29,15 @@
   "brier": 0.2047,
   "log_loss": 0.58979,
   "n": 17984
+ },
+ "holdout": {
+  "brier": 0.22853,
+  "log_loss": 0.64687,
+  "n": 93787
+ },
+ "holdout_installed_linear": {
+  "brier": 0.2038,
+  "log_loss": 0.58936,
+  "n": 93787
  }
 }

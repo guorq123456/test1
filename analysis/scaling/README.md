@@ -144,3 +144,105 @@ holdout game used):
 - About 15 seconds an epoch for 88,000 positions while 4 self-play processes share the 4 cores, so about 5 minutes
   an epoch at 10⁵.
 - The training and validation losses are close, so the net is not overfitting at 5000 games.
+
+## Results at 10³ and 10⁴ (2026-10-15 19:15–20:15Z; 10⁵ waits for Salem's shards)
+
+**Data:**
+- Training: shards k = 0–9.
+  - k = 0–4: the analysis line, its branch, sha256 checked;
+  - k = 5–9: this line.
+  - `merge`: 10,000 games, no duplicates, every g unique, 60.4% first-player wins, no draws.
+- Holdout: 5000 games, 93,787 turn ends.
+  - h = 0–2: this line, data/heldout/;
+  - h = 3–4: the analysis line, sha256 checked.
+- **Positions:** every turn end, seen by the player who ended the turn; the label is the game's result.
+- All models are scored on the same positions (data/holdout-*.npz hold each model's probability at every holdout
+  turn end, in the token files' order, with seed / g / turn / result).
+- **Brier is the main score;** log-loss is in brackets.
+
+| model | games | training part | validation part (1/20 of the games) | **holdout** |
+|---|---|---|---|---|
+| installed linear (ramp-t-ramp-t-ended.json) | – | 0.2047 (10³ games) / 0.2043 (10⁴) | – | **0.2038** (0.5894) |
+| linear refit | 10³ | 0.2024 (sample) | – | **0.2013** (0.5829) |
+| linear refit | 10⁴ | 0.2022 (sample) | – | **0.2004** (0.5805) |
+| DeepSets net | 10³ | 0.2260 (0.6411) | 0.2382 | **0.2285** (0.6469) |
+| DeepSets net | 10⁴ | 0.1914 (0.5582) | 0.1944 | **0.1937** (0.5643) |
+
+**What each training column means:**
+- **Linear refits:** the training column is a sample of about 1000 of their own training games (up to 20,000 turn
+  ends, seed 0).
+- **Nets:** the training column is the whole training part (17,984 / 178,093 turn ends), the validation part
+  is 1,029 / 9,452.
+- The holdout probability files hold all five models.
+- `installed_matches_token_label`: the replayed installed logit and the token files' label differ by at most
+  6e-7, and the holdout positions line up one to one.
+
+**Readings:**
+- **From 10³ to 10⁴ games**, the linear refit improves by 0.0009 and the net by 0.035.
+- **At 10³** the net is worse than any linear model.
+- **At 10⁴** it is better than the linear refit on the same games by 0.0067 Brier (0.0162 log-loss), and better
+  than the installed model by 0.0101.
+- **Fit:** at 10⁴ the net's training and holdout scores are close (0.1914 against 0.1937), so it is not
+  overfitting; the analysis line's reading rule for 10⁵ (close means under-fitting, try a larger net) applies
+  there.
+
+### Does a card's part in the net's value depend on the position? (`contrib`, 10⁴ net; data/contrib-10000.json)
+
+**Method:**
+- 3000 holdout turn ends (seed 0).
+- In each one, one copy of a card is taken out of my hand, my field or the opponent's field, and the net's logit
+  is computed again.
+- delta = logit with the card − logit without it.
+- 19,189 deltas in all; 36 card × zone groups have at least 20 positions.
+- A model with a fixed score per card would give every group a spread of 0.
+
+**Result:**
+- The median spread (sd of delta) across the groups is 0.17 logit; the largest is 1.58.
+- In 12 of the 36 groups the sign itself changes: the card helps in at least 10% and hurts in at least 10% of
+  the positions.
+- **Examples:**
+
+  | card, zone | positions | mean delta | sd | 5%–95% | share > 0 |
+  |---|---|---|---|---|---|
+  | 约束的《正义》·伊兰翠, hand | 1641 | +0.318 | 0.170 | +0.05 to +0.57 | 99% |
+  | 世界的伙伴·佐伊, hand | 1474 | −0.176 | 0.209 | −0.56 to +0.15 | 19% |
+  | 金银绚烂·璐米欧儿&雅尔贞特, hand | 1443 | −0.271 | 0.246 | −0.58 to +0.17 | 20% |
+  | 龙之启示, hand | 830 | −0.303 | 0.212 | −0.56 to +0.12 | 13% |
+  | 宣扬的龙人, field | 541 | +0.220 | 0.122 | 0.00 to +0.40 | 95% |
+  | 断头的斩姬·相枛津, field | 263 | +0.296 | 0.213 | 0.00 to +0.63 | 95% |
+
+- **One exception:** 狐火蜃景 in hand shows delta 0 at all 473 positions. The net gives that card no weight at
+  all in hand; its phi output there is zero.
+- A negative mean for a card in hand is not "the card is bad". The net sees the position with one card fewer, but
+  the same globals (the hand count included), so the comparison is between this card and an empty slot the
+  globals still count.
+
+## Step 3: the net inside strong's search (data/timing.json, `timing.py`)
+
+**Method:**
+- One process, nothing else running.
+- **Per evaluation:** 394 turn ends of 20 holdout games, each timed 5 times.
+- **Per decision:** 120 positions, the first decision of turns ≥ 3 of the same games. v2skx and
+  v2skx+setnet=models/net-10000.npz choose in turn at each position, seeds fixed, 3 rounds.
+
+**Per evaluation, offline:**
+- the net: 0.15–0.19 ms (three runs);
+- the installed linear model: 0.05–0.09 ms.
+- The net's single-position path is exact: it differs from the batch pass by at most 3e-15. It keeps each pooled
+  card's phi output per card, so only hand, field and leader cards go through phi at each call.
+
+**Per decision:**
+
+| | ms per decision |
+|---|---|
+| v2skx | 97.1 |
+| v2skx+setnet (10⁴ net) | 151.2 |
+| **ratio** | **1.557** (rounds: 1.547, 1.573, 1.550) |
+
+- **Where the extra 54 ms goes:**
+  - the net is called 192.6 times a decision and spends 50.4 ms there (0.26 ms a call inside the search);
+  - the linear model would have spent about 16.7 ms on as many calls;
+  - the remaining 20.5 ms is the search going elsewhere with the other evaluator.
+- **Agent string:**
+  `mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-10000.npz`.
+  It replaces only the ramp-t mirror's turn-end score; the pruning stays on.

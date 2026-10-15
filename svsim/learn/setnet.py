@@ -117,6 +117,14 @@ def _spans(offsets: np.ndarray, idx: np.ndarray):
     return np.repeat(starts - first, lens) + np.arange(int(lens.sum())), lens
 
 
+class _Printed:
+    """A card at its printed values, as tokens._pooled reads one (a CardDef behind `.defn`)."""
+    __slots__ = ("defn",)
+
+    def __init__(self, defn):
+        self.defn = defn
+
+
 def _segsum(H: np.ndarray, w: np.ndarray, seg: np.ndarray, nseg: int) -> np.ndarray:
     """sum of w_t * H_t per segment (seg sorted ascending), [nseg, d], empty segments 0."""
     cs = np.cumsum(np.concatenate([np.zeros((1, H.shape[1])), H * w[:, None]]), axis=0)
@@ -216,7 +224,7 @@ class SetNet:
             l2: float = 1e-5, patience: int = 3, seed: int = 0, decay: float = 0.5, log=print) -> dict:
         """Adam; after each epoch without a better validation log-loss the step size is multiplied by `decay`,
         and `patience` such epochs in a row stop the fit; the best epoch's weights are kept."""
-        self._table = None
+        self._table, self._pool = None, {}
         rng = np.random.default_rng(seed)
         m = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
         v = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
@@ -266,22 +274,45 @@ class SetNet:
 
     # --- one position (the search) ----------------------------------------------------------------------------
     def logit(self, state, player: int) -> float:
-        """The logit of `player` winning at turn-end position `state` (learn.tokens' moment and view)."""
-        cids, toks, glob = T.encode(state, player)
+        """The logit of `player` winning at turn-end position `state` (learn.tokens' moment and view); the same
+        number as the batch forward pass on T.encode(state, player). A pooled card (a deck, the unseen pool) is at
+        its printed values, so its phi output is a constant of the card, kept per card id: those zones' sums are
+        counts times that table."""
+        live, pools = T.live_and_pooled(state, player)
         index = self._index()
-        missing = [c for c in set(int(x) for x in cids) if c not in index]
+        missing = {r[0] for r in live if r[0] not in index}
+        for defs in pools.values():
+            missing |= {d.card_id for d in defs if d.card_id not in index}
         if missing:
-            self._add_cards(state, missing)
+            self._add_cards(state, sorted(missing))
             index = self._index()
-        cards = np.array([index[int(c)] for c in cids], dtype=np.int64)
         table = getattr(self, "_table", None)            # the first layer's static part per card, computed once
         if table is None or len(table) != len(self.card_ids):
             table = self._table = self._S() @ self.W1s + self.b1
-        H1 = np.maximum(table[cards] + dynamic(toks) @ self.W1d, 0)
-        H2 = np.maximum(H1 @ self.W2 + self.b2, 0) * toks[:, _COUNT, None]
-        P = np.zeros((NZ, H2.shape[1]))
-        np.add.at(P, toks[:, _ZONE].astype(np.int64), H2)
-        u = np.concatenate([P.reshape(-1), glob / _GLOBAL_SCALE])
+            self._pool = {}
+        P = np.zeros((NZ, self.phi[1]))
+        if live:
+            rows = np.asarray(live, dtype=np.int64)
+            cards = np.array([index[int(c)] for c in rows[:, 0]], dtype=np.int64)
+            toks = np.clip(rows[:, 1:], -32768, 32767).astype(np.int16)
+            H1 = np.maximum(table[cards] + dynamic(toks) @ self.W1d, 0)
+            H2 = np.maximum(H1 @ self.W2 + self.b2, 0)       # live tokens have count 1
+            zones = toks[:, _ZONE]
+            for z in np.unique(zones):
+                P[z] = H2[zones == z].sum(axis=0)
+        for z, defs in pools.items():
+            counts: dict = {}
+            for d in defs:
+                counts[d.card_id] = counts.get(d.card_id, 0) + 1
+            for cid, n in counts.items():
+                h = self._pool.get(cid)
+                if h is None:
+                    d = next(x for x in defs if x.card_id == cid)
+                    tok = np.asarray(T._pooled([_Printed(d)], z)[0][1:], dtype=np.int16)[None, :]
+                    h = self._pool[cid] = np.maximum(
+                        np.maximum(table[index[cid]] + dynamic(tok)[0] @ self.W1d, 0) @ self.W2 + self.b2, 0)
+                P[z] += n * h
+        u = np.concatenate([P.reshape(-1), T.globals_of(state, player) / _GLOBAL_SCALE])
         z1 = np.maximum(u @ self.V1 + self.c1, 0)
         return float(np.maximum(z1 @ self.V2 + self.c2, 0) @ self.v3 + self.c3[0])
 

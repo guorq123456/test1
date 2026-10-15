@@ -158,8 +158,26 @@ def encode(state, me: int):
     table = np.asarray(rows, dtype=np.int64).reshape(-1, len(TOKEN) + 1)
     cards = table[:, 0].astype(np.int32)
     tokens = np.clip(table[:, 1:], -32768, 32767).astype(np.int16)
+    return cards, tokens, globals_of(state, me)
+
+
+def globals_of(state, me: int) -> np.ndarray:
+    """GLOBALS of `state` seen by `me`, float32."""
+    p, o = state.players[me], state.players[1 - me]
     g = [p.leader_hp, o.leader_hp, p.leader_max_hp, o.leader_max_hp, p.pp, p.max_pp, o.max_pp, p.ep, p.sep,
          o.ep, o.sep, p.turns_taken, o.turns_taken, state.turn, len(p.deck_view()), len(o.deck_view()),
          len(p.hand), len(o.hand), float(p.bonus_ready), float(o.bonus_ready), float(state.first == me),
          p.shadows, o.shadows, p.evolutions, o.evolutions]
-    return cards, tokens, np.asarray(g, dtype=np.float32)
+    return np.asarray(g, dtype=np.float32)
+
+
+def live_and_pooled(state, me: int):
+    """The encoding in two parts, for a caller that handles pooled cards itself (learn.setnet's search path):
+    ([live token rows, card id first: hand, field, leader areas], {zone: [CardDef of every pooled card]})."""
+    p, o = state.players[me], state.players[1 - me]
+    rows = [_live(state, c, 0) for c in p.hand]
+    rows += [_live(state, c, 1) for c in p.field]
+    rows += [_live(state, c, 2) for c in p.leader_area]
+    rows += [_live(state, c, 4) for c in o.field]
+    rows += [_live(state, c, 5) for c in o.leader_area]
+    return rows, {3: [c.defn for c in p.deck_view()], 6: [c.defn for c in o.hand] + [c.defn for c in o.deck_view()]}
