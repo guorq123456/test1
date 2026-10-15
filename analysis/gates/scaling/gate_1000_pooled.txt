@@ -1,0 +1,2 @@
+/home/user/test1/analysis/gates/scaling/gate_1000.jsonl: 300 pairs, seeds 70300000..70300299, 12.3% ± 2.6% (9.8%..14.9%), CR -463 (-525..-411; steady-state -301); ms per searched decision A 81.16 / B 80.33 = 1.010
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 12.3% (9.8%..15.0%), CR -463 (-523..-409; steady-state -301)
