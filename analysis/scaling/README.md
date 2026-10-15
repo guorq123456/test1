@@ -95,6 +95,26 @@ git fetch origin ccr-165ad1e7-t2zmqu && (if not exist ..\svsim-scale git worktre
 Windows (755a0bba…96a6). Shards are disjoint, so this does not matter; a game merged from both machines would show
 up as a mismatch.
 
-## Smoke (200 games, s = 70100200)
+## Smoke (200 games, s = 70100200; 2026-10-15 17:40–17:43Z, svsim at 4d7214d)
 
-See below once run.
+`play --base 70100000 --stride 2 --shards 100 101 --per-shard 200 --workers 4` (cloud, 4 processes), then `check`
+and `encode`. Files in data/smoke/:
+- `rec-70100200.jsonl.gz`: 200 games, 295 KB, sha256 9ffa550d…a710;
+- `check.json`.
+
+| | |
+|---|---|
+| games finished | 200 / 200, g 0–199 each once, no draws |
+| **CPU seconds per game (one core)** | **3.45** (the earlier timing run, s = 7100: 3.43) |
+| wall, 4 processes | 183 s, about 3,900 games an hour |
+| first player's wins | 121 / 200 (60.5%) |
+| actions per game | 68.2 on average |
+| turn-end positions | 3,858 (19.3 a game) |
+| tokens per position | 35.5 on average, at most 43 |
+| encoding | 2.0 CPU seconds for the 200 games; tokens file 257 KB |
+| installed evaluator on these positions | Brier 0.2045, log-loss 0.5892 |
+
+- The installed evaluator's Brier and log-loss are on the smoke games, which are not part of any training set.
+- **Projections:**
+  - the cloud's k = 5–9 (5,000 games) take about 80 minutes on 4 processes;
+  - 10⁵ games are about 1.9 million turn-end positions and 140 MB of record files.
