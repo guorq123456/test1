@@ -24,7 +24,9 @@ one is kept). Part files are not merged.
 the turn, as learn.tokens.encode, with
 - result: 1 if that player won, 0 if they lost, 0.5 for a draw;
 - linear: the installed evaluator's logit there (SPEC's turn-end model, PhasedLearned.score / SCALE);
-- seed, g, i (the action index of the turn's end), turn, player, actions (the game's length).
+- seed, g, i (the action index of the turn's end), turn, player, actions (the game's length);
+- with --net PATH, net_logit: that learn.setnet net's logit there. A turn end's net value depends on the position
+  alone, so this is the number the net gave the search at that real turn end in a game played with +setnet=PATH.
 Arrays: tokens int16 [sum T, len(TOKEN)], cards int32 [sum T] (each token's card id, to look up its static row in
 cards.npz), offsets int64 [N + 1] (position n's tokens are
 tokens[offsets[n]:offsets[n + 1]]), globals float32 [N, len(GLOBALS)], and the labels. TOKDIR/cards.npz: the
@@ -207,7 +209,7 @@ def _linear(state, player: int) -> float:
     return weights.score(state, player, False) / SCALE
 
 
-def encode_game(record) -> list:
+def encode_game(record, net=None) -> list:
     """[(cards, tokens, globals, labels dict, {card id: CardDef in the position})] for every turn end of the game (module docstring)."""
     from svsim.learn import tokens as T
     from svsim.learn.netdata import ENDED, rows
@@ -220,31 +222,37 @@ def encode_game(record) -> list:
         for p in state.players:
             for c in p.hand + p.field + p.leader_area + p.deck_view():
                 defs[c.defn.card_id] = c.defn
-        out.append((cids, toks, glob_, {"result": result, "linear": _linear(state, player), "i": i, "turn": state.turn,
-                                  "player": player}, defs))
+        labels = {"result": result, "linear": _linear(state, player), "i": i, "turn": state.turn, "player": player}
+        if net is not None:                          # the net's own view of the position (it depends on nothing else)
+            labels["net_logit"] = net.logit(state, player)
+        out.append((cids, toks, glob_, labels, defs))
     return out
 
 
 def _encode_shard(job):
     import numpy as np
     from svsim.learn import tokens as T
-    path, target, spec = job
+    path, target, spec, net_path = job
     _EVAL["spec"] = spec
+    net = None
+    if net_path:
+        from svsim.learn.setnet import load_cached
+        net = load_cached(net_path)
     cids, toks, offs, globs = [], [], [0], []
-    lab = {k: [] for k in ("result", "linear", "seed", "g", "i", "turn", "player", "actions")}
+    lab = {k: [] for k in ("result", "linear", "seed", "g", "i", "turn", "player", "actions", "net_logit")}
     cards = {}
     t0 = time.process_time()
     games = 0
     for record in _records(path):
         games += 1
         deal = record["seed"]
-        for c, t, g, d, defs in encode_game(record):
+        for c, t, g, d, defs in encode_game(record, net):
             cards.update(defs)
             cids.append(c)
             toks.append(t)
             offs.append(offs[-1] + len(t))
             globs.append(g)
-            for k in ("result", "linear", "i", "turn", "player"):
+            for k in ("result", "linear", "i", "turn", "player") + (("net_logit",) if net is not None else ()):
                 lab[k].append(d[k])
             lab["seed"].append(deal // 100003)
             lab["g"].append(record["g"])
@@ -253,6 +261,8 @@ def _encode_shard(job):
               "cards": np.concatenate(cids) if cids else np.zeros(0, np.int32),
               "offsets": np.asarray(offs, np.int64), "globals": np.stack(globs).astype(np.float32),
               "result": np.asarray(lab["result"], np.float32), "linear": np.asarray(lab["linear"], np.float32)}
+    if net is not None:
+        arrays["net_logit"] = np.asarray(lab["net_logit"], np.float32)
     for k in ("seed", "g", "i", "turn", "player", "actions"):
         arrays[k] = np.asarray(lab[k], np.int32)
     ids = sorted(cards)
@@ -275,7 +285,7 @@ def encode_main(args) -> None:
         seed = os.path.basename(path)[len("rec-"):-len(".jsonl.gz")]
         target = out / f"tok-{seed}.npz"
         if not target.exists():
-            jobs.append((path, target, args.spec))
+            jobs.append((path, target, args.spec, args.net))
     print(json.dumps({"shards_to_encode": len(jobs)}), flush=True)
     with Pool(args.workers) as pool:
         for target, games, n, cpu in pool.imap_unordered(_encode_shard, jobs):
@@ -308,7 +318,7 @@ def main() -> None:
     p.add_argument("--per-shard", type=int, default=1000)
     p.add_argument("--deck", default="ramp-t", choices=sorted(DECKS))
     p.add_argument("--opponent", default="ramp-t", choices=sorted(DECKS))
-    p.add_argument("--spec", default=SPEC)
+    p.add_argument("--spec", "--agent", dest="spec", default=SPEC, help="the agent on both sides (default v2skx)")
     p.add_argument("--workers", type=int, default=4)
     p.add_argument("--every", type=int, default=50, help="print progress every this many games")
     p.add_argument("--out", required=True)
@@ -317,6 +327,7 @@ def main() -> None:
     e.add_argument("--out", required=True)
     e.add_argument("--spec", default=SPEC, help="the agent whose turn-end model gives the 'linear' label")
     e.add_argument("--workers", type=int, default=4)
+    e.add_argument("--net", default=None, help="a learn.setnet net: its logit at every turn end too (net_logit)")
     m = sub.add_parser("merge")
     m.add_argument("--inputs", nargs="+", required=True)
     m.add_argument("--out", required=True)

@@ -94,7 +94,7 @@ def test_play_resume_merge_encode(tmp_path):
     assert sorted(p.name for p in merged.glob("rec-*.jsonl.gz")) == ["rec-61000.jsonl.gz", "rec-61001.jsonl.gz"]
     assert len(list(SD._records(merged / "rec-61001.jsonl.gz"))) == 2
     tok = tmp_path / "tok"
-    SD.encode_main(Namespace(records=str(merged), out=str(tok), spec=SD.SPEC, workers=1))
+    SD.encode_main(Namespace(records=str(merged), out=str(tok), spec=SD.SPEC, workers=1, net=None))
     z, c = np.load(tok / "tok-61000.npz"), np.load(tok / "cards.npz")
     n = len(z["result"])
     assert n > 0 and z["offsets"].shape == (n + 1,) and z["offsets"][-1] == len(z["tokens"]) == len(z["cards"])
