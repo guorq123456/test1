@@ -1,0 +1,973 @@
+﻿{
+ "shards": [
+  {
+   "file": "rec-70100020.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 572,
+   "draws": 0,
+   "cpu_s_per_game": 3.63,
+   "actions_mean": 66.4
+  },
+  {
+   "file": "rec-70100022.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 615,
+   "draws": 0,
+   "cpu_s_per_game": 3.61,
+   "actions_mean": 66.1
+  },
+  {
+   "file": "rec-70100024.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 628,
+   "draws": 0,
+   "cpu_s_per_game": 3.55,
+   "actions_mean": 66.9
+  },
+  {
+   "file": "rec-70100026.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 627,
+   "draws": 0,
+   "cpu_s_per_game": 2.65,
+   "actions_mean": 66.2
+  },
+  {
+   "file": "rec-70100028.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 621,
+   "draws": 0,
+   "cpu_s_per_game": 2.65,
+   "actions_mean": 65.7
+  },
+  {
+   "file": "rec-70100030.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 611,
+   "draws": 0,
+   "cpu_s_per_game": 2.63,
+   "actions_mean": 65.6
+  },
+  {
+   "file": "rec-70100032.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 593,
+   "draws": 0,
+   "cpu_s_per_game": 2.62,
+   "actions_mean": 65.5
+  },
+  {
+   "file": "rec-70100034.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 606,
+   "draws": 0,
+   "cpu_s_per_game": 2.69,
+   "actions_mean": 67.3
+  },
+  {
+   "file": "rec-70100036.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 649,
+   "draws": 0,
+   "cpu_s_per_game": 2.55,
+   "actions_mean": 64.8
+  },
+  {
+   "file": "rec-70100038.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 628,
+   "draws": 0,
+   "cpu_s_per_game": 2.63,
+   "actions_mean": 65.4
+  },
+  {
+   "file": "rec-70100040.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 589,
+   "draws": 0,
+   "cpu_s_per_game": 2.61,
+   "actions_mean": 66.1
+  },
+  {
+   "file": "rec-70100042.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 614,
+   "draws": 0,
+   "cpu_s_per_game": 2.67,
+   "actions_mean": 66.2
+  },
+  {
+   "file": "rec-70100044.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 634,
+   "draws": 0,
+   "cpu_s_per_game": 2.56,
+   "actions_mean": 65.6
+  },
+  {
+   "file": "rec-70100046.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 631,
+   "draws": 0,
+   "cpu_s_per_game": 2.61,
+   "actions_mean": 66.0
+  },
+  {
+   "file": "rec-70100048.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 615,
+   "draws": 0,
+   "cpu_s_per_game": 2.51,
+   "actions_mean": 64.5
+  },
+  {
+   "file": "rec-70100050.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 637,
+   "draws": 0,
+   "cpu_s_per_game": 2.59,
+   "actions_mean": 66.0
+  },
+  {
+   "file": "rec-70100052.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 613,
+   "draws": 0,
+   "cpu_s_per_game": 2.56,
+   "actions_mean": 65.0
+  },
+  {
+   "file": "rec-70100054.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 637,
+   "draws": 0,
+   "cpu_s_per_game": 2.58,
+   "actions_mean": 65.4
+  },
+  {
+   "file": "rec-70100056.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 611,
+   "draws": 0,
+   "cpu_s_per_game": 2.54,
+   "actions_mean": 65.0
+  },
+  {
+   "file": "rec-70100058.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 603,
+   "draws": 0,
+   "cpu_s_per_game": 2.63,
+   "actions_mean": 66.6
+  },
+  {
+   "file": "rec-70100060.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 619,
+   "draws": 0,
+   "cpu_s_per_game": 2.57,
+   "actions_mean": 65.2
+  },
+  {
+   "file": "rec-70100062.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 631,
+   "draws": 0,
+   "cpu_s_per_game": 2.6,
+   "actions_mean": 66.0
+  },
+  {
+   "file": "rec-70100064.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 609,
+   "draws": 0,
+   "cpu_s_per_game": 2.64,
+   "actions_mean": 66.0
+  },
+  {
+   "file": "rec-70100066.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 622,
+   "draws": 0,
+   "cpu_s_per_game": 2.58,
+   "actions_mean": 65.7
+  },
+  {
+   "file": "rec-70100068.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 621,
+   "draws": 0,
+   "cpu_s_per_game": 2.6,
+   "actions_mean": 65.3
+  },
+  {
+   "file": "rec-70100070.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 632,
+   "draws": 0,
+   "cpu_s_per_game": 2.63,
+   "actions_mean": 66.3
+  },
+  {
+   "file": "rec-70100072.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 629,
+   "draws": 0,
+   "cpu_s_per_game": 2.54,
+   "actions_mean": 64.2
+  },
+  {
+   "file": "rec-70100074.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 596,
+   "draws": 0,
+   "cpu_s_per_game": 2.56,
+   "actions_mean": 65.2
+  },
+  {
+   "file": "rec-70100076.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 614,
+   "draws": 0,
+   "cpu_s_per_game": 2.61,
+   "actions_mean": 65.9
+  },
+  {
+   "file": "rec-70100078.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 618,
+   "draws": 0,
+   "cpu_s_per_game": 2.61,
+   "actions_mean": 66.5
+  },
+  {
+   "file": "rec-70100080.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 631,
+   "draws": 0,
+   "cpu_s_per_game": 2.66,
+   "actions_mean": 66.6
+  },
+  {
+   "file": "rec-70100082.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 596,
+   "draws": 0,
+   "cpu_s_per_game": 2.56,
+   "actions_mean": 65.5
+  },
+  {
+   "file": "rec-70100084.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 643,
+   "draws": 0,
+   "cpu_s_per_game": 2.53,
+   "actions_mean": 64.9
+  },
+  {
+   "file": "rec-70100086.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 595,
+   "draws": 0,
+   "cpu_s_per_game": 2.6,
+   "actions_mean": 65.9
+  },
+  {
+   "file": "rec-70100088.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 605,
+   "draws": 0,
+   "cpu_s_per_game": 2.6,
+   "actions_mean": 66.1
+  },
+  {
+   "file": "rec-70100090.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 596,
+   "draws": 0,
+   "cpu_s_per_game": 2.53,
+   "actions_mean": 64.3
+  },
+  {
+   "file": "rec-70100092.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 600,
+   "draws": 0,
+   "cpu_s_per_game": 2.58,
+   "actions_mean": 65.5
+  },
+  {
+   "file": "rec-70100094.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 616,
+   "draws": 0,
+   "cpu_s_per_game": 2.64,
+   "actions_mean": 66.5
+  },
+  {
+   "file": "rec-70100096.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 616,
+   "draws": 0,
+   "cpu_s_per_game": 2.55,
+   "actions_mean": 65.1
+  },
+  {
+   "file": "rec-70100098.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 602,
+   "draws": 0,
+   "cpu_s_per_game": 2.63,
+   "actions_mean": 65.7
+  },
+  {
+   "file": "rec-70100100.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 613,
+   "draws": 0,
+   "cpu_s_per_game": 2.58,
+   "actions_mean": 66.1
+  },
+  {
+   "file": "rec-70100102.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 614,
+   "draws": 0,
+   "cpu_s_per_game": 2.54,
+   "actions_mean": 64.8
+  },
+  {
+   "file": "rec-70100104.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 629,
+   "draws": 0,
+   "cpu_s_per_game": 2.64,
+   "actions_mean": 67.3
+  },
+  {
+   "file": "rec-70100106.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 624,
+   "draws": 0,
+   "cpu_s_per_game": 2.55,
+   "actions_mean": 65.1
+  },
+  {
+   "file": "rec-70100108.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 607,
+   "draws": 0,
+   "cpu_s_per_game": 2.56,
+   "actions_mean": 65.6
+  },
+  {
+   "file": "rec-70100110.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 609,
+   "draws": 0,
+   "cpu_s_per_game": 2.61,
+   "actions_mean": 66.9
+  },
+  {
+   "file": "rec-70100112.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 618,
+   "draws": 0,
+   "cpu_s_per_game": 2.56,
+   "actions_mean": 65.6
+  },
+  {
+   "file": "rec-70100114.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 581,
+   "draws": 0,
+   "cpu_s_per_game": 2.58,
+   "actions_mean": 66.1
+  },
+  {
+   "file": "rec-70100116.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 634,
+   "draws": 0,
+   "cpu_s_per_game": 2.47,
+   "actions_mean": 63.6
+  },
+  {
+   "file": "rec-70100118.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 605,
+   "draws": 0,
+   "cpu_s_per_game": 2.56,
+   "actions_mean": 66.2
+  },
+  {
+   "file": "rec-70100120.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 578,
+   "draws": 0,
+   "cpu_s_per_game": 2.55,
+   "actions_mean": 65.5
+  },
+  {
+   "file": "rec-70100122.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 623,
+   "draws": 0,
+   "cpu_s_per_game": 2.58,
+   "actions_mean": 66.4
+  },
+  {
+   "file": "rec-70100124.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 607,
+   "draws": 0,
+   "cpu_s_per_game": 2.62,
+   "actions_mean": 66.8
+  },
+  {
+   "file": "rec-70100126.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 600,
+   "draws": 0,
+   "cpu_s_per_game": 2.53,
+   "actions_mean": 65.5
+  },
+  {
+   "file": "rec-70100128.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 631,
+   "draws": 0,
+   "cpu_s_per_game": 2.51,
+   "actions_mean": 65.1
+  },
+  {
+   "file": "rec-70100130.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 612,
+   "draws": 0,
+   "cpu_s_per_game": 2.6,
+   "actions_mean": 66.6
+  },
+  {
+   "file": "rec-70100132.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 615,
+   "draws": 0,
+   "cpu_s_per_game": 2.53,
+   "actions_mean": 64.9
+  },
+  {
+   "file": "rec-70100134.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 603,
+   "draws": 0,
+   "cpu_s_per_game": 2.53,
+   "actions_mean": 65.4
+  },
+  {
+   "file": "rec-70100136.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 614,
+   "draws": 0,
+   "cpu_s_per_game": 2.59,
+   "actions_mean": 66.2
+  },
+  {
+   "file": "rec-70100138.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 613,
+   "draws": 0,
+   "cpu_s_per_game": 2.58,
+   "actions_mean": 66.4
+  },
+  {
+   "file": "rec-70100140.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 611,
+   "draws": 0,
+   "cpu_s_per_game": 2.53,
+   "actions_mean": 65.6
+  },
+  {
+   "file": "rec-70100142.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 611,
+   "draws": 0,
+   "cpu_s_per_game": 2.59,
+   "actions_mean": 66.2
+  },
+  {
+   "file": "rec-70100144.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 599,
+   "draws": 0,
+   "cpu_s_per_game": 2.61,
+   "actions_mean": 65.8
+  },
+  {
+   "file": "rec-70100146.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 610,
+   "draws": 0,
+   "cpu_s_per_game": 2.62,
+   "actions_mean": 66.3
+  },
+  {
+   "file": "rec-70100148.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 617,
+   "draws": 0,
+   "cpu_s_per_game": 2.54,
+   "actions_mean": 65.0
+  },
+  {
+   "file": "rec-70100150.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 617,
+   "draws": 0,
+   "cpu_s_per_game": 2.56,
+   "actions_mean": 66.1
+  },
+  {
+   "file": "rec-70100152.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 602,
+   "draws": 0,
+   "cpu_s_per_game": 2.53,
+   "actions_mean": 65.9
+  },
+  {
+   "file": "rec-70100154.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 615,
+   "draws": 0,
+   "cpu_s_per_game": 2.59,
+   "actions_mean": 66.0
+  },
+  {
+   "file": "rec-70100156.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 618,
+   "draws": 0,
+   "cpu_s_per_game": 2.5,
+   "actions_mean": 65.0
+  },
+  {
+   "file": "rec-70100158.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 635,
+   "draws": 0,
+   "cpu_s_per_game": 2.53,
+   "actions_mean": 65.3
+  },
+  {
+   "file": "rec-70100160.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 630,
+   "draws": 0,
+   "cpu_s_per_game": 2.53,
+   "actions_mean": 65.9
+  },
+  {
+   "file": "rec-70100162.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 632,
+   "draws": 0,
+   "cpu_s_per_game": 2.5,
+   "actions_mean": 64.9
+  },
+  {
+   "file": "rec-70100164.jsonl.gz",
+   "games": 1000,
+   "g_unique": 1000,
+   "g_range": [
+    0,
+    999
+   ],
+   "first_seat_wins": 593,
+   "draws": 0,
+   "cpu_s_per_game": 2.46,
+   "actions_mean": 64.6
+  }
+ ],
+ "games": 73000,
+ "open_parts": [
+  "rec-70100166.part.jsonl",
+  "rec-70100168.part.jsonl",
+  "rec-70100170.part.jsonl",
+  "rec-70100172.part.jsonl",
+  "rec-70100174.part.jsonl",
+  "rec-70100176.part.jsonl",
+  "rec-70100178.part.jsonl",
+  "rec-70100180.part.jsonl",
+  "rec-70100182.part.jsonl",
+  "rec-70100184.part.jsonl",
+  "rec-70100186.part.jsonl",
+  "rec-70100188.part.jsonl",
+  "rec-70100190.part.jsonl",
+  "rec-70100192.part.jsonl",
+  "rec-70100194.part.jsonl",
+  "rec-70100196.part.jsonl",
+  "rec-70100198.part.jsonl"
+ ]
+}
