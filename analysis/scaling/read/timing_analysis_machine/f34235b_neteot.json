@@ -1,0 +1,43 @@
+{
+ "turn_end_positions": 394,
+ "per_evaluation_ms": {
+  "installed_linear": 0.0489,
+  "net": 0.1111
+ },
+ "net_over_linear": 2.27,
+ "decisions": 120,
+ "per_decision_ms": {
+  "v2skx": 106.0,
+  "v2skx+setnet": 152.3
+ },
+ "decision_ratio": 1.437,
+ "ratio_by_round": [
+  1.44,
+  1.417,
+  1.456,
+  1.437,
+  1.433
+ ],
+ "ms_by_round": {
+  "v2skx": [
+   109.6,
+   104.7,
+   104.8,
+   104.6,
+   106.3
+  ],
+  "v2skx+setnet": [
+   157.9,
+   148.3,
+   152.6,
+   150.3,
+   152.4
+  ]
+ },
+ "net_calls_per_decision": 192.5,
+ "net_ms_per_decision": 43.0,
+ "linear_ms_saved_per_decision": 9.4,
+ "rest_of_difference_ms": 12.7,
+ "net": "analysis/scaling/models/net-10000.npz",
+ "options": "+neteot"
+}
