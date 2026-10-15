@@ -1,0 +1,44 @@
+{
+ "size": 20000,
+ "name": "gen2",
+ "phi": [
+  64,
+  64
+ ],
+ "rho": [
+  128,
+  64
+ ],
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "fit_s": 1636,
+ "epochs": 21,
+ "train": {
+  "brier": 0.18816,
+  "log_loss": 0.54886,
+  "n": 350834
+ },
+ "valid": {
+  "brier": 0.18325,
+  "log_loss": 0.5383,
+  "n": 18249
+ },
+ "train_installed_linear": {
+  "brier": 0.20338,
+  "log_loss": 0.58872,
+  "n": 350834
+ },
+ "holdout": {
+  "brier": 0.19004,
+  "log_loss": 0.55448,
+  "n": 93787
+ },
+ "holdout_installed_linear": {
+  "brier": 0.2038,
+  "log_loss": 0.58936,
+  "n": 93787
+ }
+}
