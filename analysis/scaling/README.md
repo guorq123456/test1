@@ -41,6 +41,21 @@
 - 下一个空位 **70600000**。
 - 自对弈和留出用哪套卡组、哪个智能体、探索多少，由建造线的记录器定，开跑前补写在这里。
 
+**建造线补的设置**（10-15 17:41Z，数据前；建造线 4d7214d，代码 8d6d7ce 起：`svsim/learn/scaledata.py`、`tokens.py`）
+- **记录器**：`python -m svsim.learn.scaledata play --base 70100000 --stride 2 --shards <起> <止> --out <目录>`，种子派生就是 netdata.play 的原式，先后手 g % 2。
+  - 每局写完就追加到 `rec-<s>.part.jsonl`，一片满 1000 局压成 `rec-<s>.jsonl.gz`。断了用原命令再跑，会跳过已完成的片和局。
+  - 合并 `merge` 逐局去重核对：同一个 (s, g) 除 date / cpu 外必须一致。
+- **卡组、智能体、探索**：ramp-t 对 ramp-t；两边都是 v2skx `mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost`；探索率 0。
+  - 在 ramp-t 镜像上 v2skx 读的回合末模型就是现装的 `ramp-t-ramp-t-ended.json`（87 列），所以这里 v2skx 和 v2s 只差剪枝。
+  - 记录里的 `linear` 标签就是这份模型的 logit。
+- **留出 5000 局**：`--base 70200000 --shards 0 1 --per-shard 5000`，即 s = 70200000、g = 0～4999。
+- **线性重拟**（初定，第 2 步定稿时再确认）：和现装同配方。
+  - 87 个特征（版本 2 + hand、hpphase），只拟回合末；
+  - 目标是终局胜负（q_weight 0），logistic 损失，`learn.fit` 默认 l2 = 1e-3（偏置不加）；
+  - 用同样的三档训练局。
+- **三档网络的智能体串和毫秒比**：第 3 步做完才有，写法是 v2skx 后面加一个只换回合末评估的标志，开门前补写。
+- **测速**（临时种子 7100，不计入）：单核每局 3.43 秒，每局约 15 个回合末，一片 1000 局压缩后约 1.4 MB。
+
 ## 2. 留出误差（开跑前写死）
 
 - **局面**：留出 5000 局里的每个回合末。即该回合 EndTurn 之前的局面补上 `after_end_of_turn`；视角是刚结束回合的那一方。
