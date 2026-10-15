@@ -174,3 +174,12 @@
   - 线性从 10³ 到 10⁴ 只涨 +0.0009，已经接近饱和；网络涨了 +0.0348。这正是加报第 2 条要看的：差距随数据扩大，而且线性没跟着涨，指向缺表达力而不是缺数据。10⁵ 出来再看这一行有没有继续变大。
   - 分段：三个回合段网络 10⁴ 都最好，第 11 回合起差得最多（0.1650 对线性 10⁴ 的 0.1712）。
 - J90（skill(10⁵) ≥ 1.10 × skill(10⁴)）等 10⁵ 档。
+
+## J91 / J92 的门：N₀ 和代码（10-15 20:4xZ，在门的任何对局之前）
+
+- svsim 建造线 **7bb466d**（相对 4d7214d 多了 `svsim/learn/setnet.py`、`tokens.py` 小改、`arena.py` 加 `+setnet=`）；网络文件 `analysis/scaling/models/net-1000.npz`（sha256 989fa1c6…）、`net-10000.npz`（6257b666…）。
+- **N₀ = round(200 ÷ 1.557) = 128**：1.557 是建造线在空闲机器上、单进程量的整步毫秒比（`data/timing.json`，三轮 1.547 / 1.573 / 1.550）。
+- J91：A = `mcts:N+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-1000.npz`。
+- J92：同上，`net-10000.npz`。
+- B（两道都是）= `mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost`。
+- 各自先跑 20 对复核（J91 70399000～019，J92 70499000～019），在 0.97～1.03 之外修一次 N = round(128 ÷ 比值)。两道门各按自己的复核定 N。
