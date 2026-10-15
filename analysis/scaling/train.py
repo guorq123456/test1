@@ -93,8 +93,9 @@ def net_main(args) -> None:
     net.set_cards(data.card_ids, data.static, np.bincount(train.cards, minlength=len(data.card_ids)) + 1)
     t0 = time.time()
     net.fit(train, valid, epochs=args.epochs, batch=args.batch, lr=args.lr, l2=args.l2, patience=args.patience,
-            seed=args.seed)
-    report = {"size": args.size, "phi": list(args.phi), "rho": list(args.rho), "lr": args.lr, "l2": args.l2,
+            seed=args.seed, decay=args.decay)
+    report = {"size": args.size, "phi": list(args.phi), "rho": list(args.rho), "lr": args.lr, "decay": args.decay,
+              "patience": args.patience, "l2": args.l2,
               "batch": args.batch, "fit_s": round(time.time() - t0), "epochs": len(net.info["history"]),
               "train": score(net.predict(train), train.result), "valid": score(net.predict(valid), valid.result),
               "train_installed_linear": score(1 / (1 + np.exp(-train.linear)), train.result)}
@@ -271,6 +272,7 @@ def main() -> None:
     n.add_argument("--rho", type=int, nargs=2, default=(128, 64))
     n.add_argument("--epochs", type=int, default=60)
     n.add_argument("--patience", type=int, default=4)
+    n.add_argument("--decay", type=float, default=0.5, help="step size factor after an epoch without improvement")
     n.add_argument("--batch", type=int, default=256)
     n.add_argument("--lr", type=float, default=1e-3)
     n.add_argument("--l2", type=float, default=1e-5)

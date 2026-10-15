@@ -213,7 +213,9 @@ class SetNet:
 
     # --- training ---------------------------------------------------------------------------------------------
     def fit(self, data: Data, valid: Data | None = None, epochs: int = 30, batch: int = 256, lr: float = 1e-3,
-            l2: float = 1e-5, patience: int = 3, seed: int = 0, log=print) -> dict:
+            l2: float = 1e-5, patience: int = 3, seed: int = 0, decay: float = 0.5, log=print) -> dict:
+        """Adam; after each epoch without a better validation log-loss the step size is multiplied by `decay`,
+        and `patience` such epochs in a row stop the fit; the best epoch's weights are kept."""
         self._table = None
         rng = np.random.default_rng(seed)
         m = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
@@ -234,7 +236,7 @@ class SetNet:
                     v[k] = 0.999 * v[k] + 0.001 * g[k] ** 2
                     step = lr * (m[k] / (1 - 0.9 ** t)) / (np.sqrt(v[k] / (1 - 0.999 ** t)) + 1e-8)
                     setattr(self, k, getattr(self, k) - step)
-            row = {"epoch": epoch + 1, "train_bce": round(total / data.n, 5), "s": round(time.time() - t0, 1)}
+            row = {"epoch": epoch + 1, "lr": lr, "train_bce": round(total / data.n, 5), "s": round(time.time() - t0, 1)}
             if valid is not None:
                 sc = score(self.predict(valid), valid.result)
                 row.update({f"valid_{k}": v_ for k, v_ in sc.items()})
@@ -244,6 +246,7 @@ class SetNet:
                     row["best"] = True
                 else:
                     bad += 1
+                    lr *= decay
             history.append(row)
             log(json.dumps(row))
             if valid is not None and bad >= patience:

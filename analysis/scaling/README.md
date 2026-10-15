@@ -119,3 +119,28 @@ and `encode`. Files in data/smoke/:
 - **Projections:**
   - the cloud's k = 5–9 (5,000 games) take about 80 minutes on 4 processes;
   - 10⁵ games are about 1.9 million turn-end positions and 140 MB of record files.
+
+## Step 2: the net's training settings, fixed before any official size is trained
+
+**Fixed settings** (`analysis/scaling/train.py net`, learn.setnet), the same for 10³, 10⁴ and 10⁵:
+- **Shape:** phi 64-64, rho 128-64.
+- **Optimizer:** Adam, step 1e-3, batch 256 positions, l2 1e-5.
+- **Step size and stopping:** the step size halves after each epoch whose validation log-loss is not better; 4 such
+  epochs in a row stop the fit (at most 60 epochs); the best epoch's weights are kept.
+- **Validation part:** 1 game in 20 of the size's own games (key seed × 100003 + g, key % 20 == 0); the holdout
+  is never used for any choice.
+- **Threads:** single-threaded BLAS.
+
+**How these were chosen** (a pilot on shards k = 5–9, 5000 games, which are inside the 10⁴ and 10⁵ sets; no
+holdout game used):
+- The validation part is 4710 positions. "Smoke" is the 200 smoke games (s = 70100200), which are in no set.
+
+| | training part Brier | validation part Brier | smoke Brier | epochs |
+|---|---|---|---|---|
+| net, constant step 1e-3 | 0.1960 | 0.1953 | 0.1992 | 13 |
+| **net, step halved on no improvement (kept)** | **0.1920** | **0.1956** | **0.1967** | 19 |
+| installed linear model | 0.2029 | 0.2016 | 0.2045 | – |
+
+- About 15 seconds an epoch for 88,000 positions while 4 self-play processes share the 4 cores, so about 5 minutes
+  an epoch at 10⁵.
+- The training and validation losses are close, so the net is not overfitting at 5000 games.
