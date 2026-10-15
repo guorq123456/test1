@@ -63,11 +63,10 @@ class Data:
         self.card_ids = c["card_id"].astype(np.int64)
         self.static = c["static"].astype(np.float32)
         self.static_names = [str(s) for s in c["static_names"]]
-        index = {int(cid): i for i, cid in enumerate(self.card_ids)}
         toks, cards, glob, lab = [], [], [], {k: [] for k in ("result", "linear", "seed", "g", "turn")}
         for z in parts:
             toks.append(z["tokens"])
-            cards.append(np.array([index[int(x)] for x in z["cards"]], dtype=np.int32))
+            cards.append(np.searchsorted(self.card_ids, z["cards"].astype(np.int64)).astype(np.int32))
             glob.append(z["globals"])
             for k in lab:
                 lab[k].append(z[k])
@@ -92,9 +91,7 @@ class Data:
         out = object.__new__(Data)
         out.card_ids, out.static, out.static_names = self.card_ids, self.static, self.static_names
         idx = np.flatnonzero(mask)
-        lens = self.offsets[idx + 1] - self.offsets[idx]
-        take = np.concatenate([np.arange(self.offsets[i], self.offsets[i + 1]) for i in idx]) if len(idx) else \
-            np.zeros(0, np.int64)
+        take, lens = _spans(self.offsets, idx)
         out.tokens, out.cards = self.tokens[take], self.cards[take]
         out.offsets = np.concatenate([[0], np.cumsum(lens)]).astype(np.int64)
         out.globals = self.globals[idx]
@@ -105,13 +102,19 @@ class Data:
 
     def batch(self, idx: np.ndarray):
         """(card index [T], dynamic [T, D], count [T], segment [T] = position-in-batch * NZ + zone, globals [B, G])."""
-        starts, ends = self.offsets[idx], self.offsets[idx + 1]
-        lens = ends - starts
-        take = np.repeat(starts - np.concatenate([[0], np.cumsum(lens)[:-1]]), lens) + np.arange(lens.sum())
+        take, lens = _spans(self.offsets, idx)
         tok = self.tokens[take]
         pos = np.repeat(np.arange(len(idx)), lens)
         seg = pos * NZ + tok[:, _ZONE].astype(np.int64)
         return self.cards[take], dynamic(tok), tok[:, _COUNT].astype(np.float32), seg, self.globals[idx]
+
+
+def _spans(offsets: np.ndarray, idx: np.ndarray):
+    """(the token indices of positions idx, in order; each position's token count)."""
+    starts = offsets[idx]
+    lens = offsets[idx + 1] - starts
+    first = np.concatenate([[0], np.cumsum(lens)[:-1]]).astype(np.int64)
+    return np.repeat(starts - first, lens) + np.arange(int(lens.sum())), lens
 
 
 def _segsum(H: np.ndarray, w: np.ndarray, seg: np.ndarray, nseg: int) -> np.ndarray:
@@ -200,9 +203,9 @@ class SetNet:
         g["W2"], g["b2"] = H1.T @ dH2, dH2.sum(0)
         dA1 = (dH2 @ self.W2.T) * (H1 > 0)
         g["W1d"], g["b1"] = dyn.T @ dA1, dA1.sum(0)
-        per_card = np.zeros((len(S), dA1.shape[1]))
-        np.add.at(per_card, cards, dA1)
-        g["W1s"] = S.T @ per_card
+        onehot = np.zeros((len(S), len(cards)))
+        onehot[cards, np.arange(len(cards))] = 1.0
+        g["W1s"] = S.T @ (onehot @ dA1)
         if l2:
             for k in ("W1s", "W1d", "W2", "V1", "V2", "v3"):
                 g[k] = g[k] + 2 * l2 * getattr(self, k)
