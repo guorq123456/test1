@@ -1,0 +1,5 @@
+300 对（600 局）：A 得分 46.0% ± 3.2%（95% 区间 42.8%～49.2%），CR 分差约 -38（-69～-7；游戏稳态公式 -32，-58～-6，窗口内），LLR -12.18（判定线 -2.94 / 2.94）→ H0（没有变强）
+按真实先后手：A 先手 300 局 60.3% ± 5.5%；A 后手 300 局 31.7% ± 5.3%
+两局着法完全一样的对：5 / 300（2%）
+/tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/scalegates/diag_d2.jsonl: 300 pairs, seeds 70700000..70700299, 46.0% ± 3.2% (42.8%..49.2%), CR -38 (-69..-7; steady-state -32); ms per searched decision A 58.11 / B 78.06 = 0.744
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 46.0% (42.8%..49.3%), CR -38 (-68..-6; steady-state -32)
