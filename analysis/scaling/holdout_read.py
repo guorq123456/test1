@@ -2,12 +2,14 @@
 log-loss and skill = Brier(0.5) - Brier(model); differences in skill (tier to tier, net - linear refit, against the
 installed evaluator); 95% intervals from 2000 resamples of whole held-out games (numpy default_rng(0)), every
 difference paired on the same resample; turn buckets by the turn just ended (1-5, 6-10, 11+).
+`--wide` adds the secondary rows (README, the twice-as-wide net): wide - fixed net and wide - linear refit per tier,
+wide tier to tier, and the wide skill ratio (described, not judged).
 The installed evaluator's probability is recalibrated as pre-registered: p = sigma(a * logit + b), a and b fitted by
 1-D logistic regression on 10^4 training turn ends (`--calib` rows from installed_logits.py).
 Condition: the opponent's deck list is known (order and hand not).
 
     python3 holdout_read.py --linear holdout-linear.npz --net 1000=holdout-net-1000.npz 10000=holdout-net-10000.npz \
-        --calib train_k0_logits.jsonl --out read.txt
+        --calib train_k0_logits.jsonl --out read.txt [--wide 10000=holdout-net-wide-10000.npz ...]
 """
 import argparse
 import json
@@ -34,6 +36,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--linear", required=True)
     ap.add_argument("--net", nargs="+", required=True, help="SIZE=path")
+    ap.add_argument("--wide", nargs="*", default=[], help="SIZE=path (secondary rows)")
     ap.add_argument("--calib", required=True)
     ap.add_argument("--boot", type=int, default=2000)
     ap.add_argument("--out", required=True)
@@ -45,14 +48,15 @@ def main():
     P = {}
     for j, m in enumerate(names):
         P["installed (raw)" if m == "installed" else m.replace("lin-", "linear ")] = lin["p"][:, j].astype(np.float64)
-    sizes = []
-    for spec in args.net:
-        size, path = spec.split("=")
-        d = np.load(path, allow_pickle=True)
-        assert (d["seed"].astype(np.int64) == seed).all() and (d["g"] == g).all() and (d["turn"] == turn).all() \
-            and (d["result"] == lin["result"]).all(), f"{path} not aligned"
-        P[f"net {size}"] = d["p"].astype(np.float64)
-        sizes.append(size)
+    sizes, wides = [], []
+    for kind, specs, into in (("net", args.net, sizes), ("wide", args.wide, wides)):
+        for spec in specs:
+            size, path = spec.split("=")
+            d = np.load(path, allow_pickle=True)
+            assert (d["seed"].astype(np.int64) == seed).all() and (d["g"] == g).all() and (d["turn"] == turn).all() \
+                and (d["result"] == lin["result"]).all(), f"{path} not aligned"
+            P[f"{kind} {size}"] = d["p"].astype(np.float64)
+            into.append(size)
 
     cal = [json.loads(l) for l in open(args.calib, encoding="utf-8") if l.strip()]
     cx = np.array([r["x"] for r in cal])
@@ -70,7 +74,8 @@ def main():
     def per_game(v):
         return np.bincount(gi, weights=v, minlength=G)
 
-    order = ["installed (raw)", "installed (calibrated)"] + [f"linear {s}" for s in sizes] + [f"net {s}" for s in sizes]
+    order = (["installed (raw)", "installed (calibrated)"] + [f"linear {s}" for s in sizes] + [f"net {s}" for s in sizes]
+             + [f"wide {s}" for s in wides])
     order = [m for m in order if m in P]
     E, L = {}, {}
     for m in order:
@@ -112,6 +117,11 @@ def main():
     for s in sizes:
         pairs.append((f"net {s}", "installed (calibrated)"))
     pairs.append((f"linear {sizes[-1]}", "installed (calibrated)"))
+    for i in range(1, len(wides)):
+        pairs.append((f"wide {wides[i]}", f"wide {wides[i-1]}"))
+    for s in wides:
+        pairs.append((f"wide {s}", f"net {s}"))
+        pairs.append((f"wide {s}", f"linear {s}"))
     for x1, x2 in pairs:
         d_pt = skill_pt[x1] - skill_pt[x2]
         lo, hi = ci(skill_bs[x1] - skill_bs[x2])
@@ -121,6 +131,11 @@ def main():
         r_pt = skill_pt[f"net {s2}"] / skill_pt[f"net {s1}"]
         lo, hi = ci(skill_bs[f"net {s2}"] / skill_bs[f"net {s1}"])
         out += ["", f"- skill(net {s2}) ÷ skill(net {s1}) = **{r_pt:.3f}**（{lo:.3f}～{hi:.3f}）"]
+    if len(wides) >= 2:
+        s1, s2 = wides[-2], wides[-1]
+        r_pt = skill_pt[f"wide {s2}"] / skill_pt[f"wide {s1}"]
+        lo, hi = ci(skill_bs[f"wide {s2}"] / skill_bs[f"wide {s1}"])
+        out += [f"- 次要行，只描述：skill(wide {s2}) ÷ skill(wide {s1}) = {r_pt:.3f}（{lo:.3f}～{hi:.3f}）"]
     out += ["", "**分段**（刚结束的回合：token 文件的 turn − 1）", "", "| 段 | 局面 | " + " | ".join(order) + " |",
             "|---|---|" + "---|" * len(order)]
     t0 = turn - 1
