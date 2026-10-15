@@ -246,3 +246,39 @@ holdout game used):
 - **Agent string:**
   `mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-10000.npz`.
   It replaces only the ramp-t mirror's turn-end score; the pruning stays on.
+
+### The net's search path made faster, same numbers (the architecture thread 20:57Z)
+
+**Which version J91 and J92 used:**
+- J91 and J92 (equal-compute gates, N = 128) ran with the net's search path from before this change.
+- In this branch, setnet.py is the same file from 7bb466d to 25e246e.
+- b0920c3's earlier path agrees with it to 3e-15 but not to the last bit; the analysis line's run record names
+  the builder commit it used.
+
+**The change (learn.setnet.SetNet.logit):**
+- No int16 copy or clip for the live tokens.
+- No np.unique for the zones.
+- Each pooled zone's sum is kept per zone content: card ids with their counts, in order of first appearance. A
+  determinized deck with the same cards reuses it.
+- The sums are added in the same order as before.
+
+**Check (`speedcheck.py --old 25e246e`):** SetNet.logit before and after is compared with == on 7937 positions:
+- every turn end of 100 holdout games (1907);
+- every position the search asked the net about in 30 decisions of v2skx+setnet (6030).
+- **0 differ.**
+
+**Speed (`timing.py --rounds 5`, the same 120 positions, one process, idle machine):**
+- The old version was timed from a worktree at 25e246e, right before the new one.
+
+| | before (25e246e) | after |
+|---|---|---|
+| v2skx, ms a decision | 96.1 | 94.5 |
+| v2skx+setnet (10⁴ net), ms a decision | 151.3 | 132.3 |
+| **ratio** | **1.574** (rounds 1.569, 1.554, 1.582, 1.586, 1.582) | **1.400** (rounds 1.504, 1.378, 1.356, 1.358, 1.405) |
+| the net's own time inside the search, ms a decision | 50.9 | 35.7 |
+
+- The first round of the new version includes filling its per-zone cache.
+- data/timing.json holds the new run.
+- **Offline time per evaluation varies a lot between runs** on this machine: the net 0.09–0.18 ms, the linear
+  model 0.04–0.09 ms. The interleaved decision ratio is the steadier number.
+- **The ratio for equal compute from here on is 1.400.**

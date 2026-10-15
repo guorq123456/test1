@@ -224,7 +224,7 @@ class SetNet:
             l2: float = 1e-5, patience: int = 3, seed: int = 0, decay: float = 0.5, log=print) -> dict:
         """Adam; after each epoch without a better validation log-loss the step size is multiplied by `decay`,
         and `patience` such epochs in a row stop the fit; the best epoch's weights are kept."""
-        self._table, self._pool = None, {}
+        self._table, self._pool, self._zone_sums = None, {}, {}
         rng = np.random.default_rng(seed)
         m = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
         v = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
@@ -276,42 +276,61 @@ class SetNet:
     def logit(self, state, player: int) -> float:
         """The logit of `player` winning at turn-end position `state` (learn.tokens' moment and view); the same
         number as the batch forward pass on T.encode(state, player). A pooled card (a deck, the unseen pool) is at
-        its printed values, so its phi output is a constant of the card, kept per card id: those zones' sums are
-        counts times that table."""
-        live, pools = T.live_and_pooled(state, player)
+        its printed values, so its phi output is a constant of the card, kept per card id, and a pooled zone's sum
+        is kept per zone content (card ids with their counts, in order of first appearance): the sums are added
+        in the same order as the batch pass's per-card version, so the result is the same to the last bit
+        (tests/test_setnet.py, analysis/scaling/README.md)."""
+        p, o = state.players[player], state.players[1 - player]
+        live = [T._live(state, c, 0) for c in p.hand]
+        live += [T._live(state, c, 1) for c in p.field]
+        live += [T._live(state, c, 2) for c in p.leader_area]
+        live += [T._live(state, c, 4) for c in o.field]
+        live += [T._live(state, c, 5) for c in o.leader_area]
+        pooled = ((3, p.deck_view()), (6, list(o.hand) + list(o.deck_view())))
+        keys = []
+        for z, cards_ in pooled:
+            counts: dict = {}
+            for c in cards_:
+                cid = c.defn.card_id
+                counts[cid] = counts.get(cid, 0) + 1
+            keys.append((z, tuple(counts.items())))
         index = self._index()
         missing = {r[0] for r in live if r[0] not in index}
-        for defs in pools.values():
-            missing |= {d.card_id for d in defs if d.card_id not in index}
+        for _, key in keys:
+            missing |= {cid for cid, _ in key if cid not in index}
         if missing:
             self._add_cards(state, sorted(missing))
             index = self._index()
         table = getattr(self, "_table", None)            # the first layer's static part per card, computed once
         if table is None or len(table) != len(self.card_ids):
             table = self._table = self._S() @ self.W1s + self.b1
-            self._pool = {}
+            self._pool, self._zone_sums = {}, {}
         P = np.zeros((NZ, self.phi[1]))
         if live:
             rows = np.asarray(live, dtype=np.int64)
-            cards = np.array([index[int(c)] for c in rows[:, 0]], dtype=np.int64)
-            toks = np.clip(rows[:, 1:], -32768, 32767).astype(np.int16)
-            H1 = np.maximum(table[cards] + dynamic(toks) @ self.W1d, 0)
+            cards = [index[c] for c in rows[:, 0].tolist()]
+            H1 = np.maximum(table[cards] + dynamic(rows[:, 1:]) @ self.W1d, 0)
             H2 = np.maximum(H1 @ self.W2 + self.b2, 0)       # live tokens have count 1
-            zones = toks[:, _ZONE]
-            for z in np.unique(zones):
+            zones = rows[:, 1 + _ZONE]
+            for z in sorted(set(zones.tolist())):
                 P[z] = H2[zones == z].sum(axis=0)
-        for z, defs in pools.items():
-            counts: dict = {}
-            for d in defs:
-                counts[d.card_id] = counts.get(d.card_id, 0) + 1
-            for cid, n in counts.items():
-                h = self._pool.get(cid)
-                if h is None:
-                    d = next(x for x in defs if x.card_id == cid)
-                    tok = np.asarray(T._pooled([_Printed(d)], z)[0][1:], dtype=np.int16)[None, :]
-                    h = self._pool[cid] = np.maximum(
-                        np.maximum(table[index[cid]] + dynamic(tok)[0] @ self.W1d, 0) @ self.W2 + self.b2, 0)
-                P[z] += n * h
+        sums = self._zone_sums
+        for (z, cards_), (_, key) in zip(pooled, keys):
+            total = sums.get((z, key))
+            if total is None:
+                total = np.zeros(self.phi[1])
+                for cid, n in key:
+                    h = self._pool.get(cid)
+                    if h is None:
+                        d = next(c.defn for c in cards_ if c.defn.card_id == cid)
+                        tok = np.asarray(T._pooled([_Printed(d)], z)[0][1:], dtype=np.int16)[None, :]
+                        h = self._pool[cid] = np.maximum(
+                            np.maximum(table[index[cid]] + dynamic(tok)[0] @ self.W1d, 0) @ self.W2 + self.b2, 0)
+                    total += n * h
+                if len(sums) > 50000:
+                    sums.clear()
+                sums[(z, key)] = total
+            P[z] = P[z] + total
         u = np.concatenate([P.reshape(-1), T.globals_of(state, player) / _GLOBAL_SCALE])
         z1 = np.maximum(u @ self.V1 + self.c1, 0)
         return float(np.maximum(z1 @ self.V2 + self.c2, 0) @ self.v3 + self.c3[0])
