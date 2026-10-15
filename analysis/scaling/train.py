@@ -56,12 +56,17 @@ from svsim.learn.setnet import NZ, Data, SetNet, score  # noqa: E402
 
 BASE, STRIDE, HOLDOUT_BASE = 70100000, 2, 70200000
 HOLDOUT = [HOLDOUT_BASE + STRIDE * h for h in range(5)]
-SIZES = {1000: 1, 10000: 10, 100000: 100}
+SIZES = {1000: 1, 10000: 10, 100000: 100, 20000: 10}   # 20000: 10^4 of v2skx plus --add (generation 2)
 INSTALLED = ROOT / "svsim/learn/phased_models/ramp-t-ramp-t-ended.json"
 
 
-def shards(size: int) -> list:
-    return [BASE + STRIDE * k for k in range(SIZES[size])]
+def shards(size: int, add=()) -> list:
+    """The size's training shards (the first SIZES[size] of BASE), plus --add BASE:K's K shards of another base."""
+    out = [BASE + STRIDE * k for k in range(SIZES[size])]
+    for spec in add or ():
+        base, k = (int(x) for x in spec.split(":"))
+        out += [base + STRIDE * j for j in range(k)]
+    return out
 
 
 def _files(folder, seeds, prefix: str, suffix: str) -> list:
@@ -90,11 +95,11 @@ def _tag(args) -> str:
 
 def net_main(args) -> None:
     tok = Path(args.tokens)
-    data = Data(_files(tok, shards(args.size), "tok-", ".npz"), tok / "cards.npz")
+    data = Data(_files(tok, shards(args.size, args.add), "tok-", ".npz"), tok / "cards.npz")
     valid_mask = data.games() % 20 == 0
     train, valid = data.subset(~valid_mask), data.subset(valid_mask)
     net = SetNet(data.static.shape[1], phi=args.phi, rho=args.rho, seed=args.seed,
-                 info={"deck": "ramp-t", "opponent": "ramp-t", "size": args.size, "shards": shards(args.size),
+                 info={"deck": "ramp-t", "opponent": "ramp-t", "size": args.size, "shards": shards(args.size, args.add),
                        "train_positions": train.n, "name": args.name or None,
                        "valid_positions": valid.n})
     net.set_cards(data.card_ids, data.static, np.bincount(train.cards, minlength=len(data.card_ids)) + 1)
@@ -296,6 +301,8 @@ def main() -> None:
     n.add_argument("--l2", type=float, default=1e-5)
     n.add_argument("--seed", type=int, default=0)
     n.add_argument("--name", default="", help="a variant's name: files net-<name>-<size>.* (the fixed net: none)")
+    n.add_argument("--add", action="append", default=[], metavar="BASE:K",
+                   help="also train on K shards of BASE (BASE + 2k): generation 2 is --size 20000 --add 70800000:10")
     hn = sub.add_parser("holdout-net")
     hn.add_argument("--size", type=int, choices=sorted(SIZES), required=True)
     hn.add_argument("--tokens", required=True)
