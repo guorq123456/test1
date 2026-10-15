@@ -43,7 +43,9 @@ scores a position inside the turn as if the turn ended there (as the
 linear models do), except a turn start reached by playing out the reply;
 "+mean" backs values up as plain averages instead of the best own choice
 (search.mcts, backup="mean"); "+vnet" turn ends scored by the pairing's value network (learn.vnet, from
-svsim/learn/vnets; "+vnet=FOLDER" another folder's <deck>-<deck>-vnet.npz), the in-turn score unchanged; "+phased" linear models by moment (learn.phased:
+svsim/learn/vnets; "+vnet=FOLDER" another folder's <deck>-<deck>-vnet.npz), the in-turn score unchanged; "+setnet=PATH"
+turn ends of the net's own pairing scored by the scaling test's card-token DeepSets net at PATH (learn.setnet, a
+.npz; relative paths also from the repository root), everything else unchanged; "+phased" linear models by moment (learn.phased:
 turn ends, and turn starts reached by playing out the reply; "+phased=NAME" this agent's models from
 the folder NAME, a path or svsim/learn/phased_models/NAME, learn.phased.folder_of; "+screen=N" the lethal search's budget for a position whose damage estimate falls short (the
 estimate is no bound, search.lethal.damage_estimate), "+screen=N:N2:K" ... and N2 nodes when it is short by K or
@@ -206,7 +208,7 @@ def _make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "lethal3", "plannerfix", "eot", "discard", "adaptive", "abs", "abs0", "complex", "xprune"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet=", "par=", "xprune="))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "lethal3", "plannerfix", "eot", "discard", "adaptive", "abs", "abs0", "complex", "xprune"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet=", "par=", "xprune=", "setnet="))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -240,6 +242,10 @@ def _make_agent(spec: str, seed: int):
         else:
             nets = load_vnets(VNETS)
         weights = VNetEnded(weights, nets, aliases)
+    setnet = [o[len("setnet="):] for o in options if o.startswith("setnet=")]
+    if setnet:                                     # turn ends of the net's pairing by the scaling test's DeepSets
+        from svsim.learn.setnet import SetNetEnded, load_cached   # net (learn.setnet); the rest as before
+        weights = SetNetEnded(weights, load_cached(setnet[0]))
     if "timing" in options:                        # holding cards until the player would play them
         from svsim.learn.timing import Timed
         weights = Timed(base=weights)

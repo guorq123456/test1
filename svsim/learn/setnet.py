@@ -214,6 +214,7 @@ class SetNet:
     # --- training ---------------------------------------------------------------------------------------------
     def fit(self, data: Data, valid: Data | None = None, epochs: int = 30, batch: int = 256, lr: float = 1e-3,
             l2: float = 1e-5, patience: int = 3, seed: int = 0, log=print) -> dict:
+        self._table = None
         rng = np.random.default_rng(seed)
         m = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
         v = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
@@ -270,9 +271,16 @@ class SetNet:
             self._add_cards(state, missing)
             index = self._index()
         cards = np.array([index[int(c)] for c in cids], dtype=np.int64)
-        seg = toks[:, _ZONE].astype(np.int64)
-        return float(self.forward(cards, dynamic(toks), toks[:, _COUNT].astype(np.float32), seg,
-                                  (glob / _GLOBAL_SCALE)[None, :])[0])
+        table = getattr(self, "_table", None)            # the first layer's static part per card, computed once
+        if table is None or len(table) != len(self.card_ids):
+            table = self._table = self._S() @ self.W1s + self.b1
+        H1 = np.maximum(table[cards] + dynamic(toks) @ self.W1d, 0)
+        H2 = np.maximum(H1 @ self.W2 + self.b2, 0) * toks[:, _COUNT, None]
+        P = np.zeros((NZ, H2.shape[1]))
+        np.add.at(P, toks[:, _ZONE].astype(np.int64), H2)
+        u = np.concatenate([P.reshape(-1), glob / _GLOBAL_SCALE])
+        z1 = np.maximum(u @ self.V1 + self.c1, 0)
+        return float(np.maximum(z1 @ self.V2 + self.c2, 0) @ self.v3 + self.c3[0])
 
     def _index(self) -> dict:
         idx = getattr(self, "_idx", None)
@@ -306,6 +314,44 @@ class SetNet:
             setattr(net, k, np.array(z[k]))
         net.info = json.loads(str(z["info"]))
         return net
+
+
+_CACHE: dict = {}
+
+
+def load_cached(path) -> SetNet:
+    """The net at `path` (relative paths also from the repository root), loaded once per process."""
+    p = Path(path)
+    if not p.exists() and not p.is_absolute():
+        p = Path(__file__).resolve().parents[2] / p
+    key = str(p.resolve())
+    net = _CACHE.get(key)
+    if net is None:
+        net = _CACHE[key] = SetNet.load(p)
+    return net
+
+
+class SetNetEnded:
+    """Search weights: the turn-end score (player_moves_next False) of the net's own pairing (info "deck",
+    "opponent": the scored player's deck and the other's, ui.session.DECKS keys) from the net, as SCALE x its
+    logit; everything else (in-turn scores, other pairings, finished games) from `base`."""
+
+    def __init__(self, base, net: SetNet):
+        self.base = base
+        self.net = net
+        self.pair = (net.info.get("deck"), net.info.get("opponent"))
+        if None in self.pair:
+            raise ValueError("the net names no pairing (info deck / opponent)")
+
+    def score(self, state, player: int, player_moves_next: bool = False) -> float:
+        from svsim.learn.model import SCALE
+        from svsim.search.evaluate import WIN
+        if state.winner is not None:
+            return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
+        if not player_moves_next and (state.players[player].deck_name, state.players[1 - player].deck_name) \
+                == self.pair:
+            return SCALE * self.net.logit(state, player)
+        return self.base.score(state, player, player_moves_next)
 
 
 def score(p: np.ndarray, y: np.ndarray) -> dict:

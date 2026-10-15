@@ -86,7 +86,8 @@ def net_main(args) -> None:
     valid_mask = data.games() % 20 == 0
     train, valid = data.subset(~valid_mask), data.subset(valid_mask)
     net = SetNet(data.static.shape[1], phi=args.phi, rho=args.rho, seed=args.seed,
-                 info={"size": args.size, "shards": shards(args.size), "train_positions": train.n,
+                 info={"deck": "ramp-t", "opponent": "ramp-t", "size": args.size, "shards": shards(args.size),
+                       "train_positions": train.n,
                        "valid_positions": valid.n})
     net.set_cards(data.card_ids, data.static, np.bincount(train.cards, minlength=len(data.card_ids)) + 1)
     t0 = time.time()
