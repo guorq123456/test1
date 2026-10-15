@@ -1,14 +1,15 @@
 """The scaling test's data (the architecture thread 2026-10-15 17:27Z): strong self-play on the ramp-t mirror,
 recorded in shards by seed, then every turn end encoded as card tokens (learn.tokens) with its labels.
 
-    python -m svsim.tools.host svsim.learn.scaledata play --base S --shards 10 100 --out DIR --workers 11
+    python -m svsim.tools.host svsim.learn.scaledata play --base S --stride 2 --shards 10 100 --out DIR --workers 11
     python -m svsim.learn.scaledata encode --records DIR --out TOKDIR --workers 4
     python -m svsim.learn.scaledata merge --inputs DIR1 DIR2 ... --out DIR
     python -m svsim.learn.scaledata check DIR
 
-`play`: shard k is netdata seed S + k, games g = 0 .. --per-shard - 1 (default 1000), each one learn.netdata.play
+`play`: shard k is netdata seed S + stride * k, games g = 0 .. --per-shard - 1 (default 1000), each one learn.netdata.play
 with SPEC on both sides, no exploration. A game is fixed by (seed, g): deal seed * 100003 + g, agent seeds
-seed * 1000 + 2g + i, seat g % 2 for --deck. Each finished game is appended to DIR/rec-<seed>.part.jsonl at
+seed * 1000 + 2g + i, seat g % 2 for --deck (stride 2 keeps the agent seeds of
+1000-game shards apart: the analysis line, 2f981bb). Each finished game is appended to DIR/rec-<seed>.part.jsonl at
 once (one JSON record per line, with "cpu": the seconds of CPU time its worker spent on it, one core); a complete
 shard is compressed to DIR/rec-<seed>.jsonl.gz and its part file removed. Stopped at any point, the same command
 picks up where it left off (a cut-off last line is dropped and its game played again; complete shards are skipped).
@@ -97,7 +98,7 @@ def play_main(args) -> None:
     out.mkdir(parents=True, exist_ok=True)
     todo, seeds = [], []
     for k in range(args.shards[0], args.shards[1]):
-        seed = args.base + k
+        seed = args.base + args.stride * k
         if (out / f"rec-{seed}.jsonl.gz").exists():
             continue
         if _finish(out, seed, args.per_shard):
@@ -106,7 +107,7 @@ def play_main(args) -> None:
         seeds.append(seed)
         todo += [(seed, g, args.deck, args.opponent, args.spec) for g in range(args.per_shard) if g not in have]
     print(json.dumps({"spec": args.spec, "deck": args.deck, "opponent": args.opponent, "base": args.base,
-                      "shards": args.shards, "per_shard": args.per_shard, "open_shards": seeds, "games_to_play": len(todo),
+                      "stride": args.stride, "shards": args.shards, "per_shard": args.per_shard, "open_shards": seeds, "games_to_play": len(todo),
                       "workers": args.workers}), flush=True)
     if not todo:
         return
@@ -302,7 +303,8 @@ def main() -> None:
     p = sub.add_parser("play")
     p.add_argument("--base", type=int, required=True, help="netdata seed of shard 0 (from the analysis line)")
     p.add_argument("--shards", type=int, nargs=2, required=True, metavar=("FROM", "TO"),
-                   help="shards FROM .. TO - 1, shard k being seed BASE + k")
+                   help="shards FROM .. TO - 1")
+    p.add_argument("--stride", type=int, default=2, help="shard k is seed BASE + STRIDE * k")
     p.add_argument("--per-shard", type=int, default=1000)
     p.add_argument("--deck", default="ramp-t", choices=sorted(DECKS))
     p.add_argument("--opponent", default="ramp-t", choices=sorted(DECKS))

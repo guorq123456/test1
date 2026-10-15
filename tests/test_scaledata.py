@@ -69,7 +69,7 @@ def test_read_part_drops_a_cut_last_line(tmp_path):
 
 def test_play_resume_merge_encode(tmp_path):
     rec = tmp_path / "rec"
-    args = Namespace(base=61000, shards=[0, 2], per_shard=2, deck="ramp-t", opponent="ramp-t", spec="greedy",
+    args = Namespace(base=61000, stride=1, shards=[0, 2], per_shard=2, deck="ramp-t", opponent="ramp-t", spec="greedy",
                      workers=1, every=10, out=str(rec))
     rec.mkdir()
     with open(rec / "rec-61001.part.jsonl", "w", encoding="utf-8") as fh:   # half a shard, its last line cut off

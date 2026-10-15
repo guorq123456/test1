@@ -20,20 +20,27 @@ hpphase).
 - So on ramp-t, v2skx's evaluator is level strong's installed one; the only difference from v2s here is the
   discard pruning.
 
-**Games and seeds:**
-- Shard k is netdata seed S + k. It holds games g = 0 … 999, 1000 games per shard.
-- Each game is `learn.netdata.play` and is fixed by (seed, g):
-  - deal seed: seed × 100003 + g;
-  - agent seeds: seed × 1000 + 2g + i;
+**Games and seeds** (the analysis line, 2f981bb):
+- Shard k (k = 0 … 99) is netdata seed s_k = 70100000 + 2k. It holds games g = 0 … 999.
+- Each game is `learn.netdata.play` and is fixed by (s, g):
+  - deal seed: s × 100003 + g;
+  - agent seeds: s × 1000 + 2g + i (a stride of 2 keeps neighbouring shards' agent seeds apart);
+  - exploration rng: s × 7919 + g, at rate 0;
   - --deck's seat: g % 2.
-- S comes from the analysis line.
-- Shards k = 0–9 (10⁴ games) run in the cloud; k = 10–99 run on Salem's computer.
+- **Who plays which shards:**
+  - k = 0–4: the analysis line;
+  - k = 5–9: this line (the cloud's 10⁴ together with 0–4);
+  - k = 10–99: Salem's computer.
+- **Sizes:** 10³ = shard 0, 10⁴ = shards 0–9, 10⁵ = all.
+- **Smoke:** s = 70100200 (shard index 100), g < 200. Not part of the data.
+- **Holdout:** 5000 games, s = 70200000, g = 0 … 4999: `--base 70200000 --shards 0 1 --per-shard 5000`.
+- **Gates:** 70300000 / 70400000 / 70500000.
 
 **Files:**
 - Each finished game is appended at once to `rec-<seed>.part.jsonl` (the netdata record: the deal and the actions,
   plus the search's view of each decision).
   - "cpu" is the CPU seconds its worker spent on it.
-- A complete shard is compressed to `rec-<seed>.jsonl.gz`, about 2.5 MB.
+- A complete shard is compressed to `rec-<seed>.jsonl.gz`, about 1.4 MB (1.44 KB a game in the smoke).
 - **Resume:** run the same command again. A cut-off last line is dropped and that game is played again; finished
   shards are skipped.
 - **Merge:** `merge` puts shards from several machines together, one game per (seed, g). A game found twice must
@@ -64,33 +71,30 @@ hpphase).
 
 ## Salem's computer: shards 10–99 (90,000 games) in a separate worktree
 
-Commands are for cmd, run from Salem's own checkout. `<C>` is the commit to run (the one the architecture thread
-names) and S the analysis line's seed base.
-
-1. **A worktree of its own** (Salem's checkout stays as it is):
-   ```
-   git fetch origin ccr-165ad1e7-t2zmqu
-   git worktree add ..\svsim-scale <C>
-   cd ..\svsim-scale
-   ```
-2. **Run.** Records go to `..\scale-rec`, outside the worktree. Salem's rules: below normal priority, off CPU0,
-   at most 12 processes (11 workers plus the parent):
-   ```
-   start "" /WAIT /BELOWNORMAL /AFFINITY FFFFE cmd /c "python -m svsim.tools.host svsim.learn.scaledata play --base S --shards 10 100 --workers 11 --out ..\scale-rec > ..\scale-rec.log 2>&1"
-   ```
-   - It prints one progress line every 50 games: games, wall seconds, CPU seconds per game, games per hour.
-   - **Stopped at any point:** run the same line again to go on.
-3. **Check:**
-   ```
-   python -m svsim.learn.scaledata check ..\scale-rec
-   ```
-   It lists each shard (games, unique g, first-seat wins, CPU seconds per game) and any unfinished part files.
-4. **Hand over** the `rec-*.jsonl.gz` files, about 2.5 MB per shard, about 225 MB for 90 shards. Part files are not
-   needed.
-
-**Time:** at 3.0 CPU seconds per game (cloud, Linux), 11 workers come to about 13,000 games an hour, so about 7
-hours for 90,000. Windows may differ; the log's first lines show the real rate.
+**One line**, in the cmd window Salem normally runs svsim from (venv active), in his own checkout. `<C>` is the
+commit the architecture thread names.
+```
+git fetch origin ccr-165ad1e7-t2zmqu && (if not exist ..\svsim-scale git worktree add --detach ..\svsim-scale <C>) && cd ..\svsim-scale && start "" /WAIT /BELOWNORMAL /AFFINITY FFFFE cmd /c "python -m svsim.tools.host svsim.learn.scaledata play --base 70100000 --stride 2 --shards 10 100 --workers 11 --out ..\scale-rec >> ..\scale-rec.log 2>&1 && python -m svsim.learn.scaledata check ..\scale-rec > ..\scale-check.json"
+```
+- **What it does:**
+  - creates the worktree `..\svsim-scale` at `<C>` (once; Salem's own checkout is not touched);
+  - plays the shards there at below-normal priority, off CPU0, 11 workers plus the parent (12 processes);
+  - writes `..\scale-check.json`, a summary of each shard.
+- **Output:** `..\scale-rec\rec-<seed>.jsonl.gz`, one per finished shard, about 1.4 MB each and about 130 MB for
+  all 90. `..\scale-rec.log` gets a progress line every 50 games: games, wall seconds, CPU seconds per game,
+  games per hour.
+- **Stopped at any point** (closed window, reboot): run the same line again. It skips the worktree, finished shards
+  and finished games, and replays only a cut-off last game.
+- **Time:** the cloud measured 3.43 CPU seconds a game (Linux, 4 workers). With Salem's machine's per-process
+  factor of about 0.73 (analysis/local-runs) and 11 workers, that is about 6 hours for 90,000 games; E-cores may
+  stretch it to 8. The log's first lines show the real rate.
+- **Getting the shards back to the cloud:** about 130 MB in 90 files of about 1.4 MB, fine for a data branch in git.
+  How they are pushed is left to the architecture and coordination lines with Salem.
 
 **Cross-machine games are not expected to be identical:** cmp_roots differs between Linux (142cc567…2b9adf) and
 Windows (755a0bba…96a6). Shards are disjoint, so this does not matter; a game merged from both machines would show
 up as a mismatch.
+
+## Smoke (200 games, s = 70100200)
+
+See below once run.
