@@ -11,7 +11,9 @@ One process, nothing else running. Two readings, both on holdout games (s_h = 70
   turns from the holdout games, the agents' seed fixed), whole act() time, the two in turn at each position, over
   several rounds; the ratio of the sums, and how much of the difference is the net's own time (its calls timed
   inside the search, less what the linear model would have cost for as many calls) and how much is the search
-  going elsewhere with another evaluator.
+  going elsewhere with another evaluator. The net's caches (per card, per pooled zone, per encoding) are emptied at
+  the start of each round: the rounds search the same positions with the same seeds, so a cache kept across
+  rounds would find what an earlier round put there.
 Writes data/timing.json.
 """
 import os
@@ -87,7 +89,8 @@ def main():
     specs = {"v2skx": SPEC, "v2skx+setnet": f"{SPEC}+setnet={args.net}{args.options}"}
     totals = {k: [] for k in specs}
     for _ in range(args.rounds):                      # both agents at each position in turn, several rounds
-        t_round = {k: 0.0 for k in specs}
+        net._table, net._memo = None, None            # every cache the net keeps starts empty in each round: the
+        t_round = {k: 0.0 for k in specs}             # rounds repeat the same positions and seeds
         for i, s in enumerate(starts):
             for name, spec in specs.items():
                 agent = make_agent(spec, 1000 + i)
@@ -105,6 +108,7 @@ def main():
            "net_over_linear": round(per_eval["net"] / per_eval["installed_linear"], 2),
            "decisions": len(starts), "per_decision_ms": per_move,
            "decision_ratio": round(per_move["v2skx+setnet"] / per_move["v2skx"], 3), "ratio_by_round": rounds,
+           "ms_by_round": {k: [round(t / len(starts) * 1e3, 1) for t in v] for k, v in totals.items()},
            "net_calls_per_decision": round(spent["calls"] / n, 1),
            "net_ms_per_decision": round(net_ms, 1),
            "linear_ms_saved_per_decision": round(spent["calls"] / n * per_eval["installed_linear"], 1),

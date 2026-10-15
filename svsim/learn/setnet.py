@@ -224,7 +224,7 @@ class SetNet:
             l2: float = 1e-5, patience: int = 3, seed: int = 0, decay: float = 0.5, log=print) -> dict:
         """Adam; after each epoch without a better validation log-loss the step size is multiplied by `decay`,
         and `patience` such epochs in a row stop the fit; the best epoch's weights are kept."""
-        self._table, self._pool, self._zone_sums, self._memo = None, {}, {}, None
+        self._table, self._pool, self._zone_sums = None, {}, {}
         rng = np.random.default_rng(seed)
         m = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
         v = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
@@ -279,9 +279,7 @@ class SetNet:
         its printed values, so its phi output is a constant of the card, kept per card id, and a pooled zone's sum
         is kept per zone content (card ids with their counts, in order of first appearance): the sums are added
         in the same order as the batch pass's per-card version, so the result is the same to the last bit
-        (tests/test_setnet.py, analysis/scaling/README.md). The logit is kept per encoding (the live tokens,
-        the pooled zones' contents, the globals): the search's determinizations differ in hidden cards the
-        encoding pools, so about half its calls repeat an encoding already scored."""
+        (tests/test_setnet.py, analysis/scaling/README.md)."""
         p, o = state.players[player], state.players[1 - player]
         live = [T._live(state, c, 0) for c in p.hand]
         live += [T._live(state, c, 1) for c in p.field]
@@ -296,13 +294,6 @@ class SetNet:
                 cid = c.defn.card_id
                 counts[cid] = counts.get(cid, 0) + 1
             keys.append((z, tuple(counts.items())))
-        glob = T.globals_of(state, player)
-        whole = (tuple(map(tuple, live)), tuple(keys), glob.tobytes())
-        memo = getattr(self, "_memo", None)
-        if memo is not None:                             # the same encoding as a position already scored
-            hit = memo.get(whole)
-            if hit is not None:
-                return hit
         index = self._index()
         missing = {r[0] for r in live if r[0] not in index}
         for _, key in keys:
@@ -313,7 +304,7 @@ class SetNet:
         table = getattr(self, "_table", None)            # the first layer's static part per card, computed once
         if table is None or len(table) != len(self.card_ids):
             table = self._table = self._S() @ self.W1s + self.b1
-            self._pool, self._zone_sums, self._memo = {}, {}, {}
+            self._pool, self._zone_sums = {}, {}
         P = np.zeros((NZ, self.phi[1]))
         if live:
             rows = np.asarray(live, dtype=np.int64)
@@ -340,14 +331,9 @@ class SetNet:
                     sums.clear()
                 sums[(z, key)] = total
             P[z] = P[z] + total
-        u = np.concatenate([P.reshape(-1), glob / _GLOBAL_SCALE])
+        u = np.concatenate([P.reshape(-1), T.globals_of(state, player) / _GLOBAL_SCALE])
         z1 = np.maximum(u @ self.V1 + self.c1, 0)
-        out = float(np.maximum(z1 @ self.V2 + self.c2, 0) @ self.v3 + self.c3[0])
-        memo = self._memo
-        if len(memo) > 200000:
-            memo.clear()
-        memo[whole] = out
-        return out
+        return float(np.maximum(z1 @ self.V2 + self.c2, 0) @ self.v3 + self.c3[0])
 
     def _index(self) -> dict:
         idx = getattr(self, "_idx", None)

@@ -336,3 +336,29 @@ exactly D1's agent.
    gave the search at that real turn end.
 3. Train **net-gen2-20000** with the fixed settings (2cbc3b6) on v2skx's 10⁴ games (k = 0–9 of 70100000) plus
    generation 2's 10⁴. Validation part as before (key % 20 == 0); the holdout is scored once at the end.
+
+### Correction to the decision ratios above, and the encoding cache dropped (23:30Z)
+
+**What was wrong:** `timing.py` repeats the same 120 positions with the same seeds in every round.
+- d0e498d's per-zone cache (and e30b882's per-encoding cache) kept what an earlier round had put there, so rounds
+  after the first ran partly on warm caches no real game has.
+- The ratios **1.400** (without +neteot) and **1.447** (with it) are optimistic for that reason.
+
+**The fix:** `timing.py` now empties every cache of the net at the start of each round. It sets `_table` and
+`_memo` to None; with only `_table` reset, the encoding cache was still consulted before the reset could happen.
+
+**Remeasured** (5 interleaved rounds, the same 120 positions, one process, idle machine, 23:05–23:30Z):
+
+| net path | options | ratio | rounds | the net's ms a decision |
+|---|---|---|---|---|
+| 69e3ad2 (= d0e498d) | — | **1.485** | 1.49, 1.528, 1.465, 1.474, 1.469 | 41.3 |
+| 69e3ad2 (= d0e498d) | +neteot | **1.541** | 1.548, 1.539, 1.545, 1.536, 1.532 | 42.0 |
+| e30b882 (with the encoding cache) | +neteot | 1.622 | 1.588, 1.639, 1.653, 1.606, 1.627 | 45.5 |
+| 25e246e (before the speed change; only a per-card cache, warm after the first calls) | — | 1.574 (measured before the fix) | – | 50.9 |
+
+**What this means:**
+- The speed change d0e498d brings 1.574 down to 1.485, not to 1.400.
+- The encoding cache makes the search **slower**: building the key costs more than the repeats save in a fresh
+  run. The e30b882 cache is taken out again; setnet.py is 69e3ad2's.
+- The gates set N from their own 20-pair check on real games, so they are not affected. J100's check measured
+  1.219 there.
