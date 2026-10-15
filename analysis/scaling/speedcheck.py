@@ -40,6 +40,7 @@ def main():
     ap.add_argument("--net", required=True)
     ap.add_argument("--games", type=int, default=100)
     ap.add_argument("--decisions", type=int, default=30)
+    ap.add_argument("--options", default="", help="more agent options for the search, e.g. +neteot")
     args = ap.parse_args()
     src = subprocess.run(["git", "show", f"{args.old}:svsim/learn/setnet.py"], cwd=ROOT, capture_output=True,
                          check=True).stdout
@@ -73,11 +74,11 @@ def main():
                 done.add((s.active, s.turn))
                 starts.append(s.clone())
     for i, s in enumerate(starts[:args.decisions]):
-        make_agent(f"{SPEC}+setnet={args.net}", 1000 + i).act(s.clone(), legal_actions(s))
+        make_agent(f"{SPEC}+setnet={args.net}{args.options}", 1000 + i).act(s.clone(), legal_actions(s))
     new.SetNet.logit = plain
     positions += seen
     diff = sum(net_new.logit(s, p) != net_old.logit(s, p) for s, p in positions)
-    out = {"old": args.old, "turn_ends": turn_ends, "search_positions": len(seen), "compared": len(positions),
+    out = {"old": args.old, "options": args.options, "turn_ends": turn_ends, "search_positions": len(seen), "compared": len(positions),
            "different": int(diff)}
     print(json.dumps(out))
     sys.exit(1 if diff else 0)
