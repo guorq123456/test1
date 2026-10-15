@@ -309,3 +309,30 @@ positions after the end-of-turn abilities.
   against 1.400 without the option.
 
 **D3's A:** `mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-10000.npz+neteot`.
+- **Use for now:** `+neteot` is for D3 only (the architecture thread 21:12Z). Whether a retrained net goes to a
+  gate with it waits on D3.
+
+## Generation 2: self-play with the 10⁴ net (set up 21:15Z, before any game; the architecture thread 21:08Z)
+
+**Why:** D1 (the 10⁴ net against v2skx, both at 200 iterations) came to 44.3% (40.7–47.8). The upper end is below
+50%, so the net plays its own positions now.
+
+**Agent:** both sides play `mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-10000.npz`,
+exactly D1's agent.
+- **No +neteot**, so the positions are the ones D1's agent reaches.
+- **Code:** d0e498d (its net path gives the same logits as 7bb466d's, to the last bit).
+- **Net file:** net-10000.npz, sha256 6257b666….
+
+**Games:**
+- ramp-t mirror, no exploration.
+- Shard k is s_k = 70800000 + 2k, g = 0–999.
+- **Who plays:** k = 0–4 this line, k = 5–9 the analysis line.
+- **Command:**
+  `scaledata play --base 70800000 --stride 2 --shards K0 K1 --agent "<the agent>" --deck ramp-t --opponent ramp-t`.
+
+**Afterwards:**
+1. `merge`.
+2. `encode --net analysis/scaling/models/net-10000.npz`, so every turn end carries net_logit: the number the net
+   gave the search at that real turn end.
+3. Train **net-gen2-20000** with the fixed settings (2cbc3b6) on v2skx's 10⁴ games (k = 0–9 of 70100000) plus
+   generation 2's 10⁴. Validation part as before (key % 20 == 0); the holdout is scored once at the end.
