@@ -17,6 +17,7 @@ the same positions.
   validation part for early stopping, the rest the training part. Writes models/net-<size>.npz and
   data/net-<size>.json: Brier and log-loss on the training part, the validation part and the holdout, and the
   epochs. Writes data/holdout-net-<size>.npz: the net's probability at every holdout turn end, with its keys.
+  `--name NAME` (a variant, e.g. the wider net "wide"): every file is net-NAME-<size>.* instead.
 - `linear`: refits the installed turn-end model's recipe on the size's games (learn.phased: features version 2 +
   hand, hpphase, turn ends only, the result as target, draws left out, l2 1e-3, sign constraints as installed):
   models/lin-<size>/ramp-t-ramp-t-ended.json.
@@ -82,6 +83,11 @@ def _keys(d: Data) -> dict:
     return {"seed": d.seed, "g": d.g, "turn": d.turn, "result": d.result}
 
 
+def _tag(args) -> str:
+    """The files' name: <size>, or <name>-<size> for a variant (--name), so a variant never overwrites the fixed net."""
+    return f"{args.name}-{args.size}" if args.name else str(args.size)
+
+
 def net_main(args) -> None:
     tok = Path(args.tokens)
     data = Data(_files(tok, shards(args.size), "tok-", ".npz"), tok / "cards.npz")
@@ -89,24 +95,24 @@ def net_main(args) -> None:
     train, valid = data.subset(~valid_mask), data.subset(valid_mask)
     net = SetNet(data.static.shape[1], phi=args.phi, rho=args.rho, seed=args.seed,
                  info={"deck": "ramp-t", "opponent": "ramp-t", "size": args.size, "shards": shards(args.size),
-                       "train_positions": train.n,
+                       "train_positions": train.n, "name": args.name or None,
                        "valid_positions": valid.n})
     net.set_cards(data.card_ids, data.static, np.bincount(train.cards, minlength=len(data.card_ids)) + 1)
     t0 = time.time()
     net.fit(train, valid, epochs=args.epochs, batch=args.batch, lr=args.lr, l2=args.l2, patience=args.patience,
             seed=args.seed, decay=args.decay)
-    report = {"size": args.size, "phi": list(args.phi), "rho": list(args.rho), "lr": args.lr, "decay": args.decay,
+    report = {"size": args.size, "name": args.name or None, "phi": list(args.phi), "rho": list(args.rho), "lr": args.lr, "decay": args.decay,
               "patience": args.patience, "l2": args.l2,
               "batch": args.batch, "fit_s": round(time.time() - t0), "epochs": len(net.info["history"]),
               "train": score(net.predict(train), train.result), "valid": score(net.predict(valid), valid.result),
               "train_installed_linear": score(1 / (1 + np.exp(-train.linear)), train.result)}
     net.info["report"] = report
     (HERE / "models").mkdir(exist_ok=True)
-    net.save(HERE / f"models/net-{args.size}.npz")
-    _holdout_net(net, tok, args.size, report)
+    net.save(HERE / f"models/net-{_tag(args)}.npz")
+    _holdout_net(net, tok, _tag(args), report)
 
 
-def _holdout_net(net: SetNet, tok: Path, size: int, report: dict) -> None:
+def _holdout_net(net: SetNet, tok: Path, tag: str, report: dict) -> None:
     """The net on the holdout (when its 5 token files are there), into the report; writes the report."""
     hold = [tok / f"tok-{s}.npz" for s in HOLDOUT]
     if all(f.exists() for f in hold):
@@ -114,15 +120,15 @@ def _holdout_net(net: SetNet, tok: Path, size: int, report: dict) -> None:
         p = net.predict(h)
         report["holdout"] = score(p, h.result)
         report["holdout_installed_linear"] = score(1 / (1 + np.exp(-h.linear)), h.result)
-        np.savez_compressed(HERE / f"data/holdout-net-{size}.npz", p=p.astype(np.float32), **_keys(h))
-    (HERE / f"data/net-{size}.json").write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
+        np.savez_compressed(HERE / f"data/holdout-net-{tag}.npz", p=p.astype(np.float32), **_keys(h))
+    (HERE / f"data/net-{tag}.json").write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=1))
 
 
 def holdout_net_main(args) -> None:
     """A trained net (models/net-<size>.npz) on the holdout, once the holdout is there."""
-    net = SetNet.load(HERE / f"models/net-{args.size}.npz")
-    _holdout_net(net, Path(args.tokens), args.size, dict(net.info["report"]))
+    net = SetNet.load(HERE / f"models/net-{_tag(args)}.npz")
+    _holdout_net(net, Path(args.tokens), _tag(args), dict(net.info["report"]))
 
 
 def linear_main(args) -> None:
@@ -243,7 +249,7 @@ def contributions(net: SetNet, data: Data, idx, zones=(0, 1, 4)) -> list:
 
 def contrib_main(args) -> None:
     tok = Path(args.tokens)
-    net = SetNet.load(HERE / f"models/net-{args.size}.npz")
+    net = SetNet.load(HERE / f"models/net-{_tag(args)}.npz")
     h = _align(net, Data([tok / f"tok-{s}.npz" for s in HOLDOUT], tok / "cards.npz"))
     rng = np.random.default_rng(0)
     idx = rng.choice(h.n, size=min(args.sample, h.n), replace=False)
@@ -269,7 +275,7 @@ def contrib_main(args) -> None:
     report = {"size": args.size, "positions": len(idx), "deltas": len(rows),
               "note": "delta = logit(position) - logit(position without one copy of the card); a fixed score per "
                       "card would give sd 0", "table": table}
-    (HERE / f"data/contrib-{args.size}.json").write_text(json.dumps(report, indent=1, ensure_ascii=False) + "\n",
+    (HERE / f"data/contrib-{_tag(args)}.json").write_text(json.dumps(report, indent=1, ensure_ascii=False) + "\n",
                                                          encoding="utf-8")
     print(json.dumps(report, indent=1, ensure_ascii=False)[:4000])
 
@@ -289,9 +295,11 @@ def main() -> None:
     n.add_argument("--lr", type=float, default=1e-3)
     n.add_argument("--l2", type=float, default=1e-5)
     n.add_argument("--seed", type=int, default=0)
+    n.add_argument("--name", default="", help="a variant's name: files net-<name>-<size>.* (the fixed net: none)")
     hn = sub.add_parser("holdout-net")
     hn.add_argument("--size", type=int, choices=sorted(SIZES), required=True)
     hn.add_argument("--tokens", required=True)
+    hn.add_argument("--name", default="")
     li = sub.add_parser("linear")
     li.add_argument("--size", type=int, choices=sorted(SIZES), required=True)
     li.add_argument("--records", required=True)
@@ -304,6 +312,7 @@ def main() -> None:
     c.add_argument("--size", type=int, choices=sorted(SIZES), required=True)
     c.add_argument("--tokens", required=True)
     c.add_argument("--sample", type=int, default=3000)
+    c.add_argument("--name", default="")
     args = ap.parse_args()
     (HERE / "data").mkdir(exist_ok=True)
     {"net": net_main, "holdout-net": holdout_net_main, "linear": linear_main, "holdout-linear": holdout_linear_main,
