@@ -387,11 +387,14 @@ def load_cached(path) -> SetNet:
 class SetNetEnded:
     """Search weights: the turn-end score (player_moves_next False) of the net's own pairing (info "deck",
     "opponent": the scored player's deck and the other's, ui.session.DECKS keys) from the net, as SCALE x its
-    logit; everything else (in-turn scores, other pairings, finished games) from `base`."""
+    logit; everything else (in-turn scores, other pairings, finished games) from `base`. With `end_mid_turn`
+    (agent option +neteot), a position inside the scored player's own turn (they are to act) is scored after
+    search.evaluate.after_end_of_turn on a copy, the moment the net was trained on; off, nothing changes."""
 
-    def __init__(self, base, net: SetNet):
+    def __init__(self, base, net: SetNet, end_mid_turn: bool = False):
         self.base = base
         self.net = net
+        self.end_mid_turn = end_mid_turn         # +neteot: a mid-turn position is first played to its turn end
         self.pair = (net.info.get("deck"), net.info.get("opponent"))
         if None in self.pair:
             raise ValueError("the net names no pairing (info deck / opponent)")
@@ -403,6 +406,14 @@ class SetNetEnded:
             return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
         if not player_moves_next and (state.players[player].deck_name, state.players[1 - player].deck_name) \
                 == self.pair:
+            if self.end_mid_turn and state.active == player:
+                # inside the scored player's own turn (a leaf after a move that isn't the turn's end, the root's
+                # center): the net has only seen positions after the end-of-turn abilities, so end the turn on a
+                # copy first, as learn.netdata.rows does for its turn-end rows
+                from svsim.search.evaluate import after_end_of_turn
+                state = after_end_of_turn(state)
+                if state.winner is not None:
+                    return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
             return SCALE * self.net.logit(state, player)
         return self.base.score(state, player, player_moves_next)
 

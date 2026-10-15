@@ -44,6 +44,8 @@ def main():
     ap.add_argument("--games", type=int, default=20)
     ap.add_argument("--decisions", type=int, default=120)
     ap.add_argument("--rounds", type=int, default=3)
+    ap.add_argument("--options", default="", help="more agent options for the net's side, e.g. +neteot")
+    ap.add_argument("--out", default="data/timing.json")
     args = ap.parse_args()
     recs = []
     with gzip.open(Path(args.records) / "rec-70200000.jsonl.gz", "rt", encoding="utf-8") as fh:
@@ -82,7 +84,7 @@ def main():
         spent["calls"] += 1
         return v
     SN.SetNet.logit = timed
-    specs = {"v2skx": SPEC, "v2skx+setnet": f"{SPEC}+setnet={args.net}"}
+    specs = {"v2skx": SPEC, "v2skx+setnet": f"{SPEC}+setnet={args.net}{args.options}"}
     totals = {k: [] for k in specs}
     for _ in range(args.rounds):                      # both agents at each position in turn, several rounds
         t_round = {k: 0.0 for k in specs}
@@ -108,8 +110,8 @@ def main():
            "linear_ms_saved_per_decision": round(spent["calls"] / n * per_eval["installed_linear"], 1),
            "rest_of_difference_ms": round(per_move["v2skx+setnet"] - per_move["v2skx"] - net_ms
                                           + spent["calls"] / n * per_eval["installed_linear"], 1),
-           "net": args.net}
-    (HERE / "data/timing.json").write_text(json.dumps(out, indent=1) + "\n", encoding="utf-8")
+           "net": args.net, "options": args.options}
+    (HERE / args.out).write_text(json.dumps(out, indent=1) + "\n", encoding="utf-8")
     print(json.dumps(out, indent=1))
 
 

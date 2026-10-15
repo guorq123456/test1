@@ -99,3 +99,26 @@ def test_search_switch_scores_only_the_nets_turn_ends(tmp_path):
     assert w.score(s, p, True) == w.base.score(s, p, True)     # in-turn: as before
     other = make_agent("mcts:20+plan+learned+phased", 0)
     assert w.score(s, p, True) == _search(other).weights.score(s, p, True)
+
+
+def test_neteot_ends_a_mid_turn_position_first_and_leaves_turn_ends_alone(tmp_path):
+    from svsim.learn.model import SCALE
+    from svsim.learn.netdata import _search
+    from svsim.tools.arena import make_agent
+    positions = _positions(4)
+    net = _net(_data(positions))
+    net.save(tmp_path / "n.npz")
+    spec = f"mcts:20+plan+learned+phased+setnet={tmp_path / 'n.npz'}"
+    off, on = _search(make_agent(spec, 0)).weights, _search(make_agent(spec + "+neteot", 0)).weights
+    assert not off.end_mid_turn and on.end_mid_turn
+    for s, p in positions:                                     # turn ends: the scored player isn't to act
+        assert s.active != p
+        assert on.score(s, p, False) == off.score(s, p, False) == SCALE * net.logit(s, p)
+    for seed in range(4):                                      # inside the player's own turn
+        cards = decks.build(DECKS["ramp-t"][1])
+        s = new_game(cards, list(cards), seed=seed)
+        p = s.active
+        ended = after_end_of_turn(s)
+        assert on.score(s, p, False) == SCALE * net.logit(ended, p)
+        assert off.score(s, p, False) == SCALE * net.logit(s, p)
+        assert on.score(s, p, True) == off.score(s, p, True)   # in-turn (player moves next): the base, as before

@@ -252,8 +252,9 @@ holdout game used):
 **Which version J91 and J92 used:**
 - J91 and J92 (equal-compute gates, N = 128) ran with the net's search path from before this change.
 - In this branch, setnet.py is the same file from 7bb466d to 25e246e.
-- b0920c3's earlier path agrees with it to 3e-15 but not to the last bit; the analysis line's run record names
-  the builder commit it used.
+- b0920c3's earlier path agrees with it to 3e-15 but not to the last bit.
+- The analysis line confirms that the two gates, their 20-pair checks, D1 / D2 and the leaf probe all checked
+  out **7bb466d**, unchanged (net-1000 989fa1c6…, net-10000 6257b666…).
 
 **The change (learn.setnet.SetNet.logit):**
 - No int16 copy or clip for the live tokens.
@@ -282,3 +283,29 @@ holdout game used):
 - **Offline time per evaluation varies a lot between runs** on this machine: the net 0.09–0.18 ms, the linear
   model 0.04–0.09 ms. The interleaved decision ratio is the steadier number.
 - **The ratio for equal compute from here on is 1.400.**
+
+### +neteot: a mid-turn position played to its turn end before the net scores it (the architecture thread 21:00Z)
+
+**Why:** the analysis line's leaf probe (7eba5be) found 17.1% of the net's scores falling inside a turn. These
+are in-turn leaves (after a move that isn't the turn's end) and the root's center. The net has only seen
+positions after the end-of-turn abilities.
+
+**What the option does:**
+- With `+neteot` beside `+setnet=PATH`, a position the search scores for a player who is still to act (their own
+  turn, `player_moves_next` False) is first put through `search.evaluate.after_end_of_turn` on a copy.
+- If the end of turn decides the game, it counts as the win or loss.
+- Off by default; off, the search path is the same as before.
+
+**Tests (tests/test_setnet.py):**
+- turn-end positions get the same score with and without the option;
+- with it, a mid-turn position scores the same as the net on that position's after_end_of_turn;
+- without it, it scores as before;
+- scores where the player moves next still come from the base.
+
+**In the search:**
+- In 12 decisions (holdout game 1, turns ≥ 3), 903 of 2412 net calls (37.4%) were mid-turn positions. This is a
+  different sample from the probe's 17.1%.
+- Decision ratio (data/timing-neteot.json, 5 interleaved rounds): **1.447** (1.515, 1.48, 1.393, 1.42, 1.429),
+  against 1.400 without the option.
+
+**D3's A:** `mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-10000.npz+neteot`.
