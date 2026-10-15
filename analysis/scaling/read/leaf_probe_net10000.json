@@ -1,0 +1,93 @@
+{
+ "condition": "对手卡表已知（牌序、手牌未知）",
+ "a": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-10000.npz",
+ "b": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost",
+ "seeds": [
+  71000000,
+  71000004
+ ],
+ "games": 10,
+ "a_points": [
+  0.0,
+  1.0,
+  0.0,
+  0.0,
+  1.0,
+  0.0,
+  0.0,
+  0.0,
+  1.0,
+  0.0
+ ],
+ "seconds": 43,
+ "net_calls": 41205,
+ "ended": 34146,
+ "mid": 7059,
+ "mid_share": 0.1713,
+ "d_net": {
+  "n": 7059,
+  "mean": -0.0252,
+  "sd": 0.1713,
+  "mean_abs": 0.0587,
+  "p10": -0.1265,
+  "p90": 0.0383
+ },
+ "d_lin": {
+  "n": 7059,
+  "mean": -0.0061,
+  "sd": 0.1119,
+  "mean_abs": 0.0061,
+  "p10": 0.0,
+  "p90": 0.0
+ },
+ "d_net_fresh0": {
+  "n": 1199,
+  "mean": -0.0085,
+  "sd": 0.0553,
+  "mean_abs": 0.0209,
+  "p10": -0.0173,
+  "p90": 0.0151
+ },
+ "d_net_fresh1plus": {
+  "n": 5860,
+  "mean": -0.0287,
+  "sd": 0.1861,
+  "mean_abs": 0.0664,
+  "p10": -0.1329,
+  "p90": 0.0475
+ },
+ "d_lin_fresh0": {
+  "n": 1199,
+  "mean": 0.0,
+  "sd": 0.0,
+  "mean_abs": 0.0,
+  "p10": 0.0,
+  "p90": 0.0
+ },
+ "d_lin_fresh1plus": {
+  "n": 5860,
+  "mean": -0.0074,
+  "sd": 0.1228,
+  "mean_abs": 0.0074,
+  "p10": 0.0,
+  "p90": 0.0
+ },
+ "within_search_sd_of_ended_logits": {
+  "n": 205,
+  "mean": 0.4884,
+  "sd": 0.3892,
+  "mean_abs": 0.4884,
+  "p10": 0.0597,
+  "p90": 1.0634
+ },
+ "within_search_p90_minus_median": {
+  "n": 205,
+  "mean": 0.252,
+  "sd": 0.4053,
+  "mean_abs": 0.252,
+  "p10": 0.0,
+  "p90": 0.6888
+ },
+ "corr_d_net_d_lin": 0.8693,
+ "note": "d = logit(mid-turn position) - logit(the same position with the turn ended there); linear in the same units (score / SCALE). A mid-turn leaf is scored by the net at a moment it never trained on."
+}
