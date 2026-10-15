@@ -8,6 +8,7 @@ ended the turn; the label is the game's result for them. Every model is scored b
 the same positions.
 
     python analysis/scaling/train.py net --size 1000 --tokens TOKDIR
+    python analysis/scaling/train.py holdout-net --size 1000 --tokens TOKDIR      # a trained net, holdout later
     python analysis/scaling/train.py linear --size 1000 --records RECDIR
     python analysis/scaling/train.py holdout-linear --records RECDIR --tokens TOKDIR
     python analysis/scaling/train.py contrib --size 100000 --tokens TOKDIR
@@ -99,18 +100,29 @@ def net_main(args) -> None:
               "batch": args.batch, "fit_s": round(time.time() - t0), "epochs": len(net.info["history"]),
               "train": score(net.predict(train), train.result), "valid": score(net.predict(valid), valid.result),
               "train_installed_linear": score(1 / (1 + np.exp(-train.linear)), train.result)}
+    net.info["report"] = report
+    (HERE / "models").mkdir(exist_ok=True)
+    net.save(HERE / f"models/net-{args.size}.npz")
+    _holdout_net(net, tok, args.size, report)
+
+
+def _holdout_net(net: SetNet, tok: Path, size: int, report: dict) -> None:
+    """The net on the holdout (when its 5 token files are there), into the report; writes the report."""
     hold = [tok / f"tok-{s}.npz" for s in HOLDOUT]
     if all(f.exists() for f in hold):
         h = _align(net, Data(hold, tok / "cards.npz"))
         p = net.predict(h)
         report["holdout"] = score(p, h.result)
         report["holdout_installed_linear"] = score(1 / (1 + np.exp(-h.linear)), h.result)
-        np.savez_compressed(HERE / f"data/holdout-net-{args.size}.npz", p=p.astype(np.float32), **_keys(h))
-    net.info["report"] = report
-    (HERE / "models").mkdir(exist_ok=True)
-    net.save(HERE / f"models/net-{args.size}.npz")
-    (HERE / f"data/net-{args.size}.json").write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
+        np.savez_compressed(HERE / f"data/holdout-net-{size}.npz", p=p.astype(np.float32), **_keys(h))
+    (HERE / f"data/net-{size}.json").write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=1))
+
+
+def holdout_net_main(args) -> None:
+    """A trained net (models/net-<size>.npz) on the holdout, once the holdout is there."""
+    net = SetNet.load(HERE / f"models/net-{args.size}.npz")
+    _holdout_net(net, Path(args.tokens), args.size, dict(net.info["report"]))
 
 
 def linear_main(args) -> None:
@@ -277,6 +289,9 @@ def main() -> None:
     n.add_argument("--lr", type=float, default=1e-3)
     n.add_argument("--l2", type=float, default=1e-5)
     n.add_argument("--seed", type=int, default=0)
+    hn = sub.add_parser("holdout-net")
+    hn.add_argument("--size", type=int, choices=sorted(SIZES), required=True)
+    hn.add_argument("--tokens", required=True)
     li = sub.add_parser("linear")
     li.add_argument("--size", type=int, choices=sorted(SIZES), required=True)
     li.add_argument("--records", required=True)
@@ -291,7 +306,7 @@ def main() -> None:
     c.add_argument("--sample", type=int, default=3000)
     args = ap.parse_args()
     (HERE / "data").mkdir(exist_ok=True)
-    {"net": net_main, "linear": linear_main, "holdout-linear": holdout_linear_main,
+    {"net": net_main, "holdout-net": holdout_net_main, "linear": linear_main, "holdout-linear": holdout_linear_main,
      "contrib": contrib_main}[args.cmd](args)
 
 

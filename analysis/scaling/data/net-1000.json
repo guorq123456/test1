@@ -1,0 +1,33 @@
+{
+ "size": 1000,
+ "phi": [
+  64,
+  64
+ ],
+ "rho": [
+  128,
+  64
+ ],
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "fit_s": 30,
+ "epochs": 8,
+ "train": {
+  "brier": 0.22597,
+  "log_loss": 0.64112,
+  "n": 17984
+ },
+ "valid": {
+  "brier": 0.23817,
+  "log_loss": 0.66755,
+  "n": 1029
+ },
+ "train_installed_linear": {
+  "brier": 0.2047,
+  "log_loss": 0.58979,
+  "n": 17984
+ }
+}
