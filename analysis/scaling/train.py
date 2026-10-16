@@ -59,7 +59,8 @@ BASE, STRIDE, HOLDOUT_BASE = 70100000, 2, 70200000
 HOLDOUT = [HOLDOUT_BASE + STRIDE * h for h in range(5)]
 PAIR = ("ramp-t", "ramp-t")      # the net's pairing (info deck / opponent; SetNetEnded scores only this one)
 SIZES = {1000: 1, 10000: 10, 100000: 100, 20000: 10, 30000: 10,   # 20000 / 30000: 10^4 of v2skx plus --add (gen 2, 3)
-         39000: 10, 131000: 100}   # 39000: 10^4 plus gen 2, 3, 4 (k 0-8); 131000: 10^5 plus those and sp-net100000
+         39000: 10, 131000: 100,   # 39000: 10^4 plus gen 2, 3, 4 (k 0-8); 131000: 10^5 plus those and sp-net100000
+         29000: 0}   # 29000: self-play only (gen 2, 3, 4 k 0-8 through --add), no v2skx
 
 
 def shards(size: int, add=()) -> list:
