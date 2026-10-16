@@ -11,7 +11,7 @@ For each net (models/<name>.npz):
    - phi's: the standardized static row of every card a token there has, and the token's dynamic values;
    - rho's: the pooled zone sums (7 zones x phi's width) and the scaled globals;
 3. per weight array: how many are exactly 0, subnormal (below 2.2e-308) and normal.
-Writes data/deadunits.json and prints it.
+Adds to data/deadunits.json (a net described again replaces its entry) and prints it.
 """
 from __future__ import annotations
 
@@ -119,7 +119,10 @@ def main() -> None:
     ap.add_argument("--nets", nargs="+", default=["net-10000", "net-gen2-20000", "net-100000"])
     args = ap.parse_args()
     out = [describe(n, Path(args.tokens)) for n in args.nets]
-    (HERE / "data/deadunits.json").write_text(json.dumps(out, indent=1) + "\n", encoding="utf-8")
+    path = HERE / "data/deadunits.json"      # other nets' entries stay; a net described again is replaced
+    old = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+    out = [e for e in old if e["net"] not in set(args.nets)] + out
+    path.write_text(json.dumps(out, indent=1) + "\n", encoding="utf-8")
     print(json.dumps(out, indent=1))
 
 

@@ -636,6 +636,7 @@ turn ends; it is in no net's training.
 | net-gen2-20000 | 0.19004 | 0.19649 | 0.57078 |
 | net-gen3-30000 | 0.18920 | 0.19539 | 0.56687 |
 | **net-gen4-39000** (21 epochs, 3215 s) | **0.18868** | **0.19303** | **0.56109** |
+| net-sp-29000 (self-play only: gen 2, 3, 4 k 0–8; 26 epochs, 3119 s) | 0.19185 | 0.19355 | 0.56236 |
 | net-100000 | 0.18676 | 0.19550 | 0.56783 |
 | net-leaky-100000 | 0.18692 | 0.19587 | 0.56806 |
 | net-wide-100000 (not converged) | 0.18649 | 0.19420 | 0.56403 |
@@ -656,3 +657,9 @@ The fit reached the 2-hour limit after epoch 14. Validation Brier per epoch:
 At epoch 14 the step size was 1.25e-4. Following the architecture thread (15:28Z, option b), the fit was not resumed. The
 file holds the checkpoint's best weights (epoch 12), taken with the same command and `--epochs 14`, which trains no further
 epoch. The report carries the note 「未收敛（第 12 轮）」.
+
+net-sp-29000 (models/net-sp-29000.npz, sha256 ee697fa9…; the architecture thread 16:23Z) was trained on self-play only:
+gen 2, gen 3 and gen 4 k = 0–8, with no v2skx games (`--size 29000`, 0 v2skx shards). It uses ReLU 64-64 / 128-64 and
+`--ftz`. Removing v2skx's 10⁴ games from net-gen4-39000's data made it worse on both holdouts: +0.0032 on v2skx and
++0.0005 on self-play. Dead on the holdout: phi 6 / 31 of 64, rho 86 of 128 / 10 of 64; 0 subnormal weights.
+`deadunits.py` now adds to data/deadunits.json instead of rewriting it.
