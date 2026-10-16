@@ -17,6 +17,8 @@ analysis line's records apart from date and cpu.
 | 6 | 72300012 | rec-72300012.jsonl.gz | 500 (g 0–499) |
 | 7 | 72300014 | rec-72300014.jsonl.gz | 500 (g 0–499) |
 | 8 | 72300016 | rec-72300016.jsonl.gz | 500 (g 0–499) |
+| 9 | 72300018 | rec-72300018.jsonl.gz | 500 (g 0–499) |
+| 10 | 72300020 | rec-72300020.jsonl.gz | 500 (g 0–499) |
 
 Shard k = 4 is handed to the analysis line. It finishes g = 306–499 from this part file with the same command:
 `scaledata play --base 72300000 --stride 2 --shards 4 5 --per-shard 500 --out <dir containing this file>`. The builder
