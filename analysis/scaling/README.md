@@ -623,3 +623,23 @@ there are 0 subnormal weights. Pooled rho inputs that are 0 throughout training:
 This is a description only.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## Generation 4 results (2026-10-16 13:30Z–)
+
+The v2skx holdout is 70200000 + 2h, h = 0–4, 93787 turn ends. The self-play holdout is gen 4's k = 9 (71600018), 17948
+turn ends; it is in no net's training.
+
+| net | v2skx holdout Brier | self-play holdout Brier | self-play log loss |
+|---|---|---|---|
+| installed linear | 0.2038 | 0.20723 | 0.60109 |
+| net-10000 | 0.19369 | 0.20123 | 0.58455 |
+| net-gen2-20000 | 0.19004 | 0.19649 | 0.57078 |
+| net-gen3-30000 | 0.18920 | 0.19539 | 0.56687 |
+| **net-gen4-39000** (21 epochs, 3215 s) | **0.18868** | **0.19303** | **0.56109** |
+| net-100000 | 0.18676 | 0.19550 | 0.56783 |
+| net-leaky-100000 | 0.18692 | 0.19587 | 0.56806 |
+| net-wide-100000 (not converged) | 0.18649 | 0.19420 | 0.56403 |
+
+net-gen4-39000 (models/net-gen4-39000.npz, sha256 1a177260…) was trained with ReLU 64-64 / 128-64 and `--ftz`.
+
+Condition: the opponent's deck list is known (order and hand not).
