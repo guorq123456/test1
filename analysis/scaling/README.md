@@ -455,3 +455,37 @@ sources are in the table above (k10–82 Windows, the rest Linux). Holdout and s
 - net-1000, net-10000, net-wide-10000, net-gen2-20000: none.
 - net-100000: from epoch 11 on.
 - net-wide-100000 and net-gen3-30000: all epochs.
+
+## How much of each net is in use (`deadunits.py`, data/deadunits.json; the architecture thread 04:37Z, description only)
+
+**What is counted:**
+- **Dead unit:** a unit that outputs 0 at every holdout turn end (phi: over every token; rho: over every position).
+  The same counts come out over each net's own training data.
+- **Input always 0:** an input that is 0 throughout the net's training data.
+- **Weights:** each array split into exactly 0 / subnormal / normal.
+
+| | net-10000 | net-gen2-20000 | net-100000 |
+|---|---|---|---|
+| phi layer 1, dead units | 0 of 64 | 1 of 64 | **39 of 64** |
+| phi layer 2, dead units | 5 of 64 | 25 of 64 | **40 of 64** |
+| rho layer 1, dead units | 62 of 128 | 86 of 128 | **91 of 128** |
+| rho layer 2, dead units | 15 of 64 | 18 of 64 | **31 of 64** |
+| static inputs always 0 | 50 of 96 | 51 of 96 | 50 of 96 |
+| dynamic inputs always 0 | 6 of 23 | 6 of 23 | 6 of 23 |
+| rho's pooled inputs always 0 | 197 of 448 | 273 of 448 | 316 of 448 |
+| globals always 0 | 0 of 25 | 0 of 25 | 0 of 25 |
+| weights: exactly 0 / subnormal / normal | 0 / 0 / 80,833 | 0 / 37,106 / 43,727 | 71,081 / 0 / 9,752 |
+
+**Readings:**
+- **Static inputs:** half of them never vary. The ramp-t mirror has 18 card ids, and many properties (hooks,
+  keywords, crafts) are the same for all 18, so after standardizing they are 0. That is the data, not the net.
+- **Dead units grow with training:** at 10⁵, about 25 of phi's 64 units per layer and 37 of rho's 128 first-layer
+  units are alive.
+  - Most of rho's pooled inputs that are always 0 follow from phi's dead second layer (7 zones × 40 = 280 of the
+    316).
+  - The weights into dead units get no gradient and l2 decay drives them to 0 (subnormal at gen2; exactly 0 with
+    `--ftz` at 10⁵).
+- **So the width actually in use is well below the nominal one,** which fits the under-fitting reading at 10⁵ and
+  may be why the wide net gained only 0.0014 at 10⁴.
+- Nothing in the test's settings changes; whether a next round uses another activation or decay is a separate
+  decision.
