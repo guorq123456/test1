@@ -363,5 +363,98 @@
     "normal": 1
    }
   }
+ },
+ {
+  "net": "net-wide-100000",
+  "slope": 0.0,
+  "holdout_turn_ends": 93787,
+  "training_turn_ends": 1873395,
+  "dead_on_holdout": {
+   "phi_layer1": "104 of 128",
+   "phi_layer2": "107 of 128",
+   "rho_layer1": "217 of 256",
+   "rho_layer2": "81 of 128"
+  },
+  "dead_on_training": {
+   "phi_layer1": "104 of 128",
+   "phi_layer2": "107 of 128",
+   "rho_layer1": "217 of 256",
+   "rho_layer2": "81 of 128"
+  },
+  "inputs_always_0_in_training": {
+   "phi_static": "50 of 96",
+   "phi_dynamic": "6 of 23",
+   "rho_pooled": "798 of 896",
+   "rho_globals": "0 of 25"
+  },
+  "weights": {
+   "W1s": {
+    "size": 12288,
+    "zero": 11184,
+    "subnormal": 0,
+    "normal": 1104
+   },
+   "W1d": {
+    "size": 2944,
+    "zero": 2605,
+    "subnormal": 0,
+    "normal": 339
+   },
+   "b1": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "W2": {
+    "size": 16384,
+    "zero": 15908,
+    "subnormal": 0,
+    "normal": 476
+   },
+   "b2": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "V1": {
+    "size": 235776,
+    "zero": 230233,
+    "subnormal": 0,
+    "normal": 5543
+   },
+   "c1": {
+    "size": 256,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 256
+   },
+   "V2": {
+    "size": 32768,
+    "zero": 30947,
+    "subnormal": 0,
+    "normal": 1821
+   },
+   "c2": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "v3": {
+    "size": 128,
+    "zero": 81,
+    "subnormal": 0,
+    "normal": 47
+   },
+   "c3": {
+    "size": 1,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1
+   }
+  },
+  "note": "weights from the epoch-17 checkpoint (best epoch 16), not converged"
  }
 ]

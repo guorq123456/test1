@@ -591,3 +591,35 @@ writes data/holdout-selfplay-net-<tag>.npz. It refuses a seed that is among the 
 option, output is as before.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## The wide 10⁵ net, scored from its epoch-17 checkpoint (not converged; the architecture thread 10:37Z)
+
+The wide 10⁵ fit (phi 128-128, rho 256-128, ReLU, `--ftz`) reached the 2-hour background limit after epoch 17. It was not
+resumed: its best validation Brier (0.18489, epoch 16) was already level with net-100000's (0.18483). The structure rule
+needs it 0.0035 lower, and one or two more epochs at step size 6.25e-5 could not make that up. models/net-wide-100000.npz
+holds the checkpoint's best weights (epoch 16 by validation log loss). They came from the same `net` command with
+`--epochs 17`, which trains no further epoch. Its report (data/net-wide-100000.json) carries a "not converged" note.
+
+| net | parameters (approx.) | epochs | valid Brier | holdout Brier | holdout log loss |
+|---|---|---|---|---|---|
+| net-100000 (ReLU 64-64 / 128-64) | 1× | 27 | 0.18483 | 0.18676 | 0.54595 |
+| net-leaky-100000 (R3) | 1× | 24 | 0.18489 | 0.18692 | 0.54648 |
+| net-wide-100000 (epoch-17 checkpoint) | ≈4× | 17 | 0.18489 | 0.18649 | 0.54534 |
+
+Wide minus default on the holdout is −0.0003, far from the −0.0035 the rule asks for. Generation 4 therefore uses the
+default structure (ReLU 64-64 / 128-64, `--ftz`).
+
+Dead units (data/deadunits.json, now 5 nets): units whose output is never positive anywhere on the holdout.
+
+| layer | net-100000 dead | live | net-wide-100000 dead | live |
+|---|---|---|---|---|
+| phi layer 1 | 39 of 64 | 25 | 104 of 128 | 24 |
+| phi layer 2 | 40 of 64 | 24 | 107 of 128 | 21 |
+| rho layer 1 | 91 of 128 | 37 | 217 of 256 | 39 |
+| rho layer 2 | 31 of 64 | 33 | 81 of 128 | 47 |
+
+Doubling the width left about the same number of live units in the first three layers. The extra units died. With `--ftz`
+there are 0 subnormal weights. Pooled rho inputs that are 0 throughout training: 798 of 896 (net-100000: 316 of 448).
+This is a description only.
+
+Condition: the opponent's deck list is known (order and hand not).
