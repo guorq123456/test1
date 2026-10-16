@@ -489,3 +489,17 @@ sources are in the table above (k10–82 Windows, the rest Linux). Holdout and s
   may be why the wide net gained only 0.0014 at 10⁴.
 - Nothing in the test's settings changes; whether a next round uses another activation or decay is a separate
   decision.
+
+### R3, registered before any result (the architecture thread 06:25Z)
+
+**Purpose:** tell "the net is too narrow" apart from "its units die".
+
+**Settings:** 10⁵ data, net-100000's width (phi 64-64, rho 128-64). The only change is ReLU → leaky ReLU with
+negative slope 0.01 (`--slope 0.01`; setnet's ReLU path is unchanged, checked bitwise on net-10000's and
+net-100000's holdout probabilities). Everything else is as net-100000: Adam 1e-3, batch 256, l2 1e-5, step halving
+and stopping, `--ftz`.
+
+**J104:** R3's holdout Brier point estimate is below net-100000's 0.18676 (60%).
+- Its dead-unit counts are reported too: a unit whose output is never positive.
+- Order: after the wide 10⁵ net, and after net-gen3-30000, which goes first when generation 3's data arrives.
+- R3 is a description only; this test's conclusions do not change with it.

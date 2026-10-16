@@ -98,7 +98,7 @@ def net_main(args) -> None:
     data = Data(_files(tok, shards(args.size, args.add), "tok-", ".npz"), tok / "cards.npz")
     valid_mask = data.games() % 20 == 0
     train, valid = data.subset(~valid_mask), data.subset(valid_mask)
-    net = SetNet(data.static.shape[1], phi=args.phi, rho=args.rho, seed=args.seed,
+    net = SetNet(data.static.shape[1], phi=args.phi, rho=args.rho, seed=args.seed, slope=args.slope,
                  info={"deck": "ramp-t", "opponent": "ramp-t", "size": args.size, "shards": shards(args.size, args.add),
                        "train_positions": train.n, "name": args.name or None,
                        "valid_positions": valid.n})
@@ -106,7 +106,7 @@ def net_main(args) -> None:
     t0 = time.time()
     net.fit(train, valid, epochs=args.epochs, batch=args.batch, lr=args.lr, l2=args.l2, patience=args.patience,
             seed=args.seed, decay=args.decay, checkpoint=args.checkpoint, ftz=args.ftz)
-    report = {"size": args.size, "name": args.name or None, "ftz": args.ftz, "phi": list(args.phi), "rho": list(args.rho), "lr": args.lr, "decay": args.decay,
+    report = {"size": args.size, "name": args.name or None, "ftz": args.ftz, "slope": args.slope, "phi": list(args.phi), "rho": list(args.rho), "lr": args.lr, "decay": args.decay,
               "patience": args.patience, "l2": args.l2,
               "batch": args.batch, "fit_s": round(time.time() - t0), "epochs": len(net.info["history"]),
               "train": score(net.predict(train), train.result), "valid": score(net.predict(valid), valid.result),
@@ -301,6 +301,7 @@ def main() -> None:
     n.add_argument("--l2", type=float, default=1e-5)
     n.add_argument("--seed", type=int, default=0)
     n.add_argument("--name", default="", help="a variant's name: files net-<name>-<size>.* (the fixed net: none)")
+    n.add_argument("--slope", type=float, default=0.0, help="leaky ReLU's negative slope (0: ReLU, the fixed net)")
     n.add_argument("--ftz", action="store_true",
                    help="set subnormal weights and Adam moments to 0 after every step (setnet.SetNet.fit ftz)")
     n.add_argument("--checkpoint", default=None,

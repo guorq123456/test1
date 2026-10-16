@@ -130,6 +130,20 @@ def _flush(a: np.ndarray) -> int:
     return n
 
 
+def _act(x: np.ndarray, slope: float) -> np.ndarray:
+    """ReLU (slope 0, the same operation as before R3, so earlier nets stay bitwise reproducible) or leaky ReLU."""
+    if slope == 0.0:
+        return np.maximum(x, 0)
+    return np.where(x > 0, x, slope * x)
+
+
+def _dact(out: np.ndarray, slope: float):
+    """The activation's derivative from its output (the output's sign is the input's for slope >= 0)."""
+    if slope == 0.0:
+        return out > 0
+    return np.where(out > 0, 1.0, slope)
+
+
 class _Printed:
     """A card at its printed values, as tokens._pooled reads one (a CardDef behind `.defn`)."""
     __slots__ = ("defn",)
@@ -148,8 +162,10 @@ def _segsum(H: np.ndarray, w: np.ndarray, seg: np.ndarray, nseg: int) -> np.ndar
 class SetNet:
     PARAMS = ("W1s", "W1d", "b1", "W2", "b2", "V1", "c1", "V2", "c2", "v3", "c3")
 
-    def __init__(self, static_width: int, phi=(64, 64), rho=(128, 64), seed: int = 0, info=None):
+    def __init__(self, static_width: int, phi=(64, 64), rho=(128, 64), seed: int = 0, info=None,
+                 slope: float = 0.0):
         rng = np.random.default_rng(seed)
+        self.slope = float(slope)      # 0: ReLU (the fixed settings); > 0: leaky ReLU with that negative slope (R3)
         D, G = len(DYN_NAMES), len(T.GLOBALS)
         h1, h2 = phi
         r1, r2 = rho
@@ -193,13 +209,13 @@ class SetNet:
         B = glob.shape[0]
         S = self._S(static)
         A1 = (S @ self.W1s)[cards] + dyn @ self.W1d + self.b1
-        H1 = np.maximum(A1, 0)
+        H1 = _act(A1, self.slope)
         A2 = H1 @ self.W2 + self.b2
-        H2 = np.maximum(A2, 0)
+        H2 = _act(A2, self.slope)
         P = _segsum(H2, count, seg, B * NZ).reshape(B, -1)
         U = np.concatenate([P, glob], axis=1)
-        Z1 = np.maximum(U @ self.V1 + self.c1, 0)
-        Z2 = np.maximum(Z1 @ self.V2 + self.c2, 0)
+        Z1 = _act(U @ self.V1 + self.c1, self.slope)
+        Z2 = _act(Z1 @ self.V2 + self.c2, self.slope)
         out = Z2 @ self.v3 + self.c3[0]
         if keep:
             return out, (S, H1, H2, U, Z1, Z2)
@@ -214,15 +230,15 @@ class SetNet:
         g = {}
         dz = (p - y) / B
         g["v3"], g["c3"] = Z2.T @ dz, np.array([dz.sum()])
-        dZ2 = np.outer(dz, self.v3) * (Z2 > 0)
+        dZ2 = np.outer(dz, self.v3) * _dact(Z2, self.slope)
         g["V2"], g["c2"] = Z1.T @ dZ2, dZ2.sum(0)
-        dZ1 = (dZ2 @ self.V2.T) * (Z1 > 0)
+        dZ1 = (dZ2 @ self.V2.T) * _dact(Z1, self.slope)
         g["V1"], g["c1"] = U.T @ dZ1, dZ1.sum(0)
         dU = dZ1 @ self.V1.T
         dP = dU[:, :NZ * self.phi[1]].reshape(B * NZ, self.phi[1])
-        dH2 = dP[seg] * count[:, None] * (H2 > 0)
+        dH2 = dP[seg] * count[:, None] * _dact(H2, self.slope)
         g["W2"], g["b2"] = H1.T @ dH2, dH2.sum(0)
-        dA1 = (dH2 @ self.W2.T) * (H1 > 0)
+        dA1 = (dH2 @ self.W2.T) * _dact(H1, self.slope)
         g["W1d"], g["b1"] = dyn.T @ dA1, dA1.sum(0)
         onehot = np.zeros((len(S), len(cards)))
         onehot[cards, np.arange(len(cards))] = 1.0
@@ -361,8 +377,8 @@ class SetNet:
         if live:
             rows = np.asarray(live, dtype=np.int64)
             cards = [index[c] for c in rows[:, 0].tolist()]
-            H1 = np.maximum(table[cards] + dynamic(rows[:, 1:]) @ self.W1d, 0)
-            H2 = np.maximum(H1 @ self.W2 + self.b2, 0)       # live tokens have count 1
+            H1 = _act(table[cards] + dynamic(rows[:, 1:]) @ self.W1d, self.slope)
+            H2 = _act(H1 @ self.W2 + self.b2, self.slope)       # live tokens have count 1
             zones = rows[:, 1 + _ZONE]
             for z in sorted(set(zones.tolist())):
                 P[z] = H2[zones == z].sum(axis=0)
@@ -376,16 +392,17 @@ class SetNet:
                     if h is None:
                         d = next(c.defn for c in cards_ if c.defn.card_id == cid)
                         tok = np.asarray(T._pooled([_Printed(d)], z)[0][1:], dtype=np.int16)[None, :]
-                        h = self._pool[cid] = np.maximum(
-                            np.maximum(table[index[cid]] + dynamic(tok)[0] @ self.W1d, 0) @ self.W2 + self.b2, 0)
+                        h = self._pool[cid] = _act(
+                            _act(table[index[cid]] + dynamic(tok)[0] @ self.W1d, self.slope) @ self.W2 + self.b2,
+                            self.slope)
                     total += n * h
                 if len(sums) > 50000:
                     sums.clear()
                 sums[(z, key)] = total
             P[z] = P[z] + total
         u = np.concatenate([P.reshape(-1), T.globals_of(state, player) / _GLOBAL_SCALE])
-        z1 = np.maximum(u @ self.V1 + self.c1, 0)
-        return float(np.maximum(z1 @ self.V2 + self.c2, 0) @ self.v3 + self.c3[0])
+        z1 = _act(u @ self.V1 + self.c1, self.slope)
+        return float(_act(z1 @ self.V2 + self.c2, self.slope) @ self.v3 + self.c3[0])
 
     def _index(self) -> dict:
         idx = getattr(self, "_idx", None)
@@ -414,14 +431,15 @@ class SetNet:
     def save(self, path) -> None:
         arrays = {k: getattr(self, k) for k in self.PARAMS}
         arrays.update(smean=self.smean, sstd=self.sstd, card_ids=self.card_ids, static=self.static,
-                      phi=np.array(self.phi), rho=np.array(self.rho),
+                      phi=np.array(self.phi), rho=np.array(self.rho), slope=np.array(self.slope),
                       info=np.array(json.dumps(self.info)))
         np.savez(path, **arrays)
 
     @classmethod
     def load(cls, path) -> "SetNet":
         z = np.load(path, allow_pickle=False)
-        net = cls(z["static"].shape[1], phi=tuple(int(x) for x in z["phi"]), rho=tuple(int(x) for x in z["rho"]))
+        net = cls(z["static"].shape[1], phi=tuple(int(x) for x in z["phi"]), rho=tuple(int(x) for x in z["rho"]),
+                  slope=float(z["slope"]) if "slope" in z.files else 0.0)
         for k in cls.PARAMS + ("smean", "sstd", "card_ids", "static"):
             setattr(net, k, np.array(z[k]))
         net.info = json.loads(str(z["info"]))

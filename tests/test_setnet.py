@@ -150,3 +150,30 @@ def test_flushing_subnormal_weights_keeps_the_logits(tmp_path):
     assert flushed is not plain and not np.any((flushed.V1 != 0) & (np.abs(flushed.V1) < np.finfo(float).tiny))
     for s, p in positions:
         assert flushed.logit(s, p) == plain.logit(s, p)
+
+
+def test_leaky_relu_gradients_and_single_position_path(tmp_path):
+    positions = _positions()
+    d = _data(positions)
+    net = SN.SetNet(d.static.shape[1], phi=(8, 6), rho=(10, 5), seed=2, slope=0.01,
+                    info={"deck": "ramp-t", "opponent": "ramp-t"})
+    net.set_cards(d.card_ids, d.static)
+    batch, y = d.batch(np.arange(d.n)), d.result.astype(float)
+    _, g = net.grads(batch, y)
+    rng = np.random.default_rng(1)
+    for k in net.PARAMS:
+        P = getattr(net, k)
+        i = tuple(rng.integers(0, s) for s in P.shape)
+        old = P[i]
+        P[i] = old + 1e-6
+        lp, _ = net.grads(batch, y)
+        P[i] = old - 1e-6
+        lm, _ = net.grads(batch, y)
+        P[i] = old
+        assert abs((lp - lm) / 2e-6 - g[k][i]) < 1e-6
+    net.save(tmp_path / "leaky.npz")
+    back = SN.SetNet.load(tmp_path / "leaky.npz")
+    assert back.slope == 0.01
+    z = net.forward(*batch)
+    for (s, p), want in zip(positions, z):
+        assert abs(back.logit(s, p) - want) < 1e-9

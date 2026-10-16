@@ -5,7 +5,7 @@ known (order and hand not).
     python analysis/scaling/deadunits.py --tokens TOKDIR [--nets net-10000 net-gen2-20000 net-100000]
 
 For each net (models/<name>.npz):
-1. units per layer that output 0 at every holdout turn end (the 5 tok-702000xx files): phi's two layers over every
+1. units per layer whose output is never positive (0 for ReLU) at every holdout turn end (the 5 tok-702000xx files): phi's two layers over every
    token of those positions, rho's two layers over the positions;
 2. inputs that are 0 throughout the net's own training data (its info "shards", the validation part included):
    - phi's: the standardized static row of every card a token there has, and the token's dynamic values;
@@ -30,18 +30,20 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))
 sys.path.insert(0, str(HERE))
 
-from svsim.learn.setnet import NZ, Data, SetNet, _TINY, _segsum  # noqa: E402
+from svsim.learn.setnet import NZ, Data, SetNet, _TINY, _act, _segsum  # noqa: E402
 
 
 class Seen:
-    """Per-dimension 'ever nonzero' over batches."""
+    """Per dimension, over batches: ever nonzero (inputs) or ever positive (a unit's output: with leaky ReLU a unit
+    whose output is never positive is dead in the same sense, its input always on the flat side)."""
 
-    def __init__(self, width: int):
+    def __init__(self, width: int, positive: bool = False):
         self.any = np.zeros(width, dtype=bool)
+        self.positive = positive
 
     def add(self, x: np.ndarray) -> None:
         if len(x):
-            self.any |= np.any(x != 0, axis=0)
+            self.any |= np.any(x > 0 if self.positive else x != 0, axis=0)
 
 
 def _layers(net: SetNet, batch, static):
@@ -51,19 +53,19 @@ def _layers(net: SetNet, batch, static):
     S = net._S()
     x_phi = np.concatenate([S[cards], dyn], axis=1)
     A1 = (S @ net.W1s)[cards] + dyn @ net.W1d + net.b1
-    H1 = np.maximum(A1, 0)
-    H2 = np.maximum(H1 @ net.W2 + net.b2, 0)
+    H1 = _act(A1, net.slope)
+    H2 = _act(H1 @ net.W2 + net.b2, net.slope)
     P = _segsum(H2, count, seg, B * NZ).reshape(B, -1)
     U = np.concatenate([P, glob], axis=1)
-    Z1 = np.maximum(U @ net.V1 + net.c1, 0)
-    Z2 = np.maximum(Z1 @ net.V2 + net.c2, 0)
+    Z1 = _act(U @ net.V1 + net.c1, net.slope)
+    Z2 = _act(Z1 @ net.V2 + net.c2, net.slope)
     return x_phi, H1, H2, U, Z1, Z2
 
 
 def _pass(net: SetNet, data: Data, step: int = 2048):
     widths = [net.static.shape[1] + net.W1d.shape[0], net.phi[0], net.phi[1], net.V1.shape[0], net.rho[0],
               net.rho[1]]
-    seen = [Seen(w) for w in widths]
+    seen = [Seen(w, positive=i in (1, 2, 4, 5)) for i, w in enumerate(widths)]
     for s in range(0, data.n, step):
         for sn, arr in zip(seen, _layers(net, data.batch(np.arange(s, min(s + step, data.n))), None)):
             sn.add(arr)
@@ -98,7 +100,7 @@ def describe(name: str, tok: Path) -> dict:
     pooled_zero = int((~any_train[3][:NZ * h2]).sum())
     globals_zero = int((~any_train[3][NZ * h2:]).sum())
     return {
-        "net": name, "holdout_turn_ends": 93787, "training_turn_ends": n_train,
+        "net": name, "slope": net.slope, "holdout_turn_ends": 93787, "training_turn_ends": n_train,
         "dead_on_holdout": {"phi_layer1": f"{dead_hold[1]} of {h1}", "phi_layer2": f"{dead_hold[2]} of {h2}",
                             "rho_layer1": f"{dead_hold[4]} of {r1}", "rho_layer2": f"{dead_hold[5]} of {r2}"},
         "dead_on_training": {"phi_layer1": f"{zero_train[1]} of {h1}", "phi_layer2": f"{zero_train[2]} of {h2}",
