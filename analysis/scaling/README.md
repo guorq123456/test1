@@ -639,7 +639,20 @@ turn ends; it is in no net's training.
 | net-100000 | 0.18676 | 0.19550 | 0.56783 |
 | net-leaky-100000 | 0.18692 | 0.19587 | 0.56806 |
 | net-wide-100000 (not converged) | 0.18649 | 0.19420 | 0.56403 |
+| **net-all-131000** (未收敛（第 12 轮）: epoch-14 checkpoint, best epoch 12) | **0.18659** | **0.19230** | **0.55855** |
 
 net-gen4-39000 (models/net-gen4-39000.npz, sha256 1a177260…) was trained with ReLU 64-64 / 128-64 and `--ftz`.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+net-all-131000 (models/net-all-131000.npz, sha256 4e377143…) is the install candidate. It trained on 131 shards: v2skx
+10⁵, gen 2, gen 3, gen 4 k = 0–8 and sp-net100000. It uses ReLU 64-64 / 128-64 and `--ftz`, and has 0 subnormal weights.
+The fit reached the 2-hour limit after epoch 14. Validation Brier per epoch:
+
+| epoch | 6 | 9 | 11 | 12 | 13 | 14 |
+|---|---|---|---|---|---|---|
+| valid Brier | 0.18659 | 0.18602 | 0.18572 | **0.18569** | 0.18634 | 0.18582 |
+
+At epoch 14 the step size was 1.25e-4. Following the architecture thread (15:28Z, option b), the fit was not resumed. The
+file holds the checkpoint's best weights (epoch 12), taken with the same command and `--epochs 14`, which trains no further
+epoch. The report carries the note 「未收敛（第 12 轮）」.
