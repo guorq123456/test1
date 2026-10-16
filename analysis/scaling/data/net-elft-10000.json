@@ -1,0 +1,46 @@
+{
+ "size": 10000,
+ "name": "elft",
+ "ftz": true,
+ "slope": 0.0,
+ "phi": [
+  64,
+  64
+ ],
+ "rho": [
+  128,
+  64
+ ],
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "fit_s": 699,
+ "epochs": 16,
+ "train": {
+  "brier": 0.19037,
+  "log_loss": 0.55414,
+  "n": 167643
+ },
+ "valid": {
+  "brier": 0.18441,
+  "log_loss": 0.54074,
+  "n": 8954
+ },
+ "train_installed_linear": {
+  "brier": 0.20938,
+  "log_loss": 0.60071,
+  "n": 167643
+ },
+ "holdout": {
+  "brier": 0.19086,
+  "log_loss": 0.55551,
+  "n": 88311
+ },
+ "holdout_installed_linear": {
+  "brier": 0.20834,
+  "log_loss": 0.5985,
+  "n": 88311
+ }
+}

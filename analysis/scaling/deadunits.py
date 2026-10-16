@@ -82,6 +82,7 @@ def describe(name: str, tok: Path) -> dict:
     net = SetNet.load(HERE / f"models/{name}.npz")
     hold = _align(net, Data([tok / f"tok-{s}.npz" for s in T.HOLDOUT], tok / "cards.npz"))
     dead_hold, _ = _pass(net, hold)
+    n_hold = hold.n
     del hold
     shards = net.info.get("shards") or T.shards(net.info["size"])
     train = _align(net, Data([tok / f"tok-{s}.npz" for s in shards], tok / "cards.npz"))
@@ -100,7 +101,7 @@ def describe(name: str, tok: Path) -> dict:
     pooled_zero = int((~any_train[3][:NZ * h2]).sum())
     globals_zero = int((~any_train[3][NZ * h2:]).sum())
     return {
-        "net": name, "slope": net.slope, "holdout_turn_ends": 93787, "training_turn_ends": n_train,
+        "net": name, "slope": net.slope, "holdout_turn_ends": int(n_hold), "training_turn_ends": n_train,
         "dead_on_holdout": {"phi_layer1": f"{dead_hold[1]} of {h1}", "phi_layer2": f"{dead_hold[2]} of {h2}",
                             "rho_layer1": f"{dead_hold[4]} of {r1}", "rho_layer2": f"{dead_hold[5]} of {r2}"},
         "dead_on_training": {"phi_layer1": f"{zero_train[1]} of {h1}", "phi_layer2": f"{zero_train[2]} of {h2}",
@@ -117,7 +118,11 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--tokens", required=True)
     ap.add_argument("--nets", nargs="+", default=["net-10000", "net-gen2-20000", "net-100000"])
+    ap.add_argument("--holdout-base", type=int, default=70200000,
+                    help="seed of holdout shard 0 (5 shards; the elf-t mirror: 72000000)")
     args = ap.parse_args()
+    import train as T
+    T.HOLDOUT = [args.holdout_base + T.STRIDE * h for h in range(5)]
     out = [describe(n, Path(args.tokens)) for n in args.nets]
     path = HERE / "data/deadunits.json"      # other nets' entries stay; a net described again is replaced
     old = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []

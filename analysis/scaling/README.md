@@ -663,3 +663,30 @@ gen 2, gen 3 and gen 4 k = 0–8, with no v2skx games (`--size 29000`, 0 v2skx s
 `--ftz`. Removing v2skx's 10⁴ games from net-gen4-39000's data made it worse on both holdouts: +0.0032 on v2skx and
 +0.0005 on self-play. Dead on the holdout: phi 6 / 31 of 64, rho 86 of 128 / 10 of 64; 0 subnormal weights.
 `deadunits.py` now adds to data/deadunits.json instead of rewriting it.
+
+## net-elft-10000: the first net on the elf-t mirror (连击妖; the architecture thread 21:40Z, registered in the analysis line's 26acfd9)
+
+The data is the analysis line's 37252cc. Training uses data/elf-t/rec, 71900000 + 2k (k = 0–9), 1000 games each. The
+holdout is data/elf-t/heldout, 72000000 + 2h (h = 0–4), 88311 turn ends. Every file's sha256 matched. The records were
+encoded into their own token folder (22 card ids; ramp-t has 18) with the default spec. The 'linear' label is therefore
+the installed elf-t turn-end model.
+
+    python analysis/scaling/train.py --deck elf-t --opponent elf-t --base 71900000 --holdout-base 72000000 \
+        net --size 10000 --name elft --ftz --tokens TOK-ELFT --checkpoint CKPT
+
+The structure is ReLU 64-64 / 128-64 with `--ftz`. The fit took 16 epochs and 699 s. The model is
+models/net-elft-10000.npz (sha256 3278ad1a6ce5c6b576b7ba134f1216def01740fc4711b1dc2cabbb9a7573b1fa); its info pairing is
+elf-t / elf-t. The holdout probabilities are in data/holdout-net-elft-10000.npz.
+
+| | valid (8954) | holdout Brier (88311) | holdout log loss |
+|---|---|---|---|
+| net-elft-10000 | 0.18441 | **0.19086** | 0.55551 |
+| installed elf-t linear, same holdout | | 0.20834 | 0.5985 |
+
+The net is 0.0175 below the installed linear model. On the ramp-t mirror, net-10000 was 0.0101 below its linear model
+(0.19369 vs 0.2038).
+
+Dead units on the holdout: phi 0 / 2 of 64, rho 57 of 128 / 7 of 64. There are 0 subnormal weights. Pooled rho inputs
+that are 0 throughout training: 146 of 448. `deadunits.py` takes `--holdout-base` (the elf-t mirror: 72000000).
+
+Condition: the opponent's deck list is known (order and hand not).
