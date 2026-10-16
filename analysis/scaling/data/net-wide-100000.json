@@ -43,5 +43,18 @@
   "log_loss": 0.58936,
   "n": 93787
  },
+ "holdout_selfplay": {
+  "seeds": [
+   71600018
+  ],
+  "brier": 0.1942,
+  "log_loss": 0.56403,
+  "n": 17948,
+  "installed_linear": {
+   "brier": 0.20723,
+   "log_loss": 0.60109,
+   "n": 17948
+  }
+ },
  "note": "weights from the epoch-17 checkpoint (best epoch 16 by validation log loss), not converged; the fit stopped at the 2-hour limit and was not resumed (the architecture thread 10:37Z). fit_s covers only this scoring run"
 }

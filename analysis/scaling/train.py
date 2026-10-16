@@ -146,7 +146,9 @@ def _holdout_net(net: SetNet, tok: Path, tag: str, report: dict, extra=()) -> No
 def holdout_net_main(args) -> None:
     """A trained net (models/net-<size>.npz) on the holdout, once the holdout is there."""
     net = SetNet.load(HERE / f"models/net-{_tag(args)}.npz")
-    _holdout_net(net, Path(args.tokens), _tag(args), dict(net.info["report"]), args.extra_holdout)
+    written = HERE / f"data/net-{_tag(args)}.json"     # keeps what was added to the written report (e.g. a note)
+    report = {**net.info["report"], **(json.loads(written.read_text()) if written.exists() else {})}
+    _holdout_net(net, Path(args.tokens), _tag(args), report, args.extra_holdout)
 
 
 def linear_main(args) -> None:
