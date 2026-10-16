@@ -122,3 +122,18 @@ def test_neteot_ends_a_mid_turn_position_first_and_leaves_turn_ends_alone(tmp_pa
         assert on.score(s, p, False) == SCALE * net.logit(ended, p)
         assert off.score(s, p, False) == SCALE * net.logit(s, p)
         assert on.score(s, p, True) == off.score(s, p, True)   # in-turn (player moves next): the base, as before
+
+
+def test_fit_resumed_from_a_checkpoint_matches_an_unbroken_fit(tmp_path):
+    d = _data(_positions(8))
+    quiet = lambda *_: None
+    whole = _net(d, seed=3)
+    whole.fit(d, d, epochs=4, batch=3, patience=10, log=quiet)
+    broken = _net(d, seed=3)
+    ck = tmp_path / "ck.npz"
+    broken.fit(d, d, epochs=2, batch=3, patience=10, log=quiet, checkpoint=ck)   # stopped after 2 epochs
+    again = _net(d, seed=3)
+    again.fit(d, d, epochs=4, batch=3, patience=10, log=quiet, checkpoint=ck)    # goes on from epoch 3
+    for k in SN.SetNet.PARAMS:
+        assert np.array_equal(getattr(whole, k), getattr(again, k))
+    assert [r["epoch"] for r in again.info["history"]] == [1, 2, 3, 4]

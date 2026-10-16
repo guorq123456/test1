@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
 from pathlib import Path
 
@@ -221,16 +222,35 @@ class SetNet:
 
     # --- training ---------------------------------------------------------------------------------------------
     def fit(self, data: Data, valid: Data | None = None, epochs: int = 30, batch: int = 256, lr: float = 1e-3,
-            l2: float = 1e-5, patience: int = 3, seed: int = 0, decay: float = 0.5, log=print) -> dict:
+            l2: float = 1e-5, patience: int = 3, seed: int = 0, decay: float = 0.5, log=print,
+            checkpoint=None) -> dict:
         """Adam; after each epoch without a better validation log-loss the step size is multiplied by `decay`,
-        and `patience` such epochs in a row stop the fit; the best epoch's weights are kept."""
+        and `patience` such epochs in a row stop the fit; the best epoch's weights are kept. With `checkpoint` (a
+        path), the whole state (weights, Adam's moments and step count, the step size, the best epoch so far, the
+        shuffling generator) is written after every epoch and read back at the start, so a stopped fit goes on from
+        its last finished epoch exactly as if it had not stopped."""
         self._table, self._pool, self._zone_sums = None, {}, {}
         rng = np.random.default_rng(seed)
         m = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
         v = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
         t, best, best_params, bad, history = 0, None, None, 0, []
+        start, stopped = 0, False
+        if checkpoint is not None and Path(checkpoint).exists():
+            z = np.load(checkpoint, allow_pickle=False)
+            meta = json.loads(str(z["meta"]))
+            for k in self.PARAMS:
+                setattr(self, k, np.array(z["p_" + k]))
+                m[k], v[k] = np.array(z["m_" + k]), np.array(z["v_" + k])
+            if meta["has_best"]:
+                best_params = {k: np.array(z["b_" + k]) for k in self.PARAMS}
+            t, best, bad, lr, history = meta["t"], meta["best"], meta["bad"], meta["lr"], meta["history"]
+            start, stopped = meta["epochs_done"], meta["stopped"]
+            rng.bit_generator.state = meta["rng"]
+            log(json.dumps({"resumed_after_epoch": start, "stopped": stopped}))
         y = data.result.astype(np.float64)
-        for epoch in range(epochs):
+        for epoch in range(start, epochs):
+            if stopped:
+                break
             t0 = time.time()
             order = rng.permutation(data.n)
             total = 0.0
@@ -257,7 +277,20 @@ class SetNet:
                     lr *= decay
             history.append(row)
             log(json.dumps(row))
-            if valid is not None and bad >= patience:
+            stopped = valid is not None and bad >= patience
+            if checkpoint is not None:
+                arrays = {"p_" + k: getattr(self, k) for k in self.PARAMS}
+                arrays.update({"m_" + k: m[k] for k in self.PARAMS})
+                arrays.update({"v_" + k: v[k] for k in self.PARAMS})
+                if best_params is not None:
+                    arrays.update({"b_" + k: best_params[k] for k in self.PARAMS})
+                meta = {"t": t, "best": best, "bad": bad, "lr": lr, "history": history, "epochs_done": epoch + 1,
+                        "stopped": stopped, "has_best": best_params is not None,
+                        "rng": rng.bit_generator.state}
+                tmp = str(checkpoint) + ".tmp.npz"
+                np.savez(tmp, meta=np.array(json.dumps(meta)), **arrays)
+                os.replace(tmp, checkpoint)
+            if stopped:
                 break
         if best_params is not None:
             for k, val in best_params.items():

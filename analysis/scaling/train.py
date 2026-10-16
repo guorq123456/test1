@@ -105,7 +105,7 @@ def net_main(args) -> None:
     net.set_cards(data.card_ids, data.static, np.bincount(train.cards, minlength=len(data.card_ids)) + 1)
     t0 = time.time()
     net.fit(train, valid, epochs=args.epochs, batch=args.batch, lr=args.lr, l2=args.l2, patience=args.patience,
-            seed=args.seed, decay=args.decay)
+            seed=args.seed, decay=args.decay, checkpoint=args.checkpoint)
     report = {"size": args.size, "name": args.name or None, "phi": list(args.phi), "rho": list(args.rho), "lr": args.lr, "decay": args.decay,
               "patience": args.patience, "l2": args.l2,
               "batch": args.batch, "fit_s": round(time.time() - t0), "epochs": len(net.info["history"]),
@@ -301,6 +301,8 @@ def main() -> None:
     n.add_argument("--l2", type=float, default=1e-5)
     n.add_argument("--seed", type=int, default=0)
     n.add_argument("--name", default="", help="a variant's name: files net-<name>-<size>.* (the fixed net: none)")
+    n.add_argument("--checkpoint", default=None,
+                   help="a file for the fit's state after every epoch; the same command again goes on from it")
     n.add_argument("--add", action="append", default=[], metavar="BASE:K",
                    help="also train on K shards of BASE (BASE + 2k): generation 2 is --size 20000 --add 70800000:10")
     hn = sub.add_parser("holdout-net")
