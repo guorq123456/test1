@@ -1,0 +1,2 @@
+/tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/j109/gate_j109.jsonl: 300 pairs, seeds 72100000..72100299, 52.2% ± 3.2% (49.0%..55.3%), CR +20 (-10..+51; steady-state +17); ms per searched decision A 67.34 / B 66.66 = 1.010
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 52.2% (49.0%..55.3%), CR +20 (-9..+51; steady-state +17)
