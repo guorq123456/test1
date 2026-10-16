@@ -118,6 +118,18 @@ def _spans(offsets: np.ndarray, idx: np.ndarray):
     return np.repeat(starts - first, lens) + np.arange(int(lens.sum())), lens
 
 
+_TINY = np.finfo(np.float64).tiny
+
+
+def _flush(a: np.ndarray) -> int:
+    """Set the subnormal numbers of `a` to 0 in place; how many there were."""
+    sub = (a != 0) & (np.abs(a) < _TINY)
+    n = int(sub.sum())
+    if n:
+        a[sub] = 0.0
+    return n
+
+
 class _Printed:
     """A card at its printed values, as tokens._pooled reads one (a CardDef behind `.defn`)."""
     __slots__ = ("defn",)
@@ -223,12 +235,16 @@ class SetNet:
     # --- training ---------------------------------------------------------------------------------------------
     def fit(self, data: Data, valid: Data | None = None, epochs: int = 30, batch: int = 256, lr: float = 1e-3,
             l2: float = 1e-5, patience: int = 3, seed: int = 0, decay: float = 0.5, log=print,
-            checkpoint=None) -> dict:
+            checkpoint=None, ftz: bool = False) -> dict:
         """Adam; after each epoch without a better validation log-loss the step size is multiplied by `decay`,
         and `patience` such epochs in a row stop the fit; the best epoch's weights are kept. With `checkpoint` (a
         path), the whole state (weights, Adam's moments and step count, the step size, the best epoch so far, the
         shuffling generator) is written after every epoch and read back at the start, so a stopped fit goes on from
-        its last finished epoch exactly as if it had not stopped."""
+        its last finished epoch exactly as if it had not stopped. With `ftz`, after every step the weights and
+        Adam's moments below the smallest normal float64 (subnormal numbers, which l2 decay drives unused weights
+        into) are set to 0: they are far below a unit in the last place of anything they are added to, and CPU
+        arithmetic on them is many times slower (the 10^5 net's epochs went from 234 s to 990 s). Off by default,
+        so the 10^3 / 10^4 nets stay reproducible."""
         self._table, self._pool, self._zone_sums = None, {}, {}
         rng = np.random.default_rng(seed)
         m = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
@@ -264,6 +280,9 @@ class SetNet:
                     v[k] = 0.999 * v[k] + 0.001 * g[k] ** 2
                     step = lr * (m[k] / (1 - 0.9 ** t)) / (np.sqrt(v[k] / (1 - 0.999 ** t)) + 1e-8)
                     setattr(self, k, getattr(self, k) - step)
+                    if ftz:
+                        for arr in (getattr(self, k), m[k], v[k]):
+                            _flush(arr)
             row = {"epoch": epoch + 1, "lr": lr, "train_bce": round(total / data.n, 5), "s": round(time.time() - t0, 1)}
             if valid is not None:
                 sc = score(self.predict(valid), valid.result)
@@ -384,6 +403,13 @@ class SetNet:
         self.card_ids = np.concatenate([self.card_ids, np.asarray(missing, np.int64)])
         self.static = np.concatenate([self.static, np.asarray(rows, dtype=np.float64)])
 
+    def flush_subnormals(self) -> int:
+        """Set every subnormal weight to 0 (agent option +netftz, at load); how many there were. The net's numbers
+        are unchanged where checked (analysis/scaling/README.md); only CPU time on them is saved."""
+        n = sum(_flush(getattr(self, k)) for k in self.PARAMS)
+        self._table = None
+        return n
+
     # --- files ------------------------------------------------------------------------------------------------
     def save(self, path) -> None:
         arrays = {k: getattr(self, k) for k in self.PARAMS}
@@ -405,15 +431,18 @@ class SetNet:
 _CACHE: dict = {}
 
 
-def load_cached(path) -> SetNet:
-    """The net at `path` (relative paths also from the repository root), loaded once per process."""
+def load_cached(path, ftz: bool = False) -> SetNet:
+    """The net at `path` (relative paths also from the repository root), loaded once per process; with `ftz`, its
+    subnormal weights set to 0 at load (a separate copy)."""
     p = Path(path)
     if not p.exists() and not p.is_absolute():
         p = Path(__file__).resolve().parents[2] / p
-    key = str(p.resolve())
+    key = (str(p.resolve()), ftz)
     net = _CACHE.get(key)
     if net is None:
         net = _CACHE[key] = SetNet.load(p)
+        if ftz:
+            net.flush_subnormals()
     return net
 
 

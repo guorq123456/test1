@@ -137,3 +137,16 @@ def test_fit_resumed_from_a_checkpoint_matches_an_unbroken_fit(tmp_path):
     for k in SN.SetNet.PARAMS:
         assert np.array_equal(getattr(whole, k), getattr(again, k))
     assert [r["epoch"] for r in again.info["history"]] == [1, 2, 3, 4]
+
+
+def test_flushing_subnormal_weights_keeps_the_logits(tmp_path):
+    positions = _positions(4)
+    d = _data(positions)
+    net = _net(d)
+    net.V1[:5, :3] = 1e-310                                   # subnormal weights, as l2 decay leaves them
+    net.save(tmp_path / "n.npz")
+    flushed = SN.load_cached(tmp_path / "n.npz", ftz=True)
+    plain = SN.load_cached(tmp_path / "n.npz")
+    assert flushed is not plain and not np.any((flushed.V1 != 0) & (np.abs(flushed.V1) < np.finfo(float).tiny))
+    for s, p in positions:
+        assert flushed.logit(s, p) == plain.logit(s, p)
