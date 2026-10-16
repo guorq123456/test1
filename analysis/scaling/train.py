@@ -12,6 +12,7 @@ the same positions.
     python analysis/scaling/train.py linear --size 1000 --records RECDIR
     python analysis/scaling/train.py holdout-linear --records RECDIR --tokens TOKDIR
     python analysis/scaling/train.py contrib --size 100000 --tokens TOKDIR
+    python analysis/scaling/train.py --deck elf-t --opponent elf-t --base B --holdout-base H net ...   # another pairing
 
 - `net`: trains on the size's shards; 1 game in 20 of them (game key seed * 100003 + g, key % 20 == 0) is the
   validation part for early stopping, the rest the training part. Writes models/net-<size>.npz and
@@ -20,8 +21,8 @@ the same positions.
   `--name NAME` (a variant, e.g. the wider net "wide"): every file is net-NAME-<size>.* instead.
 - `linear`: refits the installed turn-end model's recipe on the size's games (learn.phased: features version 2 +
   hand, hpphase, turn ends only, the result as target, draws left out, l2 1e-3, sign constraints as installed):
-  models/lin-<size>/ramp-t-ramp-t-ended.json.
-- `holdout-linear`: every linear model (the refits found and the installed ramp-t-ramp-t-ended.json) at every
+  models/lin-<size>/<deck>-<opponent>-ended.json.
+- `holdout-linear`: every linear model (the refits found and the installed <deck>-<opponent>-ended.json) at every
   holdout turn end, and at up to 20000 turn ends of each refit's own training games (a sample, seed 0):
   data/holdout-linear.npz and data/linear.json.
 - `contrib`: does a card's part in the net's value depend on the position? Over holdout turn ends (a sample of
@@ -56,8 +57,8 @@ from svsim.learn.setnet import NZ, Data, SetNet, score  # noqa: E402
 
 BASE, STRIDE, HOLDOUT_BASE = 70100000, 2, 70200000
 HOLDOUT = [HOLDOUT_BASE + STRIDE * h for h in range(5)]
+PAIR = ("ramp-t", "ramp-t")      # the net's pairing (info deck / opponent; SetNetEnded scores only this one)
 SIZES = {1000: 1, 10000: 10, 100000: 100, 20000: 10, 30000: 10}   # 20000 / 30000: 10^4 of v2skx plus --add (gen 2, 3)
-INSTALLED = ROOT / "svsim/learn/phased_models/ramp-t-ramp-t-ended.json"
 
 
 def shards(size: int, add=()) -> list:
@@ -99,7 +100,7 @@ def net_main(args) -> None:
     valid_mask = data.games() % 20 == 0
     train, valid = data.subset(~valid_mask), data.subset(valid_mask)
     net = SetNet(data.static.shape[1], phi=args.phi, rho=args.rho, seed=args.seed, slope=args.slope,
-                 info={"deck": "ramp-t", "opponent": "ramp-t", "size": args.size, "shards": shards(args.size, args.add),
+                 info={"deck": PAIR[0], "opponent": PAIR[1], "size": args.size, "shards": shards(args.size, args.add),
                        "train_positions": train.n, "name": args.name or None,
                        "valid_positions": valid.n})
     net.set_cards(data.card_ids, data.static, np.bincount(train.cards, minlength=len(data.card_ids)) + 1)
@@ -148,7 +149,7 @@ def linear_main(args) -> None:
                         if line.strip():
                             fh.write(line if line.endswith("\n") else line + "\n")
         cmd = [sys.executable, "-m", "svsim.learn.phased", "--games", str(plain), "--out", str(out), "--matchup",
-               "ramp-t-ramp-t", "--features", "hand,hpphase", "--moments", "ended", "--workers", str(args.workers)]
+               f"{PAIR[0]}-{PAIR[1]}", "--features", "hand,hpphase", "--moments", "ended", "--workers", str(args.workers)]
         print(" ".join(cmd), flush=True)
         subprocess.run(cmd, cwd=ROOT, check=True)
 
@@ -191,9 +192,9 @@ def _lines(files):
 
 
 def holdout_linear_main(args) -> None:
-    names, paths = ["installed"], [str(INSTALLED)]
+    names, paths = ["installed"], [str(ROOT / f"svsim/learn/phased_models/{PAIR[0]}-{PAIR[1]}-ended.json")]
     for size in SIZES:
-        p = HERE / f"models/lin-{size}/ramp-t-ramp-t-ended.json"
+        p = HERE / f"models/lin-{size}/{PAIR[0]}-{PAIR[1]}-ended.json"
         if p.exists():
             names.append(f"lin-{size}")
             paths.append(str(p))
@@ -287,6 +288,10 @@ def contrib_main(args) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--deck", default="ramp-t", help="the pairing's decks (default the ramp-t mirror); the net's info")
+    ap.add_argument("--opponent", default="ramp-t")
+    ap.add_argument("--base", type=int, default=70100000, help="seed of training shard 0 (shard k: BASE + 2k)")
+    ap.add_argument("--holdout-base", type=int, default=70200000, help="seed of holdout shard 0 (5 shards)")
     sub = ap.add_subparsers(dest="cmd", required=True)
     n = sub.add_parser("net")
     n.add_argument("--size", type=int, choices=sorted(SIZES), required=True)
@@ -326,6 +331,9 @@ def main() -> None:
     c.add_argument("--sample", type=int, default=3000)
     c.add_argument("--name", default="")
     args = ap.parse_args()
+    global BASE, HOLDOUT, PAIR
+    BASE, PAIR = args.base, (args.deck, args.opponent)
+    HOLDOUT = [args.holdout_base + STRIDE * h for h in range(5)]
     (HERE / "data").mkdir(exist_ok=True)
     {"net": net_main, "holdout-net": holdout_net_main, "linear": linear_main, "holdout-linear": holdout_linear_main,
      "contrib": contrib_main}[args.cmd](args)

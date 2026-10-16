@@ -503,3 +503,35 @@ and stopping, `--ftz`.
 - Its dead-unit counts are reported too: a unit whose output is never positive.
 - Order: after the wide 10⁵ net, and after net-gen3-30000, which goes first when generation 3's data arrives.
 - R3 is a description only; this test's conclusions do not change with it.
+
+## Another pairing: the elf-t mirror (连击妖, preparation and smoke only; the architecture thread 08:18Z)
+
+**The strong level on the elf-t mirror:**
+- In this repository `LEVELS["strong"]` is `mcts:200+plan+learned+phased` (v2s). v2skx is the install package
+  prepared for Salem's computer.
+- On the elf-t mirror both read the installed `elf-t-elf-t-ended.json` and `-act.json`: pkg-kc-ramp-ramp replaces
+  only the original Ramp mirror's model.
+- So v2s and v2skx differ there only by the discard pruning.
+- The installed elf-t turn-end model has the same recipe as ramp-t's (version 2 + hand, hpphase; 87 coefficients;
+  fitted on 27,716 positions).
+
+**What carries over unchanged:**
+- **Recorder:** `scaledata play --deck elf-t --opponent elf-t`.
+- **Token encoding:** generic; static rows come from card definitions, scripts and measured roles.
+- **The linear label:** SPEC's turn-end model is picked per pairing by deck name.
+- **`after_end_of_turn` and `+neteot`:** generic.
+- **SetNetEnded:** scores only the net's own pairing (info deck / opponent).
+
+**What changed:** `train.py` takes `--deck`, `--opponent`, `--base` and `--holdout-base` (defaults: the ramp-t mirror
+and its seeds). The net's info pairing, the linear refit's matchup and the installed model it is compared with
+follow them.
+
+**Smoke** (temporary seed 7300, not part of any data):
+- **Play:** 6 games of v2skx on the elf-t mirror all finished. 4.2 CPU seconds a game, 84.7 actions on average,
+  first player 5 of 6.
+- **Encode:** 101 turn ends, 20 card ids (ramp-t: 18), 40.2 tokens a position; the linear label is finite
+  everywhere.
+- **A 2-epoch net** trained with `--deck elf-t --opponent elf-t` names the elf-t pairing.
+- **Search with it:** 2 games of v2skx+setnet=that net+neteot finished, with 49,234 net calls between them. A
+  ramp-t game with the same net made no call to it.
+- **Not done:** no large run, no seeds registered.
