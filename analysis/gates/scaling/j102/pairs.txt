@@ -1,0 +1,6 @@
+J102 - J98 pair by pair (300 pairs): +5.5% (+1.3%..+9.7%)
+J102 - J101 pair by pair (300 pairs): +11.5% (+7.0%..+16.0%)
+J98 - J101 pair by pair (300 pairs): +6.0% (+1.3%..+10.7%)
+J101 before the restart (84 pairs): ms A 53.38 / B 64.45 = 0.828
+J101 after the restart (216 pairs): ms A 72.97 / B 70.57 = 1.034
+J101 all (300 pairs): ms A 67.40 / B 68.83 = 0.979
