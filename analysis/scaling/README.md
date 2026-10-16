@@ -535,3 +535,40 @@ follow them.
 - **Search with it:** 2 games of v2skx+setnet=that net+neteot finished, with 49,234 net calls between them. A
   ramp-t game with the same net made no call to it.
 - **Not done:** no large run, no seeds registered.
+
+## net-gen3-30000 and R3 (2026-10-16 07:55–08:55Z)
+
+**net-gen3-30000:**
+- **Data:** v2skx's k = 0–9, generation 2's k = 0–9, generation 3's k = 0–9 (s = 71300000 + 2k: the analysis
+  line, 34ae44c; 10,000 games checked game by game, first player 60.5%).
+- **Settings:** fixed, with `--ftz` throughout. 20 epochs; no subnormal weight left.
+
+| | Brier (log-loss) |
+|---|---|
+| training part (519,870 turn ends) | 0.18839 (0.54951) |
+| validation part (26,916) | 0.18628 (0.54561) |
+| holdout | **0.18920 (0.55236)** |
+
+- For comparison on the holdout: net-gen2-20000 0.1900, net-10000 0.1937, net-100000 0.18676.
+
+**R3 (net-leaky-100000):** leaky ReLU 0.01, otherwise net-100000's settings, `--ftz`; 24 epochs.
+
+| | Brier (log-loss) |
+|---|---|
+| training part | 0.18434 (0.53999) |
+| validation part | 0.18489 (0.54129) |
+| holdout | **0.18692 (0.54648)** |
+
+- net-100000 on the holdout: 0.18676 (0.54595). J104 is the analysis line's to read.
+- **Units never positive**, R3 against net-100000:
+
+  | layer | R3 | net-100000 |
+  |---|---|---|
+  | phi layer 1 | 19 of 64 | 39 |
+  | phi layer 2 | 0 of 64 | 40 |
+  | rho layer 1 | 63 of 128 | 91 |
+  | rho layer 2 | 20 of 64 | 31 |
+
+- With leaky ReLU those units still pass gradient: every weight of W2, V1, V2 and v3 is normal; only W1s / W1d
+  have exact zeros (3,200 / 384).
+- No pooled input is always 0 (net-100000: 316 of 448).
