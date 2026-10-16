@@ -2,7 +2,8 @@
  "models": [
   "installed",
   "lin-1000",
-  "lin-10000"
+  "lin-10000",
+  "lin-100000"
  ],
  "holdout": {
   "installed": {
@@ -19,6 +20,11 @@
    "brier": 0.20044,
    "log_loss": 0.58046,
    "n": 93787
+  },
+  "lin-100000": {
+   "brier": 0.20011,
+   "log_loss": 0.57978,
+   "n": 93787
   }
  },
  "aligned_with_tokens": true,
@@ -33,6 +39,11 @@
    "brier": 0.20219,
    "log_loss": 0.58424,
    "n": 19547
+  },
+  "lin-100000": {
+   "brier": 0.19718,
+   "log_loss": 0.57238,
+   "n": 19717
   }
  }
 }

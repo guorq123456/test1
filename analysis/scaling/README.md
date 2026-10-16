@@ -418,3 +418,40 @@ from epoch 11 if
   batch pass and by the search's single-position path.
 - One logit takes 0.153 ms instead of 0.261 ms (measured with two trainings running).
 - J98 is recorded as it ran. J93 uses `+netftz` (registered by the architecture thread before any J93 data).
+
+## Results at 10⁵ (2026-10-16 02:20–06:30Z)
+
+**Data:** 100 shards, 100,000 games, merged with no duplicates and no mismatches; 1,873,395 turn ends. Shard
+sources are in the table above (k10–82 Windows, the rest Linux). Holdout and scores as for 10³ / 10⁴.
+
+**Holdout Brier** (log-loss in brackets), 93,787 turn ends:
+
+| model | 10³ | 10⁴ | **10⁵** |
+|---|---|---|---|
+| linear refit (installed recipe) | 0.2013 (0.5829) | 0.2004 (0.5805) | **0.2001 (0.5798)** |
+| DeepSets net, fixed settings | 0.2285 (0.6469) | 0.1937 (0.5643) | **0.18676 (0.54595)** |
+| installed linear model | 0.2038 (0.5894) | | |
+
+**The 10⁵ net (net-100000):**
+
+| | Brier (log-loss) |
+|---|---|
+| training part (1,778,991 turn ends) | 0.18491 (0.54147) |
+| validation part (94,404) | 0.18483 (0.54126) |
+| holdout | 0.18676 (0.54595) |
+
+- 27 epochs: 1–10 as registered, 11–27 with `--ftz` (R1).
+- The training and holdout scores are close, so under the analysis line's rule the 10⁵ net is under-fitting.
+- 71,081 of its 80,833 parameters are exactly 0 after training; this is looked at in the dead-unit diagnostic.
+
+**The linear refit at 10⁵:** a training-game sample (about 1000 games, 19,717 turn ends) scores 0.1972 (0.5724).
+
+**Readings:**
+- From 10⁴ to 10⁵ games the linear refit gains 0.0003 and the net 0.0069. From 10³ to 10⁴ it was 0.0009 and 0.035.
+- At 10⁵ the net is 0.0134 better than the linear refit on the same games and 0.0170 better than the installed
+  model.
+
+**Which nets used `--ftz`** (the architecture thread 06:01Z):
+- net-1000, net-10000, net-wide-10000, net-gen2-20000: none.
+- net-100000: from epoch 11 on.
+- net-wide-100000 and net-gen3-30000: all epochs.
