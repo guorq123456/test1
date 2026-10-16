@@ -1,0 +1,2 @@
+/tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/j98/ncheck_j98.jsonl: 20 pairs, seeds 70999000..70999019, 52.5% ± 11.2% (41.3%..63.7%), CR +24 (-83..+133; steady-state +20); ms per searched decision A 98.42 / B 71.22 = 1.382
+pooled pair by pair (20 pairs, stratified bootstrap 4000): 52.5% (42.5%..62.5%), CR +24 (-71..+121; steady-state +20)
