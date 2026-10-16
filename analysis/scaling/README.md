@@ -386,3 +386,35 @@ exactly D1's agent.
 **Why every shard has one source:** cmp_roots differs between Linux (142cc567…2b9adf) and Windows (755a0bba…96a6),
 so the same seeds give different games on the two systems. If both systems played the same shard, only one copy
 would be kept.
+
+## 10⁵ training: subnormal numbers, and the switch to flushing them (the architecture thread 04:30Z, R1 / R2)
+
+**What happened:** the 10⁵ net's epochs slowed from 234 s to about 990 s, though the batches cost the same.
+- At epoch 9, 212,276 of the checkpoint's 323,332 numbers were subnormal (below 2.2e-308), in the weights
+  themselves (54,363 of V1's 60,544) and in Adam's moments.
+- l2 decay drives unused weights there, and CPU arithmetic on subnormal numbers is many times slower.
+
+**R1 (registered before the trial's numbers):** epoch 10 ran unchanged. Alongside it, a copy of the epoch-9
+checkpoint with every subnormal number set to 0 trained epoch 10 too. The rule: switch the main run to flushing
+from epoch 11 if
+1. every weight ≥ 2.2e-308 is bitwise equal between the two (fallback: max difference ≤ 1e-12), and
+2. the two epoch-10 validation Brier scores agree to 6 decimals.
+
+**Result:**
+- All 9,915 normal weights are equal to the last bit (max difference 0).
+- Validation Brier 0.185074212348 both, log-loss 0.541848559755 both.
+- Epoch time 988 s unchanged against 247 s with the copy flushed.
+- **So from epoch 11 the run uses `--ftz`:** after every step, subnormal weights and Adam moments are set to 0
+  (setnet.SetNet.fit ftz, default off; 142ccdd). The 10⁵ report says so.
+
+**R2 (inference):**
+
+| net | subnormal weights |
+|---|---|
+| net-1000, net-10000, net-wide-10000 | none |
+| net-gen2-20000 | 37,106 of 80,833 |
+
+- **Flushing net-gen2-20000's at load** (`+netftz`, `ftzcheck.py`): 0 of 93,787 holdout logits change, by the
+  batch pass and by the search's single-position path.
+- One logit takes 0.153 ms instead of 0.261 ms (measured with two trainings running).
+- J98 is recorded as it ran. J93 uses `+netftz` (registered by the architecture thread before any J93 data).
