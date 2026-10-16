@@ -572,3 +572,22 @@ follow them.
 - With leaky ReLU those units still pass gradient: every weight of W2, V1, V2 and v3 is normal; only W1s / W1d
   have exact zeros (3,200 / 384).
 - No pooled input is always 0 (net-100000: 316 of 448).
+
+## Generation 4: two nets, two holdouts (registered by the architecture thread 08:53Z, before any gen-4 game)
+
+The analysis line plays generation 4 with net-gen3-30000 as the player, at seeds 71600000 + 2k. Shard k = 9 stays out of
+training and becomes the self-play holdout. The net-100000 self-play already played (k = 0–1) is kept as "sp-net100000".
+Both nets use the default structure (ReLU, phi 64-64, rho 128-64, `--ftz`). The wide structure is used only if the wide 10⁵
+net is at least 0.0035 lower than the default structure on both holdouts.
+
+| net | `--size` | training shards |
+|---|---|---|
+| net-gen4-39000 | 39000 (10 v2skx shards) | v2skx 10⁴ + `--add 70800000:10 --add 71300000:10 --add 71600000:9` |
+| net-all-131000 (`--name all`) | 131000 (100 v2skx shards) | v2skx 10⁵ + the same three `--add` + sp-net100000's two shards |
+
+Every net reports both holdouts. The v2skx holdout (70200000 + 2h) works as before. The gen-4 k = 9 shard goes through
+`--extra-holdout selfplay:71600018`, on `net` and on `holdout-net`. That option adds `holdout_selfplay` to the report and
+writes data/holdout-selfplay-net-<tag>.npz. It refuses a seed that is among the net's own training shards. Without the
+option, output is as before.
+
+Condition: the opponent's deck list is known (order and hand not).

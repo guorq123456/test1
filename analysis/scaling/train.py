@@ -58,7 +58,8 @@ from svsim.learn.setnet import NZ, Data, SetNet, score  # noqa: E402
 BASE, STRIDE, HOLDOUT_BASE = 70100000, 2, 70200000
 HOLDOUT = [HOLDOUT_BASE + STRIDE * h for h in range(5)]
 PAIR = ("ramp-t", "ramp-t")      # the net's pairing (info deck / opponent; SetNetEnded scores only this one)
-SIZES = {1000: 1, 10000: 10, 100000: 100, 20000: 10, 30000: 10}   # 20000 / 30000: 10^4 of v2skx plus --add (gen 2, 3)
+SIZES = {1000: 1, 10000: 10, 100000: 100, 20000: 10, 30000: 10,   # 20000 / 30000: 10^4 of v2skx plus --add (gen 2, 3)
+         39000: 10, 131000: 100}   # 39000: 10^4 plus gen 2, 3, 4 (k 0-8); 131000: 10^5 plus those and sp-net100000
 
 
 def shards(size: int, add=()) -> list:
@@ -115,11 +116,12 @@ def net_main(args) -> None:
     net.info["report"] = report
     (HERE / "models").mkdir(exist_ok=True)
     net.save(HERE / f"models/net-{_tag(args)}.npz")
-    _holdout_net(net, tok, _tag(args), report)
+    _holdout_net(net, tok, _tag(args), report, args.extra_holdout)
 
 
-def _holdout_net(net: SetNet, tok: Path, tag: str, report: dict) -> None:
-    """The net on the holdout (when its 5 token files are there), into the report; writes the report."""
+def _holdout_net(net: SetNet, tok: Path, tag: str, report: dict, extra=()) -> None:
+    """The net on the holdout (when its 5 token files are there), into the report; writes the report. extra:
+    NAME:SEED[,SEED...] further holdout sets (e.g. a generation's held-out self-play shard), as holdout_NAME."""
     hold = [tok / f"tok-{s}.npz" for s in HOLDOUT]
     if all(f.exists() for f in hold):
         h = _align(net, Data(hold, tok / "cards.npz"))
@@ -127,6 +129,16 @@ def _holdout_net(net: SetNet, tok: Path, tag: str, report: dict) -> None:
         report["holdout"] = score(p, h.result)
         report["holdout_installed_linear"] = score(1 / (1 + np.exp(-h.linear)), h.result)
         np.savez_compressed(HERE / f"data/holdout-net-{tag}.npz", p=p.astype(np.float32), **_keys(h))
+    for spec in extra or ():
+        name, seeds = spec.split(":")
+        seeds = [int(x) for x in seeds.split(",")]
+        if set(seeds) & set(net.info.get("shards") or ()):
+            raise SystemExit(f"holdout {name}: {seeds} is in the net's training shards")
+        h = _align(net, Data(_files(tok, seeds, "tok-", ".npz"), tok / "cards.npz"))
+        p = net.predict(h)
+        report[f"holdout_{name}"] = {"seeds": seeds, **score(p, h.result),
+                                     "installed_linear": score(1 / (1 + np.exp(-h.linear)), h.result)}
+        np.savez_compressed(HERE / f"data/holdout-{name}-net-{tag}.npz", p=p.astype(np.float32), **_keys(h))
     (HERE / f"data/net-{tag}.json").write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=1))
 
@@ -134,7 +146,7 @@ def _holdout_net(net: SetNet, tok: Path, tag: str, report: dict) -> None:
 def holdout_net_main(args) -> None:
     """A trained net (models/net-<size>.npz) on the holdout, once the holdout is there."""
     net = SetNet.load(HERE / f"models/net-{_tag(args)}.npz")
-    _holdout_net(net, Path(args.tokens), _tag(args), dict(net.info["report"]))
+    _holdout_net(net, Path(args.tokens), _tag(args), dict(net.info["report"]), args.extra_holdout)
 
 
 def linear_main(args) -> None:
@@ -317,6 +329,9 @@ def main() -> None:
     hn.add_argument("--size", type=int, choices=sorted(SIZES), required=True)
     hn.add_argument("--tokens", required=True)
     hn.add_argument("--name", default="")
+    for q in (n, hn):
+        q.add_argument("--extra-holdout", action="append", default=[], metavar="NAME:SEED[,SEED]",
+                       help="also score on these token files, as holdout_NAME (gen 4's k = 9: selfplay:71600018)")
     li = sub.add_parser("linear")
     li.add_argument("--size", type=int, choices=sorted(SIZES), required=True)
     li.add_argument("--records", required=True)
