@@ -19,10 +19,20 @@ analysis line's records apart from date and cpu.
 | 8 | 72300016 | rec-72300016.jsonl.gz | 500 (g 0–499) |
 | 9 | 72300018 | rec-72300018.jsonl.gz | 500 (g 0–499) |
 | 10 | 72300020 | rec-72300020.jsonl.gz | 500 (g 0–499) |
+| 11 | 72300022 | rec-72300022.jsonl.gz | 500 (g 0–499); g 0–134 before a container restart, g 135–499 resumed |
+| 12 | 72300024 | rec-72300024.jsonl.gz | 500 (g 0–499), all after the restart |
+| 13 | 72300026 | rec-72300026.jsonl.gz | 500 (g 0–499); g 0–118 before the restart, g 119–499 resumed |
 
 Shard k = 4 is handed to the analysis line. It finishes g = 306–499 from this part file with the same command:
 `scaledata play --base 72300000 --stride 2 --shards 4 5 --per-shard 500 --out <dir containing this file>`. The builder
 line does not play k = 4 again, so every game has exactly one source. The part file has no cut-off line, and its g values
 are unique and consecutive. No game is a draw. Every agent seed is s×1000 + 2g + i.
+
+**Resume after the container restart (20:17Z, k = 11–13).** The play command was run again on the same part files. It
+resumes game by game: games already played are kept and are not played again. The boundary check, as the architecture
+thread asked (17:24Z), found the following. Every shard has g 0–499, each g exactly once. Every deal seed is s×100003 + g
+and every agent seed is s×1000 + 2g + i. Games g = 134 and 135 of k = 11 (the last game before the restart and the first
+after it) were played again outside the pool. After the JSON round trip, each matched its stored record field for field,
+apart from date and cpu.
 
 Condition: the opponent's deck list is known (order and hand not).
