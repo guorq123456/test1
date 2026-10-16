@@ -12,7 +12,7 @@ analysis line's records apart from date and cpu.
 | 1 | 72300002 | rec-72300002.jsonl.gz | 500 (g 0–499) |
 | 2 | 72300004 | rec-72300004.jsonl.gz | 500 (g 0–499) |
 | 3 | 72300006 | rec-72300006.jsonl.gz | 500 (g 0–499) |
-| 4 | 72300008 | rec-72300008.part.jsonl | **306 (g 0–305)**, stopped at the 2-hour limit |
+| 4 | 72300008 | rec-72300008.jsonl.gz | 500 (g 0–499): g 0–305 here (stopped at the 2-hour limit), g 306–499 resumed by the analysis line (its 37252cc) |
 | 5 | 72300010 | rec-72300010.jsonl.gz | 500 (g 0–499) |
 | 6 | 72300012 | rec-72300012.jsonl.gz | 500 (g 0–499) |
 | 7 | 72300014 | rec-72300014.jsonl.gz | 500 (g 0–499) |
@@ -29,9 +29,14 @@ analysis line's records apart from date and cpu.
 | 18 | 72300036 | rec-72300036.jsonl.gz | 500 (g 0–499) |
 | 19 | 72300038 | rec-72300038.jsonl.gz | 500 (g 0–499) |
 
-k = 20–27 and 28–39 are the analysis line's (its branch, same directory name); k = 4 was finished there too.
+| 20–39 | 72300040 … 72300078 | rec-…jsonl.gz | 500 each, played by the analysis line (its 21437c8) |
 
-Shard k = 4 is handed to the analysis line. It finishes g = 306–499 from this part file with the same command:
+**All 40 shards, merged (2026-10-16 23:3xZ).** The analysis line's 21 files (k = 4, 20–39) matched its SHA256SUMS. They
+were copied here, and SHA256SUMS was regenerated over all 40 files. Every shard was checked again: g 0–499 each once,
+deal seed s×100003 + g, agent seeds s×1000 + 2g + i, no draw, and one player string on both sides. Each shard has
+exactly one source. In total there are 20000 games; the first player won 59.7%.
+
+Shard k = 4 was handed to the analysis line. It finishes g = 306–499 from this part file with the same command:
 `scaledata play --base 72300000 --stride 2 --shards 4 5 --per-shard 500 --out <dir containing this file>`. The builder
 line does not play k = 4 again, so every game has exactly one source. The part file has no cut-off line, and its g values
 are unique and consecutive. No game is a draw. Every agent seed is s×1000 + 2g + i.
