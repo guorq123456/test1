@@ -56,7 +56,7 @@ from svsim.learn.setnet import NZ, Data, SetNet, score  # noqa: E402
 
 BASE, STRIDE, HOLDOUT_BASE = 70100000, 2, 70200000
 HOLDOUT = [HOLDOUT_BASE + STRIDE * h for h in range(5)]
-SIZES = {1000: 1, 10000: 10, 100000: 100, 20000: 10}   # 20000: 10^4 of v2skx plus --add (generation 2)
+SIZES = {1000: 1, 10000: 10, 100000: 100, 20000: 10, 30000: 10}   # 20000 / 30000: 10^4 of v2skx plus --add (gen 2, 3)
 INSTALLED = ROOT / "svsim/learn/phased_models/ramp-t-ramp-t-ended.json"
 
 
