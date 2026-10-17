@@ -65,9 +65,10 @@ SIZES = {1000: 1, 10000: 10, 100000: 100, 20000: 10, 30000: 10,   # 20000 / 3000
          19500: 10}   # 19500: the elf-t mirror's 10^4 (--base 71900000) plus its gen-2 self-play k 0-18 (500 each)
 
 
-def shards(size: int, add=()) -> list:
-    """The size's training shards (the first SIZES[size] of BASE), plus --add BASE:K's K shards of another base."""
-    out = [BASE + STRIDE * k for k in range(SIZES[size])]
+def shards(size: int, add=(), base_shards: int | None = None) -> list:
+    """The size's training shards (the first SIZES[size] of BASE, or the first base_shards: --base-shards), plus
+    --add BASE:K's K shards of another base."""
+    out = [BASE + STRIDE * k for k in range(SIZES[size] if base_shards is None else base_shards)]
     for spec in add or ():
         base, k = (int(x) for x in spec.split(":"))
         out += [base + STRIDE * j for j in range(k)]
@@ -100,12 +101,12 @@ def _tag(args) -> str:
 
 def net_main(args) -> None:
     tok = Path(args.tokens)
-    data = Data(_files(tok, shards(args.size, args.add), "tok-", ".npz"), tok / "cards.npz")
+    data = Data(_files(tok, shards(args.size, args.add, args.base_shards), "tok-", ".npz"), tok / "cards.npz")
     valid_mask = data.games() % 20 == 0
     train, valid = data.subset(~valid_mask), data.subset(valid_mask)
     net = SetNet(data.static.shape[1], phi=args.phi, rho=args.rho, seed=args.seed, slope=args.slope,
                  inputs=data.inputs,
-                 info={"deck": PAIR[0], "opponent": PAIR[1], "size": args.size, "shards": shards(args.size, args.add),
+                 info={"deck": PAIR[0], "opponent": PAIR[1], "size": args.size, "shards": shards(args.size, args.add, args.base_shards),
                        "train_positions": train.n, "name": args.name or None, "inputs": data.inputs,
                        "valid_positions": valid.n})
     net.set_cards(data.card_ids, data.static, np.bincount(train.cards, minlength=len(data.card_ids)) + 1)
@@ -331,6 +332,9 @@ def main() -> None:
                    help="a file for the fit's state after every epoch; the same command again goes on from it")
     n.add_argument("--add", action="append", default=[], metavar="BASE:K",
                    help="also train on K shards of BASE (BASE + 2k): generation 2 is --size 20000 --add 70800000:10")
+    n.add_argument("--base-shards", type=int, default=None, metavar="N",
+                   help="train on the first N shards of --base instead of SIZES[size] (the elf-t mirror's gen 3: "
+                        "--size 29000 --base-shards 10 --add 72800000:19 --add 74100000:19)")
     hn = sub.add_parser("holdout-net")
     hn.add_argument("--size", type=int, choices=sorted(SIZES), required=True)
     hn.add_argument("--tokens", required=True)
