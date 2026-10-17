@@ -4,7 +4,8 @@ thread 2026-10-17 11:37Z, step 1: data, network, offline report; nothing in the 
 The data is the recorded search: at every decision of a self-play record (learn.scaledata play) the root's visits
 per legal move ("visits", learn.netdata._thought). Moves that are the same to the search (search.mcts.action_key:
 two copies of a card in hand, say) share one child and so one visit count; they are one move here. The target is
-the visit distribution over these distinct moves (tau = 1).
+the visit distribution over these distinct moves (tau = 1), or visits ** (1 / tau) normalized (`--tau`;
+0.5: the visits squared, a sharper target).
 
 The position is learn.tokens.encode(state, me) of the player to act (the same view as the value net's: their hand,
 both fields and leader areas, their deck and the opponent's unseen pool as counts). It goes through the value net's
@@ -264,6 +265,14 @@ class Decisions:
 
     def games(self) -> np.ndarray:
         return self.seed.astype(np.int64) * 100003 + self.g.astype(np.int64)
+
+    def sharpen(self, tau: float) -> None:
+        """Targets pi ** (1 / tau), normalized per decision (tau = 0.5: visits squared; tau = 1 leaves them)."""
+        if tau == 1.0:
+            return
+        q = self.pi.astype(np.float64) ** (1.0 / tau)
+        tot = np.add.reduceat(q, self.moff[:-1])
+        self.pi = (q / np.repeat(tot, np.diff(self.moff))).astype(np.float32)
 
     def subset(self, mask) -> "Decisions":
         out = object.__new__(Decisions)
@@ -578,14 +587,17 @@ def fit_main(args) -> None:
     folder = Path(args.data)
     files = [folder / f"dec-{s}.npz" for s in args.shards]
     data = Decisions(files, args.cards)
+    data.sharpen(args.tau)
     valid_mask = data.games() % 20 == 0
     train, valid = data.subset(~valid_mask), data.subset(valid_mask)
+    card_ids, static = data.card_ids, data.static
+    del data                                                 # the two parts are copies: free the whole
     net = SetNet.load(args.init)
     pol = SetPolicy.from_value_net(net, head=args.head, seed=args.seed,
-                                   info={"init": str(args.init), "freeze": args.freeze, "shards": args.shards,
+                                   info={"init": str(args.init), "freeze": args.freeze, "tau": args.tau, "shards": args.shards,
                                          "deck": net.info.get("deck"), "opponent": net.info.get("opponent"),
                                          "train_decisions": train.n, "valid_decisions": valid.n})
-    pol.card_ids, pol.static = data.card_ids, data.static.astype(np.float64)
+    pol.card_ids, pol.static = card_ids, static.astype(np.float64)
     t0 = time.time()
     pol.fit(train, valid, epochs=args.epochs, batch=args.batch, lr=args.lr, l2=args.l2, patience=args.patience,
             seed=args.seed, decay=args.decay, freeze=args.freeze, checkpoint=args.checkpoint, ftz=args.ftz)
@@ -608,6 +620,7 @@ def main() -> None:
     f.add_argument("--shards", type=int, nargs="+", required=True)
     f.add_argument("--init", required=True, help="the value net whose trunk the prior starts from")
     f.add_argument("--freeze", action="store_true", help="keep the trunk; fit the head only")
+    f.add_argument("--tau", type=float, default=1.0, help="targets visits ** (1 / tau), normalized (0.5: squared)")
     f.add_argument("--head", type=int, default=64)
     f.add_argument("--epochs", type=int, default=60)
     f.add_argument("--patience", type=int, default=4)

@@ -173,3 +173,16 @@ def test_fit_resumes_exactly_from_its_checkpoint(shard, tmp_path):
     _, c = _tiny(shard)
     c.fit(data, data, epochs=3, batch=16, log=lambda s: None, checkpoint=ck)
     assert all(np.array_equal(getattr(a, k), getattr(c, k)) for k in SP.SetPolicy.PARAMS)
+
+
+def test_tau_half_squares_the_visits_per_decision(shard):
+    data = SP.Decisions([shard / "dec-74100038.npz"], shard / "cards.npz")
+    before = data.pi.astype(np.float64).copy()
+    data.sharpen(0.5)
+    for d in range(data.n):
+        lo, hi = data.moff[d], data.moff[d + 1]
+        want = before[lo:hi] ** 2 / np.sum(before[lo:hi] ** 2)
+        assert np.allclose(data.pi[lo:hi], want, atol=1e-6) and abs(data.pi[lo:hi].sum() - 1) < 1e-5
+    same = SP.Decisions([shard / "dec-74100038.npz"], shard / "cards.npz")
+    same.sharpen(1.0)
+    assert np.array_equal(same.pi, before.astype(np.float32))
