@@ -1,0 +1,99 @@
+{
+ "spec": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-gen4-59000.npz+neteot",
+ "seed": 73300000,
+ "games": [
+  {
+   "g": 0,
+   "winner": 0,
+   "actions": 51,
+   "net_calls": 7836,
+   "missing_v1": [
+    [
+     2,
+     0,
+     2
+    ]
+   ],
+   "missing_v2": [
+    [
+     2,
+     0,
+     2
+    ]
+   ]
+  },
+  {
+   "g": 1,
+   "winner": 1,
+   "actions": 46,
+   "net_calls": 6231,
+   "missing_v1": [
+    [
+     7,
+     0,
+     10
+    ]
+   ],
+   "missing_v2": [
+    [
+     7,
+     0,
+     10
+    ]
+   ]
+  },
+  {
+   "g": 2,
+   "winner": 1,
+   "actions": 93,
+   "net_calls": 13856,
+   "missing_v1": [
+    [
+     2,
+     1,
+     2
+    ],
+    [
+     8,
+     1,
+     18
+    ]
+   ],
+   "missing_v2": [
+    [
+     2,
+     1,
+     2
+    ],
+    [
+     8,
+     1,
+     18
+    ]
+   ]
+  },
+  {
+   "g": 3,
+   "winner": 0,
+   "actions": 66,
+   "net_calls": 10050,
+   "missing_v1": [],
+   "missing_v2": []
+  }
+ ],
+ "condition": "对手卡表已知（牌序、手牌未知）",
+ "summary": {
+  "v1": {
+   "turn_ends": 72,
+   "found_in_search": 68,
+   "step_equal": 72,
+   "step_diff_cols": {}
+  },
+  "v2": {
+   "turn_ends": 72,
+   "found_in_search": 68,
+   "step_equal": 72,
+   "step_diff_cols": {}
+  }
+ }
+}
