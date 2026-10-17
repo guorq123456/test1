@@ -286,7 +286,7 @@ def encode_main(args) -> None:
         seed = os.path.basename(path)[len("rec-"):-len(".jsonl.gz")]
         target = out / f"tok-{seed}.npz"
         if not target.exists():
-            jobs.append((path, target, args.spec, args.net, args.inputs))
+            jobs.append((path, target, args.spec, args.net, getattr(args, "inputs", "v1")))
     print(json.dumps({"shards_to_encode": len(jobs)}), flush=True)
     with Pool(args.workers) as pool:
         for target, games, n, cpu in pool.imap_unordered(_encode_shard, jobs):
