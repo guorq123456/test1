@@ -18,9 +18,21 @@ not pushed that shard.
 | 15 | 72800030 | 500 (g 0–499) | builder line |
 | 16 | 72800032 | 500 (g 0–499) | builder line |
 | 17 | 72800034 | 500 (g 0–499) | builder line |
+| 0–9 | 72800000 … 72800018 | 500 each | the analysis line (its 6b51f35) |
 | 18 | 72800036 | 500 (g 0–499) | builder line |
+| **19** | **72800038** | 500 (g 0–499); g 0–82 before a container restart, g 83–499 resumed | builder line; **holdout** |
 
 Each shard was checked: g 0–499 each once, deal seed s×100003 + g, agent seeds s×1000 + 2g + i, no draw, and one
 player string, elf-t on both sides.
+
+**All 20 shards, merged (2026-10-17 05:0xZ).** The analysis line's 10 files matched its SHA256SUMS. They were
+copied here, and SHA256SUMS was regenerated over all 20 files. Every shard was checked again: g 0–499 each once, both
+seeds right, one player string, elf-t on both sides, explore 0, no draw. Each shard has exactly one source. In total
+there are 10000 games; the first player won 65.0%. Training uses k = 0–18; k = 19 is the holdout.
+
+**k = 19's resume.** A container restart stopped the shard after g = 82. The same command resumed it from its part
+file, game by game. Seeds and game numbers run on across the boundary. Games 82 and 83 (the last before the restart
+and the first after it) were played again outside the pool. After the JSON round trip, both match their stored records
+field for field, apart from date and cpu.
 
 Condition: the opponent's deck list is known (order and hand not).
