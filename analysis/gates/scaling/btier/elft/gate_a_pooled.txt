@@ -1,0 +1,2 @@
+/tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/btier/elft/gate_a.jsonl: 300 pairs, seeds 75100000..75100299, 52.3% ± 3.2% (49.2%..55.5%), CR +22 (-8..+52; steady-state +19); ms per searched decision A 124.36 / B 126.90 = 0.980
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 52.3% (49.2%..55.5%), CR +22 (-8..+52; steady-state +19)
