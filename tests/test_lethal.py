@@ -209,6 +209,33 @@ def test_screening_only_shortens_hopeless_searches():
         assert search.solve(state).screened and search.budget == budget
 
 
+def test_screen_budget_zero_skips_only_the_far_screen():
+    """`+screen=0:1000:4` (the architecture thread 2026-10-17, after D6): a position short by more than 4 expands no
+    node; near and unscreened positions search as with the default 200:1000:4."""
+    from svsim.search.lethal import LethalSearch, damage_estimate
+    from svsim.tools.arena import make_agent
+    agent = make_agent("mcts:5+plan+screen=0:1000:4", 1).search
+    assert (agent.screen, agent.near, agent.max_nodes) == (0, (1000, 4), 2000)
+    far = position(20)
+    put(far, 0, demo.LANCER)                                # 3 face damage: short by 17
+    near = position(6)
+    put(near, 0, demo.LANCER)                               # short by 3
+    full = position(2)
+    put(full, 0, demo.GIANT)
+    put(full, 0, demo.RAIDER)
+    put(full, 1, demo.SHIELDBEARER)
+    assert damage_estimate(far) == 3 and damage_estimate(near) == 3
+    zero, default = LethalSearch(max_nodes=2000, screen=0, near=(1000, 4)), LethalSearch(max_nodes=2000, screen=200, near=(1000, 4))
+    r = zero.solve(far)
+    assert r.screened and not r.sure and r.nodes == 0 and r.line == [] and zero.budget == 0
+    for state, budget in ((near, 1000), (full, 2000)):
+        a, b = zero.solve(state), default.solve(state)
+        assert zero.budget == default.budget == budget
+        assert (a.probability, repr(a.line), a.sure, a.nodes, a.complete, a.screened) == \
+               (b.probability, repr(b.line), b.sure, b.nodes, b.complete, b.screened)
+    assert zero.solve(full).sure
+
+
 class _Restricted:
     """A base agent whose search carries a veto (as ISMCTS.veto does); it ends the turn itself."""
 

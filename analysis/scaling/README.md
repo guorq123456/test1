@@ -832,4 +832,24 @@ points, 60/60). Elf-t has only 4 screen points.
 
 J124 (ramp-t bare N160 converts ≥ 90%, probability 35%): 85.3%, below 90%.
 
+**`+screen=0:1000:4` (the architecture thread, after D6).** With no code change it turns off only the far screen. A
+position whose estimate falls short by more than 4 gets budget 0. The root's `_search` returns at once (nodes 0, no
+line, not sure), and LethalAgent then hands the decision to the tree search, as when 200 nodes find nothing. Near
+positions keep 1000 nodes and unscreened ones keep 2000. The lethal search seeds its own `random.Random(seed)` on
+each solve and never touches the game's generator, so nothing else moves. tests/test_lethal.py
+(`test_screen_budget_zero_skips_only_the_far_screen`) covers this: the spec parses, a far position expands no node,
+and near and unscreened positions give the same result as 200:1000:4.
+
+What budget 0 leaves was measured by d6_screen0.py on recorded positions (100 games each; data/d6/screen0-*.json).
+These are not agent decisions: every main-phase step of the record counts.
+
+| records | far-screen positions | solve at 200 | solve at 0 | of it damage_estimate | screen lethals at 200 |
+|---|---|---|---|---|---|
+| ramp-t rec-72300000 | 5553 | 14.2 ms | 0.28 ms | 0.25 ms | 56 |
+| elf-t rec-72800000 | 8523 | 23.3 ms | 0.29 ms | 0.24 ms | 10 |
+
+The estimate is paid today as well. Budget 0 adds about 0.04 ms (the root's state_key and the generator), and it
+keeps about 1.2–2% of the screen's time. Near and unscreened results were identical at 327 / 360 positions
+(probability, line, sure, nodes, complete).
+
 Condition: the opponent's deck list is known (order and hand not).
