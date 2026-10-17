@@ -637,6 +637,7 @@ turn ends; it is in no net's training.
 | net-gen3-30000 | 0.18920 | 0.19539 | 0.56687 |
 | **net-gen4-39000** (21 epochs, 3215 s) | **0.18868** | **0.19303** | **0.56109** |
 | net-sp-29000 (self-play only: gen 2, 3, 4 k 0–8; 26 epochs, 3119 s) | 0.19185 | 0.19355 | 0.56236 |
+| **net-gen4-59000** (gen4-39000's data + 2×10⁴ extra gen-4 games; 29 epochs) | **0.18832** | **0.19064** | **0.55445** |
 | net-100000 | 0.18676 | 0.19550 | 0.56783 |
 | net-leaky-100000 | 0.18692 | 0.19587 | 0.56806 |
 | net-wide-100000 (not converged) | 0.18649 | 0.19420 | 0.56403 |
@@ -690,3 +691,14 @@ Dead units on the holdout: phi 0 / 2 of 64, rho 57 of 128 / 7 of 64. There are 0
 that are 0 throughout training: 146 of 448. `deadunits.py` takes `--holdout-base` (the elf-t mirror: 72000000).
 
 Condition: the opponent's deck list is known (order and hand not).
+
+net-gen4-59000 (models/net-gen4-59000.npz, sha256 1adbebb98a4fc82af28eed70bec065115f638ea4f377b9de9182362c35b27835; the
+architecture thread 21:40Z) was trained on net-gen4-39000's 39 shards plus the 40 extra gen-4 shards (72300000 + 2k,
+500 games each, data/gen4x). The command was `--size 59000 --name gen4 --add 70800000:10 --add 71300000:10 --add
+71600000:9 --add 72300000:40 --ftz --extra-holdout selfplay:71600018`; 71600018 is in no net's training. The structure
+is unchanged (ReLU 64-64 / 128-64). A container restart stopped the fit after epoch 19. The same command resumed it from
+the checkpoint, which holds the RNG state, so the fit equals an unbroken one. It stopped by patience after epoch 29.
+
+Compared with net-gen4-39000, the extra 2×10⁴ games moved the v2skx holdout by −0.0004 (0.18868 → 0.18832) and the
+self-play holdout by −0.0024 (0.19303 → 0.19064). net-gen4-59000 is the best net so far on the self-play holdout
+(net-all-131000: 0.19230). Dead on the holdout: phi 31 / 38 of 64, rho 85 of 128 / 21 of 64; 0 subnormal weights.
