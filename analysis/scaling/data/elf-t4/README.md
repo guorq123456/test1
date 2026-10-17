@@ -19,8 +19,17 @@ Cross-machine check: the analysis line replayed g 0–2 of 75500000 on its machi
 | 1 | 75500002 | 500 (g 0–499) | 1 |
 | 2 | 75500004 | 500 (g 0–499) | 1 |
 | 3 | 75500006 | 500 (g 0–499) | 1 |
+| 4 | 75500008 | 500 (g 0–499) | 2 |
+| 5 | 75500010 | 500 (g 0–499) | 2 |
+| 6 | 75500012 | 500 (g 0–499) | 2 |
+| 7 | 75500014 | 500 (g 0–499) | 2 |
+| 8 | 75500016 | 500 (g 0–499) | 2 |
+| 9 | 75500018 | 500 (g 0–499) | 2 |
+| 10 | 75500020 | 500 (g 0–499) | 2 |
+| 11 | 75500022 | 500 (g 0–499) | 2 |
 
-Batch 1 (k = 0–3) took 2636 s for 2000 games (5.19 cpu s a game, about 2730 games an hour).
+Batch 1 (k = 0–3) took 2636 s for 2000 games (5.19 cpu s a game, about 2730 games an hour). Batch 2 (k = 4–11) took 5136 s for 4000 games (5.07 cpu s a game, about
+2800 games an hour).
 
 Each shard was checked for the following:
 - g 0–499, each once;
@@ -31,6 +40,7 @@ Each shard was checked for the following:
 - one player string;
 - elf-t on both sides.
 
-The first player won 67.6% / 67.6% / 65.0% / 60.6% of the games (k = 0–3).
+The first player won 67.6% / 67.6% / 65.0% / 60.6% of the games (k = 0–3), and
+67.0% / 65.6% / 63.6% / 66.8% / 67.8% / 64.4% / 63.0% / 66.0% (k = 4–11).
 
 Condition: the opponent's deck list is known (order and hand not).
