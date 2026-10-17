@@ -13,6 +13,9 @@ sure it had not pushed those shards.
 
 | k | seed | games | played by |
 |---|---|---|---|
+| 0–7 | 74100000 … 74100014 | 500 each | the analysis line (its b4c41ee) |
+| 8 | 74100016 | 500 (g 0–499) | builder line |
+| 9 | 74100018 | 500 (g 0–499) | builder line |
 | 10 | 74100020 | 500 (g 0–499) | builder line |
 | 11 | 74100022 | 500 (g 0–499) | builder line |
 | 12 | 74100024 | 500 (g 0–499) | builder line |
@@ -25,6 +28,12 @@ sure it had not pushed those shards.
 | **19** | **74100038** | 500 (g 0–499) | builder line; **holdout** |
 
 Each shard was checked: g 0–499 each once, deal seed s×100003 + g, agent seeds s×1000 + 2g + i, no draw, explore 0,
-one player string, elf-t on both sides. The first player won 65.8% / 61.2% / 66.6% / 68.4% / 66.8% / 65.2% / 67.2% / 68.0% / 63.8% of the games (k = 10–18); 61.2% in the holdout k = 19.
+one player string, elf-t on both sides. The first player won 65.8% / 61.2% / 66.6% / 68.4% / 66.8% / 65.2% / 67.2% / 68.0% / 63.8% of the games (k = 10–18); 61.2% in the holdout k = 19; 64.6% / 64.4% for k = 8, 9.
+
+**All 20 shards, merged (2026-10-17 10:40Z).** The analysis line's 8 files matched the sha256 sums in its README
+section. They were copied here, and SHA256SUMS was regenerated over all 20 files. Every shard was checked again:
+g 0–499 each once, both seeds right, one player string over all 20, elf-t on both sides, explore 0, no draw. Each
+shard has exactly one source. In total there are 10000 games; the first player won 65.7%. Training uses k = 0–18;
+k = 19 is the holdout.
 
 Condition: the opponent's deck list is known (order and hand not).
