@@ -702,3 +702,53 @@ the checkpoint, which holds the RNG state, so the fit equals an unbroken one. It
 Compared with net-gen4-39000, the extra 2×10⁴ games moved the v2skx holdout by −0.0004 (0.18868 → 0.18832) and the
 self-play holdout by −0.0024 (0.19303 → 0.19064). net-gen4-59000 is the best net so far on the self-play holdout
 (net-all-131000: 0.19230). Dead on the holdout: phi 31 / 38 of 64, rho 85 of 128 / 21 of 64; 0 subnormal weights.
+
+## Input versions v2 and v2kc: net-in2-59000 and net-in2kc-59000 (the architecture thread 2026-10-17 01:30Z)
+
+`learn.tokens` takes an input version (`inputs`); v1, the default, is the encoding every earlier net has, unchanged.
+- **v2**: every token has three more columns.
+  - share: in my deck, the chance that my next draw is this card; in the opponent's unseen pool, the expected
+    copies of it in their hand (hand size × count / pool size), in thousandths.
+  - next_pp: the owner's play points next turn.
+  - next_evolve: whether the owner can evolve next turn.
+  
+  Also, a field follower's attack state is read as of its owner's next turn. At a turn end it still described the
+  turn just played: attacks are reset only at the owner's turn start.
+- **v2kc**: v2 plus the seven lethal-clock globals (`learn.features` kclock).
+
+A net saves its version with its file; a file without one is v1, so every earlier file and its numbers are unchanged.
+`scaledata encode --inputs v2|v2kc` writes the tokens.
+
+**Old nets unchanged.** tests/data/setnet_golden_69e3ad2.json holds the logits of gen3-30000, net-elft-10000 and
+gen4-59000 on all 71 turn ends of holdout rec-70200000's first 4 games. They were computed in a 69e3ad2 checkout, and
+`test_old_nets_give_the_69e3ad2_numbers_bit_for_bit` checks them string for string. Other tests check v2 / v2kc:
+single position equals the batch pass, gradients against finite differences, the version kept in the file, and what
+share, next-turn values and attack state mean.
+
+**Data.** The same 79 training shards and two holdouts as gen4-59000 (85 record files) were encoded again as v2 and as
+v2kc. Each file was checked against v1: same positions, results, linear labels and v1 globals, and every column v2
+does not change is identical. 1.4% of the tokens (572020 of 41752217) got the next-turn attack state. The training
+command is gen4-59000's with `--name in2` / `--name in2kc` and the v2 / v2kc token folder.
+
+| net | inputs | epochs | valid Brier | v2skx holdout Brier | self-play holdout Brier (log loss) | µs per call | sha256 |
+|---|---|---|---|---|---|---|---|
+| net-gen4-59000 | v1 | 29 | 0.18754 | 0.18832 | 0.19064 (0.55445) | 131 (1.00×) | 1adbebb9… |
+| **net-in2-59000** | v2 | 29 | 0.18633 | **0.18767** | **0.18911** (0.55134) | 160 (1.22×) | c37e82bc… |
+| net-in2kc-59000 | v2kc | 22 | 0.18647 | 0.18798 | 0.18920 (0.55121) | 179 (1.37×) | a49cb0dd… |
+
+The v2 inputs improve both holdouts (−0.0007 and −0.0015) at no extra data. The lethal clock adds nothing on top of
+them offline (+0.0003 / +0.0001).
+
+The µs per call column is `analysis/scaling/inputcost.py`. It records the 1608 positions gen4-59000 was called on in
+8 search decisions (ramp-t mirror, mcts:200 + neteot) and replays them through each net with cold caches; the figure
+is the best of 5 interleaved rounds on the same machine. The net's share of a step was 40% (see the earlier timing),
+so a step costs about +9% (v2) and +15% (v2kc).
+
+A first version of the v2 search path rebuilt every pooled card's token row before its phi lookup, at 1.89× per call.
+It now builds a row only when that phi is missing. The logits of both nets on 111 turn ends are identical before and
+after the change.
+
+Dead units on the v2skx holdout: in2: phi 23 / 32 of 64, rho 84 of 128 / 29 of 64; in2kc: phi 15 / 34, rho 86 / 22.
+Both nets have 0 subnormal weights.
+
+Condition: the opponent's deck list is known (order and hand not).

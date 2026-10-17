@@ -482,11 +482,14 @@ class SetNet:
             if total is None:
                 total = np.zeros(self.phi[1])
                 for cid, n in key[1]:
-                    d = next(c.defn for c in cards_ if c.defn.card_id == cid)
-                    row = T._pooled2([_Printed(d)] * n, z, per, nxt)[0]
-                    hk = (cid,) + tuple(row[3:])
+                    # the token's phi input is the card's printed values (a function of the card) plus V2_EXTRA,
+                    # so (card, share, next-turn values) names it; the row itself is built only on a miss
+                    hk = (cid, int(round(1000 * per * n))) + nxt
                     h = self._pool.get(hk)
                     if h is None:
+                        d = next(c.defn for c in cards_ if c.defn.card_id == cid)
+                        row = T._pooled2([_Printed(d)] * n, z, per, nxt)[0]
+                        assert row[-3] == hk[1]
                         tok = np.asarray(row[1:], dtype=np.int16)[None, :]
                         h = self._pool[hk] = _act(_act(table[index[cid]] + dynamic(tok, self.inputs)[0] @ self.W1d,
                                                        self.slope) @ self.W2 + self.b2, self.slope)
