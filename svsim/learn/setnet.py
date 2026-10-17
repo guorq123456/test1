@@ -45,14 +45,39 @@ _ZONE, _COUNT = T.TOKEN.index("zone"), T.TOKEN.index("count")
 _GLOBAL_SCALE = np.array([20, 20, 20, 20, 10, 10, 10, 2, 2, 2, 2, 10, 10, 20, 40, 40, 9, 9, 1, 1, 1, 20, 20, 5, 5],
                          dtype=np.float32)
 assert len(_GLOBAL_SCALE) == len(T.GLOBALS)
+# input versions (learn.tokens INPUTS): v2 adds V2_EXTRA to every token, v2kc also the lethal clock's globals
+_V2_COLS = [T.TOKEN_V2.index(n) for n in T.V2_EXTRA]
+_V2_SCALE = np.array([1000, 10, 1], dtype=np.float32)
+_KC_SCALE = np.array([10, 10, 10, 200, 200, 20, 20], dtype=np.float32)
+_GLOBAL_SCALE_KC = np.concatenate([_GLOBAL_SCALE, _KC_SCALE])
+assert len(_GLOBAL_SCALE_KC) == len(T.GLOBALS_KC)
 
 
-def dynamic(tokens: np.ndarray) -> np.ndarray:
-    """[T, len(DYN_NAMES)] float32 of int16 tokens [T, len(TOKEN)]."""
+def dyn_names(inputs: str = "v1") -> tuple:
+    return DYN_NAMES if inputs == "v1" else DYN_NAMES + T.V2_EXTRA
+
+
+def global_scale(inputs: str = "v1") -> np.ndarray:
+    return _GLOBAL_SCALE_KC if inputs == "v2kc" else _GLOBAL_SCALE
+
+
+def inputs_of(n_token_cols: int, n_globals: int) -> str:
+    """The input version of token rows / globals of these widths."""
+    if n_token_cols == len(T.TOKEN):
+        return "v1"
+    if n_token_cols == len(T.TOKEN_V2):
+        return "v2kc" if n_globals == len(T.GLOBALS_KC) else "v2"
+    raise ValueError(f"tokens with {n_token_cols} columns")
+
+
+def dynamic(tokens: np.ndarray, inputs: str = "v1") -> np.ndarray:
+    """[T, len(dyn_names(inputs))] float32 of int16 tokens [T, len(T.token_names(inputs))]."""
     d = tokens[:, _DYN_COLS].astype(np.float32) / _DYN_SCALE
     kw = tokens[:, _KW_COL].astype(np.int32)
     bits = ((kw[:, None] >> np.arange(KW)) & 1).astype(np.float32)
-    return np.concatenate([d, bits], axis=1)
+    if inputs == "v1":
+        return np.concatenate([d, bits], axis=1)
+    return np.concatenate([d, bits, tokens[:, _V2_COLS].astype(np.float32) / _V2_SCALE], axis=1)
 
 
 class Data:
@@ -79,7 +104,8 @@ class Data:
             o.append(z["offsets"][1:].astype(np.int64) + base)
             base += int(z["offsets"][-1])
         self.offsets = np.concatenate(o)
-        self.globals = np.concatenate(glob) / _GLOBAL_SCALE
+        self.inputs = inputs_of(self.tokens.shape[1], parts[0]["globals"].shape[1])
+        self.globals = np.concatenate(glob) / global_scale(self.inputs)
         for k in lab:
             setattr(self, k, np.concatenate(lab[k]))
         self.n = len(self.result)
@@ -91,6 +117,7 @@ class Data:
     def subset(self, mask: np.ndarray) -> "Data":
         out = object.__new__(Data)
         out.card_ids, out.static, out.static_names = self.card_ids, self.static, self.static_names
+        out.inputs = getattr(self, "inputs", "v1")
         idx = np.flatnonzero(mask)
         take, lens = _spans(self.offsets, idx)
         out.tokens, out.cards = self.tokens[take], self.cards[take]
@@ -107,7 +134,8 @@ class Data:
         tok = self.tokens[take]
         pos = np.repeat(np.arange(len(idx)), lens)
         seg = pos * NZ + tok[:, _ZONE].astype(np.int64)
-        return self.cards[take], dynamic(tok), tok[:, _COUNT].astype(np.float32), seg, self.globals[idx]
+        return (self.cards[take], dynamic(tok, getattr(self, "inputs", "v1")), tok[:, _COUNT].astype(np.float32),
+                seg, self.globals[idx])
 
 
 def _spans(offsets: np.ndarray, idx: np.ndarray):
@@ -163,10 +191,11 @@ class SetNet:
     PARAMS = ("W1s", "W1d", "b1", "W2", "b2", "V1", "c1", "V2", "c2", "v3", "c3")
 
     def __init__(self, static_width: int, phi=(64, 64), rho=(128, 64), seed: int = 0, info=None,
-                 slope: float = 0.0):
+                 slope: float = 0.0, inputs: str = "v1"):
         rng = np.random.default_rng(seed)
         self.slope = float(slope)      # 0: ReLU (the fixed settings); > 0: leaky ReLU with that negative slope (R3)
-        D, G = len(DYN_NAMES), len(T.GLOBALS)
+        self.inputs = inputs           # learn.tokens INPUTS; "v1" for every net before 2026-10-17
+        D, G = len(dyn_names(inputs)), len(T.global_names(inputs))
         h1, h2 = phi
         r1, r2 = rho
         self.phi, self.rho = tuple(phi), tuple(rho)
@@ -348,6 +377,8 @@ class SetNet:
         is kept per zone content (card ids with their counts, in order of first appearance): the sums are added
         in the same order as the batch pass's per-card version, so the result is the same to the last bit
         (tests/test_setnet.py, analysis/scaling/README.md)."""
+        if self.inputs != "v1":
+            return self._logit2(state, player)
         p, o = state.players[player], state.players[1 - player]
         live = [T._live(state, c, 0) for c in p.hand]
         live += [T._live(state, c, 1) for c in p.field]
@@ -404,6 +435,70 @@ class SetNet:
         z1 = _act(u @ self.V1 + self.c1, self.slope)
         return float(_act(z1 @ self.V2 + self.c2, self.slope) @ self.v3 + self.c3[0])
 
+    def _logit2(self, state, player: int) -> float:
+        """logit() for the v2 inputs: a pooled token's row also holds its share and its owner's next-turn values,
+        so its phi output is kept per (card, row) and a pooled zone's sum per (zone content, share per copy,
+        next-turn values)."""
+        p, o = state.players[player], state.players[1 - player]
+        mine, theirs = T._next(state, player), T._next(state, 1 - player)
+        live = [T._live2(state, c, 0, mine) for c in p.hand]
+        live += [T._live2(state, c, 1, mine) for c in p.field]
+        live += [T._live2(state, c, 2, mine) for c in p.leader_area]
+        live += [T._live2(state, c, 4, theirs) for c in o.field]
+        live += [T._live2(state, c, 5, theirs) for c in o.leader_area]
+        deck, pool = p.deck_view(), list(o.hand) + list(o.deck_view())
+        pooled = ((3, deck, T._pool_per(len(deck), 0, 3), mine),
+                  (6, pool, T._pool_per(len(pool), len(o.hand), 6), theirs))
+        keys = []
+        for z, cards_, per, nxt in pooled:
+            counts: dict = {}
+            for c in cards_:
+                cid = c.defn.card_id
+                counts[cid] = counts.get(cid, 0) + 1
+            keys.append((z, tuple(counts.items()), per, nxt))
+        index = self._index()
+        missing = {r[0] for r in live if r[0] not in index}
+        for key in keys:
+            missing |= {cid for cid, _ in key[1] if cid not in index}
+        if missing:
+            self._add_cards(state, sorted(missing))
+            index = self._index()
+        table = getattr(self, "_table", None)
+        if table is None or len(table) != len(self.card_ids):
+            table = self._table = self._S() @ self.W1s + self.b1
+            self._pool, self._zone_sums = {}, {}
+        P = np.zeros((NZ, self.phi[1]))
+        if live:
+            rows = np.asarray(live, dtype=np.int64)
+            cards = [index[c] for c in rows[:, 0].tolist()]
+            H1 = _act(table[cards] + dynamic(rows[:, 1:], self.inputs) @ self.W1d, self.slope)
+            H2 = _act(H1 @ self.W2 + self.b2, self.slope)
+            zones = rows[:, 1 + _ZONE]
+            for z in sorted(set(zones.tolist())):
+                P[z] = H2[zones == z].sum(axis=0)
+        sums = self._zone_sums
+        for (z, cards_, per, nxt), key in zip(pooled, keys):
+            total = sums.get(key)
+            if total is None:
+                total = np.zeros(self.phi[1])
+                for cid, n in key[1]:
+                    d = next(c.defn for c in cards_ if c.defn.card_id == cid)
+                    row = T._pooled2([_Printed(d)] * n, z, per, nxt)[0]
+                    hk = (cid,) + tuple(row[3:])
+                    h = self._pool.get(hk)
+                    if h is None:
+                        tok = np.asarray(row[1:], dtype=np.int16)[None, :]
+                        h = self._pool[hk] = _act(_act(table[index[cid]] + dynamic(tok, self.inputs)[0] @ self.W1d,
+                                                       self.slope) @ self.W2 + self.b2, self.slope)
+                    total += n * h
+                if len(sums) > 50000:
+                    sums.clear()
+                sums[key] = total
+            P[z] = P[z] + total
+        u = np.concatenate([P.reshape(-1), T.globals_of(state, player, self.inputs) / global_scale(self.inputs)])
+        z1 = _act(u @ self.V1 + self.c1, self.slope)
+        return float(_act(z1 @ self.V2 + self.c2, self.slope) @ self.v3 + self.c3[0])
+
     def _index(self) -> dict:
         idx = getattr(self, "_idx", None)
         if idx is None or len(idx) != len(self.card_ids):
@@ -433,13 +528,16 @@ class SetNet:
         arrays.update(smean=self.smean, sstd=self.sstd, card_ids=self.card_ids, static=self.static,
                       phi=np.array(self.phi), rho=np.array(self.rho), slope=np.array(self.slope),
                       info=np.array(json.dumps(self.info)))
+        if self.inputs != "v1":                  # a v1 net's file is as before
+            arrays["inputs"] = np.array(self.inputs)
         np.savez(path, **arrays)
 
     @classmethod
     def load(cls, path) -> "SetNet":
         z = np.load(path, allow_pickle=False)
         net = cls(z["static"].shape[1], phi=tuple(int(x) for x in z["phi"]), rho=tuple(int(x) for x in z["rho"]),
-                  slope=float(z["slope"]) if "slope" in z.files else 0.0)
+                  slope=float(z["slope"]) if "slope" in z.files else 0.0,
+                  inputs=str(z["inputs"]) if "inputs" in z.files else "v1")
         for k in cls.PARAMS + ("smean", "sstd", "card_ids", "static"):
             setattr(net, k, np.array(z[k]))
         net.info = json.loads(str(z["info"]))

@@ -28,6 +28,22 @@ cemetery and the turn number.
 
 `encode(state, me)` -> (cards: int32 [T], tokens: int16 [T, len(TOKEN)], globals: float32 [len(GLOBALS)]). A
 token's card id (cards) is there only to look up the card's static row (`static`), never an input of its own.
+
+Input versions (`inputs`, the architecture thread 2026-10-17 01:30Z; "v1", the default, is the encoding above,
+unchanged, and every net trained before has it):
+- "v2": three more columns on every token (V2_EXTRA), and the attack state of field tokens as of the owner's next
+  turn. The owner is me in my zones and the opponent in theirs.
+  - share: for a pooled token, my deck: the chance that my next draw is this card (count / deck size); the
+    opponent's unseen pool: the expected copies of this card in their hand (hand size x count / pool size). Both
+    are in thousandths. Other tokens: 0.
+  - next_pp: the owner's play points on their next turn (maximum + 1, at most 10).
+  - next_evolve: 1 if the owner can evolve on their next turn (an evolution point left, and the evolution turn
+    reached by then).
+  - attack state: at a turn end, attacks_left / can_hit_* still describe the turn just played; a follower's
+    attacks are reset at its owner's next turn start. In v2, a field follower that can attack at all (not
+    cant_attack) has its full attacks and can hit both followers and the leader on that turn. Hand and leader-area
+    tokens are as in v1.
+- "v2kc": v2 plus seven globals (GLOBALS_KC), learn.features' lethal clock ("kclock") of the player who ended the turn.
 """
 from __future__ import annotations
 
@@ -46,6 +62,22 @@ CRAFTS = ("NEUTRAL", "FOREST", "SWORD", "RUNE", "DRAGON", "ABYSS", "HAVEN", "POR
 PROPS = ("enhance_max", "enhance_n", "modes", "evolve_modes", "play_targets", "evolve_targets", "engage_cost",
          "attacks_per_turn", "skybound", "invoke", "accelerate_cost", "crystallize_cost", "listen_in_hand",
          "unplayable", "indestructible", "cant_attack", "ignores_ward", "related")
+V2_EXTRA = ("share", "next_pp", "next_evolve")
+TOKEN_V2 = TOKEN + V2_EXTRA
+KCLOCK = ("me_kill_turns", "op_kill_turns", "kill_lead", "op_hp_x_kill_lead", "me_hp_x_kill_lead",
+          "op_hp_x_me_near", "me_hp_x_op_near")
+GLOBALS_KC = GLOBALS + KCLOCK
+INPUTS = ("v1", "v2", "v2kc")
+
+
+def token_names(inputs: str = "v1") -> tuple:
+    return TOKEN if inputs == "v1" else TOKEN_V2
+
+
+def global_names(inputs: str = "v1") -> tuple:
+    return GLOBALS_KC if inputs == "v2kc" else GLOBALS
+
+
 ROLES = ("face", "removal", "heal", "draw", "ramp", "body")
 RECURRING = ("face", "heal", "clear")
 
@@ -144,9 +176,43 @@ def _pooled(cards, zone: int) -> list:
     return out
 
 
-def encode(state, me: int):
-    """(cards int32 [T], tokens int16 [T, len(TOKEN)], globals float32 [len(GLOBALS)]) of `state` seen by `me`
-    (module docstring)."""
+def _next(state, owner: int) -> tuple:
+    """(next_pp, next_evolve) of `owner` (v2)."""
+    from svsim.core.engine import EVOLVE_TURN, MAX_PP
+    pl = state.players[owner]
+    return (min(pl.max_pp + 1, MAX_PP),
+            int(pl.ep > 0 and pl.turns_taken + 1 >= EVOLVE_TURN[state.first == owner]))
+
+
+def _live2(state, c, zone: int, nxt: tuple) -> list:
+    """A v2 token for a card as it is now: v1's, the field's attack state as of the owner's next turn, and
+    V2_EXTRA (share 0)."""
+    row = _live(state, c, zone)
+    if zone in (1, 4) and c.defn.is_follower:
+        from svsim.core.script import prop
+        can = not prop(c, "cant_attack") and c.max_attacks > 0
+        hf, hl, al = (1 + TOKEN.index(n) for n in ("can_hit_follower", "can_hit_leader", "attacks_left"))
+        row[hf], row[hl], row[al] = int(can), int(can), c.max_attacks if can else 0
+    return row + [0, nxt[0], nxt[1]]
+
+
+def _pooled2(cards, zone: int, per: float, nxt: tuple) -> list:
+    """v2 pooled tokens: v1's and V2_EXTRA, share = round(1000 x per x count)."""
+    return [r + [int(round(1000 * per * r[2])), nxt[0], nxt[1]] for r in _pooled(cards, zone)]
+
+
+def _pool_per(n_pool: int, n_hand: int, zone: int) -> float:
+    """share per copy: my deck 1 / deck size; the unseen pool hand size / pool size."""
+    if n_pool == 0:
+        return 0.0
+    return (1.0 if zone == 3 else n_hand) / n_pool
+
+
+def encode(state, me: int, inputs: str = "v1"):
+    """(cards int32 [T], tokens int16 [T, len(token_names(inputs))], globals float32 [len(global_names(inputs))])
+    of `state` seen by `me` (module docstring)."""
+    if inputs != "v1":
+        return _encode2(state, me, inputs)
     p, o = state.players[me], state.players[1 - me]
     rows = [_live(state, c, 0) for c in p.hand]
     rows += [_live(state, c, 1) for c in p.field]
@@ -161,8 +227,29 @@ def encode(state, me: int):
     return cards, tokens, globals_of(state, me)
 
 
-def globals_of(state, me: int) -> np.ndarray:
-    """GLOBALS of `state` seen by `me`, float32."""
+def _encode2(state, me: int, inputs: str):
+    p, o = state.players[me], state.players[1 - me]
+    mine, theirs = _next(state, me), _next(state, 1 - me)
+    rows = [_live2(state, c, 0, mine) for c in p.hand]
+    rows += [_live2(state, c, 1, mine) for c in p.field]
+    rows += [_live2(state, c, 2, mine) for c in p.leader_area]
+    deck = p.deck_view()
+    rows += _pooled2(deck, 3, _pool_per(len(deck), 0, 3), mine)
+    rows += [_live2(state, c, 4, theirs) for c in o.field]
+    rows += [_live2(state, c, 5, theirs) for c in o.leader_area]
+    pool = list(o.hand) + list(o.deck_view())
+    rows += _pooled2(pool, 6, _pool_per(len(pool), len(o.hand), 6), theirs)
+    table = np.asarray(rows, dtype=np.int64).reshape(-1, len(TOKEN_V2) + 1)
+    cards = table[:, 0].astype(np.int32)
+    tokens = np.clip(table[:, 1:], -32768, 32767).astype(np.int16)
+    return cards, tokens, globals_of(state, me, inputs)
+
+
+def globals_of(state, me: int, inputs: str = "v1") -> np.ndarray:
+    """global_names(inputs) of `state` seen by `me`, float32."""
+    if inputs == "v2kc":
+        from svsim.learn.features import _kclock_values
+        return np.concatenate([globals_of(state, me), np.asarray(_kclock_values(state, me), dtype=np.float32)])
     p, o = state.players[me], state.players[1 - me]
     g = [p.leader_hp, o.leader_hp, p.leader_max_hp, o.leader_max_hp, p.pp, p.max_pp, o.max_pp, p.ep, p.sep,
          o.ep, o.sep, p.turns_taken, o.turns_taken, state.turn, len(p.deck_view()), len(o.deck_view()),
