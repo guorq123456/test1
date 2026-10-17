@@ -735,6 +735,7 @@ command is gen4-59000's with `--name in2` / `--name in2kc` and the v2 / v2kc tok
 | net-gen4-59000 | v1 | 29 | 0.18754 | 0.18832 | 0.19064 (0.55445) | 131 (1.00×) | 1adbebb9… |
 | **net-in2-59000** | v2 | 29 | 0.18633 | **0.18767** | **0.18911** (0.55134) | 160 (1.22×) | c37e82bc… |
 | net-in2kc-59000 | v2kc | 22 | 0.18647 | 0.18798 | 0.18920 (0.55121) | 179 (1.37×) | a49cb0dd… |
+| net-in2a-59000 | v2a | 24 | 0.18637 | 0.18793 | 0.18928 (0.55103) | 137 (1.23×)¹ | 71f13486… |
 
 The v2 inputs improve both holdouts (−0.0007 and −0.0015) at no extra data. The lethal clock adds nothing on top of
 them offline (+0.0003 / +0.0001).
@@ -752,3 +753,15 @@ Dead units on the v2skx holdout: in2: phi 23 / 32 of 64, rho 84 of 128 / 29 of 6
 Both nets have 0 subnormal weights.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+**v2a (the architecture thread 04:21Z, after J116 / J117 found both v2 nets weaker in play).** v2a has v2's three
+columns, with v1's attack state (attacks_left, can_hit_*): it tests whether the next-turn attack state is what cost
+v2 its strength. v2a has v2's widths, so its token files carry an `inputs` mark. The token files were built from the
+v2 files by putting v1's three attack columns back. Three shards (70100000, 72300040, 70200004) encoded with
+`--inputs v2a` were identical to them, array for array. The training command is gen4-59000's with `--name in2a`. A
+container restart stopped the fit after epoch 3; it was resumed from the checkpoint, which holds the RNG state.
+Offline, in2a equals in2 (0.18793 / 0.18928 against 0.18767 / 0.18911). Dead on the holdout: phi 23 / 29 of 64,
+rho 90 of 128 / 29 of 64; 0 subnormal weights.
+
+¹ in2a's cost was measured after 33a8495 (the live memo), in a second run of `inputcost.py`. In that run: gen4-59000 111 µs,
+in2 139 µs (1.26×), in2kc 176 µs (1.59×: the lethal clock is not memoized), in2a 137 µs (1.23×).

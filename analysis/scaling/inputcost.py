@@ -23,7 +23,7 @@ SPEC = "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=ana
 for i, s in enumerate(starts):
     make_agent(SPEC, 2000 + i).act(s.clone(), legal_actions(s))
 setnet.SetNet.logit = plain
-names = ["net-gen4-59000", "net-in2-59000", "net-in2kc-59000"]
+names = ["net-gen4-59000", "net-in2-59000", "net-in2kc-59000", "net-in2a-59000"]
 best = {n: 1e9 for n in names}
 for rnd in range(5):
     for n in (names if rnd % 2 == 0 else names[::-1]):
