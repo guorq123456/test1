@@ -42,5 +42,18 @@
   "brier": 0.20834,
   "log_loss": 0.5985,
   "n": 88311
+ },
+ "holdout_selfplay": {
+  "seeds": [
+   72800038
+  ],
+  "brier": 0.1931,
+  "log_loss": 0.56346,
+  "n": 9361,
+  "installed_linear": {
+   "brier": 0.20518,
+   "log_loss": 0.59323,
+   "n": 9361
+  }
  }
 }

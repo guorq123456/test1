@@ -765,3 +765,29 @@ rho 90 of 128 / 29 of 64; 0 subnormal weights.
 
 ¹ in2a's cost was measured after 33a8495 (the live memo), in a second run of `inputcost.py`. In that run: gen4-59000 111 µs,
 in2 139 µs (1.26×), in2kc 176 µs (1.59×: the lethal clock is not memoized), in2a 137 µs (1.23×).
+
+## net-elft-gen2-19500: the elf-t mirror's second generation (registered by the analysis line, J120 / J121)
+
+The data is the elf-t mirror's 10⁴ games (71900000 + 2k, k = 0–9, v2skx) plus its gen-2 self-play k = 0–18
+(72800000 + 2k, 500 games each, net-elft-10000 + neteot; data/elf-t2). Gen-2 k = 19 (72800038) is held out. Inputs v1,
+ReLU 64-64 / 128-64, `--ftz`:
+
+    python analysis/scaling/train.py --deck elf-t --opponent elf-t --base 71900000 --holdout-base 72000000 \
+        net --size 19500 --name elft-gen2 --add 72800000:19 --ftz --tokens TOK-ELFT --checkpoint CKPT \
+        --extra-holdout selfplay:72800038
+
+| net | epochs | valid Brier | elf-t holdout Brier (88311) | gen-2 self-play holdout Brier (9361) |
+|---|---|---|---|---|
+| installed elf-t linear | | | 0.20834 | 0.20518 |
+| net-elft-10000 | 16 | 0.18441 | 0.19086 | 0.19310 |
+| **net-elft-gen2-19500** | 17 | 0.18502 | **0.19088** | **0.18415** |
+
+The model is models/net-elft-gen2-19500.npz (sha256
+e244c577a174f8c43728755f14216750e3307cf59f659be68acaa1a7292cc58f). The holdout probabilities are in
+data/holdout-net-elft-gen2-19500.npz and data/holdout-selfplay-net-elft-gen2-19500.npz.
+
+On the v2skx-played holdout the second generation equals the first. On the positions its own player reaches (the
+gen-2 self-play holdout) it is 0.0090 lower. Dead on the holdout: phi 0 / 6 of 64, rho 72 of 128 / 16 of 64; 0
+subnormal weights.
+
+Condition: the opponent's deck list is known (order and hand not).

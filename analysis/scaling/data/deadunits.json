@@ -1008,5 +1008,97 @@
     "normal": 1
    }
   }
+ },
+ {
+  "net": "net-elft-gen2-19500",
+  "slope": 0.0,
+  "holdout_turn_ends": 88311,
+  "training_turn_ends": 354023,
+  "dead_on_holdout": {
+   "phi_layer1": "0 of 64",
+   "phi_layer2": "6 of 64",
+   "rho_layer1": "72 of 128",
+   "rho_layer2": "16 of 64"
+  },
+  "dead_on_training": {
+   "phi_layer1": "0 of 64",
+   "phi_layer2": "6 of 64",
+   "rho_layer1": "66 of 128",
+   "rho_layer2": "16 of 64"
+  },
+  "inputs_always_0_in_training": {
+   "phi_static": "51 of 96",
+   "phi_dynamic": "6 of 23",
+   "rho_pooled": "161 of 448",
+   "rho_globals": "0 of 25"
+  },
+  "weights": {
+   "W1s": {
+    "size": 6144,
+    "zero": 3264,
+    "subnormal": 0,
+    "normal": 2880
+   },
+   "W1d": {
+    "size": 1472,
+    "zero": 437,
+    "subnormal": 0,
+    "normal": 1035
+   },
+   "b1": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "W2": {
+    "size": 4096,
+    "zero": 2,
+    "subnormal": 0,
+    "normal": 4094
+   },
+   "b2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "V1": {
+    "size": 60544,
+    "zero": 12390,
+    "subnormal": 0,
+    "normal": 48154
+   },
+   "c1": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "V2": {
+    "size": 8192,
+    "zero": 2686,
+    "subnormal": 0,
+    "normal": 5506
+   },
+   "c2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "v3": {
+    "size": 64,
+    "zero": 3,
+    "subnormal": 0,
+    "normal": 61
+   },
+   "c3": {
+    "size": 1,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1
+   }
+  }
  }
 ]
