@@ -13,6 +13,9 @@ not pushed that shard.
 | 10 | 72800020 | 500 (g 0–499) | builder line |
 | 11 | 72800022 | 500 (g 0–499) | builder line |
 | 12 | 72800024 | 500 (g 0–499) | builder line |
+| 13 | 72800026 | 500 (g 0–499) | builder line |
+| 14 | 72800028 | 500 (g 0–499) | builder line |
+| 15 | 72800030 | 500 (g 0–499) | builder line |
 
 Each shard was checked: g 0–499 each once, deal seed s×100003 + g, agent seeds s×1000 + 2g + i, no draw, and one
 player string, elf-t on both sides.
