@@ -791,3 +791,45 @@ gen-2 self-play holdout) it is 0.0090 lower. Dead on the holdout: phi 0 / 6 of 6
 subnormal weights.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## D6: what the lethal agent buys (registered by the analysis line, method B)
+
+The script is analysis/scaling/d6_lethal.py; the outputs are in data/d6.
+
+**Part 1, time split** (ramp-t seed 74000000, elf-t 74000002, 20 games each; split-*.json). Shares of a decision's time:
+
+| mirror | decisions | ms / decision | planner | full | near | screen | rest (search) |
+|---|---|---|---|---|---|---|---|
+| ramp-t | 1277 | 49.18 | 0.0054 | 0.0079 | 0.0533 | 0.2205 | 0.7129 |
+| elf-t | 1910 | 59.73 | 0.0389 | 0.0271 | 0.0493 | 0.1984 | 0.6864 |
+
+**Part 2a, sure-lethal starts** (points-*.json). A point is the first decision of a turn where the planner, or
+LethalSearch.solve, is sure of lethal, and its first move is the recorded move. Ramp-t's points come from rec-71600018
+plus gen4x (21000 games); elf-t's come from elf-t2 (10000 games). 200 points were sampled from each with
+`random.Random(73900000)`.
+
+| mirror | points found | per game | planner | full | near | screen | sample (planner / full / near / screen) |
+|---|---|---|---|---|---|---|---|
+| ramp-t | 17424 | 0.83 | 64.3% | 13.3% | 12.7% | 9.7% | 140 / 19 / 21 / 20 |
+| elf-t | 9167 | 0.917 | 77.7% | 16.0% | 5.1% | 1.3% | 156 / 26 / 14 / 4 |
+
+**Part 2b, conversion by the bare search** (convert-*.json). From each point the bare search (`mcts-raw:160` for
+ramp-t with net-gen3-30000, `mcts-raw:140` for elf-t with net-elft-10000, i.e. the equal-compute player without
+LethalAgent) plays the rest of the turn (at most 60 steps), three times, with seeds B + 3j + r (B = 73900000 ramp-t,
+73950000 elf-t). A run converts if the game is won within that turn.
+
+| mirror | planner | full | near | screen | all (600 runs) | 95% CI (by point) |
+|---|---|---|---|---|---|---|
+| ramp-t | 359/420 85.5% | 46/57 80.7% | 47/63 74.6% | 60/60 100% | **512/600 85.3%** | 80.5–90.2% |
+| elf-t | 423/468 90.4% | 68/78 87.2% | 24/42 57.1% | 6/12 50% | **521/600 86.8%** | 82.3–91.4% |
+
+The outcome is nearly fixed per point: in ramp-t 169 points convert 3/3 and 27 convert 0/3 (4 mixed); in elf-t 170
+and 23 (7 mixed). The sample is uniform over points, so the "all" rate estimates the rate over all sure-lethal starts.
+Without the lethal agent, about 0.83 × 14.7% ≈ 0.12 (ramp-t) and 0.917 × 13.2% ≈ 0.12 (elf-t) sure-lethal turns per
+game are not won that turn (some of these games may still be won later). The cost is 28.7% / 31.4% of decision time,
+22.1% / 19.8% of it in the screen alone. The screen's own points (ramp-t 9.7% of points) all converted in ramp-t (20
+points, 60/60). Elf-t has only 4 screen points.
+
+J124 (ramp-t bare N160 converts ≥ 90%, probability 35%): 85.3%, below 90%.
+
+Condition: the opponent's deck list is known (order and hand not).
