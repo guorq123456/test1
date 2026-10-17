@@ -1,0 +1,340 @@
+{
+ "label": "gen3-N120",
+ "spec": "mcts:120+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-gen3-30000.npz+neteot",
+ "rec": "/home/user/test1/analysis/scaling/data/heldout/rec-70200008.jsonl.gz",
+ "seed": 73800000,
+ "points": [
+  [
+   400,
+   49
+  ],
+  [
+   220,
+   6
+  ],
+  [
+   537,
+   29
+  ],
+  [
+   696,
+   76
+  ],
+  [
+   673,
+   21
+  ],
+  [
+   929,
+   21
+  ],
+  [
+   692,
+   13
+  ],
+  [
+   452,
+   57
+  ],
+  [
+   416,
+   33
+  ],
+  [
+   175,
+   53
+  ]
+ ],
+ "plain_cpu_s": [
+  0.1041,
+  0.0487,
+  0.1382,
+  0.1086,
+  0.0506,
+  0.0332,
+  0.029,
+  0.0286,
+  0.0613,
+  0.1045
+ ],
+ "plain_ms_per_decision": 70.7,
+ "profiled_s": 1.49,
+ "simulator_share": 0.5636,
+ "blocks": {
+  "_other_by_module": {
+   "search/lethal.py": 0.1194,
+   "core/view.py": 0.0181,
+   "core/state.py": 0.007,
+   "search/combo.py": 0.0054,
+   "core/engine.py": 0.0052,
+   "search/mcts.py": 0.0025,
+   "learn/setnet.py": 0.0015,
+   "core/script.py": 0.0013
+  },
+  "state copy": {
+   "seconds": 0.1781,
+   "share": 0.1195,
+   "top": [
+    {
+     "fn": "core/state.py:69(copy)",
+     "seconds": 0.0661,
+     "calls": 73344
+    },
+    {
+     "fn": "core/state.py:194(copy)",
+     "seconds": 0.0349,
+     "calls": 7514
+    },
+    {
+     "fn": "core/state.py:285(clone)",
+     "seconds": 0.0251,
+     "calls": 3757
+    },
+    {
+     "fn": "~:0(<built-in method __new__ of type object at 0x9bd900>)",
+     "seconds": 0.0169,
+     "calls": 87812
+    },
+    {
+     "fn": "~:0(<function Random.getstate at 0x7fe08cf16a20>)",
+     "seconds": 0.0128,
+     "calls": 4466
+    }
+   ]
+  },
+  "determinization": {
+   "seconds": 0.1058,
+   "share": 0.071,
+   "top": [
+    {
+     "fn": "core/view.py:37(_inline_shuffle)",
+     "seconds": 0.0385,
+     "calls": 3508
+    },
+    {
+     "fn": "core/view.py:73(determinize)",
+     "seconds": 0.0198,
+     "calls": 1200
+    },
+    {
+     "fn": "~:0(<method 'getrandbits' of '_random.Random' objects>)",
+     "seconds": 0.0126,
+     "calls": 151483
+    },
+    {
+     "fn": "~:0(<method 'bit_length' of 'int' objects>)",
+     "seconds": 0.0107,
+     "calls": 98708
+    },
+    {
+     "fn": "~:0(<function Random.seed at 0x7fe08cf16c00>)",
+     "seconds": 0.0102,
+     "calls": 1764
+    }
+   ]
+  },
+  "rules step": {
+   "seconds": 0.3964,
+   "share": 0.2661,
+   "top": [
+    {
+     "fn": "core/effects.py:24(enqueue)",
+     "seconds": 0.0328,
+     "calls": 36110
+    },
+    {
+     "fn": "core/effects.py:48(emit)",
+     "seconds": 0.0301,
+     "calls": 9184
+    },
+    {
+     "fn": "~:0(<built-in method builtins.any>)",
+     "seconds": 0.0283,
+     "calls": 12993
+    },
+    {
+     "fn": "core/engine.py:432(_play)",
+     "seconds": 0.0201,
+     "calls": 1811
+    },
+    {
+     "fn": "core/script.py:205(script_for)",
+     "seconds": 0.0155,
+     "calls": 78700
+    }
+   ]
+  },
+  "legal moves": {
+   "seconds": 0.1594,
+   "share": 0.107,
+   "top": [
+    {
+     "fn": "core/engine.py:185(_play_actions)",
+     "seconds": 0.0239,
+     "calls": 2300
+    },
+    {
+     "fn": "core/engine.py:56(legal_actions)",
+     "seconds": 0.0143,
+     "calls": 2300
+    },
+    {
+     "fn": "core/engine.py:139(_signature)",
+     "seconds": 0.0137,
+     "calls": 14238
+    },
+    {
+     "fn": "core/engine.py:206(_attack_actions)",
+     "seconds": 0.0124,
+     "calls": 2300
+    },
+    {
+     "fn": "core/engine.py:83(play_form)",
+     "seconds": 0.0119,
+     "calls": 12980
+    }
+   ]
+  },
+  "net encoding": {
+   "seconds": 0.0832,
+   "share": 0.0558,
+   "top": [
+    {
+     "fn": "learn/tokens.py:163(_live)",
+     "seconds": 0.0339,
+     "calls": 8785
+    },
+    {
+     "fn": "learn/tokens.py:138(_counters)",
+     "seconds": 0.0129,
+     "calls": 8785
+    },
+    {
+     "fn": "core/enums.py:50(__and__)",
+     "seconds": 0.0055,
+     "calls": 29281
+    },
+    {
+     "fn": "~:0(<built-in method numpy.asarray>)",
+     "seconds": 0.0052,
+     "calls": 1210
+    },
+    {
+     "fn": "learn/tokens.py:266(globals_of)",
+     "seconds": 0.0048,
+     "calls": 1210
+    }
+   ]
+  },
+  "net forward": {
+   "seconds": 0.1694,
+   "share": 0.1137,
+   "top": [
+    {
+     "fn": "learn/setnet.py:380(logit)",
+     "seconds": 0.113,
+     "calls": 1210
+    },
+    {
+     "fn": "~:0(<method 'get' of 'dict' objects>)",
+     "seconds": 0.0189,
+     "calls": 193862
+    },
+    {
+     "fn": "learn/setnet.py:603(score)",
+     "seconds": 0.0087,
+     "calls": 1210
+    },
+    {
+     "fn": "learn/setnet.py:168(_act)",
+     "seconds": 0.0082,
+     "calls": 2420
+    },
+    {
+     "fn": "~:0(<method 'copy' of 'numpy.ndarray' objects>)",
+     "seconds": 0.0061,
+     "calls": 1210
+    }
+   ]
+  },
+  "MCTS bookkeeping": {
+   "seconds": 0.152,
+   "share": 0.102,
+   "top": [
+    {
+     "fn": "search/mcts.py:404(_iterate)",
+     "seconds": 0.0363,
+     "calls": 1200
+    },
+    {
+     "fn": "search/mcts.py:522(_refresh)",
+     "seconds": 0.0116,
+     "calls": 3911
+    },
+    {
+     "fn": "search/mcts.py:271(_choose)",
+     "seconds": 0.0114,
+     "calls": 10
+    },
+    {
+     "fn": "search/mcts.py:489(_options)",
+     "seconds": 0.011,
+     "calls": 1521
+    },
+    {
+     "fn": "search/mcts.py:101(action_key)",
+     "seconds": 0.0066,
+     "calls": 4356
+    }
+   ]
+  },
+  "linear evaluation": {
+   "seconds": 0.0035,
+   "share": 0.0023,
+   "top": [
+    {
+     "fn": "search/evaluate.py:228(evaluate)",
+     "seconds": 0.0029,
+     "calls": 1210
+    },
+    {
+     "fn": "~:0(<built-in method builtins.hasattr>)",
+     "seconds": 0.0006,
+     "calls": 1210
+    }
+   ]
+  },
+  "other": {
+   "seconds": 0.2423,
+   "share": 0.1626,
+   "top": [
+    {
+     "fn": "~:0(<built-in method builtins.sorted>)",
+     "seconds": 0.0263,
+     "calls": 31904
+    },
+    {
+     "fn": "search/lethal.py:98(hidden_info)",
+     "seconds": 0.0254,
+     "calls": 2463
+    },
+    {
+     "fn": "search/lethal.py:78(state_key)",
+     "seconds": 0.0228,
+     "calls": 1369
+    },
+    {
+     "fn": "search/lethal.py:212(_evaluate)",
+     "seconds": 0.018,
+     "calls": 1694
+    },
+    {
+     "fn": "search/lethal.py:68(_card_key)",
+     "seconds": 0.0152,
+     "calls": 20191
+    }
+   ]
+  }
+ },
+ "condition": "对手卡表已知（牌序、手牌未知）"
+}

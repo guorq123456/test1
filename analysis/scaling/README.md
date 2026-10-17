@@ -1259,3 +1259,40 @@ J92 的 40% 里混着两样东西：网络比现装评估慢（N 从 200 降到 
     - 每块再列最耗时的 5 个函数和调用次数。
   - **预测**（架构线）：gen3 N = 120 时，模拟器那几块（复制、确定化、推进、着法生成）合计占一个决策的 50% 以上：75%。
   - elft-gen2 一到先跑 J120，P1 可以中断。
+
+## P1 读完：一个决策的时间花在哪（10-17 06:4xZ）
+
+条件：对手卡表已知（牌序、手牌未知）。5158530，分析线机器，每个选手 10 个决策点（种子 73800000 + k），每点新建选手。脚本和逐块前 5 个函数在 `analysis/gates/scaling/p1/`。
+
+**cProfile + 按调用边分摊（登记的方法）**
+
+| 块 | gen3 N = 120 + eot（跳费龙） | elft N = 105 + eot（连击妖） | v2skx N = 200（跳费龙） |
+|---|---|---|---|
+| 状态复制 | 11.9% | 12.9% | 10.0% |
+| 确定化 | 7.1% | 5.7% | 8.4% |
+| 规则推进 | 26.6% | 29.8% | 25.6% |
+| 合法着法 | 10.7% | 8.3% | 11.9% |
+| 网络编码 | 5.6% | 5.2% | — |
+| 网络前向 | 11.4% | 8.1% | — |
+| MCTS 记账 | 10.2% | 8.5% | 12.3% |
+| 线性评估 | 0.2% | 0.2% | 19.0% |
+| 其它 | 16.3% | 21.4% | 12.9% |
+| **模拟器合计**（前四块） | **56.4%** | **56.6%** | **55.8%** |
+| 不开 profiler，每决策 CPU 毫秒 | 70.7 | 67.4 | 70.2 |
+
+- "其它"里大头是 `search/lethal.py`（斩杀时钟包）：gen3 11.9%、elft 13.7%、v2skx 9.0%。主要函数是 `hidden_info`、`state_key`、`_evaluate`、`_card_key`，以及它们调用的 `sorted`。elft 另有 `search/combo.py` 3.5%。
+- 各块最耗时的函数（gen3；括号里是 10 个决策的调用次数）：
+  - 复制：`CardInstance.copy`（73344）、`PlayerState.copy`（7514）、`GameState.clone`（3757）、对象创建、`Random.getstate`。
+  - 确定化：`_inline_shuffle`（3508）、`determinize`（1200）、`getrandbits`（151483）、`bit_length`、`Random.seed`。
+  - 规则推进：`effects.enqueue`（36110）、`effects.emit`（9184）、`any`、`engine._play`、`script_for`（78700）。
+  - 合法着法：`_play_actions`（2300）、`legal_actions`、`_signature`（14238）、`_attack_actions`、`play_form`。
+  - 网络编码：`tokens._live`（8785）、`_counters`、`enums.__and__`、`globals_of`。
+  - 网络前向：`SetNet.logit`（1210）、`dict.get`（193862）、`SetNetEnded.score`、`_act`。
+  - MCTS 记账：`_iterate`（1200）、`_refresh`、`_choose`、`_options`、`action_key`。
+  - v2skx 的线性评估：`sum`、`features.side_features`、`model` 里的生成器（176880）、`resources`、`recurring_sum`。
+- **低开销交叉核对**（没登记，用来看方法偏差）：只在入口函数（`GameState.clone`、`determinize`、`engine.apply`、`legal_actions`、`SetNet.logit`、线性 `evaluate`）上挂独占计时，同样的决策点。
+  - 模拟器合计：gen3 **45.1%**、elft 45.7%、v2skx 52.4%。
+  - 网络（编码 + 前向）：gen3 26.5%、elft 25.1%。
+  - cProfile 给每次函数调用都加开销，调用多的小函数（复制、规则推进正是这类）被放大。入口计时只在少数入口上加开销，所以模拟器的真实占比更可能接近 45%。
+- **预测**："gen3 N = 120 时模拟器合计 > 50%"（75%）：按登记的 cProfile 方法 56.4%，**对**；但低开销核对只有 45.1%，结论依赖方法，照记。
+- **能动的地方**（按块大小）：规则推进（`enqueue` / `emit` / `script_for`）约四分之一；斩杀时钟包约 12%；复制约 12%（`CardInstance.copy` 每个决策约 7 千次）；合法着法约 10%；确定化 6%～8%（洗牌的随机数）。网络前向本身已经只占约 10%（cProfile）到 25%（入口计时，含编码）。
