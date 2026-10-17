@@ -47,7 +47,9 @@ svsim/learn/vnets; "+vnet=FOLDER" another folder's <deck>-<deck>-vnet.npz), the 
 turn ends of the net's own pairing scored by the scaling test's card-token DeepSets net at PATH (learn.setnet, a
 .npz; relative paths also from the repository root), everything else unchanged; with "+neteot" too, a position
 inside the scored player's own turn is first played to its turn end (after_end_of_turn, on a copy); with "+netftz", the
-net's subnormal weights are set to 0 at load (same numbers where checked, less CPU time); "+phased" linear models by moment (learn.phased:
+net's subnormal weights are set to 0 at load (same numbers where checked, less CPU time); "+puct=PATH[:C[:T]]" PUCT
+at every node of the search (search.mcts, puct) with the move prior at PATH (learn.setpolicy), c_puct C (default 1)
+and the prior sharpened by 1 / T (default 1), unvisited moves at the node's value - 0.1; "+phased" linear models by moment (learn.phased:
 turn ends, and turn starts reached by playing out the reply; "+phased=NAME" this agent's models from
 the folder NAME, a path or svsim/learn/phased_models/NAME, learn.phased.folder_of; "+screen=N" the lethal search's budget for a position whose damage estimate falls short (the
 estimate is no bound, search.lethal.damage_estimate), "+screen=N:N2:K" ... and N2 nodes when it is short by K or
@@ -190,6 +192,17 @@ def _infer_option(options) -> tuple | None:
     return (float(chosen[0][0]), float(chosen[0][1]) if len(chosen[0]) > 1 else 0.0)
 
 
+def _puct_options(options) -> dict:
+    """+puct=PATH[:C[:T]]: PUCT at every node of the search with the move prior at PATH (learn.setpolicy, a .npz;
+    relative paths also from the repository root), c_puct C (default 1) and the prior sharpened by 1 / T (default 1)."""
+    chosen = [o[len("puct="):] for o in options if o.startswith("puct=")]
+    if not chosen:
+        return {}
+    from svsim.learn.setpolicy import load_cached
+    path, c, t = (chosen[0].split(":") + ["", ""])[:3]
+    return {"puct": load_cached(path), "c_puct": float(c) if c else 1.0, "puct_temp": float(t) if t else 1.0}
+
+
 def make_agent(spec: str, seed: int):
     """The agent `spec` names; "+mull=WAY" redraws its opening hand that way (agents.mulligan.decide:
     default, rules[:VARIANT,...], sim[:N[:H]]) and changes nothing else."""
@@ -210,7 +223,7 @@ def _make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "lethal3", "plannerfix", "eot", "discard", "adaptive", "abs", "abs0", "complex", "xprune", "neteot", "netftz"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet=", "par=", "xprune=", "setnet="))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "lethal3", "plannerfix", "eot", "discard", "adaptive", "abs", "abs0", "complex", "xprune", "neteot", "netftz"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet=", "par=", "xprune=", "setnet=", "puct="))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -309,7 +322,8 @@ def _make_agent(spec: str, seed: int):
                           **({"center": False, "normalize": True} if "abs" in options else {}),   # +abs
                           **({"center": False} if "abs0" in options else {}),   # +abs0: absolute values only
                           **_par_options(spec, options),       # +par=K: K root-parallel trees (search.parallel)
-                          **_prior_options(options))
+                          **_prior_options(options),
+                          **_puct_options(options))           # +puct=PATH[:C[:T]] (search.mcts, puct)
         cross = [o for o in options if o.startswith("cross")]
         if cross:                                  # keep a card / PP / evolution for later (agents.crossturn_agent)
             from svsim.agents.crossturn_agent import CrossTurnAgent

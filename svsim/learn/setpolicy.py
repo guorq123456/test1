@@ -633,6 +633,21 @@ class SetPolicy:
         return pol
 
 
+_CACHE: dict = {}
+
+
+def load_cached(path) -> SetPolicy:
+    """The prior at `path` (relative paths also from the repository root), loaded once per process."""
+    p = Path(path)
+    if not p.exists() and not p.is_absolute():
+        p = Path(__file__).resolve().parents[2] / p
+    key = str(p.resolve())
+    pol = _CACHE.get(key)
+    if pol is None:
+        pol = _CACHE[key] = SetPolicy.load(p)
+    return pol
+
+
 # --- command line ------------------------------------------------------------------------------------------------
 
 def fit_main(args) -> None:

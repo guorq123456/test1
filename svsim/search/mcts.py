@@ -157,7 +157,7 @@ def _rank(state: GameState, action) -> tuple:
 
 
 class Node:
-    __slots__ = ("children", "visits", "total", "avail", "options", "value")
+    __slots__ = ("children", "visits", "total", "avail", "options", "value", "prior")
 
     def __init__(self):
         self.children: dict = {}
@@ -166,6 +166,7 @@ class Node:
         self.avail = 0
         self.options = None            # {frozenset of open moves: times seen} once searched below
         self.value = 0.0               # the node's estimate (see ISMCTS._refresh)
+        self.prior = None              # (puct) {action key: prior}, computed the first time a move is picked here
 
 
 # alloc=self's prior mean of legal moves at a searched decision (two or more legal moves): 5.83 over the 13388 such
@@ -180,8 +181,17 @@ class ISMCTS:
                  reserve: bool = False, veto=None, reply_after: int = 0, reply_top: int = 0,
                  reply_budget: int = 0, average: int = 1, prior=None, c_prior: float = 0.3,
                  reuse: bool = False, min_new: int = 20, alloc: tuple | None = None, infer: tuple | None = None,
-                 oracle: bool = False, normalize: bool = False, parallel: int = 0, par_spec: str | None = None):
+                 oracle: bool = False, normalize: bool = False, parallel: int = 0, par_spec: str | None = None,
+                 puct=None, c_puct: float = 1.0, puct_temp: float = 1.0, fpu: float = 0.1):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
+        # PUCT at every node (puct: a move prior, learn.setpolicy.SetPolicy; the architecture thread 2026-10-17,
+        # "B"): a move is picked by Q + c_puct x P x sqrt(node visits) / (1 + its visits) in place of UCB1's
+        # exploration term, an unvisited move scoring Q = the node's value - fpu (no move is forced to be tried
+        # first). P is the prior over the node's open moves (one per action key), sharpened by 1 / puct_temp,
+        # computed once, the first time a move is picked at the node. None: the search as before.
+        if puct is not None and prior is not None:
+            raise ValueError("puct and the root prior (+prior / +mimic) are two different uses of a prior")
+        self.puct, self.c_puct, self.puct_temp, self.fpu = puct, c_puct, puct_temp, fpu
         self.normalize = normalize     # (+abs) selection on Q min-max normalized over this search's tree (MuZero):
                                        # with absolute values (center=False) a lost or won position's values sit
                                        # near 0 or 1, and the normalization keeps the selection's resolution
@@ -426,6 +436,24 @@ class ISMCTS:
                                 "enemy_field": [c.defn.card_id for c in q.field],
                                 "enemy_hand": [c.defn.card_id for c in q.hand]})
             offered.append(options)
+            if self.puct is not None:                   # PUCT (see __init__): one move, tried or not
+                k = self._puct_pick(s, node, options)
+                for kk in options:
+                    child = node.children.get(kk)
+                    if child is not None:
+                        child.avail += 1
+                child = node.children.get(k)
+                if child is None:
+                    child = node.children[k] = Node()
+                    child.avail = 1
+                    self._step(s, options[k])
+                    path.append(child)
+                    break
+                node = child
+                self._step(s, options[k])
+                path.append(node)
+                depth += 1
+                continue
             fresh = None
             for k in options:
                 child = node.children.get(k)
@@ -485,6 +513,39 @@ class ISMCTS:
             seen = frozenset(options)
             n.options[seen] = n.options.get(seen, 0) + 1
             self._refresh(n)
+
+    def _puct_pick(self, s: GameState, node: Node, options: dict):
+        """The move PUCT picks at `node` among `options` (see __init__). A move the node's prior has no entry for
+        (open in this determinization only) gets 1 / (number of open moves); ties go to the first in `options`."""
+        if node.prior is None:
+            probs = self.puct.priors(s, list(options.values()))
+            if self.puct_temp != 1.0:
+                probs = [float(x) ** (1.0 / self.puct_temp) for x in probs]
+            total = float(sum(probs))
+            node.prior = {k: float(x) / total for k, x in zip(options, probs)}
+        prior, default = node.prior, 1.0 / len(options)
+        by_max = self.backup == "max"
+        scaled = self.normalize and self._qmax is not None and self._qmax - self._qmin > 1e-9
+        parent = (node.value if by_max else node.total / node.visits) if node.visits else 0.5
+        if scaled:
+            parent = (parent - self._qmin) / (self._qmax - self._qmin)
+        first = parent - self.fpu
+        root_n = math.sqrt(max(node.visits, 1))
+        best, best_u = None, -math.inf
+        children = node.children
+        for k in options:
+            child = children.get(k)
+            if child is None or not child.visits:
+                q, n = first, 0
+            else:
+                q = child.value if by_max else child.total / child.visits
+                if scaled:
+                    q = (q - self._qmin) / (self._qmax - self._qmin)
+                n = child.visits
+            u = q + self.c_puct * prior.get(k, default) * root_n / (1 + n)
+            if u > best_u:
+                best, best_u = k, u
+        return best
 
     def _options(self, s: GameState, me: int, prior) -> dict:
         """The moves open in `s`, {action_key: action}, in the order they are tried."""
