@@ -1,0 +1,62 @@
+{
+ "ramp mirror 6f11111": {
+  "starts": 18892,
+  "sure (find_lethal 20000)": 789,
+  "found now": 755,
+  "found +lethal3": 905,
+  "gained, find_lethal sure": 77,
+  "gained beyond find_lethal": 73,
+  "lost": 0,
+  "sure missed now": 86,
+  "sure missed +lethal3": 9,
+  "unrealized": 27,
+  "unrealized recovered": 22,
+  "unrealized missed by both": 5,
+  "by the planner now / +lethal3": [
+   485,
+   863
+  ],
+  "ms per start now: mean / p90": [
+   58.2,
+   107.4
+  ],
+  "ms per start +lethal3: mean / p90": [
+   63.2,
+   104.9
+  ],
+  "added ms per start: mean / p90": [
+   5.0,
+   7.5
+  ]
+ },
+ "pirate-t mirror (80 games)": {
+  "starts": 1389,
+  "sure (find_lethal 20000)": 70,
+  "found now": 60,
+  "found +lethal3": 76,
+  "gained, find_lethal sure": 12,
+  "gained beyond find_lethal": 4,
+  "lost": 0,
+  "sure missed now": 13,
+  "sure missed +lethal3": 1,
+  "unrealized": 4,
+  "unrealized recovered": 4,
+  "unrealized missed by both": 0,
+  "by the planner now / +lethal3": [
+   32,
+   56
+  ],
+  "ms per start now: mean / p90": [
+   112.8,
+   246.3
+  ],
+  "ms per start +lethal3: mean / p90": [
+   120.7,
+   223.4
+  ],
+  "added ms per start: mean / p90": [
+   7.9,
+   63.6
+  ]
+ }
+}

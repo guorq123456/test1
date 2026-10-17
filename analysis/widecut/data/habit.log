@@ -1,0 +1,80 @@
+{
+ "positions": 45,
+ "same_left_out": 1,
+ "k": 32,
+ "b_minus_a_all": [
+  0.0369,
+  0.0085,
+  0.0717,
+  44
+ ],
+ "b_minus_a_big": [
+  0.0406,
+  -0.001,
+  0.0854,
+  30
+ ],
+ "b_minus_a_other": [
+  0.029,
+  0.0045,
+  0.0558,
+  14
+ ],
+ "a_win_mean": 0.4865,
+ "b_win_mean": 0.5234,
+ "check_big_mcts1043_playout": [
+  0.0083,
+  -0.0417,
+  0.0542,
+  30
+ ],
+ "check_big_same_positions_level_strong": [
+  0.0406,
+  0.001,
+  0.0885,
+  30
+ ],
+ "largest": [
+  {
+   "game": 133,
+   "turn": 11,
+   "start": 121,
+   "discarded": [
+    "Burnite, Anathema of Ash",
+    "Sagatsumatsu, Fair Beheader"
+   ],
+   "b_discarded": [
+    "Lazing Flame"
+   ],
+   "a_win": 0.4375,
+   "b_win": 0.9375,
+   "diff": 0.5
+  },
+  {
+   "game": 764,
+   "turn": 9,
+   "start": 286,
+   "discarded": [
+    "Sagatsumatsu, Fair Beheader"
+   ],
+   "b_discarded": [
+    "Zooey, Ally of the World"
+   ],
+   "a_win": 0.4375,
+   "b_win": 0.6875,
+   "diff": 0.25
+  },
+  {
+   "game": 890,
+   "turn": 11,
+   "start": 478,
+   "discarded": [
+    "Burnite, Anathema of Ash"
+   ],
+   "b_discarded": [],
+   "a_win": 0.25,
+   "b_win": 0.46875,
+   "diff": 0.21875
+  }
+ ]
+}

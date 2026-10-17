@@ -1,0 +1,10 @@
+{
+ "kind": "setup",
+ "expected": {
+  "enemy_followers_at_most": 0,
+  "enemy_hp_at_most": 6,
+  "ep_at_least": 1
+ },
+ "source": "Operations puzzle k = 455 (the analysis line's candidates_all.md, puzzle 4; the architecture thread 2026-10-10 09:45Z)",
+ "notes": "An evaluation puzzle: the installed evaluation rates the bot's ends 0.32-0.38 against Salem's 0.272 (the enemy at 6, their board empty, an evolution point kept); G_end re-test: Salem 0.583, the bot 0.125. mcts:1043 plays 7 different ends on 8 seeds, none Salem's."
+}

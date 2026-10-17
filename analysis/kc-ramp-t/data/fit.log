@@ -1,0 +1,43 @@
+{
+ "train": {
+  "contrast_mse_w": 0.004324,
+  "sign_w": 0.7378,
+  "calib_logloss": 0.612
+ },
+ "val": {
+  "contrast_mse_w": 0.008986,
+  "sign_w": 0.6958,
+  "calib_logloss": 0.6236
+ },
+ "intercept": -0.2045,
+ "seconds": 75,
+ "extra coefficients (standardized)": {
+  "me_handplay_face": 0.0136,
+  "me_handplay_removal": -0.0406,
+  "me_handplay_heal": -0.0164,
+  "me_handplay_draw": 0.0336,
+  "me_handplay_ramp": 0.0105,
+  "me_handplay_body": 0.1039,
+  "me_hp_early": 0.0201,
+  "me_hp_mid": 0.0149,
+  "op_hp_early": -0.0947,
+  "op_hp_mid": -0.0551,
+  "me_kill_turns": 0.0205,
+  "op_kill_turns": 0.0113,
+  "kill_lead": -0.0112,
+  "op_hp_x_kill_lead": 0.082,
+  "me_hp_x_kill_lead": -0.045,
+  "op_hp_x_me_near": 0.0111,
+  "me_hp_x_op_near": -0.022
+ },
+ "counts": {
+  "labels": 5053,
+  "examples": 100864,
+  "no_examples": 94
+ },
+ "val_counts": {
+  "labels": 467,
+  "examples": 14913,
+  "no_examples": 4
+ }
+}

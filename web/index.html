@@ -1,0 +1,1033 @@
+<title>超凡陪练台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Noto+Sans+SC:wght@400;600;700&display=swap">
+<style>
+/* Layout: one screen of card table. The opponent sits on top, you at the bottom,
+   your hand along the thumb edge; a bottom sheet holds a card's moves. */
+:root {
+  --bg: #e6eae2;        /* table */
+  --lane: #d6ddd1;      /* field lanes */
+  --panel: #fbfcf8;     /* cards, sheets */
+  --ink: #1b221e;
+  --muted: #5d6a62;
+  --line: #bfcabd;
+  --accent: #22704a;    /* your moves, ready followers */
+  --accent-ink: #ffffff;
+  --foe: #ad3f2e;       /* the opponent, attack targets */
+  --gold: #9a6c0c;      /* play points, cost */
+  --atk: #b0640f;
+  --life: #ad3f2e;
+  --shade: rgba(20, 28, 24, 0.45);
+  --font-body: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --font-num: "Barlow Condensed", "DIN Alternate", "Roboto Condensed", "Arial Narrow", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121815; --lane: #1a221e; --panel: #222b26; --ink: #e4ebe5; --muted: #96a49b; --line: #34413a;
+    --accent: #58c288; --accent-ink: #0c1a12; --foe: #ee7d66; --gold: #e2b44a; --atk: #f0a24a; --life: #ee7d66;
+    --shade: rgba(0, 0, 0, 0.6); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121815; --lane: #1a221e; --panel: #222b26; --ink: #e4ebe5; --muted: #96a49b; --line: #34413a;
+  --accent: #58c288; --accent-ink: #0c1a12; --foe: #ee7d66; --gold: #e2b44a; --atk: #f0a24a; --life: #ee7d66;
+  --shade: rgba(0, 0, 0, 0.6); color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; }
+button { font: inherit; color: inherit; }
+button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#app { height: 100%; max-width: 560px; margin: 0 auto; padding-inline: 16px; box-sizing: border-box;
+  display: flex; flex-direction: column; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+
+/* ---- setup ---- */
+#setup { display: flex; flex-direction: column; gap: 18px; padding-block: 24px; overflow-y: auto; }
+#setup h1 { margin: 0; font-size: 26px; letter-spacing: 0.04em; text-wrap: balance; }
+#setup .lead { margin: 4px 0 0; color: var(--muted); line-height: 1.6; }
+.field-group { display: flex; flex-direction: column; gap: 8px; }
+.field-group > span { font-size: 12px; color: var(--muted); letter-spacing: 0.08em; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg button { flex: 1 1 auto; min-width: 0; padding: 9px 10px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--panel); cursor: pointer; }
+.seg button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.primary { padding: 12px 16px; border-radius: 10px; border: 0; background: var(--accent); color: var(--accent-ink);
+  font-weight: 700; font-size: 16px; cursor: pointer; }
+.primary:disabled { opacity: 0.45; cursor: default; }
+.ghost { padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line); background: transparent; cursor: pointer; }
+#status { color: var(--muted); font-size: 13px; line-height: 1.6; white-space: pre-wrap; min-height: 1.6em; }
+#status.error { color: var(--foe); }
+#saved-games { font-size: 13px; color: var(--muted); }
+.level-info { font-size: 12px; color: var(--muted); min-height: 1.4em; }
+
+/* ---- board ---- */
+#board { flex: 1; display: flex; flex-direction: column; gap: 6px; padding-block: 8px; min-height: 0; }
+.leader { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; padding: 6px 10px; border-radius: 10px;
+  background: var(--panel); border: 1px solid var(--line); }
+.leader .hp { font-family: var(--font-num); font-weight: 700; font-size: 30px; line-height: 1; min-width: 2.2ch; }
+.leader .hp small { font-size: 14px; color: var(--muted); font-weight: 600; }
+.leader .stats { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 12px; color: var(--muted); min-width: 0; flex: 1 1 180px; }
+.leader .stats > span { white-space: nowrap; }
+.leader .stats b { color: var(--ink); font-family: var(--font-num); font-size: 15px; font-weight: 700; }
+.leader .who { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; }
+#ai-leader .who { color: var(--foe); }
+#my-leader .who { color: var(--accent); }
+#ai-leader.target { border-color: var(--foe); box-shadow: 0 0 0 2px var(--foe); cursor: pointer; }
+.pp-pips { display: inline-flex; gap: 2px; vertical-align: middle; }
+.pp-pips i { width: 6px; height: 10px; border-radius: 2px; background: var(--line); }
+.pp-pips i.on { background: var(--gold); }
+.thinking { margin-left: auto; font-size: 12px; color: var(--foe); }
+.leader-area { display: flex; flex-wrap: wrap; gap: 4px; flex: 1 0 100%; }
+.chip { font-size: 11px; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); background: transparent; cursor: pointer; }
+
+.lane { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 6px; border-radius: 10px;
+  background: var(--lane); min-height: 92px; flex: 1 1 0; max-height: 200px; }
+.slot { border: 1px dashed var(--line); border-radius: 8px; min-height: 80px; }
+.card { position: relative; display: flex; flex-direction: column; justify-content: flex-start;
+  min-width: 0; min-height: 80px; box-sizing: border-box; padding: 5px 5px 22px;
+  border-radius: 8px; background: var(--panel); border: 1px solid var(--line); font-size: 11px; line-height: 1.25;
+  text-align: left; cursor: pointer; }
+.card .name { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600; }
+.card .kw { margin-top: 2px; color: var(--muted); font-size: 10px; }
+.card .stat { position: absolute; bottom: 3px; font-family: var(--font-num); font-weight: 700; font-size: 18px; line-height: 1; }
+.card .atk { left: 6px; color: var(--atk); }
+.card .life { right: 6px; color: var(--life); }
+.card .life.hurt { text-decoration: underline; text-underline-offset: 2px; }
+.card .count { position: absolute; bottom: 4px; right: 6px; font-size: 11px; color: var(--muted); }
+.card .badge { position: absolute; top: -7px; right: -4px; font-size: 10px; padding: 0 5px; border-radius: 999px;
+  background: var(--gold); color: var(--panel); font-weight: 700; }
+.card.amulet { border-style: dashed; }
+.card.ready { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.card.selected { box-shadow: 0 0 0 2px var(--accent); }
+.card.target { border-color: var(--foe); box-shadow: 0 0 0 2px var(--foe); }
+.card.dim { opacity: 0.55; }
+
+#ticker { flex: none; padding: 6px 10px; border-radius: 8px; background: transparent; border: 1px solid var(--line);
+  font-size: 12px; color: var(--muted); text-align: left; cursor: pointer; line-height: 1.5; }
+#ticker .last { color: var(--ink); }
+#ticker div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.my-controls { display: flex; align-items: center; gap: 6px; }
+.my-controls .turn-info { margin-right: auto; font-size: 12px; color: var(--muted); }
+.my-controls button { padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg);
+  cursor: pointer; font-size: 13px; white-space: nowrap; }
+.my-controls .end { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+.my-controls button:disabled { opacity: 0.4; cursor: default; }
+.my-controls .review-info { flex: 1; min-width: 0; font-size: 13px; line-height: 1.35; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.my-controls .review-info .who-ai { color: var(--foe); }
+.my-controls .mistake[aria-pressed="true"] { background: var(--foe); color: var(--panel); border-color: var(--foe); font-weight: 700; }
+#saved-games button { margin-top: 8px; }
+.steps .turn { color: var(--muted); font-size: 12px; margin-top: 8px; }
+.steps button.ai { color: var(--muted); }
+.steps button.here { border-color: var(--accent); }
+.steps .tag { margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--foe); color: var(--panel); font-size: 12px; }
+.steps .note { font-size: 12px; color: var(--muted); padding: 0 12px 4px; }
+
+#hand { display: flex; gap: 8px; overflow-x: auto; padding: 9px 4px 4px 8px; flex: none; }
+#hand .card { flex: 0 0 78px; min-height: 96px; }
+.card .cost { position: absolute; top: -6px; left: -6px; width: 22px; height: 22px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--gold); color: var(--panel);
+  font-family: var(--font-num); font-weight: 700; font-size: 15px; }
+.card .cost.cheaper { box-shadow: 0 0 0 2px var(--accent); }
+.card.in-hand .name { margin-top: 6px; }
+.card .type { position: absolute; bottom: 4px; right: 6px; font-size: 10px; color: var(--muted); }
+
+.toolbar { display: flex; gap: 6px; padding-block: 4px 6px; flex: none; }
+.toolbar button { flex: 1; min-width: 0; padding: 8px 4px; border-radius: 8px; border: 1px solid var(--line);
+  background: transparent; cursor: pointer; font-size: 13px; }
+
+/* ---- sheet and dialogs ---- */
+.scrim { position: fixed; inset: 0; background: var(--shade); z-index: 10; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 11; max-height: 72%; overflow-y: auto;
+  background: var(--panel); border-radius: 14px 14px 0 0; border-top: 1px solid var(--line);
+  padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px)); box-sizing: border-box;
+  max-width: 560px; margin: 0 auto; }
+.sheet h2 { margin: 0 0 4px; font-size: 16px; text-wrap: balance; }
+.sheet .sub { color: var(--muted); font-size: 12px; margin-bottom: 10px; }
+.sheet .moves { display: flex; flex-direction: column; gap: 6px; }
+.sheet .moves button { text-align: left; padding: 11px 12px; border-radius: 9px; border: 1px solid var(--line);
+  background: var(--bg); cursor: pointer; line-height: 1.4; }
+.sheet .moves button.main { border-color: var(--accent); }
+.sheet .row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.sheet pre, .sheet .text { white-space: pre-wrap; font-family: var(--font-body); font-size: 13px; line-height: 1.6; margin: 0; }
+.sheet table.impact { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.sheet table.impact th, .sheet table.impact td { padding: 5px 4px; border-bottom: 1px solid var(--line); text-align: right; }
+.sheet table.impact th:first-child, .sheet table.impact td:first-child { text-align: left; white-space: nowrap; }
+.sheet table.impact thead th { font-weight: 600; color: var(--muted); }
+.sheet ul.reading { margin: 0 0 10px; padding-left: 18px; font-size: 13px; line-height: 1.6; }
+.sheet details { margin-top: 10px; font-size: 12px; color: var(--muted); }
+.card-info { margin-top: 12px; }
+.card-info .info-head { font-size: 12px; color: var(--muted); letter-spacing: 0.06em; margin: 10px 0 4px; }
+.card-info .info-text { margin: 0 0 6px; font-size: 13px; line-height: 1.6; }
+.card-info .info-note { margin: 0 0 6px; font-size: 12px; color: var(--muted); }
+.card-info .info-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.card-info .info-table th { text-align: left; font-weight: 400; color: var(--muted); padding: 3px 8px 3px 0; }
+.card-info .info-table td { text-align: right; padding: 3px 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sheet details dl { margin: 6px 0 0; }
+.sheet details dt { font-weight: 600; color: var(--ink); margin-top: 6px; }
+.sheet details dd { margin: 0; }
+.sheet textarea { width: 100%; box-sizing: border-box; min-height: 90px; padding: 8px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; }
+.mull { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 8px; margin: 6px 0 4px; }
+.mull .card { min-height: 100px; }
+.mull .card.swap { border-color: var(--foe); box-shadow: 0 0 0 2px var(--foe); }
+.mull .card.swap::after { content: "换掉"; position: absolute; top: -8px; right: -4px; font-size: 10px; font-weight: 700;
+  padding: 0 6px; border-radius: 999px; background: var(--foe); color: var(--panel); }
+.log-list { display: flex; flex-direction: column; gap: 3px; font-size: 13px; line-height: 1.5; }
+.log-list .turn { color: var(--muted); margin-top: 6px; }
+.code-box { width: 100%; box-sizing: border-box; min-height: 70px; font-family: ui-monospace, monospace; font-size: 11px;
+  word-break: break-all; }
+@media (prefers-reduced-motion: no-preference) {
+  .sheet { animation: rise 0.16s ease-out; }
+  @keyframes rise { from { transform: translateY(24px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+}
+</style>
+
+<div id="app">
+  <section id="setup">
+    <div>
+      <h1>超凡陪练台</h1>
+      <p class="lead">《影之诗：超凡世界》对战模拟器的手机版。规则引擎和 AI 都在这个页面里运行，点牌就能出牌；每一局都会自动存档，方便复盘。</p>
+    </div>
+    <div class="field-group"><span>你的卡组</span>
+      <div class="seg" data-name="you">
+        <button data-value="rhino" aria-pressed="true">破魔虫精灵</button>
+        <button data-value="ramp">跳费龙</button>
+        <button data-value="pirate">海盗皇家</button>
+        <button data-value="combo">连击精灵</button>
+        <button data-value="face">快攻龙</button>
+        <button data-value="elf-t">连击妖（比赛版）</button>
+        <button data-value="nemesis-t">机锋（比赛版）</button>
+        <button data-value="ramp-t">跳费龙（比赛版）</button>
+        <button data-value="pirate-t">旗皇（比赛版）</button>
+      </div>
+    </div>
+    <div class="field-group"><span>AI 的卡组</span>
+      <div class="seg" data-name="opponent">
+        <button data-value="ramp" aria-pressed="true">跳费龙</button>
+        <button data-value="rhino">破魔虫精灵</button>
+        <button data-value="pirate">海盗皇家</button>
+        <button data-value="combo">连击精灵</button>
+        <button data-value="face">快攻龙</button>
+        <button data-value="elf-t">连击妖（比赛版）</button>
+        <button data-value="nemesis-t">机锋（比赛版）</button>
+        <button data-value="ramp-t">跳费龙（比赛版）</button>
+        <button data-value="pirate-t">旗皇（比赛版）</button>
+      </div>
+    </div>
+    <div class="field-group"><span>AI 强度</span>
+      <div class="seg" data-name="level">
+        <button data-value="fast">快速</button>
+        <button data-value="normal" aria-pressed="true">普通</button>
+        <button data-value="strong">强</button>
+        <button data-value="max">最强</button>
+        <button data-value="original">原始版</button>
+      </div>
+      <div class="level-info" id="level-info"></div>
+    </div>
+    <div class="field-group"><span>先后手</span>
+      <div class="seg" data-name="first">
+        <button data-value="random" aria-pressed="true">随机</button>
+        <button data-value="you">我先手</button>
+        <button data-value="ai">我后手</button>
+      </div>
+    </div>
+    <div id="resume-box" class="field-group" hidden>
+      <span>没下完的对局</span>
+      <button class="primary" id="resume" type="button">继续上一局</button>
+    </div>
+    <button class="primary" id="start" disabled>开始对局</button>
+    <div id="status">正在加载模拟器……第一次打开大约需要十几秒。</div>
+    <div id="saved-games"></div>
+  </section>
+
+  <section id="board" hidden>
+    <div class="leader" id="ai-leader"></div>
+    <div class="lane" id="ai-field"></div>
+    <button id="ticker" type="button" aria-label="对局记录"></button>
+    <div class="lane" id="my-field"></div>
+    <div class="leader" id="my-leader"></div>
+    <div class="my-controls" id="controls"></div>
+    <div id="hand"></div>
+    <nav class="toolbar" id="play-tools">
+      <button id="btn-hint" type="button">提示</button>
+      <button id="btn-lethal" type="button">查斩杀</button>
+      <button id="btn-note" type="button">备注</button>
+      <button id="btn-log" type="button">记录</button>
+      <button id="btn-menu" type="button">菜单</button>
+    </nav>
+    <nav class="toolbar" id="review-tools" hidden>
+      <button id="rv-steps" type="button">全部步骤</button>
+      <button id="rv-note" type="button">备注</button>
+      <button id="rv-hint" type="button">AI 会怎么走</button>
+      <button id="rv-lethal" type="button">查斩杀</button>
+      <button id="rv-impact" type="button">胜负影响</button>
+      <button id="rv-exit" type="button">退出复盘</button>
+    </nav>
+  </section>
+</div>
+<div class="scrim" id="scrim" hidden></div>
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true"></div>
+
+<script>
+"use strict";
+// ---------------------------------------------------------------- backend
+// The game runs either behind the local server (python -m svsim.tools.web) or
+// in this page, in a Web Worker with Pyodide (the published page).
+const Backend = {
+  mode: null, worker: null, pending: new Map(), nextId: 1,
+  async init(progress) {
+    try {
+      const r = await fetch("api/ping", {cache: "no-store"});
+      if (r.ok && (await r.json()).ok) { this.mode = "http"; return; }
+    } catch (e) { /* not behind the local server */ }
+    this.mode = "pyodide";
+    await new Promise((resolve, reject) => {
+      let worker;
+      try { worker = new Worker("worker.js"); } catch (e) { reject(e); return; }
+      this.worker = worker;
+      worker.onmessage = (ev) => {
+        const m = ev.data;
+        if (m.type === "progress") progress(m.text);
+        else if (m.type === "ready") resolve();
+        else if (m.type === "fatal") reject(new Error(m.text));
+        else if (m.id) {
+          const p = this.pending.get(m.id); this.pending.delete(m.id);
+          if (!p) return;
+          if (m.error) p.reject(new Error(m.error)); else p.resolve(JSON.parse(m.result));
+        }
+      };
+      worker.onerror = (e) => reject(new Error(e.message || "Worker 加载失败"));
+    });
+  },
+  async call(method, ...args) {
+    if (this.mode === "http") {
+      const r = await fetch("api/call", {method: "POST", headers: {"Content-Type": "application/json"},
+                                         body: JSON.stringify({method, args})});
+      const data = await r.json();
+      if (data.error) throw new Error(data.error);
+      return data.result;
+    }
+    const id = this.nextId++;
+    return new Promise((resolve, reject) => {
+      this.pending.set(id, {resolve, reject});
+      this.worker.postMessage({id, method, args});
+    });
+  },
+};
+
+// ---------------------------------------------------------------- saving
+// Every move is saved twice: in this browser (so a game survives the page being
+// reloaded, e.g. after the phone puts it in the background) and, on the
+// published page, in the page's own store, where Claude can read it for review
+// and another device can carry it on. The local server also keeps replays/.
+const LOCAL_KEY = "svsim-current-game";
+const Store = {
+  db: null, gameId: null, writing: false, pending: null,
+  async init() {
+    try {
+      if (!window.claude || !window.claude.use) return;
+      this.db = await window.claude.use("db");
+      if (this.db) this.refreshCount();
+    } catch (e) { this.db = null; }
+  },
+  async refreshCount() {
+    try {
+      const snap = await this.db.collection("games").get();
+      const done = snap.docs.filter(d => d.data() && d.data().finished).length;
+      const box = document.getElementById("saved-games"); box.replaceChildren();
+      if (snap.size) box.appendChild(el("div", null, `这个页面已保存 ${snap.size} 局对局（${done} 局打完）。`));
+      if (done) {
+        const b = el("button", "ghost", "复盘打完的对局，标出自己的失误"); b.type = "button";
+        b.addEventListener("click", openReviewList); box.appendChild(b);
+      }
+    } catch (e) { /* the count is optional */ }
+  },
+  async finished() {
+    const snap = await this.db.collection("games").where("finished", "==", true).orderBy("updated", "desc").limit(50).get();
+    return snap.docs.map(d => ({gameId: d.id, body: d.data()})).filter(g => g.body && g.body.record);
+  },
+  write(id, body) {                                // a reviewed game goes back with its marks and notes
+    if (!this.db) return;
+    this.pending = {id, body};
+    this.flush();
+  },
+  loadLocal() {
+    try { const text = localStorage.getItem(LOCAL_KEY); return text ? JSON.parse(text) : null; }
+    catch (e) { return null; }
+  },
+  setLocal(entry) {
+    try { entry ? localStorage.setItem(LOCAL_KEY, JSON.stringify(entry)) : localStorage.removeItem(LOCAL_KEY); }
+    catch (e) { /* private window or storage blocked: the store still has it */ }
+  },
+  save(record, finished, summary, extra) {
+    if (!record || !this.gameId) return;
+    const body = {record, finished: !!finished, winner: record.winner ?? null, moves: record.actions.length,
+                  bot: record.bot || {level: null, version: null, spec: record.ai ?? null, build: null},
+                  updated: new Date().toISOString(), turn: summary ? summary.turn : null,
+                  you_hp: summary ? summary.you : null, ai_hp: summary ? summary.ai : null, ...(extra || {})};
+    this.setLocal(finished ? null : {gameId: this.gameId, body});
+    if (!this.db) return;
+    this.pending = {id: this.gameId, body};        // one write at a time, the latest state wins
+    this.flush();
+  },
+  async flush() {
+    if (this.writing || !this.pending) return;
+    this.writing = true;
+    const {id, body} = this.pending; this.pending = null;
+    try { await this.db.collection("games").doc(id).set(body); } catch (e) { /* kept locally */ }
+    this.writing = false;
+    this.flush();
+  },
+  async unfinished() {
+    if (!this.db) return null;
+    try {
+      const snap = await this.db.collection("games").where("finished", "==", false)
+        .orderBy("updated", "desc").limit(1).get();
+      return snap.empty ? null : {gameId: snap.docs[0].id, body: snap.docs[0].data()};
+    } catch (e) { return null; }
+  },
+};
+
+async function persist(finished, extra) {
+  if (!view) return;
+  const record = await safeRecord();
+  Store.save(record, finished, {turn: view.turn, you: view.you.hp, ai: view.ai.hp}, extra);
+}
+
+// ---------------------------------------------------------------- state
+let view = null, busy = false, selected = null, choice = {you: "rhino", opponent: "ramp", level: "normal", first: "random"};
+const $ = (id) => document.getElementById(id);
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+function status(text, error) { const s = $("status"); s.textContent = text; s.classList.toggle("error", !!error); }
+
+// ---------------------------------------------------------------- setup screen
+document.querySelectorAll(".seg").forEach(seg => {
+  seg.addEventListener("click", (ev) => {
+    const b = ev.target.closest("button"); if (!b) return;
+    seg.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    choice[seg.dataset.name] = b.dataset.value;
+    if (seg.dataset.name === "level" || seg.dataset.name === "opponent") showLevelInfo();
+  });
+});
+
+// The AI's class rating with the level and deck picked: each deck counted on its own from the anchor
+// (the ruler's strong level, CR 1300), measured by 100 games against each of the ruler's four decks.
+const LEVEL_NAMES = {fast: "快速档", normal: "普通档", strong: "强档", max: "最强档", original: "原始版"};
+let ratings = null;
+function showLevelInfo() {
+  const box = $("level-info");
+  if (!ratings) { box.textContent = ""; return; }
+  const decks = (ratings.tiers[choice.level] || {}).decks || {}, t = decks[choice.opponent];
+  const deck = DECK_NAMES[choice.opponent] || choice.opponent;
+  const cr = !t ? "CR 只标定比赛卡组" : t.cr != null ?
+    `CR ${t.cr}` + (Array.isArray(t.ci) ? `（${t.ci[0]}～${t.ci[1]}）` : t.ci != null ? ` ± ${t.ci}` : "") +
+    (t.anchor ? "（锚）" : "") : "CR 待标定";
+  box.textContent = `${LEVEL_NAMES[choice.level] || choice.level} · ${deck} · 版本 ${ratings.version} · ${ratings.commit} · ${cr}`;
+  box.title = (t && t.note) || "";
+}
+
+$("start").addEventListener("click", startGame);
+
+async function startGame() {
+  closeSheet();
+  $("start").disabled = true;
+  status("正在开局……");
+  try {
+    view = await Backend.call("start", choice.you, choice.opponent, choice.level, null, choice.first);
+    Store.gameId = `${Date.now()}`;
+    $("setup").hidden = true; $("board").hidden = false;
+    render();
+    await afterMove();
+  } catch (e) {
+    status("开局失败：" + e.message, true);
+  } finally { $("start").disabled = false; }
+}
+
+// ---------------------------------------------------------------- rendering
+function sideStats(side, mine) {
+  const pips = el("span", "pp-pips");
+  for (let i = 0; i < side.max_pp; i++) { const p = el("i"); if (i < side.pp) p.className = "on"; pips.appendChild(p); }
+  const wrap = el("div", "stats");
+  const pp = el("span"); pp.append("PP "); const b = el("b", null, `${side.pp}/${side.max_pp}`); pp.append(b, " ", pips);
+  wrap.appendChild(pp);
+  const add = (label, value) => { const s = el("span"); s.append(label + " "); s.appendChild(el("b", null, String(value))); wrap.appendChild(s); };
+  add("进化", side.ep); add("超进化", side.sep);
+  if (mine) add("连击", side.combo);
+  add("手牌", side.hand_count); add("牌组", side.deck);
+  if (side.bonus) add("额外能量点", "可用");
+  return wrap;
+}
+
+function renderLeader(node, side, mine) {
+  node.replaceChildren();
+  node.appendChild(el("span", "who", mine ? "你" : "AI"));
+  const hp = el("span", "hp"); hp.append(String(side.hp)); hp.appendChild(el("small", null, "/" + side.max_hp));
+  node.appendChild(hp);
+  node.appendChild(sideStats(side, mine));
+  if (side.leader_area.length) {
+    const area = el("div", "leader-area");
+    side.leader_area.forEach(c => {
+      const chip = el("button", "chip", c.name + (c.countdown != null ? ` ${c.countdown}` : "")); chip.type = "button";
+      chip.addEventListener("click", (ev) => { ev.stopPropagation(); openCard(c, [], false); });
+      area.appendChild(chip);
+    });
+    node.appendChild(area);
+  }
+}
+
+function cardNode(c, opts = {}) {
+  const b = el("button", "card" + (c.kind === "amulet" ? " amulet" : "") + (opts.inHand ? " in-hand" : ""));
+  b.type = "button";
+  b.dataset.uid = c.uid;
+  if (opts.inHand) {
+    const cost = el("span", "cost num", String(c.cost)); if (c.cost < c.base_cost) cost.classList.add("cheaper");
+    b.appendChild(cost);
+  }
+  b.appendChild(el("div", "name", c.name));
+  const kw = [c.keywords, c.status && !opts.inHand ? c.status : ""].filter(Boolean).join(" · ");
+  if (kw) b.appendChild(el("div", "kw", kw));
+  if (c.kind === "follower") {
+    b.appendChild(el("span", "stat atk", String(c.atk)));
+    const life = el("span", "stat life", String(c.life)); if (c.life < c.max_life) life.classList.add("hurt");
+    b.appendChild(life);
+    if (c.evolved) b.appendChild(el("span", "badge", c.evolved === 2 ? "超进化" : "进化"));
+  } else if (c.countdown != null) {
+    b.appendChild(el("span", "count", `吟唱 ${c.countdown}`));
+  } else if (opts.inHand) {
+    b.appendChild(el("span", "type", c.kind === "spell" ? "法术" : c.kind === "amulet" ? "护符" : ""));
+  }
+  return b;
+}
+
+function actionsOf(uid) { return view.actions.filter(a => a.source === uid); }
+function myTurn() { return view && !view.review && !view.over && view.active === 0 && view.phase === "main" && !busy; }
+
+function renderLane(node, cards, mine) {
+  node.replaceChildren();
+  const targets = new Set();
+  if (selected != null) actionsOf(selected).forEach(a => { if (a.type === "Attack" && !a.target_leader) targets.add(a.target); });
+  cards.forEach(c => {
+    const n = cardNode(c);
+    if (mine) {
+      if (myTurn() && actionsOf(c.uid).some(a => a.type === "Attack")) n.classList.add("ready");
+      if (c.uid === selected) n.classList.add("selected");
+    } else if (targets.has(c.uid)) n.classList.add("target");
+    n.addEventListener("click", () => onFieldTap(c, mine));
+    node.appendChild(n);
+  });
+  for (let i = cards.length; i < 5; i++) node.appendChild(el("div", "slot"));
+}
+
+function render() {
+  if (!view) return;
+  renderLeader($("ai-leader"), view.ai, false);
+  if (busy && view.active === 1) $("ai-leader").appendChild(el("span", "thinking", "AI 思考中……"));
+  const leaderTarget = selected != null && actionsOf(selected).some(a => a.type === "Attack" && a.target_leader);
+  $("ai-leader").classList.toggle("target", leaderTarget);
+  renderLane($("ai-field"), view.ai.field, false);
+  renderLane($("my-field"), view.you.field, true);
+  renderLeader($("my-leader"), view.you, true);
+  const controls = $("controls"); controls.replaceChildren();
+  controls.appendChild(el("span", "turn-info", view.over ? "对局结束" :
+    `第 ${view.turn} 回合 · ${view.active === 0 ? "你的回合" : "AI 的回合"}`));
+  const bonus = view.actions.find(a => a.type === "UseBonusPP");
+  if (bonus) {
+    const bb = el("button", null, "额外能量点"); bb.type = "button"; bb.disabled = !myTurn();
+    bb.addEventListener("click", () => act(bonus.i)); controls.appendChild(bb);
+  }
+  const end = view.actions.find(a => a.type === "EndTurn");
+  const eb = el("button", "end", view.over ? "已结束" : view.active === 0 ? "结束回合" : "AI 回合");
+  eb.type = "button"; eb.disabled = !end || !myTurn();
+  eb.addEventListener("click", () => end && act(end.i));
+  controls.appendChild(eb);
+  // hand
+  const hand = $("hand"); hand.replaceChildren();
+  view.you.hand.forEach(c => {
+    const n = cardNode(c, {inHand: true});
+    const playable = myTurn() && actionsOf(c.uid).length > 0;
+    if (playable) n.classList.add("ready"); else n.classList.add("dim");
+    n.addEventListener("click", () => onHandTap(c));
+    hand.appendChild(n);
+  });
+  // ticker
+  const t = $("ticker"); t.replaceChildren();
+  view.log.slice(-3).forEach((line, i, arr) => t.appendChild(el("div", i === arr.length - 1 ? "last" : null, line)));
+  if (view.review) renderReviewControls();
+}
+
+// ---------------------------------------------------------------- input
+function onHandTap(c) {
+  if (!view) return;
+  const moves = myTurn() ? actionsOf(c.uid) : [];
+  selected = null; render();
+  openCard(c, moves, true);
+}
+
+function onFieldTap(c, mine) {
+  if (!view) return;
+  if (!mine && selected != null) {             // attack the tapped enemy follower
+    const a = actionsOf(selected).find(x => x.type === "Attack" && x.target === c.uid);
+    if (a) { closeSheet(); act(a.i); return; }
+  }
+  const moves = mine && myTurn() ? actionsOf(c.uid) : [];
+  if (mine && moves.some(a => a.type === "Attack")) { selected = c.uid; render(); }
+  else { selected = null; render(); }
+  openCard(c, moves, false);
+}
+
+$("ai-leader").addEventListener("click", () => {
+  if (selected == null || !view) return;
+  const a = actionsOf(selected).find(x => x.type === "Attack" && x.target_leader);
+  if (a) { closeSheet(); act(a.i); }
+});
+
+function describeCard(c) {
+  const bits = [];
+  if (c.cost != null) bits.push(`${c.cost} 费` + (c.cost !== c.base_cost ? `（原 ${c.base_cost}）` : ""));
+  if (c.kind === "follower") bits.push(`${c.atk}/${c.life}` + (c.life < c.max_life ? `（上限 ${c.max_life}）` : ""));
+  if (c.kind === "amulet") bits.push("护符"); if (c.kind === "spell") bits.push("法术");
+  if (c.keywords) bits.push(c.keywords);
+  if (c.evolved) bits.push(c.evolved === 2 ? "已超进化" : "已进化");
+  if (c.status) bits.push(c.status);
+  if (c.countdown != null) bits.push(`吟唱 ${c.countdown}`);
+  return bits.join(" · ");
+}
+
+function openCard(c, moves, inHand) {
+  const sheet = $("sheet"); sheet.replaceChildren();
+  sheet.appendChild(el("h2", null, c.name));
+  sheet.appendChild(el("div", "sub", describeCard(c)));
+  const list = el("div", "moves");
+  if (moves.some(a => a.type === "Attack")) sheet.appendChild(el("div", "sub", "也可以直接点高亮的敌方随从或对手主战者来攻击。"));
+  moves.forEach((a, k) => {
+    const b = el("button", k === 0 ? "main" : null, a.text); b.type = "button";
+    b.addEventListener("click", () => { closeSheet(); act(a.i); });
+    list.appendChild(b);
+  });
+  if (!moves.length) list.appendChild(el("div", "sub", view && view.active === 0 ? "现在没有可以对这张牌做的操作。" : "现在是 AI 的回合。"));
+  sheet.appendChild(list);
+  const details = el("div", "card-info"); sheet.appendChild(details);
+  const row = el("div", "row"); const close = el("button", "ghost", "关闭"); close.type = "button";
+  close.addEventListener("click", () => { selected = null; closeSheet(); render(); });
+  row.appendChild(close); sheet.appendChild(row);
+  showSheet();
+  showCardInfo(details, c.uid);
+}
+
+// The card's text and the counts its own effect reads, from the game state (Session.card_info).
+async function showCardInfo(box, uid) {
+  let info;
+  try { info = await Backend.call("card_info", uid); } catch (e) { return; }
+  if (!info || info.error || !box.isConnected) return;
+  box.replaceChildren();
+  info.text.forEach(t => box.appendChild(el("p", "info-text", t)));
+  if (info.related.length) box.appendChild(el("p", "info-note", "相关的卡：" + info.related.join("、")));
+  if (info.counters.length) {
+    const t = el("table", "info-table");
+    info.counters.forEach(([k, v]) => { const tr = el("tr"); tr.append(el("th", null, k), el("td", null, String(v))); t.appendChild(tr); });
+    box.appendChild(t);
+  }
+  if (info.play) box.appendChild(el("p", "info-note", info.play));
+}
+
+function showSheet() { $("sheet").hidden = false; $("scrim").hidden = false; }
+function closeSheet() { $("sheet").hidden = true; $("scrim").hidden = true; }
+$("scrim").addEventListener("click", () => { if (view && view.mulligan) return; selected = null; closeSheet(); render(); });
+
+async function act(index) {
+  if (!myTurn()) return;
+  busy = true; selected = null;
+  try { view = await Backend.call("act", index); } catch (e) { toast("出错了：" + e.message); }
+  busy = false;
+  render();
+  await persist(false);
+  await afterMove();
+}
+
+// After any move: the mulligan, the AI's turn, or the end of the game.
+async function afterMove() {
+  if (!view) return;
+  if (view.mulligan) { openMulligan(); return; }
+  if (!view.over && view.active === 1) {
+    busy = true; render();
+    await persist(false);
+    while (view && !view.over && view.active === 1) {
+      try { view = await Backend.call("ai_step"); } catch (e) { toast("AI 出错了：" + e.message); break; }
+      render();
+      await sleep(view.phase === "main" ? 350 : 0);
+    }
+    busy = false; render();
+    await persist(false);
+    if (view.mulligan) { openMulligan(); return; }
+  }
+  if (view.over) { await persist(true); openEnd(); }
+}
+
+async function safeRecord() { try { return await Backend.call("record_data"); } catch (e) { return null; } }
+
+function openMulligan() {
+  const sheet = $("sheet"); sheet.replaceChildren();
+  sheet.appendChild(el("h2", null, "换牌"));
+  sheet.appendChild(el("div", "sub", "点选要换掉的牌，再确定。"));
+  const grid = el("div", "mull"); const picks = new Set();
+  view.you.hand.forEach((c, i) => {
+    const n = cardNode(c, {inHand: true});
+    n.addEventListener("click", () => { picks.has(i) ? picks.delete(i) : picks.add(i); n.classList.toggle("swap", picks.has(i)); });
+    grid.appendChild(n);
+  });
+  sheet.appendChild(grid);
+  const row = el("div", "row"); const ok = el("button", "primary", "确定"); ok.type = "button";
+  ok.addEventListener("click", async () => {
+    ok.disabled = true; closeSheet();
+    view = await Backend.call("mulligan", [...picks]); render(); await afterMove();
+  });
+  row.appendChild(ok); sheet.appendChild(row);
+  showSheet();
+}
+
+function openEnd() {
+  const sheet = $("sheet"); sheet.replaceChildren();
+  const win = view.winner === 0;
+  sheet.appendChild(el("h2", null, win ? "你赢了！" : view.winner === 1 ? "AI 赢了" : "平局"));
+  sheet.appendChild(el("div", "sub", Store.db ? "这一局已自动保存，Claude 可以直接读取复盘。" :
+    Backend.mode === "http" ? "这一局已保存到电脑上的 replays 文件夹。" : "把下面的回放码发给 Claude 就能复盘。"));
+  const box = el("textarea", "code-box"); box.id = "replay-code"; box.readOnly = true; box.value = view.code || "";
+  sheet.appendChild(box);
+  const row = el("div", "row");
+  const copy = el("button", "ghost", "复制回放码"); copy.type = "button";
+  copy.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(box.value); copy.textContent = "已复制"; }
+    catch (e) { box.focus(); box.select(); copy.textContent = "已选中，请手动复制"; }
+  });
+  const again = el("button", "primary", "再来一局"); again.type = "button";
+  again.addEventListener("click", startGame);
+  const back = el("button", "ghost", "换卡组"); back.type = "button";
+  back.addEventListener("click", () => { closeSheet(); $("board").hidden = true; $("setup").hidden = false; Store.db && Store.refreshCount(); });
+  row.append(again, copy, back); sheet.appendChild(row);
+  showSheet();
+}
+
+function toast(text, title) {
+  const sheet = $("sheet"); sheet.replaceChildren();
+  if (title) sheet.appendChild(el("h2", null, title));
+  sheet.appendChild(el("pre", null, text));
+  const row = el("div", "row"); const close = el("button", "ghost", "关闭"); close.type = "button";
+  close.addEventListener("click", closeSheet); row.appendChild(close); sheet.appendChild(row);
+  showSheet();
+}
+
+// ---------------------------------------------------------------- toolbar
+$("btn-hint").addEventListener("click", async () => {
+  if (!myTurn()) return toast("等轮到你的时候再问。", "提示");
+  toast("AI 正在想……", "提示");
+  try { toast(await Backend.call("hint"), "提示"); } catch (e) { toast("出错了：" + e.message, "提示"); }
+});
+$("btn-lethal").addEventListener("click", async () => {
+  if (!myTurn()) return toast("等轮到你的时候再查。", "查斩杀");
+  toast("正在算……", "查斩杀");
+  try { toast(await Backend.call("lethal"), "查斩杀"); } catch (e) { toast("出错了：" + e.message, "查斩杀"); }
+});
+$("btn-log").addEventListener("click", () => {
+  if (!view) return;
+  const sheet = $("sheet"); sheet.replaceChildren();
+  sheet.appendChild(el("h2", null, "对局记录"));
+  const list = el("div", "log-list");
+  view.log.forEach(line => list.appendChild(el("div", line.startsWith("——") ? "turn" : null, line)));
+  sheet.appendChild(list);
+  const row = el("div", "row"); const close = el("button", "ghost", "关闭"); close.type = "button";
+  close.addEventListener("click", closeSheet); row.appendChild(close); sheet.appendChild(row);
+  showSheet();
+  sheet.scrollTop = sheet.scrollHeight;
+});
+$("ticker").addEventListener("click", () => $("btn-log").click());
+$("btn-note").addEventListener("click", () => {
+  if (!view) return;
+  const sheet = $("sheet"); sheet.replaceChildren();
+  sheet.appendChild(el("h2", null, "写一句备注"));
+  sheet.appendChild(el("div", "sub", "记下你为什么这么打，比如“憋着破魔虫，等下回合 10 费打 14”。会存在这一步旁边，复盘时看得到。"));
+  const ta = el("textarea"); ta.id = "note-text"; sheet.appendChild(ta);
+  const row = el("div", "row");
+  const ok = el("button", "primary", "保存备注"); ok.type = "button";
+  ok.addEventListener("click", async () => {
+    if (!ta.value.trim()) return;
+    view = await Backend.call("note", ta.value); closeSheet(); render(); await persist(false);
+  });
+  const close = el("button", "ghost", "取消"); close.type = "button"; close.addEventListener("click", closeSheet);
+  row.append(ok, close); sheet.appendChild(row);
+  showSheet(); ta.focus();
+});
+$("btn-menu").addEventListener("click", () => {
+  const sheet = $("sheet"); sheet.replaceChildren();
+  sheet.appendChild(el("h2", null, "菜单"));
+  const list = el("div", "moves");
+  const item = (text, fn) => { const b = el("button", null, text); b.type = "button"; b.addEventListener("click", fn); list.appendChild(b); };
+  item("认输并结束这一局", async () => {
+    closeSheet();
+    if (view && !view.over) await persist(true, {resigned: true});
+    $("board").hidden = true; $("setup").hidden = false; view = null; Store.db && Store.refreshCount();
+  });
+  item("查看回放码", async () => {
+    try { const code = await Backend.call("code"); toast(code, "回放码"); } catch (e) { toast(e.message); }
+  });
+  sheet.appendChild(list);
+  const row = el("div", "row"); const close = el("button", "ghost", "关闭"); close.type = "button";
+  close.addEventListener("click", closeSheet); row.appendChild(close); sheet.appendChild(row);
+  showSheet();
+});
+
+// ---------------------------------------------------------------- reviewing a finished game
+// Step through your own moves, mark the ones that were mistakes (learning leaves
+// them out) and note why; the marks are saved with the game.
+const DECK_NAMES = {rhino: "破魔虫精灵", ramp: "跳费龙", pirate: "海盗皇家", combo: "连击精灵", face: "快攻龙",
+  "elf-t": "连击妖（比赛版）", "nemesis-t": "机锋（比赛版）", "ramp-t": "跳费龙（比赛版）", "pirate-t": "旗皇（比赛版）"};
+let reviewing = null;                              // {gameId, body} of the game on screen
+
+function describeFinished(body) {
+  const when = body.updated ? new Date(body.updated).toLocaleString("zh-CN", {month: "numeric", day: "numeric",
+    hour: "2-digit", minute: "2-digit"}) : "";
+  const names = body.record.names ? body.record.names.map(n => DECK_NAMES[n] || n).join(" 对 ") + " · " : "";
+  const result = body.resigned ? "认输" : body.winner === 0 ? "你赢" : body.winner === 1 ? "AI 赢" : "平局";
+  const marks = (body.record.mistakes || []).length;
+  const bot = body.record.bot, level = bot && {fast: "快速", normal: "普通", strong: "强", max: "最强", original: "原始版"}[bot.level];
+  const ai = level ? ` · AI ${level}${bot.version ? "（" + bot.version + "）" : ""}` : "";
+  return `${when} · ${names}${result}${ai} · ${body.moves} 步` + (marks ? ` · 已标 ${marks} 处失误` : "");
+}
+
+async function openReviewList() {
+  const sheet = $("sheet"); sheet.replaceChildren();
+  sheet.appendChild(el("h2", null, "复盘"));
+  sheet.appendChild(el("div", "sub", "选一局，按“下一步”看你的每个操作；觉得是失误就点“失误”。学习时会跳过这些操作，不再当成好棋学。"));
+  const list = el("div", "moves"); sheet.appendChild(list);
+  const row = el("div", "row"); const close = el("button", "ghost", "关闭"); close.type = "button";
+  close.addEventListener("click", closeSheet); row.appendChild(close); sheet.appendChild(row);
+  showSheet();
+  try {
+    const games = await Store.finished();
+    if (!games.length) list.appendChild(el("div", "sub", "还没有打完的对局。"));
+    games.forEach(g => {
+      const b = el("button", null, describeFinished(g.body)); b.type = "button";
+      b.addEventListener("click", () => startReview(g.gameId, g.body)); list.appendChild(b);
+    });
+  } catch (e) { list.appendChild(el("div", "sub", "读不到保存的对局：" + e.message)); }
+}
+
+async function startReview(gameId, body) {
+  closeSheet();
+  status("正在打开这一局……");
+  try { view = await Backend.call("review", body.record); }
+  catch (e) { status("没能打开这一局：" + e.message, true); return; }
+  status("模拟器已就绪。");
+  reviewing = {gameId, body};
+  $("play-tools").hidden = true; $("review-tools").hidden = false;
+  $("setup").hidden = true; $("board").hidden = false;
+  selected = null; render();
+}
+
+function reviewTarget(step) {                      // the previous / next move of yours
+  const at = view.review.at, mine = view.moves.filter(m => m.who === "you");
+  if (step < 0) { const prev = mine.filter(m => m.i < at); return prev.length ? prev[prev.length - 1].i : null; }
+  const next = mine.find(m => m.i > at);
+  return next ? next.i : (at < view.review.end ? view.review.end : null);
+}
+
+async function reviewGo(at) {
+  if (at == null || busy) return;
+  busy = true;
+  try { view = await Backend.call("goto", at); } catch (e) { toast("出错了：" + e.message); }
+  busy = false; render();
+}
+
+function renderReviewControls() {
+  const controls = $("controls"); controls.replaceChildren();
+  const r = view.review, m = r.move;
+  const info = el("div", "review-info");
+  if (m) {
+    info.append(`第 ${m.turn} 回合 · `);
+    info.appendChild(el("span", m.who === "ai" ? "who-ai" : null, m.who === "you" ? "你" : "AI"));
+    info.append("：" + m.text);
+  } else {
+    info.textContent = "对局结束：" + (r.winner === 0 ? "你赢了" : r.winner === 1 ? "AI 赢了" : "平局");
+  }
+  controls.appendChild(info);
+  const prev = el("button", null, "◀"); prev.type = "button"; prev.setAttribute("aria-label", "你的上一步");
+  const before = reviewTarget(-1); prev.disabled = before == null;
+  prev.addEventListener("click", () => reviewGo(before));
+  const next = el("button", null, "▶"); next.type = "button"; next.setAttribute("aria-label", "你的下一步");
+  const after = reviewTarget(1); next.disabled = after == null;
+  next.addEventListener("click", () => reviewGo(after));
+  const flag = el("button", "mistake", m && m.mistake ? "失误 ✓" : "失误"); flag.type = "button";
+  flag.setAttribute("aria-pressed", String(!!(m && m.mistake)));
+  flag.disabled = !m || m.who !== "you";
+  flag.addEventListener("click", async () => {
+    busy = true;
+    try { view = await Backend.call("mark", !m.mistake); } catch (e) { toast("出错了：" + e.message); }
+    busy = false; render(); await saveReview();
+  });
+  controls.append(prev, next, flag);
+}
+
+async function saveReview() {
+  const record = await safeRecord();
+  if (!record || !reviewing) return;
+  reviewing.body = {...reviewing.body, record, reviewed: new Date().toISOString()};
+  Store.write(reviewing.gameId, reviewing.body);
+}
+
+function openSteps() {
+  const sheet = $("sheet"); sheet.replaceChildren();
+  sheet.appendChild(el("h2", null, "全部步骤"));
+  sheet.appendChild(el("div", "sub", "点一步跳到那里（看到的是这一步之前的局面）。"));
+  const list = el("div", "moves steps");
+  let turn = null, here = null;
+  view.moves.forEach(m => {
+    if (m.turn !== turn) { turn = m.turn; list.appendChild(el("div", "turn", `第 ${turn} 回合`)); }
+    const b = el("button", m.who === "ai" ? "ai" : null, (m.who === "you" ? "你：" : "AI：") + m.text); b.type = "button";
+    if (m.mistake) b.appendChild(el("span", "tag", "失误"));
+    if (m.i === view.review.at) { b.classList.add("here"); here = b; }
+    b.addEventListener("click", () => { closeSheet(); reviewGo(m.i); });
+    list.appendChild(b);
+    m.notes.forEach(text => list.appendChild(el("div", "note", "备注：" + text)));
+  });
+  sheet.appendChild(list);
+  const row = el("div", "row"); const close = el("button", "ghost", "关闭"); close.type = "button";
+  close.addEventListener("click", closeSheet); row.appendChild(close); sheet.appendChild(row);
+  showSheet();
+  if (here) here.scrollIntoView({block: "center"});
+}
+
+function exitReview() {
+  closeSheet();
+  reviewing = null; view = null;
+  $("review-tools").hidden = true; $("play-tools").hidden = false;
+  $("board").hidden = true; $("setup").hidden = false;
+  Store.db && Store.refreshCount();
+}
+
+$("rv-steps").addEventListener("click", () => view && view.review && openSteps());
+$("rv-exit").addEventListener("click", exitReview);
+$("rv-hint").addEventListener("click", async () => {
+  toast("AI 正在想……", "AI 会怎么走");
+  try { toast(await Backend.call("hint"), "AI 会怎么走"); } catch (e) { toast("出错了：" + e.message, "AI 会怎么走"); }
+});
+$("rv-lethal").addEventListener("click", async () => {
+  toast("正在算……", "查斩杀");
+  try { toast(await Backend.call("lethal"), "查斩杀"); } catch (e) { toast("出错了：" + e.message, "查斩杀"); }
+});
+$("rv-impact").addEventListener("click", async () => {
+  const m = view && view.review && view.review.move;
+  if (!m || m.who !== "you") return toast("翻到你自己回合里的一步再看。", "胜负影响");
+  toast("正在比较三种打法：你的、AI 的、直接结束。每种都让对手的 AI 在几种可能的手牌下回应一遍，再数双方还差几回合能斩杀。第一次算要半分钟左右……", "胜负影响");
+  let r;
+  try { r = await Backend.call("impact"); } catch (e) { return toast("出错了：" + e.message, "胜负影响"); }
+  if (r.error) return toast(r.error, "胜负影响");
+  openImpact(r);
+  await saveReview();                              // keep the result with the game
+});
+
+function openImpact(r) {
+  const sheet = $("sheet"); sheet.replaceChildren();
+  sheet.appendChild(el("h2", null, `第 ${r.turn} 回合：这回合剩下的部分怎么打`));
+  sheet.appendChild(el("div", "sub", `从这一步起到回合结束。对手的回应抽样 ${r.samples} 次，数字是平均。`));
+  const ul = el("ul", "reading");
+  r.reading.forEach(line => ul.appendChild(el("li", null, line)));
+  sheet.appendChild(ul);
+  const table = el("table", "impact");
+  const head = el("thead"); const hr = el("tr"); hr.appendChild(el("th", null, ""));
+  r.columns.forEach(c => hr.appendChild(el("th", null, c))); head.appendChild(hr); table.appendChild(head);
+  const body = el("tbody");
+  r.rows.forEach(row => {
+    const tr = el("tr");
+    row.forEach((v, i) => tr.appendChild(el(i ? "td" : "th", null, v)));
+    body.appendChild(tr);
+  });
+  table.appendChild(body); sheet.appendChild(table);
+  const details = el("details"); details.appendChild(el("summary", null, "每一行是什么意思"));
+  const dl = el("dl");
+  (r.meaning || []).forEach(([label, text]) => { dl.appendChild(el("dt", null, label)); dl.appendChild(el("dd", null, text)); });
+  details.appendChild(dl); sheet.appendChild(details);
+  const row = el("div", "row"); const close = el("button", "ghost", "关闭"); close.type = "button";
+  close.addEventListener("click", closeSheet); row.appendChild(close); sheet.appendChild(row);
+  showSheet();
+}
+
+$("rv-note").addEventListener("click", () => {
+  const m = view && view.review && view.review.move;
+  if (!m) return;
+  const sheet = $("sheet"); sheet.replaceChildren();
+  sheet.appendChild(el("h2", null, "给这一步写备注"));
+  sheet.appendChild(el("div", "sub", `${m.who === "you" ? "你" : "AI"}：${m.text}。比如为什么是失误、当时应该怎么打。`));
+  const ta = el("textarea"); ta.id = "note-text"; sheet.appendChild(ta);
+  const row = el("div", "row");
+  const ok = el("button", "primary", "保存备注"); ok.type = "button";
+  ok.addEventListener("click", async () => {
+    if (!ta.value.trim()) return;
+    view = await Backend.call("note", ta.value); closeSheet(); render(); await saveReview();
+  });
+  const close = el("button", "ghost", "取消"); close.type = "button"; close.addEventListener("click", closeSheet);
+  row.append(ok, close); sheet.appendChild(row);
+  showSheet(); ta.focus();
+});
+
+// ---------------------------------------------------------------- carrying on a game
+async function resumeGame(gameId, record) {
+  closeSheet();
+  status("正在恢复对局……");
+  try {
+    view = await Backend.call("resume", record);
+  } catch (e) {
+    status("没能恢复上一局：" + e.message + "。可以开始新的对局。", true);
+    if (Store.loadLocal() && Store.loadLocal().gameId === gameId) Store.setLocal(null);
+    return false;
+  }
+  Store.gameId = gameId;
+  $("resume-box").hidden = true;
+  $("setup").hidden = true; $("board").hidden = false;
+  render();
+  await afterMove();
+  return true;
+}
+
+function describeSaved(body) {
+  const when = body.updated ? new Date(body.updated).toLocaleString("zh-CN", {month: "numeric", day: "numeric",
+    hour: "2-digit", minute: "2-digit"}) : "";
+  const where = body.turn != null ? `第 ${body.turn} 回合，你 ${body.you_hp} 血 / AI ${body.ai_hp} 血` : `已走 ${body.moves} 步`;
+  return `继续上一局（${where}${when ? "，" + when : ""}）`;
+}
+
+// A game this browser was playing comes back by itself; one saved from
+// elsewhere is offered on the start screen.
+async function offerResume(dbReady) {
+  const local = Store.loadLocal();
+  if (local && local.body && local.body.record && !local.body.finished) {
+    if (await resumeGame(local.gameId, local.body.record)) return;
+  }
+  await dbReady;
+  const saved = await Store.unfinished();
+  if (!saved || view) return;                   // nothing saved, or a game is already on the table
+  const button = $("resume");
+  button.textContent = describeSaved(saved.body);
+  button.onclick = () => resumeGame(saved.gameId, saved.body.record);
+  $("resume-box").hidden = false;
+}
+
+// ---------------------------------------------------------------- boot
+(async () => {
+  const dbReady = Store.init();
+  try {
+    await Backend.init((text) => status(text));
+    status(Backend.mode === "http" ? "已连接电脑上的模拟器。" : "模拟器已就绪。");
+    $("start").disabled = false;
+    try { ratings = await Backend.call("ratings"); } catch (e) { ratings = null; }
+    showLevelInfo();
+    offerResume(dbReady);
+  } catch (e) {
+    status("模拟器没能在这个页面里启动：" + e.message +
+      "\n可以改用电脑：在项目目录运行 python -m svsim.tools.web，然后用浏览器打开它给出的地址（手机连同一个 Wi-Fi 也能打开）。", true);
+  }
+})();
+</script>

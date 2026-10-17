@@ -1,0 +1,9 @@
+{"model": "linear+clock", "mse": 0.033655, "sign": 0.7252, "calib": 0.5896, "by_kind": {"keep": 0.7228, "noevo": 0.7554, "save": 0.6708}, "clock_coefs": {"me_burst": 0.2027, "op_burst": -0.3252, "me_clock": 0.0329, "op_clock": 0.0369, "clock_lead": 0.0021}, "intercept": -0.4175, "seconds": 93}
+{"model": "network", "epoch": 1, "mse": 0.033485, "sign": 0.7274, "calib": 0.5891, "by_kind": {"keep": 0.7239, "noevo": 0.761, "save": 0.6757}}
+{"model": "network", "epoch": 2, "mse": 0.033658, "sign": 0.7292, "calib": 0.5883, "by_kind": {"keep": 0.7262, "noevo": 0.7615, "save": 0.6764}}
+{"model": "network", "epoch": 3, "mse": 0.033581, "sign": 0.7332, "calib": 0.5914, "by_kind": {"keep": 0.73, "noevo": 0.7647, "save": 0.684}}
+{"model": "network", "epoch": 4, "mse": 0.033542, "sign": 0.7304, "calib": 0.5879, "by_kind": {"keep": 0.7265, "noevo": 0.7634, "save": 0.6847}}
+{"model": "network", "epoch": 5, "mse": 0.033584, "sign": 0.7318, "calib": 0.5873, "by_kind": {"keep": 0.7299, "noevo": 0.7604, "save": 0.6764}}
+{"model": "network", "epoch": 6, "mse": 0.033648, "sign": 0.7263, "calib": 0.5906, "by_kind": {"keep": 0.7228, "noevo": 0.7564, "save": 0.6833}}
+{"model": "network", "parameters": 2978, "seconds": 70}
+{"cost_us": {"linear_features": 165.3, "with_clock": 105.9, "network_on_top": 231.0}}
