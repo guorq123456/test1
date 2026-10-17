@@ -1,0 +1,8 @@
+set -e
+cd /tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/wt_eg3
+export PYTHONPATH=.
+python3 /tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/d8/d8.py scan /home/user/test1/analysis/scaling/data/gen4/rec/rec-71600018.jsonl.gz --out /tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/d8/scan-ramp.json --workers 4
+python3 /tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/d8/d8.py scan /home/user/test1/analysis/scaling/data/elf-t3/rec/rec-74100038.jsonl.gz --out /tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/d8/scan-elft.json --workers 4
+python3 /tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/d8/d8.py rerun /home/user/test1/analysis/scaling/data/gen4/rec/rec-71600018.jsonl.gz --scan /tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/d8/scan-ramp.json --seed-base 74800000 --sample-seed 74800000 --points 2000 --out /tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/d8/rerun-ramp.json --workers 4
+python3 /tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/d8/d8.py rerun /home/user/test1/analysis/scaling/data/elf-t3/rec/rec-74100038.jsonl.gz --scan /tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/d8/scan-elft.json --seed-base 74850000 --sample-seed 74800000 --points 2000 --out /tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/d8/rerun-elft.json --workers 4
+echo DONE
