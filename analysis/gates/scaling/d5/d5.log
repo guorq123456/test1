@@ -1,0 +1,85 @@
+500 decision points (3s)
+50 / 500  20s
+100 / 500  40s
+150 / 500  59s
+200 / 500  75s
+250 / 500  93s
+300 / 500  107s
+350 / 500  124s
+400 / 500  143s
+450 / 500  160s
+500 / 500  175s
+{
+ "condition": "对手卡表已知（牌序、手牌未知）",
+ "rec": "/home/user/test1/analysis/scaling/data/heldout/rec-70200008.jsonl.gz",
+ "seed": 73400000,
+ "ref": "mcts:1600+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost",
+ "specs": {
+  "ref": "mcts:1600+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost",
+  "net-10000": "mcts:100+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-10000.npz+neteot",
+  "net-gen2-20000": "mcts:100+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-gen2-20000.npz+neteot",
+  "net-gen3-30000": "mcts:100+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-gen3-30000.npz+neteot",
+  "net-gen4-39000": "mcts:100+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-gen4-39000.npz+neteot",
+  "net-gen4-59000": "mcts:100+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-gen4-59000.npz+neteot",
+  "net-all-131000": "mcts:100+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-all-131000.npz+neteot",
+  "net-in2-59000": "mcts:100+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-in2-59000.npz+neteot",
+  "net-in2kc-59000": "mcts:100+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-in2kc-59000.npz+neteot"
+ },
+ "n": 500,
+ "summary": {
+  "net-10000": {
+   "agree": 0.544,
+   "lo": 0.5,
+   "hi": 0.59,
+   "scale": -0.088
+  },
+  "net-gen2-20000": {
+   "agree": 0.618,
+   "lo": 0.5759,
+   "hi": 0.662,
+   "scale": 0.152
+  },
+  "net-gen3-30000": {
+   "agree": 0.592,
+   "lo": 0.548,
+   "hi": 0.636,
+   "scale": 0.376
+  },
+  "net-gen4-39000": {
+   "agree": 0.588,
+   "lo": 0.544,
+   "hi": 0.632,
+   "scale": 0.323
+  },
+  "net-gen4-59000": {
+   "agree": 0.604,
+   "lo": 0.56,
+   "hi": 0.648,
+   "scale": 0.448
+  },
+  "net-all-131000": {
+   "agree": 0.61,
+   "lo": 0.566,
+   "hi": 0.654,
+   "scale": 0.464
+  },
+  "net-in2-59000": {
+   "agree": 0.594,
+   "lo": 0.55,
+   "hi": 0.64,
+   "scale": 0.288
+  },
+  "net-in2kc-59000": {
+   "agree": 0.618,
+   "lo": 0.574,
+   "hi": 0.662,
+   "scale": 0.232
+  }
+ },
+ "spearman": 0.0838,
+ "spearman_boot_95": [
+  -0.1667,
+  0.5988
+ ],
+ "seconds": 175
+}
