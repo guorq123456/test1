@@ -1,0 +1,5032 @@
+{
+"a": "mcts:96+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-elft-10000.npz+neteot",
+"b": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost",
+"deck": "elf-t",
+"games": [
+{
+"seed": 73200010,
+"seat": 0,
+"a_points": 1.0,
+"actions": [
+[
+"B",
+0,
+"Mulligan(indices=(1,))"
+],
+[
+"A",
+0,
+"Mulligan(indices=(3,))"
+],
+[
+"B",
+1,
+"PlayCard(uid=54, targets=(), modes=())"
+],
+[
+"B",
+1,
+"EndTurn()"
+],
+[
+"A",
+2,
+"EndTurn()"
+],
+[
+"B",
+3,
+"Attack(attacker=54, target=-1)"
+],
+[
+"B",
+3,
+"PlayCard(uid=74, targets=(), modes=())"
+],
+[
+"B",
+3,
+"EndTurn()"
+],
+[
+"A",
+4,
+"UseBonusPP()"
+],
+[
+"A",
+4,
+"PlayCard(uid=10, targets=(), modes=(2,))"
+],
+[
+"A",
+4,
+"EndTurn()"
+],
+[
+"B",
+5,
+"PlayCard(uid=81, targets=(10,), modes=())"
+],
+[
+"B",
+5,
+"EndTurn()"
+],
+[
+"A",
+6,
+"EndTurn()"
+],
+[
+"B",
+7,
+"PlayCard(uid=73, targets=(), modes=())"
+],
+[
+"B",
+7,
+"PlayCard(uid=83, targets=(), modes=())"
+],
+[
+"B",
+7,
+"PlayCard(uid=46, targets=(), modes=())"
+],
+[
+"B",
+7,
+"Attack(attacker=81, target=-1)"
+],
+[
+"B",
+7,
+"EndTurn()"
+],
+[
+"A",
+8,
+"PlayCard(uid=8, targets=(), modes=(2,))"
+],
+[
+"A",
+8,
+"PlayCard(uid=12, targets=(), modes=())"
+],
+[
+"A",
+8,
+"Evolve(uid=12, super_=False, targets=(), modes=())"
+],
+[
+"A",
+8,
+"Attack(attacker=12, target=83)"
+],
+[
+"A",
+8,
+"EndTurn()"
+],
+[
+"B",
+9,
+"PlayCard(uid=51, targets=(), modes=(2,))"
+],
+[
+"B",
+9,
+"Attack(attacker=73, target=-1)"
+],
+[
+"B",
+9,
+"PlayCard(uid=84, targets=(), modes=())"
+],
+[
+"B",
+9,
+"Attack(attacker=84, target=12)"
+],
+[
+"B",
+9,
+"Evolve(uid=51, super_=False, targets=(), modes=(0,))"
+],
+[
+"B",
+9,
+"PlayCard(uid=85, targets=(), modes=())"
+],
+[
+"B",
+9,
+"EndTurn()"
+],
+[
+"A",
+10,
+"PlayCard(uid=18, targets=(73,), modes=())"
+],
+[
+"A",
+10,
+"PlayCard(uid=11, targets=(), modes=())"
+],
+[
+"A",
+10,
+"Evolve(uid=18, super_=False, targets=(), modes=())"
+],
+[
+"A",
+10,
+"Attack(attacker=18, target=51)"
+],
+[
+"A",
+10,
+"EndTurn()"
+],
+[
+"B",
+11,
+"PlayCard(uid=57, targets=(), modes=())"
+],
+[
+"B",
+11,
+"Attack(attacker=85, target=18)"
+],
+[
+"B",
+11,
+"PlayCard(uid=86, targets=(), modes=())"
+],
+[
+"B",
+11,
+"PlayCard(uid=69, targets=(), modes=())"
+],
+[
+"B",
+11,
+"Evolve(uid=86, super_=False, targets=(), modes=())"
+],
+[
+"B",
+11,
+"PlayCard(uid=56, targets=(), modes=())"
+],
+[
+"B",
+11,
+"Attack(attacker=86, target=11)"
+],
+[
+"B",
+11,
+"Attack(attacker=56, target=-1)"
+],
+[
+"B",
+11,
+"EndTurn()"
+],
+[
+"A",
+12,
+"PlayCard(uid=3, targets=(), modes=())"
+],
+[
+"A",
+12,
+"Evolve(uid=3, super_=True, targets=(), modes=())"
+],
+[
+"A",
+12,
+"PlayCard(uid=23, targets=(34,), modes=())"
+],
+[
+"A",
+12,
+"Attack(attacker=3, target=57)"
+],
+[
+"A",
+12,
+"Attack(attacker=23, target=56)"
+],
+[
+"A",
+12,
+"EndTurn()"
+],
+[
+"B",
+13,
+"PlayCard(uid=66, targets=(3,), modes=())"
+],
+[
+"B",
+13,
+"Evolve(uid=66, super_=True, targets=(), modes=())"
+],
+[
+"B",
+13,
+"Attack(attacker=66, target=23)"
+],
+[
+"B",
+13,
+"EndTurn()"
+],
+[
+"A",
+14,
+"PlayCard(uid=37, targets=(66,), modes=())"
+],
+[
+"A",
+14,
+"PlayCard(uid=14, targets=(), modes=())"
+],
+[
+"A",
+14,
+"UseBonusPP()"
+],
+[
+"A",
+14,
+"PlayCard(uid=35, targets=(), modes=())"
+],
+[
+"A",
+14,
+"EndTurn()"
+],
+[
+"B",
+15,
+"PlayCard(uid=42, targets=(), modes=())"
+],
+[
+"B",
+15,
+"PlayCard(uid=68, targets=(14,), modes=())"
+],
+[
+"B",
+15,
+"Attack(attacker=68, target=35)"
+],
+[
+"B",
+15,
+"EndTurn()"
+],
+[
+"A",
+16,
+"PlayCard(uid=19, targets=(42,), modes=())"
+],
+[
+"A",
+16,
+"Attack(attacker=19, target=68)"
+],
+[
+"A",
+16,
+"PlayCard(uid=31, targets=(), modes=())"
+],
+[
+"A",
+16,
+"PlayCard(uid=34, targets=(), modes=())"
+],
+[
+"A",
+16,
+"UseBonusPP()"
+],
+[
+"A",
+16,
+"PlayCard(uid=28, targets=(), modes=())"
+],
+[
+"A",
+16,
+"EndTurn()"
+],
+[
+"B",
+17,
+"PlayCard(uid=58, targets=(19,), modes=())"
+],
+[
+"B",
+17,
+"PlayCard(uid=79, targets=(), modes=())"
+],
+[
+"B",
+17,
+"PlayCard(uid=52, targets=(), modes=())"
+],
+[
+"B",
+17,
+"PlayCard(uid=53, targets=(), modes=())"
+],
+[
+"B",
+17,
+"Evolve(uid=79, super_=True, targets=(), modes=())"
+],
+[
+"B",
+17,
+"Attack(attacker=79, target=-1)"
+],
+[
+"B",
+17,
+"EndTurn()"
+],
+[
+"A",
+18,
+"PlayCard(uid=20, targets=(), modes=())"
+],
+[
+"A",
+18,
+"PlayCard(uid=32, targets=(), modes=())"
+],
+[
+"A",
+18,
+"PlayCard(uid=92, targets=(), modes=())"
+],
+[
+"A",
+18,
+"Attack(attacker=20, target=58)"
+],
+[
+"A",
+18,
+"PlayCard(uid=90, targets=(), modes=())"
+],
+[
+"A",
+18,
+"PlayCard(uid=91, targets=(), modes=())"
+],
+[
+"A",
+18,
+"EndTurn()"
+],
+[
+"B",
+19,
+"PlayCard(uid=50, targets=(), modes=(0,))"
+],
+[
+"B",
+19,
+"PlayCard(uid=67, targets=(20,), modes=())"
+],
+[
+"B",
+19,
+"Attack(attacker=67, target=32)"
+],
+[
+"B",
+19,
+"EndTurn()"
+],
+[
+"A",
+20,
+"PlayCard(uid=25, targets=(50,), modes=())"
+],
+[
+"A",
+20,
+"PlayCard(uid=89, targets=(), modes=())"
+],
+[
+"A",
+20,
+"Attack(attacker=92, target=67)"
+],
+[
+"A",
+20,
+"PlayCard(uid=36, targets=(), modes=())"
+],
+[
+"A",
+20,
+"Attack(attacker=25, target=-2)"
+],
+[
+"A",
+20,
+"EndTurn()"
+],
+[
+"B",
+21,
+"PlayCard(uid=93, targets=(), modes=())"
+],
+[
+"B",
+21,
+"PlayCard(uid=94, targets=(), modes=())"
+],
+[
+"B",
+21,
+"PlayCard(uid=76, targets=(), modes=())"
+],
+[
+"B",
+21,
+"PlayCard(uid=78, targets=(25,), modes=())"
+],
+[
+"B",
+21,
+"PlayCard(uid=47, targets=(), modes=())"
+],
+[
+"B",
+21,
+"Attack(attacker=93, target=89)"
+],
+[
+"B",
+21,
+"EndTurn()"
+],
+[
+"A",
+22,
+"PlayCard(uid=17, targets=(76,), modes=())"
+],
+[
+"A",
+22,
+"Attack(attacker=36, target=94)"
+],
+[
+"A",
+22,
+"PlayCard(uid=24, targets=(4,), modes=())"
+],
+[
+"A",
+22,
+"Evolve(uid=24, super_=True, targets=(), modes=())"
+],
+[
+"A",
+22,
+"PlayCard(uid=7, targets=(), modes=())"
+],
+[
+"A",
+22,
+"PlayCard(uid=30, targets=(), modes=())"
+],
+[
+"A",
+22,
+"PlayCard(uid=22, targets=(6,), modes=())"
+],
+[
+"A",
+22,
+"EndTurn()"
+],
+[
+"B",
+23,
+"PlayCard(uid=55, targets=(), modes=())"
+],
+[
+"B",
+23,
+"PlayCard(uid=59, targets=(22,), modes=())"
+],
+[
+"B",
+23,
+"EndTurn()"
+],
+[
+"A",
+24,
+"Attack(attacker=24, target=-2)"
+],
+[
+"A",
+24,
+"Attack(attacker=17, target=-2)"
+],
+[
+"A",
+24,
+"Attack(attacker=30, target=-2)"
+]
+]
+},
+{
+"seed": 73200010,
+"seat": 1,
+"a_points": 1.0,
+"actions": [
+[
+"A",
+0,
+"Mulligan(indices=(1,))"
+],
+[
+"B",
+0,
+"Mulligan(indices=(3,))"
+],
+[
+"A",
+1,
+"EndTurn()"
+],
+[
+"B",
+2,
+"PlayCard(uid=12, targets=(), modes=())"
+],
+[
+"B",
+2,
+"UseBonusPP()"
+],
+[
+"B",
+2,
+"PlayCard(uid=11, targets=(), modes=())"
+],
+[
+"B",
+2,
+"EndTurn()"
+],
+[
+"A",
+3,
+"PlayCard(uid=74, targets=(), modes=())"
+],
+[
+"A",
+3,
+"EndTurn()"
+],
+[
+"B",
+4,
+"Attack(attacker=12, target=-2)"
+],
+[
+"B",
+4,
+"Attack(attacker=11, target=-2)"
+],
+[
+"B",
+4,
+"PlayCard(uid=34, targets=(), modes=())"
+],
+[
+"B",
+4,
+"EndTurn()"
+],
+[
+"A",
+5,
+"PlayCard(uid=51, targets=(), modes=(2,))"
+],
+[
+"A",
+5,
+"Attack(attacker=74, target=34)"
+],
+[
+"A",
+5,
+"EndTurn()"
+],
+[
+"B",
+6,
+"PlayCard(uid=10, targets=(), modes=(2,))"
+],
+[
+"B",
+6,
+"EndTurn()"
+],
+[
+"A",
+7,
+"PlayCard(uid=46, targets=(), modes=())"
+],
+[
+"A",
+7,
+"PlayCard(uid=81, targets=(10,), modes=())"
+],
+[
+"A",
+7,
+"EndTurn()"
+],
+[
+"B",
+8,
+"PlayCard(uid=8, targets=(), modes=(0,))"
+],
+[
+"B",
+8,
+"Evolve(uid=8, super_=False, targets=(), modes=(1,))"
+],
+[
+"B",
+8,
+"PlayCard(uid=84, targets=(), modes=())"
+],
+[
+"B",
+8,
+"PlayCard(uid=35, targets=(), modes=())"
+],
+[
+"B",
+8,
+"Attack(attacker=8, target=81)"
+],
+[
+"B",
+8,
+"EndTurn()"
+],
+[
+"A",
+9,
+"PlayCard(uid=73, targets=(), modes=())"
+],
+[
+"A",
+9,
+"Evolve(uid=73, super_=False, targets=(), modes=())"
+],
+[
+"A",
+9,
+"Attack(attacker=73, target=8)"
+],
+[
+"A",
+9,
+"PlayCard(uid=83, targets=(), modes=())"
+],
+[
+"A",
+9,
+"Attack(attacker=83, target=84)"
+],
+[
+"A",
+9,
+"PlayCard(uid=57, targets=(), modes=())"
+],
+[
+"A",
+9,
+"Attack(attacker=57, target=-1)"
+],
+[
+"A",
+9,
+"EndTurn()"
+],
+[
+"B",
+10,
+"PlayCard(uid=23, targets=(85,), modes=())"
+],
+[
+"B",
+10,
+"PlayCard(uid=18, targets=(57,), modes=())"
+],
+[
+"B",
+10,
+"Attack(attacker=35, target=-2)"
+],
+[
+"B",
+10,
+"Evolve(uid=18, super_=False, targets=(), modes=())"
+],
+[
+"B",
+10,
+"EndTurn()"
+],
+[
+"A",
+11,
+"PlayCard(uid=56, targets=(), modes=())"
+],
+[
+"A",
+11,
+"PlayCard(uid=54, targets=(), modes=())"
+],
+[
+"A",
+11,
+"Evolve(uid=54, super_=False, targets=(), modes=())"
+],
+[
+"A",
+11,
+"PlayCard(uid=52, targets=(), modes=())"
+],
+[
+"A",
+11,
+"PlayCard(uid=69, targets=(), modes=())"
+],
+[
+"A",
+11,
+"PlayCard(uid=53, targets=(), modes=())"
+],
+[
+"A",
+11,
+"Attack(attacker=69, target=23)"
+],
+[
+"A",
+11,
+"Attack(attacker=54, target=35)"
+],
+[
+"A",
+11,
+"EndTurn()"
+],
+[
+"B",
+12,
+"PlayCard(uid=17, targets=(53,), modes=())"
+],
+[
+"B",
+12,
+"Attack(attacker=18, target=-2)"
+],
+[
+"B",
+12,
+"Evolve(uid=17, super_=True, targets=(), modes=())"
+],
+[
+"B",
+12,
+"PlayCard(uid=14, targets=(), modes=())"
+],
+[
+"B",
+12,
+"Attack(attacker=17, target=54)"
+],
+[
+"B",
+12,
+"UseBonusPP()"
+],
+[
+"B",
+12,
+"Attack(attacker=14, target=56)"
+],
+[
+"B",
+12,
+"EndTurn()"
+],
+[
+"A",
+13,
+"PlayCard(uid=66, targets=(17,), modes=())"
+],
+[
+"A",
+13,
+"Evolve(uid=52, super_=True, targets=(), modes=())"
+],
+[
+"A",
+13,
+"Attack(attacker=52, target=18)"
+],
+[
+"A",
+13,
+"Attack(attacker=66, target=-1)"
+],
+[
+"A",
+13,
+"EndTurn()"
+],
+[
+"B",
+14,
+"PlayCard(uid=37, targets=(66,), modes=())"
+],
+[
+"B",
+14,
+"PlayCard(uid=19, targets=(52,), modes=())"
+],
+[
+"B",
+14,
+"Evolve(uid=14, super_=True, targets=(), modes=())"
+],
+[
+"B",
+14,
+"PlayCard(uid=31, targets=(), modes=())"
+],
+[
+"B",
+14,
+"Attack(attacker=14, target=-2)"
+],
+[
+"B",
+14,
+"UseBonusPP()"
+],
+[
+"B",
+14,
+"PlayCard(uid=88, targets=(), modes=())"
+],
+[
+"B",
+14,
+"EndTurn()"
+],
+[
+"A",
+15,
+"PlayCard(uid=68, targets=(14,), modes=())"
+],
+[
+"A",
+15,
+"Evolve(uid=68, super_=True, targets=(), modes=())"
+],
+[
+"A",
+15,
+"PlayCard(uid=86, targets=(), modes=())"
+],
+[
+"A",
+15,
+"Attack(attacker=68, target=19)"
+],
+[
+"A",
+15,
+"Attack(attacker=86, target=88)"
+],
+[
+"A",
+15,
+"EndTurn()"
+],
+[
+"B",
+16,
+"PlayCard(uid=36, targets=(), modes=())"
+],
+[
+"B",
+16,
+"PlayCard(uid=20, targets=(), modes=())"
+],
+[
+"B",
+16,
+"Attack(attacker=31, target=68)"
+],
+[
+"B",
+16,
+"EndTurn()"
+],
+[
+"A",
+17,
+"PlayCard(uid=42, targets=(), modes=())"
+],
+[
+"A",
+17,
+"PlayCard(uid=67, targets=(20,), modes=())"
+],
+[
+"A",
+17,
+"Attack(attacker=67, target=-1)"
+],
+[
+"A",
+17,
+"EndTurn()"
+],
+[
+"B",
+18,
+"PlayCard(uid=28, targets=(), modes=())"
+],
+[
+"B",
+18,
+"Attack(attacker=36, target=67)"
+],
+[
+"B",
+18,
+"PlayCard(uid=3, targets=(), modes=())"
+],
+[
+"B",
+18,
+"PlayCard(uid=89, targets=(), modes=())"
+],
+[
+"B",
+18,
+"PlayCard(uid=90, targets=(), modes=())"
+],
+[
+"B",
+18,
+"Attack(attacker=28, target=42)"
+],
+[
+"B",
+18,
+"EndTurn()"
+],
+[
+"A",
+19,
+"PlayCard(uid=58, targets=(36,), modes=())"
+],
+[
+"A",
+19,
+"PlayCard(uid=79, targets=(), modes=())"
+],
+[
+"A",
+19,
+"PlayCard(uid=50, targets=(), modes=(0,))"
+],
+[
+"A",
+19,
+"EndTurn()"
+],
+[
+"B",
+20,
+"PlayCard(uid=25, targets=(58,), modes=())"
+],
+[
+"B",
+20,
+"Attack(attacker=25, target=-2)"
+],
+[
+"B",
+20,
+"EndTurn()"
+],
+[
+"A",
+21,
+"PlayCard(uid=91, targets=(), modes=())"
+],
+[
+"A",
+21,
+"PlayCard(uid=92, targets=(), modes=())"
+],
+[
+"A",
+21,
+"Attack(attacker=79, target=25)"
+],
+[
+"A",
+21,
+"Attack(attacker=91, target=25)"
+],
+[
+"A",
+21,
+"Attack(attacker=92, target=25)"
+],
+[
+"A",
+21,
+"Attack(attacker=50, target=25)"
+],
+[
+"A",
+21,
+"PlayCard(uid=76, targets=(), modes=())"
+],
+[
+"A",
+21,
+"PlayCard(uid=78, targets=(25,), modes=())"
+],
+[
+"A",
+21,
+"PlayCard(uid=55, targets=(), modes=())"
+],
+[
+"A",
+21,
+"Attack(attacker=55, target=-1)"
+],
+[
+"A",
+21,
+"EndTurn()"
+],
+[
+"B",
+22,
+"PlayCard(uid=32, targets=(), modes=())"
+],
+[
+"B",
+22,
+"PlayCard(uid=93, targets=(), modes=())"
+],
+[
+"B",
+22,
+"EndTurn()"
+],
+[
+"A",
+23,
+"PlayCard(uid=59, targets=(32,), modes=())"
+],
+[
+"A",
+23,
+"PlayCard(uid=47, targets=(), modes=())"
+],
+[
+"A",
+23,
+"Attack(attacker=76, target=93)"
+],
+[
+"A",
+23,
+"Attack(attacker=55, target=32)"
+],
+[
+"A",
+23,
+"EndTurn()"
+],
+[
+"B",
+24,
+"PlayCard(uid=7, targets=(), modes=())"
+],
+[
+"B",
+24,
+"PlayCard(uid=24, targets=(), modes=())"
+],
+[
+"B",
+24,
+"PlayCard(uid=4, targets=(), modes=())"
+],
+[
+"B",
+24,
+"EndTurn()"
+],
+[
+"A",
+25,
+"PlayCard(uid=60, targets=(24,), modes=())"
+],
+[
+"A",
+25,
+"Attack(attacker=76, target=24)"
+],
+[
+"A",
+25,
+"Attack(attacker=59, target=-1)"
+],
+[
+"A",
+25,
+"EndTurn()"
+],
+[
+"B",
+26,
+"PlayCard(uid=22, targets=(), modes=())"
+],
+[
+"B",
+26,
+"PlayCard(uid=30, targets=(), modes=())"
+],
+[
+"B",
+26,
+"Attack(attacker=30, target=59)"
+],
+[
+"B",
+26,
+"EndTurn()"
+],
+[
+"A",
+27,
+"PlayCard(uid=64, targets=(), modes=())"
+],
+[
+"A",
+27,
+"PlayCard(uid=61, targets=(), modes=())"
+],
+[
+"A",
+27,
+"PlayCard(uid=94, targets=(), modes=())"
+],
+[
+"A",
+27,
+"PlayCard(uid=95, targets=(), modes=())"
+],
+[
+"A",
+27,
+"EndTurn()"
+],
+[
+"B",
+28,
+"PlayCard(uid=13, targets=(), modes=())"
+],
+[
+"B",
+28,
+"PlayCard(uid=9, targets=(), modes=(2,))"
+],
+[
+"B",
+28,
+"PlayCard(uid=6, targets=(), modes=())"
+],
+[
+"B",
+28,
+"EndTurn()"
+],
+[
+"A",
+29,
+"Attack(attacker=61, target=-1)"
+]
+]
+},
+{
+"seed": 73200011,
+"seat": 0,
+"a_points": 0.0,
+"actions": [
+[
+"A",
+0,
+"Mulligan(indices=(3,))"
+],
+[
+"B",
+0,
+"Mulligan(indices=())"
+],
+[
+"A",
+1,
+"EndTurn()"
+],
+[
+"B",
+2,
+"PlayCard(uid=69, targets=(), modes=())"
+],
+[
+"B",
+2,
+"UseBonusPP()"
+],
+[
+"B",
+2,
+"PlayCard(uid=53, targets=(), modes=())"
+],
+[
+"B",
+2,
+"EndTurn()"
+],
+[
+"A",
+3,
+"EndTurn()"
+],
+[
+"B",
+4,
+"PlayCard(uid=74, targets=(), modes=())"
+],
+[
+"B",
+4,
+"Attack(attacker=69, target=-1)"
+],
+[
+"B",
+4,
+"Attack(attacker=53, target=-1)"
+],
+[
+"B",
+4,
+"EndTurn()"
+],
+[
+"A",
+5,
+"PlayCard(uid=8, targets=(), modes=(2,))"
+],
+[
+"A",
+5,
+"EndTurn()"
+],
+[
+"B",
+6,
+"PlayCard(uid=56, targets=(), modes=())"
+],
+[
+"B",
+6,
+"PlayCard(uid=83, targets=(), modes=())"
+],
+[
+"B",
+6,
+"Attack(attacker=74, target=-1)"
+],
+[
+"B",
+6,
+"EndTurn()"
+],
+[
+"A",
+7,
+"PlayCard(uid=18, targets=(74,), modes=())"
+],
+[
+"A",
+7,
+"Attack(attacker=8, target=83)"
+],
+[
+"A",
+7,
+"EndTurn()"
+],
+[
+"B",
+8,
+"PlayCard(uid=78, targets=(18,), modes=())"
+],
+[
+"B",
+8,
+"Evolve(uid=56, super_=False, targets=(), modes=())"
+],
+[
+"B",
+8,
+"Attack(attacker=56, target=-1)"
+],
+[
+"B",
+8,
+"EndTurn()"
+],
+[
+"A",
+9,
+"PlayCard(uid=23, targets=(26,), modes=())"
+],
+[
+"A",
+9,
+"Evolve(uid=8, super_=False, targets=(), modes=(2,))"
+],
+[
+"A",
+9,
+"PlayCard(uid=11, targets=(), modes=())"
+],
+[
+"A",
+9,
+"PlayCard(uid=34, targets=(), modes=())"
+],
+[
+"A",
+9,
+"PlayCard(uid=28, targets=(), modes=())"
+],
+[
+"A",
+9,
+"Attack(attacker=8, target=-2)"
+],
+[
+"A",
+9,
+"Attack(attacker=28, target=56)"
+],
+[
+"A",
+9,
+"EndTurn()"
+],
+[
+"B",
+10,
+"PlayCard(uid=50, targets=(), modes=(2,))"
+],
+[
+"B",
+10,
+"PlayCard(uid=52, targets=(), modes=())"
+],
+[
+"B",
+10,
+"Evolve(uid=50, super_=False, targets=(), modes=(2,))"
+],
+[
+"B",
+10,
+"PlayCard(uid=70, targets=(), modes=())"
+],
+[
+"B",
+10,
+"Attack(attacker=50, target=34)"
+],
+[
+"B",
+10,
+"EndTurn()"
+],
+[
+"A",
+11,
+"PlayCard(uid=21, targets=(), modes=())"
+],
+[
+"A",
+11,
+"PlayCard(uid=84, targets=(), modes=())"
+],
+[
+"A",
+11,
+"EndTurn()"
+],
+[
+"B",
+12,
+"PlayCard(uid=51, targets=(), modes=(2,))"
+],
+[
+"B",
+12,
+"PlayCard(uid=71, targets=(), modes=())"
+],
+[
+"B",
+12,
+"Evolve(uid=51, super_=True, targets=(), modes=(1,))"
+],
+[
+"B",
+12,
+"Attack(attacker=51, target=21)"
+],
+[
+"B",
+12,
+"UseBonusPP()"
+],
+[
+"B",
+12,
+"PlayCard(uid=75, targets=(), modes=())"
+],
+[
+"B",
+12,
+"PlayCard(uid=73, targets=(), modes=())"
+],
+[
+"B",
+12,
+"PlayCard(uid=86, targets=(), modes=())"
+],
+[
+"B",
+12,
+"EndTurn()"
+],
+[
+"A",
+13,
+"PlayCard(uid=24, targets=(35,), modes=())"
+],
+[
+"A",
+13,
+"PlayCard(uid=17, targets=(73,), modes=())"
+],
+[
+"A",
+13,
+"Evolve(uid=17, super_=False, targets=(), modes=())"
+],
+[
+"A",
+13,
+"PlayCard(uid=36, targets=(), modes=())"
+],
+[
+"A",
+13,
+"PlayCard(uid=85, targets=(), modes=())"
+],
+[
+"A",
+13,
+"Attack(attacker=17, target=51)"
+],
+[
+"A",
+13,
+"EndTurn()"
+],
+[
+"B",
+14,
+"PlayCard(uid=80, targets=(24,), modes=())"
+],
+[
+"B",
+14,
+"Evolve(uid=75, super_=True, targets=(71,), modes=())"
+],
+[
+"B",
+14,
+"Attack(attacker=71, target=-1)"
+],
+[
+"B",
+14,
+"Attack(attacker=86, target=-1)"
+],
+[
+"B",
+14,
+"PlayCard(uid=47, targets=(), modes=())"
+],
+[
+"B",
+14,
+"Attack(attacker=75, target=36)"
+],
+[
+"B",
+14,
+"EndTurn()"
+],
+[
+"A",
+15,
+"PlayCard(uid=1, targets=(), modes=())"
+],
+[
+"A",
+15,
+"PlayCard(uid=26, targets=(75,), modes=())"
+],
+[
+"A",
+15,
+"Attack(attacker=26, target=71)"
+],
+[
+"A",
+15,
+"Evolve(uid=1, super_=True, targets=(), modes=())"
+],
+[
+"A",
+15,
+"Attack(attacker=1, target=86)"
+],
+[
+"A",
+15,
+"EndTurn()"
+],
+[
+"B",
+16,
+"PlayCard(uid=43, targets=(), modes=())"
+],
+[
+"B",
+16,
+"PlayCard(uid=68, targets=(26,), modes=())"
+],
+[
+"B",
+16,
+"Attack(attacker=80, target=-1)"
+],
+[
+"B",
+16,
+"Attack(attacker=68, target=-1)"
+],
+[
+"B",
+16,
+"EndTurn()"
+],
+[
+"A",
+17,
+"Attack(attacker=1, target=68)"
+],
+[
+"A",
+17,
+"PlayCard(uid=9, targets=(), modes=(2,))"
+],
+[
+"A",
+17,
+"PlayCard(uid=10, targets=(), modes=(2,))"
+],
+[
+"A",
+17,
+"PlayCard(uid=7, targets=(), modes=())"
+],
+[
+"A",
+17,
+"Evolve(uid=10, super_=True, targets=(), modes=(1,))"
+],
+[
+"A",
+17,
+"PlayCard(uid=15, targets=(), modes=())"
+],
+[
+"A",
+17,
+"Attack(attacker=15, target=-2)"
+],
+[
+"A",
+17,
+"Attack(attacker=10, target=43)"
+],
+[
+"A",
+17,
+"EndTurn()"
+],
+[
+"B",
+18,
+"PlayCard(uid=58, targets=(15,), modes=())"
+],
+[
+"B",
+18,
+"PlayCard(uid=54, targets=(), modes=())"
+],
+[
+"B",
+18,
+"PlayCard(uid=57, targets=(), modes=())"
+],
+[
+"B",
+18,
+"Attack(attacker=57, target=-1)"
+]
+]
+},
+{
+"seed": 73200011,
+"seat": 1,
+"a_points": 0.0,
+"actions": [
+[
+"B",
+0,
+"Mulligan(indices=(3,))"
+],
+[
+"A",
+0,
+"Mulligan(indices=())"
+],
+[
+"B",
+1,
+"PlayCard(uid=28, targets=(), modes=())"
+],
+[
+"B",
+1,
+"EndTurn()"
+],
+[
+"A",
+2,
+"UseBonusPP()"
+],
+[
+"A",
+2,
+"PlayCard(uid=74, targets=(), modes=())"
+],
+[
+"A",
+2,
+"EndTurn()"
+],
+[
+"B",
+3,
+"PlayCard(uid=11, targets=(), modes=())"
+],
+[
+"B",
+3,
+"PlayCard(uid=30, targets=(), modes=())"
+],
+[
+"B",
+3,
+"Attack(attacker=28, target=-2)"
+],
+[
+"B",
+3,
+"EndTurn()"
+],
+[
+"A",
+4,
+"PlayCard(uid=56, targets=(), modes=())"
+],
+[
+"A",
+4,
+"Attack(attacker=74, target=-1)"
+],
+[
+"A",
+4,
+"EndTurn()"
+],
+[
+"B",
+5,
+"PlayCard(uid=8, targets=(), modes=(2,))"
+],
+[
+"B",
+5,
+"Attack(attacker=28, target=-2)"
+],
+[
+"B",
+5,
+"Attack(attacker=11, target=-2)"
+],
+[
+"B",
+5,
+"Attack(attacker=30, target=-2)"
+],
+[
+"B",
+5,
+"EndTurn()"
+],
+[
+"A",
+6,
+"PlayCard(uid=50, targets=(), modes=(0,))"
+],
+[
+"A",
+6,
+"Attack(attacker=56, target=8)"
+],
+[
+"A",
+6,
+"EndTurn()"
+],
+[
+"B",
+7,
+"PlayCard(uid=18, targets=(50,), modes=())"
+],
+[
+"B",
+7,
+"Attack(attacker=28, target=-2)"
+],
+[
+"B",
+7,
+"Attack(attacker=11, target=-2)"
+],
+[
+"B",
+7,
+"Attack(attacker=30, target=-2)"
+],
+[
+"B",
+7,
+"EndTurn()"
+],
+[
+"A",
+8,
+"PlayCard(uid=78, targets=(18,), modes=())"
+],
+[
+"A",
+8,
+"EndTurn()"
+],
+[
+"B",
+9,
+"Attack(attacker=11, target=-2)"
+],
+[
+"B",
+9,
+"PlayCard(uid=23, targets=(6,), modes=())"
+],
+[
+"B",
+9,
+"PlayCard(uid=7, targets=(), modes=())"
+],
+[
+"B",
+9,
+"Attack(attacker=28, target=-2)"
+],
+[
+"B",
+9,
+"Evolve(uid=30, super_=False, targets=(), modes=())"
+],
+[
+"B",
+9,
+"Attack(attacker=30, target=-2)"
+],
+[
+"B",
+9,
+"EndTurn()"
+],
+[
+"A",
+10,
+"PlayCard(uid=51, targets=(), modes=(2,))"
+],
+[
+"A",
+10,
+"PlayCard(uid=53, targets=(), modes=())"
+],
+[
+"A",
+10,
+"Evolve(uid=51, super_=False, targets=(), modes=(2,))"
+],
+[
+"A",
+10,
+"PlayCard(uid=69, targets=(), modes=())"
+],
+[
+"A",
+10,
+"EndTurn()"
+],
+[
+"B",
+11,
+"PlayCard(uid=21, targets=(), modes=())"
+],
+[
+"B",
+11,
+"Evolve(uid=21, super_=False, targets=(), modes=())"
+],
+[
+"B",
+11,
+"EndTurn()"
+],
+[
+"A",
+12,
+"PlayCard(uid=73, targets=(), modes=())"
+],
+[
+"A",
+12,
+"PlayCard(uid=52, targets=(), modes=())"
+],
+[
+"A",
+12,
+"PlayCard(uid=75, targets=(), modes=())"
+],
+[
+"A",
+12,
+"Evolve(uid=52, super_=False, targets=(), modes=())"
+],
+[
+"A",
+12,
+"PlayCard(uid=71, targets=(), modes=())"
+],
+[
+"A",
+12,
+"UseBonusPP()"
+],
+[
+"A",
+12,
+"PlayCard(uid=70, targets=(), modes=())"
+],
+[
+"A",
+12,
+"Attack(attacker=52, target=21)"
+],
+[
+"A",
+12,
+"EndTurn()"
+],
+[
+"B",
+13,
+"Attack(attacker=21, target=-2)"
+],
+[
+"B",
+13,
+"PlayCard(uid=26, targets=(73,), modes=())"
+],
+[
+"B",
+13,
+"PlayCard(uid=86, targets=(), modes=())"
+],
+[
+"B",
+13,
+"PlayCard(uid=87, targets=(), modes=())"
+],
+[
+"B",
+13,
+"Evolve(uid=26, super_=True, targets=(), modes=())"
+],
+[
+"B",
+13,
+"Attack(attacker=26, target=-2)"
+]
+]
+},
+{
+"seed": 73200012,
+"seat": 0,
+"a_points": 1.0,
+"actions": [
+[
+"A",
+0,
+"Mulligan(indices=())"
+],
+[
+"B",
+0,
+"Mulligan(indices=(3,))"
+],
+[
+"A",
+1,
+"PlayCard(uid=6, targets=(), modes=())"
+],
+[
+"A",
+1,
+"EndTurn()"
+],
+[
+"B",
+2,
+"UseBonusPP()"
+],
+[
+"B",
+2,
+"PlayCard(uid=52, targets=(), modes=())"
+],
+[
+"B",
+2,
+"PlayCard(uid=71, targets=(), modes=())"
+],
+[
+"B",
+2,
+"EndTurn()"
+],
+[
+"A",
+3,
+"PlayCard(uid=32, targets=(), modes=())"
+],
+[
+"A",
+3,
+"EndTurn()"
+],
+[
+"B",
+4,
+"Attack(attacker=52, target=-1)"
+],
+[
+"B",
+4,
+"Attack(attacker=71, target=-1)"
+],
+[
+"B",
+4,
+"EndTurn()"
+],
+[
+"A",
+5,
+"PlayCard(uid=22, targets=(12,), modes=())"
+],
+[
+"A",
+5,
+"PlayCard(uid=24, targets=(83,), modes=())"
+],
+[
+"A",
+5,
+"Attack(attacker=32, target=71)"
+],
+[
+"A",
+5,
+"PlayCard(uid=30, targets=(), modes=())"
+],
+[
+"A",
+5,
+"Attack(attacker=30, target=52)"
+],
+[
+"A",
+5,
+"EndTurn()"
+],
+[
+"B",
+6,
+"PlayCard(uid=63, targets=(48,), modes=())"
+],
+[
+"B",
+6,
+"PlayCard(uid=56, targets=(), modes=())"
+],
+[
+"B",
+6,
+"EndTurn()"
+],
+[
+"A",
+7,
+"PlayCard(uid=18, targets=(56,), modes=())"
+],
+[
+"A",
+7,
+"Attack(attacker=22, target=63)"
+],
+[
+"A",
+7,
+"Attack(attacker=32, target=-2)"
+],
+[
+"A",
+7,
+"Attack(attacker=24, target=-2)"
+],
+[
+"A",
+7,
+"EndTurn()"
+],
+[
+"B",
+8,
+"PlayCard(uid=58, targets=(18,), modes=())"
+],
+[
+"B",
+8,
+"Evolve(uid=58, super_=False, targets=(), modes=())"
+],
+[
+"B",
+8,
+"Attack(attacker=58, target=24)"
+],
+[
+"B",
+8,
+"EndTurn()"
+],
+[
+"A",
+9,
+"Attack(attacker=32, target=-2)"
+],
+[
+"A",
+9,
+"PlayCard(uid=16, targets=(), modes=())"
+],
+[
+"A",
+9,
+"PlayCard(uid=37, targets=(58,), modes=())"
+],
+[
+"A",
+9,
+"EndTurn()"
+],
+[
+"B",
+10,
+"PlayCard(uid=44, targets=(), modes=())"
+],
+[
+"B",
+10,
+"EndTurn()"
+],
+[
+"A",
+11,
+"PlayCard(uid=4, targets=(), modes=())"
+],
+[
+"A",
+11,
+"PlayCard(uid=11, targets=(), modes=())"
+],
+[
+"A",
+11,
+"PlayCard(uid=15, targets=(), modes=())"
+],
+[
+"A",
+11,
+"Evolve(uid=11, super_=False, targets=(), modes=())"
+],
+[
+"A",
+11,
+"PlayCard(uid=35, targets=(), modes=())"
+],
+[
+"A",
+11,
+"Attack(attacker=15, target=-2)"
+],
+[
+"A",
+11,
+"Attack(attacker=11, target=44)"
+],
+[
+"A",
+11,
+"EndTurn()"
+],
+[
+"B",
+12,
+"PlayCard(uid=61, targets=(), modes=())"
+],
+[
+"B",
+12,
+"Evolve(uid=61, super_=True, targets=(), modes=())"
+],
+[
+"B",
+12,
+"Attack(attacker=61, target=15)"
+],
+[
+"B",
+12,
+"PlayCard(uid=85, targets=(), modes=())"
+],
+[
+"B",
+12,
+"PlayCard(uid=86, targets=(), modes=())"
+],
+[
+"B",
+12,
+"UseBonusPP()"
+],
+[
+"B",
+12,
+"EndTurn()"
+],
+[
+"A",
+13,
+"PlayCard(uid=26, targets=(61,), modes=())"
+],
+[
+"A",
+13,
+"Evolve(uid=26, super_=False, targets=(), modes=())"
+],
+[
+"A",
+13,
+"Attack(attacker=26, target=-2)"
+],
+[
+"A",
+13,
+"EndTurn()"
+],
+[
+"B",
+14,
+"PlayCard(uid=66, targets=(26,), modes=())"
+],
+[
+"B",
+14,
+"PlayCard(uid=88, targets=(), modes=())"
+],
+[
+"B",
+14,
+"Evolve(uid=66, super_=False, targets=(), modes=())"
+],
+[
+"B",
+14,
+"Attack(attacker=66, target=-1)"
+],
+[
+"B",
+14,
+"UseBonusPP()"
+],
+[
+"B",
+14,
+"EndTurn()"
+],
+[
+"A",
+15,
+"PlayCard(uid=3, targets=(), modes=())"
+],
+[
+"A",
+15,
+"PlayCard(uid=5, targets=(), modes=())"
+],
+[
+"A",
+15,
+"PlayCard(uid=83, targets=(), modes=())"
+],
+[
+"A",
+15,
+"Evolve(uid=3, super_=True, targets=(), modes=())"
+],
+[
+"A",
+15,
+"PlayCard(uid=12, targets=(), modes=())"
+],
+[
+"A",
+15,
+"EndTurn()"
+],
+[
+"B",
+16,
+"PlayCard(uid=77, targets=(), modes=())"
+],
+[
+"B",
+16,
+"PlayCard(uid=48, targets=(), modes=())"
+],
+[
+"B",
+16,
+"UseBonusPP()"
+],
+[
+"B",
+16,
+"PlayCard(uid=78, targets=(3,), modes=())"
+],
+[
+"B",
+16,
+"Evolve(uid=77, super_=True, targets=(), modes=())"
+],
+[
+"B",
+16,
+"Attack(attacker=77, target=12)"
+],
+[
+"B",
+16,
+"EndTurn()"
+],
+[
+"A",
+17,
+"Attack(attacker=83, target=-2)"
+],
+[
+"A",
+17,
+"PlayCard(uid=21, targets=(), modes=())"
+],
+[
+"A",
+17,
+"PlayCard(uid=91, targets=(), modes=())"
+],
+[
+"A",
+17,
+"PlayCard(uid=34, targets=(), modes=())"
+],
+[
+"A",
+17,
+"PlayCard(uid=92, targets=(), modes=())"
+],
+[
+"A",
+17,
+"EndTurn()"
+],
+[
+"B",
+18,
+"PlayCard(uid=57, targets=(), modes=())"
+],
+[
+"B",
+18,
+"PlayCard(uid=49, targets=(), modes=(2,))"
+],
+[
+"B",
+18,
+"PlayCard(uid=75, targets=(), modes=())"
+],
+[
+"B",
+18,
+"PlayCard(uid=69, targets=(), modes=())"
+],
+[
+"B",
+18,
+"PlayCard(uid=54, targets=(), modes=())"
+],
+[
+"B",
+18,
+"Attack(attacker=69, target=34)"
+],
+[
+"B",
+18,
+"EndTurn()"
+],
+[
+"A",
+19,
+"Attack(attacker=21, target=-2)"
+],
+[
+"A",
+19,
+"Attack(attacker=34, target=-2)"
+],
+[
+"A",
+19,
+"PlayCard(uid=20, targets=(), modes=())"
+],
+[
+"A",
+19,
+"PlayCard(uid=17, targets=(57,), modes=())"
+],
+[
+"A",
+19,
+"PlayCard(uid=93, targets=(), modes=())"
+],
+[
+"A",
+19,
+"PlayCard(uid=94, targets=(), modes=())"
+],
+[
+"A",
+19,
+"Evolve(uid=17, super_=True, targets=(), modes=())"
+],
+[
+"A",
+19,
+"Attack(attacker=20, target=49)"
+],
+[
+"A",
+19,
+"Attack(attacker=17, target=75)"
+]
+]
+},
+{
+"seed": 73200012,
+"seat": 1,
+"a_points": 0.0,
+"actions": [
+[
+"B",
+0,
+"Mulligan(indices=())"
+],
+[
+"A",
+0,
+"Mulligan(indices=(3,))"
+],
+[
+"B",
+1,
+"PlayCard(uid=6, targets=(), modes=())"
+],
+[
+"B",
+1,
+"EndTurn()"
+],
+[
+"A",
+2,
+"EndTurn()"
+],
+[
+"B",
+3,
+"PlayCard(uid=22, targets=(35,), modes=())"
+],
+[
+"B",
+3,
+"PlayCard(uid=12, targets=(), modes=())"
+],
+[
+"B",
+3,
+"EndTurn()"
+],
+[
+"A",
+4,
+"PlayCard(uid=63, targets=(71,), modes=())"
+],
+[
+"A",
+4,
+"PlayCard(uid=52, targets=(), modes=())"
+],
+[
+"A",
+4,
+"EndTurn()"
+],
+[
+"B",
+5,
+"PlayCard(uid=32, targets=(), modes=())"
+],
+[
+"B",
+5,
+"PlayCard(uid=30, targets=(), modes=())"
+],
+[
+"B",
+5,
+"Attack(attacker=22, target=63)"
+],
+[
+"B",
+5,
+"Attack(attacker=12, target=-2)"
+],
+[
+"B",
+5,
+"Attack(attacker=30, target=52)"
+],
+[
+"B",
+5,
+"EndTurn()"
+],
+[
+"A",
+6,
+"PlayCard(uid=48, targets=(), modes=())"
+],
+[
+"A",
+6,
+"EndTurn()"
+],
+[
+"B",
+7,
+"PlayCard(uid=24, targets=(83,), modes=())"
+],
+[
+"B",
+7,
+"Attack(attacker=32, target=-2)"
+],
+[
+"B",
+7,
+"PlayCard(uid=5, targets=(), modes=())"
+],
+[
+"B",
+7,
+"Attack(attacker=12, target=-2)"
+],
+[
+"B",
+7,
+"PlayCard(uid=16, targets=(), modes=())"
+],
+[
+"B",
+7,
+"Attack(attacker=16, target=-2)"
+],
+[
+"B",
+7,
+"EndTurn()"
+],
+[
+"A",
+8,
+"PlayCard(uid=58, targets=(32,), modes=())"
+],
+[
+"A",
+8,
+"Evolve(uid=58, super_=False, targets=(), modes=())"
+],
+[
+"A",
+8,
+"Attack(attacker=58, target=24)"
+],
+[
+"A",
+8,
+"EndTurn()"
+],
+[
+"B",
+9,
+"PlayCard(uid=37, targets=(58,), modes=())"
+],
+[
+"B",
+9,
+"PlayCard(uid=15, targets=(), modes=())"
+],
+[
+"B",
+9,
+"Attack(attacker=16, target=-2)"
+],
+[
+"B",
+9,
+"Evolve(uid=12, super_=False, targets=(), modes=())"
+],
+[
+"B",
+9,
+"Attack(attacker=12, target=-2)"
+],
+[
+"B",
+9,
+"EndTurn()"
+],
+[
+"A",
+10,
+"UseBonusPP()"
+],
+[
+"A",
+10,
+"PlayCard(uid=61, targets=(), modes=())"
+],
+[
+"A",
+10,
+"Evolve(uid=61, super_=False, targets=(), modes=())"
+],
+[
+"A",
+10,
+"EndTurn()"
+],
+[
+"B",
+11,
+"PlayCard(uid=4, targets=(), modes=())"
+],
+[
+"B",
+11,
+"PlayCard(uid=3, targets=(), modes=())"
+],
+[
+"B",
+11,
+"EndTurn()"
+],
+[
+"A",
+12,
+"UseBonusPP()"
+],
+[
+"A",
+12,
+"PlayCard(uid=66, targets=(3,), modes=())"
+],
+[
+"A",
+12,
+"Attack(attacker=66, target=-1)"
+],
+[
+"A",
+12,
+"EndTurn()"
+],
+[
+"B",
+13,
+"PlayCard(uid=18, targets=(66,), modes=())"
+],
+[
+"B",
+13,
+"Evolve(uid=18, super_=True, targets=(), modes=())"
+],
+[
+"B",
+13,
+"PlayCard(uid=34, targets=(), modes=())"
+],
+[
+"B",
+13,
+"PlayCard(uid=11, targets=(), modes=())"
+],
+[
+"B",
+13,
+"Attack(attacker=18, target=66)"
+],
+[
+"B",
+13,
+"EndTurn()"
+],
+[
+"A",
+14,
+"PlayCard(uid=44, targets=(), modes=())"
+],
+[
+"A",
+14,
+"Evolve(uid=44, super_=True, targets=(), modes=())"
+],
+[
+"A",
+14,
+"PlayCard(uid=57, targets=(), modes=())"
+],
+[
+"A",
+14,
+"Attack(attacker=44, target=18)"
+],
+[
+"A",
+14,
+"PlayCard(uid=85, targets=(), modes=())"
+],
+[
+"A",
+14,
+"Attack(attacker=57, target=34)"
+],
+[
+"A",
+14,
+"EndTurn()"
+],
+[
+"B",
+15,
+"PlayCard(uid=17, targets=(57,), modes=())"
+],
+[
+"B",
+15,
+"Evolve(uid=17, super_=True, targets=(), modes=())"
+],
+[
+"B",
+15,
+"PlayCard(uid=35, targets=(), modes=())"
+],
+[
+"B",
+15,
+"Attack(attacker=17, target=44)"
+],
+[
+"B",
+15,
+"EndTurn()"
+],
+[
+"A",
+16,
+"PlayCard(uid=86, targets=(), modes=())"
+],
+[
+"A",
+16,
+"PlayCard(uid=78, targets=(17,), modes=())"
+],
+[
+"A",
+16,
+"PlayCard(uid=56, targets=(), modes=())"
+],
+[
+"A",
+16,
+"Attack(attacker=56, target=-1)"
+],
+[
+"A",
+16,
+"PlayCard(uid=77, targets=(), modes=())"
+],
+[
+"A",
+16,
+"Evolve(uid=77, super_=True, targets=(56,), modes=())"
+],
+[
+"A",
+16,
+"Attack(attacker=77, target=35)"
+],
+[
+"A",
+16,
+"EndTurn()"
+],
+[
+"B",
+17,
+"PlayCard(uid=19, targets=(56,), modes=())"
+],
+[
+"B",
+17,
+"Evolve(uid=19, super_=False, targets=(), modes=())"
+],
+[
+"B",
+17,
+"Attack(attacker=19, target=77)"
+],
+[
+"B",
+17,
+"PlayCard(uid=7, targets=(), modes=())"
+],
+[
+"B",
+17,
+"PlayCard(uid=29, targets=(), modes=())"
+],
+[
+"B",
+17,
+"PlayCard(uid=83, targets=(), modes=())"
+],
+[
+"B",
+17,
+"Attack(attacker=29, target=56)"
+],
+[
+"B",
+17,
+"EndTurn()"
+],
+[
+"A",
+18,
+"PlayCard(uid=54, targets=(), modes=())"
+],
+[
+"A",
+18,
+"PlayCard(uid=49, targets=(), modes=(2,))"
+],
+[
+"A",
+18,
+"Attack(attacker=54, target=83)"
+],
+[
+"A",
+18,
+"PlayCard(uid=75, targets=(), modes=())"
+],
+[
+"A",
+18,
+"PlayCard(uid=76, targets=(), modes=())"
+],
+[
+"A",
+18,
+"PlayCard(uid=69, targets=(), modes=())"
+],
+[
+"A",
+18,
+"EndTurn()"
+],
+[
+"B",
+19,
+"PlayCard(uid=1, targets=(), modes=())"
+],
+[
+"B",
+19,
+"PlayCard(uid=31, targets=(), modes=())"
+],
+[
+"B",
+19,
+"PlayCard(uid=39, targets=(), modes=())"
+],
+[
+"B",
+19,
+"PlayCard(uid=36, targets=(), modes=())"
+],
+[
+"B",
+19,
+"PlayCard(uid=14, targets=(), modes=())"
+],
+[
+"B",
+19,
+"Attack(attacker=14, target=-2)"
+],
+[
+"B",
+19,
+"EndTurn()"
+],
+[
+"A",
+20,
+"PlayCard(uid=80, targets=(39,), modes=())"
+],
+[
+"A",
+20,
+"PlayCard(uid=67, targets=(31,), modes=())"
+],
+[
+"A",
+20,
+"Attack(attacker=80, target=14)"
+],
+[
+"A",
+20,
+"Attack(attacker=67, target=-1)"
+],
+[
+"A",
+20,
+"EndTurn()"
+],
+[
+"B",
+21,
+"Attack(attacker=1, target=67)"
+],
+[
+"B",
+21,
+"PlayCard(uid=26, targets=(67,), modes=())"
+],
+[
+"B",
+21,
+"Attack(attacker=26, target=-2)"
+],
+[
+"B",
+21,
+"Attack(attacker=36, target=-2)"
+]
+]
+},
+{
+"seed": 73200013,
+"seat": 0,
+"a_points": 1.0,
+"actions": [
+[
+"B",
+0,
+"Mulligan(indices=(2,))"
+],
+[
+"A",
+0,
+"Mulligan(indices=(0,))"
+],
+[
+"B",
+1,
+"PlayCard(uid=54, targets=(), modes=())"
+],
+[
+"B",
+1,
+"EndTurn()"
+],
+[
+"A",
+2,
+"PlayCard(uid=22, targets=(12,), modes=())"
+],
+[
+"A",
+2,
+"EndTurn()"
+],
+[
+"B",
+3,
+"PlayCard(uid=76, targets=(), modes=())"
+],
+[
+"B",
+3,
+"Attack(attacker=54, target=22)"
+],
+[
+"B",
+3,
+"EndTurn()"
+],
+[
+"A",
+4,
+"UseBonusPP()"
+],
+[
+"A",
+4,
+"PlayCard(uid=10, targets=(), modes=(0,))"
+],
+[
+"A",
+4,
+"EndTurn()"
+],
+[
+"B",
+5,
+"PlayCard(uid=63, targets=(64,), modes=())"
+],
+[
+"B",
+5,
+"PlayCard(uid=69, targets=(), modes=())"
+],
+[
+"B",
+5,
+"Attack(attacker=76, target=-1)"
+],
+[
+"B",
+5,
+"EndTurn()"
+],
+[
+"A",
+6,
+"PlayCard(uid=4, targets=(), modes=())"
+],
+[
+"A",
+6,
+"PlayCard(uid=83, targets=(), modes=())"
+],
+[
+"A",
+6,
+"Attack(attacker=83, target=63)"
+],
+[
+"A",
+6,
+"PlayCard(uid=28, targets=(), modes=())"
+],
+[
+"A",
+6,
+"Attack(attacker=10, target=-2)"
+],
+[
+"A",
+6,
+"Attack(attacker=28, target=69)"
+],
+[
+"A",
+6,
+"EndTurn()"
+],
+[
+"B",
+7,
+"PlayCard(uid=60, targets=(10,), modes=())"
+],
+[
+"B",
+7,
+"Attack(attacker=76, target=-1)"
+],
+[
+"B",
+7,
+"EndTurn()"
+],
+[
+"A",
+8,
+"PlayCard(uid=1, targets=(), modes=())"
+],
+[
+"A",
+8,
+"PlayCard(uid=24, targets=(84,), modes=())"
+],
+[
+"A",
+8,
+"PlayCard(uid=23, targets=(37,), modes=())"
+],
+[
+"A",
+8,
+"Evolve(uid=24, super_=False, targets=(), modes=())"
+],
+[
+"A",
+8,
+"Attack(attacker=24, target=76)"
+],
+[
+"A",
+8,
+"EndTurn()"
+],
+[
+"B",
+9,
+"PlayCard(uid=58, targets=(24,), modes=())"
+],
+[
+"B",
+9,
+"Evolve(uid=58, super_=False, targets=(), modes=())"
+],
+[
+"B",
+9,
+"Attack(attacker=58, target=23)"
+],
+[
+"B",
+9,
+"Attack(attacker=60, target=-1)"
+],
+[
+"B",
+9,
+"EndTurn()"
+],
+[
+"A",
+10,
+"PlayCard(uid=18, targets=(60,), modes=())"
+],
+[
+"A",
+10,
+"Evolve(uid=18, super_=False, targets=(), modes=())"
+],
+[
+"A",
+10,
+"PlayCard(uid=5, targets=(), modes=())"
+],
+[
+"A",
+10,
+"Attack(attacker=1, target=-2)"
+],
+[
+"A",
+10,
+"Attack(attacker=18, target=58)"
+],
+[
+"A",
+10,
+"EndTurn()"
+],
+[
+"B",
+11,
+"PlayCard(uid=51, targets=(), modes=(0,))"
+],
+[
+"B",
+11,
+"PlayCard(uid=43, targets=(), modes=())"
+],
+[
+"B",
+11,
+"Evolve(uid=51, super_=False, targets=(), modes=(0,))"
+],
+[
+"B",
+11,
+"PlayCard(uid=87, targets=(), modes=())"
+],
+[
+"B",
+11,
+"Attack(attacker=51, target=1)"
+],
+[
+"B",
+11,
+"EndTurn()"
+],
+[
+"A",
+12,
+"Attack(attacker=1, target=87)"
+],
+[
+"A",
+12,
+"PlayCard(uid=13, targets=(), modes=())"
+],
+[
+"A",
+12,
+"PlayCard(uid=6, targets=(), modes=())"
+],
+[
+"A",
+12,
+"Evolve(uid=13, super_=True, targets=(), modes=())"
+],
+[
+"A",
+12,
+"Attack(attacker=13, target=51)"
+],
+[
+"A",
+12,
+"PlayCard(uid=16, targets=(), modes=())"
+],
+[
+"A",
+12,
+"Attack(attacker=16, target=-2)"
+],
+[
+"A",
+12,
+"UseBonusPP()"
+],
+[
+"A",
+12,
+"PlayCard(uid=35, targets=(), modes=())"
+],
+[
+"A",
+12,
+"PlayCard(uid=29, targets=(), modes=())"
+],
+[
+"A",
+12,
+"Attack(attacker=29, target=43)"
+],
+[
+"A",
+12,
+"EndTurn()"
+],
+[
+"B",
+13,
+"PlayCard(uid=80, targets=(16,), modes=())"
+],
+[
+"B",
+13,
+"Evolve(uid=43, super_=True, targets=(), modes=())"
+],
+[
+"B",
+13,
+"PlayCard(uid=78, targets=(13,), modes=())"
+],
+[
+"B",
+13,
+"PlayCard(uid=88, targets=(), modes=())"
+],
+[
+"B",
+13,
+"Attack(attacker=43, target=35)"
+],
+[
+"B",
+13,
+"Attack(attacker=88, target=29)"
+],
+[
+"B",
+13,
+"EndTurn()"
+],
+[
+"A",
+14,
+"PlayCard(uid=27, targets=(43,), modes=())"
+],
+[
+"A",
+14,
+"Attack(attacker=27, target=80)"
+],
+[
+"A",
+14,
+"EndTurn()"
+],
+[
+"B",
+15,
+"PlayCard(uid=79, targets=(27,), modes=())"
+],
+[
+"B",
+15,
+"PlayCard(uid=89, targets=(), modes=())"
+],
+[
+"B",
+15,
+"Attack(attacker=89, target=27)"
+],
+[
+"B",
+15,
+"Evolve(uid=79, super_=True, targets=(), modes=())"
+],
+[
+"B",
+15,
+"Attack(attacker=79, target=-1)"
+],
+[
+"B",
+15,
+"PlayCard(uid=77, targets=(), modes=())"
+],
+[
+"B",
+15,
+"PlayCard(uid=90, targets=(), modes=())"
+],
+[
+"B",
+15,
+"PlayCard(uid=52, targets=(), modes=())"
+],
+[
+"B",
+15,
+"EndTurn()"
+],
+[
+"A",
+16,
+"PlayCard(uid=26, targets=(79,), modes=())"
+],
+[
+"A",
+16,
+"Attack(attacker=26, target=77)"
+],
+[
+"A",
+16,
+"PlayCard(uid=11, targets=(), modes=())"
+],
+[
+"A",
+16,
+"Evolve(uid=11, super_=True, targets=(), modes=())"
+],
+[
+"A",
+16,
+"Attack(attacker=11, target=52)"
+],
+[
+"A",
+16,
+"EndTurn()"
+],
+[
+"B",
+17,
+"PlayCard(uid=72, targets=(), modes=())"
+],
+[
+"B",
+17,
+"PlayCard(uid=66, targets=(26,), modes=())"
+],
+[
+"B",
+17,
+"Attack(attacker=90, target=-1)"
+],
+[
+"B",
+17,
+"Attack(attacker=66, target=11)"
+],
+[
+"B",
+17,
+"EndTurn()"
+],
+[
+"A",
+18,
+"PlayCard(uid=19, targets=(72,), modes=())"
+],
+[
+"A",
+18,
+"PlayCard(uid=36, targets=(), modes=())"
+],
+[
+"A",
+18,
+"PlayCard(uid=32, targets=(), modes=())"
+],
+[
+"A",
+18,
+"PlayCard(uid=30, targets=(), modes=())"
+],
+[
+"A",
+18,
+"Attack(attacker=30, target=66)"
+],
+[
+"A",
+18,
+"EndTurn()"
+],
+[
+"B",
+19,
+"PlayCard(uid=62, targets=(), modes=())"
+],
+[
+"B",
+19,
+"PlayCard(uid=49, targets=(), modes=(2,))"
+],
+[
+"B",
+19,
+"Attack(attacker=90, target=19)"
+],
+[
+"B",
+19,
+"PlayCard(uid=91, targets=(), modes=())"
+],
+[
+"B",
+19,
+"PlayCard(uid=93, targets=(), modes=())"
+],
+[
+"B",
+19,
+"PlayCard(uid=94, targets=(), modes=())"
+],
+[
+"B",
+19,
+"EndTurn()"
+],
+[
+"A",
+20,
+"PlayCard(uid=38, targets=(49,), modes=())"
+],
+[
+"A",
+20,
+"PlayCard(uid=25, targets=(62,), modes=())"
+],
+[
+"A",
+20,
+"Attack(attacker=25, target=-2)"
+],
+[
+"A",
+20,
+"Attack(attacker=32, target=-2)"
+],
+[
+"A",
+20,
+"EndTurn()"
+],
+[
+"B",
+21,
+"PlayCard(uid=56, targets=(), modes=())"
+],
+[
+"B",
+21,
+"EndTurn()"
+],
+[
+"A",
+22,
+"Attack(attacker=25, target=-2)"
+]
+]
+},
+{
+"seed": 73200013,
+"seat": 1,
+"a_points": 1.0,
+"actions": [
+[
+"A",
+0,
+"Mulligan(indices=(2,))"
+],
+[
+"B",
+0,
+"Mulligan(indices=(0,))"
+],
+[
+"A",
+1,
+"EndTurn()"
+],
+[
+"B",
+2,
+"UseBonusPP()"
+],
+[
+"B",
+2,
+"PlayCard(uid=35, targets=(), modes=())"
+],
+[
+"B",
+2,
+"EndTurn()"
+],
+[
+"A",
+3,
+"PlayCard(uid=63, targets=(64,), modes=())"
+],
+[
+"A",
+3,
+"EndTurn()"
+],
+[
+"B",
+4,
+"Attack(attacker=35, target=63)"
+],
+[
+"B",
+4,
+"PlayCard(uid=12, targets=(), modes=())"
+],
+[
+"B",
+4,
+"PlayCard(uid=22, targets=(34,), modes=())"
+],
+[
+"B",
+4,
+"EndTurn()"
+],
+[
+"A",
+5,
+"PlayCard(uid=76, targets=(), modes=())"
+],
+[
+"A",
+5,
+"EndTurn()"
+],
+[
+"B",
+6,
+"Attack(attacker=35, target=-2)"
+],
+[
+"B",
+6,
+"PlayCard(uid=4, targets=(), modes=())"
+],
+[
+"B",
+6,
+"PlayCard(uid=1, targets=(), modes=())"
+],
+[
+"B",
+6,
+"Attack(attacker=12, target=-2)"
+],
+[
+"B",
+6,
+"Attack(attacker=22, target=-2)"
+],
+[
+"B",
+6,
+"EndTurn()"
+],
+[
+"A",
+7,
+"PlayCard(uid=54, targets=(), modes=())"
+],
+[
+"A",
+7,
+"PlayCard(uid=51, targets=(), modes=(2,))"
+],
+[
+"A",
+7,
+"Attack(attacker=76, target=22)"
+],
+[
+"A",
+7,
+"EndTurn()"
+],
+[
+"B",
+8,
+"PlayCard(uid=10, targets=(), modes=(2,))"
+],
+[
+"B",
+8,
+"PlayCard(uid=24, targets=(28,), modes=())"
+],
+[
+"B",
+8,
+"Evolve(uid=10, super_=False, targets=(), modes=(1,))"
+],
+[
+"B",
+8,
+"PlayCard(uid=23, targets=(), modes=())"
+],
+[
+"B",
+8,
+"PlayCard(uid=5, targets=(), modes=())"
+],
+[
+"B",
+8,
+"Attack(attacker=1, target=-2)"
+],
+[
+"B",
+8,
+"Attack(attacker=10, target=51)"
+],
+[
+"B",
+8,
+"EndTurn()"
+],
+[
+"A",
+9,
+"PlayCard(uid=60, targets=(10,), modes=())"
+],
+[
+"A",
+9,
+"Evolve(uid=60, super_=False, targets=(), modes=())"
+],
+[
+"A",
+9,
+"PlayCard(uid=69, targets=(), modes=())"
+],
+[
+"A",
+9,
+"Attack(attacker=60, target=24)"
+],
+[
+"A",
+9,
+"Attack(attacker=69, target=23)"
+],
+[
+"A",
+9,
+"EndTurn()"
+],
+[
+"B",
+10,
+"PlayCard(uid=37, targets=(60,), modes=())"
+],
+[
+"B",
+10,
+"PlayCard(uid=13, targets=(), modes=())"
+],
+[
+"B",
+10,
+"PlayCard(uid=6, targets=(), modes=())"
+],
+[
+"B",
+10,
+"Evolve(uid=1, super_=False, targets=(), modes=())"
+],
+[
+"B",
+10,
+"Attack(attacker=1, target=-2)"
+],
+[
+"B",
+10,
+"EndTurn()"
+],
+[
+"A",
+11,
+"PlayCard(uid=62, targets=(), modes=())"
+],
+[
+"A",
+11,
+"Evolve(uid=62, super_=False, targets=(), modes=())"
+],
+[
+"A",
+11,
+"PlayCard(uid=84, targets=(), modes=())"
+],
+[
+"A",
+11,
+"Attack(attacker=62, target=1)"
+],
+[
+"A",
+11,
+"EndTurn()"
+],
+[
+"B",
+12,
+"PlayCard(uid=18, targets=(62,), modes=())"
+],
+[
+"B",
+12,
+"Evolve(uid=18, super_=True, targets=(), modes=())"
+],
+[
+"B",
+12,
+"PlayCard(uid=32, targets=(), modes=())"
+],
+[
+"B",
+12,
+"UseBonusPP()"
+],
+[
+"B",
+12,
+"PlayCard(uid=87, targets=(), modes=())"
+],
+[
+"B",
+12,
+"Attack(attacker=18, target=62)"
+],
+[
+"B",
+12,
+"EndTurn()"
+],
+[
+"A",
+13,
+"PlayCard(uid=58, targets=(18,), modes=())"
+],
+[
+"A",
+13,
+"PlayCard(uid=79, targets=(), modes=())"
+],
+[
+"A",
+13,
+"Evolve(uid=79, super_=True, targets=(), modes=())"
+],
+[
+"A",
+13,
+"Attack(attacker=79, target=-1)"
+],
+[
+"A",
+13,
+"EndTurn()"
+],
+[
+"B",
+14,
+"PlayCard(uid=16, targets=(), modes=())"
+],
+[
+"B",
+14,
+"PlayCard(uid=11, targets=(), modes=())"
+],
+[
+"B",
+14,
+"Evolve(uid=11, super_=True, targets=(), modes=())"
+],
+[
+"B",
+14,
+"Attack(attacker=11, target=79)"
+],
+[
+"B",
+14,
+"PlayCard(uid=29, targets=(), modes=())"
+],
+[
+"B",
+14,
+"PlayCard(uid=31, targets=(), modes=())"
+],
+[
+"B",
+14,
+"PlayCard(uid=88, targets=(), modes=())"
+],
+[
+"B",
+14,
+"Attack(attacker=29, target=79)"
+],
+[
+"B",
+14,
+"Attack(attacker=88, target=58)"
+],
+[
+"B",
+14,
+"EndTurn()"
+],
+[
+"A",
+15,
+"PlayCard(uid=78, targets=(11,), modes=())"
+],
+[
+"A",
+15,
+"PlayCard(uid=85, targets=(), modes=())"
+],
+[
+"A",
+15,
+"PlayCard(uid=77, targets=(), modes=())"
+],
+[
+"A",
+15,
+"PlayCard(uid=80, targets=(), modes=())"
+],
+[
+"A",
+15,
+"PlayCard(uid=52, targets=(), modes=())"
+],
+[
+"A",
+15,
+"Evolve(uid=80, super_=True, targets=(), modes=())"
+],
+[
+"A",
+15,
+"Attack(attacker=80, target=-1)"
+],
+[
+"A",
+15,
+"EndTurn()"
+],
+[
+"B",
+16,
+"PlayCard(uid=26, targets=(80,), modes=())"
+],
+[
+"B",
+16,
+"PlayCard(uid=30, targets=(), modes=())"
+],
+[
+"B",
+16,
+"Attack(attacker=26, target=77)"
+],
+[
+"B",
+16,
+"Attack(attacker=30, target=52)"
+],
+[
+"B",
+16,
+"EndTurn()"
+],
+[
+"A",
+17,
+"PlayCard(uid=43, targets=(), modes=())"
+],
+[
+"A",
+17,
+"PlayCard(uid=49, targets=(), modes=(1,))"
+],
+[
+"A",
+17,
+"PlayCard(uid=66, targets=(26,), modes=())"
+],
+[
+"A",
+17,
+"Attack(attacker=66, target=-1)"
+],
+[
+"A",
+17,
+"EndTurn()"
+],
+[
+"B",
+18,
+"PlayCard(uid=27, targets=(66,), modes=())"
+],
+[
+"B",
+18,
+"Attack(attacker=27, target=49)"
+],
+[
+"B",
+18,
+"EndTurn()"
+],
+[
+"A",
+19,
+"PlayCard(uid=56, targets=(), modes=())"
+],
+[
+"A",
+19,
+"PlayCard(uid=68, targets=(27,), modes=())"
+],
+[
+"A",
+19,
+"Attack(attacker=68, target=-1)"
+]
+]
+},
+{
+"seed": 73200014,
+"seat": 0,
+"a_points": 0.0,
+"actions": [
+[
+"A",
+0,
+"Mulligan(indices=())"
+],
+[
+"B",
+0,
+"Mulligan(indices=())"
+],
+[
+"A",
+1,
+"PlayCard(uid=22, targets=(23,), modes=())"
+],
+[
+"A",
+1,
+"EndTurn()"
+],
+[
+"B",
+2,
+"PlayCard(uid=69, targets=(), modes=())"
+],
+[
+"B",
+2,
+"UseBonusPP()"
+],
+[
+"B",
+2,
+"Attack(attacker=69, target=22)"
+],
+[
+"B",
+2,
+"EndTurn()"
+],
+[
+"A",
+3,
+"PlayCard(uid=36, targets=(), modes=())"
+],
+[
+"A",
+3,
+"EndTurn()"
+],
+[
+"B",
+4,
+"PlayCard(uid=64, targets=(52,), modes=())"
+],
+[
+"B",
+4,
+"PlayCard(uid=45, targets=(), modes=())"
+],
+[
+"B",
+4,
+"UseBonusPP()"
+],
+[
+"B",
+4,
+"EndTurn()"
+],
+[
+"A",
+5,
+"PlayCard(uid=2, targets=(), modes=())"
+],
+[
+"A",
+5,
+"Attack(attacker=36, target=64)"
+],
+[
+"A",
+5,
+"EndTurn()"
+],
+[
+"B",
+6,
+"UseBonusPP()"
+],
+[
+"B",
+6,
+"PlayCard(uid=60, targets=(2,), modes=())"
+],
+[
+"B",
+6,
+"EndTurn()"
+],
+[
+"A",
+7,
+"Attack(attacker=36, target=-2)"
+],
+[
+"A",
+7,
+"PlayCard(uid=11, targets=(), modes=())"
+],
+[
+"A",
+7,
+"PlayCard(uid=12, targets=(), modes=())"
+],
+[
+"A",
+7,
+"PlayCard(uid=28, targets=(), modes=())"
+],
+[
+"A",
+7,
+"EndTurn()"
+],
+[
+"B",
+8,
+"PlayCard(uid=50, targets=(), modes=(2,))"
+],
+[
+"B",
+8,
+"Evolve(uid=50, super_=False, targets=(), modes=(0,))"
+],
+[
+"B",
+8,
+"Attack(attacker=60, target=-1)"
+],
+[
+"B",
+8,
+"PlayCard(uid=83, targets=(), modes=())"
+],
+[
+"B",
+8,
+"Attack(attacker=50, target=12)"
+],
+[
+"B",
+8,
+"EndTurn()"
+],
+[
+"A",
+9,
+"Evolve(uid=28, super_=False, targets=(), modes=())"
+],
+[
+"A",
+9,
+"PlayCard(uid=31, targets=(), modes=())"
+],
+[
+"A",
+9,
+"Attack(attacker=28, target=50)"
+],
+[
+"A",
+9,
+"PlayCard(uid=5, targets=(), modes=())"
+],
+[
+"A",
+9,
+"PlayCard(uid=85, targets=(), modes=())"
+],
+[
+"A",
+9,
+"Attack(attacker=85, target=83)"
+],
+[
+"A",
+9,
+"EndTurn()"
+],
+[
+"B",
+10,
+"Evolve(uid=60, super_=False, targets=(), modes=())"
+],
+[
+"B",
+10,
+"PlayCard(uid=65, targets=(84,), modes=())"
+],
+[
+"B",
+10,
+"Attack(attacker=60, target=31)"
+],
+[
+"B",
+10,
+"PlayCard(uid=72, targets=(), modes=())"
+],
+[
+"B",
+10,
+"PlayCard(uid=75, targets=(), modes=())"
+],
+[
+"B",
+10,
+"EndTurn()"
+],
+[
+"A",
+11,
+"PlayCard(uid=21, targets=(), modes=())"
+],
+[
+"A",
+11,
+"Evolve(uid=21, super_=False, targets=(), modes=())"
+],
+[
+"A",
+11,
+"EndTurn()"
+],
+[
+"B",
+12,
+"PlayCard(uid=78, targets=(21,), modes=())"
+],
+[
+"B",
+12,
+"PlayCard(uid=48, targets=(), modes=())"
+],
+[
+"B",
+12,
+"Evolve(uid=75, super_=True, targets=(), modes=())"
+],
+[
+"B",
+12,
+"Attack(attacker=75, target=-1)"
+],
+[
+"B",
+12,
+"UseBonusPP()"
+],
+[
+"B",
+12,
+"PlayCard(uid=70, targets=(), modes=())"
+],
+[
+"B",
+12,
+"EndTurn()"
+],
+[
+"A",
+13,
+"PlayCard(uid=26, targets=(75,), modes=())"
+],
+[
+"A",
+13,
+"Attack(attacker=26, target=70)"
+],
+[
+"A",
+13,
+"EndTurn()"
+],
+[
+"B",
+14,
+"PlayCard(uid=47, targets=(), modes=())"
+],
+[
+"B",
+14,
+"PlayCard(uid=80, targets=(26,), modes=())"
+],
+[
+"B",
+14,
+"PlayCard(uid=77, targets=(), modes=())"
+],
+[
+"B",
+14,
+"PlayCard(uid=53, targets=(), modes=())"
+],
+[
+"B",
+14,
+"Evolve(uid=80, super_=True, targets=(), modes=())"
+],
+[
+"B",
+14,
+"Attack(attacker=80, target=-1)"
+],
+[
+"B",
+14,
+"EndTurn()"
+],
+[
+"A",
+15,
+"PlayCard(uid=23, targets=(35,), modes=())"
+],
+[
+"A",
+15,
+"PlayCard(uid=25, targets=(80,), modes=())"
+],
+[
+"A",
+15,
+"Evolve(uid=23, super_=True, targets=(), modes=())"
+],
+[
+"A",
+15,
+"Attack(attacker=23, target=77)"
+],
+[
+"A",
+15,
+"Attack(attacker=25, target=53)"
+],
+[
+"A",
+15,
+"EndTurn()"
+],
+[
+"B",
+16,
+"PlayCard(uid=43, targets=(), modes=())"
+],
+[
+"B",
+16,
+"PlayCard(uid=87, targets=(), modes=())"
+],
+[
+"B",
+16,
+"PlayCard(uid=55, targets=(), modes=())"
+],
+[
+"B",
+16,
+"PlayCard(uid=79, targets=(), modes=())"
+],
+[
+"B",
+16,
+"Attack(attacker=87, target=23)"
+],
+[
+"B",
+16,
+"Attack(attacker=55, target=-1)"
+],
+[
+"B",
+16,
+"EndTurn()"
+],
+[
+"A",
+17,
+"PlayCard(uid=18, targets=(43,), modes=())"
+],
+[
+"A",
+17,
+"Evolve(uid=18, super_=True, targets=(), modes=())"
+],
+[
+"A",
+17,
+"Attack(attacker=18, target=79)"
+],
+[
+"A",
+17,
+"PlayCard(uid=24, targets=(4,), modes=())"
+],
+[
+"A",
+17,
+"PlayCard(uid=19, targets=(55,), modes=())"
+],
+[
+"A",
+17,
+"EndTurn()"
+],
+[
+"B",
+18,
+"Attack(attacker=55, target=24)"
+],
+[
+"B",
+18,
+"PlayCard(uid=52, targets=(), modes=())"
+],
+[
+"B",
+18,
+"PlayCard(uid=68, targets=(18,), modes=())"
+],
+[
+"B",
+18,
+"Attack(attacker=68, target=-1)"
+]
+]
+},
+{
+"seed": 73200014,
+"seat": 1,
+"a_points": 1.0,
+"actions": [
+[
+"B",
+0,
+"Mulligan(indices=())"
+],
+[
+"A",
+0,
+"Mulligan(indices=())"
+],
+[
+"B",
+1,
+"PlayCard(uid=11, targets=(), modes=())"
+],
+[
+"B",
+1,
+"EndTurn()"
+],
+[
+"A",
+2,
+"UseBonusPP()"
+],
+[
+"A",
+2,
+"PlayCard(uid=72, targets=(), modes=())"
+],
+[
+"A",
+2,
+"EndTurn()"
+],
+[
+"B",
+3,
+"PlayCard(uid=36, targets=(), modes=())"
+],
+[
+"B",
+3,
+"Attack(attacker=11, target=-2)"
+],
+[
+"B",
+3,
+"EndTurn()"
+],
+[
+"A",
+4,
+"PlayCard(uid=64, targets=(83,), modes=())"
+],
+[
+"A",
+4,
+"PlayCard(uid=45, targets=(), modes=())"
+],
+[
+"A",
+4,
+"Attack(attacker=72, target=-1)"
+],
+[
+"A",
+4,
+"EndTurn()"
+],
+[
+"B",
+5,
+"PlayCard(uid=22, targets=(23,), modes=())"
+],
+[
+"B",
+5,
+"PlayCard(uid=12, targets=(), modes=())"
+],
+[
+"B",
+5,
+"Attack(attacker=36, target=64)"
+],
+[
+"B",
+5,
+"Attack(attacker=11, target=-2)"
+],
+[
+"B",
+5,
+"EndTurn()"
+],
+[
+"A",
+6,
+"PlayCard(uid=50, targets=(), modes=(2,))"
+],
+[
+"A",
+6,
+"Attack(attacker=72, target=22)"
+],
+[
+"A",
+6,
+"EndTurn()"
+],
+[
+"B",
+7,
+"PlayCard(uid=2, targets=(), modes=())"
+],
+[
+"B",
+7,
+"PlayCard(uid=28, targets=(), modes=())"
+],
+[
+"B",
+7,
+"Attack(attacker=12, target=-2)"
+],
+[
+"B",
+7,
+"Attack(attacker=28, target=72)"
+],
+[
+"B",
+7,
+"EndTurn()"
+],
+[
+"A",
+8,
+"PlayCard(uid=60, targets=(2,), modes=())"
+],
+[
+"A",
+8,
+"Attack(attacker=50, target=-1)"
+],
+[
+"A",
+8,
+"Evolve(uid=60, super_=False, targets=(), modes=())"
+],
+[
+"A",
+8,
+"Attack(attacker=60, target=12)"
+],
+[
+"A",
+8,
+"EndTurn()"
+],
+[
+"B",
+9,
+"PlayCard(uid=31, targets=(), modes=())"
+],
+[
+"B",
+9,
+"PlayCard(uid=85, targets=(), modes=())"
+],
+[
+"B",
+9,
+"Evolve(uid=31, super_=False, targets=(), modes=())"
+],
+[
+"B",
+9,
+"Attack(attacker=31, target=60)"
+],
+[
+"B",
+9,
+"EndTurn()"
+],
+[
+"A",
+10,
+"Attack(attacker=50, target=85)"
+],
+[
+"A",
+10,
+"PlayCard(uid=52, targets=(), modes=())"
+],
+[
+"A",
+10,
+"PlayCard(uid=65, targets=(61,), modes=())"
+],
+[
+"A",
+10,
+"PlayCard(uid=75, targets=(), modes=())"
+],
+[
+"A",
+10,
+"PlayCard(uid=69, targets=(), modes=())"
+],
+[
+"A",
+10,
+"Evolve(uid=65, super_=False, targets=(), modes=())"
+],
+[
+"A",
+10,
+"EndTurn()"
+],
+[
+"B",
+11,
+"PlayCard(uid=21, targets=(), modes=())"
+],
+[
+"B",
+11,
+"Evolve(uid=21, super_=False, targets=(), modes=())"
+],
+[
+"B",
+11,
+"Attack(attacker=21, target=65)"
+],
+[
+"B",
+11,
+"EndTurn()"
+],
+[
+"A",
+12,
+"PlayCard(uid=80, targets=(21,), modes=())"
+],
+[
+"A",
+12,
+"UseBonusPP()"
+],
+[
+"A",
+12,
+"PlayCard(uid=47, targets=(), modes=())"
+],
+[
+"A",
+12,
+"PlayCard(uid=73, targets=(), modes=())"
+],
+[
+"A",
+12,
+"PlayCard(uid=88, targets=(), modes=())"
+],
+[
+"A",
+12,
+"Evolve(uid=80, super_=True, targets=(), modes=())"
+],
+[
+"A",
+12,
+"Attack(attacker=80, target=-1)"
+],
+[
+"A",
+12,
+"EndTurn()"
+],
+[
+"B",
+13,
+"PlayCard(uid=26, targets=(80,), modes=())"
+],
+[
+"B",
+13,
+"Evolve(uid=26, super_=True, targets=(), modes=())"
+],
+[
+"B",
+13,
+"Attack(attacker=26, target=88)"
+],
+[
+"B",
+13,
+"EndTurn()"
+],
+[
+"A",
+14,
+"PlayCard(uid=43, targets=(), modes=())"
+],
+[
+"A",
+14,
+"PlayCard(uid=83, targets=(), modes=())"
+],
+[
+"A",
+14,
+"PlayCard(uid=78, targets=(26,), modes=())"
+],
+[
+"A",
+14,
+"Attack(attacker=73, target=-1)"
+],
+[
+"A",
+14,
+"PlayCard(uid=74, targets=(), modes=())"
+],
+[
+"A",
+14,
+"EndTurn()"
+],
+[
+"B",
+15,
+"PlayCard(uid=5, targets=(), modes=())"
+],
+[
+"B",
+15,
+"PlayCard(uid=4, targets=(), modes=())"
+],
+[
+"B",
+15,
+"PlayCard(uid=86, targets=(), modes=())"
+],
+[
+"B",
+15,
+"PlayCard(uid=35, targets=(), modes=())"
+],
+[
+"B",
+15,
+"PlayCard(uid=18, targets=(43,), modes=())"
+],
+[
+"B",
+15,
+"Evolve(uid=35, super_=True, targets=(18,), modes=())"
+],
+[
+"B",
+15,
+"Attack(attacker=35, target=74)"
+],
+[
+"B",
+15,
+"Attack(attacker=18, target=73)"
+],
+[
+"B",
+15,
+"EndTurn()"
+],
+[
+"A",
+16,
+"PlayCard(uid=59, targets=(18,), modes=())"
+],
+[
+"A",
+16,
+"PlayCard(uid=77, targets=(), modes=())"
+],
+[
+"A",
+16,
+"Attack(attacker=83, target=-1)"
+],
+[
+"A",
+16,
+"Evolve(uid=59, super_=True, targets=(), modes=())"
+],
+[
+"A",
+16,
+"PlayCard(uid=53, targets=(), modes=())"
+],
+[
+"A",
+16,
+"PlayCard(uid=70, targets=(), modes=())"
+],
+[
+"A",
+16,
+"Attack(attacker=59, target=35)"
+],
+[
+"A",
+16,
+"EndTurn()"
+],
+[
+"B",
+17,
+"PlayCard(uid=6, targets=(), modes=())"
+],
+[
+"B",
+17,
+"PlayCard(uid=87, targets=(), modes=())"
+],
+[
+"B",
+17,
+"PlayCard(uid=25, targets=(59,), modes=())"
+],
+[
+"B",
+17,
+"Attack(attacker=25, target=53)"
+],
+[
+"B",
+17,
+"EndTurn()"
+],
+[
+"A",
+18,
+"PlayCard(uid=55, targets=(), modes=())"
+],
+[
+"A",
+18,
+"PlayCard(uid=68, targets=(25,), modes=())"
+],
+[
+"A",
+18,
+"Attack(attacker=68, target=-1)"
+],
+[
+"A",
+18,
+"Attack(attacker=70, target=-1)"
+],
+[
+"A",
+18,
+"Attack(attacker=77, target=-1)"
+]
+]
+}
+]
+}
