@@ -1,0 +1,2 @@
+/tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/btier/ramp/gate_abc.jsonl: 900 pairs, seeds 74900000..75300299, 52.2% ± 1.9% (50.3%..54.1%), CR +20 (+2..+39; steady-state +17); ms per searched decision A 112.21 / B 115.62 = 0.971
+pooled pair by pair (900 pairs, stratified bootstrap 4000): 52.2% (50.3%..54.1%), CR +20 (+3..+39; steady-state +17)
