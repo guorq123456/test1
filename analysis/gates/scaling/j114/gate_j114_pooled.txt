@@ -1,0 +1,2 @@
+analysis/gates/scaling/j114/gate_j114.jsonl: 300 pairs, seeds 72700000..72700299, 53.2% ± 3.6% (49.5%..56.8%), CR +30 (-4..+65; steady-state +25); ms per searched decision A 71.22 / B 70.85 = 1.005
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 53.2% (49.5%..56.7%), CR +30 (-5..+63; steady-state +25)
