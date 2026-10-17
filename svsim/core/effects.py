@@ -8,8 +8,12 @@ from __future__ import annotations
 
 from .carddef import CardDef
 from .enums import Keyword
+from operator import attrgetter
+
 from .script import (LISTEN_IN_DECK, LISTEN_IN_HAND, CardScript, Ctx, Grant, Trigger, prop,
-                     _EMPTY, script_for, scripts_of)
+                     _EMPTY, _SCRIPTS, script_for, scripts_of)
+
+_CARD_ID = attrgetter("defn.card_id")
 from .state import (BANISHED, DESTROYED, FIELD_LIMIT, HAND_LIMIT, LEADER_AREA_LIMIT, MAX_PP,
                     CardInstance, GameState, PlayerState, leader_of, leader_uid)
 
@@ -56,10 +60,15 @@ def emit(state: GameState, hook: str, player: int | None = None,
             continue
         p = state.players[side]
         for inst in p.leader_area + p.field:
-            if inst is not exclude:
-                enqueue(state, hook, inst, side, **choices)
+            if inst is exclude:
+                continue
+            if not inst.grants:                # enqueue's own first test, without the call: most cards lack the hook
+                own = _EMPTY if inst.silenced else _SCRIPTS.get(inst.defn.card_id, _EMPTY)
+                if getattr(own, hook, None) is None:
+                    continue
+            enqueue(state, hook, inst, side, **choices)
         # the deck only when a card in it listens (reading it first without copying shared cards: state.deck)
-        listening = bool(LISTEN_IN_DECK) and any(c.defn.card_id in LISTEN_IN_DECK for c in p.deck_view())
+        listening = bool(LISTEN_IN_DECK) and not LISTEN_IN_DECK.isdisjoint(map(_CARD_ID, p.deck_view()))
         for zone, cards, ids in (("hand", p.hand, LISTEN_IN_HAND),
                                  ("deck", p.deck if listening else (), LISTEN_IN_DECK)):
             if ids:
