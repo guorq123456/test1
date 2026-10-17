@@ -1002,10 +1002,16 @@ solved for the base time:
 - ramp-t: 23.9 ms + 0.434 ms per iteration (ft);
 - elf-t: 35.1 ms + 0.588 ms per iteration (ft).
 
+The chosen priors (the analysis line's O1, 31dd112: ft-t05 in both mirrors) were timed in a second run the same way
+(data/policy/puct-cost-*-t05.json). The machine was a little slower than in the first run; the ratios are the same:
+- ramp-t: base 73.2 ms, ft-t05 83.6 ms (×1.14), equal-wall N 98.0;
+- elf-t: base 85.9 ms, ft-t05 104.2 ms (×1.21), equal-wall N 76.8.
+
 **A note from the analysis line's check (31dd112).** search.xprune's cache (`XPrune.allowed`) is keyed by hand uids,
 which are unique within a game only, so one player object reused across games can hit another game's entry. A game
 (arena, the trainer's `start` / `resume`) always makes a new player. policy_offline.py used one player for a whole
 shard: 3 of ramp-t's 46781 decisions had another expansion order, 1 of them another first move. It now makes a new
-player each game. The "order" figures above are the earlier run's.
+player each game. The "order" figures above are the earlier run's. The cache itself is now emptied when a new game
+starts (cdc7b6f, the architecture thread 19:11Z; tests/test_xprune_games.py). A game's own calls are unchanged.
 
 Condition: the opponent's deck list is known (order and hand not).
