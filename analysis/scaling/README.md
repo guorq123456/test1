@@ -888,3 +888,87 @@ training shards, so it is not comparable across nets. Dead on the holdout: phi 4
 0 subnormal weights.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## A move prior, step 1: data, network, offline report (the architecture thread 11:37Z; the analysis line's lines 95dc772 / 42cec2a)
+
+learn/setpolicy.py. A decision is a searched main-phase decision of a self-play record with two distinct moves or
+more. Moves that are the same to the search (one `action_key`, such as two copies of a card in hand) share one
+child, and the record gives each of them its count. Here they are one move. The target is the root's visits over
+the distinct moves; `--tau 0.5` squares them before normalizing.
+
+The position is learn.tokens.encode of the player to act, run through the value net's trunk. A move is three parts:
+- its kind and its target's kind;
+- eight numbers (cost, play points after it, kills / dies / face for an attack, targets, mode, fused cards);
+- phi of the acting card's token and of its first target's token.
+
+No card id, no per-card score. Each mirror has four versions: fine-tuned (`ft`, the trunk starts from the value net
+and is fitted too) or frozen (`fz`, head only), at tau 1 or 0.5. Adam, lr 1e-3, l2 1e-5, batch 256, patience 4,
+`--ftz`. The validation part is the games with seed·100003 + g a multiple of 20, inside the training shards.
+
+- **elf-t:** 72800000 + 2k and 74100000 + 2k, k = 0–18 (38 shards; 72800038 and 74100038 are in neither); init
+  net-elft-gen3-29000.
+- **ramp-t:** 72300000 + 2k, k = 0–39 (gen4x); init net-gen4-59000. The holdout is 71600018.
+
+The fits ran in planned chunks (`--epochs 8 / 16 / …` from the checkpoint, which holds the RNG state; a resumed fit
+equals an unbroken one, tests/test_setpolicy.py), each under 2 h, until patience stopped them. Three runs were
+killed by the container's memory limit at load before any epoch of theirs was lost. The causes were the whole
+data kept next to its two parts, then the per-file parts next to their concatenation. Both are fixed: `Decisions.split`
+fills arrays allocated once, with the same arrays (test). No chunk hit the 2 h limit.
+
+| prior | file | epochs (best) | valid CE (its own tau) | fit s | sha256 |
+|---|---|---|---|---|---|
+| elf-t ft | models/prior-elft-ft.npz | 34 (30) | 1.44145 | 12316 | 973ffd83… |
+| elf-t fz | models/prior-elft-fz.npz | 31 (27) | 1.47905 | 5639 | c73d915c… |
+| elf-t ft τ0.5 | models/prior-elft-ft-t05.npz | 36 (32) | 1.27785 | 13902 | bc086c53… |
+| elf-t fz τ0.5 | models/prior-elft-fz-t05.npz | 37 (33) | 1.35753 | 7148 | 03f72b9a… |
+| ramp-t ft | models/prior-ramp-ft.npz | 43 (39) | 1.27435 | 9382 | ebb209a5… |
+| ramp-t fz | models/prior-ramp-fz.npz | 37 (33) | 1.33356 | 4274 | 8b5f4fdd… |
+| ramp-t ft τ0.5 | models/prior-ramp-ft-t05.npz | 38 (35) | 1.09904 | 8639 | 23708146… |
+| ramp-t fz τ0.5 | models/prior-ramp-fz-t05.npz | 39 (36) | 1.19230 | 5068 | db963849… |
+
+Training: elf-t 1331969 decisions (valid 70993); ramp-t 889226 (valid 46477). Full sha256 in data/policy/SHA256SUMS.
+
+**Offline report** (analysis/scaling/policy_offline.py; data/policy/offline-*.json; per-decision rows in
+data/policy/dump-*.jsonl.gz). The figures:
+- top1: the method's first move is a most-visited move (first in legal order on a tie of the prior);
+- top2: the visits of its first two;
+- KL: KL(π ‖ q) against the recorded visits at tau 1 for every version. The tau-0.5 versions were fitted to a
+  sharper target, so a higher KL is by construction.
+- end: whether "end the turn" is first, against whether it is the search's most-visited move. Ending is legal at
+  every decision.
+
+"order" is the search's expansion order now (`_options` without a prior, the recorded player); "uniform" is the
+expected value of a random order. The analysis line's D8: the recorded player searching the same position again
+with other seeds agrees on its first move 91.7% (ramp-t) / 86.3% (elf-t).
+
+elf-t, gen-3 holdout 74100038 (500 games, 36399 decisions; 9183 turn-first):
+
+| method | top1 | top2 | KL | end | top1 first / rest | KL first / rest |
+|---|---|---|---|---|---|---|
+| uniform | 0.2645 | 0.4645 | 0.2297 | 0.7540 | 0.1892 / 0.2900 | 0.1940 / 0.2418 |
+| order | 0.4219 | 0.5364 | | 0.9289 | 0.3163 / 0.4575 | |
+| ft | 0.6678 | 0.6197 | 0.0646 | 0.9718 | 0.6311 / 0.6802 | 0.0625 / 0.0653 |
+| fz | 0.6085 | 0.6014 | 0.1025 | 0.9513 | 0.5931 / 0.6137 | 0.0830 / 0.1091 |
+| ft τ0.5 | 0.6690 | 0.6193 | 0.1211 | 0.9727 | 0.6329 / 0.6812 | 0.1195 / 0.1216 |
+| fz τ0.5 | 0.6142 | 0.6025 | 0.1313 | 0.9537 | 0.6033 / 0.6179 | 0.1268 / 0.1328 |
+
+ramp-t, holdout 71600018 (1000 games, 46781 decisions; 17132 turn-first). "old" is learn/policies/ramp-ramp.npz:
+the old Ramp mirror, card one-hot over 17 cards, 14 of this data's 18. Its probabilities are added per key.
+
+| method | top1 | top2 | KL | end | top1 first / rest | KL first / rest |
+|---|---|---|---|---|---|---|
+| uniform | 0.2956 | 0.5257 | 0.3368 | 0.7210 | 0.2195 / 0.3395 | 0.3666 / 0.3195 |
+| order | 0.4447 | 0.6128 | | 0.8822 | 0.3701 / 0.4878 | |
+| old | 0.5148 | 0.6304 | 0.2288 | 0.8878 | 0.4389 / 0.5587 | 0.2761 / 0.2014 |
+| ft | 0.7360 | 0.6916 | 0.0695 | 0.9654 | 0.6697 / 0.7743 | 0.0989 / 0.0525 |
+| fz | 0.6839 | 0.6785 | 0.1289 | 0.9437 | 0.6229 / 0.7191 | 0.1630 / 0.1092 |
+| ft τ0.5 | 0.7474 | 0.6922 | 0.1383 | 0.9677 | 0.6867 / 0.7825 | 0.1760 / 0.1164 |
+| fz τ0.5 | 0.6956 | 0.6791 | 0.1653 | 0.9485 | 0.6323 / 0.7322 | 0.2106 / 0.1392 |
+
+elf-t gen-2 holdout 72800038 (reported only; played by net-elft-10000's player, 37284 decisions): ft 0.6634 /
+fz 0.5964 / ft τ0.5 0.6654 / fz τ0.5 0.6051 top1, against order 0.4076 and uniform 0.2680.
+
+The pass or fail of each version is the analysis line's (its registered lines). This report only gives the
+numbers. Offline agreement is not strength: whether a prior helps is the gate's question, with its cost counted.
+
+Condition: the opponent's deck list is known (order and hand not).

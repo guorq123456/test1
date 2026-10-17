@@ -1,0 +1,200 @@
+{
+ "records": "rec-72800038.jsonl.gz",
+ "games": 500,
+ "spec": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-elft-10000.npz+neteot",
+ "priors": {
+  "ft": "/tmp/claude-0/-home-user-test1/4558b0d4-7d84-547b-a46c-c361326f3747/scratchpad/scale/pol-elft/prior-ft.npz",
+  "fz": "/tmp/claude-0/-home-user-test1/4558b0d4-7d84-547b-a46c-c361326f3747/scratchpad/scale/pol-elft/prior-fz.npz",
+  "ft-t05": "/tmp/claude-0/-home-user-test1/4558b0d4-7d84-547b-a46c-c361326f3747/scratchpad/scale/pol-elft/prior-ft-t05.npz",
+  "fz-t05": "/tmp/claude-0/-home-user-test1/4558b0d4-7d84-547b-a46c-c361326f3747/scratchpad/scale/pol-elft/prior-fz-t05.npz"
+ },
+ "old": null,
+ "methods": {
+  "uniform": {
+   "all": {
+    "decisions": 37284,
+    "top1": 0.268,
+    "top2": 0.4713,
+    "ce": 1.5994,
+    "kl": 0.218,
+    "end_decisions": 37284,
+    "end_agree": 0.7535,
+    "search_ends": 0.0662
+   },
+   "first": {
+    "decisions": 9419,
+    "top1": 0.1882,
+    "top2": 0.3129,
+    "ce": 1.9853,
+    "kl": 0.1876,
+    "end_decisions": 9419,
+    "end_agree": 0.836,
+    "search_ends": 0.0303
+   },
+   "rest": {
+    "decisions": 27865,
+    "top1": 0.295,
+    "top2": 0.5249,
+    "ce": 1.4689,
+    "kl": 0.2283,
+    "end_decisions": 27865,
+    "end_agree": 0.7256,
+    "search_ends": 0.0784
+   }
+  },
+  "order": {
+   "all": {
+    "decisions": 37284,
+    "top1": 0.4076,
+    "top2": 0.5411,
+    "end_decisions": 37284,
+    "end_agree": 0.9338,
+    "search_ends": 0.0662
+   },
+   "first": {
+    "decisions": 9419,
+    "top1": 0.2981,
+    "top2": 0.3651,
+    "end_decisions": 9419,
+    "end_agree": 0.9697,
+    "search_ends": 0.0303
+   },
+   "rest": {
+    "decisions": 27865,
+    "top1": 0.4446,
+    "top2": 0.6006,
+    "end_decisions": 27865,
+    "end_agree": 0.9216,
+    "search_ends": 0.0784
+   }
+  },
+  "ft": {
+   "all": {
+    "decisions": 37284,
+    "top1": 0.6634,
+    "top2": 0.6213,
+    "ce": 1.4402,
+    "kl": 0.0588,
+    "end_decisions": 37284,
+    "end_agree": 0.9694,
+    "search_ends": 0.0662
+   },
+   "first": {
+    "decisions": 9419,
+    "top1": 0.6259,
+    "top2": 0.4568,
+    "ce": 1.8556,
+    "kl": 0.058,
+    "end_decisions": 9419,
+    "end_agree": 0.9861,
+    "search_ends": 0.0303
+   },
+   "rest": {
+    "decisions": 27865,
+    "top1": 0.6761,
+    "top2": 0.6769,
+    "ce": 1.2997,
+    "kl": 0.0591,
+    "end_decisions": 27865,
+    "end_agree": 0.9638,
+    "search_ends": 0.0784
+   }
+  },
+  "fz": {
+   "all": {
+    "decisions": 37284,
+    "top1": 0.5964,
+    "top2": 0.6037,
+    "ce": 1.477,
+    "kl": 0.0956,
+    "end_decisions": 37284,
+    "end_agree": 0.9529,
+    "search_ends": 0.0662
+   },
+   "first": {
+    "decisions": 9419,
+    "top1": 0.5883,
+    "top2": 0.4475,
+    "ce": 1.8783,
+    "kl": 0.0807,
+    "end_decisions": 9419,
+    "end_agree": 0.9859,
+    "search_ends": 0.0303
+   },
+   "rest": {
+    "decisions": 27865,
+    "top1": 0.5992,
+    "top2": 0.6565,
+    "ce": 1.3413,
+    "kl": 0.1006,
+    "end_decisions": 27865,
+    "end_agree": 0.9418,
+    "search_ends": 0.0784
+   }
+  },
+  "ft-t05": {
+   "all": {
+    "decisions": 37284,
+    "top1": 0.6654,
+    "top2": 0.6212,
+    "ce": 1.5017,
+    "kl": 0.1203,
+    "end_decisions": 37284,
+    "end_agree": 0.9706,
+    "search_ends": 0.0662
+   },
+   "first": {
+    "decisions": 9419,
+    "top1": 0.6231,
+    "top2": 0.4574,
+    "ce": 1.9154,
+    "kl": 0.1178,
+    "end_decisions": 9419,
+    "end_agree": 0.9855,
+    "search_ends": 0.0303
+   },
+   "rest": {
+    "decisions": 27865,
+    "top1": 0.6797,
+    "top2": 0.6765,
+    "ce": 1.3619,
+    "kl": 0.1212,
+    "end_decisions": 27865,
+    "end_agree": 0.9656,
+    "search_ends": 0.0784
+   }
+  },
+  "fz-t05": {
+   "all": {
+    "decisions": 37284,
+    "top1": 0.6051,
+    "top2": 0.6044,
+    "ce": 1.5098,
+    "kl": 0.1285,
+    "end_decisions": 37284,
+    "end_agree": 0.9549,
+    "search_ends": 0.0662
+   },
+   "first": {
+    "decisions": 9419,
+    "top1": 0.5917,
+    "top2": 0.4488,
+    "ce": 1.9265,
+    "kl": 0.1289,
+    "end_decisions": 9419,
+    "end_agree": 0.9858,
+    "search_ends": 0.0303
+   },
+   "rest": {
+    "decisions": 27865,
+    "top1": 0.6096,
+    "top2": 0.657,
+    "ce": 1.369,
+    "kl": 0.1283,
+    "end_decisions": 27865,
+    "end_agree": 0.9444,
+    "search_ends": 0.0784
+   }
+  }
+ }
+}
