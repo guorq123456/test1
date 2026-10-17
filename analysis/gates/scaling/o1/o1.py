@@ -32,12 +32,22 @@ def _init(priors, old):
 def _run_games(job):
     import d8
     from svsim.search.mcts import _locator, action_key
+    from svsim.learn.netdata import _search
+    from svsim.tools.arena import make_agent
     path, gs = job
     recs = {r["g"]: r for r in d8._load(path) if r["g"] in gs}
-    out = []
+    out, searches = [], {}
     for g in sorted(recs):
+        spec = d8._spec(recs[g])
+        if spec not in searches:
+            searches[spec] = _search(make_agent(spec, 0))
         for i, state, legal, keys, key_of, kv, start, end, bad, n_legal in d8._decisions(recs[g]):
-            row = {"g": g, "i": i, "raw": {}}
+            firsts = [key_of.index(k) for k in range(len(keys))]
+            pos = {k: n for n, k in enumerate(keys)}
+            order = [pos[k] for k in searches[spec]._options(state, state.active, None) if k in pos]
+            order += [k for k in range(len(keys)) if k not in order]
+            row = {"g": g, "i": i, "raw": {}, "start": bool(start), "visits_raw": list(recs[g]["search"][i]["visits"]),
+                   "order_legal": [firsts[k] for k in order]}
             for name, pol in _P.items():
                 pr = np.asarray(pol.priors(state, legal), float)
                 q = np.zeros(len(keys))
@@ -69,6 +79,8 @@ def run_main(args):
         arrays[n] = np.concatenate([r[n] for r in rows])
         arrays["raw_" + n] = np.concatenate([r["raw"][n] for r in rows])
     np.savez(args.out, names=np.array(names), **arrays)
+    json.dump([{"g": r["g"], "i": r["i"], "start": r["start"], "visits": r["visits_raw"], "order": r["order_legal"]}
+               for r in rows], gzip.open(args.out.replace(".npz", "-meta.json.gz"), "wt"))
     print(len(rows), "decisions,", names)
 
 
@@ -157,7 +169,7 @@ def _auc(scores, labels):
 
 def read_main(args):
     scan = json.load(open(args.scan))["rows"]
-    z = np.load(args.probs)
+    z = dict(np.load(args.probs))
     names = [str(x) for x in z["names"]]
     koff = z["koff"]
     P = {m: [z[m][koff[n]:koff[n + 1]] for n in range(len(scan))] for m in names}
@@ -219,7 +231,7 @@ def read_main(args):
         pool = sorted(pool, key=lambda m: verdict[m]["own_kl"])
         choice = pool[0]
         if len(pool) > 1 and verdict[pool[1]]["own_kl"] - verdict[pool[0]]["own_kl"] < 0.005:
-            frozen = [m for m in pool[:2] if "frozen" in m or "freeze" in m]
+            frozen = [m for m in pool[:2] if m.startswith("fz")]
             choice = frozen[0] if frozen else pool[0]
     res["choice"] = choice
     # cross-check against the builder's dump (per legal move, as recorded; names mapped by --dump-map DUMP=MINE)
