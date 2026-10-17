@@ -131,7 +131,7 @@ def main() -> None:
                     first = [group.index(j) for j in range(n)]
                     dump.write(json.dumps({"seed": int(rec["seed"]) // 100003, "g": rec["g"], "i": i,
                                            "start": bool(start), "visits": rec["search"][i]["visits"],
-                                           "priors": {k: [round(float(x), 6) for x in v] for k, v in raw.items()},
+                                           "priors": {k: [float(x) for x in v] for k, v in raw.items()},
                                            "order": [first[j] for j in order]}) + "\n")
                 for name, q in dists.items():
                     o = np.argsort(-q, kind="stable")
