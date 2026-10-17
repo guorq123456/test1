@@ -5,7 +5,8 @@ elft-10000, 56.2%), and the analysis line registered the seeds. The player is
 `mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-elft-gen2-19500.npz+neteot`
 (net-elft-gen2-19500, sha256 e244c577…) on both sides, elf-t vs elf-t, code d884a3c, played in a d884a3c worktree.
 
-The analysis line plays k = 0–9; the builder line plays k = 10–19. **k = 19 (74100038) is the gen-3 self-play
+The analysis line plays k = 0–7; the builder line plays k = 8–19 (k = 8, 9 were moved to the builder line by the
+analysis line's re-split, 804388d). **k = 19 (74100038) is the gen-3 self-play
 holdout and goes into no training.** This file and SHA256SUMS are kept by the builder line; the analysis line's shards go
 into rec/ with their checksums in its own README section, and SHA256SUMS is regenerated over all 20 files at the merge. Before each batch was started, the analysis line's branch was checked to make
 sure it had not pushed those shards.
@@ -21,8 +22,9 @@ sure it had not pushed those shards.
 | 16 | 74100032 | 500 (g 0–499) | builder line |
 | 17 | 74100034 | 500 (g 0–499) | builder line |
 | 18 | 74100036 | 500 (g 0–499) | builder line |
+| **19** | **74100038** | 500 (g 0–499) | builder line; **holdout** |
 
 Each shard was checked: g 0–499 each once, deal seed s×100003 + g, agent seeds s×1000 + 2g + i, no draw, explore 0,
-one player string, elf-t on both sides. The first player won 65.8% / 61.2% / 66.6% / 68.4% / 66.8% / 65.2% / 67.2% / 68.0% / 63.8% of the games (k = 10–18).
+one player string, elf-t on both sides. The first player won 65.8% / 61.2% / 66.6% / 68.4% / 66.8% / 65.2% / 67.2% / 68.0% / 63.8% of the games (k = 10–18); 61.2% in the holdout k = 19.
 
 Condition: the opponent's deck list is known (order and hand not).
