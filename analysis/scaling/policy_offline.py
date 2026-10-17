@@ -91,7 +91,6 @@ def main() -> None:
     from svsim.learn.policy import PolicyNet
     from svsim.search.mcts import _locator, action_key
     from svsim.tools.arena import make_agent
-    search = _search(make_agent(args.spec, 0))
     priors = {name: SP.SetPolicy.load(path) for name, path in (p.split("=", 1) for p in args.prior)}
     old = PolicyNet.load(Path(args.old)) if args.old else None
     methods = ["uniform", "order"] + (["old"] if old else []) + list(priors)
@@ -104,6 +103,8 @@ def main() -> None:
                 continue
             rec = json.loads(line)
             games += 1
+            search = _search(make_agent(args.spec, 0))     # a new player each game: search.xprune's cache is
+                                                           # keyed by uids, unique within a game only
             for i, state, legal, reps, group, pi, start in SP.decisions(rec):
                 me, n = state.active, len(reps)
                 where = _locator(state, me)

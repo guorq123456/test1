@@ -972,3 +972,40 @@ The pass or fail of each version is the analysis line's (its registered lines). 
 numbers. Offline agreement is not strength: whether a prior helps is the gate's question, with its cost counted.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## B: PUCT at every node (search.mcts `puct`, agent option `+puct=PATH[:C[:T]]`; the architecture thread 18:59Z)
+
+A node picks its move by Q + c_puct · P · √(node visits) / (1 + move visits). This replaces UCB1's exploration
+term; no move is forced to be tried first. An unvisited move scores Q = the node's value − 0.1, and a node not yet
+visited counts as 0.5.
+
+P is the prior (learn.setpolicy) over the node's open moves, one per action key, sharpened by 1 / T. It is computed
+once, the first time a move is picked at the node, and kept on the node. A move open in some determinizations only,
+with no entry, gets 1 / (open moves). PUCT and the root prior (+prior / +mimic) can't be combined.
+
+Off, the search is unchanged: tests/test_golden_search.py replays bit for bit, and the whole suite passes. Tests
+(tests/test_puct.py) check four things: one prior per node over its open moves; a peaked prior takes the visits
+and leaves moves untried; the spec option; the temperature.
+
+**Cost** (analysis/scaling/puct_cost.py; data/policy/puct-cost-*.json). It runs on recorded positions, so no game
+is played and no seed is drawn: the holdouts' first games, the searched decisions only. Each spec gets a fresh
+player per position, and the specs take turns. Each spec is the candidate with `+puct=prior-<mirror>-<ft|fz>.npz:1`.
+The prior's trunk is its own (from gen4-59000 / elft-gen3-29000), not the candidate's net.
+
+| mirror | candidate | decisions | base ms | ft ms (×) | fz ms (×) | equal-wall N, ft / fz |
+|---|---|---|---|---|---|---|
+| ramp-t | gen3-30000 N 120 | 248 | 65.9 | 76.0 (1.15) | 75.6 (1.15) | 96.9 / 96.5 |
+| elf-t | elft-gen2-19500 N 105 | 310 | 79.2 | 96.8 (1.22) | 96.7 (1.22) | 74.9 / 75.6 |
+
+The equal-wall N comes from a line through the PUCT spec's times at N 120 and 72 (ramp-t) / 105 and 63 (elf-t),
+solved for the base time:
+- ramp-t: 23.9 ms + 0.434 ms per iteration (ft);
+- elf-t: 35.1 ms + 0.588 ms per iteration (ft).
+
+**A note from the analysis line's check (31dd112).** search.xprune's cache (`XPrune.allowed`) is keyed by hand uids,
+which are unique within a game only, so one player object reused across games can hit another game's entry. A game
+(arena, the trainer's `start` / `resume`) always makes a new player. policy_offline.py used one player for a whole
+shard: 3 of ramp-t's 46781 decisions had another expansion order, 1 of them another first move. It now makes a new
+player each game. The "order" figures above are the earlier run's.
+
+Condition: the opponent's deck list is known (order and hand not).
