@@ -17,6 +17,10 @@ Figures, over all decisions and split into the turn's first decision / the rest:
 - end: over decisions where ending the turn is a move, how often the method's first move is "end" exactly when the
   search's most-visited move is (and how often the search's is).
 
+With --dump, a jsonl.gz row per decision: seed, g, i (the action's index), start, visits (per legal move, as
+recorded), priors (each method's probability per legal move, legal_actions order) and order (the expansion order
+as legal-move indices, one per action key: the first legal move with that key).
+
     python analysis/scaling/policy_offline.py --records REC --spec SPEC --prior NAME=PATH ... [--old PATH] --out OUT
 """
 from __future__ import annotations
@@ -80,6 +84,7 @@ def main() -> None:
     ap.add_argument("--old", default=None, help="learn.policy PolicyNet file (the old head)")
     ap.add_argument("--games", type=int, default=0, help="only the first N games (0: all)")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--dump", default=None, help="a jsonl.gz with one row per decision (the analysis line's recheck)")
     args = ap.parse_args()
     from svsim.core.actions import EndTurn
     from svsim.learn.netdata import _search
@@ -92,6 +97,7 @@ def main() -> None:
     methods = ["uniform", "order"] + (["old"] if old else []) + list(priors)
     acc = {m: {part: _Acc() for part in ("all", "first", "rest")} for m in methods}
     games = 0
+    dump = gzip.open(args.dump, "wt") if args.dump else None
     with gzip.open(args.records, "rt") as fh:
         for line in fh:
             if not line.strip():
@@ -114,17 +120,27 @@ def main() -> None:
                 order += [j for j in range(n) if j not in order]
                 for part in parts:
                     acc["order"][part].add(pi, np.asarray(order), None, end)
-                dists = {}
+                dists, raw = {}, {}
                 if old is not None:
-                    dists["old"] = _per_move(old.priors(state, legal), group, n)
+                    raw["old"] = old.priors(state, legal)
                 for name, pol in priors.items():
-                    dists[name] = _per_move(pol.priors(state, legal), group, n)
+                    raw[name] = pol.priors(state, legal)
+                for name, pr in raw.items():
+                    dists[name] = _per_move(pr, group, n)
+                if dump is not None:                  # per legal move, as recorded; order: legal indices, one a key
+                    first = [group.index(j) for j in range(n)]
+                    dump.write(json.dumps({"seed": int(rec["seed"]) // 100003, "g": rec["g"], "i": i,
+                                           "start": bool(start), "visits": rec["search"][i]["visits"],
+                                           "priors": {k: [round(float(x), 6) for x in v] for k, v in raw.items()},
+                                           "order": [first[j] for j in order]}) + "\n")
                 for name, q in dists.items():
                     o = np.argsort(-q, kind="stable")
                     for part in parts:
                         acc[name][part].add(pi, o, q, end)
             if args.games and games >= args.games:
                 break
+    if dump is not None:
+        dump.close()
     report = {"records": Path(args.records).name, "games": games, "spec": args.spec,
               "priors": {name: str(path) for name, path in (p.split("=", 1) for p in args.prior)},
               "old": args.old,
