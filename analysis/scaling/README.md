@@ -1007,6 +1007,11 @@ The chosen priors (the analysis line's O1, 31dd112: ft-t05 in both mirrors) were
 - ramp-t: base 73.2 ms, ft-t05 83.6 ms (×1.14), equal-wall N 98.0;
 - elf-t: base 85.9 ms, ft-t05 104.2 ms (×1.21), equal-wall N 76.8.
 
+**Read by the gates (the analysis line's a07ba82).** The gates ran at c_puct 2. That costs more per iteration than
+the c_puct 1 measured here: at N 97 / 75 the analysis line's 20-pair check found ms ratios of 1.103 / 1.055, and
+the gates used N 88 (ramp-t) / 71 (elf-t). Time a PUCT spec at the c_puct it will play with. The gates' results
+are the analysis line's.
+
 **A note from the analysis line's check (31dd112).** search.xprune's cache (`XPrune.allowed`) is keyed by hand uids,
 which are unique within a game only, so one player object reused across games can hit another game's entry. A game
 (arena, the trainer's `start` / `resume`) always makes a new player. policy_offline.py used one player for a whole
