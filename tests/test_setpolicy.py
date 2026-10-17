@@ -186,3 +186,14 @@ def test_tau_half_squares_the_visits_per_decision(shard):
     same = SP.Decisions([shard / "dec-74100038.npz"], shard / "cards.npz")
     same.sharpen(1.0)
     assert np.array_equal(same.pi, before.astype(np.float32))
+
+
+def test_split_file_by_file_equals_the_mask_on_the_whole(shard):
+    whole = SP.Decisions([shard / "dec-74100038.npz"] * 2, shard / "cards.npz")
+    v = whole.games() % 3 == 0
+    train, valid = SP.Decisions.split([shard / "dec-74100038.npz"] * 2, shard / "cards.npz", every=3)
+    for got, want in ((train, whole.subset(~v)), (valid, whole.subset(v))):
+        for k in ("tokens", "cards", "globals", "offsets", "moff", "kind", "tkind", "src", "tgt", "extras", "pi",
+                  "seed", "g", "step"):
+            assert np.array_equal(getattr(got, k), getattr(want, k)), k
+    assert train.n + valid.n == whole.n and valid.n > 0

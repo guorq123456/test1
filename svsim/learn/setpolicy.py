@@ -266,6 +266,38 @@ class Decisions:
     def games(self) -> np.ndarray:
         return self.seed.astype(np.int64) * 100003 + self.g.astype(np.int64)
 
+    @classmethod
+    def split(cls, files, cards_npz, every: int = 20) -> tuple["Decisions", "Decisions"]:
+        """(training part, validation part: the games whose key seed * 100003 + g is a multiple of `every`), read
+        one file at a time, so the whole data is never in memory next to its two parts."""
+        train, valid = [], []
+        for f in files:
+            d = cls([f], cards_npz)
+            v = d.games() % every == 0
+            train.append(d.subset(~v))
+            valid.append(d.subset(v))
+            del d
+        return cls.concat(train), cls.concat(valid)
+
+    @classmethod
+    def concat(cls, parts: list) -> "Decisions":
+        out = object.__new__(cls)
+        out.card_ids, out.static = parts[0].card_ids, parts[0].static
+        out.tokens = np.concatenate([d.tokens for d in parts])
+        out.cards = np.concatenate([d.cards for d in parts])
+        out.globals = np.concatenate([d.globals for d in parts])
+        o, mo, base, mbase = [np.zeros(1, np.int64)], [np.zeros(1, np.int64)], 0, 0
+        for d in parts:
+            o.append(d.offsets[1:] + base)
+            mo.append(d.moff[1:] + mbase)
+            base += int(d.offsets[-1])
+            mbase += int(d.moff[-1])
+        out.offsets, out.moff = np.concatenate(o), np.concatenate(mo)
+        for k in ("kind", "tkind", "src", "tgt", "extras", "pi", "seed", "g", "step", "turn", "start", "n_legal"):
+            setattr(out, k, np.concatenate([getattr(d, k) for d in parts]))
+        out.n = len(out.offsets) - 1
+        return out
+
     def sharpen(self, tau: float) -> None:
         """Targets pi ** (1 / tau), normalized per decision (tau = 0.5: visits squared; tau = 1 leaves them)."""
         if tau == 1.0:
@@ -586,12 +618,10 @@ def fit_main(args) -> None:
     from svsim.learn.setnet import SetNet
     folder = Path(args.data)
     files = [folder / f"dec-{s}.npz" for s in args.shards]
-    data = Decisions(files, args.cards)
-    data.sharpen(args.tau)
-    valid_mask = data.games() % 20 == 0
-    train, valid = data.subset(~valid_mask), data.subset(valid_mask)
-    card_ids, static = data.card_ids, data.static
-    del data                                                 # the two parts are copies: free the whole
+    train, valid = Decisions.split(files, args.cards)
+    train.sharpen(args.tau)
+    valid.sharpen(args.tau)
+    card_ids, static = train.card_ids, train.static
     net = SetNet.load(args.init)
     pol = SetPolicy.from_value_net(net, head=args.head, seed=args.seed,
                                    info={"init": str(args.init), "freeze": args.freeze, "tau": args.tau, "shards": args.shards,
