@@ -1,0 +1,2 @@
+analysis/gates/scaling/j126/gate_j126.jsonl: 300 pairs, seeds 74300000..74300299, 53.3% ± 2.9% (50.4%..56.2%), CR +32 (+4..+59; steady-state +27); ms per searched decision A 62.56 / B 63.07 = 0.992
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 53.3% (50.5%..56.3%), CR +32 (+5..+60; steady-state +27)
