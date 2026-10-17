@@ -853,3 +853,38 @@ keeps about 1.2–2% of the screen's time. Near and unscreened results were iden
 (probability, line, sure, nodes, complete).
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## net-elft-gen3-29000: the elf-t mirror's third generation (registered by the analysis line, 8a1cf5e; J129 / J130)
+
+The data is the elf-t mirror's 10⁴ games (71900000 + 2k, k = 0–9, v2skx), its gen-2 self-play k = 0–18 (72800000,
+data/elf-t2) and its gen-3 self-play k = 0–18 (74100000 + 2k, 500 games each, net-elft-gen2-19500 + neteot;
+data/elf-t3). Gen-2 k = 19 (72800038) and gen-3 k = 19 (74100038) are held out. SIZES has 29000 for sp-29000 (self-play
+only), so `--base-shards 10` (dab8ce4; default SIZES[size], every earlier command unchanged) takes the 10 v2skx shards.
+Inputs v1, ReLU 64-64 / 128-64, `--ftz`, patience 4:
+
+    python analysis/scaling/train.py --deck elf-t --opponent elf-t --base 71900000 --holdout-base 72000000 \
+        net --size 29000 --base-shards 10 --name elft-gen3 --add 72800000:19 --add 74100000:19 --ftz \
+        --tokens TOK-ELFT --checkpoint CKPT --extra-holdout selfplay:72800038 --extra-holdout selfplay3:74100038
+
+The fit took 17 epochs and 1664 s (best epoch 13). The two earlier nets were scored on the gen-3 holdout with
+`holdout-net ... --extra-holdout selfplay3:74100038`; their other numbers are unchanged.
+
+| net | epochs | valid Brier | elf-t holdout Brier (88311) | gen-2 self-play holdout (9361) | gen-3 self-play holdout (9128) |
+|---|---|---|---|---|---|
+| installed elf-t linear | | | 0.20834 | 0.20518 | 0.20395 |
+| net-elft-10000 | 16 | 0.18441 | 0.19086 | 0.19310 | 0.18431 |
+| net-elft-gen2-19500 | 17 | 0.18502 | 0.19088 | 0.18415 | 0.17837 |
+| **net-elft-gen3-29000** | 17 | 0.17901 | **0.18803** | **0.18125** | **0.17319** |
+
+The model is models/net-elft-gen3-29000.npz (sha256
+2102bd023c65ba7cdb612f9be69cf1305e64645afcccbd835b77996c1691ebac); the report is data/net-elft-gen3-29000.json. The
+per-position holdout probabilities are data/holdout-net-elft-gen3-29000.npz (elf-t, 72000000:5),
+data/holdout-selfplay-net-elft-gen3-29000.npz (72800038) and data/holdout-selfplay3-net-elft-gen3-29000.npz
+(74100038).
+
+Unlike gen 2, gen 3 also improves the v2skx-played holdout (−0.0029 against both earlier nets). On the positions its
+own player reaches it is 0.0052 below gen 2; on gen 2's positions, 0.0029 below. The valid set is drawn from the
+training shards, so it is not comparable across nets. Dead on the holdout: phi 4 / 25 of 64, rho 87 of 128 / 21 of 64;
+0 subnormal weights.
+
+Condition: the opponent's deck list is known (order and hand not).
