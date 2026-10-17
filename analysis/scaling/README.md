@@ -1341,3 +1341,15 @@ J92 的 40% 里混着两样东西：网络比现装评估慢（N 从 200 降到 
     - 不足 200 个点就依次加下一片（72300002 / 72800002 …）。找到的点全用，不抽样。
   - **convert**（裸搜索 `mcts-raw` 把这回合下完，跳费龙 160 次、连击妖 140 次）：每个点都用同样 3 个选手种子。跳费龙 **73910000、73910001、73910002**，连击妖 **73960000、73960001、73960002**。
   - 建造线冒烟（临时种子，不算数据）：连击妖 1 局 split 里 screen 占 22.4%；跳费龙 8 局找到 7 个点（规划器 6、near 1）。
+- **D6 最终定法**（10-17 06:4xZ，建造线脚本 d9b8fdb，在任何 D6 对局之前；**取代上一条 a9c5ed4**，回到 92c3292 的种子方案。两条消息交错，a9c5ed4 是照旧脚本 246bbf1 改的）：
+  - **points**：
+    - 跳费龙扫 71600018（第 4 代 k = 9，选手和 gen4x 一样是 gen3 + eot）加 `data/gen4x/rec/` 全部 40 片；连击妖扫 `data/elf-t2/rec/` 全部 20 片。
+    - 顺序：文件按起始种子升序，局按 g，决策按动作序号。每个（回合, 行动方）只取第一个点。
+    - 成立条件：记录里 search 为 None；用记录自己的选手串重建 LethalAgent，先 `_planned` 后 `search.solve`，得到 sure；斩杀线第一步经 `combo.listed` 映射后和记录的那一步 repr 相同。不同的另记 not_the_recorded_move，不算点。
+    - 分块：planner / full（预算 = max_nodes）/ near（= near[0]）/ screen。
+    - 收齐后超过 200 个，就用 `random.Random(73900000).sample(range(总数), 200)` 取下标，排序后按原顺序保留，第 j 个点 j 从 0 起。
+  - **convert**：第 j 个点第 r 个种子 = `--seed-base` + 3j + r（r = 0～2）。跳费龙 base **73900000**，连击妖 base **73950000**。
+    - 裸搜索串：跳费龙 `mcts-raw:160+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-gen3-30000.npz+neteot`，连击妖 `mcts-raw:140+…+setnet=analysis/scaling/models/net-elft-10000.npz+neteot`。
+    - 从这个点把当前回合下完，最多 60 步，记这回合结束前行动方有没有赢。
+  - **split**：跳费龙 netdata 种子 **74000000**，连击妖 **74000002**，各 20 局，空机器上计时。
+  - 73910000～002、73960000～002 两组 convert 种子作废，不再分给别的用途。
