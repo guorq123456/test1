@@ -21,7 +21,8 @@ MIRROR is ramp (net-gen3-30000, mcts:120) or elft (net-elft-10000, mcts:105): th
    `convert` plays the rest of that turn from each point with the bare tree search (mcts-raw: the same evaluation
    and net, no lethal agent) at the iterations the lethal agent's time buys (ramp 160 = 120 / 0.75, elft 140), once per
    agent seed, and records whether the turn's player won before the turn ended. Point j's agent seeds are
-   --seed-base + 3j + r, r = 0..2 (registered: ramp 73900000, elft 73950000).
+   --seed-base + 3j + r, r = 0..2 (92c3292), or the same three --seeds at every point (a9c5ed4, which supersedes it:
+   ramp 73910000-02, elft 73960000-02; points with --fill: shard by shard from the first until 200, all used).
 """
 from __future__ import annotations
 
@@ -169,12 +170,21 @@ def points_main(args) -> None:
     import random
     from multiprocessing import Pool
     files = sorted(args.records, key=_first_seed)
-    with Pool(args.workers) as pool:
-        scans = pool.map(_scan, files)                   # in file order
+    if args.fill:                                        # a9c5ed4: shard by shard until --want points, all used
+        scans, used = [], []
+        for f in files:
+            scans.append(_scan(f))
+            used.append(f)
+            if sum(len(x[0]) for x in scans) >= args.want:
+                break
+        files = used
+    else:
+        with Pool(args.workers) as pool:
+            scans = pool.map(_scan, files)               # in file order
     every = [p for pts, _, _ in scans for p in pts]
     games = sum(n for _, n, _ in scans)
     misplayed = sum(m for _, _, m in scans)
-    if args.want and len(every) > args.want:
+    if args.want and len(every) > args.want and not args.fill:
         keep = sorted(random.Random(73900000).sample(range(len(every)), args.want))
         chosen = [every[k] for k in keep]
     else:
@@ -217,7 +227,7 @@ def convert_main(args) -> None:
         rec = record(p["file"], p["seed"], p["g"])
         start = next(s for i, (s, a) in enumerate(R.steps(rec)) if i == p["i"])
         me, wins = start.active, []
-        seeds = [args.seed_base + 3 * p["j"] + r for r in range(3)]
+        seeds = list(args.seeds) if args.seeds else [args.seed_base + 3 * p["j"] + r for r in range(3)]
         for seed in seeds:
             s = start.clone()
             agent = make_agent(bare, seed)
@@ -234,7 +244,8 @@ def convert_main(args) -> None:
         b[0] += sum(r["wins"])
         b[1] += len(r["wins"])
     total = [sum(v[0] for v in by.values()), sum(v[1] for v in by.values())]
-    _write(args.out, {"mirror": args.mirror, "bare_spec": bare, "seed_base": args.seed_base, "points": len(rows),
+    _write(args.out, {"mirror": args.mirror, "bare_spec": bare, "seeds": args.seeds, "seed_base": args.seed_base,
+                      "points": len(rows),
                       "converted": {k: {"won": v[0], "of": v[1], "rate": round(v[0] / v[1], 4)}
                                     for k, v in sorted(by.items())},
                       "all": {"won": total[0], "of": total[1], "rate": round(total[0] / max(1, total[1]), 4)},
@@ -260,13 +271,17 @@ def main() -> None:
     p.add_argument("mirror", choices=sorted(MIRRORS))
     p.add_argument("records", nargs="+")
     p.add_argument("--want", type=int, default=200)
+    p.add_argument("--fill", action="store_true",
+                   help="(a9c5ed4) scan the files in order until --want points are found, and use every point found")
     p.add_argument("--workers", type=int, default=4)
     p.add_argument("--out")
     c = sub.add_parser("convert")
     c.add_argument("mirror", choices=sorted(MIRRORS))
     c.add_argument("points")
     c.add_argument("--record-dirs", nargs="+", required=True)
-    c.add_argument("--seed-base", type=int, required=True, help="point j's seeds: B + 3j + r, r = 0..2")
+    g = c.add_mutually_exclusive_group(required=True)
+    g.add_argument("--seeds", type=int, nargs=3, help="(a9c5ed4) the same three agent seeds at every point")
+    g.add_argument("--seed-base", type=int, help="(92c3292) point j's seeds: B + 3j + r, r = 0..2")
     c.add_argument("--iterations", type=int, default=0)
     c.add_argument("--limit", type=int, default=0)
     c.add_argument("--out")
