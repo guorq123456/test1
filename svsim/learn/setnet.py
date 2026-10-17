@@ -290,7 +290,7 @@ class SetNet:
         into) are set to 0: they are far below a unit in the last place of anything they are added to, and CPU
         arithmetic on them is many times slower (the 10^5 net's epochs went from 234 s to 990 s). Off by default,
         so the 10^3 / 10^4 nets stay reproducible."""
-        self._table, self._pool, self._zone_sums = None, {}, {}
+        self._table, self._pool, self._zone_sums, self._live_sums = None, {}, {}, {}
         rng = np.random.default_rng(seed)
         m = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
         v = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
@@ -403,16 +403,8 @@ class SetNet:
         table = getattr(self, "_table", None)            # the first layer's static part per card, computed once
         if table is None or len(table) != len(self.card_ids):
             table = self._table = self._S() @ self.W1s + self.b1
-            self._pool, self._zone_sums = {}, {}
-        P = np.zeros((NZ, self.phi[1]))
-        if live:
-            rows = np.asarray(live, dtype=np.int64)
-            cards = [index[c] for c in rows[:, 0].tolist()]
-            H1 = _act(table[cards] + dynamic(rows[:, 1:]) @ self.W1d, self.slope)
-            H2 = _act(H1 @ self.W2 + self.b2, self.slope)       # live tokens have count 1
-            zones = rows[:, 1 + _ZONE]
-            for z in sorted(set(zones.tolist())):
-                P[z] = H2[zones == z].sum(axis=0)
+            self._pool, self._zone_sums, self._live_sums = {}, {}, {}
+        P = self._live_part(live, index, table, "v1")
         sums = self._zone_sums
         for (z, cards_), (_, key) in zip(pooled, keys):
             total = sums.get((z, key))
@@ -466,16 +458,8 @@ class SetNet:
         table = getattr(self, "_table", None)
         if table is None or len(table) != len(self.card_ids):
             table = self._table = self._S() @ self.W1s + self.b1
-            self._pool, self._zone_sums = {}, {}
-        P = np.zeros((NZ, self.phi[1]))
-        if live:
-            rows = np.asarray(live, dtype=np.int64)
-            cards = [index[c] for c in rows[:, 0].tolist()]
-            H1 = _act(table[cards] + dynamic(rows[:, 1:], self.inputs) @ self.W1d, self.slope)
-            H2 = _act(H1 @ self.W2 + self.b2, self.slope)
-            zones = rows[:, 1 + _ZONE]
-            for z in sorted(set(zones.tolist())):
-                P[z] = H2[zones == z].sum(axis=0)
+            self._pool, self._zone_sums, self._live_sums = {}, {}, {}
+        P = self._live_part(live, index, table, self.inputs)
         sums = self._zone_sums
         for (z, cards_, per, nxt), key in zip(pooled, keys):
             total = sums.get(key)
@@ -502,6 +486,34 @@ class SetNet:
         z1 = _act(u @ self.V1 + self.c1, self.slope)
         return float(_act(z1 @ self.V2 + self.c2, self.slope) @ self.v3 + self.c3[0])
 
+    def _live_part(self, live, index, table, inputs) -> np.ndarray:
+        """The live tokens' phi sums per zone [NZ, phi out], a fresh array. Memoized on the exact live rows (card ids
+        and every value): the same rows give the same matrix products in the same order, so a hit is the same number
+        to the last bit (a token computed on its own or in a smaller batch would not be: BLAS sums in a different
+        order). The card id in the key is only the memo's key, never an input of the net."""
+        memo = getattr(self, "_live_sums", None)
+        if memo is None:
+            memo = self._live_sums = {}
+        key = tuple(map(tuple, live))
+        hit = memo.get(key)
+        if hit is not None:
+            self._live_hits = getattr(self, "_live_hits", 0) + 1
+            return hit.copy()
+        P = np.zeros((NZ, self.phi[1]))
+        if live:
+            rows = np.asarray(live, dtype=np.int64)
+            cards = [index[c] for c in rows[:, 0].tolist()]
+            H1 = _act(table[cards] + dynamic(rows[:, 1:], inputs) @ self.W1d, self.slope)
+            H2 = _act(H1 @ self.W2 + self.b2, self.slope)       # live tokens have count 1
+            zones = rows[:, 1 + _ZONE]
+            for z in sorted(set(zones.tolist())):
+                P[z] = H2[zones == z].sum(axis=0)
+        if len(memo) > 50000:
+            memo.clear()
+        memo[key] = P.copy()
+        self._live_misses = getattr(self, "_live_misses", 0) + 1
+        return P
+
     def _index(self) -> dict:
         idx = getattr(self, "_idx", None)
         if idx is None or len(idx) != len(self.card_ids):
@@ -522,7 +534,7 @@ class SetNet:
         """Set every subnormal weight to 0 (agent option +netftz, at load); how many there were. The net's numbers
         are unchanged where checked (analysis/scaling/README.md); only CPU time on them is saved."""
         n = sum(_flush(getattr(self, k)) for k in self.PARAMS)
-        self._table = None
+        self._table, self._live_sums = None, {}
         return n
 
     # --- files ------------------------------------------------------------------------------------------------

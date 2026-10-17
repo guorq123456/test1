@@ -301,3 +301,28 @@ def test_v2_and_v2kc_single_position_logit_matches_the_batch_and_files_keep_the_
     v1 = _net(_data(positions[:4]))
     v1.save(tmp_path / "v1.npz")
     assert "inputs" not in np.load(tmp_path / "v1.npz").files and SN.SetNet.load(tmp_path / "v1.npz").inputs == "v1"
+
+
+def test_live_memo_hits_give_the_same_bits_as_a_cold_net():
+    """The live part's memo (setnet._live_part): every position scored twice by a warm net, interleaved, equals a
+    cold net's first score, for a v1 and a v2 net."""
+    import gzip
+    import json
+    from pathlib import Path
+    from svsim.learn.netdata import ENDED, rows
+    root = Path(__file__).resolve().parents[1]
+    states = []
+    with gzip.open(root / "analysis/scaling/data/heldout/rec-70200002.jsonl.gz", "rt") as fh:
+        for line, _ in zip(fh, range(3)):
+            states += [(s, p) for i, (ph, p, s, r) in rows(json.loads(line), index=True) if ph == ENDED]
+    for name in ("net-gen3-30000", "net-in2-59000"):
+        path = root / f"analysis/scaling/models/{name}.npz"
+        warm = SN.SetNet.load(path)
+        first = [warm.logit(s, p) for s, p in states]
+        again = [warm.logit(s, p) for s, p in states[::-1]][::-1]
+        cold = []
+        for s, p in states:
+            net = SN.SetNet.load(path)
+            cold.append(net.logit(s, p))
+        assert first == again == cold
+        assert warm._live_hits >= len(states)

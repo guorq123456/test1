@@ -146,10 +146,22 @@ def _counters(c) -> int:
     return max(-100, min(total, 100))
 
 
+_LAZY: dict = {}
+
+
+def _lazy():
+    """(Keyword, prop), imported once (the search calls _live a few hundred times a decision)."""
+    got = _LAZY.get("kp")
+    if got is None:
+        from svsim.core.enums import Keyword
+        from svsim.core.script import prop
+        got = _LAZY["kp"] = (Keyword, prop)
+    return got
+
+
 def _live(state, c, zone: int) -> list:
     """A token for a card as it is now (hand, field, leader area)."""
-    from svsim.core.enums import Keyword
-    from svsim.core.script import prop
+    Keyword, prop = _lazy()
     follower = c.defn.is_follower
     fresh = c.entered_turn == state.turn
     left = max(c.max_attacks - c.attacks_made, 0) if follower and zone in (1, 4) else 0
@@ -178,7 +190,11 @@ def _pooled(cards, zone: int) -> list:
 
 def _next(state, owner: int) -> tuple:
     """(next_pp, next_evolve) of `owner` (v2)."""
-    from svsim.core.engine import EVOLVE_TURN, MAX_PP
+    rules = _LAZY.get("rules")
+    if rules is None:
+        from svsim.core.engine import EVOLVE_TURN, MAX_PP
+        rules = _LAZY["rules"] = (EVOLVE_TURN, MAX_PP)
+    EVOLVE_TURN, MAX_PP = rules
     pl = state.players[owner]
     return (min(pl.max_pp + 1, MAX_PP),
             int(pl.ep > 0 and pl.turns_taken + 1 >= EVOLVE_TURN[state.first == owner]))
@@ -189,7 +205,7 @@ def _live2(state, c, zone: int, nxt: tuple) -> list:
     V2_EXTRA (share 0)."""
     row = _live(state, c, zone)
     if zone in (1, 4) and c.defn.is_follower:
-        from svsim.core.script import prop
+        prop = _lazy()[1]
         can = not prop(c, "cant_attack") and c.max_attacks > 0
         hf, hl, al = (1 + TOKEN.index(n) for n in ("can_hit_follower", "can_hit_leader", "attacks_left"))
         row[hf], row[hl], row[al] = int(can), int(can), c.max_attacks if can else 0
