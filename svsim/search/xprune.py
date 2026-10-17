@@ -102,9 +102,17 @@ class XPrune:
     def __init__(self, m: int = 2, horizon: int = 3, order: str = "when"):
         self.m, self.horizon, self.order = m, horizon, order
         self._allowed: dict = {}
+        self._turn = 0                          # the turn of the last call (a new game empties the cache)
         self.calls = self.cut = 0               # vetoes asked / given (a reading)
 
     def __call__(self, state, action) -> bool:
+        # The cache is keyed by hand uids, unique within a game only, so a player object kept for another game
+        # (analysis/scaling/README.md, "B") would hit the earlier game's entries: a call at turn 1 or 2 (a game's
+        # first own turn) after one past turn 2 is a new game, and empties it. Within a game no call goes back to
+        # turn 2 or before once past it, so a game's own calls are as before.
+        if state.turn <= 2 < self._turn:
+            self._allowed.clear()
+        self._turn = state.turn
         if not isinstance(action, (PlayCard, Evolve, Engage)) or not action.targets:
             return False
         p = state.players[state.active]
@@ -118,11 +126,17 @@ class XPrune:
         self.cut += out
         return out
 
+    @staticmethod
+    def key(state, action, k: int) -> tuple:
+        """allowed()'s cache key: hand uids (unique within a game only), costs, play points, the action."""
+        p = state.players[state.active]
+        return (state.active, tuple((c.uid, c.cost, c.silenced) for c in p.hand), p.pp, p.max_pp, p.bonus_ready,
+                p.bonus_active, action.uid, type(action).__name__, k)
+
     def allowed(self, state, action, k: int) -> set:
         """The signatures of the m + k - 1 most discardable hand cards (the discarding card left out)."""
         p = state.players[state.active]
-        key = (state.active, tuple((c.uid, c.cost, c.silenced) for c in p.hand), p.pp, p.max_pp, p.bonus_ready,
-               p.bonus_active, action.uid, type(action).__name__, k)
+        key = self.key(state, action, k)
         hit = self._allowed.get(key)
         if hit is not None:
             return hit
