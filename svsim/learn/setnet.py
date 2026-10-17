@@ -61,8 +61,11 @@ def global_scale(inputs: str = "v1") -> np.ndarray:
     return _GLOBAL_SCALE_KC if inputs == "v2kc" else _GLOBAL_SCALE
 
 
-def inputs_of(n_token_cols: int, n_globals: int) -> str:
-    """The input version of token rows / globals of these widths."""
+def inputs_of(n_token_cols: int, n_globals: int, marked: str | None = None) -> str:
+    """The input version of token rows / globals of these widths (a token file's own "inputs" mark first: v2a has
+    v2's widths; files written before the mark are v1, v2 or v2kc)."""
+    if marked:
+        return marked
     if n_token_cols == len(T.TOKEN):
         return "v1"
     if n_token_cols == len(T.TOKEN_V2):
@@ -104,7 +107,11 @@ class Data:
             o.append(z["offsets"][1:].astype(np.int64) + base)
             base += int(z["offsets"][-1])
         self.offsets = np.concatenate(o)
-        self.inputs = inputs_of(self.tokens.shape[1], parts[0]["globals"].shape[1])
+        self.inputs = inputs_of(self.tokens.shape[1], parts[0]["globals"].shape[1],
+                                str(parts[0]["inputs"]) if "inputs" in parts[0].files else None)
+        if any(inputs_of(z["tokens"].shape[1], z["globals"].shape[1], str(z["inputs"]) if "inputs" in z.files
+                         else None) != self.inputs for z in parts):
+            raise ValueError("token files of different input versions")
         self.globals = np.concatenate(glob) / global_scale(self.inputs)
         for k in lab:
             setattr(self, k, np.concatenate(lab[k]))
@@ -433,11 +440,12 @@ class SetNet:
         next-turn values)."""
         p, o = state.players[player], state.players[1 - player]
         mine, theirs = T._next(state, player), T._next(state, 1 - player)
-        live = [T._live2(state, c, 0, mine) for c in p.hand]
-        live += [T._live2(state, c, 1, mine) for c in p.field]
-        live += [T._live2(state, c, 2, mine) for c in p.leader_area]
-        live += [T._live2(state, c, 4, theirs) for c in o.field]
-        live += [T._live2(state, c, 5, theirs) for c in o.leader_area]
+        an = self.inputs != "v2a"
+        live = [T._live2(state, c, 0, mine, an) for c in p.hand]
+        live += [T._live2(state, c, 1, mine, an) for c in p.field]
+        live += [T._live2(state, c, 2, mine, an) for c in p.leader_area]
+        live += [T._live2(state, c, 4, theirs, an) for c in o.field]
+        live += [T._live2(state, c, 5, theirs, an) for c in o.leader_area]
         deck, pool = p.deck_view(), list(o.hand) + list(o.deck_view())
         pooled = ((3, deck, T._pool_per(len(deck), 0, 3), mine),
                   (6, pool, T._pool_per(len(pool), len(o.hand), 6), theirs))

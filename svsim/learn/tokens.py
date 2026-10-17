@@ -44,6 +44,7 @@ unchanged, and every net trained before has it):
     cant_attack) has its full attacks and can hit both followers and the leader on that turn. Hand and leader-area
     tokens are as in v1.
 - "v2kc": v2 plus seven globals (GLOBALS_KC), learn.features' lethal clock ("kclock") of the player who ended the turn.
+- "v2a": v2's three columns, with v1's attack state (the ablation of the architecture thread 2026-10-17 04:21Z).
 """
 from __future__ import annotations
 
@@ -67,7 +68,7 @@ TOKEN_V2 = TOKEN + V2_EXTRA
 KCLOCK = ("me_kill_turns", "op_kill_turns", "kill_lead", "op_hp_x_kill_lead", "me_hp_x_kill_lead",
           "op_hp_x_me_near", "me_hp_x_op_near")
 GLOBALS_KC = GLOBALS + KCLOCK
-INPUTS = ("v1", "v2", "v2kc")
+INPUTS = ("v1", "v2", "v2kc", "v2a")
 
 
 def token_names(inputs: str = "v1") -> tuple:
@@ -200,11 +201,11 @@ def _next(state, owner: int) -> tuple:
             int(pl.ep > 0 and pl.turns_taken + 1 >= EVOLVE_TURN[state.first == owner]))
 
 
-def _live2(state, c, zone: int, nxt: tuple) -> list:
-    """A v2 token for a card as it is now: v1's, the field's attack state as of the owner's next turn, and
-    V2_EXTRA (share 0)."""
+def _live2(state, c, zone: int, nxt: tuple, attack_next: bool = True) -> list:
+    """A v2 token for a card as it is now: v1's, the field's attack state as of the owner's next turn (not for
+    v2a: attack_next False keeps v1's), and V2_EXTRA (share 0)."""
     row = _live(state, c, zone)
-    if zone in (1, 4) and c.defn.is_follower:
+    if attack_next and zone in (1, 4) and c.defn.is_follower:
         prop = _lazy()[1]
         can = not prop(c, "cant_attack") and c.max_attacks > 0
         hf, hl, al = (1 + TOKEN.index(n) for n in ("can_hit_follower", "can_hit_leader", "attacks_left"))
@@ -246,13 +247,14 @@ def encode(state, me: int, inputs: str = "v1"):
 def _encode2(state, me: int, inputs: str):
     p, o = state.players[me], state.players[1 - me]
     mine, theirs = _next(state, me), _next(state, 1 - me)
-    rows = [_live2(state, c, 0, mine) for c in p.hand]
-    rows += [_live2(state, c, 1, mine) for c in p.field]
-    rows += [_live2(state, c, 2, mine) for c in p.leader_area]
+    an = inputs != "v2a"
+    rows = [_live2(state, c, 0, mine, an) for c in p.hand]
+    rows += [_live2(state, c, 1, mine, an) for c in p.field]
+    rows += [_live2(state, c, 2, mine, an) for c in p.leader_area]
     deck = p.deck_view()
     rows += _pooled2(deck, 3, _pool_per(len(deck), 0, 3), mine)
-    rows += [_live2(state, c, 4, theirs) for c in o.field]
-    rows += [_live2(state, c, 5, theirs) for c in o.leader_area]
+    rows += [_live2(state, c, 4, theirs, an) for c in o.field]
+    rows += [_live2(state, c, 5, theirs, an) for c in o.leader_area]
     pool = list(o.hand) + list(o.deck_view())
     rows += _pooled2(pool, 6, _pool_per(len(pool), len(o.hand), 6), theirs)
     table = np.asarray(rows, dtype=np.int64).reshape(-1, len(TOKEN_V2) + 1)

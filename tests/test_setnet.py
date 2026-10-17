@@ -187,7 +187,7 @@ def _data_inputs(positions, inputs):
     cids, toks, glob = zip(*(T.encode(s, p, inputs) for s, p in positions))
     d.tokens = np.concatenate(toks)
     d.globals = np.stack(glob) / SN.global_scale(inputs)
-    d.inputs = SN.inputs_of(d.tokens.shape[1], np.stack(glob).shape[1])
+    d.inputs = SN.inputs_of(d.tokens.shape[1], np.stack(glob).shape[1], inputs if inputs == "v2a" else None)
     return d
 
 
@@ -269,7 +269,7 @@ def test_v2_shares_next_turn_values_and_attack_state():
 def test_v2_and_v2kc_single_position_logit_matches_the_batch_and_files_keep_the_version(tmp_path):
     positions = _played_positions()
     assert len(positions) >= 10
-    for inputs in ("v2", "v2kc"):
+    for inputs in ("v2", "v2kc", "v2a"):
         d = _data_inputs(positions, inputs)
         assert d.inputs == inputs
         net = SN.SetNet(d.static.shape[1], phi=(8, 6), rho=(10, 5), seed=4, inputs=inputs,
@@ -326,3 +326,17 @@ def test_live_memo_hits_give_the_same_bits_as_a_cold_net():
             cold.append(net.logit(s, p))
         assert first == again == cold
         assert warm._live_hits >= len(states)
+
+
+def test_v2a_is_v2_with_v1s_attack_state():
+    attack = [T.TOKEN.index(n) for n in ("can_hit_follower", "can_hit_leader", "attacks_left")]
+    others = [i for i in range(len(T.TOKEN_V2)) if i not in attack]
+    changed = 0
+    for s, me in _played_positions():
+        c1, t1, g1 = T.encode(s, me)
+        c2, t2, g2 = T.encode(s, me, "v2")
+        ca, ta, ga = T.encode(s, me, "v2a")
+        assert np.array_equal(ca, c2) and np.array_equal(ga, g1) and ta.shape == t2.shape
+        assert np.array_equal(ta[:, others], t2[:, others]) and np.array_equal(ta[:, attack], t1[:, attack])
+        changed += int((t2[:, attack] != t1[:, attack]).any(axis=1).sum())
+    assert changed > 0                                   # the positions do tell v2 and v2a apart

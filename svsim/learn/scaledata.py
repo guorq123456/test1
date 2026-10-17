@@ -264,6 +264,8 @@ def _encode_shard(job):
               "result": np.asarray(lab["result"], np.float32), "linear": np.asarray(lab["linear"], np.float32)}
     if net is not None:
         arrays["net_logit"] = np.asarray(lab["net_logit"], np.float32)
+    if inputs == "v2a":                        # v2a has v2's widths: the file says which (earlier files: no mark)
+        arrays["inputs"] = np.array(inputs)
     for k in ("seed", "g", "i", "turn", "player", "actions"):
         arrays[k] = np.asarray(lab[k], np.int32)
     ids = sorted(cards)
@@ -329,7 +331,7 @@ def main() -> None:
     e.add_argument("--spec", default=SPEC, help="the agent whose turn-end model gives the 'linear' label")
     e.add_argument("--workers", type=int, default=4)
     e.add_argument("--net", default=None, help="a learn.setnet net: its logit at every turn end too (net_logit)")
-    e.add_argument("--inputs", default="v1", choices=("v1", "v2", "v2kc"),
+    e.add_argument("--inputs", default="v1", choices=("v1", "v2", "v2kc", "v2a"),
                    help="the token version (learn.tokens INPUTS; v1, the default, as before)")
     m = sub.add_parser("merge")
     m.add_argument("--inputs", nargs="+", required=True)
