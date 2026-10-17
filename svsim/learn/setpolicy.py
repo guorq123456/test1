@@ -269,34 +269,55 @@ class Decisions:
     @classmethod
     def split(cls, files, cards_npz, every: int = 20) -> tuple["Decisions", "Decisions"]:
         """(training part, validation part: the games whose key seed * 100003 + g is a multiple of `every`), read
-        one file at a time, so the whole data is never in memory next to its two parts."""
-        train, valid = [], []
-        for f in files:
-            d = cls([f], cards_npz)
-            v = d.games() % every == 0
-            train.append(d.subset(~v))
-            valid.append(d.subset(v))
-            del d
-        return cls.concat(train), cls.concat(valid)
-
-    @classmethod
-    def concat(cls, parts: list) -> "Decisions":
-        out = object.__new__(cls)
-        out.card_ids, out.static = parts[0].card_ids, parts[0].static
-        out.tokens = np.concatenate([d.tokens for d in parts])
-        out.cards = np.concatenate([d.cards for d in parts])
-        out.globals = np.concatenate([d.globals for d in parts])
-        o, mo, base, mbase = [np.zeros(1, np.int64)], [np.zeros(1, np.int64)], 0, 0
-        for d in parts:
-            o.append(d.offsets[1:] + base)
-            mo.append(d.moff[1:] + mbase)
-            base += int(d.offsets[-1])
-            mbase += int(d.moff[-1])
-        out.offsets, out.moff = np.concatenate(o), np.concatenate(mo)
-        for k in ("kind", "tkind", "src", "tgt", "extras", "pi", "seed", "g", "step", "turn", "start", "n_legal"):
-            setattr(out, k, np.concatenate([getattr(d, k) for d in parts]))
-        out.n = len(out.offsets) - 1
-        return out
+        one file at a time into arrays allocated once, so neither the whole data nor a second copy of a part is
+        ever in memory (the same arrays as subset() of the whole by that mask)."""
+        sizes = []
+        for f in files:                                   # pass 1: what each part takes from each file
+            with np.load(f) as z:
+                v = (z["seed"].astype(np.int64) * 100003 + z["g"].astype(np.int64)) % every == 0
+                tl, ml = np.diff(z["offsets"]), np.diff(z["moff"])
+                sizes.append([(int(m.sum()), int(tl[m].sum()), int(ml[m].sum())) for m in (~v, v)])
+        out = []
+        for side in (0, 1):
+            n = sum(x[side][0] for x in sizes)
+            t = sum(x[side][1] for x in sizes)
+            mv = sum(x[side][2] for x in sizes)
+            d = object.__new__(cls)
+            d.n, d.offsets, d.moff = n, np.zeros(n + 1, np.int64), np.zeros(n + 1, np.int64)
+            d._alloc = (n, t, mv)
+            out.append(d)
+        pos = [[0, 0, 0], [0, 0, 0]]
+        for f in files:                                   # pass 2: fill
+            part = cls([f], cards_npz)
+            v = part.games() % every == 0
+            for side, mask in ((0, ~v), (1, v)):
+                sub = part.subset(mask)
+                d, (i, ti, mi) = out[side], pos[side]
+                if not hasattr(d, "tokens"):
+                    n, t, mv = d._alloc
+                    d.card_ids, d.static = part.card_ids, part.static
+                    d.tokens = np.empty((t,) + sub.tokens.shape[1:], sub.tokens.dtype)
+                    d.cards = np.empty(t, sub.cards.dtype)
+                    d.globals = np.empty((n,) + sub.globals.shape[1:], sub.globals.dtype)
+                    for k in ("kind", "tkind", "src", "tgt", "extras", "pi"):
+                        a = getattr(sub, k)
+                        setattr(d, k, np.empty((mv,) + a.shape[1:], a.dtype))
+                    for k in ("seed", "g", "step", "turn", "start", "n_legal"):
+                        setattr(d, k, np.empty(n, getattr(sub, k).dtype))
+                d.tokens[ti:ti + len(sub.tokens)] = sub.tokens
+                d.cards[ti:ti + len(sub.cards)] = sub.cards
+                d.globals[i:i + sub.n] = sub.globals
+                d.offsets[i + 1:i + sub.n + 1] = sub.offsets[1:] + ti
+                d.moff[i + 1:i + sub.n + 1] = sub.moff[1:] + mi
+                for k in ("kind", "tkind", "src", "tgt", "extras", "pi"):
+                    getattr(d, k)[mi:mi + len(sub.pi)] = getattr(sub, k)
+                for k in ("seed", "g", "step", "turn", "start", "n_legal"):
+                    getattr(d, k)[i:i + sub.n] = getattr(sub, k)
+                pos[side] = [i + sub.n, ti + len(sub.tokens), mi + len(sub.pi)]
+            del part
+        for d in out:
+            del d._alloc
+        return out[0], out[1]
 
     def sharpen(self, tau: float) -> None:
         """Targets pi ** (1 / tau), normalized per decision (tau = 0.5: visits squared; tau = 1 leaves them)."""
