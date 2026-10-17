@@ -1454,3 +1454,7 @@ J92 的 40% 里混着两样东西：网络比现装评估慢（N 从 200 降到 
   - 门 1（J120）里第 2 代对第 1 代是 56.2%。对 v2skx 多涨的这一截，比"对上一代赢多少"大，和架构线引的跳费龙经验（第 3 代对 10 万局网络赢 55.7%，对 v2skx 只高 3 个点）方向相反。这只是一门的点估计，等 J125 合并再看。
   - 照登记：J121 过了，接着跑确认门 J125（N = 110，74200000～299），已开跑。
 - 文件：`analysis/gates/scaling/j121/`。
+- **J126 选项的含义**（建造线 07:04Z 确认，fdcee34 只加了测试，没改代码）：`+screen=0:1000:4` 只关掉"伤害估计差距超过 4"的那部分 screen，预算 0、扩展 0 个节点，交给树搜索。near（差距 ≤ 4，1000 节点）和完整搜索（2000 节点）不变。默认是 `200:1000:4`。
+  - 本线在 d884a3c 上建了这个选手：LethalAgent 的 `max_nodes` 2000、`near` (1000, 4)、`screen` 0，和说明一致。
+  - 建造线在已录局面上量的预算 0 剩余开销：每次 0.28 ms（跳费龙；200 节点时是 14.2 ms），其中约 0.24 ms 是本来就要算的 damage_estimate。
+  - J126 照登记跑：A = `mcts:N+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-gen3-30000.npz+neteot+screen=0:1000:4`，B = `mcts:120+…+setnet=…/net-gen3-30000.npz+neteot`（默认 screen）。J125 跑完就开。
