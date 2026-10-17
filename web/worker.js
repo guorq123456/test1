@@ -70,6 +70,17 @@ async function boot() {
     indexURL: new URL("pyodide/", self.location).href,
     stderr: (line) => { errors.push(line); if (errors.length > 20) errors.shift(); },
   });
+  // numpy, only when a level's agent uses a net (tools.web: the build then ships pyodide/numpy.json; without it
+  // the page loads as before)
+  const np = await realFetch(new URL("pyodide/numpy.json", self.location).href).catch(() => null);
+  if (np && np.ok) {
+    postMessage({type: "progress", text: "正在加载 numpy（神经网络要用）……"});
+    const {file, base64} = await np.json();
+    const raw = atob(base64), bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+    py.unpackArchive(bytes, "wheel");                    // into site-packages, its libraries loaded
+    py.runPython("import numpy");                        // fails loudly here, not at the AI's first move
+  }
   postMessage({type: "progress", text: "正在加载模拟器和卡池……"});
   const files = await json("svsim.json");
   for (const [path, text] of Object.entries(files)) {

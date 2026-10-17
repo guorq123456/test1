@@ -361,11 +361,14 @@ class Decisions:
 
 
 def seg_softmax(s: np.ndarray, start: np.ndarray) -> np.ndarray:
-    """Softmax of s within the segments that begin at `start` (sorted, the first 0)."""
+    """Softmax of s within the segments that begin at `start` (sorted, the first 0). Indices and counts are the
+    platform's (intp): numpy on 32-bit WebAssembly (Pyodide) refuses int64 ones; on 64 bits nothing changes."""
+    start = np.asarray(start, dtype=np.intp)
+    counts = np.diff(np.append(start, len(s))).astype(np.intp)
     mx = np.maximum.reduceat(s, start)
-    e = np.exp(s - np.repeat(mx, np.diff(np.append(start, len(s)))))
+    e = np.exp(s - np.repeat(mx, counts))
     tot = np.add.reduceat(e, start)
-    return e / np.repeat(tot, np.diff(np.append(start, len(s))))
+    return e / np.repeat(tot, counts)
 
 
 # --- the network -------------------------------------------------------------------------------------------------
@@ -644,7 +647,8 @@ def load_cached(path) -> SetPolicy:
     key = str(p.resolve())
     pol = _CACHE.get(key)
     if pol is None:
-        pol = _CACHE[key] = SetPolicy.load(p)
+        from svsim.learn.setnet import _file
+        pol = _CACHE[key] = SetPolicy.load(_file(p))
     return pol
 
 

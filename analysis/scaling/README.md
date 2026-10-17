@@ -1021,3 +1021,58 @@ the same to 4 decimals, except ramp-t's top2: 0.4625 (turn-first) and 0.6997 (th
 starts (cdc7b6f, the architecture thread 19:11Z; tests/test_xprune_games.py). A game's own calls are unchanged.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## B: the trainer's install path, ready and not published (the architecture thread 21:01Z)
+
+Nothing a player sees has changed: the levels (svsim/ui/session.py LEVELS), ratings.json, the installed models and
+the published page are as they were. A build of the levels as they are gets no new file
+(tests/test_web_models.py). The Session already plays any agent spec, `+puct` included, so it needed no change.
+
+**What a level with +setnet / +puct needs in the page, and now has:**
+- **The models:** the page ships only text (hosts like claude.ai serve no archives). A model a spec names
+  (`+setnet=PATH`, `+puct=PATH[:C[:T]]`) ships as base64 text at `<PATH>.b64` in svsim.json. learn.setnet's
+  and learn.setpolicy's `load_cached` read it where the .npz itself is missing. Sizes: ~0.91 MB a value net,
+  ~1.06 MB a prior.
+- **numpy:** the worker loaded none; the trainer was pure Python until now. When the specs name a model, the build
+  writes Pyodide's numpy wheel as base64 JSON (pyodide/numpy.json, 15.9 MB; the wheel comes from the full Pyodide
+  release). The worker unpacks it with `pyodide.unpackArchive(…, "wheel")` and imports numpy at boot, so a missing
+  numpy fails at boot, not at the AI's first move. Without the file the worker loads as before. numpy.json is just
+  under a 16 MB per-file limit; split it before it grows.
+- **`python -m svsim.tools.web --build DIR --spec SPEC …`:** carries a candidate spec's models (and its phased
+  folder) without naming it in any level.
+
+**One bug the simulation found:** Pyodide's numpy is 32-bit (wasm32). learn.setpolicy's `seg_softmax` passed int64
+counts and indices to `np.repeat` / `np.add.reduceat`, which 32-bit numpy refuses. It now passes the platform's
+`intp`, which is int64 on 64 bits, so nothing changes there (tests pass).
+
+**The local simulation** (analysis/scaling/web_sim):
+- **The worker:** run_worker.js runs the built worker.js in Node against serve.py, a static host that refuses .zip /
+  .whl as claude.ai does. It boots (~4 s from local files), loads numpy and both priors, and plays whole games
+  through the Session (start / mulligan / act / ai_step) with the four candidate specs (ramp-t / elf-t, base / PUCT).
+- **The cost:** run_py.js runs puct_cost.py inside Pyodide on the holdouts' recorded positions (3 games each;
+  data/policy/pyodide-cost-*.json).
+
+| mirror | decisions | base ms (Pyodide) | PUCT at the gate's N, ms (×) | PUCT at the base's N, ms (×) |
+|---|---|---|---|---|
+| ramp-t | 125 | 148.2 (N 120) | 143.6 at N 88 (0.97) | 170.2 at N 120 (1.15) |
+| elf-t | 163 | 169.4 (N 105) | 165.0 at N 71 (0.97) | 197.1 at N 105 (1.16) |
+
+Pyodide in Node is about 2× native CPython here. At the gate's N, a decision with the prior costs what the installed
+N costs (0.97, as in the gates). The page's cost is the boot: +15.9 MB numpy and ~2 MB of models, once.
+
+## Next round of self-play with the B players (ready, waiting for seeds)
+
+The players, both sides, with c_puct 2, T 1 (the gates' players):
+- ramp-t: `mcts:88+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-gen3-30000.npz+neteot+puct=analysis/scaling/models/prior-ramp-ft-t05.npz:2:1`
+- elf-t: `mcts:71+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-elft-gen2-19500.npz+neteot+puct=analysis/scaling/models/prior-elft-ft-t05.npz:2:1`
+
+The command, once the analysis line has given the bases and the split:
+
+    python -m svsim.learn.scaledata play --base BASE --stride 2 --shards K0 K1 --per-shard 500 \
+        --deck ramp-t --opponent ramp-t --spec "<the ramp-t player>" --workers 4 --out OUT
+
+elf-t is the same with `--deck elf-t --opponent elf-t`. It runs in a worktree at the commit given with the seeds.
+The records keep each decision's root visits per legal move, as before (netdata `_thought`; with PUCT a move never
+tried has 0). tests/test_web_models.py plays one such game and checks the counts against the legal moves.
+
+Condition: the opponent's deck list is known (order and hand not).

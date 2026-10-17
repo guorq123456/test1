@@ -43,21 +43,46 @@ def page_html() -> str:
     return SKELETON.replace("{page}", (WEB / "index.html").read_text(encoding="utf-8"))
 
 
-def _candidate(f: Path) -> bool:
-    """A model kept beside the installed ones (phased_models/<folder>/), which only "+phased=FOLDER" loads,
-    and no level of the page names (the original level plays phased_models/orig-f631e14)."""
+def _specs(extra=()) -> list:
+    """The agent specs the build carries: the page's levels, plus `extra` (build --spec, a candidate tried in the
+    page before any level names it)."""
     from svsim.ui.session import LEVELS
+    return list(LEVELS.values()) + list(extra)
+
+
+def _candidate(f: Path, extra=()) -> bool:
+    """A model kept beside the installed ones (phased_models/<folder>/), which only "+phased=FOLDER" loads,
+    and no level of the page (nor an `extra` spec) names (the original level plays phased_models/orig-f631e14)."""
     models = PACKAGE / "learn" / "phased_models"
-    named = {part[len("phased="):] for spec in LEVELS.values() for part in spec.split("+") if part.startswith("phased=")}
+    named = {part[len("phased="):] for spec in _specs(extra) for part in spec.split("+") if part.startswith("phased=")}
     return models in f.parents and f.parent != models and f.parent.name not in named
 
 
-def package_sources(commit: str | None = None) -> dict:
+def model_files(extra=()) -> list:
+    """The binary models (.npz, relative to the repository root) the specs name: "+setnet=PATH" (learn.setnet) and
+    "+puct=PATH[:C[:T]]" (learn.setpolicy). They need numpy in the page."""
+    out = []
+    for spec in _specs(extra):
+        for part in spec.split("+"):
+            for opt in ("setnet=", "puct="):
+                if part.startswith(opt):
+                    path = part[len(opt):].split(":")[0]
+                    if path not in out:
+                        out.append(path)
+    return out
+
+
+def package_sources(commit: str | None = None, extra=()) -> dict:
     """The svsim package (sources and card tables) as {path: text}; with `commit`, svsim/build.py
-    says it was built from that commit (the page has no git)."""
+    says it was built from that commit (the page has no git). The binary models the specs name ship as base64 text
+    at "<path>.b64" (hosts like claude.ai serve no archives); learn.setnet / learn.setpolicy's load_cached read
+    them where the .npz itself is missing."""
+    import base64
     out = {f.relative_to(ROOT).as_posix(): f.read_text(encoding="utf-8")
            for f in sorted(PACKAGE.rglob("*"))
-           if f.suffix in (".py", ".json") and "__pycache__" not in f.parts and not _candidate(f)}
+           if f.suffix in (".py", ".json") and "__pycache__" not in f.parts and not _candidate(f, extra)}
+    for path in model_files(extra):
+        out[path + ".b64"] = base64.b64encode((ROOT / path).read_bytes()).decode("ascii")
     if commit is not None:
         line = "COMMIT = None "
         assert out["svsim/build.py"].count(line) == 1
@@ -75,14 +100,17 @@ def stdlib_sources(stdlib_zip: Path) -> dict:
         return {name: z.read(name).decode("utf-8") for name in z.namelist() if not name.endswith("/")}
 
 
-def build(out: Path, pyodide_from: Path | None = None) -> None:
+def build(out: Path, pyodide_from: Path | None = None, extra=()) -> None:
+    """The in-browser version in `out`. `extra`: agent specs to carry besides the levels' (a candidate tried in the
+    page; the levels, ratings.json and the installed models are unchanged). When the specs name a binary model, the
+    page also gets numpy: Pyodide's numpy wheel as base64 JSON (pyodide/numpy.json), which the worker loads."""
     out.mkdir(parents=True, exist_ok=True)
     (out / "page.html").write_text((WEB / "index.html").read_text(encoding="utf-8"), encoding="utf-8")
     (out / "index.html").write_text(page_html(), encoding="utf-8")
     (out / "worker.js").write_text((WEB / "worker.js").read_text(encoding="utf-8"), encoding="utf-8")
     from svsim.build import git_commit
     commit = git_commit(ROOT) or "unknown"
-    package = package_sources(commit)
+    package = package_sources(commit, extra)
     (out / "svsim.json").write_text(json.dumps(package, ensure_ascii=False), encoding="utf-8")
     from svsim.ui.session import LEVELS                # ratings.json beside the page, specs filled in, for readers
     ratings = json.loads(package["svsim/ui/ratings.json"])
@@ -103,6 +131,20 @@ def build(out: Path, pyodide_from: Path | None = None) -> None:
         with urllib.request.urlopen(url) as r:
             target.write_bytes(r.read())
     (pyo / "python_stdlib.json").write_text(json.dumps(stdlib_sources(pyo / "python_stdlib.zip")), encoding="utf-8")
+    if model_files(extra):                             # numpy for the nets, as text (no archive on the host)
+        import base64
+        lock = json.loads((pyo / "pyodide-lock.json").read_text(encoding="utf-8"))
+        wheel = lock["packages"]["numpy"]["file_name"]
+        source = pyodide_from / wheel if pyodide_from is not None else None
+        if source is not None and source.exists():
+            data = source.read_bytes()
+        else:
+            url = f"https://cdn.jsdelivr.net/pyodide/v{PYODIDE_VERSION}/full/{wheel}"   # packages: the full release
+            print(f"下载 {url}")
+            with urllib.request.urlopen(url) as r:
+                data = r.read()
+        (pyo / "numpy.json").write_text(json.dumps({"file": wheel, "base64": base64.b64encode(data).decode("ascii")}),
+                                        encoding="utf-8")
     print(f"版本：提交 {commit}" + ("（有未提交的改动）" if commit.endswith("+") else ""))
     print(f"已生成 {out}：page.html（发布到 claude.ai 用）、index.html（任何静态网站都能放）、worker.js、"
           "svsim.json、ratings.json、pyodide/（python_stdlib.zip 只用来生成 python_stdlib.json，不必发布）")
@@ -173,9 +215,11 @@ def main() -> None:
     parser.add_argument("--host", default="0.0.0.0", help="0.0.0.0 lets a phone on the same network connect")
     parser.add_argument("--build", metavar="DIR", help="write the in-browser version to DIR instead of serving")
     parser.add_argument("--pyodide-from", metavar="DIR", help="(with --build) copy Pyodide files from DIR")
+    parser.add_argument("--spec", action="append", default=[], metavar="SPEC",
+                        help="(with --build) also carry this agent spec's models (a candidate; the levels unchanged)")
     args = parser.parse_args()
     if args.build:
-        build(Path(args.build), Path(args.pyodide_from) if args.pyodide_from else None)
+        build(Path(args.build), Path(args.pyodide_from) if args.pyodide_from else None, args.spec)
         return
     server = HTTPServer((args.host, args.port), Handler)
     print(f"在浏览器打开：http://localhost:{args.port}")

@@ -570,6 +570,19 @@ class SetNet:
 _CACHE: dict = {}
 
 
+def _file(p: Path):
+    """`p`, or where only "<p>.b64" is there (the in-browser build ships binary models as base64 text,
+    tools.web), its decoded bytes as a file object."""
+    if p.exists():
+        return p
+    b64 = Path(str(p) + ".b64")
+    if not b64.exists():
+        return p
+    import base64
+    import io
+    return io.BytesIO(base64.b64decode(b64.read_text(encoding="ascii")))
+
+
 def load_cached(path, ftz: bool = False) -> SetNet:
     """The net at `path` (relative paths also from the repository root), loaded once per process; with `ftz`, its
     subnormal weights set to 0 at load (a separate copy)."""
@@ -579,7 +592,7 @@ def load_cached(path, ftz: bool = False) -> SetNet:
     key = (str(p.resolve()), ftz)
     net = _CACHE.get(key)
     if net is None:
-        net = _CACHE[key] = SetNet.load(p)
+        net = _CACHE[key] = SetNet.load(_file(p))
         if ftz:
             net.flush_subnormals()
     return net
