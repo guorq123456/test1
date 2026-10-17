@@ -18,8 +18,11 @@ sure it had not pushed those shards.
 | 13 | 74100026 | 500 (g 0–499) | builder line |
 | 14 | 74100028 | 500 (g 0–499) | builder line |
 | 15 | 74100030 | 500 (g 0–499) | builder line |
+| 16 | 74100032 | 500 (g 0–499) | builder line |
+| 17 | 74100034 | 500 (g 0–499) | builder line |
+| 18 | 74100036 | 500 (g 0–499) | builder line |
 
 Each shard was checked: g 0–499 each once, deal seed s×100003 + g, agent seeds s×1000 + 2g + i, no draw, explore 0,
-one player string, elf-t on both sides. The first player won 65.8% / 61.2% / 66.6% / 68.4% / 66.8% / 65.2% of the games (k = 10–15).
+one player string, elf-t on both sides. The first player won 65.8% / 61.2% / 66.6% / 68.4% / 66.8% / 65.2% / 67.2% / 68.0% / 63.8% of the games (k = 10–18).
 
 Condition: the opponent's deck list is known (order and hand not).
