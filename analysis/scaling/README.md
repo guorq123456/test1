@@ -1996,3 +1996,27 @@ J92 的 40% 里混着两样东西：网络比现装评估慢（N 从 200 降到 
   - 两个镜像都取 c_puct = 2，先验温度 T = 1。
   - 照记：c* 都略高于 2，说明在 c = 2 时 PUCT 的探索总量仍比现在的 UCB1 小一点（约 0.8 倍）。
   - 若建造线代码里 PUCT 项的写法和规则里的 c · P · √N ÷ (1 + n) 不同（例如用可用次数代替父节点访问数），本线按代码的实际写法、同一条规则重算 c*，仍在任何对局之前，并在这里写明。
+
+### B 档的代码、开门前的核对、N₀（10-17 19:3xZ，在任何 B 档对局之前）
+
+条件：对手卡表已知（牌序、手牌未知）。
+
+- **代码**：建造线 c102f6e（PUCT），72a5148（耗时；svsim/ 和 c102f6e 相同）。门钉在 **72a5148**。XPrune 缓存的修正（换局时清空，架构线定）单独提交，不进这个检出。
+- **实际公式**（抄自 `ISMCTS._puct_pick`）：
+  - 选 Q + c_puct · P · √max(节点访问数, 1) ÷ (1 + 子节点访问数)，代替 UCB1 的探索项。根节点的访问数就是 Σn，和 c01d2c5 规则里的形式相同，所以 c* = 2.44 / 2.60、**c_puct = 2 不用重算**。
+  - 没访问过的走法 Q = 节点值 − 0.1（FPU 0.1，代码默认，不调），不再强制先展开没试过的走法。
+  - P 在节点第一次选走法时算一次，对这个节点的开放走法（过了 reserve / veto / prune，每个 action_key 一个）归一化，按 1 / T 锐化（T = 1 不变）。先验里没有的走法（只在某些确定化里开放）给 1 ÷ 开放走法数。
+  - 开关：`+puct=PATH:C:T`。门用 `+puct=analysis/scaling/models/prior-ramp-ft-t05.npz:2:1` / `…/prior-elft-ft-t05.npz:2:1`。
+- **开门前的核对**（全部通过）：
+  - **开关关时，价值网络**：72a5148 和 69e3ad2 各打一遍 logit，逐字节相同。gen3-30000 / 70200006 前 20 局 367 个回合末，gen4-59000 / 71600018 前 20 局 347 个，net-elft-10000 / 72000000 前 20 局 343 个。
+  - **开关关时，同种子重下**：在 72a5148 上用 scaledata 重下 71600018 g = 0～2（gen3 + eot 200 次）和 72800038 g = 0～2（net-elft-10000 + eot 200 次）。6 局整份记录除日期和耗时外全部相同（着法、胜负、每步访问数）。建造线另报整套测试 1214 个全过，金标准搜索逐位重放。
+  - **开关开时，先验对**：两个留出片前 20 局的每个决策上（跳费龙 898 个、连击妖 1392 个；外层自己下了的 2 / 1 个不算），根节点挂的先验和 `SetPolicy.priors`（真实局面、同一组开放走法、归一化）最大差 1.1×10⁻¹⁶ / 1.7×10⁻¹⁶，键和顺序全部相同。脚本 `analysis/gates/scaling/btier/rootprior.py`。
+  - **先验文件**：prior-ramp-ft-t05 23708146…，prior-elft-ft-t05 bc086c53…，和登记一致。
+- **N₀**（建造线 puct-cost，在记录局面上计时，c_puct = 1，ft 版；ft-t05 结构相同）：
+  - 跳费龙：基线 N = 120 每步 65.9 ms；加先验后，120 次 75.95 ms、72 次 55.14 ms。两点拟合得等墙钟 N = 96.9，**N₀ = 97**。
+  - 连击妖：基线 N = 105 每步 79.2 ms，加先验 ×1.22，等墙钟 **N₀ = 75**。
+  - c_puct = 2 会改树的形状，每次迭代的耗时可能略不同，由 20 对复核兜住。
+- **选手串**（`P = plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost`）：
+  - 跳费龙：A = `mcts:N+P+setnet=analysis/scaling/models/net-gen3-30000.npz+neteot+puct=analysis/scaling/models/prior-ramp-ft-t05.npz:2:1`（N 从 97 起），B = `mcts:120+P+setnet=…/net-gen3-30000.npz+neteot`。
+  - 连击妖：A = `mcts:N+P+setnet=analysis/scaling/models/net-elft-gen2-19500.npz+neteot+puct=analysis/scaling/models/prior-elft-ft-t05.npz:2:1`（N 从 75 起），B = `mcts:105+P+setnet=…/net-elft-gen2-19500.npz+neteot`。
+- 照 c01d2c5 开跑：跳费龙复核 → 门 A → 门 B → 连击妖复核 → 门 A → 门 B。本线机器，空机器，3 个进程。
