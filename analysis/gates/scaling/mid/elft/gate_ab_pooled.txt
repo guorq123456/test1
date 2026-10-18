@@ -1,0 +1,2 @@
+/tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/midgate/elft/gate_ab.jsonl: 600 pairs, seeds 76200000..76300299, 64.5% ± 2.2% (62.3%..66.7%), CR +141 (+119..+163; steady-state +116); ms per searched decision A 70.44 / B 73.08 = 0.964
+pooled pair by pair (600 pairs, stratified bootstrap 4000): 64.5% (62.3%..66.7%), CR +141 (+118..+164; steady-state +116)
