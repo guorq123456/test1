@@ -1,0 +1,6 @@
+relabel stopped: paused before k=28 at 13:38:15
+ramp-t check ratio 0.9713982766478556 -> N=83 at 13:38:56
+ramp-t gate done at 13:49:25
+elf-t check ratio 0.9210022152757159 -> N=73 at 13:50:35
+elf-t gate done at 14:08:18
+relabel resumed at 14:08:18
