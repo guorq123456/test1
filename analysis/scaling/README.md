@@ -1133,3 +1133,58 @@ Order: the elf-t fits first; its data is all in (data/elf-t4, 455b6f0). ramp-t f
 pushed its shards.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+### Next cycle: the four fits (2026-10-18 01:02–06:40Z; the shard lists above, unchanged)
+
+Every fit went on from its candidate with `--init` / `--prior`. None has a subnormal weight. Each chunk ran under 2 h
+from its checkpoint, until patience stopped it. No chunk was killed and no load ran out of memory. The two value
+nets' dead units are in data/deadunits.json (description only).
+
+| model | from | shards | train / valid | epochs (best) | fit s | valid at the start → end | sha256 |
+|---|---|---|---|---|---|---|---|
+| models/net-elft-gen4-38500.npz | net-elft-gen2-19500 | 67 | 667582 / 35521 turn ends | 18 (14) | 2407 | Brier 0.18106 → 0.17664 | 381c8f2d… |
+| models/net-gen5-68500.npz | net-gen3-30000 | 98 | 1175048 / 61131 turn ends | 25 (21) | 4771 | Brier 0.18956 → 0.18654 | 417571af… |
+| models/prior-elft-gen4-ft-t05.npz | prior-elft-ft-t05 | 57 | 1988790 / 105961 decisions | 35 (31) | 4868 + 5774 + 5920 + 496 | CE 1.20829 → 1.19134 | 7c5d15b2… |
+| models/prior-ramp-gen5-ft-t05.npz | prior-ramp-ft-t05 | 59 | 1302270 / 67936 decisions | 30 (26) | 4483 + 4493 | CE 1.03554 → 1.02275 | 1b7cdfef… |
+
+The full sha256 sums are in data/policy/SHA256SUMS. Each "valid" is its own fit's set, drawn from its training shards,
+so it is not comparable across fits.
+
+**Value nets, holdout Brier** (reported, not judged). The earlier nets were scored on this cycle's holdouts with
+`holdout-net ... --extra-holdout selfplay4:75500038` / `selfplay5:75400038`, from a tokens folder holding only that
+file. Their other numbers and files are unchanged; the reports only gained the new key.
+
+| elf-t | v2skx 72000000 (88311) | gen 2 72800038 (9361) | gen 3 74100038 (9128) | this cycle 75500038 (9195) |
+|---|---|---|---|---|
+| installed linear | 0.20834 | 0.20518 | 0.20395 | 0.19939 |
+| net-elft-gen2-19500 (the candidate) | 0.19088 | 0.18415 | 0.17837 | 0.16803 |
+| net-elft-gen3-29000 | 0.18803 | 0.18125 | 0.17319 | 0.16246 |
+| **net-elft-gen4-38500** | **0.18678** | **0.17913** | **0.17294** | **0.16074** |
+
+| ramp-t | v2skx 70200000 (93787) | gen 4 71600018 (17948) | this cycle 75400038 (8925) |
+|---|---|---|---|
+| installed linear | | 0.20723 | 0.20906 |
+| net-gen3-30000 (the candidate) | 0.18920 | 0.19539 | 0.19371 |
+| net-gen4-59000 | 0.18832 | **0.19064** | 0.19066 |
+| **net-gen5-68500** | **0.18830** | 0.19071 | **0.19007** |
+
+The elf-t net is the lowest of the three on every holdout. The ramp-t net is below its start on every holdout. It
+equals net-gen4-59000 (the same shards less this cycle's 19), within 0.0006 either way.
+
+**Priors, offline report** (policy_offline.py, O1's measure; data/policy/offline2-*.json, per-decision rows in
+dump2-*.jsonl.gz). The earlier prior's figures on 74100038 / 71600018 are those of the step-1 report to the digit.
+Each table is a first decision over all decisions.
+
+| holdout (played by) | decisions | order top1 | ft-t05 top1 / KL | new top1 / KL |
+|---|---|---|---|---|
+| elf-t 74100038 (mcts:200, gen2 net, UCB1) | 36399 | 0.4219 | 0.6690 / 0.1211 | **0.6727** / 0.1866 |
+| elf-t 75500038 (this cycle's PUCT player) | 36413 | 0.3648 | **0.9194** / 0.0441 | 0.8974 / **0.0266** |
+| ramp-t 71600018 (mcts:200, gen3 net, UCB1) | 46781 | 0.4447 | 0.7474 / 0.1383 | **0.7520** / 0.1977 |
+| ramp-t 75400038 (this cycle's PUCT player) | 22902 | 0.3873 | **0.9485** / 0.0497 | 0.9231 / **0.0330** |
+
+This cycle's holdouts were played by a search whose prior was ft-t05 itself. That prior shaped those visits, so its top1
+there (0.92 / 0.95) is no fair comparison: it is the self-reinforcement the registration names. On them the new prior's
+KL to the visits is lower. On the older UCB1 holdouts the new priors pick the most-visited move slightly more often
+(+0.004 / +0.005), and their KL is higher, being sharper. Offline agreement is not strength; that is the gates' question.
+
+Condition: the opponent's deck list is known (order and hand not).
