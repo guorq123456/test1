@@ -11,7 +11,7 @@ For each: Brier, log-loss and the calibration in 10 bins of the predicted win ch
 rows in order, checked by game and action index).
 
     python analysis/scaling/mid_report.py --net NEW --base CANDIDATE --tokens TOK --mid-dir MID --records DIR \\
-        --holdout NAME:SEED ... [--end-holdout NAME:SEED,SEED,...] --out OUT
+        --holdout NAME:SEED ... [--end-holdout NAME:SEED,SEED,...] --out OUT [--dump DIR]
 """
 from __future__ import annotations
 
@@ -112,7 +112,12 @@ def main() -> None:
     ap.add_argument("--end-holdout", action="append", default=[], metavar="NAME:SEED[,SEED]",
                     help="turn ends only (no records with the search's decisions)")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--dump", default=None, help="a folder for the per-position probabilities (<holdout>-end.npz, "
+                                                 "<holdout>-mid.npz; the analysis line's recheck)")
     args = ap.parse_args()
+    dump = Path(args.dump) if args.dump else None
+    if dump:
+        dump.mkdir(parents=True, exist_ok=True)
     new, base = SetNet.load(args.net), SetNet.load(args.base)
     if not new.flag or base.flag:
         raise SystemExit("--net needs the flag, --base none")
@@ -125,8 +130,13 @@ def main() -> None:
         if set(seeds) & trained:
             raise SystemExit(f"{name}: in the net's training shards")
         d = MR.phase_data([tok / f"tok-{s}.npz" for s in seeds], [], tok / "cards.npz")
-        report["holdouts"][name] = {"seeds": seeds, "end": {"new": judged(predict(new, d, True), d.result),
-                                                            "candidate": judged(predict(base, d, False), d.result)}}
+        p_new, p_base = predict(new, d, True), predict(base, d, False)
+        report["holdouts"][name] = {"seeds": seeds, "end": {"new": judged(p_new, d.result),
+                                                            "candidate": judged(p_base, d.result)}}
+        if dump:
+            i = np.concatenate([np.load(tok / f"tok-{s}.npz")["i"] for s in seeds])
+            np.savez_compressed(dump / f"{name}-end.npz", seed=d.seed, g=d.g, i=i, turn=d.turn, y=d.result,
+                                p_new=p_new, p_candidate=p_base)
         print(json.dumps({name: {k: v["brier"] for k, v in report["holdouts"][name]["end"].items()}}), flush=True)
     for spec in args.holdout:
         name, s = spec.split(":")
@@ -136,14 +146,22 @@ def main() -> None:
         d_end = MR.phase_data([tok / f"tok-{s}.npz"], [], tok / "cards.npz")
         d_mid = MR.phase_data([], [mid / f"mid-{s}.npz"], tok / "cards.npz")
         pb, pn = eot_baseline(Path(args.records) / f"rec-{s}.jsonl.gz", mid / f"mid-{s}.npz", base, new)
+        e_new, e_base = predict(new, d_end, True), predict(base, d_end, False)
+        m_new, m_raw = predict(new, d_mid, True), predict(base, d_mid, False)
         report["holdouts"][name] = {
             "seeds": [s],
-            "end": {"new": judged(predict(new, d_end, True), d_end.result),
-                    "candidate": judged(predict(base, d_end, False), d_end.result)},
-            "mid": {"new": judged(predict(new, d_mid, True), d_mid.result),
+            "end": {"new": judged(e_new, d_end.result), "candidate": judged(e_base, d_end.result)},
+            "mid": {"new": judged(m_new, d_mid.result),
                     "candidate_after_turn_end": judged(pb, d_mid.result),
                     "new_after_turn_end": judged(pn, d_mid.result),
-                    "candidate_as_is": judged(predict(base, d_mid, False), d_mid.result)}}
+                    "candidate_as_is": judged(m_raw, d_mid.result)}}
+        if dump:
+            zt, zm = np.load(tok / f"tok-{s}.npz"), np.load(mid / f"mid-{s}.npz")
+            np.savez_compressed(dump / f"{name}-end.npz", seed=d_end.seed, g=d_end.g, i=zt["i"], turn=d_end.turn,
+                                y=d_end.result, p_new=e_new, p_candidate=e_base)
+            np.savez_compressed(dump / f"{name}-mid.npz", seed=d_mid.seed, g=d_mid.g, i=zm["i"], turn=d_mid.turn,
+                                start=zm["start"], y=d_mid.result, p_new=m_new, p_candidate_after_turn_end=pb,
+                                p_new_after_turn_end=pn, p_candidate_as_is=m_raw)
         print(json.dumps({name: {kind: {k: v["brier"] for k, v in r.items()}
                                  for kind, r in report["holdouts"][name].items() if kind != "seeds"}}), flush=True)
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
