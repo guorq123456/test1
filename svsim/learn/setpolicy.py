@@ -654,6 +654,21 @@ def load_cached(path) -> SetPolicy:
 
 # --- command line ------------------------------------------------------------------------------------------------
 
+def _prior_to_continue(args, card_ids, static) -> SetPolicy:
+    """--prior's prior, to go on training from: all its weights and its standardization as they are. Its head width
+    must be the command's and its card table the data's (one cards.npz)."""
+    import hashlib
+    pol = SetPolicy.load(args.prior)
+    if pol.head != args.head:
+        raise SystemExit(f"--prior {args.prior}: head {pol.head}, not the command's {args.head}")
+    if not (np.array_equal(pol.card_ids, card_ids) and np.array_equal(pol.static, np.asarray(static, np.float64))):
+        raise SystemExit(f"--prior {args.prior}: its card table is not the data's cards.npz")
+    pol.info = {"prior": str(args.prior), "prior_sha256": hashlib.sha256(Path(args.prior).read_bytes()).hexdigest(),
+                "freeze": args.freeze, "tau": args.tau, "shards": args.shards,
+                "deck": pol.info.get("deck"), "opponent": pol.info.get("opponent")}
+    return pol
+
+
 def fit_main(args) -> None:
     from svsim.learn.setnet import SetNet
     folder = Path(args.data)
@@ -662,12 +677,18 @@ def fit_main(args) -> None:
     train.sharpen(args.tau)
     valid.sharpen(args.tau)
     card_ids, static = train.card_ids, train.static
-    net = SetNet.load(args.init)
-    pol = SetPolicy.from_value_net(net, head=args.head, seed=args.seed,
-                                   info={"init": str(args.init), "freeze": args.freeze, "tau": args.tau, "shards": args.shards,
-                                         "deck": net.info.get("deck"), "opponent": net.info.get("opponent"),
-                                         "train_decisions": train.n, "valid_decisions": valid.n})
-    pol.card_ids, pol.static = card_ids, static.astype(np.float64)
+    if args.prior:
+        pol = _prior_to_continue(args, card_ids, static)
+    else:
+        net = SetNet.load(args.init)
+        pol = SetPolicy.from_value_net(net, head=args.head, seed=args.seed,
+                                       info={"init": str(args.init), "freeze": args.freeze, "tau": args.tau, "shards": args.shards,
+                                             "deck": net.info.get("deck"), "opponent": net.info.get("opponent"),
+                                             "train_decisions": train.n, "valid_decisions": valid.n})
+        pol.card_ids, pol.static = card_ids, static.astype(np.float64)
+    if args.prior:
+        pol.info.update(train_decisions=train.n, valid_decisions=valid.n,
+                        init_valid_ce=round(pol.cross_entropy(valid), 5))
     t0 = time.time()
     pol.fit(train, valid, epochs=args.epochs, batch=args.batch, lr=args.lr, l2=args.l2, patience=args.patience,
             seed=args.seed, decay=args.decay, freeze=args.freeze, checkpoint=args.checkpoint, ftz=args.ftz)
@@ -688,7 +709,10 @@ def main() -> None:
     f.add_argument("--data", required=True, help="a folder of dec-<seed>.npz")
     f.add_argument("--cards", required=True, help="a token folder's cards.npz (the static rows)")
     f.add_argument("--shards", type=int, nargs="+", required=True)
-    f.add_argument("--init", required=True, help="the value net whose trunk the prior starts from")
+    start = f.add_mutually_exclusive_group(required=True)
+    start.add_argument("--init", help="the value net whose trunk the prior starts from")
+    start.add_argument("--prior", help="a prior to go on training from (all its weights; the next cycle after the "
+                                       "B players: --prior analysis/scaling/models/prior-elft-ft-t05.npz)")
     f.add_argument("--freeze", action="store_true", help="keep the trunk; fit the head only")
     f.add_argument("--tau", type=float, default=1.0, help="targets visits ** (1 / tau), normalized (0.5: squared)")
     f.add_argument("--head", type=int, default=64)

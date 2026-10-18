@@ -1076,3 +1076,60 @@ The records keep each decision's root visits per legal move, as before (netdata 
 tried has 0). tests/test_web_models.py plays one such game and checks the counts against the legal moves.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## Next cycle: training the value nets and priors on the PUCT self-play (shard lists fixed before any fit)
+
+The analysis line registered this in 45212fb ("下一圈：训练"). Every fit goes on from the current candidate. Two
+options make that possible; both are off by default, so every earlier command is unchanged (tests):
+- `train.py net --init NET` starts from NET's weights, card table and standardization. NET's shape and input version
+  must be the command's, and every card of the tokens must be in its table with the same static row. The report
+  adds the start's valid Brier (`init_valid`) and its sha256.
+- `setpolicy fit --prior PRIOR` (instead of `--init VALUE_NET`) starts from all of PRIOR's weights. Its head width
+  must be the command's, and its card table the data's cards.npz. The info adds the start's valid CE.
+
+Every value net uses inputs v1, ReLU 64-64 / 128-64, `--ftz`, patience 4, lr 1e-3, decay 0.5 and the valid set
+(games with seed·100003 + g a multiple of 20) as before. Every prior is fine-tuned at τ 0.5, `--ftz`, patience 4,
+and its valid set is the same rule. Each fit runs in planned chunks of under 2 h from its checkpoint, as before.
+
+**elf-t value net** (`net-elft-gen4-38500`, from net-elft-gen2-19500, sha256 e244c577…). The shards are:
+- the 10⁴ v2skx games 71900000 + 2k, k = 0–9;
+- gen-2 self-play 72800000 + 2k, k = 0–18;
+- gen-3 self-play 74100000 + 2k, k = 0–18;
+- this cycle 75500000 + 2k, k = 0–18.
+
+That is 67 shards and 38500 games. 72800038 / 74100038 / 75500038 and the five 72000000 holdouts are in none of
+them.
+
+    python analysis/scaling/train.py --deck elf-t --opponent elf-t --base 71900000 --holdout-base 72000000 \
+        net --size 38500 --name elft-gen4 --add 72800000:19 --add 74100000:19 --add 75500000:19 --ftz \
+        --init analysis/scaling/models/net-elft-gen2-19500.npz --tokens TOK-ELFT --checkpoint CKPT \
+        --extra-holdout selfplay:72800038 --extra-holdout selfplay3:74100038 --extra-holdout selfplay4:75500038
+
+**ramp-t value net** (`net-gen5-68500`, from net-gen3-30000). The shards are net-gen4-59000's 79 (70100000 k 0–9,
+70800000 k 0–9, 71300000 k 0–9, 71600000 k 0–8, 72300000 k 0–39), plus this cycle's 75400000 + 2k, k = 0–18. That is
+98 shards and 68500 games. 71600018, 75400038 and the five 70200000 holdouts are in none of them. "All the data so
+far" here means the lists the candidate's line was trained on (net-gen3-30000's 30 shards are all in
+net-gen4-59000's). The 10⁵ v2skx shards (70100020 onward, the all-131000 net's) are not taken.
+
+    python analysis/scaling/train.py net --size 68500 --name gen5 --add 70800000:10 --add 71300000:10 \
+        --add 71600000:9 --add 72300000:40 --add 75400000:19 --ftz --init analysis/scaling/models/net-gen3-30000.npz \
+        --tokens TOK --checkpoint CKPT --extra-holdout selfplay:71600018 --extra-holdout selfplay5:75400038
+
+**elf-t prior** (`prior-elft-gen4-ft-t05`, from prior-elft-ft-t05, sha256 bc086c53…). The shards are the earlier
+prior's 38 (72800000 + 2k and 74100000 + 2k, k = 0–18) plus 75500000 + 2k, k = 0–18. That is 57 shards and about
+2.09 million decisions.
+
+    python -m svsim.learn.setpolicy fit --data DEC --cards CARDS --shards <the 57> \
+        --prior analysis/scaling/models/prior-elft-ft-t05.npz --tau 0.5 --ftz --checkpoint CKPT --out OUT
+
+**ramp-t prior** (`prior-ramp-gen5-ft-t05`, from prior-ramp-ft-t05, sha256 23708146…). The shards are the earlier
+prior's 40 (72300000 + 2k, k = 0–39) plus 75400000 + 2k, k = 0–18. That is 59 shards.
+
+Holdouts, reported and not judged (the analysis line's registration):
+- the value nets' Brier on every earlier holdout and on this cycle's k = 19;
+- the priors' top1 and KL (policy_offline.py, O1's measure) on 74100038 / 71600018 and on this cycle's k = 19.
+
+Order: the elf-t fits first; its data is all in (data/elf-t4, 455b6f0). ramp-t follows once the analysis line has
+pushed its shards.
+
+Condition: the opponent's deck list is known (order and hand not).

@@ -40,6 +40,7 @@ os.environ.setdefault("MKL_NUM_THREADS", "1")
 
 import argparse      # noqa: E402
 import gzip          # noqa: E402
+import hashlib       # noqa: E402
 import json          # noqa: E402
 import subprocess    # noqa: E402
 import sys           # noqa: E402
@@ -62,7 +63,9 @@ SIZES = {1000: 1, 10000: 10, 100000: 100, 20000: 10, 30000: 10,   # 20000 / 3000
          39000: 10, 131000: 100,   # 39000: 10^4 plus gen 2, 3, 4 (k 0-8); 131000: 10^5 plus those and sp-net100000
          29000: 0,   # 29000: self-play only (gen 2, 3, 4 k 0-8 through --add), no v2skx
          59000: 10,   # 59000: as 39000 plus the 2x10^4 extra gen-4 games (--add 72300000:40)
-         19500: 10}   # 19500: the elf-t mirror's 10^4 (--base 71900000) plus its gen-2 self-play k 0-18 (500 each)
+         19500: 10,   # 19500: the elf-t mirror's 10^4 (--base 71900000) plus its gen-2 self-play k 0-18 (500 each)
+         38500: 10,   # 38500: as 19500 plus its gen-3 and round-4 (PUCT) self-play k 0-18
+         68500: 10}   # 68500: as 59000 plus the ramp-t round-4 (PUCT) self-play k 0-18 (--add 75400000:19)
 
 
 def shards(size: int, add=(), base_shards: int | None = None) -> list:
@@ -103,13 +106,21 @@ def net_main(args) -> None:
     tok = Path(args.tokens)
     data = Data(_files(tok, shards(args.size, args.add, args.base_shards), "tok-", ".npz"), tok / "cards.npz")
     valid_mask = data.games() % 20 == 0
+    info = {"deck": PAIR[0], "opponent": PAIR[1], "size": args.size, "shards": shards(args.size, args.add, args.base_shards),
+            "name": args.name or None, "inputs": data.inputs}
+    if args.init:
+        net = _init_net(args, data)
+        data = _align(net, data)
     train, valid = data.subset(~valid_mask), data.subset(valid_mask)
-    net = SetNet(data.static.shape[1], phi=args.phi, rho=args.rho, seed=args.seed, slope=args.slope,
-                 inputs=data.inputs,
-                 info={"deck": PAIR[0], "opponent": PAIR[1], "size": args.size, "shards": shards(args.size, args.add, args.base_shards),
-                       "train_positions": train.n, "name": args.name or None, "inputs": data.inputs,
-                       "valid_positions": valid.n})
-    net.set_cards(data.card_ids, data.static, np.bincount(train.cards, minlength=len(data.card_ids)) + 1)
+    info.update(train_positions=train.n, valid_positions=valid.n)
+    if args.init:
+        info.update(init=str(args.init), init_sha256=hashlib.sha256(Path(args.init).read_bytes()).hexdigest(),
+                    init_valid=score(net.predict(valid), valid.result))
+        net.info = info
+    else:
+        net = SetNet(data.static.shape[1], phi=args.phi, rho=args.rho, seed=args.seed, slope=args.slope,
+                     inputs=data.inputs, info=info)
+        net.set_cards(data.card_ids, data.static, np.bincount(train.cards, minlength=len(data.card_ids)) + 1)
     t0 = time.time()
     net.fit(train, valid, epochs=args.epochs, batch=args.batch, lr=args.lr, l2=args.l2, patience=args.patience,
             seed=args.seed, decay=args.decay, checkpoint=args.checkpoint, ftz=args.ftz)
@@ -122,6 +133,25 @@ def net_main(args) -> None:
     (HERE / "models").mkdir(exist_ok=True)
     net.save(HERE / f"models/net-{_tag(args)}.npz")
     _holdout_net(net, tok, _tag(args), report, args.extra_holdout)
+
+
+def _init_net(args, data: Data) -> SetNet:
+    """--init's net, to go on training from: its weights, its card table and its standardization as they are
+    (set_cards is not called again). Its shape and input version must be the command's, and every card of the data
+    must be in its table with the same static row."""
+    net = SetNet.load(args.init)
+    want = {"phi": tuple(args.phi), "rho": tuple(args.rho), "slope": float(args.slope), "inputs": data.inputs}
+    got = {"phi": net.phi, "rho": net.rho, "slope": net.slope, "inputs": net.inputs}
+    if got != want:
+        raise SystemExit(f"--init {args.init}: {got} is not the command's {want}")
+    index = {int(c): i for i, c in enumerate(net.card_ids)}
+    missing = [int(c) for c in data.card_ids if int(c) not in index]
+    if missing:
+        raise SystemExit(f"--init {args.init}: cards not in its table: {missing[:5]}")
+    rows = [index[int(c)] for c in data.card_ids]
+    if not np.array_equal(net.static[rows], data.static):
+        raise SystemExit(f"--init {args.init}: its static rows differ from the tokens' cards.npz")
+    return net
 
 
 def _holdout_net(net: SetNet, tok: Path, tag: str, report: dict, extra=()) -> None:
@@ -335,6 +365,9 @@ def main() -> None:
     n.add_argument("--base-shards", type=int, default=None, metavar="N",
                    help="train on the first N shards of --base instead of SIZES[size] (the elf-t mirror's gen 3: "
                         "--size 29000 --base-shards 10 --add 72800000:19 --add 74100000:19)")
+    n.add_argument("--init", default=None, metavar="NET",
+                   help="go on training from this net (its weights, card table and standardization; the next cycle "
+                        "after the B players: --init analysis/scaling/models/net-elft-gen2-19500.npz). Off: a new net")
     hn = sub.add_parser("holdout-net")
     hn.add_argument("--size", type=int, choices=sorted(SIZES), required=True)
     hn.add_argument("--tokens", required=True)

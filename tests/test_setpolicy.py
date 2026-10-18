@@ -197,3 +197,30 @@ def test_split_file_by_file_equals_the_mask_on_the_whole(shard):
                   "seed", "g", "step"):
             assert np.array_equal(getattr(got, k), getattr(want, k)), k
     assert train.n + valid.n == whole.n and valid.n > 0
+
+
+def test_prior_continues_from_all_its_weights_and_checks_its_card_table(shard, tmp_path):
+    import argparse
+    data, pol = _tiny(shard)
+    pol.fit(data, data, epochs=1, batch=16, log=lambda s: None)
+    path = tmp_path / "prior.npz"
+    pol.save(path)
+    args = argparse.Namespace(prior=str(path), head=3, freeze=False, tau=0.5, shards=[74100038])
+    got = SP._prior_to_continue(args, data.card_ids, data.static)
+    for k in SP.SetPolicy.PARAMS + ("smean", "sstd", "card_ids", "static"):
+        assert np.array_equal(getattr(got, k), getattr(pol, k))
+    assert got.info["prior"] == str(path) and got.info["tau"] == 0.5
+    with pytest.raises(SystemExit):                                        # another head width
+        SP._prior_to_continue(argparse.Namespace(**{**vars(args), "head": 64}), data.card_ids, data.static)
+    with pytest.raises(SystemExit):                                        # another card table
+        SP._prior_to_continue(args, data.card_ids[::-1], data.static[::-1])
+
+
+@pytest.mark.parametrize("start", [[], ["--init", "N", "--prior", "P"]])
+def test_fit_starts_from_exactly_one_of_a_value_net_or_a_prior(monkeypatch, start):
+    import sys
+    monkeypatch.setattr(SP, "fit_main", lambda args: None)
+    monkeypatch.setattr(sys, "argv", ["setpolicy", "fit", "--data", "D", "--cards", "C", "--shards", "1",
+                                      "--out", "O"] + start)
+    with pytest.raises(SystemExit):
+        SP.main()
