@@ -68,5 +68,18 @@
    "log_loss": 0.58789,
    "n": 9128
   }
+ },
+ "holdout_selfplay4": {
+  "seeds": [
+   75500038
+  ],
+  "brier": 0.16246,
+  "log_loss": 0.48491,
+  "n": 9195,
+  "installed_linear": {
+   "brier": 0.19939,
+   "log_loss": 0.57707,
+   "n": 9195
+  }
  }
 }
