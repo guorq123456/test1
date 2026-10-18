@@ -1,0 +1,7 @@
+ramp-t check done N=88
+ramp-t gate A done
+ramp-t gate B done
+elf-t check done N=74
+elf-t gate A done
+elf-t gate B done
+ALL DONE

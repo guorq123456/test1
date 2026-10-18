@@ -1,0 +1,2 @@
+/tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/cycle5/ramp/gate_ab.jsonl: 600 pairs, seeds 75600000..75700299, 50.6% ± 1.9% (48.7%..52.5%), CR +6 (-13..+24; steady-state +5); ms per searched decision A 64.31 / B 65.06 = 0.989
+pooled pair by pair (600 pairs, stratified bootstrap 4000): 50.6% (48.6%..52.5%), CR +6 (-13..+24; steady-state +5)
