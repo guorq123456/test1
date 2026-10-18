@@ -1402,3 +1402,30 @@ drawing only the rest from the pool, would use information that is public by the
 of its own, so it is listed here, not made.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## The opponent-hand zone: an omniscient net and its control (the architecture thread 17:47Z; code 08c2952; set before either fit)
+
+**Code.** `SetNet(ophand=True)` adds a zone of the opponent's real hand, card by card. Each card is a live token of
+the existing card features (learn.tokens._live), with no card id and no score per card. Its phi sum enters rho
+through rows of its own: `U @ V1 + P_hand @ V1h`. `SetNet.with_ophand_from(net)` starts with V1h = 0. Until it is
+trained, the net then gives every position the same number as `net`, to the last bit, in both the batch and the
+search's single-position path (tests/test_ophand.py). Off, nothing changes: no other net, file or test differs.
+`midrows encode-hand` writes, beside each tok- / mid- file, the opponent's hand at its positions. Their game and
+action index are checked against the file's when they are loaded. In the search, the zone sees the hand as the
+state has it: a guess, or the real one with `+oracle`. This is a diagnostic only, and no player or level uses it.
+
+**Two fits, the same in everything but the zone.** Both start from net-mid-ramp-t (sha256 4232818e…). Both use its
+data: the 98 turn-end shards and 59 mid-turn shards of its list. The mid-turn rows are thinned with the same rate and
+seed, so the rows are the same. The valid part is the same games (seed·100003 + g a multiple of 20). The settings
+are the same: lr 1e-3, decay 0.5, l2 1e-5, batch 256, `--ftz`. Both run exactly 12 epochs: `--patience 100`, so
+neither stops early, and each keeps its best valid epoch.
+- **omniscient** `net-midoph-ramp-t`: with the zone (`--hand-dir`);
+- **control** `net-midc-ramp-t`: without it, net-mid-ramp-t trained on for the same 12 epochs.
+
+    python analysis/scaling/train_mid.py --deck ramp-t --opponent ramp-t --init analysis/scaling/models/net-mid-ramp-t.npz \
+        <net-mid-ramp-t's --end / --mid / --holdout lists> --epochs 12 --patience 100 --name midoph-ramp-t --hand-dir HAND
+    (the control: the same without --hand-dir, --name midc-ramp-t)
+
+The screen is the analysis line's: holdout Brier, omniscient against control. Below 0.005 better, this line stops.
+
+Condition: the opponent's deck list is known (order and hand not).
