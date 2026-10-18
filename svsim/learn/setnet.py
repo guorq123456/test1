@@ -198,10 +198,15 @@ class SetNet:
     PARAMS = ("W1s", "W1d", "b1", "W2", "b2", "V1", "c1", "V2", "c2", "v3", "c3")
 
     def __init__(self, static_width: int, phi=(64, 64), rho=(128, 64), seed: int = 0, info=None,
-                 slope: float = 0.0, inputs: str = "v1"):
+                 slope: float = 0.0, inputs: str = "v1", flag: bool = False):
         rng = np.random.default_rng(seed)
         self.slope = float(slope)      # 0: ReLU (the fixed settings); > 0: leaky ReLU with that negative slope (R3)
         self.inputs = inputs           # learn.tokens INPUTS; "v1" for every net before 2026-10-17
+        # flag: rho also reads a last global, 1 at a position inside the mover's own turn and 0 at a turn end
+        # (learn.midrows; the agent option +netmid). Off for every net before 2026-10-18, whose files are as before
+        self.flag = bool(flag)
+        if self.flag and inputs != "v1":
+            raise ValueError("the mid-turn flag is for v1 inputs")
         D, G = len(dyn_names(inputs)), len(T.global_names(inputs))
         h1, h2 = phi
         r1, r2 = rho
@@ -212,7 +217,7 @@ class SetNet:
         self.b1 = np.zeros(h1)
         self.W2 = rng.normal(0, np.sqrt(2 / h1), (h1, h2))
         self.b2 = np.zeros(h2)
-        u = NZ * h2 + G
+        u = NZ * h2 + G + int(self.flag)
         self.V1 = rng.normal(0, np.sqrt(2 / u) / 4, (u, r1))   # pooled sums are large: start small
         self.c1 = np.zeros(r1)
         self.V2 = rng.normal(0, np.sqrt(2 / r1), (r1, r2))
@@ -377,13 +382,16 @@ class SetNet:
         return 1 / (1 + np.exp(-np.clip(out, -30, 30)))
 
     # --- one position (the search) ----------------------------------------------------------------------------
-    def logit(self, state, player: int) -> float:
+    def logit(self, state, player: int, mid: bool = False) -> float:
         """The logit of `player` winning at turn-end position `state` (learn.tokens' moment and view); the same
         number as the batch forward pass on T.encode(state, player). A pooled card (a deck, the unseen pool) is at
         its printed values, so its phi output is a constant of the card, kept per card id, and a pooled zone's sum
         is kept per zone content (card ids with their counts, in order of first appearance): the sums are added
         in the same order as the batch pass's per-card version, so the result is the same to the last bit
-        (tests/test_setnet.py, analysis/scaling/README.md)."""
+        (tests/test_setnet.py, analysis/scaling/README.md). With `mid` (a flagged net only), the position is inside
+        `player`'s own turn, `player` to act, and the flag input is 1."""
+        if mid and not self.flag:
+            raise ValueError("a net without the mid-turn flag scores turn ends only")
         if self.inputs != "v1":
             return self._logit2(state, player)
         p, o = state.players[player], state.players[1 - player]
@@ -430,9 +438,25 @@ class SetNet:
                     sums.clear()
                 sums[(z, key)] = total
             P[z] = P[z] + total
-        u = np.concatenate([P.reshape(-1), T.globals_of(state, player) / _GLOBAL_SCALE])
+        g = T.globals_of(state, player) / _GLOBAL_SCALE
+        if self.flag:
+            g = np.append(g, np.float32(1.0 if mid else 0.0))
+        u = np.concatenate([P.reshape(-1), g])
         z1 = _act(u @ self.V1 + self.c1, self.slope)
         return float(_act(z1 @ self.V2 + self.c2, self.slope) @ self.v3 + self.c3[0])
+
+    @classmethod
+    def flagged_from(cls, net: "SetNet", info=None) -> "SetNet":
+        """`net` with the mid-turn flag added: the same weights, card table and standardization, and V1 one row
+        longer, that row 0. So at flag 0 (a turn end) it scores as `net` does, and training starts from it."""
+        if net.flag:
+            raise ValueError("the net has the flag already")
+        out = cls(net.static.shape[1], phi=net.phi, rho=net.rho, slope=net.slope, inputs=net.inputs, flag=True,
+                  info=info)
+        for k in cls.PARAMS + ("smean", "sstd", "card_ids", "static"):
+            setattr(out, k, np.array(getattr(net, k)))
+        out.V1 = np.concatenate([np.asarray(net.V1, dtype=np.float64), np.zeros((1, net.V1.shape[1]))])
+        return out
 
     def _logit2(self, state, player: int) -> float:
         """logit() for the v2 inputs: a pooled token's row also holds its share and its owner's next-turn values,
@@ -553,6 +577,8 @@ class SetNet:
                       info=np.array(json.dumps(self.info)))
         if self.inputs != "v1":                  # a v1 net's file is as before
             arrays["inputs"] = np.array(self.inputs)
+        if self.flag:                            # so is a net's without the flag
+            arrays["flag"] = np.array(True)
         np.savez(path, **arrays)
 
     @classmethod
@@ -560,7 +586,8 @@ class SetNet:
         z = np.load(path, allow_pickle=False)
         net = cls(z["static"].shape[1], phi=tuple(int(x) for x in z["phi"]), rho=tuple(int(x) for x in z["rho"]),
                   slope=float(z["slope"]) if "slope" in z.files else 0.0,
-                  inputs=str(z["inputs"]) if "inputs" in z.files else "v1")
+                  inputs=str(z["inputs"]) if "inputs" in z.files else "v1",
+                  flag=bool(z["flag"]) if "flag" in z.files else False)
         for k in cls.PARAMS + ("smean", "sstd", "card_ids", "static"):
             setattr(net, k, np.array(z[k]))
         net.info = json.loads(str(z["info"]))
@@ -603,12 +630,18 @@ class SetNetEnded:
     "opponent": the scored player's deck and the other's, ui.session.DECKS keys) from the net, as SCALE x its
     logit; everything else (in-turn scores, other pairings, finished games) from `base`. With `end_mid_turn`
     (agent option +neteot), a position inside the scored player's own turn (they are to act) is scored after
-    search.evaluate.after_end_of_turn on a copy, the moment the net was trained on; off, nothing changes."""
+    search.evaluate.after_end_of_turn on a copy, the moment the net was trained on; off, nothing changes. With
+    `mid_turn` (agent option +netmid; a net with the mid-turn flag, learn.midrows), such a position is scored as it
+    is by the net's mid-turn branch (flag 1), with no turn end played, and every other position by its turn-end
+    branch (flag 0); it takes the place of `end_mid_turn`."""
 
-    def __init__(self, base, net: SetNet, end_mid_turn: bool = False):
+    def __init__(self, base, net: SetNet, end_mid_turn: bool = False, mid_turn: bool = False):
         self.base = base
         self.net = net
         self.end_mid_turn = end_mid_turn         # +neteot: a mid-turn position is first played to its turn end
+        self.mid_turn = mid_turn                 # +netmid: a mid-turn position is scored by the mid-turn branch
+        if mid_turn and not net.flag:
+            raise ValueError("+netmid needs a net with the mid-turn flag (learn.midrows)")
         self.pair = (net.info.get("deck"), net.info.get("opponent"))
         if None in self.pair:
             raise ValueError("the net names no pairing (info deck / opponent)")
@@ -620,6 +653,8 @@ class SetNetEnded:
             return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
         if not player_moves_next and (state.players[player].deck_name, state.players[1 - player].deck_name) \
                 == self.pair:
+            if self.mid_turn and state.active == player:
+                return SCALE * self.net.logit(state, player, mid=True)
             if self.end_mid_turn and state.active == player:
                 # inside the scored player's own turn (a leaf after a move that isn't the turn's end, the root's
                 # center): the net has only seen positions after the end-of-turn abilities, so end the turn on a

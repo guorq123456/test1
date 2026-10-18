@@ -1,0 +1,216 @@
+"""Mid-turn rows for the value net's mid-turn branch (the architecture thread 2026-10-18 07:53Z).
+
+Under +neteot, learn.setnet.SetNetEnded plays a leaf inside the scored player's own turn to its turn end
+(after_end_of_turn, on a copy) and scores that with a net trained on turn ends only. The cards still playable, the
+play points left and the attacks not made all count as wasted. A net with the mid-turn flag (SetNet flag: rho reads
+one more global, 1 inside the mover's turn, 0 at a turn end) is trained on both kinds of position, and the agent
+option +netmid scores such a leaf as it is by the flag-1 branch.
+
+A mid-turn row is a decision of the move prior's data (learn.setpolicy.decisions: a searched main-phase decision
+with two distinct moves or more, the mover to act, the turn not ended), encoded by learn.tokens.encode from the
+mover's view, labelled with the game's result from the mover's view (1 a win, 0 a loss, 0.5 a draw). The files
+have the turn-end token files' layout (learn.scaledata encode: tokens, cards, offsets, globals, result, seed, g,
+turn, player, card_id, static), so learn.setnet.Data reads them. "i" is the decision's action index and "start"
+whether it is its turn's first decision. "linear" is 0: no turn-end model scores a mid-turn position.
+
+phase_split loads turn-end and mid-turn files into one learn.setnet.Data per part (training / validation by game,
+seed·100003 + g a multiple of `every` in validation), with the flag appended to the globals. It fills arrays
+allocated once, file by file, so the whole data never sits in memory next to its parts. A mid-turn file's rows
+can be thinned to a rate (each row kept with probability `mid_rate`, from a generator seeded by (seed, shard)).
+
+    python -m svsim.learn.midrows encode --records DIR --out DIR [--workers 4]
+"""
+from __future__ import annotations
+
+import argparse
+import glob
+import gzip
+import json
+import os
+import time
+from pathlib import Path
+
+import numpy as np
+
+
+def mid_rows(record: dict):
+    """[(cards, tokens, globals, labels, {card id: CardDef})] at every decision of learn.setpolicy.decisions."""
+    from svsim.learn import tokens as T
+    from svsim.learn.setpolicy import decisions
+    winner = record.get("winner")
+    out = []
+    for i, state, *_rest, start in decisions(record):
+        me = state.active
+        cids, toks, glob_ = T.encode(state, me)
+        defs = {}
+        for p in state.players:
+            for c in p.hand + p.field + p.leader_area + p.deck_view():
+                defs[c.defn.card_id] = c.defn
+        result = 0.5 if winner is None else float(winner == me)
+        out.append((cids, toks, glob_, {"result": result, "i": i, "turn": state.turn, "player": me,
+                                        "start": bool(start)}, defs))
+    return out
+
+
+def _encode_shard(job):
+    from svsim.learn import tokens as T
+    path, target = job
+    t0 = time.process_time()
+    cids, toks, offs, globs = [], [], [0], []
+    lab = {k: [] for k in ("result", "seed", "g", "i", "turn", "player", "start")}
+    cards = {}
+    games = 0
+    with gzip.open(path, "rt") as fh:
+        for line in fh:
+            if not line.strip():
+                continue
+            record = json.loads(line)
+            games += 1
+            for c, t, g, d, defs in mid_rows(record):
+                cards.update(defs)
+                cids.append(c)
+                toks.append(t)
+                offs.append(offs[-1] + len(t))
+                globs.append(g)
+                for k in ("result", "i", "turn", "player", "start"):
+                    lab[k].append(d[k])
+                lab["seed"].append(int(record["seed"]) // 100003)
+                lab["g"].append(record["g"])
+    arrays = {"tokens": np.concatenate(toks) if toks else np.zeros((0, len(T.TOKEN)), np.int16),
+              "cards": np.concatenate(cids) if cids else np.zeros(0, np.int32),
+              "offsets": np.asarray(offs, np.int64),
+              "globals": np.stack(globs).astype(np.float32) if globs else np.zeros((0, len(T.GLOBALS)), np.float32),
+              "result": np.asarray(lab["result"], np.float32), "linear": np.zeros(len(globs), np.float32),
+              "start": np.asarray(lab["start"], bool)}
+    for k in ("seed", "g", "i", "turn", "player"):
+        arrays[k] = np.asarray(lab[k], np.int32)
+    ids = sorted(cards)
+    arrays["card_id"] = np.asarray(ids, np.int32)
+    arrays["static"] = np.stack([T.static(cards[c]) for c in ids]) if ids else np.zeros((0, len(T.static_names())))
+    tmp = str(target) + ".tmp.npz"
+    np.savez_compressed(tmp, **arrays)
+    os.replace(tmp, target)
+    return str(target), games, len(globs), round(time.process_time() - t0, 1)
+
+
+def encode_main(args) -> None:
+    from multiprocessing import Pool
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    jobs = []
+    for path in sorted(glob.glob(os.path.join(args.records, "rec-*.jsonl.gz"))):
+        seed = os.path.basename(path)[len("rec-"):-len(".jsonl.gz")]
+        target = out / f"mid-{seed}.npz"
+        if not target.exists():
+            jobs.append((path, target))
+    print(json.dumps({"shards_to_encode": len(jobs)}), flush=True)
+    with Pool(args.workers) as pool:
+        for target, games, n, cpu in pool.imap_unordered(_encode_shard, jobs):
+            print(json.dumps({"file": os.path.basename(target), "games": games, "positions": n, "cpu_s": cpu}),
+                  flush=True)
+
+
+# --- loading: turn-end and mid-turn rows, the flag appended --------------------------------------------------------
+
+def _plan(end_files, mid_files, every: int, mid_rate: float, seed: int):
+    """[(path, flag, rows kept, rows in validation)] per file, from its labels only."""
+    plan = []
+    for flag, files in ((0.0, end_files), (1.0, mid_files)):
+        for f in files:
+            with np.load(f) as z:
+                n = len(z["result"])
+                games = z["seed"].astype(np.int64) * 100003 + z["g"].astype(np.int64)
+                shard = int(z["seed"][0]) if n else 0
+            keep = np.ones(n, bool)
+            if flag and mid_rate < 1.0:
+                keep = np.random.default_rng([seed, shard]).random(n) < mid_rate
+            valid = games % every == 0 if every else np.zeros(n, bool)
+            plan.append((f, flag, keep, valid))
+    return plan
+
+
+def _assemble(plan, cards_npz, part: str):
+    """One learn.setnet.Data of the plan's rows of `part` ("train": kept and not validation, "valid": kept and
+    validation, "all": kept), arrays allocated once and filled file by file."""
+    from svsim.learn.setnet import Data, global_scale, inputs_of
+    c = np.load(cards_npz)
+    out = object.__new__(Data)
+    out.card_ids = c["card_id"].astype(np.int64)
+    out.static = c["static"].astype(np.float32)
+    out.static_names = [str(s) for s in c["static_names"]] if "static_names" in c.files else []
+    out.inputs = "v1"
+
+    def rows_of(keep, valid):
+        return keep & ~valid if part == "train" else (keep & valid if part == "valid" else keep)
+
+    n_pos = n_tok = 0
+    width = n_glob = None
+    for f, _flag, keep, valid in plan:
+        sel = rows_of(keep, valid)
+        with np.load(f) as z:
+            lens = np.diff(z["offsets"])
+            if width is None:
+                width, n_glob = z["tokens"].shape[1], z["globals"].shape[1]
+                if inputs_of(width, n_glob, str(z["inputs"]) if "inputs" in z.files else None) != "v1":
+                    raise ValueError("the mid-turn flag is for v1 inputs")
+        n_pos += int(sel.sum())
+        n_tok += int(lens[sel].sum())
+    out.tokens = np.zeros((n_tok, width), np.int16)
+    out.cards = np.zeros(n_tok, np.int32)
+    out.offsets = np.zeros(n_pos + 1, np.int64)
+    out.globals = np.zeros((n_pos, n_glob + 1), np.float32)
+    for k, dt in (("result", np.float32), ("linear", np.float32), ("seed", np.int32), ("g", np.int32),
+                  ("turn", np.int32)):
+        setattr(out, k, np.zeros(n_pos, dt))
+    out.flag = np.zeros(n_pos, np.float32)
+    scale = global_scale("v1")
+    p = t = 0
+    for f, flag, keep, valid in plan:
+        sel = np.flatnonzero(rows_of(keep, valid))
+        if not len(sel):
+            continue
+        with np.load(f) as z:
+            offs = z["offsets"].astype(np.int64)
+            starts, lens = offs[sel], offs[sel + 1] - offs[sel]
+            first = np.concatenate([[0], np.cumsum(lens)[:-1]]).astype(np.int64)
+            take = np.repeat(starts - first, lens) + np.arange(int(lens.sum()), dtype=np.int64)
+            m = len(sel)
+            k = int(lens.sum())
+            out.tokens[t:t + k] = z["tokens"][take]
+            out.cards[t:t + k] = np.searchsorted(out.card_ids, z["cards"][take].astype(np.int64)).astype(np.int32)
+            out.offsets[p + 1:p + m + 1] = t + np.cumsum(lens)
+            out.globals[p:p + m, :n_glob] = z["globals"][sel] / scale
+            out.globals[p:p + m, n_glob] = flag
+            for key in ("result", "linear", "seed", "g", "turn"):
+                getattr(out, key)[p:p + m] = z[key][sel]
+            out.flag[p:p + m] = flag
+        p += m
+        t += k
+    out.n = n_pos
+    return out
+
+
+def phase_split(end_files, mid_files, cards_npz, every: int = 20, mid_rate: float = 1.0, seed: int = 0):
+    """(training, validation) learn.setnet.Data over turn-end files (flag 0) and mid-turn files (flag 1)."""
+    plan = _plan(end_files, mid_files, every, mid_rate, seed)
+    return _assemble(plan, cards_npz, "train"), _assemble(plan, cards_npz, "valid")
+
+
+def phase_data(end_files, mid_files, cards_npz):
+    """Every row of the files as one learn.setnet.Data, the flag appended (a holdout)."""
+    return _assemble(_plan(end_files, mid_files, 0, 1.0, 0), cards_npz, "all")
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    e = sub.add_parser("encode")
+    e.add_argument("--records", required=True)
+    e.add_argument("--out", required=True)
+    e.add_argument("--workers", type=int, default=4)
+    args = ap.parse_args()
+    {"encode": encode_main}[args.cmd](args)
+
+
+if __name__ == "__main__":
+    main()
