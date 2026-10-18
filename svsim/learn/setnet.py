@@ -33,6 +33,7 @@ import numpy as np
 from svsim.learn import tokens as T
 
 NZ = len(T.ZONES)
+OP_HAND = NZ           # the zone value of an opponent-hand token (an ophand net's extra zone; not one of T.ZONES)
 KW = len(T.KEYWORDS)
 # a token's state as phi sees it: DYNAMIC scaled, keywords as bits (zone and count are not inputs of phi)
 DYN_NAMES = ("cost", "atk", "life", "max_life", "evolved", "super_evolved", "can_hit_follower", "can_hit_leader",
@@ -144,6 +145,13 @@ class Data:
         return (self.cards[take], dynamic(tok, getattr(self, "inputs", "v1")), tok[:, _COUNT].astype(np.float32),
                 seg, self.globals[idx])
 
+    def hand_batch(self, idx: np.ndarray):
+        """The opponent's hand tokens of positions idx (an ophand net, learn.midrows hand- files): (card index [T],
+        dynamic [T, D], position in the batch [T])."""
+        take, lens = _spans(self.hand_offsets, idx)
+        tok = self.hand_tokens[take]
+        return self.hand_cards[take], dynamic(tok), np.repeat(np.arange(len(idx)), lens)
+
 
 def _spans(offsets: np.ndarray, idx: np.ndarray):
     """(the token indices of positions idx, in order; each position's token count)."""
@@ -198,7 +206,7 @@ class SetNet:
     PARAMS = ("W1s", "W1d", "b1", "W2", "b2", "V1", "c1", "V2", "c2", "v3", "c3")
 
     def __init__(self, static_width: int, phi=(64, 64), rho=(128, 64), seed: int = 0, info=None,
-                 slope: float = 0.0, inputs: str = "v1", flag: bool = False):
+                 slope: float = 0.0, inputs: str = "v1", flag: bool = False, ophand: bool = False):
         rng = np.random.default_rng(seed)
         self.slope = float(slope)      # 0: ReLU (the fixed settings); > 0: leaky ReLU with that negative slope (R3)
         self.inputs = inputs           # learn.tokens INPUTS; "v1" for every net before 2026-10-17
@@ -207,6 +215,14 @@ class SetNet:
         self.flag = bool(flag)
         if self.flag and inputs != "v1":
             raise ValueError("the mid-turn flag is for v1 inputs")
+        # ophand: a diagnostic (the architecture thread 2026-10-18 17:47Z): the opponent's real hand, card by card,
+        # as one more zone; its phi sum enters rho through its own rows V1h (U @ V1 + P_hand @ V1h). Off for every
+        # net before, whose numbers and files are unchanged
+        self.ophand = bool(ophand)
+        if self.ophand and inputs != "v1":
+            raise ValueError("the opponent-hand zone is for v1 inputs")
+        if self.ophand:
+            self.PARAMS = SetNet.PARAMS + ("V1h",)
         D, G = len(dyn_names(inputs)), len(T.global_names(inputs))
         h1, h2 = phi
         r1, r2 = rho
@@ -224,6 +240,8 @@ class SetNet:
         self.c2 = np.zeros(r2)
         self.v3 = rng.normal(0, np.sqrt(1 / r2), r2)
         self.c3 = np.zeros(1)
+        if self.ophand:
+            self.V1h = np.zeros((h2, r1))             # the opponent-hand zone's rows, 0 at the start
         self.smean = np.zeros(static_width)
         self.sstd = np.ones(static_width)
         self.card_ids = np.zeros(0, np.int64)
@@ -246,7 +264,8 @@ class SetNet:
         return (s - self.smean) / self.sstd
 
     # --- forward / backward -----------------------------------------------------------------------------------
-    def forward(self, cards, dyn, count, seg, glob, keep=False, static=None):
+    def forward(self, cards, dyn, count, seg, glob, keep=False, static=None, hand=None):
+        """`hand` (an ophand net): (card index, dynamic, position in batch) of the opponent's hand tokens."""
         B = glob.shape[0]
         S = self._S(static)
         A1 = (S @ self.W1s)[cards] + dyn @ self.W1d + self.b1
@@ -255,17 +274,28 @@ class SetNet:
         H2 = _act(A2, self.slope)
         P = _segsum(H2, count, seg, B * NZ).reshape(B, -1)
         U = np.concatenate([P, glob], axis=1)
-        Z1 = _act(U @ self.V1 + self.c1, self.slope)
+        if hand is None:
+            Z1 = _act(U @ self.V1 + self.c1, self.slope)
+        else:                                          # the base part as without the zone, then the zone's term
+            hc, hd, hpos = hand
+            Hh1 = _act((S @ self.W1s)[hc] + hd @ self.W1d + self.b1, self.slope)
+            Hh2 = _act(Hh1 @ self.W2 + self.b2, self.slope)
+            Ph = _segsum(Hh2, np.ones(len(hc)), hpos, B)
+            Z1 = _act(U @ self.V1 + Ph @ self.V1h + self.c1, self.slope)
         Z2 = _act(Z1 @ self.V2 + self.c2, self.slope)
         out = Z2 @ self.v3 + self.c3[0]
         if keep:
-            return out, (S, H1, H2, U, Z1, Z2)
+            if hand is None:
+                return out, (S, H1, H2, U, Z1, Z2)
+            return out, (S, H1, H2, U, Z1, Z2, (Hh1, Hh2, Ph))
         return out
 
     def grads(self, batch, y, l2: float = 0.0):
-        cards, dyn, count, seg, glob = batch
+        hand = batch[5] if len(batch) > 5 else None
+        cards, dyn, count, seg, glob = batch[:5]
         B = glob.shape[0]
-        z, (S, H1, H2, U, Z1, Z2) = self.forward(*batch, keep=True)
+        z, kept = self.forward(*batch[:5], keep=True, hand=hand)
+        S, H1, H2, U, Z1, Z2 = kept[:6]
         p = 1 / (1 + np.exp(-np.clip(z, -30, 30)))
         loss = float(np.mean(-(y * np.log(p + 1e-12) + (1 - y) * np.log(1 - p + 1e-12))))
         g = {}
@@ -284,8 +314,21 @@ class SetNet:
         onehot = np.zeros((len(S), len(cards)))
         onehot[cards, np.arange(len(cards))] = 1.0
         g["W1s"] = S.T @ (onehot @ dA1)
+        if hand is not None:                           # the opponent-hand zone: its rows and its tokens' phi
+            hc, hd, hpos = hand
+            Hh1, Hh2, Ph = kept[6]
+            g["V1h"] = Ph.T @ dZ1
+            dHh2 = (dZ1 @ self.V1h.T)[hpos] * _dact(Hh2, self.slope)
+            g["W2"] = g["W2"] + Hh1.T @ dHh2
+            g["b2"] = g["b2"] + dHh2.sum(0)
+            dAh1 = (dHh2 @ self.W2.T) * _dact(Hh1, self.slope)
+            g["W1d"] = g["W1d"] + hd.T @ dAh1
+            g["b1"] = g["b1"] + dAh1.sum(0)
+            onehot_h = np.zeros((len(S), len(hc)))
+            onehot_h[hc, np.arange(len(hc))] = 1.0
+            g["W1s"] = g["W1s"] + S.T @ (onehot_h @ dAh1)
         if l2:
-            for k in ("W1s", "W1d", "W2", "V1", "V2", "v3"):
+            for k in ("W1s", "W1d", "W2", "V1", "V2", "v3") + (("V1h",) if hand is not None else ()):
                 g[k] = g[k] + 2 * l2 * getattr(self, k)
         return loss, g
 
@@ -329,7 +372,7 @@ class SetNet:
             total = 0.0
             for s in range(0, data.n, batch):
                 idx = order[s:s + batch]
-                loss, g = self.grads(data.batch(idx), y[idx], l2)
+                loss, g = self.grads(self._batch(data, idx), y[idx], l2)
                 total += loss * len(idx)
                 t += 1
                 for k in self.PARAMS:
@@ -374,11 +417,17 @@ class SetNet:
         self.info["history"] = history
         return {"history": history}
 
+    def _batch(self, data, idx):
+        """data.batch(idx), and for an ophand net the opponent-hand tokens too (data.hand_batch)."""
+        b = data.batch(idx)
+        return b + (data.hand_batch(idx),) if self.ophand else b
+
     def predict(self, data: Data, batch: int = 1024) -> np.ndarray:
         out = np.zeros(data.n)
         for s in range(0, data.n, batch):
             idx = np.arange(s, min(s + batch, data.n))
-            out[idx] = self.forward(*data.batch(idx))
+            b = self._batch(data, idx)
+            out[idx] = self.forward(*b[:5], hand=b[5] if len(b) > 5 else None)
         return 1 / (1 + np.exp(-np.clip(out, -30, 30)))
 
     # --- one position (the search) ----------------------------------------------------------------------------
@@ -442,7 +491,23 @@ class SetNet:
         if self.flag:
             g = np.append(g, np.float32(1.0 if mid else 0.0))
         u = np.concatenate([P.reshape(-1), g])
-        z1 = _act(u @ self.V1 + self.c1, self.slope)
+        if not self.ophand:
+            z1 = _act(u @ self.V1 + self.c1, self.slope)
+        else:                         # the opponent's hand as the state has it (a guess, or the real one)
+            Ph = np.zeros(self.phi[1])
+            rows = [T._live(state, c, OP_HAND) for c in o.hand]
+            if rows:
+                r = np.asarray(rows, dtype=np.int64)
+                hidx = []
+                for cid in r[:, 0].tolist():
+                    if cid not in index:
+                        self._add_cards(state, [cid])
+                        index = self._index()
+                        table = self._table = self._S() @ self.W1s + self.b1
+                    hidx.append(index[cid])
+                Hh1 = _act(table[hidx] + dynamic(r[:, 1:]) @ self.W1d, self.slope)
+                Ph = _act(Hh1 @ self.W2 + self.b2, self.slope).sum(axis=0)
+            z1 = _act(u @ self.V1 + Ph @ self.V1h + self.c1, self.slope)
         return float(_act(z1 @ self.V2 + self.c2, self.slope) @ self.v3 + self.c3[0])
 
     @classmethod
@@ -456,6 +521,18 @@ class SetNet:
         for k in cls.PARAMS + ("smean", "sstd", "card_ids", "static"):
             setattr(out, k, np.array(getattr(net, k)))
         out.V1 = np.concatenate([np.asarray(net.V1, dtype=np.float64), np.zeros((1, net.V1.shape[1]))])
+        return out
+
+    @classmethod
+    def with_ophand_from(cls, net: "SetNet", info=None) -> "SetNet":
+        """`net` with the opponent-hand zone added (a diagnostic): the same weights, card table and standardization,
+        and V1h 0, so it scores every position as `net` does, to the last bit, until it is trained."""
+        if net.ophand:
+            raise ValueError("the net has the opponent-hand zone already")
+        out = cls(net.static.shape[1], phi=net.phi, rho=net.rho, slope=net.slope, inputs=net.inputs, flag=net.flag,
+                  ophand=True, info=info)
+        for k in SetNet.PARAMS + ("smean", "sstd", "card_ids", "static"):
+            setattr(out, k, np.array(getattr(net, k)))
         return out
 
     def _logit2(self, state, player: int) -> float:
@@ -579,6 +656,8 @@ class SetNet:
             arrays["inputs"] = np.array(self.inputs)
         if self.flag:                            # so is a net's without the flag
             arrays["flag"] = np.array(True)
+        if self.ophand:
+            arrays["ophand"] = np.array(True)
         np.savez(path, **arrays)
 
     @classmethod
@@ -587,8 +666,9 @@ class SetNet:
         net = cls(z["static"].shape[1], phi=tuple(int(x) for x in z["phi"]), rho=tuple(int(x) for x in z["rho"]),
                   slope=float(z["slope"]) if "slope" in z.files else 0.0,
                   inputs=str(z["inputs"]) if "inputs" in z.files else "v1",
-                  flag=bool(z["flag"]) if "flag" in z.files else False)
-        for k in cls.PARAMS + ("smean", "sstd", "card_ids", "static"):
+                  flag=bool(z["flag"]) if "flag" in z.files else False,
+                  ophand=bool(z["ophand"]) if "ophand" in z.files else False)
+        for k in net.PARAMS + ("smean", "sstd", "card_ids", "static"):
             setattr(net, k, np.array(z[k]))
         net.info = json.loads(str(z["info"]))
         return net

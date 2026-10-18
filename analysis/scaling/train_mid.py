@@ -59,6 +59,8 @@ def align(net: SetNet, data) -> None:
     if not np.array_equal(net.static[rows], data.static):
         raise SystemExit("the net's static rows differ from the tokens' cards.npz")
     data.cards = np.asarray(rows, dtype=np.int32)[data.cards]
+    if hasattr(data, "hand_cards"):
+        data.hand_cards = np.asarray(rows, dtype=np.int32)[data.hand_cards]
 
 
 def by_kind(net: SetNet, data) -> dict:
@@ -85,6 +87,9 @@ def main() -> None:
     ap.add_argument("--l2", type=float, default=1e-5)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--checkpoint", default=None)
+    ap.add_argument("--hand-dir", default=None,
+                    help="the hand- files (midrows encode-hand): add the opponent-hand zone (a diagnostic, SetNet "
+                         "ophand), its rows 0 at the start")
     args = ap.parse_args()
     end_seeds, mid_seeds = seeds_of(args.end), seeds_of(args.mid)
     held = set(args.holdout) & (set(end_seeds) | set(mid_seeds))
@@ -99,18 +104,26 @@ def main() -> None:
     n_end = sum(len(np.load(f)["result"]) for f in end_files)
     n_mid = sum(len(np.load(f)["result"]) for f in mid_files)
     rate = min(1.0, n_end / n_mid)
-    train, valid = MR.phase_split(end_files, mid_files, tok / "cards.npz", every=20, mid_rate=rate, seed=args.seed)
+    train, valid = MR.phase_split(end_files, mid_files, tok / "cards.npz", every=20, mid_rate=rate, seed=args.seed,
+                                  hand_dir=args.hand_dir)
     base = SetNet.load(args.init)
-    if base.inputs != "v1" or base.slope != 0.0:
-        raise SystemExit("the candidate has to be a v1 ReLU net")
+    if base.inputs != "v1" or base.slope != 0.0 or base.ophand:
+        raise SystemExit("the start has to be a v1 ReLU net without the opponent-hand zone")
     info = {"deck": args.deck, "opponent": args.opponent, "flag": True, "inputs": "v1", "name": args.name,
             "init": str(args.init), "init_sha256": hashlib.sha256(Path(args.init).read_bytes()).hexdigest(),
             "end_shards": end_seeds, "mid_shards": mid_seeds, "shards": sorted(set(end_seeds) | set(mid_seeds)),
             "mid_rate": round(rate, 6), "end_rows": n_end, "mid_rows": n_mid,
             "train_positions": train.n, "valid_positions": valid.n,
             "train_by_kind": {"end": int((train.flag == 0).sum()), "mid": int((train.flag == 1).sum())},
-            "valid_by_kind": {"end": int((valid.flag == 0).sum()), "mid": int((valid.flag == 1).sum())}}
-    net = SetNet.flagged_from(base, info=info)
+            "valid_by_kind": {"end": int((valid.flag == 0).sum()), "mid": int((valid.flag == 1).sum())},
+            "continued": base.flag, "ophand": bool(args.hand_dir)}
+    if base.flag:                                 # a flagged net goes on training as it is
+        net = base
+        net.info = info
+    else:
+        net = SetNet.flagged_from(base, info=info)
+    if args.hand_dir:
+        net = SetNet.with_ophand_from(net, info=info)
     for d in (train, valid):
         align(net, d)
     net.info["init_valid"] = by_kind(net, valid)

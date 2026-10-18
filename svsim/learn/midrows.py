@@ -19,6 +19,7 @@ allocated once, file by file, so the whole data never sits in memory next to its
 can be thinned to a rate (each row kept with probability `mid_rate`, from a generator seeded by (seed, shard)).
 
     python -m svsim.learn.midrows encode --records DIR --out DIR [--workers 4]
+    python -m svsim.learn.midrows encode-hand --kind end|mid --records DIR --out DIR   # hand-<tok|mid>-<seed>.npz
 """
 from __future__ import annotations
 
@@ -110,6 +111,77 @@ def encode_main(args) -> None:
                   flush=True)
 
 
+# --- the opponent's hand, card by card (a diagnostic: SetNet ophand; the architecture thread 2026-10-18 17:47Z) ---
+
+def hand_rows(record: dict, kind: str) -> list:
+    """[(g, i, cards, tokens)] per position of a tok- file (kind "end": learn.scaledata's turn ends, the player who
+    ended the turn as "me") or of a mid- file (kind "mid": this module's decisions, the mover as "me"), in the files'
+    order: the tokens (learn.tokens._live, zone setnet.OP_HAND) of the opponent's real hand there."""
+    from svsim.learn import tokens as T
+    from svsim.learn.setnet import OP_HAND
+    out = []
+
+    def of(state, me, i):
+        rows = [T._live(state, c, OP_HAND) for c in state.players[1 - me].hand]
+        table = np.asarray(rows, dtype=np.int64).reshape(-1, len(T.TOKEN) + 1)
+        out.append((record["g"], i, table[:, 0].astype(np.int32),
+                    np.clip(table[:, 1:], -32768, 32767).astype(np.int16)))
+    if kind == "end":
+        from svsim.learn.netdata import ENDED, rows
+        for i, (phase, player, state, _result) in rows(record, index=True):
+            if phase == ENDED:
+                of(state, player, i)
+    else:
+        from svsim.learn.setpolicy import decisions
+        for i, state, *_ in decisions(record):
+            of(state, state.active, i)
+    return out
+
+
+def _encode_hand_shard(job):
+    from svsim.learn import tokens as T
+    path, target, kind = job
+    t0 = time.process_time()
+    cids, toks, offs, gs, iis = [], [], [0], [], []
+    games = 0
+    with gzip.open(path, "rt") as fh:
+        for line in fh:
+            if not line.strip():
+                continue
+            games += 1
+            for g, i, c, tk in hand_rows(json.loads(line), kind):
+                cids.append(c)
+                toks.append(tk)
+                offs.append(offs[-1] + len(tk))
+                gs.append(g)
+                iis.append(i)
+    arrays = {"tokens": np.concatenate(toks) if toks else np.zeros((0, len(T.TOKEN)), np.int16),
+              "cards": np.concatenate(cids) if cids else np.zeros(0, np.int32),
+              "offsets": np.asarray(offs, np.int64), "g": np.asarray(gs, np.int32), "i": np.asarray(iis, np.int32)}
+    tmp = str(target) + ".tmp.npz"
+    np.savez_compressed(tmp, **arrays)
+    os.replace(tmp, target)
+    return str(target), games, len(gs), round(time.process_time() - t0, 1)
+
+
+def encode_hand_main(args) -> None:
+    from multiprocessing import Pool
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    prefix = {"end": "tok", "mid": "mid"}[args.kind]
+    jobs = []
+    for path in sorted(glob.glob(os.path.join(args.records, "rec-*.jsonl.gz"))):
+        seed = os.path.basename(path)[len("rec-"):-len(".jsonl.gz")]
+        target = out / f"hand-{prefix}-{seed}.npz"
+        if not target.exists():
+            jobs.append((path, target, args.kind))
+    print(json.dumps({"shards_to_encode": len(jobs)}), flush=True)
+    with Pool(args.workers) as pool:
+        for target, games, n, cpu in pool.imap_unordered(_encode_hand_shard, jobs):
+            print(json.dumps({"file": os.path.basename(target), "games": games, "positions": n, "cpu_s": cpu}),
+                  flush=True)
+
+
 # --- loading: turn-end and mid-turn rows, the flag appended --------------------------------------------------------
 
 def _plan(end_files, mid_files, every: int, mid_rate: float, seed: int):
@@ -129,7 +201,7 @@ def _plan(end_files, mid_files, every: int, mid_rate: float, seed: int):
     return plan
 
 
-def _assemble(plan, cards_npz, part: str):
+def _assemble(plan, cards_npz, part: str, hand_dir=None):
     """One learn.setnet.Data of the plan's rows of `part` ("train": kept and not validation, "valid": kept and
     validation, "all": kept), arrays allocated once and filled file by file."""
     from svsim.learn.setnet import Data, global_scale, inputs_of
@@ -164,11 +236,36 @@ def _assemble(plan, cards_npz, part: str):
         setattr(out, k, np.zeros(n_pos, dt))
     out.flag = np.zeros(n_pos, np.float32)
     scale = global_scale("v1")
-    p = t = 0
-    for f, flag, keep, valid in plan:
+    hands = []                                       # (hand file, rows) per plan entry, when hand_dir is given
+    if hand_dir is not None:
+        n_hand = 0
+        for f, _flag, keep, valid in plan:
+            hf = Path(hand_dir) / f"hand-{Path(f).name}"
+            sel = rows_of(keep, valid)
+            with np.load(hf) as hz, np.load(f) as z:
+                if not (np.array_equal(hz["g"], z["g"]) and np.array_equal(hz["i"], z["i"])):
+                    raise ValueError(f"{hf}: its positions are not {f}'s")
+                n_hand += int(np.diff(hz["offsets"])[sel].sum())
+            hands.append(hf)
+        out.hand_tokens = np.zeros((n_hand, width), np.int16)
+        out.hand_cards = np.zeros(n_hand, np.int32)
+        out.hand_offsets = np.zeros(n_pos + 1, np.int64)
+    p = t = h = 0
+    for j, (f, flag, keep, valid) in enumerate(plan):
         sel = np.flatnonzero(rows_of(keep, valid))
         if not len(sel):
             continue
+        if hands:
+            with np.load(hands[j]) as hz:
+                offs = hz["offsets"].astype(np.int64)
+                starts, lens = offs[sel], offs[sel + 1] - offs[sel]
+                first = np.concatenate([[0], np.cumsum(lens)[:-1]]).astype(np.int64)
+                take = np.repeat(starts - first, lens) + np.arange(int(lens.sum()), dtype=np.int64)
+                k = int(lens.sum())
+                out.hand_tokens[h:h + k] = hz["tokens"][take]
+                out.hand_cards[h:h + k] = np.searchsorted(out.card_ids, hz["cards"][take].astype(np.int64))
+                out.hand_offsets[p + 1:p + len(sel) + 1] = h + np.cumsum(lens)
+                h += k
         with np.load(f) as z:
             offs = z["offsets"].astype(np.int64)
             starts, lens = offs[sel], offs[sel + 1] - offs[sel]
@@ -190,15 +287,17 @@ def _assemble(plan, cards_npz, part: str):
     return out
 
 
-def phase_split(end_files, mid_files, cards_npz, every: int = 20, mid_rate: float = 1.0, seed: int = 0):
-    """(training, validation) learn.setnet.Data over turn-end files (flag 0) and mid-turn files (flag 1)."""
+def phase_split(end_files, mid_files, cards_npz, every: int = 20, mid_rate: float = 1.0, seed: int = 0,
+                hand_dir=None):
+    """(training, validation) learn.setnet.Data over turn-end files (flag 0) and mid-turn files (flag 1). With
+    `hand_dir`, each file's hand-<name> there (encode-hand) adds the opponent's hand tokens (an ophand net)."""
     plan = _plan(end_files, mid_files, every, mid_rate, seed)
-    return _assemble(plan, cards_npz, "train"), _assemble(plan, cards_npz, "valid")
+    return (_assemble(plan, cards_npz, "train", hand_dir), _assemble(plan, cards_npz, "valid", hand_dir))
 
 
-def phase_data(end_files, mid_files, cards_npz):
+def phase_data(end_files, mid_files, cards_npz, hand_dir=None):
     """Every row of the files as one learn.setnet.Data, the flag appended (a holdout)."""
-    return _assemble(_plan(end_files, mid_files, 0, 1.0, 0), cards_npz, "all")
+    return _assemble(_plan(end_files, mid_files, 0, 1.0, 0), cards_npz, "all", hand_dir)
 
 
 def main() -> None:
@@ -208,8 +307,13 @@ def main() -> None:
     e.add_argument("--records", required=True)
     e.add_argument("--out", required=True)
     e.add_argument("--workers", type=int, default=4)
+    h = sub.add_parser("encode-hand")
+    h.add_argument("--kind", choices=("end", "mid"), required=True, help="end: beside tok- files; mid: beside mid-")
+    h.add_argument("--records", required=True)
+    h.add_argument("--out", required=True)
+    h.add_argument("--workers", type=int, default=4)
     args = ap.parse_args()
-    {"encode": encode_main}[args.cmd](args)
+    {"encode": encode_main, "encode-hand": encode_hand_main}[args.cmd](args)
 
 
 if __name__ == "__main__":
