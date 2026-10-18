@@ -1,0 +1,81 @@
+{
+ "files": {
+  "selfplay-end.npz": {
+   "n": 17948,
+   "brier_oph": 0.1842951059303155,
+   "brier_ctl": 0.19093279166746255,
+   "ece_oph": 0.006446557047489502,
+   "ece_ctl": 0.00933366914637814,
+   "drop": 0.006637685737147042,
+   "start_vs_base_identical": true,
+   "start_vs_base_maxdiff": 0.0
+  },
+  "selfplay-mid.npz": {
+   "n": 46781,
+   "brier_oph": 0.18050688731056844,
+   "brier_ctl": 0.18622655709070293,
+   "ece_oph": 0.013432764308171625,
+   "ece_ctl": 0.013807475509620868,
+   "drop": 0.005719669780134495,
+   "start_vs_base_identical": true,
+   "start_vs_base_maxdiff": 0.0
+  },
+  "selfplay5-end.npz": {
+   "n": 8925,
+   "brier_oph": 0.18011940337274038,
+   "brier_ctl": 0.18998122851764646,
+   "ece_oph": 0.009500529098427113,
+   "ece_ctl": 0.01393563297849063,
+   "drop": 0.009861825144906078,
+   "start_vs_base_identical": true,
+   "start_vs_base_maxdiff": 0.0
+  },
+  "selfplay5-mid.npz": {
+   "n": 22902,
+   "brier_oph": 0.17343630925179698,
+   "brier_ctl": 0.18268641211312997,
+   "ece_oph": 0.010210436756492245,
+   "ece_ctl": 0.011258362642994568,
+   "drop": 0.009250102861332987,
+   "start_vs_base_identical": true,
+   "start_vs_base_maxdiff": 0.0
+  },
+  "v2skx-end.npz": {
+   "n": 93787,
+   "brier_oph": 0.1832407169982374,
+   "brier_ctl": 0.18884995341366295,
+   "ece_oph": 0.011755009860023138,
+   "ece_ctl": 0.016998187473505667,
+   "drop": 0.005609236415425545,
+   "start_vs_base_identical": true,
+   "start_vs_base_maxdiff": 0.0
+  }
+ },
+ "pooled": {
+  "end": {
+   "n": 120660,
+   "games": 6500,
+   "brier_oph": 0.1831666779500473,
+   "brier_ctl": 0.18924345093796469,
+   "drop": [
+    0.006076772987917438,
+    0.005311738443185822,
+    0.006878747398008319
+   ],
+   "passes": true
+  },
+  "mid": {
+   "n": 69683,
+   "games": 1500,
+   "brier_oph": 0.17818307262546612,
+   "brier_ctl": 0.1850630537932505,
+   "drop": [
+    0.006879981167784362,
+    0.005008305576564628,
+    0.008785264779965076
+   ],
+   "passes": true
+  }
+ },
+ "screen_passes": true
+}
