@@ -1293,3 +1293,14 @@ in two chunks: 3728 s, then 190 s from the checkpoint. It has 0 subnormal weight
 data/policy/fit-ramp-r1.log. The offline O1 against D10's A-UCB visits and the gate are the analysis line's.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+**The elf-t new bot in the install path** (the architecture thread 15:45Z; ready, not published). The bot is
+`mcts:71+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-mid-elf-t.npz+netmid+puct=analysis/scaling/models/prior-elft-ft-t05.npz:2:1`
+(N 71 as in the elf-t gate's start; the gate's timing check may move it). The build at d00ab33 carries
+net-mid-elf-t and prior-elft-ft-t05 as .b64, and numpy.json.
+- **A whole game in the Node worker:** it booted in 3.7 s. The elf-t mirror with the new bot as the AI ran to its
+  end at turn 10 with 22 AI steps, a mean of 103 ms a step, and no error.
+- **Pyodide step cost** (data/mid/pyodide-cost-elf-t.json; 75500038's first 3 games, 221 decisions): the installed
+  strong level `mcts:200+plan+learned+phased` took 218.8 ms a decision and the new bot 209.8 ms, ×0.96.
+
+Condition: the opponent's deck list is known (order and hand not).
