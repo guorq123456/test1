@@ -1,0 +1,48 @@
+{
+ "name": "mid-elf-t",
+ "fit_s": 3753,
+ "epochs": 18,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.17086,
+   "log_loss": 0.50505,
+   "n": 667582
+  },
+  "mid": {
+   "brier": 0.15119,
+   "log_loss": 0.45496,
+   "n": 666894
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.17684,
+   "log_loss": 0.52133,
+   "n": 35521
+  },
+  "mid": {
+   "brier": 0.16678,
+   "log_loss": 0.49764,
+   "n": 35632
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.18106,
+   "log_loss": 0.53316,
+   "n": 35521
+  },
+  "mid": {
+   "brier": 0.26119,
+   "log_loss": 0.86052,
+   "n": 35632
+  }
+ },
+ "mid_rate": 0.33565
+}
