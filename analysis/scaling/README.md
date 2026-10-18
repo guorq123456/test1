@@ -1358,3 +1358,47 @@ budget, fewer sampled draws in the lethal search, or batching the net's leaf eva
 summation order). Whether ×1.3 is worth the work is D12's question (2N against N); this table only gives the price.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## D13 preparation: the opponent's real hand in the search (`+oracle`), and what the guess at their hand uses (the architecture thread 17:44Z)
+
+**The switch already exists.** `+oracle` came in f90f60e (2026-10-08) as an experiment, off by default and in no
+level. With it, every determinization of the tree search (search.mcts, core.view.determinize(..., oracle=True))
+gives the opponent their real hand, and only the order of their deck (and of one's own) is guessed. Off,
+determinize draws exactly as before: tests/test_learn.py::test_oracle_sees_the_opponent_s_real_hand_and_off_draws_as_before
+checks the uids and the random numbers against the definition from before the switch. For D13 the spec is A's with
+`+oracle` added. Two things it does not touch:
+- The value net never sees which unseen cards are in the hand. tokens pools the opponent's hand and deck into one
+  zone (op_unseen), so with the switch the net scores the same cards in the same pooled zone. Only the simulated
+  play differs: what the opponent can play in the tree.
+- The lethal agent's macro / burst / dig lines determinize on their own and stay unaided, but A uses none of them.
+  The lethal search itself looks only at the searcher's own turn.
+
+New here: `web --build` refuses a spec with `+oracle` (svsim/tools/web.py _specs; test in
+tests/test_web_models.py), so the diagnostic cannot reach the page. No game is played by this change, and the
+search's code is untouched.
+
+**What the guess at the opponent's hand uses now** (core.view.determinize, without `+oracle` or `+infer`). The pool
+is the opponent's real hand plus their real deck. With the deck list known, that is exactly the deck list less
+every card seen leave it: played, on the field, in the cemetery, banished, discarded. It is shuffled uniformly,
+and the first len(hand) cards become the hand. So:
+
+| information | used? |
+|---|---|
+| the deck list (the condition of every result) | yes, the pool is the cards not yet seen |
+| cards played, destroyed, discarded, banished | yes, they are out of the pool |
+| the hand's size | yes |
+| the mulligan | nothing public to use (only the number swapped, which the hand's size already gives) |
+| when a card was drawn | not used, and nothing about which card a draw was |
+| **cards put into the hand by an effect** (add_to_hand, add_copy_to_hand: Fairy, Deepwood Bounty, Spilling Red, Depths of the Eld Blades …) | **not used**: they are public and certainly in the hand, but they are pooled with the deck. A guess can put one in the deck and a deck card in the hand, a world that cannot be |
+| **cards returned to the hand from the field** (return_to_hand) | **not used**: public and in the hand, pooled the same way |
+| cards drawn by a condition (draw_matching: "draw a follower") | not used: the hand holds a card meeting it (public as a condition, not as the card) |
+| what the opponent could have played and did not (search.infer, `+infer=...`) | off in A; a weighting, not a certainty |
+
+How often it matters, on the first 20 games of this cycle's holdouts at the searched decisions: in ramp-t 254 of 964
+decisions (25%), the opponent's hand holds at least one card from no deck list slot (386 of 4633 hand cards: Spilling
+Red 267, Depths of the Eld Blades 119). In elf-t it is 407 of 1423 (29%) (515 of 6330: Fairy 330, Deepwood Bounty
+185). Returned cards come on top of that and are not counted here. Keeping such known cards in the hand, and
+drawing only the rest from the pool, would use information that is public by the rules. It is a candidate change
+of its own, so it is listed here, not made.
+
+Condition: the opponent's deck list is known (order and hand not).

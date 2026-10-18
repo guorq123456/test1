@@ -47,7 +47,11 @@ def _specs(extra=()) -> list:
     """The agent specs the build carries: the page's levels, plus `extra` (build --spec, a candidate tried in the
     page before any level names it)."""
     from svsim.ui.session import LEVELS
-    return list(LEVELS.values()) + list(extra)
+    specs = list(LEVELS.values()) + list(extra)
+    for spec in specs:                     # +oracle sees the opponent's hand: a diagnostic, never in the page
+        if "oracle" in spec.split("+"):
+            raise ValueError(f"{spec}: +oracle is a diagnostic and never goes into the page")
+    return specs
 
 
 def _candidate(f: Path, extra=()) -> bool:

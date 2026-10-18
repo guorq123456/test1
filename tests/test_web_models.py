@@ -83,3 +83,15 @@ def test_self_play_records_a_puct_player_s_visits():
             assert len(want[i]["visits"]) == len(legal_actions(state)) and sum(want[i]["visits"]) > 0
             checked += 1
     assert checked == len(searched)
+
+
+def test_the_build_refuses_a_spec_that_sees_the_opponent_s_hand(tmp_path):
+    import pytest
+    from svsim.learn.netdata import _search
+    from svsim.tools.arena import make_agent
+    oracle = SPEC + "+oracle"                    # the diagnostic (D13): A that sees the opponent's real hand
+    assert _search(make_agent(oracle, 0)).oracle is True and _search(make_agent(SPEC, 0)).oracle is False
+    with pytest.raises(ValueError):
+        model_files([oracle])
+    with pytest.raises(ValueError):
+        build(tmp_path / "dist", _fake_pyodide(tmp_path), [oracle])
