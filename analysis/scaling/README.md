@@ -1263,3 +1263,24 @@ The fit runs in planned chunks of under 2 h from its checkpoint. The training sh
 this cycle's 75400038 are in neither list.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+### +netmid in the trainer's install path (the architecture thread 12:01Z; ready, not published)
+
+Nothing a player sees has changed: the levels, ratings.json, the installed models and the published page are as they
+were. The install path built for +setnet / +puct (above) needed no change for +netmid. The flag net is one more .npz
+the spec names. It ships as `<path>.b64`, and SetNet.load reads its "flag" key there as from the file, in both
+the 64-bit and the 32-bit numpy (the flag is a float appended to the globals).
+
+- **Build.** `python -m svsim.tools.web --build DIR --spec A --spec B` at efc64cb. A is the gate's
+  `mcts:83+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-mid-ramp-t.npz+netmid+puct=analysis/scaling/models/prior-ramp-ft-t05.npz:2:1`
+  and B is today's candidate + prior. svsim.json carries net-mid-ramp-t, net-gen3-30000 and prior-ramp-ft-t05 as
+  .b64, and pyodide/numpy.json as before.
+- **A whole game in the page's worker** (web_sim/run_worker.js, Node). The worker boots in 3.1 s and loads numpy.
+  The Session plays ramp-t mirror with A as the AI and the other side picking legal moves by a fixed generator. The
+  game ran to its end at turn 16 with 29 AI steps, a mean of 106 ms a step, and no error.
+- **Step cost inside Pyodide** (web_sim/run_py.js running puct_cost.py; data/mid/pyodide-cost-ramp-t.json). On
+  75400038's first 3 games (113 decisions), B at N 88 took 140.4 ms a decision and A at N 83 took 142.7 ms, ×1.02.
+  The native figure is ×0.99 (the gate's own was 0.988). The page's cost of A is that of today's B, and the boot
+  is as before (numpy, and ~0.9 MB per model).
+
+Condition: the opponent's deck list is known (order and hand not).
