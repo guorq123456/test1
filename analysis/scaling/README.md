@@ -1304,3 +1304,57 @@ net-mid-elf-t and prior-elft-ft-t05 as .b64, and numpy.json.
   strong level `mcts:200+plan+learned+phased` took 218.8 ms a decision and the new bot 209.8 ms, ×0.96.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## Where a new candidate's decision time goes (the architecture thread 17:17Z; report only, nothing changed)
+
+`analysis/scaling/profile_cost.py`; data/profile/. The bots are the two new candidates: ramp-t A (net-mid-ramp-t +
+`+netmid` + ft-t05 PUCT, N 83) and the elf-t bot of 3928895 (net-mid-elf-t + `+netmid` + prior-elft-ft-t05, N 71).
+They play the first 3 games of this cycle's holdouts, 75400038 / 75500038. Each side's agent decides at every
+main-phase step, and the game goes on by the recorded move. There is one agent per side and game, so what an
+agent keeps between decisions is kept as in play; no game is played and no seed is drawn. That covers 151 / 271
+steps. The run is native, and in Pyodide 0.26.4 in Node, using the builds of 4ee2855 / 3928895
+(web_sim/profile_in_pyodide.py).
+
+Timers wrap a few methods (inclusive wall, without the profiler). The figures are ms per main-phase step.
+GameState.clone and determinize overlap the others: the lethal search clones too.
+
+| | ramp-t native | ramp-t Pyodide | elf-t native | elf-t Pyodide |
+|---|---|---|---|---|
+| wall per step | 38.1 | 90.8 | 52.7 | 115.5 |
+| lethal search (LethalSearch.solve) | 12.6 (33%) | 32.3 (36%) | 16.8 (32%) | 42.3 (37%) |
+| value net (SetNet.logit) | 6.1 (16%) | 17.8 (20%) | 7.0 (13%) | 18.1 (16%) |
+| prior (SetPolicy.priors) | 4.7 (12%) | 12.0 (13%) | 6.8 (13%) | 16.6 (14%) |
+| determinize | 3.0 (8%) | 6.0 (7%) | 3.1 (6%) | 5.7 (5%) |
+| GameState.clone (all callers) | 4.1 (11%) | 10.7 (12%) | 5.2 (10%) | 13.9 (12%) |
+
+The rest, about a third, is the tree search's own work: moves applied in the iterations, legal moves, selection and
+backup, and search.xprune.
+
+Under cProfile, own time by where the code lives, with a C function's time given to its callers, puts the
+simulator (rules, moves) at 41% / 39%, state copy at 9%, the value net at 17% / 14%, the prior at 4%, mcts.py at
+9% / 7%, and lethal and plans at 11% / 21%. The profiler's overhead falls mostly on many small Python calls, so these
+shares are a guide only. The lethal search runs 0.4 / 0.3 times a step: the agent skips it while the turn and the
+hidden information are the same. Most runs are screened, with a budget of 200 nodes, and run to that budget. That
+is about 280–300 µs a node, each node being moves, clones and sampled draws.
+
+The positions mode (`--mode positions`: a fresh agent at each searched decision, as puct_cost.py does) loses that
+skip, so it puts the lethal search at 34–42%. That overstates it for play, so the table above uses play order.
+
+**What exact (bit-for-bit) changes could save: estimates, nothing tried.** Each change is meant to leave every
+decision, every random draw and every number as it is, checked by the golden replays (the 3-game replays and the
+logit dumps) before any use.
+
+| change | where | est. share of the part | est. share of the step |
+|---|---|---|---|
+| lethal: compute hidden_info once per search level, not per node, and a cheaper state_key (per-card keys built once per card state) | search/lethal.py (state_key, hidden_info, _card_key were ~25% of the lethal time under the profiler) | 20–30% | 7–10% |
+| value net: fewer Python tuples on the live tokens (the rows and the memo key are built per leaf; logit's own Python time is ~45% of it) | learn/setnet.py logit, tokens._live | 25–40% | 3–6% |
+| prior: the move arrays and token encoding vectorized, the trunk's live-token memo as in the value net (forward is ~40% of priors()) | learn/setpolicy.py priors | 30–40% | 4–5% |
+| determinize: shuffles from a dedicated Random, no getstate / seed round trip (the same draws) | core/view.py _inline_shuffle (getstate + seed ~0.35 of its time) | ~40% | 2–3% |
+| state copy: cheaper per-card copy (515k card copies in 151 steps) | core/state.py copy | 20–30% | 2–3% |
+
+That totals about 18–27% of a step: ×1.2–1.4 the iterations in the same time, or the same play ~20% sooner.
+That is not 2×. The larger savings change results, and are therefore not on this list: a smaller lethal screen
+budget, fewer sampled draws in the lethal search, or batching the net's leaf evaluations (which changes BLAS's
+summation order). Whether ×1.3 is worth the work is D12's question (2N against N); this table only gives the price.
+
+Condition: the opponent's deck list is known (order and hand not).

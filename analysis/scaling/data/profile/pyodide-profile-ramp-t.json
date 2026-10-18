@@ -1,0 +1,49 @@
+{
+ "records": "rec.jsonl.gz",
+ "games": 3,
+ "mode": "game",
+ "decisions": 151,
+ "specs": {
+  "A": {
+   "spec": "mcts:83+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-mid-ramp-t.npz+netmid+puct=analysis/scaling/models/prior-ramp-ft-t05.npz:2:1",
+   "ms_per_decision": 104.59,
+   "profiled_ms_per_decision": 201.95,
+   "share": {
+    "state copy": 0.0872,
+    "simulator": 0.3608,
+    "value net": 0.1771,
+    "prior": 0.0489,
+    "tree search": 0.0845,
+    "lethal and plans": 0.1454,
+    "linear models": 0.0014,
+    "other": 0.0947
+   },
+   "ms_per_decision_by_part": {
+    "state copy": 9.12,
+    "simulator": 37.73,
+    "value net": 18.52,
+    "prior": 5.12,
+    "tree search": 8.84,
+    "lethal and plans": 15.2,
+    "linear models": 0.15,
+    "other": 9.9
+   },
+   "timers_ms_per_decision": {
+    "GameState.clone": 10.67,
+    "SetNet.logit": 17.75,
+    "SetPolicy.priors": 12.03,
+    "LethalSearch.solve": 32.31,
+    "determinize": 6.04,
+    "wall": 90.8
+   },
+   "timers_calls_per_decision": {
+    "GameState.clone": 210.3,
+    "SetNet.logit": 62.9,
+    "SetPolicy.priors": 10.0,
+    "LethalSearch.solve": 0.4,
+    "determinize": 62.1
+   }
+  }
+ },
+ "where": "Pyodide 0.26.4 in Node, dist built at efc64cb with --spec A --spec B"
+}
