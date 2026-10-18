@@ -1437,4 +1437,15 @@ tests/test_ophand.py::test_added_at_zero_it_scores_as_the_net_to_the_last_bit. T
 data/mid/hand-ramp-holdout (SHA256SUMS). They are re-made by `python -m svsim.learn.midrows encode-hand --kind end|mid
 --records DIR --out DIR` from the holdout records.
 
+**The two fits (files only; the screen is the analysis line's).** Both ran 12 epochs. The omniscient net kept
+epoch 12 and the control kept epoch 10.
+- `models/net-midoph-ramp-t.npz`, sha256 a5f29bca…. Info: data/net-midoph-ramp-t.json. Log:
+  data/mid/train-midoph-ramp-t.log. Holdout: data/mid/report-midoph-ramp-t.json and dump-midoph-ramp-t, read with
+  the recorded real hand (`--hand-dir`).
+- `models/net-midc-ramp-t.npz`, sha256 26ea8ccb…. Info: data/net-midc-ramp-t.json. Log:
+  data/mid/train-midc-ramp-t.log. Holdout: data/mid/report-midc-ramp-t.json and dump-midc-ramp-t.
+
+The omniscient net reads the opponent's real hand. It is for measurement only, not for play, and `+oracle` never goes
+into an installed spec (tools/web.py refuses it).
+
 Condition: the opponent's deck list is known (order and hand not).
