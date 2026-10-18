@@ -1188,3 +1188,60 @@ KL to the visits is lower. On the older UCB1 holdouts the new priors pick the mo
 (+0.004 / +0.005), and their KL is higher, being sharper. Offline agreement is not strength; that is the gates' question.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## The value net's mid-turn branch (the architecture thread 2026-10-18 07:53Z; code 0b15872; lists fixed before any fit)
+
+Under +neteot, a leaf inside the scored player's own turn is first played to its turn end (after_end_of_turn on a
+copy) and then scored by a net that has seen turn ends only. The cards still playable, the play points left and the
+attacks not made all count as wasted. Here one net learns both kinds of position, and a flag tells it which.
+
+- **Net.** `SetNet(flag=True)`: rho reads one more global, the flag (1 inside the mover's own turn, 0 at a turn end).
+  `SetNet.flagged_from(candidate)` starts from the candidate's weights, card table and standardization, with V1 one
+  zero row longer. At the start, then, it is the candidate at flag 0, and the candidate on the raw position at flag 1.
+  A net without the flag, and its file, are as before (tests/test_midrows.py; the golden numbers still hold).
+- **Rows.** The turn-end rows are learn.scaledata's tok- files (flag 0). The mid-turn rows (learn.midrows mid- files,
+  flag 1) are the move prior's decisions (setpolicy.decisions: searched main-phase decisions with two distinct moves
+  or more, the mover to act). They are encoded from the mover's view and labelled with the game's result from the
+  mover's view. There is no deck id and no card id, as before.
+- **Weight of the two kinds.** Both kinds weigh the same. The mid-turn rows are thinned to about the turn-end rows'
+  number: each is kept with probability n_end / n_mid, from a generator seeded per shard. A turn has several
+  decisions and one end, so the thinning also keeps the data's size near a turn-end net's. Training and validation
+  are split file by file into arrays allocated once (midrows.phase_split), against the memory problems seen before.
+- **Settings.** The same as every scaling-test net: inputs v1, ReLU 64-64 / 128-64, Adam, lr 1e-3, decay 0.5,
+  patience 4, l2 1e-5, batch 256, `--ftz`. The valid part is the games with seed·100003 + g a multiple of 20. Fits
+  run in planned chunks of under 2 h from a checkpoint.
+- **Switch.** Agent option `+netmid` (with `+setnet=` a flagged net). A leaf inside the scored player's own turn is
+  scored as it is by the flag-1 branch, with no turn end played. Every other position is scored by the flag-0
+  branch. Off, nothing changes (tests).
+
+**ramp-t** `net-mid-ramp-t`, from net-gen3-30000:
+- turn-end rows: bbc694a's 98 shards (70100000 k 0–9, 70800000 k 0–9, 71300000 k 0–9, 71600000 k 0–8, 72300000
+  k 0–39, 75400000 k 0–18);
+- mid-turn rows: the prior's 59 (72300000 k 0–39, 75400000 k 0–18);
+- holdouts: the five 70200000 shards (turn ends only), 71600018 and 75400038.
+
+**elf-t** `net-mid-elf-t`, from net-elft-gen2-19500:
+- turn-end rows: bbc694a's 67 shards (71900000 k 0–9, 72800000 / 74100000 / 75500000 k 0–18);
+- mid-turn rows: the prior's 57 (72800000 / 74100000 / 75500000 k 0–18);
+- holdouts: the five 72000000 shards (turn ends only), 72800038, 74100038 and 75500038.
+
+    python analysis/scaling/train_mid.py --deck ramp-t --opponent ramp-t --init analysis/scaling/models/net-gen3-30000.npz \
+        --tokens TOK --end 70100000:10 --end 70800000:10 --end 71300000:10 --end 71600000:9 --end 72300000:40 \
+        --end 75400000:19 --mid-dir MID --mid 72300000:40 --mid 75400000:19 \
+        --holdout 70200000 70200002 70200004 70200006 70200008 71600018 75400038 --name mid-ramp-t --checkpoint CKPT
+
+elf-t is the same with its lists (`--deck elf-t --opponent elf-t --init .../net-elft-gen2-19500.npz --name mid-elf-t`).
+The script refuses a holdout seed that is in the training lists.
+
+**Report** (mid_report.py), per holdout:
+- turn ends: the new net (flag 0) against the candidate;
+- mid-turn decisions: the new net (flag 1) against "end the turn now and score with the candidate", which is
+  +neteot's number (after_end_of_turn, a finished game 1 / 0). The new net's turn-end branch after that turn end
+  and the candidate on the raw position are also given;
+- for each: Brier, log-loss and calibration in 10 bins of the prediction (rows, mean prediction, win rate, ece).
+
+The step cost is measured against today's +neteot player on recorded positions (puct_cost.py).
+
+Order: ramp-t first, then elf-t. At most one elf-t process loads at a time. No games are played.
+
+Condition: the opponent's deck list is known (order and hand not).
