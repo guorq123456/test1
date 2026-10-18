@@ -1,0 +1,61 @@
+{"deck": "ramp-t", "opponent": "ramp-t", "flag": true, "inputs": "v1", "name": "midv2a-ramp-t", "init": "analysis/scaling/models/net-mid-ramp-t.npz", "init_sha256": "4232818e66cfef80772676a19673db5804498a0dac379a77d38bfb5c9966e1c5", "mid_rate": 0.902185, "end_rows": 1236179, "mid_rows": 1370206, "train_positions": 2349693, "valid_positions": 122424, "train_by_kind": {"end": 1175048, "mid": 1174645}, "valid_by_kind": {"end": 61131, "mid": 61293}, "continued": true, "ophand": false, "v2a": true, "wide": false, "init_valid": {"end": {"brier": 0.18685, "log_loss": 0.54647, "n": 61131}, "mid": {"brier": 0.17723, "log_loss": 0.52359, "n": 61293}}}
+{"epoch": 1, "lr": 0.001, "train_bce": 0.54423, "s": 356.3, "valid_brier": 0.18499, "valid_log_loss": 0.54233, "valid_n": 122424, "best": true}
+{"epoch": 2, "lr": 0.001, "train_bce": 0.54401, "s": 330.9, "valid_brier": 0.18419, "valid_log_loss": 0.54071, "valid_n": 122424, "best": true}
+{"epoch": 3, "lr": 0.001, "train_bce": 0.54359, "s": 362.1, "valid_brier": 0.18483, "valid_log_loss": 0.54164, "valid_n": 122424}
+{"epoch": 4, "lr": 0.0005, "train_bce": 0.53954, "s": 345.7, "valid_brier": 0.1832, "valid_log_loss": 0.53802, "valid_n": 122424, "best": true}
+{"epoch": 5, "lr": 0.0005, "train_bce": 0.53882, "s": 374.2, "valid_brier": 0.18306, "valid_log_loss": 0.53736, "valid_n": 122424, "best": true}
+{"epoch": 6, "lr": 0.0005, "train_bce": 0.53825, "s": 348.4, "valid_brier": 0.1829, "valid_log_loss": 0.53695, "valid_n": 122424, "best": true}
+{"epoch": 7, "lr": 0.0005, "train_bce": 0.53786, "s": 367.0, "valid_brier": 0.18323, "valid_log_loss": 0.5381, "valid_n": 122424}
+{"epoch": 8, "lr": 0.00025, "train_bce": 0.53545, "s": 343.6, "valid_brier": 0.18217, "valid_log_loss": 0.5352, "valid_n": 122424, "best": true}
+{"epoch": 9, "lr": 0.00025, "train_bce": 0.5352, "s": 366.4, "valid_brier": 0.18238, "valid_log_loss": 0.53574, "valid_n": 122424}
+{"epoch": 10, "lr": 0.000125, "train_bce": 0.53382, "s": 349.7, "valid_brier": 0.18195, "valid_log_loss": 0.53472, "valid_n": 122424, "best": true}
+{"epoch": 11, "lr": 0.000125, "train_bce": 0.53361, "s": 369.1, "valid_brier": 0.18182, "valid_log_loss": 0.53434, "valid_n": 122424, "best": true}
+{"epoch": 12, "lr": 0.000125, "train_bce": 0.53344, "s": 340.3, "valid_brier": 0.18188, "valid_log_loss": 0.53456, "valid_n": 122424}
+{
+ "name": "midv2a-ramp-t",
+ "fit_s": 4442,
+ "epochs": 12,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 100,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.18597,
+   "log_loss": 0.5433,
+   "n": 1175048
+  },
+  "mid": {
+   "brier": 0.1771,
+   "log_loss": 0.52246,
+   "n": 1174645
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.18641,
+   "log_loss": 0.54524,
+   "n": 61131
+  },
+  "mid": {
+   "brier": 0.17723,
+   "log_loss": 0.52347,
+   "n": 61293
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.18685,
+   "log_loss": 0.54647,
+   "n": 61131
+  },
+  "mid": {
+   "brier": 0.17723,
+   "log_loss": 0.52359,
+   "n": 61293
+  }
+ },
+ "mid_rate": 0.902185
+}
