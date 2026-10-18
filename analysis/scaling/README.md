@@ -1284,3 +1284,12 @@ the 64-bit and the 32-bit numpy (the flag is a float appended to the globals).
   is as before (numpy, and ~0.9 MB per model).
 
 Condition: the opponent's deck list is known (order and hand not).
+
+**prior-ramp-r1** (the fit above, 2026-10-18 15:3x–16:5xZ). The model is models/prior-ramp-r1.npz (sha256
+cf3e0de2242fb0a9891ae2eecae2d1093e75c16676ce5a7973a80d325f1fcf4a), from prior-ramp-ft-t05 (23708146…). It had 443253
+training and 23228 valid decisions over the 40 shards (info "shards", exactly 72300000 + 2k, k = 0–39). Valid CE at
+τ 0.5 against the new visits went from 1.20699 at the start (ft-t05 itself) to 1.07395. It ran 42 epochs (best 38)
+in two chunks: 3728 s, then 190 s from the checkpoint. It has 0 subnormal weights. The log is
+data/policy/fit-ramp-r1.log. The offline O1 against D10's A-UCB visits and the gate are the analysis line's.
+
+Condition: the opponent's deck list is known (order and hand not).
