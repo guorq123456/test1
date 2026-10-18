@@ -206,23 +206,32 @@ class SetNet:
     PARAMS = ("W1s", "W1d", "b1", "W2", "b2", "V1", "c1", "V2", "c2", "v3", "c3")
 
     def __init__(self, static_width: int, phi=(64, 64), rho=(128, 64), seed: int = 0, info=None,
-                 slope: float = 0.0, inputs: str = "v1", flag: bool = False, ophand: bool = False):
+                 slope: float = 0.0, inputs: str = "v1", flag: bool = False, ophand: bool = False,
+                 xcols: bool = False):
         rng = np.random.default_rng(seed)
         self.slope = float(slope)      # 0: ReLU (the fixed settings); > 0: leaky ReLU with that negative slope (R3)
         self.inputs = inputs           # learn.tokens INPUTS; "v1" for every net before 2026-10-17
         # flag: rho also reads a last global, 1 at a position inside the mover's own turn and 0 at a turn end
         # (learn.midrows; the agent option +netmid). Off for every net before 2026-10-18, whose files are as before
         self.flag = bool(flag)
-        if self.flag and inputs != "v1":
-            raise ValueError("the mid-turn flag is for v1 inputs")
+        if self.flag and inputs not in ("v1", "v2a"):
+            raise ValueError("the mid-turn flag is for v1 or v2a inputs")
         # ophand: a diagnostic (the architecture thread 2026-10-18 17:47Z): the opponent's real hand, card by card,
         # as one more zone; its phi sum enters rho through its own rows V1h (U @ V1 + P_hand @ V1h). Off for every
         # net before, whose numbers and files are unchanged
         self.ophand = bool(ophand)
         if self.ophand and inputs != "v1":
             raise ValueError("the opponent-hand zone is for v1 inputs")
+        # xcols: a v2a net grown from a v1 one (the architecture thread 2026-10-18 19:38Z, D14a): v1's columns go
+        # through W1d as before and V2_EXTRA through rows of their own, W1x, added after (0 at the start, so it
+        # scores as the v1 net to the last bit). A v2a net without it (net-in2a-59000) has them in W1d
+        self.xcols = bool(xcols)
+        if self.xcols and inputs != "v2a":
+            raise ValueError("xcols is for v2a inputs")
         if self.ophand:
             self.PARAMS = SetNet.PARAMS + ("V1h",)
+        if self.xcols:
+            self.PARAMS = SetNet.PARAMS + ("W1x",)
         D, G = len(dyn_names(inputs)), len(T.global_names(inputs))
         h1, h2 = phi
         r1, r2 = rho
@@ -230,6 +239,9 @@ class SetNet:
         fin = static_width + D
         self.W1s = rng.normal(0, np.sqrt(2 / fin), (static_width, h1))
         self.W1d = rng.normal(0, np.sqrt(2 / fin), (D, h1))
+        if self.xcols:
+            self.W1d = self.W1d[:len(DYN_NAMES)].copy()
+            self.W1x = np.zeros((len(T.V2_EXTRA), h1))
         self.b1 = np.zeros(h1)
         self.W2 = rng.normal(0, np.sqrt(2 / h1), (h1, h2))
         self.b2 = np.zeros(h2)
@@ -264,11 +276,18 @@ class SetNet:
         return (s - self.smean) / self.sstd
 
     # --- forward / backward -----------------------------------------------------------------------------------
+    def _pre1(self, base: np.ndarray, dyn: np.ndarray) -> np.ndarray:
+        """base + the dynamic part of phi's first layer (an xcols net: v1's columns as before, then W1x's term)."""
+        if not self.xcols:
+            return base + dyn @ self.W1d
+        n = len(DYN_NAMES)
+        return base + np.ascontiguousarray(dyn[..., :n]) @ self.W1d + np.ascontiguousarray(dyn[..., n:]) @ self.W1x
+
     def forward(self, cards, dyn, count, seg, glob, keep=False, static=None, hand=None):
         """`hand` (an ophand net): (card index, dynamic, position in batch) of the opponent's hand tokens."""
         B = glob.shape[0]
         S = self._S(static)
-        A1 = (S @ self.W1s)[cards] + dyn @ self.W1d + self.b1
+        A1 = self._pre1((S @ self.W1s)[cards], dyn) + self.b1
         H1 = _act(A1, self.slope)
         A2 = H1 @ self.W2 + self.b2
         H2 = _act(A2, self.slope)
@@ -310,7 +329,11 @@ class SetNet:
         dH2 = dP[seg] * count[:, None] * _dact(H2, self.slope)
         g["W2"], g["b2"] = H1.T @ dH2, dH2.sum(0)
         dA1 = (dH2 @ self.W2.T) * _dact(H1, self.slope)
-        g["W1d"], g["b1"] = dyn.T @ dA1, dA1.sum(0)
+        if self.xcols:
+            n = len(DYN_NAMES)
+            g["W1d"], g["W1x"], g["b1"] = dyn[:, :n].T @ dA1, dyn[:, n:].T @ dA1, dA1.sum(0)
+        else:
+            g["W1d"], g["b1"] = dyn.T @ dA1, dA1.sum(0)
         onehot = np.zeros((len(S), len(cards)))
         onehot[cards, np.arange(len(cards))] = 1.0
         g["W1s"] = S.T @ (onehot @ dA1)
@@ -328,7 +351,8 @@ class SetNet:
             onehot_h[hc, np.arange(len(hc))] = 1.0
             g["W1s"] = g["W1s"] + S.T @ (onehot_h @ dAh1)
         if l2:
-            for k in ("W1s", "W1d", "W2", "V1", "V2", "v3") + (("V1h",) if hand is not None else ()):
+            for k in ("W1s", "W1d", "W2", "V1", "V2", "v3") + (("V1h",) if hand is not None else ()) + \
+                    (("W1x",) if self.xcols else ()):
                 g[k] = g[k] + 2 * l2 * getattr(self, k)
         return loss, g
 
@@ -442,7 +466,7 @@ class SetNet:
         if mid and not self.flag:
             raise ValueError("a net without the mid-turn flag scores turn ends only")
         if self.inputs != "v1":
-            return self._logit2(state, player)
+            return self._logit2(state, player, mid)
         p, o = state.players[player], state.players[1 - player]
         live = [T._live(state, c, 0) for c in p.hand]
         live += [T._live(state, c, 1) for c in p.field]
@@ -535,7 +559,19 @@ class SetNet:
             setattr(out, k, np.array(getattr(net, k)))
         return out
 
-    def _logit2(self, state, player: int) -> float:
+    @classmethod
+    def with_v2a_from(cls, net: "SetNet", info=None) -> "SetNet":
+        """A v1 `net` grown to v2a (xcols): the same weights, card table and standardization, and W1x (V2_EXTRA's
+        rows) 0, so it scores every position as `net` does, to the last bit, until it is trained."""
+        if net.inputs != "v1" or net.ophand:
+            raise ValueError("a v1 net without the opponent-hand zone grows to v2a")
+        out = cls(net.static.shape[1], phi=net.phi, rho=net.rho, slope=net.slope, inputs="v2a", flag=net.flag,
+                  xcols=True, info=info)
+        for k in SetNet.PARAMS + ("smean", "sstd", "card_ids", "static"):
+            setattr(out, k, np.array(getattr(net, k)))
+        return out
+
+    def _logit2(self, state, player: int, mid: bool = False) -> float:
         """logit() for the v2 inputs: a pooled token's row also holds its share and its owner's next-turn values,
         so its phi output is kept per (card, row) and a pooled zone's sum per (zone content, share per copy,
         next-turn values)."""
@@ -584,14 +620,17 @@ class SetNet:
                         row = T._pooled2([_Printed(d)] * n, z, per, nxt)[0]
                         assert row[-3] == hk[1]
                         tok = np.asarray(row[1:], dtype=np.int16)[None, :]
-                        h = self._pool[hk] = _act(_act(table[index[cid]] + dynamic(tok, self.inputs)[0] @ self.W1d,
+                        h = self._pool[hk] = _act(_act(self._pre1(table[index[cid]], dynamic(tok, self.inputs)[0]),
                                                        self.slope) @ self.W2 + self.b2, self.slope)
                     total += n * h
                 if len(sums) > 50000:
                     sums.clear()
                 sums[key] = total
             P[z] = P[z] + total
-        u = np.concatenate([P.reshape(-1), T.globals_of(state, player, self.inputs) / global_scale(self.inputs)])
+        g = T.globals_of(state, player, self.inputs) / global_scale(self.inputs)
+        if self.flag:
+            g = np.append(g, np.float32(1.0 if mid else 0.0))
+        u = np.concatenate([P.reshape(-1), g])
         z1 = _act(u @ self.V1 + self.c1, self.slope)
         return float(_act(z1 @ self.V2 + self.c2, self.slope) @ self.v3 + self.c3[0])
 
@@ -612,7 +651,7 @@ class SetNet:
         if live:
             rows = np.asarray(live, dtype=np.int64)
             cards = [index[c] for c in rows[:, 0].tolist()]
-            H1 = _act(table[cards] + dynamic(rows[:, 1:], inputs) @ self.W1d, self.slope)
+            H1 = _act(self._pre1(table[cards], dynamic(rows[:, 1:], inputs)), self.slope)
             H2 = _act(H1 @ self.W2 + self.b2, self.slope)       # live tokens have count 1
             zones = rows[:, 1 + _ZONE]
             for z in sorted(set(zones.tolist())):
@@ -658,16 +697,22 @@ class SetNet:
             arrays["flag"] = np.array(True)
         if self.ophand:
             arrays["ophand"] = np.array(True)
+        if self.xcols:
+            arrays["xcols"] = np.array(True)
         np.savez(path, **arrays)
 
     @classmethod
     def load(cls, path) -> "SetNet":
         z = np.load(path, allow_pickle=False)
+        if "wide" in z.files:                    # a net grown wider (learn.widenet)
+            from svsim.learn.widenet import WideSetNet
+            return WideSetNet.from_file(z)
         net = cls(z["static"].shape[1], phi=tuple(int(x) for x in z["phi"]), rho=tuple(int(x) for x in z["rho"]),
                   slope=float(z["slope"]) if "slope" in z.files else 0.0,
                   inputs=str(z["inputs"]) if "inputs" in z.files else "v1",
                   flag=bool(z["flag"]) if "flag" in z.files else False,
-                  ophand=bool(z["ophand"]) if "ophand" in z.files else False)
+                  ophand=bool(z["ophand"]) if "ophand" in z.files else False,
+                  xcols=bool(z["xcols"]) if "xcols" in z.files else False)
         for k in net.PARAMS + ("smean", "sstd", "card_ids", "static"):
             setattr(net, k, np.array(z[k]))
         net.info = json.loads(str(z["info"]))

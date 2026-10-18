@@ -18,7 +18,7 @@ seed·100003 + g a multiple of `every` in validation), with the flag appended to
 allocated once, file by file, so the whole data never sits in memory next to its parts. A mid-turn file's rows
 can be thinned to a rate (each row kept with probability `mid_rate`, from a generator seeded by (seed, shard)).
 
-    python -m svsim.learn.midrows encode --records DIR --out DIR [--workers 4]
+    python -m svsim.learn.midrows encode --records DIR --out DIR [--workers 4] [--inputs v1|v2a]
     python -m svsim.learn.midrows encode-hand --kind end|mid --records DIR --out DIR   # hand-<tok|mid>-<seed>.npz
 """
 from __future__ import annotations
@@ -34,15 +34,16 @@ from pathlib import Path
 import numpy as np
 
 
-def mid_rows(record: dict):
-    """[(cards, tokens, globals, labels, {card id: CardDef})] at every decision of learn.setpolicy.decisions."""
+def mid_rows(record: dict, inputs: str = "v1"):
+    """[(cards, tokens, globals, labels, {card id: CardDef})] at every decision of learn.setpolicy.decisions, in the
+    learn.tokens input version `inputs` (v1, or v2a: v1's columns and V2_EXTRA)."""
     from svsim.learn import tokens as T
     from svsim.learn.setpolicy import decisions
     winner = record.get("winner")
     out = []
     for i, state, *_rest, start in decisions(record):
         me = state.active
-        cids, toks, glob_ = T.encode(state, me)
+        cids, toks, glob_ = T.encode(state, me, inputs)
         defs = {}
         for p in state.players:
             for c in p.hand + p.field + p.leader_area + p.deck_view():
@@ -55,7 +56,8 @@ def mid_rows(record: dict):
 
 def _encode_shard(job):
     from svsim.learn import tokens as T
-    path, target = job
+    path, target = job[:2]
+    inputs = job[2] if len(job) > 2 else "v1"
     t0 = time.process_time()
     cids, toks, offs, globs = [], [], [0], []
     lab = {k: [] for k in ("result", "seed", "g", "i", "turn", "player", "start")}
@@ -67,7 +69,7 @@ def _encode_shard(job):
                 continue
             record = json.loads(line)
             games += 1
-            for c, t, g, d, defs in mid_rows(record):
+            for c, t, g, d, defs in mid_rows(record, inputs):
                 cards.update(defs)
                 cids.append(c)
                 toks.append(t)
@@ -77,12 +79,15 @@ def _encode_shard(job):
                     lab[k].append(d[k])
                 lab["seed"].append(int(record["seed"]) // 100003)
                 lab["g"].append(record["g"])
-    arrays = {"tokens": np.concatenate(toks) if toks else np.zeros((0, len(T.TOKEN)), np.int16),
+    arrays = {"tokens": np.concatenate(toks) if toks else np.zeros((0, len(T.token_names(inputs))), np.int16),
               "cards": np.concatenate(cids) if cids else np.zeros(0, np.int32),
               "offsets": np.asarray(offs, np.int64),
-              "globals": np.stack(globs).astype(np.float32) if globs else np.zeros((0, len(T.GLOBALS)), np.float32),
+              "globals": np.stack(globs).astype(np.float32) if globs else np.zeros((0, len(T.global_names(inputs))),
+                                                                                    np.float32),
               "result": np.asarray(lab["result"], np.float32), "linear": np.zeros(len(globs), np.float32),
               "start": np.asarray(lab["start"], bool)}
+    if inputs != "v1":                         # as learn.scaledata's v2a files: the file says which (v1: no mark)
+        arrays["inputs"] = np.array(inputs)
     for k in ("seed", "g", "i", "turn", "player"):
         arrays[k] = np.asarray(lab[k], np.int32)
     ids = sorted(cards)
@@ -103,7 +108,7 @@ def encode_main(args) -> None:
         seed = os.path.basename(path)[len("rec-"):-len(".jsonl.gz")]
         target = out / f"mid-{seed}.npz"
         if not target.exists():
-            jobs.append((path, target))
+            jobs.append((path, target, args.inputs))
     print(json.dumps({"shards_to_encode": len(jobs)}), flush=True)
     with Pool(args.workers) as pool:
         for target, games, n, cpu in pool.imap_unordered(_encode_shard, jobs):
@@ -210,7 +215,7 @@ def _assemble(plan, cards_npz, part: str, hand_dir=None):
     out.card_ids = c["card_id"].astype(np.int64)
     out.static = c["static"].astype(np.float32)
     out.static_names = [str(s) for s in c["static_names"]] if "static_names" in c.files else []
-    out.inputs = "v1"
+    out.inputs = None
 
     def rows_of(keep, valid):
         return keep & ~valid if part == "train" else (keep & valid if part == "valid" else keep)
@@ -221,10 +226,14 @@ def _assemble(plan, cards_npz, part: str, hand_dir=None):
         sel = rows_of(keep, valid)
         with np.load(f) as z:
             lens = np.diff(z["offsets"])
+            inputs = inputs_of(z["tokens"].shape[1], z["globals"].shape[1],
+                               str(z["inputs"]) if "inputs" in z.files else None)
             if width is None:
-                width, n_glob = z["tokens"].shape[1], z["globals"].shape[1]
-                if inputs_of(width, n_glob, str(z["inputs"]) if "inputs" in z.files else None) != "v1":
-                    raise ValueError("the mid-turn flag is for v1 inputs")
+                width, n_glob, out.inputs = z["tokens"].shape[1], z["globals"].shape[1], inputs
+                if inputs not in ("v1", "v2a"):
+                    raise ValueError("the mid-turn flag is for v1 or v2a inputs")
+            elif inputs != out.inputs:
+                raise ValueError(f"{f}: {inputs} inputs among {out.inputs}")
         n_pos += int(sel.sum())
         n_tok += int(lens[sel].sum())
     out.tokens = np.zeros((n_tok, width), np.int16)
@@ -235,9 +244,12 @@ def _assemble(plan, cards_npz, part: str, hand_dir=None):
                   ("turn", np.int32)):
         setattr(out, k, np.zeros(n_pos, dt))
     out.flag = np.zeros(n_pos, np.float32)
-    scale = global_scale("v1")
+    out.inputs = out.inputs or "v1"
+    scale = global_scale(out.inputs)
     hands = []                                       # (hand file, rows) per plan entry, when hand_dir is given
     if hand_dir is not None:
+        if out.inputs != "v1":
+            raise ValueError("the opponent-hand zone is for v1 inputs")
         n_hand = 0
         for f, _flag, keep, valid in plan:
             hf = Path(hand_dir) / f"hand-{Path(f).name}"
@@ -307,6 +319,7 @@ def main() -> None:
     e.add_argument("--records", required=True)
     e.add_argument("--out", required=True)
     e.add_argument("--workers", type=int, default=4)
+    e.add_argument("--inputs", choices=("v1", "v2a"), default="v1", help="v2a: learn.tokens' v2a (a marked file)")
     h = sub.add_parser("encode-hand")
     h.add_argument("--kind", choices=("end", "mid"), required=True, help="end: beside tok- files; mid: beside mid-")
     h.add_argument("--records", required=True)

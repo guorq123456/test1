@@ -90,6 +90,12 @@ def main() -> None:
     ap.add_argument("--hand-dir", default=None,
                     help="the hand- files (midrows encode-hand): add the opponent-hand zone (a diagnostic, SetNet "
                          "ophand), its rows 0 at the start")
+    ap.add_argument("--v2a", action="store_true",
+                    help="the start grown to v2a inputs (SetNet.with_v2a_from: V2_EXTRA's rows W1x, 0 at the start); "
+                         "--tokens and --mid-dir then hold v2a files")
+    ap.add_argument("--wide", action="store_true",
+                    help="the start grown to twice its width with a trainable leaky ReLU (learn.widenet.WideSetNet."
+                         "grown_from: the new blocks into old units 0, the slopes 0 at the start)")
     args = ap.parse_args()
     end_seeds, mid_seeds = seeds_of(args.end), seeds_of(args.mid)
     held = set(args.holdout) & (set(end_seeds) | set(mid_seeds))
@@ -116,7 +122,7 @@ def main() -> None:
             "train_positions": train.n, "valid_positions": valid.n,
             "train_by_kind": {"end": int((train.flag == 0).sum()), "mid": int((train.flag == 1).sum())},
             "valid_by_kind": {"end": int((valid.flag == 0).sum()), "mid": int((valid.flag == 1).sum())},
-            "continued": base.flag, "ophand": bool(args.hand_dir)}
+            "continued": base.flag, "ophand": bool(args.hand_dir), "v2a": bool(args.v2a), "wide": bool(args.wide)}
     if base.flag:                                 # a flagged net goes on training as it is
         net = base
         net.info = info
@@ -124,6 +130,15 @@ def main() -> None:
         net = SetNet.flagged_from(base, info=info)
     if args.hand_dir:
         net = SetNet.with_ophand_from(net, info=info)
+    if args.v2a:
+        net = SetNet.with_v2a_from(net, info=info)
+        info["inputs"] = "v2a"
+    if args.wide:
+        from svsim.learn.widenet import WideSetNet
+        net = WideSetNet.grown_from(net, info=info)
+        info["extra"] = list(net.extra)
+    if train.inputs != net.inputs or valid.inputs != net.inputs:
+        raise SystemExit(f"the data's inputs ({train.inputs}) are not the net's ({net.inputs})")
     for d in (train, valid):
         align(net, d)
     net.info["init_valid"] = by_kind(net, valid)

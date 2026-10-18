@@ -31,6 +31,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1]))
 
 from svsim.learn import midrows as MR  # noqa: E402
+from svsim.learn import tokens as T  # noqa: E402
 from svsim.learn.setnet import SetNet, score  # noqa: E402
 
 
@@ -62,6 +63,9 @@ def _aligned(net: SetNet, data):
     out.__dict__.update(data.__dict__)
     table = np.array([index[int(c)] for c in data.card_ids], dtype=np.int32)
     out.cards = table[data.cards]
+    if net.inputs == "v1" and getattr(data, "inputs", "v1") == "v2a":   # v2a rows are v1's columns, then V2_EXTRA
+        out.tokens = np.ascontiguousarray(data.tokens[:, :len(T.TOKEN)])
+        out.inputs = "v1"
     if hasattr(data, "hand_cards"):
         out.hand_cards = table[data.hand_cards]
     return out
