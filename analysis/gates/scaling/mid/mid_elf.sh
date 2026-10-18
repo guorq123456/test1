@@ -1,5 +1,5 @@
 #!/bin/bash
-# mid-turn value net gate, elf-t (README 31f6e3c): A = net-mid-elf-t +netmid + ft-t05 PUCT vs B = elftgen2 + ft-t05 N 71; code 524467d (svsim/ = fbb3c21)
+# mid-turn value net gate, elf-t (README 31f6e3c): A = net-mid-elf-t +netmid + ft-t05 PUCT vs B = elftgen2 + ft-t05 N 71; code 75b5119 (svsim/ = fbb3c21)
 S=/tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad
 cd $S/wt_elfmid
 export PYTHONPATH=$S/wt_elfmid
