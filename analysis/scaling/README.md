@@ -1449,3 +1449,42 @@ The omniscient net reads the opponent's real hand. It is for measurement only, n
 into an installed spec (tools/web.py refuses it).
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## D14: new inputs and a wider net on the ramp-t mid net (the architecture thread 19:38Z; code 62aac43; set before either fit)
+
+Both fits start from net-mid-ramp-t (sha256 4232818e…) and score as it does, to the last bit, until they are
+trained. They use net-midc-ramp-t's data, mid-turn thinning rate and seed, valid games, 12 epochs at `--patience 100`
+and its settings, and each keeps its best valid epoch. The control is net-midc-ramp-t, which is not trained again.
+
+**D14a, `net-midv2a-ramp-t` (`train_mid.py --v2a`).** The inputs are v2a's (net-in2a-59000's): v1's columns plus
+share, next_pp and next_evolve (learn.tokens V2_EXTRA). `SetNet.with_v2a_from` (option xcols) keeps v1's columns
+going through W1d as before and gives the three new columns rows of their own, W1x (3 × 64), 0 at the start. Their
+product is added after v1's, so every product the old net makes is made as before. Making W1d three rows longer
+instead would change the inner size of a product, and BLAS can then sum in another order. The data was encoded
+again as v2a (`scaledata encode --inputs v2a`, `midrows encode --inputs v2a`). All 166 files (105 turn-end, 61
+mid-turn, holdouts included) were checked against the v1 files: v1's token columns and every other array are
+identical. So the rows, results, thinning and valid split are the same.
+
+**D14b, `net-midwide-ramp-t` (`train_mid.py --wide`, learn.widenet).**
+- **Width.** Twice the width: phi 128-128, rho 256-128 (64 / 64 / 128 / 64 new units).
+- **Old units.** They keep their weights. The new units reach an old unit only through blocks of their own (new
+  inputs to old outputs, and the new last-layer units to the output). These blocks start at 0, are trained, and are
+  added after the old net's own term.
+- **New units.** Their input weights (from old and new units) start random: He, from the constructor's fixed
+  generator, not a game seed. So they compute from the first step and their output weights get gradient.
+- **Activation.** A PReLU, max(z, 0) + a·min(z, 0), on every unit, old and new (option 1 of the analysis line's two;
+  the architecture thread prefers it). There is one slope a per layer (phi 1, phi 2, rho 1, rho 2). The slopes start
+  at 0, where the activation is the old ReLU to the last bit, and are trained with the weights, without l2. So the
+  dead old units can come back too.
+- **Fit in chunks.** Its epochs are slower, so it goes in chunks of under 2 hours from its checkpoint. The checkpoint
+  holds the whole state, the shuffling generator included, so the result is the same as an unbroken fit.
+
+**Starting-point check.** The same as D13′'s: both starts' holdout dumps against data/mid/dump-mid-ramp-t, field by
+field. The tests are tests/test_v2a_grow.py and tests/test_widenet.py: the start equals the net bitwise in the batch
+and in the single-position path, at turn ends and mid-turn. Trained, the single-position path matches the batch, and
+the gradients match finite differences.
+
+**The screen is the analysis line's:** either variant ≥ 0.010 lower than net-midc-ramp-t mid-turn goes to a gate.
+Otherwise this line stops.
+
+Condition: the opponent's deck list is known (order and hand not).
