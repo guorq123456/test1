@@ -60,7 +60,10 @@ def _aligned(net: SetNet, data):
     index = {int(c): i for i, c in enumerate(net.card_ids)}
     out = object.__new__(type(data))
     out.__dict__.update(data.__dict__)
-    out.cards = np.array([index[int(c)] for c in data.card_ids], dtype=np.int32)[data.cards]
+    table = np.array([index[int(c)] for c in data.card_ids], dtype=np.int32)
+    out.cards = table[data.cards]
+    if hasattr(data, "hand_cards"):
+        out.hand_cards = table[data.hand_cards]
     return out
 
 
@@ -112,10 +115,12 @@ def main() -> None:
     ap.add_argument("--end-holdout", action="append", default=[], metavar="NAME:SEED[,SEED]",
                     help="turn ends only (no records with the search's decisions)")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--hand-dir", default=None, help="the hand- files (an ophand --net reads the real hand there)")
     ap.add_argument("--dump", default=None, help="a folder for the per-position probabilities (<holdout>-end.npz, "
                                                  "<holdout>-mid.npz; the analysis line's recheck)")
     args = ap.parse_args()
     dump = Path(args.dump) if args.dump else None
+    hand_dir = args.hand_dir
     if dump:
         dump.mkdir(parents=True, exist_ok=True)
     new, base = SetNet.load(args.net), SetNet.load(args.base)
@@ -129,7 +134,7 @@ def main() -> None:
         seeds = [int(s) for s in seeds.split(",")]
         if set(seeds) & trained:
             raise SystemExit(f"{name}: in the net's training shards")
-        d = MR.phase_data([tok / f"tok-{s}.npz" for s in seeds], [], tok / "cards.npz")
+        d = MR.phase_data([tok / f"tok-{s}.npz" for s in seeds], [], tok / "cards.npz", hand_dir=hand_dir)
         p_new, p_base = predict(new, d, True), predict(base, d, False)
         report["holdouts"][name] = {"seeds": seeds, "end": {"new": judged(p_new, d.result),
                                                             "candidate": judged(p_base, d.result)}}
@@ -143,8 +148,8 @@ def main() -> None:
         s = int(s)
         if s in trained:
             raise SystemExit(f"{name}: in the net's training shards")
-        d_end = MR.phase_data([tok / f"tok-{s}.npz"], [], tok / "cards.npz")
-        d_mid = MR.phase_data([], [mid / f"mid-{s}.npz"], tok / "cards.npz")
+        d_end = MR.phase_data([tok / f"tok-{s}.npz"], [], tok / "cards.npz", hand_dir=hand_dir)
+        d_mid = MR.phase_data([], [mid / f"mid-{s}.npz"], tok / "cards.npz", hand_dir=hand_dir)
         pb, pn = eot_baseline(Path(args.records) / f"rec-{s}.jsonl.gz", mid / f"mid-{s}.npz", base, new)
         e_new, e_base = predict(new, d_end, True), predict(base, d_end, False)
         m_new, m_raw = predict(new, d_mid, True), predict(base, d_mid, False)
