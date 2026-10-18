@@ -1,0 +1,2 @@
+/home/user/test1/analysis/gates/scaling/d13p/aor/gate.jsonl: 300 pairs, seeds 77200000..77200299, 52.2% ± 3.3% (48.9%..55.5%), CR +20 (-11..+52; steady-state +17); ms per searched decision A 71.02 / B 64.47 = 1.102
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 52.2% (48.8%..55.5%), CR +20 (-11..+52; steady-state +17)
