@@ -1245,3 +1245,21 @@ The step cost is measured against today's +neteot player on recorded positions (
 Order: ramp-t first, then elf-t. At most one elf-t process loads at a time. No games are played.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## R1: the ramp-t prior refitted on decisions searched again by A's scorer (the analysis line's 96c5b24; lists fixed before the fit)
+
+The data is data/r1-ramp/rec/: gen4x 72300000 + 2k, k = 0–39, ft-t05's training records. About half of their
+decisions were searched again by A's scorer without a prior (see that folder's README; the builder line did 30 shards
+and the analysis line 10). learn.setpolicy encode reads the 40 shards as it reads self-play shards. Their decisions
+are the re-searched ones (466481 in all), and the targets are the new visits.
+
+    python -m svsim.learn.setpolicy fit --data DEC --cards CARDS --shards 72300000 72300002 ... 72300078 \
+        --prior analysis/scaling/models/prior-ramp-ft-t05.npz --tau 0.5 --ftz --checkpoint CKPT \
+        --out analysis/scaling/models/prior-ramp-r1.npz
+
+Every other setting is ft-t05's: head 64, Adam, lr 1e-3, decay 0.5, patience 4, l2 1e-5, batch 256. The valid part
+is the games with seed·100003 + g a multiple of 20. CARDS is ft-t05's cards.npz, whose card table `--prior` checks.
+The fit runs in planned chunks of under 2 h from its checkpoint. The training shards are these 40 only. 71600018 and
+this cycle's 75400038 are in neither list.
+
+Condition: the opponent's deck list is known (order and hand not).
