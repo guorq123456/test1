@@ -1428,4 +1428,13 @@ neither stops early, and each keeps its best valid epoch.
 
 The screen is the analysis line's: holdout Brier, omniscient against control. Below 0.005 better, this line stops.
 
+**Starting-point check (before either fit's result).** `SetNet.with_ophand_from(net-mid-ramp-t)` (V1h = 0, sha256
+39d2c922…) was run through mid_report.py on the holdouts with `--hand-dir`, so it read the recorded real hand. Its
+dumps (data/mid/dump-midoph-start-ramp-t) equal data/mid/dump-mid-ramp-t field by field, to the last bit: turn ends of
+v2skx (70200000–70200008), selfplay (71600018) and selfplay5 (75400038), and mid-turn decisions of the last two. The
+mid-turn baseline columns go through the single-position path (`logit`), so that path is covered too. The test is
+tests/test_ophand.py::test_added_at_zero_it_scores_as_the_net_to_the_last_bit. The holdouts' hand files are in
+data/mid/hand-ramp-holdout (SHA256SUMS). They are re-made by `python -m svsim.learn.midrows encode-hand --kind end|mid
+--records DIR --out DIR` from the holdout records.
+
 Condition: the opponent's deck list is known (order and hand not).
