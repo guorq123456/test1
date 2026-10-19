@@ -54,7 +54,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path.insert(0, str(ROOT))
 
-from svsim.learn.setnet import NZ, Data, SetNet, score  # noqa: E402
+from svsim.learn.setnet import NZ, Data, SetNet, in_valid, score  # noqa: E402
 
 BASE, STRIDE, HOLDOUT_BASE = 70100000, 2, 70200000
 HOLDOUT = [HOLDOUT_BASE + STRIDE * h for h in range(5)]
@@ -105,9 +105,11 @@ def _tag(args) -> str:
 def net_main(args) -> None:
     tok = Path(args.tokens)
     data = Data(_files(tok, shards(args.size, args.add, args.base_shards), "tok-", ".npz"), tok / "cards.npz")
-    valid_mask = data.games() % 20 == 0
+    valid_mask = in_valid(data.games(), 20, getattr(args, "split", "key"))
     info = {"deck": PAIR[0], "opponent": PAIR[1], "size": args.size, "shards": shards(args.size, args.add, args.base_shards),
             "name": args.name or None, "inputs": data.inputs}
+    if getattr(args, "split", "key") != "key":
+        info["split"] = args.split
     if args.init:
         net = _init_net(args, data)
         data = _align(net, data)
@@ -365,6 +367,8 @@ def main() -> None:
     n.add_argument("--base-shards", type=int, default=None, metavar="N",
                    help="train on the first N shards of --base instead of SIZES[size] (the elf-t mirror's gen 3: "
                         "--size 29000 --base-shards 10 --add 72800000:19 --add 74100000:19)")
+    n.add_argument("--split", choices=("key", "hash"), default="key",
+                   help="the validation games (learn.setnet.in_valid): key, as before; hash, no tie to the seat")
     n.add_argument("--init", default=None, metavar="NET",
                    help="go on training from this net (its weights, card table and standardization; the next cycle "
                         "after the B players: --init analysis/scaling/models/net-elft-gen2-19500.npz). Off: a new net")

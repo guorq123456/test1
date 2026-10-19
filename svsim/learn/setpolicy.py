@@ -270,14 +270,15 @@ class Decisions:
         return self.seed.astype(np.int64) * 100003 + self.g.astype(np.int64)
 
     @classmethod
-    def split(cls, files, cards_npz, every: int = 20) -> tuple["Decisions", "Decisions"]:
-        """(training part, validation part: the games whose key seed * 100003 + g is a multiple of `every`), read
+    def split(cls, files, cards_npz, every: int = 20, split: str = "key") -> tuple["Decisions", "Decisions"]:
+        """(training part, validation part: the games learn.setnet.in_valid picks by `split`), read
         one file at a time into arrays allocated once, so neither the whole data nor a second copy of a part is
         ever in memory (the same arrays as subset() of the whole by that mask)."""
+        from svsim.learn.setnet import in_valid
         sizes = []
         for f in files:                                   # pass 1: what each part takes from each file
             with np.load(f) as z:
-                v = (z["seed"].astype(np.int64) * 100003 + z["g"].astype(np.int64)) % every == 0
+                v = in_valid(z["seed"].astype(np.int64) * 100003 + z["g"].astype(np.int64), every, split)
                 tl, ml = np.diff(z["offsets"]), np.diff(z["moff"])
                 sizes.append([(int(m.sum()), int(tl[m].sum()), int(ml[m].sum())) for m in (~v, v)])
         out = []
@@ -292,7 +293,7 @@ class Decisions:
         pos = [[0, 0, 0], [0, 0, 0]]
         for f in files:                                   # pass 2: fill
             part = cls([f], cards_npz)
-            v = part.games() % every == 0
+            v = in_valid(part.games(), every, split)
             for side, mask in ((0, ~v), (1, v)):
                 sub = part.subset(mask)
                 d, (i, ti, mi) = out[side], pos[side]
@@ -682,7 +683,7 @@ def fit_main(args) -> None:
     from svsim.learn.setnet import SetNet
     folder = Path(args.data)
     files = [folder / f"dec-{s}.npz" for s in args.shards]
-    train, valid = Decisions.split(files, args.cards)
+    train, valid = Decisions.split(files, args.cards, split=getattr(args, "split", "key"))
     train.sharpen(args.tau)
     valid.sharpen(args.tau)
     card_ids, static = train.card_ids, train.static
@@ -709,6 +710,8 @@ def fit_main(args) -> None:
     t0 = time.time()
     pol.fit(train, valid, epochs=args.epochs, batch=args.batch, lr=args.lr, l2=args.l2, patience=args.patience,
             seed=args.seed, decay=args.decay, freeze=args.freeze, checkpoint=args.checkpoint, ftz=args.ftz)
+    if getattr(args, "split", "key") != "key":
+        pol.info["split"] = args.split
     pol.info["report"] = {"fit_s": round(time.time() - t0), "epochs": len(pol.info["history"]),
                           "train_ce": round(pol.cross_entropy(train), 5), "valid_ce": round(pol.cross_entropy(valid), 5)}
     pol.save(args.out)
@@ -747,6 +750,8 @@ def main() -> None:
     f.add_argument("--extend-cards", action="store_true",
                    help="with --prior: the data's cards the prior has no row for are added by their static rows "
                         "(setnet.extend_table; a new pairing)")
+    f.add_argument("--split", choices=("key", "hash"), default="key",
+                   help="the validation games (learn.setnet.in_valid): key, as before, or hash (no tie to the seat)")
     f.add_argument("--deck", default=None, help="info only: the side whose decisions these are (default the prior's)")
     f.add_argument("--opponent", default=None, help="info only: that side's opponent (default the prior's)")
     f.add_argument("--out", required=True)

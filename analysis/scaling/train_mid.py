@@ -90,6 +90,9 @@ def main() -> None:
     ap.add_argument("--l2", type=float, default=1e-5)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--checkpoint", default=None)
+    ap.add_argument("--split", choices=("key", "hash"), default="key",
+                    help="the validation games (learn.setnet.in_valid): key, every net's before 2026-10-19 and a "
+                         "continued line's; hash, no tie to the seat (from-scratch nets of new pairings)")
     ap.add_argument("--hand-dir", default=None,
                     help="the hand- files (midrows encode-hand): add the opponent-hand zone (a diagnostic, SetNet "
                          "ophand), its rows 0 at the start")
@@ -121,7 +124,7 @@ def main() -> None:
     n_mid = sum(len(np.load(f)["result"]) for f in mid_files)
     rate = min(1.0, n_end / n_mid)
     train, valid = MR.phase_split(end_files, mid_files, tok / "cards.npz", every=20, mid_rate=rate, seed=args.seed,
-                                  hand_dir=args.hand_dir)
+                                  hand_dir=args.hand_dir, split=getattr(args, "split", "key"))
     if args.fresh:
         base = SetNet(train.static.shape[1], seed=args.seed, flag=True)
         base.set_cards(train.card_ids, train.static, np.bincount(train.cards, minlength=len(train.card_ids)) + 1)
@@ -155,6 +158,8 @@ def main() -> None:
     if args.pairs:
         info["pairs"] = [p.split(":") for p in args.pairs]
     info["deck"], info["opponent"] = args.deck, args.opponent
+    if getattr(args, "split", "key") != "key":
+        info["split"] = args.split
     if args.extend_cards:
         from svsim.learn.setnet import extend_table
         n0 = len(net.card_ids)

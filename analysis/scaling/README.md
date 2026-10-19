@@ -2006,3 +2006,24 @@ default to the prior's.
 The same fit on NM2's file gives its 86.3 back. This N₀ is a start: as in NM1 and NM2, the gate's check games set N.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+### The validation split: `--split key|hash` (the architecture thread 2026-10-19 16:53Z)
+
+`learn.setnet.in_valid` picks the validation games for train_mid.py, train.py net and `setpolicy fit`.
+- **`key`** is the default and every net's split so far: (seed·100003 + g) % 20 == 0. With even shard seeds it picks
+  g of one parity only, so one seat (see the NM3 section).
+- **`hash`** is splitmix64 of the same key, % 20 == 0. It picks the same share of games with no tie to g's parity.
+  On NM3's 10 training shards it picks 533 games, 47.5% of them with g even.
+- With `key` the parts are those of before. On NM3's data the counts are 335 737 / 18 003 rows and 319 125 /
+  17 151 decisions, and net-nm3f-elf-nem's valid Brier is 0.19572 again. A model's info has `"split": "hash"` only
+  when it was fitted with hash.
+
+**Which line uses which:**
+
+| line | split |
+|---|---|
+| every net and prior up to and including NM3 | key |
+| continued lines (NM1 gen 3, NM2 gen 2, and the like) | key |
+| from-scratch nets of new pairings, from the next one on | hash |
+
+Condition: the opponent's deck list is known (order and hand not).

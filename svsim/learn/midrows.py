@@ -189,8 +189,9 @@ def encode_hand_main(args) -> None:
 
 # --- loading: turn-end and mid-turn rows, the flag appended --------------------------------------------------------
 
-def _plan(end_files, mid_files, every: int, mid_rate: float, seed: int):
+def _plan(end_files, mid_files, every: int, mid_rate: float, seed: int, split: str = "key"):
     """[(path, flag, rows kept, rows in validation)] per file, from its labels only."""
+    from svsim.learn.setnet import in_valid
     plan = []
     for flag, files in ((0.0, end_files), (1.0, mid_files)):
         for f in files:
@@ -201,7 +202,7 @@ def _plan(end_files, mid_files, every: int, mid_rate: float, seed: int):
             keep = np.ones(n, bool)
             if flag and mid_rate < 1.0:
                 keep = np.random.default_rng([seed, shard]).random(n) < mid_rate
-            valid = games % every == 0 if every else np.zeros(n, bool)
+            valid = in_valid(games, every, split) if every else np.zeros(n, bool)
             plan.append((f, flag, keep, valid))
     return plan
 
@@ -300,10 +301,11 @@ def _assemble(plan, cards_npz, part: str, hand_dir=None):
 
 
 def phase_split(end_files, mid_files, cards_npz, every: int = 20, mid_rate: float = 1.0, seed: int = 0,
-                hand_dir=None):
+                hand_dir=None, split: str = "key"):
     """(training, validation) learn.setnet.Data over turn-end files (flag 0) and mid-turn files (flag 1). With
-    `hand_dir`, each file's hand-<name> there (encode-hand) adds the opponent's hand tokens (an ophand net)."""
-    plan = _plan(end_files, mid_files, every, mid_rate, seed)
+    `hand_dir`, each file's hand-<name> there (encode-hand) adds the opponent's hand tokens (an ophand net). `split`:
+    learn.setnet.in_valid's."""
+    plan = _plan(end_files, mid_files, every, mid_rate, seed, split)
     return (_assemble(plan, cards_npz, "train", hand_dir), _assemble(plan, cards_npz, "valid", hand_dir))
 
 

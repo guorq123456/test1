@@ -84,6 +84,26 @@ def dynamic(tokens: np.ndarray, inputs: str = "v1") -> np.ndarray:
     return np.concatenate([d, bits, tokens[:, _V2_COLS].astype(np.float32) / _V2_SCALE], axis=1)
 
 
+SPLITS = ("key", "hash")
+
+
+def in_valid(keys, every: int = 20, split: str = "key") -> np.ndarray:
+    """The validation games among game keys (seed * 100003 + g). "key": the key a multiple of `every`, every net's
+    split before 2026-10-19. With the shards' even seeds (100003 = 3 mod 20) that picks g of one parity only, so one
+    seat (netdata.play seats the deck at g % 2). "hash": splitmix64 of the key a multiple of `every`, the same share
+    of games with no tie to g's parity (from-scratch nets of new pairings, the architecture thread 2026-10-19)."""
+    keys = np.asarray(keys, np.int64)
+    if split == "key":
+        return keys % every == 0
+    if split != "hash":
+        raise ValueError(f"split {split!r}: one of {SPLITS}")
+    z = keys.astype(np.uint64) + np.uint64(0x9E3779B97F4A7C15)
+    z = (z ^ (z >> np.uint64(30))) * np.uint64(0xBF58476D1CE4E5B9)
+    z = (z ^ (z >> np.uint64(27))) * np.uint64(0x94D049BB133111EB)
+    z = z ^ (z >> np.uint64(31))
+    return z % np.uint64(every) == 0
+
+
 class Data:
     """Turn-end positions from tok-*.npz files (learn.scaledata encode), kept compact (int16 tokens)."""
 
