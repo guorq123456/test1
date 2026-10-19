@@ -1844,3 +1844,36 @@ Condition: the opponent's deck list is known (order and hand not).
   differs only by the priors and nets. The start is the pooled per-position fit, and the gate's check games set N.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## NM3 preparation: elf-t vs nemesis-t (the architecture thread 2026-10-19 10:38Z; set before any game)
+
+**What the trainer's bots score this pairing with** (pairing_probe.py, data/pairing/probe-nm3.json):
+
+| bot | elf-t (AI) vs nemesis-t | nemesis-t (AI) vs elf-t |
+|---|---|---|
+| fast, original | weights/forest.json | weights/portal.json |
+| normal | ref-5558960/elf-t-nemesis-t-{ended,act}.json (sha256 f3b4ebee…, 7da583ee…) | ref-5558960/nemesis-t-elf-t-{ended,act}.json |
+| strong, max, v2skx | phased_models (= pkg-kc-ramp-ramp)/elf-t-nemesis-t-{ended,act}.json (e9a27705…, ca6a4f2f…) | phased_models (= pkg-kc-ramp-ramp)/nemesis-t-elf-t-{ended,act}.json (85a74b7f…, 3ff16f20…) |
+
+- **One difference from NM1 and NM2: the elf-t side's models.** Since C2 (the hand feature set, 2026-10-08; gated at
+  the strong level only), strong, max and v2skx have the C2 models fitted on the c2gen self-play (13 016 / 62 706
+  positions). Normal keeps Version 15's frozen ones.
+- The nemesis-t side's files are the same in all three folders (14 341 / 67 348 positions, the 2000-game pairs set).
+- No net answers in this pairing.
+
+**Card table.** net-nm2f-ramp-nem knows nemesis-t's cards and not elf-t's. net-nm1f-ramp-elf knows elf-t's and not
+nemesis-t's. A start's missing cards are added by their static rows (`--extend-cards`).
+
+**Plan (NM1's recipe):**
+- **Data:** v2skx on both sides, `scaledata play --deck elf-t --opponent nemesis-t`: 10 training shards of 1000 and 5
+  holdout shards of 1000; seeds from the analysis line.
+- **Value net, two arms:** fresh (constructor seed 0), and from net-nm2f-ramp-nem (`--init … --extend-cards`). Both
+  have the mid-turn branch and one net for both views (`--pairs elf-t:nemesis-t nemesis-t:elf-t`), with NM1's
+  settings. **The arm with the lower valid Brier, both kinds of row together, goes to the gate.** Nothing is assumed
+  from NM1 and NM2. The holdout shards are not read before the choice.
+- **Priors:** elf-t side from prior-nm1-elf-t, nemesis-t side from prior-nm2-nemesis-t. Both use `--prior
+  --extend-cards`, on that side's decisions, τ 0.5.
+- **N₀:** the pooled per-position fit as a start; the gate's check games set N.
+- **Order:** NM1 generation 2's continuation goes first when its data is in (about 12:35Z); NM3's fits come after.
+
+Condition: the opponent's deck list is known (order and hand not).

@@ -1,0 +1,576 @@
+{
+ "specs": {
+  "level-fast": "greedy+plan+learned",
+  "level-normal": "mcts:115+plan+learned+phased=ref-5558960+reuse+mull=default",
+  "level-strong": "mcts:200+plan+learned+phased",
+  "level-max": "mcts:1043+plan+learned+phased",
+  "level-original": "mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default",
+  "v2skx": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost",
+  "A-ramp-t": "mcts:83+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-mid-ramp-t.npz+netmid+puct=analysis/scaling/models/prior-ramp-ft-t05.npz:2:1",
+  "A-elf-t": "mcts:71+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-mid-elf-t.npz+netmid+puct=analysis/scaling/models/prior-elft-ft-t05.npz:2:1",
+  "NM1-ramp-t": "mcts:99+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm1f-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1-ramp-t.npz:2:1",
+  "NM1-elf-t": "mcts:91+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm1f-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1-elf-t.npz:2:1"
+ },
+ "pairs": {
+  "elf-t:nemesis-t": {
+   "level-fast": {
+    "turn_end": {
+     "learned": {
+      "file": "forest.json"
+     }
+    },
+    "in_turn": {
+     "learned": {
+      "file": "forest.json"
+     }
+    }
+   },
+   "level-normal": {
+    "turn_end": {
+     "phased": {
+      "folder": "svsim/learn/phased_models/ref-5558960",
+      "file": "elf-t-nemesis-t-ended.json",
+      "exact_pairing": true
+     }
+    },
+    "in_turn": {
+     "phased": {
+      "folder": "svsim/learn/phased_models/ref-5558960",
+      "file": "elf-t-nemesis-t-act.json",
+      "exact_pairing": true
+     }
+    }
+   },
+   "level-strong": {
+    "turn_end": {
+     "phased": {
+      "folder": "svsim/learn/phased_models",
+      "file": "elf-t-nemesis-t-ended.json",
+      "exact_pairing": true
+     }
+    },
+    "in_turn": {
+     "phased": {
+      "folder": "svsim/learn/phased_models",
+      "file": "elf-t-nemesis-t-act.json",
+      "exact_pairing": true
+     }
+    }
+   },
+   "level-max": {
+    "turn_end": {
+     "phased": {
+      "folder": "svsim/learn/phased_models",
+      "file": "elf-t-nemesis-t-ended.json",
+      "exact_pairing": true
+     }
+    },
+    "in_turn": {
+     "phased": {
+      "folder": "svsim/learn/phased_models",
+      "file": "elf-t-nemesis-t-act.json",
+      "exact_pairing": true
+     }
+    }
+   },
+   "level-original": {
+    "turn_end": {
+     "phased": null,
+     "learned": {
+      "file": "forest.json"
+     }
+    },
+    "in_turn": {
+     "phased": null,
+     "learned": {
+      "file": "forest.json"
+     }
+    }
+   },
+   "v2skx": {
+    "turn_end": {
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "elf-t-nemesis-t-ended.json",
+      "exact_pairing": true
+     }
+    },
+    "in_turn": {
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "elf-t-nemesis-t-act.json",
+      "exact_pairing": true
+     }
+    }
+   },
+   "A-ramp-t": {
+    "turn_end": {
+     "net": {
+      "file": "analysis/scaling/models/net-mid-ramp-t.npz",
+      "pairings": [
+       [
+        "ramp-t",
+        "ramp-t"
+       ]
+      ],
+      "answers_here": false
+     },
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "elf-t-nemesis-t-ended.json",
+      "exact_pairing": true
+     }
+    },
+    "in_turn": {
+     "net": {
+      "file": "analysis/scaling/models/net-mid-ramp-t.npz",
+      "pairings": [
+       [
+        "ramp-t",
+        "ramp-t"
+       ]
+      ],
+      "answers_here": false
+     },
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "elf-t-nemesis-t-act.json",
+      "exact_pairing": true
+     }
+    },
+    "prior": {
+     "file": "analysis/scaling/models/prior-ramp-ft-t05.npz",
+     "pairing": [
+      "ramp-t",
+      "ramp-t"
+     ]
+    }
+   },
+   "A-elf-t": {
+    "turn_end": {
+     "net": {
+      "file": "analysis/scaling/models/net-mid-elf-t.npz",
+      "pairings": [
+       [
+        "elf-t",
+        "elf-t"
+       ]
+      ],
+      "answers_here": false
+     },
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "elf-t-nemesis-t-ended.json",
+      "exact_pairing": true
+     }
+    },
+    "in_turn": {
+     "net": {
+      "file": "analysis/scaling/models/net-mid-elf-t.npz",
+      "pairings": [
+       [
+        "elf-t",
+        "elf-t"
+       ]
+      ],
+      "answers_here": false
+     },
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "elf-t-nemesis-t-act.json",
+      "exact_pairing": true
+     }
+    },
+    "prior": {
+     "file": "analysis/scaling/models/prior-elft-ft-t05.npz",
+     "pairing": [
+      "elf-t",
+      "elf-t"
+     ]
+    }
+   },
+   "NM1-ramp-t": {
+    "turn_end": {
+     "net": {
+      "file": "analysis/scaling/models/net-nm1f-ramp-elf.npz",
+      "pairings": [
+       [
+        "elf-t",
+        "ramp-t"
+       ],
+       [
+        "ramp-t",
+        "elf-t"
+       ]
+      ],
+      "answers_here": false
+     },
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "elf-t-nemesis-t-ended.json",
+      "exact_pairing": true
+     }
+    },
+    "in_turn": {
+     "net": {
+      "file": "analysis/scaling/models/net-nm1f-ramp-elf.npz",
+      "pairings": [
+       [
+        "elf-t",
+        "ramp-t"
+       ],
+       [
+        "ramp-t",
+        "elf-t"
+       ]
+      ],
+      "answers_here": false
+     },
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "elf-t-nemesis-t-act.json",
+      "exact_pairing": true
+     }
+    },
+    "prior": {
+     "file": "analysis/scaling/models/prior-nm1-ramp-t.npz",
+     "pairing": [
+      "ramp-t",
+      "ramp-t"
+     ]
+    }
+   },
+   "NM1-elf-t": {
+    "turn_end": {
+     "net": {
+      "file": "analysis/scaling/models/net-nm1f-ramp-elf.npz",
+      "pairings": [
+       [
+        "elf-t",
+        "ramp-t"
+       ],
+       [
+        "ramp-t",
+        "elf-t"
+       ]
+      ],
+      "answers_here": false
+     },
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "elf-t-nemesis-t-ended.json",
+      "exact_pairing": true
+     }
+    },
+    "in_turn": {
+     "net": {
+      "file": "analysis/scaling/models/net-nm1f-ramp-elf.npz",
+      "pairings": [
+       [
+        "elf-t",
+        "ramp-t"
+       ],
+       [
+        "ramp-t",
+        "elf-t"
+       ]
+      ],
+      "answers_here": false
+     },
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "elf-t-nemesis-t-act.json",
+      "exact_pairing": true
+     }
+    },
+    "prior": {
+     "file": "analysis/scaling/models/prior-nm1-elf-t.npz",
+     "pairing": [
+      "elf-t",
+      "elf-t"
+     ]
+    }
+   }
+  },
+  "nemesis-t:elf-t": {
+   "level-fast": {
+    "turn_end": {
+     "learned": {
+      "file": "portal.json"
+     }
+    },
+    "in_turn": {
+     "learned": {
+      "file": "portal.json"
+     }
+    }
+   },
+   "level-normal": {
+    "turn_end": {
+     "phased": {
+      "folder": "svsim/learn/phased_models/ref-5558960",
+      "file": "nemesis-t-elf-t-ended.json",
+      "exact_pairing": true
+     }
+    },
+    "in_turn": {
+     "phased": {
+      "folder": "svsim/learn/phased_models/ref-5558960",
+      "file": "nemesis-t-elf-t-act.json",
+      "exact_pairing": true
+     }
+    }
+   },
+   "level-strong": {
+    "turn_end": {
+     "phased": {
+      "folder": "svsim/learn/phased_models",
+      "file": "nemesis-t-elf-t-ended.json",
+      "exact_pairing": true
+     }
+    },
+    "in_turn": {
+     "phased": {
+      "folder": "svsim/learn/phased_models",
+      "file": "nemesis-t-elf-t-act.json",
+      "exact_pairing": true
+     }
+    }
+   },
+   "level-max": {
+    "turn_end": {
+     "phased": {
+      "folder": "svsim/learn/phased_models",
+      "file": "nemesis-t-elf-t-ended.json",
+      "exact_pairing": true
+     }
+    },
+    "in_turn": {
+     "phased": {
+      "folder": "svsim/learn/phased_models",
+      "file": "nemesis-t-elf-t-act.json",
+      "exact_pairing": true
+     }
+    }
+   },
+   "level-original": {
+    "turn_end": {
+     "phased": null,
+     "learned": {
+      "file": "portal.json"
+     }
+    },
+    "in_turn": {
+     "phased": null,
+     "learned": {
+      "file": "portal.json"
+     }
+    }
+   },
+   "v2skx": {
+    "turn_end": {
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "nemesis-t-elf-t-ended.json",
+      "exact_pairing": true
+     }
+    },
+    "in_turn": {
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "nemesis-t-elf-t-act.json",
+      "exact_pairing": true
+     }
+    }
+   },
+   "A-ramp-t": {
+    "turn_end": {
+     "net": {
+      "file": "analysis/scaling/models/net-mid-ramp-t.npz",
+      "pairings": [
+       [
+        "ramp-t",
+        "ramp-t"
+       ]
+      ],
+      "answers_here": false
+     },
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "nemesis-t-elf-t-ended.json",
+      "exact_pairing": true
+     }
+    },
+    "in_turn": {
+     "net": {
+      "file": "analysis/scaling/models/net-mid-ramp-t.npz",
+      "pairings": [
+       [
+        "ramp-t",
+        "ramp-t"
+       ]
+      ],
+      "answers_here": false
+     },
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "nemesis-t-elf-t-act.json",
+      "exact_pairing": true
+     }
+    },
+    "prior": {
+     "file": "analysis/scaling/models/prior-ramp-ft-t05.npz",
+     "pairing": [
+      "ramp-t",
+      "ramp-t"
+     ]
+    }
+   },
+   "A-elf-t": {
+    "turn_end": {
+     "net": {
+      "file": "analysis/scaling/models/net-mid-elf-t.npz",
+      "pairings": [
+       [
+        "elf-t",
+        "elf-t"
+       ]
+      ],
+      "answers_here": false
+     },
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "nemesis-t-elf-t-ended.json",
+      "exact_pairing": true
+     }
+    },
+    "in_turn": {
+     "net": {
+      "file": "analysis/scaling/models/net-mid-elf-t.npz",
+      "pairings": [
+       [
+        "elf-t",
+        "elf-t"
+       ]
+      ],
+      "answers_here": false
+     },
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "nemesis-t-elf-t-act.json",
+      "exact_pairing": true
+     }
+    },
+    "prior": {
+     "file": "analysis/scaling/models/prior-elft-ft-t05.npz",
+     "pairing": [
+      "elf-t",
+      "elf-t"
+     ]
+    }
+   },
+   "NM1-ramp-t": {
+    "turn_end": {
+     "net": {
+      "file": "analysis/scaling/models/net-nm1f-ramp-elf.npz",
+      "pairings": [
+       [
+        "elf-t",
+        "ramp-t"
+       ],
+       [
+        "ramp-t",
+        "elf-t"
+       ]
+      ],
+      "answers_here": false
+     },
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "nemesis-t-elf-t-ended.json",
+      "exact_pairing": true
+     }
+    },
+    "in_turn": {
+     "net": {
+      "file": "analysis/scaling/models/net-nm1f-ramp-elf.npz",
+      "pairings": [
+       [
+        "elf-t",
+        "ramp-t"
+       ],
+       [
+        "ramp-t",
+        "elf-t"
+       ]
+      ],
+      "answers_here": false
+     },
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "nemesis-t-elf-t-act.json",
+      "exact_pairing": true
+     }
+    },
+    "prior": {
+     "file": "analysis/scaling/models/prior-nm1-ramp-t.npz",
+     "pairing": [
+      "ramp-t",
+      "ramp-t"
+     ]
+    }
+   },
+   "NM1-elf-t": {
+    "turn_end": {
+     "net": {
+      "file": "analysis/scaling/models/net-nm1f-ramp-elf.npz",
+      "pairings": [
+       [
+        "elf-t",
+        "ramp-t"
+       ],
+       [
+        "ramp-t",
+        "elf-t"
+       ]
+      ],
+      "answers_here": false
+     },
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "nemesis-t-elf-t-ended.json",
+      "exact_pairing": true
+     }
+    },
+    "in_turn": {
+     "net": {
+      "file": "analysis/scaling/models/net-nm1f-ramp-elf.npz",
+      "pairings": [
+       [
+        "elf-t",
+        "ramp-t"
+       ],
+       [
+        "ramp-t",
+        "elf-t"
+       ]
+      ],
+      "answers_here": false
+     },
+     "phased": {
+      "folder": "svsim/learn/phased_models/pkg-kc-ramp-ramp",
+      "file": "nemesis-t-elf-t-act.json",
+      "exact_pairing": true
+     }
+    },
+    "prior": {
+     "file": "analysis/scaling/models/prior-nm1-elf-t.npz",
+     "pairing": [
+      "elf-t",
+      "elf-t"
+     ]
+    }
+   }
+  }
+ }
+}
