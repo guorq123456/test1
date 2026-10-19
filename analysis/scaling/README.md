@@ -1782,3 +1782,22 @@ Condition: the opponent's deck list is known (order and hand not).
 - The nemesis-t prior takes its trunk from net-nm2f-ramp-nem (`setpolicy fit --init`).
 
 Condition: the opponent's deck list is known (order and hand not).
+
+**Whole-game timing on recorded games does not match the gates either** (game_cost.py, NM1's specs; data/nm1/
+gamecost-*.json). The positions were games 0–29 of shards 77900006 / 08 / 10, with one agent per game and side kept
+through the game, the specs rotating game by game. Ratios are the new bot's ms per decision over v2skx's:
+
+| side | N | game_cost.py | the gate's own whole-game timing |
+|---|---|---|---|
+| ramp-t | 99 | 1.121 | 1.052 |
+| ramp-t | 94 | 1.035 | 1.015 |
+| elf-t | 91 | 1.141 | 0.953 |
+| elf-t | 95 | 1.122 | 1.000 |
+
+- **Why it misses.** On recorded games the agent follows v2skx's moves. The positions it meets, and what it keeps
+  between decisions (a reused tree, the lethal stamp), are not those of its own games. So this is worse than the
+  per-position fit, which was off by about 5%.
+- **What sets N.** The offline N₀ is only a start. The N of a gate is set by the gate's own check games (whole-game
+  timing in play), as in NM1. For NM2 the start is the pooled per-position fit, as NM1's was.
+
+Condition: the opponent's deck list is known (order and hand not).
