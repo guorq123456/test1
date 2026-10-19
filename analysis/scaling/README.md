@@ -1801,3 +1801,26 @@ through the game, the specs rotating game by game. Ratios are the new bot's ms p
   timing in play), as in NM1. For NM2 the start is the pooled per-position fit, as NM1's was.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+### NM2 priors, the new bot's two specs and N₀ (2026-10-19 09:2x–10:4xZ)
+
+| prior | from | train / valid decisions | valid CE | epochs (best) | sha256 |
+|---|---|---|---|---|---|
+| prior-nm2-ramp-t | prior-nm1-ramp-t (`--prior --extend-cards`) | 201 495 / 10 522 | 1.2333 → 1.10376 | 32 (28) | 45abda4f… |
+| prior-nm2-nemesis-t | the trunk of net-nm2f-ramp-nem at flag 0 (`--init`), a new head | 270 677 / 14 366 | 1.29994 (epoch 1) → 1.23206 | 42 (38) | 8e074cc1… |
+
+**The new bot:**
+- ramp-t: `mcts:88+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm2f-ramp-nem.npz+netmid+puct=analysis/scaling/models/prior-nm2-ramp-t.npz:2:1`
+- nemesis-t: `mcts:86+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm2f-ramp-nem.npz+netmid+puct=analysis/scaling/models/prior-nm2-nemesis-t.npz:2:1`
+
+**N₀**, NM1's pooled per-position fit (puct_cost.py `--deck`). The positions are games 0–29 of training shards
+78700006 / 08 / 10: 1925 ramp-t and 2629 nemesis-t decisions. The table is ms per decision (data/nm2/cost-*-fit.json):
+
+| side | v2skx | N 90 | N 100 | N 110 | N₀ |
+|---|---|---|---|---|---|
+| ramp-t | 90.77 | 92.01 | 94.74 | 100.05 | 88.0 → **88** |
+| nemesis-t | 101.06 | 103.30 | 106.81 | 112.97 | 86.3 → **86** |
+
+This N₀ is a start (see above): the gate's own check games set the N, as in NM1.
+
+Condition: the opponent's deck list is known (order and hand not).
