@@ -1824,3 +1824,23 @@ Condition: the opponent's deck list is known (order and hand not).
 This N₀ is a start (see above): the gate's own check games set the N, as in NM1.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## NM1 generation 2: the plan (set before the gen-2 data is read)
+
+- **Data.** The NM1 new bot played both sides (`--opponent-spec`): training 78300000 + 2k (k = 0–9) and holdout
+  78400000 + 2h (h = 0–4), 1000 games each; the analysis line played all but k = 9.
+- **Value net `net-nm1g2-ramp-elf`.**
+  - Start: net-nm1f-ramp-elf, its table and flag kept, both orders.
+  - Training rows: generation 1's 10 training shards plus generation 2's 10. Both kinds of row, mid-turn rows thinned
+    to the turn ends' count over all 20 shards. Valid games: seed·100003 + g a multiple of 20 in both generations.
+  - Settings: NM1's (lr 1e-3, decay 0.5, l2 1e-5, batch 256, `--ftz`, patience 4, at most 60 epochs), the best valid
+    epoch kept.
+  - One arm only: the step is a continuation. The holdout shards of both generations are the analysis line's.
+- **Priors `prior-nm1g2-ramp-t` / `prior-nm1g2-elf-t`.** Each side's from prior-nm1-* (`--prior`), on that side's
+  decisions in the same 20 shards, τ 0.5.
+- **Generation 1's data stays in.** Generation 2's games come from a stronger player, but 10⁴ of them alone is half
+  the rows. Keeping both is how the mirrors' later generations were trained (gen4-59000, the mid nets).
+- **N₀.** The gate (gen 2 against gen 1) puts two new bots side by side with the same structure, so their cost
+  differs only by the priors and nets. The start is the pooled per-position fit, and the gate's check games set N.
+
+Condition: the opponent's deck list is known (order and hand not).
