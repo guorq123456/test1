@@ -2073,3 +2073,61 @@ The builder checked the analysis line's k = 0–2: SHA256SUMS, the stats, and 12
 - This is a continued line, so its fits use `--split key`.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+### NM1 generation 3: the fits, the specs and N₀ (2026-10-19 20:4xZ–23:5xZ)
+
+The data is gen 1, gen 2 and gen 3's training shards, 30 in all: 77900000 / 78300000 / 79700000 + 2k, k = 0–9.
+The split is `--split key`, as for a continued line.
+
+**Value net, two arms** (the architecture thread 19:52Z). The valid part is 23 987 turn-end and 24 080 mid-turn rows
+of 1500 games:
+
+| arm | model | epochs (best) | valid Brier: turn end / mid-turn / both | sha256 |
+|---|---|---|---|---|
+| from net-nm1g2-ramp-elf | net-nm1g3-ramp-elf | 13 (9) | 0.16857 / 0.15935 / **0.16395** | 7885e137… |
+| fresh | net-nm1g3f-ramp-elf | 17 (13) | 0.16911 / 0.16010 / 0.16460 | 92de25d9… |
+
+- **The continued arm goes to the gate.** Its valid Brier is the lower.
+- **Start:** net-nm1g2-ramp-elf scores 0.16636 on the same valid part (0.1707 / 0.16203).
+- **The difference is within noise.** Paired over the valid games (2000 resamples), fresh − continued is +0.00065,
+  sd 0.00063, 95% −0.0005 to +0.0020.
+- **By generation** (continued / fresh):
+
+  | valid rows | continued | fresh |
+  |---|---|---|
+  | gen 1 | 0.16560 | 0.16705 |
+  | gen 2 | 0.15977 | 0.16089 |
+  | gen 3 | 0.16642 | 0.16584 |
+
+  The fresh arm is lower on gen 3's own rows.
+- **On the gen-3 holdout (the analysis line, 1194793) the fresh arm is about 0.001 better on both kinds of row.**
+  Both arms beat the gen-2 net there. The gate uses the continued arm, as registered.
+
+**Priors** (each from its gen-2 prior, `--prior --extend-cards --deck --opponent`, τ 0.5, that side's decisions in
+the 30 shards):
+
+| prior | train / valid decisions | valid CE | epochs | sha256 |
+|---|---|---|---|---|
+| prior-nm1g3-ramp-t | 588 354 / 30 965 | 0.98571 → 0.96885 | 37 | 913be133… |
+| prior-nm1g3-elf-t | 871 727 / 45 994 | 1.06246 → 1.04815 | 31 | 9a92361f… |
+
+- Both ran in two planned chunks. Each was stopped at 23:07Z, before its 2 h limit, and resumed from its checkpoint.
+  The epochs carry on in order, so the fit is the one an unbroken run gives.
+- Their info is written by the fixed `fit` (9b28ed9): the gen-2 prior and its sha256, the 30 shards and the side.
+
+**The gen-3 bot:**
+- ramp-t: `mcts:89+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm1g3-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1g3-ramp-t.npz:2:1`
+- elf-t: `mcts:95+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm1g3-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1g3-elf-t.npz:2:1`
+- Both were checked: they build and search with their N, the net answers both orders, and each prior is its side's.
+
+**N₀:** gen 2's N, 89 and 95, as for gen 2 against gen 1. Per position at the same N, on 25 games of 79700018
+(data/nm1g3/cost-g3-*.json), gen 3 against gen 2 costs:
+
+| side | decisions | ms per decision (gen 2 → gen 3) | ratio |
+|---|---|---|---|
+| ramp-t | 521 | 87.65 → 86.56 | 0.988 |
+| elf-t | 720 | 95.22 → 95.01 | 0.998 |
+
+The gate's check games set N.
+
+Condition: the opponent's deck list is known (order and hand not).
