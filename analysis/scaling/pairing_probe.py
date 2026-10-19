@@ -31,6 +31,10 @@ CANDIDATES = {
                 "net-mid-ramp-t.npz+netmid+puct=analysis/scaling/models/prior-ramp-ft-t05.npz:2:1",
     "A-elf-t": "mcts:71+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/"
                "net-mid-elf-t.npz+netmid+puct=analysis/scaling/models/prior-elft-ft-t05.npz:2:1",
+    "NM1-ramp-t": "mcts:99+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/"
+                  "net-nm1f-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1-ramp-t.npz:2:1",
+    "NM1-elf-t": "mcts:91+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/"
+                 "net-nm1f-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1-elf-t.npz:2:1",
 }
 
 
@@ -68,8 +72,8 @@ def answered_by(spec: str, weights, state, player: int, moves_next: bool) -> dic
     if isinstance(w, SetNetEnded):
         pair = (state.players[player].deck_name, state.players[1 - player].deck_name)
         path = next(o for o in spec.split("+") if o.startswith("setnet="))[len("setnet="):]
-        out["net"] = {"file": path, "pairing": list(w.pair), "answers_here": (pair == w.pair
-                                                                                             and not moves_next)}
+        out["net"] = {"file": path, "pairings": sorted(list(p) for p in w.pairs),
+                      "answers_here": pair in w.pairs and not moves_next}
         if out["net"]["answers_here"]:
             return out
         w = w.base
