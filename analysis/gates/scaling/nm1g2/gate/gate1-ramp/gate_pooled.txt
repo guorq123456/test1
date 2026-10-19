@@ -1,0 +1,2 @@
+/home/user/test1/analysis/gates/scaling/nm1g2/gate/gate1-ramp/gate.jsonl: 300 pairs, seeds 78500000..78500299, 57.2% ± 3.9% (53.2%..61.1%), CR +68 (+31..+107; steady-state +57); ms per searched decision A 86.55 / B 84.52 = 1.024
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 57.2% (53.2%..61.2%), CR +68 (+30..+107; steady-state +57)

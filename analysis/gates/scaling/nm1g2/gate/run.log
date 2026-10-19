@@ -1,0 +1,5 @@
+gate1-ramp check ratio 1.0210757862656592 -> N=94 at 12:23:29
+gate1-ramp gate done at 12:38:40
+gate2-elf check ratio 0.9709565777171238 -> N=95 at 12:39:47
+gate2-elf gate done at 12:55:04
+DONE at 12:55:05
