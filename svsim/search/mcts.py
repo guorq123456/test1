@@ -182,8 +182,13 @@ class ISMCTS:
                  reply_budget: int = 0, average: int = 1, prior=None, c_prior: float = 0.3,
                  reuse: bool = False, min_new: int = 20, alloc: tuple | None = None, infer: tuple | None = None,
                  oracle: bool = False, normalize: bool = False, parallel: int = 0, par_spec: str | None = None,
-                 puct=None, c_puct: float = 1.0, puct_temp: float = 1.0, fpu: float = 0.1):
+                 puct=None, c_puct: float = 1.0, puct_temp: float = 1.0, fpu: float = 0.1,
+                 reply_end: bool = False):
         self.iterations = iterations   # per decision (or until `seconds` have passed)
+        # (+netreply) a played-out reply stops at the opponent's turn end (after_end_of_turn: end-of-turn
+        # abilities resolved, the own turn not started) where the weights score that moment themselves
+        # (learn.setnet.SetNetEnded.answers_reply); off, or where they don't, the reply goes on into the own turn
+        self.reply_end = reply_end
         # PUCT at every node (puct: a move prior, learn.setpolicy.SetPolicy; the architecture thread 2026-10-17,
         # "B"): a move is picked by Q + c_puct x P x sqrt(node visits) / (1 + its visits) in place of UCB1's
         # exploration term, an unvisited move scoring Q = the node's value - fpu (no move is forced to be tried
@@ -491,7 +496,13 @@ class ISMCTS:
             self._replies += 1
             _start_turn(s)                       # the opponent's turn, played greedily
             while not s.over and s.active != me:
-                apply(s, self.opponent.act(s, legal_actions(s)))
+                a = self.opponent.act(s, legal_actions(s))
+                if self.reply_end and isinstance(a, EndTurn) and getattr(self.weights, "answers_reply",
+                                                                          lambda *_: False)(s, me):
+                    from svsim.search.evaluate import after_end_of_turn
+                    s = after_end_of_turn(s)
+                    break
+                apply(s, a)
             me_next = not s.over
         v = self.value(s, me, me_next)
         if self.normalize:

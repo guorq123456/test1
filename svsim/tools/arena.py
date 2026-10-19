@@ -48,7 +48,9 @@ turn ends of the net's own pairing scored by the scaling test's card-token DeepS
 .npz; relative paths also from the repository root), everything else unchanged; with "+neteot" too, a position
 inside the scored player's own turn is first played to its turn end (after_end_of_turn, on a copy); with "+netmid"
 (a net with the mid-turn flag, learn.midrows), such a position is scored as it is by the net's mid-turn branch and
-every other one by its turn-end branch, no turn end played; with "+netftz", the
+every other one by its turn-end branch, no turn end played; with "+netreply" (and the reply's play-out,
+mcts-reply), a played-out opponent turn of the net's pairing stops at its end and is scored by the net from the
+opponent's side (minus its turn-end logit), not by the in-turn model after the own turn starts; with "+netftz", the
 net's subnormal weights are set to 0 at load (same numbers where checked, less CPU time); "+puct=PATH[:C[:T]]" PUCT
 at every node of the search (search.mcts, puct) with the move prior at PATH (learn.setpolicy), c_puct C (default 1)
 and the prior sharpened by 1 / T (default 1), unvisited moves at the node's value - 0.1; "+phased" linear models by moment (learn.phased:
@@ -225,7 +227,7 @@ def _make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "lethal3", "plannerfix", "eot", "discard", "adaptive", "abs", "abs0", "complex", "xprune", "neteot", "netftz", "netmid"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet=", "par=", "xprune=", "setnet=", "puct="))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "lethal3", "plannerfix", "eot", "discard", "adaptive", "abs", "abs0", "complex", "xprune", "neteot", "netftz", "netmid", "netreply"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet=", "par=", "xprune=", "setnet=", "puct="))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -263,7 +265,8 @@ def _make_agent(spec: str, seed: int):
     if setnet:                                     # turn ends of the net's pairing by the scaling test's DeepSets
         from svsim.learn.setnet import SetNetEnded, load_cached   # net (learn.setnet); the rest as before
         weights = SetNetEnded(weights, load_cached(setnet[0], ftz="netftz" in options),
-                              end_mid_turn="neteot" in options, mid_turn="netmid" in options)
+                              end_mid_turn="neteot" in options, mid_turn="netmid" in options,
+                              reply_end="netreply" in options)
     if "timing" in options:                        # holding cards until the player would play them
         from svsim.learn.timing import Timed
         weights = Timed(base=weights)
@@ -315,6 +318,7 @@ def _make_agent(spec: str, seed: int):
             vetoes.append(XPrune(*[int(x) if i < 2 else x for i, x in enumerate(parts)]))   # M:H:ORDER
         veto = (lambda s, a: any(v(s, a) for v in vetoes)) if vetoes else None
         agent = MCTSAgent(int(arg or 400), seed=seed, reply=name == "mcts-reply", weights=weights,
+                          reply_end="netreply" in options,       # +netreply (search.mcts, learn.setnet)
                           backup="mean" if "mean" in options else "max",
                           reserve="reserve" in options, veto=veto, reply_after=1 if "lazy" in options else 0,
                           reply_top=3 if "focus" in options else 0, reply_budget=20 if "focus" in options else 0,

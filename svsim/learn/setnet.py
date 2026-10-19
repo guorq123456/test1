@@ -720,7 +720,7 @@ class SetNet:
 
 
 def extend_table(model, card_ids, static) -> np.ndarray:
-    """A start's card table grown to a new pairing's cards (D15, the architecture thread 2026-10-19 00:34Z): the
+    """A start's card table grown to a new pairing's cards (NM1, the architecture thread 2026-10-19 00:34Z): the
     cards of (card_ids, static) that `model` (a SetNet or a setpolicy.SetPolicy) has no row for are appended by their
     static rows, the standardization unchanged, so on the cards it knew the model scores as before. A card in both
     must have the same static row. Returns each of card_ids' index in the model's table."""
@@ -787,8 +787,13 @@ class SetNetEnded:
     is by the net's mid-turn branch (flag 1), with no turn end played, and every other position by its turn-end
     branch (flag 0); it takes the place of `end_mid_turn`."""
 
-    def __init__(self, base, net: SetNet, end_mid_turn: bool = False, mid_turn: bool = False):
+    def __init__(self, base, net: SetNet, end_mid_turn: bool = False, mid_turn: bool = False,
+                 reply_end: bool = False):
         self.base = base
+        # +netreply (the architecture thread 2026-10-19 00:37Z): a leaf of +reply's played-out opponent turn, stopped
+        # at that turn's end (search.mcts reply_end, after_end_of_turn) and scored with player_moves_next, is the
+        # opponent's turn end: SCALE x minus the net's turn-end logit for the opponent. Off: as before
+        self.reply_end = reply_end
         self.net = net
         self.end_mid_turn = end_mid_turn         # +neteot: a mid-turn position is first played to its turn end
         self.mid_turn = mid_turn                 # +netmid: a mid-turn position is scored by the mid-turn branch
@@ -797,15 +802,23 @@ class SetNetEnded:
         self.pair = (net.info.get("deck"), net.info.get("opponent"))
         if None in self.pair:
             raise ValueError("the net names no pairing (info deck / opponent)")
-        # a net trained on both sides of a non-mirror pairing (D15) names both orders in info "pairs"; a net
+        # a net trained on both sides of a non-mirror pairing (NM1) names both orders in info "pairs"; a net
         # without the key answers for (deck, opponent) only, as before
         self.pairs = {tuple(p) for p in net.info.get("pairs") or [self.pair]}
+
+    def answers_reply(self, state, player: int) -> bool:
+        """Whether a +reply leaf where the opponent of `player` ends the turn is scored here (+netreply, the net's
+        pairing seen from the opponent)."""
+        return self.reply_end and (state.players[1 - player].deck_name, state.players[player].deck_name) \
+            in self.pairs
 
     def score(self, state, player: int, player_moves_next: bool = False) -> float:
         from svsim.learn.model import SCALE
         from svsim.search.evaluate import WIN
         if state.winner is not None:
             return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
+        if player_moves_next and state.active == player and self.answers_reply(state, player):
+            return -SCALE * self.net.logit(state, 1 - player)
         if not player_moves_next and (state.players[player].deck_name, state.players[1 - player].deck_name) \
                 in self.pairs:
             if self.mid_turn and state.active == player:

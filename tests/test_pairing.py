@@ -1,4 +1,4 @@
-"""A non-mirror pairing's pieces (D15, the architecture thread 2026-10-19 00:34Z; off by default): a value net that
+"""A non-mirror pairing's pieces (NM1, the architecture thread 2026-10-19 00:34Z; off by default): a value net that
 answers for both orders of a pairing (info "pairs"), a start's card table grown to the pairing's cards
 (setnet.extend_table), and one side's decisions for its prior (setpolicy encode --deck)."""
 import gzip

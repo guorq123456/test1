@@ -1510,7 +1510,7 @@ Condition: the opponent's deck list is known (order and hand not).
 
 Condition: the opponent's deck list is known (order and hand not).
 
-## D15 preparation: ramp-t vs elf-t, a non-mirror pairing (the architecture thread 2026-10-19 00:34Z)
+## NM1 preparation: ramp-t vs elf-t, a non-mirror pairing (the architecture thread 2026-10-19 00:34Z; named NM1 at 00:40Z, D15 being the analysis line's reply diagnostic)
 
 The scoring-net line stops (D14, the analysis line c3379a2). The same recipe moves to a non-mirror pairing, ramp-t
 against elf-t first. Below is what the trainer's bots use there today, what the new candidates do there, and the
@@ -1608,5 +1608,25 @@ bot (`net-mid-elf-t+netmid+puct=prior-elft-ft-t05`, N 71).
   - `setpolicy encode/fit` keeps one side's decisions (`--deck`).
 - **The gate is the analysis line's to register.** The new bot plays v2skx with seats swapped, time-matched. The new
   bot on the ramp-t side and on the elf-t side are two arms or one, as it registers.
+
+Condition: the opponent's deck list is known (order and hand not).
+
+## +netreply: a +reply leaf scored by the value net (the architecture thread 2026-10-19 00:37Z; the analysis line's D15 finding)
+
+`mcts-reply` plays the opponent's next turn out greedily at a turn-end leaf. It then scores the leaf with
+`player_moves_next` True, and SetNetEnded passed every such score to the linear model under it, so one tree mixed two
+scales (the analysis line, c66d599).
+- **The moment.** The engine starts the next turn inside the opponent's EndTurn (core.engine._end_turn calls
+  _start_turn: play points refilled, turn-start abilities, the draw). So the leaf as it was is the start of the own
+  turn, not the opponent's turn end the nets were trained on.
+- **With +netreply** (off by default), where the net answers for the opponent's side of its pairing
+  (SetNetEnded.answers_reply), the play-out stops at the opponent's EndTurn: search.mcts takes after_end_of_turn,
+  the end-of-turn abilities resolved and the own turn not started, the moment of a turn-end row. The score is then
+  SCALE × minus the net's turn-end logit for the opponent.
+- **Other pairings**, and the switch off, go on into the own turn as before and are scored by the in-turn model.
+- **Tests:** tests/test_netreply.py checks that the score is −SCALE × net.logit(position, opponent). It also checks
+  that with the switch the scored leaves are before the own turn starts (turns_taken not advanced), and without it
+  after. The agent option is tested too. The full suite passes: 1249 passed, 4 skipped. The old nets' golden numbers
+  are unchanged with the switch off.
 
 Condition: the opponent's deck list is known (order and hand not).
