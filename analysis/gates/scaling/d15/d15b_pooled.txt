@@ -1,0 +1,2 @@
+/tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/d15/d15b.jsonl: 300 pairs, seeds 78200000..78200299, 52.0% ± 3.2% (48.8%..55.2%), CR +19 (-11..+49; steady-state +16); ms per searched decision A 215.55 / B 59.18 = 3.642
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 52.0% (48.8%..55.2%), CR +19 (-11..+49; steady-state +16)
