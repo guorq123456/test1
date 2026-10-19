@@ -3394,3 +3394,12 @@ J92 的 40% 里混着两样东西：网络比现装评估慢（N 从 200 降到 
 - 建造线的调查（0715c4d）：
   - 各档（普通、强、最强、v2skx）在这个对位用的是同一套专属线性模型（2026-10-08 那 2000 局拟合的），现有的网都不回答这个对位。
   - 机锋 38 张牌里现有网只认得 1 张，其余用 --extend-cards 按静态行补进。
+- **NM1 第 2 代的两方选手串开关核过**（建造线 0ccb583，`scaledata play --opponent-spec`，`netdata.play` job[10]）：
+  - 读了改动：只在给了 job[10] 时把 --opponent 那一方的选手串换掉；没给时 specs = [spec, spec]，代理种子、座位、"ai" 字段都和以前一样。
+  - 建造线的 tests/test_pairing.py 5 项全过。
+  - **关时逐位不变**：用 0ccb583 重下 NM1 的 4 局（77900016 g 0、501；78000004 g 2、777；原记录是 cb81fd4 / 91e88e0 下的），不给 --opponent-spec、和给一个相同的 v2skx 串，两种都和提交的记录逐局相同（JSON 往返后，不比 date、cpu）。
+  - 0ccb583 里三个模型文件的 sha256 和 cb81fd4 相同。
+- **第 2 代自对弈安排**：本机在 NM2 留出片下完后接着下（约 07:15Z 起，3 进程），先训练 10 片、再留出 5 片。
+  - 跳费龙方 `mcts:94+P+setnet=M/net-nm1f-ramp-elf.npz+netmid+puct=M/prior-nm1-ramp-t.npz:2:1`。
+  - 连击妖方 `mcts:95+P+setnet=M/net-nm1f-ramp-elf.npz+netmid+puct=M/prior-nm1-elf-t.npz:2:1`。
+  - 建造线 NM2 训练片下完后如果空着，从训练片的后几片接，先发消息。
