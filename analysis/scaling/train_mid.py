@@ -72,7 +72,10 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--deck", required=True)
     ap.add_argument("--opponent", required=True)
-    ap.add_argument("--init", required=True, help="the candidate value net (no flag) to start from")
+    ap.add_argument("--init", help="the candidate value net to start from (a flagged one goes on training)")
+    ap.add_argument("--fresh", action="store_true",
+                    help="no start: a new flagged net of the default structure (constructor seed --seed), its card "
+                         "table and standardization from the training data (as train.py's nets); NM1's control arm")
     ap.add_argument("--tokens", required=True, help="the tok- files' folder, with its cards.npz")
     ap.add_argument("--end", action="append", required=True, metavar="BASE:K", help="turn-end shards")
     ap.add_argument("--mid-dir", required=True, help="the mid- files' folder (learn.midrows encode)")
@@ -102,6 +105,8 @@ def main() -> None:
     ap.add_argument("--pairs", nargs="+", default=None, metavar="DECK:OPPONENT",
                     help="the orders of the pairing the net answers for (info pairs; default --deck:--opponent)")
     args = ap.parse_args()
+    if bool(args.init) == args.fresh:
+        raise SystemExit("give --init or --fresh")
     end_seeds, mid_seeds = seeds_of(args.end), seeds_of(args.mid)
     held = set(args.holdout) & (set(end_seeds) | set(mid_seeds))
     if held:
@@ -117,11 +122,16 @@ def main() -> None:
     rate = min(1.0, n_end / n_mid)
     train, valid = MR.phase_split(end_files, mid_files, tok / "cards.npz", every=20, mid_rate=rate, seed=args.seed,
                                   hand_dir=args.hand_dir)
-    base = SetNet.load(args.init)
+    if args.fresh:
+        base = SetNet(train.static.shape[1], seed=args.seed, flag=True)
+        base.set_cards(train.card_ids, train.static, np.bincount(train.cards, minlength=len(train.card_ids)) + 1)
+    else:
+        base = SetNet.load(args.init)
     if base.inputs != "v1" or base.slope != 0.0 or base.ophand:
         raise SystemExit("the start has to be a v1 ReLU net without the opponent-hand zone")
     info = {"deck": args.deck, "opponent": args.opponent, "flag": True, "inputs": "v1", "name": args.name,
-            "init": str(args.init), "init_sha256": hashlib.sha256(Path(args.init).read_bytes()).hexdigest(),
+            "init": "fresh" if args.fresh else str(args.init),
+            "init_sha256": None if args.fresh else hashlib.sha256(Path(args.init).read_bytes()).hexdigest(),
             "end_shards": end_seeds, "mid_shards": mid_seeds, "shards": sorted(set(end_seeds) | set(mid_seeds)),
             "mid_rate": round(rate, 6), "end_rows": n_end, "mid_rows": n_mid,
             "train_positions": train.n, "valid_positions": valid.n,

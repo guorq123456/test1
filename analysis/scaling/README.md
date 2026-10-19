@@ -1630,3 +1630,32 @@ scales (the analysis line, c66d599).
   are unchanged with the switch off.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+### NM1 value net: two arms, and the choice between them (the architecture thread 03:15Z; set before either fit)
+
+The start rule (the lower valid Brier) picked net-mid-ramp-t: 0.304 on the valid games of the 9 shards then
+played, against net-mid-elf-t's 0.363 (data/nm1/start-choice.json). Both are worse than a constant 0.5 (0.25)
+on this pairing. The architecture thread reads this as calibration that did not carry over: in a mirror both sides
+are alike, here one side is favoured. So two arms are trained, on the same data with the same settings.
+- **Main arm `net-nm1-ramp-elf` (start).** From net-mid-ramp-t, its card table grown to the pairing's cards
+  (`--extend-cards`), the flag kept.
+- **Control arm `net-nm1f-ramp-elf` (fresh).** A new flagged net of the default structure (phi 64-64, rho
+  128-64, ReLU), from the constructor's fixed seed 0. Its card table and standardization come from the training data,
+  as train.py's nets (`--fresh`).
+- **Both arms.**
+  - Data: the 10 training shards' turn ends (tok-) and mid-turn rows (mid-), thinned to the turn ends' count.
+    Valid games: seed·100003 + g a multiple of 20.
+  - Views: one net for both sides' views, answering for both orders (`--pairs ramp-t:elf-t elf-t:ramp-t`).
+  - Settings: lr 1e-3, decay 0.5, l2 1e-5, batch 256, `--ftz`, patience 4, at most 60 epochs, the best valid epoch
+    kept.
+- **Which goes to the gate.** The arm with the lower valid Brier, both kinds of row together, at its kept epoch. The
+  holdout shards (78000000 + 2h) are not read before that choice. After it they are the analysis line's.
+- **The commands** (TOK, MID: the NM1 token and mid-row folders):
+
+      python analysis/scaling/train_mid.py --deck ramp-t --opponent elf-t --pairs ramp-t:elf-t elf-t:ramp-t \
+          --tokens TOK --end 77900000:10 --mid-dir MID --mid 77900000:10 \
+          --holdout 78000000 78000002 78000004 78000006 78000008 \
+          (--init analysis/scaling/models/net-mid-ramp-t.npz --extend-cards --name nm1-ramp-elf | --fresh --name nm1f-ramp-elf) \
+          --ftz is train_mid's default (SetNet.fit ftz=True); --checkpoint CKPT
+
+Condition: the opponent's deck list is known (order and hand not).
