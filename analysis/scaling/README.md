@@ -1661,3 +1661,18 @@ are alike, here one side is favoured. So two arms are trained, on the same data 
   (train_mid.py always fits with `--ftz`, SetNet.fit ftz=True.)
 
 Condition: the opponent's deck list is known (order and hand not).
+
+**The two arms, and the choice** (2026-10-19 03:46–04:13Z; the rule above). Both fits ran on 10 shards: 319 970
+training and 15 996 valid rows, mid-turn rows thinned at 0.32.
+
+| arm | sha256 | epochs (kept) | valid Brier, both kinds | turn end | mid-turn |
+|---|---|---|---|---|---|
+| start, net-nm1-ramp-elf | b6e525eb… | 10 (6) | 0.17422 | 0.17669 | 0.17174 |
+| fresh, **net-nm1f-ramp-elf** | cae8324a… | 16 (12) | **0.17109** | 0.17520 | 0.16698 |
+
+- **The fresh arm goes to the gate.** Its valid Brier is the lower one.
+- Both arms answer for both orders of the pairing (info pairs).
+- The holdout shards were not read for this choice. They are the analysis line's from here on.
+- Logs: data/nm1/train-nm1{,f}-ramp-elf.log. Info: data/net-nm1{,f}-ramp-elf.json.
+
+Condition: the opponent's deck list is known (order and hand not).
