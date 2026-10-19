@@ -52,15 +52,21 @@ def play(job):
     fork = job[7] if len(job) > 7 else False
     triggers = tuple(job[8]) if len(job) > 8 and job[8] else ("payoff", "deck", "unlock")
     mode = job[9] if len(job) > 9 and job[9] else "all"          # the branch's hold: see _keep, _qgap_keep
+    # job[10] (NM1 gen 2, the analysis line 2026-10-19 05:30Z): the spec of the side playing `opponent`; None or
+    # left out: `spec` on both sides, as before
+    ospec = job[10] if len(job) > 10 and job[10] else None
     qgap = _qgap_mode(mode) or _evolve_mode(mode)   # (eps, cap, pick, min_since): "qgap[:EPS[:CAP[:PICK[:MINSINCE]]]]",
     force = mode.startswith("evolve")               # or the reverse, "evolve[:EPS[:PICK[:MINSINCE]]]" (_evolve_force)
     rng = random.Random(seed * 7919 + g)
     seat = g % 2
     cards = [None, None]
     cards[seat], cards[1 - seat] = decks.build(DECKS[deck][1]), decks.build(DECKS[opponent][1])
-    agents = [make_agent(spec, seed * 1000 + 2 * g + i) for i in (0, 1)]
+    specs = [spec, spec]
+    if ospec is not None:
+        specs[1 - seat] = ospec
+    agents = [make_agent(specs[i], seed * 1000 + 2 * g + i) for i in (0, 1)]
     state = new_game(cards[0], cards[1], seed=seed * 100003 + g)
-    record = R.new_record(cards[0], cards[1], seed * 100003 + g, state.first, f"{spec} / {spec}")
+    record = R.new_record(cards[0], cards[1], seed * 100003 + g, state.first, f"{specs[0]} / {specs[1]}")
     record["g"], record["explore"] = g, explore
     record["names"] = [deck, opponent] if seat == 0 else [opponent, deck]   # ui.session.DECKS keys by seat
     _identity(record, cards, seed * 7919 + g, [seed * 1000 + 2 * g + i for i in (0, 1)])
@@ -78,7 +84,7 @@ def play(job):
     if not snapshot:
         return [record]
     branch = json.loads(json.dumps({k: v for k, v in snapshot["record"].items()}))
-    branch_agents = [make_agent(spec, seed * 1000 + 2 * g + i + 500000) for i in (0, 1)]
+    branch_agents = [make_agent(specs[i], seed * 1000 + 2 * g + i + 500000) for i in (0, 1)]
     branch_rng = random.Random()
     branch_rng.setstate(snapshot["rng"])
     info = {k: snapshot[k] for k in ("i", "player", "turn", "trigger", "target") + (("q_gap", "q_moves") if qgap else ())}

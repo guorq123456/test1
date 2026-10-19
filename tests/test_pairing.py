@@ -104,3 +104,19 @@ def test_a_prior_takes_a_flagged_net_s_trunk_at_flag_0():
     legal = legal_actions(st)
     p = pol.priors(st, legal)
     assert len(p) == len(legal) and abs(sum(p) - 1) < 1e-9
+
+
+def test_each_side_its_own_spec():
+    """netdata.play job[10] / scaledata play --opponent-spec: the side playing the opponent deck gets its own spec;
+    left out, or the same spec, the game is the one both sides' spec gives (NM1 gen 2)."""
+    from svsim.learn.netdata import play
+    spec, other = "mcts:8+plan+learned+phased", "mcts:4+plan+learned+phased"
+    strip = lambda r: {k: v for k, v in json.loads(json.dumps(r)).items() if k not in ("date", "cpu")}  # noqa: E731
+    for g in (0, 1):                                   # both seats of the deck
+        base = strip(play((g, 4242, "ramp-t", "elf-t", spec, 0.0)))
+        assert strip(play((g, 4242, "ramp-t", "elf-t", spec, 0.0, 0.0, False, None, None, None))) == base
+        assert strip(play((g, 4242, "ramp-t", "elf-t", spec, 0.0, 0.0, False, None, None, spec))) == base
+        mixed = strip(play((g, 4242, "ramp-t", "elf-t", spec, 0.0, 0.0, False, None, None, other)))
+        seat = mixed["names"].index("ramp-t")
+        assert mixed["ai"].split(" / ")[seat] == spec and mixed["ai"].split(" / ")[1 - seat] == other
+        assert mixed["actions"] != base["actions"]

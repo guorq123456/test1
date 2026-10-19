@@ -50,9 +50,10 @@ VOLATILE = ("date", "cpu")                       # fields that may differ betwee
 
 def _play(job):
     from svsim.learn.netdata import play
-    seed, g, deck, opponent, spec = job
+    seed, g, deck, opponent, spec = job[:5]
+    ospec = job[5] if len(job) > 5 else None       # --opponent-spec: the side playing `opponent`; None as before
     t0 = time.process_time()
-    record = play((g, seed, deck, opponent, spec, 0.0))
+    record = play((g, seed, deck, opponent, spec, 0.0) + ((0.0, False, None, None, ospec) if ospec else ()))
     record["cpu"] = round(time.process_time() - t0, 3)
     return seed, record
 
@@ -99,6 +100,7 @@ def play_main(args) -> None:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     todo, seeds = [], []
+    ospec = getattr(args, "opponent_spec", None)
     for k in range(args.shards[0], args.shards[1]):
         seed = args.base + args.stride * k
         if (out / f"rec-{seed}.jsonl.gz").exists():
@@ -107,8 +109,10 @@ def play_main(args) -> None:
             continue
         have = {r["g"] for r in _read_part(out / f"rec-{seed}.part.jsonl")}
         seeds.append(seed)
-        todo += [(seed, g, args.deck, args.opponent, args.spec) for g in range(args.per_shard) if g not in have]
-    print(json.dumps({"spec": args.spec, "deck": args.deck, "opponent": args.opponent, "base": args.base,
+        todo += [(seed, g, args.deck, args.opponent, args.spec) + ((ospec,) if ospec else ())
+                 for g in range(args.per_shard) if g not in have]
+    print(json.dumps({"spec": args.spec, **({"opponent_spec": ospec} if ospec else {}),
+                      "deck": args.deck, "opponent": args.opponent, "base": args.base,
                       "stride": args.stride, "shards": args.shards, "per_shard": args.per_shard, "open_shards": seeds, "games_to_play": len(todo),
                       "workers": args.workers}), flush=True)
     if not todo:
@@ -322,6 +326,8 @@ def main() -> None:
     p.add_argument("--deck", default="ramp-t", choices=sorted(DECKS))
     p.add_argument("--opponent", default="ramp-t", choices=sorted(DECKS))
     p.add_argument("--spec", "--agent", dest="spec", default=SPEC, help="the agent on both sides (default v2skx)")
+    p.add_argument("--opponent-spec", default=None, help="the agent of the side playing --opponent (default: --spec on "
+                                                         "both sides, as before)")
     p.add_argument("--workers", type=int, default=4)
     p.add_argument("--every", type=int, default=50, help="print progress every this many games")
     p.add_argument("--out", required=True)
