@@ -4,6 +4,7 @@ with those dumps row by row (seed, g, i, kind checked), then Brier / log-loss / 
 and paired differences with a 95% bootstrap of games (2000, rng 0).
 
     python holdout_new.py --records DIR --ref DIR --net NAME=PATH ... --seed S ... --out OUT.json --dump DIR [--workers 4]
+                          [--pair A,B ...]   (extra paired differences err[A] - err[B]; positive: B better)
 """
 from __future__ import annotations
 
@@ -76,6 +77,7 @@ def main() -> None:
     ap.add_argument("--out", required=True)
     ap.add_argument("--dump", required=True)
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--pair", action="append", default=[], metavar="A,B")
     args = ap.parse_args()
     nets = dict(s.split("=", 1) for s in args.net)
     dump = Path(args.dump)
@@ -120,6 +122,8 @@ def main() -> None:
                     pr[f"{b} - {a}"] = boot(err[b] - err[a], m)          # positive: the net is better
             if len(names) == 2:
                 pr[f"{names[0]} - {names[1]}"] = boot(err[names[0]] - err[names[1]], m)  # positive: names[1] better
+            for a, b in (q.split(",") for q in args.pair):
+                pr[f"{a} - {b}"] = boot(err[a] - err[b], m)                        # positive: b better
             report["paired"][f"{kname}/{deck}"] = pr
             print(kname, deck, json.dumps({k: v["brier"] for k, v in report["scores"][f"{kname}/{deck}"].items()}),
                   json.dumps(pr), flush=True)
