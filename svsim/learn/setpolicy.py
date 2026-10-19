@@ -413,12 +413,15 @@ class SetPolicy:
     @classmethod
     def from_value_net(cls, net, head: int = 64, seed: int = 0, info=None) -> "SetPolicy":
         """A prior whose trunk is the value net's (learn.setnet.SetNet, v1 inputs, ReLU): phi, the zone sums and
-        rho's two hidden layers, with its static standardization."""
+        rho's two hidden layers, with its static standardization. A net with the mid-turn flag gives its trunk at
+        flag 0 (V1 without the flag's row)."""
         if net.inputs != "v1" or net.slope != 0.0:
             raise ValueError("the trunk has to be a v1 ReLU value net")
         pol = cls(net.static.shape[1], phi=net.phi, rho=net.rho, head=head, seed=seed, info=info)
         for k in TRUNK:
             setattr(pol, k, np.array(getattr(net, k), dtype=np.float64))
+        if getattr(net, "flag", False):          # a mid-turn flagged net (NM2): its trunk at flag 0, the flag's row out
+            pol.V1 = pol.V1[:-1].copy()
         pol.smean, pol.sstd = np.array(net.smean), np.array(net.sstd)
         pol.card_ids, pol.static = np.array(net.card_ids), np.array(net.static)
         return pol

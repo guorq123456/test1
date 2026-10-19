@@ -92,3 +92,15 @@ def test_one_side_s_decisions(record, tmp_path):
     assert len(ramp["step"]) == movers.count("ramp-t") > 0 and len(elf["step"]) == movers.count("elf-t") > 0
     assert sorted(np.concatenate([ramp["step"], elf["step"]]).tolist()) == sorted(both["step"].tolist())
     assert np.array_equal(ramp["step"], both["step"][np.isin(both["step"], ramp["step"])])
+
+
+def test_a_prior_takes_a_flagged_net_s_trunk_at_flag_0():
+    net = SN.SetNet.load(RAMP)
+    assert net.flag
+    pol = SP.SetPolicy.from_value_net(net)
+    assert pol.V1.shape[0] == net.V1.shape[0] - 1 and np.array_equal(pol.V1, net.V1[:-1])
+    st = _mirror_states(3)[0]
+    from svsim.core.engine import legal_actions
+    legal = legal_actions(st)
+    p = pol.priors(st, legal)
+    assert len(p) == len(legal) and abs(sum(p) - 1) < 1e-9
