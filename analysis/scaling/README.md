@@ -1911,3 +1911,18 @@ gen 1 cost 0.980 (ramp-t, 519 decisions) and 1.003 (elf-t, 790), per-position on
 (data/nm1g2/cost-g2-*.json). The gate's check games set N.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+**NM1 generation-2 gates (the analysis line, f960c05).** Gen 2 against gen 1, 300 pairs per gate. The check games kept N:
+
+| gate | gen 2 plays | N₀ → N (check ratio) | in-gate ratio | win rate (95% CI) | CR |
+|---|---|---|---|---|---|
+| 1 | ramp-t | 94 → 94 (1.021) | 1.024 | 57.2% (53.2–61.1) | +68 |
+| 2 | elf-t | 95 → 95 (0.971) | 0.980 | 54.0% (50.2–57.8) | +38 |
+| both, 600 pairs | | | | 55.6% (52.8–58.4) | +53 |
+
+- Both gates passed: the lower bound of the 600 pairs is above 50%.
+- Keeping gen 1's N held here. The two generations have the same structure, and the gates' same-deck ms ratios,
+  gen 2 over gen 1, were 1.008 (ramp-t) and 0.995 (elf-t). The per-position reading above was 0.980 / 1.003.
+- Installing is Salem's call.
+
+Condition: the opponent's deck list is known (order and hand not).
