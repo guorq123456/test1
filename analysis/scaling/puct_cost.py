@@ -28,6 +28,8 @@ def main() -> None:
     ap.add_argument("--games", type=int, default=10)
     ap.add_argument("--spec", action="append", required=True, metavar="NAME=SPEC")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--deck", default=None, help="only the decisions of the side playing this deck (a non-mirror "
+                                                "pairing's side; default every decision)")
     args = ap.parse_args()
     from svsim.core.engine import legal_actions
     from svsim.learn.netdata import _search
@@ -44,6 +46,8 @@ def main() -> None:
                 break
             rec = json.loads(line)
             for i, state, legal, reps, group, pi, start in SP.decisions(rec):
+                if args.deck and state.players[state.active].deck_name != args.deck:
+                    continue
                 order = specs[n % len(specs):] + specs[:n % len(specs)]
                 for name, spec in order:
                     agent = make_agent(spec, 0)
@@ -54,7 +58,7 @@ def main() -> None:
                     search = _search(agent)
                     iters[name] += search.last_iterations or 0
                 n += 1
-    out = {"records": Path(args.records).name, "games": args.games, "decisions": n,
+    out = {"records": Path(args.records).name, "games": args.games, "deck": args.deck, "decisions": n,
            "specs": {name: {"spec": spec, "ms_per_decision": round(1e3 * total[name] / n, 2),
                             "iterations_per_decision": round(iters[name] / n, 1)} for name, spec in specs}}
     Path(args.out).write_text(json.dumps(out, indent=1) + "\n")
