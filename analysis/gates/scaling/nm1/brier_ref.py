@@ -31,7 +31,8 @@ from pathlib import Path  # noqa: E402
 
 import numpy as np  # noqa: E402
 
-SCORERS = ("v2skx", "v2skx_eot", "net_ramp", "net_elf")
+NETS = ("net_ramp=net-mid-ramp-t.npz", "net_elf=net-mid-elf-t.npz")      # the NM1 reference's two nets (default)
+SCORERS = ("v2skx", "v2skx_eot") + tuple(n.split("=")[0] for n in NETS)
 
 
 def sig(x):
@@ -50,7 +51,13 @@ def judged(p, y):
             "log_loss": round(float((-(y * np.log(q) + (1 - y) * np.log(1 - q))).mean()), 5), "ece": round(ece(p, y), 5)}
 
 
-def shard(path: Path, models: Path, games: int | None):
+def sides(decks) -> list:
+    """The scored sides' decks, ramp-t first (NM1's order), then "both"."""
+    u = sorted(set(decks.tolist()))
+    return sorted(u, key=lambda x: x != "ramp-t") + ["both"]
+
+
+def shard(path: Path, models: Path, games: int | None, nets_spec=NETS):
     from svsim.learn.model import SCALE
     from svsim.learn.netdata import ENDED, rows, _search
     from svsim.learn.scaledata import SPEC
@@ -59,8 +66,8 @@ def shard(path: Path, models: Path, games: int | None):
     from svsim.search.evaluate import after_end_of_turn
     from svsim.tools.arena import make_agent
     w = _search(make_agent(SPEC, 0)).weights
-    nets = {"net_ramp": SetNet.load(models / "net-mid-ramp-t.npz"), "net_elf": SetNet.load(models / "net-mid-elf-t.npz")}
-    out = {k: [] for k in ("g", "i", "kind", "deck", "turn", "first", "y") + SCORERS}
+    nets = {k: SetNet.load(models / f) for k, f in (n.split("=", 1) for n in nets_spec)}
+    out = {k: [] for k in ("g", "i", "kind", "deck", "turn", "first", "y", "v2skx", "v2skx_eot", *nets)}
 
     def add(rec, i, kind, state, me, y, extra):
         out["g"].append(rec["g"])
@@ -110,27 +117,32 @@ def main() -> None:
     ap.add_argument("--out", required=True)
     ap.add_argument("--dump", required=True)
     ap.add_argument("--games", type=int, default=None, help="the first N games of each shard (a test run)")
+    ap.add_argument("--net", action="append", default=None, metavar="NAME=FILE",
+                    help="a net in --models scored as it is (default: the NM1 reference's net_ramp and net_elf)")
     args = ap.parse_args()
+    global SCORERS
+    nets_spec = tuple(args.net) if args.net else NETS
+    SCORERS = ("v2skx", "v2skx_eot") + tuple(n.split("=")[0] for n in nets_spec)
     dump = Path(args.dump)
     dump.mkdir(parents=True, exist_ok=True)
     import hashlib
     report = {"seeds": args.seed, "shards": {}, "pooled": {},
               "models_sha256": {f: hashlib.sha256((Path(args.models) / f).read_bytes()).hexdigest()
-                                for f in ("net-mid-ramp-t.npz", "net-mid-elf-t.npz")}}
+                                for f in (n.split("=", 1)[1] for n in nets_spec)}}
     parts = []
     for s in args.seed:
         target = dump / f"ref-{s}.npz"
         if target.exists() and args.games is None:
             d = dict(np.load(target))
         else:
-            d = shard(Path(args.records) / f"rec-{s}.jsonl.gz", Path(args.models), args.games)
+            d = shard(Path(args.records) / f"rec-{s}.jsonl.gz", Path(args.models), args.games, nets_spec)
             np.savez_compressed(str(target) + ".tmp.npz", seed=np.full(len(d["y"]), s), **d)
             os.replace(str(target) + ".tmp.npz", target)
         d["seed"] = np.full(len(d["y"]), s)
         parts.append(d)
         rep = {}
         for kind, kname in ((0, "end"), (1, "mid")):
-            for deck in ("ramp-t", "elf-t", "both"):
+            for deck in sides(d["deck"]):
                 m = (d["kind"] == kind) & ((d["deck"] == deck) if deck != "both" else True)
                 rep[f"{kname}/{deck}"] = {k: judged(sig(d[k][m]), d["y"][m]) for k in SCORERS
                                           if not (kind == 0 and k == "v2skx_eot")}
@@ -142,7 +154,7 @@ def main() -> None:
     rng = np.random.default_rng(0)
     idx = rng.integers(0, len(games), (2000, len(games)))
     for kind, kname in ((0, "end"), (1, "mid")):
-        for deck in ("ramp-t", "elf-t", "both"):
+        for deck in sides(d["deck"]):
             m = (d["kind"] == kind) & ((d["deck"] == deck) if deck != "both" else True)
             cnt = np.bincount(inv[m], minlength=len(games))[idx].sum(1)
             rec = {}
