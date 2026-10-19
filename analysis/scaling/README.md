@@ -1727,3 +1727,43 @@ Condition: the opponent's deck list is known (order and hand not).
 - **Installing** is Salem's call.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## NM2 preparation: ramp-t vs nemesis-t (the architecture thread 2026-10-19 05:28Z; set before any game)
+
+**What the trainer's bots score this pairing with** (pairing_probe.py, data/pairing/probe-nm2.json). It is as in
+NM1:
+
+| bot | ramp-t (AI) vs nemesis-t | nemesis-t (AI) vs ramp-t |
+|---|---|---|
+| fast, original | weights/dragon.json | weights/portal.json |
+| normal | ref-5558960/ramp-t-nemesis-t-{ended,act}.json | ref-5558960/nemesis-t-ramp-t-{ended,act}.json |
+| strong, max | phased_models/ramp-t-nemesis-t-{ended,act}.json | phased_models/nemesis-t-ramp-t-{ended,act}.json |
+| v2skx | pkg-kc-ramp-ramp/ramp-t-nemesis-t-{ended,act}.json | pkg-kc-ramp-ramp/nemesis-t-ramp-t-{ended,act}.json |
+
+- The four per-pairing files are byte for byte the same in the three folders (sha256 0e76127c…, 719ddf12…,
+  a16ecfe4…, daafbf1b…). They are version-2 linear models, fitted on the 2000 v2 self-play games of the 2026-10-08
+  per-pairing fits (about 15 600 turn ends a side).
+- No net answers here: neither the mirror nets nor NM1's, whose pairs are ramp-t–elf-t.
+
+**The card table.** nemesis-t has 38 distinct cards; net-nm1f-ramp-elf and net-mid-ramp-t know 1 of them. The others
+are added by their static rows (setnet.extend_table, `--extend-cards`) when a start that lacks them is grown. The
+cards themselves are in the simulator (the tournament decks' registration).
+
+**Plan (NM1's recipe):**
+- **Data:** v2skx on both sides, `scaledata play --deck ramp-t --opponent nemesis-t`. 10 training shards of 1000 games
+  and 5 holdout shards of 1000; seeds from the analysis line.
+- **Value net, two arms:** fresh (constructor seed 0), and from net-nm1f-ramp-elf (it has seen the ramp-t side;
+  `--init … --extend-cards`). Both have the mid-turn branch and one net for both views
+  (`--pairs ramp-t:nemesis-t nemesis-t:ramp-t`), with NM1's settings. **The arm with the lower valid Brier, both kinds
+  of row together, goes to the gate.** The holdout shards are not read before that choice.
+- **Priors:**
+  - ramp-t side: from prior-nm1-ramp-t (`--prior … --extend-cards`).
+  - nemesis-t side: there is no nemesis prior. It is made as the mirrors' `ft` priors were: the trunk from the chosen
+    NM2 value net (`setpolicy fit --init NET`), fine-tuned with its head at τ 0.5. That trunk has seen nemesis-t's
+    cards, and a mirror prior's trunk has not. The chosen net has the mid-turn flag, so its trunk is taken at flag 0
+    (a turn end): the flag's row of V1 is left out. This is the one code change, off for unflagged nets.
+  - Both sides: τ 0.5 on that side's decisions (`setpolicy encode --deck`).
+- **N₀:** by whole-game timing (NM1's gates found per-decision timing ±5% off), or many more positions than NM1's.
+  Given to the analysis line before the gate.
+
+Condition: the opponent's deck list is known (order and hand not).
