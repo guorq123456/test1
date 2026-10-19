@@ -3709,3 +3709,9 @@ J92 的 40% 里混着两样东西：网络比现装评估慢（N 从 200 降到 
   - sha256：net-nm3f-elf-nem 30846733…0542，prior-nm3-elf-t ab41e9ad…8448，prior-nm3-nemesis-t 7c9da4f9…2355，和建造线给的一致。
   - 两个串两方都由新网打分（开局局面 score = SCALE × net.logit），先验都载入，info 里的 deck / opponent 是各自那一方。
 - **运行**：`analysis/gates/scaling/nm3/gate/run.sh`。第 2 代留出片 17:19Z 暂停（h = 1 下到 70 局），本机空闲，3 进程；门跑完接着下。
+- **验证取法的开关已实现**（建造线 a72b505）：
+  - `--split key|hash`：train_mid.py、train.py net、setpolicy fit 都有，背后是 `learn.setnet.in_valid`。
+  - `key` 是默认，就是原来的 (seed·100003 + g) % 20 == 0，在 NM3 数据上划分逐行不变，net-nm3f 的验证 Brier 仍是 0.19572。
+  - `hash` 先对同一个键做 splitmix64 再取模，和座位无关；在 NM3 数据上取到 533 局，其中 47.5% 是偶数 g。
+  - 到 NM3 为止的网和续训的线用 `key`，新对位从头训的网用 `hash`，建造线 README 有表。
+  - 这只是训练端的改动，门不受影响。
