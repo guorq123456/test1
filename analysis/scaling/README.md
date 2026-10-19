@@ -2052,11 +2052,15 @@ Both sides are the gen-2 bot with their own specs (`scaledata play --deck ramp-t
 - R = `mcts:89+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm1g2-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1g2-ramp-t.npz:2:1`
 - E = `mcts:95+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm1g2-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1g2-elf-t.npz:2:1`
 
-The builder plays training shards 79700000 + 2k, k = 5–9 (data/nm1g3/rec, SHA256SUMS-build). The analysis line
-plays k = 0–4 and the holdout 79800000 + 2h.
+The builder plays training shards 79700000 + 2k, k = 3–9 (data/nm1g3/rec, SHA256SUMS-build), and holdout h = 3, 4.
+The analysis line plays k = 0–2 and holdout h = 0–2. k = 3, 4 and h = 3, 4 moved to the builder at 19:54Z.
+The builder checked the analysis line's k = 0–2: SHA256SUMS, the stats, and 12 of 12 replayed games identical
+(g 0, 1, 500, 999 of each shard).
 
 | k | shard | games | draws | first player wins | ramp-t wins | ramp-t in seat 0 | ramp-t first |
 |---|---|---|---|---|---|---|---|
+| 3 | 79700006 | 1000 | 0 | 587 | 490 | 500 | 501 |
+| 4 | 79700008 | 1000 | 0 | 631 | 530 | 500 | 513 |
 | 5 | 79700010 | 1000 | 0 | 611 | 530 | 500 | 487 |
 | 6 | 79700012 | 1000 | 0 | 574 | 512 | 500 | 514 |
 | 7 | 79700014 | 1000 | 0 | 584 | 508 | 500 | 502 |
