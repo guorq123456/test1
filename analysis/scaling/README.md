@@ -1656,6 +1656,8 @@ are alike, here one side is favoured. So two arms are trained, on the same data 
           --tokens TOK --end 77900000:10 --mid-dir MID --mid 77900000:10 \
           --holdout 78000000 78000002 78000004 78000006 78000008 \
           (--init analysis/scaling/models/net-mid-ramp-t.npz --extend-cards --name nm1-ramp-elf | --fresh --name nm1f-ramp-elf) \
-          --ftz is train_mid's default (SetNet.fit ftz=True); --checkpoint CKPT
+          --epochs 60 --patience 4 --checkpoint CKPT
+
+  (train_mid.py always fits with `--ftz`, SetNet.fit ftz=True.)
 
 Condition: the opponent's deck list is known (order and hand not).
