@@ -1891,3 +1891,23 @@ Condition: the opponent's deck list is known (order and hand not).
 - Installing is Salem's call.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+### NM1 generation 2: the fits, the specs and N₀ (2026-10-19 10:5x–12:2xZ)
+
+| model | from | data | valid | epochs (best) | sha256 |
+|---|---|---|---|---|---|
+| net-nm1g2-ramp-elf | net-nm1f-ramp-elf | gen 1 + gen 2, 602 228 / 31 847 rows | Brier: turn end 0.17681 → 0.16971, mid-turn 0.16721 → 0.16000 | 13 (9) | 34f53da0… |
+| prior-nm1g2-ramp-t | prior-nm1-ramp-t | 383 994 / 20 224 decisions | CE 1.10149 → 1.05866 | 31 (27), two chunks | 4b276d1e… |
+| prior-nm1g2-elf-t | prior-nm1-elf-t | 570 378 / 30 356 decisions | CE 1.18051 → 1.14379 | 31 (27), two chunks | c7db9f78… |
+
+The "→" pairs are the start (the gen-1 model on the new valid part) and the fit.
+
+**The gen-2 bot:**
+- ramp-t: `mcts:94+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm1g2-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1g2-ramp-t.npz:2:1`
+- elf-t: `mcts:95+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm1g2-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1g2-elf-t.npz:2:1`
+
+**N₀.** Generation 1's in-gate N, 94 and 95. The two generations have the same structure. At the same N, gen 2 against
+gen 1 cost 0.980 (ramp-t, 519 decisions) and 1.003 (elf-t, 790), per-position on 25 games of 78300018
+(data/nm1g2/cost-g2-*.json). The gate's check games set N.
+
+Condition: the opponent's deck list is known (order and hand not).
