@@ -109,7 +109,7 @@ def main() -> None:
 
     for kind, kname in ((0, "end"), (1, "mid")):
         refs = ["v2skx"] + (["v2skx_eot"] if kind == 1 else [])
-        for deck in ("ramp-t", "elf-t", "both"):
+        for deck in sorted(set(d["deck"].tolist()), key=lambda x: x != "ramp-t") + ["both"]:
             m = (d["kind"] == kind) & ((d["deck"] == deck) if deck != "both" else True)
             y = d["y"]
             report["scores"][f"{kname}/{deck}"] = {k: judged(sig(d[k][m]), y[m]) for k in names + refs}

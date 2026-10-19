@@ -1,0 +1,336 @@
+{
+ "nets": {
+  "start": {
+   "path": "/tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/nm2net/net-nm2-ramp-nem.npz",
+   "sha256": "9c8fb3087dad01ef48ac2063886597f82460ca5267c8d424cad1cc07e203c31e"
+  },
+  "fresh": {
+   "path": "/tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/nm2net/net-nm2f-ramp-nem.npz",
+   "sha256": "e286636845846c661ecce0d8ce041008b66e9fb6c7995a2c64bb189f23adf850"
+  }
+ },
+ "seeds": [
+  78800000,
+  78800002,
+  78800004,
+  78800006,
+  78800008
+ ],
+ "games": 5000,
+ "scores": {
+  "end/ramp-t": {
+   "start": {
+    "n": 41775,
+    "brier": 0.18917,
+    "log_loss": 0.55432,
+    "ece": 0.01917,
+    "mean_p": 0.5572,
+    "win_rate": 0.5419
+   },
+   "fresh": {
+    "n": 41775,
+    "brier": 0.18697,
+    "log_loss": 0.54847,
+    "ece": 0.02245,
+    "mean_p": 0.5239,
+    "win_rate": 0.5419
+   },
+   "v2skx": {
+    "n": 41775,
+    "brier": 0.19923,
+    "log_loss": 0.57646,
+    "ece": 0.03436,
+    "mean_p": 0.5108,
+    "win_rate": 0.5419
+   }
+  },
+  "end/nemesis-t": {
+   "start": {
+    "n": 41749,
+    "brier": 0.18981,
+    "log_loss": 0.55312,
+    "ece": 0.02021,
+    "mean_p": 0.4111,
+    "win_rate": 0.4314
+   },
+   "fresh": {
+    "n": 41749,
+    "brier": 0.18712,
+    "log_loss": 0.54805,
+    "ece": 0.02106,
+    "mean_p": 0.414,
+    "win_rate": 0.4314
+   },
+   "v2skx": {
+    "n": 41749,
+    "brier": 0.20073,
+    "log_loss": 0.57826,
+    "ece": 0.06971,
+    "mean_p": 0.5011,
+    "win_rate": 0.4314
+   }
+  },
+  "end/both": {
+   "start": {
+    "n": 83524,
+    "brier": 0.18949,
+    "log_loss": 0.55372,
+    "ece": 0.00824,
+    "mean_p": 0.4842,
+    "win_rate": 0.4866
+   },
+   "fresh": {
+    "n": 83524,
+    "brier": 0.18704,
+    "log_loss": 0.54826,
+    "ece": 0.02176,
+    "mean_p": 0.469,
+    "win_rate": 0.4866
+   },
+   "v2skx": {
+    "n": 83524,
+    "brier": 0.19998,
+    "log_loss": 0.57736,
+    "ece": 0.0204,
+    "mean_p": 0.506,
+    "win_rate": 0.4866
+   }
+  },
+  "mid/ramp-t": {
+   "start": {
+    "n": 105923,
+    "brier": 0.18335,
+    "log_loss": 0.54078,
+    "ece": 0.01766,
+    "mean_p": 0.5712,
+    "win_rate": 0.5559
+   },
+   "fresh": {
+    "n": 105923,
+    "brier": 0.18342,
+    "log_loss": 0.54138,
+    "ece": 0.01992,
+    "mean_p": 0.5469,
+    "win_rate": 0.5559
+   },
+   "v2skx": {
+    "n": 105923,
+    "brier": 0.27963,
+    "log_loss": 0.84053,
+    "ece": 0.2373,
+    "mean_p": 0.3186,
+    "win_rate": 0.5559
+   },
+   "v2skx_eot": {
+    "n": 105923,
+    "brier": 0.2685,
+    "log_loss": 0.80655,
+    "ece": 0.21636,
+    "mean_p": 0.3396,
+    "win_rate": 0.5559
+   }
+  },
+  "mid/nemesis-t": {
+   "start": {
+    "n": 142204,
+    "brier": 0.1863,
+    "log_loss": 0.54794,
+    "ece": 0.0155,
+    "mean_p": 0.4208,
+    "win_rate": 0.4361
+   },
+   "fresh": {
+    "n": 142204,
+    "brier": 0.18006,
+    "log_loss": 0.53303,
+    "ece": 0.01784,
+    "mean_p": 0.4226,
+    "win_rate": 0.4361
+   },
+   "v2skx": {
+    "n": 142204,
+    "brier": 0.22736,
+    "log_loss": 0.69548,
+    "ece": 0.11923,
+    "mean_p": 0.3169,
+    "win_rate": 0.4361
+   },
+   "v2skx_eot": {
+    "n": 142204,
+    "brier": 0.22688,
+    "log_loss": 0.69328,
+    "ece": 0.11797,
+    "mean_p": 0.3181,
+    "win_rate": 0.4361
+   }
+  },
+  "mid/both": {
+   "start": {
+    "n": 248127,
+    "brier": 0.18504,
+    "log_loss": 0.54488,
+    "ece": 0.00999,
+    "mean_p": 0.485,
+    "win_rate": 0.4873
+   },
+   "fresh": {
+    "n": 248127,
+    "brier": 0.1815,
+    "log_loss": 0.53659,
+    "ece": 0.0176,
+    "mean_p": 0.4757,
+    "win_rate": 0.4873
+   },
+   "v2skx": {
+    "n": 248127,
+    "brier": 0.24967,
+    "log_loss": 0.7574,
+    "ece": 0.16963,
+    "mean_p": 0.3176,
+    "win_rate": 0.4873
+   },
+   "v2skx_eot": {
+    "n": 248127,
+    "brier": 0.24465,
+    "log_loss": 0.74163,
+    "ece": 0.15997,
+    "mean_p": 0.3273,
+    "win_rate": 0.4873
+   }
+  }
+ },
+ "paired": {
+  "end/ramp-t": {
+   "v2skx - start": [
+    0.01006,
+    0.0075,
+    0.01252
+   ],
+   "v2skx - fresh": [
+    0.01227,
+    0.01002,
+    0.0145
+   ],
+   "start - fresh": [
+    0.0022,
+    0.00058,
+    0.00388
+   ]
+  },
+  "end/nemesis-t": {
+   "v2skx - start": [
+    0.01092,
+    0.00802,
+    0.01383
+   ],
+   "v2skx - fresh": [
+    0.01361,
+    0.01039,
+    0.01678
+   ],
+   "start - fresh": [
+    0.00269,
+    0.001,
+    0.00438
+   ]
+  },
+  "end/both": {
+   "v2skx - start": [
+    0.01049,
+    0.00797,
+    0.01296
+   ],
+   "v2skx - fresh": [
+    0.01294,
+    0.01067,
+    0.01524
+   ],
+   "start - fresh": [
+    0.00245,
+    0.00113,
+    0.0038
+   ]
+  },
+  "mid/ramp-t": {
+   "v2skx - start": [
+    0.09628,
+    0.08846,
+    0.10403
+   ],
+   "v2skx_eot - start": [
+    0.08514,
+    0.0778,
+    0.09239
+   ],
+   "v2skx - fresh": [
+    0.09621,
+    0.08916,
+    0.10329
+   ],
+   "v2skx_eot - fresh": [
+    0.08507,
+    0.07859,
+    0.09164
+   ],
+   "start - fresh": [
+    -7e-05,
+    -0.00176,
+    0.00162
+   ]
+  },
+  "mid/nemesis-t": {
+   "v2skx - start": [
+    0.04105,
+    0.03709,
+    0.04523
+   ],
+   "v2skx_eot - start": [
+    0.04058,
+    0.03662,
+    0.04472
+   ],
+   "v2skx - fresh": [
+    0.04729,
+    0.04307,
+    0.05178
+   ],
+   "v2skx_eot - fresh": [
+    0.04682,
+    0.0426,
+    0.05124
+   ],
+   "start - fresh": [
+    0.00624,
+    0.00421,
+    0.00819
+   ]
+  },
+  "mid/both": {
+   "v2skx - start": [
+    0.06463,
+    0.06224,
+    0.067
+   ],
+   "v2skx_eot - start": [
+    0.0596,
+    0.05734,
+    0.06184
+   ],
+   "v2skx - fresh": [
+    0.06818,
+    0.06586,
+    0.07051
+   ],
+   "v2skx_eot - fresh": [
+    0.06315,
+    0.06095,
+    0.06535
+   ],
+   "start - fresh": [
+    0.00355,
+    0.00201,
+    0.00507
+   ]
+  }
+ }
+}
