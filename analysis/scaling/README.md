@@ -2027,3 +2027,20 @@ Condition: the opponent's deck list is known (order and hand not).
 | from-scratch nets of new pairings, from the next one on | hash |
 
 Condition: the opponent's deck list is known (order and hand not).
+
+**NM3 gates (the analysis line, 6ef8368).** New bot against v2skx, 300 pairs per gate:
+
+| gate | new bot plays | N₀ → N (check ratio) | in-gate ratio | win rate (95% CI) | CR |
+|---|---|---|---|---|---|
+| 1 | elf-t | 88 → 88 (1.027) | 0.984 | 52.7% (48.7–56.7) | +25 |
+| 2 | nemesis-t | 86 → 78 (1.105) | 1.046 (out of band, noted) | 67.5% (64.0–71.0) | +172 |
+| both, 600 pairs | | | | 60.1% (57.3–62.8) | +97 |
+
+- Both gates passed: the lower bound of the 600 pairs is above 50%.
+- **The nemesis-t side ran slower than the per-position fit both times:** check ratio 1.114 in NM2 and 1.105 in NM3.
+  Even after the fix, the in-gate ratio was 1.03–1.05.
+- **The architecture thread's rule (18:02Z):** from now on, a nemesis-t side's N₀ is divided by 1.10 before it goes
+  to the analysis line's check.
+- Installing is Salem's call.
+
+Condition: the opponent's deck list is known (order and hand not).
