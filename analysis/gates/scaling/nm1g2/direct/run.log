@@ -1,0 +1,5 @@
+ramp-t check ratio 1.0272614929372064 -> N=94 at 16:10:15
+ramp-t gate done at 16:24:05
+elf-t check ratio 0.9845951003968814 -> N=95 at 16:24:54
+elf-t gate done at 16:37:16
+DONE at 16:37:16
