@@ -2044,3 +2044,28 @@ Condition: the opponent's deck list is known (order and hand not).
 - Installing is Salem's call.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+### NM1 generation 3 self-play: the builder's training shards (2026-10-19 18:0x–19:5xZ)
+
+Both sides are the gen-2 bot with their own specs (`scaledata play --deck ramp-t --opponent elf-t --spec R
+--opponent-spec E`). The N are the architecture thread's: ramp-t 89 (corrected by the gen-2 direct test), elf-t 95.
+- R = `mcts:89+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm1g2-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1g2-ramp-t.npz:2:1`
+- E = `mcts:95+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm1g2-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1g2-elf-t.npz:2:1`
+
+The builder plays training shards 79700000 + 2k, k = 5–9 (data/nm1g3/rec, SHA256SUMS-build). The analysis line
+plays k = 0–4 and the holdout 79800000 + 2h.
+
+| k | shard | games | draws | first player wins | ramp-t wins | ramp-t in seat 0 | ramp-t first |
+|---|---|---|---|---|---|---|---|
+| 5 | 79700010 | 1000 | 0 | 611 | 530 | 500 | 487 |
+| 6 | 79700012 | 1000 | 0 | 574 | 512 | 500 | 514 |
+| 7 | 79700014 | 1000 | 0 | 584 | 508 | 500 | 502 |
+| 8 | 79700016 | 1000 | 0 | 616 | 540 | 500 | 520 |
+| 9 | 79700018 | 1000 | 0 | 576 | 527 | 500 | 517 |
+
+- Every shard has 1000 distinct g. Each has two `ai` strings, one per seat order.
+- No shard was stopped or resumed.
+- "First player wins" counts winner == first.
+- This is a continued line, so its fits use `--split key`.
+
+Condition: the opponent's deck list is known (order and hand not).
