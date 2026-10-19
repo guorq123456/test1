@@ -3546,3 +3546,14 @@ J92 的 40% 里混着两样东西：网络比现装评估慢（N 从 200 降到 
   - 机锋一方（58.3%，+79）比跳费龙一方（54.0%，+38）收益大。跳费龙一方后手 48.0%，区间含 50%。
   - 装不装等 Salem。
 - 文件：`analysis/gates/scaling/nm2/gate/`。
+- **第 2 代选手串**（建造线 b9e6f75，12:20Z 给；在任何第 2 代门局之前）：
+  - A，跳费龙方 N 94：`mcts:94+P+setnet=M/net-nm1g2-ramp-elf.npz+netmid+puct=M/prior-nm1g2-ramp-t.npz:2:1`。
+  - A，连击妖方 N 95：`mcts:95+P+setnet=M/net-nm1g2-ramp-elf.npz+netmid+puct=M/prior-nm1g2-elf-t.npz:2:1`。
+  - B 是第 1 代 bot，NM1 门里那两个串。
+  - 续训：价值网从 net-nm1f-ramp-elf 出发，第 1、2 代共 20 片，验证 Brier 0.1697 / 0.1600，起点 0.1768 / 0.1672。两方先验各自续训。
+  - N₀ 沿用第 1 代门内修过的 94 / 95。建造线逐局面核过：同 N 下第 2 代耗时 ÷ 第 1 代，跳费龙 0.980，连击妖 1.003。
+- **本线核对**：
+  - 代码 b9e6f75，svsim/ 和 0ccb583 相同。sha256：net-nm1g2-ramp-elf 34f53da0…5663，prior-nm1g2-ramp-t 4b276d1e…673e，prior-nm1g2-elf-t c7db9f78…5b60；B 用的三个文件和 cb81fd4 相同。
+  - 两个 A 串两方都由新网打分（开局局面 score = SCALE × net.logit），先验都载入。
+- **门内按时间对齐要注意一处**：照登记的规则，复核比的是 A 在本方牌上的毫秒和 B 在另一副牌上的毫秒（NM1、NM2 的门也是这样）。所以每道门的 N 修正里混着两副牌的耗时差。两道门里 A 各用一副，合计时这个差大致抵消。另报"同一副牌上第 2 代对第 1 代"的毫秒比作描述，取另一道门里 B 的毫秒来比。
+- **运行**：`analysis/gates/scaling/nm1g2/gate/run.sh`。NM3 自对弈 12:22Z 暂停（k = 2 下到 180 局），本机空闲，3 进程；门跑完接着下 NM3。
