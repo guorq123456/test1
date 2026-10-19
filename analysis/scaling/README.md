@@ -3698,3 +3698,14 @@ J92 的 40% 里混着两样东西：网络比现装评估慢（N 从 200 降到 
     1. 从旧网续训的线（NM1 第 3 代、NM2 第 2 代等）沿用旧取法，不改。续训池里有旧网训过的局，换取法会把它们放进验证集。
     2. 以后从头训的网（下一个新对位起，包括将来的机锋镜像或旗皇相关对位），验证局改用和座位无关的取法，例如 hash(seed, g) % 20 == 0。建造线实现时在 README 写清哪条线用哪种取法。
     3. 已有的门和留出片结论不重算。NM3 留出片比验证好 1～2 个标准差，记为噪声，不再追。
+- **NM3 选手串和 N₀ 起点**（建造线 2e5e17a，17:16Z 给；仍在任何 NM3 门局之前）：
+  - 门 1，A 用连击妖，N₀ = 88：`mcts:88+P+setnet=M/net-nm3f-elf-nem.npz+netmid+puct=M/prior-nm3-elf-t.npz:2:1`。
+  - 门 2，A 用机锋，N₀ = 86：`mcts:86+P+setnet=M/net-nm3f-elf-nem.npz+netmid+puct=M/prior-nm3-nemesis-t.npz:2:1`。
+  - B = v2skx。
+  - 先验：连击妖方从 prior-nm1-elf-t、机锋方从 prior-nm2-nemesis-t 续训，都加了 --extend-cards，τ 0.5。
+  - N₀ 用合并逐局面拟合（训练片 79100006/08/10 各前 30 局），只当起点，N 由门内复核定。
+- **本线核对**：
+  - 代码 2e5e17a。svsim/ 和 0ccb583 相比只改了 setpolicy fit 写 info 的地方（9b28ed9），对局不受影响。
+  - sha256：net-nm3f-elf-nem 30846733…0542，prior-nm3-elf-t ab41e9ad…8448，prior-nm3-nemesis-t 7c9da4f9…2355，和建造线给的一致。
+  - 两个串两方都由新网打分（开局局面 score = SCALE × net.logit），先验都载入，info 里的 deck / opponent 是各自那一方。
+- **运行**：`analysis/gates/scaling/nm3/gate/run.sh`。第 2 代留出片 17:19Z 暂停（h = 1 下到 70 局），本机空闲，3 进程；门跑完接着下。
