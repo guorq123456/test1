@@ -1,4 +1,4 @@
-"""Per-shard stats of NM1 self-play records (ramp-t vs elf-t, v2skx both sides): games, distinct g, draws, ramp-t
+"""Per-shard stats of non-mirror self-play records with ramp-t on one side (NM1 ramp-t vs elf-t, NM2 ramp-t vs nemesis-t): games, distinct g, draws, ramp-t
 wins, first-seat wins, how often ramp-t moved first and sat in seat 0, mean actions, searched decisions.
 
     python shard_stats.py REC.jsonl.gz ...      (writes REC.stats.json beside each; prints one line per shard)
@@ -10,7 +10,7 @@ import sys
 
 def stats(path):
     n = draws = ramp_wins = first_wins = ramp_first = ramp_seat0 = actions = searched = 0
-    gs = []
+    gs, opponents = [], {}
     for line in gzip.open(path, "rt", encoding="utf-8"):
         if not line.strip():
             continue
@@ -18,7 +18,8 @@ def stats(path):
         n += 1
         gs.append(r["g"])
         ramp = r["deck_keys"].index("ramp-t")
-        assert sorted(r["deck_keys"]) == ["elf-t", "ramp-t"], r["deck_keys"]
+        other = r["deck_keys"][1 - ramp]
+        assert other != "ramp-t" and opponents.setdefault(other, True), r["deck_keys"]
         draws += r["winner"] not in (0, 1)
         ramp_wins += r["winner"] == ramp
         first_wins += r["winner"] == r["first"]
@@ -26,7 +27,8 @@ def stats(path):
         ramp_seat0 += ramp == 0
         actions += len(r["actions"])
         searched += sum(t is not None for t in r.get("search") or [])
-    return {"games": n, "g_unique": len(set(gs)), "g_range": [min(gs), max(gs)], "draws": draws,
+    assert len(opponents) == 1, opponents
+    return {"opponent": next(iter(opponents)), "games": n, "g_unique": len(set(gs)), "g_range": [min(gs), max(gs)], "draws": draws,
             "ramp_t_wins": ramp_wins, "first_seat_wins": first_wins, "ramp_t_first": ramp_first,
             "ramp_t_seat0": ramp_seat0, "actions": actions, "searched_decisions": searched}
 

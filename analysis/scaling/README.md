@@ -3403,3 +3403,7 @@ J92 的 40% 里混着两样东西：网络比现装评估慢（N 从 200 降到 
   - 跳费龙方 `mcts:94+P+setnet=M/net-nm1f-ramp-elf.npz+netmid+puct=M/prior-nm1-ramp-t.npz:2:1`。
   - 连击妖方 `mcts:95+P+setnet=M/net-nm1f-ramp-elf.npz+netmid+puct=M/prior-nm1-elf-t.npz:2:1`。
   - 建造线 NM2 训练片下完后如果空着，从训练片的后几片接，先发消息。
+- **NM2 留出 5 片下完**（本线，代码 cb81fd4 / svsim 91e88e0，3 进程，05:31Z～07:24Z）：`analysis/scaling/data/nm2/holdout/`，附 `SHA256SUMS-analysis` 和每片 `.stats.json`（`shard_stats.py` 推广到任何有跳费龙一方的对位，多报一项 opponent）。
+  - 每片 1000 局，局号不重复，无平局，跳费龙坐 0 号位 500 局。
+  - 跳费龙胜依次 496、500、498、527、496，合计 2517 / 5000（50.3%）。先手胜 534、557、581、531、529（54.6%），比 NM1 的约 59% 低。
+  - 第 2 代自对弈 07:24Z 接着开下。前两局的 "ai" 按座位对上：跳费龙方 mcts:94 + prior-nm1-ramp-t，连击妖方 mcts:95 + prior-nm1-elf-t。
