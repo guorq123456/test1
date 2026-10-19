@@ -3909,3 +3909,25 @@ J92 的 40% 里混着两样东西：网络比现装评估慢（N 从 200 降到 
 - **NM2 第 2 代：本线 k = 5、6 下完**，都没停过。跳费龙胜 431、454，先手胜 548、539。
   - 本线的 7 片训练片齐了。加上建造线的 k = 8、9，9 片合计跳费龙胜 45.0%。k = 7 在建造线。
   - 本线 23:40Z 开下留出片 80200000 + 2h。
+
+### NM1 第 3 代门：选手串登记（在任何第 3 代门局之前，10-19 23:5xZ）
+
+条件：对手卡表已知（牌序、手牌未知）。
+
+- **来源**：建造线 280dc04（README「NM1 generation 3: the fits, the specs and N₀」）。
+- **A**（第 3 代 bot）：
+  - 跳费龙：`mcts:89+P+setnet=M/net-nm1g3-ramp-elf.npz+netmid+puct=M/prior-nm1g3-ramp-t.npz:2:1`
+  - 连击妖：`mcts:95+P+setnet=M/net-nm1g3-ramp-elf.npz+netmid+puct=M/prior-nm1g3-elf-t.npz:2:1`
+  - 其中 P = `plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost`，M = `analysis/scaling/models`。
+- **B**（第 2 代 bot，装档 N）：跳费龙 `mcts:89+P+setnet=M/net-nm1g2-ramp-elf.npz+netmid+puct=M/prior-nm1g2-ramp-t.npz:2:1`，连击妖同样换成 `mcts:95` 和 `prior-nm1g2-elf-t`。
+- **本线核对**：
+  - sha256 都对上：net-nm1g3-ramp-elf 7885e137…（续训臂，按登记）、prior-nm1g3-ramp-t 913be133…、prior-nm1g3-elf-t 9a92361f…。
+  - 两个先验的 info 里 deck / opponent 是各自那一方，起点 sha 是第 2 代先验（4b276d1e / c7db9f78）。
+  - 四个串都能建 agent，搜索次数 89 / 95 / 89 / 95。
+- **N₀** = 89 / 95。建造线逐局面比过：跳费龙 0.988，连击妖 0.998。照旧由各门 20 对的复核定 N。
+- **代码** 280dc04。和第 2 代门的 b9e6f75 相比，svsim 只改了训练用的部分：`--split` 选项、setpolicy fit 的 info。下棋路径没变。
+- **门**：
+  - 门 1：A 用跳费龙，对 B 的连击妖。复核 79999000，门 79900000。
+  - 门 2：A 用连击妖，对 B 的跳费龙。复核 80099000，门 80000000。
+  - 各 300 对，本机 3 个进程。门期间 NM2 第 2 代自对弈暂停（PAUSE）。
+- 脚本：`analysis/gates/scaling/nm1g3/gate/run.sh`。打分 J165a–d。
