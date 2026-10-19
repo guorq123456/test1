@@ -1509,3 +1509,104 @@ Condition: the opponent's deck list is known (order and hand not).
 | net-midwide-ramp-t | 145.43 | 2.43 |
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## D15 preparation: ramp-t vs elf-t, a non-mirror pairing (the architecture thread 2026-10-19 00:34Z)
+
+The scoring-net line stops (D14, the analysis line c3379a2). The same recipe moves to a non-mirror pairing, ramp-t
+against elf-t first. Below is what the trainer's bots use there today, what the new candidates do there, and the
+plan. Nothing a player sees has changed.
+
+### 1. The trainer: decks, pairings, and what each level scores with
+
+**Decks.** The page (web/index.html, ui.session.DECKS) offers nine decks on either side, so 81 ordered pairings: the
+five early decks (破魔虫精灵 rhino, 跳费龙 ramp, 海盗皇家 pirate, 连击精灵 combo, 快攻龙 face) and the four
+tournament decks (elf-t, nemesis-t, ramp-t, pirate-t). The AI plays the deck picked as "AI 的卡组". The CR
+calibration (ratings.json, version 23) measures the four tournament decks, each against the ruler's four.
+
+**Levels** (ui.session.LEVELS): fast `greedy+plan+learned`; normal
+`mcts:115+plan+learned+phased=ref-5558960+reuse+mull=default`; strong `mcts:200+plan+learned+phased`; max
+`mcts:1043+plan+learned+phased`; original `mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default`.
+
+**Which model scores**: analysis/scaling/pairing_probe.py builds each bot as the trainer does and asks it to
+score a dealt position of the pairing (no game played, no seed drawn). Output: data/pairing/probe-levels.json.
+- *Per-pairing linear models* (learn.phased): a model is filed under the ordered pair (deck, opponent deck) and the
+  moment (ended / act). There are installed models for 12 ordered pairs: elf-t–elf-t, elf-t–nemesis-t, elf-t–ramp-t,
+  nemesis-t–elf-t, nemesis-t–ramp-t, pirate-t–elf-t, pirate-t–pirate-t, ramp-ramp, ramp-t–elf-t, ramp-t–nemesis-t,
+  ramp-t–pirate-t and ramp-t–ramp-t.
+- *Per-deck linear models* (learn.model Learned, svsim/learn/weights): every other pairing falls back to the deck's
+  class model (dragon.json, forest.json, …) or to ramp-ramp.json.
+
+| bot | ramp-t (AI) vs elf-t | elf-t (AI) vs ramp-t |
+|---|---|---|
+| fast | weights/dragon.json | weights/forest.json |
+| normal | ref-5558960/ramp-t-elf-t-{ended,act}.json | ref-5558960/elf-t-ramp-t-{ended,act}.json |
+| strong, max | phased_models/ramp-t-elf-t-{ended,act}.json | phased_models/elf-t-ramp-t-{ended,act}.json |
+| original | weights/dragon.json (its folder has the Game8 mirror only) | weights/forest.json |
+| v2skx (`phased=pkg-kc-ramp-ramp`) | pkg-kc-ramp-ramp/ramp-t-elf-t-{ended,act}.json | pkg-kc-ramp-ramp/elf-t-ramp-t-{ended,act}.json |
+
+- **The four ramp-t vs elf-t files are the same in all three folders, byte for byte** (sha256 ramp-t-elf-t-ended
+  b2f24b13…, -act 9fea10f1…, elf-t-ramp-t-ended 8be505d7…, -act df7e7bff…). Normal, strong, max and v2skx
+  therefore score ramp-t vs elf-t with the same weights.
+- **pkg-kc-ramp-ramp is mirror-only in effect.** It is the installed folder copied byte for byte, with
+  ramp-ramp-ended.json replaced (README of the package). Outside the original Ramp mirror, v2skx differs from strong
+  only by `+xprune=3:3:cost`.
+- **The four files.** Each is a version-2 linear model of one side and moment. They were fitted on the 2000 v2
+  self-play games of elf-t vs ramp-t (2026-10-08, per-pairing fits). The turn-end models used about 14 800 turn
+  ends each, the in-turn models 52 904 and 70 361 positions.
+- **For comparison, the mirrors:**
+  - the ramp-t mirror: normal falls back to ramp-ramp (the alias, since ref-5558960 has no ramp-t–ramp-t), while
+    strong and v2skx use ramp-t–ramp-t;
+  - the elf-t mirror: elf-t–elf-t at every searching level.
+
+### 2. The new candidates in ramp-t vs elf-t
+
+The candidates are the ramp-t mirror's A (`net-mid-ramp-t+netmid+puct=prior-ramp-ft-t05`, N 83) and the elf-t new
+bot (`net-mid-elf-t+netmid+puct=prior-elft-ft-t05`, N 71).
+- **They run.** On the first 2 recorded games of that set (111 main-phase decisions, both sides), each spec decided
+  at every step without an error (profile_cost.py, data/pairing/probe-candidates-ramp-t-elf-t.json). The records
+  were replayed; no seed was drawn.
+- **Their value net is never used** (SetNet.logit 0 calls per decision). SetNetEnded answers only for its own pairing
+  (info deck / opponent: ramp-t–ramp-t, elf-t–elf-t). Every position goes to the model under it, which is v2skx's,
+  i.e. the installed ramp-t–elf-t / elf-t–ramp-t linear models above. +netmid changes nothing there.
+- **Their move prior is used** (SetPolicy.priors 12.2 and 10.7 calls per decision). The prior checks no pairing.
+  Cards it never saw get their static rows on the fly, but it was trained on its mirror's decisions only.
+- So in this pairing a candidate is v2skx's evaluation with a mirror-trained prior at a smaller N (83 / 71 against
+  200), not the bot that passed its mirror's gate.
+
+### 3. Plan for ramp-t vs elf-t (the mirror's recipe)
+
+- **Data.**
+  - Who plays: v2skx on both sides (`scaledata play --deck ramp-t --opponent elf-t`). The first player is
+    random per game, so each deck is first and second, and every game gives turn ends and decisions from both
+    sides.
+  - How much: 10⁴ games in 10 shards of 1000 for training, and 5 shards held out. This is the mirror's first
+    generation (70100000 + 2k, holdout 70200000 + 2h).
+  - Why not the new candidates: they would add only a mirror prior to the same evaluation (§2), so the data would be
+    v2skx's at a smaller N.
+  - Seeds come from the analysis line.
+  - Cost: about 4–5 CPU s a game, so about 1.1 h a shard with 4 workers. It is played in runs of under 2 hours.
+- **Value net.**
+  - One net, learning both sides' views. Each turn end is scored from the side that ended the turn, as in the
+    mirror. Both views share the card features, so one net sees twice the data.
+  - The net knows no deck or pairing number: its inputs are each card's features and state, never a card id, and no
+    card gets a fixed score.
+  - It has the mid-turn branch: flag, mid-turn rows from the decisions of both sides, and the mirror's thinning and
+    valid split.
+  - Start: net-mid-ramp-t or net-mid-elf-t, whichever has the lower valid Brier on the new data before training
+    (both kinds of row). This rule is set before either is scored.
+  - A card the start never saw is added to its table by its static row, as SetNet does in play, with the start's
+    standardization unchanged. So on the cards it knows, the start scores as before.
+  - Training: as gen 4 / the mid nets (lr 1e-3, decay 0.5, l2 1e-5, batch 256, --ftz, patience 4). The epochs go
+    in chunks of under 2 hours.
+- **Move prior.**
+  - Each side's own mirror prior, prior-ramp-ft-t05 and prior-elft-ft-t05, is fine-tuned on that side's decisions
+    in the new data (`setpolicy fit --prior`, τ 0.5).
+  - Before the fine-tune, the valid CE of the mirror prior as it is is reported next to it.
+- **Code needed (default off, the mirrors bit for bit as now):**
+  - SetNetEnded answers for a net whose info names both orders of a pairing;
+  - `train_mid.py` / `scaledata` take the non-mirror pairing's shards and the start's table extension;
+  - `setpolicy encode/fit` keeps one side's decisions (`--deck`).
+- **The gate is the analysis line's to register.** The new bot plays v2skx with seats swapped, time-matched. The new
+  bot on the ramp-t side and on the elf-t side are two arms or one, as it registers.
+
+Condition: the opponent's deck list is known (order and hand not).
