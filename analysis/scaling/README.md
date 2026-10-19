@@ -1676,3 +1676,35 @@ training and 15 996 valid rows, mid-turn rows thinned at 0.32.
 - Logs: data/nm1/train-nm1{,f}-ramp-elf.log. Info: data/net-nm1{,f}-ramp-elf.json.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+### NM1 priors, the new bot's two specs and N₀ (2026-10-19 04:10–05:15Z)
+
+**Priors.** Each side's mirror prior was fine-tuned on that side's decisions in the 10 training shards (`setpolicy
+encode --deck`, `fit --prior … --extend-cards --tau 0.5 --ftz`). Their info still names the mirror pairing (deck /
+opponent); the prior checks no pairing.
+
+| prior | from | train / valid decisions | valid CE start → end | epochs (best) | sha256 |
+|---|---|---|---|---|---|
+| prior-nm1-ramp-t | prior-ramp-ft-t05 | 188 450 / 10 014 | 1.31714 → 1.15019 | 40 (36) | 4f023f95… |
+| prior-nm1-elf-t | prior-elft-ft-t05 | 283 215 / 15 067 | 1.45271 → 1.25591 | 30 (26) | db18c4b6… |
+
+**The new bot, one spec per deck it plays:**
+- ramp-t: `mcts:99+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm1f-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1-ramp-t.npz:2:1`
+- elf-t: `mcts:91+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm1f-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1-elf-t.npz:2:1`
+
+**N₀, matched to v2skx's wall time per decision** (puct_cost.py with `--deck`, native).
+- *Positions.* The recorded decisions of that side in games 0–29 of training shards 77900006, 77900008 and
+  77900010: 1876 ramp-t and 2711 elf-t decisions. No game was played and no seed was drawn.
+- *Method.* v2skx and the new bot at N 90, 100 and 110 took turns position by position. The new bot's
+  ms per decision was fitted linearly in N, and N₀ is where the fit meets v2skx's time.
+- *Result.*
+
+  | side | v2skx | N 90 | N 100 | N 110 | N₀ |
+  |---|---|---|---|---|---|
+  | ramp-t | 83.28 | 79.45 | 82.78 | 88.52 | 99.3 → **99** |
+  | elf-t | 100.42 | 100.47 | 104.03 | 110.56 | 90.9 → **91** |
+
+- *Earlier, smaller runs.* Runs of 20–30 games on single shards scattered by about ±10% (data/nm1/cost-*.json),
+  which is why the pooled run above sets N₀.
+
+Condition: the opponent's deck list is known (order and hand not).
