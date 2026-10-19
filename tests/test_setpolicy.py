@@ -216,6 +216,28 @@ def test_prior_continues_from_all_its_weights_and_checks_its_card_table(shard, t
         SP._prior_to_continue(args, data.card_ids[::-1], data.static[::-1])
 
 
+def test_a_prior_grown_to_a_new_pairing_records_where_it_came_from(shard, tmp_path):
+    """--prior --extend-cards: the info names this fit (the prior and its sha256, the shards, the side), not the
+    prior's own start; the weights are the prior's."""
+    import argparse
+    import hashlib
+    data, pol = _tiny(shard)
+    pol.info = {**pol.info, "init": "old-net.npz", "shards": [1, 2], "deck": "ramp-t", "opponent": "nemesis-t"}
+    path = tmp_path / "prior.npz"
+    pol.save(path)
+    args = argparse.Namespace(prior=str(path), head=3, freeze=False, tau=0.5, shards=[74100038], extend_cards=True,
+                              deck="nemesis-t", opponent="elf-t")
+    got = SP._prior_to_continue(args, data.card_ids[::-1], data.static[::-1])     # another table: grown, not refused
+    for k in SP.SetPolicy.PARAMS + ("smean", "sstd", "card_ids", "static"):
+        assert np.array_equal(getattr(got, k), getattr(pol, k))
+    assert "init" not in got.info and got.info["shards"] == [74100038]
+    assert got.info["prior_sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
+    assert (got.info["deck"], got.info["opponent"]) == ("nemesis-t", "elf-t")
+    plain = SP._prior_to_continue(argparse.Namespace(**{**vars(args), "deck": None, "opponent": None}),
+                                  data.card_ids, data.static)
+    assert (plain.info["deck"], plain.info["opponent"]) == ("ramp-t", "nemesis-t")
+
+
 @pytest.mark.parametrize("start", [[], ["--init", "N", "--prior", "P"]])
 def test_fit_starts_from_exactly_one_of_a_value_net_or_a_prior(monkeypatch, start):
     import sys

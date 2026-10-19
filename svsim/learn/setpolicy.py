@@ -667,13 +667,14 @@ def _prior_to_continue(args, card_ids, static) -> SetPolicy:
     pol = SetPolicy.load(args.prior)
     if pol.head != args.head:
         raise SystemExit(f"--prior {args.prior}: head {pol.head}, not the command's {args.head}")
-    if getattr(args, "extend_cards", False):        # a new pairing: the data's cards the prior lacks are added
-        return pol
-    if not (np.array_equal(pol.card_ids, card_ids) and np.array_equal(pol.static, np.asarray(static, np.float64))):
+    extend = getattr(args, "extend_cards", False)   # a new pairing: the data's cards the prior lacks are added
+    if not extend and not (np.array_equal(pol.card_ids, card_ids)
+                           and np.array_equal(pol.static, np.asarray(static, np.float64))):
         raise SystemExit(f"--prior {args.prior}: its card table is not the data's cards.npz")
     pol.info = {"prior": str(args.prior), "prior_sha256": hashlib.sha256(Path(args.prior).read_bytes()).hexdigest(),
                 "freeze": args.freeze, "tau": args.tau, "shards": args.shards,
-                "deck": pol.info.get("deck"), "opponent": pol.info.get("opponent")}
+                "deck": getattr(args, "deck", None) or pol.info.get("deck"),
+                "opponent": getattr(args, "opponent", None) or pol.info.get("opponent")}
     return pol
 
 
@@ -746,6 +747,8 @@ def main() -> None:
     f.add_argument("--extend-cards", action="store_true",
                    help="with --prior: the data's cards the prior has no row for are added by their static rows "
                         "(setnet.extend_table; a new pairing)")
+    f.add_argument("--deck", default=None, help="info only: the side whose decisions these are (default the prior's)")
+    f.add_argument("--opponent", default=None, help="info only: that side's opponent (default the prior's)")
     f.add_argument("--out", required=True)
     args = ap.parse_args()
     {"encode": encode_main, "fit": fit_main}[args.cmd](args)
