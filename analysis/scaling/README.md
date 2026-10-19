@@ -1947,3 +1947,62 @@ v2skx on both sides (`scaledata play --deck elf-t --opponent nemesis-t`), the bu
   identically.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+### NM3: the value net, the priors, the specs and N₀ (2026-10-19 14:5xZ–17:1xZ)
+
+The data is the 10 training shards 79100000 + 2k, k = 0–9: the analysis line's k = 0–4 (SHA256SUMS-analysis on
+its branch) and the builder's k = 5–9. 19 of the analysis line's games were replayed, all identical, including
+four around k = 2's resume point. The validation part is (seed·100003 + g) % 20 == 0, as in NM1 and NM2.
+
+**Value net, two arms** (valid: 8952 turn-end and 9051 mid-turn rows of 500 games):
+
+| arm | model | epochs (best) | valid Brier: turn end / mid-turn / both | start on the valid part | sha256 |
+|---|---|---|---|---|---|
+| fresh | net-nm3f-elf-nem | 11 (7) | 0.19776 / 0.19370 / **0.19572** | — | 30846733… |
+| from net-nm2f-ramp-nem, `--extend-cards` (21 cards added) | net-nm3-elf-nem | 6 (2) | 0.20231 / 0.20018 / 0.20124 | 0.23922 / 0.23444 | 0cda54b6… |
+
+- **The fresh arm goes to the gate.** It has the lower valid Brier, both kinds of row together, as in NM1 and NM2.
+  The holdout was not read before the choice.
+- **The choice holds on the valid part alone.** Paired over the valid games (2000 resamples of games), start − fresh
+  is +0.0055, sd 0.0023, 95% +0.001 to +0.010. The fresh arm's own valid Brier has an sd of 0.006 over games.
+- **Every valid game has the pairing's first deck in seat 0.** 100003 ≡ 3 (mod 20) and the shards' seeds are even,
+  so the chosen g are all even, and play() seats the deck at g % 2. The net has no seat input (only went_first and
+  the like). The valid games' first-player share, first-player wins, elf-t wins and length are those of the training
+  games, within noise. The same holds for NM1 and NM2.
+- **The architecture thread's decision (16:53Z):** lines continued from an earlier net keep this split. From-scratch
+  nets of new pairings get a seat-free split (for example hash(seed, g) % 20 == 0), and this README says which line
+  uses which. Earlier results are not recomputed.
+
+**Priors** (both `--prior --extend-cards`, τ 0.5, on that side's decisions):
+
+| prior | from | train / valid decisions | valid CE | epochs | sha256 |
+|---|---|---|---|---|---|
+| prior-nm3-elf-t | prior-nm1-elf-t | 319 125 / 17 151 | 1.373 → 1.23115 | 51 (6675 s) | ab41e9ad… |
+| prior-nm3-nemesis-t | prior-nm2-nemesis-t | 324 735 / 17 161 | 1.39392 → 1.23071 | 32 (4239 s) | 7c9da4f9… |
+
+**A fix to the priors' info (9b28ed9).** With `--extend-cards`, `setpolicy fit --prior` kept the start prior's own
+provenance in the info: its init, its shards, its deck and opponent. Now it writes the fields a plain `--prior`
+writes: the prior and its sha256, the shards and τ. `--deck` / `--opponent` set the side; they are info only, and
+default to the prior's.
+- The two NM3 priors' info was rewritten to these fields after the fit, and their weights were checked identical.
+- prior-nm2-ramp-t, prior-nm1g2-ramp-t and prior-nm1g2-elf-t keep the stale fields. Their weights, and so their play
+  in the gates, are as gated.
+- No search reads these fields. pairing_probe.py prints a prior's deck and opponent.
+
+**The new bot:**
+- elf-t: `mcts:88+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm3f-elf-nem.npz+netmid+puct=analysis/scaling/models/prior-nm3-elf-t.npz:2:1`
+- nemesis-t: `mcts:86+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm3f-elf-nem.npz+netmid+puct=analysis/scaling/models/prior-nm3-nemesis-t.npz:2:1`
+- Both were checked to build and to search with the set N. The net answers both orders. Each prior is its own
+  side's.
+
+**N₀**, the pooled per-position fit as in NM2: puct_cost.py `--deck` on games 0–29 of training shards
+79100006 / 08 / 10. The table gives ms per decision (data/nm3/cost-*-fit.json).
+
+| side | decisions | v2skx | N 90 | N 100 | N 110 | N₀ |
+|---|---|---|---|---|---|---|
+| elf-t | 2952 | 99.52 | 100.96 | 103.73 | 109.92 | 88.1 → **88** |
+| nemesis-t | 3037 | 113.44 | 116.08 | 119.97 | 126.46 | 85.7 → **86** |
+
+The same fit on NM2's file gives its 86.3 back. This N₀ is a start: as in NM1 and NM2, the gate's check games set N.
+
+Condition: the opponent's deck list is known (order and hand not).
