@@ -96,6 +96,11 @@ def main() -> None:
     ap.add_argument("--wide", action="store_true",
                     help="the start grown to twice its width with a trainable leaky ReLU (learn.widenet.WideSetNet."
                          "grown_from: the new blocks into old units 0, the slopes 0 at the start)")
+    ap.add_argument("--extend-cards", action="store_true",
+                    help="cards of the data the start has no row for are added by their static rows (setnet."
+                         "extend_table; a new pairing's start)")
+    ap.add_argument("--pairs", nargs="+", default=None, metavar="DECK:OPPONENT",
+                    help="the orders of the pairing the net answers for (info pairs; default --deck:--opponent)")
     args = ap.parse_args()
     end_seeds, mid_seeds = seeds_of(args.end), seeds_of(args.mid)
     held = set(args.holdout) & (set(end_seeds) | set(mid_seeds))
@@ -137,6 +142,14 @@ def main() -> None:
         from svsim.learn.widenet import WideSetNet
         net = WideSetNet.grown_from(net, info=info)
         info["extra"] = list(net.extra)
+    if args.pairs:
+        info["pairs"] = [p.split(":") for p in args.pairs]
+    info["deck"], info["opponent"] = args.deck, args.opponent
+    if args.extend_cards:
+        from svsim.learn.setnet import extend_table
+        n0 = len(net.card_ids)
+        extend_table(net, train.card_ids, train.static)
+        info["extended_cards"] = [int(c) for c in net.card_ids[n0:]]
     if train.inputs != net.inputs or valid.inputs != net.inputs:
         raise SystemExit(f"the data's inputs ({train.inputs}) are not the net's ({net.inputs})")
     for d in (train, valid):

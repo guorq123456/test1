@@ -719,6 +719,33 @@ class SetNet:
         return net
 
 
+def extend_table(model, card_ids, static) -> np.ndarray:
+    """A start's card table grown to a new pairing's cards (D15, the architecture thread 2026-10-19 00:34Z): the
+    cards of (card_ids, static) that `model` (a SetNet or a setpolicy.SetPolicy) has no row for are appended by their
+    static rows, the standardization unchanged, so on the cards it knew the model scores as before. A card in both
+    must have the same static row. Returns each of card_ids' index in the model's table."""
+    index = {int(c): i for i, c in enumerate(model.card_ids)}
+    static = np.asarray(static, dtype=np.float64)
+    new = []
+    for c, row in zip(np.asarray(card_ids).tolist(), static):
+        if c in index:
+            if not np.array_equal(model.static[index[c]], row):
+                raise ValueError(f"card {c}: its static row differs from the model's")
+        elif c not in {n for n, _ in new}:
+            new.append((c, row))
+    if new:
+        model.card_ids = np.concatenate([model.card_ids, np.asarray([c for c, _ in new], np.int64)])
+        model.static = np.concatenate([model.static, np.stack([r for _, r in new])])
+        for k in ("_table", "_idx"):
+            if hasattr(model, k):
+                setattr(model, k, None)
+        for k in ("_pool", "_zone_sums", "_live_sums"):
+            if hasattr(model, k):
+                setattr(model, k, {})
+        index = {int(c): i for i, c in enumerate(model.card_ids)}
+    return np.asarray([index[c] for c in np.asarray(card_ids).tolist()], dtype=np.int32)
+
+
 _CACHE: dict = {}
 
 
@@ -770,6 +797,9 @@ class SetNetEnded:
         self.pair = (net.info.get("deck"), net.info.get("opponent"))
         if None in self.pair:
             raise ValueError("the net names no pairing (info deck / opponent)")
+        # a net trained on both sides of a non-mirror pairing (D15) names both orders in info "pairs"; a net
+        # without the key answers for (deck, opponent) only, as before
+        self.pairs = {tuple(p) for p in net.info.get("pairs") or [self.pair]}
 
     def score(self, state, player: int, player_moves_next: bool = False) -> float:
         from svsim.learn.model import SCALE
@@ -777,7 +807,7 @@ class SetNetEnded:
         if state.winner is not None:
             return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
         if not player_moves_next and (state.players[player].deck_name, state.players[1 - player].deck_name) \
-                == self.pair:
+                in self.pairs:
             if self.mid_turn and state.active == player:
                 return SCALE * self.net.logit(state, player, mid=True)
             if self.end_mid_turn and state.active == player:

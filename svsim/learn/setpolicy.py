@@ -184,7 +184,8 @@ def decisions(record: dict, skip_first: int = 0):
 
 
 def _encode_shard(job):
-    path, target = job
+    path, target = job[:2]
+    deck = job[2] if len(job) > 2 else None          # one side's decisions only (the mover's deck), or both
     import gzip
     t0 = time.process_time()
     cards, toks, offs, glob, meta = [], [], [0], [], {k: [] for k in ("g", "step", "turn", "start", "n_legal")}
@@ -196,6 +197,8 @@ def _encode_shard(job):
             rec = json.loads(line)
             for i, state, legal, reps, group, pi, start in decisions(rec):
                 me = state.active
+                if deck is not None and state.players[me].deck_name != deck:
+                    continue
                 c, tk, gl = T.encode(state, me)
                 kind, tkind, src, tgt, extras = move_arrays(state, reps, rows_of(state, me))
                 cards.append(c), toks.append(tk), glob.append(gl)
@@ -225,7 +228,7 @@ def encode_main(args) -> None:
         seed = os.path.basename(path)[len("rec-"):-len(".jsonl.gz")]
         target = out / f"dec-{seed}.npz"
         if not target.exists():
-            jobs.append((path, target))
+            jobs.append((path, target, args.deck))
     print(json.dumps({"shards_to_encode": len(jobs)}), flush=True)
     with Pool(args.workers) as pool:
         for target, n, m, cpu in pool.imap_unordered(_encode_shard, jobs):
@@ -661,6 +664,8 @@ def _prior_to_continue(args, card_ids, static) -> SetPolicy:
     pol = SetPolicy.load(args.prior)
     if pol.head != args.head:
         raise SystemExit(f"--prior {args.prior}: head {pol.head}, not the command's {args.head}")
+    if getattr(args, "extend_cards", False):        # a new pairing: the data's cards the prior lacks are added
+        return pol
     if not (np.array_equal(pol.card_ids, card_ids) and np.array_equal(pol.static, np.asarray(static, np.float64))):
         raise SystemExit(f"--prior {args.prior}: its card table is not the data's cards.npz")
     pol.info = {"prior": str(args.prior), "prior_sha256": hashlib.sha256(Path(args.prior).read_bytes()).hexdigest(),
@@ -679,6 +684,14 @@ def fit_main(args) -> None:
     card_ids, static = train.card_ids, train.static
     if args.prior:
         pol = _prior_to_continue(args, card_ids, static)
+        if getattr(args, "extend_cards", False):
+            from svsim.learn.setnet import extend_table
+            n0 = len(pol.card_ids)
+            table = extend_table(pol, card_ids, static)
+            for d in (train, valid):                   # the data's card indices into the prior's (grown) table
+                d.cards = table[d.cards]
+                d.card_ids, d.static = pol.card_ids, pol.static.astype(np.float32)
+            pol.info = {**pol.info, "extended_cards": [int(c) for c in pol.card_ids[n0:]]}
     else:
         net = SetNet.load(args.init)
         pol = SetPolicy.from_value_net(net, head=args.head, seed=args.seed,
@@ -705,6 +718,8 @@ def main() -> None:
     e.add_argument("--records", required=True)
     e.add_argument("--out", required=True)
     e.add_argument("--workers", type=int, default=4)
+    e.add_argument("--deck", default=None, help="keep the decisions of the side playing this deck only (a non-mirror "
+                                                "pairing's prior; default both sides)")
     f = sub.add_parser("fit")
     f.add_argument("--data", required=True, help="a folder of dec-<seed>.npz")
     f.add_argument("--cards", required=True, help="a token folder's cards.npz (the static rows)")
@@ -725,6 +740,9 @@ def main() -> None:
     f.add_argument("--seed", type=int, default=0)
     f.add_argument("--ftz", action="store_true")
     f.add_argument("--checkpoint", default=None)
+    f.add_argument("--extend-cards", action="store_true",
+                   help="with --prior: the data's cards the prior has no row for are added by their static rows "
+                        "(setnet.extend_table; a new pairing)")
     f.add_argument("--out", required=True)
     args = ap.parse_args()
     {"encode": encode_main, "fit": fit_main}[args.cmd](args)
