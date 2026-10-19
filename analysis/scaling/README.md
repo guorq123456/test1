@@ -1708,3 +1708,22 @@ opponent); the prior checks no pairing.
   which is why the pooled run above sets N₀.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+**NM1 gates (the analysis line, 80c7437).** New bot against v2skx, 300 pairs per gate:
+
+| gate | new bot plays | win rate (95% CI) | CR |
+|---|---|---|---|
+| 1 | ramp-t | 58.3% (54.5–62.2) | +79 |
+| 2 | elf-t | 58.8% (55.0–62.7) | +84 |
+| both, 600 pairs | | 58.6% (55.9–61.3) | +82 |
+
+- Both gates passed: the lower bound of the 600 pairs is above 50%.
+- **N₀ was corrected inside the gates.** The gates' own checks timed whole games and found the N₀ above off by about
+  5% each way, so they ran with corrected N:
+  - ramp-t: ratio 1.052, gate N 94, in-gate ratio after the fix 1.015;
+  - elf-t: ratio 0.953, gate N 95, in-gate ratio after the fix 1.000.
+- **Next time.** For a non-mirror pairing, N₀ should come from whole-game timing like the gates', or from many more
+  positions.
+- **Installing** is Salem's call.
+
+Condition: the opponent's deck list is known (order and hand not).
