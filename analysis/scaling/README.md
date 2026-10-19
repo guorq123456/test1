@@ -1926,3 +1926,24 @@ Condition: the opponent's deck list is known (order and hand not).
 - Installing is Salem's call.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+### NM3 self-play: the builder's training shards (2026-10-19 10:4x–14:0xZ)
+
+v2skx on both sides (`scaledata play --deck elf-t --opponent nemesis-t`), the builder's half of the training shards:
+79100000 + 2k, k = 5–9 (data/nm3/rec, SHA256SUMS-build). The analysis line plays k = 0–4 and the holdout.
+
+| k | shard | games | draws | first player wins | elf-t wins | elf-t in seat 0 | elf-t first |
+|---|---|---|---|---|---|---|---|
+| 5 | 79100010 | 1000 | 0 | 572 | 453 | 500 | 511 |
+| 6 | 79100012 | 1000 | 0 | 553 | 456 | 500 | 497 |
+| 7 | 79100014 | 1000 | 0 | 557 | 462 | 500 | 487 |
+| 8 | 79100016 | 1000 | 0 | 554 | 439 | 500 | 507 |
+| 9 | 79100018 | 1000 | 0 | 547 | 454 | 500 | 491 |
+
+- Every shard has 1000 distinct g.
+- "First player wins" is winner == first. An earlier message to the analysis line counted winner == 0 by mistake, and
+  the analysis line caught it.
+- k = 9 was stopped after 279 games on purpose, to add workers, and resumed from its part file. Games 277–282 replay
+  identically.
+
+Condition: the opponent's deck list is known (order and hand not).
