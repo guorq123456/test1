@@ -1877,3 +1877,17 @@ nemesis-t's. A start's missing cards are added by their static rows (`--extend-c
 - **Order:** NM1 generation 2's continuation goes first when its data is in (about 12:35Z); NM3's fits come after.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+**NM2 gates (the analysis line, 29f9cd0).** New bot against v2skx, 300 pairs per gate. The check games corrected N:
+
+| gate | new bot plays | N₀ → N (check ratio) | in-gate ratio | win rate (95% CI) | CR |
+|---|---|---|---|---|---|
+| 1 | ramp-t | 88 → 94 (0.940) | 0.982 | 54.0% (50.0–58.0) | +38 |
+| 2 | nemesis-t | 86 → 77 (1.114) | 1.0305 | 58.3% (54.5–62.2) | +79 |
+| both, 600 pairs | | | | 56.2% (53.3–58.9) | +59 |
+
+- Both gates passed: the lower bound of the 600 pairs is above 50%.
+- The per-position N₀ was off by 6% (ramp-t) and 11% (nemesis-t). This is NM1's lesson again: the check games set N.
+- Installing is Salem's call.
+
+Condition: the opponent's deck list is known (order and hand not).
