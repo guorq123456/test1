@@ -1488,3 +1488,24 @@ the gradients match finite differences.
 Otherwise this line stops.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+### D14 fits (files; the screen is the analysis line's)
+
+| net | sha256 | epochs (best) | fit | info / log | holdout |
+|---|---|---|---|---|---|
+| net-midv2a-ramp-t (D14a) | e16da389… | 12 (11) | 4442 s, one run | data/net-midv2a-ramp-t.json, data/mid/train-midv2a-ramp-t.log | report-midv2a-ramp-t.json, dump-midv2a-ramp-t |
+| net-midwide-ramp-t (D14b) | 6fb58358… | 12 (12) | 12609 s of epochs in four chunks (1, 2–6, 7–10, 11–12) | data/net-midwide-ramp-t.json (its fit_s is the last chunk's), data/mid/train-midwide-ramp-t.log | report-midwide-ramp-t.json, dump-midwide-ramp-t |
+
+- D14b's learned slopes are, phi 1 to rho 2: 0.0014, 0.0003, −0.038, −0.090. The largest weight of the new last-layer
+  units (v3_n) is 0.0027.
+- **Step cost, native** (puct_cost.py, data/mid/cost-d14-ramp-t.json): 469 decisions of rec-75400038's first 10
+  games. A's spec (N 83, +netmid, prior ft-t05) with each net, the three taking turns position by position. The
+  figures are ms per decision:
+
+| net | ms per decision | × net-midc-ramp-t |
+|---|---|---|
+| net-midc-ramp-t | 59.90 | 1.00 |
+| net-midv2a-ramp-t | 62.66 | 1.05 |
+| net-midwide-ramp-t | 145.43 | 2.43 |
+
+Condition: the opponent's deck list is known (order and hand not).
