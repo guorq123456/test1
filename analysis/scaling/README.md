@@ -1767,3 +1767,18 @@ cards themselves are in the simulator (the tournament decks' registration).
   Given to the analysis line before the gate.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+**NM2 value net, the two arms and the choice** (2026-10-19 08:42–09:2xZ; the rule above). Both fits ran on 10 shards:
+318 021 training and 16 828 valid rows, mid-turn rows thinned at 0.337.
+
+| arm | sha256 | epochs (kept) | valid Brier, both kinds | turn end | mid-turn | at the start |
+|---|---|---|---|---|---|---|
+| start, net-nm2-ramp-nem (from net-nm1f-ramp-elf) | 9c8fb308… | 11 (7) | 0.19081 | 0.19209 | 0.18955 | 0.232 / 0.232 |
+| fresh, **net-nm2f-ramp-nem** | e2866368… | 13 (9) | **0.18835** | 0.18983 | 0.18689 | 0.402 / 0.396 |
+
+- **The fresh arm goes to the gate**, as in NM1. The start inherited something: it began far better (0.23
+  against 0.40). But it stopped at a worse epoch.
+- The holdout shards (78800000 + 2h) were not read for the choice.
+- The nemesis-t prior takes its trunk from net-nm2f-ramp-nem (`setpolicy fit --init`).
+
+Condition: the opponent's deck list is known (order and hand not).
