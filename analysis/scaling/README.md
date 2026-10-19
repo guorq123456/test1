@@ -3489,3 +3489,14 @@ J92 的 40% 里混着两样东西：网络比现装评估慢（N 从 200 降到 
   - 跳费龙胜依次 499、503、536、496、500、475、528、528、493；加建造线 k = 9 的 528，10 片合计 5086 / 10000。第 1 代 v2skx 数据是 5252 / 10000。
   - 先手胜 577～604。
 - **留出片暂停，让 NM2 的门先跑**（10:4xZ）：架构线定了 NM2 优先，门要本机空闲。留出 h = 0（78400000）刚下了 29 局，停下，门跑完从 part 文件接着下。
+- **NM2 选手串和 N₀ 起点**（建造线 eec27ea，10:38Z 给；仍在任何门局之前）：
+  - 门 1，A 用跳费龙，N₀ = 88：`mcts:88+P+setnet=M/net-nm2f-ramp-nem.npz+netmid+puct=M/prior-nm2-ramp-t.npz:2:1`。
+  - 门 2，A 用机锋，N₀ = 86：`mcts:86+P+setnet=M/net-nm2f-ramp-nem.npz+netmid+puct=M/prior-nm2-nemesis-t.npz:2:1`。
+  - B = v2skx。
+  - 先验：跳费龙方从 prior-nm1-ramp-t 微调；机锋方主干取自 net-nm2f-ramp-nem（旗标 0），加新头再训。
+  - N₀ 用 NM1 那种合并逐局面拟合（训练片 78700006/08/10 各前 30 局）。建造线新写的整局计时 game_cost.py 拿 NM1 门内实测对过，偏差到 0.19，不用。N 照旧由门内 20 对复核定。
+- **本线核对**：
+  - 代码 eec27ea，svsim/ 和 0ccb583 相同。
+  - 三个模型文件 sha256 和建造线给的一致：net e2866368…f850、prior-nm2-ramp-t 45abda4f…56f1、prior-nm2-nemesis-t 8e074cc1…e44e。
+  - 两个串按陪练台方式建出来，两方都由新网打分：开局局面 score = SCALE × net.logit；info pairs 两种顺序都有。先验也都载入了。
+- **运行**：`analysis/gates/scaling/nm2/gate/run.sh`，本机空闲（第 2 代留出片已暂停），3 进程。门跑完再接着下留出片。
