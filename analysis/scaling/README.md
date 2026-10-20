@@ -2412,3 +2412,55 @@ targets on enemy cards. The analysis line's b1 and b2 half-gates swap the net an
 one carries the loss.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+**Afterwards (the analysis line c577c03, c9d85c3).** The premise of this section was withdrawn.
+- A single gate's score holds the two decks' matchup, so it is read against the previous generation's self-play rate
+  for that deck, not against 50%.
+- Read that way, the elf-t side did not fall back:
+  - gen 2 against gen 1: +1.7;
+  - the half-gates: b1 (gen-2 net) +3.4, b2 (gen-2 prior) +2.2, a (gen 2 at N 88) +6.9.
+- The seat split was withdrawn (the architecture thread 10:57Z). The NM3 candidate is the gen-1 bot again.
+
+### Same-deck N against v2skx for the install candidates (the architecture thread 2026-10-20 10:55Z / 10:57Z)
+
+The rule from the next gate on: a seat's N is matched to v2skx playing the same deck. Here it is recomputed for each
+install candidate's seats, offline, with no game and no seed.
+
+**Method.** The script is `samedeck_fit.py`, and the data are in `data/samedeck/`.
+- *Positions.* Each line's gen-1 N₀ positions: games 0–29 of three v2skx training shards per line, 90 games.
+- *Timing.* puct_cost.py `--deck`, with v2skx and the candidate at three N, taking turns position by position.
+- *Fit.* A linear fit in N; the N is where the fit meets v2skx's time.
+- *The two runs.*
+  - 2026-10-20: three seats ran in parallel, N 75/90/105.
+  - 2026-10-19: the gen-1 fits. Converted to gen 2 with the gen-2 / gen-1 per-position ratio at the same N (0.980,
+    1.003, 0.997, 1.011). NM3's gen-1 bot needs no conversion.
+
+| seat | gate N | install N | same-deck N, 10-19 fit | same-deck N, 10-20 fit |
+|---|---|---|---|---|
+| NM1 gen 2 ramp-t | 94 | 89 | 103 | 88 |
+| NM1 gen 2 elf-t | 95 | 95 | 90 | **81** |
+| NM2 gen 2 ramp-t | 85 | 85 | 89 | 83 |
+| NM2 gen 2 nemesis-t | 77 | 80 | 84 | 75 |
+| NM3 gen 1 elf-t | 88 | 88 | 88 | |
+| NM3 gen 1 nemesis-t | 78 | 75 | 86 | |
+
+- **The two runs disagree by 6–15% in N, on the same positions.**
+  - *What moved.* The new bot's time per decision against v2skx's, at the same N, moved by 2–8% between the runs.
+  - *What held.* Gen 2 against gen 1 stayed within about 1%: same structure, same run.
+  - *How it amplifies.* Time per decision is flat in N: the elasticity is 0.39–0.59, so 10% more N is only about 4–6%
+    more time. A few percent of timing drift therefore becomes 5–15% in N.
+- *Solo control on 30 of the 90 games, run alone.* At N 90, gen 1 and gen 2 against v2skx:
+  - elf-t: 1.136 and 1.138;
+  - nemesis-t: 1.136 and 1.132.
+
+  The generations match, but the level is far above both fits (about 1.00–1.09).
+- So a time match between a net bot and v2skx, two different structures, depends on the host and its state at the
+  10% level. A same-structure match does not.
+- **The flag (a same-deck N more than 10% below the gate N).**
+  - NM1 gen 2 elf-t is flagged in the 10-20 fit (81 against 95), but not in the 10-19 fit (90).
+  - Nothing else is flagged in either run.
+  - NM3 gen 1 nemesis-t goes the other way: its gate N is below the same-deck N.
+- **For the NM2 gen-2 gate against v2skx:** the same fit, run on the gate's own host just before the gate, sets N₀
+  better than either run here. Its seats come out at ramp-t 83–89 and nemesis-t 75–84.
+
+Condition: the opponent's deck list is known (order and hand not).
