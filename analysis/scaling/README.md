@@ -2205,6 +2205,7 @@ mid-turn rows of 1000 games.
 - Here both bots have the same structure, and B's N 75 is already an in-gate N. NM1 gen 2's same-structure checks were
   1.021 / 0.971.
 - With the rule taken literally, the start would be 74 / 1.10 → 67.
-- The analysis line and the architecture thread decide which to start from; the gate's check games set N either way.
+- **The architecture thread agreed (02:15Z): the start is 74.** The rule now reads: a nemesis-t side's N₀ is divided
+  by 1.10 only when B is v2skx, a different structure. The gate's check games set N.
 
 Condition: the opponent's deck list is known (order and hand not).
