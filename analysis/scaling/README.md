@@ -4245,3 +4245,26 @@ J92 的 40% 里混着两样东西：网络比现装评估慢（N 从 200 降到 
   - 建造线算本线 80600006 的 sha256 也是 1f6679d6…。
   - 它停下前的 17 局（g 0～16）和本线同局号逐局比对（去掉 date、cpu），17 / 17 完全一样。同一套种子和代码，两台机器下出来的局逐局相同。
   - 先验还在训（连击妖 epoch 11，机锋 epoch 8），之后测 N₀，机锋方不乘 1/1.10。
+
+### NM3 第 2 代门：选手串登记（在任何 NM3 第 2 代门局之前，10-20 09:4xZ）
+
+条件：对手卡表已知（牌序、手牌未知）。
+
+- **来源**：建造线 7f1d5fb（README「NM3 generation 2: self-play, the fits, the specs and N₀」）。
+- **A**（NM3 第 2 代 bot）：
+  - 连击妖：`mcts:88+P+setnet=M/net-nm3g2f-elf-nem.npz+netmid+puct=M/prior-nm3g2-elf-t.npz:2:1`
+  - 机锋：`mcts:75+P+setnet=M/net-nm3g2f-elf-nem.npz+netmid+puct=M/prior-nm3g2-nemesis-t.npz:2:1`
+- **B**（NM3 第 1 代 bot，装档 N）：
+  - 连击妖：`mcts:88+P+setnet=M/net-nm3f-elf-nem.npz+netmid+puct=M/prior-nm3-elf-t.npz:2:1`
+  - 机锋：同样换成 `mcts:75` 和 `prior-nm3-nemesis-t`。
+- **N₀**：连击妖 88（逐局面比 0.999），机锋 75（1.006）。机锋方不乘 1/1.10，因为 B 不是 v2skx。
+- **本线核对**：
+  - sha256 都对上：net-nm3g2f-elf-nem 67cb052a…、prior-nm3g2-elf-t 9317eb6a…、prior-nm3g2-nemesis-t b14dc2ad…。
+  - 两个先验 info 里的 deck / opponent 是各自那一方，起点 sha 是第 1 代先验（ab41e9ad / 7c9da4f9）。
+  - 四个串都能建 agent，搜索次数 88 / 75 / 88 / 75。
+- **代码** 7f1d5fb。svsim 相对 2e5e17a 只改了训练用的部分，下棋路径不变。
+- **门**：
+  - 门 1：A 用连击妖，对 B 的机锋。复核 80799000，门 80700000。
+  - 门 2：A 用机锋，对 B 的连击妖。复核 80899000，门 80800000。
+  - 各 300 对，本机 3 个进程。两方分开报，也分座位报。
+- 脚本：`analysis/gates/scaling/nm3g2/gate/run.sh`。打分 J169a–e。
