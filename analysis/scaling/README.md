@@ -2464,3 +2464,15 @@ install candidate's seats, offline, with no game and no seed.
   better than either run here. Its seats come out at ramp-t 83–89 and nemesis-t 75–84.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+**Afterwards (the architecture thread 2026-10-20 11:59Z).**
+- A gate against v2skx now gets its same-deck N measured on the analysis line's machine, under the gate's load, just
+  before the gate. A gen-vs-gen gate is matched as before.
+- **The install N is not taken from these offline numbers.** The trainer runs in the browser (Pyodide), where timing
+  differs from both machines. Once Salem chooses to install, the same-deck N against v2skx is measured once in the
+  browser. Until then, a candidate's N in the lists here is a reference only.
+- The NM2 positions for that fit are `data/samedeck/rec-cost-nm2.jsonl.gz`: the first 30 games of 78700006 / 08 /
+  10, in that order, 90 records. The file is checked equal, record by record, to the committed shards (sha256
+  70e59868b19f64e7…).
+
+Condition: the opponent's deck list is known (order and hand not).
