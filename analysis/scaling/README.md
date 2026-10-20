@@ -2209,3 +2209,20 @@ mid-turn rows of 1000 games.
   by 1.10 only when B is v2skx, a different structure. The gate's check games set N.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+**NM2 generation-2 gates (the analysis line, bb56f17): passed.** Gen 2 against gen 1, 300 pairs per gate:
+
+| gate | gen 2 plays | N₀ → N (check ratio) | in-gate ratio | win rate | CR |
+|---|---|---|---|---|---|
+| 1 | ramp-t | 94 → 85 (1.106) | 0.984 | 50.0% | +0 |
+| 2 | nemesis-t | 74 → 77 (0.962) | 0.963 (out of band, noted) | 59.5% | +91 |
+| both, 600 pairs | | | | 54.8% (52.1–57.3) | +45 |
+
+- Both gates passed: the lower bound of the 600 pairs is above 50%.
+- **The per-position N₀ missed on both sides,** though both bots have the same structure:
+  - ramp-t was about 10% too high (the check ratio was 1.106);
+  - nemesis-t was about 4% too low (0.962).
+- **The install N (the architecture thread 02:45Z):** ramp-t 85, nemesis-t 80.
+- Installing is Salem's call.
+
+Condition: the opponent's deck list is known (order and hand not).
