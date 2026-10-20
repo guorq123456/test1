@@ -2312,3 +2312,103 @@ Condition: the opponent's deck list is known (order and hand not).
 - The NM3 model files are left as they are until it decides.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+### NM3 generation 2: why the elf-t side fell back — the prior and the timing (the architecture thread 2026-10-20 10:31Z)
+
+Report only. No game is played and no seed is drawn. The NM3 model files are left as they are.
+
+**(1) The two elf-t priors on the gen-2 holdout's elf-t decisions.** The script is `nm3g2_prior_cmp.py`, and the
+output is `data/nm3g2/diag/prior-cmp-elf-t.json`.
+
+- The holdout is h = 0–4 (80600000 + 2h), encoded with `setpolicy encode --deck elf-t`: 164 016 decisions.
+- The search targets come from the gen-1 bots that played those shards. That search ran with the gen-1 prior, so "top-1
+  vs search" leans towards gen 1.
+- A rerun differs from the first run in one decision, an argmax near-tie under threaded BLAS. The file holds the rerun.
+
+| | gen-1 prior | gen-2 prior |
+|---|---|---|
+| CE to the search, τ 0.5 | 1.07897 | 0.98003 |
+| top-1 = the search's top | 80.87% | 81.69% |
+| mass on the search's top | 0.448 | 0.523 |
+
+The two priors' top-1 picks agree on 86.4% of decisions. By the kind of move the search chose:
+
+| search's top | decisions | gen 1 hits | gen 2 hits | g1 = g2 |
+|---|---|---|---|---|
+| play (no target) | 71 358 | 80.95% | 82.44% | 87.0% |
+| attack → leader | 20 574 | 87.49% | 87.89% | 88.6% |
+| **attack → enemy card** | 17 897 | 85.75% | **82.07%** | 86.3% |
+| **play → enemy card** | 16 140 | 69.66% | **67.10%** | 77.9% |
+| evolve | 8 821 | 82.61% | 84.90% | 87.8% |
+| super-evolve | 8 162 | 82.05% | 84.56% | 88.2% |
+| end turn | 7 399 | 91.39% | 93.99% | 94.5% |
+| play → hand card | 6 222 | 50.13% | 59.48% | 75.4% |
+| bonus | 5 794 | 87.49% | 88.87% | 91.2% |
+
+- **Gen 2 is the better prior overall** (CE −9%) and in every turn band.
+- **It is worse in one place: picking an enemy card to hit**, whether by attacking it or by playing a card at it. That is
+  trading and removal: 34 037 decisions, about a fifth of elf-t's.
+- When the two priors disagree, about half the time both pick a "play" move but a different card or target (10 402 of
+  22 339). Next most common: gen 1 plays and gen 2 attacks (2 475); then both attack, at different targets (2 176).
+
+**(3) Timing.** The script is `gate_ratios.py`, and the output is `data/nm3g2/diag/gate-ratios.json`. The four-spec
+per-position file is `data/nm3g2/diag/cost-split-elf-t.json`.
+
+- **What the check compares.** A gate's check ratio is A's ms per decision over B's, in the same games. In a non-mirror
+  gate, A and B sit on opposite decks. Recomputed from each ncheck.jsonl, it reproduces all 16 scaling checks exactly.
+- **What N₀ compared.** The gen-2 N₀ compared gen 2 with gen 1 on the same deck. It cannot predict a check of
+  gen-2 elf-t against gen-1 nemesis-t.
+  - The gen-1 install Ns (elf-t 88, nemesis-t 75) were each set against v2skx, never against each other.
+  - So 0.999 and 1.095 measure different things.
+- **The check is noisy.** A pair bootstrap of each 300-pair gate gives the SD of what a 20-pair check would read. It is
+  0.034–0.051, wider than the ±0.03 band. NM3 gen-2 gate 2 is one example: it read 1.007 at its check and 0.953 over
+  its 600 games, at the same N.
+- **The gen-2 elf-t side is not slower.**
+  - In the check games at N 88: gen 2 97.88 ms per decision (gate 1), gen 1 97.25 (gate 2). Decisions per game: 34.8
+    and 34.0.
+  - Per position at N 88, on the N₀'s 805 elf-t positions, each spec relative to gen 1 (156.24 ms):
+
+    | gen-2 net | gen-2 prior | ratio |
+    |---|---|---|
+    | | | 1 |
+    | yes | | 0.986 |
+    | | yes | 0.999 |
+    | yes | yes | 1.004 |
+
+  - Neither the net nor the prior makes a decision slower. Neither do longer turns: the decisions per game above are
+    much the same.
+- **Gate 1's elf-t side was not short of time.** Over its 600 games at N 80 it ran at 1.026 of its gen-1 nemesis-t
+  opponent's time per decision.
+
+**The 16 checks and their gates** (ratio = A ms per decision / B ms per decision):
+
+| gate | check N | check ratio | gate N | gate ratio (600 games) | 20-pair SD |
+|---|---|---|---|---|---|
+| nm1 gate1-ramp | 99 | 1.052 | 94 | 1.015 | 0.047 |
+| nm1 gate2-elf | 91 | 0.953 | 95 | 1.000 | 0.042 |
+| nm1g2 direct elf-t | 95 | 0.985 | 95 | 0.998 | 0.049 |
+| nm1g2 direct ramp-t | 94 | 1.027 | 94 | 1.061 | 0.048 |
+| nm1g2 gate1-ramp | 94 | 1.021 | 94 | 1.024 | 0.043 |
+| nm1g2 gate2-elf | 95 | 0.971 | 95 | 0.980 | 0.044 |
+| nm1g3 gate1-ramp | 89 | 0.969 | 92 | 0.990 | 0.040 |
+| nm1g3 gate2-elf | 95 | 0.965 | 98 | 1.059 | 0.047 |
+| nm2 gate1-ramp | 88 | 0.940 | 94 | 0.982 | 0.039 |
+| nm2 gate2-nem | 86 | 1.114 | 77 | 1.030 | 0.051 |
+| nm2g2 gate1-ramp | 94 | 1.106 | 85 | 0.984 | 0.049 |
+| nm2g2 gate2-nem | 74 | 0.962 | 77 | 0.964 | 0.045 |
+| nm3 gate1-elf | 88 | 1.027 | 88 | 0.984 | 0.034 |
+| nm3 gate2-nem | 86 | 1.105 | 78 | 1.046 | 0.039 |
+| nm3g2 gate1-elf | 88 | 1.095 | 80 | 1.026 | 0.037 |
+| nm3g2 gate2-nem | 75 | 1.007 | 75 | 0.953 | 0.036 |
+
+- The 600-game ratios run from 0.953 to 1.061, with a mean of 1.006.
+- The "N₀ misses" in NM2 and NM3 were checks of A against the opposite deck, plus the check's own noise. Gen 2 was not
+  slower.
+- For a gen-vs-gen gate, N₀ is better estimated as A's side against B's side, with both on their own decks' positions
+  in the same games.
+
+**Reading them together.** The elf-t fall-back is not a timing artefact. What differs is how the gen-2 prior chooses
+targets on enemy cards. The analysis line's b1 and b2 half-gates swap the net and the prior, and they will say which
+one carries the loss.
+
+Condition: the opponent's deck list is known (order and hand not).
