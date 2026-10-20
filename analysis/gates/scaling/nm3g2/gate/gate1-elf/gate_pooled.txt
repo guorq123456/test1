@@ -1,0 +1,2 @@
+/home/user/test1/analysis/gates/scaling/nm3g2/gate/gate1-elf/gate.jsonl: 300 pairs, seeds 80700000..80700299, 44.5% ± 4.0% (40.5%..48.5%), CR -52 (-91..-14; steady-state -44); ms per searched decision A 94.82 / B 92.40 = 1.026
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 44.5% (40.3%..48.5%), CR -52 (-92..-14; steady-state -44)
