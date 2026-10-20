@@ -1,0 +1,2 @@
+{"spec": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost", "opponent_spec": "mcts:84+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm2g2f-ramp-nem.npz+netmid+puct=analysis/scaling/models/prior-nm2g2-nemesis-t.npz:2:1", "deck": "ramp-t", "opponent": "nemesis-t", "base": 81600000, "stride": 2, "shards": [1, 2], "per_shard": 30, "open_shards": [81600002], "games_to_play": 30, "workers": 3}
+{"games": 30, "of": 30, "wall_s": 46, "cpu_s_per_game": 4.5, "games_per_hour": 2338}
