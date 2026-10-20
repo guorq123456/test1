@@ -4064,3 +4064,30 @@ J92 的 40% 里混着两样东西：网络比现装评估慢（N 从 200 降到 
   - **验证上区间跨 0：默认选从头训那条**。以前是取点估计更好的那条。
   - 理由：比过的五次里，从头训没有一次明显输。NM1 第 3 代验证上分不开，留出片上从头训好约 0.001；NM2 第 2 代两边都说从头训好约 0.003。
   - NM2 第 2 代按旧规则已经选了从头训，新旧规则结果一样，不受影响。
+
+### NM2 第 2 代门：选手串登记（在任何 NM2 第 2 代门局之前，10-20 02:2xZ）
+
+条件：对手卡表已知（牌序、手牌未知）。
+
+- **规则改动**（架构线 02:16Z，在任何门局之前）：**只有 B 是 v2skx 时，机锋方 N₀ 才乘 1/1.10**（47d4360 那条规则收窄）。
+  - 理由：1/1.10 补的是"新 bot 对 v2skx"时两边结构不同、逐局面计时把机锋方估低的那部分。这次 A、B 结构相同，B 的机锋 N 75 已在门里校过。
+  - 本线 J167 登记里"机锋方的 N₀ 先乘 1/1.10 再复核"一句由此作废。预测本身不改。
+  - 复核照旧只修一次。
+- **来源**：建造线 cfd2df6（README「NM2 generation 2: self-play, the fits, the specs and N₀」）。
+- **A**（NM2 第 2 代 bot）：
+  - 跳费龙：`mcts:94+P+setnet=M/net-nm2g2f-ramp-nem.npz+netmid+puct=M/prior-nm2g2-ramp-t.npz:2:1`
+  - 机锋：`mcts:74+P+setnet=M/net-nm2g2f-ramp-nem.npz+netmid+puct=M/prior-nm2g2-nemesis-t.npz:2:1`
+- **B**（NM2 第 1 代 bot，装档 N）：
+  - 跳费龙：`mcts:94+P+setnet=M/net-nm2f-ramp-nem.npz+netmid+puct=M/prior-nm2-ramp-t.npz:2:1`
+  - 机锋：同样换成 `mcts:75` 和 `prior-nm2-nemesis-t`。
+- **N₀**：跳费龙 94（逐局面比 0.997），机锋 75 / 1.011 → 74。
+- **本线核对**：
+  - sha256 都对上：net-nm2g2f-ramp-nem ac8bd599…、prior-nm2g2-ramp-t 847e24f5…、prior-nm2g2-nemesis-t b672ed41…。
+  - 两个先验 info 里的 deck / opponent 是各自那一方，起点 sha 是第 1 代先验（45abda4f / 8e074cc1）。
+  - 四个串都能建 agent，搜索次数 94 / 74 / 94 / 75。
+- **代码** cfd2df6。svsim 相对 eec27ea 只改了训练用的部分，下棋路径不变。
+- **门**：
+  - 门 1：A 用跳费龙，对 B 的机锋。复核 80399000，门 80300000。
+  - 门 2：A 用机锋，对 B 的跳费龙。复核 80499000，门 80400000。
+  - 各 300 对，本机 3 个进程。
+- 脚本：`analysis/gates/scaling/nm2g2/gate/run.sh`。打分 J167a–e。
