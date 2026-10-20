@@ -2131,3 +2131,20 @@ the 30 shards):
 The gate's check games set N.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+**NM1 generation-3 gates (the analysis line, 999a37f): not passed.** Gen 3 against gen 2, 300 pairs per gate:
+
+| gate | gen 3 plays | N₀ → N (check ratio) | in-gate ratio | win rate (95% CI) | CR |
+|---|---|---|---|---|---|
+| 1 | ramp-t | 89 → 92 (0.969) | 0.990 | 53.2% (49.3–57.2) | |
+| 2 | elf-t | 95 → 98 (0.965) | 1.059 (out of band, noted) | 47.7% (43.8–51.5) | |
+| both, 600 pairs | | | | 50.4% (47.6–53.2) | +4 |
+
+- **Not passed:** the lower bound of the 600 pairs is below 50%. Gen 2 stays NM1's bot.
+- **Both checks found gen 3 about 3% cheaper** than the per-position readings (0.988 / 0.998) said, so N was raised by
+  3 on each side.
+- **The gate used the continued arm, as registered.** On the gen-3 holdout the fresh arm was about 0.001 better on
+  both kinds of row; the gate does not say whether that would have mattered.
+- **What NM1 does next is the architecture thread's call.**
+
+Condition: the opponent's deck list is known (order and hand not).
