@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-test1/cf6df9ad-c705-526d-b63f-e3d01c619a8e/scratchpad/wt_samedeck/analysis/scaling/samedeck_fit.py", line 9, in <module>
+    d = json.load(open(f)); s = d["specs"]
+                  ~~~~^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/user/test1/analysis/gates/scaling/nm2g2/v2skx/samedeck/ramp-t.json'
