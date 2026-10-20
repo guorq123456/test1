@@ -1,0 +1,28 @@
+{
+ "records": "rec-cost-gate.jsonl.gz",
+ "games": 60,
+ "deck": "nemesis-t",
+ "decisions": 1755,
+ "specs": {
+  "v2skx": {
+   "spec": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost",
+   "ms_per_decision": 105.87,
+   "iterations_per_decision": 199.7
+  },
+  "n55": {
+   "spec": "mcts:55+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm2g2f-ramp-nem.npz+netmid+puct=analysis/scaling/models/prior-nm2g2-nemesis-t.npz:2:1",
+   "ms_per_decision": 87.06,
+   "iterations_per_decision": 54.9
+  },
+  "n70": {
+   "spec": "mcts:70+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm2g2f-ramp-nem.npz+netmid+puct=analysis/scaling/models/prior-nm2g2-nemesis-t.npz:2:1",
+   "ms_per_decision": 94.73,
+   "iterations_per_decision": 69.9
+  },
+  "n85": {
+   "spec": "mcts:85+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm2g2f-ramp-nem.npz+netmid+puct=analysis/scaling/models/prior-nm2g2-nemesis-t.npz:2:1",
+   "ms_per_decision": 103.88,
+   "iterations_per_decision": 84.9
+  }
+ }
+}
