@@ -1,0 +1,2 @@
+/home/user/test1/analysis/gates/scaling/nm3g2/elfcheck/b2/gate.jsonl: 300 pairs, seeds 81000000..81000299, 45.0% ± 3.9% (41.1%..48.9%), CR -47 (-85..-11; steady-state -40); ms per searched decision A 96.06 / B 93.41 = 1.028
+pooled pair by pair (300 pairs, stratified bootstrap 4000): 45.0% (41.0%..48.8%), CR -47 (-86..-11; steady-state -40)
