@@ -2226,3 +2226,68 @@ Condition: the opponent's deck list is known (order and hand not).
 - Installing is Salem's call.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+### NM3 generation 2: self-play, the fits, the specs and N₀ (2026-10-20 02:5xZ–09:4xZ)
+
+**Self-play.** NM3 bots on both sides with their own specs: elf-t mcts:88, nemesis-t mcts:75 (the install N), both
+with net-nm3f-elf-nem and that side's NM3 prior. Training shards are 80500000 + 2k, holdout 80600000 + 2h.
+- The builder played training k = 5–9 and holdout h = 4 (data/nm3g2/rec and /hold, SHA256SUMS-build). The analysis
+  line played the rest, h = 3 included.
+- **Resumes after container restarts:** the builder's k = 6 (after game 765; g 763–767 replay identically), and the
+  analysis line's k = 2 (after game 190) and h = 0 (after game 864).
+- **Cross-machine check of h = 3:** the builder's 17 games of h = 3 from before it stopped (g 0–16) are identical to
+  the analysis line's.
+- The builder checked the analysis line's k = 0–4: SHA256SUMS 5 of 5, the stats, and 14 of 14 replays.
+- elf-t won 4285 of the 10 000 training games.
+
+| k | shard | first player wins | elf-t wins |
+|---|---|---|---|
+| 5 | 80500010 | 556 | 441 |
+| 6 | 80500012 | 540 | 427 |
+| 7 | 80500014 | 572 | 419 |
+| 8 | 80500016 | 558 | 437 |
+| 9 | 80500018 | 550 | 433 |
+
+**Value net, two arms.** Gen 1 + gen 2, 20 shards, `--split key`. The valid part is 17 354 turn-end and 17 374
+mid-turn rows of 1000 games.
+
+| arm | model | epochs (best) | valid Brier: turn end / mid-turn / both | sha256 |
+|---|---|---|---|---|
+| from net-nm3f-elf-nem | net-nm3g2-elf-nem | 9 (5) | 0.18765 / 0.18115 / 0.18440 | dc184732… |
+| fresh | net-nm3g2f-elf-nem | 12 (8) | 0.18617 / 0.18010 / **0.18313** | 67cb052a… |
+
+- **Start:** net-nm3f-elf-nem scores 0.19097 on the same valid part.
+- **Paired over the valid games:** continued − fresh is +0.00127, sd 0.00095, 95% −0.0007 to +0.0032. The interval
+  crosses 0, so the 01:23Z rule picks the fresh arm. Its point estimate is also the lower.
+- **By generation** (continued / fresh): gen 1 0.19423 / 0.19125, gen 2 0.17396 / 0.17450.
+- **Holdout (the analysis line, 3253ab6):** gen-1 net − fresh is +0.0108 / +0.0112. Fresh − continued is
+  −0.0008 / +0.0004, so the two do not separate. On the elf-t side's mid-turn rows the continued arm is better by
+  +0.0015 (+0.0003 to +0.0027).
+
+**Priors** (each from its NM3 prior, `--prior --extend-cards --deck --opponent`, τ 0.5, `--split key`):
+
+| prior | train / valid decisions | valid CE | epochs | sha256 |
+|---|---|---|---|---|
+| prior-nm3g2-elf-t | 630 516 / 33 403 | 1.15454 → 1.12266 | 22 | 9317eb6a… |
+| prior-nm3g2-nemesis-t | 645 599 / 33 819 | 1.16011 → 1.12602 | 36 | b14dc2ad… |
+
+Both ran in two planned chunks. Each was stopped at 07:51Z, before its 2 h limit, and resumed from its checkpoint;
+the epochs carry on in order.
+
+**The gen-2 bot:**
+- elf-t: `mcts:88+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm3g2f-elf-nem.npz+netmid+puct=analysis/scaling/models/prior-nm3g2-elf-t.npz:2:1`
+- nemesis-t: `mcts:75+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm3g2f-elf-nem.npz+netmid+puct=analysis/scaling/models/prior-nm3g2-nemesis-t.npz:2:1`
+- Both were checked: they build and search with their N, the net answers both orders, and each prior is its side's.
+
+**N₀.** Gen 1's N times gen 1 / gen 2 per position, at the same N, on 25 games of 80500018
+(data/nm3g2/cost-g2-*.json). There is no 1/1.10 for nemesis-t: B is the same structure.
+
+| side | decisions | ms per decision (gen 1 → gen 2) | ratio | N₀ |
+|---|---|---|---|---|
+| elf-t | 805 | 159.48 → 159.36 | 0.999 | 88 |
+| nemesis-t | 821 | 146.91 → 147.80 | 1.006 | 75 / 1.006 → 75 |
+
+Both timings ran beside other fits, but the specs take turns position by position, so the drift falls on both alike.
+The gate's check games set N.
+
+Condition: the opponent's deck list is known (order and hand not).
