@@ -2291,3 +2291,24 @@ Both timings ran beside other fits, but the specs take turns position by positio
 The gate's check games set N.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+**NM3 generation-2 gates (the analysis line, 70111a0): not passed.** Gen 2 against gen 1, 300 pairs per gate:
+
+| gate | gen 2 plays | N₀ → N (check ratio) | in-gate ratio | win rate (95% CI) | CR |
+|---|---|---|---|---|---|
+| 1 | elf-t | 88 → 80 (1.095) | 1.026 | 44.5% (40.5–48.5) | −52 |
+| 2 | nemesis-t | 75 → 75 (1.007) | 0.953 (out of band, noted) | 60.3% (56.4–64.2) | +99 |
+| both, 600 pairs | | | | 52.4% (49.5–55.2) | +23 |
+
+- Not passed: the lower bound of the 600 pairs is below 50%.
+- **The two sides went opposite ways.** The gen-2 elf-t side is clearly worse than gen 1; the nemesis-t side is
+  clearly better.
+- **The per-position ratio missed again on the elf-t side:** 0.999 against a check of 1.095.
+- **The registered "if the elf-t side is still weak, look into it" condition is met.** The analysis line put three
+  routes to the architecture thread:
+  - (a) a same-N control;
+  - (b) swapping the net and the prior apart;
+  - (c) replacing only the nemesis-t side.
+- The NM3 model files are left as they are until it decides.
+
+Condition: the opponent's deck list is known (order and hand not).
