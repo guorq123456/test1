@@ -1,0 +1,3 @@
+geometric mean 1.082: in band, N stay
+elf-t: ratio 1.018; N 76 -> 76
+nemesis-t: ratio 1.151; N 75 -> 75
