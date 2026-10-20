@@ -2148,3 +2148,63 @@ Condition: the opponent's deck list is known (order and hand not).
 - **What NM1 does next is the architecture thread's call.**
 
 Condition: the opponent's deck list is known (order and hand not).
+
+### NM2 generation 2: self-play, the fits, the specs and N₀ (2026-10-19 21:3xZ – 2026-10-20 02:3xZ)
+
+**Self-play.** NM2 bots on both sides with their own specs: ramp-t mcts:94 and nemesis-t mcts:75 (the install N),
+both with net-nm2f-ramp-nem and that side's NM2 prior. Training shards are 80100000 + 2k, holdout 80200000 + 2h.
+- The builder played k = 7–9 and h = 3, 4 (data/nm2g2/rec and /hold, SHA256SUMS-build). The analysis line played the
+  rest.
+- The builder checked the analysis line's k = 0–6: SHA256SUMS 7 of 7, the stats, and 21 of 21 replays.
+- ramp-t won 4483 of the 10 000 training games.
+
+| k | shard | first player wins | ramp-t wins |
+|---|---|---|---|
+| 7 | 80100014 | 560 | 430 |
+| 8 | 80100016 | 563 | 463 |
+| 9 | 80100018 | 573 | 463 |
+
+**Value net, two arms.** Gen 1 + gen 2, 20 shards, `--split key`. The valid part is 16 503 turn-end and 16 708
+mid-turn rows of 1000 games.
+
+| arm | model | epochs (best) | valid Brier: turn end / mid-turn / both | sha256 |
+|---|---|---|---|---|
+| from net-nm2f-ramp-nem | net-nm2g2-ramp-nem | 9 (5) | 0.18736 / 0.18139 / 0.18436 | e0b75bc7… |
+| fresh | net-nm2g2f-ramp-nem | 16 (12) | 0.18383 / 0.18041 / **0.18211** | ac8bd599… |
+
+- **The fresh arm goes to the gate.**
+- **Start:** net-nm2f-ramp-nem scores 0.19171 on the same valid part.
+- **Paired over the valid games:** continued − fresh is +0.00225, sd 0.00099, 95% +0.0003 to +0.0042.
+- **By generation** (continued / fresh): gen 1 0.18777 / 0.18661, gen 2 0.18093 / 0.17758.
+- **Holdout (the analysis line, 9d746a7):** gen-1 net 0.1974 / 0.1939, continued 0.1866 / 0.1812, fresh
+  0.1834 / 0.1783. Fresh − continued is −0.0031 / −0.0029, the same way as on valid.
+- **The arm rule from NM3 gen 2 on (the architecture thread 01:23Z):** with the paired valid interval clear of 0, the
+  better arm; with it across 0, the fresh arm.
+
+**Priors** (each from its NM2 prior, `--prior --extend-cards --deck --opponent`, τ 0.5):
+
+| prior | train / valid decisions | valid CE | epochs | sha256 |
+|---|---|---|---|---|
+| prior-nm2g2-ramp-t | 401 108 / 21 060 | 1.05003 → 1.01124 | 31 | 847e24f5… |
+| prior-nm2g2-nemesis-t | 551 233 / 29 103 | 1.17205 → 1.13477 | 26 | b672ed41… |
+
+**The gen-2 bot:**
+- ramp-t: `mcts:94+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm2g2f-ramp-nem.npz+netmid+puct=analysis/scaling/models/prior-nm2g2-ramp-t.npz:2:1`
+- nemesis-t: `mcts:74+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm2g2f-ramp-nem.npz+netmid+puct=analysis/scaling/models/prior-nm2g2-nemesis-t.npz:2:1`
+- Both were checked: they build and search with their N, the net answers both orders, and each prior is its side's.
+
+**N₀.** Gen 1's N times gen 1 / gen 2 per position, at the same N, on 25 games of 80100018 (data/nm2g2/cost-g2-*.json):
+
+| side | decisions | ms per decision (gen 1 → gen 2) | ratio | N₀ |
+|---|---|---|---|---|
+| ramp-t | 549 | 91.66 → 91.40 | 0.997 | 94 |
+| nemesis-t | 822 | 108.82 → 110.04 | 1.011 | 75 / 1.011 → **74** |
+
+- **The 1/1.10 rule for nemesis-t is not applied on top.** That rule came from new bots against v2skx: different
+  structures, where per-position timing read the nemesis-t side about 10% low (NM2 1.114, NM3 1.105).
+- Here both bots have the same structure, and B's N 75 is already an in-gate N. NM1 gen 2's same-structure checks were
+  1.021 / 0.971.
+- With the rule taken literally, the start would be 74 / 1.10 → 67.
+- The analysis line and the architecture thread decide which to start from; the gate's check games set N either way.
+
+Condition: the opponent's deck list is known (order and hand not).
