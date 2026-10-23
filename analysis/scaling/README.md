@@ -2476,3 +2476,63 @@ Condition: the opponent's deck list is known (order and hand not).
   70e59868b19f64e7…).
 
 Condition: the opponent's deck list is known (order and hand not).
+
+## Strong's net bots by matchup: the install, and N from real games in the page's runtime (2026-10-23)
+
+**Salem, in this session:** 「装档」, then 「非镜像也装，那几个nm都装吧」.
+
+**What changes.** `ui.session.MATCHUPS` / `level_spec` picks strong's bot by (the player's deck, the AI's deck) in 8
+matchups. Every other matchup, and every other level, is unchanged.
+
+| matchups | bot |
+|---|---|
+| the ramp-t mirror | net-mid-ramp-t + prior-ramp-ft-t05 |
+| the elf-t mirror | net-mid-elf-t + prior-elft-ft-t05 |
+| ramp-t vs elf-t (NM1 gen 2, both seats) | one net; the prior is the AI's deck's |
+| ramp-t vs nemesis-t (NM2 gen 2, both seats) | one net; the prior is the AI's deck's |
+| elf-t vs nemesis-t (NM3 gen 2, both seats) | one net; the prior is the AI's deck's |
+
+**The page.** It ships 13 models (5 nets and 8 priors), about 13.5 MB of base64. These go in `models-N.json`, each
+about 6 MB, and svsim.json `_more` lists them for worker.js. numpy (about 16 MB) comes too. All of it downloads once,
+the first time the page opens. Nothing is published yet.
+
+**N from real games.** The script is `selfplay_time.py`, run in Pyodide through `web_sim/selfplay_time_in_pyodide.py`
+and `run_py.js` on the build's own bundle. The data are in `data/install-time/`.
+- Each seed is one game, played twice: the new bots on both sides, and the reference on both sides.
+- The two take turns seed by seed, in a rotating order.
+- The time of every agent.act is summed per deck.
+- Seeds, timing only (the analysis line 0e9038c / 8c19c27): the mirrors 82500000–09 and 82600000–09; NM1 83500000–09,
+  NM2 83600000–09, NM3 83700000–09.
+- In Pyodide the games replayed move for move as natively.
+
+| matchup, deck the AI plays | N | reference | new ms / reference ms per decision | ratio |
+|---|---|---|---|---|
+| ramp-t mirror | 83 | v2s | 122.33 / 124.24 | 0.985 |
+| ramp-t mirror | 83 | v2skx | 114.58 / 118.77 | 0.965 |
+| elf-t mirror | 73 | v2s (= v2skx on elf-t) | 148.31 / 151.20 | 0.981 |
+| NM1, ramp-t | 94 | v2skx | 146.30 / 134.25 | 1.090 |
+| NM1, elf-t | 95 | v2skx | 143.54 / 140.99 | 1.018 |
+| NM2, ramp-t | 76 | v2skx | 127.90 / 139.48 | 0.917 |
+| NM2, nemesis-t | 63 | v2skx | 155.14 / 150.83 | 1.029 |
+| NM3, elf-t | 76 | v2skx | 159.36 / 135.40 | 1.177 |
+| NM3, nemesis-t | 75 | v2skx | 159.76 / 144.13 | 1.108 |
+
+- Each row is 10 games per side: 270–690 decisions. Read the ratios as about ±5–8%.
+- **The reference waits on where the trainer runs.**
+  - The web page (version 23) has strong = v2s.
+  - Salem's Windows install (673e2c1, 10-13) has strong = v2skx.
+  - The architecture thread proposes bringing the page to the Windows state (v2skx in the unchanged matchups, plus
+    最强), which would make v2skx the reference.
+- **N, by the gates' rule:** inside 0.97–1.03, N stays; outside, N = round(N / ratio), once. Against v2skx:
+
+  | seat | N |
+  |---|---|
+  | ramp-t mirror | 83 → 86 |
+  | elf-t mirror | 73 |
+  | NM1 | 94 → 86 / 95 |
+  | NM2 | 76 → 83 / 63 |
+  | NM3 | 76 → 65 / 75 → 68 |
+
+  Against v2s, the mirrors stay at 83 / 73.
+
+Condition: the opponent's deck list is known (order and hand not).
