@@ -83,6 +83,9 @@ async function boot() {
   }
   postMessage({type: "progress", text: "正在加载模拟器和卡池……"});
   const files = await json("svsim.json");
+  const more = files._more || [];                       // the nets and priors, in files of their own (tools.web)
+  delete files._more;
+  for (const name of more) Object.assign(files, await json(name));
   for (const [path, text] of Object.entries(files)) {
     const full = "/home/pyodide/app/" + path;
     py.FS.mkdirTree(full.slice(0, full.lastIndexOf("/")));

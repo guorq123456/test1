@@ -102,8 +102,10 @@ def test_the_local_server_runs_the_session_and_saves_finished_games(tmp_path):
 def test_the_build_has_the_page_the_package_and_pyodide(tmp_path):
     fake = tmp_path / "pyodide-src"                    # stand-ins for the downloaded Pyodide files
     fake.mkdir()
-    for name in ("pyodide.js", "pyodide.asm.js", "pyodide.asm.wasm", "pyodide-lock.json"):
+    for name in ("pyodide.js", "pyodide.asm.js", "pyodide.asm.wasm"):
         (fake / name).write_text("stub")
+    (fake / "pyodide-lock.json").write_text(json.dumps({"packages": {"numpy": {"file_name": "numpy-x.whl"}}}))
+    (fake / "numpy-x.whl").write_bytes(b"wheel bytes")  # strong's net bots need numpy in the page
     with zipfile.ZipFile(fake / "python_stdlib.zip", "w") as z:
         z.writestr("encodings/", "")
         z.writestr("encodings/__init__.py", "# stdlib")
@@ -118,7 +120,13 @@ def test_the_build_has_the_page_the_package_and_pyodide(tmp_path):
     models = [n for n in package if n.startswith("svsim/learn/phased_models/")]   # installed ones, no candidates
     assert "svsim/learn/phased_models/elf-t-ramp-t-ended.json" in models    # ... but the original level's folder
     assert {n.rsplit("/", 1)[0] for n in models} == {"svsim/learn/phased_models", "svsim/learn/phased_models/orig-f631e14",
-                                                     "svsim/learn/phased_models/ref-5558960"}   # normal's frozen models
+                                                     "svsim/learn/phased_models/ref-5558960",   # normal's frozen models
+                                                     "svsim/learn/phased_models/pkg-kc-ramp-ramp"}   # strong's net bots
+    assert not any(n.endswith(".b64") for n in package)          # the models: models-N.json, each under 16 MB
+    parts = {name: json.loads((out / name).read_text()) for name in package["_more"]}
+    from svsim.tools.web import model_files
+    assert sorted(n for part in parts.values() for n in part) == sorted(m + ".b64" for m in model_files())
+    assert all((out / name).stat().st_size < 16_000_000 for name in parts)
     from svsim.build import git_commit
     shipped = json.loads((out / "ratings.json").read_text(encoding="utf-8"))
     assert shipped["commit"] == (git_commit() or "unknown") and shipped["published_at"].endswith("Z")
@@ -394,3 +402,30 @@ def test_a_game_at_the_strongest_level_runs_and_replays():
     assert session.record["bot"]["level"] == "max" and session.record["bot"]["spec"] == "mcts:1043+plan+learned+phased"
     record = json.loads(json.dumps(session.record_data()))
     assert _fingerprint(_replay(record)) == _fingerprint(session.state)
+
+
+def test_strong_plays_the_gated_net_bots_in_the_four_tournament_decks_matchups_only():
+    from svsim.tools.web import model_files
+    from svsim.ui.session import LEVELS, MATCHUPS, level_spec
+    pairs = {("ramp-t", "ramp-t"), ("elf-t", "elf-t"), ("elf-t", "ramp-t"), ("ramp-t", "elf-t"), ("nemesis-t", "ramp-t"),
+             ("ramp-t", "nemesis-t"), ("nemesis-t", "elf-t"), ("elf-t", "nemesis-t")}
+    assert set(MATCHUPS) == {("strong",) + p for p in pairs}
+    assert "net-mid-ramp-t.npz+netmid+puct=analysis/scaling/models/prior-ramp-ft-t05.npz" in level_spec("strong", "ramp-t", "ramp-t")
+    assert "net-mid-elf-t.npz+netmid+puct=analysis/scaling/models/prior-elft-ft-t05.npz" in level_spec("strong", "elf-t", "elf-t")
+    # the AI's deck picks the prior; one net per non-mirror pairing answers both seats
+    assert "net-nm1g2-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1g2-ramp-t.npz" in level_spec("strong", "elf-t", "ramp-t")
+    assert "net-nm3g2f-elf-nem.npz+netmid+puct=analysis/scaling/models/prior-nm3g2-nemesis-t.npz" in level_spec("strong", "elf-t", "nemesis-t")
+    for you, opponent in (("nemesis-t", "nemesis-t"), ("pirate-t", "ramp-t"), ("ramp-t", "pirate-t"), ("rhino", "ramp")):
+        assert level_spec("strong", you, opponent) == LEVELS["strong"]
+    for level in ("fast", "normal", "max", "original"):
+        assert all(level_spec(level, *p) == LEVELS[level] for p in pairs)
+    assert all("oracle" not in spec.split("+") for spec in MATCHUPS.values())
+    assert len(model_files()) == 13              # 5 nets (2 mirrors, 3 non-mirror lines) and 8 priors
+    session = Session()
+    session.start("ramp-t", "ramp-t", "strong", 3, "you")
+    assert session.record["bot"]["level"] == "strong" and session.record["bot"]["spec"] == MATCHUPS[("strong", "ramp-t", "ramp-t")]
+    assert session.record["ai"] == MATCHUPS[("strong", "ramp-t", "ramp-t")]
+    session.start("pirate-t", "ramp-t", "strong", 3, "you")
+    assert session.record["bot"]["spec"] == LEVELS["strong"]
+    tier = session.ratings()["tiers"]["strong"]
+    assert tier["spec"] == LEVELS["strong"] and set(tier["matchups"]) == {f"{a} vs {b}" for a, b in pairs}

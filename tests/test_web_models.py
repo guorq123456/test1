@@ -1,6 +1,6 @@
 """The in-browser build's binary models (the architecture thread 2026-10-17 21:01Z: the install path for +puct, made
 ready, nothing published). A level's (or a --spec candidate's) +setnet= / +puct= model ships as base64 text, and the
-page then gets numpy (pyodide/numpy.json). A build of the levels as they are carries neither."""
+page then gets numpy (pyodide/numpy.json). Since 2026-10-23 strong's matchup bots (ui.session.MATCHUPS) name such models."""
 import base64
 import gzip
 import json
@@ -29,16 +29,21 @@ def _fake_pyodide(tmp_path):
     return fake
 
 
-def test_the_levels_as_they_are_ship_no_binary_model_and_no_numpy(tmp_path):
-    assert model_files() == []
-    assert not any(n.endswith(".b64") for n in package_sources())
+def test_the_levels_ship_strongs_net_bots_models_and_numpy(tmp_path):
+    # strong's matchup bots (ui.session.MATCHUPS, Salem 2026-10-23 「装档」) name their nets and priors
+    from svsim.ui.session import MATCHUPS
+    named = {part.split("=", 1)[1].split(":")[0] for spec in MATCHUPS.values() for part in spec.split("+")
+             if part.startswith(("setnet=", "puct="))}
+    assert sorted(model_files()) == sorted(named) and len(named) == 13
+    assert sorted(n for n in package_sources() if n.endswith(".b64")) == sorted(m + ".b64" for m in model_files())
     out = tmp_path / "dist"
     build(out, _fake_pyodide(tmp_path))
-    assert not (out / "pyodide" / "numpy.json").exists()
+    assert json.loads((out / "pyodide" / "numpy.json").read_text())["file"] == "numpy-x.whl"
 
 
 def test_a_candidate_spec_ships_its_models_as_base64_and_numpy(tmp_path):
-    assert model_files([SPEC]) == ["analysis/scaling/models/net-gen3-30000.npz", PRIOR]
+    levels = model_files()                         # the levels' own (strong's mirror bots), then the candidate's new one
+    assert model_files([SPEC]) == levels + ["analysis/scaling/models/net-gen3-30000.npz"] and PRIOR in levels
     package = package_sources(extra=[SPEC])
     assert base64.b64decode(package[PRIOR + ".b64"]) == (ROOT / PRIOR).read_bytes()
     assert "svsim/learn/phased_models/pkg-kc-ramp-ramp/ramp-t-ramp-t-ended.json" in package   # its phased folder

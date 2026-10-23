@@ -44,10 +44,10 @@ def page_html() -> str:
 
 
 def _specs(extra=()) -> list:
-    """The agent specs the build carries: the page's levels, plus `extra` (build --spec, a candidate tried in the
-    page before any level names it)."""
-    from svsim.ui.session import LEVELS
-    specs = list(LEVELS.values()) + list(extra)
+    """The agent specs the build carries: the page's levels and their matchup bots (ui.session.MATCHUPS), plus `extra`
+    (build --spec, a candidate tried in the page before any level names it)."""
+    from svsim.ui.session import LEVELS, MATCHUPS
+    specs = list(LEVELS.values()) + list(MATCHUPS.values()) + list(extra)
     for spec in specs:                     # +oracle sees the opponent's hand: a diagnostic, never in the page
         if "oracle" in spec.split("+"):
             raise ValueError(f"{spec}: +oracle is a diagnostic and never goes into the page")
@@ -104,6 +104,15 @@ def stdlib_sources(stdlib_zip: Path) -> dict:
         return {name: z.read(name).decode("utf-8") for name in z.namelist() if not name.endswith("/")}
 
 
+MODEL_PART = 6_000_000      # characters of base64 per models-N.json (svsim.json "_more" lists them; worker.js reads them)
+
+
+def _write_part(out: Path, n: int, part: dict) -> str:
+    name = f"models-{n}.json"
+    (out / name).write_text(json.dumps(part), encoding="utf-8")
+    return name
+
+
 def build(out: Path, pyodide_from: Path | None = None, extra=()) -> None:
     """The in-browser version in `out`. `extra`: agent specs to carry besides the levels' (a candidate tried in the
     page; the levels, ratings.json and the installed models are unchanged). When the specs name a binary model, the
@@ -115,11 +124,24 @@ def build(out: Path, pyodide_from: Path | None = None, extra=()) -> None:
     from svsim.build import git_commit
     commit = git_commit(ROOT) or "unknown"
     package = package_sources(commit, extra)
-    (out / "svsim.json").write_text(json.dumps(package, ensure_ascii=False), encoding="utf-8")
-    from svsim.ui.session import LEVELS                # ratings.json beside the page, specs filled in, for readers
+    core = {path: text for path, text in package.items() if not path.endswith(".b64")}
+    core["_more"] = []                                 # the models in files of their own, each under a host's 16 MB
+    part: dict = {}
+    for path in sorted(p for p in package if p.endswith(".b64")):
+        if part and sum(map(len, part.values())) + len(package[path]) > MODEL_PART:
+            core["_more"].append(_write_part(out, len(core["_more"]) + 1, part))
+            part = {}
+        part[path] = package[path]
+    if part:
+        core["_more"].append(_write_part(out, len(core["_more"]) + 1, part))
+    (out / "svsim.json").write_text(json.dumps(core, ensure_ascii=False), encoding="utf-8")
+    from svsim.ui.session import LEVELS, MATCHUPS      # ratings.json beside the page, specs filled in, for readers
     ratings = json.loads(package["svsim/ui/ratings.json"])
     for level, spec in LEVELS.items():
         ratings["tiers"].setdefault(level, {})["spec"] = spec
+        matchups = {f"{you} vs {opponent}": m for (lv, you, opponent), m in MATCHUPS.items() if lv == level}
+        if matchups:
+            ratings["tiers"][level]["matchups"] = matchups
     (out / "ratings.json").write_text(json.dumps(ratings, ensure_ascii=False, indent=1), encoding="utf-8")
     pyo = out / "pyodide"
     pyo.mkdir(exist_ok=True)
@@ -151,7 +173,8 @@ def build(out: Path, pyodide_from: Path | None = None, extra=()) -> None:
                                         encoding="utf-8")
     print(f"版本：提交 {commit}" + ("（有未提交的改动）" if commit.endswith("+") else ""))
     print(f"已生成 {out}：page.html（发布到 claude.ai 用）、index.html（任何静态网站都能放）、worker.js、"
-          "svsim.json、ratings.json、pyodide/（python_stdlib.zip 只用来生成 python_stdlib.json，不必发布）")
+          "svsim.json、models-*.json（模型，有的话）、ratings.json、pyodide/（python_stdlib.zip 只用来生成 "
+          "python_stdlib.json，不必发布）")
 
 
 class Handler(BaseHTTPRequestHandler):

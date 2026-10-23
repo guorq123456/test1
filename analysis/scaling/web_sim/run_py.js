@@ -7,6 +7,8 @@ const [dist, script, ...extra] = process.argv.slice(2);
   const {base64} = JSON.parse(fs.readFileSync(path.join(dist, "pyodide/numpy.json"), "utf8"));
   py.unpackArchive(new Uint8Array(Buffer.from(base64, "base64")), "wheel");
   const files = JSON.parse(fs.readFileSync(path.join(dist, "svsim.json"), "utf8"));
+  for (const name of files._more || []) Object.assign(files, JSON.parse(fs.readFileSync(path.join(dist, name), "utf8")));
+  delete files._more;
   for (const [p, text] of Object.entries(files)) {
     const full = "/home/pyodide/app/" + p;
     py.FS.mkdirTree(full.slice(0, full.lastIndexOf("/")));

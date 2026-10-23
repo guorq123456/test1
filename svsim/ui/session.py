@@ -52,7 +52,35 @@ LEVELS = {"fast": "greedy+plan+learned", "normal": "mcts:115+plan+learned+phased
           # alias, the lethal screen it had (200 iterations, no near-lethal deepening), the plain mulligan; on
           # the same seeds it plays both builds move for move, so the player can play the old bot to compare
           "original": "mcts:100+plan+learned+phased=orig-f631e14+noalias+screen=200+mull=default"}
+# Matchups where a level plays another bot than its LEVELS spec: (level, the player's deck, the AI's deck) -> spec.
+# Strong, by Salem's word in this session (2026-10-23: 「装档」, then 「非镜像也装，那几个nm都装吧」): a value net
+# with its in-turn branch (+netmid) and a move prior per deck (+puct), each in the pairing it was trained and gated in
+# (analysis/scaling/README.md): the ramp-t and elf-t mirrors, and the non-mirror lines NM1 gen 2 (ramp-t vs elf-t),
+# NM2 gen 2 (ramp-t vs nemesis-t) and NM3 gen 2 (elf-t vs nemesis-t), whose one net answers both seats. Every other
+# matchup, and every other level, is unchanged.
+_P = "plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost"
+_M = "analysis/scaling/models"
+
+
+def _bot(n: int, net: str, prior: str) -> str:
+    return f"mcts:{n}+{_P}+setnet={_M}/{net}.npz+netmid+puct={_M}/{prior}.npz:2:1"
+
+
+MATCHUPS = {("strong", "ramp-t", "ramp-t"): _bot(83, "net-mid-ramp-t", "prior-ramp-ft-t05"),
+            ("strong", "elf-t", "elf-t"): _bot(73, "net-mid-elf-t", "prior-elft-ft-t05"),
+            ("strong", "elf-t", "ramp-t"): _bot(89, "net-nm1g2-ramp-elf", "prior-nm1g2-ramp-t"),        # NM1 gen 2
+            ("strong", "ramp-t", "elf-t"): _bot(95, "net-nm1g2-ramp-elf", "prior-nm1g2-elf-t"),
+            ("strong", "nemesis-t", "ramp-t"): _bot(85, "net-nm2g2f-ramp-nem", "prior-nm2g2-ramp-t"),   # NM2 gen 2
+            ("strong", "ramp-t", "nemesis-t"): _bot(80, "net-nm2g2f-ramp-nem", "prior-nm2g2-nemesis-t"),
+            ("strong", "nemesis-t", "elf-t"): _bot(88, "net-nm3g2f-elf-nem", "prior-nm3g2-elf-t"),      # NM3 gen 2
+            ("strong", "elf-t", "nemesis-t"): _bot(75, "net-nm3g2f-elf-nem", "prior-nm3g2-nemesis-t")}
 RATINGS = Path(__file__).resolve().parent / "ratings.json"
+
+
+def level_spec(level: str, you: str | None = None, opponent: str | None = None) -> str:
+    """The spec `level` plays when the player has `you` and the AI `opponent` (MATCHUPS, else LEVELS; a spec that is
+    no level plays as itself)."""
+    return MATCHUPS.get((level, you, opponent), LEVELS.get(level, level))
 
 
 CALIBRATED = ("ramp-t", "elf-t", "nemesis-t", "pirate-t")   # the decks the CR calibration measures
@@ -68,6 +96,9 @@ def ratings() -> dict:
     for level, spec in LEVELS.items():
         tier = data["tiers"].setdefault(level, {})
         tier["spec"] = spec
+        matchups = {f"{you} vs {opponent}": m for (lv, you, opponent), m in MATCHUPS.items() if lv == level}
+        if matchups:
+            tier["matchups"] = matchups
         for deck in CALIBRATED:
             tier.setdefault("decks", {}).setdefault(deck, {"cr": None, "ci": None, "games": 0, "measured_vs": None,
                                                           "note": "待标定"})
@@ -142,7 +173,7 @@ class Session:
         order = None if first in (None, "random") else (0 if first == "you" else 1)
         self.state = new_game(mine, theirs, seed=seed, first=order)
         self.reviewing = False
-        spec = LEVELS.get(level, level)
+        spec = level_spec(level, you, opponent)
         self.record = records.new_record(mine, theirs, seed, self.state.first, spec, first_arg=order)
         self.record["names"] = [you, opponent]
         self.record["bot"] = bot_info(level, spec, opponent)     # the AI plays `opponent`
