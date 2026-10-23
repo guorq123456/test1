@@ -1,1 +1,11 @@
 ramp-t_vs_ramp-t done at 14:38:57
+elf-t_vs_elf-t done at 15:25:28
+ramp-t_vs_elf-t done at 15:38:26
+ramp-t_vs_nemesis-t done at 15:51:12
+elf-t_vs_ramp-t done at 16:03:32
+--- resumed at 16:15:15 after the 2-hour background limit stopped the first run (elf-t_vs_nemesis-t at 60 / 100 pairs; the gate resumes by pair)
+have ramp-t_vs_ramp-t
+have elf-t_vs_elf-t
+have ramp-t_vs_elf-t
+have ramp-t_vs_nemesis-t
+have elf-t_vs_ramp-t
