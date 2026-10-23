@@ -2536,3 +2536,25 @@ and `run_py.js` on the build's own bundle. The data are in `data/install-time/`.
   Against v2s, the mirrors stay at 83 / 73.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+**Against v2s, and the installed N** (the architecture thread 14:38Z).
+- The page keeps version 23's strong (v2s) in every other matchup; v2skx and 最强 are not added.
+- So the N is matched to v2s. The non-mirror pairings were retimed against v2s on the same seeds:
+
+| matchup, deck the AI plays | gated N | new ms / v2s ms per decision | ratio | installed N |
+|---|---|---|---|---|
+| ramp-t mirror | 83 | 122.33 / 124.24 | 0.985 | 83 |
+| elf-t mirror | 73 | 148.31 / 151.20 | 0.981 | 73 |
+| NM1, ramp-t | 94 | 142.67 / 132.12 | 1.080 | 87 |
+| NM1, elf-t | 95 | 141.79 / 136.66 | 1.038 | 92 |
+| NM2, ramp-t | 76 | 130.58 / 123.13 | 1.061 | 72 |
+| NM2, nemesis-t | 63 | 152.91 / 152.84 | 1.000 | 63 |
+| NM3, elf-t | 76 | 157.07 / 126.23 | 1.244 | 61 |
+| NM3, nemesis-t | 75 | 155.79 / 133.52 | 1.167 | 64 |
+
+- The new bots replay their games identically in both runs (the same seeds). Their own times moved by 1–3% between
+  the runs: the machine.
+- The analysis line's round 8 measured these cells at the gated N (83 / 73 / 89 / 95 / 85 / 80 / 88 / 75). It notes
+  every cell whose installed N is more than 15% away.
+
+Condition: the opponent's deck list is known (order and hand not).
