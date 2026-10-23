@@ -155,7 +155,7 @@ def test_records_say_which_bot_played_and_old_records_still_read():
     assert ratings["anchor"]["commit"] == "20bcfbe" and ratings["anchor"]["cr"] == 1300
     assert all(set(t["decks"]) == {"ramp-t", "elf-t", "nemesis-t", "pirate-t"} for t in ratings["tiers"].values())
     session.start("rhino", "nemesis-t", "strong", 3, "you")       # the AI's deck's CR goes with the record
-    assert session.record["bot"]["cr"] == ratings["tiers"]["strong"]["decks"]["nemesis-t"]["cr"] == 1300
+    assert session.record["bot"]["cr"] == ratings["tiers"]["strong"]["decks"]["nemesis-t"]["cr"] == 1372   # round 8
     session.start("rhino", "ramp", "fast", 3, "you")
     assert session.record["bot"]["version"] is None and session.record["bot"]["level"] == "fast"
     old = json.loads(json.dumps(session.record_data()))
