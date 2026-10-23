@@ -68,11 +68,11 @@ def _bot(n: int, net: str, prior: str) -> str:
 
 MATCHUPS = {("strong", "ramp-t", "ramp-t"): _bot(83, "net-mid-ramp-t", "prior-ramp-ft-t05"),
             ("strong", "elf-t", "elf-t"): _bot(73, "net-mid-elf-t", "prior-elft-ft-t05"),
-            ("strong", "elf-t", "ramp-t"): _bot(89, "net-nm1g2-ramp-elf", "prior-nm1g2-ramp-t"),        # NM1 gen 2
+            ("strong", "elf-t", "ramp-t"): _bot(94, "net-nm1g2-ramp-elf", "prior-nm1g2-ramp-t"),        # NM1 gen 2
             ("strong", "ramp-t", "elf-t"): _bot(95, "net-nm1g2-ramp-elf", "prior-nm1g2-elf-t"),
-            ("strong", "nemesis-t", "ramp-t"): _bot(85, "net-nm2g2f-ramp-nem", "prior-nm2g2-ramp-t"),   # NM2 gen 2
-            ("strong", "ramp-t", "nemesis-t"): _bot(80, "net-nm2g2f-ramp-nem", "prior-nm2g2-nemesis-t"),
-            ("strong", "nemesis-t", "elf-t"): _bot(88, "net-nm3g2f-elf-nem", "prior-nm3g2-elf-t"),      # NM3 gen 2
+            ("strong", "nemesis-t", "ramp-t"): _bot(76, "net-nm2g2f-ramp-nem", "prior-nm2g2-ramp-t"),   # NM2 gen 2
+            ("strong", "ramp-t", "nemesis-t"): _bot(63, "net-nm2g2f-ramp-nem", "prior-nm2g2-nemesis-t"),
+            ("strong", "nemesis-t", "elf-t"): _bot(76, "net-nm3g2f-elf-nem", "prior-nm3g2-elf-t"),      # NM3 gen 2
             ("strong", "elf-t", "nemesis-t"): _bot(75, "net-nm3g2f-elf-nem", "prior-nm3g2-nemesis-t")}
 RATINGS = Path(__file__).resolve().parent / "ratings.json"
 
