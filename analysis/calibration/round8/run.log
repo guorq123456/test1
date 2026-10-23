@@ -9,3 +9,7 @@ have elf-t_vs_elf-t
 have ramp-t_vs_elf-t
 have ramp-t_vs_nemesis-t
 have elf-t_vs_ramp-t
+elf-t_vs_nemesis-t done at 16:22:23
+nemesis-t_vs_ramp-t done at 16:34:38
+nemesis-t_vs_elf-t done at 16:51:01
+DONE at 16:51:04
