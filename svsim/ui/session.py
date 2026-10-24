@@ -75,8 +75,8 @@ MATCHUPS = {("strong", "ramp-t", "ramp-t"): _bot(83, "net-mid-ramp-t", "prior-ra
             ("strong", "ramp-t", "elf-t"): _bot(92, "net-nm1g2-ramp-elf", "prior-nm1g2-elf-t"),
             ("strong", "nemesis-t", "ramp-t"): _bot(72, "net-nm2g2f-ramp-nem", "prior-nm2g2-ramp-t"),   # NM2 gen 2
             ("strong", "ramp-t", "nemesis-t"): _bot(63, "net-nm2g2f-ramp-nem", "prior-nm2g2-nemesis-t"),
-            ("strong", "nemesis-t", "elf-t"): _bot(88, "net-nm3g3f-elf-nem", "prior-nm3g3-elf-t"),      # NM3 gen 3
-            ("strong", "elf-t", "nemesis-t"): _bot(75, "net-nm3g3f-elf-nem", "prior-nm3g3-nemesis-t")}
+            ("strong", "nemesis-t", "elf-t"): _bot(62, "net-nm3g3f-elf-nem", "prior-nm3g3-elf-t"),      # NM3 gen 3
+            ("strong", "elf-t", "nemesis-t"): _bot(57, "net-nm3g3f-elf-nem", "prior-nm3g3-nemesis-t")}
 RATINGS = Path(__file__).resolve().parent / "ratings.json"
 
 

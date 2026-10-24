@@ -2612,3 +2612,20 @@ checkpoint.
 - nemesis-t: `mcts:75+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm3g3f-elf-nem.npz+netmid+puct=analysis/scaling/models/prior-nm3g3-nemesis-t.npz:2:1`
 
 Condition: the opponent's deck list is known (order and hand not).
+
+**NM3 gen 3 into version 24 (the architecture thread 2026-10-24 02:43Z).**
+- Gen 3 passed its gate against gen 2 (the analysis line: 54.8%, 51.8–57.6%, +45 CR).
+- Strong's two NM3 matchups now play the gen-3 bot (net-nm3g3f-elf-nem + prior-nm3g3-*). The other six matchups are
+  unchanged.
+- The N was timed against v2s in real games in Pyodide, as above. The seeds are 83700000–09, reused on purpose and
+  paired with the gen-2 run (the analysis line).
+
+| deck the AI plays | gated N | gen 3 ms / v2s ms per decision | ratio | installed N |
+|---|---|---|---|---|
+| elf-t | 88 | 168.44 / 118.90 | 1.417 | 62 |
+| nemesis-t | 75 | 167.14 / 126.49 | 1.321 | 57 |
+
+Gen 2's installed N for the same matchups was 61 / 64. The nemesis-t seat's gap to that comes from this run, not
+from gen 3: per position, gen 3 / gen 2 is 1.000 at the same N. Each run's reading is about ±5–8%.
+
+Condition: the opponent's deck list is known (order and hand not).
