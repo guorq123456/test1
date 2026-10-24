@@ -2558,3 +2558,57 @@ Condition: the opponent's deck list is known (order and hand not).
   every cell whose installed N is more than 15% away.
 
 Condition: the opponent's deck list is known (order and hand not).
+
+### NM3 generation 3: self-play, the fits, the specs and N₀ (2026-10-23 19:4xZ – 2026-10-24 02:0xZ)
+
+**Self-play.**
+- The players: the NM3 gen-2 bots on both sides, code 7f1d5fb (the analysis line 2f70e07), with net-nm3g2f-elf-nem
+  and that side's gen-2 prior:
+  - elf-t: mcts:88;
+  - nemesis-t: mcts:75.
+- Seeds: training 83300000 + 2k, holdout 83400000 + 2h.
+- Who played what:
+  - the builder: training k = 5–9 and holdout h = 3, 4 (data/nm3g3/rec and /hold, SHA256SUMS-build), each in one
+    run with no resume;
+  - the analysis line: the rest.
+- The checks:
+  - The builder checked the analysis line's k = 0–4: SHA256SUMS 5 / 5, and g 0 and g 999 of each replay identically
+    (10 / 10).
+  - The analysis line checked k = 5–9 in the same way (10 / 10).
+- elf-t won 4207 of the 10 000 training games (2109 + 2098).
+
+**Value net, two arms.** Gen 1 + 2 + 3, 30 shards, `--split key`. The valid part is 51 523 rows of 1500 games.
+
+| arm | model | epochs (best) | valid Brier: turn end / mid-turn / both | sha256 |
+|---|---|---|---|---|
+| from net-nm3g2f-elf-nem | net-nm3g3-elf-nem | 10 (6) | 0.18457 / 0.17752 / 0.18105 | ff0c9be0… |
+| fresh | net-nm3g3f-elf-nem | 17 (16) | 0.18440 / 0.17634 / **0.18038** | 2377f4ac… |
+
+- **Start:** net-nm3g2f-elf-nem scores 0.18672 / 0.17992 on the same valid part.
+- **The arms paired over the valid games** (analysis/scaling/arm_paired.py, 2000 game resamples;
+  data/nm3g3/arms-paired.json): continued − fresh is +0.00067, sd 0.0007, 95% −0.00068 to +0.00208. The interval
+  crosses 0, so by the rule of 01:23Z **the fresh arm goes to the gate**.
+- The paired script reproduces the continued arm's valid Brier exactly. For the fresh arm it reads 0.18038, against
+  0.18042 in train_mid's log for its best epoch.
+
+**Priors.** Each is continued from gen 2's on the 30 shards, τ 0.5, `--split key`, in two planned chunks from its
+checkpoint.
+
+| model | from | epochs | valid CE (after epoch 1 → end) | sha256 |
+|---|---|---|---|---|
+| prior-nm3g3-elf-t | prior-nm3g2-elf-t | 32 | 1.0399 → 1.02781 | 56b3eee6… |
+| prior-nm3g3-nemesis-t | prior-nm3g2-nemesis-t | 28 | 1.04955 → 1.03287 | 6df8a456… |
+
+**N₀.** Gen 2's N times gen 2 / gen 3 per position, at the same N, on 25 games of 83300018
+(data/nm3g3/cost-g3-*.json). Both bots have the same structure.
+
+| side | decisions | ms per decision (gen 2 → gen 3) | ratio | N₀ |
+|---|---|---|---|---|
+| elf-t | 889 | 101.95 → 102.54 | 1.006 | 88 |
+| nemesis-t | 930 | 97.76 → 97.80 | 1.000 | 75 |
+
+**The gen-3 bot:**
+- elf-t: `mcts:88+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm3g3f-elf-nem.npz+netmid+puct=analysis/scaling/models/prior-nm3g3-elf-t.npz:2:1`
+- nemesis-t: `mcts:75+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm3g3f-elf-nem.npz+netmid+puct=analysis/scaling/models/prior-nm3g3-nemesis-t.npz:2:1`
+
+Condition: the opponent's deck list is known (order and hand not).
