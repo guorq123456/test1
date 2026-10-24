@@ -56,7 +56,8 @@ LEVELS = {"fast": "greedy+plan+learned", "normal": "mcts:115+plan+learned+phased
 # Strong, by Salem's word in this session (2026-10-23: 「装档」, then 「非镜像也装，那几个nm都装吧」): a value net
 # with its in-turn branch (+netmid) and a move prior per deck (+puct), each in the pairing it was trained and gated in
 # (analysis/scaling/README.md): the ramp-t and elf-t mirrors, and the non-mirror lines NM1 gen 2 (ramp-t vs elf-t),
-# NM2 gen 2 (ramp-t vs nemesis-t) and NM3 gen 2 (elf-t vs nemesis-t), whose one net answers both seats. Every other
+# NM2 gen 2 (ramp-t vs nemesis-t) and NM3 gen 3 (elf-t vs nemesis-t; gen 3 passed its gate on 10-24), whose one net
+# answers both seats. Every other
 # matchup, and every other level, is unchanged. N: each bot's time per decision matched to strong's own (v2s) on the
 # same deck in real games in the page's runtime (Pyodide, 10 games a pairing; analysis/scaling/README.md, "N from
 # real games"), by the gates' rule: inside 0.97-1.03 N stays, outside N = round(N / ratio) once.
@@ -74,8 +75,8 @@ MATCHUPS = {("strong", "ramp-t", "ramp-t"): _bot(83, "net-mid-ramp-t", "prior-ra
             ("strong", "ramp-t", "elf-t"): _bot(92, "net-nm1g2-ramp-elf", "prior-nm1g2-elf-t"),
             ("strong", "nemesis-t", "ramp-t"): _bot(72, "net-nm2g2f-ramp-nem", "prior-nm2g2-ramp-t"),   # NM2 gen 2
             ("strong", "ramp-t", "nemesis-t"): _bot(63, "net-nm2g2f-ramp-nem", "prior-nm2g2-nemesis-t"),
-            ("strong", "nemesis-t", "elf-t"): _bot(61, "net-nm3g2f-elf-nem", "prior-nm3g2-elf-t"),      # NM3 gen 2
-            ("strong", "elf-t", "nemesis-t"): _bot(64, "net-nm3g2f-elf-nem", "prior-nm3g2-nemesis-t")}
+            ("strong", "nemesis-t", "elf-t"): _bot(88, "net-nm3g3f-elf-nem", "prior-nm3g3-elf-t"),      # NM3 gen 3
+            ("strong", "elf-t", "nemesis-t"): _bot(75, "net-nm3g3f-elf-nem", "prior-nm3g3-nemesis-t")}
 RATINGS = Path(__file__).resolve().parent / "ratings.json"
 
 

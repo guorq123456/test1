@@ -414,7 +414,7 @@ def test_strong_plays_the_gated_net_bots_in_the_four_tournament_decks_matchups_o
     assert "net-mid-elf-t.npz+netmid+puct=analysis/scaling/models/prior-elft-ft-t05.npz" in level_spec("strong", "elf-t", "elf-t")
     # the AI's deck picks the prior; one net per non-mirror pairing answers both seats
     assert "net-nm1g2-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1g2-ramp-t.npz" in level_spec("strong", "elf-t", "ramp-t")
-    assert "net-nm3g2f-elf-nem.npz+netmid+puct=analysis/scaling/models/prior-nm3g2-nemesis-t.npz" in level_spec("strong", "elf-t", "nemesis-t")
+    assert "net-nm3g3f-elf-nem.npz+netmid+puct=analysis/scaling/models/prior-nm3g3-nemesis-t.npz" in level_spec("strong", "elf-t", "nemesis-t")
     for you, opponent in (("nemesis-t", "nemesis-t"), ("pirate-t", "ramp-t"), ("ramp-t", "pirate-t"), ("rhino", "ramp")):
         assert level_spec("strong", you, opponent) == LEVELS["strong"]
     for level in ("fast", "normal", "max", "original"):
