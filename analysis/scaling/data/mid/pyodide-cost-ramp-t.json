@@ -1,0 +1,18 @@
+{
+ "records": "rec.jsonl.gz",
+ "games": 3,
+ "decisions": 113,
+ "specs": {
+  "B": {
+   "spec": "mcts:88+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-gen3-30000.npz+neteot+puct=analysis/scaling/models/prior-ramp-ft-t05.npz:2:1",
+   "ms_per_decision": 140.4,
+   "iterations_per_decision": 88.0
+  },
+  "A": {
+   "spec": "mcts:83+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-mid-ramp-t.npz+netmid+puct=analysis/scaling/models/prior-ramp-ft-t05.npz:2:1",
+   "ms_per_decision": 142.72,
+   "iterations_per_decision": 83.0
+  }
+ },
+ "where": "Pyodide 0.26.4 in Node (analysis/scaling/web_sim/run_py.js), dist built at efc64cb with --spec A --spec B"
+}

@@ -1,0 +1,1380 @@
+[
+ {
+  "net": "net-10000",
+  "holdout_turn_ends": 93787,
+  "training_turn_ends": 187545,
+  "dead_on_holdout": {
+   "phi_layer1": "0 of 64",
+   "phi_layer2": "5 of 64",
+   "rho_layer1": "62 of 128",
+   "rho_layer2": "15 of 64"
+  },
+  "dead_on_training": {
+   "phi_layer1": "0 of 64",
+   "phi_layer2": "5 of 64",
+   "rho_layer1": "61 of 128",
+   "rho_layer2": "15 of 64"
+  },
+  "inputs_always_0_in_training": {
+   "phi_static": "50 of 96",
+   "phi_dynamic": "6 of 23",
+   "rho_pooled": "197 of 448",
+   "rho_globals": "0 of 25"
+  },
+  "weights": {
+   "W1s": {
+    "size": 6144,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 6144
+   },
+   "W1d": {
+    "size": 1472,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1472
+   },
+   "b1": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "W2": {
+    "size": 4096,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 4096
+   },
+   "b2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "V1": {
+    "size": 60544,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 60544
+   },
+   "c1": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "V2": {
+    "size": 8192,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 8192
+   },
+   "c2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "v3": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "c3": {
+    "size": 1,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1
+   }
+  }
+ },
+ {
+  "net": "net-gen2-20000",
+  "holdout_turn_ends": 93787,
+  "training_turn_ends": 369083,
+  "dead_on_holdout": {
+   "phi_layer1": "1 of 64",
+   "phi_layer2": "25 of 64",
+   "rho_layer1": "86 of 128",
+   "rho_layer2": "18 of 64"
+  },
+  "dead_on_training": {
+   "phi_layer1": "1 of 64",
+   "phi_layer2": "25 of 64",
+   "rho_layer1": "86 of 128",
+   "rho_layer2": "18 of 64"
+  },
+  "inputs_always_0_in_training": {
+   "phi_static": "51 of 96",
+   "phi_dynamic": "6 of 23",
+   "rho_pooled": "273 of 448",
+   "rho_globals": "0 of 25"
+  },
+  "weights": {
+   "W1s": {
+    "size": 6144,
+    "zero": 0,
+    "subnormal": 3264,
+    "normal": 2880
+   },
+   "W1d": {
+    "size": 1472,
+    "zero": 0,
+    "subnormal": 432,
+    "normal": 1040
+   },
+   "b1": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "W2": {
+    "size": 4096,
+    "zero": 0,
+    "subnormal": 56,
+    "normal": 4040
+   },
+   "b2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "V1": {
+    "size": 60544,
+    "zero": 0,
+    "subnormal": 29427,
+    "normal": 31117
+   },
+   "c1": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "V2": {
+    "size": 8192,
+    "zero": 0,
+    "subnormal": 3920,
+    "normal": 4272
+   },
+   "c2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "v3": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 7,
+    "normal": 57
+   },
+   "c3": {
+    "size": 1,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1
+   }
+  }
+ },
+ {
+  "net": "net-100000",
+  "holdout_turn_ends": 93787,
+  "training_turn_ends": 1873395,
+  "dead_on_holdout": {
+   "phi_layer1": "39 of 64",
+   "phi_layer2": "40 of 64",
+   "rho_layer1": "91 of 128",
+   "rho_layer2": "31 of 64"
+  },
+  "dead_on_training": {
+   "phi_layer1": "39 of 64",
+   "phi_layer2": "40 of 64",
+   "rho_layer1": "91 of 128",
+   "rho_layer2": "31 of 64"
+  },
+  "inputs_always_0_in_training": {
+   "phi_static": "50 of 96",
+   "phi_dynamic": "6 of 23",
+   "rho_pooled": "316 of 448",
+   "rho_globals": "0 of 25"
+  },
+  "weights": {
+   "W1s": {
+    "size": 6144,
+    "zero": 4994,
+    "subnormal": 0,
+    "normal": 1150
+   },
+   "W1d": {
+    "size": 1472,
+    "zero": 1115,
+    "subnormal": 0,
+    "normal": 357
+   },
+   "b1": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "W2": {
+    "size": 4096,
+    "zero": 3524,
+    "subnormal": 0,
+    "normal": 572
+   },
+   "b2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "V1": {
+    "size": 60544,
+    "zero": 54446,
+    "subnormal": 0,
+    "normal": 6098
+   },
+   "c1": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "V2": {
+    "size": 8192,
+    "zero": 6971,
+    "subnormal": 0,
+    "normal": 1221
+   },
+   "c2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "v3": {
+    "size": 64,
+    "zero": 31,
+    "subnormal": 0,
+    "normal": 33
+   },
+   "c3": {
+    "size": 1,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1
+   }
+  }
+ },
+ {
+  "net": "net-leaky-100000",
+  "slope": 0.01,
+  "holdout_turn_ends": 93787,
+  "training_turn_ends": 1873395,
+  "dead_on_holdout": {
+   "phi_layer1": "19 of 64",
+   "phi_layer2": "0 of 64",
+   "rho_layer1": "63 of 128",
+   "rho_layer2": "20 of 64"
+  },
+  "dead_on_training": {
+   "phi_layer1": "19 of 64",
+   "phi_layer2": "0 of 64",
+   "rho_layer1": "63 of 128",
+   "rho_layer2": "20 of 64"
+  },
+  "inputs_always_0_in_training": {
+   "phi_static": "50 of 96",
+   "phi_dynamic": "6 of 23",
+   "rho_pooled": "0 of 448",
+   "rho_globals": "0 of 25"
+  },
+  "weights": {
+   "W1s": {
+    "size": 6144,
+    "zero": 3200,
+    "subnormal": 0,
+    "normal": 2944
+   },
+   "W1d": {
+    "size": 1472,
+    "zero": 384,
+    "subnormal": 0,
+    "normal": 1088
+   },
+   "b1": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "W2": {
+    "size": 4096,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 4096
+   },
+   "b2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "V1": {
+    "size": 60544,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 60544
+   },
+   "c1": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "V2": {
+    "size": 8192,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 8192
+   },
+   "c2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "v3": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "c3": {
+    "size": 1,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1
+   }
+  }
+ },
+ {
+  "net": "net-wide-100000",
+  "slope": 0.0,
+  "holdout_turn_ends": 93787,
+  "training_turn_ends": 1873395,
+  "dead_on_holdout": {
+   "phi_layer1": "104 of 128",
+   "phi_layer2": "107 of 128",
+   "rho_layer1": "217 of 256",
+   "rho_layer2": "81 of 128"
+  },
+  "dead_on_training": {
+   "phi_layer1": "104 of 128",
+   "phi_layer2": "107 of 128",
+   "rho_layer1": "217 of 256",
+   "rho_layer2": "81 of 128"
+  },
+  "inputs_always_0_in_training": {
+   "phi_static": "50 of 96",
+   "phi_dynamic": "6 of 23",
+   "rho_pooled": "798 of 896",
+   "rho_globals": "0 of 25"
+  },
+  "weights": {
+   "W1s": {
+    "size": 12288,
+    "zero": 11184,
+    "subnormal": 0,
+    "normal": 1104
+   },
+   "W1d": {
+    "size": 2944,
+    "zero": 2605,
+    "subnormal": 0,
+    "normal": 339
+   },
+   "b1": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "W2": {
+    "size": 16384,
+    "zero": 15908,
+    "subnormal": 0,
+    "normal": 476
+   },
+   "b2": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "V1": {
+    "size": 235776,
+    "zero": 230233,
+    "subnormal": 0,
+    "normal": 5543
+   },
+   "c1": {
+    "size": 256,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 256
+   },
+   "V2": {
+    "size": 32768,
+    "zero": 30947,
+    "subnormal": 0,
+    "normal": 1821
+   },
+   "c2": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "v3": {
+    "size": 128,
+    "zero": 81,
+    "subnormal": 0,
+    "normal": 47
+   },
+   "c3": {
+    "size": 1,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1
+   }
+  },
+  "note": "weights from the epoch-17 checkpoint (best epoch 16), not converged"
+ },
+ {
+  "net": "net-sp-29000",
+  "slope": 0.0,
+  "holdout_turn_ends": 93787,
+  "training_turn_ends": 521222,
+  "dead_on_holdout": {
+   "phi_layer1": "6 of 64",
+   "phi_layer2": "31 of 64",
+   "rho_layer1": "86 of 128",
+   "rho_layer2": "10 of 64"
+  },
+  "dead_on_training": {
+   "phi_layer1": "6 of 64",
+   "phi_layer2": "31 of 64",
+   "rho_layer1": "86 of 128",
+   "rho_layer2": "10 of 64"
+  },
+  "inputs_always_0_in_training": {
+   "phi_static": "50 of 96",
+   "phi_dynamic": "6 of 23",
+   "rho_pooled": "283 of 448",
+   "rho_globals": "0 of 25"
+  },
+  "weights": {
+   "W1s": {
+    "size": 6144,
+    "zero": 3253,
+    "subnormal": 0,
+    "normal": 2891
+   },
+   "W1d": {
+    "size": 1472,
+    "zero": 508,
+    "subnormal": 0,
+    "normal": 964
+   },
+   "b1": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "W2": {
+    "size": 4096,
+    "zero": 1574,
+    "subnormal": 0,
+    "normal": 2522
+   },
+   "b2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "V1": {
+    "size": 60544,
+    "zero": 46937,
+    "subnormal": 0,
+    "normal": 13607
+   },
+   "c1": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "V2": {
+    "size": 8192,
+    "zero": 5790,
+    "subnormal": 0,
+    "normal": 2402
+   },
+   "c2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "v3": {
+    "size": 64,
+    "zero": 8,
+    "subnormal": 0,
+    "normal": 56
+   },
+   "c3": {
+    "size": 1,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1
+   }
+  }
+ },
+ {
+  "net": "net-elft-10000",
+  "slope": 0.0,
+  "holdout_turn_ends": 88311,
+  "training_turn_ends": 176597,
+  "dead_on_holdout": {
+   "phi_layer1": "0 of 64",
+   "phi_layer2": "2 of 64",
+   "rho_layer1": "57 of 128",
+   "rho_layer2": "7 of 64"
+  },
+  "dead_on_training": {
+   "phi_layer1": "0 of 64",
+   "phi_layer2": "2 of 64",
+   "rho_layer1": "58 of 128",
+   "rho_layer2": "7 of 64"
+  },
+  "inputs_always_0_in_training": {
+   "phi_static": "52 of 96",
+   "phi_dynamic": "6 of 23",
+   "rho_pooled": "146 of 448",
+   "rho_globals": "0 of 25"
+  },
+  "weights": {
+   "W1s": {
+    "size": 6144,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 6144
+   },
+   "W1d": {
+    "size": 1472,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1472
+   },
+   "b1": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "W2": {
+    "size": 4096,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 4096
+   },
+   "b2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "V1": {
+    "size": 60544,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 60544
+   },
+   "c1": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "V2": {
+    "size": 8192,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 8192
+   },
+   "c2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "v3": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "c3": {
+    "size": 1,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1
+   }
+  }
+ },
+ {
+  "net": "net-gen4-59000",
+  "slope": 0.0,
+  "holdout_turn_ends": 93787,
+  "training_turn_ends": 1067833,
+  "dead_on_holdout": {
+   "phi_layer1": "31 of 64",
+   "phi_layer2": "38 of 64",
+   "rho_layer1": "85 of 128",
+   "rho_layer2": "21 of 64"
+  },
+  "dead_on_training": {
+   "phi_layer1": "31 of 64",
+   "phi_layer2": "38 of 64",
+   "rho_layer1": "85 of 128",
+   "rho_layer2": "21 of 64"
+  },
+  "inputs_always_0_in_training": {
+   "phi_static": "51 of 96",
+   "phi_dynamic": "6 of 23",
+   "rho_pooled": "303 of 448",
+   "rho_globals": "0 of 25"
+  },
+  "weights": {
+   "W1s": {
+    "size": 6144,
+    "zero": 4659,
+    "subnormal": 0,
+    "normal": 1485
+   },
+   "W1d": {
+    "size": 1472,
+    "zero": 956,
+    "subnormal": 0,
+    "normal": 516
+   },
+   "b1": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "W2": {
+    "size": 4096,
+    "zero": 3265,
+    "subnormal": 0,
+    "normal": 831
+   },
+   "b2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "V1": {
+    "size": 60544,
+    "zero": 53038,
+    "subnormal": 0,
+    "normal": 7506
+   },
+   "c1": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "V2": {
+    "size": 8192,
+    "zero": 6343,
+    "subnormal": 0,
+    "normal": 1849
+   },
+   "c2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "v3": {
+    "size": 64,
+    "zero": 21,
+    "subnormal": 0,
+    "normal": 43
+   },
+   "c3": {
+    "size": 1,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1
+   }
+  }
+ },
+ {
+  "net": "net-in2-59000",
+  "slope": 0.0,
+  "holdout_turn_ends": 93787,
+  "training_turn_ends": 1067833,
+  "dead_on_holdout": {
+   "phi_layer1": "23 of 64",
+   "phi_layer2": "32 of 64",
+   "rho_layer1": "84 of 128",
+   "rho_layer2": "29 of 64"
+  },
+  "dead_on_training": {
+   "phi_layer1": "23 of 64",
+   "phi_layer2": "32 of 64",
+   "rho_layer1": "84 of 128",
+   "rho_layer2": "29 of 64"
+  },
+  "inputs_always_0_in_training": {
+   "phi_static": "51 of 96",
+   "phi_dynamic": "6 of 26",
+   "rho_pooled": "282 of 448",
+   "rho_globals": "0 of 25"
+  },
+  "weights": {
+   "W1s": {
+    "size": 6144,
+    "zero": 4299,
+    "subnormal": 0,
+    "normal": 1845
+   },
+   "W1d": {
+    "size": 1664,
+    "zero": 934,
+    "subnormal": 0,
+    "normal": 730
+   },
+   "b1": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "W2": {
+    "size": 4096,
+    "zero": 2909,
+    "subnormal": 0,
+    "normal": 1187
+   },
+   "b2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "V1": {
+    "size": 60544,
+    "zero": 52163,
+    "subnormal": 0,
+    "normal": 8381
+   },
+   "c1": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "V2": {
+    "size": 8192,
+    "zero": 6652,
+    "subnormal": 0,
+    "normal": 1540
+   },
+   "c2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "v3": {
+    "size": 64,
+    "zero": 29,
+    "subnormal": 0,
+    "normal": 35
+   },
+   "c3": {
+    "size": 1,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1
+   }
+  }
+ },
+ {
+  "net": "net-in2kc-59000",
+  "slope": 0.0,
+  "holdout_turn_ends": 93787,
+  "training_turn_ends": 1067833,
+  "dead_on_holdout": {
+   "phi_layer1": "15 of 64",
+   "phi_layer2": "34 of 64",
+   "rho_layer1": "86 of 128",
+   "rho_layer2": "22 of 64"
+  },
+  "dead_on_training": {
+   "phi_layer1": "15 of 64",
+   "phi_layer2": "34 of 64",
+   "rho_layer1": "86 of 128",
+   "rho_layer2": "22 of 64"
+  },
+  "inputs_always_0_in_training": {
+   "phi_static": "51 of 96",
+   "phi_dynamic": "6 of 26",
+   "rho_pooled": "297 of 448",
+   "rho_globals": "0 of 32"
+  },
+  "weights": {
+   "W1s": {
+    "size": 6144,
+    "zero": 3894,
+    "subnormal": 0,
+    "normal": 2250
+   },
+   "W1d": {
+    "size": 1664,
+    "zero": 741,
+    "subnormal": 0,
+    "normal": 923
+   },
+   "b1": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "W2": {
+    "size": 4096,
+    "zero": 2712,
+    "subnormal": 0,
+    "normal": 1384
+   },
+   "b2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "V1": {
+    "size": 61440,
+    "zero": 53657,
+    "subnormal": 0,
+    "normal": 7783
+   },
+   "c1": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "V2": {
+    "size": 8192,
+    "zero": 6430,
+    "subnormal": 0,
+    "normal": 1762
+   },
+   "c2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "v3": {
+    "size": 64,
+    "zero": 22,
+    "subnormal": 0,
+    "normal": 42
+   },
+   "c3": {
+    "size": 1,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1
+   }
+  }
+ },
+ {
+  "net": "net-in2a-59000",
+  "slope": 0.0,
+  "holdout_turn_ends": 93787,
+  "training_turn_ends": 1067833,
+  "dead_on_holdout": {
+   "phi_layer1": "23 of 64",
+   "phi_layer2": "29 of 64",
+   "rho_layer1": "90 of 128",
+   "rho_layer2": "29 of 64"
+  },
+  "dead_on_training": {
+   "phi_layer1": "23 of 64",
+   "phi_layer2": "29 of 64",
+   "rho_layer1": "90 of 128",
+   "rho_layer2": "29 of 64"
+  },
+  "inputs_always_0_in_training": {
+   "phi_static": "51 of 96",
+   "phi_dynamic": "6 of 26",
+   "rho_pooled": "254 of 448",
+   "rho_globals": "0 of 25"
+  },
+  "weights": {
+   "W1s": {
+    "size": 6144,
+    "zero": 4254,
+    "subnormal": 0,
+    "normal": 1890
+   },
+   "W1d": {
+    "size": 1664,
+    "zero": 926,
+    "subnormal": 0,
+    "normal": 738
+   },
+   "b1": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "W2": {
+    "size": 4096,
+    "zero": 2740,
+    "subnormal": 0,
+    "normal": 1356
+   },
+   "b2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "V1": {
+    "size": 60544,
+    "zero": 52314,
+    "subnormal": 0,
+    "normal": 8230
+   },
+   "c1": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "V2": {
+    "size": 8192,
+    "zero": 6871,
+    "subnormal": 0,
+    "normal": 1321
+   },
+   "c2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "v3": {
+    "size": 64,
+    "zero": 29,
+    "subnormal": 0,
+    "normal": 35
+   },
+   "c3": {
+    "size": 1,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1
+   }
+  }
+ },
+ {
+  "net": "net-elft-gen2-19500",
+  "slope": 0.0,
+  "holdout_turn_ends": 88311,
+  "training_turn_ends": 354023,
+  "dead_on_holdout": {
+   "phi_layer1": "0 of 64",
+   "phi_layer2": "6 of 64",
+   "rho_layer1": "72 of 128",
+   "rho_layer2": "16 of 64"
+  },
+  "dead_on_training": {
+   "phi_layer1": "0 of 64",
+   "phi_layer2": "6 of 64",
+   "rho_layer1": "66 of 128",
+   "rho_layer2": "16 of 64"
+  },
+  "inputs_always_0_in_training": {
+   "phi_static": "51 of 96",
+   "phi_dynamic": "6 of 23",
+   "rho_pooled": "161 of 448",
+   "rho_globals": "0 of 25"
+  },
+  "weights": {
+   "W1s": {
+    "size": 6144,
+    "zero": 3264,
+    "subnormal": 0,
+    "normal": 2880
+   },
+   "W1d": {
+    "size": 1472,
+    "zero": 437,
+    "subnormal": 0,
+    "normal": 1035
+   },
+   "b1": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "W2": {
+    "size": 4096,
+    "zero": 2,
+    "subnormal": 0,
+    "normal": 4094
+   },
+   "b2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "V1": {
+    "size": 60544,
+    "zero": 12390,
+    "subnormal": 0,
+    "normal": 48154
+   },
+   "c1": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "V2": {
+    "size": 8192,
+    "zero": 2686,
+    "subnormal": 0,
+    "normal": 5506
+   },
+   "c2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "v3": {
+    "size": 64,
+    "zero": 3,
+    "subnormal": 0,
+    "normal": 61
+   },
+   "c3": {
+    "size": 1,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1
+   }
+  }
+ },
+ {
+  "net": "net-elft-gen3-29000",
+  "slope": 0.0,
+  "holdout_turn_ends": 88311,
+  "training_turn_ends": 528087,
+  "dead_on_holdout": {
+   "phi_layer1": "4 of 64",
+   "phi_layer2": "25 of 64",
+   "rho_layer1": "87 of 128",
+   "rho_layer2": "21 of 64"
+  },
+  "dead_on_training": {
+   "phi_layer1": "4 of 64",
+   "phi_layer2": "25 of 64",
+   "rho_layer1": "87 of 128",
+   "rho_layer2": "21 of 64"
+  },
+  "inputs_always_0_in_training": {
+   "phi_static": "51 of 96",
+   "phi_dynamic": "6 of 23",
+   "rho_pooled": "267 of 448",
+   "rho_globals": "0 of 25"
+  },
+  "weights": {
+   "W1s": {
+    "size": 6144,
+    "zero": 3264,
+    "subnormal": 0,
+    "normal": 2880
+   },
+   "W1d": {
+    "size": 1472,
+    "zero": 425,
+    "subnormal": 0,
+    "normal": 1047
+   },
+   "b1": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "W2": {
+    "size": 4096,
+    "zero": 40,
+    "subnormal": 0,
+    "normal": 4056
+   },
+   "b2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "V1": {
+    "size": 60544,
+    "zero": 31864,
+    "subnormal": 0,
+    "normal": 28680
+   },
+   "c1": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "V2": {
+    "size": 8192,
+    "zero": 4989,
+    "subnormal": 0,
+    "normal": 3203
+   },
+   "c2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "v3": {
+    "size": 64,
+    "zero": 8,
+    "subnormal": 0,
+    "normal": 56
+   },
+   "c3": {
+    "size": 1,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1
+   }
+  }
+ },
+ {
+  "net": "net-elft-gen4-38500",
+  "slope": 0.0,
+  "holdout_turn_ends": 88311,
+  "training_turn_ends": 703103,
+  "dead_on_holdout": {
+   "phi_layer1": "12 of 64",
+   "phi_layer2": "24 of 64",
+   "rho_layer1": "87 of 128",
+   "rho_layer2": "20 of 64"
+  },
+  "dead_on_training": {
+   "phi_layer1": "12 of 64",
+   "phi_layer2": "24 of 64",
+   "rho_layer1": "87 of 128",
+   "rho_layer2": "20 of 64"
+  },
+  "inputs_always_0_in_training": {
+   "phi_static": "51 of 96",
+   "phi_dynamic": "6 of 23",
+   "rho_pooled": "225 of 448",
+   "rho_globals": "0 of 25"
+  },
+  "weights": {
+   "W1s": {
+    "size": 6144,
+    "zero": 3332,
+    "subnormal": 0,
+    "normal": 2812
+   },
+   "W1d": {
+    "size": 1472,
+    "zero": 535,
+    "subnormal": 0,
+    "normal": 937
+   },
+   "b1": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "W2": {
+    "size": 4096,
+    "zero": 1549,
+    "subnormal": 0,
+    "normal": 2547
+   },
+   "b2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "V1": {
+    "size": 60544,
+    "zero": 48415,
+    "subnormal": 0,
+    "normal": 12129
+   },
+   "c1": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "V2": {
+    "size": 8192,
+    "zero": 6390,
+    "subnormal": 0,
+    "normal": 1802
+   },
+   "c2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "v3": {
+    "size": 64,
+    "zero": 19,
+    "subnormal": 0,
+    "normal": 45
+   },
+   "c3": {
+    "size": 1,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1
+   }
+  }
+ },
+ {
+  "net": "net-gen5-68500",
+  "slope": 0.0,
+  "holdout_turn_ends": 93787,
+  "training_turn_ends": 1236179,
+  "dead_on_holdout": {
+   "phi_layer1": "34 of 64",
+   "phi_layer2": "35 of 64",
+   "rho_layer1": "92 of 128",
+   "rho_layer2": "23 of 64"
+  },
+  "dead_on_training": {
+   "phi_layer1": "34 of 64",
+   "phi_layer2": "35 of 64",
+   "rho_layer1": "92 of 128",
+   "rho_layer2": "23 of 64"
+  },
+  "inputs_always_0_in_training": {
+   "phi_static": "51 of 96",
+   "phi_dynamic": "6 of 23",
+   "rho_pooled": "303 of 448",
+   "rho_globals": "0 of 25"
+  },
+  "weights": {
+   "W1s": {
+    "size": 6144,
+    "zero": 4794,
+    "subnormal": 0,
+    "normal": 1350
+   },
+   "W1d": {
+    "size": 1472,
+    "zero": 1023,
+    "subnormal": 0,
+    "normal": 449
+   },
+   "b1": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "W2": {
+    "size": 4096,
+    "zero": 3276,
+    "subnormal": 0,
+    "normal": 820
+   },
+   "b2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "V1": {
+    "size": 60544,
+    "zero": 54305,
+    "subnormal": 0,
+    "normal": 6239
+   },
+   "c1": {
+    "size": 128,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 128
+   },
+   "V2": {
+    "size": 8192,
+    "zero": 6725,
+    "subnormal": 0,
+    "normal": 1467
+   },
+   "c2": {
+    "size": 64,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 64
+   },
+   "v3": {
+    "size": 64,
+    "zero": 23,
+    "subnormal": 0,
+    "normal": 41
+   },
+   "c3": {
+    "size": 1,
+    "zero": 0,
+    "subnormal": 0,
+    "normal": 1
+   }
+  }
+ }
+]

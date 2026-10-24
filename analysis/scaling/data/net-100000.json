@@ -1,0 +1,58 @@
+{
+ "size": 100000,
+ "name": null,
+ "ftz": true,
+ "phi": [
+  64,
+  64
+ ],
+ "rho": [
+  128,
+  64
+ ],
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "fit_s": 4429,
+ "epochs": 27,
+ "train": {
+  "brier": 0.18491,
+  "log_loss": 0.54147,
+  "n": 1778991
+ },
+ "valid": {
+  "brier": 0.18483,
+  "log_loss": 0.54126,
+  "n": 94404
+ },
+ "train_installed_linear": {
+  "brier": 0.20281,
+  "log_loss": 0.58675,
+  "n": 1778991
+ },
+ "holdout": {
+  "brier": 0.18676,
+  "log_loss": 0.54595,
+  "n": 93787
+ },
+ "holdout_installed_linear": {
+  "brier": 0.2038,
+  "log_loss": 0.58936,
+  "n": 93787
+ },
+ "holdout_selfplay": {
+  "seeds": [
+   71600018
+  ],
+  "brier": 0.1955,
+  "log_loss": 0.56783,
+  "n": 17948,
+  "installed_linear": {
+   "brier": 0.20723,
+   "log_loss": 0.60109,
+   "n": 17948
+  }
+ }
+}

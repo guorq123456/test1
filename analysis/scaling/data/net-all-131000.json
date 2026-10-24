@@ -1,0 +1,60 @@
+{
+ "size": 131000,
+ "name": "all",
+ "ftz": true,
+ "slope": 0.0,
+ "phi": [
+  64,
+  64
+ ],
+ "rho": [
+  128,
+  64
+ ],
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "fit_s": 0,
+ "epochs": 14,
+ "train": {
+  "brier": 0.18609,
+  "log_loss": 0.54415,
+  "n": 2308773
+ },
+ "valid": {
+  "brier": 0.18569,
+  "log_loss": 0.54362,
+  "n": 121673
+ },
+ "train_installed_linear": {
+  "brier": 0.20323,
+  "log_loss": 0.58853,
+  "n": 2308773
+ },
+ "holdout": {
+  "brier": 0.18659,
+  "log_loss": 0.54547,
+  "n": 93787
+ },
+ "holdout_installed_linear": {
+  "brier": 0.2038,
+  "log_loss": 0.58936,
+  "n": 93787
+ },
+ "holdout_selfplay": {
+  "seeds": [
+   71600018
+  ],
+  "brier": 0.1923,
+  "log_loss": 0.55855,
+  "n": 17948,
+  "installed_linear": {
+   "brier": 0.20723,
+   "log_loss": 0.60109,
+   "n": 17948
+  }
+ },
+ "note": "\u672a\u6536\u655b\uff08\u7b2c 12 \u8f6e\uff09 / not converged: weights from the epoch-14 checkpoint (best epoch 12 by validation log loss); the fit stopped at the 2-hour limit and was not resumed (the architecture thread 15:28Z, option b). fit_s covers only this scoring run"
+}

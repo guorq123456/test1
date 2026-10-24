@@ -1,0 +1,178 @@
+{
+ "deck": "ramp-t",
+ "opponent": "elf-t",
+ "seeds": [
+  83500000,
+  83500001,
+  83500002,
+  83500003,
+  83500004,
+  83500005,
+  83500006,
+  83500007,
+  83500008,
+  83500009
+ ],
+ "pairs": {
+  "new": {
+   "specs": {
+    "ramp-t": "mcts:94+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm1g2-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1g2-ramp-t.npz:2:1",
+    "elf-t": "mcts:95+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm1g2-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1g2-elf-t.npz:2:1"
+   },
+   "games": [
+    {
+     "seed": 83500000,
+     "s": 10.7,
+     "turns": null,
+     "actions": 65
+    },
+    {
+     "seed": 83500001,
+     "s": 11.3,
+     "turns": null,
+     "actions": 81
+    },
+    {
+     "seed": 83500002,
+     "s": 11.9,
+     "turns": null,
+     "actions": 72
+    },
+    {
+     "seed": 83500003,
+     "s": 10.3,
+     "turns": null,
+     "actions": 73
+    },
+    {
+     "seed": 83500004,
+     "s": 20.6,
+     "turns": null,
+     "actions": 117
+    },
+    {
+     "seed": 83500005,
+     "s": 7.9,
+     "turns": null,
+     "actions": 64
+    },
+    {
+     "seed": 83500006,
+     "s": 12.4,
+     "turns": null,
+     "actions": 85
+    },
+    {
+     "seed": 83500007,
+     "s": 5.0,
+     "turns": null,
+     "actions": 48
+    },
+    {
+     "seed": 83500008,
+     "s": 15.2,
+     "turns": null,
+     "actions": 99
+    },
+    {
+     "seed": 83500009,
+     "s": 4.4,
+     "turns": null,
+     "actions": 42
+    }
+   ],
+   "decks": {
+    "ramp-t": {
+     "ms": 46083.5,
+     "decisions": 315,
+     "ms_per_decision": 146.3
+    },
+    "elf-t": {
+     "ms": 61864.9,
+     "decisions": 431,
+     "ms_per_decision": 143.54
+    }
+   }
+  },
+  "v2skx": {
+   "specs": {
+    "ramp-t": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost",
+    "elf-t": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost"
+   },
+   "games": [
+    {
+     "seed": 83500000,
+     "s": 10.3,
+     "turns": null,
+     "actions": 83
+    },
+    {
+     "seed": 83500001,
+     "s": 19.0,
+     "turns": null,
+     "actions": 153
+    },
+    {
+     "seed": 83500002,
+     "s": 9.4,
+     "turns": null,
+     "actions": 72
+    },
+    {
+     "seed": 83500003,
+     "s": 9.4,
+     "turns": null,
+     "actions": 70
+    },
+    {
+     "seed": 83500004,
+     "s": 11.4,
+     "turns": null,
+     "actions": 83
+    },
+    {
+     "seed": 83500005,
+     "s": 19.5,
+     "turns": null,
+     "actions": 85
+    },
+    {
+     "seed": 83500006,
+     "s": 5.6,
+     "turns": null,
+     "actions": 55
+    },
+    {
+     "seed": 83500007,
+     "s": 12.1,
+     "turns": null,
+     "actions": 84
+    },
+    {
+     "seed": 83500008,
+     "s": 9.7,
+     "turns": null,
+     "actions": 76
+    },
+    {
+     "seed": 83500009,
+     "s": 6.6,
+     "turns": null,
+     "actions": 53
+    }
+   ],
+   "decks": {
+    "ramp-t": {
+     "ms": 46315.3,
+     "decisions": 345,
+     "ms_per_decision": 134.25
+    },
+    "elf-t": {
+     "ms": 66123.2,
+     "decisions": 469,
+     "ms_per_decision": 140.99
+    }
+   }
+  }
+ }
+}

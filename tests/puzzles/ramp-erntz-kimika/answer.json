@@ -1,0 +1,6 @@
+{
+ "kind": "setup",
+ "expected": {},
+ "source": "Operations puzzle 1 (the analysis line's d9f691e, puzzles/puzzles.md, k = 320; the architecture thread 2026-10-10 08:46Z)",
+ "notes": "Open: Salem's line (re-test 0.771 vs the bot's 0.000, 48 games each) rests on Kimika drawing Sagatsumatsu (3 of 27 cards left; Spilling Red is not in the deck), so it is not a line a player can plan. Every spec (level-strong, mcts:1043, mcts:3000; 8 seeds) plays Erntz and ends; the installed evaluation rates Salem's actual turn end 0.726 and the bot's 0.088 (analysis/puzzles3)."
+}

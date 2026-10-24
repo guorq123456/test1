@@ -1,0 +1,166 @@
+{
+ "deck": "ramp-t",
+ "opponent": "ramp-t",
+ "seeds": [
+  82500000,
+  82500001,
+  82500002,
+  82500003,
+  82500004,
+  82500005,
+  82500006,
+  82500007,
+  82500008,
+  82500009
+ ],
+ "pairs": {
+  "new": {
+   "specs": {
+    "ramp-t": "mcts:83+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-mid-ramp-t.npz+netmid+puct=analysis/scaling/models/prior-ramp-ft-t05.npz:2:1"
+   },
+   "games": [
+    {
+     "seed": 82500000,
+     "s": 8.8,
+     "turns": null,
+     "actions": 65
+    },
+    {
+     "seed": 82500001,
+     "s": 6.0,
+     "turns": null,
+     "actions": 58
+    },
+    {
+     "seed": 82500002,
+     "s": 5.4,
+     "turns": null,
+     "actions": 42
+    },
+    {
+     "seed": 82500003,
+     "s": 7.4,
+     "turns": null,
+     "actions": 72
+    },
+    {
+     "seed": 82500004,
+     "s": 5.5,
+     "turns": null,
+     "actions": 61
+    },
+    {
+     "seed": 82500005,
+     "s": 6.6,
+     "turns": null,
+     "actions": 44
+    },
+    {
+     "seed": 82500006,
+     "s": 6.9,
+     "turns": null,
+     "actions": 70
+    },
+    {
+     "seed": 82500007,
+     "s": 6.4,
+     "turns": null,
+     "actions": 60
+    },
+    {
+     "seed": 82500008,
+     "s": 7.3,
+     "turns": null,
+     "actions": 61
+    },
+    {
+     "seed": 82500009,
+     "s": 9.4,
+     "turns": null,
+     "actions": 62
+    }
+   ],
+   "decks": {
+    "ramp-t": {
+     "ms": 68177.7,
+     "decisions": 595,
+     "ms_per_decision": 114.58
+    }
+   }
+  },
+  "v2skx": {
+   "specs": {
+    "ramp-t": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost"
+   },
+   "games": [
+    {
+     "seed": 82500000,
+     "s": 12.7,
+     "turns": null,
+     "actions": 95
+    },
+    {
+     "seed": 82500001,
+     "s": 5.4,
+     "turns": null,
+     "actions": 57
+    },
+    {
+     "seed": 82500002,
+     "s": 6.2,
+     "turns": null,
+     "actions": 57
+    },
+    {
+     "seed": 82500003,
+     "s": 6.2,
+     "turns": null,
+     "actions": 60
+    },
+    {
+     "seed": 82500004,
+     "s": 5.8,
+     "turns": null,
+     "actions": 59
+    },
+    {
+     "seed": 82500005,
+     "s": 5.0,
+     "turns": null,
+     "actions": 46
+    },
+    {
+     "seed": 82500006,
+     "s": 12.7,
+     "turns": null,
+     "actions": 108
+    },
+    {
+     "seed": 82500007,
+     "s": 6.8,
+     "turns": null,
+     "actions": 55
+    },
+    {
+     "seed": 82500008,
+     "s": 9.5,
+     "turns": null,
+     "actions": 77
+    },
+    {
+     "seed": 82500009,
+     "s": 12.3,
+     "turns": null,
+     "actions": 78
+    }
+   ],
+   "decks": {
+    "ramp-t": {
+     "ms": 82186.5,
+     "decisions": 692,
+     "ms_per_decision": 118.77
+    }
+   }
+  }
+ }
+}

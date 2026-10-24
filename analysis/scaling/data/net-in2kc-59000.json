@@ -1,0 +1,59 @@
+{
+ "size": 59000,
+ "name": "in2kc",
+ "ftz": true,
+ "slope": 0.0,
+ "phi": [
+  64,
+  64
+ ],
+ "rho": [
+  128,
+  64
+ ],
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "fit_s": 2364,
+ "epochs": 22,
+ "train": {
+  "brier": 0.18589,
+  "log_loss": 0.54298,
+  "n": 1015024
+ },
+ "valid": {
+  "brier": 0.18647,
+  "log_loss": 0.54539,
+  "n": 52809
+ },
+ "train_installed_linear": {
+  "brier": 0.205,
+  "log_loss": 0.59489,
+  "n": 1015024
+ },
+ "holdout": {
+  "brier": 0.18798,
+  "log_loss": 0.54913,
+  "n": 93787
+ },
+ "holdout_installed_linear": {
+  "brier": 0.2038,
+  "log_loss": 0.58936,
+  "n": 93787
+ },
+ "holdout_selfplay": {
+  "seeds": [
+   71600018
+  ],
+  "brier": 0.1892,
+  "log_loss": 0.55121,
+  "n": 17948,
+  "installed_linear": {
+   "brier": 0.20723,
+   "log_loss": 0.60109,
+   "n": 17948
+  }
+ }
+}

@@ -1,0 +1,59 @@
+{
+ "size": 100000,
+ "name": "leaky",
+ "ftz": true,
+ "slope": 0.01,
+ "phi": [
+  64,
+  64
+ ],
+ "rho": [
+  128,
+  64
+ ],
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "fit_s": 6752,
+ "epochs": 24,
+ "train": {
+  "brier": 0.18434,
+  "log_loss": 0.53999,
+  "n": 1778991
+ },
+ "valid": {
+  "brier": 0.18489,
+  "log_loss": 0.54129,
+  "n": 94404
+ },
+ "train_installed_linear": {
+  "brier": 0.20281,
+  "log_loss": 0.58675,
+  "n": 1778991
+ },
+ "holdout": {
+  "brier": 0.18692,
+  "log_loss": 0.54648,
+  "n": 93787
+ },
+ "holdout_installed_linear": {
+  "brier": 0.2038,
+  "log_loss": 0.58936,
+  "n": 93787
+ },
+ "holdout_selfplay": {
+  "seeds": [
+   71600018
+  ],
+  "brier": 0.19587,
+  "log_loss": 0.56806,
+  "n": 17948,
+  "installed_linear": {
+   "brier": 0.20723,
+   "log_loss": 0.60109,
+   "n": 17948
+  }
+ }
+}

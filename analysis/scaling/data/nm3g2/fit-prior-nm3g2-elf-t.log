@@ -1,0 +1,25 @@
+{"epoch": 1, "lr": 0.001, "train_ce": 1.1346, "s": 283.5, "valid_ce": 1.13556, "best": true}
+{"epoch": 2, "lr": 0.001, "train_ce": 1.13007, "s": 282.3, "valid_ce": 1.13403, "best": true}
+{"epoch": 3, "lr": 0.001, "train_ce": 1.12892, "s": 288.3, "valid_ce": 1.13446}
+{"epoch": 4, "lr": 0.0005, "train_ce": 1.12323, "s": 289.8, "valid_ce": 1.1282, "best": true}
+{"epoch": 5, "lr": 0.0005, "train_ce": 1.12268, "s": 297.3, "valid_ce": 1.12928}
+{"epoch": 6, "lr": 0.00025, "train_ce": 1.11972, "s": 300.2, "valid_ce": 1.1248, "best": true}
+{"epoch": 7, "lr": 0.00025, "train_ce": 1.11941, "s": 292.5, "valid_ce": 1.12491}
+{"epoch": 8, "lr": 0.000125, "train_ce": 1.11771, "s": 295.9, "valid_ce": 1.12403, "best": true}
+{"epoch": 9, "lr": 0.000125, "train_ce": 1.1175, "s": 299.1, "valid_ce": 1.12437}
+{"epoch": 10, "lr": 6.25e-05, "train_ce": 1.11668, "s": 301.4, "valid_ce": 1.12347, "best": true}
+{"epoch": 11, "lr": 6.25e-05, "train_ce": 1.11656, "s": 294.9, "valid_ce": 1.12333, "best": true}
+{"epoch": 12, "lr": 6.25e-05, "train_ce": 1.11648, "s": 296.4, "valid_ce": 1.12361}
+{"epoch": 13, "lr": 3.125e-05, "train_ce": 1.116, "s": 290.2, "valid_ce": 1.12298, "best": true}
+{"epoch": 14, "lr": 3.125e-05, "train_ce": 1.11595, "s": 294.2, "valid_ce": 1.12289, "best": true}
+{"epoch": 15, "lr": 3.125e-05, "train_ce": 1.1159, "s": 302.7, "valid_ce": 1.1229}
+{"epoch": 16, "lr": 1.5625e-05, "train_ce": 1.11564, "s": 289.5, "valid_ce": 1.12288}
+{"epoch": 17, "lr": 7.8125e-06, "train_ce": 1.1155, "s": 280.4, "valid_ce": 1.12274, "best": true}
+{"epoch": 18, "lr": 7.8125e-06, "train_ce": 1.11548, "s": 274.3, "valid_ce": 1.12266, "best": true}
+{"epoch": 19, "lr": 7.8125e-06, "train_ce": 1.11546, "s": 277.0, "valid_ce": 1.12273}
+{"epoch": 20, "lr": 3.90625e-06, "train_ce": 1.11539, "s": 280.5, "valid_ce": 1.12268}
+--- resumed 07:51:49Z (planned chunk 2)
+{"resumed_after_epoch": 20, "stopped": false}
+{"epoch": 21, "lr": 1.953125e-06, "train_ce": 1.11535, "s": 279.6, "valid_ce": 1.12268}
+{"epoch": 22, "lr": 9.765625e-07, "train_ce": 1.11533, "s": 292.1, "valid_ce": 1.12265}
+{"fit_s": 596, "epochs": 22, "train_ce": 1.11538, "valid_ce": 1.12266}

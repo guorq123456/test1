@@ -1,0 +1,19 @@
+{
+ "shards": [
+  {
+   "file": "rec-70100200.jsonl.gz",
+   "games": 200,
+   "g_unique": 200,
+   "g_range": [
+    0,
+    199
+   ],
+   "first_seat_wins": 121,
+   "draws": 0,
+   "cpu_s_per_game": 3.45,
+   "actions_mean": 68.2
+  }
+ ],
+ "games": 200,
+ "open_parts": []
+}
