@@ -10,7 +10,8 @@ played card is counted, hence the `+ 1` in `_combo_on_play`.
 from svsim.cards import common
 from svsim.cards.pool import card
 from svsim.core import effects as E
-from svsim.core.enums import Keyword
+from svsim.cards.neutral import DIVINE_EVIDENCE
+from svsim.core.enums import Craft, Keyword
 from svsim.core.script import CardScript, Target, TargetSpec, register
 from svsim.core.state import FIELD_LIMIT
 
@@ -31,6 +32,19 @@ MINIMIZED_ANXIETY_CREST = card(10712312)  # 纹章：忧虑缩小
 MAGNIFIED_MALICE_CREST = card(10713312)  # 纹章：恶意扩大
 THESTAE_CREST = card(10714112)  # 纹章：操量的安纳提玛·达斯特迪兹
 GREAT_HART_CREST = card(10714122)  # 纹章：冰界鹿王
+UNTAMED_TESTIMONY_CREST = card(11012312)  # 纹章：鸟兽述怀
+
+# --- set 10010 ---
+DEBONAIR_DOGSITTER = card(11011110)  # 优雅看护者
+WOLF_PACK_LACKEY = card(11011120)  # 群狼侍者
+NATURAL_REINCARNATION = card(11011310)  # 自然的再生
+INQUIRING_MISCHIEF = card(11012110)  # 好奇的老鼠
+GARDEN_ELF = card(11012120)  # 花园精灵
+UNTAMED_TESTIMONY = card(11012310)  # 鸟兽述怀
+SLEUTHS_BEST_FRIEND = card(11013110)  # 传心搭档犬
+NOSCHES_INTERROGATION = card(11013310)  # 诺榭的审讯
+NOSCHE = card(11014110)  # 兽语侦探·诺榭
+HEARTENING_HYPHAE = card(11014120)  # 播撒生命的异形
 
 # --- set 10009 ---
 SPROUTING_INITIATE = card(10911110)  # 发芽组员
@@ -113,7 +127,9 @@ MAY = card(10012110)  # 冒险精灵·小梅
 SELWYN = card(10012120)  # 音速射手·塞尔文
 BUG_ALERT = card(10012310)  # 昆虫的忠告
 
-CARDS = [SPROUTING_INITIATE, JUNGLE_YOUTH, TRAP_IN_THE_WOODS, LEAFSHADOW_ASSASSIN, PRIMATE_PLOTTERS,
+CARDS = [DEBONAIR_DOGSITTER, WOLF_PACK_LACKEY, NATURAL_REINCARNATION, INQUIRING_MISCHIEF, GARDEN_ELF,
+         UNTAMED_TESTIMONY, SLEUTHS_BEST_FRIEND, NOSCHES_INTERROGATION, NOSCHE, HEARTENING_HYPHAE,
+         SPROUTING_INITIATE, JUNGLE_YOUTH, TRAP_IN_THE_WOODS, LEAFSHADOW_ASSASSIN, PRIMATE_PLOTTERS,
          VERDANT_RING_KINDRED, VIRID_LIEUTENANT, CRIMSON_INCENSE, MAGACHIYO, HIEN,
          MARLONE, CITRUS, MOELLE, RUFLET, LYCORIS, PEACEFUL_SOLITUDE, MICHELLE, CURIOSITY_ABOUNDS,
          SETUS_AND_MAISHA, TIA,
@@ -129,7 +145,7 @@ CARDS = [SPROUTING_INITIATE, JUNGLE_YOUTH, TRAP_IN_THE_WOODS, LEAFSHADOW_ASSASSI
          FAIRY_TAMER, STRAY_BEASTMAN, GENTLE_TREANT, WILD_PROFUSION, MAY, SELWYN, BUG_ALERT]
 TOKENS = [FAIRY, SPRINGBLOOM_FAIRY, DEEPWOOD_BOUNTY, EVE, DEPTHS_OF_THE_ELD_LANCE]
 LEADER_AREA = [STARRY_SKY_CREST, YUEL_CREST, SATHANID_FAITH, MINIMIZED_ANXIETY_CREST,
-               MAGNIFIED_MALICE_CREST, THESTAE_CREST, GREAT_HART_CREST]
+               MAGNIFIED_MALICE_CREST, THESTAE_CREST, GREAT_HART_CREST, UNTAMED_TESTIMONY_CREST]
 # Cards whose text is only keywords: they play correctly without a script.
 NO_SCRIPT_NEEDED = [JUNGLE_YOUTH, HOWLING_WOLFMAN, FAIRY_BEASTWHISPERER, FAIRY, EVE]
 
@@ -188,6 +204,11 @@ def _give_all_allies(ctx, keywords: Keyword) -> None:
 
 def _is_pixie(inst) -> bool:
     return inst.defn.is_follower and E.has_trait(inst, PIXIE)
+
+
+def _one_cost_allies(ctx, exclude=None) -> int:
+    """Allied cards on the field (followers and amulets) with a base cost of 1."""
+    return sum(c.defn.cost == 1 for c in ctx.me.field if c is not exclude)
 
 
 # --- tokens ------------------------------------------------------------------------------
@@ -293,6 +314,139 @@ class GreatHartCrest(CardScript):
     def on_turn_end(self, ctx):
         if _combo(ctx, 3):
             _add(ctx, DEEPWOOD_BOUNTY)
+
+
+@register(UNTAMED_TESTIMONY_CREST.card_id)
+class UntamedTestimonyCrest(CardScript):
+    """Countdown (2). At the start of your turn, summon an Inquiring Mischief."""
+
+    def on_turn_start(self, ctx):
+        _summon(ctx, INQUIRING_MISCHIEF)
+
+
+# --- set 10010 -------------------------------------------------------------------------------
+
+@register(DEBONAIR_DOGSITTER.card_id)
+class DebonairDogsitter(CardScript):
+    """Fanfare: summon a Divine Evidence. Evolve: if there are at least two 1-base-cost
+    allied cards on the field, restore 2 defense to your leader."""
+
+    def fanfare(self, ctx):
+        _summon(ctx, DIVINE_EVIDENCE)
+
+    def on_evolve(self, ctx):
+        if _one_cost_allies(ctx) >= 2:
+            E.heal_leader(ctx.state, ctx.controller, 2)
+
+
+@register(WOLF_PACK_LACKEY.card_id)
+class WolfPackLackey(CardScript):
+    """Fanfare: summon 2 Wolf Pack Lackeys. Rush. Evolve: replicate the Fanfare."""
+
+    def fanfare(self, ctx):
+        _summon(ctx, WOLF_PACK_LACKEY, 2)
+
+    def on_evolve(self, ctx):
+        _summon(ctx, WOLF_PACK_LACKEY, 2)
+
+
+@register(NATURAL_REINCARNATION.card_id)
+class NaturalReincarnation(CardScript):
+    """Summon a Fairy and evolve it. Enhance (6): summon 3 instead."""
+    enhance = (6,)
+
+    def cast(self, ctx):
+        for fairy in _summon(ctx, FAIRY, 3 if ctx.enhanced else 1):
+            _evolve(ctx, fairy)
+
+
+@register(INQUIRING_MISCHIEF.card_id)
+class InquiringMischief(CardScript):
+    """When this follower enters the field, if there are at least 2 other 1-base-cost
+    allied cards on the field, give it +2/+1. Rush."""
+
+    def on_enter(self, ctx):
+        if _one_cost_allies(ctx, exclude=ctx.source) >= 2:
+            E.buff(ctx.state, ctx.source, 2, 1)
+
+
+@register(GARDEN_ELF.card_id)
+class GardenElf(CardScript):
+    """At the end of your turn, add a Deepwood Bounty and a Fairy to your hand."""
+
+    def on_turn_end(self, ctx):
+        _add(ctx, DEEPWOOD_BOUNTY)
+        _add(ctx, FAIRY)
+
+
+@register(UNTAMED_TESTIMONY.card_id)
+class UntamedTestimony(CardScript):
+    """Summon a Divine Evidence. Gain Crest: Untamed Testimony."""
+
+    def cast(self, ctx):
+        _summon(ctx, DIVINE_EVIDENCE)
+        _gain_crest(ctx, UNTAMED_TESTIMONY_CREST)
+
+
+@register(SLEUTHS_BEST_FRIEND.card_id)
+class SleuthsBestFriend(CardScript):
+    """Fanfare: summon a Divine Evidence. Storm. Evolve: if there are at least two
+    1-base-cost allied cards on the field, summon an Inquiring Mischief."""
+
+    def fanfare(self, ctx):
+        _summon(ctx, DIVINE_EVIDENCE)
+
+    def on_evolve(self, ctx):
+        if _one_cost_allies(ctx) >= 2:
+            _summon(ctx, INQUIRING_MISCHIEF)
+
+
+@register(NOSCHES_INTERROGATION.card_id)
+class NoschesInterrogation(CardScript):
+    """Deal 5 damage to a random enemy follower. Add an Inquiring Mischief to your hand
+    and, if there are at least two 1-base-cost allied cards on the field, give it Storm."""
+
+    def cast(self, ctx):
+        E.damage(ctx.state, _random_enemy_follower(ctx), 5, ctx.source)
+        for mischief in _add(ctx, INQUIRING_MISCHIEF):
+            if _one_cost_allies(ctx) >= 2:
+                E.give_keywords(mischief, Keyword.STORM)
+
+
+@register(NOSCHE.card_id)
+class Nosche(CardScript):
+    """Fanfare: summon a Sleuth's Best Friend and an Inquiring Mischief.
+    Super-Evolve: give all other allied followers +2/+0."""
+
+    def fanfare(self, ctx):
+        _summon(ctx, SLEUTHS_BEST_FRIEND)
+        _summon(ctx, INQUIRING_MISCHIEF)
+
+    def on_super_evolve(self, ctx):
+        _buff_all_allies(ctx, 2, 0, exclude=ctx.source)
+
+
+@register(HEARTENING_HYPHAE.card_id)
+class HearteningHyphae(CardScript):
+    """Fanfare: do this 2 times: "Draw a card. Summon any Forestcraft followers drawn."
+    Super-Evolve: replicate the Fanfare."""
+
+    def fanfare(self, ctx):
+        self._sow(ctx)
+
+    def on_super_evolve(self, ctx):
+        self._sow(ctx)
+
+    def _sow(self, ctx):
+        p = ctx.me
+        for _ in range(2):
+            for c in E.draw(ctx.state, ctx.controller):
+                # As for Chloe: with a full field the follower stays in hand. A drawn card that
+                # was overdrawn (full hand) is gone and isn't summoned.
+                if (c.defn.is_follower and c.defn.craft == Craft.FOREST and c in p.hand
+                        and len(p.field) < FIELD_LIMIT):
+                    p.hand.remove(c)
+                    E.enter_field(ctx.state, c)
 
 
 # --- set 10009 -------------------------------------------------------------------------------
