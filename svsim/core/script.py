@@ -175,9 +175,13 @@ class CardScript:
 HOOKS = ("fanfare", "cast", "last_words", "on_evolve", "on_super_evolve", "on_evolved", "strike",
          "follower_strike", "leader_strike", "clash", "engage", "on_turn_start", "on_turn_end",
          "on_opponent_turn_start", "on_opponent_turn_end", "on_discard", "on_drawn",
-         "on_spellboost", "on_fuse", "on_invoked", "on_buffed", "on_damaged", "on_enter", "on_banished", "on_play",
+         "on_spellboost", "on_fuse", "on_invoked", "on_buffed", "on_damaged", "on_enter", "on_play",
          "on_ally_enter", "on_enemy_enter", "on_ally_evolve", "on_attack", "on_card_destroyed",
          "on_ally_leave", "on_engage", "on_earth_rite", "on_draw", "on_leader_healed")
+# learn.tokens builds a hook_ feature column per entry of HOOKS, so trained nets
+# depend on its length and order: hooks added later go in LATER_HOOKS instead.
+LATER_HOOKS = ("on_banished",)
+ALL_HOOKS = HOOKS + LATER_HOOKS
 
 _EMPTY = CardScript()
 _SCRIPTS: dict[int, CardScript] = {}

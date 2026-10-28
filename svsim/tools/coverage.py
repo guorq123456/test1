@@ -14,7 +14,7 @@ from svsim.agents.random_agent import RandomAgent, play_game
 from svsim.cards import decks, library
 from svsim.core.engine import new_game
 from svsim.core.enums import Craft
-from svsim.core.script import HOOKS, script_for
+from svsim.core.script import ALL_HOOKS, script_for
 
 assert library.__all__        # every craft module registers its scripts
 
@@ -24,7 +24,7 @@ def instrument(card_defs) -> tuple[Counter, set]:
     fired, expected = Counter(), set()
     for defn in card_defs:
         script = script_for(defn.card_id)
-        for hook in HOOKS:
+        for hook in ALL_HOOKS:
             method = getattr(script, hook)
             key = (type(script).__name__, hook)
             if method is None or key in expected:
