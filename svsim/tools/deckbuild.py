@@ -39,8 +39,9 @@ gain nothing); the anchor curve and the final league are the check on them.
 Start (round 0): each class's seed decks (--seeds-file: lines "label|deck hash", Rotation hashes of
 any class; cards no longer legal are swapped for legal ones of the nearest cost) and --random random
 decks (costs drawn from the seed decks' cost curve, or flat without seeds) go through the same halving
-against a provisional field (each class's first seed deck, else its first random deck); the winner
-becomes the class's incumbent, no confirmation.
+against a provisional field (each class's first seed deck, else its first random deck), with
+--start-stage deals in the first stage (many candidates, and the search corrects a poor start); the
+winner becomes the class's incumbent, no confirmation.
 
 Everything is written to --out: state.json after every class (a rerun resumes from it, with the same
 arguments), deals.jsonl one line per deck per deal (for the correlation of paired decks and any
@@ -258,13 +259,13 @@ class Search:
                 fh.write(json.dumps({"tag": tag, **res}) + "\n")
         return got
 
-    def halving(self, cands: dict, incumbent: tuple | None, field: dict, tag: str) -> tuple:
+    def halving(self, cands: dict, incumbent: tuple | None, field: dict, tag: str, first: int | None = None) -> tuple:
         """Successive halving of `cands` (key -> ids), the incumbent (key, ids) playing every deal; returns
         (survivor key, {key: scores}) with each key's scores over the deals it played."""
         scores = {k: [] for k in cands}
         if incumbent:
             scores[incumbent[0]] = []
-        alive, size, stage = list(cands), self.args.stage, 0
+        alive, size, stage = list(cands), first or self.args.stage, 0
         while True:
             deals = self.deals(size, field)
             playing = {k: cands[k] for k in alive}
@@ -301,7 +302,7 @@ class Search:
         field = {k: next(iter(v.values())) for k, v in cands_by_class.items()}
         for name, cands in cands_by_class.items():
             print(f"[起点] {name}: {len(cands)} 套候选", flush=True)
-            best, scores = self.halving(cands, None, field, f"r0:{name}")
+            best, scores = self.halving(cands, None, field, f"r0:{name}", self.args.start_stage)
             mean = sum(scores[best]) / len(scores[best])
             self.st["field"][name] = cands[best]
             field[name] = cands[best]
@@ -456,6 +457,7 @@ def main() -> None:
     ap.add_argument("--rounds", type=int, default=10, help="rounds after round 0 (10)")
     ap.add_argument("--variants", type=int, default=8, help="variants per class per round (8)")
     ap.add_argument("--stage", type=int, default=28, help="deals in the halving's first stage, doubled each stage (28)")
+    ap.add_argument("--start-stage", type=int, default=7, help="the same in round 0 (7)")
     ap.add_argument("--confirm", type=int, default=560, help="fresh deals for the confirmation at most (560)")
     ap.add_argument("--batch", type=int, default=70, help="confirmation deals between two looks of the test (70)")
     ap.add_argument("--h1", type=float, default=0.02, help="the confirmation's H1: the variant scores this much more (0.02)")
