@@ -1,6 +1,6 @@
-From 7aa1f2736a09346ce83db7368ba83bf4ade3c019 Mon Sep 17 00:00:00 2001
+From 25e4918ea0ae63279d0d21e9d47fbc6485f462fa Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
-Date: Wed, 28 Oct 2026 19:20:20 +0000
+Date: Wed, 28 Oct 2026 19:23:20 +0000
 Subject: [PATCH 1/4] Set 10 Witch (Runecraft), analysis line: Dedicated Aide,
  Wily Witch, Atelier Relocation, Leisurely Attendant, Ruler of Tempests,
  Discerning Melody (E.engaged_amulet_this_turn), Dramatic Assistant,
@@ -14,27 +14,25 @@ Subject: [PATCH 1/4] Set 10 Witch (Runecraft), analysis line: Dedicated Aide,
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LfGPwGP5hardfTTjWqiw99
 ---
- svsim/cards/pending.py   |   5 +-
+ svsim/cards/pending.py   |   3 +-
  svsim/cards/rune.py      | 192 +++++++++++++++++++++++++++++++++-
  tests/test_cards_rune.py | 221 +++++++++++++++++++++++++++++++++++++++
- 3 files changed, 413 insertions(+), 5 deletions(-)
+ 3 files changed, 412 insertions(+), 4 deletions(-)
 
 diff --git a/svsim/cards/pending.py b/svsim/cards/pending.py
-index eac2434..37e585b 100644
+index e34eddc..e59902b 100644
 --- a/svsim/cards/pending.py
 +++ b/svsim/cards/pending.py
-@@ -11,9 +11,8 @@ PENDING = frozenset({
-     11011110,
-     11011120, 11011310, 11012110, 11012120, 11012310, 11012312, 11013110, 11013310,
-     11014110, 11014120, 11021110, 11021120, 11021310, 11022110, 11022120, 11022310,
--    11023110, 11023310, 11024110, 11024120, 11024122, 11031110, 11031120, 11031310,
--    11032110, 11032120, 11032310, 11033110, 11033310, 11033312, 11034110, 11034112,
--    11034120, 11041110, 11041120, 11041310, 11042110, 11042120, 11042310, 11043110,
-+    11023110, 11023310, 11024110, 11024120, 11024122,
-+    11041110, 11041120, 11041310, 11042110, 11042120, 11042310, 11043110,
-     11043310, 11044110, 11044120, 11051110, 11051120, 11051310, 11052110, 11052120,
-     11052310, 11053110, 11053310, 11054110, 11054120, 11054122, 11061110, 11061120,
-     11061310, 11062110, 11062120, 11062310, 11063110, 11063310, 11063312, 11064110,
+@@ -8,8 +8,7 @@ ROTATED_OUT: the cards that left the Rotation table (set 4, and what only it gen
+ before set 10 (the starter and tournament decks) are checked against the Rotation before it (decks.ROTATION_PRE10).
+ """
+ PENDING = frozenset({
+-    11031110, 11031120, 11031310, 11032110, 11032120, 11032310, 11033110, 11033310,
+-    11033312, 11034110, 11034112, 11034120, 11051110, 11051120, 11051310, 11052110,
++    11051110, 11051120, 11051310, 11052110,
+     11052120, 11052310, 11053110, 11053310, 11054110, 11054120, 11054122, 11061110,
+     11061120, 11061310, 11062110, 11062120, 11062310, 11063110, 11063310, 11063312,
+     11064110, 11064112, 11064120, 11071110, 11071120, 11071310, 11072110, 11072120,
 diff --git a/svsim/cards/rune.py b/svsim/cards/rune.py
 index d5e67df..7316f4b 100644
 --- a/svsim/cards/rune.py

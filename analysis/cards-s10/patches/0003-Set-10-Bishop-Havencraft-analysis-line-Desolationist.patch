@@ -1,6 +1,6 @@
-From 3c11715649a73ff6160a6b1ad7a792ed8a8079d2 Mon Sep 17 00:00:00 2001
+From e95aac35a63551708f31a6928a791525a857b550 Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
-Date: Wed, 28 Oct 2026 19:20:20 +0000
+Date: Wed, 28 Oct 2026 19:23:21 +0000
 Subject: [PATCH 3/4] Set 10 Bishop (Havencraft), analysis line: Desolationist
  Refiner, Combative Monk, Solitary Cultivation, Desolationist Tamer, Winged
  Accordionist, Destructive Propagation, Desolationist Rehabilitator, Fruitless
@@ -265,19 +265,19 @@ index 8715f69..4ab5b94 100644
  
  @register(FOLLOWER_OF_THE_TENETS.card_id)
 diff --git a/svsim/cards/pending.py b/svsim/cards/pending.py
-index 1734819..a198cff 100644
+index e0e8389..3311059 100644
 --- a/svsim/cards/pending.py
 +++ b/svsim/cards/pending.py
-@@ -14,10 +14,8 @@ PENDING = frozenset({
-     11023110, 11023310, 11024110, 11024120, 11024122,
-     11041110, 11041120, 11041310, 11042110, 11042120, 11042310, 11043110,
-     11043310, 11044110, 11044120,
--    11061110, 11061120,
--    11061310, 11062110, 11062120, 11062310, 11063110, 11063310, 11063312, 11064110,
--    11064112, 11064120, 11071110, 11071120, 11071310, 11072110, 11072120, 11072310,
--    11073110, 11073310, 11074110, 11074120, 11074122, 90061140,
-+    11071110, 11071120, 11071310, 11072110, 11072120, 11072310,
-+    11073110, 11073310, 11074110, 11074120, 11074122,
+@@ -8,10 +8,8 @@ ROTATED_OUT: the cards that left the Rotation table (set 4, and what only it gen
+ before set 10 (the starter and tournament decks) are checked against the Rotation before it (decks.ROTATION_PRE10).
+ """
+ PENDING = frozenset({
+-    11061110,
+-    11061120, 11061310, 11062110, 11062120, 11062310, 11063110, 11063310, 11063312,
+-    11064110, 11064112, 11064120, 11071110, 11071120, 11071310, 11072110, 11072120,
+-    11072310, 11073110, 11073310, 11074110, 11074120, 11074122, 90061140,
++    11071110, 11071120, 11071310, 11072110, 11072120,
++    11072310, 11073110, 11073310, 11074110, 11074120, 11074122,
  })
  
  ROTATED_OUT = frozenset({

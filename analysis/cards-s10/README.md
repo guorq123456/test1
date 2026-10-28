@@ -7,8 +7,9 @@
 ## 交付
 
 - 补丁在 `patches/`，一个职业一个提交，共 4 个。
-- 基线是建造线的 `463b898`（set 10 的引擎钩子）。在它上面 `git am analysis/cards-s10/patches/*.patch` 就能接上。
-- 只改了 `svsim/cards/{rune,abyss,haven,portal}.py`、对应的 `tests/test_cards_*.py`，以及 `svsim/cards/pending.py`（把写好的卡移出 PENDING）。公共文件一行没动。
+- 基线是建造线的 `d27dc30`：引擎钩子 463b898 之后，又加了建造线自己的中立、龙、妖精、皇家。在它上面 `git am analysis/cards-s10/patches/*.patch` 就能接上。
+- 第一版补丁接在 463b898 上（3abfbba）。后来建造线把 pending.py 重排了，就改接到 d27dc30 上；内容没变，只是 pending.py 的改法跟着换了。
+- 只改了 `svsim/cards/{rune,abyss,haven,portal}.py`、对应的 `tests/test_cards_*.py`，以及 `svsim/cards/pending.py`。pending.py 是把写好的卡移出 PENDING；4 个补丁都打上以后 PENDING 为空，第 10 弹全部有了脚本。公共文件一行没动。
 
 | 补丁 | 职业 | 脚本 | 新测试 |
 |---|---|---|---|
@@ -63,8 +64,8 @@
 | 主教 | 49 | 49 | 不崩；145 / 155，18.2 回合 |
 | 复仇者 | 37 | 37 | 不崩；154 / 146，20.4 回合 |
 
-- 4 个补丁在 463b898 上用 `git am` 接得上，结果和我这边的树逐字节相同。
-- 全套测试在 463b898 + 这 4 个补丁上：1317 passed，7 skipped，4 failed。
+- 4 个补丁在 d27dc30 上用 `git am` 接得上，结果和我这边的树逐字节相同。
+- 全套测试在 d27dc30 + 这 4 个补丁上：1371 passed，7 skipped，4 failed。在 463b898 + 这 4 个补丁上是 1317 passed。
 - 失败的 4 个都是 `test_golden_search`。它们在干净的 4d3d4b5 上、在我的容器里就失败（决策 6 对不上），和加卡无关。建造线那边的说法是 golden search 没变。
 
 ## 解读和假设（请审的人重点看）

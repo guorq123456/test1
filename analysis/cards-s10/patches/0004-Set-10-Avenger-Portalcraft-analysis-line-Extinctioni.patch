@@ -1,6 +1,6 @@
-From cb66e2ee7791adc0c67258566336ed8e2c76730e Mon Sep 17 00:00:00 2001
+From af6f0588ad159ea7bde3dd6540497b4d90461d81 Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
-Date: Wed, 28 Oct 2026 19:20:20 +0000
+Date: Wed, 28 Oct 2026 19:23:21 +0000
 Subject: [PATCH 4/4] Set 10 Avenger (Portalcraft), analysis line:
  Extinctionist Majordomo, Incohesive Construction, Extinctionist Socialite and
  Extinctionist Dandy (on_ally_fuse: once per Fuse that includes an amulet),
@@ -15,24 +15,27 @@ Subject: [PATCH 4/4] Set 10 Avenger (Portalcraft), analysis line:
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LfGPwGP5hardfTTjWqiw99
 ---
- svsim/cards/pending.py     |   2 -
+ svsim/cards/pending.py     |   5 +-
  svsim/cards/portal.py      | 182 +++++++++++++++++++++++++++++++++-
  tests/test_cards_portal.py | 193 +++++++++++++++++++++++++++++++++++++
- 3 files changed, 372 insertions(+), 5 deletions(-)
+ 3 files changed, 373 insertions(+), 7 deletions(-)
 
 diff --git a/svsim/cards/pending.py b/svsim/cards/pending.py
-index a198cff..a09449b 100644
+index 3311059..1196632 100644
 --- a/svsim/cards/pending.py
 +++ b/svsim/cards/pending.py
-@@ -14,8 +14,6 @@ PENDING = frozenset({
-     11023110, 11023310, 11024110, 11024120, 11024122,
-     11041110, 11041120, 11041310, 11042110, 11042120, 11042310, 11043110,
-     11043310, 11044110, 11044120,
--    11071110, 11071120, 11071310, 11072110, 11072120, 11072310,
--    11073110, 11073310, 11074110, 11074120, 11074122,
- })
+@@ -7,10 +7,7 @@ card still missing a script). Take a card out of PENDING when its script lands.
+ ROTATED_OUT: the cards that left the Rotation table (set 4, and what only it generated). They still play; decks built
+ before set 10 (the starter and tournament decks) are checked against the Rotation before it (decks.ROTATION_PRE10).
+ """
+-PENDING = frozenset({
+-    11071110, 11071120, 11071310, 11072110, 11072120,
+-    11072310, 11073110, 11073310, 11074110, 11074120, 11074122,
+-})
++PENDING = frozenset()
  
  ROTATED_OUT = frozenset({
+     10401110, 10401120, 10402110, 10403110, 10403120, 10404110, 10404112, 10411110,
 diff --git a/svsim/cards/portal.py b/svsim/cards/portal.py
 index 80883d0..dec4239 100644
 --- a/svsim/cards/portal.py
