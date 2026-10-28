@@ -25,15 +25,23 @@ def test_random_decks_and_variants_are_legal():
 
 def test_legalize_keeps_legal_slots_and_fixes_the_rest():
     rng = random.Random(2)
-    _, _, ids = decks.deckcode.decode_deck("".join(decks.RAMP_T_HASH))
-    out = deckbuild.legalize(ids, Craft.DRAGON, rng)
-    assert out == ids                                   # already legal: unchanged, slot for slot
-    foreign = [i for i in decks.deckcode.decode_deck("".join(decks.PIRATE_T_HASH))[2]
-               if POOL[i].craft == Craft.SWORD][0]
-    bad = [foreign] + ids[1:]
-    fixed = deckbuild.legalize(bad, Craft.DRAGON, rng)
+    ids = deckbuild.random_ids(Craft.DRAGON, rng)
+    assert deckbuild.legalize(ids, Craft.DRAGON, rng) == ids      # already legal: unchanged, slot for slot
+    foreign = deckbuild.legal_cards(Craft.SWORD)
+    foreign = next(c.card_id for c in foreign if c.craft == Craft.SWORD)
+    fixed = deckbuild.legalize([foreign] + ids[1:], Craft.DRAGON, rng)
     assert _legal(fixed, Craft.DRAGON) and fixed[1:] == ids[1:]
     assert deckbuild.legalize(ids[:30], Craft.DRAGON, rng)[:30] == ids[:30]   # short lists are filled
+
+
+def test_tournament_seeds_are_legal_after_legalize():
+    # the 2026-10-07 lists predate card set 10: cards that left Rotation give their slots to legal ones
+    from pathlib import Path
+    path = Path(__file__).parent.parent / "analysis" / "deckbuild" / "seeds-tournament-2026-10-07.txt"
+    rng = random.Random(4)
+    for _, ids in deckbuild.read_seeds(str(path)):
+        craft = deckbuild.craft_of_ids(ids)
+        assert _legal(deckbuild.legalize(ids, craft, rng), craft)
 
 
 def test_variant_respects_three_copies():
