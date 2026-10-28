@@ -1260,6 +1260,215 @@ def test_omerio_evolve_destroys_all_allied_amulets():
     assert p.leader_hp == 12 and omerio.counters["step"] == 2
 
 
+# --- set 10010 -------------------------------------------------------------------------------
+
+BUNNIES = H.BUNNIES_OF_DESOLATION
+EVIDENCE = H.DIVINE_EVIDENCE
+
+
+def on_field(state, player, defn):
+    return [c for c in state.players[player].field if c.defn.card_id == defn.card_id]
+
+
+def footman(state, player, life):
+    f = put(state, player, demo.FOOTMAN)
+    f.life = f.max_life = life
+    return f
+
+
+def crest(state, defn, player=0):
+    return E.leader_area_card(state, player, defn)
+
+
+def test_bunnies_banish_a_cheapest_hand_card_evolve_and_hit_the_leader_when_destroyed():
+    state = start()
+    p = state.players[0]
+    p.hand.clear()
+    giant, footman_card, lancer = give(state, 0, demo.GIANT), give(state, 0, demo.FOOTMAN), give(state, 0, demo.LANCER)
+    bunnies = put(state, 0, BUNNIES)
+    resolve_queue(state)
+    assert footman_card.fate == BANISHED and p.hand == [giant, lancer]
+    assert bunnies.evolved and (bunnies.atk, bunnies.life) == (3, 3)
+    assert p.evolutions == 1 and p.ep == 2                  # not with evolution points
+    E.destroy(state, bunnies)
+    resolve_queue(state)
+    assert state.players[1].leader_hp == 18
+    p.hand.clear()
+    empty = put(state, 0, BUNNIES)
+    resolve_queue(state)
+    assert empty.evolved                                    # an empty hand: it still evolves
+
+
+def test_desolationist_refiner_last_words_two_evidence():
+    state = start()
+    E.destroy(state, put(state, 0, H.DESOLATIONIST_REFINER))
+    resolve_queue(state)
+    assert count(state.players[0].hand, EVIDENCE) == 2
+
+
+def test_combative_monk_attacks_twice_and_grows_with_barrier_on_each_strike():
+    state = start()
+    monk = put(state, 0, H.COMBATIVE_MONK)
+    apply(state, Attack(monk.uid, ENEMY_LEADER))
+    assert (monk.atk, monk.life) == (6, 6) and monk.has(Keyword.BARRIER)
+    assert state.players[1].leader_hp == 14
+    foe = footman(state, 1, 8)
+    foe.atk = 5
+    apply(state, Attack(monk.uid, foe.uid))
+    assert (monk.atk, monk.life) == (8, 8) and not monk.has(Keyword.BARRIER)   # its Barrier took the hit
+    assert foe.fate == DESTROYED
+    assert Attack(monk.uid, ENEMY_LEADER) not in legal_actions(state)
+
+
+def test_solitary_cultivation_needs_an_allied_follower():
+    state = start()
+    set_pp(state, 0, 3)
+    spell = give(state, 0, H.SOLITARY_CULTIVATION)
+    assert plays(state, spell.uid) == []
+    ally = put(state, 0, demo.FOOTMAN)
+    play(state, spell, [ally.uid])
+    assert (ally.atk, ally.life) == (3, 4) and ally.has(Keyword.BARRIER)
+
+
+def test_desolationist_tamer_adds_bunnies_and_evolve_recovers_a_point():
+    state = start()
+    set_pp(state, 0, 3)
+    tamer = give(state, 0, H.DESOLATIONIST_TAMER)
+    play(state, tamer)
+    assert count(state.players[0].hand, BUNNIES) == 1 and on_field(state, 0, BUNNIES) == []
+    unlock_evolution(state, 0)
+    apply(state, Evolve(tamer.uid))
+    assert state.players[0].pp == 1
+
+
+def test_winged_accordionist_summons_a_falcon_and_buffs_the_others_on_evolve():
+    state = start()
+    set_pp(state, 0, 4)
+    other = put(state, 0, demo.FOOTMAN)
+    accordionist = give(state, 0, H.WINGED_ACCORDIONIST)
+    play(state, accordionist)
+    falcon, = on_field(state, 0, H.HOLY_FALCON)
+    unlock_evolution(state, 0)
+    apply(state, Evolve(accordionist.uid))
+    assert (falcon.atk, falcon.life) == (3, 3) and (other.atk, other.life) == (2, 3)
+    assert (accordionist.atk, accordionist.life) == (3, 3)
+
+
+def test_destructive_propagation_two_or_four_bunnies():
+    state = start()
+    p = state.players[0]
+    p.hand.clear()
+    set_pp(state, 0, 5)
+    spell = give(state, 0, H.DESTRUCTIVE_PROPAGATION)
+    keep = [give(state, 0, demo.GIANT) for _ in range(3)]
+    cheap = [give(state, 0, demo.FOOTMAN) for _ in range(2)]
+    play(state, spell)
+    bunnies = on_field(state, 0, BUNNIES)
+    assert len(bunnies) == 2 and all(b.evolved for b in bunnies)
+    assert all(c.fate == BANISHED for c in cheap) and p.hand == keep
+    state = start()
+    set_pp(state, 0, 8)
+    play(state, give(state, 0, H.DESTRUCTIVE_PROPAGATION))
+    assert len(on_field(state, 0, BUNNIES)) == 4 and state.players[0].pp == 0
+
+
+def test_desolationist_rehabilitator_banishes_and_summons_two_bunnies():
+    state = start()
+    p = state.players[0]
+    foe = put(state, 1, demo.BOMBER)
+    set_pp(state, 0, 8)
+    rehab = give(state, 0, H.DESOLATIONIST_REHABILITATOR)
+    play(state, rehab, [foe.uid])
+    assert foe.fate == BANISHED and state.players[0].leader_hp == 20      # no Last Words
+    assert len(on_field(state, 0, BUNNIES)) == 2
+    hurt(state)
+    hand = len(p.hand)
+    unlock_evolution(state, 0)
+    apply(state, Evolve(rehab.uid))
+    assert p.leader_hp == 10 and len(p.hand) == hand        # plain evolution: nothing
+    state = start()
+    p = state.players[0]
+    rehab = put(state, 0, H.DESOLATIONIST_REHABILITATOR)
+    hurt(state)
+    hand = len(p.hand)
+    unlock_evolution(state, 0)
+    apply(state, Evolve(rehab.uid, super_=True))
+    assert p.leader_hp == 12 and len(p.hand) == hand + 2
+
+
+def test_fruitless_testimony_modes_and_its_crest_runs_two_turns():
+    state = start()
+    p = state.players[0]
+    p.hand.clear()
+    foe = footman(state, 1, 5)
+    set_pp(state, 0, 3)
+    testimony = give(state, 0, H.FRUITLESS_TESTIMONY)
+    assert {a.modes for a in plays(state, testimony.uid)} == {(0,), (1,)}
+    play(state, testimony, modes=(0,))
+    assert foe.life == 1 and crest(state, H.FRUITLESS_TESTIMONY_CREST) is not None
+    assert on_field(state, 0, BUNNIES) == []
+    hurt(state)
+    end_turns(state, 2)
+    assert p.leader_hp == 11 and count(p.hand, EVIDENCE) == 1
+    end_turns(state, 2)
+    assert p.leader_hp == 12 and count(p.hand, EVIDENCE) == 2   # the turn its count runs out still counts
+    assert crest(state, H.FRUITLESS_TESTIMONY_CREST) is None
+    end_turns(state, 2)
+    assert p.leader_hp == 12 and count(p.hand, EVIDENCE) == 2
+    p.hand.clear()
+    set_pp(state, 0, 3)
+    play(state, give(state, 0, H.FRUITLESS_TESTIMONY), modes=(1,))
+    assert len(on_field(state, 0, BUNNIES)) == 1 and crest(state, H.FRUITLESS_TESTIMONY_CREST) is None
+
+
+def test_lapinette_banishes_and_its_crest_brings_one_or_two_more_bunnies():
+    state = start()
+    foe = put(state, 1, demo.FOOTMAN)
+    set_pp(state, 0, 6)
+    lapinette = give(state, 0, H.LAPINETTE)
+    play(state, lapinette, [foe.uid])
+    assert foe.fate == BANISHED and len(on_field(state, 0, BUNNIES)) == 1
+    unlock_evolution(state, 0)
+    apply(state, Evolve(lapinette.uid))
+    assert crest(state, H.LAPINETTE_CREST).countdown == 1
+    end_turns(state, 2)
+    assert len(on_field(state, 0, BUNNIES)) == 2 and crest(state, H.LAPINETTE_CREST) is None
+    state = start()
+    lapinette = put(state, 0, H.LAPINETTE)
+    unlock_evolution(state, 0)
+    apply(state, Evolve(lapinette.uid, super_=True))
+    assert crest(state, H.LAPINETTE_CREST).countdown == 2
+    end_turns(state, 2)
+    assert len(on_field(state, 0, BUNNIES)) == 1
+    end_turns(state, 2)
+    assert len(on_field(state, 0, BUNNIES)) == 2 and crest(state, H.LAPINETTE_CREST) is None
+
+
+def test_parareligious_idol_copies_enemy_followers_banished_on_your_turn():
+    state = start()
+    idol = put(state, 0, H.PARARELIGIOUS_IDOL)
+    assert idol.has(Keyword.INTIMIDATE) and idol.has(Keyword.AURA)
+    assert not [a for a in legal_actions(state) if isinstance(a, Attack) and a.attacker == idol.uid]
+    foe = footman(state, 1, 1)
+    foe.atk = 4
+    E.banish(state, foe)
+    resolve_queue(state)
+    copy, = [c for c in state.players[0].field if c.defn.card_id == demo.FOOTMAN.card_id]
+    assert (copy.atk, copy.life) == (4, 1) and copy.owner == 0
+    E.banish(state, put(state, 0, demo.FOOTMAN))           # an allied one: no copy
+    resolve_queue(state)
+    assert len(state.players[0].field) == 2
+    end_turns(state)
+    E.banish(state, put(state, 1, demo.FOOTMAN))           # opponent's turn: no copy
+    resolve_queue(state)
+    assert len(state.players[0].field) == 2
+    end_turns(state)
+    target = put(state, 1, demo.LANCER)
+    unlock_evolution(state, 0)
+    apply(state, Evolve(idol.uid, targets=(target.uid,)))
+    assert target.fate == BANISHED and len(on_field(state, 0, demo.LANCER)) == 1
+
+
 # --- coverage and fuzzing ------------------------------------------------------------------
 
 def test_every_haven_card_is_scripted_or_keyword_only():

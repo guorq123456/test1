@@ -21,6 +21,8 @@ HOLYFLAME_TIGER = card(90061120)  # 圣炎猛虎
 REGAL_FALCON = card(90061130)  # 壮丽大神隼
 RINGS_OF_MOONLIGHT = card(90064210)  # 月影指环
 DEPTHS_OF_THE_ELD_TOME = card(90064320)  # 天书深渊
+BUNNIES_OF_DESOLATION = card(90061140)  # 地害之兔
+DIVINE_EVIDENCE = card(90001210)  # 神域的物证 (Neutral token; Clue)
 
 # --- leader area / alternate forms ---
 ERRALDE_CREST = card(10964112)  # 纹章：神纹的罪人·艾尔拉德
@@ -28,6 +30,8 @@ VERDILIA_CREST = card(10864112)  # 纹章：飞跃的姐妹·贝尔迪俪亚&卡
 ZOE_CREST = card(10864122)  # 纹章：希望的光彩·莉迪耶尔
 KUKISHIRO_CREST = card(10564122)  # 纹章：雾卷花·茎白
 LYANTHOTH_FAITH = card(10664122)  # 古旧天书·莲妥丝 (信仰)
+FRUITLESS_TESTIMONY_CREST = card(11063312)  # 纹章：徒然的证言
+LAPINETTE_CREST = card(11064112)  # 纹章：地害三恶·拉碧妲赫特
 ALMIRAJ_CRYSTALLIZE = card(10962122)  # 奇迹独角兔 (结晶)
 COWARD_CRYSTALLIZE = card(10661112)  # 崇奉的懦者 (结晶)
 DYER_CRYSTALLIZE = card(10662112)  # 崇敬的涂描者 (结晶)
@@ -114,6 +118,18 @@ JURATIO = card(10963210)  # 神纹誓言
 ERRALDE = card(10964110)  # 神纹的罪人·艾尔拉德
 OMERIO = card(10964120)  # 翼天的变貌·奥梅里欧
 
+# --- set 10010 ---
+DESOLATIONIST_REFINER = card(11061110)  # 地害加工者
+COMBATIVE_MONK = card(11061120)  # 斗志修行僧
+SOLITARY_CULTIVATION = card(11061310)  # 孤高的锻炼
+DESOLATIONIST_TAMER = card(11062110)  # 地害驯兽师
+WINGED_ACCORDIONIST = card(11062120)  # 有翼奏者
+DESTRUCTIVE_PROPAGATION = card(11062310)  # 荒废的繁殖
+DESOLATIONIST_REHABILITATOR = card(11063110)  # 地害矫正者
+FRUITLESS_TESTIMONY = card(11063310)  # 徒然的证言
+LAPINETTE = card(11064110)  # 地害三恶·拉碧妲赫特
+PARARELIGIOUS_IDOL = card(11064120)  # 亚教偶像
+
 CARDS = [
     SOULCURE_SISTER, FOX_OF_PURITY, WINGED_WARRIOR, AVIAN_STATUE, IRONFIST_PRIEST, SACRED_GRIFFON,
     WINGED_STATUE, TROUE, LAMRETTA, AWED_AND_INSPIRED, SARA, SOPHIA, SKYFARING_VESSEL, TIKOH,
@@ -127,10 +143,14 @@ CARDS = [
     TRIDENT_OF_ERODING_TIDES, RODEO, INITIA, LILIUM, THERESA, GRANT, EDETH, VICHE, LINGERING_THREAT,
     COLETTE, ACADEMY_HIJINKS, VERDILIA_AND_CASTELLE, ZOE, FOLLOWER_OF_THE_TENETS, PERYTON,
     ROARING_BASILICA, AGENT_OF_THE_TESTAMENTS, MIRACULOUS_ALMIRAJ, VOW_OF_DEVOTION,
-    EXECUTOR_OF_THE_VOW, JURATIO, ERRALDE, OMERIO,
+    EXECUTOR_OF_THE_VOW, JURATIO, ERRALDE, OMERIO, DESOLATIONIST_REFINER, COMBATIVE_MONK,
+    SOLITARY_CULTIVATION, DESOLATIONIST_TAMER, WINGED_ACCORDIONIST, DESTRUCTIVE_PROPAGATION,
+    DESOLATIONIST_REHABILITATOR, FRUITLESS_TESTIMONY, LAPINETTE, PARARELIGIOUS_IDOL,
 ]
-TOKENS = [HOLY_FALCON, HOLYFLAME_TIGER, REGAL_FALCON, RINGS_OF_MOONLIGHT, DEPTHS_OF_THE_ELD_TOME]
-LEADER_AREA = [ERRALDE_CREST, VERDILIA_CREST, ZOE_CREST, KUKISHIRO_CREST, LYANTHOTH_FAITH]
+TOKENS = [HOLY_FALCON, HOLYFLAME_TIGER, REGAL_FALCON, RINGS_OF_MOONLIGHT, DEPTHS_OF_THE_ELD_TOME,
+          BUNNIES_OF_DESOLATION]
+LEADER_AREA = [ERRALDE_CREST, VERDILIA_CREST, ZOE_CREST, KUKISHIRO_CREST, LYANTHOTH_FAITH,
+               FRUITLESS_TESTIMONY_CREST, LAPINETTE_CREST]
 ALTERNATE_FORMS = [ALMIRAJ_CRYSTALLIZE, COWARD_CRYSTALLIZE, DYER_CRYSTALLIZE, CRUSADER_CRYSTALLIZE]
 # Keyword-only cards: no script needed.
 NO_SCRIPT = [FOX_OF_PURITY, VENERATING_DYER, MIRACULOUS_ALMIRAJ, HOLY_FALCON, HOLYFLAME_TIGER,
@@ -263,6 +283,24 @@ class DepthsOfTheEldTome(CardScript):
                 E.add_to_hand(ctx.state, ctx.controller, DEPTHS_OF_THE_ELD_TOME)
 
 
+@register(BUNNIES_OF_DESOLATION.card_id)
+class BunniesOfDesolation(CardScript):
+    """When this follower enters the field, banish a random card with the lowest cost
+    from your hand and evolve this follower. Last Words: deal 2 damage to the enemy
+    leader."""
+
+    def on_enter(self, ctx):
+        hand = ctx.me.hand
+        if hand:
+            low = min(c.cost for c in hand)
+            for c in E.random_sample(ctx.state, [c for c in hand if c.cost == low], 1):
+                E.banish(ctx.state, c)
+        _evolve_self(ctx)
+
+    def last_words(self, ctx):
+        E.damage(ctx.state, [common.enemy_leader(ctx)], 2, ctx.source)
+
+
 # --- leader area -------------------------------------------------------------------------
 
 @register(ERRALDE_CREST.card_id)
@@ -363,6 +401,159 @@ class CrusaderCrystallize(CardScript):
 
     def last_words(self, ctx):
         E.summon(ctx.state, ctx.controller, WORSHIPFUL_CRUSADER)
+
+
+@register(FRUITLESS_TESTIMONY_CREST.card_id)
+class FruitlessTestimonyCrest(CardScript):
+    """Countdown (2). At the start of your turn, restore 1 defense to your leader and add a
+    Divine Evidence to your hand."""
+
+    def on_turn_start(self, ctx):
+        _heal(ctx, 1)
+        E.add_to_hand(ctx.state, ctx.controller, DIVINE_EVIDENCE)
+
+
+@register(LAPINETTE_CREST.card_id)
+class LapinetteCrest(CardScript):
+    """Countdown (1). At the start of your turn, summon a Bunnies of Desolation."""
+
+    def on_turn_start(self, ctx):
+        E.summon(ctx.state, ctx.controller, BUNNIES_OF_DESOLATION)
+
+
+# --- set 10010 -----------------------------------------------------------------------------
+
+def _summon_bunnies(ctx, n: int = 1) -> None:
+    for _ in range(n):
+        E.summon(ctx.state, ctx.controller, BUNNIES_OF_DESOLATION)
+
+
+@register(DESOLATIONIST_REFINER.card_id)
+class DesolationistRefiner(CardScript):
+    """Last Words: add 2 Divine Evidence to your hand."""
+
+    def last_words(self, ctx):
+        for _ in range(2):
+            E.add_to_hand(ctx.state, ctx.controller, DIVINE_EVIDENCE)
+
+
+@register(COMBATIVE_MONK.card_id)
+class CombativeMonk(CardScript):
+    """Rush. Can attack 2 times per turn. Strike: give this follower +2/+2 and Barrier."""
+    attacks_per_turn = 2
+
+    def strike(self, ctx):
+        E.buff(ctx.state, ctx.source, 2, 2)
+        E.give_keywords(ctx.source, Keyword.BARRIER)
+
+
+@register(SOLITARY_CULTIVATION.card_id)
+class SolitaryCultivation(CardScript):
+    """Select an allied follower and give it +2/+2 and Barrier."""
+    play_targets = common.ALLIED_FOLLOWER
+
+    def cast(self, ctx):
+        for f in ctx.chosen():
+            E.buff(ctx.state, f, 2, 2)
+            E.give_keywords(f, Keyword.BARRIER)
+
+
+@register(DESOLATIONIST_TAMER.card_id)
+class DesolationistTamer(CardScript):
+    """Fanfare: add a Bunnies of Desolation to your hand. Evolve: recover 1 play point."""
+
+    def fanfare(self, ctx):
+        E.add_to_hand(ctx.state, ctx.controller, BUNNIES_OF_DESOLATION)
+
+    def on_evolve(self, ctx):
+        E.recover_pp(ctx.state, ctx.controller, 1)
+
+
+@register(WINGED_ACCORDIONIST.card_id)
+class WingedAccordionist(CardScript):
+    """Fanfare: summon a Holy Falcon. Evolve: give all other allied followers +1/+1."""
+
+    def fanfare(self, ctx):
+        E.summon(ctx.state, ctx.controller, HOLY_FALCON)
+
+    def on_evolve(self, ctx):
+        for f in [c for c in ctx.me.followers if c is not ctx.source]:
+            E.buff(ctx.state, f, 1, 1)
+
+
+@register(DESTRUCTIVE_PROPAGATION.card_id)
+class DestructivePropagation(CardScript):
+    """Summon 2 Bunnies of Desolation. Enhance (8): summon 4 instead."""
+    enhance = (8,)
+
+    def cast(self, ctx):
+        _summon_bunnies(ctx, 4 if ctx.enhanced else 2)
+
+
+@register(DESOLATIONIST_REHABILITATOR.card_id)
+class DesolationistRehabilitator(CardScript):
+    """Fanfare: select an enemy follower and banish it; summon 2 Bunnies of Desolation.
+    Super-Evolve: draw 2 cards; restore 2 defense to your leader."""
+    play_targets = common.ENEMY_FOLLOWER
+
+    def fanfare(self, ctx):
+        _banish_chosen(ctx)
+        _summon_bunnies(ctx, 2)
+
+    def on_super_evolve(self, ctx):
+        E.draw(ctx.state, ctx.controller, 2)
+        _heal(ctx, 2)
+
+
+@register(FRUITLESS_TESTIMONY.card_id)
+class FruitlessTestimony(CardScript):
+    """Mode: 1. Deal 4 damage to a random enemy follower; gain Crest: Fruitless Testimony.
+    2. Summon a Bunnies of Desolation."""
+    modes = (2, 1)
+
+    def cast(self, ctx):
+        if 0 in ctx.modes:
+            E.damage(ctx.state, _random_enemies(ctx), 4, ctx.source)
+            E.add_to_leader_area(ctx.state, ctx.controller, FRUITLESS_TESTIMONY_CREST)
+        if 1 in ctx.modes:
+            _summon_bunnies(ctx)
+
+
+@register(LAPINETTE.card_id)
+class Lapinette(CardScript):
+    """Fanfare: select an enemy follower and banish it; summon a Bunnies of Desolation.
+    Evolve: gain Crest: Lapinette, Calamity of Desolation. Super-Evolve: delay the count of
+    that crest by 1."""
+    play_targets = common.ENEMY_FOLLOWER
+
+    def fanfare(self, ctx):
+        _banish_chosen(ctx)
+        _summon_bunnies(ctx)
+
+    def on_evolve(self, ctx):
+        E.add_to_leader_area(ctx.state, ctx.controller, LAPINETTE_CREST)
+
+    def on_super_evolve(self, ctx):
+        crest = E.leader_area_card(ctx.state, ctx.controller, LAPINETTE_CREST)
+        if crest is not None:
+            E.advance_countdown(ctx.state, crest, -1)
+
+
+@register(PARARELIGIOUS_IDOL.card_id)
+class ParareligiousIdol(CardScript):
+    """Intimidate. Aura. Can't attack followers or leaders. During your turn, whenever an
+    enemy follower is banished from the field, summon an exact copy of it. Evolve: select
+    an enemy follower and banish it."""
+    cant_attack = True
+    evolve_targets = common.ENEMY_FOLLOWER
+
+    def on_card_banished(self, ctx):
+        f = ctx.other
+        if f.owner != ctx.controller and f.defn.is_follower and common.during_your_turn(ctx):
+            E.summon_copy(ctx.state, ctx.controller, f)
+
+    def on_evolve(self, ctx):
+        _banish_chosen(ctx)
 
 
 # --- set 10009 -----------------------------------------------------------------------------
