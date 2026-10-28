@@ -23,6 +23,7 @@ DELTA_CANNON = card(90034340)  # 苍奏之四
 SEND_EM_PACKING = card(90034350)  # 宏大的回归
 CARAVAN_MAMMOTH = card(10002120)  # 商队猛犸象 (Neutral; no abilities)
 REGAL_FALCON = card(90061130)  # 壮丽大神隼 (Havencraft token; Storm only)
+DIVINE_EVIDENCE = card(90001210)  # 神域的物证 (Neutral token; Clue)
 
 # --- leader area ---
 ELMOTT_CREST = card(10433112)  # 纹章：缅怀之火·埃尔默特
@@ -34,6 +35,20 @@ ELD_CRYSTALS_FAITH = card(10634122)  # 信仰：天晶深渊
 LILANTHIM_CREST = card(10734112)  # 纹章：万食的安纳提玛·拉拉安瑟姆
 TICO_CREST = card(10833112)  # 纹章：玛纳利亚文书官·琪可
 SEPHIE_CREST = card(10934112)  # 纹章：万术的罪人·赛菲
+NOEINHOWELLS_INTERROGATION_CREST = card(11033312)  # 纹章：诺茵华薇儿的审讯
+NOEINHOWELL_CREST = card(11034112)  # 纹章：迷歌侦探·诺茵华薇儿
+
+# --- set 10 ---
+DEDICATED_AIDE = card(11031110)  # 碎心勤务员
+WILY_WITCH = card(11031120)  # 戏法女巫
+ATELIER_RELOCATION = card(11031310)  # 工坊搬迁
+LEISURELY_ATTENDANT = card(11032110)  # 无聊顾问
+RULER_OF_TEMPESTS = card(11032120)  # 风暴支配者
+DISCERNING_MELODY = card(11032310)  # 解谜旋律
+DRAMATIC_ASSISTANT = card(11033110)  # 歌剧助手
+NOEINHOWELLS_INTERROGATION = card(11033310)  # 诺茵华薇儿的审讯
+NOEINHOWELL = card(11034110)  # 迷歌侦探·诺茵华薇儿
+INFERNAL_CHIMERA = card(11034120)  # 劫焰奇美拉
 
 # --- set 9 ---
 OBSESSED_TEST_SUBJECT = card(10931110)  # 沉溺的实验体
@@ -119,7 +134,10 @@ REMI_AND_RAMI = card(10032110)  # 双面魔女·蕾米拉米
 BLAZE_DESTROYER = card(10032120)  # 魔焰毁灭者
 ARCANE_ERUPTION = card(10032310)  # 魔爆
 
-CARDS = [OBSESSED_TEST_SUBJECT, KEY_SPIRIT, MISCALCULATED_EXPERIMENT, ENAMORED_RESEARCHER,
+CARDS = [DEDICATED_AIDE, WILY_WITCH, ATELIER_RELOCATION, LEISURELY_ATTENDANT, RULER_OF_TEMPESTS,
+         DISCERNING_MELODY, DRAMATIC_ASSISTANT, NOEINHOWELLS_INTERROGATION, NOEINHOWELL,
+         INFERNAL_CHIMERA,
+         OBSESSED_TEST_SUBJECT, KEY_SPIRIT, MISCALCULATED_EXPERIMENT, ENAMORED_RESEARCHER,
          NOBLE_PHILOSOPHER, HUMANE_LOVE, ECSTATIC_SCHOLAR, OBSIDIAN_RAVEN, SEPHIE, PHYLENE,
          MEOWSKERS, POPPY, STORMY_BLAST_REPRINT, SAMMY_AND_MARIE, HARMONIOUS_MEAL,
          EARTH_SHATTERING_BOLT, TICO, AMETHYSTS_NAPTIME, TETRA_AND_LADICA, GINGER,
@@ -137,7 +155,8 @@ CARDS = [OBSESSED_TEST_SUBJECT, KEY_SPIRIT, MISCALCULATED_EXPERIMENT, ENAMORED_R
 TOKENS = [CLAY_GOLEM, GUARDIAN_GOLEM, MAGIC_SEDIMENT, MYSTERIAN_MISSILE, ARS_MAGNA,
           DEPTHS_OF_THE_ELD_CRYSTALS, DELTA_CANNON, SEND_EM_PACKING]
 LEADER_AREA = [ELMOTT_CREST, CAGLIOSTRO_CREST, INSOMNIAC_WITCH_CREST, LHYNKAL_CREST,
-               SHYMM_CREST, ELD_CRYSTALS_FAITH, LILANTHIM_CREST, TICO_CREST, SEPHIE_CREST]
+               SHYMM_CREST, ELD_CRYSTALS_FAITH, LILANTHIM_CREST, TICO_CREST, SEPHIE_CREST,
+               NOEINHOWELLS_INTERROGATION_CREST, NOEINHOWELL_CREST]
 
 
 # --- helpers -------------------------------------------------------------------------
@@ -401,6 +420,175 @@ class SephieCrest(CardScript):
         if (f.defn.card_id == OBSESSED_TEST_SUBJECT.card_id and common.during_your_turn(ctx)
                 and _on_field(ctx, f) and E.once_per_turn(ctx, "sephie")):
             E.give_keywords(f, Keyword.STORM)
+
+
+@register(NOEINHOWELLS_INTERROGATION_CREST.card_id)
+class NoeinhowellsInterrogationCrest(CardScript):
+    """Whenever you Engage an amulet, activate the next ability not yet activated: 1. Deal
+    3 damage to a random enemy follower. 2. Restore 2 defense to your leader. 3. Recover 1
+    evolution point; destroy this crest."""
+
+    def on_engage(self, ctx):
+        c = E.counters(ctx.source)
+        step = c.get("step", 0)
+        c["step"] = step + 1
+        if step == 0:
+            E.damage(ctx.state, _random_enemy(ctx), 3, ctx.source)
+        elif step == 1:
+            E.heal_leader(ctx.state, ctx.controller, 2)
+        else:
+            E.recover_ep(ctx.state, ctx.controller)
+            E.destroy(ctx.state, ctx.source, by_ability=False)
+
+
+@register(NOEINHOWELL_CREST.card_id)
+class NoeinhowellCrest(CardScript):
+    """Once on each of your turns, when you Engage an amulet, recover 1 play point."""
+
+    def on_engage(self, ctx):
+        if common.during_your_turn(ctx) and E.once_per_turn(ctx, "noeinhowell"):
+            E.recover_pp(ctx.state, ctx.controller, 1)
+
+
+# --- set 10 ------------------------------------------------------------------------------------
+
+def _summon_evidence(ctx) -> None:
+    E.summon(ctx.state, ctx.controller, DIVINE_EVIDENCE)
+
+
+@register(DEDICATED_AIDE.card_id)
+class DedicatedAide(CardScript):
+    """Fanfare: summon a Divine Evidence. Ward. Whenever you Engage an amulet, give this
+    follower +1/+1."""
+
+    def fanfare(self, ctx):
+        _summon_evidence(ctx)
+
+    def on_engage(self, ctx):
+        E.buff(ctx.state, ctx.source, 1, 1)
+
+
+@register(WILY_WITCH.card_id)
+class WilyWitch(CardScript):
+    """Fanfare: Mode: 1. Earth Rite (1): deal 2 damage to a random enemy follower. 2. Gain 2
+    earth sigils."""
+    modes = (2, 1)
+
+    def fanfare(self, ctx):
+        if 0 in ctx.modes and E.earth_rite(ctx.state, ctx.controller, 1):
+            E.damage(ctx.state, _random_enemy(ctx), 2, ctx.source)
+        if 1 in ctx.modes:
+            common.gain_earth_sigils(ctx, 2)
+
+
+@register(ATELIER_RELOCATION.card_id)
+class AtelierRelocation(CardScript):
+    """Summon 3 Clay Golems. Enhance (8): give them Storm."""
+    enhance = (8,)
+
+    def cast(self, ctx):
+        for golem in _summon(ctx, CLAY_GOLEM, 3):
+            if ctx.enhanced and _on_field(ctx, golem):
+                E.give_keywords(golem, Keyword.STORM)
+
+
+@register(LEISURELY_ATTENDANT.card_id)
+class LeisurelyAttendant(CardScript):
+    """Activates in hand: whenever you Engage an amulet, reduce the cost of this card by 1.
+    Fanfare: summon a Divine Evidence. Whenever you Engage an amulet, restore 1 defense to
+    your leader."""
+    listen_in_hand = True
+
+    def fanfare(self, ctx):
+        _summon_evidence(ctx)
+
+    def on_engage(self, ctx):
+        if any(c is ctx.source for c in ctx.me.hand):
+            E.add_cost(ctx.source, -1)
+        elif _on_field(ctx, ctx.source):
+            E.heal_leader(ctx.state, ctx.controller, 1)
+
+
+@register(RULER_OF_TEMPESTS.card_id)
+class RulerOfTempests(CardScript):
+    """Fanfare: Earth Rite (1): summon a Guardian Golem. Whenever an allied Golem follower
+    enters the field, deal 3 damage to a random enemy follower. Evolve: replicate the
+    Fanfare."""
+
+    def fanfare(self, ctx):
+        self._rite(ctx)
+
+    def on_evolve(self, ctx):
+        self._rite(ctx)
+
+    def _rite(self, ctx):
+        if E.earth_rite(ctx.state, ctx.controller, 1):
+            _summon(ctx, GUARDIAN_GOLEM)
+
+    def on_ally_enter(self, ctx):
+        if ctx.other.defn.is_follower and E.has_trait(ctx.other, GOLEM):
+            E.damage(ctx.state, _random_enemy(ctx), 3, ctx.source)
+
+
+@register(DISCERNING_MELODY.card_id)
+class DiscerningMelody(CardScript):
+    """Summon a Divine Evidence. If you've Engaged an amulet this turn, deal 3 damage to a
+    random enemy follower."""
+
+    def cast(self, ctx):
+        _summon_evidence(ctx)
+        if E.engaged_amulet_this_turn(ctx.state, ctx.controller):
+            E.damage(ctx.state, _random_enemy(ctx), 3, ctx.source)
+
+
+@register(DRAMATIC_ASSISTANT.card_id)
+class DramaticAssistant(CardScript):
+    """Fanfare: summon a Dedicated Aide. Whenever you Engage an amulet, deal 5 damage to a
+    random enemy follower. Evolve: recover 1 play point."""
+
+    def fanfare(self, ctx):
+        _summon(ctx, DEDICATED_AIDE)
+
+    def on_engage(self, ctx):
+        E.damage(ctx.state, _random_enemy(ctx), 5, ctx.source)
+
+    def on_evolve(self, ctx):
+        E.recover_pp(ctx.state, ctx.controller, 1)
+
+
+@register(NOEINHOWELLS_INTERROGATION.card_id)
+class NoeinhowellsInterrogation(CardScript):
+    """Add a Divine Evidence to your hand. Gain Crest: Noeinhowell's Interrogation."""
+
+    def cast(self, ctx):
+        E.add_to_hand(ctx.state, ctx.controller, DIVINE_EVIDENCE)
+        E.add_to_leader_area(ctx.state, ctx.controller, NOEINHOWELLS_INTERROGATION_CREST)
+
+
+@register(NOEINHOWELL.card_id)
+class Noeinhowell(CardScript):
+    """Fanfare: summon a Divine Evidence. Whenever you Engage an amulet, deal 3 damage to a
+    random enemy follower. Evolve: gain Crest: Noeinhowell, Hymnodic Detective."""
+
+    def fanfare(self, ctx):
+        _summon_evidence(ctx)
+
+    def on_engage(self, ctx):
+        E.damage(ctx.state, _random_enemy(ctx), 3, ctx.source)
+
+    def on_evolve(self, ctx):
+        E.add_to_leader_area(ctx.state, ctx.controller, NOEINHOWELL_CREST)
+
+
+@register(INFERNAL_CHIMERA.card_id)
+class InfernalChimera(CardScript):
+    """Fanfare: deal X damage split between all enemies, X = your earth sigils (none are
+    spent)."""
+
+    def fanfare(self, ctx):
+        x = E.earth_sigils(ctx.state, ctx.controller)
+        if x:
+            E.split_damage(ctx.state, 1 - ctx.controller, x, ctx.source, followers_only=False)
 
 
 # --- set 9 -------------------------------------------------------------------------------------

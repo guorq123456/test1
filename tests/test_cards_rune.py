@@ -61,6 +61,227 @@ def test_every_rune_card_with_abilities_has_a_script():
     assert all(has_script(c.card_id) for c in rune.LEADER_AREA)
 
 
+# --- set 10 ----------------------------------------------------------------------------------
+
+EVIDENCE = rune.DIVINE_EVIDENCE
+
+
+def evidence(state, player=0):
+    return on_field(state, player, EVIDENCE)
+
+
+def engage(state, amulet, player=0):
+    """Engage an allied amulet, paying its cost on top of the current play points."""
+    p = state.players[player]
+    p.pp += 1
+    p.max_pp = max(p.max_pp, p.pp)
+    apply(state, Engage(amulet.uid))
+
+
+def engage_new_evidence(state, player=0):
+    """Put a fresh Divine Evidence on the field and Engage it (it draws, then is used up)."""
+    engage(state, put(state, player, EVIDENCE), player)
+
+
+def test_dedicated_aide_summons_evidence_and_grows_whenever_an_amulet_is_engaged():
+    state = start()
+    set_pp(state, 0, 3)
+    aide = give(state, 0, rune.DEDICATED_AIDE)
+    apply(state, PlayCard(aide.uid))
+    assert aide.has(Keyword.WARD) and len(evidence(state)) == 1
+    hand = len(state.players[0].hand)
+    engage(state, evidence(state)[0])
+    assert (aide.atk, aide.life) == (4, 4)
+    assert evidence(state) == [] and len(state.players[0].hand) == hand + 1   # drew, its clue used up
+    sigils(state, n=1)
+    engage(state, E.earth_sigil_amulet(state, 0))
+    assert (aide.atk, aide.life) == (5, 5)                  # any amulet counts, not only Clue amulets
+
+
+def test_wily_witch_modes():
+    state = start()
+    foe = put(state, 1, demo.FOOTMAN)
+    foe.life = foe.max_life = 3
+    sigils(state, n=1)
+    set_pp(state, 0, 2)
+    witch = give(state, 0, rune.WILY_WITCH)
+    assert {a.modes for a in plays(state, witch.uid)} == {(0,), (1,)}
+    apply(state, PlayCard(witch.uid, modes=(0,)))
+    assert foe.life == 1 and sigils(state) == 0
+    set_pp(state, 0, 2)
+    apply(state, PlayCard(give(state, 0, rune.WILY_WITCH).uid, modes=(0,)))
+    assert foe.life == 1                                    # no sigil to spend: nothing
+    set_pp(state, 0, 2)
+    apply(state, PlayCard(give(state, 0, rune.WILY_WITCH).uid, modes=(1,)))
+    assert sigils(state) == 2 and foe.life == 1
+
+
+def test_atelier_relocation_summons_three_clay_golems_storm_when_enhanced():
+    state = start()
+    set_pp(state, 0, 4)
+    apply(state, PlayCard(give(state, 0, rune.ATELIER_RELOCATION).uid))
+    golems = on_field(state, 0, rune.CLAY_GOLEM)
+    assert len(golems) == 3 and not any(g.has(Keyword.STORM) for g in golems)
+    state = start()
+    set_pp(state, 0, 8)
+    apply(state, PlayCard(give(state, 0, rune.ATELIER_RELOCATION).uid))
+    golems = on_field(state, 0, rune.CLAY_GOLEM)
+    assert len(golems) == 3 and all(g.has(Keyword.STORM) for g in golems)
+    assert state.players[0].pp == 0
+
+
+def test_leisurely_attendant_gets_cheaper_in_hand_and_heals_on_the_field():
+    state = start()
+    p = state.players[0]
+    p.leader_hp = 10
+    attendant = give(state, 0, rune.LEISURELY_ATTENDANT)
+    engage_new_evidence(state)
+    assert attendant.cost == 3 and p.leader_hp == 10        # in hand: cheaper, no healing
+    engage_new_evidence(state)
+    assert attendant.cost == 2
+    set_pp(state, 0, 2)
+    apply(state, PlayCard(attendant.uid))
+    assert len(evidence(state)) == 1
+    engage(state, evidence(state)[0])
+    assert p.leader_hp == 11
+
+
+def test_ruler_of_tempests_earth_rite_golem_and_golem_triggered_damage():
+    state = start()
+    foe = put(state, 1, demo.FOOTMAN)
+    foe.life = foe.max_life = 10
+    sigils(state, n=1)
+    set_pp(state, 0, 6)
+    ruler = give(state, 0, rune.RULER_OF_TEMPESTS)
+    apply(state, PlayCard(ruler.uid))
+    assert len(on_field(state, 0, rune.GUARDIAN_GOLEM)) == 1 and sigils(state) == 0
+    assert foe.life == 7                                    # its own Golem set off the 3 damage
+    put(state, 0, rune.CLAY_GOLEM)
+    resolve_queue(state)
+    assert foe.life == 4
+    put(state, 0, demo.FOOTMAN)
+    resolve_queue(state)
+    assert foe.life == 4                                    # not a Golem
+    unlock_evolution(state, 0)
+    apply(state, Evolve(ruler.uid))
+    assert foe.life == 4 and len(on_field(state, 0, rune.GUARDIAN_GOLEM)) == 1   # Evolve: no sigil, nothing
+    state = start()
+    foe = put(state, 1, demo.FOOTMAN)
+    foe.life = foe.max_life = 10
+    ruler = put(state, 0, rune.RULER_OF_TEMPESTS)
+    sigils(state, n=1)
+    unlock_evolution(state, 0)
+    apply(state, Evolve(ruler.uid))
+    assert len(on_field(state, 0, rune.GUARDIAN_GOLEM)) == 1 and foe.life == 7
+
+
+def test_discerning_melody_needs_an_engage_this_turn():
+    state = start()
+    foe = put(state, 1, demo.FOOTMAN)
+    foe.life = foe.max_life = 10
+    set_pp(state, 0, 1)
+    apply(state, PlayCard(give(state, 0, rune.DISCERNING_MELODY).uid))
+    assert len(evidence(state)) == 1 and foe.life == 10
+    engage(state, evidence(state)[0])                       # the Evidence is used up: the engage still counts
+    set_pp(state, 0, 1)
+    apply(state, PlayCard(give(state, 0, rune.DISCERNING_MELODY).uid))
+    assert foe.life == 7
+    apply(state, EndTurn())
+    apply(state, EndTurn())
+    set_pp(state, 0, 1)
+    apply(state, PlayCard(give(state, 0, rune.DISCERNING_MELODY).uid))
+    assert foe.life == 7                                    # engaged on an earlier turn only
+
+
+def test_dramatic_assistant_summons_an_aide_and_hits_for_five_on_engage():
+    state = start()
+    foe = put(state, 1, demo.FOOTMAN)
+    foe.life = foe.max_life = 10
+    set_pp(state, 0, 5)
+    assistant = give(state, 0, rune.DRAMATIC_ASSISTANT)
+    apply(state, PlayCard(assistant.uid))
+    aides = on_field(state, 0, rune.DEDICATED_AIDE)
+    assert len(aides) == 1 and evidence(state) == []        # summoned, so no Fanfare of its own
+    engage_new_evidence(state)
+    assert foe.life == 5 and (aides[0].atk, aides[0].life) == (4, 4)
+    unlock_evolution(state, 0)
+    set_pp(state, 0, 3)
+    state.players[0].pp = 1
+    apply(state, Evolve(assistant.uid))
+    assert state.players[0].pp == 2
+
+
+def test_noeinhowells_interrogation_crest_runs_its_three_steps_then_goes():
+    state = start()
+    p = state.players[0]
+    foe = put(state, 1, demo.FOOTMAN)
+    foe.life = foe.max_life = 10
+    set_pp(state, 0, 2)
+    apply(state, PlayCard(give(state, 0, rune.NOEINHOWELLS_INTERROGATION).uid))
+    assert count(p.hand, EVIDENCE) == 1
+    crest = p.leader_area[-1]
+    assert crest.defn.card_id == rune.NOEINHOWELLS_INTERROGATION_CREST.card_id
+    p.leader_hp, p.ep = 10, 0
+    engage_new_evidence(state)
+    assert foe.life == 7 and p.leader_hp == 10 and p.ep == 0
+    engage_new_evidence(state)
+    assert foe.life == 7 and p.leader_hp == 12 and p.ep == 0
+    engage_new_evidence(state)
+    assert p.ep == 1 and crest not in p.leader_area
+    engage_new_evidence(state)
+    assert foe.life == 7 and p.leader_hp == 12 and p.ep == 1
+
+
+def test_noeinhowell_engage_damage_and_crest_recovers_one_point_per_turn():
+    state = start()
+    p = state.players[0]
+    foe = put(state, 1, demo.FOOTMAN)
+    foe.life = foe.max_life = 20
+    set_pp(state, 0, 4)
+    noein = give(state, 0, rune.NOEINHOWELL)
+    apply(state, PlayCard(noein.uid))
+    assert len(evidence(state)) == 1
+    engage(state, evidence(state)[0])
+    assert foe.life == 17
+    unlock_evolution(state, 0)
+    apply(state, Evolve(noein.uid))
+    assert any(c.defn.card_id == rune.NOEINHOWELL_CREST.card_id for c in p.leader_area)
+    p.max_pp, p.pp = 5, 0
+    engage_new_evidence(state)                              # pays 1, gets 1 back
+    assert p.pp == 1 and foe.life == 14
+    engage_new_evidence(state)
+    assert p.pp == 1 and foe.life == 11                     # once per turn
+    apply(state, EndTurn())
+    apply(state, EndTurn())
+    p.max_pp, p.pp = 5, 0
+    engage_new_evidence(state)
+    assert p.pp == 1
+
+
+def test_infernal_chimera_splits_x_between_all_enemies_without_spending_sigils():
+    state = start()
+    old = put(state, 1, demo.FOOTMAN)
+    old.life = old.max_life = 2
+    young = put(state, 1, demo.FOOTMAN)
+    young.life = young.max_life = 4
+    sigils(state, n=5)
+    set_pp(state, 0, 8)
+    apply(state, PlayCard(give(state, 0, rune.INFERNAL_CHIMERA).uid))
+    assert old.fate == DESTROYED and young.life == 1 and state.players[1].leader_hp == 20
+    assert sigils(state) == 5
+    state = start()
+    foe = put(state, 1, demo.FOOTMAN)
+    foe.life = foe.max_life = 2
+    sigils(state, n=9)
+    set_pp(state, 0, 8)
+    apply(state, PlayCard(give(state, 0, rune.INFERNAL_CHIMERA).uid))
+    assert foe.fate == DESTROYED and state.players[1].leader_hp == 13
+    state = start()
+    set_pp(state, 0, 8)
+    apply(state, PlayCard(give(state, 0, rune.INFERNAL_CHIMERA).uid))
+    assert state.players[1].leader_hp == 20
+
+
 # --- set 9 -----------------------------------------------------------------------------------
 
 def test_obsessed_test_subject_qa_counts_copies_as_they_enter():
