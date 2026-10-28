@@ -6,6 +6,7 @@ from the pool table (svsim/cards/pool.py); this module holds the abilities.
 Comments give the official Simplified Chinese names.
 """
 from svsim.cards import common
+from svsim.cards.neutral import DIVINE_EVIDENCE
 from svsim.cards.pool import card
 from svsim.core import effects as E
 from svsim.core.enums import Keyword
@@ -57,6 +58,19 @@ DRACHE_AND_ALUZARD_CREST = card(10844112)  # 纹章：反照的赤红·德莱克
 DRAGONS_VALE_ELDER_CREST = card(10744122)  # 纹章：龙峪的古龙
 YUBE_CREST = card(10544122)  # 纹章：波摇花·夕夜
 CRESCENT_TUBE_RIDE_CREST = card(10441312)  # 纹章：破浪新月
+
+# set 10010: Deicide in Nacreheim
+OBLIVIATIONIST_MARAUDER = card(11041110)  # 天噬暴行者
+FREEZING_ICENEWT = card(11041120)  # 冰锥蜥蜴
+DANCE_OF_THE_WATERWYRM = card(11041310)  # 水龙神的慈雨
+OBLIVIATIONIST_SMUGGLER = card(11042110)  # 天噬运货人
+DRAGONEWT_SCOUT = card(11042120)  # 侦察龙人
+COLLECTION_MANIFEST = card(11042310)  # 收集的显现
+OBLIVIATIONIST_MUGGER = card(11043110)  # 天噬抢劫犯
+BIRDS_EYE_VIEW = card(11043310)  # 俯瞰的目光
+LEIZAUT = card(11044110)  # 天噬三恶·莱特欧芙
+JERVA = card(11044120)  # 龙惧·吉尔沃
+INQUIRING_MISCHIEF = card(11012110)  # 好奇的老鼠 (Forestcraft: scripted in forest.py)
 
 # set 10009: Revenants of Azvaldt
 RIPPER_CLAWED_THIEF = card(10941110)  # 碎裂的盗匪
@@ -125,6 +139,8 @@ MEG = card(10443110)  # 平平无奇的女孩·梅格
 PRIMAL_BEAST_ABSORPTION = card(10443310)  # 星晶兽吸收之力
 WILNAS = card(10444110)  # 炎之法则·威尔纳斯
 
+CARDS += [OBLIVIATIONIST_MARAUDER, FREEZING_ICENEWT, DANCE_OF_THE_WATERWYRM, OBLIVIATIONIST_SMUGGLER,
+          DRAGONEWT_SCOUT, COLLECTION_MANIFEST, OBLIVIATIONIST_MUGGER, BIRDS_EYE_VIEW, LEIZAUT, JERVA]
 CARDS += [RIPPER_CLAWED_THIEF, CAVE_DRAGON, DRAKE_WHELPS_TANTRUM, HIGH_SPIRITED_MARAUDER,
           DRAGONFOLK_BUTLER, PARTING_JAWS, BARREN_EARTH_TYRANT, ARTIGLIO, ANTEMARIA,
           GIDO, SANDSTORM_WATCHDRAGON, SPIRIT_OF_WADATSUMI, REEF_AND_LOLO, ART_OF_DECAY, GIADA,
@@ -515,6 +531,149 @@ class CrescentTubeRideCrest(CardScript):
     def on_turn_end(self, ctx):
         for f in E.random_sample(ctx.state, ctx.me.followers, 1):
             E.buff(ctx.state, f, 1, 1)
+
+
+# --- set 10010: Deicide in Nacreheim --------------------------------------------------------
+
+def _clues_in_hand(ctx) -> list:
+    """The Clue amulets in your hand (effects.CLUE)."""
+    return [c for c in ctx.me.hand if E.is_clue(c)]
+
+
+def _discard_random_clue(ctx) -> bool:
+    """"If you have a Clue amulet in your hand, discard a random Clue amulet": whether one was."""
+    return any(E.discard(ctx.state, c) for c in E.random_sample(ctx.state, _clues_in_hand(ctx), 1))
+
+
+@register(OBLIVIATIONIST_MARAUDER.card_id)
+class ObliviationistMarauder(CardScript):
+    """Rush. Last Words: add a Divine Evidence to your hand."""
+
+    def last_words(self, ctx):
+        E.add_to_hand(ctx.state, ctx.controller, DIVINE_EVIDENCE)
+
+
+@register(FREEZING_ICENEWT.card_id)
+class FreezingIcenewt(CardScript):
+    """Fanfare: once, deal 3 damage to a random enemy follower. Enhance (7): 3 times
+    instead (a fresh random follower each time), and give this follower +5/+5."""
+    enhance = (7,)
+
+    def fanfare(self, ctx):
+        for _ in range(3 if ctx.enhanced else 1):
+            E.damage(ctx.state, _random_enemy_follower(ctx), 3, ctx.source)
+        if ctx.enhanced and _on_field(ctx.state, ctx.source):
+            E.buff(ctx.state, ctx.source, 5, 5)
+
+
+@register(DANCE_OF_THE_WATERWYRM.card_id)
+class DanceOfTheWaterwyrm(CardScript):
+    """Draw a card. Restore 1 defense to your leader. If you're in Overflow, gain 1 max play point."""
+
+    def cast(self, ctx):
+        E.draw(ctx.state, ctx.controller)
+        E.heal_leader(ctx.state, ctx.controller, 1)
+        if E.overflow(ctx.state, ctx.controller):
+            E.gain_max_pp(ctx.state, ctx.controller)
+
+
+@register(OBLIVIATIONIST_SMUGGLER.card_id)
+class ObliviationistSmuggler(CardScript):
+    """Fanfare: select 2 enemy followers and destroy them. Add 2 Divine Evidence to your hand."""
+    play_targets = (TargetSpec(Target.ENEMY_FOLLOWER, 2),)
+
+    def fanfare(self, ctx):
+        for f in ctx.chosen():
+            E.destroy(ctx.state, f)
+        for _ in range(2):
+            E.add_to_hand(ctx.state, ctx.controller, DIVINE_EVIDENCE)
+
+
+@register(DRAGONEWT_SCOUT.card_id)
+class DragonewtScout(CardScript):
+    """Ambush. Strike: evolve another random unevolved allied follower (an effect: no
+    points are spent and its Evolve abilities don't fire, as with Sofina)."""
+
+    def strike(self, ctx):
+        others = [f for f in ctx.me.followers if f is not ctx.source and not f.evolved]
+        for f in E.random_sample(ctx.state, others, 1):
+            E.evolve(ctx.state, f)
+
+
+@register(COLLECTION_MANIFEST.card_id)
+class CollectionManifest(CardScript):
+    """Deal 4 damage to a random enemy follower. If you have a Clue amulet in your hand,
+    discard a random Clue amulet and draw a card with a base cost of 5 or more."""
+
+    def cast(self, ctx):
+        E.damage(ctx.state, _random_enemy_follower(ctx), 4, ctx.source)
+        # The draw is part of the condition (EN "discard ... and draw"; the CHS text puts it
+        # in its own sentence).
+        if _discard_random_clue(ctx):
+            E.draw_matching(ctx.state, ctx.controller, lambda c: c.defn.cost >= 5)
+
+
+@register(OBLIVIATIONIST_MUGGER.card_id)
+class ObliviationistMugger(CardScript):
+    """Fanfare: if you have a Clue amulet in your hand, discard a random Clue amulet and
+    gain 1 max play point. Evolve: select an enemy follower and deal it 3 damage."""
+    evolve_targets = common.ENEMY_FOLLOWER
+
+    def fanfare(self, ctx):
+        if _discard_random_clue(ctx):
+            E.gain_max_pp(ctx.state, ctx.controller)
+
+    def on_evolve(self, ctx):
+        E.damage(ctx.state, ctx.chosen(), 3, ctx.source)
+
+
+@register(BIRDS_EYE_VIEW.card_id)
+class BirdsEyeView(CardScript):
+    """Choose 2 modes: 1. Summon an Inquiring Mischief. 2. Give the 2 leftmost allied
+    followers +1/+0. 3. Add 3 Divine Evidence to your hand. 4. Deal 4 damage to a random
+    enemy follower."""
+    modes = (4, 2)
+
+    def cast(self, ctx):
+        if 0 in ctx.modes:
+            E.summon(ctx.state, ctx.controller, INQUIRING_MISCHIEF)
+        if 1 in ctx.modes:
+            for f in ctx.me.followers[:2]:                 # field order: oldest = leftmost
+                E.buff(ctx.state, f, 1, 0)
+        if 2 in ctx.modes:
+            for _ in range(3):
+                E.add_to_hand(ctx.state, ctx.controller, DIVINE_EVIDENCE)
+        if 3 in ctx.modes:
+            E.damage(ctx.state, _random_enemy_follower(ctx), 4, ctx.source)
+
+
+@register(LEIZAUT.card_id)
+class Leizaut(CardScript):
+    """Fanfare: banish every card with a base cost of 4 or less from your deck. Discard
+    every Clue amulet in your hand. X times, deal 8 damage to a random enemy follower
+    (re-rolled each time), X = the cards discarded this way. Storm."""
+
+    def fanfare(self, ctx):
+        for c in [c for c in ctx.me.deck if c.defn.cost <= 4]:
+            E.banish(ctx.state, c)
+        x = sum(E.discard(ctx.state, c) for c in _clues_in_hand(ctx))
+        for _ in range(x):
+            E.damage(ctx.state, _random_enemy_follower(ctx), 8, ctx.source)
+
+
+@register(JERVA.card_id)
+class Jerva(CardScript):
+    """Fanfare: deal X damage split between all enemy followers, X = the enemy leader's
+    max defense minus its defense. Super-Evolve: gain Storm and Ward."""
+
+    def fanfare(self, ctx):
+        enemy = ctx.opponent
+        x = enemy.leader_max_hp - enemy.leader_hp
+        if x > 0:
+            E.split_damage(ctx.state, 1 - ctx.controller, x, ctx.source)
+
+    def on_super_evolve(self, ctx):
+        E.give_keywords(ctx.source, Keyword.STORM | Keyword.WARD)
 
 
 # --- set 10009: Revenants of Azvaldt -------------------------------------------------------
