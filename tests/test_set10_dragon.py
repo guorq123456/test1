@@ -1,4 +1,5 @@
 """Dragoncraft cards of set 10 (Deicide in Nacreheim, 2026-10-28)."""
+from itertools import combinations
 import random
 
 from svsim.agents.random_agent import RandomAgent, play_game
@@ -12,7 +13,7 @@ from svsim.core.enums import DRAW, Craft, Keyword
 from svsim.core.script import has_script
 from svsim.core.state import DESTROYED, IN_PLAY, leader_uid
 
-from helpers import count, give, put, set_pp, start, unlock_evolution
+from helpers import count, give, plays, put, set_pp, start, unlock_evolution
 
 SET10 = [dragon.OBLIVIATIONIST_MARAUDER, dragon.FREEZING_ICENEWT, dragon.DANCE_OF_THE_WATERWYRM,
          dragon.OBLIVIATIONIST_SMUGGLER, dragon.DRAGONEWT_SCOUT, dragon.COLLECTION_MANIFEST,
@@ -238,3 +239,73 @@ def test_random_decks_with_set_10_play_out():
         agents = [RandomAgent(g, end_turn_weight=0.2), RandomAgent(g + 1, end_turn_weight=0.2)]
         winner = play_game(state, agents)
         assert state.over and winner in (0, 1, DRAW)
+
+
+# --- gaps found by the analysis line's review (2026-10-28) ---------------------------------
+
+def test_obliviationist_mugger_discards_only_one_of_two_clues():
+    state = start(first=0)
+    p = state.players[0]
+    p.hand.clear()
+    _evidence_in_hand(state, n=2)
+    play(state, dragon.OBLIVIATIONIST_MUGGER, pp=4)
+    assert count(p.hand, DIVINE_EVIDENCE) == 1 and p.max_pp == 5
+
+
+def test_dragonewt_scout_evolves_only_one_of_two_candidates():
+    state = start(first=0)
+    scout = put(state, 0, dragon.DRAGONEWT_SCOUT)
+    a, b = put(state, 0, demo.FOOTMAN), put(state, 0, demo.FOOTMAN)
+    apply(state, Attack(scout.uid, leader_uid(1)))
+    assert a.evolved + b.evolved == 1
+
+
+def test_obliviationist_smuggler_offers_only_pairs_of_targets():
+    state = start(first=0)
+    enemies = [put(state, 1, demo.GIANT) for _ in range(3)]
+    smuggler = give(state, 0, dragon.OBLIVIATIONIST_SMUGGLER)
+    set_pp(state, 0, 7)
+    options = {a.targets for a in plays(state, smuggler.uid)}
+    assert options and all(len(t) == 2 for t in options)
+    assert {frozenset(t) for t in options} == {frozenset(p) for p in combinations([e.uid for e in enemies], 2)}
+
+
+def test_birds_eye_view_offers_the_six_pairs_of_modes():
+    state = start(first=0)
+    view = give(state, 0, dragon.BIRDS_EYE_VIEW)
+    set_pp(state, 0, 3)
+    assert {tuple(sorted(a.modes)) for a in plays(state, view.uid)} == set(combinations(range(4), 2))
+
+
+def test_birds_eye_view_modes_one_and_three():
+    state = start(first=0)
+    p = state.players[0]
+    p.hand.clear()
+    ally = put(state, 0, demo.FOOTMAN)
+    giant = put(state, 1, demo.GIANT)
+    play(state, dragon.BIRDS_EYE_VIEW, modes=(0, 2), pp=3)     # summon, evidence: no buff, no damage
+    assert count(p.hand, DIVINE_EVIDENCE) == 3 and ally.atk == 1 and giant.life == 5
+    assert [f.defn for f in p.field] == [demo.FOOTMAN, dragon.INQUIRING_MISCHIEF]
+    p.hand.clear()
+    play(state, dragon.BIRDS_EYE_VIEW, modes=(1, 3), pp=3)     # buff, damage: no summon, no evidence
+    assert ally.atk == 2 and giant.life == 1 and p.hand == [] and len(p.field) == 2
+
+
+def test_leizaut_deals_exactly_eight():
+    state = start(first=0)
+    p = state.players[0]
+    big = put(state, 1, demo.GIANT)
+    big.life = big.max_life = 20
+    p.hand.clear()
+    _evidence_in_hand(state)
+    play(state, dragon.LEIZAUT, pp=10)
+    assert big.life == 12
+
+
+def test_jerva_with_one_missing_defense_deals_one():
+    state = start(first=0)
+    enemy = state.players[1]
+    giant = put(state, 1, demo.GIANT)
+    enemy.leader_hp = enemy.leader_max_hp - 1
+    play(state, dragon.JERVA, pp=6)
+    assert giant.life == 4

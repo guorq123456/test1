@@ -314,3 +314,14 @@ def test_random_swordcraft_decks_with_set_10_play_out():
         agents = [RandomAgent(g, end_turn_weight=0.2), RandomAgent(g + 1, end_turn_weight=0.2)]
         winner = play_game(state, agents, on_action=check_invariants)
         assert state.over and winner in (0, 1, -1)
+
+
+# --- gaps found by the analysis line's review (2026-10-28) ---------------------------------
+
+def test_placid_dilettante_with_zero_attack_summons_zero_attack_newsies():
+    state = fresh()
+    dilettante = give(state, 0, sword.PLACID_DILETTANTE)
+    dilettante.atk = 0
+    play(state, dilettante)
+    newsies = [f for f in state.players[0].followers if f is not dilettante]
+    assert len(newsies) == 2 and all(stats(n) == (0, 1, 1) for n in newsies)

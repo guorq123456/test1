@@ -251,3 +251,33 @@ def test_heartening_hyphae_super_evolve_replicates_and_full_field_keeps_it_in_ha
     apply(state, Evolve(hyphae.uid, True))
     assert count(p.field, forest.GARDEN_ELF) == 2                     # field full: both stay in hand
     assert count(p.hand, forest.GARDEN_ELF) == 1 and count(p.hand, forest.WOLF_PACK_LACKEY) == 1
+
+
+# --- gaps found by the analysis line's review (2026-10-28) ---------------------------------
+
+def test_wolf_pack_lackey_evolve_summons_exactly_two():
+    state = fresh()
+    p = state.players[0]
+    lackey = put(state, 0, forest.WOLF_PACK_LACKEY)        # on the field without its Fanfare
+    unlock_evolution(state, 0)
+    apply(state, Evolve(lackey.uid))
+    assert count(p.field, forest.WOLF_PACK_LACKEY) == 3       # room for more: exactly 2 came
+
+
+def test_nosches_interrogation_deals_exactly_five():
+    state = fresh()
+    big = put(state, 1, demo.GIANT)
+    big.life = big.max_life = 20
+    spell = give(state, 0, forest.NOSCHES_INTERROGATION)
+    set_pp(state, 0, 3)
+    play(state, spell)
+    assert big.life == 15
+
+
+def test_nosche_super_evolve_gives_attack_only():
+    state = fresh()
+    other = put(state, 0, demo.SHIELDBEARER)               # 1/3
+    nosche = put(state, 0, forest.NOSCHE)
+    unlock_evolution(state, 0)
+    apply(state, Evolve(nosche.uid, True))
+    assert (other.atk, other.life, other.max_life) == (3, 3, 3)
