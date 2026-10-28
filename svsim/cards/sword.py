@@ -6,6 +6,7 @@ this module holds the abilities. Comments give the official Simplified
 Chinese names.
 """
 from svsim.cards import common
+from svsim.cards.neutral import DIVINE_EVIDENCE
 from svsim.cards.pool import card
 from svsim.core import effects as E
 from svsim.core.enums import Craft, Keyword
@@ -355,6 +356,19 @@ DESPERADOS_SHOT = card(90024330)  # 亡命者的枪击
 GILDARIA_CREST = card(10724112)  # 纹章：统音的安纳提玛·吉尔达利娅
 MAJESTIC_CONQUEST_CREST = card(10622312)  # 纹章：威风的行军
 
+# --- set 10010 ---
+GUILELESS_NEWSIE = card(11021110)  # 纯真卖报人
+BEJEWELED_LADY = card(11021120)  # 宝石淑女
+ONWARD_CHARGE = card(11021310)  # 突击号令
+CHEEKY_ARCHITECT = card(11022110)  # 俏皮设计师
+ERRANT_KNIGHT = card(11022120)  # 变心卫士
+DICHOTOMOUS_FORENSICS = card(11022310)  # 表里的现场验证
+PLACID_DILETTANTE = card(11023110)  # 安逸爱好家
+NO_LIFES_CROSS_EXAMINATION = card(11023310)  # 诺·莱芙的问答
+NO_LIFE = card(11024110)  # 表里侦探·诺·莱芙
+ALMAELYS = card(11024120)  # 千金大参谋·阿尔梅莉洁
+ALMAELYS_CREST = card(11024122)  # 纹章：千金大参谋·阿尔梅莉洁
+
 # --- set 10009 ---
 KINDRED_CAVALRYWOMAN = card(10921120)  # 团结骑兵 (keywords only)
 PHALANX = card(10921310)  # 方阵
@@ -531,6 +545,204 @@ class MajesticConquestCrest(CardScript):
     def on_play(self, ctx):
         if ctx.enhanced:
             E.summon(ctx.state, ctx.controller, FEARLESS_SOLDIER)
+
+
+# --- set 10010 ---------------------------------------------------------------------------
+
+def _set_stats(inst, atk: int, life: int) -> None:
+    """Set a card's attack and defense to atk/life (defense and max defense alike)."""
+    inst.atk, inst.life, inst.max_life = max(0, atk), life, life
+
+
+def _swap_stats(inst) -> None:
+    """Swap the card's attack and (current) defense, as _set_stats. A follower on the field
+    left with 0 defense is destroyed: the E.buff that always follows checks deaths."""
+    _set_stats(inst, inst.life, inst.atk)
+
+
+class _SwapOnClueEngage(CardScript):
+    """Activates in hand. Whenever you Engage a Clue amulet, swap this follower's attack
+    and defense and give it +1/+0 (on the field as well as in hand)."""
+    listen_in_hand = True
+
+    def on_engage(self, ctx):
+        if E.is_clue(ctx.other):
+            _swap_stats(ctx.source)
+            E.buff(ctx.state, ctx.source, 1, 0)
+
+
+def _engaged_clue(ctx) -> bool:
+    return E.engaged_clue_this_turn(ctx.state, ctx.controller)
+
+
+@register(GUILELESS_NEWSIE.card_id)
+class GuilelessNewsie(_SwapOnClueEngage):
+    """Activates in hand: swap stats and +1/+0 on a Clue Engage. Enhance (4): summon an
+    exact copy of this card. Rush. Last Words: summon a Divine Evidence."""
+    enhance = (4,)
+
+    def fanfare(self, ctx):
+        if ctx.enhanced and _on_field(ctx, ctx.source):
+            E.summon_copy(ctx.state, ctx.controller, ctx.source)
+
+    def last_words(self, ctx):
+        E.summon(ctx.state, ctx.controller, DIVINE_EVIDENCE)
+
+
+@register(BEJEWELED_LADY.card_id)
+class BejeweledLady(CardScript):
+    """Fanfare: add a Gilded Necklace to your hand. Once on each of your turns, when you
+    play a spell, deal 2 damage to all enemies (followers and leader)."""
+
+    def fanfare(self, ctx):
+        _add(ctx, GILDED_NECKLACE)
+
+    def on_play(self, ctx):
+        if ctx.as_spell and common.during_your_turn(ctx) and E.once_per_turn(ctx, "bejeweled"):
+            E.damage(ctx.state, list(ctx.opponent.followers) + [common.enemy_leader(ctx)], 2,
+                     ctx.source)
+
+
+@register(ONWARD_CHARGE.card_id)
+class OnwardCharge(CardScript):
+    """Summon 2 Steelclad Knights, evolve them and give them Barrier."""
+
+    def cast(self, ctx):
+        for knight in _summon(ctx, STEELCLAD_KNIGHT, 2):
+            E.evolve(ctx.state, knight)
+            E.give_keywords(knight, Keyword.BARRIER)
+
+
+@register(CHEEKY_ARCHITECT.card_id)
+class CheekyArchitect(_SwapOnClueEngage):
+    """Activates in hand: swap stats and +1/+0 on a Clue Engage. Fanfare: select an enemy
+    follower and deal it X damage, X = this follower's attack; summon a Divine Evidence.
+    Evolve: summon a Guileless Newsie."""
+    play_targets = ENEMY
+
+    def fanfare(self, ctx):
+        _hit_selected(ctx, ctx.source.atk)
+        E.summon(ctx.state, ctx.controller, DIVINE_EVIDENCE)
+
+    def on_evolve(self, ctx):
+        E.summon(ctx.state, ctx.controller, GUILELESS_NEWSIE)
+
+
+def _allied_amulet(ctx) -> bool:
+    return any(c.defn.is_amulet for c in ctx.me.field)
+
+
+@register(ERRANT_KNIGHT.card_id)
+class ErrantKnight(CardScript):
+    """Fanfare: if there's an allied amulet on the field, select an enemy follower and
+    banish it. Ward. Super-Evolve: replicate the Fanfare."""
+    play_targets = ENEMY
+    super_evolve_targets = ENEMY
+
+    def fanfare(self, ctx):
+        self._banish(ctx)
+
+    def on_super_evolve(self, ctx):
+        self._banish(ctx)
+
+    def _banish(self, ctx):
+        # Checked when it resolves; the selection is offered either way (as for Haven's
+        # Sister of Strategic Development) and does nothing without an allied amulet.
+        if _allied_amulet(ctx):
+            for target in ctx.chosen():
+                E.banish(ctx.state, target)
+
+
+@register(DICHOTOMOUS_FORENSICS.card_id)
+class DichotomousForensics(CardScript):
+    """Select an enemy follower and deal it 5 damage; 10 instead if you've Engaged a Clue
+    amulet this turn."""
+    play_targets = ENEMY
+
+    def cast(self, ctx):
+        _hit_selected(ctx, 10 if _engaged_clue(ctx) else 5)
+
+
+@register(PLACID_DILETTANTE.card_id)
+class PlacidDilettante(_SwapOnClueEngage):
+    """Activates in hand: swap stats and +1/+0 on a Clue Engage. Fanfare: summon 2
+    Guileless Newsies and set their attack and defense to this follower's. Evolve: give
+    all other allied followers Bane."""
+
+    def fanfare(self, ctx):
+        atk, life = ctx.source.atk, ctx.source.life
+        for newsie in _summon(ctx, GUILELESS_NEWSIE, 2):
+            _set_stats(newsie, atk, life)
+
+    def on_evolve(self, ctx):
+        for f in [f for f in ctx.me.followers if f is not ctx.source]:
+            E.give_keywords(f, Keyword.BANE)
+
+
+@register(NO_LIFES_CROSS_EXAMINATION.card_id)
+class NoLifesCrossExamination(CardScript):
+    """Summon a Divine Evidence. If you've Engaged a Clue amulet this turn, summon a
+    Guileless Newsie."""
+
+    def cast(self, ctx):
+        E.summon(ctx.state, ctx.controller, DIVINE_EVIDENCE)
+        if _engaged_clue(ctx):
+            E.summon(ctx.state, ctx.controller, GUILELESS_NEWSIE)
+
+
+@register(NO_LIFE.card_id)
+class NoLife(_SwapOnClueEngage):
+    """Activates in hand: swap stats and +1/+0 on a Clue Engage. Fanfare: summon an exact
+    copy of this card; if this follower's attack is lower than its defense, give the copy
+    Bane and this follower Drain; if higher, the copy Ward and this follower Storm. Rush."""
+
+    def fanfare(self, ctx):
+        me = ctx.source
+        copy = E.summon_copy(ctx.state, ctx.controller, me) if _on_field(ctx, me) else None
+        # Compared after the copy is summoned (the text's order); equal stats give nothing.
+        # With a full field there is no copy, but this follower still gets its keyword.
+        if me.atk < me.life:
+            if copy is not None:
+                E.give_keywords(copy, Keyword.BANE)
+            E.give_keywords(me, Keyword.DRAIN)
+        elif me.atk > me.life:
+            if copy is not None:
+                E.give_keywords(copy, Keyword.WARD)
+            E.give_keywords(me, Keyword.STORM)
+
+
+@register(ALMAELYS.card_id)
+class Almaelys(CardScript):
+    """Fanfare: add a Glittering Gold to your hand. Evolve: gain Crest: Almaelys.
+    Super-Evolve: delay the crest's count by 2."""
+
+    def fanfare(self, ctx):
+        _add(ctx, GLITTERING_GOLD)
+
+    def on_evolve(self, ctx):
+        E.add_to_leader_area(ctx.state, ctx.controller, ALMAELYS_CREST)
+
+    def on_super_evolve(self, ctx):
+        # on_evolve has run first, so this is the crest just gained (or the one already there).
+        crest = E.leader_area_card(ctx.state, ctx.controller, ALMAELYS_CREST)
+        if crest is not None:
+            E.advance_countdown(ctx.state, crest, -2)
+
+
+@register(ALMAELYS_CREST.card_id)
+class AlmaelysCrest(CardScript):
+    """Countdown (2). At the end of your turn, activate the next of: 1. add a Gilded Blade
+    to your hand and set its cost to 0; 2. the same with a Gilded Goblet."""
+    # Unlike Rune's crest 11033312, the text doesn't say "that hasn't been activated yet",
+    # so the sequence repeats 1, 2, 1, 2 when a delayed count lets it run more than twice.
+
+    def on_turn_end(self, ctx):
+        counters = E.counters(ctx.source)
+        step = counters.get("step", 0)
+        counters["step"] = step + 1
+        token = E.add_to_hand(ctx.state, ctx.controller, (GILDED_BLADE, GILDED_GOBLET)[step % 2])
+        if token is not None:
+            E.set_cost(token, 0)
 
 
 # --- set 10009 ---------------------------------------------------------------------------
@@ -1148,6 +1360,8 @@ class Seofon(CardScript):
 
 
 ALL_CARDS = CARDS + [
+    GUILELESS_NEWSIE, BEJEWELED_LADY, ONWARD_CHARGE, CHEEKY_ARCHITECT, ERRANT_KNIGHT,
+    DICHOTOMOUS_FORENSICS, PLACID_DILETTANTE, NO_LIFES_CROSS_EXAMINATION, NO_LIFE, ALMAELYS,
     KINDRED_CAVALRYWOMAN, PHALANX, FEROCIOUS_COMMANDER,
     NAHT_AND_VINCE, SHAILI, SASHA, KATZE, ODA_NOBUNAGA, SHARED_EXISTENCE, OKITA_SOUJI,
     SLICE_OF_DOMESTICITY, BUNNY_AND_BARON, MARS,
@@ -1161,4 +1375,4 @@ ALL_CARDS = CARDS + [
     RANDALL, ARTHUR, MORDRED, AGLOVALE, FEATHER, FIORITO, KNIGHTLY_ARDOR, SEOFON,
 ]
 ALL_TOKENS = TOKENS + [KNIGHT, NAHTS_HENCHMAN, WRETCH, DESPERADOS_SHOT]
-ALL_LEADER_AREA = LEADER_AREA + [GILDARIA_CREST, MAJESTIC_CONQUEST_CREST]
+ALL_LEADER_AREA = LEADER_AREA + [GILDARIA_CREST, MAJESTIC_CONQUEST_CREST, ALMAELYS_CREST]
