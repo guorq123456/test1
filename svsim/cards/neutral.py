@@ -15,7 +15,12 @@ LYRIA = card(10403120)  # 掌握天空命运的少女·露莉亚
 FATE_OF_THE_WORLD = card(10503310)  # 《世界》的呈现
 
 # --- set 10010 ---
+EXIAS = card(11001110)  # 爱意天使·艾克夏丝
+DYNAMES = card(11002110)  # 信仰天使·迪纳梅斯
+SCENE_OF_DEICIDE = card(11002210)  # 弑神现场
+KYRIOS = card(11003110)  # 希求天使·丘丽奥丝
 NACREHEIM = card(11003210)  # 理想国·涅格尔赫亚
+REZEAL = card(11004110)  # 理想国之神·列加尔
 # --- set 10010 tokens ---
 DIVINE_EVIDENCE = card(90001210)  # 神域的物证
 # --- set 10009 ---
@@ -74,6 +79,7 @@ SANDALPHON = card(10404110)  # 天司长的继承者·圣德芬
 JAILOR_ACCELERATE = card(10901112)  # 最古老的狱卒 (激奏)
 ILLAMRITA_CREST = card(10704112)  # 纹章：特殊目标·海雷姆哈妮
 SANDALPHON_CREST = card(10404112)  # 纹章：天司长的继承者·圣德芬
+REZEAL_CREST = card(11004112)  # 纹章：理想国之神·列加尔
 
 CARDS = [LYRIA, FATE_OF_THE_WORLD,
          JAILOR_OF_ANTIQUITY, INITIATION_OF_REBIRTH, BLADE_ANGEL, WARDEN_OF_SELFLESSNESS, AZVALDT,
@@ -87,8 +93,8 @@ CARDS = [LYRIA, FATE_OF_THE_WORLD,
          INDOMITABLE_FIGHTER, LEAH, QUAKE_GOLIATH, DETECTIVES_LENS, ARRIET, CARAVAN_MAMMOTH,
          ADVENTURERS_GUILD,
          KATALINA, VYRN, YUNI, GRAN_AND_DJEETA, SANDALPHON,
-         NACREHEIM]
-LEADER_AREA = [ILLAMRITA_CREST, SANDALPHON_CREST]
+         EXIAS, DYNAMES, SCENE_OF_DEICIDE, KYRIOS, NACREHEIM, REZEAL]
+LEADER_AREA = [ILLAMRITA_CREST, SANDALPHON_CREST, REZEAL_CREST]
 ALTERNATE_FORMS = [JAILOR_ACCELERATE]
 
 HAND = (TargetSpec(Target.HAND_CARD),)
@@ -742,6 +748,97 @@ class Nacreheim(_ClueEngage):
 
     def on_banished(self, ctx):
         E.heal_leader(ctx.state, ctx.controller, 2)
+
+
+@register(EXIAS.card_id)
+class Exias(CardScript):
+    """Fanfare: add a Divine Evidence to your hand. Rush."""
+
+    def fanfare(self, ctx):
+        E.add_to_hand(ctx.state, ctx.controller, DIVINE_EVIDENCE)
+
+
+@register(DYNAMES.card_id)
+class Dynames(CardScript):
+    """Fanfare: select an enemy follower and deal it 2 damage; add a Divine Evidence
+    to your hand. Evolve: replicate the Fanfare."""
+    play_targets = common.ENEMY_FOLLOWER
+    evolve_targets = common.ENEMY_FOLLOWER
+
+    def fanfare(self, ctx):
+        self._testify(ctx)
+
+    def on_evolve(self, ctx):
+        self._testify(ctx)
+
+    def _testify(self, ctx):
+        E.damage(ctx.state, ctx.chosen(), 2, ctx.source)
+        E.add_to_hand(ctx.state, ctx.controller, DIVINE_EVIDENCE)
+
+
+@register(SCENE_OF_DEICIDE.card_id)
+class SceneOfDeicide(CardScript):
+    """Countdown (3). At the end of your turn, banish a random enemy follower and
+    summon a Divine Evidence on the enemy's field."""
+
+    def on_turn_end(self, ctx):
+        for target in _random_enemy_follower(ctx):
+            E.banish(ctx.state, target)
+        # Unconditional: the Chinese text makes the summon its own sentence.
+        E.summon(ctx.state, 1 - ctx.controller, DIVINE_EVIDENCE)
+
+
+@register(KYRIOS.card_id)
+class Kyrios(CardScript):
+    """Fanfare: deal 2 damage to all enemy followers; add 2 Divine Evidence to your
+    hand. Ward."""
+
+    def fanfare(self, ctx):
+        E.damage(ctx.state, list(ctx.opponent.followers), 2, ctx.source)
+        for _ in range(2):
+            E.add_to_hand(ctx.state, ctx.controller, DIVINE_EVIDENCE)
+
+
+@register(REZEAL.card_id)
+class Rezeal(CardScript):
+    """Fanfare: select an enemy follower and deal it 9 damage. Super-Evolve: gain
+    Crest: Rezeal, Goddess of Nacreheim."""
+    play_targets = common.ENEMY_FOLLOWER
+
+    def fanfare(self, ctx):
+        E.damage(ctx.state, ctx.chosen(), 9, ctx.source)
+
+    def on_super_evolve(self, ctx):
+        E.add_to_leader_area(ctx.state, ctx.controller, REZEAL_CREST)
+
+
+class _SummonCopyOnDeath(CardScript):
+    """Last Words: summon a copy of this card (a fresh one)."""
+
+    def last_words(self, ctx):
+        E.summon(ctx.state, ctx.controller, ctx.source.defn)
+
+
+class _CantAttack(CardScript):
+    cant_attack = True
+
+
+SUMMON_COPY_ON_DEATH = _SummonCopyOnDeath()
+CANT_ATTACK = _CantAttack()
+
+
+@register(REZEAL_CREST.card_id)
+class RezealCrest(CardScript):
+    """Whenever you play a follower, give it "Last Words: summon a copy of this card"
+    and, until the end of the turn, "Can't attack followers or leaders"."""
+
+    def on_play(self, ctx):
+        played = ctx.other
+        if ctx.as_spell or played is None or not played.defn.is_follower \
+                or ctx.state.on_field(played.uid) is not played:
+            return
+        E.grant(played, SUMMON_COPY_ON_DEATH)
+        E.grant(played, CANT_ATTACK, common.end_of_turn(ctx))
 
 
 # --- set 10004 ----------------------------------------------------------------------------
