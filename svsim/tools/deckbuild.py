@@ -32,7 +32,7 @@ incumbent; the seven incumbents are the field. A round goes through the classes 
 The field moves with every accepted change, so the search has no fixed target and could go round in
 circles (each class beating the field of the moment, not getting better). The anchor: round 0's field,
 frozen; after every round each incumbent plays it on the same --anchor-deals deals (the same seeds every
-round), and the report prints the curve. A curve that stops rising means the search is circling.
+round, --anchor-seed on, by default --seed + 900000), and the report prints the curve. A curve that stops rising means the search is circling.
 With 7 classes and many rounds, some changes are accepted by luck alone (5% of the changes that
 gain nothing); the anchor curve and the final league are the check on them.
 
@@ -69,7 +69,7 @@ from svsim.core.enums import Craft
 
 CONDITION = "对手卡表已知（牌序、手牌未知）"
 CLASSES = [c for c in Craft if c != Craft.NEUTRAL]
-ANCHOR_OFFSET = 900_000                    # the anchor's deals: seeds --seed + ANCHOR_OFFSET on, the same every round
+ANCHOR_OFFSET = 900_000                    # the anchor's deals by default: seeds --seed + ANCHOR_OFFSET on, every round
 # agent options that choose models by the decks' identity (decks.identify, the matchup's models): a deck changed by
 # the search isn't recognized and plays on another model, so the search's default agent has none of them
 DECK_MODELS = ("learned", "phased", "net", "prior", "puct", "mimic", "timing", "level-", "ruler", "ref")
@@ -334,7 +334,8 @@ class Search:
         """Each incumbent on the anchor's fixed deals (the same seeds every round): the round's point of the curve."""
         anchor = self.st["anchor"]
         keys = sorted(anchor, key=lambda k: Craft[k])
-        deals = [(self.args.seed + ANCHOR_OFFSET + j, anchor[keys[j % len(keys)]]) for j in range(self.args.anchor_deals)]
+        first = self.args.anchor_seed if self.args.anchor_seed is not None else self.args.seed + ANCHOR_OFFSET
+        deals = [(first + j, anchor[keys[j % len(keys)]]) for j in range(self.args.anchor_deals)]
         got = self.play(dict(self.st["field"]), deals, f"r{self.st['round']}:anchor")
         point = {k: sum(v) / len(v) for k, v in got.items()}
         self.st.setdefault("anchor_curve", []).append({"round": self.st["round"], **point})
@@ -461,6 +462,7 @@ def main() -> None:
     ap.add_argument("--min-nonzero", type=int, default=20,
                     help="deals where the two decks scored differently, needed to accept (20)")
     ap.add_argument("--anchor-deals", type=int, default=70, help="the anchor's fixed deals per class per round (70)")
+    ap.add_argument("--anchor-seed", type=int, help="first seed of the anchor's deals (default --seed + 900000)")
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1))
     ap.add_argument("--allow-missing", action="store_true", help="run although some Rotation cards have no script")
     ap.add_argument("--deck-models", action="store_true", help="allow an --agent that picks models by deck identity")
