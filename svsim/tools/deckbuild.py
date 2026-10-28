@@ -250,6 +250,13 @@ class Search:
 
     def play(self, decklists: dict, deals: list, tag: str) -> dict:
         """Each deck of `decklists` (key -> ids) on each deal; key -> list of deal scores in deal order."""
+        for ids in [*decklists.values(), *(opp for _, opp in deals)]:
+            # a registered deck redraws by its own data (agents.mulligan) and is filed under its name
+            # (new_game's deck_name): its variants, unrecognized, wouldn't be, and a card swap would mix with a
+            # change of redraw (the builder's review, 2026-10-28)
+            name = decks.identify([POOL[i] for i in ids])
+            if name is not None:
+                raise ValueError(f"a registered deck ({name}) is in the search")
         jobs = [(k, ids, opp, seed, self.args.agent) for k, ids in decklists.items() for seed, opp in deals]
         order = {seed: j for j, (seed, _) in enumerate(deals)}
         got = {k: [None] * len(deals) for k in decklists}
@@ -300,7 +307,10 @@ class Search:
                 cands[f"random{r}"] = random_ids(craft, self.rng, curve)
             cands_by_class[craft.name] = cands
         field = {k: next(iter(v.values())) for k, v in cands_by_class.items()}
+        field.update(self.st["field"])                     # resumed: the classes already done keep their decks
         for name, cands in cands_by_class.items():
+            if name in self.st["field"]:
+                continue
             print(f"[起点] {name}: {len(cands)} 套候选", flush=True)
             best, scores = self.halving(cands, None, field, f"r0:{name}", self.args.start_stage)
             mean = sum(scores[best]) / len(scores[best])

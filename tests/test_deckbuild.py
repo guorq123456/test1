@@ -51,3 +51,13 @@ def test_variant_respects_three_copies():
     for _ in range(200):
         ids = deckbuild.variant(ids, craft, rng)
         assert max(Counter(ids).values()) <= decks.MAX_COPIES
+
+
+def test_the_search_refuses_a_registered_deck():
+    import pytest
+    from types import SimpleNamespace
+    face = [c.card_id for c in decks.build(decks.FACE_DRAGON)]
+    search = deckbuild.Search.__new__(deckbuild.Search)
+    search.args = SimpleNamespace(agent="mcts:1+plan")
+    with pytest.raises(ValueError, match="registered deck"):
+        search.play({"x": face}, [(1, face)], "t")
