@@ -230,6 +230,194 @@ def test_void_colonel_crystallize_and_its_last_words():
     assert ids(p.field) == [abyss.VOID_COLONEL.card_id]
 
 
+# --- set 10010 ------------------------------------------------------------------------------
+
+EVIDENCE = abyss.DIVINE_EVIDENCE
+
+
+def on_field(state, player, defn):
+    return [c for c in state.players[player].field if c.defn.card_id == defn.card_id]
+
+
+def footman(state, player, life):
+    f = put(state, player, demo.FOOTMAN)
+    f.life = f.max_life = life
+    return f
+
+
+def test_diligent_undertaker_last_words_gives_two_evidence():
+    state = start()
+    p = state.players[0]
+    kill(state, put(state, 0, abyss.DILIGENT_UNDERTAKER))
+    assert len(on_field(state, 0, EVIDENCE)) == 1 and count(p.hand, EVIDENCE) == 1
+
+
+def test_vengeful_capra_last_words_hits_your_leader():
+    state = start()
+    kill(state, put(state, 0, abyss.VENGEFUL_CAPRA))
+    assert hp(state) == (18, 20)
+
+
+def test_runaway_souls_adds_a_ghost():
+    state = start()
+    set_pp(state, 0, 1)
+    play(state, give(state, 0, abyss.RUNAWAY_SOULS))
+    assert count(state.players[0].hand, abyss.GHOST) == 1 and state.players[0].field == []
+
+
+def test_solemn_gravekeeper_powers_up_a_departed_follower_when_an_ally_is_banished_on_your_turn():
+    state = start()
+    set_pp(state, 0, 5)
+    keeper = give(state, 0, abyss.SOLEMN_GRAVEKEEPER)
+    play(state, keeper)
+    zombie, = on_field(state, 0, abyss.ROTTING_ZOMBIE)
+    E.banish(state, put(state, 0, EVIDENCE))               # an amulet counts
+    resolve_queue(state)
+    assert (zombie.atk, zombie.life) == (4, 4) and zombie.has(Keyword.RUSH)
+    E.banish(state, put(state, 1, demo.FOOTMAN))           # an enemy card doesn't
+    resolve_queue(state)
+    assert (zombie.atk, zombie.life) == (4, 4)
+    ghost = put(state, 0, abyss.GHOST)
+    end_turns(state)                                       # the Ghost goes at the end of your turn: still yours
+    assert ghost.fate == BANISHED and (zombie.atk, zombie.life) == (6, 6)
+    E.banish(state, put(state, 0, EVIDENCE))               # on the opponent's turn: nothing
+    resolve_queue(state)
+    assert (zombie.atk, zombie.life) == (6, 6)
+    end_turns(state)
+    unlock_evolution(state, 0)
+    apply(state, Evolve(keeper.uid))
+    assert len(on_field(state, 0, EVIDENCE)) == 1 and (zombie.atk, zombie.life) == (6, 6)
+
+
+def test_solemn_gravekeeper_powers_up_only_one_departed_follower():
+    state = start()
+    put(state, 0, abyss.SOLEMN_GRAVEKEEPER)
+    zombies = [put(state, 0, abyss.ROTTING_ZOMBIE) for _ in range(2)]
+    E.banish(state, put(state, 0, EVIDENCE))
+    resolve_queue(state)
+    assert sorted(z.atk for z in zombies) == [2, 4]
+
+
+def test_solemn_gravekeeper_with_no_departed_follower_does_nothing():
+    state = start()
+    keeper = put(state, 0, abyss.SOLEMN_GRAVEKEEPER)
+    E.banish(state, put(state, 0, EVIDENCE))
+    resolve_queue(state)
+    assert (keeper.atk, keeper.life) == (4, 4)
+
+
+def test_restive_centaur_strike_necromancy_4_sweeps():
+    state = start()
+    p = state.players[0]
+    a, b = footman(state, 1, 4), footman(state, 1, 5)
+    centaur = put(state, 0, abyss.RESTIVE_CENTAUR)
+    p.shadows = 4
+    apply(state, Attack(centaur.uid, leader_uid(1)))
+    assert a.fate == DESTROYED and b.life == 1 and p.shadows == 0 and hp(state) == (20, 14)
+    state = start()
+    p = state.players[0]
+    a = footman(state, 1, 4)
+    centaur = put(state, 0, abyss.RESTIVE_CENTAUR, ready=False)
+    p.shadows = 3
+    apply(state, Attack(centaur.uid, a.uid))               # Rush; not enough shadows
+    assert p.shadows == 3 and a.fate == DESTROYED and centaur.life == 6 - 1
+
+
+def test_last_will_and_testament_summons_and_adds_evidence():
+    state = start()
+    set_pp(state, 0, 1)
+    play(state, give(state, 0, abyss.LAST_WILL_AND_TESTAMENT))
+    assert len(on_field(state, 0, EVIDENCE)) == 1 and count(state.players[0].hand, EVIDENCE) == 1
+
+
+def test_attending_amanuensis_ghost_with_bane_and_healing_on_banish():
+    state = start()
+    p = state.players[0]
+    p.leader_hp = 10
+    set_pp(state, 0, 7)
+    nurse = give(state, 0, abyss.ATTENDING_AMANUENSIS)
+    play(state, nurse)
+    ghost, = on_field(state, 0, abyss.GHOST)
+    assert ghost.has(Keyword.BANE)
+    foe = footman(state, 1, 9)
+    apply(state, Attack(ghost.uid, foe.uid))               # Bane kills; the Ghost dies and is banished
+    assert foe.fate == DESTROYED and ghost.fate == BANISHED and p.leader_hp == 12
+    unlock_evolution(state, 0)
+    apply(state, Evolve(nurse.uid))
+    assert on_field(state, 0, abyss.GHOST) == []            # a plain evolution doesn't replicate it
+    state = start()
+    nurse = put(state, 0, abyss.ATTENDING_AMANUENSIS)
+    unlock_evolution(state, 0)
+    apply(state, Evolve(nurse.uid, super_=True))
+    ghost, = on_field(state, 0, abyss.GHOST)
+    assert ghost.has(Keyword.BANE)
+    end_turns(state)
+    E.banish(state, put(state, 0, EVIDENCE))               # opponent's turn
+    resolve_queue(state)
+    assert state.players[0].leader_hp == 20
+
+
+def test_nocturnes_interrogation_deals_the_clue_count_and_banishes_the_clues():
+    state = start()
+    a, b = footman(state, 1, 2), footman(state, 1, 5)
+    put(state, 0, EVIDENCE)
+    put(state, 0, EVIDENCE)
+    assert E.clues(state, 0) == 2
+    set_pp(state, 0, 1)
+    play(state, give(state, 0, abyss.NOCTURNES_INTERROGATION))
+    assert a.fate == DESTROYED and b.life == 3
+    assert E.clues(state, 0) == 0 and on_field(state, 0, EVIDENCE) == []
+    shield = footman(state, 1, 2)
+    E.give_keywords(shield, Keyword.BARRIER)
+    set_pp(state, 0, 1)
+    play(state, give(state, 0, abyss.NOCTURNES_INTERROGATION))
+    assert shield.has(Keyword.BARRIER) and b.life == 3      # no clues: no damage at all
+
+
+def test_nocturne_skeletons_on_banish_and_last_will_on_evolve():
+    state = start()
+    p = state.players[0]
+    set_pp(state, 0, 6)
+    nocturne = give(state, 0, abyss.NOCTURNE)
+    play(state, nocturne)
+    ghost, = on_field(state, 0, abyss.GHOST)
+    assert ghost.has(Keyword.BANE)
+    put(state, 0, EVIDENCE)
+    set_pp(state, 0, 1)
+    play(state, give(state, 0, abyss.NOCTURNES_INTERROGATION))
+    skeleton, = on_field(state, 0, abyss.SKELETON)
+    assert (skeleton.atk, skeleton.life) == (3, 5) and skeleton.has(Keyword.WARD)
+    end_turns(state)                                       # the Ghost: one more Skeleton
+    assert len(on_field(state, 0, abyss.SKELETON)) == 2
+    E.banish(state, put(state, 0, EVIDENCE))               # opponent's turn: none
+    resolve_queue(state)
+    assert len(on_field(state, 0, abyss.SKELETON)) == 2
+    end_turns(state)
+    unlock_evolution(state, 0)
+    apply(state, Evolve(nocturne.uid))
+    assert count(p.hand, abyss.LAST_WILL_AND_TESTAMENT) == 1
+
+
+def test_gremory_last_words_necromancy_2_and_crest_shadows():
+    state = start()
+    p = state.players[0]
+    gremory = put(state, 0, abyss.GREMORY)
+    assert gremory.has(Keyword.WARD)
+    hand = len(p.hand)
+    kill(state, gremory)                                   # its own shadow makes 1: not enough
+    assert p.shadows == 1 and len(p.hand) == hand
+    kill(state, put(state, 0, abyss.GREMORY))              # 1 + its own = 2
+    assert p.shadows == 0 and len(p.hand) == hand + 1
+    gremory = put(state, 0, abyss.GREMORY)
+    unlock_evolution(state, 0)
+    apply(state, Evolve(gremory.uid))
+    assert any(c.defn.card_id == abyss.GREMORY_CREST.card_id for c in p.leader_area)
+    end_turns(state)
+    assert p.shadows == 2
+    end_turns(state)
+    assert p.shadows == 2                                  # only at the end of your own turn
+
+
 # --- set 10009 ------------------------------------------------------------------------------
 
 def test_ruthless_blitzer_hits_both_leaders():

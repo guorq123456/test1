@@ -23,6 +23,7 @@ BAT = card(90051120)  # 蝙蝠 (Drain only)
 GHOST = card(90051130)  # 怨灵
 ROTTING_ZOMBIE = card(90051140)  # 腐臭的僵尸
 DEPTHS_OF_THE_ELD_SIGHT = card(90054330)  # 天眼深渊
+DIVINE_EVIDENCE = card(90001210)  # 神域的物证 (Neutral token; Clue)
 
 # --- leader area / alternate forms ---
 ISTYNDET_CREST = card(10954112)  # 纹章：伊斯坦戴德 对 玛尔奇盖特
@@ -32,6 +33,19 @@ VALIANT_EDGE_CREST = card(10451312)  # 纹章：妖异利刃
 CORRUPTION_CREST = card(10453312)  # 纹章：堕落
 BELIAL_CREST = card(10454122)  # 纹章：狡诈的堕天司·彼列
 VOID_COLONEL_CRYSTALLIZE = card(10952112)  # 渊底上校（结晶）
+GREMORY_CREST = card(11054122)  # 纹章：末日变换·格莫瑞
+
+# --- set 10010 ---
+DILIGENT_UNDERTAKER = card(11051110)  # 告别入殓师
+VENGEFUL_CAPRA = card(11051120)  # 复仇山羊
+RUNAWAY_SOULS = card(11051310)  # 灵魂逃亡
+SOLEMN_GRAVEKEEPER = card(11052110)  # 永住守墓人
+RESTIVE_CENTAUR = card(11052120)  # 桀骜半人马
+LAST_WILL_AND_TESTAMENT = card(11052310)  # 听取遗言
+ATTENDING_AMANUENSIS = card(11053110)  # 鬼录护士
+NOCTURNES_INTERROGATION = card(11053310)  # 诺克坦的审讯
+NOCTURNE = card(11054110)  # 残思侦探·诺克坦
+GREMORY = card(11054120)  # 末日变换·格莫瑞
 
 # --- set 10009 ---
 RUTHLESS_BLITZER = card(10951110)  # 强袭的特攻队长
@@ -116,7 +130,7 @@ BELIAL = card(10454120)  # 狡诈的堕天司·彼列
 
 TOKENS = [SKELETON, BAT, GHOST, ROTTING_ZOMBIE, DEPTHS_OF_THE_ELD_SIGHT]
 LEADER_AREA = [ISTYNDET_CREST, RIGOR_CREST, MILTEO_CREST, VALIANT_EDGE_CREST, CORRUPTION_CREST,
-               BELIAL_CREST]
+               BELIAL_CREST, GREMORY_CREST]
 ALTERNATE_FORMS = [VOID_COLONEL_CRYSTALLIZE]
 KEYWORD_ONLY = [MISTRESS_OF_THE_FANGED, SKELETON, BAT]   # no script needed
 BLOCKED: list = []
@@ -304,6 +318,157 @@ class VoidColonelCrystallize(CardScript):
 
     def last_words(self, ctx):
         E.summon(ctx.state, ctx.controller, VOID_COLONEL)
+
+
+@register(GREMORY_CREST.card_id)
+class GremoryCrest(CardScript):
+    """At the end of your turn, gain 2 shadows."""
+
+    def on_turn_end(self, ctx):
+        ctx.me.shadows += 2
+
+
+# --- set 10010 ---------------------------------------------------------------------------
+
+def summon_evidence(ctx) -> None:
+    E.summon(ctx.state, ctx.controller, DIVINE_EVIDENCE)
+
+
+def allied_banished_on_your_turn(ctx) -> bool:
+    """"During your turn, whenever an allied card is banished from the field"."""
+    return ctx.other.owner == ctx.controller and common.during_your_turn(ctx)
+
+
+def summon_ghost_with_bane(ctx) -> None:
+    ghost = E.summon(ctx.state, ctx.controller, GHOST)
+    if ghost is not None:
+        E.give_keywords(ghost, Keyword.BANE)
+
+
+@register(DILIGENT_UNDERTAKER.card_id)
+class DiligentUndertaker(CardScript):
+    """Last Words: summon a Divine Evidence; add a Divine Evidence to your hand."""
+
+    def last_words(self, ctx):
+        summon_evidence(ctx)
+        E.add_to_hand(ctx.state, ctx.controller, DIVINE_EVIDENCE)
+
+
+@register(VENGEFUL_CAPRA.card_id)
+class VengefulCapra(CardScript):
+    """Last Words: deal 2 damage to your leader."""
+
+    def last_words(self, ctx):
+        hit_own_leader(ctx, 2)
+
+
+@register(RUNAWAY_SOULS.card_id)
+class RunawaySouls(CardScript):
+    """Add a Ghost to your hand."""
+
+    def cast(self, ctx):
+        E.add_to_hand(ctx.state, ctx.controller, GHOST)
+
+
+@register(SOLEMN_GRAVEKEEPER.card_id)
+class SolemnGravekeeper(CardScript):
+    """Fanfare: summon a Rotting Zombie. During your turn, whenever an allied card is
+    banished from the field, give a random allied Departed follower +2/+2 and Rush.
+    Evolve: summon a Divine Evidence."""
+
+    def fanfare(self, ctx):
+        E.summon(ctx.state, ctx.controller, ROTTING_ZOMBIE)
+
+    def on_card_banished(self, ctx):
+        if not allied_banished_on_your_turn(ctx):
+            return
+        for f in E.random_sample(ctx.state, [c for c in ctx.me.followers if is_departed(c)], 1):
+            E.buff(ctx.state, f, 2, 2)
+            E.give_keywords(f, Keyword.RUSH)
+
+    def on_evolve(self, ctx):
+        summon_evidence(ctx)
+
+
+@register(RESTIVE_CENTAUR.card_id)
+class RestiveCentaur(CardScript):
+    """Rush. Strike: Necromancy (4): deal 4 damage to all enemy followers."""
+
+    def strike(self, ctx):
+        if E.necromancy(ctx.state, ctx.controller, 4):
+            E.damage(ctx.state, list(ctx.opponent.followers), 4, ctx.source)
+
+
+@register(LAST_WILL_AND_TESTAMENT.card_id)
+class LastWillAndTestament(CardScript):
+    """Summon a Divine Evidence. Add a Divine Evidence to your hand."""
+
+    def cast(self, ctx):
+        summon_evidence(ctx)
+        E.add_to_hand(ctx.state, ctx.controller, DIVINE_EVIDENCE)
+
+
+@register(ATTENDING_AMANUENSIS.card_id)
+class AttendingAmanuensis(CardScript):
+    """Fanfare: summon a Ghost and give it Bane. During your turn, whenever an allied card
+    is banished from the field, restore 2 defense to your leader. Super-Evolve: replicate
+    the Fanfare."""
+
+    def fanfare(self, ctx):
+        summon_ghost_with_bane(ctx)
+
+    def on_card_banished(self, ctx):
+        if allied_banished_on_your_turn(ctx):
+            E.heal_leader(ctx.state, ctx.controller, 2)
+
+    def on_super_evolve(self, ctx):
+        summon_ghost_with_bane(ctx)
+
+
+@register(NOCTURNES_INTERROGATION.card_id)
+class NocturnesInterrogation(CardScript):
+    """Deal X damage to all enemy followers, X = your clues. Banish all allied Clue amulets."""
+
+    def cast(self, ctx):
+        x = E.clues(ctx.state, ctx.controller)
+        if x:
+            E.damage(ctx.state, list(ctx.opponent.followers), x, ctx.source)
+        for c in [c for c in ctx.me.field if c.defn.is_amulet and E.has_trait(c, E.CLUE)]:
+            E.banish(ctx.state, c)
+
+
+@register(NOCTURNE.card_id)
+class Nocturne(CardScript):
+    """Fanfare: summon a Ghost and give it Bane. During your turn, whenever an allied card
+    is banished from the field, summon a Skeleton and give it +2/+4 and Ward. Evolve: add
+    a Last Will and Testament to your hand."""
+
+    def fanfare(self, ctx):
+        summon_ghost_with_bane(ctx)
+
+    def on_card_banished(self, ctx):
+        if not allied_banished_on_your_turn(ctx):
+            return
+        skeleton = E.summon(ctx.state, ctx.controller, SKELETON)
+        if skeleton is not None:
+            E.buff(ctx.state, skeleton, 2, 4)
+            E.give_keywords(skeleton, Keyword.WARD)
+
+    def on_evolve(self, ctx):
+        E.add_to_hand(ctx.state, ctx.controller, LAST_WILL_AND_TESTAMENT)
+
+
+@register(GREMORY.card_id)
+class Gremory(CardScript):
+    """Ward. Last Words: Necromancy (2): draw a card. Evolve: gain Crest: Gremory, Doom
+    Dispeller."""
+
+    def last_words(self, ctx):
+        if E.necromancy(ctx.state, ctx.controller, 2):
+            E.draw(ctx.state, ctx.controller)
+
+    def on_evolve(self, ctx):
+        E.add_to_leader_area(ctx.state, ctx.controller, GREMORY_CREST)
 
 
 # --- set 10009 ---------------------------------------------------------------------------
