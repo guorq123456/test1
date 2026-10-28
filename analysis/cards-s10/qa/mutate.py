@@ -21,6 +21,21 @@ MODULES = {
                "DesolationistRefiner", "CombativeMonk", "SolitaryCultivation", "DesolationistTamer",
                "WingedAccordionist", "DestructivePropagation", "DesolationistRehabilitator",
                "FruitlessTestimony", "Lapinette", "ParareligiousIdol"]),
+    "neutral": ("svsim/cards/neutral.py", "tests/test_set10_neutral.py tests/test_clue.py tests/test_cards_neutral.py",
+                ["_ClueEngage", "DivineEvidence", "Nacreheim", "Exias", "Dynames", "SceneOfDeicide", "Kyrios",
+                 "Rezeal", "_SummonCopyOnDeath", "_CantAttack", "RezealCrest"]),
+    "dragon": ("svsim/cards/dragon.py", "tests/test_set10_dragon.py tests/test_cards_dragon.py",
+               ["_clues_in_hand", "_discard_random_clue", "ObliviationistMarauder", "FreezingIcenewt",
+                "DanceOfTheWaterwyrm", "ObliviationistSmuggler", "DragonewtScout", "CollectionManifest",
+                "ObliviationistMugger", "BirdsEyeView", "Leizaut", "Jerva"]),
+    "forest": ("svsim/cards/forest.py", "tests/test_set10_forest.py tests/test_cards_forest.py",
+               ["UntamedTestimonyCrest", "_one_cost_allies", "DebonairDogsitter", "WolfPackLackey",
+                "NaturalReincarnation", "InquiringMischief", "GardenElf", "UntamedTestimony", "SleuthsBestFriend",
+                "NoschesInterrogation", "Nosche", "HearteningHyphae"]),
+    "sword": ("svsim/cards/sword.py", "tests/test_set10_sword.py tests/test_cards_sword.py",
+              ["_set_stats", "_swap_stats", "_SwapOnClueEngage", "_engaged_clue", "GuilelessNewsie", "BejeweledLady",
+               "OnwardCharge", "CheekyArchitect", "_allied_amulet", "ErrantKnight", "DichotomousForensics",
+               "PlacidDilettante", "NoLifesCrossExamination", "NoLife", "Almaelys", "AlmaelysCrest"]),
     "portal": ("svsim/cards/portal.py", "tests/test_cards_portal.py",
                ["DimensionalWandererCrest", "is_amulet", "fused_an_amulet", "add_evidence",
                 "_FuseAmuletsForEvidence", "ExtinctionistMajordomo", "IncohesiveConstruction",
@@ -95,7 +110,7 @@ def main(which):
             # No bytecode at all: a same-size mutant written within the same second would otherwise
             # leave a .pyc that still looks valid for the next mutant (or the restored file).
             subprocess.run(["find", ".", "-name", "__pycache__", "-type", "d", "-prune", "-exec", "rm", "-rf", "{}", "+"])
-            r = subprocess.run([sys.executable, "-B", "-m", "pytest", "-x", "-q", "-p", "no:cacheprovider", test],
+            r = subprocess.run([sys.executable, "-B", "-m", "pytest", "-x", "-q", "-p", "no:cacheprovider", *test.split()],
                                capture_output=True, text=True, timeout=600,
                                env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
             if r.returncode == 0:

@@ -8,8 +8,10 @@
 
 - 补丁在 `patches/`，一个职业一个提交，共 4 个。
 - 基线是建造线的 `d27dc30`：引擎钩子 463b898 之后，又加了建造线自己的中立、龙、妖精、皇家。在它上面 `git am analysis/cards-s10/patches/*.patch` 就能接上。
-- 第一版补丁接在 463b898 上（3abfbba）。后来建造线把 pending.py 重排了，就改接到 d27dc30 上；内容没变，只是 pending.py 的改法跟着换了。
-- 只改了 `svsim/cards/{rune,abyss,haven,portal}.py`、对应的 `tests/test_cards_*.py`，以及 `svsim/cards/pending.py`。pending.py 是把写好的卡移出 PENDING；4 个补丁都打上以后 PENDING 为空，第 10 弹全部有了脚本。公共文件一行没动。
+- 补丁里**不含 pending.py**，这是建造线定的格式：每个提交信息末尾列出要从 PENDING 去掉的卡号，建造线合并时重新生成 pending.py。只打补丁、还没重新生成之前，test_full_pool 会报这些卡号「已有脚本却还在 PENDING」。
+- 只改了 `svsim/cards/{rune,abyss,haven,portal}.py` 和对应的 `tests/test_cards_*.py`，公共文件一行没动。
+- 我模拟了一遍合并：在 d27dc30 上 git am 这 4 个补丁，再把 47 个卡号移出 PENDING。之后 PENDING 为空，第 10 弹全部有了脚本；test_full_pool 加上四个职业的测试文件共 402 个，全部通过。
+- 交付过三版：3abfbba 接在 463b898 上，pending.py 一起改；61a1d4d 改接到 d27dc30 上；现在这一版去掉了 pending.py。三版的卡牌脚本和测试完全一样。
 
 | 补丁 | 职业 | 脚本 | 新测试 |
 |---|---|---|---|
@@ -65,7 +67,7 @@
 | 复仇者 | 37 | 37 | 不崩；154 / 146，20.4 回合 |
 
 - 4 个补丁在 d27dc30 上用 `git am` 接得上，结果和我这边的树逐字节相同。
-- 全套测试在 d27dc30 + 这 4 个补丁上：1371 passed，7 skipped，4 failed。在 463b898 + 这 4 个补丁上是 1317 passed。
+- 全套测试在 d27dc30 + 这 4 个补丁 + 重新生成的 PENDING 上：1371 passed，7 skipped，4 failed。在 463b898 上（第一版）是 1317 passed。
 - 失败的 4 个都是 `test_golden_search`。它们在干净的 4d3d4b5 上、在我的容器里就失败（决策 6 对不上），和加卡无关。建造线那边的说法是 golden search 没变。
 
 ## 解读和假设（请审的人重点看）
@@ -86,4 +88,5 @@
 ## 文件
 
 - `patches/`：4 个补丁。
+- `review-builder.md`：对建造线那一半（中立、龙、妖精、皇家）的互审。
 - `qa/mutate.py`、`qa/games.py`、`qa/hookcov.py`：上面的核查脚本，在仓库根目录运行。

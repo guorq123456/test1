@@ -1,6 +1,6 @@
-From e95aac35a63551708f31a6928a791525a857b550 Mon Sep 17 00:00:00 2001
+From cd3abebadb4b963f1baae793cb1f2e3e51d0bdf8 Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
-Date: Wed, 28 Oct 2026 19:23:21 +0000
+Date: Wed, 28 Oct 2026 19:31:36 +0000
 Subject: [PATCH 3/4] Set 10 Bishop (Havencraft), analysis line: Desolationist
  Refiner, Combative Monk, Solitary Cultivation, Desolationist Tamer, Winged
  Accordionist, Destructive Propagation, Desolationist Rehabilitator, Fruitless
@@ -12,13 +12,14 @@ Subject: [PATCH 3/4] Set 10 Bishop (Havencraft), analysis line: Desolationist
  start of 463b898; EN and CHS text checked; 11 tests, 49 of 49 mutants caught;
  300 random games play out
 
+Out of PENDING (13): 11061110, 11061120, 11061310, 11062110, 11062120, 11062310, 11063110, 11063310, 11063312, 11064110, 11064112, 11064120, 90061140. pending.py is not in this patch (the builder regenerates it on merge); until then test_full_pool flags these ids as scripted but pending.
+
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LfGPwGP5hardfTTjWqiw99
 ---
  svsim/cards/haven.py      | 197 ++++++++++++++++++++++++++++++++++-
- svsim/cards/pending.py    |   6 +-
  tests/test_cards_haven.py | 209 ++++++++++++++++++++++++++++++++++++++
- 3 files changed, 405 insertions(+), 7 deletions(-)
+ 2 files changed, 403 insertions(+), 3 deletions(-)
 
 diff --git a/svsim/cards/haven.py b/svsim/cards/haven.py
 index 8715f69..4ab5b94 100644
@@ -264,23 +265,6 @@ index 8715f69..4ab5b94 100644
  # --- set 10009 -----------------------------------------------------------------------------
  
  @register(FOLLOWER_OF_THE_TENETS.card_id)
-diff --git a/svsim/cards/pending.py b/svsim/cards/pending.py
-index e0e8389..3311059 100644
---- a/svsim/cards/pending.py
-+++ b/svsim/cards/pending.py
-@@ -8,10 +8,8 @@ ROTATED_OUT: the cards that left the Rotation table (set 4, and what only it gen
- before set 10 (the starter and tournament decks) are checked against the Rotation before it (decks.ROTATION_PRE10).
- """
- PENDING = frozenset({
--    11061110,
--    11061120, 11061310, 11062110, 11062120, 11062310, 11063110, 11063310, 11063312,
--    11064110, 11064112, 11064120, 11071110, 11071120, 11071310, 11072110, 11072120,
--    11072310, 11073110, 11073310, 11074110, 11074120, 11074122, 90061140,
-+    11071110, 11071120, 11071310, 11072110, 11072120,
-+    11072310, 11073110, 11073310, 11074110, 11074120, 11074122,
- })
- 
- ROTATED_OUT = frozenset({
 diff --git a/tests/test_cards_haven.py b/tests/test_cards_haven.py
 index c55976f..83064b9 100644
 --- a/tests/test_cards_haven.py
