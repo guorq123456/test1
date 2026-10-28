@@ -58,6 +58,9 @@ from svsim.core.enums import Craft
 
 CONDITION = "对手卡表已知（牌序、手牌未知）"
 CLASSES = [c for c in Craft if c != Craft.NEUTRAL]
+# agent options that choose models by the decks' identity (decks.identify, the matchup's models): a deck changed by
+# the search isn't recognized and plays on another model, so the search's default agent has none of them
+DECK_MODELS = ("learned", "phased", "net", "prior", "puct", "mimic", "timing", "level-", "ruler", "ref")
 
 
 # --- the pool and decks -------------------------------------------------------------
@@ -411,6 +414,7 @@ def main() -> None:
     ap.add_argument("--z", type=float, default=2.0, help="standard errors the confirmed gain must exceed (2.0)")
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1))
     ap.add_argument("--allow-missing", action="store_true", help="run although some Rotation cards have no script")
+    ap.add_argument("--deck-models", action="store_true", help="allow an --agent that picks models by deck identity")
     ap.add_argument("--league", help='round robin of this file\'s decks ("label|deck hash" lines) instead of a search')
     ap.add_argument("--deals", type=int, default=50, help="--league: deals per pair of decks (50)")
     args = ap.parse_args()
@@ -425,6 +429,9 @@ def main() -> None:
         return
     if args.seed is None and not (out / "state.json").exists():
         ap.error("--seed is required for a new run (the analysis line allocates seed banks)")
+    if any(t in args.agent for t in DECK_MODELS) and not args.deck_models:
+        ap.error(f"{args.agent} picks models by the decks' identity: a changed deck isn't recognized and falls back "
+                 "to other models, so a swap and a change of evaluation would mix (--deck-models to run anyway)")
     missing = missing_scripts()
     if missing and not args.allow_missing:
         ap.error(f"{len(missing)} Rotation cards have abilities but no script, e.g. "
