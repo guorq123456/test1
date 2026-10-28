@@ -464,6 +464,7 @@ def banish(state: GameState, inst: CardInstance) -> bool:
     if _remove_from_play(state, inst):
         inst.fate = BANISHED
         enqueue(state, "on_banished", inst, inst.owner, zone=None)
+        emit(state, "on_card_banished", other=inst)
         _left_field(state, inst)
         return True
     if not (_remove_from(p.hand, inst) or _remove_from(p.deck, inst)):
@@ -777,9 +778,24 @@ def consume_clue(state: GameState, inst: CardInstance, n: int = 1) -> None:
         destroy(state, inst, by_ability=False)
 
 
+def consume_clues(state: GameState, player: int, n: int) -> bool:
+    """A cost of n clues ("Clue -n: ..."): consumed from the allied Clue amulet only if it has
+    n, like Earth Rite. Returns whether they were consumed."""
+    amulet = clue_amulet(state, player)
+    if amulet is None or counters(amulet).get("clues", 0) < n:
+        return False
+    consume_clue(state, amulet, n)
+    return True
+
+
 def engaged_clue_this_turn(state: GameState, player: int) -> bool:
     """"If you've Engaged a Clue amulet this turn"."""
     return state.players[player].clue_engaged_turn == state.turn
+
+
+def engaged_amulet_this_turn(state: GameState, player: int) -> bool:
+    """"If you've Engaged an amulet this turn" (the amulet may be gone since)."""
+    return state.players[player].amulet_engaged_turn == state.turn
 
 
 def earth_rite(state: GameState, player: int, n: int) -> bool:

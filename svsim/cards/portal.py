@@ -423,10 +423,10 @@ class SlausCrest(CardScript):
 
     def last_words(self, ctx):
         # Confirmed by the player: the ability still activates on the turn the count
-        # reaches 0. The engine destroys a countdown crest at 0 before its start-of-turn
-        # ability would be queued, so its Last Words does it instead.
-        if ctx.source.countdown is not None and ctx.source.countdown <= 0:
-            wheel_of_fortune(ctx, SLAUS_BAD)
+        # reaches 0. The engine now queues on_turn_start then (in the place this Last
+        # Words held), so this does nothing; it stays only so the card's learn.tokens
+        # row (hook_last_words) is the one the trained nets saw.
+        pass
 
 
 @register(SHODDY_PLAYTHING_ACCELERATE.card_id)

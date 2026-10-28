@@ -189,6 +189,7 @@ class PlayerState:
     extra_damage: int = 0          # leader "takes N more damage"
     entered: dict = dc_field(default_factory=dict)   # card_id -> allied follower entries this match
     clue_engaged_turn: int = -1    # global turn of the last allied Engage of a Clue amulet (set 10)
+    amulet_engaged_turn: int = -1  # global turn of the last allied Engage of any amulet (set 10)
     deck_name: str | None = None   # the named deck registered (cards.decks.NAMED), "" for another; set by new_game
     _deck_shared: bool = dc_field(default=False, compare=False, repr=False)   # see `deck`
 
@@ -229,6 +230,7 @@ class PlayerState:
         clone.extra_damage = self.extra_damage
         clone.entered = dict(self.entered)
         clone.clue_engaged_turn = self.clue_engaged_turn
+        clone.amulet_engaged_turn = self.amulet_engaged_turn
         clone.deck_name = self.deck_name
         return clone
 

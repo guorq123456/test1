@@ -170,6 +170,8 @@ class CardScript:
     on_earth_rite = None     # controller performed an Earth Rite; ctx.amount = sigils spent
     on_draw = None           # controller drew a card; ctx.other
     on_leader_healed = None  # controller's leader had defense restored (even by 0); ctx.amount
+    on_card_banished = None  # a card (either side, follower or amulet) was banished from the field; ctx.other
+    on_ally_fuse = None      # controller fused; ctx.other = the card fused to, ctx.cards = the cards fused
 
 
 HOOKS = ("fanfare", "cast", "last_words", "on_evolve", "on_super_evolve", "on_evolved", "strike",
@@ -180,7 +182,7 @@ HOOKS = ("fanfare", "cast", "last_words", "on_evolve", "on_super_evolve", "on_ev
          "on_ally_leave", "on_engage", "on_earth_rite", "on_draw", "on_leader_healed")
 # learn.tokens builds a hook_ feature column per entry of HOOKS, so trained nets
 # depend on its length and order: hooks added later go in LATER_HOOKS instead.
-LATER_HOOKS = ("on_banished",)
+LATER_HOOKS = ("on_banished", "on_card_banished", "on_ally_fuse")
 ALL_HOOKS = HOOKS + LATER_HOOKS
 
 _EMPTY = CardScript()

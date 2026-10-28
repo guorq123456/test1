@@ -389,6 +389,9 @@ def _start_turn(state: GameState) -> None:
         if card.countdown is not None:
             card.countdown -= 1
             if card.countdown <= 0:
+                # Its start-of-turn ability still activates on the turn the count reaches 0
+                # (confirmed by Salem for Crest: Slaus): queued first, then the card goes.
+                E.enqueue(state, "on_turn_start", card, p.index, zone=None)
                 E.destroy(state, card, by_ability=False)
                 continue
         E.enqueue(state, "on_turn_start", card, p.index)
@@ -548,6 +551,7 @@ def _engage(state: GameState, action: Engage) -> None:
     script = script_for(amulet.defn.card_id)
     p.pp -= script.engage_cost
     amulet.engaged_turn = state.turn
+    p.amulet_engaged_turn = state.turn
     if E.is_clue(amulet):
         p.clue_engaged_turn = state.turn
     E.enqueue(state, "engage", amulet, p.index, targets=action.targets, modes=action.modes)
@@ -565,4 +569,5 @@ def _fuse(state: GameState, action: Fuse) -> None:
     card.fused_turn = state.turn
     E.counters(card).setdefault("fused", []).extend(c.defn.card_id for c in fodder)
     E.enqueue(state, "on_fuse", card, p.index, zone="hand", cards=tuple(fodder))
+    E.emit(state, "on_ally_fuse", player=p.index, other=card, cards=tuple(fodder))
     resolve_queue(state)
