@@ -1,0 +1,506 @@
+From 3c11715649a73ff6160a6b1ad7a792ed8a8079d2 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 28 Oct 2026 19:20:20 +0000
+Subject: [PATCH 3/4] Set 10 Bishop (Havencraft), analysis line: Desolationist
+ Refiner, Combative Monk, Solitary Cultivation, Desolationist Tamer, Winged
+ Accordionist, Destructive Propagation, Desolationist Rehabilitator, Fruitless
+ Testimony and its crest, Lapinette and its crest (Super-Evolve delays the
+ crest its Evolve just gave: two Bunnies), Parareligious Idol (an exact copy
+ per enemy follower banished on your turn) and Bunnies of Desolation (banishes
+ a random cheapest hand card by current cost, evolves even with an empty hand)
+ scripted, out of PENDING; the two countdown crests rely on the count-0 turn
+ start of 463b898; EN and CHS text checked; 11 tests, 49 of 49 mutants caught;
+ 300 random games play out
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LfGPwGP5hardfTTjWqiw99
+---
+ svsim/cards/haven.py      | 197 ++++++++++++++++++++++++++++++++++-
+ svsim/cards/pending.py    |   6 +-
+ tests/test_cards_haven.py | 209 ++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 405 insertions(+), 7 deletions(-)
+
+diff --git a/svsim/cards/haven.py b/svsim/cards/haven.py
+index 8715f69..4ab5b94 100644
+--- a/svsim/cards/haven.py
++++ b/svsim/cards/haven.py
+@@ -21,6 +21,8 @@ HOLYFLAME_TIGER = card(90061120)  # 圣炎猛虎
+ REGAL_FALCON = card(90061130)  # 壮丽大神隼
+ RINGS_OF_MOONLIGHT = card(90064210)  # 月影指环
+ DEPTHS_OF_THE_ELD_TOME = card(90064320)  # 天书深渊
++BUNNIES_OF_DESOLATION = card(90061140)  # 地害之兔
++DIVINE_EVIDENCE = card(90001210)  # 神域的物证 (Neutral token; Clue)
+ 
+ # --- leader area / alternate forms ---
+ ERRALDE_CREST = card(10964112)  # 纹章：神纹的罪人·艾尔拉德
+@@ -28,6 +30,8 @@ VERDILIA_CREST = card(10864112)  # 纹章：飞跃的姐妹·贝尔迪俪亚&卡
+ ZOE_CREST = card(10864122)  # 纹章：希望的光彩·莉迪耶尔
+ KUKISHIRO_CREST = card(10564122)  # 纹章：雾卷花·茎白
+ LYANTHOTH_FAITH = card(10664122)  # 古旧天书·莲妥丝 (信仰)
++FRUITLESS_TESTIMONY_CREST = card(11063312)  # 纹章：徒然的证言
++LAPINETTE_CREST = card(11064112)  # 纹章：地害三恶·拉碧妲赫特
+ ALMIRAJ_CRYSTALLIZE = card(10962122)  # 奇迹独角兔 (结晶)
+ COWARD_CRYSTALLIZE = card(10661112)  # 崇奉的懦者 (结晶)
+ DYER_CRYSTALLIZE = card(10662112)  # 崇敬的涂描者 (结晶)
+@@ -114,6 +118,18 @@ JURATIO = card(10963210)  # 神纹誓言
+ ERRALDE = card(10964110)  # 神纹的罪人·艾尔拉德
+ OMERIO = card(10964120)  # 翼天的变貌·奥梅里欧
+ 
++# --- set 10010 ---
++DESOLATIONIST_REFINER = card(11061110)  # 地害加工者
++COMBATIVE_MONK = card(11061120)  # 斗志修行僧
++SOLITARY_CULTIVATION = card(11061310)  # 孤高的锻炼
++DESOLATIONIST_TAMER = card(11062110)  # 地害驯兽师
++WINGED_ACCORDIONIST = card(11062120)  # 有翼奏者
++DESTRUCTIVE_PROPAGATION = card(11062310)  # 荒废的繁殖
++DESOLATIONIST_REHABILITATOR = card(11063110)  # 地害矫正者
++FRUITLESS_TESTIMONY = card(11063310)  # 徒然的证言
++LAPINETTE = card(11064110)  # 地害三恶·拉碧妲赫特
++PARARELIGIOUS_IDOL = card(11064120)  # 亚教偶像
++
+ CARDS = [
+     SOULCURE_SISTER, FOX_OF_PURITY, WINGED_WARRIOR, AVIAN_STATUE, IRONFIST_PRIEST, SACRED_GRIFFON,
+     WINGED_STATUE, TROUE, LAMRETTA, AWED_AND_INSPIRED, SARA, SOPHIA, SKYFARING_VESSEL, TIKOH,
+@@ -127,10 +143,14 @@ CARDS = [
+     TRIDENT_OF_ERODING_TIDES, RODEO, INITIA, LILIUM, THERESA, GRANT, EDETH, VICHE, LINGERING_THREAT,
+     COLETTE, ACADEMY_HIJINKS, VERDILIA_AND_CASTELLE, ZOE, FOLLOWER_OF_THE_TENETS, PERYTON,
+     ROARING_BASILICA, AGENT_OF_THE_TESTAMENTS, MIRACULOUS_ALMIRAJ, VOW_OF_DEVOTION,
+-    EXECUTOR_OF_THE_VOW, JURATIO, ERRALDE, OMERIO,
++    EXECUTOR_OF_THE_VOW, JURATIO, ERRALDE, OMERIO, DESOLATIONIST_REFINER, COMBATIVE_MONK,
++    SOLITARY_CULTIVATION, DESOLATIONIST_TAMER, WINGED_ACCORDIONIST, DESTRUCTIVE_PROPAGATION,
++    DESOLATIONIST_REHABILITATOR, FRUITLESS_TESTIMONY, LAPINETTE, PARARELIGIOUS_IDOL,
+ ]
+-TOKENS = [HOLY_FALCON, HOLYFLAME_TIGER, REGAL_FALCON, RINGS_OF_MOONLIGHT, DEPTHS_OF_THE_ELD_TOME]
+-LEADER_AREA = [ERRALDE_CREST, VERDILIA_CREST, ZOE_CREST, KUKISHIRO_CREST, LYANTHOTH_FAITH]
++TOKENS = [HOLY_FALCON, HOLYFLAME_TIGER, REGAL_FALCON, RINGS_OF_MOONLIGHT, DEPTHS_OF_THE_ELD_TOME,
++          BUNNIES_OF_DESOLATION]
++LEADER_AREA = [ERRALDE_CREST, VERDILIA_CREST, ZOE_CREST, KUKISHIRO_CREST, LYANTHOTH_FAITH,
++               FRUITLESS_TESTIMONY_CREST, LAPINETTE_CREST]
+ ALTERNATE_FORMS = [ALMIRAJ_CRYSTALLIZE, COWARD_CRYSTALLIZE, DYER_CRYSTALLIZE, CRUSADER_CRYSTALLIZE]
+ # Keyword-only cards: no script needed.
+ NO_SCRIPT = [FOX_OF_PURITY, VENERATING_DYER, MIRACULOUS_ALMIRAJ, HOLY_FALCON, HOLYFLAME_TIGER,
+@@ -263,6 +283,24 @@ class DepthsOfTheEldTome(CardScript):
+                 E.add_to_hand(ctx.state, ctx.controller, DEPTHS_OF_THE_ELD_TOME)
+ 
+ 
++@register(BUNNIES_OF_DESOLATION.card_id)
++class BunniesOfDesolation(CardScript):
++    """When this follower enters the field, banish a random card with the lowest cost
++    from your hand and evolve this follower. Last Words: deal 2 damage to the enemy
++    leader."""
++
++    def on_enter(self, ctx):
++        hand = ctx.me.hand
++        if hand:
++            low = min(c.cost for c in hand)
++            for c in E.random_sample(ctx.state, [c for c in hand if c.cost == low], 1):
++                E.banish(ctx.state, c)
++        _evolve_self(ctx)
++
++    def last_words(self, ctx):
++        E.damage(ctx.state, [common.enemy_leader(ctx)], 2, ctx.source)
++
++
+ # --- leader area -------------------------------------------------------------------------
+ 
+ @register(ERRALDE_CREST.card_id)
+@@ -365,6 +403,159 @@ class CrusaderCrystallize(CardScript):
+         E.summon(ctx.state, ctx.controller, WORSHIPFUL_CRUSADER)
+ 
+ 
++@register(FRUITLESS_TESTIMONY_CREST.card_id)
++class FruitlessTestimonyCrest(CardScript):
++    """Countdown (2). At the start of your turn, restore 1 defense to your leader and add a
++    Divine Evidence to your hand."""
++
++    def on_turn_start(self, ctx):
++        _heal(ctx, 1)
++        E.add_to_hand(ctx.state, ctx.controller, DIVINE_EVIDENCE)
++
++
++@register(LAPINETTE_CREST.card_id)
++class LapinetteCrest(CardScript):
++    """Countdown (1). At the start of your turn, summon a Bunnies of Desolation."""
++
++    def on_turn_start(self, ctx):
++        E.summon(ctx.state, ctx.controller, BUNNIES_OF_DESOLATION)
++
++
++# --- set 10010 -----------------------------------------------------------------------------
++
++def _summon_bunnies(ctx, n: int = 1) -> None:
++    for _ in range(n):
++        E.summon(ctx.state, ctx.controller, BUNNIES_OF_DESOLATION)
++
++
++@register(DESOLATIONIST_REFINER.card_id)
++class DesolationistRefiner(CardScript):
++    """Last Words: add 2 Divine Evidence to your hand."""
++
++    def last_words(self, ctx):
++        for _ in range(2):
++            E.add_to_hand(ctx.state, ctx.controller, DIVINE_EVIDENCE)
++
++
++@register(COMBATIVE_MONK.card_id)
++class CombativeMonk(CardScript):
++    """Rush. Can attack 2 times per turn. Strike: give this follower +2/+2 and Barrier."""
++    attacks_per_turn = 2
++
++    def strike(self, ctx):
++        E.buff(ctx.state, ctx.source, 2, 2)
++        E.give_keywords(ctx.source, Keyword.BARRIER)
++
++
++@register(SOLITARY_CULTIVATION.card_id)
++class SolitaryCultivation(CardScript):
++    """Select an allied follower and give it +2/+2 and Barrier."""
++    play_targets = common.ALLIED_FOLLOWER
++
++    def cast(self, ctx):
++        for f in ctx.chosen():
++            E.buff(ctx.state, f, 2, 2)
++            E.give_keywords(f, Keyword.BARRIER)
++
++
++@register(DESOLATIONIST_TAMER.card_id)
++class DesolationistTamer(CardScript):
++    """Fanfare: add a Bunnies of Desolation to your hand. Evolve: recover 1 play point."""
++
++    def fanfare(self, ctx):
++        E.add_to_hand(ctx.state, ctx.controller, BUNNIES_OF_DESOLATION)
++
++    def on_evolve(self, ctx):
++        E.recover_pp(ctx.state, ctx.controller, 1)
++
++
++@register(WINGED_ACCORDIONIST.card_id)
++class WingedAccordionist(CardScript):
++    """Fanfare: summon a Holy Falcon. Evolve: give all other allied followers +1/+1."""
++
++    def fanfare(self, ctx):
++        E.summon(ctx.state, ctx.controller, HOLY_FALCON)
++
++    def on_evolve(self, ctx):
++        for f in [c for c in ctx.me.followers if c is not ctx.source]:
++            E.buff(ctx.state, f, 1, 1)
++
++
++@register(DESTRUCTIVE_PROPAGATION.card_id)
++class DestructivePropagation(CardScript):
++    """Summon 2 Bunnies of Desolation. Enhance (8): summon 4 instead."""
++    enhance = (8,)
++
++    def cast(self, ctx):
++        _summon_bunnies(ctx, 4 if ctx.enhanced else 2)
++
++
++@register(DESOLATIONIST_REHABILITATOR.card_id)
++class DesolationistRehabilitator(CardScript):
++    """Fanfare: select an enemy follower and banish it; summon 2 Bunnies of Desolation.
++    Super-Evolve: draw 2 cards; restore 2 defense to your leader."""
++    play_targets = common.ENEMY_FOLLOWER
++
++    def fanfare(self, ctx):
++        _banish_chosen(ctx)
++        _summon_bunnies(ctx, 2)
++
++    def on_super_evolve(self, ctx):
++        E.draw(ctx.state, ctx.controller, 2)
++        _heal(ctx, 2)
++
++
++@register(FRUITLESS_TESTIMONY.card_id)
++class FruitlessTestimony(CardScript):
++    """Mode: 1. Deal 4 damage to a random enemy follower; gain Crest: Fruitless Testimony.
++    2. Summon a Bunnies of Desolation."""
++    modes = (2, 1)
++
++    def cast(self, ctx):
++        if 0 in ctx.modes:
++            E.damage(ctx.state, _random_enemies(ctx), 4, ctx.source)
++            E.add_to_leader_area(ctx.state, ctx.controller, FRUITLESS_TESTIMONY_CREST)
++        if 1 in ctx.modes:
++            _summon_bunnies(ctx)
++
++
++@register(LAPINETTE.card_id)
++class Lapinette(CardScript):
++    """Fanfare: select an enemy follower and banish it; summon a Bunnies of Desolation.
++    Evolve: gain Crest: Lapinette, Calamity of Desolation. Super-Evolve: delay the count of
++    that crest by 1."""
++    play_targets = common.ENEMY_FOLLOWER
++
++    def fanfare(self, ctx):
++        _banish_chosen(ctx)
++        _summon_bunnies(ctx)
++
++    def on_evolve(self, ctx):
++        E.add_to_leader_area(ctx.state, ctx.controller, LAPINETTE_CREST)
++
++    def on_super_evolve(self, ctx):
++        crest = E.leader_area_card(ctx.state, ctx.controller, LAPINETTE_CREST)
++        if crest is not None:
++            E.advance_countdown(ctx.state, crest, -1)
++
++
++@register(PARARELIGIOUS_IDOL.card_id)
++class ParareligiousIdol(CardScript):
++    """Intimidate. Aura. Can't attack followers or leaders. During your turn, whenever an
++    enemy follower is banished from the field, summon an exact copy of it. Evolve: select
++    an enemy follower and banish it."""
++    cant_attack = True
++    evolve_targets = common.ENEMY_FOLLOWER
++
++    def on_card_banished(self, ctx):
++        f = ctx.other
++        if f.owner != ctx.controller and f.defn.is_follower and common.during_your_turn(ctx):
++            E.summon_copy(ctx.state, ctx.controller, f)
++
++    def on_evolve(self, ctx):
++        _banish_chosen(ctx)
++
++
+ # --- set 10009 -----------------------------------------------------------------------------
+ 
+ @register(FOLLOWER_OF_THE_TENETS.card_id)
+diff --git a/svsim/cards/pending.py b/svsim/cards/pending.py
+index 1734819..a198cff 100644
+--- a/svsim/cards/pending.py
++++ b/svsim/cards/pending.py
+@@ -14,10 +14,8 @@ PENDING = frozenset({
+     11023110, 11023310, 11024110, 11024120, 11024122,
+     11041110, 11041120, 11041310, 11042110, 11042120, 11042310, 11043110,
+     11043310, 11044110, 11044120,
+-    11061110, 11061120,
+-    11061310, 11062110, 11062120, 11062310, 11063110, 11063310, 11063312, 11064110,
+-    11064112, 11064120, 11071110, 11071120, 11071310, 11072110, 11072120, 11072310,
+-    11073110, 11073310, 11074110, 11074120, 11074122, 90061140,
++    11071110, 11071120, 11071310, 11072110, 11072120, 11072310,
++    11073110, 11073310, 11074110, 11074120, 11074122,
+ })
+ 
+ ROTATED_OUT = frozenset({
+diff --git a/tests/test_cards_haven.py b/tests/test_cards_haven.py
+index c55976f..83064b9 100644
+--- a/tests/test_cards_haven.py
++++ b/tests/test_cards_haven.py
+@@ -1260,6 +1260,215 @@ def test_omerio_evolve_destroys_all_allied_amulets():
+     assert p.leader_hp == 12 and omerio.counters["step"] == 2
+ 
+ 
++# --- set 10010 -------------------------------------------------------------------------------
++
++BUNNIES = H.BUNNIES_OF_DESOLATION
++EVIDENCE = H.DIVINE_EVIDENCE
++
++
++def on_field(state, player, defn):
++    return [c for c in state.players[player].field if c.defn.card_id == defn.card_id]
++
++
++def footman(state, player, life):
++    f = put(state, player, demo.FOOTMAN)
++    f.life = f.max_life = life
++    return f
++
++
++def crest(state, defn, player=0):
++    return E.leader_area_card(state, player, defn)
++
++
++def test_bunnies_banish_a_cheapest_hand_card_evolve_and_hit_the_leader_when_destroyed():
++    state = start()
++    p = state.players[0]
++    p.hand.clear()
++    giant, footman_card, lancer = give(state, 0, demo.GIANT), give(state, 0, demo.FOOTMAN), give(state, 0, demo.LANCER)
++    bunnies = put(state, 0, BUNNIES)
++    resolve_queue(state)
++    assert footman_card.fate == BANISHED and p.hand == [giant, lancer]
++    assert bunnies.evolved and (bunnies.atk, bunnies.life) == (3, 3)
++    assert p.evolutions == 1 and p.ep == 2                  # not with evolution points
++    E.destroy(state, bunnies)
++    resolve_queue(state)
++    assert state.players[1].leader_hp == 18
++    p.hand.clear()
++    empty = put(state, 0, BUNNIES)
++    resolve_queue(state)
++    assert empty.evolved                                    # an empty hand: it still evolves
++
++
++def test_desolationist_refiner_last_words_two_evidence():
++    state = start()
++    E.destroy(state, put(state, 0, H.DESOLATIONIST_REFINER))
++    resolve_queue(state)
++    assert count(state.players[0].hand, EVIDENCE) == 2
++
++
++def test_combative_monk_attacks_twice_and_grows_with_barrier_on_each_strike():
++    state = start()
++    monk = put(state, 0, H.COMBATIVE_MONK)
++    apply(state, Attack(monk.uid, ENEMY_LEADER))
++    assert (monk.atk, monk.life) == (6, 6) and monk.has(Keyword.BARRIER)
++    assert state.players[1].leader_hp == 14
++    foe = footman(state, 1, 8)
++    foe.atk = 5
++    apply(state, Attack(monk.uid, foe.uid))
++    assert (monk.atk, monk.life) == (8, 8) and not monk.has(Keyword.BARRIER)   # its Barrier took the hit
++    assert foe.fate == DESTROYED
++    assert Attack(monk.uid, ENEMY_LEADER) not in legal_actions(state)
++
++
++def test_solitary_cultivation_needs_an_allied_follower():
++    state = start()
++    set_pp(state, 0, 3)
++    spell = give(state, 0, H.SOLITARY_CULTIVATION)
++    assert plays(state, spell.uid) == []
++    ally = put(state, 0, demo.FOOTMAN)
++    play(state, spell, [ally.uid])
++    assert (ally.atk, ally.life) == (3, 4) and ally.has(Keyword.BARRIER)
++
++
++def test_desolationist_tamer_adds_bunnies_and_evolve_recovers_a_point():
++    state = start()
++    set_pp(state, 0, 3)
++    tamer = give(state, 0, H.DESOLATIONIST_TAMER)
++    play(state, tamer)
++    assert count(state.players[0].hand, BUNNIES) == 1 and on_field(state, 0, BUNNIES) == []
++    unlock_evolution(state, 0)
++    apply(state, Evolve(tamer.uid))
++    assert state.players[0].pp == 1
++
++
++def test_winged_accordionist_summons_a_falcon_and_buffs_the_others_on_evolve():
++    state = start()
++    set_pp(state, 0, 4)
++    other = put(state, 0, demo.FOOTMAN)
++    accordionist = give(state, 0, H.WINGED_ACCORDIONIST)
++    play(state, accordionist)
++    falcon, = on_field(state, 0, H.HOLY_FALCON)
++    unlock_evolution(state, 0)
++    apply(state, Evolve(accordionist.uid))
++    assert (falcon.atk, falcon.life) == (3, 3) and (other.atk, other.life) == (2, 3)
++    assert (accordionist.atk, accordionist.life) == (3, 3)
++
++
++def test_destructive_propagation_two_or_four_bunnies():
++    state = start()
++    p = state.players[0]
++    p.hand.clear()
++    set_pp(state, 0, 5)
++    spell = give(state, 0, H.DESTRUCTIVE_PROPAGATION)
++    keep = [give(state, 0, demo.GIANT) for _ in range(3)]
++    cheap = [give(state, 0, demo.FOOTMAN) for _ in range(2)]
++    play(state, spell)
++    bunnies = on_field(state, 0, BUNNIES)
++    assert len(bunnies) == 2 and all(b.evolved for b in bunnies)
++    assert all(c.fate == BANISHED for c in cheap) and p.hand == keep
++    state = start()
++    set_pp(state, 0, 8)
++    play(state, give(state, 0, H.DESTRUCTIVE_PROPAGATION))
++    assert len(on_field(state, 0, BUNNIES)) == 4 and state.players[0].pp == 0
++
++
++def test_desolationist_rehabilitator_banishes_and_summons_two_bunnies():
++    state = start()
++    p = state.players[0]
++    foe = put(state, 1, demo.BOMBER)
++    set_pp(state, 0, 8)
++    rehab = give(state, 0, H.DESOLATIONIST_REHABILITATOR)
++    play(state, rehab, [foe.uid])
++    assert foe.fate == BANISHED and state.players[0].leader_hp == 20      # no Last Words
++    assert len(on_field(state, 0, BUNNIES)) == 2
++    hurt(state)
++    hand = len(p.hand)
++    unlock_evolution(state, 0)
++    apply(state, Evolve(rehab.uid))
++    assert p.leader_hp == 10 and len(p.hand) == hand        # plain evolution: nothing
++    state = start()
++    p = state.players[0]
++    rehab = put(state, 0, H.DESOLATIONIST_REHABILITATOR)
++    hurt(state)
++    hand = len(p.hand)
++    unlock_evolution(state, 0)
++    apply(state, Evolve(rehab.uid, super_=True))
++    assert p.leader_hp == 12 and len(p.hand) == hand + 2
++
++
++def test_fruitless_testimony_modes_and_its_crest_runs_two_turns():
++    state = start()
++    p = state.players[0]
++    p.hand.clear()
++    foe = footman(state, 1, 5)
++    set_pp(state, 0, 3)
++    testimony = give(state, 0, H.FRUITLESS_TESTIMONY)
++    assert {a.modes for a in plays(state, testimony.uid)} == {(0,), (1,)}
++    play(state, testimony, modes=(0,))
++    assert foe.life == 1 and crest(state, H.FRUITLESS_TESTIMONY_CREST) is not None
++    assert on_field(state, 0, BUNNIES) == []
++    hurt(state)
++    end_turns(state, 2)
++    assert p.leader_hp == 11 and count(p.hand, EVIDENCE) == 1
++    end_turns(state, 2)
++    assert p.leader_hp == 12 and count(p.hand, EVIDENCE) == 2   # the turn its count runs out still counts
++    assert crest(state, H.FRUITLESS_TESTIMONY_CREST) is None
++    end_turns(state, 2)
++    assert p.leader_hp == 12 and count(p.hand, EVIDENCE) == 2
++    p.hand.clear()
++    set_pp(state, 0, 3)
++    play(state, give(state, 0, H.FRUITLESS_TESTIMONY), modes=(1,))
++    assert len(on_field(state, 0, BUNNIES)) == 1 and crest(state, H.FRUITLESS_TESTIMONY_CREST) is None
++
++
++def test_lapinette_banishes_and_its_crest_brings_one_or_two_more_bunnies():
++    state = start()
++    foe = put(state, 1, demo.FOOTMAN)
++    set_pp(state, 0, 6)
++    lapinette = give(state, 0, H.LAPINETTE)
++    play(state, lapinette, [foe.uid])
++    assert foe.fate == BANISHED and len(on_field(state, 0, BUNNIES)) == 1
++    unlock_evolution(state, 0)
++    apply(state, Evolve(lapinette.uid))
++    assert crest(state, H.LAPINETTE_CREST).countdown == 1
++    end_turns(state, 2)
++    assert len(on_field(state, 0, BUNNIES)) == 2 and crest(state, H.LAPINETTE_CREST) is None
++    state = start()
++    lapinette = put(state, 0, H.LAPINETTE)
++    unlock_evolution(state, 0)
++    apply(state, Evolve(lapinette.uid, super_=True))
++    assert crest(state, H.LAPINETTE_CREST).countdown == 2
++    end_turns(state, 2)
++    assert len(on_field(state, 0, BUNNIES)) == 1
++    end_turns(state, 2)
++    assert len(on_field(state, 0, BUNNIES)) == 2 and crest(state, H.LAPINETTE_CREST) is None
++
++
++def test_parareligious_idol_copies_enemy_followers_banished_on_your_turn():
++    state = start()
++    idol = put(state, 0, H.PARARELIGIOUS_IDOL)
++    assert idol.has(Keyword.INTIMIDATE) and idol.has(Keyword.AURA)
++    assert not [a for a in legal_actions(state) if isinstance(a, Attack) and a.attacker == idol.uid]
++    foe = footman(state, 1, 1)
++    foe.atk = 4
++    E.banish(state, foe)
++    resolve_queue(state)
++    copy, = [c for c in state.players[0].field if c.defn.card_id == demo.FOOTMAN.card_id]
++    assert (copy.atk, copy.life) == (4, 1) and copy.owner == 0
++    E.banish(state, put(state, 0, demo.FOOTMAN))           # an allied one: no copy
++    resolve_queue(state)
++    assert len(state.players[0].field) == 2
++    end_turns(state)
++    E.banish(state, put(state, 1, demo.FOOTMAN))           # opponent's turn: no copy
++    resolve_queue(state)
++    assert len(state.players[0].field) == 2
++    end_turns(state)
++    target = put(state, 1, demo.LANCER)
++    unlock_evolution(state, 0)
++    apply(state, Evolve(idol.uid, targets=(target.uid,)))
++    assert target.fate == BANISHED and len(on_field(state, 0, demo.LANCER)) == 1
++
++
+ # --- coverage and fuzzing ------------------------------------------------------------------
+ 
+ def test_every_haven_card_is_scripted_or_keyword_only():
+-- 
+2.43.0
+

@@ -1,0 +1,503 @@
+From 7aa1f2736a09346ce83db7368ba83bf4ade3c019 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 28 Oct 2026 19:20:20 +0000
+Subject: [PATCH 1/4] Set 10 Witch (Runecraft), analysis line: Dedicated Aide,
+ Wily Witch, Atelier Relocation, Leisurely Attendant, Ruler of Tempests,
+ Discerning Melody (E.engaged_amulet_this_turn), Dramatic Assistant,
+ Noeinhowell's Interrogation and its crest (the next unused of three steps per
+ Engage, then destroyed), Noeinhowell and its crest (1 PP once per turn),
+ Infernal Chimera (X = earth sigils split over all enemies, none spent; no
+ damage at X = 0) scripted, out of PENDING; EN and CHS text checked; 10 tests,
+ 53 of 53 mutants caught; 300 random games with each set-10 Witch card x3 play
+ out
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LfGPwGP5hardfTTjWqiw99
+---
+ svsim/cards/pending.py   |   5 +-
+ svsim/cards/rune.py      | 192 +++++++++++++++++++++++++++++++++-
+ tests/test_cards_rune.py | 221 +++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 413 insertions(+), 5 deletions(-)
+
+diff --git a/svsim/cards/pending.py b/svsim/cards/pending.py
+index eac2434..37e585b 100644
+--- a/svsim/cards/pending.py
++++ b/svsim/cards/pending.py
+@@ -11,9 +11,8 @@ PENDING = frozenset({
+     11011110,
+     11011120, 11011310, 11012110, 11012120, 11012310, 11012312, 11013110, 11013310,
+     11014110, 11014120, 11021110, 11021120, 11021310, 11022110, 11022120, 11022310,
+-    11023110, 11023310, 11024110, 11024120, 11024122, 11031110, 11031120, 11031310,
+-    11032110, 11032120, 11032310, 11033110, 11033310, 11033312, 11034110, 11034112,
+-    11034120, 11041110, 11041120, 11041310, 11042110, 11042120, 11042310, 11043110,
++    11023110, 11023310, 11024110, 11024120, 11024122,
++    11041110, 11041120, 11041310, 11042110, 11042120, 11042310, 11043110,
+     11043310, 11044110, 11044120, 11051110, 11051120, 11051310, 11052110, 11052120,
+     11052310, 11053110, 11053310, 11054110, 11054120, 11054122, 11061110, 11061120,
+     11061310, 11062110, 11062120, 11062310, 11063110, 11063310, 11063312, 11064110,
+diff --git a/svsim/cards/rune.py b/svsim/cards/rune.py
+index d5e67df..7316f4b 100644
+--- a/svsim/cards/rune.py
++++ b/svsim/cards/rune.py
+@@ -23,6 +23,7 @@ DELTA_CANNON = card(90034340)  # 苍奏之四
+ SEND_EM_PACKING = card(90034350)  # 宏大的回归
+ CARAVAN_MAMMOTH = card(10002120)  # 商队猛犸象 (Neutral; no abilities)
+ REGAL_FALCON = card(90061130)  # 壮丽大神隼 (Havencraft token; Storm only)
++DIVINE_EVIDENCE = card(90001210)  # 神域的物证 (Neutral token; Clue)
+ 
+ # --- leader area ---
+ ELMOTT_CREST = card(10433112)  # 纹章：缅怀之火·埃尔默特
+@@ -34,6 +35,20 @@ ELD_CRYSTALS_FAITH = card(10634122)  # 信仰：天晶深渊
+ LILANTHIM_CREST = card(10734112)  # 纹章：万食的安纳提玛·拉拉安瑟姆
+ TICO_CREST = card(10833112)  # 纹章：玛纳利亚文书官·琪可
+ SEPHIE_CREST = card(10934112)  # 纹章：万术的罪人·赛菲
++NOEINHOWELLS_INTERROGATION_CREST = card(11033312)  # 纹章：诺茵华薇儿的审讯
++NOEINHOWELL_CREST = card(11034112)  # 纹章：迷歌侦探·诺茵华薇儿
++
++# --- set 10 ---
++DEDICATED_AIDE = card(11031110)  # 碎心勤务员
++WILY_WITCH = card(11031120)  # 戏法女巫
++ATELIER_RELOCATION = card(11031310)  # 工坊搬迁
++LEISURELY_ATTENDANT = card(11032110)  # 无聊顾问
++RULER_OF_TEMPESTS = card(11032120)  # 风暴支配者
++DISCERNING_MELODY = card(11032310)  # 解谜旋律
++DRAMATIC_ASSISTANT = card(11033110)  # 歌剧助手
++NOEINHOWELLS_INTERROGATION = card(11033310)  # 诺茵华薇儿的审讯
++NOEINHOWELL = card(11034110)  # 迷歌侦探·诺茵华薇儿
++INFERNAL_CHIMERA = card(11034120)  # 劫焰奇美拉
+ 
+ # --- set 9 ---
+ OBSESSED_TEST_SUBJECT = card(10931110)  # 沉溺的实验体
+@@ -119,7 +134,10 @@ REMI_AND_RAMI = card(10032110)  # 双面魔女·蕾米拉米
+ BLAZE_DESTROYER = card(10032120)  # 魔焰毁灭者
+ ARCANE_ERUPTION = card(10032310)  # 魔爆
+ 
+-CARDS = [OBSESSED_TEST_SUBJECT, KEY_SPIRIT, MISCALCULATED_EXPERIMENT, ENAMORED_RESEARCHER,
++CARDS = [DEDICATED_AIDE, WILY_WITCH, ATELIER_RELOCATION, LEISURELY_ATTENDANT, RULER_OF_TEMPESTS,
++         DISCERNING_MELODY, DRAMATIC_ASSISTANT, NOEINHOWELLS_INTERROGATION, NOEINHOWELL,
++         INFERNAL_CHIMERA,
++         OBSESSED_TEST_SUBJECT, KEY_SPIRIT, MISCALCULATED_EXPERIMENT, ENAMORED_RESEARCHER,
+          NOBLE_PHILOSOPHER, HUMANE_LOVE, ECSTATIC_SCHOLAR, OBSIDIAN_RAVEN, SEPHIE, PHYLENE,
+          MEOWSKERS, POPPY, STORMY_BLAST_REPRINT, SAMMY_AND_MARIE, HARMONIOUS_MEAL,
+          EARTH_SHATTERING_BOLT, TICO, AMETHYSTS_NAPTIME, TETRA_AND_LADICA, GINGER,
+@@ -137,7 +155,8 @@ CARDS = [OBSESSED_TEST_SUBJECT, KEY_SPIRIT, MISCALCULATED_EXPERIMENT, ENAMORED_R
+ TOKENS = [CLAY_GOLEM, GUARDIAN_GOLEM, MAGIC_SEDIMENT, MYSTERIAN_MISSILE, ARS_MAGNA,
+           DEPTHS_OF_THE_ELD_CRYSTALS, DELTA_CANNON, SEND_EM_PACKING]
+ LEADER_AREA = [ELMOTT_CREST, CAGLIOSTRO_CREST, INSOMNIAC_WITCH_CREST, LHYNKAL_CREST,
+-               SHYMM_CREST, ELD_CRYSTALS_FAITH, LILANTHIM_CREST, TICO_CREST, SEPHIE_CREST]
++               SHYMM_CREST, ELD_CRYSTALS_FAITH, LILANTHIM_CREST, TICO_CREST, SEPHIE_CREST,
++               NOEINHOWELLS_INTERROGATION_CREST, NOEINHOWELL_CREST]
+ 
+ 
+ # --- helpers -------------------------------------------------------------------------
+@@ -403,6 +422,175 @@ class SephieCrest(CardScript):
+             E.give_keywords(f, Keyword.STORM)
+ 
+ 
++@register(NOEINHOWELLS_INTERROGATION_CREST.card_id)
++class NoeinhowellsInterrogationCrest(CardScript):
++    """Whenever you Engage an amulet, activate the next ability not yet activated: 1. Deal
++    3 damage to a random enemy follower. 2. Restore 2 defense to your leader. 3. Recover 1
++    evolution point; destroy this crest."""
++
++    def on_engage(self, ctx):
++        c = E.counters(ctx.source)
++        step = c.get("step", 0)
++        c["step"] = step + 1
++        if step == 0:
++            E.damage(ctx.state, _random_enemy(ctx), 3, ctx.source)
++        elif step == 1:
++            E.heal_leader(ctx.state, ctx.controller, 2)
++        else:
++            E.recover_ep(ctx.state, ctx.controller)
++            E.destroy(ctx.state, ctx.source, by_ability=False)
++
++
++@register(NOEINHOWELL_CREST.card_id)
++class NoeinhowellCrest(CardScript):
++    """Once on each of your turns, when you Engage an amulet, recover 1 play point."""
++
++    def on_engage(self, ctx):
++        if common.during_your_turn(ctx) and E.once_per_turn(ctx, "noeinhowell"):
++            E.recover_pp(ctx.state, ctx.controller, 1)
++
++
++# --- set 10 ------------------------------------------------------------------------------------
++
++def _summon_evidence(ctx) -> None:
++    E.summon(ctx.state, ctx.controller, DIVINE_EVIDENCE)
++
++
++@register(DEDICATED_AIDE.card_id)
++class DedicatedAide(CardScript):
++    """Fanfare: summon a Divine Evidence. Ward. Whenever you Engage an amulet, give this
++    follower +1/+1."""
++
++    def fanfare(self, ctx):
++        _summon_evidence(ctx)
++
++    def on_engage(self, ctx):
++        E.buff(ctx.state, ctx.source, 1, 1)
++
++
++@register(WILY_WITCH.card_id)
++class WilyWitch(CardScript):
++    """Fanfare: Mode: 1. Earth Rite (1): deal 2 damage to a random enemy follower. 2. Gain 2
++    earth sigils."""
++    modes = (2, 1)
++
++    def fanfare(self, ctx):
++        if 0 in ctx.modes and E.earth_rite(ctx.state, ctx.controller, 1):
++            E.damage(ctx.state, _random_enemy(ctx), 2, ctx.source)
++        if 1 in ctx.modes:
++            common.gain_earth_sigils(ctx, 2)
++
++
++@register(ATELIER_RELOCATION.card_id)
++class AtelierRelocation(CardScript):
++    """Summon 3 Clay Golems. Enhance (8): give them Storm."""
++    enhance = (8,)
++
++    def cast(self, ctx):
++        for golem in _summon(ctx, CLAY_GOLEM, 3):
++            if ctx.enhanced and _on_field(ctx, golem):
++                E.give_keywords(golem, Keyword.STORM)
++
++
++@register(LEISURELY_ATTENDANT.card_id)
++class LeisurelyAttendant(CardScript):
++    """Activates in hand: whenever you Engage an amulet, reduce the cost of this card by 1.
++    Fanfare: summon a Divine Evidence. Whenever you Engage an amulet, restore 1 defense to
++    your leader."""
++    listen_in_hand = True
++
++    def fanfare(self, ctx):
++        _summon_evidence(ctx)
++
++    def on_engage(self, ctx):
++        if any(c is ctx.source for c in ctx.me.hand):
++            E.add_cost(ctx.source, -1)
++        elif _on_field(ctx, ctx.source):
++            E.heal_leader(ctx.state, ctx.controller, 1)
++
++
++@register(RULER_OF_TEMPESTS.card_id)
++class RulerOfTempests(CardScript):
++    """Fanfare: Earth Rite (1): summon a Guardian Golem. Whenever an allied Golem follower
++    enters the field, deal 3 damage to a random enemy follower. Evolve: replicate the
++    Fanfare."""
++
++    def fanfare(self, ctx):
++        self._rite(ctx)
++
++    def on_evolve(self, ctx):
++        self._rite(ctx)
++
++    def _rite(self, ctx):
++        if E.earth_rite(ctx.state, ctx.controller, 1):
++            _summon(ctx, GUARDIAN_GOLEM)
++
++    def on_ally_enter(self, ctx):
++        if ctx.other.defn.is_follower and E.has_trait(ctx.other, GOLEM):
++            E.damage(ctx.state, _random_enemy(ctx), 3, ctx.source)
++
++
++@register(DISCERNING_MELODY.card_id)
++class DiscerningMelody(CardScript):
++    """Summon a Divine Evidence. If you've Engaged an amulet this turn, deal 3 damage to a
++    random enemy follower."""
++
++    def cast(self, ctx):
++        _summon_evidence(ctx)
++        if E.engaged_amulet_this_turn(ctx.state, ctx.controller):
++            E.damage(ctx.state, _random_enemy(ctx), 3, ctx.source)
++
++
++@register(DRAMATIC_ASSISTANT.card_id)
++class DramaticAssistant(CardScript):
++    """Fanfare: summon a Dedicated Aide. Whenever you Engage an amulet, deal 5 damage to a
++    random enemy follower. Evolve: recover 1 play point."""
++
++    def fanfare(self, ctx):
++        _summon(ctx, DEDICATED_AIDE)
++
++    def on_engage(self, ctx):
++        E.damage(ctx.state, _random_enemy(ctx), 5, ctx.source)
++
++    def on_evolve(self, ctx):
++        E.recover_pp(ctx.state, ctx.controller, 1)
++
++
++@register(NOEINHOWELLS_INTERROGATION.card_id)
++class NoeinhowellsInterrogation(CardScript):
++    """Add a Divine Evidence to your hand. Gain Crest: Noeinhowell's Interrogation."""
++
++    def cast(self, ctx):
++        E.add_to_hand(ctx.state, ctx.controller, DIVINE_EVIDENCE)
++        E.add_to_leader_area(ctx.state, ctx.controller, NOEINHOWELLS_INTERROGATION_CREST)
++
++
++@register(NOEINHOWELL.card_id)
++class Noeinhowell(CardScript):
++    """Fanfare: summon a Divine Evidence. Whenever you Engage an amulet, deal 3 damage to a
++    random enemy follower. Evolve: gain Crest: Noeinhowell, Hymnodic Detective."""
++
++    def fanfare(self, ctx):
++        _summon_evidence(ctx)
++
++    def on_engage(self, ctx):
++        E.damage(ctx.state, _random_enemy(ctx), 3, ctx.source)
++
++    def on_evolve(self, ctx):
++        E.add_to_leader_area(ctx.state, ctx.controller, NOEINHOWELL_CREST)
++
++
++@register(INFERNAL_CHIMERA.card_id)
++class InfernalChimera(CardScript):
++    """Fanfare: deal X damage split between all enemies, X = your earth sigils (none are
++    spent)."""
++
++    def fanfare(self, ctx):
++        x = E.earth_sigils(ctx.state, ctx.controller)
++        if x:
++            E.split_damage(ctx.state, 1 - ctx.controller, x, ctx.source, followers_only=False)
++
++
+ # --- set 9 -------------------------------------------------------------------------------------
+ 
+ @register(OBSESSED_TEST_SUBJECT.card_id)
+diff --git a/tests/test_cards_rune.py b/tests/test_cards_rune.py
+index f9a2c4c..ac06c4e 100644
+--- a/tests/test_cards_rune.py
++++ b/tests/test_cards_rune.py
+@@ -61,6 +61,227 @@ def test_every_rune_card_with_abilities_has_a_script():
+     assert all(has_script(c.card_id) for c in rune.LEADER_AREA)
+ 
+ 
++# --- set 10 ----------------------------------------------------------------------------------
++
++EVIDENCE = rune.DIVINE_EVIDENCE
++
++
++def evidence(state, player=0):
++    return on_field(state, player, EVIDENCE)
++
++
++def engage(state, amulet, player=0):
++    """Engage an allied amulet, paying its cost on top of the current play points."""
++    p = state.players[player]
++    p.pp += 1
++    p.max_pp = max(p.max_pp, p.pp)
++    apply(state, Engage(amulet.uid))
++
++
++def engage_new_evidence(state, player=0):
++    """Put a fresh Divine Evidence on the field and Engage it (it draws, then is used up)."""
++    engage(state, put(state, player, EVIDENCE), player)
++
++
++def test_dedicated_aide_summons_evidence_and_grows_whenever_an_amulet_is_engaged():
++    state = start()
++    set_pp(state, 0, 3)
++    aide = give(state, 0, rune.DEDICATED_AIDE)
++    apply(state, PlayCard(aide.uid))
++    assert aide.has(Keyword.WARD) and len(evidence(state)) == 1
++    hand = len(state.players[0].hand)
++    engage(state, evidence(state)[0])
++    assert (aide.atk, aide.life) == (4, 4)
++    assert evidence(state) == [] and len(state.players[0].hand) == hand + 1   # drew, its clue used up
++    sigils(state, n=1)
++    engage(state, E.earth_sigil_amulet(state, 0))
++    assert (aide.atk, aide.life) == (5, 5)                  # any amulet counts, not only Clue amulets
++
++
++def test_wily_witch_modes():
++    state = start()
++    foe = put(state, 1, demo.FOOTMAN)
++    foe.life = foe.max_life = 3
++    sigils(state, n=1)
++    set_pp(state, 0, 2)
++    witch = give(state, 0, rune.WILY_WITCH)
++    assert {a.modes for a in plays(state, witch.uid)} == {(0,), (1,)}
++    apply(state, PlayCard(witch.uid, modes=(0,)))
++    assert foe.life == 1 and sigils(state) == 0
++    set_pp(state, 0, 2)
++    apply(state, PlayCard(give(state, 0, rune.WILY_WITCH).uid, modes=(0,)))
++    assert foe.life == 1                                    # no sigil to spend: nothing
++    set_pp(state, 0, 2)
++    apply(state, PlayCard(give(state, 0, rune.WILY_WITCH).uid, modes=(1,)))
++    assert sigils(state) == 2 and foe.life == 1
++
++
++def test_atelier_relocation_summons_three_clay_golems_storm_when_enhanced():
++    state = start()
++    set_pp(state, 0, 4)
++    apply(state, PlayCard(give(state, 0, rune.ATELIER_RELOCATION).uid))
++    golems = on_field(state, 0, rune.CLAY_GOLEM)
++    assert len(golems) == 3 and not any(g.has(Keyword.STORM) for g in golems)
++    state = start()
++    set_pp(state, 0, 8)
++    apply(state, PlayCard(give(state, 0, rune.ATELIER_RELOCATION).uid))
++    golems = on_field(state, 0, rune.CLAY_GOLEM)
++    assert len(golems) == 3 and all(g.has(Keyword.STORM) for g in golems)
++    assert state.players[0].pp == 0
++
++
++def test_leisurely_attendant_gets_cheaper_in_hand_and_heals_on_the_field():
++    state = start()
++    p = state.players[0]
++    p.leader_hp = 10
++    attendant = give(state, 0, rune.LEISURELY_ATTENDANT)
++    engage_new_evidence(state)
++    assert attendant.cost == 3 and p.leader_hp == 10        # in hand: cheaper, no healing
++    engage_new_evidence(state)
++    assert attendant.cost == 2
++    set_pp(state, 0, 2)
++    apply(state, PlayCard(attendant.uid))
++    assert len(evidence(state)) == 1
++    engage(state, evidence(state)[0])
++    assert p.leader_hp == 11
++
++
++def test_ruler_of_tempests_earth_rite_golem_and_golem_triggered_damage():
++    state = start()
++    foe = put(state, 1, demo.FOOTMAN)
++    foe.life = foe.max_life = 10
++    sigils(state, n=1)
++    set_pp(state, 0, 6)
++    ruler = give(state, 0, rune.RULER_OF_TEMPESTS)
++    apply(state, PlayCard(ruler.uid))
++    assert len(on_field(state, 0, rune.GUARDIAN_GOLEM)) == 1 and sigils(state) == 0
++    assert foe.life == 7                                    # its own Golem set off the 3 damage
++    put(state, 0, rune.CLAY_GOLEM)
++    resolve_queue(state)
++    assert foe.life == 4
++    put(state, 0, demo.FOOTMAN)
++    resolve_queue(state)
++    assert foe.life == 4                                    # not a Golem
++    unlock_evolution(state, 0)
++    apply(state, Evolve(ruler.uid))
++    assert foe.life == 4 and len(on_field(state, 0, rune.GUARDIAN_GOLEM)) == 1   # Evolve: no sigil, nothing
++    state = start()
++    foe = put(state, 1, demo.FOOTMAN)
++    foe.life = foe.max_life = 10
++    ruler = put(state, 0, rune.RULER_OF_TEMPESTS)
++    sigils(state, n=1)
++    unlock_evolution(state, 0)
++    apply(state, Evolve(ruler.uid))
++    assert len(on_field(state, 0, rune.GUARDIAN_GOLEM)) == 1 and foe.life == 7
++
++
++def test_discerning_melody_needs_an_engage_this_turn():
++    state = start()
++    foe = put(state, 1, demo.FOOTMAN)
++    foe.life = foe.max_life = 10
++    set_pp(state, 0, 1)
++    apply(state, PlayCard(give(state, 0, rune.DISCERNING_MELODY).uid))
++    assert len(evidence(state)) == 1 and foe.life == 10
++    engage(state, evidence(state)[0])                       # the Evidence is used up: the engage still counts
++    set_pp(state, 0, 1)
++    apply(state, PlayCard(give(state, 0, rune.DISCERNING_MELODY).uid))
++    assert foe.life == 7
++    apply(state, EndTurn())
++    apply(state, EndTurn())
++    set_pp(state, 0, 1)
++    apply(state, PlayCard(give(state, 0, rune.DISCERNING_MELODY).uid))
++    assert foe.life == 7                                    # engaged on an earlier turn only
++
++
++def test_dramatic_assistant_summons_an_aide_and_hits_for_five_on_engage():
++    state = start()
++    foe = put(state, 1, demo.FOOTMAN)
++    foe.life = foe.max_life = 10
++    set_pp(state, 0, 5)
++    assistant = give(state, 0, rune.DRAMATIC_ASSISTANT)
++    apply(state, PlayCard(assistant.uid))
++    aides = on_field(state, 0, rune.DEDICATED_AIDE)
++    assert len(aides) == 1 and evidence(state) == []        # summoned, so no Fanfare of its own
++    engage_new_evidence(state)
++    assert foe.life == 5 and (aides[0].atk, aides[0].life) == (4, 4)
++    unlock_evolution(state, 0)
++    set_pp(state, 0, 3)
++    state.players[0].pp = 1
++    apply(state, Evolve(assistant.uid))
++    assert state.players[0].pp == 2
++
++
++def test_noeinhowells_interrogation_crest_runs_its_three_steps_then_goes():
++    state = start()
++    p = state.players[0]
++    foe = put(state, 1, demo.FOOTMAN)
++    foe.life = foe.max_life = 10
++    set_pp(state, 0, 2)
++    apply(state, PlayCard(give(state, 0, rune.NOEINHOWELLS_INTERROGATION).uid))
++    assert count(p.hand, EVIDENCE) == 1
++    crest = p.leader_area[-1]
++    assert crest.defn.card_id == rune.NOEINHOWELLS_INTERROGATION_CREST.card_id
++    p.leader_hp, p.ep = 10, 0
++    engage_new_evidence(state)
++    assert foe.life == 7 and p.leader_hp == 10 and p.ep == 0
++    engage_new_evidence(state)
++    assert foe.life == 7 and p.leader_hp == 12 and p.ep == 0
++    engage_new_evidence(state)
++    assert p.ep == 1 and crest not in p.leader_area
++    engage_new_evidence(state)
++    assert foe.life == 7 and p.leader_hp == 12 and p.ep == 1
++
++
++def test_noeinhowell_engage_damage_and_crest_recovers_one_point_per_turn():
++    state = start()
++    p = state.players[0]
++    foe = put(state, 1, demo.FOOTMAN)
++    foe.life = foe.max_life = 20
++    set_pp(state, 0, 4)
++    noein = give(state, 0, rune.NOEINHOWELL)
++    apply(state, PlayCard(noein.uid))
++    assert len(evidence(state)) == 1
++    engage(state, evidence(state)[0])
++    assert foe.life == 17
++    unlock_evolution(state, 0)
++    apply(state, Evolve(noein.uid))
++    assert any(c.defn.card_id == rune.NOEINHOWELL_CREST.card_id for c in p.leader_area)
++    p.max_pp, p.pp = 5, 0
++    engage_new_evidence(state)                              # pays 1, gets 1 back
++    assert p.pp == 1 and foe.life == 14
++    engage_new_evidence(state)
++    assert p.pp == 1 and foe.life == 11                     # once per turn
++    apply(state, EndTurn())
++    apply(state, EndTurn())
++    p.max_pp, p.pp = 5, 0
++    engage_new_evidence(state)
++    assert p.pp == 1
++
++
++def test_infernal_chimera_splits_x_between_all_enemies_without_spending_sigils():
++    state = start()
++    old = put(state, 1, demo.FOOTMAN)
++    old.life = old.max_life = 2
++    young = put(state, 1, demo.FOOTMAN)
++    young.life = young.max_life = 4
++    sigils(state, n=5)
++    set_pp(state, 0, 8)
++    apply(state, PlayCard(give(state, 0, rune.INFERNAL_CHIMERA).uid))
++    assert old.fate == DESTROYED and young.life == 1 and state.players[1].leader_hp == 20
++    assert sigils(state) == 5
++    state = start()
++    foe = put(state, 1, demo.FOOTMAN)
++    foe.life = foe.max_life = 2
++    sigils(state, n=9)
++    set_pp(state, 0, 8)
++    apply(state, PlayCard(give(state, 0, rune.INFERNAL_CHIMERA).uid))
++    assert foe.fate == DESTROYED and state.players[1].leader_hp == 13
++    state = start()
++    set_pp(state, 0, 8)
++    apply(state, PlayCard(give(state, 0, rune.INFERNAL_CHIMERA).uid))
++    assert state.players[1].leader_hp == 20
++
++
+ # --- set 9 -----------------------------------------------------------------------------------
+ 
+ def test_obsessed_test_subject_qa_counts_copies_as_they_enter():
+-- 
+2.43.0
+
