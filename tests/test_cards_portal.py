@@ -1196,6 +1196,199 @@ def test_beelzebub_takes_more_damage_stacks():
     assert victim.fate == DESTROYED and state.players[1].leader_hp == 18
 
 
+# --- set 10010 -------------------------------------------------------------------------------
+
+EVIDENCE = P.DIVINE_EVIDENCE
+
+
+def on_field(state, player, defn):
+    return [c for c in state.players[player].field if c.defn.card_id == defn.card_id]
+
+
+def footman(state, player, life, atk=1):
+    f = put(state, player, demo.FOOTMAN)
+    f.life = f.max_life = life
+    f.atk = atk
+    return f
+
+
+def fuse(state, card, *fodder):
+    apply(state, Fuse(card.uid, tuple(c.uid for c in fodder)))
+
+
+def test_extinctionist_majordomo_last_words_two_evidence():
+    state = start()
+    majordomo = put(state, 0, P.EXTINCTIONIST_MAJORDOMO)
+    assert majordomo.has(Keyword.WARD)
+    E.destroy(state, majordomo)
+    resolve_queue(state)
+    assert count(state.players[0].hand, EVIDENCE) == 2
+
+
+def test_otherworldly_intruder_is_keywords_only():
+    assert P.OTHERWORLDLY_INTRUDER.keywords & Keyword.STORM and P.OTHERWORLDLY_INTRUDER.keywords & Keyword.AURA
+    assert not has_script(P.OTHERWORLDLY_INTRUDER.card_id)
+
+
+def test_incohesive_construction_puppet_gets_bane_or_ward():
+    seen = set()
+    for seed in range(12):
+        state = start(seed=seed)
+        set_pp(state, 0, 1)
+        hand_only(state, 0)
+        play(state, give(state, 0, P.INCOHESIVE_CONSTRUCTION))
+        puppet, = state.players[0].hand
+        assert puppet.defn.card_id == P.ENHANCED_PUPPET.card_id
+        got = puppet.keywords & (Keyword.BANE | Keyword.WARD)
+        assert got in (Keyword.BANE, Keyword.WARD)
+        seen.add(got)
+    assert seen == {Keyword.BANE, Keyword.WARD}
+
+
+def test_extinctionist_socialite_pings_on_amulet_fuses_and_draws_a_fuse_card():
+    state = start()
+    set_pp(state, 0, 3)
+    hand_only(state, 0)
+    socialite = give(state, 0, P.EXTINCTIONIST_SOCIALITE)
+    play(state, socialite)
+    assert count(state.players[0].hand, EVIDENCE) == 2
+    a, b = footman(state, 1, 3), footman(state, 1, 1)
+    hand = give(state, 0, P.HAND_OF_EXTINCTION)
+    fuse(state, hand, state.players[0].hand[0])
+    assert a.life == 2 and b.fate == DESTROYED
+    striker, ancient = give(state, 0, P.STRIKER_ARTIFACT), give(state, 0, P.ANCIENT_ARTIFACT)
+    fuse(state, striker, ancient)                           # not an amulet
+    assert a.life == 2
+    deck_of(state, 0, [demo.FOOTMAN] * 5 + [P.CALAMITY_IN_CUSTODY] + [demo.FOOTMAN] * 5)
+    unlock_evolution(state, 0)
+    apply(state, Evolve(socialite.uid))
+    assert count(state.players[0].hand, P.CALAMITY_IN_CUSTODY) == 1
+
+
+def test_bestial_beamcannoneer_summons_two_artifacts():
+    state = start()
+    set_pp(state, 0, 6)
+    cannon = give(state, 0, P.BESTIAL_BEAMCANNONEER)
+    play(state, cannon)
+    assert cannon.has(Keyword.RUSH)
+    assert len(on_field(state, 0, P.STRIKER_ARTIFACT)) == 1 and len(on_field(state, 0, P.ANCIENT_ARTIFACT)) == 1
+
+
+def test_hand_of_extinction_four_or_eight_and_evidence_on_fuse():
+    state = start()
+    a = footman(state, 1, 9)
+    set_pp(state, 0, 5)
+    play(state, give(state, 0, P.HAND_OF_EXTINCTION))
+    assert a.life == 5 and on_field(state, 0, EVIDENCE) == []
+    hand = give(state, 0, P.HAND_OF_EXTINCTION)
+    fuse(state, hand, give(state, 0, EVIDENCE), give(state, 0, demo.TOTEM))
+    assert len(on_field(state, 0, EVIDENCE)) == 1           # once per Fuse, however many cards
+    big = footman(state, 1, 20)
+    set_pp(state, 0, 5)
+    play(state, hand)
+    assert a.fate == DESTROYED and big.life == 12
+
+
+def test_extinctionist_dandy_destroys_and_heals_on_amulet_fuses():
+    state = start()
+    p = state.players[0]
+    set_pp(state, 0, 8)
+    hand_only(state, 0)
+    dandy = give(state, 0, P.EXTINCTIONIST_DANDY)
+    play(state, dandy)
+    assert dandy.has(Keyword.WARD) and count(p.hand, EVIDENCE) == 2
+    foe = footman(state, 1, 20)
+    p.leader_hp = 10
+    fuse(state, give(state, 0, P.CALAMITY_IN_CUSTODY), p.hand[0])
+    assert foe.fate == DESTROYED and p.leader_hp == 12
+    striker, ancient = give(state, 0, P.STRIKER_ARTIFACT), give(state, 0, P.ANCIENT_ARTIFACT)
+    other = footman(state, 1, 20)
+    fuse(state, striker, ancient)
+    assert other.fate != DESTROYED and p.leader_hp == 12
+
+
+def test_extinctionist_dandy_destroys_only_one_of_several():
+    state = start()
+    put(state, 0, P.EXTINCTIONIST_DANDY)
+    foes = [footman(state, 1, 20) for _ in range(3)]
+    fuse(state, give(state, 0, P.CALAMITY_IN_CUSTODY), give(state, 0, EVIDENCE))
+    assert sum(f.fate == DESTROYED for f in foes) == 1
+
+
+def test_calamity_in_custody_destroys_one_of_the_tied_strongest():
+    state = start()
+    tied = [footman(state, 1, 9, atk=5) for _ in range(2)]
+    put(state, 0, EVIDENCE)
+    put(state, 0, EVIDENCE)
+    set_pp(state, 0, 1)
+    play(state, give(state, 0, P.CALAMITY_IN_CUSTODY))
+    assert sum(f.fate == DESTROYED for f in tied) == 1
+
+
+def test_calamity_in_custody_heals_and_spends_two_clues_on_the_strongest_enemy():
+    state = start()
+    p = state.players[0]
+    p.leader_hp = 10
+    weak, strong = footman(state, 1, 9, atk=3), footman(state, 1, 9, atk=5)
+    put(state, 0, EVIDENCE)
+    set_pp(state, 0, 1)
+    play(state, give(state, 0, P.CALAMITY_IN_CUSTODY))
+    assert p.leader_hp == 12 and E.clues(state, 0) == 1 and strong.fate != DESTROYED   # 1 clue: not enough
+    custody = give(state, 0, P.CALAMITY_IN_CUSTODY)
+    fuse(state, custody, give(state, 0, EVIDENCE))         # summons another: 2 clues
+    assert E.clues(state, 0) == 2
+    set_pp(state, 0, 1)
+    play(state, custody)
+    assert strong.fate == DESTROYED and weak.fate != DESTROYED
+    assert E.clues(state, 0) == 0 and on_field(state, 0, EVIDENCE) == []
+
+
+def test_lineage_destroys_every_copy_and_halves_max_defense_when_fused():
+    state = start()
+    twins = [put(state, 1, demo.LANCER) for _ in range(2)]
+    bystander = put(state, 1, demo.FOOTMAN)
+    set_pp(state, 0, 9)
+    play(state, give(state, 0, P.LINEAGE), [twins[0].uid])
+    assert all(t.fate == DESTROYED for t in twins) and bystander.fate != DESTROYED
+    assert state.players[1].leader_max_hp == 20
+    state = start()
+    foe = state.players[1]
+    foe.leader_hp = 15
+    lineage = give(state, 0, P.LINEAGE)
+    fuse(state, lineage, give(state, 0, EVIDENCE))
+    assert len(on_field(state, 0, EVIDENCE)) == 1
+    set_pp(state, 0, 9)
+    play(state, lineage)                                    # no enemy follower: still halves
+    assert foe.leader_max_hp == 10 and foe.leader_hp == 10
+
+
+def test_dimensional_wanderer_rush_on_fuse_and_its_crest_brings_it_back():
+    state = start()
+    p = state.players[0]
+    wanderer = put(state, 0, P.DIMENSIONAL_WANDERER, ready=False)
+    striker, ancient = give(state, 0, P.STRIKER_ARTIFACT), give(state, 0, P.ANCIENT_ARTIFACT)
+    fuse(state, striker, ancient)                           # any Fuse
+    assert wanderer.has(Keyword.RUSH)
+    E.destroy(state, wanderer)
+    resolve_queue(state)
+    crest = E.leader_area_card(state, 0, P.DIMENSIONAL_WANDERER_CREST)
+    assert crest.countdown == 2
+    fuse(state, give(state, 0, P.HAND_OF_EXTINCTION), give(state, 0, EVIDENCE))
+    assert crest.countdown == 1
+    fuse(state, give(state, 0, P.CALAMITY_IN_CUSTODY), give(state, 0, EVIDENCE))
+    assert crest not in p.leader_area and len(on_field(state, 0, P.DIMENSIONAL_WANDERER)) == 1
+    state = start()
+    E.destroy(state, put(state, 0, P.DIMENSIONAL_WANDERER))
+    resolve_queue(state)
+    pass_turns(state, 4)                                    # the count runs out at the start of turn 3
+    assert len(on_field(state, 0, P.DIMENSIONAL_WANDERER)) == 1
+    state = start()
+    wanderer = put(state, 0, P.DIMENSIONAL_WANDERER, ready=False)
+    unlock_evolution(state, 0)
+    apply(state, Evolve(wanderer.uid, super_=True))
+    assert wanderer.has(Keyword.STORM)
+
+
 # --- random games ----------------------------------------------------------------------------
 
 def random_deck(rng):

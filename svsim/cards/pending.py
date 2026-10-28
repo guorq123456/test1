@@ -8,8 +8,6 @@ ROTATED_OUT: the cards that left the Rotation table (set 4, and what only it gen
 before set 10 (the starter and tournament decks) are checked against the Rotation before it (decks.ROTATION_PRE10).
 """
 PENDING = frozenset({
-    11071110, 11071120, 11071310, 11072110, 11072120, 11072310, 11073110, 11073310,
-    11074110, 11074120, 11074122,
 })
 
 ROTATED_OUT = frozenset({

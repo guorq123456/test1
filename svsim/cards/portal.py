@@ -7,7 +7,7 @@ from svsim.cards import common
 from svsim.cards.pool import POOL, card
 from svsim.core import effects as E
 from svsim.core.enums import Craft, Keyword
-from svsim.core.script import CardScript, Target, TargetSpec, prop, register
+from svsim.core.script import CardScript, Target, TargetSpec, prop, register, script_for
 
 ARTIFACT = "Artifact"
 PUPPETRY = "Puppetry"
@@ -28,6 +28,7 @@ OMINOUS_ARTIFACT_BETA = card(90073120)  # 毁灭创造物β
 OMINOUS_ARTIFACT_GAMMA = card(90073130)  # 毁灭创造物γ
 MASTERWORK_ARTIFACT_OMEGA = card(90074110)  # 卓越创造物Ω
 IMARIS_LITTLE_BUDDIES = card(90074140)  # 伊鞠的小鬼 (keywords only)
+DIVINE_EVIDENCE = card(90001210)  # 神域的物证 (Neutral token; Clue)
 WARDEN_OF_THE_TRIGGER = card(90074150)  # 击针看守
 DEPTHS_OF_THE_ELD_AXE = card(90074320)  # 天斧深渊
 
@@ -35,9 +36,22 @@ DEPTHS_OF_THE_ELD_AXE = card(90074320)  # 天斧深渊
 LU_WOH_CREST = card(10474112)  # 纹章：光之法则·龙敖
 SLAUS_CREST = card(10574112)  # 纹章：转动的《命运之轮》·斯洛士
 CUTTHROAT_CREST = card(10974112)  # 纹章：束刃的罪人·卡特斯罗特
+DIMENSIONAL_WANDERER_CREST = card(11074122)  # 纹章：次元异客
 SHODDY_PLAYTHING_ACCELERATE = card(10671112)  # 低劣的玩具（激奏）
 SUBSTANDARD_PUPPET_ACCELERATE = card(10672112)  # 拙劣的人偶（激奏）
 LUDICROUS_ORDNANCE_ACCELERATE = card(10673112)  # 愚劣的兵器（激奏）
+
+# --- set 10010 ---
+EXTINCTIONIST_MAJORDOMO = card(11071110)  # 人灭执事
+OTHERWORLDLY_INTRUDER = card(11071120)  # 异界来访者 (keywords only)
+INCOHESIVE_CONSTRUCTION = card(11071310)  # 组装失败
+EXTINCTIONIST_SOCIALITE = card(11072110)  # 人灭富豪
+BESTIAL_BEAMCANNONEER = card(11072120)  # 发射器猫人
+HAND_OF_EXTINCTION = card(11072310)  # 毁灭怪腕
+EXTINCTIONIST_DANDY = card(11073110)  # 人灭绅士
+CALAMITY_IN_CUSTODY = card(11073310)  # 最凶恶的收容
+LINEAGE = card(11074110)  # 人灭三恶·兰佩吉
+DIMENSIONAL_WANDERER = card(11074120)  # 次元异客
 
 # --- set 10009 ---
 BLUERUST_UNDERLING = card(10971110)  # 青锈小卒
@@ -121,6 +135,9 @@ LU_WOH = card(10474110)  # 光之法则·龙敖
 BEELZEBUB = card(10474120)  # 唯一王者·别西卜
 
 CARDS = [
+    EXTINCTIONIST_MAJORDOMO, OTHERWORLDLY_INTRUDER, INCOHESIVE_CONSTRUCTION, EXTINCTIONIST_SOCIALITE,
+    BESTIAL_BEAMCANNONEER, HAND_OF_EXTINCTION, EXTINCTIONIST_DANDY, CALAMITY_IN_CUSTODY, LINEAGE,
+    DIMENSIONAL_WANDERER,
     BLUERUST_UNDERLING, TWINDRONE_ENGINEER, DIMENSIONAL_SELECTION, IRONWORK_BODYGUARD,
     BLADE_PUPPETEER, DISGRACEFUL_BANISHMENT, STEELFORGED_RIGHT_HAND, SOULFORGE, CUTTHROAT,
     AIZEDEN,
@@ -143,12 +160,12 @@ TOKENS = [PUPPET, ENHANCED_PUPPET, ANALYZING_ARTIFACT, ANCIENT_ARTIFACT, MYSTIC_
           FORTIFIER_ARTIFACT, OMINOUS_ARTIFACT_ALPHA, OMINOUS_ARTIFACT_BETA,
           OMINOUS_ARTIFACT_GAMMA, MASTERWORK_ARTIFACT_OMEGA, IMARIS_LITTLE_BUDDIES,
           WARDEN_OF_THE_TRIGGER, DEPTHS_OF_THE_ELD_AXE]
-LEADER_AREA = [LU_WOH_CREST, SLAUS_CREST, CUTTHROAT_CREST]
+LEADER_AREA = [LU_WOH_CREST, SLAUS_CREST, CUTTHROAT_CREST, DIMENSIONAL_WANDERER_CREST]
 ALTERNATE_FORMS = [SHODDY_PLAYTHING_ACCELERATE, SUBSTANDARD_PUPPET_ACCELERATE,
                    LUDICROUS_ORDNANCE_ACCELERATE]
 # Cards with only keywords (or nothing) on them: they need no script.
 VANILLA = [MECHANIZED_BEAST, ANCIENT_ARTIFACT, MYSTIC_ARTIFACT, RADIANT_ARTIFACT,
-           IMARIS_LITTLE_BUDDIES]
+           IMARIS_LITTLE_BUDDIES, OTHERWORLDLY_INTRUDER]
 
 
 # --- helpers ---------------------------------------------------------------------------
@@ -452,6 +469,165 @@ class LudicrousOrdnanceAccelerate(CardScript):
 
     def cast(self, ctx):
         summon(ctx.state, ctx.controller, LUDICROUS_ORDNANCE)
+
+
+@register(DIMENSIONAL_WANDERER_CREST.card_id)
+class DimensionalWandererCrest(CardScript):
+    """Countdown (2). Whenever you Fuse, advance this crest's count by 1. Last Words:
+    summon a Dimensional Wanderer."""
+
+    def on_ally_fuse(self, ctx):
+        E.advance_countdown(ctx.state, ctx.source, 1)
+
+    def last_words(self, ctx):
+        summon(ctx.state, ctx.controller, DIMENSIONAL_WANDERER)
+
+
+# --- set 10010 -------------------------------------------------------------------------------
+
+def is_amulet(c) -> bool:
+    return c.defn.is_amulet
+
+
+def fused_an_amulet(ctx) -> bool:
+    """"Whenever you Fuse an amulet": the cards fused include an amulet."""
+    return any(is_amulet(c) for c in ctx.cards)
+
+
+def add_evidence(ctx, n: int = 1) -> None:
+    for _ in range(n):
+        E.add_to_hand(ctx.state, ctx.controller, DIVINE_EVIDENCE)
+
+
+class _FuseAmuletsForEvidence(CardScript):
+    """Fuse: Amulets. Whenever you Fuse to this card, summon a Divine Evidence."""
+    fuse_filter = staticmethod(is_amulet)
+
+    def on_fuse(self, ctx):
+        summon(ctx.state, ctx.controller, DIVINE_EVIDENCE)
+
+    @staticmethod
+    def fused(ctx) -> bool:
+        return bool((ctx.source.counters or {}).get("fused"))
+
+
+@register(EXTINCTIONIST_MAJORDOMO.card_id)
+class ExtinctionistMajordomo(CardScript):
+    """Ward. Last Words: add 2 Divine Evidence to your hand."""
+
+    def last_words(self, ctx):
+        add_evidence(ctx, 2)
+
+
+@register(INCOHESIVE_CONSTRUCTION.card_id)
+class IncohesiveConstruction(CardScript):
+    """Add an Enhanced Puppet to your hand and give it Bane or Ward at random."""
+
+    def cast(self, ctx):
+        puppet = E.add_to_hand(ctx.state, ctx.controller, ENHANCED_PUPPET)
+        if puppet is not None:
+            E.give_keywords(puppet, ctx.state.rng.choice((Keyword.BANE, Keyword.WARD)))
+
+
+@register(EXTINCTIONIST_SOCIALITE.card_id)
+class ExtinctionistSocialite(CardScript):
+    """Fanfare: add 2 Divine Evidence to your hand. Whenever you Fuse an amulet, deal 1
+    damage to all enemy followers. Evolve: draw a card with Fuse."""
+
+    def fanfare(self, ctx):
+        add_evidence(ctx, 2)
+
+    def on_ally_fuse(self, ctx):
+        if fused_an_amulet(ctx):
+            E.damage(ctx.state, list(ctx.opponent.followers), 1, ctx.source)
+
+    def on_evolve(self, ctx):
+        E.draw_matching(ctx.state, ctx.controller,
+                        lambda c: script_for(c.defn.card_id).fuse_filter is not None)
+
+
+@register(BESTIAL_BEAMCANNONEER.card_id)
+class BestialBeamcannoneer(CardScript):
+    """Fanfare: summon a Striker Artifact and an Ancient Artifact. Rush."""
+
+    def fanfare(self, ctx):
+        summon(ctx.state, ctx.controller, STRIKER_ARTIFACT)
+        summon(ctx.state, ctx.controller, ANCIENT_ARTIFACT)
+
+
+@register(HAND_OF_EXTINCTION.card_id)
+class HandOfExtinction(_FuseAmuletsForEvidence):
+    """Fuse: Amulets. Whenever you Fuse to this card, summon a Divine Evidence. Deal 4
+    damage to all enemy followers; 8 instead if a card was fused to this one."""
+
+    def cast(self, ctx):
+        E.damage(ctx.state, list(ctx.opponent.followers), 8 if self.fused(ctx) else 4, ctx.source)
+
+
+@register(EXTINCTIONIST_DANDY.card_id)
+class ExtinctionistDandy(CardScript):
+    """Fanfare: add 2 Divine Evidence to your hand. Whenever you Fuse an amulet, destroy a
+    random enemy follower and restore 2 defense to your leader. Ward."""
+
+    def fanfare(self, ctx):
+        add_evidence(ctx, 2)
+
+    def on_ally_fuse(self, ctx):
+        if not fused_an_amulet(ctx):
+            return
+        for f in E.random_sample(ctx.state, ctx.opponent.followers, 1):
+            E.destroy(ctx.state, f)
+        E.heal_leader(ctx.state, ctx.controller, 2)
+
+
+@register(CALAMITY_IN_CUSTODY.card_id)
+class CalamityInCustody(_FuseAmuletsForEvidence):
+    """Fuse: Amulets. Whenever you Fuse to this card, summon a Divine Evidence. Restore 2
+    defense to your leader. Consume 2 clues to destroy a random enemy follower with the
+    highest attack."""
+
+    def cast(self, ctx):
+        E.heal_leader(ctx.state, ctx.controller, 2)
+        if not E.consume_clues(ctx.state, ctx.controller, 2):
+            return
+        foes = ctx.opponent.followers
+        if foes:
+            top = max(f.atk for f in foes)
+            for f in E.random_sample(ctx.state, [f for f in foes if f.atk == top], 1):
+                E.destroy(ctx.state, f)
+
+
+@register(LINEAGE.card_id)
+class Lineage(_FuseAmuletsForEvidence):
+    """Fuse: Amulets. Whenever you Fuse to this card, summon a Divine Evidence. Fanfare:
+    select an enemy follower and destroy every enemy follower with its name. If a card was
+    fused to this one, halve the enemy leader's max defense (rounded up: an assumption,
+    the text doesn't say)."""
+    play_targets = common.ENEMY_FOLLOWER
+
+    def fanfare(self, ctx):
+        for target in ctx.chosen():
+            name = target.defn.name
+            for f in [f for f in ctx.opponent.followers if f.defn.name == name]:
+                E.destroy(ctx.state, f)
+        if self.fused(ctx):
+            foe = 1 - ctx.controller
+            E.set_leader_max_hp(ctx.state, foe, (ctx.state.players[foe].leader_max_hp + 1) // 2)
+
+
+@register(DIMENSIONAL_WANDERER.card_id)
+class DimensionalWanderer(CardScript):
+    """Whenever you Fuse, give this follower Rush. Last Words: gain Crest: Dimensional
+    Wanderer. Super-Evolve: give this follower Storm."""
+
+    def on_ally_fuse(self, ctx):
+        E.give_keywords(ctx.source, Keyword.RUSH)
+
+    def last_words(self, ctx):
+        E.add_to_leader_area(ctx.state, ctx.controller, DIMENSIONAL_WANDERER_CREST)
+
+    def on_super_evolve(self, ctx):
+        E.give_keywords(ctx.source, Keyword.STORM)
 
 
 # --- set 10009 -------------------------------------------------------------------------------
