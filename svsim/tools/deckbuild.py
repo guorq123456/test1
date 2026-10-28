@@ -17,14 +17,24 @@ incumbent; the seven incumbents are the field. A round goes through the classes 
    and scores its mean (win 1, draw 0.5). Every candidate plays the same deals with its cards in the
    same slots, so the shuffle puts the same slots on the same draws: two decks differ only where a
    swapped card is drawn, and the luck of the deal cancels out in their difference;
-3. successive halving: all variants play --stage deals; the better half by mean score plays the next
-   --stage x 2^k deals, until one is left. The incumbent plays every deal too, never dropped;
-4. confirmation: the last variant and the incumbent play --confirm fresh deals (the halving picked
-   the luckiest of many, so its own deals overrate it); the variant replaces the incumbent if its
-   mean difference on those deals is more than --z (2) standard errors above 0. The field changes at once.
+3. successive halving: all variants play --stage deals; the better half by mean score (ties broken at
+   random) plays the next --stage x 2^k deals, until one is left. The incumbent plays every deal too;
+4. confirmation: the last variant and the incumbent play fresh deals (the halving picked the luckiest of
+   several, so its own deals overrate it), --batch at a time, with a sequential test on the deal
+   differences (tools.gate.llr, H0 = 0, H1 = --h1, error rates 5%) up to --confirm deals; the variant
+   replaces the incumbent when H1 is accepted with at least --min-nonzero deals where the two decks
+   scored differently, else nothing changes. The field changes at once.
    (A first run on the old pool, 2026-10-28, 124 paired deals: the two decks' deal scores correlate 0.88,
    so the difference's variance is 0.037 against 0.31 unpaired, about 8 times fewer deals for the same
-   precision; 105 of the 124 deals ended with the same score for both.)
+   precision; but 105 of the 124 deals ended with the same score for both, so a difference rests on the
+   few deals where a swapped card mattered: hence the floor on those, from the analysis line's review.)
+
+The field moves with every accepted change, so the search has no fixed target and could go round in
+circles (each class beating the field of the moment, not getting better). The anchor: round 0's field,
+frozen; after every round each incumbent plays it on the same --anchor-deals deals (the same seeds every
+round), and the report prints the curve. A curve that stops rising means the search is circling.
+With 7 classes and many rounds, some changes are accepted by luck alone (5% of the changes that
+gain nothing); the anchor curve and the final league are the check on them.
 
 Start (round 0): each class's seed decks (--seeds-file: lines "label|deck hash", Rotation hashes of
 any class; cards no longer legal are swapped for legal ones of the nearest cost) and --random random
@@ -34,7 +44,8 @@ becomes the class's incumbent, no confirmation.
 
 Everything is written to --out: state.json after every class (a rerun resumes from it, with the same
 arguments), deals.jsonl one line per deck per deal (for the correlation of paired decks and any
-later analysis), changes.jsonl one line per confirmation. --report prints each class's incumbent
+later analysis; a resumed class step plays its deals again, so count each (tag, key, seed) once),
+changes.jsonl one line per confirmation. --report prints each class's incumbent
 (names, cost curve, deck hash), its accepted changes and its scores.
 
 Refuses to start while some Rotation card has abilities but no script (decks.unimplemented), unless
@@ -58,6 +69,7 @@ from svsim.core.enums import Craft
 
 CONDITION = "对手卡表已知（牌序、手牌未知）"
 CLASSES = [c for c in Craft if c != Craft.NEUTRAL]
+ANCHOR_OFFSET = 900_000                    # the anchor's deals: seeds --seed + ANCHOR_OFFSET on, the same every round
 # agent options that choose models by the decks' identity (decks.identify, the matchup's models): a deck changed by
 # the search isn't recognized and plays on another model, so the search's default agent has none of them
 DECK_MODELS = ("learned", "phased", "net", "prior", "puct", "mimic", "timing", "level-", "ruler", "ref")
@@ -263,6 +275,7 @@ class Search:
                 scores[k] += v
             if len(alive) == 1:
                 return alive[0], scores
+            self.rng.shuffle(alive)                          # ties go by chance, not by the variants' numbers
             alive.sort(key=lambda k: -sum(scores[k]) / len(scores[k]))
             alive = alive[:max(1, len(alive) // 2)]
             size, stage = size * 2, stage + 1
@@ -295,8 +308,37 @@ class Search:
             self.st["history"][name] = [{"round": 0, "from": best, "score": mean}]
             print(f"  → {best}，对临时环境 {mean:.1%}（{len(scores[best])} 个发牌）", flush=True)
             self.save()
+        self.st["anchor"] = dict(self.st["field"])           # round 0's field, frozen
+        self.anchor()
         self.st["round"] = 1
         self.save()
+
+    def confirm(self, inc: list, cand: list, key: str, field: dict, tag: str) -> tuple:
+        """The sequential test of `cand` against the incumbent on fresh deals: ("accepted" | "rejected" |
+        "undecided", the deal differences)."""
+        from svsim.tools.gate import bounds, llr
+        lo, hi = bounds(0.05, 0.05)
+        diff: list = []
+        while len(diff) < self.args.confirm:
+            deals = self.deals(min(self.args.batch, self.args.confirm - len(diff)), field)
+            got = self.play({"incumbent": inc, key: cand}, deals, f"{tag}:confirm")
+            diff += [a - b for a, b in zip(got[key], got["incumbent"])]
+            value = llr(diff, 0.0, self.args.h1)
+            if value <= lo:
+                return "rejected", diff
+            if value >= hi and sum(d != 0 for d in diff) >= self.args.min_nonzero:
+                return "accepted", diff
+        return "undecided", diff
+
+    def anchor(self) -> None:
+        """Each incumbent on the anchor's fixed deals (the same seeds every round): the round's point of the curve."""
+        anchor = self.st["anchor"]
+        keys = sorted(anchor, key=lambda k: Craft[k])
+        deals = [(self.args.seed + ANCHOR_OFFSET + j, anchor[keys[j % len(keys)]]) for j in range(self.args.anchor_deals)]
+        got = self.play(dict(self.st["field"]), deals, f"r{self.st['round']}:anchor")
+        point = {k: sum(v) / len(v) for k, v in got.items()}
+        self.st.setdefault("anchor_curve", []).append({"round": self.st["round"], **point})
+        print(f"[第 {self.st['round']} 轮] 对固定参照：" + "，".join(f"{k} {v:.1%}" for k, v in point.items()), flush=True)
 
     def step(self, name: str) -> None:
         craft = Craft[name]
@@ -313,21 +355,17 @@ class Search:
         if cand_mean <= inc_mean:
             record["verdict"] = "no change (halving)"
         else:
-            deals = self.deals(self.args.confirm, field)
-            got = self.play({"incumbent": inc, best: cands[best]}, deals, f"{tag}:confirm")
-            diff = [a - b for a, b in zip(got[best], got["incumbent"])]
+            verdict, diff = self.confirm(inc, cands[best], best, field, tag)
             mean = sum(diff) / len(diff)
             sd = math.sqrt(sum((d - mean) ** 2 for d in diff) / (len(diff) - 1)) if len(diff) > 1 else 0.0
-            se = sd / math.sqrt(len(diff)) if diff else 0.0
-            a_inc = sum(got["incumbent"]) / len(diff)
-            record.update(confirm_diff=mean, confirm_se=se, confirm_incumbent=a_inc, confirm_deals=len(diff))
-            if se > 0 and mean > self.args.z * se:
-                record["verdict"] = "accepted"
+            record.update(confirm_diff=mean, confirm_se=sd / math.sqrt(len(diff)), confirm_deals=len(diff),
+                          confirm_nonzero=sum(d != 0 for d in diff), confirm_better=sum(d > 0 for d in diff),
+                          confirm_worse=sum(d < 0 for d in diff))
+            record["verdict"] = verdict
+            if verdict == "accepted":
                 self.st["field"][name] = cands[best]
-                self.st["history"][name].append({"round": self.st["round"], "score": a_inc + mean,
+                self.st["history"][name].append({"round": self.st["round"], "gain": mean,
                                                  "out": record["out"], "in": record["in"]})
-            else:
-                record["verdict"] = "rejected"
         with open(self.out / "changes.jsonl", "a", encoding="utf-8") as fh:
             fh.write(json.dumps(record, ensure_ascii=False) + "\n")
         names = lambda ids: "、".join(POOL[i].name_zh or POOL[i].name for i in ids)   # noqa: E731
@@ -346,6 +384,7 @@ class Search:
                     self.step(CLASSES[i].name)
                     self.st["class_index"] = i + 1
                     self.save()
+                self.anchor()
                 self.st["round"] += 1
                 self.st["class_index"] = 0
                 self.save()
@@ -396,7 +435,13 @@ def report(out: Path) -> None:
             card = POOL[i]
             print(f"  {n}× {card.name_zh or card.name}（{card.cost}费，{card.name}）")
         hist = st["history"].get(name, [])
-        print(f"接受的改动 {len(hist) - 1} 次；得分记录：" + "、".join(f"{h['score']:.1%}" for h in hist))
+        print(f"接受的改动 {len(hist) - 1} 次" + ("；复核时的胜率差：" + "、".join(f"{h['gain']:+.1%}" for h in hist[1:])
+                                              if len(hist) > 1 else ""))
+    curve = st.get("anchor_curve", [])
+    if curve:
+        print("\n对固定参照（第 0 轮的环境，每轮同一批发牌）的得分：")
+        for name in sorted(st["field"], key=lambda k: Craft[k]):
+            print(f"  {name}: " + " → ".join(f"{p[name]:.1%}" for p in curve if name in p))
 
 
 def main() -> None:
@@ -408,10 +453,14 @@ def main() -> None:
     ap.add_argument("--random", type=int, default=8, help="random decks per class in round 0 (8)")
     ap.add_argument("--agent", default="mcts:100+plan", help="the agent playing both sides (mcts:100+plan)")
     ap.add_argument("--rounds", type=int, default=10, help="rounds after round 0 (10)")
-    ap.add_argument("--variants", type=int, default=16, help="variants per class per round (16)")
-    ap.add_argument("--stage", type=int, default=14, help="deals in the halving's first stage, doubled each stage (14)")
-    ap.add_argument("--confirm", type=int, default=140, help="fresh deals for the confirmation (140)")
-    ap.add_argument("--z", type=float, default=2.0, help="standard errors the confirmed gain must exceed (2.0)")
+    ap.add_argument("--variants", type=int, default=8, help="variants per class per round (8)")
+    ap.add_argument("--stage", type=int, default=28, help="deals in the halving's first stage, doubled each stage (28)")
+    ap.add_argument("--confirm", type=int, default=560, help="fresh deals for the confirmation at most (560)")
+    ap.add_argument("--batch", type=int, default=70, help="confirmation deals between two looks of the test (70)")
+    ap.add_argument("--h1", type=float, default=0.02, help="the confirmation's H1: the variant scores this much more (0.02)")
+    ap.add_argument("--min-nonzero", type=int, default=20,
+                    help="deals where the two decks scored differently, needed to accept (20)")
+    ap.add_argument("--anchor-deals", type=int, default=70, help="the anchor's fixed deals per class per round (70)")
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1))
     ap.add_argument("--allow-missing", action="store_true", help="run although some Rotation cards have no script")
     ap.add_argument("--deck-models", action="store_true", help="allow an --agent that picks models by deck identity")
