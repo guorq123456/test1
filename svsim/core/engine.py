@@ -548,6 +548,8 @@ def _engage(state: GameState, action: Engage) -> None:
     script = script_for(amulet.defn.card_id)
     p.pp -= script.engage_cost
     amulet.engaged_turn = state.turn
+    if E.is_clue(amulet):
+        p.clue_engaged_turn = state.turn
     E.enqueue(state, "engage", amulet, p.index, targets=action.targets, modes=action.modes)
     E.emit(state, "on_engage", player=p.index, other=amulet)
     resolve_queue(state)

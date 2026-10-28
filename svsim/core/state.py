@@ -188,6 +188,7 @@ class PlayerState:
     damage_cap_until: int = 0      # global turn at whose end damage_cap expires
     extra_damage: int = 0          # leader "takes N more damage"
     entered: dict = dc_field(default_factory=dict)   # card_id -> allied follower entries this match
+    clue_engaged_turn: int = -1    # global turn of the last allied Engage of a Clue amulet (set 10)
     deck_name: str | None = None   # the named deck registered (cards.decks.NAMED), "" for another; set by new_game
     _deck_shared: bool = dc_field(default=False, compare=False, repr=False)   # see `deck`
 
@@ -227,6 +228,7 @@ class PlayerState:
         clone.damage_cap_until = self.damage_cap_until
         clone.extra_damage = self.extra_damage
         clone.entered = dict(self.entered)
+        clone.clue_engaged_turn = self.clue_engaged_turn
         clone.deck_name = self.deck_name
         return clone
 

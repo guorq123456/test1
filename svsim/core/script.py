@@ -156,6 +156,7 @@ class CardScript:
     on_buffed = None         # given +attack or +defense on the field
     on_damaged = None        # took damage (even 0); ctx.amount
     on_enter = None          # "When this card enters the field": played, summoned or invoked
+    on_banished = None       # "When this card is banished from the field" (set 10)
 
     # --- listener hooks: cards in play (or in hand / deck if listen_in_*) ---
     on_play = None           # controller played another card; ctx.other, ctx.enhanced, ctx.as_spell
@@ -174,7 +175,7 @@ class CardScript:
 HOOKS = ("fanfare", "cast", "last_words", "on_evolve", "on_super_evolve", "on_evolved", "strike",
          "follower_strike", "leader_strike", "clash", "engage", "on_turn_start", "on_turn_end",
          "on_opponent_turn_start", "on_opponent_turn_end", "on_discard", "on_drawn",
-         "on_spellboost", "on_fuse", "on_invoked", "on_buffed", "on_damaged", "on_enter", "on_play",
+         "on_spellboost", "on_fuse", "on_invoked", "on_buffed", "on_damaged", "on_enter", "on_banished", "on_play",
          "on_ally_enter", "on_enemy_enter", "on_ally_evolve", "on_attack", "on_card_destroyed",
          "on_ally_leave", "on_engage", "on_earth_rite", "on_draw", "on_leader_healed")
 

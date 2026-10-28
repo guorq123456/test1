@@ -21,6 +21,11 @@ UNSELECTABLE = Keyword.AMBUSH | Keyword.AURA
 OVERFLOW_PP = 7
 EARTH_SIGIL = "Earth Sigil"
 DEPARTED = "Departed"
+# Clue (set 10, 2026-10-28; the rules as Dengeki Online 10-27 reported the official stream): a Clue amulet enters
+# with 1 clue; when it enters, the allied Clue amulets already on the field are banished and their clues added to it.
+# What happens at 0 clues is not stated yet: as Earth Sigil, the amulet is destroyed (CLUE_ZERO_DESTROYS).
+CLUE = "Clue"
+CLUE_ZERO_DESTROYS = True
 
 
 # --- triggers -----------------------------------------------------------------
@@ -458,6 +463,7 @@ def banish(state: GameState, inst: CardInstance) -> bool:
     p = state.players[inst.owner]
     if _remove_from_play(state, inst):
         inst.fate = BANISHED
+        enqueue(state, "on_banished", inst, inst.owner, zone=None)
         _left_field(state, inst)
         return True
     if not (_remove_from(p.hand, inst) or _remove_from(p.deck, inst)):
@@ -490,6 +496,12 @@ def enter_field(state: GameState, inst: CardInstance, count_rally: bool = True,
             sigils += counters(other).get("sigils", 0)
             banish(state, other)
         counters(inst)["sigils"] = sigils
+    if inst.defn.is_amulet and has_trait(inst, CLUE):
+        clue_count = counters(inst).get("clues") or 1   # merge the Clue amulets already on the field
+        for other in [c for c in p.field if c.defn.is_amulet and has_trait(c, CLUE)]:
+            clue_count += counters(other).get("clues", 0)
+            banish(state, other)
+        counters(inst)["clues"] = clue_count
     p.field.append(inst)
     if inst.defn.is_follower:
         p.entered[inst.defn.card_id] = p.entered.get(inst.defn.card_id, 0) + 1
@@ -738,6 +750,36 @@ def gain_earth_sigils(state: GameState, player: int, n: int, sediment: CardDef) 
         inst = state.new_instance(sediment, player)
         counters(inst)["sigils"] = n
         enter_field(state, inst)
+
+
+def is_clue(inst: CardInstance) -> bool:
+    """A Clue amulet (on the field, or a card in hand)."""
+    return inst.defn.is_amulet and has_trait(inst, CLUE)
+
+
+def clue_amulet(state: GameState, player: int) -> CardInstance | None:
+    """The allied Clue amulet on the field (entering merges them, so there is at most one)."""
+    for c in state.players[player].field:
+        if is_clue(c):
+            return c
+    return None
+
+
+def clues(state: GameState, player: int) -> int:
+    """"The number of clues you have": those on the allied Clue amulets."""
+    return sum(counters(c).get("clues", 0) for c in state.players[player].field if is_clue(c))
+
+
+def consume_clue(state: GameState, inst: CardInstance, n: int = 1) -> None:
+    """"Consume a clue" on the Clue amulet `inst`; at 0 it is destroyed (CLUE_ZERO_DESTROYS)."""
+    counters(inst)["clues"] = max(0, counters(inst).get("clues", 0) - n)
+    if counters(inst)["clues"] <= 0 and CLUE_ZERO_DESTROYS and state.on_field(inst.uid) is not None:
+        destroy(state, inst, by_ability=False)
+
+
+def engaged_clue_this_turn(state: GameState, player: int) -> bool:
+    """"If you've Engaged a Clue amulet this turn"."""
+    return state.players[player].clue_engaged_turn == state.turn
 
 
 def earth_rite(state: GameState, player: int, n: int) -> bool:

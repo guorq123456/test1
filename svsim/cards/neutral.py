@@ -14,6 +14,10 @@ from svsim.core.state import leader_uid
 LYRIA = card(10403120)  # 掌握天空命运的少女·露莉亚
 FATE_OF_THE_WORLD = card(10503310)  # 《世界》的呈现
 
+# --- set 10010 ---
+NACREHEIM = card(11003210)  # 理想国·涅格尔赫亚
+# --- set 10010 tokens ---
+DIVINE_EVIDENCE = card(90001210)  # 神域的物证
 # --- set 10009 ---
 JAILOR_OF_ANTIQUITY = card(10901110)  # 最古老的狱卒
 INITIATION_OF_REBIRTH = card(10901310)  # 轮回转冲
@@ -712,6 +716,31 @@ class AdventurersGuild(CardScript):
         E.destroy(ctx.state, ctx.source)
         for f in ctx.chosen():
             E.give_keywords(f, Keyword.RUSH)
+
+
+# --- set 10010: Clue amulets (effects.CLUE: entering merges them and adds up their clues) ---
+
+class _ClueEngage(CardScript):
+    """Clue. Engage (1): draw a card. Consume a clue."""
+    engage_cost = 1
+
+    def engage(self, ctx):
+        E.draw(ctx.state, ctx.controller)
+        E.consume_clue(ctx.state, ctx.source)
+
+
+@register(DIVINE_EVIDENCE.card_id)
+class DivineEvidence(_ClueEngage):
+    """Clue. Engage (1): draw a card. Consume a clue."""
+
+
+@register(NACREHEIM.card_id)
+class Nacreheim(_ClueEngage):
+    """Clue. When this card is banished from the field, restore 2 defense to your leader.
+    Engage (1): draw a card. Consume a clue."""
+
+    def on_banished(self, ctx):
+        E.heal_leader(ctx.state, ctx.controller, 2)
 
 
 # --- set 10004 ----------------------------------------------------------------------------
