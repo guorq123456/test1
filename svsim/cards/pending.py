@@ -7,8 +7,7 @@ card still missing a script). Take a card out of PENDING when its script lands.
 ROTATED_OUT: the cards that left the Rotation table (set 4, and what only it generated). They still play; decks built
 before set 10 (the starter and tournament decks) are checked against the Rotation before it (decks.ROTATION_PRE10).
 """
-PENDING = frozenset({
-})
+PENDING = frozenset()
 
 ROTATED_OUT = frozenset({
     10401110, 10401120, 10402110, 10403110, 10403120, 10404110, 10404112, 10411110,

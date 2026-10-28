@@ -69,10 +69,10 @@ def test_kyrios_damages_all_enemy_followers_and_adds_two_evidence():
 def test_rezeal_deals_nine_and_its_super_evolution_gains_the_crest():
     state = fresh()
     big = put(state, 1, demo.GIANT)
-    big.life = big.max_life = 9
+    big.life = big.max_life = 20
     rezeal = give(state, 0, neutral.REZEAL)
     apply(state, PlayCard(rezeal.uid, (big.uid,)))
-    assert big.fate == DESTROYED
+    assert big.life == 11                                  # exactly 9 (the analysis line's review)
     unlock_evolution(state, 0)
     apply(state, Evolve(rezeal.uid))                       # a normal evolution: no crest
     assert E.leader_area_card(state, 0, neutral.REZEAL_CREST) is None
