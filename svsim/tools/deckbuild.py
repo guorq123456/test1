@@ -23,7 +23,10 @@ incumbent; the seven incumbents are the field. A round goes through the classes 
    several, so its own deals overrate it), --batch at a time, with a sequential test on the deal
    differences (tools.gate.llr, H0 = 0, H1 = --h1, error rates 5%) up to --confirm deals; the variant
    replaces the incumbent when H1 is accepted with at least --min-nonzero deals where the two decks
-   scored differently, else nothing changes. The field changes at once.
+   scored differently, or, when the test reaches the cap undecided, if its mean gain over all the deals
+   is more than --at-max standard errors above 0 (a gain near H1 keeps the test between its lines:
+   run B's first Forest change, +2.0% +- 0.9% over 560 deals); else nothing changes. The field changes
+   at once.
    (A first run on the old pool, 2026-10-28, 124 paired deals: the two decks' deal scores correlate 0.88,
    so the difference's variance is 0.037 against 0.31 unpaired, about 8 times fewer deals for the same
    precision; but 105 of the 124 deals ended with the same score for both, so a difference rests on the
@@ -325,8 +328,8 @@ class Search:
         self.save()
 
     def confirm(self, inc: list, cand: list, key: str, field: dict, tag: str) -> tuple:
-        """The sequential test of `cand` against the incumbent on fresh deals: ("accepted" | "rejected" |
-        "undecided", the deal differences)."""
+        """The sequential test of `cand` against the incumbent on fresh deals: ("accepted" | "accepted at the
+        cap" | "rejected" | "undecided", the deal differences)."""
         from svsim.tools.gate import bounds, llr
         lo, hi = bounds(0.05, 0.05)
         diff: list = []
@@ -339,6 +342,13 @@ class Search:
                 return "rejected", diff
             if value >= hi and sum(d != 0 for d in diff) >= self.args.min_nonzero:
                 return "accepted", diff
+        # truncated at --confirm deals without a verdict (a gain near H1 keeps the test between its lines): a
+        # fixed-sample test on all of them, the gain more than --at-max standard errors above 0
+        mean = sum(diff) / len(diff)
+        sd = math.sqrt(sum((d - mean) ** 2 for d in diff) / (len(diff) - 1)) if len(diff) > 1 else 0.0
+        if sd > 0 and mean > self.args.at_max * sd / math.sqrt(len(diff)) \
+                and sum(d != 0 for d in diff) >= self.args.min_nonzero:
+            return "accepted at the cap", diff
         return "undecided", diff
 
     def anchor(self) -> None:
@@ -374,7 +384,7 @@ class Search:
                           confirm_nonzero=sum(d != 0 for d in diff), confirm_better=sum(d > 0 for d in diff),
                           confirm_worse=sum(d < 0 for d in diff))
             record["verdict"] = verdict
-            if verdict == "accepted":
+            if verdict.startswith("accepted"):
                 self.st["field"][name] = cands[best]
                 self.st["history"][name].append({"round": self.st["round"], "gain": mean,
                                                  "out": record["out"], "in": record["in"]})
@@ -471,6 +481,8 @@ def main() -> None:
     ap.add_argument("--confirm", type=int, default=560, help="fresh deals for the confirmation at most (560)")
     ap.add_argument("--batch", type=int, default=70, help="confirmation deals between two looks of the test (70)")
     ap.add_argument("--h1", type=float, default=0.02, help="the confirmation's H1: the variant scores this much more (0.02)")
+    ap.add_argument("--at-max", type=float, default=2.0,
+                    help="at the cap undecided: accept if the gain is this many standard errors above 0 (2.0)")
     ap.add_argument("--min-nonzero", type=int, default=20,
                     help="deals where the two decks scored differently, needed to accept (20)")
     ap.add_argument("--anchor-deals", type=int, default=70, help="the anchor's fixed deals per class per round (70)")

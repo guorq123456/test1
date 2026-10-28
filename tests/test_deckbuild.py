@@ -61,3 +61,24 @@ def test_the_search_refuses_a_registered_deck():
     search.args = SimpleNamespace(agent="mcts:1+plan")
     with pytest.raises(ValueError, match="registered deck"):
         search.play({"x": face}, [(1, face)], "t")
+
+
+def test_confirm_takes_a_clear_gain_at_the_cap(tmp_path):
+    """A gain near H1 can leave the sequential test undecided at the cap: the fixed-sample test then takes it
+    when it is clearly above 0, and leaves a gain within the noise undecided."""
+    import argparse
+    args = argparse.Namespace(out=str(tmp_path), seed=1, confirm=560, batch=70, h1=0.02, at_max=2.0,
+                              min_nonzero=20)
+
+    def run(pattern):
+        s = deckbuild.Search(args)
+        s.deals = lambda n, field: list(range(n))
+        s.play = lambda decks, deals, tag: {"incumbent": [0.0] * len(deals),
+                                            "v": [pattern[i % len(pattern)] for i in range(len(deals))]}
+        return s.confirm([], [], "v", {}, "t")
+
+    # 70 deals: 7 won, 6 lost by the variant, the rest even: mean +1/70, se about 0.4/sqrt(n)
+    verdict, diff = run([1.0] * 7 + [-1.0] * 6 + [0.0] * 57)
+    assert len(diff) == 560 and verdict == "undecided"
+    verdict, diff = run([1.0] * 9 + [-1.0] * 6 + [0.0] * 55)    # mean +3/70 over 560: z about 2.9
+    assert verdict.startswith("accepted")
