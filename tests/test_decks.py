@@ -10,7 +10,7 @@ HIGHLANDER_PORTAL = (
 
 def test_starter_decks_are_legal():
     for counts in (decks.PIRATE_SWORD, decks.RAMP_DRAGON):
-        assert decks.validate(decks.build(counts)) == []
+        assert decks.validate(decks.build(counts), sets=decks.ROTATION_PRE10) == []   # built before set 10
 
 
 def test_validate_catches_problems():

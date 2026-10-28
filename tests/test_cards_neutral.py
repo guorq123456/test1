@@ -924,7 +924,11 @@ def test_sandalphon_crest_heals_all_allies_then_expires():
 # --- coverage and fuzzing ---------------------------------------------------------------------
 
 def test_every_neutral_card_is_scripted_or_needs_no_script():
-    neutral_pool = [c for c in collectible(Craft.NEUTRAL) if c.craft == Craft.NEUTRAL]
+    from svsim.cards.pending import PENDING, ROTATED_OUT       # set 10 (2026-10-28): the pre-10 Rotation's cards
+    from svsim.cards.pool import POOL
+    neutral_pool = [c for c in collectible(Craft.NEUTRAL) if c.craft == Craft.NEUTRAL and c.card_id not in PENDING]
+    neutral_pool += [POOL[i] for i in ROTATED_OUT if POOL[i].craft == Craft.NEUTRAL and POOL[i].card_set
+                     and not POOL[i].is_token and POOL[i] not in neutral_pool]
     assert sorted(c.card_id for c in neutral_pool) == sorted(c.card_id for c in neutral.CARDS)
     extra = neutral.LEADER_AREA + neutral.ALTERNATE_FORMS
     assert decks.unimplemented(neutral_pool + extra) == []

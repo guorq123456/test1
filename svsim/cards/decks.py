@@ -57,9 +57,15 @@ def craft_of(deck: list[CardDef]) -> Craft:
     return crafts.pop() if len(crafts) == 1 else Craft.NEUTRAL
 
 
-def validate(deck: list[CardDef], craft: Craft | None = None, unlimited: bool = False) -> list[str]:
+# The Rotation before set 10 (Deicide in Nacreheim, 2026-10-28): Basic and sets 4-9. The decks built for it (the
+# starter and tournament decks) are checked against it (validate(sets=ROTATION_PRE10)).
+ROTATION_PRE10 = frozenset({10000, *range(10004, 10010)})
+
+
+def validate(deck: list[CardDef], craft: Craft | None = None, unlimited: bool = False,
+             sets: frozenset | None = None) -> list[str]:
     """Problems that make a deck illegal (empty list = legal) in Rotation, or in
-    Unlimited with `unlimited`."""
+    Unlimited with `unlimited`, or in the Rotation of the card sets `sets` (e.g. ROTATION_PRE10)."""
     craft = craft_of(deck) if craft is None else craft
     problems = []
     if len(deck) != DECK_SIZE:
@@ -71,7 +77,8 @@ def validate(deck: list[CardDef], craft: Craft | None = None, unlimited: bool = 
             problems.append(f"{card.name} is a token")
         if card.craft not in (Craft.NEUTRAL, craft):
             problems.append(f"{card.name} is not {craft.name.title()} or Neutral")
-        if card.card_set and not card.rotation and not card.is_token and not unlimited:
+        legal = card.card_set in sets if sets is not None else card.rotation
+        if card.card_set and not legal and not card.is_token and not unlimited:
             problems.append(f"{card.name} is not legal in Rotation")
     return problems
 

@@ -13,8 +13,8 @@ import time
 import urllib.request
 
 API = "https://shadowverse-wb.com/web/CardSet/cardList?card_set_id={set_id}"
-# 10000 = Basic, 10001-10009 = card sets 1-9, 90000 = tokens. Add new sets as they release.
-SETS = [10000, *range(10001, 10010), 90000]
+# 10000 = Basic, 10001-10010 = card sets 1-10, 90000 = tokens. Add new sets as they release.
+SETS = [10000, *range(10001, 10011), 90000]
 LANGS = ("en", "ja", "chs", "cht", "ko")
 
 

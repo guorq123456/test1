@@ -825,7 +825,7 @@ def _check(state, action):
 def test_random_dragon_decks_play_out():
     pool = [c for c in collectible(Craft.DRAGON)
             if has_script(c.card_id) or c in dragon.KEYWORD_ONLY]
-    assert sum(c.craft == Craft.DRAGON for c in pool) >= 60
+    assert sum(c.craft == Craft.DRAGON for c in pool) >= 55   # set 10 (2026-10-28): set 4 out, its own pending
     for g in range(100):
         rng = random.Random(g)
         deck0, deck1 = _random_deck(rng, pool), _random_deck(rng, pool)

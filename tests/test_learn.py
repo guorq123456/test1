@@ -301,7 +301,7 @@ def test_tournament_decks_are_registered_everywhere_and_files_name_them():
     crafts = {"elf-t": Craft.FOREST, "nemesis-t": Craft.PORTAL, "ramp-t": Craft.DRAGON, "pirate-t": Craft.SWORD}
     for key, h in hashes.items():
         cards = decks.from_hash(h)
-        assert len(cards) == 40 and decks.to_hash(cards) == h and decks.validate(cards) == []
+        assert len(cards) == 40 and decks.to_hash(cards) == h and decks.validate(cards, sets=decks.ROTATION_PRE10) == []
         assert decks.craft_of(cards) == crafts[key] and not decks.unimplemented(cards)
         assert sorted(c.card_id for c in decks.build(decks.NAMED[key])) == sorted(c.card_id for c in cards)
         assert decks.identify(cards) == key and key in DECKS and key in LEARN_DECKS

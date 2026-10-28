@@ -1263,8 +1263,9 @@ def test_omerio_evolve_destroys_all_allied_amulets():
 # --- coverage and fuzzing ------------------------------------------------------------------
 
 def test_every_haven_card_is_scripted_or_keyword_only():
+    from svsim.cards.pending import PENDING, ROTATED_OUT       # set 10 (2026-10-28): the pre-10 Rotation's cards
     from svsim.cards.pool import POOL, ROTATION_IDS
-    haven = [POOL[i] for i in ROTATION_IDS if POOL[i].craft == Craft.HAVEN]
+    haven = [POOL[i] for i in (ROTATION_IDS - PENDING) | ROTATED_OUT if POOL[i].craft == Craft.HAVEN]
     unscripted = [c for c in haven if not has_script(c.card_id)]
     assert sorted(c.card_id for c in unscripted) == sorted(c.card_id for c in H.NO_SCRIPT)
     assert len(haven) == len(H.CARDS) + len(H.TOKENS) + len(H.LEADER_AREA) + len(H.ALTERNATE_FORMS)

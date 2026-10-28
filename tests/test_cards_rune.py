@@ -53,7 +53,8 @@ class ThreeAttacks(CardScript):
 # --- coverage ------------------------------------------------------------------------------
 
 def test_every_rune_card_with_abilities_has_a_script():
-    rune_cards = [POOL[i] for i in ROTATION_IDS if POOL[i].craft == Craft.RUNE]
+    from svsim.cards.pending import PENDING, ROTATED_OUT       # set 10 (2026-10-28): the pre-10 Rotation's cards
+    rune_cards = [POOL[i] for i in (ROTATION_IDS - PENDING) | ROTATED_OUT if POOL[i].craft == Craft.RUNE]
     missing = [c.name for c in rune_cards if needs_script(c) and not has_script(c.card_id)]
     assert missing == []
     assert not any(has_script(i) for i in KEYWORDS_ONLY)
