@@ -12,8 +12,10 @@ incumbent; the seven incumbents are the field. A round goes through the classes 
 1. variants: --variants copies of the incumbent, each with 1 to 3 cards swapped (each swap takes a
    card out of one slot and puts a legal card in, half the time one costing within 1 of it), up to
    3 copies of a card, the class's and Neutral Rotation cards only;
-2. deals: a deal is a seed and an opponent from the field (the classes in turn, the own class's
-   incumbent included); a deck plays a deal twice, once from each seat, both sides played by --agent,
+2. deals: a deal is a seed and an opponent from the field (the other classes in turn: once a deck holds
+   its class, its mirror scores even whichever deck it is, so the old incumbent as an opponent would only
+   reward beating its predecessor; run A's first Haven change gained +15% against its predecessor and
+   +4% against the rest, 2026-10-29); a deck plays a deal twice, once from each seat, both sides played by --agent,
    and scores its mean (win 1, draw 0.5). Every candidate plays the same deals with its cards in the
    same slots, so the shuffle puts the same slots on the same draws: two decks differ only where a
    swapped card is drawn, and the luck of the deal cancels out in their difference;
@@ -315,7 +317,8 @@ class Search:
             if name in self.st["field"]:
                 continue
             print(f"[起点] {name}: {len(cands)} 套候选", flush=True)
-            best, scores = self.halving(cands, None, field, f"r0:{name}", self.args.start_stage)
+            others = {k: v for k, v in field.items() if k != name}
+            best, scores = self.halving(cands, None, others, f"r0:{name}", self.args.start_stage)
             mean = sum(scores[best]) / len(scores[best])
             self.st["field"][name] = cands[best]
             field[name] = cands[best]
@@ -364,14 +367,15 @@ class Search:
 
     def step(self, name: str) -> None:
         craft = Craft[name]
-        field = dict(self.st["field"])
-        inc = field[name]
+        inc = self.st["field"][name]
+        field = {k: v for k, v in self.st["field"].items() if k != name}
         cands = {f"v{j}": variant(inc, craft, self.rng) for j in range(self.args.variants)}
         tag = f"r{self.st['round']}:{name}"
         best, scores = self.halving(cands, ("incumbent", inc), field, tag)
         cand_mean = sum(scores[best]) / len(scores[best])
         inc_mean = sum(scores["incumbent"][:len(scores[best])]) / len(scores[best])
-        record = {"round": self.st["round"], "class": name, "halving_best": cand_mean, "halving_incumbent": inc_mean,
+        record = {"round": self.st["round"], "class": name, "opponents": sorted(field, key=lambda k: Craft[k]),
+                  "halving_best": cand_mean, "halving_incumbent": inc_mean,
                   "out": sorted((counts(inc) - counts(cands[best])).elements()),
                   "in": sorted((counts(cands[best]) - counts(inc)).elements())}
         if cand_mean <= inc_mean:

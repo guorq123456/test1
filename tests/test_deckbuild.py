@@ -82,3 +82,20 @@ def test_confirm_takes_a_clear_gain_at_the_cap(tmp_path):
     assert len(diff) == 560 and verdict == "undecided"
     verdict, diff = run([1.0] * 9 + [-1.0] * 6 + [0.0] * 55)    # mean +3/70 over 560: z about 2.9
     assert verdict.startswith("accepted")
+
+
+def test_a_class_is_searched_against_the_other_classes(tmp_path):
+    """The own class's incumbent is not an opponent: in the field its mirror is even whichever deck holds it."""
+    import argparse
+    args = argparse.Namespace(out=str(tmp_path), seed=1, variants=2)
+    s = deckbuild.Search(args)
+    rng = random.Random(3)
+    s.st["field"] = {c.name: deckbuild.random_ids(c, rng) for c in deckbuild.CLASSES}
+    seen = []
+
+    def halving(cands, incumbent, field, tag, first=None):
+        seen.append(set(field))
+        return "v0", {"v0": [0.0], "incumbent": [1.0]}            # the incumbent stays: no confirmation
+    s.halving = halving
+    s.step("DRAGON")
+    assert seen == [{c.name for c in deckbuild.CLASSES} - {"DRAGON"}]
