@@ -253,3 +253,42 @@ def test_legalize_counts_a_reprint_as_its_name():
     assert Counter(POOL[i].name for i in out)["Stormy Blast"] == 3 and out[4:] == ids[4:]
     two = deckbuild.legalize([10831310] * 2 + ids[4:], Craft.RUNE, random.Random(0))
     assert two[:2] == [10131320] * 2                          # the reprint alone keeps its copies
+
+
+def _roster():
+    import importlib.util
+    from pathlib import Path
+    path = Path(__file__).resolve().parents[1] / "analysis/deckbuild/blind-test/roster.py"
+    spec = importlib.util.spec_from_file_location("roster", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_roster_takes_each_groups_own_best_deck_per_class():
+    roster = _roster()
+    assert [roster.tier(x) for x in ("T2-RUNE-a", "g3-S1-FOREST-combo", "g3-W2-SWORD-x", "STRONG-PORTAL-y",
+                                     "P2G3-SWORD-1", "SWORD-midrange", "WEAK-RUNE-z", "可玩-HAVEN-q")] \
+        == [2, 1, 3, 1, 99, 99, 3, 2]
+    rune = [c.card_id for c in deckbuild.legal_cards(Craft.RUNE)][:14]
+    sword = [c.card_id for c in deckbuild.legal_cards(Craft.SWORD)][:14]
+    deck = lambda pool, k: [pool[(k + j) % 14] for j in range(13) for _ in range(3)] + [pool[k]]
+    got = roster.pick([("T2-RUNE-a", deck(rune, 0)), ("T1-RUNE-b", deck(rune, 1)), ("SWORD-x", deck(sword, 0)),
+                       ("SWORD-y", deck(sword, 1))])
+    assert {c: lab for c, (lab, _) in got.items()} == {"RUNE": "T1-RUNE-b", "SWORD": "SWORD-x"}
+
+
+def test_cross_group_league_never_pairs_decks_of_one_group(monkeypatch, tmp_path):
+    import argparse
+    pool = [c.card_id for c in deckbuild.legal_cards(Craft.FOREST)][:14]
+    hashes = [deckbuild.deck_hash([pool[(k + j) % 14] for j in range(13) for _ in range(3)] + [pool[k]])
+              for k in range(4)]
+    (tmp_path / "r.txt").write_text("\n".join(f"{g}/{n}|{h}" for (g, n), h in
+                                              zip([("a", "x"), ("a", "y"), ("b", "x"), ("c", "x")], hashes)))
+    seen = []
+    monkeypatch.setattr(deckbuild, "play_deal", lambda job: seen.append(job[0]) or {"key": job[0], "points": [1, 0]})
+    deckbuild.league(argparse.Namespace(league=str(tmp_path / "r.txt"), seed=1, deals=2, agent="greedy", workers=1,
+                                        out=str(tmp_path), cross_groups=True))
+    assert (0, 1) not in seen and len(seen) == 2 * 5
+    out = json.loads((tmp_path / "league.json").read_text(encoding="utf-8"))
+    assert out["score"][0][1] is None and abs(out["means"][0] - 0.5) < 1e-9

@@ -1,0 +1,8 @@
+# 指标 5 循环赛的名单来源：组名|分支|提交|文件。每组每职业取一副，规则见 roster.py；bot 组在冻结后补上。
+control|claude/deck-search|c475e59f06c0707ebcc1f7abe95273a0ac56c1dc|analysis/deckbuild/blind-test/control.txt
+g1|claude/claude-built-decks-set10|e8e6fcd4ab6360850b037ea73047db820adcac33|analysis/deckbuild/blind-test/claude-built-g1.txt
+g2|claude/blind-test-g2|bc5a79e8246bf882db3583363743f6e05abc1f9e|analysis/deckbuild/blind-test/claude-built-g2.txt
+g3|claude/claude-built-g3|a173fa43426d9ab5f2720621e156a9bf082c2cc7|analysis/deckbuild/blind-test/claude-built-g3.txt
+p2-g1|claude/rules-only-decks-p2-g1|27ccd447ef00f0b494a2c2a0f9a8fe1c2300a1ad|analysis/deckbuild/blind-test/claude-built-p2-g1.txt
+p2-g2|claude/claude-built-p2-g2|e445cc57f1b13e4a2bf7a57aca660ec7ab5af954|analysis/deckbuild/blind-test/claude-built-p2-g2.txt
+p2-g3|claude/claude-built-p2-g3|f03accd7686957508300818754322940fd8be9da|analysis/deckbuild/blind-test/claude-built-p2-g3.txt

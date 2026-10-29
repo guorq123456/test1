@@ -722,9 +722,12 @@ def league(args) -> None:
     """--league FILE: every pair of FILE's decks on --deals deals each (seeds from --seed on, both seats per
     deal), both sides --agent; prints each deck's mean score and the score table, writes OUT/league.json."""
     entries = read_seeds(args.league)
+    group = [e[0].split("/", 1)[0] if getattr(args, "cross_groups", False) else e[0] for e in entries]
     jobs, seed = [], args.seed
     for a in range(len(entries)):
         for b in range(a + 1, len(entries)):
+            if group[a] == group[b]:                          # --cross-groups: decks of one group never meet
+                continue
             for _ in range(args.deals):
                 jobs.append(((a, b), entries[a][1], entries[b][1], seed, args.agent))
                 seed += 1
@@ -739,7 +742,7 @@ def league(args) -> None:
     for (a, b), v in table.items():
         score[a][b] = sum(v) / len(v)
         score[b][a] = 1 - score[a][b]
-    means = [sum(x for x in row if x is not None) / (n - 1) for row in score]
+    means = [sum(x for x in row if x is not None) / max(1, sum(x is not None for x in row)) for row in score]
     print(f"条件：{CONDITION}；两边都由 {args.agent} 操作；每对 {args.deals} 个发牌（{2 * args.deals} 局）")
     for i in sorted(range(n), key=lambda i: -means[i]):
         print(f"  {means[i]:.1%}  {entries[i][0]}  " + " ".join("  -  " if x is None else f"{x:.0%}".rjust(5)
@@ -826,6 +829,8 @@ def main() -> None:
     ap.add_argument("--deck-models", action="store_true", help="allow an --agent that picks models by deck identity")
     ap.add_argument("--league", help='round robin of this file\'s decks ("label|deck hash" lines) instead of a search')
     ap.add_argument("--deals", type=int, default=50, help="--league: deals per pair of decks (50)")
+    ap.add_argument("--cross-groups", action="store_true",
+                    help='--league: labels are "group/name"; only decks of different groups play each other')
     args = ap.parse_args()
     out = Path(args.out)
     if args.report:
