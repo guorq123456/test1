@@ -36,6 +36,20 @@ from multiprocessing import Pool
 ACT, ENDED = 0, 1
 
 
+def deck_cards(deck) -> list:
+    """A deck of a self-play job: a ui.session.DECKS key, or (label, card ids) (learn.scaledata play --pool)."""
+    from svsim.cards import decks
+    from svsim.cards.pool import POOL
+    from svsim.ui.session import DECKS
+    if isinstance(deck, str):
+        return decks.build(DECKS[deck][1])
+    return [POOL[i] for i in deck[1]]
+
+
+def deck_name(deck) -> str:
+    return deck if isinstance(deck, str) else deck[0]
+
+
 def play(job):
     """One self-play game (`spec` on both sides) as a record, with exploration. With `fork` (job[7]), a
     list of two records instead: the game, and a branch of it from the first turn a side could keep its
@@ -60,7 +74,8 @@ def play(job):
     rng = random.Random(seed * 7919 + g)
     seat = g % 2
     cards = [None, None]
-    cards[seat], cards[1 - seat] = decks.build(DECKS[deck][1]), decks.build(DECKS[opponent][1])
+    cards[seat], cards[1 - seat] = deck_cards(deck), deck_cards(opponent)
+    deck, opponent = deck_name(deck), deck_name(opponent)
     specs = [spec, spec]
     if ospec is not None:
         specs[1 - seat] = ospec

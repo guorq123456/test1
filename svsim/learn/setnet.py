@@ -837,9 +837,10 @@ class SetNetEnded:
         self.mid_turn = mid_turn                 # +netmid: a mid-turn position is scored by the mid-turn branch
         if mid_turn and not net.flag:
             raise ValueError("+netmid needs a net with the mid-turn flag (learn.midrows)")
-        self.any_pairing = any_pairing           # +netany (the architecture thread 2026-10-29 02:30Z)
+        # +netany (the architecture thread 2026-10-29 02:30Z), or a net trained on a pool of decks (info shared)
+        self.any_pairing = any_pairing or bool(net.info.get("shared"))
         self.pair = (net.info.get("deck"), net.info.get("opponent"))
-        if None in self.pair and not any_pairing:
+        if None in self.pair and not self.any_pairing:
             raise ValueError("the net names no pairing (info deck / opponent)")
         # a net trained on both sides of a non-mirror pairing (NM1) names both orders in info "pairs"; a net
         # without the key answers for (deck, opponent) only, as before

@@ -70,8 +70,11 @@ def by_kind(net: SetNet, data) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--deck", required=True)
-    ap.add_argument("--opponent", required=True)
+    ap.add_argument("--deck", default=None, help="the pairing (ui.session.DECKS keys); not with --shared")
+    ap.add_argument("--opponent", default=None)
+    ap.add_argument("--shared", action="store_true",
+                    help="data from scaledata play --pool: the net is for every deck (info shared: true, no pairing; "
+                         "learn.setnet.SetNetEnded scores every game with it, as with +netany)")
     ap.add_argument("--init", help="the candidate value net to start from (a flagged one goes on training)")
     ap.add_argument("--fresh", action="store_true",
                     help="no start: a new flagged net of the default structure (constructor seed --seed), its card "
@@ -110,6 +113,8 @@ def main() -> None:
     args = ap.parse_args()
     if bool(args.init) == args.fresh:
         raise SystemExit("give --init or --fresh")
+    if args.shared == bool(args.deck or args.opponent) or bool(args.deck) != bool(args.opponent):
+        raise SystemExit("give --deck and --opponent, or --shared")
     end_seeds, mid_seeds = seeds_of(args.end), seeds_of(args.mid)
     held = set(args.holdout) & (set(end_seeds) | set(mid_seeds))
     if held:
@@ -158,6 +163,9 @@ def main() -> None:
     if args.pairs:
         info["pairs"] = [p.split(":") for p in args.pairs]
     info["deck"], info["opponent"] = args.deck, args.opponent
+    if args.shared:                               # a net for every deck (the architecture thread 2026-10-29 02:30Z)
+        info["shared"] = True
+        info.pop("pairs", None)
     if getattr(args, "split", "key") != "key":
         info["split"] = args.split
     if args.extend_cards:

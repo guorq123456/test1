@@ -15,6 +15,12 @@ shard is compressed to DIR/rec-<seed>.jsonl.gz and its part file removed. Stoppe
 picks up where it left off (a cut-off last line is dropped and its game played again; complete shards are skipped).
 Shards and games are independent, so any machine can play any shard and `merge` puts them together.
 
+With --pool FILE (deck codes, lines "label|code" as tools.deckgate's field; the architecture thread 2026-10-29
+02:30Z, data for a net shared by every deck), --deck / --opponent are not used: game g of shard `seed` draws its two
+decks from the pool, each at random with replacement (a mirror is possible), from random.Random("pool:seed:g") (its
+own numbers: the deal and the agents' seeds are as above); the record's "names" are the pool labels by seat. Its
+records go through `encode` and learn.midrows as the others do (they read the decks from the record).
+
 `merge`: every rec-*.jsonl.gz under --inputs into --out, one game per (seed, g); a game found twice must be the
 same record apart from "date" and "cpu" (a determinism check across machines), else it is reported (the first
 one is kept). Part files are not merged.
@@ -56,6 +62,24 @@ def _play(job):
     record = play((g, seed, deck, opponent, spec, 0.0) + ((0.0, False, None, None, ospec) if ospec else ()))
     record["cpu"] = round(time.process_time() - t0, 3)
     return seed, record
+
+
+def pool_of(path: str) -> list:
+    """The pool's decks as [label, card ids] (tools.deckgate.read_field)."""
+    from svsim.tools.deckgate import read_field
+    return [[label, list(ids)] for label, ids in read_field(path)]
+
+
+def pool_pair(pool: list, seed: int, g: int) -> tuple:
+    """Game g of shard `seed`'s two decks: each drawn from the pool at random (with replacement)."""
+    import random
+    rng = random.Random(f"pool:{seed}:{g}")
+    return pool[rng.randrange(len(pool))], pool[rng.randrange(len(pool))]
+
+
+def _sha256(path: str) -> str:
+    import hashlib
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
 def _read_part(path: Path) -> list:
@@ -101,6 +125,9 @@ def play_main(args) -> None:
     out.mkdir(parents=True, exist_ok=True)
     todo, seeds = [], []
     ospec = getattr(args, "opponent_spec", None)
+    decks_pool = pool_of(args.pool) if getattr(args, "pool", None) else None
+    if decks_pool and ospec:
+        raise SystemExit("--opponent-spec needs --deck / --opponent, not --pool")
     for k in range(args.shards[0], args.shards[1]):
         seed = args.base + args.stride * k
         if (out / f"rec-{seed}.jsonl.gz").exists():
@@ -109,10 +136,16 @@ def play_main(args) -> None:
             continue
         have = {r["g"] for r in _read_part(out / f"rec-{seed}.part.jsonl")}
         seeds.append(seed)
-        todo += [(seed, g, args.deck, args.opponent, args.spec) + ((ospec,) if ospec else ())
-                 for g in range(args.per_shard) if g not in have]
+        if decks_pool:
+            todo += [(seed, g) + pool_pair(decks_pool, seed, g) + (args.spec,)
+                     for g in range(args.per_shard) if g not in have]
+        else:
+            todo += [(seed, g, args.deck, args.opponent, args.spec) + ((ospec,) if ospec else ())
+                     for g in range(args.per_shard) if g not in have]
+    decks_used = ({"pool": args.pool, "pool_sha256": _sha256(args.pool), "pool_labels": [d[0] for d in decks_pool]}
+                  if decks_pool else {"deck": args.deck, "opponent": args.opponent})
     print(json.dumps({"spec": args.spec, **({"opponent_spec": ospec} if ospec else {}),
-                      "deck": args.deck, "opponent": args.opponent, "base": args.base,
+                      **decks_used, "base": args.base,
                       "stride": args.stride, "shards": args.shards, "per_shard": args.per_shard, "open_shards": seeds, "games_to_play": len(todo),
                       "workers": args.workers}), flush=True)
     if not todo:
@@ -325,6 +358,7 @@ def main() -> None:
     p.add_argument("--per-shard", type=int, default=1000)
     p.add_argument("--deck", default="ramp-t", choices=sorted(DECKS))
     p.add_argument("--opponent", default="ramp-t", choices=sorted(DECKS))
+    p.add_argument("--pool", default=None, help="deck codes (lines label|code): each game draws its two decks from them")
     p.add_argument("--spec", "--agent", dest="spec", default=SPEC, help="the agent on both sides (default v2skx)")
     p.add_argument("--opponent-spec", default=None, help="the agent of the side playing --opponent (default: --spec on "
                                                          "both sides, as before)")

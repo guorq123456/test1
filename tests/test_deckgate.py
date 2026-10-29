@@ -74,3 +74,34 @@ def test_netclip_leaves_the_nets_own_decks_alone_and_bounds_unseen_cards():
     lo, hi = clipped.zclip
     S = clipped._S()
     assert np.all(S >= lo - 1e-12) and np.all(S <= hi + 1e-12)
+
+
+def test_scaledata_pool_draws_a_fixed_pair_per_game_and_netdata_plays_label_and_ids(tmp_path):
+    from svsim.learn import scaledata
+    from svsim.learn.netdata import play
+    path = tmp_path / "pool.txt"
+    path.write_text("\n".join(FIELD_LINES) + "\n", encoding="utf-8")
+    pool = scaledata.pool_of(str(path))
+    assert [d[0] for d in pool] == ["a", "b"] and all(len(d[1]) == 40 for d in pool)
+    assert scaledata.pool_pair(pool, 7, 3) == scaledata.pool_pair(pool, 7, 3)
+    pairs = {tuple(x[0] for x in scaledata.pool_pair(pool, 7, g)) for g in range(40)}
+    assert pairs == {("a", "a"), ("a", "b"), ("b", "a"), ("b", "b")}          # with replacement: mirrors too
+    deck, opp = scaledata.pool_pair(pool, 7, 1)
+    record = play((1, 7, deck, opp, "random", 0.0))
+    assert record["names"] == [opp[0], deck[0]] and record["decks"] == [opp[1], deck[1]]   # g = 1: seat 1 for deck
+
+
+def test_a_shared_net_answers_every_pairing_even_without_one():
+    net = load_cached(NET)
+
+    class Base:
+        def score(self, state, player, player_moves_next=False):
+            return 1.0
+
+    info = dict(net.info)
+    try:
+        net.info = dict(info, shared=True, deck=None, opponent=None)
+        assert SetNetEnded(Base(), net, mid_turn=True).any_pairing
+    finally:
+        net.info = info
+    assert not SetNetEnded(Base(), net, mid_turn=True).any_pairing
