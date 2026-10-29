@@ -185,6 +185,60 @@ def variant(ids: list, craft: Craft, rng: random.Random) -> list:
     return out
 
 
+def _partners(seed, options: list) -> list:
+    """`options` of the seed's card set except the seed, closest to it first: cards naming a card the seed names
+    (the same token or amulet) before the rest, each group by cosine between standardized static rows."""
+    import numpy as np
+    from svsim.learn.tokens import static
+    same = [c for c in options if c.card_set == seed.card_set and c.card_id != seed.card_id]
+    if not same:
+        return []
+    rows = np.stack([static(c) for c in [seed] + same]).astype(np.float64)
+    rows = (rows - rows.mean(0)) / np.where(rows.std(0) > 1e-9, rows.std(0), 1.0)
+    rows /= np.maximum(np.linalg.norm(rows, axis=1, keepdims=True), 1e-9)
+    cos = rows[1:] @ rows[0]
+    named = set(seed.related) | {seed.card_id}
+    order = sorted(range(len(same)), key=lambda j: (not set(same[j].related) & named, -cos[j]))
+    return [same[j] for j in order]
+
+
+def package(ids: list, craft: Craft, rng: random.Random, prefer: list | None = None, top: int = 6) -> list:
+    """`ids` with every copy of a few of its cards (4 to 6 slots or just over) given to a package: 2-3 copies of a
+    seed card (half the time one of `prefer`, the new set's, when given) and the rest from the seed's set, drawn
+    among its `top` closest cards (_partners). One step of the search can then try several cards that work
+    together, which 1-3 single swaps (variant) would almost never assemble."""
+    options = legal_cards(craft)
+    have = Counter(ids)
+    want, gone = rng.randint(4, 6), []
+    for i in rng.sample(sorted(have), len(have)):
+        if sum(have[g] for g in gone) >= want:
+            break
+        gone.append(i)
+    slots = [k for k, i in enumerate(ids) if i in gone]          # given new cards in place, as variant does
+    pool = [c for c in options if c.card_id not in gone]
+    seeds = [c for c in (prefer or []) if c in pool] if prefer and rng.random() < 0.5 else pool
+    seed = rng.choice(seeds or pool)
+    out = list(ids)
+    have = Counter(i for i in ids if i not in gone)
+    fill = [seed.card_id] * min(decks.MAX_COPIES - have[seed.card_id], len(slots), rng.randint(2, 3))
+    have[seed.card_id] += len(fill)
+    near = _partners(seed, pool)[:top]
+    while len(fill) < len(slots):
+        left = [c for c in near if have[c.card_id] < decks.MAX_COPIES]
+        if not left:
+            break
+        c = rng.choice(left)
+        n = min(rng.randint(1, 3), decks.MAX_COPIES - have[c.card_id], len(slots) - len(fill))
+        fill += [c.card_id] * n
+        have[c.card_id] += n
+    while len(fill) < len(slots):
+        fill.append(_pick(pool, rng, have).card_id)
+        have[fill[-1]] += 1
+    for k, i in zip(slots, fill):
+        out[k] = i
+    return out
+
+
 def read_seeds(path: str) -> list:
     """(label, ids) for each line "label|hash" or "hash" of `path`; '#' starts a comment."""
     out = []
@@ -385,18 +439,28 @@ class Search:
         self.st.setdefault("anchor_curve", []).append({"round": self.st["round"], **point})
         print(f"[第 {self.st['round']} 轮] 对固定参照：" + "，".join(f"{k} {v:.1%}" for k, v in point.items()), flush=True)
 
+    def one_variant(self, inc: list, craft: Craft) -> list:
+        """A package move (package) with probability --package, else 1-3 single swaps (variant); --package 0 draws
+        exactly as the tool did before the option existed."""
+        p = getattr(self.args, "package", 0.0) or 0.0
+        if p and self.rng.random() < p:
+            prefer = [c for c in legal_cards(craft) if str(c.card_set) == str(self.args.new_set)] \
+                if getattr(self.args, "new_set", None) else None
+            return package(inc, craft, self.rng, prefer)
+        return variant(inc, craft, self.rng)
+
     def propose(self, inc: list, craft: Craft, field: dict) -> dict:
         """--variants variants of the incumbent. With --guide MODEL (learn.deckmodel): --guide-pool distinct
         variants, of which the model's best by predicted mean score against `field` and --guide-explore drawn at
         random from the rest; the games still decide."""
         if not getattr(self.args, "guide", None):
-            return {f"v{j}": variant(inc, craft, self.rng) for j in range(self.args.variants)}
+            return {f"v{j}": self.one_variant(inc, craft) for j in range(self.args.variants)}
         if self.model is None:
             from svsim.learn.deckmodel import DeckModel
             self.model = DeckModel.load(self.args.guide)
         pool, seen = [], {deck_hash(inc)}
         for _ in range(self.args.guide_pool * 5):
-            v = variant(inc, craft, self.rng)
+            v = self.one_variant(inc, craft)
             if deck_hash(v) not in seen:
                 seen.add(deck_hash(v))
                 pool.append(v)
@@ -528,6 +592,9 @@ def main() -> None:
     ap.add_argument("--new-set", default=None,
                     help="round 0's random decks fill --new-share of their slots with this card set's cards (e.g. 10010)")
     ap.add_argument("--new-share", type=float, default=0.6, help="see --new-set (0.6)")
+    ap.add_argument("--package", type=float, default=0.0,
+                    help="share of variants that replace every copy of 1-2 cards with a package of related cards "
+                         "from one card set (0: single swaps only)")
     ap.add_argument("--sets", default=None,
                     help='build from these card sets instead of the Rotation: "pre10" (the Rotation before set 10) '
                          'or comma-separated set numbers (10000 is Basic)')

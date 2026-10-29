@@ -143,3 +143,19 @@ def test_a_model_picks_the_variants_to_play(tmp_path):
     # the three the model ranks first are among them
     pred = s.model.predict([v for v in cands.values() for _ in field], [o for _ in cands for o in field.values()])
     assert np.isfinite(pred).all()
+
+
+def test_a_package_swaps_several_related_cards_in_place():
+    rng = random.Random(7)
+    for craft in deckbuild.CLASSES:
+        ids = deckbuild.random_ids(craft, rng)
+        prefer = [c for c in deckbuild.legal_cards(craft) if str(c.card_set) == "10010"]
+        for _ in range(10):
+            v = deckbuild.package(ids, craft, rng, prefer)
+            assert _legal(v, craft)
+            changed = [k for k, (a, b) in enumerate(zip(ids, v)) if a != b]
+            gone = {ids[k] for k in changed}
+            assert 4 <= sum(Counter(ids)[i] for i in gone) <= 8            # every copy of the cards it drops
+            assert all(i not in v for i in gone)
+            sets = Counter(POOL[v[k]].card_set for k in changed)
+            assert sets.most_common(1)[0][1] >= len(changed) // 2           # most of the package is from one set
