@@ -2,3 +2,25 @@
 X = mcts:56+plan+setnet=analysis/scaling/models/net-s1-ii.npz+netmid+netany
 Y = mcts:100+plan
 BLAS 线程：OMP_NUM_THREADS=1，OPENBLAS_NUM_THREADS=1，MKL_NUM_THREADS=1
+  …25 对 65s
+  …50 对 119s
+  …75 对 174s
+  …100 对 232s
+  …125 对 296s
+  …150 对 360s
+  …175 对 420s
+  …200 对 478s
+  …225 对 541s
+  …250 对 603s
+  …275 对 663s
+  …300 对 719s
+300 对（1200 局）：X 得分 41.0% ± 2.3%（95% 区间 38.7%～43.3%），CR 分差约 -86（-109～-64；游戏稳态公式 -72，-90～-54，窗口内），LLR -42.00（判定线 -2.94 / 2.94，H1 = 55%）→ H0（没有变强）
+  X 用 B-r1-forest：85 对 41.8% ± 7.3%
+  X 用 B-r1-sword：86 对 64.0% ± 7.4%
+  X 用 B-r1-rune：86 对 20.3% ± 6.4%
+  X 用 B-r1-dragon：86 对 41.9% ± 7.9%
+  X 用 B-r1-abyss：86 对 33.1% ± 7.4%
+  X 用 B-r1-haven：86 对 41.3% ± 7.5%
+  X 用 B-r1-portal：85 对 44.7% ± 7.0%
+每步（搜索过的决定）CPU：X 55 ms，Y 45 ms，比 1.230（墙钟 X 56 ms，Y 46 ms；28357 / 26869 步）
+X 按真实先后手：先手 600 局 44.5%，后手 600 局 37.5%

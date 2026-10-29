@@ -133,3 +133,31 @@ mcts:N+plan+puct=prior-s1-20k (the hand-written score, the shared prior at the r
 The prior with 64 iterations nearly matches the hand-written search with 100 (so it is worth more than its
 iterations), but what it costs a decision is about what it saves: at equal CPU it does not help on B-r1. It is far
 closer than the shared value net (S1, 36.5% at 23% more CPU).
+
+## S1 (ii): the shared net trained to rank a decision's children, on advantage labels (`s1/gate/ii-*`)
+
+`analysis/scaling/models/net-s1-ii.npz`: net-s1-20k continued on S1's 20 shards (the same rows, the same held-out
+decks' games as validation) with two changes (learn.ranked; `analysis/scaling/train_mid.py --advantage --rank-dir`):
+- labels 0.5 + (y - p) / 2, p the decks' strength model's probability for the row's player (fitted on the 17533
+  training games: deck strengths, going first +0.39 logit), so a label no longer carries what the decks predict;
+- a pairwise ranking loss (weight 1) at a quarter of the searched decisions (170937 in training, 24298 in
+  validation): the teacher's best child (most visits of the recorded mcts:100+plan) against up to 3 others, each
+  child scored by the branch the search scores it with (mid-turn if the mover still acts).
+Fit: 11 epochs, best 7 (validation log loss + ranking loss). On the held-out decks' decisions, the teacher's best
+child ranked first among its (up to 4) children: **53.0% at the start (net-s1-20k) -> 75.9%**; ranking loss 0.677
+-> 0.582.
+
+X = mcts:N+plan+setnet=net-s1-ii+netmid+netany, Y = mcts:100+plan, BLAS on one thread.
+- Time match (24 pairs at N = 100, seeds 85891200 on): CPU X / Y 1.785 -> **N 56** (24 pairs at N = 100: 46.9% ±
+  6.8%; S1's at N = 100: 32.3% ± 9.1%).
+- 300 fixed pairs (1200 games), bank 85820000: **X 41.0% ± 2.3%** (95% 38.7%-43.3%), the sequential test H0.
+  - By X's deck: forest 41.8%, sword 64.0%, rune 20.3%, dragon 41.9%, abyss 33.1%, haven 41.3%, portal 44.7%
+    (± 6.4-7.9%).
+  - First / second: 44.5% / 37.5%.
+  - CPU per searched decision X 55 ms, Y 45 ms: ratio 1.230, outside 0.97-1.03 (the extra time is X's).
+- The architecture thread's prediction, registered before: 45%-53%, above 50% with probability 0.35. The result is
+  below the range.
+
+Against S1 (36.5% on the same bank at the same N and about the same CPU ratio) the ranking loss gains 4.5 points,
+but the net still loses to the hand-written score by 9 points with 23% more CPU. The ranking it learned is the
+hand-written search's own (the teacher is mcts:100+plan), so at best it copies what Y already does, at a net's cost.
