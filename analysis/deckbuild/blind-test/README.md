@@ -28,7 +28,9 @@ Salem 10-29 另开了一条线程：Claude 读第 10 弹的卡牌文字，自己
 - 已冻结：
   - g1：提交 e8e6fcd4ab6360850b037ea73047db820adcac33（分支 claude/claude-built-decks-set10，2026-10-29 21:12:44Z），10 副，标签「档位-职业-体系」。bot 这边没有打开看过内容。
   - g3：提交 a173fa43426d9ab5f2720621e156a9bf082c2cc7（分支 claude/claude-built-g3，2026-10-29 21:38:42Z），15 副，标签如「g3-S1-FOREST-combo」，S/P/W 表示强/可用/弱。bot 这边没有打开看过内容。
-    - 注意：这个提交建在 claude/deck-search 的 1f72130b 上，那里已经有 bot 的名单（analysis/deckbuild/F/current.txt 是陪练台上那七副，F/seeds.txt 是新搜法的起点）。那条线程有没有读过它们，要它自己说明；读过的话，g3 就不算独立于 bot。
+    - 这个提交建在 claude/deck-search 的 1f72130b 上，那里已经有 bot 的名单（F/current.txt、F/seeds.txt、fields/B-r1.txt）。那条线程自述（coordinator 转述，21:40Z）：analysis/ 下只列过文件名、对本 README grep 过一次（只回显到对照名单的文件名和格式说明），读过 read_seeds 的代码；bot 的名单文件都没有打开或输出。它参考了换包前的四套比赛卡表（svsim/cards/decks.py）和两套换包前的攻略站卡表，第一阶段允许。判定：照常算独立的一组。
+  - g2：提交 bc5a79e8246bf882db3583363743f6e05abc1f9e（分支 claude/blind-test-g2，从 main 起，2026-10-29 21:39:37Z），13 副（T1 三副、T2 五副、T3 五副），另附说明 claude-built-g2.md。bot 这边没有打开看过内容。
+    - 自述隔离：浅拉过 claude/deck-search，只读了 read_seeds 和卡组代码的解码程序，列过 blind-test/ 的文件名；对照名单、F/*、fields/* 和任何结果都没打开；陪练台分支上只在改动统计里见过 bot 名单的文件名。
 - 第二阶段（10-29 21:19Z 补登）：Salem 看了 g1 后定了更严的规则，只给可用卡池和游戏规则，不给任何参考卡组、体系名或提示。三条新线程按同样三种设置各构筑一份，记作 p2-g1、p2-g2、p2-g3，冻结文件 claude-built-p2-g1.txt、claude-built-p2-g2.txt、claude-built-p2-g3.txt，格式同上。第一阶段的 g2、g3 照旧跑完。
   - 指标和第三组相同，每个子组各算一遍；指标 5 的循环赛把这三份也放进去，按 bot 对每个子组分别报。
   - 已冻结：
