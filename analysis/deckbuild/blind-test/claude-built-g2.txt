@@ -1,0 +1,29 @@
+# Claude-built decks, blind-test group g2 (2026-10-29). Built from the Rotation card pool's text only:
+# no set-10 deck lists, tier lists or ladder data looked up; no bot search output read. Not for any search or self-play.
+# Format as frozen.txt: label|deck code (deckbuild.read_seeds). Tier = my own judgment (T1 strong, T2 playable, T3 weak).
+# 连击妖
+T1-FOREST-1|1.1.e4Gg.e4Gg.e4Gg.eVLe.eVLe.eVLe.fFRw.fFRw.fFRw.fds6.fds6.fds6.etGk.etGk.etGk.fe5k.fe5k.fe5k.feLM.feLM.feLM.e6kU.e6x8.e6x8.e6x8.fea-.fea-.fea-.g0WO.g0WO.g0WO.etl-.etl-.etl-.feOU.feOU.etm8.fGAU.fGAU.fGAU
+# 宇宙鱼（机锋单卡）
+T1-PORTAL-1|1.7.eLN-.f5jk.fU5Q.fsVc.fsoM.ftEU.ftEU.ftEU.cQnG.cR2I.eLae.ej_8.f5wE.fDUc.fUq8.gEw6.eLaU.eSRY.eqqU.f69s.fUKu.ft1-.f-3-.eKrc.eL5E.f5gc.f6Pe.fsVm.fslE.fUp-.fs-s.f-Jc.gFCs.ejG6.gEwG.gF9u.ej--.ftEe.ejlM.f6PU
+# 跳费龙
+T1-DRAGON-1|1.4.fNIk.fNIk.eE3E.eE3E.eE3E.ecgO.ecgO.ecgO.e-Ls.e-Ls.e-Ls.fN08.fN08.fzqM.fzqM.cJl6.cJl6.cJl6.e-O-.e-O-.g84c.g84c.ecgE.ecgE.ecgE.flvu.flvu.flvu.g7q-.g7q-.fNVO.fNVO.fNVO.e_4k.e_4k.e_4k.fDkE.eEFk.eEFk.g8KE
+# 琳库露法
+T2-RUNE-1|1.3.cH3E.cH3E.cH3E.e4Gg.e4Gg.e4Gg.eBpU.eBpU.eBpU.fKNE.fKNE.fKNE.eB7k.eB7k.eB7k.fDXk.fDXk.fDXk.fKcs.fKcs.fKcs.fKpM.fKpM.fKpM.fKsU.fKsU.fKsU.fKZk.fKZk.fKZk.eBKO.eBKO.fL2-.fL2-.fL2-.fL38.fL38.eBpe.eBpe.eBpe
+# 旗皇
+T2-SWORD-1|1.2.cEZs.cEZs.evm6.eXnu.eXnu.eXnu.evi-.evi-.fgIM.fgIM.fgIM.g2_c.g2_c.e9Ak.e9Ak.e9Ak.fgX-.fgX-.fgX-.fgb6.fgb6.g3Ru.g3Ru.fgqk.fgqk.fgqk.e9NO.e9NO.e9NO.fgnc.fgnc.fgnc.g2j0.g2j0.g2j0.fh1E.fh1E.fh1E.g2ye.fh1O
+# 护符控制教（加亚教偶像）
+T2-HAVEN-1|1.6.cOc2.cOc2.cOc2.f3Fw.f3Fw.f3Fw.egrQ.egrQ.egrQ.eh52.eh52.eh52.fRxc.fRxc.fS9g.fS9g.fS9g.f3lA.f3lA.f3lA.eShA.ehKg.ehKg.ehKg.ehYk.ehYk.ehYk.egps.egps.egps.f-Jc.f-Jc.fqaA.gDCu.gDCu.f3zO.f3zO.ehYu.ehYu.ehYu
+# 证据土法（启动法）
+T2-RUNE-2|1.3.cH1g.cH1g.cH1g.g5Rs.g5Rs.ey9O.ey9O.ey9O.fDXk.fDXk.g59G.g59G.g5hU.g5hU.eB4c.eB4c.g596.g596.g596.exyk.eyR-.eyR-.eyR-.g5Ok.g5Ok.g5t-.g5t-.g5t-.eyOs.eyOs.f-Jc.f-Jc.g5eM.g5eM.g5eM.g5Ou.eyeU.eyee.g5u8.g5u8
+# 实验体法
+T2-RUNE-3|1.3.fKNE.fKNE.fKNE.fink.fink.fink.fDXk.fDXk.fDXk.fKKG.fKKG.fKKG.fikc.fikc.fikc.eaD-.fKpM.fKpM.fKpM.fKsU.fKsU.fKsU.fj1M.fj1M.fj1M.fi-E.fi-E.fi-E.fjDs.fjDs.fjDs.fjG-.fjG-.fjG-.fL2-.fL2-.fL2-.fjTU.fjTU.fjTU
+# 放逐梦（侦探梦）
+T3-ABYSS-1|1.5.gA4k.gA4k.gA4k.gAKM.gAKM.gAZ-.f0oG.f0oG.f0oG.gA1c.gA1c.gA1c.eGCk.eGCk.eGCk.eeNm.eeNm.f1KU.f1KU.f1KU.fngE.fngE.gA1m.gA1m.gA1m.f11k.f11k.f-Jc.f-Jc.gAHE.gAHE.gAHE.f11u.gAmU.gAmU.gAmU.fnsu.gAHO.gAWs.gAWs
+# 人灭融合鱼
+T3-PORTAL-2|1.7.gFSU.gFSU.gFSU.cR0k.cR0k.cR2I.cR2I.cR2I.gEw6.gEw6.gEw6.cQn6.cQn6.cQn6.f-3-.f-3-.gF9k.gF9k.gF9k.gFf8.gFf8.cQqE.cQqE.cR0u.cR0u.fUp-.f-Jc.f-Jc.gFCs.gFCs.gFCs.gEwG.gEwG.gEwG.ej--.gFPM.gFPM.gFPM.gFe-.gFe-
+# 快攻龙（舍弃龙）
+T3-DRAGON-2|1.4.flAs.flAs.flAs.flD-.flD-.flD-.eDme.eDme.eDme.eE3E.eE3E.eE3E.ecgO.ecgO.ecgO.fN08.fN08.fN08.flQU.flQU.flQU.fljE.fljE.fljE.flTc.flTc.flTc.flg6.flg6.flg6.g8KO.g8KO.g8KO.ecTk.ecgE.ecgE.ecgE.flvk.flvk.flvk
+# 地害兔教（快攻教）
+T3-HAVEN-2|1.6.cOc2.cOc2.cOc2.fqM6.fqM6.fzqM.fzqM.fzqM.gCTs.gCTs.gCTs.fqJ8.fqJ8.fqJ8.gCW-.gCW-.gCjU.gCjU.gCjU.gD0E.gD0E.gD0E.cOMQ.cOMQ.eh3U.eh3U.gCje.gCje.gCje.gCmc.gCmc.gCmc.fq3W.gDCk.gDCk.gDCk.gCU0.f3U8.f3U8.gCz6
+# 快攻梦
+T3-ABYSS-2|1.5.cM8E.cM8E.cM8E.fPCm.fPCm.fPCm.gA4k.gA4k.eGFs.eGFs.eGFs.eeNc.eeNc.eeNc.fnd6.fnd6.fnd6.fndG.fndG.fndG.fnvs.fnvs.cLum.cLum.fPCc.fPCc.fPCc.fPhs.fPhs.gA1m.gA1m.gA1m.fPSO.fPSO.fo6M.fo6M.fo6M.foM8.foM8.foM8
