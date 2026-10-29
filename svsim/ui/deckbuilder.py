@@ -148,6 +148,14 @@ def deck_from(spec: dict) -> list:
     return build(Counter(POOL[i] for i in ids))
 
 
+def _label_name(key: str, craft: Craft) -> str:
+    """The page's name for a frozen list's label "{tier}-{CLASS}-{k}" (T1-FOREST-1 -> "T1 精灵 1"); else "bot 的<class>"."""
+    parts = key.split("-")
+    if len(parts) == 3 and parts[0][:1] == "T" and parts[1] in Craft.__members__:
+        return f"{parts[0]} {CLASS_ZH[Craft[parts[1]]]} {parts[2]}"
+    return f"bot 的{CLASS_ZH[craft]}"
+
+
 def bot_decks() -> dict:
     """The bot's own decks (BOT_DECKS): {"note": the file's first comment line, "decks": [{key, name, craft, code}]}.
     A line is "key|code" or "key|code|display name"; '#' lines are comments."""
@@ -167,6 +175,6 @@ def bot_decks() -> dict:
         ids = parse_code(code)
         crafts = {POOL[i].craft for i in ids if i in POOL} - {Craft.NEUTRAL}
         craft = crafts.pop() if len(crafts) == 1 else Craft.NEUTRAL
-        out.append({"key": key, "name": name[0] if name else f"bot 的{CLASS_ZH[craft]}", "craft": int(craft),
+        out.append({"key": key, "name": name[0] if name else _label_name(key, craft), "craft": int(craft),
                     "code": code, "problems": problems(ids)})
     return {"note": note, "decks": out}

@@ -1,4 +1,4 @@
-# 未冻结：bot 构筑搜索进行中的最新一副（每个职业一副，2026-10-29 晚）；冻结名单出来后替换
+# 还没冻结：这是 bot 搜卡组到目前为止每个职业最好的一副，冻结名单出来后会换掉。强弱是便宜的 bot（手写评分的搜索）在「对手卡表已知（牌序、手牌未知）」的条件下打出来的。
 # 格式：key|卡组代码|显示名（deckbuild 的种子格式，第三段可省）
 bot-forest|1.1.e3_e.e3_e.e6hM.e6hM.eSfc.eSvE.eUfk.eUvM.eVLU.eVLU.etGu.fC_M.fC_M.fDE-.fDE-.fDXk.fDkO.fDkO.fDkO.fFRc.fFz-.fGAe.fzqM.f-3-.f-3-.g0Gc.g0Gm.g0Gm.g0Jk.g0Jk.g0Jk.g0WE.g0ZM.g0ZM.g0o-.g0o-.g0_U.g0_U.g0_e.g0_e|bot 的精灵（搜索中）
 bot-sword|1.2.c9x8.cEaA.e9Ak.e9NO.evyc.fDkO.fHts.fHuA.fI7e.fI7e.fIcu.fbv6.fgLU.fgqk.fh1O.fh1O.fzqM.f-3-.f-Jc.f-LA.f-LA.f-LA.f-ZE.g2is.g2is.g2j0.g2l-.g2yU.g2yU.g2yU.g2ye.g2_c.g2_c.g3C6.g3C6.g3FE.g3Rk.g3Ru.g3Ru.g3Ru|bot 的皇家（搜索中）
