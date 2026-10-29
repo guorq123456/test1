@@ -1,0 +1,17 @@
+{
+ "games": 20000,
+ "decks": 112,
+ "brier": {
+  "constant": 0.25,
+  "first": 0.24804,
+  "strength": 0.22283,
+  "pair": 0.23486
+ },
+ "share_of_constant_brier_removed": {
+  "constant": 0.0,
+  "first": 0.0079,
+  "strength": 0.1087,
+  "pair": 0.0606
+ },
+ "condition": "对手卡表已知（牌序、手牌未知）"
+}

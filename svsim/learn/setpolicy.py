@@ -718,6 +718,13 @@ def fit_main(args) -> None:
     print(json.dumps(pol.info["report"]))
 
 
+def _split_arg(text: str) -> str:
+    """--split: key, hash, or games:FILE (learn.setnet.in_valid; the shared prior's hold-out by deck)."""
+    if text in ("key", "hash") or (text.startswith("games:") and Path(text[len("games:"):]).exists()):
+        return text
+    raise argparse.ArgumentTypeError("key, hash, or games:FILE with FILE there")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -750,7 +757,7 @@ def main() -> None:
     f.add_argument("--extend-cards", action="store_true",
                    help="with --prior: the data's cards the prior has no row for are added by their static rows "
                         "(setnet.extend_table; a new pairing)")
-    f.add_argument("--split", choices=("key", "hash"), default="key",
+    f.add_argument("--split", type=_split_arg, default="key",
                    help="the validation games (learn.setnet.in_valid): key, as before, or hash (no tie to the seat)")
     f.add_argument("--deck", default=None, help="info only: the side whose decisions these are (default the prior's)")
     f.add_argument("--opponent", default=None, help="info only: that side's opponent (default the prior's)")
