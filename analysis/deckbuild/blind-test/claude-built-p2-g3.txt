@@ -1,0 +1,11 @@
+# Phase 2 (rules + card pool only), group g3. label|deck code, read by svsim.tools.deckbuild.read_seeds
+P2G3-DRAGON-1|1.4.cJSg.cJVU.cJVU.cJVU.cJl6.cJl6.cJl6.eDWs.eDWs.eDWs.eEFk.eEFk.ecE6.ecQc.ecQc.e-O-.e-O-.e-O-.e-bU.e-bU.e-uE.e_4k.e_4k.fMmM.fMmM.fMmW.fMmW.fNVO.fNVO.fNVO.fbPs.fbPs.flvu.flvu.flvu.g7bW.g7bW.g7eU.g7eU.g7eU
+P2G3-FOREST-1|1.1.cCNE.cCNE.cCNE.e6Rk.e6Rk.e6Rk.e6Us.e6kU.eUcm.eUcm.et1G.et1G.etGk.etGk.etGk.etGu.etJs.etJs.etZU.etl-.etl-.fFkM.fGAU.fGAe.fGAe.fe5k.fe5k.fe8s.fe8s.feLM.feLM.feLM.fea-.fea-.fea-.g0WO.g0WO.g0WO.g0ls.g0ls
+P2G3-PORTAL-1|1.7.cQn6.cQn6.eL5E.eL5E.f5gm.f5gm.f5jk.f5jk.f5jk.f5wE.f5wE.f5wE.f5wO.f69s.f69s.f6C-.f6C-.f6PU.f6PU.f6Pe.f6Pe.f6Pe.fUKk.fUKk.fUKu.fUKu.fUKu.fUdU.fUdU.fUq8.fUq8.fUq8.fsVm.fsVm.ftEe.ftEe.ftEe.gF9u.gF9u.gF9u
+P2G3-SWORD-1|1.2.c9hM.c9hM.eX2s.eX2s.eX2s.eX5-.eX5-.eXIU.eXIU.eXIU.eXLc.eXLc.eXY6.eXY6.eXY6.eXbE.eXbE.eXnk.eXnk.eXnu.eXnu.eXnu.evj8.evj8.ewCO.ewCO.fHuA.fHuA.fIAc.fIAc.fIck.fIck.fgLU.fgLU.fgY8.fgY8.fgY8.fgb6.fgb6.g2l-
+P2G3-RUNE-1|1.3.cH1g.cH1g.cH1g.cHFk.cHFk.eBNM.eBNM.exvm.exvm.exvm.ey9O.ey9O.eyCM.eyOs.eyOs.eyR-.eyR-.fKd0.fKd0.g596.g596.g596.g59G.g59G.g5Ok.g5Ok.g5Ou.g5Ou.g5Rs.g5Rs.g5eM.g5eM.g5eM.g5hU.g5hU.g5t-.g5t-.g5t-.g5u8.g5u8
+P2G3-ABYSS-1|1.5.cLum.cLum.eFz6.eFz6.eG0E.eG0E.eG0E.eGFs.eGFs.eGFs.eeNc.eeNc.eeNm.eeNm.eedO.eedO.fPCc.fPCc.fPCc.fPCm.fPCm.fPCm.fPSO.fPSO.fPSO.fnd6.fnd6.fnd6.fnsu.fnsu.fnvs.fnvs.fnvs.fo6M.fo6M.fo6M.foM8.gA1m.gA1m.gA1m
+P2G3-HAVEN-1|1.6.cOc2.cOc2.egps.egps.egps.egrQ.egrQ.eh3U.eh3U.eh3U.eh52.ehJ6.ehJ6.ehKg.ehYk.ehYk.ehYu.f3EM.f3EM.f3EM.f3T-.f3T-.f3T-.f3jc.f3jc.f3zE.f3zE.f3zO.f3zO.fRes.fRes.fRxc.fRxc.fSNu.fSNu.fqJ8.fqJ8.fqJ8.fqoO.fqoO
+P2G3-SWORD-2|1.2.cEc-.e8eW.e8eW.e8hU.e8u8.e8u8.e9Ak.e9Ak.e9NO.e9NO.evWU.evWU.ev_k.fI7U.fI7U.fI7U.fIQE.fIQE.fgIM.fgIM.fgIM.fgX-.fgX-.fgX-.fgb6.fgb6.fgb6.fgnc.fgnc.fgnc.fgqk.fgqk.fh1E.fh1E.g2j0.g2j0.g2j0.g3Ru.g3Ru.g3Ru
+P2G3-RUNE-2|1.3.cH3E.cH3E.cHIs.eB7k.eB7k.eBKE.eBKE.eZku.eZku.ey9E.ey9E.fKNE.fKNE.fKNE.fKsU.fKsU.fbPs.fbPs.fikc.fikc.fikc.fikm.fikm.fi-E.fi-E.fi-E.fi-O.fi-O.fj1M.fj1M.fj1M.fjDs.fjDs.fjDs.fjG-.fjG-.fjG-.fjTU.fjTU.fjTU
+P2G3-PORTAL-2|1.7.cQn6.cQn6.cQnQ.cQnQ.cQqE.cQqE.ejG6.ejVu.fU56.fU56.fUNs.fUNs.fbPs.fbPs.fzqM.fzqM.f-3-.f-3-.f-Jc.f-Jc.gEw6.gEw6.gEw6.gEwG.gEwG.gF9k.gF9k.gF9k.gFCs.gFCs.gFCs.gFPM.gFPM.gFSU.gFSU.gFSU.gFe-.gFe-.gFf8.gFf8
