@@ -1,0 +1,13 @@
+# Blind test group g1: decks built by reading the set-10 card pool (no simulation, no set-10 web data,
+# no bot search results). Frozen 2026-10-29. One line per deck: label|deck code (read with read_seeds).
+# Label = tier (reasoned on paper) - class - archetype. Human-readable report kept outside the repo.
+STRONG-PORTAL-cutthroat|1.7.ftEU.ftEU.ftEU.fU5Q.fsVc.fsoM.ej_8.eLae.fDUc.fzqM.fUq8.ejJE.gEw6.f69s.fUKu.eqqU.eSRY.eLaU.ft1-.f-3-.f6Pe.eKrc.fslE.fsVm.eL5E.fDE-.fs-s.fUp-.eSAW.f-Jc.gEwG.gF9u.f-5Y.ftEe.ej--.fUaM.f6PU.ejlM.gFe-.fDkE
+STRONG-DRAGON-ramp|1.4.fNIk.fNIk.ecgO.ecgO.e-Ls.e-Ls.eE3E.eE3E.eE3E.g7u6.g7u6.g7u6.fzqM.fzqM.fN08.fN08.cJl6.cJl6.cJl6.e-O-.e-O-.e-O-.ecgE.ecgE.ecgE.flvu.flvu.flvu.fNVO.fNVO.fNVO.cJSg.e_4k.e_4k.e_4k.fDkE.eEFk.eEFk.eEFk.g8KE
+STRONG-FOREST-combo|1.1.e4Gg.e4Gg.e4Gg.eVLe.eVLe.eVLe.fFRw.fFRw.fFRw.fds6.fds6.fds6.fe5k.fe5k.fe5k.feLM.feLM.feLM.etGk.etGk.etGk.e6x8.e6x8.e6x8.fea-.fea-.fea-.g0WO.g0WO.g0o-.e6kU.etl-.etl-.etl-.feOU.feOU.etm8.fGAU.fGAU.fGAU
+PLAYABLE-SWORD-pirate|1.2.cEZs.cEZs.cEZs.eXbE.eXbE.evm6.evm6.eXnu.eXnu.eXnu.fgIM.fgIM.fgIM.fIQE.fgX-.fgX-.fgX-.e9Ak.e9Ak.e9Ak.fgb6.fgb6.g3Ru.g3Ru.g3Ru.fgqk.fgqk.fgqk.e9NO.e9NO.fgnc.fgnc.fgnc.g2j0.g2j0.g2j0.fh1E.fh1E.fh1E.fh1O
+PLAYABLE-RUNE-lhynkal|1.3.eBpU.eBpU.eBpU.fKNE.fKNE.fKNE.cH3E.cH3E.cH3E.fKcs.fKcs.fKcs.fKK6.fKK6.fKK6.eB7k.eB7k.fKKG.fKpM.fKpM.fKsU.fKsU.fKsU.fKZk.fKZk.fKZk.eSAW.eSAW.eBKO.eBKO.eB4m.eB4m.fL2-.fL2-.fL2-.fikm.fikm.eBpe.eBpe.fjTe
+PLAYABLE-RUNE-testsubject|1.3.fikc.fikc.fikc.cH3E.cH3E.fKNE.fKNE.fKNE.fink.fj1M.fj1M.fj1M.fKpM.fKpM.fKpM.fKsU.fKsU.fKsU.fi-O.fi-E.fi-E.fi-E.fjDs.fjDs.fjDs.fjG-.fjG-.fjG-.eSAW.eSAW.fL2-.fL2-.fL2-.fjTU.fjTU.fjTU.fikm.fikm.eBpe.eBpe
+PLAYABLE-HAVEN-amulet|1.6.cOc2.cOc2.fqM6.fqM6.egrQ.egrQ.egrQ.eh52.eh52.eh52.fq4w.fq4w.fS9g.fS9g.fRxc.fRxc.ehKg.ehKg.ehKg.ehYk.ehYk.ehYk.eShA.eShA.egps.egps.egps.eSAW.eSAW.fqoO.fqoO.fqaA.f-5Y.f3zO.f3zO.f3U8.ehYu.ehYu.ehYu.cOMQ
+PLAYABLE-ABYSS-clue|1.5.f-LA.gAKM.gAKM.gAKM.gAZ-.gAZ-.gAZ-.gA4k.gA4k.gA1c.gA1c.gA1c.gAme.gAme.fzqM.fzqM.fzqM.f-3-.f-3-.f-3-.gAHE.gAHE.gAHE.eSAW.eSAW.f-Jc.f-Jc.gAmU.gAmU.gAmU.f11u.f11u.f-5Y.gAWs.gAWs.fnsu.fnsu.gAHO.foM8.foM8
+WEAK-SWORD-detective|1.2.f-LA.f-LA.g3FE.g3FE.g3FE.g2is.g2is.g2is.g2_c.g2_c.g2_c.fzqM.fzqM.fzqM.g2yU.g2yU.g2yU.f-3-.f-3-.fgb6.fgb6.fgIW.fgIW.fgIW.fHuA.fHuA.fDE-.fDE-.eSAW.eSAW.f-Jc.g3C6.g3C6.g3C6.g2ye.g2ye.g2ye.g3Rk.g3Rk.fh1O
+WEAK-HAVEN-bunny|1.6.fqM6.fqM6.gCTs.gCTs.gCTs.fRxc.fRxc.gCjU.gCjU.gCjU.gD0E.gD0E.gD0E.eIPM.eIPM.gCje.gCje.cOaU.cOaU.gCmc.gCmc.gCmc.egps.egps.egps.eSAW.eSAW.gDCk.gDCk.gDCk.gDCu.gDCu.f3zO.f3zO.gCU0.gCU0.gCz6.gCz6.f3U8.f3U8
