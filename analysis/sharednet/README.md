@@ -58,3 +58,48 @@ why the nets fail here.
 - C2: the same with +netany, the first 20 pairs: every pair's points and move counts identical to C1 (20 / 20).
 
 So T1's result is the nets', not the tool's.
+
+# S1: a shared net trained on a pool of set-10 decks (2026-10-29)
+
+The architecture thread 2026-10-29 03:33Z. Condition: 对手卡表已知（牌序、手牌未知）.
+
+- Pool: `fields/C-r0-pool.txt`, search C's 112 distinct round-0 candidates (claude/deck-runs-C 5d70c18), 16 per class,
+  65% set-10 cards; B-r1 (the test field) is not in it.
+- Self-play: `learn.scaledata play --pool`, two different decks per game (same class allowed), both sides
+  mcts:100+plan, 20 shards x 1000 games, seeds 85830000 + 2k (k < 20). About 2.4 CPU s a game.
+- Hold-out by deck (`s1.py holdout`): one deck per class (smallest label sha256): C-r0-abyss-random8,
+  C-r0-dragon-random4, C-r0-forest-random12, C-r0-haven-random12, C-r0-portal-random7, C-r0-rune-random10,
+  C-r0-sword-random14; every game drawing one is validation (2467 of 20000), none is in training
+  (`train_mid.py --split games:s1/holdout-games.json`).
+- Training: `analysis/scaling/train_mid.py --shared --fresh`, turn-end and mid-turn rows (mid rows thinned to the
+  turn-end count), the scaling test's settings. net-s1-10k (first 10 shards) and net-s1-20k (all 20).
+
+## Held-out decks: is it a better predictor? (`s1/eval-*.json`)
+
+Log loss on the held-out decks' games (the hand-written score: search.evaluate with the default weights, what
+mcts:100+plan searches with, calibrated by a one-variable logistic fit on 600 training games; constant: the base rate):
+
+| | turn ends | mid-turn |
+|---|---|---|
+| net-s1-10k | 0.592 | 0.584 |
+| net-s1-20k | **0.575** | **0.568** |
+| hand-written, calibrated | 0.645 | 0.647 |
+| constant | 0.693 | 0.693 |
+
+The net predicts results on decks it never saw clearly better than the hand-written score.
+
+## B-r1: does it play better? (`s1/gate/`)
+
+tools.deckgate on B-r1, Y = mcts:100+plan, X = mcts:N+plan+setnet=net-s1-20k+netmid+netany.
+- Time match (once): 24 pairs at N = 100, seeds 85891000 on: CPU X / Y 1.772 -> N 56. (24 pairs at N = 100: 32.3% ±
+  9.1%.)
+- 300 fixed pairs (1200 games), bank 85820000: **X 36.5% ± 2.4%** (95% 34.1%-38.9%).
+  - By X's deck: forest 25.3%, sword 55.8%, rune 20.9%, dragon 34.3%, abyss 34.9%, haven 36.0%, portal 48.2% (± 6.5-8.5%).
+  - First / second: 37.3% / 35.7%.
+  - **CPU per searched decision X 57 ms, Y 46 ms: ratio 1.231, outside 0.97-1.03** (the extra time is X's).
+- The architecture thread's prediction, registered before: 45%-56%, above 52% with probability 0.4. The result is
+  below the range.
+
+Against T1 (pairing nets, 22.5%-25.5%, bank 85800000) S1 gains about 13 points, but the search with the shared net
+still loses to the hand-written score by 13 points on the same field, with more CPU. A better predictor of the result
+does not make a better search here (see the report to the architecture thread for what this suggests checking).
