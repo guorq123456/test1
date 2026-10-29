@@ -17,3 +17,247 @@
 [第 12 轮] 对固定参照：FOREST 67.9%，SWORD 63.6%，RUNE 40.7%，DRAGON 55.7%，ABYSS 58.6%，HAVEN 73.6%，PORTAL 63.6%
 [第 13 轮] FOREST: undecided；换下 传承的意志、昔日的天秤·马龙、信仰天使·迪纳梅斯、信仰天使·迪纳梅斯、播撒生命的异形、播撒生命的异形，换上 希求天使·丘丽奥丝、鸟兽述怀、传心搭档犬、传心搭档犬、传心搭档犬、兽语侦探·诺榭；复核差 +0.0% ± 1.6%
 [第 13 轮] SWORD: rejected；换下 悠久的骑士·莎夏、方阵，换上 丽金花的挥霍、宝石淑女；复核差 -2.9% ± 1.5%
+[第 13 轮] RUNE: undecided；换下 煌响使者·亨莉雅妲、魔恋的爱慕·希姆、劫焰奇美拉、劫焰奇美拉、劫焰奇美拉，换上 爱意天使·艾克夏丝、信仰天使·迪纳梅斯、信仰天使·迪纳梅斯、希求天使·丘丽奥丝、希求天使·丘丽奥丝；复核差 +1.7% ± 1.4%
+[第 13 轮] DRAGON: undecided；换下 龙惧·吉尔沃，换上 尘土的不法者；复核差 +1.1% ± 0.9%
+[第 13 轮] ABYSS: undecided；换下 黑夜鬼人、魅惑的魅魔·莉莉姆、逃避幽灵者、颓废之泪、高洁的黑翼·奥莉薇、高洁的黑翼·奥莉薇、听取遗言，换上 弑神现场、理想国·涅格尔赫亚、告别入殓师、灵魂逃亡、灵魂逃亡、诺克坦的审讯、残思侦探·诺克坦；复核差 -0.2% ± 1.6%
+[第 13 轮] HAVEN: undecided；换下 思念的《力量》·索菲娜、图书室的魔女·莉莉尤姆、纪律间谍、信仰天使·迪纳梅斯、荒废的繁殖、荒废的繁殖，换上 最古老的狱卒、最古老的狱卒、最古老的狱卒、神纹的罪人·艾尔拉德、神纹的罪人·艾尔拉德、神纹的罪人·艾尔拉德；复核差 -1.4% ± 1.6%
+[第 13 轮] PORTAL: undecided；换下 人灭三恶·兰佩吉，换上 愚劣的兵器；复核差 +0.7% ± 1.0%
+[第 13 轮] 对固定参照：FOREST 67.9%，SWORD 63.6%，RUNE 40.7%，DRAGON 55.7%，ABYSS 58.6%，HAVEN 73.6%，PORTAL 63.6%
+完成，用时 15424s
+第 14 轮（已完成 13 轮），条件：对手卡表已知（牌序、手牌未知）
+
+## FOREST  1.1.e3_e.e3_e.e6hM.e6hM.eSfc.eSvE.eUfk.eUvM.eVLU.eVLU.etGu.fC_M.fC_M.fDE-.fDE-.fDXk.fDkO.fDkO.fDkO.fFRc.fFz-.fGAe.fzqM.f-3-.f-3-.g0Gc.g0Gm.g0Gm.g0Jk.g0Jk.g0Jk.g0WE.g0ZM.g0ZM.g0o-.g0o-.g0_U.g0_U.g0_e.g0_e
+费用曲线：1费1 2费8 3费7 4费4 5费5 6费3 7费4 8费4 9费4
+  1× 好奇的老鼠（1费，Inquiring Mischief）
+  2× 自律的圣鸟·汉萨（2费，Hamsa, Sculpted Divinity）
+  1× 传承的意志（2费，Wills United）
+  1× 永恒冰晶·蒂亚（2费，Tia, Eternal Crystalian）
+  1× 爱意天使·艾克夏丝（2费，Exias, Angel of Love）
+  1× 优雅看护者（2费，Debonair Dogsitter）
+  2× 鸟兽述怀（2费，Untamed Testimony）
+  2× 信仰天使·迪纳梅斯（3费，Dynames, Angel of Piety）
+  3× 自然的再生（3费，Natural Reincarnation）
+  2× 诺榭的审讯（3费，Nosche's Interrogation）
+  2× 手持军配团扇的伟丈夫（4费，Behemoth General）
+  2× 激动的欢喜·阿尔菲德（4费，Alfied, Squire of Joy）
+  2× 引路船工（5费，Spirited Skipper）
+  1× 向女王献花（5费，Floral Offering）
+  1× 弓兵指挥者（5费，Hawkeyed Tactician）
+  1× 水镜的信赖（5费，Curiosity Abounds）
+  1× 彷徨于黑暗之兽（6费，Beast Lost to the Dark）
+  2× 兽语侦探·诺榭（6费，Nosche, Theriophone Detective）
+  1× 天枪授予（7费，Advent of the Eld Lance）
+  1× 昔日的天秤·马龙（7费，Marlone, Scales of the Past）
+  2× 群狼侍者（7费，Wolf Pack Lackey）
+  2× 慈爱的凛华·奥尔提雅（8费，Althenia, Nurturing Bloom）
+  2× 播撒生命的异形（8费，Heartening Hyphae）
+  1× 恐惧的象征·欧米伽奥提普（9费，Omegotep, the Dreaded One）
+  3× 高洁的黑翼·奥莉薇（9费，Olivia, Proud Dark Angel）
+接受的改动 4 次；复核时的胜率差：+2.5%、+2.7%、+2.7%、+3.5%
+
+## SWORD  1.2.c9x8.cEaA.e9Ak.e9NO.evyc.fDkO.fHts.fHuA.fI7e.fI7e.fIcu.fbv6.fgLU.fgqk.fh1O.fh1O.fzqM.f-3-.f-Jc.f-LA.f-LA.f-LA.f-ZE.g2is.g2is.g2j0.g2l-.g2yU.g2yU.g2yU.g2ye.g2_c.g2_c.g3C6.g3C6.g3FE.g3Rk.g3Ru.g3Ru.g3Ru
+费用曲线：1费4 2费6 3费8 4费2 5费5 6费2 7费4 8费2 9费3 10费4
+  3× 理想国·涅格尔赫亚（1费，Nacreheim, Utopian World）
+  1× 诺·莱芙的问答（1费，No Life's Cross-Examination）
+  1× 方阵（2费，Phalanx）
+  1× 爱意天使·艾克夏丝（2费，Exias, Angel of Love）
+  2× 纯真卖报人（2费，Guileless Newsie）
+  2× 表里的现场验证（2费，Dichotomous Forensics）
+  1× 荣耀的丽金花（3费，Splendor of the Goldbloom）
+  1× 信仰天使·迪纳梅斯（3费，Dynames, Angel of Piety）
+  3× 俏皮设计师（3费，Cheeky Architect）
+  3× 千金大参谋·阿尔梅莉洁（3费，Almaelys, Affluent Strategist）
+  1× 悠久的骑士·莎夏（4费，Sasha, Knight Everlasting）
+  1× 黄金时代（4费，L'Age d'Or）
+  1× 丽金花·云庆（5费，Unkei, Goldbloom）
+  1× 响爪分队长（5费，Knellclaw Lieutenant）
+  1× 无我看守（5费，Warden of Selflessness）
+  1× 希求天使·丘丽奥丝（5费，Kyrios, Angel of Aspiration）
+  1× 宝石淑女（5费，Bejeweled Lady）
+  2× 安逸爱好家（6费，Placid Dilettante）
+  1× 商队猛犸象（7费，Caravan Mammoth）
+  1× 武力与治安·娜哈特·娜哈特&宾森特（7费，Naht & Vince, Force and Order）
+  1× 突击号令（7费，Onward, Charge!）
+  1× 变心卫士（7费，Errant Knight）
+  1× 人马骑士（8费，Centaur Centurion）
+  1× 焦灼炎将·玛尔斯（8费，Mars, Conflagrant Commander）
+  1× 高洁的黑翼·奥莉薇（9费，Olivia, Proud Dark Angel）
+  1× 理想国之神·列加尔（9费，Rezeal, Goddess of Nacreheim）
+  1× 表里侦探·诺·莱芙（9费，No Life, Dichotomous Detective）
+  2× 织田信长（10费，Oda Nobunaga）
+  2× 武皇的变貌·贝尔铁佐（10费，Beltezore, Valorous Revenant）
+接受的改动 2 次；复核时的胜率差：+4.8%、+4.8%
+
+## RUNE  1.3.c9w-.cH1g.eBNM.eSAM.eSAW.eSAW.eZku.eaD-.eqqU.exvc.ey9O.eyee.fKpM.fL38.fbPs.fbfU.fbv6.fi-E.fjG-.fjG-.fzqM.f-5Y.f-LA.f-ZE.f-ZE.g596.g59G.g59G.g5CE.g5Ok.g5Ok.g5Ok.g5Ou.g5eM.g5eM.g5eM.g5t-.g5u8.g5u8.g5u8
+费用曲线：1费3 2费5 3费6 4费7 5费8 6费3 7费2 8费4 9费2
+  1× 魔女的炼金炉（1费，Witch's New Brew）
+  1× 魔猫戏法（1费，Kitty Cunning）
+  1× 理想国·涅格尔赫亚（1费，Nacreheim, Utopian World）
+  1× 浑浊之民（2费，Muddled Onlooker）
+  1× 甜蜜猎食者（2费，Pretty Predator）
+  1× 爱意天使·艾克夏丝（2费，Exias, Angel of Love）
+  2× 戏法女巫（2费，Wily Witch）
+  1× 煌响使者·亨莉雅妲（3费，Arriet, Luxminstrel）
+  1× 冒险魔导书（3费，Adventurous Grimoire）
+  1× 魔恋的爱慕·希姆（3费，Shymm, Love Bewitched）
+  1× 神话记者（3费，Intrepid Newshound）
+  1× 玛纳利亚文书官·琪可（3费，Tico, Mysterian Spellcrafter）
+  1× 碎心勤务员（3费，Dedicated Aide）
+  1× 小巧捕食者（4费，Dainty Horror）
+  1× 心醉的研究者（4费，Enamored Researcher）
+  1× 工坊搬迁（4费，Atelier Relocation）
+  3× 无聊顾问（4费，Leisurely Attendant）
+  1× 迷歌侦探·诺茵华薇儿（4费，Noeinhowell, Hymnodic Detective）
+  2× 匍匐的异类（5费，Disrupted Commoner）
+  1× 无我看守（5费，Warden of Selflessness）
+  2× 乌涅（5费，Obsidian Raven）
+  3× 歌剧助手（5费，Dramatic Assistant）
+  1× 最古老的狱卒（6费，Jailor of Antiquity）
+  1× 弑神现场（6费，Scene of Deicide）
+  1× 风暴支配者（6费，Ruler of Tempests）
+  1× 灾难言灵·洋荷（7费，Ginger, Disastrous Word）
+  1× 圣剑天使（7费，Blade Angel）
+  1× 可爱杰作（8费，Beloved Masterpiece）
+  3× 劫焰奇美拉（8费，Infernal Chimera）
+  2× 理想国之神·列加尔（9费，Rezeal, Goddess of Nacreheim）
+接受的改动 7 次；复核时的胜率差：+1.6%、+1.7%、+2.8%、+4.1%、+2.9%、+7.9%、+2.6%
+
+## DRAGON  1.4.cJSg.cJh-.eDX0.eDmU.eE3E.ecE6.fDkE.fMmW.fMmg.fNFc.flAs.flAs.flQe.flTc.flg6.flg6.flvk.flvu.f-3-.f-Jc.f-LA.f-LA.f-ZE.g7bM.g7bM.g7bM.g7bW.g7eU.g7q-.g7q-.g7q-.g7r8.g7u6.g7u6.g7u6.g84c.g8KE.g8KO.g8KO.g8KO
+费用曲线：1费8 2费5 3费5 4费2 5费3 6费5 7费6 8费3 9费2 10费1
+  1× 赤流（1费，Spilling Red）
+  2× 碎裂的盗匪（1费，Ripper-Clawed Thief）
+  2× 理想国·涅格尔赫亚（1费，Nacreheim, Utopian World）
+  3× 天噬暴行者（1费，Obliviationist Marauder）
+  1× 懒惰的波摇花（2费，Sloth of the Crestpetal）
+  1× 沧海之精（2费，Spirit of Wadatsumi）
+  3× 收集的显现（2费，Collection Manifest）
+  1× 颚口之别（3费，Parting Jaws）
+  1× 信仰天使·迪纳梅斯（3费，Dynames, Angel of Piety）
+  1× 冰锥蜥蜴（3费，Freezing Icenewt）
+  1× 水龙神的慈雨（3费，Dance of the Waterwyrm）
+  1× 侦察龙人（3费，Dragonewt Scout）
+  1× 猛攻的龙战士（4费，Draconic Berserker）
+  1× 天噬抢劫犯（4费，Obliviationist Mugger）
+  2× 尘土的不法者（5费，Barren-Earth Tyrant）
+  1× 希求天使·丘丽奥丝（5费，Kyrios, Angel of Aspiration）
+  1× 水滴打拍者（6费，Stormy Shamisen Shredder）
+  1× 穹顶的战火·杰亚达（6费，Giada, Peerless Flame of War）
+  3× 龙惧·吉尔沃（6费，Jerva, Wyrm Unyielding）
+  1× 沙尘守宝龙（7费，Sandstorm Watchdragon）
+  1× 穿孔的罪人·安缇马丽亚（7费，Antemaria, Piercing Convict）
+  1× 禁牙的变貌·诺玛格达拉（7费，Normagdala, Ravening Revenant）
+  3× 天噬运货人（7费，Obliviationist Smuggler）
+  1× 凶鲨战士（8费，Warrior of the Deep）
+  1× 铁锤龙骑士（8费，Ironmace Dragoon）
+  1× 龙人管家（8费，Dragonfolk Butler）
+  1× 阿尔比昂巴哈姆特（9费，Alabaster Bahamut）
+  1× 理想国之神·列加尔（9费，Rezeal, Goddess of Nacreheim）
+  1× 天噬三恶·莱特欧芙（10费，Leizaut, Calamity of Obliviation）
+接受的改动 3 次；复核时的胜率差：+3.8%、+4.0%、+7.4%
+
+## ABYSS  1.5.cLum.cM8E.eGi8.eShA.eeNm.eegM.eev-.ef6U.eqd-.erJk.fDkO.fDkO.fbv6.fnvs.foM8.foM8.fzqM.f-3-.f-3-.f-5Y.f-LA.f-LA.f-ZE.gA1c.gA1c.gA1m.gA1m.gA1m.gAHE.gAHE.gAHO.gAKM.gAWs.gAWs.gAWs.gAmU.gAmU.gAme.gAme.gAme
+费用曲线：1费4 2费7 3费5 4费5 5费3 6费4 7费5 8费2 9费4 10费1
+  1× 魅惑的魅魔·莉莉姆（1费，Lilith, Enchanting Succubus）
+  2× 理想国·涅格尔赫亚（1费，Nacreheim, Utopian World）
+  1× 听取遗言（1费，Last Will and Testament）
+  1× 锁链相连（2费，Chains of the Past）
+  1× 爱意天使·艾克夏丝（2费，Exias, Angel of Love）
+  2× 告别入殓师（2费，Diligent Undertaker）
+  3× 末日变换·格莫瑞（2费，Gremory, Doom Dispeller）
+  1× 黑夜鬼人（3费，Night Fiend）
+  1× 逃避幽灵者（3费，Ghost Dodger）
+  1× 枯渴的天眼（3费，Depletive Eld Sight）
+  2× 信仰天使·迪纳梅斯（3费，Dynames, Angel of Piety）
+  1× 黑暗次元（4费，Dark Dimensions）
+  1× 颓废之泪（4费，Tears of Degradation）
+  3× 复仇山羊（4费，Vengeful Capra）
+  1× 无我看守（5费，Warden of Selflessness）
+  2× 永住守墓人（5费，Solemn Gravekeeper）
+  1× 特殊目标·海雷姆哈妮（6费，Illamrita, Designated Target）
+  1× 弑神现场（6费，Scene of Deicide）
+  2× 残思侦探·诺克坦（6费，Nocturne, Postmortem Detective）
+  1× “最强”的诱惑（7费，Allure of the Mightiest）
+  1× 桀骜半人马（7费，Restive Centaur）
+  3× 鬼录护士（7费，Attending Amanuensis）
+  2× 伽罗塔德 对 泽特（8费，Garodeth vs. Zeth）
+  1× 枯渴的魔神·阿尔弭斯（9费，Armes, Depletive Demon）
+  2× 高洁的黑翼·奥莉薇（9费，Olivia, Proud Dark Angel）
+  1× 理想国之神·列加尔（9费，Rezeal, Goddess of Nacreheim）
+  1× 奥夜花·释藤（10费，Shakdoh, Nightblossom）
+接受的改动 3 次；复核时的胜率差：+5.4%、+4.5%、+3.4%
+
+## HAVEN  1.6.c9hg.cOaU.eJ8E.eSvE.egrQ.ehJ6.eqas.er5g.erJu.f3zO.fC_M.fDE-.fRes.fRfA.fRxc.fS9g.fqI-.fqaA.fzqM.f-3-.f-LA.gCTs.gCU0.gCU0.gCW-.gCjU.gCjU.gCjU.gCje.gCmc.gCmc.gCz6.gCz6.gD0E.gD0E.gDCk.gDCk.gDCk.gDCu.gDCu
+费用曲线：1费2 2费8 3费9 4费5 5费3 6费7 7费3 8费2 9费1
+  1× 巴别隆城（1费，City of Babelon）
+  1× 理想国·涅格尔赫亚（1费，Nacreheim, Utopian World）
+  1× 污浊的圣水（2费，Unholy Water）
+  1× 纯真孩童（2费，Altaro Superfan）
+  1× 自律的圣鸟·汉萨（2费，Hamsa, Sculpted Divinity）
+  1× 图书室的魔女·莉莉尤姆（2费，Lilium, Witch of the Tomes）
+  1× 威胁的残渣（2费，Lingering Threat）
+  1× 同窗好友（2费，Academy Hijinks）
+  1× 爱意天使·艾克夏丝（2费，Exias, Angel of Love）
+  1× 地害加工者（2费，Desolationist Refiner）
+  1× 巴别隆市长·埃尔塔罗（3费，Altaro, Mayor of Babelon）
+  1× 纪律间谍（3费，Agent of the Testaments）
+  1× 信仰天使·迪纳梅斯（3费，Dynames, Angel of Piety）
+  1× 孤高的锻炼（3费，Solitary Cultivation）
+  3× 地害驯兽师（3费，Desolationist Tamer）
+  2× 徒然的证言（3费，Fruitless Testimony）
+  1× 激震的歌利亚（4费，Quake Goliath）
+  1× 铁拳神父（4费，Ironfist Priest）
+  1× 思念的《力量》·索菲娜（4费，Sofina, Inspiring Strength）
+  1× 激动的欢喜·阿尔菲德（4费，Alfied, Squire of Joy）
+  1× 有翼奏者（4费，Winged Accordionist）
+  1× 亡灵猎人·格兰特（5费，Grant, Hunter of Undeath）
+  2× 荒废的繁殖（5费，Destructive Propagation）
+  1× 崇拜的圣骑士（6费，Worshipful Crusader）
+  1× 神纹誓言（6费，Juratio）
+  3× 地害三恶·拉碧妲赫特（6费，Lapinette, Calamity of Desolation）
+  2× 亚教偶像（6费，Parareligious Idol）
+  1× 崇拜经理人·伊尼西雅（7费，Initia, Chief Ordination Officer）
+  2× 斗志修行僧（7费，Combative Monk）
+  2× 地害矫正者（8费，Desolationist Rehabilitator）
+  1× 恐惧的象征·欧米伽奥提普（9费，Omegotep, the Dreaded One）
+接受的改动 3 次；复核时的胜率差：+2.5%、+4.4%、+4.4%
+
+## PORTAL  1.7.e3ls.e3_e.ejJE.ejYs.eqd-.f5gc.f5gm.f5gm.f6PU.fDkE.fU5G.fUp-.fc8k.ft1-.ftEe.ftEe.fzqM.f-3-.f-3-.f-5Y.f-5Y.f-Jc.f-Jc.f-ZE.gEw6.gEwG.gEzE.gF9k.gF9u.gF9u.gFCs.gFCs.gFPM.gFPM.gFPM.gFSU.gFSU.gFSU.gFe-.gFe-
+费用曲线：1费5 2费4 3费4 4费3 5费5 6费6 7费4 8费4 9费5
+  1× 挥毫的怪物（1费，Monster Litterateur）
+  1× 组装失败（1费，Incohesive Construction）
+  3× 最凶恶的收容（1费，Calamity in Custody）
+  1× 天斧授予（2费，Advent of the Eld Axe）
+  1× 过度守护者·莉欧娜（2费，Leona, Overbearing Guardian）
+  1× 爱意天使·艾克夏丝（2费，Exias, Angel of Love）
+  1× 人灭执事（2费，Extinctionist Majordomo）
+  1× 白牙燐敛 （3费，Soulforge）
+  2× 信仰天使·迪纳梅斯（3费，Dynames, Angel of Piety）
+  1× 人灭富豪（3费，Extinctionist Socialite）
+  1× 手持军配团扇的伟丈夫（4费，Behemoth General）
+  1× 颓废之泪（4费，Tears of Degradation）
+  1× 个性店主（4费，Brusque Barkeep）
+  1× 决断的交错·亚修雷&莉缇雅（5费，Asher & Lydia, Paths Beyond）
+  2× 希求天使·丘丽奥丝（5费，Kyrios, Angel of Aspiration）
+  2× 毁灭怪腕（5费，Hand of Extinction）
+  1× 平庸的制图（6费，Myriad Designs）
+  2× 弑神现场（6费，Scene of Deicide）
+  1× 异界来访者（6费，Otherworldly Intruder）
+  2× 发射器猫人（6费，Bestial Beamcannoneer）
+  2× 炫酷舞者（7费，Beat Breaker）
+  2× 弹哭的变貌·艾兹伊甸（7费，Aizeden, Killshot Revenant）
+  1× 虚刻的安纳提玛·斯卡雷特（8费，Scarlet, Anathema of Dislocation）
+  3× 人灭绅士（8费，Extinctionist Dandy）
+  1× 阿尔比昂巴哈姆特（9费，Alabaster Bahamut）
+  1× 断绝的轮回·泽勒尔（9费，Zerael, Sundered Rebirth）
+  1× 理想国之神·列加尔（9费，Rezeal, Goddess of Nacreheim）
+  2× 人灭三恶·兰佩吉（9费，Lineage, Calamity of Extinction）
+接受的改动 2 次；复核时的胜率差：+2.2%、+4.4%
+
+对固定参照（第 0 轮的环境，每轮同一批发牌）的得分：
+  FOREST: 65.0% → 62.9% → 67.9% → 67.9% → 67.9% → 67.9% → 67.9% → 67.9% → 67.9% → 67.9% → 67.9% → 67.9% → 67.9% → 67.9%
+  SWORD: 57.1% → 60.0% → 60.0% → 60.0% → 63.6% → 63.6% → 63.6% → 63.6% → 63.6% → 63.6% → 63.6% → 63.6% → 63.6% → 63.6%
+  RUNE: 22.9% → 29.3% → 29.3% → 30.7% → 30.7% → 32.1% → 32.1% → 40.0% → 40.0% → 39.3% → 43.6% → 43.6% → 40.7% → 40.7%
+  DRAGON: 49.3% → 52.1% → 55.0% → 55.0% → 55.0% → 55.0% → 55.7% → 55.7% → 55.7% → 55.7% → 55.7% → 55.7% → 55.7% → 55.7%
+  ABYSS: 53.6% → 63.6% → 63.6% → 63.6% → 63.6% → 63.6% → 56.4% → 56.4% → 58.6% → 58.6% → 58.6% → 58.6% → 58.6% → 58.6%
+  HAVEN: 67.1% → 67.1% → 70.7% → 72.9% → 72.9% → 72.9% → 72.9% → 72.9% → 72.9% → 73.6% → 73.6% → 73.6% → 73.6% → 73.6%
+  PORTAL: 55.7% → 55.7% → 55.7% → 65.7% → 63.6% → 63.6% → 63.6% → 63.6% → 63.6% → 63.6% → 63.6% → 63.6% → 63.6% → 63.6%
