@@ -39,6 +39,13 @@ from svsim.learn import midrows as MR  # noqa: E402
 from svsim.learn.setnet import SetNet, score  # noqa: E402
 
 
+def _split(text: str) -> str:
+    """--split: key, hash, or games:FILE (learn.setnet.in_valid)."""
+    if text in ("key", "hash") or (text.startswith("games:") and Path(text[len("games:"):]).exists()):
+        return text
+    raise argparse.ArgumentTypeError("key, hash, or games:FILE with FILE there")
+
+
 def seeds_of(specs) -> list:
     """BASE:K (shards BASE + 2k, k < K) for each spec, in order."""
     out = []
@@ -93,7 +100,7 @@ def main() -> None:
     ap.add_argument("--l2", type=float, default=1e-5)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--checkpoint", default=None)
-    ap.add_argument("--split", choices=("key", "hash"), default="key",
+    ap.add_argument("--split", type=_split, default="key",
                     help="the validation games (learn.setnet.in_valid): key, every net's before 2026-10-19 and a "
                          "continued line's; hash, no tie to the seat (from-scratch nets of new pairings)")
     ap.add_argument("--hand-dir", default=None,

@@ -87,12 +87,26 @@ def dynamic(tokens: np.ndarray, inputs: str = "v1") -> np.ndarray:
 SPLITS = ("key", "hash")
 
 
+_LISTED: dict = {}
+
+
+def _listed_games(path: str) -> np.ndarray:
+    got = _LISTED.get(path)
+    if got is None:
+        got = _LISTED[path] = np.asarray(sorted(json.loads(Path(path).read_text(encoding="utf-8"))), np.int64)
+    return got
+
+
 def in_valid(keys, every: int = 20, split: str = "key") -> np.ndarray:
     """The validation games among game keys (seed * 100003 + g). "key": the key a multiple of `every`, every net's
     split before 2026-10-19. With the shards' even seeds (100003 = 3 mod 20) that picks g of one parity only, so one
     seat (netdata.play seats the deck at g % 2). "hash": splitmix64 of the key a multiple of `every`, the same share
-    of games with no tie to g's parity (from-scratch nets of new pairings, the architecture thread 2026-10-19)."""
+    of games with no tie to g's parity (from-scratch nets of new pairings, the architecture thread 2026-10-19).
+    "games:FILE": the games whose keys FILE lists (JSON, a list of keys), e.g. every game of a held-out deck of a pool
+    (the shared net S1, the architecture thread 2026-10-29 03:33Z); `every` is not used."""
     keys = np.asarray(keys, np.int64)
+    if split.startswith("games:"):
+        return np.isin(keys, _listed_games(split[len("games:"):]))
     if split == "key":
         return keys % every == 0
     if split != "hash":

@@ -105,3 +105,13 @@ def test_a_shared_net_answers_every_pairing_even_without_one():
     finally:
         net.info = info
     assert not SetNetEnded(Base(), net, mid_turn=True).any_pairing
+
+
+def test_in_valid_games_file(tmp_path):
+    import json
+    import numpy as np
+    from svsim.learn.setnet import in_valid
+    path = tmp_path / "games.json"
+    path.write_text(json.dumps([5, 9]), encoding="utf-8")
+    assert in_valid(np.array([5, 6, 9, 20]), 20, f"games:{path}").tolist() == [True, False, True, False]
+    assert in_valid(np.array([20, 21]), 20, "key").tolist() == [True, False]          # as before
