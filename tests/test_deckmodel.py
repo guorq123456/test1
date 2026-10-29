@@ -36,3 +36,11 @@ def test_a_deck_against_itself_and_saved_model(tmp_path):
     p = m.predict([deck, other], [other, deck])
     m.save(str(tmp_path / "m.npz"))
     assert np.allclose(DeckModel.load(str(tmp_path / "m.npz")).predict([deck, other], [other, deck]), p)
+
+
+def test_a_feature_never_seen_to_change_reads_0():
+    m = DeckModel(3, 4, 4, seed=1)
+    X = np.array([[1.0, 0.0, 2.0], [3.0, 0.0, 2.5], [2.0, 0.0, 4.0]])
+    m.set_scale(X)
+    Z = m.standardize(np.array([[2.0, 1.0, 100.0]]))       # a new card: column 1 never varied, column 2 far out
+    assert Z[0, 1] == 0.0 and Z[0, 2] == m.standardize(X)[:, 2].max()

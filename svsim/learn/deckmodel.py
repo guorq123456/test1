@@ -13,6 +13,12 @@ measured in the sandbox), the same row the value network reads. A new card is sc
     E(D)   = sum_c n_c(D) phi(c) / 40                  n_c(D): copies of c in the 40-card deck D
     p(D beats O) = sigmoid(v2 . relu(V1 [E(D), E(O), E(D) * E(O)] + c1) + c2)
 
+A card's row is standardized with the training cards' mean and spread, and each column clipped to the range the
+training cards span; a column that never varied among them (in the old pool: hook_on_enter, hook_on_engage, which
+only set 10's cards have) is read as 0. The model can't know what a feature does that it never saw change, and a
+column with a near-0 spread would otherwise put a new card thousands of spreads out (the builder found this in the
+value nets, 2026-10-29: +netclip).
+
 So a card's part depends on the deck it sits in only through E (the product term lets a deck's mix meet the
 opponent's), and two cards with the same row are the same card to the model. No fixed per-card value either: phi
 is a vector whose worth is decided by rho, against a given opponent.
@@ -83,11 +89,24 @@ class DeckModel:
                   "v2": rng.normal(0, 1 / math.sqrt(h2), h2), "c2": np.zeros(1)}
         self.mu = np.zeros(n_in)
         self.sd = np.ones(n_in)
+        self.lo = np.full(n_in, -np.inf)
+        self.hi = np.full(n_in, np.inf)
         self.info: dict = {}
+
+    def standardize(self, X: np.ndarray) -> np.ndarray:
+        return np.clip((X - self.mu) / self.sd, self.lo, self.hi)
+
+    def set_scale(self, X: np.ndarray) -> None:
+        """Mean, spread and range from the training cards' rows `X`; a column constant there reads 0."""
+        self.mu = X.mean(0)
+        sd = X.std(0)
+        self.sd = np.where(sd > 1e-9, sd, 1.0)
+        Z = (X - self.mu) / self.sd
+        self.lo, self.hi = Z.min(0), Z.max(0)
 
     # --- the cards
     def phi(self, X: np.ndarray) -> tuple:
-        pre = ((X - self.mu) / self.sd) @ self.p["W1"] + self.p["b1"]
+        pre = self.standardize(X) @ self.p["W1"] + self.p["b1"]
         return np.maximum(pre, 0.0), pre
 
     # --- forward over count matrices (rows: decks, columns: the batch's card vocabulary, entries copies / 40)
@@ -111,7 +130,7 @@ class DeckModel:
         dEo = du[:, h:2 * h] + du[:, 2 * h:] * Em
         dPhi = Cm.T @ dEm + Co.T @ dEo
         dpre = dPhi * (pre > 0)
-        g["W1"], g["b1"] = ((X - self.mu) / self.sd).T @ dpre, dpre.sum(0)
+        g["W1"], g["b1"] = self.standardize(X).T @ dpre, dpre.sum(0)
         return g
 
     # --- use
@@ -137,14 +156,14 @@ class DeckModel:
         return self.head(E[:len(mine)], E[len(mine):])
 
     def save(self, path: str) -> None:
-        np.savez(path, mu=self.mu, sd=self.sd, info=json.dumps(self.info), **self.p)
+        np.savez(path, mu=self.mu, sd=self.sd, lo=self.lo, hi=self.hi, info=json.dumps(self.info), **self.p)
 
     @classmethod
     def load(cls, path: str) -> "DeckModel":
         z = np.load(path)
         m = cls(z["W1"].shape[0], z["W1"].shape[1], z["V1"].shape[1])
         m.p = {k: z[k] for k in ("W1", "b1", "V1", "c1", "v2", "c2")}
-        m.mu, m.sd, m.info = z["mu"], z["sd"], json.loads(str(z["info"]))
+        m.mu, m.sd, m.lo, m.hi, m.info = z["mu"], z["sd"], z["lo"], z["hi"], json.loads(str(z["info"]))
         return m
 
 
@@ -180,7 +199,7 @@ def fit(records: list, h: int = 32, h2: int = 32, epochs: int = 60, batch: int =
     test = [r for r in records if held_out(r[5])]
     train = train + [(o, d, 1.0 - y, *rest) for d, o, y, *rest in train]
     m = DeckModel(X.shape[1], h, h2, seed)
-    m.mu, m.sd = X.mean(0), np.maximum(X.std(0), 1e-3)
+    m.set_scale(X)
     Cm, Co = _matrices(train, decks, col)
     y = np.array([r[2] for r in train])
     Tm, To = _matrices(test, decks, col)
