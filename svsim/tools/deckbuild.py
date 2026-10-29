@@ -93,7 +93,14 @@ def legal_cards(craft: Craft) -> list:
     ability scripted."""
     cards = collectible(craft) if SETS is None else [c for c in collectible(craft, unlimited=True) if c.card_set in SETS]
     missing = set(decks.unimplemented(cards))
-    return [c for c in cards if c not in missing and not c.is_token]
+    out, names = [], set()
+    # one card per name: the copy limit is by name, and a reprint under a new id (Stormy Blast, 10131320 and
+    # 10831310) let a deck hold 3 + 1 of it (found in search F's round 0, 10-29)
+    for c in (c for c in cards if c not in missing and not c.is_token):
+        if c.name not in names:
+            names.add(c.name)
+            out.append(c)
+    return out
 
 
 def missing_scripts() -> list:

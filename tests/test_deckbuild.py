@@ -238,3 +238,9 @@ def test_make_ups_come_from_real_lists_and_copy_moves_stay_legal():
                 w = move(v, craft, rng)
                 assert _legal(w, craft)
                 assert 1 <= sum(a != b for a, b in zip(v, w)) <= 6          # a fallback swap moves 2 cards
+
+
+def test_the_pool_holds_one_card_per_name():
+    for craft in deckbuild.CLASSES:
+        names = [c.name for c in deckbuild.legal_cards(craft)]
+        assert len(names) == len(set(names))                  # a reprint would let 3 + 1 copies in
