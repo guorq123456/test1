@@ -1,0 +1,7 @@
+条件：对手卡表已知（牌序、手牌未知）；两边都由 mcts:100+plan 操作
+[第 2 轮] RUNE: no change (halving)；换下 乌涅，换上 元素支配者
+[第 2 轮] DRAGON: accepted；换下 龙之启示、弑神现场，换上 烈焰火蜥蜴、猛攻的龙战士；复核差 +12.9% ± 2.8%
+[第 2 轮] ABYSS: rejected；换下 死亡主持人·马克米朗，换上 渴命的破坏者；复核差 -2.1% ± 1.4%
+[第 2 轮] HAVEN: no change (halving)；换下 崇敬的涂描者、阳光耳饰，换上 纯洁白狐、手持军配团扇的伟丈夫
+[第 2 轮] PORTAL: no change (halving)；换下 个性店主，换上 侦探的放大镜
+exit 124

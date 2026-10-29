@@ -1,0 +1,2 @@
+条件：对手卡表已知（牌序、手牌未知）；两边都由 mcts:100+plan 操作
+[第 2 轮] 对固定参照：FOREST 30.7%，SWORD 72.1%，RUNE 40.7%，DRAGON 42.9%，ABYSS 65.0%，HAVEN 40.7%，PORTAL 69.3%

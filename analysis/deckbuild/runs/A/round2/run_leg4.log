@@ -1,0 +1,6 @@
+条件：对手卡表已知（牌序、手牌未知）；两边都由 mcts:100+plan 操作
+[第 1 轮] ABYSS: undecided；换下 爱意天使·艾克夏丝，换上 锁链相连；复核差 +1.1% ± 0.8%
+[第 1 轮] HAVEN: accepted；换下 阳光耳饰，换上 铭刻之约；复核差 +6.6% ± 1.8%
+[第 1 轮] PORTAL: no change (halving)；换下 愚劣的兵器，换上 巴别隆城
+[第 1 轮] 对固定参照：FOREST 30.7%，SWORD 72.1%，RUNE 40.7%，DRAGON 27.1%，ABYSS 65.0%，HAVEN 40.7%，PORTAL 69.3%
+exit 124
