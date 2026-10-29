@@ -204,3 +204,20 @@ def test_screened_play_skips_deals_that_never_touch_a_changed_slot(tmp_path):
         k = [d[0] for d in deals].index(x["seed"])
         assert got["v"][k] == got["incumbent"][k]
         assert all(0 not in t for t in x["touched"])
+
+
+def test_shaped_decks_hold_13_cards_three_times_and_one_once():
+    rng = random.Random(10)
+    for craft in deckbuild.CLASSES:
+        ids = deckbuild.random_ids(craft, rng)
+        v = deckbuild.shaped(ids, craft, rng)
+        assert _legal(v, craft)
+        assert sorted(Counter(v).values()) == [1] + [3] * 13
+        prefer = [c for c in deckbuild.legal_cards(craft) if str(c.card_set) == "10010"]
+        for _ in range(10):
+            w = deckbuild.type_swap(v, craft, rng, prefer)
+            assert _legal(w, craft)
+            assert sorted(Counter(w).values()) == [1] + [3] * 13                 # the shape survives a swap
+            gone = set(v) - set(w)
+            assert 1 <= len(gone) <= 2
+            assert all(a == b or a in gone for a, b in zip(v, w))               # in place

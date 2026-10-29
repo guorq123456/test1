@@ -1,0 +1,8 @@
+# Anchor decks of search C (its round-0 field), so F's anchor curve is on C's scale (same --anchor-seed)
+anchorC-FOREST|1.1.e3_e.e3_e.eSfc.eUfk.eUsO.eUvM.eVLU.eVLU.etGu.fDXk.fDkO.fFRc.fGAe.fbPs.fbwg.fc8k.fzqM.fzqM.f-3-.f-3-.f-Jc.g0Gc.g0Gm.g0Gm.g0Jk.g0Jk.g0Jk.g0WE.g0WE.g0ZM.g0ZM.g0ZM.g0ls.g0ls.g0o-.g0o-.g0_U.g0_U.g0_e.g0_e
+anchorC-SWORD|1.2.cEaA.e4Uk.e9Ak.evyc.fDkO.fHuA.fI7e.fI7e.fIcu.fbv6.fgLU.fgqk.fh1O.fh1O.fzqM.f-3-.f-5Y.f-Jc.f-Jc.f-LA.f-LA.f-LA.f-ZE.g2is.g2is.g2j0.g2l-.g2yU.g2yU.g2yU.g2ye.g2_c.g2_c.g3C6.g3C6.g3FE.g3Rk.g3Ru.g3Ru.g3Ru
+anchorC-RUNE|1.3.c9w-.eBNM.eSAM.eaD-.eqqU.exvc.eyCM.eyee.fKpM.fbfU.fbv6.fjDs.fjG-.fjTU.fjTe.fzqM.fzqM.f-3-.f-5Y.f-Jc.f-LA.f-ZE.g596.g59G.g59G.g59G.g5CE.g5Ok.g5Ok.g5Ok.g5Ou.g5Ou.g5eM.g5eM.g5t-.g5t-.g5t-.g5u8.g5u8.g5u8
+anchorC-DRAGON|1.4.cJh-.eDX0.eDmU.ecQc.fDkE.fMmW.fMmg.flAs.flQe.flTc.flg6.flg6.flvk.flvu.f-3-.f-5Y.f-Jc.f-LA.f-LA.f-LA.f-ZE.g7bM.g7bM.g7bM.g7bW.g7eU.g7eU.g7eU.g7q-.g7q-.g7q-.g7r8.g7u6.g7u6.g7u6.g84c.g8KE.g8KO.g8KO.g8KO
+anchorC-ABYSS|1.5.eGi8.eShA.eegM.eev-.ef6U.eqd-.erJk.f1HM.fDkO.fDkO.fbv6.foM8.foM8.fzqM.fzqM.f-3-.f-3-.f-5Y.f-5Y.f-LA.f-LA.f-ZE.f-ZE.gA1c.gA1m.gA1m.gA1m.gAHE.gAHE.gAHO.gAKM.gAKM.gAWs.gAWs.gAWs.gAmU.gAmU.gAme.gAme.gAme
+anchorC-HAVEN|1.6.c9hg.cOaU.eJ8E.eSvE.egrQ.ehJ6.eqas.er5g.f3zO.fC_M.fC_M.fDE-.fDXk.fRfA.fqI-.fqaA.fzqM.f-3-.f-3-.f-LA.f-LA.f-LA.f-ZE.gCTs.gCU0.gCU0.gCW-.gCjU.gCjU.gCjU.gCje.gCmc.gCmc.gD0E.gD0E.gDCk.gDCk.gDCk.gDCu.gDCu
+anchorC-PORTAL|1.7.e3ls.ejJE.eqd-.f5gc.f5gm.f5gm.f6PU.fDkE.fU5G.fc8k.ft1-.ftEe.ftEe.fzqM.fzqM.f-3-.f-3-.f-5Y.f-5Y.f-Jc.f-Jc.f-Jc.f-LA.f-ZE.gEw6.gEwG.gEzE.gF9k.gF9u.gF9u.gFCs.gFCs.gFPM.gFPM.gFPM.gFSU.gFSU.gFSU.gFe-.gFe-

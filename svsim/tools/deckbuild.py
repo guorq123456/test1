@@ -185,6 +185,52 @@ def variant(ids: list, craft: Craft, rng: random.Random) -> list:
     return out
 
 
+# --shape: every deck is a tournament list's usual make-up, 13 cards three times and one card once (the 10-29
+# review: the free-form search left 27-31 different cards, 1-4 of them three times; Salem 19:30Z: 「在玩家视角甚至
+# 不能叫真卡组」)
+SHAPE_CORE, SHAPE_EXTRA = 13, 1
+
+
+def shaped(ids: list, craft: Craft, rng: random.Random) -> list:
+    """`ids` condensed to the shape: the cards it holds most often first (ties by chance), then the ones it holds
+    once, in a random order, each of the first 13 three times and the 14th once; short of cards, random legal
+    ones. Different draws give different condensations of one deck."""
+    have = Counter(ids)
+    multi = sorted((i for i in have if have[i] >= 2), key=lambda i: (-have[i], rng.random()))
+    single = sorted(i for i in have if have[i] == 1)
+    rng.shuffle(single)
+    picks = (multi + single)[:SHAPE_CORE + SHAPE_EXTRA]
+    options = sorted(c.card_id for c in legal_cards(craft))
+    while len(picks) < SHAPE_CORE + SHAPE_EXTRA:
+        picks.append(rng.choice([o for o in options if o not in picks]))
+    return [i for i in picks[:SHAPE_CORE] for _ in range(decks.MAX_COPIES)] + picks[SHAPE_CORE:]
+
+
+def type_swap(ids: list, craft: Craft, rng: random.Random, prefer: list | None = None) -> list:
+    """A shaped deck with every copy of 1 of its cards (a third of the time 2) given, in place, to a card it doesn't
+    hold: half the time one costing within 1 of the card it replaces, a quarter of the time one of `prefer` (the
+    new set's); when 2 go, half the time a pair from one set that belong together (a seed and one of its
+    _partners). The deck keeps its shape."""
+    options = legal_cards(craft)
+    have = Counter(ids)
+    gone = rng.sample(sorted(have), 1 if rng.random() < 2 / 3 else min(2, len(have)))
+    pool = [c for c in options if c.card_id not in have]
+    new: list = []
+    if len(gone) == 2 and rng.random() < 0.5:
+        seeds = [c for c in pool if prefer and c in prefer] if rng.random() < 0.5 else pool
+        seed = rng.choice(seeds or pool)
+        mates = [c for c in _partners(seed, pool)[:6]]
+        if mates:
+            new = [seed.card_id, rng.choice(mates).card_id]
+    for g in gone[len(new):]:
+        left = [c for c in pool if c.card_id not in new]
+        if prefer and rng.random() < 0.25:
+            left = [c for c in left if c in prefer] or left
+        new.append(_pick(left, rng, Counter(), POOL[g].cost, near=rng.random() < 0.5).card_id)
+    swap = dict(zip(gone, new))
+    return [swap.get(i, i) for i in ids]
+
+
 def consolidate(ids: list, craft: Craft, rng: random.Random) -> list:
     """`ids` with 1 or 2 slots of cards it holds once given more copies of a card it already holds (up to 3): real
     lists are a dozen full sets, and swaps of random cards almost never build one (the 10-29 review found the
@@ -428,12 +474,22 @@ class Search:
             by_class.setdefault(craft.name, []).append((label, legalize(ids, craft, self.rng)))
         curve = curve_of([ids for _, ids in seeds]) if seeds else None
         cands_by_class = {}
+        shape = getattr(self.args, "shape", False)
         for craft in CLASSES:
             cands = dict(by_class.get(craft.name, []))
             prefer = [c for c in legal_cards(craft) if str(c.card_set) == str(self.args.new_set)] \
                 if self.args.new_set else None
             for r in range(self.args.random):
                 cands[f"random{r}"] = random_ids(craft, self.rng, curve, prefer, self.args.new_share)
+            if shape:       # each seed condensed --shape-tries ways, each random deck once; doubles dropped
+                out, seen = {}, set()
+                for label, ids in cands.items():
+                    for m in range(1 if label.startswith("random") else self.args.shape_tries):
+                        v = shaped(ids, craft, self.rng)
+                        if deck_hash(v) not in seen and decks.identify([POOL[i] for i in v]) is None:
+                            seen.add(deck_hash(v))
+                            out[f"{label}~{m}"] = v
+                cands = out
             cands_by_class[craft.name] = cands
         field = {k: next(iter(v.values())) for k, v in cands_by_class.items()}
         field.update(self.st["field"])                     # resumed: the classes already done keep their decks
@@ -450,6 +506,8 @@ class Search:
             print(f"  → {best}，对临时环境 {mean:.1%}（{len(scores[best])} 个发牌）", flush=True)
             self.save()
         self.st["anchor"] = dict(self.st["field"])           # round 0's field, frozen
+        if getattr(self.args, "anchor_file", None):         # or another run's, to put two runs on one scale
+            self.st["anchor"] = {craft_of_ids(ids).name: ids for _, ids in read_seeds(self.args.anchor_file)}
         self.anchor()
         self.st["round"] = 1
         self.save()
@@ -493,6 +551,10 @@ class Search:
         """A package move (package) with probability --package, more copies of a card already held (consolidate)
         with probability --consolidate, else 1-3 single swaps (variant); with both 0 the draws are exactly the
         tool's before these options existed."""
+        if getattr(self.args, "shape", False):
+            prefer = [c for c in legal_cards(craft) if str(c.card_set) == str(self.args.new_set)] \
+                if getattr(self.args, "new_set", None) else None
+            return type_swap(inc, craft, self.rng, prefer)
         p = getattr(self.args, "package", 0.0) or 0.0
         q = getattr(self.args, "consolidate", 0.0) or 0.0
         if p or q:
@@ -648,6 +710,12 @@ def main() -> None:
     ap.add_argument("--new-set", default=None,
                     help="round 0's random decks fill --new-share of their slots with this card set's cards (e.g. 10010)")
     ap.add_argument("--new-share", type=float, default=0.6, help="see --new-set (0.6)")
+    ap.add_argument("--shape", action="store_true",
+                    help="every deck 13 cards three times and one once: round 0 condenses the seeds and random "
+                         "decks to that shape, and variants swap whole cards (type_swap)")
+    ap.add_argument("--shape-tries", type=int, default=3, help="--shape: condensations per seed deck (3)")
+    ap.add_argument("--anchor-file", help='the anchor decks ("label|deck hash", one per class) instead of round '
+                                          "0's field")
     ap.add_argument("--consolidate", type=float, default=0.0,
                     help="share of variants that give 1-2 single-copy slots to more copies of a card already held (0)")
     ap.add_argument("--screen", action="store_true",
