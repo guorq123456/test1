@@ -1,3 +1,4 @@
+import json
 import random
 from collections import Counter
 
@@ -159,3 +160,47 @@ def test_a_package_swaps_several_related_cards_in_place():
             assert all(i not in v for i in gone)
             sets = Counter(POOL[v[k]].card_set for k in changed)
             assert sets.most_common(1)[0][1] >= len(changed) // 2           # most of the package is from one set
+
+
+def test_consolidate_adds_copies_of_a_card_already_held():
+    rng = random.Random(8)
+    for craft in deckbuild.CLASSES:
+        ids = deckbuild.random_ids(craft, rng)
+        for _ in range(10):
+            v = deckbuild.consolidate(ids, craft, rng)
+            assert _legal(v, craft)
+            changed = [k for k, (a, b) in enumerate(zip(ids, v)) if a != b]
+            assert 1 <= len(changed) <= 3
+            if len({v[k] for k in changed}) == 1 and v[changed[0]] in ids:        # not the fallback swap
+                assert all(Counter(ids)[ids[k]] == 1 for k in changed)             # it gave up single copies
+                assert len(set(v)) < len(set(ids)) or len(changed) == 1
+
+
+def test_a_deal_reports_the_slots_each_game_touched():
+    rng = random.Random(9)
+    ids = deckbuild.random_ids(Craft.FOREST, rng)
+    opp = deckbuild.random_ids(Craft.SWORD, rng)
+    res = deckbuild.play_deal(("k", ids, opp, 85899100, "random"))
+    assert len(res["touched"]) == 2
+    for t in res["touched"]:
+        assert len(t) >= 3 and all(0 <= k < 40 for k in t)                          # the opening hand at least
+
+
+def test_screened_play_skips_deals_that_never_touch_a_changed_slot(tmp_path):
+    import argparse
+    args = argparse.Namespace(out=str(tmp_path), seed=1, variants=2, agent="random")
+    s = deckbuild.Search(args)
+    s.pool = deckbuild._InProcess()
+    rng = random.Random(4)
+    inc = deckbuild.random_ids(Craft.HAVEN, rng)
+    far = list(inc)
+    far[0] = next(c.card_id for c in deckbuild.legal_cards(Craft.HAVEN) if c.card_id not in inc)
+    deals = [(85899200 + j, deckbuild.random_ids(Craft.RUNE, rng)) for j in range(6)]
+    got = s.play({"incumbent": inc, "v": far}, deals, "t", screen="incumbent")
+    lines = [json.loads(x) for x in (tmp_path / "deals.jsonl").read_text(encoding="utf-8").splitlines()]
+    screened = [x for x in lines if x.get("screened")]
+    assert len([x for x in lines if x["key"] == "v"]) == 6                      # every deal on record
+    for x in screened:
+        k = [d[0] for d in deals].index(x["seed"])
+        assert got["v"][k] == got["incumbent"][k]
+        assert all(0 not in t for t in x["touched"])

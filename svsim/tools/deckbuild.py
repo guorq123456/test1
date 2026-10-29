@@ -185,6 +185,25 @@ def variant(ids: list, craft: Craft, rng: random.Random) -> list:
     return out
 
 
+def consolidate(ids: list, craft: Craft, rng: random.Random) -> list:
+    """`ids` with 1 or 2 slots of cards it holds once given more copies of a card it already holds (up to 3): real
+    lists are a dozen full sets, and swaps of random cards almost never build one (the 10-29 review found the
+    search's decks at 27-31 different cards, 1-4 of them three times). Falls back to variant when it can't."""
+    have = Counter(ids)
+    grow = sorted(i for i in have if have[i] < decks.MAX_COPIES)
+    if not grow:
+        return variant(ids, craft, rng)
+    c = rng.choice(grow)
+    n = min(rng.randint(1, 2), decks.MAX_COPIES - have[c])
+    singles = [k for k, i in enumerate(ids) if have[i] == 1 and i != c]
+    if len(singles) < n:
+        return variant(ids, craft, rng)
+    out = list(ids)
+    for k in rng.sample(singles, n):
+        out[k] = c
+    return out
+
+
 def _partners(seed, options: list) -> list:
     """`options` of the seed's card set except the seed, closest to it first: cards naming a card the seed names
     (the same token or amulet) before the rest, each group by cosine between standardized static rows."""
@@ -261,21 +280,28 @@ def play_deal(job) -> dict:
     from svsim.tools.arena import make_agent
     key, ids, opp, seed, spec = job
     mine, theirs = [POOL[i] for i in ids], [POOL[i] for i in opp]
-    points = []
+    points, touched = [], []
     for seat in (0, 1):
         cards = [None, None]
         cards[seat], cards[1 - seat] = mine, theirs
         state = new_game(cards[0], cards[1], seed=seed)
+        me = state.players[seat]
+        slot = {uid: k for k, uid in enumerate(sorted(c.uid for c in me.deck + me.hand))}   # made in list order
+        seen = {slot[c.uid] for c in me.hand}
         agents = [None, None]
         agents[seat] = make_agent(spec, 2 * seed + seat)
         agents[1 - seat] = make_agent(spec, 2 * seed + 1 - seat + 7919)
         while not state.over:
             apply(state, agents[state.active].act(state, legal_actions(state)))
         points.append(1.0 if state.winner == seat else 0.5 if state.winner not in (0, 1) else 0.0)
+        left = {c.uid for c in me.deck}
+        touched.append(sorted(seen | {k for uid, k in slot.items() if uid not in left}))
         if seat == 0:
             first = state.first
     # both lists as deck codes, so the records alone can train a model of deck strength (deck, opponent, score)
-    return {"key": key, "seed": seed, "points": points, "first": first, "deck": deck_hash(ids), "opp": deck_hash(opp)}
+    # touched: per game, the deck's slots that were in the opening hand or left the deck (screened halving)
+    return {"key": key, "seed": seed, "points": points, "first": first, "deck": deck_hash(ids), "opp": deck_hash(opp),
+            "touched": touched}
 
 
 class _InProcess:
@@ -325,8 +351,12 @@ class Search:
             self.st["next_seed"] += 1
         return out
 
-    def play(self, decklists: dict, deals: list, tag: str) -> dict:
-        """Each deck of `decklists` (key -> ids) on each deal; key -> list of deal scores in deal order."""
+    def play(self, decklists: dict, deals: list, tag: str, screen: str | None = None) -> dict:
+        """Each deck of `decklists` (key -> ids) on each deal; key -> list of deal scores in deal order. With
+        `screen` (the incumbent's key) the incumbent plays first, and a deck that differs from it only in slots
+        neither of its two games touched (opening hand or drawn) takes its score on that deal unplayed: up to
+        the first touched changed slot the games are the same, so the difference such a deal adds is 0 (the
+        search's own sampling of the unseen deck can still differ; screening is for the halving only)."""
         for ids in [*decklists.values(), *(opp for _, opp in deals)]:
             # a registered deck redraws by its own data (agents.mulligan) and is filed under its name
             # (new_game's deck_name): its variants, unrecognized, wouldn't be, and a card swap would mix with a
@@ -334,13 +364,32 @@ class Search:
             name = decks.identify([POOL[i] for i in ids])
             if name is not None:
                 raise ValueError(f"a registered deck ({name}) is in the search")
-        jobs = [(k, ids, opp, seed, self.args.agent) for k, ids in decklists.items() for seed, opp in deals]
         order = {seed: j for j, (seed, _) in enumerate(deals)}
         got = {k: [None] * len(deals) for k in decklists}
+        rest = dict(decklists)
         with open(self.out / "deals.jsonl", "a", encoding="utf-8") as fh:
-            for res in self.pool.imap_unordered(play_deal, jobs):
-                got[res["key"]][order[res["seed"]]] = sum(res["points"]) / 2
-                fh.write(json.dumps({"tag": tag, **res}) + "\n")
+            def run(lists, skip=frozenset()):
+                jobs = [(k, ids, opp, seed, self.args.agent) for k, ids in lists.items() for seed, opp in deals
+                        if (k, seed) not in skip]
+                out = {}
+                for res in self.pool.imap_unordered(play_deal, jobs):
+                    got[res["key"]][order[res["seed"]]] = sum(res["points"]) / 2
+                    fh.write(json.dumps({"tag": tag, **res}) + "\n")
+                    out[res["seed"]] = res
+                return out
+            skip = set()
+            if screen is not None:
+                base = run({screen: rest.pop(screen)})
+                inc = decklists[screen]
+                for k, ids in rest.items():
+                    changed = {j for j, (a, b) in enumerate(zip(ids, inc)) if a != b}
+                    for seed, _ in deals:
+                        if not changed & set(base[seed]["touched"][0]) and not changed & set(base[seed]["touched"][1]):
+                            skip.add((k, seed))
+                            got[k][order[seed]] = got[screen][order[seed]]
+                            fh.write(json.dumps({"tag": tag, **base[seed], "key": k, "deck": deck_hash(ids),
+                                                 "screened": True}) + "\n")
+            run(rest, skip)
         return got
 
     def halving(self, cands: dict, incumbent: tuple | None, field: dict, tag: str, first: int | None = None) -> tuple:
@@ -355,7 +404,8 @@ class Search:
             playing = {k: cands[k] for k in alive}
             if incumbent:
                 playing[incumbent[0]] = incumbent[1]
-            got = self.play(playing, deals, f"{tag}:s{stage}")
+            got = self.play(playing, deals, f"{tag}:s{stage}",
+                            screen=incumbent[0] if incumbent and getattr(self.args, "screen", False) else None)
             for k, v in got.items():
                 scores[k] += v
             if len(alive) == 1:
@@ -440,13 +490,19 @@ class Search:
         print(f"[第 {self.st['round']} 轮] 对固定参照：" + "，".join(f"{k} {v:.1%}" for k, v in point.items()), flush=True)
 
     def one_variant(self, inc: list, craft: Craft) -> list:
-        """A package move (package) with probability --package, else 1-3 single swaps (variant); --package 0 draws
-        exactly as the tool did before the option existed."""
+        """A package move (package) with probability --package, more copies of a card already held (consolidate)
+        with probability --consolidate, else 1-3 single swaps (variant); with both 0 the draws are exactly the
+        tool's before these options existed."""
         p = getattr(self.args, "package", 0.0) or 0.0
-        if p and self.rng.random() < p:
-            prefer = [c for c in legal_cards(craft) if str(c.card_set) == str(self.args.new_set)] \
-                if getattr(self.args, "new_set", None) else None
-            return package(inc, craft, self.rng, prefer)
+        q = getattr(self.args, "consolidate", 0.0) or 0.0
+        if p or q:
+            r = self.rng.random()
+            if r < p:
+                prefer = [c for c in legal_cards(craft) if str(c.card_set) == str(self.args.new_set)] \
+                    if getattr(self.args, "new_set", None) else None
+                return package(inc, craft, self.rng, prefer)
+            if r < p + q:
+                return consolidate(inc, craft, self.rng)
         return variant(inc, craft, self.rng)
 
     def propose(self, inc: list, craft: Craft, field: dict) -> dict:
@@ -592,6 +648,11 @@ def main() -> None:
     ap.add_argument("--new-set", default=None,
                     help="round 0's random decks fill --new-share of their slots with this card set's cards (e.g. 10010)")
     ap.add_argument("--new-share", type=float, default=0.6, help="see --new-set (0.6)")
+    ap.add_argument("--consolidate", type=float, default=0.0,
+                    help="share of variants that give 1-2 single-copy slots to more copies of a card already held (0)")
+    ap.add_argument("--screen", action="store_true",
+                    help="halving plays a variant only on deals where its incumbent touched a changed slot (the "
+                         "confirmation and anchors still play every deal)")
     ap.add_argument("--package", type=float, default=0.0,
                     help="share of variants that replace every copy of 1-2 cards with a package of related cards "
                          "from one card set (0: single swaps only)")
