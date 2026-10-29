@@ -139,8 +139,11 @@ def curve_of(decklists: list) -> Counter:
     return Counter(min(POOL[i].cost, 10) for ids in decklists for i in ids)
 
 
-def random_ids(craft: Craft, rng: random.Random, curve: Counter | None = None) -> list:
-    """A random legal deck: each slot's cost drawn from `curve` (flat without one), then a card of that cost."""
+def random_ids(craft: Craft, rng: random.Random, curve: Counter | None = None, prefer: list | None = None,
+               share: float = 0.0) -> list:
+    """A random legal deck: `share` of its slots random cards of `prefer` (the new set's, so that the search
+    can start inside an archetype a 1-3 card swap would never assemble), each other slot's cost drawn from
+    `curve` (flat without one), then a card of that cost."""
     options = legal_cards(craft)
     by_cost: dict = {}
     for c in options:
@@ -148,6 +151,12 @@ def random_ids(craft: Craft, rng: random.Random, curve: Counter | None = None) -
     costs = sorted(by_cost)
     weights = [curve.get(k, 0) + 0.1 for k in costs] if curve else None
     out, have = [], Counter()
+    while prefer and len(out) < round(share * decks.DECK_SIZE):
+        left = [c for c in prefer if have[c.card_id] < decks.MAX_COPIES]
+        if not left:
+            break
+        out.append(rng.choice(left).card_id)
+        have[out[-1]] += 1
     while len(out) < decks.DECK_SIZE:
         cost = rng.choices(costs, weights)[0]
         exact = [c for c in by_cost[cost] if have[c.card_id] < decks.MAX_COPIES]
@@ -308,8 +317,10 @@ class Search:
         cands_by_class = {}
         for craft in CLASSES:
             cands = dict(by_class.get(craft.name, []))
+            prefer = [c for c in legal_cards(craft) if str(c.card_set) == str(self.args.new_set)] \
+                if self.args.new_set else None
             for r in range(self.args.random):
-                cands[f"random{r}"] = random_ids(craft, self.rng, curve)
+                cands[f"random{r}"] = random_ids(craft, self.rng, curve, prefer, self.args.new_share)
             cands_by_class[craft.name] = cands
         field = {k: next(iter(v.values())) for k, v in cands_by_class.items()}
         field.update(self.st["field"])                     # resumed: the classes already done keep their decks
@@ -478,6 +489,9 @@ def main() -> None:
     ap.add_argument("--seeds-file", help='seed decks, one "label|deck hash" per line')
     ap.add_argument("--random", type=int, default=8, help="random decks per class in round 0 (8)")
     ap.add_argument("--agent", default="mcts:100+plan", help="the agent playing both sides (mcts:100+plan)")
+    ap.add_argument("--new-set", default=None,
+                    help="round 0's random decks fill --new-share of their slots with this card set's cards (e.g. 10010)")
+    ap.add_argument("--new-share", type=float, default=0.6, help="see --new-set (0.6)")
     ap.add_argument("--rounds", type=int, default=10, help="rounds after round 0 (10)")
     ap.add_argument("--variants", type=int, default=8, help="variants per class per round (8)")
     ap.add_argument("--stage", type=int, default=28, help="deals in the halving's first stage, doubled each stage (28)")

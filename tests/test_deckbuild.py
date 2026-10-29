@@ -99,3 +99,12 @@ def test_a_class_is_searched_against_the_other_classes(tmp_path):
     s.halving = halving
     s.step("DRAGON")
     assert seen == [{c.name for c in deckbuild.CLASSES} - {"DRAGON"}]
+
+
+def test_random_decks_can_start_from_the_new_set():
+    rng = random.Random(4)
+    for craft in deckbuild.CLASSES:
+        prefer = [c for c in deckbuild.legal_cards(craft) if str(c.card_set) == "10010"]
+        ids = deckbuild.random_ids(craft, rng, None, prefer, 0.6)
+        assert _legal(ids, craft)
+        assert sum(str(POOL[i].card_set) == "10010" for i in ids) >= 24
