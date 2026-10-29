@@ -114,3 +114,6 @@ BrokenPipeError: [WinError 232] 管道正在被关闭。
 条件：对手卡表已知（牌序、手牌未知）；两边都由 mcts:100+plan 操作
 [第 1 轮] PORTAL: no change (halving)；换下 尽小花·伊鞠，换上 巴别隆城
 [第 1 轮] 对固定参照：FOREST 69.3%，SWORD 77.9%，RUNE 54.3%，DRAGON 62.1%，ABYSS 85.0%，HAVEN 67.1%，PORTAL 90.7%
+[第 2 轮] FOREST: rejected；换下 自律的圣鸟·汉萨，换上 恐惧的象征·欧米伽奥提普；复核差 -0.6% ± 1.0%
+[第 2 轮] SWORD: rejected；换下 须臾剑士，换上 人马骑士；复核差 -1.4% ± 1.1%
+--- paused 2026-10-29T21:19:11Z at Salem's request (state round 2, class_index 2; RUNE of round 2 was in progress and will be replayed) ---
