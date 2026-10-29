@@ -1,0 +1,37 @@
+{
+ "net": "analysis/scaling/models/net-s1-20k.npz",
+ "decisions": 1500,
+ "every": 86,
+ "teacher": "mcts:400+plan",
+ "top1": {
+  "net_top1": 0.454,
+  "hand_top1": 0.668,
+  "recorded_top1": 0.814,
+  "net_hand_same_top1": 0.526
+ },
+ "spearman_with_teacher_visits": {
+  "net": {
+   "mean": 0.4209,
+   "n": 1211,
+   "se": 0.0129
+  },
+  "hand": {
+   "mean": 0.5779,
+   "n": 1210,
+   "se": 0.0112
+  },
+  "recorded": {
+   "mean": 0.8374,
+   "n": 1208,
+   "se": 0.0067
+  }
+ },
+ "counts": {
+  "decisions": 1500,
+  "net_top1": 681,
+  "hand_top1": 1002,
+  "recorded_top1": 1221,
+  "net_hand_same_top1": 789
+ },
+ "condition": "对手卡表已知（牌序、手牌未知）"
+}
