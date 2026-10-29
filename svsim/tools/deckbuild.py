@@ -230,7 +230,7 @@ class _InProcess:
 def _nice() -> None:
     try:
         os.nice(10)
-    except OSError:
+    except (OSError, AttributeError):          # Windows has no os.nice: start the run at low priority there
         pass
 
 
