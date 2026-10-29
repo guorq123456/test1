@@ -255,6 +255,7 @@ class Search:
                        "args": {k: v for k, v in vars(args).items() if k not in ("report", "workers")}}
         self.rng = random.Random(f"{args.seed}:{self.st['round']}:{self.st['class_index']}")
         self.pool = None
+        self.model = None
 
     def save(self) -> None:
         tmp = self.state_path.with_suffix(".tmp")
@@ -384,11 +385,38 @@ class Search:
         self.st.setdefault("anchor_curve", []).append({"round": self.st["round"], **point})
         print(f"[第 {self.st['round']} 轮] 对固定参照：" + "，".join(f"{k} {v:.1%}" for k, v in point.items()), flush=True)
 
+    def propose(self, inc: list, craft: Craft, field: dict) -> dict:
+        """--variants variants of the incumbent. With --guide MODEL (learn.deckmodel): --guide-pool distinct
+        variants, of which the model's best by predicted mean score against `field` and --guide-explore drawn at
+        random from the rest; the games still decide."""
+        if not getattr(self.args, "guide", None):
+            return {f"v{j}": variant(inc, craft, self.rng) for j in range(self.args.variants)}
+        if self.model is None:
+            from svsim.learn.deckmodel import DeckModel
+            self.model = DeckModel.load(self.args.guide)
+        pool, seen = [], {deck_hash(inc)}
+        for _ in range(self.args.guide_pool * 5):
+            v = variant(inc, craft, self.rng)
+            if deck_hash(v) not in seen:
+                seen.add(deck_hash(v))
+                pool.append(v)
+            if len(pool) == self.args.guide_pool:
+                break
+        opps = list(field.values())
+        pred = self.model.predict([v for v in pool for _ in opps], [o for _ in pool for o in opps])
+        means = pred.reshape(len(pool), len(opps)).mean(1)
+        order = sorted(range(len(pool)), key=lambda j: -means[j])
+        explore = min(self.args.guide_explore, self.args.variants)
+        picked = order[:self.args.variants - explore]
+        rest = order[self.args.variants - explore:]
+        picked += self.rng.sample(rest, min(explore, len(rest)))
+        return {f"v{j}": pool[k] for j, k in enumerate(picked)}
+
     def step(self, name: str) -> None:
         craft = Craft[name]
         inc = self.st["field"][name]
         field = {k: v for k, v in self.st["field"].items() if k != name}
-        cands = {f"v{j}": variant(inc, craft, self.rng) for j in range(self.args.variants)}
+        cands = self.propose(inc, craft, field)
         tag = f"r{self.st['round']}:{name}"
         best, scores = self.halving(cands, ("incumbent", inc), field, tag)
         cand_mean = sum(scores[best]) / len(scores[best])
@@ -503,6 +531,11 @@ def main() -> None:
     ap.add_argument("--sets", default=None,
                     help='build from these card sets instead of the Rotation: "pre10" (the Rotation before set 10) '
                          'or comma-separated set numbers (10000 is Basic)')
+    ap.add_argument("--guide", default=None,
+                    help="a learn.deckmodel model: it picks which variants are played (the games still decide)")
+    ap.add_argument("--guide-pool", type=int, default=200, help="variants the model ranks per class per round (200)")
+    ap.add_argument("--guide-explore", type=int, default=2,
+                    help="of --variants, this many drawn at random from the model's rest (2)")
     ap.add_argument("--rounds", type=int, default=10, help="rounds after round 0 (10)")
     ap.add_argument("--variants", type=int, default=8, help="variants per class per round (8)")
     ap.add_argument("--stage", type=int, default=28, help="deals in the halving's first stage, doubled each stage (28)")

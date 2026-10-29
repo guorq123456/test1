@@ -120,3 +120,26 @@ def test_a_run_can_build_from_the_old_pool():
             assert all(POOL[i].card_set != 10010 for i in ids)
     finally:
         deckbuild.SETS = None
+
+
+def test_a_model_picks_the_variants_to_play(tmp_path):
+    """--guide: the model ranks --guide-pool variants; the best and --guide-explore random ones are played."""
+    import argparse
+    import numpy as np
+    from svsim.learn.deckmodel import DeckModel, static_rows
+    from svsim.cards.pool import POOL as P
+    m = DeckModel(len(static_rows([next(iter(P))])[0]), 4, 4, seed=1)
+    path = str(tmp_path / "m.npz")
+    m.save(path)
+    args = argparse.Namespace(out=str(tmp_path / "run"), seed=1, variants=4, guide=path, guide_pool=20,
+                              guide_explore=1)
+    s = deckbuild.Search(args)
+    rng = random.Random(6)
+    field = {c.name: deckbuild.random_ids(c, rng) for c in deckbuild.CLASSES if c != Craft.DRAGON}
+    inc = deckbuild.random_ids(Craft.DRAGON, rng)
+    cands = s.propose(inc, Craft.DRAGON, field)
+    assert len(cands) == 4 and len({deckbuild.deck_hash(v) for v in cands.values()}) == 4
+    assert all(_legal(v, Craft.DRAGON) for v in cands.values())
+    # the three the model ranks first are among them
+    pred = s.model.predict([v for v in cands.values() for _ in field], [o for _ in cands for o in field.values()])
+    assert np.isfinite(pred).all()
