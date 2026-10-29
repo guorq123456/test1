@@ -23,7 +23,7 @@ EARTH_SIGIL = "Earth Sigil"
 DEPARTED = "Departed"
 # Clue (set 10, 2026-10-28; the rules as Dengeki Online 10-27 reported the official stream): a Clue amulet enters
 # with 1 clue; when it enters, the allied Clue amulets already on the field are banished and their clues added to it.
-# What happens at 0 clues is not stated yet: as Earth Sigil, the amulet is destroyed (CLUE_ZERO_DESTROYS).
+# At 0 clues the amulet is destroyed (CLUE_ZERO_DESTROYS; Salem confirmed, 2026-10-29: 「线索到0，证据会破坏」).
 CLUE = "Clue"
 CLUE_ZERO_DESTROYS = True
 

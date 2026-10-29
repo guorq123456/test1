@@ -805,10 +805,12 @@ class SetNetEnded:
     search.evaluate.after_end_of_turn on a copy, the moment the net was trained on; off, nothing changes. With
     `mid_turn` (agent option +netmid; a net with the mid-turn flag, learn.midrows), such a position is scored as it
     is by the net's mid-turn branch (flag 1), with no turn end played, and every other position by its turn-end
-    branch (flag 0); it takes the place of `end_mid_turn`."""
+    branch (flag 0); it takes the place of `end_mid_turn`. With `any_pairing` (agent option +netany), the net
+    scores every game, whatever the decks (a shared net, or a pairing net tried on decks it never saw); off, only
+    its own pairing, as before."""
 
     def __init__(self, base, net: SetNet, end_mid_turn: bool = False, mid_turn: bool = False,
-                 reply_end: bool = False):
+                 reply_end: bool = False, any_pairing: bool = False):
         self.base = base
         # +netreply (the architecture thread 2026-10-19 00:37Z): a leaf of +reply's played-out opponent turn, stopped
         # at that turn's end (search.mcts reply_end, after_end_of_turn) and scored with player_moves_next, is the
@@ -819,8 +821,9 @@ class SetNetEnded:
         self.mid_turn = mid_turn                 # +netmid: a mid-turn position is scored by the mid-turn branch
         if mid_turn and not net.flag:
             raise ValueError("+netmid needs a net with the mid-turn flag (learn.midrows)")
+        self.any_pairing = any_pairing           # +netany (the architecture thread 2026-10-29 02:30Z)
         self.pair = (net.info.get("deck"), net.info.get("opponent"))
-        if None in self.pair:
+        if None in self.pair and not any_pairing:
             raise ValueError("the net names no pairing (info deck / opponent)")
         # a net trained on both sides of a non-mirror pairing (NM1) names both orders in info "pairs"; a net
         # without the key answers for (deck, opponent) only, as before
@@ -829,8 +832,8 @@ class SetNetEnded:
     def answers_reply(self, state, player: int) -> bool:
         """Whether a +reply leaf where the opponent of `player` ends the turn is scored here (+netreply, the net's
         pairing seen from the opponent)."""
-        return self.reply_end and (state.players[1 - player].deck_name, state.players[player].deck_name) \
-            in self.pairs
+        return self.reply_end and (self.any_pairing or (state.players[1 - player].deck_name,
+                                                        state.players[player].deck_name) in self.pairs)
 
     def score(self, state, player: int, player_moves_next: bool = False) -> float:
         from svsim.learn.model import SCALE
@@ -839,8 +842,8 @@ class SetNetEnded:
             return WIN if state.winner == player else (-WIN if state.winner == 1 - player else 0.0)
         if player_moves_next and state.active == player and self.answers_reply(state, player):
             return -SCALE * self.net.logit(state, 1 - player)
-        if not player_moves_next and (state.players[player].deck_name, state.players[1 - player].deck_name) \
-                in self.pairs:
+        if not player_moves_next and (self.any_pairing or (state.players[player].deck_name,
+                                                           state.players[1 - player].deck_name) in self.pairs):
             if self.mid_turn and state.active == player:
                 return SCALE * self.net.logit(state, player, mid=True)
             if self.end_mid_turn and state.active == player:

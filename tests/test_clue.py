@@ -1,7 +1,7 @@
 """Clue (set 10, Deicide in Nacreheim, 2026-10-28): the rule as Dengeki Online 10-27 reported the official stream
 (the architecture thread 10-28) and the two Clue amulets' text. A Clue amulet enters with 1 clue; entering banishes
-the allied Clue amulets already on the field and adds their clues to it. At 0 clues it is destroyed (not stated by
-the source yet: as Earth Sigil, effects.CLUE_ZERO_DESTROYS)."""
+the allied Clue amulets already on the field and adds their clues to it. At 0 clues it is destroyed
+(effects.CLUE_ZERO_DESTROYS; Salem confirmed, 2026-10-29)."""
 from svsim.cards import neutral
 from svsim.core import effects as E
 from svsim.core.actions import EndTurn, Engage, PlayCard
