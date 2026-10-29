@@ -1,6 +1,8 @@
 """The P3 pool (the architecture thread 2026-10-29 19:45Z; Salem 19:44Z approved ten times the shared net's self-play):
 P2's 432 decks and the distinct decks of deck search F's round 0 (claude/deck-runs-F, deals.jsonl "deck", tags "r0:"),
-B-r1's 7 decks and S1's 7 held-out decks left out (the gate's field, and the validation decks).
+B-r1's 7 decks and S1's 7 held-out decks left out (the gate's field, and the validation decks), and so is any deck
+with more than 3 cards of one name (Stormy Blast has two card ids, 10131320 and 10831310, the set-8 reprint; the
+architecture thread 2026-10-29 20:15Z: the limit is by name; 8 of P2's Rune decks hold 4-5).
 
     python analysis/sharednet/p3pool.py --p2 analysis/sharednet/fields/P2-pool.txt --deals DEALS [DEALS ...] \
         --source "claude/deck-runs-F <commit>" --out analysis/sharednet/fields/P3-pool.txt
@@ -24,7 +26,10 @@ CLASSES = {1: "forest", 2: "sword", 3: "rune", 4: "dragon", 5: "abyss", 6: "have
 
 
 def main() -> None:
+    from collections import Counter
     from svsim.cards import deckcode
+    from svsim.cards.decks import MAX_COPIES
+    from svsim.cards.pool import POOL
     from svsim.learn.scaledata import pool_of
     from svsim.tools.deckgate import read_field
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -65,6 +70,21 @@ def main() -> None:
             if key in seen or key in new:
                 continue
             new[key] = (int(craft), deckcode.encode_deck(fmt, craft, sorted(ids)))
+    def over(ids) -> bool:
+        return max(Counter(POOL[i].name for i in ids).values()) > MAX_COPIES
+    over_new = [k for k in new if over(k)]
+    for k in over_new:
+        del new[k]
+    p2_ids = dict(p2)
+    body, over_p2 = [], []
+    for line in p2_text.splitlines():
+        if not line.strip() or line.startswith("#"):
+            continue
+        label = line.split("|", 1)[0].strip()
+        if over(p2_ids[label]):
+            over_p2.append(label)
+        else:
+            body.append(line)
     by_class: dict = {}
     for key, (craft, code) in new.items():
         by_class.setdefault(craft, []).append(code)
@@ -72,14 +92,15 @@ def main() -> None:
     for craft in sorted(by_class):
         for n, code in enumerate(sorted(by_class[craft], key=lambda c: hashlib.sha256(c.encode()).hexdigest()), 1):
             lines.append(f"P-F0-{CLASSES.get(craft, craft)}-{n}|{code}")
-    body = [l for l in p2_text.splitlines() if l.strip() and not l.startswith("#")]
-    head = (f"# P3 (the architecture thread 2026-10-29 19:45Z): P2's {len(body)} decks, then the {len(lines)} distinct "
+    head = (f"# P3 (the architecture thread 2026-10-29 19:45Z): P2's decks ({len(body)}), then the {len(lines)} distinct "
             f"decks of deck search F {args.round} ({args.source}, deals.jsonl deck) not in P2; B-r1's 7 and S1's 7 "
-            f"held-out decks left out")
+            f"held-out decks left out, and decks with more than {MAX_COPIES} cards of one name "
+            f"(P2's {', '.join(over_p2) or 'none'}; {len(over_new)} of F's)")
     text = "\n".join([head] + body + lines) + "\n"
     Path(args.out).write_text(text, encoding="utf-8", newline="\n")
     pool = pool_of(args.out)
     print(json.dumps({"deals": deals, "p2": len(body), "new": len(lines), "left_out_deals": skipped_out,
+                      "over_by_name": {"p2": over_p2, "new": len(over_new)},
                       "pool": len(pool), "by_class": {CLASSES.get(c, c): len(v) for c, v in sorted(by_class.items())},
                       "sha256": hashlib.sha256(Path(args.out).read_bytes()).hexdigest()}))
 
