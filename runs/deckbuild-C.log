@@ -73,3 +73,9 @@ BrokenPipeError: [WinError 232] 管道正在被关闭。
 [第 3 轮] 对固定参照：FOREST 67.9%，SWORD 60.0%，RUNE 30.7%，DRAGON 55.0%，ABYSS 63.6%，HAVEN 72.9%，PORTAL 65.7%
 [第 4 轮] FOREST: no change (halving)；换下 群狼侍者、诺榭的审讯，换上 向女王献花、兽语侦探·诺榭
 [第 4 轮] SWORD: accepted；换下 希求天使·丘丽奥丝，换上 丽金花·云庆；复核差 +4.8% ± 1.6%
+[第 4 轮] RUNE: rejected；换下 神话记者，换上 传承的意志；复核差 -0.9% ± 1.1%
+[第 4 轮] DRAGON: undecided；换下 龙人管家、尘土的不法者，换上 隔断的龙斗士、狼人族首领·契特；复核差 +1.9% ± 1.2%
+[第 4 轮] ABYSS: undecided；换下 理想国之神·列加尔、复仇山羊，换上 巴别隆市长·埃尔塔罗、伽罗塔德 对 泽特；复核差 +1.4% ± 1.3%
+[第 4 轮] HAVEN: rejected；换下 激震的歌利亚，换上 崇奉的懦者；复核差 -0.6% ± 1.0%
+[第 4 轮] PORTAL: accepted；换下 爱意天使·艾克夏丝、理想国·涅格尔赫亚，换上 平庸的制图、决断的交错·亚修雷&莉缇雅；复核差 +4.4% ± 1.4%
+[第 4 轮] 对固定参照：FOREST 67.9%，SWORD 63.6%，RUNE 30.7%，DRAGON 55.0%，ABYSS 63.6%，HAVEN 72.9%，PORTAL 63.6%
