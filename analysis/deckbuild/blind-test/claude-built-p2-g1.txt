@@ -1,0 +1,16 @@
+# Blind test, phase 2, group g1: decks built from the card pool and the rules only (no reference decks).
+# One line per deck: label|deck code (Rotation format). Built 2026-10-29; not run in any simulator search.
+FOREST-A-1cost-combo|1.1.g0WE.g0WE.g0WE.fds6.fds6.etZU.etZU.f-LA.f-LA.g0Gc.g0Gc.g0Gc.feLM.feLM.g0ZM.g0ZM.etGk.etGk.g0WO.g0WO.g0WO.fea-.fea-.fea-.g0o-.g0o-.g0o-.e6kU.e6kU.feOU.feOU.feOU.g0ls.g0ls.g0ls.g0_U.g0_U.feb8.feb8.feb8
+FOREST-B-pixie-wide|1.1.et1G.et1G.cCNE.cCNE.fds6.fds6.cC7c.cC7c.cC7c.cC9A.cC9A.fe5k.fe5k.fFhE.fFhE.etGk.etGk.etGk.fFRm.fFRm.fFRm.e6x8.e6x8.fea-.fea-.g0Jk.g0Jk.g0ls.g0ls.e6CG.e6CG.e6CG.e6hM.e6hM.e6hM.fFz-.eUsO.eUsO.cCNO.cCNO
+SWORD-A-gold-flag|1.2.evWU.evWU.eXbE.eXbE.fgIM.fgIM.fgIM.e8hU.e8hU.g2_c.g2_c.g3Ru.g3Ru.g3Ru.fgX-.fgX-.fgX-.e9Ak.e9Ak.fgb6.fgb6.fgb6.fI7U.fI7U.fgqk.fgqk.eXY6.eXY6.g2j0.g2j0.g2j0.e9NO.e9NO.fgnc.fgnc.fh1E.fh1E.fh1E.g2ye.g2ye
+SWORD-B-clue-swap|1.2.g3FE.g3FE.g3FE.f-LA.f-LA.g2is.g2is.g2is.g2_c.g2_c.g2_c.fzqM.fzqM.g2yU.g2yU.g2yU.f-3-.f-3-.f-3-.fgb6.fgb6.fgb6.eXIU.eXIU.eXY6.eXY6.fDE-.fDE-.f-Jc.f-Jc.e9NO.e9NO.eSAW.g3C6.g3C6.g2ye.g2ye.g2ye.g3Rk.g3Rk
+RUNE-A-engage-engine|1.3.cH1g.cH1g.cH1g.g5Rs.g5Rs.g5hU.g5hU.ey9O.ey9O.g59G.g59G.exvm.exvm.g596.g596.eB4c.eB4c.eSRY.eSRY.g5t-.g5t-.g5t-.eyR-.eyR-.exyk.g5eM.g5eM.g5eM.eyOs.eyOs.eyOs.f-Jc.f-Jc.fKd0.eB4m.eyeU.g5u8.g5u8.fc8k.fc8k
+RUNE-B-spellboost|1.3.cH3E.cH3E.fKNE.fKNE.fKNE.fink.fink.fink.fKK6.fKK6.fKK6.fKcs.fKcs.eB7k.eB7k.fKKG.fKKG.fKsU.fKsU.cH06.cH06.fKpM.fKpM.cHIs.cHIs.fKZk.fKZk.fKZk.fL2-.fL2-.fL2-.eBKO.eBKO.fikm.fikm.fjTe.fjTe.fjTe.eBpe.eBpe
+DRAGON-A-clue-ramp|1.4.g7bM.g7bM.cJVU.cJVU.g7u6.g7u6.g7u6.cJl6.cJl6.cJl6.g87k.g87k.g87k.g7eU.g7eU.e-O-.e-O-.g84c.g84c.g84c.e3_e.e3_e.f-Jc.f-Jc.e-bU.e-bU.g7q-.g7q-.g7q-.e-uE.e-uE.fMmW.fNVO.fNVO.fNVO.eEFk.eEFk.eEFk.g8KE.g8KE
+DRAGON-B-face|1.4.flAs.flAs.flAs.flD-.flD-.g7bM.g7bM.flQU.flQU.flQU.fljE.fljE.e-Ls.e-Ls.e-Ls.fzqM.fzqM.eSAM.eSAM.eSAM.eE3E.eE3E.g7bW.g7bW.cJh-.cJh-.flg6.flg6.flg6.g8KO.g8KO.g8KO.fN36.fN36.flvk.flvk.flvk.cJSg.cJSg.cJSg
+ABYSS-A-banish-engine|1.5.gA4k.gA4k.gAKM.gAKM.gAKM.gAZ-.gAZ-.eG0E.eG0E.eG0E.gA1c.gA1c.gA1c.gAme.gAme.eGCk.eGCk.eGCk.eeNm.eeNm.fngE.fngE.f11k.f11k.f11k.gAHE.gAHE.gAHE.f-Jc.eSAW.eSAW.gAmU.gAmU.gAmU.f11u.f11u.gAWs.gAWs.fnsu.fnsu
+ABYSS-B-self-damage|1.5.fPCm.fPCm.gA4k.gA4k.fnd6.fnd6.fnd6.cLuw.cLuw.eGFs.eGFs.eG0E.eG0E.eG0E.f0o6.f0o6.fnvs.fnvs.cLum.cLum.cLum.eeNm.eeNm.gA1m.gA1m.gA1m.fPCc.fPCc.fPCc.eedO.eedO.fPSO.fPSO.f11k.f11k.fo6M.fo6M.foM8.foM8.foM8
+HAVEN-A-banish-steal|1.6.fqM6.fqM6.gCTs.gCTs.gCTs.fRxc.fRxc.gCjU.gCjU.gCjU.gD0E.gD0E.gD0E.eIPM.eIPM.eIPM.fqI-.fqI-.cOaU.cOaU.f-Jc.f-Jc.eSAW.fRfA.fRfA.gCmc.gDCk.gDCk.gDCk.gDCu.gDCu.fqaA.f3zO.f3zO.fqYc.gCz6.gCz6.f3U8.fc8k.fc8k
+HAVEN-B-amulet-countdown|1.6.cOc2.cOc2.f3Fw.egrQ.egrQ.egrQ.eh52.eh52.eh52.fq4w.fq4w.f3T-.f3T-.f3T-.fS9g.fS9g.egs-.egs-.ehKg.ehKg.ehYk.ehYk.f3EM.f3EM.f-Jc.f-Jc.fqoO.fqoO.f3jc.f3jc.f-5Y.f-5Y.f3zO.f3zO.f3zE.f3zE.f3U8.ehYu.fc8k.fc8k
+PORTAL-A-singleton|1.7.fsVc.ftEU.fsoM.gEzE.eKuk.f-LA.cQnG.ejJE.gEw6.fUq8.fzqM.c9hW.cQn6.fUdU.ft1-.fUNs.f-3-.gF9k.cQqE.fslE.fUKk.ejVu.fDE-.eqd-.fs-s.eLKs.gFCs.eSAW.f-Jc.fC_W.cQnQ.gEwG.gF9u.fbPs.fUaM.fU56.gFPM.fc8k.f-ZE.gFe-
+PORTAL-B-artifact|1.7.f5jk.f5jk.f5jk.fU5Q.fU5Q.f5wE.f5wE.f5wE.fUq8.fUq8.fUq8.cR0k.cR0k.f69s.f69s.f69s.cQn6.cQn6.fUKu.fUKu.f6C-.f6C-.fUdU.fUdU.f6Pe.f6Pe.f6Pe.fsVm.fsVm.cQqE.cQqE.f5wO.f5wO.gF9u.gF9u.ftEe.ftEe.f5gm.f6PU.f6PU
