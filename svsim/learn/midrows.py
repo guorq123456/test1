@@ -207,6 +207,27 @@ def _plan(end_files, mid_files, every: int, mid_rate: float, seed: int, split: s
     return plan
 
 
+def _add_file_cards(out, plan) -> None:
+    """Cards in the plan's files that cards_npz lacks (a card seen only inside a turn, e.g. one made and spent in the
+    same turn: scaledata encode's cards.npz has the turn ends' cards only), added from the files' own static rows,
+    the table kept in id order (rows are looked up by searchsorted). With every card in cards_npz, nothing changes."""
+    known = {int(c) for c in out.card_ids}
+    extra: dict = {}
+    for f, *_ in plan:
+        with np.load(f) as z:
+            if "card_id" not in z.files:
+                continue
+            for cid, row in zip(z["card_id"].tolist(), z["static"]):
+                if cid not in known and cid not in extra:
+                    extra[cid] = np.asarray(row, np.float32)
+    if not extra:
+        return
+    ids = np.concatenate([out.card_ids, np.asarray(sorted(extra), np.int64)])
+    rows = np.concatenate([out.static, np.stack([extra[c] for c in sorted(extra)])])
+    order = np.argsort(ids, kind="stable")
+    out.card_ids, out.static = ids[order], rows[order]
+
+
 def _assemble(plan, cards_npz, part: str, hand_dir=None):
     """One learn.setnet.Data of the plan's rows of `part` ("train": kept and not validation, "valid": kept and
     validation, "all": kept), arrays allocated once and filled file by file."""
@@ -217,6 +238,7 @@ def _assemble(plan, cards_npz, part: str, hand_dir=None):
     out.static = c["static"].astype(np.float32)
     out.static_names = [str(s) for s in c["static_names"]] if "static_names" in c.files else []
     out.inputs = None
+    _add_file_cards(out, plan)
 
     def rows_of(keep, valid):
         return keep & ~valid if part == "train" else (keep & valid if part == "valid" else keep)
