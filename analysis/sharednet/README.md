@@ -161,3 +161,34 @@ X = mcts:N+plan+setnet=net-s1-ii+netmid+netany, Y = mcts:100+plan, BLAS on one t
 Against S1 (36.5% on the same bank at the same N and about the same CPU ratio) the ranking loss gains 4.5 points,
 but the net still loses to the hand-written score by 9 points with 23% more CPU. The ranking it learned is the
 hand-written search's own (the teacher is mcts:100+plan), so at best it copies what Y already does, at a net's cost.
+
+## S1 A: the ranking learned from a stronger teacher, mcts:400+plan (`s1/gate/a400-*`)
+
+The architecture thread 2026-10-29 18:28Z: (ii)'s teacher is Y itself (the recorded mcts:100+plan), so learning its
+ranking can at best copy Y. `learn.ranked encode --teacher mcts:400+plan --rate 0.05` searched 5% of S1's decisions
+afresh (agent seed: the deal key + the step): 40232 decisions (134477 children), 2.25 CPU hours. On the 34164 of them
+that (ii)'s files also hold, the teacher's best child is the recorded mcts:100's in **90.2%**: the stronger teacher
+changes the label of one decision in ten.
+
+`analysis/scaling/models/net-s1-a400.npz`: (ii)'s recipe (net-s1-20k continued, advantage labels, ranking weight 1)
+with these labels: 9 epochs, best 5. The teacher's best child ranked first on the held-out decks' decisions:
+
+| net | on mcts:100's labels (24298 decisions) | on mcts:400's labels (4985 decisions) |
+|---|---|---|
+| net-s1-20k (start) | 53.0% | 52.4% |
+| net-s1-ii | 75.9% | 74.4% |
+| net-s1-a400 | 72.6% | 71.4% |
+
+(ii), with four times the decisions, ranks even the stronger teacher's choices better than A does.
+
+Gate as (ii) (BLAS on one thread; 3 workers, a training run on the fourth core):
+- Time match (24 pairs at N = 100, seeds 85891300 on): CPU X / Y 1.800 -> **N 56** (at N = 100: 32.3% ± 6.2%).
+- 300 fixed pairs, bank 85820000: **X 34.6% ± 2.2%** (95% 32.3%-36.8%), H0. By X's deck: forest 35.3%, sword
+  58.1%, rune 24.4%, dragon 32.6%, abyss 24.4%, haven 32.6%, portal 34.7%. First / second 36.3% / 32.8%. CPU X 50
+  ms, Y 42 ms: ratio 1.197.
+- The architecture thread's prediction: 44%-52%, above 50% with probability 0.25. Below the range; 6.4 points under
+  (ii) (41.0%).
+
+The upper reference the architecture thread asked for (mcts:400+plan against mcts:100+plan without matched time on
+B-r1) does not exist; the nearest (the analysis line, the Ramp-Dragon depth curve, learned evaluation against v2) is
+400 iterations against 100: about 54% (50%-57%).
