@@ -22,7 +22,10 @@ sides' time per searched decision: CPU seconds (time.process_time, one process p
 
 The time match (the gate's rule, the architecture thread): --time K plays K pairs and prints X's and Y's CPU per
 searched decision and their ratio; within 0.97-1.03 X's N stays, else N = round(N / ratio), once. Its seeds are
-its own (--seed), not the bank's.
+its own (--seed), not the bank's. Time it with numpy's BLAS on one thread (OMP_NUM_THREADS=1, OPENBLAS_NUM_THREADS=1,
+MKL_NUM_THREADS=1): with --workers on every core, BLAS threads add CPU to process_time that a net-using side pays and
+a side without nets does not (2026-10-29: the shared prior's ratio 5.97 with threads, 1.57 on one thread, the same
+games); the run's first lines record the setting.
 
 Results go to --out one pair per line, and a rerun with the same arguments resumes from it.
 """
@@ -216,6 +219,8 @@ def main() -> None:
     print(f"条件：{len(field)} 套卡组（{args.field}）的 {len(order)} 个非镜像有序对局轮流；每对 = 一副发牌，"
           f"X 打 a 对 Y 打 b、Y 打 a 对 X 打 b，各坐两边（4 局）；{CONDITION}", flush=True)
     print(f"X = {args.x}\nY = {args.y}", flush=True)
+    print("BLAS 线程：" + "，".join(f"{k}={os.environ.get(k, '未设')}" for k in
+                                  ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")), flush=True)
     todo = []
     for k in range(count):
         if k in done:

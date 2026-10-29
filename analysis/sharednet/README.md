@@ -103,3 +103,19 @@ tools.deckgate on B-r1, Y = mcts:100+plan, X = mcts:N+plan+setnet=net-s1-20k+net
 Against T1 (pairing nets, 22.5%-25.5%, bank 85800000) S1 gains about 13 points, but the search with the shared net
 still loses to the hand-written score by 13 points on the same field, with more CPU. A better predictor of the result
 does not make a better search here (see the report to the architecture thread for what this suggests checking).
+
+## S1 (i): a shared move prior over the hand-written score (`s1/gate/prior-*`)
+
+`analysis/scaling/models/prior-s1-20k.npz`: learn.setpolicy fit on S1's 20 shards' decisions (k < 20, C-r0 pool),
+trunk from net-s1-20k, validation the held-out decks' games (`--split games:s1/holdout-games.json`), cards
+`cards-all.npz`. Capped at 6 epochs (validation cross-entropy 1.3879, 1.3832, 1.3811, 1.3799, 1.3791, 1.3785: about
+0.001 an epoch at the end; early stopping alone would have run many more 40-minute epochs). X =
+mcts:N+plan+puct=prior-s1-20k (the hand-written score, the shared prior at the root and in the tree), Y = mcts:100+plan.
+
+- **Timing and BLAS threads.** The first time match (24 pairs at N = 100, seeds 85891100 on, numpy's BLAS threads
+  left as they come) gave CPU X / Y 5.967 (X 399 ms, Y 67 ms a searched decision). The same 24 pairs with BLAS on one
+  thread (OMP_NUM_THREADS = OPENBLAS_NUM_THREADS = MKL_NUM_THREADS = 1): **1.573 (X 73 ms, Y 46 ms) -> N 64**, the
+  same games (43.8% ± 7.4% both times). With 4 workers on 4 cores, BLAS threads oversubscribe the machine and are
+  charged to the side that calls numpy; the gate below runs on one thread. The earlier timings in this file (T1, S1)
+  were taken with threads as they came, so their ratios may overstate X's cost: to be measured again on one thread.
+- 300 fixed pairs (1200 games), bank 85820000, X at N = 64: running.
