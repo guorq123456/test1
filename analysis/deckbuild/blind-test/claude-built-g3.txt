@@ -1,0 +1,19 @@
+# Blind test, Claude-built group g3: decks built by reading the card pool only (no simulator search,
+# no set-10 web data, no bot results). Frozen 2026-10-29. Format as frozen.txt: label|deck code (read_seeds).
+# Label = g3-<tier>-<CLASS>-<archetype>; tier S = strong, P = playable, W = weak, ranked within tier.
+# These lists must not be fed into any search, self-play or training line.
+g3-S1-FOREST-combo|1.1.e4Gg.e4Gg.e4Gg.eVLe.eVLe.eVLe.fFRw.fFRw.fFRw.fds6.fds6.fds6.etGk.etGk.etGk.fe5k.fe5k.fe5k.feLM.feLM.feLM.e6kU.e6x8.e6x8.e6x8.fea-.fea-.fea-.g0WO.g0WO.etl-.etl-.etl-.feOU.etm8.etm8.fGAU.fGAU.fGAU.g0_e
+g3-S2-PORTAL-highlander|1.7.eLN-.f5jk.fU5Q.fsVc.fsoM.ftEU.ftEU.ftEU.cQnG.cR2I.eLae.ej_8.f5wE.fDUc.fUq8.fzqM.gEw6.eLaU.eSRY.eqqU.f69s.fUKu.ft1-.f-3-.eKrc.eL5E.eqd-.f5gc.f6Pe.fUKk.fsVm.fslE.fUp-.fs-s.f-Jc.fbPs.gF9u.ej--.ftEe.f6PU
+g3-S3-DRAGON-ramp|1.4.fNIk.fNIk.g7bM.g7bM.g7bM.eE3E.eE3E.eE3E.ecgO.ecgO.ecgO.e-Ls.e-Ls.e-Ls.fN08.fN08.cJl6.cJl6.cJl6.g7eU.g84c.g84c.g84c.f-Jc.ecgE.ecgE.ecgE.flvu.flvu.flvu.fNVO.fNVO.fNVO.e_4k.e_4k.e_4k.fDkE.eEFk.eEFk.eEFk
+g3-P1-ABYSS-nocturne|1.5.gAKM.gAKM.gAZ-.cMBM.f0oG.f0oG.gA1c.gA1c.gA1c.gAme.gAme.gAme.eeQk.eeQk.f1KU.f1KU.f1KU.gA1m.gA1m.gA1m.f11k.f11k.f-Jc.f-Jc.gAHE.gAHE.f11u.fnsk.fnsk.gAmU.gAmU.gAmU.fnsu.gAHO.gAHO.gAWs.gAWs.fPxU.foM8.foM8
+g3-P2-SWORD-pirate|1.2.cEZs.cEZs.eXnu.eXnu.eXnu.evi-.evi-.evi-.fgIM.fgIM.fgIM.g2_c.e9Ak.e9Ak.e9Ak.fgX-.fgX-.fgX-.fgb6.fgb6.fgb6.g3Ru.g3Ru.fgqk.fgqk.fgqk.e9NO.e9NO.e9NO.fgnc.fgnc.fgnc.g2j0.g2j0.g2j0.fh1E.fh1E.fh1E.fh1O.fh1O
+g3-P3-RUNE-experiment|1.3.cH3E.cH3E.fKNE.fKNE.fKNE.eB7k.eB7k.fKK6.fKK6.fikc.fikc.fikc.fKpM.fKpM.fKpM.fKsU.fKsU.fKsU.fj1M.fj1M.fj1M.fi-E.fi-E.fi-E.fKZk.fKZk.fjDs.fjDs.fjDs.fjG-.fjG-.fjG-.f-Jc.f-Jc.fL2-.fL2-.fikm.fjTU.fjTU.fjTU
+g3-P4-HAVEN-control|1.6.cOc2.cOc2.f3Fw.f3Fw.egrQ.egrQ.egrQ.eh52.eh52.fRxc.fRxc.fS9g.fS9g.fq4w.fq4w.f3lA.f3lA.eShA.eShA.ehKg.ehKg.ehKg.ehYk.ehYk.ehYk.egps.egps.egps.fRfA.fRfA.f-Jc.f-Jc.fqaA.gDCk.f3zO.f3zO.fqYc.ehYu.ehYu.ehYu
+g3-P5-RUNE-engage|1.3.cH1g.cH1g.cH1g.g5Rs.g5Rs.g5Rs.ey9O.ey9O.g59G.g59G.g59G.g5hU.g5hU.g596.g596.g596.exyk.exyk.eyR-.eyR-.g5Ok.g5Ok.g5t-.g5t-.g5t-.eyOs.eyOs.fKd0.f-Jc.f-Jc.g5eM.g5eM.g5eM.g5Ou.g5Ou.eyeU.eyee.eyee.g5u8.g5u8
+g3-P6-ABYSS-aggro|1.5.fPCm.fPCm.fPCm.f0o6.f0o6.fnd6.fnd6.fnd6.fndG.fndG.fnvs.fnvs.fnvs.cLum.cLum.f1KU.f1KU.f1KU.fPVM.fPVM.eedO.eedO.fPCc.fPCc.fPCc.gA1m.gA1m.gA1m.fPSO.fPSO.fPSO.cLuc.fo6M.fo6M.fo6M.fnsu.fPxU.foM8.foM8.foM8
+g3-W1-HAVEN-bunny|1.6.fqM6.fqM6.fRxc.fRxc.fzqM.fzqM.gCTs.gCTs.gCTs.fqJ8.fqJ8.f-3-.f-3-.gCjU.gCjU.gCjU.gD0E.gD0E.cOaU.cOaU.gCje.gCje.gCje.fRfA.fRfA.f-Jc.f-Jc.gCmc.gCmc.gCmc.eh3e.eh3e.gDCk.gDCk.gDCk.gCU0.gCU0.f3U8.gCz6.gCz6
+g3-W2-RUNE-lhynkal|1.3.cH3E.cH3E.cH3E.eBpU.eBpU.eBpU.fKNE.fKNE.fKNE.fink.fink.eB7k.eB7k.fKK6.fKK6.fKK6.fKcs.fKcs.fKcs.fKsU.fKsU.fKsU.fKZk.fKZk.fKZk.f-Jc.f-Jc.eB4m.eB4m.eBKO.eBKO.eBKO.fL2-.fL2-.fL2-.fikm.fikm.eBpe.eBpe.fjTe
+g3-W3-DRAGON-face|1.4.flAs.flAs.flAs.flD-.flD-.flD-.g7bM.g7bM.g7bM.eE3E.eE3E.eE3E.ecgO.ecgO.ecgO.fN08.fN08.fN08.flQU.flQU.flQU.fljE.fljE.fljE.g7u6.flTc.flTc.flg6.flg6.flg6.g8KO.g8KO.ecTk.ecTk.ecgE.ecgE.ecgE.flvk.flvk.flvk
+g3-W4-SWORD-rally|1.2.cEpU.cEpU.e8x6.e8x6.eX2s.eX2s.eX2s.evi-.evi-.evi-.eXIU.eXIU.eXIU.evTW.evTW.ewCE.ewCE.ewCE.fHuA.fHuA.fHuA.fgIW.fgIW.fgIW.evj8.evj8.evyc.evyc.evyc.fIck.fIck.fgY8.fgY8.fgY8.ewCO.ewCO.cEaA.fIcu.fIcu.fh1O
+g3-W5-FOREST-fairy|1.1.et1G.et1G.fFRw.fFRw.fds6.fds6.fds6.g0WE.g0WE.g0WE.cC7c.cC7c.cC7c.cC9A.cC9A.fe5k.fe5k.g0Gc.g0Gc.g0Gc.fFRm.fFRm.fFRm.fea-.fea-.g0Jk.g0Jk.g0Jk.g0o-.g0o-.g0ls.g0ls.g0ls.e6CG.e6CG.e6CG.e6hM.e6hM.g0_U.g0_U
+g3-W6-PORTAL-extinction|1.7.gEzE.gEzE.gFSU.gFSU.cR2I.cR2I.fzqM.fzqM.gEw6.gEw6.gEw6.f-3-.f-3-.gF9k.gF9k.gF9k.gFf8.gFf8.eqd-.cR0u.cR0u.f-Jc.f-Jc.gFCs.gFCs.gFCs.fbPs.fbPs.gEwG.gEwG.gF9u.gF9u.fU56.f6PU.f6PU.gFPM.gFPM.gFPM.gFe-.gFe-
