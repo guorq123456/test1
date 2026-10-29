@@ -51,3 +51,26 @@ def test_netany_scores_decks_the_net_never_saw():
     assert own.score(state, 0) == 12345.0                          # not its pairing: the base's score
     assert anyp.score(state, 0) != 12345.0                         # +netany: the net's
     assert make_agent(f"mcts:10+plan+setnet={NET}+netmid+netany", 0) is not None
+
+
+def test_netclip_leaves_the_nets_own_decks_alone_and_bounds_unseen_cards():
+    import numpy as np
+    from svsim.cards import decks
+    from svsim.core.engine import new_game
+    from svsim.tools.deckgate import read_field
+    from svsim.ui.session import DECKS
+    plain, clipped = load_cached(NET), load_cached(NET, clip=True)
+    assert plain is not clipped
+    ramp = decks.build(DECKS["ramp-t"][1])
+    own = new_game(ramp, ramp, seed=3)
+    assert clipped.logit(own, 0) == plain.logit(own, 0)                 # the net's own cards: the same number
+    lines = [l.split("|", 1)[1] for l in FIELD_LINES]
+    from svsim.cards import deckcode
+    from svsim.cards.pool import POOL
+    a = [POOL[i] for i in deckcode.decode_deck(lines[0])[2]]
+    b = [POOL[i] for i in deckcode.decode_deck(lines[1])[2]]
+    other = new_game(a, b, seed=3)
+    clipped.logit(other, 0)
+    lo, hi = clipped.zclip
+    S = clipped._S()
+    assert np.all(S >= lo - 1e-12) and np.all(S <= hi + 1e-12)

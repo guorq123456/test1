@@ -51,7 +51,8 @@ inside the scored player's own turn is first played to its turn end (after_end_o
 every other one by its turn-end branch, no turn end played; with "+netreply" (and the reply's play-out,
 mcts-reply), a played-out opponent turn of the net's pairing stops at its end and is scored by the net from the
 opponent's side (minus its turn-end logit), not by the in-turn model after the own turn starts; with "+netany", the
-net scores every game whatever the decks (not only its own pairing); with "+netftz", the
+net scores every game whatever the decks (not only its own pairing); with "+netclip", a card's standardized
+static row is clipped to the range of the net's own cards (SetNet.clip_to_own_range); with "+netftz", the
 net's subnormal weights are set to 0 at load (same numbers where checked, less CPU time); "+puct=PATH[:C[:T]]" PUCT
 at every node of the search (search.mcts, puct) with the move prior at PATH (learn.setpolicy), c_puct C (default 1)
 and the prior sharpened by 1 / T (default 1), unvisited moves at the node's value - 0.1; "+phased" linear models by moment (learn.phased:
@@ -228,7 +229,7 @@ def _make_agent(spec: str, seed: int):
         spec = "+".join([VERSIONS[head]] + rest)
     spec, *options = spec.split("+")
     unknown = set(options) - {"plan", "threat", "hand", "macro", "learned", "timing", "burst", "reserve", "ready",
-                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "lethal3", "plannerfix", "eot", "discard", "adaptive", "abs", "abs0", "complex", "xprune", "neteot", "netftz", "netmid", "netreply", "netany"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet=", "par=", "xprune=", "setnet=", "puct="))}
+                              "pace", "burst2", "patient", "dig", "dig2", "survive", "points", "priced", "enhance", "net", "lazy", "focus", "endnow", "mean", "phased", "reuse", "alias", "noalias", "oracle", "vnet", "tick", "lethal2", "lethal3", "plannerfix", "eot", "discard", "adaptive", "abs", "abs0", "complex", "xprune", "neteot", "netftz", "netmid", "netreply", "netany", "netclip"} - {o for o in options if o.startswith(("hp", "gain", "avg", "prior", "cross", "pick", "phased=", "screen=", "mimic=", "alloc=", "infer=", "vnet=", "par=", "xprune=", "setnet=", "puct="))}
     if unknown:
         raise ValueError(f"unknown agent options {sorted(unknown)}")
     planner = "plan" in options
@@ -265,7 +266,7 @@ def _make_agent(spec: str, seed: int):
     setnet = [o[len("setnet="):] for o in options if o.startswith("setnet=")]
     if setnet:                                     # turn ends of the net's pairing by the scaling test's DeepSets
         from svsim.learn.setnet import SetNetEnded, load_cached   # net (learn.setnet); the rest as before
-        weights = SetNetEnded(weights, load_cached(setnet[0], ftz="netftz" in options),
+        weights = SetNetEnded(weights, load_cached(setnet[0], ftz="netftz" in options, clip="netclip" in options),
                               end_mid_turn="neteot" in options, mid_turn="netmid" in options,
                               reply_end="netreply" in options, any_pairing="netany" in options)
     if "timing" in options:                        # holding cards until the player would play them

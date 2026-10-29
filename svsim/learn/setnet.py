@@ -293,7 +293,21 @@ class SetNet:
 
     def _S(self, static=None) -> np.ndarray:
         s = self.static if static is None else static
-        return (s - self.smean) / self.sstd
+        z = (s - self.smean) / self.sstd
+        clip = getattr(self, "zclip", None)
+        if clip is not None and static is None:       # +netclip: the table's rows within the net's own range
+            z = np.clip(z, clip[0], clip[1])
+        return z
+
+    def clip_to_own_range(self) -> None:
+        """Agent option +netclip (the shared-net test T1, 2026-10-29): from now on, a card's standardized static row
+        is clipped, column by column, to the range of the cards the net has now (the ones it was trained on). A
+        column that never varied in training has a tiny std, so a card of another class or with an ability the
+        training decks never had reads as hundreds of standard deviations there; clipped, it reads as the nearest
+        value the net has seen. The net's own cards are unchanged (they are the range)."""
+        z = (self.static - self.smean) / self.sstd
+        self.zclip = (z.min(0), z.max(0))
+        self._table, self._pool, self._zone_sums, self._live_sums = None, {}, {}, {}
 
     # --- forward / backward -----------------------------------------------------------------------------------
     def _pre1(self, base: np.ndarray, dyn: np.ndarray) -> np.ndarray:
@@ -782,18 +796,20 @@ def _file(p: Path):
     return io.BytesIO(base64.b64decode(b64.read_text(encoding="ascii")))
 
 
-def load_cached(path, ftz: bool = False) -> SetNet:
+def load_cached(path, ftz: bool = False, clip: bool = False) -> SetNet:
     """The net at `path` (relative paths also from the repository root), loaded once per process; with `ftz`, its
-    subnormal weights set to 0 at load (a separate copy)."""
+    subnormal weights set to 0 at load (a separate copy); with `clip`, SetNet.clip_to_own_range (a separate copy)."""
     p = Path(path)
     if not p.exists() and not p.is_absolute():
         p = Path(__file__).resolve().parents[2] / p
-    key = (str(p.resolve()), ftz)
+    key = (str(p.resolve()), ftz) + ((True,) if clip else ())
     net = _CACHE.get(key)
     if net is None:
         net = _CACHE[key] = SetNet.load(_file(p))
         if ftz:
             net.flush_subnormals()
+        if clip:
+            net.clip_to_own_range()
     return net
 
 
