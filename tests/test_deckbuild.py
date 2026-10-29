@@ -108,3 +108,15 @@ def test_random_decks_can_start_from_the_new_set():
         ids = deckbuild.random_ids(craft, rng, None, prefer, 0.6)
         assert _legal(ids, craft)
         assert sum(str(POOL[i].card_set) == "10010" for i in ids) >= 24
+
+
+def test_a_run_can_build_from_the_old_pool():
+    rng = random.Random(5)
+    deckbuild.SETS = decks.ROTATION_PRE10
+    try:
+        for craft in deckbuild.CLASSES:
+            ids = deckbuild.random_ids(craft, rng)
+            assert decks.validate([POOL[i] for i in ids], craft, sets=decks.ROTATION_PRE10) == []
+            assert all(POOL[i].card_set != 10010 for i in ids)
+    finally:
+        deckbuild.SETS = None

@@ -83,15 +83,22 @@ DECK_MODELS = ("learned", "phased", "net", "prior", "puct", "mimic", "timing", "
 
 # --- the pool and decks -------------------------------------------------------------
 
+# --sets: the card sets a run builds from instead of the Rotation (e.g. the Rotation before set 10, for a search in
+# the old pool whose records train the deck model that then guides the search in the new one)
+SETS: frozenset | None = None
+
+
 def legal_cards(craft: Craft) -> list:
-    """The deck-buildable cards for `craft`: its own and Neutral Rotation cards with every ability scripted."""
-    cards = collectible(craft)
+    """The deck-buildable cards for `craft`: its own and Neutral Rotation cards (cards of SETS, when set) with every
+    ability scripted."""
+    cards = collectible(craft) if SETS is None else [c for c in collectible(craft, unlimited=True) if c.card_set in SETS]
     missing = set(decks.unimplemented(cards))
     return [c for c in cards if c not in missing and not c.is_token]
 
 
 def missing_scripts() -> list:
-    return decks.unimplemented(collectible())
+    cards = collectible() if SETS is None else [c for c in collectible(unlimited=True) if c.card_set in SETS]
+    return decks.unimplemented(cards)
 
 
 def counts(ids) -> Counter:
@@ -493,6 +500,9 @@ def main() -> None:
     ap.add_argument("--new-set", default=None,
                     help="round 0's random decks fill --new-share of their slots with this card set's cards (e.g. 10010)")
     ap.add_argument("--new-share", type=float, default=0.6, help="see --new-set (0.6)")
+    ap.add_argument("--sets", default=None,
+                    help='build from these card sets instead of the Rotation: "pre10" (the Rotation before set 10) '
+                         'or comma-separated set numbers (10000 is Basic)')
     ap.add_argument("--rounds", type=int, default=10, help="rounds after round 0 (10)")
     ap.add_argument("--variants", type=int, default=8, help="variants per class per round (8)")
     ap.add_argument("--stage", type=int, default=28, help="deals in the halving's first stage, doubled each stage (28)")
@@ -526,6 +536,10 @@ def main() -> None:
     if any(t in args.agent for t in DECK_MODELS) and not args.deck_models:
         ap.error(f"{args.agent} picks models by the decks' identity: a changed deck isn't recognized and falls back "
                  "to other models, so a swap and a change of evaluation would mix (--deck-models to run anyway)")
+    if args.sets:
+        global SETS
+        SETS = decks.ROTATION_PRE10 if args.sets == "pre10" else frozenset(int(x) for x in args.sets.split(","))
+        print(f"卡池：第 {sorted(SETS)} 弹，不是现在的轮换", flush=True)
     missing = missing_scripts()
     if missing and not args.allow_missing:
         ap.error(f"{len(missing)} Rotation cards have abilities but no script, e.g. "
