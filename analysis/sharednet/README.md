@@ -117,5 +117,19 @@ mcts:N+plan+puct=prior-s1-20k (the hand-written score, the shared prior at the r
   thread (OMP_NUM_THREADS = OPENBLAS_NUM_THREADS = MKL_NUM_THREADS = 1): **1.573 (X 73 ms, Y 46 ms) -> N 64**, the
   same games (43.8% ± 7.4% both times). With 4 workers on 4 cores, BLAS threads oversubscribe the machine and are
   charged to the side that calls numpy; the gate below runs on one thread. The earlier timings in this file (T1, S1)
-  were taken with threads as they came, so their ratios may overstate X's cost: to be measured again on one thread.
-- 300 fixed pairs (1200 games), bank 85820000, X at N = 64: running.
+  were taken with threads as they came. S1's time match again on one thread (`s1/gate/time-100-1thread.*`, the same
+  24 pairs, the same games): **1.781 -> N 56**, as before (1.772 -> 56): the value net's small products do not start
+  BLAS threads, the prior's larger ones do. S1's gate (36.5%) stands; T1 (value nets of the same size) likewise.
+- 300 fixed pairs (1200 games), bank 85820000, X = mcts:64+plan+puct=prior-s1-20k, one thread (`s1/gate/prior-64.*`):
+  **X 48.3% ± 2.1%** (95% 46.3%-50.4%), the sequential test H0.
+  - By X's deck: forest 44.7%, sword 72.1%, rune 37.8%, dragon 40.1%, abyss 37.8%, haven 48.8%, portal 57.1%
+    (± 7.0-8.1%).
+  - First / second: 50.0% / 46.7%.
+  - **CPU per searched decision X 55 ms, Y 43 ms: ratio 1.284, outside 0.97-1.03** (the extra time is X's: the
+    24-pair measure under-corrected, and the rule adjusts once).
+- The architecture thread's prediction, registered before: 50%-55%, above 52% with probability 0.4. The result is
+  below the range, and with X's 28% more CPU the CPU-adjusted reading is lower still.
+
+The prior with 64 iterations nearly matches the hand-written search with 100 (so it is worth more than its
+iterations), but what it costs a decision is about what it saves: at equal CPU it does not help on B-r1. It is far
+closer than the shared value net (S1, 36.5% at 23% more CPU).
