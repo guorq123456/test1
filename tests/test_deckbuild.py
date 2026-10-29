@@ -206,7 +206,7 @@ def test_screened_play_skips_deals_that_never_touch_a_changed_slot(tmp_path):
         assert all(0 not in t for t in x["touched"])
 
 
-def test_shaped_decks_hold_13_cards_three_times_and_one_once():
+def test_a_deck_condensed_to_a_make_up_keeps_it_through_a_card_swap():
     rng = random.Random(10)
     for craft in deckbuild.CLASSES:
         ids = deckbuild.random_ids(craft, rng)
@@ -221,3 +221,20 @@ def test_shaped_decks_hold_13_cards_three_times_and_one_once():
             gone = set(v) - set(w)
             assert 1 <= len(gone) <= 2
             assert all(a == b or a in gone for a, b in zip(v, w))               # in place
+
+
+def test_make_ups_come_from_real_lists_and_copy_moves_stay_legal():
+    prof = deckbuild.profiles("analysis/deckbuild/seeds-tournament-2026-10-07.txt")
+    assert (1, 0, 37) in prof["PORTAL"]                                         # the Cutthroat list
+    rng = random.Random(11)
+    for craft in deckbuild.CLASSES:
+        ids = deckbuild.random_ids(craft, rng)
+        for p in prof[craft.name][:4]:
+            v = deckbuild.shaped(ids, craft, rng, p)
+            assert _legal(v, craft)
+            c = Counter(v)
+            assert tuple(sum(n == k for n in c.values()) for k in (3, 2, 1)) == p
+            for move in (deckbuild.shift, deckbuild.drop, deckbuild.add_new):
+                w = move(v, craft, rng)
+                assert _legal(w, craft)
+                assert 1 <= sum(a != b for a, b in zip(v, w)) <= 6          # a fallback swap moves 2 cards

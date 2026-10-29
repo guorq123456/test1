@@ -185,32 +185,85 @@ def variant(ids: list, craft: Craft, rng: random.Random) -> list:
     return out
 
 
-# --shape: every deck is a tournament list's usual make-up, 13 cards three times and one card once (the 10-29
-# review: the free-form search left 27-31 different cards, 1-4 of them three times; Salem 19:30Z: 「在玩家视角甚至
-# 不能叫真卡组」)
-SHAPE_CORE, SHAPE_EXTRA = 13, 1
+# --shape: round 0 condenses decks to the make-up of real lists of the class (how many cards three, two and one
+# times: --shape-profiles, the pre-set-10 tournament lists), and the variants change cards and copy counts, so
+# each class's make-up drifts where the games say. The 10-29 review found the free-form search's decks at 27-31
+# different cards (Salem 19:30Z: 「在玩家视角甚至不能叫真卡组」); a fixed 13x3+1 was wrong too (Salem 19:40Z: the
+# Cutthroat deck holds 37 cards once).
+def profiles(path: str) -> dict:
+    """Class name -> the (three-, two-, one-of counts) of each list in `path` (read_seeds format)."""
+    out: dict = {}
+    for _, ids in read_seeds(path):
+        c = Counter(ids)
+        out.setdefault(craft_of_ids(ids).name, []).append(
+            tuple(sum(v == n for v in c.values()) for n in (3, 2, 1)))
+    return out
 
 
-def shaped(ids: list, craft: Craft, rng: random.Random) -> list:
-    """`ids` condensed to the shape: the cards it holds most often first (ties by chance), then the ones it holds
-    once, in a random order, each of the first 13 three times and the 14th once; short of cards, random legal
-    ones. Different draws give different condensations of one deck."""
+def shaped(ids: list, craft: Craft, rng: random.Random, profile: tuple = (13, 0, 1)) -> list:
+    """`ids` condensed to `profile` (n3, n2, n1 cards three, two and one times): the cards it holds most often
+    first (ties by chance), then the ones it holds once in a random order; short of cards, random legal ones."""
     have = Counter(ids)
     multi = sorted((i for i in have if have[i] >= 2), key=lambda i: (-have[i], rng.random()))
     single = sorted(i for i in have if have[i] == 1)
     rng.shuffle(single)
-    picks = (multi + single)[:SHAPE_CORE + SHAPE_EXTRA]
+    want = sum(profile)
+    picks = (multi + single)[:want]
     options = sorted(c.card_id for c in legal_cards(craft))
-    while len(picks) < SHAPE_CORE + SHAPE_EXTRA:
+    while len(picks) < want:
         picks.append(rng.choice([o for o in options if o not in picks]))
-    return [i for i in picks[:SHAPE_CORE] for _ in range(decks.MAX_COPIES)] + picks[SHAPE_CORE:]
+    n3, n2, _ = profile
+    copies = [3] * n3 + [2] * n2 + [1] * (want - n3 - n2)
+    return [i for i, n in zip(picks, copies) for _ in range(n)]
+
+
+def shift(ids: list, craft: Craft, rng: random.Random) -> list:
+    """One copy, in place, from one card the deck holds to another it holds fewer than 3 times (a card whose last
+    copy goes leaves the deck)."""
+    have = Counter(ids)
+    to = sorted(i for i in have if have[i] < decks.MAX_COPIES)
+    if not to:
+        return type_swap(ids, craft, rng)
+    y = rng.choice(to)
+    out = list(ids)
+    out[rng.choice([k for k, i in enumerate(ids) if i != y])] = y
+    return out
+
+
+def add_new(ids: list, craft: Craft, rng: random.Random, prefer: list | None = None) -> list:
+    """One copy of a card the deck doesn't hold in place of one copy of a card it does (half the time costing
+    within 1 of it, a quarter of the time one of `prefer`)."""
+    have = Counter(ids)
+    pool = [c for c in legal_cards(craft) if c.card_id not in have]
+    if prefer and rng.random() < 0.25:
+        pool = [c for c in pool if c in prefer] or pool
+    k = rng.randrange(len(ids))
+    out = list(ids)
+    out[k] = _pick(pool, rng, Counter(), POOL[ids[k]].cost, near=rng.random() < 0.5).card_id
+    return out
+
+
+def drop(ids: list, craft: Craft, rng: random.Random) -> list:
+    """Every copy of one card, in place, given one by one to cards the deck holds fewer than 3 times."""
+    have = Counter(ids)
+    x = rng.choice(sorted(have))
+    left = Counter({i: n for i, n in have.items() if i != x})
+    out = list(ids)
+    for k in [k for k, i in enumerate(ids) if i == x]:
+        room = sorted(i for i in left if left[i] < decks.MAX_COPIES)
+        if not room:
+            return type_swap(ids, craft, rng)
+        y = rng.choice(room)
+        out[k] = y
+        left[y] += 1
+    return out
 
 
 def type_swap(ids: list, craft: Craft, rng: random.Random, prefer: list | None = None) -> list:
-    """A shaped deck with every copy of 1 of its cards (a third of the time 2) given, in place, to a card it doesn't
-    hold: half the time one costing within 1 of the card it replaces, a quarter of the time one of `prefer` (the
-    new set's); when 2 go, half the time a pair from one set that belong together (a seed and one of its
-    _partners). The deck keeps its shape."""
+    """Every copy of 1 of the deck's cards (a third of the time 2) given, in place, to a card it doesn't hold:
+    half the time one costing within 1 of the card it replaces, a quarter of the time one of `prefer` (the new
+    set's); when 2 go, half the time a pair from one set that belong together (a seed and one of its _partners).
+    Copy counts stay as they were."""
     options = legal_cards(craft)
     have = Counter(ids)
     gone = rng.sample(sorted(have), 1 if rng.random() < 2 / 3 else min(2, len(have)))
@@ -481,11 +534,15 @@ class Search:
                 if self.args.new_set else None
             for r in range(self.args.random):
                 cands[f"random{r}"] = random_ids(craft, self.rng, curve, prefer, self.args.new_share)
-            if shape:       # each seed condensed --shape-tries ways, each random deck once; doubles dropped
+            if shape:       # each seed as it is and condensed --shape-tries ways to make-ups of real lists of
+                # its class, each random deck condensed once; doubles and registered decks dropped
+                prof = profiles(self.args.shape_profiles).get(craft.name) or [(13, 0, 1)]
                 out, seen = {}, set()
                 for label, ids in cands.items():
-                    for m in range(1 if label.startswith("random") else self.args.shape_tries):
-                        v = shaped(ids, craft, self.rng)
+                    tries = [None] if label.startswith("random") else [ids]
+                    tries += [None] * (0 if label.startswith("random") else self.args.shape_tries - 1)
+                    for m, v in enumerate(tries):
+                        v = v if v is not None else shaped(ids, craft, self.rng, self.rng.choice(prof))
                         if deck_hash(v) not in seen and decks.identify([POOL[i] for i in v]) is None:
                             seen.add(deck_hash(v))
                             out[f"{label}~{m}"] = v
@@ -551,10 +608,17 @@ class Search:
         """A package move (package) with probability --package, more copies of a card already held (consolidate)
         with probability --consolidate, else 1-3 single swaps (variant); with both 0 the draws are exactly the
         tool's before these options existed."""
-        if getattr(self.args, "shape", False):
+        if getattr(self.args, "shape", False):         # cards and copy counts both move
             prefer = [c for c in legal_cards(craft) if str(c.card_set) == str(self.args.new_set)] \
                 if getattr(self.args, "new_set", None) else None
-            return type_swap(inc, craft, self.rng, prefer)
+            r = self.rng.random()
+            if r < 0.45:
+                return type_swap(inc, craft, self.rng, prefer)
+            if r < 0.70:
+                return shift(inc, craft, self.rng)
+            if r < 0.90:
+                return add_new(inc, craft, self.rng, prefer)
+            return drop(inc, craft, self.rng)
         p = getattr(self.args, "package", 0.0) or 0.0
         q = getattr(self.args, "consolidate", 0.0) or 0.0
         if p or q:
@@ -711,9 +775,12 @@ def main() -> None:
                     help="round 0's random decks fill --new-share of their slots with this card set's cards (e.g. 10010)")
     ap.add_argument("--new-share", type=float, default=0.6, help="see --new-set (0.6)")
     ap.add_argument("--shape", action="store_true",
-                    help="every deck 13 cards three times and one once: round 0 condenses the seeds and random "
-                         "decks to that shape, and variants swap whole cards (type_swap)")
-    ap.add_argument("--shape-tries", type=int, default=3, help="--shape: condensations per seed deck (3)")
+                    help="round 0 condenses seeds and random decks to make-ups of real lists of the class "
+                         "(--shape-profiles); variants swap whole cards, move copies, add or drop a card")
+    ap.add_argument("--shape-tries", type=int, default=3,
+                    help="--shape: candidates per seed deck, itself and the rest condensed (3)")
+    ap.add_argument("--shape-profiles", default="analysis/deckbuild/seeds-tournament-2026-10-07.txt",
+                    help="--shape: the lists whose make-ups (three-, two-, one-of counts) round 0 draws from")
     ap.add_argument("--anchor-file", help='the anchor decks ("label|deck hash", one per class) instead of round '
                                           "0's field")
     ap.add_argument("--consolidate", type=float, default=0.0,
