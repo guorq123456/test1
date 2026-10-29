@@ -213,7 +213,8 @@ def play_deal(job) -> dict:
         points.append(1.0 if state.winner == seat else 0.5 if state.winner not in (0, 1) else 0.0)
         if seat == 0:
             first = state.first
-    return {"key": key, "seed": seed, "points": points, "first": first}
+    # both lists as deck codes, so the records alone can train a model of deck strength (deck, opponent, score)
+    return {"key": key, "seed": seed, "points": points, "first": first, "deck": deck_hash(ids), "opp": deck_hash(opp)}
 
 
 class _InProcess:
