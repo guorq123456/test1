@@ -22,6 +22,23 @@ def test_validate_catches_problems():
                for p in decks.validate(deck[:-1] + [dragon.ZOOEY], Craft.SWORD))
 
 
+def test_the_copy_limit_is_by_name_so_a_reprint_counts_with_its_original():
+    import random
+    from collections import Counter
+    from svsim.cards.pool import POOL
+    old, reprint = POOL[10131320], POOL[10831310]           # Stormy Blast and its set-8 reprint
+    assert old.name == reprint.name and old.card_id != reprint.card_id
+    rune = decks.random_deck(Craft.RUNE, random.Random(0))
+    rest = [c for c in rune if c.name != old.name][:36]
+    assert len(rest) == 36
+    assert not any("Stormy Blast" in p for p in decks.validate(rest + [old, old, reprint, rest[0]]))   # 3: fine
+    problems = decks.validate(rest + [old, old, reprint, reprint])
+    assert any("4 copies of Stormy Blast" in p for p in problems)
+    for seed in range(40):                                  # random decks keep to it as well
+        d = decks.random_deck(Craft.RUNE, random.Random(seed))
+        assert max(Counter(c.name for c in d).values()) <= decks.MAX_COPIES
+
+
 def test_card_tokens():
     assert deckcode.encode_card(10161210) == "cmmw"
     assert deckcode.decode_card("cmmw") == 10161210

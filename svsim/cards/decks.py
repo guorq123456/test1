@@ -70,9 +70,12 @@ def validate(deck: list[CardDef], craft: Craft | None = None, unlimited: bool = 
     problems = []
     if len(deck) != DECK_SIZE:
         problems.append(f"{len(deck)} cards, need {DECK_SIZE}")
-    for card, n in Counter(deck).items():
+    # the limit is by name: a reprint has its own card id (Stormy Blast: 10131320 and the set-8 10831310) but is the
+    # same card (the architecture thread 2026-10-29 20:17Z)
+    for name, n in Counter(card.name for card in deck).items():
         if n > MAX_COPIES:
-            problems.append(f"{n} copies of {card.name}")
+            problems.append(f"{n} copies of {name}")
+    for card in dict.fromkeys(deck):
         if card.is_token:
             problems.append(f"{card.name} is a token")
         if card.craft not in (Craft.NEUTRAL, craft):
@@ -92,7 +95,7 @@ def unimplemented(cards) -> list[CardDef]:
 
 def random_deck(craft: Craft, rng: random.Random, implemented_only: bool = True) -> list[CardDef]:
     """A random legal Rotation deck for `craft` (class and Neutral cards, up to 3
-    copies each). With `implemented_only`, cards still missing a script are left out."""
+    copies of each name). With `implemented_only`, cards still missing a script are left out."""
     options = [c for c in collectible(craft)
                if not (implemented_only and c.has_ability and not has_script(c.card_id))]
     if len(options) * MAX_COPIES < DECK_SIZE:
@@ -100,7 +103,7 @@ def random_deck(craft: Craft, rng: random.Random, implemented_only: bool = True)
     deck: list[CardDef] = []
     while len(deck) < DECK_SIZE:
         card = rng.choice(options)
-        if deck.count(card) < MAX_COPIES:
+        if sum(c.name == card.name for c in deck) < MAX_COPIES:
             deck.append(card)
     return deck
 
