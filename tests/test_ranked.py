@@ -191,3 +191,20 @@ def test_strength_model_and_advantage_labels():
     assert np.allclose(RK.advantage([1.0, 0.0, 0.5], [0.75, 0.25, 0.5]), [0.625, 0.375, 0.5])
     assert RK.predicted(model, {9: ("X", "Y", 0, 0)}, [9], [0])[0] == pytest.approx(
         1 / (1 + np.exp(-(model["b"] + model["c"]))))                             # unknown decks: strength 0
+
+
+def test_a_teacher_searches_the_kept_decisions_afresh_and_picks_the_best_by_its_visits():
+    r = _records(1)[0]
+    got = RK.children(r, 0.15, 3, teacher="mcts:30+plan")
+    assert len(got) > 3
+    again = RK.children(r, 0.15, 3, teacher="mcts:30+plan")             # the teacher's seeds are fixed
+    assert [(i, me, len(rows)) for i, me, rows in got] == [(i, me, len(rows)) for i, me, rows in again]
+    assert all(np.array_equal(x[1], y[1]) for (_, _, a), (_, _, b) in zip(got, again) for x, y in zip(a, b))
+    differs = 0
+    recorded = {i: rows for i, _, rows in RK.children(r, 0.15, 3)}
+    for i, me, rows in got:
+        st, legal, reps, v_rec = next((s, lg, rp, v) for j, s, lg, rp, _g, v, _ in decisions(r) if j == i)
+        v = RK.teacher_visits(st, legal, reps, "mcts:30+plan", int(r["seed"]) + i)
+        assert abs(rows[0][5] - v.max()) < 1e-12 and int((v == v.max()).sum()) == 1
+        differs += int(i not in recorded or not np.array_equal(recorded[i][0][1], rows[0][1]))
+    assert differs > 0                                     # the teacher's best is not always the recorded search's

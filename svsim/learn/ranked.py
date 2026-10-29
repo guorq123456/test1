@@ -7,10 +7,17 @@ the teacher's best child is the distinct move with the most recorded visits (a t
 used), and up to `others` other distinct moves are drawn (without replacement, generator seeded by (deal key, step)).
 A child is the position after the move (EndTurn: search.evaluate.after_end_of_turn, the turn's end abilities done,
 the opponent to act), encoded by learn.tokens.encode from the mover's view, with the mid-turn flag 1 if the mover
-still acts there and 0 if not (the branch learn.setnet.SetNetEnded scores it with under +netmid). A child where the game is over is left
-out (the search scores it by the result); so is a decision whose best child is, or that keeps no other child. Only a
-share `rate` of the decisions is used (each kept with that probability, the same generator), to keep the files'
-size near the mid-turn files'.
+still acts there and 0 if not (the branch learn.setnet.SetNetEnded scores it with under +netmid). A child where the
+game is over is left out (the search scores it by the result); so is a decision whose best child is, or that keeps no
+other child. Only a share `rate` of the decisions is used (each kept with that probability, the same generator), to
+keep the files' size near the mid-turn files'.
+
+A stronger teacher (the architecture thread 2026-10-29 18:28Z, S1 (ii) A: the recorded mcts:100+plan is the agent the
+net has to beat, so learning its ranking can at best copy it): with `teacher` (an arena spec, e.g. mcts:400+plan) the
+visits are not the recorded ones but the teacher's, searching the decision afresh (agent seed: the deal key + the
+step, as analysis/sharednet/s1diag.py rank), mapped to the distinct moves by search.mcts.action_key. The decisions
+kept for a rate are the same with or without a teacher (the same generator draw comes first), so a smaller rate's are
+among a larger one's.
 
 The files (rank-<seed>.npz) have the mid-turn files' layout (learn.midrows), each row a child, plus "flag" (per row),
 "group" (the decision, numbered within the file), "best" (the teacher's best child) and "visits" (the child's share
@@ -23,7 +30,8 @@ Advantage labels. A position's label is the game's result from its player's view
 first) + c (L2 0.5 on s), and `advantage` turns y into 0.5 + (y - p) / 2, p the model's probability for the player:
 in [0, 1], 0.5 for a result as the decks predict. Labels only: no deck enters any input.
 
-    python -m svsim.learn.ranked encode --records DIR --out DIR [--rate 0.25] [--others 3] [--workers 4]
+    python -m svsim.learn.ranked encode --records DIR --out DIR [--rate 0.25] [--others 3] [--workers 4] \
+        [--teacher mcts:400+plan]
 
 Condition: 对手卡表已知（牌序、手牌未知）.
 """
@@ -40,7 +48,24 @@ from pathlib import Path
 import numpy as np
 
 
-def children(record: dict, rate: float = 0.25, others: int = 3):
+def teacher_visits(state, legal, reps, spec: str, seed: int) -> np.ndarray:
+    """The share of `spec`'s root visits of each distinct move `reps` when it searches `state` (a copy) afresh."""
+    from svsim.learn.netdata import _search
+    from svsim.search.mcts import _locator, action_key
+    from svsim.tools.arena import make_agent
+    agent = make_agent(spec, seed)
+    agent.act(state.clone(), legal)
+    search = _search(agent)
+    where = _locator(state, state.active)
+    v = np.zeros(len(reps))
+    if search is not None and search.last_root is not None:
+        for j, a in enumerate(reps):
+            child = search.last_root.children.get(action_key(state, a, where))
+            v[j] = child.visits if child is not None else 0
+    return v / v.sum() if v.sum() > 0 else v
+
+
+def children(record: dict, rate: float = 0.25, others: int = 3, teacher: str | None = None):
     """[(decision step, mover, [(cards, tokens, globals, flag, best, visits, child), ...]) per decision used] of the
     record."""
     from svsim.core.actions import EndTurn
@@ -50,10 +75,14 @@ def children(record: dict, rate: float = 0.25, others: int = 3):
     from svsim.search.evaluate import after_end_of_turn
     key = int(record["seed"])
     out = []
-    for i, state, _legal, reps, _group, v, _start in decisions(record):
+    for i, state, legal, reps, _group, v, _start in decisions(record):
         rng = np.random.default_rng([key, i])
         if rng.random() >= rate:
             continue
+        if teacher is not None:
+            v = teacher_visits(state, legal, reps, teacher, key + i)
+            if v.sum() <= 0:
+                continue
         top = float(v.max())
         if int((v == top).sum()) != 1:
             continue
@@ -85,7 +114,8 @@ def children(record: dict, rate: float = 0.25, others: int = 3):
 
 def _encode_shard(job):
     from svsim.learn import tokens as T
-    path, target, rate, others = job
+    path, target, rate, others = job[:4]
+    teacher = job[4] if len(job) > 4 else None
     t0 = time.process_time()
     cids, toks, offs, globs = [], [], [0], []
     lab = {k: [] for k in ("result", "seed", "g", "i", "turn", "player", "flag", "group", "best", "visits")}
@@ -98,7 +128,7 @@ def _encode_shard(job):
             record = json.loads(line)
             games += 1
             winner = record.get("winner")
-            for i, me, rows in children(record, rate, others):
+            for i, me, rows in children(record, rate, others, teacher):
                 for c, t, g, flag, best, visits, child in rows:
                     for p in child.players:
                         for card in p.hand + p.field + p.leader_area + p.deck_view():
@@ -146,8 +176,9 @@ def encode_main(args) -> None:
         seed = os.path.basename(path)[len("rec-"):-len(".jsonl.gz")]
         target = out / f"rank-{seed}.npz"
         if not target.exists():
-            jobs.append((path, target, args.rate, args.others))
-    print(json.dumps({"shards_to_encode": len(jobs), "rate": args.rate, "others": args.others}), flush=True)
+            jobs.append((path, target, args.rate, args.others, args.teacher))
+    print(json.dumps({"shards_to_encode": len(jobs), "rate": args.rate, "others": args.others,
+                      "teacher": args.teacher}), flush=True)
     with Pool(args.workers) as pool:
         for target, games, decs, n, cpu in pool.imap_unordered(_encode_shard, jobs):
             print(json.dumps({"file": os.path.basename(target), "games": games, "decisions": decs, "children": n,
@@ -248,6 +279,8 @@ def main() -> None:
     e.add_argument("--rate", type=float, default=0.25, help="the share of decisions used")
     e.add_argument("--others", type=int, default=3, help="other children drawn beside the teacher's best")
     e.add_argument("--workers", type=int, default=4)
+    e.add_argument("--teacher", default=None, help="an arena spec searching each kept decision afresh for the visits "
+                                                    "(default: the recorded search's)")
     args = ap.parse_args()
     {"encode": encode_main}[args.cmd](args)
 
