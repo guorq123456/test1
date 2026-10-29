@@ -85,7 +85,7 @@ def test_scaledata_pool_draws_a_fixed_pair_per_game_and_netdata_plays_label_and_
     assert [d[0] for d in pool] == ["a", "b"] and all(len(d[1]) == 40 for d in pool)
     assert scaledata.pool_pair(pool, 7, 3) == scaledata.pool_pair(pool, 7, 3)
     pairs = {tuple(x[0] for x in scaledata.pool_pair(pool, 7, g)) for g in range(40)}
-    assert pairs == {("a", "a"), ("a", "b"), ("b", "a"), ("b", "b")}          # with replacement: mirrors too
+    assert pairs == {("a", "b"), ("b", "a")}                                   # two different decks
     deck, opp = scaledata.pool_pair(pool, 7, 1)
     record = play((1, 7, deck, opp, "random", 0.0))
     assert record["names"] == [opp[0], deck[0]] and record["decks"] == [opp[1], deck[1]]   # g = 1: seat 1 for deck

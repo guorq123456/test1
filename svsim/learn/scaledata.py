@@ -17,7 +17,7 @@ Shards and games are independent, so any machine can play any shard and `merge` 
 
 With --pool FILE (deck codes, lines "label|code" as tools.deckgate's field; the architecture thread 2026-10-29
 02:30Z, data for a net shared by every deck), --deck / --opponent are not used: game g of shard `seed` draws its two
-decks from the pool, each at random with replacement (a mirror is possible), from random.Random("pool:seed:g") (its
+decks from the pool, two different ones at random (two of one class are a legal game), from random.Random("pool:seed:g") (its
 own numbers: the deal and the agents' seeds are as above); the record's "names" are the pool labels by seat. Its
 records go through `encode` and learn.midrows as the others do (they read the decks from the record).
 
@@ -71,10 +71,12 @@ def pool_of(path: str) -> list:
 
 
 def pool_pair(pool: list, seed: int, g: int) -> tuple:
-    """Game g of shard `seed`'s two decks: each drawn from the pool at random (with replacement)."""
+    """Game g of shard `seed`'s two decks: two different decks of the pool at random (the architecture thread
+    2026-10-29 03:33Z; two decks of one class are a legal game, as in the deck search)."""
     import random
     rng = random.Random(f"pool:{seed}:{g}")
-    return pool[rng.randrange(len(pool))], pool[rng.randrange(len(pool))]
+    i, j = rng.sample(range(len(pool)), 2)
+    return pool[i], pool[j]
 
 
 def _sha256(path: str) -> str:
