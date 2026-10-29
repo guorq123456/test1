@@ -179,6 +179,53 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
 .log-list .turn { color: var(--muted); margin-top: 6px; }
 .code-box { width: 100%; box-sizing: border-box; min-height: 70px; font-family: ui-monospace, monospace; font-size: 11px;
   word-break: break-all; }
+
+/* ---- deck picking and the deck editor ---- */
+.sub-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.empty-note { font-size: 12px; color: var(--muted); padding: 4px 0; }
+.seg button .cls { font-size: 11px; opacity: 0.75; margin-left: 4px; }
+#editor { flex: 1; display: flex; flex-direction: column; gap: 10px; padding-block: 12px; min-height: 0; overflow-y: auto; }
+#editor .ed-head { display: flex; gap: 8px; align-items: center; }
+#editor .ed-head input { flex: 1; min-width: 0; padding: 9px 10px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--panel); color: var(--ink); font: inherit; font-weight: 600; }
+#editor .ed-count { font-family: var(--font-num); font-weight: 700; font-size: 20px; white-space: nowrap; }
+#editor .ed-count.ok { color: var(--accent); }
+.ed-problems { font-size: 12px; color: var(--foe); line-height: 1.5; }
+.ed-problems.ok { color: var(--accent); }
+.ed-list-mine { display: flex; flex-direction: column; gap: 6px; }
+.ed-list-mine .deck-row { display: flex; gap: 8px; align-items: center; }
+.ed-list-mine .deck-row button.main { flex: 1; text-align: left; padding: 10px 12px; border-radius: 9px;
+  border: 1px solid var(--line); background: var(--panel); cursor: pointer; line-height: 1.4; }
+.ed-list-mine .deck-row .meta { display: block; font-size: 12px; color: var(--muted); }
+.curve { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 4px; align-items: end; height: 54px; }
+.curve div { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%;
+  font-size: 10px; color: var(--muted); }
+.curve i { display: block; width: 100%; background: var(--gold); border-radius: 3px 3px 0 0; min-height: 1px; }
+.curve b { font-family: var(--font-num); font-size: 12px; color: var(--ink); }
+.crow { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; background: var(--panel);
+  border: 1px solid var(--line); }
+.crow .c-cost { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--gold); color: var(--panel); font-family: var(--font-num); font-weight: 700; font-size: 15px; }
+.crow .c-main { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 0; cursor: pointer; }
+.crow .c-name { font-weight: 600; font-size: 13px; overflow-wrap: anywhere; }
+.crow .c-name .new { white-space: nowrap; font-size: 10px; padding: 0 5px; border-radius: 999px; background: var(--accent); color: var(--accent-ink);
+  margin-left: 4px; font-weight: 700; vertical-align: 1px; }
+.crow .c-name .new.out { background: var(--foe); color: var(--panel); }
+.crow .c-sub { font-size: 11px; color: var(--muted); }
+.crow .c-text { font-size: 12px; line-height: 1.5; margin-top: 4px; color: var(--ink); }
+.crow .c-n { font-family: var(--font-num); font-weight: 700; font-size: 17px; min-width: 2ch; text-align: center; }
+.crow .c-n.zero { color: var(--line); }
+.crow .pm { flex: none; width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg);
+  cursor: pointer; font-size: 18px; line-height: 1; }
+.crow .pm:disabled { opacity: 0.35; cursor: default; }
+.ed-cards { display: flex; flex-direction: column; gap: 5px; }
+.ed-filters { display: flex; flex-direction: column; gap: 6px; position: sticky; top: -12px; background: var(--bg);
+  padding-block: 6px; z-index: 2; }
+.ed-filters input[type=search] { width: 100%; box-sizing: border-box; padding: 9px 10px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; }
+.ed-filters .seg button { flex: 1 1 0; padding: 6px 4px; font-size: 12px; }
+.ed-section { font-size: 12px; color: var(--muted); letter-spacing: 0.08em; margin-top: 4px; }
+.row-wrap { display: flex; gap: 8px; flex-wrap: wrap; }
 @media (prefers-reduced-motion: no-preference) {
   .sheet { animation: rise 0.16s ease-out; }
   @keyframes rise { from { transform: translateY(24px); opacity: 0.6; } to { transform: none; opacity: 1; } }
@@ -191,8 +238,13 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
       <h1>超凡陪练台</h1>
       <p class="lead">《影之诗：超凡世界》对战模拟器的手机版。规则引擎和 AI 都在这个页面里运行，点牌就能出牌；每一局都会自动存档，方便复盘。</p>
     </div>
-    <div class="field-group"><span>你的卡组</span>
-      <div class="seg" data-name="you">
+    <div class="field-group deck-pick" data-name="you"><span>你的卡组</span>
+      <div class="sub-label">我自己组的</div>
+      <div class="seg" data-kind="custom"></div>
+      <div class="sub-label">bot 自己构筑的（第 10 弹）</div>
+      <div class="seg" data-kind="bot"><span class="empty-note">读取中……</span></div>
+      <div class="sub-label">旧卡组（第 10 弹之前的环境，含已退环境的卡）</div>
+      <div class="seg" data-kind="old">
         <button data-value="rhino" aria-pressed="true">破魔虫精灵</button>
         <button data-value="ramp">跳费龙</button>
         <button data-value="pirate">海盗皇家</button>
@@ -204,10 +256,15 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
         <button data-value="pirate-t">旗皇（比赛版）</button>
       </div>
     </div>
-    <div class="field-group"><span>AI 的卡组</span>
-      <div class="seg" data-name="opponent">
-        <button data-value="ramp" aria-pressed="true">跳费龙</button>
+    <div class="field-group deck-pick" data-name="opponent"><span>AI 的卡组</span>
+      <div class="sub-label">我自己组的</div>
+      <div class="seg" data-kind="custom"></div>
+      <div class="sub-label">bot 自己构筑的（第 10 弹）</div>
+      <div class="seg" data-kind="bot"><span class="empty-note">读取中……</span></div>
+      <div class="sub-label">旧卡组（第 10 弹之前的环境，含已退环境的卡）</div>
+      <div class="seg" data-kind="old">
         <button data-value="rhino">破魔虫精灵</button>
+        <button data-value="ramp" aria-pressed="true">跳费龙</button>
         <button data-value="pirate">海盗皇家</button>
         <button data-value="combo">连击精灵</button>
         <button data-value="face">快攻龙</button>
@@ -217,6 +274,7 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
         <button data-value="pirate-t">旗皇（比赛版）</button>
       </div>
     </div>
+    <button class="ghost" id="open-editor" type="button" disabled>组卡 / 管理我的卡组</button>
     <div class="field-group"><span>AI 强度</span>
       <div class="seg" data-name="level">
         <button data-value="fast">快速</button>
@@ -266,6 +324,15 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
       <button id="rv-impact" type="button">胜负影响</button>
       <button id="rv-exit" type="button">退出复盘</button>
     </nav>
+  </section>
+
+  <section id="editor" hidden>
+    <div class="ed-head">
+      <button class="ghost" id="ed-back" type="button">返回</button>
+      <input id="ed-name" type="text" maxlength="40" placeholder="卡组名" aria-label="卡组名">
+      <span class="ed-count" id="ed-count">0/40</span>
+    </div>
+    <div id="ed-body"></div>
   </section>
 </div>
 <div class="scrim" id="scrim" hidden></div>
@@ -406,7 +473,7 @@ function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.
 function status(text, error) { const s = $("status"); s.textContent = text; s.classList.toggle("error", !!error); }
 
 // ---------------------------------------------------------------- setup screen
-document.querySelectorAll(".seg").forEach(seg => {
+document.querySelectorAll(".seg[data-name]").forEach(seg => {
   seg.addEventListener("click", (ev) => {
     const b = ev.target.closest("button"); if (!b) return;
     seg.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
@@ -422,6 +489,13 @@ let ratings = null;
 function showLevelInfo() {
   const box = $("level-info");
   if (!ratings) { box.textContent = ""; return; }
+  if (!(choice.you in DECK_NAMES && choice.opponent in DECK_NAMES)) {   // a custom or bot-built deck on the table
+    box.textContent = `${LEVEL_NAMES[choice.level] || choice.level} · 通用打法：手写评分的搜索` +
+      (choice.level === "normal" || choice.level === "original" ? "（就是 bot 搜卡组时用的那个 AI）" : "") +
+      " · 没有为这副卡组专门训练的模型 · CR 未标定";
+    box.title = (ratings.generic || {})[choice.level] || "";
+    return;
+  }
   const decks = (ratings.tiers[choice.level] || {}).decks || {}, t = decks[choice.opponent];
   const deck = DECK_NAMES[choice.opponent] || choice.opponent;
   const cr = !t ? "CR 只标定比赛卡组" : t.cr != null ?
@@ -438,7 +512,8 @@ async function startGame() {
   $("start").disabled = true;
   status("正在开局……");
   try {
-    view = await Backend.call("start", choice.you, choice.opponent, choice.level, null, choice.first);
+    const you = resolveDeck(choice.you), opponent = resolveDeck(choice.opponent);
+    view = await Backend.call("start", you, opponent, choice.level, null, choice.first);
     Store.gameId = `${Date.now()}`;
     $("setup").hidden = true; $("board").hidden = false;
     render();
@@ -790,7 +865,8 @@ let reviewing = null;                              // {gameId, body} of the game
 function describeFinished(body) {
   const when = body.updated ? new Date(body.updated).toLocaleString("zh-CN", {month: "numeric", day: "numeric",
     hour: "2-digit", minute: "2-digit"}) : "";
-  const names = body.record.names ? body.record.names.map(n => DECK_NAMES[n] || n).join(" 对 ") + " · " : "";
+  const labels = body.record.labels || (body.record.names || []).map(n => DECK_NAMES[n] || n);
+  const names = labels.length ? labels.join(" 对 ") + " · " : "";
   const result = body.resigned ? "认输" : body.winner === 0 ? "你赢" : body.winner === 1 ? "AI 赢" : "平局";
   const marks = (body.record.mistakes || []).length;
   const bot = body.record.bot, level = bot && {fast: "快速", normal: "普通", strong: "强", max: "最强", original: "原始版"}[bot.level];
@@ -1015,6 +1091,420 @@ async function offerResume(dbReady) {
   $("resume-box").hidden = false;
 }
 
+// ---------------------------------------------------------------- the player's own decks
+// The player's decks live in this browser and, on the published page, in the page's store ("decks"), so another
+// device has them too. A deck goes to the simulator as {name, code} (the game's deck code); the simulator checks it
+// (ui.deckbuilder) and plays it. The bot's own built decks come from the simulator (bot_decks).
+const DECKS_KEY = "svsim-my-decks";
+const SET_NAMES = {10000: "基础卡", 10001: "特殊卡"};
+function setName(id) { return SET_NAMES[id] || (id > 10000 && id < 10100 ? `第 ${id - 10000} 弹` : String(id)); }
+
+const Decks = {
+  mine: [], bots: [], botNote: "", pool: null, byId: new Map(), classes: {},
+  loadLocal() {
+    try { const t = localStorage.getItem(DECKS_KEY); return t ? JSON.parse(t) : []; } catch (e) { return []; }
+  },
+  saveLocal() {
+    try { localStorage.setItem(DECKS_KEY, JSON.stringify(this.mine)); } catch (e) { /* the store still has them */ }
+  },
+  async boot(dbReady) {
+    this.mine = this.loadLocal();
+    renderDeckPickers();
+    try {
+      const b = await Backend.call("bot_decks");
+      this.bots = b.decks || []; this.botNote = b.note || "";
+    } catch (e) { this.bots = []; }
+    renderDeckPickers();
+    $("open-editor").disabled = false;
+    await dbReady;
+    if (!Store.db) return;
+    try {                                           // the store's copy wins where it is newer
+      const snap = await Store.db.collection("decks").get();
+      const byId = new Map(this.mine.map(d => [d.id, d]));
+      snap.docs.forEach(doc => {
+        const d = doc.data(); if (!d || !d.id) return;
+        const here = byId.get(d.id);
+        if (d.deleted) { if (here && (here.updated || "") <= (d.updated || "")) byId.delete(d.id); return; }
+        if (!here || (here.updated || "") < (d.updated || "")) byId.set(d.id, d);
+      });
+      this.mine = [...byId.values()].sort((a, b) => (b.updated || "").localeCompare(a.updated || ""));
+      this.saveLocal(); renderDeckPickers();
+    } catch (e) { /* this browser's decks only */ }
+  },
+  async loadPool() {
+    if (this.pool) return this.pool;
+    this.pool = await Backend.call("pool");
+    this.pool.cards.forEach(c => this.byId.set(c.id, c));
+    this.classes = this.pool.classes;
+    return this.pool;
+  },
+  put(deck) {
+    deck.updated = new Date().toISOString();
+    this.mine = [deck, ...this.mine.filter(d => d.id !== deck.id)];
+    this.saveLocal();
+    this.queue(deck);
+  },
+  remove(id) {
+    this.mine = this.mine.filter(d => d.id !== id);
+    this.saveLocal();
+    this.queue({id, deleted: true, updated: new Date().toISOString()});
+    for (const side of ["you", "opponent"]) if (choice[side] === "custom:" + id) choice[side] = side === "you" ? "rhino" : "ramp";
+  },
+  timers: new Map(),
+  queue(deck) {                                     // one write per deck a second after its last change
+    if (!Store.db) return;
+    clearTimeout(this.timers.get(deck.id));
+    this.timers.set(deck.id, setTimeout(async () => {
+      try { await Store.db.collection("decks").doc(deck.id).set(deck); } catch (e) { /* kept in this browser */ }
+    }, 1000));
+  },
+};
+
+function deckSize(deck) { return Object.values(deck.counts || {}).reduce((a, b) => a + b, 0); }
+function deckIds(deck) { return Object.entries(deck.counts || {}).flatMap(([id, n]) => Array(n).fill(Number(id))); }
+function className(craft) { return (Decks.classes && Decks.classes[craft]) || ["中立", "精灵", "皇家", "巫师", "龙族", "梦魇", "主教", "超越者"][craft] || ""; }
+
+function resolveDeck(value) {
+  if (value.startsWith("custom:")) {
+    const d = Decks.mine.find(x => "custom:" + x.id === value);
+    if (!d) throw new Error("找不到这副卡组了，请重新选");
+    if (!d.code || !d.legal) throw new Error(`「${d.name}」还没组完（${deckSize(d)}/40 或有不合规的牌），先去组卡页改好`);
+    return {name: d.name, code: d.code};
+  }
+  if (value.startsWith("bot:")) {
+    const d = Decks.bots.find(x => "bot:" + x.key === value);
+    if (!d) throw new Error("找不到这副 bot 卡组了，请重新选");
+    return {name: d.name, code: d.code};
+  }
+  return value;
+}
+
+function deckLabel(value) {
+  if (value.startsWith("custom:")) { const d = Decks.mine.find(x => "custom:" + x.id === value); return d ? d.name : ""; }
+  if (value.startsWith("bot:")) { const d = Decks.bots.find(x => "bot:" + x.key === value); return d ? d.name : ""; }
+  return DECK_NAMES[value] || value;
+}
+
+function renderDeckPickers() {
+  document.querySelectorAll(".deck-pick").forEach(group => {
+    const side = group.dataset.name;
+    const custom = group.querySelector('[data-kind="custom"]'), bot = group.querySelector('[data-kind="bot"]');
+    custom.replaceChildren();
+    if (!Decks.mine.length) custom.appendChild(el("span", "empty-note", "还没有。点下面的「组卡」组一副，或者导入卡组代码。"));
+    Decks.mine.forEach(d => {
+      const b = el("button", null, d.name); b.type = "button"; b.dataset.value = "custom:" + d.id;
+      b.appendChild(el("span", "cls", d.legal ? className(d.craft) : `未完成 ${deckSize(d)}/40`));
+      b.disabled = !d.legal;
+      custom.appendChild(b);
+    });
+    bot.replaceChildren();
+    if (!Decks.bots.length) bot.appendChild(el("span", "empty-note", "这个版本里没有 bot 构筑的卡组。"));
+    Decks.bots.forEach(d => {
+      const b = el("button", null, d.name); b.type = "button"; b.dataset.value = "bot:" + d.key;
+      bot.appendChild(b);
+    });
+    if (Decks.botNote && Decks.bots.length) bot.appendChild(el("span", "empty-note", Decks.botNote));
+    if (!group.querySelector(`button[data-value="${CSS.escape(choice[side])}"]:not(:disabled)`))
+      choice[side] = side === "you" ? "rhino" : "ramp";
+    group.querySelectorAll("button[data-value]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.value === choice[side])));
+  });
+  showLevelInfo();
+}
+
+document.querySelectorAll(".deck-pick").forEach(group => {
+  group.addEventListener("click", (ev) => {
+    const b = ev.target.closest("button[data-value]"); if (!b || b.disabled) return;
+    choice[group.dataset.name] = b.dataset.value;
+    group.querySelectorAll("button[data-value]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    showLevelInfo();
+  });
+});
+
+// ---------------------------------------------------------------- the deck editor
+let editing = null;                                 // the deck being edited: {id, name, craft, counts, code, legal}
+let edTab = "cards", edFilter = {text: "", cost: "all", scope: "all"}, edRows = new Map();
+
+function showEditor(on) {
+  $("editor").hidden = !on; $("setup").hidden = on;
+  if (!on) { editing = null; renderDeckPickers(); }
+  window.scrollTo(0, 0); $("editor").scrollTop = 0;
+}
+
+$("open-editor").addEventListener("click", openDeckList);
+$("ed-back").addEventListener("click", () => { editing ? openDeckList() : showEditor(false); });
+$("ed-name").addEventListener("input", () => {
+  if (!editing) return;
+  editing.name = $("ed-name").value.trim() || "未命名卡组";
+  Decks.put(editing);
+});
+
+async function openDeckList() {
+  editing = null;
+  showEditor(true);
+  $("ed-name").hidden = true; $("ed-count").textContent = "";
+  const body = $("ed-body"); body.replaceChildren(el("div", "sub-label", "正在读卡池……"));
+  try { await Decks.loadPool(); } catch (e) { body.replaceChildren(el("div", "ed-problems", "卡池没读出来：" + e.message)); return; }
+  body.replaceChildren();
+  body.appendChild(el("h2", null, "我的卡组"));
+  body.appendChild(el("div", "sub-label", "规则：正好 40 张；同名卡最多 3 张；一个职业的卡加中立卡；只能用现在轮替环境的卡（第 10 弹在，第 4 弹已退）。改动会自动保存。"));
+  const list = el("div", "ed-list-mine");
+  if (!Decks.mine.length) list.appendChild(el("div", "empty-note", "还没有卡组。"));
+  Decks.mine.forEach(d => {
+    const row = el("div", "deck-row");
+    const b = el("button", "main"); b.type = "button";
+    b.append(d.name);
+    b.appendChild(el("span", "meta", `${className(d.craft)} · ${deckSize(d)}/40` + (d.legal ? " · 可以用" : " · 还没组完")));
+    b.addEventListener("click", () => editDeck(d));
+    const del = el("button", "ghost", "删除"); del.type = "button";
+    del.addEventListener("click", () => confirmDelete(d));
+    row.append(b, del); list.appendChild(row);
+  });
+  body.appendChild(list);
+  body.appendChild(el("div", "ed-section", "新建一副"));
+  const crafts = el("div", "seg");
+  for (let k = 1; k <= 7; k++) {
+    const b = el("button", null, className(k)); b.type = "button";
+    b.addEventListener("click", () => editDeck({id: `d${Date.now()}`, name: `我的${className(k)}`, craft: k, counts: {}}));
+    crafts.appendChild(b);
+  }
+  body.appendChild(crafts);
+  body.appendChild(el("div", "ed-section", "导入卡组代码"));
+  body.appendChild(el("div", "sub-label", "粘贴卡组代码（像 1.2.cEZs.dmj6…），或者官网组卡器里带 hash= 的分享链接。"));
+  const ta = el("textarea", "code-box"); ta.setAttribute("aria-label", "卡组代码");
+  body.appendChild(ta);
+  const msg = el("div", "ed-problems");
+  const row = el("div", "row-wrap");
+  const go = el("button", "primary", "导入"); go.type = "button";
+  go.addEventListener("click", async () => {
+    msg.textContent = "";
+    try {
+      const r = await Backend.call("check_deck", ta.value);
+      if (r.craft == null) { msg.textContent = r.problems.join("；") || "看不出是哪个职业的卡组"; return; }
+      const counts = {};
+      r.ids.forEach(id => { counts[id] = (counts[id] || 0) + 1; });
+      editDeck({id: `d${Date.now()}`, name: `导入的${className(r.craft)}`, craft: r.craft, counts});
+    } catch (e) { msg.textContent = e.message; }
+  });
+  row.appendChild(go); body.append(row, msg);
+}
+
+function confirmDelete(d) {
+  const sheet = $("sheet"); sheet.replaceChildren();
+  sheet.appendChild(el("h2", null, `删除「${d.name}」？`));
+  sheet.appendChild(el("div", "sub", "删掉就找不回来了。想留底可以先导出卡组代码。"));
+  const row = el("div", "row");
+  const ok = el("button", "primary", "删除"); ok.type = "button";
+  ok.addEventListener("click", () => { Decks.remove(d.id); closeSheet(); openDeckList(); });
+  const no = el("button", "ghost", "取消"); no.type = "button"; no.addEventListener("click", closeSheet);
+  row.append(ok, no); sheet.appendChild(row); showSheet();
+}
+
+async function editDeck(deck) {
+  await Decks.loadPool();
+  editing = {...deck, counts: {...(deck.counts || {})}};
+  showEditor(true);
+  $("ed-name").hidden = false; $("ed-name").value = editing.name;
+  edTab = deckSize(editing) ? edTab : "cards";
+  const body = $("ed-body"); body.replaceChildren();
+  const tabs = el("div", "seg"); tabs.id = "ed-tabs";
+  [["cards", "选卡"], ["list", "卡组清单"]].forEach(([k, label]) => {
+    const b = el("button", null, label); b.type = "button"; b.dataset.tab = k;
+    b.addEventListener("click", () => { edTab = k; renderEditorTab(); });
+    tabs.appendChild(b);
+  });
+  body.appendChild(tabs);
+  body.appendChild(el("div", "sub-label", `${className(editing.craft)}卡组 · 改动自动保存`));
+  const problems = el("div", "ed-problems"); problems.id = "ed-problems"; body.appendChild(problems);
+  const pane = el("div"); pane.id = "ed-pane"; body.appendChild(pane);
+  buildCardBrowser();
+  renderEditorTab();
+  await refreshDeck(false);
+}
+
+function renderEditorTab() {
+  document.querySelectorAll("#ed-tabs button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.tab === edTab)));
+  const pane = $("ed-pane"); pane.replaceChildren();
+  if (edTab === "cards") pane.appendChild(edBrowser);
+  else pane.appendChild(deckListPane());
+}
+
+let edBrowser = null;
+function buildCardBrowser() {
+  edRows = new Map();
+  const wrap = el("div");
+  const filters = el("div", "ed-filters");
+  const search = el("input"); search.type = "search"; search.placeholder = "搜卡名、俗称、英文名或效果";
+  search.value = edFilter.text;
+  search.addEventListener("input", () => { edFilter.text = search.value.trim().toLowerCase(); applyFilter(); });
+  filters.appendChild(search);
+  const costs = el("div", "seg");
+  [["all", "全部"], ["0-1", "0-1"], ["2", "2"], ["3", "3"], ["4", "4"], ["5", "5"], ["6", "6"], ["7", "7"], ["8+", "8+"]].forEach(([k, label]) => {
+    const b = el("button", null, label); b.type = "button"; b.dataset.k = k;
+    b.setAttribute("aria-pressed", String(edFilter.cost === k));
+    b.addEventListener("click", () => { edFilter.cost = k; costs.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); applyFilter(); });
+    costs.appendChild(b);
+  });
+  filters.appendChild(costs);
+  const scope = el("div", "seg");
+  [["all", "全部"], ["class", className(editing.craft)], ["neutral", "中立"], ["new", "第 10 弹新卡"], ["in", "已放进卡组"]].forEach(([k, label]) => {
+    const b = el("button", null, label); b.type = "button";
+    b.setAttribute("aria-pressed", String(edFilter.scope === k));
+    b.addEventListener("click", () => { edFilter.scope = k; scope.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); applyFilter(); });
+    scope.appendChild(b);
+  });
+  filters.appendChild(scope);
+  wrap.appendChild(filters);
+  const list = el("div", "ed-cards");
+  const cards = Decks.pool.cards.filter(c => c.craft === editing.craft || c.craft === 0)
+    .sort((a, b) => a.cost - b.cost || (a.craft === 0) - (b.craft === 0) || a.id - b.id);
+  cards.forEach(c => { const r = cardRow(c); edRows.set(c.id, r); list.appendChild(r.node); });
+  const none = el("div", "empty-note", "没有符合条件的卡。"); none.id = "ed-none"; none.hidden = true;
+  wrap.append(list, none);
+  edBrowser = wrap;
+  applyFilter();
+}
+
+function statsLine(c) {
+  const parts = [c.type + (c.atk != null ? ` ${c.atk}/${c.life}` : ""), c.craft === 0 ? "中立" : className(c.craft), setName(c.set)];
+  if (c.kw) parts.push(c.kw);
+  return parts.join(" · ");
+}
+
+function cardRow(c) {
+  const node = el("div", "crow");
+  node.appendChild(el("span", "c-cost num", String(c.cost)));
+  const main = el("button", "c-main"); main.type = "button";
+  const name = el("div", "c-name", c.name + (c.nick ? `（${c.nick}）` : ""));
+  if (c.new) name.appendChild(el("span", "new", "新"));
+  if (c.out) name.appendChild(el("span", "new out", "已退环境"));
+  main.appendChild(name);
+  main.appendChild(el("div", "c-sub", statsLine(c)));
+  const text = el("div", "c-text"); text.hidden = true;
+  text.textContent = (c.text || "没有效果文字") + `\n（${c.en}；效果是模拟器脚本里的写法）`;
+  text.style.whiteSpace = "pre-wrap";
+  main.appendChild(text);
+  main.addEventListener("click", () => { text.hidden = !text.hidden; });
+  const minus = el("button", "pm", "−"); minus.type = "button"; minus.setAttribute("aria-label", "少放一张 " + c.name);
+  const n = el("span", "c-n num", "0");
+  const plus = el("button", "pm", "+"); plus.type = "button"; plus.setAttribute("aria-label", "多放一张 " + c.name);
+  minus.addEventListener("click", () => changeCount(c.id, -1));
+  plus.addEventListener("click", () => changeCount(c.id, +1));
+  node.append(main, minus, n, plus);
+  const r = {node, n, minus, plus, card: c, hay: [c.name, c.nick || "", c.en, c.text || "", c.kw].join(" ").toLowerCase()};
+  updateRow(r);
+  return r;
+}
+
+function updateRow(r) {
+  const k = editing.counts[r.card.id] || 0;
+  r.n.textContent = String(k); r.n.classList.toggle("zero", !k);
+  r.minus.disabled = !k;
+  r.plus.disabled = k >= 3 || deckSize(editing) >= 40;
+}
+
+function applyFilter() {
+  const f = edFilter;
+  let shown = 0;
+  edRows.forEach(r => {
+    const c = r.card;
+    const cost = f.cost === "all" || (f.cost === "0-1" ? c.cost <= 1 : f.cost === "8+" ? c.cost >= 8 : c.cost === Number(f.cost));
+    const scope = f.scope === "all" || (f.scope === "class" ? c.craft !== 0 : f.scope === "neutral" ? c.craft === 0 :
+      f.scope === "new" ? c.new : (editing.counts[c.id] || 0) > 0);
+    const ok = cost && scope && (!f.text || r.hay.includes(f.text));
+    r.node.hidden = !ok; shown += ok;
+  });
+  const none = document.getElementById("ed-none"); if (none) none.hidden = shown > 0;
+}
+
+function changeCount(id, delta) {
+  const k = (editing.counts[id] || 0) + delta;
+  if (k < 0 || k > 3 || (delta > 0 && deckSize(editing) >= 40)) return;
+  if (k) editing.counts[id] = k; else delete editing.counts[id];
+  edRows.forEach(updateRow);
+  if (edTab === "list") renderEditorTab();
+  refreshDeck(true);
+}
+
+let checkSeq = 0;
+async function refreshDeck(save) {
+  const size = deckSize(editing);
+  const count = $("ed-count"); count.textContent = `${size}/40`; count.classList.toggle("ok", size === 40);
+  const seq = ++checkSeq;
+  let r;
+  try { r = await Backend.call("check_deck", deckIds(editing), editing.craft); } catch (e) { r = {problems: [e.message], code: null}; }
+  if (seq !== checkSeq || !editing) return;
+  Object.values(r.others || {}).forEach(c => { if (!Decks.byId.has(c.id)) { c.out = true; Decks.byId.set(c.id, c); } });
+  if (edTab === "list" && Object.keys(r.others || {}).length && !$("ed-pane").dataset.named) {
+    $("ed-pane").dataset.named = "1"; renderEditorTab();
+  }
+  editing.code = r.code; editing.legal = !r.problems.length && size === 40;
+  const p = $("ed-problems");
+  if (p) {
+    p.classList.toggle("ok", editing.legal);
+    p.textContent = editing.legal ? "合规，可以拿去对战了。" : r.problems.join("；");
+  }
+  if (save) Decks.put(editing);
+}
+
+function deckListPane() {
+  const pane = el("div");
+  const ids = Object.keys(editing.counts).map(Number).map(id => Decks.byId.get(id) ||
+    {id, name: `现在不能用的卡（编号 ${id}）`, cost: 99, craft: -1, type: "", set: 0, en: "", text: ""});
+  ids.sort((a, b) => a.cost - b.cost || a.id - b.id);
+  const curve = el("div", "curve");
+  const bins = Array(9).fill(0);
+  ids.forEach(c => { bins[Math.min(Math.max(c.cost, 0), 8)] += editing.counts[c.id]; });
+  const top = Math.max(1, ...bins);
+  bins.forEach((n, i) => {
+    const col = el("div"); col.appendChild(el("b", null, n ? String(n) : ""));
+    const bar = el("i"); bar.style.height = `${Math.round(n / top * 36)}px`; col.appendChild(bar);
+    col.appendChild(el("span", null, i === 8 ? "8+" : String(i))); curve.appendChild(col);
+  });
+  pane.appendChild(curve);
+  const kinds = {};
+  ids.forEach(c => { kinds[c.type || "其他"] = (kinds[c.type || "其他"] || 0) + editing.counts[c.id]; });
+  const newCount = ids.filter(c => c.new).reduce((a, c) => a + editing.counts[c.id], 0);
+  pane.appendChild(el("div", "sub-label", Object.entries(kinds).map(([k, n]) => `${k} ${n}`).join(" · ") + ` · 第 10 弹新卡 ${newCount} 张`));
+  const list = el("div", "ed-cards");
+  if (!ids.length) list.appendChild(el("div", "empty-note", "卡组是空的。到「选卡」里点 + 放牌。"));
+  ids.forEach(c => {
+    const row = cardRow(c); list.appendChild(row.node);
+    if (!edRows.has(c.id)) row.plus.disabled = true;      // out of Rotation: it can only be taken out
+  });
+  pane.appendChild(list);
+  const row = el("div", "row-wrap"); row.style.marginTop = "12px";
+  const exp = el("button", "primary", "导出卡组代码"); exp.type = "button";
+  exp.addEventListener("click", showDeckCode);
+  const copy = el("button", "ghost", "另存一份"); copy.type = "button";
+  copy.addEventListener("click", () => {
+    const d = {...editing, id: `d${Date.now()}`, name: editing.name + "（副本）", counts: {...editing.counts}};
+    Decks.put(d); editDeck(d);
+  });
+  const play = el("button", "ghost", "用它开打"); play.type = "button";
+  play.addEventListener("click", () => {
+    if (!editing.legal) return toast("这副还没组完：" + ($("ed-problems").textContent || ""), "还不能用");
+    choice.you = "custom:" + editing.id; showEditor(false);
+  });
+  row.append(exp, copy, play); pane.appendChild(row);
+  return pane;
+}
+
+function showDeckCode() {
+  const sheet = $("sheet"); sheet.replaceChildren();
+  sheet.appendChild(el("h2", null, `「${editing.name}」的卡组代码`));
+  sheet.appendChild(el("div", "sub", editing.code ? "复制下来可以存档，也可以在别的设备上导入。" + (editing.legal ? "" : "（这副还没组完，代码只记下现在的牌。）") : "还没有职业卡，生成不了代码。"));
+  const box = el("textarea", "code-box"); box.readOnly = true; box.value = editing.code || "";
+  sheet.appendChild(box);
+  const row = el("div", "row");
+  const copy = el("button", "primary", "复制"); copy.type = "button";
+  copy.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(box.value); copy.textContent = "已复制"; }
+    catch (e) { box.focus(); box.select(); copy.textContent = "已选中，请手动复制"; }
+  });
+  const close = el("button", "ghost", "关闭"); close.type = "button"; close.addEventListener("click", closeSheet);
+  row.append(copy, close); sheet.appendChild(row); showSheet();
+}
+
 // ---------------------------------------------------------------- boot
 (async () => {
   const dbReady = Store.init();
@@ -1023,6 +1513,7 @@ async function offerResume(dbReady) {
     status(Backend.mode === "http" ? "已连接电脑上的模拟器。" : "模拟器已就绪。");
     $("start").disabled = false;
     try { ratings = await Backend.call("ratings"); } catch (e) { ratings = null; }
+    Decks.boot(dbReady);
     showLevelInfo();
     offerResume(dbReady);
   } catch (e) {

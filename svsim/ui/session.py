@@ -77,13 +77,29 @@ MATCHUPS = {("strong", "ramp-t", "ramp-t"): _bot(83, "net-mid-ramp-t", "prior-ra
             ("strong", "ramp-t", "nemesis-t"): _bot(63, "net-nm2g2f-ramp-nem", "prior-nm2g2-nemesis-t"),
             ("strong", "nemesis-t", "elf-t"): _bot(62, "net-nm3g3f-elf-nem", "prior-nm3g3-elf-t"),      # NM3 gen 3
             ("strong", "elf-t", "nemesis-t"): _bot(57, "net-nm3g3f-elf-nem", "prior-nm3g3-nemesis-t")}
+# A deck the levels' models were not made for (the player's own, or the bot's built decks: ui.deckbuilder) plays these
+# instead: the hand-set evaluator, no per-deck or per-class models (2026-10-29: trained nets score 22-26% on unseen
+# decks against it). normal is the deck search's own bot (deckbuild --agent default); its deck judgments matched
+# mcts:400's (validation league 10-28, identical ranks), so the higher levels only search deeper.
+GENERIC = {"fast": "greedy+plan", "normal": "mcts:100+plan", "strong": "mcts:400+plan", "max": "mcts:1000+plan",
+           "original": "mcts:100+plan"}
 RATINGS = Path(__file__).resolve().parent / "ratings.json"
 
 
 def level_spec(level: str, you: str | None = None, opponent: str | None = None) -> str:
-    """The spec `level` plays when the player has `you` and the AI `opponent` (MATCHUPS, else LEVELS; a spec that is
-    no level plays as itself)."""
+    """The spec `level` plays when the player has `you` and the AI `opponent` (MATCHUPS, else LEVELS; GENERIC when
+    either deck is no DECKS key: a custom deck; a spec that is no level plays as itself)."""
+    if (you not in DECKS or opponent not in DECKS) and level in GENERIC:
+        return GENERIC[level]
     return MATCHUPS.get((level, you, opponent), LEVELS.get(level, level))
+
+
+def _deck(choice) -> tuple:
+    """(key, name, cards) of a deck the page picked: a DECKS key, or a custom deck {"name", "code"} (key "custom")."""
+    if isinstance(choice, dict):
+        from svsim.ui.deckbuilder import deck_from
+        return "custom", (choice.get("name") or "自组卡组").strip()[:40], deck_from(choice)
+    return choice, DECKS[choice][0], decks.build(DECKS[choice][1])
 
 
 CALIBRATED = ("ramp-t", "elf-t", "nemesis-t", "pirate-t")   # the decks the CR calibration measures
@@ -133,6 +149,8 @@ def bot_of(record: dict) -> dict:
 
 def deck_names(record: dict) -> tuple:
     """Both decks' names (records from before "names" was kept: by their cards)."""
+    if len(record.get("labels") or []) == 2:      # custom decks keep their names in the record
+        return tuple(record["labels"])
     keys = list(record.get("names") or [])
     if len(keys) != 2 or not all(k in DECKS for k in keys):
         lists = {key: sorted(c.card_id for c in decks.build(listing)) for key, (_, listing) in DECKS.items()}
@@ -172,17 +190,20 @@ class Session:
     def start(self, you: str = "rhino", opponent: str = "ramp", level: str = "normal",
               seed: int | None = None, first: str | None = None) -> dict:
         seed = random.randrange(10 ** 9) if seed is None else seed
-        mine, theirs = decks.build(DECKS[you][1]), decks.build(DECKS[opponent][1])
+        (you, my_name, mine), (opponent, their_name, theirs) = _deck(you), _deck(opponent)
         order = None if first in (None, "random") else (0 if first == "you" else 1)
         self.state = new_game(mine, theirs, seed=seed, first=order)
         self.reviewing = False
         spec = level_spec(level, you, opponent)
         self.record = records.new_record(mine, theirs, seed, self.state.first, spec, first_arg=order)
         self.record["names"] = [you, opponent]
+        self.record["labels"] = [my_name, their_name]
         self.record["bot"] = bot_info(level, spec, opponent)     # the AI plays `opponent`
+        if spec == GENERIC.get(level) and spec != LEVELS.get(level):
+            self.record["bot"]["generic"] = True
         from svsim.tools.arena import make_agent
         self.ai = make_agent(spec, seed)
-        self.decks = (DECKS[you][0], DECKS[opponent][0])
+        self.decks = (my_name, their_name)
         self.log = [f"对局开始：你用{self.decks[0]}，AI 用{self.decks[1]}；你{'先手' if self.state.first == 0 else '后手'}。"]
         return self.view()
 
@@ -333,7 +354,23 @@ class Session:
 
     def ratings(self) -> dict:
         """The levels' class ratings for the start screen (see ratings())."""
-        return ratings()
+        out = ratings()
+        out["generic"] = GENERIC
+        return out
+
+    # --- the player's own decks (ui.deckbuilder) -----------------------------------------
+
+    def pool(self) -> dict:
+        from svsim.ui.deckbuilder import pool
+        return pool()
+
+    def check_deck(self, code_or_ids, craft: int | None = None) -> dict:
+        from svsim.ui.deckbuilder import check
+        return check(code_or_ids, craft)
+
+    def bot_decks(self) -> dict:
+        from svsim.ui.deckbuilder import bot_decks
+        return bot_decks()
 
     def code(self) -> str:
         return records.encode(self.record)

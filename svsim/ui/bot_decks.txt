@@ -1,0 +1,9 @@
+# 未冻结：bot 构筑搜索进行中的最新一副（每个职业一副，2026-10-29 晚）；冻结名单出来后替换
+# 格式：key|卡组代码|显示名（deckbuild 的种子格式，第三段可省）
+bot-forest|1.1.e3_e.e3_e.e6hM.e6hM.eSfc.eSvE.eUfk.eUvM.eVLU.eVLU.etGu.fC_M.fC_M.fDE-.fDE-.fDXk.fDkO.fDkO.fDkO.fFRc.fFz-.fGAe.fzqM.f-3-.f-3-.g0Gc.g0Gm.g0Gm.g0Jk.g0Jk.g0Jk.g0WE.g0ZM.g0ZM.g0o-.g0o-.g0_U.g0_U.g0_e.g0_e|bot 的精灵（搜索中）
+bot-sword|1.2.c9x8.cEaA.e9Ak.e9NO.evyc.fDkO.fHts.fHuA.fI7e.fI7e.fIcu.fbv6.fgLU.fgqk.fh1O.fh1O.fzqM.f-3-.f-Jc.f-LA.f-LA.f-LA.f-ZE.g2is.g2is.g2j0.g2l-.g2yU.g2yU.g2yU.g2ye.g2_c.g2_c.g3C6.g3C6.g3FE.g3Rk.g3Ru.g3Ru.g3Ru|bot 的皇家（搜索中）
+bot-rune|1.3.c9w-.cH1g.eBNM.eSAM.eSAW.eSAW.eZku.eaD-.eqqU.exvc.ey9O.eyee.fKpM.fL38.fbPs.fbfU.fbv6.fi-E.fjG-.fjG-.fzqM.f-5Y.f-LA.f-ZE.f-ZE.g596.g59G.g59G.g5CE.g5Ok.g5Ok.g5Ok.g5Ou.g5eM.g5eM.g5eM.g5t-.g5u8.g5u8.g5u8|bot 的巫师（搜索中）
+bot-dragon|1.4.cJSg.cJh-.eDX0.eDmU.eE3E.ecE6.fDkE.fMmW.fMmg.fNFc.flAs.flAs.flQe.flTc.flg6.flg6.flvk.flvu.f-3-.f-Jc.f-LA.f-LA.f-ZE.g7bM.g7bM.g7bM.g7bW.g7eU.g7q-.g7q-.g7q-.g7r8.g7u6.g7u6.g7u6.g84c.g8KE.g8KO.g8KO.g8KO|bot 的龙族（搜索中）
+bot-abyss|1.5.cLum.cM8E.eGi8.eShA.eeNm.eegM.eev-.ef6U.eqd-.erJk.fDkO.fDkO.fbv6.fnvs.foM8.foM8.fzqM.f-3-.f-3-.f-5Y.f-LA.f-LA.f-ZE.gA1c.gA1c.gA1m.gA1m.gA1m.gAHE.gAHE.gAHO.gAKM.gAWs.gAWs.gAWs.gAmU.gAmU.gAme.gAme.gAme|bot 的梦魇（搜索中）
+bot-haven|1.6.c9hg.cOaU.eJ8E.eSvE.egrQ.ehJ6.eqas.er5g.erJu.f3zO.fC_M.fDE-.fRes.fRfA.fRxc.fS9g.fqI-.fqaA.fzqM.f-3-.f-LA.gCTs.gCU0.gCU0.gCW-.gCjU.gCjU.gCjU.gCje.gCmc.gCmc.gCz6.gCz6.gD0E.gD0E.gDCk.gDCk.gDCk.gDCu.gDCu|bot 的主教（搜索中）
+bot-portal|1.7.e3ls.e3_e.ejJE.ejYs.eqd-.f5gc.f5gm.f5gm.f6PU.fDkE.fU5G.fUp-.fc8k.ft1-.ftEe.ftEe.fzqM.f-3-.f-3-.f-5Y.f-5Y.f-Jc.f-Jc.f-ZE.gEw6.gEwG.gEzE.gF9k.gF9u.gF9u.gFCs.gFCs.gFPM.gFPM.gFPM.gFSU.gFSU.gFSU.gFe-.gFe-|bot 的超越者（搜索中）
