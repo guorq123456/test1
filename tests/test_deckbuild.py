@@ -244,3 +244,12 @@ def test_the_pool_holds_one_card_per_name():
     for craft in deckbuild.CLASSES:
         names = [c.name for c in deckbuild.legal_cards(craft)]
         assert len(names) == len(set(names))                  # a reprint would let 3 + 1 copies in
+
+
+def test_legalize_counts_a_reprint_as_its_name():
+    rune = [c.card_id for c in deckbuild.legal_cards(Craft.RUNE) if c.name != "Stormy Blast"][:12]
+    ids = [10131320] * 3 + [10831310] + [i for i in rune for _ in range(3)]  # A's and F's RUNE: 3 + 1 Stormy Blast
+    out = deckbuild.legalize(ids, Craft.RUNE, random.Random(0))
+    assert Counter(POOL[i].name for i in out)["Stormy Blast"] == 3 and out[4:] == ids[4:]
+    two = deckbuild.legalize([10831310] * 2 + ids[4:], Craft.RUNE, random.Random(0))
+    assert two[:2] == [10131320] * 2                          # the reprint alone keeps its copies

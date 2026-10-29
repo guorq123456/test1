@@ -132,11 +132,13 @@ def _pick(options, rng: random.Random, have: Counter, cost: int | None = None, n
 
 def legalize(ids: list, craft: Craft, rng: random.Random) -> list:
     """`ids` as a legal deck of `craft`, slot by slot: a card that isn't legal (left Rotation, another class, no
-    script) or is a 4th copy gives its slot to a legal card of the nearest cost; short lists are filled at random."""
+    script) or is a 4th copy gives its slot to a legal card of the nearest cost; short lists are filled at random.
+    A reprint counts as the card of the same name the pool keeps, so 3 + 1 Stormy Blast loses only the 4th copy."""
     options = legal_cards(craft)
     legal = {c.card_id for c in options}
+    same = {c.name: c.card_id for c in options}
     out, have = [], Counter()
-    for i in ids[:decks.DECK_SIZE]:
+    for i in (same.get(POOL[i].name, i) if i in POOL else i for i in ids[:decks.DECK_SIZE]):
         if i in legal and have[i] < decks.MAX_COPIES:
             out.append(i)
         else:
