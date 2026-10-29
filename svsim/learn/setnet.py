@@ -359,14 +359,20 @@ class SetNet:
 
     def grads(self, batch, y, l2: float = 0.0):
         hand = batch[5] if len(batch) > 5 else None
-        cards, dyn, count, seg, glob = batch[:5]
-        B = glob.shape[0]
+        B = batch[4].shape[0]
         z, kept = self.forward(*batch[:5], keep=True, hand=hand)
-        S, H1, H2, U, Z1, Z2 = kept[:6]
         p = 1 / (1 + np.exp(-np.clip(z, -30, 30)))
         loss = float(np.mean(-(y * np.log(p + 1e-12) + (1 - y) * np.log(1 - p + 1e-12))))
+        return loss, self.backward(batch, kept, (p - y) / B, l2)
+
+    def backward(self, batch, kept, dz, l2: float = 0.0) -> dict:
+        """The gradient of the weights from dz, the loss's gradient in the batch's outputs (forward's z), with
+        forward's kept arrays; l2's term added."""
+        hand = batch[5] if len(batch) > 5 else None
+        cards, dyn, count, seg, glob = batch[:5]
+        B = glob.shape[0]
+        S, H1, H2, U, Z1, Z2 = kept[:6]
         g = {}
-        dz = (p - y) / B
         g["v3"], g["c3"] = Z2.T @ dz, np.array([dz.sum()])
         dZ2 = np.outer(dz, self.v3) * _dact(Z2, self.slope)
         g["V2"], g["c2"] = Z1.T @ dZ2, dZ2.sum(0)
@@ -402,12 +408,13 @@ class SetNet:
             for k in ("W1s", "W1d", "W2", "V1", "V2", "v3") + (("V1h",) if hand is not None else ()) + \
                     (("W1x",) if self.xcols else ()):
                 g[k] = g[k] + 2 * l2 * getattr(self, k)
-        return loss, g
+        return g
 
     # --- training ---------------------------------------------------------------------------------------------
     def fit(self, data: Data, valid: Data | None = None, epochs: int = 30, batch: int = 256, lr: float = 1e-3,
             l2: float = 1e-5, patience: int = 3, seed: int = 0, decay: float = 0.5, log=print,
-            checkpoint=None, ftz: bool = False) -> dict:
+            checkpoint=None, ftz: bool = False, rank=None, rank_valid=None, rank_weight: float = 1.0,
+            rank_batch: int = 64) -> dict:
         """Adam; after each epoch without a better validation log-loss the step size is multiplied by `decay`,
         and `patience` such epochs in a row stop the fit; the best epoch's weights are kept. With `checkpoint` (a
         path), the whole state (weights, Adam's moments and step count, the step size, the best epoch so far, the
@@ -416,9 +423,18 @@ class SetNet:
         Adam's moments below the smallest normal float64 (subnormal numbers, which l2 decay drives unused weights
         into) are set to 0: they are far below a unit in the last place of anything they are added to, and CPU
         arithmetic on them is many times slower (the 10^5 net's epochs went from 234 s to 990 s). Off by default,
-        so the 10^3 / 10^4 nets stay reproducible."""
+        so the 10^3 / 10^4 nets stay reproducible.
+
+        With `rank` (learn.ranked.load's children of searched decisions; the architecture thread 2026-10-29, S1 (ii)),
+        every step adds a pairwise ranking loss on `rank_batch` decisions, `rank_weight` times the mean over the
+        decision's (teacher's best child, other child) pairs of log(1 + exp(-(z_best - z_other))), z the net's logit
+        of each child for the mover; the decisions are drawn from a generator of their own (seed, 1), so the value
+        rows' order is the fit's without them. The validation part then also scores `rank_valid` (the pairs' loss
+        and the share of decisions whose best child the net ranks first), and an epoch is better when log loss +
+        rank_weight * that loss is. Without `rank`, the fit is the one before."""
         self._table, self._pool, self._zone_sums, self._live_sums = None, {}, {}, {}
         rng = np.random.default_rng(seed)
+        rank_rng = np.random.default_rng([seed, 1]) if rank is not None else None
         m = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
         v = {k: np.zeros_like(getattr(self, k)) for k in self.PARAMS}
         t, best, best_params, bad, history = 0, None, None, 0, []
@@ -434,6 +450,8 @@ class SetNet:
             t, best, bad, lr, history = meta["t"], meta["best"], meta["bad"], meta["lr"], meta["history"]
             start, stopped = meta["epochs_done"], meta["stopped"]
             rng.bit_generator.state = meta["rng"]
+            if rank_rng is not None:
+                rank_rng.bit_generator.state = meta["rank_rng"]
             log(json.dumps({"resumed_after_epoch": start, "stopped": stopped}))
         y = data.result.astype(np.float64)
         for epoch in range(start, epochs):
@@ -441,11 +459,22 @@ class SetNet:
                 break
             t0 = time.time()
             order = rng.permutation(data.n)
-            total = 0.0
+            total = rank_total = 0.0
+            if rank is not None:
+                rank_order, rank_at, rank_steps = rank_rng.permutation(rank.n_dec), 0, 0
             for s in range(0, data.n, batch):
                 idx = order[s:s + batch]
                 loss, g = self.grads(self._batch(data, idx), y[idx], l2)
                 total += loss * len(idx)
+                if rank is not None:
+                    if rank_at + rank_batch > rank.n_dec:
+                        rank_order, rank_at = rank_rng.permutation(rank.n_dec), 0
+                    r_loss, r_g = self.rank_grads(rank, rank_order[rank_at:rank_at + rank_batch], rank_weight)
+                    rank_at += rank_batch
+                    rank_total += r_loss
+                    rank_steps += 1
+                    for k in g:
+                        g[k] = g[k] + r_g[k]
                 t += 1
                 for k in self.PARAMS:
                     m[k] = 0.9 * m[k] + 0.1 * g[k]
@@ -456,11 +485,19 @@ class SetNet:
                         for arr in (getattr(self, k), m[k], v[k]):
                             _flush(arr)
             row = {"epoch": epoch + 1, "lr": lr, "train_bce": round(total / data.n, 5), "s": round(time.time() - t0, 1)}
+            if rank is not None:
+                row["train_rank"] = round(rank_total / max(rank_steps, 1), 5)
             if valid is not None:
                 sc = score(self.predict(valid), valid.result)
                 row.update({f"valid_{k}": v_ for k, v_ in sc.items()})
-                if best is None or sc["log_loss"] < best - 1e-5:
-                    best, bad = sc["log_loss"], 0
+                crit = sc["log_loss"]
+                if rank_valid is not None:
+                    rv = self.rank_score(rank_valid)
+                    row.update({f"valid_rank_{k}": v_ for k, v_ in rv.items()})
+                    crit = sc["log_loss"] + rank_weight * rv["loss"]
+                    row["valid_criterion"] = round(crit, 5)
+                if best is None or crit < best - 1e-5:
+                    best, bad = crit, 0
                     best_params = {k: getattr(self, k).copy() for k in self.PARAMS}
                     row["best"] = True
                 else:
@@ -478,6 +515,8 @@ class SetNet:
                 meta = {"t": t, "best": best, "bad": bad, "lr": lr, "history": history, "epochs_done": epoch + 1,
                         "stopped": stopped, "has_best": best_params is not None,
                         "rng": rng.bit_generator.state}
+                if rank_rng is not None:
+                    meta["rank_rng"] = rank_rng.bit_generator.state
                 tmp = str(checkpoint) + ".tmp.npz"
                 np.savez(tmp, meta=np.array(json.dumps(meta)), **arrays)
                 os.replace(tmp, checkpoint)
@@ -488,6 +527,45 @@ class SetNet:
                 setattr(self, k, val)
         self.info["history"] = history
         return {"history": history}
+
+    @staticmethod
+    def _pairs(rank, decs):
+        """(the children rows of decisions `decs` of `rank`, in order; per (best, other) pair, the best child's and the
+        other child's place in those rows)."""
+        lo, hi = rank.dec_offsets[decs], rank.dec_offsets[decs + 1]
+        lens = hi - lo
+        first = np.concatenate([[0], np.cumsum(lens)[:-1]]).astype(np.int64)
+        rows = np.repeat(lo - first, lens) + np.arange(int(lens.sum()))
+        dec_of = np.repeat(np.arange(len(decs)), lens)
+        isbest = rank.best[rows]
+        best_at = np.zeros(len(decs), np.int64)
+        best_at[dec_of[isbest]] = np.flatnonzero(isbest)
+        other = np.flatnonzero(~isbest)
+        return rows, best_at[dec_of[other]], other
+
+    def rank_grads(self, rank, decs, weight: float = 1.0):
+        """(weight times the mean pairwise loss over decisions `decs` of `rank`, its gradient; no l2)."""
+        rows, b, o = self._pairs(rank, decs)
+        batch = self._batch(rank, rows)
+        z, kept = self.forward(*batch[:5], keep=True, hand=batch[5] if len(batch) > 5 else None)
+        d = z[b] - z[o]
+        loss = float(np.mean(np.logaddexp(0.0, -d)))
+        s = weight / len(d) / (1 + np.exp(np.clip(d, -30, 30)))      # weight * sigmoid(-d) / pairs
+        dz = np.zeros(len(rows))
+        np.add.at(dz, b, -s)
+        np.add.at(dz, o, s)
+        return weight * loss, self.backward(batch, kept, dz, 0.0)
+
+    def rank_score(self, rank) -> dict:
+        """The mean pairwise loss over every (best, other) pair of `rank`, and the share of decisions where the
+        net's highest child is the teacher's best (a tie at the top counts as the best first)."""
+        z = self.predict(rank)
+        rows, b, o = self._pairs(rank, np.arange(rank.n_dec))
+        d = z[rows][b] - z[rows][o]
+        top = np.maximum.reduceat(z, rank.dec_offsets[:-1].astype(np.int64)) if rank.n_dec else np.zeros(0)
+        z_best = z[np.flatnonzero(rank.best)]
+        return {"loss": round(float(np.mean(np.logaddexp(0.0, -d))), 5),
+                "top1": round(float(np.mean(z_best >= top)), 4), "pairs": int(len(d)), "decisions": int(rank.n_dec)}
 
     def _batch(self, data, idx):
         """data.batch(idx), and for an ophand net the opponent-hand tokens too (data.hand_batch)."""

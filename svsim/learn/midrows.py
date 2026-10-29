@@ -264,7 +264,7 @@ def _assemble(plan, cards_npz, part: str, hand_dir=None):
     out.offsets = np.zeros(n_pos + 1, np.int64)
     out.globals = np.zeros((n_pos, n_glob + 1), np.float32)
     for k, dt in (("result", np.float32), ("linear", np.float32), ("seed", np.int32), ("g", np.int32),
-                  ("turn", np.int32)):
+                  ("turn", np.int32), ("player", np.int32)):
         setattr(out, k, np.zeros(n_pos, dt))
     out.flag = np.zeros(n_pos, np.float32)
     out.inputs = out.inputs or "v1"
@@ -311,10 +311,14 @@ def _assemble(plan, cards_npz, part: str, hand_dir=None):
             out.tokens[t:t + k] = z["tokens"][take]
             out.cards[t:t + k] = np.searchsorted(out.card_ids, z["cards"][take].astype(np.int64)).astype(np.int32)
             out.offsets[p + 1:p + m + 1] = t + np.cumsum(lens)
+            if "flag" in z.files:                    # a file with a flag per row (learn.ranked's children)
+                flag = z["flag"][sel]
             out.globals[p:p + m, :n_glob] = z["globals"][sel] / scale
             out.globals[p:p + m, n_glob] = flag
             for key in ("result", "linear", "seed", "g", "turn"):
                 getattr(out, key)[p:p + m] = z[key][sel]
+            if "player" in z.files:
+                out.player[p:p + m] = z["player"][sel]
             out.flag[p:p + m] = flag
         p += m
         t += k

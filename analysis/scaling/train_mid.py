@@ -15,6 +15,10 @@ the thinning also keeps the training data's size and memory near a turn-end net'
         --init analysis/scaling/models/net-gen3-30000.npz --tokens TOK --end 70100000:10 ... \\
         --mid-dir MID --mid 72300000:40 ... --holdout 71600018 ... --name NAME --checkpoint CKPT
 
+S1 (ii) (the architecture thread 2026-10-29): --advantage RECORDS turns every label into the result against the
+decks' strength model fitted on the training games (learn.ranked.advantage), and --rank-dir DIR adds the pairwise
+ranking loss on the rank- files of the --mid shards there (learn.ranked; SetNet.fit's rank), split as the rows.
+
 Writes models/net-<NAME>.npz and data/net-<NAME>.json.
 """
 from __future__ import annotations
@@ -117,6 +121,12 @@ def main() -> None:
                          "extend_table; a new pairing's start)")
     ap.add_argument("--pairs", nargs="+", default=None, metavar="DECK:OPPONENT",
                     help="the orders of the pairing the net answers for (info pairs; default --deck:--opponent)")
+    ap.add_argument("--advantage", default=None, metavar="RECORDS",
+                    help="the shards' records: labels 0.5 + (result - the decks' strength model's p) / 2, the model "
+                         "fitted on the training games (learn.ranked)")
+    ap.add_argument("--rank-dir", default=None, help="the rank- files (learn.ranked encode): add the ranking loss")
+    ap.add_argument("--rank-weight", type=float, default=1.0)
+    ap.add_argument("--rank-batch", type=int, default=64, help="decisions per step")
     args = ap.parse_args()
     if bool(args.init) == args.fresh:
         raise SystemExit("give --init or --fresh")
@@ -180,19 +190,52 @@ def main() -> None:
         n0 = len(net.card_ids)
         extend_table(net, train.card_ids, train.static)
         info["extended_cards"] = [int(c) for c in net.card_ids[n0:]]
+    rank_train = rank_valid = None
+    if args.rank_dir:
+        from svsim.learn import ranked
+        rank_files = [Path(args.rank_dir) / f"rank-{s}.npz" for s in mid_seeds]
+        missing = [str(f) for f in rank_files if not f.exists()]
+        if missing:
+            raise SystemExit(f"missing: {missing[:5]}")
+        rank_train, rank_valid = ranked.load(rank_files, tok / "cards.npz", every=20, split=getattr(args, "split", "key"))
+        if args.extend_cards:
+            from svsim.learn.setnet import extend_table
+            n0 = len(net.card_ids)
+            extend_table(net, rank_train.card_ids, rank_train.static)
+            extend_table(net, rank_valid.card_ids, rank_valid.static)
+            info.setdefault("extended_cards", []).extend(int(c) for c in net.card_ids[n0:])
+        info.update({"rank_dir": str(args.rank_dir), "rank_weight": args.rank_weight, "rank_batch": args.rank_batch,
+                     "rank_train": {"decisions": int(rank_train.n_dec), "children": int(rank_train.n)},
+                     "rank_valid": {"decisions": int(rank_valid.n_dec), "children": int(rank_valid.n)}})
+    if args.advantage:
+        from svsim.learn import ranked
+        games = ranked.games_of(args.advantage)
+        keys = sorted({int(k) for k in train.games()})
+        model = ranked.strength(games, keys)
+        for d in (train, valid):
+            d.result = ranked.advantage(d.result, ranked.predicted(model, games, d.games(), d.player))
+        info["advantage"] = {"records": str(args.advantage), "games": len(keys), "b": model["b"], "c": model["c"],
+                             "decks": len(model["s"])}
     if train.inputs != net.inputs or valid.inputs != net.inputs:
         raise SystemExit(f"the data's inputs ({train.inputs}) are not the net's ({net.inputs})")
-    for d in (train, valid):
+    for d in (train, valid) + ((rank_train, rank_valid) if rank_train is not None else ()):
         align(net, d)
     net.info["init_valid"] = by_kind(net, valid)
+    if rank_valid is not None:
+        net.info["init_valid_rank"] = net.rank_score(rank_valid)
     print(json.dumps({k: v for k, v in net.info.items() if not k.endswith("shards")}), flush=True)
     t0 = time.time()
     net.fit(train, valid, epochs=args.epochs, batch=args.batch, lr=args.lr, l2=args.l2, patience=args.patience,
-            seed=args.seed, decay=args.decay, checkpoint=args.checkpoint, ftz=True)
+            seed=args.seed, decay=args.decay, checkpoint=args.checkpoint, ftz=True, rank=rank_train,
+            rank_valid=rank_valid, rank_weight=args.rank_weight, rank_batch=args.rank_batch)
     report = {"name": args.name, "fit_s": round(time.time() - t0), "epochs": len(net.info["history"]),
               "lr": args.lr, "decay": args.decay, "patience": args.patience, "l2": args.l2, "batch": args.batch,
               "ftz": True, "train": by_kind(net, train), "valid": by_kind(net, valid),
               "init_valid": net.info["init_valid"], "mid_rate": net.info["mid_rate"]}
+    if rank_valid is not None:
+        report.update({"init_valid_rank": net.info["init_valid_rank"], "valid_rank": net.rank_score(rank_valid)})
+    if args.advantage:
+        report["labels"] = "advantage"
     net.info["report"] = report
     (HERE / "models").mkdir(exist_ok=True)
     net.save(HERE / f"models/net-{args.name}.npz")
