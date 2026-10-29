@@ -131,7 +131,9 @@ def rank_main(args) -> None:
             sites.append((record["seed"], i))
     step = max(1, len(sites) // args.decisions)
     chosen = set(sites[::step][:args.decisions])
-    tally = {"decisions": 0, "net_top1": 0, "hand_top1": 0, "recorded_top1": 0, "net_hand_same_top1": 0}
+    tally = {"decisions": 0, "net_top1": 0, "hand_top1": 0, "recorded_top1": 0, "net_hand_same_top1": 0,
+             "with_end": 0, "teacher_end": 0, "net_end": 0, "hand_end": 0,
+             "rest": 0, "net_top1_rest": 0, "hand_top1_rest": 0}
     corr = {"net": [], "hand": [], "recorded": []}
     for record in _records(args.records):
         key = record["seed"]
@@ -185,6 +187,18 @@ def rank_main(args) -> None:
             tally["hand_top1"] += int(int(np.argmax(hand_v)) == best)
             tally["recorded_top1"] += int(int(np.argmax(recorded)) == best)
             tally["net_hand_same_top1"] += int(int(np.argmax(net_v)) == int(np.argmax(hand_v)))
+            ends = [j for j, a in enumerate(reps) if isinstance(a, EndTurn)]
+            if ends:                                     # EndTurn against the rest: the net's two branches meet here
+                e = ends[0]
+                tally["with_end"] += 1
+                tally["teacher_end"] += int(best == e)
+                tally["net_end"] += int(int(np.argmax(net_v)) == e)
+                tally["hand_end"] += int(int(np.argmax(hand_v)) == e)
+                rest = [j for j in range(len(reps)) if j != e]
+                if best != e and len(rest) >= 2:         # within one branch: the moves that go on with the turn
+                    tally["rest"] += 1
+                    tally["net_top1_rest"] += int(max(rest, key=lambda j: net_v[j]) == best)
+                    tally["hand_top1_rest"] += int(max(rest, key=lambda j: hand_v[j]) == best)
             for name, vals in (("net", net_v), ("hand", hand_v), ("recorded", recorded)):
                 r = _spearman(vals, visits)
                 if r is not None:
@@ -198,6 +212,10 @@ def rank_main(args) -> None:
            "spearman_with_teacher_visits": {k: {"mean": round(float(np.mean(v)), 4), "n": len(v),
                                                 "se": round(float(np.std(v) / math.sqrt(len(v))), 4)}
                                             for k, v in corr.items() if v},
+           "end_turn": {k: round(tally[k] / max(tally["with_end"], 1), 4) for k in ("teacher_end", "net_end",
+                                                                                    "hand_end")},
+           "top1_without_end_turn": {k: round(tally[k] / max(tally["rest"], 1), 4) for k in ("net_top1_rest",
+                                                                                         "hand_top1_rest")},
            "counts": tally, "condition": "对手卡表已知（牌序、手牌未知）"}
     _write(out, args.out)
 
