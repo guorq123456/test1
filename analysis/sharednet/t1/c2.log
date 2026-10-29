@@ -1,0 +1,8 @@
+条件：2 套卡组（analysis/sharednet/fields/control-elf-nem.txt）的 2 个非镜像有序对局轮流；每对 = 一副发牌，X 打 a 对 Y 打 b、Y 打 a 对 X 打 b，各坐两边（4 局）；对手卡表已知（牌序、手牌未知）
+X = mcts:49+plan+setnet=analysis/scaling/models/net-nm3g3f-elf-nem.npz+netmid+netany
+Y = mcts:100+plan
+20 对（80 局）：X 得分 61.3% ± 11.5%（95% 区间 49.7%～72.8%），CR 分差约 +108（-2～+232；游戏稳态公式 +90，-2～>+175，窗口内），LLR +1.34（判定线 -2.94 / 2.94，H1 = 55%）→ 未判定
+  X 用 elf-t：20 对 55.0% ± 14.0%
+  X 用 nemesis-t：20 对 67.5% ± 14.7%
+每步（搜索过的决定）CPU：X 49 ms，Y 40 ms，比 1.214（墙钟 X 49 ms，Y 40 ms；2502 / 2161 步）
+X 按真实先后手：先手 40 局 65.0%，后手 40 局 57.5%
