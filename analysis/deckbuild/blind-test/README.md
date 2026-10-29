@@ -27,6 +27,8 @@ Salem 10-29 另开了一条线程：Claude 读第 10 弹的卡牌文字，自己
   - 冻结文件：claude-built-g1.txt、claude-built-g2.txt、claude-built-g3.txt，每行「标签|卡组代码」，和 bot 的 frozen.txt 同一格式；提交号由各线程给出，补在本节末尾。
 - 已冻结：
   - g1：提交 e8e6fcd4ab6360850b037ea73047db820adcac33（分支 claude/claude-built-decks-set10，2026-10-29 21:12:44Z），10 副，标签「档位-职业-体系」。bot 这边没有打开看过内容。
+  - g3：提交 a173fa43426d9ab5f2720621e156a9bf082c2cc7（分支 claude/claude-built-g3，2026-10-29 21:38:42Z），15 副，标签如「g3-S1-FOREST-combo」，S/P/W 表示强/可用/弱。bot 这边没有打开看过内容。
+    - 注意：这个提交建在 claude/deck-search 的 1f72130b 上，那里已经有 bot 的名单（analysis/deckbuild/F/current.txt 是陪练台上那七副，F/seeds.txt 是新搜法的起点）。那条线程有没有读过它们，要它自己说明；读过的话，g3 就不算独立于 bot。
 - 第二阶段（10-29 21:19Z 补登）：Salem 看了 g1 后定了更严的规则，只给可用卡池和游戏规则，不给任何参考卡组、体系名或提示。三条新线程按同样三种设置各构筑一份，记作 p2-g1、p2-g2、p2-g3，冻结文件 claude-built-p2-g1.txt、claude-built-p2-g2.txt、claude-built-p2-g3.txt，格式同上。第一阶段的 g2、g3 照旧跑完。
   - 指标和第三组相同，每个子组各算一遍；指标 5 的循环赛把这三份也放进去，按 bot 对每个子组分别报。
   - 已冻结：
