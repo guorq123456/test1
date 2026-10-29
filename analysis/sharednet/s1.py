@@ -76,7 +76,7 @@ def _rows(record):
     winner = record.get("winner")
     for _i, state, *_rest, _start in decisions(record):
         me = state.active
-        yield "mid", state.copy(), me, 0.5 if winner is None else float(winner == me), True
+        yield "mid", state.clone(), me, 0.5 if winner is None else float(winner == me), True
 
 
 def _records(folder: str):
