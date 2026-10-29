@@ -12,10 +12,22 @@ def _bot(i=0):
     return deckbuilder.bot_decks()["decks"][i]
 
 
-def test_bot_decks_are_legal_and_one_per_class():
+def test_bot_decks_play_and_are_one_per_class():
     bd = deckbuilder.bot_decks()["decks"]
-    assert bd and all(not d["problems"] for d in bd)
+    assert bd and all(len(deckbuilder.deck_from(d)) == 40 for d in bd)    # even one the search left a card over
     assert len({d["craft"] for d in bd}) == len(bd)
+
+
+def test_reprints_share_the_name_limit():
+    from collections import defaultdict
+    from svsim.cards.pool import collectible
+    names = defaultdict(list)
+    for c in collectible():
+        names[(c.name, c.craft)].append(c)
+    a, b = next(v for v in names.values() if len(v) > 1)[:2]
+    others = [c.card_id for c in collectible(a.craft) if c.name != a.name and c.craft == a.craft][:12]
+    ids = [a.card_id] * 3 + [b.card_id] + [i for i in others for _ in range(3)][:36]
+    assert any("重印" in p for p in deckbuilder.problems(ids))
 
 
 def test_pool_is_rotation_without_tokens():
@@ -25,7 +37,7 @@ def test_pool_is_rotation_without_tokens():
 
 
 def test_check_names_the_problems():
-    code = _bot(1)["code"]                                       # a Sword deck
+    code = next(d["code"] for d in deckbuilder.bot_decks()["decks"] if not d["problems"] and d["craft"] == 2)
     assert deckbuilder.check(code)["problems"] == []
     assert deckbuilder.check("https://example/deck/detail/?hash=" + code + "&lang=chs")["problems"] == []
     dragon = decks.RAMP_T_HASH.split(".")[2]                      # a Dragon card in a Sword deck

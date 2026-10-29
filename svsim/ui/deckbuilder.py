@@ -84,10 +84,13 @@ def problems(ids: list, craft: int | None = None) -> list[str]:
         out.append("一副卡组只能有一个职业（加中立卡）" if len(crafts) > 1 else "还没有职业卡，选不出职业")
     if len(ids) != DECK_SIZE:
         out.append(f"现在 {len(ids)} 张，要正好 {DECK_SIZE} 张")
+    by_name = Counter(c.name for c in cards)          # a reprint has its own id but the same name: one limit
     for c, n in sorted(Counter(cards).items(), key=lambda x: x[0].card_id):
         name = card_name(c)
-        if n > MAX_COPIES:
-            out.append(f"{name} 有 {n} 张，同名卡最多 {MAX_COPIES} 张")
+        total = by_name.pop(c.name, 0)            # reported once, at the name's first id
+        if total > MAX_COPIES:
+            reprint = "（同名的重印卡算在一起）" if n < total else ""
+            out.append(f"{name} 有 {total} 张{reprint}，同名卡最多 {MAX_COPIES} 张")
         if c.is_token or c.type in (CardType.CREST, CardType.FAITH):
             out.append(f"{name} 是衍生卡，不能放进卡组")
         elif not c.rotation:
@@ -140,10 +143,11 @@ def check(code_or_ids, craft: int | None = None) -> dict:
 
 
 def deck_from(spec: dict) -> list:
-    """The cards of a deck the page sends ({"name", "code"}); ValueError when it is illegal."""
+    """The cards of a deck the page sends ({"name", "code"}); ValueError when it is illegal. One of the bot's own
+    decks (BOT_DECKS, the same code) plays as the search left it, even with a problem the editor would refuse."""
     craft, ids = decode(spec["code"])
     found = problems(ids, craft or None)
-    if found:
+    if found and not any(d["code"] == spec["code"] for d in bot_decks()["decks"]):
         raise ValueError(f"卡组「{spec.get('name') or '未命名'}」不合法：" + "；".join(found))
     return build(Counter(POOL[i] for i in ids))
 
@@ -151,7 +155,7 @@ def deck_from(spec: dict) -> list:
 def _label_name(key: str, craft: Craft) -> str:
     """The page's name for a frozen list's label "{tier}-{CLASS}-{k}" (T1-FOREST-1 -> "T1 精灵 1"); else "bot 的<class>"."""
     parts = key.split("-")
-    if len(parts) == 3 and parts[0][:1] == "T" and parts[1] in Craft.__members__:
+    if len(parts) == 3 and parts[1] in Craft.__members__:
         return f"{parts[0]} {CLASS_ZH[Craft[parts[1]]]} {parts[2]}"
     return f"bot 的{CLASS_ZH[craft]}"
 
