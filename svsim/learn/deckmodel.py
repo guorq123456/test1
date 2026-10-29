@@ -187,8 +187,8 @@ def bce(p, y) -> float:
     return float(np.mean(-(y * np.log(p) + (1 - y) * np.log(1 - p))))
 
 
-def fit(records: list, h: int = 32, h2: int = 32, epochs: int = 60, batch: int = 512, lr: float = 3e-3,
-        l2: float = 1e-4, seed: int = 0, log=print) -> tuple:
+def fit(records: list, h: int = 8, h2: int = 8, epochs: int = 15, batch: int = 512, lr: float = 3e-3,
+        l2: float = 1e-2, seed: int = 0, log=print) -> tuple:
     """Adam on the mirrored training deals; the epoch with the best held-out log loss is kept."""
     codes = sorted({d for r in records for d in r[:2]})
     decks = {c: Counter(decode(c)) for c in codes}
@@ -280,10 +280,12 @@ def main() -> None:
     f = sub.add_parser("fit")
     f.add_argument("--records", nargs="+", required=True, help="tools.deckbuild deals.jsonl files")
     f.add_argument("--out", required=True)
-    f.add_argument("--h", type=int, default=32)
-    f.add_argument("--h2", type=int, default=32)
-    f.add_argument("--epochs", type=int, default=60)
-    f.add_argument("--l2", type=float, default=1e-4)
+    # sizes chosen without new-pool labels: leave one class out of the old-pool search O (its class cards never
+    # seen, as a new pack's), 2026-10-29: 32/32, l2 1e-4 0.719 (worse than a constant, 0.693); 8/8, l2 1e-2 0.682
+    f.add_argument("--h", type=int, default=8)
+    f.add_argument("--h2", type=int, default=8)
+    f.add_argument("--epochs", type=int, default=15)
+    f.add_argument("--l2", type=float, default=1e-2)
     f.add_argument("--seed", type=int, default=0)
     e = sub.add_parser("eval")
     e.add_argument("--model", required=True)
