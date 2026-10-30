@@ -12,10 +12,11 @@ def _bot(i=0):
     return deckbuilder.bot_decks()["decks"][i]
 
 
-def test_bot_decks_play_and_are_one_per_class():
+def test_bot_decks_play_and_cover_every_class():
     bd = deckbuilder.bot_decks()["decks"]
     assert bd and all(len(deckbuilder.deck_from(d)) == 40 for d in bd)    # even one the search left a card over
-    assert len({d["craft"] for d in bd}) == len(bd)
+    assert {d["craft"] for d in bd} == set(range(1, 8))
+    assert len({d["key"] for d in bd}) == len(bd)
 
 
 def test_reprints_share_the_name_limit():
