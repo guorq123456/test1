@@ -55,3 +55,21 @@ see the cards, not only position totals.
 
 Next: labels on 10000 more decisions at m = 4 (a playout buys more for a fit spread over more decisions when the
 model explains little of d), seed 85961000, the pilot's games left out (it stays as a held-out set with low noise).
+
+### Interim: 2741 labelled decisions at m = 4 (`r1_cards.py`, `cards-2741.json`)
+
+Fitted on the m = 4 labels so far, judged on the pilot (753 decisions, m = 12, games not in training). Cards: per
+zone (my hand, field, leader area, deck; the opponent's field and leader area) the sum of the cards' static rows
+(learn.tokens.static), 576 columns. "Switch": take the second move wherever the model prefers it; gain per decision
+over always taking the teacher's first, win-rate points.
+
+| model | held-out corr with d | teacher-wrong clear decisions right | switch rate | switch gain |
+|---|---|---|---|---|
+| hand-written score | 0.185 | 2 / 23 | 6.1% | +0.21 ± 0.12 |
+| + generic (105) | **0.242** | 4 / 23 | 9.7% | +0.22 ± 0.19 |
+| + cards (576) | 0.156 | 3 / 23 | 12.5% | +0.07 ± 0.25 |
+| + generic + cards | 0.175 | 4 / 23 | 16.5% | +0.06 ± 0.28 |
+
+With 3.6 times the decisions the generic correction begins to predict d (0.185 -> 0.242), but it does not choose
+better: the switches it adds gain nothing measurable. The card sums overfit at this size. The labels' noise allows a
+correlation of 0.82 on the pilot.
