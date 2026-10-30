@@ -9,7 +9,7 @@ of the previous round (slot order matters). Checks: each replayed variant's deck
 deal records (written from r2:RUNE on), and each step's halving winner (changes.jsonl out/in) is one of them.
 
 Writes results.md and variants.jsonl next to this file. Run from the deck-search worktree (it needs svsim.tools.deckbuild):
-  PYTHONPATH=<worktree> python -B analysis/deckbuild/runs/A/set10/exploration.py <worktree>/runs/deckbuild-A/deals.jsonl
+  PYTHONPATH=<worktree> python -B analysis/deckbuild/runs/A/set10/exploration.py <worktree>/runs/deckbuild-A/deals.jsonl [1-10]
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ HERE = Path(__file__).resolve().parent
 RUN = HERE.parent                                        # analysis/deckbuild/runs/A
 SEED = 84801000
 NEW_SET = "10010"
-ROUNDS = (1, 2, 3)
+ROUNDS = (1, 2, 3)                                       # override with a second argument, e.g. 1-10
 SIMS = 400                                               # random variants per step for the expected share
 
 
@@ -106,7 +106,7 @@ def main(deals_path: str) -> None:
 
     out = []
     p = out.append
-    p("# 搜索 A：变体试没试第 10 弹的卡（不打新对局）")
+    p(f"# 搜索 A：变体试没试第 10 弹的卡（第 {ROUNDS[0]}～{ROUNDS[-1]} 轮，不打新对局）")
     p("")
     p("条件：对手卡表已知（牌序、手牌未知）")
     p("")
@@ -187,10 +187,14 @@ def main(deals_path: str) -> None:
         p(f"- 进了复核的减半胜者（{label}）：{len(sel)} 个，接受 {acc} 个；"
           + "、".join(f"第 {c['round']} 轮 {c['class']} {c['verdict']}" for c in sel))
     text = "\n".join(out) + "\n"
-    (HERE / "results.md").write_text(text, encoding="utf-8")
-    (HERE / "variants.jsonl").write_text("".join(json.dumps(x, ensure_ascii=False) + "\n" for x in rows), encoding="utf-8")
+    tag = "" if ROUNDS == (1, 2, 3) else f"-r{ROUNDS[0]}-{ROUNDS[-1]}"       # the first write-up keeps its names
+    (HERE / f"results{tag}.md").write_text(text, encoding="utf-8")
+    (HERE / f"variants{tag}.jsonl").write_text("".join(json.dumps(x, ensure_ascii=False) + "\n" for x in rows), encoding="utf-8")
     print(text)
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 2:
+        lo, _, hi = sys.argv[2].partition("-")
+        ROUNDS = tuple(range(int(lo), int(hi or lo) + 1))
     main(sys.argv[1])
