@@ -218,3 +218,32 @@ Gate as (ii) (BLAS on one thread, an idle machine):
 
 Three times the games ranked the teacher's choices a little better and played no better (38.5% against 41.0%, the
 difference -2.5 ± 3.3 points): within this range, more of the same data is not what the net lacks.
+
+## S1 (i) on 60000 games: the move prior with three times the data (`s1/gate/prior60-*`)
+
+The architecture thread 2026-10-30 00:52Z: of the four, (i) (the prior over the hand-written score) was best, and B
+added data under (ii)'s recipe, so whether data helps the best recipe was untested. `prior-s1-60k.npz`: prior-s1-20k
+continued on all 60 shards' decisions (S1's 20 + S1(b)'s 40; cards by their static rows, `cards-all60.npz`, 586
+cards), the same validation (S1's 7 held-out decks' games), 3 epochs (validation cross-entropy 1.37736, 1.37643,
+1.37589; prior-s1-20k: 1.37852). On the 129655 held-out decisions, the most-visited move of the recorded
+mcts:100+plan is the prior's highest: **66.7%** (prior-s1-20k: 66.3%); among all distinct moves of a decision, so not
+the value nets' figure (their up to 4 children).
+
+X = mcts:N+plan+puct=prior-s1-60k, Y = mcts:100+plan, BLAS on one thread, an idle machine:
+- Time match (24 pairs at N = 100, seeds 85891500 on): CPU X / Y 1.675 -> **N 60** (at N = 100: 49.0% ± 7.5%).
+- 300 fixed pairs, bank 85820000: **X 48.0% ± 2.1%** (95% 45.9%-50.1%), H0. By X's deck: forest 44.7%, sword
+  73.8%, rune 41.9%, dragon 36.0%, abyss 37.8%, haven 47.1%, portal 54.7%. First / second 49.2% / 46.8%. CPU X 51
+  ms, Y 39 ms: ratio 1.299.
+- The architecture thread's prediction: 45%-53%, above 50% with probability 0.3. Inside the range, not above 50%;
+  against prior-s1-20k (48.3% ± 2.1% at N 64, ratio 1.284) no change (-0.3 ± 3.0 points).
+
+| X | games | top-1 (held out) | gate (bank 85820000, 300 pairs) | CPU X / Y |
+|---|---|---|---|---|
+| (i) prior-s1-20k | 20000 | 66.3% (all moves) | 48.3% ± 2.1% (N 64) | 1.284 |
+| (i) prior-s1-60k | 60000 | 66.7% (all moves) | 48.0% ± 2.1% (N 60) | 1.299 |
+| S1 net-s1-20k | 20000 | 53.0% (≤ 4 children) | 36.5% ± 2.4% (N 56) | 1.231 |
+| (ii) net-s1-ii | 20000 | 75.9% (≤ 4 children) | 41.0% ± 2.3% (N 56) | 1.230 |
+| A net-s1-a400 | 20000 | 72.6% (≤ 4 children) | 34.6% ± 2.2% (N 56) | 1.197 |
+| B net-s1-b60 | 60000 | 78.4% (≤ 4 children) | 38.5% ± 2.4% (N 58) | 1.254 |
+
+Three times the data did not move either recipe: the prior stays just under Y at equal CPU, the value net well under.
