@@ -1,0 +1,28 @@
+decks 56; cheap mcts:100+plan seed 85900000; deep mcts:400+plan seed 85920000
+Spearman 0.985 (95% 0.963-0.993); Pearson 0.989
+claim 11 (wrong if above 0.9): WRONG
+cheap: spread of deck scores 17.1 points, reliability at least 0.971
+deep: spread of deck scores 17.2 points, reliability at least 0.971
+group  cheap  deep
+bot      69.7  70.1
+control  60.8  62.8
+g1       44.9  45.2
+g2       42.7  43.5
+g3       51.0  50.9
+p2-g1    43.7  42.8
+p2-g2    44.7  43.0
+p2-g3    42.5  41.6
+moved most (deep - cheap, points):
+  control/control-HAVEN             56.8 ->  62.8 (+5.9)
+  control/control-RUNE              49.3 ->  54.7 (+5.4)
+  bot/T3-RUNE-1                     50.8 ->  55.5 (+4.7)
+  p2-g3/P2G3-SWORD-1                63.2 ->  58.5 (-4.7)
+  p2-g3/P2G3-HAVEN-1                23.9 ->  19.7 (-4.2)
+  p2-g2/可玩-HAVEN-回复触发控制             49.7 ->  45.6 (-4.1)
+  p2-g1/ABYSS-A-banish-engine       55.9 ->  51.9 (-4.0)
+  p2-g2/强-DRAGON-跳费弃牌               30.0 ->  26.1 (-3.9)
+  g2/T1-FOREST-1                    39.1 ->  42.9 (+3.8)
+  g3/g3-P1-ABYSS-nocturne           59.6 ->  55.9 (-3.7)
+  p2-g1/HAVEN-A-banish-steal        64.8 ->  61.2 (-3.6)
+  g3/g3-P4-HAVEN-control            42.6 ->  46.0 (+3.5)
+condition: 对手卡表已知（牌序、手牌未知）

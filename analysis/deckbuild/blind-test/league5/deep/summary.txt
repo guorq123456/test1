@@ -1,0 +1,36 @@
+每组对其他所有组：
+  bot      70.1 ± 1.1
+  control  62.8 ± 1.3
+  g1       45.2 ± 1.4
+  g2       43.5 ± 1.4
+  g3       50.9 ± 1.3
+  p2-g1    42.8 ± 1.4
+  p2-g2    43.0 ± 1.3
+  p2-g3    41.6 ± 1.4
+两两（行对列，行方得分）：
+            bot control      g1      g2      g3   p2-g1   p2-g2   p2-g3
+bot         -    55.5    71.2    71.6    68.7    75.5    74.0    74.1  
+control  44.5       -    67.6    65.4    62.6    66.4    69.0    64.1  
+g1       28.8    32.4       -    53.2    44.0    52.6    50.7    54.9  
+g2       28.4    34.6    46.8       -    42.0    48.1    50.8    53.7  
+g3       31.3    37.4    56.0    58.0       -    60.3    56.3    57.1  
+p2-g1    24.5    33.6    47.4    51.9    39.7       -    50.9    51.6  
+p2-g2    26.0    31.0    49.3    49.2    43.7    49.1       -    53.1  
+p2-g3    25.9    35.9    45.1    46.3    42.9    48.4    46.9       -  
+bot 对各组（± 按卡组对算的标准误）：
+  bot vs control: 55.5 ± 3.1
+  bot vs g1: 71.2 ± 2.9
+  bot vs g2: 71.6 ± 2.7
+  bot vs g3: 68.7 ± 2.8
+  bot vs p2-g1: 75.5 ± 2.6
+  bot vs p2-g2: 74.0 ± 2.6
+  bot vs p2-g3: 74.1 ± 2.6
+每组各职业那副对其他组的平均：
+  bot: T1-ABYSS-1 77; T1-FOREST-1 68; T1-HAVEN-1 67; T1-PORTAL-1 85; T1-SWORD-1 80; T3-DRAGON-1 58; T3-RUNE-1 56
+  control: control-ABYSS 79; control-DRAGON 37; control-FOREST 49; control-HAVEN 63; control-PORTAL 84; control-RUNE 55; control-SWORD 74
+  g1: PLAYABLE-ABYSS-clue 48; PLAYABLE-HAVEN-amulet 43; PLAYABLE-RUNE-lhynkal 32; PLAYABLE-SWORD-pirate 67; STRONG-DRAGON-ramp 19; STRONG-FOREST-combo 44; STRONG-PORTAL-cutthroat 63
+  g2: T1-DRAGON-1 27; T1-FOREST-1 43; T1-PORTAL-1 62; T2-HAVEN-1 30; T2-RUNE-1 24; T2-SWORD-1 66; T3-ABYSS-1 53
+  g3: g3-P1-ABYSS-nocturne 56; g3-P2-SWORD-pirate 69; g3-P3-RUNE-experiment 55; g3-P4-HAVEN-control 46; g3-S1-FOREST-combo 43; g3-S2-PORTAL-highlander 56; g3-S3-DRAGON-ramp 31
+  p2-g1: ABYSS-A-banish-engine 52; DRAGON-A-clue-ramp 21; FOREST-A-1cost-combo 29; HAVEN-A-banish-steal 61; PORTAL-A-singleton 40; RUNE-A-engage-engine 44; SWORD-A-gold-flag 53
+  p2-g2: 可玩-ABYSS-消失连锁 54; 可玩-HAVEN-回复触发控制 46; 可玩-SWORD-金币海盗旗 58; 强-DRAGON-跳费弃牌 26; 强-FOREST-连击引擎 27; 强-PORTAL-无重复 50; 强-RUNE-启动护符 41
+  p2-g3: P2G3-ABYSS-1 44; P2G3-DRAGON-1 21; P2G3-FOREST-1 30; P2G3-HAVEN-1 20; P2G3-PORTAL-1 65; P2G3-RUNE-1 54; P2G3-SWORD-1 58
