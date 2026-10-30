@@ -1,0 +1,6 @@
+条件：对手卡表已知（牌序、手牌未知）；两边都由 mcts:100+plan 操作
+[第 7 轮] PORTAL: no change (halving)；换下 虚刻的安纳提玛·斯卡雷特，换上 阿尔比昂巴哈姆特
+[第 7 轮] 对固定参照：FOREST 35.0%，SWORD 72.1%，RUNE 47.1%，DRAGON 45.7%，ABYSS 65.0%，HAVEN 49.3%，PORTAL 69.3%
+[第 8 轮] FOREST: undecided；换下 烟管的罪人·曲千代，换上 永恒冰晶·蒂亚；复核差 +0.1% ± 0.9%
+[第 8 轮] SWORD: no change (halving)；换下 无音的包围，换上 信仰天使·迪纳梅斯
+exit 124
