@@ -1,0 +1,81 @@
+{"deck": null, "opponent": null, "flag": true, "inputs": "v1", "name": "s1-b60", "init": "analysis/scaling/models/net-s1-20k.npz", "init_sha256": "2ac44fb791ead6ad19f3bc3ce24798034b226f8eadfff17fdd79b8c934552862", "mid_rate": 0.313294, "end_rows": 973198, "mid_rows": 3106340, "train_positions": 1864804, "valid_positions": 81328, "train_by_kind": {"end": 932778, "mid": 932026}, "valid_by_kind": {"end": 40420, "mid": 40908}, "continued": true, "ophand": false, "v2a": false, "wide": false, "shared": true, "split": "games:analysis/sharednet/s1/holdout-games.json", "extended_cards": [10011120, 10021310, 10042310, 10051130, 10131320, 10513310, 10521120, 10531120, 10551310, 10552110, 10552120, 10562120, 10572120, 10633110, 10721120, 10733310, 10741110, 10762210, 10824110, 10831110, 10831310, 10842110, 10854120, 10873310, 10914110, 10941120, 10951110, 10972110, 90014330, 90024330, 90034340, 90064320], "rank_dir": "runs/s1/rank", "rank_weight": 1.0, "rank_batch": 64, "rank_train": {"decisions": 545920, "children": 1808816}, "rank_valid": {"decisions": 24298, "children": 80282}, "advantage": {"records": "runs/s1/rec", "games": 57533, "b": 0.4753775018898497, "c": -0.2513172023722504, "decks": 537}, "init_valid": {"end": {"brier": 0.07793, "log_loss": 0.759, "n": 40420}, "mid": {"brier": 0.0792, "log_loss": 0.76785, "n": 40908}}, "init_valid_rank": {"loss": 0.67734, "top1": 0.5303, "pairs": 55984, "decisions": 24298}}
+{"epoch": 1, "lr": 0.001, "train_bce": 0.72885, "s": 1544.0, "train_rank": 0.40407, "valid_brier": 0.06692, "valid_log_loss": 0.71971, "valid_n": 81328, "valid_rank_loss": 0.58802, "valid_rank_top1": 0.7451, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.30773, "best": true}
+{"epoch": 2, "lr": 0.001, "train_bce": 0.72371, "s": 1594.5, "train_rank": 0.35305, "valid_brier": 0.06693, "valid_log_loss": 0.7197, "valid_n": 81328, "valid_rank_loss": 0.58399, "valid_rank_top1": 0.7603, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.30369, "best": true}
+{"epoch": 3, "lr": 0.001, "train_bce": 0.72149, "s": 1571.9, "train_rank": 0.33751, "valid_brier": 0.06698, "valid_log_loss": 0.72155, "valid_n": 81328, "valid_rank_loss": 0.58193, "valid_rank_top1": 0.7622, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.30348, "best": true}
+{"epoch": 4, "lr": 0.001, "train_bce": 0.72028, "s": 1522.8, "train_rank": 0.32881, "valid_brier": 0.06575, "valid_log_loss": 0.71773, "valid_n": 81328, "valid_rank_loss": 0.57579, "valid_rank_top1": 0.7687, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.29352, "best": true}
+EXIT 124
+{"deck": null, "opponent": null, "flag": true, "inputs": "v1", "name": "s1-b60", "init": "analysis/scaling/models/net-s1-20k.npz", "init_sha256": "2ac44fb791ead6ad19f3bc3ce24798034b226f8eadfff17fdd79b8c934552862", "mid_rate": 0.313294, "end_rows": 973198, "mid_rows": 3106340, "train_positions": 1864804, "valid_positions": 81328, "train_by_kind": {"end": 932778, "mid": 932026}, "valid_by_kind": {"end": 40420, "mid": 40908}, "continued": true, "ophand": false, "v2a": false, "wide": false, "shared": true, "split": "games:analysis/sharednet/s1/holdout-games.json", "extended_cards": [10011120, 10021310, 10042310, 10051130, 10131320, 10513310, 10521120, 10531120, 10551310, 10552110, 10552120, 10562120, 10572120, 10633110, 10721120, 10733310, 10741110, 10762210, 10824110, 10831110, 10831310, 10842110, 10854120, 10873310, 10914110, 10941120, 10951110, 10972110, 90014330, 90024330, 90034340, 90064320], "rank_dir": "runs/s1/rank", "rank_weight": 1.0, "rank_batch": 64, "rank_train": {"decisions": 545920, "children": 1808816}, "rank_valid": {"decisions": 24298, "children": 80282}, "advantage": {"records": "runs/s1/rec", "games": 57533, "b": 0.4753775018898497, "c": -0.2513172023722504, "decks": 537}, "init_valid": {"end": {"brier": 0.07793, "log_loss": 0.759, "n": 40420}, "mid": {"brier": 0.0792, "log_loss": 0.76785, "n": 40908}}, "init_valid_rank": {"loss": 0.67734, "top1": 0.5303, "pairs": 55984, "decisions": 24298}}
+{"resumed_after_epoch": 4, "stopped": false}
+{"epoch": 5, "lr": 0.001, "train_bce": 0.71977, "s": 1534.8, "train_rank": 0.32303, "valid_brier": 0.06605, "valid_log_loss": 0.71917, "valid_n": 81328, "valid_rank_loss": 0.57624, "valid_rank_top1": 0.7696, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.29541}
+{"epoch": 6, "lr": 0.0005, "train_bce": 0.71789, "s": 1630.7, "train_rank": 0.31048, "valid_brier": 0.06514, "valid_log_loss": 0.71682, "valid_n": 81328, "valid_rank_loss": 0.57191, "valid_rank_top1": 0.7815, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.28873, "best": true}
+{"epoch": 7, "lr": 0.0005, "train_bce": 0.71777, "s": 1560.0, "train_rank": 0.30682, "valid_brier": 0.06548, "valid_log_loss": 0.71845, "valid_n": 81328, "valid_rank_loss": 0.57042, "valid_rank_top1": 0.7839, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.28887}
+{"epoch": 8, "lr": 0.00025, "train_bce": 0.71662, "s": 1514.7, "train_rank": 0.29993, "valid_brier": 0.06389, "valid_log_loss": 0.71342, "valid_n": 81328, "valid_rank_loss": 0.56851, "valid_rank_top1": 0.7843, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.28193, "best": true}
+EXIT 124
+{"deck": null, "opponent": null, "flag": true, "inputs": "v1", "name": "s1-b60", "init": "analysis/scaling/models/net-s1-20k.npz", "init_sha256": "2ac44fb791ead6ad19f3bc3ce24798034b226f8eadfff17fdd79b8c934552862", "mid_rate": 0.313294, "end_rows": 973198, "mid_rows": 3106340, "train_positions": 1864804, "valid_positions": 81328, "train_by_kind": {"end": 932778, "mid": 932026}, "valid_by_kind": {"end": 40420, "mid": 40908}, "continued": true, "ophand": false, "v2a": false, "wide": false, "shared": true, "split": "games:analysis/sharednet/s1/holdout-games.json", "extended_cards": [10011120, 10021310, 10042310, 10051130, 10131320, 10513310, 10521120, 10531120, 10551310, 10552110, 10552120, 10562120, 10572120, 10633110, 10721120, 10733310, 10741110, 10762210, 10824110, 10831110, 10831310, 10842110, 10854120, 10873310, 10914110, 10941120, 10951110, 10972110, 90014330, 90024330, 90034340, 90064320], "rank_dir": "runs/s1/rank", "rank_weight": 1.0, "rank_batch": 64, "rank_train": {"decisions": 545920, "children": 1808816}, "rank_valid": {"decisions": 24298, "children": 80282}, "advantage": {"records": "runs/s1/rec", "games": 57533, "b": 0.4753775018898497, "c": -0.2513172023722504, "decks": 537}, "init_valid": {"end": {"brier": 0.07793, "log_loss": 0.759, "n": 40420}, "mid": {"brier": 0.0792, "log_loss": 0.76785, "n": 40908}}, "init_valid_rank": {"loss": 0.67734, "top1": 0.5303, "pairs": 55984, "decisions": 24298}}
+{"resumed_after_epoch": 8, "stopped": false}
+{"epoch": 9, "lr": 0.00025, "train_bce": 0.71666, "s": 1441.2, "train_rank": 0.29802, "valid_brier": 0.06491, "valid_log_loss": 0.71584, "valid_n": 81328, "valid_rank_loss": 0.56758, "valid_rank_top1": 0.7847, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.28342}
+{"epoch": 10, "lr": 0.000125, "train_bce": 0.71606, "s": 1437.5, "train_rank": 0.294, "valid_brier": 0.06455, "valid_log_loss": 0.71591, "valid_n": 81328, "valid_rank_loss": 0.56622, "valid_rank_top1": 0.7854, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.28213}
+{"epoch": 11, "lr": 6.25e-05, "train_bce": 0.71574, "s": 1398.9, "train_rank": 0.29162, "valid_brier": 0.06422, "valid_log_loss": 0.71457, "valid_n": 81328, "valid_rank_loss": 0.56753, "valid_rank_top1": 0.7885, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.2821}
+{"epoch": 12, "lr": 3.125e-05, "train_bce": 0.71561, "s": 1397.1, "train_rank": 0.2904, "valid_brier": 0.06476, "valid_log_loss": 0.71656, "valid_n": 81328, "valid_rank_loss": 0.56626, "valid_rank_top1": 0.7896, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.28282}
+{
+ "name": "s1-b60",
+ "fit_s": 5808,
+ "epochs": 12,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.05095,
+   "log_loss": 0.69298,
+   "n": 932778
+  },
+  "mid": {
+   "brier": 0.06698,
+   "log_loss": 0.73563,
+   "n": 932026
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.05593,
+   "log_loss": 0.69193,
+   "n": 40420
+  },
+  "mid": {
+   "brier": 0.07175,
+   "log_loss": 0.73466,
+   "n": 40908
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.07793,
+   "log_loss": 0.759,
+   "n": 40420
+  },
+  "mid": {
+   "brier": 0.0792,
+   "log_loss": 0.76785,
+   "n": 40908
+  }
+ },
+ "mid_rate": 0.313294,
+ "init_valid_rank": {
+  "loss": 0.67734,
+  "top1": 0.5303,
+  "pairs": 55984,
+  "decisions": 24298
+ },
+ "valid_rank": {
+  "loss": 0.56851,
+  "top1": 0.7843,
+  "pairs": 55984,
+  "decisions": 24298
+ },
+ "labels": "advantage"
+}
+EXIT 0
