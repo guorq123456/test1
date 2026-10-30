@@ -24,3 +24,34 @@ Registered before the run (the architecture thread, 2026-10-30 16:4xZ):
 - share of decisions whose true d < 0 (the teacher's first is the worse): 25%-40%; below 10%: stop R1;
 - correlation of paired playouts: 0.3-0.6;
 - where d is clear (|d| > 2 SE), the hand-written score orders the two children as d does: 60%-75%; above 90%: stop R1.
+
+### Pilot result (2026-10-30 18:0xZ; `pilot.json`, `fit-pilot.json`, data `pilot.jsonl.gz`)
+
+1050 games drawn (the pool the script draws from), 753 decisions labelled (297 skipped: a tie at the top of the visits
+or a child that ends the game), m = 12, 1.31 CPU s a playout. Win-rate points, 95% bootstrap intervals over decisions.
+
+| | registered | result | stop line |
+|---|---|---|---|
+| mean d | +2 to +6 | **+3.4** (2.0-4.9) | |
+| spread of the true d (tau) | 5-12 | **16.4** (13.9-18.7); split halves (playouts 1-6 against 7-12): 16.4 (13.7-18.8) | < 3 |
+| P(true d < 0), normal model | 25%-40% | **41.8%** (38.9%-45.0%) | < 10% |
+| paired playouts, correlation within a decision | 0.3-0.6 | **0.30** | |
+| hand-written score's order = d's, clear decisions | 60%-75% | **61.8%** (76 clear decisions) | > 90% |
+
+No stop line is crossed. Two predictions missed: the spread is larger than registered, and the normal model's
+teacher-wrong share is just above the range. The normal model does not fit: 48% of the decisions have d = 0 exactly
+(40% have every paired playout identical: the two moves led to the same result), and the largest 5% of |d| carry 56%
+of the squared differences. A reading without the model: of the 154 decisions whose two halves of playouts both give a
+nonzero d of one sign, the teacher's first is the worse in 56 (36%), the better in 98; 56 is 7.4% of all decisions.
+By the mover's class tau is 9 (rune) to 21 (sword); by the game's stage 10 (own turn 8 or earlier), 18, 24 (after 16).
+
+Is d predictable beyond the hand-written score (`r1_fit.py`, 5-fold cross-validation over decisions, 105 features)?
+Held-out correlation with d: the hand-written score alone 0.176, plus the linear correction 0.182 (the penalty chosen
+in the folds is the largest offered); the labels' own noise allows 0.82. Of the 23 clear decisions where the teacher's
+first is the worse, the hand-written score orders 2 right, with the correction 3. With 753 decisions the generic
+position features add nothing measurable. The clearest teacher-wrong decisions are of many kinds (two cards of one
+turn, attack or end the turn, engaging Divine Evidence early or late, fusing), which suggests the correction has to
+see the cards, not only position totals.
+
+Next: labels on 10000 more decisions at m = 4 (a playout buys more for a fit spread over more decisions when the
+model explains little of d), seed 85961000, the pilot's games left out (it stays as a held-out set with low noise).

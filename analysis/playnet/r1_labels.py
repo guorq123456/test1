@@ -22,7 +22,7 @@ order of both decks and future random effects are redrawn.
     python analysis/playnet/r1_labels.py --records 'runs/s1/rec-p3/*.jsonl.gz' --decisions 600 --m 8 \
         --seed 85960000 --workers 4 --out runs/r1/pilot.jsonl
 
-Resumable: decisions already in --out are skipped.
+Resumable: decisions already in --out are skipped. --exclude leaves out the games of another label file.
 
 Condition: 对手卡表已知（牌序、手牌未知）.
 """
@@ -135,7 +135,7 @@ def jobs(pattern: str, n: int, m: int, spec: str, seed: int, done: set):
     for path, k in rows:
         by_file.setdefault(path, set()).add(k)
         taken += 1
-        if taken >= int(n * 1.3) + 10:      # some draws are skipped (ties, game-ending children)
+        if taken >= int(n * 1.5) + 10:      # some draws are skipped (ties, game-ending children: 28% in the pilot)
             break
     for path in sorted(by_file):
         with gzip.open(path, "rt") as fh:
@@ -153,6 +153,8 @@ def main() -> None:
     ap.add_argument("--seed", type=int, required=True)
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--exclude", action="append", default=[], help="label files whose games are left out (a "
+                    "held-out set, e.g. the pilot)")
     args = ap.parse_args()
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -162,6 +164,10 @@ def main() -> None:
             r = json.loads(text)
             done.add((r["file"], r["line"]))
             kept += r.get("results") is not None
+    for path in args.exclude:
+        for text in open(path):
+            r = json.loads(text)
+            done.add((r["file"], r["line"]))
     todo = list(jobs(args.records, args.decisions, args.m, args.spec, args.seed, done))
     print(f"{len(done)} done, {len(todo)} to draw from, want {args.decisions}", flush=True)
     from multiprocessing import Pool
