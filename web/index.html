@@ -1162,7 +1162,7 @@ const Decks = {
 
 function deckSize(deck) { return Object.values(deck.counts || {}).reduce((a, b) => a + b, 0); }
 function deckIds(deck) { return Object.entries(deck.counts || {}).flatMap(([id, n]) => Array(n).fill(Number(id))); }
-function className(craft) { return (Decks.classes && Decks.classes[craft]) || ["中立", "精灵", "皇家", "巫师", "龙族", "梦魇", "主教", "超越者"][craft] || ""; }
+function className(craft) { return (Decks.classes && Decks.classes[craft]) || ["中立", "精灵", "皇家护卫", "巫师", "龙族", "梦魇", "主教", "超越者"][craft] || ""; }
 
 function resolveDeck(value) {
   if (value.startsWith("custom:")) {

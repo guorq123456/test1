@@ -42,7 +42,7 @@ def test_check_names_the_problems():
     assert deckbuilder.check(code)["problems"] == []
     assert deckbuilder.check("https://example/deck/detail/?hash=" + code + "&lang=chs")["problems"] == []
     dragon = decks.RAMP_T_HASH.split(".")[2]                      # a Dragon card in a Sword deck
-    assert any("不能放进皇家卡组" in p for p in deckbuilder.check(code[:-5] + "." + dragon)["problems"])
+    assert any("不能放进皇家护卫卡组" in p for p in deckbuilder.check(code[:-5] + "." + dragon)["problems"])
     short = deckbuilder.check(code.rsplit(".", 1)[0])
     assert any("39 张" in p for p in short["problems"])
     old = deckbuilder.check(decks.RAMP_T_HASH)                     # set 4 cards rotated out

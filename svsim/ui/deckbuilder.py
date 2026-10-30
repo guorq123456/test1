@@ -27,7 +27,7 @@ HERE = Path(__file__).resolve().parent
 BOT_DECKS = HERE / "bot_decks.txt"
 NICKNAMES = HERE / "nicknames.json"        # {card id: community name}, from analysis/card-glossary.md
 NEW_SET = 10010                            # Deicide in Nacreheim (2026-10-28)
-CLASS_ZH = {Craft.NEUTRAL: "中立", Craft.FOREST: "精灵", Craft.SWORD: "皇家", Craft.RUNE: "巫师", Craft.DRAGON: "龙族",
+CLASS_ZH = {Craft.NEUTRAL: "中立", Craft.FOREST: "精灵", Craft.SWORD: "皇家护卫", Craft.RUNE: "巫师", Craft.DRAGON: "龙族",
             Craft.ABYSS: "梦魇", Craft.HAVEN: "主教", Craft.PORTAL: "超越者"}
 _TYPE_ZH = {CardType.FOLLOWER: "随从", CardType.SPELL: "法术", CardType.AMULET: "护符",
             CardType.COUNTDOWN_AMULET: "倒数护符"}
