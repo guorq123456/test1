@@ -1,0 +1,61 @@
+{
+ "name": "s1-a400",
+ "fit_s": 4482,
+ "epochs": 9,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.05478,
+   "log_loss": 0.70199,
+   "n": 284357
+  },
+  "mid": {
+   "brier": 0.0708,
+   "log_loss": 0.74551,
+   "n": 284829
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.06246,
+   "log_loss": 0.71136,
+   "n": 40420
+  },
+  "mid": {
+   "brier": 0.07797,
+   "log_loss": 0.75434,
+   "n": 40450
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.07749,
+   "log_loss": 0.75773,
+   "n": 40420
+  },
+  "mid": {
+   "brier": 0.07877,
+   "log_loss": 0.76644,
+   "n": 40450
+  }
+ },
+ "mid_rate": 0.309526,
+ "init_valid_rank": {
+  "loss": 0.67762,
+  "top1": 0.5238,
+  "pairs": 11597,
+  "decisions": 4985
+ },
+ "valid_rank": {
+  "loss": 0.59231,
+  "top1": 0.7135,
+  "pairs": 11597,
+  "decisions": 4985
+ },
+ "labels": "advantage"
+}

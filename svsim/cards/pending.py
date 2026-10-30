@@ -1,0 +1,24 @@
+"""Cards whose Rotation status changed with set 10 (Deicide in Nacreheim, 2026-10-28; Salem: 「你先帮我在模拟器更新一下
+游戏的新卡」).
+
+PENDING: the cards the set added to the pool tables (its 76 cards, 9 crests and 2 tokens), until their scripts are
+written: the coverage tests leave them out, and random Rotation decks skip them (decks.random_deck leaves out every
+card still missing a script). Take a card out of PENDING when its script lands.
+ROTATED_OUT: the cards that left the Rotation table (set 4, and what only it generated). They still play; decks built
+before set 10 (the starter and tournament decks) are checked against the Rotation before it (decks.ROTATION_PRE10).
+"""
+PENDING = frozenset()
+
+ROTATED_OUT = frozenset({
+    10401110, 10401120, 10402110, 10403110, 10403120, 10404110, 10404112, 10411110,
+    10411120, 10411310, 10412110, 10412120, 10412310, 10412312, 10413110, 10413310,
+    10414110, 10414120, 10414122, 10421110, 10421120, 10421130, 10422110, 10422120,
+    10422130, 10423110, 10423310, 10424110, 10424120, 10431110, 10431120, 10431310,
+    10432110, 10432120, 10432310, 10433110, 10433112, 10433310, 10434110, 10434120,
+    10434122, 10441110, 10441120, 10441310, 10441312, 10442110, 10442120, 10442310,
+    10443110, 10443310, 10444110, 10444120, 10451110, 10451120, 10451310, 10451312,
+    10452110, 10452120, 10452130, 10453110, 10453310, 10453312, 10454110, 10454120,
+    10454122, 10461110, 10461120, 10461210, 10462110, 10462120, 10462210, 10463110,
+    10463210, 10464110, 10464120, 10471110, 10471120, 10471130, 10472110, 10472120,
+    10472310, 10473110, 10473310, 10474110, 10474112, 10474120, 90034320,
+})

@@ -1,0 +1,72 @@
+{
+ "size": 59000,
+ "name": "gen4",
+ "ftz": true,
+ "slope": 0.0,
+ "phi": [
+  64,
+  64
+ ],
+ "rho": [
+  128,
+  64
+ ],
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "fit_s": 1077,
+ "epochs": 29,
+ "train": {
+  "brier": 0.18604,
+  "log_loss": 0.5434,
+  "n": 1015024
+ },
+ "valid": {
+  "brier": 0.18754,
+  "log_loss": 0.54787,
+  "n": 52809
+ },
+ "train_installed_linear": {
+  "brier": 0.205,
+  "log_loss": 0.59489,
+  "n": 1015024
+ },
+ "holdout": {
+  "brier": 0.18832,
+  "log_loss": 0.54987,
+  "n": 93787
+ },
+ "holdout_installed_linear": {
+  "brier": 0.2038,
+  "log_loss": 0.58936,
+  "n": 93787
+ },
+ "holdout_selfplay": {
+  "seeds": [
+   71600018
+  ],
+  "brier": 0.19064,
+  "log_loss": 0.55445,
+  "n": 17948,
+  "installed_linear": {
+   "brier": 0.20723,
+   "log_loss": 0.60109,
+   "n": 17948
+  }
+ },
+ "holdout_selfplay5": {
+  "seeds": [
+   75400038
+  ],
+  "brier": 0.19066,
+  "log_loss": 0.55653,
+  "n": 8925,
+  "installed_linear": {
+   "brier": 0.20906,
+   "log_loss": 0.60038,
+   "n": 8925
+  }
+ }
+}

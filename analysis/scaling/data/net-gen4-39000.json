@@ -1,0 +1,59 @@
+{
+ "size": 39000,
+ "name": "gen4",
+ "ftz": true,
+ "slope": 0.0,
+ "phi": [
+  64,
+  64
+ ],
+ "rho": [
+  128,
+  64
+ ],
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "fit_s": 3215,
+ "epochs": 21,
+ "train": {
+  "brier": 0.18772,
+  "log_loss": 0.5479,
+  "n": 673819
+ },
+ "valid": {
+  "brier": 0.18941,
+  "log_loss": 0.55355,
+  "n": 34948
+ },
+ "train_installed_linear": {
+  "brier": 0.20448,
+  "log_loss": 0.59302,
+  "n": 673819
+ },
+ "holdout": {
+  "brier": 0.18868,
+  "log_loss": 0.55109,
+  "n": 93787
+ },
+ "holdout_installed_linear": {
+  "brier": 0.2038,
+  "log_loss": 0.58936,
+  "n": 93787
+ },
+ "holdout_selfplay": {
+  "seeds": [
+   71600018
+  ],
+  "brier": 0.19303,
+  "log_loss": 0.56109,
+  "n": 17948,
+  "installed_linear": {
+   "brier": 0.20723,
+   "log_loss": 0.60109,
+   "n": 17948
+  }
+ }
+}

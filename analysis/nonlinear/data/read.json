@@ -1,0 +1,24 @@
+{
+ "cand-kc-ramp-ramp": {
+  "contrast_mse_w": 0.011104,
+  "sign_w": 0.7388
+ },
+ "cand-nl-ramp-ramp": {
+  "contrast_mse_w": 0.010274,
+  "sign_w": 0.7437
+ },
+ "val examples": 39219,
+ "val starts": 937,
+ "cand-nl - cand-kc": {
+  "contrast_mse_w": -0.00083,
+  "contrast_mse_w 95%": [
+   -0.00156,
+   -0.00017
+  ],
+  "sign_w points": 0.49,
+  "sign_w points 95%": [
+   -1.1,
+   2.1
+  ]
+ }
+}

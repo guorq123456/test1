@@ -1,0 +1,61 @@
+{
+ "name": "s1-b60",
+ "fit_s": 5808,
+ "epochs": 12,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.05095,
+   "log_loss": 0.69298,
+   "n": 932778
+  },
+  "mid": {
+   "brier": 0.06698,
+   "log_loss": 0.73563,
+   "n": 932026
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.05593,
+   "log_loss": 0.69193,
+   "n": 40420
+  },
+  "mid": {
+   "brier": 0.07175,
+   "log_loss": 0.73466,
+   "n": 40908
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.07793,
+   "log_loss": 0.759,
+   "n": 40420
+  },
+  "mid": {
+   "brier": 0.0792,
+   "log_loss": 0.76785,
+   "n": 40908
+  }
+ },
+ "mid_rate": 0.313294,
+ "init_valid_rank": {
+  "loss": 0.67734,
+  "top1": 0.5303,
+  "pairs": 55984,
+  "decisions": 24298
+ },
+ "valid_rank": {
+  "loss": 0.56851,
+  "top1": 0.7843,
+  "pairs": 55984,
+  "decisions": 24298
+ },
+ "labels": "advantage"
+}

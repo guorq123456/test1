@@ -1,0 +1,24 @@
+{
+ "records": [
+  "rec-77900006.jsonl.gz",
+  "rec-77900008.jsonl.gz",
+  "rec-77900010.jsonl.gz"
+ ],
+ "games": 90,
+ "deck": "elf-t",
+ "decisions": 3479,
+ "specs": {
+  "v2skx": {
+   "spec": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost",
+   "ms_per_decision": 63.2
+  },
+  "n91": {
+   "spec": "mcts:91+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm1f-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1-elf-t.npz:2:1",
+   "ms_per_decision": 72.13
+  },
+  "n95": {
+   "spec": "mcts:95+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm1f-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1-elf-t.npz:2:1",
+   "ms_per_decision": 70.93
+  }
+ }
+}

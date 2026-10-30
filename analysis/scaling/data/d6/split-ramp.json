@@ -1,0 +1,21 @@
+{
+ "mirror": "ramp",
+ "spec": "mcts:120+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-gen3-30000.npz+neteot",
+ "seed": 74000000,
+ "games": 20,
+ "decisions": 1277,
+ "ms_per_decision": 49.18,
+ "share_of_decision_time": {
+  "planner": 0.0054,
+  "full": 0.0079,
+  "near": 0.0533,
+  "screen": 0.2205,
+  "other": 0.7129
+ },
+ "calls": {
+  "planner": 547,
+  "full": 5,
+  "near": 27,
+  "screen": 507
+ }
+}

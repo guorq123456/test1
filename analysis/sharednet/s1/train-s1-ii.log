@@ -1,0 +1,74 @@
+{"deck": null, "opponent": null, "flag": true, "inputs": "v1", "name": "s1-ii", "init": "analysis/scaling/models/net-s1-20k.npz", "init_sha256": "2ac44fb791ead6ad19f3bc3ce24798034b226f8eadfff17fdd79b8c934552862", "mid_rate": 0.309526, "end_rows": 324777, "mid_rows": 1049273, "train_positions": 569186, "valid_positions": 80870, "train_by_kind": {"end": 284357, "mid": 284829}, "valid_by_kind": {"end": 40420, "mid": 40450}, "continued": true, "ophand": false, "v2a": false, "wide": false, "shared": true, "split": "games:analysis/sharednet/s1/holdout-games.json", "extended_cards": [10011120, 10021310, 10042310, 10051130, 10131320, 10513310, 10521120, 10531120, 10551310, 10552110, 10552120, 10562120, 10572120, 10633110, 10721120, 10733310, 10741110, 10762210, 10824110, 10831110, 10831310, 10842110, 10854120, 10873310, 10914110, 10941120, 10951110, 10972110, 90024330, 90034340, 90064320], "rank_dir": "runs/s1/rank", "rank_weight": 1.0, "rank_batch": 64, "rank_train": {"decisions": 170937, "children": 567986}, "rank_valid": {"decisions": 24298, "children": 80282}, "advantage": {"records": "runs/s1/rec", "games": 17533, "b": 0.38948225296482214, "c": -0.2098757463530317, "decks": 105}, "init_valid": {"end": {"brier": 0.07749, "log_loss": 0.75773, "n": 40420}, "mid": {"brier": 0.07877, "log_loss": 0.76644, "n": 40450}}, "init_valid_rank": {"loss": 0.67734, "top1": 0.5303, "pairs": 55984, "decisions": 24298}}
+{"epoch": 1, "lr": 0.001, "train_bce": 0.72738, "s": 456.7, "train_rank": 0.44935, "valid_brier": 0.07036, "valid_log_loss": 0.73066, "valid_n": 80870, "valid_rank_loss": 0.60443, "valid_rank_top1": 0.7335, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.33509, "best": true}
+{"epoch": 2, "lr": 0.001, "train_bce": 0.72682, "s": 473.1, "train_rank": 0.40391, "valid_brier": 0.069, "valid_log_loss": 0.72668, "valid_n": 80870, "valid_rank_loss": 0.59309, "valid_rank_top1": 0.7419, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.31977, "best": true}
+{"epoch": 3, "lr": 0.001, "train_bce": 0.72437, "s": 476.6, "train_rank": 0.38321, "valid_brier": 0.07123, "valid_log_loss": 0.73325, "valid_n": 80870, "valid_rank_loss": 0.59235, "valid_rank_top1": 0.7503, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.3256}
+{"epoch": 4, "lr": 0.0005, "train_bce": 0.72184, "s": 485.1, "train_rank": 0.36473, "valid_brier": 0.06805, "valid_log_loss": 0.72552, "valid_n": 80870, "valid_rank_loss": 0.5857, "valid_rank_top1": 0.7576, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.31122, "best": true}
+{"epoch": 5, "lr": 0.0005, "train_bce": 0.72127, "s": 480.9, "train_rank": 0.35645, "valid_brier": 0.06797, "valid_log_loss": 0.72512, "valid_n": 80870, "valid_rank_loss": 0.58759, "valid_rank_top1": 0.7541, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.31271}
+{"epoch": 6, "lr": 0.00025, "train_bce": 0.71994, "s": 463.9, "train_rank": 0.34686, "valid_brier": 0.06595, "valid_log_loss": 0.71998, "valid_n": 80870, "valid_rank_loss": 0.58479, "valid_rank_top1": 0.7569, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.30477, "best": true}
+{"epoch": 7, "lr": 0.00025, "train_bce": 0.71991, "s": 482.9, "train_rank": 0.34305, "valid_brier": 0.06633, "valid_log_loss": 0.72078, "valid_n": 80870, "valid_rank_loss": 0.58243, "valid_rank_top1": 0.7585, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.30321, "best": true}
+{"epoch": 8, "lr": 0.00025, "train_bce": 0.71958, "s": 475.9, "train_rank": 0.33983, "valid_brier": 0.06858, "valid_log_loss": 0.72923, "valid_n": 80870, "valid_rank_loss": 0.58542, "valid_rank_top1": 0.7571, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.31465}
+{"epoch": 9, "lr": 0.000125, "train_bce": 0.71892, "s": 453.6, "train_rank": 0.335, "valid_brier": 0.06712, "valid_log_loss": 0.72444, "valid_n": 80870, "valid_rank_loss": 0.58206, "valid_rank_top1": 0.7611, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.3065}
+{"epoch": 10, "lr": 6.25e-05, "train_bce": 0.71849, "s": 468.0, "train_rank": 0.33141, "valid_brier": 0.06735, "valid_log_loss": 0.72512, "valid_n": 80870, "valid_rank_loss": 0.58102, "valid_rank_top1": 0.7611, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.30614}
+{"epoch": 11, "lr": 3.125e-05, "train_bce": 0.71814, "s": 452.5, "train_rank": 0.33078, "valid_brier": 0.06774, "valid_log_loss": 0.72611, "valid_n": 80870, "valid_rank_loss": 0.58023, "valid_rank_top1": 0.7611, "valid_rank_pairs": 55984, "valid_rank_decisions": 24298, "valid_criterion": 1.30634}
+{
+ "name": "s1-ii",
+ "fit_s": 5580,
+ "epochs": 11,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.05321,
+   "log_loss": 0.69647,
+   "n": 284357
+  },
+  "mid": {
+   "brier": 0.06892,
+   "log_loss": 0.73738,
+   "n": 284829
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.05901,
+   "log_loss": 0.70158,
+   "n": 40420
+  },
+  "mid": {
+   "brier": 0.07364,
+   "log_loss": 0.73996,
+   "n": 40450
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.07749,
+   "log_loss": 0.75773,
+   "n": 40420
+  },
+  "mid": {
+   "brier": 0.07877,
+   "log_loss": 0.76644,
+   "n": 40450
+  }
+ },
+ "mid_rate": 0.309526,
+ "init_valid_rank": {
+  "loss": 0.67734,
+  "top1": 0.5303,
+  "pairs": 55984,
+  "decisions": 24298
+ },
+ "valid_rank": {
+  "loss": 0.58243,
+  "top1": 0.7585,
+  "pairs": 55984,
+  "decisions": 24298
+ },
+ "labels": "advantage"
+}
+EXIT 0

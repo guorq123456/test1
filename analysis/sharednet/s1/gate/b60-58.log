@@ -1,0 +1,26 @@
+条件：7 套卡组（analysis/sharednet/fields/B-r1.txt）的 42 个非镜像有序对局轮流；每对 = 一副发牌，X 打 a 对 Y 打 b、Y 打 a 对 X 打 b，各坐两边（4 局）；对手卡表已知（牌序、手牌未知）
+X = mcts:58+plan+setnet=analysis/scaling/models/net-s1-b60.npz+netmid+netany
+Y = mcts:100+plan
+BLAS 线程：OMP_NUM_THREADS=1，OPENBLAS_NUM_THREADS=1，MKL_NUM_THREADS=1
+  …25 对 55s
+  …50 对 96s
+  …75 对 147s
+  …100 对 197s
+  …125 对 253s
+  …150 对 309s
+  …175 对 360s
+  …200 对 409s
+  …225 对 461s
+  …250 对 505s
+  …275 对 560s
+  …300 对 610s
+300 对（1200 局）：X 得分 38.5% ± 2.4%（95% 区间 36.1%～40.9%），CR 分差约 -111（-134～-87；游戏稳态公式 -92，-111～-73，窗口内），LLR -48.81（判定线 -2.94 / 2.94，H1 = 55%）→ H0（没有变强）
+  X 用 B-r1-forest：85 对 32.9% ± 7.6%
+  X 用 B-r1-sword：86 对 64.0% ± 8.0%
+  X 用 B-r1-rune：86 对 22.7% ± 6.4%
+  X 用 B-r1-dragon：86 对 40.1% ± 7.6%
+  X 用 B-r1-abyss：86 对 31.4% ± 7.1%
+  X 用 B-r1-haven：86 对 34.3% ± 7.5%
+  X 用 B-r1-portal：85 对 44.1% ± 7.0%
+每步（搜索过的决定）CPU：X 49 ms，Y 39 ms，比 1.254（墙钟 X 49 ms，Y 39 ms；27540 / 26017 步）
+X 按真实先后手：先手 600 局 41.5%，后手 600 局 35.5%
