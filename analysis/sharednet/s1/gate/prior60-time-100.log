@@ -1,0 +1,4 @@
+条件：7 套卡组（analysis/sharednet/fields/B-r1.txt）的 42 个非镜像有序对局轮流；每对 = 一副发牌，X 打 a 对 Y 打 b、Y 打 a 对 X 打 b，各坐两边（4 局）；对手卡表已知（牌序、手牌未知）
+X = mcts:100+plan+puct=analysis/scaling/models/prior-s1-60k.npz
+Y = mcts:100+plan
+BLAS 线程：OMP_NUM_THREADS=1，OPENBLAS_NUM_THREADS=1，MKL_NUM_THREADS=1
