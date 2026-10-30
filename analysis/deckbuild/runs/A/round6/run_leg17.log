@@ -1,0 +1,6 @@
+条件：对手卡表已知（牌序、手牌未知）；两边都由 mcts:100+plan 操作
+[第 5 轮] HAVEN: accepted at the cap；换下 叮当天使·莉亚、混沌监狱·阿兹弗特、孤高的锻炼，换上 坚固的雾卷花、高洁的黑翼·奥莉薇、威胁的残渣；复核差 +3.2% ± 1.4%
+[第 5 轮] PORTAL: no change (halving)；换下 决断的交错·亚修雷&莉缇雅，换上 聪明的创造者
+[第 5 轮] 对固定参照：FOREST 35.0%，SWORD 72.1%，RUNE 40.7%，DRAGON 45.7%，ABYSS 65.0%，HAVEN 49.3%，PORTAL 69.3%
+[第 6 轮] FOREST: no change (halving)；换下 优雅的虫风花、忧虑缩小，换上 不屈的剑斗士、理想国·涅格尔赫亚
+exit 124
