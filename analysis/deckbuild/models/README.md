@@ -23,3 +23,20 @@ Condition of every label: the opponent's deck list is known (order and hand not)
   round 0's decks): log loss 0.672 (constant 0.693); ordering of each first halving stage's decks, Spearman
   0.13 +- 0.07 over 31 stages; the model's best is the games' best in 26% of stages (chance 10%).
 - Registered before (plan section 10.3): offline Spearman 0.05-0.25, above 0.2 with 0.4. Inside the range, below 0.2.
+
+## dm-S10 (2026-10-30 02:1xZ, not kept)
+
+- Same sizes (h 8/8, l2 1e-2), fitted on set 10's own searches: C rounds 0-10, D, the guided twin Cg; 208,082 deals.
+  Held out within them: log loss 0.649 (constant 0.693).
+- Ordering of first halving stages it never saw (Spearman per stage, mean ± SE), against dm-O-r1:
+
+  | stages | dm-O-r1 | dm-S10 | paired difference |
+  |---|---|---|---|
+  | search F rounds 1-2 (14) | 0.102 ± 0.106 | -0.018 ± 0.140 | -0.120 ± 0.164 |
+  | search F round 0, whole seed decks (7) | 0.226 ± 0.136 | 0.222 ± 0.150 | -0.004 ± 0.167 |
+  | search A rounds 3-5 (26) | 0.108 ± 0.083 | 0.101 ± 0.072 | -0.007 ± 0.101 |
+
+- Registered before (progress log 02:0xZ): dm-O-r1 about 0.10 on F, dm-S10 about 0.20, dm-S10 ahead by 2 SE with
+  0.45. It is not ahead: ten times the deals of the pack itself do not order a deck's 1-3 card variants better. A deck
+  is the mean of its cards' vectors here, and a swap of 1-3 cards barely moves that mean (review claim 5).
+- Rule registered with it: no gain, and dm-O-r1 at 0.10 or more on F, so F is guided by dm-O-r1 from its next round.
