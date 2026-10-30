@@ -255,3 +255,13 @@ Traceback (most recent call last):
     ov, err = _winapi.WriteFile(self._handle, buf, overlapped=True)
               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 BrokenPipeError: [WinError 232] 管道正在被关闭。
+--- restart 2026-10-30T02:06:33Z on 9a551e7d with --workers 11 --guide analysis/deckbuild/models/dm-O-r1.npz (state 4 0) ---
+条件：对手卡表已知（牌序、手牌未知）；两边都由 mcts:100+plan 操作
+[第 4 轮] FOREST: accepted；换下 播撒生命的异形、播撒生命的异形、播撒生命的异形，换上 好奇的老鼠、好奇的老鼠、好奇的老鼠；复核差 +4.4% ± 1.5%
+[第 4 轮] SWORD: no change (halving)；换下 听略谍报兵、听略谍报兵、听略谍报兵，换上 传承的意志、传承的意志、传承的意志
+[第 4 轮] RUNE: no change (halving)；换下 乌涅，换上 工坊搬迁
+[第 4 轮] DRAGON: no change (halving)；换下 宣扬的龙人，换上 涌泉打水人
+[第 4 轮] ABYSS: undecided；换下 傍死的安纳提玛·徒姬、傍死的安纳提玛·徒姬、傍死的安纳提玛·徒姬，换上 最古老的狱卒、最古老的狱卒、最古老的狱卒；复核差 +0.4% ± 1.3%
+[第 4 轮] HAVEN: undecided；换下 巴别隆城、巴别隆城，换上 崇拜经理人·伊尼西雅、有翼奏者；复核差 -0.4% ± 1.1%
+[第 4 轮] PORTAL: rejected；换下 巴别隆城、巴别隆城，换上 最凶恶的收容、最凶恶的收容；复核差 -1.9% ± 1.3%
+[第 4 轮] 对固定参照：FOREST 70.0%，SWORD 77.9%，RUNE 57.9%，DRAGON 61.4%，ABYSS 85.0%，HAVEN 66.4%，PORTAL 90.0%
