@@ -1,0 +1,6 @@
+# bot 冻结的候选来源：名字|分支|提交|state.json 路径。F 和 A 的提交在冻结时换成它们最后一个完成的轮次。
+F|claude/deck-runs-F|0b31087fab5a7bdb87a6988d40c92545363152b3|runs/deckbuild-F/state.json
+A|ccr-da4857cc-rkpgwr|cdb0332854fa1a36492e1d6c25257d146168d620|analysis/deckbuild/runs/A/round5/state.json
+C|claude/deck-runs-C|ed75b6fb39d1140a011f414d5b1c0b63a0558af9|runs/deckbuild-C/state.json
+D|claude/deck-runs-D|24e8935b84ef3aa6ede192faa0aaf05c3271ea19|runs/deckbuild-D/state.json
+Cg|claude/deck-runs-Cg|5b5af466bd0acf5df84f4d113242554891c83c5b|runs/deckbuild-Cg/state.json

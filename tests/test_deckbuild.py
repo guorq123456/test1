@@ -292,3 +292,26 @@ def test_cross_group_league_never_pairs_decks_of_one_group(monkeypatch, tmp_path
     assert (0, 1) not in seen and len(seen) == 2 * 5
     out = json.loads((tmp_path / "league.json").read_text(encoding="utf-8"))
     assert out["score"][0][1] is None and abs(out["means"][0] - 0.5) < 1e-9
+
+
+def _freeze():
+    import importlib.util
+    from pathlib import Path
+    path = Path(__file__).resolve().parents[1] / "analysis/deckbuild/blind-test/freeze.py"
+    spec = importlib.util.spec_from_file_location("freeze", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_freeze_tiers_cut_at_55_and_50_and_keep_only_distinct_decks_in_a_tier():
+    freeze = _freeze()
+    pool = [c.card_id for c in deckbuild.legal_cards(Craft.FOREST)][:20]
+    base = [pool[j] for j in range(13) for _ in range(3)] + [pool[13]]
+    near = base[:-3] + [pool[14]] * 3                                   # 3 cards apart from base
+    far = [pool[6 + j] for j in range(13) for _ in range(3)] + [pool[19]]  # 18 apart
+    got = freeze.tiers([("F-FOREST", base), ("C-FOREST", near), ("A-FOREST", far), ("D-FOREST", base[:])],
+                       [0.60, 0.58, 0.56, 0.45])
+    assert [(d["label"], d["source"]) for d in got] == [("T1-FOREST-1", "F-FOREST"), ("T1-FOREST-2", "A-FOREST"),
+                                                         ("T3-FOREST-1", "D-FOREST")]
+    assert freeze.apart(base, near) == 3 and freeze.tier_of(0.5) == 2 and freeze.tier_of(0.4999) == 3
