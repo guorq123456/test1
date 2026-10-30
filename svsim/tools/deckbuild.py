@@ -720,23 +720,48 @@ class Search:
 
 def league(args) -> None:
     """--league FILE: every pair of FILE's decks on --deals deals each (seeds from --seed on, both seats per
-    deal), both sides --agent; prints each deck's mean score and the score table, writes OUT/league.json."""
+    deal), both sides --agent; prints each deck's mean score and the score table, writes OUT/league.json.
+    Each deal's result is appended to OUT/league-deals.jsonl as it comes in, and a rerun with the same arguments
+    plays only the deals that file lacks (a stopped league lost everything before, 10-30)."""
     entries = read_seeds(args.league)
     group = [e[0].split("/", 1)[0] if getattr(args, "cross_groups", False) else e[0] for e in entries]
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    log = out / "league-deals.jsonl"
+    done: dict = {}
+    if log.exists():
+        for line in log.read_text(encoding="utf-8").splitlines():
+            try:
+                r = json.loads(line)
+            except json.JSONDecodeError:                      # a line cut off by a stopped run
+                continue
+            if r.get("agent") == args.agent:
+                done[(r["a"], r["b"], r["seed"])] = r["score"]
+    table: dict = {}
     jobs, seed = [], args.seed
     for a in range(len(entries)):
         for b in range(a + 1, len(entries)):
             if group[a] == group[b]:                          # --cross-groups: decks of one group never meet
                 continue
             for _ in range(args.deals):
-                jobs.append(((a, b), entries[a][1], entries[b][1], seed, args.agent))
+                key = (entries[a][0], entries[b][0], seed)
+                if key in done:
+                    table.setdefault((a, b), []).append(done[key])
+                else:
+                    jobs.append(((a, b), entries[a][1], entries[b][1], seed, args.agent))
                 seed += 1
-    table: dict = {}
+    if done:
+        print(f"接着上次：{sum(len(v) for v in table.values())} 个发牌已有结果，还要打 {len(jobs)} 个", flush=True)
     workers = args.workers
-    with (Pool(workers, initializer=_nice) if workers > 1 else _InProcess()) as pool:
+    with open(log, "a", encoding="utf-8") as fh, \
+            (Pool(workers, initializer=_nice) if workers > 1 else _InProcess()) as pool:
         for res in pool.imap_unordered(play_deal, jobs):
             a, b = res["key"]
-            table.setdefault((a, b), []).append(sum(res["points"]) / 2)
+            v = sum(res["points"]) / 2
+            table.setdefault((a, b), []).append(v)
+            fh.write(json.dumps({"a": entries[a][0], "b": entries[b][0], "seed": res["seed"], "agent": args.agent,
+                                 "score": v}, ensure_ascii=False) + "\n")
+            fh.flush()
     n = len(entries)
     score = [[None] * n for _ in range(n)]
     for (a, b), v in table.items():
@@ -747,8 +772,6 @@ def league(args) -> None:
     for i in sorted(range(n), key=lambda i: -means[i]):
         print(f"  {means[i]:.1%}  {entries[i][0]}  " + " ".join("  -  " if x is None else f"{x:.0%}".rjust(5)
                                                              for x in score[i]))
-    out = Path(args.out)
-    out.mkdir(parents=True, exist_ok=True)
     (out / "league.json").write_text(json.dumps({"agent": args.agent, "deals": args.deals, "seed": args.seed,
                                                  "decks": [e[0] for e in entries], "score": score, "means": means},
                                                 ensure_ascii=False), encoding="utf-8")

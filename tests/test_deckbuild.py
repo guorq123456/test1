@@ -286,7 +286,8 @@ def test_cross_group_league_never_pairs_decks_of_one_group(monkeypatch, tmp_path
     (tmp_path / "r.txt").write_text("\n".join(f"{g}/{n}|{h}" for (g, n), h in
                                               zip([("a", "x"), ("a", "y"), ("b", "x"), ("c", "x")], hashes)))
     seen = []
-    monkeypatch.setattr(deckbuild, "play_deal", lambda job: seen.append(job[0]) or {"key": job[0], "points": [1, 0]})
+    monkeypatch.setattr(deckbuild, "play_deal",
+                        lambda job: seen.append(job[0]) or {"key": job[0], "seed": job[3], "points": [1, 0]})
     deckbuild.league(argparse.Namespace(league=str(tmp_path / "r.txt"), seed=1, deals=2, agent="greedy", workers=1,
                                         out=str(tmp_path), cross_groups=True))
     assert (0, 1) not in seen and len(seen) == 2 * 5
@@ -315,3 +316,34 @@ def test_freeze_tiers_cut_at_55_and_50_and_keep_only_distinct_decks_in_a_tier():
     assert [(d["label"], d["source"]) for d in got] == [("T1-FOREST-1", "F-FOREST"), ("T1-FOREST-2", "A-FOREST"),
                                                          ("T3-FOREST-1", "D-FOREST")]
     assert freeze.apart(base, near) == 3 and freeze.tier_of(0.5) == 2 and freeze.tier_of(0.4999) == 3
+
+
+def test_a_stopped_league_resumes_from_its_deal_log(monkeypatch, tmp_path):
+    import argparse
+    pool = [c.card_id for c in deckbuild.legal_cards(Craft.FOREST)][:14]
+    hashes = [deckbuild.deck_hash([pool[(k + j) % 14] for j in range(13) for _ in range(3)] + [pool[k]])
+              for k in range(3)]
+    (tmp_path / "r.txt").write_text("\n".join(f"d{k}|{h}" for k, h in enumerate(hashes)))
+    args = argparse.Namespace(league=str(tmp_path / "r.txt"), seed=10, deals=2, agent="greedy", workers=1,
+                              out=str(tmp_path), cross_groups=False)
+    calls = []
+
+    def stop_after_two(job):
+        if len(calls) == 2:
+            raise KeyboardInterrupt
+        calls.append(job[3])
+        return {"key": job[0], "seed": job[3], "points": [1, 1]}
+
+    monkeypatch.setattr(deckbuild, "play_deal", stop_after_two)
+    try:
+        deckbuild.league(args)
+    except KeyboardInterrupt:
+        pass
+    assert calls == [10, 11] and not (tmp_path / "league.json").exists()
+    rest = []
+    monkeypatch.setattr(deckbuild, "play_deal", lambda job: rest.append(job[3]) or
+                        {"key": job[0], "seed": job[3], "points": [0, 0]})
+    deckbuild.league(args)
+    assert rest == [12, 13, 14, 15]                           # 3 pairs x 2 deals, the first two already logged
+    out = json.loads((tmp_path / "league.json").read_text(encoding="utf-8"))
+    assert out["score"][0][1] == 1.0 and out["score"][0][2] == 0.0
