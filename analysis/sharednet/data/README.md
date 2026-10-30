@@ -16,3 +16,10 @@ Condition: 对手卡表已知（牌序、手牌未知）.
 
 The encoded files (tok-, mid-, dec-) are not here: `scaledata encode`, `midrows encode` and `setpolicy encode` on
 these records give them again.
+
+- `rec-p3/rec-<seed>.jsonl.gz`: P3 self-play (the architecture thread 2026-10-29 19:45Z, Salem 19:44Z approved ten
+  times the data), this container's share k = 160..179 (85830320-85830358), pool `fields/P3-pool.txt` (sha256
+  51c34e1a...), both sides mcts:100+plan, code 48f96b4 and after (the same engine); 20 x 1000 games, each shard's
+  deal keys checked once each, the first 30 games' decks pool_pair's draw. `play.log` the runs' log. The other
+  shares: Salem's computer k = 60..79 (claude/sharednet-p3-rc), the architecture thread's container k = 180..259
+  (claude/sharednet-p3-thread); stopped near 128000 games in all (the architecture thread 2026-10-30 00:52Z).
