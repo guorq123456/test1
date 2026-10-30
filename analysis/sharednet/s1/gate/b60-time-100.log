@@ -2,3 +2,14 @@
 X = mcts:100+plan+setnet=analysis/scaling/models/net-s1-b60.npz+netmid+netany
 Y = mcts:100+plan
 BLAS 线程：OMP_NUM_THREADS=1，OPENBLAS_NUM_THREADS=1，MKL_NUM_THREADS=1
+24 对（96 局）：X 得分 25.0% ± 7.2%（95% 区间 17.8%～32.2%），CR 分差约 -259（-361～-175；游戏稳态公式超出匹配窗口 <−175），LLR -10.56（判定线 -2.94 / 2.94，H1 = 55%）→ H0（没有变强）
+  X 用 B-r1-forest：7 对 28.6% ± 19.8%
+  X 用 B-r1-sword：7 对 42.9% ± 25.6%
+  X 用 B-r1-rune：7 对 35.7% ± 18.1%
+  X 用 B-r1-dragon：6 对 16.7% ± 20.7%
+  X 用 B-r1-abyss：7 对 14.3% ± 18.1%
+  X 用 B-r1-haven：7 对 14.3% ± 18.1%
+  X 用 B-r1-portal：7 对 21.4% ± 19.8%
+每步（搜索过的决定）CPU：X 70 ms，Y 41 ms，比 1.710（墙钟 X 72 ms，Y 42 ms；2292 / 2215 步）
+X 按真实先后手：先手 48 局 22.9%，后手 48 局 27.1%
+时间匹配：X / Y = 1.710 → N 100 → 58

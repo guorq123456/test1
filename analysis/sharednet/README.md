@@ -192,3 +192,29 @@ Gate as (ii) (BLAS on one thread; 3 workers, a training run on the fourth core):
 The upper reference the architecture thread asked for (mcts:400+plan against mcts:100+plan without matched time on
 B-r1) does not exist; the nearest (the analysis line, the Ramp-Dragon depth curve, learned evaluation against v2) is
 400 iterations against 100: about 54% (50%-57%).
+
+## S1 B: (ii)'s recipe on three times the data, 60000 games (`s1/gate/b60-*`)
+
+The architecture thread 2026-10-29 18:33Z (the review thread Salem opened: the shared net fails for want of data; its
+falsifiable condition "above 50% within 60000 games"). `analysis/scaling/models/net-s1-b60.npz`: (ii)'s recipe
+(net-s1-20k continued, advantage labels, ranking loss at a quarter of the decisions) on all 60 shards: S1's 20 (C-r0
+pool), S1(b)'s k = 20..59 (P2 pool; k = 36..59 the RC line's, claude/sharednet-p2-rc fb7f3c9). The same validation
+(S1's 7 held-out decks, in neither pool). 12 epochs (three resumed chunks), best 8. Ranking on the held-out decks'
+decisions: the teacher's best child first **78.4%** ((ii): 75.9%), ranking loss 0.569 (0.582).
+
+Gate as (ii) (BLAS on one thread, an idle machine):
+- Time match (24 pairs at N = 100, seeds 85891400 on): CPU X / Y 1.710 -> **N 58**.
+- 300 fixed pairs, bank 85820000: **X 38.5% ± 2.4%** (95% 36.1%-40.9%), H0. By X's deck: forest 32.9%, sword
+  64.0%, rune 22.7%, dragon 40.1%, abyss 31.4%, haven 34.3%, portal 44.1%. First / second 41.5% / 35.5%. CPU X 49
+  ms, Y 39 ms: ratio 1.254.
+- The architecture thread's prediction: 42%-52%, above 50% with probability 0.25. Below the range.
+
+| net | games | ranking top-1 (held out) | gate (bank 85820000, 300 pairs) | CPU X / Y |
+|---|---|---|---|---|
+| S1 (net-s1-20k) | 20000 | 53.0% | 36.5% ± 2.4% (N 56) | 1.231 |
+| (ii) net-s1-ii | 20000 | 75.9% | 41.0% ± 2.3% (N 56) | 1.230 |
+| A net-s1-a400 | 20000 (mcts:400 labels on 5%) | 72.6% | 34.6% ± 2.2% (N 56) | 1.197 |
+| B net-s1-b60 | 60000 | 78.4% | 38.5% ± 2.4% (N 58) | 1.254 |
+
+Three times the games ranked the teacher's choices a little better and played no better (38.5% against 41.0%, the
+difference -2.5 ± 3.3 points): within this range, more of the same data is not what the net lacks.
