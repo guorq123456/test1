@@ -1,0 +1,50 @@
+{
+ "train": 10000,
+ "test": 753,
+ "test_ceiling_corr": 0.8160888419804465,
+ "hand": {
+  "corr": 0.18487513052964363,
+  "mse": 0.03917915173125108,
+  "sign_clear": 0.7105263157894737,
+  "teacher_wrong_clear_right": "2/23",
+  "switch_rate": 0.03851261620185923,
+  "switch_gain": 0.001217352810978309,
+  "switch_gain_se": 0.0009832948200536617,
+  "s": 50.0,
+  "lam": 0.0
+ },
+ "hand+generic": {
+  "corr": 0.23884186210507963,
+  "mse": 0.0384982520906838,
+  "sign_clear": 0.7236842105263158,
+  "teacher_wrong_clear_right": "2/23",
+  "switch_rate": 0.04780876494023904,
+  "switch_gain": 0.001770694997786631,
+  "switch_gain_se": 0.001036843345051164,
+  "s": 50.0,
+  "lam": 10000.0
+ },
+ "hand+cards": {
+  "corr": 0.21087228784250833,
+  "mse": 0.038913998988832944,
+  "sign_clear": 0.6973684210526315,
+  "teacher_wrong_clear_right": "1/23",
+  "switch_rate": 0.04249667994687915,
+  "switch_gain": 0.0014386896857016378,
+  "switch_gain_se": 0.0009316526342054459,
+  "s": 50.0,
+  "lam": 100000.0
+ },
+ "hand+generic+cards": {
+  "corr": 0.22545494781442094,
+  "mse": 0.0387635098632651,
+  "sign_clear": 0.6973684210526315,
+  "teacher_wrong_clear_right": "1/23",
+  "switch_rate": 0.04249667994687915,
+  "switch_gain": 0.0013280212483399733,
+  "switch_gain_se": 0.0009384282523201148,
+  "s": 50.0,
+  "lam": 100000.0
+ },
+ "condition": "对手卡表已知（牌序、手牌未知）"
+}

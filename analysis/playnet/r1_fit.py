@@ -1,7 +1,8 @@
 """R1: is the playouts' verdict d predictable beyond the hand-written score? (cross-validated, before any gate)
 
 For each labelled decision (r1_labels.py), the two children are rebuilt from the record (replayed to the step, the
-two moves applied) and described from the mover's view by learn.features (version 2, without the planner's
+two moves applied; an end of turn as the search scores it, search.evaluate.after_end_of_turn: before the opponent's
+turn begins) and described from the mover's view by learn.features (version 2, without the planner's
 potential: the version's per-side terms, the hand's and the deck's roles), the extras "tempo", "hand" and "hpphase",
 and the engine counters a combo, ramp or amulet deck builds (cards played this turn, followers entered this match,
 cemetery, evolutions, distinct costs played, amulets on the field and their countdowns), each side's. The rows are
@@ -56,8 +57,9 @@ def describe(state, me: int) -> list[float]:
 
 def rebuild(row: dict, records: Path):
     """The two children of the row's decision, and the mover."""
-    from svsim.core.actions import from_dict
+    from svsim.core.actions import EndTurn, from_dict
     from svsim.core.engine import apply
+    from svsim.search.evaluate import after_end_of_turn
     from svsim.tools import records as R
     with gzip.open(records / row["file"], "rt") as fh:
         for k, text in enumerate(fh):
@@ -68,8 +70,12 @@ def rebuild(row: dict, records: Path):
         if i == row["step"]:
             out = []
             for mv in row["moves"]:
-                child = state.clone()
-                apply(child, from_dict(mv))
+                action = from_dict(mv)
+                if isinstance(action, EndTurn):         # as the search scores it (and r1_labels' hand score):
+                    child = after_end_of_turn(state)    # the turn's end abilities done, the opponent's turn not begun
+                else:
+                    child = state.clone()
+                    apply(child, action)
                 out.append(child)
             return out, state.active
     raise ValueError(f"step {row['step']} not in {row['file']}:{row['line']}")

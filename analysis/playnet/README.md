@@ -73,3 +73,29 @@ over always taking the teacher's first, win-rate points.
 With 3.6 times the decisions the generic correction begins to predict d (0.185 -> 0.242), but it does not choose
 better: the switches it adds gain nothing measurable. The card sums overfit at this size. The labels' noise allows a
 correlation of 0.82 on the pilot.
+
+### 10000 decisions at m = 4: R1's linear correction stops here (2026-10-31 01:3xZ; `cards-10000.json`, `labels-m4.jsonl.gz`)
+
+Labels: 10000 decisions (13514 games drawn, the pilot's games left out), m = 4, seed 85961000, 10.1 CPU s a decision.
+They repeat the pilot's spread: mean d +3.2 points, tau 16.4.
+
+A fault found on the way and fixed (r1_fit.rebuild): an end of turn's child was rebuilt with the move applied, so the
+opponent's turn had begun (their draw, their play points), while the search scores that child, and r1_labels scored
+the hand-written part, before the opponent's turn (search.evaluate.after_end_of_turn). Before the fix the generic
+correction's switches gained +0.46 ± 0.18 points a decision; most of that was the correction telling the end of turn
+apart by the opponent's started turn, which the search never sees.
+
+Fitted on the 10000, judged on the pilot (753 decisions, m = 12), the fault fixed:
+
+| model | held-out corr with d | switch rate | switch gain | paired with the hand-written score alone |
+|---|---|---|---|---|
+| hand-written score | 0.185 | 3.9% | +0.12 ± 0.10 | |
+| + generic (105) | 0.239 | 4.8% | +0.18 ± 0.10 | +0.06 ± 0.08 |
+| + cards (576) | 0.211 | 4.2% | +0.14 ± 0.09 | +0.02 ± 0.08 |
+| + generic + cards | 0.225 | 4.2% | +0.13 ± 0.09 | +0.01 ± 0.08 |
+
+What the labels would allow: switching wherever the pilot's measured d < 0 gains +3.9 points a decision (biased up by
+the labels' noise); the normal model's E[max(0, -d)] is +5.0. A linear correction, generic or by the cards' summed
+static rows, predicts d a little better than the hand-written score (0.185 -> 0.239) and chooses no better (+0.06 ±
+0.08 points a decision). No gate is run: a correction that does not change the root choice on held-out decisions has
+nothing to show the gate. The architecture thread's P(gate above 52%) for R1's linear correction: 0.05.
