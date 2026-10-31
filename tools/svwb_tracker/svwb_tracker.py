@@ -419,6 +419,16 @@ def analyze(game, cards, my_decks, archetypes, cfg):
         else:
             opp_turns += 1
 
+    # 回合切换只认「动作」：一方出牌/进化就是这一方的回合。手牌事件（抽牌）只在它后面紧接着就是这一方的动作、
+    # 或者这一方抽完没动、对方又抽了（= 这一方空过）时才算回合开始；效果加进手里的牌不会被当成回合开始。
+    n_body = len(body)
+    action_idx = [k for k, y in enumerate(body) if y["kind"] in ("play", "evolve")]
+    import bisect
+
+    def next_action(i):
+        k = bisect.bisect_right(action_idx, i)
+        return action_idx[k] if k < len(action_idx) else None
+
     for i, (x, s) in enumerate(zip(body, side_of)):
         if turn1_t is None or x["t"] < turn1_t:
             continue
@@ -426,8 +436,21 @@ def analyze(game, cards, my_decks, archetypes, cfg):
             if x["cid"] != "0" and s == "me":
                 g["my_seen"].append(x["cid"])
             is_reveal = s == "opp" and x["cid"] != "0"
-            if is_reveal or last_t is None or x["t"] - last_t >= 2.0:
-                switch(s)
+            if is_reveal:
+                switch("opp")
+            elif s != turn_side:
+                j = next_action(i)
+                if j is None:
+                    pass
+                elif side_of[j] == s:
+                    switch(s)
+                else:
+                    # 对方的下一个动作之前，对方又抽了一张（间隔 ≥ 2 秒）→ 这一方这回合空过了
+                    other = "opp" if s == "me" else "me"
+                    passed = any(body[k]["kind"] == "hand" and side_of[k] == other and not (side_of[k] == "opp" and body[k]["cid"] != "0")
+                                 and body[k]["t"] - x["t"] >= 2.0 for k in range(i + 1, j))
+                    if passed:
+                        switch(s)
         elif x["kind"] == "play":
             switch(s)
             last_field_play_t[x["cid"]] = x["t"]
@@ -449,7 +472,24 @@ def analyze(game, cards, my_decks, archetypes, cfg):
         last_t = x["t"]
     g["moves"] = moves
     g["my_turns"], g["opp_turns"] = my_turns, opp_turns
+    # 费用核对：一方在第 k 回合打出的牌原费高于 k，说明回合数可能少数了（或有减费/跳费），只提醒
+    if not g["partial"]:
+        for side_key, label in (("me", "我方"), ("opp", "对手")):
+            for m in moves:
+                if m["side"] != side_key or m["kind"] != "出牌":
+                    continue
+                info = lookup(cards, m["cid"])
+                if info and info.get("cost") is not None and m["turn"] and info["cost"] > m["turn"] + (0 if side_key == "me" else 0):
+                    g["warnings"].append("%s第 %d 回合打出 %d 费的「%s」，回合数或有偏差（或减费/跳费）" % (label, m["turn"], info["cost"], info["zh"]))
+                    break
     if g["report"]:
+        if g["partial"]:
+            dm, do = g["report"]["ally_turn"] - my_turns, g["report"]["oppo_turn"] - opp_turns
+            for m in moves:
+                if m["side"] == "me":
+                    m["turn"] += dm
+                elif m["side"] == "opp":
+                    m["turn"] += do
         g["my_turns"], g["opp_turns"] = g["report"]["ally_turn"], g["report"]["oppo_turn"]
         # 用结算记录核对先后手：谁的回合结束的 + 双方回合数
         if moves:
