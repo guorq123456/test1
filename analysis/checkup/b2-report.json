@@ -1,0 +1,15 @@
+{
+ "version": "checkup-b-1",
+ "condition": "对手卡表已知（牌序、手牌未知）",
+ "b2": {
+  "labelled": 271,
+  "with_3rd": 192,
+  "third_or_fourth_clearly_beats_first": 7,
+  "coverage_gain": 0.0024600246002460017,
+  "coverage_gain_se": 0.003942404936445866,
+  "top2_oracle_gain": 0.01845018450184502,
+  "top2_oracle_gain_se": 0.005979421695791405,
+  "ties": 109,
+  "tie_mean_abs_d12": 0.06574923547400612
+ }
+}
