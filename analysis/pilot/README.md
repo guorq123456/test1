@@ -49,3 +49,20 @@ for measurement. The commands, with this line's seeds:
     python -m svsim.tools.herogate --hero $H --field $F --x "mcts:N+plan+setnet=NET+netmid+netany" \
         --base mcts:100+plan --opp mcts:100+plan --seed 85997000 --pairs 300 --out runs/pilot-dfm/gate-g1.jsonl
     # a second generation, if any: self-play base 85998000, gate bank 85999000
+
+## Next, after the Rune pair reports: the Portal pair (Salem 2026-10-31 23:24Z; seeds the architecture thread 23:28Z)
+
+DFM's 超越者 (人灭鱼, a fusion control deck with many decision points) gets the same isolated measurement, paired with
+the bot's own 超越者 at an equal budget. Nothing starts until the Rune pair has reported. Seed bank 86000000-86009999:
+
+| hero | field | self-play (10 shards, stride 2) | holdout (2) | gate bank | timing | gen-2 self-play | gen-2 gate |
+|---|---|---|---|---|---|---|---|
+| bot/T1-PORTAL-1 | fields/bot-frozen7.txt | 86000000 | 86001000 | 86002000 | 86002900 | 86003000 | 86004000 |
+| dfm/PORTAL-MingiGod (EXTERNAL) | fields/dfm-portal-vs-bot6.txt | 86005000 | 86006000 | 86007000 | 86007900 | 86008000 | 86009000 |
+
+The DFM Portal hero is EXTERNAL as the DFM Rune one: measurement only, models `net-pilot-portal-dfm-*`, never a deck
+search, 陪练台 / the web models or an install.
+
+The Rune pair's layout, for reference: bot/T3-RUNE-1 85990000 / 85991000 / gate 85992000 / timing 85992900 / gen 2
+85993000, 85994000; dfm/RUNE-ユーリ (EXTERNAL, run in the architecture thread's container) 85995000 / 85996000 /
+gate 85997000 / timing 85997900 / gen 2 85998000, 85999000.
