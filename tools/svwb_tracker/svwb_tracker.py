@@ -158,15 +158,23 @@ def load_archetypes(path):
 def match_deck(seen_ids, decks, cls, cards, min_seen, min_score, margin):
     """seen_ids：这一方被看到的卡（不含衍生牌）。返回 (名字, 分数, 依据) 或 (None, ...)。
     分数 = 看到的不同卡里有几成在这副卡组里。同名卡组取最高分。"""
-    seen = {base_id(c) for c in seen_ids if not is_token(cards, c)}
-    seen = {c for c in seen if card_class(c) in (cls, 0, None)}
+    # 同一张牌可能有不止一个编号（再版、异画、版本位），所以按「卡名」比对；卡表里查不到的才退回规范编号
+    def key(c):
+        info = lookup(cards, c)
+        return ("n", info["zh"], info.get("craft")) if info else ("i", base_id(c))
+    seen = {}
+    for c in seen_ids:
+        if is_token(cards, c) or card_class(c) not in (cls, 0, None):
+            continue
+        seen.setdefault(key(c), base_id(c))
     if len(seen) < min_seen:
         return None, 0.0, "看到的牌太少（%d 张）" % len(seen)
     best = {}
     for d in decks:
         if cls is not None and d["cls"] not in (cls, None):
             continue
-        hit = sum(1 for c in seen if c in d["cards"])
+        dkeys = {key(c) for c in d["cards"]}
+        hit = sum(1 for k in seen if k in dkeys)
         score = hit / len(seen)
         if d["name"] not in best or score > best[d["name"]][0]:
             best[d["name"]] = (score, hit)
@@ -177,8 +185,8 @@ def match_deck(seen_ids, decks, cls, cards, min_seen, min_score, margin):
     second = ranked[1][1][0] if len(ranked) > 1 else 0.0
     why = "看到 %d 张不同的牌，%d 张在「%s」里（%.0f%%）" % (len(seen), hit, name, 100 * score)
     if hit < len(seen) and len(seen) - hit <= 4:
-        best_cards = max((d for d in decks if d["name"] == name), key=lambda d: sum(1 for c in seen if c in d["cards"]))["cards"]
-        why += "，不在表里的：" + "、".join(card_name(cards, c) for c in sorted(seen) if c not in best_cards)
+        best_keys = max(({key(c) for c in d["cards"]} for d in decks if d["name"] == name), key=lambda ks: sum(1 for k in seen if k in ks))
+        why += "，不在表里的：" + "、".join(card_name(cards, seen[k]) for k in sorted(seen, key=lambda k: seen[k]) if k not in best_keys)
     if score < min_score:
         return None, score, why + "，不够像"
     if score - second < margin and len(ranked) > 1:
