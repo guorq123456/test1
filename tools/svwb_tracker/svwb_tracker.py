@@ -48,7 +48,9 @@ RE_REPORT = re.compile(r"reasn: \w+ .*?ally_turn: (\d+) oppo_turn: (\d+)")
 RE_SCENE = re.compile(r"シーンロード完了 name=(\S+)")
 RE_QUIT = re.compile(r"Application:quitting")
 
-REVEAL_WINDOW = 1.8     # 对手亮牌到打出的最长间隔（秒）
+PREPLAY_WINDOW = 1.6    # 「亮牌/选项」到打出的最长间隔（秒）：对手亮牌 0.5～1.4 秒，我方选择类卡牌的选项 0.9～1.9 秒
+PASS_GAP_A = 2.0        # 推断「对方空过」：对方的抽牌至少要在我方最后一个动作之后这么多秒
+PASS_GAP_B = 3.0        # 推断「对方空过」：我方再次抽牌至少要在对方抽牌之后这么多秒
 SUMMON_WINDOW = 1.2     # 出牌到入场的最长间隔（秒）；超过就当作效果召唤
 
 
@@ -274,6 +276,9 @@ def segment(entries):
         cur["last_t"] = ev["t"]
         if kind == "cutin_end" and cur["cutin_end"] is None:
             cur["cutin_end"] = ev["t"]
+            # 开场动画结束之前还没有任何手牌/出牌事件 → 这局其实是完整的，只是没看到 battleStart 那条
+            if cur["partial"] and not any(x["kind"] in ("hand", "play", "evolve") for x in cur["events"]):
+                cur["partial"] = False
         if kind == "result" and cur["result"] is None:
             cur["result"] = f["word"]
     if cur is not None:
@@ -313,59 +318,89 @@ def analyze(game, cards, my_decks, archetypes, cfg):
     # 2) 只看开场动画结束之后的牌
     t0 = game["cutin_end"] if game["cutin_end"] is not None else game["start_t"]
     body = [x for x in ev if x["t"] >= t0 and x["kind"] in ("hand", "play", "field", "evolve")]
+    n_body = len(body)
 
-    # 先判断我方职业：我方看得见 ID 的手牌，非中立牌的职业众数
-    my_cls_votes = collections.Counter()
+    # 3) 双方职业（不依赖任何一手牌的归属判断）
+    #   我方：开场 3 秒内看得见 ID 的起手牌里，非中立牌的职业众数；没有就看我方进化的牌，再没有就看皮肤末位。
+    #   对手：所有出牌、进化、可见手牌里，除我方职业和中立之外最常见的职业（对手进化的牌权重加大）；
+    #         一张都没有就看皮肤末位；皮肤也没有就按同职业（镜像局）处理。
+    opening_vis = [x for x in body if x["kind"] == "hand" and x["cid"] != "0" and x["t"] - t0 <= 3.0]
+    votes = collections.Counter(card_class(x["cid"]) for x in opening_vis if card_class(x["cid"]))
+    my_cls = votes.most_common(1)[0][0] if votes else None
+    if my_cls is None:
+        votes = collections.Counter(card_class(x["cid"]) for x in body if x["kind"] == "evolve" and x["ally"] and card_class(x["cid"]))
+        my_cls = votes.most_common(1)[0][0] if votes else skin_cls(g["my_skin"])
+    other = collections.Counter()
     for x in body:
-        if x["kind"] == "hand" and x["cid"] != "0":
-            c = card_class(x["cid"])
-            if c:
-                my_cls_votes[c] += 1
-    # 但手牌里也混着对手亮出的牌（亮出后马上打出）。先粗估，再用「亮牌」规则修正。
-    # 3) 第一遍：给每张 hand/play/field 定归属
-    side_of = []   # 与 body 对齐：'me' / 'opp' / None
-    hand_times = collections.defaultdict(list)  # cid -> 出现时间列表（可见的 hand 事件）
-    for x in body:
-        if x["kind"] == "hand" and x["cid"] != "0":
-            hand_times[x["cid"]].append(x["t"])
+        c = card_class(x["cid"]) if x["kind"] in ("play", "evolve", "hand") and x["cid"] != "0" else None
+        if not c or c == my_cls:
+            continue
+        if x["kind"] == "evolve":
+            if x["ally"]:
+                continue
+            other[c] += 3
+        else:
+            other[c] += 1
+    opp_skin_c = skin_cls(g["opp_skin"])
+    if other and (other.most_common(1)[0][1] >= 2 or not opp_skin_c):
+        opp_cls = other.most_common(1)[0][0]
+    else:
+        opp_cls = opp_skin_c or my_cls
+    g["my_cls"], g["opp_cls"] = my_cls, opp_cls
+    g["skins"] = {"me": g["my_skin"], "opp": g["opp_skin"], "me_cls": skin_cls(g["my_skin"]), "opp_cls": opp_skin_c}
+    if g["skins"]["me_cls"] and my_cls and g["skins"]["me_cls"] != my_cls:
+        g["warnings"].append("我方皮肤末位（%s）和起手牌职业（%s）不一致" % (g["my_skin"], CLASS_NAMES.get(my_cls)))
+    if opp_skin_c and opp_cls and opp_skin_c != opp_cls:
+        g["warnings"].append("对手皮肤末位（%s）和出牌职业（%s）不一致" % (g["opp_skin"], CLASS_NAMES.get(opp_cls)))
+    mirror = my_cls is not None and my_cls == opp_cls
+    g["mirror"] = mirror
+    if mirror:
+        g["warnings"].append("同职业局：双方出牌归属只能靠回合推断，把握较低")
+
+    # 4) 第一遍：可靠的归属（锚点）
+    #   暗牌（CardId=0）→ 对手；进化 → isAlly 旗标；非镜像局里出牌/可见手牌按职业归属；
+    #   中立牌和镜像局里的牌 → 待定（None），第二遍按「当时是谁的回合」归属。
+    #   「亮牌/选项」：一张可见手牌之后 PREPLAY_WINDOW 秒内就有同一张（规范 ID）被打出，这条手牌事件不是抽牌：
+    #   既可能是对手亮牌后打出，也可能是我方选择类卡牌弹出的选项，它的归属跟那次出牌走。
+    side_of = [None] * n_body
+    preplay_of = [None] * n_body
     for i, x in enumerate(body):
-        s = None
+        if x["kind"] != "hand" or x["cid"] == "0":
+            continue
+        b = base_id(x["cid"])
+        for j in range(i + 1, min(n_body, i + 10)):
+            y = body[j]
+            if y["t"] - x["t"] > PREPLAY_WINDOW:
+                break
+            if y["kind"] == "play" and base_id(y["cid"]) == b:
+                preplay_of[i] = j
+                break
+    for i, x in enumerate(body):
         if x["kind"] == "hand":
             if x["cid"] == "0":
-                s = "opp"
+                side_of[i] = "opp"
+            elif preplay_of[i] is not None:
+                side_of[i] = None
             else:
-                # 之后 REVEAL_WINDOW 内有同一 ID 的 play → 这是对手亮牌
-                nxt = next((y for y in body[i + 1:i + 6] if y["kind"] == "play" and y["cid"] == x["cid"] and y["t"] - x["t"] <= REVEAL_WINDOW), None)
-                s = "opp" if nxt else "me"
-        elif x["kind"] == "play":
-            recent = [t for t in hand_times.get(x["cid"], []) if 0 <= x["t"] - t <= REVEAL_WINDOW]
-            s = "opp" if recent else "me"
-        elif x["kind"] == "evolve":
-            s = "me" if x["ally"] else "opp"
-        side_of.append(s)
-
-    my_votes = collections.Counter(card_class(x["cid"]) for x, s in zip(body, side_of) if s == "me" and x["kind"] in ("hand", "play") and card_class(x["cid"]))
-    opp_votes = collections.Counter(card_class(x["cid"]) for x, s in zip(body, side_of) if s == "opp" and x["kind"] in ("play", "evolve") and card_class(x["cid"]))
-    g["my_cls"] = my_votes.most_common(1)[0][0] if my_votes else skin_cls(g["my_skin"])
-    g["opp_cls"] = opp_votes.most_common(1)[0][0] if opp_votes else skin_cls(g["opp_skin"])
-    if g["my_skin"] and skin_cls(g["my_skin"]) and g["my_cls"] and skin_cls(g["my_skin"]) != g["my_cls"]:
-        g["warnings"].append("我方皮肤末位（%s）和手牌职业（%s）不一致" % (g["my_skin"], CLASS_NAMES.get(g["my_cls"])))
-    # 职业不同的对局，用职业再修一遍归属（打出的非中立牌属于哪个职业就是谁的）
-    if g["my_cls"] and g["opp_cls"] and g["my_cls"] != g["opp_cls"]:
-        for i, x in enumerate(body):
-            if x["kind"] in ("play", "hand") and x["cid"] != "0":
                 c = card_class(x["cid"])
-                if c == g["my_cls"]:
-                    side_of[i] = "me"
-                elif c == g["opp_cls"]:
-                    side_of[i] = "opp"
+                if not mirror and c and c == opp_cls:
+                    side_of[i] = "opp"      # 对手被效果亮出来的牌（不是抽牌）
+                else:
+                    side_of[i] = "me"       # 我抽到/拿到的牌
+        elif x["kind"] == "play":
+            c = card_class(x["cid"])
+            if not mirror and c and c == my_cls:
+                side_of[i] = "me"
+            elif not mirror and c and c == opp_cls:
+                side_of[i] = "opp"
+        elif x["kind"] == "evolve":
+            side_of[i] = "me" if x["ally"] else "opp"
 
-    # 4) 第二遍：回合与每一手
-    # 开局阶段（起手 4+4、换牌）不算回合。回合从「换牌后第一次孤立的抽牌」开始：
-    #   孤立 = 前后 6 秒内没有另一方的手牌事件；起手那 8 张在开场后 2 秒内一起出现，不算。
-    first_play_i = next((i for i, (x, s) in enumerate(zip(body, side_of)) if x["kind"] == "play"), None)
+    # 5) 先后手：回合从「换牌后第一次孤立的抽牌」开始
+    #   孤立 = 前后 3 秒内没有另一方的手牌事件；起手那 8 张在开场后 2 秒内一起出现，不算；亮牌/选项不算抽牌。
+    first_play_i = next((i for i, x in enumerate(body) if x["kind"] == "play"), None)
     first_play_t = body[first_play_i]["t"] if first_play_i is not None else None
-    hand_evts = [(i, x, s) for i, (x, s) in enumerate(zip(body, side_of)) if x["kind"] == "hand"]
+    hand_evts = [(i, x, side_of[i]) for i, x in enumerate(body) if x["kind"] == "hand" and preplay_of[i] is None]
     D = []
     for i, x, s in hand_evts:
         if first_play_t is not None and x["t"] >= first_play_t:
@@ -373,15 +408,18 @@ def analyze(game, cards, my_decks, archetypes, cfg):
         if x["t"] - t0 < 5:
             continue
         if s == "opp" and x["cid"] != "0":
-            continue  # 对手亮牌，不是抽牌
+            continue  # 对手被亮出来的牌，不是抽牌
         other_near = any(abs(y["t"] - x["t"]) <= 3.0 and s2 != s for j, y, s2 in hand_evts if j != i)
         if other_near:
             continue
         D.append((s, x["t"]))
     while len(D) >= 2 and D[0][0] == D[1][0]:
         D.pop(0)  # 连着两次都是同一方：前一次是换牌（或效果抽牌）
-    g["opening"] = [{"dt": round(x["t"] - t0, 1), "side": s, "cid": x["cid"], "create": x["create"]}
-                    for i, x, s in hand_evts if (first_play_t is None or x["t"] < first_play_t) and x["t"] - t0 <= 120]
+    g["opening"] = [{"dt": round(x["t"] - t0, 1), "side": side_of[i] if preplay_of[i] is None else "pre", "cid": x["cid"], "create": x["create"]}
+                    for i, x in enumerate(body) if x["kind"] == "hand" and (first_play_t is None or x["t"] < first_play_t) and x["t"] - t0 <= 120]
+    first_play_side = None
+    if first_play_i is not None:
+        first_play_side = side_of[first_play_i]
     if g["partial"]:
         D = []
         turn1_t = body[0]["t"] if body else None
@@ -390,11 +428,11 @@ def analyze(game, cards, my_decks, archetypes, cfg):
         turn1_t = D[0][1]
         g["first"] = D[0][0] == "me"
         g["first_why"] = "换牌后第一个抽牌的是%s" % ("我方" if g["first"] else "对手")
-        if first_play_i is not None and side_of[first_play_i] != D[0][0]:
-            g["first_why"] += "（但第一个出牌的是另一方，把握中等）"
-    elif first_play_i is not None and not g["partial"]:
+        if first_play_side is not None and first_play_side != D[0][0]:
+            g["first_why"] += "（第一个出牌的是另一方，可能是先手空过了第 1 回合）"
+    elif first_play_side is not None:
         turn1_t = first_play_t
-        g["first"] = side_of[first_play_i] == "me"
+        g["first"] = first_play_side == "me"
         g["first_why"] = "第一个出牌的是%s（没看到开局抽牌，把握中等）" % ("我方" if g["first"] else "对手")
     else:
         turn1_t = None
@@ -404,55 +442,73 @@ def analyze(game, cards, my_decks, archetypes, cfg):
         if s == "me" and x["cid"] != "0":
             g["my_hand0"].append(x["cid"])
 
+    # 6) 第二遍：回合与每一手
+    #   回合切换主要认「锚点动作」：归属可靠的一方出牌/进化，就是这一方的回合。
+    #   抽牌事件只在这些情况下算回合开始：(a) 它后面的下一个锚点动作就是这一方的；(b) 后面没有锚点动作可参照
+    #   （镜像局、尾声），且离最后一个动作 ≥ PASS_GAP_A 秒；(c) 下一个锚点动作是对方的，但对方在 ≥ PASS_GAP_B 秒后
+    #   又抽了一张且其间没有动作（= 这一方这回合空过了）。(b)(c) 都要求当前回合的一方已经动过，或这回合已经过了
+    #   6 秒以上（否则等于连着两次空过，更可能是效果抽牌）。待定归属的出牌归当时回合的一方。
     moves = []
     turn_side, my_turns, opp_turns = None, 0, 0
-    last_t = None
+    turn_actions = 0
+    turn_start_t = None
+    last_action_t = None
     last_field_play_t = {}
+    ambiguous = 0
 
-    def switch(s):
-        nonlocal turn_side, my_turns, opp_turns
+    def switch(s, t):
+        nonlocal turn_side, my_turns, opp_turns, turn_actions, turn_start_t
         if s is None or s == turn_side:
             return
         turn_side = s
+        turn_actions = 0
+        turn_start_t = t
         if s == "me":
             my_turns += 1
         else:
             opp_turns += 1
 
-    # 回合切换只认「动作」：一方出牌/进化就是这一方的回合。手牌事件（抽牌）只在它后面紧接着就是这一方的动作、
-    # 或者这一方抽完没动、对方又抽了（= 这一方空过）时才算回合开始；效果加进手里的牌不会被当成回合开始。
-    n_body = len(body)
-    action_idx = [k for k, y in enumerate(body) if y["kind"] in ("play", "evolve")]
     import bisect
+    anchor_idx = [k for k, y in enumerate(body) if y["kind"] in ("play", "evolve") and side_of[k] is not None]
 
-    def next_action(i):
-        k = bisect.bisect_right(action_idx, i)
-        return action_idx[k] if k < len(action_idx) else None
+    def next_anchor(i):
+        k = bisect.bisect_right(anchor_idx, i)
+        return anchor_idx[k] if k < len(anchor_idx) else None
 
-    for i, (x, s) in enumerate(zip(body, side_of)):
+    for i, x in enumerate(body):
         if turn1_t is None or x["t"] < turn1_t:
             continue
+        s = side_of[i]
         if x["kind"] == "hand":
-            if x["cid"] != "0" and s == "me":
+            if preplay_of[i] is not None:
+                continue
+            if s == "me" and x["cid"] != "0":
                 g["my_seen"].append(x["cid"])
-            is_reveal = s == "opp" and x["cid"] != "0"
-            if is_reveal:
-                switch("opp")
-            elif s != turn_side:
-                j = next_action(i)
-                if j is None:
-                    pass
-                elif side_of[j] == s:
-                    switch(s)
-                else:
-                    # 对方的下一个动作之前，对方又抽了一张（间隔 ≥ 2 秒）→ 这一方这回合空过了
-                    other = "opp" if s == "me" else "me"
-                    passed = any(body[k]["kind"] == "hand" and side_of[k] == other and not (side_of[k] == "opp" and body[k]["cid"] != "0")
-                                 and body[k]["t"] - x["t"] >= 2.0 for k in range(i + 1, j))
-                    if passed:
-                        switch(s)
+            if s == turn_side:
+                continue
+            j = next_anchor(i)
+            if j is not None and side_of[j] == s:
+                switch(s, x["t"])
+                continue
+            settled = turn_side is None or turn_actions > 0 or (turn_start_t is not None and x["t"] - turn_start_t >= 6.0)
+            if not settled or (last_action_t is not None and x["t"] - last_action_t < PASS_GAP_A):
+                continue
+            if j is None:
+                switch(s, x["t"])
+                continue
+            opposite = "opp" if s == "me" else "me"
+            passed = any(body[k]["kind"] == "hand" and preplay_of[k] is None and side_of[k] == opposite
+                         and body[k]["t"] - x["t"] >= PASS_GAP_B for k in range(i + 1, j))
+            if passed:
+                switch(s, x["t"])
         elif x["kind"] == "play":
-            switch(s)
+            if s is None:
+                s = turn_side or (("me" if g["first"] else "opp") if g["first"] is not None else "me")
+                side_of[i] = s
+                ambiguous += 1
+            switch(s, x["t"])
+            turn_actions += 1
+            last_action_t = x["t"]
             last_field_play_t[x["cid"]] = x["t"]
             (g["my_seen"] if s == "me" else g["opp_seen"]).append(x["cid"])
             moves.append({"t": x["t"], "side": s, "turn": my_turns if s == "me" else opp_turns, "kind": "出牌", "cid": x["cid"]})
@@ -466,22 +522,28 @@ def analyze(game, cards, my_decks, archetypes, cfg):
                 elif s2 == "me":
                     g["my_seen"].append(x["cid"])
         elif x["kind"] == "evolve":
-            switch(s)
+            switch(s, x["t"])
+            turn_actions += 1
+            last_action_t = x["t"]
             moves.append({"t": x["t"], "side": s, "turn": my_turns if s == "me" else opp_turns, "kind": "超进化" if x["super"] else "进化", "cid": x["cid"]})
             (g["my_seen"] if s == "me" else g["opp_seen"]).append(x["cid"])
-        last_t = x["t"]
     g["moves"] = moves
+    g["ambiguous"] = ambiguous
     g["my_turns"], g["opp_turns"] = my_turns, opp_turns
-    # 费用核对：一方在第 k 回合打出的牌原费高于 k，说明回合数可能少数了（或有减费/跳费），只提醒
+    # 费用线索：一方在第 k 回合打出的牌原费高于 k。巫师的法术增幅减费、龙族的跳费都会让它误报，所以只当线索，不当警告
+    g["hints"] = []
     if not g["partial"]:
         for side_key, label in (("me", "我方"), ("opp", "对手")):
             for m in moves:
                 if m["side"] != side_key or m["kind"] != "出牌":
                     continue
                 info = lookup(cards, m["cid"])
-                if info and info.get("cost") is not None and m["turn"] and info["cost"] > m["turn"] + (0 if side_key == "me" else 0):
-                    g["warnings"].append("%s第 %d 回合打出 %d 费的「%s」，回合数或有偏差（或减费/跳费）" % (label, m["turn"], info["cost"], info["zh"]))
+                if info and info.get("cost") is not None and m["turn"] and info["cost"] > m["turn"]:
+                    g["hints"].append("%s第 %d 回合打出 %d 费的「%s」" % (label, m["turn"], info["cost"], info["zh"]))
                     break
+    if g["report"] and not g["partial"] and (g["report"]["ally_turn"], g["report"]["oppo_turn"]) != (my_turns, opp_turns):
+        g["warnings"].append("按动作数出来的回合数（我 %d / 对手 %d）和结算记录（我 %d / 对手 %d）不一致，表里的回合号可能有偏差"
+                             % (my_turns, opp_turns, g["report"]["ally_turn"], g["report"]["oppo_turn"]))
     if g["report"]:
         if g["partial"]:
             dm, do = g["report"]["ally_turn"] - my_turns, g["report"]["oppo_turn"] - opp_turns
@@ -578,15 +640,19 @@ def write_outputs(games, cards, out_dir, season):
             ])
         wr.writerows(rows)
     # review.md：每一手
-    lines = ["# 对局回顾（自动读取）", "", "时间是本机时间。回合数是按双方交替抽牌推出来的，效果抽牌多的局可能偏差一两回合。", ""]
+    lines = ["# 对局回顾（自动读取）", "", "时间是本机时间。记录文件里没有「换回合」事件，回合数是按双方动作的交替推出来的，可能偏差一回合；结算记录里的双方回合数更可靠。", ""]
     for g in reversed(games):
         res = g["result"] or "未完成"
         lines.append("## %s  %s（%s） 对 %s（%s）  %s  %s" % (
             fmt_clock(g["start"]), g["my_deck"], CLASS_NAMES.get(g["my_cls"], "?"), g["opp_deck"], CLASS_NAMES.get(g["opp_cls"], "?"),
             ("先手" if g["first"] else "后手") if g["first"] is not None else "先后手不明", res))
-        meta = ["%s" % ("天梯" if g["ranked"] else "非天梯/未知模式"), "我方 %d 回合，对手 %d 回合" % (g["my_turns"], g["opp_turns"])]
+        meta = ["%s" % ("天梯" if g["ranked"] else ("进行中，还没打完" if g["result"] is None else "非天梯/未知模式")), "我方 %d 回合，对手 %d 回合" % (g["my_turns"], g["opp_turns"])]
         if g["end"]:
             meta.append("用时 %d 分 %02d 秒" % divmod(int(g["end"] - (g["cutin_end"] or g["start"])), 60))
+        if g.get("skins"):
+            meta.append("主战者皮肤：我 %s / 对手 %s" % (g["skins"].get("me") or "?", g["skins"].get("opp") or "?"))
+        if g.get("ambiguous"):
+            meta.append("按回合归属的出牌 %d 手（中立牌或同职业局）" % g["ambiguous"])
         meta.append("先后手依据：%s" % (g["first_why"] or "无"))
         meta.append("我的卡组依据：%s" % g["my_deck_why"])
         meta.append("对手套路依据：%s" % g["opp_deck_why"])
@@ -594,11 +660,13 @@ def write_outputs(games, cards, out_dir, season):
             meta.append("这局开头没存到（存档程序启动前的部分丢了），回合号从存到的地方数起")
         if g["warnings"]:
             meta.append("注意：" + "；".join(g["warnings"]))
+        if g.get("hints"):
+            meta.append("费用线索（巫师减费、龙族跳费会误报）：" + "；".join(g["hints"]))
         lines.append("- " + "；".join(meta))
         if g["my_hand0"]:
             lines.append("- 我的起手/换牌看到：" + "、".join(card_name(cards, c) for c in g["my_hand0"]))
         if g.get("opening"):
-            lines.append("- 开局手牌事件（秒 / 谁 / 牌 / 新建）：" + "，".join("%.0f %s %s%s" % (o["dt"], "我" if o["side"] == "me" else "敌", o["cid"] if o["cid"] != "0" else "暗", "*" if o["create"] else "") for o in g["opening"]))
+            lines.append("- 开局手牌事件（秒 / 谁 / 牌 / 新建）：" + "，".join("%.0f %s %s%s" % (o["dt"], {"me": "我", "opp": "敌", "pre": "亮"}.get(o["side"], "?"), o["cid"] if o["cid"] != "0" else "暗", "*" if o["create"] else "") for o in g["opening"]))
         lines.append("")
         lines.append("| 时刻 | 谁 | 回合 | 动作 | 牌 | 费 |")
         lines.append("|---|---|---|---|---|---|")
@@ -640,7 +708,7 @@ def run_parse(a):
     fin = [g for g in games if g["result"] in ("胜", "负")]
     print("读到 %d 条面包屑，切出 %d 局，其中有胜负的 %d 局（胜 %d），写入 %s" % (
         len(entries), len(games), len(fin), sum(1 for g in fin if g["result"] == "胜"), a.out))
-    for g in games[-5:]:
+    for g in games[-12:]:
         print("  %s %s 对 %s·%s %s %s" % (fmt_clock(g["start"]), g["my_deck"], CLASS_NAMES.get(g["opp_cls"], "?"), g["opp_deck"],
                                         ("先手" if g["first"] else "后手") if g["first"] is not None else "先后不明", g["result"] or "未完成"))
     return games
