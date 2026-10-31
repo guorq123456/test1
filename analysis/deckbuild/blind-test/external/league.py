@@ -45,7 +45,8 @@ def report(rows, ref, roster):
         g = l.split("/", 1)[0]
         if g not in groups:
             groups.append(g)
-    print(f"条件：{CONDITION}；两边都由 mcts:100+plan 操作；每对 10 个发牌（20 局）")
+    specs = sorted({r["spec"] for r in rows})
+    print(f"条件：{CONDITION}；两边都由 {'、'.join(specs)} 操作；每对 10 个发牌（20 局）")
     print("参照卡组对各组的得分（行：参照卡组；列：对手组）")
     print(" " * 24 + " ".join(f"{g:>7}" for g in groups) + "    全部")
     allm = []

@@ -4,6 +4,7 @@ in the metric-5 cheap league (both mcts:100+plan, 10 deals per pair; different d
 noise), and the external decks head to head with the bot's and the control's seven.
 
     python analysis/deckbuild/blind-test/external/league_vs_roster.py runs/external/dfm-cheap.jsonl
+    python analysis/deckbuild/blind-test/external/league_vs_roster.py runs/external/dfm-deep.jsonl deep
 
 Condition: 对手卡表已知（牌序、手牌未知）. Comparison only: the external decks never enter search or training.
 """
@@ -15,7 +16,7 @@ from collections import defaultdict
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-L5 = HERE.parent / "league5/cheap/league-deals.jsonl.gz"
+L5 = HERE.parent / "league5/{}/league-deals.jsonl.gz"
 CLASSES = ("FOREST", "SWORD", "RUNE", "DRAGON", "ABYSS", "HAVEN", "PORTAL")
 ZH = dict(zip(CLASSES, ("精灵", "皇家护卫", "巫师", "龙族", "梦魇", "主教", "超越者")))
 CLAUDE = ("g1", "g2", "g3", "p2-g1", "p2-g2", "p2-g3")
@@ -45,13 +46,15 @@ def main():
             r = json.loads(t)
             ext[r["ref"]][r["opp"]].append(r["score"])
     l5 = defaultdict(lambda: defaultdict(list))         # deck -> opp -> scores (both seats folded)
-    with gzip.open(L5, "rt") as fh:
+    which = sys.argv[2] if len(sys.argv) > 2 else "cheap"
+    with gzip.open(str(L5).format(which), "rt") as fh:
         for t in fh:
             r = json.loads(t)
             l5[r["a"]][r["b"]].append(r["score"])
             l5[r["b"]][r["a"]].append(1 - r["score"])
     roster = {d for d in l5}
-    print("条件：对手卡表已知（牌序、手牌未知）；两边都由 mcts:100+plan 操作；每对 10 个发牌")
+    spec = next(iter(json.loads(t)["spec"] for t in open(sys.argv[1]) if t.strip()))
+    print(f"条件：对手卡表已知（牌序、手牌未知）；两边都由 {spec} 操作；每对 10 个发牌；指标 5 用 {which} 那一遍")
     print("一、对 Claude 六组 42 副卡组的平均得分（同样的对手；外部卡组和 bot、对照用的是不同的发牌）")
     print(f"{'职业':6s} {'外部卡组':22s} {'外部':>11s} {'bot 同职业':>11s} {'对照同职业':>11s}")
     tot = defaultdict(list)
