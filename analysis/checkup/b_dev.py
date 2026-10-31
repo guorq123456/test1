@@ -117,7 +117,7 @@ def job_b2(job) -> dict:
     tie = bool(v[order[0]] == v[order[1]])
     labelled = row.get("results") is not None
     if labelled:
-        assert [to_dict(reps[j]) for j in order[:2]] == row["moves"], "the stored first and second"
+        assert json.loads(json.dumps([to_dict(reps[j]) for j in order[:2]])) == row["moves"], "the stored first and second"
         play = order[2:4]
     elif tie:
         play = order[:4]
