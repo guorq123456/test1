@@ -20,6 +20,9 @@ With --pool FILE (deck codes, lines "label|code" as tools.deckgate's field; the 
 decks from the pool, two different ones at random (two of one class are a legal game), from random.Random("pool:seed:g") (its
 own numbers: the deal and the agents' seeds are as above); the record's "names" are the pool labels by seat. Its
 records go through `encode` and learn.midrows as the others do (they read the decks from the record).
+With --hero LABEL as well (a pilot trained for one deck, the architecture thread 2026-10-31 23:35Z), every game is the
+pool's deck LABEL against one other deck of the pool, drawn by random.Random("hero:seed:g"); the hero sits in seat
+g % 2 (as --deck does); --hero-spec gives the hero's side its own agent (default --spec on both sides).
 
 `merge`: every rec-*.jsonl.gz under --inputs into --out, one game per (seed, g); a game found twice must be the
 same record apart from "date" and "cpu" (a determinism check across machines), else it is reported (the first
@@ -79,6 +82,17 @@ def pool_pair(pool: list, seed: int, g: int) -> tuple:
     return pool[i], pool[j]
 
 
+def hero_pair(pool: list, hero: str, seed: int, g: int) -> tuple:
+    """Game g of shard `seed` with --hero: the hero's deck and one other deck of the pool, drawn by
+    random.Random("hero:seed:g")."""
+    import random
+    mine = [d for d in pool if d[0] == hero]
+    if len(mine) != 1:
+        raise SystemExit(f"--hero {hero}: {len(mine)} decks of the pool have that label")
+    others = [d for d in pool if d[0] != hero]
+    return mine[0], random.Random(f"hero:{seed}:{g}").choice(others)
+
+
 def _sha256(path: str) -> str:
     import hashlib
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
@@ -130,6 +144,12 @@ def play_main(args) -> None:
     decks_pool = pool_of(args.pool) if getattr(args, "pool", None) else None
     if decks_pool and ospec:
         raise SystemExit("--opponent-spec needs --deck / --opponent, not --pool")
+    hero = getattr(args, "hero", None)
+    hero_spec = getattr(args, "hero_spec", None)
+    if (hero or hero_spec) and not decks_pool:
+        raise SystemExit("--hero needs --pool")
+    if hero_spec and not hero:
+        raise SystemExit("--hero-spec needs --hero")
     for k in range(args.shards[0], args.shards[1]):
         seed = args.base + args.stride * k
         if (out / f"rec-{seed}.jsonl.gz").exists():
@@ -138,7 +158,10 @@ def play_main(args) -> None:
             continue
         have = {r["g"] for r in _read_part(out / f"rec-{seed}.part.jsonl")}
         seeds.append(seed)
-        if decks_pool:
+        if hero:                                   # deck = the hero (seat g % 2); ospec = the other side's agent
+            todo += [(seed, g) + hero_pair(decks_pool, hero, seed, g) + (hero_spec or args.spec,)
+                     + ((args.spec,) if hero_spec else ()) for g in range(args.per_shard) if g not in have]
+        elif decks_pool:
             todo += [(seed, g) + pool_pair(decks_pool, seed, g) + (args.spec,)
                      for g in range(args.per_shard) if g not in have]
         else:
@@ -146,6 +169,8 @@ def play_main(args) -> None:
                      for g in range(args.per_shard) if g not in have]
     decks_used = ({"pool": args.pool, "pool_sha256": _sha256(args.pool), "pool_labels": [d[0] for d in decks_pool]}
                   if decks_pool else {"deck": args.deck, "opponent": args.opponent})
+    if hero:
+        decks_used.update(hero=hero, **({"hero_spec": hero_spec} if hero_spec else {}))
     print(json.dumps({"spec": args.spec, **({"opponent_spec": ospec} if ospec else {}),
                       **decks_used, "base": args.base,
                       "stride": args.stride, "shards": args.shards, "per_shard": args.per_shard, "open_shards": seeds, "games_to_play": len(todo),
@@ -361,6 +386,8 @@ def main() -> None:
     p.add_argument("--deck", default="ramp-t", choices=sorted(DECKS))
     p.add_argument("--opponent", default="ramp-t", choices=sorted(DECKS))
     p.add_argument("--pool", default=None, help="deck codes (lines label|code): each game draws its two decks from them")
+    p.add_argument("--hero", default=None, help="with --pool: every game is this pool deck against another one")
+    p.add_argument("--hero-spec", default=None, help="with --hero: the hero's agent (default --spec)")
     p.add_argument("--spec", "--agent", dest="spec", default=SPEC, help="the agent on both sides (default v2skx)")
     p.add_argument("--opponent-spec", default=None, help="the agent of the side playing --opponent (default: --spec on "
                                                          "both sides, as before)")

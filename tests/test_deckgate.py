@@ -91,6 +91,39 @@ def test_scaledata_pool_draws_a_fixed_pair_per_game_and_netdata_plays_label_and_
     assert record["names"] == [opp[0], deck[0]] and record["decks"] == [opp[1], deck[1]]   # g = 1: seat 1 for deck
 
 
+def test_scaledata_hero_plays_one_deck_against_the_others_from_its_seat(tmp_path):
+    import argparse
+    import gzip
+    import json
+    import pytest
+    from svsim.learn import scaledata
+    path = tmp_path / "pool.txt"
+    third = "c|" + FIELD_LINES[1].split("|", 1)[1]
+    path.write_text("\n".join(FIELD_LINES + [third]) + "\n", encoding="utf-8")
+    pool = scaledata.pool_of(str(path))
+    assert scaledata.hero_pair(pool, "a", 9, 4) == scaledata.hero_pair(pool, "a", 9, 4)
+    opps = [scaledata.hero_pair(pool, "a", 9, g) for g in range(60)]
+    assert all(h[0] == "a" for h, _ in opps) and {o[0] for _, o in opps} == {"b", "c"}   # never the hero itself
+    with pytest.raises(SystemExit):
+        scaledata.hero_pair(pool, "zz", 9, 0)
+    out = tmp_path / "rec"
+    args = argparse.Namespace(base=9, stride=2, shards=[0, 1], per_shard=4, deck=None, opponent=None, pool=str(path),
+                              hero="a", hero_spec="greedy", spec="random", opponent_spec=None, workers=1, every=10,
+                              out=str(out))
+    scaledata.play_main(args)
+    with gzip.open(out / "rec-9.jsonl.gz", "rt") as fh:
+        records = [json.loads(line) for line in fh]
+    assert [r["g"] for r in records] == [0, 1, 2, 3]
+    for r in records:
+        seat = r["g"] % 2
+        assert r["names"][seat] == "a" and r["names"][1 - seat] == scaledata.hero_pair(pool, "a", 9, r["g"])[1][0]
+        specs = r["ai"].split(" / ")
+        assert specs[seat] == "greedy" and specs[1 - seat] == "random"
+    for bad in (dict(pool=None), dict(hero=None)):
+        with pytest.raises(SystemExit):
+            scaledata.play_main(argparse.Namespace(**{**vars(args), **bad, "out": str(tmp_path / "x")}))
+
+
 def test_a_shared_net_answers_every_pairing_even_without_one():
     net = load_cached(NET)
 
