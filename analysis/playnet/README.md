@@ -102,7 +102,8 @@ nothing to show the gate. The architecture thread's P(gate above 52%) for R1's l
 
 Where the teacher goes wrong (`r1_where.py`, `where.txt`, all 10753 decisions): by the kind of move and by the card,
 nothing the teacher picks is clearly worse on average than what it passed over (n >= 30, |mean| > 2.5 SE: every such
-card or kind as the teacher's first has a negative mean regret, the teacher right on average); the one thing it
-clearly passes over too often is nothing (EndTurn as the second: +6.1 ± 0.6, the teacher right to play on). Its
+card or kind as the teacher's first has a negative mean regret, the teacher right on average); as the second, no
+card or kind is clearly passed over when it was better (the one listed, EndTurn, +6.1 ± 0.6, shows the teacher right
+to play on rather than end the turn; Kyrios, Angel of Aspiration, +10.1 ± 3.9, likewise right to hold). Its
 mistakes are not concentrated on a card or a kind of move: they depend on the position, which is why a correction
 summed over cards or over position totals does not find them.
