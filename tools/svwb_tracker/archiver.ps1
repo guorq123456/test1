@@ -1,7 +1,13 @@
 # Archives Shadowverse WB crash-reporter breadcrumbs (rolling buffer) into raw\breadcrumbs-YYYY-MM-DD.jsonl.
 # Read-only on the game files (opened with FileShare.ReadWrite). Never exits on errors.
+# When a battle result appears it screenshots the result screen (rank gauge) into shots\, only while shots\ENABLED exists.
+param([string]$TestShot)  # -TestShot <path>: take one screenshot with the same code and exit
 $ErrorActionPreference = 'Continue'
 $root = 'C:\claude\svwb-tracker'
+$shots = "$root\shots"
+Add-Type -AssemblyName System.Drawing, System.Windows.Forms
+Add-Type -Namespace Win32 -Name Dpi -MemberDefinition '[DllImport("user32.dll")] public static extern bool SetProcessDPIAware();'
+[void][Win32.Dpi]::SetProcessDPIAware()  # physical pixels (1920x1200), not the 125% scaled size
 $bt = 'C:\Program Files\Epic Games\ShadowverseWorldsBeyONv4y\ShadowverseWB_Data\Persistent\bt'
 $files = @("$bt\bt-breadcrumbs-0", "$bt\bt-breadcrumbs-1")
 $logFile = "$root\logs\archiver.log"
@@ -43,6 +49,48 @@ function Entries($text) {
   return ,$out
 }
 
+# Passive full-screen capture of the primary screen (GDI copy; nothing is sent to the game).
+function Capture($path) {
+  $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+  $bmp = New-Object System.Drawing.Bitmap($b.Width, $b.Height)
+  try {
+    $g = [System.Drawing.Graphics]::FromImage($bmp)
+    try { $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size) } finally { $g.Dispose() }
+    $bmp.Save($path, [System.Drawing.Imaging.ImageFormat]::Png)
+  } finally { $bmp.Dispose() }
+}
+if ($TestShot) { Capture $TestShot; return }
+$pending = New-Object System.Collections.Generic.List[object]  # @{due=epoch ms; path=...}
+function NowMs { [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() }
+# A result line was just archived: shoot at +3 s and +4 s (rank gauge page) and +8 s (last page) after the line's own timestamp.
+function ScheduleShots($entry) {
+  if (-not (Test-Path "$shots\ENABLED")) { return }
+  if ($entry -notmatch '"timestamp":\s*(\d+)') { return }
+  $ts = [int64]$Matches[1]
+  $age = (NowMs) - $ts
+  if ($age -gt 30000) { return }  # old line found after a restart, not a live result
+  $name = "$shots\result-" + [DateTimeOffset]::FromUnixTimeMilliseconds($ts).LocalDateTime.ToString('yyyyMMdd-HHmmss')
+  if ($age -gt 4000) { $pending.Add(@{ due = 0; path = "$name-late.png" }) }
+  else { $pending.Add(@{ due = $ts + 3000; path = "$name-a.png" }); $pending.Add(@{ due = $ts + 4000; path = "$name-b.png" }) }
+  $pending.Add(@{ due = $ts + 8000; path = "$name-c.png" })
+  $script:lastResult = NowMs
+  Log "result seen (age $age ms), shots scheduled"
+}
+function RunDueShots {
+  $now = NowMs
+  foreach ($p in @($pending | ? { $_.due -le $now })) {
+    try { Capture $p.path; Log "shot $([IO.Path]::GetFileName($p.path))" } catch { Log "shot failed: $($_.Exception.Message)" }
+    [void]$pending.Remove($p)
+  }
+}
+function PruneShots {
+  try { Get-ChildItem $shots -Filter *.png | ? { $_.LastWriteTime -lt (Get-Date).AddDays(-14) } | Remove-Item -ErrorAction SilentlyContinue } catch {}
+}
+$lastResult = 0
+$lastPrune = [datetime]::MinValue
+$lastProcCheck = [datetime]::MinValue
+$gameRunning = $false
+
 # Seed keys from today's archive so a restart does not duplicate entries.
 $today = "$root\raw\breadcrumbs-" + (Get-Date).ToString('yyyy-MM-dd') + '.jsonl'
 if (Test-Path $today) { try { Get-Content $today -Encoding UTF8 -Tail $maxKeys | % { [void](Remember $_) } } catch {} }
@@ -59,7 +107,12 @@ while ($true) {
       if ($null -eq $entries) { continue }  # unparsable now; retry next round
       $new = New-Object System.Text.StringBuilder
       $n = 0
-      foreach ($e in $entries) { if (Remember $e) { [void]$new.Append($e).Append("`n"); $n++ } }
+      foreach ($e in $entries) {
+        if (Remember $e) {
+          [void]$new.Append($e).Append("`n"); $n++
+          if ($e.Contains('PlayTimeline, name=BattleResult')) { ScheduleShots $e }
+        }
+      }
       if ($n -gt 0) {
         $out = "$root\raw\breadcrumbs-" + (Get-Date).ToString('yyyy-MM-dd') + '.jsonl'
         [IO.File]::AppendAllText($out, $new.ToString(), $utf8)
@@ -68,5 +121,13 @@ while ($true) {
       $stamp[$f] = $sig
     } catch { Log "error $([IO.Path]::GetFileName($f)): $($_.Exception.Message)" }
   }
-  Start-Sleep -Seconds 5
+  RunDueShots
+  if (((Get-Date) - $lastPrune).TotalHours -ge 1) { PruneShots; $lastPrune = Get-Date }
+  if (((Get-Date) - $lastProcCheck).TotalSeconds -ge 30) {
+    $gameRunning = [bool](Get-Process -Name ShadowverseWB -ErrorAction SilentlyContinue); $lastProcCheck = Get-Date
+  }
+  # Poll every 1 s while the game runs (so the +3 s shot is not missed), 250 ms while shots are due, else 5 s.
+  if ($pending.Count -gt 0) { Start-Sleep -Milliseconds 250 }
+  elseif ($gameRunning -or ((NowMs) - $lastResult) -lt 10000) { Start-Sleep -Seconds 1 }
+  else { Start-Sleep -Seconds 5 }
 }
