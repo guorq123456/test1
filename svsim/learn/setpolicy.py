@@ -526,13 +526,15 @@ class SetPolicy:
         v = {k: np.zeros_like(getattr(self, k)) for k in keys}
         t, best, best_params, bad, history, start, stopped = 0, None, None, 0, [], 0, False
         if checkpoint is not None and Path(checkpoint).exists():
-            z = np.load(checkpoint, allow_pickle=False)
-            meta = json.loads(str(z["meta"]))
-            for k in keys:
-                setattr(self, k, np.array(z["p_" + k]))
-                m[k], v[k] = np.array(z["m_" + k]), np.array(z["v_" + k])
-            if meta["has_best"]:
-                best_params = {k: np.array(z["b_" + k]) for k in keys}
+            # read inside `with`: an NpzFile left open keeps the file locked on Windows, and the epoch's
+            # os.replace(tmp, checkpoint) then fails (WinError 5; Codex, 2026-10-31)
+            with np.load(checkpoint, allow_pickle=False) as z:
+                meta = json.loads(str(z["meta"]))
+                for k in keys:
+                    setattr(self, k, np.array(z["p_" + k]))
+                    m[k], v[k] = np.array(z["m_" + k]), np.array(z["v_" + k])
+                if meta["has_best"]:
+                    best_params = {k: np.array(z["b_" + k]) for k in keys}
             t, best, bad, lr, history = meta["t"], meta["best"], meta["bad"], meta["lr"], meta["history"]
             start, stopped = meta["epochs_done"], meta["stopped"]
             rng.bit_generator.state = meta["rng"]
@@ -634,12 +636,12 @@ class SetPolicy:
 
     @classmethod
     def load(cls, path) -> "SetPolicy":
-        z = np.load(path, allow_pickle=False)
-        pol = cls(z["static"].shape[1], phi=tuple(int(x) for x in z["phi"]), rho=tuple(int(x) for x in z["rho"]),
-                  head=int(z["head"]))
-        for k in cls.PARAMS + ("smean", "sstd", "card_ids", "static"):
-            setattr(pol, k, np.array(z[k]))
-        pol.info = json.loads(str(z["info"]))
+        with np.load(path, allow_pickle=False) as z:  # closed after reading (a save to `path` later must not fail)
+            pol = cls(z["static"].shape[1], phi=tuple(int(x) for x in z["phi"]), rho=tuple(int(x) for x in z["rho"]),
+                      head=int(z["head"]))
+            for k in cls.PARAMS + ("smean", "sstd", "card_ids", "static"):
+                setattr(pol, k, np.array(z[k]))
+            pol.info = json.loads(str(z["info"]))
         return pol
 
 

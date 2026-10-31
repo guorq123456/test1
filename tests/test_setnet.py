@@ -1,5 +1,8 @@
 """The scaling test's DeepSets value net (learn.setnet) and its search switch (+setnet=PATH)."""
+import os
+
 import numpy as np
+import pytest
 
 from svsim.cards import decks
 from svsim.core.engine import new_game
@@ -138,6 +141,25 @@ def test_fit_resumed_from_a_checkpoint_matches_an_unbroken_fit(tmp_path):
         assert np.array_equal(getattr(whole, k), getattr(again, k))
     assert [r["epoch"] for r in again.info["history"]] == [1, 2, 3, 4]
 
+
+
+@pytest.mark.skipif(not os.path.isdir("/proc/self/fd"), reason="needs /proc/self/fd")
+def test_resuming_leaves_no_handle_on_the_checkpoint_it_replaces(tmp_path, monkeypatch):
+    """The resumed fit read its checkpoint with np.load and kept the file open; the next epoch's os.replace onto it
+    then failed on Windows (WinError 5). Every replace must find no handle of ours on the file."""
+    from tests.fd_probe import watch_replace
+    d = _data(_positions(8))
+    quiet = lambda *_: None
+    ck = tmp_path / "ck.npz"
+    _net(d, seed=3).fit(d, d, epochs=1, batch=3, patience=10, log=quiet, checkpoint=ck)
+    seen = watch_replace(monkeypatch)
+    again = _net(d, seed=3)
+    again.fit(d, d, epochs=3, batch=3, patience=10, log=quiet, checkpoint=ck)
+    assert seen and all(n == 0 for n in seen)
+    again.save(tmp_path / "n.npz")
+    SN.SetNet.load(tmp_path / "n.npz")
+    from tests.fd_probe import open_handles
+    assert open_handles(tmp_path / "n.npz") == 0
 
 def test_flushing_subnormal_weights_keeps_the_logits(tmp_path):
     positions = _positions(4)

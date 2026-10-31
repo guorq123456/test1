@@ -618,3 +618,33 @@ class ISMCTS:
         if s.winner == DRAW and s.turn <= real_limit:
             s.winner, s.phase = None, Phase.MAIN
         s.max_turns = real_limit
+
+
+# --- the leaf contract (the bot check-up, 2026-10-31) ----------------------------------------------------------
+# What the search scores, for code outside it that rebuilds and scores a decision's children (labels, features,
+# diagnostics). Two slips cost analyses before: rebuilding an end of turn with the opponent's turn already begun
+# (R1, 10-31: a fake +0.46 switch gain) and scoring a child inside the turn with player_moves_next=True (R1's and
+# s1diag's hand scores; the search uses False at every leaf of a search without the reply's play-out).
+# tests/test_leaf_contract.py checks both against the leaves ISMCTS really scores.
+LEAF_CONTRACT = 1
+
+
+def search_child(state: GameState, action) -> GameState:
+    """The position the search reaches by `action` from `state`, on a copy (ISMCTS._step): a move applied as it
+    is; an end of turn with the turn's end abilities resolved and the opponent's turn not begun."""
+    s = state.clone()
+    ISMCTS._step(s, action)
+    return s
+
+
+def leaf_score(state: GameState, me: int, weights=DEFAULT) -> float:
+    """The hand-written score a search without the reply's play-out gives a leaf for `me` (before its centring and
+    squashing, which keep the order): player_moves_next is False at every leaf, inside the turn as at its end."""
+    return float(evaluate(state, me, weights, player_moves_next=False))
+
+
+def leaf_phase(state: GameState, me: int) -> str:
+    """"over", "turn_end" (an end of turn resolved, the opponent's turn not begun) or "in_turn"."""
+    if state.over:
+        return "over"
+    return "in_turn" if state.active == me and state.phase == Phase.MAIN else "turn_end"

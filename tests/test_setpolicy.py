@@ -1,6 +1,7 @@
 """learn.setpolicy: the move prior over card tokens (the architecture thread 2026-10-17 11:37Z, step 1)."""
 import gzip
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -174,6 +175,22 @@ def test_fit_resumes_exactly_from_its_checkpoint(shard, tmp_path):
     c.fit(data, data, epochs=3, batch=16, log=lambda s: None, checkpoint=ck)
     assert all(np.array_equal(getattr(a, k), getattr(c, k)) for k in SP.SetPolicy.PARAMS)
 
+
+
+@pytest.mark.skipif(not os.path.isdir("/proc/self/fd"), reason="needs /proc/self/fd")
+def test_resuming_leaves_no_handle_on_the_checkpoint_it_replaces(shard, tmp_path, monkeypatch):
+    """As learn.setnet's: a resumed fit must not keep its checkpoint open when an epoch replaces it (Windows)."""
+    from tests.fd_probe import open_handles, watch_replace
+    data, b = _tiny(shard)
+    ck = tmp_path / "ck.npz"
+    b.fit(data, data, epochs=1, batch=16, log=lambda s: None, checkpoint=ck)
+    seen = watch_replace(monkeypatch)
+    _, c = _tiny(shard)
+    c.fit(data, data, epochs=3, batch=16, log=lambda s: None, checkpoint=ck)
+    assert seen and all(n == 0 for n in seen)
+    c.save(tmp_path / "p.npz")
+    SP.SetPolicy.load(tmp_path / "p.npz")
+    assert open_handles(tmp_path / "p.npz") == 0
 
 def test_tau_half_squares_the_visits_per_decision(shard):
     data = SP.Decisions([shard / "dec-74100038.npz"], shard / "cards.npz")

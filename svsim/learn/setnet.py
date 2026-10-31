@@ -440,13 +440,15 @@ class SetNet:
         t, best, best_params, bad, history = 0, None, None, 0, []
         start, stopped = 0, False
         if checkpoint is not None and Path(checkpoint).exists():
-            z = np.load(checkpoint, allow_pickle=False)
-            meta = json.loads(str(z["meta"]))
-            for k in self.PARAMS:
-                setattr(self, k, np.array(z["p_" + k]))
-                m[k], v[k] = np.array(z["m_" + k]), np.array(z["v_" + k])
-            if meta["has_best"]:
-                best_params = {k: np.array(z["b_" + k]) for k in self.PARAMS}
+            # read inside `with`: an NpzFile left open keeps the file locked on Windows, and the epoch's
+            # os.replace(tmp, checkpoint) then fails (WinError 5; Codex, 2026-10-31)
+            with np.load(checkpoint, allow_pickle=False) as z:
+                meta = json.loads(str(z["meta"]))
+                for k in self.PARAMS:
+                    setattr(self, k, np.array(z["p_" + k]))
+                    m[k], v[k] = np.array(z["m_" + k]), np.array(z["v_" + k])
+                if meta["has_best"]:
+                    best_params = {k: np.array(z["b_" + k]) for k in self.PARAMS}
             t, best, bad, lr, history = meta["t"], meta["best"], meta["bad"], meta["lr"], meta["history"]
             start, stopped = meta["epochs_done"], meta["stopped"]
             rng.bit_generator.state = meta["rng"]
@@ -829,7 +831,11 @@ class SetNet:
 
     @classmethod
     def load(cls, path) -> "SetNet":
-        z = np.load(path, allow_pickle=False)
+        with np.load(path, allow_pickle=False) as z:  # closed after reading (a save to `path` later must not fail)
+            return cls._from_npz(z)
+
+    @classmethod
+    def _from_npz(cls, z) -> "SetNet":
         if "wide" in z.files:                    # a net grown wider (learn.widenet)
             from svsim.learn.widenet import WideSetNet
             return WideSetNet.from_file(z)
