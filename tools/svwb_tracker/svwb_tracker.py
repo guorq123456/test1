@@ -176,6 +176,9 @@ def match_deck(seen_ids, decks, cls, cards, min_seen, min_score, margin):
     name, (score, hit) = ranked[0]
     second = ranked[1][1][0] if len(ranked) > 1 else 0.0
     why = "看到 %d 张不同的牌，%d 张在「%s」里（%.0f%%）" % (len(seen), hit, name, 100 * score)
+    if hit < len(seen) and len(seen) - hit <= 4:
+        best_cards = max((d for d in decks if d["name"] == name), key=lambda d: sum(1 for c in seen if c in d["cards"]))["cards"]
+        why += "，不在表里的：" + "、".join(card_name(cards, c) for c in sorted(seen) if c not in best_cards)
     if score < min_score:
         return None, score, why + "，不够像"
     if score - second < margin and len(ranked) > 1:
