@@ -26,13 +26,17 @@ does a pilot trained for one deck play it better than the untrained mcts:100+pla
 
 Seeds 85990000-85999999 are this line's (allocated by the architecture thread).
 
-## Prepared, not run: hero dfm/RUNE-ユーリ
+## EXTERNAL: hero dfm/RUNE-ユーリ, isolated training for measurement only
+
+Salem chose 「隔离训练」 on the decision card (2026-10-31 23:18Z, relayed by the architecture thread 23:4xZ): the
+external pro list may be self-play trained **for measurement only**. Isolation: its models are named
+`net-pilot-rune-dfm-*`; never in a deck search, never in 陪练台 / the web models, never installed. The same recipe and
+settings as the bot hero, so that the two lifts compare; the same 6 opponents.
 
 `fields/dfm-yuri-vs-bot6.txt`: the external pro list dfm/RUNE-ユーリ (claude/deck-search
-analysis/deckbuild/blind-test/external/dfm-2026-10-31.txt) against the same 6 non-Rune bot decks. **It waits for
-Salem's decision in the architecture thread.** That file says its decks never enter a search, a self-play pool or
-training data; a pilot trained on this deck's self-play is such training data, so it needs Salem's explicit yes. An
-isolated measurement only: never deck search, 陪练台 or a bot install. The commands, with this line's seeds:
+analysis/deckbuild/blind-test/external/dfm-2026-10-31.txt) against the same 6 non-Rune bot decks. That file says its
+decks never enter a search, a self-play pool or training data; Salem's 「隔离训练」 allows this one isolated training,
+for measurement. The commands, with this line's seeds:
 
     F=analysis/pilot/fields/dfm-yuri-vs-bot6.txt H=dfm/RUNE-ユーリ
     python -m svsim.learn.scaledata play --pool $F --hero $H --base 85995000 --stride 2 --shards 0 10 \
