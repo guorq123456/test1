@@ -51,6 +51,7 @@ RE_QUIT = re.compile(r"Application:quitting")
 PREPLAY_WINDOW = 1.6    # 「亮牌/选项」到打出的最长间隔（秒）：对手亮牌 0.5～1.4 秒，我方选择类卡牌的选项 0.9～1.9 秒
 PASS_GAP_A = 2.0        # 推断「对方空过」：对方的抽牌至少要在我方最后一个动作之后这么多秒
 PASS_GAP_B = 3.0        # 推断「对方空过」：我方再次抽牌至少要在对方抽牌之后这么多秒
+SETTLED_GAP = 3.0       # 当前回合的一方还没动过时，这回合至少要过了这么多秒，才允许推断「对方开始了新回合/空过」
 SUMMON_WINDOW = 1.2     # 出牌到入场的最长间隔（秒）；超过就当作效果召唤
 
 
@@ -312,7 +313,14 @@ def analyze(game, cards, my_decks, archetypes, cfg):
             g["report"] = {"ally_turn": x["ally_turn"], "oppo_turn": x["oppo_turn"]}
         if x["kind"] in ("result", "result_ui") and g["end"] is None:
             g["end"] = x["t"]
-    # 皮肤 ID 末位 = 职业（推测，样本少）
+    # 开头没存到的局：皮肤编号从进化记录里补（进化记录带「リーダースキンID + isAlly」）
+    for x in ev:
+        if x["kind"] == "evolve" and x.get("skin"):
+            if x["ally"] and g["my_skin"] is None:
+                g["my_skin"] = x["skin"]
+            if not x["ally"] and g["opp_skin"] is None:
+                g["opp_skin"] = x["skin"]
+    # 皮肤 ID 末位 = 职业（10-31 在 7 局、7 个不同皮肤上验证：1 精灵、3 巫师、4 龙族、6 主教都对）
     skin_cls = lambda s: int(s[-1]) if s and s[-1].isdigit() and 1 <= int(s[-1]) <= 7 else None  # noqa: E731
 
     # 2) 只看开场动画结束之后的牌
@@ -324,12 +332,14 @@ def analyze(game, cards, my_decks, archetypes, cfg):
     #   我方：开场 3 秒内看得见 ID 的起手牌里，非中立牌的职业众数；没有就看我方进化的牌，再没有就看皮肤末位。
     #   对手：所有出牌、进化、可见手牌里，除我方职业和中立之外最常见的职业（对手进化的牌权重加大）；
     #         一张都没有就看皮肤末位；皮肤也没有就按同职业（镜像局）处理。
+    #   主战者皮肤编号末位 = 职业，已在 7 局里验证（6/6 有皮肤的局都对），所以皮肤优先，牌只做校验和兜底。
     opening_vis = [x for x in body if x["kind"] == "hand" and x["cid"] != "0" and x["t"] - t0 <= 3.0]
     votes = collections.Counter(card_class(x["cid"]) for x in opening_vis if card_class(x["cid"]))
-    my_cls = votes.most_common(1)[0][0] if votes else None
-    if my_cls is None:
+    my_cls_cards = votes.most_common(1)[0][0] if votes else None
+    if my_cls_cards is None:
         votes = collections.Counter(card_class(x["cid"]) for x in body if x["kind"] == "evolve" and x["ally"] and card_class(x["cid"]))
-        my_cls = votes.most_common(1)[0][0] if votes else skin_cls(g["my_skin"])
+        my_cls_cards = votes.most_common(1)[0][0] if votes else None
+    my_cls = skin_cls(g["my_skin"]) or my_cls_cards
     other = collections.Counter()
     for x in body:
         c = card_class(x["cid"]) if x["kind"] in ("play", "evolve", "hand") and x["cid"] != "0" else None
@@ -342,16 +352,14 @@ def analyze(game, cards, my_decks, archetypes, cfg):
         else:
             other[c] += 1
     opp_skin_c = skin_cls(g["opp_skin"])
-    if other and (other.most_common(1)[0][1] >= 2 or not opp_skin_c):
-        opp_cls = other.most_common(1)[0][0]
-    else:
-        opp_cls = opp_skin_c or my_cls
+    opp_cls_cards = other.most_common(1)[0][0] if other else None
+    opp_cls = opp_skin_c or opp_cls_cards or my_cls
     g["my_cls"], g["opp_cls"] = my_cls, opp_cls
     g["skins"] = {"me": g["my_skin"], "opp": g["opp_skin"], "me_cls": skin_cls(g["my_skin"]), "opp_cls": opp_skin_c}
-    if g["skins"]["me_cls"] and my_cls and g["skins"]["me_cls"] != my_cls:
-        g["warnings"].append("我方皮肤末位（%s）和起手牌职业（%s）不一致" % (g["my_skin"], CLASS_NAMES.get(my_cls)))
-    if opp_skin_c and opp_cls and opp_skin_c != opp_cls:
-        g["warnings"].append("对手皮肤末位（%s）和出牌职业（%s）不一致" % (g["opp_skin"], CLASS_NAMES.get(opp_cls)))
+    if skin_cls(g["my_skin"]) and my_cls_cards and skin_cls(g["my_skin"]) != my_cls_cards:
+        g["warnings"].append("我方皮肤末位说是%s，起手牌却是%s，职业按皮肤算" % (CLASS_NAMES.get(my_cls), CLASS_NAMES.get(my_cls_cards)))
+    if opp_skin_c and opp_cls_cards and opp_skin_c != opp_cls_cards and other[opp_cls_cards] >= 2:
+        g["warnings"].append("对手皮肤末位说是%s，出的牌却多是%s，职业按皮肤算" % (CLASS_NAMES.get(opp_cls), CLASS_NAMES.get(opp_cls_cards)))
     mirror = my_cls is not None and my_cls == opp_cls
     g["mirror"] = mirror
     if mirror:
@@ -447,7 +455,7 @@ def analyze(game, cards, my_decks, archetypes, cfg):
     #   抽牌事件只在这些情况下算回合开始：(a) 它后面的下一个锚点动作就是这一方的；(b) 后面没有锚点动作可参照
     #   （镜像局、尾声），且离最后一个动作 ≥ PASS_GAP_A 秒；(c) 下一个锚点动作是对方的，但对方在 ≥ PASS_GAP_B 秒后
     #   又抽了一张且其间没有动作（= 这一方这回合空过了）。(b)(c) 都要求当前回合的一方已经动过，或这回合已经过了
-    #   6 秒以上（否则等于连着两次空过，更可能是效果抽牌）。待定归属的出牌归当时回合的一方。
+    #   SETTLED_GAP 秒以上（否则等于连着两次空过，更可能是效果抽牌）。待定归属的出牌归当时回合的一方。
     moves = []
     turn_side, my_turns, opp_turns = None, 0, 0
     turn_actions = 0
@@ -490,7 +498,7 @@ def analyze(game, cards, my_decks, archetypes, cfg):
             if j is not None and side_of[j] == s:
                 switch(s, x["t"])
                 continue
-            settled = turn_side is None or turn_actions > 0 or (turn_start_t is not None and x["t"] - turn_start_t >= 6.0)
+            settled = turn_side is None or turn_actions > 0 or (turn_start_t is not None and x["t"] - turn_start_t >= SETTLED_GAP)
             if not settled or (last_action_t is not None and x["t"] - last_action_t < PASS_GAP_A):
                 continue
             if j is None:
@@ -629,6 +637,8 @@ def write_outputs(games, cards, out_dir, season):
                 note += "｜开头没存到"
             if g["first"] is None:
                 note += "｜先后手没判出来"
+            if g.get("mirror"):
+                note += "｜同职业局，双方出牌归属把握较低"
             if g["opp_deck"] == UNKNOWN:
                 note += "｜对手套路：" + g["opp_deck_why"]
             if opp_cards:
