@@ -12,6 +12,12 @@ Variants (fixed 2026-10-31 22:30Z, before any game; deck-agnostic, never tuned o
   pp        a max PP point is worth 1.2 (a card in hand) instead of 0.4: discarding a card for a max PP point
             no longer scores as a loss.
   base      the evaluation as it is: the bot's decks only (DFM's baseline is runs/external/dfm-cheap.jsonl).
+  sigils    (added 22:55Z, after Salem's review of the bot's 三轴土 games and before any of its games: on his
+            turn 3 he makes four earth sigils with 暴食的零嘴, the bot passes; the evaluation scores the passing
+            1.60 and the four sigils 1.50.) The sigils stack on one amulet, which the evaluation values at
+            0.6 x cost + 0.5 = 1.1 however many sigils it holds. Variant: the stack counts as an amulet whose cost
+            is its number of sigils (0.6 per sigil + 0.5). Only 巫师. Prediction: DFM's gain minus the bot's is
+            +3 points or more (0.6).
 
 Predictions written before the games (analysis/deckbuild/blind-test/external/EVAL-FLIP.md): the difference in
 differences (DFM's gain minus the bot's) is +3 points or more for discount/巫师 (0.45), fused/超越者 (0.40),
@@ -47,7 +53,7 @@ BOT_SEED = 85984000
 CLASSES = ("RUNE", "DRAGON", "PORTAL")
 ZH = {"RUNE": "巫师", "DRAGON": "龙族", "PORTAL": "超越者"}
 CLAUDE = ("g1", "g2", "g3", "p2-g1", "p2-g2", "p2-g3")
-ONLY = {"fused": ("PORTAL",)}
+ONLY = {"fused": ("PORTAL",), "sigils": ("RUNE",)}
 _side_value = EV.side_value
 
 
@@ -63,6 +69,12 @@ def _pp(p, w=EV.DEFAULT):
     return _side_value(p, w) + (1.2 - w.max_pp) * p.max_pp
 
 
+def _sigils(p, w=EV.DEFAULT):
+    from svsim.core import effects as E
+    stack = next((c for c in p.field if c.defn.is_amulet and E.has_trait(c, E.EARTH_SIGIL)), None)
+    return _side_value(p, w) + (w.amulet * (E.counters(stack).get("sigils", 1) - stack.defn.cost) if stack else 0.0)
+
+
 def EV_counters(card):
     from svsim.core import effects as E
     return E.counters(card)
@@ -70,7 +82,7 @@ def EV_counters(card):
 
 def apply(variant):
     if variant != "base":
-        EV.side_value = {"discount": _discount, "fused": _fused, "pp": _pp}[variant]
+        EV.side_value = {"discount": _discount, "fused": _fused, "pp": _pp, "sigils": _sigils}[variant]
 
 
 def craft(label):
@@ -114,7 +126,7 @@ def report(rows):
     base = [json.loads(t) for t in BASE.read_text().splitlines() if t.strip()]
     base += [r for r in rows if r["variant"] == "base"]
     print("条件：对手卡表已知（牌序、手牌未知）；两边都由 mcts:100+plan 操作；对手是 Claude 六组 42 副，每副 10 个发牌（两个座位）")
-    for variant in ("discount", "fused", "pp"):
+    for variant in ("discount", "fused", "pp", "sigils"):
         vr = [r for r in rows if r["variant"] == variant]
         if not vr:
             continue
@@ -146,7 +158,7 @@ def report(rows):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("ref")
-    ap.add_argument("--variant", choices=("base", "discount", "fused", "pp"))
+    ap.add_argument("--variant", choices=("base", "discount", "fused", "pp", "sigils"))
     ap.add_argument("--out", required=True)
     ap.add_argument("--deals", type=int, default=10)
     ap.add_argument("--spec", default="mcts:100+plan")
