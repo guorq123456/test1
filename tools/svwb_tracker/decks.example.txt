@@ -1,4 +1,3 @@
-# 我的卡组登记：每行「名字|卡组代码」。卡组代码从游戏里「分享卡组」复制（形如 1.3.cH1g.cH1g....）。
-# 登记之后，解析器会按你起手和打出的牌认出你用的是哪副。没登记就只写职业。
-# 例：
-# 法术秘术|1.3.cH1g.cH1g.cH1g.cH3E.cH3E.cH3E....
+# 我的卡组登记：每行「名字|卡组代码」，# 开头是注释。卡组代码从游戏里的卡组详情复制。
+# 解析程序按这局看到的我方牌（起手、抽到、打出）和这里的卡表比对，重合 75% 以上就认定。
+法术秘术（DFM）|1.3.cH1g.cH1g.cH1g.cH3E.cH3E.cH3E.cfTu.cfTu.cfTu.eBpe.eBpe.eBpe.ey9E.ey9E.ey9E.eyCM.eyCM.eyCM.fKcs.fKpM.fKpM.fKpM.fKsU.fKsU.fKsU.f-LA.g5Ok.g5Ok.g5Ok.g5Rs.g5Rs.g5Rs.g5hU.g5hU.g5t-.g5t-.g5t-.g5u8.g5u8.g5u8
