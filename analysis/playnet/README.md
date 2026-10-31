@@ -99,3 +99,10 @@ the labels' noise); the normal model's E[max(0, -d)] is +5.0. A linear correctio
 static rows, predicts d a little better than the hand-written score (0.185 -> 0.239) and chooses no better (+0.06 ±
 0.08 points a decision). No gate is run: a correction that does not change the root choice on held-out decisions has
 nothing to show the gate. The architecture thread's P(gate above 52%) for R1's linear correction: 0.05.
+
+Where the teacher goes wrong (`r1_where.py`, `where.txt`, all 10753 decisions): by the kind of move and by the card,
+nothing the teacher picks is clearly worse on average than what it passed over (n >= 30, |mean| > 2.5 SE: every such
+card or kind as the teacher's first has a negative mean regret, the teacher right on average); the one thing it
+clearly passes over too often is nothing (EndTurn as the second: +6.1 ± 0.6, the teacher right to play on). Its
+mistakes are not concentrated on a card or a kind of move: they depend on the position, which is why a correction
+summed over cards or over position totals does not find them.
