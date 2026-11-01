@@ -220,6 +220,7 @@ DFM Rune g3 at equal CPU (N 50, ratio 1.113): +17.8 ± 4.0 (7.3% → 25.2%), com
 | dfm/PORTAL-MingiGod (EXTERNAL) | g1 | 74 (1.182) | -5.7 ± 4.6 | 63 (1.053) | -7.2 ± 4.6 |
 | bot/T1-PORTAL-1 | g1 | 72 (1.097) | -6.5 ± 4.5 | 66 (1.034) | -10.5 ± 4.7 |
 | dfm/PORTAL-MingiGod (EXTERNAL) | g2 | 63 (1.218) | +14.8 ± 4.7 | 52 (1.094) | +10.3 ± 4.9 |
+| bot/T1-PORTAL-1 | g2 | 78 (1.169) | +2.8 ± 4.1 | 67 (1.091) | +5.0 ± 4.4 |
 
 ## Result, Portal pair gen 2: dfm/PORTAL-MingiGod (EXTERNAL, measurement only)
 
@@ -244,3 +245,25 @@ Condition: 对手卡表已知（牌序、手牌未知）.
   +5.5% to +15.2%)**; ratio 1.094 (still a little above 1.08: one check per generation, as the rule says; the
   difference at a ratio of 1.0 would be a little smaller). By opponent: Forest +5.0, Sword +7.0, Rune +12.0, Dragon
   +20.0, Abyss +8.0, Haven +10.0.
+
+## Result, Portal pair gen 2: bot/T1-PORTAL-1
+
+Condition: 对手卡表已知（牌序、手牌未知）.
+
+- Self-play: 10 shards x 1000 from 86003000, the hero piloted by mcts:72 + net-pilot-portal-bot-g1, opponents
+  mcts:100+plan; 2.6 CPU s a game. The hero scored **56.8%** (gen 1's self-play: 67.4%). Records in
+  `data/portal-bot/rec-g2/`.
+- `net-pilot-portal-bot-g2`: fresh on gens 1 + 2 (turn ends 302467 rows, mid-turn 1040101 thinned at 0.291), holdout
+  86001000/86001002; the first chunk's deadline came after epoch 1 and the second chunk resumed from the checkpoint
+  ("resumed_after_epoch": 1). Best epoch 11 of 15: valid brier 0.172, log loss 0.510 (g1: 0.160 / 0.482 on its own
+  holdout rows; the gen-2 rows are not the same mix, so the two are not directly comparable).
+- Time match (24 pairs from 86004900): ratio 1.274 → N 78.
+- Gate (300 pairs, bank 86004000, X = mcts:78+plan+setnet=net-pilot-portal-bot-g2+netmid+netany): **X 69.5% ± 3.8%,
+  baseline 66.7% ± 4.0%, paired +2.8% ± 4.1% (95% -1.3% to +6.9%)**; CPU X 61 ms, baseline 52 ms: ratio 1.169. By
+  opponent: Forest +3.0, Sword -2.0, Rune -1.0, Dragon +15.0, Abyss -4.0, Haven +6.0 (± 7.7-11.3).
+- **Equal CPU** (the same bank, N 67 = 78 / 1.169): **X 71.7% ± 3.8%, baseline 66.7%, paired +5.0% ± 4.4% (95%
+  +0.6% to +9.4%)**; ratio 1.091. By opponent: Forest +2.0, Sword +4.0, Rune +3.0, Dragon +15.0, Abyss -1.0, Haven
+  +7.0.
+- The smaller budget scoring higher is noise between two readings on the same deals (2.2 points apart, each ± 4.1-4.4).
+  Read together: gen 2 is a few points above the baseline, from -6.5 / -10.5 at gen 1. The bot Portal hero is already
+  strong (the baseline 66.7%), so there is less room than for the DFM hero (baseline 33.0%).
