@@ -86,3 +86,22 @@ gate 85997000 / timing 85997900 / gen 2 85998000, 85999000.
   3.7% (95% -12.0% to -4.7%)**. By opponent: Forest -10.0, Sword +1.0, Dragon -8.0, Abyss -11.0, Haven -12.0, Portal
   -10.0 (± 7-12 each). CPU X 58 ms, baseline 41 ms: ratio 1.431. The whole interval is below 0: **the net's values
   are worse**, not only its cost (with 43% more CPU it still loses 8 points).
+
+## The rule corrected: a second generation after all (the architecture thread 2026-11-01 01:40Z)
+
+"Gen 2 only if g1 beats the baseline" was wrong: the precedent's own gen 1 lost too (analysis/scaling/README.md: the
+10⁴ net against v2skx came to 44.3%, 40.7%-47.8%), and that line went on to a second generation "so the net plays its
+own positions", then a third, 10⁵, a move prior. A fresh gen-1 net is exploited by the search on positions its pilot
+never reached; self-play with the net is the correction. So, for the bot Rune hero:
+1. Gen 2 self-play: `scaledata play --pool fields/bot-frozen7.txt --hero bot/T3-RUNE-1 --hero-spec
+   "mcts:64+plan+setnet=net-pilot-rune-bot-g1+netmid+netany" --spec mcts:100+plan`, base 85993000 stride 2, 10 shards
+   x 1000.
+2. The same encode; a fresh net on gen 1 + gen 2 (20 shards; gen 1's data stays in), the same settings, holdout
+   85991000/2 -> `net-pilot-rune-bot-g2`.
+3. Time match once (24 pairs from 85994900), gate 300 pairs on 85994000 against mcts:100+plan, as for g1.
+
+Registered before any game (the architecture thread): g2 closes at least half of g1's gap (paired difference >= -3.6)
+with probability 0.5; g2 beats the baseline (interval above 0) 0.2. If g2 is still clearly below, the next lever is
+the precedent's first step (a per-deck refit of the turn-end evaluator as the base the net corrects), not more
+generations. The DFM hero gets the same second generation in the architecture thread's container (85998000 /
+85999000).
