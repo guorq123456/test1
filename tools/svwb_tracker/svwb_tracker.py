@@ -7,6 +7,7 @@
 用法（在 Salem 的电脑上）：
     python svwb_tracker.py parse --raw C:\\claude\\svwb-tracker\\raw --out C:\\claude\\svwb-tracker\\out
     python svwb_tracker.py parse ... --decks C:\\claude\\svwb-tracker\\decks.txt   # 我的卡组登记：每行「名字|卡组代码」
+    python svwb_tracker.py parse ... --rank C:\\claude\\svwb-tracker\\shots\\rank.jsonl   # rank_reader.py 从结算页截图读出的段位/积分
     python svwb_tracker.py watch ...   # 每 60 秒重跑一次 parse
 
 输出（--out 目录）：
