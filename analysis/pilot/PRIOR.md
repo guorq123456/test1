@@ -48,3 +48,10 @@ The bot rune hero gets the same step only if this one gains (its gen 4 is runnin
   锅 before 光: P(锅) 0.405 > P(光) 0.234 -> passes (prediction 0.45). Not scored, reported: 零嘴 for 4 土 0.599 vs end
   turn 0.269; 物证 0.227 vs 解谜旋律 0.192 (end turn 0.238 is the top move there); 琪可 into the knight 0.200 vs 迷人怪兽
   0.066.
+- Time match on 86028900: X at N 100 costs 2.52x the baseline per searched decision -> N 40. Gate on 86028000 at
+  N 40: X 32.3%, baseline 5.3%, +27.0 ± 4.1, in-gate CPU ratio 1.288 (over 1.08) -> equal-CPU run at N 31.
+- EQUAL CPU (N 31, ratio 1.124; g3's row was N 50 at 1.110): X 31.2%, baseline 5.3%, +25.9. Paired with g3 on the
+  same 300 deals (gate4bank-g3-n50): 31.2 vs 23.5, **+7.7 ± 4.1** -> the first prediction (prior beats g3 by at
+  least +3, 0.4) came true. By opponent (prior / g3 / baseline): 龙族 72/57/13, 主教 50/40/10, 精灵 27/24/3,
+  皇家护卫 14/8/4, 梦魇 14/6/0, 超越者 10/6/2. In rating (1 logit ≈ 236): baseline -> prior ≈ +490, g3 -> prior ≈ +90.
+- Both predictions came true. Next per the plan above: the bot rune hero gets the same step after its gen 4.
