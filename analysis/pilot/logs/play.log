@@ -1,0 +1,27 @@
+{"spec": "mcts:100+plan", "pool": "analysis/pilot/fields/bot-frozen7.txt", "pool_sha256": "00f8db9adac2c2e873859ecbbcfe72bada6d2134d4e0015a922b7495d059aff6", "pool_labels": ["bot/T1-FOREST-1", "bot/T1-SWORD-1", "bot/T3-RUNE-1", "bot/T3-DRAGON-1", "bot/T1-ABYSS-1", "bot/T1-HAVEN-1", "bot/T1-PORTAL-1"], "hero": "bot/T3-RUNE-1", "base": 85990000, "stride": 2, "shards": [0, 10], "per_shard": 1000, "open_shards": [85990000, 85990002, 85990004, 85990006, 85990008, 85990010, 85990012, 85990014, 85990016, 85990018], "games_to_play": 10000, "workers": 4}
+{"games": 500, "of": 10000, "wall_s": 267, "cpu_s_per_game": 2.08, "games_per_hour": 6736}
+{"games": 1000, "of": 10000, "wall_s": 517, "cpu_s_per_game": 2.03, "games_per_hour": 6960}
+{"games": 1500, "of": 10000, "wall_s": 776, "cpu_s_per_game": 2.04, "games_per_hour": 6959}
+{"games": 2000, "of": 10000, "wall_s": 1023, "cpu_s_per_game": 2.01, "games_per_hour": 7040}
+{"games": 2500, "of": 10000, "wall_s": 1267, "cpu_s_per_game": 2.0, "games_per_hour": 7105}
+{"games": 3000, "of": 10000, "wall_s": 1516, "cpu_s_per_game": 2.0, "games_per_hour": 7122}
+{"games": 3500, "of": 10000, "wall_s": 1766, "cpu_s_per_game": 2.0, "games_per_hour": 7133}
+{"games": 4000, "of": 10000, "wall_s": 2013, "cpu_s_per_game": 1.99, "games_per_hour": 7153}
+{"games": 4500, "of": 10000, "wall_s": 2260, "cpu_s_per_game": 1.99, "games_per_hour": 7167}
+{"games": 5000, "of": 10000, "wall_s": 2511, "cpu_s_per_game": 1.99, "games_per_hour": 7169}
+{"games": 5500, "of": 10000, "wall_s": 2756, "cpu_s_per_game": 1.98, "games_per_hour": 7184}
+{"games": 6000, "of": 10000, "wall_s": 3010, "cpu_s_per_game": 1.99, "games_per_hour": 7177}
+{"games": 6500, "of": 10000, "wall_s": 3260, "cpu_s_per_game": 1.99, "games_per_hour": 7178}
+{"games": 7000, "of": 10000, "wall_s": 3519, "cpu_s_per_game": 1.99, "games_per_hour": 7162}
+{"games": 7500, "of": 10000, "wall_s": 3775, "cpu_s_per_game": 1.99, "games_per_hour": 7153}
+{"games": 8000, "of": 10000, "wall_s": 4030, "cpu_s_per_game": 1.99, "games_per_hour": 7147}
+{"games": 8500, "of": 10000, "wall_s": 4277, "cpu_s_per_game": 1.99, "games_per_hour": 7154}
+{"games": 9000, "of": 10000, "wall_s": 4526, "cpu_s_per_game": 1.99, "games_per_hour": 7158}
+{"games": 9500, "of": 10000, "wall_s": 4772, "cpu_s_per_game": 1.99, "games_per_hour": 7167}
+{"games": 10000, "of": 10000, "wall_s": 5016, "cpu_s_per_game": 1.99, "games_per_hour": 7176}
+{"spec": "mcts:100+plan", "pool": "analysis/pilot/fields/bot-frozen7.txt", "pool_sha256": "00f8db9adac2c2e873859ecbbcfe72bada6d2134d4e0015a922b7495d059aff6", "pool_labels": ["bot/T1-FOREST-1", "bot/T1-SWORD-1", "bot/T3-RUNE-1", "bot/T3-DRAGON-1", "bot/T1-ABYSS-1", "bot/T1-HAVEN-1", "bot/T1-PORTAL-1"], "hero": "bot/T3-RUNE-1", "base": 85991000, "stride": 2, "shards": [0, 2], "per_shard": 1000, "open_shards": [85991000, 85991002], "games_to_play": 2000, "workers": 4}
+{"games": 500, "of": 2000, "wall_s": 252, "cpu_s_per_game": 1.99, "games_per_hour": 7146}
+{"games": 1000, "of": 2000, "wall_s": 518, "cpu_s_per_game": 2.05, "games_per_hour": 6945}
+{"games": 1500, "of": 2000, "wall_s": 776, "cpu_s_per_game": 2.05, "games_per_hour": 6957}
+{"games": 2000, "of": 2000, "wall_s": 1026, "cpu_s_per_game": 2.03, "games_per_hour": 7018}
+EXIT 0
