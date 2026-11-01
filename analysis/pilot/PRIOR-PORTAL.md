@@ -52,4 +52,7 @@ Seeds:
 - Init. g2 on g3's gate deals (bank 86036000) at N 50 (ratio 1.040): X 50.5%, baseline 35.0%. Paired with g3's own
   N 50 row on the same 300 deals: 53.8% vs 50.5%, so **g3 − g2 = +3.3 ± 4.8**. That is ≥ 0, so the prior starts from
   g3. Logs: `logs/portal-dfm/gate3bank-g2-n50.*`.
-- The fit is running: hero decisions of 86008000 and 86035000, 20 shards.
+- Fit: 761499 hero decisions (20 shards: the g2 and g3 self-play, 86008000 and 86035000), init net-pilot-portal-dfm-g3,
+  `--tau 0.5 --ftz`. Validation cross entropy 1.5440 (epoch 1) → 1.5255 (epoch 20; unchanged to 4 decimals through
+  epoch 32). It stopped on patience at epoch 32 of 35 → `prior-pilot-portal-dfm-ft-t05.npz`, 78 min. Log
+  `logs/portal-dfm/prior-dfm.log`.
