@@ -1,0 +1,59 @@
+{"deck": null, "opponent": null, "flag": true, "inputs": "v1", "name": "pilot-portal-dfm-g3", "init": "fresh", "init_sha256": null, "mid_rate": 0.265121, "end_rows": 508770, "mid_rows": 1919012, "train_positions": 966704, "valid_positions": 50831, "train_by_kind": {"end": 483213, "mid": 483491}, "valid_by_kind": {"end": 25557, "mid": 25274}, "continued": true, "ophand": false, "v2a": false, "wide": false, "shared": true, "init_valid": {"end": {"brier": 0.39681, "log_loss": 1.19011, "n": 25557}, "mid": {"brier": 0.38996, "log_loss": 1.15304, "n": 25274}}}
+{"epoch": 1, "lr": 0.001, "train_bce": 0.54583, "s": 152.9, "valid_brier": 0.18233, "valid_log_loss": 0.54018, "valid_n": 50831, "best": true}
+{"epoch": 2, "lr": 0.001, "train_bce": 0.51959, "s": 151.2, "valid_brier": 0.18095, "valid_log_loss": 0.53629, "valid_n": 50831, "best": true}
+{"epoch": 3, "lr": 0.001, "train_bce": 0.51257, "s": 150.6, "valid_brier": 0.17897, "valid_log_loss": 0.53118, "valid_n": 50831, "best": true}
+{"epoch": 4, "lr": 0.001, "train_bce": 0.50776, "s": 146.7, "valid_brier": 0.18166, "valid_log_loss": 0.53937, "valid_n": 50831}
+{"epoch": 5, "lr": 0.0005, "train_bce": 0.49932, "s": 149.1, "valid_brier": 0.17898, "valid_log_loss": 0.53173, "valid_n": 50831}
+{"epoch": 6, "lr": 0.00025, "train_bce": 0.49353, "s": 147.6, "valid_brier": 0.17796, "valid_log_loss": 0.52871, "valid_n": 50831, "best": true}
+{"epoch": 7, "lr": 0.00025, "train_bce": 0.49153, "s": 144.9, "valid_brier": 0.17794, "valid_log_loss": 0.5288, "valid_n": 50831}
+{"epoch": 8, "lr": 0.000125, "train_bce": 0.4883, "s": 146.5, "valid_brier": 0.17852, "valid_log_loss": 0.53062, "valid_n": 50831}
+{"epoch": 9, "lr": 6.25e-05, "train_bce": 0.48635, "s": 148.5, "valid_brier": 0.17821, "valid_log_loss": 0.53006, "valid_n": 50831}
+{"epoch": 10, "lr": 3.125e-05, "train_bce": 0.48528, "s": 152.4, "valid_brier": 0.17821, "valid_log_loss": 0.52991, "valid_n": 50831}
+{
+ "name": "pilot-portal-dfm-g3",
+ "fit_s": 1558,
+ "epochs": 10,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.16609,
+   "log_loss": 0.4967,
+   "n": 483213
+  },
+  "mid": {
+   "brier": 0.16166,
+   "log_loss": 0.4859,
+   "n": 483491
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.17832,
+   "log_loss": 0.5291,
+   "n": 25557
+  },
+  "mid": {
+   "brier": 0.17759,
+   "log_loss": 0.52833,
+   "n": 25274
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.39681,
+   "log_loss": 1.19011,
+   "n": 25557
+  },
+  "mid": {
+   "brier": 0.38996,
+   "log_loss": 1.15304,
+   "n": 25274
+  }
+ },
+ "mid_rate": 0.265121
+}

@@ -1,0 +1,48 @@
+{
+ "name": "pilot-portal-dfm-g3",
+ "fit_s": 1558,
+ "epochs": 10,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.16609,
+   "log_loss": 0.4967,
+   "n": 483213
+  },
+  "mid": {
+   "brier": 0.16166,
+   "log_loss": 0.4859,
+   "n": 483491
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.17832,
+   "log_loss": 0.5291,
+   "n": 25557
+  },
+  "mid": {
+   "brier": 0.17759,
+   "log_loss": 0.52833,
+   "n": 25274
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.39681,
+   "log_loss": 1.19011,
+   "n": 25557
+  },
+  "mid": {
+   "brier": 0.38996,
+   "log_loss": 1.15304,
+   "n": 25274
+  }
+ },
+ "mid_rate": 0.265121
+}

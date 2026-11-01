@@ -221,6 +221,7 @@ DFM Rune g3 at equal CPU (N 50, ratio 1.113): +17.8 ± 4.0 (7.3% → 25.2%), com
 | bot/T1-PORTAL-1 | g1 | 72 (1.097) | -6.5 ± 4.5 | 66 (1.034) | -10.5 ± 4.7 |
 | dfm/PORTAL-MingiGod (EXTERNAL) | g2 | 63 (1.218) | +14.8 ± 4.7 | 52 (1.094) | +10.3 ± 4.9 |
 | bot/T1-PORTAL-1 | g2 | 78 (1.169) | +2.8 ± 4.1 | 67 (1.091) | +5.0 ± 4.4 |
+| dfm/PORTAL-MingiGod (EXTERNAL) | g3 | 59 (1.173) | +16.2 ± 4.8 | 50 (1.067) | +18.8 ± 4.7 |
 
 ## Result, Portal pair gen 2: dfm/PORTAL-MingiGod (EXTERNAL, measurement only)
 
@@ -267,3 +268,22 @@ Condition: 对手卡表已知（牌序、手牌未知）.
 - The smaller budget scoring higher is noise between two readings on the same deals (2.2 points apart, each ± 4.1-4.4).
   Read together: gen 2 is a few points above the baseline, from -6.5 / -10.5 at gen 1. The bot Portal hero is already
   strong (the baseline 66.7%), so there is less room than for the DFM hero (baseline 33.0%).
+
+## Result, Portal pair gen 3: dfm/PORTAL-MingiGod (EXTERNAL, measurement only)
+
+Condition: 对手卡表已知（牌序、手牌未知）. Gen-3 bank 86035000-86039999.
+
+- Self-play: 10 shards x 1000 from 86035000, the hero piloted by mcts:63 + net-pilot-portal-dfm-g2 (g2's gate N),
+  opponents mcts:100+plan; 3.5 CPU s a game; two chunks. The hero scored **50.1%** (gen 2: 30.7%, gen 1: 36.2%).
+  Records in `data/portal-dfm/rec-g3/`.
+- `net-pilot-portal-dfm-g3`: fresh on gens 1-3 (30 shards; turn ends 508770 rows, mid-turn 1919012 thinned at
+  0.265), holdout 86006000/86006002. Best epoch 6 of 10: valid brier 0.178, log loss 0.529 (the holdout rows are gen-1
+  games, so this does not compare across generations).
+- Time match (24 pairs from 86036900): ratio 1.685 → N 59.
+- Gate (300 pairs, bank 86036000, X = mcts:59+plan+setnet=net-pilot-portal-dfm-g3+netmid+netany): **X 51.2% ± 4.3%,
+  baseline 35.0% ± 3.9%, paired +16.2% ± 4.8% (95% +11.4% to +20.9%)**; CPU X 57 ms, baseline 48 ms: ratio 1.173. By
+  opponent: Forest +11.0, Sword +12.0, Rune +22.0, Dragon +36.0, Abyss +3.0, Haven +13.0 (± 9.9-12.6).
+- **Equal CPU** (the same bank, N 50 = 59 / 1.173): **X 53.8% ± 4.3%, baseline 35.0%, paired +18.8% ± 4.7% (95%
+  +14.1% to +23.6%)**; ratio 1.067. By opponent: Forest +17.0, Sword +16.0, Rune +26.0, Dragon +36.0, Abyss +8.0,
+  Haven +10.0.
+- g2 was +14.8 / +10.3 on its own bank (86009000); g3 - g2 on the same deals is read before the move prior (below).
