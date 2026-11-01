@@ -74,3 +74,6 @@ The DFM arm gained, so bot/T3-RUNE-1 gets the same step.
   g4 39.0 vs g3 36.5, **+2.5 ± 4.3** -> g4 adds little, as DFM's g4 (−3.0 ± 3.8): both rune pilots level off at gen
   3-4. By the rule above (paired difference at least 0) the prior starts from g4. A prior from g3 was also fitted
   while g4 trained (compute only, prior-pilot-rune-bot-g3init-ft-t05); it is not the registered arm.
+- Exploratory, not registered (written before its games): the g3-init prior, fitted anyway, uses the idle cores
+  while the g4-init prior fits: g3 + its prior, time-matched on 86024800, gate on 86023000, paired with g3 at N 58.
+  It answers only "does a prior help the bot rune g3 net too"; the registered result is the g4-init arm.
