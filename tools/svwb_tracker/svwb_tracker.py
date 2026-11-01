@@ -606,6 +606,12 @@ def analyze(game, cards, my_decks, archetypes, cfg):
     # 6) 卡组识别
     my_seen_ids = [c for c in g["my_seen"] + g["my_hand0"]]
     name, score, why = match_deck(my_seen_ids, my_decks, g["my_cls"], cards, cfg["my_min_seen"], cfg["my_min_score"], 0.0) if my_decks else (None, 0, "没有登记我的卡组")
+    if name is None:
+        # 没登记（或不像登记的卡组）：退回套路参照表，按套路名记，并注明是按套路表认的
+        aname, ascore, awhy = match_deck(my_seen_ids, archetypes, g["my_cls"], cards, cfg["opp_min_seen"], cfg["opp_min_score"], cfg["opp_margin"])
+        if aname:
+            name = aname
+            why = why + "；按套路表认作「%s」（%s）" % (aname, awhy)
     g["my_deck"] = name or (CLASS_NAMES.get(g["my_cls"], "未知职业") + ("（未登记）" if my_decks else ""))
     g["my_deck_why"] = why
     oname, oscore, owhy = match_deck(g["opp_seen"], archetypes, g["opp_cls"], cards, cfg["opp_min_seen"], cfg["opp_min_score"], cfg["opp_margin"])
