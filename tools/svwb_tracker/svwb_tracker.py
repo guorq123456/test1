@@ -695,10 +695,11 @@ def attach_rank(games, entries):
     # 1) 直读：结果时间之后 90 秒内最近的一张
     for g in seq:
         end = g["end"] or g["start"]
-        cands = [e for e in entries if e.get("ok") and e.get("mp") is not None and 0 <= e["_t"] - end <= RANK_MATCH_WINDOW]
+        # 截图文件名的时间是结果事件的整秒（毫秒截掉了），所以可能比 end 早不到 1 秒，留 2 秒余量
+        cands = [e for e in entries if e.get("ok") and e.get("mp") is not None and -2.0 <= e["_t"] - end <= RANK_MATCH_WINDOW]
         if not cands:
             continue
-        e = min(cands, key=lambda e: e["_t"] - end)
+        e = min(cands, key=lambda e: abs(e["_t"] - end))
         g["rank"], g["group"], g["mp"], g["mp_total"] = e.get("rank"), e.get("group"), int(e["mp"]), e.get("total")
         g["mp_src"] = "截图直读"
 
