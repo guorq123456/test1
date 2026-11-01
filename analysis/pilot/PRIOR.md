@@ -55,3 +55,17 @@ The bot rune hero gets the same step only if this one gains (its gen 4 is runnin
   least +3, 0.4) came true. By opponent (prior / g3 / baseline): 龙族 72/57/13, 主教 50/40/10, 精灵 27/24/3,
   皇家护卫 14/8/4, 梦魇 14/6/0, 超越者 10/6/2. In rating (1 logit ≈ 236): baseline -> prior ≈ +490, g3 -> prior ≈ +90.
 - Both predictions came true. Next per the plan above: the bot rune hero gets the same step after its gen 4.
+
+## Bot rune hero: the same step (written 15:1xZ, before its gen-4 gate and before any prior game)
+
+The DFM arm gained, so bot/T3-RUNE-1 gets the same step.
+- Data: the hero's decisions in the bot's net-guided self-play of gens 3 and 4 (86020000 and 86022000, 20 shards).
+- Init: the better of g3 and g4 on the same deals (g4 if its paired difference against g3 on bank 86023000 is at least
+  0, else g3); fit as above (`--tau 0.5 --ftz`, patience stop or 35 epochs, whichever first) ->
+  prior-pilot-rune-bot-ft-t05.
+- Arm: that net + `puct=prior-pilot-rune-bot-ft-t05.npz:2:1`; N time-matched on 86024900, gate on 86023000 (g4's
+  gate deals); equal-CPU rerun at round(N / in-gate ratio) when the ratio is over 1.08; paired with the chosen net's
+  own equal-CPU row on 86023000.
+- Predictions: the prior arm beats its value net alone on the same deals by at least +3 points: 0.45 (the DFM arm
+  did, +7.7; the bot list has fewer long ordered turns, so a smaller gain is likely). Its gain is smaller than the
+  DFM arm's +7.7: 0.7.
