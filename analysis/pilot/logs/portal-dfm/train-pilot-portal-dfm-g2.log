@@ -1,0 +1,60 @@
+{"deck": null, "opponent": null, "flag": true, "inputs": "v1", "name": "pilot-portal-dfm-g2", "init": "fresh", "init_sha256": null, "mid_rate": 0.268142, "end_rows": 332466, "mid_rows": 1239889, "train_positions": 631759, "valid_positions": 33075, "train_by_kind": {"end": 315802, "mid": 315957}, "valid_by_kind": {"end": 16664, "mid": 16411}, "continued": true, "ophand": false, "v2a": false, "wide": false, "shared": true, "init_valid": {"end": {"brier": 0.39655, "log_loss": 1.19094, "n": 16664}, "mid": {"brier": 0.37965, "log_loss": 1.12476, "n": 16411}}}
+{"epoch": 1, "lr": 0.001, "train_bce": 0.54499, "s": 102.7, "valid_brier": 0.17941, "valid_log_loss": 0.53517, "valid_n": 33075, "best": true}
+{"epoch": 2, "lr": 0.001, "train_bce": 0.51575, "s": 103.5, "valid_brier": 0.17807, "valid_log_loss": 0.53077, "valid_n": 33075, "best": true}
+{"epoch": 3, "lr": 0.001, "train_bce": 0.50709, "s": 101.8, "valid_brier": 0.17628, "valid_log_loss": 0.52577, "valid_n": 33075, "best": true}
+{"epoch": 4, "lr": 0.001, "train_bce": 0.50152, "s": 106.6, "valid_brier": 0.17411, "valid_log_loss": 0.52112, "valid_n": 33075, "best": true}
+{"epoch": 5, "lr": 0.001, "train_bce": 0.49704, "s": 101.0, "valid_brier": 0.1746, "valid_log_loss": 0.5224, "valid_n": 33075}
+{"epoch": 6, "lr": 0.0005, "train_bce": 0.48785, "s": 101.3, "valid_brier": 0.17355, "valid_log_loss": 0.51941, "valid_n": 33075, "best": true}
+{"epoch": 7, "lr": 0.0005, "train_bce": 0.4838, "s": 103.1, "valid_brier": 0.17281, "valid_log_loss": 0.51854, "valid_n": 33075, "best": true}
+{"epoch": 8, "lr": 0.0005, "train_bce": 0.48065, "s": 103.0, "valid_brier": 0.17467, "valid_log_loss": 0.52406, "valid_n": 33075}
+{"epoch": 9, "lr": 0.00025, "train_bce": 0.4738, "s": 103.8, "valid_brier": 0.17467, "valid_log_loss": 0.52535, "valid_n": 33075}
+{"epoch": 10, "lr": 0.000125, "train_bce": 0.46951, "s": 103.8, "valid_brier": 0.17448, "valid_log_loss": 0.52407, "valid_n": 33075}
+{"epoch": 11, "lr": 6.25e-05, "train_bce": 0.46698, "s": 104.2, "valid_brier": 0.17497, "valid_log_loss": 0.52691, "valid_n": 33075}
+{
+ "name": "pilot-portal-dfm-g2",
+ "fit_s": 1188,
+ "epochs": 11,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.16199,
+   "log_loss": 0.48693,
+   "n": 315802
+  },
+  "mid": {
+   "brier": 0.15721,
+   "log_loss": 0.47478,
+   "n": 315957
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.17267,
+   "log_loss": 0.51744,
+   "n": 16664
+  },
+  "mid": {
+   "brier": 0.17296,
+   "log_loss": 0.51966,
+   "n": 16411
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.39655,
+   "log_loss": 1.19094,
+   "n": 16664
+  },
+  "mid": {
+   "brier": 0.37965,
+   "log_loss": 1.12476,
+   "n": 16411
+  }
+ },
+ "mid_rate": 0.268142
+}

@@ -219,3 +219,28 @@ DFM Rune g3 at equal CPU (N 50, ratio 1.113): +17.8 ± 4.0 (7.3% → 25.2%), com
 |---|---|---|---|---|---|
 | dfm/PORTAL-MingiGod (EXTERNAL) | g1 | 74 (1.182) | -5.7 ± 4.6 | 63 (1.053) | -7.2 ± 4.6 |
 | bot/T1-PORTAL-1 | g1 | 72 (1.097) | -6.5 ± 4.5 | 66 (1.034) | -10.5 ± 4.7 |
+| dfm/PORTAL-MingiGod (EXTERNAL) | g2 | 63 (1.218) | +14.8 ± 4.7 | 52 (1.094) | +10.3 ± 4.9 |
+
+## Result, Portal pair gen 2: dfm/PORTAL-MingiGod (EXTERNAL, measurement only)
+
+Condition: 对手卡表已知（牌序、手牌未知）.
+
+- Self-play: 10 shards x 1000 from 86008000, the hero piloted by mcts:74 + net-pilot-portal-dfm-g1 (g1's gate N),
+  opponents mcts:100+plan; 3.3 CPU s a game. The hero scored **30.7%** (gen 1's self-play: 36.2%). Records in
+  `data/portal-dfm/rec-g2/`.
+- Process: the container restarted once during self-play (the chunk re-created, resuming from the part file); a
+  later chunk's outer `timeout` killed the script but not its inner `timeout` child, so two processes briefly wrote
+  the last shard's part file: 11 games twice, identical apart from "date" and "cpu", and the shard is keyed by g, so
+  the shard is sound. The generation script now gives every step what is left of one chunk deadline, with no outer
+  timeout.
+- `net-pilot-portal-dfm-g2`: fresh on gens 1 + 2 (20 shards; turn ends 332466 rows, mid-turn 1239889 thinned at
+  0.268), holdout 86006000/86006002. Best epoch 7 of 11: valid brier 0.173, log loss 0.519 (g1: 0.185 / 0.546).
+- Time match (24 pairs from 86009900): ratio 1.600 → N 63.
+- Gate (300 pairs, bank 86009000, X = mcts:63+plan+setnet=net-pilot-portal-dfm-g2+netmid+netany): **X 47.8% ± 4.3%,
+  baseline 33.0% ± 3.9%, paired +14.8% ± 4.7% (95% +10.1% to +19.6%)**; CPU X 57 ms, baseline 47 ms: ratio 1.218.
+  By opponent: Forest +22.0, Sword +5.0, Rune +15.0, Dragon +26.0, Abyss +11.0, Haven +10.0 (± 9.4-13.8): above the
+  baseline against all six.
+- **Equal CPU** (the same bank, N 52 = 63 / 1.218): **X 43.3% ± 4.2%, baseline 33.0%, paired +10.3% ± 4.9% (95%
+  +5.5% to +15.2%)**; ratio 1.094 (still a little above 1.08: one check per generation, as the rule says; the
+  difference at a ratio of 1.0 would be a little smaller). By opponent: Forest +5.0, Sword +7.0, Rune +12.0, Dragon
+  +20.0, Abyss +8.0, Haven +10.0.
