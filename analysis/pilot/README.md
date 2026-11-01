@@ -80,3 +80,9 @@ gate 85997000 / timing 85997900 / gen 2 85998000, 85999000.
   (95% -11.1% to -3.6%)**. By opponent: Forest -10.0, Sword -5.0, Dragon -5.0, Abyss -8.0, Haven -9.0, Portal -7.0
   (± 8-11 each). CPU X 44 ms, baseline 41 ms a searched decision: ratio 1.059.
 - g1 does not beat the baseline, so no second generation (the line's rule). Logs in `logs/`.
+- The check without time matching (the architecture thread 01:28Z; its reading registered before: a paired difference
+  >= 0 or an interval reaching above 0 = the cost is the problem, an interval wholly below 0 = the values are worse):
+  the same 300 pairs on bank 85992000 with X at N = 100: **X 17.2% ± 3.1%, baseline 25.5% ± 3.4%, paired -8.3% ±
+  3.7% (95% -12.0% to -4.7%)**. By opponent: Forest -10.0, Sword +1.0, Dragon -8.0, Abyss -11.0, Haven -12.0, Portal
+  -10.0 (± 7-12 each). CPU X 58 ms, baseline 41 ms: ratio 1.431. The whole interval is below 0: **the net's values
+  are worse**, not only its cost (with 43% more CPU it still loses 8 points).
