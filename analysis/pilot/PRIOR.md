@@ -69,3 +69,8 @@ The DFM arm gained, so bot/T3-RUNE-1 gets the same step.
 - Predictions: the prior arm beats its value net alone on the same deals by at least +3 points: 0.45 (the DFM arm
   did, +7.7; the bot list has fewer long ordered turns, so a smaller gain is likely). Its gain is smaller than the
   DFM arm's +7.7: 0.7.
+- Bot gen 4 (16:3xZ): self-play hero 36.7% (g3 32.5%). Gate on 86023000 at its time-matched N 65 (in-gate ratio
+  1.263): 39.3 vs 27.2, +12.2 ± 4.7. Same deals, the same N 58 as g3 (same net size, so the same CPU per iteration):
+  g4 39.0 vs g3 36.5, **+2.5 ± 4.3** -> g4 adds little, as DFM's g4 (−3.0 ± 3.8): both rune pilots level off at gen
+  3-4. By the rule above (paired difference at least 0) the prior starts from g4. A prior from g3 was also fitted
+  while g4 trained (compute only, prior-pilot-rune-bot-g3init-ft-t05); it is not the registered arm.
