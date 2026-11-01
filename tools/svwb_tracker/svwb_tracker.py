@@ -460,6 +460,10 @@ def analyze(game, cards, my_decks, archetypes, cfg):
         turn1_t = first_play_t
         g["first"] = first_play_side == "me"
         g["first_why"] = "第一个出牌的是%s（没看到开局抽牌，把握中等）" % ("我方" if g["first"] else "对手")
+    elif first_play_t is not None:
+        # 同职业局、开局抽牌又没分清：先后手判不出来，但回合和每一手还是要记（从第一手出牌起数；第一手归谁见下面）
+        turn1_t = first_play_t
+        g["first_why"] = "同职业局，开局抽牌没分清，先后手没判出来"
     else:
         turn1_t = None
     for i, x, s in hand_evts:
@@ -529,7 +533,15 @@ def analyze(game, cards, my_decks, archetypes, cfg):
                 switch(s, x["t"])
         elif x["kind"] == "play":
             if s is None:
-                s = turn_side or (("me" if g["first"] else "opp") if g["first"] is not None else "me")
+                if turn_side is None:
+                    # 开局第一手归属不明：看它前面 4 秒内最近的一次抽牌是谁的（暗牌 = 对手，亮牌 = 我方）
+                    for k in range(i - 1, -1, -1):
+                        if x["t"] - body[k]["t"] > 4.0:
+                            break
+                        if body[k]["kind"] == "hand" and preplay_of[k] is None and side_of[k] is not None:
+                            s = side_of[k]
+                            break
+                s = s or turn_side or (("me" if g["first"] else "opp") if g["first"] is not None else "me")
                 side_of[i] = s
                 ambiguous += 1
             switch(s, x["t"])
@@ -588,7 +600,13 @@ def analyze(game, cards, my_decks, archetypes, cfg):
             else:
                 g["first_why"] += "；第 1 回合费用也对得上（%s）" % why
         elif len(behind) == 2:
-            g["warnings"].append("双方第 1 回合都打出了 2 费以上的牌，回合号有偏差，这条用不上")
+            # 双方的第 1 回合都没数到（开局两边都空过，抽牌又没分清）：两边的回合号各加 1，先后手这条不动
+            for m in moves:
+                m["turn"] += 1
+            my_turns += 1
+            opp_turns += 1
+            g["my_turns"], g["opp_turns"] = my_turns, opp_turns
+            g["warnings"].append("双方第 1 回合都打出了 2 费以上的牌：开局两个回合都没数到，双方回合号各加了 1")
     # 费用线索：一方在第 k 回合打出的牌原费高于 k。巫师的法术增幅减费、龙族的跳费都会让它误报，所以只当线索，不当警告
     g["hints"] = []
     if not g["partial"]:
