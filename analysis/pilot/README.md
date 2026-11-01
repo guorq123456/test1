@@ -192,6 +192,30 @@ bot decks). Condition: 对手卡表已知（牌序、手牌未知）.
   Haven +5.0.
 - Gen 1 loses, as expected (bot rune g1: -7.3 ± 3.8). Next: the bot Portal hero's g1, then gen 2 for both.
 
+## Result, Portal pair gen 1: bot/T1-PORTAL-1
+
+Field `fields/bot-frozen7.txt` (the 7 bot decks; the hero against the other 6). Condition: 对手卡表已知（牌序、手牌未知）.
+
+- Self-play: 10 shards x 1000 from 86000000 (stride 2), both sides mcts:100+plan, 2.3 CPU s a game; holdout 2 x 1000
+  from 86001000. The hero scored **67.4%** in self-play (holdout 67.2%). Records in `data/portal-bot/`, logs in
+  `logs/portal-bot/`. Run as two planned chunks (`play`, then `rest`).
+- `net-pilot-portal-bot-g1`: train_mid.py --shared --fresh on the 10 shards (turn ends 149103 rows, mid-turn 501615
+  thinned at 0.297), holdout 86001000/86001002. Best epoch 9 of 13: valid brier 0.160, log loss 0.482.
+- Time match (24 pairs from 86002900): ratio 1.383 → N 72.
+- Gate (300 pairs, bank 86002000, X = mcts:72+plan+setnet=net-pilot-portal-bot-g1+netmid+netany): **X 61.3% ± 4.0%,
+  baseline 67.8% ± 3.8%, paired -6.5% ± 4.5% (95% -11.0% to -2.0%)**; CPU X 57 ms, baseline 52 ms: ratio 1.097. By
+  opponent: Forest -6.0, Sword -4.0, Rune -10.0, Dragon +1.0, Abyss -16.0, Haven -4.0 (± 8.2-13.4).
+- **Equal CPU** (the same bank, N 66 = 72 / 1.097): **X 57.3% ± 4.0%, baseline 67.8%, paired -10.5% ± 4.7% (95%
+  -15.2% to -5.8%)**; ratio 1.034. By opponent: Forest -11.0, Sword +0.0, Rune -10.0, Dragon -5.0, Abyss -23.0,
+  Haven -14.0.
+- Gen 1 loses, as expected. Next: gen 2 for both Portal heroes (timing seeds gate bank + 900: DFM 86009900, bot
+  86004900; the architecture thread 10:39Z agreed).
+
+The bot Rune hero's gen 4 moved to the architecture thread's container (10:39Z: self-play 86022000 with mcts:66 + net
+g3, fresh on gens 1-4, time 86023900, gate 86023000), from this branch's records and net g3; not run here. Their
+DFM Rune g3 at equal CPU (N 50, ratio 1.113): +17.8 ± 4.0 (7.3% → 25.2%), commit 0dfe3573 on claude/pilot-dfm.
+
 | hero | generation | gate N (ratio) | paired | equal CPU N (ratio) | paired at equal CPU |
 |---|---|---|---|---|---|
 | dfm/PORTAL-MingiGod (EXTERNAL) | g1 | 74 (1.182) | -5.7 ± 4.6 | 63 (1.053) | -7.2 ± 4.6 |
+| bot/T1-PORTAL-1 | g1 | 72 (1.097) | -6.5 ± 4.5 | 66 (1.034) | -10.5 ± 4.7 |
