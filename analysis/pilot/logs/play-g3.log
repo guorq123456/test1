@@ -1,0 +1,22 @@
+{"spec": "mcts:100+plan", "pool": "analysis/pilot/fields/bot-frozen7.txt", "pool_sha256": "00f8db9adac2c2e873859ecbbcfe72bada6d2134d4e0015a922b7495d059aff6", "pool_labels": ["bot/T1-FOREST-1", "bot/T1-SWORD-1", "bot/T3-RUNE-1", "bot/T3-DRAGON-1", "bot/T1-ABYSS-1", "bot/T1-HAVEN-1", "bot/T1-PORTAL-1"], "hero": "bot/T3-RUNE-1", "hero_spec": "mcts:67+plan+setnet=analysis/scaling/models/net-pilot-rune-bot-g2.npz+netmid+netany", "base": 86020000, "stride": 2, "shards": [0, 10], "per_shard": 1000, "open_shards": [86020000, 86020002, 86020004, 86020006, 86020008, 86020010, 86020012, 86020014, 86020016, 86020018], "games_to_play": 10000, "workers": 4}
+{"games": 500, "of": 10000, "wall_s": 283, "cpu_s_per_game": 2.23, "games_per_hour": 6361}
+{"games": 1000, "of": 10000, "wall_s": 566, "cpu_s_per_game": 2.23, "games_per_hour": 6363}
+{"games": 1500, "of": 10000, "wall_s": 841, "cpu_s_per_game": 2.22, "games_per_hour": 6423}
+{"games": 2000, "of": 10000, "wall_s": 1132, "cpu_s_per_game": 2.24, "games_per_hour": 6362}
+{"games": 2500, "of": 10000, "wall_s": 1404, "cpu_s_per_game": 2.22, "games_per_hour": 6409}
+{"games": 3000, "of": 10000, "wall_s": 1684, "cpu_s_per_game": 2.22, "games_per_hour": 6415}
+{"games": 3500, "of": 10000, "wall_s": 1964, "cpu_s_per_game": 2.22, "games_per_hour": 6414}
+{"games": 4000, "of": 10000, "wall_s": 2247, "cpu_s_per_game": 2.23, "games_per_hour": 6409}
+{"games": 4500, "of": 10000, "wall_s": 2527, "cpu_s_per_game": 2.23, "games_per_hour": 6410}
+{"games": 5000, "of": 10000, "wall_s": 2807, "cpu_s_per_game": 2.23, "games_per_hour": 6411}
+{"games": 5500, "of": 10000, "wall_s": 3087, "cpu_s_per_game": 2.22, "games_per_hour": 6414}
+{"games": 6000, "of": 10000, "wall_s": 3375, "cpu_s_per_game": 2.23, "games_per_hour": 6399}
+{"games": 6500, "of": 10000, "wall_s": 3653, "cpu_s_per_game": 2.23, "games_per_hour": 6406}
+{"games": 7000, "of": 10000, "wall_s": 3935, "cpu_s_per_game": 2.23, "games_per_hour": 6404}
+{"games": 7500, "of": 10000, "wall_s": 4211, "cpu_s_per_game": 2.23, "games_per_hour": 6412}
+{"games": 8000, "of": 10000, "wall_s": 4480, "cpu_s_per_game": 2.22, "games_per_hour": 6428}
+{"games": 8500, "of": 10000, "wall_s": 4761, "cpu_s_per_game": 2.22, "games_per_hour": 6427}
+{"games": 9000, "of": 10000, "wall_s": 5046, "cpu_s_per_game": 2.22, "games_per_hour": 6421}
+{"games": 9500, "of": 10000, "wall_s": 5325, "cpu_s_per_game": 2.22, "games_per_hour": 6423}
+{"games": 10000, "of": 10000, "wall_s": 5599, "cpu_s_per_game": 2.22, "games_per_hour": 6430}
+EXIT 0
