@@ -66,3 +66,17 @@ search, 陪练台 / the web models or an install.
 The Rune pair's layout, for reference: bot/T3-RUNE-1 85990000 / 85991000 / gate 85992000 / timing 85992900 / gen 2
 85993000, 85994000; dfm/RUNE-ユーリ (EXTERNAL, run in the architecture thread's container) 85995000 / 85996000 /
 gate 85997000 / timing 85997900 / gen 2 85998000, 85999000.
+
+## Result, g1 (bot/T3-RUNE-1)
+
+- Self-play (mcts:100+plan both sides, 2.05 CPU s a game, about 7000 games an hour on 4 workers): the hero scores
+  25.9% (holdout 25.6%); against Portal 12%, Sword 18%, Abyss 25%, Forest 27%, Haven 32%, Dragon 42%.
+- `net-pilot-rune-bot-g1`: train_mid.py --shared --fresh on the 10 shards (turn ends 138677 rows, mid-turn thinned to
+  as many), 15 epochs, best 11; validation (key split) log loss turn end 0.461, mid-turn 0.440 (start 1.104).
+- Time match (24 pairs from 85992900, BLAS on one thread): X / baseline CPU 1.561 -> **N 64** (at N = 100: X 31.2%,
+  baseline 22.9%, paired +8.3% ± 15.2%).
+- Gate (300 pairs, bank 85992000, X = mcts:64+plan+setnet=net-pilot-rune-bot-g1+netmid+netany, baseline
+  mcts:100+plan, opponents mcts:100+plan): **X 18.2% ± 3.1%, baseline 25.5% ± 3.4%, paired difference -7.3% ± 3.8%
+  (95% -11.1% to -3.6%)**. By opponent: Forest -10.0, Sword -5.0, Dragon -5.0, Abyss -8.0, Haven -9.0, Portal -7.0
+  (± 8-11 each). CPU X 44 ms, baseline 41 ms a searched decision: ratio 1.059.
+- g1 does not beat the baseline, so no second generation (the line's rule). Logs in `logs/`.
