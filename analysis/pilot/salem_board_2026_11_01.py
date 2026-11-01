@@ -23,7 +23,19 @@ For each line: the hand-set turn-end score (search.evaluate, the bot's own), wha
 position, and the line played out to the end of the game by mcts:100+plan on both sides, with the opponent's hand
 re-dealt at random each time. Condition: 对手卡表已知（牌序、手牌未知）.
 
+ACCEPTANCE ITEM (Salem, 2026-11-01 14:18Z, his reason in his words, relayed by the coordinator): 「他的两只怪送不掉就
+不能出双顾问回血，单顾问只能回两滴血，他打过两张抽二钢铁所以不撞是一个稳定叫杀，而撞了不是」. Keeping the bunnies back
+leaves the two 琪可 on the opponent's board: with them, the sigil stack and the clue amulet only one slot is free, so
+only one 无聊顾问 (its fanfare's 神域的物证 needs a slot too; it heals 1 per amulet engage) and about 2 healing; two of
+the three 钢铁的小憩 (draw 2, at X >= 5 also heal 2) are already spent. So 12 defense against four 3/3s with Last
+Words 2 is a stable lethal; trading frees the slots and is not. An evaluation passes when it scores keep above all.
+The playouts of 13:4xZ (trade slightly better, keep 94.7 vs all 99.3) are NOT evidence against it: the opponent's
+hand was dealt at random with all three 小憩 (fixed below: two are removed as played), and the 三轴土 pilot there
+(g3 value net, mcts:50) still wins only about a quarter of its games against the bot's decks. Salem's games and
+lists never enter search, self-play or training; this item is a check, never a fitting target.
+
     python analysis/pilot/salem_board_2026_11_01.py [--playouts 100] [--workers 2]
+    python analysis/pilot/salem_board_2026_11_01.py --accept [--net PATH]   # the acceptance item only
 """
 import argparse
 import json
@@ -49,7 +61,7 @@ REF = ROOT / "analysis/deckbuild/blind-test/external/dfm-2026-10-31.txt"
 if not REF.exists():                                     # on a branch without it: claude/deck-search's copy
     REF = Path("/home/claude/test1/.wt/ds/analysis/deckbuild/blind-test/external/dfm-2026-10-31.txt")
 PROPAGATION, REHAB, TERESA, CLUE, LILIUM = 11062310, 11063110, 10861120, 90001210, 10861110
-TICO, TICO_CREST, SEDIMENT = 10833110, 10833112, 90031210
+TICO, TICO_CREST, SEDIMENT, NAPTIME = 10833110, 10833112, 90031210, 10833310
 LINES = ("keep", "all", "big", "small")
 
 
@@ -117,6 +129,8 @@ def build(seed: int):
     E.gain_earth_sigils(st, 1, 7, POOL[SEDIMENT])
     clue = E.summon(st, 1, POOL[CLUE])
     E.counters(clue)["clues"] = 3
+    for _ in range(2):                                    # two 钢铁的小憩 already played (Salem)
+        take(op, NAPTIME)
     for _ in range(8):
         op.hand.append(op.deck.pop())
     del op.deck[21:]
@@ -184,6 +198,30 @@ def playout(job):
     return name, seed, (1.0 if st.winner == 0 else 0.0 if st.winner == 1 else 0.5)
 
 
+def accept(net_path=None, base=86040000, deals=5, k=8):
+    """The acceptance item: the evaluation's turn-end score of keep against all (Salem's side), over `deals` deals of
+    the opponent's unknown cards and `k` reseeded copies each. Passes when keep scores higher."""
+    if net_path:
+        from svsim.learn.setnet import load_cached
+        net = load_cached(net_path)
+        ev = lambda t: net.logit(EV.after_end_of_turn(t), 0)  # noqa: E731
+    else:
+        ev = lambda t: EV.evaluate(EV.after_end_of_turn(t), 0, EV.DEFAULT)  # noqa: E731
+    scores = {"keep": 0.0, "all": 0.0}
+    for seed in range(base, base + deals):
+        st = cast(build(seed))
+        for name in scores:
+            t0 = line(st.clone(), name)
+            for j in range(k):
+                t = t0.clone()
+                t.rng = random.Random(j)
+                scores[name] += ev(t) / (deals * k)
+    ok = scores["keep"] > scores["all"]
+    print(f"{'过' if ok else '没过'}  Salem 2026-11-01 兔子教盘面：不撞 > 全撞（{net_path or '手写评估'}）："
+          f"不撞 {scores['keep']:.3f}，全撞 {scores['all']:.3f}")
+    return ok
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--playouts", type=int, default=100)
@@ -191,7 +229,12 @@ def main():
     ap.add_argument("--base", type=int, default=86040000)
     ap.add_argument("--out", default="runs/salem-board-2026-11-01.jsonl")
     ap.add_argument("--opp-spec", default="mcts:100+plan", help="the 三轴土 side's agent in the playouts")
+    ap.add_argument("--accept", action="store_true", help="the acceptance item only (keep must score above all)")
+    ap.add_argument("--net", default=None, help="with --accept: a value net to score with (default the hand-set)")
     args = ap.parse_args()
+    if args.accept:
+        accept(args.net, args.base)
+        return
     st = cast(build(args.base))
     me, op = st.players
     print("位置：", [f"{c.defn.name_zh} {c.atk}/{c.life}" for c in me.field], "对",
