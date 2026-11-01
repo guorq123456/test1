@@ -121,6 +121,11 @@ generations. The DFM hero gets the same second generation in the architecture th
   the baseline (interval above 0), probability 0.2: yes. One generation of the net playing its own positions turned
   -7.3 into +8.3.
 
+- **Equal CPU** (the same 300 pairs on bank 85994000, X at N 56): **X 31.3% ± 3.9%, baseline 25.8% ± 3.5%, paired
+  +5.5% ± 4.4% (95% +1.1% to +9.9%)**; CPU X 42 ms, baseline 40 ms: ratio 1.050. By opponent: Forest +17.0 (± 10.7),
+  Sword +1.0, Dragon +5.0, Abyss +5.0, Haven +8.0, Portal -3.0 (± 8.6-13.2). The gain holds at equal CPU, smaller
+  (+5.5 against +8.3 with 19% more).
+
 ## Next (the architecture thread 2026-11-01 03:29Z): the equal-CPU check, then a third generation
 
 - Equal CPU: the same 300 pairs on bank 85994000 with X at N 56 (= 67 / 1.19), the report to Salem resting on it.
