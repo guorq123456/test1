@@ -77,3 +77,8 @@ The DFM arm gained, so bot/T3-RUNE-1 gets the same step.
 - Exploratory, not registered (written before its games): the g3-init prior, fitted anyway, uses the idle cores
   while the g4-init prior fits: g3 + its prior, time-matched on 86024800, gate on 86023000, paired with g3 at N 58.
   It answers only "does a prior help the bot rune g3 net too"; the registered result is the g4-init arm.
+- Exploratory result (17:1xZ): time match 2.228 -> N 45; gate N 45: 53.0 vs 27.2 (ratio 1.504); rerun N 30: X 50.7%,
+  baseline 27.2%, +23.5 ± 4.6, ratio 1.232 (g3's N 58 row on these deals: 1.181, so about 4% more CPU than g3).
+  Paired with g3 N 58: 50.7 vs 36.5, +14.2 ± 4.3. The cost per decision has a fixed part (N 45: 57 ms, N 30: 46 ms),
+  so dividing N by the ratio does not reach 1.0. Not registered; it says the second bot prediction (gain smaller than
+  the DFM arm's) will likely fail.
