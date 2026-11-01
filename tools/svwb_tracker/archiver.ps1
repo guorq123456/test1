@@ -8,6 +8,15 @@ $shots = "$root\shots"
 Add-Type -AssemblyName System.Drawing, System.Windows.Forms
 Add-Type -Namespace Win32 -Name Dpi -MemberDefinition '[DllImport("user32.dll")] public static extern bool SetProcessDPIAware();'
 [void][Win32.Dpi]::SetProcessDPIAware()  # physical pixels (1920x1200), not the 125% scaled size
+Add-Type -Namespace Win32 -Name Fg -MemberDefinition @'
+[DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+[DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetWindowText(IntPtr h, System.Text.StringBuilder s, int n);
+'@
+function ForegroundTitle {
+  $sb = New-Object System.Text.StringBuilder 256
+  [void][Win32.Fg]::GetWindowText([Win32.Fg]::GetForegroundWindow(), $sb, 256)
+  $sb.ToString()
+}
 $bt = 'C:\Program Files\Epic Games\ShadowverseWorldsBeyONv4y\ShadowverseWB_Data\Persistent\bt'
 $files = @("$bt\bt-breadcrumbs-0", "$bt\bt-breadcrumbs-1")
 $logFile = "$root\logs\archiver.log"
@@ -62,7 +71,7 @@ function Capture($path) {
 if ($TestShot) { Capture $TestShot; return }
 $pending = New-Object System.Collections.Generic.List[object]  # @{due=epoch ms; path=...}
 function NowMs { [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() }
-# A result line was just archived: shoot at +3 s and +4 s (rank gauge page) and +8 s (last page) after the line's own timestamp.
+# A result line was just archived: shoot at +2.6/+3.3/+3.9 s (rank page, MP counter settled) and +8 s (summary page) after the line's own timestamp.
 function ScheduleShots($entry) {
   if (-not (Test-Path "$shots\ENABLED")) { return }
   if ($entry -notmatch '"timestamp":\s*(\d+)') { return }
@@ -70,16 +79,25 @@ function ScheduleShots($entry) {
   $age = (NowMs) - $ts
   if ($age -gt 30000) { return }  # old line found after a restart, not a live result
   $name = "$shots\result-" + [DateTimeOffset]::FromUnixTimeMilliseconds($ts).LocalDateTime.ToString('yyyyMMdd-HHmmss')
-  if ($age -gt 4000) { $pending.Add(@{ due = 0; path = "$name-late.png" }) }
-  else { $pending.Add(@{ due = $ts + 3000; path = "$name-a.png" }); $pending.Add(@{ due = $ts + 4000; path = "$name-b.png" }) }
-  $pending.Add(@{ due = $ts + 8000; path = "$name-c.png" })
+  if ($age -gt 3900) { $pending.Add(@{ due = 0; path = "$name-late.png" }) }
+  else {
+    $pending.Add(@{ due = $ts + 2600; path = "$name-a.png" })
+    $pending.Add(@{ due = $ts + 3300; path = "$name-b.png" })
+    $pending.Add(@{ due = $ts + 3900; path = "$name-c.png" })
+  }
+  $pending.Add(@{ due = $ts + 8000; path = "$name-d.png" })
   $script:lastResult = NowMs
   Log "result seen (age $age ms), shots scheduled"
 }
 function RunDueShots {
   $now = NowMs
   foreach ($p in @($pending | ? { $_.due -le $now })) {
-    try { Capture $p.path; Log "shot $([IO.Path]::GetFileName($p.path))" } catch { Log "shot failed: $($_.Exception.Message)" }
+    # Only the game window: never capture whatever else is in front.
+    $title = ForegroundTitle
+    if ($title -ne 'ShadowverseWB') { Log "game not in front, skipped $([IO.Path]::GetFileName($p.path))" }
+    else {
+      try { Capture $p.path; Log "shot $([IO.Path]::GetFileName($p.path))" } catch { Log "shot failed: $($_.Exception.Message)" }
+    }
     [void]$pending.Remove($p)
   }
 }
