@@ -120,3 +120,14 @@ generations. The DFM hero gets the same second generation in the architecture th
 - Against the registered predictions: g2 closes at least half of g1's gap (>= -3.6), probability 0.5: yes; g2 beats
   the baseline (interval above 0), probability 0.2: yes. One generation of the net playing its own positions turned
   -7.3 into +8.3.
+
+## Next (the architecture thread 2026-11-01 03:29Z): the equal-CPU check, then a third generation
+
+- Equal CPU: the same 300 pairs on bank 85994000 with X at N 56 (= 67 / 1.19), the report to Salem resting on it.
+- Gen 3 for the bot Rune hero instead of the mirror arm (a Rune mirror game costs about 2.6 times as much; the mirror
+  arm is on hold for both heroes): hero `mcts:67+plan+setnet=net-pilot-rune-bot-g2+netmid+netany`, opponents
+  mcts:100+plan, 10 shards x 1000 at base 86020000 stride 2; a fresh net on gen 1 + 2 + 3 (30 shards), the same
+  settings -> `net-pilot-rune-bot-g3`; time match once on 86021900; gate 300 pairs on 86021000 against mcts:100+plan.
+  Seeds 86020000-86024999 are the bot hero's gens 3-4; 86025000-86029999 the DFM hero's.
+- Registered (the architecture thread, before any game): g3 beats g2's paired difference on its own bank 0.55; g3
+  beats the baseline 0.7.
