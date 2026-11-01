@@ -166,3 +166,32 @@ thread 06:10Z): the same recipe with generations, gen 1 expected to lose, a gate
 each, an equal-CPU check whenever the in-gate ratio is above 1.08; DFM and bot alternating. Gen-3 banks: 86030000-
 86034999 the bot Portal hero, 86035000-86039999 the DFM one (self-play +0, gate +1000, timing +1900).
 
+
+## Result, Portal pair gen 1: dfm/PORTAL-MingiGod (EXTERNAL, measurement only)
+
+EXTERNAL: a pro list (Salem 「隔离训练」 2026-10-31 23:18Z), isolated. Measurement only: never in deck search, the
+trainer or web models, never installed. Field `fields/dfm-portal-vs-bot6.txt` (the DFM Portal list + the 6 non-Portal
+bot decks). Condition: 对手卡表已知（牌序、手牌未知）.
+
+- Self-play: 10 shards x 1000 from 86005000 (stride 2), both sides mcts:100+plan, 2.8 CPU s a game; holdout 2 x 1000
+  from 86006000. The hero scored **36.2%** in self-play (holdout 35.5%). Records in `data/portal-dfm/`, logs in
+  `logs/portal-dfm/`.
+- The first background task stopped at the 2-hour limit during the holdout (self-play complete); the rest ran as a
+  separate chunk (the generation script now has stages `play` and `rest`, each under the limit). Not a restart.
+- `net-pilot-portal-dfm-g1`: train_mid.py --shared --fresh on the 10 shards (turn ends 169578 rows, mid-turn 623108
+  thinned at 0.272), holdout 86006000/86006002. Best epoch 3 of 7 (early stop): valid brier 0.185, log loss 0.546
+  (bot rune g1: 0.148 / 0.451 at epoch 11). The Portal games are harder to value from these inputs, or the net
+  overfits sooner.
+- Time match (24 pairs from 86007900): ratio 1.358 → N 74.
+- Gate (300 pairs, bank 86007000, X = mcts:74+plan+setnet=net-pilot-portal-dfm-g1+netmid+netany, baseline and
+  opponents mcts:100+plan): **X 28.7% ± 3.8%, baseline 34.3% ± 4.1%, paired -5.7% ± 4.6% (95% -10.3% to -1.0%)**;
+  CPU X 57 ms, baseline 48 ms: ratio 1.182. By opponent: Forest -13.0, Sword -2.0, Rune +9.0, Dragon -20.0,
+  Abyss -11.0, Haven +3.0 (± 8.1-14.2).
+- **Equal CPU** (the same bank, N 63 = 74 / 1.182): **X 27.2% ± 3.7%, baseline 34.3%, paired -7.2% ± 4.6% (95%
+  -11.7% to -2.6%)**; ratio 1.053. By opponent: Forest -10.0, Sword -8.0, Rune +0.0, Dragon -26.0, Abyss -4.0,
+  Haven +5.0.
+- Gen 1 loses, as expected (bot rune g1: -7.3 ± 3.8). Next: the bot Portal hero's g1, then gen 2 for both.
+
+| hero | generation | gate N (ratio) | paired | equal CPU N (ratio) | paired at equal CPU |
+|---|---|---|---|---|---|
+| dfm/PORTAL-MingiGod (EXTERNAL) | g1 | 74 (1.182) | -5.7 ± 4.6 | 63 (1.053) | -7.2 ± 4.6 |

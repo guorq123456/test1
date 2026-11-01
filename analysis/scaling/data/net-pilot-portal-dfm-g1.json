@@ -1,0 +1,48 @@
+{
+ "name": "pilot-portal-dfm-g1",
+ "fit_s": 360,
+ "epochs": 7,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.17446,
+   "log_loss": 0.51977,
+   "n": 160998
+  },
+  "mid": {
+   "brier": 0.17134,
+   "log_loss": 0.51249,
+   "n": 161035
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.18597,
+   "log_loss": 0.54845,
+   "n": 8580
+  },
+  "mid": {
+   "brier": 0.18361,
+   "log_loss": 0.54358,
+   "n": 8505
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.40116,
+   "log_loss": 1.21208,
+   "n": 8580
+  },
+  "mid": {
+   "brier": 0.38149,
+   "log_loss": 1.14045,
+   "n": 8505
+  }
+ },
+ "mid_rate": 0.272149
+}
