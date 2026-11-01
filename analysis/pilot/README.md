@@ -136,3 +136,18 @@ generations. The DFM hero gets the same second generation in the architecture th
   Seeds 86020000-86024999 are the bot hero's gens 3-4; 86025000-86029999 the DFM hero's.
 - Registered (the architecture thread, before any game): g3 beats g2's paired difference on its own bank 0.55; g3
   beats the baseline 0.7.
+
+## Result, g3 (bot/T3-RUNE-1)
+
+- Gen-3 self-play (the hero piloted by mcts:67 + net g2, opponents mcts:100+plan, 2.2 CPU s a game, about 6400 games
+  an hour on 4 workers): the hero scored **32.5%** (gen 2's self-play with g1: 17.2%); Dragon 52%, Haven 40%, Forest
+  36%, Abyss 25%, Sword 23%, Portal 18%.
+- `net-pilot-rune-bot-g3`: fresh on gens 1-3 (30 shards), the same settings, 19 epochs; validation log loss turn end
+  0.443, mid-turn 0.424 (not comparable with g2's: the validation games include gen 3's).
+- Time match (24 pairs from 86021900): CPU 1.513 -> **N 66** (at N = 100: +8.3% ± 16.3%).
+- Gate (300 pairs, bank 86021000, X = mcts:66+plan+setnet=net-pilot-rune-bot-g3+netmid+netany): **X 37.5% ± 3.9%,
+  baseline 26.2% ± 3.5%, paired +11.3% ± 4.4% (95% +6.9% to +15.7%)**. By opponent: Forest +16.0, Sword +14.0,
+  Dragon +13.0, Abyss +8.0, Haven +9.0, Portal +8.0 (± 9.4-12.1): above the baseline against all six. CPU X 47 ms,
+  baseline 41 ms: **ratio 1.130**.
+- Against the registered predictions: g3 beats g2's paired difference on its own bank (+8.3), 0.55: yes; g3 beats the
+  baseline, 0.7: yes.
