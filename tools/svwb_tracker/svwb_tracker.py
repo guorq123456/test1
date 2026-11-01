@@ -41,7 +41,9 @@ RE_FIELD = re.compile(r"GetOrCreateField(Follower|Amulet)開始 CardId=(\d+)")
 RE_EVOLVE = re.compile(r"進化時クラッシュ調査：カードID Card\((\d+)\) / リーダースキンID (\d+) / isAlly (True|False) / isSuper (True|False)")
 RE_SKIN = re.compile(r"LeaderSkinクラッシュ調査：LoadResourceAsync開始, id:(vs|class)_(\d+), ally:(True|False), result:(True|False), battleStart:(True|False)")
 RE_CUTIN_END = re.compile(r"BattleStartCutin\.OnDestroy")
-RE_RESULT_TL = re.compile(r"PlayTimeline, name=BattleResult(\w+?)Timeline")
+# 胜负是 …WinTimeline / …LoseTimeline；升级、升分组是 …RankUpTimeLine9 / …GroupPromotionTimeLine1（大写 L 加数字），所以放宽
+RE_RESULT_TL = re.compile(r"PlayTimeline, name=BattleResult(\w+?)Time[Ll]ine\d*")
+RESULT_FLAGS = ("RankUp", "GroupPromotion")   # 这两个不是胜负，是结算后多放的动画
 RE_RESULT_BG = re.compile(r"object=ResultBG(\w+?)Effect")
 RE_RESULT_UI = re.compile(r"Instantiate, name=Prefabs/Battle/BattleResult$")
 RE_RANK_GAUGE = re.compile(r"source=BattleResultRankGauge")
@@ -292,7 +294,7 @@ def segment(entries):
             # 开场动画结束之前还没有任何手牌/出牌事件 → 这局其实是完整的，只是没看到 battleStart 那条
             if cur["partial"] and not any(x["kind"] in ("hand", "play", "evolve") for x in cur["events"]):
                 cur["partial"] = False
-        if kind == "result" and cur["result"] is None:
+        if kind == "result" and cur["result"] is None and f["word"] not in RESULT_FLAGS:
             cur["result"] = f["word"]
     if cur is not None:
         games.append(cur)
@@ -323,7 +325,7 @@ def analyze(game, cards, my_decks, archetypes, cfg):
             g["ranked"] = True
         if x["kind"] == "report":
             g["report"] = {"ally_turn": x["ally_turn"], "oppo_turn": x["oppo_turn"]}
-        if x["kind"] in ("result", "result_ui") and g["end"] is None:
+        if x["kind"] in ("result", "result_ui") and g["end"] is None and x.get("word") not in RESULT_FLAGS:
             g["end"] = x["t"]
         if x["kind"] == "result" and x.get("word") == "RankUp":
             g["rank_up"] = True        # 结算后多放了一段「升级」动画：这局打满了这一级的积分
@@ -560,6 +562,8 @@ def analyze(game, cards, my_decks, archetypes, cfg):
     if not g["partial"] and not g.get("mirror"):
         behind = []
         for side_key, label in (("me", "我方"), ("opp", "对手")):
+            if (g["my_cls"] if side_key == "me" else g["opp_cls"]) == 7:
+                continue  # 超越者的融合能在第 1 回合把费用减下来（11-01 12:26 误报过），这条对超越者不用
             m = next((m for m in moves if m["side"] == side_key and m["kind"] == "出牌"), None)
             if m is not None and m["turn"] == 1:
                 info = lookup(cards, m["cid"])
@@ -693,10 +697,11 @@ def analyze(game, cards, my_decks, archetypes, cfg):
 #   {"ts":"20261101-091854","rank":"大师","level":0,"mp":3960,"next":1040,"total":173,"group":"蓝宝石","ok":true,...}
 # ts 是截图文件名里的本地时间（结果出来后几秒）。这里按每局的结束时间对上去，再把没截到的局按前后两张截图推算。
 RANK_MATCH_WINDOW = 90.0   # 结果事件到截图文件名时间的最大间隔（秒）
-# 大师段位 11-01 看到的规则：赢 = (对战胜利 100 + 表现 15 [+ 连胜 30]) × 分组奖励倍率；输 = 只有表现 +12~15，不扣分；每一级 5000 分打满升一级。
+# 大师段位 11-01 看到的规则：赢 = (对战胜利 100 + 表现 15 [+ 连胜 30]) × 分组奖励倍率；输 = 只有表现 +12~15，不扣分。
+# 积分不清零：大师 0 是 0~5000，大师 1 是 5000~10000……升级那一刻结算页的数字会停在 5000 的整数倍上（升级动画），所以升级那局的截图偏低。
 WIN_BASE, STREAK_BONUS, LOSS_BONUS = 115, 30, 15
 GROUP_MULT = {"翡翠": None, "黄玉": None, "红宝石": None, "蓝宝石": 1.5, "钻石": 2.0}   # None = 还没见过，会从截图里学
-RANK_BAND = 5000
+RANK_BAND = 5000   # 每一级的宽度
 
 
 def load_rank(path):
@@ -779,8 +784,10 @@ def attach_rank(games, entries):
                 mult[g["group"]] = round(m * 4) / 4
 
     def delta(k):
-        """seq[k] 这局应该加多少分；分组倍率不知道就 None"""
+        """seq[k] 这局应该加多少分：截图上读到了就用读到的，否则按规则算；分组倍率不知道就 None"""
         g, prev = seq[k], (seq[k - 1] if k > 0 else None)
+        if k in direct and g.get("mp_total") is not None:
+            return g["mp_total"]
         if g["result"] == "负":
             return LOSS_BONUS
         m = mult.get(g["group"])
@@ -792,8 +799,6 @@ def attach_rank(games, entries):
         """从 seq[a] 的积分推到 seq[b]（含 b）；碰到升级或倍率未知就 None"""
         mp = seq[a]["mp"]
         for k in range(a + 1, b + 1):
-            if seq[k - 1].get("rank_up"):
-                return None
             d = delta(k)
             if d is None:
                 return None
@@ -804,9 +809,6 @@ def attach_rank(games, entries):
     order = sorted(direct)
     a = order[0] if order else None
     for b in order[1:]:
-        if crosses(a, b, "rank_up") or seq[b].get("rank_up"):
-            a = b
-            continue
         pred = chain(a, b)
         read = seq[b]["mp"]
         if read < seq[a]["mp"]:
@@ -814,7 +816,7 @@ def attach_rank(games, entries):
             seq[b]["mp"], seq[b]["mp_src"], seq[b]["mp_total"] = None, "", None
             direct.discard(b)
         elif pred is not None and 5 < pred - read <= 400:
-            seq[b]["warnings"].append("截图读到的积分 %d 比按前后局推算的 %d 低，可能拍到数字还在跳，按推算记" % (read, pred))
+            seq[b]["warnings"].append("截图读到的积分 %d 比按前后局推算的 %d 低，%s，按推算记" % (read, pred, "升级动画把数字停在了 %d" % read if seq[b].get("rank_up") else "可能拍到数字还在跳"))
             seq[b]["mp"], seq[b]["mp_src"], seq[b]["mp_total"] = None, "", None
             direct.discard(b)
         else:
@@ -830,16 +832,12 @@ def attach_rank(games, entries):
             continue
         mp, ok = seq[a]["mp"], True
         for k in run:
-            if seq[k - 1].get("rank_up"):
-                ok = False
             d = delta(k) if ok else None
             if d is None:
-                seq[k]["mp_src"] = "升级后新一级从多少起算还不知道，等下一张截图" if not ok else "这个分组的奖励倍率还不知道，没法推算"
+                seq[k]["mp_src"] = "这个分组的奖励倍率还不知道，没法推算"
                 ok = False
                 continue
             mp += d
-            if seq[k].get("rank_up") and mp > RANK_BAND:
-                mp = RANK_BAND
             seq[k]["mp"], seq[k]["mp_total"] = mp, d
         if b is None:
             src = "按前一张截图推算，没有后一张核对"
@@ -848,9 +846,22 @@ def attach_rank(games, entries):
         else:
             d_b = delta(b)
             pred_next = (mp + d_b) if d_b is not None else None
-            if seq[b].get("rank_up") and pred_next is not None and pred_next > RANK_BAND:
-                pred_next = RANK_BAND
             tol = 2 + sum(3 if seq[k]["result"] == "负" else 2 for k in run)
+            losses_in_run = [k for k in run if seq[k]["result"] == "负"]
+            if pred_next is not None and losses_in_run and -3 * len(losses_in_run) <= seq[b]["mp"] - pred_next < 0:
+                # 差的那几分是输的局表现奖励不到 15（12~15 都见过）：把差额摊到输的局上，让链条正好接上后一张截图
+                short = pred_next - seq[b]["mp"]
+                for k in losses_in_run:
+                    cut = min(3, short)
+                    seq[k]["mp_total"] -= cut
+                    short -= cut
+                    if short == 0:
+                        break
+                mp = seq[a]["mp"]
+                for k in run:
+                    mp += seq[k]["mp_total"]
+                    seq[k]["mp"] = mp
+                pred_next = mp + d_b
             if pred_next is None or abs(pred_next - seq[b]["mp"]) <= tol:
                 src = "按前后截图推算"
             else:
@@ -906,7 +917,7 @@ def write_outputs(games, cards, out_dir, season):
             elif g.get("mp_src"):
                 note += "｜积分：" + g["mp_src"]
             if g.get("rank_up"):
-                note += "｜这局打完升了一级（这一级的 %d 分打满）" % RANK_BAND
+                note += "｜这局打完升了一级（积分过了 %d 的整数倍）" % RANK_BAND
             if g.get("group_promotion"):
                 note += "｜这局打完升了分组，下一局起算新分组"
             rows.append([
