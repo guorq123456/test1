@@ -82,3 +82,13 @@ The DFM arm gained, so bot/T3-RUNE-1 gets the same step.
   Paired with g3 N 58: 50.7 vs 36.5, +14.2 ± 4.3. The cost per decision has a fixed part (N 45: 57 ms, N 30: 46 ms),
   so dividing N by the ratio does not reach 1.0. Not registered; it says the second bot prediction (gain smaller than
   the DFM arm's) will likely fail.
+- REGISTERED bot arm (18:3xZ): g4 + prior-pilot-rune-bot-ft-t05 (g4 init, 33 epochs). Time match 2.248 -> N 44; gate
+  N 44: 53.0 vs 27.2 (ratio 1.454); equal-CPU rerun N 30: X 53.8%, baseline 27.2%, +26.6, ratio 1.186 (g4's N 58 row
+  on these deals: 1.160). Paired with g4 N 58: 53.8 vs 39.0, **+14.8 ± 4.6**; with g3 N 58: +17.3 ± 4.3.
+  By opponent (prior / baseline): 龙族 75/41, 主教 58/27, 精灵 59/33, 梦魇 51/28, 超越者 41/11, 皇家护卫 39/23.
+  Predictions: beats its value net by at least +3 (0.45): TRUE. Gain smaller than the DFM arm's +7.7 (0.7): FALSE,
+  it is about twice as large in points (in rating: bot +268 from untrained, DFM +490, since DFM starts near 0%).
+- Where the two rune heroes stand with the same recipe (value net generations + prior, equal CPU, each on its own
+  deals): bot/T3-RUNE-1 53.8%, dfm/RUNE-ユーリ 31.2% against the bot's six other decks. The gap was ~21 points
+  untrained, ~9 at g3, now ~22. Neither pilot has converged; no deck-strength conclusion (Salem's rule: a pro list's
+  prior is strong; this field is the bot's own decks, not the real meta).
