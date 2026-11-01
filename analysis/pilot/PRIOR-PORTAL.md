@@ -48,4 +48,8 @@ Seeds:
 
 ## Results (written after the runs)
 
-(none yet)
+**DFM Portal.**
+- Init. g2 on g3's gate deals (bank 86036000) at N 50 (ratio 1.040): X 50.5%, baseline 35.0%. Paired with g3's own
+  N 50 row on the same 300 deals: 53.8% vs 50.5%, so **g3 − g2 = +3.3 ± 4.8**. That is ≥ 0, so the prior starts from
+  g3. Logs: `logs/portal-dfm/gate3bank-g2-n50.*`.
+- The fit is running: hero decisions of 86008000 and 86035000, 20 shards.

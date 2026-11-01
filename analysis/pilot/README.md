@@ -286,4 +286,5 @@ Condition: 对手卡表已知（牌序、手牌未知）. Gen-3 bank 86035000-86
 - **Equal CPU** (the same bank, N 50 = 59 / 1.173): **X 53.8% ± 4.3%, baseline 35.0%, paired +18.8% ± 4.7% (95%
   +14.1% to +23.6%)**; ratio 1.067. By opponent: Forest +17.0, Sword +16.0, Rune +26.0, Dragon +36.0, Abyss +8.0,
   Haven +10.0.
-- g2 was +14.8 / +10.3 on its own bank (86009000); g3 - g2 on the same deals is read before the move prior (below).
+- g2 was +14.8 / +10.3 on its own bank (86009000). On g3's deals at the same N 50: g2 X 50.5%. **g3 − g2 = +3.3 ± 4.8**
+  (analysis/pilot/paired.py). The move prior step follows in PRIOR-PORTAL.md.
