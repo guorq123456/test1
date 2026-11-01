@@ -41,3 +41,12 @@ wins: that is the signal we want.
 - MF's paired difference is above g1's (+1.3): 0.6.
 
 Isolation as for g1: net-pilot-rune-dfm-* models stay out of git, out of any deck search, 陪练台 and the web models.
+
+## Paused (03:3xZ, after 1000 mirror games)
+
+The bot rune hero's gen 2 (the builder, c1fdb2d) beat its baseline: +8.3 ± 4.3 (34.2% vs 25.8%, X with 19% more CPU;
+an equal-CPU check is ordered). So one generation of the net playing its own positions fixed what g1 got wrong, as in
+the precedent, and my reading above ("a pilot this weak cannot teach the net") is overturned for the bot's deck.
+Mirror games of 三轴土 cost 5.1 CPU s each (2.6x a field game). The mirror arm is paused (shard 86015000 complete,
+two part files, resumable); DFM gen 2 runs first (hero mcts:58 + g1, self-play 85998000, gate 85999000), as the bot's
+did. The mirror predictions above stay registered for whenever the arm resumes.
