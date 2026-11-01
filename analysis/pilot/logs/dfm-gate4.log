@@ -1,0 +1,25 @@
+条件：英雄 dfm/RUNE-ユーリ 对 6 套对手轮流（analysis/pilot/fields/dfm-yuri-vs-bot6.txt）；每对 = 一副发牌，X 和基线各坐两边；对手卡表已知（牌序、手牌未知）
+X = mcts:54+plan+setnet=analysis/scaling/models/net-pilot-rune-dfm-g4.npz+netmid+netany
+基线 = mcts:100+plan
+对手 = mcts:100+plan
+BLAS 线程：OMP_NUM_THREADS=1，OPENBLAS_NUM_THREADS=1，MKL_NUM_THREADS=1
+  …25 对 63s
+  …50 对 120s
+  …75 对 192s
+  …100 对 250s
+  …125 对 311s
+  …150 对 373s
+  …175 对 442s
+  …200 对 505s
+  …225 对 569s
+  …250 对 628s
+  …275 对 686s
+  …300 对 752s
+300 对（X 600 局、基线 600 局）：英雄卡组 X 18.7% ± 3.4%，基线 5.3% ± 1.8%，配对差 +13.3% ± 3.6%（95% 区间 +9.8%～+16.9%）
+  对 bot/T1-FOREST-1：50 对 X 14.0%，基线 3.0%，差 +11.0% ± 8.1%
+  对 bot/T1-SWORD-1：50 对 X 9.0%，基线 4.0%，差 +5.0% ± 5.8%
+  对 bot/T3-DRAGON-1：50 对 X 54.0%，基线 13.0%，差 +41.0% ± 10.4%
+  对 bot/T1-ABYSS-1：50 对 X 8.0%，基线 0.0%，差 +8.0% ± 5.1%
+  对 bot/T1-HAVEN-1：50 对 X 25.0%，基线 10.0%，差 +15.0% ± 11.6%
+  对 bot/T1-PORTAL-1：50 对 X 2.0%，基线 2.0%，差 +0.0% ± 4.0%
+英雄每步（搜索过的决定）CPU：X 48 ms，基线 43 ms，比 1.130
