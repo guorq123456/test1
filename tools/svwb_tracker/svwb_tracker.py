@@ -652,6 +652,110 @@ def analyze(game, cards, my_decks, archetypes, cfg):
     return g
 
 
+# ---------- 结果页截图识别出来的段位/积分 ----------
+# rank_reader.py（只能在 Salem 的 Windows 上跑，要 winocr）把每局结果页读成 shots\rank.jsonl，一行一局：
+#   {"ts":"20261101-091854","rank":"大师","level":0,"mp":3960,"next":1040,"total":173,"group":"蓝宝石","ok":true,...}
+# ts 是截图文件名里的本地时间（结果出来后几秒）。这里按每局的结束时间对上去，再把没截到的局按前后两张截图推算。
+RANK_MATCH_WINDOW = 90.0   # 结果事件到截图文件名时间的最大间隔（秒）
+WIN_PLAIN, WIN_STREAK, LOSS_BONUS = 173, 218, 15   # 大师段位 11-01 观察到的规则：赢 +173（连胜 +218），输只拿表现奖励 +14/15，不扣分
+
+
+def load_rank(path):
+    out = []
+    if not path:
+        return out
+    pth = Path(path)
+    if not pth.exists():
+        print("段位文件不存在：%s" % pth, file=sys.stderr)
+        return out
+    with open(pth, encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                d = json.loads(line)
+                d["_t"] = time.mktime(dt.datetime.strptime(d["ts"], "%Y%m%d-%H%M%S").timetuple())
+            except (ValueError, KeyError, TypeError):
+                continue
+            out.append(d)
+    out.sort(key=lambda d: d["_t"])
+    return out
+
+
+def attach_rank(games, entries):
+    """把截图读出来的段位/分组/积分贴到每局上；没截到的局按前后局推算积分。"""
+    for g in games:
+        g["rank"] = g["group"] = g["mp"] = g["mp_total"] = None
+        g["mp_src"] = ""
+    if not entries:
+        return
+    seq = sorted([g for g in games if g["result"] in ("胜", "负") and g["ranked"]], key=lambda g: g["start"])
+    # 1) 直读：结果时间之后 90 秒内最近的一张
+    for g in seq:
+        end = g["end"] or g["start"]
+        cands = [e for e in entries if e.get("ok") and e.get("mp") is not None and 0 <= e["_t"] - end <= RANK_MATCH_WINDOW]
+        if not cands:
+            continue
+        e = min(cands, key=lambda e: e["_t"] - end)
+        g["rank"], g["group"], g["mp"], g["mp_total"] = e.get("rank"), e.get("group"), int(e["mp"]), e.get("total")
+        g["mp_src"] = "截图直读"
+
+    def delta(g, prev):
+        if g["result"] == "负":
+            return LOSS_BONUS
+        return WIN_STREAK if (prev is not None and prev["result"] == "胜") else WIN_PLAIN
+
+    # 2) 直读里还在跳数字的（截图太早，数字比链条算出来的低）：和前一张直读对不上就作废，改成推算
+    known = [i for i, g in enumerate(seq) if g["mp"] is not None]
+    a = known[0] if known else None
+    for b in known[1:]:
+        pred = seq[a]["mp"]
+        for k in range(a + 1, b + 1):
+            pred += delta(seq[k], seq[k - 1])
+        if 5 < pred - seq[b]["mp"] <= 400:
+            seq[b]["warnings"].append("截图读到的积分 %d 比按前后局推算的 %d 低，可能拍到数字还在跳，按推算记" % (seq[b]["mp"], pred))
+            seq[b]["mp"], seq[b]["mp_src"] = None, ""
+        else:
+            a = b
+    # 3) 推算：从前一张直读往后加，有后一张直读就核对
+    known = [i for i, g in enumerate(seq) if g["mp"] is not None]
+    if not known:
+        return
+    for a, b in zip(known, known[1:] + [None]):
+        run = range(a + 1, b if b is not None else len(seq))
+        if not len(run):
+            continue
+        mp, losses = seq[a]["mp"], 0
+        for k in run:
+            d = delta(seq[k], seq[k - 1])
+            mp += d
+            losses += seq[k]["result"] == "负"
+            seq[k]["mp"], seq[k]["mp_total"] = mp, d
+            seq[k]["rank"], seq[k]["group"] = seq[a]["rank"], seq[a]["group"]
+        if b is None:
+            for k in run:
+                seq[k]["mp_src"] = "按前一张截图推算，没有后一张核对"
+        else:
+            pred_next = mp + delta(seq[b], seq[b - 1])
+            tol = 2 + losses + sum(1 for k in run if seq[k]["result"] == "胜")
+            if abs(pred_next - seq[b]["mp"]) <= tol:
+                for k in run:
+                    seq[k]["mp_src"] = "按前后截图推算"
+            else:
+                for k in run:
+                    seq[k]["mp_src"] = "推算，但和后一张截图差 %d 分" % (seq[b]["mp"] - pred_next)
+                seq[b]["warnings"].append("从前一张截图推到这局应是 %d 分，截图读到 %d，中间可能漏了局或读错" % (pred_next, seq[b]["mp"]))
+    # 4) 分组/段位空着的，用同一天最近一局的
+    last = None
+    for g in seq:
+        if g["rank"] and g["group"]:
+            last = g
+        elif last is not None and dt.date.fromtimestamp(g["start"]) == dt.date.fromtimestamp(last["start"]):
+            g["rank"] = g["rank"] or last["rank"]
+            g["group"] = g["group"] or last["group"]
+
+
 # ---------- 输出 ----------
 def local_iso(ts):
     return dt.datetime.fromtimestamp(ts).astimezone().isoformat(timespec="seconds")
@@ -692,10 +796,12 @@ def write_outputs(games, cards, out_dir, season):
                 note += "｜对手套路：" + g["opp_deck_why"]
             if opp_cards:
                 note += "｜对手出过：" + "、".join(opp_cards[:14])
+            if g.get("mp") is not None:
+                note += "｜积分 %d（%s%s）" % (g["mp"], g["mp_src"], ("，这局 %+d" % g["mp_total"]) if g.get("mp_total") is not None else "")
             rows.append([
                 "bt-%d" % int(g["start"] * 1000), local_iso(g["start"]), g["my_deck"], CLASS_NAMES.get(g["my_cls"], ""),
                 CLASS_NAMES.get(g["opp_cls"], ""), g["opp_deck"], ("先手" if g["first"] else "后手") if g["first"] is not None else "先手",
-                g["result"], "", "", "", "", g["my_turns"] or "", note, season,
+                g["result"], g.get("rank") or "", g.get("group") or "", g.get("mp") if g.get("mp") is not None else "", "", g["my_turns"] or "", note, season,
             ])
         wr.writerows(rows)
     # review.md：每一手
@@ -708,6 +814,9 @@ def write_outputs(games, cards, out_dir, season):
         meta = ["%s" % ("天梯" if g["ranked"] else ("进行中，还没打完" if g["result"] is None else "非天梯/未知模式")), "我方 %d 回合，对手 %d 回合" % (g["my_turns"], g["opp_turns"])]
         if g["end"]:
             meta.append("用时 %d 分 %02d 秒" % divmod(int(g["end"] - (g["cutin_end"] or g["start"])), 60))
+        if g.get("mp") is not None:
+            meta.append("段位：%s %s，积分 %d（%s%s）" % (g.get("rank") or "？", g.get("group") or "？", g["mp"], g["mp_src"],
+                                                  ("，这局 %+d" % g["mp_total"]) if g.get("mp_total") is not None else ""))
         if g.get("skins"):
             meta.append("主战者皮肤：我 %s / 对手 %s" % (g["skins"].get("me") or "?", g["skins"].get("opp") or "?"))
         if g.get("ambiguous"):
@@ -763,6 +872,7 @@ def run_parse(a):
     segs = segment(entries)
     games = [analyze(s, cards, my_decks, archetypes, cfg) for s in segs]
     games = [g for g in games if g["moves"] or g["result"]]
+    attach_rank(games, load_rank(a.rank))
     rows = write_outputs(games, cards, a.out, a.season)
     fin = [g for g in games if g["result"] in ("胜", "负")]
     print("读到 %d 条面包屑，切出 %d 局，其中有胜负的 %d 局（胜 %d），写入 %s" % (
@@ -785,6 +895,7 @@ def main(argv=None):
         q.add_argument("--decks", default=None, help="我的卡组登记文件：每行「名字|卡组代码」")
         q.add_argument("--season", default="第10弹")
         q.add_argument("--since", default=None, help="只读这一天之后的 raw 文件，格式 YYYY-MM-DD")
+        q.add_argument("--rank", default=None, help="rank_reader.py 从结果页截图读出的 shots\\rank.jsonl；给了就填段位/分组/积分")
         q.add_argument("--interval", type=int, default=60)
     a = p.parse_args(argv)
     if a.cmd == "parse":
