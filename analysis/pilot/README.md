@@ -151,3 +151,18 @@ generations. The DFM hero gets the same second generation in the architecture th
   baseline 41 ms: **ratio 1.130**.
 - Against the registered predictions: g3 beats g2's paired difference on its own bank (+8.3), 0.55: yes; g3 beats the
   baseline, 0.7: yes.
+- **Equal CPU** (the same 300 pairs on bank 86021000, X at N 58 = 66 / 1.13): **X 34.2% ± 4.1%, baseline 26.2% ±
+  3.5%, paired +8.0% ± 4.2% (95% +3.8% to +12.2%)**; CPU X 44 ms, baseline 42 ms: ratio 1.052. By opponent: Forest
+  +12.0, Sword +5.0, Dragon +14.0, Abyss +3.0, Haven +12.0, Portal +2.0 (± 8.7-12.2).
+
+| generation | gate N (ratio) | paired | equal CPU N (ratio) | paired at equal CPU |
+|---|---|---|---|---|
+| g1 | 64 (1.059) | -7.3 ± 3.8 | (N 100: -8.3 ± 3.7) | - |
+| g2 | 67 (1.190) | +8.3 ± 4.3 | 56 (1.050) | +5.5 ± 4.4 |
+| g3 | 66 (1.130) | +11.3 ± 4.4 | 58 (1.052) | +8.0 ± 4.2 |
+
+The bot Rune hero's gen 4 is deferred (its bank 86022000-86024999 reserved); next, the Portal pair (the architecture
+thread 06:10Z): the same recipe with generations, gen 1 expected to lose, a gate every generation, a time match once
+each, an equal-CPU check whenever the in-gate ratio is above 1.08; DFM and bot alternating. Gen-3 banks: 86030000-
+86034999 the bot Portal hero, 86035000-86039999 the DFM one (self-play +0, gate +1000, timing +1900).
+
