@@ -36,3 +36,15 @@ orders that matter.
 - It passes 锅 before 光 (Salem's position 2) with the prior's own ranking (prior P(锅) > P(光) at that position): 0.45.
 
 The bot rune hero gets the same step only if this one gains (its gen 4 is running first).
+
+## Results (written after the runs)
+
+- Fit: 766580 hero decisions (20 shards, the g3 and g4 self-play); validation cross entropy 1.4639 (epoch 24) ->
+  1.4634 (epoch 34). Deviation: the run hit the container's 2 h limit at epoch 33 with the step size down to 1/256 of
+  the start and the gain under 1e-4 over eight epochs, so it was resumed from its checkpoint with `--epochs 35`
+  instead of waiting for the patience stop (up to 60 epochs). Kept: epoch 34.
+- Salem's positions, asked of the prior (analysis/pilot/prior_acceptance.py, logs/prior-acceptance.log; the same
+  positions as acceptance.py, checked card for card against claude/deck-search's replay): the pre-registered item,
+  锅 before 光: P(锅) 0.405 > P(光) 0.234 -> passes (prediction 0.45). Not scored, reported: 零嘴 for 4 土 0.599 vs end
+  turn 0.269; 物证 0.227 vs 解谜旋律 0.192 (end turn 0.238 is the top move there); 琪可 into the knight 0.200 vs 迷人怪兽
+  0.066.
