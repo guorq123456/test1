@@ -563,6 +563,30 @@ def analyze(game, cards, my_decks, archetypes, cfg):
     if g["report"] and not g["partial"] and (g["report"]["ally_turn"], g["report"]["oppo_turn"]) != (my_turns, opp_turns):
         g["warnings"].append("按动作数出来的回合数（我 %d / 对手 %d）和结算记录（我 %d / 对手 %d）不一致，表里的回合号可能有偏差"
                              % (my_turns, opp_turns, g["report"]["ally_turn"], g["report"]["oppo_turn"]))
+    # 进化回合核对先后手：后手从自己的第 4 回合起能进化、第 6 回合起能超进化；先手要等到第 5 / 第 7 回合。
+    # 谁在第 4 回合进化（或第 6 回合超进化）了，谁就是后手。这条是规则，比抽牌顺序可靠，所以不一致时以它为准。
+    if not g["partial"]:
+        evo_votes = []
+        for side_key, label in (("me", "我方"), ("opp", "对手")):
+            for kind, limit in (("进化", 4), ("超进化", 6)):
+                m = next((m for m in moves if m["side"] == side_key and m["kind"] == kind), None)
+                if m is None or not m["turn"]:
+                    continue
+                if m["turn"] < limit:
+                    g["warnings"].append("%s第 %d 回合就%s，比规则允许的还早，回合号有偏差" % (label, m["turn"], kind))
+                elif m["turn"] == limit:
+                    evo_votes.append((side_key == "opp", "%s第 %d 回合就%s，只有后手能这么早" % (label, m["turn"], kind)))
+        if evo_votes and len(set(v for v, _ in evo_votes)) == 1:
+            evo_first, evo_why = evo_votes[0]
+            if g["first"] is None:
+                g["first"], g["first_why"] = evo_first, "进化回合：" + evo_why
+            elif evo_first != g["first"]:
+                g["warnings"].append("先后手两种算法不一致（抽牌顺序说%s，进化回合说%s），按进化回合算" % ("先手" if g["first"] else "后手", "先手" if evo_first else "后手"))
+                g["first"], g["first_why"] = evo_first, "进化回合：%s（抽牌顺序本来说%s）" % (evo_why, "后手" if evo_first else "先手")
+            else:
+                g["first_why"] += "；进化回合也对得上（%s）" % evo_why
+        elif len(evo_votes) > 1:
+            g["warnings"].append("双方都在最早的后手回合进化了，回合号有偏差，进化回合这条用不上")
     if g["report"]:
         if g["partial"]:
             dm, do = g["report"]["ally_turn"] - my_turns, g["report"]["oppo_turn"] - opp_turns
@@ -572,19 +596,27 @@ def analyze(game, cards, my_decks, archetypes, cfg):
                 elif m["side"] == "opp":
                     m["turn"] += do
         g["my_turns"], g["opp_turns"] = g["report"]["ally_turn"], g["report"]["oppo_turn"]
-        # 用结算记录核对先后手：谁的回合结束的 + 双方回合数
+        # 用结算记录核对先后手：双方回合数不等时，多一回合的那方是先手（局在他的回合里结束）；
+        # 相等时局在后手的回合里结束，只能靠最后一手是谁的来判（最后一回合若只攻击没出牌会判错，所以只当参考）
         if moves:
             last_side = moves[-1]["side"]
             at, ot = g["report"]["ally_turn"], g["report"]["oppo_turn"]
-            if last_side == "me":
-                rep_first = True if at == ot + 1 else (False if at == ot else None)
-            else:
-                rep_first = False if ot == at + 1 else (True if at == ot else None)
+            rep_first, rep_sure = None, False
+            if at == ot + 1:
+                rep_first, rep_sure = True, True
+            elif ot == at + 1:
+                rep_first, rep_sure = False, True
+            elif at == ot:
+                rep_first = last_side == "opp"
             if rep_first is not None:
                 if g["first"] is None:
-                    g["first"], g["first_why"] = rep_first, "按结算记录的双方回合数推出"
+                    g["first"], g["first_why"] = rep_first, "按结算记录的双方回合数推出" + ("" if rep_sure else "（回合数相等，靠最后一手是谁的，把握中等）")
                 elif rep_first != g["first"]:
-                    g["warnings"].append("先后手两种算法不一致（抽牌顺序说%s，结算回合数说%s）" % ("先手" if g["first"] else "后手", "先手" if rep_first else "后手"))
+                    if rep_sure:
+                        g["warnings"].append("先后手两种算法不一致（前面的依据说%s，结算回合数说%s），按结算回合数算" % ("先手" if g["first"] else "后手", "先手" if rep_first else "后手"))
+                        g["first"], g["first_why"] = rep_first, "结算记录：双方回合数 %d/%d，多一回合的是%s（前面的依据本来说%s）" % (at, ot, "我方" if rep_first else "对手", "后手" if rep_first else "先手")
+                    else:
+                        g["warnings"].append("先后手两种算法不一致（前面的依据说%s，结算回合数说%s，后者把握中等，不改）" % ("先手" if g["first"] else "后手", "先手" if rep_first else "后手"))
 
     # 5) 胜负
     w = (game["result"] or "").lower()
