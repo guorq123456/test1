@@ -308,7 +308,7 @@ def analyze(game, cards, my_decks, archetypes, cfg):
         "my_skin": None, "opp_skin": None, "my_cls": None, "opp_cls": None,
         "first": None, "first_why": "", "my_turns": 0, "opp_turns": 0,
         "my_hand0": [], "my_seen": [], "opp_seen": [], "moves": [], "report": None, "scene": None,
-        "warnings": [], "partial": bool(game.get("partial")),
+        "warnings": [], "partial": bool(game.get("partial")), "rank_up": False, "group_promotion": False,
     }
     # 1) 皮肤：class_#### 的 ally 字段可信；vs_#### 的不可信
     for x in ev:
@@ -325,6 +325,10 @@ def analyze(game, cards, my_decks, archetypes, cfg):
             g["report"] = {"ally_turn": x["ally_turn"], "oppo_turn": x["oppo_turn"]}
         if x["kind"] in ("result", "result_ui") and g["end"] is None:
             g["end"] = x["t"]
+        if x["kind"] == "result" and x.get("word") == "RankUp":
+            g["rank_up"] = True        # 结算后多放了一段「升级」动画：这局打满了这一级的积分
+        if x["kind"] == "result" and x.get("word") == "GroupPromotion":
+            g["group_promotion"] = True  # 结算后多放了一段「升分组」动画：下一局起是新分组
     # 开头没存到的局：皮肤编号从进化记录里补（进化记录带「リーダースキンID + isAlly」）
     for x in ev:
         if x["kind"] == "evolve" and x.get("skin"):
@@ -550,6 +554,37 @@ def analyze(game, cards, my_decks, archetypes, cfg):
     g["moves"] = moves
     g["ambiguous"] = ambiguous
     g["my_turns"], g["opp_turns"] = my_turns, opp_turns
+    # 第 1 回合就打出 2 费以上的牌：这一方的回合号少算了 1——他是先手，真正的第 1 回合空过了，程序从另一方的出牌开始数回合。
+    # 第 1 回合只有 1 点 PP，巫师减费、龙族跳费在第 1 回合都做不到，所以这条很硬（11-01 三局验证：和进化回合、结算回合数都一致）。
+    # 同职业局的出牌归属本身不可靠，不用这条。
+    if not g["partial"] and not g.get("mirror"):
+        behind = []
+        for side_key, label in (("me", "我方"), ("opp", "对手")):
+            m = next((m for m in moves if m["side"] == side_key and m["kind"] == "出牌"), None)
+            if m is not None and m["turn"] == 1:
+                info = lookup(cards, m["cid"])
+                if info and info.get("cost") is not None and info["cost"] >= 2:
+                    behind.append((side_key, "%s第 1 回合就打出 %d 费的「%s」，只可能是先手空过第 1 回合后的第 2 回合" % (label, info["cost"], info["zh"])))
+        if len(behind) == 1:
+            side_key, why = behind[0]
+            for m in moves:
+                if m["side"] == side_key:
+                    m["turn"] += 1
+            if side_key == "me":
+                my_turns += 1
+            else:
+                opp_turns += 1
+            g["my_turns"], g["opp_turns"] = my_turns, opp_turns
+            cost_first = side_key == "me"
+            if g["first"] is None:
+                g["first"], g["first_why"] = cost_first, "第 1 回合费用：" + why
+            elif g["first"] != cost_first:
+                g["warnings"].append("先后手两种算法不一致（抽牌顺序说%s，第 1 回合费用说%s），按费用算" % ("先手" if g["first"] else "后手", "先手" if cost_first else "后手"))
+                g["first"], g["first_why"] = cost_first, "第 1 回合费用：%s（抽牌顺序本来说%s）" % (why, "后手" if cost_first else "先手")
+            else:
+                g["first_why"] += "；第 1 回合费用也对得上（%s）" % why
+        elif len(behind) == 2:
+            g["warnings"].append("双方第 1 回合都打出了 2 费以上的牌，回合号有偏差，这条用不上")
     # 费用线索：一方在第 k 回合打出的牌原费高于 k。巫师的法术增幅减费、龙族的跳费都会让它误报，所以只当线索，不当警告
     g["hints"] = []
     if not g["partial"]:
@@ -658,7 +693,10 @@ def analyze(game, cards, my_decks, archetypes, cfg):
 #   {"ts":"20261101-091854","rank":"大师","level":0,"mp":3960,"next":1040,"total":173,"group":"蓝宝石","ok":true,...}
 # ts 是截图文件名里的本地时间（结果出来后几秒）。这里按每局的结束时间对上去，再把没截到的局按前后两张截图推算。
 RANK_MATCH_WINDOW = 90.0   # 结果事件到截图文件名时间的最大间隔（秒）
-WIN_PLAIN, WIN_STREAK, LOSS_BONUS = 173, 218, 15   # 大师段位 11-01 观察到的规则：赢 +173（连胜 +218），输只拿表现奖励 +14/15，不扣分
+# 大师段位 11-01 看到的规则：赢 = (对战胜利 100 + 表现 15 [+ 连胜 30]) × 分组奖励倍率；输 = 只有表现 +12~15，不扣分；每一级 5000 分打满升一级。
+WIN_BASE, STREAK_BONUS, LOSS_BONUS = 115, 30, 15
+GROUP_MULT = {"翡翠": None, "黄玉": None, "红宝石": None, "蓝宝石": 1.5, "钻石": 2.0}   # None = 还没见过，会从截图里学
+RANK_BAND = 5000
 
 
 def load_rank(path):
@@ -687,75 +725,140 @@ def load_rank(path):
 def attach_rank(games, entries):
     """把截图读出来的段位/分组/积分贴到每局上；没截到的局按前后局推算积分。"""
     for g in games:
-        g["rank"] = g["group"] = g["mp"] = g["mp_total"] = None
+        g["rank"] = g["group"] = g["mp"] = g["mp_total"] = g["rank_level"] = None
         g["mp_src"] = ""
     if not entries:
         return
     seq = sorted([g for g in games if g["result"] in ("胜", "负") and g["ranked"]], key=lambda g: g["start"])
-    # 1) 直读：结果时间之后 90 秒内最近的一张
-    for g in seq:
+    direct = set()
+    # 1) 直读：结果时间附近最近的一张（文件名是整秒，可能比结果事件早不到 1 秒）
+    for i, g in enumerate(seq):
         end = g["end"] or g["start"]
-        # 截图文件名的时间是结果事件的整秒（毫秒截掉了），所以可能比 end 早不到 1 秒，留 2 秒余量
         cands = [e for e in entries if e.get("ok") and e.get("mp") is not None and -2.0 <= e["_t"] - end <= RANK_MATCH_WINDOW]
         if not cands:
             continue
         e = min(cands, key=lambda e: abs(e["_t"] - end))
-        g["rank"], g["group"], g["mp"], g["mp_total"] = e.get("rank"), e.get("group"), int(e["mp"]), e.get("total")
+        g["rank"], g["group"], g["mp"], g["mp_total"], g["rank_level"] = e.get("rank"), e.get("group"), int(e["mp"]), e.get("total"), e.get("level")
         g["mp_src"] = "截图直读"
+        direct.add(i)
 
-    def delta(g, prev):
+    def crosses(a, b, key):
+        """a 之后、b 之前（含 b 之前的局）有没有升级/升分组：升级发生在 seq[k] 打完之后，影响 k+1 起"""
+        return any(seq[k].get(key) for k in range(a, b))
+
+    # 2) 段位/分组空着的：抄同一天最近的一局，但不跨过升级/升分组
+    for key, flag in (("group", "group_promotion"), ("rank", "__never__")):   # 段位名（大师/宗师）升一级不会变，只有分组要防跨过升分组
+        for i, g in enumerate(seq):
+            if g[key]:
+                continue
+            day = dt.date.fromtimestamp(g["start"])
+            for j in range(i - 1, -1, -1):
+                if dt.date.fromtimestamp(seq[j]["start"]) != day or crosses(j, i, flag):
+                    break
+                if seq[j][key]:
+                    g[key] = seq[j][key]
+                    break
+            if g[key]:
+                continue
+            for j in range(i + 1, len(seq)):
+                if dt.date.fromtimestamp(seq[j]["start"]) != day or crosses(i, j, flag):
+                    break
+                if seq[j][key]:
+                    g[key] = seq[j][key]
+                    break
+
+    # 3) 分组奖励倍率：表里有的用表里的，表里没有的从直读的赢局学（倍率只认 0.25 的整数倍）
+    mult = dict(GROUP_MULT)
+    for i in sorted(direct):
+        g = seq[i]
+        if g["result"] == "胜" and g["mp_total"] and g["group"] and mult.get(g["group"]) is None:
+            prev = seq[i - 1] if i > 0 else None
+            base = WIN_BASE + (STREAK_BONUS if prev is not None and prev["result"] == "胜" else 0)
+            m = g["mp_total"] / base
+            if abs(m * 4 - round(m * 4)) < 0.05:
+                mult[g["group"]] = round(m * 4) / 4
+
+    def delta(k):
+        """seq[k] 这局应该加多少分；分组倍率不知道就 None"""
+        g, prev = seq[k], (seq[k - 1] if k > 0 else None)
         if g["result"] == "负":
             return LOSS_BONUS
-        return WIN_STREAK if (prev is not None and prev["result"] == "胜") else WIN_PLAIN
+        m = mult.get(g["group"])
+        if m is None:
+            return None
+        return int((WIN_BASE + (STREAK_BONUS if prev is not None and prev["result"] == "胜" else 0)) * m + 0.5)   # 游戏里 172.5 记成 173：四舍五入，不是银行家舍入
 
-    # 2) 直读里还在跳数字的（截图太早，数字比链条算出来的低）：和前一张直读对不上就作废，改成推算
-    known = [i for i, g in enumerate(seq) if g["mp"] is not None]
-    a = known[0] if known else None
-    for b in known[1:]:
-        pred = seq[a]["mp"]
+    def chain(a, b):
+        """从 seq[a] 的积分推到 seq[b]（含 b）；碰到升级或倍率未知就 None"""
+        mp = seq[a]["mp"]
         for k in range(a + 1, b + 1):
-            pred += delta(seq[k], seq[k - 1])
-        if 5 < pred - seq[b]["mp"] <= 400:
-            seq[b]["warnings"].append("截图读到的积分 %d 比按前后局推算的 %d 低，可能拍到数字还在跳，按推算记" % (seq[b]["mp"], pred))
-            seq[b]["mp"], seq[b]["mp_src"] = None, ""
-        else:
-            a = b
-    # 3) 推算：从前一张直读往后加，有后一张直读就核对
-    known = [i for i, g in enumerate(seq) if g["mp"] is not None]
-    if not known:
-        return
-    for a, b in zip(known, known[1:] + [None]):
-        run = range(a + 1, b if b is not None else len(seq))
-        if not len(run):
-            continue
-        mp, losses = seq[a]["mp"], 0
-        for k in run:
-            d = delta(seq[k], seq[k - 1])
+            if seq[k - 1].get("rank_up"):
+                return None
+            d = delta(k)
+            if d is None:
+                return None
             mp += d
-            losses += seq[k]["result"] == "负"
-            seq[k]["mp"], seq[k]["mp_total"] = mp, d
-            seq[k]["rank"], seq[k]["group"] = seq[a]["rank"], seq[a]["group"]
-        if b is None:
-            for k in run:
-                seq[k]["mp_src"] = "按前一张截图推算，没有后一张核对"
+        return mp
+
+    # 4) 直读里读坏的：比前一局还低（积分不会掉，除非升级换了一级）→ 识别少了一位；比推算低一点 → 拍到数字还在跳；差得很多 → 留着但提醒
+    order = sorted(direct)
+    a = order[0] if order else None
+    for b in order[1:]:
+        if crosses(a, b, "rank_up") or seq[b].get("rank_up"):
+            a = b
+            continue
+        pred = chain(a, b)
+        read = seq[b]["mp"]
+        if read < seq[a]["mp"]:
+            seq[b]["warnings"].append("截图读到的积分 %d 比前一局的 %d 还低，识别出错（多半少读了一位），按前后局推算" % (read, seq[a]["mp"]))
+            seq[b]["mp"], seq[b]["mp_src"], seq[b]["mp_total"] = None, "", None
+            direct.discard(b)
+        elif pred is not None and 5 < pred - read <= 400:
+            seq[b]["warnings"].append("截图读到的积分 %d 比按前后局推算的 %d 低，可能拍到数字还在跳，按推算记" % (read, pred))
+            seq[b]["mp"], seq[b]["mp_src"], seq[b]["mp_total"] = None, "", None
+            direct.discard(b)
         else:
-            pred_next = mp + delta(seq[b], seq[b - 1])
-            tol = 2 + losses + sum(1 for k in run if seq[k]["result"] == "胜")
-            if abs(pred_next - seq[b]["mp"]) <= tol:
-                for k in run:
-                    seq[k]["mp_src"] = "按前后截图推算"
+            if pred is not None and abs(pred - read) > 400:
+                seq[b]["warnings"].append("从前一张截图推到这局应是 %d 分，截图读到 %d，中间可能漏了局或读错；按截图记" % (pred, read))
+            a = b
+
+    # 5) 推算：从前一张直读往后加，有后一张直读就核对；升级那局记成打满，之后的局要等新的截图
+    order = sorted(direct)
+    for a, b in zip(order, order[1:] + [None]):
+        run = list(range(a + 1, b if b is not None else len(seq)))
+        if not run:
+            continue
+        mp, ok = seq[a]["mp"], True
+        for k in run:
+            if seq[k - 1].get("rank_up"):
+                ok = False
+            d = delta(k) if ok else None
+            if d is None:
+                seq[k]["mp_src"] = "升级后新一级从多少起算还不知道，等下一张截图" if not ok else "这个分组的奖励倍率还不知道，没法推算"
+                ok = False
+                continue
+            mp += d
+            if seq[k].get("rank_up") and mp > RANK_BAND:
+                mp = RANK_BAND
+            seq[k]["mp"], seq[k]["mp_total"] = mp, d
+        if b is None:
+            src = "按前一张截图推算，没有后一张核对"
+        elif not ok:
+            src = "按前一张截图推算"
+        else:
+            d_b = delta(b)
+            pred_next = (mp + d_b) if d_b is not None else None
+            if seq[b].get("rank_up") and pred_next is not None and pred_next > RANK_BAND:
+                pred_next = RANK_BAND
+            tol = 2 + sum(3 if seq[k]["result"] == "负" else 2 for k in run)
+            if pred_next is None or abs(pred_next - seq[b]["mp"]) <= tol:
+                src = "按前后截图推算"
             else:
-                for k in run:
-                    seq[k]["mp_src"] = "推算，但和后一张截图差 %d 分" % (seq[b]["mp"] - pred_next)
+                src = "推算，但和后一张截图差 %d 分" % (seq[b]["mp"] - pred_next)
                 seq[b]["warnings"].append("从前一张截图推到这局应是 %d 分，截图读到 %d，中间可能漏了局或读错" % (pred_next, seq[b]["mp"]))
-    # 4) 分组/段位空着的，用同一天最近一局的
-    last = None
-    for g in seq:
-        if g["rank"] and g["group"]:
-            last = g
-        elif last is not None and dt.date.fromtimestamp(g["start"]) == dt.date.fromtimestamp(last["start"]):
-            g["rank"] = g["rank"] or last["rank"]
-            g["group"] = g["group"] or last["group"]
+        for k in run:
+            if seq[k]["mp"] is not None and not seq[k]["mp_src"]:
+                seq[k]["mp_src"] = src
 
 
 # ---------- 输出 ----------
@@ -800,6 +903,12 @@ def write_outputs(games, cards, out_dir, season):
                 note += "｜对手出过：" + "、".join(opp_cards[:14])
             if g.get("mp") is not None:
                 note += "｜积分 %d（%s%s）" % (g["mp"], g["mp_src"], ("，这局 %+d" % g["mp_total"]) if g.get("mp_total") is not None else "")
+            elif g.get("mp_src"):
+                note += "｜积分：" + g["mp_src"]
+            if g.get("rank_up"):
+                note += "｜这局打完升了一级（这一级的 %d 分打满）" % RANK_BAND
+            if g.get("group_promotion"):
+                note += "｜这局打完升了分组，下一局起算新分组"
             rows.append([
                 "bt-%d" % int(g["start"] * 1000), local_iso(g["start"]), g["my_deck"], CLASS_NAMES.get(g["my_cls"], ""),
                 CLASS_NAMES.get(g["opp_cls"], ""), g["opp_deck"], ("先手" if g["first"] else "后手") if g["first"] is not None else "先手",
@@ -817,8 +926,12 @@ def write_outputs(games, cards, out_dir, season):
         if g["end"]:
             meta.append("用时 %d 分 %02d 秒" % divmod(int(g["end"] - (g["cutin_end"] or g["start"])), 60))
         if g.get("mp") is not None:
-            meta.append("段位：%s %s，积分 %d（%s%s）" % (g.get("rank") or "？", g.get("group") or "？", g["mp"], g["mp_src"],
-                                                  ("，这局 %+d" % g["mp_total"]) if g.get("mp_total") is not None else ""))
+            meta.append("段位：%s%s %s，积分 %d（%s%s）%s%s" % (g.get("rank") or "？", (" %d" % g["rank_level"]) if g.get("rank_level") is not None else "",
+                                                      g.get("group") or "？", g["mp"], g["mp_src"],
+                                                      ("，这局 %+d" % g["mp_total"]) if g.get("mp_total") is not None else "",
+                                                      "；这局打完升了一级" if g.get("rank_up") else "", "；这局打完升了分组" if g.get("group_promotion") else ""))
+        elif g.get("mp_src"):
+            meta.append("段位：%s %s，积分：%s" % (g.get("rank") or "？", g.get("group") or "？", g["mp_src"]))
         if g.get("skins"):
             meta.append("主战者皮肤：我 %s / 对手 %s" % (g["skins"].get("me") or "?", g["skins"].get("opp") or "?"))
         if g.get("ambiguous"):
