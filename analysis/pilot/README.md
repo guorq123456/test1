@@ -105,3 +105,18 @@ with probability 0.5; g2 beats the baseline (interval above 0) 0.2. If g2 is sti
 the precedent's first step (a per-deck refit of the turn-end evaluator as the base the net corrects), not more
 generations. The DFM hero gets the same second generation in the architecture thread's container (85998000 /
 85999000).
+
+## Result, g2 (bot/T3-RUNE-1)
+
+- Gen-2 self-play (the hero piloted by mcts:64 + net g1, opponents mcts:100+plan, 1.8 CPU s a game, about 7950 games
+  an hour on 4 workers): the hero scored 17.2%.
+- `net-pilot-rune-bot-g2`: fresh, on gen 1 + gen 2 (20 shards), the same settings; 12 epochs; validation log loss
+  turn end 0.419, mid-turn 0.400 (g1: 0.461, 0.440).
+- Time match (24 pairs from 85994900): CPU X / baseline 1.488 -> **N 67** (at N = 100: -6.2% ± 16.0%).
+- Gate (300 pairs, bank 85994000, X = mcts:67+plan+setnet=net-pilot-rune-bot-g2+netmid+netany): **X 34.2% ± 4.0%,
+  baseline 25.8% ± 3.5%, paired difference +8.3% ± 4.3% (95% +4.0% to +12.6%)**. By opponent: Forest +22.0 (± 9.4),
+  Sword +0.0, Dragon +8.0, Abyss +2.0, Haven +15.0 (± 10.2), Portal +3.0. CPU X 48 ms, baseline 40 ms a searched
+  decision: **ratio 1.190** (the rule matches once; X has 19% more CPU here).
+- Against the registered predictions: g2 closes at least half of g1's gap (>= -3.6), probability 0.5: yes; g2 beats
+  the baseline (interval above 0), probability 0.2: yes. One generation of the net playing its own positions turned
+  -7.3 into +8.3.
