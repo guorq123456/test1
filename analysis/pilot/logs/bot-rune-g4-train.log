@@ -1,0 +1,65 @@
+{"deck": null, "opponent": null, "flag": true, "inputs": "v1", "name": "pilot-rune-bot-g4", "init": "fresh", "init_sha256": null, "mid_rate": 0.290887, "end_rows": 575382, "mid_rows": 1978024, "train_positions": 1093328, "valid_positions": 57189, "train_by_kind": {"end": 546827, "mid": 546501}, "valid_by_kind": {"end": 28555, "mid": 28634}, "continued": true, "ophand": false, "v2a": false, "wide": false, "shared": true, "init_valid": {"end": {"brier": 0.37723, "log_loss": 1.09864, "n": 28555}, "mid": {"brier": 0.35746, "log_loss": 1.02457, "n": 28634}}}
+{"epoch": 1, "lr": 0.001, "train_bce": 0.5038, "s": 278.8, "valid_brier": 0.15454, "valid_log_loss": 0.47018, "valid_n": 57189, "best": true}
+{"epoch": 2, "lr": 0.001, "train_bce": 0.47272, "s": 262.6, "valid_brier": 0.15259, "valid_log_loss": 0.46406, "valid_n": 57189, "best": true}
+{"epoch": 3, "lr": 0.001, "train_bce": 0.46618, "s": 263.3, "valid_brier": 0.152, "valid_log_loss": 0.46326, "valid_n": 57189, "best": true}
+{"epoch": 4, "lr": 0.001, "train_bce": 0.46228, "s": 256.2, "valid_brier": 0.14996, "valid_log_loss": 0.45769, "valid_n": 57189, "best": true}
+{"epoch": 5, "lr": 0.001, "train_bce": 0.45906, "s": 255.4, "valid_brier": 0.15241, "valid_log_loss": 0.46422, "valid_n": 57189}
+{"epoch": 6, "lr": 0.0005, "train_bce": 0.45218, "s": 265.7, "valid_brier": 0.14885, "valid_log_loss": 0.45444, "valid_n": 57189, "best": true}
+{"epoch": 7, "lr": 0.0005, "train_bce": 0.44996, "s": 282.0, "valid_brier": 0.1488, "valid_log_loss": 0.45396, "valid_n": 57189, "best": true}
+{"epoch": 8, "lr": 0.0005, "train_bce": 0.44838, "s": 268.4, "valid_brier": 0.14893, "valid_log_loss": 0.45425, "valid_n": 57189}
+{"epoch": 9, "lr": 0.00025, "train_bce": 0.44384, "s": 275.9, "valid_brier": 0.14855, "valid_log_loss": 0.45392, "valid_n": 57189, "best": true}
+{"epoch": 10, "lr": 0.00025, "train_bce": 0.44245, "s": 273.3, "valid_brier": 0.14878, "valid_log_loss": 0.45419, "valid_n": 57189}
+{"epoch": 11, "lr": 0.000125, "train_bce": 0.43969, "s": 283.3, "valid_brier": 0.14857, "valid_log_loss": 0.45372, "valid_n": 57189, "best": true}
+{"epoch": 12, "lr": 0.000125, "train_bce": 0.43879, "s": 264.0, "valid_brier": 0.14878, "valid_log_loss": 0.45354, "valid_n": 57189, "best": true}
+{"epoch": 13, "lr": 0.000125, "train_bce": 0.43816, "s": 263.7, "valid_brier": 0.14892, "valid_log_loss": 0.45437, "valid_n": 57189}
+{"epoch": 14, "lr": 6.25e-05, "train_bce": 0.4365, "s": 284.2, "valid_brier": 0.14876, "valid_log_loss": 0.45419, "valid_n": 57189}
+{"epoch": 15, "lr": 3.125e-05, "train_bce": 0.43554, "s": 264.3, "valid_brier": 0.14872, "valid_log_loss": 0.45394, "valid_n": 57189}
+{"epoch": 16, "lr": 1.5625e-05, "train_bce": 0.43498, "s": 265.2, "valid_brier": 0.14871, "valid_log_loss": 0.45435, "valid_n": 57189}
+{
+ "name": "pilot-rune-bot-g4",
+ "fit_s": 4481,
+ "epochs": 16,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.14834,
+   "log_loss": 0.44992,
+   "n": 546827
+  },
+  "mid": {
+   "brier": 0.1391,
+   "log_loss": 0.42546,
+   "n": 546501
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.15214,
+   "log_loss": 0.46172,
+   "n": 28555
+  },
+  "mid": {
+   "brier": 0.14543,
+   "log_loss": 0.44537,
+   "n": 28634
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.37723,
+   "log_loss": 1.09864,
+   "n": 28555
+  },
+  "mid": {
+   "brier": 0.35746,
+   "log_loss": 1.02457,
+   "n": 28634
+  }
+ },
+ "mid_rate": 0.290887
+}
