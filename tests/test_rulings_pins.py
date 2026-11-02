@@ -361,3 +361,88 @@ def test_c10n_zoe_takes_her_self_damage_after_the_chosen_mode(monkeypatch):
     apply(state, PlayCard(zoe.uid, (), (0,)))              # mode 1: 3 damage to all enemy followers
     assert calls[0] == ([enemy.uid], 3) and calls[-1] == ([zoe.uid], 3)   # the mode first, then the self-damage
     assert zoe.life == haven.ZOE.life - 3
+
+
+def test_c10r_sofina_evolved_by_galleon_at_end_of_turn_does_not_activate_that_turn():
+    from svsim.cards import haven as H
+    from helpers import unlock_evolution
+    state = start(first=0)
+    galleon = put(state, 0, H.GALLEON)
+    galleon.evolved = True                                 # so Galleon picks Sofina
+    sofina = put(state, 0, H.SOFINA)
+    enemy = put(state, 1, demo.SHIELDBEARER)               # 1/3
+    unlock_evolution(state, 0)
+    apply(state, EndTurn())                                # Galleon evolves Sofina at the end of the turn
+    assert sofina.evolved and (enemy.atk, enemy.life) == (1, 3)   # her own end-of-turn ability did not fire
+    apply(state, EndTurn())
+    apply(state, EndTurn())                                # her next turn end: now -1/-1 to all other followers
+    assert (enemy.atk, enemy.life) == (0, 2)
+
+
+def _test_card(card_id, name, ctype, cost=1, atk=0, life=0, traits=(), last_words=False):
+    from svsim.core.carddef import CardDef
+    from svsim.core.enums import Craft
+    from svsim.core.script import CardScript, has_script, register
+    defn = CardDef(card_id, name, Craft.NEUTRAL, ctype, cost, atk, life, traits=traits)
+    if not has_script(card_id):
+        body = {"last_words": (lambda self, ctx: None)} if last_words else {}
+        register(card_id)(type(f"Test{card_id}", (CardScript,), body))
+    return defn
+
+
+def _picks_of(make_state, act, picked, seeds=200):
+    """How often `picked(state)` is true over `seeds` runs of act(make_state(seed))."""
+    n = 0
+    for seed in range(seeds):
+        state = make_state(seed)
+        act(state)
+        n += bool(picked(state))
+    return n
+
+
+def test_c08_sublime_eld_tome_kandima_aika_and_zerk_pick_per_destruction_not_per_name():
+    from svsim.cards import haven, neutral, portal
+    from svsim.core.actions import PlayCard
+    from svsim.core.engine import resolve_queue
+    from svsim.core.enums import CardType
+    from helpers import give, set_pp
+    amulets = [_test_card(7598 + i, f"Test LW Amulet {i}", CardType.AMULET, last_words=True) for i in range(3)]
+    artifacts = [_test_card(7601 + i, f"Test Artifact {i}", CardType.FOLLOWER, 1, 1, 1, traits=("Artifact",))
+                 for i in range(2)]
+    common, rare = amulets[0], amulets[1:]
+    on_field = lambda s, d: any(c.defn.card_id == d.card_id for c in s.players[0].field)  # noqa: E731
+    in_hand = lambda s, d: any(c.defn.card_id == d.card_id for c in s.players[0].hand)     # noqa: E731
+
+    def fresh(seed, destroyed_amulets=(), destroyed=()):
+        state = start(seed=seed)
+        p = state.players[0]
+        p.hand.clear()
+        p.destroyed_amulets = list(destroyed_amulets)
+        p.destroyed = list(destroyed)
+        set_pp(state, 0, 10)
+        return state
+
+    def play(defn):
+        def act(state):
+            apply(state, PlayCard(give(state, 0, defn).uid))
+        return act
+
+    # Sublime Eld Tome, Last Words: one copy; the common amulet was destroyed 20 times, the other once
+    def tome_dies(state):
+        tome = put(state, 0, haven.SUBLIME_ELD_TOME)
+        E.destroy(state, tome)
+        resolve_queue(state)
+    n = _picks_of(lambda s: fresh(s, [common] * 20 + [rare[0]]), tome_dies, lambda s: on_field(s, common))
+    assert n >= 160                                        # per destruction ~182 (the Tome itself joins the pool); by name ~67
+    # Kandima, Fanfare: 2 differently named; the common one is almost always among them
+    n = _picks_of(lambda s: fresh(s, [common] * 20 + rare), play(haven.KANDIMA), lambda s: on_field(s, common))
+    assert n >= 185                                        # per destruction ~199; by name ~133
+    # Aika, Fanfare: a copy of a destroyed follower to the hand
+    others = [demo.SHIELDBEARER, demo.LANCER, demo.ANGEL, demo.ASSASSIN, demo.LEECH]
+    n = _picks_of(lambda s: fresh(s, destroyed=[demo.FOOTMAN] * 20 + others), play(neutral.AIKA),
+                  lambda s: in_hand(s, demo.FOOTMAN))
+    assert n >= 140                                        # per destruction ~160; by name ~33
+    # Zerk, Fanfare: a destroyed Artifact follower's name to the hand
+    n = _picks_of(lambda s: fresh(s, destroyed=[artifacts[0]] * 20 + [artifacts[1]]), play(portal.ZERK),
+                  lambda s: in_hand(s, artifacts[0]))
+    assert n >= 170                                        # per destruction ~190; by name ~100
