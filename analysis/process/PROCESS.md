@@ -173,3 +173,32 @@ of the architecture thread, and they are written into the files before the scrip
   0.9.
 - The merged script reproduces all four reported numbers within rounding: 0.7. A number that doesn't reproduce is
   reported as is, with the difference found.
+
+### Item 5 results (written after the code)
+
+- Library: `analysis/acceptance/` (f59c09f). Tiers frozen from g3's margins in 90d8db5, before any net was scored
+  here. The margins came from the architecture thread's `acc_margins.py`, 83fc1823 on claude/pilot-dfm.
+  - Item 2 (先锅后光) is marginal: |margin| under 0.10 on both branches.
+  - Items 1, 3 and 4 are clear. Item 4 is borderline: its g3 mid-turn margin is 0.103, and the sign flips between
+    branches under both g3 and g5.
+  - The bunny board is clear by Salem's reasoning, not by a net. Net scores on it are reference only until there is
+    a 主教 net.
+- Rebuild: the four replay positions were recorded once with the old recipe. Their fingerprints equal
+  prior_acceptance.py's logged ones on all four. Prediction 0.9: **TRUE**.
+- Reproduction (logs in `analysis/acceptance/logs/`). All within rounding, so the prediction at 0.7 is **TRUE**.
+
+  | model / evaluation | scoring | result | reported |
+  |---|---|---|---|
+  | net-pilot-rune-dfm-g3 | turn-end | 2/4 (clear 2/3, marginal 0/1) | 2/4 |
+  | net-pilot-rune-dfm-g3 | mid-turn | 3/4 (clear 3/3, marginal 0/1) | 3/4 |
+  | net-pilot-rune-dfm-g5 | turn-end | 2/4 | 2/4 |
+  | net-pilot-rune-dfm-g5 | mid-turn | 3/4 | 3/4 |
+  | prior-pilot-rune-dfm-ft-t05 | prior | 锅 before 光: 0.405 vs 0.234 (4/4 in all) | 0.405 vs 0.234 |
+  | prior2-pilot-rune-dfm-ft-t05 | prior | 4/4 (0.833/0.121, 0.624/0.184, 0.474/0.162, 0.201/0.044) | 4/4, the same numbers |
+  | hand-set | — | fails the bunny board: keep 3.390 < all 3.718 | 3.39 < 3.72 |
+
+  - The g3 and g5 per-item logits equal `acc-margins.log` to 3 decimals.
+  - The hand-set scores on the four rune items also equal it: 1.5/1.6, 2.1/2.1, 3.2/3.2, 0.062/2.560, all failing.
+- `tools.herogate` appends the library's line when the hero deck has positions and X names a net or a prior.
+- Tests: `tests/test_acceptance_lib.py`, 5 tests. Every stored position rebuilds to its fingerprint; a moved position
+  raises; the tally counts the tiers; the hand-set evaluation fails the bunny board.
