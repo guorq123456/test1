@@ -1,0 +1,20 @@
+条件：英雄 dfm/RUNE-ユーリ 对 1 套对手轮流（analysis/pilot/fields/bot-rune-only.txt）；每对 = 一副发牌，X 和基线各坐两边；对手卡表已知（牌序、手牌未知）
+X = mcts:30+plan+setnet=analysis/scaling/models/net-pilot-rune-dfm-g5.npz+netmid+netany+puct=analysis/scaling/models/prior2-pilot-rune-dfm-ft-t05.npz:2:1
+基线 = mcts:100+plan
+对手 = mcts:28+plan+setnet=analysis/scaling/models/net-pilot-rune-bot-g5.npz+netmid+netany+puct=analysis/scaling/models/prior2-pilot-rune-bot-ft-t05.npz:2:1
+BLAS 线程：OMP_NUM_THREADS=1，OPENBLAS_NUM_THREADS=1，MKL_NUM_THREADS=1
+  …25 对 67s
+  …50 对 136s
+  …75 对 203s
+  …100 对 280s
+  …125 对 357s
+  …150 对 425s
+  …175 对 498s
+  …200 对 576s
+  …225 对 656s
+  …250 对 735s
+  …275 对 815s
+  …300 对 890s
+300 对（X 600 局、基线 600 局）：英雄卡组 X 30.3% ± 3.5%，基线 8.3% ± 2.3%，配对差 +22.0% ± 3.6%（95% 区间 +18.4%～+25.6%）
+  对 bot/T3-RUNE-1：300 对 X 30.3%，基线 8.3%，差 +22.0% ± 3.6%
+英雄每步（搜索过的决定）CPU：X 49 ms，基线 41 ms，比 1.211

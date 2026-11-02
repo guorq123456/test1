@@ -1,2 +1,3 @@
 # measurement only: the hero dfm/RUNE-ユーリ against the bot's own 巫师 alone (both pilots trained the same way; analysis/pilot/ROUND2.md)
 bot/T3-RUNE-1|1.3.cH3E.cH3E.cfTu.cfTu.cfTu.eSAM.fC_M.fC_M.fC_M.fDXk.fDXk.fDXk.fKcs.fKpM.fKpM.fKpM.fKsU.fKsU.fKsU.fL2-.fL2-.fL2-.fikc.fikc.fikc.fink.fink.fi-E.fi-E.fi-E.fj1M.fj1M.fj1M.fjG-.fjG-.fjG-.fjTU.fjTU.fjTU.g5Rs
+dfm/RUNE-ユーリ|1.3.cH1g.cH1g.cH1g.cH3E.cH3E.cH3E.cfTu.cfTu.cfTu.eBpe.eBpe.eBpe.ey9E.ey9E.ey9E.eyCM.eyCM.eyCM.fKcs.fKpM.fKpM.fKpM.fKsU.fKsU.fKsU.f-LA.g5Ok.g5Ok.g5Ok.g5Rs.g5Rs.g5Rs.g5hU.g5hU.g5t-.g5t-.g5t-.g5u8.g5u8.g5u8

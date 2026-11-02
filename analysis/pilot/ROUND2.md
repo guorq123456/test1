@@ -49,3 +49,8 @@ this field). Direct test: the DFM round-2 arm (N 30) against the bot rune round-
 = bot/T3-RUNE-1 only (fields/bot-rune-only.txt), 300 pairs on 86048000, both seats. The baseline arm (DFM at
 mcts:100+plan) plays the same trained opponent.
 Prediction: the trained DFM 三轴土 wins at least 45% of the head-to-head games: 0.35.
+Result (02:2xZ): the trained DFM arm wins **30.3% ± 3.5** of 600 games against the trained bot rune arm (first 35.3%,
+second 25.3%); DFM at mcts:100+plan wins 8.3% against it. Prediction (at least 45%, 0.35): FALSE. With pilots trained
+the same way, the bot's own 巫师 beats DFM 三轴土 about 70-30 in this simulator. Per Salem's rule this indicts the pilot
+or the simulator before the deck: the 三轴土 pilot levelled off at this budget, and the loss games are written out for
+his review (analysis/pilot/watch_pilot.py; /mnt/project-files/shadowverse/watch-sanzhoutu-trained-2026-11-02.md).
