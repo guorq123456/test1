@@ -249,6 +249,8 @@ class WideSetNet(SetNet):
 
     # --- files ------------------------------------------------------------------------------------------------
     def save(self, path) -> None:
+        from svsim.learn import provenance          # the rules version it was trained on (process item 2)
+        provenance.ensure(self.info)
         arrays = {k: getattr(self, k) for k in self.PARAMS}
         arrays.update(smean=self.smean, sstd=self.sstd, card_ids=self.card_ids, static=self.static,
                       phi=np.array(self.phi), rho=np.array(self.rho), slope=np.array(0.0),

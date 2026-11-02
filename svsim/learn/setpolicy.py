@@ -628,6 +628,8 @@ class SetPolicy:
 
     # --- files ------------------------------------------------------------------------------------------------
     def save(self, path) -> None:
+        from svsim.learn import provenance          # the rules version it was trained on (process item 2)
+        provenance.ensure(self.info)
         arrays = {k: getattr(self, k) for k in self.PARAMS}
         arrays.update(smean=self.smean, sstd=self.sstd, card_ids=self.card_ids, static=self.static,
                       phi=np.array(self.phi), rho=np.array(self.rho), head=np.array(self.head),
@@ -658,6 +660,8 @@ def load_cached(path) -> SetPolicy:
     if pol is None:
         from svsim.learn.setnet import _file
         pol = _CACHE[key] = SetPolicy.load(_file(p))
+        from svsim.learn import provenance          # a warning line when its rules version is stale or unknown
+        provenance.check_loaded(p, pol.info)
     return pol
 
 
@@ -709,6 +713,8 @@ def fit_main(args) -> None:
     if args.prior:
         pol.info.update(train_decisions=train.n, valid_decisions=valid.n,
                         init_valid_ce=round(pol.cross_entropy(valid), 5))
+    from svsim.learn import provenance              # the rules version at training time (process item 2)
+    pol.info["provenance"] = provenance.stamp()
     t0 = time.time()
     pol.fit(train, valid, epochs=args.epochs, batch=args.batch, lr=args.lr, l2=args.l2, patience=args.patience,
             seed=args.seed, decay=args.decay, freeze=args.freeze, checkpoint=args.checkpoint, ftz=args.ftz)

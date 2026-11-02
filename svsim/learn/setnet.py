@@ -815,6 +815,8 @@ class SetNet:
 
     # --- files ------------------------------------------------------------------------------------------------
     def save(self, path) -> None:
+        from svsim.learn import provenance          # the rules version it was trained on (process item 2)
+        provenance.ensure(self.info)
         arrays = {k: getattr(self, k) for k in self.PARAMS}
         arrays.update(smean=self.smean, sstd=self.sstd, card_ids=self.card_ids, static=self.static,
                       phi=np.array(self.phi), rho=np.array(self.rho), slope=np.array(self.slope),
@@ -904,6 +906,8 @@ def load_cached(path, ftz: bool = False, clip: bool = False) -> SetNet:
     net = _CACHE.get(key)
     if net is None:
         net = _CACHE[key] = SetNet.load(_file(p))
+        from svsim.learn import provenance          # a warning line when its rules version is stale or unknown
+        provenance.check_loaded(p, net.info)
         if ftz:
             net.flush_subnormals()
         if clip:

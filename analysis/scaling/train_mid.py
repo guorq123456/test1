@@ -154,7 +154,8 @@ def main() -> None:
         base = SetNet.load(args.init)
     if base.inputs != "v1" or base.slope != 0.0 or base.ophand:
         raise SystemExit("the start has to be a v1 ReLU net without the opponent-hand zone")
-    info = {"deck": args.deck, "opponent": args.opponent, "flag": True, "inputs": "v1", "name": args.name,
+    from svsim.learn import provenance          # the rules version at training time (process item 2)
+    info = {"provenance": provenance.stamp(), "deck": args.deck, "opponent": args.opponent, "flag": True, "inputs": "v1", "name": args.name,
             "init": "fresh" if args.fresh else str(args.init),
             "init_sha256": None if args.fresh else hashlib.sha256(Path(args.init).read_bytes()).hexdigest(),
             "end_shards": end_seeds, "mid_shards": mid_seeds, "shards": sorted(set(end_seeds) | set(mid_seeds)),
