@@ -309,3 +309,5 @@ Condition: 对手卡表已知（牌序、手牌未知）. Gen-3 bank 86030000-86
   - By opponent: Forest +5.0, Sword +18.0, Rune +4.0, Dragon +10.0, Abyss +1.0, Haven +0.0.
 - **Equal CPU** (N 66): **X 75.8% ± 3.5%, paired +6.2% ± 4.3% (95% +1.9% to +10.5%)**; ratio 1.081.
   - By opponent: Forest +5.0, Sword +16.0, Rune +9.0, Dragon +8.0, Abyss -1.0, Haven +0.0.
+- On g3's deals at the same N 66: g2 X 75.8%, so **g3 − g2 = +0.0 ± 4.1**. The value net has levelled off; the move
+  prior step follows in PRIOR-PORTAL.md.

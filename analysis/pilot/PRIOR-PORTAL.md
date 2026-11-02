@@ -70,3 +70,12 @@ Seeds:
   - (D2) gain larger than DFM rune's +7.7 (0.4): **TRUE, narrowly**. +8.7 against +7.7 is well inside the noise.
 - The route so far for this hero (equal CPU, paired over the baseline): g1 −7.2, g2 +10.3, g3 +18.8, g3 + prior
   +27.5. The X score went 27.2% → 62.5% against the bot's six other decks.
+
+**Bot Portal.**
+- Init. g2 on g3's gate deals (bank 86031000) at N 66 (ratio 1.062): X 75.8%, baseline 69.7%. Paired with g3's own
+  N 66 row on the same 300 deals: 75.8% vs 75.8%, so **g3 − g2 = +0.0 ± 4.1**. That is ≥ 0, so the prior starts from
+  g3. The value-net generations have levelled off for this hero (as the rune heroes did at gen 3-4). Logs:
+  `logs/portal-bot/gate3bank-g2-n66.*`.
+- Fit: 574635 hero decisions (20 shards: the g2 and g3 self-play, 86003000 and 86030000), init net-pilot-portal-bot-g3,
+  `--tau 0.5 --ftz`. Validation cross entropy 1.4901 (epoch 1) → 1.4580 (epoch 29). It stopped on patience at epoch 33
+  → `prior-pilot-portal-bot-ft-t05.npz`, 59 min. Log `logs/portal-bot/prior-bot.log`.
