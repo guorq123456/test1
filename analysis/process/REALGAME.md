@@ -151,4 +151,65 @@ One position per Salem own turn 1 to 5, at the start of that turn.
 - The plan's: Salem marks at least 3 bot lines 「我绝对不会这么打」 〔0.8〕.
 - Mine: the 三轴土 bot (trained net + prior) agrees more often than the 兔子主教 bot (hand-set evaluator) 〔0.6〕.
 
+### Results (written after the run, 2026-11-02 12:5xZ; ledger F-17)
+
+Code: `realgame_6b.py` rebuilds the positions and runs the bot; `realgame_6b_table.py` writes the table for Salem. The
+table and the per-position results stay in /mnt/project-files/shadowverse/salem-games/realgame-6b-2026-11-02.md.
+
+Deviations from the registration, all made before the full run was read:
+- **Games.** 28 reliable games, not 27: after the tracker's re-parse, game 38 has no turn-number warning.
+- **Mulligan.** No card-by-card rule could tell kept from returned cards. The replacements are found by timing: the
+  cluster of Salem's hand events within 1 s of each other, before his first turn starts. The kept set is then any
+  subset of the opening four that is consistent with the replacement count and with his later plays. A turn with more
+  than one consistent hand is dropped.
+- **Drawn and played at once.** When a card is played without having entered his hand, the reveal just before the
+  play counts as the draw.
+- **Decision time.** The position is taken just before his first action of the turn, not at the turn start, so the
+  turn's draw is in hand.
+- **Turns without plays.** A turn where he played nothing is dropped, since there is no line to compare.
+- **Opponent list.** The reference list with the opp_deck label; otherwise the class's first list.
+- **Replay.** Attacks are not replayed. Plays and evolves are replayed with random targets, so a follower can die to a
+  replayed spell. A card the engine would not let him afford gets its PP forced, and forced PP, unplayable cards and
+  skipped evolves are counted per position.
+- **Seeds.** Seed bank 86300000 + 100 x game + turn, one bot run per position.
+- **Agreement key.** A first version dropped created cards from the key. It was changed back to the registered rule:
+  created cards count, and an alternate form counts as its base card. This moved agreement from 30/86 to 28/86.
+- **Seen early.** Games 13 and 41 were looked at in a test run before the full run.
+
+Counts:
+- 140 turns in the 28 games. 86 were rebuilt. Dropped: 34 with more than one possible mulligan, 15 with no play, and 5
+  in one game whose opening was not four cards.
+- 19 games give at least one position: 63 兔子主教 positions and 23 三轴土 positions.
+- Agreement: 28/86 (33%). 兔子主教 20/63 (32%), 三轴土 8/23 (35%).
+- Agreement by turn: T1 2/14, T2 6/16, T3 12/18, T4 6/19, T5 2/19.
+- Secondary measure (same first card): 33/86.
+- The 58 divergences:
+  - the bot plays different cards: 35;
+  - the bot plays nothing: 9;
+  - the bot plays a subset of his cards: 8;
+  - the bot plays a superset: 4;
+  - the same cards with a different evolve target: 2.
+- Positions where the replay deviated (forced PP, unplayable card, skipped evolve): 7. One of them agrees.
+
+The clearest pattern is on turn 1:
+- The 兔子主教 bot (hand-set evaluator) passes 7 times where Salem plays the 1-cost 羽翼石像 or a crystallized 奇迹独角兔.
+- In games 9, 17 and 26 the legal actions were listed: the 1-cost play is legal each time, and the bot picks EndTurn.
+- So this is the evaluator's choice, not a simulator gap. A guess, not checked: the hand-set evaluator values a card in
+  hand above a 1-cost amulet or crystal on board.
+- The 三轴土 bot plays 解谜旋律 or 暴食的零嘴 on turn 1 where Salem plays 智慧光辉 (2 games).
+
+Predictions:
+- Agreement under 70% (0.6): TRUE, 33%.
+- Salem marks at least 3 bot lines 「我绝对不会这么打」 (0.8): waits for his verdicts on sections 1 and 2 of the table
+  (24 rows).
+- The 三轴土 bot agrees more often than the 兔子主教 bot (0.6): TRUE by point estimate, 35% vs 32%. With 23 and 63
+  positions this is well within noise, so it is not evidence for the trained net.
+
+Limits:
+- The opponent's list is a guess from the archetype reference. Salem's list is the DFM list, not necessarily his 40.
+- Boards ignore combat, so from turn 2 on, positions with opponent followers can differ a lot from the real game. The
+  table therefore asks for verdicts only on turn 1 and on clean turns, meaning no replay deviation and no opponent
+  follower.
+- The bot runs once per position, so a close choice can flip on the seed.
+
 ## 6c: opponent weighting (waits for 50 games)
