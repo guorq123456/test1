@@ -214,6 +214,20 @@ def bank_lines(seed: int, count: int, bank: str | None, timing: bool) -> list:
     return [s for s in (sel, con) if s]
 
 
+def pending_rulings_line(path=None) -> str:
+    """The template's 未决裁定 line: every row of docs/rulings.md whose 依据 column (the 4th) starts with 「未决」, as
+    「R-01 回合上限」; 「无」 when there are none. A plain table read (the architecture thread 2026-11-02 10:15Z)."""
+    p = Path(path) if path else ROOT / "docs" / "rulings.md"
+    if not p.exists():
+        return "未决裁定：（docs/rulings.md 不在）"
+    rows = []
+    for line in p.read_text(encoding="utf-8").splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")] if line.startswith("|") else []
+        if len(cells) >= 4 and cells[3].startswith("未决"):
+            rows.append(f"{cells[0]} {cells[1]}")
+    return "未决裁定：" + ("，".join(rows) if rows else "无")
+
+
 # --- backfill and list ------------------------------------------------------------------------------------------
 
 def training_commit(path: Path, info: dict | None) -> tuple:

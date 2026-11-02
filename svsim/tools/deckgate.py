@@ -223,10 +223,11 @@ def main() -> None:
     print(f"条件：{len(field)} 套卡组（{args.field}）的 {len(order)} 个非镜像有序对局轮流；每对 = 一副发牌，"
           f"X 打 a 对 Y 打 b、Y 打 a 对 X 打 b，各坐两边（4 局）；{CONDITION}", flush=True)
     print(f"X = {args.x}\nY = {args.y}", flush=True)
-    from svsim.learn.provenance import bank_lines, guard, simulator_line
+    from svsim.learn.provenance import bank_lines, guard, pending_rulings_line, simulator_line
     print(simulator_line(args.x, args.allow_stale), flush=True)      # the gate report template's fixed lines
     for line in bank_lines(args.seed, count, args.bank, bool(args.time)):
         print(line, flush=True)
+    print(pending_rulings_line(), flush=True)
     guard([args.x, args.y], args.allow_stale, out=lambda s: print(s, flush=True))  # stale stops the gate
     print("BLAS 线程：" + "，".join(f"{k}={os.environ.get(k, '未设')}" for k in
                                   ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")), flush=True)

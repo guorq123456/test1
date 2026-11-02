@@ -146,3 +146,14 @@ def test_gate_report_lines_name_the_simulator_and_the_seed_banks(tmp_path):
     assert P.bank_lines(86036000, 300, "confirm", False) == ["挑选种子库：本次未用", "确认种子库：86036000–86036299（本次）"]
     assert P.bank_lines(86036900, 24, None, True) == ["挑选种子库：86036900–86036923（本次）", "确认种子库：本次未用"]
     assert "未标明" in P.bank_lines(1, 2, None, False)[0]
+
+
+def test_pending_rulings_line_lists_rows_whose_basis_starts_with_undecided(tmp_path):
+    doc = tmp_path / "rulings.md"
+    doc.write_text("| 编号 | 对象 | 现在的实现 | 依据 | 钉住 | 测试 |\n|---|---|---|---|---|---|\n"
+                   "| R-01 | 回合上限 | x | 未决：初代 | 部分 | t |\n| R-02 | 进化点 | x | 推断 | 部分 | t |\n"
+                   "| R-09 | 合并 | x | 未决 | 否 | t |\n", encoding="utf-8")
+    assert P.pending_rulings_line(doc) == "未决裁定：R-01 回合上限，R-09 合并"
+    doc.write_text("| R-02 | 进化点 | x | 推断 | 部分 | t |\n", encoding="utf-8")
+    assert P.pending_rulings_line(doc) == "未决裁定：无"
+    assert P.pending_rulings_line() == "未决裁定：R-01 回合上限"            # the register as it stands today
