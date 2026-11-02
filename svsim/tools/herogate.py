@@ -109,6 +109,25 @@ def time_match(n: int, ratio: float) -> int:
     return n if 0.97 <= ratio <= 1.03 else max(1, round(n / ratio))
 
 
+def acceptance_line(x_spec: str, hero: str):
+    """The acceptance library's pass rates for the hero deck under X's net and prior (analysis/acceptance, process
+    item 5), or None when the hero has no positions or X names neither; never stops a gate."""
+    import re
+    net = re.search(r"(?:^|\+)setnet=([^+]+)", x_spec)
+    prior = re.search(r"(?:^|\+)puct=([^+:]+)", x_spec)
+    if not (net or prior):
+        return None
+    try:
+        import sys
+        folder = Path(__file__).resolve().parents[2] / "analysis" / "acceptance"
+        if str(folder) not in sys.path:
+            sys.path.insert(0, str(folder))
+        from run import summary_line
+        return summary_line(net.group(1) if net else None, prior.group(1) if prior else None, deck=hero)
+    except Exception as e:                       # the library is a report, not a gate condition
+        return f"验收库：没能运行（{e!r}）"
+
+
 class _InProcess:
     def __enter__(self):
         return self
@@ -172,6 +191,9 @@ def main() -> None:
     results = [done[k] for k in sorted(done) if k < count]
     for line in report(results, labels):
         print(line, flush=True)
+    acceptance = acceptance_line(args.x, args.hero)
+    if acceptance:
+        print(acceptance, flush=True)
     if args.time:
         ratio = cpu(results, "x") / max(cpu(results, "base"), 1e-12)
         n = budget(args.x)
