@@ -22,3 +22,14 @@ Predictions:
 - Bot round 2 beats bot round 1 by at least +3 points: 0.4.
 - The gap between the two (each on its own deals) narrows by at least 3 points: 0.45.
 The DFM hero runs first (it is the measurement target); the bot hero after it, in the same container.
+
+## Results
+
+DFM (01:1xZ 2026-11-02):
+- Self-play with the round-1 arm: hero 29.2% (round 1's own gate on other deals: 31.2%).
+- g5: fresh on 50 shards, best epoch about 12 of 15 (valid log loss 0.3596). Prior 2: 35 epochs (one 2 h stop,
+  resumed from its checkpoint), valid CE 1.3251.
+- Time match 2.451 -> N 41; gate N 41: 33.3 vs 5.3 (ratio 1.347); equal-CPU rerun N 30: **34.7%**, ratio 1.129
+  (round 1's N 31 row: 1.124). Paired with round 1 on the same deals: **+3.5 ± 3.8** (N 41: +2.2 ± 3.8).
+- Prediction "at least +3" (0.5): the point estimate clears it, the interval does not exclude 0: a small gain at
+  best. By opponent (round 2 / round 1): 龙族 73/72, 主教 47/50, 精灵 36/27, 梦魇 19/14, 超越者 17/10, 皇家护卫 16/14.
