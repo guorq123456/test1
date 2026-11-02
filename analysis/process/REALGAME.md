@@ -212,4 +212,57 @@ Limits:
   follower.
 - The bot runs once per position, so a close choice can flip on the seed.
 
+### Prediction 2 withdrawn (2026-11-02 23:35Z)
+
+Salem declined to mark the table. His reason: he often can't judge the bot's choice in these positions, because his own
+earlier turns already differ from what the bot would have played.
+- The prediction (at least 3 rows marked 「我绝对不会这么打」) is withdrawn, not scored.
+- My mistake: a standing rule from 2026-10-07 already said not to send him per-item tables to mark. Single decisions
+  are not adjudicated, by him or by Claude; only aggregate statistics over rule-based categories count.
+
+### Part 2: play both lines out (pre-registered 2026-11-02 23:5xZ, before any rollout is read)
+
+The question changes from "would Salem play the bot's line" to this: in the same position, which set of cards wins more
+when the same pilot plays the rest of the game?
+
+**Method.** Script: `realgame_6b_roll.py`. For each of the 58 divergent positions, and for each of K = 40 seeds:
+1. Rebuild the position with that seed. Salem's remaining deck order and the opponent's hidden cards change with it.
+2. Branch "salem": force his cards and evolves in his order. Branch "bot": force the bot's cards and evolves from the
+   6b run, in its order.
+3. When a forced play has several modes or targets, take the one the hand-set evaluator scores best right after it.
+4. The bot then attacks for Salem, with his hand, evolve points and bonus PP set aside, so neither branch adds cards.
+5. Both sides finish the game with bots. Salem's side uses the 6b pilot for his deck. The opponent uses mcts:100+plan.
+
+**Scoring.**
+- A pair (same seed, both branches) scores Salem's result minus the bot's: +1, 0 or −1.
+- Each position's score is the mean of its 40 pairs.
+- Each category's score is the mean over its positions. Its standard error is computed over positions, not pairs.
+- Seeds: 86400000 + 10000 × game + 1000 × turn + k, the range 86400000–86899999.
+
+**Categories.** Fixed now, from the lines only, by turn (1, or 2 to 5) and by how the bot's cards and evolves relate
+to Salem's:
+- turn 1, the bot plays nothing: 7 positions;
+- turn 1, different cards: 5;
+- turns 2–5, the bot plays nothing: 2;
+- turns 2–5, the bot plays a subset of his cards: 8;
+- turns 2–5, the bot plays a superset: 4;
+- turns 2–5, different cards: 32.
+
+**Biases, stated before the run.**
+- Both branches are continued by the bot. A line that needs Salem's plan on later turns is judged by how the bot
+  follows it up, which favours the bot's own line.
+- Targets and modes in Salem's line are the evaluator's choice, not his.
+- Boards ignore combat before the position, and the opponent's list is a guess from the archetype reference.
+
+**Predictions.**
+- H1: in "turn 1, the bot plays nothing", Salem's line scores above 0, by more than 2 standard errors 〔0.7〕.
+- H2: over all 58 positions, each weighted equally, Salem's line scores at least 0 〔0.65〕. The bias above points
+  the other way. The prior for a pro list played by its expert pilot is strong.
+- No prediction for the other categories. They are reported as they come.
+
+**Meaning, fixed now.**
+- H1 true: the hand-set evaluator's turn-1 pass is a measured blind spot. Turn-1 cheap plays become an acceptance
+  category. Nothing is installed from this.
+- H1 false: the pass is not shown to cost games under this pilot. It stays a divergence, not a defect.
+
 ## 6c: opponent weighting (waits for 50 games)
