@@ -74,6 +74,78 @@ compared with the current rules:
 - Mine: at least the Portal pair's models pass it (the 6 Portal nets and 2 priors, all trained after the last
   rules-file commit), 0.7.
 
-## Item 5: one acceptance library
+## Item 5: one acceptance library (pre-registered before any code, 2026-11-02 ~10:20Z)
 
-(pre-registered before its code; to follow)
+The plan's section 5, as the architecture thread quoted it at 09:56Z:
+- One directory holds Salem's 4 replay points, the 11-01 bunny board, and every position from future replay reviews.
+- One script runs any net and any prior over all of them and prints the pass rate.
+- Each generation's gate report appends the pass rate.
+- Two tiers: clear items and marginal items (margins of 0.04-0.08). Marginal pass rates are noisy and never gate
+  alone.
+
+### What gets built
+
+**`analysis/acceptance/positions/<id>.json`, one file per position.** Each file holds:
+- the side to judge, its deck, and the opponent's deck, as deck codes in the file;
+- how to rebuild the position;
+- the fingerprint: the side's hand ids, field ids, pp and leader hp;
+- Salem's line and reason, in his words where they exist, and the line he calls wrong;
+- the scorings that apply: turn-end, mid-turn, prior first step, hand-set evaluation;
+- the tier: clear or marginal.
+
+**Rebuilding is from the engine only.**
+- A replay position stores the deal seed and which side goes first, and the full action list up to the position.
+- The action list is recorded once, by replaying the old recipe (mcts:100+plan from the deal, as acceptance.py does)
+  with the current engine. After that the rebuild applies the stored actions; no search runs. A change to search or
+  evaluation no longer moves the position.
+- A rebuild whose fingerprint differs from the stored one is an error: the item is not scored.
+- The bunny board is built by hand (salem_board_2026_11_01.py sets the zones directly), so its file names that
+  builder and stores its fingerprint.
+
+**Scorings.** A line is a list of action descriptions applied in order.
+- Turn-end: the net's turn-end score after the line and the end of the turn.
+- Mid-turn: the net's mid-turn branch on the state right after the line.
+- Hand-set evaluation: search.evaluate after the end of turn, as acceptance.py does.
+- In each of these, an item passes when Salem's line scores above every wrong line. The score is the mean over 40
+  reseeded copies, as acceptance.py does, so random effects average out.
+- Prior: the prior's probability of the first step of Salem's line against the first step of the wrong line
+  (prior_acceptance.py's rule; item 1's wrong line is ending the turn).
+- The bunny board uses only the hand-set evaluation for now.
+
+**One script: `analysis/acceptance/run.py [--net PATH] [--prior PATH] [--deck LABEL]`.**
+- It prints each item, then the pass rate per scoring and per tier.
+- `herogate` prints the same line at the end of a gate when the hero deck has positions and the X spec names a net or
+  a prior.
+
+**Inputs.**
+- The deck lists come from claude/deck-search (dfm-2026-10-31.txt, league5/roster.txt). Only the lines needed go into
+  the position files; no list file is copied.
+- The models are net-pilot-rune-dfm-g3, prior-pilot-rune-dfm-ft-t05 and the round-2 prior. They are asked of the
+  architecture thread; they are not on any branch yet.
+
+### Acceptance (the plan's)
+
+- The two existing scripts (acceptance.py and prior_acceptance.py) merge into one.
+- The merged script reproduces the reported numbers:
+  - 三轴土 g3: turn-end 2/4, mid-turn 3/4;
+  - prior-pilot-rune-dfm-ft-t05 passes 锅 before 光 (0.405 vs 0.234);
+  - the round-2 prior passes all four;
+  - the hand-set evaluation fails the bunny board (keep 3.39 < all 3.72).
+- The fingerprints of the four replay positions match prior_acceptance.py's printed fingerprints.
+- Unit tests:
+  - a stored position rebuilds to its fingerprint;
+  - a changed fingerprint is reported, not scored;
+  - the tier split is counted correctly.
+
+### Tiers (fixed before any score is computed here)
+
+An item is marginal when the reference value net's margin between Salem's line and the wrong line was under 0.10 on
+the scale the plan uses. The plan's marginal items have margins of 0.04-0.08 under g2. Which items those are is asked
+of the architecture thread, and they are written into the files before the script runs any net.
+
+### Predictions (before any code)
+
+- The four replay positions rebuild by the stored action lists to the same fingerprints the old recipe gives today:
+  0.9.
+- The merged script reproduces all four reported numbers within rounding: 0.7. A number that doesn't reproduce is
+  reported as is, with the difference found.

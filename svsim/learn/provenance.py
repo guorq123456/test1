@@ -107,6 +107,9 @@ def status(info: dict | None) -> tuple:
     return "stale", changed
 
 
+# what the plan calls them: a stale model is 「待复测」 (to be re-measured)
+LABEL = {"current": "current", "stale": "待复测 (stale)", "未登记": "未登记"}
+
 _WARNED: set = set()
 
 
@@ -168,7 +171,7 @@ def guard(specs, allow_stale: bool = False, out=print) -> list:
                 stale.append(m)
     for m, st, changed in rows:
         extra = f"，{len(changed)} 个规则文件已改" if st == "stale" else ""
-        out(f"模型规则版本：{Path(m).name} {st}{extra}")
+        out(f"模型规则版本：{Path(m).name} {LABEL.get(st, st)}{extra}")
     if stale and not allow_stale:
         raise SystemExit(f"模型与当前规则不符：{', '.join(Path(m).name for m in stale)}"
                          "（--allow-stale 可放行，并记入输出）")
@@ -266,7 +269,7 @@ def main() -> None:
         rows = list_models(_resolve(args.dir))
         for name, commit, st, changed in rows:
             tail = f"  changed: {', '.join(changed)}" if changed else ""
-            print(f"{name}\t{commit}\t{st}{tail}")
+            print(f"{name}\t{commit}\t{LABEL.get(st, st)}{tail}")
         counts = {s: sum(1 for r in rows if r[2] == s) for s in ("current", "stale", "未登记")}
         print(f"# {len(rows)} models: " + ", ".join(f"{k} {v}" for k, v in counts.items()) + f"; rules hash {current()[0][:16]}")
     else:
