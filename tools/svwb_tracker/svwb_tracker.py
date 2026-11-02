@@ -78,11 +78,15 @@ def card_class(cid):
 
 
 def lookup(cards, cid):
-    """卡表里找名字：原 ID → 7 开头的异画换成 1 开头 → 末位换成 0（版本位）。"""
+    """卡表里找名字：原 ID → 7 开头的异画换成 1 开头 → 末位 3 换成 2 → 末位换成 0。
+    末位：0 本体、1 本体的异画、2 结晶/加速这类替代形态（费用和本体不同）、3 替代形态的异画。
+    所以末位 3 要先折到 2（同一形态、同费用），折不到再退到 0；直接折到 0 会把 1 费的结晶显示成 3 费的本体。"""
     s = str(cid)
     cands = [s]
     if s.startswith("7"):
         cands.append("1" + s[1:])
+    if s.endswith("3"):
+        cands += [c[:-1] + "2" for c in list(cands)]
     cands += [c[:-1] + "0" for c in list(cands)]
     for c in cands:
         if c in cards:
@@ -101,6 +105,52 @@ def base_id(cid):
     if s.startswith("7"):
         s = "1" + s[1:]
     return s[:-1] + "0" if len(s) == 8 else s
+
+
+def calibrate_turns(g, moves, my_turns, opp_turns):
+    """用结算记录的双方回合数核对数出来的回合数，能解释的差异写进 notes，坐实的偏差改掉，其余报警。返回改后的 (my_turns, opp_turns)。
+    一方少数 1 回合有两种常见原因：
+      (a) 局在他的回合里结束、而他最后一回合只攻击没出牌/进化——回合号本身没错，只是最后一回合没数到（11-01 第 12、26 局）；
+      (b) 他第 1 回合没有任何看得到的动作，程序从他第 2 回合的第一手开始数——他所有的回合号都少 1（11-01 第 38 局双方都是）。
+    (b) 用进化时机坐实：进化比规则允许的最早回合（先手第 5/第 7，后手第 4/第 6；先后手不明时按 4/6）还早，就把这一方回合号加 1。
+    多算了、少 2 以上、少 1 但两条都解释不了的，只报警不改。同职业局动作归属不可靠，只报警。"""
+    if not g["report"] or g["partial"]:
+        return my_turns, opp_turns
+    at, ot = g["report"]["ally_turn"], g["report"]["oppo_turn"]
+    explained_final = set()
+    if not g.get("mirror"):
+        rep_first = True if at == ot + 1 else False if ot == at + 1 else g["first"]
+        final_side = "me" if at > ot else "opp" if ot > at else (("opp" if rep_first else "me") if rep_first is not None else None)
+        last_side = moves[-1]["side"] if moves else None
+        shifted = []
+        for side_key, label in (("me", "我方"), ("opp", "对手")):
+            d = (at - my_turns) if side_key == "me" else (ot - opp_turns)
+            if d != 1:
+                continue
+            if side_key == final_side and last_side is not None and last_side != side_key:
+                explained_final.add(side_key)
+                g["notes"].append("%s最后一回合只攻击没出牌，按动作数就少数了 1 回合；回合号本身没错" % label)
+                continue
+            side_first = ((side_key == "me") == rep_first) if rep_first is not None else None
+            lim_evo, lim_super = (5, 7) if side_first else (4, 6)
+            early = any(m["side"] == side_key and ((m["kind"] == "进化" and m["turn"] < lim_evo) or (m["kind"] == "超进化" and m["turn"] < lim_super))
+                        for m in moves)
+            if early:
+                for m in moves:
+                    if m["side"] == side_key:
+                        m["turn"] += 1
+                shifted.append(label)
+        if "我方" in shifted:
+            my_turns += 1
+        if "对手" in shifted:
+            opp_turns += 1
+        if shifted:
+            g["notes"].append("%s第 1 回合没有看得到的动作，回合号少数了 1：按结算记录的回合数（我 %d / 对手 %d）和进化时机，把%s回合号加了 1"
+                              % ("、".join(shifted), at, ot, "、".join(shifted)))
+    bad = [sk for sk in ("me", "opp") if ((at - my_turns) if sk == "me" else (ot - opp_turns)) != 0 and not (sk in explained_final)]
+    if bad:
+        g["warnings"].append("按动作数出来的回合数（我 %d / 对手 %d）和结算记录（我 %d / 对手 %d）不一致，表里的回合号可能有偏差" % (my_turns, opp_turns, at, ot))
+    return my_turns, opp_turns
 
 
 def is_token(cards, cid):
@@ -310,7 +360,7 @@ def analyze(game, cards, my_decks, archetypes, cfg):
         "my_skin": None, "opp_skin": None, "my_cls": None, "opp_cls": None,
         "first": None, "first_why": "", "my_turns": 0, "opp_turns": 0,
         "my_hand0": [], "my_seen": [], "opp_seen": [], "moves": [], "report": None, "scene": None,
-        "warnings": [], "partial": bool(game.get("partial")), "rank_up": False, "group_promotion": False,
+        "warnings": [], "notes": [], "partial": bool(game.get("partial")), "rank_up": False, "group_promotion": False,
     }
     # 1) 皮肤：class_#### 的 ally 字段可信；vs_#### 的不可信
     for x in ev:
@@ -607,6 +657,9 @@ def analyze(game, cards, my_decks, archetypes, cfg):
             opp_turns += 1
             g["my_turns"], g["opp_turns"] = my_turns, opp_turns
             g["warnings"].append("双方第 1 回合都打出了 2 费以上的牌：开局两个回合都没数到，双方回合号各加了 1")
+    # 结算记录的回合数核对（见 calibrate_turns）
+    my_turns, opp_turns = calibrate_turns(g, moves, my_turns, opp_turns)
+    g["my_turns"], g["opp_turns"] = my_turns, opp_turns
     # 费用线索：一方在第 k 回合打出的牌原费高于 k。巫师的法术增幅减费、龙族的跳费都会让它误报，所以只当线索，不当警告
     g["hints"] = []
     if not g["partial"]:
@@ -618,9 +671,6 @@ def analyze(game, cards, my_decks, archetypes, cfg):
                 if info and info.get("cost") is not None and m["turn"] and info["cost"] > m["turn"]:
                     g["hints"].append("%s第 %d 回合打出 %d 费的「%s」" % (label, m["turn"], info["cost"], info["zh"]))
                     break
-    if g["report"] and not g["partial"] and (g["report"]["ally_turn"], g["report"]["oppo_turn"]) != (my_turns, opp_turns):
-        g["warnings"].append("按动作数出来的回合数（我 %d / 对手 %d）和结算记录（我 %d / 对手 %d）不一致，表里的回合号可能有偏差"
-                             % (my_turns, opp_turns, g["report"]["ally_turn"], g["report"]["oppo_turn"]))
     # 进化回合核对先后手：后手从自己的第 4 回合起能进化、第 6 回合起能超进化；先手要等到第 5 / 第 7 回合。
     # 谁在第 4 回合进化（或第 6 回合超进化）了，谁就是后手。这条是规则，比抽牌顺序可靠，所以不一致时以它为准。
     if not g["partial"]:
@@ -972,6 +1022,8 @@ def write_outputs(games, cards, out_dir, season):
             meta.append("这局开头没存到（存档程序启动前的部分丢了），回合号从存到的地方数起")
         if g["warnings"]:
             meta.append("注意：" + "；".join(g["warnings"]))
+        if g.get("notes"):
+            meta.append("说明：" + "；".join(g["notes"]))
         if g.get("hints"):
             meta.append("费用线索（巫师减费、龙族跳费会误报）：" + "；".join(g["hints"]))
         lines.append("- " + "；".join(meta))
