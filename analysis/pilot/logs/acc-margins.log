@@ -1,0 +1,36 @@
+hand-set (default evaluator, its own score scale)
+  第一局第3回合：零嘴做4土 > 空过 salem +1.5000 bot +1.6000 margin -0.1000 fail
+  第二局第3回合：先锅后光 > 先光后 salem +2.1000 bot +2.1000 margin +0.0000 fail
+  第三局第4回合：先打物证再启动 >  salem +3.2000 bot +3.2000 margin +0.0000 fail
+  第一局第7回合：琪可打骑士+魔弹 > salem +0.0619 bot +2.5600 margin -2.4981 fail
+net-pilot-rune-dfm-g2.npz turn-end logit
+  第一局第3回合：零嘴做4土 > 空过 salem -4.0048 bot -4.0777 margin +0.0729 PASS
+  第二局第3回合：先锅后光 > 先光后 salem -4.9831 bot -4.9154 margin -0.0677 fail
+  第三局第4回合：先打物证再启动 >  salem -5.3557 bot -5.4022 margin +0.0465 PASS
+  第一局第7回合：琪可打骑士+魔弹 > salem -5.0545 bot -5.0039 margin -0.0506 fail
+net-pilot-rune-dfm-g2.npz mid-turn logit
+  第一局第3回合：零嘴做4土 > 空过 salem -3.8259 bot -3.7774 margin -0.0485 fail
+  第二局第3回合：先锅后光 > 先光后 salem -4.6942 bot -4.6565 margin -0.0377 fail
+  第三局第4回合：先打物证再启动 >  salem -4.9331 bot -4.9767 margin +0.0436 PASS
+  第一局第7回合：琪可打骑士+魔弹 > salem -4.7150 bot -4.6341 margin -0.0809 fail
+net-pilot-rune-dfm-g3.npz turn-end logit
+  第一局第3回合：零嘴做4土 > 空过 salem -2.4367 bot -2.7526 margin +0.3159 PASS
+  第二局第3回合：先锅后光 > 先光后 salem -3.3417 bot -3.2705 margin -0.0712 fail
+  第三局第4回合：先打物证再启动 >  salem -4.2681 bot -4.4444 margin +0.1763 PASS
+  第一局第7回合：琪可打骑士+魔弹 > salem -4.8713 bot -4.7242 margin -0.1470 fail
+net-pilot-rune-dfm-g3.npz mid-turn logit
+  第一局第3回合：零嘴做4土 > 空过 salem -2.4990 bot -2.7143 margin +0.2153 PASS
+  第二局第3回合：先锅后光 > 先光后 salem -3.1096 bot -3.0844 margin -0.0251 fail
+  第三局第4回合：先打物证再启动 >  salem -3.8523 bot -4.0209 margin +0.1686 PASS
+  第一局第7回合：琪可打骑士+魔弹 > salem -4.0095 bot -4.1122 margin +0.1027 PASS
+net-pilot-rune-dfm-g5.npz turn-end logit
+  第一局第3回合：零嘴做4土 > 空过 salem -1.2514 bot -2.1702 margin +0.9189 PASS
+  第二局第3回合：先锅后光 > 先光后 salem -2.2668 bot -2.1494 margin -0.1174 fail
+  第三局第4回合：先打物证再启动 >  salem -3.9331 bot -4.2071 margin +0.2740 PASS
+  第一局第7回合：琪可打骑士+魔弹 > salem -4.9729 bot -4.9369 margin -0.0360 fail
+net-pilot-rune-dfm-g5.npz mid-turn logit
+  第一局第3回合：零嘴做4土 > 空过 salem -1.4147 bot -2.0204 margin +0.6057 PASS
+  第二局第3回合：先锅后光 > 先光后 salem -2.0781 bot -1.9333 margin -0.1449 fail
+  第三局第4回合：先打物证再启动 >  salem -3.6862 bot -3.8341 margin +0.1479 PASS
+  第一局第7回合：琪可打骑士+魔弹 > salem -3.9840 bot -4.6685 margin +0.6845 PASS
+过  Salem 2026-11-01 兔子教盘面：不撞 > 全撞（analysis/scaling/models/net-pilot-rune-dfm-g3.npz）：不撞 1.923，全撞 0.224
