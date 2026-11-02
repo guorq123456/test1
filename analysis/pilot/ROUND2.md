@@ -65,3 +65,7 @@ Test: the rune head-to-head again on the same 300 deals (86048000), both trained
 (DFM N 120, bot N 112), paired with the N 30/28 run.
 Prediction: the trained DFM 三轴土 gains at least 5 points over its 30.3%: 0.35 (precedent: deeper play did not change
 deck rankings with the hand-set evaluation; trained nets may differ).
+Result (04:2xZ): 32.5% ± 3.5 (first 36.0, second 29.0); paired with the N 30/28 run on the same deals +2.2 ± 3.5.
+Prediction (at least +5, 0.35): FALSE. More search for both sides does not move this matchup: whatever holds the
+trained 三轴土 back here is not search budget at decision time (left: the trained nets themselves, the simulator, or
+this one matchup).
