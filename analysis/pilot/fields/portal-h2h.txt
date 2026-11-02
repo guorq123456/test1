@@ -1,0 +1,3 @@
+# Portal head to head (the architecture thread 2026-11-02 03:36Z): dfm/PORTAL-MingiGod (EXTERNAL, measurement only) and bot/T1-PORTAL-1, the lines as in dfm-portal-vs-bot6.txt and bot-frozen7.txt
+dfm/PORTAL-MingiGod|1.7.cR2I.cR2I.eShA.eShA.f6PU.fUp-.fUp-.fUq8.fUq8.fUq8.ftEe.ftEe.ftEe.fzqM.fzqM.fzqM.f-5Y.f-LA.f-LA.f-LA.gEw6.gEw6.gEw6.gF9k.gF9k.gF9k.gFCs.gFCs.gFPM.gFPM.gFPM.gFSU.gFSU.gFSU.gFe-.gFe-.gFe-.gFf8.gFf8.gFf8
+bot/T1-PORTAL-1|1.7.eLN-.eLN-.eLN-.eLae.eLae.eLae.ejlM.ejlM.ejlM.ej--.ej--.ej--.er5g.f5gc.f5jk.f5jk.f5jk.f5wE.f5wE.f5wE.f69s.f69s.f69s.f6PU.f6PU.f6PU.f6Pe.f6Pe.f6Pe.fUp-.fUp-.fUp-.fUq8.fUq8.fUq8.ftEe.ftEe.ftEe.f-LA.gFf8

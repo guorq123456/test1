@@ -102,3 +102,24 @@ Seeds:
 - The gap between the two was ~35 points under the baseline pilot and ~20 points with the trained pilots.
 - Neither pilot has converged, and this field is the bot's own decks, not the real meta, so there is no conclusion
   about deck strength (Salem's rule).
+
+## Head to head (pre-registered 2026-11-02 ~03:45Z, before any game)
+
+The architecture thread asked for this on 2026-11-02 03:36Z, as the same step it ran for rune. There, the trained DFM
+三轴土 scored 30.3% ± 3.5 against the trained bot rune; its prediction "at least 45%" at 0.35 was false.
+
+- Field: `fields/portal-h2h.txt`, the two Portal lines.
+- Hero: dfm/PORTAL-MingiGod, X = its g3 + prior at its equal-CPU N:
+  `mcts:37+plan+setnet=net-pilot-portal-dfm-g3+netmid+netany+puct=prior-pilot-portal-dfm-ft-t05.npz:2:1`.
+- Baseline: mcts:100+plan piloting the DFM list.
+- Opponent, in every game: the bot Portal g3 + prior arm at its equal-CPU N:
+  `mcts:47+plan+setnet=net-pilot-portal-bot-g3+netmid+netany+puct=prior-pilot-portal-bot-ft-t05.npz:2:1`.
+- 300 pairs, seed 86039500 (unused), 4 workers.
+- Reported: X (the trained DFM list's win rate against the trained bot list), the first/second split, the baseline row,
+  and the CPU ratio.
+
+Predictions:
+- (H1) X is at least 45%: 0.25. Against the bot's six other decks the trained bot Portal scored 82.3% and the trained
+  DFM Portal 62.5%, and the rune analogue came out at 30.3%.
+- (H2) X beats the baseline row (mcts:100+plan on the DFM list against the same trained bot opponent) by at least
+  +10: 0.6. The DFM prior arm was +27.5 over the baseline against the field.
