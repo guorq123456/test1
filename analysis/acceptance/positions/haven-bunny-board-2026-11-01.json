@@ -123,5 +123,7 @@
  "copies": 8,
  "reseed": "after_line",
  "note": "scored from Salem's (主教) side, hand-set evaluation only for now",
- "tier": "unassigned"
+ "tier": "clear",
+ "tier_rule": "clear from Salem's reasoning (a stable lethal), not from a net: no 主教 net exists and the rune nets score it from the wrong deck",
+ "tier_note": "net scores on this board are reference only until there is a bunny-bishop net (for the record: g3 keep 1.923 vs all 0.224)"
 }

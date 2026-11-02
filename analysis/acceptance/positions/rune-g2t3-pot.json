@@ -84,5 +84,21 @@
  ],
  "copies": 40,
  "reseed": "before_line",
- "tier": "unassigned"
+ "tier": "marginal",
+ "tier_rule": "marginal when |margin| < 0.10 on either branch under the reference net g3 (frozen 2026-11-02 before any other net was scored here)",
+ "tier_margins": {
+  "source": "claude/pilot-dfm 83fc1823 analysis/pilot/acc_margins.py, logs/acc-margins.log (value-net logit, Salem line minus bot line, mean over k=40)",
+  "g3": {
+   "turn_end": -0.071,
+   "mid_turn": -0.025
+  },
+  "g2": {
+   "turn_end": -0.068,
+   "mid_turn": -0.038
+  },
+  "g5": {
+   "turn_end": -0.117,
+   "mid_turn": -0.145
+  }
+ }
 }
