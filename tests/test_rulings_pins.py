@@ -164,3 +164,200 @@ def test_r14_halving_an_odd_max_defense_rounds_up():
     set_pp(state, 0, 9)
     play(state, lineage)
     assert foe.leader_max_hp == 10 and foe.leader_hp == 10  # 19 / 2 rounded up
+
+
+# --- card rulings (docs/rulings.md section C, item 8) -----------------------------------------------------------
+
+def test_c06_trap_in_the_woods_destroys_itself_even_when_the_follower_survives():
+    from svsim.cards import forest
+    from svsim.core.actions import PlayCard
+    from svsim.core.carddef import CardDef
+    from svsim.core.enums import CardType, Craft
+    from svsim.core.script import CardScript, register
+    from svsim.core.state import DESTROYED, IN_PLAY
+    from helpers import give, set_pp
+    sturdy = CardDef(7593, "Test Sturdy Follower", Craft.NEUTRAL, CardType.FOLLOWER, 1, 1, 1)
+
+    @register(sturdy.card_id)
+    class Sturdy(CardScript):                             # "can't be destroyed by abilities"
+        indestructible = True
+
+    state = start(first=0)
+    trap = put(state, 0, forest.TRAP_IN_THE_WOODS)
+    apply(state, EndTurn())
+    set_pp(state, 1, 1)
+    follower = give(state, 1, sturdy)
+    apply(state, PlayCard(follower.uid))
+    assert follower.fate == IN_PLAY and trap.fate == DESTROYED
+
+
+def test_c10a_city_of_babelon_engage_with_an_empty_hand_still_delays():
+    from svsim.cards import neutral
+    from svsim.core.actions import Engage, PlayCard
+    from helpers import give, set_pp
+    state = start()
+    p = state.players[0]
+    p.hand.clear()
+    set_pp(state, 0, 3)
+    city = give(state, 0, neutral.CITY_OF_BABELON)
+    apply(state, PlayCard(city.uid))
+    assert p.hand == [] and city.countdown == 1
+    assert Engage(city.uid, ()) in legal_actions(state)   # engage offered with nothing to discard
+    apply(state, Engage(city.uid, ()))
+    assert city.countdown == 2 and p.pp == 1
+
+
+def _test_spell(card_id: int):
+    """A 0-cost neutral spell that does nothing (registered once per id)."""
+    from svsim.core.carddef import CardDef
+    from svsim.core.enums import CardType, Craft
+    from svsim.core.script import CardScript, has_script, register
+    spell = CardDef(card_id, f"Test Spell {card_id}", Craft.NEUTRAL, CardType.SPELL, 0)
+    if not has_script(card_id):
+        register(card_id)(type(f"TestSpell{card_id}", (CardScript,), {"cast": lambda self, ctx: None}))
+    return spell
+
+
+def test_c10b_the_evolution_bonus_counts_as_a_buff():
+    from svsim.cards import forest
+    from svsim.core.actions import Evolve
+    from helpers import unlock_evolution
+    state = start(first=0)
+    unlock_evolution(state, 0)
+    ruflet = put(state, 0, forest.RUFLET)
+    fairies = lambda: [c for c in state.players[0].field if c.defn.card_id == forest.FAIRY.card_id]  # noqa: E731
+    assert fairies() == []
+    apply(state, Evolve(ruflet.uid))                       # +2/+2 from evolving: "when buffed" fires
+    assert len(fairies()) == 1
+
+
+def test_c10e_katze_spends_its_once_per_turn_use_with_no_target():
+    from svsim.cards import sword
+    from svsim.core.actions import PlayCard
+    from helpers import give
+    spell = _test_spell(7594)
+    state = start(first=0)
+    put(state, 0, sword.KATZE)
+    apply(state, PlayCard(give(state, 0, spell).uid))     # no enemy follower: nothing hit, the use is spent
+    enemy = put(state, 1, demo.SHIELDBEARER)
+    apply(state, PlayCard(give(state, 0, spell).uid))
+    assert enemy.life == 3                                 # the second spell this turn deals nothing
+    apply(state, EndTurn())
+    apply(state, EndTurn())
+    apply(state, PlayCard(give(state, 0, spell).uid))     # a new turn: the use is back
+    assert enemy.life == 1
+
+
+def test_c10f_cutthroat_crest_is_only_spent_on_an_actual_evolution():
+    from svsim.cards import portal as PORTAL
+    from svsim.core.actions import PlayCard
+    from svsim.core.carddef import CardDef
+    from svsim.core.enums import CardType, Craft
+    from svsim.core.script import CardScript, register
+    from helpers import give, set_pp
+    fleeting = CardDef(7595, "Test Fleeting Follower", Craft.NEUTRAL, CardType.FOLLOWER, 1, 1, 1)
+
+    @register(fleeting.card_id)
+    class Fleeting(CardScript):                            # gone from the field by the time the crest looks
+        def fanfare(self, ctx):
+            E.banish(ctx.state, ctx.source)
+
+    state = start(first=0)
+    E.add_to_leader_area(state, 0, PORTAL.CUTTHROAT_CREST)
+    set_pp(state, 0, 10)
+    gone = give(state, 0, fleeting)
+    apply(state, PlayCard(gone.uid))
+    assert state.on_field(gone.uid) is None
+    footman = give(state, 0, demo.FOOTMAN)
+    apply(state, PlayCard(footman.uid))
+    assert footman.evolved                                 # the use was not spent on the follower that left
+
+
+def test_c10j_lhynkal_crest_can_take_max_defense_to_zero():
+    from svsim.cards import rune
+    state = start(first=0)
+    foe = state.players[1]
+    foe.leader_max_hp = foe.leader_hp = 2
+    E.add_to_leader_area(state, 0, rune.LHYNKAL_CREST)
+    E.summon(state, 0, rune.LHYNKAL)
+    from svsim.core.engine import resolve_queue
+    resolve_queue(state)
+    assert foe.leader_max_hp == 0 and state.winner == 0
+
+
+def test_c10k_sephie_still_spends_two_play_points_on_a_full_field():
+    from svsim.cards import rune
+    from svsim.core.state import FIELD_LIMIT
+    from helpers import give
+    from test_cards_portal import fuse
+    state = start(first=0)
+    p = state.players[0]
+    sephie = give(state, 0, rune.SEPHIE)
+    for _ in range(FIELD_LIMIT):
+        put(state, 0, demo.FOOTMAN)
+    p.pp = 5
+    fuse(state, sephie, give(state, 0, demo.FOOTMAN))
+    assert p.pp == 3 and len(p.field) == FIELD_LIMIT       # 2 spent, no Test Subject (no room)
+    assert not any(c.defn.card_id == rune.OBSESSED_TEST_SUBJECT.card_id for c in p.field)
+
+
+def test_c10l_blade_of_the_crestpetal_uses_the_burned_cards_cost_on_a_full_hand():
+    from svsim.cards import dragon
+    from svsim.core.actions import PlayCard
+    from svsim.core.state import DESTROYED, HAND_LIMIT
+    from helpers import set_pp
+    state = start(first=0)
+    p = state.players[0]
+    p.deck[:] = [state.new_instance(demo.SHIELDBEARER, 0)]     # the only follower in the deck: cost 2
+    enemy = put(state, 1, demo.SHIELDBEARER)                   # 1/3
+    blade = state.new_instance(dragon.BLADE_OF_THE_CRESTPETAL, 0)
+    p.hand[:] = [blade] + [state.new_instance(demo.FOOTMAN, 0) for _ in range(HAND_LIMIT)]
+    set_pp(state, 0, 10)
+    shadows = p.shadows
+    apply(state, PlayCard(blade.uid))                          # after the cast the hand is full: the draw burns
+    assert len(p.hand) == HAND_LIMIT and p.deck == [] and p.shadows == shadows + 2   # the spell and the burned card
+    assert enemy.life == 1 and enemy.fate != DESTROYED         # X = 2, the burned card's cost
+
+
+def test_c10m_istyndet_crest_destroys_the_enemy_even_if_the_ally_survives():
+    from svsim.cards import abyss
+    from svsim.core.carddef import CardDef
+    from svsim.core.enums import CardType, Craft
+    from svsim.core.script import CardScript, register
+    from svsim.core.state import DESTROYED, IN_PLAY
+    keeper = CardDef(7596, "Test Undying Last Words", Craft.NEUTRAL, CardType.FOLLOWER, 1, 1, 1)
+
+    @register(keeper.card_id)
+    class Keeper(CardScript):                              # Last Words, can't be destroyed by abilities
+        indestructible = True
+
+        def last_words(self, ctx):
+            pass
+
+    state = start(first=0)
+    E.add_to_leader_area(state, 0, abyss.ISTYNDET_CREST)
+    ally = put(state, 0, keeper)
+    enemy = put(state, 1, demo.SHIELDBEARER)
+    apply(state, EndTurn())
+    assert ally.fate == IN_PLAY and enemy.fate == DESTROYED
+
+
+def test_c10n_zoe_takes_her_self_damage_after_the_chosen_mode(monkeypatch):
+    from svsim.cards import haven
+    from svsim.core.actions import PlayCard
+    from helpers import give, set_pp
+    calls = []
+    real = E.damage
+
+    def recording(state, targets, amount, *a, **k):        # the order of the fanfare's damage calls
+        calls.append(([getattr(t, "uid", t) for t in targets], amount))
+        return real(state, targets, amount, *a, **k)
+
+    monkeypatch.setattr(E, "damage", recording)
+    state = start(first=0)
+    enemy = put(state, 1, demo.SHIELDBEARER)
+    set_pp(state, 0, 10)
+    zoe = give(state, 0, haven.ZOE)
+    apply(state, PlayCard(zoe.uid, (), (0,)))              # mode 1: 3 damage to all enemy followers
+    assert calls[0] == ([enemy.uid], 3) and calls[-1] == ([zoe.uid], 3)   # the mode first, then the self-damage
+    assert zoe.life == haven.ZOE.life - 3
