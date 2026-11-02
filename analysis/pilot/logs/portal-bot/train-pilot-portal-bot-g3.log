@@ -1,0 +1,64 @@
+{"deck": null, "opponent": null, "flag": true, "inputs": "v1", "name": "pilot-portal-bot-g3", "init": "fresh", "init_sha256": null, "mid_rate": 0.290296, "end_rows": 460707, "mid_rows": 1587027, "train_positions": 875104, "valid_positions": 46095, "train_by_kind": {"end": 437758, "mid": 437346}, "valid_by_kind": {"end": 22949, "mid": 23146}, "continued": true, "ophand": false, "v2a": false, "wide": false, "shared": true, "init_valid": {"end": {"brier": 0.38924, "log_loss": 1.14064, "n": 22949}, "mid": {"brier": 0.38424, "log_loss": 1.1149, "n": 23146}}}
+{"epoch": 1, "lr": 0.001, "train_bce": 0.53564, "s": 136.5, "valid_brier": 0.16893, "valid_log_loss": 0.50467, "valid_n": 46095, "best": true}
+{"epoch": 2, "lr": 0.001, "train_bce": 0.50548, "s": 129.5, "valid_brier": 0.16696, "valid_log_loss": 0.49868, "valid_n": 46095, "best": true}
+{"epoch": 3, "lr": 0.001, "train_bce": 0.49814, "s": 125.2, "valid_brier": 0.1655, "valid_log_loss": 0.49489, "valid_n": 46095, "best": true}
+{"epoch": 4, "lr": 0.001, "train_bce": 0.49329, "s": 126.7, "valid_brier": 0.1636, "valid_log_loss": 0.49039, "valid_n": 46095, "best": true}
+{"epoch": 5, "lr": 0.001, "train_bce": 0.48959, "s": 130.8, "valid_brier": 0.16309, "valid_log_loss": 0.48861, "valid_n": 46095, "best": true}
+{"epoch": 6, "lr": 0.001, "train_bce": 0.4872, "s": 135.3, "valid_brier": 0.16369, "valid_log_loss": 0.49023, "valid_n": 46095}
+{"deck": null, "opponent": null, "flag": true, "inputs": "v1", "name": "pilot-portal-bot-g3", "init": "fresh", "init_sha256": null, "mid_rate": 0.290296, "end_rows": 460707, "mid_rows": 1587027, "train_positions": 875104, "valid_positions": 46095, "train_by_kind": {"end": 437758, "mid": 437346}, "valid_by_kind": {"end": 22949, "mid": 23146}, "continued": true, "ophand": false, "v2a": false, "wide": false, "shared": true, "init_valid": {"end": {"brier": 0.38924, "log_loss": 1.14064, "n": 22949}, "mid": {"brier": 0.38424, "log_loss": 1.1149, "n": 23146}}}
+{"resumed_after_epoch": 6, "stopped": false}
+{"epoch": 7, "lr": 0.0005, "train_bce": 0.48005, "s": 143.4, "valid_brier": 0.16262, "valid_log_loss": 0.4869, "valid_n": 46095, "best": true}
+{"epoch": 8, "lr": 0.0005, "train_bce": 0.4783, "s": 128.8, "valid_brier": 0.16287, "valid_log_loss": 0.48782, "valid_n": 46095}
+{"epoch": 9, "lr": 0.00025, "train_bce": 0.47388, "s": 132.6, "valid_brier": 0.16193, "valid_log_loss": 0.48523, "valid_n": 46095, "best": true}
+{"epoch": 10, "lr": 0.00025, "train_bce": 0.47254, "s": 130.0, "valid_brier": 0.16222, "valid_log_loss": 0.48601, "valid_n": 46095}
+{"epoch": 11, "lr": 0.000125, "train_bce": 0.46993, "s": 129.9, "valid_brier": 0.16188, "valid_log_loss": 0.48559, "valid_n": 46095}
+{"epoch": 12, "lr": 6.25e-05, "train_bce": 0.4683, "s": 128.9, "valid_brier": 0.16231, "valid_log_loss": 0.48671, "valid_n": 46095}
+{"epoch": 13, "lr": 3.125e-05, "train_bce": 0.46748, "s": 127.4, "valid_brier": 0.16238, "valid_log_loss": 0.48689, "valid_n": 46095}
+{
+ "name": "pilot-portal-bot-g3",
+ "fit_s": 963,
+ "epochs": 13,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.1598,
+   "log_loss": 0.47899,
+   "n": 437758
+  },
+  "mid": {
+   "brier": 0.1543,
+   "log_loss": 0.46524,
+   "n": 437346
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.16242,
+   "log_loss": 0.48627,
+   "n": 22949
+  },
+  "mid": {
+   "brier": 0.16145,
+   "log_loss": 0.48421,
+   "n": 23146
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.38924,
+   "log_loss": 1.14064,
+   "n": 22949
+  },
+  "mid": {
+   "brier": 0.38424,
+   "log_loss": 1.1149,
+   "n": 23146
+  }
+ },
+ "mid_rate": 0.290296
+}

@@ -223,6 +223,7 @@ DFM Rune g3 at equal CPU (N 50, ratio 1.113): +17.8 ± 4.0 (7.3% → 25.2%), com
 | bot/T1-PORTAL-1 | g2 | 78 (1.169) | +2.8 ± 4.1 | 67 (1.091) | +5.0 ± 4.4 |
 | dfm/PORTAL-MingiGod (EXTERNAL) | g3 | 59 (1.173) | +16.2 ± 4.8 | 50 (1.067) | +18.8 ± 4.7 |
 | dfm/PORTAL-MingiGod (EXTERNAL) | g3 + prior | 50 (1.365) | +26.3 ± 4.6 | 37 (1.174) | +27.5 ± 4.7; over g3 on the same deals +8.7 ± 4.5 |
+| bot/T1-PORTAL-1 | g3 | 77 (1.160) | +6.3 ± 4.1 | 66 (1.081) | +6.2 ± 4.3 |
 
 ## Result, Portal pair gen 2: dfm/PORTAL-MingiGod (EXTERNAL, measurement only)
 
@@ -289,3 +290,22 @@ Condition: 对手卡表已知（牌序、手牌未知）. Gen-3 bank 86035000-86
   Haven +10.0.
 - g2 was +14.8 / +10.3 on its own bank (86009000). On g3's deals at the same N 50: g2 X 50.5%. **g3 − g2 = +3.3 ± 4.8**
   (analysis/pilot/paired.py). The move prior step follows in PRIOR-PORTAL.md.
+
+## Result, Portal pair gen 3: bot/T1-PORTAL-1
+
+Condition: 对手卡表已知（牌序、手牌未知）. Gen-3 bank 86030000-86034999.
+
+- Self-play: 10 shards x 1000 from 86030000, the hero piloted by mcts:78 + net-pilot-portal-bot-g2, opponents
+  mcts:100+plan; 2.7 CPU s a game.
+  - The hero scored **73.9%** (gen 2: 56.8%, gen 1: 67.4%). Records in `data/portal-bot/rec-g3/`.
+  - The first chunk ran on 3 workers beside the DFM prior fit; the DFM prior gate ran between chunks on the idle
+    machine.
+  - A container restart came during training (epoch 6, checkpointed); the next chunk resumed it.
+- `net-pilot-portal-bot-g3`: fresh on gens 1-3 (turn ends 460707 rows, mid-turn 1587027 thinned at 0.290). Best
+  epoch 9 of 13: valid brier 0.162, log loss 0.485.
+- Time match (24 pairs from 86031900): ratio 1.302 → N 77.
+- Gate (300 pairs, bank 86031000): **X 76.0% ± 3.4%, baseline 69.7% ± 3.9%, paired +6.3% ± 4.1% (95% +2.3% to
+  +10.4%)**; ratio 1.160.
+  - By opponent: Forest +5.0, Sword +18.0, Rune +4.0, Dragon +10.0, Abyss +1.0, Haven +0.0.
+- **Equal CPU** (N 66): **X 75.8% ± 3.5%, paired +6.2% ± 4.3% (95% +1.9% to +10.5%)**; ratio 1.081.
+  - By opponent: Forest +5.0, Sword +16.0, Rune +9.0, Dragon +8.0, Abyss -1.0, Haven +0.0.
