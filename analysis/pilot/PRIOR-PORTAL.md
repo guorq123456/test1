@@ -79,3 +79,26 @@ Seeds:
 - Fit: 574635 hero decisions (20 shards: the g2 and g3 self-play, 86003000 and 86030000), init net-pilot-portal-bot-g3,
   `--tau 0.5 --ftz`. Validation cross entropy 1.4901 (epoch 1) → 1.4580 (epoch 29). It stopped on patience at epoch 33
   → `prior-pilot-portal-bot-ft-t05.npz`, 59 min. Log `logs/portal-bot/prior-bot.log`.
+- Time match on 86034800: X at N 100 costs 1.633x the baseline per searched decision → N 61.
+- Gate on 86031000 at N 61: X 82.0%, baseline 69.7%, +12.3 ± 4.1; in-gate ratio 1.310 → equal-CPU rerun at N 47.
+- **Equal CPU (N 47, ratio 1.164)**: X 82.3% ± 3.3%, baseline 69.7%, **+12.7 ± 4.0** over the baseline.
+  - By opponent (prior / baseline): Rune 99/87, Dragon 98/83, Forest 90/72, Haven 75/67, Sword 67/46, Abyss 65/63.
+  - Paired with g3's N 66 row on the same 300 deals: 82.3 vs 75.8, **+6.5 ± 3.8**.
+  - CPU: g3's row ran at ratio 1.081, the prior arm at 1.164, about 8% more CPU per searched decision.
+- Predictions:
+  - (B1) beats its net by at least +3 (0.5): **TRUE**.
+  - (B2) gain smaller than the DFM Portal arm's (+8.7) (0.6): **TRUE** (+6.5; the difference between the two gains is
+    well inside the noise).
+- The route for this hero (equal CPU, paired over the baseline): g1 −10.5, g2 +5.0, g3 +6.2, g3 + prior +12.7. The X
+  score went 57.3% → 82.3%.
+
+## Where the two Portal heroes stand (equal CPU, each on its own gen-3 deals, against the bot's six other decks)
+
+| hero | baseline mcts:100+plan | g3 | g3 + prior |
+|---|---|---|---|
+| bot/T1-PORTAL-1 | 69.7% | 75.8% | **82.3%** |
+| dfm/PORTAL-MingiGod (EXTERNAL) | 35.0% | 53.8% | **62.5%** |
+
+- The gap between the two was ~35 points under the baseline pilot and ~20 points with the trained pilots.
+- Neither pilot has converged, and this field is the bot's own decks, not the real meta, so there is no conclusion
+  about deck strength (Salem's rule).

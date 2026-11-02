@@ -224,6 +224,7 @@ DFM Rune g3 at equal CPU (N 50, ratio 1.113): +17.8 ± 4.0 (7.3% → 25.2%), com
 | dfm/PORTAL-MingiGod (EXTERNAL) | g3 | 59 (1.173) | +16.2 ± 4.8 | 50 (1.067) | +18.8 ± 4.7 |
 | dfm/PORTAL-MingiGod (EXTERNAL) | g3 + prior | 50 (1.365) | +26.3 ± 4.6 | 37 (1.174) | +27.5 ± 4.7; over g3 on the same deals +8.7 ± 4.5 |
 | bot/T1-PORTAL-1 | g3 | 77 (1.160) | +6.3 ± 4.1 | 66 (1.081) | +6.2 ± 4.3 |
+| bot/T1-PORTAL-1 | g3 + prior | 61 (1.310) | +12.3 ± 4.1 | 47 (1.164) | +12.7 ± 4.0; over g3 on the same deals +6.5 ± 3.8 |
 
 ## Result, Portal pair gen 2: dfm/PORTAL-MingiGod (EXTERNAL, measurement only)
 
