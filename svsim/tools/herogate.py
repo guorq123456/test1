@@ -152,6 +152,8 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--out", default=None)
     ap.add_argument("--time", type=int, default=0, metavar="K", help="the time match: K pairs, the CPU ratio, N")
+    ap.add_argument("--bank", choices=("select", "confirm"), default=None,
+                    help="which seed bank this run's seeds belong to (the report's 挑选 / 确认 lines; a time match is 挑选)")
     ap.add_argument("--allow-stale", action="store_true",
                     help="let a model trained on other rules through (learn.provenance; printed in the output)")
     args = ap.parse_args()
@@ -170,8 +172,11 @@ def main() -> None:
     print(f"条件：英雄 {args.hero} 对 {len(opps)} 套对手轮流（{args.field}）；每对 = 一副发牌，X 和基线各坐两边；{CONDITION}",
           flush=True)
     print(f"X = {args.x}\n基线 = {args.base}\n对手 = {args.opp}", flush=True)
-    from svsim.learn.provenance import guard            # a model trained on other rules stops the gate
-    guard([args.x, args.base, args.opp], args.allow_stale, out=lambda s: print(s, flush=True))
+    from svsim.learn.provenance import bank_lines, guard, simulator_line
+    print(simulator_line(args.x, args.allow_stale), flush=True)      # the gate report template's fixed lines
+    for line in bank_lines(args.seed, count, args.bank, bool(args.time)):
+        print(line, flush=True)
+    guard([args.x, args.base, args.opp], args.allow_stale, out=lambda s: print(s, flush=True))  # stale stops the gate
     print("BLAS 线程：" + "，".join(f"{k}={os.environ.get(k, '未设')}" for k in
                                   ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")), flush=True)
     todo = [(k, args.seed + k, opps[k % len(opps)], field[hero][1], field[opps[k % len(opps)]][1], args.x, args.base,

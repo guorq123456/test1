@@ -134,3 +134,15 @@ def test_backfill_stamps_only_when_no_rules_file_changed_since_the_model_was_add
     assert P.status(P.model_info(models / "a.npz"))[0] == "stale"            # a's stamp no longer matches
     rows = {r[0]: r for r in P.list_models(models)}
     assert rows["a.npz"][2] == "stale" and rows["a.npz"][3] == ["svsim/cards/forest.py"] and rows["b.npz"][2] == "未登记"
+
+
+def test_gate_report_lines_name_the_simulator_and_the_seed_banks(tmp_path):
+    net = _tiny_net()
+    net.save(tmp_path / "cur.npz")
+    line = P.simulator_line(f"mcts:50+plan+setnet={tmp_path / 'cur.npz'}+netmid")
+    assert line.startswith("模拟器：提交号 ") and f"规则哈希 {P.current()[0][:16]}" in line and "cur.npz" in line
+    assert "（一致）" in line
+    assert P.simulator_line("mcts:100+plan").endswith("X 方没有学习模型")
+    assert P.bank_lines(86036000, 300, "confirm", False) == ["挑选种子库：本次未用", "确认种子库：86036000–86036299（本次）"]
+    assert P.bank_lines(86036900, 24, None, True) == ["挑选种子库：86036900–86036923（本次）", "确认种子库：本次未用"]
+    assert "未标明" in P.bank_lines(1, 2, None, False)[0]

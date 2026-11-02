@@ -180,6 +180,40 @@ def guard(specs, allow_stale: bool = False, out=print) -> list:
     return rows
 
 
+def simulator_line(x_spec: str, allow_stale: bool = False) -> str:
+    """The gate report template's 模拟器 line (docs/gate-report-template.md on claude/process): this checkout's commit
+    and rules hash, and each X model's training-time rules hash with 一致 / 不一致 / 未登记."""
+    commit = _git("rev-parse", "--short=9", "HEAD") or "?"
+    dirty = " (规则文件有未提交的改动)" if _git("status", "--porcelain", "--", *_rel_rules()) else ""
+    h = current()[0]
+    parts = []
+    for m in models_in_spec(x_spec):
+        try:
+            info = model_info(m)
+        except Exception as e:
+            parts.append(f"{Path(m).name} 读不了（{e!r}）")
+            continue
+        rec = (info or {}).get("provenance") or {}
+        st, _ = status(info)
+        verdict = {"current": "一致", "stale": "不一致" + ("，--allow-stale 放行" if allow_stale else ""),
+                   "未登记": "未登记"}.get(st, st)
+        parts.append(f"{Path(m).name} {str(rec.get('rules_hash', '-'))[:16]}（{verdict}）")
+    models = "；X 方模型训练时的规则哈希 " + "，".join(parts) if parts else "；X 方没有学习模型"
+    return f"模拟器：提交号 {commit}{dirty}，规则哈希 {h[:16]}{models}"
+
+
+def bank_lines(seed: int, count: int, bank: str | None, timing: bool) -> list:
+    """The template's 挑选 / 确认 seed-bank lines for a run on seeds seed .. seed+count-1. A time match is 挑选 by
+    definition; otherwise --bank says which (unmarked runs say so)."""
+    rng = f"{seed}–{seed + count - 1}"
+    kind = "select" if timing else bank
+    sel = f"挑选种子库：{rng}（本次）" if kind == "select" else "挑选种子库：本次未用"
+    con = f"确认种子库：{rng}（本次）" if kind == "confirm" else "确认种子库：本次未用"
+    if kind is None:
+        sel, con = f"挑选 / 确认种子库：{rng}（未标明，用 --bank select|confirm）", None
+    return [s for s in (sel, con) if s]
+
+
 # --- backfill and list ------------------------------------------------------------------------------------------
 
 def training_commit(path: Path, info: dict | None) -> tuple:
