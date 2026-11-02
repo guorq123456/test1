@@ -3,3 +3,18 @@ X = mcts:37+plan+setnet=analysis/scaling/models/net-pilot-portal-dfm-g3.npz+netm
 基线 = mcts:100+plan
 对手 = mcts:47+plan+setnet=analysis/scaling/models/net-pilot-portal-bot-g3.npz+netmid+netany+puct=analysis/scaling/models/prior-pilot-portal-bot-ft-t05.npz:2:1
 BLAS 线程：OMP_NUM_THREADS=1，OPENBLAS_NUM_THREADS=1，MKL_NUM_THREADS=1
+  …25 对 99s
+  …50 对 193s
+  …75 对 292s
+  …100 对 394s
+  …125 对 488s
+  …150 对 577s
+  …175 对 687s
+  …200 对 778s
+  …225 对 868s
+  …250 对 974s
+  …275 对 1070s
+  …300 对 1166s
+300 对（X 600 局、基线 600 局）：英雄卡组 X 21.7% ± 3.3%，基线 16.0% ± 3.0%，配对差 +5.7% ± 3.9%（95% 区间 +1.8%～+9.5%）
+  对 bot/T1-PORTAL-1：300 对 X 21.7%，基线 16.0%，差 +5.7% ± 3.9%
+英雄每步（搜索过的决定）CPU：X 51 ms，基线 44 ms，比 1.155

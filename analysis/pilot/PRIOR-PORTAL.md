@@ -123,3 +123,20 @@ Predictions:
   DFM Portal 62.5%, and the rune analogue came out at 30.3%.
 - (H2) X beats the baseline row (mcts:100+plan on the DFM list against the same trained bot opponent) by at least
   +10: 0.6. The DFM prior arm was +27.5 over the baseline against the field.
+
+Result (written after the run; 300 pairs, seed 86039500, log `logs/portal-h2h/`):
+
+| DFM list piloted by | overall | going first (300) | going second (300) |
+|---|---|---|---|
+| g3 + prior, N 37 (X) | **21.7% ± 3.3%** | 27.0% | 16.3% |
+| mcts:100+plan (baseline) | 16.0% ± 3.0% | 22.7% | 9.3% |
+
+- The opponent in every game was the trained bot Portal (g3 + prior, N 47).
+- Paired X − baseline: **+5.7 ± 3.9** (95% +1.8 to +9.5).
+- CPU per searched decision: X 51 ms, baseline 44 ms, ratio 1.155.
+- Predictions:
+  - (H1) X at least 45% (0.25): **FALSE** (21.7%).
+  - (H2) X beats the baseline row by at least +10 (0.6): **FALSE** (+5.7). Against the trained bot Portal, the DFM
+    pilot's training gains less than it did against the field (+27.5).
+- The rune analogue was 30.3%. Neither pilot has converged, and this is one matchup inside the simulator, so it says
+  nothing about how the two lists compare in the real game (Salem's rule).
