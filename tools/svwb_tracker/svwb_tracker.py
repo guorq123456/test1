@@ -1067,7 +1067,12 @@ def run_parse(a):
     entries = load_raw(a.raw, a.since)
     segs = segment(entries)
     games = [analyze(s, cards, my_decks, archetypes, cfg) for s in segs]
-    games = [g for g in games if g["moves"] or g["result"]]
+    # 一条记录里连一张牌都没看到（没有出牌、进化、手牌），就算带着胜负字样也不是对局——多半是结算画面重放或主战者加载（11-01 15:56 出现过一次）
+    is_game = lambda g: bool(g["moves"] or g["my_seen"] or g["opp_seen"] or g["my_hand0"])
+    for g in games:
+        if not is_game(g):
+            print("  跳过 %s 的一条记录：没有任何卡牌动作，只看到了结算画面或主战者加载，不算对局" % fmt_clock(g["start"]))
+    games = [g for g in games if is_game(g)]
     attach_rank(games, load_rank(a.rank))
     rows = write_outputs(games, cards, a.out, a.season)
     fin = [g for g in games if g["result"] in ("胜", "负")]
