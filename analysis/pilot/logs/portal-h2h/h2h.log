@@ -1,0 +1,5 @@
+条件：英雄 dfm/PORTAL-MingiGod 对 1 套对手轮流（analysis/pilot/fields/portal-h2h.txt）；每对 = 一副发牌，X 和基线各坐两边；对手卡表已知（牌序、手牌未知）
+X = mcts:37+plan+setnet=analysis/scaling/models/net-pilot-portal-dfm-g3.npz+netmid+netany+puct=analysis/scaling/models/prior-pilot-portal-dfm-ft-t05.npz:2:1
+基线 = mcts:100+plan
+对手 = mcts:47+plan+setnet=analysis/scaling/models/net-pilot-portal-bot-g3.npz+netmid+netany+puct=analysis/scaling/models/prior-pilot-portal-bot-ft-t05.npz:2:1
+BLAS 线程：OMP_NUM_THREADS=1，OPENBLAS_NUM_THREADS=1，MKL_NUM_THREADS=1
