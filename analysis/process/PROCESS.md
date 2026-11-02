@@ -74,6 +74,30 @@ compared with the current rules:
 - Mine: at least the Portal pair's models pass it (the 6 Portal nets and 2 priors, all trained after the last
   rules-file commit), 0.7.
 
+### Item 2 results (written after the code)
+
+- Code: `svsim/learn/provenance.py` (832c37e; the 「待复测」 label in 9d5a498). It hooks into:
+  - `SetNet.save`, `WideSetNet.save` and `SetPolicy.save`: stamp if there is no record;
+  - `train_mid.py` and `setpolicy fit`: stamp at training start;
+  - `setnet.load_cached` and `setpolicy.load_cached`: warn;
+  - `herogate` and `deckgate`: the guard and `--allow-stale`.
+- `rules_files()`: 26 files today. Rules hash de145991df27d6a7….
+- Acceptance check, on copies stamped in a scratch folder (no real model rewritten):
+  - one line appended to `svsim/cards/portal.py` → both stamped models list as 待复测, with `portal.py` named, and
+    herogate refuses the stale net;
+  - the edit reverted (`git diff` empty) → both current again;
+  - the legacy copy stays 未登记 throughout.
+- Tests: `tests/test_provenance.py` 6 passed. Full suite: 1423 passed, 4 skipped, exit code 0.
+- Predictions:
+  - The plan's "on launch day no model is flagged": **TRUE**. All 86 models list as 未登记; none is 待复测.
+  - Mine, "at most 15 of the models pass the backfill check" (0.7): **FALSE**.
+    - 18 pass: the 6 Portal nets and 2 Portal priors, the 3 bot rune nets, and net-s1-10k, -20k, -a400, -b60 and -ii
+      with prior-s1-20k and -60k.
+    - The other 68 have 15 rules files changed since the commit that added them.
+    - (Also: 86 of the 89 files in `analysis/scaling/models` are models; the other 3 are not .npz.)
+  - Mine, "the Portal pair's models pass it" (0.7): **TRUE**, all 8.
+- The backfill was only dry-run. It rewrites the model file (its sha256 changes), so it waits until someone asks.
+
 ## Item 5: one acceptance library (pre-registered before any code, 2026-11-02 ~10:20Z)
 
 The plan's section 5, as the architecture thread quoted it at 09:56Z:
