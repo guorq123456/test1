@@ -96,6 +96,59 @@ wrong costs or evolve turns, nothing finer. The per-game table is in
 
 For 6b: use only games that are not same-class, not partial, and carry no turn-number warning.
 
-## 6b: decision divergence table (registered after 6a reports)
+## 6b: decision divergence table (pre-registered 2026-11-02 12:0xZ, before any position is rebuilt)
+
+### Data
+
+games.jsonl alone can't rebuild Salem's hand at the start of a turn:
+- my_seen has no turn or time, and it repeats hand events;
+- the opening cards he mulliganed away are not recorded.
+
+So 6b waits for the raw breadcrumb files (asked for 11-02 12:0xZ). Once they are here, the tracker's own parser runs
+in the cloud with one extra output: Salem's hand events with times, each placed on his turns.
+
+Games: the 27 that 6a found reliable. Each is not same-class, not partial, and has no turn-number warning: 20 兔子主教,
+7 三轴土.
+
+### Positions
+
+One position per Salem own turn 1 to 5, at the start of that turn.
+
+- **His hand.** The opening hand after the mulligan, plus his draws and created cards up to that point, minus what he
+  played.
+  - A card from the first four counts as kept when he later plays it with no second hand event of that card before.
+    It counts as returned when a replacement count requires it.
+  - A turn where any card in hand is uncertain is dropped and counted.
+- **Boards.** Both sides' cards that entered play, at printed stats. Deaths and damage are unknown, so every follower
+  is assumed alive. A turn where the opponent has a follower on board at its start is tagged 「可能有交换」, and is
+  reported in its own column.
+- **Decks.**
+  - Salem's: the DFM list he plays for that archetype (兔子主教 dfm/HAVEN-ユーリ, 三轴土 dfm/RUNE-ユーリ), minus his
+    known cards, in random order. This uses the external lists as a check only.
+  - The opponent's: the tracker's archetype reference list for the opp_deck label, or that class's most common
+    reference list when the label is 未知. Its hand is a count only.
+  - Condition line on every result: 「对手卡表按套路参照表猜（牌序、手牌未知）」.
+
+### The bot
+
+- 三轴土: the DFM rune g5 value net with prior2 under PUCT, N 30, as in the round-2 gate. These are measurement models;
+  this is a check, and they are not installed.
+- 兔子主教: mcts:100+plan with the hand-set evaluator. No 主教 net exists, so this is the bot's weakest pilot and is
+  reported as such.
+- The bot plays its whole turn in the simulator, with the same seed per position.
+
+### Comparison
+
+- **Agreement:** the same multiset of cards played and the same evolve or super-evolve targets, ignoring attacks and
+  order.
+- **Secondary:** the same first card.
+- The table for Salem lists every divergence with game, turn, hand, both boards, his play and the bot's play, plus an
+  empty column for his verdict.
+
+### Predictions
+
+- The plan's: bot and Salem agree on fewer than 70% of the kept turns 〔0.6〕.
+- The plan's: Salem marks at least 3 bot lines 「我绝对不会这么打」 〔0.8〕.
+- Mine: the 三轴土 bot (trained net + prior) agrees more often than the 兔子主教 bot (hand-set evaluator) 〔0.6〕.
 
 ## 6c: opponent weighting (waits for 50 games)
