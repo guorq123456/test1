@@ -54,3 +54,14 @@ second 25.3%); DFM at mcts:100+plan wins 8.3% against it. Prediction (at least 4
 the same way, the bot's own 巫师 beats DFM 三轴土 about 70-30 in this simulator. Per Salem's rule this indicts the pilot
 or the simulator before the deck: the 三轴土 pilot levelled off at this budget, and the loss games are written out for
 his review (analysis/pilot/watch_pilot.py; /mnt/project-files/shadowverse/watch-sanzhoutu-trained-2026-11-02.md).
+
+## Budget test (written 04:0xZ, before its games)
+
+The Portal pair gave the same picture (builder 58f317a: trained 人灭鱼 21.7% ± 3.3 against trained 造物鱼; untrained
+16.0%). Both pro lists lose about 70-30 or worse to the bot's own lists when both pilots are trained the same way, at
+the same small search budget (about 30 iterations a decision). If the pro lists need more search to show their
+strength (longer ordered turns, more choices), the head-to-head should move toward them when both sides get more.
+Test: the rune head-to-head again on the same 300 deals (86048000), both trained arms at four times their equal-CPU N
+(DFM N 120, bot N 112), paired with the N 30/28 run.
+Prediction: the trained DFM 三轴土 gains at least 5 points over its 30.3%: 0.35 (precedent: deeper play did not change
+deck rankings with the hand-set evaluation; trained nets may differ).
