@@ -56,3 +56,17 @@ Seeds:
   `--tau 0.5 --ftz`. Validation cross entropy 1.5440 (epoch 1) → 1.5255 (epoch 20; unchanged to 4 decimals through
   epoch 32). It stopped on patience at epoch 32 of 35 → `prior-pilot-portal-dfm-ft-t05.npz`, 78 min. Log
   `logs/portal-dfm/prior-dfm.log`.
+- Time match on 86039800: X at N 100 costs 2.020x the baseline per searched decision → N 50.
+- Gate on 86036000 at N 50: X 61.3%, baseline 35.0%, +26.3 ± 4.6; in-gate ratio 1.365 (over 1.08) → equal-CPU rerun
+  at N 37.
+- **Equal CPU (N 37, ratio 1.174)**: X 62.5% ± 4.2%, baseline 35.0%, **+27.5 ± 4.7** over the baseline.
+  - By opponent (prior / baseline): Dragon 84/41, Rune 84/56, Forest 67/43, Haven 56/30, Sword 45/19, Abyss 39/21.
+  - Paired with g3's N 50 row on the same 300 deals: 62.5 vs 53.8, **+8.7 ± 4.5**.
+  - CPU: g3's row ran at ratio 1.067, the prior arm at 1.174, so the prior arm used about 10% more CPU per searched
+    decision than g3 did. The cost has a fixed part, so dividing N by the ratio does not reach 1.0 (the rune arms
+    showed the same).
+- Predictions:
+  - (D1) beats its net by at least +3 (0.6): **TRUE**.
+  - (D2) gain larger than DFM rune's +7.7 (0.4): **TRUE, narrowly**. +8.7 against +7.7 is well inside the noise.
+- The route so far for this hero (equal CPU, paired over the baseline): g1 −7.2, g2 +10.3, g3 +18.8, g3 + prior
+  +27.5. The X score went 27.2% → 62.5% against the bot's six other decks.
