@@ -62,6 +62,40 @@ Each flag is then read by hand and put into one of four classes:
 - Every card id maps to the simulator pool 〔0.85〕.
 - At least 95% of tokens have a generator in their game 〔0.7〕.
 
+### Results (written after the run, 2026-11-02 11:5xZ; ledger F-16)
+
+Deviations from the registration, all made before reading any flag as sim or parse:
+- The id normalisation keeps alternate play forms. Last digit 2 is Crystallize or Accelerate; 3 is its alternate art.
+  The tracker's base_id folds them into the base card, which made every crystallized 奇迹独角兔 a 3-cost play.
+- The PP check has a second, generous level (`PP·可解释` vs `PP·未解释`). A card counts 0 if any script can change
+  its cost. A token counts 0 when its generator was played earlier that turn, since a summon is logged as a play. Each
+  PP-recovery or max-PP card played or evolved that turn adds 2.
+- Token generation is followed through created non-deck cards (crests, alternate forms). 雾卷花·茎白 makes 神圣猎鹰
+  through its crest.
+
+Counts:
+- Pool: 1027 of 1027 card ids (game x side x card) exist in the simulator.
+- Tokens: 119 of 120 have a generator in their game. The exception is a 蝙蝠 the 中速梦魇 opponent played and
+  super-evolved in game 25. None of that opponent's seen cards make bats in the simulator. Classified **unclear**.
+- PP: 60 turns spend more than the turn number. 49 are explained at the generous level. The other 11, and the 2 early
+  evolves, all sit in games the parser itself marks as unreliable, so they are classified **parse**:
+  - 7 in same-class games, where the side of each play is inferred from turn timing;
+  - 5 in game 38, where both sides' turn numbers are one low and the parser warned;
+  - 1 in the one partial game, where the ramp turns are missing.
+- **sim** (a simulator bug): 0.
+
+Predictions:
+- At least one sim or parse disagreement (0.5): TRUE, all of them parse.
+- At least one sim bug (0.3): FALSE.
+- All ids in the pool (0.85): TRUE.
+- At least 95% of tokens generated (0.7): TRUE, 99.2%.
+
+Limits: the check sees neither HP, targets nor random results. It rules out pool gaps, ungeneratable tokens and clearly
+wrong costs or evolve turns, nothing finer. The per-game table is in
+/mnt/project-files/shadowverse/salem-games/realgame-6a-2026-11-02.md (not in the repo).
+
+For 6b: use only games that are not same-class, not partial, and carry no turn-number warning.
+
 ## 6b: decision divergence table (registered after 6a reports)
 
 ## 6c: opponent weighting (waits for 50 games)
