@@ -62,4 +62,22 @@ analysis/seed-banks.md). The split is decided here, before any game; nothing out
 
 ## Results (written after the runs)
 
-(none yet)
+| generation | gate N (ratio) | paired | equal CPU N (ratio) | paired at equal CPU | X / baseline at equal CPU |
+|---|---|---|---|---|---|
+| g1 | 55 (1.261) | +2.3 ± 4.4 | 44 (1.090) | +0.7 ± 4.6 | 46.7% / 46.0% |
+
+**g1** (records `data/haven-bot/`, logs `logs/haven-bot/`):
+- Self-play: 10 x 1000 from 86900000, both sides mcts:100+plan, 2.2 CPU s a game. The hero scored 48.6% (holdout
+  48.6%).
+- Net: `net-pilot-haven-bot-g1`, trained fresh, best epoch 7 of 11. Valid brier 0.187, log loss 0.549. Stamped with
+  the rules hash (provenance, current).
+- Time match (86902900): ratio 1.813 → N 55.
+- Gate (confirmation bank 86902000): X 48.3% ± 4.0%, baseline 46.0% ± 4.2%, paired **+2.3 ± 4.4** (95% −2.1 to
+  +6.7). Ratio 1.261.
+- Equal CPU (N 44): X 46.7%, paired **+0.7 ± 4.6** (95% −4.0 to +5.3). Ratio 1.090, still a little over 1.08; one
+  rerun per generation, as the rule says.
+  - By opponent: Abyss +10, Dragon 0, Rune +2, Portal +2, Forest −4, Sword −6.
+- Predictions:
+  - H3 (g1 below the baseline, paired < 0; 0.7): **FALSE**. +0.7 at equal CPU and +2.3 at N 55, both intervals
+    around 0. This is the first hero whose g1 did not lose.
+  - H4 (baseline under 50% on g1's bank; 0.75): **TRUE**, 46.0%.
