@@ -66,6 +66,7 @@ analysis/seed-banks.md). The split is decided here, before any game; nothing out
 |---|---|---|---|---|---|
 | g1 | 55 (1.261) | +2.3 ± 4.4 | 44 (1.090) | +0.7 ± 4.6 | 46.7% / 46.0% |
 | g2 | 53 (1.180) | +6.5 ± 4.8 | 45 (1.062) | +3.7 ± 4.9 | 52.0% / 48.3% |
+| g3 | 55 (1.208) | +14.0 ± 4.7 | 46 (1.108) | **+12.5 ± 4.9** | 61.3% / 48.8% |
 
 **g1** (records `data/haven-bot/`, logs `logs/haven-bot/`):
 - Self-play: 10 x 1000 from 86900000, both sides mcts:100+plan, 2.2 CPU s a game. The hero scored 48.6% (holdout
@@ -93,3 +94,18 @@ analysis/seed-banks.md). The split is decided here, before any game; nothing out
   - By opponent: Portal +16, Abyss +12, Sword +8, Rune +3, Dragon +2, Forest −2.
 - Equal CPU (N 45): X 52.0%, paired **+3.7 ± 4.9** (95% −1.3 to +8.6). Ratio 1.062.
   - By opponent: Portal +12, Sword +4, Dragon +4, Forest +2, Rune 0, Abyss 0.
+
+**g3** (records `data/haven-bot/rec-g3/`):
+- Self-play: 10 x 1000 from 86905000, the hero piloted by mcts:53 + net g2, 2.8 CPU s a game; two chunks. The hero
+  scored 54.0% (g2 47.3%, g1 48.6%).
+- Net: `net-pilot-haven-bot-g3`, trained fresh on gens 1-3. Best epoch 17 of 21: valid brier 0.179, log loss 0.527.
+- Time match (86906900): ratio 1.818 → N 55.
+- Gate (confirmation bank 86906000): X 62.8% ± 4.0%, baseline 48.8% ± 4.1%, paired **+14.0 ± 4.7** (95% +9.3 to
+  +18.7). Ratio 1.208.
+  - By opponent: Portal +21, Forest +19, Rune +13, Dragon +13, Sword +11, Abyss +7. Above the baseline against all
+    six.
+- **Equal CPU** (N 46; the rerun ran into chunk 2's deadline at 51 pairs and was finished from its jsonl in chunk
+  3): X 61.3% ± 3.9%, paired **+12.5 ± 4.9** (95% +7.6 to +17.4). Ratio 1.108.
+  - By opponent: Forest +20, Sword +15, Rune +15, Portal +10, Abyss +8, Dragon +7.
+- **H1** (g3 at equal CPU ≥ +5 over the hand-set bot; 0.7): **TRUE**. +12.5, and the whole 95% interval is above +5.
+- Route at equal CPU: g1 +0.7, g2 +3.7, g3 +12.5.
