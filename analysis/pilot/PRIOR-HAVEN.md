@@ -116,4 +116,6 @@ analysis/seed-banks.md). The split is decided here, before any game; nothing out
   4.4**, so the init is **g3**.
 - Data: the hero's decisions in the gen-2 and gen-3 self-play (20 shards, `setpolicy_named.py encode`).
 - Fit from g3, `--tau 0.5 --ftz --epochs 35`. Chunk 1's deadline came at epoch 30 (valid ce 1.32506, best);
-  chunk 2 resumed from the checkpoint.
+  chunk 2 resumed from the checkpoint. Done at epoch 35: train ce 1.31276, valid ce 1.32504 (best epoch 34). Model
+  `prior-pilot-haven-bot-ft-t05`, stamped with the rules hash (provenance, current). Log
+  `logs/haven-bot/prior-haven-bot.log`.
