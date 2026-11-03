@@ -265,4 +265,43 @@ to Salem's:
   category. Nothing is installed from this.
 - H1 false: the pass is not shown to cost games under this pilot. It stays a divergence, not a defect.
 
+### Part 2 results (written after the run, 2026-11-03 01:3xZ; ledger F-18)
+
+All 58 positions x 40 pairs = 2320 pairs ran; none was skipped. The container restarted once at 2289 pairs, and the
+script resumed from its output file. Summary script: `realgame_6b_roll_report.py`.
+
+| Category | Positions | Salem's line wins | Bot's line wins | Difference (per position, ± SE) |
+|---|---|---|---|---|
+| Turn 1, the bot plays nothing | 7 | 81.1% | 72.5% | +0.086 ± 0.029 |
+| Turn 1, different cards | 5 | 71.0% | 67.0% | +0.040 ± 0.024 |
+| Turns 2–5, the bot plays nothing | 2 | 55.0% | 60.0% | −0.050 ± 0.125 |
+| Turns 2–5, the bot plays a subset | 8 | 76.9% | 70.6% | +0.062 ± 0.077 |
+| Turns 2–5, the bot plays a superset | 4 | 21.2% | 21.2% | +0.000 ± 0.060 |
+| Turns 2–5, different cards | 32 | 66.1% | 66.8% | −0.007 ± 0.019 |
+| All | 58 | | | +0.017 ± 0.016 |
+
+Turns 2–5 together (46 positions): +0.004 ± 0.020. By deck: 兔子主教 +0.017 ± 0.020 (43), 三轴土 +0.017 ± 0.027 (15).
+
+Forced lines that could not be played as recorded:
+- In Salem's branch: a card in hand with no legal play 221 times, a skipped evolve 40 times. They sit in 7 turn-5
+  positions, where his real turn had PP or a cost reduction the rebuilt position lacks. In game 26 turn 5, for
+  example, his line was never playable.
+- A card absent from hand 104 times. These are mostly tokens the breadcrumb logs as plays (三轴土).
+- In the bot's branch: 16 unplayable cards and 48 skipped evolves, from seeds whose rebuilt board differs.
+- Sensitivity check, chosen after seeing these counts: drop the 8 positions where at least 10% of pairs hit an
+  unplayable card or a skipped evolve. All 50 then score +0.028 ± 0.017, and turn 1 is unchanged.
+
+Predictions:
+- H1 (turn 1, bot passes: Salem above 0 by more than 2 SE) (0.7): TRUE. +0.086 ± 0.029 is 3.0 SE.
+- H2 (all 58: Salem at least 0) (0.65): TRUE as a point estimate, +0.017 ± 0.016. It is not a measured advantage.
+
+Meaning, as fixed before the run:
+- The 兔子主教 bot's turn-1 pass is a measured blind spot of the hand-set evaluator. The same pilot, playing the rest
+  of the game, wins 8.6 points more after Salem's 1-cost play than after passing.
+- Turn-1 cheap plays become an acceptance category. Nothing is installed from this.
+- On turns 2–5 this method finds no difference. That does not show the bot chooses as well as Salem:
+  - the bot continues both branches, which favours its own line;
+  - the method compares only the cards played that turn.
+  So the tool's reach ends at turn 1 here.
+
 ## 6c: opponent weighting (waits for 50 games)

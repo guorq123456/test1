@@ -23,12 +23,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import realgame_6b as R  # noqa: E402
-from svsim.core.actions import EndTurn, Evolve, PlayCard, UseBonusPP  # noqa: E402
-from svsim.core.engine import apply, legal_actions  # noqa: E402
-from svsim.core.state import Phase  # noqa: E402
-from svsim.search.evaluate import evaluate  # noqa: E402
-from svsim.tools.arena import make_agent  # noqa: E402
+import realgame_6b as R
+
+from svsim.core.actions import EndTurn, Evolve, PlayCard, UseBonusPP
+from svsim.core.engine import apply, legal_actions
+from svsim.core.state import Phase
+from svsim.search.evaluate import evaluate
+from svsim.tools.arena import make_agent
 
 OPP_SPEC = "mcts:100+plan"
 SEED_BASE = 86400000          # 86400000 + 10000 * game + 1000 * turn + k (seed ledger: next free was 86400000)
