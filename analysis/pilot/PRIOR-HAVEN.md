@@ -47,7 +47,18 @@ has Salem's isolated-training exception. Nothing is installed; this line only re
 
 ## Seeds
 
-(waiting for the analysis session)
+Bank 86900000-86959999 was allocated by the analysis session (ef44d23 on ccr-da4857cc-rkpgwr,
+analysis/seed-banks.md). The split is decided here, before any game; nothing outside the bank is used.
+
+| step | self-play (10 x 1000, stride 2) | holdout (2 x 1000) | gate (300 pairs, confirmation) | time match (24 pairs, selection) |
+|---|---|---|---|---|
+| g1 | 86900000 | 86901000 | 86902000 | 86902900 |
+| g2 | 86903000 | - | 86904000 | 86904900 |
+| g3 | 86905000 | - | 86906000 | 86906900 |
+| prior | - | - | 86906000 (g3's deals) | 86909800 |
+
+- g2 on g3's deals, which decides the prior's init, uses g3's bank 86906000.
+- Spare for a gen 4 or a rerun: 86910000-86959999. It is reported back to the analysis session as used.
 
 ## Results (written after the runs)
 
