@@ -305,3 +305,8 @@ Meaning, as fixed before the run:
   So the tool's reach ends at turn 1 here.
 
 ## 6c: opponent weighting (waits for 50 games)
+
+Shelved by Salem, 2026-11-03 14:41Z, on a decision card.
+- The tracker reached 60 games, but the plan's 6c (weight the league and self-play by the opponents he meets) conflicts with the data rule: his games are for checking the simulator only, never search or training.
+- The options were: measure only, weight as planned, or not now. He chose not now.
+- Nothing from his opponent mix is computed or stored.
