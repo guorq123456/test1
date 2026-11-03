@@ -109,3 +109,11 @@ analysis/seed-banks.md). The split is decided here, before any game; nothing out
   - By opponent: Forest +20, Sword +15, Rune +15, Portal +10, Abyss +8, Dragon +7.
 - **H1** (g3 at equal CPU ≥ +5 over the hand-set bot; 0.7): **TRUE**. +12.5, and the whole 95% interval is above +5.
 - Route at equal CPU: g1 +0.7, g2 +3.7, g3 +12.5.
+
+**Prior** (logs `runs/pilot-haven-bot/logs/`, the prior's own section below when gated):
+- Init. g2 on g3's confirmation deals (86906000) at g3's equal-CPU N 46: X 51.5% ± 4.0%, paired with the baseline
+  +2.7 ± 4.5 (95% −1.9 to +7.2), ratio 1.097. Paired with g3's equal-CPU row on the same deals: g3 − g2 = **+9.8 ±
+  4.4**, so the init is **g3**.
+- Data: the hero's decisions in the gen-2 and gen-3 self-play (20 shards, `setpolicy_named.py encode`).
+- Fit from g3, `--tau 0.5 --ftz --epochs 35`. Chunk 1's deadline came at epoch 30 (valid ce 1.32506, best);
+  chunk 2 resumed from the checkpoint.
