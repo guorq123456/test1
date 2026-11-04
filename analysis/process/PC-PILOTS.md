@@ -18,7 +18,7 @@ recipe (analysis/pilot/PRIOR-HAVEN.md on the builder line, commit 5b66f4fd), one
   1.08. Driver: `analysis/process/pilot_gen_win.py` (resumable; run from the repo root), the Windows port of the builder's pilot-gen.sh.
 - **Machine.** New PC, 4 jobs x 6 workers, below-normal priority, BLAS on one thread. CPU ratios are measured while
   the four jobs share the machine; X and the baseline play in the same pool, so the ratio stays paired.
-- **Later generations.** g2 and g3 follow whatever g1 shows (the corrected rule, analysis/pilot/README.md: every
+- **Later generations.** g2 and g3 (driver `analysis/process/pilot_next_win.py DECK GEN WORKERS`) follow whatever g1 shows (the corrected rule, analysis/pilot/README.md: every
   hero's g1 so far lost or tied), each in the next 3000 seeds of its bank, the layout of PRIOR-HAVEN.md.
 
 ## Predictions (before any gate result)
