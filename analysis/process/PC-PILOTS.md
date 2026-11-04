@@ -31,3 +31,27 @@ The precedents at g1, equal CPU: 巫师 (rune bot) −7.3, Portal bot −6.5, DF
 
 No conclusion about a deck's strength is drawn from g1. Nothing is installed in the bot or the trainer page without
 Salem's word.
+
+## Result, g1 (reported by the new PC's RC thread 2026-11-04 17:59Z; all four ended 17:35-17:46Z)
+
+300 pairs on each deck's confirmation deals (base + 2000), X = mcts:N+plan+setnet=net-pilot-DECK-bot-g1+netmid+netany,
+baseline mcts:100+plan, opponents the field's six other bot decks at mcts:100+plan. ± is the 95% half-width.
+
+| hero | time match ratio -> N | gate at N: X / baseline, paired (in-gate ratio) | equal CPU N: X, paired (ratio) |
+|---|---|---|---|
+| 精灵 bot/T1-FOREST-1 | 1.433 -> 70 | 42.5% / 43.8%, −1.3 ± 4.9 (1.214) | 58: 43.5%, **−0.3 ± 4.7** (1.082) |
+| 皇家护卫 bot/T1-SWORD-1 | 1.295 -> 77 | 53.5% / 64.0%, −10.5 ± 4.6 (1.186) | 65: 52.8%, **−11.2 ± 4.7** (1.058) |
+| 龙族 bot/T3-DRAGON-1 | 1.430 -> 70 | 29.5% / 37.5%, −8.0 ± 4.6 (1.197) | 58: 29.2%, **−8.3 ± 4.6** (1.056) |
+| 梦魇 bot/T1-ABYSS-1 | 1.320 -> 76 | 55.0% / 57.2%, −2.2 ± 4.4 (1.198) | 63: 54.5%, **−2.7 ± 4.8** (1.078) |
+
+Self-play 10 shards and holdout 2 shards complete for all four. Seeds used exactly as registered (base, +1000,
++2000, +2900).
+
+- P1 (at least 3 of 4 between −10 and +5 at equal CPU; 0.7): **TRUE**, 3 of 4 (皇家护卫 −11.2 is out).
+- P2 (at least 2 of 4 below 0; 0.6): **TRUE**, all 4.
+- P3 (none with its 95% interval wholly above 0; 0.7): **TRUE**; 皇家护卫 and 龙族 have theirs wholly below 0.
+
+Reading: the usual g1 picture (rune bot −7.3, Portal bot −6.5, DFM Portal −5.7, 主教 +0.7); 皇家护卫 −11.2 is the
+worst g1 so far, about one standard error beyond the rune hero's. g2 follows (the corrected rule). A pipeline check
+runs alongside: the training logs' best epoch and validation loss, the self-play hero score. If 皇家护卫's net did
+not learn (best epoch 1, or validation loss flat), its g2 stops; the others go on.
