@@ -61,3 +61,13 @@ the first epoch → the best: 精灵 0.587 → 0.556 (epoch 6 of 10), 皇家护�
 0.503 (epoch 6 of 10), 梦魇 0.568 → 0.532 (epoch 4 of 8). So 皇家护卫's g1 loss is not a training failure; all four
 go on to g2. By opponent at equal CPU the largest drops: 皇家护卫 vs 梦魇 −24 and vs 主教 −19, 龙族 vs 精灵 −21,
 精灵 vs 梦魇 −15 (± 10-13 each). The self-play logs do not print the hero's score.
+
+## Result, g2 (RC thread 2026-11-04 22:13Z, relayed by the coordinator; started 18:03Z on all 24 cores, Salem's word 18:01Z)
+
+Equal CPU, 300 pairs on each deck's g2 confirmation deals (base + 4000), paired difference X − baseline, points:
+龙族 **+11.8** (g1 −8.3), 梦魇 **+10.3** (g1 −2.7), 精灵 **+5.8** (g1 −0.3), 皇家护卫 **+3.0** (g1 −11.2), the last within
+its interval. The hero self-played as mcts:<g1's gate N> + net g1 (70, 77, 70, 76). The intervals, the per-opponent
+rows, the time match and the training epochs are to be filled in from the logs when the RC thread sends their text.
+
+g3 started right after (the same script, GEN 3; seeds base + 5000 / + 6000 / + 6900) on the new PC's usual cap: 12
+processes on E-cores only, Salem's class time being over.
