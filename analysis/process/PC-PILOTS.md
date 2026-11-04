@@ -64,10 +64,23 @@ go on to g2. By opponent at equal CPU the largest drops: 皇家护卫 vs 梦魇 
 
 ## Result, g2 (RC thread 2026-11-04 22:13Z, relayed by the coordinator; started 18:03Z on all 24 cores, Salem's word 18:01Z)
 
-Equal CPU, 300 pairs on each deck's g2 confirmation deals (base + 4000), paired difference X − baseline, points:
-龙族 **+11.8** (g1 −8.3), 梦魇 **+10.3** (g1 −2.7), 精灵 **+5.8** (g1 −0.3), 皇家护卫 **+3.0** (g1 −11.2), the last within
-its interval. The hero self-played as mcts:<g1's gate N> + net g1 (70, 77, 70, 76). The intervals, the per-opponent
-rows, the time match and the training epochs are to be filled in from the logs when the RC thread sends their text.
+g2 ended 19:16-19:40Z. 300 pairs on each deck's g2 confirmation deals (base + 4000); ± is the 95% half-width. The
+hero self-played as mcts:<g1's gate N> + net g1 (70, 77, 70, 76); the net is fresh on g1 + g2 with g1's holdout.
 
-g3 started right after (the same script, GEN 3; seeds base + 5000 / + 6000 / + 6900) on the new PC's usual cap: 12
+| hero | net: valid log loss epoch 1 → best | time match ratio -> N | gate at N: X / baseline, paired (ratio) | equal CPU N: X, paired (ratio) |
+|---|---|---|---|---|
+| 精灵 | 0.564 → 0.538 (epoch 10 of 14) | 1.500 -> 67 | 51.3% / 44.3%, +7.0 ± 4.4 (1.152) | 58: 50.2%, **+5.8 ± 4.5** (1.058) |
+| 皇家护卫 | 0.529 → 0.502 (epoch 17 of 21) | 1.264 -> 79 | 72.3% / 66.0%, +6.3 ± 4.2 (1.223) | 65: 69.0%, **+3.0 ± 4.2** (1.074) |
+| 龙族 | 0.522 → 0.492 (epoch 9 of 13) | 1.348 -> 74 | 50.7% / 38.7%, +12.0 ± 4.3 (1.249) | 59: 50.5%, **+11.8 ± 4.5** (1.114) |
+| 梦魇 | 0.546 → 0.523 (epoch 8 of 12) | 1.620 -> 62 | 67.8% / 59.0%, +8.8 ± 4.7 (1.194) | 52: 69.3%, **+10.3 ± 4.6** (1.083) |
+
+- Route at equal CPU, g1 → g2: 精灵 −0.3 → +5.8, 皇家护卫 −11.2 → +3.0, 龙族 −8.3 → +11.8, 梦魇 −2.7 → +10.3. Three of
+  four have their intervals wholly above 0; 皇家护卫's reaches below 0. Each generation is gated on its own deals, so
+  the step g1 → g2 is not a paired difference.
+- 龙族's equal-CPU row still uses 11% more CPU than the baseline (ratio 1.114; the script reruns once). Its gate at N
+  74 (ratio 1.249) gave +12.0, the rerun at 59 gave +11.8, so the gain does not come from the extra CPU.
+- By opponent at equal CPU, the largest: 龙族 vs 主教 +22 and vs 精灵 +18; 梦魇 vs 龙族 +20; 精灵 vs 龙族 +19
+  (± 10-12 each). The five drops are all small and within their errors (the largest: 精灵 vs 梦魇 −6).
+
+g3 started 22:11:49Z (the same script, GEN 3; seeds base + 5000 / + 6000 / + 6900; hero N 67, 79, 74, 62 from g2's gate) on the usual cap: 12
 processes on E-cores only, Salem's class time being over.
