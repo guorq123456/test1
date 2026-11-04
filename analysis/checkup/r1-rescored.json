@@ -1,0 +1,120 @@
+{
+ "version": "r1-rescore-1 (leaf contract 1)",
+ "condition": "对手卡表已知（牌序、手牌未知）",
+ "test": {
+  "decisions": 753,
+  "old_rule_reproduces_stored": 1.0,
+  "children_rescored_differently": 0.2543160690571049,
+  "children_in_turn": 0.8213811420982736,
+  "decisions_whose_order_flips": 0.03187250996015936
+ },
+ "train": {
+  "decisions": 10000,
+  "old_rule_reproduces_stored": 1.0,
+  "children_rescored_differently": 0.2301,
+  "children_in_turn": 0.8308,
+  "decisions_whose_order_flips": 0.0338
+ },
+ "pilot_hand_stored": {
+  "corr_dh_d": 0.1928344006100323,
+  "sign_agree_clear": 0.618421052631579,
+  "clear": 76
+ },
+ "pilot_hand_contract": {
+  "corr_dh_d": 0.18622953253962238,
+  "sign_agree_clear": 0.6447368421052632,
+  "clear": 76
+ },
+ "models_stored": {
+  "hand": {
+   "corr": 0.18487513052964363,
+   "mse": 0.03917915173125108,
+   "sign_clear": 0.7105263157894737,
+   "teacher_wrong_clear_right": "2/23",
+   "switch_rate": 0.03851261620185923,
+   "switch_gain": 0.001217352810978309,
+   "switch_gain_se": 0.0009832948200536617,
+   "s": 50.0,
+   "lam": 0.0
+  },
+  "hand+generic": {
+   "corr": 0.23884186210507963,
+   "mse": 0.0384982520906838,
+   "sign_clear": 0.7236842105263158,
+   "teacher_wrong_clear_right": "2/23",
+   "switch_rate": 0.04780876494023904,
+   "switch_gain": 0.001770694997786631,
+   "switch_gain_se": 0.001036843345051164,
+   "s": 50.0,
+   "lam": 10000.0
+  },
+  "hand+cards": {
+   "corr": 0.21087228784250833,
+   "mse": 0.038913998988832944,
+   "sign_clear": 0.6973684210526315,
+   "teacher_wrong_clear_right": "1/23",
+   "switch_rate": 0.04249667994687915,
+   "switch_gain": 0.0014386896857016378,
+   "switch_gain_se": 0.0009316526342054459,
+   "s": 50.0,
+   "lam": 100000.0
+  },
+  "hand+generic+cards": {
+   "corr": 0.22545494781442094,
+   "mse": 0.0387635098632651,
+   "sign_clear": 0.6973684210526315,
+   "teacher_wrong_clear_right": "1/23",
+   "switch_rate": 0.04249667994687915,
+   "switch_gain": 0.0013280212483399733,
+   "switch_gain_se": 0.0009384282523201148,
+   "s": 50.0,
+   "lam": 100000.0
+  }
+ },
+ "models_contract": {
+  "hand": {
+   "corr": 0.1775001327456482,
+   "mse": 0.03931872299135961,
+   "sign_clear": 0.6973684210526315,
+   "teacher_wrong_clear_right": "1/23",
+   "switch_rate": 0.033200531208499334,
+   "switch_gain": 0.00044267374944665787,
+   "switch_gain_se": 0.0008718339119961917,
+   "s": 50.0,
+   "lam": 0.0
+  },
+  "hand+generic": {
+   "corr": 0.22555394475375787,
+   "mse": 0.038699765408623014,
+   "sign_clear": 0.7105263157894737,
+   "teacher_wrong_clear_right": "1/23",
+   "switch_rate": 0.03851261620185923,
+   "switch_gain": 0.0004426737494466577,
+   "switch_gain_se": 0.000798408713688735,
+   "s": 50.0,
+   "lam": 10000.0
+  },
+  "hand+cards": {
+   "corr": 0.20329742263865888,
+   "mse": 0.039066573033453005,
+   "sign_clear": 0.6973684210526315,
+   "teacher_wrong_clear_right": "1/23",
+   "switch_rate": 0.033200531208499334,
+   "switch_gain": 0.00011066843736166451,
+   "switch_gain_se": 0.0008360739923583175,
+   "s": 50.0,
+   "lam": 100000.0
+  },
+  "hand+generic+cards": {
+   "corr": 0.21581306433560818,
+   "mse": 0.038937241548986,
+   "sign_clear": 0.6973684210526315,
+   "teacher_wrong_clear_right": "1/23",
+   "switch_rate": 0.033200531208499334,
+   "switch_gain": 0.00011066843736166451,
+   "switch_gain_se": 0.0008360739923583175,
+   "s": 50.0,
+   "lam": 100000.0
+  }
+ }
+}

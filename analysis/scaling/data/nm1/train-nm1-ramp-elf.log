@@ -1,0 +1,59 @@
+{"deck": "ramp-t", "opponent": "elf-t", "flag": true, "inputs": "v1", "name": "nm1-ramp-elf", "init": "analysis/scaling/models/net-mid-ramp-t.npz", "init_sha256": "4232818e66cfef80772676a19673db5804498a0dac379a77d38bfb5c9966e1c5", "mid_rate": 0.320566, "end_rows": 159240, "mid_rows": 496746, "train_positions": 302660, "valid_positions": 15996, "train_by_kind": {"end": 151241, "mid": 151419}, "valid_by_kind": {"end": 7999, "mid": 7997}, "continued": true, "ophand": false, "v2a": false, "wide": false, "pairs": [["ramp-t", "elf-t"], ["elf-t", "ramp-t"]], "extended_cards": [10414120, 10414122, 10503210, 10513310, 10514120, 10614120, 10614122, 10712110, 10714110, 10714112, 10714120, 10714122, 10811130, 10814110, 10911110, 10912110, 10913110, 10913310, 10914110, 90011110, 90011310], "init_valid": {"end": {"brier": 0.30332, "log_loss": 1.04865, "n": 7999}, "mid": {"brier": 0.28304, "log_loss": 0.94129, "n": 7997}}}
+{"epoch": 1, "lr": 0.001, "train_bce": 0.54577, "s": 61.0, "valid_brier": 0.18061, "valid_log_loss": 0.53244, "valid_n": 15996, "best": true}
+{"epoch": 2, "lr": 0.001, "train_bce": 0.52217, "s": 61.9, "valid_brier": 0.17836, "valid_log_loss": 0.52653, "valid_n": 15996, "best": true}
+{"epoch": 3, "lr": 0.001, "train_bce": 0.51663, "s": 60.4, "valid_brier": 0.17839, "valid_log_loss": 0.52605, "valid_n": 15996, "best": true}
+{"epoch": 4, "lr": 0.001, "train_bce": 0.51382, "s": 58.2, "valid_brier": 0.17591, "valid_log_loss": 0.52076, "valid_n": 15996, "best": true}
+{"epoch": 5, "lr": 0.001, "train_bce": 0.51179, "s": 57.9, "valid_brier": 0.17571, "valid_log_loss": 0.51957, "valid_n": 15996, "best": true}
+{"epoch": 6, "lr": 0.001, "train_bce": 0.51043, "s": 57.0, "valid_brier": 0.17422, "valid_log_loss": 0.51561, "valid_n": 15996, "best": true}
+{"epoch": 7, "lr": 0.001, "train_bce": 0.51525, "s": 58.8, "valid_brier": 0.17744, "valid_log_loss": 0.52359, "valid_n": 15996}
+{"epoch": 8, "lr": 0.0005, "train_bce": 0.51155, "s": 57.5, "valid_brier": 0.17636, "valid_log_loss": 0.52103, "valid_n": 15996}
+{"epoch": 9, "lr": 0.00025, "train_bce": 0.50811, "s": 57.5, "valid_brier": 0.17658, "valid_log_loss": 0.5213, "valid_n": 15996}
+{"epoch": 10, "lr": 0.000125, "train_bce": 0.5062, "s": 57.3, "valid_brier": 0.17552, "valid_log_loss": 0.51878, "valid_n": 15996}
+{
+ "name": "nm1-ramp-elf",
+ "fit_s": 617,
+ "epochs": 10,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.17327,
+   "log_loss": 0.51206,
+   "n": 151241
+  },
+  "mid": {
+   "brier": 0.16664,
+   "log_loss": 0.49692,
+   "n": 151419
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.17669,
+   "log_loss": 0.51993,
+   "n": 7999
+  },
+  "mid": {
+   "brier": 0.17174,
+   "log_loss": 0.51129,
+   "n": 7997
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.30332,
+   "log_loss": 1.04865,
+   "n": 7999
+  },
+  "mid": {
+   "brier": 0.28304,
+   "log_loss": 0.94129,
+   "n": 7997
+  }
+ },
+ "mid_rate": 0.320566
+}

@@ -1,0 +1,48 @@
+{
+ "name": "nm3g3-elf-nem",
+ "fit_s": 2782,
+ "epochs": 10,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.17513,
+   "log_loss": 0.51436,
+   "n": 491074
+  },
+  "mid": {
+   "brier": 0.16332,
+   "log_loss": 0.48548,
+   "n": 490957
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.18457,
+   "log_loss": 0.54148,
+   "n": 25835
+  },
+  "mid": {
+   "brier": 0.17752,
+   "log_loss": 0.5271,
+   "n": 25688
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.18672,
+   "log_loss": 0.54646,
+   "n": 25835
+  },
+  "mid": {
+   "brier": 0.17992,
+   "log_loss": 0.53211,
+   "n": 25688
+  }
+ },
+ "mid_rate": 0.256349
+}

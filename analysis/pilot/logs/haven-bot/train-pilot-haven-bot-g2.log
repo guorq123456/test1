@@ -1,0 +1,63 @@
+{"provenance": {"commit": "4250099bb17788cd2991ff5c3635d51a98c21dc0", "rules_dirty": false, "rules_hash": "de145991df27d6a7a7436982a85a6a34aa3e5283afc92586a61589bf2c2ae01c", "rules_files": {"svsim/cards/__init__.py": "fdd37d0b8b354a83", "svsim/cards/abyss.py": "1e0255bacf4d012e", "svsim/cards/common.py": "0f5adc3ebe513545", "svsim/cards/data/rotation.json": "14df94e8cc5c7153", "svsim/cards/data/unlimited.json": "7f92a09793e6397b", "svsim/cards/dragon.py": "3b37b17f7fa79657", "svsim/cards/forest.py": "68c651e7f641c0d1", "svsim/cards/haven.py": "7ba4ebc43894f6cb", "svsim/cards/library.py": "863d4cee6d3a95da", "svsim/cards/neutral.py": "8b4d0f7febd1690f", "svsim/cards/official.py": "cfbc9e66904dbe11", "svsim/cards/pending.py": "e4f135d57aa7ee1c", "svsim/cards/pool.py": "feb0bb60ec708b88", "svsim/cards/portal.py": "3d6a9e9be5b7261a", "svsim/cards/rune.py": "d808a9d59820c720", "svsim/cards/sword.py": "57879818f71deb46", "svsim/cards/unlimited.py": "aca7e9f7ddc617ff", "svsim/core/__init__.py": "30682dccac7c4cc0", "svsim/core/actions.py": "2a5af73a8a94bedf", "svsim/core/carddef.py": "91e1bff5f56ccc61", "svsim/core/effects.py": "0f705e38ed7d7cc0", "svsim/core/engine.py": "b73e2995a0b0f44f", "svsim/core/enums.py": "6c3ea487c21d1902", "svsim/core/script.py": "931a94bbd7876e57", "svsim/core/state.py": "fd94228f8015f6b3", "svsim/core/view.py": "379558fc4ad77bbf"}, "stamped": "2026-11-03T05:45:33Z"}, "deck": null, "opponent": null, "flag": true, "inputs": "v1", "name": "pilot-haven-bot-g2", "init": "fresh", "init_sha256": null, "mid_rate": 0.323922, "end_rows": 285286, "mid_rows": 880724, "train_positions": 543198, "valid_positions": 28552, "train_by_kind": {"end": 271013, "mid": 272185}, "valid_by_kind": {"end": 14273, "mid": 14279}, "continued": true, "ophand": false, "v2a": false, "wide": false, "shared": true, "init_valid": {"end": {"brier": 0.3792, "log_loss": 1.11602, "n": 14273}, "mid": {"brier": 0.36912, "log_loss": 1.07679, "n": 14279}}}
+{"epoch": 1, "lr": 0.001, "train_bce": 0.60302, "s": 152.2, "valid_brier": 0.19586, "valid_log_loss": 0.57151, "valid_n": 28552, "best": true}
+{"epoch": 2, "lr": 0.001, "train_bce": 0.56042, "s": 148.6, "valid_brier": 0.19182, "valid_log_loss": 0.56114, "valid_n": 28552, "best": true}
+{"epoch": 3, "lr": 0.001, "train_bce": 0.55257, "s": 146.0, "valid_brier": 0.1899, "valid_log_loss": 0.55594, "valid_n": 28552, "best": true}
+{"provenance": {"commit": "4250099bb17788cd2991ff5c3635d51a98c21dc0", "rules_dirty": false, "rules_hash": "de145991df27d6a7a7436982a85a6a34aa3e5283afc92586a61589bf2c2ae01c", "rules_files": {"svsim/cards/__init__.py": "fdd37d0b8b354a83", "svsim/cards/abyss.py": "1e0255bacf4d012e", "svsim/cards/common.py": "0f5adc3ebe513545", "svsim/cards/data/rotation.json": "14df94e8cc5c7153", "svsim/cards/data/unlimited.json": "7f92a09793e6397b", "svsim/cards/dragon.py": "3b37b17f7fa79657", "svsim/cards/forest.py": "68c651e7f641c0d1", "svsim/cards/haven.py": "7ba4ebc43894f6cb", "svsim/cards/library.py": "863d4cee6d3a95da", "svsim/cards/neutral.py": "8b4d0f7febd1690f", "svsim/cards/official.py": "cfbc9e66904dbe11", "svsim/cards/pending.py": "e4f135d57aa7ee1c", "svsim/cards/pool.py": "feb0bb60ec708b88", "svsim/cards/portal.py": "3d6a9e9be5b7261a", "svsim/cards/rune.py": "d808a9d59820c720", "svsim/cards/sword.py": "57879818f71deb46", "svsim/cards/unlimited.py": "aca7e9f7ddc617ff", "svsim/core/__init__.py": "30682dccac7c4cc0", "svsim/core/actions.py": "2a5af73a8a94bedf", "svsim/core/carddef.py": "91e1bff5f56ccc61", "svsim/core/effects.py": "0f705e38ed7d7cc0", "svsim/core/engine.py": "b73e2995a0b0f44f", "svsim/core/enums.py": "6c3ea487c21d1902", "svsim/core/script.py": "931a94bbd7876e57", "svsim/core/state.py": "fd94228f8015f6b3", "svsim/core/view.py": "379558fc4ad77bbf"}, "stamped": "2026-11-03T05:55:38Z"}, "deck": null, "opponent": null, "flag": true, "inputs": "v1", "name": "pilot-haven-bot-g2", "init": "fresh", "init_sha256": null, "mid_rate": 0.323922, "end_rows": 285286, "mid_rows": 880724, "train_positions": 543198, "valid_positions": 28552, "train_by_kind": {"end": 271013, "mid": 272185}, "valid_by_kind": {"end": 14273, "mid": 14279}, "continued": true, "ophand": false, "v2a": false, "wide": false, "shared": true, "init_valid": {"end": {"brier": 0.3792, "log_loss": 1.11602, "n": 14273}, "mid": {"brier": 0.36912, "log_loss": 1.07679, "n": 14279}}}
+{"resumed_after_epoch": 3, "stopped": false}
+{"epoch": 4, "lr": 0.001, "train_bce": 0.54594, "s": 148.4, "valid_brier": 0.18772, "valid_log_loss": 0.54983, "valid_n": 28552, "best": true}
+{"epoch": 5, "lr": 0.001, "train_bce": 0.54053, "s": 144.9, "valid_brier": 0.18677, "valid_log_loss": 0.54732, "valid_n": 28552, "best": true}
+{"epoch": 6, "lr": 0.001, "train_bce": 0.53637, "s": 150.7, "valid_brier": 0.1867, "valid_log_loss": 0.54684, "valid_n": 28552, "best": true}
+{"epoch": 7, "lr": 0.001, "train_bce": 0.53309, "s": 146.3, "valid_brier": 0.18892, "valid_log_loss": 0.5531, "valid_n": 28552}
+{"epoch": 8, "lr": 0.0005, "train_bce": 0.52493, "s": 148.1, "valid_brier": 0.18434, "valid_log_loss": 0.54079, "valid_n": 28552, "best": true}
+{"epoch": 9, "lr": 0.0005, "train_bce": 0.52207, "s": 152.4, "valid_brier": 0.18529, "valid_log_loss": 0.5431, "valid_n": 28552}
+{"epoch": 10, "lr": 0.00025, "train_bce": 0.51669, "s": 150.8, "valid_brier": 0.18508, "valid_log_loss": 0.54259, "valid_n": 28552}
+{"epoch": 11, "lr": 0.000125, "train_bce": 0.5132, "s": 152.9, "valid_brier": 0.1854, "valid_log_loss": 0.54353, "valid_n": 28552}
+{"epoch": 12, "lr": 6.25e-05, "train_bce": 0.51134, "s": 154.8, "valid_brier": 0.18569, "valid_log_loss": 0.54426, "valid_n": 28552}
+{
+ "name": "pilot-haven-bot-g2",
+ "fit_s": 1413,
+ "epochs": 12,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.18116,
+   "log_loss": 0.53195,
+   "n": 271013
+  },
+  "mid": {
+   "brier": 0.17049,
+   "log_loss": 0.50634,
+   "n": 272185
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.1869,
+   "log_loss": 0.54615,
+   "n": 14273
+  },
+  "mid": {
+   "brier": 0.18177,
+   "log_loss": 0.53543,
+   "n": 14279
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.3792,
+   "log_loss": 1.11602,
+   "n": 14273
+  },
+  "mid": {
+   "brier": 0.36912,
+   "log_loss": 1.07679,
+   "n": 14279
+  }
+ },
+ "mid_rate": 0.323922
+}

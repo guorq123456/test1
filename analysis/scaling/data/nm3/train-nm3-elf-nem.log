@@ -1,0 +1,55 @@
+{"deck": "elf-t", "opponent": "nemesis-t", "flag": true, "inputs": "v1", "name": "nm3-elf-nem", "init": "analysis/scaling/models/net-nm2f-ramp-nem.npz", "init_sha256": "e286636845846c661ecce0d8ce041008b66e9fb6c7995a2c64bb189f23adf850", "mid_rate": 0.260834, "end_rows": 176890, "mid_rows": 678172, "train_positions": 335737, "valid_positions": 18003, "train_by_kind": {"end": 167938, "mid": 167799}, "valid_by_kind": {"end": 8952, "mid": 9051}, "continued": true, "ophand": false, "v2a": false, "wide": false, "pairs": [["elf-t", "nemesis-t"], ["nemesis-t", "elf-t"]], "extended_cards": [10414120, 10414122, 10503210, 10513310, 10514120, 10614120, 10614122, 10712110, 10714110, 10714112, 10714120, 10714122, 10811130, 10814110, 10911110, 10912110, 10913110, 10913310, 10914110, 90011110, 90011310], "init_valid": {"end": {"brier": 0.23922, "log_loss": 0.69569, "n": 8952}, "mid": {"brier": 0.23444, "log_loss": 0.68788, "n": 9051}}}
+{"epoch": 1, "lr": 0.001, "train_bce": 0.56928, "s": 98.4, "valid_brier": 0.20824, "valid_log_loss": 0.60093, "valid_n": 18003, "best": true}
+{"epoch": 2, "lr": 0.001, "train_bce": 0.55105, "s": 117.3, "valid_brier": 0.20124, "valid_log_loss": 0.58357, "valid_n": 18003, "best": true}
+{"epoch": 3, "lr": 0.001, "train_bce": 0.54437, "s": 125.0, "valid_brier": 0.20422, "valid_log_loss": 0.59232, "valid_n": 18003}
+{"epoch": 4, "lr": 0.0005, "train_bce": 0.53451, "s": 130.9, "valid_brier": 0.20056, "valid_log_loss": 0.5839, "valid_n": 18003}
+{"epoch": 5, "lr": 0.00025, "train_bce": 0.52752, "s": 129.6, "valid_brier": 0.20086, "valid_log_loss": 0.58479, "valid_n": 18003}
+{"epoch": 6, "lr": 0.000125, "train_bce": 0.52374, "s": 115.3, "valid_brier": 0.20076, "valid_log_loss": 0.58596, "valid_n": 18003}
+{
+ "name": "nm3-elf-nem",
+ "fit_s": 753,
+ "epochs": 6,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.18832,
+   "log_loss": 0.54959,
+   "n": 167938
+  },
+  "mid": {
+   "brier": 0.18108,
+   "log_loss": 0.53348,
+   "n": 167799
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.20231,
+   "log_loss": 0.58516,
+   "n": 8952
+  },
+  "mid": {
+   "brier": 0.20018,
+   "log_loss": 0.582,
+   "n": 9051
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.23922,
+   "log_loss": 0.69569,
+   "n": 8952
+  },
+  "mid": {
+   "brier": 0.23444,
+   "log_loss": 0.68788,
+   "n": 9051
+  }
+ },
+ "mid_rate": 0.260834
+}

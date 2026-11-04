@@ -1,0 +1,18 @@
+{
+ "records": "rec-79700018.jsonl.gz",
+ "games": 25,
+ "deck": "ramp-t",
+ "decisions": 521,
+ "specs": {
+  "g2": {
+   "spec": "mcts:89+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm1g2-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1g2-ramp-t.npz:2:1",
+   "ms_per_decision": 87.65,
+   "iterations_per_decision": 88.8
+  },
+  "g3": {
+   "spec": "mcts:89+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm1g3-ramp-elf.npz+netmid+puct=analysis/scaling/models/prior-nm1g3-ramp-t.npz:2:1",
+   "ms_per_decision": 86.56,
+   "iterations_per_decision": 88.8
+  }
+ }
+}

@@ -1,0 +1,129 @@
+{
+ "id": "haven-bunny-board-2026-11-01",
+ "title": "Salem 2026-11-01 兔子教盘面：不撞 > 全撞",
+ "kind": "叫杀",
+ "source": "analysis/pilot/salem_board_2026_11_01.py --accept (Salem's screenshot, rebuilt by hand)",
+ "deck": "dfm/HAVEN-ユーリ",
+ "deck_code": "1.6.cOMQ.cOMQ.cOc2.cOc2.fRes.fRes.fRes.fRf0.fRf0.fRxc.fRxc.fS86.fS86.fSNk.fSNu.fSNu.fSNu.fqJ8.fqJ8.fqJ8.f-3-.f-3-.gCTs.gCTs.gCTs.gCjU.gCjU.gCjU.gCmc.gCmc.gCmc.gCz6.gCz6.gCz6.gD0E.gD0E.gD0E.gDCk.gDCk.gDCk",
+ "opponent": "dfm/RUNE-ユーリ",
+ "opponent_code": "1.3.cH1g.cH1g.cH1g.cH3E.cH3E.cH3E.cfTu.cfTu.cfTu.eBpe.eBpe.eBpe.ey9E.ey9E.ey9E.eyCM.eyCM.eyCM.fKcs.fKpM.fKpM.fKpM.fKsU.fKsU.fKsU.f-LA.g5Ok.g5Ok.g5Ok.g5Rs.g5Rs.g5Rs.g5hU.g5hU.g5t-.g5t-.g5t-.g5u8.g5u8.g5u8",
+ "external": "dfm lists are EXTERNAL (Salem 「隔离训练」): checks only; Salem's list is close to DFM's 兔子主教",
+ "rebuild": {
+  "kind": "builder",
+  "function": "bunny_board",
+  "line_function": "bunny_line",
+  "seeds": [
+   86040000,
+   86040001,
+   86040002,
+   86040003,
+   86040004
+  ]
+ },
+ "fingerprint": [
+  {
+   "hand": [
+    10861110,
+    10861120,
+    11063110,
+    90001210
+   ],
+   "field": [
+    90061140,
+    90061140,
+    90061140,
+    90061140
+   ],
+   "pp": 0,
+   "leader_hp": 19,
+   "turn": 14
+  },
+  {
+   "hand": [
+    10861110,
+    10861120,
+    11063110,
+    90001210
+   ],
+   "field": [
+    90061140,
+    90061140,
+    90061140,
+    90061140
+   ],
+   "pp": 0,
+   "leader_hp": 19,
+   "turn": 14
+  },
+  {
+   "hand": [
+    10861110,
+    10861120,
+    11063110,
+    90001210
+   ],
+   "field": [
+    90061140,
+    90061140,
+    90061140,
+    90061140
+   ],
+   "pp": 0,
+   "leader_hp": 19,
+   "turn": 14
+  },
+  {
+   "hand": [
+    10861110,
+    10861120,
+    11063110,
+    90001210
+   ],
+   "field": [
+    90061140,
+    90061140,
+    90061140,
+    90061140
+   ],
+   "pp": 0,
+   "leader_hp": 19,
+   "turn": 14
+  },
+  {
+   "hand": [
+    10861110,
+    10861120,
+    11063110,
+    90001210
+   ],
+   "field": [
+    90061140,
+    90061140,
+    90061140,
+    90061140
+   ],
+   "pp": 0,
+   "leader_hp": 19,
+   "turn": 14
+  }
+ ],
+ "salem": {
+  "line": "keep",
+  "reason": "「他的两只怪送不掉就不能出双顾问回血，单顾问只能回两滴血，他打过两张抽二钢铁所以不撞是一个稳定叫杀，而撞了不是」（Salem 2026-11-01 14:18Z）"
+ },
+ "wrong": [
+  {
+   "line": "all",
+   "who": "trading all four bunnies"
+  }
+ ],
+ "scorings": [
+  "handset"
+ ],
+ "copies": 8,
+ "reseed": "after_line",
+ "note": "scored from Salem's (主教) side, hand-set evaluation only for now",
+ "tier": "clear",
+ "tier_rule": "clear from Salem's reasoning (a stable lethal), not from a net: no 主教 net exists and the rune nets score it from the wrong deck",
+ "tier_note": "net scores on this board are reference only until there is a bunny-bishop net (for the record: g3 keep 1.923 vs all 0.224)"
+}

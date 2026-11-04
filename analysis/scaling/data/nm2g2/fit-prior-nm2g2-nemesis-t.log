@@ -1,0 +1,27 @@
+{"epoch": 1, "lr": 0.001, "train_ce": 1.13922, "s": 175.6, "valid_ce": 1.15037, "best": true}
+{"epoch": 2, "lr": 0.001, "train_ce": 1.13591, "s": 170.6, "valid_ce": 1.14728, "best": true}
+{"epoch": 3, "lr": 0.001, "train_ce": 1.13506, "s": 175.6, "valid_ce": 1.14466, "best": true}
+{"epoch": 4, "lr": 0.001, "train_ce": 1.13452, "s": 163.7, "valid_ce": 1.14768}
+{"epoch": 5, "lr": 0.0005, "train_ce": 1.12818, "s": 169.1, "valid_ce": 1.13899, "best": true}
+{"epoch": 6, "lr": 0.0005, "train_ce": 1.12747, "s": 171.4, "valid_ce": 1.1392}
+{"epoch": 7, "lr": 0.00025, "train_ce": 1.12425, "s": 166.5, "valid_ce": 1.13712, "best": true}
+{"epoch": 8, "lr": 0.00025, "train_ce": 1.12378, "s": 161.7, "valid_ce": 1.13752}
+{"epoch": 9, "lr": 0.000125, "train_ce": 1.12208, "s": 161.3, "valid_ce": 1.13608, "best": true}
+{"epoch": 10, "lr": 0.000125, "train_ce": 1.12182, "s": 160.3, "valid_ce": 1.13649}
+{"epoch": 11, "lr": 6.25e-05, "train_ce": 1.12084, "s": 160.1, "valid_ce": 1.13543, "best": true}
+{"epoch": 12, "lr": 6.25e-05, "train_ce": 1.12074, "s": 163.4, "valid_ce": 1.13537, "best": true}
+{"epoch": 13, "lr": 6.25e-05, "train_ce": 1.12067, "s": 164.1, "valid_ce": 1.13536, "best": true}
+{"epoch": 14, "lr": 6.25e-05, "train_ce": 1.12059, "s": 164.3, "valid_ce": 1.13536}
+{"epoch": 15, "lr": 3.125e-05, "train_ce": 1.12008, "s": 163.5, "valid_ce": 1.13492, "best": true}
+{"epoch": 16, "lr": 3.125e-05, "train_ce": 1.12002, "s": 161.7, "valid_ce": 1.13496}
+{"epoch": 17, "lr": 1.5625e-05, "train_ce": 1.11975, "s": 170.0, "valid_ce": 1.13483, "best": true}
+{"epoch": 18, "lr": 1.5625e-05, "train_ce": 1.11971, "s": 168.7, "valid_ce": 1.13483}
+{"epoch": 19, "lr": 7.8125e-06, "train_ce": 1.11957, "s": 166.2, "valid_ce": 1.13479, "best": true}
+{"epoch": 20, "lr": 7.8125e-06, "train_ce": 1.11956, "s": 168.5, "valid_ce": 1.1348}
+{"epoch": 21, "lr": 3.90625e-06, "train_ce": 1.11947, "s": 165.5, "valid_ce": 1.13479}
+{"epoch": 22, "lr": 1.953125e-06, "train_ce": 1.11943, "s": 177.9, "valid_ce": 1.13477, "best": true}
+{"epoch": 23, "lr": 1.953125e-06, "train_ce": 1.11942, "s": 182.7, "valid_ce": 1.13477}
+{"epoch": 24, "lr": 9.765625e-07, "train_ce": 1.1194, "s": 184.3, "valid_ce": 1.13477}
+{"epoch": 25, "lr": 4.8828125e-07, "train_ce": 1.11939, "s": 189.7, "valid_ce": 1.13477}
+{"epoch": 26, "lr": 2.44140625e-07, "train_ce": 1.11938, "s": 197.7, "valid_ce": 1.13476}
+{"fit_s": 4592, "epochs": 26, "train_ce": 1.11939, "valid_ce": 1.13477}

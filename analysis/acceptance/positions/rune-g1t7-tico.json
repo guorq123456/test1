@@ -1,0 +1,145 @@
+{
+ "id": "rune-g1t7-tico",
+ "title": "第一局第7回合：琪可打骑士+魔弹 > 怪兽打骑士+魔弹+琪可打脸",
+ "kind": "打脸还是解场",
+ "source": "analysis/resource-value/acceptance.py on claude/deck-search; Salem's verdicts of 2026-10-31 22:45Z-23:03Z",
+ "deck": "dfm/RUNE-ユーリ",
+ "deck_code": "1.3.cH1g.cH1g.cH1g.cH3E.cH3E.cH3E.cfTu.cfTu.cfTu.eBpe.eBpe.eBpe.ey9E.ey9E.ey9E.eyCM.eyCM.eyCM.fKcs.fKpM.fKpM.fKpM.fKsU.fKsU.fKsU.f-LA.g5Ok.g5Ok.g5Ok.g5Rs.g5Rs.g5Rs.g5hU.g5hU.g5t-.g5t-.g5t-.g5u8.g5u8.g5u8",
+ "opponent": "bot/T1-SWORD-1",
+ "opponent_code": "1.2.cEZs.cEZs.cEZs.cEaA.cEaA.eXnu.eXnu.eXnu.evTW.evTW.evTW.evi-.evi-.evi-.evj8.evj8.evj8.evm6.evm6.evm6.evyc.evyc.evyc.ewCE.ewCE.ewCE.ewCO.ewCO.ewCO.fHts.fHts.fHts.fIN6.fIN6.fIck.fIck.fIck.fIcu.fIcu.fIcu",
+ "external": "dfm lists are EXTERNAL (Salem 「隔离训练」): checks only",
+ "rebuild": {
+  "kind": "replay",
+  "seed": 85981131,
+  "seat": 0,
+  "first": true,
+  "turn": 7,
+  "recorded_with": "mcts:100+plan both sides (acceptance.py's recipe), once",
+  "actions": [
+   [
+    2,
+    "换牌：[1]"
+   ],
+   [
+    5,
+    "换牌：[0, 1]"
+   ],
+   [
+    0,
+    "结束回合"
+   ],
+   [
+    0,
+    "使用额外能量点"
+   ],
+   [
+    0,
+    "结束回合"
+   ],
+   [
+    2,
+    "结束回合"
+   ],
+   [
+    0,
+    "使用额外能量点"
+   ],
+   [
+    0,
+    "使用「传调联络兵」"
+   ],
+   [
+    0,
+    "结束回合"
+   ],
+   [
+    3,
+    "使用「玛纳利亚文书官·琪可」"
+   ],
+   [
+    0,
+    "结束回合"
+   ],
+   [
+    0,
+    "使用「传调联络兵」"
+   ],
+   [
+    1,
+    "「传调联络兵」攻击敌方主战者"
+   ],
+   [
+    1,
+    "「骑士」攻击敌方主战者"
+   ],
+   [
+    0,
+    "结束回合"
+   ]
+  ]
+ },
+ "fingerprint": {
+  "hand": [
+   10031310,
+   10534120,
+   10732110,
+   10732310,
+   10732310,
+   11033310,
+   11034110,
+   90031310,
+   90031310
+  ],
+  "field": [
+   10833110
+  ],
+  "pp": 4,
+  "leader_hp": 17,
+  "turn": 7
+ },
+ "salem": {
+  "line": [
+   "「玛纳利亚文书官·琪可」攻击敌方场上的「骑士」",
+   "使用「玛纳利亚魔弹」",
+   "使用「迷人怪兽」"
+  ],
+  "reason": null
+ },
+ "wrong": [
+  {
+   "line": [
+    "使用「迷人怪兽」",
+    "「迷人怪兽」攻击敌方场上的「骑士」",
+    "使用「玛纳利亚魔弹」",
+    "「玛纳利亚文书官·琪可」攻击敌方主战者"
+   ],
+   "who": "the bot (mcts:100+plan)"
+  }
+ ],
+ "scorings": [
+  "turn_end",
+  "mid_turn",
+  "prior",
+  "handset"
+ ],
+ "copies": 40,
+ "reseed": "before_line",
+ "tier": "clear",
+ "tier_rule": "marginal when |margin| < 0.10 on either branch under the reference net g3 (frozen 2026-11-02 before any other net was scored here)",
+ "tier_margins": {
+  "source": "claude/pilot-dfm 83fc1823 analysis/pilot/acc_margins.py, logs/acc-margins.log (value-net logit, Salem line minus bot line, mean over k=40)",
+  "g3": {
+   "turn_end": -0.147,
+   "mid_turn": 0.103
+  },
+  "g2": {
+   "turn_end": -0.051,
+   "mid_turn": -0.081
+  },
+  "g5": {
+   "turn_end": -0.036,
+   "mid_turn": 0.685
+  }
+ },
+ "tier_note": "borderline: g3 mid margin 0.103 is just over 0.10, and the sign flips between the two branches under both g3 and g5, so its result is noisy even as a clear item"
+}

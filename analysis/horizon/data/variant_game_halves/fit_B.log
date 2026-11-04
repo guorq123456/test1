@@ -1,0 +1,126 @@
+{
+ "train": {
+  "contrast_mse_w": 0.008752,
+  "sign_w": 0.7632,
+  "sign_w_vs_original_labels": 0.7395,
+  "calib_logloss": 0.5946
+ },
+ "intercept": -0.3158,
+ "seconds": 220,
+ "prices": {
+  "0": {
+   "G": {
+    "ep": -1.4414,
+    "sep": 0.1501,
+    "max_pp": 9.2111,
+    "pp_left": -0.5519,
+    "hand": 3.5504,
+    "enemy_hp": -2.063,
+    "own_hp": 0.5637,
+    "own_followers": 0.7373,
+    "own_stats": 0.5105,
+    "enemy_followers": -3.9423,
+    "enemy_stats": -0.7498,
+    "own_amulets": 0.0,
+    "enemy_amulets": 0.0
+   },
+   "T": {
+    "ep": -0.7428,
+    "sep": 0.978,
+    "max_pp": 6.2352,
+    "pp_left": -0.4112,
+    "hand": 1.8955,
+    "enemy_hp": -2.4334,
+    "own_hp": 0.258,
+    "own_followers": -0.3283,
+    "own_stats": 0.7951,
+    "enemy_followers": -4.124,
+    "enemy_stats": -0.4782,
+    "own_amulets": 0.0,
+    "enemy_amulets": 0.0
+   },
+   "gap_prob": {
+    "max_pp": 0.029759,
+    "hand": 0.016549,
+    "sep": -0.008279,
+    "own_followers": 0.010657
+   },
+   "pairs": 2488,
+   "starts": 874
+  },
+  "1": {
+   "G": {
+    "ep": 2.6594,
+    "sep": 0.3153,
+    "max_pp": 14.6306,
+    "pp_left": -1.1659,
+    "hand": 3.1352,
+    "enemy_hp": -2.2438,
+    "own_hp": 2.101,
+    "own_followers": 1.4404,
+    "own_stats": 0.5058,
+    "enemy_followers": -8.2854,
+    "enemy_stats": -0.3159,
+    "own_amulets": 0.0,
+    "enemy_amulets": 0.0
+   },
+   "T": {
+    "ep": 1.3015,
+    "sep": 1.0729,
+    "max_pp": 6.5884,
+    "pp_left": -1.3402,
+    "hand": 2.1959,
+    "enemy_hp": -2.2939,
+    "own_hp": 0.5591,
+    "own_followers": -0.1057,
+    "own_stats": 0.772,
+    "enemy_followers": -5.443,
+    "enemy_stats": -0.2332,
+    "own_amulets": 0.0,
+    "enemy_amulets": 0.0
+   },
+   "gap_prob": {
+    "max_pp": 0.080422,
+    "hand": 0.009393,
+    "sep": -0.007576,
+    "own_followers": 0.015462
+   },
+   "pairs": 2385,
+   "starts": 837
+  },
+  "teacher_re_run_gap_prob": {
+   "max_pp": 0.05509,
+   "hand": 0.012971,
+   "sep": -0.007928,
+   "own_followers": 0.013059
+  }
+ },
+ "variance": {
+  "step1": {
+   "n": 5453,
+   "var_L": 0.0226064,
+   "var_correction": 0.000899,
+   "share": 0.0398,
+   "share_unweighted": 0.0302,
+   "mean_correction": -0.006281,
+   "mean_abs_correction": 0.019941
+  },
+  "teacher_ends": {
+   "n": 211696,
+   "var_L": 0.0144713,
+   "var_correction": 0.0008592,
+   "share": 0.0594,
+   "share_unweighted": 0.0546,
+   "mean_correction": -0.00321,
+   "mean_abs_correction": 0.020855
+  }
+ },
+ "counts": {
+  "step1_labels": 5453,
+  "step1_examples": 108686,
+  "step1_no_examples": 231,
+  "teacher_ends_labels": 13607,
+  "teacher_ends_examples": 211696,
+  "teacher_ends_no_examples": 251
+ }
+}

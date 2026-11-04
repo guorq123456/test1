@@ -1,0 +1,48 @@
+{
+ "name": "pilot-haven-bot-g2",
+ "fit_s": 1413,
+ "epochs": 12,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.18116,
+   "log_loss": 0.53195,
+   "n": 271013
+  },
+  "mid": {
+   "brier": 0.17049,
+   "log_loss": 0.50634,
+   "n": 272185
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.1869,
+   "log_loss": 0.54615,
+   "n": 14273
+  },
+  "mid": {
+   "brier": 0.18177,
+   "log_loss": 0.53543,
+   "n": 14279
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.3792,
+   "log_loss": 1.11602,
+   "n": 14273
+  },
+  "mid": {
+   "brier": 0.36912,
+   "log_loss": 1.07679,
+   "n": 14279
+  }
+ },
+ "mid_rate": 0.323922
+}

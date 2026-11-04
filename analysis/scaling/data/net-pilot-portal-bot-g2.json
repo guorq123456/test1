@@ -1,0 +1,48 @@
+{
+ "name": "pilot-portal-bot-g2",
+ "fit_s": 1324,
+ "epochs": 15,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.16779,
+   "log_loss": 0.49931,
+   "n": 287428
+  },
+  "mid": {
+   "brier": 0.16163,
+   "log_loss": 0.4842,
+   "n": 287469
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.17267,
+   "log_loss": 0.51131,
+   "n": 15039
+  },
+  "mid": {
+   "brier": 0.17123,
+   "log_loss": 0.50806,
+   "n": 15195
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.38779,
+   "log_loss": 1.13375,
+   "n": 15039
+  },
+  "mid": {
+   "brier": 0.37985,
+   "log_loss": 1.09985,
+   "n": 15195
+  }
+ },
+ "mid_rate": 0.290805
+}

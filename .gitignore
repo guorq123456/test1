@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+# Official card data is Cygames content: fetch it locally, don't commit it.
+data/raw/
+
+# Agent worktrees
+.claude/worktrees/
+
+# Games saved by tools.play (share them by their replay code)
+replays/
+
+# Builds of the in-browser version (python -m svsim.tools.web --build)
+dist/

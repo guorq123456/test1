@@ -1,0 +1,22 @@
+{
+ "rows": 51523,
+ "games": 1500,
+ "a": "analysis/scaling/models/net-nm3g3-elf-nem.npz",
+ "b": "analysis/scaling/models/net-nm3g3f-elf-nem.npz",
+ "brier_a": {
+  "end": 0.18457,
+  "mid": 0.17752,
+  "both": 0.18105
+ },
+ "brier_b": {
+  "end": 0.1844,
+  "mid": 0.17634,
+  "both": 0.18038
+ },
+ "a_minus_b": 0.00067,
+ "sd": 0.0007,
+ "ci95": [
+  -0.00068,
+  0.00208
+ ]
+}

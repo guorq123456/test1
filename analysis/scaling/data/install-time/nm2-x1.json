@@ -1,0 +1,178 @@
+{
+ "deck": "ramp-t",
+ "opponent": "nemesis-t",
+ "seeds": [
+  83600000,
+  83600001,
+  83600002,
+  83600003,
+  83600004,
+  83600005,
+  83600006,
+  83600007,
+  83600008,
+  83600009
+ ],
+ "pairs": {
+  "new": {
+   "specs": {
+    "ramp-t": "mcts:76+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm2g2f-ramp-nem.npz+netmid+puct=analysis/scaling/models/prior-nm2g2-ramp-t.npz:2:1",
+    "nemesis-t": "mcts:63+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm2g2f-ramp-nem.npz+netmid+puct=analysis/scaling/models/prior-nm2g2-nemesis-t.npz:2:1"
+   },
+   "games": [
+    {
+     "seed": 83600000,
+     "s": 4.8,
+     "turns": null,
+     "actions": 35
+    },
+    {
+     "seed": 83600001,
+     "s": 9.0,
+     "turns": null,
+     "actions": 67
+    },
+    {
+     "seed": 83600002,
+     "s": 10.6,
+     "turns": null,
+     "actions": 66
+    },
+    {
+     "seed": 83600003,
+     "s": 9.2,
+     "turns": null,
+     "actions": 65
+    },
+    {
+     "seed": 83600004,
+     "s": 12.6,
+     "turns": null,
+     "actions": 95
+    },
+    {
+     "seed": 83600005,
+     "s": 4.7,
+     "turns": null,
+     "actions": 43
+    },
+    {
+     "seed": 83600006,
+     "s": 18.8,
+     "turns": null,
+     "actions": 118
+    },
+    {
+     "seed": 83600007,
+     "s": 10.2,
+     "turns": null,
+     "actions": 57
+    },
+    {
+     "seed": 83600008,
+     "s": 4.9,
+     "turns": null,
+     "actions": 42
+    },
+    {
+     "seed": 83600009,
+     "s": 15.0,
+     "turns": null,
+     "actions": 92
+    }
+   ],
+   "decks": {
+    "ramp-t": {
+     "ms": 34660.6,
+     "decisions": 271,
+     "ms_per_decision": 127.9
+    },
+    "nemesis-t": {
+     "ms": 63450.6,
+     "decisions": 409,
+     "ms_per_decision": 155.14
+    }
+   }
+  },
+  "v2skx": {
+   "specs": {
+    "ramp-t": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost",
+    "nemesis-t": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost"
+   },
+   "games": [
+    {
+     "seed": 83600000,
+     "s": 5.6,
+     "turns": null,
+     "actions": 35
+    },
+    {
+     "seed": 83600001,
+     "s": 21.5,
+     "turns": null,
+     "actions": 121
+    },
+    {
+     "seed": 83600002,
+     "s": 11.7,
+     "turns": null,
+     "actions": 88
+    },
+    {
+     "seed": 83600003,
+     "s": 6.2,
+     "turns": null,
+     "actions": 57
+    },
+    {
+     "seed": 83600004,
+     "s": 14.0,
+     "turns": null,
+     "actions": 100
+    },
+    {
+     "seed": 83600005,
+     "s": 4.5,
+     "turns": null,
+     "actions": 43
+    },
+    {
+     "seed": 83600006,
+     "s": 18.7,
+     "turns": null,
+     "actions": 118
+    },
+    {
+     "seed": 83600007,
+     "s": 10.3,
+     "turns": null,
+     "actions": 62
+    },
+    {
+     "seed": 83600008,
+     "s": 4.0,
+     "turns": null,
+     "actions": 46
+    },
+    {
+     "seed": 83600009,
+     "s": 13.4,
+     "turns": null,
+     "actions": 79
+    }
+   ],
+   "decks": {
+    "ramp-t": {
+     "ms": 43934.7,
+     "decisions": 315,
+     "ms_per_decision": 139.48
+    },
+    "nemesis-t": {
+     "ms": 65461.5,
+     "decisions": 434,
+     "ms_per_decision": 150.83
+    }
+   }
+  }
+ }
+}

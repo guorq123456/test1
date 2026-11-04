@@ -1,0 +1,48 @@
+{
+ "name": "mid-ramp-t",
+ "fit_s": 1086,
+ "epochs": 27,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.18665,
+   "log_loss": 0.54523,
+   "n": 1175048
+  },
+  "mid": {
+   "brier": 0.17798,
+   "log_loss": 0.52483,
+   "n": 1174645
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.18685,
+   "log_loss": 0.54647,
+   "n": 61131
+  },
+  "mid": {
+   "brier": 0.17723,
+   "log_loss": 0.52359,
+   "n": 61293
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.18956,
+   "log_loss": 0.55387,
+   "n": 61131
+  },
+  "mid": {
+   "brier": 0.27884,
+   "log_loss": 0.94685,
+   "n": 61293
+  }
+ },
+ "mid_rate": 0.902185
+}

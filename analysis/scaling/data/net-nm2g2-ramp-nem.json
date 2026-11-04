@@ -1,0 +1,48 @@
+{
+ "name": "nm2g2-ramp-nem",
+ "fit_s": 1450,
+ "epochs": 9,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.18046,
+   "log_loss": 0.5303,
+   "n": 314511
+  },
+  "mid": {
+   "brier": 0.17103,
+   "log_loss": 0.50773,
+   "n": 314595
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.18736,
+   "log_loss": 0.5483,
+   "n": 16503
+  },
+  "mid": {
+   "brier": 0.18139,
+   "log_loss": 0.53507,
+   "n": 16708
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.19331,
+   "log_loss": 0.56835,
+   "n": 16503
+  },
+  "mid": {
+   "brier": 0.19013,
+   "log_loss": 0.56831,
+   "n": 16708
+  }
+ },
+ "mid_rate": 0.330187
+}

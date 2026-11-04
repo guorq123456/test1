@@ -1,0 +1,48 @@
+{"epoch": 1, "lr": 0.001, "train_ce": 1.33451, "s": 200.9, "valid_ce": 1.31068, "best": true}
+{"epoch": 2, "lr": 0.001, "train_ce": 1.30517, "s": 198.1, "valid_ce": 1.30095, "best": true}
+{"epoch": 3, "lr": 0.001, "train_ce": 1.29833, "s": 199.9, "valid_ce": 1.29598, "best": true}
+{"epoch": 4, "lr": 0.001, "train_ce": 1.29439, "s": 204.2, "valid_ce": 1.29176, "best": true}
+{"epoch": 5, "lr": 0.001, "train_ce": 1.29179, "s": 204.2, "valid_ce": 1.29045, "best": true}
+{"epoch": 6, "lr": 0.001, "train_ce": 1.28991, "s": 207.6, "valid_ce": 1.28799, "best": true}
+{"epoch": 7, "lr": 0.001, "train_ce": 1.28837, "s": 210.8, "valid_ce": 1.28784, "best": true}
+{"epoch": 8, "lr": 0.001, "train_ce": 1.28713, "s": 201.3, "valid_ce": 1.28527, "best": true}
+{"fit_s": 1676, "epochs": 8, "train_ce": 1.28585, "valid_ce": 1.28527}
+{"resumed_after_epoch": 8, "stopped": false}
+{"epoch": 9, "lr": 0.001, "train_ce": 1.28616, "s": 213.9, "valid_ce": 1.28431, "best": true}
+{"epoch": 10, "lr": 0.001, "train_ce": 1.28522, "s": 210.6, "valid_ce": 1.2836, "best": true}
+{"epoch": 11, "lr": 0.001, "train_ce": 1.2843, "s": 208.9, "valid_ce": 1.28419}
+{"epoch": 12, "lr": 0.0005, "train_ce": 1.28115, "s": 208.4, "valid_ce": 1.28014, "best": true}
+{"epoch": 13, "lr": 0.0005, "train_ce": 1.2806, "s": 196.3, "valid_ce": 1.27909, "best": true}
+{"epoch": 14, "lr": 0.0005, "train_ce": 1.28019, "s": 206.3, "valid_ce": 1.27888, "best": true}
+{"epoch": 15, "lr": 0.0005, "train_ce": 1.27985, "s": 213.1, "valid_ce": 1.27893}
+{"epoch": 16, "lr": 0.00025, "train_ce": 1.27815, "s": 189.4, "valid_ce": 1.27745, "best": true}
+{"epoch": 17, "lr": 0.00025, "train_ce": 1.27789, "s": 204.7, "valid_ce": 1.27733, "best": true}
+{"epoch": 18, "lr": 0.00025, "train_ce": 1.2777, "s": 207.5, "valid_ce": 1.27666, "best": true}
+{"epoch": 19, "lr": 0.00025, "train_ce": 1.27752, "s": 199.6, "valid_ce": 1.2765, "best": true}
+{"epoch": 20, "lr": 0.00025, "train_ce": 1.27737, "s": 201.2, "valid_ce": 1.2764, "best": true}
+{"epoch": 21, "lr": 0.00025, "train_ce": 1.27722, "s": 210.6, "valid_ce": 1.27696}
+{"epoch": 22, "lr": 0.000125, "train_ce": 1.27633, "s": 203.6, "valid_ce": 1.27549, "best": true}
+{"epoch": 23, "lr": 0.000125, "train_ce": 1.2762, "s": 209.2, "valid_ce": 1.27517, "best": true}
+{"epoch": 24, "lr": 0.000125, "train_ce": 1.27609, "s": 192.2, "valid_ce": 1.27528}
+{"epoch": 25, "lr": 6.25e-05, "train_ce": 1.27563, "s": 208.9, "valid_ce": 1.27511, "best": true}
+{"epoch": 26, "lr": 6.25e-05, "train_ce": 1.27556, "s": 212.0, "valid_ce": 1.27488, "best": true}
+{"epoch": 27, "lr": 6.25e-05, "train_ce": 1.27551, "s": 190.9, "valid_ce": 1.27484, "best": true}
+{"epoch": 28, "lr": 6.25e-05, "train_ce": 1.27546, "s": 207.0, "valid_ce": 1.27487}
+{"fit_s": 4213, "epochs": 28, "train_ce": 1.2753, "valid_ce": 1.27484}
+{"resumed_after_epoch": 28, "stopped": false}
+{"epoch": 29, "lr": 3.125e-05, "train_ce": 1.2752, "s": 210.3, "valid_ce": 1.27463, "best": true}
+{"epoch": 30, "lr": 3.125e-05, "train_ce": 1.27516, "s": 200.4, "valid_ce": 1.27462, "best": true}
+{"epoch": 31, "lr": 3.125e-05, "train_ce": 1.27515, "s": 220.9, "valid_ce": 1.27453, "best": true}
+{"epoch": 32, "lr": 3.125e-05, "train_ce": 1.27512, "s": 223.0, "valid_ce": 1.27462}
+{"epoch": 33, "lr": 1.5625e-05, "train_ce": 1.27498, "s": 234.7, "valid_ce": 1.27446, "best": true}
+{"epoch": 34, "lr": 1.5625e-05, "train_ce": 1.27497, "s": 218.0, "valid_ce": 1.27447}
+{"epoch": 35, "lr": 7.8125e-06, "train_ce": 1.2749, "s": 231.8, "valid_ce": 1.27438, "best": true}
+{"epoch": 36, "lr": 7.8125e-06, "train_ce": 1.27488, "s": 228.2, "valid_ce": 1.27442}
+{"epoch": 37, "lr": 3.90625e-06, "train_ce": 1.27485, "s": 232.6, "valid_ce": 1.27438}
+{"epoch": 38, "lr": 1.953125e-06, "train_ce": 1.27483, "s": 219.9, "valid_ce": 1.27437, "best": true}
+{"epoch": 39, "lr": 1.953125e-06, "train_ce": 1.27482, "s": 234.1, "valid_ce": 1.27435, "best": true}
+{"epoch": 40, "lr": 1.953125e-06, "train_ce": 1.27482, "s": 229.1, "valid_ce": 1.27436}
+{"epoch": 41, "lr": 9.765625e-07, "train_ce": 1.27481, "s": 233.1, "valid_ce": 1.27436}
+{"epoch": 42, "lr": 4.8828125e-07, "train_ce": 1.27481, "s": 222.6, "valid_ce": 1.27435}
+{"epoch": 43, "lr": 2.44140625e-07, "train_ce": 1.2748, "s": 235.7, "valid_ce": 1.27435}
+{"fit_s": 3493, "epochs": 43, "train_ce": 1.27481, "valid_ce": 1.27435}

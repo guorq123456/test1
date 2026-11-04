@@ -1,0 +1,4 @@
+N=700 {"starts": 100, "ms A/B": 0.92, "iterations A/B": 0.676, "ms per turn A / B": [1154.0, 1254.4]}
+N=850 {"starts": 100, "ms A/B": 1.031, "iterations A/B": 0.809, "ms per turn A / B": [1293.3, 1253.9]}
+N=1000 {"starts": 100, "ms A/B": 1.188, "iterations A/B": 0.955, "ms per turn A / B": [1498.3, 1260.7]}
+N=810 {"starts": 300, "ms A/B": 1.016, "iterations A/B": 0.764, "ms per turn A / B": [1278.0, 1257.4]}

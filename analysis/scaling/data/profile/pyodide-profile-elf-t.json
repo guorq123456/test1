@@ -1,0 +1,49 @@
+{
+ "records": "rec.jsonl.gz",
+ "games": 3,
+ "mode": "game",
+ "decisions": 271,
+ "specs": {
+  "E": {
+   "spec": "mcts:71+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-mid-elf-t.npz+netmid+puct=analysis/scaling/models/prior-elft-ft-t05.npz:2:1",
+   "ms_per_decision": 133.91,
+   "profiled_ms_per_decision": 248.65,
+   "share": {
+    "state copy": 0.0827,
+    "simulator": 0.3318,
+    "value net": 0.1566,
+    "prior": 0.0549,
+    "tree search": 0.0698,
+    "lethal and plans": 0.2292,
+    "linear models": 0.001,
+    "other": 0.074
+   },
+   "ms_per_decision_by_part": {
+    "state copy": 11.08,
+    "simulator": 44.43,
+    "value net": 20.98,
+    "prior": 7.35,
+    "tree search": 9.34,
+    "lethal and plans": 30.69,
+    "linear models": 0.13,
+    "other": 9.92
+   },
+   "timers_ms_per_decision": {
+    "GameState.clone": 13.93,
+    "SetNet.logit": 18.09,
+    "SetPolicy.priors": 16.64,
+    "LethalSearch.solve": 42.33,
+    "determinize": 5.65,
+    "wall": 115.53
+   },
+   "timers_calls_per_decision": {
+    "GameState.clone": 215.4,
+    "SetNet.logit": 58.7,
+    "SetPolicy.priors": 13.2,
+    "LethalSearch.solve": 0.3,
+    "determinize": 57.9
+   }
+  }
+ },
+ "where": "Pyodide 0.26.4 in Node, dist built at d00ab33 with --spec <new elf-t bot>"
+}

@@ -1,0 +1,32 @@
+{
+ "records": "rec-74100038.jsonl.gz",
+ "games": 5,
+ "decisions": 310,
+ "specs": {
+  "base": {
+   "spec": "mcts:105+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-elft-gen2-19500.npz+neteot",
+   "ms_per_decision": 79.15,
+   "iterations_per_decision": 105.0
+  },
+  "ft": {
+   "spec": "mcts:105+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-elft-gen2-19500.npz+neteot+puct=analysis/scaling/models/prior-elft-ft.npz:1",
+   "ms_per_decision": 96.83,
+   "iterations_per_decision": 105.0
+  },
+  "fz": {
+   "spec": "mcts:105+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-elft-gen2-19500.npz+neteot+puct=analysis/scaling/models/prior-elft-fz.npz:1",
+   "ms_per_decision": 96.74,
+   "iterations_per_decision": 105.0
+  },
+  "ft63": {
+   "spec": "mcts:63+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-elft-gen2-19500.npz+neteot+puct=analysis/scaling/models/prior-elft-ft.npz:1",
+   "ms_per_decision": 72.13,
+   "iterations_per_decision": 63.0
+  },
+  "fz63": {
+   "spec": "mcts:63+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-elft-gen2-19500.npz+neteot+puct=analysis/scaling/models/prior-elft-fz.npz:1",
+   "ms_per_decision": 71.63,
+   "iterations_per_decision": 63.0
+  }
+ }
+}

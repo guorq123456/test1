@@ -1,0 +1,25 @@
+条件：英雄 dfm/PORTAL-MingiGod 对 6 套对手轮流（analysis/pilot/fields/dfm-portal-vs-bot6.txt）；每对 = 一副发牌，X 和基线各坐两边；对手卡表已知（牌序、手牌未知）
+X = mcts:50+plan+setnet=analysis/scaling/models/net-pilot-portal-dfm-g2.npz+netmid+netany
+基线 = mcts:100+plan
+对手 = mcts:100+plan
+BLAS 线程：OMP_NUM_THREADS=1，OPENBLAS_NUM_THREADS=1，MKL_NUM_THREADS=1
+  …25 对 84s
+  …50 对 157s
+  …75 对 231s
+  …100 对 307s
+  …125 对 377s
+  …150 对 455s
+  …175 对 534s
+  …200 对 606s
+  …225 对 681s
+  …250 对 754s
+  …275 对 836s
+  …300 对 916s
+300 对（X 600 局、基线 600 局）：英雄卡组 X 50.5% ± 4.5%，基线 35.0% ± 3.9%，配对差 +15.5% ± 5.1%（95% 区间 +10.4%～+20.6%）
+  对 bot/T1-FOREST-1：50 对 X 59.0%，基线 43.0%，差 +16.0% ± 13.3%
+  对 bot/T1-SWORD-1：50 对 X 28.0%，基线 19.0%，差 +9.0% ± 11.8%
+  对 bot/T3-RUNE-1：50 对 X 76.0%，基线 56.0%，差 +20.0% ± 10.1%
+  对 bot/T3-DRAGON-1：50 对 X 73.0%，基线 41.0%，差 +32.0% ± 15.0%
+  对 bot/T1-ABYSS-1：50 对 X 26.0%，基线 21.0%，差 +5.0% ± 9.8%
+  对 bot/T1-HAVEN-1：50 对 X 41.0%，基线 30.0%，差 +11.0% ± 13.8%
+英雄每步（搜索过的决定）CPU：X 49 ms，基线 47 ms，比 1.040

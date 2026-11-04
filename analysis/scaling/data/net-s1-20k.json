@@ -1,0 +1,48 @@
+{
+ "name": "s1-20k",
+ "fit_s": 1345,
+ "epochs": 5,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.18614,
+   "log_loss": 0.5487,
+   "n": 284357
+  },
+  "mid": {
+   "brier": 0.18237,
+   "log_loss": 0.53994,
+   "n": 284829
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.19766,
+   "log_loss": 0.57495,
+   "n": 40420
+  },
+  "mid": {
+   "brier": 0.19404,
+   "log_loss": 0.56743,
+   "n": 40450
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.38533,
+   "log_loss": 1.13489,
+   "n": 40420
+  },
+  "mid": {
+   "brier": 0.3756,
+   "log_loss": 1.09535,
+   "n": 40450
+  }
+ },
+ "mid_rate": 0.309526
+}

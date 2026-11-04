@@ -1,0 +1,211 @@
+{"deck": "ramp-t", "opponent": "ramp-t", "flag": true, "inputs": "v1", "name": "midwide-ramp-t", "init": "analysis/scaling/models/net-mid-ramp-t.npz", "init_sha256": "4232818e66cfef80772676a19673db5804498a0dac379a77d38bfb5c9966e1c5", "mid_rate": 0.902185, "end_rows": 1236179, "mid_rows": 1370206, "train_positions": 2349693, "valid_positions": 122424, "train_by_kind": {"end": 1175048, "mid": 1174645}, "valid_by_kind": {"end": 61131, "mid": 61293}, "continued": true, "ophand": false, "v2a": false, "wide": true, "init_valid": {"end": {"brier": 0.18685, "log_loss": 0.54647, "n": 61131}, "mid": {"brier": 0.17723, "log_loss": 0.52359, "n": 61293}}}
+{"epoch": 1, "lr": 0.001, "train_bce": 0.54722, "s": 1070.8, "valid_brier": 0.18534, "valid_log_loss": 0.54319, "valid_n": 122424, "best": true}
+{
+ "name": "midwide-ramp-t",
+ "fit_s": 1110,
+ "epochs": 1,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 100,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.19013,
+   "log_loss": 0.55414,
+   "n": 1175048
+  },
+  "mid": {
+   "brier": 0.1818,
+   "log_loss": 0.53492,
+   "n": 1174645
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.19008,
+   "log_loss": 0.55421,
+   "n": 61131
+  },
+  "mid": {
+   "brier": 0.18061,
+   "log_loss": 0.5322,
+   "n": 61293
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.18685,
+   "log_loss": 0.54647,
+   "n": 61131
+  },
+  "mid": {
+   "brier": 0.17723,
+   "log_loss": 0.52359,
+   "n": 61293
+  }
+ },
+ "mid_rate": 0.902185
+}
+{"deck": "ramp-t", "opponent": "ramp-t", "flag": true, "inputs": "v1", "name": "midwide-ramp-t", "init": "analysis/scaling/models/net-mid-ramp-t.npz", "init_sha256": "4232818e66cfef80772676a19673db5804498a0dac379a77d38bfb5c9966e1c5", "mid_rate": 0.902185, "end_rows": 1236179, "mid_rows": 1370206, "train_positions": 2349693, "valid_positions": 122424, "train_by_kind": {"end": 1175048, "mid": 1174645}, "valid_by_kind": {"end": 61131, "mid": 61293}, "continued": true, "ophand": false, "v2a": false, "wide": true, "init_valid": {"end": {"brier": 0.18685, "log_loss": 0.54647, "n": 61131}, "mid": {"brier": 0.17723, "log_loss": 0.52359, "n": 61293}}}
+{"resumed_after_epoch": 1, "stopped": false}
+{"epoch": 2, "lr": 0.001, "train_bce": 0.54432, "s": 1089.5, "valid_brier": 0.18376, "valid_log_loss": 0.53951, "valid_n": 122424, "best": true}
+{"epoch": 3, "lr": 0.001, "train_bce": 0.54363, "s": 1085.3, "valid_brier": 0.18523, "valid_log_loss": 0.54252, "valid_n": 122424}
+{"epoch": 4, "lr": 0.0005, "train_bce": 0.53953, "s": 1058.3, "valid_brier": 0.18316, "valid_log_loss": 0.53787, "valid_n": 122424, "best": true}
+{"epoch": 5, "lr": 0.0005, "train_bce": 0.5389, "s": 1069.4, "valid_brier": 0.18291, "valid_log_loss": 0.53691, "valid_n": 122424, "best": true}
+{"epoch": 6, "lr": 0.0005, "train_bce": 0.53841, "s": 1008.6, "valid_brier": 0.18263, "valid_log_loss": 0.53622, "valid_n": 122424, "best": true}
+{
+ "name": "midwide-ramp-t",
+ "fit_s": 5494,
+ "epochs": 6,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 100,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.18728,
+   "log_loss": 0.5467,
+   "n": 1175048
+  },
+  "mid": {
+   "brier": 0.17901,
+   "log_loss": 0.52739,
+   "n": 1174645
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.18745,
+   "log_loss": 0.5478,
+   "n": 61131
+  },
+  "mid": {
+   "brier": 0.17782,
+   "log_loss": 0.52467,
+   "n": 61293
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.18685,
+   "log_loss": 0.54647,
+   "n": 61131
+  },
+  "mid": {
+   "brier": 0.17723,
+   "log_loss": 0.52359,
+   "n": 61293
+  }
+ },
+ "mid_rate": 0.902185
+}
+{"deck": "ramp-t", "opponent": "ramp-t", "flag": true, "inputs": "v1", "name": "midwide-ramp-t", "init": "analysis/scaling/models/net-mid-ramp-t.npz", "init_sha256": "4232818e66cfef80772676a19673db5804498a0dac379a77d38bfb5c9966e1c5", "mid_rate": 0.902185, "end_rows": 1236179, "mid_rows": 1370206, "train_positions": 2349693, "valid_positions": 122424, "train_by_kind": {"end": 1175048, "mid": 1174645}, "valid_by_kind": {"end": 61131, "mid": 61293}, "continued": true, "ophand": false, "v2a": false, "wide": true, "init_valid": {"end": {"brier": 0.18685, "log_loss": 0.54647, "n": 61131}, "mid": {"brier": 0.17723, "log_loss": 0.52359, "n": 61293}}}
+{"resumed_after_epoch": 6, "stopped": false}
+{"epoch": 7, "lr": 0.0005, "train_bce": 0.53803, "s": 1028.1, "valid_brier": 0.18288, "valid_log_loss": 0.53706, "valid_n": 122424}
+{"epoch": 8, "lr": 0.00025, "train_bce": 0.53548, "s": 1044.1, "valid_brier": 0.18191, "valid_log_loss": 0.53446, "valid_n": 122424, "best": true}
+{"epoch": 9, "lr": 0.00025, "train_bce": 0.53518, "s": 1069.6, "valid_brier": 0.18243, "valid_log_loss": 0.5358, "valid_n": 122424}
+{"epoch": 10, "lr": 0.000125, "train_bce": 0.53373, "s": 1046.3, "valid_brier": 0.18177, "valid_log_loss": 0.53415, "valid_n": 122424, "best": true}
+{
+ "name": "midwide-ramp-t",
+ "fit_s": 4334,
+ "epochs": 10,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 100,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.18625,
+   "log_loss": 0.54401,
+   "n": 1175048
+  },
+  "mid": {
+   "brier": 0.17716,
+   "log_loss": 0.52264,
+   "n": 1174645
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.18666,
+   "log_loss": 0.5458,
+   "n": 61131
+  },
+  "mid": {
+   "brier": 0.17691,
+   "log_loss": 0.52254,
+   "n": 61293
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.18685,
+   "log_loss": 0.54647,
+   "n": 61131
+  },
+  "mid": {
+   "brier": 0.17723,
+   "log_loss": 0.52359,
+   "n": 61293
+  }
+ },
+ "mid_rate": 0.902185
+}
+{"deck": "ramp-t", "opponent": "ramp-t", "flag": true, "inputs": "v1", "name": "midwide-ramp-t", "init": "analysis/scaling/models/net-mid-ramp-t.npz", "init_sha256": "4232818e66cfef80772676a19673db5804498a0dac379a77d38bfb5c9966e1c5", "mid_rate": 0.902185, "end_rows": 1236179, "mid_rows": 1370206, "train_positions": 2349693, "valid_positions": 122424, "train_by_kind": {"end": 1175048, "mid": 1174645}, "valid_by_kind": {"end": 61131, "mid": 61293}, "continued": true, "ophand": false, "v2a": false, "wide": true, "init_valid": {"end": {"brier": 0.18685, "log_loss": 0.54647, "n": 61131}, "mid": {"brier": 0.17723, "log_loss": 0.52359, "n": 61293}}}
+{"resumed_after_epoch": 10, "stopped": false}
+{"epoch": 11, "lr": 0.000125, "train_bce": 0.53347, "s": 996.0, "valid_brier": 0.18173, "valid_log_loss": 0.53402, "valid_n": 122424, "best": true}
+{"epoch": 12, "lr": 0.000125, "train_bce": 0.53323, "s": 1042.9, "valid_brier": 0.18169, "valid_log_loss": 0.53398, "valid_n": 122424, "best": true}
+{
+ "name": "midwide-ramp-t",
+ "fit_s": 2111,
+ "epochs": 12,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 100,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.18593,
+   "log_loss": 0.54328,
+   "n": 1175048
+  },
+  "mid": {
+   "brier": 0.17684,
+   "log_loss": 0.52187,
+   "n": 1174645
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.18648,
+   "log_loss": 0.54546,
+   "n": 61131
+  },
+  "mid": {
+   "brier": 0.1769,
+   "log_loss": 0.52254,
+   "n": 61293
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.18685,
+   "log_loss": 0.54647,
+   "n": 61131
+  },
+  "mid": {
+   "brier": 0.17723,
+   "log_loss": 0.52359,
+   "n": 61293
+  }
+ },
+ "mid_rate": 0.902185
+}

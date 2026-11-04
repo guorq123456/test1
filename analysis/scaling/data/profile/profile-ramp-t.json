@@ -1,0 +1,48 @@
+{
+ "records": "rec-75400038.jsonl.gz",
+ "games": 3,
+ "mode": "game",
+ "decisions": 151,
+ "specs": {
+  "A": {
+   "spec": "mcts:83+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-mid-ramp-t.npz+netmid+puct=analysis/scaling/models/prior-ramp-ft-t05.npz:2:1",
+   "ms_per_decision": 44.9,
+   "profiled_ms_per_decision": 101.75,
+   "share": {
+    "state copy": 0.0934,
+    "simulator": 0.4116,
+    "value net": 0.1666,
+    "prior": 0.0363,
+    "tree search": 0.0944,
+    "lethal and plans": 0.1121,
+    "linear models": 0.0014,
+    "other": 0.0842
+   },
+   "ms_per_decision_by_part": {
+    "state copy": 4.19,
+    "simulator": 18.48,
+    "value net": 7.48,
+    "prior": 1.63,
+    "tree search": 4.24,
+    "lethal and plans": 5.03,
+    "linear models": 0.06,
+    "other": 3.78
+   },
+   "timers_ms_per_decision": {
+    "GameState.clone": 4.06,
+    "SetNet.logit": 6.11,
+    "SetPolicy.priors": 4.68,
+    "LethalSearch.solve": 12.57,
+    "determinize": 2.95,
+    "wall": 38.07
+   },
+   "timers_calls_per_decision": {
+    "GameState.clone": 210.3,
+    "SetNet.logit": 62.9,
+    "SetPolicy.priors": 10.0,
+    "LethalSearch.solve": 0.4,
+    "determinize": 62.1
+   }
+  }
+ }
+}

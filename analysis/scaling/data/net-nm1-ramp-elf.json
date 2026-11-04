@@ -1,0 +1,48 @@
+{
+ "name": "nm1-ramp-elf",
+ "fit_s": 617,
+ "epochs": 10,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.17327,
+   "log_loss": 0.51206,
+   "n": 151241
+  },
+  "mid": {
+   "brier": 0.16664,
+   "log_loss": 0.49692,
+   "n": 151419
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.17669,
+   "log_loss": 0.51993,
+   "n": 7999
+  },
+  "mid": {
+   "brier": 0.17174,
+   "log_loss": 0.51129,
+   "n": 7997
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.30332,
+   "log_loss": 1.04865,
+   "n": 7999
+  },
+  "mid": {
+   "brier": 0.28304,
+   "log_loss": 0.94129,
+   "n": 7997
+  }
+ },
+ "mid_rate": 0.320566
+}

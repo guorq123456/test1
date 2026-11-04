@@ -1,0 +1,134 @@
+{
+ "records": "rec-71600018.jsonl.gz",
+ "games": 1000,
+ "spec": "mcts:200+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-gen3-30000.npz+neteot",
+ "priors": {
+  "ft-t05": "analysis/scaling/models/prior-ramp-ft-t05.npz",
+  "gen5-ft-t05": "analysis/scaling/models/prior-ramp-gen5-ft-t05.npz"
+ },
+ "old": null,
+ "methods": {
+  "uniform": {
+   "all": {
+    "decisions": 46781,
+    "top1": 0.2956,
+    "top2": 0.5257,
+    "ce": 1.5486,
+    "kl": 0.3368,
+    "end_decisions": 46781,
+    "end_agree": 0.721,
+    "search_ends": 0.1238
+   },
+   "first": {
+    "decisions": 17132,
+    "top1": 0.2195,
+    "top2": 0.3713,
+    "ce": 1.9301,
+    "kl": 0.3666,
+    "end_decisions": 17132,
+    "end_agree": 0.8098,
+    "search_ends": 0.0674
+   },
+   "rest": {
+    "decisions": 29649,
+    "top1": 0.3395,
+    "top2": 0.6149,
+    "ce": 1.3282,
+    "kl": 0.3195,
+    "end_decisions": 29649,
+    "end_agree": 0.6697,
+    "search_ends": 0.1564
+   }
+  },
+  "order": {
+   "all": {
+    "decisions": 46781,
+    "top1": 0.4447,
+    "top2": 0.6128,
+    "end_decisions": 46781,
+    "end_agree": 0.8822,
+    "search_ends": 0.1238
+   },
+   "first": {
+    "decisions": 17132,
+    "top1": 0.3701,
+    "top2": 0.4625,
+    "end_decisions": 17132,
+    "end_agree": 0.9326,
+    "search_ends": 0.0674
+   },
+   "rest": {
+    "decisions": 29649,
+    "top1": 0.4878,
+    "top2": 0.6997,
+    "end_decisions": 29649,
+    "end_agree": 0.853,
+    "search_ends": 0.1564
+   }
+  },
+  "ft-t05": {
+   "all": {
+    "decisions": 46781,
+    "top1": 0.7474,
+    "top2": 0.6922,
+    "ce": 1.3501,
+    "kl": 0.1383,
+    "end_decisions": 46781,
+    "end_agree": 0.9677,
+    "search_ends": 0.1238
+   },
+   "first": {
+    "decisions": 17132,
+    "top1": 0.6867,
+    "top2": 0.5632,
+    "ce": 1.7394,
+    "kl": 0.176,
+    "end_decisions": 17132,
+    "end_agree": 0.989,
+    "search_ends": 0.0674
+   },
+   "rest": {
+    "decisions": 29649,
+    "top1": 0.7825,
+    "top2": 0.7667,
+    "ce": 1.1251,
+    "kl": 0.1164,
+    "end_decisions": 29649,
+    "end_agree": 0.9554,
+    "search_ends": 0.1564
+   }
+  },
+  "gen5-ft-t05": {
+   "all": {
+    "decisions": 46781,
+    "top1": 0.752,
+    "top2": 0.6928,
+    "ce": 1.4096,
+    "kl": 0.1977,
+    "end_decisions": 46781,
+    "end_agree": 0.9683,
+    "search_ends": 0.1238
+   },
+   "first": {
+    "decisions": 17132,
+    "top1": 0.695,
+    "top2": 0.5642,
+    "ce": 1.8176,
+    "kl": 0.2542,
+    "end_decisions": 17132,
+    "end_agree": 0.989,
+    "search_ends": 0.0674
+   },
+   "rest": {
+    "decisions": 29649,
+    "top1": 0.785,
+    "top2": 0.7671,
+    "ce": 1.1738,
+    "kl": 0.1651,
+    "end_decisions": 29649,
+    "end_agree": 0.9563,
+    "search_ends": 0.1564
+   }
+  }
+ }
+}

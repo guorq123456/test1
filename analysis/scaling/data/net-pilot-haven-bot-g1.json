@@ -1,0 +1,48 @@
+{
+ "name": "pilot-haven-bot-g1",
+ "fit_s": 925,
+ "epochs": 11,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.18261,
+   "log_loss": 0.53734,
+   "n": 135984
+  },
+  "mid": {
+   "brier": 0.17302,
+   "log_loss": 0.51429,
+   "n": 136390
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.18959,
+   "log_loss": 0.55406,
+   "n": 7065
+  },
+  "mid": {
+   "brier": 0.1844,
+   "log_loss": 0.54299,
+   "n": 7130
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.38189,
+   "log_loss": 1.12714,
+   "n": 7065
+  },
+  "mid": {
+   "brier": 0.37447,
+   "log_loss": 1.09504,
+   "n": 7130
+  }
+ },
+ "mid_rate": 0.323917
+}

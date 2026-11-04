@@ -1,0 +1,15 @@
+{
+ "x": "mcts:56+plan+setnet=analysis/scaling/models/net-s1-20k.npz+netmid+netany",
+ "games": 14,
+ "seed": 85892000,
+ "calls": 17214,
+ "share": {
+  "net_end": 0.6271,
+  "net_mid": 0.3729
+ },
+ "counts": {
+  "net_mid": 6419,
+  "net_end": 10795
+ },
+ "condition": "对手卡表已知（牌序、手牌未知）"
+}

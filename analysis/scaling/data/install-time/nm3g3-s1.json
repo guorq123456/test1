@@ -1,0 +1,178 @@
+{
+ "deck": "elf-t",
+ "opponent": "nemesis-t",
+ "seeds": [
+  83700000,
+  83700001,
+  83700002,
+  83700003,
+  83700004,
+  83700005,
+  83700006,
+  83700007,
+  83700008,
+  83700009
+ ],
+ "pairs": {
+  "new": {
+   "specs": {
+    "elf-t": "mcts:88+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm3g3f-elf-nem.npz+netmid+puct=analysis/scaling/models/prior-nm3g3-elf-t.npz:2:1",
+    "nemesis-t": "mcts:75+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm3g3f-elf-nem.npz+netmid+puct=analysis/scaling/models/prior-nm3g3-nemesis-t.npz:2:1"
+   },
+   "games": [
+    {
+     "seed": 83700000,
+     "s": 15.5,
+     "turns": null,
+     "actions": 94
+    },
+    {
+     "seed": 83700001,
+     "s": 13.2,
+     "turns": null,
+     "actions": 89
+    },
+    {
+     "seed": 83700002,
+     "s": 12.0,
+     "turns": null,
+     "actions": 91
+    },
+    {
+     "seed": 83700003,
+     "s": 22.4,
+     "turns": null,
+     "actions": 111
+    },
+    {
+     "seed": 83700004,
+     "s": 9.4,
+     "turns": null,
+     "actions": 64
+    },
+    {
+     "seed": 83700005,
+     "s": 17.2,
+     "turns": null,
+     "actions": 103
+    },
+    {
+     "seed": 83700006,
+     "s": 26.5,
+     "turns": null,
+     "actions": 118
+    },
+    {
+     "seed": 83700007,
+     "s": 19.4,
+     "turns": null,
+     "actions": 101
+    },
+    {
+     "seed": 83700008,
+     "s": 20.4,
+     "turns": null,
+     "actions": 123
+    },
+    {
+     "seed": 83700009,
+     "s": 3.8,
+     "turns": null,
+     "actions": 45
+    }
+   ],
+   "decks": {
+    "elf-t": {
+     "ms": 76303.6,
+     "decisions": 453,
+     "ms_per_decision": 168.44
+    },
+    "nemesis-t": {
+     "ms": 81228.3,
+     "decisions": 486,
+     "ms_per_decision": 167.14
+    }
+   }
+  },
+  "v2s": {
+   "specs": {
+    "elf-t": "mcts:200+plan+learned+phased",
+    "nemesis-t": "mcts:200+plan+learned+phased"
+   },
+   "games": [
+    {
+     "seed": 83700000,
+     "s": 6.7,
+     "turns": null,
+     "actions": 53
+    },
+    {
+     "seed": 83700001,
+     "s": 11.9,
+     "turns": null,
+     "actions": 100
+    },
+    {
+     "seed": 83700002,
+     "s": 9.9,
+     "turns": null,
+     "actions": 95
+    },
+    {
+     "seed": 83700003,
+     "s": 12.3,
+     "turns": null,
+     "actions": 85
+    },
+    {
+     "seed": 83700004,
+     "s": 4.3,
+     "turns": null,
+     "actions": 48
+    },
+    {
+     "seed": 83700005,
+     "s": 11.4,
+     "turns": null,
+     "actions": 93
+    },
+    {
+     "seed": 83700006,
+     "s": 12.6,
+     "turns": null,
+     "actions": 82
+    },
+    {
+     "seed": 83700007,
+     "s": 15.1,
+     "turns": null,
+     "actions": 111
+    },
+    {
+     "seed": 83700008,
+     "s": 7.9,
+     "turns": null,
+     "actions": 63
+    },
+    {
+     "seed": 83700009,
+     "s": 4.6,
+     "turns": null,
+     "actions": 53
+    }
+   ],
+   "decks": {
+    "elf-t": {
+     "ms": 45420.9,
+     "decisions": 382,
+     "ms_per_decision": 118.9
+    },
+    "nemesis-t": {
+     "ms": 50723.1,
+     "decisions": 401,
+     "ms_per_decision": 126.49
+    }
+   }
+  }
+ }
+}

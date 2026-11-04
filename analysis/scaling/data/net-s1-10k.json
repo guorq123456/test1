@@ -1,0 +1,48 @@
+{
+ "name": "s1-10k",
+ "fit_s": 778,
+ "epochs": 6,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.17866,
+   "log_loss": 0.53029,
+   "n": 143128
+  },
+  "mid": {
+   "brier": 0.17456,
+   "log_loss": 0.5205,
+   "n": 143092
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.20387,
+   "log_loss": 0.59169,
+   "n": 19799
+  },
+  "mid": {
+   "brier": 0.20195,
+   "log_loss": 0.58806,
+   "n": 20027
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.38562,
+   "log_loss": 1.13493,
+   "n": 19799
+  },
+  "mid": {
+   "brier": 0.37446,
+   "log_loss": 1.09215,
+   "n": 20027
+  }
+ },
+ "mid_rate": 0.308794
+}

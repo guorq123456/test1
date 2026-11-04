@@ -1,0 +1,59 @@
+{
+ "size": 29000,
+ "name": "sp",
+ "ftz": true,
+ "slope": 0.0,
+ "phi": [
+  64,
+  64
+ ],
+ "rho": [
+  128,
+  64
+ ],
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "fit_s": 3119,
+ "epochs": 26,
+ "train": {
+  "brier": 0.1878,
+  "log_loss": 0.54813,
+  "n": 495726
+ },
+ "valid": {
+  "brier": 0.18949,
+  "log_loss": 0.55381,
+  "n": 25496
+ },
+ "train_installed_linear": {
+  "brier": 0.20453,
+  "log_loss": 0.59399,
+  "n": 495726
+ },
+ "holdout": {
+  "brier": 0.19185,
+  "log_loss": 0.55916,
+  "n": 93787
+ },
+ "holdout_installed_linear": {
+  "brier": 0.2038,
+  "log_loss": 0.58936,
+  "n": 93787
+ },
+ "holdout_selfplay": {
+  "seeds": [
+   71600018
+  ],
+  "brier": 0.19355,
+  "log_loss": 0.56236,
+  "n": 17948,
+  "installed_linear": {
+   "brier": 0.20723,
+   "log_loss": 0.60109,
+   "n": 17948
+  }
+ }
+}

@@ -1,0 +1,21 @@
+{
+ "mirror": "elft",
+ "spec": "mcts:105+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-elft-10000.npz+neteot",
+ "seed": 74000002,
+ "games": 20,
+ "decisions": 1910,
+ "ms_per_decision": 59.73,
+ "share_of_decision_time": {
+  "planner": 0.0389,
+  "full": 0.0271,
+  "near": 0.0493,
+  "screen": 0.1984,
+  "other": 0.6864
+ },
+ "calls": {
+  "planner": 636,
+  "full": 9,
+  "near": 34,
+  "screen": 579
+ }
+}

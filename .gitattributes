@@ -1,0 +1,4 @@
+# model snapshots are hashed (README sha256, tests): never convert their line endings on checkout
+svsim/learn/phased_models/**/*.json -text
+# Deck fields and pools are hashed (learn.scaledata play logs the pool sha256): the same bytes on every system
+analysis/**/*.txt text eol=lf

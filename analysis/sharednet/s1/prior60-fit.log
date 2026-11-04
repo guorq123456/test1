@@ -1,0 +1,5 @@
+{"epoch": 1, "lr": 0.001, "train_ce": 1.44047, "s": 2871.4, "valid_ce": 1.37736, "best": true}
+{"epoch": 2, "lr": 0.001, "train_ce": 1.43927, "s": 864.9, "valid_ce": 1.37643, "best": true}
+{"resumed_after_epoch": 2, "stopped": false}
+{"epoch": 3, "lr": 0.001, "train_ce": 1.43862, "s": 814.0, "valid_ce": 1.37589, "best": true}
+{"fit_s": 839, "epochs": 3, "train_ce": 1.43815, "valid_ce": 1.37589}

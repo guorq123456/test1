@@ -1,0 +1,70 @@
+{"provenance": {"commit": "27e5d8c6359c52bcba815bd4f0dfc1c7b5a992b5", "rules_dirty": false, "rules_hash": "de145991df27d6a7a7436982a85a6a34aa3e5283afc92586a61589bf2c2ae01c", "rules_files": {"svsim/cards/__init__.py": "fdd37d0b8b354a83", "svsim/cards/abyss.py": "1e0255bacf4d012e", "svsim/cards/common.py": "0f5adc3ebe513545", "svsim/cards/data/rotation.json": "14df94e8cc5c7153", "svsim/cards/data/unlimited.json": "7f92a09793e6397b", "svsim/cards/dragon.py": "3b37b17f7fa79657", "svsim/cards/forest.py": "68c651e7f641c0d1", "svsim/cards/haven.py": "7ba4ebc43894f6cb", "svsim/cards/library.py": "863d4cee6d3a95da", "svsim/cards/neutral.py": "8b4d0f7febd1690f", "svsim/cards/official.py": "cfbc9e66904dbe11", "svsim/cards/pending.py": "e4f135d57aa7ee1c", "svsim/cards/pool.py": "feb0bb60ec708b88", "svsim/cards/portal.py": "3d6a9e9be5b7261a", "svsim/cards/rune.py": "d808a9d59820c720", "svsim/cards/sword.py": "57879818f71deb46", "svsim/cards/unlimited.py": "aca7e9f7ddc617ff", "svsim/core/__init__.py": "30682dccac7c4cc0", "svsim/core/actions.py": "2a5af73a8a94bedf", "svsim/core/carddef.py": "91e1bff5f56ccc61", "svsim/core/effects.py": "0f705e38ed7d7cc0", "svsim/core/engine.py": "b73e2995a0b0f44f", "svsim/core/enums.py": "6c3ea487c21d1902", "svsim/core/script.py": "931a94bbd7876e57", "svsim/core/state.py": "fd94228f8015f6b3", "svsim/core/view.py": "379558fc4ad77bbf"}, "stamped": "2026-11-03T08:50:07Z"}, "deck": null, "opponent": null, "flag": true, "inputs": "v1", "name": "pilot-haven-bot-g3", "init": "fresh", "init_sha256": null, "mid_rate": 0.323509, "end_rows": 429447, "mid_rows": 1327464, "train_positions": 817365, "valid_positions": 42842, "train_by_kind": {"end": 407997, "mid": 409368}, "valid_by_kind": {"end": 21450, "mid": 21392}, "continued": true, "ophand": false, "v2a": false, "wide": false, "shared": true, "init_valid": {"end": {"brier": 0.38089, "log_loss": 1.12484, "n": 21450}, "mid": {"brier": 0.37441, "log_loss": 1.09572, "n": 21392}}}
+{"epoch": 1, "lr": 0.001, "train_bce": 0.59264, "s": 234.0, "valid_brier": 0.18872, "valid_log_loss": 0.5541, "valid_n": 42842, "best": true}
+{"epoch": 2, "lr": 0.001, "train_bce": 0.55439, "s": 235.6, "valid_brier": 0.19187, "valid_log_loss": 0.56051, "valid_n": 42842}
+{"epoch": 3, "lr": 0.0005, "train_bce": 0.54227, "s": 235.4, "valid_brier": 0.18395, "valid_log_loss": 0.54099, "valid_n": 42842, "best": true}
+{"epoch": 4, "lr": 0.0005, "train_bce": 0.53777, "s": 249.7, "valid_brier": 0.18217, "valid_log_loss": 0.53641, "valid_n": 42842, "best": true}
+{"epoch": 5, "lr": 0.0005, "train_bce": 0.53414, "s": 237.2, "valid_brier": 0.1815, "valid_log_loss": 0.53457, "valid_n": 42842, "best": true}
+{"epoch": 6, "lr": 0.0005, "train_bce": 0.53098, "s": 242.6, "valid_brier": 0.18356, "valid_log_loss": 0.53939, "valid_n": 42842}
+{"epoch": 7, "lr": 0.00025, "train_bce": 0.52543, "s": 227.9, "valid_brier": 0.18032, "valid_log_loss": 0.53128, "valid_n": 42842, "best": true}
+{"epoch": 8, "lr": 0.00025, "train_bce": 0.52376, "s": 254.5, "valid_brier": 0.18, "valid_log_loss": 0.53054, "valid_n": 42842, "best": true}
+{"epoch": 9, "lr": 0.00025, "train_bce": 0.52272, "s": 245.6, "valid_brier": 0.18008, "valid_log_loss": 0.53077, "valid_n": 42842}
+{"epoch": 10, "lr": 0.000125, "train_bce": 0.51949, "s": 248.1, "valid_brier": 0.17922, "valid_log_loss": 0.5287, "valid_n": 42842, "best": true}
+{"epoch": 11, "lr": 0.000125, "train_bce": 0.51863, "s": 247.0, "valid_brier": 0.1796, "valid_log_loss": 0.52967, "valid_n": 42842}
+{"epoch": 12, "lr": 6.25e-05, "train_bce": 0.51685, "s": 246.0, "valid_brier": 0.17923, "valid_log_loss": 0.52853, "valid_n": 42842, "best": true}
+{"epoch": 13, "lr": 6.25e-05, "train_bce": 0.51638, "s": 253.4, "valid_brier": 0.17914, "valid_log_loss": 0.52845, "valid_n": 42842, "best": true}
+{"epoch": 14, "lr": 6.25e-05, "train_bce": 0.51603, "s": 237.5, "valid_brier": 0.17933, "valid_log_loss": 0.52891, "valid_n": 42842}
+{"epoch": 15, "lr": 3.125e-05, "train_bce": 0.51506, "s": 254.4, "valid_brier": 0.17888, "valid_log_loss": 0.52789, "valid_n": 42842, "best": true}
+{"epoch": 16, "lr": 3.125e-05, "train_bce": 0.51483, "s": 254.7, "valid_brier": 0.17871, "valid_log_loss": 0.52746, "valid_n": 42842, "best": true}
+{"epoch": 17, "lr": 3.125e-05, "train_bce": 0.51465, "s": 248.1, "valid_brier": 0.17862, "valid_log_loss": 0.52725, "valid_n": 42842, "best": true}
+{"epoch": 18, "lr": 3.125e-05, "train_bce": 0.51445, "s": 249.5, "valid_brier": 0.1788, "valid_log_loss": 0.52768, "valid_n": 42842}
+{"epoch": 19, "lr": 1.5625e-05, "train_bce": 0.51393, "s": 242.4, "valid_brier": 0.17883, "valid_log_loss": 0.52774, "valid_n": 42842}
+{"epoch": 20, "lr": 7.8125e-06, "train_bce": 0.51361, "s": 237.1, "valid_brier": 0.17879, "valid_log_loss": 0.52763, "valid_n": 42842}
+{"epoch": 21, "lr": 3.90625e-06, "train_bce": 0.51345, "s": 246.5, "valid_brier": 0.17884, "valid_log_loss": 0.52779, "valid_n": 42842}
+{
+ "name": "pilot-haven-bot-g3",
+ "fit_s": 5359,
+ "epochs": 21,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.17902,
+   "log_loss": 0.52638,
+   "n": 407997
+  },
+  "mid": {
+   "brier": 0.16861,
+   "log_loss": 0.50159,
+   "n": 409368
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.1826,
+   "log_loss": 0.53622,
+   "n": 21450
+  },
+  "mid": {
+   "brier": 0.17463,
+   "log_loss": 0.51826,
+   "n": 21392
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.38089,
+   "log_loss": 1.12484,
+   "n": 21450
+  },
+  "mid": {
+   "brier": 0.37441,
+   "log_loss": 1.09572,
+   "n": 21392
+  }
+ },
+ "mid_rate": 0.323509
+}

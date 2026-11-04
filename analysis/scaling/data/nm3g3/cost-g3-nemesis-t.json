@@ -1,0 +1,18 @@
+{
+ "records": "rec-83300018.jsonl.gz",
+ "games": 25,
+ "deck": "nemesis-t",
+ "decisions": 930,
+ "specs": {
+  "g2": {
+   "spec": "mcts:75+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm3g2f-elf-nem.npz+netmid+puct=analysis/scaling/models/prior-nm3g2-nemesis-t.npz:2:1",
+   "ms_per_decision": 97.76,
+   "iterations_per_decision": 74.9
+  },
+  "g3": {
+   "spec": "mcts:75+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-nm3g3f-elf-nem.npz+netmid+puct=analysis/scaling/models/prior-nm3g3-nemesis-t.npz:2:1",
+   "ms_per_decision": 97.8,
+   "iterations_per_decision": 74.9
+  }
+ }
+}

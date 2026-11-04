@@ -1,0 +1,469 @@
+{
+ "installed": {
+  "top1": 0.3117,
+  "vs_bot": 0.0859,
+  "n_top1": 231,
+  "n_vs_bot": 163
+ },
+ "cand-kc": {
+  "top1": 0.368,
+  "vs_bot": 0.227,
+  "n_top1": 231,
+  "n_vs_bot": 163
+ },
+ "cand-sp (held out)": {
+  "top1": 0.3853,
+  "vs_bot": 0.2577,
+  "n_top1": 231,
+  "n_vs_bot": 163
+ },
+ "cand-sp - cand-kc (points, 95%)": {
+  "top1": [
+   1.66,
+   -1.44,
+   5.06
+  ],
+  "vs_bot": [
+   2.94,
+   -1.4,
+   7.3
+  ]
+ },
+ "other pairings (descriptive, Ramp-mirror models)": {
+  "破魔虫精灵/跳费龙": {
+   "turns": 75,
+   "pairs": 70,
+   "cand-kc vs bot": 0.086,
+   "cand-sp vs bot": 0.086
+  },
+  "机锋（比赛版）/连击妖（比赛版）": {
+   "turns": 50,
+   "pairs": 42,
+   "cand-kc vs bot": 0.31,
+   "cand-sp vs bot": 0.286
+  },
+  "旗皇（比赛版）/连击妖（比赛版）": {
+   "turns": 31,
+   "pairs": 24,
+   "cand-kc vs bot": 0.208,
+   "cand-sp vs bot": 0.208
+  }
+ },
+ "operations positions (ENDED logits)": {
+  "329": {
+   "installed": {
+    "salem": 0.625,
+    "bot": 0.799,
+    "right": false,
+    "runs Salem beats": 0,
+    "runs": 24
+   },
+   "cand-kc": {
+    "salem": 0.536,
+    "bot": 0.558,
+    "right": false,
+    "runs Salem beats": 0,
+    "runs": 24
+   },
+   "cand-sp": {
+    "salem": 0.794,
+    "bot": 0.732,
+    "right": true,
+    "runs Salem beats": 24,
+    "runs": 24
+   },
+   "cand-sp (fold without this game)": {
+    "salem": 0.862,
+    "bot": 0.805,
+    "right": true,
+    "runs Salem beats": 24,
+    "runs": 24
+   }
+  },
+  "455": {
+   "installed": {
+    "salem": -0.985,
+    "bot": -0.737,
+    "right": false,
+    "runs Salem beats": 0,
+    "runs": 24
+   },
+   "cand-kc": {
+    "salem": -0.873,
+    "bot": -0.667,
+    "right": false,
+    "runs Salem beats": 0,
+    "runs": 24
+   },
+   "cand-sp": {
+    "salem": -0.717,
+    "bot": -0.557,
+    "right": false,
+    "runs Salem beats": 0,
+    "runs": 24
+   },
+   "cand-sp (fold without this game)": {
+    "salem": -0.737,
+    "bot": -0.576,
+    "right": false,
+    "runs Salem beats": 0,
+    "runs": 24
+   }
+  },
+  "ramp-erntz-normagdala": {
+   "installed": {
+    "salem": 0.287,
+    "cand-kc 997 end": -0.375,
+    "right": true
+   },
+   "cand-kc": {
+    "salem": -0.03,
+    "cand-kc 997 end": -0.21,
+    "right": true
+   },
+   "cand-sp": {
+    "salem": 0.233,
+    "cand-kc 997 end": -0.208,
+    "right": true
+   },
+   "cand-sp (fold without this game)": {
+    "salem": 0.247,
+    "cand-kc 997 end": -0.2,
+    "right": true
+   }
+  },
+  "ramp-erntz-spilling": {
+   "installed": {
+    "salem": 0.811,
+    "cand-kc 997 end": 0.514,
+    "right": true
+   },
+   "cand-kc": {
+    "salem": 0.075,
+    "cand-kc 997 end": 0.313,
+    "right": false
+   },
+   "cand-sp": {
+    "salem": 0.158,
+    "cand-kc 997 end": 0.295,
+    "right": false
+   },
+   "cand-sp (fold without this game)": {
+    "salem": 0.162,
+    "cand-kc 997 end": 0.334,
+    "right": false
+   }
+  }
+ },
+ "weights (standardized, per raw unit)": {
+  "me_hp": {
+   "installed": [
+    0.415,
+    0.0758
+   ],
+   "cand-kc": [
+    0.362,
+    0.0618
+   ],
+   "cand-sp": [
+    0.484,
+    0.0825
+   ]
+  },
+  "me_hp_sqrt": {
+   "installed": [
+    0.568,
+    0.6005
+   ],
+   "cand-kc": [
+    0.524,
+    0.5148
+   ],
+   "cand-sp": [
+    0.493,
+    0.4843
+   ]
+  },
+  "me_hp_low": {
+   "installed": [
+    -0.064,
+    -0.2503
+   ],
+   "cand-kc": [
+    0.0,
+    0.0
+   ],
+   "cand-sp": [
+    0.0,
+    0.0
+   ]
+  },
+  "me_hand": {
+   "installed": [
+    0.165,
+    0.1035
+   ],
+   "cand-kc": [
+    0.186,
+    0.1048
+   ],
+   "cand-sp": [
+    0.246,
+    0.1382
+   ]
+  },
+  "me_followers": {
+   "installed": [
+    0.063,
+    0.0645
+   ],
+   "cand-kc": [
+    0.064,
+    0.0694
+   ],
+   "cand-sp": [
+    0.1,
+    0.1078
+   ]
+  },
+  "me_atk": {
+   "installed": [
+    0.157,
+    0.0361
+   ],
+   "cand-kc": [
+    0.279,
+    0.0693
+   ],
+   "cand-sp": [
+    0.285,
+    0.0708
+   ]
+  },
+  "me_life": {
+   "installed": [
+    0.158,
+    0.0374
+   ],
+   "cand-kc": [
+    0.077,
+    0.0192
+   ],
+   "cand-sp": [
+    0.093,
+    0.0233
+   ]
+  },
+  "me_board_threat": {
+   "installed": [
+    -0.079,
+    -0.0199
+   ],
+   "cand-kc": [
+    -0.127,
+    -0.0341
+   ],
+   "cand-sp": [
+    -0.181,
+    -0.0485
+   ]
+  },
+  "me_ep": {
+   "installed": [
+    0.173,
+    0.1991
+   ],
+   "cand-kc": [
+    0.15,
+    0.1735
+   ],
+   "cand-sp": [
+    0.195,
+    0.2251
+   ]
+  },
+  "me_sep": {
+   "installed": [
+    0.451,
+    0.5937
+   ],
+   "cand-kc": [
+    0.366,
+    0.465
+   ],
+   "cand-sp": [
+    0.379,
+    0.4809
+   ]
+  },
+  "me_max_pp": {
+   "installed": [
+    0.959,
+    0.302
+   ],
+   "cand-kc": [
+    1.008,
+    0.3553
+   ],
+   "cand-sp": [
+    1.312,
+    0.4623
+   ]
+  },
+  "op_hp": {
+   "installed": [
+    -0.281,
+    -0.0464
+   ],
+   "cand-kc": [
+    -0.469,
+    -0.0793
+   ],
+   "cand-sp": [
+    -0.6,
+    -0.1015
+   ]
+  },
+  "op_hp_sqrt": {
+   "installed": [
+    -0.584,
+    -0.5502
+   ],
+   "cand-kc": [
+    -0.261,
+    -0.2545
+   ],
+   "cand-sp": [
+    -0.306,
+    -0.2982
+   ]
+  },
+  "op_hp_low": {
+   "installed": [
+    0.068,
+    0.2213
+   ],
+   "cand-kc": [
+    0.019,
+    0.0623
+   ],
+   "cand-sp": [
+    0.003,
+    0.0112
+   ]
+  },
+  "op_hand": {
+   "installed": [
+    -0.112,
+    -0.0741
+   ],
+   "cand-kc": [
+    -0.011,
+    -0.0066
+   ],
+   "cand-sp": [
+    -0.024,
+    -0.0147
+   ]
+  },
+  "op_followers": {
+   "installed": [
+    0.029,
+    0.0556
+   ],
+   "cand-kc": [
+    -0.053,
+    -0.0783
+   ],
+   "cand-sp": [
+    -0.079,
+    -0.1181
+   ]
+  },
+  "op_atk": {
+   "installed": [
+    -0.281,
+    -0.1486
+   ],
+   "cand-kc": [
+    -0.259,
+    -0.0994
+   ],
+   "cand-sp": [
+    -0.288,
+    -0.1105
+   ]
+  },
+  "op_life": {
+   "installed": [
+    0.054,
+    0.0389
+   ],
+   "cand-kc": [
+    -0.051,
+    -0.0231
+   ],
+   "cand-sp": [
+    -0.086,
+    -0.0393
+   ]
+  },
+  "op_board_threat": {
+   "installed": [
+    -0.145,
+    -0.1
+   ],
+   "cand-kc": [
+    -0.014,
+    -0.0066
+   ],
+   "cand-sp": [
+    0.004,
+    0.0018
+   ]
+  },
+  "op_ep": {
+   "installed": [
+    -0.114,
+    -0.1346
+   ],
+   "cand-kc": [
+    -0.053,
+    -0.0608
+   ],
+   "cand-sp": [
+    0.0,
+    0.0001
+   ]
+  },
+  "op_sep": {
+   "installed": [
+    -0.479,
+    -0.6785
+   ],
+   "cand-kc": [
+    -0.426,
+    -0.5577
+   ],
+   "cand-sp": [
+    -0.454,
+    -0.5939
+   ]
+  },
+  "op_max_pp": {
+   "installed": [
+    -1.209,
+    -0.3608
+   ],
+   "cand-kc": [
+    -1.179,
+    -0.4018
+   ],
+   "cand-sp": [
+    -1.488,
+    -0.5071
+   ]
+  }
+ },
+ "lambda": 0.03
+}

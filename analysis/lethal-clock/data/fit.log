@@ -1,0 +1,26 @@
+{
+ "train": {
+  "contrast_mse_w": 0.008476,
+  "sign_w": 0.7495,
+  "calib_logloss": 0.5959
+ },
+ "intercept": -0.3589,
+ "seconds": 200,
+ "kclock coefficients (standardized)": {
+  "me_kill_turns": -0.0257,
+  "op_kill_turns": 0.0322,
+  "kill_lead": 0.0616,
+  "op_hp_x_kill_lead": 0.0261,
+  "me_hp_x_kill_lead": -0.0976,
+  "op_hp_x_me_near": -0.0156,
+  "me_hp_x_op_near": -0.0003
+ },
+ "counts": {
+  "step1_labels": 5453,
+  "step1_examples": 108686,
+  "step1_no_examples": 231,
+  "teacher_ends_labels": 13607,
+  "teacher_ends_examples": 211696,
+  "teacher_ends_no_examples": 251
+ }
+}

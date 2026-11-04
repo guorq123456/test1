@@ -1,0 +1,51 @@
+{
+ "net": "analysis/scaling/models/net-s1-10k.npz",
+ "net_sha256": "7bee0b7f92e207b2d336d6676c3900437404df10b3a61a71499a61957c536445",
+ "holdout": "analysis/sharednet/s1/holdout-games.json",
+ "fit_games": 600,
+ "condition": "对手卡表已知（牌序、手牌未知）",
+ "end": {
+  "net": {
+   "log_loss": 0.59169,
+   "brier": 0.20387,
+   "n": 19799
+  },
+  "hand_written": {
+   "log_loss": 0.64851,
+   "brier": 0.22957,
+   "n": 19799
+  },
+  "hand_written_fit": {
+   "a": 0.04608898385596608,
+   "b": -0.4460320858559636,
+   "rows": 9928
+  },
+  "base_rate": {
+   "log_loss": 0.69283,
+   "brier": 0.24984,
+   "n": 19799
+  }
+ },
+ "mid": {
+  "net": {
+   "log_loss": 0.58356,
+   "brier": 0.20003,
+   "n": 63963
+  },
+  "hand_written": {
+   "log_loss": 0.65056,
+   "brier": 0.23001,
+   "n": 63963
+  },
+  "hand_written_fit": {
+   "a": 0.0345943603470147,
+   "b": -0.11965886343414585,
+   "rows": 32291
+  },
+  "base_rate": {
+   "log_loss": 0.69269,
+   "brier": 0.24977,
+   "n": 63963
+  }
+ }
+}

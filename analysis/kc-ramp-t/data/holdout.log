@@ -1,0 +1,12 @@
+host: priority nice 10, CPUs [1, 2, 3], 3 CPUs
+条件：对手卡表已知（牌序、手牌未知）。第 1 步留出读数（只报；判定看门）
+
+- 新：`mcts:200+plan+learned+phased=cand-kc-ramp-t`；现装：`v2s`；留出开头 164 个，对子 471 个
+- 不含 end，和 ΔG_end（K = 16） 同号（290 对）：new 0.686、installed 0.700
+  - new − installed -0.014（-0.062～+0.036）
+- 不含 end，和 ΔT 同号（367 对）：new 0.781、installed 0.732
+  - new − installed +0.049（+0.005～+0.093）
+- 含 end，和 ΔG_end（K = 16） 同号（384 对）：new 0.758、installed 0.768
+  - new − installed -0.010（-0.046～+0.027）
+- 含 end，和 ΔT 同号（471 对）：new 0.827、installed 0.789
+  - new − installed +0.038（+0.004～+0.072）

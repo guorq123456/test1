@@ -1,0 +1,21 @@
+{
+ "version": "checkup-b-1",
+ "condition": "对手卡表已知（牌序、手牌未知）",
+ "b1": {
+  "decisions": 753,
+  "mean_d_old": 0.03386454183266932,
+  "mean_d_new": 0.03718459495351926,
+  "mean_d_new_minus_old_same_playouts": 0.0023240371845949536,
+  "se": 0.011806579268298617,
+  "corr_raw": 0.3516532551046519,
+  "reliability_old": 0.7078083805163845,
+  "reliability_new": 0.40742747313370314,
+  "corr_disattenuated": 0.6548346270143887,
+  "corr_disattenuated_95": [
+   0.47826763582709997,
+   0.8361669106159113
+  ],
+  "teacher_first_worse_old": 0.21646746347941567,
+  "teacher_first_worse_new": 0.18592297476759628
+ }
+}

@@ -1,0 +1,593 @@
+{
+  "ai_hp": 0,
+  "bot": {
+    "build": "d9a3cb2",
+    "commit": "d9a3cb2",
+    "cr": 1366,
+    "level": "strong",
+    "spec": "mcts:200+plan+learned+phased",
+    "version": "v2s"
+  },
+  "finished": true,
+  "moves": 85,
+  "record": {
+    "actions": [
+      {
+        "indices": [
+          1,
+          2,
+          3
+        ],
+        "type": "Mulligan"
+      },
+      {
+        "indices": [],
+        "type": "Mulligan"
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 2
+      },
+      {
+        "attacker": 2,
+        "target": -2,
+        "type": "Attack"
+      },
+      {
+        "type": "EndTurn"
+      },
+      {
+        "type": "UseBonusPP"
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 55
+      },
+      {
+        "type": "EndTurn"
+      },
+      {
+        "attacker": 2,
+        "target": -2,
+        "type": "Attack"
+      },
+      {
+        "type": "EndTurn"
+      },
+      {
+        "attacker": 55,
+        "target": -1,
+        "type": "Attack"
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 73
+      },
+      {
+        "type": "EndTurn"
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 26
+      },
+      {
+        "attacker": 26,
+        "target": 55,
+        "type": "Attack"
+      },
+      {
+        "attacker": 2,
+        "target": -2,
+        "type": "Attack"
+      },
+      {
+        "type": "EndTurn"
+      },
+      {
+        "modes": [],
+        "targets": [
+          83
+        ],
+        "type": "PlayCard",
+        "uid": 64
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 57
+      },
+      {
+        "attacker": 73,
+        "target": -1,
+        "type": "Attack"
+      },
+      {
+        "type": "EndTurn"
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 6
+      },
+      {
+        "attacker": 6,
+        "target": 64,
+        "type": "Attack"
+      },
+      {
+        "attacker": 86,
+        "target": 57,
+        "type": "Attack"
+      },
+      {
+        "attacker": 2,
+        "target": -2,
+        "type": "Attack"
+      },
+      {
+        "type": "EndTurn"
+      },
+      {
+        "modes": [],
+        "targets": [
+          6
+        ],
+        "type": "PlayCard",
+        "uid": 58
+      },
+      {
+        "attacker": 73,
+        "target": -1,
+        "type": "Attack"
+      },
+      {
+        "modes": [],
+        "super_": false,
+        "targets": [],
+        "type": "Evolve",
+        "uid": 58
+      },
+      {
+        "attacker": 58,
+        "target": 2,
+        "type": "Attack"
+      },
+      {
+        "type": "EndTurn"
+      },
+      {
+        "modes": [],
+        "targets": [
+          58
+        ],
+        "type": "PlayCard",
+        "uid": 31
+      },
+      {
+        "modes": [],
+        "super_": false,
+        "targets": [
+          58
+        ],
+        "type": "Evolve",
+        "uid": 31
+      },
+      {
+        "attacker": 31,
+        "target": 73,
+        "type": "Attack"
+      },
+      {
+        "type": "EndTurn"
+      },
+      {
+        "modes": [],
+        "targets": [
+          31
+        ],
+        "type": "PlayCard",
+        "uid": 78
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 54
+      },
+      {
+        "modes": [],
+        "super_": false,
+        "targets": [],
+        "type": "Evolve",
+        "uid": 54
+      },
+      {
+        "type": "EndTurn"
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 25
+      },
+      {
+        "attacker": 25,
+        "target": 54,
+        "type": "Attack"
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 85
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 91
+      },
+      {
+        "type": "EndTurn"
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 76
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 56
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 70
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 52
+      },
+      {
+        "modes": [],
+        "super_": true,
+        "targets": [
+          52
+        ],
+        "type": "Evolve",
+        "uid": 76
+      },
+      {
+        "type": "UseBonusPP"
+      },
+      {
+        "type": "EndTurn"
+      },
+      {
+        "modes": [
+          1
+        ],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 5
+      },
+      {
+        "modes": [],
+        "super_": true,
+        "targets": [],
+        "type": "Evolve",
+        "uid": 5
+      },
+      {
+        "attacker": 5,
+        "target": 76,
+        "type": "Attack"
+      },
+      {
+        "type": "EndTurn"
+      },
+      {
+        "type": "UseBonusPP"
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 42
+      },
+      {
+        "modes": [],
+        "targets": [
+          5
+        ],
+        "type": "PlayCard",
+        "uid": 68
+      },
+      {
+        "modes": [],
+        "super_": true,
+        "targets": [],
+        "type": "Evolve",
+        "uid": 68
+      },
+      {
+        "attacker": 68,
+        "target": -1,
+        "type": "Attack"
+      },
+      {
+        "type": "EndTurn"
+      },
+      {
+        "modes": [
+          0,
+          1,
+          2
+        ],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 4
+      },
+      {
+        "attacker": 4,
+        "target": 68,
+        "type": "Attack"
+      },
+      {
+        "type": "EndTurn"
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 61
+      },
+      {
+        "attacker": 42,
+        "target": 4,
+        "type": "Attack"
+      },
+      {
+        "type": "EndTurn"
+      },
+      {
+        "modes": [],
+        "targets": [
+          61
+        ],
+        "type": "PlayCard",
+        "uid": 28
+      },
+      {
+        "modes": [],
+        "targets": [
+          61
+        ],
+        "type": "PlayCard",
+        "uid": 94
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 1
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 21
+      },
+      {
+        "modes": [],
+        "super_": true,
+        "targets": [],
+        "type": "Evolve",
+        "uid": 1
+      },
+      {
+        "attacker": 1,
+        "target": -2,
+        "type": "Attack"
+      },
+      {
+        "type": "EndTurn"
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 92
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 93
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 79
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 83
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 48
+      },
+      {
+        "modes": [],
+        "targets": [
+          43
+        ],
+        "type": "PlayCard",
+        "uid": 63
+      },
+      {
+        "type": "EndTurn"
+      },
+      {
+        "modes": [],
+        "targets": [],
+        "type": "PlayCard",
+        "uid": 39
+      },
+      {
+        "modes": [],
+        "super_": false,
+        "targets": [],
+        "type": "Evolve",
+        "uid": 39
+      },
+      {
+        "attacker": 39,
+        "target": 63,
+        "type": "Attack"
+      },
+      {
+        "attacker": 39,
+        "target": -2,
+        "type": "Attack"
+      }
+    ],
+    "ai": "mcts:200+plan+learned+phased",
+    "bot": {
+      "build": "d9a3cb2",
+      "commit": "d9a3cb2",
+      "cr": 1366,
+      "level": "strong",
+      "spec": "mcts:200+plan+learned+phased",
+      "version": "v2s"
+    },
+    "date": "2026-10-08 02:39",
+    "decks": [
+      [
+        10021110,
+        10021110,
+        10423110,
+        10423110,
+        10423110,
+        10424110,
+        10424110,
+        10424110,
+        10523310,
+        10523310,
+        10523310,
+        10524120,
+        10524120,
+        10524120,
+        10624120,
+        10624120,
+        10624120,
+        10722110,
+        10722110,
+        10722110,
+        10921110,
+        10921110,
+        10921110,
+        10922110,
+        10922110,
+        10922110,
+        10922310,
+        10922310,
+        10922310,
+        10923110,
+        10923110,
+        10923110,
+        10923310,
+        10923310,
+        10923310,
+        10924110,
+        10924110,
+        10924110,
+        10924120,
+        10924120
+      ],
+      [
+        10403120,
+        10403120,
+        10414120,
+        10503210,
+        10503210,
+        10503210,
+        10513310,
+        10514120,
+        10514120,
+        10514120,
+        10614120,
+        10614120,
+        10614120,
+        10712110,
+        10712110,
+        10712110,
+        10714110,
+        10714110,
+        10714110,
+        10714120,
+        10714120,
+        10811130,
+        10811130,
+        10811130,
+        10814110,
+        10814110,
+        10814110,
+        10911110,
+        10911110,
+        10911110,
+        10912110,
+        10912110,
+        10912110,
+        10913110,
+        10913110,
+        10913110,
+        10913310,
+        10914110,
+        10914110,
+        10914110
+      ]
+    ],
+    "first": 0,
+    "first_arg": null,
+    "names": [
+      "pirate-t",
+      "elf-t"
+    ],
+    "notes": [
+      {
+        "at": 73,
+        "text": "这回合因为胜局已定就随便打了"
+      }
+    ],
+    "seed": 817983451,
+    "version": 1,
+    "winner": 0
+  },
+  "turn": 19,
+  "updated": "2026-10-08T06:43:04.604Z",
+  "winner": 0,
+  "you_hp": 14
+}

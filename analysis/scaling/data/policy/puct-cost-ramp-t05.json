@@ -1,0 +1,22 @@
+{
+ "records": "rec-71600018.jsonl.gz",
+ "games": 6,
+ "decisions": 248,
+ "specs": {
+  "base": {
+   "spec": "mcts:120+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-gen3-30000.npz+neteot",
+   "ms_per_decision": 73.22,
+   "iterations_per_decision": 120.0
+  },
+  "ft-t05": {
+   "spec": "mcts:120+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-gen3-30000.npz+neteot+puct=analysis/scaling/models/prior-ramp-ft-t05.npz:1",
+   "ms_per_decision": 83.59,
+   "iterations_per_decision": 120.0
+  },
+  "ft-t05-72": {
+   "spec": "mcts:72+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-gen3-30000.npz+neteot+puct=analysis/scaling/models/prior-ramp-ft-t05.npz:1",
+   "ms_per_decision": 60.94,
+   "iterations_per_decision": 72.0
+  }
+ }
+}

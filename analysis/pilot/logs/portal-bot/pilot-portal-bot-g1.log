@@ -1,0 +1,59 @@
+== 2026-11-01T09:22:50Z pilot-portal-bot-g1: hero bot/T1-PORTAL-1 field analysis/pilot/fields/bot-frozen7.txt self 86000000 holdout 86001000 hero-spec - train 86000000
+{"spec": "mcts:100+plan", "pool": "analysis/pilot/fields/bot-frozen7.txt", "pool_sha256": "00f8db9adac2c2e873859ecbbcfe72bada6d2134d4e0015a922b7495d059aff6", "pool_labels": ["bot/T1-FOREST-1", "bot/T1-SWORD-1", "bot/T3-RUNE-1", "bot/T3-DRAGON-1", "bot/T1-ABYSS-1", "bot/T1-HAVEN-1", "bot/T1-PORTAL-1"], "hero": "bot/T1-PORTAL-1", "base": 86000000, "stride": 2, "shards": [0, 10], "per_shard": 1000, "open_shards": [86000000, 86000002, 86000004, 86000006, 86000008, 86000010, 86000012, 86000014, 86000016, 86000018], "games_to_play": 10000, "workers": 4}
+{"games": 500, "of": 10000, "wall_s": 284, "cpu_s_per_game": 2.24, "games_per_hour": 6346}
+{"games": 1000, "of": 10000, "wall_s": 570, "cpu_s_per_game": 2.24, "games_per_hour": 6320}
+{"games": 1500, "of": 10000, "wall_s": 858, "cpu_s_per_game": 2.26, "games_per_hour": 6296}
+{"games": 2000, "of": 10000, "wall_s": 1154, "cpu_s_per_game": 2.28, "games_per_hour": 6238}
+{"games": 2500, "of": 10000, "wall_s": 1455, "cpu_s_per_game": 2.3, "games_per_hour": 6184}
+{"games": 3000, "of": 10000, "wall_s": 1748, "cpu_s_per_game": 2.3, "games_per_hour": 6178}
+{"games": 3500, "of": 10000, "wall_s": 2034, "cpu_s_per_game": 2.3, "games_per_hour": 6193}
+{"games": 4000, "of": 10000, "wall_s": 2319, "cpu_s_per_game": 2.29, "games_per_hour": 6210}
+{"games": 4500, "of": 10000, "wall_s": 2600, "cpu_s_per_game": 2.28, "games_per_hour": 6230}
+{"games": 5000, "of": 10000, "wall_s": 2888, "cpu_s_per_game": 2.28, "games_per_hour": 6233}
+{"games": 5500, "of": 10000, "wall_s": 3175, "cpu_s_per_game": 2.28, "games_per_hour": 6235}
+{"games": 6000, "of": 10000, "wall_s": 3471, "cpu_s_per_game": 2.29, "games_per_hour": 6222}
+{"games": 6500, "of": 10000, "wall_s": 3762, "cpu_s_per_game": 2.29, "games_per_hour": 6219}
+{"games": 7000, "of": 10000, "wall_s": 4055, "cpu_s_per_game": 2.29, "games_per_hour": 6215}
+{"games": 7500, "of": 10000, "wall_s": 4333, "cpu_s_per_game": 2.28, "games_per_hour": 6231}
+{"games": 8000, "of": 10000, "wall_s": 4629, "cpu_s_per_game": 2.29, "games_per_hour": 6222}
+{"games": 8500, "of": 10000, "wall_s": 4931, "cpu_s_per_game": 2.29, "games_per_hour": 6205}
+{"games": 9000, "of": 10000, "wall_s": 5215, "cpu_s_per_game": 2.29, "games_per_hour": 6213}
+{"games": 9500, "of": 10000, "wall_s": 5507, "cpu_s_per_game": 2.29, "games_per_hour": 6210}
+{"games": 10000, "of": 10000, "wall_s": 5804, "cpu_s_per_game": 2.29, "games_per_hour": 6203}
+== 2026-11-01T10:59:34Z pilot-portal-bot-g1 self-play done
+== 2026-11-01T10:59:45Z pilot-portal-bot-g1: hero bot/T1-PORTAL-1 field analysis/pilot/fields/bot-frozen7.txt self 86000000 holdout 86001000 hero-spec - train 86000000
+{"spec": "mcts:100+plan", "pool": "analysis/pilot/fields/bot-frozen7.txt", "pool_sha256": "00f8db9adac2c2e873859ecbbcfe72bada6d2134d4e0015a922b7495d059aff6", "pool_labels": ["bot/T1-FOREST-1", "bot/T1-SWORD-1", "bot/T3-RUNE-1", "bot/T3-DRAGON-1", "bot/T1-ABYSS-1", "bot/T1-HAVEN-1", "bot/T1-PORTAL-1"], "hero": "bot/T1-PORTAL-1", "base": 86001000, "stride": 2, "shards": [0, 2], "per_shard": 1000, "open_shards": [86001000, 86001002], "games_to_play": 2000, "workers": 4}
+{"games": 500, "of": 2000, "wall_s": 294, "cpu_s_per_game": 2.31, "games_per_hour": 6131}
+{"games": 1000, "of": 2000, "wall_s": 600, "cpu_s_per_game": 2.37, "games_per_hour": 6003}
+{"games": 1500, "of": 2000, "wall_s": 910, "cpu_s_per_game": 2.4, "games_per_hour": 5936}
+{"games": 2000, "of": 2000, "wall_s": 1218, "cpu_s_per_game": 2.4, "games_per_hour": 5910}
+{"shards_to_encode": 12}
+{"file": "tok-86000000.npz", "games": 1000, "positions": 14936, "cpu_s": 9.9}
+{"file": "tok-86000002.npz", "games": 1000, "positions": 15043, "cpu_s": 10.3}
+{"file": "tok-86000004.npz", "games": 1000, "positions": 14925, "cpu_s": 10.5}
+{"file": "tok-86000006.npz", "games": 1000, "positions": 14916, "cpu_s": 10.7}
+{"file": "tok-86000008.npz", "games": 1000, "positions": 14939, "cpu_s": 10.3}
+{"file": "tok-86000012.npz", "games": 1000, "positions": 14813, "cpu_s": 9.7}
+{"file": "tok-86000010.npz", "games": 1000, "positions": 14869, "cpu_s": 10.3}
+{"file": "tok-86000014.npz", "games": 1000, "positions": 14878, "cpu_s": 10.5}
+{"file": "tok-86000016.npz", "games": 1000, "positions": 14880, "cpu_s": 9.7}
+{"file": "tok-86001002.npz", "games": 1000, "positions": 15154, "cpu_s": 9.2}
+{"file": "tok-86000018.npz", "games": 1000, "positions": 14904, "cpu_s": 10.3}
+{"file": "tok-86001000.npz", "games": 1000, "positions": 14705, "cpu_s": 9.9}
+{"cards": 157, "static_width": 96}
+{"shards_to_encode": 12}
+{"file": "mid-86000000.npz", "games": 1000, "positions": 50345, "cpu_s": 13.9}
+{"file": "mid-86000004.npz", "games": 1000, "positions": 50377, "cpu_s": 13.9}
+{"file": "mid-86000006.npz", "games": 1000, "positions": 50017, "cpu_s": 14.6}
+{"file": "mid-86000002.npz", "games": 1000, "positions": 50891, "cpu_s": 15.2}
+{"file": "mid-86000010.npz", "games": 1000, "positions": 50016, "cpu_s": 13.7}
+{"file": "mid-86000008.npz", "games": 1000, "positions": 50042, "cpu_s": 13.8}
+{"file": "mid-86000012.npz", "games": 1000, "positions": 49784, "cpu_s": 13.3}
+{"file": "mid-86000014.npz", "games": 1000, "positions": 49742, "cpu_s": 12.9}
+{"file": "mid-86001000.npz", "games": 1000, "positions": 49902, "cpu_s": 13.3}
+{"file": "mid-86000018.npz", "games": 1000, "positions": 50211, "cpu_s": 13.8}
+{"file": "mid-86000016.npz", "games": 1000, "positions": 50190, "cpu_s": 13.8}
+{"file": "mid-86001002.npz", "games": 1000, "positions": 51054, "cpu_s": 14.2}
+N 72 in-gate ratio 1.097
+equal-CPU N 66
+== 2026-11-01T11:59:39Z pilot-portal-bot-g1 done

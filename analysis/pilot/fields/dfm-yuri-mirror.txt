@@ -1,0 +1,5 @@
+# EXTERNAL, measurement only (Salem 「隔离训练」 2026-10-31 23:18Z): the MIRROR of the external pro list dfm/RUNE-ユーリ
+# (same list as fields/dfm-yuri-vs-bot6.txt). Never in a deck search, a self-play pool for the bot, or training other than
+# the isolated net-pilot-rune-dfm-* measurement. See analysis/pilot/MIRROR.md.
+dfm/RUNE-ユーリ|1.3.cH1g.cH1g.cH1g.cH3E.cH3E.cH3E.cfTu.cfTu.cfTu.eBpe.eBpe.eBpe.ey9E.ey9E.ey9E.eyCM.eyCM.eyCM.fKcs.fKpM.fKpM.fKpM.fKsU.fKsU.fKsU.f-LA.g5Ok.g5Ok.g5Ok.g5Rs.g5Rs.g5Rs.g5hU.g5hU.g5t-.g5t-.g5t-.g5u8.g5u8.g5u8
+dfm/RUNE-ユーリ-mirror|1.3.cH1g.cH1g.cH1g.cH3E.cH3E.cH3E.cfTu.cfTu.cfTu.eBpe.eBpe.eBpe.ey9E.ey9E.ey9E.eyCM.eyCM.eyCM.fKcs.fKpM.fKpM.fKpM.fKsU.fKsU.fKsU.f-LA.g5Ok.g5Ok.g5Ok.g5Rs.g5Rs.g5Rs.g5hU.g5hU.g5t-.g5t-.g5t-.g5u8.g5u8.g5u8

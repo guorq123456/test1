@@ -1,0 +1,54 @@
+== 2026-11-01T15:17:49Z pilot-portal-bot-g2: hero bot/T1-PORTAL-1 field analysis/pilot/fields/bot-frozen7.txt self 86003000 holdout - hero-spec mcts:72+plan+setnet=analysis/scaling/models/net-pilot-portal-bot-g1.npz+netmid+netany train 86000000,86003000
+{"spec": "mcts:100+plan", "pool": "analysis/pilot/fields/bot-frozen7.txt", "pool_sha256": "00f8db9adac2c2e873859ecbbcfe72bada6d2134d4e0015a922b7495d059aff6", "pool_labels": ["bot/T1-FOREST-1", "bot/T1-SWORD-1", "bot/T3-RUNE-1", "bot/T3-DRAGON-1", "bot/T1-ABYSS-1", "bot/T1-HAVEN-1", "bot/T1-PORTAL-1"], "hero": "bot/T1-PORTAL-1", "hero_spec": "mcts:72+plan+setnet=analysis/scaling/models/net-pilot-portal-bot-g1.npz+netmid+netany", "base": 86003000, "stride": 2, "shards": [0, 10], "per_shard": 1000, "open_shards": [86003000, 86003002, 86003004, 86003006, 86003008, 86003010, 86003012, 86003014, 86003016, 86003018], "games_to_play": 10000, "workers": 4}
+{"games": 500, "of": 10000, "wall_s": 339, "cpu_s_per_game": 2.68, "games_per_hour": 5313}
+{"games": 1000, "of": 10000, "wall_s": 684, "cpu_s_per_game": 2.7, "games_per_hour": 5265}
+{"games": 1500, "of": 10000, "wall_s": 1015, "cpu_s_per_game": 2.68, "games_per_hour": 5323}
+{"games": 2000, "of": 10000, "wall_s": 1339, "cpu_s_per_game": 2.65, "games_per_hour": 5377}
+{"games": 2500, "of": 10000, "wall_s": 1669, "cpu_s_per_game": 2.64, "games_per_hour": 5393}
+{"games": 3000, "of": 10000, "wall_s": 2010, "cpu_s_per_game": 2.65, "games_per_hour": 5373}
+{"games": 3500, "of": 10000, "wall_s": 2344, "cpu_s_per_game": 2.65, "games_per_hour": 5376}
+{"games": 4000, "of": 10000, "wall_s": 2677, "cpu_s_per_game": 2.65, "games_per_hour": 5379}
+{"games": 4500, "of": 10000, "wall_s": 3006, "cpu_s_per_game": 2.64, "games_per_hour": 5389}
+{"games": 5000, "of": 10000, "wall_s": 3333, "cpu_s_per_game": 2.64, "games_per_hour": 5400}
+{"games": 5500, "of": 10000, "wall_s": 3669, "cpu_s_per_game": 2.64, "games_per_hour": 5396}
+{"games": 6000, "of": 10000, "wall_s": 3993, "cpu_s_per_game": 2.63, "games_per_hour": 5410}
+{"games": 6500, "of": 10000, "wall_s": 4322, "cpu_s_per_game": 2.63, "games_per_hour": 5414}
+{"games": 7000, "of": 10000, "wall_s": 4651, "cpu_s_per_game": 2.63, "games_per_hour": 5418}
+{"games": 7500, "of": 10000, "wall_s": 4987, "cpu_s_per_game": 2.63, "games_per_hour": 5414}
+{"games": 8000, "of": 10000, "wall_s": 5324, "cpu_s_per_game": 2.63, "games_per_hour": 5410}
+{"games": 8500, "of": 10000, "wall_s": 5657, "cpu_s_per_game": 2.63, "games_per_hour": 5409}
+{"games": 9000, "of": 10000, "wall_s": 5993, "cpu_s_per_game": 2.63, "games_per_hour": 5407}
+{"games": 9500, "of": 10000, "wall_s": 6327, "cpu_s_per_game": 2.64, "games_per_hour": 5405}
+{"games": 10000, "of": 10000, "wall_s": 6665, "cpu_s_per_game": 2.64, "games_per_hour": 5401}
+{"shards_to_encode": 10}
+{"file": "tok-86003006.npz", "games": 1000, "positions": 15369, "cpu_s": 10.2}
+{"file": "tok-86003004.npz", "games": 1000, "positions": 15160, "cpu_s": 10.6}
+{"file": "tok-86003000.npz", "games": 1000, "positions": 15274, "cpu_s": 11.0}
+{"file": "tok-86003002.npz", "games": 1000, "positions": 15325, "cpu_s": 11.2}
+{"file": "tok-86003008.npz", "games": 1000, "positions": 15332, "cpu_s": 9.6}
+{"file": "tok-86003010.npz", "games": 1000, "positions": 15388, "cpu_s": 9.7}
+{"file": "tok-86003012.npz", "games": 1000, "positions": 15338, "cpu_s": 9.7}
+{"file": "tok-86003014.npz", "games": 1000, "positions": 15355, "cpu_s": 9.7}
+{"file": "tok-86003016.npz", "games": 1000, "positions": 15350, "cpu_s": 9.4}
+{"file": "tok-86003018.npz", "games": 1000, "positions": 15473, "cpu_s": 9.9}
+{"cards": 157, "static_width": 96}
+{"shards_to_encode": 10}
+{"file": "mid-86003004.npz", "games": 1000, "positions": 53646, "cpu_s": 14.6}
+{"file": "mid-86003002.npz", "games": 1000, "positions": 53498, "cpu_s": 14.9}
+{"file": "mid-86003000.npz", "games": 1000, "positions": 53629, "cpu_s": 15.3}
+{"file": "mid-86003006.npz", "games": 1000, "positions": 53701, "cpu_s": 15.5}
+{"file": "mid-86003008.npz", "games": 1000, "positions": 53777, "cpu_s": 14.0}
+{"file": "mid-86003010.npz", "games": 1000, "positions": 53995, "cpu_s": 14.0}
+{"file": "mid-86003014.npz", "games": 1000, "positions": 53904, "cpu_s": 14.0}
+{"file": "mid-86003012.npz", "games": 1000, "positions": 53980, "cpu_s": 14.5}
+{"file": "mid-86003016.npz", "games": 1000, "positions": 53668, "cpu_s": 13.8}
+{"file": "mid-86003018.npz", "games": 1000, "positions": 54688, "cpu_s": 13.9}
+train failed
+== 2026-11-01T17:13:10Z the first chunk's deadline came during training (epoch 1, checkpointed); chunk 2 resumes it
+== 2026-11-01T17:13:10Z pilot-portal-bot-g2: hero bot/T1-PORTAL-1 field analysis/pilot/fields/bot-frozen7.txt self 86003000 holdout - hero-spec mcts:72+plan+setnet=analysis/scaling/models/net-pilot-portal-bot-g1.npz+netmid+netany train 86000000,86003000
+{"shards_to_encode": 0}
+{"cards": 157, "static_width": 96}
+{"shards_to_encode": 0}
+N 78 in-gate ratio 1.169
+equal-CPU N 67
+== 2026-11-01T18:03:45Z pilot-portal-bot-g2 done

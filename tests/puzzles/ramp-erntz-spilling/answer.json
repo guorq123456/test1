@@ -1,0 +1,9 @@
+{
+ "kind": "setup",
+ "expected": {
+  "enemy_followers_at_most": 0,
+  "our_hp_at_least": 13
+ },
+ "source": "Operations puzzle 3 (the analysis line's d9f691e, puzzles/puzzles.md, k = 445; the architecture thread 2026-10-10 08:46Z)",
+ "notes": "Salem's turn end: Erntz removed, our Erntz down with Ward, us at 13. Re-test 0.667 vs the bot's 0.125. level-strong plays Lumiore & Argente discarding Erntz and Sloth (us at 6); mcts:400 and up find Salem's line (any order); the installed evaluation prefers Salem's end (0.652 vs 0.403)."
+}

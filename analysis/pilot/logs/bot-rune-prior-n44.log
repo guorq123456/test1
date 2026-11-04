@@ -1,0 +1,25 @@
+条件：英雄 bot/T3-RUNE-1 对 6 套对手轮流（analysis/pilot/fields/bot-frozen7.txt）；每对 = 一副发牌，X 和基线各坐两边；对手卡表已知（牌序、手牌未知）
+X = mcts:44+plan+setnet=analysis/scaling/models/net-pilot-rune-bot-g4.npz+netmid+netany+puct=analysis/scaling/models/prior-pilot-rune-bot-ft-t05.npz:2:1
+基线 = mcts:100+plan
+对手 = mcts:100+plan
+BLAS 线程：OMP_NUM_THREADS=1，OPENBLAS_NUM_THREADS=1，MKL_NUM_THREADS=1
+  …25 对 63s
+  …50 对 121s
+  …75 对 180s
+  …100 对 236s
+  …125 对 297s
+  …150 对 353s
+  …175 对 405s
+  …200 对 460s
+  …225 对 521s
+  …250 对 579s
+  …275 对 631s
+  …300 对 687s
+300 对（X 600 局、基线 600 局）：英雄卡组 X 53.0% ± 4.2%，基线 27.2% ± 3.6%，配对差 +25.8% ± 4.9%（95% 区间 +20.9%～+30.7%）
+  对 bot/T1-FOREST-1：50 对 X 65.0%，基线 33.0%，差 +32.0% ± 11.8%
+  对 bot/T1-SWORD-1：50 对 X 32.0%，基线 23.0%，差 +9.0% ± 12.1%
+  对 bot/T3-DRAGON-1：50 对 X 74.0%，基线 41.0%，差 +33.0% ± 12.1%
+  对 bot/T1-ABYSS-1：50 对 X 48.0%，基线 28.0%，差 +20.0% ± 12.2%
+  对 bot/T1-HAVEN-1：50 对 X 57.0%，基线 27.0%，差 +30.0% ± 12.5%
+  对 bot/T1-PORTAL-1：50 对 X 42.0%，基线 11.0%，差 +31.0% ± 10.4%
+英雄每步（搜索过的决定）CPU：X 56 ms，基线 38 ms，比 1.454

@@ -1,0 +1,53 @@
+{
+ "net": "analysis/scaling/models/net-s1-20k.npz",
+ "decisions": 1500,
+ "every": 86,
+ "teacher": "mcts:400+plan",
+ "top1": {
+  "net_top1": 0.454,
+  "hand_top1": 0.668,
+  "recorded_top1": 0.814,
+  "net_hand_same_top1": 0.526
+ },
+ "spearman_with_teacher_visits": {
+  "net": {
+   "mean": 0.4209,
+   "n": 1211,
+   "se": 0.0129
+  },
+  "hand": {
+   "mean": 0.5779,
+   "n": 1210,
+   "se": 0.0112
+  },
+  "recorded": {
+   "mean": 0.8374,
+   "n": 1208,
+   "se": 0.0067
+  }
+ },
+ "end_turn": {
+  "teacher_end": 0.06,
+  "net_end": 0.0207,
+  "hand_end": 0.092
+ },
+ "top1_without_end_turn": {
+  "net_top1_rest": 0.3812,
+  "hand_top1_rest": 0.6348
+ },
+ "counts": {
+  "decisions": 1500,
+  "net_top1": 681,
+  "hand_top1": 1002,
+  "recorded_top1": 1221,
+  "net_hand_same_top1": 789,
+  "with_end": 1500,
+  "teacher_end": 90,
+  "net_end": 31,
+  "hand_end": 138,
+  "rest": 1183,
+  "net_top1_rest": 451,
+  "hand_top1_rest": 751
+ },
+ "condition": "对手卡表已知（牌序、手牌未知）"
+}

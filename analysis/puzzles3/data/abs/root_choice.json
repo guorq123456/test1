@@ -1,0 +1,26 @@
+{
+ "< 0.15": {
+  "decisions": 50,
+  "different": 23,
+  "share": 0.46,
+  "installed vs itself, another seed": 0.08
+ },
+ "0.15-0.85": {
+  "decisions": 1048,
+  "different": 306,
+  "share": 0.292,
+  "installed vs itself, another seed": 0.0525
+ },
+ "> 0.85": {
+  "decisions": 39,
+  "different": 5,
+  "share": 0.1282,
+  "installed vs itself, another seed": 0.0256
+ },
+ "all": {
+  "decisions": 1137,
+  "different": 334,
+  "share": 0.2938,
+  "installed vs itself, another seed": 0.0528
+ }
+}

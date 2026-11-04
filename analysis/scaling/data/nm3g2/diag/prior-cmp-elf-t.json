@@ -1,0 +1,149 @@
+{
+ "decisions": 164016,
+ "with_choice": 164016,
+ "g1": {
+  "ce_tau05": 1.07897,
+  "ce_tau05_choice": 1.07897,
+  "top1_vs_search": 0.8087,
+  "p_on_search_top": 0.4478
+ },
+ "g2": {
+  "ce_tau05": 0.98003,
+  "ce_tau05_choice": 0.98003,
+  "top1_vs_search": 0.8169,
+  "p_on_search_top": 0.523
+ },
+ "top1_g1_vs_g2": 0.8638,
+ "by_search_top_kind": {
+  "play->none": {
+   "n": 71358,
+   "g1_hits_search": 0.8095,
+   "g2_hits_search": 0.8244,
+   "g1_g2_agree": 0.8698
+  },
+  "attack->enemy_leader": {
+   "n": 20574,
+   "g1_hits_search": 0.8749,
+   "g2_hits_search": 0.8789,
+   "g1_g2_agree": 0.8863
+  },
+  "attack->enemy_card": {
+   "n": 17897,
+   "g1_hits_search": 0.8575,
+   "g2_hits_search": 0.8207,
+   "g1_g2_agree": 0.8628
+  },
+  "play->enemy_card": {
+   "n": 16140,
+   "g1_hits_search": 0.6966,
+   "g2_hits_search": 0.671,
+   "g1_g2_agree": 0.7794
+  },
+  "evolve->none": {
+   "n": 8821,
+   "g1_hits_search": 0.8261,
+   "g2_hits_search": 0.849,
+   "g1_g2_agree": 0.8779
+  },
+  "super->none": {
+   "n": 8162,
+   "g1_hits_search": 0.8205,
+   "g2_hits_search": 0.8456,
+   "g1_g2_agree": 0.8819
+  },
+  "end->none": {
+   "n": 7399,
+   "g1_hits_search": 0.9139,
+   "g2_hits_search": 0.9399,
+   "g1_g2_agree": 0.9447
+  },
+  "play->hand_card": {
+   "n": 6222,
+   "g1_hits_search": 0.5013,
+   "g2_hits_search": 0.5948,
+   "g1_g2_agree": 0.7535
+  },
+  "bonus->none": {
+   "n": 5794,
+   "g1_hits_search": 0.8749,
+   "g2_hits_search": 0.8887,
+   "g1_g2_agree": 0.9116
+  },
+  "evolve->own_card": {
+   "n": 1156,
+   "g1_hits_search": 0.8633,
+   "g2_hits_search": 0.8763,
+   "g1_g2_agree": 0.9014
+  },
+  "super->own_card": {
+   "n": 493,
+   "g1_hits_search": 0.7302,
+   "g2_hits_search": 0.7282,
+   "g1_g2_agree": 0.8154
+  }
+ },
+ "by_turn": {
+  "turn 14+": {
+   "n": 55769,
+   "g1_hits_search": 0.7519,
+   "g2_hits_search": 0.758,
+   "g1_g2_agree": 0.8279
+  },
+  "turn 12-13": {
+   "n": 25344,
+   "g1_hits_search": 0.8098,
+   "g2_hits_search": 0.816,
+   "g1_g2_agree": 0.861
+  },
+  "turn 10-11": {
+   "n": 23531,
+   "g1_hits_search": 0.8277,
+   "g2_hits_search": 0.8355,
+   "g1_g2_agree": 0.8756
+  },
+  "turn 8-9": {
+   "n": 21529,
+   "g1_hits_search": 0.8345,
+   "g2_hits_search": 0.847,
+   "g1_g2_agree": 0.873
+  },
+  "turn 6-7": {
+   "n": 13734,
+   "g1_hits_search": 0.8215,
+   "g2_hits_search": 0.8238,
+   "g1_g2_agree": 0.8687
+  },
+  "turn 4-5": {
+   "n": 11988,
+   "g1_hits_search": 0.8468,
+   "g2_hits_search": 0.865,
+   "g1_g2_agree": 0.9026
+  },
+  "turn 2-3": {
+   "n": 9861,
+   "g1_hits_search": 0.9299,
+   "g2_hits_search": 0.9384,
+   "g1_g2_agree": 0.9473
+  },
+  "turn 0-1": {
+   "n": 2260,
+   "g1_hits_search": 0.9496,
+   "g2_hits_search": 0.9748,
+   "g1_g2_agree": 0.969
+  }
+ },
+ "disagreements_g1kind_to_g2kind": {
+  "play -> play": 10402,
+  "play -> attack": 2475,
+  "attack -> attack": 2176,
+  "attack -> play": 1969,
+  "play -> evolve": 625,
+  "evolve -> evolve": 595,
+  "evolve -> play": 507,
+  "play -> bonus": 487,
+  "attack -> super": 382,
+  "play -> super": 368,
+  "super -> play": 362,
+  "super -> super": 331
+ }
+}

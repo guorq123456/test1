@@ -1,0 +1,48 @@
+{
+ "name": "pilot-rune-bot-g3",
+ "fit_s": 2332,
+ "epochs": 19,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.14078,
+   "log_loss": 0.43086,
+   "n": 402919
+  },
+  "mid": {
+   "brier": 0.13273,
+   "log_loss": 0.40902,
+   "n": 402895
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.14462,
+   "log_loss": 0.44308,
+   "n": 21036
+  },
+  "mid": {
+   "brier": 0.13723,
+   "log_loss": 0.42389,
+   "n": 21060
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.37866,
+   "log_loss": 1.10656,
+   "n": 21036
+  },
+  "mid": {
+   "brier": 0.35935,
+   "log_loss": 1.03319,
+   "n": 21060
+  }
+ },
+ "mid_rate": 0.292209
+}

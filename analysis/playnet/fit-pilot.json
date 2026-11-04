@@ -1,0 +1,87 @@
+{
+ "decisions": 753,
+ "features": 105,
+ "hand": {
+  "corr": 0.17626229429127085,
+  "mse": 0.03899502145466645,
+  "sign_clear": 0.6710526315789473,
+  "sign_teacher_wrong_clear": 0.08695652173913043
+ },
+ "hand+phi": {
+  "corr": 0.1821420252806622,
+  "mse": 0.03892696093187615,
+  "sign_clear": 0.7105263157894737,
+  "sign_teacher_wrong_clear": 0.13043478260869565
+ },
+ "ceiling_corr": 0.8160888419804465,
+ "mse_constant": 0.040243188379725896,
+ "clear": 76,
+ "full_fit": {
+  "s": 50.0,
+  "lam": 1000.0,
+  "hand_coef": 0.1927056295035586,
+  "top_features": [
+   [
+    "op_bane",
+    -0.0096
+   ],
+   [
+    "op_board_threat",
+    -0.0068
+   ],
+   [
+    "me_lasts",
+    0.0068
+   ],
+   [
+    "me_amulet_cost",
+    0.0062
+   ],
+   [
+    "me_evasive",
+    -0.0059
+   ],
+   [
+    "me_board_lethal",
+    -0.0057
+   ],
+   [
+    "me_shadows",
+    -0.0053
+   ],
+   [
+    "op_ward",
+    0.0049
+   ],
+   [
+    "op_life",
+    -0.0044
+   ],
+   [
+    "op_rec_clear",
+    0.0042
+   ],
+   [
+    "me_drain",
+    -0.0041
+   ],
+   [
+    "me_hand",
+    -0.004
+   ],
+   [
+    "op_evasive",
+    -0.004
+   ],
+   [
+    "me_hp_early",
+    -0.004
+   ],
+   [
+    "me_barrier",
+    0.0039
+   ]
+  ]
+ },
+ "condition": "对手卡表已知（牌序、手牌未知）"
+}

@@ -1,0 +1,61 @@
+{"shards_to_encode": 20}
+{"file": "dec-86903002.npz", "decisions": 21779, "moves": 119691, "cpu_s": 12.7}
+{"file": "dec-86903000.npz", "decisions": 22071, "moves": 121120, "cpu_s": 12.8}
+{"file": "dec-86903004.npz", "decisions": 21892, "moves": 120336, "cpu_s": 13.1}
+{"file": "dec-86903008.npz", "decisions": 22056, "moves": 121650, "cpu_s": 12.2}
+{"file": "dec-86903006.npz", "decisions": 21739, "moves": 119582, "cpu_s": 12.3}
+{"file": "dec-86903010.npz", "decisions": 21922, "moves": 119817, "cpu_s": 12.6}
+{"file": "dec-86903012.npz", "decisions": 22001, "moves": 118982, "cpu_s": 13.0}
+{"file": "dec-86903014.npz", "decisions": 22028, "moves": 121245, "cpu_s": 13.1}
+{"file": "dec-86903016.npz", "decisions": 21994, "moves": 121715, "cpu_s": 13.1}
+{"file": "dec-86903018.npz", "decisions": 21781, "moves": 118665, "cpu_s": 13.4}
+{"file": "dec-86905000.npz", "decisions": 22506, "moves": 125364, "cpu_s": 13.6}
+{"file": "dec-86905002.npz", "decisions": 22920, "moves": 127717, "cpu_s": 14.7}
+{"file": "dec-86905006.npz", "decisions": 22471, "moves": 125790, "cpu_s": 12.5}
+{"file": "dec-86905004.npz", "decisions": 21965, "moves": 121853, "cpu_s": 13.4}
+{"file": "dec-86905008.npz", "decisions": 23007, "moves": 128908, "cpu_s": 14.2}
+{"file": "dec-86905010.npz", "decisions": 22583, "moves": 125424, "cpu_s": 14.3}
+{"file": "dec-86905012.npz", "decisions": 22689, "moves": 126691, "cpu_s": 14.2}
+{"file": "dec-86905014.npz", "decisions": 22590, "moves": 126899, "cpu_s": 14.2}
+{"file": "dec-86905016.npz", "decisions": 22725, "moves": 126236, "cpu_s": 13.8}
+{"file": "dec-86905018.npz", "decisions": 22362, "moves": 124851, "cpu_s": 14.3}
+{"epoch": 1, "lr": 0.001, "train_ce": 1.3743, "s": 148.5, "valid_ce": 1.35769, "best": true}
+{"epoch": 2, "lr": 0.001, "train_ce": 1.34438, "s": 143.1, "valid_ce": 1.34696, "best": true}
+{"epoch": 3, "lr": 0.001, "train_ce": 1.33703, "s": 141.4, "valid_ce": 1.34316, "best": true}
+{"epoch": 4, "lr": 0.001, "train_ce": 1.33314, "s": 139.0, "valid_ce": 1.33955, "best": true}
+{"epoch": 5, "lr": 0.001, "train_ce": 1.33053, "s": 140.5, "valid_ce": 1.33764, "best": true}
+{"epoch": 6, "lr": 0.001, "train_ce": 1.32849, "s": 139.2, "valid_ce": 1.33687, "best": true}
+{"epoch": 7, "lr": 0.001, "train_ce": 1.3271, "s": 152.1, "valid_ce": 1.33616, "best": true}
+{"epoch": 8, "lr": 0.001, "train_ce": 1.32601, "s": 150.5, "valid_ce": 1.33417, "best": true}
+{"epoch": 9, "lr": 0.001, "train_ce": 1.32491, "s": 147.0, "valid_ce": 1.33408, "best": true}
+{"epoch": 10, "lr": 0.001, "train_ce": 1.32407, "s": 143.9, "valid_ce": 1.33269, "best": true}
+{"epoch": 11, "lr": 0.001, "train_ce": 1.3233, "s": 147.5, "valid_ce": 1.33227, "best": true}
+{"epoch": 12, "lr": 0.001, "train_ce": 1.3227, "s": 149.0, "valid_ce": 1.33099, "best": true}
+{"epoch": 13, "lr": 0.001, "train_ce": 1.32222, "s": 148.3, "valid_ce": 1.33174}
+{"epoch": 14, "lr": 0.0005, "train_ce": 1.31887, "s": 146.5, "valid_ce": 1.3283, "best": true}
+{"epoch": 15, "lr": 0.0005, "train_ce": 1.31834, "s": 148.2, "valid_ce": 1.32837}
+{"epoch": 16, "lr": 0.00025, "train_ce": 1.31647, "s": 151.3, "valid_ce": 1.32698, "best": true}
+{"epoch": 17, "lr": 0.00025, "train_ce": 1.3161, "s": 146.8, "valid_ce": 1.32688, "best": true}
+{"epoch": 18, "lr": 0.00025, "train_ce": 1.3159, "s": 153.6, "valid_ce": 1.32679, "best": true}
+{"epoch": 19, "lr": 0.00025, "train_ce": 1.31571, "s": 152.4, "valid_ce": 1.32647, "best": true}
+{"epoch": 20, "lr": 0.00025, "train_ce": 1.31554, "s": 149.6, "valid_ce": 1.32631, "best": true}
+{"epoch": 21, "lr": 0.00025, "train_ce": 1.31539, "s": 152.6, "valid_ce": 1.32647}
+{"epoch": 22, "lr": 0.000125, "train_ce": 1.31438, "s": 152.6, "valid_ce": 1.32578, "best": true}
+{"epoch": 23, "lr": 0.000125, "train_ce": 1.31424, "s": 153.2, "valid_ce": 1.32562, "best": true}
+{"epoch": 24, "lr": 0.000125, "train_ce": 1.31413, "s": 160.2, "valid_ce": 1.32613}
+{"epoch": 25, "lr": 6.25e-05, "train_ce": 1.3136, "s": 153.8, "valid_ce": 1.32537, "best": true}
+{"epoch": 26, "lr": 6.25e-05, "train_ce": 1.31351, "s": 154.5, "valid_ce": 1.32527, "best": true}
+{"epoch": 27, "lr": 6.25e-05, "train_ce": 1.31344, "s": 162.9, "valid_ce": 1.32532}
+{"epoch": 28, "lr": 3.125e-05, "train_ce": 1.31317, "s": 153.3, "valid_ce": 1.32513, "best": true}
+{"epoch": 29, "lr": 3.125e-05, "train_ce": 1.31312, "s": 150.0, "valid_ce": 1.32516}
+{"epoch": 30, "lr": 1.5625e-05, "train_ce": 1.31297, "s": 152.4, "valid_ce": 1.32506, "best": true}
+fit incomplete
+--- chunk 2 (resume from checkpoint) 12:24Z
+{"resumed_after_epoch": 30, "stopped": false}
+{"epoch": 31, "lr": 1.5625e-05, "train_ce": 1.31294, "s": 167.8, "valid_ce": 1.32509}
+{"epoch": 32, "lr": 7.8125e-06, "train_ce": 1.31286, "s": 157.3, "valid_ce": 1.32507}
+{"epoch": 33, "lr": 3.90625e-06, "train_ce": 1.31281, "s": 153.1, "valid_ce": 1.32505}
+{"epoch": 34, "lr": 1.953125e-06, "train_ce": 1.31278, "s": 152.7, "valid_ce": 1.32504, "best": true}
+{"epoch": 35, "lr": 1.953125e-06, "train_ce": 1.31278, "s": 154.2, "valid_ce": 1.32504}
+{"fit_s": 814, "epochs": 35, "train_ce": 1.31276, "valid_ce": 1.32504}
+fit done

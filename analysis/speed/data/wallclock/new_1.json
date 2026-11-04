@@ -1,0 +1,66 @@
+{
+ "mcts:200+plan+learned+phased": {
+  "ms per decision (median)": 108.1,
+  "rounds": [
+   106.5,
+   109.8
+  ],
+  "iterations per decision": 185.7
+ },
+ "mcts:1043+plan+learned+phased": {
+  "ms per decision (median)": 422.3,
+  "rounds": [
+   417.5,
+   427.1
+  ],
+  "iterations per decision": 968.5
+ },
+ "mcts:200+plan+learned+phased=cand-kc-ramp-ramp": {
+  "ms per decision (median)": 114.7,
+  "rounds": [
+   119.0,
+   110.5
+  ],
+  "iterations per decision": 185.7
+ },
+ "mcts:1043+plan+learned+phased=cand-kc-ramp-ramp": {
+  "ms per decision (median)": 457.4,
+  "rounds": [
+   436.9,
+   477.8
+  ],
+  "iterations per decision": 968.5
+ },
+ "mcts:300+plan+learned+phased": {
+  "ms per decision (median)": 140.5,
+  "rounds": [
+   137.9,
+   143.1
+  ],
+  "iterations per decision": 278.6
+ },
+ "mcts:1600+plan+learned+phased": {
+  "ms per decision (median)": 671.4,
+  "rounds": [
+   633.6,
+   709.2
+  ],
+  "iterations per decision": 1485.7
+ },
+ "mcts:300+plan+learned+phased=cand-kc-ramp-ramp": {
+  "ms per decision (median)": 140.5,
+  "rounds": [
+   138.0,
+   143.0
+  ],
+  "iterations per decision": 278.6
+ },
+ "mcts:1600+plan+learned+phased=cand-kc-ramp-ramp": {
+  "ms per decision (median)": 699.3,
+  "rounds": [
+   717.8,
+   680.8
+  ],
+  "iterations per decision": 1485.7
+ }
+}

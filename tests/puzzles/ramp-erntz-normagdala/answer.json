@@ -1,0 +1,9 @@
+{
+ "kind": "setup",
+ "expected": {
+  "enemy_followers_at_most": 0,
+  "our_hp_at_least": 11
+ },
+ "source": "Operations puzzle 2 (the analysis line's d9f691e, puzzles/puzzles.md, k = 518; the architecture thread 2026-10-10 08:46Z)",
+ "notes": "Salem's turn end: the enemy board empty, us at 11 (Erntz heals 8). Re-test 0.542 vs the bot's 0.000. level-strong (200 iterations) plays Erntz, evolves it into Normagdala (us at 3); mcts:600 and up find Salem's line; the installed evaluation prefers Salem's end (0.587 vs 0.282)."
+}

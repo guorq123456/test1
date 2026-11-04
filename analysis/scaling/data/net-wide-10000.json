@@ -1,0 +1,44 @@
+{
+ "size": 10000,
+ "name": "wide",
+ "phi": [
+  128,
+  128
+ ],
+ "rho": [
+  256,
+  128
+ ],
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "fit_s": 1463,
+ "epochs": 20,
+ "train": {
+  "brier": 0.18873,
+  "log_loss": 0.55123,
+  "n": 178093
+ },
+ "valid": {
+  "brier": 0.19356,
+  "log_loss": 0.56276,
+  "n": 9452
+ },
+ "train_installed_linear": {
+  "brier": 0.20432,
+  "log_loss": 0.59033,
+  "n": 178093
+ },
+ "holdout": {
+  "brier": 0.19233,
+  "log_loss": 0.5608,
+  "n": 93787
+ },
+ "holdout_installed_linear": {
+  "brier": 0.2038,
+  "log_loss": 0.58936,
+  "n": 93787
+ }
+}

@@ -1,0 +1,18 @@
+{
+ "records": "rec.jsonl.gz",
+ "games": 3,
+ "decisions": 221,
+ "specs": {
+  "strong": {
+   "spec": "mcts:200+plan+learned+phased",
+   "ms_per_decision": 218.76,
+   "iterations_per_decision": 200.0
+  },
+  "new": {
+   "spec": "mcts:71+plan+learned+phased=pkg-kc-ramp-ramp+xprune=3:3:cost+setnet=analysis/scaling/models/net-mid-elf-t.npz+netmid+puct=analysis/scaling/models/prior-elft-ft-t05.npz:2:1",
+   "ms_per_decision": 209.78,
+   "iterations_per_decision": 71.0
+  }
+ },
+ "where": "Pyodide 0.26.4 in Node (analysis/scaling/web_sim/run_py.js), dist built at d00ab33 with --spec <new elf-t bot>"
+}

@@ -1,0 +1,56 @@
+{"deck": null, "opponent": null, "flag": true, "inputs": "v1", "name": "pilot-portal-dfm-g1", "init": "fresh", "init_sha256": null, "mid_rate": 0.272149, "end_rows": 169578, "mid_rows": 623108, "train_positions": 322033, "valid_positions": 17085, "train_by_kind": {"end": 160998, "mid": 161035}, "valid_by_kind": {"end": 8580, "mid": 8505}, "continued": true, "ophand": false, "v2a": false, "wide": false, "shared": true, "init_valid": {"end": {"brier": 0.40116, "log_loss": 1.21208, "n": 8580}, "mid": {"brier": 0.38149, "log_loss": 1.14045, "n": 8505}}}
+{"epoch": 1, "lr": 0.001, "train_bce": 0.56563, "s": 49.4, "valid_brier": 0.19409, "valid_log_loss": 0.57, "valid_n": 17085, "best": true}
+{"epoch": 2, "lr": 0.001, "train_bce": 0.53583, "s": 49.0, "valid_brier": 0.18839, "valid_log_loss": 0.5552, "valid_n": 17085, "best": true}
+{"epoch": 3, "lr": 0.001, "train_bce": 0.52346, "s": 48.4, "valid_brier": 0.1848, "valid_log_loss": 0.54602, "valid_n": 17085, "best": true}
+{"epoch": 4, "lr": 0.001, "train_bce": 0.51551, "s": 48.9, "valid_brier": 0.18776, "valid_log_loss": 0.55477, "valid_n": 17085}
+{"epoch": 5, "lr": 0.0005, "train_bce": 0.50357, "s": 48.2, "valid_brier": 0.1844, "valid_log_loss": 0.54803, "valid_n": 17085}
+{"epoch": 6, "lr": 0.00025, "train_bce": 0.49485, "s": 48.7, "valid_brier": 0.18704, "valid_log_loss": 0.5573, "valid_n": 17085}
+{"epoch": 7, "lr": 0.000125, "train_bce": 0.48888, "s": 48.9, "valid_brier": 0.18547, "valid_log_loss": 0.5534, "valid_n": 17085}
+{
+ "name": "pilot-portal-dfm-g1",
+ "fit_s": 360,
+ "epochs": 7,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.17446,
+   "log_loss": 0.51977,
+   "n": 160998
+  },
+  "mid": {
+   "brier": 0.17134,
+   "log_loss": 0.51249,
+   "n": 161035
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.18597,
+   "log_loss": 0.54845,
+   "n": 8580
+  },
+  "mid": {
+   "brier": 0.18361,
+   "log_loss": 0.54358,
+   "n": 8505
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.40116,
+   "log_loss": 1.21208,
+   "n": 8580
+  },
+  "mid": {
+   "brier": 0.38149,
+   "log_loss": 1.14045,
+   "n": 8505
+  }
+ },
+ "mid_rate": 0.272149
+}

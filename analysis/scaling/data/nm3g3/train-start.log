@@ -1,0 +1,59 @@
+{"deck": "elf-t", "opponent": "nemesis-t", "flag": true, "inputs": "v1", "name": "nm3g3-elf-nem", "init": "analysis/scaling/models/net-nm3g2f-elf-nem.npz", "init_sha256": "67cb052a93a5a22e057d9f70a59f06d3cecfd8d23a46899497586c4cb7ed4b84", "mid_rate": 0.256349, "end_rows": 516909, "mid_rows": 2016430, "train_positions": 982031, "valid_positions": 51523, "train_by_kind": {"end": 491074, "mid": 490957}, "valid_by_kind": {"end": 25835, "mid": 25688}, "continued": true, "ophand": false, "v2a": false, "wide": false, "pairs": [["elf-t", "nemesis-t"], ["nemesis-t", "elf-t"]], "extended_cards": [], "init_valid": {"end": {"brier": 0.18672, "log_loss": 0.54646, "n": 25835}, "mid": {"brier": 0.17992, "log_loss": 0.53211, "n": 25688}}}
+{"epoch": 1, "lr": 0.001, "train_bce": 0.519, "s": 264.6, "valid_brier": 0.1833, "valid_log_loss": 0.53925, "valid_n": 51523, "best": true}
+{"epoch": 2, "lr": 0.001, "train_bce": 0.51646, "s": 265.9, "valid_brier": 0.18225, "valid_log_loss": 0.53647, "valid_n": 51523, "best": true}
+{"epoch": 3, "lr": 0.001, "train_bce": 0.51423, "s": 263.1, "valid_brier": 0.18334, "valid_log_loss": 0.539, "valid_n": 51523}
+{"epoch": 4, "lr": 0.0005, "train_bce": 0.50732, "s": 265.8, "valid_brier": 0.182, "valid_log_loss": 0.53589, "valid_n": 51523, "best": true}
+{"epoch": 5, "lr": 0.0005, "train_bce": 0.50559, "s": 269.4, "valid_brier": 0.18226, "valid_log_loss": 0.53719, "valid_n": 51523}
+{"epoch": 6, "lr": 0.00025, "train_bce": 0.50152, "s": 271.7, "valid_brier": 0.18105, "valid_log_loss": 0.53431, "valid_n": 51523, "best": true}
+{"epoch": 7, "lr": 0.00025, "train_bce": 0.5006, "s": 270.5, "valid_brier": 0.1809, "valid_log_loss": 0.53462, "valid_n": 51523}
+{"epoch": 8, "lr": 0.000125, "train_bce": 0.49813, "s": 258.8, "valid_brier": 0.18131, "valid_log_loss": 0.53583, "valid_n": 51523}
+{"epoch": 9, "lr": 6.25e-05, "train_bce": 0.49672, "s": 261.2, "valid_brier": 0.1813, "valid_log_loss": 0.53624, "valid_n": 51523}
+{"epoch": 10, "lr": 3.125e-05, "train_bce": 0.49593, "s": 268.7, "valid_brier": 0.18125, "valid_log_loss": 0.53562, "valid_n": 51523}
+{
+ "name": "nm3g3-elf-nem",
+ "fit_s": 2782,
+ "epochs": 10,
+ "lr": 0.001,
+ "decay": 0.5,
+ "patience": 4,
+ "l2": 1e-05,
+ "batch": 256,
+ "ftz": true,
+ "train": {
+  "end": {
+   "brier": 0.17513,
+   "log_loss": 0.51436,
+   "n": 491074
+  },
+  "mid": {
+   "brier": 0.16332,
+   "log_loss": 0.48548,
+   "n": 490957
+  }
+ },
+ "valid": {
+  "end": {
+   "brier": 0.18457,
+   "log_loss": 0.54148,
+   "n": 25835
+  },
+  "mid": {
+   "brier": 0.17752,
+   "log_loss": 0.5271,
+   "n": 25688
+  }
+ },
+ "init_valid": {
+  "end": {
+   "brier": 0.18672,
+   "log_loss": 0.54646,
+   "n": 25835
+  },
+  "mid": {
+   "brier": 0.17992,
+   "log_loss": 0.53211,
+   "n": 25688
+  }
+ },
+ "mid_rate": 0.256349
+}

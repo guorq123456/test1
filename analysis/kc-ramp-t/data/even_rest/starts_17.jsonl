@@ -1,0 +1,15 @@
+{"k": 1970, "src": "selfplay", "game": 950, "at": 33, "seat": 1, "own_turn": 7, "split": "train", "K": 4}
+{"k": 1972, "src": "selfplay", "game": 852, "at": 14, "seat": 1, "own_turn": 3, "split": "train", "K": 4}
+{"k": 1974, "src": "selfplay", "game": 538, "at": 9, "seat": 0, "own_turn": 2, "split": "train", "K": 4}
+{"k": 1976, "src": "selfplay", "game": 431, "at": 32, "seat": 0, "own_turn": 6, "split": "train", "K": 4}
+{"k": 1978, "src": "selfplay", "game": 890, "at": 2, "seat": 1, "own_turn": 1, "split": "train", "K": 4}
+{"k": 1980, "src": "selfplay", "game": 782, "at": 36, "seat": 0, "own_turn": 7, "split": "train", "K": 4}
+{"k": 1982, "src": "selfplay", "game": 100, "at": 5, "seat": 0, "own_turn": 2, "split": "train", "K": 4}
+{"k": 1984, "src": "selfplay", "game": 402, "at": 19, "seat": 0, "own_turn": 5, "split": "train", "K": 4}
+{"k": 1986, "src": "selfplay", "game": 360, "at": 37, "seat": 1, "own_turn": 7, "split": "train", "K": 4}
+{"k": 1988, "src": "selfplay", "game": 467, "at": 3, "seat": 1, "own_turn": 1, "split": "train", "K": 4}
+{"k": 1990, "src": "selfplay", "game": 361, "at": 9, "seat": 0, "own_turn": 3, "split": "train", "K": 4}
+{"k": 1992, "src": "selfplay", "game": 336, "at": 42, "seat": 0, "own_turn": 7, "split": "train", "K": 4}
+{"k": 1994, "src": "selfplay", "game": 726, "at": 31, "seat": 0, "own_turn": 7, "split": "val", "K": 16}
+{"k": 1996, "src": "selfplay", "game": 978, "at": 19, "seat": 0, "own_turn": 4, "split": "train", "K": 4}
+{"k": 1998, "src": "selfplay", "game": 496, "at": 65, "seat": 1, "own_turn": 10, "split": "train", "K": 4}
