@@ -55,3 +55,9 @@ Reading: the usual g1 picture (rune bot −7.3, Portal bot −6.5, DFM Portal �
 worst g1 so far, about one standard error beyond the rune hero's. g2 follows (the corrected rule). A pipeline check
 runs alongside: the training logs' best epoch and validation loss, the self-play hero score. If 皇家护卫's net did
 not learn (best epoch 1, or validation loss flat), its g2 stops; the others go on.
+
+Pipeline check (RC thread, 18:05Z, read-only): every net learned. Fresh, shared, patience 4; validation log loss at
+the first epoch → the best: 精灵 0.587 → 0.556 (epoch 6 of 10), 皇家护卫 0.562 → 0.523 (epoch 9 of 13), 龙族 0.538 →
+0.503 (epoch 6 of 10), 梦魇 0.568 → 0.532 (epoch 4 of 8). So 皇家护卫's g1 loss is not a training failure; all four
+go on to g2. By opponent at equal CPU the largest drops: 皇家护卫 vs 梦魇 −24 and vs 主教 −19, 龙族 vs 精灵 −21,
+精灵 vs 梦魇 −15 (± 10-13 each). The self-play logs do not print the hero's score.
