@@ -117,3 +117,15 @@ mcts:<g2's gate N> + net g2 (67, 79, 74, 62); the net is fresh on g1 + g2 + g3 w
 - By opponent at equal CPU, the largest: 龙族 vs 主教 +35 and vs 超越者 +19; 精灵 vs 主教 +19; 梦魇 vs 巫师 +16. The
   drops are small and within their errors (the largest: 精灵 vs 龙族 −6).
 - **P4** (at least 3 of 4 at ≥ +5; 0.65): **FALSE**. Two of four (龙族, 梦魇); 精灵 +4.8 and 皇家护卫 +4.5 fall just short.
+
+## g4 alongside the prior (registered 2026-11-05 ~13:55Z, before any g4 game)
+
+Salem 2026-11-05 13:46-13:48Z: standing approval for PC jobs within the plan, and the whole new PC for the day. The
+prior runs on 12 processes (4 x 3 workers, from 13:47Z); the other 12 run g4 for the same four heroes (4 x 3 workers):
+the hero self-plays as mcts:<g3's gate N> + net g3, seeds base + 7000 (self-play), + 8000 (gate), + 8900 (time match),
+inside each bank and clear of the prior's base + 6000 and + 9800. g4 encodes into its own tok4 / mid4 so the prior's
+fit reads an untouched tok/. After its gate, g3's net plays g4's deals at g4's equal-CPU N, so g4 − g3 is paired.
+Driver `analysis/process/pilot_next_win.py DECK 4 WORKERS`.
+
+- (P6) g4 − g3, both at equal CPU on g4's deals (paired), is ≥ 0 for at least 3 of the 4: 0.55. (主教 g3 − g2 was
+  +9.8 ± 4.4; here 精灵 and 皇家护卫 did not move from g2 to g3 on separate deals.)
