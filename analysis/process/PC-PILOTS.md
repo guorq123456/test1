@@ -84,3 +84,16 @@ hero self-played as mcts:<g1's gate N> + net g1 (70, 77, 70, 76); the net is fre
 
 g3 started 22:11:49Z (the same script, GEN 3; seeds base + 5000 / + 6000 / + 6900; hero N 67, 79, 74, 62 from g2's gate) on the usual cap: 12
 processes on E-cores only, Salem's class time being over.
+
+## Predictions for g3 and the prior (registered 2026-11-05 ~04:50Z, before any g3 result reached this thread)
+
+- (P4) At equal CPU on its own confirmation deals (base + 6000), g3 beats the hand-set bot by at least +5 points for
+  at least 3 of the 4 heroes: 0.65. (主教 g3 +12.5; here g2 already gave +5.8 to +11.8 for three.)
+- (P5) The prior over its init net, both at equal CPU on g3's deals (paired), is ≥ 0 for at least 3 of the 4: 0.65.
+  Precedents +3.0 (主教), +6.5 (Portal bot), +8.7 (DFM Portal), +15 (rune bot).
+
+The prior step (driver `analysis/process/pilot_prior_win.py DECK WORKERS`, the PRIOR-HAVEN.md recipe: init = the
+better of g2 and g3 on g3's deals; the hero's gen-2 and gen-3 decisions; fit `--tau 0.5 --ftz --epochs 35` from the
+init net; `+puct=<prior>:2:1`; time match base + 9800; gate on g3's deals with an equal-CPU rerun; the prior paired
+with the init's equal-CPU row) is new code on the PC and waits for Salem's word. Its paired arithmetic reproduces the
+主教 numbers from the builder's logs (prior − g3 +3.0 ± 4.0; g3 − g2 +9.8 ± 4.4).
