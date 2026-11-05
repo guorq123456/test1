@@ -176,3 +176,8 @@ On g4's confirmation deals (base + 8000). "g4 − g3" is g3's net on the same de
 - (P7) g5 − g4 ≥ 0 at equal CPU on g5's deals, for both 精灵 and 龙族: 0.5.
 - After g5: a prior from the better of g4 / g5 for 精灵 and 龙族 (the rune bot's precedent: its prior was fit from
   the better of g3 / g4), with seeds to be registered then.
+- The prior driver now takes the two generations: `pilot_prior_win.py DECK WORKERS 4 5` fits from the better of g4 /
+  g5 on g5's deals (base + 10000), with the time match on base + 11900 (reserved by the analysis ledger, ac6f25a1);
+  its files carry "-g5". The default (2 3) keeps every earlier file name, so 梦魇's running prior is unaffected.
+- (P8, registered 2026-11-05 ~20:10Z, before any g5 result) For 精灵 and 龙族, the second prior over its init (the
+  better of g4 / g5), both at equal CPU on g5's deals, is ≥ 0 for both: 0.65.

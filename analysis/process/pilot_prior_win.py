@@ -1,6 +1,10 @@
-"""The move prior for one of the four new-PC bot heroes after g3 (PC-PILOTS.md), as PRIOR-HAVEN.md, for Windows.
+"""The move prior for one of the four new-PC bot heroes (PC-PILOTS.md), as PRIOR-HAVEN.md, for Windows.
 
-    py analysis/process/pilot_prior_win.py DECK WORKERS        e.g.  py analysis/process/pilot_prior_win.py forest 3
+    py analysis/process/pilot_prior_win.py DECK WORKERS [A B]  e.g.  py analysis/process/pilot_prior_win.py forest 3
+
+A B: the two generations it starts from, 2 3 (default) or 4 5; below, "g2/g3" stands for gA/gB. With 4 5 every file
+name carries "-g5" (the prior, its logs, gates and checkpoint) and the time match is base + 11900; the init step
+reuses gate5bank-g4-n<N>.jsonl when the g5 driver already played it.
 
 Run from the repo root (with PYTHONPATH set to it); resumable. Steps, all in g1's run directory runs/pilot-DECK-bot-g1:
   1. init: g2's net on g3's confirmation deals (base + 6000) at g3's equal-CPU N; init = g3 if g3 - g2 >= 0, else g2;
@@ -22,7 +26,11 @@ import time
 HEROES = {"forest": ("bot/T1-FOREST-1", 86960000), "sword": ("bot/T1-SWORD-1", 87020000),
           "dragon": ("bot/T3-DRAGON-1", 87080000), "abyss": ("bot/T1-ABYSS-1", 87140000)}
 DECK, W = sys.argv[1], int(sys.argv[2])
-DRY = len(sys.argv) > 3
+DRY = "dry" in sys.argv[3:]
+A, B = tuple(int(x) for x in sys.argv[3:] if x != "dry") or (2, 3)
+TIMES = {(2, 3): 9800, (4, 5): 11900}       # time-match seeds inside the bank (the analysis ledger, ac6f25a1)
+assert (A, B) in TIMES, "A B: 2 3 or 4 5"
+SUF = "" if (A, B) == (2, 3) else f"-g{B}"
 assert DECK in HEROES, "DECK forest|sword|dragon|abyss"
 if os.name == "nt":
     import ctypes
@@ -32,12 +40,19 @@ HERO, BANK = HEROES[DECK]
 FIELD = "analysis/pilot/fields/bot-frozen7.txt"
 RUN = f"runs/pilot-{DECK}-bot-g1"
 L = f"{RUN}/logs"
-SELF2, SELF3 = BANK + 3000, BANK + 5000
-GATE3, TIME = BANK + 6000, BANK + 9800
+
+
+def self_base(g):
+    return BANK if g == 1 else BANK + 1000 + 2000 * (g - 1)
+
+
+SELFA, SELFB = self_base(A), self_base(B)
+GATEB, TIME = SELFB + 1000, BANK + TIMES[(A, B)]
+TOKB = f"{RUN}/tok" if B < 4 else f"{RUN}/tok{B}"
 MODELS = "analysis/scaling/models"
-PRI = f"{MODELS}/prior-pilot-{DECK}-bot-ft-t05.npz"
+PRI = f"{MODELS}/prior-pilot-{DECK}-bot{SUF}-ft-t05.npz"
 ENV = dict(os.environ, OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1", PYTHONUTF8="1")
-LOG = open(f"{L}/prior-{DECK}-bot.log", "a", encoding="utf-8")  # noqa: SIM115
+LOG = open(f"{L}/prior-{DECK}-bot{SUF}.log", "a", encoding="utf-8")  # noqa: SIM115
 
 
 def say(s):
@@ -104,62 +119,63 @@ def eq_row(name):
 
 gate = ["-m", "svsim.tools.herogate", "--hero", HERO, "--field", FIELD, "--base", "mcts:100+plan",
         "--opp", "mcts:100+plan", "--workers", str(W)]
-G2, G3 = f"pilot-{DECK}-bot-g2", f"pilot-{DECK}-bot-g3"
-N3, G3_ROW = eq_row(G3) if not DRY else (46, "g3.jsonl")
-say(f"start prior {DECK}: hero {HERO}, g3 equal-CPU N {N3} ({G3_ROW}), deals {GATE3}, time {TIME}, workers {W}")
+GA, GB = f"pilot-{DECK}-bot-g{A}", f"pilot-{DECK}-bot-g{B}"
+NB, GB_ROW = eq_row(GB) if not DRY else (46, "gB.jsonl")
+say(f"start prior {DECK} from g{A}/g{B}: hero {HERO}, g{B} equal-CPU N {NB} ({GB_ROW}), deals {GATEB}, time {TIME}, "
+    f"workers {W}")
 
 # 1. init
-G2_ROW = f"{L}/gate3bank-g2-n{N3}.jsonl"
-if not complete(G2_ROW):
-    run(gate + ["--x", f"mcts:{N3}+plan+setnet={MODELS}/net-{G2}.npz+netmid+netany", "--seed", str(GATE3),
-                "--pairs", "300", "--out", G2_ROW], out=f"{L}/gate3bank-g2-n{N3}.log")
+GA_ROW = f"{L}/gate{B}bank-g{A}-n{NB}.jsonl"
+if not complete(GA_ROW):
+    run(gate + ["--x", f"mcts:{NB}+plan+setnet={MODELS}/net-{GA}.npz+netmid+netany", "--seed", str(GATEB),
+                "--pairs", "300", "--out", GA_ROW], out=f"{L}/gate{B}bank-g{A}-n{NB}.log")
 if DRY:
-    init, init_row = G3, G3_ROW
+    init, init_row = GB, GB_ROW
 else:
-    n, d, hw = paired(G3_ROW, G2_ROW)
-    init, init_row = (G3, G3_ROW) if d >= 0 else (G2, G2_ROW)
-    say(f"init: g3 - g2 on {n} deals = {d:+.1f} ± {hw:.1f} -> {init}")
+    n, d, hw = paired(GB_ROW, GA_ROW)
+    init, init_row = (GB, GB_ROW) if d >= 0 else (GA, GA_ROW)
+    say(f"init: g{B} - g{A} on {n} deals = {d:+.1f} ± {hw:.1f} -> {init}")
 NET = f"{MODELS}/net-{init}.npz"
 
-# 2. decisions of gens 2 and 3
-if not os.path.exists(f"{RUN}/dec.done"):
+# 2. decisions of the two generations (one dec-<seed>.npz a shard; the fit picks its shards)
+if not os.path.exists(f"{RUN}/dec{SUF}.done"):
     os.makedirs(f"{RUN}/enc-dec", exist_ok=True)
-    for f in glob.glob(f"{RUN}/rec-{SELF2}/rec-*.jsonl.gz") + glob.glob(f"{RUN}/rec-{SELF3}/rec-*.jsonl.gz"):
+    for f in glob.glob(f"{RUN}/rec-{SELFA}/rec-*.jsonl.gz") + glob.glob(f"{RUN}/rec-{SELFB}/rec-*.jsonl.gz"):
         dst = os.path.join(RUN, "enc-dec", os.path.basename(f))
         if not os.path.exists(dst):
             shutil.copy(f, dst)
     run(["analysis/pilot/setpolicy_named.py", "encode", "--records", f"{RUN}/enc-dec", "--out", f"{RUN}/dec",
          "--workers", str(W), "--deck", HERO])
     if not DRY:
-        open(f"{RUN}/dec.done", "w").close()
+        open(f"{RUN}/dec{SUF}.done", "w").close()
 
 # 3. fit (static rows added for cards seen only at decisions, such as the 梦魇 hero's Ghost token)
 if not os.path.exists(PRI):
-    cards = f"{RUN}/prior-cards.npz"
-    run(["analysis/process/extend_cards.py", f"{RUN}/dec", f"{RUN}/tok/cards.npz", cards])
-    shards = [str(b + 2 * i) for b in (SELF2, SELF3) for i in range(10)]
+    cards = f"{RUN}/prior-cards{SUF}.npz"
+    run(["analysis/process/extend_cards.py", f"{RUN}/dec", f"{TOKB}/cards.npz", cards])
+    shards = [str(b + 2 * i) for b in (SELFA, SELFB) for i in range(10)]
     run(["-m", "svsim.learn.setpolicy", "fit", "--data", f"{RUN}/dec", "--cards", cards,
          "--shards", *shards, "--init", NET, "--tau", "0.5", "--ftz", "--epochs", "35",
-         "--checkpoint", f"{RUN}/ckpt-prior-{DECK}.npz", "--out", PRI], out=f"{L}/fit-prior-{DECK}-bot.log")
+         "--checkpoint", f"{RUN}/ckpt-prior-{DECK}{SUF}.npz", "--out", PRI], out=f"{L}/fit-prior-{DECK}-bot{SUF}.log")
 
 # 4. arm: time match, gate, equal-CPU rerun
 X = f"+plan+setnet={NET}+netmid+netany+puct={PRI}:2:1"
-tlog = f"{L}/time-prior-{DECK}-bot.log"
+tlog = f"{L}/time-prior-{DECK}-bot{SUF}.log"
 if not DRY and last(r"→ N 100 → (\d+)", tlog) is None:
-    run(gate + ["--x", "mcts:100" + X, "--seed", str(TIME), "--time", "24", "--out", f"{L}/time-prior-{DECK}-bot.jsonl"],
+    run(gate + ["--x", "mcts:100" + X, "--seed", str(TIME), "--time", "24", "--out", f"{L}/time-prior-{DECK}-bot{SUF}.jsonl"],
         out=tlog)
 N = int(last(r"→ N 100 → (\d+)", tlog)) if not DRY else 44
-glog = f"{L}/gate-prior-{DECK}-bot.log"
-run(gate + ["--x", f"mcts:{N}{X}", "--seed", str(GATE3), "--pairs", "300", "--out", f"{L}/gate-prior-{DECK}-bot.jsonl"],
+glog = f"{L}/gate-prior-{DECK}-bot{SUF}.log"
+run(gate + ["--x", f"mcts:{N}{X}", "--seed", str(GATEB), "--pairs", "300", "--out", f"{L}/gate-prior-{DECK}-bot{SUF}.jsonl"],
     out=glog)
 R = float(last(r"比 ([0-9.]+)", glog)) if not DRY else 1.2
 say(f"N {N} in-gate ratio {R}")
-row = f"{L}/gate-prior-{DECK}-bot.jsonl"
+row = f"{L}/gate-prior-{DECK}-bot{SUF}.jsonl"
 if R > 1.08:
     N2 = max(1, round(N / R))
-    row = f"{L}/gate-prior-{DECK}-bot-n{N2}.jsonl"
-    run(gate + ["--x", f"mcts:{N2}{X}", "--seed", str(GATE3), "--pairs", "300", "--out", row],
-        out=f"{L}/gate-prior-{DECK}-bot-n{N2}.log")
+    row = f"{L}/gate-prior-{DECK}-bot{SUF}-n{N2}.jsonl"
+    run(gate + ["--x", f"mcts:{N2}{X}", "--seed", str(GATEB), "--pairs", "300", "--out", row],
+        out=f"{L}/gate-prior-{DECK}-bot{SUF}-n{N2}.log")
     say(f"equal-CPU N {N2}")
 
 # 5. the prior over its init net, both at equal CPU on the same deals
