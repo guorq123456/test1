@@ -67,6 +67,15 @@ def last(pattern, path, default=None):
     return found[-1] if found else default
 
 
+def complete(path, pairs=300):
+    """A gate file holds all its pairs (herogate appends one line a pair and resumes from a partial file)."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return sum(1 for line in f if line.strip()) >= pairs
+    except FileNotFoundError:
+        return False
+
+
 def paired(a_path, b_path):
     """Mean over shared deals of A's X points minus B's X points, and its 95% half-width (as analysis/pilot/paired.py)."""
     def load(p):
@@ -101,7 +110,7 @@ say(f"start prior {DECK}: hero {HERO}, g3 equal-CPU N {N3} ({G3_ROW}), deals {GA
 
 # 1. init
 G2_ROW = f"{L}/gate3bank-g2-n{N3}.jsonl"
-if not os.path.exists(G2_ROW):
+if not complete(G2_ROW):
     run(gate + ["--x", f"mcts:{N3}+plan+setnet={MODELS}/net-{G2}.npz+netmid+netany", "--seed", str(GATE3),
                 "--pairs", "300", "--out", G2_ROW], out=f"{L}/gate3bank-g2-n{N3}.log")
 if DRY:
@@ -134,7 +143,7 @@ if not os.path.exists(PRI):
 # 4. arm: time match, gate, equal-CPU rerun
 X = f"+plan+setnet={NET}+netmid+netany+puct={PRI}:2:1"
 tlog = f"{L}/time-prior-{DECK}-bot.log"
-if not DRY and not os.path.exists(tlog):
+if not DRY and last(r"→ N 100 → (\d+)", tlog) is None:
     run(gate + ["--x", "mcts:100" + X, "--seed", str(TIME), "--time", "24", "--out", f"{L}/time-prior-{DECK}-bot.jsonl"],
         out=tlog)
 N = int(last(r"→ N 100 → (\d+)", tlog)) if not DRY else 44

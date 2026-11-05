@@ -65,9 +65,22 @@ def run(args, out=None):
         sys.exit(1)
 
 
-def last(pattern, path):
-    with open(path, encoding="utf-8") as f:
-        return re.findall(pattern, f.read())[-1]
+def last(pattern, path, default=None):
+    try:
+        with open(path, encoding="utf-8") as f:
+            found = re.findall(pattern, f.read())
+    except FileNotFoundError:
+        found = []
+    return found[-1] if found else default
+
+
+def complete(path, pairs=300):
+    """A gate file holds all its pairs (herogate appends one line a pair and resumes from a partial file)."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return sum(1 for line in f if line.strip()) >= pairs
+    except FileNotFoundError:
+        return False
 
 
 prev_n = int(last(r"N (\d+) in-gate ratio", f"{RUN}/logs/{PREV}.log")) if not DRY else 55
@@ -102,7 +115,7 @@ X = f"+plan+setnet={NET}+netmid+netany"
 gate = ["-m", "svsim.tools.herogate", "--hero", HERO, "--field", FIELD, "--base", "mcts:100+plan",
         "--opp", "mcts:100+plan", "--workers", str(W)]
 tlog = f"{RUN}/logs/time-{NAME}.log"
-if not DRY and not os.path.exists(tlog):
+if not DRY and last(r"→ N 100 → (\d+)", tlog) is None:
     run(gate + ["--x", "mcts:100" + X, "--seed", str(TIME), "--time", "24", "--out", f"{RUN}/logs/time-{NAME}.jsonl"],
         out=tlog)
 N = int(last(r"→ N 100 → (\d+)", tlog)) if not DRY else 100
@@ -140,7 +153,7 @@ def paired(a_path, b_path):
 
 if GEN >= 4:
     prow = f"{RUN}/logs/gate{GEN}bank-g{GEN - 1}-n{neq}.jsonl"
-    if not os.path.exists(prow):
+    if not complete(prow):
         run(gate + ["--x", f"mcts:{neq}+plan+setnet={PREV_NET}+netmid+netany", "--seed", str(GATE), "--pairs", "300",
                     "--out", prow], out=f"{RUN}/logs/gate{GEN}bank-g{GEN - 1}-n{neq}.log")
     if not DRY:
