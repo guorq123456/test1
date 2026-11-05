@@ -1,8 +1,8 @@
-"""Pilot generation g2, g3 or g4 for one of the four new-PC bot heroes (PC-PILOTS.md), as pilot-gen.sh, for Windows.
+"""Pilot generation g2 to g5 for one of the four new-PC bot heroes (PC-PILOTS.md), as pilot-gen.sh, for Windows.
 
     py analysis/process/pilot_next_win.py DECK GEN WORKERS      e.g.  py analysis/process/pilot_next_win.py forest 2 6
 
-DECK is forest, sword, dragon or abyss; GEN is 2, 3 or 4. Run from the repo root (with PYTHONPATH set to it); resumable.
+DECK is forest, sword, dragon or abyss; GEN is 2 to 5. Run from the repo root (with PYTHONPATH set to it); resumable.
 Seeds, the layout of PRIOR-HAVEN.md inside the deck's bank: gN self-play base + 1000 + 2000 (N - 1), gate + 1000,
 time match + 1900. The hero self-plays as mcts:<g(N-1)'s gate N> + net g(N-1); the net is trained fresh on gens 1..N
 with g1's holdout. Everything lives in g1's run directory runs/pilot-DECK-bot-g1.
@@ -23,7 +23,7 @@ HEROES = {"forest": ("bot/T1-FOREST-1", 86960000), "sword": ("bot/T1-SWORD-1", 8
           "dragon": ("bot/T3-DRAGON-1", 87080000), "abyss": ("bot/T1-ABYSS-1", 87140000)}
 DECK, GEN, W = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
 DRY = len(sys.argv) > 4
-assert DECK in HEROES and GEN in (2, 3, 4), "DECK forest|sword|dragon|abyss, GEN 2|3|4"
+assert DECK in HEROES and 2 <= GEN <= 5, "DECK forest|sword|dragon|abyss, GEN 2-5"
 if os.name == "nt":
     import ctypes
     k = ctypes.windll.kernel32

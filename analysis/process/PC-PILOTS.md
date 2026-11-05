@@ -129,3 +129,50 @@ Driver `analysis/process/pilot_next_win.py DECK 4 WORKERS`.
 
 - (P6) g4 − g3, both at equal CPU on g4's deals (paired), is ≥ 0 for at least 3 of the 4: 0.55. (主教 g3 − g2 was
   +9.8 ± 4.4; here 精灵 and 皇家护卫 did not move from g2 to g3 on separate deals.)
+
+## Result, the prior (RC thread, relayed 2026-11-05 19:56Z; 4 x 3 workers on E-cores from 13:51Z)
+
+On g3's confirmation deals (base + 6000); ± is the 95% half-width; "over init" is paired on the same deals, both at
+equal CPU.
+
+| hero | init (g3 − g2 on g3's deals) | prior fit (35 epochs: train / valid ce) | time ratio -> N | gate at N: X / baseline, paired (ratio) | equal CPU N: X, paired (ratio) | prior over init |
+|---|---|---|---|---|---|---|
+| 精灵 | g3 (+2.3 ± 4.2) | 1.408 / 1.414 | 1.937 -> 52 | 62.2% / 47.7%, +14.5 ± 4.2 (1.363) | 38: 61.0%, **+13.3 ± 4.6** (1.166) | **+8.5 ± 4.0** |
+| 皇家护卫 | g2 (−0.3 ± 3.8) | 1.343 / 1.344 | 1.943 -> 51 | 75.8% / 67.5%, +8.3 ± 3.9 (1.292) | 39: 76.7%, **+9.2 ± 4.0** (1.107) | **+4.3 ± 3.6** |
+| 龙族 | g3 (+7.8 ± 4.2) | 1.346 / 1.361 (stopped at 32) | 2.066 -> 48 | 61.7% / 38.5%, +23.2 ± 4.3 (1.277) | 38: 60.5%, **+22.0 ± 4.3** (1.128) | **+5.0 ± 4.2** |
+| 梦魇 | g3 (+5.2 ± 4.2) | FAILED: card 90051130 (Ghost) has no static row in tok/cards.npz | | | | |
+
+- **P5** (prior ≥ 0 over its init for at least 3 of 4; 0.65): **TRUE** already on three (+8.5, +4.3, +5.0); 梦魇 to
+  follow. The three equal-CPU rows still use 7-17% more CPU after one rerun (the prior's fixed cost, as with 主教 and
+  Portal); in each the gate at the higher N gave about the same (+14.5, +8.3, +23.2), so the gain is not the CPU.
+- 梦魇's fit: the Ghost token appears at the hero's decision points but never in the value net's encoded positions,
+  so the value encode's cards.npz has no row for it. Fix: `analysis/process/extend_cards.py` writes the decisions'
+  missing rows (learn.tokens.static, the encode's own function) into a separate `prior-cards.npz`; the prior driver
+  now always fits with that file. 梦魇's prior reruns from its fit (steps 1-2 are done).
+
+## Result, g4 (same relay; 4 x 3 workers on P-cores from 13:51Z)
+
+On g4's confirmation deals (base + 8000). "g4 − g3" is g3's net on the same deals at g4's equal-CPU N, paired.
+
+| hero | net: valid ll epoch 1 → best | time ratio -> N | gate at N: X / baseline, paired (ratio) | equal CPU N: X, paired (ratio) | g3 on these deals (ratio) | g4 − g3 |
+|---|---|---|---|---|---|---|
+| 精灵 | 0.545 → 0.526 (10 of 14) | 1.557 -> 64 | 60.8% / 45.0%, +15.8 ± 4.4 (1.176) | 54: 60.2%, **+15.2 ± 4.6** (1.054) | +10.0 ± 4.6 (1.081) | **+5.2 ± 4.5** |
+| 皇家护卫 | 0.499 → 0.477 (10 of 14) | 1.512 -> 66 | 77.8% / 66.7%, +11.2 ± 4.1 (1.146) | 58: 74.5%, **+7.8 ± 4.2** (1.058) | +7.5 ± 4.1 (1.046) | **+0.3 ± 3.8** |
+| 龙族 | 0.532 → 0.507 (11 of 15) | 1.593 -> 63 | 57.5% / 37.3%, +20.2 ± 4.9 (1.114) | 57: 58.5%, **+21.2 ± 4.9** (1.049) | +16.2 ± 4.8 (1.038) | **+5.0 ± 4.1** |
+| 梦魇 | 0.499 → 0.483 (8 of 12) | 1.390 -> 72 | 72.3% / 62.2%, +10.2 ± 4.4 (1.294) | 56: 71.3%, **+9.2 ± 4.7** (1.114) | +10.7 ± 4.1 (1.109) | **−1.5 ± 4.2** |
+
+- **P6** (g4 − g3 ≥ 0 for at least 3 of 4; 0.55): **TRUE** by the letter (+5.2, +0.3, +5.0, −1.5), but 皇家护卫's +0.3
+  is a tie. Reading: 精灵 and 龙族 still gain about +5 a generation (both intervals reach just above 0); 皇家护卫 and
+  梦魇 have levelled.
+- The same g3 nets scored +10.0 (精灵) and +16.2 (龙族) on g4's deals against +4.8 and +17.0 on their own: one bank
+  of 300 deals moves a hero's number by several points, which is why the step between generations is read paired.
+
+## Next (registered 2026-11-05 ~20:05Z, before any of these games), Salem's whole-PC day
+
+- 梦魇: the prior again from its fit, with the card rows added (6 workers).
+- 精灵 and 龙族: g5 (8 workers each), seeds base + 9000 (self-play), + 10000 (gate), + 10900 (time match); hero
+  mcts:<g4's gate N> + net g4; tok5 / mid5; g4 on g5's deals for the paired step.
+- 皇家护卫: no more generations; its prior (+9.2 over the hand-set bot) is its best pilot so far.
+- (P7) g5 − g4 ≥ 0 at equal CPU on g5's deals, for both 精灵 and 龙族: 0.5.
+- After g5: a prior from the better of g4 / g5 for 精灵 and 龙族 (the rune bot's precedent: its prior was fit from
+  the better of g3 / g4), with seeds to be registered then.

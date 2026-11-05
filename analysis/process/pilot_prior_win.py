@@ -133,10 +133,12 @@ if not os.path.exists(f"{RUN}/dec.done"):
     if not DRY:
         open(f"{RUN}/dec.done", "w").close()
 
-# 3. fit
+# 3. fit (static rows added for cards seen only at decisions, such as the 梦魇 hero's Ghost token)
 if not os.path.exists(PRI):
+    cards = f"{RUN}/prior-cards.npz"
+    run(["analysis/process/extend_cards.py", f"{RUN}/dec", f"{RUN}/tok/cards.npz", cards])
     shards = [str(b + 2 * i) for b in (SELF2, SELF3) for i in range(10)]
-    run(["-m", "svsim.learn.setpolicy", "fit", "--data", f"{RUN}/dec", "--cards", f"{RUN}/tok/cards.npz",
+    run(["-m", "svsim.learn.setpolicy", "fit", "--data", f"{RUN}/dec", "--cards", cards,
          "--shards", *shards, "--init", NET, "--tau", "0.5", "--ftz", "--epochs", "35",
          "--checkpoint", f"{RUN}/ckpt-prior-{DECK}.npz", "--out", PRI], out=f"{L}/fit-prior-{DECK}-bot.log")
 
