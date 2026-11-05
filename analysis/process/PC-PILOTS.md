@@ -97,3 +97,23 @@ better of g2 and g3 on g3's deals; the hero's gen-2 and gen-3 decisions; fit `--
 init net; `+puct=<prior>:2:1`; time match base + 9800; gate on g3's deals with an equal-CPU rerun; the prior paired
 with the init's equal-CPU row) is new code on the PC and waits for Salem's word. Its paired arithmetic reproduces the
 主教 numbers from the builder's logs (prior − g3 +3.0 ± 4.0; g3 − g2 +9.8 ± 4.4).
+
+## Result, g3 (RC thread, relayed 2026-11-05 04:51Z; ran 22:11Z-00:51Z on 12 E-core processes, 3 workers each)
+
+300 pairs on each deck's g3 confirmation deals (base + 6000); ± is the 95% half-width. The hero self-played as
+mcts:<g2's gate N> + net g2 (67, 79, 74, 62); the net is fresh on g1 + g2 + g3 with g1's holdout.
+
+| hero | net: valid log loss epoch 1 → best | time match ratio -> N | gate at N: X / baseline, paired (ratio) | equal CPU N: X, paired (ratio) |
+|---|---|---|---|---|
+| 精灵 | 0.553 → 0.527 (epoch 8 of 12) | 1.747 -> 57 | 51.5% / 47.7%, +3.8 ± 4.7 (1.104) | 52: 52.5%, **+4.8 ± 4.6** (1.063) |
+| 皇家护卫 | 0.507 → 0.485 (epoch 12 of 16) | 1.424 -> 70 | 72.3% / 67.5%, +4.8 ± 4.0 (1.147) | 61: 72.0%, **+4.5 ± 3.9** (1.040) |
+| 龙族 | 0.531 → 0.504 (epoch 13 of 17) | 1.603 -> 62 | 53.5% / 38.5%, +15.0 ± 4.5 (1.151) | 54: 55.5%, **+17.0 ± 4.8** (1.048) |
+| 梦魇 | 0.515 → 0.491 (epoch 7 of 11) | 1.532 -> 65 | 73.5% / 58.8%, +14.7 ± 4.6 (1.187) | 55: 71.8%, **+13.0 ± 4.4** (1.114) |
+
+- Route at equal CPU over the hand-set bot, g1 → g2 → g3: 精灵 −0.3 → +5.8 → +4.8; 皇家护卫 −11.2 → +3.0 → +4.5;
+  龙族 −8.3 → +11.8 → +17.0; 梦魇 −2.7 → +10.3 → +13.0. All four g3 intervals lie wholly above 0. Each generation
+  is gated on its own deals, so the steps are not paired; 精灵 and 皇家护卫 levelled at about +5 from g2 to g3.
+- 梦魇's equal-CPU row still uses 11% more CPU (ratio 1.114); at 19% more it gave +14.7, so the gain is not the CPU.
+- By opponent at equal CPU, the largest: 龙族 vs 主教 +35 and vs 超越者 +19; 精灵 vs 主教 +19; 梦魇 vs 巫师 +16. The
+  drops are small and within their errors (the largest: 精灵 vs 龙族 −6).
+- **P4** (at least 3 of 4 at ≥ +5; 0.65): **FALSE**. Two of four (龙族, 梦魇); 精灵 +4.8 and 皇家护卫 +4.5 fall just short.
