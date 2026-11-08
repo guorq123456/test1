@@ -54,6 +54,14 @@ Predictions (written before any of these games):
 - (A2) The paired difference at strong is smaller than at normal for most decks (deeper search narrows the gap): 0.55.
 - (A3) The page's normal N is within ±15% of the native gated N for every deck: 0.6.
 
+Added 20:5xZ, before any of its games: the pilots were trained and gated against the bot's six other frozen decks
+only, but in the trainer the AI faces the player's own deck. So the acceptance adds opponents the pilot never saw: the
+hero against the bot's 12 decks without a pilot (analysis/pilot/fields/unseen/<key>.txt; bot-built lists only), at the
+page's normal N against mcts:100+plan, 100 pairs a deck.
+- (A4) For each installed deck, the pilot scores at least as high as the generic bot against the unseen decks (paired
+  difference ≥ 0): 0.75 each.
+- (A5) The gain against unseen decks is smaller than against the training field for most decks: 0.7.
+
 ## Results
 
 ### N in the page's runtime (20:0x-20:3xZ, Pyodide 0.26.4 in Node on the build's bundle; data/page-time)

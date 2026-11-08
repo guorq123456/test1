@@ -1,0 +1,15 @@
+# The pilot of bot/T1-SWORD-1 against the bot's 12 decks it never trained or was gated against (bot_decks.txt less the 7 with a pilot);
+# bot-built lists only. analysis/pilot/PAGE-INSTALL.md, A4.
+bot/T1-SWORD-1|1.2.cEZs.cEZs.cEZs.cEaA.cEaA.eXnu.eXnu.eXnu.evTW.evTW.evTW.evi-.evi-.evi-.evj8.evj8.evj8.evm6.evm6.evm6.evyc.evyc.evyc.ewCE.ewCE.ewCE.ewCO.ewCO.ewCO.fHts.fHts.fHts.fIN6.fIN6.fIck.fIck.fIck.fIcu.fIcu.fIcu
+bot/T1-HAVEN-2|1.6.eIwA.egps.egps.egps.eh3U.eh52.eh52.eh52.ehKg.ehKg.ehKg.ehYu.ehYu.f3Fw.f3Fw.f3VY.f3VY.f3lA.f3lA.f3lA.f3zO.f3zO.fDkO.fRuU.fRxc.fS9g.fS9g.fS9g.fSNu.fSNu.fSNu.fbwg.fbwg.fqM6.fqYc.fqYc.fqaA.fqaA.fqoE.fqoE
+bot/T2-FOREST-1|1.1.c9hg.e3_e.e3_e.e6hM.e6hM.eSfc.eSvE.eUvM.eVLU.eVLU.et1G.etGu.fC_M.fC_M.fDXk.fDkO.fFRc.fFRm.fFz-.fGAU.fGAe.fGAe.fGAe.fbPs.fbfU.fc8k.f-3-.g0Gc.g0Gm.g0Gm.g0Jk.g0Jk.g0WE.g0ZM.g0ZM.g0o-.g0_U.g0_U.g0_e.g0_e
+bot/T2-HAVEN-1|1.6.c9hg.cOaU.eJ8E.eSvE.egrQ.ehJ6.eqas.er5g.erJu.f3zO.fC_M.fDE-.fRes.fRfA.fRxc.fS9g.fqI-.fqaA.fzqM.f-3-.f-LA.gCTs.gCU0.gCU0.gCW-.gCjU.gCjU.gCjU.gCje.gCmc.gCmc.gCz6.gCz6.gD0E.gD0E.gDCk.gDCk.gDCk.gDCu.gDCu
+bot/T3-HAVEN-1|1.6.c9hg.cOaU.eSAM.eSvE.egrQ.ehJ6.eqas.f3zO.fC_M.fC_M.fDE-.fRes.fRfA.fS9g.fqI-.fqaA.fqoE.fqoE.fzqM.f-3-.f-3-.f-LA.gCTs.gCU0.gCU0.gCW-.gCjU.gCjU.gCjU.gCje.gCmc.gCmc.gCz6.gD0E.gD0E.gDCk.gDCk.gDCk.gDCu.gDCu
+bot/T3-FOREST-1|1.1.e3_e.e3_e.e6hM.e6hM.eSfc.eSvE.eUfk.eUvM.eVLU.eVLU.etGu.fC_M.fC_M.fDE-.fDE-.fDXk.fDkO.fDkO.fDkO.fFRc.fFz-.fGAe.fzqM.f-3-.f-3-.g0Gc.g0Gm.g0Gm.g0Jk.g0Jk.g0Jk.g0WE.g0ZM.g0ZM.g0o-.g0o-.g0_U.g0_U.g0_e.g0_e
+bot/T3-PORTAL-1|1.7.e3ls.e3_e.ejJE.ejYs.ejlM.eqd-.f5gc.f5gm.f5gm.f6PU.fDkE.fU5G.fUp-.fbv6.fbv6.ft1-.ftEe.ftEe.fzqM.f-3-.f-3-.f-5Y.f-Jc.f-Jc.gEw6.gEwG.gEzE.gF9k.gF9u.gF9u.gFCs.gFCs.gFPM.gFPM.gFPM.gFSU.gFSU.gFSU.gFe-.gFe-
+bot/T3-ABYSS-1|1.5.eShA.eegM.eev-.ef6U.eqd-.erJk.f1HM.fDkE.fDkE.fDkO.fDkO.fPxU.fbv6.fbv6.foM8.foM8.fzqM.fzqM.f-3-.f-3-.f-5Y.f-LA.f-LA.f-ZE.gA1c.gA1c.gA1m.gA1m.gA1m.gAHE.gAHE.gAHO.gAKM.gAWs.gAWs.gAmU.gAmU.gAme.gAme.gAme
+bot/T3-DRAGON-2|1.4.cJSg.eDmU.ecA-.ecQc.e-r6.fDXk.fDkE.fMmW.fMmg.fNFc.flAs.flAs.flTc.flg6.flg6.flg6.flvk.flvu.f-3-.f-Jc.f-LA.f-LA.f-ZE.g7bM.g7bM.g7bM.g7bW.g7eU.g7q-.g7q-.g7q-.g7r8.g7u6.g7u6.g7u6.g84c.g8KE.g8KO.g8KO.g8KO
+bot/T3-SWORD-1|1.2.c9x8.cEaA.e9Ak.e9NO.evyc.ewCE.fDkO.fHts.fHuA.fI7e.fI7e.fIcu.fbv6.fgIM.fgLU.fh1O.fh1O.fzqM.f-3-.f-Jc.f-LA.f-LA.f-ZE.g2is.g2is.g2j0.g2j0.g2l-.g2yU.g2yU.g2yU.g2ye.g2_c.g2_c.g3C6.g3C6.g3Rk.g3Ru.g3Ru.g3Ru
+bot/T3-FOREST-2|1.1.cC7m.e4Gg.e4Gg.e6kU.e6kU.e6x8.e6x8.e6x8.eVLe.eVLe.eVLe.etGk.etGk.etGk.etJs.etl-.etl-.etl-.etm8.etm8.fDE-.fDkO.fFRw.fFRw.fFRw.fGAU.fGAU.fGAU.fGAe.fds6.fds6.fds6.fe5k.fe5k.fe5k.feLM.feLM.fea-.fea-.fea-
+bot/T3-RUNE-2|1.3.c9w-.cH1g.eBNM.eSAM.eSAW.eSAW.eZku.eaD-.eqqU.exvc.ey9O.eyee.fKpM.fL38.fbPs.fbfU.fbv6.fi-E.fjG-.fjG-.fzqM.f-5Y.f-LA.f-ZE.f-ZE.g596.g59G.g59G.g5CE.g5Ok.g5Ok.g5Ok.g5Ou.g5eM.g5eM.g5eM.g5t-.g5u8.g5u8.g5u8
+bot/T3-RUNE-3|1.3.c9hM.c9w-.eBNM.eSAM.eSAW.eSfc.eaD-.eqqU.exvc.eyCM.eyee.fC_W.fDkE.fKpM.fL38.fL38.fbPs.fbv6.fc8k.fjG-.fjTe.fzqM.fzqM.f-3-.f-5Y.f-ZE.g596.g59G.g59G.g59G.g5CE.g5Ok.g5Ou.g5eM.g5eM.g5t-.g5t-.g5u8.g5u8.g5u8
