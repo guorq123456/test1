@@ -45,10 +45,11 @@ def page_html() -> str:
 
 
 def _specs(extra=()) -> list:
-    """The agent specs the build carries: the page's levels and their matchup bots (ui.session.MATCHUPS), plus `extra`
+    """The agent specs the build carries: the page's levels, their matchup bots (ui.session.MATCHUPS) and the bot decks'
+    pilots (ui.session.PILOTS), plus `extra`
     (build --spec, a candidate tried in the page before any level names it)."""
-    from svsim.ui.session import LEVELS, MATCHUPS
-    specs = list(LEVELS.values()) + list(MATCHUPS.values()) + list(extra)
+    from svsim.ui.session import LEVELS, MATCHUPS, PILOTS
+    specs = list(LEVELS.values()) + list(MATCHUPS.values()) + list(PILOTS.values()) + list(extra)
     for spec in specs:                     # +oracle sees the opponent's hand: a diagnostic, never in the page
         if "oracle" in spec.split("+"):
             raise ValueError(f"{spec}: +oracle is a diagnostic and never goes into the page")
@@ -136,8 +137,9 @@ def build(out: Path, pyodide_from: Path | None = None, extra=()) -> None:
     if part:
         core["_more"].append(_write_part(out, len(core["_more"]) + 1, part))
     (out / "svsim.json").write_text(json.dumps(core, ensure_ascii=False), encoding="utf-8")
-    from svsim.ui.session import LEVELS, MATCHUPS      # ratings.json beside the page, specs filled in, for readers
+    from svsim.ui.session import LEVELS, MATCHUPS, pilots_info   # ratings.json beside the page, specs filled in
     ratings = json.loads(package["svsim/ui/ratings.json"])
+    ratings["pilots"] = pilots_info()
     for level, spec in LEVELS.items():
         ratings["tiers"].setdefault(level, {})["spec"] = spec
         matchups = {f"{you} vs {opponent}": m for (lv, you, opponent), m in MATCHUPS.items() if lv == level}

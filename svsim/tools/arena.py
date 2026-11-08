@@ -128,6 +128,10 @@ VERSIONS = {
 # svsim.ui.session.LEVELS themselves, so a gate or the CR calibration can't play a hand-copied variant.
 from svsim.ui.session import LEVELS as _LEVELS    # noqa: E402  (session imports this module only lazily)
 VERSIONS.update({f"level-{level}": spec for level, spec in _LEVELS.items()})
+# The pilots of the bot's own decks as the trainer's normal level plays them (ui.session.PILOTS; Salem 2026-11-08
+# 「那就帮我都装进去吧」): pilot-T1-SWORD-1 etc., the deck's net and move prior at the page's normal N.
+from svsim.ui.session import PILOTS as _PILOTS    # noqa: E402
+VERSIONS.update({f"pilot-{key}": spec for (level, key), spec in _PILOTS.items() if level == "normal"})
 
 
 def _prior_options(options) -> dict:

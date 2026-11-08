@@ -489,6 +489,14 @@ let ratings = null;
 function showLevelInfo() {
   const box = $("level-info");
   if (!ratings) { box.textContent = ""; return; }
+  const pilot = choice.opponent.startsWith("bot:") && (ratings.pilots || {})[choice.opponent.slice(4)];
+  if (pilot && pilot.levels[choice.level]) {          // one of the bot's decks with a pilot of its own (session.PILOTS)
+    const g = pilot.gate;
+    box.textContent = `${LEVEL_NAMES[choice.level] || choice.level} · AI 用为这副卡组专门练的打法（自对弈练出的局面评估和走法先验）` +
+      ` · 实测：同样思考时间下对 bot 另外六副卡组胜率 ${g.pilot}%，通用打法 ${g.generic}% · CR 未标定`;
+    box.title = pilot.levels[choice.level];
+    return;
+  }
   if (!(choice.you in DECK_NAMES && choice.opponent in DECK_NAMES)) {   // a custom or bot-built deck on the table
     box.textContent = `${LEVEL_NAMES[choice.level] || choice.level} · 通用打法：手写评分的搜索` +
       (choice.level === "normal" || choice.level === "original" ? "（就是 bot 搜卡组时用的那个 AI）" : "") +
@@ -1201,6 +1209,7 @@ function renderDeckPickers() {
     if (!Decks.bots.length) bot.appendChild(el("span", "empty-note", "这个版本里没有 bot 构筑的卡组。"));
     Decks.bots.forEach(d => {
       const b = el("button", null, d.name); b.type = "button"; b.dataset.value = "bot:" + d.key;
+      if (d.pilot && side === "opponent") b.appendChild(el("span", "cls", "专门练过"));
       bot.appendChild(b);
     });
     if (Decks.botNote && Decks.bots.length) bot.appendChild(el("span", "empty-note", Decks.botNote));

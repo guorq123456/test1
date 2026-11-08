@@ -54,7 +54,7 @@ def test_check_names_the_problems():
 def test_custom_deck_plays_the_generic_bot_and_resumes():
     s = Session()
     mine = {"name": "我的", "code": _bot(0)["code"]}
-    v = s.start(mine, {"name": "对面", "code": _bot(3)["code"]}, "strong", 7, "you")
+    v = s.start(mine, {"name": "对面", "code": _bot(5)["code"]}, "strong", 7, "you")     # T1-HAVEN-2: no pilot
     assert v["decks"] == ["我的", "对面"] and s.record["ai"] == GENERIC["strong"] and s.record["bot"]["generic"]
     while not s.state.over and len(s.record["actions"]) < 25:
         if s.state.active == 0:
@@ -73,3 +73,34 @@ def test_named_decks_keep_their_levels():
 def test_illegal_custom_deck_is_refused():
     with pytest.raises(ValueError):
         Session().start({"name": "旧", "code": decks.RAMP_T_HASH}, "ramp", "fast", 1)
+
+
+def test_the_bot_decks_with_a_pilot_play_it_at_normal_strong_and_max_only():
+    # Salem 2026-11-08 「那就帮我都装进去吧」: the AI piloting one of the bot's decks with a pilot (same code) plays it
+    from svsim.ui.session import PILOT_MODELS, PILOTS
+    bd = {d["key"]: d for d in Session().bot_decks()["decks"]}
+    assert set(PILOT_MODELS) <= set(bd) and all(bd[k]["pilot"] == (k in PILOT_MODELS) for k in bd)
+    for key, (net, prior, _) in PILOT_MODELS.items():
+        for level in ("normal", "strong", "max"):
+            spec = level_spec(level, "custom", f"bot/{key}")
+            assert spec == PILOTS[(level, key)] and f"{net}.npz+netmid+netany+puct=" in spec and f"{prior}.npz:2:1" in spec
+        assert level_spec("fast", "custom", f"bot/{key}") == GENERIC["fast"]
+        assert level_spec("original", "custom", f"bot/{key}") == GENERIC["original"]
+        assert level_spec("normal", f"bot/{key}", "custom") == GENERIC["normal"]      # the player's deck: no pilot
+    assert level_spec("normal", "custom", "bot/T1-HAVEN-2") == GENERIC["normal"]
+
+
+def test_a_game_against_a_pilot_records_it_and_resumes():
+    s = Session()
+    haven = next(d for d in Session().bot_decks()["decks"] if d["key"] == "T1-HAVEN-1")
+    v = s.start({"name": "我的", "code": _bot(5)["code"]}, {"name": haven["name"], "code": haven["code"]}, "normal", 3,
+                "you")
+    assert s.record["bot"]["pilot"] == "T1-HAVEN-1" and "generic" not in s.record["bot"]
+    assert s.record["bot"]["version"] == "pilot-T1-HAVEN-1"
+    while not s.state.over and len(s.record["actions"]) < 30:
+        if s.state.active == 0:
+            v = s.mulligan([]) if v.get("mulligan") else s.act(0)
+        else:
+            v = s.ai_step()
+    again = Session().resume(json.loads(json.dumps(s.record)))
+    assert again["decks"] == ["我的", haven["name"]]

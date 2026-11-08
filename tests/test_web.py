@@ -420,7 +420,8 @@ def test_strong_plays_the_gated_net_bots_in_the_four_tournament_decks_matchups_o
     for level in ("fast", "normal", "max", "original"):
         assert all(level_spec(level, *p) == LEVELS[level] for p in pairs)
     assert all("oracle" not in spec.split("+") for spec in MATCHUPS.values())
-    assert len(model_files()) == 13              # 5 nets (2 mirrors, 3 non-mirror lines) and 8 priors
+    from svsim.ui.session import PILOT_MODELS     # 5 nets (2 mirrors, 3 non-mirror lines) and 8 priors; and the
+    assert len(model_files()) == 13 + 2 * len(PILOT_MODELS)     # bot decks' pilots, a net and a prior each
     session = Session()
     session.start("ramp-t", "ramp-t", "strong", 3, "you")
     assert session.record["bot"]["level"] == "strong" and session.record["bot"]["spec"] == MATCHUPS[("strong", "ramp-t", "ramp-t")]

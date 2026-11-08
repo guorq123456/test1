@@ -83,22 +83,57 @@ MATCHUPS = {("strong", "ramp-t", "ramp-t"): _bot(83, "net-mid-ramp-t", "prior-ra
 # mcts:400's (validation league 10-28, identical ranks), so the higher levels only search deeper.
 GENERIC = {"fast": "greedy+plan", "normal": "mcts:100+plan", "strong": "mcts:400+plan", "max": "mcts:1000+plan",
            "original": "mcts:100+plan"}
+# The bot's own decks with a pilot of their own (Salem, 2026-11-08: 「那就帮我都装进去吧」). Each is a value net with its
+# in-turn branch that scores every game whatever the other deck (+netany), plus a move prior (+puct), both trained by
+# self-play for that one list against the bot's six other frozen decks (analysis/pilot/PRIOR-HAVEN.md, PRIOR-PORTAL.md,
+# ROUND2.md; analysis/process/PC-PILOTS.md). Each passed the hero gate against GENERIC's normal bot (mcts:100+plan)
+# piloting the same list: 300 pairs on deals of its own, the field analysis/pilot/fields/bot-frozen7.txt opposite at
+# mcts:100+plan, equal CPU. When the AI plays one of these lists (the same deck code; ui.deckbuilder.bot_decks),
+# normal, strong and max play its pilot instead of GENERIC; fast and original stay generic.
+#   key: (net, prior, the gate: its equal-CPU N natively, the pilot's score, the generic bot's score, both in %)
+PILOT_MODELS = {
+    "T1-SWORD-1": ("net-pilot-sword-bot-g2", "prior-pilot-sword-bot-ft-t05", (39, 76.7, 67.5)),
+    "T1-ABYSS-1": ("net-pilot-abyss-bot-g3", "prior-pilot-abyss-bot-ft-t05", (39, 76.5, 58.8)),
+    "T3-RUNE-1": ("net-pilot-rune-bot-g5", "prior2-pilot-rune-bot-ft-t05", (28, 55.5, 27.2)),
+    "T1-HAVEN-1": ("net-pilot-haven-bot-g3", "prior-pilot-haven-bot-ft-t05", (35, 64.3, 48.8)),
+    "T1-PORTAL-1": ("net-pilot-portal-bot-g3", "prior-pilot-portal-bot-ft-t05", (47, 82.3, 69.7)),
+}
+# N by level in the page's runtime: normal at the generic normal bot's time per decision, strong and max at
+# GENERIC's 400 and 1000 iterations' (analysis/pilot/PAGE-INSTALL.md: real games in Pyodide, the gates' rule).
+PILOT_N = {key: {"normal": n, "strong": 4 * n, "max": 10 * n} for key, (_, _, (n, _, _)) in PILOT_MODELS.items()}
+
+
+def pilot_spec(key: str, level: str) -> str | None:
+    """The spec of the pilot for the bot's deck `key` at `level` (None: no pilot for that deck or level)."""
+    if key not in PILOT_MODELS or level not in PILOT_N.get(key, {}):
+        return None
+    net, prior, _ = PILOT_MODELS[key]
+    return f"mcts:{PILOT_N[key][level]}+plan+setnet={_M}/{net}.npz+netmid+netany+puct={_M}/{prior}.npz:2:1"
+
+
+PILOTS = {(level, key): spec for key in PILOT_MODELS for level in ("normal", "strong", "max")
+          if (spec := pilot_spec(key, level))}
 RATINGS = Path(__file__).resolve().parent / "ratings.json"
 
 
 def level_spec(level: str, you: str | None = None, opponent: str | None = None) -> str:
-    """The spec `level` plays when the player has `you` and the AI `opponent` (MATCHUPS, else LEVELS; GENERIC when
-    either deck is no DECKS key: a custom deck; a spec that is no level plays as itself)."""
+    """The spec `level` plays when the player has `you` and the AI `opponent` (MATCHUPS, else LEVELS; when either deck
+    is no DECKS key, a custom deck: the pilot of the AI's deck where it is one of the bot's decks with a pilot
+    ("bot/<key>", PILOTS), else GENERIC; a spec that is no level plays as itself)."""
     if (you not in DECKS or opponent not in DECKS) and level in GENERIC:
+        if isinstance(opponent, str) and opponent.startswith("bot/") and (level, opponent[4:]) in PILOTS:
+            return PILOTS[(level, opponent[4:])]
         return GENERIC[level]
     return MATCHUPS.get((level, you, opponent), LEVELS.get(level, level))
 
 
 def _deck(choice) -> tuple:
-    """(key, name, cards) of a deck the page picked: a DECKS key, or a custom deck {"name", "code"} (key "custom")."""
+    """(key, name, cards) of a deck the page picked: a DECKS key, or a deck {"name", "code"}: one of the bot's own
+    decks (the same code; key "bot/<its key>"), else a custom deck (key "custom")."""
     if isinstance(choice, dict):
-        from svsim.ui.deckbuilder import deck_from
-        return "custom", (choice.get("name") or "自组卡组").strip()[:40], deck_from(choice)
+        from svsim.ui.deckbuilder import bot_decks, deck_from
+        key = next((f"bot/{d['key']}" for d in bot_decks()["decks"] if d["code"] == choice.get("code")), "custom")
+        return key, (choice.get("name") or "自组卡组").strip()[:40], deck_from(choice)
     return choice, DECKS[choice][0], decks.build(DECKS[choice][1])
 
 
@@ -122,6 +157,16 @@ def ratings() -> dict:
             tier.setdefault("decks", {}).setdefault(deck, {"cr": None, "ci": None, "games": 0, "measured_vs": None,
                                                           "note": "待标定"})
     return data
+
+
+def pilots_info() -> dict:
+    """For the start screen: each bot deck with a pilot, its levels' specs and its gate (PILOT_MODELS)."""
+    out = {}
+    for key, (net, prior, (n, x, base)) in PILOT_MODELS.items():
+        out[key] = {"net": net, "prior": prior, "levels": {lv: s for (lv, k), s in PILOTS.items() if k == key},
+                    "gate": {"n": n, "pilot": x, "generic": base, "vs": GENERIC["normal"],
+                             "field": "bot 的另外六副冻结卡组（mcts:100+plan）", "pairs": 300}}
+    return out
 
 
 def rating_of(level: str, deck: str):
@@ -201,6 +246,8 @@ class Session:
         self.record["bot"] = bot_info(level, spec, opponent)     # the AI plays `opponent`
         if spec == GENERIC.get(level) and spec != LEVELS.get(level):
             self.record["bot"]["generic"] = True
+        if spec == PILOTS.get((level, opponent[4:])):                 # the AI's deck's own pilot
+            self.record["bot"]["pilot"] = opponent[4:]
         from svsim.tools.arena import make_agent
         self.ai = make_agent(spec, seed)
         self.decks = (my_name, their_name)
@@ -356,6 +403,7 @@ class Session:
         """The levels' class ratings for the start screen (see ratings())."""
         out = ratings()
         out["generic"] = GENERIC
+        out["pilots"] = pilots_info()
         return out
 
     # --- the player's own decks (ui.deckbuilder) -----------------------------------------
@@ -369,8 +417,12 @@ class Session:
         return check(code_or_ids, craft)
 
     def bot_decks(self) -> dict:
+        """The bot's own decks (ui.deckbuilder.bot_decks), each saying whether it has a pilot of its own (PILOTS)."""
         from svsim.ui.deckbuilder import bot_decks
-        return bot_decks()
+        out = bot_decks()
+        for d in out["decks"]:
+            d["pilot"] = d["key"] in PILOT_MODELS
+        return out
 
     def code(self) -> str:
         return records.encode(self.record)

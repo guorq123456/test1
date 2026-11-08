@@ -31,10 +31,11 @@ def _fake_pyodide(tmp_path):
 
 def test_the_levels_ship_strongs_net_bots_models_and_numpy(tmp_path):
     # strong's matchup bots (ui.session.MATCHUPS, Salem 2026-10-23 「装档」) name their nets and priors
-    from svsim.ui.session import MATCHUPS
-    named = {part.split("=", 1)[1].split(":")[0] for spec in MATCHUPS.values() for part in spec.split("+")
-             if part.startswith(("setnet=", "puct="))}
-    assert sorted(model_files()) == sorted(named) and len(named) == 13
+    # and the bot decks' pilots (ui.session.PILOTS, Salem 2026-11-08 「那就帮我都装进去吧」) theirs: a net and a prior each
+    from svsim.ui.session import MATCHUPS, PILOT_MODELS, PILOTS
+    named = {part.split("=", 1)[1].split(":")[0] for spec in [*MATCHUPS.values(), *PILOTS.values()]
+             for part in spec.split("+") if part.startswith(("setnet=", "puct="))}
+    assert sorted(model_files()) == sorted(named) and len(named) == 13 + 2 * len(PILOT_MODELS)
     assert sorted(n for n in package_sources() if n.endswith(".b64")) == sorted(m + ".b64" for m in model_files())
     out = tmp_path / "dist"
     build(out, _fake_pyodide(tmp_path))
