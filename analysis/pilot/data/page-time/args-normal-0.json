@@ -1,0 +1,1 @@
+["--hero", "bot/T1-SWORD-1", "--field", "/home/pyodide/field.txt", "--x", "mcts:39+plan+setnet=analysis/scaling/models/net-pilot-sword-bot-g2.npz+netmid+netany+puct=analysis/scaling/models/prior-pilot-sword-bot-ft-t05.npz:2:1", "--base", "mcts:100+plan", "--opp", "mcts:100+plan", "--seed", "87200000", "--pairs", "24"]

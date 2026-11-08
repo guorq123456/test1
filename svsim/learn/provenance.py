@@ -38,19 +38,32 @@ def rules_files(root: Path | None = None) -> list[Path]:
     return sorted(files, key=lambda p: p.relative_to(root).as_posix())
 
 
-def file_digests(root: Path | None = None) -> dict:
-    """{relative path: first 16 hex of the file's sha256} over rules_files()."""
+# Line endings: a Windows checkout (git's autocrlf, the new PC, 2026-11-08) has the same rules with CRLF. The hash and
+# the digests read every file with LF line endings, so a model's record does not depend on the platform; records
+# stamped before that on a CRLF checkout match the CRLF form of the current rules (status).
+LF, CRLF = b"\n", b"\r\n"
+
+
+def _rules_bytes(p: Path, eol: bytes = LF) -> bytes:
+    data = p.read_bytes().replace(CRLF, LF)
+    return data if eol == LF else data.replace(LF, eol)
+
+
+def file_digests(root: Path | None = None, eol: bytes = LF) -> dict:
+    """{relative path: first 16 hex of the file's sha256} over rules_files(), line endings as `eol`."""
     root = root or ROOT
-    return {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()[:16] for p in rules_files(root)}
+    return {p.relative_to(root).as_posix(): hashlib.sha256(_rules_bytes(p, eol)).hexdigest()[:16]
+            for p in rules_files(root)}
 
 
-def rules_hash(root: Path | None = None) -> str:
-    """sha256 over the rules files sorted by path, each fed in as its path, a NUL, its bytes and a NUL."""
+def rules_hash(root: Path | None = None, eol: bytes = LF) -> str:
+    """sha256 over the rules files sorted by path, each fed in as its path, a NUL, its bytes (line endings as `eol`)
+    and a NUL."""
     root = root or ROOT
     h = hashlib.sha256()
     for p in rules_files(root):
         h.update(p.relative_to(root).as_posix().encode() + b"\0")
-        h.update(p.read_bytes() + b"\0")
+        h.update(_rules_bytes(p, eol) + b"\0")
     return h.hexdigest()
 
 
@@ -62,6 +75,13 @@ def current() -> tuple:
     if not _CURRENT:
         _CURRENT["v"] = (rules_hash(), file_digests())
     return _CURRENT["v"]
+
+
+def current_crlf() -> tuple:
+    """current() with CRLF line endings: what a Windows checkout of these rules stamped before the hash read LF."""
+    if "crlf" not in _CURRENT:
+        _CURRENT["crlf"] = (rules_hash(eol=CRLF), file_digests(eol=CRLF))
+    return _CURRENT["crlf"]
 
 
 def _git(*args, root: Path | None = None) -> str | None:
@@ -100,10 +120,11 @@ def status(info: dict | None) -> tuple:
     if not isinstance(rec, dict) or "rules_hash" not in rec:
         return "未登记", []
     h, files = current()
-    if rec["rules_hash"] == h:
+    h_crlf, files_crlf = current_crlf()
+    if rec["rules_hash"] in (h, h_crlf):
         return "current", []
     old = rec.get("rules_files") or {}
-    changed = sorted(k for k in set(old) | set(files) if old.get(k) != files.get(k))
+    changed = sorted(k for k in set(old) | set(files) if old.get(k) not in (files.get(k), files_crlf.get(k)))
     return "stale", changed
 
 

@@ -1,0 +1,1 @@
+["--hero", "bot/T1-ABYSS-1", "--field", "/home/pyodide/field.txt", "--x", "mcts:39+plan+setnet=analysis/scaling/models/net-pilot-abyss-bot-g3.npz+netmid+netany+puct=analysis/scaling/models/prior-pilot-abyss-bot-ft-t05.npz:2:1", "--base", "mcts:100+plan", "--opp", "mcts:100+plan", "--seed", "87200100", "--pairs", "24"]

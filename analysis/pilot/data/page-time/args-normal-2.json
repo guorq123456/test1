@@ -1,0 +1,1 @@
+["--hero", "bot/T3-RUNE-1", "--field", "/home/pyodide/field.txt", "--x", "mcts:28+plan+setnet=analysis/scaling/models/net-pilot-rune-bot-g5.npz+netmid+netany+puct=analysis/scaling/models/prior2-pilot-rune-bot-ft-t05.npz:2:1", "--base", "mcts:100+plan", "--opp", "mcts:100+plan", "--seed", "87200200", "--pairs", "24"]

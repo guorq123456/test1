@@ -44,6 +44,21 @@ def test_hash_is_stable_and_moves_with_any_rules_byte_but_not_with_other_files(t
     assert P.rules_hash(root) == h
 
 
+def test_line_endings_do_not_change_the_hash_and_a_crlf_stamp_is_current(tmp_path, monkeypatch):
+    # the new PC's Windows checkout (2026-11-08): the same rules with CRLF were reported as 26 files changed
+    root = _tree(tmp_path)
+    h, files = P.rules_hash(root), P.file_digests(root)
+    crlf = P.rules_hash(root, eol=P.CRLF)
+    for f in P.rules_files(root):
+        f.write_bytes(f.read_bytes().replace(b"\n", b"\r\n"))
+    assert P.rules_hash(root) == h and P.file_digests(root) == files and crlf != h
+    monkeypatch.setattr(P, "ROOT", root)
+    monkeypatch.setattr(P, "_CURRENT", {})
+    assert P.status({"provenance": {"rules_hash": crlf, "rules_files": P.file_digests(root, eol=P.CRLF)}}) == ("current", [])
+    stale = {"rules_hash": "0" * 64, "rules_files": {**P.file_digests(root, eol=P.CRLF), "svsim/core/engine.py": "x"}}
+    assert P.status({"provenance": stale}) == ("stale", ["svsim/core/engine.py"])
+
+
 def _tiny_net():
     from svsim.learn.setnet import SetNet
     net = SetNet(3, phi=(4, 3), rho=(5, 3), seed=1, info={"deck": "a", "opponent": "b"})
