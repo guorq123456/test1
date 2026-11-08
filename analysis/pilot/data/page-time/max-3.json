@@ -1,0 +1,86 @@
+{
+ "hero": "bot/T1-HAVEN-1",
+ "x": "mcts:480+plan+setnet=analysis/scaling/models/net-pilot-haven-bot-g3.npz+netmid+netany+puct=analysis/scaling/models/prior-pilot-haven-bot-ft-t05.npz:2:1",
+ "base": "mcts:1000+plan",
+ "opp": "mcts:100+plan",
+ "seed": 87200300,
+ "pairs": [
+  {
+   "k": 0,
+   "seed": 87200300,
+   "opp": "bot/T1-FOREST-1"
+  },
+  {
+   "k": 1,
+   "seed": 87200301,
+   "opp": "bot/T1-SWORD-1"
+  },
+  {
+   "k": 2,
+   "seed": 87200302,
+   "opp": "bot/T3-RUNE-1"
+  },
+  {
+   "k": 3,
+   "seed": 87200303,
+   "opp": "bot/T3-DRAGON-1"
+  },
+  {
+   "k": 4,
+   "seed": 87200304,
+   "opp": "bot/T1-ABYSS-1"
+  },
+  {
+   "k": 5,
+   "seed": 87200305,
+   "opp": "bot/T1-PORTAL-1"
+  },
+  {
+   "k": 6,
+   "seed": 87200306,
+   "opp": "bot/T1-FOREST-1"
+  },
+  {
+   "k": 7,
+   "seed": 87200307,
+   "opp": "bot/T1-SWORD-1"
+  },
+  {
+   "k": 8,
+   "seed": 87200308,
+   "opp": "bot/T3-RUNE-1"
+  },
+  {
+   "k": 9,
+   "seed": 87200309,
+   "opp": "bot/T3-DRAGON-1"
+  },
+  {
+   "k": 10,
+   "seed": 87200310,
+   "opp": "bot/T1-ABYSS-1"
+  },
+  {
+   "k": 11,
+   "seed": 87200311,
+   "opp": "bot/T1-PORTAL-1"
+  }
+ ],
+ "per_decision": {
+  "x": {
+   "cpu_ms": 0.0,
+   "wall_ms": 421.64,
+   "decisions": 564
+  },
+  "base": {
+   "cpu_ms": 0.0,
+   "wall_ms": 305.35,
+   "decisions": 518
+  }
+ },
+ "ratio_wall": 1.381,
+ "n": 480,
+ "n_matched": 348,
+ "seconds": 463.3,
+ "condition": "对手卡表已知（牌序、手牌未知）"
+}

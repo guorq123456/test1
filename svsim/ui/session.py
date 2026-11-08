@@ -98,9 +98,16 @@ PILOT_MODELS = {
     "T1-HAVEN-1": ("net-pilot-haven-bot-g3", "prior-pilot-haven-bot-ft-t05", (35, 64.3, 48.8)),
     "T1-PORTAL-1": ("net-pilot-portal-bot-g3", "prior-pilot-portal-bot-ft-t05", (47, 82.3, 69.7)),
 }
-# N by level in the page's runtime: normal at the generic normal bot's time per decision, strong and max at
-# GENERIC's 400 and 1000 iterations' (analysis/pilot/PAGE-INSTALL.md: real games in Pyodide, the gates' rule).
-PILOT_N = {key: {"normal": n, "strong": 4 * n, "max": 10 * n} for key, (_, _, (n, _, _)) in PILOT_MODELS.items()}
+# N by level in the page's runtime (analysis/pilot/PAGE-INSTALL.md, data/page-time): the pilot's time per searched
+# decision matched to GENERIC's at the same level (mcts:100 / 400 / 1000 +plan piloting the same list) in real games
+# in Pyodide, by the gates' rule (inside 0.97-1.03 N stays, else N = round(N / ratio), once). In the page the net costs
+# more than natively (normal: ratio 1.18-1.31 at the gated N), and the generic bot's time grows slower than its
+# iterations (mcts:1000 about 5.5x mcts:100's time), so strong and max are far below 4x and 10x normal's N.
+PILOT_N = {"T1-SWORD-1": {"normal": 30, "strong": 129, "max": 350},
+           "T1-ABYSS-1": {"normal": 30, "strong": 125, "max": 315},
+           "T3-RUNE-1": {"normal": 21, "strong": 112, "max": 305},
+           "T1-HAVEN-1": {"normal": 30, "strong": 130, "max": 348},
+           "T1-PORTAL-1": {"normal": 36, "strong": 131, "max": 343}}
 
 
 def pilot_spec(key: str, level: str) -> str | None:

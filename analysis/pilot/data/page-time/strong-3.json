@@ -1,0 +1,146 @@
+{
+ "hero": "bot/T1-HAVEN-1",
+ "x": "mcts:180+plan+setnet=analysis/scaling/models/net-pilot-haven-bot-g3.npz+netmid+netany+puct=analysis/scaling/models/prior-pilot-haven-bot-ft-t05.npz:2:1",
+ "base": "mcts:400+plan",
+ "opp": "mcts:100+plan",
+ "seed": 87201000,
+ "pairs": [
+  {
+   "k": 0,
+   "seed": 87201000,
+   "opp": "bot/T1-FOREST-1"
+  },
+  {
+   "k": 1,
+   "seed": 87201001,
+   "opp": "bot/T1-SWORD-1"
+  },
+  {
+   "k": 2,
+   "seed": 87201002,
+   "opp": "bot/T3-RUNE-1"
+  },
+  {
+   "k": 3,
+   "seed": 87201003,
+   "opp": "bot/T3-DRAGON-1"
+  },
+  {
+   "k": 4,
+   "seed": 87201004,
+   "opp": "bot/T1-ABYSS-1"
+  },
+  {
+   "k": 5,
+   "seed": 87201005,
+   "opp": "bot/T1-PORTAL-1"
+  },
+  {
+   "k": 6,
+   "seed": 87201006,
+   "opp": "bot/T1-FOREST-1"
+  },
+  {
+   "k": 7,
+   "seed": 87201007,
+   "opp": "bot/T1-SWORD-1"
+  },
+  {
+   "k": 8,
+   "seed": 87201008,
+   "opp": "bot/T3-RUNE-1"
+  },
+  {
+   "k": 9,
+   "seed": 87201009,
+   "opp": "bot/T3-DRAGON-1"
+  },
+  {
+   "k": 10,
+   "seed": 87201010,
+   "opp": "bot/T1-ABYSS-1"
+  },
+  {
+   "k": 11,
+   "seed": 87201011,
+   "opp": "bot/T1-PORTAL-1"
+  },
+  {
+   "k": 12,
+   "seed": 87201012,
+   "opp": "bot/T1-FOREST-1"
+  },
+  {
+   "k": 13,
+   "seed": 87201013,
+   "opp": "bot/T1-SWORD-1"
+  },
+  {
+   "k": 14,
+   "seed": 87201014,
+   "opp": "bot/T3-RUNE-1"
+  },
+  {
+   "k": 15,
+   "seed": 87201015,
+   "opp": "bot/T3-DRAGON-1"
+  },
+  {
+   "k": 16,
+   "seed": 87201016,
+   "opp": "bot/T1-ABYSS-1"
+  },
+  {
+   "k": 17,
+   "seed": 87201017,
+   "opp": "bot/T1-PORTAL-1"
+  },
+  {
+   "k": 18,
+   "seed": 87201018,
+   "opp": "bot/T1-FOREST-1"
+  },
+  {
+   "k": 19,
+   "seed": 87201019,
+   "opp": "bot/T1-SWORD-1"
+  },
+  {
+   "k": 20,
+   "seed": 87201020,
+   "opp": "bot/T3-RUNE-1"
+  },
+  {
+   "k": 21,
+   "seed": 87201021,
+   "opp": "bot/T3-DRAGON-1"
+  },
+  {
+   "k": 22,
+   "seed": 87201022,
+   "opp": "bot/T1-ABYSS-1"
+  },
+  {
+   "k": 23,
+   "seed": 87201023,
+   "opp": "bot/T1-PORTAL-1"
+  }
+ ],
+ "per_decision": {
+  "x": {
+   "cpu_ms": 0.0,
+   "wall_ms": 186.98,
+   "decisions": 1030
+  },
+  "base": {
+   "cpu_ms": 0.0,
+   "wall_ms": 134.78,
+   "decisions": 1050
+  }
+ },
+ "ratio_wall": 1.387,
+ "n": 180,
+ "n_matched": 130,
+ "seconds": 463.9,
+ "condition": "对手卡表已知（牌序、手牌未知）"
+}
