@@ -107,4 +107,27 @@ searched decision (Pyodide has one thread; its process_time reads 0).
 ### Acceptance (native, 100 pairs a deck, --bank confirm)
 
 Because the page's N is below the gated N, normal is re-checked at the page's N too (87202100 + 100 i), then strong
-(87201400 + 100 i). (running)
+(87201400 + 100 i), then the unseen decks (87202800 + 100 i). Seeds: the analysis line 6e112a1a / 620bea29 / 195c8c52.
+Logs and pair files: data/accept/. Hero % (X / the generic bot of the same level on the same deals), paired
+difference ± 95% half-width, native CPU ratio per searched decision:
+
+| deck | normal, page N (vs mcts:100) | strong, page N (vs mcts:400) | unseen 12, normal (vs mcts:100) |
+|---|---|---|---|
+| 皇家护卫 T1-SWORD-1 | 76.0 / 65.0, +11.0 ± 8.0 (1.05) | 79.0 / 68.5, +10.5 ± 6.3 (0.98) | 82.5 / 75.5, +7.0 ± 6.4 (1.14) |
+| 梦魇 T1-ABYSS-1 | 79.0 / 57.0, +22.0 ± 8.0 (1.22) | 82.5 / 65.0, +17.5 ± 8.2 (0.97) | 74.0 / 72.5, +1.5 ± 6.0 (1.10) |
+| 巫师 T3-RUNE-1 | 51.0 / 29.0, +22.0 ± 8.5 (1.05) | 55.5 / 36.0, +19.5 ± 8.3 (0.97) | 71.0 / 43.0, +28.0 ± 8.3 (1.05) |
+| 主教 T1-HAVEN-1 | 66.0 / 48.0, +18.0 ± 7.8 (1.05) | 63.0 / 56.5, +6.5 ± 7.5 (0.96) | 68.5 / 66.0, +2.5 ± 7.5 (1.05) |
+| 超越者 T1-PORTAL-1 | 80.0 / 64.0, +16.0 ± 6.8 (1.18) | 85.5 / 77.0, +8.5 ± 6.1 (1.03) | 92.0 / 87.5, +4.5 ± 5.6 (1.20) |
+
+- Normal at the page's lower N lost nothing visible: each difference is within its interval of the gated one (+9.2,
+  +17.7, +28.3, +15.5, +12.7).
+- (A1) at strong every difference is ≥ 0: **TRUE** (主教's interval reaches −1.0).
+- (A2) the strong gap is smaller than the normal gap for most decks: **TRUE** (5 of 5).
+- (A4) against the unseen decks every difference is ≥ 0: **TRUE** by the point estimates; three intervals (梦魇, 主教,
+  超越者) include 0, so for those decks the pilot is "no worse than before" against decks it never saw, not shown
+  better.
+- (A5) the gain against unseen decks is smaller than against the training field for most decks: **TRUE** (4 of 5;
+  巫师 is the exception, +28.0 against +22.0).
+- Max is not measured; it is installed by the same timing rule and the page says so.
+- Verdict: no deck and no level is worse than the bot it replaces, so the five go in (version 26). 精灵 and 龙族 follow
+  when their second priors are gated (same checks, i = 5, 6).

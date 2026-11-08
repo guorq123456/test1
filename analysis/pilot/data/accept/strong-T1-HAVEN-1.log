@@ -1,0 +1,23 @@
+条件：英雄 bot/T1-HAVEN-1 对 6 套对手轮流（analysis/pilot/fields/bot-frozen7.txt）；每对 = 一副发牌，X 和基线各坐两边；对手卡表已知（牌序、手牌未知）
+X = mcts:130+plan+setnet=analysis/scaling/models/net-pilot-haven-bot-g3.npz+netmid+netany+puct=analysis/scaling/models/prior-pilot-haven-bot-ft-t05.npz:2:1
+基线 = mcts:400+plan
+对手 = mcts:100+plan
+模拟器：提交号 5d768a23b，规则哈希 de145991df27d6a7；X 方模型训练时的规则哈希 net-pilot-haven-bot-g3.npz de145991df27d6a7（一致），prior-pilot-haven-bot-ft-t05.npz de145991df27d6a7（一致）
+挑选种子库：本次未用
+确认种子库：87201700–87201799（本次）
+未决裁定：R-01 回合上限
+模型规则版本：net-pilot-haven-bot-g3.npz current
+模型规则版本：prior-pilot-haven-bot-ft-t05.npz current
+BLAS 线程：OMP_NUM_THREADS=1，OPENBLAS_NUM_THREADS=1，MKL_NUM_THREADS=1
+  …25 对 54s
+  …50 对 104s
+  …75 对 156s
+  …100 对 210s
+100 对（X 200 局、基线 200 局）：英雄卡组 X 63.0% ± 7.1%，基线 56.5% ± 6.8%，配对差 +6.5% ± 7.5%（95% 区间 -1.0%～+14.0%）
+  对 bot/T1-FOREST-1：17 对 X 64.7%，基线 64.7%，差 +0.0% ± 14.6%
+  对 bot/T1-SWORD-1：17 对 X 50.0%，基线 32.4%，差 +17.6% ± 18.7%
+  对 bot/T3-RUNE-1：17 对 X 88.2%，基线 67.6%，差 +20.6% ± 14.7%
+  对 bot/T3-DRAGON-1：17 对 X 76.5%，基线 70.6%，差 +5.9% ± 18.6%
+  对 bot/T1-ABYSS-1：16 对 X 53.1%，基线 65.6%，差 -12.5% ± 14.1%
+  对 bot/T1-PORTAL-1：16 对 X 43.8%，基线 37.5%，差 +6.2% ± 25.1%
+英雄每步（搜索过的决定）CPU：X 63 ms，基线 66 ms，比 0.957

@@ -1,0 +1,29 @@
+条件：英雄 bot/T1-ABYSS-1 对 12 套对手轮流（analysis/pilot/fields/unseen/T1-ABYSS-1.txt）；每对 = 一副发牌，X 和基线各坐两边；对手卡表已知（牌序、手牌未知）
+X = mcts:30+plan+setnet=analysis/scaling/models/net-pilot-abyss-bot-g3.npz+netmid+netany+puct=analysis/scaling/models/prior-pilot-abyss-bot-ft-t05.npz:2:1
+基线 = mcts:100+plan
+对手 = mcts:100+plan
+模拟器：提交号 5d768a23b，规则哈希 de145991df27d6a7；X 方模型训练时的规则哈希 net-pilot-abyss-bot-g3.npz 26d19bb095e9d8aa（一致），prior-pilot-abyss-bot-ft-t05.npz 26d19bb095e9d8aa（一致）
+挑选种子库：本次未用
+确认种子库：87202900–87202999（本次）
+未决裁定：R-01 回合上限
+模型规则版本：net-pilot-abyss-bot-g3.npz current
+模型规则版本：prior-pilot-abyss-bot-ft-t05.npz current
+BLAS 线程：OMP_NUM_THREADS=1，OPENBLAS_NUM_THREADS=1，MKL_NUM_THREADS=1
+  …25 对 37s
+  …50 对 73s
+  …75 对 110s
+  …100 对 147s
+100 对（X 200 局、基线 200 局）：英雄卡组 X 74.0% ± 6.0%，基线 72.5% ± 6.4%，配对差 +1.5% ± 6.0%（95% 区间 -4.5%～+7.5%）
+  对 bot/T1-HAVEN-2：9 对 X 77.8%，基线 72.2%，差 +5.6% ± 19.6%
+  对 bot/T2-FOREST-1：9 对 X 55.6%，基线 66.7%，差 -11.1% ± 21.8%
+  对 bot/T2-HAVEN-1：9 对 X 88.9%，基线 61.1%，差 +27.8% ± 17.2%
+  对 bot/T3-HAVEN-1：9 对 X 61.1%，基线 61.1%，差 +0.0% ± 16.3%
+  对 bot/T3-FOREST-1：8 对 X 68.8%，基线 75.0%，差 -6.2% ± 12.2%
+  对 bot/T3-PORTAL-1：8 对 X 81.2%，基线 68.8%，差 +12.5% ± 30.7%
+  对 bot/T3-ABYSS-1：8 对 X 50.0%，基线 56.2%，差 -6.2% ± 22.2%
+  对 bot/T3-DRAGON-2：8 对 X 75.0%，基线 68.8%，差 +6.2% ± 34.3%
+  对 bot/T3-SWORD-1：8 对 X 81.2%，基线 87.5%，差 -6.2% ± 12.2%
+  对 bot/T3-FOREST-2：8 对 X 68.8%，基线 75.0%，差 -6.2% ± 12.2%
+  对 bot/T3-RUNE-2：8 对 X 93.8%，基线 87.5%，差 +6.2% ± 22.2%
+  对 bot/T3-RUNE-3：8 对 X 87.5%，基线 93.8%，差 -6.2% ± 12.2%
+英雄每步（搜索过的决定）CPU：X 32 ms，基线 29 ms，比 1.099

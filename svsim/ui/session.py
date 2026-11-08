@@ -118,6 +118,14 @@ def pilot_spec(key: str, level: str) -> str | None:
     return f"mcts:{PILOT_N[key][level]}+plan+setnet={_M}/{net}.npz+netmid+netany+puct={_M}/{prior}.npz:2:1"
 
 
+# The acceptance at the page's N (analysis/pilot/PAGE-INSTALL.md; native, 100 pairs a deck, deals of its own): the
+# pilot's score and the generic bot's of the same level piloting the same list, in %, against the bot's six other
+# frozen decks (normal, strong) and against the bot's 12 decks it never saw (unseen, at normal). max: not measured.
+PILOT_CHECKS = {"T1-SWORD-1": {"normal": (76.0, 65.0), "strong": (79.0, 68.5), "unseen": (82.5, 75.5)},
+                "T1-ABYSS-1": {"normal": (79.0, 57.0), "strong": (82.5, 65.0), "unseen": (74.0, 72.5)},
+                "T3-RUNE-1": {"normal": (51.0, 29.0), "strong": (55.5, 36.0), "unseen": (71.0, 43.0)},
+                "T1-HAVEN-1": {"normal": (66.0, 48.0), "strong": (63.0, 56.5), "unseen": (68.5, 66.0)},
+                "T1-PORTAL-1": {"normal": (80.0, 64.0), "strong": (85.5, 77.0), "unseen": (92.0, 87.5)}}
 PILOTS = {(level, key): spec for key in PILOT_MODELS for level in ("normal", "strong", "max")
           if (spec := pilot_spec(key, level))}
 RATINGS = Path(__file__).resolve().parent / "ratings.json"
@@ -172,7 +180,8 @@ def pilots_info() -> dict:
     for key, (net, prior, (n, x, base)) in PILOT_MODELS.items():
         out[key] = {"net": net, "prior": prior, "levels": {lv: s for (lv, k), s in PILOTS.items() if k == key},
                     "gate": {"n": n, "pilot": x, "generic": base, "vs": GENERIC["normal"],
-                             "field": "bot 的另外六副冻结卡组（mcts:100+plan）", "pairs": 300}}
+                             "field": "bot 的另外六副冻结卡组（mcts:100+plan）", "pairs": 300},
+                    "checks": {name: {"pilot": a, "generic": b} for name, (a, b) in PILOT_CHECKS.get(key, {}).items()}}
     return out
 
 

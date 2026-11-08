@@ -491,9 +491,12 @@ function showLevelInfo() {
   if (!ratings) { box.textContent = ""; return; }
   const pilot = choice.opponent.startsWith("bot:") && (ratings.pilots || {})[choice.opponent.slice(4)];
   if (pilot && pilot.levels[choice.level]) {          // one of the bot's decks with a pilot of its own (session.PILOTS)
-    const g = pilot.gate;
+    const c = pilot.checks || {}, here = c[choice.level] || c.strong, u = c.unseen;
+    const measured = here ? `${choice.level in c ? "实测" : "最强档没单独测，强档实测"}（同样思考时间，对 bot 另外六副卡组）：` +
+      `胜率 ${here.pilot}%，原来的通用打法 ${here.generic}%` : "";
     box.textContent = `${LEVEL_NAMES[choice.level] || choice.level} · AI 用为这副卡组专门练的打法（自对弈练出的局面评估和走法先验）` +
-      ` · 实测：同样思考时间下对 bot 另外六副卡组胜率 ${g.pilot}%，通用打法 ${g.generic}% · CR 未标定`;
+      (measured ? " · " + measured : "") +
+      (u ? ` · 对它没练过的卡组（普通档）：${u.pilot}% 对 ${u.generic}%` : "") + " · CR 未标定";
     box.title = pilot.levels[choice.level];
     return;
   }
