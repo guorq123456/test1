@@ -34,7 +34,8 @@ SKELETON = ('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">'
             '</head><body>{page}</body></html>')
 
 ALLOWED = {"start", "resume", "summary", "view", "act", "mulligan", "ai_step", "hint", "lethal", "note", "code",
-           "record_data", "review", "goto", "mark", "impact", "ratings", "card_info"}
+           "record_data", "review", "goto", "mark", "impact", "ratings", "card_info",
+           "pool", "check_deck", "bot_decks"}
 
 
 def page_html() -> str:
@@ -84,7 +85,7 @@ def package_sources(commit: str | None = None, extra=()) -> dict:
     import base64
     out = {f.relative_to(ROOT).as_posix(): f.read_text(encoding="utf-8")
            for f in sorted(PACKAGE.rglob("*"))
-           if f.suffix in (".py", ".json") and "__pycache__" not in f.parts and not _candidate(f, extra)}
+           if f.suffix in (".py", ".json", ".txt") and "__pycache__" not in f.parts and not _candidate(f, extra)}
     for path in model_files(extra):
         out[path + ".b64"] = base64.b64encode((ROOT / path).read_bytes()).decode("ascii")
     if commit is not None:

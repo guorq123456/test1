@@ -1,0 +1,8 @@
+# run B (random start, set-10 pool) after round 1: one incumbent per class, deck codes (deckbuild.read_seeds format)
+B-r1-forest|1.1.c9hg.c9hg.cC7w.cCNO.e3_U.e3_e.e4IE.e6hM.eShA.eSvE.eUcc.eUcc.eV5s.eVLe.eqd-.er46.et16.et16.et1G.etl-.fC_W.fC_W.fDkE.fGAe.fbv6.fbwg.fc8k.fdsG.fdsG.fe5u.feLM.f-5Y.f-5Y.g0Gm.g0Gm.g0WO.g0ZM.g0ls.g0_e.g0_e
+B-r1-sword|1.2.c9x8.e3_e.e8eM.e8t-.e8u8.e8x6.e8x6.e9NE.eSAW.eX5-.eXIe.eXbE.eqd-.evTW.evWU.evi-.evm6.ev_k.ewCO.ewCO.ewCO.fC_M.fDkE.fDkE.fHts.fHts.fHuA.fI7e.fIcu.fbPs.fc8k.fgLU.fgX-.fgqk.fh1O.fh1O.f-5Y.f-5Y.g2l-.g3Ru
+B-r1-rune|1.3.c9w-.c9w-.cH06.cH06.cHFu.cHIs.e3_e.eB4c.eBKO.eBpe.eBpe.eSRY.eSvE.eZVG.eZ-M.ea1U.er46.exvc.exvm.eyR-.eyeU.eyee.eyee.fDkE.fDkE.fKpM.fKsU.fL38.fL38.fbv6.fc8k.fi-O.fjTU.fjTe.fjTe.f-ZE.f-ZE.g59G.g5CE.g5t-
+B-r1-dragon|1.4.c9w-.cJSM.cJSM.e3ls.e3ls.e3ls.e3_e.e3_e.e4Gg.eEFk.eEFk.eEFk.eSAM.eSAW.eShA.ecA-.ecE6.erJk.e-bU.e-bU.e-uE.e_4u.fC_W.fDkE.fDkE.fMmM.fNIk.fNVE.fbwg.fc8k.flB0.flD-.flQe.flvu.f-Jc.g7q-.g84c.g8KE.g8KE.g8KE
+B-r1-abyss|1.5.c9yY.cLum.cM8O.eFzG.eGh-.eGi8.eGi8.eGi8.eSAM.eSAW.eSAW.eSvE.eedO.ef6U.ef6U.ef6U.ef6e.eqqU.er5g.f11k.f1X8.fDkO.fPxU.fPxU.fPxU.fPxe.fbwg.fngE.fnsu.foM8.foM8.foM8.f-Jc.f-LA.f-LA.gA1c.gA1c.gAHE.gAKM.gAWs
+B-r1-haven|1.6.c9hg.cOae.cOc2.cOc2.e3ls.e3_U.e4Gg.eIPM.eIPW.eISU.eIgY.eJ8O.eSAW.eSAW.eSAW.egrQ.eqd-.er5g.f3Fw.f3zO.f3zO.fDE-.fDE-.fDUc.fDkO.fRuU.fRuU.fRue.fS86.fS86.fSNu.fbv6.fc8k.fqYc.fqoO.f-Jc.gCTs.gCmc.gCmc.gDCk
+B-r1-portal|1.7.cQnG.cR0u.e3_e.e4IE.eLN-.eLae.eSAW.eSRY.ejG6.ejGG.ejoU.ej--.ej--.ej_8.er5g.erJu.f5gc.f5gc.f6PU.f6PU.f6Pe.fDUc.fDkE.fUKu.fbPs.fbS-.fbfU.fbfU.fbv6.fbwg.ft1-.ftEe.f-Jc.f-ZE.f-ZE.gEwG.gF9u.gFCs.gFPM.gFPM
