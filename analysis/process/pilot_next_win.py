@@ -20,16 +20,17 @@ import sys
 import time
 
 HEROES = {"forest": ("bot/T1-FOREST-1", 86960000), "sword": ("bot/T1-SWORD-1", 87020000),
-          "dragon": ("bot/T3-DRAGON-1", 87080000), "abyss": ("bot/T1-ABYSS-1", 87140000)}
+          "dragon": ("bot/T3-DRAGON-1", 87080000), "abyss": ("bot/T1-ABYSS-1", 87140000),
+          "forest2": ("bot/T3-FOREST-2", 87240000)}     # the bot's combo elf (WGP comparison report 2026-11-15, section 7)
 DECK, GEN, W = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
 DRY = len(sys.argv) > 4
-assert DECK in HEROES and 2 <= GEN <= 5, "DECK forest|sword|dragon|abyss, GEN 2-5"
+assert DECK in HEROES and 2 <= GEN <= 5, "DECK forest|sword|dragon|abyss|forest2, GEN 2-5"
 if os.name == "nt":
     import ctypes
     k = ctypes.windll.kernel32
     k.SetPriorityClass(k.GetCurrentProcess(), 0x4000)   # below normal; children inherit
 HERO, BANK = HEROES[DECK]
-FIELD = "analysis/pilot/fields/bot-frozen7.txt"
+FIELD = {"forest2": "analysis/pilot/fields/bot-frozen7-forest2.txt"}.get(DECK, "analysis/pilot/fields/bot-frozen7.txt")
 RUN = f"runs/pilot-{DECK}-bot-g1"
 NAME = f"pilot-{DECK}-bot-g{GEN}"
 PREV = f"pilot-{DECK}-bot-g{GEN - 1}"

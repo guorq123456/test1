@@ -35,3 +35,25 @@ def test_a_pair_plays_both_arms_from_both_seats_and_the_same_pilot_gives_the_sam
 
 def test_time_match_rule():
     assert H.time_match(100, 1.02) == 100 and H.time_match(100, 1.6) == 62 and H.budget("mcts:56+plan") == 56
+
+
+def test_opp_pilots_gives_each_bot_deck_with_a_pilot_its_own_and_the_rest_the_opp_spec(tmp_path, monkeypatch, capsys):
+    # the T3-FOREST-2 pilot's acceptance (WGP comparison report 2026-11-15, section 7): trained opponents
+    import json
+    import sys
+    from svsim.ui import deckbuilder
+    from svsim.ui.session import pilot_native_spec
+    code = {d["key"]: d["code"] for d in deckbuilder.bot_decks()["decks"]}
+    path = tmp_path / "field.txt"
+    path.write_text("".join(f"bot/{k}|{code[k]}\n" for k in ("T3-FOREST-2", "T1-SWORD-1", "T1-HAVEN-2")), encoding="utf-8")
+    out = tmp_path / "g.jsonl"
+    monkeypatch.setattr(sys, "argv", ["herogate", "--hero", "bot/T3-FOREST-2", "--field", str(path), "--x", "greedy",
+                                      "--base", "greedy", "--opp", "random", "--opp-pilots", "--seed", "5",
+                                      "--pairs", "2", "--workers", "1", "--out", str(out)])
+    H.main()
+    printed = capsys.readouterr().out
+    sword = pilot_native_spec("T1-SWORD-1")
+    assert sword.startswith("mcts:39+") and "net-pilot-sword-bot-g2.npz" in sword
+    assert f"对手 bot/T1-SWORD-1：它自己练过的驾驶员 {sword}" in printed and "对手 bot/T1-HAVEN-2：random" in printed
+    assert pilot_native_spec("T1-HAVEN-2") is None
+    assert len([json.loads(x) for x in out.read_text().splitlines()]) == 2

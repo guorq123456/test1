@@ -7,7 +7,9 @@ if os.name == "nt":
     import ctypes
     k = ctypes.windll.kernel32
     k.SetPriorityClass(k.GetCurrentProcess(), 0x4000)   # below normal; children inherit
-FIELD = "analysis/pilot/fields/bot-frozen7.txt"
+# bot/T3-FOREST-2 (the bot's combo elf; the WGP comparison report 2026-11-15, section 7) plays against the same six
+# non-Forest decks, in a field with it in place of T1-FOREST-1
+FIELD = {"bot/T3-FOREST-2": "analysis/pilot/fields/bot-frozen7-forest2.txt"}.get(HERO, "analysis/pilot/fields/bot-frozen7.txt")
 RUN = f"runs/{NAME}"
 SELF, HOLD, GATE, TIME = BASE, BASE + 1000, BASE + 2000, BASE + 2900
 ENV = dict(os.environ, OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1", PYTHONUTF8="1")

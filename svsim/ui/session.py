@@ -126,6 +126,15 @@ PILOT_CHECKS = {"T1-SWORD-1": {"normal": (76.0, 65.0), "strong": (79.0, 68.5), "
                 "T3-RUNE-1": {"normal": (51.0, 29.0), "strong": (55.5, 36.0), "unseen": (71.0, 43.0)},
                 "T1-HAVEN-1": {"normal": (66.0, 48.0), "strong": (63.0, 56.5), "unseen": (68.5, 66.0)},
                 "T1-PORTAL-1": {"normal": (80.0, 64.0), "strong": (85.5, 77.0), "unseen": (92.0, 87.5)}}
+def pilot_native_spec(key: str) -> str | None:
+    """The pilot of the bot's deck `key` as its gate played it natively (its equal-CPU N against mcts:100+plan), for
+    tools.herogate --opp-pilots: an opponent that plays its own trained pilot (None: no pilot for `key`)."""
+    if key not in PILOT_MODELS:
+        return None
+    net, prior, (n, _, _) = PILOT_MODELS[key]
+    return f"mcts:{n}+plan+setnet={_M}/{net}.npz+netmid+netany+puct={_M}/{prior}.npz:2:1"
+
+
 PILOTS = {(level, key): spec for key in PILOT_MODELS for level in ("normal", "strong", "max")
           if (spec := pilot_spec(key, level))}
 RATINGS = Path(__file__).resolve().parent / "ratings.json"

@@ -24,20 +24,21 @@ import sys
 import time
 
 HEROES = {"forest": ("bot/T1-FOREST-1", 86960000), "sword": ("bot/T1-SWORD-1", 87020000),
-          "dragon": ("bot/T3-DRAGON-1", 87080000), "abyss": ("bot/T1-ABYSS-1", 87140000)}
+          "dragon": ("bot/T3-DRAGON-1", 87080000), "abyss": ("bot/T1-ABYSS-1", 87140000),
+          "forest2": ("bot/T3-FOREST-2", 87240000)}     # the bot's combo elf (WGP comparison report 2026-11-15, section 7)
 DECK, W = sys.argv[1], int(sys.argv[2])
 DRY = "dry" in sys.argv[3:]
 A, B = tuple(int(x) for x in sys.argv[3:] if x != "dry") or (2, 3)
 TIMES = {(2, 3): 9800, (4, 5): 11900}       # time-match seeds inside the bank (the analysis ledger, ac6f25a1)
 assert (A, B) in TIMES, "A B: 2 3 or 4 5"
 SUF = "" if (A, B) == (2, 3) else f"-g{B}"
-assert DECK in HEROES, "DECK forest|sword|dragon|abyss"
+assert DECK in HEROES, "DECK forest|sword|dragon|abyss|forest2"
 if os.name == "nt":
     import ctypes
     k = ctypes.windll.kernel32
     k.SetPriorityClass(k.GetCurrentProcess(), 0x4000)   # below normal; children inherit
 HERO, BANK = HEROES[DECK]
-FIELD = "analysis/pilot/fields/bot-frozen7.txt"
+FIELD = {"forest2": "analysis/pilot/fields/bot-frozen7-forest2.txt"}.get(DECK, "analysis/pilot/fields/bot-frozen7.txt")
 RUN = f"runs/pilot-{DECK}-bot-g1"
 L = f"{RUN}/logs"
 

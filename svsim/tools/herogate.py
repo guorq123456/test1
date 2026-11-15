@@ -147,6 +147,9 @@ def main() -> None:
     ap.add_argument("--x", required=True, help="the pilot under test (arena spec), on the hero's side")
     ap.add_argument("--base", required=True, help="the baseline pilot, on the hero's side")
     ap.add_argument("--opp", required=True, help="the opponents' agent")
+    ap.add_argument("--opp-pilots", action="store_true",
+                    help="an opponent deck labelled bot/<key> with an installed pilot (ui.session.PILOT_MODELS) plays "
+                         "that pilot at its gate's native N; the others play --opp")
     ap.add_argument("--seed", type=int, required=True, help="pair k plays deal seed + k")
     ap.add_argument("--pairs", type=int, default=300)
     ap.add_argument("--workers", type=int, default=4)
@@ -171,17 +174,29 @@ def main() -> None:
         os.makedirs(os.path.dirname(args.out), exist_ok=True)
     print(f"条件：英雄 {args.hero} 对 {len(opps)} 套对手轮流（{args.field}）；每对 = 一副发牌，X 和基线各坐两边；{CONDITION}",
           flush=True)
+    opp_spec = {i: args.opp for i in opps}
+    if args.opp_pilots:
+        from svsim.ui.session import pilot_native_spec
+        for i in opps:
+            label = labels[i]
+            spec = pilot_native_spec(label[len("bot/"):]) if label.startswith("bot/") else None
+            opp_spec[i] = spec or args.opp
     print(f"X = {args.x}\n基线 = {args.base}\n对手 = {args.opp}", flush=True)
+    if args.opp_pilots:
+        for i in opps:
+            print(f"  对手 {labels[i]}：{'它自己练过的驾驶员 ' + opp_spec[i] if opp_spec[i] != args.opp else args.opp}",
+                  flush=True)
     from svsim.learn.provenance import bank_lines, guard, pending_rulings_line, simulator_line
     print(simulator_line(args.x, args.allow_stale), flush=True)      # the gate report template's fixed lines
     for line in bank_lines(args.seed, count, args.bank, bool(args.time)):
         print(line, flush=True)
     print(pending_rulings_line(), flush=True)
-    guard([args.x, args.base, args.opp], args.allow_stale, out=lambda s: print(s, flush=True))  # stale stops the gate
+    guard([args.x, args.base, *sorted(set(opp_spec.values()))], args.allow_stale,
+          out=lambda s: print(s, flush=True))                                                     # stale stops the gate
     print("BLAS 线程：" + "，".join(f"{k}={os.environ.get(k, '未设')}" for k in
                                   ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")), flush=True)
     todo = [(k, args.seed + k, opps[k % len(opps)], field[hero][1], field[opps[k % len(opps)]][1], args.x, args.base,
-             args.opp) for k in range(count) if k not in done]
+             opp_spec[opps[k % len(opps)]]) for k in range(count) if k not in done]
     t0 = time.time()
     fh = open(args.out, "a", encoding="utf-8") if args.out else None
     with (Pool(args.workers) if args.workers > 1 else _InProcess()) as pool:
