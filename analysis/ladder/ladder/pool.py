@@ -104,11 +104,37 @@ class Member:
         return self.since_change < UNSTABLE_GAMES
 
 
+def pick_opponent(a, members, mu: float, rng: random.Random, cr: float | None = None):
+    """§4.2 for one side `a` (its CR `cr`, default a.cr): the opponent's class uniformly over the 7, again while
+    that class has nobody (other than `a`); within it, by matching weight among members within 200, else the one
+    with the closest CR (ties uniformly, A17). Shared by the pool and the frozen-pool evaluator."""
+    mine = a.cr if cr is None else cr
+    by_craft = {}
+    for m in members:
+        if m is not a:
+            by_craft.setdefault(m.craft, []).append(m)
+    if not by_craft:
+        raise PoolError("nobody to play")
+    while True:
+        cands = by_craft.get(rng.choice(CRAFTS))
+        if not cands:
+            continue                                           # nobody of that class: draw the class again
+        near = [m for m in cands if rules.within_window(mine, m.cr)]
+        if near:
+            w = [rules.effective_weight(m.cr, mu, m.protected) for m in near]
+            return rng.choices(near, weights=w)[0], "window"
+        best = min(abs(m.cr - mine) for m in cands)
+        return rng.choice([m for m in cands if abs(m.cr - mine) == best]), "closest"
+
+
 class Pool:
-    def __init__(self, path):
-        self.dir = Path(path)
-        self.events_path = self.dir / "events.jsonl"
-        self.games_path = self.dir / "games.jsonl"
+    def __init__(self, path, on_event=None):
+        """`path` None: an in-memory pool (statistical checks on made-up results; nothing written).
+        `on_event(pool, ev)` is called after every event is folded in, on load and live (the leaderboard uses it)."""
+        self.dir = Path(path) if path is not None else None
+        self.events_path = self.dir / "events.jsonl" if self.dir else None
+        self.games_path = self.dir / "games.jsonl" if self.dir else None
+        self.on_event = on_event
         self.members: dict[str, Member] = {}
         self.period = 0
         self.params: dict = {}
@@ -119,7 +145,7 @@ class Pool:
         self.inflight: dict[str, dict] = {}
         self.cr_sum_check = 0            # sum of CR changes from games (zero-sum check)
         self.lost_to_removal = 0         # CR changes that went to a member already removed (A4)
-        if self.events_path.exists():
+        if self.events_path is not None and self.events_path.exists():
             for line in self.events_path.read_text(encoding="utf-8").splitlines():
                 if line.strip():
                     self._apply(json.loads(line))
@@ -128,12 +154,14 @@ class Pool:
     # --- creation and the event log --------------------------------------------------------------------------
 
     @classmethod
-    def create(cls, path, seeds: tuple[int, int], rng_seed: int | None = None, note: str = "") -> "Pool":
-        d = Path(path)
-        if (d / "events.jsonl").exists():
-            raise PoolError(f"{d} already holds a pool")
-        d.mkdir(parents=True, exist_ok=True)
-        pool = cls(d)
+    def create(cls, path, seeds: tuple[int, int], rng_seed: int | None = None, note: str = "",
+               on_event=None) -> "Pool":
+        if path is not None:
+            d = Path(path)
+            if (d / "events.jsonl").exists():
+                raise PoolError(f"{d} already holds a pool")
+            d.mkdir(parents=True, exist_ok=True)
+        pool = cls(path, on_event=on_event)
         lo, hi = int(seeds[0]), int(seeds[1])
         if not lo < hi:
             raise PoolError("empty seed range")
@@ -146,10 +174,10 @@ class Pool:
 
     def _log(self, ev: dict) -> dict:
         ev = {"n": self.n_events, **ev}
-        self.dir.mkdir(parents=True, exist_ok=True)
-        with self.events_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(ev, ensure_ascii=False) + "\n")
-            f.flush()
+        if self.dir is not None:
+            with self.events_path.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(ev, ensure_ascii=False) + "\n")
+                f.flush()
         self._apply(ev)
         return ev
 
@@ -202,6 +230,8 @@ class Pool:
             self.members[ev["member"]].exit_reason = ev["reason"]
         else:
             raise PoolError(f"unknown event {kind}")
+        if self.on_event is not None:
+            self.on_event(self, ev)
 
     # --- state ---------------------------------------------------------------------------------------------
 
@@ -308,21 +338,8 @@ class Pool:
             raise PoolError("fewer than two members in the pool")
         mu = self.mu
         a = rng.choices(act, weights=[self.weight(m, mu) for m in act])[0]
-        if not any(m is not a for m in act):
-            raise PoolError("nobody to play")
-        for _ in range(10000):
-            craft = rng.choice(CRAFTS)
-            cands = [m for m in act if m.craft == craft and m is not a]
-            if not cands:
-                continue                                       # nobody of that class: draw the class again
-            near = [m for m in cands if rules.within_window(a.cr, m.cr)]
-            if near:
-                b = rng.choices(near, weights=[self.weight(m, mu) for m in near])[0]
-                return a, b, "window"
-            best = min(abs(m.cr - a.cr) for m in cands)
-            b = rng.choice([m for m in cands if abs(m.cr - a.cr) == best])   # ties: uniformly (A17)
-            return a, b, "closest"
-        raise PoolError("no opponent class found")
+        b, how = pick_opponent(a, act, mu, rng)
+        return a, b, how
 
     def next_job(self) -> dict:
         """Pair two members from the CRs of this moment, reserve a ladder seed, log the start."""

@@ -1,0 +1,81 @@
+{
+ "model": "21 members, 3 per class at -6/0/+6 pp; P = 0.5 + s_a - s_b",
+ "seed": 20261121,
+ "leaderboard": {
+  "pools": 40,
+  "ratio_tau": {
+   "mean": 1.061,
+   "min": 0.726,
+   "max": 1.27
+  },
+  "ratio_batch_means": {
+   "mean": 1.164
+  },
+  "rel_cr_by_strength": {
+   "-6pp": -65.1,
+   "+0pp": -0.6,
+   "+6pp": 64.3
+  },
+  "removed_by_strength": {
+   "-6pp": "24 of 280",
+   "+0pp": "0 of 280",
+   "+6pp": "0 of 280"
+  }
+ },
+ "evaluator_fluctuation": {
+  "+0pp": {
+   "mean": 1.0,
+   "sd_of_evals": 8.3,
+   "mean_reported_se": 7.54,
+   "ratio": 1.102,
+   "covered": 18
+  }
+ },
+ "known_strengths": {
+  "-6pp": {
+   "mean": -58.8,
+   "sd_of_evals": 2.86,
+   "mean_reported_se": 8.65,
+   "ratio": 0.331,
+   "covered": 3
+  },
+  "-3pp": {
+   "mean": -22.0,
+   "sd_of_evals": 7.88,
+   "mean_reported_se": 8.59,
+   "ratio": 0.916,
+   "covered": 3
+  },
+  "+0pp": {
+   "mean": -0.2,
+   "sd_of_evals": 6.96,
+   "mean_reported_se": 9.49,
+   "ratio": 0.733,
+   "covered": 3
+  },
+  "+3pp": {
+   "mean": 29.4,
+   "sd_of_evals": 7.5,
+   "mean_reported_se": 6.84,
+   "ratio": 1.096,
+   "covered": 3
+  },
+  "+6pp": {
+   "mean": 57.1,
+   "sd_of_evals": 3.21,
+   "mean_reported_se": 7.11,
+   "ratio": 0.452,
+   "covered": 3
+  },
+  "+12pp": {
+   "mean": 107.1,
+   "sd_of_evals": 2.44,
+   "mean_reported_se": 7.38,
+   "ratio": 0.331,
+   "covered": 3
+  }
+ },
+ "known_order_right": true,
+ "cr_per_pp_fit": 9.09,
+ "seconds": 80
+}
