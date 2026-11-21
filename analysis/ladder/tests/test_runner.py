@@ -1,0 +1,107 @@
+"""The batch runner (phase 1, item 1.3): results by the rules, logs that replay, resuming.
+Seeds 99001200-99001299 (host probe bank, SEEDS.md)."""
+import json
+import sys
+from pathlib import Path
+
+import pytest
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parent))
+sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parents[2]))
+import os  # noqa: E402
+import subprocess  # noqa: E402
+os.environ["LADDER_EXTRA_PATH"] = str(HERE)
+from ladder import runner  # noqa: E402
+from ladder.replay import replay_decisions, replay_moves  # noqa: E402
+
+ROOT = HERE.parents[2]
+CODES = [l.strip().split("|")[1] for l in (ROOT / "analysis/pilot/fields/bot-frozen7.txt").read_text(
+    encoding="utf-8").splitlines() if l.strip() and not l.startswith("#")]
+
+
+def job(i, s0, s1, a=1, b=4, first=None):
+    return {"id": f"t-{i}", "seed": 99001200 + i, "first": first, "decks": [CODES[a], CODES[b]],
+            "strategies": [s0, s1], "strategy_seeds": [i * 2 + 1, i * 2 + 2], "labels": {"test": True}}
+
+
+@pytest.fixture(scope="module")
+def log_path(tmp_path_factory):
+    return tmp_path_factory.mktemp("runs") / "games.jsonl"
+
+
+@pytest.fixture(scope="module")
+def logs(log_path):
+    out = log_path
+    jobs = [job(0, "bot:greedy+plan", "bot:greedy+plan"),
+            job(1, "bot:mcts:100+plan", "py:helpers:Random", first=0),
+            job(2, "py:helpers:Random", "py:helpers:Crash"),
+            job(3, "py:helpers:Illegal", "py:helpers:Random", first=0),
+            job(4, "py:helpers:Random", "py:helpers:Slow", first=0),
+            job(5, "py:helpers:Random", "py:helpers:Random", a=2, b=6)]
+    summary = runner.run(jobs, str(out), workers=3, step_limit=5.0, quiet=True)
+    assert summary["played"] == 6
+    rows = {r["id"]: r for r in map(json.loads, out.read_text().splitlines())}
+    again = runner.run(jobs, str(out), workers=2, step_limit=5.0, quiet=True)        # resume: nothing to do
+    assert again["played"] == 0 and again["skipped"] == 6
+    return rows
+
+
+def test_results_follow_the_rules(logs):
+    assert logs["t-0"]["result"] in ("normal", "draw")
+    assert logs["t-2"]["result"] == "crash" and logs["t-2"]["loser"] == 1 and logs["t-2"]["winner"] == 0
+    assert logs["t-3"]["result"] == "illegal" and logs["t-3"]["loser"] == 0
+    assert logs["t-4"]["result"] == "timeout" and logs["t-4"]["loser"] == 1
+
+
+def test_logs_carry_what_a_replay_needs(logs):
+    r = logs["t-1"]
+    for key in ("seed", "first", "decks", "strategies", "strategy_seeds", "actions", "steps", "cpu_unit",
+                "provenance", "out_of_guess", "turns"):
+        assert key in r, key
+    assert len(r["steps"]) == len(r["actions"])
+    assert r["provenance"]["python"]
+
+
+@pytest.mark.parametrize("gid", ["t-0", "t-1", "t-2", "t-5"])
+def test_moves_replay(logs, gid):
+    ok, why = replay_moves(logs[gid])
+    assert ok, why
+
+
+@pytest.mark.parametrize("gid", ["t-0", "t-1", "t-5"])
+def test_decisions_replay(logs, gid):
+    ok, why = replay_decisions(logs[gid])
+    assert ok, why
+
+
+def test_replay_in_a_fresh_process(logs, log_path):
+    """The replay tool alone, in a new interpreter (no search ever ran there): every logged game must replay.
+    This is what caught the missing card scripts (ENVIRONMENT 9.4)."""
+    r = subprocess.run([sys.executable, "-m", "ladder.replay", str(log_path)], cwd=HERE.parent,
+                       capture_output=True, text=True, timeout=600)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert json.loads(r.stdout.strip().splitlines()[-1]) == {"checked": 6, "failed": 0}
+
+
+def test_every_card_script_is_loaded_in_a_fresh_process():
+    """Importing the ladder package alone registers every class's card scripts: no baseline card plays as vanilla."""
+    code = ("import sys; sys.path[:0] = [%r, %r]\n"
+            "from ladder import runner, base\n"
+            "codes = [l.strip().split('|')[1] for l in open(%r, encoding='utf-8') if l.strip() and l[0] != '#']\n"
+            "print(sum(len(runner.unscripted(runner.load_deck(c))) for c in codes))\n"
+            % (str(HERE.parent), str(ROOT), str(ROOT / "analysis/pilot/fields/bot-frozen7.txt")))
+    r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, r.stderr
+    assert r.stdout.strip() == "0"
+
+
+def test_a_deck_with_an_unscripted_card_is_void():
+    from svsim.cards.pool import POOL
+    from svsim.core.script import has_script
+    no_script = next(c.card_id for c in POOL.values() if c.has_ability and not has_script(c.card_id))
+    deck = [no_script] + [c.card_id for c in runner.load_deck(CODES[1])][1:]
+    res = runner.play_job({"id": "t-v", "seed": 99001206, "decks": [deck, CODES[4]],
+                           "strategies": ["py:helpers:Random", "py:helpers:Random"], "strategy_seeds": [1, 2]})
+    assert res["result"] == "void" and "no script" in res["error"]

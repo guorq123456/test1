@@ -34,6 +34,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import svsim.cards.library  # noqa: F401  every card script; the engine plays an unregistered card as vanilla
 from svsim.core.state import CardInstance, GameState
 from svsim.core.view import observe, shuffle
 
