@@ -10,6 +10,15 @@ cd /d C:\claude\ladder
 set PYTHONHASHSEED=0
 set PYTHONUTF8=1
 if not exist C:\claude\ladder-runs\p1 mkdir C:\claude\ladder-runs\p1
+rem Refuse to start while another phase-1 run is going (two at once would double the processes and share files).
+powershell -NoProfile -Command "if (Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'python.exe' -and $_.CommandLine -match 'phase1_checks' }) { exit 3 } else { exit 0 }"
+set CHECK=%errorlevel%
+if not "%CHECK%"=="0" (
+  echo not started %date% %time%: running-check returned %CHECK%, 3 means a phase-1 run is still going >> C:\claude\ladder-runs\p1\status.txt
+  echo Not started: a phase-1 run is still going, or the check could not run - code %CHECK%.
+  pause
+  exit /b 1
+)
 set PYBASE=
 for /f "usebackq delims=" %%p in (`.venv\Scripts\python.exe -c "import sys; print(sys._base_executable)"`) do set PYBASE=%%p
 set __PYVENV_LAUNCHER__=%CD%\.venv\Scripts\python.exe

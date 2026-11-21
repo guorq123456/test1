@@ -21,10 +21,15 @@ Steps, in this order (each writes RUNS/<step>/summary.json and probe/p1-<step>.j
 5. fluct (波动检查): the Swordcraft baseline evaluated 20 times in the frozen baseline pool (each evaluation 5
    repeats x 1200 games, last 600, §4.4); the spread of the 20 results over the mean reported standard error should
    be in 0.7-1.4.
+6. known2 (已知强弱, finer round, A26): as `known` with random-move rates 0, 0.04, 0.08, 0.15. In `known` the two
+   weakest versions won under 25% against everyone, where §3 gives no floor (flat +8/-24 past 175), and their CRs
+   walked off by thousands (LD-17); this round keeps every version inside the field. Summaries of both rounds also
+   give each member's mean relative CR over the two halves of its window (a drifting CR shows there).
 
 Seeds: baseline from the formal-ladder range; everything else from the host-measurement range 92300000-92799999,
 split: fluct 92300000-92499999 (10000 per evaluation), known 92500000-92649999 (check pools 92500000-92549999,
-head-to-head 92550000-92559999, evaluator 92560000-92639999), gate 92650000-92699999 (SEEDS.md).
+head-to-head 92550000-92559999, evaluator 92560000-92639999), gate 92650000-92699999, known2 92700000-92795999
+(pools 92700000-92753999, head-to-head 92754000-92755999, evaluator 92756000-92795999) (SEEDS.md).
 `--scale` multiplies every game count (0.02 for a quick dry run in the container).
 """
 from __future__ import annotations
@@ -62,6 +67,15 @@ DEFAULT = "bot:mcts:100+plan"
 SCALE = [1.0]
 SWORD = 2
 EPS = (0.0, 0.15, 0.35, 0.6)
+# The second, finer round (A26): the first one's two weakest versions fell beyond what §3 can place (past 175 the
+# change is a flat +8/-24, so a member winning under 25% against its nearest opponents has no floor and its CR walks
+# off; LD-17). Small gaps instead, all inside the field: about 7, 13 and 25 points below the default in mirror games.
+KNOWN = {
+    "known": {"eps": EPS, "pools": KNOWN_POOL, "h2h": KNOWN_H2H, "eval": KNOWN_EVAL, "eval_span": 20000},
+    "known2": {"eps": (0.0, 0.04, 0.08, 0.15),
+               "pools": {"all-1500": (92700000, 92727000), "reversed": (92727000, 92754000)},
+               "h2h": (92754000, 92756000), "eval": 92756000, "eval_span": 10000},   # up to 92795999
+}
 
 
 def baseline_codes():
@@ -184,7 +198,7 @@ def step_gate(runs: Path, a) -> dict:
 
 # --- 4. known strengths -------------------------------------------------------------------------------------------
 
-def check_pool(d: Path, starts, seeds) -> tuple[P.Pool, list[str]]:
+def check_pool(d: Path, starts, seeds, eps_list=EPS) -> tuple[P.Pool, list[str]]:
     if (d / "events.jsonl").exists():
         pool = P.Pool(d)
         return pool, [m.mid for m in pool.active() if m.owner == "check"]
@@ -196,13 +210,15 @@ def check_pool(d: Path, starts, seeds) -> tuple[P.Pool, list[str]]:
             pool.enter([c.card_id for c in load_deck(code)], DEFAULT, "baseline", deck_code=code, note=name)
     ids = [c.card_id for c in load_deck(sword_code)]
     mids = []
-    for eps, cr in zip(EPS, starts):
+    for eps, cr in zip(eps_list, starts):
         spec = DEFAULT if eps == 0 else f"mix:{eps}:mcts:100+plan"
         mids.append(pool.enter(ids, spec, "check", note=f"eps {eps}", cr=cr))
     return pool, mids
 
 
-def head_to_head(runs: Path, a) -> list[dict]:
+def head_to_head(runs: Path, a, step="known") -> list[dict]:
+    cfg = KNOWN[step]
+    eps_list = cfg["eps"]
     from ladder import runner
     codes = baseline_codes()
     sword = next(c for n, c in codes if "SWORD" in n)
@@ -210,13 +226,13 @@ def head_to_head(runs: Path, a) -> list[dict]:
     out = []
     rng = random.Random(7)
     used = set()
-    for i in range(len(EPS) - 1):
-        hi, lo = EPS[i], EPS[i + 1]
+    for i in range(len(eps_list) - 1):
+        hi, lo = eps_list[i], eps_list[i + 1]
         specs = [DEFAULT if e == 0 else f"mix:{e}:mcts:100+plan" for e in (hi, lo)]
         jobs = []
         for k in range(n):
             while True:
-                seed = rng.randrange(*KNOWN_H2H)
+                seed = rng.randrange(*cfg["h2h"])
                 if seed not in used:
                     used.add(seed)
                     break
@@ -224,7 +240,7 @@ def head_to_head(runs: Path, a) -> list[dict]:
             jobs.append({"id": f"h2h-{i}-{k:04d}", "seed": seed, "first": None, "decks": [sword, sword],
                          "strategies": ss, "strategy_seeds": [rng.randrange(1, 2 ** 31), rng.randrange(1, 2 ** 31)],
                          "labels": {"better_seat": k % 2}})
-        path = runs / "known" / f"h2h-{i}.jsonl"
+        path = runs / step / f"h2h-{i}.jsonl"
         runner.run(jobs, str(path), workers=a.workers, mask=a.mask, quiet=True)
         logs = [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
         dec = [l for l in logs if l.get("winner") in (0, 1)]
@@ -237,37 +253,51 @@ def head_to_head(runs: Path, a) -> list[dict]:
     return out
 
 
-def step_known(runs: Path, a) -> dict:
+def halves(series, mid, window) -> list[float]:
+    """Mean relative CR over the first and the second half of the member's window: a drifting CR shows here."""
+    rel = [cr - mu for cr, mu in series.points[mid][-window:]]
+    h = len(rel) // 2
+    return [round(sum(rel[:h]) / max(1, h), 1), round(sum(rel[h:]) / max(1, len(rel) - h), 1)]
+
+
+def known_round(runs: Path, a, step: str) -> dict:
+    cfg = KNOWN[step]
+    eps_list = cfg["eps"]
     each = max(60, int(2400 * a.scale))                  # 2000 in the window after ~400 to settle
-    res = {}
+    res, drift = {}, {}
     for name, starts in (("all-1500", (1500, 1500, 1500, 1500)), ("reversed", (1300, 1433, 1567, 1700))):
-        d = runs / "known" / name
-        pool, mids = check_pool(d, starts, KNOWN_POOL[name])
+        d = runs / step / name
+        pool, mids = check_pool(d, starts, cfg["pools"][name], eps_list)
         ladder_until(pool, each, a.workers, a.mask, members=mids)
         pool, series = L.load(d)
         window = min(L.WINDOW_GAMES, each - max(10, each // 6))
         rows = {r["mid"]: r for r in L.board(pool, series, window=window)}
         res[name] = [{"eps": eps, "rel_cr": round(rows[m]["rel_cr"], 1),
                       "ci": [round(rows[m]["lo"], 1), round(rows[m]["hi"], 1)], "games": rows[m]["games"]}
-                     for eps, m in zip(EPS, mids)]
+                     for eps, m in zip(eps_list, mids)]
+        names = {m.mid: m.note for m in pool.active()}
+        drift[name] = {names[m.mid]: {"halves": halves(series, m.mid, window), "tau": round(rows[m.mid]["tau"], 1)}
+                       for m in pool.active() if m.mid in rows}
     # the evaluator on the four, frozen from the first run
-    d1 = runs / "known" / "all-1500"
-    fz = runs / "known" / "frozen.json"
+    d1 = runs / step / "all-1500"
+    fz = runs / step / "frozen.json"
     if not fz.exists():
         fz.write_text(json.dumps(E.freeze(d1)), encoding="utf-8")
     frozen, _ = E.load_frozen(fz)
     pool1 = P.Pool(d1)
     mids1 = [m.mid for m in pool1.active() if m.owner == "check"]
     evals = []
+    span = cfg["eval_span"]
     for k, mid in enumerate(mids1):
         cand = E.candidate_from(frozen, mid=mid)
-        lo = KNOWN_EVAL + 20000 * k                              # each candidate its own slice of the range
-        ev = E.Evaluation(fz, runs / "known" / f"eval-{k}", cand, (lo, lo + 20000),
+        lo = cfg["eval"] + span * k                              # each candidate its own slice of the range
+        ev = E.Evaluation(fz, runs / step / f"eval-{k}", cand, (lo, lo + span),
                           games=max(10, int(1200 * a.scale)), tail=max(5, int(600 * a.scale)), repeats=3,
                           rng_seed=100 + k)
         r = ev.run(workers=a.workers, mask=a.mask) if not ev.done() else ev.result()
-        evals.append({"eps": EPS[k], "rel_cr": round(r["rel_cr"], 1), "ci": [round(r["lo"], 1), round(r["hi"], 1)]})
-    h2h = head_to_head(runs, a)
+        evals.append({"eps": eps_list[k], "rel_cr": round(r["rel_cr"], 1),
+                      "ci": [round(r["lo"], 1), round(r["hi"], 1)]})
+    h2h = head_to_head(runs, a, step)
     order = [all(x["rel_cr"] > y["rel_cr"] for x, y in zip(rs, rs[1:])) for rs in res.values()]
     order_eval = all(x["rel_cr"] > y["rel_cr"] for x, y in zip(evals, evals[1:]))
     agree = [abs(x["rel_cr"] - y["rel_cr"]) <= 1.96 * math.hypot((x["ci"][1] - x["ci"][0]) / 3.92,
@@ -277,9 +307,17 @@ def step_known(runs: Path, a) -> dict:
     for i, h in enumerate(h2h):
         pool_gap = res["all-1500"][i]["rel_cr"] - res["all-1500"][i + 1]["rel_cr"]
         gaps.append({**h, "pool_gap": round(pool_gap, 1)})
-    return save(runs, "known", {"leaderboard": res, "evaluator": evals, "head_to_head": gaps,
-                                "order_right_leaderboard": order, "order_right_evaluator": order_eval,
-                                "runs_agree": agree})
+    return save(runs, step, {"eps": list(eps_list), "leaderboard": res, "evaluator": evals, "head_to_head": gaps,
+                             "order_right_leaderboard": order, "order_right_evaluator": order_eval,
+                             "runs_agree": agree, "drift": drift})
+
+
+def step_known(runs: Path, a) -> dict:
+    return known_round(runs, a, "known")
+
+
+def step_known2(runs: Path, a) -> dict:
+    return known_round(runs, a, "known2")
 
 
 # --- 5. fluctuation ------------------------------------------------------------------------------------------
@@ -310,7 +348,7 @@ def step_fluct(runs: Path, a) -> dict:
 
 
 STEPS = {"baseline": step_baseline, "replay": step_replay, "gate": step_gate, "known": step_known,
-         "fluct": step_fluct}
+         "fluct": step_fluct, "known2": step_known2}
 
 
 def main():

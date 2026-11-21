@@ -21,8 +21,9 @@ HERE = Path(__file__).resolve().parent
 sys.path[:0] = [str(HERE)]
 import phase1_checks as C  # noqa: E402
 
-STEPS = ("baseline", "replay", "gate", "known", "fluct")
-ZH = {"baseline": "基线天梯", "replay": "重放", "gate": "把关工具自检", "known": "已知强弱", "fluct": "波动"}
+STEPS = ("baseline", "replay", "gate", "known", "fluct", "known2")
+ZH = {"baseline": "基线天梯", "replay": "重放", "gate": "把关工具自检", "known": "已知强弱（第一轮，粗）",
+      "fluct": "波动", "known2": "已知强弱（第二轮，细）"}
 
 
 def logs(path: Path):
@@ -36,12 +37,13 @@ def groups(runs: Path) -> dict[str, tuple[tuple[int, int], list[Path]]]:
     """Game logs by seed segment: name -> ((lo, hi), files)."""
     g = {"baseline": (C.LADDER_SEEDS, [runs / "baseline" / "pool" / "games.jsonl"]),
          "gate": (C.GATE_SEEDS, sorted((runs / "gate").glob("G-*/games.jsonl"))),
-         "known pools": ((C.KNOWN_POOL["all-1500"][0], C.KNOWN_POOL["reversed"][1]),
-                         [runs / "known" / n / "games.jsonl" for n in C.KNOWN_POOL]),
-         "known head-to-head": (C.KNOWN_H2H, sorted((runs / "known").glob("h2h-*.jsonl"))),
-         "known evaluator": ((C.KNOWN_EVAL, C.KNOWN_EVAL + 20000 * len(C.EPS)),
-                             sorted((runs / "known").glob("eval-*/games.jsonl"))),
          "fluct": (C.FLUCT_SEEDS, sorted((runs / "fluct").glob("eval-*/games.jsonl")))}
+    for step, cfg in C.KNOWN.items():
+        g[f"{step} pools"] = ((cfg["pools"]["all-1500"][0], cfg["pools"]["reversed"][1]),
+                              [runs / step / n / "games.jsonl" for n in cfg["pools"]])
+        g[f"{step} head-to-head"] = (cfg["h2h"], sorted((runs / step).glob("h2h-*.jsonl")))
+        g[f"{step} evaluator"] = ((cfg["eval"], cfg["eval"] + cfg["eval_span"] * len(cfg["eps"])),
+                                  sorted((runs / step).glob("eval-*/games.jsonl")))
     return {k: (r, [f for f in fs if f.exists()]) for k, (r, fs) in g.items()}
 
 
@@ -97,9 +99,9 @@ def wilson(k, n, z=1.96):
     return round(c - h, 4), round(c + h, 4)
 
 
-def h2h_from_logs(runs: Path) -> list[dict]:
+def h2h_from_logs(runs: Path, step: str) -> list[dict]:
     out = []
-    for f in sorted((runs / "known").glob("h2h-*.jsonl")):
+    for f in sorted((runs / step).glob("h2h-*.jsonl")):
         dec = [r for r in logs(f) if r.get("winner") in (0, 1)]
         k = sum(r["winner"] == r["labels"]["better_seat"] for r in dec)
         draws = sum(1 for r in logs(f) if r.get("result") == "draw")
@@ -120,8 +122,8 @@ def render(runs: Path, rep: dict) -> str:
     for k in STEPS:
         d = s.get(k)
         ok = "—" if d is None else ("过" if d.get("ok", d.get("zero_sum", {}).get("ok")) else "**没过**")
-        if k == "known" and d:
-            ok = "过" if all(d["order_right_leaderboard"]) and d["order_right_evaluator"] and all(d["runs_agree"]) \
+        if k in C.KNOWN and d:
+            ok = "排序过（量值另看）" if all(d["order_right_leaderboard"]) and d["order_right_evaluator"] and all(d["runs_agree"]) \
                 else "**没过**"
         w(f"| {ZH[k]} | {'跑完' if d else '没有结果'} | {ok} |")
     if b := s.get("baseline"):
@@ -143,18 +145,32 @@ def render(runs: Path, rep: dict) -> str:
             dc = x["discordant"] or {}
             w(f"| {x['check']} | {x['verdict']} | {x['pairs']} | {x['expected_pairs'] or '—'} | {x['share'] or '—'} "
               f"| {dc.get('new', '—')} / {dc.get('old', '—')} | {x['compute_ratio']} |")
-    if k := s.get("known"):
-        w("\n## 已知强弱（皇家护卫基线卡表，默认打法按比例随机走一步）\n\n"
+    for step in C.KNOWN:
+        k = s.get(step)
+        if not k:
+            continue
+        eps_list = k.get("eps") or C.KNOWN[step]["eps"]
+        w(f"\n## {ZH[step]}：皇家护卫基线卡表，默认打法按比例随机走一步\n\n"
           "| 随机比例 | 天梯：都从 1500 起 | 天梯：起点倒过来 | 两次一致 | 冻结池评估（3 次重复） |\n|---|---|---|---|---|")
-        for i, e in enumerate(C.EPS):
+        for i, e in enumerate(eps_list):
             a, b2, ev = k["leaderboard"]["all-1500"][i], k["leaderboard"]["reversed"][i], k["evaluator"][i]
             w(f"| {e:.0%} | {a['rel_cr']:+.0f} {fmt_ci(a['ci'])} | {b2['rel_cr']:+.0f} {fmt_ci(b2['ci'])} "
               f"| {'是' if k['runs_agree'][i] else '**否**'} | {ev['rel_cr']:+.0f} {fmt_ci(ev['ci'])} |")
         w(f"\n排序对：天梯 {k['order_right_leaderboard']}，评估 {k['order_right_evaluator']}。\n")
-        w("| 相邻两档 | 直接对打局数 | 强的一方胜率 | 95% 区间（Wilson） | 池里的分差（都从 1500 起） |\n|---|---|---|---|---|")
-        for x, h in zip(k["head_to_head"], rep.get("h2h", [])):
+        w("| 相邻两档 | 直接对打局数 | 强的一方胜率 | 95% 区间（Wilson） | 按 §3 折成的分差（8 分 / 点） | "
+          "池里的分差（都从 1500 起） |\n|---|---|---|---|---|---|")
+        for x, h in zip(k["head_to_head"], rep.get("h2h", {}).get(step, [])):
             lo, hi = h["wilson"]
-            w(f"| {x['pair']} | {h['decided']} | {h['win_rate']:.1%} | [{lo:.1%}, {hi:.1%}] | {x['pool_gap']:+.0f} |")
+            w(f"| {x['pair']} | {h['decided']} | {h['win_rate']:.1%} | [{lo:.1%}, {hi:.1%}] | "
+              f"{x['cr_gap_8_per_pp']:+.0f} | {x['pool_gap']:+.0f} |")
+        if dr := k.get("drift"):
+            w("\n各成员窗口前一半、后一半的平均相对 CR（差得多就是还在漂）：\n\n| 成员 | 都从 1500 起 | 起点倒过来 |\n|---|---|---|")
+            for m in dr["all-1500"]:
+                cells = []
+                for run in ("all-1500", "reversed"):
+                    x = dr.get(run, {}).get(m)
+                    cells.append(f"{x['halves'][0]:+.0f} → {x['halves'][1]:+.0f}（τ {x['tau']}）" if x else "—")
+                w(f"| {m} | {cells[0]} | {cells[1]} |")
     if f := s.get("fluct"):
         means = [e["rel_cr"] for e in f["evaluations"]]
         tot = st.mean(means)
@@ -195,7 +211,7 @@ def main():
             rep["steps"][k] = json.loads(p.read_text(encoding="utf-8"))
     for name, (rng, files) in groups(runs).items():
         rep["games"][name] = scan(name, rng, files)
-    rep["h2h"] = h2h_from_logs(runs)
+    rep["h2h"] = {step: h2h_from_logs(runs, step) for step in C.KNOWN}
     (runs / "report.json").write_text(json.dumps(rep, ensure_ascii=False, indent=1), encoding="utf-8")
     md = render(runs, rep)
     Path(a.out or runs / "report.md").write_text(md, encoding="utf-8")
