@@ -38,6 +38,7 @@ import svsim.cards.library  # noqa: F401  every card script; the engine plays an
 from svsim.core.state import CardInstance, GameState
 from svsim.core.view import observe, shuffle
 
+BASE_VERSION = "base-1"   # recorded per member and per game (§4.3); a change to the base that reaches a member is an update
 EPS = 0.05        # a guessed list's weight for a shown card it doesn't hold (as analysis/deck-inference, 10-07)
 ROOT = Path(__file__).resolve().parents[3]
 

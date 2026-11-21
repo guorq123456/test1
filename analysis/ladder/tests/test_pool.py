@@ -1,0 +1,306 @@
+"""The pool manager (phase 1, item 1.4): every rule branch with synthetic members and made-up results, the
+zero-sum check, resuming from the event log, and one short real ladder through the batch runner.
+Ladder seeds 99001700-99001999 (host probe bank, SEEDS.md); deck seeds for synthetic lists 99001700+."""
+import json
+import os
+import random
+import sys
+from collections import Counter
+from pathlib import Path
+
+import pytest
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parent))
+sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parents[2]))
+os.environ["LADDER_EXTRA_PATH"] = str(HERE)
+from ladder import pool as P  # noqa: E402
+from ladder import rules  # noqa: E402
+from ladder.runner import load_deck  # noqa: E402
+from ladder.replay import replay_moves  # noqa: E402
+from svsim.cards.decks import random_deck  # noqa: E402
+from svsim.core.enums import Craft  # noqa: E402
+
+ROOT = HERE.parents[2]
+CODES = [l.strip().split("|")[1] for l in (ROOT / "analysis/pilot/fields/bot-frozen7.txt").read_text(
+    encoding="utf-8").splitlines() if l.strip() and not l.startswith("#")]
+BASE_DECKS = [[c.card_id for c in load_deck(code)] for code in CODES]       # one per class, classes 1..7 in order
+SEEDS = (99001700, 99002000)
+
+
+def synth_deck(craft, i):
+    return [c.card_id for c in random_deck(Craft(craft), random.Random(99001700 + 100 * craft + i))]
+
+
+def new_pool(tmp_path, name="p"):
+    return P.Pool.create(tmp_path / name, SEEDS, rng_seed=7)
+
+
+def finish(pool, job, winner, result="normal"):
+    return pool.settle({"id": job["id"], "result": result, "winner": winner})
+
+
+def baseline_pool(tmp_path, name="p"):
+    pool = new_pool(tmp_path, name)
+    for d in BASE_DECKS:
+        pool.enter(d, "bot:mcts:100+plan", "baseline", rng=random.Random(len(pool.members)))
+    return pool
+
+
+def test_entry_and_mu(tmp_path):
+    pool = baseline_pool(tmp_path)
+    assert [m.craft for m in pool.active()] == [1, 2, 3, 4, 5, 6, 7]
+    assert all(m.cr == 1500 for m in pool.active()) and pool.mu == 1500
+    assert len({m.anon for m in pool.active()}) == 7
+    for _ in range(40):                                  # move mu away from 1500, then a newcomer still enters at 1500
+        job = pool.next_job()
+        finish(pool, job, 0 if pool.members[job["labels"]["members"][0]].craft == 1 else 1)
+    assert pool.mu == pytest.approx(1500)                # zero-sum: no removal, so mu stays
+    pool.advance(force="test")                           # to the first deck period
+    mid = pool.enter(synth_deck(1, 0), "py:helpers:Random", "jia")
+    assert pool.members[mid].cr == 1500
+
+
+def test_zero_sum_and_settlement_by_the_rules(tmp_path):
+    pool = baseline_pool(tmp_path)
+    total = pool.total_cr()
+    rng = random.Random(1)
+    for _ in range(300):
+        job = pool.next_job()
+        a, b = (pool.members[x] for x in job["labels"]["members"])
+        ca, cb = a.cr, b.cr
+        w = rng.randrange(2)
+        ev = finish(pool, job, w)
+        winner, loser = (a, b) if w == 0 else (b, a)
+        cw, cl = (ca, cb) if w == 0 else (cb, ca)
+        assert winner.cr - cw == rules.delta(cw, cl, True) and loser.cr - cl == rules.delta(cl, cw, False)
+        assert sum(ev["deltas"]) == 0
+    assert pool.total_cr() == total and pool.cr_sum_check == 0
+
+
+def test_draws_and_void_change_nothing(tmp_path):
+    pool = baseline_pool(tmp_path)
+    before = {m.mid: (m.cr, m.games) for m in pool.active()}
+    j1, j2 = pool.next_job(), pool.next_job()
+    finish(pool, j1, None, "draw")
+    finish(pool, j2, None, "void")
+    assert {m.mid: (m.cr, m.games) for m in pool.active()} == before
+    assert sum(m.draws for m in pool.active()) == 2
+    j3 = pool.next_job()
+    finish(pool, j3, 1, "timeout")                       # a timeout (or crash, illegal) is a loss for its maker
+    assert sum(m.games for m in pool.active()) == 2
+
+
+def test_matching_window_weights_and_closest(tmp_path):
+    pool = new_pool(tmp_path)
+    for craft in (1, 2):
+        for i in range(2):
+            pool.enter(synth_deck(craft, i), "bot:greedy", "baseline", rng=random.Random(craft * 10 + i))
+    f1, f2, s1, s2 = pool.active()
+    for m in (f1, f2, s1, s2):
+        m.full_strategy_period, m.games = True, 5000      # out of protection (test-only direct state)
+    f1.cr, f2.cr, s1.cr, s2.cr = 1600, 1560, 1550, 1290   # mu = 1500
+    rng = random.Random(3)
+    # weights: s2 is 210 below mu -> 1 - 0.8 * 10/100 = 0.92; the rest 1
+    assert pool.weight(s2) == pytest.approx(0.92)
+    picks = Counter()
+    for _ in range(20000):
+        a, b, how = pool.draw_pair(rng)
+        picks[a.mid] += 1
+        assert a is not b
+        assert rules.within_window(a.cr, b.cr) or how == "closest"
+        if how == "closest":                             # nobody of that class within 200: the closest one
+            cands = [m for m in pool.active() if m.craft == b.craft and m is not a]
+            assert abs(b.cr - a.cr) == min(abs(m.cr - a.cr) for m in cands)
+    share = picks[s2.mid] / sum(picks.values())
+    assert share == pytest.approx(0.92 / 3.92, abs=0.01)
+    # s2 at 1290 against Forest: f1 (1600) and f2 (1560) are both past 200 -> always f2, the closest
+    s2_vs = Counter()
+    for _ in range(4000):
+        a, b, how = pool.draw_pair(rng)
+        if a is s2 and b.craft == 1:
+            s2_vs[(b.mid, how)] += 1
+    assert set(s2_vs) == {(f2.mid, "closest")}
+
+
+def test_opponent_class_is_uniform_and_empty_classes_are_redrawn(tmp_path):
+    pool = new_pool(tmp_path)
+    for craft in (1, 3, 5):
+        pool.enter(BASE_DECKS[craft - 1], "bot:greedy", "baseline", rng=random.Random(craft))
+    rng = random.Random(5)
+    seen = Counter()
+    for _ in range(9000):
+        a, b, _ = pool.draw_pair(rng)
+        if a.craft == 1:
+            seen[b.craft] += 1
+    assert set(seen) == {3, 5}                           # no Forest mirror possible (only one Forest member)
+    assert seen[3] / (seen[3] + seen[5]) == pytest.approx(0.5, abs=0.03)
+
+
+def test_downweight_line_and_floor():
+    mu = 1500
+    assert rules.effective_weight(1300, mu, False) == pytest.approx(1.0)
+    assert rules.effective_weight(1250, mu, False) == pytest.approx(0.6)
+    assert rules.effective_weight(1200, mu, False) == pytest.approx(0.2)
+    assert rules.effective_weight(1200, mu, True) == 1.0
+
+
+def test_removal_protection_and_cascade(tmp_path):
+    pool = new_pool(tmp_path)
+    decks = [synth_deck(1, i) for i in range(2)] + [synth_deck(2, i) for i in range(2)] + [synth_deck(3, 0)]
+    for i, d in enumerate(decks):
+        pool.enter(d, "bot:greedy", "baseline", rng=random.Random(100 + i))
+    ms = pool.active()
+    for m in ms:
+        m.full_strategy_period, m.games = True, 5000
+    ms[0].cr, ms[1].cr, ms[2].cr, ms[3].cr, ms[4].cr = 1900, 1880, 1500, 1215, 1005   # mu = 1500
+    ms[3].games = 999                                    # in protection (fewer than 1000 games): stays
+    removed = pool._remove_below_line()
+    # 1005 <= 1500 - 300 goes; mu becomes (1900+1880+1500+1215)/4 = 1623.75; 1215 is protected, 1500 is above
+    assert removed == [ms[4].mid]
+    assert not ms[4].active and ms[3].active
+    ms[3].games = 1000                                   # protection over: 1215 <= 1623.75 - 300 goes too
+    assert pool._remove_below_line() == [ms[3].mid]
+    # after that mu = 1760 and 1500 > 1460: nobody else
+    assert ms[2].active
+
+
+def test_removal_cascades_in_one_settlement(tmp_path):
+    """Taking out one member raises mu, which can put the next one under the line at once (A16)."""
+    pool = new_pool(tmp_path)
+    for i, d in enumerate([synth_deck(1, i) for i in range(2)] + [synth_deck(2, i) for i in range(3)]):
+        pool.enter(d, "bot:greedy", "baseline", rng=random.Random(300 + i))
+    ms = pool.active()
+    for m in ms:
+        m.full_strategy_period, m.games = True, 5000
+    ms[0].cr, ms[1].cr, ms[2].cr, ms[3].cr, ms[4].cr = 1900, 1880, 1500, 1215, 1005   # mu 1500, line 1200
+    assert pool._remove_below_line() == [ms[4].mid, ms[3].mid]   # 1005 first; then mu 1623.75 takes 1215
+    assert pool.mu == pytest.approx(1760)
+
+
+def test_protection_needs_both_1000_games_and_a_whole_strategy_period(tmp_path):
+    pool = baseline_pool(tmp_path)
+    m = pool.active()[0]
+    assert m.protected
+    m.games = 1500
+    assert m.protected                                   # no whole strategy period yet
+    pool.advance(force="test")                           # 0 -> 1 deck
+    pool.advance(force="test")                           # 1 -> 2 strategy
+    assert m.protected
+    pool.advance(force="test")                           # 2 -> 3: the strategy period ended with m in the pool
+    assert m.full_strategy_period and not m.protected
+
+
+def test_periods_entries_updates_and_unstable(tmp_path):
+    pool = baseline_pool(tmp_path)
+    mid = pool.active()[0].mid
+    with pytest.raises(P.PoolError):
+        pool.update(mid, "bot:mcts:200+plan", gate="G-x")       # not a strategy period
+    with pytest.raises(P.PoolError):
+        pool.enter(synth_deck(1, 1), "py:helpers:Random", "jia")  # players start in period 1
+    with pytest.raises(P.PoolError):
+        pool.advance()                                   # nobody has 2000 games yet
+    pool.advance(force="test")
+    assert P.period_kind(pool.period) == "deck"
+    pool.advance(force="test")
+    assert P.period_kind(pool.period) == "strategy"
+    with pytest.raises(P.PoolError):
+        pool.enter(synth_deck(1, 2), "py:helpers:Random", "jia")  # no new decks in a strategy period
+    with pytest.raises(P.PoolError):
+        pool.update(mid, "bot:mcts:200+plan", gate="")   # needs the gate that passed it
+    m = pool.members[mid]
+    cr, anon = m.cr, m.anon
+    assert pool.update(mid, "bot:mcts:200+plan", gate="G-0001") == 2
+    assert (m.cr, m.anon, m.version, m.since_change, m.unstable) == (cr, anon, 2, 0, True)
+    m.since_change = 300
+    assert not m.unstable
+
+
+def test_period_ends_only_when_everyone_has_2000_games(tmp_path):
+    pool = baseline_pool(tmp_path)
+    for m in pool.active():
+        m.period_games = 2000
+    pool.active()[3].period_games = 1999
+    assert pool.period_done() == [pool.active()[3].mid]
+    pool.active()[3].period_games = 2000
+    assert pool.period_done() == []
+    pool.advance()
+    assert all(m.period_games == 0 for m in pool.active())
+
+
+def test_quotas(tmp_path):
+    pool = baseline_pool(tmp_path)
+    pool.advance(force="test")
+    pool.enter(BASE_DECKS[0], "py:helpers:Random", "jia")             # the Forest baseline list, a second time
+    with pytest.raises(P.ListFull) as e:
+        pool.enter(BASE_DECKS[0], "py:helpers:Random", "yi")          # a third member with that list
+    assert len(e.value.holders) == 2
+    pool.enter(synth_deck(2, 0), "py:helpers:Random", "jia")
+    with pytest.raises(P.PoolError):
+        pool.enter(synth_deck(2, 1), "py:helpers:Random", "jia")      # 2 new decks per deck period
+    for k in range(1, 6):                                             # 7 members per player at most
+        pool.advance(force="test"); pool.advance(force="test")
+        pool.enter(synth_deck(3, k), "py:helpers:Random", "jia")
+    assert len([m for m in pool.active() if m.owner == "jia"]) == 7
+    pool.advance(force="test"); pool.advance(force="test")
+    with pytest.raises(P.PoolError):
+        pool.enter(synth_deck(4, 0), "py:helpers:Random", "jia")
+
+
+def test_an_opponent_removed_mid_game(tmp_path):
+    """Two games in flight; the first one to end removes a member who is still playing the second (A4)."""
+    pool = new_pool(tmp_path)
+    decks = [synth_deck(1, 0), synth_deck(2, 0), synth_deck(1, 1), synth_deck(2, 1)]
+    for i, d in enumerate(decks):
+        pool.enter(d, "bot:greedy", "baseline", rng=random.Random(200 + i))
+    ms = pool.active()
+    for m in ms:
+        m.full_strategy_period, m.games = True, 5000
+    ms[0].cr, ms[1].cr, ms[2].cr, ms[3].cr = 1800, 1800, 1700, 1210         # mu 1627.5; line 1327.5
+    # two games started by hand so the case is exact: ms[3] is in both
+    g1 = {"ev": "start", "id": "x1", "seed": 99001990, "members": [ms[0].mid, ms[3].mid], "cr": [1800, 1210]}
+    g2 = {"ev": "start", "id": "x2", "seed": 99001991, "members": [ms[3].mid, ms[2].mid], "cr": [1210, 1700]}
+    pool._log(g1); pool._log(g2)
+    finish(pool, {"id": "x1"}, 0)                        # ms[3] loses 8 (d < -175): 1202 <= mu - 300 -> removed
+    assert not ms[3].active
+    before = ms[2].cr
+    ev = finish(pool, {"id": "x2"}, 0)                   # ms[3] "wins" a game it was playing when it left
+    assert ms[2].cr == before + ev["deltas"][1]          # the side still in the pool is settled as usual
+    assert pool.lost_to_removal == ev["deltas"][0]
+
+
+def test_resume_rebuilds_the_same_state(tmp_path):
+    pool = baseline_pool(tmp_path)
+    rng = random.Random(9)
+    for _ in range(120):
+        finish(pool, pool.next_job(), rng.randrange(2))
+    pool.next_job()                                      # started, never finished (the machine stopped)
+    again = P.Pool(tmp_path / "p")
+    assert again.private_rows() == pool.private_rows()
+    assert again.used_seeds == pool.used_seeds and again.started == pool.started
+    assert again.inflight == {}
+    assert len(pool.used_seeds) == pool.started          # one fresh seed per game, never repeated
+    assert all(SEEDS[0] <= s < SEEDS[1] for s in pool.used_seeds)
+
+
+def test_public_view_hides_owner_age_and_version(tmp_path):
+    pool = baseline_pool(tmp_path)
+    row = pool.public_rows()[0]
+    assert set(row) == {"anon", "craft", "rel_cr", "baseline"}
+
+
+def test_a_short_real_ladder(tmp_path):
+    pool = new_pool(tmp_path, "real")
+    for craft in (2, 5, 7):
+        pool.enter(BASE_DECKS[craft - 1], "py:helpers:Random", "baseline", rng=random.Random(craft))
+    res = pool.ladder(workers=2, games=12, step_limit=10.0)
+    assert res["played"] == 12
+    lines = [json.loads(l) for l in pool.games_path.read_text().splitlines()]
+    assert len(lines) == 12 and all(l["labels"]["members"] and l["labels"]["base"] for l in lines)
+    assert all(l["result"] in ("normal", "draw") for l in lines), [l.get("error") for l in lines]
+    again = P.Pool(tmp_path / "real")
+    assert again.settled == 12 and again.total_cr() == 1500 * 3
+    for l in lines[:4]:
+        ok, why = replay_moves(l)
+        assert ok, why

@@ -5,7 +5,8 @@
 ## 现在在哪
 
 - 阶段：**0（侦察，只读）已完成**，2026-11-21。产出：ENVIRONMENT.md（含对照表、CR 核对）、DEVIATIONS.md、SEEDS.md、LEDGER.md、GATES.md（空）。
-- 下一步：阶段 1。先做不依赖待定问题的 1.1（CR 结算）、1.2（不偷看的抽样和默认猜测）、1.3（runner）。
+- 阶段 1 进行中（11-21 起）。已完成：1.1 CR 结算（ladder/rules.py）、1.2 不偷看的底座（ladder/base.py、strategy.py）、1.3 批量对战和重放（ladder/runner.py、replay.py）、1.4 池管理器（ladder/pool.py）。测试 97 个全过（tests/）。
+- 下一步：1.6 排行榜、1.5 冻结池评测器，然后 1.7 检验工具、1.8 基线入池；最后健全性检查交 Salem 验收。
 - 待 Salem：结论账本在哪；玩家提示词；外部玩家怎么接入；假设 A1、A7、A8。（C2 已由 Salem 裁定 S1 定下，11-21 07:12Z，见 DEVIATIONS）
 - 不写任何策略，不往池子里放任何东西。
 

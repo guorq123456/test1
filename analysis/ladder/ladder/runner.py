@@ -223,8 +223,13 @@ def provenance() -> dict:
             "python": platform.python_version(), "numpy": npv, "os": platform.platform()}
 
 
-def run(jobs: list, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=None, quiet=False) -> dict:
-    """Play `jobs`, appending one log line per game to `out_path` (skipping ids already there)."""
+def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=None, quiet=False,
+        on_result=None) -> dict:
+    """Play `jobs`, appending one log line per game to `out_path` (skipping ids already there).
+
+    `jobs` is a list, or an iterator that is asked for the next job only when a worker is free (the pool manager
+    makes each pairing from the CRs of that moment). `on_result(log)` is called in this process, in the order the
+    games end, after the line is written (the pool manager settles CR there)."""
     if workers > MAX_WORKERS:
         raise SystemExit(f"at most {MAX_WORKERS} workers (12 processes with this one)")
     out = Path(out_path)
@@ -233,9 +238,23 @@ def run(jobs: list, out_path: str, workers: int = 4, step_limit: float = 30.0, m
         for line in out.read_text(encoding="utf-8").splitlines():
             if line.strip():
                 done.add(json.loads(line)["id"])
-    pending = [j for j in jobs if j["id"] not in done]
-    if not pending:
-        return {"played": 0, "skipped": len(done)}
+    if isinstance(jobs, list):
+        jobs = [j for j in jobs if j["id"] not in done]
+        if not jobs:
+            return {"played": 0, "skipped": len(done)}
+        workers = min(workers, len(jobs))
+    source = iter(jobs)
+    exhausted = False
+
+    def take():
+        nonlocal exhausted
+        while not exhausted:
+            job = next(source, None)
+            if job is None:
+                exhausted = True
+            elif job["id"] not in done:
+                return job
+        return None
     limits = _limit(mask)
     prov = provenance()
     ctx = mp.get_context("spawn")
@@ -248,7 +267,7 @@ def run(jobs: list, out_path: str, workers: int = 4, step_limit: float = 30.0, m
         p.start()
         return {"proc": p, "inq": inq, "beat": beat, "job": None}
 
-    pool = [spawn(i) for i in range(min(workers, len(pending)))]
+    pool = [spawn(i) for i in range(workers)]
     t0, count, counts = time.time(), 0, {}
 
     def write(f, res):
@@ -256,6 +275,8 @@ def run(jobs: list, out_path: str, workers: int = 4, step_limit: float = 30.0, m
         res["provenance"], res["limits"] = prov, limits
         f.write(json.dumps(res, ensure_ascii=False) + "\n")
         f.flush()
+        if on_result is not None:
+            on_result(res)
         count += 1
         counts[res["result"]] = counts.get(res["result"], 0) + 1
         if not quiet and count % 100 == 0:
@@ -267,11 +288,14 @@ def run(jobs: list, out_path: str, workers: int = 4, step_limit: float = 30.0, m
                 "labels": job.get("labels", {}), "result": result, **kw}
 
     with out.open("a", encoding="utf-8") as f:
-        while pending or any(w["job"] for w in pool):
+        while True:
             for w in pool:                                          # hand out work
-                if w["job"] is None and pending:
-                    w["job"] = pending.pop(0)
-                    w["inq"].put(w["job"])
+                if w["job"] is None and not exhausted:
+                    w["job"] = take()
+                    if w["job"] is not None:
+                        w["inq"].put(w["job"])
+            if exhausted and not any(w["job"] for w in pool):
+                break
             try:
                 res = results_q.get(timeout=0.25)
             except Exception:
