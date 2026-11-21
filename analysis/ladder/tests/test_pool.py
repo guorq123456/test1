@@ -304,3 +304,14 @@ def test_a_short_real_ladder(tmp_path):
     for l in lines[:4]:
         ok, why = replay_moves(l)
         assert ok, why
+
+
+def test_a_check_pool_allows_other_starts_and_no_quotas_but_the_real_pool_doesnt(tmp_path):
+    real = new_pool(tmp_path, "real")
+    with pytest.raises(P.PoolError):
+        real.enter(BASE_DECKS[0], "bot:greedy", "baseline", cr=1700)
+    chk = P.Pool.create(tmp_path / "chk", SEEDS, rng_seed=1, check=True)
+    for k, cr in enumerate((1300, 1500, 1700)):          # one list three times, other starting CRs
+        chk.enter(BASE_DECKS[1], f"mix:0.{k}:greedy", "check", cr=cr, rng=random.Random(k))
+    assert [m.cr for m in chk.active()] == [1300, 1500, 1700]
+    assert P.Pool(tmp_path / "chk").params["check"] is True

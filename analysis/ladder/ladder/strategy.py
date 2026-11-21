@@ -40,6 +40,20 @@ class BotStrategy:
         return choice
 
 
+class MixStrategy(BotStrategy):
+    """Host-made weaker versions for the phase-1 known-strength checks only (never a pool member a player owns):
+    with probability `eps` a uniformly random legal move, otherwise the bot's move. Spec "mix:<eps>:<bot spec>"."""
+    def __init__(self, eps: float, spec: str = DEFAULT_SPEC, seed: int = 0, guess_fn=None):
+        super().__init__(spec, seed, guess_fn)
+        self.eps = float(eps)
+        self.coin = random.Random(seed * 7_919 + 13)
+
+    def act(self, pos: base.PublicPosition, actions: list):
+        if self.coin.random() < self.eps:
+            return actions[self.coin.randrange(len(actions))]
+        return super().act(pos, actions)
+
+
 def play(deck0, deck1, strategies, seed: int, first: int | None = None, on_decision=None, max_turns: int = 60):
     """A refereed game: each strategy sees only its public position. Returns (winner, state, tracker).
     `on_decision(state, seat, tracker, pos, action)` is called before each action is applied (for checks)."""

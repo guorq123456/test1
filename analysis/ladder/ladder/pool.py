@@ -155,7 +155,9 @@ class Pool:
 
     @classmethod
     def create(cls, path, seeds: tuple[int, int], rng_seed: int | None = None, note: str = "",
-               on_event=None) -> "Pool":
+               on_event=None, check: bool = False) -> "Pool":
+        """`check`: a host-only pool for the phase-1 checks (synthetic members): quotas off, and a member may
+        enter at another CR to test convergence from different starts. Never the real pool."""
         if path is not None:
             d = Path(path)
             if (d / "events.jsonl").exists():
@@ -166,7 +168,7 @@ class Pool:
         if not lo < hi:
             raise PoolError("empty seed range")
         pool._log({"ev": "create", "seeds": [lo, hi], "rng_seed": rng_seed if rng_seed is not None
-                   else secrets.randbits(48), "note": note,
+                   else secrets.randbits(48), "note": note, "check": bool(check),
                    "rules": {"entry": rules.ENTRY_CR, "window": rules.WINDOW, "floor": rules.WEIGHT_FLOOR,
                              "remove_at": rules.REMOVE_AT, "protect": PROTECT_GAMES, "period": FULL_PERIOD_GAMES,
                              "unstable": UNSTABLE_GAMES}})
@@ -253,13 +255,16 @@ class Pool:
     # --- entering, updating, periods ---------------------------------------------------------------------------
 
     def enter(self, deck, strategy: str, owner: str, deck_code: str | None = None, note: str = "",
-              base_version: str | None = None, rng=None) -> str:
+              base_version: str | None = None, rng=None, cr: int | None = None) -> str:
         """A new member at 1500 (§4.1). Only in the baseline run or a deck period (§4.5)."""
         from ladder import base
+        check = self.params.get("check", False)
+        if cr is not None and not check:
+            raise PoolError("every member enters at 1500 (§4.1); another start only in a check pool")
         kind = period_kind(self.period)
         if kind == "strategy":
             raise PoolError("no new decks in a strategy period (§4.5)")
-        if owner not in HOST_OWNERS and kind == "baseline":
+        if owner not in HOST_OWNERS and kind == "baseline" and not check:
             raise PoolError("players' decks enter from period 1")
         ids = [int(c) for c in deck]
         if len(ids) != 40:
@@ -267,9 +272,9 @@ class Pool:
         craft = base.craft_of(_cards(ids))
         key = list_key(ids)
         holders = [m.mid for m in self.active() if list_key(m.deck) == key]
-        if len(holders) >= MAX_PER_LIST:
+        if len(holders) >= MAX_PER_LIST and not check:
             raise ListFull(holders)
-        if owner not in HOST_OWNERS:
+        if owner not in HOST_OWNERS and not check:
             mine = [m for m in self.active() if m.owner == owner]
             if len(mine) >= MAX_PER_PLAYER:
                 raise PoolError(f"{owner} already has {len(mine)} members in the pool (at most {MAX_PER_PLAYER})")
@@ -285,7 +290,7 @@ class Pool:
         mid = f"m{len(self.members) + 1:04d}"
         m = Member(mid=mid, anon=anon, craft=craft, deck=ids, deck_code=deck_code, owner=owner,
                    entry_period=self.period, strategy=strategy, base_version=base_version or base.BASE_VERSION,
-                   note=note)
+                   note=note, cr=int(cr) if cr is not None else rules.ENTRY_CR)
         d = asdict(m)
         d.pop("history")
         self._log({"ev": "enter", "member": d})

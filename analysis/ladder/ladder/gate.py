@@ -20,7 +20,8 @@ Kinds:
   the new version wins: 0.5 + gap / (2 * discordant share). The discordant share is the member's last measured one,
   or (first gate) measured on a separate 200 pairs first and then fixed (A23: those 200 don't count in the test).
   The expected number of pairs under H1 is worked out before the run; at 3 times that with no decision: undecided,
-  which counts as not passed.
+  which counts as not passed. Two versions that play alike (no discordant pair in the first 200) stop there with
+  "no difference" instead of running to the cap.
 - noninf (refactor, speed-up, simplification whose decisions changed): the same test with H0 gap -2, H1 gap 0.
 - same (a change that should not change any decision): every decision of both versions over `--pairs` pairs
   (default 100) must match exactly. Passing needs no statistics. If one differs, it is a noninf case.
@@ -65,6 +66,7 @@ COMPUTE_RATIO = 1.08
 VOID_LIMIT = 0.02
 CAP_FACTOR = 3
 PRE_PAIRS = 200
+SAME_AFTER = 200                              # this many pairs with no discordant one: the versions play alike
 LEDGER_DIR = HERE.parent                      # gates.jsonl and GATES.md live in analysis/ladder/
 
 
@@ -324,6 +326,9 @@ class Gate:
                 if o in ("new", "old"):
                     p["counted"] = True
                     state["verdict"] = test.add(o == "new")
+                state["done"] = state.get("done", 0) + 1
+                if state["verdict"] is None and state["done"] >= SAME_AFTER and test.wins + test.losses == 0:
+                    state["verdict"] = "SAME"           # identical results so far: report no difference, stop
 
         from ladder import runner
 
@@ -337,8 +342,11 @@ class Gate:
             p["outcome"] = self._outcome(p)
             p["after_stop"] = True
         v = state["verdict"]
-        passed = v == "H1"
-        rec["verdict"] = ("passed" if passed else "not passed") if v else "undecided (counts as not passed)"
+        if v == "SAME":
+            rec["verdict"] = (f"no difference: the first {SAME_AFTER} pairs all had the same result "
+                              f"({'passed' if self.kind == 'noninf' else 'not passed'})")
+        else:
+            rec["verdict"] = ("passed" if v == "H1" else "not passed") if v else "undecided (counts as not passed)"
         rec["llr"] = round(test.llr, 3)
         rec["discordant"] = {"new": test.wins, "old": test.losses}
         n = state["issued"]

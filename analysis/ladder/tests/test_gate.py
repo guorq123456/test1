@@ -104,3 +104,10 @@ def test_refusals(tmp_path, frozen):
     g = gate(tmp_path, fz, mid, "bot:greedy", "py:helpers:Random", "same", pairs=2,
              resubmit_of="G-0001", since="search order changed")
     assert g.gid == "G-0002"
+
+
+def test_identical_versions_in_the_sequential_test_stop_with_no_difference(tmp_path, frozen, monkeypatch):
+    fz, mid = frozen
+    monkeypatch.setattr(G, "SAME_AFTER", 15)
+    rec = gate(tmp_path, fz, mid, "py:helpers:Random", "py:helpers:Random", "better", share=0.4).run(workers=2)
+    assert rec["verdict"].startswith("no difference") and rec["pairs"] < rec["cap_pairs"]

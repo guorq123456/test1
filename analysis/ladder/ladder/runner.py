@@ -6,8 +6,9 @@
     {"id": "g-000001", "seed": 87xxxxxx, "first": 0 | 1 | null,
      "decks": [deck code or card ids, ...two], "strategies": [spec, spec], "strategy_seeds": [int, int],
      "labels": {...anything kept in the log: member ids, versions...}}
-Strategy specs: "bot:<arena spec>" (the base's BotStrategy over that bot, e.g. "bot:mcts:100+plan"), or
-"py:<module>:<factory>" (a factory called with seed=...; e.g. a player's submission).
+Strategy specs: "bot:<arena spec>" (the base's BotStrategy over that bot, e.g. "bot:mcts:100+plan"),
+"mix:<eps>:<arena spec>" (the same with a random legal move at rate eps: host-made weaker versions for the
+known-strength checks), or "py:<module>:<factory>" (a factory called with seed=...; e.g. a player's submission).
 
 Rules it applies (task spec §4.2): a strategy that raises loses (crash); one that returns a move not in the legal
 list loses (illegal); one whose single decision runs past --step-limit seconds of wall time loses (timeout: the
@@ -70,6 +71,10 @@ def make_strategy(spec: str, seed: int):
     if spec.startswith("bot:"):
         from ladder.strategy import BotStrategy
         return BotStrategy(spec[4:], seed=seed)
+    if spec.startswith("mix:"):                       # host-made weaker versions for the known-strength checks
+        from ladder.strategy import MixStrategy
+        _, eps, bot = spec.split(":", 2)
+        return MixStrategy(float(eps), bot, seed=seed)
     if spec.startswith("py:"):
         import importlib
         _, module, attr = spec.split(":", 2)
