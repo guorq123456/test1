@@ -66,8 +66,8 @@ def scan(name, rng, files) -> dict:
                 w = 0
                 for seat, comp, wall_us in r.get("steps", []):
                     w += wall_us
-                    if seat in default:
-                        cpu.append(comp / (1e6 if r.get("cpu_unit") == "ns" else 1e3))   # ms
+                    if seat in default:      # wall time per step (ms): CPU is in ns on Linux, cycles on Windows
+                        cpu.append(wall_us / 1e3)
                 wall_game.append(w / 1e6)
             p = r.get("provenance") or {}
             machines.add((p.get("commit", "")[:7], p.get("dirty"), p.get("python"), p.get("os")))
@@ -164,7 +164,7 @@ def render(runs: Path, rep: dict) -> str:
           f"比值 **{f['ratio']}**（合格线 0.7～1.4）。结果从 {min(means):+.1f} 到 {max(means):+.1f}，"
           f"平均 {tot:+.1f}。各次的 95% 区间盖住总平均：{cover} / {len(means)} 次。")
     w("\n## 局、种子和算力\n\n| 部分 | 局 | 结果 | 种子段 | 都在段内 | 每个种子用了几次（次数: 种子数） | 重跑 | "
-      "默认打法每步 CPU（毫秒，均值 / 中位 / p90 / 最长） | 每局用时（秒） | 每局猜测外的牌 |\n"
+      "默认打法每步用时（毫秒，均值 / 中位 / p90 / 最长） | 每局用时（秒） | 每局猜测外的牌 |\n"
       "|---|---|---|---|---|---|---|---|---|---|")
     for name, x in rep["games"].items():
         if not x["records"]:
@@ -185,6 +185,8 @@ def main():
     ap.add_argument("--runs", required=True)
     ap.add_argument("--out")
     a = ap.parse_args()
+    for stream in (sys.stdout, sys.stderr):              # Windows: stdout to a file is cp1252 and can't take 中文
+        stream.reconfigure(encoding="utf-8", errors="backslashreplace")
     runs = Path(a.runs)
     rep = {"steps": {}, "games": {}}
     for k in STEPS:

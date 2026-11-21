@@ -6,7 +6,7 @@
 
 - 阶段：**0（侦察，只读）已完成**，2026-11-21。产出：ENVIRONMENT.md（含对照表、CR 核对）、DEVIATIONS.md、SEEDS.md、LEDGER.md、GATES.md（空）。
 - 阶段 1 进行中（11-21 起）。已完成：1.1 CR 结算（ladder/rules.py）、1.2 不偷看的底座（base.py、strategy.py）、1.3 批量对战和重放（runner.py、replay.py）、1.4 池管理器（pool.py）、1.5 冻结池评测器（evaluator.py）、1.6 排行榜（leaderboard.py）、1.7 检验工具（gate.py）。测试 113 个全过（tests/）。假对局上的统计预检：tools/check_stats.py、gate.py selfcheck（LD-12～LD-16）。种子段已在项目登记表上登记（SEEDS.md）。
-- 下一步：1.8 基线入池和真实对局的健全性检查，在 Salem 电脑上跑 tools/phase1_checks.py all（约 7 小时；启动要 Salem 双击 tools/pc/phase1-checks.cmd，11-21 08:2xZ 已请他点）。跑完汇总交 Salem 验收，验收后 1.9 锁定。
+- 下一步：1.8 基线入池和真实对局的健全性检查，在 Salem 电脑上跑 tools/phase1_checks.py all（约 7 小时；11-21 08:39:44Z 启动，09:07Z 基线跑完后因 Windows 编码问题退出，后四步没跑；已修，等 Salem 再双击续跑）。跑完汇总交 Salem 验收，验收后 1.9 锁定。
 - 待 Salem：结论账本在哪；玩家提示词；外部玩家怎么接入；假设 A1、A7、A8。（C2 已由 Salem 裁定 S1 定下，11-21 07:12Z，见 DEVIATIONS）
 - 不写任何策略，不往池子里放任何东西。
 
@@ -125,3 +125,4 @@
 | 阶段 | 开始 | 结束 | 对局数 | 机器 |
 |---|---|---|---|---|
 | 0 | 2026-11-21 06:38Z | 2026-11-21 07:2xZ | 测速 84 + 10 局（云端容器），14 + 168 局（电脑） | 云端 4 核；电脑 12 进程 E 核 |
+| 1（健全性检查，第 1 段） | 2026-11-21 08:39:44Z | 2026-11-21 09:07:14Z | 基线天梯 10667 局（跑完）；之后打印结果时因编码报错退出，后四步没跑 | 电脑 11 个工作进程 E 核（实际 13 个进程，偏差 D5） |

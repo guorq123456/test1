@@ -322,6 +322,8 @@ def main():
     ap.add_argument("--scale", type=float, default=1.0)
     ap.add_argument("--evals", type=int, default=20, help="fluct: evaluations (20; fewer only for a dry run)")
     a = ap.parse_args()
+    for stream in (sys.stdout, sys.stderr):              # Windows: stdout to a file is cp1252 and can't take 中文
+        stream.reconfigure(encoding="utf-8", errors="backslashreplace")
     a.mask = int(a.mask, 16) if a.mask else None
     SCALE[0] = a.scale
     from ladder import runner
