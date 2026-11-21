@@ -1,0 +1,76 @@
+{
+ "sims": 2000,
+ "share": 0.4,
+ "seed": 20261121,
+ "rows": {
+  "better +2": [
+   {
+    "true_gap": 0.0,
+    "accept_h1": 0.0515,
+    "undecided": 0.0225,
+    "mean_pairs": 5270.0705,
+    "expected_pairs_h1": 5297.780543570226
+   },
+   {
+    "true_gap": 1.0,
+    "accept_h1": 0.423,
+    "undecided": 0.134,
+    "mean_pairs": 7829.2185,
+    "expected_pairs_h1": 5297.780543570226
+   },
+   {
+    "true_gap": 2.0,
+    "accept_h1": 0.9285,
+    "undecided": 0.0235,
+    "mean_pairs": 5159.1365,
+    "expected_pairs_h1": 5297.780543570226
+   }
+  ],
+  "better +5": [
+   {
+    "true_gap": 0.0,
+    "accept_h1": 0.0445,
+    "undecided": 0.0285,
+    "mean_pairs": 839.236,
+    "expected_pairs_h1": 845.7819863998328
+   },
+   {
+    "true_gap": 2.5,
+    "accept_h1": 0.4055,
+    "undecided": 0.1415,
+    "mean_pairs": 1279.845,
+    "expected_pairs_h1": 845.7819863998328
+   },
+   {
+    "true_gap": 5.0,
+    "accept_h1": 0.9225,
+    "undecided": 0.0275,
+    "mean_pairs": 858.366,
+    "expected_pairs_h1": 845.7819863998328
+   }
+  ],
+  "noninf": [
+   {
+    "true_gap": -2.0,
+    "accept_h1": 0.0425,
+    "undecided": 0.025,
+    "mean_pairs": 5312.485,
+    "expected_pairs_h1": 5293.362410929159
+   },
+   {
+    "true_gap": -1.0,
+    "accept_h1": 0.434,
+    "undecided": 0.1385,
+    "mean_pairs": 7763.627,
+    "expected_pairs_h1": 5293.362410929159
+   },
+   {
+    "true_gap": 0.0,
+    "accept_h1": 0.933,
+    "undecided": 0.023,
+    "mean_pairs": 5127.4865,
+    "expected_pairs_h1": 5293.362410929159
+   }
+  ]
+ }
+}
