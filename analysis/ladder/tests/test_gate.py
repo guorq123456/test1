@@ -67,6 +67,9 @@ def test_a_clearly_stronger_update_passes_and_a_weaker_one_doesnt(tmp_path, froz
     good = gate(tmp_path, fz, mid, "bot:greedy", "py:helpers:Random", "better", delta=10, share=0.5).run(workers=3)
     assert good["verdict"] == "passed" and good["discordant"]["new"] > good["discordant"]["old"]
     assert good["pairs"] < good["cap_pairs"]
+    # opponents are tallied over every pair the test used; the discordant ones are exactly what the test counted
+    assert sum(good["opponents_discordant"].values()) == sum(good["discordant"].values())
+    assert sum(good["opponents"].values()) >= sum(good["discordant"].values())
     bad = gate(tmp_path, fz, mid, "py:helpers:Random", "bot:greedy", "better", delta=10, share=0.5,
                rng=3).run(workers=3)
     assert bad["verdict"] == "not passed"

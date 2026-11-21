@@ -267,18 +267,28 @@ class Gate:
         else:
             self._fixed(rec, workers, step_limit, mask)
         self._compute(rec)
-        counted = [p for p in self.pairs if p.get("counted")]
-        rec["pairs"] = len(self.pairs)
+        rec["pairs"] = len(self.pairs)                     # every pair played, the share pre-run included
+        rec["pre_pairs"] = sum(1 for p in self.pairs if p["tag"] == "pre")
         rec["void_pairs"] = sum(1 for p in self.pairs if p.get("outcome") == "void")
         if rec["pairs"] and rec["void_pairs"] / rec["pairs"] > VOID_LIMIT:
             rec["verdict"] = "invalid: too many void pairs"
         if rec.get("compute_ratio") and rec["compute_ratio"] > COMPUTE_RATIO and not self.compute_is_the_point:
             rec["verdict"] = f"invalid: compute ratio {rec['compute_ratio']} > {COMPUTE_RATIO}"
-        opp = {}
-        for p in counted or self.pairs:
-            opp[CRAFT_ZH[p["opp_craft"]]] = opp.get(CRAFT_ZH[p["opp_craft"]], 0) + 1
-        rec["opponents"] = opp
-        rec["opponents_note"] = "、".join(f"{k} {v}" for k, v in sorted(opp.items(), key=lambda x: -x[1]))
+        # opponents of the pairs the test used (not the share pre-run, not pairs finishing after the stop), and of
+        # the ones among them whose results differed (the only ones the sequential test counts)
+        used = [p for p in self.pairs if p["tag"] != "pre" and not p.get("after_stop")
+                and p.get("outcome") not in (None, "void")]
+        opp, opp_d = {}, {}
+        for p in used:
+            k = CRAFT_ZH[p["opp_craft"]]
+            opp[k] = opp.get(k, 0) + 1
+            if p["outcome"] in ("new", "old"):
+                opp_d[k] = opp_d.get(k, 0) + 1
+        rec["opponents"], rec["opponents_discordant"] = opp, opp_d
+
+        def note(d):
+            return "、".join(f"{k} {v}" for k, v in sorted(d.items(), key=lambda x: -x[1])) or "—"
+        rec["opponents_note"] = note(opp) + ("" if self.kind == "same" else f"（结果不同的：{note(opp_d)}）")
         rec["seeds_used"] = sorted(self.seeds_used)
         rec["seed_note"] = f"{len(self.seeds_used)} 个，取自 {self.lo}～{self.hi - 1}"
         rec["seconds"] = round(time.time() - t0, 1)
