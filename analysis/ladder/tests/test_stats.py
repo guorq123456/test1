@@ -102,6 +102,25 @@ def test_board_window_unstable_and_update(tmp_path):
     assert all(set(r) == {"anon", "craft", "baseline", "rel_cr", "lo", "hi", "best", "worst"} for r in pub)
 
 
+def test_public_board_from_100_games_with_a_wider_short_interval(tmp_path):
+    # Salem S7: on the public board from 100 games; under 2000 the interval uses tau >= 150 and 1.96 (A38)
+    pool, series = made_up(tmp_path, 330)                # each of 7 members ~94 games: nobody listed yet
+    short = [m for m in pool.active() if len(series.points[m.mid]) < L.PUBLIC_MIN_GAMES]
+    listed = {r["anon"] for r in L.public_board(pool, series)}
+    assert {m.anon for m in short}.isdisjoint(listed)
+    assert listed == {m.anon for m in pool.active() if len(series.points[m.mid]) >= L.PUBLIC_MIN_GAMES}
+    pool2, series2 = made_up(tmp_path / "b", 700)          # ~200 each: all listed, intervals from the floor
+    pub = {r["anon"]: r for r in L.public_board(pool2, series2)}
+    assert len(pub) == len(pool2.active())
+    for m in pool2.active():
+        pts = series2.points[m.mid]
+        rel = [c - mu for c, mu in pts]
+        mean = sum(rel) / len(rel)
+        sd = math.sqrt(sum((x - mean) ** 2 for x in rel) / (len(rel) - 1))
+        half = (pub[m.anon]["hi"] - pub[m.anon]["lo"]) / 2
+        assert half >= round(1.96 * sd * math.sqrt(L.SHORT_TAU_FLOOR / len(rel)), 1) - 0.2
+
+
 def test_freeze_uses_the_last_1000_games(tmp_path):
     pool, series = made_up(tmp_path, 4500)
     body = E.freeze(tmp_path / "lb")

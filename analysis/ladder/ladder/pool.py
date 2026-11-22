@@ -42,8 +42,11 @@ from ladder import rules  # noqa: E402
 
 CRAFTS = (1, 2, 3, 4, 5, 6, 7)    # Forest, Sword, Rune, Dragon, Abyss, Haven, Portal (svsim Craft values)
 CRAFT_ZH = {1: "精灵", 2: "皇家护卫", 3: "巫师", 4: "龙族", 5: "梦魇", 6: "主教", 7: "超越者"}
-PROTECT_GAMES = 1000              # §4.5 protection: the first 1000 games ...
-FULL_PERIOD_GAMES = 2000          # §4.5 a period ends once every member has 2000 games since its last change
+PROTECT_GAMES = 0                 # Salem S7 (11-22): protection only until a whole strategy period (§4.5's "first
+                                  # 1000 games, or ..., whichever later" lost its games part; 0 = never by games)
+FULL_PERIOD_GAMES = 100           # Salem S7 (11-22): a player period ends once every member has 100 games since its
+                                  # last change (§4.5 said 2000)
+BASELINE_PERIOD_GAMES = 2000      # period 0 (the phase-1 baseline run) keeps §4.5's 2000 (A37)
 UNSTABLE_GAMES = 300              # §4.3 after a strategy update, "unstable" until 300 games
 MAX_PER_PLAYER = None             # Salem S6 (11-22): no cap on a player's members (the plan's 7 is gone)
 MAX_PER_LIST = 2                  # ... at most 2 members with the same list
@@ -77,6 +80,11 @@ def period_kind(n: int) -> str:
     return "baseline" if n == 0 else ("deck" if n % 2 == 1 else "strategy")
 
 
+def period_target(n: int) -> int:
+    """The games every member needs in period n (since its last change) before the period may end."""
+    return BASELINE_PERIOD_GAMES if n == 0 else FULL_PERIOD_GAMES
+
+
 def list_key(card_ids) -> str:
     return ".".join(str(c) for c in sorted(card_ids))
 
@@ -107,7 +115,8 @@ class Member:
 
     @property
     def protected(self) -> bool:
-        """§4.5: the first 1000 games, or until it has been through a whole strategy period, whichever is later."""
+        """Until it has been through a whole strategy period (Salem S7; §4.5 also had "the first 1000 games, whichever
+        is later": PROTECT_GAMES, now 0)."""
         return self.games < PROTECT_GAMES or not self.full_strategy_period
 
     @property
@@ -199,6 +208,7 @@ class Pool:
                    "rules": {"matching": MATCHING, "entry": rules.ENTRY_CR, "window": rules.WINDOW,
                              "floor": rules.WEIGHT_FLOOR,
                              "remove_at": rules.REMOVE_AT, "protect": PROTECT_GAMES, "period": FULL_PERIOD_GAMES,
+                             "baseline_period": BASELINE_PERIOD_GAMES,
                              "unstable": UNSTABLE_GAMES}})
         return pool
 
@@ -341,19 +351,22 @@ class Pool:
         return m.version
 
     def period_done(self) -> list[str]:
-        """The members still short of 2000 games in this period since their last change (empty = may advance)."""
-        return [m.mid for m in self.active() if m.period_games < FULL_PERIOD_GAMES]
+        """The members still short of this period's games since their last change (empty = may advance):
+        2000 in the baseline run, 100 in the players' periods (S7)."""
+        need = period_target(self.period)
+        return [m.mid for m in self.active() if m.period_games < need]
 
     def advance(self, force: str | None = None) -> int:
         short = self.period_done()
         if short and not force:
-            raise PoolError(f"{len(short)} members still short of {FULL_PERIOD_GAMES} games: {short[:10]}")
+            raise PoolError(f"{len(short)} members still short of {period_target(self.period)} games: {short[:10]}")
         through = []
         if period_kind(self.period) == "strategy":
             # nobody enters during a strategy period, so everyone in the pool now was there for all of it
             through = [m.mid for m in self.active()]
         self._log({"ev": "period", "period": self.period + 1, "kind": period_kind(self.period + 1),
-                   "through_strategy_period": through, "forced": force, "short": short})
+                   "through_strategy_period": through, "forced": force, "short": short,
+                   "rules": {"period_games": period_target(self.period + 1), "protect_games": PROTECT_GAMES}})
         return self.period
 
     def set_exit_reason(self, mid: str, reason: str):
@@ -456,7 +469,7 @@ class Pool:
     # --- running the ladder ----------------------------------------------------------------------------------
 
     def jobs(self, games: int | None = None, until_period_done: bool = False):
-        """Pairings on demand: stop after `games` more starts, or once every member has its 2000 games. Also stops
+        """Pairings on demand: stop after `games` more starts, or once every member has this period's games (period_target). Also stops
         (A27) when no pair can be made, or, for the period, when every member still short has nobody within 200;
         `stuck()` says which. Games still in flight may bring a member back within 200: ask again after."""
         n = 0

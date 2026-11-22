@@ -163,7 +163,7 @@ def test_period_stops_when_only_isolated_members_are_short(tmp_path):
         pool.enter(BASE_DECKS[craft - 1], "bot:greedy", "baseline", rng=random.Random(craft))
     a, b, c = pool.active()
     a.cr, b.cr, c.cr = 1600, 1600, 1300                   # c is out of reach (A27)
-    a.period_games = b.period_games = P.FULL_PERIOD_GAMES
+    a.period_games = b.period_games = P.period_target(pool.period)
     st = pool.stuck(for_period=True)
     assert st["why"] == "short members isolated" and st["short"] == [c.mid]
     assert list(pool.jobs(until_period_done=True)) == []
@@ -219,12 +219,12 @@ def test_removal_protection_and_cascade(tmp_path):
     for m in ms:
         m.full_strategy_period, m.games = True, 5000
     ms[0].cr, ms[1].cr, ms[2].cr, ms[3].cr, ms[4].cr = 1900, 1880, 1500, 1215, 1005   # mu = 1500
-    ms[3].games = 999                                    # in protection (fewer than 1000 games): stays
+    ms[3].full_strategy_period = False                   # in protection (no whole strategy period yet, S7): stays
     removed = pool._remove_below_line()
     # 1005 <= 1500 - 300 goes; mu becomes (1900+1880+1500+1215)/4 = 1623.75; 1215 is protected, 1500 is above
     assert removed == [ms[4].mid]
     assert not ms[4].active and ms[3].active
-    ms[3].games = 1000                                   # protection over: 1215 <= 1623.75 - 300 goes too
+    ms[3].full_strategy_period = True                    # protection over: 1215 <= 1623.75 - 300 goes too
     assert pool._remove_below_line() == [ms[3].mid]
     # after that mu = 1760 and 1500 > 1460: nobody else
     assert ms[2].active
@@ -243,7 +243,9 @@ def test_removal_cascades_in_one_settlement(tmp_path):
     assert pool.mu == pytest.approx(1760)
 
 
-def test_protection_needs_both_1000_games_and_a_whole_strategy_period(tmp_path):
+def test_protection_lasts_until_a_whole_strategy_period(tmp_path):
+    # Salem S7 (11-22): protection by periods only; the games part of §4.5 ("the first 1000 games") is gone
+    assert P.PROTECT_GAMES == 0
     pool = baseline_pool(tmp_path)
     m = pool.active()[0]
     assert m.protected
@@ -254,6 +256,8 @@ def test_protection_needs_both_1000_games_and_a_whole_strategy_period(tmp_path):
     assert m.protected
     pool.advance(force="test")                           # 2 -> 3: the strategy period ended with m in the pool
     assert m.full_strategy_period and not m.protected
+    m.games = 150                                        # few games: no longer matters
+    assert not m.protected
 
 
 def test_periods_entries_updates_and_unstable(tmp_path):
@@ -281,8 +285,10 @@ def test_periods_entries_updates_and_unstable(tmp_path):
     assert not m.unstable
 
 
-def test_period_ends_only_when_everyone_has_2000_games(tmp_path):
+def test_period_ends_only_when_everyone_has_its_games(tmp_path):
+    # the baseline run (period 0) needs 2000 each (A37); the players' periods 100 each (Salem S7)
     pool = baseline_pool(tmp_path)
+    assert (P.period_target(0), P.period_target(1), P.period_target(2)) == (2000, 100, 100)
     for m in pool.active():
         m.period_games = 2000
     pool.active()[3].period_games = 1999
@@ -291,6 +297,14 @@ def test_period_ends_only_when_everyone_has_2000_games(tmp_path):
     assert pool.period_done() == []
     pool.advance()
     assert all(m.period_games == 0 for m in pool.active())
+    ev = [json.loads(x) for x in (tmp_path / "p" / "events.jsonl").read_text().splitlines()][-1]
+    assert ev["rules"] == {"period_games": 100, "protect_games": 0}
+    for m in pool.active():
+        m.period_games = 100
+    pool.active()[0].period_games = 99
+    assert pool.period_done() == [pool.active()[0].mid]
+    pool.active()[0].period_games = 100
+    assert pool.period_done() == []
 
 
 def test_quotas(tmp_path):

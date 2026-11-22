@@ -55,7 +55,7 @@ def made_up_pool(strengths, rng_seed):
     for i, (craft, _) in enumerate(strengths):
         pool.enter(deck(craft, i), "made-up", "baseline", rng=random.Random(i))
     for m in pool.active():
-        m.full_strategy_period = True          # protection only by games (the made-up pool has no periods)
+        m.full_strategy_period = True          # no periods here; since S7 (protection by periods only) nobody is protected
     return pool, series, {m.mid: strengths[i][1] for i, m in enumerate(pool.active())}
 
 

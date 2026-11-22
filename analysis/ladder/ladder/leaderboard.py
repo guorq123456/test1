@@ -38,6 +38,8 @@ if str(HERE.parent) not in sys.path:
 from ladder import pool as P  # noqa: E402
 
 WINDOW_GAMES = 2000
+PUBLIC_MIN_GAMES = 100             # Salem S7 (11-22): the public board lists a member once it has 100 games
+SHORT_TAU_FLOOR = 150              # A38: under 2000 games the public interval uses tau >= 150 games and z = 1.96
 BATCHES = 10
 LINE = 250                         # §4.4 the line: relative CR >= +250
 T975 = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
@@ -167,13 +169,30 @@ def board(pool: P.Pool, series: Series, window: int = WINDOW_GAMES) -> list[dict
     return sorted(rows, key=lambda r: (r["craft"], -(r["rel_cr"] if r["ranked"] else -1e9)))
 
 
+def short_interval(points: list, e: dict) -> dict:
+    """A38: fewer than 2000 games. The autocorrelation time estimated from a short series runs low (made-up games:
+    a 95% interval covered 63-83% at 100-400 games), so use tau >= SHORT_TAU_FLOOR and the normal 1.96 (covered
+    96-99% on made-up games; the baselines' tau in real games was 54-271, median 157)."""
+    rel = [c - m for c, m in points]
+    n = len(rel)
+    mean = sum(rel) / n
+    sd = math.sqrt(sum((x - mean) ** 2 for x in rel) / (n - 1))
+    tau = max(SHORT_TAU_FLOOR, e["tau"] if e["tau"] == e["tau"] else 0.0)
+    se = sd * math.sqrt(tau / n)
+    return e | {"se": se, "lo": mean - 1.96 * se, "hi": mean + 1.96 * se, "tau": tau}
+
+
 def public_board(pool: P.Pool, series: Series, window: int = WINDOW_GAMES) -> list[dict]:
+    """A21 with Salem's S7: every member with at least 100 games since entry, over its last 2000 (whatever version
+    played them); under 2000 games the interval is A38's."""
     rows = []
     for m in pool.active():
         pts = series.points[m.mid]
-        if len(pts) < window:
+        if len(pts) < PUBLIC_MIN_GAMES:
             continue
         e = estimate(pts, window)
+        if e["n"] < window:
+            e = short_interval(pts[-window:], e)
         rows.append({"anon": m.anon, "craft": P.CRAFT_ZH[m.craft], "baseline": m.owner == "baseline",
                      "ranked": True, **{k: round(e[k], 1) for k in ("rel_cr", "lo", "hi")}})
     rank_intervals(rows)
