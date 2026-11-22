@@ -5,7 +5,7 @@ every period on purpose: an unchanged member gets the same games, so only new ve
     python -m ladder.anchors induct POOL --hof HOF.json [--period N]     # end of a period: the hall of fame
     python -m ladder.anchors table --out ANCHORS.json [--hof HOF.json]
     python -m ladder.anchors run ANCHORS.json --pool POOL --out DIR [--games-per-anchor 10] [--tiers ...]
-                                 [--all] [--plan] [--workers 11 --mask 0x3FC3FC]
+                                 [--all] [--plan] [--workers 23]
     python -m ladder.anchors report DIR --anchors ANCHORS.json
 
 The panel (Salem's S9, 11-22: 「基线快照 + 名人堂」; the bot's other tiers are not anchors, the trained pilots only a

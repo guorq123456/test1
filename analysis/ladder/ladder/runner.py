@@ -1,6 +1,6 @@
 """Batch runner (phase 1, item 1.3): many refereed games in parallel, every game logged so it can be replayed.
 
-    python -m ladder.runner --jobs jobs.jsonl --out games.jsonl --workers 11 [--mask 0x3FC3FC] [--step-limit 30]
+    python -m ladder.runner --jobs jobs.jsonl --out games.jsonl --workers 23 [--mask 0x3FC3FC] [--step-limit 30]
 
 (run from analysis/ladder, or with analysis/ladder on PYTHONPATH). A job is one JSON line:
     {"id": "g-000001", "seed": 87xxxxxx, "first": 0 | 1 | null,
@@ -15,9 +15,11 @@ list loses (illegal); one whose single decision runs past --step-limit seconds o
 worker is killed and replaced). An engine error while applying a legal move can't be pinned on either side: the
 game is void. The 60-turn cap gives a draw (assumption A3).
 
-Limits (Salem's computer, plan 红线 8 and assumption A6): at most 11 worker processes (+ this one = 12), below
-normal priority, and on Windows the affinity mask given by --mask (0x3FC3FC = the 16 E-cores); workers inherit
-both. BLAS threads are pinned to 1 and PYTHONHASHSEED to 0 in every worker.
+Limits (Salem's computer): Salem S10 (11-22 08:49Z) allows all cores ("这个项目你可以全核开跑"): at most 23 worker
+processes (+ this one = the 24 logical CPUs), below normal priority, and on Windows the affinity mask given by --mask
+if any; workers inherit both. Runs that compare per-step compute between games (submit receive, gate, the pilot tool)
+take --mask 0x3FC3FC (the 16 E-cores, at most 15 workers) so that every game runs on one core type (A44). Before
+S10: at most 11 workers, E-cores only (plan 红线 8, A6). BLAS threads are pinned to 1 and PYTHONHASHSEED to 0 in every worker.
 
 Per-decision compute: on Windows the thread's CPU cycles (QueryThreadCycleTime; time.process_time is only good to
 15.6 ms there), elsewhere the thread's CPU nanoseconds. The unit is in every log line.
@@ -39,7 +41,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent            # analysis/ladder/ladder
 ROOT = HERE.parents[2]                             # repository root
-MAX_WORKERS = 11
+MAX_WORKERS = 23                                  # Salem S10: all 24 logical CPUs, with this process
 for var in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ.setdefault(var, "1")
 os.environ.setdefault("PYTHONHASHSEED", "0")
@@ -189,6 +191,17 @@ def _worker(inq, results_q, beat, wid):
         results_q.put(res)
 
 
+E_CORES = 0x3FC3FC                                # the 16 E-cores of Salem's computer (ENVIRONMENT.md)
+
+
+def one_core_type(mask):
+    """A44: a run that compares per-step compute between games must keep every game on one core type (all cores
+    since S10 mix P- and E-cores, which differ in speed). On Windows the mask is required; elsewhere it is ignored."""
+    if os.name == "nt" and mask is None:
+        raise SystemExit(f"this run compares per-step compute: give --mask {hex(E_CORES)} (the E-cores; A44)")
+    return None if mask is None else hex(mask)
+
+
 def _limit(mask):
     """Below normal priority (and the affinity mask on Windows) for this process; workers inherit both."""
     if os.name == "nt":
@@ -240,7 +253,7 @@ def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=No
     makes each pairing from the CRs of that moment). `on_result(log)` is called in this process, in the order the
     games end, after the line is written (the pool manager settles CR there)."""
     if workers > MAX_WORKERS:
-        raise SystemExit(f"at most {MAX_WORKERS} workers (12 processes with this one)")
+        raise SystemExit(f"at most {MAX_WORKERS} workers ({MAX_WORKERS + 1} processes with this one)")
     out = Path(out_path)
     done = set()
     if out.exists():

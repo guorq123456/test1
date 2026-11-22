@@ -1,7 +1,7 @@
 """Submissions (phase 2, item 2.3): the entry point, and the checks a submission passes before it goes anywhere.
 
     python -m ladder.submit precheck DIR [--deck-of-member CODE]      # format, deck, code; no games, counts nothing
-    python -m ladder.submit receive  DIR --player 甲 --pool POOLDIR --out SUBDIR [--workers 4] [--mask 0x3FC3FC]
+    python -m ladder.submit receive  DIR --player 甲 --pool POOLDIR --out SUBDIR [--workers 15] --mask 0x3FC3FC
     python -m ladder.submit admit    SUBDIR --receipt S-0001 --pool POOLDIR   # an accepted new deck enters the pool
     python -m ladder.submit status   SUBDIR --pool POOLDIR --player 甲         # classes done / missing this period
 
@@ -585,6 +585,8 @@ def receive(d: Path, player: str, pool_dir: Path, subdir: Path, workers: int = 4
             rng_seed: int | None = None, smoke_games: int = SMOKE_GAMES, step_limit: float = 30.0,
             seeds: tuple[int, int] = SMOKE_SEEDS) -> dict:
     """Every check; the receipt; one ledger line (accepted or refused)."""
+    from ladder.runner import one_core_type
+    one_core_type(mask)                                   # the compute check compares games (A44)
     from ladder import base
     from ladder.pool import Pool
     from ladder.replay import replay_decisions

@@ -105,3 +105,15 @@ def test_a_deck_with_an_unscripted_card_is_void():
     res = runner.play_job({"id": "t-v", "seed": 99001206, "decks": [deck, CODES[4]],
                            "strategies": ["py:helpers:Random", "py:helpers:Random"], "strategy_seeds": [1, 2]})
     assert res["result"] == "void" and "no script" in res["error"]
+
+
+def test_compute_comparing_runs_need_one_core_type(monkeypatch):
+    # Salem S10 (all cores) with A44: on Windows a run that compares per-step compute must give the E-core mask
+    import pytest
+    from ladder import runner
+    assert runner.MAX_WORKERS == 23
+    assert runner.one_core_type(None) is None and runner.one_core_type(runner.E_CORES) == "0x3fc3fc"
+    monkeypatch.setattr(runner.os, "name", "nt")
+    with pytest.raises(SystemExit):
+        runner.one_core_type(None)
+    assert runner.one_core_type(0x3FC3FC) == "0x3fc3fc"

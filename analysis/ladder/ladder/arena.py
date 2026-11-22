@@ -3,7 +3,7 @@ resuming from a position of one's own game, a game count per player and period.
 
 Host:
     python -m ladder.arena snapshot POOLDIR --arena ARENA [--anchors ANCHORS.json]
-    python -m ladder.arena open     ARENA --hours 4 --games 20000 [--workers 11 --mask 0x3FC3FC]
+    python -m ladder.arena open     ARENA --hours 4 --games 20000 [--workers 23]
 Players (each command is one run; what a player may read is under ARENA/players/<code>/, nothing else):
     python -m ladder.arena field    ARENA --player 甲
     python -m ladder.arena ladder   ARENA --player 甲 --version DIR [--replacing ANON] [--games 600 --tail 300 --repeats 3]

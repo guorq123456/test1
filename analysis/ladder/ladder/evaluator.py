@@ -3,7 +3,7 @@
     python -m ladder.evaluator freeze  POOLDIR --out FROZEN.json [--cr last1000 | current]
     python -m ladder.evaluator run     FROZEN.json --candidate MID | --deck CODE --strategy SPEC
                                        --out DIR --seeds LO HI [--games 1200 --tail 600 --repeats 5]
-                                       [--workers 11 --mask 0x3FC3FC] [--rng-seed N]
+                                       [--workers 23] [--rng-seed N]
 
 Freeze: every member's CR is fixed, by default at the mean of its CR over its last 1000 decided games (§4.4 step 1;
 A22: the last 1000 whatever version played them). The frozen pool is a file: members, decks, strategies, versions,

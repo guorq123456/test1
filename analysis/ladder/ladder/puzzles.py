@@ -4,7 +4,7 @@
     python -m ladder.puzzles add SUBDIR --id P01 --deck CODE --title "..." [--note "..."] [--public PUBDIR]
     python -m ladder.puzzles run SUBDIR --id P01 --seeds LO HI --out DIR [--games-per-opponent 10]
                                  [--field others|frozen7|wgpq] [--ref NAME=SPEC ...] [--agreement 60]
-                                 [--workers 11 --mask 0x3FC3FC]
+                                 [--workers 23]
 
 - add: the puzzle goes into SUBDIR/puzzles.json (the submission check reads it: a 公共题 submission must name a
   puzzle there and bring exactly its list) and, without the list's owner or anything else, into PUBDIR/puzzles.md.

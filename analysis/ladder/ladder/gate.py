@@ -2,7 +2,7 @@
 
     python -m ladder.gate run FROZEN.json --member MID --new SPEC --old SPEC --kind better|noninf|same|fixed
                           --change "what changed" --prediction "expected gap and why" --seeds LO HI --out DIR
-                          [--delta 2] [--share 0.4] [--pairs N] [--workers 11 --mask 0x3FC3FC]
+                          [--delta 2] [--share 0.4] [--pairs N] [--workers 15 --mask 0x3FC3FC]
                           [--resubmit-of G-xxxx --what-changed-since "..."]
     python -m ladder.gate selfcheck [--sims 2000]
 
@@ -262,12 +262,15 @@ class Gate:
                    mask=mask, quiet=True, on_result=on_result)
 
     def run(self, workers=4, step_limit=30.0, mask=None) -> dict:
+        from ladder.runner import one_core_type
         t0 = time.time()
+        core_mask = one_core_type(mask)                    # compute is compared (A44)
         rec = {"gate": self.gid, "date": time.strftime("%m-%d"), "member": self.me.mid, "anon": self.me.anon,
                "craft": self.me.craft,
                "kind": self.kind, "new": self.new, "old": self.old, "change": self.change,
                "prediction": self.prediction, "resubmit_of": self.resubmit_of, "since": self.since,
-               "frozen": self.body["hash"], "seed_range": [self.lo, self.hi], "rng_seed": self.rng_seed}
+               "frozen": self.body["hash"], "seed_range": [self.lo, self.hi], "rng_seed": self.rng_seed,
+               "mask": core_mask}
         if self.kind in ("better", "noninf"):
             self._sequential(rec, workers, step_limit, mask)
         else:

@@ -2,7 +2,7 @@
 两个数都报」).
 
     python tools/pilot_conditions.py --seeds LO HI --games-per-opponent 20 --out DIR [--pilots T1-SWORD-1 ...]
-                                     [--workers 11 --mask 0x3FC3FC]
+                                     [--workers 15 --mask 0x3FC3FC]
 
 Each pilot plays its own list (the bot frozen seven list of its class) at its equal-CPU N (svsim.ui.session.
 pilot_native_spec) against a field of lists played by the default bot mcts:100+plan; on the same games the default
@@ -146,6 +146,7 @@ def main(argv=None):
     from ladder import deal, runner
     if a.workers > runner.MAX_WORKERS:
         raise SystemExit(f"at most {runner.MAX_WORKERS} workers")
+    runner.one_core_type(a.mask)              # the compute ratio pilot / reference compares games (A44)
     runner._limit(a.mask)                     # below normal priority (+ E-core mask on Windows); children inherit
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)

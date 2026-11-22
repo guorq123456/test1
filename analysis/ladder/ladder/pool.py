@@ -3,7 +3,7 @@
     python -m ladder.pool create  POOLDIR --seeds LO HI [--rng-seed N]
     python -m ladder.pool enter   POOLDIR --deck CODE --strategy SPEC --owner WHO [--note TEXT]
     python -m ladder.pool update  POOLDIR --member MID --strategy SPEC --gate REF
-    python -m ladder.pool ladder  POOLDIR --workers 11 [--mask 0x3FC3FC] [--games N | --until-period-done]
+    python -m ladder.pool ladder  POOLDIR --workers 23 [--games N | --until-period-done]
     python -m ladder.pool advance POOLDIR [--force REASON]
     python -m ladder.pool show    POOLDIR [--private]
 
