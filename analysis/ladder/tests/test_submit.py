@@ -313,21 +313,22 @@ def test_an_accepted_update_goes_to_the_gate(tmp_path, monkeypatch):
     class FakeGate:
         def __init__(self, frozen, member, new, old, kind, change, prediction, seeds, out_dir, **kw):
             calls.append({"member": member, "new": new, "old": old, "kind": kind, "change": change,
-                          "ledger_root": kw.get("ledger_root")})
+                          "ledger_root": kw.get("ledger_root"), "resubmit_of": kw.get("resubmit_of"),
+                          "since": kw.get("since")})
 
         def run(self, workers=4, mask=None):
             return {"gate": f"G-{len(calls):04d}", "verdict": "passed" if len(calls) == 1 else "not passed"}
     import ladder.gate
     monkeypatch.setattr(ladder.gate, "Gate", FakeGate)
 
-    def receipt(rid, route=None, spec="py:sub_x:Quick", src=None, was_=None):
+    def receipt(rid, route=None, spec="py:sub_x:Quick", src=None, was_=None, change="改了换牌", **extra):
         (subs / rid).mkdir(parents=True, exist_ok=True)
         (subs / "code").mkdir(parents=True, exist_ok=True)
         (subs / "code" / f"{spec.split(':')[1]}.py").write_text(
             src or f"class Quick:\n    N = {rid[-1]}\n", encoding="utf-8")
         (subs / rid / "submission.json").write_text(json.dumps(
-            {"type": "打法更新", "member": "一号", "class": "Quick", "change": "改了换牌", "prediction": "+3，因为…",
-             "route": route}, ensure_ascii=False), encoding="utf-8")
+            {"type": "打法更新", "member": "一号", "class": "Quick", "change": change, "prediction": "+3，因为…",
+             "route": route, **extra}, ensure_ascii=False), encoding="utf-8")
         submit._append(subs, {"ev": "receipt", "id": rid, "player": "甲", "kind": "update", "verdict": "收下",
                               "member": "一号", "mid": mid, "spec": spec, "route": route,
                               "was": was_ or {"strategy": pool.members[mid].strategy, "version": 1}})
@@ -355,11 +356,20 @@ def test_an_accepted_update_goes_to_the_gate(tmp_path, monkeypatch):
     same = submit.gate_update(subs, "S-0004", pool.dir, tmp_path / "f.json", (1, 2), tmp_path / "gates", delta=3)
     assert same["gate"] is None and "同一个改动" in same["verdict"] and same["same_as"] == "S-0001"
     assert len(calls) == 2
+    # after S-0003 failed on this version: the same change in other code is not gated; a new try must name it
+    receipt("S-0005", spec="py:sub_S0005:Quick")
+    twin = submit.gate_update(subs, "S-0005", pool.dir, tmp_path / "f.json", (1, 2), tmp_path / "gates", delta=3)
+    assert twin["gate"] is None and "改动说明和预测和 S-0003 一样" in twin["verdict"] and len(calls) == 2
+    receipt("S-0006", spec="py:sub_S0006:Quick", change="换牌改成看对手职业")
+    bare = submit.gate_update(subs, "S-0006", pool.dir, tmp_path / "f.json", (1, 2), tmp_path / "gates", delta=3)
+    assert bare["gate"] is None and "resubmit_of" in bare["verdict"] and len(calls) == 2
     # an update written against an older version is compared with the version the member has now
-    receipt("S-0005", spec="py:sub_S0005:Quick", was_={"strategy": was, "version": 1})   # received at version 1
+    receipt("S-0007", spec="py:sub_S0007:Quick", was_={"strategy": was, "version": 1}, change="换牌改成看对手职业",
+            resubmit_of="S-0003", since="换牌看对手职业，不再固定换掉高费卡")
     now = Pool(pool.dir).members[mid]
-    late = submit.gate_update(subs, "S-0005", pool.dir, tmp_path / "f.json", (1, 2), tmp_path / "gates", delta=3)
+    late = submit.gate_update(subs, "S-0007", pool.dir, tmp_path / "f.json", (1, 2), tmp_path / "gates", delta=3)
     assert calls[2]["old"] == now.strategy != was and "现在这一版" in late["note"]
+    assert calls[2]["resubmit_of"] == "G-0002" and calls[2]["since"].startswith("换牌看对手职业")
 
 
 def test_a_route_stop_mark_is_checked(tmp_path):
@@ -371,3 +381,13 @@ def test_a_route_stop_mark_is_checked(tmp_path):
     ok = make_sub(tmp_path / "s2", "打法更新", member="一号", change="c", prediction="p",
                   route={"steps": 3, "step": 2, "route_of": "S-0001", "stop": True})
     assert submit.read_dir(ok)["meta"]["route"]["stop"] is True
+
+
+def test_a_resubmission_names_the_failed_gate_and_what_changed(tmp_path):
+    bad = make_sub(tmp_path / "s1", "打法更新", member="一号", change="c", prediction="p", resubmit_of="S-0001")
+    with pytest.raises(submit.Refused) as e:
+        submit.read_dir(bad)
+    assert any("since" in p for p in e.value.args[0])
+    ok = make_sub(tmp_path / "s2", "打法更新", member="一号", change="c", prediction="p", resubmit_of="S-0001",
+                  since="搜索深度按剩余费用调")
+    assert submit.read_dir(ok)["meta"]["resubmit_of"] == "S-0001"

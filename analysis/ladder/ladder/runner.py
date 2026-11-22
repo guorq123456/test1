@@ -186,7 +186,9 @@ def _worker(inq, results_q, beat, wid):
         try:
             res = play_job(job, beat)
         except Exception:
-            res = {"id": job["id"], "result": "void", "error": "runner error:\n" + traceback.format_exc(limit=8)}
+            res = {"id": job["id"], "seed": job.get("seed"), "decks": job.get("decks"),
+                   "strategies": job.get("strategies"), "deal": job.get("deal"), "labels": job.get("labels", {}),
+                   "result": "void", "error": "runner error:\n" + traceback.format_exc(limit=8)}
         res["worker"] = wid
         results_q.put(res)
 

@@ -168,15 +168,31 @@ def record_interrupted(out_dir, ledger: list[dict], root: Path) -> list[dict]:
     while True:
         gid = f"G-{n:04d}"
         games = Path(out_dir) / gid / "games.jsonl"
-        if gid in have or not games.exists() or not games.read_text(encoding="utf-8").strip():
+        if gid in have or not games.exists() or not games.read_text(encoding="utf-8", errors="replace").strip(" \t\r\n\x00"):
             return out
         start = Path(out_dir) / gid / "start.json"
-        st = json.loads(start.read_text(encoding="utf-8")) if start.exists() else {}
-        seeds = sorted({json.loads(l)["seed"] for l in games.read_text(encoding="utf-8").splitlines() if l.strip()})
+        try:
+            st = json.loads(start.read_text(encoding="utf-8")) if start.exists() else {}
+        except ValueError:
+            st = {}
+        seeds, torn = set(), 0
+        for l in games.read_text(encoding="utf-8", errors="replace").splitlines():
+            l = l.strip(" \t\r\n\x00")
+            if not l:
+                continue
+            try:                                        # a power cut can leave a half-written last line
+                s = json.loads(l).get("seed")
+            except ValueError:
+                torn += 1
+                continue
+            if s is not None:                           # a runner-error line may have no seed
+                seeds.add(s)
+        seeds = sorted(seeds)
         rec = {"gate": gid, "date": time.strftime("%m-%d"), "member": st.get("member"), "anon": st.get("anon", "?"),
                "kind": st.get("kind", "?"), "new": st.get("new"), "old": st.get("old"),
                "change": st.get("change", "（不知道）"), "prediction": st.get("prediction", ""),
-               "seed_note": f"用了 {len(seeds)} 个种子", "opponents_note": "—",
+               "seed_note": f"用了 {len(seeds)} 个种子" + (f"，{torn} 行没写完，跳过" if torn else ""),
+               "opponents_note": "—",
                "verdict": "interrupted: 中途停了，没有结论，不算一次检验", "interrupted": True, "seeds_used": seeds}
         append_ledger(rec, root)
         out.append(rec)

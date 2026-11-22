@@ -224,7 +224,7 @@ def step_gate(runs: Path, a) -> dict:
     mid = sword_mid(fz)
     root = runs / "gate"
     root.mkdir(parents=True, exist_ok=True)
-    done = {(r["new"], r["old"], r["kind"]): r for r in G.read_ledger(root)}
+    done = {(r["new"], r["old"], r["kind"]): r for r in G.read_ledger(root) if not r.get("interrupted")}   # A47
     weak = "mix:0.35:mcts:100+plan"
     plan = [("strong passes", DEFAULT, weak, "better", True), ("weak is rejected", weak, DEFAULT, "better", True),
             ("identical: same decisions", DEFAULT, DEFAULT, "same", False)]

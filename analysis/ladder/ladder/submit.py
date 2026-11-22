@@ -10,6 +10,7 @@ A submission is one directory (public/submit.md is the players' description):
                       "class": the strategy class, "deck": deck code (新卡组, 公共题),
                       "change": what changed, "prediction": expected gap and why (打法更新),
                       "route": {"steps": N, "step": k, "stop_if": "...", "route_of": "S-xxxx"} (multi-step, A33),
+                      "resubmit_of": "S-xxxx", "since": "..." (an update after a failed gate on the same version, A46),
                       "puzzle": puzzle id (公共题)}
     strategy.py      the strategy: one module, the class named by "class", a subclass of ladder.interface
                      .PlayerStrategy
@@ -227,6 +228,9 @@ def read_dir(d: Path) -> dict:
                 problems.append("多步改法第 2 步起要写 route_of（第 1 步的回执编号）")
             elif "stop" in r and not (r["stop"] is True and 1 < r["step"] < r["steps"]):
                 problems.append("stop 只能写 true，而且只在第 2 步到倒数第 2 步之间（按 stop_if 中途停）")
+    if kind == "update" and ("resubmit_of" in meta or "since" in meta):
+        if not str(meta.get("resubmit_of", "")).startswith("S-") or not str(meta.get("since", "")).strip():
+            problems.append("重交要同时写 resubmit_of（指回的那一次的回执编号）和 since（实质改了什么）")
     if kind == "puzzle" and not isinstance(meta.get("puzzle"), str):
         problems.append("公共题要写 puzzle（题号）")
     for f in ("notes.md", "evidence.md"):
@@ -859,13 +863,38 @@ def gate_update(subdir: Path, rid: str, pool_dir: Path, frozen: Path, seeds: tup
         was = rec.get("was") or {}
     if was.get("version") is not None and was["version"] != m.version:
         line["note"] = f"收件时成员是第 {was['version']} 版，现在是第 {m.version} 版：和现在这一版比"
+    # an earlier gate of this member against this same version that did not pass: a new try must not be the same
+    # change in other words, must name that gate and say what changed in substance (A46; the gate's 指回 column)
+    failed = [l for l in lines if l.get("ev") == "gated" and l.get("mid") == m.mid and l.get("gate")
+              and l.get("verdict") != "passed" and l.get("old") == old]
+    resubmit_gate, since = None, ""
+    if failed:
+        def said(r):
+            p = subdir / r / "submission.json"
+            x = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+            return str(x.get("change", "")).strip(), str(x.get("prediction", "")).strip()
+        mine = (str(meta["change"]).strip(), str(meta["prediction"]).strip())
+        twin = next((l for l in failed if said(l["receipt"]) == mine), None)
+        if twin:
+            line.update(verdict=f"同一个改动（改动说明和预测和 {twin['receipt']} 一样），不重新检验", gate=None,
+                        fingerprint=fp, same_as=twin["receipt"])
+            _append(subdir, line)
+            return line
+        names = {l["receipt"]: l["gate"] for l in failed}
+        ro, since = meta.get("resubmit_of"), str(meta.get("since") or "").strip()
+        if ro not in names or not since:
+            line.update(verdict=f"重交：这一版上已经有没过的检验（{'、'.join(sorted(names))}），要在 submission.json 里写 "
+                                "resubmit_of（指回哪一次）和 since（实质改了什么）；不检验", gate=None, fingerprint=fp)
+            _append(subdir, line)
+            return line
+        resubmit_gate = names[ro]
     code = subdir / "code"
     if str(code) not in sys.path:
         sys.path.insert(0, str(code))                     # the workers import the staged submission from here
     os.environ["LADDER_EXTRA_PATH"] = os.pathsep.join(
         x for x in (str(code), os.environ.get("LADDER_EXTRA_PATH", "")) if x)
     g = Gate(frozen, m.mid, rec["spec"], old, "better", change, prediction, seeds, out_dir, delta=delta,
-             ledger_root=Path(out_dir), rng_seed=rng_seed)
+             ledger_root=Path(out_dir), rng_seed=rng_seed, resubmit_of=resubmit_gate, since=since)
     res = g.run(workers=workers, mask=mask)
     line.update(gate=res["gate"], verdict=res["verdict"], old=old, new=rec["spec"], fingerprint=fp)
     if res["verdict"] == "passed":

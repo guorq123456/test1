@@ -168,3 +168,17 @@ def test_a_used_up_seed_range_is_refused(tmp_path, frozen):
                      "seeds_used": list(range(*GATE_SEEDS))}, tmp_path)
     with pytest.raises(P.PoolError, match="used up"):
         gate(tmp_path, fz, mid, "bot:greedy", "py:helpers:Random", "better", delta=10, share=0.5)
+
+
+def test_a_torn_game_log_does_not_block_later_gates(tmp_path, frozen):
+    # review 11-22 (second round): a power cut can leave a half-written line; a runner-error line has no seed
+    fz, mid = frozen
+    d = tmp_path / "gates" / "G-0001"
+    d.mkdir(parents=True)
+    (d / "games.jsonl").write_text(json.dumps({"id": "a", "seed": 99001850}) + "\n" +
+                                   json.dumps({"id": "b", "result": "void", "error": "runner error"}) + "\n" +
+                                   '{"id": "c", "se' + "\x00" * 8, encoding="utf-8")
+    g = gate(tmp_path, fz, mid, "bot:greedy", "py:helpers:Random", "better", delta=10, share=0.5)
+    line = G.read_ledger(tmp_path)[0]
+    assert g.gid == "G-0002" and line["interrupted"] and line["seeds_used"] == [99001850]
+    assert "1 行没写完" in line["seed_note"] and 99001850 in g.used
