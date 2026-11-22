@@ -9,7 +9,8 @@
 How a pair is played: the new and the old version each play one game against the same frozen opponent, with the
 same seed, in the same seat (so the same deal and the same first player), with the same strategy seeds on both
 sides. Seats alternate pair by pair (half each). The opponent is drawn from the frozen pool (the member itself left
-out) with the matching the member meets on the ladder (pool.pick_opponent from the member's CR). A pair with the
+out) with the matching the member meets on the ladder (pool.pick_opponent from the member's CR; S2: only members
+within 200; a member with nobody within 200 plays the closest, as in the evaluator, A28 pending Salem). A pair with the
 same result twice is concordant and skipped; a discordant pair counts, "won" when the new version won it. A crash,
 illegal move or timeout loses for the side that made it; a void game (no one to blame) voids its pair, and if more
 than 2% of the pairs are void the whole gate is invalid (A24).
@@ -57,9 +58,11 @@ for p in (str(ROOT), str(HERE.parent)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
+from ladder import rules  # noqa: E402
+from ladder import evaluator as E  # noqa: E402
 from ladder.evaluator import Candidate, load_frozen, opponents_for  # noqa: E402
 from ladder.leaderboard import t975  # noqa: E402
-from ladder.pool import CRAFT_ZH, PoolError, pick_opponent  # noqa: E402
+from ladder.pool import CRAFT_ZH, PoolError, near_by_craft, pick_opponent  # noqa: E402
 
 ALPHA = BETA = 0.05
 COMPUTE_RATIO = 1.08
@@ -189,6 +192,9 @@ class Gate:
         self.me = me
         self.others, self.mu = opponents_for(self.frozen, member)
         self.cand = Candidate(member, me.craft, me.deck, new, cr=me.cr)
+        if E.FAR == "wait" and not near_by_craft(self.cand, self.others, me.cr):
+            raise PoolError(f"{member} has nobody within {rules.WINDOW} in the frozen pool (CR {me.cr}): on the ladder it "
+                            "plays nobody (S2, A27), so there is nothing to test it against")
         self.kind, self.new, self.old, self.delta = kind, new, old, delta
         self.change, self.prediction, self.resubmit_of, self.since = change, prediction, resubmit_of, since
         self.compute_is_the_point = compute_is_the_point
@@ -209,7 +215,7 @@ class Gate:
 
     # one pair = two jobs
     def _pair(self, i: int, tag: str) -> list[dict]:
-        opp, how = pick_opponent(self.cand, self.others, self.mu, self.rng, cr=self.me.cr)
+        opp, how = pick_opponent(self.cand, self.others, self.mu, self.rng, cr=self.me.cr, far=E.FAR)
         while True:
             seed = self.rng.randrange(self.lo, self.hi)
             if seed not in self.used:
@@ -219,7 +225,7 @@ class Gate:
         seat = i % 2
         sseeds = [self.rng.randrange(1, 2 ** 31), self.rng.randrange(1, 2 ** 31)]
         pair = {"i": i, "tag": tag, "seed": seed, "seat": seat, "opp": opp.mid, "opp_craft": opp.craft,
-                "ids": {}}
+                "how": how, "ids": {}}
         jobs = []
         for side, spec in (("new", self.new), ("old", self.old)):
             sides = [(self.me.deck, spec), (opp.deck, opp.strategy)]
@@ -269,6 +275,7 @@ class Gate:
         self._compute(rec)
         rec["pairs"] = len(self.pairs)                     # every pair played, the share pre-run included
         rec["pre_pairs"] = sum(1 for p in self.pairs if p["tag"] == "pre")
+        rec["far_pairs"] = sum(1 for p in self.pairs if p.get("how") == "far")   # A28: nobody within 200
         rec["void_pairs"] = sum(1 for p in self.pairs if p.get("outcome") == "void")
         if rec["pairs"] and rec["void_pairs"] / rec["pairs"] > VOID_LIMIT:
             rec["verdict"] = "invalid: too many void pairs"

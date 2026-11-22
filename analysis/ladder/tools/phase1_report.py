@@ -21,7 +21,7 @@ HERE = Path(__file__).resolve().parent
 sys.path[:0] = [str(HERE)]
 import phase1_checks as C  # noqa: E402
 
-STEPS = ("baseline", "replay", "gate", "known", "fluct", "known2")
+STEPS = ("baseline", "replay", "gate", "known", "known2", "fluct")   # `known` only in the 11-21 run (p1)
 ZH = {"baseline": "基线天梯", "replay": "重放", "gate": "把关工具自检", "known": "已知强弱（第一轮，粗）",
       "fluct": "波动", "known2": "已知强弱（第二轮，细）"}
 
@@ -121,6 +121,8 @@ def render(runs: Path, rep: dict) -> str:
     w("| 步骤 | 状态 | 判定 |\n|---|---|---|")
     for k in STEPS:
         d = s.get(k)
+        if k == "known" and d is None:
+            continue
         ok = "—" if d is None else ("过" if d.get("ok", d.get("zero_sum", {}).get("ok")) else "**没过**")
         if k in C.KNOWN and d:
             ok = "排序过（量值另看）" if all(d["order_right_leaderboard"]) and d["order_right_evaluator"] and all(d["runs_agree"]) \
@@ -136,6 +138,11 @@ def render(runs: Path, rep: dict) -> str:
             w(f"| {r['craft']} | {r['member']} | {r['games']} | {r['rel_cr']:+.0f} | {fmt_ci(r['ci'])} | {r['tau']} "
               f"| {fz.get(r['member'], '—')} |")
         w(f"\n冻结快照 hash {b['frozen_hash']}（各成员最后 1000 局的平均 CR）。")
+        if "matching" in b:
+            iso = "、".join(b["isolated_at_end"]) or "没有"
+            short = "、".join(f"{x['member']}（{x['games']} 局，CR {x['cr']}）" for x in b["short"]) or "没有"
+            w(f"匹配规则 {b['matching']}；没用 11-21 基线打过的种子 {b.get('excluded_seeds', 0)} 个。"
+              f"结束时够不着任何人（200 以内没人）的：{iso}；因此没打满的：{short}。")
     if r := s.get("replay"):
         w(f"\n## 重放\n\n抽 {r['checked']} 局，逐步重放和逐个决策重放，不一致 {len(r['failed'])} 局。")
     if g := s.get("gate"):

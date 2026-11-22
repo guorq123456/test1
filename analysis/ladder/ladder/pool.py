@@ -8,7 +8,9 @@
     python -m ladder.pool show    POOLDIR [--private]
 
 Everything follows the task spec §3-§4 (rules.py holds the numbers); the choices it leaves open are assumptions
-A3, A4, A13-A19 in DEVIATIONS.md.
+A3, A4, A13-A19, A27 in DEVIATIONS.md. Matching follows Salem's ruling S2 (11-22): a class with nobody within 200 is
+drawn again; there is no "closest" fallback, so a member with nobody within 200 plays no games until someone comes
+within 200 again (A27).
 
 Storage: POOLDIR/events.jsonl is the pool. Every change is one appended line (create, enter, start, game, remove,
 update, period, exit_reason) and the state is rebuilt by folding the lines in order, the same code path live and on
@@ -48,10 +50,19 @@ MAX_PER_LIST = 2                  # ... at most 2 members with the same list
 NEW_DECKS_PER_PERIOD = 2          # ... at most 2 new decks per player per deck period
 HOST_OWNERS = ("baseline", "salem")   # members that belong to no player (§4.1)
 ANON_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+MATCHING = "S2"                   # Salem 11-22: never past 200 (class redrawn; initiator redrawn, A27). Older pools: none
 
 
 class PoolError(Exception):
     pass
+
+
+class NoOpponent(PoolError):
+    """S2 / A27: nobody within 200 of this side, in any class."""
+
+
+class Stalled(PoolError):
+    """S2 / A27: no two members of the pool are within 200 of each other: no game can be paired."""
 
 
 class ListFull(PoolError):
@@ -104,27 +115,41 @@ class Member:
         return self.since_change < UNSTABLE_GAMES
 
 
-def pick_opponent(a, members, mu: float, rng: random.Random, cr: float | None = None):
-    """§4.2 for one side `a` (its CR `cr`, default a.cr): the opponent's class uniformly over the 7, again while
-    that class has nobody (other than `a`); within it, by matching weight among members within 200, else the one
-    with the closest CR (ties uniformly, A17). Shared by the pool and the frozen-pool evaluator."""
-    mine = a.cr if cr is None else cr
-    by_craft = {}
+def near_by_craft(a, members, cr: float) -> dict:
+    """The members other than `a` within 200 of `cr`, by class."""
+    out = {}
     for m in members:
-        if m is not a:
-            by_craft.setdefault(m.craft, []).append(m)
-    if not by_craft:
+        if m is not a and rules.within_window(cr, m.cr):
+            out.setdefault(m.craft, []).append(m)
+    return out
+
+
+def pick_opponent(a, members, mu: float, rng: random.Random, cr: float | None = None, far: str = "wait"):
+    """§4.2 with Salem's ruling S2 (11-22: 「没人就重抽」) for one side `a` (its CR `cr`, default a.cr): the
+    opponent's class uniformly over the 7, drawn again while that class has nobody within 200 (other than `a`);
+    within it, by matching weight. Nobody within 200 in any class (S2 doesn't cover it):
+    - far="wait" (the live pool, A27): NoOpponent; the pool draws another initiator and this one waits until
+      someone comes within 200;
+    - far="closest" (frozen pools only, the evaluator and the gate, A28, pending Salem): the member with the
+      closest CR (ties uniformly), marked "far". Frozen opponents never move back within 200, so waiting would be
+      for ever.
+    Shared by the pool, the frozen-pool evaluator and the gate."""
+    mine = a.cr if cr is None else cr
+    others = [m for m in members if m is not a]
+    if not others:
         raise PoolError("nobody to play")
+    near = near_by_craft(a, others, mine)
+    if not near:
+        if far == "closest":
+            best = min(abs(m.cr - mine) for m in others)
+            return rng.choice([m for m in others if abs(m.cr - mine) == best]), "far"
+        raise NoOpponent(f"nobody within {rules.WINDOW} of CR {mine}")
     while True:
-        cands = by_craft.get(rng.choice(CRAFTS))
+        cands = near.get(rng.choice(CRAFTS))
         if not cands:
-            continue                                           # nobody of that class: draw the class again
-        near = [m for m in cands if rules.within_window(mine, m.cr)]
-        if near:
-            w = [rules.effective_weight(m.cr, mu, m.protected) for m in near]
-            return rng.choices(near, weights=w)[0], "window"
-        best = min(abs(m.cr - mine) for m in cands)
-        return rng.choice([m for m in cands if abs(m.cr - mine) == best]), "closest"
+            continue                       # nobody of that class within 200: draw the class again (S2)
+        w = [rules.effective_weight(m.cr, mu, m.protected) for m in cands]
+        return rng.choices(cands, weights=w)[0], "window"
 
 
 class Pool:
@@ -155,9 +180,11 @@ class Pool:
 
     @classmethod
     def create(cls, path, seeds: tuple[int, int], rng_seed: int | None = None, note: str = "",
-               on_event=None, check: bool = False) -> "Pool":
+               on_event=None, check: bool = False, exclude_seeds=None) -> "Pool":
         """`check`: a host-only pool for the phase-1 checks (synthetic members): quotas off, and a member may
-        enter at another CR to test convergence from different starts. Never the real pool."""
+        enter at another CR to test convergence from different starts. Never the real pool.
+        `exclude_seeds`: seeds of the range already played elsewhere (an earlier pool that was set aside): they are
+        written into the create line and never drawn (each ladder seed is played once)."""
         if path is not None:
             d = Path(path)
             if (d / "events.jsonl").exists():
@@ -167,9 +194,11 @@ class Pool:
         lo, hi = int(seeds[0]), int(seeds[1])
         if not lo < hi:
             raise PoolError("empty seed range")
+        excluded = sorted({int(x) for x in exclude_seeds or () if lo <= int(x) < hi})
         pool._log({"ev": "create", "seeds": [lo, hi], "rng_seed": rng_seed if rng_seed is not None
-                   else secrets.randbits(48), "note": note, "check": bool(check),
-                   "rules": {"entry": rules.ENTRY_CR, "window": rules.WINDOW, "floor": rules.WEIGHT_FLOOR,
+                   else secrets.randbits(48), "note": note, "check": bool(check), "excluded_seeds": excluded,
+                   "rules": {"matching": MATCHING, "entry": rules.ENTRY_CR, "window": rules.WINDOW,
+                             "floor": rules.WEIGHT_FLOOR,
                              "remove_at": rules.REMOVE_AT, "protect": PROTECT_GAMES, "period": FULL_PERIOD_GAMES,
                              "unstable": UNSTABLE_GAMES}})
         return pool
@@ -189,6 +218,7 @@ class Pool:
         self.n_events = ev["n"] + 1
         if kind == "create":
             self.params = ev
+            self.used_seeds.update(ev.get("excluded_seeds", []))
         elif kind == "enter":
             m = Member(**ev["member"])
             m.history = [[m.version, m.strategy, m.base_version, ev["n"], None]]
@@ -335,16 +365,32 @@ class Pool:
 
     # --- matching (§4.2) -------------------------------------------------------------------------------------
 
+    def isolated(self) -> list[str]:
+        """S2 / A27: the members with nobody within 200 right now. They can't be drawn, as initiator or opponent."""
+        act = self.active()
+        return [m.mid for m in act if not any(o is not m and rules.within_window(m.cr, o.cr) for o in act)]
+
     def draw_pair(self, rng: random.Random) -> tuple[Member, Member, str]:
-        """The initiator by matching weight; the opponent's class uniformly over the 7; within it, by weight among
-        members within 200, else the one with the closest CR; a class with nobody in it is drawn again."""
+        """The initiator by matching weight; the opponent's class uniformly over the 7, drawn again while that class
+        has nobody within 200 (S2); within it, by weight. An initiator with nobody within 200 in any class is drawn
+        again (A27); no two members within 200 at all: Stalled."""
         act = self.active()
         if len(act) < 2:
             raise PoolError("fewer than two members in the pool")
         mu = self.mu
-        a = rng.choices(act, weights=[self.weight(m, mu) for m in act])[0]
-        b, how = pick_opponent(a, act, mu, rng)
-        return a, b, how
+        cands = list(act)
+        while cands:
+            a = rng.choices(cands, weights=[self.weight(m, mu) for m in cands])[0]
+            try:
+                b, how = pick_opponent(a, act, mu, rng)
+            except NoOpponent:
+                cands.remove(a)            # nobody within 200 of it: draw the initiator again among the rest
+                continue
+            return a, b, how
+        raise Stalled(f"no two of the {len(act)} members are within {rules.WINDOW} of each other")
+
+    def can_pair(self) -> bool:
+        return len(self.isolated()) < len(self.active()) and len(self.active()) >= 2
 
     def next_job(self) -> dict:
         """Pair two members from the CRs of this moment, reserve a ladder seed, log the start."""
@@ -410,15 +456,30 @@ class Pool:
     # --- running the ladder ----------------------------------------------------------------------------------
 
     def jobs(self, games: int | None = None, until_period_done: bool = False):
-        """Pairings on demand: stop after `games` more starts, or once every member has its 2000 games."""
+        """Pairings on demand: stop after `games` more starts, or once every member has its 2000 games. Also stops
+        (A27) when no pair can be made, or, for the period, when every member still short has nobody within 200;
+        `stuck()` says which. Games still in flight may bring a member back within 200: ask again after."""
         n = 0
         while True:
             if games is not None and n >= games:
                 return
             if until_period_done and not self.period_done():
                 return
+            if self.stuck(until_period_done):
+                return
             n += 1
             yield self.next_job()
+
+    def stuck(self, for_period: bool = False) -> dict | None:
+        """Why no more games can usefully be paired now (A27), or None."""
+        iso = self.isolated()
+        if not self.can_pair():
+            return {"why": "stalled", "isolated": iso}
+        if for_period:
+            short = self.period_done()
+            if short and set(short) <= set(iso):
+                return {"why": "short members isolated", "short": short, "isolated": iso}
+        return None
 
     def ladder(self, workers: int = 4, games: int | None = None, until_period_done: bool = False,
                step_limit: float = 30.0, mask=None, quiet=True) -> dict:
@@ -484,7 +545,8 @@ def main():
     elif a.cmd == "ladder":
         res = pool.ladder(a.workers, a.games, a.until_period_done, a.step_limit,
                           int(a.mask, 16) if a.mask else None, quiet=False)
-        print(json.dumps({**res, "mu": round(pool.mu, 2), "short": len(pool.period_done())}))
+        print(json.dumps({**res, "mu": round(pool.mu, 2), "short": len(pool.period_done()),
+                          "isolated": pool.isolated(), "stuck": pool.stuck(a.until_period_done)}))
     elif a.cmd == "advance":
         print(json.dumps({"period": pool.advance(a.force), "kind": period_kind(pool.period)}))
     elif a.cmd == "show":

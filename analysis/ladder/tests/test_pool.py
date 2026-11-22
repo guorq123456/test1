@@ -92,36 +92,100 @@ def test_draws_and_void_change_nothing(tmp_path):
     assert sum(m.games for m in pool.active()) == 2
 
 
-def test_matching_window_weights_and_closest(tmp_path):
+def out_of_protection(*ms):
+    for m in ms:
+        m.full_strategy_period, m.games = True, 5000      # out of protection (test-only direct state)
+
+
+def test_matching_only_within_200_and_redraws(tmp_path):
+    """S2: a class with nobody within 200 is drawn again; nobody is ever matched past 200."""
     pool = new_pool(tmp_path)
     for craft in (1, 2):
         for i in range(2):
             pool.enter(synth_deck(craft, i), "bot:greedy", "baseline", rng=random.Random(craft * 10 + i))
     f1, f2, s1, s2 = pool.active()
-    for m in (f1, f2, s1, s2):
-        m.full_strategy_period, m.games = True, 5000      # out of protection (test-only direct state)
-    f1.cr, f2.cr, s1.cr, s2.cr = 1600, 1560, 1550, 1290   # mu = 1500
+    out_of_protection(f1, f2, s1, s2)
+    f1.cr, f2.cr, s1.cr, s2.cr = 1600, 1560, 1550, 1380   # s2 reaches f2 (180) and s1 (170), not f1 (220)
     rng = random.Random(3)
-    # weights: s2 is 210 below mu -> 1 - 0.8 * 10/100 = 0.92; the rest 1
-    assert pool.weight(s2) == pytest.approx(0.92)
-    picks = Counter()
+    s2_vs, f1_vs = Counter(), Counter()
     for _ in range(20000):
         a, b, how = pool.draw_pair(rng)
+        assert a is not b and how == "window" and rules.within_window(a.cr, b.cr)
+        if a is s2:
+            s2_vs[b.mid] += 1
+        if a is f1:
+            f1_vs[b.mid] += 1
+    # s2 against Forest is always f2; Forest and Sword each half (Forest is not "nobody", f1 is just out of reach)
+    assert set(s2_vs) == {f2.mid, s1.mid}
+    assert s2_vs[f2.mid] / sum(s2_vs.values()) == pytest.approx(0.5, abs=0.03)
+    assert set(f1_vs) == {f2.mid, s1.mid}                 # f1 never meets s2 (220 apart)
+    assert pool.isolated() == []
+
+
+def test_isolated_members_are_never_drawn(tmp_path):
+    pool = new_pool(tmp_path)
+    for craft in (1, 2):
+        for i in range(2):
+            pool.enter(synth_deck(craft, i), "bot:greedy", "baseline", rng=random.Random(craft * 10 + i))
+    f1, f2, s1, s2 = pool.active()
+    out_of_protection(f1, f2, s1, s2)
+    f1.cr, f2.cr, s1.cr, s2.cr = 1600, 1560, 1550, 1290   # s2: 260 or more from everyone; mu 1500
+    # the weight still follows §4.2: s2 is 210 below mu -> 1 - 0.8 * 10/100 = 0.92
+    assert pool.weight(s2) == pytest.approx(0.92)
+    assert pool.isolated() == [s2.mid]
+    rng = random.Random(4)
+    picks = Counter()
+    for _ in range(9000):
+        a, b, _ = pool.draw_pair(rng)
+        assert s2 not in (a, b)
         picks[a.mid] += 1
-        assert a is not b
-        assert rules.within_window(a.cr, b.cr) or how == "closest"
-        if how == "closest":                             # nobody of that class within 200: the closest one
-            cands = [m for m in pool.active() if m.craft == b.craft and m is not a]
-            assert abs(b.cr - a.cr) == min(abs(m.cr - a.cr) for m in cands)
-    share = picks[s2.mid] / sum(picks.values())
-    assert share == pytest.approx(0.92 / 3.92, abs=0.01)
-    # s2 at 1290 against Forest: f1 (1600) and f2 (1560) are both past 200 -> always f2, the closest
-    s2_vs = Counter()
-    for _ in range(4000):
-        a, b, how = pool.draw_pair(rng)
-        if a is s2 and b.craft == 1:
-            s2_vs[(b.mid, how)] += 1
-    assert set(s2_vs) == {(f2.mid, "closest")}
+    for m in (f1, f2, s1):                                # the initiator is drawn again among the rest
+        assert picks[m.mid] / 9000 == pytest.approx(1 / 3, abs=0.02)
+    with pytest.raises(P.NoOpponent):
+        P.pick_opponent(s2, pool.active(), pool.mu, rng)
+    # frozen pools only (A28): the closest instead, marked "far"
+    far = Counter(P.pick_opponent(s2, pool.active(), pool.mu, rng, far="closest")[0].mid for _ in range(200))
+    assert set(far) == {s1.mid}                           # 1550 is the closest to 1290
+    assert P.pick_opponent(f1, pool.active(), pool.mu, rng, far="closest")[1] == "window"
+    assert pool.stuck() is None
+    # nobody within 200 of anybody: stalled, and the job stream ends instead of raising
+    f1.cr, f2.cr, s1.cr, s2.cr = 2100, 1800, 1500, 1200
+    assert sorted(pool.isolated()) == sorted(m.mid for m in (f1, f2, s1, s2))
+    with pytest.raises(P.Stalled):
+        pool.draw_pair(rng)
+    assert pool.stuck()["why"] == "stalled"
+    assert list(pool.jobs(games=5)) == []
+
+
+def test_period_stops_when_only_isolated_members_are_short(tmp_path):
+    pool = new_pool(tmp_path)
+    for craft in (1, 2, 3):
+        pool.enter(BASE_DECKS[craft - 1], "bot:greedy", "baseline", rng=random.Random(craft))
+    a, b, c = pool.active()
+    a.cr, b.cr, c.cr = 1600, 1600, 1300                   # c is out of reach (A27)
+    a.period_games = b.period_games = P.FULL_PERIOD_GAMES
+    st = pool.stuck(for_period=True)
+    assert st["why"] == "short members isolated" and st["short"] == [c.mid]
+    assert list(pool.jobs(until_period_done=True)) == []
+    b.period_games = 0                                    # someone who can still play is short: go on
+    assert pool.stuck(for_period=True) is None
+    job = next(pool.jobs(until_period_done=True))
+    assert c.mid not in job["labels"]["members"]
+
+
+def test_excluded_seeds_are_never_drawn(tmp_path):
+    lo, hi = 99001700, 99001720
+    taken = set(range(lo, lo + 15))
+    pool = P.Pool.create(tmp_path / "x", (lo, hi), rng_seed=1, exclude_seeds=taken | {5, 10 ** 9})
+    for d in BASE_DECKS[:2]:
+        pool.enter(d, "bot:greedy", "baseline", rng=random.Random(len(pool.members)))
+    seeds = {pool.next_job()["seed"] for _ in range(5)}
+    assert seeds == set(range(lo + 15, hi))
+    with pytest.raises(P.PoolError):
+        pool.next_job()
+    again = P.Pool(tmp_path / "x")                        # the exclusion is in the create line: a resume keeps it
+    assert again.used_seeds == taken | seeds
+    assert again.params["excluded_seeds"] == sorted(taken)
 
 
 def test_opponent_class_is_uniform_and_empty_classes_are_redrawn(tmp_path):

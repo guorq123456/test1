@@ -109,6 +109,22 @@ def test_refusals(tmp_path, frozen):
     assert g.gid == "G-0002"
 
 
+def test_a_member_nobody_can_reach(tmp_path, frozen, monkeypatch):
+    fz, mid = frozen
+    body = json.loads(fz.read_text(encoding="utf-8"))
+    body["members"][0]["cr"] = 1800                      # the others are at 1500: 300 away
+    far = tmp_path / "far.json"
+    far.write_text(json.dumps(body), encoding="utf-8")
+    m0 = body["members"][0]["mid"]
+    monkeypatch.setattr(E, "FAR", "wait")                # S2 strictly: nothing to test it against
+    with pytest.raises(P.PoolError, match="nobody within 200"):
+        gate(tmp_path, far, m0, "bot:greedy", "py:helpers:Random", "same", pairs=2)
+    monkeypatch.setattr(E, "FAR", "closest")             # A28: the closest (here all of them are)
+    g = gate(tmp_path, far, m0, "bot:greedy", "py:helpers:Random", "same", pairs=2)
+    jobs = g._pair(0, "x")
+    assert g.pairs[-1]["how"] == "far" and len(jobs) == 2
+
+
 def test_identical_versions_in_the_sequential_test_stop_with_no_difference(tmp_path, frozen, monkeypatch):
     fz, mid = frozen
     monkeypatch.setattr(G, "SAME_AFTER", 15)

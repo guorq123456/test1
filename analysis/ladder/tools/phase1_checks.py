@@ -1,13 +1,21 @@
 """Phase 1 on real games (item 1.8 and the sanity checks), meant for Salem's computer. Every step resumes.
 
-    python tools/phase1_checks.py all --runs RUNS [--workers 11 --mask 0x3FC3FC] [--scale 1.0]
-    python tools/phase1_checks.py <step> --runs RUNS ...        step: baseline replay gate known fluct
+    python tools/phase1_checks.py all --runs RUNS [--exclude-pool OLDPOOL] [--workers 11 --mask 0x3FC3FC] [--scale 1.0]
+    python tools/phase1_checks.py <step>[,<step>...] --runs RUNS ...   steps: baseline replay gate known2 fluct
+
+Under Salem's ruling S2 (11-22: never matched past 200; a class with nobody within 200 is drawn again) the checks
+run again in a new runs folder (p1b). `all` is baseline, replay, gate, known2, fluct, in that order. The 11-21 run
+(p1, the old matching with the closest-in-class fallback) stays as it is, on record; its baseline seeds are excluded
+from the new baseline (--exclude-pool), and a runs folder whose pools were made under the old matching is refused.
+The first known-strength round (`known`, 11-21) is not run again: its seeds are used, and known2 is the round meant
+to be read (A26).
 
 Steps, in this order (each writes RUNS/<step>/summary.json and probe/p1-<step>.json):
 1. baseline (1.8): the real initial pool. Seven baseline members (bot-frozen7, the default strategy mcts:100+plan
    behind the base with the default guess), period 0, formal-ladder seeds 89500000-90999999, until every member has
-   `--games-each` decided games (3000). Then the first leaderboard, the zero-sum check, and the frozen snapshot of
-   the baselines (fixed at their last-1000 mean) kept as the anchor (RUNS/baseline/frozen.json).
+   `--games-each` decided games (3000), or until the only members still short have nobody within 200 (S2: they
+   can't be matched; A27; the summary lists them). Then the first leaderboard, the zero-sum check, and the frozen
+   snapshot of the baselines (fixed at their last-1000 mean) kept as the anchor (RUNS/baseline/frozen.json).
 2. replay: 20 games of the baseline ladder drawn at random (seed 1), replayed move by move and decision by decision.
 3. gate (检验工具自检, real half): on the Swordcraft baseline in the frozen pool, a clearly stronger update
    (mcts:100+plan over mix:0.35:mcts:100+plan) must pass, the reverse must not, identical versions must come out
@@ -26,10 +34,11 @@ Steps, in this order (each writes RUNS/<step>/summary.json and probe/p1-<step>.j
    walked off by thousands (LD-17); this round keeps every version inside the field. Summaries of both rounds also
    give each member's mean relative CR over the two halves of its window (a drifting CR shows there).
 
-Seeds: baseline from the formal-ladder range; everything else from the host-measurement range 92300000-92799999,
-split: fluct 92300000-92499999 (10000 per evaluation), known 92500000-92649999 (check pools 92500000-92549999,
-head-to-head 92550000-92559999, evaluator 92560000-92639999), gate 92650000-92699999, known2 92700000-92795999
-(pools 92700000-92753999, head-to-head 92754000-92755999, evaluator 92756000-92795999) (SEEDS.md).
+Seeds (SEEDS.md): baseline from the formal-ladder range, never one the 11-21 baseline played; known2 92700000-
+92795999 as planned (pools 92700000-92753999, head-to-head 92754000-92755999, evaluator 92756000-92795999; the 11-21
+run never got to it); gate and fluct again from the second host-measurement segment 92900000-93299999: gate
+92900000-92949999, fluct 92950000-93149999 (10000 per evaluation). The 11-21 run used fluct 92300000-92499999,
+known 92500000-92649999, gate 92650000-92699999.
 `--scale` multiplies every game count (0.02 for a quick dry run in the container).
 """
 from __future__ import annotations
@@ -57,12 +66,12 @@ from ladder.replay import replay_decisions, replay_moves  # noqa: E402
 from ladder.runner import load_deck  # noqa: E402
 
 LADDER_SEEDS = (89500000, 91000000)
-FLUCT_SEEDS = (92300000, 92500000)
-KNOWN_SEEDS = (92500000, 92650000)       # pools 92500000-92549999, head-to-head 92550000-92559999, evaluator
+FLUCT_SEEDS = (92950000, 93150000)       # S2 re-run (11-21: 92300000-92500000)
+KNOWN_SEEDS = (92500000, 92650000)       # 11-21 round 1, used: pools 92500000-92549999, head-to-head, evaluator
 KNOWN_POOL = {"all-1500": (92500000, 92525000), "reversed": (92525000, 92550000)}
 KNOWN_H2H = (92550000, 92560000)
 KNOWN_EVAL = 92560000                    # + 20000 per candidate
-GATE_SEEDS = (92650000, 92700000)
+GATE_SEEDS = (92900000, 92950000)        # S2 re-run (11-21: 92650000-92700000)
 DEFAULT = "bot:mcts:100+plan"
 SCALE = [1.0]
 SWORD = 2
@@ -96,15 +105,50 @@ def save(runs: Path, step: str, out: dict):
     return out
 
 
-def ladder_until(pool: P.Pool, each: int, workers, mask, members=None):
-    """Play until every member in `members` (default all) has `each` decided games."""
+def ladder_until(pool: P.Pool, each: int, workers, mask, members=None) -> list[str]:
+    """Play until every member in `members` (default all) has `each` decided games, or until every one still short
+    has nobody within 200 (S2: it can't be matched; A27). Returns the members left short that way."""
     while True:
         ms = [pool.members[m] for m in members] if members else pool.active()
-        short = min(m.games for m in ms)
-        if short >= each:
-            return
-        need = max(len(ms), int((each - short) * len(pool.active()) / 2 * 0.6))
+        short = [m for m in ms if m.games < each]
+        if not short:
+            return []
+        iso = set(pool.isolated())
+        playing = [m for m in short if m.mid not in iso]
+        if not playing or not pool.can_pair():
+            return [m.mid for m in short]
+        need = max(len(ms), int((each - min(m.games for m in playing)) * len(pool.active()) / 2 * 0.6))
+        before = pool.started
         pool.ladder(workers=workers, games=need, mask=mask, quiet=True)
+        if pool.started == before:                       # nothing could be paired
+            return [m.mid for m in short]
+
+
+def isolation(pool: P.Pool, short: list[str], names: dict) -> dict:
+    """Who has nobody within 200 at the end, and who stopped short of its games for that (A27)."""
+    return {"isolated_at_end": [names.get(m, m) for m in pool.isolated()],
+            "short": [{"member": names.get(m, m), "games": pool.members[m].games, "cr": pool.members[m].cr}
+                      for m in short]}
+
+
+def old_matching(runs: Path) -> list[str]:
+    """Pools in this runs folder made before S2 (their create line has no matching rule)."""
+    bad = []
+    for ev in runs.glob("**/events.jsonl"):
+        with ev.open(encoding="utf-8") as f:
+            first = json.loads(f.readline() or "{}")
+        if first.get("ev") == "create" and first.get("rules", {}).get("matching") != P.MATCHING:
+            bad.append(str(ev.parent))
+    return bad
+
+
+def seeds_played(pool_dirs) -> set[int]:
+    out = set()
+    for d in pool_dirs or ():
+        for line in (Path(d) / "events.jsonl").read_text(encoding="utf-8").splitlines():
+            if '"ev": "start"' in line:
+                out.add(json.loads(line)["seed"])
+    return out
 
 
 def zero_sum(pool: P.Pool) -> dict:
@@ -122,12 +166,16 @@ def step_baseline(runs: Path, a) -> dict:
     if (d / "events.jsonl").exists():
         pool = P.Pool(d)
     else:
-        pool = P.Pool.create(d, LADDER_SEEDS, note="phase-1 baseline pool (the real initial pool)")
+        old = seeds_played(a.exclude_pool)
+        if a.scale == 1.0 and not old:
+            raise SystemExit("the real baseline needs --exclude-pool with the 11-21 baseline pool (its seeds are played)")
+        pool = P.Pool.create(d, LADDER_SEEDS, note="phase-1 baseline pool (the real initial pool), matching S2",
+                             exclude_seeds=old)
         for name, code in baseline_codes():
             ids = [c.card_id for c in load_deck(code)]
             pool.enter(ids, DEFAULT, "baseline", deck_code=code, note=name)
     t0 = time.time()
-    ladder_until(pool, each, a.workers, a.mask)
+    short = ladder_until(pool, each, a.workers, a.mask)
     pool, series = L.load(d)
     board = L.board(pool, series, window=min(L.WINDOW_GAMES, each - max(10, each // 6)))
     frozen = E.freeze(d)
@@ -136,6 +184,8 @@ def step_baseline(runs: Path, a) -> dict:
     names = {m.mid: m.note for m in pool.active()}
     return save(runs, "baseline", {
         "games": pool.settled, "seconds": round(time.time() - t0), "mu": round(pool.mu, 2),
+        "matching": P.MATCHING, "excluded_seeds": len(pool.params.get("excluded_seeds", [])),
+        **isolation(pool, short, names),
         "zero_sum": zero_sum(pool),
         "board": [{"member": names[r["mid"]], "craft": r["craft"], "games": r["games"],
                    "rel_cr": round(r["rel_cr"], 1), "ci": [round(r["lo"], 1), round(r["hi"], 1)],
@@ -264,11 +314,11 @@ def known_round(runs: Path, a, step: str) -> dict:
     cfg = KNOWN[step]
     eps_list = cfg["eps"]
     each = max(60, int(2400 * a.scale))                  # 2000 in the window after ~400 to settle
-    res, drift = {}, {}
+    res, drift, iso = {}, {}, {}
     for name, starts in (("all-1500", (1500, 1500, 1500, 1500)), ("reversed", (1300, 1433, 1567, 1700))):
         d = runs / step / name
         pool, mids = check_pool(d, starts, cfg["pools"][name], eps_list)
-        ladder_until(pool, each, a.workers, a.mask, members=mids)
+        short = ladder_until(pool, each, a.workers, a.mask, members=mids)
         pool, series = L.load(d)
         window = min(L.WINDOW_GAMES, each - max(10, each // 6))
         rows = {r["mid"]: r for r in L.board(pool, series, window=window)}
@@ -278,6 +328,7 @@ def known_round(runs: Path, a, step: str) -> dict:
         names = {m.mid: m.note for m in pool.active()}
         drift[name] = {names[m.mid]: {"halves": halves(series, m.mid, window), "tau": round(rows[m.mid]["tau"], 1)}
                        for m in pool.active() if m.mid in rows}
+        iso[name] = isolation(pool, short, names)
     # the evaluator on the four, frozen from the first run
     d1 = runs / step / "all-1500"
     fz = runs / step / "frozen.json"
@@ -296,7 +347,8 @@ def known_round(runs: Path, a, step: str) -> dict:
                           rng_seed=100 + k)
         r = ev.run(workers=a.workers, mask=a.mask) if not ev.done() else ev.result()
         evals.append({"eps": eps_list[k], "rel_cr": round(r["rel_cr"], 1),
-                      "ci": [round(r["lo"], 1), round(r["hi"], 1)]})
+                      "ci": [round(r["lo"], 1), round(r["hi"], 1)], "far_games": r.get("far_games"),
+                      "stuck": r.get("stuck")})
     h2h = head_to_head(runs, a, step)
     order = [all(x["rel_cr"] > y["rel_cr"] for x, y in zip(rs, rs[1:])) for rs in res.values()]
     order_eval = all(x["rel_cr"] > y["rel_cr"] for x, y in zip(evals, evals[1:]))
@@ -309,7 +361,7 @@ def known_round(runs: Path, a, step: str) -> dict:
         gaps.append({**h, "pool_gap": round(pool_gap, 1)})
     return save(runs, step, {"eps": list(eps_list), "leaderboard": res, "evaluator": evals, "head_to_head": gaps,
                              "order_right_leaderboard": order, "order_right_evaluator": order_eval,
-                             "runs_agree": agree, "drift": drift})
+                             "runs_agree": agree, "drift": drift, "isolation": iso, "far_rule": E.FAR})
 
 
 def step_known(runs: Path, a) -> dict:
@@ -340,20 +392,24 @@ def step_fluct(runs: Path, a) -> dict:
         print(f"fluct {k + 1}/{n_evals}: {r['rel_cr']:+.1f} (se {r['se']:.1f})", file=sys.stderr, flush=True)
     means = [r["rel_cr"] for r in results]
     ratio = st.stdev(means) / st.mean(r["se"] for r in results)
-    return save(runs, "fluct", {"member": mid, "evaluations": [{"rel_cr": round(r["rel_cr"], 2),
-                                                               "se": round(r["se"], 2)} for r in results],
+    return save(runs, "fluct", {"member": mid, "far_rule": E.FAR,
+                                "far_games": sum(r.get("far_games") or 0 for r in results),
+                                "evaluations": [{"rel_cr": round(r["rel_cr"], 2),
+                                                 "se": round(r["se"], 2)} for r in results],
                                 "sd_of_evaluations": round(st.stdev(means), 2),
                                 "mean_reported_se": round(st.mean(r["se"] for r in results), 2),
                                 "ratio": round(ratio, 3), "ok": 0.7 <= ratio <= 1.4})
 
 
-STEPS = {"baseline": step_baseline, "replay": step_replay, "gate": step_gate, "known": step_known,
-         "fluct": step_fluct, "known2": step_known2}
+STEPS = {"baseline": step_baseline, "replay": step_replay, "gate": step_gate, "known2": step_known2,
+         "fluct": step_fluct}         # `known` (round 1) ran 11-21 under the old matching and is not run again
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("step", choices=["all", *STEPS])
+    ap.add_argument("step", help="all, or steps separated by commas: " + ", ".join(STEPS))
+    ap.add_argument("--exclude-pool", action="append", default=[],
+                    help="baseline: a pool whose seeds were played (the 11-21 baseline); repeatable")
     ap.add_argument("--runs", required=True)
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--mask")
@@ -368,7 +424,14 @@ def main():
     print(json.dumps({"limits": runner._limit(a.mask)}), file=sys.stderr, flush=True)   # this process too
     runs = Path(a.runs)
     runs.mkdir(parents=True, exist_ok=True)
-    steps = list(STEPS) if a.step == "all" else [a.step]
+    steps = list(STEPS) if a.step == "all" else a.step.split(",")
+    bad = [s for s in steps if s not in STEPS]
+    if bad:
+        raise SystemExit(f"unknown steps {bad}; steps: {', '.join(STEPS)}")
+    old = old_matching(runs)
+    if old:
+        raise SystemExit(f"{runs} holds pools made under the old matching (before S2): {old[:3]}; use a new folder")
+    print(json.dumps({"matching": P.MATCHING, "far_rule": E.FAR}), file=sys.stderr, flush=True)
     for s in steps:
         t = time.time()
         print(f"== {s} ({time.strftime('%H:%M:%S')})", file=sys.stderr, flush=True)

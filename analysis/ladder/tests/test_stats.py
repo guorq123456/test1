@@ -2,6 +2,7 @@
 intervals, the window rules, freezing, and one short real evaluation through the runner (resume included).
 The full fluctuation checks are tools/check_stats.py (made-up games) and the real-game checks in GATES.md.
 Seeds: evaluation games 99001600-99001699 (host probe bank, SEEDS.md)."""
+import dataclasses
 import json
 import math
 import os
@@ -64,10 +65,12 @@ def test_rank_intervals_ties_dont_chain():
     assert got == {"a": (1, 2), "b": (1, 3), "c": (2, 3), "d": (4, 4)}
 
 
-def made_up(tmp_path, n_games, strengths=(0.05, 0.0, -0.05)):
+def made_up(tmp_path, n_games, strengths=(0.05, 0.0, -0.05, 0.0, 0.0, 0.0, 0.0)):
+    # seven members: with three, S2 (nobody is matched past 200) soon leaves all three more than 200 apart and the
+    # made-up ladder stalls (500-2200 games in a probe); seven stay together
     series = L.Series()
     pool = P.Pool.create(tmp_path / "lb", PLACEHOLDER, rng_seed=3, on_event=series)
-    for i, craft in enumerate((1, 2, 3)):
+    for i, craft in enumerate(range(1, len(strengths) + 1)):
         pool.enter(synth_deck(craft, 5), "bot:greedy", "baseline", rng=random.Random(50 + i))
     s = {m.mid: strengths[i] for i, m in enumerate(pool.active())}
     rng = random.Random(4)
@@ -80,7 +83,7 @@ def made_up(tmp_path, n_games, strengths=(0.05, 0.0, -0.05)):
 
 
 def test_board_window_unstable_and_update(tmp_path):
-    pool, series = made_up(tmp_path, 3100)               # each of 3 members plays ~2/3 of the games
+    pool, series = made_up(tmp_path, 8000)               # each of 7 members plays ~2/7 of the games
     rows = {r["mid"]: r for r in L.board(pool, series)}
     assert all(r["ranked"] and r["n"] == 2000 for r in rows.values())
     strong, mid_, weak = (pool.active()[i].mid for i in range(3))
@@ -100,7 +103,7 @@ def test_board_window_unstable_and_update(tmp_path):
 
 
 def test_freeze_uses_the_last_1000_games(tmp_path):
-    pool, series = made_up(tmp_path, 2500)
+    pool, series = made_up(tmp_path, 4500)
     body = E.freeze(tmp_path / "lb")
     for f in body["members"]:
         tail = series.points[f["mid"]][-1000:]
@@ -119,6 +122,48 @@ def test_repeat_sync_finds_a_known_strength():
     res = E.summarize(vals)
     # 6 pp over equals: CR gap where (16 + k) / 32 = 0.56 -> k = 1.92 -> between 48 and 75
     assert 40 < res["rel_cr"] < 85 and res["lo"] < res["rel_cr"] < res["hi"]
+
+
+def test_repeat_sync_out_of_reach_waits_or_plays_the_closest(monkeypatch):
+    """A candidate that wins everything climbs past 200 above the whole frozen pool. FAR "wait" (S2 strictly): it
+    stays put there; FAR "closest" (A28): it goes on against the closest, +8 a win, so it walks on."""
+    frozen = [E.Frozen(mid=f"f{i}", anon="", craft=c, cr=1500, deck=[], strategy="") for i, c in
+              enumerate((1, 2, 3, 4, 5, 6, 7))]
+    others, mu = E.opponents_for(frozen, None)
+    monkeypatch.setattr(E, "FAR", "wait")
+    v = E.repeat_sync(lambda o, g: True, others, mu, 400, 200, random.Random(1))
+    assert 200 < v <= 208 and v == int(v)                # the first CR past 1700 (a win there is +8), all 200 at it
+    monkeypatch.setattr(E, "FAR", "closest")
+    v = E.repeat_sync(lambda o, g: True, others, mu, 400, 200, random.Random(1))
+    assert v > 1000
+
+
+def test_strict_waiting_reads_a_strong_candidate_too_high(monkeypatch):
+    """LD-22: 6 pp over a pool all at 1500 (true gap 48-75). Waiting reads it near +200; the closest doesn't."""
+    frozen = [E.Frozen(mid=f"f{i}", anon="", craft=c, cr=1500, deck=[], strategy="") for i, c in
+              enumerate((1, 2, 3, 4, 5, 6, 7))]
+    others, mu = E.opponents_for(frozen, None)
+    out = {}
+    for far in ("wait", "closest"):
+        monkeypatch.setattr(E, "FAR", far)
+        out[far] = E.summarize([E.repeat_sync(lambda o, g: g.random() < 0.56, others, mu, 3000, 2000,
+                                              random.Random(k)) for k in range(6)])["rel_cr"]
+    assert out["wait"] > 150 and 40 < out["closest"] < 85
+
+
+def test_an_evaluation_out_of_reach_from_the_start_plays_nothing(tmp_path, monkeypatch):
+    monkeypatch.setattr(E, "FAR", "wait")
+    members = [E.Frozen(mid=f"f{i}", anon="", craft=c, cr=cr, deck=[], strategy="")
+               for i, (c, cr) in enumerate(((2, 1000), (5, 2000)))]
+    body = {"members": [dataclasses.asdict(m) for m in members], "hash": "test"}
+    fz = tmp_path / "frozen.json"
+    fz.write_text(json.dumps(body), encoding="utf-8")
+    cand = E.Candidate("outside", 7, [], "py:helpers:Random")
+    ev = E.Evaluation(fz, tmp_path / "eval", cand, (99001600, 99001700), games=10, tail=5, repeats=2, rng_seed=1)
+    assert ev.done() and list(ev.jobs()) == []
+    res = ev.run(workers=1)
+    assert res["rel_cr"] == 0 and [s["after"] for s in res["stuck"]] == [0, 0]
+    assert not (tmp_path / "eval" / "starts.jsonl").exists()
 
 
 def test_a_short_real_evaluation_and_resume(tmp_path):

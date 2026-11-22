@@ -12,8 +12,13 @@ fixed CRs.
 Run: the candidate (a member taken out of the frozen pool, or any deck + strategy) is the only member whose CR moves.
 mu is the mean of the other members' fixed CRs and stays put; the candidate starts at mu (rounded: CRs are integers).
 Every game is the candidate against an opponent drawn by the pool's own matching (pool.pick_opponent: class
-uniformly, then by matching weight within 200, else the closest). One repeat is `games` decided games (draws don't
-count, A3); its value is the mean CR over the last `tail` of them minus mu. Repeats are independent (fresh seeds,
+uniformly, drawn again while it has nobody within 200 (Salem's S2), then by matching weight). One repeat is `games`
+decided games (draws don't count, A3); its value is the mean CR over the last `tail` of them minus mu. A candidate
+whose CR gets more than 200 past every frozen member has nobody within reach; frozen members never move back, so
+(A28, pending Salem; FAR below) it plays the closest one, and the start says "far". With FAR = "wait" (S2 read
+strictly) the repeat would stop there instead and its remaining games count at that CR: the value is then a bound,
+the result says so ("stuck"), and made-up repeats read a candidate 50-100 above the strongest frozen member 70-100
+too high (LD-22). Repeats are independent (fresh seeds,
 fresh start), so the interval is Student's t over the repeat values: the strong game-to-game correlation inside a
 repeat never enters it. The phase-1 fluctuation check (20 evaluations of one strategy) tests that.
 
@@ -41,9 +46,10 @@ for p in (str(ROOT), str(HERE.parent)):
 
 from ladder import rules  # noqa: E402
 from ladder.leaderboard import load as load_series, t975  # noqa: E402
-from ladder.pool import CRAFT_ZH, PoolError, pick_opponent  # noqa: E402
+from ladder.pool import CRAFT_ZH, NoOpponent, PoolError, near_by_craft, pick_opponent  # noqa: E402
 
 FREEZE_GAMES = 1000
+FAR = "closest"     # A28 (pending Salem): nobody within 200 in a frozen pool -> the closest; "wait" = stop (S2 strict)
 
 
 @dataclass
@@ -118,7 +124,11 @@ def repeat_sync(play, others: list[Frozen], mu: float, games: int, tail: int, rn
     cand = cand or Candidate("cand", 0, [], "")
     cr, crs = round(mu), []
     while len(crs) < games:
-        opp, _ = pick_opponent(cand, others, mu, rng, cr=cr)
+        try:
+            opp, _ = pick_opponent(cand, others, mu, rng, cr=cr, far=FAR)
+        except NoOpponent:                       # FAR "wait": nobody within 200 ever again; the CR stays put
+            crs += [cr] * (games - len(crs))
+            break
         won = play(opp, rng)
         if won is None:
             continue
@@ -196,7 +206,7 @@ class Evaluation:
     def _start(self, rep):
         k = self.n_started[rep]
         rng = random.Random(f"{self.meta['rng_seed']}:{rep}:{k}")
-        opp, how = pick_opponent(self.cand, self.others, self.mu, rng, cr=self.cr[rep])
+        opp, how = pick_opponent(self.cand, self.others, self.mu, rng, cr=self.cr[rep], far=FAR)
         if len(self.used) >= self.hi - self.lo:
             raise PoolError("the seed range is used up")
         while True:
@@ -212,17 +222,28 @@ class Evaluation:
             f.write(json.dumps(st) + "\n")
         return st
 
+    def _out_of_reach(self, rep) -> bool:
+        """FAR "wait" only: nobody within 200 of this repeat's CR now (decided by the CR alone, so a resume finds
+        it again)."""
+        return FAR == "wait" and not near_by_craft(self.cand, self.others, self.cr[rep])
+
+    def _stuck(self, rep) -> bool:
+        """Short of its games, out of reach, and nothing in flight that could bring it back."""
+        return (len(self.crs[rep]) < self.games and self._out_of_reach(rep)
+                and not any(x == rep for x in self.inflight.values()) and not any(st["rep"] == rep for st in self.redo))
+
     def jobs(self):
         while self.redo:
             st = dict(self.redo.pop(0), rerun=True)
             self.inflight[st["id"]] = st["rep"]
             yield self._job(st)
         while True:
-            need = [r for r in range(self.repeats)
-                    if len(self.crs[r]) + sum(1 for x in self.inflight.values() if x == r) < self.games]
+            prog = {r: len(self.crs[r]) + sum(1 for x in self.inflight.values() if x == r)
+                    for r in range(self.repeats)}
+            need = [r for r in range(self.repeats) if prog[r] < self.games and not self._out_of_reach(r)]
             if not need:
-                return
-            rep = min(need, key=lambda r: len(self.crs[r]) + sum(1 for x in self.inflight.values() if x == r))
+                return                   # done, stuck, or out of reach until the games in flight come back
+            rep = min(need, key=lambda r: prog[r])
             st = self._start(rep)
             self.inflight[st["id"]] = rep
             yield self._job(st)
@@ -232,25 +253,34 @@ class Evaluation:
         self._fold(log)
 
     def done(self) -> bool:
-        return all(len(c) >= self.games for c in self.crs)
+        return all(len(c) >= self.games or self._stuck(r) for r, c in enumerate(self.crs))
 
     def run(self, workers=4, step_limit=30.0, mask=None, quiet=True) -> dict:
         from ladder import runner
-        rounds = 0
+        idle = 0
         while not self.done():
-            rounds += 1
-            if rounds > 50:
-                raise PoolError("too many rounds: games keep ending void or drawn")
+            before = sum(len(c) for c in self.crs)
             runner.run(self.jobs(), str(self.games_path), workers=workers, step_limit=step_limit, mask=mask,
                        quiet=quiet, on_result=self.on_result)
             self.inflight.clear()
+            idle = idle + 1 if sum(len(c) for c in self.crs) == before else 0
+            if idle > 50:
+                raise PoolError("too many rounds without a decided game: games keep ending void or drawn")
         return self.result()
 
     def result(self) -> dict:
-        values = [sum(c[self.games - self.tail:self.games]) / self.tail - self.mu for c in self.crs]
+        top, bottom = max(f.cr for f in self.others), min(f.cr for f in self.others)
+        stuck, values = [], []
+        for r, c in enumerate(self.crs):
+            if len(c) < self.games:                                    # FAR "wait": stopped out of reach
+                stuck.append({"rep": r, "after": len(c), "cr": self.cr[r],
+                              "side": "top" if self.cr[r] > top else "bottom" if self.cr[r] < bottom else "?"})
+                c = c + [self.cr[r]] * (self.games - len(c))
+            values.append(sum(c[self.games - self.tail:self.games]) / self.tail - self.mu)
         out = {"candidate": self.cand.mid, "craft": CRAFT_ZH.get(self.cand.craft), "mu": self.mu,
                "frozen_hash": self.meta["frozen_hash"], "games": self.games, "tail": self.tail,
-               "results": self.counts, **summarize(values)}
+               "results": self.counts, "far_rule": FAR, "stuck": stuck,
+               "far_games": sum(1 for st in self.starts.values() if st.get("how") == "far"), **summarize(values)}
         (self.dir / "result.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
         return out
 
