@@ -1,0 +1,1003 @@
+{
+ "steps": {
+  "baseline": {
+   "games": 11382,
+   "seconds": 1794,
+   "mu": 1500.0,
+   "matching": "S2",
+   "excluded_seeds": 10667,
+   "isolated_at_end": [
+    "bot/T3-RUNE-1"
+   ],
+   "short": [
+    {
+     "member": "bot/T3-RUNE-1",
+     "games": 817,
+     "cr": 1009
+    }
+   ],
+   "zero_sum": {
+    "sum_of_changes": 0,
+    "lost_to_removal": 0,
+    "total_cr": 10500,
+    "expected_total": 10500,
+    "ok": true
+   },
+   "board": [
+    {
+     "member": "bot/T1-HAVEN-1",
+     "craft": "主教",
+     "games": 3879,
+     "rel_cr": -0.3,
+     "ci": [
+      -54.5,
+      54.0
+     ],
+     "tau": 157.3,
+     "se_batch": 22.76
+    },
+    {
+     "member": "bot/T3-RUNE-1",
+     "craft": "巫师",
+     "games": 817,
+     "rel_cr": -274.8,
+     "ci": [
+      -388.3,
+      -161.2
+     ],
+     "tau": 163.2,
+     "se_batch": 26.14
+    },
+    {
+     "member": "bot/T1-ABYSS-1",
+     "craft": "梦魇",
+     "games": 3987,
+     "rel_cr": 172.7,
+     "ci": [
+      136.3,
+      209.1
+     ],
+     "tau": 136.6,
+     "se_batch": 15.02
+    },
+    {
+     "member": "bot/T1-SWORD-1",
+     "craft": "皇家护卫",
+     "games": 3656,
+     "rel_cr": 255.2,
+     "ci": [
+      237.5,
+      272.9
+     ],
+     "tau": 54.4,
+     "se_batch": 7.88
+    },
+    {
+     "member": "bot/T1-FOREST-1",
+     "craft": "精灵",
+     "games": 3705,
+     "rel_cr": -48.3,
+     "ci": [
+      -94.9,
+      -1.8
+     ],
+     "tau": 154.7,
+     "se_batch": 17.21
+    },
+    {
+     "member": "bot/T1-PORTAL-1",
+     "craft": "超越者",
+     "games": 3719,
+     "rel_cr": 237.5,
+     "ci": [
+      195.4,
+      279.6
+     ],
+     "tau": 167.5,
+     "se_batch": 14.01
+    },
+    {
+     "member": "bot/T3-DRAGON-1",
+     "craft": "龙族",
+     "games": 3001,
+     "rel_cr": -129.8,
+     "ci": [
+      -200.7,
+      -58.9
+     ],
+     "tau": 270.8,
+     "se_batch": 19.44
+    }
+   ],
+   "frozen_hash": "8d9b362d108bc944",
+   "frozen": [
+    {
+     "member": "bot/T1-FOREST-1",
+     "cr": 1461,
+     "from_games": 1000
+    },
+    {
+     "member": "bot/T1-SWORD-1",
+     "cr": 1762,
+     "from_games": 1000
+    },
+    {
+     "member": "bot/T3-RUNE-1",
+     "cr": 1225,
+     "from_games": 817
+    },
+    {
+     "member": "bot/T3-DRAGON-1",
+     "cr": 1399,
+     "from_games": 1000
+    },
+    {
+     "member": "bot/T1-ABYSS-1",
+     "cr": 1700,
+     "from_games": 1000
+    },
+    {
+     "member": "bot/T1-HAVEN-1",
+     "cr": 1479,
+     "from_games": 1000
+    },
+    {
+     "member": "bot/T1-PORTAL-1",
+     "cr": 1756,
+     "from_games": 1000
+    }
+   ],
+   "draws": 0
+  },
+  "replay": {
+   "checked": 20,
+   "failed": [],
+   "ok": true,
+   "machine": {
+    "commit": "380361324c261c7f00fbc42c4fff7e7afc90b5aa",
+    "dirty": false,
+    "python": "3.12.10",
+    "numpy": "2.5.5",
+    "os": "Windows-11-10.0.26300-SP0"
+   }
+  },
+  "gate": {
+   "member": "m0002",
+   "results": [
+    {
+     "check": "strong passes",
+     "verdict": "passed",
+     "pairs": 271,
+     "expected_pairs": 1079,
+     "share": 0.51,
+     "discordant": {
+      "new": 32,
+      "old": 0
+     },
+     "compute_ratio": 1.678
+    },
+    {
+     "check": "weak is rejected",
+     "verdict": "not passed",
+     "pairs": 61,
+     "expected_pairs": 1079,
+     "share": 0.51,
+     "discordant": {
+      "new": 0,
+      "old": 29
+     },
+     "compute_ratio": 0.702
+    },
+    {
+     "check": "identical: same decisions",
+     "verdict": "passed: every decision the same",
+     "pairs": 50,
+     "expected_pairs": null,
+     "share": null,
+     "discordant": null,
+     "compute_ratio": 1.003
+    }
+   ],
+   "ok": true
+  },
+  "known2": {
+   "eps": [
+    0.0,
+    0.04,
+    0.08,
+    0.15
+   ],
+   "leaderboard": {
+    "all-1500": [
+     {
+      "eps": 0.0,
+      "rel_cr": 261.0,
+      "ci": [
+       227.0,
+       295.0
+      ],
+      "games": 2401
+     },
+     {
+      "eps": 0.04,
+      "rel_cr": 114.7,
+      "ci": [
+       84.7,
+       144.7
+      ],
+      "games": 2569
+     },
+     {
+      "eps": 0.08,
+      "rel_cr": -24.6,
+      "ci": [
+       -68.4,
+       19.3
+      ],
+      "games": 2556
+     },
+     {
+      "eps": 0.15,
+      "rel_cr": -239.8,
+      "ci": [
+       -340.4,
+       -139.2
+      ],
+      "games": 2714
+     }
+    ],
+    "reversed": [
+     {
+      "eps": 0.0,
+      "rel_cr": 238.6,
+      "ci": [
+       182.6,
+       294.5
+      ],
+      "games": 2400
+     },
+     {
+      "eps": 0.04,
+      "rel_cr": 134.5,
+      "ci": [
+       105.6,
+       163.4
+      ],
+      "games": 2663
+     },
+     {
+      "eps": 0.08,
+      "rel_cr": -18.2,
+      "ci": [
+       -59.6,
+       23.3
+      ],
+      "games": 2604
+     },
+     {
+      "eps": 0.15,
+      "rel_cr": -220.9,
+      "ci": [
+       -257.8,
+       -183.9
+      ],
+      "games": 2641
+     }
+    ]
+   },
+   "evaluator": [
+    {
+     "eps": 0.0,
+     "rel_cr": 352.9,
+     "ci": [
+      64.8,
+      641.0
+     ],
+     "far_games": 0,
+     "stuck": [
+      {
+       "rep": 1,
+       "after": 771,
+       "cr": 2025,
+       "side": "top"
+      }
+     ]
+    },
+    {
+     "eps": 0.04,
+     "rel_cr": 139.4,
+     "ci": [
+      5.9,
+      272.9
+     ],
+     "far_games": 0,
+     "stuck": []
+    },
+    {
+     "eps": 0.08,
+     "rel_cr": -1.1,
+     "ci": [
+      -72.6,
+      70.5
+     ],
+     "far_games": 0,
+     "stuck": []
+    },
+    {
+     "eps": 0.15,
+     "rel_cr": -229.3,
+     "ci": [
+      -347.6,
+      -111.1
+     ],
+     "far_games": 0,
+     "stuck": []
+    }
+   ],
+   "head_to_head": [
+    {
+     "pair": "eps 0.0 vs 0.04",
+     "games": 400,
+     "win_rate": 0.535,
+     "ci": [
+      0.4861,
+      0.5839
+     ],
+     "cr_gap_8_per_pp": 28.0,
+     "pool_gap": 146.3
+    },
+    {
+     "pair": "eps 0.04 vs 0.08",
+     "games": 400,
+     "win_rate": 0.5825,
+     "ci": [
+      0.5342,
+      0.6308
+     ],
+     "cr_gap_8_per_pp": 66.0,
+     "pool_gap": 139.3
+    },
+    {
+     "pair": "eps 0.08 vs 0.15",
+     "games": 400,
+     "win_rate": 0.6425,
+     "ci": [
+      0.5955,
+      0.6895
+     ],
+     "cr_gap_8_per_pp": 114.0,
+     "pool_gap": 215.2
+    }
+   ],
+   "order_right_leaderboard": [
+    true,
+    true
+   ],
+   "order_right_evaluator": true,
+   "runs_agree": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "drift": {
+    "all-1500": {
+     "bot/T1-FOREST-1": {
+      "halves": [
+       -63.6,
+       -1.0
+      ],
+      "tau": 101.5
+     },
+     "bot/T3-RUNE-1": {
+      "halves": [
+       -296.1,
+       -357.7
+      ],
+      "tau": 257.5
+     },
+     "bot/T3-DRAGON-1": {
+      "halves": [
+       -133.0,
+       -102.0
+      ],
+      "tau": 104.6
+     },
+     "bot/T1-ABYSS-1": {
+      "halves": [
+       163.2,
+       203.1
+      ],
+      "tau": 93.1
+     },
+     "bot/T1-HAVEN-1": {
+      "halves": [
+       -61.6,
+       -24.8
+      ],
+      "tau": 73.9
+     },
+     "bot/T1-PORTAL-1": {
+      "halves": [
+       235.2,
+       285.5
+      ],
+      "tau": 65.1
+     },
+     "eps 0.0": {
+      "halves": [
+       240.5,
+       281.5
+      ],
+      "tau": 111.3
+     },
+     "eps 0.04": {
+      "halves": [
+       110.4,
+       119.0
+      ],
+      "tau": 88.0
+     },
+     "eps 0.08": {
+      "halves": [
+       -4.1,
+       -45.0
+      ],
+      "tau": 136.8
+     },
+     "eps 0.15": {
+      "halves": [
+       -199.3,
+       -280.3
+      ],
+      "tau": 334.6
+     }
+    },
+    "reversed": {
+     "bot/T1-FOREST-1": {
+      "halves": [
+       -20.5,
+       -47.7
+      ],
+      "tau": 146.0
+     },
+     "bot/T3-RUNE-1": {
+      "halves": [
+       -228.1,
+       -325.2
+      ],
+      "tau": 297.9
+     },
+     "bot/T3-DRAGON-1": {
+      "halves": [
+       -123.7,
+       -87.3
+      ],
+      "tau": 51.3
+     },
+     "bot/T1-ABYSS-1": {
+      "halves": [
+       169.9,
+       177.8
+      ],
+      "tau": 61.8
+     },
+     "bot/T1-HAVEN-1": {
+      "halves": [
+       25.4,
+       -52.1
+      ],
+      "tau": 172.3
+     },
+     "bot/T1-PORTAL-1": {
+      "halves": [
+       190.5,
+       233.7
+      ],
+      "tau": 138.0
+     },
+     "eps 0.0": {
+      "halves": [
+       203.5,
+       273.6
+      ],
+      "tau": 231.3
+     },
+     "eps 0.04": {
+      "halves": [
+       135.0,
+       134.0
+      ],
+      "tau": 83.5
+     },
+     "eps 0.08": {
+      "halves": [
+       2.4,
+       -38.8
+      ],
+      "tau": 152.5
+     },
+     "eps 0.15": {
+      "halves": [
+       -234.5,
+       -207.2
+      ],
+      "tau": 128.5
+     }
+    }
+   },
+   "isolation": {
+    "all-1500": {
+     "isolated_at_end": [],
+     "short": []
+    },
+    "reversed": {
+     "isolated_at_end": [
+      "bot/T3-RUNE-1"
+     ],
+     "short": []
+    }
+   },
+   "far_rule": "wait"
+  },
+  "fluct": {
+   "member": "m0002",
+   "far_rule": "wait",
+   "far_games": 0,
+   "evaluations": [
+    {
+     "rel_cr": 276.56,
+     "se": 40.39
+    },
+    {
+     "rel_cr": 254.01,
+     "se": 5.97
+    },
+    {
+     "rel_cr": 274.01,
+     "se": 25.76
+    },
+    {
+     "rel_cr": 265.74,
+     "se": 10.71
+    },
+    {
+     "rel_cr": 257.4,
+     "se": 8.2
+    },
+    {
+     "rel_cr": 250.19,
+     "se": 13.97
+    },
+    {
+     "rel_cr": 280.98,
+     "se": 25.65
+    },
+    {
+     "rel_cr": 241.88,
+     "se": 10.91
+    },
+    {
+     "rel_cr": 252.09,
+     "se": 6.9
+    },
+    {
+     "rel_cr": 246.93,
+     "se": 11.59
+    },
+    {
+     "rel_cr": 242.2,
+     "se": 21.31
+    },
+    {
+     "rel_cr": 265.02,
+     "se": 3.65
+    },
+    {
+     "rel_cr": 266.56,
+     "se": 6.44
+    },
+    {
+     "rel_cr": 267.09,
+     "se": 7.95
+    },
+    {
+     "rel_cr": 257.49,
+     "se": 9.22
+    },
+    {
+     "rel_cr": 247.75,
+     "se": 9.37
+    },
+    {
+     "rel_cr": 277.59,
+     "se": 10.57
+    },
+    {
+     "rel_cr": 244.35,
+     "se": 12.26
+    },
+    {
+     "rel_cr": 242.75,
+     "se": 9.53
+    },
+    {
+     "rel_cr": 268.89,
+     "se": 11.03
+    }
+   ],
+   "sd_of_evaluations": 12.87,
+   "mean_reported_se": 13.07,
+   "ratio": 0.985,
+   "ok": true
+  }
+ },
+ "games": {
+  "baseline": {
+   "files": 1,
+   "records": 11382,
+   "results": {
+    "normal": 11382
+   },
+   "seeds_unique": 11382,
+   "seed_min": 89500167,
+   "seed_max": 90999939,
+   "segment": [
+    89500000,
+    90999999
+   ],
+   "inside": true,
+   "times_used": {
+    "1": 11382
+   },
+   "reruns": 0,
+   "turns_mean": 15.74,
+   "out_of_guess_per_game": 0.0,
+   "default_step_ms": {
+    "steps": 747214,
+    "mean": 25.8,
+    "median": 11.23,
+    "p90": 58.95,
+    "max": 1889.4
+   },
+   "game_seconds_mean": 1.69,
+   "machines": [
+    [
+     "3803613",
+     false,
+     "3.12.10",
+     "Windows-11-10.0.26300-SP0"
+    ]
+   ],
+   "limits": [
+    "{\"mask\": \"0x3fc3fc\", \"priority\": \"below normal\"}"
+   ]
+  },
+  "gate": {
+   "files": 3,
+   "records": 764,
+   "results": {
+    "normal": 764
+   },
+   "seeds_unique": 382,
+   "seed_min": 92900055,
+   "seed_max": 92949749,
+   "segment": [
+    92900000,
+    92949999
+   ],
+   "inside": true,
+   "times_used": {
+    "2": 382
+   },
+   "reruns": 0,
+   "turns_mean": 15.09,
+   "out_of_guess_per_game": 0.0,
+   "default_step_ms": {
+    "steps": 41420,
+    "mean": 31.17,
+    "median": 11.78,
+    "p90": 62.06,
+    "max": 1463.1
+   },
+   "game_seconds_mean": 1.89,
+   "machines": [
+    [
+     "3803613",
+     false,
+     "3.12.10",
+     "Windows-11-10.0.26300-SP0"
+    ]
+   ],
+   "limits": [
+    "{\"mask\": \"0x3fc3fc\", \"priority\": \"below normal\"}"
+   ]
+  },
+  "fluct": {
+   "files": 20,
+   "records": 118966,
+   "results": {
+    "normal": 118966
+   },
+   "seeds_unique": 118966,
+   "seed_min": 92950000,
+   "seed_max": 93149999,
+   "segment": [
+    92950000,
+    93149999
+   ],
+   "inside": true,
+   "times_used": {
+    "1": 118966
+   },
+   "reruns": 11,
+   "turns_mean": 15.83,
+   "out_of_guess_per_game": 0.0,
+   "default_step_ms": {
+    "steps": 8480034,
+    "mean": 30.41,
+    "median": 11.91,
+    "p90": 62.91,
+    "max": 3367.5
+   },
+   "game_seconds_mean": 2.17,
+   "machines": [
+    [
+     "3803613",
+     false,
+     "3.12.10",
+     "Windows-11-10.0.26300-SP0"
+    ],
+    [
+     "f29eef2",
+     false,
+     "3.12.10",
+     "Windows-11-10.0.26300-SP0"
+    ]
+   ],
+   "limits": [
+    "{\"mask\": \"0x3fc3fc\", \"priority\": \"below normal\"}",
+    "{\"mask\": \"0xffffff\", \"priority\": \"below normal\"}"
+   ]
+  },
+  "known pools": {
+   "files": 0,
+   "records": 0,
+   "results": {},
+   "seeds_unique": 0,
+   "seed_min": null,
+   "seed_max": null,
+   "segment": [
+    92500000,
+    92549999
+   ],
+   "inside": true,
+   "times_used": {},
+   "reruns": 0,
+   "turns_mean": null,
+   "out_of_guess_per_game": null,
+   "default_step_ms": {
+    "steps": 0,
+    "mean": null,
+    "median": null,
+    "p90": null,
+    "max": null
+   },
+   "game_seconds_mean": null,
+   "machines": [],
+   "limits": []
+  },
+  "known head-to-head": {
+   "files": 0,
+   "records": 0,
+   "results": {},
+   "seeds_unique": 0,
+   "seed_min": null,
+   "seed_max": null,
+   "segment": [
+    92550000,
+    92559999
+   ],
+   "inside": true,
+   "times_used": {},
+   "reruns": 0,
+   "turns_mean": null,
+   "out_of_guess_per_game": null,
+   "default_step_ms": {
+    "steps": 0,
+    "mean": null,
+    "median": null,
+    "p90": null,
+    "max": null
+   },
+   "game_seconds_mean": null,
+   "machines": [],
+   "limits": []
+  },
+  "known evaluator": {
+   "files": 0,
+   "records": 0,
+   "results": {},
+   "seeds_unique": 0,
+   "seed_min": null,
+   "seed_max": null,
+   "segment": [
+    92560000,
+    92639999
+   ],
+   "inside": true,
+   "times_used": {},
+   "reruns": 0,
+   "turns_mean": null,
+   "out_of_guess_per_game": null,
+   "default_step_ms": {
+    "steps": 0,
+    "mean": null,
+    "median": null,
+    "p90": null,
+    "max": null
+   },
+   "game_seconds_mean": null,
+   "machines": [],
+   "limits": []
+  },
+  "known2 pools": {
+   "files": 2,
+   "records": 29490,
+   "results": {
+    "normal": 29490
+   },
+   "seeds_unique": 29490,
+   "seed_min": 92700000,
+   "seed_max": 92753999,
+   "segment": [
+    92700000,
+    92753999
+   ],
+   "inside": true,
+   "times_used": {
+    "1": 29490
+   },
+   "reruns": 0,
+   "turns_mean": 15.65,
+   "out_of_guess_per_game": 0.0,
+   "default_step_ms": {
+    "steps": 1432562,
+    "mean": 28.25,
+    "median": 11.66,
+    "p90": 61.88,
+    "max": 2072.5
+   },
+   "game_seconds_mean": 1.83,
+   "machines": [
+    [
+     "3803613",
+     false,
+     "3.12.10",
+     "Windows-11-10.0.26300-SP0"
+    ]
+   ],
+   "limits": [
+    "{\"mask\": \"0x3fc3fc\", \"priority\": \"below normal\"}"
+   ]
+  },
+  "known2 head-to-head": {
+   "files": 3,
+   "records": 1200,
+   "results": {
+    "normal": 1200
+   },
+   "seeds_unique": 1200,
+   "seed_min": 92754000,
+   "seed_max": 92755999,
+   "segment": [
+    92754000,
+    92755999
+   ],
+   "inside": true,
+   "times_used": {
+    "1": 1200
+   },
+   "reruns": 0,
+   "turns_mean": 15.51,
+   "out_of_guess_per_game": 0.0,
+   "default_step_ms": {
+    "steps": 15199,
+    "mean": 36.88,
+    "median": 12.02,
+    "p90": 66.08,
+    "max": 1069.2
+   },
+   "game_seconds_mean": 2.42,
+   "machines": [
+    [
+     "3803613",
+     false,
+     "3.12.10",
+     "Windows-11-10.0.26300-SP0"
+    ]
+   ],
+   "limits": [
+    "{\"mask\": \"0x3fc3fc\", \"priority\": \"below normal\"}"
+   ]
+  },
+  "known2 evaluator": {
+   "files": 4,
+   "records": 13971,
+   "results": {
+    "normal": 13971
+   },
+   "seeds_unique": 13971,
+   "seed_min": 92756000,
+   "seed_max": 92795996,
+   "segment": [
+    92756000,
+    92795999
+   ],
+   "inside": true,
+   "times_used": {
+    "1": 13971
+   },
+   "reruns": 0,
+   "turns_mean": 15.43,
+   "out_of_guess_per_game": 0.0,
+   "default_step_ms": {
+    "steps": 497467,
+    "mean": 31.72,
+    "median": 12.01,
+    "p90": 65.1,
+    "max": 2227.0
+   },
+   "game_seconds_mean": 1.99,
+   "machines": [
+    [
+     "3803613",
+     false,
+     "3.12.10",
+     "Windows-11-10.0.26300-SP0"
+    ]
+   ],
+   "limits": [
+    "{\"mask\": \"0x3fc3fc\", \"priority\": \"below normal\"}"
+   ]
+  }
+ },
+ "h2h": {
+  "known": [],
+  "known2": [
+   {
+    "file": "h2h-0.jsonl",
+    "decided": 400,
+    "better_wins": 214,
+    "draws": 0,
+    "win_rate": 0.535,
+    "wilson": [
+     0.486,
+     0.5833
+    ]
+   },
+   {
+    "file": "h2h-1.jsonl",
+    "decided": 400,
+    "better_wins": 233,
+    "draws": 0,
+    "win_rate": 0.5825,
+    "wilson": [
+     0.5336,
+     0.6298
+    ]
+   },
+   {
+    "file": "h2h-2.jsonl",
+    "decided": 400,
+    "better_wins": 257,
+    "draws": 0,
+    "win_rate": 0.6425,
+    "wilson": [
+     0.5944,
+     0.6879
+    ]
+   }
+  ]
+ }
+}
