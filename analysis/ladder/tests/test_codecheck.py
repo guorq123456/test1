@@ -128,6 +128,14 @@ BAD = {
  "imul-list": "from ladder import base\nx = base.baseline_lists()\ny = x['a']\ny *= 0",
  "yield-finally": "def tail(n):\n    try:\n        yield n\n    finally:\n        while True:\n            pass",
  "yield-except": "def tail(n):\n    try:\n        yield n\n    except BaseException:\n        pass",
+ # LD-43: what the narrower rules must still refuse
+ "cls-subclass-init": "from svsim.core.script import INVOKERS\nclass A:\n    @classmethod\n    def make(cls, x):\n        return cls(x)\nclass B(A):\n    def __init__(self, x):\n        x.append(1)\nB.make(INVOKERS)",
+ "cls-inherited-init": "from svsim.core.script import INVOKERS\nclass A:\n    def __init__(self, x):\n        self.x = x\n    @classmethod\n    def make(cls, x):\n        return cls(x)\nclass B(A):\n    pass\nB.make(INVOKERS).x.append(1)",
+ "field-default": "from svsim.core.script import INVOKERS\nimport dataclasses\n@dataclasses.dataclass\nclass M:\n    x: object = dataclasses.field(default=INVOKERS)\nM().x.append(1)",
+ "field-lambda": "from svsim.core.script import INVOKERS\nimport dataclasses\n@dataclasses.dataclass\nclass M:\n    x: object = dataclasses.field(default_factory=lambda: INVOKERS)\nM().x.append(1)",
+ "field-svsim-class": "import dataclasses\nfrom svsim.core.state import GameState\n@dataclasses.dataclass\nclass M:\n    x: object = dataclasses.field(default_factory=GameState)\nM().x.players.append(1)",
+ "unknown-base-own": "def mk():\n    return object\nclass W(mk()):\n    def my_f(self, x):\n        x.items.append(1)",
+ "namedtuple-method": "from typing import NamedTuple\nfrom svsim.core.script import INVOKERS\nclass P(NamedTuple):\n    a: int\n    def my_f(self, x):\n        x.append(1)\nP(1).my_f(INVOKERS)",
 }
 GOOD_LD42 = {
  "tree": "class Node:\n    def __init__(self, parent, move):\n        self.parent = parent\n        self.move = move\n        self.children = []\n        self.visits = 0\n        if parent is not None:\n            parent.children.append(self)\nclass T(PlayerStrategy):\n    def search(self, pos):\n        root = Node(None, None)\n        n = Node(Node(root, 1), 2)\n        while n is not None:\n            n.visits += 1\n            n = n.parent\n        return {}",
@@ -140,6 +148,13 @@ GOOD_LD42 = {
  "lru-method": "import functools\nclass T(PlayerStrategy):\n    @functools.lru_cache(maxsize=None)\n    def cost(self, n):\n        return n * 2\n    def search(self, pos):\n        return {'iterations': 100 + self.cost(1)}",
  "mul-float": "from svsim.search.evaluate import evaluate, DEFAULT\nclass T(PlayerStrategy):\n    def evaluate(self, state, me, me_next):\n        v = evaluate(state, me, DEFAULT, player_moves_next=me_next)\n        v *= 0.5\n        return v",
  "yield-plain": "def pairs(xs):\n    for i, x in enumerate(xs):\n        try:\n            v = x * 2\n        except TypeError:\n            v = 0\n        yield i, v",
+}
+GOOD_LD43 = {
+ "typing-bases": "from typing import NamedTuple, Generic, TypeVar, TypedDict\nimport collections\nT_ = TypeVar('T_')\nclass E(NamedTuple):\n    u: int\n    v: int\nclass Box(Generic[T_]):\n    pass\nclass TD(TypedDict):\n    a: int\nclass E2(collections.namedtuple('E2', 'a b')):\n    pass\nclass G:\n    def __init__(self):\n        self.cells = [[0] * 3 for _ in range(3)]\n    def place(self, r, c, v):\n        self.cells[r][c] = v\nG().place(1, 1, E(1, 2).u)",
+ "unknown-base-elsewhere": "def mk():\n    return object\nclass W(mk()):\n    pass\nclass G:\n    def __init__(self):\n        self.items = []\n    def my_g(self, y):\n        y.items.append(1)\nG().my_g(G())",
+ "cls-factory": "class Node:\n    def __init__(self, parent=None):\n        self.children = []\n        if parent is not None:\n            parent.children.append(self)\nclass Feat:\n    def __init__(self, life, hand):\n        self.life, self.hand = life, hand\n    @classmethod\n    def of(cls, pos):\n        p = pos.state.players[0]\n        return cls(p.life, len(p.hand))\nclass T(PlayerStrategy):\n    def search(self, pos):\n        f = Feat.of(pos)\n        Node(Node())\n        return {}",
+ "field-factory": "import collections\nimport dataclasses\n@dataclasses.dataclass\nclass Memory:\n    counts: collections.Counter = dataclasses.field(default_factory=collections.Counter)\n    q: collections.deque = dataclasses.field(default_factory=collections.deque)\nclass T(PlayerStrategy):\n    def __init__(self, seed=0):\n        super().__init__(seed)\n        self.mem = Memory()\n    def search(self, pos):\n        self.mem.counts[pos.turn] += 1\n        self.mem.q.append(1)\n        return {}",
+ "select-store": "class Tree:\n    def __init__(self):\n        self.rows = {}\n    def select(self, node):\n        node.hits.append(1)\n        return node\n    def store(self, k, entry):\n        entry.seen.append(k)\n        self.rows[k] = entry\nclass Entry:\n    def __init__(self):\n        self.hits, self.seen = [], []\nt = Tree()\nt.store(1, t.select(Entry()))",
 }
 GOOD = {
  "field-shadow": "from dataclasses import field\ndef f():\n    field = {}\n    field['a'] = 1\n    return field",
@@ -166,20 +181,44 @@ def test_refused(name):
     assert check_code(textwrap.dedent(BAD[name]) + TAIL, "S"), name
 
 
-@pytest.mark.parametrize("name", sorted(GOOD) + sorted(GOOD_LD42))
+@pytest.mark.parametrize("name", sorted(GOOD) + sorted(GOOD_LD42) + sorted(GOOD_LD43))
 def test_accepted(name):
-    src = textwrap.dedent(GOOD.get(name) or GOOD_LD42[name])
+    src = textwrap.dedent(GOOD.get(name) or GOOD_LD42.get(name) or GOOD_LD43[name])
     if "class T(" in src:
         src = "from ladder.interface import PlayerStrategy\n" + src
     assert check_code(src + TAIL, "S") == []
 
 
 def test_a_method_named_like_host_code_says_so():
-    # LD-42: a method whose name the simulator or the ladder also uses may be called by them with their objects, so
-    # its parameters start as possibly shared; the refusal says to rename it
+    # LD-42, LD-43: a method whose name the simulator or the ladder also uses on objects it is handed may be called by
+    # them with their objects, so its parameters start as possibly shared; a refusal ends with a note naming every
+    # such method (only those with parameters), and renaming them as it says gets the module accepted
     src = textwrap.dedent(GOOD_LD42["grid"]).replace("place", "put")
     got = check_code("from ladder.interface import PlayerStrategy\n" + src + TAIL, "S")
-    assert got and "方法名 put" in got[0]
+    notes = [g for g in got if g.startswith("提示：")]
+    assert notes and "Grid.put" in notes[0] and "my_" in notes[0]
+    assert check_code("from ladder.interface import PlayerStrategy\n" + src.replace("put(", "my_put(") + TAIL, "S") == []
+    bag = ("class Item:\n    def __init__(self, w):\n        self.w = w\n"
+           "class Bag:\n    def __init__(self):\n        self.items = []\n    def add(self, it):\n        self.items.append(it)\n"
+           "    def normalize(self):\n        total = sum(i.w for i in self.items)\n        for i in self.items:\n"
+           "            i.w = i.w / total\n            i.w += 1\n"
+           "b = Bag()\nb.add(Item(1.0))\nb.normalize()\n")
+    got = check_code(bag + TAIL, "S")
+    notes = [g for g in got if g.startswith("提示：")]
+    assert any("Bag.add" in n and "Bag.normalize" not in n.split(" ")[0] for n in notes), got
+    assert len([g for g in got if not g.startswith("提示：")]) == 2          # the attribute and the += refusal
+    assert check_code(bag.replace("add(", "my_add(") + TAIL, "S") == []
+
+
+def test_ordinary_names_from_strings_alone_are_not_method_names():
+    # LD-43: only attribute names, getattr-style written-out names and the strings of modules that read attributes
+    # by a computed name count; not argparse choices, dict keys or this reader's own word lists
+    from ladder.codecheck import base_self_names, duck_names
+    from ladder.interface import PlayerStrategy
+    d = duck_names()
+    assert {"select", "store", "normalize", "merge", "node"}.isdisjoint(d)
+    assert {"update", "add", "put", "get", "act", "guess"} <= d
+    assert {"prior", "veto", "evaluate", "guess"} <= base_self_names(PlayerStrategy)
 
 
 def test_own_classes_in_annotations_need_lazy_annotations():

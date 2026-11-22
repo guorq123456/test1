@@ -1,6 +1,7 @@
 """Every game of a period replayed move by move, before it advances (LD-40, RUNBOOK 每期 §4).
 
-    python -m ladder.audit LOG [LOG ...] [--workers 23] [--out audit.json] [--allow-empty PATTERN ...]
+    python -m ladder.audit LOG [LOG ...] [--events POOLDIR/events.jsonl] [--workers 23] [--out audit.json]
+        [--allow-empty PATTERN ...]
 
 A LOG may be a pattern (cmd.exe doesn't expand them): "C:\\claude\\ladder-host\\gates\\*\\games.jsonl". A pattern that
 matches nothing is an error, so a typo can't pass as "nothing to check"; a pattern given with --allow-empty may match
@@ -16,8 +17,11 @@ A failure means the game was played on a simulator that wasn't the one in the re
 was changed afterwards): it is listed, with why, for Salem (red line: 发现了就记录并报告), and nothing is changed
 here. A line that isn't JSON (the half-written last line of a power cut: the runner starts its next line on a fresh
 one, LD-41) is skipped and listed under "unreadable". "voids" counts the void games of each strategy, and of those
-the ones it was losing when the tripwire voided them (a side that voids its own losses: report it). Exit code 1 if any game fails, 2 if a log is missing or can't be
-read at all.
+the ones it was losing when the tripwire voided them (a side that voids its own losses: report it). With --events
+(the pool's events.jsonl), "unlogged" lists the games the pool counted (a "game" event) that have no readable line in
+the logs: after a power cut the event can reach the disk and the game's line not, and the pool never plays a game id
+again, so such a game moved CR without a replay (LD-43: report it). Exit code 1 if any game fails, 2 if a log is
+missing or can't be read at all.
 """
 from __future__ import annotations
 
@@ -100,13 +104,24 @@ def expand(args, allow_empty=()) -> list[Path]:
     return unique
 
 
-def audit(logs, workers: int = 4, mask=None) -> dict:
+def counted(events) -> list[str]:
+    """The ids of the games a pool counted: its "game" events, in order."""
+    out = []
+    for path in events:
+        for e in read(Path(path)):
+            if e.get("ev") == "game" and isinstance(e.get("id"), str):
+                out.append(e["id"])
+    return out
+
+
+def audit(logs, workers: int = 4, mask=None, events=()) -> dict:
     from ladder.runner import MAX_WORKERS, _limit
     if workers > MAX_WORKERS:
         raise SystemExit(f"at most {MAX_WORKERS} workers")
-    items, skipped, unreadable, voids = [], 0, [], {}
+    items, skipped, unreadable, voids, ids = [], 0, [], {}, set()
     for path in logs:
         for g in read(Path(path), unreadable):
+            ids.add(g.get("id"))
             if g.get("result") == "void":               # who voids games, and how often while losing (LD-41)
                 for seat, spec in enumerate(g.get("strategies") or []):
                     v = voids.setdefault(str(spec), {"void": 0, "was_losing": 0})
@@ -124,8 +139,9 @@ def audit(logs, workers: int = 4, mask=None) -> dict:
             for where, gid, ok, why in ex.map(_one, items, chunksize=16):
                 if not ok:
                     failed.append({"log": where, "id": gid, "why": why})
+    unlogged = [gid for gid in counted(events) if gid not in ids]
     return {"logs": [str(p) for p in logs], "checked": len(items), "skipped": skipped, "failed": failed,
-            "unreadable": unreadable, "voids": voids, "ok": not failed}
+            "unreadable": unreadable, "voids": voids, "unlogged": unlogged, "ok": not failed}
 
 
 def main():
@@ -134,22 +150,31 @@ def main():
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--mask", default=None)
     ap.add_argument("--out", default=None)
+    ap.add_argument("--events", action="append", default=[], metavar="EVENTS",
+                    help="the pool's events.jsonl: games it counted that have no line in the logs are listed")
     ap.add_argument("--allow-empty", nargs="+", default=[], metavar="PATTERN",
                     help="logs or patterns that may match nothing yet (the gates' before the pool's first gate)")
     a = ap.parse_args()
     for stream in (sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8", errors="backslashreplace")
-    res = audit(expand(a.logs, a.allow_empty), a.workers, int(a.mask, 16) if a.mask else None)
+    for e in a.events:
+        if not Path(e).is_file():
+            print(f"no such events file: {e}", file=sys.stderr)
+            sys.exit(2)
+    res = audit(expand(a.logs, a.allow_empty), a.workers, int(a.mask, 16) if a.mask else None, a.events)
     if a.out:
         Path(a.out).parent.mkdir(parents=True, exist_ok=True)
         Path(a.out).write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
     print(json.dumps({k: res[k] for k in ("checked", "skipped", "ok")} | {"failed": len(res["failed"]),
-                                                                          "unreadable": len(res["unreadable"])},
+                                                                          "unreadable": len(res["unreadable"]),
+                                                                          "unlogged": len(res["unlogged"])},
                      ensure_ascii=False))
     for spec, v in sorted(res["voids"].items(), key=lambda kv: -kv[1]["void"])[:10]:
         print(f"void {v['void']} (losing when voided {v['was_losing']}): {spec}")
     for u in res["unreadable"][:20]:
         print(f"{u}: not a JSON line, skipped (a half-written line from a power cut? check it)")
+    for gid in res["unlogged"][:20]:
+        print(f"{gid}: counted by the pool but no line in the logs (a power cut?): not replayed, report it")
     for f in res["failed"][:50]:
         print(f"{f['log']} {f['id']}: {f['why']}")
     sys.exit(0 if res["ok"] else 1)

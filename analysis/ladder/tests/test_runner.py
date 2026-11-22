@@ -335,6 +335,17 @@ def test_code_left_running_off_the_clock_is_stopped(tmp_path):
     assert got[0]["timeout"] == runner.IDLE and "value" in got[1]
 
 
+
+def test_copying_the_position_is_not_a_change(tmp_path):
+    # LD-43: copy.copy / deepcopy store __slotnames__ in a class the first time one of its objects is copied (ladder.base
+    # PublicPosition, GameState, collections.ChainMap...); the snapshot fills that cache first, so copying voids nothing
+    jobs = [job(39, "py:helpers:CopiesPosition", "py:helpers:Random", first=0),
+            job(40, "py:helpers:Random", "py:helpers:CopiesPosition", first=0)]
+    out = tmp_path / "g.jsonl"
+    runner.run(jobs, str(out), workers=1, step_limit=30.0, quiet=True)
+    rows = [json.loads(line) for line in out.read_text(encoding="utf-8").splitlines()]
+    assert [r["result"] for r in rows] != [] and all(r["result"] in ("normal", "draw") for r in rows), rows
+
 def test_the_watch_follows_the_standard_library_and_what_an_lru_cache_wraps():
     # LD-42: random.Random's methods (the deal and the search shuffle with it), a class or function of an allowed
     # standard module, and the function under an lru_cache are followed

@@ -25,7 +25,9 @@ memos (phase 1's decision replays in fresh processes matched games played in lon
 changes nothing but speed, and nothing one game leaves in them reaches the next. Two more, for the host's trained
 pilots only (svsim.learn is closed to strategies): CACHE_ATTRS, a net's memo and counter attributes, not compared;
 GROWS, svsim.learn's module dicts and sets (models loaded once per process), which may gain items but not lose or
-replace one, and are then snapshotted again. A dict found to grow in play that isn't listed here would show up as a
+replace one, and are then snapshotted again. And one CPython cache: copy.copy / deepcopy store `__slotnames__` in a
+class the first time one of its objects is copied; the snapshot fills it in every class it follows first (LD-43:
+a strategy that copied its position voided every game). A dict found to grow in play that isn't listed here would show up as a
 void "added" — a false alarm to fix by listing it, after reading its code.
 
 What it doesn't see: a change made and undone inside one game (ladder/audit.py replays every game of a period before
@@ -35,6 +37,7 @@ spot checks).
 """
 from __future__ import annotations
 
+import copyreg
 import enum
 import functools
 import sys
@@ -260,6 +263,9 @@ def snapshot() -> Snapshot:
         if isinstance(obj, (set, frozenset)):
             s.sets.append([obj, frozenset(obj), path, id(obj) in grows])
             continue
+        if isinstance(obj, type) and "__slotnames__" not in obj.__dict__ and \
+                (_watched(getattr(obj, "__module__", None)) or getattr(obj, "__module__", None) in STDLIB):
+            copyreg._slotnames(obj)                # LD-43: copy.copy / deepcopy store it on first use (a pure cache)
         try:
             members = _members(obj)
         except Exception:                          # an object that won't show its inside is held by identity only

@@ -265,6 +265,20 @@ class PatchesRandom(Random):
             random.Random.shuffle = shuffle
         return super().act(pos, actions)
 
+
+class CopiesPosition(Random):
+    """Copies what it is given every decision (copy.copy / deepcopy of the position, a ChainMap, a UserDict): allowed,
+    and changes nothing shared; CPython caches __slotnames__ in each class copied for the first time (LD-43: the
+    tripwire took that for a change and voided every game)."""
+    def act(self, pos, actions):
+        import collections
+        import copy
+        copy.deepcopy(pos)
+        copy.copy(pos)
+        copy.deepcopy(collections.ChainMap({"n": len(actions)}, {}))
+        copy.deepcopy(collections.UserDict({"n": 1}))
+        return super().act(pos, actions)
+
 def _lingering(n):
     try:
         yield n

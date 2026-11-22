@@ -103,3 +103,22 @@ def test_nul_lines_are_listed_and_a_log_named_twice_is_read_once(tmp_path):
     assert paths == [log]
     res = audit.audit(paths)
     assert res["unreadable"] == [f"{log}:1"] and res["skipped"] == 1
+
+
+def test_a_game_the_pool_counted_without_a_log_line_is_listed(tmp_path, monkeypatch):
+    # LD-43: a power cut can keep the pool's "game" event and lose the game's line; the pool never plays that id
+    # again, so the audit lists it (--events) instead of letting it pass unreplayed
+    log, events = tmp_path / "games.jsonl", tmp_path / "events.jsonl"
+    row = {"id": "L1-0000001", "result": "void", "strategies": ["py:a:A", "py:b:B"], "error": "x"}
+    log.write_bytes((json.dumps(row) + "\n").encode() + b"\x00" * 40 + b"\n")
+    events.write_text("".join(json.dumps(e) + "\n" for e in (
+        {"n": 1, "ev": "start", "id": "L1-0000001"}, {"n": 2, "ev": "game", "id": "L1-0000001"},
+        {"n": 3, "ev": "game", "id": "L1-0000002"})), encoding="utf-8")
+    res = audit.audit([log], events=[events])
+    assert res["unlogged"] == ["L1-0000002"] and res["ok"] and res["unreadable"] == [f"{log}:2"]
+    assert audit.audit([log])["unlogged"] == []
+    report = tmp_path / "a.json"
+    monkeypatch.setattr(sys, "argv", ["audit", str(log), "--events", str(events), "--out", str(report)])
+    with pytest.raises(SystemExit) as e:
+        audit.main()
+    assert e.value.code == 0 and json.loads(report.read_text(encoding="utf-8"))["unlogged"] == ["L1-0000002"]

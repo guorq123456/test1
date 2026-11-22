@@ -1,5 +1,5 @@
-"""Reading a submission's code (item 2.3; fifth pass LD-40, sixth LD-41, seventh LD-42). Nothing in the submitted
-code runs.
+"""Reading a submission's code (item 2.3; fifth pass LD-40, sixth LD-41, seventh LD-42, eighth LD-43). Nothing in
+the submitted code runs.
 The simulator's and ladder's own modules are imported here (they are the host's code) to tell a module from a class
 from a function; svsim.learn, svsim.tools, svsim.ui, svsim.build, svsim.search.parallel and ladder's other modules
 never are.
@@ -31,10 +31,12 @@ repeated until nothing changes:
           and a real property's .setter / .getter / .deleter (checked by what the name is, not how it's spelled).
 A method's parameters start CLEAN, the module's own code being the only caller; HOLDS when someone else may call
 it: a dunder, the __init__ of a class with a base that isn't the module's own (PlayerStrategy alone is fine), a
-method named like any attribute the simulator's or ladder's code uses or a member of a non-own base class (the
-host may call it with its objects: rename a helper that collides, the refusal says so); every method HOLDS when a
-class's base can't be told; SHARED when the method is taken as a value. `cls(...)` in a classmethod is every
-__init__ of the module.
+method named like an attribute the simulator's or ladder's code uses on objects it is handed (duck_names), or like
+a member of a non-own base class or a name that base's code uses on self (the host may call it with its objects);
+every method of a class whose base can't be told (typing.NamedTuple / TypedDict, Generic[...] and namedtuple(...)
+can: LD-43); SHARED when the method is taken as a value. A refusal ends with a note naming the methods HOLDS only
+for their name, and those named like a container's methods (rename them). `cls(...)` in a classmethod is the
+__init__ of that class or of one of the module's classes built on it.
 A SHARED object may not be changed: no assignment or `del` into it (x.a = ..., x[k] = ...), no augmented assignment
 on it (x += ...: write x = x + ...; adding a number literal is allowed), no method that changes a container
 (append, add, update, pop, clear, sort, ...: called or taken as a value), no shuffle / heappush / insort on it, no
@@ -263,10 +265,32 @@ def scalar_return(fn) -> bool:
 _DUCK: frozenset | None = None
 
 
+DUCK_SKIP = ("svsim/tools/", "svsim/ui/", "svsim/build/", "ladder/codecheck.py")   # never run with a strategy's
+#                                                    objects (closed to strategies, or this reader's own word lists)
+COMPUTED_ACCESS = frozenset({"getattr", "hasattr", "setattr", "delattr", "attrgetter", "methodcaller", "vars"})
+
+
+def _computed_access(tree) -> bool:
+    """The module reads attributes by a name it works out (getattr(x, name), vars(x)[k], x.__dict__): any string
+    in it may be an attribute name."""
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Call):
+            f = n.func
+            name = f.id if isinstance(f, ast.Name) else f.attr if isinstance(f, ast.Attribute) else None
+            if name in COMPUTED_ACCESS and any(not isinstance(a, ast.Constant) for a in n.args[1:2] or n.args[:1]):
+                return True
+        elif isinstance(n, ast.Attribute) and n.attr in ("__dict__", "__getattribute__"):
+            return True
+    return False
+
+
 def duck_names() -> frozenset:
-    """Every attribute name the simulator's and the ladder's code reads (x.name) or writes out as a string: a
-    method of the strategy's own classes with one of these names may be called by host code with host objects
-    (duck typing, a hook found by name), so its parameters start as HOLDS (LD-42). Read once per process."""
+    """Every method name host code may call on an object it was handed (duck typing): the attribute names the
+    simulator's and the ladder's code reads or writes (x.name, not self.x / cls.x: those are its own classes',
+    see base_self_names), the written-out names of getattr / hasattr / attrgetter / methodcaller, and every
+    identifier-shaped string of a module that reads attributes by a computed name. A method of the strategy's own
+    classes with one of these names may be called by host code with host objects, so its parameters start as HOLDS
+    (LD-42; LD-43 left out other strings, the modules closed to strategies and this reader). Read once."""
     global _DUCK
     if _DUCK is None:
         names = set()
@@ -274,18 +298,61 @@ def duck_names() -> frozenset:
             m = _import(pkg)
             for root in (list(getattr(m, "__path__", [])) if m is not _MISSING else []):
                 for path in sorted(Path(root).rglob("*.py")):
+                    rel = path.relative_to(Path(root).parent).as_posix()
+                    if rel.startswith(DUCK_SKIP):
+                        continue
                     try:
                         tree = ast.parse(path.read_text(encoding="utf-8"))
                     except (OSError, SyntaxError, ValueError, UnicodeDecodeError):
                         continue
+                    every_string = _computed_access(tree)
                     for n in ast.walk(tree):
                         if isinstance(n, ast.Attribute) and not (isinstance(n.value, ast.Name) and
                                                                  n.value.id in ("self", "cls")):
-                            names.add(n.attr)       # (self.x: a subclass's, and class_attrs has those)
+                            names.add(n.attr)
                         elif isinstance(n, ast.Constant) and isinstance(n.value, str) and n.value.isidentifier():
-                            names.add(n.value)
+                            if every_string:
+                                names.add(n.value)
+                        elif isinstance(n, ast.Call):
+                            f = n.func
+                            fname = f.id if isinstance(f, ast.Name) else f.attr if isinstance(f, ast.Attribute) \
+                                else None
+                            if fname in COMPUTED_ACCESS:
+                                names.update(a.value for a in n.args if isinstance(a, ast.Constant) and
+                                             isinstance(a.value, str) and a.value.isidentifier())
         _DUCK = frozenset(names)
     return _DUCK
+
+
+_BASE_SELF: dict = {}
+
+
+def base_self_names(cls) -> frozenset | None:
+    """The names an svsim / ladder class's own code uses on self / cls (`self.hook(x)`, possibly a method only a
+    subclass defines): a strategy's class built on it may have them called with host objects. None: its code reads
+    self's attributes by a computed name (any name)."""
+    if cls in _BASE_SELF:
+        return _BASE_SELF[cls]
+    names = set()
+    for k in getattr(cls, "__mro__", ()):
+        if (getattr(k, "__module__", "") or "").split(".")[0] not in ("svsim", "ladder"):
+            continue
+        try:
+            tree = ast.parse(textwrap.dedent(inspect.getsource(k)))
+        except (OSError, TypeError, SyntaxError):
+            continue
+        for n in ast.walk(tree):
+            if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name) and n.value.id in ("self", "cls"):
+                names.add(n.attr)
+            elif isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in COMPUTED_ACCESS and \
+                    n.args and isinstance(n.args[0], ast.Name) and n.args[0].id in ("self", "cls"):
+                if len(n.args) >= 2 and isinstance(n.args[1], ast.Constant) and isinstance(n.args[1].value, str):
+                    names.add(n.args[1].value)
+                else:
+                    _BASE_SELF[cls] = None
+                    return None
+    _BASE_SELF[cls] = frozenset(names)
+    return _BASE_SELF[cls]
 
 
 # --- the module's scopes and what flows where ------------------------------------------------------------------
@@ -350,6 +417,7 @@ class Flow:
         self._collect()
         self.lv: dict = {}
         self.attrs: dict = {}
+        self._ext: dict = {}
         self.changed = False
         self._memo: dict = {}
         self.incomplete = False
@@ -631,6 +699,10 @@ class Flow:
             if users:
                 c.user_bases += users
                 continue
+            plain = self._typing_base(b)
+            if plain is not None:                  # NamedTuple, TypedDict, Generic[T], namedtuple(...) (LD-43)
+                c.builtin_bases.append(plain)
+                continue
             kn = self.known(b)
             if kn is not None and isinstance(kn[2], type):
                 c.objs.append(kn[2])
@@ -656,6 +728,30 @@ class Flow:
         ps = _player_strategy()
         c.fresh_ok = bool(c.objs) and not c.unknown and all(o is ps for o in c.objs)
         return c
+
+    def _typing_base(self, b):
+        """A base that only shapes the class (typing.NamedTuple / TypedDict, Generic[...] / Protocol[...],
+        collections.namedtuple(...)): the plain type it amounts to, else None."""
+        import typing
+        if isinstance(b, ast.Subscript):
+            kn = self.known(b.value)
+            if kn is not None and any(kn[2] is t for t in (typing.Generic, typing.Protocol)):
+                return kn[2]
+            return None
+        if isinstance(b, ast.Call):
+            kn = self.known(b.func)
+            if kn is not None and kn[2] is collections.namedtuple and not any(
+                    isinstance(a, ast.Starred) for a in b.args) and all(
+                    isinstance(a, ast.Constant) for a in b.args) and not b.keywords:
+                return tuple
+            return None
+        kn = self.known(b)
+        if kn is not None:
+            if kn[2] is typing.NamedTuple:
+                return tuple
+            if kn[2] is typing.TypedDict:
+                return dict
+        return None
 
     # what a name or an expression is
 
@@ -736,6 +832,23 @@ class Flow:
             s = s.parent
         return None
 
+    def subclasses(self, c) -> list:
+        """Class `c` and the module's classes built on it, directly or not (classes come only from class bodies:
+        three-argument type and make_dataclass are refused)."""
+        out = [c]
+        for d in self.cls:
+            if d is not c and c in self.ancestors(d):
+                out.append(d)
+        return out
+
+    def ancestors(self, c, seen=None) -> set:
+        seen = set() if seen is None else seen
+        for u in self.cls[c].user_bases:
+            if u not in seen:
+                seen.add(u)
+                self.ancestors(u, seen)
+        return seen
+
     def class_methods(self, c, name, seen=None) -> list:
         """The defs of `name` in class `c` or, failing that, in its first user base that has one."""
         seen = set() if seen is None else seen
@@ -753,23 +866,40 @@ class Flow:
 
     # levels
 
-    def external_names(self) -> frozenset | None:
-        """Method names host code may call on the module's own objects: the names the simulator's and the ladder's
-        code uses (duck_names), and every attribute of a base class that isn't the module's own (PlayerStrategy's
-        hooks, a dict's get, an svsim class's methods). None: any name (a base the reading can't place)."""
-        names = set(duck_names())
-        for c in self.cls.values():
-            if c.unknown:
-                return None
-            for o in c.objs + c.builtin_bases:
+    def ext_for(self, info) -> frozenset | None:
+        """Method names host code may call on objects of one of the module's own classes: the names the simulator's
+        and the ladder's code uses on objects it is handed (duck_names), and for a class built on a class that isn't
+        the module's own, every attribute of it and every name its code uses on self (PlayerStrategy's hooks, a
+        dict's get, an svsim class's methods and the hooks it expects). None: any name (a base the reading can't
+        place, or one that reads self's attributes by a computed name). Per class (LD-43: one NamedTuple made every
+        class's methods HOLDS)."""
+        if info.unknown:
+            return None
+        key = id(info)
+        if key not in self._ext:
+            names = set(duck_names())
+            for o in info.objs + info.builtin_bases:
                 names |= class_attrs(o)
-        return frozenset(names)
+                more = base_self_names(o)
+                if more is None:
+                    self._ext[key] = None
+                    return None
+                names |= more
+            self._ext[key] = frozenset(names)
+        return self._ext[key]
 
-    def _param_base(self, f, ext) -> int:
+    def name_rule(self, f) -> bool:
+        """`f`'s parameters start as HOLDS only because of its name (renaming it would make them CLEAN)."""
+        if f.value_used or f.cls is None or f.node.name == "__init__" or dunder(f.node.name):
+            return False
+        ext = self.ext_for(self.cls[f.cls])
+        return ext is not None and f.node.name in ext
+
+    def _param_base(self, f) -> int:
         """Where a function's parameters start (the calls in the module then raise them): SHARED for a function
-        taken as a value; for a method, HOLDS when host code may call it (a name in `ext`, a dunder, __init__ of a
-        class with a base that isn't the module's own but PlayerStrategy), else CLEAN like a plain function (LD-42:
-        the module's own trees and tables were refused)."""
+        taken as a value; for a method, HOLDS when host code may call it (a name in its class's ext_for, a dunder,
+        __init__ of a class with a base that isn't the module's own but PlayerStrategy), else CLEAN like a plain
+        function (LD-42: the module's own trees and tables were refused)."""
         if f.value_used:
             return SHARED
         if f.cls is None:
@@ -777,16 +907,16 @@ class Flow:
         name, info = f.node.name, self.cls[f.cls]
         if name == "__init__":
             return HOLDS if info.unknown or (info.objs and not info.fresh_ok) else CLEAN
+        ext = self.ext_for(info)
         if dunder(name) or ext is None or name in ext:
             return HOLDS
         return CLEAN
 
     def _init_levels(self):
-        ext = self.ext = self.external_names()
         for node, f in self.fn.items():
             if f.deco_unknown:
                 self._raise_ret(node, SHARED)           # the name holds what the decorator returned (LD-42)
-            base = self._param_base(f, ext)
+            base = self._param_base(f)
             params = f.pos + f.kwonly + [x for x in (f.vararg, f.kwarg) if x is not None]
             for i, x in enumerate(params):
                 if i == 0 and f.own:
@@ -974,8 +1104,8 @@ class Flow:
         return SHARED if args >= HOLDS else CLEAN
 
     def _factory(self, node) -> int:
-        """What calling a defaultdict's factory gives: a standard-library class (not the simulator's) or a builtin
-        type makes a new, clean object (LD-42: defaultdict(Counter) was refused)."""
+        """What calling a factory (a defaultdict's, a dataclass field's) gives: a standard-library class (not the
+        simulator's) or a builtin type makes a new, clean object (LD-42: defaultdict(Counter) was refused)."""
         if isinstance(node, ast.Name) and self.key(node) is None and isinstance(getattr(builtins, node.id, None), type):
             return CLEAN
         kn = self.known(node)
@@ -992,6 +1122,12 @@ class Flow:
             return args             # a copy of a class, a function or an enum member is the thing itself
         if any(obj is x for x in (dataclasses.replace, dataclasses.fields, dataclasses.asdict, dataclasses.astuple)):
             return max(holds(args), HOLDS if obj is not dataclasses.replace else CLEAN)   # fields' .type: a class
+        if obj is dataclasses.field and call is not None:  # what an instance gets: the default, or a new one
+            v = CLEAN                                     # from the factory (LD-43: default_factory=Counter)
+            for kw in call.keywords:
+                v = max(v, self._factory(kw.value) if kw.arg == "default_factory" else
+                        self.level(kw.value) if kw.arg in ("default", None) else CLEAN)
+            return max(v, args if any(isinstance(a, ast.Starred) for a in call.args) else CLEAN)
         if obj is collections.defaultdict and call is not None and call.args and \
                 not isinstance(call.args[0], ast.Starred):
             rest = [self.level(a) for a in call.args[1:]] + [self.level(k.value) for k in call.keywords]
@@ -1109,8 +1245,11 @@ class Flow:
             out += [(d, 0) for d in self.fdefs.get(k, ())]
             for c in self.cdefs.get(k, ()):
                 out += [(d, 1) for d in self.class_methods(c, "__init__")]
-            if k in self.own and self.own[k][1]:          # cls(...): this class or any subclass (LD-42)
-                out += [(d, 1) for d in self.methods.get("__init__", ())]
+            if k in self.own and self.own[k][1]:          # cls(...): this class or any subclass (LD-42, LD-43)
+                seen = set()
+                for c in self.subclasses(self.own[k][0]):
+                    out += [(d, 1) for d in self.class_methods(c, "__init__") if d not in seen]
+                    seen.update(self.class_methods(c, "__init__"))
         else:
             a = f.attr if isinstance(f, ast.Attribute) else self._getattr_name(f)
             for d in self.methods.get(a, ()) if a else ():
@@ -1291,16 +1430,11 @@ def _rules(tree, flow, cls) -> list[str]:
         own = flow.own_of(node)
         return bool(flow.user_class(node)) or (own is not None and own[1] and not own[2]) or type_call(node)
 
-    def hint(at) -> str:
-        """Why a parameter may be shared, when that comes only from the name of the method the code is in."""
-        m = flow.method_of(at)
-        if m is None or m.name == "__init__" or dunder(m.name) or flow.fn[m].value_used or flow.ext is None:
-            return ""
-        info = flow.cls[flow.fn[m].cls]
-        if m.name in duck_names() and not any(m.name in class_attrs(o) for o in info.objs + info.builtin_bases):
-            return (f"（方法名 {m.name} 在模拟器 / 天梯的代码里也有，可能被它们拿主机的对象来调，所以它的参数按可能共用算："
-                    "只给自己用的方法换个名字，比如加个前缀）")
-        return ""
+    level_hit = []                                 # a refusal because something may be shared (LD-43's note)
+
+    def shared(node, what):
+        level_hit.append(node)
+        bad(node, what)
 
     def yield_in_try(node) -> bool:
         """`node` (a yield / await) is inside a try of its own function, outside that try's finally."""
@@ -1356,15 +1490,14 @@ def _rules(tree, flow, cls) -> list[str]:
             if root is not None:
                 bad(at, f"给 {root} 里的东西赋值或删除（不许改模块、引擎、卡牌里的东西）")
             elif flow.level(base) >= SHARED:
-                bad(at, f"{how}：不许改可能共用的对象（从 svsim / ladder 拿来或读出来的东西；"
-                        "要改就自己做一份：list(x)、dict(x)、dataclasses.replace(x, ...)）" + hint(at))
+                shared(at, f"{how}：不许改可能共用的对象（从 svsim / ladder 拿来或读出来的东西；"
+                           "要改就自己做一份：list(x)、dict(x)、dataclasses.replace(x, ...)）")
         if ctx == "load" and a in MUTATORS:
             kn = flow.known(base)
             unbound = (isinstance(base, ast.Name) and flow.key(base) is None and base.id in BUILTIN_TYPES) or \
                 class_like(base) or (kn is not None and isinstance(kn[2], type))
             if flow.level(base) >= SHARED:
-                bad(at, f"{how}：不许改可能共用的容器（要改就自己做一份：list(x)、dict(x)、dataclasses.replace(x, ...)）"
-                    + hint(at))
+                shared(at, f"{how}：不许改可能共用的容器（要改就自己做一份：list(x)、dict(x)、dataclasses.replace(x, ...)）")
             elif unbound and not (call is not None and call.args and not isinstance(call.args[0], ast.Starred)
                                   and flow.level(call.args[0]) < SHARED):
                 bad(at, f"{how}：不许改可能共用的容器")
@@ -1446,13 +1579,13 @@ def _rules(tree, flow, cls) -> list[str]:
                 if root is not None:
                     bad(node, f"给 {root} 里的东西赋值或删除（不许改模块、引擎、卡牌里的东西）")
                 elif flow.level(node.value) >= SHARED:
-                    bad(node, "x[...] = / del：不许改可能共用的对象（从 svsim / ladder 拿来或读出来的东西；"
-                              "要改就自己做一份：list(x)、dict(x)、dataclasses.replace(x, ...)）" + hint(node))
+                    shared(node, "x[...] = / del：不许改可能共用的对象（从 svsim / ladder 拿来或读出来的东西；"
+                                 "要改就自己做一份：list(x)、dict(x)、dataclasses.replace(x, ...)）")
         elif isinstance(node, ast.AugAssign):
             if flow.level(node.target) >= SHARED and not (_numeric(node.value) and
                                                           (not isinstance(node.op, ast.Mult) or _floaty(node.value))):
-                bad(node, "x += ...：x 可能是共用的对象，原地运算会改它（写成 x = x + ...；"
-                          "加减一个数字可以，乘一个整数不行：列表 *= 0 会原地清空）")
+                shared(node, "x += ...：x 可能是共用的对象，原地运算会改它（写成 x = x + ...；"
+                             "加减一个数字可以，乘一个小数常量可以，乘整数不行：列表 *= 0 会原地清空）")
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and banned_dunder(node.name):
             bad(node, f"def {node.name}（自己定义双下划线方法不许，__init__、__post_init__ 除外）")
         elif isinstance(node, (ast.Yield, ast.YieldFrom, ast.Await)) and yield_in_try(node):
@@ -1490,10 +1623,41 @@ def _rules(tree, flow, cls) -> list[str]:
             name = fn.attr if isinstance(fn, ast.Attribute) else fn.id if isinstance(fn, ast.Name) else None
             if name in ARG_MUTATORS and node.args and \
                     (isinstance(node.args[0], ast.Starred) or flow.level(node.args[0]) >= SHARED):
-                bad(node, f"{name}(...)：不许改可能共用的容器（要改就自己做一份：list(x)、dict(x)、dataclasses.replace(x, ...)）"
-                    + hint(node))
+                shared(node, f"{name}(...)：不许改可能共用的容器（要改就自己做一份：list(x)、dict(x)、"
+                             "dataclasses.replace(x, ...)）")
         elif isinstance(node, ast.ClassDef) and isinstance(p, ast.Module):
             classes.append(node.name)
     if cls not in classes:
         problems.append(f"模块顶层没有类 {cls}")
+    if level_hit:
+        problems += _name_note(flow)
     return problems
+
+
+def _name_note(flow) -> list[str]:
+    """Why the module's own objects may count as shared when that comes from a method's name (LD-43): the methods
+    whose parameters start as HOLDS only for their name (not a hook the base class has or calls), and the module's
+    methods named like a container's (x.update(...) is read as a dict's or a set's)."""
+    by_name, like = [], []
+    for node, f in flow.fn.items():
+        if f.cls is None:
+            continue
+        info = flow.cls[f.cls]
+        base = set()
+        for o in info.objs + info.builtin_bases:
+            base |= class_attrs(o) | (base_self_names(o) or set())
+        label = f"{f.cls.name}.{node.name}"
+        params = f.pos[0 if f.static else 1:] + f.kwonly + [x for x in (f.vararg, f.kwarg) if x is not None]
+        if params and flow.name_rule(f) and node.name not in base:
+            by_name.append(label)
+        if node.name in MUTATORS or node.name in ADDERS:
+            like.append(label)
+    out = []
+    if by_name:
+        out.append("提示：" + "、".join(sorted(set(by_name))) + " 的名字模拟器 / 天梯的代码里也用（它们可能拿主机的对象来调"
+                   "这个名字的方法），所以参数按可能共用算，从参数读出来、传出去、存起来的东西也一样。只给自己用的方法换个"
+                   "它们不用的名字就行，比如加 my_ 前缀（别用下划线开头：x._y 只有 self._y 能碰）")
+    if like:
+        out.append("提示：" + "、".join(sorted(set(like))) + " 和容器的方法同名：x.update(...)、x.add(...) 这类调用会被"
+                   "当成往容器里放东西或改容器，换个名字")
+    return out
