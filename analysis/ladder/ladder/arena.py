@@ -434,9 +434,14 @@ def run_ladder(arena: Path, player: str, version_dir: Path, replacing: str | Non
 def _from_position(job: dict) -> dict:
     """A worker: the logged game up to its `upto` move, then played on (continuation `cont`: None keeps the deal and
     the generator as they were; an int reshuffles the unseen deck order of both sides and reseeds the generator)."""
-    import traceback
+    from ladder.runner import host_ctrl_c
+    with host_ctrl_c():                               # only a real Ctrl+C stops the resume run (fourth pass)
+        return _play_on(job)
+
+
+def _play_on(job: dict) -> dict:
     from ladder import base
-    from ladder.runner import _make_counter, host_interrupt, legal_choice, load_deck, make_strategy, safe_repr
+    from ladder.runner import _make_counter, host_interrupt, legal_choice, make_strategy, offer, safe_repr, tb
     from svsim.core.actions import from_dict, to_dict
     from svsim.core.engine import apply, legal_actions
     from ladder import deal
@@ -461,7 +466,7 @@ def _from_position(job: dict) -> dict:
     except BaseException as e:                        # as the runner (LD-36)
         if host_interrupt(e):
             raise
-        out.update(result="void", error="strategy failed to load:\n" + traceback.format_exc(limit=5))
+        out.update(result="void", error="strategy failed to load:\n" + tb(5))
         return out
     while not state.over:
         seat = state.active
@@ -469,11 +474,11 @@ def _from_position(job: dict) -> dict:
         pos = base.public_position(state, seat, tracker)
         c0 = counter()
         try:
-            action = strategies[seat].act(pos, list(actions))
+            action = strategies[seat].act(pos, offer(actions))   # fresh copies, as in the runner (fourth pass)
         except BaseException as e:                    # SystemExit too: the strategy's crash, as in the runner (LD-36)
             if host_interrupt(e):
                 raise
-            out.update(result="crash", loser=seat, winner=1 - seat, error=traceback.format_exc(limit=8))
+            out.update(result="crash", loser=seat, winner=1 - seat, error=tb())
             break
         out["steps"].append([seat, counter() - c0, 0])
         chosen = legal_choice(action, actions)        # as in the runner (LD-37)

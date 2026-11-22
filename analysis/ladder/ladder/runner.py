@@ -11,10 +11,13 @@ Strategy specs: "bot:<arena spec>" (the base's BotStrategy over that bot, e.g. "
 known-strength checks), or "py:<module>:<factory>" (a factory called with seed=...; e.g. a player's submission).
 
 Rules it applies (task spec §4.2): a strategy that raises loses (crash); one that returns a move not in the legal
-list loses (illegal: judged on the referee's own list, the strategy gets a copy; anything that isn't exactly one of
-those moves, or can't even be compared, is illegal; LD-37); one whose single decision runs past --step-limit seconds of wall time loses (timeout: the
-worker is killed and replaced). "Raises" includes SystemExit and KeyboardInterrupt from the strategy's own call
-(workers ignore Ctrl+C; LD-36); one raised in the end-of-game guess leaves the result alone. An engine error, while
+list loses (illegal: judged on the referee's own list; the strategy is handed fresh copies of the moves, never the
+referee's objects; anything that isn't exactly one of those moves, or can't even be compared, is illegal; LD-37,
+LD-38's review); one whose single decision runs past --step-limit seconds of wall time, judging the returned move
+included, loses (timeout: the worker is killed and replaced). "Raises" includes SystemExit and KeyboardInterrupt from
+the strategy's own call (LD-36): only a real Ctrl+C, marked by its signal handler, stops the tool (`host_ctrl_c`);
+one raised in the end-of-game guess leaves the result alone. Text a strategy controls (error messages, the shown
+move) is cleaned of lone surrogates before it is kept, so it can always be written. An engine error, while
 applying a legal move or around it, can't be pinned on either side: the game is void. So is a worker that dies outright
 (os._exit, killed): code of either side can do that. The 60-turn cap gives a draw (assumption A3).
 
@@ -36,6 +39,8 @@ import json
 import multiprocessing as mp
 import os
 import platform
+import re
+import signal
 import subprocess
 import sys
 import time
@@ -73,6 +78,7 @@ def _make_counter():
 # --- log lines -----------------------------------------------------------------------------------------------
 
 _SEPARATORS = {"\u2028": "\\u2028", "\u2029": "\\u2029", "\x85": "\\u0085"}
+_SURROGATES = re.compile("[\ud800-\udfff]")
 
 
 def jsonl(obj) -> str:
@@ -82,7 +88,19 @@ def jsonl(obj) -> str:
     text = json.dumps(obj, ensure_ascii=False)
     for raw, esc in _SEPARATORS.items():
         text = text.replace(raw, esc)
-    return text + "\n"
+    return clean(text) + "\n"
+
+
+def clean(text: str) -> str:
+    """`text` with lone surrogates (U+D800-U+DFFF, which no UTF-8 file can take) turned into U+FFFD. A strategy's
+    error message or repr can hold them; left in, the log write raises and the whole run stops on every resume
+    (11-22 fourth pass)."""
+    return _SURROGATES.sub("\ufffd", text)
+
+
+def tb(limit=8) -> str:
+    """The current exception's traceback, cleaned (it can carry a strategy's own message)."""
+    return clean(traceback.format_exc(limit=limit))
 
 
 # --- strategies ----------------------------------------------------------------------------------------------
@@ -120,25 +138,51 @@ def unscripted(deck) -> list[int]:
 
 # --- one game ------------------------------------------------------------------------------------------------
 
-def host_interrupt(e: BaseException) -> bool:
-    """True for a KeyboardInterrupt that is the host's Ctrl+C: anywhere SIGINT isn't ignored. Only the runner's workers
-    ignore it, so there a KeyboardInterrupt is a strategy's own; in the host's process (a replay, a submission check)
-    it must stop the tool, not count as a crash (11-22 third pass, LD-37)."""
-    if not isinstance(e, KeyboardInterrupt):
+_CTRL_C = [False]                                  # set by a real Ctrl+C while `host_ctrl_c` is on
+
+
+def _on_ctrl_c(signum, frame):
+    _CTRL_C[0] = True
+    raise KeyboardInterrupt
+
+
+class host_ctrl_c:
+    """While a game is played in a process that doesn't ignore Ctrl+C (the host's own: a replay, a submission check;
+    an arena worker), a real Ctrl+C goes through a handler that marks it before raising, so `host_interrupt` can tell
+    it from a KeyboardInterrupt a strategy raised itself (11-22 fourth pass: judging by the handler setting alone
+    made a strategy's own KeyboardInterrupt stop the replay of its logged crash). Where SIGINT is ignored (the runner's
+    workers) nothing is installed and every KeyboardInterrupt is a strategy's; off the main thread nothing can be."""
+    def __enter__(self):
+        _CTRL_C[0] = False
+        self.prev = None
+        try:
+            cur = signal.getsignal(signal.SIGINT)
+            if cur is not signal.SIG_IGN:
+                signal.signal(signal.SIGINT, _on_ctrl_c)
+                self.prev = cur if cur is not None else signal.SIG_DFL
+        except ValueError:                             # not the main thread
+            pass
+        return self
+
+    def __exit__(self, *exc):
+        if self.prev is not None:
+            signal.signal(signal.SIGINT, self.prev)
         return False
-    import signal
-    try:
-        return signal.getsignal(signal.SIGINT) is not signal.SIG_IGN
-    except ValueError:                                 # not the main thread: can't tell, so stop
-        return True
+
+
+def host_interrupt(e: BaseException) -> bool:
+    """True only for the host's own Ctrl+C (marked by `host_ctrl_c`): that stops the tool. Any other
+    KeyboardInterrupt, and SystemExit, came from a strategy's code and counts against it (LD-36, LD-37)."""
+    return isinstance(e, KeyboardInterrupt) and _CTRL_C[0]
 
 
 def legal_choice(action, legal: list):
     """The referee's own element of `legal` that `action` (what a strategy returned) stands for, or None. Only an
-    object of exactly an engine action's type that equals one of the referee's moves counts; the strategy was handed
-    a copy of the list, so adding to it changes nothing, and any error in comparing makes the move illegal (11-22 third
-    pass, LD-37: a strategy could append moves to the list it was given, or return an object whose comparison raises
-    to have the game written off)."""
+    object of exactly an engine action's type that equals one of the referee's moves counts, and any error in
+    comparing makes the move illegal (11-22 third pass, LD-37: a strategy could append moves to the list it was
+    given, or return an object whose comparison raises to have the game written off). The strategy must have been
+    handed `offer(legal)`, not `legal`: the moves are frozen dataclasses, but their __init__ can still rewrite one in
+    place, and a rewritten referee object would equal itself here (fourth pass)."""
     t = type(action)
     for a in legal:
         if type(a) is t:
@@ -152,9 +196,15 @@ def legal_choice(action, legal: list):
     return None
 
 
+def offer(legal: list) -> list:
+    """Fresh copies of the referee's moves for a strategy (rebuilt from their dicts, the way a log is replayed)."""
+    from svsim.core.actions import from_dict, to_dict
+    return [from_dict(to_dict(a)) for a in legal]
+
+
 def safe_repr(x, limit=300) -> str:
     try:
-        return repr(x)[:limit]
+        return clean(repr(x)[:limit])
     except BaseException as e:                         # noqa: BLE001
         if host_interrupt(e):
             raise
@@ -163,6 +213,11 @@ def safe_repr(x, limit=300) -> str:
 
 def play_job(job: dict, beat=None) -> dict:
     """Play one job in this process. `beat` (a shared array: seat, step start in ns) lets the parent time a step."""
+    with host_ctrl_c():
+        return _play(job, beat)
+
+
+def _play(job: dict, beat) -> dict:
     from svsim.core.actions import to_dict
     from svsim.core.engine import apply, legal_actions
     from ladder import base, deal
@@ -182,12 +237,12 @@ def play_job(job: dict, beat=None) -> dict:
     except BaseException as e:                        # SystemExit too: a factory can't end the worker (LD-36)
         if host_interrupt(e):
             raise
-        out.update(result="void", error="strategy failed to load:\n" + traceback.format_exc(limit=5))
+        out.update(result="void", error="strategy failed to load:\n" + tb(5))
         return out
     try:
         _, state = deal.start(job, first="first")      # base-2: the keyed deal when the job carries one (LD-27/29)
     except Exception:
-        out.update(result="void", error="engine error at the start:\n" + traceback.format_exc(limit=8))
+        out.update(result="void", error="engine error at the start:\n" + tb())
         return out
     out["first"] = state.first
     tracker = base.Tracker(state)
@@ -195,45 +250,53 @@ def play_job(job: dict, beat=None) -> dict:
         seat = state.active
         try:                                          # the engine's and the base's side, not the strategies'
             actions = legal_actions(state)
+            offered = offer(actions)                  # fresh objects: the referee's own never leave its hands
             pos = base.public_position(state, seat, tracker)
         except Exception:
-            out.update(result="void", error="engine error outside a move:\n" + traceback.format_exc(limit=8))
+            out.update(result="void", error="engine error outside a move:\n" + tb())
             break
         if beat is not None:
             beat[0], beat[1] = seat, time.monotonic_ns()
+        crash = shown = chosen = None
         w0, c0 = time.perf_counter_ns(), counter()
         try:
-            action = strategies[seat].act(pos, list(actions))         # a copy: the referee keeps its own list
-        except BaseException as e:                    # SystemExit, KeyboardInterrupt too: the strategy's own doing
-            if host_interrupt(e):                     # (workers ignore Ctrl+C; in the host's process it stops)
-                raise
-            out.update(result="crash", loser=seat, winner=1 - seat, error=traceback.format_exc(limit=8))
-            break
+            try:
+                action = strategies[seat].act(pos, offered)
+            except BaseException as e:                # SystemExit, KeyboardInterrupt too: the strategy's own doing
+                if host_interrupt(e):                 # (only the host's marked Ctrl+C stops the tool)
+                    raise
+                crash = tb()
+            else:
+                c1, w1 = counter(), time.perf_counter_ns()
+                out["steps"].append([seat, c1 - c0, (w1 - w0) // 1000])     # seat, compute (cpu_unit), wall in us
+                chosen = legal_choice(action, actions)   # still on the step's clock: judging runs the returned
+                if chosen is None:                       # object's own code (its __eq__, its __repr__)
+                    shown = safe_repr(action)
         finally:
             if beat is not None:
                 beat[1] = 0
-        c1, w1 = counter(), time.perf_counter_ns()
-        out["steps"].append([seat, c1 - c0, (w1 - w0) // 1000])     # seat, compute (cpu_unit), wall in us
-        chosen = legal_choice(action, actions)
+        if crash is not None:
+            out.update(result="crash", loser=seat, winner=1 - seat, error=crash)
+            break
         if chosen is None:
-            out.update(result="illegal", loser=seat, winner=1 - seat, error=safe_repr(action))
+            out.update(result="illegal", loser=seat, winner=1 - seat, error=shown)
             break
         action = chosen                               # from here on the referee's own object
         try:
             out["actions"].append(to_dict(action))
             tracker.before(state)
         except Exception:
-            out.update(result="void", error="engine error outside a move:\n" + traceback.format_exc(limit=8))
+            out.update(result="void", error="engine error outside a move:\n" + tb())
             break
         try:
             apply(state, action)
         except Exception:
-            out.update(result="void", error="engine error on a legal move:\n" + traceback.format_exc(limit=8))
+            out.update(result="void", error="engine error on a legal move:\n" + tb())
             break
         try:
             tracker.after(state)
         except Exception:
-            out.update(result="void", error="engine error outside a move:\n" + traceback.format_exc(limit=8))
+            out.update(result="void", error="engine error outside a move:\n" + tb())
             break
     if out["result"] is None:
         out["winner"] = state.winner if state.winner in (0, 1) else None
@@ -273,7 +336,7 @@ def _worker(inq, results_q, beat, wid):
         except Exception:
             res = {"id": job["id"], "seed": job.get("seed"), "decks": job.get("decks"),
                    "strategies": job.get("strategies"), "deal": job.get("deal"), "labels": job.get("labels", {}),
-                   "result": "void", "error": "runner error:\n" + traceback.format_exc(limit=8)}
+                   "result": "void", "error": "runner error:\n" + tb()}
         res["worker"] = wid
         results_q.put(res)
 

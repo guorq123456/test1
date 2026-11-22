@@ -167,6 +167,51 @@ def test_the_referee_judges_moves_on_its_own_list(tmp_path):
 
 
 def test_the_hosts_ctrl_c_stops_a_game_played_in_its_own_process():
-    # a replay or a submission check plays in the host's process: Ctrl+C there is not the strategy's crash (LD-37)
+    # a replay or a submission check plays in the host's process: a real Ctrl+C there stops it (LD-37) and the
+    # handler is put back afterwards
+    import signal
+    before = signal.getsignal(signal.SIGINT)
     with pytest.raises(KeyboardInterrupt):
-        runner.play_job(job(17, "py:helpers:Interrupts", "py:helpers:Random", first=1))
+        runner.play_job(job(17, "py:helpers:HostCtrlC", "py:helpers:Random", first=1))
+    assert signal.getsignal(signal.SIGINT) is before
+
+
+def test_a_strategys_own_keyboard_interrupt_replays_as_its_crash(tmp_path):
+    # fourth pass: in the host's process too, a KeyboardInterrupt the strategy raised is its crash, so the crash the
+    # runner logged replays decision for decision (a replay, submit's determinism check) instead of stopping the tool
+    r = runner.play_job(job(18, "py:helpers:Interrupts", "py:helpers:Random", first=1))
+    assert r["result"] == "crash" and r["loser"] == 0
+    out = tmp_path / "g.jsonl"
+    runner.run([job(18, "py:helpers:Interrupts", "py:helpers:Random", first=1)], str(out), workers=1, quiet=True)
+    log = json.loads(out.read_text(encoding="utf-8"))
+    assert log["result"] == "crash" and log["loser"] == 0
+    assert replay_moves(log) == (True, "ok") and replay_decisions(log) == (True, "ok")
+
+
+def test_the_strategy_never_holds_the_referees_moves(tmp_path):
+    # fourth pass: rewriting a handed move in place (frozen dataclass __init__) is an illegal move, not a pass or a
+    # void; a returned object whose comparison never ends is a timeout for its side; a lone surrogate in a crash
+    # message doesn't stop the log write
+    jobs = [job(19, "py:helpers:Rewrites", "py:helpers:Random", first=0),
+            job(20, "py:helpers:HangsWhenJudged", "py:helpers:Random", first=0),
+            job(21, "py:helpers:Surrogate", "py:helpers:Random", first=0)]
+    out = tmp_path / "g.jsonl"
+    runner.run(jobs, str(out), workers=3, step_limit=2.0, quiet=True)
+    rows = {r["id"]: r for r in map(json.loads, out.read_text(encoding="utf-8").splitlines())}
+    assert len(rows) == 3
+    assert rows["t-19"]["result"] == "illegal" and rows["t-19"]["loser"] == 0
+    assert rows["t-20"]["result"] == "timeout" and rows["t-20"]["loser"] == 0
+    assert rows["t-21"]["result"] == "crash" and "lost anyway \ufffd" in rows["t-21"]["error"]
+
+
+def test_arena_continuations_judge_like_the_runner():
+    # fourth pass: the practice arena's continuation games (run in pool workers that don't ignore Ctrl+C) count a
+    # strategy's own KeyboardInterrupt as its crash instead of stopping the whole resume run, and hand out copies
+    from ladder import arena
+    src = runner.play_job(job(22, "py:helpers:Random", "py:helpers:Random", first=0))
+    base = {"decks": src["decks"], "seed": src["seed"], "deal": src.get("deal"), "first_arg": src["first_arg"],
+            "prefix": src["actions"][:4], "prefix_steps": src["steps"][:4], "cont": None, "strategy_seeds": [1, 2]}
+    r = arena._from_position(dict(base, id="c-1", strategies=["py:helpers:Interrupts", "py:helpers:Interrupts"]))
+    assert r["result"] == "crash"
+    r = arena._from_position(dict(base, id="c-2", strategies=["py:helpers:Rewrites", "py:helpers:Rewrites"]))
+    assert r["result"] == "illegal"

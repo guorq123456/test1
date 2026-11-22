@@ -99,3 +99,57 @@ class OddMessage(Crash):
         if self.n == 2:
             raise ValueError("x\u2028y\u2029z\x85w")
         return actions[0]
+
+
+class Rewrites(_Base):
+    """Rewrites a move it was handed in place through its __init__ (frozen dataclasses allow that) and plays it: it
+    holds only a copy, so this is an illegal move, not the referee's own object changed (11-22 fourth pass)."""
+    def act(self, pos, actions):
+        import dataclasses
+        for a in actions:
+            fs = dataclasses.fields(a)
+            if fs and isinstance(getattr(a, fs[0].name), int):
+                vals = [getattr(a, f.name) for f in fs]
+                vals[0] = 10 ** 6
+                a.__init__(*vals)
+                return a
+        return actions[0]
+
+
+class HostCtrlC(_Base):
+    """Stands in for the host pressing Ctrl+C while this side thinks: a real SIGINT to its own process (ignored in
+    the runner's workers)."""
+    def act(self, pos, actions):
+        import signal
+        signal.raise_signal(signal.SIGINT)
+        return actions[0]
+
+
+class _Hang:
+    def __eq__(self, other):
+        while True:
+            time.sleep(0.05)
+
+    __hash__ = object.__hash__
+
+
+class HangsWhenJudged(_Base):
+    """Returns a move of the right type whose field never finishes comparing: a timeout (fourth pass)."""
+    def act(self, pos, actions):
+        import dataclasses
+        for a in actions:
+            fs = dataclasses.fields(a)
+            if fs:
+                vals = [getattr(a, f.name) for f in fs]
+                vals[0] = _Hang()
+                return type(a)(*vals)
+        return actions[0]
+
+
+class Surrogate(Crash):
+    """Crashes with a lone surrogate in its message (no UTF-8 file can hold one): the log still gets written."""
+    def act(self, pos, actions):
+        self.n += 1
+        if self.n == 2:
+            raise ValueError("lost anyway \ud800")
+        return actions[0]
