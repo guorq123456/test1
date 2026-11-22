@@ -14,12 +14,15 @@ Rules it applies (task spec §4.2): a strategy that raises loses (crash); one th
 list loses (illegal: judged on the referee's own list; the strategy is handed fresh copies of the moves, never the
 referee's objects; anything that isn't exactly one of those moves, or can't even be compared, is illegal; LD-37,
 LD-38's review); one whose single decision runs past --step-limit seconds of wall time, judging the returned move
-included, loses (timeout: the worker is killed and replaced). "Raises" includes SystemExit and KeyboardInterrupt from
+included, loses (timeout: the worker is killed and replaced); so does one whose end-of-game guess does (LD-40: a hang
+there used to stall the whole run). "Raises" includes SystemExit and KeyboardInterrupt from
 the strategy's own call (LD-36): only a real Ctrl+C, marked by its signal handler, stops the tool (`host_ctrl_c`);
 one raised in the end-of-game guess leaves the result alone. Text a strategy controls (error messages, the shown
 move) is cleaned of lone surrogates before it is kept, so it can always be written. An engine error, while
 applying a legal move or around it, can't be pinned on either side: the game is void. So is a worker that dies outright
-(os._exit, killed): code of either side can do that. The 60-turn cap gives a draw (assumption A3).
+(os._exit, killed): code of either side can do that. So is a game after which the simulator in the worker is not what
+it was (ladder/watch.py, LD-40: shared card definitions, scripts, the bots' weights, classes, functions): the worker
+then ends and a new one takes its place. The 60-turn cap gives a draw (assumption A3).
 
 Limits (Salem's computer): Salem S10 (11-22 08:49Z) allows all cores ("这个项目你可以全核开跑"): at most 23 worker
 processes (+ this one = the 24 logical CPUs), below normal priority, and on Windows the affinity mask given by --mask
@@ -118,6 +121,18 @@ def make_strategy(spec: str, seed: int):
         _, module, attr = spec.split(":", 2)
         return getattr(importlib.import_module(module), attr)(seed=seed)
     raise ValueError(f"unknown strategy spec {spec!r}")
+
+
+def load_strategies(specs, seeds, beat=None) -> list:
+    """Both sides' strategies, built on the load clock (LD-40: a module or factory that hangs can't stall a run; it
+    is stopped after LOAD_FACTOR x the step limit and the game is void, as for one that fails to load)."""
+    if beat is not None:
+        beat[0], beat[1] = LOAD, time.monotonic_ns()
+    try:
+        return [make_strategy(s, seed) for s, seed in zip(specs, seeds)]
+    finally:
+        if beat is not None:
+            beat[1] = 0
 
 
 def load_deck(x):
@@ -233,7 +248,7 @@ def _play(job: dict, beat) -> dict:
         out.update(result="void", error=f"cards with no script (would play as vanilla): {missing}")
         return out
     try:
-        strategies = [make_strategy(s, seed) for s, seed in zip(job["strategies"], seeds)]
+        strategies = load_strategies(job["strategies"], seeds, beat)
     except BaseException as e:                        # SystemExit too: a factory can't end the worker (LD-36)
         if host_interrupt(e):
             raise
@@ -306,7 +321,14 @@ def _play(job: dict, beat) -> dict:
     for seat in (0, 1):
         try:
             pos = base.public_position(state, seat, tracker)
-            og.append(base.out_of_guess(strategies[seat].guess(pos), tracker.revealed[1 - seat]))
+            if beat is not None:                      # the guess is on the clock too (LD-40): one that hangs
+                beat[0], beat[1] = GUESS + seat, time.monotonic_ns()      # loses by timeout, it can't stall
+            try:                                                           # the run
+                guess = strategies[seat].guess(pos)
+            finally:
+                if beat is not None:
+                    beat[1] = 0
+            og.append(base.out_of_guess(guess, tracker.revealed[1 - seat]))
         except BaseException as e:                    # SystemExit in a guess can't void a finished game (LD-36)
             if host_interrupt(e):
                 raise
@@ -317,16 +339,42 @@ def _play(job: dict, beat) -> dict:
 
 # --- workers and the watchdog ----------------------------------------------------------------------------------
 
-def _worker(inq, results_q, beat, wid):
-    """One job at a time from its own queue, so the parent always knows which job a worker holds."""
+GUESS = 2                                         # beat[0]: 0/1 a seat's decision, 2/3 its end-of-game guess,
+HOST = -1                                         # -1 the host's own check after a game (a hang there: void),
+LOAD = -2                                         # -2 loading the strategies (void, on a longer clock)
+LOAD_FACTOR = 4
+
+
+def _limit_for(what: int, step_limit: float) -> float:
+    return step_limit * LOAD_FACTOR if what == LOAD else step_limit
+
+
+def _worker_setup(paths=()):
     import signal
     signal.signal(signal.SIGINT, signal.SIG_IGN)      # Ctrl+C stops the parent, which ends the workers; inside a
     #                                                   worker a KeyboardInterrupt is then a strategy's own (LD-36)
     sys.path.insert(0, str(HERE.parent))
     sys.path.insert(0, str(ROOT))
-    for extra in filter(None, os.environ.get("LADDER_EXTRA_PATH", "").split(os.pathsep)):
+    for extra in list(filter(None, os.environ.get("LADDER_EXTRA_PATH", "").split(os.pathsep))) + list(paths):
         sys.path.insert(0, extra)                     # where submissions (or test strategies) live
     os.chdir(ROOT)
+    from ladder import watch
+    watch.preload()
+    return watch, watch.snapshot()                    # LD-40: what later games here inherit, checked after each
+
+
+def _check(watch, snap, beat):
+    """The tripwire after a task, itself on the clock (an object a strategy left behind could make it hang)."""
+    beat[0], beat[1] = HOST, time.monotonic_ns()
+    try:
+        return watch.changes(snap)
+    finally:
+        beat[1] = 0
+
+
+def _worker(inq, results_q, beat, wid):
+    """One job at a time from its own queue, so the parent always knows which job a worker holds."""
+    watch, snap = _worker_setup()
     while True:
         job = inq.get()
         if job is None:
@@ -338,7 +386,119 @@ def _worker(inq, results_q, beat, wid):
                    "strategies": job.get("strategies"), "deal": job.get("deal"), "labels": job.get("labels", {}),
                    "result": "void", "error": "runner error:\n" + tb()}
         res["worker"] = wid
+        moved = _check(watch, snap, beat)
+        if moved:                                     # either side's code may have done it: the game is void, and
+            res.update(voided_result=res.get("result"), result="void", winner=None, loser=None, worker_exit=True,
+                       error=clean("the simulator changed in this worker during the game (LD-40): "
+                                   + "; ".join(moved)))
+            results_q.put(res)                        # no later game runs here: the parent starts a new worker
+            inq.get()                                 # once it has this result (so it never takes this for a crash)
+            return
+        if watch.stale(snap):
+            snap = watch.snapshot()
         results_q.put(res)
+
+
+def _task_worker(inq, results_q, beat, wid, fn, paths):
+    """`guarded_map`'s worker: as `_worker`, for any task function."""
+    import importlib
+    watch, snap = _worker_setup(paths)
+    mod, name = fn.split(":")
+    f = getattr(importlib.import_module(mod), name)
+    while True:
+        item = inq.get()
+        if item is None:
+            return
+        i, task = item
+        try:
+            res = {"value": f(task, beat)}
+        except Exception:
+            res = {"error": "runner error:\n" + tb()}
+        moved = _check(watch, snap, beat)
+        if moved:
+            res["changed"] = clean("; ".join(moved))
+            results_q.put((wid, i, res, True))
+            inq.get()
+            return
+        if watch.stale(snap):
+            snap = watch.snapshot()
+        results_q.put((wid, i, res, False))
+
+
+def guarded_map(fn: str, tasks: list, workers: int = 4, step_limit: float = 30.0, mask=None, paths=()) -> list:
+    """`fn` ("module:function", called as fn(task, beat)) over `tasks` in this runner's kind of workers: Ctrl+C
+    ignored in them, the step clock (the function sets `beat` around every strategy call, as `_play` does), the
+    tripwire (LD-40). One result per task, in order: {"value": what fn returned} or {"error": runner error}, plus
+    "changed" (the simulator changed during it; the worker was replaced), or {"timeout": beat[0], ...} (killed past
+    `step_limit`), or {"died": exit code}. For the tools that ask strategies outside a game log (puzzles, the
+    arena's resume): one strategy's hang, crash or meddling stays in its own task."""
+    if workers > MAX_WORKERS:
+        raise SystemExit(f"at most {MAX_WORKERS} workers ({MAX_WORKERS + 1} processes with this one)")
+    out = [None] * len(tasks)
+    if not tasks:
+        return out
+    _limit(mask)
+    ctx = mp.get_context("spawn")
+    results_q = ctx.Queue()
+    todo = list(enumerate(tasks))[::-1]
+
+    def spawn(wid):
+        inq = ctx.Queue()
+        beat = ctx.Array("q", [-1, 0], lock=False)
+        p = ctx.Process(target=_task_worker, args=(inq, results_q, beat, wid, fn, list(paths)), daemon=True)
+        p.start()
+        return {"proc": p, "inq": inq, "beat": beat, "task": None}
+
+    pool = [spawn(i) for i in range(min(workers, len(tasks)))]
+    try:
+        while True:
+            for w in pool:
+                if w["task"] is None and todo:
+                    w["task"] = todo.pop()
+                    w["inq"].put(w["task"])
+            if not todo and not any(w["task"] is not None for w in pool):
+                break
+            try:
+                wid, i, res, gone = results_q.get(timeout=0.25)
+            except Exception:
+                wid = None
+            if wid is not None:
+                w = pool[wid]
+                if w["task"] is not None and w["task"][0] == i:
+                    w["task"] = None
+                    out[i] = res
+                if gone:
+                    w["inq"].put(None)
+                    w["proc"].join(timeout=30)
+                    if w["proc"].is_alive():
+                        w["proc"].kill()
+                        w["proc"].join()
+                    pool[wid] = spawn(wid)
+                continue
+            now = time.monotonic_ns()
+            for k, w in enumerate(pool):
+                if w["task"] is None:
+                    continue
+                started, what = w["beat"][1], int(w["beat"][0])
+                if started and (now - started) / 1e9 > _limit_for(what, step_limit):
+                    w["proc"].kill()
+                    w["proc"].join()
+                    out[w["task"][0]] = {"timeout": what,
+                                         "error": f"ran past {_limit_for(what, step_limit)}s of wall time"}
+                    pool[k] = spawn(k)
+                elif not w["proc"].is_alive():
+                    out[w["task"][0]] = {"died": w["proc"].exitcode}
+                    pool[k] = spawn(k)
+    except BaseException:
+        for w in pool:
+            if w["proc"].is_alive():
+                w["proc"].kill()
+        raise
+    for w in pool:
+        w["inq"].put(None)
+    for w in pool:
+        w["proc"].join(timeout=10)
+    return out
 
 
 E_CORES = 0x3FC3FC                                # the 16 E-cores of Salem's computer (ENVIRONMENT.md)
@@ -485,23 +645,40 @@ def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=No
                 except Exception:
                     res = None
                 if res is not None:
-                    w = pool[res.pop("worker")]
+                    i = res.pop("worker")
+                    w, gone = pool[i], res.pop("worker_exit", False)
                     if w["job"] is not None and w["job"]["id"] == res["id"]:
                         w["job"] = None
                         write(f, res)
+                    if gone:                                            # the simulator changed in it (LD-40)
+                        w["inq"].put(None)
+                        w["proc"].join(timeout=30)
+                        if w["proc"].is_alive():
+                            w["proc"].kill()
+                            w["proc"].join()
+                        pool[i] = spawn(i)
                     continue
                 now = time.monotonic_ns()
                 for i, w in enumerate(pool):                            # the watchdog
                     job = w["job"]
                     if job is None:
                         continue
-                    started = w["beat"][1]
-                    if started and (now - started) / 1e9 > step_limit:
-                        seat = int(w["beat"][0])
+                    started, what = w["beat"][1], int(w["beat"][0])
+                    if started and (now - started) / 1e9 > _limit_for(what, step_limit):
                         w["proc"].kill()
                         w["proc"].join()
-                        write(f, stub(job, "timeout", loser=seat, winner=1 - seat,
-                                      error=f"one decision ran past {step_limit}s of wall time"))
+                        if what in (0, 1):
+                            write(f, stub(job, "timeout", loser=what, winner=1 - what,
+                                          error=f"one decision ran past {step_limit}s of wall time"))
+                        elif what in (GUESS, GUESS + 1):                # LD-40: the guess is the strategy's too
+                            seat = what - GUESS
+                            write(f, stub(job, "timeout", loser=seat, winner=1 - seat,
+                                          error=f"the end-of-game guess ran past {step_limit}s of wall time"))
+                        elif what == LOAD:
+                            write(f, stub(job, "void", error=f"the strategies took more than "
+                                                             f"{_limit_for(LOAD, step_limit)}s to load"))
+                        else:                                           # the host's check after the game
+                            write(f, stub(job, "void", error=f"the check after the game ran past {step_limit}s"))
                         pool[i] = spawn(i)
                     elif not w["proc"].is_alive():
                         # not pinned on a side: any code in the process (a thread of either strategy) can end it

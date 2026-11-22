@@ -112,6 +112,22 @@ def _dunder(name: str) -> bool:
     return name.startswith("__") and name.endswith("__") and name not in ALLOWED_DUNDERS
 
 
+def _is_super(node) -> bool:
+    return isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "super"
+
+
+def _own(node) -> bool:
+    """`self`, `cls` or `super()`: the strategy's own object, whose private attributes it may use."""
+    return (isinstance(node, ast.Name) and node.id in ("self", "cls")) or _is_super(node)
+
+
+def _root(node) -> str | None:
+    """The name an attribute / subscript chain starts from (`a` in a.b[c].d), or None."""
+    while isinstance(node, (ast.Attribute, ast.Subscript)):
+        node = node.value
+    return node.id if isinstance(node, ast.Name) else None
+
+
 def _module_problem(name: str) -> str | None:
     if any(name == p or name.startswith(p + ".") for p in DENIED_PREFIXES):
         return "它们能载入训练好的模型（A12）"
@@ -133,6 +149,15 @@ def check_code(src: str, cls: str) -> list[str]:
         for child in ast.iter_child_nodes(node):
             child._parent = node
     problems, random_alias, classes = [], set(), []
+    imported, ladder_pkg = set(), set()                # names bound by import statements; names bound to `ladder`
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for a in node.names:
+                imported.add(a.asname or a.name.split(".")[0])
+                if a.asname is None and a.name.split(".")[0] == "ladder":
+                    ladder_pkg.add("ladder")
+        elif isinstance(node, ast.ImportFrom):
+            imported.update(a.asname or a.name for a in node.names)
 
     def bad(node, what):
         problems.append(f"第 {getattr(node, 'lineno', '?')} 行：{what}")
@@ -176,14 +201,31 @@ def check_code(src: str, cls: str) -> list[str]:
         elif isinstance(node, ast.Attribute):
             if node.attr in BANNED_ATTRS or _dunder(node.attr):
                 bad(node, f".{node.attr}（不许用：碰文件、别的进程、调用栈或解释器）")
+            elif node.attr == "__init__" and not _is_super(node.value):
+                bad(node, ".__init__ 只能写成 super().__init__(...)（对别的对象调 __init__ 会原地改写它，"
+                          "包括裁判的走法和卡牌定义）")
+            elif node.attr.startswith("_") and not node.attr.startswith("__") and not _own(node.value):
+                bad(node, f".{node.attr}（别的对象、模块的私有属性不许碰；自己的 self._x 可以）")
             if isinstance(node.value, ast.Name) and node.value.id in random_alias and node.attr != "Random":
                 bad(node, f"{node.value.id}.{node.attr}（要随机数用 self.random，不用全局的 random）")
+            if isinstance(node.value, ast.Name) and node.value.id in ladder_pkg and node.attr not in ("interface", "base"):
+                bad(node, f"ladder.{node.attr}（ladder 里只能用 ladder.interface、ladder.base）")
+            if isinstance(node.ctx, (ast.Store, ast.Del)) and _root(node) in imported:
+                bad(node, f"给 {_root(node)} 里的东西赋值或删除（不许改模块、引擎、卡牌里的东西）")
+        elif isinstance(node, ast.Subscript):
+            if isinstance(node.ctx, (ast.Store, ast.Del)) and _root(node) in imported:
+                bad(node, f"给 {_root(node)} 里的东西赋值或删除（不许改模块、引擎、卡牌里的东西）")
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and _dunder(node.name):
+            bad(node, f"def {node.name}（自己定义双下划线方法不许，__init__、__post_init__ 除外）")
         elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in ATTR_FUNCS:
             name = node.args[1] if len(node.args) >= 2 else None
             if not (isinstance(name, ast.Constant) and isinstance(name.value, str)):
                 bad(node, f"{node.func.id} 的属性名要写死成字符串")
-            elif name.value in BANNED_ATTRS or _dunder(name.value):
+            elif name.value in BANNED_ATTRS or _dunder(name.value) or name.value == "__init__" or \
+                    (name.value.startswith("_") and not _own(node.args[0])):
                 bad(node, f"{node.func.id}(..., {name.value!r})（这个属性不许碰）")
+            elif node.func.id in ("setattr", "delattr") and _root(node.args[0]) in imported:
+                bad(node, f"{node.func.id}({_root(node.args[0])}, ...)（不许改模块、引擎、卡牌里的东西）")
         elif isinstance(node, ast.ClassDef) and isinstance(getattr(node, "_parent", None), ast.Module):
             classes.append(node.name)
     if cls not in classes:
@@ -469,13 +511,19 @@ def load_check(path: Path, cls: str, deck, opp_craft: int, seed: int, game_seed:
                PYTHONIOENCODING="utf-8")
     try:
         r = subprocess.run([sys.executable, "-m", "ladder.submit", "_load", str(argfile)], cwd=str(LADDER),
-                           env=env, capture_output=True, text=True, encoding="utf-8", timeout=timeout)
+                           env=env, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                           timeout=timeout)
     except subprocess.TimeoutExpired:
         return {"ok": False, "error": f"载入检查超过 {timeout:.0f} 秒"}
-    for line in reversed(r.stdout.splitlines()):
+    out, err = r.stdout or "", r.stderr or ""         # the player's code can write anything there (fifth pass)
+    for line in reversed(out.splitlines()):
         if line.startswith("LOADCHECK "):
-            return json.loads(line[len("LOADCHECK "):])
-    return {"ok": False, "error": "载入检查的进程没有交回结果：\n" + (r.stderr or r.stdout)[-3000:]}
+            try:
+                return json.loads(line[len("LOADCHECK "):])
+            except ValueError:
+                break
+    from ladder.runner import clean
+    return {"ok": False, "error": clean("载入检查的进程没有交回结果：\n" + (err or out)[-3000:])}
 
 
 # --- games ----------------------------------------------------------------------------------------------------

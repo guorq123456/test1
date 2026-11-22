@@ -78,6 +78,7 @@ python -m ladder.submit precheck 你的提交目录
    - 只许 import 这些模块：`ladder.interface`、`ladder.base`、`svsim`（`svsim.learn`、`svsim.tools` 除外，它们能载入训练好的模型）、`math`、`random`、`collections`、`itertools`、`functools`、`dataclasses`、`heapq`、`bisect`、`statistics`、`copy`、`enum`、`typing`、`numpy`。
    - 不许用碰文件、网络、别的进程、调用栈、解释器的名字：`open`、`eval`、`exec`、`compile`、`globals`、`vars`，双下划线属性（`__init__`、`__name__`、`__post_init__` 除外），`f_back`、`tb_frame` 这类属性，等等。
    - `getattr`、`setattr`、`hasattr` 的属性名要写死成字符串。
+   - 不许改别人的东西：`__init__` 只能写成 `super().__init__(...)`；别的对象、模块的私有属性（`x._y`）不许碰，自己的 `self._y` 可以；`ladder` 里只能用 `interface`、`base`；不许给 import 进来的模块、类、对象里的东西赋值或删除（`pool.POOL[k] = ...`、`Attack.x = ...`、`setattr(模块, ...)`）；不许自己定义双下划线方法（`__init__`、`__post_init__` 除外）。给你的走法、局面都是拷贝或者只读的，改它们没有用；改卡牌定义、引擎这类共用的东西，就是作弊。
    - 不用全局的 `random`。要随机数用 `self.random`，或者用你自己按种子建的 `random.Random`。
 5. **载入**：在一个单独的进程里载入你的模块，装上审计钩子。读写文件、联网、开进程、ctypes、翻垃圾回收器里的对象，一律报错。然后打一局。哪怕你的代码把报错接住了，也照样记下、照样拒收。
 6. **冒烟**：对默认打法打 10 局（调参段里主持方自己那一份种子，对手用基线卡表，七个职业轮流，先后手各一半）。崩溃、非法步、超时都拒收。

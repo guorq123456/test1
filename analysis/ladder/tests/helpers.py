@@ -153,3 +153,79 @@ class Surrogate(Crash):
         if self.n == 2:
             raise ValueError("lost anyway \ud800")
         return actions[0]
+
+
+class HangsInGuess(Random):
+    """Plays at random, then never finishes its end-of-game guess: a timeout for its side, not a stalled run (LD-40)."""
+    def guess(self, pos):
+        time.sleep(600)
+
+
+class HangsOnLoad(Random):
+    """Never finishes being built: the game is void after the load clock, not a stalled run (LD-40)."""
+    def __init__(self, seed=0):
+        time.sleep(600)
+
+
+class ChangesCards(Random):
+    """On its first decision rewrites the shared definitions of the cards in its hand (cost 0) and plays on: the
+    runner voids the game and replaces the worker (LD-40)."""
+    done = False
+
+    def act(self, pos, actions):
+        if not self.done:
+            self.done = True
+            for c in pos.state.players[pos.me].hand:
+                object.__setattr__(c.defn, "cost", 0)
+        return super().act(pos, actions)
+
+
+class PatchesScripts(Random):
+    """Adds a member to the scripts' base class on its first decision (harmless here, but every later game in the
+    process would inherit it): void, worker replaced (LD-40)."""
+    def act(self, pos, actions):
+        from svsim.core.script import CardScript
+        CardScript.patched_by_a_strategy = True
+        return super().act(pos, actions)
+
+
+def task(t, beat=None):
+    """A runner.guarded_map task for the tests: t is "ok", "hang", "change", "die" or "raise"."""
+    import os
+    if t == "hang":
+        beat[0], beat[1] = 1, time.monotonic_ns()
+        time.sleep(600)
+    if t == "change":
+        from svsim.cards.pool import POOL
+        d = next(iter(POOL.values()))
+        object.__setattr__(d, "cost", d.cost + 1)
+    if t == "die":
+        os._exit(3)
+    if t == "raise":
+        raise ValueError("task failed")
+    from svsim.cards.pool import POOL
+    return {"t": t, "pid": os.getpid(), "costs": sum(d.cost for d in POOL.values())}
+
+
+class ChangesUntilGuess(Random):
+    """Lets both sides evolve from their first turn (the engine's own rule table, changed in place) and evolves
+    whenever it can; puts the table back in its end-of-game guess: nothing outlasts the game, so the worker's
+    tripwire can't see it; ladder/audit.py's replay does (LD-40)."""
+    def __init__(self, seed=0):
+        super().__init__(seed)
+        self.kept = None
+
+    def act(self, pos, actions):
+        from svsim.core import engine
+        if self.kept is None:
+            self.kept = dict(engine.EVOLVE_TURN)
+            for k in engine.EVOLVE_TURN:
+                engine.EVOLVE_TURN[k] = 0
+        evolve = [a for a in actions if type(a).__name__ == "Evolve"]
+        return evolve[0] if evolve else super().act(pos, actions)
+
+    def guess(self, pos):
+        from svsim.core import engine
+        if self.kept is not None:
+            engine.EVOLVE_TURN.update(self.kept)
+        return super().guess(pos)

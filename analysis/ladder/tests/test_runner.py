@@ -215,3 +215,67 @@ def test_arena_continuations_judge_like_the_runner():
     assert r["result"] == "crash"
     r = arena._from_position(dict(base, id="c-2", strategies=["py:helpers:Rewrites", "py:helpers:Rewrites"]))
     assert r["result"] == "illegal"
+
+
+def test_a_change_to_the_simulator_voids_the_game_and_replaces_the_worker(tmp_path):
+    # LD-40 (fifth pass): strategy code shares its worker with later games. A game after which the shared card
+    # definitions or a script class differ is void (the original result kept as voided_result), and the worker is
+    # replaced: the next game in the same slot starts from a clean simulator and replays in a fresh process
+    jobs = [job(23, "py:helpers:ChangesCards", "py:helpers:Random", first=0),
+            job(24, "py:helpers:Random", "py:helpers:Random", first=0),
+            job(25, "py:helpers:PatchesScripts", "py:helpers:Random", first=0),
+            job(26, "py:helpers:Random", "py:helpers:Random", first=1)]
+    out = tmp_path / "g.jsonl"
+    res = runner.run(jobs, str(out), workers=1, step_limit=10.0, quiet=True)
+    rows = {r["id"]: r for r in map(json.loads, out.read_text(encoding="utf-8").splitlines())}
+    assert res["played"] == 4 and len(rows) == 4
+    for i, what in ((23, "'cost'"), (25, "patched_by_a_strategy")):
+        r = rows[f"t-{i}"]
+        assert r["result"] == "void" and r["voided_result"] in ("normal", "draw") and r["winner"] is None
+        assert "LD-40" in r["error"] and (what in r["error"] or "+1 members" in r["error"]), r["error"]
+        assert "worker_exit" not in r and "worker" not in r
+    for i in (24, 26):
+        r = rows[f"t-{i}"]
+        assert r["result"] in ("normal", "draw") and replay_moves(r) == (True, "ok"), r.get("error")
+
+
+def test_a_hung_guess_or_load_stops_by_the_clock(tmp_path):
+    # LD-40: the end-of-game guess is on the step clock (a hang there loses by timeout instead of stalling the run);
+    # building the strategies is on a longer clock (a hang there: void, like a strategy that fails to load)
+    jobs = [job(27, "py:helpers:HangsInGuess", "py:helpers:Random", first=0),
+            job(28, "py:helpers:Random", "py:helpers:HangsOnLoad", first=0)]
+    out = tmp_path / "g.jsonl"
+    runner.run(jobs, str(out), workers=2, step_limit=1.0, quiet=True)
+    rows = {r["id"]: r for r in map(json.loads, out.read_text(encoding="utf-8").splitlines())}
+    assert rows["t-27"]["result"] == "timeout" and rows["t-27"]["loser"] == 0 and "guess" in rows["t-27"]["error"]
+    assert rows["t-28"]["result"] == "void" and "to load" in rows["t-28"]["error"]
+
+
+def test_guarded_map_keeps_each_task_to_itself():
+    # LD-40: puzzles and the arena's resume ask strategies through guarded_map: a hang is stopped by the clock, a dead
+    # worker or a raise is that task's alone, and a task that changes the simulator is marked and its worker replaced,
+    # so the next task (same slot, one worker) sees the clean definitions again
+    got = runner.guarded_map("helpers:task", ["ok", "change", "ok", "hang", "ok", "die", "raise", "ok"], workers=1,
+                             step_limit=1.0)
+    assert [("value" in g, "changed" in g) for g in got[:3]] == [(True, False), (True, True), (True, False)]
+    assert got[0]["value"]["costs"] == got[2]["value"]["costs"] == got[4]["value"]["costs"]
+    assert got[1]["value"]["costs"] == got[0]["value"]["costs"] + 1
+    assert got[1]["value"]["pid"] != got[2]["value"]["pid"]
+    assert got[3]["timeout"] == 1 and got[5] == {"died": 3}
+    assert "task failed" in got[6]["error"] and "value" in got[7]
+
+
+def test_watch_sees_a_rewritten_definition_and_its_undoing():
+    from ladder import watch
+    from svsim.cards.pool import POOL
+    watch.preload()
+    snap = watch.snapshot()
+    assert watch.changes(snap) == []
+    d = next(iter(POOL.values()))
+    cost = d.cost
+    object.__setattr__(d, "cost", cost + 7)
+    try:
+        assert any("'cost'" in line for line in watch.changes(snap))
+    finally:
+        object.__setattr__(d, "cost", cost)
+    assert watch.changes(snap) == []

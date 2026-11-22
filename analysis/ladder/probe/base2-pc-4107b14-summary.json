@@ -1,0 +1,57 @@
+{
+ "machine": {
+  "commit": "4107b147514b2e41d94d6b14126b7ce8e1aa4f3d",
+  "dirty": false,
+  "python": "3.12.10",
+  "numpy": "2.5.5",
+  "os": "Windows-11-10.0.26300-SP0"
+ },
+ "key": {
+  "file": "C:\\claude\\ladder-host\\ladder.key",
+  "id": "fe6e77547a09",
+  "made_now": true,
+  "ok": true
+ },
+ "keyed_games": {
+  "games": 20,
+  "failed": [],
+  "ok": true
+ },
+ "list_order": {
+  "sides": 40,
+  "keyed_in_list_order": 0,
+  "unkeyed_in_list_order": 40,
+  "ok": true
+ },
+ "phase1_logs": {
+  "checked": 20,
+  "failed": [],
+  "ok": true,
+  "logged_commit": "380361324c261c7f00fbc42c4fff7e7afc90b5aa"
+ },
+ "base": {
+  "passed": 45,
+  "skipped": 0,
+  "failed": [],
+  "ok": true
+ },
+ "interface": {
+  "games": 40,
+  "decisions": 2588,
+  "plain_same": 40,
+  "explicit_same": 40,
+  "ok": true
+ },
+ "speed": {
+  "games": 2300,
+  "results": {
+   "normal": 2300
+  },
+  "workers": 23,
+  "played_now": 2300,
+  "seconds_now": 239.2,
+  "games_per_hour": 34673,
+  "ok": true
+ },
+ "ok": true
+}

@@ -3,8 +3,10 @@ rem base-2 before phase 1's lock (RUNBOOK, first time, steps 2-3; PHASE1-REPORT 
 rem accepted phase 1. It updates C:\claude\ladder to the latest claude/ladder, makes the host's deal key if there is
 rem none (C:\claude\ladder-host\ladder.key; made once, never copied into the repository or the project folder), then
 rem runs tools\base2_checks.py: keyed games and their replay, list order, p1b's logs replayed with this code, the base's
-rem checks, the interface's 40 games, and a speed run on all cores. About 15 minutes. Results in
-rem C:\claude\ladder-runs\base2 (summary.json); the key itself is never printed, only its id.
+rem checks, the interface's 40 games, a speed run on all cores, and (LD-40) the tripwire, guarded tasks and the
+rem replay audit. About 15 minutes. Results in C:\claude\ladder-runs\base2\<commit> and a copy of the summary
+rem at C:\claude\ladder-runs\base2\summary.json; the key itself is never printed, only its id. A second run on
+rem new code plays its own games in its own folder (it doesn't make a new key).
 rem Limits: 23 worker processes + this one, no mask, below-normal priority (set by the runner).
 cd /d C:\claude\ladder
 set PYTHONHASHSEED=0

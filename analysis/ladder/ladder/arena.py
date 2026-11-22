@@ -431,17 +431,18 @@ def run_ladder(arena: Path, player: str, version_dir: Path, replacing: str | Non
     return out
 
 
-def _from_position(job: dict) -> dict:
-    """A worker: the logged game up to its `upto` move, then played on (continuation `cont`: None keeps the deal and
-    the generator as they were; an int reshuffles the unseen deck order of both sides and reseeds the generator)."""
+def _from_position(job: dict, beat=None) -> dict:
+    """A runner.guarded_map task: the logged game up to its `upto` move, then played on (continuation `cont`: None
+    keeps the deal and the generator as they were; an int reshuffles the unseen deck order of both sides and
+    reseeds the generator)."""
     from ladder.runner import host_ctrl_c
     with host_ctrl_c():                               # only a real Ctrl+C stops the resume run (fourth pass)
-        return _play_on(job)
+        return _play_on(job, beat)
 
 
-def _play_on(job: dict) -> dict:
+def _play_on(job: dict, beat=None) -> dict:
     from ladder import base
-    from ladder.runner import _make_counter, host_interrupt, legal_choice, make_strategy, offer, safe_repr, tb
+    from ladder.runner import _make_counter, host_interrupt, legal_choice, load_strategies, offer, safe_repr, tb
     from svsim.core.actions import from_dict, to_dict
     from svsim.core.engine import apply, legal_actions
     from ladder import deal
@@ -462,7 +463,7 @@ def _play_on(job: dict) -> dict:
     out = {"id": job["id"], "result": None, "winner": None, "loser": None, "cpu_unit": unit,
            "steps": [list(s) for s in job["prefix_steps"]], "actions": list(job["prefix"])}
     try:
-        strategies = [make_strategy(s, x) for s, x in zip(job["strategies"], job["strategy_seeds"])]
+        strategies = load_strategies(job["strategies"], job["strategy_seeds"], beat)   # on the load clock (LD-40)
     except BaseException as e:                        # as the runner (LD-36)
         if host_interrupt(e):
             raise
@@ -473,15 +474,21 @@ def _play_on(job: dict) -> dict:
         actions = legal_actions(state)
         pos = base.public_position(state, seat, tracker)
         c0 = counter()
+        if beat is not None:                          # the step clock, as in the runner (LD-40)
+            beat[0], beat[1] = seat, time.monotonic_ns()
         try:
-            action = strategies[seat].act(pos, offer(actions))   # fresh copies, as in the runner (fourth pass)
-        except BaseException as e:                    # SystemExit too: the strategy's crash, as in the runner (LD-36)
-            if host_interrupt(e):
-                raise
-            out.update(result="crash", loser=seat, winner=1 - seat, error=tb())
-            break
-        out["steps"].append([seat, counter() - c0, 0])
-        chosen = legal_choice(action, actions)        # as in the runner (LD-37)
+            try:
+                action = strategies[seat].act(pos, offer(actions))   # fresh copies, as in the runner (fourth pass)
+            except BaseException as e:                # SystemExit too: the strategy's crash, as in the runner (LD-36)
+                if host_interrupt(e):
+                    raise
+                out.update(result="crash", loser=seat, winner=1 - seat, error=tb())
+                break
+            out["steps"].append([seat, counter() - c0, 0])
+            chosen = legal_choice(action, actions)    # as in the runner (LD-37), still on the clock
+        finally:
+            if beat is not None:
+                beat[1] = 0
         if chosen is None:
             out.update(result="illegal", loser=seat, winner=1 - seat, error=safe_repr(action))
             break
@@ -498,18 +505,33 @@ def _play_on(job: dict) -> dict:
     return out
 
 
-def _init_worker(mask, paths):
-    for p in paths:
-        if p not in sys.path:
-            sys.path.insert(0, p)
-    from ladder.runner import _limit
-    _limit(mask)
+def _resumed(job: dict, g: dict | None) -> dict:
+    """guarded_map's result for one continuation, as a game log: a hang loses by timeout (on loading it is void, as
+    in the runner), a dead worker is void, and so is a game during which the simulator changed (LD-40)."""
+    from ladder.runner import LOAD, clean
+    g = g or {"died": None}
+    if "value" in g:
+        log = g["value"]
+    elif "timeout" in g and g["timeout"] in (0, 1):
+        s = g["timeout"]
+        log = {"id": job["id"], "result": "timeout", "loser": s, "winner": 1 - s, "error": g.get("error")}
+    elif "timeout" in g:
+        what = "loading the strategies" if g["timeout"] == LOAD else "the check after the game"
+        log = {"id": job["id"], "result": "void", "winner": None, "loser": None, "error": f"{what} {g.get('error')}"}
+    elif "died" in g:
+        log = {"id": job["id"], "result": "void", "winner": None, "loser": None,
+               "error": f"worker died (exit code {g['died']})"}
+    else:
+        log = {"id": job["id"], "result": "void", "winner": None, "loser": None, "error": g.get("error")}
+    if g.get("changed"):
+        log = dict(log, voided_result=log.get("result"), result="void", winner=None, loser=None,
+                   error=clean("the simulator changed in this worker during the game (LD-40): " + g["changed"]))
+    return log
 
 
 def run_resume(arena: Path, player: str, run_id: str, game: str, decision: int, version_dirs: list,
                continuations: int, rng_seed: int | None = None) -> dict:
-    import concurrent.futures as cf
-    import multiprocessing as mp
+    from ladder.runner import guarded_map
     seat = Seat(arena, player)
     versions = [seat.version(d) for d in version_dirs]
     if not 1 <= len(versions) <= 2:
@@ -554,9 +576,9 @@ def run_resume(arena: Path, player: str, run_id: str, game: str, decision: int, 
     try:
         cfg = _cfg(seat)
         paths = [str(ROOT), str(LADDER), str(seat.priv / "code")]
-        with cf.ProcessPoolExecutor(max_workers=min(cfg["workers"], len(jobs)), mp_context=mp.get_context("spawn"),
-                                    initializer=_init_worker, initargs=(cfg["mask"], paths)) as ex:
-            logs = list(ex.map(_from_position, jobs))
+        got = guarded_map("ladder.arena:_from_position", jobs, workers=min(cfg["workers"], len(jobs)),
+                          mask=cfg["mask"], paths=paths)
+        logs = [_resumed(j, g) for j, g in zip(jobs, got)]
     finally:
         _unlock(lock)
     seat.count(rid, "resume", len(logs))

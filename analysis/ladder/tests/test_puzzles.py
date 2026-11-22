@@ -69,3 +69,20 @@ def test_aliases_are_drawn_fresh_every_run(tmp_path, monkeypatch):
         _r.Random(Z.secrets.randbits(64)).shuffle(order)
         seen.add(tuple(order))
     assert len(seen) > 5
+
+
+def test_an_answer_that_hangs_dies_or_changes_the_simulator_is_none():
+    # LD-40: puzzles ask through runner.guarded_map; its outcomes become answers here. A timeout, a dead worker or a
+    # runner error is no answer; an answer during which the simulator changed is none too, and the host's copy names
+    # the entry (the public copy never does)
+    ents = [{"name": "默认打法"}, {"name": "甲-1"}]
+    ask = [{"point": p, "entry": e} for p in range(2) for e in range(2)]
+    got = [{"value": {"point": 0, "entry": 0, "move": {"type": "EndTurn"}}},
+           {"value": {"point": 0, "entry": 1, "move": {"type": "EndTurn"}}, "changed": "svsim.cards.pool.POOL: x"},
+           {"timeout": 0, "error": "ran past 30.0s of wall time"},
+           {"died": 3}]
+    answers, tripped = Z._answers(ask, got, ents)
+    assert answers[0]["move"] == {"type": "EndTurn"}
+    assert [a["move"] for a in answers[1:]] == [None, None, None]
+    assert answers[2]["error"] == "timeout" and "died" in answers[3]["error"]
+    assert tripped == [{"entry": "甲-1", "point": 0, "what": "svsim.cards.pool.POOL: x"}]

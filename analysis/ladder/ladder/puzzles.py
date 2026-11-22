@@ -120,10 +120,17 @@ def _diff(a, b):
     return round(100 * m, 2), round(100 * (m - h), 2), round(100 * (m + h), 2)
 
 
-def _ask(job):
-    """One entry asked once at one decision point: replay the logged game to it, build the entry fresh, ask."""
+def _ask(job, beat=None):
+    """One entry asked once at one decision point (a runner.guarded_map task, so a hang, a crash or a change to the
+    simulator stays in this answer): replay the logged game to it, build the entry fresh, ask."""
+    from ladder.runner import host_ctrl_c
+    with host_ctrl_c():                               # only a real Ctrl+C stops the run (fifth pass, as the runner)
+        return _ask_one(job, beat)
+
+
+def _ask_one(job, beat=None):
     from ladder import base, deal
-    from ladder.runner import make_strategy
+    from ladder.runner import host_interrupt, legal_choice, load_strategies, offer, safe_repr
     from svsim.core.actions import from_dict, to_dict
     from svsim.core.engine import apply, legal_actions
     log, seat, k = job["log"], job["seat"], job["k"]
@@ -133,12 +140,26 @@ def _ask(job):
     for data in log["actions"]:
         if state.active == seat:
             if n == k:
-                strat = make_strategy(job["spec"], job["seed"])
-                try:
-                    a = strat.act(base.public_position(state, seat, tracker), legal_actions(state))
-                    return {"point": job["point"], "entry": job["entry"], "move": to_dict(a)}
-                except Exception as e:
-                    return {"point": job["point"], "entry": job["entry"], "move": None, "error": repr(e)[:200]}
+                legal = legal_actions(state)
+                try:                                  # the entry's own raise (SystemExit too) is its answer: none
+                    strat = load_strategies([job["spec"]], [job["seed"]], beat)[0]
+                    pos = base.public_position(state, seat, tracker)
+                    if beat is not None:              # on the step clock, as in a game (judging included)
+                        beat[0], beat[1] = seat, time.monotonic_ns()
+                    try:
+                        a = strat.act(pos, offer(legal))
+                        chosen = legal_choice(a, legal)   # judged as the runner judges it; illegal is no answer
+                        shown = None if chosen is not None else safe_repr(a, 200)
+                    finally:
+                        if beat is not None:
+                            beat[1] = 0
+                    return {"point": job["point"], "entry": job["entry"],
+                            "move": to_dict(chosen) if chosen is not None else None,
+                            **({} if chosen is not None else {"error": "illegal: " + shown})}
+                except BaseException as e:            # noqa: BLE001
+                    if host_interrupt(e):
+                        raise
+                    return {"point": job["point"], "entry": job["entry"], "move": None, "error": safe_repr(e, 200)}
             n += 1
         tracker.before(state)
         apply(state, from_dict(data))
@@ -146,16 +167,26 @@ def _ask(job):
     return {"point": job["point"], "entry": job["entry"], "move": None, "error": "point past the game's end"}
 
 
-def _init():
-    for p in (str(HERE.parent), str(ROOT)):
-        if p not in sys.path:
-            sys.path.insert(0, p)
-    import svsim.cards.library  # noqa: F401
+def _answers(ask: list, got: list, ents: list) -> tuple[list, list]:
+    """guarded_map's results as answers (a hang, a dead worker or a runner error is no answer), and the entries
+    during whose answer the simulator changed (LD-40: their answer is none, and the host's copy names them)."""
+    answers, tripped = [], []
+    for j, g in zip(ask, got):
+        g = g or {"error": "no result"}
+        a = g.get("value")
+        if a is None:
+            why = ("timeout" if "timeout" in g else f"worker died ({g['died']})" if "died" in g
+                   else str(g.get("error", ""))[:200])
+            a = {"point": j["point"], "entry": j["entry"], "move": None, "error": why}
+        if g.get("changed"):
+            a = dict(a, move=None, error="the simulator changed during this answer")
+            tripped.append({"entry": ents[j["entry"]]["name"], "point": j["point"], "what": g["changed"][:500]})
+        answers.append(a)
+    return answers, tripped
 
 
 def run(subdir: Path, pid: str, seeds, out: Path, games: int = 10, field: str = "others", refs=None,
         agreement: int = 60, workers: int = 4, mask=None, key="auto", rng_seed: int = 0) -> dict:
-    from concurrent.futures import ProcessPoolExecutor
     from ladder import deal, runner
     reg = _registry(subdir)
     if pid not in reg:
@@ -230,11 +261,8 @@ def run(subdir: Path, pid: str, seeds, out: Path, games: int = 10, field: str = 
             points.append((g, seat, rng.randrange(mine), rng.randrange(1, 2 ** 31)))
     ask = [{"log": g, "seat": seat, "k": k, "point": n, "entry": e_i, "spec": e["spec"], "seed": s}
            for n, (g, seat, k, s) in enumerate(points) for e_i, e in enumerate(ents)]
-    answers = []
-    if ask:
-        runner._limit(mask)
-        with ProcessPoolExecutor(max_workers=workers, initializer=_init) as ex:
-            answers = list(ex.map(_ask, ask, chunksize=4))
+    answers, tripped = _answers(ask, runner.guarded_map("ladder.puzzles:_ask", ask, workers=workers, mask=mask),
+                                ents) if ask else ([], [])
     moves = {}
     for a in answers:
         moves.setdefault(a["entry"], {})[a["point"]] = json.dumps(a["move"], sort_keys=True) if a["move"] else None
@@ -253,7 +281,7 @@ def run(subdir: Path, pid: str, seeds, out: Path, games: int = 10, field: str = 
     alias = {n: f"选手 {i + 1}" for i, n in enumerate(order)}
     host = {"puzzle": pid, "title": reg[pid]["title"], "field": field, "games_per_list": games, "seeds": [lo, hi],
             "deal": sorted(d for d in deals if d) or None, "entries": table, "agreement": agree,
-            "points": len(points), "aliases": alias}
+            "points": len(points), "aliases": alias, "simulator_changed": tripped}
     (out / "result-host.json").write_text(json.dumps(host, ensure_ascii=False, indent=1), encoding="utf-8")
     refs_order = {e["name"]: i for i, e in enumerate(ents) if e["ref"]}
 

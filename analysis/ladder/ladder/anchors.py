@@ -208,7 +208,8 @@ def plan(anchors: list[dict], pool_dir: Path, games: int, period=None, out=None)
     return jobs, todo
 
 
-SETUP_VOIDS = ("cards with no script", "strategy failed to load", "runner error", "worker died")
+SETUP_VOIDS = ("cards with no script", "strategy failed to load", "runner error", "worker died",
+               "the strategies took more than", "the check after the game ran past")     # the last two: LD-40
 # voids that may come from the host's setup or the machine rather than the game: played once more, on their own seeds
 # (a new games-P<P>-redo<k>.jsonl), once per game whatever happens to the runs. One that voids again is deterministic (a factory that fails on
 # that seed, a process ended by one of the strategies, a bug in the runner): it is written down as void like

@@ -133,6 +133,19 @@ class MyStrategy(PlayerStrategy):
     ("g = getattr", "直接调用"),
     ("import importlib", "importlib"),
     ("import numpy as np\nnp.load('x.npy')", None),            # np.load is allowed by name; files fail at load time
+    # fifth pass (LD-40): rewriting shared objects in place, other objects' private parts, the ladder package's other
+    # modules, assigning into imported modules, defining dunder methods
+    ("def f(pos):\n    for c in pos.state.players[0].hand:\n        c.defn.__init__(1, 'x', 0, 0, 0)", "super().__init__"),
+    ("def f(a):\n    a.__init__(10 ** 6, 0)", "super().__init__"),
+    ("x = getattr(object, '__init__')", "__init__"),
+    ("import collections\nx = collections._sys", "._sys"),
+    ("import ladder.base\nx = ladder.runner", "ladder.runner"),
+    ("from svsim.cards import pool\npool.POOL[10001] = None", "pool"),
+    ("from svsim.core.actions import Attack\nAttack.__eq__ = None", "__eq__"),
+    ("from svsim.search import evaluate\nevaluate.DEFAULT = None", "evaluate"),
+    ("from svsim.search import evaluate\nsetattr(evaluate, 'DEFAULT', None)", "evaluate"),
+    ("class H:\n    def __eq__(self, other):\n        return True", "def __eq__"),
+    ("class H:\n    def __init__(self):\n        super().__init__()\n        self._n = 0\n    def __post_init__(self):\n        self._n += 1", None),
 ])
 def test_the_code_check_refuses(line, what):
     src = line + "\nfrom ladder.interface import PlayerStrategy\n\nclass S(PlayerStrategy):\n    pass\n"

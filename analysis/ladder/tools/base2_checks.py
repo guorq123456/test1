@@ -19,13 +19,23 @@
 6. interface: tools/check_interface.py's 40 games (the default strategy through ladder.interface, decision for
    decision, plain and with every hook written out).
 7. speed: 2300 keyed games of the baseline lists on all cores (the runner alone, no pool): games per hour, for the
-   practice arena's time limit.
+   practice arena's time limit. With the tripwire on (LD-40): a false alarm would void games and fail this step.
+8. tripwire (LD-40): 4 keyed games in one worker: a test strategy that rewrites shared card definitions, one that adds
+   a member to the scripts' base class, each followed by a plain game. The two are void with the reason and the
+   original result kept; the plain ones after them are normal and replay (the worker was replaced).
+9. guarded tasks (LD-40): runner.guarded_map, as puzzles and the arena's resume use it, on Windows: a task that
+   changes the simulator is marked and its worker replaced, a hang is stopped by the clock, a worker that exits is
+   that task's alone.
+10. audit (LD-40): ladder/audit.py replays every game of steps 2, 7 and 8 move by move in clean processes; the only
+   ones allowed to fail are none (the void ones are skipped).
 
-Seeds: 93150000-93150019 (2, 3) and 93150100-93152399 (7), host measurement second segment (SEEDS.md); 4 replays
-p1b's own; 5 and 6 reuse the probe bank seeds the tests use (99001000+, 99001520-99001559), on purpose.
-A dry run elsewhere (--dry, with --key a throwaway file and --speed-games small) uses 93403000-93403019 and
+Seeds: 93150000-93150019 (2, 3), 93150020-93150023 (8) and 93150100-93152399 (7), host measurement second segment
+(SEEDS.md); 4 replays p1b's own; 5 and 6 reuse the probe bank seeds the tests use (99001000+, 99001520-99001559), on
+purpose. A dry run elsewhere (--dry, with --key a throwaway file and --speed-games small) uses 93403000-93403023 and
 93403100 onward instead (host probe second segment).
-Writes RUNS/keyed.jsonl, RUNS/speed.jsonl, RUNS/summary.json. A second run skips the games already played.
+Writes RUNS/<commit>/keyed.jsonl, speed.jsonl, tripwire.jsonl, summary.json (one folder per commit, "-dirty" if the
+working tree differs: a second run on the same code skips the games already played, a run on new code plays its
+own) and a copy of the summary at RUNS/summary.json.
 """
 from __future__ import annotations
 
@@ -48,10 +58,13 @@ from ladder import deal, runner  # noqa: E402
 from ladder.replay import replay_decisions, replay_moves  # noqa: E402
 
 KEYED = (93150000, 93150020)
+TRIP = 93150020
 SPEED = (93150100, 93152400)
 DRY_KEYED = (93403000, 93403020)
+DRY_TRIP = 93403020
 DRY_SPEED = 93403100
 DEFAULT = "bot:mcts:100+plan"
+TRIP_STRATEGIES = ["py:helpers:ChangesCards", "py:helpers:Random", "py:helpers:PatchesScripts", "py:helpers:Random"]
 
 
 def codes():
@@ -141,9 +154,14 @@ def main():
     key_file = Path(a.key) if a.key else deal.DEFAULT_KEY
     for stream in (sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8", errors="backslashreplace")
-    runs = Path(a.runs)
+    top = Path(a.runs)
+    prov = runner.provenance()
+    runs = top / ((prov["commit"] or "nocommit")[:7] + ("-dirty" if prov["dirty"] else ""))
     runs.mkdir(parents=True, exist_ok=True)
-    out = {"machine": runner.provenance()}
+    out = {"machine": prov, "folder": str(runs)}
+    import os
+    os.environ["LADDER_EXTRA_PATH"] = os.pathsep.join(
+        x for x in (str(LADDER / "tests"), os.environ.get("LADDER_EXTRA_PATH", "")) if x)   # the test strategies
 
     def say(step, value):
         out[step] = value
@@ -234,6 +252,12 @@ def main():
 
     # 7. speed on all cores
     path = runs / "speed.jsonl"
+    earlier = {}
+    if (runs / "summary.json").exists():
+        try:
+            earlier = json.loads((runs / "summary.json").read_text(encoding="utf-8")).get("speed") or {}
+        except ValueError:
+            earlier = {}
     t = time.time()
     res = runner.run(jobs(*speed_range, "s"), str(path), workers=a.workers, quiet=True, key=key)
     speed = [g for g in read(path) if g["id"].startswith("s-")]
@@ -241,14 +265,60 @@ def main():
     for g in speed:
         results[g["result"]] = results.get(g["result"], 0) + 1
     fresh = res.get("played", 0)
+    gph = round(fresh / res["seconds"] * 3600) if fresh and res.get("seconds") else None
+    if gph is None and earlier.get("games_per_hour"):
+        gph = earlier["games_per_hour"]                  # nothing new played: the figure from the run that played
     say("speed", {"games": len(speed), "results": results, "workers": a.workers, "played_now": fresh,
-                  "seconds_now": round(time.time() - t, 1),
-                  "games_per_hour": round(fresh / res["seconds"] * 3600) if fresh and res.get("seconds") else None,
+                  "seconds_now": round(time.time() - t, 1), "games_per_hour": gph,
+                  "games_per_hour_from": "this run" if fresh else "the earlier run on this commit",
                   "ok": len(speed) == speed_range[1] - speed_range[0] and set(results) <= {"normal", "draw"}})
 
+    # 8. the tripwire: changes that outlast a game void it and replace the worker
+    path = runs / "tripwire.jsonl"
+    t0 = DRY_TRIP if a.dry else TRIP
+    cs = codes()
+    tjobs = [{"id": f"w-{t0 + k}", "seed": t0 + k, "first": 0, "decks": [cs[1], cs[4]],
+              "strategies": [spec, "py:helpers:Random"], "strategy_seeds": None, "labels": {"check": "base-2 LD-40"}}
+             for k, spec in enumerate(TRIP_STRATEGIES)]
+    runner.run(tjobs, str(path), workers=1, step_limit=30.0, quiet=True, key=key)
+    rows = {g["id"]: g for g in read(path) if g["id"].startswith("w-")}
+    bad = []
+    for k, spec in enumerate(TRIP_STRATEGIES):
+        g = rows.get(f"w-{t0 + k}")
+        if g is None:
+            bad.append({"id": f"w-{t0 + k}", "why": "missing"})
+        elif "Random" in spec.split(":")[-1]:
+            ok, why = replay_moves(g) if g["result"] in ("normal", "draw") else (False, f"result {g['result']}")
+            if not ok:
+                bad.append({"id": g["id"], "why": why})
+        elif not (g["result"] == "void" and g.get("voided_result") in ("normal", "draw")
+                  and "LD-40" in str(g.get("error", ""))):
+            bad.append({"id": g["id"], "why": f"{g['result']}: {str(g.get('error', ''))[:200]}"})
+    say("tripwire", {"games": len(rows), "failed": bad, "ok": len(rows) == len(TRIP_STRATEGIES) and not bad})
+
+    # 9. guarded tasks (puzzles, the arena's resume)
+    got = runner.guarded_map("helpers:task", ["ok", "change", "ok", "hang", "ok", "die", "ok"], workers=1,
+                             step_limit=5.0)
+    try:
+        want = (got[0].get("value") and got[2].get("value") and "changed" in got[1] and "changed" not in got[2]
+                and got[0]["value"]["costs"] == got[2]["value"]["costs"] == got[4]["value"]["costs"]
+                and got[1]["value"]["pid"] != got[2]["value"]["pid"] and got[3].get("timeout") == 1
+                and got[5] == {"died": 3} and "value" in got[6])
+    except (AttributeError, KeyError, TypeError):
+        want = False
+    say("guarded", {"tasks": [sorted(g or {}) for g in got], "ok": bool(want)})
+
+    # 10. every game above replayed move by move in clean processes
+    from ladder import audit
+    res = audit.audit([runs / "keyed.jsonl", runs / "speed.jsonl", runs / "tripwire.jsonl"], workers=a.workers)
+    say("audit", {"checked": res["checked"], "skipped": res["skipped"], "failed": res["failed"][:20],
+                  "ok": res["ok"] and res["checked"] >= (keyed_range[1] - keyed_range[0]) + len(speed)})
+
     out["ok"] = all(v.get("ok") for k, v in out.items() if isinstance(v, dict) and "ok" in v)
-    (runs / "summary.json").write_text(json.dumps(out, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
-    print(json.dumps({"ok": out["ok"]}), flush=True)
+    text = json.dumps(out, ensure_ascii=False, indent=1, default=str)
+    (runs / "summary.json").write_text(text, encoding="utf-8")
+    (top / "summary.json").write_text(text, encoding="utf-8")
+    print(json.dumps({"ok": out["ok"], "folder": str(runs)}), flush=True)
 
 
 if __name__ == "__main__":
