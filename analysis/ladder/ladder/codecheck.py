@@ -1,5 +1,5 @@
-"""Reading a submission's code (item 2.3; fifth pass LD-40, sixth LD-41, seventh LD-42, eighth LD-43). Nothing in
-the submitted code runs.
+"""Reading a submission's code (item 2.3; fifth pass LD-40, sixth LD-41, seventh LD-42, eighth LD-43, ninth LD-44).
+Nothing in the submitted code runs.
 The simulator's and ladder's own modules are imported here (they are the host's code) to tell a module from a class
 from a function; svsim.learn, svsim.tools, svsim.ui, svsim.build, svsim.search.parallel and ladder's other modules
 never are.
@@ -28,15 +28,22 @@ repeated until nothing changes:
           (self.tree, self.agent, ...; self.random, self.rng, self.spec, self.defaults are its own); copy.copy and
           copy.deepcopy keep their argument's level (a copy of a class, a function or an enum member is itself);
           a def or class under a decorator other than lru_cache, cache, cached_property, total_ordering, dataclass
-          and a real property's .setter / .getter / .deleter (checked by what the name is, not how it's spelled).
+          and a real property's .setter / .getter / .deleter (checked by what the name is, not how it's spelled);
+          anything read from an object of a class built on a storage type (typing.NamedTuple, namedtuple(...),
+          TypedDict, dict, list, tuple, an exception...: what its constructor is given is kept where this reading
+          doesn't follow it, LD-44), self's attributes and items inside such a class too.
 A method's parameters start CLEAN, the module's own code being the only caller; HOLDS when someone else may call
 it: a dunder, the __init__ of a class with a base that isn't the module's own (PlayerStrategy alone is fine), a
 method named like an attribute the simulator's or ladder's code uses on objects it is handed (duck_names), or like
 a member of a non-own base class or a name that base's code uses on self (the host may call it with its objects);
 every method of a class whose base can't be told (typing.NamedTuple / TypedDict, Generic[...] and namedtuple(...)
 can: LD-43); SHARED when the method is taken as a value. A refusal ends with a note naming the methods HOLDS only
-for their name, and those named like a container's methods (rename them). `cls(...)` in a classmethod is the
-__init__ of that class or of one of the module's classes built on it.
+for their name, each with a name host code doesn't use either, those named like a container's methods (rename
+them), and the classes built on a storage type (use a dataclass). `cls(...)` in a classmethod is the __init__ of
+that class or of one of the module's classes built on it; constructing a class runs every __init__ of it and its own
+ancestors (a diamond's C3 order isn't worked out: LD-44); a dataclass's fields and its __post_init__'s parameters
+(InitVars) get the levels of the arguments of its construction, of cls(...) and of dataclasses.replace /
+copy.replace.
 A SHARED object may not be changed: no assignment or `del` into it (x.a = ..., x[k] = ...), no augmented assignment
 on it (x += ...: write x = x + ...; adding a number literal is allowed), no method that changes a container
 (append, add, update, pop, clear, sort, ...: called or taken as a value), no shuffle / heappush / insort on it, no
@@ -45,10 +52,11 @@ Levels follow assignments, for / with / comprehension targets, :=, unpacking, ar
 functions and methods (a function or method taken as a value: its parameters are SHARED), return values,
 attributes (by name: x.a = shared makes every .a SHARED), containers (d[k] = shared, l.append(shared)).
 Also refused, because the reading would lose track: a module used as a value (only `m.x`); a class of the module
-used other than to make an instance, read an attribute, isinstance / issubclass, a base, raise / except, a
-comparison (an own class's name in an annotation only with `from __future__ import annotations`, which leaves
+used other than to make an instance, read an attribute, isinstance / issubclass, a base (Own[...] too), raise /
+except, a comparison (an own class's name in an annotation only with `from __future__ import annotations`, which leaves
 annotations unread; a match-class pattern; iterating or indexing an own Enum); a method called through its class
-(K.method(x), cls.method(x), type(x).method(x)); type(x) used other than for an attribute, a comparison or
+(K.method(x), cls.method(x), type(x).method(x)); a class defined inside a class (Outer.Inner(...) isn't followed to
+its __init__: LD-44); type(x) used other than for an attribute, a comparison or
 isinstance; svsim.core.script.register; keyword arguments parallel / par_spec (ISMCTS's root-parallel processes:
 their CPU is not the strategy's process's); `x *= n` with an int on a SHARED x (a list repeats in place); a yield
 or await inside a try's body, except or else (when the generator is freed, there, off every clock, its except /
@@ -71,6 +79,7 @@ import inspect
 import textwrap
 import time
 import types
+import typing
 from pathlib import Path
 
 ALLOWED_TOP = {"__future__", "typing", "math", "random", "collections", "itertools", "functools", "dataclasses",
@@ -111,6 +120,7 @@ MUTATORS = frozenset({
     "extendleft", "popleft", "rotate", "subtract", "move_to_end", "fill", "put", "itemset", "resize", "setflags",
     "setfield", "partition", "byteswap", "cache_clear"})
 ADDERS = frozenset({"append", "add", "extend", "insert", "update", "appendleft", "extendleft"})
+REPLACERS = tuple(f for f in (dataclasses.replace, getattr(_copy, "replace", None)) if f is not None)  # 3.13's too
 ARG_MUTATORS = frozenset({"shuffle", "heappush", "heappop", "heapify", "heapreplace", "heappushpop", "insort",
                           "insort_left", "insort_right"})
 BUILTIN_TYPES = frozenset({"set", "dict", "list", "bytearray", "frozenset", "object", "type", "tuple"})
@@ -393,8 +403,8 @@ class Fn:
 
 
 class Cls:
-    __slots__ = ("attrs", "builtin_bases", "dataclass", "deco_unknown", "fields", "fresh_ok", "node", "objs", "tainted",
-                 "unknown", "user_bases")
+    __slots__ = ("attrs", "builtin_bases", "dataclass", "deco_unknown", "fields", "fresh_ok", "node", "objs", "storage",
+                 "tainted", "unknown", "user_bases")
 
 
 def _deco_name(d) -> str | None:
@@ -695,7 +705,7 @@ class Flow:
         c.deco_unknown = any(k not in ("dataclass", "total_ordering") for k in kinds)   # LD-42
         c.fields = [s.target.id for s in node.body if isinstance(s, ast.AnnAssign) and isinstance(s.target, ast.Name)]
         for b in node.bases:
-            users = self.user_class(b)
+            users = self.base_class(b)
             if users:
                 c.user_bases += users
                 continue
@@ -724,7 +734,10 @@ class Flow:
             c.fields = ui.fields + c.fields if c.dataclass else c.fields
         for o in c.objs:
             c.attrs |= class_attrs(o)
-        c.tainted = c.unknown or bool(c.objs)
+        c.storage = any(b is not object and b is not typing.Generic and b is not typing.Protocol
+                        for b in c.builtin_bases)     # LD-44: a tuple / dict / list / Exception base keeps what the
+        #                                               constructor is given (NamedTuple fields, e.args) unread here
+        c.tainted = c.unknown or bool(c.objs) or c.storage
         ps = _player_strategy()
         c.fresh_ok = bool(c.objs) and not c.unknown and all(o is ps for o in c.objs)
         return c
@@ -732,7 +745,6 @@ class Flow:
     def _typing_base(self, b):
         """A base that only shapes the class (typing.NamedTuple / TypedDict, Generic[...] / Protocol[...],
         collections.namedtuple(...)): the plain type it amounts to, else None."""
-        import typing
         if isinstance(b, ast.Subscript):
             kn = self.known(b.value)
             if kn is not None and any(kn[2] is t for t in (typing.Generic, typing.Protocol)):
@@ -740,10 +752,22 @@ class Flow:
             return None
         if isinstance(b, ast.Call):
             kn = self.known(b.func)
-            if kn is not None and kn[2] is collections.namedtuple and not any(
-                    isinstance(a, ast.Starred) for a in b.args) and all(
-                    isinstance(a, ast.Constant) for a in b.args) and not b.keywords:
-                return tuple
+
+            def literal(x) -> bool:
+                try:
+                    ast.literal_eval(x)
+                except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
+                    return False
+                return True
+            if kn is not None and kn[2] is collections.namedtuple and \
+                    all(literal(a) for a in b.args) and all(k.arg is not None and literal(k.value) for k in b.keywords):
+                return tuple                    # namedtuple('P', 'x y'), ['x', 'y'], defaults=(0, 0) (LD-44)
+            if kn is not None and kn[2] is typing.NamedTuple and len(b.args) == 2 and not b.keywords and \
+                    isinstance(b.args[0], ast.Constant) and isinstance(b.args[1], (ast.List, ast.Tuple)) and \
+                    all(isinstance(e, ast.Tuple) and len(e.elts) == 2 and isinstance(e.elts[0], ast.Constant) and
+                        isinstance(e.elts[1], (ast.Name, ast.Attribute, ast.Subscript, ast.Constant))
+                        for e in b.args[1].elts):
+                return tuple                    # NamedTuple('P', [('x', int)])
             return None
         kn = self.known(b)
         if kn is not None:
@@ -805,6 +829,12 @@ class Flow:
             return self.cdefs.get(self.key(node), [])
         return []
 
+    def base_class(self, node) -> list:
+        """The module's own classes a base names: `K`, or `K[...]` of an own Generic class (LD-44)."""
+        if isinstance(node, ast.Subscript):
+            return self.user_class(node.value)
+        return self.user_class(node)
+
     def own_of(self, node):
         """(class node, is the class itself, through super()) when `node` is the strategy's own object."""
         if isinstance(node, ast.Name):
@@ -848,6 +878,25 @@ class Flow:
                 seen.add(u)
                 self.ancestors(u, seen)
         return seen
+
+    def inits(self, c) -> list:
+        """Every __init__ that constructing class `c` may run: its own and its own ancestors' (all of them, not the
+        first one found: a diamond's order is C3's, LD-44)."""
+        out = []
+        for k in [c] + sorted(self.ancestors(c), key=lambda n: n.lineno):
+            out += [s for s in k.body if isinstance(s, (ast.FunctionDef, ast.AsyncFunctionDef)) and s.name == "__init__"]
+        return out
+
+    def built_by(self, call) -> list:
+        """The module's own classes a call may construct: `K(...)` (a name only class statements bind) or `cls(...)` in
+        a classmethod (the class or one built on it)."""
+        f = call.func
+        if not isinstance(f, ast.Name):
+            return []
+        k = self.key(f)
+        if k in self.own and self.own[k][1]:
+            return self.subclasses(self.own[k][0])
+        return list(self.cdefs.get(k, ()))
 
     def class_methods(self, c, name, seen=None) -> list:
         """The defs of `name` in class `c` or, failing that, in its first user base that has one."""
@@ -971,8 +1020,9 @@ class Flow:
     def self_attr(self, c, a, via_super=False) -> int:
         info = self.cls[c]
         v = CLEAN
-        if info.unknown or info.deco_unknown or (a in info.attrs and not (info.fresh_ok and a in OWN_FRESH)):
-            v = SHARED
+        if info.unknown or info.deco_unknown or info.storage or \
+                (a in info.attrs and not (info.fresh_ok and a in OWN_FRESH)):
+            v = SHARED                                  # storage: what it holds came in by construction (LD-44)
         if not via_super:
             v = max(v, self.attrs.get(a, CLEAN))
         for d in self.methods.get(a, ()):
@@ -1061,6 +1111,9 @@ class Flow:
             return SHARED if args >= HOLDS else CLEAN
         if isinstance(f, ast.Name):
             k = self.key(f)
+            if k in self.own and self.own[k][1]:          # cls(...) builds the class or one built on it (LD-44)
+                return max((SHARED if self.cls[c].deco_unknown else HOLDS if self.cls[c].tainted else CLEAN
+                            for c in self.built_by(call)), default=CLEAN)
             defs = len(self.fdefs.get(k, ())) + len(self.cdefs.get(k, ()))
             if defs and self.stores.get(k, 0) == defs:     # only def / class statements bind it
                 v = max((self.fn[d].ret for d in self.fdefs.get(k, ())), default=CLEAN)
@@ -1243,18 +1296,49 @@ class Flow:
         if isinstance(f, ast.Name):
             k = self.key(f)
             out += [(d, 0) for d in self.fdefs.get(k, ())]
-            for c in self.cdefs.get(k, ()):
-                out += [(d, 1) for d in self.class_methods(c, "__init__")]
-            if k in self.own and self.own[k][1]:          # cls(...): this class or any subclass (LD-42, LD-43)
-                seen = set()
-                for c in self.subclasses(self.own[k][0]):
-                    out += [(d, 1) for d in self.class_methods(c, "__init__") if d not in seen]
-                    seen.update(self.class_methods(c, "__init__"))
+            seen = set()
+            for c in self.built_by(call):                  # K(...), cls(...) (LD-42, LD-43, LD-44)
+                for d in self.inits(c):
+                    if d not in seen:
+                        seen.add(d)
+                        out.append((d, 1))
         else:
             a = f.attr if isinstance(f, ast.Attribute) else self._getattr_name(f)
             for d in self.methods.get(a, ()) if a else ():
                 out.append((d, 0 if self.fn[d].static else 1))
         return out
+
+    def _raise_fields(self, fields, args, keywords):
+        """Dataclass fields get the levels of the arguments that set them."""
+        if any(isinstance(a, ast.Starred) for a in args):
+            v = max(elem(self.level(a.value)) if isinstance(a, ast.Starred) else self.level(a) for a in args)
+            for name in fields:
+                self._raise_attr(name, v)
+        else:
+            for name, a in zip(fields, args):
+                self._raise_attr(name, self.level(a))
+        for kw in keywords:
+            if kw.arg is None:
+                for name in fields:
+                    self._raise_attr(name, elem(self.level(kw.value)))
+            else:
+                self._raise_attr(kw.arg, self.level(kw.value))
+
+    def _raise_post_init(self, classes, args, keywords):
+        """A dataclass's __post_init__ gets the InitVar arguments of its construction (or of replace): each of its
+        parameters gets the highest level among the call's arguments (LD-44)."""
+        v = max([elem(self.level(a.value)) if isinstance(a, ast.Starred) else self.level(a) for a in args] +
+                [elem(self.level(k.value)) if k.arg is None else self.level(k.value) for k in keywords], default=CLEAN)
+        if v == CLEAN:
+            return
+        for c in classes:
+            for k in [c, *self.ancestors(c)]:
+                for d in k.body:
+                    if isinstance(d, (ast.FunctionDef, ast.AsyncFunctionDef)) and d.name == "__post_init__" and \
+                            d in self.fn:
+                        f = self.fn[d]
+                        for x in f.pos[1:] + f.kwonly + [y for y in (f.vararg, f.kwarg) if y is not None]:
+                            self._raise(self.key(x), v)
 
     def _flow_call(self, call):
         for d, off in self.targets(call):
@@ -1284,18 +1368,16 @@ class Flow:
                 elif f.kwarg is not None:
                     self._raise(self.key(f.kwarg), holds(v))
         fn = call.func
-        if isinstance(fn, ast.Name):                           # a dataclass of the module: fields from arguments
-            for c in self.cdefs.get(self.key(fn), ()):
-                info = self.cls[c]
-                if info.dataclass:
-                    for name, a in zip(info.fields, call.args):
-                        self._raise_attr(name, self.level(a))
-                    for kw in call.keywords:
-                        if kw.arg is None:
-                            for name in info.fields:
-                                self._raise_attr(name, elem(self.level(kw.value)))
-                        else:
-                            self._raise_attr(kw.arg, self.level(kw.value))
+        for c in self.built_by(call):          # a dataclass of the module: fields from arguments (cls(...) too, LD-44)
+            info = self.cls[c]
+            if info.dataclass:
+                self._raise_fields(info.fields, call.args, call.keywords)
+                self._raise_post_init([c], call.args, call.keywords)
+        kn = self.known(fn)
+        if kn is not None and kn[2] in REPLACERS:  # replace(obj, field=x): every dataclass's field x
+            self._raise_fields(sorted({f for i in self.cls.values() if i.dataclass for f in i.fields}),
+                               call.args[1:], call.keywords)
+            self._raise_post_init([c for c, i in self.cls.items() if i.dataclass], call.args[1:], call.keywords)
         name = fn.attr if isinstance(fn, ast.Attribute) else fn.id if isinstance(fn, ast.Name) else None
         if isinstance(fn, ast.Attribute) and fn.attr in ADDERS:
             v = max([self.level(a) for a in call.args] + [self.level(k.value) for k in call.keywords], default=0)
@@ -1418,6 +1500,9 @@ def _rules(tree, flow, cls) -> list[str]:
                 return True
         if isinstance(p, ast.ClassDef) and node in p.bases:
             return True
+        if isinstance(p, ast.Subscript) and p.value is node and isinstance(parent(p), ast.ClassDef) and \
+                p in parent(p).bases:
+            return True                                 # class B(Own[int]): a generic base of its own (LD-44)
         if isinstance(p, ast.ExceptHandler) or (isinstance(p, ast.Tuple) and isinstance(parent(p), ast.ExceptHandler)):
             return True
         return isinstance_arg(node)
@@ -1506,6 +1591,9 @@ def _rules(tree, flow, cls) -> list[str]:
 
     for node in flow.nodes:
         p = parent(node)
+        if isinstance(node, ast.ClassDef) and isinstance(p, ast.ClassDef):
+            bad(node, f"类 {node.name} 定义在类 {p.name} 里面：写到模块顶层（{p.name}.{node.name}(...) 这样建对象，"
+                      "读代码跟不上它的 __init__，LD-44）")
         if isinstance(node, ast.Import):
             for a in node.names:
                 why = module_problem(a.name)
@@ -1634,10 +1722,20 @@ def _rules(tree, flow, cls) -> list[str]:
     return problems
 
 
+def _free_name(n: str, taken=frozenset()) -> str:
+    """A name for an own method that host code doesn't use (LD-44: my_hp, my_hand... are svsim.learn's)."""
+    d = duck_names()
+    for cand in (f"my_{n}", f"mine_{n}", *(f"my_{n}_{i}" for i in range(2, 100))):
+        if cand not in d and cand not in taken:
+            return cand
+    return f"my_{n}_x"
+
+
 def _name_note(flow) -> list[str]:
     """Why the module's own objects may count as shared when that comes from a method's name (LD-43): the methods
-    whose parameters start as HOLDS only for their name (not a hook the base class has or calls), and the module's
-    methods named like a container's (x.update(...) is read as a dict's or a set's)."""
+    whose parameters start as HOLDS only for their name (not a hook the base class has or calls), with a free name
+    for each (LD-44); the module's methods named like a container's (x.update(...) is read as a dict's or a set's);
+    and its classes built on a storage type (LD-44: what is read from their objects counts as shared)."""
     by_name, like = [], []
     for node, f in flow.fn.items():
         if f.cls is None:
@@ -1649,15 +1747,20 @@ def _name_note(flow) -> list[str]:
         label = f"{f.cls.name}.{node.name}"
         params = f.pos[0 if f.static else 1:] + f.kwonly + [x for x in (f.vararg, f.kwarg) if x is not None]
         if params and flow.name_rule(f) and node.name not in base:
-            by_name.append(label)
+            by_name.append(f"{label} → {_free_name(node.name, base | set(flow.methods))}")
         if node.name in MUTATORS or node.name in ADDERS:
             like.append(label)
     out = []
     if by_name:
-        out.append("提示：" + "、".join(sorted(set(by_name))) + " 的名字模拟器 / 天梯的代码里也用（它们可能拿主机的对象来调"
-                   "这个名字的方法），所以参数按可能共用算，从参数读出来、传出去、存起来的东西也一样。只给自己用的方法换个"
-                   "它们不用的名字就行，比如加 my_ 前缀（别用下划线开头：x._y 只有 self._y 能碰）")
+        out.append("提示：" + "、".join(sorted(set(by_name))) + "：左边方法的名字模拟器 / 天梯的代码里也用（它们可能拿主机的"
+                   "对象来调这个名字的方法），所以参数按可能共用算，从参数读出来、传出去、存起来的东西也一样。只给自己用的"
+                   "方法按箭头右边改名就行（它们不用的名字；别用下划线开头：x._y 只有 self._y 能碰）")
     if like:
         out.append("提示：" + "、".join(sorted(set(like))) + " 和容器的方法同名：x.update(...)、x.add(...) 这类调用会被"
                    "当成往容器里放东西或改容器，换个名字")
+    storage = sorted({c.name for c, i in flow.cls.items() if i.storage})
+    if storage:
+        out.append("提示：" + "、".join(storage) + " 建在 NamedTuple / namedtuple / TypedDict / dict / list / tuple / 异常"
+                   "上：建它时放进去的东西读代码跟不上，所以从它的对象里读出来的都按可能共用算（LD-44）。只放自己东西的"
+                   "小记录改用 @dataclasses.dataclass（按建它时传进去的东西算）")
     return out

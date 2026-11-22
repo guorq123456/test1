@@ -1,4 +1,4 @@
-"""The code reader's flow rules (LD-41, the sixth review; LD-42, the seventh): shared objects from svsim / ladder may
+"""The code reader's flow rules (LD-41, the sixth review; LD-42, the seventh; LD-43, LD-44): shared objects from svsim / ladder may
 not be changed, through any alias, argument, return value, attribute, container or decorator; and the plain strategy
 code (its own trees, tables, counters, enums, annotations) stays accepted."""
 import sys
@@ -136,6 +136,33 @@ BAD = {
  "field-svsim-class": "import dataclasses\nfrom svsim.core.state import GameState\n@dataclasses.dataclass\nclass M:\n    x: object = dataclasses.field(default_factory=GameState)\nM().x.players.append(1)",
  "unknown-base-own": "def mk():\n    return object\nclass W(mk()):\n    def my_f(self, x):\n        x.items.append(1)",
  "namedtuple-method": "from typing import NamedTuple\nfrom svsim.core.script import INVOKERS\nclass P(NamedTuple):\n    a: int\n    def my_f(self, x):\n        x.append(1)\nP(1).my_f(INVOKERS)",
+ # LD-44 (the ninth review): what a storage-type class keeps, construction through subclasses and cls(...), dataclass
+ # fields set by cls(...) or replace, InitVars, nested classes
+ "nested-class": "from svsim.core.script import INVOKERS\nclass Outer:\n    class Inner:\n        def __init__(self, x):\n            x.add(1)\nOuter.Inner(INVOKERS)",
+ "exc-sub-args": "from svsim.core.script import INVOKERS\nclass E(Exception):\n    pass\nE(INVOKERS).args[0].add(1)",
+ "dict-sub-self": "from svsim.core.script import INVOKERS\nclass D(dict):\n    def my_go(self):\n        self['k'].add(1)\nD(k=INVOKERS).my_go()",
+ "dict-sub-out": "from svsim.core.script import INVOKERS\nclass D(dict):\n    pass\nD(k=INVOKERS)['k'].add(1)",
+ "list-sub": "from svsim.core.script import INVOKERS\nclass L(list):\n    pass\nL([INVOKERS])[0].add(1)",
+ "nt": "from svsim.core.script import INVOKERS\nfrom typing import NamedTuple\nclass P(NamedTuple):\n    s: object\nP(INVOKERS).s.add(1)",
+ "nt-idx": "from svsim.core.script import INVOKERS\nfrom typing import NamedTuple\nclass P(NamedTuple):\n    s: object\nP(INVOKERS)[0].add(1)",
+ "nt-default": "from svsim.core.script import INVOKERS\nfrom typing import NamedTuple\nclass P(NamedTuple):\n    s: object = INVOKERS\nP().s.add(1)",
+ "nt-method-self": "from svsim.core.script import INVOKERS\nfrom typing import NamedTuple\nclass Box(NamedTuple):\n    s: object\n    def my_go(self):\n        self.s.add(1)\nBox(INVOKERS).my_go()",
+ "cnt": "from svsim.core.script import INVOKERS\nimport collections\nclass P(collections.namedtuple('P', 's')):\n    pass\nP(INVOKERS).s.add(1)",
+ "cnt-list": "from svsim.core.script import INVOKERS\nimport collections\nclass P(collections.namedtuple('P', ['s'])):\n    pass\nP(INVOKERS).s.add(1)",
+ "tnt-func": "from svsim.core.script import INVOKERS\nimport typing\nclass P(typing.NamedTuple('P', [('s', object)])):\n    pass\nP(INVOKERS).s.add(1)",
+ "td": "from svsim.core.script import INVOKERS\nfrom typing import TypedDict\nclass TD(TypedDict):\n    s: object\nTD(s=INVOKERS)['s'].add(1)",
+ "dc-cls": "from svsim.core.script import INVOKERS\nimport dataclasses\n@dataclasses.dataclass\nclass M:\n    x: object = None\n    @classmethod\n    def mk(cls, v):\n        return cls(x=v)\nM.mk(INVOKERS).x.add(1)",
+ "dc-cls-pos": "from svsim.core.script import INVOKERS\nimport dataclasses\n@dataclasses.dataclass\nclass M:\n    x: object = None\n    @classmethod\n    def mk(cls, v):\n        return cls(v)\nM.mk(INVOKERS).x.add(1)",
+ "dc-replace": "from svsim.core.script import INVOKERS\nimport dataclasses\n@dataclasses.dataclass\nclass M:\n    x: object = None\ndataclasses.replace(M(), x=INVOKERS).x.add(1)",
+ "dc-replace-alias": "from svsim.core.script import INVOKERS\nfrom dataclasses import dataclass, replace as r\n@dataclass\nclass M:\n    x: object = None\nr(M(), x=INVOKERS).x.add(1)",
+ "dc-replace-star": "from svsim.core.script import INVOKERS\nimport dataclasses\n@dataclasses.dataclass\nclass M:\n    x: object = None\ndataclasses.replace(M(), **{'x': INVOKERS}).x.add(1)",
+ "dc-initvar": "from svsim.core.script import INVOKERS\nimport dataclasses\n@dataclasses.dataclass\nclass M:\n    y: dataclasses.InitVar[object] = None\n    def __post_init__(self, y):\n        y.add(1)\nM(INVOKERS)",
+ "dc-initvar-attr": "from svsim.core.script import INVOKERS\nimport dataclasses\n@dataclasses.dataclass\nclass M:\n    y: dataclasses.InitVar[object] = None\n    x: object = None\n    def __post_init__(self, y):\n        self.x = y\nM(y=INVOKERS).x.add(1)",
+ "dc-initvar-replace": "from svsim.core.script import INVOKERS\nimport dataclasses\n@dataclasses.dataclass\nclass M:\n    y: dataclasses.InitVar[object] = None\n    x: object = None\n    def __post_init__(self, y):\n        self.x = y\ndataclasses.replace(M(), y=INVOKERS).x.add(1)",
+ "diamond-cm": "from svsim.core.script import INVOKERS\nclass A:\n    @classmethod\n    def mk(cls, x):\n        return cls(x)\nclass B(A):\n    def __init__(self, x):\n        x.add(1)\nclass C(A):\n    pass\nclass D(C, B):\n    pass\nD.mk(INVOKERS)",
+ "diamond-direct": "from svsim.core.script import INVOKERS\nclass A:\n    pass\nclass B(A):\n    def __init__(self, x):\n        x.add(1)\nclass C(A):\n    pass\nclass D(C, B):\n    pass\nD(INVOKERS)",
+ "generic-own-sub": "from svsim.core.script import INVOKERS\nfrom typing import Generic, TypeVar\nT_ = TypeVar('T_')\nclass Stack(Generic[T_]):\n    def __init__(self, x):\n        x.add(1)\nclass S2(Stack[int]):\n    pass\nS2(INVOKERS)",
+ "generic-own-sub-attr": "from svsim.core.script import INVOKERS\nfrom typing import Generic, TypeVar\nT_ = TypeVar('T_')\nclass Stack(Generic[T_]):\n    def __init__(self, x):\n        self.x = x\nclass S2(Stack[int]):\n    pass\nS2(INVOKERS).x.add(1)",
 }
 GOOD_LD42 = {
  "tree": "class Node:\n    def __init__(self, parent, move):\n        self.parent = parent\n        self.move = move\n        self.children = []\n        self.visits = 0\n        if parent is not None:\n            parent.children.append(self)\nclass T(PlayerStrategy):\n    def search(self, pos):\n        root = Node(None, None)\n        n = Node(Node(root, 1), 2)\n        while n is not None:\n            n.visits += 1\n            n = n.parent\n        return {}",
@@ -150,11 +177,18 @@ GOOD_LD42 = {
  "yield-plain": "def pairs(xs):\n    for i, x in enumerate(xs):\n        try:\n            v = x * 2\n        except TypeError:\n            v = 0\n        yield i, v",
 }
 GOOD_LD43 = {
- "typing-bases": "from typing import NamedTuple, Generic, TypeVar, TypedDict\nimport collections\nT_ = TypeVar('T_')\nclass E(NamedTuple):\n    u: int\n    v: int\nclass Box(Generic[T_]):\n    pass\nclass TD(TypedDict):\n    a: int\nclass E2(collections.namedtuple('E2', 'a b')):\n    pass\nclass G:\n    def __init__(self):\n        self.cells = [[0] * 3 for _ in range(3)]\n    def place(self, r, c, v):\n        self.cells[r][c] = v\nG().place(1, 1, E(1, 2).u)",
+ "typing-bases": "from typing import NamedTuple, Generic, TypeVar, TypedDict\nimport collections\nT_ = TypeVar('T_')\nclass E(NamedTuple):\n    u: int\n    v: int\nclass Box(Generic[T_]):\n    pass\nclass TD(TypedDict):\n    a: int\nclass E2(collections.namedtuple('E2', 'a b')):\n    pass\nclass G:\n    def __init__(self):\n        self.cells = [[0] * 3 for _ in range(3)]\n    def place(self, r, c, v):\n        self.cells[r][c] = v\nG().place(1, 1, 3)\nn = E(1, 2).u + 1",
  "unknown-base-elsewhere": "def mk():\n    return object\nclass W(mk()):\n    pass\nclass G:\n    def __init__(self):\n        self.items = []\n    def my_g(self, y):\n        y.items.append(1)\nG().my_g(G())",
  "cls-factory": "class Node:\n    def __init__(self, parent=None):\n        self.children = []\n        if parent is not None:\n            parent.children.append(self)\nclass Feat:\n    def __init__(self, life, hand):\n        self.life, self.hand = life, hand\n    @classmethod\n    def of(cls, pos):\n        p = pos.state.players[0]\n        return cls(p.life, len(p.hand))\nclass T(PlayerStrategy):\n    def search(self, pos):\n        f = Feat.of(pos)\n        Node(Node())\n        return {}",
  "field-factory": "import collections\nimport dataclasses\n@dataclasses.dataclass\nclass Memory:\n    counts: collections.Counter = dataclasses.field(default_factory=collections.Counter)\n    q: collections.deque = dataclasses.field(default_factory=collections.deque)\nclass T(PlayerStrategy):\n    def __init__(self, seed=0):\n        super().__init__(seed)\n        self.mem = Memory()\n    def search(self, pos):\n        self.mem.counts[pos.turn] += 1\n        self.mem.q.append(1)\n        return {}",
  "select-store": "class Tree:\n    def __init__(self):\n        self.rows = {}\n    def select(self, node):\n        node.hits.append(1)\n        return node\n    def store(self, k, entry):\n        entry.seen.append(k)\n        self.rows[k] = entry\nclass Entry:\n    def __init__(self):\n        self.hits, self.seen = [], []\nt = Tree()\nt.store(1, t.select(Entry()))",
+}
+GOOD_LD44 = {
+ "generic-own-sub": "from typing import Generic, TypeVar\nT_ = TypeVar('T_')\nclass Stack(Generic[T_]):\n    def __init__(self):\n        self.items = []\n    def my_push(self, x):\n        self.items.append(x)\nclass IntStack(Stack[int]):\n    pass\ns = IntStack()\ns.my_push(1)\ns.items.append(2)",
+ "cls-factory-mutate": "class Feat:\n    def __init__(self):\n        self.rows = []\n    @classmethod\n    def make(cls):\n        return cls()\nf = Feat.make()\nf.rows.append(1)",
+ "nt-forms": "import collections, typing\nclass P(collections.namedtuple('P', ['a', 'b'])):\n    pass\nclass Q(typing.NamedTuple('Q', [('a', int)])):\n    pass\nclass E(typing.NamedTuple):\n    u: int\n    v: int\n    def my_len(self):\n        return self.u + self.v\nrows = [E(1, 2)]\nrows.append(E(3, 4))\nx = P(1, 2).a + Q(1).a + sum(e.my_len() for e in rows)",
+ "dict-sub-plain": "class Tally(dict):\n    def my_bump(self, k):\n        self[k] = self.get(k, 0) + 1\nt = Tally()\nt.my_bump('a')",
+ "initvar": "import dataclasses\n@dataclasses.dataclass\nclass M:\n    n: dataclasses.InitVar[int] = 3\n    rows: list = dataclasses.field(default_factory=list)\n    def __post_init__(self, n):\n        self.rows = [0] * n\nm = M(4)\nm.rows.append(1)\nm.rows[0] += 1",
 }
 GOOD = {
  "field-shadow": "from dataclasses import field\ndef f():\n    field = {}\n    field['a'] = 1\n    return field",
@@ -181,9 +215,10 @@ def test_refused(name):
     assert check_code(textwrap.dedent(BAD[name]) + TAIL, "S"), name
 
 
-@pytest.mark.parametrize("name", sorted(GOOD) + sorted(GOOD_LD42) + sorted(GOOD_LD43))
+@pytest.mark.parametrize("name", sorted(GOOD) + sorted(GOOD_LD42) + sorted(GOOD_LD43) + [f"44:{k}" for k in GOOD_LD44])
 def test_accepted(name):
-    src = textwrap.dedent(GOOD.get(name) or GOOD_LD42.get(name) or GOOD_LD43[name])
+    src = textwrap.dedent(GOOD_LD44[name[3:]] if name.startswith("44:") else
+                          GOOD.get(name) or GOOD_LD42.get(name) or GOOD_LD43[name])
     if "class T(" in src:
         src = "from ladder.interface import PlayerStrategy\n" + src
     assert check_code(src + TAIL, "S") == []
@@ -196,7 +231,7 @@ def test_a_method_named_like_host_code_says_so():
     src = textwrap.dedent(GOOD_LD42["grid"]).replace("place", "put")
     got = check_code("from ladder.interface import PlayerStrategy\n" + src + TAIL, "S")
     notes = [g for g in got if g.startswith("提示：")]
-    assert notes and "Grid.put" in notes[0] and "my_" in notes[0]
+    assert notes and "Grid.put → my_put" in notes[0]
     assert check_code("from ladder.interface import PlayerStrategy\n" + src.replace("put(", "my_put(") + TAIL, "S") == []
     bag = ("class Item:\n    def __init__(self, w):\n        self.w = w\n"
            "class Bag:\n    def __init__(self):\n        self.items = []\n    def add(self, it):\n        self.items.append(it)\n"
@@ -208,6 +243,20 @@ def test_a_method_named_like_host_code_says_so():
     assert any("Bag.add" in n and "Bag.normalize" not in n.split(" ")[0] for n in notes), got
     assert len([g for g in got if not g.startswith("提示：")]) == 2          # the attribute and the += refusal
     assert check_code(bag.replace("add(", "my_add(") + TAIL, "S") == []
+
+
+def test_the_note_names_free_names_and_storage_classes():
+    # LD-44: the suggested name is one host code doesn't use either (my_hp, my_hand are svsim.learn's), and a class built
+    # on a storage type is named with the way out (a dataclass)
+    src = ("from typing import NamedTuple\nclass E(NamedTuple):\n    u: int\nclass G:\n    def __init__(self):\n"
+           "        self.cells = [[0] * 3 for _ in range(3)]\n    def hp(self, r, v):\n        self.cells[r][0] = v\n"
+           "G().hp(1, E(1).u)\n")
+    got = check_code(src + TAIL, "S")
+    notes = [g for g in got if g.startswith("提示：")]
+    assert any("G.hp → mine_hp" in n for n in notes) and any(n.startswith("提示：E 建在") for n in notes), got
+    fixed = src.replace("hp(", "mine_hp(").replace("class E(NamedTuple):\n    u: int",
+                                                    "@dataclasses.dataclass\nclass E:\n    u: int")
+    assert check_code("import dataclasses\n" + fixed + TAIL, "S") == []
 
 
 def test_ordinary_names_from_strings_alone_are_not_method_names():

@@ -346,6 +346,17 @@ def test_copying_the_position_is_not_a_change(tmp_path):
     rows = [json.loads(line) for line in out.read_text(encoding="utf-8").splitlines()]
     assert [r["result"] for r in rows] != [] and all(r["result"] in ("normal", "draw") for r in rows), rows
 
+def test_copying_an_iterator_is_not_a_change(tmp_path):
+    # LD-44: copying an itertools object warns from copy.py (ignored), and CPython then keeps copy.__warningregistry__;
+    # the snapshot makes that registry in every module it follows first and holds it by identity, so nothing is voided
+    jobs = [job(41, "py:helpers:CopiesIterators", "py:helpers:Random", first=0),
+            job(42, "py:helpers:Random", "py:helpers:CopiesIterators", first=0)]
+    out = tmp_path / "g.jsonl"
+    runner.run(jobs, str(out), workers=1, step_limit=30.0, quiet=True)
+    rows = [json.loads(line) for line in out.read_text(encoding="utf-8").splitlines()]
+    assert len(rows) == 2 and all(r["result"] in ("normal", "draw") for r in rows), rows
+
+
 def test_the_watch_follows_the_standard_library_and_what_an_lru_cache_wraps():
     # LD-42: random.Random's methods (the deal and the search shuffle with it), a class or function of an allowed
     # standard module, and the function under an lru_cache are followed

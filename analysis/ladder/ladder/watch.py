@@ -1,4 +1,5 @@
-"""The simulator's state in a worker process, before and after a game (fifth pass LD-40, sixth LD-41, seventh LD-42).
+"""The simulator's state in a worker process, before and after a game (fifth pass LD-40, sixth LD-41, seventh LD-42;
+LD-43, LD-44).
 
 A runner worker plays one game after another, often of different players. Strategy code runs in that process, so it
 could change things every later game there inherits: the shared card definitions (LD-40's finding: `pos.state` hands
@@ -27,8 +28,11 @@ pilots only (svsim.learn is closed to strategies): CACHE_ATTRS, a net's memo and
 GROWS, svsim.learn's module dicts and sets (models loaded once per process), which may gain items but not lose or
 replace one, and are then snapshotted again. And one CPython cache: copy.copy / deepcopy store `__slotnames__` in a
 class the first time one of its objects is copied; the snapshot fills it in every class it follows first (LD-43:
-a strategy that copied its position voided every game). A dict found to grow in play that isn't listed here would show up as a
-void "added" — a false alarm to fix by listing it, after reading its code.
+a strategy that copied its position voided every game). And another: a module's `__warningregistry__`, which CPython
+makes the first time a warning is charged to that module, even one the filters ignore (copying an itertools object
+warns from copy.py); the snapshot makes an empty one in every module it follows (not builtins) and holds it by
+identity only (LD-44: a strategy copying an itertools.cycle voided every game). A dict found to grow in play that
+isn't listed here would show up as a void "added" — a false alarm to fix by listing it, after reading its code.
 
 What it doesn't see: a change made and undone inside one game (ladder/audit.py replays every game of a period before
 it advances: it sees a change to the rules, not one to a bot's search), the inside of objects it doesn't follow
@@ -240,6 +244,8 @@ def snapshot() -> Snapshot:
         if not isinstance(d, dict) or id(d) in seen:
             continue
         seen.add(id(d))
+        if name != "builtins":                     # LD-44: CPython makes it on a module's first warning, even an
+            seen.add(id(dict.setdefault(d, "__warningregistry__", {})))   # ignored one: made here, held by identity
         keys = list(dict.keys(d))
         if name.startswith(GROWS):
             grows.update(id(v) for v in dict.values(d) if type(v) in (dict, set))

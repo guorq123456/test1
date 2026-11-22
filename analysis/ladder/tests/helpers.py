@@ -279,6 +279,24 @@ class CopiesPosition(Random):
         copy.deepcopy(collections.UserDict({"n": 1}))
         return super().act(pos, actions)
 
+class CopiesIterators(Random):
+    """Copies itertools objects every decision (copy.copy, a deepcopy holding one, dataclasses.asdict over one): allowed;
+    Python 3.12+ warns from copy.py while doing it (ignored by the filters), and CPython keeps a __warningregistry__ in
+    the copy module from then on (LD-44: the tripwire took that for a change and voided every game)."""
+    def act(self, pos, actions):
+        import copy
+        import dataclasses
+        import itertools
+
+        @dataclasses.dataclass
+        class Book:
+            ids: object = dataclasses.field(default_factory=itertools.count)
+        copy.copy(itertools.cycle(range(3)))
+        copy.deepcopy({"ids": itertools.count(), "seen": []})
+        dataclasses.asdict(Book())
+        return super().act(pos, actions)
+
+
 def _lingering(n):
     try:
         yield n
