@@ -342,7 +342,26 @@ def _play(job: dict, beat) -> dict:
 GUESS = 2                                         # beat[0]: 0/1 a seat's decision, 2/3 its end-of-game guess,
 HOST = -1                                         # -1 the host's own check after a game (a hang there: void),
 LOAD = -2                                         # -2 loading the strategies (void, on a longer clock)
+IDLE = -3                                         # -3 set up, no clock on (nothing on any clock too long: void,
+SETUP = -4                                        # LD-42); -4 a new worker setting up (not counted as idle)
 LOAD_FACTOR = 4
+WATCH_NS = 250_000_000                            # the watchdog looks at least this often, results or not
+
+
+def idle_limit_for(step_limit: float) -> float:
+    """How long a worker may hold a job with no clock running (host code between steps, setting up a new worker)
+    before it is taken as stuck: a strategy's code left running off its clock (a generator's finally when it is
+    freed, LD-42), or an engine that loops. Far above any real gap."""
+    return max(300.0, 10 * step_limit)
+
+
+def _idle(w: dict, now: int, limit: float) -> bool:
+    """The watchdog's other half: True when worker `w` has held its job past `limit` seconds with no clock on."""
+    started, what = w["beat"][1], int(w["beat"][0])
+    if started or what == SETUP or what != w.get("what") or w.get("since") is None:
+        w["since"], w["what"] = now, what
+        return False
+    return (now - w["since"]) / 1e9 > limit
 
 
 def _limit_for(what: int, step_limit: float) -> float:
@@ -366,7 +385,7 @@ def _warm_up():
         make_strategy(spec, 1)
 
 
-def _worker_setup(paths=()):
+def _worker_setup(paths=(), modules=()):
     import signal
     signal.signal(signal.SIGINT, signal.SIG_IGN)      # Ctrl+C stops the parent, which ends the workers; inside a
     #                                                   worker a KeyboardInterrupt is then a strategy's own (LD-36)
@@ -376,7 +395,7 @@ def _worker_setup(paths=()):
         sys.path.insert(0, extra)                     # where submissions (or test strategies) live
     os.chdir(ROOT)
     from ladder import watch
-    watch.preload()
+    watch.preload(modules)
     _warm_up()
     snap = watch.snapshot()                           # LD-40/41: what later games here inherit, checked after each
     watch.reset_caches(snap)
@@ -404,6 +423,7 @@ def _resnap(watch, beat):
 def _worker(inq, results_q, beat, wid):
     """One job at a time from its own queue, so the parent always knows which job a worker holds."""
     watch, snap = _worker_setup()
+    beat[0] = IDLE                                    # set up: from now on time with no clock on counts (LD-42)
     while True:
         job = inq.get()
         if job is None:
@@ -433,9 +453,10 @@ def _worker(inq, results_q, beat, wid):
 def _task_worker(inq, results_q, beat, wid, fn, paths):
     """`guarded_map`'s worker: as `_worker`, for any task function."""
     import importlib
-    watch, snap = _worker_setup(paths)
     mod, name = fn.split(":")
+    watch, snap = _worker_setup(paths, modules=(mod,))  # the task's module is loaded before the snapshot (LD-42)
     f = getattr(importlib.import_module(mod), name)
+    beat[0] = IDLE
     while True:
         item = inq.get()
         if item is None:
@@ -457,18 +478,21 @@ def _task_worker(inq, results_q, beat, wid, fn, paths):
         results_q.put((wid, i, res, False))
 
 
-def guarded_map(fn: str, tasks: list, workers: int = 4, step_limit: float = 30.0, mask=None, paths=()) -> list:
+def guarded_map(fn: str, tasks: list, workers: int = 4, step_limit: float = 30.0, mask=None, paths=(),
+                idle_limit: float | None = None) -> list:
     """`fn` ("module:function", called as fn(task, beat)) over `tasks` in this runner's kind of workers: Ctrl+C
     ignored in them, the step clock (the function sets `beat` around every strategy call, as `_play` does), the
     tripwire (LD-40). One result per task, in order: {"value": what fn returned} or {"error": runner error}, plus
     "changed" (the simulator changed during it; the worker was replaced), or {"timeout": beat[0], ...} (killed past
-    `step_limit`), or {"died": exit code}. For the tools that ask strategies outside a game log (puzzles, the
-    arena's resume): one strategy's hang, crash or meddling stays in its own task."""
+    `step_limit`; {"timeout": IDLE, ...} past `idle_limit` with no clock on), or {"died": exit code}. For the tools
+    that ask strategies outside a game log (puzzles, the arena's resume): one strategy's hang, crash or meddling
+    stays in its own task."""
     if workers > MAX_WORKERS:
         raise SystemExit(f"at most {MAX_WORKERS} workers ({MAX_WORKERS + 1} processes with this one)")
     out = [None] * len(tasks)
     if not tasks:
         return out
+    idle = idle_limit_for(step_limit) if idle_limit is None else idle_limit
     _limit(mask)
     ctx = mp.get_context("spawn")
     results_q = ctx.Queue()
@@ -476,17 +500,19 @@ def guarded_map(fn: str, tasks: list, workers: int = 4, step_limit: float = 30.0
 
     def spawn(wid):
         inq = ctx.Queue()
-        beat = ctx.Array("q", [-1, 0], lock=False)
+        beat = ctx.Array("q", [SETUP, 0], lock=False)
         p = ctx.Process(target=_task_worker, args=(inq, results_q, beat, wid, fn, list(paths)), daemon=True)
         p.start()
         return {"proc": p, "inq": inq, "beat": beat, "task": None}
 
     pool = [spawn(i) for i in range(min(workers, len(tasks)))]
+    last_watch = 0
     try:
         while True:
             for w in pool:
                 if w["task"] is None and todo:
                     w["task"] = todo.pop()
+                    w["since"] = None
                     w["inq"].put(w["task"])
             if not todo and not any(w["task"] is not None for w in pool):
                 break
@@ -506,8 +532,9 @@ def guarded_map(fn: str, tasks: list, workers: int = 4, step_limit: float = 30.0
                         w["proc"].kill()
                         w["proc"].join()
                     pool[wid] = spawn(wid)
-                continue
-            now = time.monotonic_ns()
+                if time.monotonic_ns() - last_watch < WATCH_NS:
+                    continue
+            now = last_watch = time.monotonic_ns()
             for k, w in enumerate(pool):
                 if w["task"] is None:
                     continue
@@ -517,6 +544,11 @@ def guarded_map(fn: str, tasks: list, workers: int = 4, step_limit: float = 30.0
                     w["proc"].join()
                     out[w["task"][0]] = {"timeout": what,
                                          "error": f"ran past {_limit_for(what, step_limit)}s of wall time"}
+                    pool[k] = spawn(k)
+                elif _idle(w, now, idle):
+                    w["proc"].kill()
+                    w["proc"].join()
+                    out[w["task"][0]] = {"timeout": IDLE, "error": f"nothing ran on any clock for {idle:.0f}s"}
                     pool[k] = spawn(k)
                 elif not w["proc"].is_alive():
                     out[w["task"][0]] = {"died": w["proc"].exitcode}
@@ -585,7 +617,7 @@ def provenance() -> dict:
 
 
 def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=None, quiet=False,
-        on_result=None, key="auto") -> dict:
+        on_result=None, key="auto", idle_limit: float | None = None) -> dict:
     """Play `jobs`, appending one log line per game to `out_path` (skipping ids already there).
 
     `key` (base-2, ladder/deal.py): "auto" = $LADDER_KEY_FILE or the host's key file if there is one; None = the
@@ -631,13 +663,14 @@ def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=No
                 return deal.seal(job, the_key)
         return None
     limits = _limit(mask)
+    idle = idle_limit_for(step_limit) if idle_limit is None else idle_limit
     prov = provenance()
     ctx = mp.get_context("spawn")
     results_q = ctx.Queue()
 
     def spawn(wid):
         inq = ctx.Queue()
-        beat = ctx.Array("q", [-1, 0], lock=False)               # seat thinking, its step start (monotonic ns)
+        beat = ctx.Array("q", [SETUP, 0], lock=False)            # seat thinking, its step start (monotonic ns)
         p = ctx.Process(target=_worker, args=(inq, results_q, beat, wid), daemon=True)
         p.start()
         return {"proc": p, "inq": inq, "beat": beat, "job": None}
@@ -669,6 +702,7 @@ def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=No
         if torn:
             with out.open("a", encoding="utf-8") as f:
                 f.write("\n")
+    last_watch = 0
     try:
         with out.open("a", encoding="utf-8") as f:
             while True:
@@ -676,6 +710,7 @@ def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=No
                     if w["job"] is None and not exhausted:
                         w["job"] = take()
                         if w["job"] is not None:
+                            w["since"] = None
                             w["inq"].put(w["job"])
                 if exhausted and not any(w["job"] for w in pool):
                     break
@@ -696,8 +731,9 @@ def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=No
                             w["proc"].kill()
                             w["proc"].join()
                         pool[i] = spawn(i)
-                    continue
-                now = time.monotonic_ns()
+                    if time.monotonic_ns() - last_watch < WATCH_NS:     # a busy pool: still look now and then
+                        continue
+                now = last_watch = time.monotonic_ns()
                 for i, w in enumerate(pool):                            # the watchdog
                     job = w["job"]
                     if job is None:
@@ -718,6 +754,12 @@ def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=No
                                                              f"{_limit_for(LOAD, step_limit)}s to load"))
                         else:                                           # the host's check after the game
                             write(f, stub(job, "void", error=f"the check after the game ran past {step_limit}s"))
+                        pool[i] = spawn(i)
+                    elif _idle(w, now, idle):                           # LD-42: stuck with no clock on
+                        w["proc"].kill()
+                        w["proc"].join()
+                        write(f, stub(job, "void", error=f"nothing ran on any clock for {idle:.0f}s (host code, or "
+                                                         "code a strategy left running off its clock)"))
                         pool[i] = spawn(i)
                     elif not w["proc"].is_alive():
                         # not pinned on a side: any code in the process (a thread of either strategy) can end it

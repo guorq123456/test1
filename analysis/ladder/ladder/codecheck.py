@@ -1,4 +1,5 @@
-"""Reading a submission's code (item 2.3; fifth pass LD-40, sixth pass LD-41). Nothing in the submitted code runs.
+"""Reading a submission's code (item 2.3; fifth pass LD-40, sixth LD-41, seventh LD-42). Nothing in the submitted
+code runs.
 The simulator's and ladder's own modules are imported here (they are the host's code) to tell a module from a class
 from a function; svsim.learn, svsim.tools, svsim.ui, svsim.build, svsim.search.parallel and ladder's other modules
 never are.
@@ -10,20 +11,30 @@ that reach files, the network, other processes, frames or the interpreter; no du
 __post_init__ (and those three never assigned); other objects' private attributes no (the strategy's own `self._x`
 yes: `self` = the first parameter of a method of the module's own class, never rebound); `getattr` & co. only
 called directly, with a written-out name; no dunder methods defined, no class built by type(name, bases, dict) or
-make_dataclass; `super().__init__` only inside __init__ / __post_init__.
+make_dataclass; `super().__init__` only inside __init__ / __post_init__; no functools.wraps / update_wrapper, no
+`attrname`, `default_factory` or typing.get_type_hints (each hands out what a check would have to follow by hand).
 
 Where shared objects go. Every value gets one of three levels, by a scope-aware reading of the whole module,
 repeated until nothing changes:
   CLEAN   made by the strategy: a literal, an instance of its own class or of a standard-library class made from
-          clean values, a number from math, what its own clean objects hold;
+          clean values, a number from math (not prod / sumprod: they start from what they're given; statistics
+          neither: median_low, mode, ... return one of their arguments), what its own clean objects hold;
   HOLDS   fresh, but may hold shared objects: a list of imported objects, list(x) / dict(x) / sorted(x) of a shared
           x, an instance of an svsim / ladder class, dataclasses.replace(x, ...), a container something shared was
-          put into, what the hooks are called with;
+          put into, what the hooks are called with, dataclasses.fields / asdict / astuple of anything;
   SHARED  maybe an object the simulator or another strategy in the same process uses: an imported name, a module's
           attribute, what an svsim / ladder function returns (unless its annotation says a number, a bool, a str),
           anything read out of a HOLDS or SHARED object, what the strategy inherits from an svsim / ladder class
           (self.tree, self.agent, ...; self.random, self.rng, self.spec, self.defaults are its own); copy.copy and
-          copy.deepcopy keep their argument's level (a copy of a class, a function or an enum member is itself).
+          copy.deepcopy keep their argument's level (a copy of a class, a function or an enum member is itself);
+          a def or class under a decorator other than lru_cache, cache, cached_property, total_ordering, dataclass
+          and a real property's .setter / .getter / .deleter (checked by what the name is, not how it's spelled).
+A method's parameters start CLEAN, the module's own code being the only caller; HOLDS when someone else may call
+it: a dunder, the __init__ of a class with a base that isn't the module's own (PlayerStrategy alone is fine), a
+method named like any attribute the simulator's or ladder's code uses or a member of a non-own base class (the
+host may call it with its objects: rename a helper that collides, the refusal says so); every method HOLDS when a
+class's base can't be told; SHARED when the method is taken as a value. `cls(...)` in a classmethod is every
+__init__ of the module.
 A SHARED object may not be changed: no assignment or `del` into it (x.a = ..., x[k] = ...), no augmented assignment
 on it (x += ...: write x = x + ...; adding a number literal is allowed), no method that changes a container
 (append, add, update, pop, clear, sort, ...: called or taken as a value), no shuffle / heappush / insort on it, no
@@ -33,9 +44,14 @@ functions and methods (a function or method taken as a value: its parameters are
 attributes (by name: x.a = shared makes every .a SHARED), containers (d[k] = shared, l.append(shared)).
 Also refused, because the reading would lose track: a module used as a value (only `m.x`); a class of the module
 used other than to make an instance, read an attribute, isinstance / issubclass, a base, raise / except, a
-comparison; a method called through its class (K.method(x), cls.method(x), type(x).method(x)); type(x) used other
-than for an attribute, a comparison or isinstance; svsim.core.script.register; keyword arguments parallel /
-par_spec (ISMCTS's root-parallel processes: their CPU is not the strategy's process's).
+comparison (an own class's name in an annotation only with `from __future__ import annotations`, which leaves
+annotations unread; a match-class pattern; iterating or indexing an own Enum); a method called through its class
+(K.method(x), cls.method(x), type(x).method(x)); type(x) used other than for an attribute, a comparison or
+isinstance; svsim.core.script.register; keyword arguments parallel / par_spec (ISMCTS's root-parallel processes:
+their CPU is not the strategy's process's); `x *= n` with an int on a SHARED x (a list repeats in place); a yield
+or await inside a try's body, except or else (when the generator is freed, there, off every clock, its except /
+finally run: LD-42; the runner's idle watchdog is the backstop). The reading repeats until nothing changes, for up
+to FLOW_SECONDS; a module that takes longer, or nests deeper than Python can read, is refused, not passed.
 What it can't see: objects reached through what the hooks are given (a card's definition through a sampled state)
 and the keys of a dictionary. Those are the tripwire's (watch.py: a change that lasts past a game) and the replay
 audit's (audit.py: a rule changed and put back within a game).
@@ -44,13 +60,16 @@ from __future__ import annotations
 
 import ast
 import builtins
+import collections
 import copy as _copy
 import dataclasses
 import enum
 import importlib
 import inspect
 import textwrap
+import time
 import types
+from pathlib import Path
 
 ALLOWED_TOP = {"__future__", "typing", "math", "random", "collections", "itertools", "functools", "dataclasses",
                "heapq", "bisect", "statistics", "copy", "enum", "numpy", "svsim"}
@@ -77,6 +96,9 @@ BANNED_ATTRS = {
     "system", "popen", "environ", "getenv", "putenv",
     # (LD-41) root-parallel search (its own processes); a class with chosen dunders; a property's raw functions
     "parallel", "par_spec", "make_dataclass", "fget", "fset", "fdel",
+    # (LD-42) setattr / getattr by a name in a string (update_wrapper's assigned=, cached_property's attrname); a
+    # class handed back as a value (a defaultdict's factory, the evaluated annotations)
+    "update_wrapper", "wraps", "attrname", "default_factory", "get_type_hints",
 }
 BANNED_KEYWORDS = {"parallel", "par_spec"}
 
@@ -101,10 +123,15 @@ KEY_METHODS = frozenset({"get", "setdefault", "pop"})         # d.get(k, default
 SCALAR_METHODS = frozenset({"index", "count", "startswith", "endswith", "find", "rfind", "isdigit", "isalpha",
                             "total", "bit_length", "is_integer", "lower", "upper", "strip", "split", "join",
                             "format", "replace", "random", "randint", "randrange", "uniform", "gauss", "getrandbits", "bisect", "bisect_left", "bisect_right"})
-SCALAR_MODULES = frozenset({"math", "statistics", "cmath"})
+SCALAR_MODULES = frozenset({"math", "cmath"})                   # numbers in, numbers out (LD-42: not statistics,
+NOT_SCALAR = frozenset({"prod", "sumprod"})                       # whose median_low / mode / mean([x]) can be x)
 FRESH_FUNCS = {("heapq", "nlargest"), ("heapq", "nsmallest"), ("heapq", "merge"), ("functools", "partial"),
                ("functools", "reduce")}
 WRAPPERS = frozenset({"staticmethod", "classmethod", "property", "cached_property", "lru_cache", "cache"})
+REAL_WRAPPERS = (("functools", "lru_cache"), ("functools", "cache"), ("functools", "cached_property"),
+                 ("functools", "total_ordering"), ("dataclasses", "dataclass"))
+ACCESSORS = frozenset({"setter", "getter", "deleter"})
+FLOW_SECONDS = 60                                 # a module whose reading takes longer is refused (LD-42)
 OWN_FRESH = frozenset({"random", "rng", "spec", "defaults", "LETHAL", "ITERATIONS"})   # PlayerStrategy's own
 SCALAR_ANNOTATIONS = {"float", "int", "bool", "str", "None", float, int, bool, str, None, type(None)}
 _MISSING = object()
@@ -233,6 +260,34 @@ def scalar_return(fn) -> bool:
         return False
 
 
+_DUCK: frozenset | None = None
+
+
+def duck_names() -> frozenset:
+    """Every attribute name the simulator's and the ladder's code reads (x.name) or writes out as a string: a
+    method of the strategy's own classes with one of these names may be called by host code with host objects
+    (duck typing, a hook found by name), so its parameters start as HOLDS (LD-42). Read once per process."""
+    global _DUCK
+    if _DUCK is None:
+        names = set()
+        for pkg in ("svsim", "ladder"):
+            m = _import(pkg)
+            for root in (list(getattr(m, "__path__", [])) if m is not _MISSING else []):
+                for path in sorted(Path(root).rglob("*.py")):
+                    try:
+                        tree = ast.parse(path.read_text(encoding="utf-8"))
+                    except (OSError, SyntaxError, ValueError, UnicodeDecodeError):
+                        continue
+                    for n in ast.walk(tree):
+                        if isinstance(n, ast.Attribute) and not (isinstance(n.value, ast.Name) and
+                                                                 n.value.id in ("self", "cls")):
+                            names.add(n.attr)       # (self.x: a subclass's, and class_attrs has those)
+                        elif isinstance(n, ast.Constant) and isinstance(n.value, str) and n.value.isidentifier():
+                            names.add(n.value)
+        _DUCK = frozenset(names)
+    return _DUCK
+
+
 # --- the module's scopes and what flows where ------------------------------------------------------------------
 
 class Scope:
@@ -247,6 +302,7 @@ class Fn:
     __slots__ = (
         "classm",
         "cls",
+        "deco_unknown",
         "decos",
         "kwarg",
         "kwonly",
@@ -265,12 +321,13 @@ class Fn:
         a = node.args
         self.pos, self.kwonly = a.posonlyargs + a.args, a.kwonlyargs
         self.vararg, self.kwarg = a.vararg, a.kwarg
-        self.cls, self.static, self.classm, self.decos = None, False, False, []
+        self.cls, self.static, self.classm, self.decos, self.deco_unknown = None, False, False, [], False
         self.value_used, self.own, self.ret = isinstance(node, ast.Lambda), False, CLEAN
 
 
 class Cls:
-    __slots__ = ("attrs", "dataclass", "fields", "fresh_ok", "node", "objs", "tainted", "unknown", "user_bases")
+    __slots__ = ("attrs", "builtin_bases", "dataclass", "deco_unknown", "fields", "fresh_ok", "node", "objs", "tainted",
+                 "unknown", "user_bases")
 
 
 def _deco_name(d) -> str | None:
@@ -294,12 +351,19 @@ class Flow:
         self.lv: dict = {}
         self.attrs: dict = {}
         self.changed = False
+        self._memo: dict = {}
+        self.incomplete = False
         self._init_levels()
-        for _ in range(200):
+        deadline = time.monotonic() + FLOW_SECONDS
+        while True:                    # levels only go up, over three values: this ends (no round cap: LD-42)
+            self._memo = {}            # a level read before a raise in the same round is read again next round
             self.changed = False
             for n in self.nodes:
                 self._flow(n)
             if not self.changed:
+                break
+            if time.monotonic() > deadline:
+                self.incomplete = True
                 break
 
     # scopes
@@ -457,13 +521,23 @@ class Flow:
                 if isinstance(p, ast.ClassDef) and node in p.body:
                     f.cls = p
                     self.methods.setdefault(node.name, []).append(node)
-                if not isinstance(node, ast.Lambda):
-                    f.decos = [_deco_name(d) for d in node.decorator_list]
-                    f.static, f.classm = "staticmethod" in f.decos, "classmethod" in f.decos
-                    if any(d not in WRAPPERS and d not in ("setter", "getter", "deleter") for d in f.decos):
-                        f.value_used = True             # a decorator gets the function itself: unbound
-                        if f.cls is not None:
-                            self.revoked.add(node)
+        for node, f in self.fn.items():        # decorators, now that every import is known (LD-42: by what they are)
+            if isinstance(node, ast.Lambda):
+                continue
+            f.decos = [self.wrapper(d) for d in node.decorator_list]
+            f.static, f.classm = "staticmethod" in f.decos, "classmethod" in f.decos
+        for node, f in self.fn.items():
+            if isinstance(node, ast.Lambda):
+                continue
+            for d, real in zip(node.decorator_list, f.decos):
+                if real is not None:
+                    continue
+                f.value_used = True                     # the decorator gets the function itself
+                if self._accessor(d, f):
+                    continue                            # @p.setter: called on an instance, by an assignment
+                f.deco_unknown = True                   # the name is whatever the decorator returned
+                if f.cls is not None:
+                    self.revoked.add(node)              # ... and it got the method unbound
         # functions taken as values: their parameters can be anything
         for node in self.nodes:
             p = self.parent.get(node)
@@ -499,6 +573,42 @@ class Flow:
             if isinstance(node, ast.ClassDef):
                 self._class(node)
 
+    def wrapper(self, d) -> str | None:
+        """The name of a decorator that returns the function (or class) wrapped the usual way: the builtins
+        staticmethod / classmethod / property, functools' lru_cache / cache / cached_property / total_ordering,
+        dataclasses.dataclass, checked by what they are (LD-42: a decorator of the module's own could return
+        anything, e.g. an imported class, under the function's name). None for any other."""
+        target = d.func if isinstance(d, ast.Call) else d
+        if isinstance(target, ast.Name) and self.key(target) is None and \
+                target.id in ("staticmethod", "classmethod", "property"):
+            return target.id
+        kn = self.known(target)
+        if kn is not None:
+            for m, n in REAL_WRAPPERS:
+                real = member(m, n)
+                if real is not _MISSING and kn[2] is real:
+                    return n
+        return None
+
+    def _accessor(self, d, f) -> bool:
+        """`@p.setter` (getter, deleter) on a method, p a property of the same class body (every def of p there a
+        property or one of its accessors)."""
+        if f.cls is None or not (isinstance(d, ast.Attribute) and d.attr in ACCESSORS and isinstance(d.value, ast.Name)):
+            return False
+        k = self.key(d.value)
+        defs = self.fdefs.get(k, ())
+        if k is None or k[0] is not self.inner[f.cls] or not defs or self.stores.get(k, 0) != len(defs):
+            return False
+        prop = False
+        for g in defs:
+            gd = self.fn[g].decos
+            prop |= "property" in gd
+            for dd, real in zip(g.decorator_list, gd):
+                if real is None and not (isinstance(dd, ast.Attribute) and dd.attr in ACCESSORS and
+                                         isinstance(dd.value, ast.Name) and dd.value.id == d.value.id):
+                    return False
+        return prop
+
     def _getattr_name(self, call) -> str | None:
         if isinstance(call, ast.Call) and isinstance(call.func, ast.Name) and call.func.id == "getattr" and \
                 self.key(call.func) is None and len(call.args) >= 2 and isinstance(call.args[1], ast.Constant) \
@@ -511,7 +621,10 @@ class Flow:
             return self.cls[node]
         c = self.cls[node] = Cls()
         c.node, c.user_bases, c.objs, c.unknown, c.tainted, c.attrs = node, [], [], False, False, set()
-        c.dataclass = any(_deco_name(d) == "dataclass" for d in node.decorator_list)
+        c.builtin_bases = []
+        kinds = [self.wrapper(d) for d in node.decorator_list]
+        c.dataclass = "dataclass" in kinds
+        c.deco_unknown = any(k not in ("dataclass", "total_ordering") for k in kinds)   # LD-42
         c.fields = [s.target.id for s in node.body if isinstance(s, ast.AnnAssign) and isinstance(s.target, ast.Name)]
         for b in node.bases:
             users = self.user_class(b)
@@ -523,6 +636,7 @@ class Flow:
                 c.objs.append(kn[2])
                 continue
             if isinstance(b, ast.Name) and self.key(b) is None and isinstance(getattr(builtins, b.id, None), type):
+                c.builtin_bases.append(getattr(builtins, b.id))
                 continue                       # object, dict, Exception...
             c.unknown = True
         if node.keywords:
@@ -532,6 +646,7 @@ class Flow:
                 continue
             ui = self._class(u)
             c.objs += ui.objs
+            c.builtin_bases += ui.builtin_bases
             c.unknown |= ui.unknown
             c.attrs |= ui.attrs
             c.fields = ui.fields + c.fields if c.dataclass else c.fields
@@ -638,9 +753,40 @@ class Flow:
 
     # levels
 
+    def external_names(self) -> frozenset | None:
+        """Method names host code may call on the module's own objects: the names the simulator's and the ladder's
+        code uses (duck_names), and every attribute of a base class that isn't the module's own (PlayerStrategy's
+        hooks, a dict's get, an svsim class's methods). None: any name (a base the reading can't place)."""
+        names = set(duck_names())
+        for c in self.cls.values():
+            if c.unknown:
+                return None
+            for o in c.objs + c.builtin_bases:
+                names |= class_attrs(o)
+        return frozenset(names)
+
+    def _param_base(self, f, ext) -> int:
+        """Where a function's parameters start (the calls in the module then raise them): SHARED for a function
+        taken as a value; for a method, HOLDS when host code may call it (a name in `ext`, a dunder, __init__ of a
+        class with a base that isn't the module's own but PlayerStrategy), else CLEAN like a plain function (LD-42:
+        the module's own trees and tables were refused)."""
+        if f.value_used:
+            return SHARED
+        if f.cls is None:
+            return CLEAN
+        name, info = f.node.name, self.cls[f.cls]
+        if name == "__init__":
+            return HOLDS if info.unknown or (info.objs and not info.fresh_ok) else CLEAN
+        if dunder(name) or ext is None or name in ext:
+            return HOLDS
+        return CLEAN
+
     def _init_levels(self):
-        for f in self.fn.values():
-            base = SHARED if f.value_used else HOLDS if f.cls is not None else CLEAN
+        ext = self.ext = self.external_names()
+        for node, f in self.fn.items():
+            if f.deco_unknown:
+                self._raise_ret(node, SHARED)           # the name holds what the decorator returned (LD-42)
+            base = self._param_base(f, ext)
             params = f.pos + f.kwonly + [x for x in (f.vararg, f.kwarg) if x is not None]
             for i, x in enumerate(params):
                 if i == 0 and f.own:
@@ -689,13 +835,13 @@ class Flow:
         for d in self.fdefs.get(k, ()):
             v = max(v, self.fn[d].ret)
         for c in self.cdefs.get(k, ()):
-            v = max(v, HOLDS if self.cls[c].tainted else CLEAN)
+            v = max(v, SHARED if self.cls[c].deco_unknown else HOLDS if self.cls[c].tainted else CLEAN)
         return v
 
     def self_attr(self, c, a, via_super=False) -> int:
         info = self.cls[c]
         v = CLEAN
-        if info.unknown or (a in info.attrs and not (info.fresh_ok and a in OWN_FRESH)):
+        if info.unknown or info.deco_unknown or (a in info.attrs and not (info.fresh_ok and a in OWN_FRESH)):
             v = SHARED
         if not via_super:
             v = max(v, self.attrs.get(a, CLEAN))
@@ -722,6 +868,12 @@ class Flow:
     def level(self, n) -> int:
         if n is None:
             return CLEAN
+        v = self._memo.get(n)
+        if v is None:
+            v = self._memo[n] = self._level(n)
+        return v
+
+    def _level(self, n) -> int:
         t = type(n)
         if t is ast.Name:
             return self.name_level(n)
@@ -783,11 +935,11 @@ class Flow:
             if defs and self.stores.get(k, 0) == defs:     # only def / class statements bind it
                 v = max((self.fn[d].ret for d in self.fdefs.get(k, ())), default=CLEAN)
                 for c in self.cdefs.get(k, ()):
-                    v = max(v, HOLDS if self.cls[c].tainted else CLEAN)
+                    v = max(v, SHARED if self.cls[c].deco_unknown else HOLDS if self.cls[c].tainted else CLEAN)
                 return v
         kn = self.known(f)
         if kn is not None:
-            return self._known_call(kn, args)
+            return self._known_call(kn, args, call)
         if isinstance(f, ast.Attribute) or self._getattr_name(f) is not None:
             base, a = (f.value, f.attr) if isinstance(f, ast.Attribute) else (f.args[0], self._getattr_name(f))
             own = self.own_of(base)
@@ -821,14 +973,29 @@ class Flow:
             return SHARED
         return SHARED if args >= HOLDS else CLEAN
 
-    def _known_call(self, kn, args) -> int:
+    def _factory(self, node) -> int:
+        """What calling a defaultdict's factory gives: a standard-library class (not the simulator's) or a builtin
+        type makes a new, clean object (LD-42: defaultdict(Counter) was refused)."""
+        if isinstance(node, ast.Name) and self.key(node) is None and isinstance(getattr(builtins, node.id, None), type):
+            return CLEAN
+        kn = self.known(node)
+        if kn is not None and isinstance(kn[2], type) and kn[0].split(".")[0] not in ("svsim", "ladder") and \
+                fresh_class(kn[2]):
+            return CLEAN
+        return self.level(node)
+
+    def _known_call(self, kn, args, call=None) -> int:
         mod, name, obj = kn
         top = mod.split(".")[0]
         shared_origin = top in ("svsim", "ladder")
         if obj is _copy.deepcopy or obj is _copy.copy:
             return args             # a copy of a class, a function or an enum member is the thing itself
-        if obj is dataclasses.replace:
-            return holds(args)
+        if any(obj is x for x in (dataclasses.replace, dataclasses.fields, dataclasses.asdict, dataclasses.astuple)):
+            return max(holds(args), HOLDS if obj is not dataclasses.replace else CLEAN)   # fields' .type: a class
+        if obj is collections.defaultdict and call is not None and call.args and \
+                not isinstance(call.args[0], ast.Starred):
+            rest = [self.level(a) for a in call.args[1:]] + [self.level(k.value) for k in call.keywords]
+            return holds(max([self._factory(call.args[0])] + rest))
         if isinstance(obj, type):
             if fresh_class(obj):
                 return HOLDS if shared_origin else holds(args)
@@ -836,7 +1003,8 @@ class Flow:
         if shared_origin:
             return CLEAN if scalar_return(obj) else SHARED
         origin = (getattr(obj, "__module__", None) or mod).split(".")[0]
-        if top in SCALAR_MODULES or origin in SCALAR_MODULES or (top == "bisect" and name.startswith("bisect")):
+        if ((top in SCALAR_MODULES or origin in SCALAR_MODULES) and name not in NOT_SCALAR) or \
+                (top == "bisect" and name.startswith("bisect")):
             return CLEAN
         if top == "itertools" or (top, name) in FRESH_FUNCS:
             return holds(args) if name != "reduce" else elem(args)
@@ -941,6 +1109,8 @@ class Flow:
             out += [(d, 0) for d in self.fdefs.get(k, ())]
             for c in self.cdefs.get(k, ()):
                 out += [(d, 1) for d in self.class_methods(c, "__init__")]
+            if k in self.own and self.own[k][1]:          # cls(...): this class or any subclass (LD-42)
+                out += [(d, 1) for d in self.methods.get("__init__", ())]
         else:
             a = f.attr if isinstance(f, ast.Attribute) else self._getattr_name(f)
             for d in self.methods.get(a, ()) if a else ():
@@ -1019,6 +1189,17 @@ def _numeric(node) -> bool:
     return False
 
 
+def _floaty(node) -> bool:
+    """A number expression that is surely a float (`a_list *= 2` changes the list in place; `*= 0.5` raises)."""
+    if isinstance(node, ast.Constant):
+        return isinstance(node.value, float)
+    if isinstance(node, ast.UnaryOp):
+        return _floaty(node.operand)
+    if isinstance(node, ast.BinOp):
+        return isinstance(node.op, ast.Div) or _floaty(node.left) or _floaty(node.right)
+    return False
+
+
 def check_code(src: str, cls: str) -> list[str]:
     """Problems found by reading the code (empty list: none). Nothing is run."""
     try:
@@ -1030,10 +1211,31 @@ def check_code(src: str, cls: str) -> list[str]:
         return [f"读不了：{type(e).__name__}"]
     try:
         flow = Flow(tree)
-    except RecursionError:
+    except (RecursionError, MemoryError):
         return ["读不了：嵌套太深"]
+    if flow.incomplete:
+        return [f"读不了：读了 {FLOW_SECONDS} 秒还没读完（代码太大或太绕）"]
+    try:
+        return _rules(tree, flow, cls)
+    except (RecursionError, MemoryError):          # LD-42: a long chain of attributes
+        return ["读不了：嵌套太深"]
+
+
+def _rules(tree, flow, cls) -> list[str]:
     problems, classes = [], []
     registrars = _registrars()
+    lazy_annotations = any(isinstance(n, ast.ImportFrom) and n.module == "__future__" and
+                           any(a.name == "annotations" for a in n.names) for n in tree.body)
+    annotations = set()
+    for n in ast.walk(tree):
+        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            a = n.args
+            annotations.update(x.annotation for x in a.posonlyargs + a.args + a.kwonlyargs + [a.vararg, a.kwarg]
+                               if x is not None and x.annotation is not None)
+            if n.returns is not None:
+                annotations.add(n.returns)
+        elif isinstance(n, ast.AnnAssign):
+            annotations.add(n.annotation)
 
     def bad(node, what):
         msg = f"第 {getattr(node, 'lineno', '?')} 行：{what}"
@@ -1057,10 +1259,24 @@ def check_code(src: str, cls: str) -> list[str]:
         return isinstance(p, ast.Call) and isinstance(p.func, ast.Name) and p.func.id in ("isinstance", "issubclass") \
             and node in p.args[1:]
 
+    def in_annotation(node) -> bool:
+        while node is not None:
+            if node in annotations:
+                return True
+            node = parent(node)
+        return False
+
     def class_use_ok(node) -> bool:
         p = parent(node)
         if (isinstance(p, ast.Call) and p.func is node) or receiver(node) or isinstance(p, (ast.Compare, ast.Raise)):
             return True
+        if isinstance(p, ast.MatchClass) and p.cls is node:
+            return True                                 # case K(...): an isinstance (LD-42)
+        if any(issubclass(o, enum.Enum) for c in flow.user_class(node) for o in flow.cls[c].objs if isinstance(o, type)):
+            if isinstance(p, (ast.For, ast.comprehension)) and p.iter is node:
+                return True                             # an enum of its own: its members (LD-42)
+            if isinstance(p, ast.Subscript) and p.value is node and isinstance(p.ctx, ast.Load):
+                return True
         if isinstance(p, ast.ClassDef) and node in p.bases:
             return True
         if isinstance(p, ast.ExceptHandler) or (isinstance(p, ast.Tuple) and isinstance(parent(p), ast.ExceptHandler)):
@@ -1074,6 +1290,27 @@ def check_code(src: str, cls: str) -> list[str]:
     def class_like(node) -> bool:
         own = flow.own_of(node)
         return bool(flow.user_class(node)) or (own is not None and own[1] and not own[2]) or type_call(node)
+
+    def hint(at) -> str:
+        """Why a parameter may be shared, when that comes only from the name of the method the code is in."""
+        m = flow.method_of(at)
+        if m is None or m.name == "__init__" or dunder(m.name) or flow.fn[m].value_used or flow.ext is None:
+            return ""
+        info = flow.cls[flow.fn[m].cls]
+        if m.name in duck_names() and not any(m.name in class_attrs(o) for o in info.objs + info.builtin_bases):
+            return (f"（方法名 {m.name} 在模拟器 / 天梯的代码里也有，可能被它们拿主机的对象来调，所以它的参数按可能共用算："
+                    "只给自己用的方法换个名字，比如加个前缀）")
+        return ""
+
+    def yield_in_try(node) -> bool:
+        """`node` (a yield / await) is inside a try of its own function, outside that try's finally."""
+        child, p = node, parent(node)
+        while p is not None and not isinstance(p, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef,
+                                                   ast.Module)):
+            if isinstance(p, (ast.Try, getattr(ast, "TryStar", ast.Try))) and child not in p.finalbody:
+                return True
+            child, p = p, parent(p)
+        return False
 
     def in_init(node) -> bool:
         m = flow.method_of(node)
@@ -1120,13 +1357,14 @@ def check_code(src: str, cls: str) -> list[str]:
                 bad(at, f"给 {root} 里的东西赋值或删除（不许改模块、引擎、卡牌里的东西）")
             elif flow.level(base) >= SHARED:
                 bad(at, f"{how}：不许改可能共用的对象（从 svsim / ladder 拿来或读出来的东西；"
-                        "要改就自己做一份：list(x)、dict(x)、dataclasses.replace(x, ...)）")
+                        "要改就自己做一份：list(x)、dict(x)、dataclasses.replace(x, ...)）" + hint(at))
         if ctx == "load" and a in MUTATORS:
             kn = flow.known(base)
             unbound = (isinstance(base, ast.Name) and flow.key(base) is None and base.id in BUILTIN_TYPES) or \
                 class_like(base) or (kn is not None and isinstance(kn[2], type))
             if flow.level(base) >= SHARED:
-                bad(at, f"{how}：不许改可能共用的容器（要改就自己做一份：list(x)、dict(x)、dataclasses.replace(x, ...)）")
+                bad(at, f"{how}：不许改可能共用的容器（要改就自己做一份：list(x)、dict(x)、dataclasses.replace(x, ...)）"
+                    + hint(at))
             elif unbound and not (call is not None and call.args and not isinstance(call.args[0], ast.Starred)
                                   and flow.level(call.args[0]) < SHARED):
                 bad(at, f"{how}：不许改可能共用的容器")
@@ -1188,7 +1426,12 @@ def check_code(src: str, cls: str) -> list[str]:
             if k in flow.mods and not receiver(node):
                 bad(node, f"模块 {node.id} 不许当值用（只能写 {node.id}.属性）")
             if flow.cdefs.get(k) and not class_use_ok(node):
-                bad(node, f"类 {node.id} 只能用来建实例、读类属性、isinstance、继承、raise / except、比较")
+                if not in_annotation(node):
+                    bad(node, f"类 {node.id} 只能用来建实例、读类属性、isinstance、继承、raise / except、比较、"
+                              "match 的 case、类型标注")
+                elif not lazy_annotations:              # LD-42: an evaluated annotation hands the class out
+                    bad(node, f"类 {node.id} 写在类型标注里：模块开头要有 from __future__ import annotations"
+                              f"（标注就不会被求值），或者写成字符串 '{node.id}'")
             if any(id(o) in registrars for _, _, o in flow.objs.get(k, ())):
                 bad(node, f"{node.id}（注册卡牌脚本会改模拟器）")
         elif isinstance(node, ast.Attribute):
@@ -1204,12 +1447,17 @@ def check_code(src: str, cls: str) -> list[str]:
                     bad(node, f"给 {root} 里的东西赋值或删除（不许改模块、引擎、卡牌里的东西）")
                 elif flow.level(node.value) >= SHARED:
                     bad(node, "x[...] = / del：不许改可能共用的对象（从 svsim / ladder 拿来或读出来的东西；"
-                              "要改就自己做一份：list(x)、dict(x)、dataclasses.replace(x, ...)）")
+                              "要改就自己做一份：list(x)、dict(x)、dataclasses.replace(x, ...)）" + hint(node))
         elif isinstance(node, ast.AugAssign):
-            if flow.level(node.target) >= SHARED and not _numeric(node.value):
-                bad(node, "x += ...：x 可能是共用的对象，原地运算会改它（写成 x = x + ...）")
+            if flow.level(node.target) >= SHARED and not (_numeric(node.value) and
+                                                          (not isinstance(node.op, ast.Mult) or _floaty(node.value))):
+                bad(node, "x += ...：x 可能是共用的对象，原地运算会改它（写成 x = x + ...；"
+                          "加减一个数字可以，乘一个整数不行：列表 *= 0 会原地清空）")
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and banned_dunder(node.name):
             bad(node, f"def {node.name}（自己定义双下划线方法不许，__init__、__post_init__ 除外）")
+        elif isinstance(node, (ast.Yield, ast.YieldFrom, ast.Await)) and yield_in_try(node):
+            bad(node, "yield 写在 try 里（try 的正文、except、else）：生成器被丢掉时那里的 except / finally 会在"
+                      "别的时候、不在任何时钟上跑（LD-42）。先算好再 yield，或者把 try 放到 yield 前面")
         elif isinstance(node, ast.Call):
             fn = node.func
             builtin = isinstance(fn, ast.Name) and flow.key(fn) is None
@@ -1242,7 +1490,8 @@ def check_code(src: str, cls: str) -> list[str]:
             name = fn.attr if isinstance(fn, ast.Attribute) else fn.id if isinstance(fn, ast.Name) else None
             if name in ARG_MUTATORS and node.args and \
                     (isinstance(node.args[0], ast.Starred) or flow.level(node.args[0]) >= SHARED):
-                bad(node, f"{name}(...)：不许改可能共用的容器（要改就自己做一份：list(x)、dict(x)、dataclasses.replace(x, ...)）")
+                bad(node, f"{name}(...)：不许改可能共用的容器（要改就自己做一份：list(x)、dict(x)、dataclasses.replace(x, ...)）"
+                    + hint(node))
         elif isinstance(node, ast.ClassDef) and isinstance(p, ast.Module):
             classes.append(node.name)
     if cls not in classes:

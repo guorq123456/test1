@@ -57,9 +57,11 @@ def read(path: Path, unreadable: list | None = None) -> list[dict]:
     except OSError as e:
         print(f"{path}: can't be read ({e})", file=sys.stderr)
         sys.exit(2)
-    for n, line in enumerate(text.splitlines(), 1):
-        line = line.strip(" \t\r\n\x00")
+    for n, raw in enumerate(text.splitlines(), 1):
+        line = raw.strip(" \t\r\n\x00")
         if not line:
+            if raw.strip(" \t\r\n") and unreadable is not None:
+                unreadable.append(f"{path}:{n}")       # only NULs: what a power cut can leave (LD-42)
             continue
         try:
             g = json.loads(line)
@@ -89,7 +91,13 @@ def expand(args, allow_empty=()) -> list[Path]:
             sys.exit(2)
         else:
             out.append(Path(a))
-    return out
+    seen, unique = set(), []
+    for p in out:                                       # a log named twice is read once (LD-42)
+        k = str(p.resolve()).lower() if sys.platform == "win32" else str(p.resolve())
+        if k not in seen:
+            seen.add(k)
+            unique.append(p)
+    return unique
 
 
 def audit(logs, workers: int = 4, mask=None) -> dict:

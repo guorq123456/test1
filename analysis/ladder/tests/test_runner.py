@@ -321,6 +321,88 @@ def test_guarded_map_keeps_each_task_to_itself():
     assert "task failed" in got[6]["error"] and "value" in got[7]
 
 
+def test_code_left_running_off_the_clock_is_stopped(tmp_path):
+    # LD-42: a generator's finally runs when the strategy is freed after the game, on no clock; the idle watchdog
+    # ends that worker (the game is void, nobody's loss) and the next game plays in a new one; guarded_map likewise
+    jobs = [job(37, "py:helpers:Lingers", "py:helpers:Random", first=0),
+            job(38, "py:helpers:Random", "py:helpers:Random", first=0)]
+    out = tmp_path / "g.jsonl"
+    runner.run(jobs, str(out), workers=1, step_limit=5.0, idle_limit=3.0, quiet=True)
+    rows = {r["id"]: r for r in map(json.loads, out.read_text(encoding="utf-8").splitlines())}
+    assert rows["t-37"]["result"] == "void" and "nothing ran on any clock" in rows["t-37"]["error"]
+    assert rows["t-38"]["result"] in ("normal", "draw")
+    got = runner.guarded_map("helpers:task", ["linger", "ok"], workers=1, step_limit=5.0, idle_limit=3.0)
+    assert got[0]["timeout"] == runner.IDLE and "value" in got[1]
+
+
+def test_the_watch_follows_the_standard_library_and_what_an_lru_cache_wraps():
+    # LD-42: random.Random's methods (the deal and the search shuffle with it), a class or function of an allowed
+    # standard module, and the function under an lru_cache are followed
+    import random
+    import statistics
+
+    from ladder import watch
+    from svsim.search import combo
+    watch.preload()
+    snap = watch.snapshot()
+    assert watch.changes(snap) == []
+    shuffle, code, wrapped = random.Random.shuffle, statistics.median_low.__code__, combo.profile.__wrapped__
+    kept = wrapped.__code__
+
+    def other(defn, fused=False):
+        return ()
+    try:
+        random.Random.shuffle = lambda self, x: None
+        assert any("random.Random" in line for line in watch.changes(snap))
+        random.Random.shuffle = shuffle
+        statistics.median_low.__code__ = other.__code__
+        assert any("median_low" in line for line in watch.changes(snap))
+        statistics.median_low.__code__ = code
+        wrapped.__code__ = other.__code__
+        assert any("__wrapped__" in line for line in watch.changes(snap))
+    finally:
+        random.Random.shuffle, statistics.median_low.__code__, wrapped.__code__ = shuffle, code, kept
+    assert watch.changes(snap) == []
+
+
+def test_the_pilots_model_caches_may_grow():
+    # LD-42: the host's pilot games load a model once per process (svsim.learn's caches gain an entry) and the net
+    # memoizes and adds rows for cards it meets: neither is a change; anything else in the net is
+    from ladder import watch
+    from svsim.learn import setnet
+    watch.preload()
+    net = object.__new__(setnet.SetNet)
+    net.__dict__.update(slope=0.1, _live_hits=0)
+    key = ("test-net-ld42",)
+    setnet._CACHE[key] = net
+    try:
+        snap = watch.snapshot()
+        setnet._CACHE[("test-net-ld42", 2)] = object()
+        net._live_hits, net._pool, net.card_ids = 5, {1: 2}, [1, 2]
+        assert watch.changes(snap) == [] and watch.stale(snap)
+        net.slope = 0.2
+        assert any("slope" in line for line in watch.changes(snap))
+    finally:
+        setnet._CACHE.pop(key, None)
+        setnet._CACHE.pop(("test-net-ld42", 2), None)
+
+
+def test_every_module_a_strategy_may_import_is_loaded_before_the_snapshot():
+    # LD-42: a module first loaded during a game used to enter the next snapshot with whatever that game did to it
+    code = ("import sys; sys.path[:0] = [sys.argv[1], sys.argv[2]]\n"
+            "from ladder import watch, codecheck\n"
+            "watch.preload(['ladder.puzzles'])\n"
+            "import pkgutil, svsim\n"
+            "names = [m.name for m in pkgutil.walk_packages(svsim.__path__, 'svsim.')\n"
+            "         if codecheck.module_problem(m.name) is None]\n"
+            "missing = [n for n in names if n not in sys.modules]\n"
+            "snap = watch.snapshot()\n"
+            "print(missing, 'ladder.puzzles' in snap.modules, 'statistics' in snap.modules)\n")
+    out = subprocess.run([sys.executable, "-c", code, str(HERE.parent), str(HERE.parents[2])], capture_output=True,
+                         text=True, timeout=300)
+    assert out.stdout.strip() == "[] True True", out.stderr[-2000:]
+
+
 def test_watch_sees_a_rewritten_definition_and_its_undoing():
     from ladder import watch
     from svsim.cards.pool import POOL

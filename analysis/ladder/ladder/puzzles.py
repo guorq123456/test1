@@ -248,9 +248,12 @@ def run(subdir: Path, pid: str, seeds, out: Path, games: int = 10, field: str = 
     key = deal.resolve(key)
     runner.run(jobs, str(out / "games.jsonl"), workers=workers, mask=mask, quiet=True, key=key)
     logs = []
-    for x in (out / "games.jsonl").read_text(encoding="utf-8").splitlines():
-        g = json.loads(x)
-        if g["id"] in which:                               # this run's games only
+    for x in (out / "games.jsonl").read_text(encoding="utf-8", errors="replace").splitlines():
+        try:
+            g = json.loads(x.strip(" \t\r\n\x00") or "null")
+        except ValueError:                                 # a line a power cut left half-written (the runner starts
+            continue                                       # the next on a fresh line and plays that game again)
+        if isinstance(g, dict) and g.get("id") in which:   # this run's games only
             g["labels"] = dict(g["labels"], entry=which[g["id"]])
             logs.append(g)
     deals = {g.get("deal", {}).get("key") if isinstance(g.get("deal"), dict) else g.get("deal") for g in logs}

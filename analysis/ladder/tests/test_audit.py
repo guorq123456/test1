@@ -91,3 +91,15 @@ def test_voids_are_counted_per_strategy_and_while_losing(tmp_path):
     res = audit.audit([log])
     assert res["checked"] == 0 and res["skipped"] == 3 and res["ok"]
     assert res["voids"] == {"py:a:A": {"void": 3, "was_losing": 2}, "py:b:B": {"void": 3, "was_losing": 0}}
+
+
+def test_nul_lines_are_listed_and_a_log_named_twice_is_read_once(tmp_path):
+    # LD-42: a power cut can leave a line of NULs; it is listed like a torn line. A log given twice (a path and a
+    # pattern that matches it) is read once
+    log = tmp_path / "g.jsonl"
+    row = {"id": "v-1", "result": "void", "strategies": ["py:a:A", "py:b:B"], "error": "x"}
+    log.write_bytes(b"\x00\x00\x00\n" + (json.dumps(row) + "\n").encode())
+    paths = audit.expand([str(log), str(tmp_path / "*.jsonl")])
+    assert paths == [log]
+    res = audit.audit(paths)
+    assert res["unreadable"] == [f"{log}:1"] and res["skipped"] == 1

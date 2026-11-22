@@ -86,10 +86,22 @@ def _write(p: Path, obj):
 
 
 def _jsonl(p: Path) -> list[dict]:
+    """The records of a JSON-lines file; a line a power cut left half-written is skipped (LD-42)."""
     p = Path(p)
     if not p.exists():
         return []
-    return [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
+    out = []
+    for line in p.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = line.strip(" \t\r\n\x00")
+        if not line:
+            continue
+        try:
+            rec = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(rec, dict):
+            out.append(rec)
+    return out
 
 
 def _append(p: Path, rec: dict):
@@ -509,7 +521,7 @@ def _play_on(job: dict, beat=None) -> dict:
 def _resumed(job: dict, g: dict | None) -> dict:
     """guarded_map's result for one continuation, as a game log: a hang loses by timeout (on loading it is void, as
     in the runner), a dead worker is void, and so is a game during which the simulator changed (LD-40)."""
-    from ladder.runner import LOAD, clean
+    from ladder.runner import IDLE, LOAD, clean
     g = g or {"died": None}
     if "value" in g:
         log = g["value"]
@@ -517,7 +529,8 @@ def _resumed(job: dict, g: dict | None) -> dict:
         s = g["timeout"]
         log = {"id": job["id"], "result": "timeout", "loser": s, "winner": 1 - s, "error": g.get("error")}
     elif "timeout" in g:
-        what = "loading the strategies" if g["timeout"] == LOAD else "the check after the game"
+        what = {LOAD: "loading the strategies", IDLE: "the worker, with no clock on:"}.get(g["timeout"],
+                                                                                         "the check after the game")
         log = {"id": job["id"], "result": "void", "winner": None, "loser": None, "error": f"{what} {g.get('error')}"}
     elif "died" in g:
         log = {"id": job["id"], "result": "void", "winner": None, "loser": None,

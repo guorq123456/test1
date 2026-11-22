@@ -1,17 +1,20 @@
-"""The simulator's state in a worker process, before and after a game (fifth pass LD-40, sixth pass LD-41).
+"""The simulator's state in a worker process, before and after a game (fifth pass LD-40, sixth LD-41, seventh LD-42).
 
 A runner worker plays one game after another, often of different players. Strategy code runs in that process, so it
 could change things every later game there inherits: the shared card definitions (LD-40's finding: `pos.state` hands
 out the pool's own CardDef objects), the card scripts and the engine's registries, the default bot's weights and
 caches, a function's code, a class's name. The submission check's code reader (ladder/codecheck.py) refuses the ways it
-can see; this is the second line: the worker warms up (one unlogged game that loads what games load,
-runner._warm_up), empties the caches, takes a snapshot, and before every game empties the caches again and after it
-compares. A change voids that game and ends the worker (the runner starts a new one).
+can see; this is the second line: the worker loads every module a game or a strategy may load (preload), warms up
+(one unlogged game that sets the lazy globals, runner._warm_up), empties the caches, takes a snapshot, and before
+every game empties the caches again and after it compares. A change voids that game and ends the worker (the runner
+starts a new one).
 
-What is followed, from every loaded module of svsim and ladder (and builtins): each global; the members of every
-class defined there, and its name, qualified name and bases; for functions, their code, defaults, closure cells and
-names; the items of dicts, lists and tuples; the attributes (and slots) of instances of svsim and ladder classes,
-such as the CardDefs, the scripts and the bots' weights; set contents. Breadth first, each object once, a few levels
+What is followed, from every loaded module of svsim and ladder (and builtins), and of the standard modules a
+strategy may import (STDLIB: random.Random's methods are what the deal and the search shuffle with): each global;
+the members of every class defined there, and its name, qualified name and bases; for functions, their code,
+defaults, closure cells and names, and the function an lru_cache wraps; the items of dicts, lists and tuples; the
+attributes (and slots) of instances of svsim and ladder classes, such as the CardDefs, the scripts and the bots'
+weights; set contents. Breadth first, each object once, a few levels
 deep. Objects are compared by identity (the snapshot holds them, so an id can't be reused), sets by value, and a
 dict, list or set that gained or lost an item has changed: the registries (scripts, listener sets, the card pool)
 are filled when the modules load, before the snapshot.
@@ -19,8 +22,11 @@ are filled when the modules load, before the snapshot.
 The caches are the exception: CACHES (memo dicts the search fills and some clear at a size limit) and every
 functools.lru_cache found are held by identity only and emptied before every game (reset_caches). They are pure
 memos (phase 1's decision replays in fresh processes matched games played in long-lived workers), so emptying them
-changes nothing but speed, and nothing one game leaves in them reaches the next. A dict found to grow in play that
-isn't listed here would show up as a void "added" — a false alarm to fix by listing it, after reading its code.
+changes nothing but speed, and nothing one game leaves in them reaches the next. Two more, for the host's trained
+pilots only (svsim.learn is closed to strategies): CACHE_ATTRS, a net's memo and counter attributes, not compared;
+GROWS, svsim.learn's module dicts and sets (models loaded once per process), which may gain items but not lose or
+replace one, and are then snapshotted again. A dict found to grow in play that isn't listed here would show up as a
+void "added" — a false alarm to fix by listing it, after reading its code.
 
 What it doesn't see: a change made and undone inside one game (ladder/audit.py replays every game of a period before
 it advances: it sees a change to the rules, not one to a bot's search), the inside of objects it doesn't follow
@@ -47,6 +53,16 @@ CACHES = (                                         # module, global: pure memo d
     ("svsim.core.state", "_SHARED"),
 )
 _ENUM_CACHES = ("_value2member_map_", "_unhashable_values_")    # Flag keeps its composite members here
+CACHE_ATTRS = {                                    # (module, class): instance attributes not compared (LD-42): memos,
+    ("svsim.learn.setnet", "SetNet"): frozenset({  # counters, and the rows a net adds for cards it meets in play.
+        "_table", "_idx", "_pool", "_zone_sums", "_live_sums", "_live_hits", "_live_misses", "card_ids", "static"}),
+}                                                  # Host-only (svsim.learn is closed to strategies): the pilots
+GROWS = ("svsim.learn.",)                         # their module globals that are dicts or sets may gain items (the
+#                                                    models loaded once per process, warnings given once), never lose
+#                                                    or replace one; the snapshot is then taken again
+STDLIB = ("random", "collections", "functools", "dataclasses", "heapq", "bisect", "statistics", "copy", "enum",
+          "typing", "math", "cmath", "itertools")   # what strategies may import: its globals, and the members of the
+#                                                    classes and functions defined there (LD-42: random.Random's)
 
 
 def _watched(name) -> bool:
@@ -55,6 +71,10 @@ def _watched(name) -> bool:
 
 def _ours(obj) -> bool:
     return _watched((getattr(type(obj), "__module__", None) or "").split(".")[0])
+
+
+def _cache_attrs(cls) -> frozenset:
+    return CACHE_ATTRS.get((getattr(cls, "__module__", None), getattr(cls, "__qualname__", None)), frozenset())
 
 
 def _cell(c):
@@ -82,7 +102,7 @@ def _members(obj):
     if isinstance(obj, property):
         return [("fget", obj.fget), ("fset", obj.fset), ("fdel", obj.fdel)]
     if isinstance(obj, type):
-        if not _watched(obj.__module__):
+        if not (_watched(obj.__module__) or obj.__module__ in STDLIB):
             return None
         own = [(k, v) for k, v in vars(obj).items() if not (isinstance(obj, enum.EnumType) and k in _ENUM_CACHES)]
         return own + [(("type", "__name__"), obj.__name__), (("type", "__qualname__"), obj.__qualname__),
@@ -91,14 +111,17 @@ def _members(obj):
         return list(dict.items(obj))
     if isinstance(obj, (list, tuple)):
         return list(enumerate(list.__iter__(obj) if isinstance(obj, list) else tuple.__iter__(obj)))
-    if isinstance(obj, (types.ModuleType, enum.Enum, functools._lru_cache_wrapper)):
+    if isinstance(obj, functools._lru_cache_wrapper):
+        return [("__wrapped__", getattr(obj, "__wrapped__", GONE))]    # LD-42: the function under the cache
+    if isinstance(obj, (types.ModuleType, enum.Enum)):
         return None                                # modules are entered from the top; an enum member's value is
         #                                            itself (members cache attributes as they're used)
     if _ours(obj):
         out = [("__class__", type(obj))]
         d = getattr(obj, "__dict__", None)
+        skip = _cache_attrs(type(obj))
         if isinstance(d, dict):
-            out += [(("attr", k), v) for k, v in dict.items(d)]
+            out += [(("attr", k), v) for k, v in dict.items(d) if k not in skip]
         for cls in type(obj).__mro__:
             slots = cls.__dict__.get("__slots__", ())
             for s in (slots,) if isinstance(slots, str) else slots:
@@ -114,7 +137,7 @@ class Snapshot:
     path]; `modules`: name -> module, for every watched module loaded; `lru`: the lru caches found."""
 
     def __init__(self):
-        self.records, self.sets, self.modules, self.held, self.lru = [], [], {}, [], []
+        self.records, self.sets, self.modules, self.held, self.lru, self.grows = [], [], {}, [], [], []
         self.relaxed = False                       # a lazy global was let through (see changes)
 
 
@@ -135,7 +158,7 @@ def _how(obj) -> str:
 def _reader(obj, how, keys):
     """A function giving the values of `keys` in `obj` now, as one tuple (GONE for a missing one)."""
     n = len(keys)
-    if how in ("dict", "moddict"):
+    if how in ("dict", "moddict", "grows"):
         return lambda o: tuple(map(dict.get, repeat(o, n), keys, repeat(GONE, n)))
     if how == "class":
         def read_class(o):
@@ -185,13 +208,16 @@ def _size(obj, how):
         return list.__len__(obj)
     if how == "inst":
         d = getattr(obj, "__dict__", None)
-        return dict.__len__(d) if isinstance(d, dict) else 0
-    return None
+        if not isinstance(d, dict):
+            return 0
+        skip = _cache_attrs(type(obj))
+        return dict.__len__(d) if not skip else sum(1 for k in dict.keys(d) if k not in skip)
+    return None                                    # a function, a tuple; a GROWS dict may gain items
 
 
-def _caches() -> set:
+def _caches(which=CACHES) -> set:
     out = set()
-    for mod, name in CACHES:
+    for mod, name in which:
         d = getattr(sys.modules.get(mod), name, None)
         if isinstance(d, dict):
             out.add(id(d))
@@ -202,16 +228,24 @@ def snapshot() -> Snapshot:
     import builtins
     s = Snapshot()
     queue, seen = [], set(_caches())               # the caches: held by identity (their global), never followed
+    grows = set()
     mods = sorted((n, m) for n, m in list(sys.modules.items()) if _watched(n) and m is not None)
-    for name, m in mods + [("builtins", builtins)]:
+    std = [(n, sys.modules[n]) for n in STDLIB if sys.modules.get(n) is not None]
+    for name, m in mods + [("builtins", builtins)] + std:
         s.modules[name] = m
         d = getattr(m, "__dict__", None)
         if not isinstance(d, dict) or id(d) in seen:
             continue
         seen.add(id(d))
         keys = list(dict.keys(d))
+        if name.startswith(GROWS):
+            grows.update(id(v) for v in dict.values(d) if type(v) in (dict, set))
         _record(s, d, "moddict", keys, name)
-        if name != "builtins":
+        if name in STDLIB:                         # its own classes and functions only (not its caches)
+            queue += [(v, f"{name}.{k}", 1) for k in keys
+                      if isinstance(v := dict.get(d, k), (type, types.FunctionType)) and
+                      getattr(v, "__module__", None) == name]
+        elif name != "builtins":
             queue += [(dict.get(d, k), f"{name}.{k}", 1) for k in keys]
     i = 0
     while i < len(queue):
@@ -224,7 +258,7 @@ def snapshot() -> Snapshot:
         if isinstance(obj, functools._lru_cache_wrapper):
             s.lru.append(obj)
         if isinstance(obj, (set, frozenset)):
-            s.sets.append([obj, frozenset(obj), path])
+            s.sets.append([obj, frozenset(obj), path, id(obj) in grows])
             continue
         try:
             members = _members(obj)
@@ -233,10 +267,13 @@ def snapshot() -> Snapshot:
         if members is None:
             continue
         how = _how(obj)
+        if id(obj) in grows:
+            how = "grows"
+            s.grows.append((obj, dict.__len__(obj)))
         keys = [k for k, _ in members]
         if how != "tuple":                         # a tuple can't change; what it holds is followed below
             _record(s, obj, how, keys, path)
-        sep = "[{}]" if how in ("dict", "list", "tuple") else ".{}"
+        sep = "[{}]" if how in ("dict", "list", "tuple", "grows") else ".{}"
         queue += [(v, path + sep.format(_short(k, 40)), depth + 1) for k, v in members]
     return s
 
@@ -255,6 +292,11 @@ def reset_caches(snap: Snapshot | None = None) -> None:
             dict.clear(d)
     for f in (snap.lru if snap is not None else ()):
         f.cache_clear()
+
+
+def _same(k, a, b) -> bool:
+    """Unchanged: the same object; for a class's name, an equal str (a builtin type makes it anew at each reading)."""
+    return a is b or (type(a) is str and type(b) is str and isinstance(k, tuple) and k[0] == "type" and a == b)
 
 
 def changes(snap: Snapshot, limit: int = 5) -> list[str]:
@@ -284,14 +326,14 @@ def changes(snap: Snapshot, limit: int = 5) -> list[str]:
         if not all(map(is_, now, before)):
             lazy = []
             for k, a, b in zip(keys, now, before):
-                if a is b:
+                if _same(k, a, b):
                     continue
                 if how == "moddict" and b is None and a is not GONE:
                     lazy.append(k)                 # a lazy global set for the first time
                     continue
                 if say(f"{path}: {_short(k)} {'removed' if a is GONE else 'changed'}"):
                     return out
-            if lazy and len(lazy) == sum(a is not b for a, b in zip(now, before)):
+            if lazy and len(lazy) == sum(not _same(k, a, b) for k, a, b in zip(keys, now, before)):
                 rec[3] = now                       # from now on its value is the one to keep
                 snap.relaxed = True
         if size is not None and _size(obj, how) != size:
@@ -306,8 +348,8 @@ def changes(snap: Snapshot, limit: int = 5) -> list[str]:
                         return out
             elif say(f"{path}: {_size(obj, how) - size:+d} members"):
                 return out
-    for obj, fs, path in snap.sets:
-        if fs != obj:
+    for obj, fs, path, grow in snap.sets:
+        if not (fs <= obj if grow else fs == obj):
             if say(f"{path}: set changed"):
                 return out
     return out
@@ -329,16 +371,33 @@ PRELOAD = ("svsim.cards.library", "svsim.cards.demo", "svsim.cards.decks", "svsi
            "svsim.tools.arena", "ladder.base", "ladder.deal", "ladder.interface", "ladder.strategy", "ladder.runner")
 
 
-def preload():
-    """What games load, loaded before the warm-up and the first snapshot (so the snapshot follows it from the start);
-    runner._warm_up then plays one game, which loads the rest and sets the lazy globals."""
+def preload(extra=()):
+    """What games load, loaded before the warm-up and the first snapshot (so the snapshot follows it from the start):
+    PRELOAD, STDLIB, every module of svsim a strategy may import (LD-42: one first loaded during a game was taken into
+    the next snapshot with whatever that game did to it), and `extra` (a guarded task's own module). runner._warm_up
+    then plays one game, which sets the lazy globals."""
     import importlib
-    for m in PRELOAD:
+    import pkgutil
+
+    from ladder.codecheck import DENIED_PREFIXES
+    for m in PRELOAD + STDLIB + tuple(extra):
         importlib.import_module(m)
+    import svsim
+    for info in pkgutil.walk_packages(svsim.__path__, "svsim."):
+        name = info.name
+        if any(name == d or name.startswith(d + ".") for d in DENIED_PREFIXES) or \
+                any(part.startswith("_") for part in name.split(".")):
+            continue
+        try:
+            importlib.import_module(name)
+        except Exception:                          # noqa: BLE001, S110 - a module that can't load can't be later either
+            pass
 
 
 def stale(snap: Snapshot) -> bool:
     """True if the snapshot should be taken again after a clean task: a watched module was loaded since, or a lazy
     global got its value (so what it holds is followed from now on)."""
     return snap.relaxed or any(_watched(n) and m is not None and n not in snap.modules
-                               for n, m in list(sys.modules.items()))
+                               for n, m in list(sys.modules.items())) or \
+        any(dict.__len__(d) > n for d, n in snap.grows) or \
+        any(grow and len(obj) > len(fs) for obj, fs, _, grow in snap.sets)

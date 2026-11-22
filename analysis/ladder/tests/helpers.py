@@ -190,10 +190,12 @@ class PatchesScripts(Random):
 
 
 def task(t, beat=None):
-    """A runner.guarded_map task for the tests: t is "ok", "hang", "change", "die" or "raise"."""
+    """A runner.guarded_map task for the tests: t is "ok", "hang", "linger", "change", "die" or "raise"."""
     import os
     if t == "hang":
         beat[0], beat[1] = 1, time.monotonic_ns()
+        time.sleep(600)
+    if t == "linger":                                   # stuck with no clock on (LD-42)
         time.sleep(600)
     if t == "change":
         from svsim.cards.pool import POOL
@@ -246,3 +248,35 @@ class RenamesAMove(Random):
         from svsim.core.actions import Evolve
         Evolve.__name__ = "Evolved"
         return super().act(pos, actions)
+
+
+
+class PatchesRandom(Random):
+    """Wraps random.Random.shuffle on its first decision: the same shuffle in a different function (the deal and the
+    search shuffle with it), so the game plays as it would; it outlasts the game: void, worker replaced (LD-42)."""
+    def act(self, pos, actions):
+        import random
+        if not getattr(random.Random.shuffle, "wrapped_by_a_strategy", False):
+            inner = random.Random.shuffle
+
+            def shuffle(rng, x):
+                return inner(rng, x)
+            shuffle.wrapped_by_a_strategy = True
+            random.Random.shuffle = shuffle
+        return super().act(pos, actions)
+
+def _lingering(n):
+    try:
+        yield n
+    finally:                                            # runs when the generator is freed: after the game
+        time.sleep(600)
+
+
+class Lingers(Random):
+    """Keeps a started generator whose finally never ends; it runs when the strategy is freed after the game, off
+    every clock (the code reader refuses a yield inside a try, LD-42): the idle watchdog voids the game, replaces the
+    worker, and the next game plays."""
+    def __init__(self, seed=0):
+        super().__init__(seed)
+        self.left = _lingering(1)
+        next(self.left)

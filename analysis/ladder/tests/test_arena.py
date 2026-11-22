@@ -133,13 +133,15 @@ def test_refusals(field, tmp_path):
 def test_resumed_outcomes_become_logs():
     # LD-40: the resume run asks through runner.guarded_map; a hang in a decision loses by timeout, a hang while
     # loading or a dead worker is void, and a continuation during which the simulator changed is void
-    from ladder.runner import LOAD
+    from ladder.runner import IDLE, LOAD
     j = {"id": "r-v0-c0001"}
     ok = {"id": "r-v0-c0001", "result": "normal", "winner": 1, "loser": None}
     assert arena._resumed(j, {"value": ok}) == ok
     t = arena._resumed(j, {"timeout": 1, "error": "ran past 30.0s of wall time"})
     assert (t["result"], t["loser"], t["winner"]) == ("timeout", 1, 0)
     assert arena._resumed(j, {"timeout": LOAD, "error": "x"})["result"] == "void"
+    idle = arena._resumed(j, {"timeout": IDLE, "error": "nothing ran on any clock for 300s"})   # LD-42
+    assert idle["result"] == "void" and "no clock" in idle["error"]
     assert arena._resumed(j, {"died": 9})["result"] == "void"
     c = arena._resumed(j, {"value": ok, "changed": "svsim.cards.pool.POOL: x"})
     assert c["result"] == "void" and c["voided_result"] == "normal" and c["winner"] is None

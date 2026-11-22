@@ -20,19 +20,21 @@
    decision, plain and with every hook written out).
 7. speed: 2300 keyed games of the baseline lists on all cores (the runner alone, no pool): games per hour, for the
    practice arena's time limit. With the tripwire on (LD-40): a false alarm would void games and fail this step.
-8. tripwire (LD-40, LD-41): 6 keyed games in one worker: a test strategy that rewrites shared card definitions, one
-   that adds a member to the scripts' base class, one that adds a card id to the scripts' listener registry, each
-   followed by a plain game. The three are void with the reason and the original result kept; the plain ones after
-   them are normal and replay (the worker was replaced).
-9. guarded tasks (LD-40): runner.guarded_map, as puzzles and the arena's resume use it, on Windows: a task that
-   changes the simulator is marked and its worker replaced, a hang is stopped by the clock, a worker that exits is
-   that task's alone.
+8. tripwire (LD-40, LD-41, LD-42): 10 keyed games in one worker: a test strategy that rewrites shared card
+   definitions, one that adds a member to the scripts' base class, one that adds a card id to the scripts' listener
+   registry, one that wraps random.Random.shuffle (the standard library is watched too), each followed by a plain
+   game. The four are void with the reason and the original result kept; the plain ones after them are normal and
+   replay (the worker was replaced). Then one that leaves code running off every clock after its game (a
+   generator's finally): the idle watchdog (15 s here) voids it and the plain game after it plays in a new worker.
+9. guarded tasks (LD-40, LD-42): runner.guarded_map, as puzzles and the arena's resume use it, on Windows: a task
+   that changes the simulator is marked and its worker replaced, a hang is stopped by the clock, a worker that exits
+   is that task's alone, a task stuck with no clock on is stopped by the idle watchdog (10 s here).
 10. audit (LD-40): ladder/audit.py replays every game of steps 2, 7 and 8 move by move in clean processes; the only
    ones allowed to fail are none (the void ones are skipped).
 
-Seeds: 93150000-93150019 (2, 3), 93150020-93150025 (8) and 93150100-93152399 (7), host measurement second segment
+Seeds: 93150000-93150019 (2, 3), 93150020-93150029 (8) and 93150100-93152399 (7), host measurement second segment
 (SEEDS.md); 4 replays p1b's own; 5 and 6 reuse the probe bank seeds the tests use (99001000+, 99001520-99001559), on
-purpose. A dry run elsewhere (--dry, with --key a throwaway file and --speed-games small) uses 93403000-93403025 and
+purpose. A dry run elsewhere (--dry, with --key a throwaway file and --speed-games small) uses 93403000-93403029 and
 93403100 onward instead (host probe second segment).
 Writes RUNS/<commit>/keyed.jsonl, speed.jsonl, tripwire.jsonl, summary.json (one folder per commit, "-dirty" if the
 working tree differs: a second run on the same code skips the games already played, a run on new code plays its
@@ -66,7 +68,10 @@ DRY_TRIP = 93403020
 DRY_SPEED = 93403100
 DEFAULT = "bot:mcts:100+plan"
 TRIP_STRATEGIES = ["py:helpers:ChangesCards", "py:helpers:Random", "py:helpers:PatchesScripts", "py:helpers:Random",
-                   "py:helpers:GrowsRegistry", "py:helpers:Random"]
+                   "py:helpers:GrowsRegistry", "py:helpers:Random", "py:helpers:PatchesRandom", "py:helpers:Random",
+                   "py:helpers:Lingers", "py:helpers:Random"]
+TRIP_IDLE = 15.0                                  # the idle watchdog's limit in step 8 (LD-42; 300 s by default)
+GUARD_IDLE = 10.0                                 # and in step 9
 
 
 def codes():
@@ -282,30 +287,34 @@ def main():
     tjobs = [{"id": f"w-{t0 + k}", "seed": t0 + k, "first": 0, "decks": [cs[1], cs[4]],
               "strategies": [spec, "py:helpers:Random"], "strategy_seeds": None, "labels": {"check": "base-2 LD-40"}}
              for k, spec in enumerate(TRIP_STRATEGIES)]
-    runner.run(tjobs, str(path), workers=1, step_limit=30.0, quiet=True, key=key)
+    runner.run(tjobs, str(path), workers=1, step_limit=30.0, quiet=True, key=key, idle_limit=TRIP_IDLE)
     rows = {g["id"]: g for g in read(path) if g["id"].startswith("w-")}
     bad = []
     for k, spec in enumerate(TRIP_STRATEGIES):
         g = rows.get(f"w-{t0 + k}")
         if g is None:
             bad.append({"id": f"w-{t0 + k}", "why": "missing"})
-        elif "Random" in spec.split(":")[-1]:
+        elif spec == "py:helpers:Random":            # a plain game (PatchesRandom is a trip strategy)
             ok, why = replay_moves(g) if g["result"] in ("normal", "draw") else (False, f"result {g['result']}")
             if not ok:
                 bad.append({"id": g["id"], "why": why})
+        elif spec.endswith(":Lingers"):              # stopped by the idle watchdog after its game (LD-42)
+            if not (g["result"] == "void" and "nothing ran on any clock" in str(g.get("error", ""))):
+                bad.append({"id": g["id"], "why": f"{g['result']}: {str(g.get('error', ''))[:200]}"})
         elif not (g["result"] == "void" and g.get("voided_result") in ("normal", "draw")
                   and "LD-40" in str(g.get("error", ""))):
             bad.append({"id": g["id"], "why": f"{g['result']}: {str(g.get('error', ''))[:200]}"})
     say("tripwire", {"games": len(rows), "failed": bad, "ok": len(rows) == len(TRIP_STRATEGIES) and not bad})
 
     # 9. guarded tasks (puzzles, the arena's resume)
-    got = runner.guarded_map("helpers:task", ["ok", "change", "ok", "hang", "ok", "die", "ok"], workers=1,
-                             step_limit=5.0)
+    got = runner.guarded_map("helpers:task", ["ok", "change", "ok", "hang", "ok", "die", "ok", "linger", "ok"],
+                             workers=1, step_limit=5.0, idle_limit=GUARD_IDLE)
     try:
         want = (got[0].get("value") and got[2].get("value") and "changed" in got[1] and "changed" not in got[2]
                 and got[0]["value"]["costs"] == got[2]["value"]["costs"] == got[4]["value"]["costs"]
                 and got[1]["value"]["pid"] != got[2]["value"]["pid"] and got[3].get("timeout") == 1
-                and got[5] == {"died": 3} and "value" in got[6])
+                and got[5] == {"died": 3} and "value" in got[6] and got[7].get("timeout") == runner.IDLE
+                and "value" in got[8])
     except (AttributeError, KeyError, TypeError):
         want = False
     say("guarded", {"tasks": [sorted(g or {}) for g in got], "ok": bool(want)})
