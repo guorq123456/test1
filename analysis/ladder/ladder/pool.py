@@ -130,9 +130,8 @@ def pick_opponent(a, members, mu: float, rng: random.Random, cr: float | None = 
     within it, by matching weight. Nobody within 200 in any class (S2 doesn't cover it):
     - far="wait" (the live pool, A27): NoOpponent; the pool draws another initiator and this one waits until
       someone comes within 200;
-    - far="closest" (frozen pools only, the evaluator and the gate, A28, pending Salem): the member with the
-      closest CR (ties uniformly), marked "far". Frozen opponents never move back within 200, so waiting would be
-      for ever.
+    - far="closest" (A28, not adopted: Salem's S3 keeps frozen pools strict too; kept for comparison probes): the
+      member with the closest CR (ties uniformly), marked "far".
     Shared by the pool, the frozen-pool evaluator and the gate."""
     mine = a.cr if cr is None else cr
     others = [m for m in members if m is not a]

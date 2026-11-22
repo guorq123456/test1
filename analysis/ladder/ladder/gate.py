@@ -10,7 +10,7 @@ How a pair is played: the new and the old version each play one game against the
 same seed, in the same seat (so the same deal and the same first player), with the same strategy seeds on both
 sides. Seats alternate pair by pair (half each). The opponent is drawn from the frozen pool (the member itself left
 out) with the matching the member meets on the ladder (pool.pick_opponent from the member's CR; S2: only members
-within 200; a member with nobody within 200 plays the closest, as in the evaluator, A28 pending Salem). A pair with the
+within 200; a member with nobody within 200 in the frozen pool can't be gated: Salem's S3, A30). A pair with the
 same result twice is concordant and skipped; a discordant pair counts, "won" when the new version won it. A crash,
 illegal move or timeout loses for the side that made it; a void game (no one to blame) voids its pair, and if more
 than 2% of the pairs are void the whole gate is invalid (A24).
@@ -194,7 +194,7 @@ class Gate:
         self.cand = Candidate(member, me.craft, me.deck, new, cr=me.cr)
         if E.FAR == "wait" and not near_by_craft(self.cand, self.others, me.cr):
             raise PoolError(f"{member} has nobody within {rules.WINDOW} in the frozen pool (CR {me.cr}): on the ladder it "
-                            "plays nobody (S2, A27), so there is nothing to test it against")
+                            "plays nobody (S2, S3, A30), so there is nothing to test it against")
         self.kind, self.new, self.old, self.delta = kind, new, old, delta
         self.change, self.prediction, self.resubmit_of, self.since = change, prediction, resubmit_of, since
         self.compute_is_the_point = compute_is_the_point

@@ -32,8 +32,8 @@ def step_k(d: int) -> int:
 
 
 def delta(mine: int, theirs: int, won: bool) -> int:
-    """The points one decided game moves my CR (§3). Any gap is accepted: the live pool matches only within 200
-    (S2), but a frozen pool may play past it (A28), and past 175 the change is the fixed +8 / -24 (or +24 / -8)."""
+    """The points one decided game moves my CR (§3). Any gap is accepted (pools match only within 200 since S2;
+    between 175 and 200 the change is the fixed +8 / -24, or +24 / -8)."""
     if not (isinstance(mine, int) and isinstance(theirs, int)):
         raise TypeError("CR is always an integer")
     d = mine - theirs

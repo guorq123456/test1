@@ -114,7 +114,9 @@ def test_freeze_uses_the_last_1000_games(tmp_path):
 
 
 def test_repeat_sync_finds_a_known_strength():
-    frozen = [E.Frozen(mid=f"f{i}", anon="", craft=c, cr=1500, deck=[], strategy="") for i, c in
+    # a field spread 1350-1650 (mu 1500): the candidate sits far inside it, away from the edge where S3's strict
+    # waiting would stop it (LD-22; next test)
+    frozen = [E.Frozen(mid=f"f{i}", anon="", craft=c, cr=1350 + 50 * i, deck=[], strategy="") for i, c in
               enumerate((1, 2, 3, 4, 5, 6, 7))]
     others, mu = E.opponents_for(frozen, None)
     vals = [E.repeat_sync(lambda o, g: g.random() < 0.56, others, mu, 3000, 2000, random.Random(k))

@@ -14,11 +14,11 @@ mu is the mean of the other members' fixed CRs and stays put; the candidate star
 Every game is the candidate against an opponent drawn by the pool's own matching (pool.pick_opponent: class
 uniformly, drawn again while it has nobody within 200 (Salem's S2), then by matching weight). One repeat is `games`
 decided games (draws don't count, A3); its value is the mean CR over the last `tail` of them minus mu. A candidate
-whose CR gets more than 200 past every frozen member has nobody within reach; frozen members never move back, so
-(A28, pending Salem; FAR below) it plays the closest one, and the start says "far". With FAR = "wait" (S2 read
-strictly) the repeat would stop there instead and its remaining games count at that CR: the value is then a bound,
-the result says so ("stuck"), and made-up repeats read a candidate 50-100 above the strongest frozen member 70-100
-too high (LD-22). Repeats are independent (fresh seeds,
+whose CR gets more than 200 past every frozen member has nobody within reach, and frozen members never move back:
+by Salem's ruling S3 (11-22, 「严格停住，不打」) it plays nobody, so the repeat stops there and its remaining games
+count at that CR (A30). The value is then a bound and the result says so ("stuck": which repeats, after how many
+games, at the top or the bottom). Made-up repeats read a candidate 50-100 above the strongest frozen member 70-100
+too high this way (LD-22); FAR = "closest" (the closest member instead, A28, not adopted) is kept for comparison. Repeats are independent (fresh seeds,
 fresh start), so the interval is Student's t over the repeat values: the strong game-to-game correlation inside a
 repeat never enters it. The phase-1 fluctuation check (20 evaluations of one strategy) tests that.
 
@@ -49,7 +49,7 @@ from ladder.leaderboard import load as load_series, t975  # noqa: E402
 from ladder.pool import CRAFT_ZH, NoOpponent, PoolError, near_by_craft, pick_opponent  # noqa: E402
 
 FREEZE_GAMES = 1000
-FAR = "closest"     # A28 (pending Salem): nobody within 200 in a frozen pool -> the closest; "wait" = stop (S2 strict)
+FAR = "wait"        # S3 (Salem 11-22): nobody within 200 in a frozen pool -> stop; "closest" = A28, not adopted
 
 
 @dataclass

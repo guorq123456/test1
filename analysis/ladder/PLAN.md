@@ -7,7 +7,7 @@
 - 阶段：**0（侦察，只读）已完成**，2026-11-21。产出：ENVIRONMENT.md（含对照表、CR 核对）、DEVIATIONS.md、SEEDS.md、LEDGER.md、GATES.md（空）。
 - 阶段 1 进行中（11-21 起）。已完成：1.1 CR 结算（ladder/rules.py）、1.2 不偷看的底座（base.py、strategy.py）、1.3 批量对战和重放（runner.py、replay.py）、1.4 池管理器（pool.py）、1.5 冻结池评测器（evaluator.py）、1.6 排行榜（leaderboard.py）、1.7 检验工具（gate.py）。测试 120 个全过（tests/，11-22 按 S2 改过）。假对局上的统计预检：tools/check_stats.py、gate.py selfcheck（LD-12～LD-16）。种子段已在项目登记表上登记（SEEDS.md）。
 - 11-21 那一轮真对局检查（电脑 C:\claude\ladder-runs\p1）已跑完：基线、重放、把关自检、已知强弱第一轮、波动。11-22 03:35Z Salem 裁定 S2（分差超过 200 永不匹配，该职业没人就重抽），匹配代码、评估器、把关、测试已改（测试 120 个全过），旧结果作废不删（A29）。
-- 下一步：在电脑上按 S2 重跑（C:\claude\ladder-runs\p1b-s2.cmd → p1b）：基线 → 重放 → 把关自检 → 已知强弱第二轮 → 波动，约 8～9 小时。跑完补验收报告，交 Salem 验收，之后 1.9 锁定。冻结池里谁都够不着怎么办（A28）待 Salem 定。
+- 下一步：在电脑上按 S2 重跑（C:\claude\ladder-runs\p1b-s2.cmd → p1b）：基线 → 重放 → 把关自检 → 已知强弱第二轮 → 波动，约 8～9 小时。跑完补验收报告，交 Salem 验收，之后 1.9 锁定。冻结池里谁都够不着：Salem 11-22 04:27Z 定了严格停住（S3、A30）。
 - 待 Salem：结论账本在哪；玩家提示词；外部玩家怎么接入；假设 A1、A7、A8。（C2 已由 Salem 裁定 S1 定下，11-21 07:12Z，见 DEVIATIONS）
 - 不写任何策略，不往池子里放任何东西。
 
