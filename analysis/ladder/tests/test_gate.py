@@ -182,3 +182,22 @@ def test_a_torn_game_log_does_not_block_later_gates(tmp_path, frozen):
     line = G.read_ledger(tmp_path)[0]
     assert g.gid == "G-0002" and line["interrupted"] and line["seeds_used"] == [99001850]
     assert "1 行没写完" in line["seed_note"] and 99001850 in g.used
+
+
+def test_a_nul_only_game_log_counts_as_an_attempt(tmp_path, frozen):
+    # a power cut during the first line can leave only NUL bytes: still an attempt, the re-run moves on
+    fz, mid = frozen
+    d = tmp_path / "gates" / "G-0001"
+    d.mkdir(parents=True)
+    (d / "games.jsonl").write_bytes(b"\x00" * 300)
+    g = gate(tmp_path, fz, mid, "bot:greedy", "py:helpers:Random", "better", delta=10, share=0.5)
+    assert g.gid == "G-0002" and G.read_ledger(tmp_path)[0]["seeds_used"] == []
+
+
+def test_a_phase1_step_called_directly_writes_no_probe_record(tmp_path):
+    sys.path.insert(0, str(HERE.parent / "tools"))
+    import phase1_checks as PC
+    assert PC.RECORD == [False]
+    before = set((HERE.parent / "probe").glob("p1-*.json"))
+    PC.save(tmp_path, "check", {"x": 1})
+    assert set((HERE.parent / "probe").glob("p1-*.json")) == before and (tmp_path / "check" / "summary.json").exists()

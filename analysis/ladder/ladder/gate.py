@@ -168,7 +168,8 @@ def record_interrupted(out_dir, ledger: list[dict], root: Path) -> list[dict]:
     while True:
         gid = f"G-{n:04d}"
         games = Path(out_dir) / gid / "games.jsonl"
-        if gid in have or not games.exists() or not games.read_text(encoding="utf-8", errors="replace").strip(" \t\r\n\x00"):
+        # an attempt exists once it wrote anything at all (a power cut can leave only NUL bytes behind)
+        if gid in have or not games.exists() or games.stat().st_size == 0:
             return out
         start = Path(out_dir) / gid / "start.json"
         try:

@@ -489,6 +489,14 @@ def _stage(sub: dict, rid: str, subdir: Path) -> str:
     return f"py:{name}:{sub['meta']['class']}"
 
 
+def gate_note(subdir: Path, rid: str, text: str) -> Path:
+    """What the player is told about the gate of their receipt (RUNBOOK §3: handed back like the receipt). Only the
+    player's own receipts: no gate ids, members' ids, opponents or seeds."""
+    p = Path(subdir) / rid / "gate-note.md"
+    p.write_text(f"# 检验结果 {rid}\n\n{text}\n", encoding="utf-8")
+    return p
+
+
 def code_fingerprint(src: str, cls: str) -> str:
     """The strategy's code without comments, layout or docstrings (its syntax tree), with the class it names: two
     submissions with the same fingerprint are the same change (red line: 同一个改动没有实质修改，不重新检验)."""
@@ -840,7 +848,12 @@ def gate_update(subdir: Path, rid: str, pool_dir: Path, frozen: Path, seeds: tup
     if route and route["step"] < route["steps"] and not route.get("stop"):
         line.update(verdict="中间一步，不检验（A33）", gate=None)
         _append(subdir, line)
+        gate_note(subdir, rid, "多步改法的中间一步：照常查过了，不检验，也不换上池子。走完最后一步（或按 stop_if 停下的那一步）再检验。")
         return line
+    # where this update starts in the ledger (a route: its first step): only what happened before it counts below
+    start_id = route.get("route_of") or rid if route else rid
+    pos = next(i for i, l in enumerate(lines) if l.get("ev") == "receipt" and l.get("id") == start_id)
+    prior = lines[:pos]
     # the same change, gated before for this member (under any receipt): not gated again (red line)
     fp = code_fingerprint((subdir / "code" / f"{rec['spec'].split(':')[1]}.py").read_text(encoding="utf-8"),
                           rec["spec"].split(":")[2])
@@ -849,6 +862,7 @@ def gate_update(subdir: Path, rid: str, pool_dir: Path, frozen: Path, seeds: tup
             line.update(verdict=f"同一个改动，不重新检验（和 {l['receipt']} 一样，检验 {l['gate']}）", gate=None,
                         fingerprint=fp, same_as=l["receipt"])
             _append(subdir, line)
+            gate_note(subdir, rid, f"和你的 {l['receipt']} 是同一份代码（去掉注释、排版以后一样），同一个改动不重新检验。")
             return line
     # against the member's version now: an update received before another one passed is compared with the one
     # that passed, never with the version it was written against (it would otherwise replace a version it never
@@ -865,7 +879,7 @@ def gate_update(subdir: Path, rid: str, pool_dir: Path, frozen: Path, seeds: tup
         line["note"] = f"收件时成员是第 {was['version']} 版，现在是第 {m.version} 版：和现在这一版比"
     # an earlier gate of this member against this same version that did not pass: a new try must not be the same
     # change in other words, must name that gate and say what changed in substance (A46; the gate's 指回 column)
-    failed = [l for l in lines if l.get("ev") == "gated" and l.get("mid") == m.mid and l.get("gate")
+    failed = [l for l in prior if l.get("ev") == "gated" and l.get("mid") == m.mid and l.get("gate")
               and l.get("verdict") != "passed" and l.get("old") == old]
     resubmit_gate, since = None, ""
     if failed:
@@ -879,13 +893,27 @@ def gate_update(subdir: Path, rid: str, pool_dir: Path, frozen: Path, seeds: tup
             line.update(verdict=f"同一个改动（改动说明和预测和 {twin['receipt']} 一样），不重新检验", gate=None,
                         fingerprint=fp, same_as=twin["receipt"])
             _append(subdir, line)
+            gate_note(subdir, rid, f"改动说明和预测和你没过的 {twin['receipt']} 一字不差，算同一个改动，不重新检验。")
             return line
-        names = {l["receipt"]: l["gate"] for l in failed}
+        names = {}                                    # a failed route can be named by its last or its first receipt
+        for l in failed:
+            names[l["receipt"]] = l["gate"]
+            r0 = next((x for x in prior if x.get("ev") == "receipt" and x.get("id") == l["receipt"]), {})
+            if (r0.get("route") or {}).get("route_of"):
+                names[r0["route"]["route_of"]] = l["gate"]
         ro, since = meta.get("resubmit_of"), str(meta.get("since") or "").strip()
+        if route and not (ro and since):             # a route may carry them on its first step
+            m0 = subdir / start_id / "submission.json"
+            m0 = json.loads(m0.read_text(encoding="utf-8")) if m0.exists() else {}
+            ro, since = ro or m0.get("resubmit_of"), since or str(m0.get("since") or "").strip()
         if ro not in names or not since:
-            line.update(verdict=f"重交：这一版上已经有没过的检验（{'、'.join(sorted(names))}），要在 submission.json 里写 "
+            shown = "、".join(sorted({l["receipt"] for l in failed}))
+            line.update(verdict=f"重交：这一版上已经有没过的检验（{shown}），要在 submission.json 里写 "
                                 "resubmit_of（指回哪一次）和 since（实质改了什么）；不检验", gate=None, fingerprint=fp)
             _append(subdir, line)
+            gate_note(subdir, rid, f"这个成员现在这一版上已经有没过的检验（你的 {shown}）。再交要在 submission.json 里写 "
+                                   "resubmit_of（指回没过的那一次的回执编号）和 since（这次实质改了什么），见 submit.md "
+                                   "第一节。这次不检验。")
             return line
         resubmit_gate = names[ro]
     code = subdir / "code"
@@ -900,6 +928,18 @@ def gate_update(subdir: Path, rid: str, pool_dir: Path, frozen: Path, seeds: tup
     if res["verdict"] == "passed":
         line["version"] = pool.update(m.mid, rec["spec"], gate=res["gate"])         # the new version number
     _append(subdir, line)
+    v = res["verdict"]
+    if v == "passed":
+        text = "检验过了，已经换上池子（CR 沿用，匿名编号不变）。"
+    elif v.startswith("invalid: compute"):
+        text = "检验无效：新打法每步算力超过旧版的 1.08 倍。池子里还是原来那一版。"
+    elif v.startswith("invalid"):
+        text = "检验无效（作废的局太多）。池子里还是原来那一版。"
+    else:
+        text = "检验没过，池子里还是原来那一版。"
+    if v != "passed":
+        text += f"再交这个成员的更新，要写 resubmit_of（{rid}）和 since（实质改了什么），见 submit.md 第一节。"
+    gate_note(subdir, rid, ("（收件以后这个成员换过版本，这次是和现在那一版比的。）" if line.get("note") else "") + text)
     return line
 
 

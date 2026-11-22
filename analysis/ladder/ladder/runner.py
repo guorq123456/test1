@@ -259,9 +259,13 @@ def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=No
     out = Path(out_path)
     done = set()
     if out.exists():
-        for line in out.read_text(encoding="utf-8").splitlines():
-            if line.strip():
-                done.add(json.loads(line)["id"])
+        for line in out.read_text(encoding="utf-8", errors="replace").splitlines():
+            line = line.strip(" \t\r\n\x00")
+            if line:
+                try:                                     # a power cut can leave a half-written last line
+                    done.add(json.loads(line)["id"])
+                except (ValueError, KeyError):
+                    pass
     if isinstance(jobs, list):
         jobs = [j for j in jobs if j["id"] not in done]
         if not jobs:

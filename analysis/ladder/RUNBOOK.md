@@ -41,7 +41,7 @@
 
 - 每份：`py -m ladder.submit receive <提交目录> --player <代号> --pool C:\claude\ladder-host\pool --out C:\claude\ladder-host\subs --workers 15 --mask 0x3FC3FC`。回执原样给本人。
 - 卡组期：收下的新卡组 `py -m ladder.submit admit C:\claude\ladder-host\subs --receipt S-xxxx --pool C:\claude\ladder-host\pool`。
-- 策略期：收下的打法更新 `py -m ladder.submit gate C:\claude\ladder-host\subs --receipt S-xxxx --pool C:\claude\ladder-host\pool --frozen C:\claude\ladder-host\frozen\P<期>.json --seeds 88500000 89000000 --out C:\claude\ladder-host\gates --delta <这一期定的> --workers 15 --mask 0x3FC3FC`。过了自动换上；没过、中间一步都只记一笔。
+- 策略期：收下的打法更新 `py -m ladder.submit gate C:\claude\ladder-host\subs --receipt S-xxxx --pool C:\claude\ladder-host\pool --frozen C:\claude\ladder-host\frozen\P<期>.json --seeds 88500000 89000000 --out C:\claude\ladder-host\gates --delta <这一期定的> --workers 15 --mask 0x3FC3FC`。过了自动换上；没过、中间一步都只记一笔。每次跑完把 `C:\claude\ladder-host\subs\S-xxxx\gate-note.md`（检验结果，只有本人的回执编号）原样给本人。
 - `py -m ladder.submit status C:\claude\ladder-host\subs --pool C:\claude\ladder-host\pool --player <代号>` 看谁还缺哪个职业。
 
 ### 4. 天梯

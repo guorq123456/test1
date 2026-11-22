@@ -370,6 +370,24 @@ def test_an_accepted_update_goes_to_the_gate(tmp_path, monkeypatch):
     late = submit.gate_update(subs, "S-0007", pool.dir, tmp_path / "f.json", (1, 2), tmp_path / "gates", delta=3)
     assert calls[2]["old"] == now.strategy != was and "现在这一版" in late["note"]
     assert calls[2]["resubmit_of"] == "G-0002" and calls[2]["since"].startswith("换牌看对手职业")
+    note = (subs / "S-0006" / "gate-note.md").read_text(encoding="utf-8")
+    assert "resubmit_of" in note and "S-0003" in note and "G-0" not in note        # the player's own receipts only
+    assert "检验" in (subs / "S-0007" / "gate-note.md").read_text(encoding="utf-8")
+    # two updates received before either is gated: the first fails, the second is still gated (it could not have
+    # named a failure that had not happened yet); a route may carry resubmit_of/since on its first step
+    receipt("S-0008", spec="py:sub_S0008:Quick", change="甲方案", resubmit_of="S-0007", since="甲")
+    receipt("S-0009", spec="py:sub_S0009:Quick", change="乙方案", resubmit_of="S-0007", since="乙")
+    calls_before = len(calls)
+    submit.gate_update(subs, "S-0008", pool.dir, tmp_path / "f.json", (1, 2), tmp_path / "gates", delta=3)
+    sib = submit.gate_update(subs, "S-0009", pool.dir, tmp_path / "f.json", (1, 2), tmp_path / "gates", delta=3)
+    assert sib["gate"] is not None and len(calls) == calls_before + 2
+    receipt("S-0010", route={"steps": 2, "step": 1, "stop_if": "x"}, spec="py:sub_S0010:Quick", change="丙方案",
+            resubmit_of="S-0009", since="换了搜索的剪枝")
+    submit.gate_update(subs, "S-0010", pool.dir, tmp_path / "f.json", (1, 2), tmp_path / "gates", delta=3)
+    receipt("S-0011", route={"steps": 2, "step": 2, "route_of": "S-0010"}, spec="py:sub_S0011:Quick", change="丙方案二",
+            src="class Quick:\n    N = 11\n")
+    end = submit.gate_update(subs, "S-0011", pool.dir, tmp_path / "f.json", (1, 2), tmp_path / "gates", delta=3)
+    assert end["gate"] is not None and calls[-1]["since"] == "换了搜索的剪枝"
 
 
 def test_a_route_stop_mark_is_checked(tmp_path):

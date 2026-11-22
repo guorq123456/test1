@@ -74,6 +74,7 @@ KNOWN_EVAL = 92560000                    # + 20000 per candidate
 GATE_SEEDS = (92900000, 92950000)        # S2 re-run (11-21: 92650000-92700000)
 DEFAULT = "bot:mcts:100+plan"
 SCALE = [1.0]
+RECORD = [False]          # only main() at full scale writes probe/p1-*.json (a script calling a step never does)
 SWORD = 2
 EPS = (0.0, 0.15, 0.35, 0.6)
 # The second, finer round (A26): the first one's two weakest versions fell beyond what §3 can place (past 175 the
@@ -98,7 +99,7 @@ def save(runs: Path, step: str, out: dict):
     d.mkdir(parents=True, exist_ok=True)
     text = json.dumps(out, ensure_ascii=False, indent=1, default=lambda x: None)
     (d / "summary.json").write_text(text, encoding="utf-8")
-    if SCALE[0] == 1.0:                                  # a dry run never lands in the repository's records
+    if RECORD[0]:                                        # a dry run or a direct call never lands in the repository's records
         (LADDER / "probe").mkdir(exist_ok=True)
         (LADDER / "probe" / f"p1-{step}.json").write_text(text, encoding="utf-8")
     print(text, flush=True)
@@ -420,6 +421,7 @@ def main():
         stream.reconfigure(encoding="utf-8", errors="backslashreplace")
     a.mask = int(a.mask, 16) if a.mask else None
     SCALE[0] = a.scale
+    RECORD[0] = a.scale == 1.0
     from ladder import runner
     print(json.dumps({"limits": runner._limit(a.mask)}), file=sys.stderr, flush=True)   # this process too
     runs = Path(a.runs)

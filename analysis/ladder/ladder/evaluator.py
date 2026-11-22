@@ -137,6 +137,20 @@ def repeat_sync(play, others: list[Frozen], mu: float, games: int, tail: int, rn
     return sum(crs[-tail:]) / tail - mu
 
 
+def _jsonl(path: Path) -> list[dict]:
+    """The lines of a log that parse: a stop (or a power cut) can leave a half-written or NUL-filled last line."""
+    out = []
+    if Path(path).exists():
+        for line in Path(path).read_text(encoding="utf-8", errors="replace").splitlines():
+            line = line.strip(" \t\r\n\x00")
+            if line:
+                try:
+                    out.append(json.loads(line))
+                except ValueError:
+                    pass
+    return out
+
+
 class Evaluation:
     """One candidate, `repeats` repeats of `games` decided real games each, against a frozen pool."""
 
@@ -169,16 +183,13 @@ class Evaluation:
         self.counts: dict[str, int] = {}
         self.starts, self.used, self.inflight = {}, set(), {}
         self.n_started = [0] * repeats
-        if self.starts_path.exists():
-            for line in self.starts_path.read_text(encoding="utf-8").splitlines():
-                st = json.loads(line)
-                self.starts[st["id"]] = st
-                self.used.add(st["seed"])
-                self.n_started[st["rep"]] += 1
+        for st in _jsonl(self.starts_path):
+            self.starts[st["id"]] = st
+            self.used.add(st["seed"])
+            self.n_started[st["rep"]] += 1
         finished = set()
-        if self.games_path.exists():
-            for line in self.games_path.read_text(encoding="utf-8").splitlines():
-                log = json.loads(line)
+        for log in _jsonl(self.games_path):
+            if log.get("id") in self.starts:             # a start line lost to a torn write: its game is not counted
                 finished.add(log["id"])
                 self._fold(log)
         self.redo = [st for gid, st in self.starts.items() if gid not in finished]   # stopped by the machine
