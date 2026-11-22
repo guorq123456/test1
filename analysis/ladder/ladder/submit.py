@@ -1,0 +1,806 @@
+"""Submissions (phase 2, item 2.3): the entry point, and the checks a submission passes before it goes anywhere.
+
+    python -m ladder.submit precheck DIR [--deck-of-member CODE]      # format, deck, code; no games, counts nothing
+    python -m ladder.submit receive  DIR --player 甲 --pool POOLDIR --out SUBDIR [--workers 4] [--mask 0x3FC3FC]
+    python -m ladder.submit admit    SUBDIR --receipt S-0001 --pool POOLDIR   # an accepted new deck enters the pool
+
+A submission is one directory (public/submit.md is the players' description):
+    submission.json  {"type": "新卡组" | "打法更新" | "公共题", "member": the player's name for the member,
+                      "class": the strategy class, "deck": deck code (新卡组, 公共题),
+                      "change": what changed, "prediction": expected gap and why (打法更新),
+                      "route": {"steps": N, "step": k, "stop_if": "...", "route_of": "S-xxxx"} (multi-step, A33),
+                      "puzzle": puzzle id (公共题)}
+    strategy.py      the strategy: one module, the class named by "class", a subclass of ladder.interface
+                     .PlayerStrategy
+    notes.md         the strategy notes (the six items of the player prompt)
+    evidence.md      the practice-arena evidence (against whom, how many games, what came out)
+
+`receive` runs every check, writes a receipt (accepted / refused, with every reason) and appends one line to
+SUBDIR/submissions.jsonl, accepted or not. The ledger is append-only. Every received 新卡组 / 打法更新 uses one of
+the player's slots for the period, accepted or not (plan 名额: 没过关的也占; A32); a 公共题 uses none; the later steps
+of a declared multi-step route use none (A33).
+
+The checks (PHASE2-DESIGN.md 2.3):
+- format: the four files, the fields the type needs;
+- deck (新卡组): legal by the simulator's own rules (svsim.cards.decks.validate: 40 cards, 3 of a name, one class
+  plus Neutral, Rotation as the simulator has it: A7), every card scripted (runner.unscripted), one class;
+- slots: at most 7 members per player and 2 per list, 2 new decks per deck period, 3 updates per strategy period;
+  new decks only in a deck period, updates only in a strategy period;
+- code, read (no running): imports only from the allowed modules, none of the names and attributes that reach
+  files, the network, other processes, frames or the interpreter (static, by the syntax tree);
+- code, loaded in a separate process with an audit hook (PEP 578) that refuses files, sockets, processes, ctypes
+  and the garbage collector's object lists, and one short game against the default strategy there;
+- smoke: SMOKE_GAMES games against the default strategy, with the baseline lists; no crash, illegal move or timeout;
+- determinism: two of those games replayed decision by decision;
+- compute: per-step compute of the submission against the default strategy in the same seat, same seeds; above
+  1.08 a warning here (the gate refuses it: A25);
+- peek: at a few decisions of two smoke games, the real state is replaced by another one the strategy can't tell
+  from it (the opponent's unknown cards, both decks' order, the generator: base.vary_secrets); a strategy that only
+  reads what the hooks give makes the same choice. A different choice is refused.
+What these can't stop: code that is determined to reach the real state in the same Python process can (the audit
+hook is not a security boundary), and under S4 the players run in Salem's own account. Spot reading of the code
+covers the rest (plan 2.3).
+"""
+from __future__ import annotations
+
+import argparse
+import ast
+import gc
+import hashlib
+import json
+import os
+import random
+import secrets
+import shutil
+import subprocess
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent             # analysis/ladder/ladder
+LADDER = HERE.parent                                # analysis/ladder
+ROOT = HERE.parents[2]                              # the repository root (svsim)
+for p in (str(ROOT), str(LADDER)):
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
+SUBMIT_VERSION = "submit-1"
+TYPES = {"新卡组": "deck", "打法更新": "update", "公共题": "puzzle"}
+FILES = ("submission.json", "strategy.py", "notes.md", "evidence.md")
+UPDATES_PER_PERIOD = 3              # plan 名额: 策略期每人最多 3 次打法更新，没过关的也占
+SMOKE_SEEDS = (88300000, 88400000)  # the host's part of the tuning range (SEEDS.md)
+SMOKE_GAMES = 10
+PEEK_GAMES, PEEK_POINTS = 2, 3
+REPLAY_GAMES = 2
+COMPUTE_WARN = 1.08
+DEFAULT = "bot:mcts:100+plan"
+
+ALLOWED_TOP = {"__future__", "typing", "math", "random", "collections", "itertools", "functools", "dataclasses",
+               "heapq", "bisect", "statistics", "copy", "enum", "numpy", "svsim"}
+ALLOWED_LADDER = {"ladder.interface", "ladder.base"}
+DENIED_PREFIXES = ("svsim.learn", "svsim.tools")    # they load trained models (A12)
+BANNED_NAMES = {"open", "eval", "exec", "compile", "__import__", "globals", "locals", "vars", "breakpoint",
+                "input", "memoryview", "help", "exit", "quit", "__builtins__", "__loader__", "__spec__", "__file__"}
+ATTR_FUNCS = {"getattr", "setattr", "delattr", "hasattr"}   # allowed only with a written-out, allowed name
+ALLOWED_DUNDERS = {"__init__", "__name__", "__post_init__"}
+BANNED_ATTRS = {
+    # frames, code, the interpreter
+    "f_back", "f_locals", "f_globals", "f_builtins", "f_code", "tb_frame", "tb_next", "gi_frame", "gi_code",
+    "cr_frame", "cr_code", "ag_frame", "ag_code", "co_code", "mro", "modules",
+    # modules reachable as attributes of allowed modules
+    "sys", "os", "gc", "inspect", "ctypes", "ctypeslib", "subprocess", "socket", "importlib", "builtins", "io",
+    "pathlib", "shutil", "threading", "multiprocessing", "marshal", "pickle",
+    # files
+    "Path", "read_text", "read_bytes", "write_text", "write_bytes", "open", "unlink", "fromfile", "tofile",
+    "memmap", "loadtxt", "savetxt", "genfromtxt", "savez", "savez_compressed", "DataSource",
+    # processes, environment
+    "system", "popen", "environ", "getenv", "putenv",
+}
+
+
+class Refused(Exception):
+    pass
+
+
+# --- reading the code ----------------------------------------------------------------------------------------
+
+def _dunder(name: str) -> bool:
+    return name.startswith("__") and name.endswith("__") and name not in ALLOWED_DUNDERS
+
+
+def _module_problem(name: str) -> str | None:
+    if any(name == p or name.startswith(p + ".") for p in DENIED_PREFIXES):
+        return "它们能载入训练好的模型（A12）"
+    top = name.split(".")[0]
+    if top == "ladder":
+        return None if name in ALLOWED_LADDER else "ladder 里只能用 ladder.interface、ladder.base"
+    if top in ALLOWED_TOP:
+        return None
+    return "不在允许的模块里"
+
+
+def check_code(src: str, cls: str) -> list[str]:
+    """Problems found by reading the code (empty list: none). Nothing is run."""
+    try:
+        tree = ast.parse(src)
+    except SyntaxError as e:
+        return [f"语法错误：第 {e.lineno} 行，{e.msg}"]
+    for node in ast.walk(tree):
+        for child in ast.iter_child_nodes(node):
+            child._parent = node
+    problems, random_alias, classes = [], set(), []
+
+    def bad(node, what):
+        problems.append(f"第 {getattr(node, 'lineno', '?')} 行：{what}")
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for a in node.names:
+                why = _module_problem(a.name)
+                if why:
+                    bad(node, f"import {a.name}（{why}）")
+                if a.name == "random":
+                    random_alias.add(a.asname or "random")
+        elif isinstance(node, ast.ImportFrom):
+            if node.level:
+                bad(node, "相对 import（一个成员只交一个模块）")
+                continue
+            mod = node.module or ""
+            why = None if mod == "ladder" else _module_problem(mod)     # `from ladder import x`: checked per name
+            if why:
+                bad(node, f"from {mod} import ...（{why}）")
+                continue
+            for a in node.names:
+                if a.name == "*":
+                    bad(node, f"from {mod} import *")
+                    continue
+                full = f"{mod}.{a.name}"
+                if (mod == "ladder" and full not in ALLOWED_LADDER) or \
+                        any(full == p or full.startswith(p + ".") for p in DENIED_PREFIXES):
+                    bad(node, f"from {mod} import {a.name}（{_module_problem(full)}）")
+                if mod == "random" and a.name != "Random":
+                    bad(node, f"from random import {a.name}（要随机数用 self.random，不用全局的 random）")
+                if a.name in BANNED_NAMES or a.name in BANNED_ATTRS or _dunder(a.name):
+                    bad(node, f"from {mod} import {a.name}（这个名字不许用）")
+        elif isinstance(node, ast.Name):
+            if node.id in BANNED_NAMES or _dunder(node.id):
+                bad(node, f"{node.id}（不许用：碰文件、动态执行或解释器）")
+            elif node.id in ATTR_FUNCS:
+                parent = getattr(node, "_parent", None)
+                if not (isinstance(parent, ast.Call) and parent.func is node):
+                    bad(node, f"{node.id} 只能直接调用")
+        elif isinstance(node, ast.Attribute):
+            if node.attr in BANNED_ATTRS or _dunder(node.attr):
+                bad(node, f".{node.attr}（不许用：碰文件、别的进程、调用栈或解释器）")
+            if isinstance(node.value, ast.Name) and node.value.id in random_alias and node.attr != "Random":
+                bad(node, f"{node.value.id}.{node.attr}（要随机数用 self.random，不用全局的 random）")
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in ATTR_FUNCS:
+            name = node.args[1] if len(node.args) >= 2 else None
+            if not (isinstance(name, ast.Constant) and isinstance(name.value, str)):
+                bad(node, f"{node.func.id} 的属性名要写死成字符串")
+            elif name.value in BANNED_ATTRS or _dunder(name.value):
+                bad(node, f"{node.func.id}(..., {name.value!r})（这个属性不许碰）")
+        elif isinstance(node, ast.ClassDef) and isinstance(getattr(node, "_parent", None), ast.Module):
+            classes.append(node.name)
+    if cls not in classes:
+        problems.append(f"模块顶层没有类 {cls}")
+    return problems
+
+
+# --- the submission directory ----------------------------------------------------------------------------------
+
+def read_dir(d: Path) -> dict:
+    """The submission as a dict, or Refused with every format problem."""
+    d = Path(d)
+    problems = [f"缺文件 {f}" for f in FILES if not (d / f).is_file()]
+    if problems:
+        raise Refused(problems)
+    try:
+        meta = json.loads((d / "submission.json").read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        raise Refused([f"submission.json 读不了：{e}"])
+    if not isinstance(meta, dict):
+        raise Refused(["submission.json 要是一个对象"])
+    kind = TYPES.get(meta.get("type"))
+    if kind is None:
+        problems.append(f"类型要是 {'、'.join(TYPES)} 之一，不是 {meta.get('type')!r}")
+    for k in ("member", "class"):
+        if not isinstance(meta.get(k), str) or not meta[k].strip():
+            problems.append(f"submission.json 缺 {k}")
+    if kind in ("deck", "puzzle") and not isinstance(meta.get("deck"), str):
+        problems.append("新卡组、公共题要有 deck（卡组代码）")
+    if kind == "update":
+        for k in ("change", "prediction"):
+            if not isinstance(meta.get(k), str) or not meta[k].strip():
+                problems.append(f"打法更新要写 {k}（改了什么 / 预期差多少、为什么）")
+        r = meta.get("route")
+        if r is not None:
+            if not (isinstance(r, dict) and isinstance(r.get("steps"), int) and isinstance(r.get("step"), int)
+                    and 1 <= r["step"] <= r["steps"] and r["steps"] >= 2):
+                problems.append("route 要有 steps（总步数，至少 2）和 step（这是第几步）")
+            elif r["step"] == 1 and not str(r.get("stop_if", "")).strip():
+                problems.append("多步改法的第 1 步要写 stop_if（什么情况下中途停）")
+            elif r["step"] > 1 and not str(r.get("route_of", "")).startswith("S-"):
+                problems.append("多步改法第 2 步起要写 route_of（第 1 步的回执编号）")
+    if kind == "puzzle" and not isinstance(meta.get("puzzle"), str):
+        problems.append("公共题要写 puzzle（题号）")
+    for f in ("notes.md", "evidence.md"):
+        if not (d / f).read_text(encoding="utf-8", errors="replace").strip():
+            problems.append(f"{f} 是空的")
+    src = (d / "strategy.py").read_text(encoding="utf-8", errors="replace")
+    if problems:
+        raise Refused(problems)
+    return {"meta": meta, "kind": kind, "src": src, "dir": d}
+
+
+def check_deck(code: str) -> tuple[list, list[str]]:
+    """(card ids, problems) for a deck code, by the simulator's own rules (A7)."""
+    from ladder.runner import load_deck, unscripted
+    from svsim.cards.decks import craft_of, validate
+    from svsim.core.enums import Craft
+    try:
+        deck = load_deck(code)
+    except Exception as e:                                  # an unknown card id or a malformed code
+        return [], [f"卡组代码读不了（{type(e).__name__}: {e}）：有模拟器里没有的牌，或者代码写错了"]
+    problems = list(validate(deck))
+    if craft_of(deck) == Craft.NEUTRAL:
+        problems.append("要有一个职业（全中立或混了两个职业都不行）")
+    missing = unscripted(deck)
+    if missing:
+        from svsim.cards.pool import card
+        problems.append("这些牌有效果却没有脚本，会按白板打：" + "、".join(sorted({card(i).name for i in missing})))
+    return [c.card_id for c in deck], problems
+
+
+# --- the ledger -----------------------------------------------------------------------------------------------
+
+def ledger(subdir: Path) -> list[dict]:
+    p = Path(subdir) / "submissions.jsonl"
+    if not p.exists():
+        return []
+    return [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
+
+
+def _append(subdir: Path, rec: dict):
+    p = Path(subdir) / "submissions.jsonl"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with p.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        f.flush()
+
+
+def _members_of(lines: list[dict], player: str) -> dict:
+    """The player's member names -> pool member ids, from the admit lines."""
+    return {l["member"]: l["mid"] for l in lines if l.get("ev") == "admit" and l.get("player") == player}
+
+
+def check_slots(sub: dict, player: str, pool, lines: list[dict]) -> tuple[list[str], dict]:
+    """Slot and period problems, and what the receipt records about slots."""
+    from ladder.pool import (MAX_PER_LIST, MAX_PER_PLAYER, NEW_DECKS_PER_PERIOD, list_key, period_kind)
+    kind, meta = sub["kind"], sub["meta"]
+    pkind = period_kind(pool.period)
+    problems, info = [], {"period": pool.period, "period_kind": pkind, "uses_slot": False}
+    mine = [l for l in lines if l.get("ev") == "receipt" and l.get("player") == player
+            and l.get("period") == pool.period]
+    names = _members_of(lines, player)
+    if kind == "deck":
+        info["uses_slot"] = True
+        if pkind != "deck":
+            problems.append(f"第 {pool.period} 期是{ {'strategy': '策略期', 'baseline': '基线期'}.get(pkind, pkind)}，只有卡组期收新卡组")
+        used = sum(1 for l in mine if l["kind"] == "deck")
+        if used >= NEW_DECKS_PER_PERIOD:
+            problems.append(f"这一期已经交过 {used} 副新卡组（每个卡组期最多 {NEW_DECKS_PER_PERIOD} 副，没过关的也算）")
+        active = [m for m in pool.active() if m.owner == player]
+        if len(active) >= MAX_PER_PLAYER:
+            problems.append(f"池子里已经有你的 {len(active)} 个成员（最多 {MAX_PER_PLAYER} 个）")
+        if sub.get("deck_ids"):
+            key = list_key(sub["deck_ids"])
+            same = [m for m in pool.active() if list_key(m.deck) == key]
+            if len(same) >= MAX_PER_LIST:
+                problems.append(f"同一张卡表池子里已经有 {len(same)} 个成员（最多 {MAX_PER_LIST} 个）")
+        if meta["member"] in names:
+            problems.append(f"成员名 {meta['member']!r} 你已经用过了")
+    elif kind == "update":
+        route = meta.get("route")
+        later_step = route is not None and route["step"] > 1
+        info["uses_slot"] = not later_step
+        if pkind != "strategy":
+            problems.append(f"第 {pool.period} 期不是策略期，只有策略期收打法更新")
+        if not later_step:
+            used = sum(1 for l in mine if l["kind"] == "update" and l.get("uses_slot"))
+            if used >= UPDATES_PER_PERIOD:
+                problems.append(f"这一期已经交过 {used} 次打法更新（每个策略期最多 {UPDATES_PER_PERIOD} 次，没过关的也算）")
+        else:
+            first = [l for l in lines if l.get("ev") == "receipt" and l.get("id") == route["route_of"]]
+            if not first or first[0].get("player") != player or first[0].get("member") != meta["member"] \
+                    or (first[0].get("route") or {}).get("step") != 1:
+                problems.append(f"route_of {route['route_of']} 不是你这个成员一条多步改法的第 1 步")
+            elif first[0]["route"]["steps"] != route["steps"]:
+                problems.append("总步数和第 1 步说的不一样")
+        mid = names.get(meta["member"])
+        if mid is None or mid not in pool.members or not pool.members[mid].active:
+            problems.append(f"你在池子里没有叫 {meta['member']!r} 的成员")
+        else:
+            info["mid"] = mid
+            sub["deck_ids"] = list(pool.members[mid].deck)
+    return problems, info
+
+
+# --- the load check (a separate process) ------------------------------------------------------------------------
+
+LOAD_BLOCK = {"subprocess.Popen", "os.system", "os.exec", "os.spawn", "os.posix_spawn", "os.startfile", "os.fork",
+              "os.forkpty", "os.kill", "os.remove", "os.rename", "os.mkdir", "os.rmdir", "os.chmod", "os.putenv",
+              "os.unsetenv", "gc.get_objects", "gc.get_referrers", "gc.get_referents", "sys._current_frames",
+              "sys.settrace", "sys.setprofile", "builtins.input", "msvcrt.locking"}
+LOAD_BLOCK_PREFIX = ("socket.", "ctypes.", "shutil.", "winreg.", "urllib.", "http.", "ftplib.", "smtplib.",
+                     "webbrowser.", "_winapi.")
+
+
+def _load_main(argfile: str) -> int:
+    """Runs in its own process: import the player's module behind an audit hook and play one short game."""
+    args = json.loads(Path(argfile).read_text(encoding="utf-8"))
+    import importlib.util
+    import sysconfig
+    import svsim.cards.library  # noqa: F401
+    from svsim.tools.arena import make_agent  # noqa: F401   (the interface builds its agent with it)
+    from ladder import base, interface, strategy as S
+    from ladder.runner import load_deck
+    try:
+        import numpy  # noqa: F401
+    except ImportError:
+        pass
+    base.baseline_lists()
+    interface.PlayerStrategy(seed=1)                  # the default agent's own lazy imports, before the hook
+    deck = load_deck(args["deck"])
+    opp = load_deck(list(base.baseline_lists()[args["opp_craft"]]))
+    path = Path(args["path"]).resolve()
+    code_roots = [Path(p).resolve() for p in {sysconfig.get_paths()[k] for k in ("stdlib", "platstdlib", "purelib",
+                                                                                  "platlib")}]
+    code_roots += [(ROOT / "svsim").resolve(), (LADDER / "ladder").resolve()]
+    seen = []
+
+    path_dirs = {Path(x).resolve() for x in sys.path if x} | {path.parent}
+
+    def _resolve(p):
+        try:
+            return Path(os.fsdecode(p)).resolve()
+        except Exception:
+            return None
+
+    def allowed_read(p) -> bool:
+        if isinstance(p, int):
+            return True                                 # an already open descriptor
+        q = _resolve(p)
+        if q is None:
+            return False
+        if q == path or (q.parent == path.parent / "__pycache__" and q.name.startswith(path.stem + ".")):
+            return True
+        return q.suffix in (".py", ".pyc", ".pyd", ".so", ".dll") and any(r in q.parents for r in code_roots)
+
+    def allowed_dir(p) -> bool:                         # the import machinery lists the directories it searches
+        q = _resolve(p) if p is not None else Path.cwd()
+        return q is not None and (q in path_dirs or any(q == r or r in q.parents for r in code_roots))
+
+    def hook(event, a):
+        why = None
+        if event == "open":
+            p, mode, flags = (list(a) + [None, None, None])[:3]
+            writing = (mode is not None and any(m in str(mode) for m in "wax+")) or \
+                      (mode is None and isinstance(flags, int) and flags & (os.O_WRONLY | os.O_RDWR | os.O_CREAT))
+            if writing or not allowed_read(p):
+                why = f"open {p!r} {mode or flags}"
+        elif event in ("os.listdir", "os.scandir"):
+            if not allowed_dir(a[0] if a else None):
+                why = f"{event} {a[0] if a else ''!r}"
+        elif event in LOAD_BLOCK or event.startswith(LOAD_BLOCK_PREFIX):
+            why = event
+        if why:
+            seen.append(why)
+            raise RuntimeError(f"提交校验：不许 {why}")
+
+    sys.dont_write_bytecode = True
+    sys.addaudithook(hook)
+    out = {"ok": False, "blocked": seen}
+    try:
+        spec = importlib.util.spec_from_file_location("player_strategy", str(path))
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        klass = getattr(mod, args["class"], None)
+        if not (isinstance(klass, type) and issubclass(klass, interface.PlayerStrategy)
+                and klass is not interface.PlayerStrategy):
+            out["error"] = f"{args['class']} 不是 ladder.interface.PlayerStrategy 的子类"
+        else:
+            strat = klass(seed=args["seed"])
+            seats = [strat, S.BotStrategy(seed=args["seed"] + 1)]
+            winner, state, _ = S.play(deck, opp, seats, seed=args["game_seed"], max_turns=args.get("max_turns", 60))
+            out.update(ok=True, winner=winner, turns=state.turn)
+    except BaseException as e:                          # noqa: BLE001 (report anything, including SystemExit)
+        import traceback
+        out["error"] = "".join(traceback.format_exception(type(e), e, e.__traceback__, limit=6))[-3000:]
+    out["blocked"] = list(seen)
+    out["ok"] = out["ok"] and not seen
+    sys.stdout.write("\nLOADCHECK " + json.dumps(out, ensure_ascii=False) + "\n")
+    sys.stdout.flush()
+    return 0
+
+
+def load_check(path: Path, cls: str, deck, opp_craft: int, seed: int, game_seed: int, work: Path,
+               timeout: float = 600.0) -> dict:
+    work = Path(work).resolve()
+    work.mkdir(parents=True, exist_ok=True)
+    argfile = work / "loadcheck-args.json"
+    argfile.write_text(json.dumps({"path": str(Path(path).resolve()), "class": cls, "deck": deck, "opp_craft": opp_craft,
+                                   "seed": seed, "game_seed": game_seed}), encoding="utf-8")
+    env = dict(os.environ, PYTHONPATH=os.pathsep.join([str(ROOT), str(LADDER)]), PYTHONHASHSEED="0",
+               PYTHONIOENCODING="utf-8")
+    try:
+        r = subprocess.run([sys.executable, "-m", "ladder.submit", "_load", str(argfile)], cwd=str(LADDER),
+                           env=env, capture_output=True, text=True, encoding="utf-8", timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "error": f"载入检查超过 {timeout:.0f} 秒"}
+    for line in reversed(r.stdout.splitlines()):
+        if line.startswith("LOADCHECK "):
+            return json.loads(line[len("LOADCHECK "):])
+    return {"ok": False, "error": "载入检查的进程没有交回结果：\n" + (r.stderr or r.stdout)[-3000:]}
+
+
+# --- games ----------------------------------------------------------------------------------------------------
+
+def _stage(sub: dict, rid: str, subdir: Path) -> str:
+    """Copy the strategy where the workers import it; returns its runner spec."""
+    code = Path(subdir) / "code"
+    code.mkdir(parents=True, exist_ok=True)
+    name = "sub_" + rid.replace("-", "")
+    (code / f"{name}.py").write_text(sub["src"], encoding="utf-8")
+    if str(code) not in sys.path:
+        sys.path.insert(0, str(code))
+    return f"py:{name}:{sub['meta']['class']}"
+
+
+def _used_smoke_seeds(lines: list[dict]) -> set:
+    return {s for l in lines if l.get("ev") == "receipt" for s in l.get("smoke_seeds", [])}
+
+
+def smoke_jobs(spec: str, deck_ids: list, rid: str, rng: random.Random, used: set, games: int = SMOKE_GAMES,
+               seeds: tuple[int, int] = SMOKE_SEEDS):
+    """Pairs of jobs: the submission and the default strategy in the same seat, same seed, same strategy seeds,
+    against the default strategy with the baseline lists (classes in turn)."""
+    from ladder import base
+    lists = base.baseline_lists()
+    crafts = sorted(lists)
+    jobs, played = [], []
+    for i in range(games):
+        while True:
+            seed = rng.randrange(*seeds)
+            if seed not in used:
+                break
+        used.add(seed)
+        played.append(seed)
+        seat = i % 2
+        opp = list(lists[crafts[i % len(crafts)]])
+        sseeds = [rng.randrange(1, 2 ** 31), rng.randrange(1, 2 ** 31)]
+        for side, s in (("sub", spec), ("default", DEFAULT)):
+            sides = [(list(deck_ids), s), (opp, DEFAULT)]
+            if seat == 1:
+                sides.reverse()
+            jobs.append({"id": f"{rid}-smoke{i:03d}-{side}", "seed": seed, "first": None,
+                         "decks": [d for d, _ in sides], "strategies": [x for _, x in sides],
+                         "strategy_seeds": sseeds, "labels": {"side": side, "seat": seat}})
+    return jobs, played
+
+
+def peek_check(log: dict, seat: int, k: int, rng: random.Random) -> str:
+    """Replay `log` with a fresh copy of the strategy at `seat`; at its k-th decision swap the real state for one it
+    can't tell apart (base.vary_secrets) and ask again. 'same', 'differs', 'diverged' (an earlier decision
+    differed: a determinism failure) or 'skipped'."""
+    from ladder import base
+    from ladder.runner import load_deck, make_strategy
+    from svsim.cards.pool import collectible
+    from svsim.core.actions import from_dict, to_dict
+    from svsim.core.engine import apply, legal_actions, new_game
+    decks = [load_deck(d) for d in log["decks"]]
+    strat = make_strategy(log["strategies"][seat], log["strategy_seeds"][seat])
+    state = new_game(decks[0], decks[1], seed=log["seed"], first=log.get("first_arg"))
+    tracker = base.Tracker(state)
+    others = [c.card_id for c in collectible(tracker.crafts[1 - seat])]
+    n = 0
+    for data in log["actions"]:
+        if state.active == seat:
+            if n == k:
+                want = base.fingerprint(base.public_position(state, seat, tracker))
+                state = base.vary_secrets(state, seat, tracker, rng, replacements=others)
+                gc.collect()                                # the real state is gone; only the varied one is left
+                pos = base.public_position(state, seat, tracker)
+                if base.fingerprint(pos) != want:
+                    return "skipped"
+                got = json.loads(json.dumps(to_dict(strat.act(pos, legal_actions(state)))))
+                return "same" if got == data else "differs"
+            got = json.loads(json.dumps(to_dict(strat.act(base.public_position(state, seat, tracker),
+                                                          legal_actions(state)))))
+            if got != data:
+                return "diverged"
+            n += 1
+        tracker.before(state)
+        apply(state, from_dict(data))
+        tracker.after(state)
+    return "skipped"
+
+
+def _mean_step(log: dict, seat: int) -> tuple[float, int]:
+    xs = [c for s, c, _ in log.get("steps", []) if s == seat]
+    return (sum(xs), len(xs))
+
+
+# --- receive ---------------------------------------------------------------------------------------------------
+
+def _sha(d: Path) -> dict:
+    return {f: hashlib.sha256((d / f).read_bytes()).hexdigest() for f in FILES}
+
+
+def precheck(d: Path, deck_of_member: str | None = None) -> dict:
+    """What a player may run on their own: format, deck, the code read. No games, no ledger, no slots."""
+    out = {"ok": True, "problems": [], "warnings": []}
+    try:
+        sub = read_dir(d)
+    except Refused as e:
+        return {"ok": False, "problems": list(e.args[0]), "warnings": []}
+    code = sub["meta"].get("deck") if sub["kind"] in ("deck", "puzzle") else deck_of_member
+    if code:
+        _, problems = check_deck(code)
+        out["problems"] += problems
+    out["problems"] += check_code(sub["src"], sub["meta"]["class"])
+    out["ok"] = not out["problems"]
+    return out
+
+
+def receive(d: Path, player: str, pool_dir: Path, subdir: Path, workers: int = 4, mask=None,
+            rng_seed: int | None = None, smoke_games: int = SMOKE_GAMES, step_limit: float = 30.0,
+            seeds: tuple[int, int] = SMOKE_SEEDS) -> dict:
+    """Every check; the receipt; one ledger line (accepted or refused)."""
+    from ladder import base
+    from ladder.pool import Pool
+    from ladder.replay import replay_decisions
+    from ladder.runner import provenance, run
+    subdir = Path(subdir).resolve()
+    lines = ledger(subdir)
+    n = sum(1 for l in lines if l.get("ev") == "receipt") + 1
+    rid = f"S-{n:04d}"
+    rng = random.Random(rng_seed if rng_seed is not None else secrets.randbits(64))
+    rec = {"ev": "receipt", "id": rid, "player": player, "time": datetime.now(timezone.utc).isoformat(
+        timespec="seconds"), "version": SUBMIT_VERSION, "interface": None, "base": base.BASE_VERSION,
+           "dir": str(Path(d).resolve()), "kind": None, "member": None, "checks": [], "reasons": [],
+           "warnings": [], "verdict": None, "uses_slot": False, "smoke_seeds": []}
+    try:
+        from ladder.interface import INTERFACE_VERSION
+        rec["interface"] = INTERFACE_VERSION
+    except Exception:
+        pass
+    store = subdir / rid
+    store.mkdir(parents=True, exist_ok=True)
+
+    def check(name, problems, detail=None):
+        rec["checks"].append({"check": name, "ok": not problems, "detail": detail})
+        rec["reasons"].extend(f"[{name}] {p}" for p in problems)
+        return not problems
+
+    def finish():
+        rec["verdict"] = "收下" if not rec["reasons"] else "拒收"
+        (store / "receipt.json").write_text(json.dumps(rec, ensure_ascii=False, indent=1), encoding="utf-8")
+        (store / "receipt.md").write_text(receipt_text(rec), encoding="utf-8")
+        _append(subdir, rec)
+        return rec
+
+    try:
+        sub = read_dir(Path(d))
+    except Refused as e:
+        check("格式", list(e.args[0]))
+        try:                                            # a refused one still uses its slot when its type is known
+            meta = json.loads((Path(d) / "submission.json").read_text(encoding="utf-8"))
+            kind = TYPES.get(meta.get("type"))
+            route = meta.get("route") if isinstance(meta.get("route"), dict) else None
+            later = bool(route) and isinstance(route.get("step"), int) and route["step"] > 1
+            rec.update(kind=kind, member=meta.get("member"), period=Pool(pool_dir).period,
+                       uses_slot=kind == "deck" or (kind == "update" and not later))
+        except Exception:
+            pass
+        return finish()
+    for f in FILES:
+        shutil.copy2(Path(d) / f, store / f)
+    rec["sha256"] = _sha(store)
+    meta = sub["meta"]
+    rec.update(kind=sub["kind"], member=meta["member"], route=meta.get("route"), puzzle=meta.get("puzzle"))
+    check("格式", [])
+    pool = Pool(pool_dir)
+    if sub["kind"] in ("deck", "puzzle"):
+        ids, problems = check_deck(meta["deck"])
+        sub["deck_ids"] = ids
+        check("卡组", problems)
+    if sub["kind"] == "puzzle":
+        puzzles = subdir / "puzzles.json"
+        known = json.loads(puzzles.read_text(encoding="utf-8")) if puzzles.exists() else {}
+        p = known.get(meta["puzzle"])
+        problems = [] if p and sorted(p.get("deck", [])) == sorted(sub.get("deck_ids", [])) else \
+            [f"没有题号 {meta['puzzle']!r}，或者卡组和题目指定的不一样"]
+        check("公共题", problems)
+    else:
+        problems, info = check_slots(sub, player, pool, lines)
+        rec.update(period=info["period"], period_kind=info["period_kind"], uses_slot=info["uses_slot"],
+                   mid=info.get("mid"))
+        check("名额和期", problems)
+    rec.setdefault("period", pool.period)
+    code_problems = check_code(sub["src"], meta["class"])
+    check("代码（读）", code_problems)
+    if rec["reasons"] or not sub.get("deck_ids"):
+        return finish()                                   # nothing is run for a submission already refused
+
+    from ladder.runner import load_deck
+    craft = int(base.craft_of(load_deck(sub["deck_ids"])))
+    lists = base.baseline_lists()
+    opp_craft = next(c for c in sorted(lists) if c != craft)
+    lc = load_check(store / "strategy.py", meta["class"], sub["deck_ids"], opp_craft, seed=rng.randrange(1, 2 ** 31),
+                    game_seed=rng.randrange(*seeds), work=store)
+    problems = [] if lc.get("ok") else ([f"载入后碰了不许碰的：{'；'.join(lc.get('blocked', []))}"] if lc.get("blocked")
+                                       else [lc.get("error", "载入失败")])
+    check("载入（隔离进程）", problems, {k: lc.get(k) for k in ("winner", "turns")})
+    if rec["reasons"]:
+        return finish()
+
+    spec = _stage(sub, rid, subdir)
+    rec["spec"] = spec
+    used = _used_smoke_seeds(lines)
+    jobs, played = smoke_jobs(spec, sub["deck_ids"], rid, rng, used, games=smoke_games, seeds=seeds)
+    rec["smoke_seeds"] = played
+    out = store / "smoke.jsonl"
+    run(jobs, str(out), workers=workers, step_limit=step_limit, mask=mask, quiet=True)
+    logs = {}
+    for line in out.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            g = json.loads(line)
+            logs[g["id"]] = g
+    mine = [logs.get(j["id"]) for j in jobs if j["labels"]["side"] == "sub"]
+    problems, voids = [], 0
+    for j, g in zip([j for j in jobs if j["labels"]["side"] == "sub"], mine):
+        seat = j["labels"]["seat"]
+        if g is None:
+            problems.append(f"{j['id']} 没打完")
+        elif g["result"] in ("crash", "illegal", "timeout") and g.get("loser") == seat:
+            problems.append(f"{j['id']}：{ {'crash': '崩了', 'illegal': '走了非法步', 'timeout': '超时'}[g['result']]}："
+                            f"{str(g.get('error', ''))[-600:]}")
+        elif g["result"] == "void":
+            voids += 1
+    wins = sum(1 for j, g in zip([j for j in jobs if j["labels"]["side"] == "sub"], mine)
+               if g and g.get("winner") == j["labels"]["seat"])
+    check("冒烟", problems, {"games": len(mine), "wins": wins, "void": voids})
+    if voids:
+        rec["warnings"].append(f"冒烟局里有 {voids} 局作废（引擎出错或无脚本，不算你的）")
+    if rec["reasons"]:
+        return finish()
+
+    pairs = [(j, logs[j["id"]], logs.get(j["id"].replace("-sub", "-default"))) for j in jobs
+             if j["labels"]["side"] == "sub" and j["id"] in logs]
+    tot = [0, 0, 0, 0]
+    for j, g, ref in pairs:
+        seat = j["labels"]["seat"]
+        s, k = _mean_step(g, seat)
+        tot[0] += s
+        tot[1] += k
+        if ref:
+            s, k = _mean_step(ref, seat)
+            tot[2] += s
+            tot[3] += k
+    ratio = (tot[0] / tot[1]) / (tot[2] / tot[3]) if tot[1] and tot[3] and tot[2] else None
+    rec["compute_ratio"] = None if ratio is None else round(ratio, 3)
+    if ratio is not None and ratio > COMPUTE_WARN:
+        rec["warnings"].append(f"每步算力是默认打法的 {ratio:.2f} 倍，超过 {COMPUTE_WARN}：把关检验会判无效（A25）")
+    check("算力", [], {"ratio": rec["compute_ratio"], "unit": pairs[0][1].get("cpu_unit") if pairs else None})
+
+    problems = []
+    normal = [g for _, g, _ in pairs if g["result"] in ("normal", "draw")]
+    for g in normal[:REPLAY_GAMES]:
+        ok, why = replay_decisions(g)
+        if not ok:
+            problems.append(f"{g['id']} 重放对不上：{why}（同一种子、同一局面要做出同样的选择；随机数用 self.random）")
+    check("确定性", problems, {"replayed": min(len(normal), REPLAY_GAMES)})
+    if rec["reasons"]:
+        return finish()
+
+    problems, tried = [], []
+    for j, g, _ in [p for p in pairs if p[1].get("result") in ("normal", "draw")][:PEEK_GAMES]:
+        seat = j["labels"]["seat"]
+        count = sum(1 for s, _, _ in g.get("steps", []) if s == seat)
+        if count == 0:
+            continue
+        points = sorted(rng.sample(range(count), min(PEEK_POINTS, count)))
+        for k in points:
+            r = peek_check(g, seat, k, random.Random(rng.randrange(2 ** 63)))
+            tried.append([g["id"], k, r])
+            if r == "differs":
+                problems.append(f"{g['id']} 第 {k} 个决策：真实局面里你看不到的东西换了，你的选择跟着变了")
+            elif r == "diverged":
+                problems.append(f"{g['id']}：重放到第 {k} 个决策以前就对不上了（不确定）")
+    check("偷看", problems, {"points": tried})
+    rec["provenance"] = provenance()
+    return finish()
+
+
+def receipt_text(rec: dict) -> str:
+    kind = {v: k for k, v in TYPES.items()}.get(rec.get("kind"), "?")
+    lines = [f"# 回执 {rec['id']}：{rec['verdict']}", "",
+             f"- 选手：{rec['player']}　类型：{kind}　成员：{rec.get('member')}　第 {rec.get('period')} 期",
+             f"- 收到：{rec['time']}　提交校验 {rec['version']}，接口 {rec.get('interface')}，底座 {rec.get('base')}",
+             f"- 占名额：{'是' if rec.get('uses_slot') else '否'}", ""]
+    if rec["reasons"]:
+        lines += ["## 拒收理由", ""] + [f"- {r}" for r in rec["reasons"]] + [""]
+    if rec["warnings"]:
+        lines += ["## 提醒", ""] + [f"- {w}" for w in rec["warnings"]] + [""]
+    lines += ["## 查了什么", ""]
+    for c in rec["checks"]:
+        d = c.get("detail")
+        lines.append(f"- {c['check']}：{'过' if c['ok'] else '没过'}" + (f"（{json.dumps(d, ensure_ascii=False)}）"
+                                                                      if d else ""))
+    if rec.get("compute_ratio") is not None:
+        lines.append(f"- 每步算力 / 默认打法：{rec['compute_ratio']}")
+    return "\n".join(lines) + "\n"
+
+
+def admit(subdir: Path, rid: str, pool_dir: Path) -> str:
+    """An accepted new deck enters the pool (pool.enter); the player's member name is kept here, not in the pool."""
+    from ladder.pool import Pool
+    lines = ledger(subdir)
+    rec = next((l for l in lines if l.get("ev") == "receipt" and l["id"] == rid), None)
+    if rec is None or rec["verdict"] != "收下" or rec["kind"] != "deck":
+        raise SystemExit(f"{rid} 不是收下的新卡组")
+    if any(l.get("ev") == "admit" and l.get("receipt") == rid for l in lines):
+        raise SystemExit(f"{rid} 已经入池了")
+    meta = json.loads((Path(subdir) / rid / "submission.json").read_text(encoding="utf-8"))
+    ids, problems = check_deck(meta["deck"])
+    if problems:
+        raise SystemExit(f"{rid} 的卡组现在不合法了：{problems}")
+    pool = Pool(pool_dir)
+    mid = pool.enter(ids, rec["spec"], rec["player"], deck_code=meta["deck"], note=f"submission {rid}")
+    _append(subdir, {"ev": "admit", "receipt": rid, "player": rec["player"], "member": rec["member"], "mid": mid,
+                     "time": datetime.now(timezone.utc).isoformat(timespec="seconds")})
+    return mid
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="python -m ladder.submit")
+    sp = ap.add_subparsers(dest="cmd", required=True)
+    a = sp.add_parser("precheck")
+    a.add_argument("dir")
+    a.add_argument("--deck-of-member")
+    a = sp.add_parser("receive")
+    a.add_argument("dir")
+    a.add_argument("--player", required=True)
+    a.add_argument("--pool", required=True)
+    a.add_argument("--out", required=True)
+    a.add_argument("--workers", type=int, default=4)
+    a.add_argument("--mask", type=lambda x: int(x, 0))
+    a = sp.add_parser("admit")
+    a.add_argument("subdir")
+    a.add_argument("--receipt", required=True)
+    a.add_argument("--pool", required=True)
+    a = sp.add_parser("_load")
+    a.add_argument("argfile")
+    args = ap.parse_args(argv)
+    if args.cmd == "_load":
+        return _load_main(args.argfile)
+    if args.cmd == "precheck":
+        out = precheck(Path(args.dir), args.deck_of_member)
+        print(json.dumps(out, ensure_ascii=False, indent=1))
+        return 0 if out["ok"] else 1
+    if args.cmd == "receive":
+        t0 = time.time()
+        rec = receive(Path(args.dir), args.player, Path(args.pool), Path(args.out), workers=args.workers,
+                      mask=args.mask)
+        print(receipt_text(rec))
+        print(f"({time.time() - t0:.0f} s)")
+        return 0
+    if args.cmd == "admit":
+        print(admit(Path(args.subdir), args.receipt, Path(args.pool)))
+        return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
