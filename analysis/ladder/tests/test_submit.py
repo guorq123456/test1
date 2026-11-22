@@ -295,3 +295,66 @@ def test_receive_and_admit(tmp_path):
     assert [l["id"] for l in submit.ledger(subs) if l["ev"] == "receipt"] == ["S-0001", "S-0002", "S-0003", "S-0004"]
     st = submit.status(subs, pool.dir, "甲")
     assert st["classes_done"] == ["梦魇", "超越者"] and len(st["classes_missing"]) == 5
+
+
+def test_an_accepted_update_goes_to_the_gate(tmp_path, monkeypatch):
+    """gate_update's wiring (the gate itself is tests/test_gate.py): old version, routes (A33), pool update."""
+    from ladder.runner import load_deck
+    pool = Pool.create(tmp_path / "pool", seeds=(99001460, 99001470), rng_seed=1)
+    for c in CODES[:2]:
+        pool.enter([x.card_id for x in load_deck(c)], "bot:greedy", "baseline")
+    pool.advance(force="test")
+    pool.advance(force="test")                                 # period 2: a strategy period
+    mid = pool.active()[0].mid
+    was = pool.members[mid].strategy
+    subs = tmp_path / "subs"
+    calls = []
+
+    class FakeGate:
+        def __init__(self, frozen, member, new, old, kind, change, prediction, seeds, out_dir, **kw):
+            calls.append({"member": member, "new": new, "old": old, "kind": kind, "change": change,
+                          "ledger_root": kw.get("ledger_root")})
+
+        def run(self, workers=4, mask=None):
+            return {"gate": f"G-{len(calls):04d}", "verdict": "passed" if len(calls) == 1 else "not passed"}
+    import ladder.gate
+    monkeypatch.setattr(ladder.gate, "Gate", FakeGate)
+
+    def receipt(rid, route=None, spec="py:sub_x:Quick"):
+        (subs / rid).mkdir(parents=True, exist_ok=True)
+        (subs / rid / "submission.json").write_text(json.dumps(
+            {"type": "打法更新", "member": "一号", "class": "Quick", "change": "改了换牌", "prediction": "+3，因为…",
+             "route": route}, ensure_ascii=False), encoding="utf-8")
+        submit._append(subs, {"ev": "receipt", "id": rid, "player": "甲", "kind": "update", "verdict": "收下",
+                              "member": "一号", "mid": mid, "spec": spec, "route": route,
+                              "was": {"strategy": pool.members[mid].strategy, "version": 1}})
+    receipt("S-0001", spec="py:sub_S0001:Quick")
+    out = submit.gate_update(subs, "S-0001", pool.dir, tmp_path / "frozen.json", (1, 2), tmp_path / "gates", delta=3)
+    assert out["verdict"] == "passed" and out["version"] == 2
+    assert calls[0]["old"] == was and calls[0]["new"] == "py:sub_S0001:Quick" and calls[0]["kind"] == "better"
+    assert calls[0]["ledger_root"] == tmp_path / "gates"           # host side, not the repository
+    assert Pool(pool.dir).members[mid].strategy == "py:sub_S0001:Quick"
+    with pytest.raises(SystemExit):
+        submit.gate_update(subs, "S-0001", pool.dir, tmp_path / "frozen.json", (1, 2), tmp_path / "gates", delta=3)
+    # a three-step route: step 1 is only recorded; step 3 is gated against the version before step 1
+    pool = Pool(pool.dir)
+    receipt("S-0002", route={"steps": 3, "step": 1, "stop_if": "x"}, spec="py:sub_S0002:Quick")
+    before = pool.members[mid].strategy
+    mid_step = submit.gate_update(subs, "S-0002", pool.dir, tmp_path / "f.json", (1, 2), tmp_path / "gates", delta=3)
+    assert mid_step["gate"] is None and "中间一步" in mid_step["verdict"] and len(calls) == 1
+    receipt("S-0003", route={"steps": 3, "step": 3, "route_of": "S-0002"}, spec="py:sub_S0003:Quick")
+    last = submit.gate_update(subs, "S-0003", pool.dir, tmp_path / "f.json", (1, 2), tmp_path / "gates", delta=3)
+    assert calls[1]["old"] == before and "停在第 3 步" in calls[1]["change"]
+    assert last["verdict"] == "not passed" and "version" not in last
+    assert Pool(pool.dir).members[mid].strategy == before         # not passed: the pool keeps the old version
+
+
+def test_a_route_stop_mark_is_checked(tmp_path):
+    bad = make_sub(tmp_path / "s1", "打法更新", member="一号", change="c", prediction="p",
+                   route={"steps": 3, "step": 3, "route_of": "S-0001", "stop": True})
+    with pytest.raises(submit.Refused) as e:
+        submit.read_dir(bad)
+    assert any("stop" in p for p in e.value.args[0])
+    ok = make_sub(tmp_path / "s2", "打法更新", member="一号", change="c", prediction="p",
+                  route={"steps": 3, "step": 2, "route_of": "S-0001", "stop": True})
+    assert submit.read_dir(ok)["meta"]["route"]["stop"] is True

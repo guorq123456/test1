@@ -255,13 +255,13 @@ class Evaluation:
     def done(self) -> bool:
         return all(len(c) >= self.games or self._stuck(r) for r, c in enumerate(self.crs))
 
-    def run(self, workers=4, step_limit=30.0, mask=None, quiet=True) -> dict:
+    def run(self, workers=4, step_limit=30.0, mask=None, quiet=True, key="auto") -> dict:
         from ladder import runner
         idle = 0
         while not self.done():
             before = sum(len(c) for c in self.crs)
             runner.run(self.jobs(), str(self.games_path), workers=workers, step_limit=step_limit, mask=mask,
-                       quiet=quiet, on_result=self.on_result)
+                       quiet=quiet, on_result=self.on_result, key=key)
             self.inflight.clear()
             idle = idle + 1 if sum(len(c) for c in self.crs) == before else 0
             if idle > 50:

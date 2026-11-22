@@ -225,6 +225,8 @@ def read_dir(d: Path) -> dict:
                 problems.append("多步改法的第 1 步要写 stop_if（什么情况下中途停）")
             elif r["step"] > 1 and not str(r.get("route_of", "")).startswith("S-"):
                 problems.append("多步改法第 2 步起要写 route_of（第 1 步的回执编号）")
+            elif "stop" in r and not (r["stop"] is True and 1 < r["step"] < r["steps"]):
+                problems.append("stop 只能写 true，而且只在第 2 步到倒数第 2 步之间（按 stop_if 中途停）")
     if kind == "puzzle" and not isinstance(meta.get("puzzle"), str):
         problems.append("公共题要写 puzzle（题号）")
     for f in ("notes.md", "evidence.md"):
@@ -329,6 +331,7 @@ def check_slots(sub: dict, player: str, pool, lines: list[dict]) -> tuple[list[s
             problems.append(f"你在池子里没有叫 {meta['member']!r} 的成员")
         else:
             info["mid"] = mid
+            info["was"] = {"strategy": pool.members[mid].strategy, "version": pool.members[mid].version}
             sub["deck_ids"] = list(pool.members[mid].deck)
     return problems, info
 
@@ -522,10 +525,10 @@ def peek_check(log: dict, seat: int, k: int, rng: random.Random) -> str:
     from ladder.runner import load_deck, make_strategy
     from svsim.cards.pool import collectible
     from svsim.core.actions import from_dict, to_dict
-    from svsim.core.engine import apply, legal_actions, new_game
-    decks = [load_deck(d) for d in log["decks"]]
+    from svsim.core.engine import apply, legal_actions
+    from ladder import deal
     strat = make_strategy(log["strategies"][seat], log["strategy_seeds"][seat])
-    state = new_game(decks[0], decks[1], seed=log["seed"], first=log.get("first_arg"))
+    _, state = deal.start(log)
     tracker = base.Tracker(state)
     others = [c.card_id for c in collectible(tracker.crafts[1 - seat])]
     n = 0
@@ -648,7 +651,7 @@ def receive(d: Path, player: str, pool_dir: Path, subdir: Path, workers: int = 4
     else:
         problems, info = check_slots(sub, player, pool, lines)
         rec.update(period=info["period"], period_kind=info["period_kind"], uses_slot=info["uses_slot"],
-                   mid=info.get("mid"), craft=info.get("craft"))
+                   mid=info.get("mid"), craft=info.get("craft"), was=info.get("was"))
         check("名额和期", problems)
     rec.setdefault("period", pool.period)
     code_problems = check_code(sub["src"], meta["class"])
@@ -791,6 +794,55 @@ def admit(subdir: Path, rid: str, pool_dir: Path) -> str:
     return mid
 
 
+def gate_update(subdir: Path, rid: str, pool_dir: Path, frozen: Path, seeds: tuple[int, int], out_dir: Path,
+                delta: float, workers: int = 4, mask=None, rng_seed: int | None = None) -> dict:
+    """An accepted 打法更新 goes to the gate (§4.3: kind better, the player's change and prediction as written) and,
+    if it passes, replaces the member's version in the pool (same CR, unstable for 300 games). Multi-step routes
+    (A33): an intermediate step is only recorded; the last step, or the step marked "stop", is gated against the
+    version the member had before step 1. The gate ledger lives in `out_dir` (host side, never the repository:
+    it holds members, versions and the players' own words)."""
+    from ladder.gate import Gate
+    from ladder.pool import Pool
+    subdir = Path(subdir).resolve()
+    lines = ledger(subdir)
+    rec = next((l for l in lines if l.get("ev") == "receipt" and l["id"] == rid), None)
+    if rec is None or rec["verdict"] != "收下" or rec["kind"] != "update":
+        raise SystemExit(f"{rid} 不是收下的打法更新")
+    if any(l.get("ev") == "gated" and l.get("receipt") == rid for l in lines):
+        raise SystemExit(f"{rid} 已经检验过了")
+    meta = json.loads((subdir / rid / "submission.json").read_text(encoding="utf-8"))
+    pool = Pool(pool_dir)
+    m = pool.members.get(rec["mid"])
+    if m is None or not m.active:
+        raise SystemExit(f"{rec['mid']} 不在池子里了")
+    route = rec.get("route") or {}
+    line = {"ev": "gated", "receipt": rid, "player": rec["player"], "member": rec["member"], "mid": m.mid,
+            "time": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+    if route and route["step"] < route["steps"] and not route.get("stop"):
+        line.update(verdict="中间一步，不检验（A33）", gate=None)
+        _append(subdir, line)
+        return line
+    old = (rec.get("was") or {}).get("strategy") or m.strategy
+    change, prediction = meta["change"], meta["prediction"]
+    if route:
+        first = next(l for l in lines if l.get("ev") == "receipt" and l.get("id") == (route.get("route_of") or rid))
+        old = (first.get("was") or {}).get("strategy") or old
+        change = f"多步改法（{route['steps']} 步，停在第 {route['step']} 步）：{change}"
+    code = subdir / "code"
+    if str(code) not in sys.path:
+        sys.path.insert(0, str(code))                     # the workers import the staged submission from here
+    os.environ["LADDER_EXTRA_PATH"] = os.pathsep.join(
+        x for x in (str(code), os.environ.get("LADDER_EXTRA_PATH", "")) if x)
+    g = Gate(frozen, m.mid, rec["spec"], old, "better", change, prediction, seeds, out_dir, delta=delta,
+             ledger_root=Path(out_dir), rng_seed=rng_seed)
+    res = g.run(workers=workers, mask=mask)
+    line.update(gate=res["gate"], verdict=res["verdict"], old=old, new=rec["spec"])
+    if res["verdict"] == "passed":
+        line["version"] = pool.update(m.mid, rec["spec"], gate=res["gate"])         # the new version number
+    _append(subdir, line)
+    return line
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="python -m ladder.submit")
     sp = ap.add_subparsers(dest="cmd", required=True)
@@ -808,6 +860,16 @@ def main(argv=None):
     a.add_argument("subdir")
     a.add_argument("--receipt", required=True)
     a.add_argument("--pool", required=True)
+    a = sp.add_parser("gate")
+    a.add_argument("subdir")
+    a.add_argument("--receipt", required=True)
+    a.add_argument("--pool", required=True)
+    a.add_argument("--frozen", required=True)
+    a.add_argument("--seeds", type=int, nargs=2, required=True)
+    a.add_argument("--out", required=True)
+    a.add_argument("--delta", type=float, required=True)
+    a.add_argument("--workers", type=int, default=4)
+    a.add_argument("--mask", type=lambda x: int(x, 0))
     a = sp.add_parser("status")
     a.add_argument("subdir")
     a.add_argument("--pool", required=True)
@@ -833,6 +895,11 @@ def main(argv=None):
         return 0
     if args.cmd == "admit":
         print(admit(Path(args.subdir), args.receipt, Path(args.pool)))
+        return 0
+    if args.cmd == "gate":
+        out = gate_update(Path(args.subdir), args.receipt, Path(args.pool), Path(args.frozen), tuple(args.seeds),
+                          Path(args.out), delta=args.delta, workers=args.workers, mask=args.mask)
+        print(json.dumps(out, ensure_ascii=False, indent=1))
         return 0
 
 

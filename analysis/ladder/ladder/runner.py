@@ -103,13 +103,14 @@ def unscripted(deck) -> list[int]:
 def play_job(job: dict, beat=None) -> dict:
     """Play one job in this process. `beat` (a shared array: seat, step start in ns) lets the parent time a step."""
     from svsim.core.actions import to_dict
-    from svsim.core.engine import apply, legal_actions, new_game
-    from ladder import base
+    from svsim.core.engine import apply, legal_actions
+    from ladder import base, deal
     counter, unit = _make_counter()
     decks = [load_deck(d) for d in job["decks"]]
-    seeds = job.get("strategy_seeds") or [job["seed"] * 2 + 1, job["seed"] * 2 + 2]
+    seeds = deal.strategy_seeds(job)
     out = {"id": job["id"], "seed": job["seed"], "first_arg": job.get("first"), "decks": job["decks"],
-           "strategies": job["strategies"], "strategy_seeds": seeds, "labels": job.get("labels", {}),
+           "strategies": job["strategies"], "strategy_seeds": seeds, "deal": job.get("deal"),
+           "labels": job.get("labels", {}),
            "cpu_unit": unit, "actions": [], "steps": [], "result": None, "winner": None, "loser": None}
     missing = [unscripted(d) for d in decks]
     if any(missing):
@@ -120,7 +121,7 @@ def play_job(job: dict, beat=None) -> dict:
     except Exception:
         out.update(result="void", error="strategy failed to load:\n" + traceback.format_exc(limit=5))
         return out
-    state = new_game(decks[0], decks[1], seed=job["seed"], first=job.get("first"))
+    _, state = deal.start(job, first="first")          # base-2: the keyed deal when the job carries one (LD-27/29)
     out["first"] = state.first
     tracker = base.Tracker(state)
     while not state.over:
@@ -229,8 +230,11 @@ def provenance() -> dict:
 
 
 def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=None, quiet=False,
-        on_result=None) -> dict:
+        on_result=None, key="auto") -> dict:
     """Play `jobs`, appending one log line per game to `out_path` (skipping ids already there).
+
+    `key` (base-2, ladder/deal.py): "auto" = $LADDER_KEY_FILE or the host's key file if there is one; None = the
+    old deal; bytes or a path. Each job is sealed here, in this process, before a worker gets it.
 
     `jobs` is a list, or an iterator that is asked for the next job only when a worker is free (the pool manager
     makes each pairing from the CRs of that moment). `on_result(log)` is called in this process, in the order the
@@ -251,6 +255,9 @@ def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=No
     source = iter(jobs)
     exhausted = False
 
+    from ladder import deal
+    the_key = deal.resolve(key)
+
     def take():
         nonlocal exhausted
         while not exhausted:
@@ -258,7 +265,7 @@ def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=No
             if job is None:
                 exhausted = True
             elif job["id"] not in done:
-                return job
+                return deal.seal(job, the_key)
         return None
     limits = _limit(mask)
     prov = provenance()
@@ -290,7 +297,7 @@ def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=No
     def stub(job, result, **kw):
         return {"id": job["id"], "seed": job["seed"], "first_arg": job.get("first"), "decks": job["decks"],
                 "strategies": job["strategies"], "strategy_seeds": job.get("strategy_seeds"),
-                "labels": job.get("labels", {}), "result": result, **kw}
+                "deal": job.get("deal"), "labels": job.get("labels", {}), "result": result, **kw}
 
     with out.open("a", encoding="utf-8") as f:
         while True:
@@ -331,7 +338,8 @@ def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=No
         w["inq"].put(None)
     for w in pool:
         w["proc"].join(timeout=10)
-    return {"played": count, "skipped": len(done), "seconds": round(time.time() - t0, 1), "results": counts}
+    return {"played": count, "skipped": len(done), "seconds": round(time.time() - t0, 1), "results": counts,
+            "deal": deal.key_id(the_key) if the_key else None}
 
 
 def main():

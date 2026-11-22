@@ -141,7 +141,11 @@ def public_field(host: dict) -> dict:
 def open_window(arena: Path, hours: float, games: int, workers: int = 11, mask: int | None = None) -> dict:
     """The players' window for this period: the deadline and the game cap (both Salem's numbers: the temporary 4 h
     and the plan's 20 000)."""
+    from ladder import deal
     host = _read(Path(arena) / "host" / "field.json")
+    kf = Path(arena) / "host" / "arena.key"
+    if not kf.exists():
+        deal.new_key_file(kf)                     # the arena's own deal key (base-2), apart from the formal pool's
     cfg = {"period": host["period"], "field": host["hash"], "opened": _iso(_now()),
            "deadline": _iso(_now() + timedelta(hours=hours)), "hours": hours, "games": games,
            "workers": workers, "mask": mask}
@@ -294,8 +298,11 @@ def _paired(a: list[int], b: list[int]) -> dict:
 # --- runs ----------------------------------------------------------------------------------------------------------
 
 def _cfg(seat: Seat) -> dict:
+    """Workers and mask from the window; the arena's own deal key (base-2; made by open_window, never the formal
+    pool's key). No key file (an arena opened before base-2, or a test arena): the old deal."""
     w = seat.window or {}
-    return {"workers": w.get("workers", 4), "mask": w.get("mask")}
+    k = seat.arena / "host" / "arena.key"
+    return {"workers": w.get("workers", 4), "mask": w.get("mask"), "key": str(k) if k.exists() else None}
 
 
 def run_vs(arena: Path, player: str, version_dir: Path, games: int, opponent: str | None = None,
@@ -341,7 +348,7 @@ def run_vs(arena: Path, player: str, version_dir: Path, games: int, opponent: st
     lock = _lock(arena)
     try:
         cfg = _cfg(seat)
-        run(jobs, str(priv / "games.jsonl"), workers=cfg["workers"], mask=cfg["mask"], quiet=True)
+        run(jobs, str(priv / "games.jsonl"), workers=cfg["workers"], mask=cfg["mask"], quiet=True, key=cfg["key"])
     finally:
         _unlock(lock)
     logs = {g["id"]: g for g in _jsonl(priv / "games.jsonl")}
@@ -398,7 +405,7 @@ def run_ladder(arena: Path, player: str, version_dir: Path, replacing: str | Non
     lock = _lock(arena)
     try:
         cfg = _cfg(seat)
-        res = ev.run(workers=cfg["workers"], mask=cfg["mask"])
+        res = ev.run(workers=cfg["workers"], mask=cfg["mask"], key=cfg["key"])
     finally:
         _unlock(lock)
     starts = {s["id"]: s for s in _jsonl(priv / "starts.jsonl")}
@@ -427,10 +434,10 @@ def _from_position(job: dict) -> dict:
     from ladder import base
     from ladder.runner import _make_counter, load_deck, make_strategy
     from svsim.core.actions import from_dict, to_dict
-    from svsim.core.engine import apply, legal_actions, new_game
+    from svsim.core.engine import apply, legal_actions
+    from ladder import deal
     counter, unit = _make_counter()
-    decks = [load_deck(d) for d in job["decks"]]
-    state = new_game(decks[0], decks[1], seed=job["seed"], first=job["first_arg"])
+    _, state = deal.start(job)
     tracker = base.Tracker(state)
     for data in job["prefix"]:
         tracker.before(state)
@@ -521,6 +528,7 @@ def run_resume(arena: Path, player: str, run_id: str, game: str, decision: int, 
             strategies = list(src["strategies"])
             strategies[me] = v["spec"]
             jobs.append({"id": f"{rid}-v{vi}-c{ci:04d}", "decks": src["decks"], "seed": src["seed"],
+                         "deal": src.get("deal"),
                          "first_arg": src.get("first_arg"), "prefix": src["actions"][:upto],
                          "prefix_steps": src["steps"][:upto], "cont": c, "strategies": strategies,
                          "strategy_seeds": ss})
@@ -562,15 +570,15 @@ def replay(arena: Path, player: str, run_id: str, game: str) -> Path:
     from ladder import base
     from ladder.runner import load_deck
     from svsim.core.actions import from_dict
-    from svsim.core.engine import apply, new_game
+    from svsim.core.engine import apply
     seat = Seat(arena, player)
     g = next((x for x in _jsonl(seat.priv / run_id / "games.jsonl") if x["id"] == game), None)
     view = next((x for x in _jsonl(seat.pub / "runs" / run_id / "games.jsonl") if x["game"] == game), None)
     if g is None or view is None:
         raise ArenaError(f"{run_id} 里没有你的 {game}")
     me = view["seat"]
-    decks = [load_deck(d) for d in g["decks"]]
-    state = new_game(decks[0], decks[1], seed=g["seed"], first=g.get("first_arg"))
+    from ladder import deal
+    _, state = deal.start(g)
     tracker = base.Tracker(state)
     steps, k = [], 0
     for step, data in zip(g.get("steps", []), g.get("actions", [])):

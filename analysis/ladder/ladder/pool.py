@@ -495,13 +495,19 @@ class Pool:
         return None
 
     def ladder(self, workers: int = 4, games: int | None = None, until_period_done: bool = False,
-               step_limit: float = 30.0, mask=None, quiet=True) -> dict:
-        from ladder import runner
+               step_limit: float = 30.0, mask=None, quiet=True, key="auto") -> dict:
+        """`key`: the deal key (base-2, ladder/deal.py). From period 1 on (players' members in the pool) a key is
+        required: without one a strategy can work out the deal from its seed (LD-27) and the uids give away the
+        opponent's list order (LD-29)."""
+        from ladder import deal, runner
         self.inflight.clear()
         if games is None and not until_period_done:
             raise PoolError("say how many games, or until the period is done")
+        k = deal.resolve(key)
+        if k is None and self.period >= 1 and not self.params.get("check", False):
+            raise PoolError("no deal key (base-2): set LADDER_KEY_FILE or make the host's key file first")
         return runner.run(self.jobs(games, until_period_done), str(self.games_path), workers=workers,
-                          step_limit=step_limit, mask=mask, quiet=quiet, on_result=self.settle)
+                          step_limit=step_limit, mask=mask, quiet=quiet, on_result=self.settle, key=k)
 
     # --- views ---------------------------------------------------------------------------------------------
 

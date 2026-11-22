@@ -22,11 +22,11 @@ from ladder.runner import load_deck, play_job  # noqa: E402
 
 def replay_moves(log: dict) -> tuple[bool, str]:
     from svsim.core.actions import from_dict
-    from svsim.core.engine import apply, legal_actions, new_game
+    from svsim.core.engine import apply, legal_actions
+    from ladder import deal
     if log.get("result") in ("timeout", "void") or "actions" not in log:
         return True, "skipped (no full move list)"
-    decks = [load_deck(d) for d in log["decks"]]          # load_deck registers every card script first
-    state = new_game(decks[0], decks[1], seed=log["seed"], first=log.get("first_arg"))
+    _, state = deal.start(log)                              # the keyed deal the log carries (base-2), if any
     if state.first != log.get("first"):
         return False, f"first player {state.first} != logged {log.get('first')}"
     for i, data in enumerate(log["actions"]):
@@ -47,6 +47,7 @@ def replay_decisions(log: dict) -> tuple[bool, str]:
     if log.get("result") in ("timeout", "void"):
         return True, "skipped"
     job = {k: log[k] for k in ("id", "seed", "decks", "strategies", "strategy_seeds")}
+    job["deal"] = log.get("deal")
     job["first"] = log.get("first_arg")
     again = json.loads(json.dumps(play_job(job)))          # the same JSON shapes as the log (tuples -> lists)
     for i, (a, b) in enumerate(zip(again["actions"], log["actions"])):
