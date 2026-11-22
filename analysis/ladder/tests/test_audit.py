@@ -1,9 +1,11 @@
-"""The replay audit before a period advances (ladder/audit.py, LD-40). Seeds 99001232-99001235 (host probe bank,
+"""The replay audit before a period advances (ladder/audit.py, LD-40). Seeds 99001232-99001236 (host probe bank,
 SEEDS.md; the runner tests' block)."""
 import json
 import os
 import sys
 from pathlib import Path
+
+import pytest
 
 HERE = Path(__file__).resolve().parent
 sys.path[:0] = [str(HERE.parent), str(HERE), str(HERE.parents[2])]
@@ -45,3 +47,47 @@ def test_a_changed_log_fails_too(tmp_path):
     bad.write_text(json.dumps(g) + "\n", encoding="utf-8")
     res = audit.audit([out, bad])
     assert res["checked"] == 2 and [f["log"] for f in res["failed"]] == [str(bad)]
+
+
+def test_a_torn_line_is_skipped_and_listed_and_the_next_game_starts_on_its_own_line(tmp_path):
+    # LD-41: a power cut can leave half a line; the runner starts its next line on a fresh one, and the audit lists
+    # the torn line instead of stopping
+    out = tmp_path / "g.jsonl"
+    out.write_text('{"id": "a-0", "seed": 1, "res', encoding="utf-8")
+    runner.run([job(36, "py:helpers:Random", "py:helpers:Random")], str(out), workers=1, quiet=True)
+    lines = out.read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 2 and json.loads(lines[1])["id"] == "a-36"
+    res = audit.audit([out])
+    assert res["ok"] and res["checked"] == 1 and res["unreadable"] == [f"{out}:1"]
+
+
+def test_patterns_that_may_match_nothing_and_the_out_folder(tmp_path, monkeypatch):
+    log = tmp_path / "pool" / "games.jsonl"
+    log.parent.mkdir()
+    log.write_text("", encoding="utf-8")
+    gates = str(tmp_path / "gates" / "*" / "games.jsonl")
+    assert audit.expand([str(log)], [gates]) == [log]
+    with pytest.raises(SystemExit) as e:
+        audit.expand([str(log), gates])
+    assert e.value.code == 2
+    with pytest.raises(SystemExit) as e:
+        audit.expand([str(tmp_path / "missing.jsonl")])
+    assert e.value.code == 2
+    report = tmp_path / "audit" / "P1.json"
+    monkeypatch.setattr(sys, "argv", ["audit", str(log), "--allow-empty", gates, "--out", str(report)])
+    with pytest.raises(SystemExit) as e:
+        audit.main()
+    assert e.value.code == 0 and json.loads(report.read_text(encoding="utf-8"))["checked"] == 0
+
+
+def test_voids_are_counted_per_strategy_and_while_losing(tmp_path):
+    log = tmp_path / "g.jsonl"
+    rows = [{"id": "v-1", "result": "void", "strategies": ["py:a:A", "py:b:B"], "voided_result": "normal",
+             "voided_winner": 1},
+            {"id": "v-2", "result": "void", "strategies": ["py:b:B", "py:a:A"], "voided_result": "normal",
+             "voided_winner": 0},
+            {"id": "v-3", "result": "void", "strategies": ["py:a:A", "py:b:B"], "error": "worker died"}]
+    log.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+    res = audit.audit([log])
+    assert res["checked"] == 0 and res["skipped"] == 3 and res["ok"]
+    assert res["voids"] == {"py:a:A": {"void": 3, "was_losing": 2}, "py:b:B": {"void": 3, "was_losing": 0}}

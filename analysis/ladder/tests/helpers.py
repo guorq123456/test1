@@ -229,3 +229,20 @@ class ChangesUntilGuess(Random):
         if self.kept is not None:
             engine.EVOLVE_TURN.update(self.kept)
         return super().guess(pos)
+
+
+class GrowsRegistry(Random):
+    """Adds a card id to the engine's hand-listener registry on its first decision (a set the card scripts fill when
+    they load; a module global, never rebound): void, worker replaced (LD-41)."""
+    def act(self, pos, actions):
+        from svsim.core import script
+        script.LISTEN_IN_HAND.add(987654321)
+        return super().act(pos, actions)
+
+
+class RenamesAMove(Random):
+    """Renames a move class (type(a).__name__ is how some code tells moves apart): void, worker replaced (LD-41)."""
+    def act(self, pos, actions):
+        from svsim.core.actions import Evolve
+        Evolve.__name__ = "Evolved"
+        return super().act(pos, actions)

@@ -44,7 +44,7 @@ def test_add_and_run(tmp_path, monkeypatch):
     assert all(a["same"] == 1.0 for a in host["agreement"])
     pub = json.loads((tmp_path / "out" / "result-public.json").read_text(encoding="utf-8"))
     assert {r["entry"] for r in pub["entries"]} == {"默认打法", "选手 1", "选手 2"} and "seeds" not in pub
-    assert "aliases" not in pub and sorted(host["aliases"]) == ["乙", "甲"]
+    assert "aliases" not in pub and sorted(host["aliases"]) == ["乙", "甲"] and pub["simulator_changed"] == 0
     # neither the rows nor the a/b order tell who came first: references first, then 选手 1, 2
     assert [(a["a"], a["b"]) for a in pub["agreement"]] == [("默认打法", "选手 1"), ("默认打法", "选手 2"),
                                                             ("选手 1", "选手 2")]
@@ -86,3 +86,17 @@ def test_an_answer_that_hangs_dies_or_changes_the_simulator_is_none():
     assert [a["move"] for a in answers[1:]] == [None, None, None]
     assert answers[2]["error"] == "timeout" and "died" in answers[3]["error"]
     assert tripped == [{"entry": "甲-1", "point": 0, "what": "svsim.cards.pool.POOL: x"}]
+
+
+def test_the_public_copy_names_no_one_whose_answer_was_voided():
+    host = {"puzzle": "P01", "title": "t", "field": "others", "games_per_list": 2, "seeds": [1, 2], "deal": None,
+            "entries": [{"entry": "默认打法"}, {"entry": "甲"}, {"entry": "乙"}],
+            "agreement": [{"a": "乙", "b": "甲", "points": 3, "same": 1.0}], "points": 3,
+            "aliases": {"甲": "选手 2", "乙": "选手 1"},
+            "simulator_changed": [{"entry": "甲", "point": 0, "what": "svsim.core.script.LISTEN_IN_HAND"}]}
+    pub = Z.public_copy(host, ["默认打法"])
+    text = json.dumps(pub, ensure_ascii=False)
+    assert pub["simulator_changed"] == 1 and "甲" not in text and "乙" not in text and "LISTEN" not in text
+    assert [r["entry"] for r in pub["entries"]] == ["默认打法", "选手 1", "选手 2"]
+    assert (pub["agreement"][0]["a"], pub["agreement"][0]["b"]) == ("选手 1", "选手 2")
+    assert host["simulator_changed"][0]["entry"] == "甲"            # the host's copy keeps the names

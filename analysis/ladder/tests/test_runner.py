@@ -232,11 +232,67 @@ def test_a_change_to_the_simulator_voids_the_game_and_replaces_the_worker(tmp_pa
     for i, what in ((23, "'cost'"), (25, "patched_by_a_strategy")):
         r = rows[f"t-{i}"]
         assert r["result"] == "void" and r["voided_result"] in ("normal", "draw") and r["winner"] is None
+        assert "voided_winner" in r
         assert "LD-40" in r["error"] and (what in r["error"] or "+1 members" in r["error"]), r["error"]
         assert "worker_exit" not in r and "worker" not in r
     for i in (24, 26):
         r = rows[f"t-{i}"]
         assert r["result"] in ("normal", "draw") and replay_moves(r) == (True, "ok"), r.get("error")
+
+
+def test_a_grown_registry_or_a_renamed_class_voids_the_game_too(tmp_path):
+    # LD-41 (sixth pass): the tripwire also follows a module global's set (the scripts' listener registries), a
+    # class's name and bases, and it sees a change made in a worker's first game (the warm-up game comes before the
+    # snapshot)
+    jobs = [job(29, "py:helpers:GrowsRegistry", "py:helpers:Random", first=0),
+            job(30, "py:helpers:RenamesAMove", "py:helpers:Random", first=0),
+            job(31, "py:helpers:Random", "py:helpers:Random", first=0)]
+    out = tmp_path / "g.jsonl"
+    runner.run(jobs, str(out), workers=1, step_limit=10.0, quiet=True)
+    rows = {r["id"]: r for r in map(json.loads, out.read_text(encoding="utf-8").splitlines())}
+    for i, what in ((29, "LISTEN_IN_HAND"), (30, "Evolve")):
+        r = rows[f"t-{i}"]
+        assert r["result"] == "void" and "voided_result" in r and what in r["error"], r.get("error")
+    assert rows["t-31"]["result"] in ("normal", "draw") and replay_moves(rows["t-31"]) == (True, "ok")
+
+
+def test_the_watch_follows_registries_and_names_and_lets_the_caches_fill_and_empty():
+    from ladder import watch
+    from svsim.core import script
+    from svsim.core.actions import Evolve
+    from svsim.search import combo, formula
+    watch.preload()
+    snap = watch.snapshot()
+    assert watch.changes(snap) == []
+    script.LISTEN_IN_HAND.add(987654321)
+    try:
+        assert any("LISTEN_IN_HAND" in line for line in watch.changes(snap))
+    finally:
+        script.LISTEN_IN_HAND.discard(987654321)
+    name = Evolve.__name__
+    Evolve.__name__ = "Evolved"
+    try:
+        assert any("Evolve" in line for line in watch.changes(snap))
+    finally:
+        Evolve.__name__ = name
+    assert watch.changes(snap) == []
+    # the memo caches fill up and are emptied at their size limits during a game: no false alarm (LD-41)
+    formula._NEXT[("probe",)] = 1
+    combo._NEXT_TURN[("probe",)] = 1
+    assert watch.changes(snap) == []
+    watch.reset_caches(snap)
+    assert ("probe",) not in formula._NEXT and ("probe",) not in combo._NEXT_TURN
+    assert watch.changes(snap) == []
+
+
+def test_the_new_snapshot_is_taken_on_the_clock():
+    beat, seen = [0, 0], []
+
+    class Watch:
+        def snapshot(self):
+            seen.append((beat[0], beat[1] != 0))
+            return "snap"
+    assert runner._resnap(Watch(), beat) == "snap" and seen == [(runner.HOST, True)] and beat[1] == 0
 
 
 def test_a_hung_guess_or_load_stops_by_the_clock(tmp_path):

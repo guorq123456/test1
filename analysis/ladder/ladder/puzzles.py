@@ -185,6 +185,28 @@ def _answers(ask: list, got: list, ents: list) -> tuple[list, list]:
     return answers, tripped
 
 
+def public_copy(host: dict, refs: list) -> dict:
+    """The players' copy of a puzzle result: players as 「选手 N」, no seeds, no deal, no alias map, and of the
+    answers voided because the simulator changed only how many (the host's copy names the entries: LD-41)."""
+    alias = host["aliases"]
+    refs_order = {name: i for i, name in enumerate(refs)}
+
+    def rank(name):                                       # refs in their own order, then 选手 1, 2, ... 10
+        return (0, refs_order[name]) if name in refs_order else (1, int(name.split()[-1]))
+    pub = json.loads(json.dumps(host))
+    for r in pub["entries"]:
+        r["entry"] = alias.get(r["entry"], r["entry"])
+    pub["entries"].sort(key=lambda r: rank(r["entry"]))
+    for r in pub["agreement"]:
+        a, b = alias.get(r["a"], r["a"]), alias.get(r["b"], r["b"])
+        r["a"], r["b"] = sorted((a, b), key=rank)        # neither the row order nor a/b tells the intake order
+    pub["agreement"].sort(key=lambda r: (rank(r["a"]), rank(r["b"])))
+    for k in ("seeds", "deal", "aliases"):
+        pub.pop(k)
+    pub["simulator_changed"] = len(host.get("simulator_changed") or ())
+    return pub
+
+
 def run(subdir: Path, pid: str, seeds, out: Path, games: int = 10, field: str = "others", refs=None,
         agreement: int = 60, workers: int = 4, mask=None, key="auto", rng_seed: int = 0) -> dict:
     from ladder import deal, runner
@@ -283,20 +305,7 @@ def run(subdir: Path, pid: str, seeds, out: Path, games: int = 10, field: str = 
             "deal": sorted(d for d in deals if d) or None, "entries": table, "agreement": agree,
             "points": len(points), "aliases": alias, "simulator_changed": tripped}
     (out / "result-host.json").write_text(json.dumps(host, ensure_ascii=False, indent=1), encoding="utf-8")
-    refs_order = {e["name"]: i for i, e in enumerate(ents) if e["ref"]}
-
-    def rank(name):                                       # refs in their own order, then 选手 1, 2, ... 10
-        return (0, refs_order[name]) if name in refs_order else (1, int(name.split()[-1]))
-    pub = json.loads(json.dumps(host))
-    for r in pub["entries"]:
-        r["entry"] = alias.get(r["entry"], r["entry"])
-    pub["entries"].sort(key=lambda r: rank(r["entry"]))
-    for r in pub["agreement"]:
-        a, b = alias.get(r["a"], r["a"]), alias.get(r["b"], r["b"])
-        r["a"], r["b"] = sorted((a, b), key=rank)        # neither the row order nor a/b tells the intake order
-    pub["agreement"].sort(key=lambda r: (rank(r["a"]), rank(r["b"])))
-    for k in ("seeds", "deal", "aliases"):
-        pub.pop(k)
+    pub = public_copy(host, [e["name"] for e in ents if e["ref"]])
     (out / "result-public.json").write_text(json.dumps(pub, ensure_ascii=False, indent=1), encoding="utf-8")
     return host
 

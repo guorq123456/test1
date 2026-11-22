@@ -486,11 +486,12 @@ def _play_on(job: dict, beat=None) -> dict:
                 break
             out["steps"].append([seat, counter() - c0, 0])
             chosen = legal_choice(action, actions)    # as in the runner (LD-37), still on the clock
+            shown = safe_repr(action) if chosen is None else None     # its repr is the strategy's code (LD-41)
         finally:
             if beat is not None:
                 beat[1] = 0
         if chosen is None:
-            out.update(result="illegal", loser=seat, winner=1 - seat, error=safe_repr(action))
+            out.update(result="illegal", loser=seat, winner=1 - seat, error=shown)
             break
         action = chosen
         out["actions"].append(to_dict(action))
@@ -524,7 +525,8 @@ def _resumed(job: dict, g: dict | None) -> dict:
     else:
         log = {"id": job["id"], "result": "void", "winner": None, "loser": None, "error": g.get("error")}
     if g.get("changed"):
-        log = dict(log, voided_result=log.get("result"), result="void", winner=None, loser=None,
+        log = dict(log, voided_result=log.get("result"), voided_winner=log.get("winner"), result="void", winner=None,
+                   loser=None,
                    error=clean("the simulator changed in this worker during the game (LD-40): " + g["changed"]))
     return log
 

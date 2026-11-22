@@ -47,7 +47,6 @@ covers the rest (plan 2.3).
 from __future__ import annotations
 
 import argparse
-import ast
 import gc
 import hashlib
 import json
@@ -79,158 +78,19 @@ REPLAY_GAMES = 2
 COMPUTE_WARN = 1.08
 DEFAULT = "bot:mcts:100+plan"
 
-ALLOWED_TOP = {"__future__", "typing", "math", "random", "collections", "itertools", "functools", "dataclasses",
-               "heapq", "bisect", "statistics", "copy", "enum", "numpy", "svsim"}
-ALLOWED_LADDER = {"ladder.interface", "ladder.base"}
-DENIED_PREFIXES = ("svsim.learn", "svsim.tools")    # they load trained models (A12)
-BANNED_NAMES = {"open", "eval", "exec", "compile", "__import__", "globals", "locals", "vars", "breakpoint",
-                "input", "memoryview", "help", "exit", "quit", "__builtins__", "__loader__", "__spec__", "__file__"}
-ATTR_FUNCS = {"getattr", "setattr", "delattr", "hasattr"}   # allowed only with a written-out, allowed name
-ALLOWED_DUNDERS = {"__init__", "__name__", "__post_init__"}
-BANNED_ATTRS = {
-    # frames, code, the interpreter
-    "f_back", "f_locals", "f_globals", "f_builtins", "f_code", "tb_frame", "tb_next", "gi_frame", "gi_code",
-    "cr_frame", "cr_code", "ag_frame", "ag_code", "co_code", "mro", "modules",
-    # modules reachable as attributes of allowed modules
-    "sys", "os", "gc", "inspect", "ctypes", "ctypeslib", "subprocess", "socket", "importlib", "builtins", "io",
-    "pathlib", "shutil", "threading", "multiprocessing", "marshal", "pickle",
-    # files
-    "Path", "read_text", "read_bytes", "write_text", "write_bytes", "open", "unlink", "fromfile", "tofile",
-    "memmap", "loadtxt", "savetxt", "genfromtxt", "savez", "savez_compressed", "DataSource",
-    # processes, environment
-    "system", "popen", "environ", "getenv", "putenv",
-}
+from ladder.codecheck import (  # noqa: F401 - the code reader (LD-41); the names stay importable from here
+    ALLOWED_LADDER,
+    ALLOWED_TOP,
+    BANNED_ATTRS,
+    BANNED_NAMES,
+    DENIED_PREFIXES,
+    check_code,
+    module_problem,
+)
 
 
 class Refused(Exception):
     pass
-
-
-# --- reading the code ----------------------------------------------------------------------------------------
-
-def _dunder(name: str) -> bool:
-    return name.startswith("__") and name.endswith("__") and name not in ALLOWED_DUNDERS
-
-
-def _is_super(node) -> bool:
-    return isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "super"
-
-
-def _own(node) -> bool:
-    """`self`, `cls` or `super()`: the strategy's own object, whose private attributes it may use."""
-    return (isinstance(node, ast.Name) and node.id in ("self", "cls")) or _is_super(node)
-
-
-def _root(node) -> str | None:
-    """The name an attribute / subscript chain starts from (`a` in a.b[c].d), or None."""
-    while isinstance(node, (ast.Attribute, ast.Subscript)):
-        node = node.value
-    return node.id if isinstance(node, ast.Name) else None
-
-
-def _module_problem(name: str) -> str | None:
-    if any(name == p or name.startswith(p + ".") for p in DENIED_PREFIXES):
-        return "它们能载入训练好的模型（A12）"
-    top = name.split(".")[0]
-    if top == "ladder":
-        return None if name in ALLOWED_LADDER else "ladder 里只能用 ladder.interface、ladder.base"
-    if top in ALLOWED_TOP:
-        return None
-    return "不在允许的模块里"
-
-
-def check_code(src: str, cls: str) -> list[str]:
-    """Problems found by reading the code (empty list: none). Nothing is run."""
-    try:
-        tree = ast.parse(src)
-    except SyntaxError as e:
-        return [f"语法错误：第 {e.lineno} 行，{e.msg}"]
-    for node in ast.walk(tree):
-        for child in ast.iter_child_nodes(node):
-            child._parent = node
-    problems, random_alias, classes = [], set(), []
-    imported, ladder_pkg = set(), set()                # names bound by import statements; names bound to `ladder`
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for a in node.names:
-                imported.add(a.asname or a.name.split(".")[0])
-                if a.asname is None and a.name.split(".")[0] == "ladder":
-                    ladder_pkg.add("ladder")
-        elif isinstance(node, ast.ImportFrom):
-            imported.update(a.asname or a.name for a in node.names)
-
-    def bad(node, what):
-        problems.append(f"第 {getattr(node, 'lineno', '?')} 行：{what}")
-
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for a in node.names:
-                why = _module_problem(a.name)
-                if why:
-                    bad(node, f"import {a.name}（{why}）")
-                if a.name == "random":
-                    random_alias.add(a.asname or "random")
-        elif isinstance(node, ast.ImportFrom):
-            if node.level:
-                bad(node, "相对 import（一个成员只交一个模块）")
-                continue
-            mod = node.module or ""
-            why = None if mod == "ladder" else _module_problem(mod)     # `from ladder import x`: checked per name
-            if why:
-                bad(node, f"from {mod} import ...（{why}）")
-                continue
-            for a in node.names:
-                if a.name == "*":
-                    bad(node, f"from {mod} import *")
-                    continue
-                full = f"{mod}.{a.name}"
-                if (mod == "ladder" and full not in ALLOWED_LADDER) or \
-                        any(full == p or full.startswith(p + ".") for p in DENIED_PREFIXES):
-                    bad(node, f"from {mod} import {a.name}（{_module_problem(full)}）")
-                if mod == "random" and a.name != "Random":
-                    bad(node, f"from random import {a.name}（要随机数用 self.random，不用全局的 random）")
-                if a.name in BANNED_NAMES or a.name in BANNED_ATTRS or _dunder(a.name):
-                    bad(node, f"from {mod} import {a.name}（这个名字不许用）")
-        elif isinstance(node, ast.Name):
-            if node.id in BANNED_NAMES or _dunder(node.id):
-                bad(node, f"{node.id}（不许用：碰文件、动态执行或解释器）")
-            elif node.id in ATTR_FUNCS:
-                parent = getattr(node, "_parent", None)
-                if not (isinstance(parent, ast.Call) and parent.func is node):
-                    bad(node, f"{node.id} 只能直接调用")
-        elif isinstance(node, ast.Attribute):
-            if node.attr in BANNED_ATTRS or _dunder(node.attr):
-                bad(node, f".{node.attr}（不许用：碰文件、别的进程、调用栈或解释器）")
-            elif node.attr == "__init__" and not _is_super(node.value):
-                bad(node, ".__init__ 只能写成 super().__init__(...)（对别的对象调 __init__ 会原地改写它，"
-                          "包括裁判的走法和卡牌定义）")
-            elif node.attr.startswith("_") and not node.attr.startswith("__") and not _own(node.value):
-                bad(node, f".{node.attr}（别的对象、模块的私有属性不许碰；自己的 self._x 可以）")
-            if isinstance(node.value, ast.Name) and node.value.id in random_alias and node.attr != "Random":
-                bad(node, f"{node.value.id}.{node.attr}（要随机数用 self.random，不用全局的 random）")
-            if isinstance(node.value, ast.Name) and node.value.id in ladder_pkg and node.attr not in ("interface", "base"):
-                bad(node, f"ladder.{node.attr}（ladder 里只能用 ladder.interface、ladder.base）")
-            if isinstance(node.ctx, (ast.Store, ast.Del)) and _root(node) in imported:
-                bad(node, f"给 {_root(node)} 里的东西赋值或删除（不许改模块、引擎、卡牌里的东西）")
-        elif isinstance(node, ast.Subscript):
-            if isinstance(node.ctx, (ast.Store, ast.Del)) and _root(node) in imported:
-                bad(node, f"给 {_root(node)} 里的东西赋值或删除（不许改模块、引擎、卡牌里的东西）")
-        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and _dunder(node.name):
-            bad(node, f"def {node.name}（自己定义双下划线方法不许，__init__、__post_init__ 除外）")
-        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in ATTR_FUNCS:
-            name = node.args[1] if len(node.args) >= 2 else None
-            if not (isinstance(name, ast.Constant) and isinstance(name.value, str)):
-                bad(node, f"{node.func.id} 的属性名要写死成字符串")
-            elif name.value in BANNED_ATTRS or _dunder(name.value) or name.value == "__init__" or \
-                    (name.value.startswith("_") and not _own(node.args[0])):
-                bad(node, f"{node.func.id}(..., {name.value!r})（这个属性不许碰）")
-            elif node.func.id in ("setattr", "delattr") and _root(node.args[0]) in imported:
-                bad(node, f"{node.func.id}({_root(node.args[0])}, ...)（不许改模块、引擎、卡牌里的东西）")
-        elif isinstance(node, ast.ClassDef) and isinstance(getattr(node, "_parent", None), ast.Module):
-            classes.append(node.name)
-    if cls not in classes:
-        problems.append(f"模块顶层没有类 {cls}")
-    return problems
 
 
 # --- the submission directory ----------------------------------------------------------------------------------

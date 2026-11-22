@@ -20,18 +20,19 @@
    decision, plain and with every hook written out).
 7. speed: 2300 keyed games of the baseline lists on all cores (the runner alone, no pool): games per hour, for the
    practice arena's time limit. With the tripwire on (LD-40): a false alarm would void games and fail this step.
-8. tripwire (LD-40): 4 keyed games in one worker: a test strategy that rewrites shared card definitions, one that adds
-   a member to the scripts' base class, each followed by a plain game. The two are void with the reason and the
-   original result kept; the plain ones after them are normal and replay (the worker was replaced).
+8. tripwire (LD-40, LD-41): 6 keyed games in one worker: a test strategy that rewrites shared card definitions, one
+   that adds a member to the scripts' base class, one that adds a card id to the scripts' listener registry, each
+   followed by a plain game. The three are void with the reason and the original result kept; the plain ones after
+   them are normal and replay (the worker was replaced).
 9. guarded tasks (LD-40): runner.guarded_map, as puzzles and the arena's resume use it, on Windows: a task that
    changes the simulator is marked and its worker replaced, a hang is stopped by the clock, a worker that exits is
    that task's alone.
 10. audit (LD-40): ladder/audit.py replays every game of steps 2, 7 and 8 move by move in clean processes; the only
    ones allowed to fail are none (the void ones are skipped).
 
-Seeds: 93150000-93150019 (2, 3), 93150020-93150023 (8) and 93150100-93152399 (7), host measurement second segment
+Seeds: 93150000-93150019 (2, 3), 93150020-93150025 (8) and 93150100-93152399 (7), host measurement second segment
 (SEEDS.md); 4 replays p1b's own; 5 and 6 reuse the probe bank seeds the tests use (99001000+, 99001520-99001559), on
-purpose. A dry run elsewhere (--dry, with --key a throwaway file and --speed-games small) uses 93403000-93403023 and
+purpose. A dry run elsewhere (--dry, with --key a throwaway file and --speed-games small) uses 93403000-93403025 and
 93403100 onward instead (host probe second segment).
 Writes RUNS/<commit>/keyed.jsonl, speed.jsonl, tripwire.jsonl, summary.json (one folder per commit, "-dirty" if the
 working tree differs: a second run on the same code skips the games already played, a run on new code plays its
@@ -64,7 +65,8 @@ DRY_KEYED = (93403000, 93403020)
 DRY_TRIP = 93403020
 DRY_SPEED = 93403100
 DEFAULT = "bot:mcts:100+plan"
-TRIP_STRATEGIES = ["py:helpers:ChangesCards", "py:helpers:Random", "py:helpers:PatchesScripts", "py:helpers:Random"]
+TRIP_STRATEGIES = ["py:helpers:ChangesCards", "py:helpers:Random", "py:helpers:PatchesScripts", "py:helpers:Random",
+                   "py:helpers:GrowsRegistry", "py:helpers:Random"]
 
 
 def codes():
@@ -149,7 +151,7 @@ def main():
     a = ap.parse_args()
     keyed_range = DRY_KEYED if a.dry else KEYED
     speed_range = (DRY_SPEED, DRY_SPEED + a.speed_games) if a.dry else (SPEED[0], SPEED[0] + a.speed_games)
-    if speed_range[1] > (DRY_SPEED + 900 if a.dry else SPEED[1]):
+    if speed_range[1] > (DRY_SPEED + 800 if a.dry else SPEED[1]):      # 93403900 is the warm-up seed
         raise SystemExit("--speed-games past the seeds set aside for it")
     key_file = Path(a.key) if a.key else deal.DEFAULT_KEY
     for stream in (sys.stdout, sys.stderr):

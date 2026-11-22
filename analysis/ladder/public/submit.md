@@ -75,10 +75,13 @@ python -m ladder.submit precheck 你的提交目录
 2. **卡组**（新卡组、公共题）：按模拟器自己的规则查：40 张，同名最多 3 张，一个职业加中立，卡池以模拟器为准。每张有效果的牌都要有脚本，没有的会按白板打，所以拒收并列出牌名。
 3. **名额和期**：见第四节。
 4. **读代码**（不运行）：
-   - 只许 import 这些模块：`ladder.interface`、`ladder.base`、`svsim`（`svsim.learn`、`svsim.tools` 除外，它们能载入训练好的模型）、`math`、`random`、`collections`、`itertools`、`functools`、`dataclasses`、`heapq`、`bisect`、`statistics`、`copy`、`enum`、`typing`、`numpy`。
-   - 不许用碰文件、网络、别的进程、调用栈、解释器的名字：`open`、`eval`、`exec`、`compile`、`globals`、`vars`，双下划线属性（`__init__`、`__name__`、`__post_init__` 除外），`f_back`、`tb_frame` 这类属性，等等。
-   - `getattr`、`setattr`、`hasattr` 的属性名要写死成字符串。
-   - 不许改别人的东西：`__init__` 只能写成 `super().__init__(...)`；别的对象、模块的私有属性（`x._y`）不许碰，自己的 `self._y` 可以；`ladder` 里只能用 `interface`、`base`；不许给 import 进来的模块、类、对象里的东西赋值或删除（`pool.POOL[k] = ...`、`Attack.x = ...`、`setattr(模块, ...)`）；不许自己定义双下划线方法（`__init__`、`__post_init__` 除外）。给你的走法、局面都是拷贝或者只读的，改它们没有用；改卡牌定义、引擎这类共用的东西，就是作弊。
+   - 只许 import 这些模块：`ladder.interface`、`ladder.base`、`svsim`（`svsim.learn`、`svsim.tools`、`svsim.ui`、`svsim.build`、`svsim.search.parallel` 除外：它们能载入训练好的模型、读强度表和对局记录、开进程）、`math`、`random`、`collections`、`itertools`、`functools`、`dataclasses`、`heapq`、`bisect`、`statistics`、`copy`、`enum`、`typing`、`numpy`。经别的模块拿到的模块（比如某个 svsim 模块里的 `time`）也按这张表管。私有名字（`from x import _y`）不许拿。
+   - 不许用碰文件、网络、别的进程、调用栈、解释器的名字：`open`、`eval`、`exec`、`compile`、`globals`、`vars`，双下划线属性（`__init__`、`__name__`、`__post_init__` 除外，而且这三个也不许赋值），`f_back`、`tb_frame` 这类属性，等等。搜索的 `parallel`、`par_spec`（开别的进程，算力不算在你头上）不许用。
+   - `getattr`、`setattr`、`delattr`、`hasattr` 只能直接调用，属性名要写死成字符串。
+   - 不许改别人的东西。读代码时，每个值分三档：你自己做的；新的、但里面装着共用的东西（比如装着 import 来的对象的列表、`list(x)`、`dataclasses.replace(x, ...)`、svsim 类的新实例、钩子给你的参数）；可能是共用的（import 来的名字、模块的属性、svsim / ladder 函数的返回值（注解写着返回数、布尔、字符串的除外）、从后两档里读出来的任何东西、你从 `PlayerStrategy` 继承来的 `self.tree`、`self.agent` 等；`self.random`、`self.rng`、`self.spec`、`self.defaults` 算你自己的）。档位跟着赋值、for、with、推导式、`:=`、拆包、你自己函数的参数和返回值、属性名、容器走。**可能共用的东西不许改**：不许给它的属性或元素赋值、删除；不许 `x += ...`、`x |= ...` 这类原地运算（要算就写成 `x = x + ...`；加一个数字常量可以）；不许调改容器的方法（`append`、`add`、`update`、`pop`、`clear`、`sort` 等，调用和当值传都算）；不许拿它去 `shuffle`、`heappush`、`insort`；不许 `setattr` / `delattr`。`copy.copy`、`copy.deepcopy` 不改档位（类、函数、枚举成员复制出来还是它自己）；要一份能改的，用 `list(x)`、`dict(x)`、`sorted(x)`、`dataclasses.replace(x, ...)`。给 import 进来的模块、类、对象里的东西赋值或删除，不管什么档都拒。
+   - 为了读得清楚，这些写法也不许：模块当值用（只能写 `模块.属性`）；你自己的类除了建实例、读属性、`isinstance`、继承、`raise` / `except`、比较以外当值用；经类调普通方法（`K.method(x)`、`cls.method(x)`、`type(x).method(x)`）；`type(x)` 除了读属性、比较、`isinstance` 以外的用法；三个参数的 `type(...)`、`make_dataclass`；`svsim.core.script.register`。
+   - 自己的东西随便改：`self.x = ...`、`self._cache[k] = v`、你自己建的列表和字典。`self` 只认方法的第一个参数，而且在方法里没被重新赋值；私有属性（`x._y`）只有自己的 `self._y` 能碰。`__init__` 只能写成 `super().__init__(...)`，而且只能在 `__init__`、`__post_init__` 里调；不许自己定义双下划线方法（`__init__`、`__post_init__` 除外）。`ladder` 里只能用 `interface`、`base`。
+   - 给你的走法、局面都是拷贝，改它们没有用；改卡牌定义、引擎、登记表、别人的搜索这类共用的东西，就是作弊。读代码看不到的（经钩子给的局面拿到的卡牌定义、字典的键），由对局后的绊线和每期的重放审计管（rules.md 第九节）。
    - 不用全局的 `random`。要随机数用 `self.random`，或者用你自己按种子建的 `random.Random`。
 5. **载入**：在一个单独的进程里载入你的模块，装上审计钩子。读写文件、联网、开进程、ctypes、翻垃圾回收器里的对象，一律报错。然后打一局。哪怕你的代码把报错接住了，也照样记下、照样拒收。
 6. **冒烟**：对默认打法打 10 局（调参段里主持方自己那一份种子，对手用基线卡表，七个职业轮流，先后手各一半）。崩溃、非法步、超时都拒收。

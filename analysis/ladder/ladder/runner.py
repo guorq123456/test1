@@ -349,6 +349,23 @@ def _limit_for(what: int, step_limit: float) -> float:
     return step_limit * LOAD_FACTOR if what == LOAD else step_limit
 
 
+WARM_UP_SEED = 93403900                          # host probe bank 2 (SEEDS.md): one unlogged game per worker start
+WARM_UP = ["py:ladder.interface:PlayerStrategy", "bot:mcts:100+plan"]
+
+
+def _warm_up():
+    """One game nobody logs, before a worker's first snapshot (LD-41): it loads what games load (the search, the
+    interface, the bots' lazy globals such as the baseline lists), so the snapshot follows all of it from the start
+    and no first game can make its changes part of what is "clean". Host code only; the deal is the old one."""
+    from ladder import base
+    lists = base.baseline_lists()
+    crafts = sorted(lists)[:2]
+    _play({"id": "warm-up", "seed": WARM_UP_SEED, "first": 0, "decks": [lists[c] for c in crafts],
+           "strategies": WARM_UP, "strategy_seeds": [1, 2]}, None)
+    for spec in ("bot:greedy+plan", "mix:0.1:mcts:100+plan"):
+        make_strategy(spec, 1)
+
+
 def _worker_setup(paths=()):
     import signal
     signal.signal(signal.SIGINT, signal.SIG_IGN)      # Ctrl+C stops the parent, which ends the workers; inside a
@@ -360,7 +377,10 @@ def _worker_setup(paths=()):
     os.chdir(ROOT)
     from ladder import watch
     watch.preload()
-    return watch, watch.snapshot()                    # LD-40: what later games here inherit, checked after each
+    _warm_up()
+    snap = watch.snapshot()                           # LD-40/41: what later games here inherit, checked after each
+    watch.reset_caches(snap)
+    return watch, snap
 
 
 def _check(watch, snap, beat):
@@ -372,6 +392,15 @@ def _check(watch, snap, beat):
         beat[1] = 0
 
 
+def _resnap(watch, beat):
+    """A new snapshot after a clean task that loaded a module (or set a lazy global): on the clock too (LD-41)."""
+    beat[0], beat[1] = HOST, time.monotonic_ns()
+    try:
+        return watch.snapshot()
+    finally:
+        beat[1] = 0
+
+
 def _worker(inq, results_q, beat, wid):
     """One job at a time from its own queue, so the parent always knows which job a worker holds."""
     watch, snap = _worker_setup()
@@ -379,6 +408,7 @@ def _worker(inq, results_q, beat, wid):
         job = inq.get()
         if job is None:
             return
+        watch.reset_caches(snap)                      # nothing one game leaves in the caches reaches the next
         try:
             res = play_job(job, beat)
         except Exception:
@@ -388,14 +418,15 @@ def _worker(inq, results_q, beat, wid):
         res["worker"] = wid
         moved = _check(watch, snap, beat)
         if moved:                                     # either side's code may have done it: the game is void, and
-            res.update(voided_result=res.get("result"), result="void", winner=None, loser=None, worker_exit=True,
+            res.update(voided_result=res.get("result"), voided_winner=res.get("winner"), result="void", winner=None,
+                       loser=None, worker_exit=True,
                        error=clean("the simulator changed in this worker during the game (LD-40): "
                                    + "; ".join(moved)))
             results_q.put(res)                        # no later game runs here: the parent starts a new worker
             inq.get()                                 # once it has this result (so it never takes this for a crash)
             return
         if watch.stale(snap):
-            snap = watch.snapshot()
+            snap = _resnap(watch, beat)
         results_q.put(res)
 
 
@@ -410,6 +441,7 @@ def _task_worker(inq, results_q, beat, wid, fn, paths):
         if item is None:
             return
         i, task = item
+        watch.reset_caches(snap)
         try:
             res = {"value": f(task, beat)}
         except Exception:
@@ -421,7 +453,7 @@ def _task_worker(inq, results_q, beat, wid, fn, paths):
             inq.get()
             return
         if watch.stale(snap):
-            snap = watch.snapshot()
+            snap = _resnap(watch, beat)
         results_q.put((wid, i, res, False))
 
 
@@ -630,6 +662,13 @@ def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=No
                 "strategies": job["strategies"], "strategy_seeds": job.get("strategy_seeds"),
                 "deal": job.get("deal"), "labels": job.get("labels", {}), "result": result, **kw}
 
+    if out.exists() and out.stat().st_size:
+        with out.open("rb") as f:                        # a power cut can leave the last line without its newline:
+            f.seek(-1, os.SEEK_END)                      # start on a fresh line, so the torn one stays on its own
+            torn = f.read(1) != b"\n"                   # (LD-41)
+        if torn:
+            with out.open("a", encoding="utf-8") as f:
+                f.write("\n")
     try:
         with out.open("a", encoding="utf-8") as f:
             while True:
