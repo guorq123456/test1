@@ -60,7 +60,7 @@
 
 拦不住的：同一个 Python 进程里有决心的代码；以及 S4 之下，选手本来就读得到电脑上的一切。所以还靠抽查：主持方每期随机抽几份提交读代码，读到违规的按规则处理并记账。
 
-打法更新收下以后进检验：11-22 写好 `python -m ladder.submit gate`（旧版本取收件时池子里的那一版，多步改法取第 1 步以前的那一版；中间一步只记一笔不检验；`stop: true` 标中途停下；检验台账放主持方目录，不进仓库；过了就 pool.update）。还没做：公共题的题库（puzzles.json）。
+打法更新收下以后进检验：11-22 写好 `python -m ladder.submit gate`（旧版本取收件时池子里的那一版，多步改法取第 1 步以前的那一版；中间一步只记一笔不检验；`stop: true` 标中途停下；检验台账放主持方目录，不进仓库；过了就 pool.update）。公共题题库和评测 11-22 做好（ladder/puzzles.py：`add` 登记题目、`run` 评测、公开结果不标是谁）。
 
 ## 2.4 练习场（代码已写：ladder/arena.py，待验收）
 
@@ -93,7 +93,7 @@
 
 和现有东西对不上、还缺的：
 
-- 公共目录：11-22 补了规则文档 public/rules.md、存档卡组清单 public/decklists.md（186 副，tools/make_public.py 生成）、卡牌常用名对照表 public/card-glossary.md（原来以为丢了，其实在仓库 analysis/card-glossary.md，10-07 版，原样复制）。环境报告第一期才有。
+- 公共目录：11-22 补了规则文档 public/rules.md、存档卡组清单 public/decklists.md（186 副，tools/make_public.py 生成）、卡牌常用名对照表 public/card-glossary.md（原来以为丢了，其实在仓库 analysis/card-glossary.md，10-07 版，原样复制）。环境报告由 ladder/report.py 生成（11-22），第一期才有。
 - 提示词里的随机数和重放要求（用 `self.random`）没写，接口说明里写了，选手会读到，不必改提示词。
 - 其余（看得到什么、对手卡表要推、练习场只用调参种子、从局面续打、默认打法每步 100 次、精确斩杀检测、红线 1～6）和接口、2.4 设计一致。
 

@@ -43,28 +43,8 @@ def decks7():
             if l.strip() and not l.startswith("#")]
 
 
-def field_of(kind):
-    frozen = decks7()
-    if kind == "frozen7":
-        return frozen
-    if kind == "others":
-        codes = {c for _, c in frozen}
-        rows = [l.strip().split("|")[:2] for l in (ROOT / "svsim/ui/bot_decks.txt").read_text(encoding="utf-8")
-                .splitlines() if l.strip() and not l.startswith("#")]
-        return [(f"bot/{n}", c) for n, c in rows if c not in codes]
-    if kind == "wgpq":
-        rows = [l.strip().split("|")[:2] for l in (LADDER / "decklists/wgpq-2026-11-14.txt").read_text(
-            encoding="utf-8").splitlines() if l.strip() and not l.startswith("#")]
-        seen, out = set(), []
-        for n, c in rows:
-            if c not in seen:
-                seen.add(c)
-                out.append((n, c))
-        return out
-    raise SystemExit(f"unknown field {kind}")
-
-
 def jobs_for(pilots, lo, hi, games, field_kind="others"):
+    from ladder.puzzles import field_of
     from svsim.ui.session import pilot_native_spec
     by_name = {n.split("/")[-1]: c for n, c in decks7()}
     field = field_of(field_kind)

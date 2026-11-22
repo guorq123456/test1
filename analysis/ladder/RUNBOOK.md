@@ -30,7 +30,7 @@
 1. 冻结池：`py -m ladder.evaluator freeze C:\claude\ladder-host\pool --out C:\claude\ladder-host\frozen\P<期>.json`（每个成员最近 1000 局平均，A22）。
 2. 练习场：`py -m ladder.arena snapshot C:\claude\ladder-host\pool --arena C:\claude\ladder-arena --anchors <锚点表>`；`py -m ladder.arena open C:\claude\ladder-arena --hours 4 --games 20000 --workers 11 --mask 0x3FC3FC`（时限 4 小时是临时限时；2 万局是规划的数）。第一次开期会生成 `arena.key`。
 3. 策略期：定这一期把关检验的 delta（规划：前几期 3～5 个百分点，后面 1.5），写进台账，再开期。
-4. 环境报告：这一期是卡组期还是策略期、时限、公开排行榜、池子里每个职业几个成员（只给匿名编号）、规则有什么变化。放进公共目录。
+4. 环境报告：`py -m ladder.report C:\claude\ladder-host\pool --out C:\claude\ladder-players\public\reports --anchors-dir C:\claude\ladder-host\anchors --anchors C:\claude\ladder-host\anchors\anchors.json [--puzzle <题>\result-public.json ...] --note "这一期的时限、规则变化"`。写 report-P<期>.md 和 .json：公开排行榜、每个职业几个成员、上一期的胜率表（成员对职业、成员对成员）、锚点成绩（按职业合起来，A43）、公共题结果（不标是谁）。发以前主持方自己从头看一遍，只有匿名编号和数。
 
 ### 2. 选手工作（时限内）
 
@@ -53,7 +53,7 @@
 
 - 名人堂（S9、A41）：天梯打完、进下一期以前 `py -m ladder.anchors induct C:\claude\ladder-host\pool --hof C:\claude\ladder-host\anchors\hof.json`，再 `py -m ladder.anchors table --out C:\claude\ladder-host\anchors\anchors.json --hof C:\claude\ladder-host\anchors\hof.json`（锚点 = 基线快照 + 名人堂；下一期练习场的 snapshot 也用这份）。
 - 锚点对战：每期 `py -m ladder.anchors run C:\claude\ladder-host\anchors\anchors.json --pool C:\claude\ladder-host\pool --out C:\claude\ladder-host\anchors --workers 11 --mask 0x3FC3FC`（先加 `--plan` 看局数）；只打新版本（A40）。`py -m ladder.anchors report C:\claude\ladder-host\anchors --anchors ...anchors.json` 出成绩。
-- 公共题（题库在做）：种子段 91900000～91999999。
+- 公共题：出题 `py -m ladder.puzzles add C:\claude\ladder-host\subs --id P01 --deck <卡组码> --title "..." --public C:\claude\ladder-players\public`；选手用 `submit` 交（种类「公共题」）。评测 `py -m ladder.puzzles run C:\claude\ladder-host\subs --id P01 --seeds <公共题段里没用过的一段> --out C:\claude\ladder-host\puzzles\P01 --workers 11 --mask 0x3FC3FC`；种子段 91900000～91999999，每次用哪一截记进 SEEDS.md。result-public.json 进环境报告，result-host.json 只给 Salem。
 
 ### 6. 汇报
 
