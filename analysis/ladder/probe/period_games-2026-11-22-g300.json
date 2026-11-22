@@ -1,0 +1,85 @@
+{
+ "G": 300,
+ "reps": 20,
+ "protect": 1000,
+ "by_period": {
+  "1": {
+   "members": 42,
+   "games": 7414,
+   "rho_now": 0.559,
+   "rho_last1000": 0.797,
+   "resid_sd_now_cr": 69.0,
+   "resid_sd_last1000_cr": 26.7,
+   "acc3_now": 0.585,
+   "acc5_now": 0.717,
+   "acc10_now": 0.866,
+   "acc5_1000": 0.874,
+   "acc10_1000": 0.987
+  },
+  "2": {
+   "members": 42,
+   "games": 7500,
+   "rho_now": 0.554,
+   "rho_last1000": 0.878,
+   "resid_sd_now_cr": 66.9,
+   "resid_sd_last1000_cr": 20.2,
+   "acc3_now": 0.611,
+   "acc5_now": 0.715,
+   "acc10_now": 0.859,
+   "acc5_1000": 0.976,
+   "acc10_1000": 1.0
+  },
+  "3": {
+   "members": 76.9,
+   "games": 13990,
+   "rho_now": 0.606,
+   "rho_last1000": 0.881,
+   "resid_sd_now_cr": 68.2,
+   "resid_sd_last1000_cr": 23.4,
+   "acc3_now": 0.628,
+   "acc5_now": 0.75,
+   "acc10_now": 0.886,
+   "acc5_1000": 0.946,
+   "acc10_1000": 0.994
+  },
+  "4": {
+   "members": 76.5,
+   "games": 14425,
+   "rho_now": 0.565,
+   "rho_last1000": 0.917,
+   "resid_sd_now_cr": 71.1,
+   "resid_sd_last1000_cr": 20.7,
+   "acc3_now": 0.635,
+   "acc5_now": 0.7,
+   "acc10_now": 0.88,
+   "acc5_1000": 0.98,
+   "acc10_1000": 1.0
+  },
+  "5": {
+   "members": 111,
+   "games": 21738,
+   "rho_now": 0.586,
+   "rho_last1000": 0.912,
+   "resid_sd_now_cr": 72.0,
+   "resid_sd_last1000_cr": 22.3,
+   "acc3_now": 0.633,
+   "acc5_now": 0.702,
+   "acc10_now": 0.871,
+   "acc5_1000": 0.962,
+   "acc10_1000": 0.999
+  },
+  "6": {
+   "members": 109.75,
+   "games": 21863,
+   "rho_now": 0.564,
+   "rho_last1000": 0.925,
+   "resid_sd_now_cr": 70.0,
+   "resid_sd_last1000_cr": 20.6,
+   "acc3_now": 0.619,
+   "acc5_now": 0.691,
+   "acc10_now": 0.87,
+   "acc5_1000": 0.979,
+   "acc10_1000": 1.0
+  }
+ }
+}
