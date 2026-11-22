@@ -1,0 +1,450 @@
+{
+ "games": 40,
+ "decisions": 2588,
+ "plain_same": 40,
+ "explicit_same": 40,
+ "seconds": 226,
+ "machine": "cloud container",
+ "rows": [
+  {
+   "seed": 99001520,
+   "decks": [
+    "bot/T1-FOREST-1",
+    "bot/T1-SWORD-1"
+   ],
+   "decisions": 80,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001521,
+   "decks": [
+    "bot/T1-FOREST-1",
+    "bot/T3-RUNE-1"
+   ],
+   "decisions": 64,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001522,
+   "decks": [
+    "bot/T1-FOREST-1",
+    "bot/T3-DRAGON-1"
+   ],
+   "decisions": 37,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001523,
+   "decks": [
+    "bot/T1-FOREST-1",
+    "bot/T1-ABYSS-1"
+   ],
+   "decisions": 91,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001524,
+   "decks": [
+    "bot/T1-FOREST-1",
+    "bot/T1-HAVEN-1"
+   ],
+   "decisions": 64,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001525,
+   "decks": [
+    "bot/T1-FOREST-1",
+    "bot/T1-PORTAL-1"
+   ],
+   "decisions": 83,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001526,
+   "decks": [
+    "bot/T1-SWORD-1",
+    "bot/T1-FOREST-1"
+   ],
+   "decisions": 85,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001527,
+   "decks": [
+    "bot/T1-SWORD-1",
+    "bot/T3-RUNE-1"
+   ],
+   "decisions": 61,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001528,
+   "decks": [
+    "bot/T1-SWORD-1",
+    "bot/T3-DRAGON-1"
+   ],
+   "decisions": 39,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001529,
+   "decks": [
+    "bot/T1-SWORD-1",
+    "bot/T1-ABYSS-1"
+   ],
+   "decisions": 77,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001530,
+   "decks": [
+    "bot/T1-SWORD-1",
+    "bot/T1-HAVEN-1"
+   ],
+   "decisions": 46,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001531,
+   "decks": [
+    "bot/T1-SWORD-1",
+    "bot/T1-PORTAL-1"
+   ],
+   "decisions": 73,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001532,
+   "decks": [
+    "bot/T3-RUNE-1",
+    "bot/T1-FOREST-1"
+   ],
+   "decisions": 65,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001533,
+   "decks": [
+    "bot/T3-RUNE-1",
+    "bot/T1-SWORD-1"
+   ],
+   "decisions": 80,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001534,
+   "decks": [
+    "bot/T3-RUNE-1",
+    "bot/T3-DRAGON-1"
+   ],
+   "decisions": 83,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001535,
+   "decks": [
+    "bot/T3-RUNE-1",
+    "bot/T1-ABYSS-1"
+   ],
+   "decisions": 66,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001536,
+   "decks": [
+    "bot/T3-RUNE-1",
+    "bot/T1-HAVEN-1"
+   ],
+   "decisions": 73,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001537,
+   "decks": [
+    "bot/T3-RUNE-1",
+    "bot/T1-PORTAL-1"
+   ],
+   "decisions": 66,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001538,
+   "decks": [
+    "bot/T3-DRAGON-1",
+    "bot/T1-FOREST-1"
+   ],
+   "decisions": 32,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001539,
+   "decks": [
+    "bot/T3-DRAGON-1",
+    "bot/T1-SWORD-1"
+   ],
+   "decisions": 41,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001540,
+   "decks": [
+    "bot/T3-DRAGON-1",
+    "bot/T3-RUNE-1"
+   ],
+   "decisions": 61,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001541,
+   "decks": [
+    "bot/T3-DRAGON-1",
+    "bot/T1-ABYSS-1"
+   ],
+   "decisions": 47,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001542,
+   "decks": [
+    "bot/T3-DRAGON-1",
+    "bot/T1-HAVEN-1"
+   ],
+   "decisions": 45,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001543,
+   "decks": [
+    "bot/T3-DRAGON-1",
+    "bot/T1-PORTAL-1"
+   ],
+   "decisions": 68,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001544,
+   "decks": [
+    "bot/T1-ABYSS-1",
+    "bot/T1-FOREST-1"
+   ],
+   "decisions": 84,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001545,
+   "decks": [
+    "bot/T1-ABYSS-1",
+    "bot/T1-SWORD-1"
+   ],
+   "decisions": 79,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001546,
+   "decks": [
+    "bot/T1-ABYSS-1",
+    "bot/T3-RUNE-1"
+   ],
+   "decisions": 88,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001547,
+   "decks": [
+    "bot/T1-ABYSS-1",
+    "bot/T3-DRAGON-1"
+   ],
+   "decisions": 45,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001548,
+   "decks": [
+    "bot/T1-ABYSS-1",
+    "bot/T1-HAVEN-1"
+   ],
+   "decisions": 59,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001549,
+   "decks": [
+    "bot/T1-ABYSS-1",
+    "bot/T1-PORTAL-1"
+   ],
+   "decisions": 68,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001550,
+   "decks": [
+    "bot/T1-HAVEN-1",
+    "bot/T1-FOREST-1"
+   ],
+   "decisions": 55,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001551,
+   "decks": [
+    "bot/T1-HAVEN-1",
+    "bot/T1-SWORD-1"
+   ],
+   "decisions": 52,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001552,
+   "decks": [
+    "bot/T1-HAVEN-1",
+    "bot/T3-RUNE-1"
+   ],
+   "decisions": 64,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001553,
+   "decks": [
+    "bot/T1-HAVEN-1",
+    "bot/T3-DRAGON-1"
+   ],
+   "decisions": 50,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001554,
+   "decks": [
+    "bot/T1-HAVEN-1",
+    "bot/T1-ABYSS-1"
+   ],
+   "decisions": 59,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001555,
+   "decks": [
+    "bot/T1-HAVEN-1",
+    "bot/T1-PORTAL-1"
+   ],
+   "decisions": 71,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001556,
+   "decks": [
+    "bot/T1-PORTAL-1",
+    "bot/T1-FOREST-1"
+   ],
+   "decisions": 60,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001557,
+   "decks": [
+    "bot/T1-PORTAL-1",
+    "bot/T1-SWORD-1"
+   ],
+   "decisions": 47,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001558,
+   "decks": [
+    "bot/T1-PORTAL-1",
+    "bot/T3-RUNE-1"
+   ],
+   "decisions": 72,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  },
+  {
+   "seed": 99001559,
+   "decks": [
+    "bot/T1-PORTAL-1",
+    "bot/T3-DRAGON-1"
+   ],
+   "decisions": 108,
+   "plain_same": true,
+   "explicit_same": true,
+   "first_difference": null
+  }
+ ]
+}
