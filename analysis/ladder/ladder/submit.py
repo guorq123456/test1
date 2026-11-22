@@ -76,6 +76,8 @@ SMOKE_GAMES = 10
 PEEK_GAMES, PEEK_POINTS = 2, 3
 REPLAY_GAMES = 2
 COMPUTE_WARN = 1.08
+YOUR_VOIDS = ("the simulator changed in this worker during the game",   # what the strategy's own code voids
+              "nothing ran on any clock", "the check after the game ran past", "worker died")  # (LD-45)
 DEFAULT = "bot:mcts:100+plan"
 
 from ladder.codecheck import (  # noqa: F401 - the code reader (LD-41); the names stay importable from here
@@ -631,10 +633,14 @@ def receive(d: Path, player: str, pool_dir: Path, subdir: Path, workers: int = 4
                             f"{str(g.get('error', ''))[-600:]}")
         elif g["result"] == "void":
             voids += 1
+            twin = logs.get(j["id"].replace("-sub", "-default"))
+            why = str(g.get("error", ""))
+            if any(why.startswith(t) for t in YOUR_VOIDS) and twin is not None and twin.get("result") != "void":
+                problems.append(f"{j['id']}：这局作废了，同一局换默认打法没作废——是你的代码（LD-45）：{why[:600]}")
     wins = sum(1 for j, g in zip([j for j in jobs if j["labels"]["side"] == "sub"], mine)
                if g and g.get("winner") == j["labels"]["seat"])
     check("冒烟", problems, {"games": len(mine), "wins": wins, "void": voids})
-    if voids:
+    if voids and not problems:
         rec["warnings"].append(f"冒烟局里有 {voids} 局作废（引擎出错或无脚本，不算你的）")
     if rec["reasons"]:
         return finish()

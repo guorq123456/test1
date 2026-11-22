@@ -1,4 +1,5 @@
-"""Reading a submission's code (item 2.3; fifth pass LD-40, sixth LD-41, seventh LD-42, eighth LD-43, ninth LD-44).
+"""Reading a submission's code (item 2.3; fifth pass LD-40, sixth LD-41, seventh LD-42, eighth LD-43, ninth LD-44,
+tenth LD-45).
 Nothing in the submitted code runs.
 The simulator's and ladder's own modules are imported here (they are the host's code) to tell a module from a class
 from a function; svsim.learn, svsim.tools, svsim.ui, svsim.build, svsim.search.parallel and ladder's other modules
@@ -31,19 +32,25 @@ repeated until nothing changes:
           and a real property's .setter / .getter / .deleter (checked by what the name is, not how it's spelled);
           anything read from an object of a class built on a storage type (typing.NamedTuple, namedtuple(...),
           TypedDict, dict, list, tuple, an exception...: what its constructor is given is kept where this reading
-          doesn't follow it, LD-44), self's attributes and items inside such a class too.
-A method's parameters start CLEAN, the module's own code being the only caller; HOLDS when someone else may call
-it: a dunder, the __init__ of a class with a base that isn't the module's own (PlayerStrategy alone is fine), a
+          doesn't follow it, LD-44), self's attributes and items inside such a class too, and what the methods it
+          inherits give (self.get(...), super().get(...), self._asdict(): LD-45); the attributes a standard-library
+          base sets on self (UserDict.data, ChainMap.maps: read from its source, LD-45).
+A method's parameters start CLEAN, the module's own code being the only caller; SHARED for __post_init__ (its
+InitVars come from any construction, a default or replace) and for an own Enum's __init__ and the hooks its base
+names (_missing_...: the member values, what C(x) is given; LD-45); HOLDS when someone else may call it: a dunder, the __init__ of a class with a base that isn't the module's own (PlayerStrategy alone is fine), a
 method named like an attribute the simulator's or ladder's code uses on objects it is handed (duck_names), or like
 a member of a non-own base class or a name that base's code uses on self (the host may call it with its objects);
 every method of a class whose base can't be told (typing.NamedTuple / TypedDict, Generic[...] and namedtuple(...)
 can: LD-43); SHARED when the method is taken as a value. A refusal ends with a note naming the methods HOLDS only
 for their name, each with a name host code doesn't use either, those named like a container's methods (rename
-them), and the classes built on a storage type (use a dataclass). `cls(...)` in a classmethod is the __init__ of
-that class or of one of the module's classes built on it; constructing a class runs every __init__ of it and its own
-ancestors (a diamond's C3 order isn't worked out: LD-44); a dataclass's fields and its __post_init__'s parameters
-(InitVars) get the levels of the arguments of its construction, of cls(...) and of dataclasses.replace /
-copy.replace.
+them), the classes built on a storage type (use a dataclass), and the lines of replace(x, **d) with a d not written
+out. `cls(...)` in a classmethod is the construction of that class or of one of the module's classes built on it;
+constructing a class runs its own __init__ if it has one, else, on each branch of its own bases, the first class's
+that has one or is a dataclass (generated: init_sources; a superset of C3's choice, LD-44 / LD-45). A dataclass's
+fields get the levels of the arguments that set them, at its construction (an undecorated subclass's, cls(...),
+super().__init__(...) too) and in dataclasses.replace / copy.replace: by name; by position when the field order is
+plain (dc_positional), else every field the highest positional level; `**{'k': v}` written out sets k, any other
+`**d` every field of every dataclass of the module (LD-45).
 A SHARED object may not be changed: no assignment or `del` into it (x.a = ..., x[k] = ...), no augmented assignment
 on it (x += ...: write x = x + ...; adding a number literal is allowed), no method that changes a container
 (append, add, update, pop, clear, sort, ...: called or taken as a value), no shuffle / heappush / insort on it, no
@@ -56,7 +63,11 @@ used other than to make an instance, read an attribute, isinstance / issubclass,
 except, a comparison (an own class's name in an annotation only with `from __future__ import annotations`, which leaves
 annotations unread; a match-class pattern; iterating or indexing an own Enum); a method called through its class
 (K.method(x), cls.method(x), type(x).method(x)); a class defined inside a class (Outer.Inner(...) isn't followed to
-its __init__: LD-44); type(x) used other than for an attribute, a comparison or
+its __init__: LD-44); an if / for / while / try / with / match in a class body (a def or a field under it isn't
+seen as the class's: LD-45); a classmethod's cls used other than to construct, read an attribute, compare or
+isinstance (f = cls; f(x) isn't followed: LD-45); dataclasses.dataclass, typing.final / no_type_check / override /
+runtime_checkable / dataclass_transform / overload, enum.global_enum and functools.total_ordering other than as a
+decorator (called on an imported class they change it: LD-45); type(x) used other than for an attribute, a comparison or
 isinstance; svsim.core.script.register; keyword arguments parallel / par_spec (ISMCTS's root-parallel processes:
 their CPU is not the strategy's process's); `x *= n` with an int on a SHARED x (a list repeats in place); a yield
 or await inside a try's body, except or else (when the generator is freed, there, off every clock, its except /
@@ -121,6 +132,7 @@ MUTATORS = frozenset({
     "setfield", "partition", "byteswap", "cache_clear"})
 ADDERS = frozenset({"append", "add", "extend", "insert", "update", "appendleft", "extendleft"})
 REPLACERS = tuple(f for f in (dataclasses.replace, getattr(_copy, "replace", None)) if f is not None)  # 3.13's too
+DC_PLAIN_KEYWORDS = frozenset({"frozen", "eq", "order", "repr", "unsafe_hash", "slots", "match_args", "weakref_slot"})
 ARG_MUTATORS = frozenset({"shuffle", "heappush", "heappop", "heapify", "heapreplace", "heappushpop", "insort",
                           "insort_left", "insort_right"})
 BUILTIN_TYPES = frozenset({"set", "dict", "list", "bytearray", "frozenset", "object", "type", "tuple"})
@@ -143,6 +155,10 @@ WRAPPERS = frozenset({"staticmethod", "classmethod", "property", "cached_propert
 REAL_WRAPPERS = (("functools", "lru_cache"), ("functools", "cache"), ("functools", "cached_property"),
                  ("functools", "total_ordering"), ("dataclasses", "dataclass"))
 ACCESSORS = frozenset({"setter", "getter", "deleter"})
+CLASS_MUTATORS = (("dataclasses", "dataclass"), ("typing", "final"), ("typing", "no_type_check"),  # change the class
+                  ("typing", "override"), ("typing", "runtime_checkable"), ("typing", "dataclass_transform"),  # or the
+                  ("typing", "overload"), ("typing", "no_type_check_decorator"), ("enum", "global_enum"),  # function
+                  ("functools", "total_ordering"))  # they're given: decorators of the module's own only (LD-45)
 FLOW_SECONDS = 60                                 # a module whose reading takes longer is refused (LD-42)
 OWN_FRESH = frozenset({"random", "rng", "spec", "defaults", "LETHAL", "ITERATIONS"})   # PlayerStrategy's own
 SCALAR_ANNOTATIONS = {"float", "int", "bool", "str", "None", float, int, bool, str, None, type(None)}
@@ -228,14 +244,16 @@ _CLASS_ATTRS: dict = {}
 
 
 def class_attrs(cls) -> set:
-    """Every attribute an instance of `cls` may have from its classes: dir(cls), and for svsim / ladder classes the
-    `self.x = ...` (and setattr(self, "x", ...)) in their source."""
+    """Every attribute an instance of `cls` may have from its classes: dir(cls), and for every class in its MRO
+    written in Python (svsim, ladder, the standard library's: LD-45) the `self.x = ...` (and setattr(self, "x", ...))
+    in their source."""
     if cls in _CLASS_ATTRS:
         return _CLASS_ATTRS[cls]
     names = set(dir(cls))
     for k in getattr(cls, "__mro__", ()):
-        if (getattr(k, "__module__", "") or "").split(".")[0] not in ("svsim", "ladder"):
-            continue
+        names |= set(getattr(k, "__dict__", {}))   # LD-45: an enum's dir() leaves out _missing_ and the like
+        if (getattr(k, "__module__", "") or "builtins") == "builtins":
+            continue                               # LD-45: the standard library's Python classes too (UserDict.data)
         try:
             tree = ast.parse(textwrap.dedent(inspect.getsource(k)))
         except (OSError, TypeError, SyntaxError):
@@ -403,8 +421,8 @@ class Fn:
 
 
 class Cls:
-    __slots__ = ("attrs", "builtin_bases", "dataclass", "deco_unknown", "fields", "fresh_ok", "node", "objs", "storage",
-                 "tainted", "unknown", "user_bases")
+    __slots__ = ("attrs", "builtin_bases", "dataclass", "dc_init", "dc_plain", "deco_unknown", "enum", "fields",
+                 "fresh_ok", "node", "objs", "storage", "tainted", "unknown", "user_bases")
 
 
 def _deco_name(d) -> str | None:
@@ -431,6 +449,7 @@ class Flow:
         self.changed = False
         self._memo: dict = {}
         self.incomplete = False
+        self.star_fields: set = set()  # lines of replace(x, **d) / K(**d) that raised every dataclass field (LD-45)
         self._init_levels()
         deadline = time.monotonic() + FLOW_SECONDS
         while True:                    # levels only go up, over three values: this ends (no round cap: LD-42)
@@ -702,6 +721,11 @@ class Flow:
         c.builtin_bases = []
         kinds = [self.wrapper(d) for d in node.decorator_list]
         c.dataclass = "dataclass" in kinds
+        dc_kw = [k for d, kind in zip(node.decorator_list, kinds) if kind == "dataclass" and isinstance(d, ast.Call)
+                 for k in d.keywords]
+        c.dc_init = not any(k.arg == "init" and not (isinstance(k.value, ast.Constant) and k.value.value is True)
+                            for k in dc_kw)    # LD-45: dataclass(init=False) runs a base's __init__
+        c.dc_plain = all(k.arg in DC_PLAIN_KEYWORDS for k in dc_kw)
         c.deco_unknown = any(k not in ("dataclass", "total_ordering") for k in kinds)   # LD-42
         c.fields = [s.target.id for s in node.body if isinstance(s, ast.AnnAssign) and isinstance(s.target, ast.Name)]
         for b in node.bases:
@@ -738,6 +762,10 @@ class Flow:
                         for b in c.builtin_bases)     # LD-44: a tuple / dict / list / Exception base keeps what the
         #                                               constructor is given (NamedTuple fields, e.args) unread here
         c.tainted = c.unknown or bool(c.objs) or c.storage
+        c.enum = any(isinstance(o, type) and issubclass(o, enum.Enum) for o in c.objs)
+        for b in c.builtin_bases:                  # LD-45: a dict / list / tuple base's methods (self.get(...))
+            if b is not object and b is not typing.Generic and b is not typing.Protocol:
+                c.attrs |= class_attrs(b)
         ps = _player_strategy()
         c.fresh_ok = bool(c.objs) and not c.unknown and all(o is ps for o in c.objs)
         return c
@@ -879,12 +907,73 @@ class Flow:
                 self.ancestors(u, seen)
         return seen
 
+    def init_sources(self, c, seen=None) -> list:
+        """What constructing class `c` runs with the call's arguments: its own __init__ if it has one (a def node);
+        else, a dataclass's generated one (the class node); else, for each of its own bases, the same, down to the
+        first class on that branch that has either (LD-45: not every ancestor's __init__, which refused a subclass
+        whose __init__ calls super().__init__() with other arguments). A superset of C3's single choice: a diamond's
+        order isn't worked out (LD-44)."""
+        seen = set() if seen is None else seen
+        if c in seen:
+            return []
+        seen.add(c)
+        d = next((s for s in c.body if isinstance(s, (ast.FunctionDef, ast.AsyncFunctionDef)) and s.name == "__init__"),
+                 None)
+        if d is not None:
+            return [d]
+        info = self.cls[c]
+        if info.dataclass and info.dc_init:
+            return [c]
+        out = []
+        for u in info.user_bases:
+            if u is not c:
+                out += [x for x in self.init_sources(u, seen) if x not in out]
+        return out
+
     def inits(self, c) -> list:
-        """Every __init__ that constructing class `c` may run: its own and its own ancestors' (all of them, not the
-        first one found: a diamond's order is C3's, LD-44)."""
+        """The __init__ defs constructing class `c` may run with the call's arguments (init_sources)."""
+        return [x for x in self.init_sources(c) if not isinstance(x, ast.ClassDef)]
+
+    def all_fields(self, c) -> list:
+        """Every annotated name of class `c` and of its own ancestors (a dataclass's fields, and more)."""
         out = []
         for k in [c] + sorted(self.ancestors(c), key=lambda n: n.lineno):
-            out += [s for s in k.body if isinstance(s, (ast.FunctionDef, ast.AsyncFunctionDef)) and s.name == "__init__"]
+            out += [s.target.id for s in k.body if isinstance(s, ast.AnnAssign) and isinstance(s.target, ast.Name)
+                    and s.target.id not in out]
+        return out
+
+    def dc_positional(self, c) -> list | None:
+        """The fields a dataclass's generated __init__ takes by position, in order, when that is plain to see: a
+        chain of single own bases, each a dataclass with no kw_only / init keyword, no ClassVar / InitVar / KW_ONLY
+        annotation and no field(init=..., kw_only=...); else None (every field then gets the highest positional
+        argument's level, LD-45)."""
+        chain, k = [], c
+        while k is not None:
+            info = self.cls[k]
+            if not info.dataclass or not info.dc_plain:
+                if any(isinstance(s, ast.AnnAssign) for s in k.body) or k is c:
+                    return None
+            else:
+                for st in k.body:
+                    if not isinstance(st, ast.AnnAssign):
+                        continue
+                    if not isinstance(st.target, ast.Name) or \
+                            any(w in ast.unparse(st.annotation) for w in ("ClassVar", "InitVar", "KW_ONLY")):
+                        return None
+                    v = st.value
+                    if isinstance(v, ast.Call) and any(kw.arg in ("init", "kw_only") or kw.arg is None
+                                                       for kw in v.keywords):
+                        return None
+            chain.append(k)
+            ub = [u for u in info.user_bases if u is not k]
+            if len(ub) > 1:
+                return None
+            k = ub[0] if ub else None
+        out = []
+        for k in reversed(chain):
+            for st in k.body:
+                if isinstance(st, ast.AnnAssign) and st.target.id not in out:
+                    out.append(st.target.id)
         return out
 
     def built_by(self, call) -> list:
@@ -954,9 +1043,13 @@ class Flow:
         if f.cls is None:
             return CLEAN
         name, info = f.node.name, self.cls[f.cls]
+        if name == "__post_init__":
+            return SHARED                          # LD-45: InitVars come from any construction, default or replace
+        ext = self.ext_for(info)
+        if info.enum and (name == "__init__" or dunder(name) or ext is None or name in ext):
+            return SHARED                          # LD-45: an Enum's __init__ gets the member values, _missing_ ...
         if name == "__init__":
             return HOLDS if info.unknown or (info.objs and not info.fresh_ok) else CLEAN
-        ext = self.ext_for(info)
         if dunder(name) or ext is None or name in ext:
             return HOLDS
         return CLEAN
@@ -1135,10 +1228,12 @@ class Flow:
                     mine = [] if via_super else self.class_methods(c, a)
                     if via_super:
                         mine = [d for u in info.user_bases if u is not c for d in self.class_methods(u, a)]
-                    if not mine and (info.unknown or a in info.attrs):
-                        v = SHARED                     # inherited from an svsim / ladder class
+                    if not mine and (info.unknown or info.storage or info.deco_unknown or a in info.attrs):
+                        v = SHARED                     # inherited from an svsim / ladder class, a dict... (LD-45)
                 return v
             r = self.level(base)
+            if isinstance(base, ast.Name) and self.key(base) is None and base.id in BUILTIN_TYPES and call.args:
+                return max([SHARED if self.level(call.args[0]) >= HOLDS else CLEAN, args])   # dict.get(d, k) (LD-45)
             if r >= SHARED:
                 return SHARED
             if a in self.methods:                       # one of the module's own methods (or a namesake)
@@ -1308,37 +1403,47 @@ class Flow:
                 out.append((d, 0 if self.fn[d].static else 1))
         return out
 
-    def _raise_fields(self, fields, args, keywords):
-        """Dataclass fields get the levels of the arguments that set them."""
-        if any(isinstance(a, ast.Starred) for a in args):
-            v = max(elem(self.level(a.value)) if isinstance(a, ast.Starred) else self.level(a) for a in args)
+    def _literal_keys(self, node):
+        """{'k': v, ...} written out (or `a if c else b` of such), as [(key, value node)]; None otherwise."""
+        if isinstance(node, ast.IfExp):
+            a, b = self._literal_keys(node.body), self._literal_keys(node.orelse)
+            return None if a is None or b is None else a + b
+        if isinstance(node, ast.Dict) and all(isinstance(k, ast.Constant) and isinstance(k.value, str)
+                                              for k in node.keys):
+            return [(k.value, v) for k, v in zip(node.keys, node.values)]
+        return None
+
+    def _raise_fields(self, fields, positional, args, keywords):
+        """Dataclass fields get the levels of the arguments that set them: by name, by position when `positional`
+        (dc_positional) says which, else every field the highest positional level (LD-45). `**{'k': v}` written out
+        sets k only; any other ** every field (and is noted, see _name_note)."""
+        if positional is None or any(isinstance(a, ast.Starred) for a in args):
+            v = max((elem(self.level(a.value)) if isinstance(a, ast.Starred) else self.level(a) for a in args),
+                    default=CLEAN)
             for name in fields:
                 self._raise_attr(name, v)
         else:
-            for name, a in zip(fields, args):
+            for name, a in zip(positional, args):
                 self._raise_attr(name, self.level(a))
         for kw in keywords:
             if kw.arg is None:
-                for name in fields:
-                    self._raise_attr(name, elem(self.level(kw.value)))
+                pairs = self._literal_keys(kw.value)
+                if pairs is not None:
+                    for name, v in pairs:
+                        self._raise_attr(name, self.level(v))
+                else:
+                    self.star_fields.add(kw.value.lineno)
+                    for name in fields:
+                        self._raise_attr(name, elem(self.level(kw.value)))
             else:
                 self._raise_attr(kw.arg, self.level(kw.value))
 
-    def _raise_post_init(self, classes, args, keywords):
-        """A dataclass's __post_init__ gets the InitVar arguments of its construction (or of replace): each of its
-        parameters gets the highest level among the call's arguments (LD-44)."""
-        v = max([elem(self.level(a.value)) if isinstance(a, ast.Starred) else self.level(a) for a in args] +
-                [elem(self.level(k.value)) if k.arg is None else self.level(k.value) for k in keywords], default=CLEAN)
-        if v == CLEAN:
-            return
-        for c in classes:
-            for k in [c, *self.ancestors(c)]:
-                for d in k.body:
-                    if isinstance(d, (ast.FunctionDef, ast.AsyncFunctionDef)) and d.name == "__post_init__" and \
-                            d in self.fn:
-                        f = self.fn[d]
-                        for x in f.pos[1:] + f.kwonly + [y for y in (f.vararg, f.kwarg) if y is not None]:
-                            self._raise(self.key(x), v)
+    def _raise_dataclass(self, c, args, keywords):
+        """Constructing class `c` (or calling super().__init__ into it): the fields of each dataclass whose generated
+        __init__ runs (init_sources) get the arguments' levels (LD-45: an undecorated subclass of a dataclass too)."""
+        for x in self.init_sources(c):
+            if isinstance(x, ast.ClassDef):
+                self._raise_fields(self.all_fields(x), self.dc_positional(x), args, keywords)
 
     def _flow_call(self, call):
         for d, off in self.targets(call):
@@ -1369,15 +1474,17 @@ class Flow:
                     self._raise(self.key(f.kwarg), holds(v))
         fn = call.func
         for c in self.built_by(call):          # a dataclass of the module: fields from arguments (cls(...) too, LD-44)
-            info = self.cls[c]
-            if info.dataclass:
-                self._raise_fields(info.fields, call.args, call.keywords)
-                self._raise_post_init([c], call.args, call.keywords)
+            self._raise_dataclass(c, call.args, call.keywords)
+        if isinstance(fn, ast.Attribute) and fn.attr == "__init__":
+            own = self.own_of(fn.value)        # super().__init__(...) into a dataclass base (LD-45)
+            if own is not None and own[2]:
+                for u in self.cls[own[0]].user_bases:
+                    if u is not own[0]:
+                        self._raise_dataclass(u, call.args, call.keywords)
         kn = self.known(fn)
         if kn is not None and kn[2] in REPLACERS:  # replace(obj, field=x): every dataclass's field x
-            self._raise_fields(sorted({f for i in self.cls.values() if i.dataclass for f in i.fields}),
-                               call.args[1:], call.keywords)
-            self._raise_post_init([c for c, i in self.cls.items() if i.dataclass], call.args[1:], call.keywords)
+            self._raise_fields(sorted({f for c, i in self.cls.items() if i.dataclass for f in self.all_fields(c)}),
+                               None, call.args[1:], call.keywords)
         name = fn.attr if isinstance(fn, ast.Attribute) else fn.id if isinstance(fn, ast.Name) else None
         if isinstance(fn, ast.Attribute) and fn.attr in ADDERS:
             v = max([self.level(a) for a in call.args] + [self.level(k.value) for k in call.keywords], default=0)
@@ -1503,6 +1610,12 @@ def _rules(tree, flow, cls) -> list[str]:
         if isinstance(p, ast.Subscript) and p.value is node and isinstance(parent(p), ast.ClassDef) and \
                 p in parent(p).bases:
             return True                                 # class B(Own[int]): a generic base of its own (LD-44)
+        q = node                                        # class B(Own[Arm]), Own[Arm, int]: a type argument (LD-45)
+        while isinstance(parent(q), ast.Tuple) or (isinstance(parent(q), ast.Subscript) and parent(q).slice is q):
+            q = parent(q)
+            if isinstance(q, ast.Subscript) and flow.base_class(q) and isinstance(parent(q), ast.ClassDef) and \
+                    q in parent(q).bases:
+                return True
         if isinstance(p, ast.ExceptHandler) or (isinstance(p, ast.Tuple) and isinstance(parent(p), ast.ExceptHandler)):
             return True
         return isinstance_arg(node)
@@ -1589,8 +1702,33 @@ def _rules(tree, flow, cls) -> list[str]:
         if a in flow.regular and class_like(base):
             bad(at, f"{how}：普通方法不许经类调（K.method(x) 能把任何对象当 self）")
 
+    mutators = [o for m, n in CLASS_MUTATORS if (o := member(m, n)) is not _MISSING]
+    defs = (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
+
+    def as_decorator(node) -> bool:
+        """`node` is a decorator of a def or class: @x or @x(...)."""
+        p = parent(node)
+        if isinstance(p, ast.Call) and p.func is node:
+            node, p = p, parent(p)
+        return isinstance(p, defs) and node in p.decorator_list
+
+    compound = (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, getattr(ast, "TryStar", ast.Try), ast.With,
+                ast.AsyncWith, getattr(ast, "Match", ast.If))
     for node in flow.nodes:
         p = parent(node)
+        if isinstance(node, compound) and isinstance(p, ast.ClassDef) and node in p.body:
+            bad(node, f"类 {p.name} 的类体里不许写 if / for / while / try / with / match：方法、字段、类属性直接写在类里"
+                      "（读代码只认直接写在类里的，LD-45）")
+        if isinstance(node, (ast.Name, ast.Attribute)) and isinstance(node.ctx, ast.Load) and \
+                (kn := flow.known(node)) is not None and any(kn[2] is o for o in mutators) and not as_decorator(node):
+            bad(node, f"{kn[1]} 只能当装饰器写在你自己的类或函数上（@{kn[1]}）：直接调用会改它拿到的类（LD-45）")
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load) and (o := flow.own.get(flow.key(node))) and \
+                o[1] and not (receiver(node) or isinstance(p, ast.Compare) or isinstance_arg(node) or
+                              (isinstance(p, ast.Call) and (p.func is node or (isinstance(p.func, ast.Name) and
+                                                                                 p.func.id in ("super", "issubclass")
+                                                                                 and flow.key(p.func) is None)))):
+            bad(node, f"{node.id}（classmethod 的类）只能用来建实例（{node.id}(...)）、读类属性、比较、isinstance，"
+                      "不许当值传（LD-45）")
         if isinstance(node, ast.ClassDef) and isinstance(p, ast.ClassDef):
             bad(node, f"类 {node.name} 定义在类 {p.name} 里面：写到模块顶层（{p.name}.{node.name}(...) 这样建对象，"
                       "读代码跟不上它的 __init__，LD-44）")
@@ -1758,6 +1896,9 @@ def _name_note(flow) -> list[str]:
     if like:
         out.append("提示：" + "、".join(sorted(set(like))) + " 和容器的方法同名：x.update(...)、x.add(...) 这类调用会被"
                    "当成往容器里放东西或改容器，换个名字")
+    if flow.star_fields:
+        out.append("提示：第 " + "、".join(map(str, sorted(flow.star_fields))) + " 行的 **字典 不是写死键的字典，读代码只好把"
+                   "模块里所有 dataclass 的字段都按它的档位算（LD-45）：写成 replace(x, 字段=值)、K(字段=值)，或者 **{'字段': 值}")
     storage = sorted({c.name for c, i in flow.cls.items() if i.storage})
     if storage:
         out.append("提示：" + "、".join(storage) + " 建在 NamedTuple / namedtuple / TypedDict / dict / list / tuple / 异常"

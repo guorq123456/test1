@@ -357,6 +357,17 @@ def test_copying_an_iterator_is_not_a_change(tmp_path):
     assert len(rows) == 2 and all(r["result"] in ("normal", "draw") for r in rows), rows
 
 
+def test_reading_annotations_is_not_a_change(tmp_path):
+    # LD-45: a runtime-checkable Protocol's isinstance and functools.cache(K) read K.__annotations__, which stores an
+    # empty one in K; the snapshot reads it first in every class it follows, so nothing is voided
+    jobs = [job(43, "py:helpers:ChecksProtocols", "py:helpers:Random", first=0),
+            job(44, "py:helpers:Random", "py:helpers:ChecksProtocols", first=0)]
+    out = tmp_path / "g.jsonl"
+    runner.run(jobs, str(out), workers=1, step_limit=30.0, quiet=True)
+    rows = [json.loads(line) for line in out.read_text(encoding="utf-8").splitlines()]
+    assert len(rows) == 2 and all(r["result"] in ("normal", "draw") for r in rows), rows
+
+
 def test_the_watch_follows_the_standard_library_and_what_an_lru_cache_wraps():
     # LD-42: random.Random's methods (the deal and the search shuffle with it), a class or function of an allowed
     # standard module, and the function under an lru_cache are followed

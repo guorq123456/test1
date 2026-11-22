@@ -310,6 +310,29 @@ def test_receive_and_admit(tmp_path):
     assert st["classes_done"] == ["梦魇", "超越者"] and len(st["classes_missing"]) == 5
 
 
+def test_smoke_games_its_own_code_voided_refuse_a_submission(tmp_path, monkeypatch):
+    # LD-45: a smoke game the tripwire (or the idle watchdog) voided while the same game with the default strategy
+    # played normally is the submission's doing: refused, quoting what changed; other voids stay a warning
+    import ladder.runner
+    real = ladder.runner.run
+
+    def fake(jobs, path, **kw):
+        with open(path, "w", encoding="utf-8") as f:
+            for j in jobs:
+                sub = j["labels"]["side"] == "sub"
+                f.write(json.dumps({"id": j["id"], "result": "void" if sub else "normal", "winner": None if sub else 0,
+                                    "error": ("the simulator changed in this worker during the game (LD-40): "
+                                              "svsim.cards.abyss.Craft: +1 members") if sub else None}) + "\n")
+        return {}
+    pool = _pool(tmp_path, 1)
+    subs = tmp_path / "subs"
+    monkeypatch.setattr(ladder.runner, "run", fake)
+    d = make_sub(tmp_path / "in1", "新卡组", deck=CODES[4], member="四号")
+    rec = submit.receive(d, "甲", pool.dir, subs, workers=2, rng_seed=7, smoke_games=2, seeds=SMOKE)
+    assert rec["verdict"] == "拒收" and any("是你的代码" in r and "Craft: +1 members" in r for r in rec["reasons"]), rec
+    monkeypatch.setattr(ladder.runner, "run", real)
+
+
 def test_an_accepted_update_goes_to_the_gate(tmp_path, monkeypatch):
     """gate_update's wiring (the gate itself is tests/test_gate.py): old version, routes (A33), pool update."""
     from ladder.runner import load_deck

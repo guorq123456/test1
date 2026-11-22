@@ -297,6 +297,25 @@ class CopiesIterators(Random):
         return super().act(pos, actions)
 
 
+class ChecksProtocols(Random):
+    """isinstance against a runtime-checkable Protocol and typing.SupportsInt, functools.cache over a host class, and
+    statistics: allowed; CPython stores an empty __annotations__ in each host class the first time it is read (LD-45:
+    the tripwire took that for a change and voided every game)."""
+    def act(self, pos, actions):
+        import functools
+        import statistics
+        import typing
+
+        @typing.runtime_checkable
+        class Targeted(typing.Protocol):
+            target: int
+        n = sum(1 for a in actions if isinstance(a, Targeted)) + sum(1 for a in actions if isinstance(a, typing.SupportsInt))
+        isinstance(self, Targeted)
+        functools.cache(type(actions[0]))
+        statistics.mean([n, 1.5])
+        return super().act(pos, actions)
+
+
 def _lingering(n):
     try:
         yield n

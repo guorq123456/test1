@@ -11,7 +11,8 @@ every game empties the caches again and after it compares. A change voids that g
 starts a new one).
 
 What is followed, from every loaded module of svsim and ladder (and builtins), and of the standard modules a
-strategy may import (STDLIB: random.Random's methods are what the deal and the search shuffle with): each global;
+strategy may import (STDLIB: random.Random's methods are what the deal and the search shuffle with) and of the ones
+statistics works with (FOLLOWED: fractions, numbers, decimal; LD-45): each global;
 the members of every class defined there, and its name, qualified name and bases; for functions, their code,
 defaults, closure cells and names, and the function an lru_cache wraps; the items of dicts, lists and tuples; the
 attributes (and slots) of instances of svsim and ladder classes, such as the CardDefs, the scripts and the bots'
@@ -28,7 +29,9 @@ pilots only (svsim.learn is closed to strategies): CACHE_ATTRS, a net's memo and
 GROWS, svsim.learn's module dicts and sets (models loaded once per process), which may gain items but not lose or
 replace one, and are then snapshotted again. And one CPython cache: copy.copy / deepcopy store `__slotnames__` in a
 class the first time one of its objects is copied; the snapshot fills it in every class it follows first (LD-43:
-a strategy that copied its position voided every game). And another: a module's `__warningregistry__`, which CPython
+a strategy that copied its position voided every game). And `__annotations__`: the first read of it on a class that has none stores an empty dict in the class (a
+runtime-checkable Protocol's isinstance and functools.cache(K) read it); the snapshot reads it first (LD-45). And
+another: a module's `__warningregistry__`, which CPython
 makes the first time a warning is charged to that module, even one the filters ignore (copying an itertools object
 warns from copy.py); the snapshot makes an empty one in every module it follows (not builtins) and holds it by
 identity only (LD-44: a strategy copying an itertools.cycle voided every game). A dict found to grow in play that
@@ -70,6 +73,8 @@ GROWS = ("svsim.learn.",)                         # their module globals that ar
 STDLIB = ("random", "collections", "functools", "dataclasses", "heapq", "bisect", "statistics", "copy", "enum",
           "typing", "math", "cmath", "itertools")   # what strategies may import: its globals, and the members of the
 #                                                    classes and functions defined there (LD-42: random.Random's)
+FOLLOWED = ("fractions", "numbers", "decimal")     # not importable by strategies, but statistics works with their
+#                                                    classes (LD-45: changing fractions.Fraction broke later games)
 
 
 def _watched(name) -> bool:
@@ -109,7 +114,7 @@ def _members(obj):
     if isinstance(obj, property):
         return [("fget", obj.fget), ("fset", obj.fset), ("fdel", obj.fdel)]
     if isinstance(obj, type):
-        if not (_watched(obj.__module__) or obj.__module__ in STDLIB):
+        if not (_watched(obj.__module__) or obj.__module__ in STDLIB + FOLLOWED):
             return None
         own = [(k, v) for k, v in vars(obj).items() if not (isinstance(obj, enum.EnumType) and k in _ENUM_CACHES)]
         return own + [(("type", "__name__"), obj.__name__), (("type", "__qualname__"), obj.__qualname__),
@@ -237,7 +242,7 @@ def snapshot() -> Snapshot:
     queue, seen = [], set(_caches())               # the caches: held by identity (their global), never followed
     grows = set()
     mods = sorted((n, m) for n, m in list(sys.modules.items()) if _watched(n) and m is not None)
-    std = [(n, sys.modules[n]) for n in STDLIB if sys.modules.get(n) is not None]
+    std = [(n, sys.modules[n]) for n in STDLIB + FOLLOWED if sys.modules.get(n) is not None]
     for name, m in mods + [("builtins", builtins)] + std:
         s.modules[name] = m
         d = getattr(m, "__dict__", None)
@@ -250,7 +255,7 @@ def snapshot() -> Snapshot:
         if name.startswith(GROWS):
             grows.update(id(v) for v in dict.values(d) if type(v) in (dict, set))
         _record(s, d, "moddict", keys, name)
-        if name in STDLIB:                         # its own classes and functions only (not its caches)
+        if name in STDLIB + FOLLOWED:              # its own classes and functions only (not its caches)
             queue += [(v, f"{name}.{k}", 1) for k in keys
                       if isinstance(v := dict.get(d, k), (type, types.FunctionType)) and
                       getattr(v, "__module__", None) == name]
@@ -269,9 +274,15 @@ def snapshot() -> Snapshot:
         if isinstance(obj, (set, frozenset)):
             s.sets.append([obj, frozenset(obj), path, id(obj) in grows])
             continue
-        if isinstance(obj, type) and "__slotnames__" not in obj.__dict__ and \
-                (_watched(getattr(obj, "__module__", None)) or getattr(obj, "__module__", None) in STDLIB):
-            copyreg._slotnames(obj)                # LD-43: copy.copy / deepcopy store it on first use (a pure cache)
+        if isinstance(obj, type) and (_watched(getattr(obj, "__module__", None)) or
+                                      getattr(obj, "__module__", None) in STDLIB + FOLLOWED):
+            if "__slotnames__" not in obj.__dict__:
+                copyreg._slotnames(obj)            # LD-43: copy.copy / deepcopy store it on first use (a pure cache)
+            if "__annotations__" not in obj.__dict__:
+                try:                               # LD-45: the first read stores an empty one (a runtime-checkable
+                    getattr(obj, "__annotations__", None)   # Protocol's isinstance, functools.cache(K) read it)
+                except Exception:                  # noqa: BLE001, S110
+                    pass
         try:
             members = _members(obj)
         except Exception:                          # an object that won't show its inside is held by identity only
@@ -392,8 +403,11 @@ def preload(extra=()):
     import pkgutil
 
     from ladder.codecheck import DENIED_PREFIXES
-    for m in PRELOAD + STDLIB + tuple(extra):
+    for m in PRELOAD + STDLIB + FOLLOWED + tuple(extra):
         importlib.import_module(m)
+    typing = sys.modules["typing"]
+    for n in ("Pattern", "Match", "ContextManager", "AsyncContextManager"):
+        getattr(typing, n, None)                   # Python 3.13 makes these on first use, in typing's globals
     import svsim
     for info in pkgutil.walk_packages(svsim.__path__, "svsim."):
         name = info.name
