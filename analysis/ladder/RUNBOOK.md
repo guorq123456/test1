@@ -51,7 +51,8 @@
 
 ### 5. 锚点、公共题
 
-- 锚点对战：第一次先 `py -m ladder.anchors table --out C:\claude\ladder-host\anchors\anchors.json`（驾驶员做完 2.5 再加 `--pilots`）。每期 `py -m ladder.anchors run C:\claude\ladder-host\anchors\anchors.json --pool C:\claude\ladder-host\pool --out C:\claude\ladder-host\anchors --workers 11 --mask 0x3FC3FC`（先加 `--plan` 看局数）；只打新版本（A40）。`py -m ladder.anchors report C:\claude\ladder-host\anchors --anchors ...anchors.json` 出成绩。
+- 名人堂（S9、A41）：天梯打完、进下一期以前 `py -m ladder.anchors induct C:\claude\ladder-host\pool --hof C:\claude\ladder-host\anchors\hof.json`，再 `py -m ladder.anchors table --out C:\claude\ladder-host\anchors\anchors.json --hof C:\claude\ladder-host\anchors\hof.json`（锚点 = 基线快照 + 名人堂；下一期练习场的 snapshot 也用这份）。
+- 锚点对战：每期 `py -m ladder.anchors run C:\claude\ladder-host\anchors\anchors.json --pool C:\claude\ladder-host\pool --out C:\claude\ladder-host\anchors --workers 11 --mask 0x3FC3FC`（先加 `--plan` 看局数）；只打新版本（A40）。`py -m ladder.anchors report C:\claude\ladder-host\anchors --anchors ...anchors.json` 出成绩。
 - 公共题（题库在做）：种子段 91900000～91999999。
 
 ### 6. 汇报
