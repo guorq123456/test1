@@ -3,8 +3,8 @@ every member of the pool against every anchor, on fresh seeds (Salem's S11, 11-2
 
     python -m ladder.anchors induct POOL --hof HOF.json [--period N]     # end of a period: the hall of fame
     python -m ladder.anchors table --out ANCHORS.json [--hof HOF.json]
-    python -m ladder.anchors run ANCHORS.json --pool POOL --out DIR [--period N] [--games-per-anchor 10] [--plan]
-                                 [--workers 23]
+    python -m ladder.anchors run ANCHORS.json --pool POOL --out DIR --code SUBS\\code [--period N]
+                                 [--games-per-anchor 10] [--plan] [--workers 23]
     python -m ladder.anchors report DIR --anchors ANCHORS.json [--period N]          # host only: per member
     python -m ladder.anchors classes DIR [--period N]                                 # the public figures
 
@@ -20,13 +20,17 @@ Every anchor keeps its slot for good (baseline 0-6, hall of fame 7, 8, ... in th
 The run (S11, A48): at the end of period P (ladder done, hall of fame inducted, before `pool advance`) every active
 member's current version plays every anchor `games` times, seats alternating, its own frozen copy included (a
 baseline member is its class's 基线快照 anchor; a hall-of-fame member may still be on the frozen version), so every
-member plays the same number of games and the counts tell nothing. Seeds: period P takes 93510000 + 50000 * P
-onwards, one per game in a fixed order (members by id, anchors by slot, game index), all through the host's key
-(base-2). A period is played once: its plan is written first (DIR/plan-P<P>.json) and an interrupted run picks up
-its own games; a second run of a period that has ledger lines is refused. One ledger line per (period, member,
-version, anchor) in DIR/anchors.jsonl, append-only. The public figures are per class and tier, rounded, without
-counts (`classes`); the per-member rows stay with the host. The fixed panel of seeds 91700000-91799999 that played
-each version once (A40) is no longer used.
+member plays the same number of games and the counts tell nothing. Seeds: the segment 93510000-94509999 is used up
+in order, one seed a game, each period right after the seeds the earlier periods' plans took, in a fixed order
+(members by id, anchors by slot, game index); every game is dealt through the host's key (base-2). Before a game is
+played every strategy and deck of the run must load (players' strategies need `--code`, the received submissions).
+A period is played once: its plan is written first (DIR/plan-P<P>.json); an interrupted run picks up its own games;
+games voided by the setup or the machine (a strategy that didn't load, a dead worker, a runner error) are never
+written down: the next run of the same command plays them again on their own seeds; a changed pool or panel is
+refused. The period's ledger lines (DIR/anchors.jsonl, append-only, one per member version and anchor) go in one
+write, and the period counts once its plan file names that write ("done"). The public figures are per class and
+tier, rounded, without counts (`classes`); the per-member rows stay with the host. The fixed panel of seeds
+91700000-91799999 that played each version once (A40) is no longer used.
 """
 from __future__ import annotations
 
@@ -43,8 +47,7 @@ for _p in (str(HERE.parent), str(ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-ANCHOR_SEEDS = (93510000, 94510000)  # S11: every period on fresh seeds (seed ledger c61debe, SEEDS.md)
-PERIOD_BLOCK = 50000               # period P plays seeds ANCHOR_SEEDS[0] + PERIOD_BLOCK * P onwards, at most this many
+ANCHOR_SEEDS = (93510000, 94510000)  # S11: fresh seeds every period, used up in order (seed ledger c61debe, SEEDS.md)
 HOF_MIN_GAMES = 300                # A41: a class's first is picked among members with >= 300 games since their change
 BASELINE_SPEC = "bot:mcts:100+plan"
 TIERS = ("基线快照", "名人堂")
@@ -112,9 +115,41 @@ def induct(pool_dir, hof_path, period=None) -> list[dict]:
     return new
 
 
+def _jsonl(f: Path) -> list[dict]:
+    """The lines of an append-only JSON-lines file, skipping a line torn by a stop (or NUL padding after a crash)."""
+    out = []
+    if f.exists():
+        for x in f.read_text(encoding="utf-8", errors="replace").splitlines():
+            try:
+                v = json.loads(x.strip("\x00").strip())
+            except ValueError:
+                continue
+            if isinstance(v, dict):
+                out.append(v)
+    return out
+
+
 def _ledger(out: Path) -> list[dict]:
-    f = out / "anchors.jsonl"
-    return [json.loads(x) for x in f.read_text(encoding="utf-8").splitlines() if x.strip()] if f.exists() else []
+    return _jsonl(Path(out) / "anchors.jsonl")
+
+
+def _plans(out: Path) -> dict:
+    """period -> its plan file (plan-P<P>.json): the seeds it took and, once the ledger lines are written, "done"."""
+    plans = {}
+    for f in Path(out).glob("plan-P*.json"):
+        v = json.loads(f.read_text(encoding="utf-8"))
+        plans[v["period"]] = v
+    return plans
+
+
+def _write_json(path: Path, value) -> None:
+    import os
+    tmp = path.with_suffix(".tmp")
+    with tmp.open("w", encoding="utf-8") as f:
+        f.write(json.dumps(value, ensure_ascii=False, indent=1))
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
 
 
 def _wilson(w: int, n: int):
@@ -132,18 +167,29 @@ def _period_of(pool_dir, period):
     return pool, (pool.period if period is None else int(period))
 
 
-def plan(anchors: list[dict], pool_dir: Path, games: int, period=None):
+def _first_seed(out, period: int) -> int:
+    """Where period's seeds start: its own plan's if it has one, else right after every seed any plan took
+    (the segment is used up in order, period after period, with no gaps and no reuse)."""
+    plans = _plans(out) if out is not None else {}
+    if period in plans:
+        return plans[period]["first_seed"]
+    return max((p["first_seed"] + p["jobs"] for p in plans.values()), default=ANCHOR_SEEDS[0])
+
+
+def plan(anchors: list[dict], pool_dir: Path, games: int, period=None, out=None):
     """This period's games (S11, A48): every active member's current version against every anchor, `games` each,
-    seats alternating, on the period's own block of seeds in a fixed order."""
+    seats alternating, one fresh seed a game in a fixed order (members by id, anchors by slot, game index), from
+    where the earlier periods' plans in `out` stopped."""
     pool, period = _period_of(pool_dir, period)
-    base = ANCHOR_SEEDS[0] + PERIOD_BLOCK * period
-    if period < 0 or base + PERIOD_BLOCK > ANCHOR_SEEDS[1]:
-        raise AnchorError(f"第 {period} 期不在锚点种子段里（{ANCHOR_SEEDS[0]}～{ANCHOR_SEEDS[1] - 1}，每期 {PERIOD_BLOCK}）："
-                          "先在登记表上登记新的一段")
+    if period < 0:
+        raise AnchorError(f"第 {period} 期？")
+    base = _first_seed(out, period)
     members = sorted(pool.active(), key=lambda m: m.mid)
     panel = sorted(anchors, key=lambda a: a["slot"])
-    if len(members) * len(panel) * games > PERIOD_BLOCK:
-        raise AnchorError(f"{len(members)} 个成员 × {len(panel)} 个锚点 × {games} 局超过每期 {PERIOD_BLOCK} 个种子")
+    n = len(members) * len(panel) * games
+    if base + n > ANCHOR_SEEDS[1]:
+        raise AnchorError(f"锚点种子段（{ANCHOR_SEEDS[0]}～{ANCHOR_SEEDS[1] - 1}）只剩 {ANCHOR_SEEDS[1] - base} 个，这一期要 {n} 个"
+                          f"（{len(members)} 个成员 × {len(panel)} 个锚点 × {games} 局）：先在项目登记表上登记新的一段")
     jobs, todo = [], []
     for m in members:
         for a in panel:
@@ -160,43 +206,113 @@ def plan(anchors: list[dict], pool_dir: Path, games: int, period=None):
     return jobs, todo
 
 
+SETUP_VOIDS = ("cards with no script", "strategy failed to load", "runner error", "worker died")
+# voids that say nothing about the game (the host's setup or the machine): never written to the ledger; the next run of
+# the same command plays them again on their own seeds. "engine error on a legal move" is a simulator bug: it stays
+# void in the ledger and is reported (red line: 发现了就记录并报告)
+
+
+def _setup_void(g: dict) -> bool:
+    return g.get("result") == "void" and str(g.get("error", "")).startswith(SETUP_VOIDS)
+
+
+def _use_code(code) -> None:
+    """Put the received submissions (subs/code) where the workers import strategies from, as submit gate and puzzles
+    run do."""
+    import os
+    if code is None:
+        return
+    c = str(Path(code).resolve())
+    if not Path(c).is_dir():
+        raise AnchorError(f"没有这个目录：{c}（收下的打法在 C:\\claude\\ladder-host\\subs\\code）")
+    if c not in sys.path:
+        sys.path.insert(0, c)
+    os.environ["LADDER_EXTRA_PATH"] = os.pathsep.join(x for x in (c, os.environ.get("LADDER_EXTRA_PATH", "")) if x)
+
+
+def preflight(jobs: list[dict]) -> list[str]:
+    """Every strategy and deck of the run loads here first (the workers get the same paths); what doesn't."""
+    import os
+    from ladder.runner import load_deck, make_strategy, unscripted
+    for extra in filter(None, os.environ.get("LADDER_EXTRA_PATH", "").split(os.pathsep)):
+        if extra not in sys.path:
+            sys.path.insert(0, extra)
+    bad = []
+    for spec in sorted({s for j in jobs for s in j["strategies"]}):
+        try:
+            make_strategy(spec, 1)
+        except Exception as e:                        # noqa: BLE001 - any failure is reported, nothing played
+            bad.append(f"打法 {spec} 载入失败：{type(e).__name__}: {e}")
+    for d in sorted({json.dumps(d) for j in jobs for d in j["decks"]}):
+        miss = unscripted(load_deck(json.loads(d)))
+        if miss:
+            bad.append(f"卡组里有没写脚本的卡 {miss}")
+    return bad
+
+
 def run(anchors_path: Path, pool_dir: Path, out: Path, games: int = 10, workers=4, mask=None, step_limit=30.0,
-        key="auto", period=None) -> dict:
+        key="auto", period=None, code=None) -> dict:
     import hashlib
+    import os
     from ladder import runner
     anchors = json.loads(Path(anchors_path).read_text(encoding="utf-8"))
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
     _, period = _period_of(pool_dir, period)
-    if any(l.get("period") == period for l in _ledger(out)):
+    plans = _plans(out)
+    if plans.get(period, {}).get("done"):
         raise AnchorError(f"第 {period} 期的锚点已经打过（每期只打一次，A48）")
-    jobs, todo = plan(anchors, pool_dir, games, period)
+    _use_code(code)
+    jobs, todo = plan(anchors, pool_dir, games, period, out)
+    bad = preflight(jobs)
+    if bad:
+        raise AnchorError("一局没打，先修好再跑：\n" + "\n".join(bad) +
+                          "\n（收下的打法要加 --code C:\\claude\\ladder-host\\subs\\code）")
     digest = hashlib.sha256(json.dumps(jobs, sort_keys=True).encode()).hexdigest()
     pf = out / f"plan-P{period}.json"
-    if pf.exists():
-        if json.loads(pf.read_text(encoding="utf-8"))["sha256"] != digest:
+    if period in plans:
+        if plans[period]["sha256"] != digest:
             raise AnchorError(f"第 {period} 期的锚点开打以后，池子或锚点表变了（{pf.name}）：先查清楚，不要换一批局重打")
     else:
-        pf.write_text(json.dumps({"period": period, "games": games, "jobs": len(jobs), "sha256": digest,
-                                  "anchors": [a["id"] for a in anchors], "time": time.strftime("%Y-%m-%dT%H:%M:%S")},
-                                 ensure_ascii=False, indent=1), encoding="utf-8")
-    log = out / f"games-P{period}.jsonl"
-    res = runner.run(jobs, str(log), workers=workers, step_limit=step_limit, mask=mask, quiet=True, key=key) \
-        if jobs else {"played": 0}
+        _write_json(pf, {"period": period, "games": games, "jobs": len(jobs), "first_seed": jobs[0]["seed"] if jobs
+                         else _first_seed(out, period), "sha256": digest, "anchors": [a["id"] for a in anchors],
+                         "time": time.strftime("%Y-%m-%dT%H:%M:%S")})
+    main = out / f"games-P{period}.jsonl"
+    redo = sorted(out.glob(f"games-P{period}-redo*.jsonl"), key=lambda f: int(f.stem.rsplit("redo", 1)[1]))
     ids = {j["id"] for j in jobs}
-    tier = {a["id"]: a["tier"] for a in anchors}
-    got = {}
+
+    def read():
+        got = {}
+        for f in [main] + redo:                       # later files replay earlier setup voids: the last line wins
+            for g in _jsonl(f):
+                if g.get("id") in ids:
+                    got[g["id"]] = g
+        return got
+
+    deal_ids, played = set(), 0
     if jobs:
-        for line in log.read_text(encoding="utf-8", errors="replace").splitlines():
-            try:
-                g = json.loads(line.strip("\x00").strip())
-            except ValueError:
-                continue                              # a line torn by a stop: its game was played again
-            if isinstance(g, dict) and g.get("id") in ids:
-                got[g["id"]] = g
-    if len(got) != len(jobs):
-        raise AnchorError(f"第 {period} 期的锚点没打完（{log.name} 里 {len(got)}/{len(jobs)} 局）：再跑一次同一条命令接着打")
-    per, deals = {}, set()
+        res = runner.run(jobs, str(main), workers=workers, step_limit=step_limit, mask=mask, quiet=True, key=key)
+        played += res.get("played") or 0
+        deal_ids.add(res.get("deal"))
+        got = read()
+        stale = [j for j in jobs if j["id"] in got and _setup_void(got[j["id"]])]
+        if stale:                                     # once per run: the same games on their own seeds, a new file
+            f = out / f"games-P{period}-redo{len(redo) + 1}.jsonl"
+            res = runner.run(stale, str(f), workers=workers, step_limit=step_limit, mask=mask, quiet=True, key=key)
+            played += res.get("played") or 0
+            deal_ids.add(res.get("deal"))
+            redo.append(f)
+            got = read()
+    else:
+        got = {}
+    missing = [j["id"] for j in jobs if j["id"] not in got]
+    stale = sorted({str(got[i].get("error", "")).splitlines()[0] for i in ids if i in got and _setup_void(got[i])})
+    if missing or stale:
+        n = sum(1 for i in ids if i in got and _setup_void(got[i]))
+        raise AnchorError(f"第 {period} 期的锚点没打完：缺 {len(missing)} 局，{n} 局因为设置或机器的问题作废（{'；'.join(stale)}）。"
+                          "台账没写。修好以后再跑同一条命令，只补这些局，用它们原来的种子")
+    tier = {a["id"]: a["tier"] for a in anchors}
+    per, deals, voids = {}, set(), {}
     for g in got.values():
         lab = g["labels"]
         deals.add((g.get("deal") or {}).get("key"))          # the key id the game was dealt with
@@ -204,6 +320,8 @@ def run(anchors_path: Path, pool_dir: Path, out: Path, games: int = 10, workers=
         d = per.setdefault(k, {"won": 0, "lost": 0, "draw": 0, "void": 0})
         if g["result"] == "void":
             d["void"] += 1
+            why = str(g.get("error", "")).splitlines()[0] if g.get("error") else "void"
+            voids[why] = voids.get(why, 0) + 1
         elif g.get("winner") is None:
             d["draw"] += 1
         elif g["winner"] == lab["seat"]:
@@ -213,20 +331,29 @@ def run(anchors_path: Path, pool_dir: Path, out: Path, games: int = 10, workers=
     if len(deals) > 1:
         raise AnchorError(f"第 {period} 期的锚点局用了不止一种发牌（{sorted(map(str, deals))}）：密钥中途换过，先查清楚")
     deal_id = deals.pop() if deals else None
-    with (out / "anchors.jsonl").open("a", encoding="utf-8") as f:
-        for (mid, ver, craft, aid), d in sorted(per.items()):
-            p, lo, hi = _wilson(d["won"], d["won"] + d["lost"])
-            f.write(json.dumps({"period": period, "member": mid, "version": ver, "craft": craft, "anchor": aid,
-                                "tier": tier[aid], "games": games, **d, "rate": p, "lo": lo, "hi": hi,
-                                "log": log.name, "deal": deal_id, "time": time.strftime("%Y-%m-%dT%H:%M:%S")},
-                               ensure_ascii=False) + "\n")
-    return {"period": period, "jobs": len(jobs), "pairs": len(todo), "played": res.get("played"), "deal": deal_id,
-            "log": str(log) if jobs else None}
+    batch = f"{digest[:12]}-{time.strftime('%Y%m%d%H%M%S')}"
+    text = "".join(json.dumps({"period": period, "member": mid, "version": ver, "craft": craft, "anchor": aid,
+                               "tier": tier[aid], "games": games, **d,
+                               **dict(zip(("rate", "lo", "hi"), _wilson(d["won"], d["won"] + d["lost"]))),
+                               "logs": [f.name for f in [main] + redo], "deal": deal_id, "batch": batch,
+                               "time": time.strftime("%Y-%m-%dT%H:%M:%S")}, ensure_ascii=False) + "\n"
+                   for (mid, ver, craft, aid), d in sorted(per.items()))
+    with (out / "anchors.jsonl").open("a", encoding="utf-8") as f:    # one write; the period counts once its plan
+        f.write(text)                                                  # file names this batch (below)
+        f.flush()
+        os.fsync(f.fileno())
+    _write_json(pf, dict(_plans(out)[period], done=batch, done_time=time.strftime("%Y-%m-%dT%H:%M:%S")))
+    return {"period": period, "jobs": len(jobs), "pairs": len(todo), "played": played, "deal": deal_id,
+            "voids": voids, "first_seed": jobs[0]["seed"] if jobs else None,
+            "last_seed": jobs[-1]["seed"] if jobs else None, "log": str(main) if jobs else None}
 
 
 def _lines(out: Path, period=None) -> tuple[int | None, list[dict]]:
-    """The ledger lines of one period (default: the last period that has lines)."""
-    lines = [l for l in _ledger(Path(out)) if "period" in l]       # lines without a period: the old fixed panel (A40)
+    """The ledger lines of one finished period (default: the last finished one). A period counts once its plan file
+    names the batch its lines were written in; lines of an interrupted write, or of the old fixed panel (A40, no
+    period), are left out."""
+    done = {p: v["done"] for p, v in _plans(out).items() if v.get("done")}
+    lines = [l for l in _ledger(Path(out)) if l.get("period") in done and l.get("batch") == done[l["period"]]]
     if period is None:
         period = max((l["period"] for l in lines), default=None)
     return period, [l for l in lines if l["period"] == period]
@@ -284,6 +411,7 @@ def main(argv=None):
     a.add_argument("--out", required=True)
     a.add_argument("--games-per-anchor", type=int, default=10)
     a.add_argument("--period", type=int, help="default: the pool's current period")
+    a.add_argument("--code", help="the received submissions (C:\\claude\\ladder-host\\subs\\code)")
     a.add_argument("--plan", action="store_true", help="only count the games")
     a.add_argument("--workers", type=int, default=4)
     a.add_argument("--mask", type=lambda x: int(x, 0))
@@ -304,11 +432,13 @@ def main(argv=None):
     elif args.cmd == "run":
         if args.plan:
             anchors = json.loads(Path(args.anchors).read_text(encoding="utf-8"))
-            jobs, todo = plan(anchors, Path(args.pool), args.games_per_anchor, args.period)
-            print(json.dumps({"games": len(jobs), "member_anchor_pairs": len(todo)}, ensure_ascii=False))
+            jobs, todo = plan(anchors, Path(args.pool), args.games_per_anchor, args.period, Path(args.out))
+            print(json.dumps({"games": len(jobs), "member_anchor_pairs": len(todo),
+                              "seeds": [jobs[0]["seed"], jobs[-1]["seed"]] if jobs else None}, ensure_ascii=False))
         else:
             print(json.dumps(run(Path(args.anchors), Path(args.pool), Path(args.out), args.games_per_anchor,
-                                 args.workers, args.mask, period=args.period), ensure_ascii=False, indent=1))
+                                 args.workers, args.mask, period=args.period, code=args.code), ensure_ascii=False,
+                             indent=1))
     elif args.cmd == "report":
         print(json.dumps(report(Path(args.out), Path(args.anchors), args.period), ensure_ascii=False, indent=1))
     elif args.cmd == "classes":

@@ -42,8 +42,12 @@ def test_report_says_nothing_about_owners_versions_or_age(tmp_path, monkeypatch)
     lines = [(pool.period, "甲", 14, 6), (pool.period, "乙", 8, 12), (pool.period - 1, "乙", 1, 19)]
     (tmp_path / "anchors" / "anchors.jsonl").write_text("".join(
         json.dumps({"period": p, "member": mids[o], "version": ver[o], "craft": craft[o], "anchor": "A00",
-                    "tier": "基线快照", "games": 20, "won": w, "lost": l, "draw": 0, "void": 0}) + "\n"
+                    "tier": "基线快照", "games": 20, "won": w, "lost": l, "draw": 0, "void": 0, "batch": f"b{p}"}) + "\n"
         for p, o, w, l in lines), encoding="utf-8")
+    from ladder.anchors import _write_json
+    for p in (pool.period - 1, pool.period):
+        _write_json(tmp_path / "anchors" / f"plan-P{p}.json", {"period": p, "jobs": 40, "first_seed": 40 * p,
+                                                                "done": f"b{p}"})
     puzzle = tmp_path / "result-public.json"
     puzzle.write_text(json.dumps({"puzzle": "P01", "title": "一题", "entries": [
         {"entry": "默认打法", "rate": .5, "lo": .4, "hi": .6},
