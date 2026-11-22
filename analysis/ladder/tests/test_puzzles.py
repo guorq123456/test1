@@ -44,3 +44,28 @@ def test_add_and_run(tmp_path, monkeypatch):
     assert all(a["same"] == 1.0 for a in host["agreement"])
     pub = json.loads((tmp_path / "out" / "result-public.json").read_text(encoding="utf-8"))
     assert {r["entry"] for r in pub["entries"]} == {"默认打法", "选手 1", "选手 2"} and "seeds" not in pub
+    assert "aliases" not in pub and sorted(host["aliases"]) == ["乙", "甲"]
+    # neither the rows nor the a/b order tell who came first: references first, then 选手 1, 2
+    assert [(a["a"], a["b"]) for a in pub["agreement"]] == [("默认打法", "选手 1"), ("默认打法", "选手 2"),
+                                                            ("选手 1", "选手 2")]
+    # a re-run into the same folder: 甲's newer strategy is played, the unchanged entries' games are kept, and 甲's
+    # old games are not scored as the new version's
+    submit._append(subs, {"ev": "receipt", "id": "S-0004", "player": "甲", "kind": "puzzle", "puzzle": "P01",
+                          "verdict": "收下", "spec": "py:helpers:Random"})
+    again = Z.run(subs, "P01", (93402300, 93403000), tmp_path / "out", games=2, field="frozen7", agreement=0,
+                  workers=2, key=str(kf))
+    logs = [json.loads(x) for x in (tmp_path / "out" / "games.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert len(logs) == 4 * 14                                     # 14 new games, for 甲's S-0004 only
+    assert sum("py:helpers:Random" in g["strategies"] for g in logs) == 14
+    assert [r["games"] for r in again["entries"]] == [14, 14, 14]
+
+
+def test_aliases_are_drawn_fresh_every_run(tmp_path, monkeypatch):
+    # the public order is a secret draw, not a function of the intake order (review 11-22)
+    seen = set()
+    import random as _r
+    for _ in range(30):
+        order = ["甲", "乙", "丙", "丁", "戊"]
+        _r.Random(Z.secrets.randbits(64)).shuffle(order)
+        seen.add(tuple(order))
+    assert len(seen) > 5

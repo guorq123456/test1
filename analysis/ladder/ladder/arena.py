@@ -120,7 +120,9 @@ def snapshot(pool_dir: Path, arena: Path, anchors: Path | None = None, cr: str =
                             "craft": int(base.craft_of(cards)), "deck": [c.card_id for c in cards],
                             "strategy": a["strategy"]})
     host = {"version": ARENA_VERSION, "time": _iso(_now()), "pool": str(pool_dir), "period": body["period"],
-            "hash": body["hash"], "mu": mu, "members": [dict(m, owner=owners.get(m["mid"])) for m in body["members"]],
+            "hash": body["hash"], "mu": mu,
+            # in anon order: the pool's own order (mid) is the order members were admitted, by player (red line)
+            "members": sorted((dict(m, owner=owners.get(m["mid"])) for m in body["members"]), key=lambda m: m["anon"]),
             "anchors": anchor_rows}
     arena = Path(arena)
     _write(arena / "host" / "frozen.json", body)
@@ -322,7 +324,8 @@ def run_vs(arena: Path, player: str, version_dir: Path, games: int, opponent: st
             pool = [seat.by_id[opponent]]
         elif craft_zh:
             craft = CRAFT_BY_ZH.get(craft_zh)
-            pool = [("member", m) for m in seat.host["members"] if m["craft"] == craft]
+            pool = sorted((("member", m) for m in seat.host["members"] if m["craft"] == craft),
+                          key=lambda x: x[1]["anon"])           # never the admission (mid) order: it groups owners
             if not pool:
                 raise ArenaError(f"练习场里没有{craft_zh}的成员")
         else:
@@ -502,6 +505,8 @@ def run_resume(arena: Path, player: str, run_id: str, game: str, decision: int, 
     src = next((g for g in _jsonl(seat.priv / run_id / "games.jsonl") if g["id"] == game), None)
     if src is None or "actions" not in src:
         raise ArenaError(f"{run_id} 里没有 {game}（或那一局没有完整的走法）")
+    if "decks" not in src:
+        raise ArenaError("续打出来的局不能再续打；从原来那一局开始续打")
     starts = {s["id"]: s for s in _jsonl(seat.priv / run_id / "starts.jsonl")}
     jobs_meta = _read(seat.priv / run_id / "jobs.json") if (seat.priv / run_id / "jobs.json").exists() else None
     if game in starts:
@@ -577,6 +582,8 @@ def replay(arena: Path, player: str, run_id: str, game: str) -> Path:
     if g is None or view is None:
         raise ArenaError(f"{run_id} 里没有你的 {game}")
     me = view["seat"]
+    if "decks" not in g:
+        raise ArenaError("续打出来的局不能回放（续打点之后重新洗了牌）；回放原来那一局")
     from ladder import deal
     _, state = deal.start(g)
     tracker = base.Tracker(state)

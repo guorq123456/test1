@@ -270,6 +270,9 @@ def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=No
 
     from ladder import deal
     the_key = deal.resolve(key)
+    if isinstance(jobs, list):
+        for j in jobs:                                   # fail before any worker starts
+            deal.require(j, the_key)
 
     def take():
         nonlocal exhausted
@@ -278,6 +281,7 @@ def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=No
             if job is None:
                 exhausted = True
             elif job["id"] not in done:
+                deal.require(job, the_key)
                 return deal.seal(job, the_key)
         return None
     limits = _limit(mask)

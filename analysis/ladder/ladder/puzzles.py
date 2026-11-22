@@ -23,7 +23,9 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import hashlib
 import random
+import secrets
 import sys
 import time
 from pathlib import Path
@@ -174,40 +176,53 @@ def run(subdir: Path, pid: str, seeds, out: Path, games: int = 10, field: str = 
         raise PuzzleError("seed range too small, or more than 100 games per field list")
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
-    jobs = []
+    jobs, which = [], {}
     for e_i, e in enumerate(ents):
+        # the id says what the game is: this run's seeds and this entry's version (its receipt, or the ref's spec),
+        # so a re-run into the same folder plays what is new and never scores an old version's games as this one's
+        tag = e.get("receipt") or "ref-" + hashlib.sha1(e["spec"].encode("utf-8")).hexdigest()[:10]
         for j, (oname, ocode) in enumerate(fl):
             for i in range(games):
                 seat = i % 2
                 sides = [(reg[pid]["deck"], e["spec"]), (ocode, DEFAULT)]
                 if seat == 1:
                     sides.reverse()
-                jobs.append({"id": f"{pid}-e{e_i}-{j:02d}-{i:03d}", "seed": lo + 100 * j + i, "first": None,
+                gid = f"{pid}-{lo}-{tag}-{j:02d}-{i:03d}"
+                which[gid] = e_i
+                jobs.append({"id": gid, "seed": lo + 100 * j + i, "first": None,
                              "decks": [d for d, _ in sides], "strategies": [s for _, s in sides],
                              "labels": {"entry": e_i, "field": oname, "game": i, "seat": seat}})
     key = deal.resolve(key)
-    res = runner.run(jobs, str(out / "games.jsonl"), workers=workers, mask=mask, quiet=True, key=key)
-    logs = [json.loads(x) for x in (out / "games.jsonl").read_text(encoding="utf-8").splitlines()]
+    runner.run(jobs, str(out / "games.jsonl"), workers=workers, mask=mask, quiet=True, key=key)
+    logs = []
+    for x in (out / "games.jsonl").read_text(encoding="utf-8").splitlines():
+        g = json.loads(x)
+        if g["id"] in which:                               # this run's games only
+            g["labels"] = dict(g["labels"], entry=which[g["id"]])
+            logs.append(g)
+    deals = {g.get("deal", {}).get("key") if isinstance(g.get("deal"), dict) else g.get("deal") for g in logs}
     won = {}
     for g in logs:
         lab = g["labels"]
-        won.setdefault(lab["entry"], {})[(lab["field"], lab["game"])] = \
-            1 if g.get("winner") == lab["seat"] else 0
+        if g.get("winner") in (0, 1) and g.get("result") != "void":   # decided games only (as the pool, A3)
+            won.setdefault(lab["entry"], {})[(lab["field"], lab["game"])] = 1 if g["winner"] == lab["seat"] else 0
     base_games = won.get(0, {})
     table = []
     for e_i, e in enumerate(ents):
         w = won.get(e_i, {})
-        keys = sorted(set(w) & set(base_games))
+        keys = sorted(set(w) & set(base_games))            # pairs where both games were decided
         p, lo_, hi_ = _wilson(sum(w.values()), len(w))
-        row = {"entry": e["name"], "ref": e["ref"], "games": len(w), "rate": p, "lo": lo_, "hi": hi_}
+        row = {"entry": e["name"], "ref": e["ref"], "games": sum(1 for g in logs if g["labels"]["entry"] == e_i),
+               "decided": len(w), "rate": p, "lo": lo_, "hi": hi_}
         if e_i and keys:
             row["vs_default_pp"] = _diff([w[k] for k in keys], [base_games[k] for k in keys])
         table.append(row)
     # agreement: decision points from the default's own games on the puzzle list
     rng = random.Random(rng_seed)
-    default_logs = [g for g in logs if g["labels"]["entry"] == 0 and g["result"] in ("normal", "draw")]
+    default_logs = sorted((g for g in logs if g["labels"]["entry"] == 0 and g["result"] in ("normal", "draw")),
+                          key=lambda g: g["id"])
     points = []
-    for _ in range(agreement if len(ents) > 1 else 0):
+    for _ in range(agreement if len(ents) > 1 and default_logs else 0):
         g = rng.choice(default_logs)
         seat = g["labels"]["seat"]
         mine = sum(1 for s in g.get("steps", []) if s[0] == seat)
@@ -215,35 +230,45 @@ def run(subdir: Path, pid: str, seeds, out: Path, games: int = 10, field: str = 
             points.append((g, seat, rng.randrange(mine), rng.randrange(1, 2 ** 31)))
     ask = [{"log": g, "seat": seat, "k": k, "point": n, "entry": e_i, "spec": e["spec"], "seed": s}
            for n, (g, seat, k, s) in enumerate(points) for e_i, e in enumerate(ents)]
-    runner._limit(mask)
-    with ProcessPoolExecutor(max_workers=workers, initializer=_init) as ex:
-        answers = list(ex.map(_ask, ask, chunksize=4))
+    answers = []
+    if ask:
+        runner._limit(mask)
+        with ProcessPoolExecutor(max_workers=workers, initializer=_init) as ex:
+            answers = list(ex.map(_ask, ask, chunksize=4))
     moves = {}
     for a in answers:
         moves.setdefault(a["entry"], {})[a["point"]] = json.dumps(a["move"], sort_keys=True) if a["move"] else None
     agree = []
     for x in range(len(ents)):
         for y in range(x + 1, len(ents)):
-            both = [p for p in range(len(points)) if moves[x].get(p) and moves[y].get(p)]
+            both = [p for p in range(len(points)) if moves.get(x, {}).get(p) and moves.get(y, {}).get(p)]
             same = sum(moves[x][p] == moves[y][p] for p in both)
             agree.append({"a": ents[x]["name"], "b": ents[y]["name"], "points": len(both),
                           "same": round(same / len(both), 3) if both else None})
-    host = {"puzzle": pid, "title": reg[pid]["title"], "field": field, "games_per_list": games, "seeds": [lo, hi],
-            "deal": res.get("deal"), "entries": table, "agreement": agree, "points": len(points)}
-    (out / "result-host.json").write_text(json.dumps(host, ensure_ascii=False, indent=1), encoding="utf-8")
-    # the public copy: players anonymous, in a shuffled order
+    # the public names: a fresh secret order for every run, so 「选手 N」 says nothing about who or in what order
+    # anyone submitted, and nothing links one puzzle's 选手 N to another's (the map stays in the host's copy)
     players = [e["name"] for e in ents if not e["ref"]]
     order = players[:]
-    random.Random(rng_seed + 1).shuffle(order)
+    random.Random(secrets.randbits(64)).shuffle(order)
     alias = {n: f"选手 {i + 1}" for i, n in enumerate(order)}
+    host = {"puzzle": pid, "title": reg[pid]["title"], "field": field, "games_per_list": games, "seeds": [lo, hi],
+            "deal": sorted(d for d in deals if d) or None, "entries": table, "agreement": agree,
+            "points": len(points), "aliases": alias}
+    (out / "result-host.json").write_text(json.dumps(host, ensure_ascii=False, indent=1), encoding="utf-8")
+    refs_order = {e["name"]: i for i, e in enumerate(ents) if e["ref"]}
+
+    def rank(name):                                       # refs in their own order, then 选手 1, 2, ... 10
+        return (0, refs_order[name]) if name in refs_order else (1, int(name.split()[-1]))
     pub = json.loads(json.dumps(host))
     for r in pub["entries"]:
         r["entry"] = alias.get(r["entry"], r["entry"])
-    pub["entries"].sort(key=lambda r: (not r["ref"], r["entry"]))
+    pub["entries"].sort(key=lambda r: rank(r["entry"]))
     for r in pub["agreement"]:
-        r["a"], r["b"] = alias.get(r["a"], r["a"]), alias.get(r["b"], r["b"])
-    pub.pop("seeds")
-    pub.pop("deal")
+        a, b = alias.get(r["a"], r["a"]), alias.get(r["b"], r["b"])
+        r["a"], r["b"] = sorted((a, b), key=rank)        # neither the row order nor a/b tells the intake order
+    pub["agreement"].sort(key=lambda r: (rank(r["a"]), rank(r["b"])))
+    for k in ("seeds", "deal", "aliases"):
+        pub.pop(k)
     (out / "result-public.json").write_text(json.dumps(pub, ensure_ascii=False, indent=1), encoding="utf-8")
     return host
 

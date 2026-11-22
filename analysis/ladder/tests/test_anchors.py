@@ -64,7 +64,7 @@ def test_anchor_run_plays_new_versions_only(tmp_path, monkeypatch):
     table.write_text(json.dumps(quick, ensure_ascii=False), encoding="utf-8")
     pool = Pool.create(tmp_path / "pool", (93400330, 93400340), rng_seed=1)
     for d in BASE_DECKS[:2]:
-        pool.enter(d, "bot:greedy", "baseline")
+        pool.enter(d, "bot:greedy+plan", "baseline")          # not the anchors' strategy: no mirror to skip
     jobs, todo = A.plan(quick, pool.dir, tmp_path / "out", 2)
     assert len(jobs) == 8 and len(todo) == 4
     assert sorted(j["seed"] for j in jobs) == [93400220, 93400220, 93400221, 93400221,
@@ -78,3 +78,26 @@ def test_anchor_run_plays_new_versions_only(tmp_path, monkeypatch):
     rows = A.report(tmp_path / "out", table)
     assert {(r["member"], r["tier"]) for r in rows} == {(m.mid, "基线快照") for m in pool.active()}
     assert all(r["decided"] <= 4 for r in rows)
+
+
+def test_a_member_never_plays_its_own_frozen_copy(tmp_path):
+    # a baseline member is its class's 基线快照 anchor (same list, same strategy): no mirror games (review 11-22)
+    rows = A.table()[:2]
+    pool = Pool.create(tmp_path / "pool", (93400330, 93400340), rng_seed=1, check=True)
+    from ladder.runner import load_deck
+    for r in rows:
+        pool.enter([c.card_id for c in load_deck(r["deck"])], r["strategy"], "baseline")
+    jobs, todo = A.plan(rows, pool.dir, tmp_path / "out", 2)
+    assert sorted(t[2] for t in todo) == ["A00", "A01"] and len(jobs) == 4
+    assert all(m.mid not in {j["labels"]["member"] for j in jobs if j["labels"]["anchor"] == f"A{k:02d}"}
+               for k, m in enumerate(Pool(pool.dir).active()))
+
+
+def test_report_counts_a_replayed_version_once(tmp_path):
+    table = tmp_path / "anchors.json"
+    table.write_text(json.dumps(A.table()[:1], ensure_ascii=False), encoding="utf-8")
+    line = {"member": "m0010", "version": 1, "anchor": "A00", "games": 10, "won": 6, "lost": 4, "draw": 0, "void": 0}
+    (tmp_path / "anchors.jsonl").write_text("".join(json.dumps(dict(line, won=w, lost=10 - w)) + "\n" for w in (6, 7)),
+                                           encoding="utf-8")
+    rows = A.report(tmp_path, table)
+    assert [(r["won"], r["decided"]) for r in rows] == [(7, 10)]          # the latest line, not 13 of 20

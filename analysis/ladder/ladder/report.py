@@ -10,9 +10,10 @@ belong to nobody). Two readings forced by the red line (DEVIATIONS A42, A43):
 - "存档卡组清单" is public/decklists.md (the reference lists), not the lists of members that left the pool: those are
   a player's lists.
 - The win tables count one period's games only (by default the last period that has games): cumulative counts
-  would tell how long a member has been in the pool (its entry period). The anchor results are per class, without
-  anonymous ids: anchors are played once per version (A40) on fixed seeds, so a member's own row would repeat
-  unchanged until its strategy changes and so tell its updates (its version).
+  would tell how long a member has been in the pool (its entry period). The anchor results are one figure per tier
+  for the whole pool, rounded, without counts: anchors are played once per version (A40) on fixed seeds, so any
+  finer figure (a member's row, a class's row, the counts) stays the same until a strategy changes and so tells
+  who changed (its version).
 """
 from __future__ import annotations
 
@@ -79,17 +80,22 @@ def build(pool_dir, anchors_dir=None, anchors_table=None, puzzles=(), note="", g
     anchors = []
     if anchors_dir and anchors_table:
         from ladder.anchors import report as anchor_report
+        from ladder.anchors import _wilson
         cur = {m.mid: m for m in pool.active()}
         agg = {}
         for r in anchor_report(Path(anchors_dir), Path(anchors_table)):
             m = cur.get(r["member"])
             if m is not None and m.version == r["version"] and r["decided"]:   # members in the pool, current version
-                agg.setdefault((m.craft, r["tier"]), []).append([r["won"], r["decided"]])
-        for (c, tier), rows in sorted(agg.items()):
-            rows.sort(key=lambda x: (-x[0] / x[1], -x[1]))
-            won, dec = sum(x[0] for x in rows), sum(x[1] for x in rows)
-            anchors.append({"craft": CRAFT_ZH[c], "tier": tier, "members": len(rows), "won": won, "decided": dec,
-                            "each": rows})
+                d = agg.setdefault(r["tier"], [0, 0])
+                d[0] += r["won"]
+                d[1] += r["decided"]
+        # A43 (amended after the 11-22 review): one figure per tier for the whole pool, rounded to whole percent,
+        # no game counts. Anchors are played once per version on fixed seeds (A40), so anything finer (per class,
+        # per member, the counts) stays the same until a strategy changes and so shows who changed, and a member's
+        # own hall-of-fame copy, which it never plays, shows in the counts
+        for tier, (w, n) in sorted(agg.items(), key=lambda x: x[0] != "基线快照"):
+            p, lo, hi = _wilson(w, n)
+            anchors.append({"tier": tier, "rate": round(100 * p), "lo": round(100 * lo), "hi": round(100 * hi)})
     per_class = {}
     for m in pool.active():
         per_class[CRAFT_ZH[m.craft]] = per_class.get(CRAFT_ZH[m.craft], 0) + 1
@@ -134,12 +140,11 @@ def markdown(r: dict) -> str:
         out.append(f"| {a} | " + " | ".join(_pct(*v.get(c, [0, 0])) for c in CRAFT_ZH.values()) + " |")
     out.append("")
     if r["anchors"]:
-        out += ["## 锚点对战", "", "锚点：基线快照（七副基线卡组 + 默认打法）和名人堂。池子里每个成员现在这一版的成绩，按职业合起来，"
-                "不标编号（每一版只打一次、种子固定，标了编号就看得出谁改过打法）。", "",
-                "| 职业 | 锚点 | 成员数 | 合计 | 各成员（从高到低） |", "|---|---|---|---|---|"]
+        out += ["## 锚点对战", "", "锚点：基线快照（七副基线卡组 + 默认打法）和名人堂。池子里每个成员现在这一版对锚点的成绩，"
+                "全池合起来，取整到百分之一，区间 95%。不分职业、不标编号、不给局数：每一版只打一次、种子固定，"
+                "分得更细就看得出谁改过打法。", "", "| 锚点 | 胜率 | 区间 |", "|---|---|---|"]
         for x in r["anchors"]:
-            each = "、".join(f"{100 * w / n:.0f}%" for w, n in x["each"])
-            out.append(f"| {x['craft']} | {x['tier']} | {x['members']} | {_pct(x['won'], x['decided'])} | {each} |")
+            out.append(f"| {x['tier']} | {x['rate']}% | {x['lo']}%～{x['hi']}% |")
         out.append("")
     for p in r["puzzles"]:
         out += [f"## 公共题 {p['puzzle']}　{p['title']}", "", "不标是谁写的；「选手 N」的编号每道题重新打乱。", "",

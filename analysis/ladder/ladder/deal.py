@@ -31,6 +31,30 @@ KEY_ENV = "LADDER_KEY_FILE"
 DEFAULT_KEY = Path(r"C:\claude\ladder-host\ladder.key")      # Salem's computer; the host's directory
 
 
+# The task's formal seed segments (SEEDS.md 正式分段): a game on one of these seeds is never dealt without the key
+# (LD-27: without it a strategy's seed gives the game seed away). Host measurement and probe segments are not here.
+FORMAL = ((87400000, 88400000, "调参（练习场、收提交的冒烟局）"), (88500000, 89000000, "把关"),
+          (89100000, 89400000, "累计确认"), (89500000, 91000000, "正式天梯"), (91100000, 91600000, "最终自测"),
+          (91700000, 91800000, "锚点"), (91900000, 92000000, "公共题、起点测量"), (92100000, 92200000, "抽查重测"))
+
+
+def formal(seed: int) -> str | None:
+    """The name of the formal segment `seed` is in, or None."""
+    for lo, hi, name in FORMAL:
+        if lo <= int(seed) < hi:
+            return name
+    return None
+
+
+def require(job: dict, key: bytes | None) -> None:
+    """Refuse a formal-seed job without the key, loudly (review of 11-22: only the pool used to refuse)."""
+    if key is None and job.get("deal") is None:
+        seg = formal(job["seed"])
+        if seg:
+            raise DealError(f"{job['id']}: seed {job['seed']} is in the formal segment {seg}; no deal key "
+                            f"(base-2): put it at {DEFAULT_KEY} or set {KEY_ENV}")
+
+
 class DealError(Exception):
     pass
 

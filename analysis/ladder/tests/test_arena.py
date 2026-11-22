@@ -57,6 +57,8 @@ def field(tmp_path, monkeypatch):
 
 def test_the_public_field_shows_only_public_things(field):
     a, host, _ = field
+    # never in the pool's own (admission) order, which groups members by owner (review 11-22)
+    assert [m["anon"] for m in host["members"]] == sorted(m["anon"] for m in host["members"])
     pub = json.loads((a / "public" / "field.json").read_text(encoding="utf-8"))
     text = json.dumps(pub, ensure_ascii=False)
     for m in host["members"]:
@@ -93,6 +95,11 @@ def test_vs_same_as_resume_replay(field, tmp_path):
         encoding="utf-8").splitlines()]
     upto = [i for i, (who, _) in enumerate(views[0]["moves"]) if who == "我"][2]
     assert len(conts) == 6 and all(c["moves"][:upto] == views[0]["moves"][:upto] for c in conts)
+    # a continuation can't be replayed or resumed again (reshuffled after the resume point): a clear refusal
+    with pytest.raises(arena.ArenaError, match="续打出来的局"):
+        arena.replay(a, "甲", res["run"], conts[0]["game"])
+    with pytest.raises(arena.ArenaError, match="续打出来的局"):
+        arena.run_resume(a, "甲", res["run"], conts[0]["game"], 0, [v1], continuations=1)
     # the replay holds my view only
     path = arena.replay(a, "甲", out["run"], game)
     rep = json.loads(path.read_text(encoding="utf-8"))
@@ -110,7 +117,8 @@ def test_ladder_mode_and_replacing(field, tmp_path):
     out = arena.run_ladder(a, "甲", v, replacing=mine, games=10, tail=5, repeats=2, rng_seed=4)
     assert out["games"] >= 1 and out["repeats"] == 2
     with pytest.raises(arena.ArenaError, match="不是你的成员"):
-        arena.run_ladder(a, "甲", v, replacing=host["members"][0]["anon"], games=4, tail=2, repeats=2)
+        arena.run_ladder(a, "甲", v, replacing=next(m["anon"] for m in host["members"] if m["anon"] != mine),
+                         games=4, tail=2, repeats=2)
 
 
 def test_refusals(field, tmp_path):

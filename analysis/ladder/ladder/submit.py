@@ -485,6 +485,19 @@ def _stage(sub: dict, rid: str, subdir: Path) -> str:
     return f"py:{name}:{sub['meta']['class']}"
 
 
+def code_fingerprint(src: str, cls: str) -> str:
+    """The strategy's code without comments, layout or docstrings (its syntax tree), with the class it names: two
+    submissions with the same fingerprint are the same change (red line: 同一个改动没有实质修改，不重新检验)."""
+    import ast
+    tree = ast.parse(src)
+    for node in ast.walk(tree):
+        body = getattr(node, "body", None)
+        if isinstance(body, list) and body and isinstance(body[0], ast.Expr) \
+                and isinstance(getattr(body[0], "value", None), ast.Constant) and isinstance(body[0].value.value, str):
+            node.body = body[1:] or [ast.Pass()]
+    return hashlib.sha256((cls + "\n" + ast.dump(tree, annotate_fields=False)).encode("utf-8")).hexdigest()
+
+
 def _used_smoke_seeds(lines: list[dict]) -> set:
     return {s for l in lines if l.get("ev") == "receipt" for s in l.get("smoke_seeds", [])}
 
@@ -824,12 +837,28 @@ def gate_update(subdir: Path, rid: str, pool_dir: Path, frozen: Path, seeds: tup
         line.update(verdict="中间一步，不检验（A33）", gate=None)
         _append(subdir, line)
         return line
-    old = (rec.get("was") or {}).get("strategy") or m.strategy
+    # the same change, gated before for this member (under any receipt): not gated again (red line)
+    fp = code_fingerprint((subdir / "code" / f"{rec['spec'].split(':')[1]}.py").read_text(encoding="utf-8"),
+                          rec["spec"].split(":")[2])
+    for l in lines:
+        if l.get("ev") == "gated" and l.get("mid") == m.mid and l.get("gate") and l.get("fingerprint") == fp:
+            line.update(verdict=f"同一个改动，不重新检验（和 {l['receipt']} 一样，检验 {l['gate']}）", gate=None,
+                        fingerprint=fp, same_as=l["receipt"])
+            _append(subdir, line)
+            return line
+    # against the member's version now: an update received before another one passed is compared with the one
+    # that passed, never with the version it was written against (it would otherwise replace a version it never
+    # met); for a route, the member's version now is the one before step 1 unless another update passed meanwhile
+    old = m.strategy
     change, prediction = meta["change"], meta["prediction"]
     if route:
         first = next(l for l in lines if l.get("ev") == "receipt" and l.get("id") == (route.get("route_of") or rid))
-        old = (first.get("was") or {}).get("strategy") or old
+        was = first.get("was") or {}
         change = f"多步改法（{route['steps']} 步，停在第 {route['step']} 步）：{change}"
+    else:
+        was = rec.get("was") or {}
+    if was.get("version") is not None and was["version"] != m.version:
+        line["note"] = f"收件时成员是第 {was['version']} 版，现在是第 {m.version} 版：和现在这一版比"
     code = subdir / "code"
     if str(code) not in sys.path:
         sys.path.insert(0, str(code))                     # the workers import the staged submission from here
@@ -838,7 +867,7 @@ def gate_update(subdir: Path, rid: str, pool_dir: Path, frozen: Path, seeds: tup
     g = Gate(frozen, m.mid, rec["spec"], old, "better", change, prediction, seeds, out_dir, delta=delta,
              ledger_root=Path(out_dir), rng_seed=rng_seed)
     res = g.run(workers=workers, mask=mask)
-    line.update(gate=res["gate"], verdict=res["verdict"], old=old, new=rec["spec"])
+    line.update(gate=res["gate"], verdict=res["verdict"], old=old, new=rec["spec"], fingerprint=fp)
     if res["verdict"] == "passed":
         line["version"] = pool.update(m.mid, rec["spec"], gate=res["gate"])         # the new version number
     _append(subdir, line)

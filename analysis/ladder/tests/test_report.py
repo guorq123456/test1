@@ -60,10 +60,9 @@ def test_report_says_nothing_about_owners_versions_or_age(tmp_path, monkeypatch)
     assert sum(v[1] for t in r["wins_vs_member"].values() for v in t.values()) == 600
     before = R.build(pool.dir, games_period=pool.period - 1)
     assert sum(v[1] for t in before["wins_vs_class"].values() for v in t.values()) == 1200
-    # anchors: per class, no anon id, the old version left out
-    assert [(a["craft"], a["members"], a["won"], a["decided"]) for a in r["anchors"]] == \
-        [("精灵", 1, 14, 20), ("皇家护卫", 1, 8, 20)]
-    assert all("anon" not in a for a in r["anchors"])
+    # anchors (A43 as amended): one rounded figure per tier for the whole pool, no class, no id, no counts; the
+    # old version left out: 22 of 40
+    assert r["anchors"] == [{"tier": "基线快照", "rate": 55, "lo": 40, "hi": 69}]
     md = R.markdown(r)
     assert "第一期" in md and "P01" in md and "选手 1" in md and "+10.0（+2.0～+18.0）" in md
     assert {b["anon"] for b in r["board"]} <= {m.anon for m in pool.active()}

@@ -30,7 +30,7 @@
 1. 冻结池：`py -m ladder.evaluator freeze C:\claude\ladder-host\pool --out C:\claude\ladder-host\frozen\P<期>.json`（每个成员最近 1000 局平均，A22）。
 2. 练习场：`py -m ladder.arena snapshot C:\claude\ladder-host\pool --arena C:\claude\ladder-arena --anchors <锚点表>`；`py -m ladder.arena open C:\claude\ladder-arena --hours 4 --games 20000 --workers 23`（时限 4 小时是临时限时；2 万局是规划的数）。第一次开期会生成 `arena.key`。
 3. 策略期：定这一期把关检验的 delta（规划：前几期 3～5 个百分点，后面 1.5），写进台账，再开期。
-4. 环境报告：`py -m ladder.report C:\claude\ladder-host\pool --out C:\claude\ladder-players\public\reports --anchors-dir C:\claude\ladder-host\anchors --anchors C:\claude\ladder-host\anchors\anchors.json [--puzzle <题>\result-public.json ...] --note "这一期的时限、规则变化"`。写 report-P<期>.md 和 .json：公开排行榜、每个职业几个成员、上一期的胜率表（成员对职业、成员对成员）、锚点成绩（按职业合起来，A43）、公共题结果（不标是谁）。发以前主持方自己从头看一遍，只有匿名编号和数。
+4. 环境报告：`py -m ladder.report C:\claude\ladder-host\pool --out C:\claude\ladder-players\public\reports --anchors-dir C:\claude\ladder-host\anchors --anchors C:\claude\ladder-host\anchors\anchors.json [--puzzle <题>\result-public.json ...] --note "这一期的时限、规则变化"`。写 report-P<期>.md 和 .json：公开排行榜、每个职业几个成员、上一期的胜率表（成员对职业、成员对成员）、锚点成绩（全池一个数，A43）、公共题结果（不标是谁）。发以前主持方自己从头看一遍，只有匿名编号和数。
 
 ### 2. 选手工作（时限内）
 

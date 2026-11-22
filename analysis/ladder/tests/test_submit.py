@@ -320,14 +320,17 @@ def test_an_accepted_update_goes_to_the_gate(tmp_path, monkeypatch):
     import ladder.gate
     monkeypatch.setattr(ladder.gate, "Gate", FakeGate)
 
-    def receipt(rid, route=None, spec="py:sub_x:Quick"):
+    def receipt(rid, route=None, spec="py:sub_x:Quick", src=None, was_=None):
         (subs / rid).mkdir(parents=True, exist_ok=True)
+        (subs / "code").mkdir(parents=True, exist_ok=True)
+        (subs / "code" / f"{spec.split(':')[1]}.py").write_text(
+            src or f"class Quick:\n    N = {rid[-1]}\n", encoding="utf-8")
         (subs / rid / "submission.json").write_text(json.dumps(
             {"type": "打法更新", "member": "一号", "class": "Quick", "change": "改了换牌", "prediction": "+3，因为…",
              "route": route}, ensure_ascii=False), encoding="utf-8")
         submit._append(subs, {"ev": "receipt", "id": rid, "player": "甲", "kind": "update", "verdict": "收下",
                               "member": "一号", "mid": mid, "spec": spec, "route": route,
-                              "was": {"strategy": pool.members[mid].strategy, "version": 1}})
+                              "was": was_ or {"strategy": pool.members[mid].strategy, "version": 1}})
     receipt("S-0001", spec="py:sub_S0001:Quick")
     out = submit.gate_update(subs, "S-0001", pool.dir, tmp_path / "frozen.json", (1, 2), tmp_path / "gates", delta=3)
     assert out["verdict"] == "passed" and out["version"] == 2
@@ -347,6 +350,16 @@ def test_an_accepted_update_goes_to_the_gate(tmp_path, monkeypatch):
     assert calls[1]["old"] == before and "停在第 3 步" in calls[1]["change"]
     assert last["verdict"] == "not passed" and "version" not in last
     assert Pool(pool.dir).members[mid].strategy == before         # not passed: the pool keeps the old version
+    # the same code again under a new receipt (comments and layout aside): not gated again (red line)
+    receipt("S-0004", spec="py:sub_S0004:Quick", src="# again\nclass Quick:\n    N   =   1   # same as S-0001\n")
+    same = submit.gate_update(subs, "S-0004", pool.dir, tmp_path / "f.json", (1, 2), tmp_path / "gates", delta=3)
+    assert same["gate"] is None and "同一个改动" in same["verdict"] and same["same_as"] == "S-0001"
+    assert len(calls) == 2
+    # an update written against an older version is compared with the version the member has now
+    receipt("S-0005", spec="py:sub_S0005:Quick", was_={"strategy": was, "version": 1})   # received at version 1
+    now = Pool(pool.dir).members[mid]
+    late = submit.gate_update(subs, "S-0005", pool.dir, tmp_path / "f.json", (1, 2), tmp_path / "gates", delta=3)
+    assert calls[2]["old"] == now.strategy != was and "现在这一版" in late["note"]
 
 
 def test_a_route_stop_mark_is_checked(tmp_path):

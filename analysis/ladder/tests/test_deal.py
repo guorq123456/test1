@@ -111,3 +111,17 @@ def test_the_players_pool_wont_play_without_a_key(tmp_path, monkeypatch):
     pool.advance(force="test")                                         # period 1: players' members may enter
     with pytest.raises(P.PoolError, match="deal key"):
         pool.ladder(games=1)
+
+
+def test_formal_seeds_are_never_dealt_without_the_key(tmp_path):
+    # review 11-22: only the pool used to refuse; the final self-test, gate, anchors, puzzles and the submission
+    # check fell back to the old deal (LD-27) when the key file was missing
+    from ladder import runner
+    job = {"id": "f-1", "seed": 91100000, "first": None, "decks": [CODES[0], CODES[1]],
+           "strategies": ["bot:greedy", "bot:greedy"], "strategy_seeds": None}
+    assert deal.formal(91100000) == "最终自测" and deal.formal(93400200) is None
+    with pytest.raises(deal.DealError, match="最终自测"):
+        runner.run([job], str(tmp_path / "g.jsonl"), workers=1, key=None)
+    assert not (tmp_path / "g.jsonl").exists() or not (tmp_path / "g.jsonl").read_text(encoding="utf-8").strip()
+    deal.require(dict(job, seed=93400200), None)                 # a probe seed: the old deal is still allowed
+    deal.require(deal.seal(job, b"k" * 32), None)                 # already sealed

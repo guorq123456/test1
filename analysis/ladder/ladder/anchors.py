@@ -129,14 +129,18 @@ def plan(anchors: list[dict], pool_dir: Path, out: Path, games: int, tiers=None,
     if games > STRIDE:
         raise AnchorError(f"at most {STRIDE} games per anchor on the panel")
     chosen = [a for a in anchors if tiers is None or a["tier"] in tiers]
+    from ladder.runner import load_deck
+    ids = {a["id"]: sorted(c.card_id for c in load_deck(a["deck"])) for a in chosen}
     jobs, todo = [], []
     for m in pool.active():
         for a in anchors:
             j = a.get("slot", anchors.index(a))
             if a not in chosen or (not every and (m.mid, m.version, a["id"], games) in done):
                 continue
-            if (a.get("mid"), a.get("version")) == (m.mid, m.version):
-                continue                              # never against a frozen copy of its own current version
+            if (a.get("mid"), a.get("version")) == (m.mid, m.version) or \
+                    (a["strategy"] == m.strategy and ids[a["id"]] == sorted(m.deck)):
+                continue                              # never against a frozen copy of its own current version (a
+                #                                       baseline member is its class's 基线快照 anchor)
             todo.append((m.mid, m.version, a["id"]))
             for i in range(games):
                 seat = i % 2
@@ -188,8 +192,10 @@ def run(anchors_path: Path, pool_dir: Path, out: Path, games: int = 10, tiers=No
 def report(out: Path, anchors_path: Path) -> list[dict]:
     """Per member version and tier: won / decided over all anchors of the tier, with a 95% interval."""
     anchors = {a["id"]: a for a in json.loads(Path(anchors_path).read_text(encoding="utf-8"))}
-    agg = {}
-    for l in _ledger(Path(out)):
+    agg, last = {}, {}
+    for l in _ledger(Path(out)):                      # a (member, version, anchor) played again: its latest line only
+        last[(l["member"], l["version"], l["anchor"])] = l
+    for l in last.values():
         tier = anchors[l["anchor"]]["tier"]
         d = agg.setdefault((l["member"], l["version"], tier), [0, 0])
         d[0] += l["won"]

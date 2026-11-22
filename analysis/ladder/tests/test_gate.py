@@ -130,3 +130,41 @@ def test_identical_versions_in_the_sequential_test_stop_with_no_difference(tmp_p
     monkeypatch.setattr(G, "SAME_AFTER", 15)
     rec = gate(tmp_path, fz, mid, "py:helpers:Random", "py:helpers:Random", "better", share=0.4).run(workers=2)
     assert rec["verdict"].startswith("no difference") and rec["pairs"] < rec["cap_pairs"]
+
+
+def test_an_interrupted_gate_is_recorded_and_the_rerun_starts_fresh(tmp_path, frozen, monkeypatch):
+    # review 11-22: a re-run used to reuse the stopped attempt's folder, skip its games and end undecided
+    fz, mid = frozen
+    from ladder import runner
+    real = runner.run
+    calls = {"n": 0}
+
+    def stop_after_four(jobs, out, **kw):
+        cut = []
+        for j in jobs:
+            cut.append(j)
+            if len(cut) == 4:
+                break
+        real(cut, out, **kw)
+        raise KeyboardInterrupt
+    monkeypatch.setattr(runner, "run", stop_after_four)
+    with pytest.raises(KeyboardInterrupt):
+        gate(tmp_path, fz, mid, "bot:greedy", "py:helpers:Random", "better", delta=10, share=0.5).run(workers=2)
+    monkeypatch.setattr(runner, "run", real)
+    assert G.read_ledger(tmp_path) == []
+    g = gate(tmp_path, fz, mid, "bot:greedy", "py:helpers:Random", "better", delta=10, share=0.5, rng=5)
+    lines = G.read_ledger(tmp_path)
+    assert g.gid == "G-0002" and [r["gate"] for r in lines] == ["G-0001"] and lines[0]["interrupted"]
+    assert lines[0]["new"] == "bot:greedy" and len(lines[0]["seeds_used"]) == 2
+    rec = g.run(workers=3)
+    assert rec["verdict"] == "passed"                            # the interrupted attempt is not "gated already"
+    assert not set(rec["seeds_used"]) & set(lines[0]["seeds_used"])
+
+
+def test_a_used_up_seed_range_is_refused(tmp_path, frozen):
+    fz, mid = frozen
+    G.append_ledger({"gate": "G-0001", "date": "11-22", "member": mid, "kind": "fixed", "new": "x", "old": "y",
+                     "change": "t", "prediction": "t", "seed_note": "", "opponents_note": "", "verdict": "t",
+                     "seeds_used": list(range(*GATE_SEEDS))}, tmp_path)
+    with pytest.raises(P.PoolError, match="used up"):
+        gate(tmp_path, fz, mid, "bot:greedy", "py:helpers:Random", "better", delta=10, share=0.5)

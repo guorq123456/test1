@@ -159,6 +159,30 @@ def append_ledger(rec: dict, root: Path = LEDGER_DIR):
         f.write(row)
 
 
+def record_interrupted(out_dir, ledger: list[dict], root: Path) -> list[dict]:
+    """Gate attempts that stopped before their ledger line (a folder with games, no line): one ledger line each,
+    "interrupted", with the seeds they used, so a re-run takes the next id and fresh seeds and the stopped attempt
+    is on the ledger too (review of 11-22: a re-run used to reuse the folder, skip its games and end undecided)."""
+    have = {r["gate"] for r in ledger}
+    out, n = [], len(ledger) + 1
+    while True:
+        gid = f"G-{n:04d}"
+        games = Path(out_dir) / gid / "games.jsonl"
+        if gid in have or not games.exists() or not games.read_text(encoding="utf-8").strip():
+            return out
+        start = Path(out_dir) / gid / "start.json"
+        st = json.loads(start.read_text(encoding="utf-8")) if start.exists() else {}
+        seeds = sorted({json.loads(l)["seed"] for l in games.read_text(encoding="utf-8").splitlines() if l.strip()})
+        rec = {"gate": gid, "date": time.strftime("%m-%d"), "member": st.get("member"), "anon": st.get("anon", "?"),
+               "kind": st.get("kind", "?"), "new": st.get("new"), "old": st.get("old"),
+               "change": st.get("change", "（不知道）"), "prediction": st.get("prediction", ""),
+               "seed_note": f"用了 {len(seeds)} 个种子", "opponents_note": "—",
+               "verdict": "interrupted: 中途停了，没有结论，不算一次检验", "interrupted": True, "seeds_used": seeds}
+        append_ledger(rec, root)
+        out.append(rec)
+        n += 1
+
+
 GATES_HEADER = """# 检验台账
 
 每次检验一行，由检验工具（ladder/gate.py）自动写入，机器可读的全文在 gates.jsonl。只增不改，没通过的也记。同一个改动没有实质修改，不重新检验。
@@ -181,7 +205,9 @@ class Gate:
             raise PoolError("a gate needs the change and the prediction written before it runs")
         self.ledger_root = Path(ledger_root)
         ledger = read_ledger(self.ledger_root)
-        earlier = [r for r in ledger if r["member"] == member and r["new"] == new and r["kind"] == kind]
+        ledger += record_interrupted(out_dir, ledger, self.ledger_root)
+        earlier = [r for r in ledger if r["member"] == member and r.get("new") == new and r.get("kind") == kind
+                   and not r.get("interrupted")]
         if earlier and not (resubmit_of and since.strip()):
             raise PoolError(f"this change was gated already ({earlier[-1]['gate']}); a resubmission names it and "
                             "says what changed in substance")
@@ -206,6 +232,8 @@ class Gate:
         self.rng_seed = rng_seed if rng_seed is not None else time.time_ns() % 2 ** 48
         self.rng = random.Random(self.rng_seed)
         self.pairs_target = pairs or {"same": 100, "fixed": 2000}.get(kind)
+        if len(self.used) >= self.hi - self.lo:
+            raise PoolError(f"the gate seed range {self.lo}-{self.hi} is used up")
         last_share = next((r["discordant_share"] for r in reversed(ledger)
                            if r["member"] == member and r.get("discordant_share")), None)
         self.share = share or last_share
@@ -216,6 +244,8 @@ class Gate:
     # one pair = two jobs
     def _pair(self, i: int, tag: str) -> list[dict]:
         opp, how = pick_opponent(self.cand, self.others, self.mu, self.rng, cr=self.me.cr, far=E.FAR)
+        if len(self.used) >= self.hi - self.lo:
+            raise PoolError(f"the gate seed range {self.lo}-{self.hi} is used up")
         while True:
             seed = self.rng.randrange(self.lo, self.hi)
             if seed not in self.used:
@@ -262,15 +292,22 @@ class Gate:
                    mask=mask, quiet=True, on_result=on_result)
 
     def run(self, workers=4, step_limit=30.0, mask=None) -> dict:
+        from ladder import deal
         from ladder.runner import one_core_type
         t0 = time.time()
         core_mask = one_core_type(mask)                    # compute is compared (A44)
+        k = deal.resolve("auto")
+        # what this attempt is, so that an attempt stopped halfway can be named in the ledger (record_interrupted)
+        (self.dir / "start.json").write_text(json.dumps(
+            {"gate": self.gid, "member": self.me.mid, "anon": self.me.anon, "kind": self.kind, "new": self.new,
+             "old": self.old, "change": self.change, "prediction": self.prediction, "rng_seed": self.rng_seed},
+            ensure_ascii=False), encoding="utf-8")
         rec = {"gate": self.gid, "date": time.strftime("%m-%d"), "member": self.me.mid, "anon": self.me.anon,
                "craft": self.me.craft,
                "kind": self.kind, "new": self.new, "old": self.old, "change": self.change,
                "prediction": self.prediction, "resubmit_of": self.resubmit_of, "since": self.since,
                "frozen": self.body["hash"], "seed_range": [self.lo, self.hi], "rng_seed": self.rng_seed,
-               "mask": core_mask}
+               "mask": core_mask, "deal": deal.key_id(k) if k else None}
         if self.kind in ("better", "noninf"):
             self._sequential(rec, workers, step_limit, mask)
         else:
