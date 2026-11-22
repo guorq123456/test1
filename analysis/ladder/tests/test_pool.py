@@ -305,13 +305,10 @@ def test_quotas(tmp_path):
         pool.enter(synth_deck(2, 1), "py:helpers:Random", "jia")      # S5: one new deck per class per deck period
     pool.enter(synth_deck(4, 1), "py:helpers:Random", "jia")          # ... a third class in the same period is fine
     pool.enter(synth_deck(2, 1), "py:helpers:Random", "yi")           # ... and another player's Sword is theirs
-    for k in range(1, 5):                                             # 7 members per player at most
+    for k in range(1, 7):                                             # S6: no cap on a player's members
         pool.advance(force="test"); pool.advance(force="test")
         pool.enter(synth_deck(3, k), "py:helpers:Random", "jia")
-    assert len([m for m in pool.active() if m.owner == "jia"]) == 7
-    pool.advance(force="test"); pool.advance(force="test")
-    with pytest.raises(P.PoolError):
-        pool.enter(synth_deck(4, 0), "py:helpers:Random", "jia")
+    assert len([m for m in pool.active() if m.owner == "jia"]) == 9
 
 
 def test_an_opponent_removed_mid_game(tmp_path):

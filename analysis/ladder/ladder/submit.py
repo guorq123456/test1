@@ -26,7 +26,7 @@ The checks (PHASE2-DESIGN.md 2.3):
 - format: the four files, the fields the type needs;
 - deck (新卡组): legal by the simulator's own rules (svsim.cards.decks.validate: 40 cards, 3 of a name, one class
   plus Neutral, Rotation as the simulator has it: A7), every card scripted (runner.unscripted), one class;
-- slots: at most 7 members per player (pending Salem under S5) and 2 per list, one new deck per class per deck
+- slots: no cap on a player's members (S6), at most 2 members per list, one new deck per class per deck
   period (S5), updates not limited; new decks only in a deck period, updates only in a strategy period;
 - code, read (no running): imports only from the allowed modules, none of the names and attributes that reach
   files, the network, other processes, frames or the interpreter (static, by the syntax tree);

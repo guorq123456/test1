@@ -45,7 +45,7 @@ CRAFT_ZH = {1: "精灵", 2: "皇家护卫", 3: "巫师", 4: "龙族", 5: "梦魇
 PROTECT_GAMES = 1000              # §4.5 protection: the first 1000 games ...
 FULL_PERIOD_GAMES = 2000          # §4.5 a period ends once every member has 2000 games since its last change
 UNSTABLE_GAMES = 300              # §4.3 after a strategy update, "unstable" until 300 games
-MAX_PER_PLAYER = 7                # plan 阶段 3 名额: at most 7 members per player in the pool
+MAX_PER_PLAYER = None             # Salem S6 (11-22): no cap on a player's members (the plan's 7 is gone)
 MAX_PER_LIST = 2                  # ... at most 2 members with the same list
 NEW_DECKS_PER_CLASS = 1           # Salem S5 (11-22): each deck period a player submits one deck for every class
 HOST_OWNERS = ("baseline", "salem")   # members that belong to no player (§4.1)
@@ -305,7 +305,7 @@ class Pool:
             raise ListFull(holders)
         if owner not in HOST_OWNERS and not check:
             mine = [m for m in self.active() if m.owner == owner]
-            if len(mine) >= MAX_PER_PLAYER:
+            if MAX_PER_PLAYER is not None and len(mine) >= MAX_PER_PLAYER:
                 raise PoolError(f"{owner} already has {len(mine)} members in the pool (at most {MAX_PER_PLAYER})")
             new_here = [m for m in self.members.values() if m.owner == owner and m.entry_period == self.period
                         and m.craft == craft]
