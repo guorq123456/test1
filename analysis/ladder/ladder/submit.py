@@ -77,7 +77,8 @@ PEEK_GAMES, PEEK_POINTS = 2, 3
 REPLAY_GAMES = 2
 COMPUTE_WARN = 1.08
 YOUR_VOIDS = ("the simulator changed in this worker during the game",   # what the strategy's own code voids
-              "nothing ran on any clock", "the check after the game ran past", "worker died")  # (LD-45)
+              "nothing ran on any clock", "the check after the game ran past", "worker died",  # (LD-45)
+              "the strategies took more than", "strategy failed to load")    # LD-46: loading it, the twin loads fine
 DEFAULT = "bot:mcts:100+plan"
 
 from ladder.codecheck import (  # noqa: F401 - the code reader (LD-41); the names stay importable from here
@@ -623,7 +624,7 @@ def receive(d: Path, player: str, pool_dir: Path, subdir: Path, workers: int = 4
             g = json.loads(line)
             logs[g["id"]] = g
     mine = [logs.get(j["id"]) for j in jobs if j["labels"]["side"] == "sub"]
-    problems, voids = [], 0
+    problems, voids, other = [], 0, []
     for j, g in zip([j for j in jobs if j["labels"]["side"] == "sub"], mine):
         seat = j["labels"]["seat"]
         if g is None:
@@ -636,12 +637,18 @@ def receive(d: Path, player: str, pool_dir: Path, subdir: Path, workers: int = 4
             twin = logs.get(j["id"].replace("-sub", "-default"))
             why = str(g.get("error", ""))
             if any(why.startswith(t) for t in YOUR_VOIDS) and twin is not None and twin.get("result") != "void":
-                problems.append(f"{j['id']}：这局作废了，同一局换默认打法没作废——是你的代码（LD-45）：{why[:600]}")
+                problems.append(f"{j['id']}：这局作废了，同一局换默认打法没作废——是你的代码（LD-45、LD-46）：{why[:600]}")
+            else:
+                first = (why.strip().splitlines() or ["?"])[0][:160]
+                both = twin is not None and twin.get("result") == "void"
+                other.append(f"{j['id']}（{'换默认打法也作废' if both else '原因不在你的代码'}）：{first}")
     wins = sum(1 for j, g in zip([j for j in jobs if j["labels"]["side"] == "sub"], mine)
                if g and g.get("winner") == j["labels"]["seat"])
+    if mine and voids == len(mine) and not problems:
+        problems.append(f"冒烟局 {voids} 局全作废，后面的检查什么也查不到（LD-46）：" + "；".join(other)[:1200])
     check("冒烟", problems, {"games": len(mine), "wins": wins, "void": voids})
     if voids and not problems:
-        rec["warnings"].append(f"冒烟局里有 {voids} 局作废（引擎出错或无脚本，不算你的）")
+        rec["warnings"].append(f"冒烟局里有 {voids} 局作废，不算你的，只提醒：" + "；".join(other)[:1200])
     if rec["reasons"]:
         return finish()
 

@@ -132,7 +132,7 @@ class MyStrategy(PlayerStrategy):
     ("x = getattr(object, '__subclasses__')", "__subclasses__"),
     ("g = getattr", "直接调用"),
     ("import importlib", "importlib"),
-    ("import numpy as np\nnp.load('x.npy')", None),            # np.load is allowed by name; files fail at load time
+    ("import numpy as np\nnp.load('x.npy')", "numpy.load"),    # LD-46: numpy's file functions read any file
     # fifth pass (LD-40): rewriting shared objects in place, other objects' private parts, the ladder package's other
     # modules, assigning into imported modules, defining dunder methods
     ("def f(pos):\n    for c in pos.state.players[0].hand:\n        c.defn.__init__(1, 'x', 0, 0, 0)", "super().__init__"),
@@ -331,6 +331,31 @@ def test_smoke_games_its_own_code_voided_refuse_a_submission(tmp_path, monkeypat
     rec = submit.receive(d, "甲", pool.dir, subs, workers=2, rng_seed=7, smoke_games=2, seeds=SMOKE)
     assert rec["verdict"] == "拒收" and any("是你的代码" in r and "Craft: +1 members" in r for r in rec["reasons"]), rec
     monkeypatch.setattr(ladder.runner, "run", real)
+
+
+@pytest.mark.parametrize("error", ["strategy failed to load:\nTraceback (most recent call last):\nIndexError: list index",
+                                   "the strategies took more than 8.0s to load", "engine error outside a move: X"])
+def test_smoke_games_its_own_load_voided_or_all_void_refuse_a_submission(tmp_path, monkeypatch, error):
+    # LD-46: a smoke game voided while loading the submission (the default twin loaded fine) is its own doing, and
+    # a smoke run where every game is void checks nothing after it: both refused, the reason quoted
+    import ladder.runner
+    real = ladder.runner.run
+    engine = error.startswith("engine")
+
+    def fake(jobs, path, **kw):
+        with open(path, "w", encoding="utf-8") as f:
+            for j in jobs:
+                void = j["labels"]["side"] == "sub" or engine
+                f.write(json.dumps({"id": j["id"], "result": "void" if void else "normal",
+                                    "winner": None if void else 0, "error": error if void else None}) + "\n")
+        return {}
+    pool = _pool(tmp_path, 1)
+    monkeypatch.setattr(ladder.runner, "run", fake)
+    d = make_sub(tmp_path / "in1", "新卡组", deck=CODES[4], member="四号")
+    rec = submit.receive(d, "甲", pool.dir, tmp_path / "subs", workers=2, rng_seed=7, smoke_games=2, seeds=SMOKE)
+    monkeypatch.setattr(ladder.runner, "run", real)
+    want = "全作废" if engine else "是你的代码"
+    assert rec["verdict"] == "拒收" and any(want in r and error.splitlines()[0][:20] in r for r in rec["reasons"]), rec
 
 
 def test_an_accepted_update_goes_to_the_gate(tmp_path, monkeypatch):

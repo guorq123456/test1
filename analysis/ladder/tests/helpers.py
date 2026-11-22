@@ -316,6 +316,35 @@ class ChecksProtocols(Random):
         return super().act(pos, actions)
 
 
+class RegistersAbc(Random):
+    """Registers a class of its own as a virtual subclass of collections.abc.Sequence: the code reader refuses .register
+    on anything but an own singledispatch function (LD-46: typing.Hashable.register(list) changed isinstance for every
+    later game in the worker); the tripwire sees the ABC registry's counter move and voids the game."""
+    def act(self, pos, actions):
+        import collections.abc
+
+        class Mine:
+            pass
+        collections.abc.Sequence.register(Mine)
+        return super().act(pos, actions)
+
+
+class UsesNumpy(Random):
+    """numpy the allowed way: arrays, its own Generator, linalg, errstate. Nothing process-wide changes (LD-46: the
+    tripwire follows numpy's error, buffer and print settings and its global RandomState, and the ABC counter)."""
+    def __init__(self, seed=0):
+        super().__init__(seed)
+        import numpy
+        self.g = numpy.random.default_rng(seed)
+
+    def act(self, pos, actions):
+        import numpy
+        p = self.g.random(len(actions)) + numpy.linalg.norm(numpy.ones(2))
+        with numpy.errstate(all="ignore"):
+            p = p + numpy.float64(1.0) / numpy.float64(0.0) * 0
+        return actions[int(numpy.argmax(numpy.nan_to_num(p)))]
+
+
 def _lingering(n):
     try:
         yield n

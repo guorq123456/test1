@@ -368,6 +368,51 @@ def test_reading_annotations_is_not_a_change(tmp_path):
     assert len(rows) == 2 and all(r["result"] in ("normal", "draw") for r in rows), rows
 
 
+def test_an_abc_registration_voids_the_game_and_numpy_used_plainly_does_not(tmp_path):
+    # LD-46: ABCMeta.register changes isinstance for the whole process (typing.Hashable.register(list) broke another
+    # player's later games); the tripwire compares the ABC registry's counter. numpy's own Generator, linalg and
+    # errstate change nothing process-wide
+    jobs = [job(45, "py:helpers:RegistersAbc", "py:helpers:Random", first=0),
+            job(46, "py:helpers:UsesNumpy", "py:helpers:Random", first=0),
+            job(47, "py:helpers:Random", "py:helpers:UsesNumpy", first=0)]
+    out = tmp_path / "g.jsonl"
+    runner.run(jobs, str(out), workers=1, step_limit=30.0, quiet=True)
+    rows = {r["id"]: r for r in map(json.loads, out.read_text(encoding="utf-8").splitlines())}
+    assert rows["t-45"]["result"] == "void" and "abc.register" in rows["t-45"]["error"], rows["t-45"]
+    assert all(rows[i]["result"] in ("normal", "draw") for i in ("t-46", "t-47")), rows
+
+
+def test_the_watch_sees_a_dataclass_field_and_numpys_settings():
+    # LD-46: @dataclass rewrites a Field it finds as a class attribute in place (one taken from
+    # dataclasses.fields(PlayCard) dropped `targets` from every later game); numpy's settings and global RandomState
+    # are the whole process's
+    import dataclasses
+
+    import numpy
+
+    from ladder import watch
+    from svsim.core.actions import PlayCard
+    watch.preload()
+    snap = watch.snapshot()
+    assert watch.changes(snap) == []
+    f = next(x for x in dataclasses.fields(PlayCard) if x.name == "targets")
+    kept, err, state = f.type, numpy.geterr(), numpy.random.get_state()
+    try:
+        f.type = int
+        assert any("__dataclass_fields__" in line and "targets" in line for line in watch.changes(snap))
+        f.type = kept
+        numpy.seterr(all="raise")
+        assert any("numpy.geterr" in line for line in watch.changes(snap))
+        numpy.seterr(**err)
+        numpy.random.seed(5)
+        assert any("numpy.random" in line for line in watch.changes(snap))
+    finally:
+        f.type = kept
+        numpy.seterr(**err)
+        numpy.random.set_state(state)
+    assert watch.changes(snap) == []
+
+
 def test_the_watch_follows_the_standard_library_and_what_an_lru_cache_wraps():
     # LD-42: random.Random's methods (the deal and the search shuffle with it), a class or function of an allowed
     # standard module, and the function under an lru_cache are followed

@@ -1,5 +1,5 @@
 """Reading a submission's code (item 2.3; fifth pass LD-40, sixth LD-41, seventh LD-42, eighth LD-43, ninth LD-44,
-tenth LD-45).
+tenth LD-45, eleventh LD-46).
 Nothing in the submitted code runs.
 The simulator's and ladder's own modules are imported here (they are the host's code) to tell a module from a class
 from a function; svsim.learn, svsim.tools, svsim.ui, svsim.build, svsim.search.parallel and ladder's other modules
@@ -7,7 +7,10 @@ never are.
 
 Two kinds of rules.
 
-Names. Imports only from the allowed modules, and no private names from them; none of the names and attributes
+Names. Imports only from the allowed modules, and no private names from them (of numpy only numpy, numpy.random,
+linalg, fft, polynomial, emath, exceptions, dtypes, typing, and none of its file, settings, test or global-random
+names: LD-46); a name an import binds never bound again (rebound, it would no longer be what the reading takes it
+for), nor two imports binding one name to different things (LD-46); none of the names and attributes
 that reach files, the network, other processes, frames or the interpreter; no dunder names but __init__, __name__,
 __post_init__ (and those three never assigned); other objects' private attributes no (the strategy's own `self._x`
 yes: `self` = the first parameter of a method of the module's own class, never rebound); `getattr` & co. only
@@ -49,8 +52,9 @@ constructing a class runs its own __init__ if it has one, else, on each branch o
 that has one or is a dataclass (generated: init_sources; a superset of C3's choice, LD-44 / LD-45). A dataclass's
 fields get the levels of the arguments that set them, at its construction (an undecorated subclass's, cls(...),
 super().__init__(...) too) and in dataclasses.replace / copy.replace: by name; by position when the field order is
-plain (dc_positional), else every field the highest positional level; `**{'k': v}` written out sets k, any other
-`**d` every field of every dataclass of the module (LD-45).
+plain (dc_positional: read as dataclasses reads it, ClassVar / InitVar / KW_ONLY / field(init=, kw_only=) and the
+string annotations included, LD-46), else every field the highest positional level (the receipt names the line);
+`**{'k': v}` written out sets k, any other `**d` every field of every dataclass of the module (LD-45).
 A SHARED object may not be changed: no assignment or `del` into it (x.a = ..., x[k] = ...), no augmented assignment
 on it (x += ...: write x = x + ...; adding a number literal is allowed), no method that changes a container
 (append, add, update, pop, clear, sort, ...: called or taken as a value), no shuffle / heappush / insort on it, no
@@ -65,9 +69,15 @@ annotations unread; a match-class pattern; iterating or indexing an own Enum); a
 (K.method(x), cls.method(x), type(x).method(x)); a class defined inside a class (Outer.Inner(...) isn't followed to
 its __init__: LD-44); an if / for / while / try / with / match in a class body (a def or a field under it isn't
 seen as the class's: LD-45); a classmethod's cls used other than to construct, read an attribute, compare or
-isinstance (f = cls; f(x) isn't followed: LD-45); dataclasses.dataclass, typing.final / no_type_check / override /
-runtime_checkable / dataclass_transform / overload, enum.global_enum and functools.total_ordering other than as a
-decorator (called on an imported class they change it: LD-45); type(x) used other than for an attribute, a comparison or
+isinstance (f = cls; f(x) isn't followed: LD-45; an own Enum's cls may also be iterated, indexed and given to
+list / sorted / max...: LD-46); dataclasses.dataclass, typing.final / no_type_check / override /
+runtime_checkable / dataclass_transform / overload / abstractmethod, enum.global_enum and functools.total_ordering
+other than as a decorator, getattr(m, 'name') spellings too (called on an imported class they change it: LD-45,
+LD-46); `.register` on anything but the module's own functools.singledispatch function (ABCMeta.register changes
+isinstance for the whole process: LD-46); a class attribute (or a dataclass field default) at the SHARED level that
+isn't a name written straight from a module whose object is no dataclasses.Field and has no __set_name__ (the class
+statement calls __set_name__; @dataclass rewrites a Field it finds in place: one from dataclasses.fields(PlayCard)
+dropped `targets` from every later game, LD-46), an import or := in a class body; type(x) used other than for an attribute, a comparison or
 isinstance; svsim.core.script.register; keyword arguments parallel / par_spec (ISMCTS's root-parallel processes:
 their CPU is not the strategy's process's); `x *= n` with an int on a SHARED x (a list repeats in place); a yield
 or await inside a try's body, except or else (when the generator is freed, there, off every clock, its except /
@@ -87,6 +97,7 @@ import dataclasses
 import enum
 import importlib
 import inspect
+import re
 import textwrap
 import time
 import types
@@ -96,6 +107,17 @@ from pathlib import Path
 ALLOWED_TOP = {"__future__", "typing", "math", "random", "collections", "itertools", "functools", "dataclasses",
                "heapq", "bisect", "statistics", "copy", "enum", "numpy", "svsim"}
 ALLOWED_LADDER = {"ladder.interface", "ladder.base"}
+NUMPY_MODULES = frozenset({"numpy", "numpy.random", "numpy.linalg", "numpy.fft", "numpy.polynomial", "numpy.emath",
+                           "numpy.exceptions", "numpy.dtypes", "numpy.typing"})    # and numpy.polynomial.*: LD-46,
+#                         not numpy.testing (builds and imports C code), numpy.lib / ma / rec / f2py (files), ...
+NUMPY_DENIED = frozenset({                         # numpy's own names that aren't for strategies (LD-46)
+    "load", "save", "savez", "savez_compressed", "savetxt", "loadtxt", "genfromtxt", "fromfile", "fromregex", "memmap",
+    "open_memmap", "DataSource", "dump", "tofile",                                                  # files
+    "seterr", "seterrcall", "setbufsize", "set_printoptions", "set_string_function", "set_numeric_ops", "add_newdoc",
+    "add_docstring", "add_newdoc_ufunc",                            # the process's numpy settings: every later game in the worker
+    "test", "info", "source", "lookfor", "show_config", "show_runtime", "who", "get_include"})   # running, showing
+NUMPY_RANDOM_OK = frozenset({"Generator", "default_rng", "RandomState", "SeedSequence", "BitGenerator", "MT19937",
+                             "PCG64", "PCG64DXSM", "Philox", "SFC64"})   # not the process's global RandomState
 DENIED_PREFIXES = ("svsim.learn", "svsim.tools",       # they load trained models (A12)
                    "svsim.ui",                          # the levels' rating table, records of games (red lines)
                    "svsim.build",                       # runs git
@@ -113,7 +135,7 @@ BANNED_ATTRS = {
     "pathlib", "shutil", "threading", "multiprocessing", "marshal", "pickle",
     # files
     "Path", "read_text", "read_bytes", "write_text", "write_bytes", "open", "unlink", "fromfile", "tofile",
-    "memmap", "loadtxt", "savetxt", "genfromtxt", "savez", "savez_compressed", "DataSource",
+    "memmap", "loadtxt", "savetxt", "genfromtxt", "savez", "savez_compressed", "DataSource", "dump",  # ndarray.dump
     # processes, environment
     "system", "popen", "environ", "getenv", "putenv",
     # (LD-41) root-parallel search (its own processes); a class with chosen dunders; a property's raw functions
@@ -143,6 +165,8 @@ SCALAR_BUILTINS = frozenset({
 FRESH_BUILTINS = frozenset({"list", "dict", "set", "frozenset", "tuple", "sorted", "reversed", "enumerate", "zip",
                             "map", "filter", "iter", "range", "sum", "bytearray", "bytes", "slice"})
 ELEMENT_BUILTINS = frozenset({"min", "max", "next"})
+ENUM_READERS = frozenset({"list", "tuple", "set", "frozenset", "sorted", "reversed", "min", "max", "len", "iter",
+                          "enumerate", "any", "all"})      # builtins that only go through an Enum class's members
 KEY_METHODS = frozenset({"get", "setdefault", "pop"})         # d.get(k, default): the key doesn't come back
 SCALAR_METHODS = frozenset({"index", "count", "startswith", "endswith", "find", "rfind", "isdigit", "isalpha",
                             "total", "bit_length", "is_integer", "lower", "upper", "strip", "split", "join",
@@ -158,7 +182,8 @@ ACCESSORS = frozenset({"setter", "getter", "deleter"})
 CLASS_MUTATORS = (("dataclasses", "dataclass"), ("typing", "final"), ("typing", "no_type_check"),  # change the class
                   ("typing", "override"), ("typing", "runtime_checkable"), ("typing", "dataclass_transform"),  # or the
                   ("typing", "overload"), ("typing", "no_type_check_decorator"), ("enum", "global_enum"),  # function
-                  ("functools", "total_ordering"))  # they're given: decorators of the module's own only (LD-45)
+                  ("functools", "total_ordering"),  # they're given: decorators of the module's own only (LD-45)
+                  ("typing", "abstractmethod"))     # LD-46: sets __isabstractmethod__ on what it's given
 FLOW_SECONDS = 60                                 # a module whose reading takes longer is refused (LD-42)
 OWN_FRESH = frozenset({"random", "rng", "spec", "defaults", "LETHAL", "ITERATIONS"})   # PlayerStrategy's own
 SCALAR_ANNOTATIONS = {"float", "int", "bool", "str", "None", float, int, bool, str, None, type(None)}
@@ -187,11 +212,26 @@ def module_problem(name: str) -> str | None:
     if any(name == p or name.startswith(p + ".") for p in DENIED_PREFIXES):
         return "它们能载入训练好的模型、读强度表或对局记录、开进程（A12、红线）"
     top = name.split(".")[0]
+    if top == "numpy" and name not in NUMPY_MODULES and not name.startswith("numpy.polynomial."):
+        return ("numpy 只许用 numpy、numpy.random、numpy.linalg、numpy.fft、numpy.polynomial、numpy.emath、"
+                "numpy.exceptions、numpy.dtypes、numpy.typing：别的子模块能读写文件、编译载入 C 代码（LD-46）")
     if top == "ladder":
         return None if name in ALLOWED_LADDER else "ladder 里只能用 ladder.interface、ladder.base"
     if top in ALLOWED_TOP:
         return None
     return "不在允许的模块里"
+
+
+def numpy_problem(mod: str, attr: str) -> str | None:
+    """Why `mod.attr` of numpy isn't for strategies (LD-46), or None."""
+    if mod.split(".")[0] != "numpy":
+        return None
+    if attr in NUMPY_DENIED:
+        return "numpy 的这个不许用：读写文件、改整个进程的 numpy 设置（同一进程里后面别人的对局也受影响）或运行别的东西（LD-46）"
+    if mod == "numpy.random" and attr not in NUMPY_RANDOM_OK:
+        return ("numpy 的全局随机数不许用（整个进程共用一个）：要随机数用 self.random，或 numpy.random.default_rng(种子) "
+                "自己建一个（LD-46）")
+    return None
 
 
 _MODULES: dict = {}
@@ -438,6 +478,8 @@ def _deco_name(d) -> str | None:
 class Flow:
     def __init__(self, tree: ast.Module):
         self.tree = tree
+        self.lazy = any(isinstance(n, ast.ImportFrom) and n.module == "__future__" and     # annotations are strings
+                        any(a.name == "annotations" for a in n.names) for n in tree.body)
         self.where, self.parent, self.inner = {}, {}, {}
         self.module = Scope(tree, "module", None)
         self.nodes = []
@@ -450,6 +492,7 @@ class Flow:
         self._memo: dict = {}
         self.incomplete = False
         self.star_fields: set = set()  # lines of replace(x, **d) / K(**d) that raised every dataclass field (LD-45)
+        self.dc_rough: set = set()     # lines building a dataclass by position where the order isn't plain (LD-46)
         self._init_levels()
         deadline = time.monotonic() + FLOW_SECONDS
         while True:                    # levels only go up, over three values: this ends (no round cap: LD-42)
@@ -552,6 +595,8 @@ class Flow:
         self.stores: dict = {}            # key -> how many bindings other than a parameter
         self.mods: dict = {}              # key -> module name
         self.objs: dict = {}              # key -> [(module, name, object)]
+        self.imports: dict = {}           # key -> how many import statements bind it (LD-46)
+        self.import_binds: dict = {}      # key -> {what each of them binds: a module's name, or id(the object)}
         self.fdefs: dict = {}             # key -> [def nodes]
         self.cdefs: dict = {}             # key -> [class nodes]
         self.fn: dict = {}                # def / lambda node -> Fn
@@ -593,13 +638,18 @@ class Flow:
             elif isinstance(node, ast.Import):
                 for a in node.names:
                     k = count(a.asname or a.name.split(".")[0])
+                    self.imports[k] = self.imports.get(k, 0) + 1
                     self.mods[k] = a.name if a.asname else a.name.split(".")[0]
+                    self.import_binds.setdefault(k, set()).add(self.mods[k])
             elif isinstance(node, ast.ImportFrom):
                 for a in node.names:
                     if a.name == "*":
                         continue
                     k = count(a.asname or a.name)
+                    self.imports[k] = self.imports.get(k, 0) + 1
                     obj = member(node.module, a.name) if node.module and not node.level else _MISSING
+                    self.import_binds.setdefault(k, set()).add(obj.__name__ if isinstance(obj, types.ModuleType)
+                                                               else (node.module, a.name) if obj is _MISSING else id(obj))
                     if isinstance(obj, types.ModuleType):
                         self.mods[k] = obj.__name__
                     else:
@@ -842,6 +892,36 @@ class Flow:
         obj = member(m, a)
         return None if isinstance(obj, types.ModuleType) else (m, a, obj)
 
+    def static_object(self, node):
+        """The object a `name` or `name.attr.attr` bound only by one import names (`moves.PlayCard`, `Craft.FOREST`),
+        or _MISSING: for what may be trusted to be that object (LD-46)."""
+        attrs = []
+        while isinstance(node, ast.Attribute):
+            attrs.append(node.attr)
+            node = node.value
+        if not isinstance(node, ast.Name):
+            return _MISSING
+        k = self.key(node)
+        if k is None or self.stores.get(k, 0) != 1 or self.imports.get(k, 0) != 1:
+            return _MISSING
+        if k in self.mods:
+            obj = _import(self.mods[k])
+        elif len(self.objs.get(k, ())) == 1:
+            obj = self.objs[k][0][2]
+        else:
+            return _MISSING
+        for a in reversed(attrs):
+            if obj is _MISSING or a.startswith("_"):
+                return _MISSING
+            if isinstance(obj, types.ModuleType):
+                obj = member(obj.__name__, a)
+                continue
+            try:
+                obj = getattr(obj, a)
+            except Exception:  # noqa: BLE001
+                return _MISSING
+        return obj
+
     def import_root(self, node) -> str | None:
         """The import-bound name an attribute / subscript chain starts from, or None."""
         while isinstance(node, (ast.Attribute, ast.Subscript)):
@@ -943,38 +1023,167 @@ class Flow:
         return out
 
     def dc_positional(self, c) -> list | None:
-        """The fields a dataclass's generated __init__ takes by position, in order, when that is plain to see: a
-        chain of single own bases, each a dataclass with no kw_only / init keyword, no ClassVar / InitVar / KW_ONLY
-        annotation and no field(init=..., kw_only=...); else None (every field then gets the highest positional
-        argument's level, LD-45)."""
+        """The parameters a dataclass's generated __init__ takes by position, in order (LD-46: exactly, as dataclasses
+        does it: a ClassVar or a field(init=False) isn't one, an InitVar is, the fields after a KW_ONLY or with
+        kw_only=True come after `*`, a field a subclass annotates again keeps its first place), over a chain of
+        single own bases, each a dataclass or a class with no annotations; None when that isn't plain to see (an
+        annotation or a default whose kind can't be told: a string under the wrong name, a name not bound by one
+        import, a call that could hand back a Field; a dataclass base that isn't the module's own): every field then
+        gets the highest positional argument's level (LD-45), and the receipt says so (_name_note)."""
         chain, k = [], c
         while k is not None:
             info = self.cls[k]
-            if not info.dataclass or not info.dc_plain:
-                if any(isinstance(s, ast.AnnAssign) for s in k.body) or k is c:
+            if any(isinstance(o, type) and dataclasses.is_dataclass(o) for o in info.objs):
+                return None
+            if not info.dataclass:
+                if any(isinstance(st, ast.AnnAssign) for st in k.body) or k is c:
                     return None
-            else:
-                for st in k.body:
-                    if not isinstance(st, ast.AnnAssign):
-                        continue
-                    if not isinstance(st.target, ast.Name) or \
-                            any(w in ast.unparse(st.annotation) for w in ("ClassVar", "InitVar", "KW_ONLY")):
-                        return None
-                    v = st.value
-                    if isinstance(v, ast.Call) and any(kw.arg in ("init", "kw_only") or kw.arg is None
-                                                       for kw in v.keywords):
-                        return None
+            elif self._dc_kw_only(k) is None:
+                return None
             chain.append(k)
             ub = [u for u in info.user_bases if u is not k]
             if len(ub) > 1:
                 return None
             k = ub[0] if ub else None
-        out = []
+        fields: dict = {}                              # name -> takes it by position (first place kept)
         for k in reversed(chain):
+            if not self.cls[k].dataclass:
+                continue
+            kw_class, marker = self._dc_kw_only(k), False
             for st in k.body:
-                if isinstance(st, ast.AnnAssign) and st.target.id not in out:
-                    out.append(st.target.id)
-        return out
+                if not isinstance(st, ast.AnnAssign):
+                    continue
+                if not isinstance(st.target, ast.Name):
+                    return None
+                kind = self._ann_kind(st.annotation)
+                if kind is None:
+                    return None
+                if kind == "kw_only":
+                    marker = True
+                    continue
+                positional = kind != "classvar"
+                kw = kw_class or marker
+                if st.value is not None and kind != "classvar":
+                    got = self._default_kind(st.value)
+                    if got is None:
+                        return None
+                    positional = got.get("init", True)
+                    kw = got.get("kw_only", kw)
+                fields[st.target.id] = positional and not kw
+        return [n for n, pos in fields.items() if pos]
+
+    def _dc_kw_only(self, k) -> bool | None:
+        """A dataclass's kw_only= (False when not given), or None for a decorator keyword that isn't a plain one."""
+        kw_only = False
+        for d in k.decorator_list:
+            if self.wrapper(d) != "dataclass" or not isinstance(d, ast.Call):
+                continue
+            if d.args:
+                return None
+            for kw in d.keywords:
+                if kw.arg == "kw_only" and isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, bool):
+                    kw_only = kw.value.value
+                elif kw.arg not in DC_PLAIN_KEYWORDS and kw.arg != "init":
+                    return None
+        return kw_only
+
+    def _named(self, node):
+        """What a name or name.attr in an annotation or a default surely is: ("obj", object), ("builtin",),
+        ("own",) for a class of the module's own, or None."""
+        if isinstance(node, ast.Name) and self.key(node) is None and hasattr(builtins, node.id):
+            return ("builtin",)
+        if isinstance(node, ast.Name) and (cs := self.cdefs.get(self.key(node))) and \
+                self.stores.get(self.key(node), 0) == len(cs):
+            return ("own",)
+        obj = self.static_object(node)
+        return None if obj is _MISSING else ("obj", obj)
+
+    def _ann_kind(self, ann) -> str | None:
+        """"classvar", "initvar", "kw_only" (the KW_ONLY marker) or "field", as dataclasses reads the annotation; None
+        when that can't be told."""
+        special = {id(typing.ClassVar): "classvar", id(dataclasses.InitVar): "initvar",
+                   id(dataclasses.KW_ONLY): "kw_only"}
+        if self.lazy or isinstance(ann, ast.Constant):
+            if isinstance(ann, ast.Constant) and not isinstance(ann.value, str):
+                return "field"
+            text = ann.value if isinstance(ann, ast.Constant) else ast.unparse(ann)
+            m = re.match(r"^(?:\s*(\w+)\s*\.)?\s*(\w+)", text)   # dataclasses' own reading of a string
+            if m is None:                                          # annotation (dataclasses._is_type)
+                return "field"
+            first = self._module_binding(m.group(1) or m.group(2))
+            if first is None:
+                return None
+            if first is _MISSING:                      # not a name of the module: dataclasses finds nothing
+                return "field"
+            if m.group(1) is None:
+                return special.get(id(first), "field")
+            for mod, obj, kind in ((typing, typing.ClassVar, "classvar"), (dataclasses, dataclasses.InitVar, "initvar"),
+                                   (dataclasses, dataclasses.KW_ONLY, "kw_only")):
+                if first is mod and getattr(mod, m.group(2), None) is obj:
+                    return kind
+            return "field"
+        head = ann.value if isinstance(ann, ast.Subscript) else ann
+        if isinstance(head, ast.BinOp) or isinstance(ann, ast.BinOp):
+            return "field"
+        if not isinstance(head, (ast.Name, ast.Attribute)):
+            return None
+        got = self._named(head)
+        if got is None:
+            return None
+        if got[0] != "obj":
+            return "field"
+        kind = special.get(id(got[1]), "field")
+        if kind == "kw_only" and isinstance(ann, ast.Subscript):
+            return None
+        return kind
+
+    def _module_binding(self, name):
+        """What the module-level `name` surely is (a module or an object) when one import binds it, _MISSING when the
+        module doesn't bind it or only class statements do (dataclasses' lookup then finds no special form), None
+        when it can't be told."""
+        if name not in self.module.bound:
+            return _MISSING
+        k = (self.module, name)
+        if self.cdefs.get(k) and self.stores.get(k, 0) == len(self.cdefs[k]):
+            return _MISSING
+        if self.stores.get(k, 0) != 1 or self.imports.get(k, 0) != 1:
+            return None
+        if k in self.mods:
+            return _import(self.mods[k])
+        return self.objs[k][0][2] if len(self.objs.get(k, ())) == 1 and self.objs[k][0][2] is not _MISSING else None
+
+    def _default_kind(self, v) -> dict | None:
+        """{} for a field default that surely isn't a dataclasses.Field, {"init": .., "kw_only": ..} for a
+        dataclasses.field(...) call with written-out keywords, None for anything else (LD-46)."""
+        if isinstance(v, ast.Call):
+            got = self._named(v.func)
+            if got is not None and got[0] == "obj" and got[1] is dataclasses.field:
+                if v.args or any(k.arg is None for k in v.keywords):
+                    return None
+                out = {}
+                for k in v.keywords:
+                    if k.arg in ("init", "kw_only"):
+                        if not (isinstance(k.value, ast.Constant) and isinstance(k.value.value, bool)):
+                            return None
+                        out[k.arg] = k.value.value
+                return out
+            if isinstance(v.func, ast.Name) and self.key(v.func) is None and \
+                    v.func.id in ("int", "float", "str", "bool", "tuple", "frozenset", "complex"):
+                return {}
+            if got is not None and got[0] == "obj" and getattr(got[1], "__module__", None) in SCALAR_MODULES:
+                return {}
+            return None
+        if isinstance(v, (ast.Constant, ast.JoinedStr, ast.Lambda, ast.Tuple, ast.List, ast.Set, ast.Dict,
+                          ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
+            return {}
+        if isinstance(v, (ast.UnaryOp, ast.BinOp)):
+            return {} if _numeric(v) else None
+        if isinstance(v, (ast.Name, ast.Attribute)):
+            got = self._named(v)
+            if got is None:
+                return None
+            return None if got[0] == "obj" and isinstance(got[1], dataclasses.Field) else {}
+        return None
 
     def built_by(self, call) -> list:
         """The module's own classes a call may construct: `K(...)` (a name only class statements bind) or `cls(...)` in
@@ -1420,6 +1629,8 @@ class Flow:
         if positional is None or any(isinstance(a, ast.Starred) for a in args):
             v = max((elem(self.level(a.value)) if isinstance(a, ast.Starred) else self.level(a) for a in args),
                     default=CLEAN)
+            if v > CLEAN:
+                self.dc_rough.add(args[0].lineno)
             for name in fields:
                 self._raise_attr(name, v)
         else:
@@ -1594,17 +1805,30 @@ def _rules(tree, flow, cls) -> list[str]:
             node = parent(node)
         return False
 
+    def own_enum(c) -> bool:
+        """Class `c` of the module's own is an Enum (through its own bases too)."""
+        return any(issubclass(o, enum.Enum) for k in [c, *flow.ancestors(c)] for o in flow.cls[k].objs
+                   if isinstance(o, type))
+
+    def enum_use(node) -> bool:
+        """`node`, an Enum class of the module's own, is only gone through for its members: for / a comprehension,
+        K[name], or list(K), sorted(K), max(K, key=...)... (LD-46: through a classmethod's cls too)."""
+        p = parent(node)
+        if isinstance(p, (ast.For, ast.AsyncFor, ast.comprehension)) and p.iter is node:
+            return True
+        if isinstance(p, ast.Subscript) and p.value is node and isinstance(p.ctx, ast.Load):
+            return True
+        return isinstance(p, ast.Call) and p.args and p.args[0] is node and isinstance(p.func, ast.Name) and \
+            flow.key(p.func) is None and p.func.id in ENUM_READERS
+
     def class_use_ok(node) -> bool:
         p = parent(node)
         if (isinstance(p, ast.Call) and p.func is node) or receiver(node) or isinstance(p, (ast.Compare, ast.Raise)):
             return True
         if isinstance(p, ast.MatchClass) and p.cls is node:
             return True                                 # case K(...): an isinstance (LD-42)
-        if any(issubclass(o, enum.Enum) for c in flow.user_class(node) for o in flow.cls[c].objs if isinstance(o, type)):
-            if isinstance(p, (ast.For, ast.comprehension)) and p.iter is node:
-                return True                             # an enum of its own: its members (LD-42)
-            if isinstance(p, ast.Subscript) and p.value is node and isinstance(p.ctx, ast.Load):
-                return True
+        if any(own_enum(c) for c in flow.user_class(node)) and enum_use(node):
+            return True                                 # an enum of its own: its members (LD-42)
         if isinstance(p, ast.ClassDef) and node in p.bases:
             return True
         if isinstance(p, ast.Subscript) and p.value is node and isinstance(parent(p), ast.ClassDef) and \
@@ -1671,6 +1895,8 @@ def _rules(tree, flow, cls) -> list[str]:
             why = None
             if m == "random" and a != "Random":
                 why = "要随机数用 self.random，不用全局的 random"
+            elif numpy_problem(m, a):
+                why = numpy_problem(m, a)
             elif isinstance(obj, types.ModuleType):
                 why = module_problem(obj.__name__)
             elif m == "ladder":
@@ -1701,6 +1927,9 @@ def _rules(tree, flow, cls) -> list[str]:
                 bad(at, f"{how}：不许改可能共用的容器")
         if a in flow.regular and class_like(base):
             bad(at, f"{how}：普通方法不许经类调（K.method(x) 能把任何对象当 self）")
+        if a == "register" and ctx == "load" and not own_function(base):
+            bad(at, f"{how}：register 只许用在你自己的 functools.singledispatch 函数上（抽象基类的 register 改的是"
+                    "整个进程的 isinstance，后面别人的对局也受影响，LD-46）")
 
     mutators = [o for m, n in CLASS_MUTATORS if (o := member(m, n)) is not _MISSING]
     defs = (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
@@ -1712,6 +1941,35 @@ def _rules(tree, flow, cls) -> list[str]:
             node, p = p, parent(p)
         return isinstance(p, defs) and node in p.decorator_list
 
+    def class_value_ok(v) -> bool:
+        """A possibly shared value may be a class attribute when it is a name straight from a module (static_object)
+        whose object isn't a dataclasses.Field and has no __set_name__, or a dataclasses.field(...) whose default is
+        one (LD-46: the class statement calls __set_name__, @dataclass rewrites a Field it finds in place)."""
+        if isinstance(v, ast.Call) and (kn := flow.known(v.func)) is not None and kn[2] is dataclasses.field:
+            return all(k.arg is not None and (k.arg != "default" or flow.level(k.value) < SHARED or class_value_ok(k.value))
+                       for k in v.keywords) and not v.args
+        obj = flow.static_object(v)
+        return obj is not _MISSING and not isinstance(obj, dataclasses.Field) and \
+            not hasattr(type(obj), "__set_name__")
+
+    def in_class_body(node) -> bool:
+        s = flow.where.get(node)
+        while s is not None and s.kind == "comp":
+            s = s.parent
+        return s is not None and s.kind == "class"
+
+    def own_function(node) -> bool:
+        """`node` names a def of the module's own, bound only by def statements, each plain or a
+        functools.singledispatch / singledispatchmethod (whose .register is its own, LD-46)."""
+        if not isinstance(node, ast.Name):
+            return False
+        k = flow.key(node)
+        defs = flow.fdefs.get(k, ())
+        ok = (member("functools", "singledispatch"), member("functools", "singledispatchmethod"))
+        return bool(defs) and flow.stores.get(k, 0) == len(defs) and \
+            all(all((kn := flow.known(d)) is not None and any(kn[2] is o for o in ok) for d in x.decorator_list)
+                for x in defs)
+
     compound = (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, getattr(ast, "TryStar", ast.Try), ast.With,
                 ast.AsyncWith, getattr(ast, "Match", ast.If))
     for node in flow.nodes:
@@ -1719,16 +1977,47 @@ def _rules(tree, flow, cls) -> list[str]:
         if isinstance(node, compound) and isinstance(p, ast.ClassDef) and node in p.body:
             bad(node, f"类 {p.name} 的类体里不许写 if / for / while / try / with / match：方法、字段、类属性直接写在类里"
                       "（读代码只认直接写在类里的，LD-45）")
-        if isinstance(node, (ast.Name, ast.Attribute)) and isinstance(node.ctx, ast.Load) and \
+        if isinstance(node, (ast.Import, ast.ImportFrom)) and isinstance(p, ast.ClassDef):
+            bad(node, f"类 {p.name} 的类体里不许 import：写在模块顶上（LD-46）")
+        if isinstance(node, (ast.Assign, ast.AnnAssign)) and isinstance(p, ast.ClassDef) and node.value is not None:
+            v = flow.level(node.value)
+            if isinstance(node, ast.Assign) and any(not isinstance(t, ast.Name) for t in node.targets):
+                v = max(v, elem(v))                     # a, b = x: each gets an item
+            if v >= SHARED and not class_value_ok(node.value):
+                shared(node, f"类 {p.name} 的类属性：可能共用的东西只许直接写模块里的名字（moves.PlayCard、Craft.FOREST 这样），"
+                             "算出来、取出来的不行——建类时 Python 会调它的 __set_name__，@dataclass 会原地改写拿到的 "
+                             "dataclasses.Field（LD-46）；放进 __init__（self.x = ...）或者用的地方再取")
+        bound = None
+        if isinstance(node, ast.Name) and not isinstance(node.ctx, ast.Load):
+            bound = flow.key(node), node.id
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            bound = (flow.resolve(flow.where[node], node.name), node.name), node.name
+        elif isinstance(node, (ast.ExceptHandler, ast.MatchAs, ast.MatchStar)) and node.name:
+            bound = (flow.resolve(flow.where[node], node.name), node.name), node.name
+        elif isinstance(node, ast.MatchMapping) and node.rest:
+            bound = (flow.resolve(flow.where[node], node.rest), node.rest), node.rest
+        if bound is not None and bound[0] in flow.imports:
+            bad(node, f"{bound[1]} 是 import 进来的名字，不许再赋值、删除或拿来定义函数、类（读代码按 import 的东西认它，LD-46）")
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            for a in node.names:
+                k = (flow.resolve(flow.where[node], a.asname or a.name.split(".")[0]), a.asname or a.name.split(".")[0])
+                if len(flow.import_binds.get(k, ())) > 1:
+                    bad(node, f"{k[1]} 被 import 了不止一次、指的不是同一个东西：换个名字（LD-46）")
+        if isinstance(node, ast.NamedExpr) and in_class_body(node):
+            bad(node, "类体里不许写 :=（它把值放成类属性，读代码跟不上，LD-46）")
+        if (isinstance(node, (ast.Name, ast.Attribute)) and isinstance(node.ctx, ast.Load) or    # LD-46: getattr(m,
+                flow._getattr_name(node) is not None) and \
                 (kn := flow.known(node)) is not None and any(kn[2] is o for o in mutators) and not as_decorator(node):
-            bad(node, f"{kn[1]} 只能当装饰器写在你自己的类或函数上（@{kn[1]}）：直接调用会改它拿到的类（LD-45）")
+            bad(node, f"{kn[1]} 只能当装饰器写在你自己的类或函数上（@{kn[1]}）：直接调用会改它拿到的类或函数"
+                      "（LD-45；getattr 写法同样，LD-46）")
         if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load) and (o := flow.own.get(flow.key(node))) and \
                 o[1] and not (receiver(node) or isinstance(p, ast.Compare) or isinstance_arg(node) or
+                              (own_enum(o[0]) and enum_use(node)) or
                               (isinstance(p, ast.Call) and (p.func is node or (isinstance(p.func, ast.Name) and
                                                                                  p.func.id in ("super", "issubclass")
                                                                                  and flow.key(p.func) is None)))):
-            bad(node, f"{node.id}（classmethod 的类）只能用来建实例（{node.id}(...)）、读类属性、比较、isinstance，"
-                      "不许当值传（LD-45）")
+            bad(node, f"{node.id}（classmethod 的类）只能用来建实例（{node.id}(...)）、读类属性、比较、isinstance"
+                      f"（枚举还可以 for m in {node.id}、{node.id}[名字]、list({node.id})），不许当值传（LD-45）")
         if isinstance(node, ast.ClassDef) and isinstance(p, ast.ClassDef):
             bad(node, f"类 {node.name} 定义在类 {p.name} 里面：写到模块顶层（{p.name}.{node.name}(...) 这样建对象，"
                       "读代码跟不上它的 __init__，LD-44）")
@@ -1767,6 +2056,8 @@ def _rules(tree, flow, cls) -> list[str]:
                         bad(node, f"from {mod} import {a.name}（它来自 {origin}）")
                 if mod == "random" and a.name != "Random":
                     bad(node, f"from random import {a.name}（要随机数用 self.random，不用全局的 random）")
+                if numpy_problem(mod, a.name):
+                    bad(node, f"from {mod} import {a.name}（{numpy_problem(mod, a.name)}）")
                 if a.name in BANNED_NAMES or a.name in BANNED_ATTRS or banned_dunder(a.name):
                     bad(node, f"from {mod} import {a.name}（这个名字不许用）")
                 if id(obj) in registrars:
@@ -1839,6 +2130,8 @@ def _rules(tree, flow, cls) -> list[str]:
                 pp = parent(node)
                 call = pp if isinstance(pp, ast.Call) and pp.func is node else None
                 attr_rules(node.args[0], name.value, node, ctx, call, f"{fn.id}(..., {name.value!r})")
+                if fn.id == "getattr" and flow.modpath(node) is not None and not receiver(node):
+                    bad(node, f"模块 {flow.modpath(node)} 不许当值用（只能写 模块.属性，LD-46）")
                 if fn.id in ("setattr", "delattr") and flow.modpath(node.args[0]) is not None:
                     bad(node, f"{fn.id}({ast.unparse(node.args[0])}, ...)（不许改模块里的东西）")
             elif builtin and fn.id == "type":
@@ -1899,6 +2192,10 @@ def _name_note(flow) -> list[str]:
     if flow.star_fields:
         out.append("提示：第 " + "、".join(map(str, sorted(flow.star_fields))) + " 行的 **字典 不是写死键的字典，读代码只好把"
                    "模块里所有 dataclass 的字段都按它的档位算（LD-45）：写成 replace(x, 字段=值)、K(字段=值)，或者 **{'字段': 值}")
+    if flow.dc_rough:
+        out.append("提示：第 " + "、".join(map(str, sorted(flow.dc_rough))) + " 行按位置（或用 *）给 dataclass 传参，读代码对不上"
+                   "是哪个字段（字段的写法读代码排不清顺序，或者父类不是你自己的 dataclass），只好把所有字段都按这些参数里"
+                   "最高的档算（LD-46）：改成按名字传，K(字段=值)")
     storage = sorted({c.name for c, i in flow.cls.items() if i.storage})
     if storage:
         out.append("提示：" + "、".join(storage) + " 建在 NamedTuple / namedtuple / TypedDict / dict / list / tuple / 异常"

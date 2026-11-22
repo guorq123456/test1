@@ -1,5 +1,5 @@
 """The simulator's state in a worker process, before and after a game (fifth pass LD-40, sixth LD-41, seventh LD-42;
-LD-43, LD-44).
+LD-43, LD-44, LD-45, LD-46).
 
 A runner worker plays one game after another, often of different players. Strategy code runs in that process, so it
 could change things every later game there inherits: the shared card definitions (LD-40's finding: `pos.state` hands
@@ -16,7 +16,11 @@ statistics works with (FOLLOWED: fractions, numbers, decimal; LD-45): each globa
 the members of every class defined there, and its name, qualified name and bases; for functions, their code,
 defaults, closure cells and names, and the function an lru_cache wraps; the items of dicts, lists and tuples; the
 attributes (and slots) of instances of svsim and ladder classes, such as the CardDefs, the scripts and the bots'
-weights; set contents. Breadth first, each object once, a few levels
+weights, and of the dataclasses module's (a dataclass's Field objects: LD-46, @dataclass rewrote one taken from
+dataclasses.fields(PlayCard)); set contents. And what no module global holds (_process_state, LD-46): the ABC
+registry's counter (ABCMeta.register changes isinstance for the whole process) and, numpy being loaded first
+(NUMPY_MODULES: it registers ABCs as it loads), its error, buffer and print settings and its global RandomState.
+Breadth first, each object once, a few levels
 deep. Objects are compared by identity (the snapshot holds them, so an id can't be reused), sets by value, and a
 dict, list or set that gained or lost an item has changed: the registries (scripts, listener sets, the card pool)
 are filled when the modules load, before the snapshot.
@@ -44,6 +48,7 @@ spot checks).
 """
 from __future__ import annotations
 
+import abc
 import copyreg
 import enum
 import functools
@@ -128,7 +133,7 @@ def _members(obj):
     if isinstance(obj, (types.ModuleType, enum.Enum)):
         return None                                # modules are entered from the top; an enum member's value is
         #                                            itself (members cache attributes as they're used)
-    if _ours(obj):
+    if _ours(obj) or getattr(type(obj), "__module__", None) == "dataclasses":   # LD-46: a dataclass's Field objects
         out = [("__class__", type(obj))]
         d = getattr(obj, "__dict__", None)
         skip = _cache_attrs(type(obj))
@@ -151,6 +156,35 @@ class Snapshot:
     def __init__(self):
         self.records, self.sets, self.modules, self.held, self.lru, self.grows = [], [], {}, [], [], []
         self.relaxed = False                       # a lazy global was let through (see changes)
+        self.process: dict = {}                    # the process-wide state no module global holds (LD-46)
+
+
+NUMPY_MODULES = ("numpy", "numpy.random", "numpy.linalg", "numpy.fft", "numpy.polynomial", "numpy.emath",
+                 "numpy.exceptions", "numpy.dtypes", "numpy.typing")   # what strategies may import of numpy (LD-46)
+
+
+def _process_state() -> dict:
+    """What a strategy could change for the whole process without touching a followed object (LD-46): the ABC
+    registry's counter (every ABCMeta.register moves it: typing.Hashable.register(list) changes isinstance for
+    every later game), and when numpy is loaded its error, buffer and print settings and its global RandomState."""
+    out = {"abc.register": abc.get_cache_token()}
+    np = sys.modules.get("numpy")
+    if np is not None:
+        for name in ("geterr", "geterrcall", "getbufsize", "get_printoptions"):
+            f = getattr(np, name, None)
+            if f is not None:
+                try:
+                    out[f"numpy.{name}"] = f()
+                except Exception:                  # noqa: BLE001
+                    out[f"numpy.{name}"] = GONE
+        rnd = sys.modules.get("numpy.random")
+        if rnd is not None and hasattr(rnd, "get_state"):
+            try:
+                st = rnd.get_state(legacy=True)
+                out["numpy.random (global)"] = (st[0], st[1].tobytes(), *st[2:])
+            except Exception:                      # noqa: BLE001
+                out["numpy.random (global)"] = GONE
+    return out
 
 
 def _how(obj) -> str:
@@ -298,6 +332,7 @@ def snapshot() -> Snapshot:
             _record(s, obj, how, keys, path)
         sep = "[{}]" if how in ("dict", "list", "tuple", "grows") else ".{}"
         queue += [(v, path + sep.format(_short(k, 40)), depth + 1) for k, v in members]
+    s.process = _process_state()
     return s
 
 
@@ -375,6 +410,14 @@ def changes(snap: Snapshot, limit: int = 5) -> list[str]:
         if not (fs <= obj if grow else fs == obj):
             if say(f"{path}: set changed"):
                 return out
+    now = _process_state()
+    for k, v in snap.process.items():
+        try:
+            same = now.get(k, GONE) == v
+        except Exception:                          # noqa: BLE001
+            same = False
+        if not same and say(f"{k} changed"):
+            return out
     return out
 
 
@@ -405,6 +448,11 @@ def preload(extra=()):
     from ladder.codecheck import DENIED_PREFIXES
     for m in PRELOAD + STDLIB + FOLLOWED + tuple(extra):
         importlib.import_module(m)
+    for m in NUMPY_MODULES:                        # LD-46: numpy registers ABCs (numbers.Integral...) when it loads
+        try:
+            importlib.import_module(m)
+        except Exception:                          # noqa: BLE001, S110 - not installed: strategies can't use it either
+            pass
     typing = sys.modules["typing"]
     for n in ("Pattern", "Match", "ContextManager", "AsyncContextManager"):
         getattr(typing, n, None)                   # Python 3.13 makes these on first use, in typing's globals

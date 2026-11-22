@@ -209,6 +209,56 @@ BAD = {
  "45-no-type-check": "import typing\nfrom svsim.cards.abyss import Craft\ntyping.no_type_check(Craft)",
  "45-dt-call": "import typing\nfrom svsim.cards.abyss import Craft\ntyping.dataclass_transform()(Craft)",
  "45-dict-unbound": "from svsim.core.script import INVOKERS\ndict.get({'k': INVOKERS}, 'k').add(1)",
+ # LD-46 (the eleventh review, and what fixing it turned up): getattr forms of the decorator-only calls, ABC register,
+ # class attributes that hand a shared object to the class statement (a host dataclass's Field), names bound by import
+ # rebound, numpy's files, settings and global random numbers, dataclass orders that can't be read
+ "46-getattr-dc": "import dataclasses\nimport statistics\ngetattr(dataclasses, 'dataclass')(statistics.Fraction)",
+ "46-getattr-abcmeta": "import dataclasses\nimport typing\ngetattr(dataclasses, 'dataclass')(typing.ABCMeta)",
+ "46-getattr-final": "import typing\nfrom svsim.cards.abyss import Craft\ngetattr(typing, 'final')(Craft)",
+ "46-getattr-total-ordering": "import functools\nfrom svsim.cards.abyss import Craft\ngetattr(functools, 'total_ordering')(Craft)",
+ "46-getattr-global-enum": "import enum\nfrom svsim.core.enums import CardType\ngetattr(enum, 'global_enum')(CardType)",
+ "46-abstractmethod-call": "import typing\nfrom svsim.core import actions as moves\ntyping.abstractmethod(moves.to_dict)",
+ "46-register-typing": "import typing\ntyping.Hashable.register(list)",
+ "46-register-cabc": "import collections.abc\ncollections.abc.Hashable.register(list)",
+ "46-register-getattr": "import typing\ngetattr(typing.Hashable, 'register')(list)",
+ "46-register-alias": "import typing\nr = typing.Iterable.register\nr(int)",
+ "46-register-own-abc": "import collections.abc\nclass H(collections.abc.Hashable):\n    def my_h(self):\n        return 1\nH.register(list)",
+ "46-field-dataclass": "import dataclasses\nimport typing\nfrom svsim.core import actions as moves\nspec = dataclasses.fields(moves.PlayCard)\n@dataclasses.dataclass\nclass Note:\n    targets: typing.ClassVar[tuple] = spec[1]",
+ "46-field-plain-class": "import dataclasses\nimport typing\nfrom svsim.core import actions as moves\nspec = dataclasses.fields(moves.PlayCard)\nclass Note:\n    t = spec[1]",
+ "46-field-unpack": "import dataclasses\nimport typing\nfrom svsim.core import actions as moves\nspec = dataclasses.fields(moves.PlayCard)\nclass Note:\n    a, b = spec[0], spec[1]",
+ "46-field-unpack-name": "import dataclasses\nimport typing\nfrom svsim.core import actions as moves\nspec = dataclasses.fields(moves.PlayCard)\nclass Note:\n    a, b, c = spec",
+ "46-field-in-field": "import dataclasses\nimport typing\nfrom svsim.core import actions as moves\nspec = dataclasses.fields(moves.PlayCard)\n@dataclasses.dataclass\nclass Note:\n    x: object = dataclasses.field(default=spec[1])",
+ "46-field-walrus": "import dataclasses\nimport typing\nfrom svsim.core import actions as moves\nspec = dataclasses.fields(moves.PlayCard)\nclass Note:\n    (t := spec[1])",
+ "46-field-module-name": "import dataclasses\nimport typing\nfrom svsim.core import actions as moves\nspec = dataclasses.fields(moves.PlayCard)\nF = spec[1]\nclass Note:\n    t = F",
+ "46-field-in-method": "import dataclasses\nimport typing\nfrom svsim.core import actions as moves\nspec = dataclasses.fields(moves.PlayCard)\nclass T:\n    def my_f(self):\n        @dataclasses.dataclass\n        class Note:\n            targets: typing.ClassVar[tuple] = spec[1]\n        return Note",
+ "46-import-in-class": "class Note:\n    from svsim.core.actions import PlayCard",
+ "46-rebind-cache": "import svsim.core.engine as E\nfrom functools import cache\ncache = lambda f: E.INVOKERS\n@cache\ndef f():\n    pass\nf.clear()",
+ "46-rebind-def": "import svsim.core.engine as E\nfrom functools import cache\ndef cache(f):\n    return E.INVOKERS\n@cache\ndef f():\n    pass\nf.clear()",
+ "46-rebind-module": "import svsim.core.engine as E\nimport functools\nfunctools = E",
+ "46-two-imports": "import typing\nfrom typing import cast as d\nfrom dataclasses import dataclass as d\nd(typing.ABCMeta)",
+ "46-np-seterr": "import numpy\nnumpy.seterr(all='raise')",
+ "46-np-printoptions": "import numpy as np\nnp.set_printoptions(precision=1)",
+ "46-np-random-seed": "import numpy\nnumpy.random.seed(3)",
+ "46-np-random-rand": "import numpy\nx = numpy.random.rand(3)",
+ "46-np-from-random": "from numpy.random import shuffle",
+ "46-np-random-alias": "import numpy.random as npr\nnpr.seed(1)",
+ "46-np-getattr-random": "import numpy\nr = getattr(numpy, 'random')\nr.seed(1)",
+ "46-np-load": "import numpy\nx = numpy.load('x.npy')",
+ "46-np-save": "import numpy\nnumpy.save('x.npy', numpy.zeros(3))",
+ "46-np-fromregex": "import numpy\nx = numpy.fromregex('k.key', '(.*)', [('k', 'U200')])",
+ "46-np-from-load": "from numpy import load",
+ "46-np-dump": "import numpy\nnumpy.zeros(3).dump('d.pkl')",
+ "46-np-testing": "import numpy.testing",
+ "46-np-lib": "import numpy\nx = numpy.lib.format",
+ "46-np-test": "import numpy\nnumpy.test()",
+ "46-np-ma": "from numpy import ma",
+ "46-dc-alias-classvar": "from svsim.core.script import INVOKERS\nimport dataclasses\nimport typing\nCV = typing.ClassVar\n@dataclasses.dataclass\nclass M:\n    a: object = None\n    b: CV[int] = 0\n    c: object = None\nM(1, INVOKERS).c.add(1)",
+ "46-dc-lazy-alias": "from __future__ import annotations\nfrom svsim.core.script import INVOKERS\nimport dataclasses\nimport typing\nCV = typing.ClassVar\n@dataclasses.dataclass\nclass M:\n    a: object = None\n    b: CV[int] = 0\n    c: object = None\nM(1, INVOKERS).c.add(1)",
+ "46-dc-field-from-func": "from svsim.core.script import INVOKERS\nimport dataclasses\ndef nf():\n    return dataclasses.field(default=None, init=False)\n@dataclasses.dataclass\nclass M:\n    a: object = None\n    b: object = nf()\n    c: object = None\nM(1, INVOKERS).c.add(1)",
+ "46-dc-lazy-plain-name": "from __future__ import annotations\nfrom svsim.core.script import INVOKERS\nimport dataclasses\nfrom typing import ClassVar\n@dataclasses.dataclass\nclass M:\n    a: object = None\n    b: ClassVar[int] = 0\n    c: object = None\nM(1, INVOKERS).c.add(1)",
+ "46-dc-kw-only-marker": "from svsim.core.script import INVOKERS\nimport dataclasses\n@dataclasses.dataclass\nclass M:\n    a: object = None\n    _: dataclasses.KW_ONLY\n    b: object = None\nM(INVOKERS).a.add(1)",
+ "46-dc-initvar-pos": "from svsim.core.script import INVOKERS\nimport dataclasses\n@dataclasses.dataclass\nclass M:\n    a: object = None\n    y: dataclasses.InitVar[object] = None\n    c: object = None\n    def __post_init__(self, y):\n        pass\nM(1, 2, INVOKERS).c.add(1)",
+ "46-dc-redefined": "from svsim.core.script import INVOKERS\nimport dataclasses\n@dataclasses.dataclass\nclass A:\n    a: object = None\n    b: object = None\n@dataclasses.dataclass\nclass B(A):\n    c: object = None\n    a: object = None\nB(1, INVOKERS).b.add(1)",
 }
 GOOD_LD42 = {
  "tree": "class Node:\n    def __init__(self, parent, move):\n        self.parent = parent\n        self.move = move\n        self.children = []\n        self.visits = 0\n        if parent is not None:\n            parent.children.append(self)\nclass T(PlayerStrategy):\n    def search(self, pos):\n        root = Node(None, None)\n        n = Node(Node(root, 1), 2)\n        while n is not None:\n            n.visits += 1\n            n = n.parent\n        return {}",
@@ -249,6 +299,21 @@ GOOD_LD45 = {
  "45-replace-star-fixed": "import dataclasses\n@dataclasses.dataclass\nclass Node:\n    v: int = 0\n    children: list = dataclasses.field(default_factory=list)\n@dataclasses.dataclass(frozen=True)\nclass Knobs:\n    iterations: int = 80\nclass T(PlayerStrategy):\n    def search(self, pos):\n        k = dataclasses.replace(Knobs(), **({'iterations': 80 + pos.turn} if pos.turn > 10 else {}))\n        root = Node(-1)\n        root.children.append(Node(0))\n        return {'iterations': k.iterations}",
  "45-tally": "class Tally(dict):\n    def my_bump(self, k):\n        self[k] = self.get(k, 0) + 1\nt = Tally()\nt.my_bump('a')",
 }
+GOOD_LD46 = {
+ "46-mcts-classvar": "import dataclasses\nimport math\nimport typing\n@dataclasses.dataclass\nclass Node:\n    state: object\n    parent: object = None\n    children: list = dataclasses.field(default_factory=list)\n    visits: int = 0\n    total: float = 0.0\n    C: typing.ClassVar[float] = math.sqrt(2)\n    @classmethod\n    def root(cls, state):\n        return cls(state)\n    def child(self, state):\n        c = Node(state, self)\n        self.children.append(c)\n        return c\nclass T(PlayerStrategy):\n    def search(self, pos):\n        root = Node.root(pos.state)\n        node = root.child(pos.state)\n        while node is not None:\n            node.visits += 1\n            node.total += 0.5\n            node = node.parent\n        return {}",
+ "46-dc-init-false": "import dataclasses\n@dataclasses.dataclass\nclass Node:\n    state: object\n    children: list = dataclasses.field(default_factory=list)\n    best: object = dataclasses.field(default=None, init=False)\nclass T(PlayerStrategy):\n    def search(self, pos):\n        root = Node(pos.state)\n        root.children.append(Node(pos.state))\n        return {}",
+ "46-dc-kw-only": "import dataclasses\n@dataclasses.dataclass\nclass Node:\n    state: object\n    children: list = dataclasses.field(default_factory=list)\n    _: dataclasses.KW_ONLY\n    depth: int = 0\nclass T(PlayerStrategy):\n    def search(self, pos):\n        root = Node(pos.state, depth=1)\n        root.children.append(Node(pos.state))\n        return {}",
+ "46-dc-initvar-last": "import dataclasses\n@dataclasses.dataclass\nclass Node:\n    state: object\n    children: list = dataclasses.field(default_factory=list)\n    n: dataclasses.InitVar[int] = 0\n    def __post_init__(self, n):\n        self.visits = n\nclass T(PlayerStrategy):\n    def search(self, pos):\n        root = Node(pos.state)\n        root.children.append(Node(pos.state))\n        return {}",
+ "46-dc-sub-classvar": "import dataclasses\nimport typing\n@dataclasses.dataclass\nclass Node:\n    move: object = None\n    parent: object = None\n    children: list = dataclasses.field(default_factory=list)\n    @classmethod\n    def make(cls, move, parent):\n        return cls(move, parent)\n@dataclasses.dataclass\nclass Root(Node):\n    BUDGET: typing.ClassVar[int] = 100\nclass T(PlayerStrategy):\n    def search(self, pos):\n        r = Root.make(pos.turn, None)\n        r.children.append(Node.make(1, r))\n        return {}",
+ "46-dc-lazy-classvar": "from __future__ import annotations\nimport dataclasses\nimport typing\n@dataclasses.dataclass\nclass Node:\n    state: object\n    children: list = dataclasses.field(default_factory=list)\n    C: typing.ClassVar[float] = 1.4\nclass T(PlayerStrategy):\n    def search(self, pos):\n        root = Node(pos.state)\n        root.children.append(Node(pos.state))\n        return {}",
+ "46-enum-missing": "import enum\nclass Mode(enum.Enum):\n    AGGRO = 'aggro'\n    CONTROL = 'control'\n    @classmethod\n    def _missing_(cls, value):\n        value = value.lower()\n        for member in cls:\n            if member.value == value:\n                return member\n        return None\nm = Mode('AGGRO')",
+ "46-enum-base": "import enum\nclass Parsable(enum.Enum):\n    @classmethod\n    def parse(cls, s):\n        return cls[s.upper()]\n    @classmethod\n    def best(cls, t):\n        return max(cls, key=lambda m: len(m.name) * t)\nclass Mode(Parsable):\n    AGGRO = 1\n    CONTROL = 2\nm = Mode.parse('aggro')\nb = Mode.best(2)\nn = list(Mode)",
+ "46-class-constants": "import math\nfrom svsim.core import actions as moves\nfrom svsim.core.enums import Craft\nclass T(PlayerStrategy):\n    FOREST = Craft.FOREST\n    PLAY = moves.PlayCard\n    PI = math.pi\n    ORDER = tuple(Craft)\n    def veto(self, state, action):\n        return isinstance(action, T.PLAY) and False",
+ "46-dc-static-defaults": "import dataclasses\nimport math\nfrom svsim.core.enums import Craft\n@dataclasses.dataclass\nclass Plan:\n    craft: object = Craft.FOREST\n    c: float = math.pi\n    other: object = dataclasses.field(default=Craft.FOREST)\np = Plan()",
+ "46-singledispatch": "import functools\n@functools.singledispatch\ndef score(x):\n    return 0\n@score.register\ndef _(x: int):\n    return x\nscore.register(float, lambda x: int(x))\nv = score(3)",
+ "46-np-allowed": "import numpy as np\nfrom numpy.random import default_rng\nclass T(PlayerStrategy):\n    def __init__(self, seed=0):\n        super().__init__(seed)\n        self.rng = np.random.default_rng(seed)\n        self.g = default_rng(seed + 1)\n    def prior(self, state, actions):\n        p = self.rng.random(len(actions)) + 1.0\n        p = p / np.linalg.norm(p, 1)\n        return list(p)",
+ "46-same-import-twice": "import svsim\nimport svsim.core\nfrom dataclasses import dataclass\nfrom dataclasses import dataclass\n@dataclass\nclass K:\n    a: int = 0",
+}
 GOOD = {
  "field-shadow": "from dataclasses import field\ndef f():\n    field = {}\n    field['a'] = 1\n    return field",
  "memo": "from ladder import base\nclass T(PlayerStrategy):\n    def __init__(self, seed=0):\n        super().__init__(seed)\n        self._memo = {}\n    def search(self, pos):\n        k = base.fingerprint(pos)\n        self._memo.setdefault(k, []).append(1)\n        self._memo[k] = [2]\n        return {}",
@@ -275,12 +340,13 @@ def test_refused(name):
 
 
 @pytest.mark.parametrize("name", sorted(GOOD) + sorted(GOOD_LD42) + sorted(GOOD_LD43) + [f"44:{k}" for k in GOOD_LD44]
-                         + sorted(GOOD_LD45))
+                         + sorted(GOOD_LD45) + sorted(GOOD_LD46))
 def test_accepted(name):
     src = textwrap.dedent(GOOD_LD44[name[3:]] if name.startswith("44:") else GOOD_LD45.get(name) or
-                          GOOD.get(name) or GOOD_LD42.get(name) or GOOD_LD43[name])
+                          GOOD_LD46.get(name) or GOOD.get(name) or GOOD_LD42.get(name) or GOOD_LD43[name])
     if "class T(" in src:
-        src = "from ladder.interface import PlayerStrategy\n" + src
+        future, _, rest = src.partition("\n") if src.startswith("from __future__") else ("", "", src)
+        src = (future + "\n" if future else "") + "from ladder.interface import PlayerStrategy\n" + rest
     assert check_code(src + TAIL, "S") == []
 
 
@@ -332,6 +398,21 @@ def test_replace_with_a_dict_built_elsewhere_is_noted():
     got = check_code(head + src + TAIL, "S")
     assert any(g.startswith("提示：第 13 行的 **字典") for g in got), got
     fixed = src.replace("**late", "**({'iterations': 80 + pos.turn} if pos.turn > 10 else {})")
+    assert check_code(head + fixed + TAIL, "S") == []
+
+
+def test_a_dataclass_built_by_position_in_an_unclear_order_is_noted():
+    # LD-46: when the reader can't tell which field a positional argument sets (here a ClassVar written through a
+    # module-level alias), every field takes the highest argument's level; the receipt names the lines and says to
+    # pass by name, which is then accepted. A ClassVar written plainly is read exactly (GOOD_LD46)
+    src = ("import dataclasses\nimport typing\nCV = typing.ClassVar\n@dataclasses.dataclass\nclass Node:\n"
+           "    state: object\n    children: list = dataclasses.field(default_factory=list)\n    C: CV[float] = 1.4\n"
+           "class T(PlayerStrategy):\n    def search(self, pos):\n        root = Node(pos.state)\n"
+           "        root.children.append(Node(pos.state))\n        return {}\n")
+    head = "from ladder.interface import PlayerStrategy\n"
+    out = check_code(head + src + TAIL, "S")
+    assert any(x.startswith("提示：第 12、13 行按位置") for x in out), out
+    fixed = src.replace("Node(pos.state)", "Node(state=pos.state)")
     assert check_code(head + fixed + TAIL, "S") == []
 
 
