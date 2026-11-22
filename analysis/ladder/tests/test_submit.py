@@ -182,31 +182,38 @@ def _pool(tmp_path, period: int):
 
 
 def test_slots_and_periods(tmp_path):
+    """S5 (Salem 11-22): one new deck per class per deck period (a refused one leaves the class open, A35);
+    updates not limited."""
     pool = _pool(tmp_path, 1)
-    ids, _ = submit.check_deck(CODES[1])
+    ids, _ = submit.check_deck(CODES[1])                                  # Sword
     sub = {"kind": "deck", "meta": {"member": "二号"}, "deck_ids": ids}
     r = lambda i, kind, **k: {"ev": "receipt", "id": f"S-{i:04d}", "player": "甲", "period": pool.period,
                               "kind": kind, **k}
-    problems, info = submit.check_slots(sub, "甲", pool, [r(1, "deck", verdict="拒收"), r(2, "deck")])
-    assert info["uses_slot"] and any("2 副" in p for p in problems)        # refused ones count too (A32)
-    problems, _ = submit.check_slots(sub, "乙", pool, [r(1, "deck"), r(2, "deck")])
-    assert problems == []                                                # another player's slots are theirs
+    problems, info = submit.check_slots(sub, "甲", pool, [r(1, "deck", verdict="拒收", craft=2)])
+    assert problems == [] and info["uses_slot"] and info["craft"] == 2   # the refused one left Sword open
+    problems, _ = submit.check_slots(sub, "甲", pool, [r(1, "deck", verdict="收下", craft=2)])
+    assert any("已经交过一副" in p for p in problems)
+    problems, _ = submit.check_slots(sub, "甲", pool, [r(i, "deck", verdict="收下", craft=c)
+                                                       for i, c in enumerate((1, 3, 4, 5, 6, 7))])
+    assert problems == []                                                # six other classes don't block Sword
+    problems, _ = submit.check_slots(sub, "乙", pool, [r(1, "deck", verdict="收下", craft=2)])
+    assert problems == []                                                # another player's classes are theirs
     mid = pool.enter(ids, "bot:mcts:100+plan", "甲")
     pool.advance(force="test: straight to a strategy period")
     admitted = [{"ev": "admit", "player": "甲", "member": "二号", "mid": mid}]
     problems, _ = submit.check_slots(sub, "甲", pool, admitted)
     assert any("卡组期" in p for p in problems)
     up = {"kind": "update", "meta": {"member": "二号"}}
-    problems, info = submit.check_slots(up, "甲", pool, admitted)
-    assert problems == [] and info["mid"] == mid and up["deck_ids"] == ids
-    three = admitted + [r(i, "update", uses_slot=True, member="二号") for i in (1, 2, 3)]
-    problems, _ = submit.check_slots(up, "甲", pool, three)
-    assert any("3 次" in p for p in problems)
-    routed = admitted + [r(1, "update", uses_slot=True, member="二号", route={"steps": 2, "step": 1}),
-                         r(2, "update", uses_slot=True), r(3, "update", uses_slot=True)]
+    many = admitted + [r(i, "update", verdict="拒收", member="二号") for i in range(1, 21)]
+    problems, info = submit.check_slots(up, "甲", pool, many)
+    assert problems == [] and info["mid"] == mid and up["deck_ids"] == ids   # updates are not limited
+    routed = admitted + [r(1, "update", member="二号", route={"steps": 2, "step": 1})]
     later = {"kind": "update", "meta": {"member": "二号", "route": {"steps": 2, "step": 2, "route_of": "S-0001"}}}
-    problems, info = submit.check_slots(later, "甲", pool, routed)
-    assert problems == [] and not info["uses_slot"]                      # a route's later steps use no slot (A33)
+    problems, _ = submit.check_slots(later, "甲", pool, routed)
+    assert problems == []
+    wrong = {"kind": "update", "meta": {"member": "二号", "route": {"steps": 3, "step": 2, "route_of": "S-0001"}}}
+    problems, _ = submit.check_slots(wrong, "甲", pool, routed)
+    assert any("总步数" in p for p in problems)
     problems, _ = submit.check_slots({"kind": "update", "meta": {"member": "三号"}}, "甲", pool, admitted)
     assert any("没有叫" in p for p in problems)
 
@@ -262,23 +269,29 @@ def test_the_peek_check(tmp_path):
 def test_receive_and_admit(tmp_path):
     pool = _pool(tmp_path, 1)
     subs = tmp_path / "subs"
-    d = make_sub(tmp_path / "in1", "新卡组", deck=CODES[4], member="四号")
+    d = make_sub(tmp_path / "in1", "新卡组", deck=CODES[4], member="四号")              # Abyss
     rec = submit.receive(d, "甲", pool.dir, subs, workers=2, rng_seed=7, smoke_games=2, seeds=SMOKE)
     assert rec["verdict"] == "收下", rec["reasons"]
     assert [c["check"] for c in rec["checks"]] == ["格式", "卡组", "名额和期", "代码（读）", "载入（隔离进程）", "冒烟",
                                                    "算力", "确定性", "偷看"]
-    assert rec["uses_slot"] and len(rec["smoke_seeds"]) == 2 and rec["compute_ratio"] is not None
+    assert rec["uses_slot"] and rec["craft"] == 5 and len(rec["smoke_seeds"]) == 2 and rec["compute_ratio"] is not None
     assert (subs / rec["id"] / "receipt.md").exists()
     mid = submit.admit(subs, rec["id"], pool.dir)
     m = Pool(pool.dir).members[mid]
     assert m.owner == "甲" and m.strategy == rec["spec"]
-    # refused: reads a file; nothing is run, the slot is used, the ledger has both lines
+    # refused: reads a file; nothing is run; Portal stays open
     d2 = make_sub(tmp_path / "in2", "新卡组", deck=CODES[6], member="六号",
                   src=QUICK + "\nX = open('a').read()\n")
     rec2 = submit.receive(d2, "甲", pool.dir, subs, workers=2, rng_seed=8, smoke_games=2, seeds=SMOKE)
-    assert rec2["verdict"] == "拒收" and rec2["uses_slot"] and rec2["smoke_seeds"] == []
-    assert [l["id"] for l in submit.ledger(subs) if l["ev"] == "receipt"] == ["S-0001", "S-0002"]
-    # a third new deck this period: no slot left
-    d3 = make_sub(tmp_path / "in3", "新卡组", deck=CODES[0], member="零号")
+    assert rec2["verdict"] == "拒收" and not rec2["uses_slot"] and rec2["smoke_seeds"] == []
+    # a second Abyss deck this period: refused before any game
+    d3 = make_sub(tmp_path / "in3", "新卡组", deck=CODES[4], member="四号乙")
     rec3 = submit.receive(d3, "甲", pool.dir, subs, workers=2, rng_seed=9, smoke_games=2, seeds=SMOKE)
-    assert rec3["verdict"] == "拒收" and any("2 副" in r for r in rec3["reasons"])
+    assert rec3["verdict"] == "拒收" and any("已经交过一副" in r for r in rec3["reasons"])
+    # Portal again, fixed: accepted
+    d4 = make_sub(tmp_path / "in4", "新卡组", deck=CODES[6], member="六号")
+    rec4 = submit.receive(d4, "甲", pool.dir, subs, workers=2, rng_seed=10, smoke_games=2, seeds=SMOKE)
+    assert rec4["verdict"] == "收下", rec4["reasons"]
+    assert [l["id"] for l in submit.ledger(subs) if l["ev"] == "receipt"] == ["S-0001", "S-0002", "S-0003", "S-0004"]
+    st = submit.status(subs, pool.dir, "甲")
+    assert st["classes_done"] == ["梦魇", "超越者"] and len(st["classes_missing"]) == 5

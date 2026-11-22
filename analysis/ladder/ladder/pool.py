@@ -47,7 +47,7 @@ FULL_PERIOD_GAMES = 2000          # §4.5 a period ends once every member has 20
 UNSTABLE_GAMES = 300              # §4.3 after a strategy update, "unstable" until 300 games
 MAX_PER_PLAYER = 7                # plan 阶段 3 名额: at most 7 members per player in the pool
 MAX_PER_LIST = 2                  # ... at most 2 members with the same list
-NEW_DECKS_PER_PERIOD = 2          # ... at most 2 new decks per player per deck period
+NEW_DECKS_PER_CLASS = 1           # Salem S5 (11-22): each deck period a player submits one deck for every class
 HOST_OWNERS = ("baseline", "salem")   # members that belong to no player (§4.1)
 ANON_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 MATCHING = "S2"                   # Salem 11-22: never past 200 (class redrawn; initiator redrawn, A27). Older pools: none
@@ -307,9 +307,10 @@ class Pool:
             mine = [m for m in self.active() if m.owner == owner]
             if len(mine) >= MAX_PER_PLAYER:
                 raise PoolError(f"{owner} already has {len(mine)} members in the pool (at most {MAX_PER_PLAYER})")
-            new_here = [m for m in self.members.values() if m.owner == owner and m.entry_period == self.period]
-            if len(new_here) >= NEW_DECKS_PER_PERIOD:
-                raise PoolError(f"{owner} already entered {len(new_here)} decks this period")
+            new_here = [m for m in self.members.values() if m.owner == owner and m.entry_period == self.period
+                        and m.craft == craft]
+            if len(new_here) >= NEW_DECKS_PER_CLASS:
+                raise PoolError(f"{owner} already entered a {CRAFT_ZH[craft]} deck this period (S5: one per class)")
         rng = rng or secrets.SystemRandom()
         taken = {m.anon for m in self.members.values()}
         while True:

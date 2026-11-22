@@ -301,9 +301,11 @@ def test_quotas(tmp_path):
         pool.enter(BASE_DECKS[0], "py:helpers:Random", "yi")          # a third member with that list
     assert len(e.value.holders) == 2
     pool.enter(synth_deck(2, 0), "py:helpers:Random", "jia")
-    with pytest.raises(P.PoolError):
-        pool.enter(synth_deck(2, 1), "py:helpers:Random", "jia")      # 2 new decks per deck period
-    for k in range(1, 6):                                             # 7 members per player at most
+    with pytest.raises(P.PoolError, match="one per class"):
+        pool.enter(synth_deck(2, 1), "py:helpers:Random", "jia")      # S5: one new deck per class per deck period
+    pool.enter(synth_deck(4, 1), "py:helpers:Random", "jia")          # ... a third class in the same period is fine
+    pool.enter(synth_deck(2, 1), "py:helpers:Random", "yi")           # ... and another player's Sword is theirs
+    for k in range(1, 5):                                             # 7 members per player at most
         pool.advance(force="test"); pool.advance(force="test")
         pool.enter(synth_deck(3, k), "py:helpers:Random", "jia")
     assert len([m for m in pool.active() if m.owner == "jia"]) == 7
