@@ -133,29 +133,50 @@ def test_an_interrupted_period_picks_up_its_own_games_and_refuses_a_changed_plan
     assert A.plan(quick, pool.dir, 2, period=2, out=out)[0][0]["seed"] == 93400228 + 8
 
 
-def test_games_voided_by_the_setup_are_played_again_and_never_written_down(tmp_path, monkeypatch):
+def test_a_setup_void_is_played_again_once_and_written_down_if_it_comes_back(tmp_path, monkeypatch):
     kf, table, quick, pool = _setup(tmp_path, monkeypatch)
-    out = tmp_path / "out"
     from ladder import runner
     real = runner.run
+    calls = []
 
-    def dies(jobs, path, **kw):                                  # the first job's worker dies, every time
+    def dies(jobs, path, **kw):                                  # the first job's worker dies (every time, or once)
+        calls.append(len(jobs))
+        if len(calls) > 1 and once:
+            return real(jobs, path, **kw)
         res = real(jobs[1:], path, **kw)
+        sealed = deal.seal(jobs[0], deal.load_key(kf))           # what the runner's stub line carries
         with open(path, "a", encoding="utf-8") as f:
             f.write(json.dumps({"id": jobs[0]["id"], "seed": jobs[0]["seed"], "labels": jobs[0]["labels"],
-                                "result": "void", "error": "worker died (exit code 1)"}) + "\n")
+                                "deal": sealed["deal"], "result": "void", "error": "worker died (exit code 1)"}) + "\n")
         return res
 
     monkeypatch.setattr(runner, "run", dies)
-    import pytest
-    with pytest.raises(A.AnchorError):                           # tried again once in the same run, died again
-        A.run(table, pool.dir, out, games=2, workers=2, key=str(kf))
-    assert not A._ledger(out) and (out / "games-P0-redo1.jsonl").exists()
-    monkeypatch.setattr(runner, "run", real)
+    once = True                                                  # the machine: fine the second time
+    res = A.run(table, pool.dir, tmp_path / "a", games=2, workers=2, key=str(kf))
+    assert calls == [8, 1] and res["played"] == 8 and res["voids"] == {}
+    assert _ledger_games(tmp_path / "a") == 8 and all(l["void"] == 0 for l in A._ledger(tmp_path / "a"))
+    assert sorted(A._ledger(tmp_path / "a")[0]["logs"]) == ["games-P0-redo1.jsonl", "games-P0.jsonl"]
+    once, calls[:] = False, []                                   # comes back on its own seed: deterministic
+    res = A.run(table, pool.dir, tmp_path / "b", games=2, workers=2, key=str(kf))
+    assert calls == [8, 1] and res["voids"] == {"worker died (exit code 1)": 1}
+    assert sum(l["void"] for l in A._ledger(tmp_path / "b")) == 1 and A._plans(tmp_path / "b")[0]["done"]
+
+
+def test_a_torn_ledger_tail_does_not_swallow_the_next_write(tmp_path, monkeypatch):
+    kf, table, quick, pool = _setup(tmp_path, monkeypatch)
+    out = tmp_path / "out"
+    A.run(table, pool.dir, out, games=2, workers=2, key=str(kf))
+    led = out / "anchors.jsonl"
+    text = led.read_text(encoding="utf-8")
+    first = text.index("\n") + 1
+    led.write_text(text[:first + 40] + "\x00" * 64, encoding="utf-8")      # a crash inside the one write
+    plan = A._plans(out)[0]
+    for k in ("done", "lines", "done_time"):
+        plan.pop(k)
+    A._write_json(out / "plan-P0.json", plan)
+    assert A.classes(out) == (None, [])                           # not finished: nothing counts
     res = A.run(table, pool.dir, out, games=2, workers=2, key=str(kf))
-    assert res["played"] == 1 and (out / "games-P0-redo2.jsonl").exists()
-    assert _ledger_games(out) == 8 and all(l["void"] == 0 for l in A._ledger(out))
-    assert sorted(A._ledger(out)[0]["logs"]) == ["games-P0-redo1.jsonl", "games-P0-redo2.jsonl", "games-P0.jsonl"]
+    assert res["played"] == 0 and len(A._lines(out)[1]) == 4      # all four pairs of the new batch
 
 
 def test_a_strategy_that_does_not_load_stops_the_run_before_any_game(tmp_path, monkeypatch):
@@ -184,10 +205,12 @@ def test_only_a_finished_period_counts_and_a_torn_ledger_line_is_skipped(tmp_pat
                            "batch": batch}) + "\n"
     (tmp_path / "anchors.jsonl").write_text(line(1, "a", 2) + '{"period": 1, "memb' + "\x00" * 8 + "\n" +
                                             line(1, "b", 12) + line(2, "c", 18), encoding="utf-8")
-    A._write_json(tmp_path / "plan-P1.json", {"period": 1, "jobs": 20, "first_seed": 1, "done": "b"})
+    A._write_json(tmp_path / "plan-P1.json", {"period": 1, "jobs": 20, "first_seed": 1, "done": "b", "lines": 1})
     A._write_json(tmp_path / "plan-P2.json", {"period": 2, "jobs": 20, "first_seed": 21})       # not finished
     period, rows = A.classes(tmp_path)
     assert period == 1 and rows[0]["rate"] == 60                 # batch b only: not a's, not unfinished period 2
+    A._write_json(tmp_path / "plan-P1.json", {"period": 1, "jobs": 20, "first_seed": 1, "done": "b", "lines": 2})
+    assert A.classes(tmp_path) == (None, [])                      # the batch is missing a line: it doesn't count
 
 
 def test_a_member_plays_its_own_frozen_copy_too(tmp_path):

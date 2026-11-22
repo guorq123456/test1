@@ -457,7 +457,7 @@ def _from_position(job: dict) -> dict:
            "steps": [list(s) for s in job["prefix_steps"]], "actions": list(job["prefix"])}
     try:
         strategies = [make_strategy(s, x) for s, x in zip(job["strategies"], job["strategy_seeds"])]
-    except Exception:
+    except BaseException:                             # as the runner (LD-36)
         out.update(result="void", error="strategy failed to load:\n" + traceback.format_exc(limit=5))
         return out
     while not state.over:
@@ -467,7 +467,7 @@ def _from_position(job: dict) -> dict:
         c0 = counter()
         try:
             action = strategies[seat].act(pos, actions)
-        except Exception:
+        except BaseException:                         # SystemExit too: the strategy's crash, as in the runner (LD-36)
             out.update(result="crash", loser=seat, winner=1 - seat, error=traceback.format_exc(limit=8))
             break
         out["steps"].append([seat, counter() - c0, 0])

@@ -25,10 +25,11 @@ in order, one seed a game, each period right after the seeds the earlier periods
 (members by id, anchors by slot, game index); every game is dealt through the host's key (base-2). Before a game is
 played every strategy and deck of the run must load (players' strategies need `--code`, the received submissions).
 A period is played once: its plan is written first (DIR/plan-P<P>.json); an interrupted run picks up its own games;
-games voided by the setup or the machine (a strategy that didn't load, a dead worker, a runner error) are never
-written down: the next run of the same command plays them again on their own seeds; a changed pool or panel is
-refused. The period's ledger lines (DIR/anchors.jsonl, append-only, one per member version and anchor) go in one
-write, and the period counts once its plan file names that write ("done"). The public figures are per class and
+a game voided in a way that may be the setup's or the machine's (a strategy that didn't load, a dead worker, a runner
+error) is played once more in the same run on its own seed, and if it voids again it is written down as void and
+reported, like an engine error; a changed pool or panel is refused. The period's ledger lines (DIR/anchors.jsonl,
+append-only, one per member version and anchor) go in one write, on a line of their own, and the period counts once
+its plan file names that write and its number of lines ("done", "lines"). The public figures are per class and
 tier, rounded, without counts (`classes`); the per-member rows stay with the host. The fixed panel of seeds
 91700000-91799999 that played each version once (A40) is no longer used.
 """
@@ -207,9 +208,10 @@ def plan(anchors: list[dict], pool_dir: Path, games: int, period=None, out=None)
 
 
 SETUP_VOIDS = ("cards with no script", "strategy failed to load", "runner error", "worker died")
-# voids that say nothing about the game (the host's setup or the machine): never written to the ledger; the next run of
-# the same command plays them again on their own seeds. "engine error on a legal move" is a simulator bug: it stays
-# void in the ledger and is reported (red line: 发现了就记录并报告)
+# voids that may come from the host's setup or the machine rather than the game: played once more in the same run, on
+# their own seeds (a new games-P<P>-redo<k>.jsonl). One that voids again is deterministic (a factory that fails on
+# that seed, a process ended by one of the strategies, a bug in the runner): it is written down as void like
+# "engine error ..." and reported (red line: 发现了就记录并报告); the period is never held up by it (11-22 re-review)
 
 
 def _setup_void(g: dict) -> bool:
@@ -306,11 +308,8 @@ def run(anchors_path: Path, pool_dir: Path, out: Path, games: int = 10, workers=
     else:
         got = {}
     missing = [j["id"] for j in jobs if j["id"] not in got]
-    stale = sorted({str(got[i].get("error", "")).splitlines()[0] for i in ids if i in got and _setup_void(got[i])})
-    if missing or stale:
-        n = sum(1 for i in ids if i in got and _setup_void(got[i]))
-        raise AnchorError(f"第 {period} 期的锚点没打完：缺 {len(missing)} 局，{n} 局因为设置或机器的问题作废（{'；'.join(stale)}）。"
-                          "台账没写。修好以后再跑同一条命令，只补这些局，用它们原来的种子")
+    if missing:
+        raise AnchorError(f"第 {period} 期的锚点没打完：缺 {len(missing)} 局。台账没写。再跑同一条命令，只补这些局，用它们原来的种子")
     tier = {a["id"]: a["tier"] for a in anchors}
     per, deals, voids = {}, set(), {}
     for g in got.values():
@@ -331,18 +330,27 @@ def run(anchors_path: Path, pool_dir: Path, out: Path, games: int = 10, workers=
     if len(deals) > 1:
         raise AnchorError(f"第 {period} 期的锚点局用了不止一种发牌（{sorted(map(str, deals))}）：密钥中途换过，先查清楚")
     deal_id = deals.pop() if deals else None
-    batch = f"{digest[:12]}-{time.strftime('%Y%m%d%H%M%S')}"
+    import secrets
+    batch = f"{digest[:12]}-{time.strftime('%Y%m%d%H%M%S')}-{secrets.token_hex(4)}"
     text = "".join(json.dumps({"period": period, "member": mid, "version": ver, "craft": craft, "anchor": aid,
                                "tier": tier[aid], "games": games, **d,
                                **dict(zip(("rate", "lo", "hi"), _wilson(d["won"], d["won"] + d["lost"]))),
                                "logs": [f.name for f in [main] + redo], "deal": deal_id, "batch": batch,
                                "time": time.strftime("%Y-%m-%dT%H:%M:%S")}, ensure_ascii=False) + "\n"
                    for (mid, ver, craft, aid), d in sorted(per.items()))
-    with (out / "anchors.jsonl").open("a", encoding="utf-8") as f:    # one write; the period counts once its plan
-        f.write(text)                                                  # file names this batch (below)
+    led = out / "anchors.jsonl"
+    if led.exists() and led.stat().st_size:
+        with led.open("rb") as f:
+            f.seek(-1, 2)
+            if f.read(1) != b"\n":
+                text = "\n" + text                     # an earlier write was torn: don't glue the first line to it
+    with led.open("a", encoding="utf-8") as f:        # one write; the period counts once its plan file names this
+        f.write(text)                                 # batch and its number of lines (below)
         f.flush()
         os.fsync(f.fileno())
-    _write_json(pf, dict(_plans(out)[period], done=batch, done_time=time.strftime("%Y-%m-%dT%H:%M:%S")))
+    if sum(1 for l in _ledger(out) if l.get("batch") == batch) != len(per):
+        raise AnchorError(f"第 {period} 期的台账行没写全（{led.name}）：这一期不算打完，再跑同一条命令重写一批")
+    _write_json(pf, dict(_plans(out)[period], done=batch, lines=len(per), done_time=time.strftime("%Y-%m-%dT%H:%M:%S")))
     return {"period": period, "jobs": len(jobs), "pairs": len(todo), "played": played, "deal": deal_id,
             "voids": voids, "first_seed": jobs[0]["seed"] if jobs else None,
             "last_seed": jobs[-1]["seed"] if jobs else None, "log": str(main) if jobs else None}
@@ -352,8 +360,11 @@ def _lines(out: Path, period=None) -> tuple[int | None, list[dict]]:
     """The ledger lines of one finished period (default: the last finished one). A period counts once its plan file
     names the batch its lines were written in; lines of an interrupted write, or of the old fixed panel (A40, no
     period), are left out."""
-    done = {p: v["done"] for p, v in _plans(out).items() if v.get("done")}
+    plans = _plans(out)
+    done = {p: v["done"] for p, v in plans.items() if v.get("done")}
     lines = [l for l in _ledger(Path(out)) if l.get("period") in done and l.get("batch") == done[l["period"]]]
+    whole = {p for p in done if "lines" not in plans[p] or sum(1 for l in lines if l["period"] == p) == plans[p]["lines"]}
+    lines = [l for l in lines if l["period"] in whole]          # a batch missing a line doesn't count
     if period is None:
         period = max((l["period"] for l in lines), default=None)
     return period, [l for l in lines if l["period"] == period]

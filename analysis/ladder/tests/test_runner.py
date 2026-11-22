@@ -117,3 +117,33 @@ def test_compute_comparing_runs_need_one_core_type(monkeypatch):
     with pytest.raises(SystemExit):
         runner.one_core_type(None)
     assert runner.one_core_type(0x3FC3FC) == "0x3fc3fc"
+
+
+def test_a_strategy_cannot_end_its_worker_to_void_a_game(tmp_path):
+    # LD-36: SystemExit / KeyboardInterrupt raised by a strategy is its crash (task spec 4.2), not a dead worker
+    # (which would void the game); one raised in the end-of-game guess leaves the result as it was
+    jobs = [job(10, "py:helpers:Quits", "py:helpers:Random", first=0),
+            job(11, "py:helpers:Random", "py:helpers:Interrupts", first=0),
+            job(12, "py:helpers:QuitsInGuess", "py:helpers:Random", first=0)]
+    out = tmp_path / "g.jsonl"
+    res = runner.run(jobs, str(out), workers=2, step_limit=5.0, quiet=True)
+    rows = {r["id"]: r for r in map(json.loads, out.read_text().splitlines())}
+    assert res["played"] == 3 and "void" not in res["results"]
+    assert rows["t-10"]["result"] == "crash" and rows["t-10"]["loser"] == 0 and "SystemExit" in rows["t-10"]["error"]
+    assert rows["t-11"]["result"] == "crash" and rows["t-11"]["loser"] == 1
+    assert rows["t-12"]["result"] in ("normal", "draw") and rows["t-12"]["out_of_guess"][0] is None
+
+
+def test_an_engine_error_outside_a_move_is_a_void_not_a_runner_error(monkeypatch):
+    from ladder import base
+    real, n = base.public_position, [0]
+
+    def flaky(*a, **kw):
+        n[0] += 1
+        if n[0] == 5:
+            raise IndexError("simulated engine bug")
+        return real(*a, **kw)
+
+    monkeypatch.setattr(base, "public_position", flaky)
+    r = runner.play_job(job(13, "py:helpers:Random", "py:helpers:Random", first=0))
+    assert r["result"] == "void" and r["error"].startswith("engine error outside a move")

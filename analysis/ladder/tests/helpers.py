@@ -48,3 +48,29 @@ class Slow(_Base):
         if self.n == 2:
             time.sleep(600)
         return actions[0]
+
+
+class Quits(_Base):
+    """Ends its process the polite way (SystemExit) on its third decision: a crash, not a dead worker (LD-36)."""
+    def __init__(self, seed=0):
+        super().__init__(seed)
+        self.n = 0
+
+    def act(self, pos, actions):
+        self.n += 1
+        if self.n == 3:
+            raise SystemExit(3)
+        return actions[0]
+
+
+class Interrupts(Quits):
+    def act(self, pos, actions):
+        if self.n == 1:
+            raise KeyboardInterrupt
+        return super().act(pos, actions)
+
+
+class QuitsInGuess(Random):
+    """Plays on, then raises SystemExit when asked for its guess at the end: the game's result stands."""
+    def guess(self, pos):
+        raise SystemExit(4)

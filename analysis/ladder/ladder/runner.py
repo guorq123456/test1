@@ -12,8 +12,10 @@ known-strength checks), or "py:<module>:<factory>" (a factory called with seed=.
 
 Rules it applies (task spec §4.2): a strategy that raises loses (crash); one that returns a move not in the legal
 list loses (illegal); one whose single decision runs past --step-limit seconds of wall time loses (timeout: the
-worker is killed and replaced). An engine error while applying a legal move can't be pinned on either side: the
-game is void. The 60-turn cap gives a draw (assumption A3).
+worker is killed and replaced). "Raises" includes SystemExit and KeyboardInterrupt from the strategy's own call
+(workers ignore Ctrl+C; LD-36); one raised in the end-of-game guess leaves the result alone. An engine error, while
+applying a legal move or around it, can't be pinned on either side: the game is void. So is a worker that dies outright
+(os._exit, killed): code of either side can do that. The 60-turn cap gives a draw (assumption A3).
 
 Limits (Salem's computer): Salem S10 (11-22 08:49Z) allows all cores ("这个项目你可以全核开跑"): at most 23 worker
 processes (+ this one = the 24 logical CPUs), below normal priority, and on Windows the affinity mask given by --mask
@@ -120,23 +122,31 @@ def play_job(job: dict, beat=None) -> dict:
         return out
     try:
         strategies = [make_strategy(s, seed) for s, seed in zip(job["strategies"], seeds)]
-    except Exception:
+    except BaseException:                             # SystemExit too: a factory can't end the worker (LD-36)
         out.update(result="void", error="strategy failed to load:\n" + traceback.format_exc(limit=5))
         return out
-    _, state = deal.start(job, first="first")          # base-2: the keyed deal when the job carries one (LD-27/29)
+    try:
+        _, state = deal.start(job, first="first")      # base-2: the keyed deal when the job carries one (LD-27/29)
+    except Exception:
+        out.update(result="void", error="engine error at the start:\n" + traceback.format_exc(limit=8))
+        return out
     out["first"] = state.first
     tracker = base.Tracker(state)
     while not state.over:
         seat = state.active
-        actions = legal_actions(state)
-        pos = base.public_position(state, seat, tracker)
+        try:                                          # the engine's and the base's side, not the strategies'
+            actions = legal_actions(state)
+            pos = base.public_position(state, seat, tracker)
+        except Exception:
+            out.update(result="void", error="engine error outside a move:\n" + traceback.format_exc(limit=8))
+            break
         if beat is not None:
             beat[0], beat[1] = seat, time.monotonic_ns()
         w0, c0 = time.perf_counter_ns(), counter()
         try:
             action = strategies[seat].act(pos, actions)
-        except Exception:
-            out.update(result="crash", loser=seat, winner=1 - seat,
+        except BaseException:                         # SystemExit, KeyboardInterrupt too: the strategy's own doing
+            out.update(result="crash", loser=seat, winner=1 - seat,   # (workers ignore Ctrl+C, LD-36)
                        error=traceback.format_exc(limit=8))
             break
         finally:
@@ -147,14 +157,22 @@ def play_job(job: dict, beat=None) -> dict:
         if action not in actions:
             out.update(result="illegal", loser=seat, winner=1 - seat, error=repr(action))
             break
-        out["actions"].append(to_dict(action))
-        tracker.before(state)
+        try:
+            out["actions"].append(to_dict(action))
+            tracker.before(state)
+        except Exception:
+            out.update(result="void", error="engine error outside a move:\n" + traceback.format_exc(limit=8))
+            break
         try:
             apply(state, action)
         except Exception:
             out.update(result="void", error="engine error on a legal move:\n" + traceback.format_exc(limit=8))
             break
-        tracker.after(state)
+        try:
+            tracker.after(state)
+        except Exception:
+            out.update(result="void", error="engine error outside a move:\n" + traceback.format_exc(limit=8))
+            break
     if out["result"] is None:
         out["winner"] = state.winner if state.winner in (0, 1) else None
         out["result"] = "normal" if out["winner"] is not None else "draw"
@@ -164,7 +182,7 @@ def play_job(job: dict, beat=None) -> dict:
         try:
             pos = base.public_position(state, seat, tracker)
             og.append(base.out_of_guess(strategies[seat].guess(pos), tracker.revealed[1 - seat]))
-        except Exception:
+        except BaseException:                         # SystemExit in a guess can't void a finished game (LD-36)
             og.append(None)
     out["out_of_guess"] = og            # shown opponent cards outside each side's guess, at the end
     return out
@@ -174,6 +192,9 @@ def play_job(job: dict, beat=None) -> dict:
 
 def _worker(inq, results_q, beat, wid):
     """One job at a time from its own queue, so the parent always knows which job a worker holds."""
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_IGN)      # Ctrl+C stops the parent, which ends the workers; inside a
+    #                                                   worker a KeyboardInterrupt is then a strategy's own (LD-36)
     sys.path.insert(0, str(HERE.parent))
     sys.path.insert(0, str(ROOT))
     for extra in filter(None, os.environ.get("LADDER_EXTRA_PATH", "").split(os.pathsep)):
@@ -322,41 +343,48 @@ def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=No
                 "strategies": job["strategies"], "strategy_seeds": job.get("strategy_seeds"),
                 "deal": job.get("deal"), "labels": job.get("labels", {}), "result": result, **kw}
 
-    with out.open("a", encoding="utf-8") as f:
-        while True:
-            for w in pool:                                          # hand out work
-                if w["job"] is None and not exhausted:
-                    w["job"] = take()
-                    if w["job"] is not None:
-                        w["inq"].put(w["job"])
-            if exhausted and not any(w["job"] for w in pool):
-                break
-            try:
-                res = results_q.get(timeout=0.25)
-            except Exception:
-                res = None
-            if res is not None:
-                w = pool[res.pop("worker")]
-                if w["job"] is not None and w["job"]["id"] == res["id"]:
-                    w["job"] = None
-                    write(f, res)
-                continue
-            now = time.monotonic_ns()
-            for i, w in enumerate(pool):                            # the watchdog
-                job = w["job"]
-                if job is None:
+    try:
+        with out.open("a", encoding="utf-8") as f:
+            while True:
+                for w in pool:                                          # hand out work
+                    if w["job"] is None and not exhausted:
+                        w["job"] = take()
+                        if w["job"] is not None:
+                            w["inq"].put(w["job"])
+                if exhausted and not any(w["job"] for w in pool):
+                    break
+                try:
+                    res = results_q.get(timeout=0.25)
+                except Exception:
+                    res = None
+                if res is not None:
+                    w = pool[res.pop("worker")]
+                    if w["job"] is not None and w["job"]["id"] == res["id"]:
+                        w["job"] = None
+                        write(f, res)
                     continue
-                started = w["beat"][1]
-                if started and (now - started) / 1e9 > step_limit:
-                    seat = int(w["beat"][0])
-                    w["proc"].kill()
-                    w["proc"].join()
-                    write(f, stub(job, "timeout", loser=seat, winner=1 - seat,
-                                  error=f"one decision ran past {step_limit}s of wall time"))
-                    pool[i] = spawn(i)
-                elif not w["proc"].is_alive():
-                    write(f, stub(job, "void", error=f"worker died (exit code {w['proc'].exitcode})"))
-                    pool[i] = spawn(i)
+                now = time.monotonic_ns()
+                for i, w in enumerate(pool):                            # the watchdog
+                    job = w["job"]
+                    if job is None:
+                        continue
+                    started = w["beat"][1]
+                    if started and (now - started) / 1e9 > step_limit:
+                        seat = int(w["beat"][0])
+                        w["proc"].kill()
+                        w["proc"].join()
+                        write(f, stub(job, "timeout", loser=seat, winner=1 - seat,
+                                      error=f"one decision ran past {step_limit}s of wall time"))
+                        pool[i] = spawn(i)
+                    elif not w["proc"].is_alive():
+                        # not pinned on a side: any code in the process (a thread of either strategy) can end it
+                        write(f, stub(job, "void", error=f"worker died (exit code {w['proc'].exitcode})"))
+                        pool[i] = spawn(i)
+    except BaseException:                             # Ctrl+C or an error here: the workers ignore Ctrl+C
+        for w in pool:                                # (LD-36), so end them before going
+            if w["proc"].is_alive():
+                w["proc"].kill()
+        raise
     for w in pool:
         w["inq"].put(None)
     for w in pool:
