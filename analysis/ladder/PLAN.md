@@ -7,9 +7,9 @@
 - 阶段：**0（侦察，只读）已完成**，2026-11-21。产出：ENVIRONMENT.md（含对照表、CR 核对）、DEVIATIONS.md、SEEDS.md、LEDGER.md、GATES.md（空）。
 - 阶段 1 进行中（11-21 起）。已完成：1.1 CR 结算（ladder/rules.py）、1.2 不偷看的底座（base.py、strategy.py）、1.3 批量对战和重放（runner.py、replay.py）、1.4 池管理器（pool.py）、1.5 冻结池评测器（evaluator.py）、1.6 排行榜（leaderboard.py）、1.7 检验工具（gate.py）。测试 120 个全过（tests/，11-22 按 S2 改过）。假对局上的统计预检：tools/check_stats.py、gate.py selfcheck（LD-12～LD-16）。种子段已在项目登记表上登记（SEEDS.md）。
 - 11-21 那一轮真对局检查（电脑 C:\claude\ladder-runs\p1）已跑完：基线、重放、把关自检、已知强弱第一轮、波动。11-22 03:35Z Salem 裁定 S2（分差超过 200 永不匹配，该职业没人就重抽），匹配代码、评估器、把关、测试已改（测试 120 个全过），旧结果作废不删（A29）。
-- 下一步：在电脑上按 S2 重跑（C:\claude\ladder-runs\p1b-s2.cmd → p1b）：基线 → 重放 → 把关自检 → 已知强弱第二轮 → 波动，约 8～9 小时。跑完补验收报告，交 Salem 验收，之后 1.9 锁定。冻结池里谁都够不着：Salem 11-22 04:27Z 定了严格停住（S3、A30）。
-- 阶段 2 准备（11-22 起，Salem 04:43Z 让开始，和重跑并行，只在云端容器里）：2.1 打法接口已写（ladder/interface.py、public/base-interface.md），2.3、2.4 设计稿在 PHASE2-DESIGN.md。
-- 待 Salem：结论账本在哪；玩家提示词；外部玩家怎么接入；假设 A1、A7、A8。（C2 已由 Salem 裁定 S1 定下，11-21 07:12Z，见 DEVIATIONS）
+- **按 S2 的重跑在电脑上进行中**：Salem 11-22 05:05:42Z（他那边 00:05）双击 p1b-s2.cmd 开跑，代码是 3803613（拉到的那一版，阶段 1 的代码和 7be4afc 一样，之后只多了文档和阶段 2 的新文件），低优先级、核掩码 0x3fc3fc、匹配 S2、冻结池 wait（S3）。顺序：基线 → 重放 → 把关自检 → 已知强弱第二轮 → 波动，约 8～9 小时，结果在 C:\claude\ladder-runs\p1b。跑完补验收报告，交 Salem 验收，之后 1.9 锁定。冻结池里谁都够不着：Salem 11-22 04:27Z 定了严格停住（S3、A30）。
+- 阶段 2 准备（11-22 起，Salem 04:43Z 让开始，和重跑并行，只在云端容器里）：2.1 打法接口（ladder/interface.py、public/base-interface.md）、2.3 提交校验（ladder/submit.py、public/submit.md）、2.4 练习场（ladder/arena.py、public/arena.md）代码已写，单元测试过；设计和没做的在 PHASE2-DESIGN.md。玩家提示词 player-prompt-v1.md（Salem 04:56Z）。外部选手：Codex 完整权限，在 Salem 自己的账户里（S4）。**选手进场以前要先做 base-2**（LD-27 种子加密钥、LD-29 开局前打乱卡表顺序），等 p1b 跑完再改 runner。
+- 待 Salem：结论账本在哪；假设 A1、A7、A8、A31～A33。（C2 已由 Salem 裁定 S1 定下，11-21 07:12Z，见 DEVIATIONS）
 - 不写任何策略，不往池子里放任何东西。
 
 ## 一、我对任务的理解
