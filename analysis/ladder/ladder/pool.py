@@ -350,22 +350,32 @@ class Pool:
                    "base_version": base_version or base.BASE_VERSION, "gate": gate})
         return m.version
 
-    def period_done(self) -> list[str]:
-        """The members still short of this period's games since their last change (empty = may advance):
-        2000 in the baseline run, 100 in the players' periods (S7)."""
+    def short_members(self) -> list[Member]:
+        """Every member still short of this period's games since its last change: 2000 in the baseline run, 100 in
+        the players' periods (S7)."""
         need = period_target(self.period)
-        return [m.mid for m in self.active() if m.period_games < need]
+        return [m for m in self.active() if m.period_games < need]
+
+    def period_done(self) -> list[str]:
+        """The members still short of this period's games who can still play (empty = may advance). Salem S8
+        (11-22): a member with nobody within 200 right now doesn't hold the period up; advance() records it."""
+        iso = set(self.isolated())
+        return [m.mid for m in self.short_members() if m.mid not in iso]
 
     def advance(self, force: str | None = None) -> int:
         short = self.period_done()
         if short and not force:
             raise PoolError(f"{len(short)} members still short of {period_target(self.period)} games: {short[:10]}")
+        iso = set(self.isolated())
+        short_isolated = [{"mid": m.mid, "games": m.period_games, "cr": m.cr} for m in self.short_members()
+                          if m.mid in iso]
         through = []
         if period_kind(self.period) == "strategy":
             # nobody enters during a strategy period, so everyone in the pool now was there for all of it
             through = [m.mid for m in self.active()]
         self._log({"ev": "period", "period": self.period + 1, "kind": period_kind(self.period + 1),
                    "through_strategy_period": through, "forced": force, "short": short,
+                   "short_isolated": short_isolated,                        # S8: short, but nobody within 200
                    "rules": {"period_games": period_target(self.period + 1), "protect_games": PROTECT_GAMES}})
         return self.period
 

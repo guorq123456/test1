@@ -164,13 +164,18 @@ def test_period_stops_when_only_isolated_members_are_short(tmp_path):
     a, b, c = pool.active()
     a.cr, b.cr, c.cr = 1600, 1600, 1300                   # c is out of reach (A27)
     a.period_games = b.period_games = P.period_target(pool.period)
-    st = pool.stuck(for_period=True)
-    assert st["why"] == "short members isolated" and st["short"] == [c.mid]
+    # Salem S8: c is short but can't play anyone, so it doesn't hold the period up
+    assert pool.period_done() == []
     assert list(pool.jobs(until_period_done=True)) == []
     b.period_games = 0                                    # someone who can still play is short: go on
-    assert pool.stuck(for_period=True) is None
+    assert pool.period_done() == [b.mid]
     job = next(pool.jobs(until_period_done=True))
     assert c.mid not in job["labels"]["members"]
+    pool.settle({"id": job["id"], "result": "draw", "winner": None})
+    b.period_games = P.period_target(pool.period)
+    pool.advance()                                        # no force needed; c's shortfall goes in the log
+    ev = [json.loads(x) for x in (tmp_path / "p" / "events.jsonl").read_text().splitlines()][-1]
+    assert ev["forced"] is None and ev["short_isolated"] == [{"mid": c.mid, "games": 0, "cr": 1300}]
 
 
 def test_excluded_seeds_are_never_drawn(tmp_path):
