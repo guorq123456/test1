@@ -162,6 +162,39 @@ def test_a_setup_void_is_played_again_once_and_written_down_if_it_comes_back(tmp
     assert sum(l["void"] for l in A._ledger(tmp_path / "b")) == 1 and A._plans(tmp_path / "b")[0]["done"]
 
 
+def test_a_game_is_played_again_at_most_once_whatever_happens_to_the_runs(tmp_path, monkeypatch):
+    kf, table, quick, pool = _setup(tmp_path, monkeypatch)
+    out = tmp_path / "out"
+    from ladder import runner
+    real = runner.run
+
+    def dies(jobs, path, **kw):                                  # the first job's worker dies every time
+        res = real(jobs[1:], path, **kw)
+        sealed = deal.seal(jobs[0], deal.load_key(kf))
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(json.dumps({"id": jobs[0]["id"], "seed": jobs[0]["seed"], "labels": jobs[0]["labels"],
+                                "deal": sealed["deal"], "result": "void", "error": "worker died (exit code 1)"}) + "\n")
+        return res
+
+    monkeypatch.setattr(runner, "run", dies)
+    real_write = A._write_json
+
+    def no_done(path, value):                                    # the run stops before the period is marked done
+        if "done" in value:
+            raise KeyboardInterrupt
+        real_write(path, value)
+
+    monkeypatch.setattr(A, "_write_json", no_done)
+    import pytest
+    with pytest.raises(KeyboardInterrupt):
+        A.run(table, pool.dir, out, games=2, workers=2, key=str(kf))
+    monkeypatch.setattr(A, "_write_json", real_write)
+    res = A.run(table, pool.dir, out, games=2, workers=2, key=str(kf))
+    assert not (out / "games-P0-redo2.jsonl").exists()            # voided twice already: written down, not replayed
+    assert res["voids"] == {"worker died (exit code 1)": 1} and A._plans(out)[0]["done"]
+    assert len(A._lines(out)[1]) == 4                             # the first, interrupted batch doesn't count
+
+
 def test_a_torn_ledger_tail_does_not_swallow_the_next_write(tmp_path, monkeypatch):
     kf, table, quick, pool = _setup(tmp_path, monkeypatch)
     out = tmp_path / "out"

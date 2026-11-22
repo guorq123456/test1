@@ -147,3 +147,26 @@ def test_an_engine_error_outside_a_move_is_a_void_not_a_runner_error(monkeypatch
     monkeypatch.setattr(base, "public_position", flaky)
     r = runner.play_job(job(13, "py:helpers:Random", "py:helpers:Random", first=0))
     assert r["result"] == "void" and r["error"].startswith("engine error outside a move")
+
+
+def test_the_referee_judges_moves_on_its_own_list(tmp_path):
+    # LD-37: appending a move to the list handed over, or returning something whose comparison raises, is an illegal
+    # move (a loss), not a pass and not a void; a crash message with line-separator characters stays one log line
+    jobs = [job(14, "py:helpers:AppendsIllegal", "py:helpers:Random", first=0),
+            job(15, "py:helpers:ReturnsArray", "py:helpers:Random", first=0),
+            job(16, "py:helpers:OddMessage", "py:helpers:Random", first=0)]
+    out = tmp_path / "g.jsonl"
+    runner.run(jobs, str(out), workers=2, step_limit=5.0, quiet=True)
+    lines = out.read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 3
+    rows = {r["id"]: r for r in map(json.loads, lines)}
+    assert rows["t-14"]["result"] == "illegal" and rows["t-14"]["loser"] == 0
+    assert rows["t-15"]["result"] == "illegal" and rows["t-15"]["loser"] == 0
+    assert rows["t-16"]["result"] == "crash" and "x\u2028y" in rows["t-16"]["error"]
+    assert runner.run(jobs, str(out), workers=2, step_limit=5.0, quiet=True)["played"] == 0    # resume sees all 3
+
+
+def test_the_hosts_ctrl_c_stops_a_game_played_in_its_own_process():
+    # a replay or a submission check plays in the host's process: Ctrl+C there is not the strategy's crash (LD-37)
+    with pytest.raises(KeyboardInterrupt):
+        runner.play_job(job(17, "py:helpers:Interrupts", "py:helpers:Random", first=1))

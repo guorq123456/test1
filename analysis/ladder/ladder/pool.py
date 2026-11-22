@@ -216,7 +216,8 @@ class Pool:
         ev = {"n": self.n_events, **ev}
         if self.dir is not None:
             with self.events_path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(ev, ensure_ascii=False) + "\n")
+                from ladder.runner import jsonl  # noqa: PLC0415 - no import cycle at load
+                f.write(jsonl(ev))
                 f.flush()
         self._apply(ev)
         return ev

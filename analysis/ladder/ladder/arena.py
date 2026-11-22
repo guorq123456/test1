@@ -96,7 +96,8 @@ def _append(p: Path, rec: dict):
     p = Path(p)
     p.parent.mkdir(parents=True, exist_ok=True)
     with p.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        from ladder.runner import jsonl  # noqa: PLC0415 - no import cycle at load
+        f.write(jsonl(rec))
 
 
 # --- the host's side: the frozen copy and the window -----------------------------------------------------------
@@ -435,7 +436,7 @@ def _from_position(job: dict) -> dict:
     the generator as they were; an int reshuffles the unseen deck order of both sides and reseeds the generator)."""
     import traceback
     from ladder import base
-    from ladder.runner import _make_counter, load_deck, make_strategy
+    from ladder.runner import _make_counter, host_interrupt, legal_choice, load_deck, make_strategy, safe_repr
     from svsim.core.actions import from_dict, to_dict
     from svsim.core.engine import apply, legal_actions
     from ladder import deal
@@ -457,7 +458,9 @@ def _from_position(job: dict) -> dict:
            "steps": [list(s) for s in job["prefix_steps"]], "actions": list(job["prefix"])}
     try:
         strategies = [make_strategy(s, x) for s, x in zip(job["strategies"], job["strategy_seeds"])]
-    except BaseException:                             # as the runner (LD-36)
+    except BaseException as e:                        # as the runner (LD-36)
+        if host_interrupt(e):
+            raise
         out.update(result="void", error="strategy failed to load:\n" + traceback.format_exc(limit=5))
         return out
     while not state.over:
@@ -466,14 +469,18 @@ def _from_position(job: dict) -> dict:
         pos = base.public_position(state, seat, tracker)
         c0 = counter()
         try:
-            action = strategies[seat].act(pos, actions)
-        except BaseException:                         # SystemExit too: the strategy's crash, as in the runner (LD-36)
+            action = strategies[seat].act(pos, list(actions))
+        except BaseException as e:                    # SystemExit too: the strategy's crash, as in the runner (LD-36)
+            if host_interrupt(e):
+                raise
             out.update(result="crash", loser=seat, winner=1 - seat, error=traceback.format_exc(limit=8))
             break
         out["steps"].append([seat, counter() - c0, 0])
-        if action not in actions:
-            out.update(result="illegal", loser=seat, winner=1 - seat, error=repr(action))
+        chosen = legal_choice(action, actions)        # as in the runner (LD-37)
+        if chosen is None:
+            out.update(result="illegal", loser=seat, winner=1 - seat, error=safe_repr(action))
             break
+        action = chosen
         out["actions"].append(to_dict(action))
         tracker.before(state)
         apply(state, action)

@@ -274,7 +274,8 @@ def _append(subdir: Path, rec: dict):
     p = Path(subdir) / "submissions.jsonl"
     p.parent.mkdir(parents=True, exist_ok=True)
     with p.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        from ladder.runner import jsonl  # noqa: PLC0415 - no import cycle at load
+        f.write(jsonl(rec))
         f.flush()
 
 
@@ -430,6 +431,7 @@ def _load_main(argfile: str) -> int:
             seen.append(why)
             raise RuntimeError(f"提交校验：不许 {why}")
 
+    from ladder.runner import jsonl                     # before the hook: it reads files
     sys.dont_write_bytecode = True
     sys.addaudithook(hook)
     out = {"ok": False, "blocked": seen}
@@ -451,7 +453,7 @@ def _load_main(argfile: str) -> int:
         out["error"] = "".join(traceback.format_exception(type(e), e, e.__traceback__, limit=6))[-3000:]
     out["blocked"] = list(seen)
     out["ok"] = out["ok"] and not seen
-    sys.stdout.write("\nLOADCHECK " + json.dumps(out, ensure_ascii=False) + "\n")
+    sys.stdout.write("\nLOADCHECK " + jsonl(out))
     sys.stdout.flush()
     return 0
 

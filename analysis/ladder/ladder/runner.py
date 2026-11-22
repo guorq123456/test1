@@ -11,7 +11,8 @@ Strategy specs: "bot:<arena spec>" (the base's BotStrategy over that bot, e.g. "
 known-strength checks), or "py:<module>:<factory>" (a factory called with seed=...; e.g. a player's submission).
 
 Rules it applies (task spec §4.2): a strategy that raises loses (crash); one that returns a move not in the legal
-list loses (illegal); one whose single decision runs past --step-limit seconds of wall time loses (timeout: the
+list loses (illegal: judged on the referee's own list, the strategy gets a copy; anything that isn't exactly one of
+those moves, or can't even be compared, is illegal; LD-37); one whose single decision runs past --step-limit seconds of wall time loses (timeout: the
 worker is killed and replaced). "Raises" includes SystemExit and KeyboardInterrupt from the strategy's own call
 (workers ignore Ctrl+C; LD-36); one raised in the end-of-game guess leaves the result alone. An engine error, while
 applying a legal move or around it, can't be pinned on either side: the game is void. So is a worker that dies outright
@@ -69,6 +70,21 @@ def _make_counter():
     return time.thread_time_ns, "ns"
 
 
+# --- log lines -----------------------------------------------------------------------------------------------
+
+_SEPARATORS = {"\u2028": "\\u2028", "\u2029": "\\u2029", "\x85": "\\u0085"}
+
+
+def jsonl(obj) -> str:
+    """One JSON line with Chinese kept readable, and with the three characters str.splitlines() also breaks lines at
+    (U+2028, U+2029, U+0085; json.dumps already escapes the control characters) escaped: a strategy's error message
+    holding one must not split a log line in two (11-22 third pass, LD-37)."""
+    text = json.dumps(obj, ensure_ascii=False)
+    for raw, esc in _SEPARATORS.items():
+        text = text.replace(raw, esc)
+    return text + "\n"
+
+
 # --- strategies ----------------------------------------------------------------------------------------------
 
 def make_strategy(spec: str, seed: int):
@@ -104,6 +120,47 @@ def unscripted(deck) -> list[int]:
 
 # --- one game ------------------------------------------------------------------------------------------------
 
+def host_interrupt(e: BaseException) -> bool:
+    """True for a KeyboardInterrupt that is the host's Ctrl+C: anywhere SIGINT isn't ignored. Only the runner's workers
+    ignore it, so there a KeyboardInterrupt is a strategy's own; in the host's process (a replay, a submission check)
+    it must stop the tool, not count as a crash (11-22 third pass, LD-37)."""
+    if not isinstance(e, KeyboardInterrupt):
+        return False
+    import signal
+    try:
+        return signal.getsignal(signal.SIGINT) is not signal.SIG_IGN
+    except ValueError:                                 # not the main thread: can't tell, so stop
+        return True
+
+
+def legal_choice(action, legal: list):
+    """The referee's own element of `legal` that `action` (what a strategy returned) stands for, or None. Only an
+    object of exactly an engine action's type that equals one of the referee's moves counts; the strategy was handed
+    a copy of the list, so adding to it changes nothing, and any error in comparing makes the move illegal (11-22 third
+    pass, LD-37: a strategy could append moves to the list it was given, or return an object whose comparison raises
+    to have the game written off)."""
+    t = type(action)
+    for a in legal:
+        if type(a) is t:
+            try:
+                if a == action:
+                    return a
+            except BaseException as e:                 # noqa: BLE001
+                if host_interrupt(e):
+                    raise
+                return None
+    return None
+
+
+def safe_repr(x, limit=300) -> str:
+    try:
+        return repr(x)[:limit]
+    except BaseException as e:                         # noqa: BLE001
+        if host_interrupt(e):
+            raise
+        return "<a returned object that can't be shown>"
+
+
 def play_job(job: dict, beat=None) -> dict:
     """Play one job in this process. `beat` (a shared array: seat, step start in ns) lets the parent time a step."""
     from svsim.core.actions import to_dict
@@ -122,7 +179,9 @@ def play_job(job: dict, beat=None) -> dict:
         return out
     try:
         strategies = [make_strategy(s, seed) for s, seed in zip(job["strategies"], seeds)]
-    except BaseException:                             # SystemExit too: a factory can't end the worker (LD-36)
+    except BaseException as e:                        # SystemExit too: a factory can't end the worker (LD-36)
+        if host_interrupt(e):
+            raise
         out.update(result="void", error="strategy failed to load:\n" + traceback.format_exc(limit=5))
         return out
     try:
@@ -144,19 +203,22 @@ def play_job(job: dict, beat=None) -> dict:
             beat[0], beat[1] = seat, time.monotonic_ns()
         w0, c0 = time.perf_counter_ns(), counter()
         try:
-            action = strategies[seat].act(pos, actions)
-        except BaseException:                         # SystemExit, KeyboardInterrupt too: the strategy's own doing
-            out.update(result="crash", loser=seat, winner=1 - seat,   # (workers ignore Ctrl+C, LD-36)
-                       error=traceback.format_exc(limit=8))
+            action = strategies[seat].act(pos, list(actions))         # a copy: the referee keeps its own list
+        except BaseException as e:                    # SystemExit, KeyboardInterrupt too: the strategy's own doing
+            if host_interrupt(e):                     # (workers ignore Ctrl+C; in the host's process it stops)
+                raise
+            out.update(result="crash", loser=seat, winner=1 - seat, error=traceback.format_exc(limit=8))
             break
         finally:
             if beat is not None:
                 beat[1] = 0
         c1, w1 = counter(), time.perf_counter_ns()
         out["steps"].append([seat, c1 - c0, (w1 - w0) // 1000])     # seat, compute (cpu_unit), wall in us
-        if action not in actions:
-            out.update(result="illegal", loser=seat, winner=1 - seat, error=repr(action))
+        chosen = legal_choice(action, actions)
+        if chosen is None:
+            out.update(result="illegal", loser=seat, winner=1 - seat, error=safe_repr(action))
             break
+        action = chosen                               # from here on the referee's own object
         try:
             out["actions"].append(to_dict(action))
             tracker.before(state)
@@ -182,7 +244,9 @@ def play_job(job: dict, beat=None) -> dict:
         try:
             pos = base.public_position(state, seat, tracker)
             og.append(base.out_of_guess(strategies[seat].guess(pos), tracker.revealed[1 - seat]))
-        except BaseException:                         # SystemExit in a guess can't void a finished game (LD-36)
+        except BaseException as e:                    # SystemExit in a guess can't void a finished game (LD-36)
+            if host_interrupt(e):
+                raise
             og.append(None)
     out["out_of_guess"] = og            # shown opponent cards outside each side's guess, at the end
     return out
@@ -329,7 +393,7 @@ def run(jobs, out_path: str, workers: int = 4, step_limit: float = 30.0, mask=No
     def write(f, res):
         nonlocal count
         res["provenance"], res["limits"] = prov, limits
-        f.write(json.dumps(res, ensure_ascii=False) + "\n")
+        f.write(jsonl(res))
         f.flush()
         if on_result is not None:
             on_result(res)

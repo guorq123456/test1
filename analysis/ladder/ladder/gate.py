@@ -147,7 +147,8 @@ def read_ledger(root: Path = LEDGER_DIR) -> list[dict]:
 
 def append_ledger(rec: dict, root: Path = LEDGER_DIR):
     with ledger_path(root).open("a", encoding="utf-8") as f:
-        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        from ladder.runner import jsonl  # noqa: PLC0415 - no import cycle at load
+        f.write(jsonl(rec))
     md = root / "GATES.md"
     if not md.exists():
         md.write_text(GATES_HEADER, encoding="utf-8")

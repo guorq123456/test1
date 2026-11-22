@@ -23,11 +23,12 @@ baseline member is its class's 基线快照 anchor; a hall-of-fame member may st
 member plays the same number of games and the counts tell nothing. Seeds: the segment 93510000-94509999 is used up
 in order, one seed a game, each period right after the seeds the earlier periods' plans took, in a fixed order
 (members by id, anchors by slot, game index); every game is dealt through the host's key (base-2). Before a game is
-played every strategy and deck of the run must load (players' strategies need `--code`, the received submissions).
+played every received strategy's module must be found (`--code`, the received submissions; it is looked up, not run),
+every host strategy must build and every deck's cards must have scripts.
 A period is played once: its plan is written first (DIR/plan-P<P>.json); an interrupted run picks up its own games;
 a game voided in a way that may be the setup's or the machine's (a strategy that didn't load, a dead worker, a runner
-error) is played once more in the same run on its own seed, and if it voids again it is written down as void and
-reported, like an engine error; a changed pool or panel is refused. The period's ledger lines (DIR/anchors.jsonl,
+error) is played once more on its own seed (once per game, however many runs it takes), and if it voids again it is
+written down as void and reported, like an engine error; a changed pool or panel is refused. The period's ledger lines (DIR/anchors.jsonl,
 append-only, one per member version and anchor) go in one write, on a line of their own, and the period counts once
 its plan file names that write and its number of lines ("done", "lines"). The public figures are per class and
 tier, rounded, without counts (`classes`); the per-member rows stay with the host. The fixed panel of seeds
@@ -208,8 +209,8 @@ def plan(anchors: list[dict], pool_dir: Path, games: int, period=None, out=None)
 
 
 SETUP_VOIDS = ("cards with no script", "strategy failed to load", "runner error", "worker died")
-# voids that may come from the host's setup or the machine rather than the game: played once more in the same run, on
-# their own seeds (a new games-P<P>-redo<k>.jsonl). One that voids again is deterministic (a factory that fails on
+# voids that may come from the host's setup or the machine rather than the game: played once more, on their own seeds
+# (a new games-P<P>-redo<k>.jsonl), once per game whatever happens to the runs. One that voids again is deterministic (a factory that fails on
 # that seed, a process ended by one of the strategies, a bug in the runner): it is written down as void like
 # "engine error ..." and reported (red line: 发现了就记录并报告); the period is never held up by it (11-22 re-review)
 
@@ -233,7 +234,10 @@ def _use_code(code) -> None:
 
 
 def preflight(jobs: list[dict]) -> list[str]:
-    """Every strategy and deck of the run loads here first (the workers get the same paths); what doesn't."""
+    """What can't work at all, before a game is played: a received strategy whose module isn't on the paths (most
+    likely a missing --code), a host strategy that doesn't build, a deck with unscripted cards. A received module is
+    only looked up, not run: its code runs in the workers, where a failure is that game's void (11-22 third pass)."""
+    import importlib.util
     import os
     from ladder.runner import load_deck, make_strategy, unscripted
     for extra in filter(None, os.environ.get("LADDER_EXTRA_PATH", "").split(os.pathsep)):
@@ -242,8 +246,13 @@ def preflight(jobs: list[dict]) -> list[str]:
     bad = []
     for spec in sorted({s for j in jobs for s in j["strategies"]}):
         try:
-            make_strategy(spec, 1)
-        except Exception as e:                        # noqa: BLE001 - any failure is reported, nothing played
+            if spec.startswith("py:"):
+                module = spec.split(":", 2)[1]
+                if importlib.util.find_spec(module) is None:
+                    bad.append(f"找不到打法 {spec} 的模块 {module}")
+            else:
+                make_strategy(spec, 1)                # host strategies (bot:, mix:)
+        except Exception as e:                        # noqa: BLE001
             bad.append(f"打法 {spec} 载入失败：{type(e).__name__}: {e}")
     for d in sorted({json.dumps(d) for j in jobs for d in j["decks"]}):
         miss = unscripted(load_deck(json.loads(d)))
@@ -284,27 +293,29 @@ def run(anchors_path: Path, pool_dir: Path, out: Path, games: int = 10, workers=
     ids = {j["id"] for j in jobs}
 
     def read():
-        got = {}
+        got, tries = {}, {}
         for f in [main] + redo:                       # later files replay earlier setup voids: the last line wins
             for g in _jsonl(f):
                 if g.get("id") in ids:
                     got[g["id"]] = g
-        return got
+                    if _setup_void(g):
+                        tries[g["id"]] = tries.get(g["id"], 0) + 1
+        return got, tries
 
     deal_ids, played = set(), 0
     if jobs:
         res = runner.run(jobs, str(main), workers=workers, step_limit=step_limit, mask=mask, quiet=True, key=key)
         played += res.get("played") or 0
         deal_ids.add(res.get("deal"))
-        got = read()
-        stale = [j for j in jobs if j["id"] in got and _setup_void(got[j["id"]])]
-        if stale:                                     # once per run: the same games on their own seeds, a new file
+        got, tries = read()
+        stale = [j for j in jobs if j["id"] in got and _setup_void(got[j["id"]]) and tries[j["id"]] == 1]
+        if stale:                                     # once per game, ever: on its own seed, in a new file
             f = out / f"games-P{period}-redo{len(redo) + 1}.jsonl"
             res = runner.run(stale, str(f), workers=workers, step_limit=step_limit, mask=mask, quiet=True, key=key)
             played += res.get("played") or 0
             deal_ids.add(res.get("deal"))
             redo.append(f)
-            got = read()
+            got, _ = read()
     else:
         got = {}
     missing = [j["id"] for j in jobs if j["id"] not in got]
@@ -332,11 +343,11 @@ def run(anchors_path: Path, pool_dir: Path, out: Path, games: int = 10, workers=
     deal_id = deals.pop() if deals else None
     import secrets
     batch = f"{digest[:12]}-{time.strftime('%Y%m%d%H%M%S')}-{secrets.token_hex(4)}"
-    text = "".join(json.dumps({"period": period, "member": mid, "version": ver, "craft": craft, "anchor": aid,
-                               "tier": tier[aid], "games": games, **d,
-                               **dict(zip(("rate", "lo", "hi"), _wilson(d["won"], d["won"] + d["lost"]))),
-                               "logs": [f.name for f in [main] + redo], "deal": deal_id, "batch": batch,
-                               "time": time.strftime("%Y-%m-%dT%H:%M:%S")}, ensure_ascii=False) + "\n"
+    text = "".join(runner.jsonl({"period": period, "member": mid, "version": ver, "craft": craft, "anchor": aid,
+                                 "tier": tier[aid], "games": games, **d,
+                                 **dict(zip(("rate", "lo", "hi"), _wilson(d["won"], d["won"] + d["lost"]))),
+                                 "logs": [f.name for f in [main] + redo], "deal": deal_id, "batch": batch,
+                                 "time": time.strftime("%Y-%m-%dT%H:%M:%S")})
                    for (mid, ver, craft, aid), d in sorted(per.items()))
     led = out / "anchors.jsonl"
     if led.exists() and led.stat().st_size:
