@@ -35,7 +35,8 @@ DEFAULT_KEY = Path(r"C:\claude\ladder-host\ladder.key")      # Salem's computer;
 # (LD-27: without it a strategy's seed gives the game seed away). Host measurement and probe segments are not here.
 FORMAL = ((87400000, 88400000, "调参（练习场、收提交的冒烟局）"), (88500000, 89000000, "把关"),
           (89100000, 89400000, "累计确认"), (89500000, 91000000, "正式天梯"), (91100000, 91600000, "最终自测"),
-          (91700000, 91800000, "锚点"), (91900000, 92000000, "公共题、起点测量"), (92100000, 92200000, "抽查重测"))
+          (91700000, 91800000, "锚点"), (91900000, 92000000, "公共题、起点测量"), (92100000, 92200000, "抽查重测"),
+          (93510000, 94510000, "锚点（S11 起每期新种子）"))
 
 
 def formal(seed: int) -> str | None:
