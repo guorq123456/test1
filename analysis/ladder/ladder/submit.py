@@ -36,7 +36,7 @@ The checks (PHASE2-DESIGN.md 2.3):
 - smoke: SMOKE_GAMES games against the default strategy, with the baseline lists; no crash, illegal move or timeout;
 - determinism: two of those games replayed decision by decision;
 - compute: per-step compute of the submission against the default strategy in the same seat, same seeds; above
-  1.08 a warning here (the gate refuses it: A25);
+  1.08 refused, every version (A52: new decks never go through the gate, and the gate compares new with old, A25);
 - peek: at a few decisions of two smoke games, the real state is replaced by another one the strategy can't tell
   from it (the opponent's unknown cards, both decks' order, the generator: base.vary_secrets); a strategy that only
   reads what the hooks give makes the same choice. A different choice is refused.
@@ -75,7 +75,7 @@ SMOKE_SEEDS = (88300000, 88400000)  # the host's part of the tuning range (SEEDS
 SMOKE_GAMES = 10
 PEEK_GAMES, PEEK_POINTS = 2, 3
 REPLAY_GAMES = 2
-COMPUTE_WARN = 1.08
+COMPUTE_CAP = 1.08                                 # per-step compute over the default's: refused above (A52)
 YOUR_VOIDS = ("the simulator changed in this worker during the game",   # what the strategy's own code voids
               "a strategy's code tried what a game may not do",                # (LD-52)
               "nothing ran on any clock", "the check after the game ran past", "worker died",  # (LD-45)
@@ -679,9 +679,11 @@ def receive(d: Path, player: str, pool_dir: Path, subdir: Path, workers: int = 4
             tot[3] += k
     ratio = (tot[0] / tot[1]) / (tot[2] / tot[3]) if tot[1] and tot[3] and tot[2] else None
     rec["compute_ratio"] = None if ratio is None else round(ratio, 3)
-    if ratio is not None and ratio > COMPUTE_WARN:
-        rec["warnings"].append(f"每步算力是默认打法的 {ratio:.2f} 倍，超过 {COMPUTE_WARN}：把关检验会判无效（A25）")
-    check("算力", [], {"ratio": rec["compute_ratio"], "unit": pairs[0][1].get("cpu_unit") if pairs else None})
+    over = [f"每步算力是默认打法的 {ratio:.2f} 倍，超过 {COMPUTE_CAP}：每一版都不许超过（所有成员一样，A52）。量有误差，"
+            "别贴着线写"] if ratio is not None and ratio > COMPUTE_CAP else []
+    check("算力", over, {"ratio": rec["compute_ratio"], "unit": pairs[0][1].get("cpu_unit") if pairs else None})
+    if rec["reasons"]:
+        return finish()
 
     problems = []
     normal = [g for _, g, _ in pairs if g["result"] in ("normal", "draw")]

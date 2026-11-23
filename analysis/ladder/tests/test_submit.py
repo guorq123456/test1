@@ -488,3 +488,15 @@ def test_a_resubmission_names_the_failed_gate_and_what_changed(tmp_path):
     ok = make_sub(tmp_path / "s2", "打法更新", member="一号", change="c", prediction="p", resubmit_of="S-0001",
                   since="搜索深度按剩余费用调")
     assert submit.read_dir(ok)["meta"]["resubmit_of"] == "S-0001"
+
+
+def test_a_strategy_over_the_compute_cap_is_refused(tmp_path):
+    """A52: every version is held to 1.08 x the default's per-step compute at receipt (new decks never meet the gate)."""
+    pool = _pool(tmp_path, 1)
+    heavy = QUICK.replace('"iterations": 8', '"iterations": 300').replace("class Quick", "class Heavy")
+    d = make_sub(tmp_path / "in", "新卡组", src=heavy, cls="Heavy", deck=CODES[4], member="重")
+    rec = submit.receive(d, "甲", pool.dir, tmp_path / "subs", workers=2, rng_seed=7, smoke_games=2, seeds=SMOKE)
+    assert rec["verdict"] == "拒收" and rec["compute_ratio"] > submit.COMPUTE_CAP, rec
+    assert [r for r in rec["reasons"] if r.startswith("[算力]") and "A52" in r], rec["reasons"]
+    assert [c["check"] for c in rec["checks"]][-1] == "算力"            # nothing after it runs
+
