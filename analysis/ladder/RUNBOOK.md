@@ -8,8 +8,8 @@
 |---|---|---|
 | `C:\claude\ladder` | 仓库（只拉 claude/ladder 分支；跑着的时候不拉） | 主持方 |
 | `C:\claude\ladder-host\` | `ladder.key`（发牌密钥，base-2，A39）、`pool\`（正式池）、`subs\`（提交台账；`subs\code\` 是收下的打法）、`gates\`（检验台账）、`frozen\`（每期的冻结池）、`anchors\`、`reports\` | 只有主持方。选手不许读（规则 + 提示词，S4） |
-| `C:\claude\ladder-arena\` | 练习场：`host\`（冻结副本、谁是谁、`arena.key`、完整日志）、`public\`、`players\<拼音>\` | `host\` 只有主持方；选手只读自己那份 |
-| `C:\claude\ladder-players\<拼音>\` | 每个选手自己的工作目录 | 本人 |
+| `C:\claude\ladder-arena\` | 练习场：`host\`（冻结副本、谁是谁、`arena.key`、完整日志）、`public\`、`players\<代号>\`（用汉字代号，arena.py） | `host\` 只有主持方；选手只读自己那份 |
+| `C:\claude\ladder-players\<拼音>\` | 每个选手自己的工作目录：笔记本、`submit\`（交提交，一个提交一个子目录）、`receipts\`（主持方放回执）、`summary-P<期>.md`、`to-host.md`（A50） | 本人；主持方收提交、放回执、读小结 |
 | `C:\claude\ladder-players\public\` | 公共目录副本：`analysis/ladder/public/` 全部 + 每期的环境报告 | 全部选手，只读 |
 
 拼音：甲 jia、乙 yi、丙 bing、丁 ding、戊 wu。
