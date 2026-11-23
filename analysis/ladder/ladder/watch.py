@@ -1,5 +1,5 @@
 """The simulator's state in a worker process, before and after a game (fifth pass LD-40, sixth LD-41, seventh LD-42;
-LD-43, LD-44, LD-45, LD-46, LD-47, LD-49, LD-50).
+LD-43, LD-44, LD-45, LD-46, LD-47, LD-49, LD-50, LD-51).
 
 A runner worker plays one game after another, often of different players. Strategy code runs in that process, so it
 could change things every later game there inherits: the shared card definitions (LD-40's finding: `pos.state` hands
@@ -25,6 +25,10 @@ registry's counter (ABCMeta.register changes isinstance for the whole process) a
 and (LD-47) the arrays and plain values numpy's modules and their classes hold (Polynomial.window, polyx, ...: an
 array is compared by its bytes; np.copyto into one changed every later polynomial in the worker) and (LD-50) their
 dicts, lists and sets by their items (np.sctypeDict), numpy's memo caches emptied before every game instead.
+LD-51: and numpy's modules strategies may use (NUMPY_MODULES, numpy.polynomial's) as the standard ones are: their
+globals, their classes member by member (np.polynomial.Polynomial.fit added, np.iinfo.max replaced: every later game
+in the worker ran the change) and the objects they keep at module level or as class attributes (np.r_, np.s_,
+np.mgrid: `np.r_.axis = 1`), but their modules' warning registries, held by identity as the others are.
 Breadth first, each object once, a few levels
 deep. Objects are compared by identity (the snapshot holds them, so an id can't be reused), sets by value, and a
 dict, list or set that gained or lost an item has changed: the registries (scripts, listener sets, the card pool)
@@ -98,6 +102,22 @@ def _ours(obj) -> bool:
     return _watched((getattr(type(obj), "__module__", None) or "").split(".")[0])
 
 
+def _numpy_name(name) -> bool:
+    return isinstance(name, str) and (name == "numpy" or name.startswith("numpy."))
+
+
+def _numpy_inst(obj) -> bool:
+    """LD-51: an instance of a numpy class whose objects keep attributes (np.r_, np.s_, np.mgrid: `np.r_.axis = 1`
+    made every later np.r_[...] in the worker fail); not arrays, scalars or ufuncs, which keep none. Followed only
+    where a strategy can name it, a numpy module's global or a numpy class's attribute: numpy keeps others that
+    change as it works (numpy 1.x's SeedSequence.generate_state closes over an np.errstate, which stores the old
+    settings in itself at every call)."""
+    t = type(obj)
+    if isinstance(obj, (type, types.ModuleType, types.FunctionType)) or not _numpy_name(getattr(t, "__module__", None)):
+        return False
+    return bool(getattr(t, "__dictoffset__", 0)) or any("__slots__" in c.__dict__ for c in t.__mro__ if c is not object)
+
+
 def _cache_attrs(cls) -> frozenset:
     return CACHE_ATTRS.get((getattr(cls, "__module__", None), getattr(cls, "__qualname__", None)), frozenset())
 
@@ -112,9 +132,18 @@ def _cell(c):
 GONE = object()
 
 
-def _members(obj):
+def _followed_class(cls) -> bool:
+    """A class whose members are followed: svsim's and ladder's, the standard modules' a strategy may use, and
+    (LD-51) numpy's (np.polynomial.Polynomial, np.finfo, np.poly1d...: `Polynomial.fit = f` made every later fit in the
+    worker run another player's function)."""
+    m = getattr(cls, "__module__", None)
+    return _watched(m) or m in STDLIB + FOLLOWED or _numpy_name(m)
+
+
+def _members(obj, numpy_ok=False):
     """The (name, value) pairs of `obj` to follow, or None for an object whose inside isn't followed. Dicts are read
-    through dict's own methods, so a subclass's overrides never run here."""
+    through dict's own methods, so a subclass's overrides never run here. `numpy_ok`: a numpy object to follow
+    (_numpy_inst)."""
     if isinstance(obj, types.FunctionType):
         out = [("__code__", obj.__code__), ("__defaults__", obj.__defaults__),
                ("__kwdefaults__", obj.__kwdefaults__), ("__dict__", obj.__dict__), ("__name__", obj.__name__),
@@ -127,7 +156,7 @@ def _members(obj):
     if isinstance(obj, property):
         return [("fget", obj.fget), ("fset", obj.fset), ("fdel", obj.fdel)]
     if isinstance(obj, type):
-        if not (_watched(obj.__module__) or obj.__module__ in STDLIB + FOLLOWED):
+        if not _followed_class(obj):
             return None
         own = [(k, v) for k, v in vars(obj).items() if not (isinstance(obj, enum.EnumType) and k in _ENUM_CACHES)]
         return own + [(("type", "__name__"), obj.__name__), (("type", "__qualname__"), obj.__qualname__),
@@ -141,8 +170,8 @@ def _members(obj):
     if isinstance(obj, (types.ModuleType, enum.Enum)):
         return None                                # modules are entered from the top; an enum member's value is
         #                                            itself (members cache attributes as they're used)
-    if _ours(obj) or getattr(type(obj), "__module__", None) == "dataclasses":   # LD-46: a dataclass's Field objects
-        out = [("__class__", type(obj))]
+    if _ours(obj) or getattr(type(obj), "__module__", None) == "dataclasses" or (numpy_ok and _numpy_inst(obj)):
+        out = [("__class__", type(obj))]           # LD-46: a dataclass's Field objects; LD-51: numpy's np.r_...
         d = getattr(obj, "__dict__", None)
         skip = _cache_attrs(type(obj))
         if isinstance(d, dict):
@@ -185,6 +214,16 @@ def _table(v) -> bool:
     return isinstance(v, (dict, list, set))
 
 
+NOT_TABLES = ("__builtins__", "__warningregistry__")   # LD-51: CPython adds to a module's warning registry as
+#   it warns (a polynomial fit's RankWarning); held by identity in the snapshot instead
+
+
+def _numpy_modules() -> list:
+    """(name, module) of numpy's modules strategies may use: NUMPY_MODULES and numpy.polynomial's."""
+    return sorted((n, m) for n, m in list(sys.modules.items())
+                  if m is not None and (n in NUMPY_MODULES or n.startswith("numpy.polynomial.")))
+
+
 def _numpy_caches() -> list:
     out = []
     for mod, cls, name in NUMPY_CACHES:
@@ -206,12 +245,9 @@ def _numpy_held() -> list:
         return []
     caches = {id(d) for d in _numpy_caches()}
     out, seen = [], set()
-    for m in sorted(n for n in list(sys.modules) if n in NUMPY_MODULES or n.startswith("numpy.polynomial.")):
-        mod = sys.modules.get(m)
-        if mod is None:
-            continue
+    for m, mod in _numpy_modules():
         for k, v in list(vars(mod).items()):
-            if isinstance(v, np.ndarray) or _plain(v) or (_table(v) and k != "__builtins__"):
+            if isinstance(v, np.ndarray) or _plain(v) or (_table(v) and k not in NOT_TABLES):
                 out.append((f"{m}.{k}", mod, k))
             elif isinstance(v, type) and str(getattr(v, "__module__", "")).startswith("numpy") and id(v) not in seen \
                     and not isinstance(v, enum.EnumType):
@@ -365,10 +401,13 @@ def snapshot() -> Snapshot:
     import builtins
     s = Snapshot()
     queue, seen = [], set(_caches())               # the caches: held by identity (their global), never followed
+    seen.update(id(d) for d in _numpy_caches())    # LD-51: numpy's too (emptied before every game)
     grows = set()
     mods = sorted((n, m) for n, m in list(sys.modules.items()) if _watched(n) and m is not None)
     std = [(n, sys.modules[n]) for n in STDLIB + FOLLOWED if sys.modules.get(n) is not None]
-    for name, m in mods + [("builtins", builtins)] + std:
+    nps = _numpy_modules()
+    npinst = set()                                 # LD-51: the numpy objects followed (_numpy_inst)
+    for name, m in mods + [("builtins", builtins)] + std + nps:
         s.modules[name] = m
         d = getattr(m, "__dict__", None)
         if not isinstance(d, dict) or id(d) in seen:
@@ -385,6 +424,12 @@ def snapshot() -> Snapshot:
                       if (isinstance(v := dict.get(d, k), (type, types.FunctionType)) and
                           getattr(v, "__module__", None) == name) or
                       (isinstance(v, (dict, list, set)) and (name, k) not in STD_CACHES)]
+        elif _numpy_name(name):                    # LD-51: numpy's classes and functions, its dicts, lists and sets,
+            queue += [(v, f"{name}.{k}", 1) for k in keys    # and the objects it keeps at module level (np.r_)
+                      if (isinstance(v := dict.get(d, k), (type, types.FunctionType)) and
+                          _numpy_name(getattr(v, "__module__", None))) or
+                      (isinstance(v, (dict, list, set)) and k not in NOT_TABLES) or
+                      (_numpy_inst(v) and not npinst.add(id(v)))]
         elif name != "builtins":
             queue += [(dict.get(d, k), f"{name}.{k}", 1) for k in keys]
     i = 0
@@ -400,8 +445,7 @@ def snapshot() -> Snapshot:
         if isinstance(obj, (set, frozenset)):
             s.sets.append([obj, frozenset(obj), path, id(obj) in grows])
             continue
-        if isinstance(obj, type) and (_watched(getattr(obj, "__module__", None)) or
-                                      getattr(obj, "__module__", None) in STDLIB + FOLLOWED):
+        if isinstance(obj, type) and _followed_class(obj):
             if "__slotnames__" not in obj.__dict__:
                 copyreg._slotnames(obj)            # LD-43: copy.copy / deepcopy store it on first use (a pure cache)
             if "__annotations__" not in obj.__dict__:
@@ -410,11 +454,13 @@ def snapshot() -> Snapshot:
                 except Exception:                  # noqa: BLE001, S110
                     pass
         try:
-            members = _members(obj)
+            members = _members(obj, id(obj) in npinst)
         except Exception:                          # an object that won't show its inside is held by identity only
             members = None
         if members is None:
             continue
+        if isinstance(obj, type) and _numpy_name(getattr(obj, "__module__", None)):
+            npinst.update(id(v) for _, v in members if _numpy_inst(v))   # a numpy class's attributes too
         how = _how(obj)
         if id(obj) in grows:
             how = "grows"

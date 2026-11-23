@@ -336,6 +336,30 @@ BAD = {
  "50-np-alias-sum": "import numpy as np\nA = np.ndarray\nA.sum(np.ones((3, 2)), 0, None, np.polynomial.Polynomial.window)",
  "50-np-getattr-sum": "import numpy as np\ngetattr(np.ndarray, 'sum')(np.ones((3, 2)), 0, None, np.polynomial.Polynomial.window)",
  "50-np-type-shuffle": "import numpy as np\nrng = np.random.default_rng(1)\ntype(rng).shuffle(rng, np.polynomial.laguerre.lagx)",
+ "51-replace-sub-own-init": "import dataclasses\nimport numpy as np\n@dataclasses.dataclass\nclass Base:\n    bag: object = None\nclass Box(Base):\n    def __init__(self, bag=None):\n        self.kept = bag\n    def poison(self, f):\n        self.kept.fit = f\ndataclasses.replace(Box(), bag=np.polynomial.Polynomial).poison(len)",
+ "51-replace-mixin": "import dataclasses\nimport numpy as np\nclass Holder:\n    def __init__(self, bag=None):\n        self.kept = bag\n    def poison(self, f):\n        self.kept.fit = f\n@dataclasses.dataclass\nclass Base:\n    bag: object = None\nclass Box(Holder, Base):\n    pass\ndataclasses.replace(Box(), bag=np.polynomial.Polynomial).poison(len)",
+ "51-replace-sub-of-sub": "import copy\nimport dataclasses\n@dataclasses.dataclass\nclass Base:\n    bag: object = None\nclass Mid(Base):\n    pass\nclass Box(Mid):\n    def __init__(self, bag=None):\n        self.kept = bag\n    def put_in(self, k, v):\n        self.kept[k] = v\nb = Mid()\nb = dataclasses.replace(b, bag=copy.dispatch_table)\nb.put_in(int, None)",
+ "51-replace-kw-init": "import dataclasses\nimport numpy as np\n@dataclasses.dataclass\nclass Box:\n    bag: object = None\n    def __init__(self, **kw):\n        self.kept = kw.get('bag')\n    def poison(self, f):\n        self.kept.fit = f\nb = Box()\nb.bag = np.polynomial.Polynomial\ndataclasses.replace(b).poison(len)",
+ "51-replace-star": "import dataclasses\n@dataclasses.dataclass\nclass Box:\n    bag: object = None\nb = Box()\nc = dataclasses.replace(*[b])",
+ "51-replace-alias": "import dataclasses\nimport numpy as np\nrep = dataclasses.replace\n@dataclasses.dataclass\nclass Box:\n    bag: object = None\n    def poison(self, f):\n        self.bag.fit = f\nrep(Box(), bag=np.polynomial.Polynomial).poison(len)",
+ "51-replace-default-arg": "import dataclasses\ndef f(x, r=dataclasses.replace):\n    return r(x)",
+ "51-replace-partial": "import dataclasses\nimport functools\nf = functools.partial(dataclasses.replace)",
+ "51-replace-from-alias-value": "from dataclasses import replace as r\nfs = [r]",
+ "51-replace-getattr-value": "import dataclasses\nr = getattr(dataclasses, 'replace')",
+ "51-heappush-as": "from heapq import heappush as push\nimport numpy as np\nh = []\npush(h, np.polynomial.Polynomial)\nh[0].fit = len",
+ "51-insort-kw": "import bisect\nimport numpy as np\nh = []\nbisect.insort(a=h, x=np.polynomial.Polynomial)\nh[0].fit = len",
+ "51-insort-a-kw": "import bisect\nfrom svsim.cards import forest\nbisect.insort(a=forest.CARDS, x=1)",
+ "51-shuffle-kw": "import random\nfrom svsim.cards import forest\nrandom.Random(7).shuffle(x=forest.CARDS)",
+ "51-shuffle-kwargs": "import random\nfrom svsim.cards import forest\nrandom.Random(1).shuffle(**{'x': forest.CARDS})",
+ "51-shuffle-partial": "import functools\nimport random\nfrom svsim.cards import forest\nfunctools.partial(random.Random(1).shuffle, forest.CARDS)()",
+ "51-np-shuffle-kw": "import numpy as np\nnp.random.default_rng(3).shuffle(x=np.polynomial.laguerre.lagx)",
+ "51-heappush-partial": "import functools\nimport heapq\nh = []\nfunctools.partial(heapq.heappush, h)(1)",
+ "51-heappush-value": "import heapq\np = heapq.heappush",
+ "51-heappush-map": "import heapq\nimport numpy as np\nh = []\nlist(map(heapq.heappush, [h], [np.polynomial.Polynomial]))",
+ "51-np-geterrobj": "import numpy as np\ne = np.geterrobj()",
+ "51-np-seterrobj": "import numpy as np\nnp.seterrobj([8192, 0, None])",
+ "51-replace-rebound-import": "import dataclasses\nimport numpy as np\nfrom svsim.search.evaluate import DEFAULT\n@dataclasses.dataclass\nclass Box:\n    bag: object = None\n    def __init__(self, bag=None):\n        self.kept = bag\n    def poison(self, f):\n        self.kept.fit = f\nDEFAULT = Box()\ndataclasses.replace(DEFAULT, bag=np.polynomial.Polynomial).poison(len)",
+ "51-replace-local-rebound": "import dataclasses\nimport numpy as np\nfrom svsim.search.evaluate import DEFAULT\n@dataclasses.dataclass\nclass Box:\n    bag: object = None\n    def __init__(self, bag=None):\n        self.kept = bag\n    def poison(self, f):\n        self.kept.fit = f\nd = DEFAULT\nd = Box()\ndataclasses.replace(d, bag=np.polynomial.Polynomial).poison(len)",
  "47-np-emath": "import numpy as np\nx = np.emath.sqrt(-1.0)",
  "47-np-emath-import": "import numpy.emath as em\nx = em.sqrt(-1.0)",
 }
@@ -402,6 +426,8 @@ GOOD_LD47 = {
  "49-np-stats": "import functools\nimport numpy as np\ndef own(a, out=None):\n    return a\nclass T(PlayerStrategy):\n    def evaluate(self, state, me, me_next):\n        p, q = state.players[me], state.players[1 - me]\n        xs = np.array([float(c.atk) for c in p.board] + [0.0])\n        ys = np.zeros(4)\n        buf = np.zeros(())\n        rng = np.random.default_rng(state.turn)\n        order = list(range(4))\n        np.random.Generator.shuffle(rng, order)\n        m = np.median(xs) + np.percentile(xs, 90) + np.median(ys, overwrite_input=True) + np.nanmedian(xs, None, None, False)\n        z = np.nan_to_num(xs) + np.nan_to_num(xs, True)\n        s = np.array2string(xs, max_line_width=120) + np.array_repr(xs, 80)\n        r = np.rot90(np.zeros((2, 2)), int(state.turn))\n        f = bool(xs.any()) + bool(xs.all(0)) + float(xs.conj()[0]) + float(np.ndarray.sum(xs, 0, None, buf))\n        g = functools.partial(np.clip, a_min=0, a_max=1)(xs)\n        h = functools.partial(own, out=state)(xs)\n        return float(m) + float(z[0]) + len(s) + float(r[0, 0]) + f + float(g[0]) + float(h[0]) + order[0]",
  "49-dc-keywords": "import dataclasses\nfrom dataclasses import dataclass, field\n@dataclass(frozen=True, order=True)\nclass Key:\n    score: float = 0.0\n    tag: str = ''\n@dataclasses.dataclass(init=True, eq=False)\nclass Node:\n    visits: int = 0\n    kids: list = field(default_factory=list)\n@dataclass()\nclass Leaf:\n    v: float = 0.0\nclass T(PlayerStrategy):\n    def search(self, pos):\n        n = Node()\n        n.kids.append(Leaf(1.0))\n        n.visits += 1\n        return {'iterations': 100 + len(n.kids) + int(Key(1.0) < Key(2.0))}",
  "50-replace-and-shuffle": "import dataclasses\nimport random\nimport numpy as np\nfrom svsim.search.evaluate import DEFAULT\n@dataclasses.dataclass(frozen=True)\nclass Node:\n    score: float = 0.0\n    kids: tuple = ()\nclass T(PlayerStrategy):\n    def weights(self, pos):\n        return dataclasses.replace(DEFAULT, hp=1.0)\n    def search(self, pos):\n        n = dataclasses.replace(Node(), score=1.0, kids=(Node(),))\n        xs = list(pos.state.players[0].hand)\n        type(self.random).shuffle(self.random, xs)\n        rng = np.random.default_rng(1)\n        a = np.zeros((3, 3))\n        type(rng).shuffle(rng, a)\n        getattr(self.random, 'shuffle')(xs)\n        b = np.zeros(())\n        type(a).sum(a, 0, None)\n        a.sum(None, None, b)\n        return {'iterations': 100 + len(n.kids) + len(xs)}",
+ "51-own-init-node-and-replace": "import dataclasses\nfrom svsim.search import evaluate as ev\nfrom svsim.search.evaluate import DEFAULT\n@dataclasses.dataclass(eq=False)\nclass Node:\n    action: object = None\n    parent: object = None\n    def __init__(self, action=None, parent=None, children=None):\n        self.action = action\n        self.parent = parent\n        self.visits = 0\n        self.value = 0.0\n        self.children = {} if children is None else children\n@dataclasses.dataclass(init=False)\nclass Stats:\n    counts: dict = None\n    def __init__(self, counts=None):\n        self.counts = counts if counts is not None else {}\nclass T(PlayerStrategy):\n    def __init__(self, seed=0):\n        super().__init__(seed)\n        self.stats = Stats()\n    def weights(self, pos):\n        base = ev.THREAT if pos.turn > 6 else DEFAULT\n        return dataclasses.replace(base, hp=0.8)\n    def search(self, pos):\n        root = Node()\n        root.children[0] = Node(0, root)\n        leaf = root.children[0]\n        node = leaf\n        while node is not None:\n            node.visits += 1\n            node.value += 0.5\n            node = node.parent\n        self.stats.counts[pos.turn] = root.visits\n        m = dataclasses.replace(Stats(), counts={})\n        m.counts[1] = 2\n        return {'iterations': 100 + root.visits}",
+ "51-shuffle-forms": "import bisect\nimport heapq\nimport random\nfrom heapq import heappush as push\nimport numpy as np\nclass T(PlayerStrategy):\n    def __init__(self, seed=0):\n        super().__init__(seed)\n        self.np_rng = np.random.default_rng(seed)\n    def prior(self, state, actions):\n        n = len(actions)\n        order = list(range(n))\n        random.Random(state.turn).shuffle(x=order)\n        arr = np.arange(n)\n        type(self.np_rng).shuffle(self.np_rng, arr)\n        self.np_rng.shuffle(x=arr)\n        heap = []\n        for i in order:\n            heapq.heappush(heap, (float(arr[i]), i))\n            push(heap, (1.0 + float(arr[i]), i))\n        xs = []\n        bisect.insort(xs, 3)\n        bisect.insort(a=xs, x=4)\n        best = heapq.heappop(heap)[1]\n        p = [0.5 / max(n - 1, 1)] * n\n        p[best] = 0.5\n        return p",
  "48-type-checking-import": "from __future__ import annotations\nimport dataclasses\nimport typing\nif typing.TYPE_CHECKING:\n    from svsim.core.state import GameState\n@dataclasses.dataclass\nclass Node:\n    state: GameState\n    visits: int = 0\n    children: list = dataclasses.field(default_factory=list)\nclass T(PlayerStrategy):\n    def search(self, pos):\n        n = Node(pos.state)\n        n.visits += 1\n        n.children.append(Node(pos.state))\n        return {}",
 }
 GOOD = {
@@ -489,6 +515,24 @@ def test_replace_with_a_dict_built_elsewhere_is_noted():
     got = check_code(head + src + TAIL, "S")
     assert any(g.startswith("提示：第 13 行的 **字典") for g in got), got
     fixed = src.replace("**late", "**({'iterations': 80 + pos.turn} if pos.turn > 10 else {})")
+    assert check_code(head + fixed + TAIL, "S") == []
+
+
+def test_a_replace_that_may_run_an_own_init_is_noted():
+    # LD-50, LD-51: replace(x, ...) on what may be an object of a class with its own __init__ raises that __init__'s
+    # parameters by x's attributes; a refusal that comes from it names the replace line, and building the object
+    # anew (K(field=value)) is accepted. replace on svsim's DEFAULT doesn't count (GOOD_LD47 51-own-init-...)
+    src = ("import dataclasses\n@dataclasses.dataclass(frozen=True)\nclass Sim:\n    hp: int = 0\n    cards: tuple = ()\n"
+           "@dataclasses.dataclass(eq=False)\nclass Line:\n    sim: object = None\n    prev: object = None\n"
+           "    def __init__(self, sim=None, prev=None):\n        self.sim = sim\n        self.prev = prev\n        self.best = 0.0\n"
+           "class T(PlayerStrategy):\n    def evaluate(self, state, me, me_next):\n        p = state.players[me]\n"
+           "        s = Sim(p.leader_hp, tuple(p.field))\n        line = Line(s)\n"
+           "        s = dataclasses.replace(s, hp=s.hp - 1)\n        line = Line(s, line)\n        node = line\n"
+           "        while node is not None:\n            node.best = 1.0\n            node = node.prev\n        return line.best\n")
+    head = "from ladder.interface import PlayerStrategy\n"
+    got = check_code(head + src + TAIL, "S")
+    assert any(g.startswith("提示：第 20 行的 replace(x, ...)") and "Line" in g for g in got), got
+    fixed = src.replace("dataclasses.replace(s, hp=s.hp - 1)", "Sim(hp=s.hp - 1, cards=s.cards)")
     assert check_code(head + fixed + TAIL, "S") == []
 
 

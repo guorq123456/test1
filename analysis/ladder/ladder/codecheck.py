@@ -1,5 +1,6 @@
 """Reading a submission's code (item 2.3; fifth pass LD-40, sixth LD-41, seventh LD-42, eighth LD-43, ninth LD-44,
-tenth LD-45, eleventh LD-46, twelfth LD-47, thirteenth LD-48, fourteenth LD-49, fifteenth LD-50).
+tenth LD-45, eleventh LD-46, twelfth LD-47, thirteenth LD-48, fourteenth LD-49, fifteenth LD-50,
+sixteenth LD-51).
 Nothing in the submitted code runs.
 The simulator's and ladder's own modules are imported here (they are the host's code) to tell a module from a class
 from a function; svsim.learn, svsim.tools, svsim.ui, svsim.build, svsim.search.parallel and ladder's other modules
@@ -118,7 +119,8 @@ NUMPY_DENIED = frozenset({                         # numpy's own names that aren
     "load", "save", "savez", "savez_compressed", "savetxt", "loadtxt", "genfromtxt", "fromfile", "fromregex", "memmap",
     "open_memmap", "DataSource", "dump", "tofile",                                                  # files
     "seterr", "seterrcall", "setbufsize", "set_printoptions", "set_string_function", "set_numeric_ops", "add_newdoc",
-    "add_docstring", "add_newdoc_ufunc", "set_default_printstyle", "printoptions",   # the process's numpy settings:
+    "add_docstring", "add_newdoc_ufunc", "set_default_printstyle", "printoptions", "seterrobj", "geterrobj",   # the
+    #                                    process's numpy settings (LD-51: numpy 1.x's geterrobj gives the live list):
     #                                                                     every later game in the worker
     "test", "info", "source", "lookfor", "show_config", "show_runtime", "who", "get_include"})   # running, showing
 NUMPY_OLD = {"product": "prod", "cumproduct": "cumprod", "sometrue": "any", "alltrue": "all"}   # numpy 1.x's
@@ -516,6 +518,7 @@ class Flow:
         self.incomplete = False
         self.star_fields: set = set()  # lines of replace(x, **d) / K(**d) that raised every dataclass field (LD-45)
         self.dc_rough: set = set()     # lines building a dataclass by position where the order isn't plain (LD-46)
+        self.replace_lines: dict = {}  # LD-51: line of a replace whose object may be an own class -> those classes
         self._init_levels()
         deadline = time.monotonic() + FLOW_SECONDS
         while True:                    # levels only go up, over three values: this ends (no round cap: LD-42)
@@ -616,6 +619,8 @@ class Flow:
 
     def _collect(self):
         self.stores: dict = {}            # key -> how many bindings other than a parameter
+        self.assigned: dict = {}          # key -> [values of its plain `name = value` bindings] (LD-51)
+        self.arg_keys: set = set()        # the keys parameters bind (LD-51)
         self.mods: dict = {}              # key -> module name
         self.objs: dict = {}              # key -> [(module, name, object)]
         self.imports: dict = {}           # key -> how many import statements bind it (LD-46)
@@ -657,7 +662,15 @@ class Flow:
                     self.stores[k] = self.stores.get(k, 0) + 1
                 return k
 
-            if isinstance(node, ast.Name) and not isinstance(node.ctx, ast.Load):
+            if isinstance(node, ast.Assign) and all(isinstance(t, ast.Name) for t in node.targets):
+                for t in node.targets:
+                    self.assigned.setdefault(self.key(t), []).append(node.value)
+            elif isinstance(node, (ast.AnnAssign, ast.NamedExpr)) and isinstance(node.target, ast.Name) and \
+                    node.value is not None:
+                self.assigned.setdefault(self.key(node.target), []).append(node.value)
+            if isinstance(node, ast.arg):
+                self.arg_keys.add(self.key(node))
+            elif isinstance(node, ast.Name) and not isinstance(node.ctx, ast.Load):
                 self.stores[self.key(node)] = self.stores.get(self.key(node), 0) + 1
             elif isinstance(node, ast.Import):
                 for a in node.names:
@@ -1750,6 +1763,60 @@ class Flow:
             elif f.kwarg is not None:
                 self._raise(self.key(f.kwarg), holds(v))
 
+    def may_be_dataclass(self, c, seen=None) -> bool:
+        """Whether class `c`'s objects may be dataclasses when the game runs (LD-51): decorated, or built on one (an
+        own class, a host class that is one, or a base the reading can't name), however far up."""
+        seen = set() if seen is None else seen
+        if c in seen:
+            return False
+        seen.add(c)
+        i = self.cls[c]
+        return i.dataclass or i.unknown or any(dataclasses.is_dataclass(o) for o in i.objs) or \
+            any(self.may_be_dataclass(u, seen) for u in i.user_bases)
+
+    def surely_host(self, node, depth=0) -> bool:
+        """`node` surely isn't an object of the module's own classes (LD-51): what an import names (svsim's DEFAULT,
+        ev.THREAT), what a host class builds (Weights(...)), a replace / copy of one, either branch of `a if c else
+        b` being one, a local name every binding of which is a plain `name = one of these` (not a parameter)."""
+        if depth > 6 or node is None:
+            return False
+        if self.import_root(node) is not None:
+            root = node
+            while isinstance(root, (ast.Attribute, ast.Subscript)):
+                root = root.value
+            k = self.key(root)             # only bound by imports (`DEFAULT = Box()` after the import isn't)
+            return self.stores.get(k, 0) == self.imports.get(k, 0)
+        if isinstance(node, ast.IfExp):
+            return self.surely_host(node.body, depth + 1) and self.surely_host(node.orelse, depth + 1)
+        if isinstance(node, ast.Call):
+            if self.user_class(node.func):
+                return False
+            kn = self.known(node.func)
+            if kn is None:
+                return False
+            if isinstance(kn[2], type):
+                return True
+            same = _is_replacer(kn[2]) or (kn[0] == "copy" and kn[1] in ("copy", "deepcopy"))
+            return same and bool(node.args) and self.surely_host(node.args[0], depth + 1)
+        if isinstance(node, ast.Name):
+            k = self.key(node)
+            vals = self.assigned.get(k, [])
+            return bool(vals) and k not in self.arg_keys and len(vals) == self.stores.get(k, 0) and \
+                not self.imports.get(k) and all(self.surely_host(v, depth + 1) for v in vals)
+        return False
+
+    def _replaced_classes(self, obj) -> list:
+        """The module's classes whose __init__ replace(obj, ...) may run (LD-51): those that may be dataclasses
+        (an undecorated subclass or a mixin's too), but none when obj surely isn't one of them (surely_host), and
+        only K's when obj is K(...)."""
+        if self.surely_host(obj):
+            return []
+        if isinstance(obj, ast.Call):
+            own = self.user_class(obj.func)
+            if own:
+                return [c for c in own if self.may_be_dataclass(c)]
+        return [c for c in self.cls if self.may_be_dataclass(c)]
+
     def _flow_call(self, call):
         for d, off in self.targets(call):
             self._raise_params(d, off, call.args, call.keywords)
@@ -1763,20 +1830,27 @@ class Flow:
                     if u is not own[0]:
                         self._raise_dataclass(u, call.args, call.keywords)
         kn = self.known(fn)
-        if kn is not None and kn[2] in REPLACERS:  # replace(obj, field=x): every dataclass's field x
+        if kn is not None and _is_replacer(kn[2]):  # replace(obj, field=x): every dataclass's field x
             self._raise_fields(sorted({f for c, i in self.cls.items() if i.dataclass for f in self.all_fields(c)}),
                                None, call.args[1:], call.keywords)
-            # LD-50: replace builds the copy with obj's class, so the __init__ a dataclass of the module runs (its
-            # own, or a base's under init=False) gets the changes, and every other parameter obj's attribute of
-            # that name (obj may be of any of them)
+            # LD-50: replace builds the copy with obj's class, so the __init__ a class of the module runs (its
+            # own, or a base's under init=False) gets the changes, and every other field obj's attribute of that
+            # name. LD-51: any class of the module (an undecorated subclass or a mixin of a dataclass is one too,
+            # so is a class built on a host dataclass), but the ones obj can't be: what an import names (svsim's
+            # DEFAULT) or a host class builds; K(...) is a K. A **kw parameter gets every field's attribute.
             obj = call.args[0] if call.args and not isinstance(call.args[0], ast.Starred) else None
             given = {k.arg for k in call.keywords if k.arg is not None}
-            for c, i in self.cls.items():
-                if not i.dataclass:
-                    continue
-                for d in self.inits(c):
+            fields = sorted({f for c in self.cls for f in self.all_fields(c)})
+            for c in self._replaced_classes(obj):
+                ds = self.inits(c)
+                if ds:
+                    self.replace_lines.setdefault(call.lineno, set()).add(c.name)
+                for d in ds:
                     f = self.fn[d]
-                    rest = [x.arg for x in f.pos[1:] + f.kwonly if x.arg not in given]
+                    names = [x.arg for x in f.pos[1:] + f.kwonly]
+                    if f.kwarg is not None:
+                        names += [a for a in fields if a not in names]
+                    rest = [a for a in names if a not in given]
                     kws = list(call.keywords)
                     if obj is not None:
                         kws += [ast.copy_location(ast.keyword(arg=a, value=ast.copy_location(
@@ -1784,7 +1858,6 @@ class Flow:
                     else:                      # replace(*xs): what xs gives, into every parameter
                         kws += [ast.keyword(arg=None, value=call.args[0].value)] if call.args else []
                     self._raise_params(d, 1, call.args[1:], kws)
-        name = _call_name(self, fn)   # LD-50: getattr(heapq, 'heappush')(...) too
         if isinstance(fn, ast.Attribute) and fn.attr in ADDERS:
             v = max([self.level(a) for a in call.args] + [self.level(k.value) for k in call.keywords], default=0)
             if isinstance(fn.value, ast.Name) and self.key(fn.value) is None and fn.value.id in BUILTIN_TYPES:
@@ -1795,8 +1868,11 @@ class Flow:
                 self._raise_container(fn.value, holds(v))
         elif isinstance(fn, ast.Attribute) and fn.attr == "setdefault" and len(call.args) >= 2:
             self._raise_container(fn.value, holds(self.level(call.args[1])))
-        if name in ARG_MUTATORS and len(call.args) >= 2:
-            self._raise_container(call.args[0], holds(max(self.level(a) for a in call.args[1:])))
+        mut = _mutator_name(self, fn)            # LD-51: an import alias, a= / x= keywords too
+        if mut is not None:
+            cont, items = _mutator_parts(call, mut)
+            if cont is not None and items:
+                self._raise_container(cont, holds(max(self.level(a) for a in items)))
         if isinstance(fn, ast.Name) and fn.id == "setattr" and self.key(fn) is None and len(call.args) >= 3 and \
                 isinstance(call.args[1], ast.Constant) and isinstance(call.args[1].value, str):
             self._raise_attr(call.args[1].value, self.level(call.args[2]))
@@ -2165,6 +2241,9 @@ def _rules(tree, flow, cls) -> list[str]:
             k = flow.key(node)
             if k is None and node.id in ATTR_FUNCS and not (isinstance(p, ast.Call) and p.func is node):
                 bad(node, f"{node.id} 只能直接调用")
+            if not (isinstance(p, ast.Call) and p.func is node) and _direct_only(flow, node):
+                bad(node, f"{node.id}（{_direct_only(flow, node)}）只能直接调用：当值用（赋给别的名字、默认参数、"
+                          "functools.partial、map）读代码就看不到它改了什么、放进了什么（LD-51）")
             if k in flow.mods and not receiver(node):
                 bad(node, f"模块 {node.id} 不许当值用（只能写 {node.id}.属性）")
             if flow.cdefs.get(k) and not class_use_ok(node):
@@ -2180,6 +2259,9 @@ def _rules(tree, flow, cls) -> list[str]:
             ctx = "load" if isinstance(node.ctx, ast.Load) else "store" if isinstance(node.ctx, ast.Store) else "del"
             call = p if isinstance(p, ast.Call) and p.func is node else None
             attr_rules(node.value, node.attr, node, ctx, call, f".{node.attr}")
+            if ctx == "load" and call is None and _direct_only(flow, node):
+                bad(node, f"{ast.unparse(node)} 只能直接调用：当值用（赋给别的名字、默认参数、functools.partial、map）"
+                          "读代码就看不到它改了什么、放进了什么（LD-51）")
             if ctx == "load" and flow.modpath(node) is not None and not receiver(node):
                 bad(node, f"模块 {flow.modpath(node)} 不许当值用（只能写 模块.属性）")
         elif isinstance(node, ast.Subscript):
@@ -2222,6 +2304,8 @@ def _rules(tree, flow, cls) -> list[str]:
                 pp = parent(node)
                 call = pp if isinstance(pp, ast.Call) and pp.func is node else None
                 attr_rules(node.args[0], name.value, node, ctx, call, f"{fn.id}(..., {name.value!r})")
+                if fn.id == "getattr" and call is None and _direct_only(flow, node):
+                    bad(node, f"{ast.unparse(node)} 只能直接调用（LD-51）")
                 if fn.id == "getattr" and flow.modpath(node) is not None and not receiver(node):
                     bad(node, f"模块 {flow.modpath(node)} 不许当值用（只能写 模块.属性，LD-46）")
                 if fn.id in ("setattr", "delattr") and flow.modpath(node.args[0]) is not None:
@@ -2231,13 +2315,19 @@ def _rules(tree, flow, cls) -> list[str]:
                     bad(node, "type(名字, 基类, 字典)：不许这样造类")
                 elif not (receiver(node) or isinstance(p, ast.Compare) or isinstance_arg(node)):
                     bad(node, "type(x) 只能用来读属性（如 .__name__）、比较、isinstance")
-            name = _call_name(flow, fn)
-            at = _arg_at(flow, fn)                 # LD-49: Generator.shuffle(rng, x) changes x; LD-50: type(r).shuffle
-            if name in ARG_MUTATORS and (any(isinstance(a, ast.Starred) for a in node.args[:max(at) + 1]) or
-                                         any(flow.level(a) >= SHARED for a in [node.args[i] for i in at
-                                                                               if i < len(node.args)])):
-                shared(node, f"{name}(...)：不许改可能共用的容器（要改就自己做一份：list(x)、dict(x)、"
-                             "dataclasses.replace(x, ...)）")
+            mc = _as_call(node, node.args[0], node.args[1:]) if _partial(flow, node) else node
+            name = _mutator_name(flow, mc.func)    # LD-51: an import alias, functools.partial, a= / x= keywords
+            at = _arg_at(flow, mc.func)            # LD-49: Generator.shuffle(rng, x) changes x; LD-50: type(r).shuffle
+            if name is not None:
+                ckw = _MUTATOR_KW.get(name)
+                conts = [mc.args[i] for i in at if i < len(mc.args)] + [k.value for k in mc.keywords if k.arg == ckw]
+                if any(isinstance(a, ast.Starred) for a in mc.args[:max(at) + 1]) or \
+                        any(k.arg is None for k in mc.keywords) or any(flow.level(a) >= SHARED for a in conts):
+                    shared(node, f"{name}(...)：不许改可能共用的容器（要改就自己做一份：list(x)、dict(x)、"
+                                 "dataclasses.replace(x, ...)）")
+            kr = flow.known(fn)
+            if kr is not None and _is_replacer(kr[2]) and node.args and isinstance(node.args[0], ast.Starred):
+                bad(node, f"{ast.unparse(fn)}(*...)：replace 的对象要直接写出来，不许用 *（LD-51）")
             for dest, how in _written_args(flow, node):          # numpy writing into an argument (LD-47, LD-48)
                 if flow.import_root(dest) is not None or flow.level(dest) >= SHARED:
                     shared(node, f"{how}：不许让 numpy 写进可能共用的数组（numpy 自己模块和类里的数组整个进程共用，"
@@ -2319,6 +2409,55 @@ def _call_name(flow, fn) -> str | None:
     if isinstance(fn, ast.Name):
         return fn.id
     return flow._getattr_name(fn)
+
+
+def _is_replacer(o) -> bool:
+    """dataclasses.replace or copy.replace, by identity (an array's == wouldn't give one answer)."""
+    return any(o is r for r in REPLACERS)
+
+
+_MUTATOR_KW = {"shuffle": "x", "insort": "a", "insort_left": "a", "insort_right": "a"}   # LD-51: the container by
+#   keyword (random.Random.shuffle(x=L), Generator.shuffle(x=W), bisect.insort(a=h, x=v)); heapq's take none
+
+
+def _mutator_name(flow, fn) -> str | None:
+    """The shuffle-like function (ARG_MUTATORS) a call calls: by the name written (an own method of that name too),
+    or (LD-51) by what an imported name is (`from heapq import heappush as push`)."""
+    name = _call_name(flow, fn)
+    if name in ARG_MUTATORS:
+        return name
+    if isinstance(fn, ast.Name):
+        for _, n, _o in flow.objs.get(flow.key(fn), ()):
+            if n in ARG_MUTATORS:
+                return n
+    return None
+
+
+def _mutator_parts(call, name):
+    """(the container, the items put in) of a heappush / insort-like call (LD-51: by keyword too); (None, []) when
+    the call can't be read that way (a *xs, a **d: the rule refuses those on what may be shared)."""
+    ckw = _MUTATOR_KW.get(name)
+    if any(isinstance(a, ast.Starred) for a in call.args) or any(k.arg is None for k in call.keywords):
+        return None, []
+    pos = list(call.args)
+    if pos:
+        return pos[0], pos[1:] + [k.value for k in call.keywords]
+    return next((k.value for k in call.keywords if k.arg == ckw), None), [k.value for k in call.keywords if k.arg != ckw]
+
+
+def _direct_only(flow, node) -> str | None:
+    """LD-51: dataclasses.replace / copy.replace and heapq's and bisect's functions that change their first argument
+    are only called directly, where the reading sees what they get: as a value (r = dataclasses.replace, a default,
+    functools.partial, map) they'd take it unseen. Gives the name, or None."""
+    if isinstance(node, ast.Name):
+        got = list(flow.objs.get(flow.key(node), ()))
+    else:
+        kn = flow.known(node)
+        got = [kn] if kn is not None else []
+    for m, n, o in got:
+        if _is_replacer(o) or (m in ("heapq", "bisect") and n in ARG_MUTATORS):
+            return f"{m}.{n}"
+    return None
 
 
 def _receiver(flow, fn):
@@ -2542,6 +2681,13 @@ def _name_note(flow) -> list[str]:
         out.append("提示：第 " + "、".join(map(str, sorted(flow.dc_rough))) + " 行按位置（或用 *）给 dataclass 传参，读代码对不上"
                    "是哪个字段（字段的写法读代码排不清顺序，或者父类不是你自己的 dataclass），只好把所有字段都按这些参数里"
                    "最高的档算（LD-46）：改成按名字传，K(字段=值)")
+    if flow.replace_lines:
+        names = sorted({n for v in flow.replace_lines.values() for n in v})
+        out.append("提示：第 " + "、".join(map(str, sorted(flow.replace_lines))) + " 行的 replace(x, ...)：读代码看不出 x 是不是 "
+                   + "、".join(names) + " 的对象；建这些类会跑自己写的 __init__（自己的或父类的），replace 也会调它，所以"
+                   "它的参数按 replace 给的东西和 x 的同名属性算，存下来的东西跟着算（LD-50、LD-51）。x 是 svsim 的东西"
+                   "（DEFAULT 这类直接 import 的、Weights(...) 建的）或者写成 K(...) 就只算对应的类；自己的对象要换字段，"
+                   "直接建新的：K(字段=值)")
     storage = sorted({c.name for c, i in flow.cls.items() if i.storage})
     if storage:
         out.append("提示：" + "、".join(storage) + " 建在 NamedTuple / namedtuple / TypedDict / dict / list / tuple / 异常"

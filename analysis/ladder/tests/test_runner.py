@@ -503,6 +503,55 @@ def test_the_watch_follows_numpys_tables_and_empties_its_caches():
     assert watch.changes(snap) == []
 
 
+def test_the_watch_follows_numpys_classes_and_objects():
+    # LD-51: numpy's classes are followed member by member (Polynomial.fit added, np.iinfo.max replaced) and the
+    # objects its modules keep (np.r_.axis): before, any of these lasted into every later game in the worker
+    np = pytest.importorskip("numpy")
+    from ladder import watch
+    watch.preload()
+    watch.reset_caches()
+    snap = watch.snapshot()
+    np.r_[[1, 2], [3]], np.s_[1:2], np.mgrid[0:2, 0:2], np.iinfo(np.int64).max, np.finfo(np.float32).tiny
+    np.poly1d([1, 2, 1]).roots, np.vectorize(abs)([-1]), np.polynomial.Polynomial.fit([0, 1, 2], [1, 2, 3], 1)
+    assert watch.changes(snap) == []
+    P = np.polynomial.Polynomial
+    try:
+        P.fit = len
+        assert any("Polynomial" in line for line in watch.changes(snap))
+    finally:
+        del P.fit
+    kept = vars(np.iinfo)["max"]
+    try:
+        np.iinfo.max = 7
+        assert any("iinfo" in line for line in watch.changes(snap))
+    finally:
+        np.iinfo.max = kept
+    axis = np.r_.axis
+    try:
+        np.r_.axis = 1
+        assert any("numpy.r_" in line for line in watch.changes(snap))
+    finally:
+        np.r_.axis = axis
+    assert watch.changes(snap) == []
+
+
+def test_numpys_warning_registries_are_held_not_compared():
+    # LD-51: CPython adds to a module's warning registry as it warns; once a registry existed at a snapshot (a fit's
+    # RankWarning in an earlier game, then a snapshot taken again), a new numpy warning voided an honest game
+    np = pytest.importorskip("numpy")
+    import warnings
+    from ladder import watch
+    watch.preload()
+    with warnings.catch_warnings():
+        warnings.simplefilter("default")
+        np.polynomial.Polynomial.fit([1, 2], [3, 4], 2)
+        snap = watch.snapshot()
+        watch.reset_caches(snap)
+        np.polynomial.Polynomial([1, 2, 3])(np.float64(1e200))
+        np.polynomial.polynomial.polyval(np.float64(1e300), [1, 2, 3])
+        assert watch.changes(snap) == []
+
+
 def test_the_pilots_model_caches_may_grow():
     # LD-42: the host's pilot games load a model once per process (svsim.learn's caches gain an entry) and the net
     # memoizes and adds rows for cards it meets: neither is a change; anything else in the net is
