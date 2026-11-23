@@ -1,0 +1,301 @@
+{
+ "what": "Salem's PC, 2026-11-23 17:48-18:20Z, commit 347ce99, tools/pc/prep-players.cmd (RUNBOOK first time 4-5, PLAN 8). Every line in the project share ladder/probe/prep-2026-11-23/.",
+ "setup": {
+  "started": "2026-11-23 12:48:25",
+  "dry": false,
+  "steps": {
+   "lock": {
+    "ok": true,
+    "files": 14,
+    "differs": []
+   },
+   "key": {
+    "ok": true,
+    "id": "fe6e77547a09"
+   },
+   "pool": {
+    "ok": true,
+    "copied": true,
+    "period": 1,
+    "kind": "deck",
+    "isolated_at_advance": [
+     "m0003"
+    ],
+    "members": 7,
+    "advance_returned": 1,
+    "p1b_unchanged": true,
+    "files": [
+     "events.jsonl",
+     "games.jsonl"
+    ],
+    "host_dirs": [
+     "subs",
+     "gates",
+     "frozen",
+     "anchors",
+     "reports",
+     "audit",
+     "puzzles"
+    ]
+   },
+   "players": {
+    "ok": true,
+    "players": {
+     "甲": "jia",
+     "乙": "yi",
+     "丙": "bing",
+     "丁": "ding",
+     "戊": "wu"
+    },
+    "made": [
+     "C:\\claude\\ladder-players\\jia\\submit",
+     "C:\\claude\\ladder-players\\jia\\receipts",
+     "C:\\claude\\ladder-players\\yi\\submit",
+     "C:\\claude\\ladder-players\\yi\\receipts",
+     "C:\\claude\\ladder-players\\bing\\submit",
+     "C:\\claude\\ladder-players\\bing\\receipts",
+     "C:\\claude\\ladder-players\\ding\\submit",
+     "C:\\claude\\ladder-players\\ding\\receipts",
+     "C:\\claude\\ladder-players\\wu\\submit",
+     "C:\\claude\\ladder-players\\wu\\receipts"
+    ],
+    "public_copied": [
+     "arena.md",
+     "base-interface.md",
+     "card-glossary.md",
+     "decklists.md",
+     "rules.md",
+     "submit.md"
+    ],
+    "public_same": []
+   }
+  },
+  "finished": "2026-11-23 12:48:26",
+  "ok": true
+ },
+ "pilots_2_5": {
+  "seeds": [
+   93170000,
+   93176000
+  ],
+  "field": "others",
+  "games_per_opponent": 50,
+  "deal": "fe6e77547a09",
+  "seconds": 1323,
+  "默认猜测": {
+   "T1-ABYSS-1": {
+    "condition": "默认猜测",
+    "games": 600,
+    "dropped_pairs": 0,
+    "pilot_rate": 0.8133,
+    "ref_rate": 0.7733,
+    "diff_pp": [
+     4.0,
+     0.12,
+     7.88
+    ],
+    "compute_ratio": 1.204
+   },
+   "T1-HAVEN-1": {
+    "condition": "默认猜测",
+    "games": 600,
+    "dropped_pairs": 0,
+    "pilot_rate": 0.6933,
+    "ref_rate": 0.6483,
+    "diff_pp": [
+     4.5,
+     0.21,
+     8.79
+    ],
+    "compute_ratio": 1.088
+   },
+   "T1-PORTAL-1": {
+    "condition": "默认猜测",
+    "games": 600,
+    "dropped_pairs": 0,
+    "pilot_rate": 0.8917,
+    "ref_rate": 0.835,
+    "diff_pp": [
+     5.67,
+     2.36,
+     8.97
+    ],
+    "compute_ratio": 1.167
+   },
+   "T1-SWORD-1": {
+    "condition": "默认猜测",
+    "games": 600,
+    "dropped_pairs": 0,
+    "pilot_rate": 0.8133,
+    "ref_rate": 0.7867,
+    "diff_pp": [
+     2.67,
+     -0.94,
+     6.27
+    ],
+    "compute_ratio": 1.119
+   },
+   "T3-RUNE-1": {
+    "condition": "默认猜测",
+    "games": 600,
+    "dropped_pairs": 0,
+    "pilot_rate": 0.7133,
+    "ref_rate": 0.47,
+    "diff_pp": [
+     24.33,
+     19.87,
+     28.8
+    ],
+    "compute_ratio": 1.002
+   }
+  },
+  "原生": {
+   "T1-ABYSS-1": {
+    "condition": "原生",
+    "games": 600,
+    "dropped_pairs": 0,
+    "pilot_rate": 0.7917,
+    "ref_rate": 0.7683,
+    "diff_pp": [
+     2.33,
+     -1.72,
+     6.39
+    ],
+    "compute_ratio": 1.168
+   },
+   "T1-HAVEN-1": {
+    "condition": "原生",
+    "games": 600,
+    "dropped_pairs": 0,
+    "pilot_rate": 0.7033,
+    "ref_rate": 0.6467,
+    "diff_pp": [
+     5.67,
+     1.35,
+     9.98
+    ],
+    "compute_ratio": 1.103
+   },
+   "T1-PORTAL-1": {
+    "condition": "原生",
+    "games": 600,
+    "dropped_pairs": 0,
+    "pilot_rate": 0.8883,
+    "ref_rate": 0.8133,
+    "diff_pp": [
+     7.5,
+     3.92,
+     11.08
+    ],
+    "compute_ratio": 1.213
+   },
+   "T1-SWORD-1": {
+    "condition": "原生",
+    "games": 600,
+    "dropped_pairs": 0,
+    "pilot_rate": 0.825,
+    "ref_rate": 0.7867,
+    "diff_pp": [
+     3.83,
+     0.25,
+     7.42
+    ],
+    "compute_ratio": 1.2
+   },
+   "T3-RUNE-1": {
+    "condition": "原生",
+    "games": 600,
+    "dropped_pairs": 0,
+    "pilot_rate": 0.69,
+    "ref_rate": 0.475,
+    "diff_pp": [
+     21.5,
+     16.91,
+     26.09
+    ],
+    "compute_ratio": 1.025
+   }
+  },
+  "guess_missing": 0,
+  "voids": []
+ },
+ "lethal_2_2_ladder": {
+  "source": "ladder",
+  "seeds": [
+   93162000,
+   93162300
+  ],
+  "tries": 3,
+  "nodes": 300000,
+  "modes": {
+   "planner": "mcts:100+plan",
+   "exact": "mcts:100"
+  },
+  "seconds": 570,
+  "games": 300,
+  "positions": 5096,
+  "lethal": 287,
+  "no_lethal_proven": 4772,
+  "undecided": 37,
+  "search_seconds_max": 153.82,
+  "planner": {
+   "found_every_try": 266,
+   "missed_some_try": 21,
+   "tries_won": 805,
+   "tries": 861
+  },
+  "exact": {
+   "found_every_try": 255,
+   "missed_some_try": 32,
+   "tries_won": 774,
+   "tries": 861
+  },
+  "in_game": {
+   "won_that_turn": 270,
+   "of": 287
+  },
+  "misses": {
+   "positions": 32,
+   "default_budget_finds_on_real_state": 0,
+   "screened": 13,
+   "sure_on_every_sample": 32,
+   "sure_on_no_sample": 0
+  }
+ },
+ "lethal_2_2_bank": {
+  "source": "bank",
+  "seeds": null,
+  "tries": 3,
+  "nodes": 300000,
+  "modes": {
+   "planner": "mcts:100+plan",
+   "exact": "mcts:100"
+  },
+  "seconds": 9,
+  "games": 3,
+  "positions": 3,
+  "lethal": 3,
+  "no_lethal_proven": 0,
+  "undecided": 0,
+  "search_seconds_max": 1.25,
+  "planner": {
+   "found_every_try": 0,
+   "missed_some_try": 3,
+   "tries_won": 0,
+   "tries": 9
+  },
+  "exact": {
+   "found_every_try": 0,
+   "missed_some_try": 3,
+   "tries_won": 0,
+   "tries": 9
+  },
+  "misses": {
+   "positions": 3,
+   "default_budget_finds_on_real_state": 0,
+   "screened": 3,
+   "sure_on_every_sample": 3,
+   "sure_on_no_sample": 0
+  }
+ }
+}
