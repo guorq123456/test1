@@ -63,3 +63,24 @@ def test_a_failing_step_still_writes_the_summary(tmp_path, monkeypatch):
     assert code == 1 and not res["ok"] and not res["steps"]["pool"]["ok"]
     assert "look before going on" in res["steps"]["pool"]["error"]
 
+
+
+def test_the_starting_puzzle_is_added_once(tmp_path):
+    import json
+    subs, pub = tmp_path / "host" / "subs", tmp_path / "players" / "public"
+    r = F.puzzle_step(subs, pub)
+    assert r["ok"] and r["added"] and r["id"] == "START" and r["list"] == "bot/T1-HAVEN-1"
+    reg = json.loads((subs / "puzzles.json").read_text(encoding="utf-8"))
+    assert reg["START"]["deck_code"].startswith("1.6.") and len(reg["START"]["deck"]) == 40
+    md = (pub / "puzzles.md").read_text(encoding="utf-8")
+    assert "START" in md and reg["START"]["deck_code"] in md and "HAVEN" not in md   # no bot name, no pilot
+    again = F.puzzle_step(subs, pub)
+    assert again["ok"] and again["note"] == "already there"
+    reg["START"]["deck_code"] = "1.6.other"
+    (subs / "puzzles.json").write_text(json.dumps(reg), encoding="utf-8")
+    try:
+        F.puzzle_step(subs, pub)
+    except SystemExit as e:
+        assert "another list" in str(e)
+    else:
+        raise AssertionError("a START on another list was taken")

@@ -12,6 +12,9 @@
 4. The players' folders (A50): PLAYERS\\<拼音>\\submit and receipts for 甲 乙 丙 丁 戊 (ladder.arena.PINYIN), and
    PLAYERS\\public: every file of analysis/ladder/public copied in (a file of the same name is replaced: the repo is
    the source; other files there, such as the period reports, are left).
+5. The starting puzzle (2.6, Salem S19 11-23 18:53Z: 主教, bot/T1-HAVEN-1): puzzle START in HOST\\subs\\puzzles.json
+   and PLAYERS\\public\\puzzles.md (ladder.puzzles.add). Already there on the same list: reported done; on another
+   list: the tool stops.
 Nothing here plays a game or uses a seed. Run again, it changes nothing that is already right. Results in
 OUT\\summary.json. `--dry` works under OUT on a copy of the p1b pool's events only, with no key.
 """
@@ -30,6 +33,9 @@ LADDER = HERE.parent
 sys.path[:0] = [str(LADDER), str(LADDER.parents[1]), str(HERE)]
 
 HOST_DIRS = ("subs", "gates", "frozen", "anchors", "reports", "audit", "puzzles")
+START_PUZZLE = {"id": "START", "list": "bot/T1-HAVEN-1", "title": "起点题（第一次进场先做）：主教",
+                "note": "这副卡组，每人各写一套打法；所有人在同样的算力下打同一批对手，看大家的起点在哪。"
+                        "对手是哪几副、打多少局，开题时定，不提前公布。"}
 
 
 def digest(d: Path) -> dict:
@@ -104,6 +110,22 @@ def players_step(players: Path, public_src: Path) -> dict:
     return {"ok": ok, "players": dict(PINYIN), "made": made, "public_copied": copied, "public_same": same}
 
 
+def puzzle_step(subdir: Path, public: Path) -> dict:
+    from ladder import puzzles
+    rows = [l.strip().split("|") for l in (LADDER.parents[1] / "analysis/pilot/fields/bot-frozen7.txt").read_text(
+        encoding="utf-8").splitlines() if l.strip() and not l.startswith("#")]
+    code = dict((n, c) for n, c, *_ in rows)[START_PUZZLE["list"]]
+    reg = puzzles._registry(subdir)
+    pid = START_PUZZLE["id"]
+    if pid in reg:
+        if reg[pid]["deck_code"] != code:
+            raise SystemExit(f"{subdir}\\puzzles.json has {pid} on another list: look before going on")
+        return {"ok": True, "note": "already there", "id": pid, "list": START_PUZZLE["list"]}
+    puzzles.add(subdir, pid, code, START_PUZZLE["title"], START_PUZZLE["note"], public)
+    return {"ok": True, "added": True, "id": pid, "list": START_PUZZLE["list"],
+            "public": str(public / "puzzles.md")}
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--p1b", type=Path, default=Path(r"C:\claude\ladder-runs\p1b\baseline\pool"))
@@ -119,7 +141,7 @@ def main(argv=None):
 
     def finish(code: int):
         res["finished"] = time.strftime("%Y-%m-%d %H:%M:%S")
-        res["ok"] = code == 0 and all(s.get("ok") for s in res["steps"].values()) and len(res["steps"]) == 4
+        res["ok"] = code == 0 and all(s.get("ok") for s in res["steps"].values()) and len(res["steps"]) == 5
         (a.out / "summary.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
         print(json.dumps(res, ensure_ascii=False, indent=1))
         return 0 if res["ok"] else 1
@@ -147,6 +169,8 @@ def main(argv=None):
         res["steps"]["pool"]["host_dirs"] = list(HOST_DIRS)
         step = "players"
         res["steps"]["players"] = players_step(a.players, LADDER / "public")
+        step = "puzzle"
+        res["steps"]["puzzle"] = puzzle_step(a.host / "subs", a.players / "public")
     except (Exception, SystemExit) as e:
         hint = ""
         if step == "pool" and not isinstance(e, SystemExit):
