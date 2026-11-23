@@ -74,6 +74,16 @@ def stamp(d: Path) -> str:
     return hashlib.sha256("\n".join(rows).encode("utf-8")).hexdigest()[:16]
 
 
+def python_cmd() -> tuple[list, dict]:
+    """The interpreter for a child command and what its environment needs. In a Windows venv sys.executable is the
+    venv's python.exe, a launcher that starts the real interpreter as a second process (D5, 11-23 review): start the
+    real one, telling it the venv through __PYVENV_LAUNCHER__, as multiprocessing does (popen_spawn_win32)."""
+    base = getattr(sys, "_base_executable", None) or sys.executable
+    if os.name == "nt" and os.path.normcase(base) != os.path.normcase(sys.executable):
+        return [base], {"__PYVENV_LAUNCHER__": sys.executable}
+    return [sys.executable], {}
+
+
 def _log_path(subs: Path) -> Path:
     return Path(subs) / "collect.jsonl"
 
@@ -180,10 +190,10 @@ class Collector:
     # --- the steps (each run in a fresh process by default) ------------------------------------------------------
     def _env(self):
         return dict(os.environ, PYTHONPATH=os.pathsep.join([str(ROOT), str(LADDER)]), PYTHONUTF8="1",
-                    PYTHONIOENCODING="utf-8")
+                    PYTHONIOENCODING="utf-8", **python_cmd()[1])
 
     def _run(self, cmd: list) -> subprocess.CompletedProcess:
-        return subprocess.run([sys.executable, "-m", "ladder.submit", *cmd], cwd=str(LADDER), env=self._env(),
+        return subprocess.run([*python_cmd()[0], "-m", "ladder.submit", *cmd], cwd=str(LADDER), env=self._env(),
                               capture_output=True, text=True, encoding="utf-8", errors="replace")
 
     def _common(self) -> list:
@@ -261,6 +271,7 @@ class Collector:
         key = (player, d, st)
         self.last_player = player
         lock = _lock(self.arena)
+        t0 = time.time()
         try:
             try:
                 rec = self.receive_fn(player, d, st)
@@ -281,7 +292,7 @@ class Collector:
                 return None
             self.in_row = 0
             _note(self.subs, {"ev": "dir", "player": player, "dir": d, "stamp": st, "receipt": rec["id"],
-                              "verdict": rec["verdict"]})
+                              "verdict": rec["verdict"], "seconds": round(time.time() - t0)})
             self.out(f"{player} {Path(d).name} → {rec['id']} {rec['verdict']}")
             self._deliver()                       # the receipt first, before an admit or a gate
             if rec["verdict"] == "收下" and rec.get("kind") == "deck":
@@ -436,9 +447,17 @@ def main(argv=None):
     ap.add_argument("--delta", type=float)
     ap.add_argument("--gates-out")
     ap.add_argument("--after-deadline", action="store_true")
+    ap.add_argument("--smoke-games", type=int, help="dry runs and tests only: passed to every receive")
+    ap.add_argument("--smoke-seeds", type=int, nargs=2, metavar=("LO", "HI"),
+                    help="dry runs and tests only: the smoke games' seed range for every receive")
+    ap.add_argument("--gate-seeds", type=int, nargs=2, metavar=("LO", "HI"), default=(88500000, 89000000),
+                    help="dry runs only: the gates' seed range (default: the formal gate segment)")
     a = ap.parse_args(argv)
+    extra = (["--smoke-games", str(a.smoke_games)] if a.smoke_games else []) + \
+        (["--smoke-seeds", *map(str, a.smoke_seeds)] if a.smoke_seeds else [])
     c = Collector(a.players, a.pool, a.subs, a.arena, workers=a.workers, mask=a.mask, gates=a.gates,
                   frozen=a.frozen, delta=a.delta, gates_out=a.gates_out, after_deadline=a.after_deadline,
+                  gate_seeds=tuple(a.gate_seeds), receive_args=extra,
                   out=lambda s: print(f"{time.strftime('%H:%M:%S')} {s}", flush=True))
     print(json.dumps(c.run(a.every), ensure_ascii=False))
     return 0

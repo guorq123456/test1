@@ -287,6 +287,37 @@ def test_the_peek_check(tmp_path):
     assert "differs" in got, got
 
 
+def test_shadow_rows_divide_by_the_twins_game_over_shadow():
+    """LD-56: the submission's CPU over the default's on its own positions, over (twin game / twin shadow)."""
+    g = {"id": "x-sub", "steps": [[0, 10, 0], [1, 5, 0], [0, 30, 0]]}
+    ref = {"id": "x-default", "steps": [[0, 8, 0], [1, 4, 0]]}
+    got = [{"value": {"steps": [[0, 20], [1, 1], [0, 20]]}}, {"value": {"steps": [[0, 6], [1, 2]]}}]
+    rows, bad = submit.shadow_rows([(g, ref, 0)], got)
+    assert rows == [(40, 40, 12, 8)] and bad == []
+    assert abs(submit.pooled_ratio(rows) - 1 / 1.5) < 1e-9
+    rows, bad = submit.shadow_rows([(g, ref, 0)], [got[0], None])                  # a shadow died
+    assert rows == [] and len(bad) == 1
+    rows, bad = submit.shadow_rows([(g, ref, 0)], [{"value": {"steps": [[0, 20]]}}, got[1]])   # not the same game
+    assert rows == [] and "decisions 2 / 1" in bad[0]
+    rows, bad = submit.shadow_rows([(g, ref, 0)], [got[0], {"value": {"steps": []}, "changed": ["x"]}])
+    assert rows == [] and len(bad) == 1
+    assert submit.pooled_ratio([]) is None
+    assert [t["strategy_seeds"] for t in submit.shadow_tasks([({"id": "a", "seed": 1, "decks": [], "actions": [],
+                                                                 "strategy_seeds": [3, 4]},
+                                                                {"id": "b", "seed": 1, "decks": [], "actions": [],
+                                                                 "strategy_seeds": [3, 4]}, 1)])] == [[3, 4], [3, 4]]
+
+
+def test_a_shadow_asks_the_default_at_every_logged_decision(tmp_path):
+    log = _log(tmp_path, "shadowed_q", QUICK, "Quick", 99001412)
+    assert log["result"] == "normal"
+    out = submit._shadow(submit.shadow_task(log, 0))
+    assert [s for s, _ in out["steps"]] == [s for s, _, _ in log["steps"]]
+    assert out["cpu_unit"] == log["cpu_unit"] and all(c >= 0 for _, c in out["steps"])
+    rows, bad = submit.shadow_rows([(log, log, 0)], [{"value": out}, {"value": out}])
+    assert len(rows) == 1 and not bad
+
+
 # --- receive, end to end ------------------------------------------------------------------------------------------
 
 def test_receive_and_admit(tmp_path):
@@ -298,6 +329,7 @@ def test_receive_and_admit(tmp_path):
     assert [c["check"] for c in rec["checks"]] == ["格式", "卡组", "名额和期", "代码（读）", "载入（隔离进程）", "冒烟",
                                                    "算力", "确定性", "偷看"]
     assert rec["uses_slot"] and rec["craft"] == 5 and len(rec["smoke_seeds"]) == 2 and rec["compute_ratio"] is not None
+    assert rec["compute"]["method"] == "shadow" and rec["compute"]["games"] >= 1, rec["compute"]
     assert (subs / rec["id"] / "receipt.md").exists()
     mid = submit.admit(subs, rec["id"], pool.dir)
     m = Pool(pool.dir).members[mid]
@@ -496,7 +528,7 @@ def test_a_strategy_over_the_compute_cap_is_refused(tmp_path):
     heavy = QUICK.replace('"iterations": 8', '"iterations": 300').replace("class Quick", "class Heavy")
     d = make_sub(tmp_path / "in", "新卡组", src=heavy, cls="Heavy", deck=CODES[4], member="重")
     rec = submit.receive(d, "甲", pool.dir, tmp_path / "subs", workers=2, rng_seed=7, smoke_games=2, seeds=SMOKE)
-    assert rec["verdict"] == "拒收" and (rec.get("compute_ratio") or 0) > submit.COMPUTE_CAP, rec["reasons"]
+    assert rec["verdict"] == "拒收" and (rec.get("compute_ratio") or 0) > submit.COMPUTE_REFUSE, rec["reasons"]
     assert [r for r in rec["reasons"] if r.startswith("[算力]") and "A52" in r], rec["reasons"]
     assert [c["check"] for c in rec["checks"]][-1] == "算力"            # nothing after it runs
 
@@ -540,3 +572,41 @@ def test_receipt_file_names_in_the_players_folder():
     assert submit.box_name("梦魇1", "S-0002", taken) == "梦魇1-S-0002"          # used twice: the id added
     for bad in ("状态", "X-检验", "X-没收成", "aux", "CON.txt", "a/b", "x" * 61, "trailing.", " lead", ""):
         assert submit.box_name(bad, "S-0009", set()) == "S-0009", bad
+
+
+def test_smoke_seeds_running_out_stop_the_receipt_before_any_game():
+    ids, _ = submit.check_deck(CODES[0])
+    used = set(range(99001420, 99001448))                             # 2 left in a 30-seed range
+    with pytest.raises(SystemExit, match="只剩 2 个"):
+        submit.smoke_jobs("bot:greedy", ids, "S-0001", random.Random(1), used, games=3, seeds=SMOKE)
+    jobs, played = submit.smoke_jobs("bot:greedy", ids, "S-0001", random.Random(1), used, games=2, seeds=SMOKE)
+    assert sorted(played) == [99001448, 99001449] and len(jobs) == 4
+
+
+def test_smoke_games_look_like_pool_games_seeds_and_lists():
+    """LD-57: strategy seeds from the pool's range (62 bits, as deal.seal); each opponent's list a public one with a
+    few cards swapped, legal and playable, the twin on the very same list."""
+    from collections import Counter
+    from ladder import base
+    from ladder.runner import load_deck, unscripted
+    from svsim.cards.decks import validate
+    ids, _ = submit.check_deck(CODES[0])
+    crafts = sorted(base.baseline_lists())
+    public = submit.public_lists()
+    assert set(public) == set(crafts) and all(sorted(base.baseline_lists()[c]) in public[c] for c in crafts)
+    jobs, _ = submit.smoke_jobs("bot:greedy", ids, "S-0001", random.Random(3), set(), games=28, seeds=SMOKE,
+                                opponents=public)
+    assert any(s >= 2 ** 31 for j in jobs for s in j["strategy_seeds"])
+    assert all(1 <= s < 2 ** 62 for j in jobs for s in j["strategy_seeds"])
+    swapped = []
+    for i in range(28):
+        sub, twin = jobs[2 * i], jobs[2 * i + 1]
+        assert twin["decks"] == sub["decks"] and twin["strategy_seeds"] == sub["strategy_seeds"]
+        opp = sub["decks"][1 - sub["labels"]["seat"]]
+        deck = load_deck(opp)
+        assert int(base.craft_of(deck)) == crafts[i % 7] and not validate(deck) and not unscripted(deck)
+        swapped.append(min(sum((Counter(opp) - Counter(l)).values()) for l in public[crafts[i % 7]]))
+    assert max(swapped) <= submit.SMOKE_SWAPS and sum(1 for x in swapped if x) >= 14, swapped
+    jobs, _ = submit.smoke_jobs("bot:greedy", ids, "S-0002", random.Random(3), set(), games=7, seeds=SMOKE, swaps=0)
+    assert [sorted(j["decks"][1 - j["labels"]["seat"]]) for j in jobs[::2]] == \
+        [sorted(base.baseline_lists()[c]) for c in crafts]               # no lists given, no swaps: the baselines

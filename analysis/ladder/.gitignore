@@ -1,0 +1,4 @@
+# compute-noise game and replay logs (megabytes): kept in the project share ladder/probe/, the repo has the summary
+# JSON and the used-seed list (LD-55..57)
+probe/*.games.jsonl
+probe/*.shadows.jsonl

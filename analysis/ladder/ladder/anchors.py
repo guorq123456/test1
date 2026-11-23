@@ -419,6 +419,11 @@ def classes(out: Path, period=None) -> tuple[int | None, list[dict]]:
 
 
 def main(argv=None):
+    for s in (sys.stdout, sys.stderr):           # a redirected or piped console is cp1252 on Windows (ENVIRONMENT
+        try:                                      # pitfall 1; 11-23 review: a player's agent pipes the output)
+            s.reconfigure(encoding="utf-8", errors="backslashreplace")
+        except Exception:                         # noqa: BLE001
+            pass
     ap = argparse.ArgumentParser(prog="python -m ladder.anchors")
     sp = ap.add_subparsers(dest="cmd", required=True)
     a = sp.add_parser("induct")

@@ -37,8 +37,10 @@ The checks (PHASE2-DESIGN.md 2.3):
   and the garbage collector's object lists, and one short game against the default strategy there;
 - smoke: SMOKE_GAMES games against the default strategy, with the baseline lists; no crash, illegal move or timeout;
 - determinism: two of those games replayed decision by decision;
-- compute: per-step compute of the submission against the default strategy in the same seat, same seeds; above
-  1.08 refused, every version (A52: new decks never go through the gate, and the gate compares new with old, A25);
+- compute: per-step compute of the submission over the default strategy's on the submission's own positions (the
+  smoke games replayed with the default, calibrated by the twin game and its replay, LD-56); the cap is 1.08,
+  measured above 1.15 refused (S15), in between a warning,
+  every version (A52: new decks never go through the gate, and the gate compares new with old, A25);
 - peek: at a few decisions of two smoke games, the real state is replaced by another one the strategy can't tell
   from it (the opponent's unknown cards, both decks' order, the generator: base.vary_secrets); a strategy that only
   reads what the hooks give makes the same choice. A different choice is refused.
@@ -74,10 +76,13 @@ TYPES = {"新卡组": "deck", "打法更新": "update", "公共题": "puzzle"}
 FILES = ("submission.json", "strategy.py", "notes.md", "evidence.md")
 UPDATES_PER_PERIOD = None           # Salem S5 (11-22): no limit on strategy updates (the plan's 3 is gone)
 SMOKE_SEEDS = (88300000, 88400000)  # the host's part of the tuning range (SEEDS.md)
-SMOKE_GAMES = 10
+SMOKE_GAMES = 100                   # LD-55/56/57: over 10 games the twins' compute ratio spread ~8% (an honest default-cost
+                                    # strategy refused ~12% of the time); the shadow over 100: 1.6-2.0% in the container
 PEEK_GAMES, PEEK_POINTS = 2, 3
 REPLAY_GAMES = 2
-COMPUTE_CAP = 1.08                                 # per-step compute over the default's: refused above (A52)
+COMPUTE_CAP = 1.08                                 # per-step compute over the default's: the cap (A52)
+COMPUTE_REFUSE = 1.15                              # refused above: the cap's public allowance for the measurement's
+                                                   # error (S15, Salem 11-23 14:10Z); 1.08-1.15 accepted with a warning
 YOUR_VOIDS = ("the simulator changed in this worker during the game",   # what the strategy's own code voids
               "a strategy's code tried what a game may not do",                # (LD-52)
               "nothing ran on any clock", "the check after the game ran past", "worker died",  # (LD-45)
@@ -550,14 +555,78 @@ def _used_smoke_seeds(lines: list[dict]) -> set:
     return {s for l in lines if l.get("ev") == "receipt" for s in l.get("smoke_seeds", [])}
 
 
-def smoke_jobs(spec: str, deck_ids: list, rid: str, rng: random.Random, used: set, games: int = SMOKE_GAMES,
-               seeds: tuple[int, int] = SMOKE_SEEDS):
-    """Pairs of jobs: the submission and the default strategy in the same seat, same seed, same strategy seeds,
-    against the default strategy with the baseline lists (classes in turn)."""
+PUBLIC_LIST_FILES = ("analysis/pilot/fields/bot-frozen7.txt", "svsim/ui/bot_decks.txt",      # tools/make_public.py
+                     "analysis/ladder/decklists/wgpq-2026-11-14.txt", "analysis/ladder/decklists/ps1011-2026-11-11.txt")
+SMOKE_SWAPS = 6                       # a smoke opponent's list: a public one with 0..6 cards swapped (LD-57)
+_PUBLIC = None
+
+
+def public_lists() -> dict:
+    """{craft: [card id lists]}: the lists of public/decklists.md (every player has them, S1) that the simulator plays
+    as written (40 cards, legal, every card scripted). Never a pool member's list: a strategy sees what its opponent
+    plays, and a receipt is back within minutes (LD-57)."""
+    global _PUBLIC
+    if _PUBLIC is None:
+        from ladder import base
+        from ladder.runner import load_deck, unscripted
+        from svsim.cards.decks import validate
+        out = {}
+        for rel in PUBLIC_LIST_FILES:
+            for line in (base._ROOT / rel).read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or "|" not in line:
+                    continue
+                try:
+                    deck = load_deck(line.split("|")[1].strip())
+                except Exception:                            # a card the simulator doesn't have
+                    continue
+                if len(deck) == 40 and not validate(deck) and not unscripted(deck):
+                    ids = sorted(c.card_id for c in deck)
+                    lists = out.setdefault(int(base.craft_of(deck)), [])
+                    if ids not in lists:
+                        lists.append(ids)
+        _PUBLIC = out
+    return _PUBLIC
+
+
+def smoke_list(craft: int, rng: random.Random, opponents: dict | None, swaps: int = SMOKE_SWAPS) -> list:
+    """One of `opponents[craft]` (else the baseline list), with up to `swaps` cards swapped for others of the lists
+    of that class (no card past its copy limit; a list the simulator wouldn't take is drawn again)."""
     from ladder import base
-    lists = base.baseline_lists()
-    crafts = sorted(lists)
+    choices = (opponents or {}).get(craft) or [sorted(base.baseline_lists()[craft])]
+    start = list(choices[rng.randrange(len(choices))])
+    k = rng.randrange(swaps + 1) if swaps else 0
+    if not k:
+        return start
+    from ladder.runner import load_deck
+    from svsim.cards.decks import validate
+    cards = sorted({c for l in choices for c in l})
+    for _ in range(20):
+        deck = list(start)
+        for _ in range(k):
+            deck.pop(rng.randrange(len(deck)))
+            deck.append(cards[rng.randrange(len(cards))])
+        try:
+            if not validate(load_deck(deck)):
+                return deck
+        except Exception:
+            pass
+    return start
+
+
+def smoke_jobs(spec: str, deck_ids: list, rid: str, rng: random.Random, used: set, games: int = SMOKE_GAMES,
+               seeds: tuple[int, int] = SMOKE_SEEDS, opponents: dict | None = None, swaps: int = SMOKE_SWAPS):
+    """Pairs of jobs: the submission and the default strategy in the same seat, same seed, same strategy seeds,
+    against the default strategy, classes in turn, each game's list from smoke_list (receive: the public lists).
+    Strategy seeds from the same range as the pool's (deal.seal: 62 bits), so a strategy can't tell a smoke game by
+    its seed, nor by its opponent's list being exactly a baseline one (LD-57)."""
+    from ladder import base
+    crafts = sorted(base.baseline_lists())
     jobs, played = [], []
+    left = (seeds[1] - seeds[0]) - sum(1 for s in used if seeds[0] <= s < seeds[1])
+    if left < games:                              # the host's to fix: never loop for a seed that isn't there
+        raise SystemExit(f"冒烟种子段 {seeds[0]}～{seeds[1] - 1} 只剩 {left} 个没用过，这一份要 {games} 个：先在 SEEDS.md "
+                         "和项目登记表上登记新的一段")
     for i in range(games):
         while True:
             seed = rng.randrange(*seeds)
@@ -566,10 +635,10 @@ def smoke_jobs(spec: str, deck_ids: list, rid: str, rng: random.Random, used: se
         used.add(seed)
         played.append(seed)
         seat = i % 2
-        opp = list(lists[crafts[i % len(crafts)]])
-        sseeds = [rng.randrange(1, 2 ** 31), rng.randrange(1, 2 ** 31)]
+        opp = smoke_list(crafts[i % len(crafts)], rng, opponents, swaps)
+        sseeds = [rng.randrange(1, 2 ** 62), rng.randrange(1, 2 ** 62)]
         for side, s in (("sub", spec), ("default", DEFAULT)):
-            sides = [(list(deck_ids), s), (opp, DEFAULT)]
+            sides = [(list(deck_ids), s), (list(opp), DEFAULT)]
             if seat == 1:
                 sides.reverse()
             jobs.append({"id": f"{rid}-smoke{i:03d}-{side}", "seed": seed, "first": None,
@@ -620,6 +689,95 @@ def _mean_step(log: dict, seat: int) -> tuple[float, int]:
     return (sum(xs), len(xs))
 
 
+# --- the compute check on the submission's own positions (A52, LD-56) -----------------------------------------
+
+def shadow_task(log: dict, seat: int, seeds=None) -> dict:
+    """What `_shadow` needs of a logged smoke game: the deal, the moves, the strategy seeds (`seeds`: others than the
+    log's, for tools/compute_noise.py only), the submission's seat."""
+    return {"id": log["id"], "seed": log["seed"], "first_arg": log.get("first_arg"), "decks": log["decks"],
+            "deal": log.get("deal"), "strategy_seeds": list(seeds or log["strategy_seeds"]),
+            "actions": log["actions"], "seat": seat}
+
+
+def _shadow(task: dict, beat=None) -> dict:
+    """A runner.guarded_map task: the logged game again, move for move, with the default strategy on both seats.
+    Every decision is asked and timed as the runner times a step (the same counter, the same calls around it), its
+    answer thrown away, the logged move played. Only host code runs here: the submission is never run again, so it
+    can't tell a measurement from a game (LD-56)."""
+    from ladder.runner import host_ctrl_c
+    with host_ctrl_c():
+        return _shadow_play(task, beat)
+
+
+def _shadow_play(task: dict, beat) -> dict:
+    from ladder import base, deal
+    from ladder.runner import _make_counter, load_strategies, offer
+    from svsim.core.actions import from_dict
+    from svsim.core.engine import apply, legal_actions
+    counter, unit = _make_counter()
+    _, state = deal.start(task)
+    tracker = base.Tracker(state)
+    strategies = load_strategies([DEFAULT, DEFAULT], task["strategy_seeds"], beat)
+    steps = []
+    for data in task["actions"]:
+        seat = state.active
+        actions = legal_actions(state)
+        offered = offer(actions)
+        pos = base.public_position(state, seat, tracker)
+        if beat is not None:
+            beat[0], beat[1] = seat, time.monotonic_ns()
+        c0 = counter()
+        try:
+            strategies[seat].act(pos, offered)
+            steps.append([seat, counter() - c0])
+        finally:
+            if beat is not None:
+                beat[1] = 0
+        tracker.before(state)
+        apply(state, from_dict(data))
+        tracker.after(state)
+    return {"id": task["id"], "steps": steps, "cpu_unit": unit}
+
+
+def shadow_tasks(pairs) -> list:
+    """Two shadows per pair (submission's game, its twin; `pairs` are (game, twin, seat)), one after the other, so
+    both run in the same batch under the same conditions. Both on the seeds the pair was played with."""
+    return [t for g, ref, seat in pairs for t in (shadow_task(g, seat), shadow_task(ref, seat))]
+
+
+def shadow_rows(pairs, got) -> tuple[list, list]:
+    """(rows, problems). One row per pair whose two shadows came back whole and match their games' decisions:
+    (the submission's CPU on its decisions in its game, the default's on the same positions in the shadow, the twin
+    game's CPU on all its decisions, its shadow's on the same). The twin and its shadow are the very same computation
+    (the default on the same positions and seeds), so their ratio is how much a step costs in a game against in a
+    shadow on this machine just then (it drifted ~9% between two runs in the container, LD-56); the submission's own
+    ratio is divided by it."""
+    rows, bad = [], []
+    for i, (g, ref, seat) in enumerate(pairs):
+        rs = [got[2 * i] or {"died": None}, got[2 * i + 1] or {"died": None}]
+        broken = [r for r in rs if "value" not in r or r.get("changed") or r.get("blocked")]
+        if broken:
+            bad.append(f"{g['id']}: {_quote(str({k: v for k, v in broken[0].items() if k != 'value'}), 200)}")
+            continue
+        mine = [c for s, c, _ in g.get("steps", []) if s == seat]
+        dflt = [c for s, c in rs[0]["value"]["steps"] if s == seat]
+        twin = [c for _, c, _ in ref.get("steps", [])]
+        tw_sh = [c for _, c in rs[1]["value"]["steps"]]
+        if len(mine) != len(dflt) or len(twin) != len(tw_sh) or not mine or not twin:
+            bad.append(f"{g['id']}: decisions {len(mine)} / {len(dflt)} (game / shadow), twin {len(twin)} / "
+                       f"{len(tw_sh)}")
+            continue
+        rows.append((sum(mine), sum(dflt), sum(twin), sum(tw_sh)))
+    return rows, bad
+
+
+def pooled_ratio(rows) -> float | None:
+    """The submission's per-step CPU over the default's on the same positions, over the rows, corrected by how
+    much more a step cost in the games than in the shadows (the twins')."""
+    t = [sum(r[i] for r in rows) for i in range(4)]
+    return (t[0] / t[1]) / (t[2] / t[3]) if all(t) else None
+
+
 # --- receive ---------------------------------------------------------------------------------------------------
 
 def _sha(d: Path) -> dict:
@@ -658,7 +816,7 @@ def _receive(d, player, pool_dir, subdir, workers, mask, rng_seed, smoke_games, 
     from ladder import base
     from ladder.pool import Pool
     from ladder.replay import replay_decisions
-    from ladder.runner import provenance, run
+    from ladder.runner import guarded_map, provenance, run
     subdir = Path(subdir).resolve()
     lines = ledger(subdir)
     n = sum(1 for l in lines if l.get("ev") == "receipt") + 1
@@ -748,7 +906,8 @@ def _receive(d, player, pool_dir, subdir, workers, mask, rng_seed, smoke_games, 
     spec = _stage(sub, rid, subdir)
     rec["spec"] = spec
     used = _used_smoke_seeds(lines)
-    jobs, played = smoke_jobs(spec, sub["deck_ids"], rid, rng, used, games=smoke_games, seeds=seeds)
+    jobs, played = smoke_jobs(spec, sub["deck_ids"], rid, rng, used, games=smoke_games, seeds=seeds,
+                              opponents=public_lists())
     rec["smoke_seeds"] = played
     out = store / "smoke.jsonl"
     run(jobs, str(out), workers=workers, step_limit=step_limit, mask=mask, quiet=True)
@@ -798,10 +957,37 @@ def _receive(d, player, pool_dir, subdir, workers, mask, rng_seed, smoke_games, 
             s, k = _mean_step(ref, seat)
             tot[2] += s
             tot[3] += k
-    ratio = (tot[0] / tot[1]) / (tot[2] / tot[3]) if tot[1] and tot[3] and tot[2] else None
-    rec["compute_ratio"] = None if ratio is None else round(ratio, 3)
-    over = [f"每步算力是默认打法的 {ratio:.2f} 倍，超过 {COMPUTE_CAP}：每一版都不许超过（所有成员一样，A52）。量有误差，"
-            "别贴着线写"] if ratio is not None and ratio > COMPUTE_CAP else []
+    twins = (tot[0] / tot[1]) / (tot[2] / tot[3]) if tot[1] and tot[3] and tot[2] else None
+    # LD-56: the default on the submission's own positions, calibrated by the twin (the twins alone go their own
+    # way: ~8% noise over 10 pairs, LD-55); `twins` is kept in the receipt for comparison only
+    items = [(g, ref, j["labels"]["seat"]) for j, g, ref in pairs
+             if g.get("result") in ("normal", "draw") and ref and ref.get("result") in ("normal", "draw")]
+    tasks = shadow_tasks(items)
+    got = guarded_map("ladder.submit:_shadow", tasks, workers=max(1, min(workers, len(tasks))),
+                      step_limit=step_limit, mask=mask) if tasks else []
+    rows, bad = shadow_rows(items, got)
+    if items and len(rows) < max(1, len(items) // 2):    # the host's side failed: no receipt, the collector retries
+        raise SystemExit(f"算力重放只回来 {len(rows)} / {len(items)} 对：{'；'.join(bad)[:1500]}")
+    ratio = pooled_ratio(rows)
+    r3 = None if ratio is None else round(ratio, 3)       # one number for the decision, the receipt and the message
+    rec["compute_ratio"] = r3
+    rec["compute"] = {"method": "shadow", "games": len(rows), "skipped": bad[:20],
+                      "twin_void": sum(1 for _, g, ref in pairs if g.get("result") in ("normal", "draw")
+                                       and not (ref and ref.get("result") in ("normal", "draw"))),
+                      "twins": None if twins is None else round(twins, 3)}
+    need = max(1, smoke_games // 2)
+    if len(rows) < need:      # too few to measure (games void on both sides, or the twins void): never let it pass
+        over = [f"冒烟局里能量算力的只有 {len(rows)} 对（要 {need} 对；其余是作废局，或者同一对里默认打法那局作废了），"
+                "量不准，不收（A52、LD-57）"]
+    elif r3 is not None and r3 > COMPUTE_REFUSE:
+        over = [f"每步算力是默认打法的 {r3:.3f} 倍，超过 {COMPUTE_REFUSE}：上限是 {COMPUTE_CAP} 倍，量法有误差，量出来超过 "
+                f"{COMPUTE_REFUSE} 倍就拒收（所有成员一样，每一版都查，A52、S15）。这次量了 {len(rows)} 对，100 对上下约 2%"
+                "（LD-56、LD-57）"]
+    else:
+        over = []
+        if r3 is not None and r3 > COMPUTE_CAP:
+            rec["warnings"].append(f"每步算力量出来是默认打法的 {r3:.3f} 倍，超过上限 {COMPUTE_CAP}，还在容差 {COMPUTE_REFUSE} "
+                                   "以内，收下；再往上就会被拒收（S15）")
     check("算力", over, {"ratio": rec["compute_ratio"], "unit": pairs[0][1].get("cpu_unit") if pairs else None})
     if rec["reasons"]:
         return finish()
@@ -1018,6 +1204,11 @@ def _gate_update(subdir: Path, rid: str, pool_dir: Path, frozen: Path, seeds: tu
 
 
 def main(argv=None):
+    for s in (sys.stdout, sys.stderr):           # a redirected or piped console is cp1252 on Windows (ENVIRONMENT
+        try:                                      # pitfall 1; 11-23 review: a player's agent pipes the output)
+            s.reconfigure(encoding="utf-8", errors="backslashreplace")
+        except Exception:                         # noqa: BLE001
+            pass
     ap = argparse.ArgumentParser(prog="python -m ladder.submit")
     sp = ap.add_subparsers(dest="cmd", required=True)
     a = sp.add_parser("precheck")
