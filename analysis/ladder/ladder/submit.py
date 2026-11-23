@@ -77,6 +77,7 @@ PEEK_GAMES, PEEK_POINTS = 2, 3
 REPLAY_GAMES = 2
 COMPUTE_WARN = 1.08
 YOUR_VOIDS = ("the simulator changed in this worker during the game",   # what the strategy's own code voids
+              "a strategy's code tried what a game may not do",                # (LD-52)
               "nothing ran on any clock", "the check after the game ran past", "worker died",  # (LD-45)
               "the strategies took more than", "strategy failed to load")    # LD-46: loading it, the twin loads fine
 DEFAULT = "bot:mcts:100+plan"
@@ -266,12 +267,8 @@ def status(subdir: Path, pool_dir: Path, player: str) -> dict:
 
 # --- the load check (a separate process) ------------------------------------------------------------------------
 
-LOAD_BLOCK = {"subprocess.Popen", "os.system", "os.exec", "os.spawn", "os.posix_spawn", "os.startfile", "os.fork",
-              "os.forkpty", "os.kill", "os.remove", "os.rename", "os.mkdir", "os.rmdir", "os.chmod", "os.putenv",
-              "os.unsetenv", "gc.get_objects", "gc.get_referrers", "gc.get_referents", "sys._current_frames",
-              "sys.settrace", "sys.setprofile", "builtins.input", "msvcrt.locking"}
-LOAD_BLOCK_PREFIX = ("socket.", "ctypes.", "shutil.", "winreg.", "urllib.", "http.", "ftplib.", "smtplib.",
-                     "webbrowser.", "_winapi.")
+from ladder.guard import BLOCK as LOAD_BLOCK, BLOCK_PREFIX as LOAD_BLOCK_PREFIX  # noqa: E402 - the games' list
+#   (LD-52: the load step's own list lacked os.symlink, os.link, os.truncate, os.utime, os.chown, os.chdir, threads)
 
 
 def _quote(why: str, n: int = 600) -> str:

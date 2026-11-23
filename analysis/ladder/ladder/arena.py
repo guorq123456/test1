@@ -520,7 +520,8 @@ def _play_on(job: dict, beat=None) -> dict:
 
 def _resumed(job: dict, g: dict | None) -> dict:
     """guarded_map's result for one continuation, as a game log: a hang loses by timeout (on loading it is void, as
-    in the runner), a dead worker is void, and so is a game during which the simulator changed (LD-40)."""
+    in the runner), a dead worker is void, and so is a game during which the simulator changed (LD-40) or a strategy's
+    code tried what a game may not do (LD-52)."""
     from ladder.runner import IDLE, LOAD, clean
     g = g or {"died": None}
     if "value" in g:
@@ -537,10 +538,12 @@ def _resumed(job: dict, g: dict | None) -> dict:
                "error": f"worker died (exit code {g['died']})"}
     else:
         log = {"id": job["id"], "result": "void", "winner": None, "loser": None, "error": g.get("error")}
-    if g.get("changed"):
+    if g.get("changed") or g.get("blocked"):
+        from ladder.runner import BLOCKED, CHANGED
+        why = ([BLOCKED + g["blocked"]] if g.get("blocked") else []) + ([CHANGED + g["changed"]] if g.get("changed")
+                                                                       else [])
         log = dict(log, voided_result=log.get("result"), voided_winner=log.get("winner"), result="void", winner=None,
-                   loser=None,
-                   error=clean("the simulator changed in this worker during the game (LD-40): " + g["changed"]))
+                   loser=None, error=clean(" | ".join(why)))
     return log
 
 

@@ -1,5 +1,6 @@
 """Test-only strategies for the runner's checks (never used in a real pool)."""
 import random
+import sys
 import time
 
 from ladder import base
@@ -189,9 +190,36 @@ class PatchesScripts(Random):
         return super().act(pos, actions)
 
 
+class TouchesFiles(Random):
+    """On its first decision tries to write a file, read one and list a folder outside the repository and the
+    Python installation ($LADDER_GUARD_PROBE), make a folder there and start a process; it catches every refusal and
+    plays on (LD-52: each is refused and written down, the game is void, nothing is written)."""
+    def act(self, pos, actions):
+        if not getattr(self, "tried", False):
+            self.tried = True
+            import os
+            import subprocess
+            probe = os.environ.get("LADDER_GUARD_PROBE", ".")
+            for attempt in (lambda: open(os.path.join(probe, "written.txt"), "w").write("x"),
+                            lambda: open(os.path.join(probe, "secret.txt"), encoding="utf-8").read(),
+                            lambda: os.listdir(probe),
+                            lambda: os.mkdir(os.path.join(probe, "made")),
+                            lambda: subprocess.run([sys.executable, "-c", "pass"], check=False)):
+                try:
+                    attempt()
+                except Exception:  # noqa: BLE001, S110
+                    pass
+        return super().act(pos, actions)
+
+
 def task(t, beat=None):
-    """A runner.guarded_map task for the tests: t is "ok", "hang", "linger", "change", "die" or "raise"."""
+    """A runner.guarded_map task for the tests: t is "ok", "hang", "linger", "change", "die", "raise" or "block"."""
     import os
+    if t == "block":                                    # LD-52: refused, the task marked, the worker replaced
+        try:
+            open(os.path.join(os.environ.get("LADDER_GUARD_PROBE", "."), "task.txt"), "w").write("x")
+        except OSError:
+            pass
     if t == "hang":
         beat[0], beat[1] = 1, time.monotonic_ns()
         time.sleep(600)

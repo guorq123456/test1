@@ -321,6 +321,91 @@ def test_guarded_map_keeps_each_task_to_itself():
     assert "task failed" in got[6]["error"] and "value" in got[7]
 
 
+def test_a_game_cannot_touch_the_computer(tmp_path, monkeypatch):
+    # LD-52: while a game runs, its worker refuses writing, making, listing and reading files outside the repository,
+    # the Python installation and the game's own strategy modules, and starting processes; a refusal voids the game
+    # (the original result kept) and replaces the worker. Reading a strategy's own module for its traceback is fine
+    probe = tmp_path / "probe"
+    probe.mkdir()
+    (probe / "secret.txt").write_text("s", encoding="utf-8")
+    monkeypatch.setenv("LADDER_GUARD_PROBE", str(probe))
+    jobs = [job(48, "py:helpers:TouchesFiles", "py:helpers:Random", first=0),
+            job(49, "py:helpers:Crash", "py:helpers:Random", first=0),
+            job(50, "py:helpers:Random", "py:helpers:Random", first=0)]
+    out = tmp_path / "g.jsonl"
+    runner.run(jobs, str(out), workers=1, step_limit=10.0, quiet=True)
+    rows = {r["id"]: r for r in map(json.loads, out.read_text(encoding="utf-8").splitlines())}
+    r = rows["t-48"]
+    assert r["result"] == "void" and r["voided_result"] in ("normal", "draw") and r["winner"] is None, r
+    assert r["error"].startswith(runner.BLOCKED), r["error"]
+    for what in ("written.txt", "secret.txt", "os.listdir", "os.mkdir", "subprocess.Popen", "seat 0's decision"):
+        assert what in r["error"], (what, r["error"])
+    assert sorted(x.name for x in probe.iterdir()) == ["secret.txt"]
+    assert rows["t-49"]["result"] == "crash" and 'raise ValueError("boom")' in rows["t-49"]["error"]
+    assert rows["t-50"]["result"] in ("normal", "draw") and replay_moves(rows["t-50"]) == (True, "ok")
+    got = runner.guarded_map("helpers:task", ["ok", "block", "ok"], workers=1, step_limit=5.0)
+    assert "blocked" in got[1] and "task.txt" in got[1]["blocked"] and "blocked" not in got[2]
+    assert got[1]["value"]["pid"] != got[2]["value"]["pid"] and not (probe / "task.txt").exists()
+
+
+def test_the_guard_reads_only_the_repository_python_and_the_jobs_modules(tmp_path):
+    # LD-52: what the hook lets a job read, list and do, decided in this process without a worker
+    from ladder import guard
+    roots = guard._roots()
+    assert any(r == guard._norm(ROOT) for r in roots)
+    assert all(not guard._under(guard._norm(ROOT), [r]) or r == guard._norm(ROOT) for r in roots)   # nothing above
+    assert guard._norm(tmp_path) and not guard._under(guard._norm(tmp_path / "x.py"), roots)
+    mod = tmp_path / "somebody.py"
+    mod.write_text("x = 1\n", encoding="utf-8")
+    guard._job_files.clear()
+    guard._job_files.add(guard._norm(mod))
+    saved = guard._read_roots
+    guard._read_roots = roots
+    try:
+        assert guard._readable(guard._norm(mod))
+        assert guard._readable(guard._norm(tmp_path / "__pycache__" / "somebody.cpython-312.pyc"))
+        assert not guard._readable(guard._norm(tmp_path / "other.py"))
+        assert guard._readable(guard._norm(ROOT / "svsim" / "core" / "engine.py"))
+    finally:
+        guard._read_roots = saved
+        guard._job_files.clear()
+    assert "os.symlink" in guard.BLOCK and "os.truncate" in guard.BLOCK and "os.utime" in guard.BLOCK
+    assert "subprocess.Popen" in guard.BLOCK and "socket.connect".startswith(guard.BLOCK_PREFIX)
+
+
+def test_the_watch_holds_numpys_private_modules_and_other_namespaces():
+    # LD-52: numpy's other modules' globals are compared by identity (a PCG64 rebound in numpy.random._generator
+    # changed every later default_rng), every other module's namespace is held, not followed (numpy 1.x's
+    # np.trapz.__globals__: its first warning voided honest games), and the audit hook's own state isn't compared
+    np = pytest.importorskip("numpy")
+    import warnings
+    from ladder import guard, watch
+    watch.preload()
+    watch.reset_caches()
+    snap = watch.snapshot()
+    gen = sys.modules.get("numpy.random._generator") or sys.modules.get("numpy.random.mtrand")
+    assert gen is not None
+    name = "PCG64" if "PCG64" in vars(gen) else next(k for k, v in vars(gen).items() if isinstance(v, type))
+    kept = vars(gen)[name]
+    try:
+        setattr(gen, name, None)
+        assert any(gen.__name__ in line and name in line for line in watch.changes(snap)), watch.changes(snap)
+    finally:
+        setattr(gen, name, kept)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        np.corrcoef([1.0, 1.0, 1.0], [1.0, 2.0, 3.0])
+        np.cov([1.0])
+    guard._on[0], guard._seen[:] = True, ["x"]
+    guard._job_files.add("y")
+    try:
+        assert watch.changes(snap) == []
+    finally:
+        guard._on[0] = False
+        guard._seen.clear()
+        guard._job_files.clear()
+
+
 def test_code_left_running_off_the_clock_is_stopped(tmp_path):
     # LD-42: a generator's finally runs when the strategy is freed after the game, on no clock; the idle watchdog
     # ends that worker (the game is void, nobody's loss) and the next game plays in a new one; guarded_map likewise

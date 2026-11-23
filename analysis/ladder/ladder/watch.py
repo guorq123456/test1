@@ -1,5 +1,5 @@
 """The simulator's state in a worker process, before and after a game (fifth pass LD-40, sixth LD-41, seventh LD-42;
-LD-43, LD-44, LD-45, LD-46, LD-47, LD-49, LD-50, LD-51).
+LD-43, LD-44, LD-45, LD-46, LD-47, LD-49, LD-50, LD-51, LD-52).
 
 A runner worker plays one game after another, often of different players. Strategy code runs in that process, so it
 could change things every later game there inherits: the shared card definitions (LD-40's finding: `pos.state` hands
@@ -29,6 +29,10 @@ LD-51: and numpy's modules strategies may use (NUMPY_MODULES, numpy.polynomial's
 globals, their classes member by member (np.polynomial.Polynomial.fit added, np.iinfo.max replaced: every later game
 in the worker ran the change) and the objects they keep at module level or as class attributes (np.r_, np.s_,
 np.mgrid: `np.r_.axis = 1`), but their modules' warning registries, held by identity as the others are.
+LD-52: numpy's other modules (numpy.random._generator, numpy.random.mtrand, numpy.lib.function_base, ...): their
+globals by identity (and their warning registries made and held), not followed; every other module's namespace is held
+by identity and never followed as a dict (numpy 1.x's np.trapz.__globals__ is numpy.lib.function_base's namespace);
+the runner's audit hook (ladder/guard.py) keeps its per-job state in ladder.guard, held by identity.
 Breadth first, each object once, a few levels
 deep. Objects are compared by identity (the snapshot holds them, so an id can't be reused), sets by value, and a
 dict, list or set that gained or lost an item has changed: the registries (scripts, listener sets, the card pool)
@@ -89,6 +93,9 @@ STDLIB = ("random", "collections", "functools", "dataclasses", "heapq", "bisect"
 #                                                    classes and functions defined there (LD-42: random.Random's)
 FOLLOWED = ("fractions", "numbers", "decimal", "copyreg")   # not importable by strategies, but statistics works
 #   with their classes (LD-45: changing fractions.Fraction broke later games); copy.dispatch_table is copyreg's (LD-49)
+HOST_STATE = (("ladder.guard", "_on"), ("ladder.guard", "_seen"), ("ladder.guard", "_beat"),
+              ("ladder.guard", "_job_files"))   # LD-52: the audit hook's own state for the job, changed by every
+#   job; held by identity (strategies can't reach ladder.guard: the code reader)
 STD_CACHES = (("typing", "_caches"), ("typing", "_cleanups"), ("typing", "_overload_registry"))   # LD-49: typing's
 #   own lru caches and the registry typing.overload fills: of the standard modules' dict, list and set globals the
 #   only ones not compared
@@ -222,6 +229,16 @@ def _numpy_modules() -> list:
     """(name, module) of numpy's modules strategies may use: NUMPY_MODULES and numpy.polynomial's."""
     return sorted((n, m) for n, m in list(sys.modules.items())
                   if m is not None and (n in NUMPY_MODULES or n.startswith("numpy.polynomial.")))
+
+
+def _numpy_private() -> list:
+    """LD-52: (name, module) of numpy's other modules (its private ones above all: numpy.random._generator,
+    numpy.random.mtrand, numpy.lib.function_base, ...). Their globals are compared by identity, never followed:
+    numpy 2's Cython functions handed a strategy numpy.random._generator's namespace through func_globals (now
+    refused by the code reader), and a rebound global there changed every later default_rng in the worker."""
+    allowed = {n for n, _ in _numpy_modules()}
+    return sorted((n, m) for n, m in list(sys.modules.items())
+                  if m is not None and _numpy_name(n) and n not in allowed and isinstance(m, types.ModuleType))
 
 
 def _numpy_caches() -> list:
@@ -402,12 +419,21 @@ def snapshot() -> Snapshot:
     s = Snapshot()
     queue, seen = [], set(_caches())               # the caches: held by identity (their global), never followed
     seen.update(id(d) for d in _numpy_caches())    # LD-51: numpy's too (emptied before every game)
+    for mod, name in HOST_STATE:                   # LD-52: the audit hook's state for the job
+        if name in getattr(sys.modules.get(mod), "__dict__", {}):
+            seen.add(id(sys.modules[mod].__dict__[name]))
     grows = set()
     mods = sorted((n, m) for n, m in list(sys.modules.items()) if _watched(n) and m is not None)
     std = [(n, sys.modules[n]) for n in STDLIB + FOLLOWED if sys.modules.get(n) is not None]
     nps = _numpy_modules()
+    private = _numpy_private()
+    looked = {n for n, _ in mods + std + nps + private} | {"builtins"}
+    seen.update(id(d) for n, m in list(sys.modules.items())     # LD-52: every other module's namespace is held by
+                if n not in looked and isinstance(d := getattr(m, "__dict__", None), dict))   # identity, never
+    #   followed as a dict (numpy 1.x's np.trapz.__globals__ is numpy.lib.function_base's: its first warning voided
+    #   honest games)
     npinst = set()                                 # LD-51: the numpy objects followed (_numpy_inst)
-    for name, m in mods + [("builtins", builtins)] + std + nps:
+    for name, m in mods + [("builtins", builtins)] + std + nps + private:
         s.modules[name] = m
         d = getattr(m, "__dict__", None)
         if not isinstance(d, dict) or id(d) in seen:
@@ -424,6 +450,8 @@ def snapshot() -> Snapshot:
                       if (isinstance(v := dict.get(d, k), (type, types.FunctionType)) and
                           getattr(v, "__module__", None) == name) or
                       (isinstance(v, (dict, list, set)) and (name, k) not in STD_CACHES)]
+        elif _numpy_name(name) and (name, m) in private:
+            pass                                   # LD-52: its globals by identity only
         elif _numpy_name(name):                    # LD-51: numpy's classes and functions, its dicts, lists and sets,
             queue += [(v, f"{name}.{k}", 1) for k in keys    # and the objects it keeps at module level (np.r_)
                       if (isinstance(v := dict.get(d, k), (type, types.FunctionType)) and

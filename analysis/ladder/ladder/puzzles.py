@@ -169,7 +169,8 @@ def _ask_one(job, beat=None):
 
 def _answers(ask: list, got: list, ents: list) -> tuple[list, list]:
     """guarded_map's results as answers (a hang, a dead worker or a runner error is no answer), and the entries
-    during whose answer the simulator changed (LD-40: their answer is none, and the host's copy names them)."""
+    during whose answer the simulator changed (LD-40) or the code tried what a game may not do (LD-52): their answer
+    is none, and the host's copy names them."""
     answers, tripped = [], []
     for j, g in zip(ask, got):
         g = g or {"error": "no result"}
@@ -178,9 +179,11 @@ def _answers(ask: list, got: list, ents: list) -> tuple[list, list]:
             why = ("timeout" if "timeout" in g else f"worker died ({g['died']})" if "died" in g
                    else str(g.get("error", ""))[:200])
             a = {"point": j["point"], "entry": j["entry"], "move": None, "error": why}
-        if g.get("changed"):
-            a = dict(a, move=None, error="the simulator changed during this answer")
-            tripped.append({"entry": ents[j["entry"]]["name"], "point": j["point"], "what": g["changed"][:500]})
+        if g.get("changed") or g.get("blocked"):
+            a = dict(a, move=None, error="the simulator changed during this answer" if g.get("changed") else
+                     "the answer's code tried what a game may not do (LD-52)")
+            tripped.append({"entry": ents[j["entry"]]["name"], "point": j["point"],
+                            "what": " | ".join(x for x in (g.get("blocked"), g.get("changed")) if x)[:500]})
         answers.append(a)
     return answers, tripped
 

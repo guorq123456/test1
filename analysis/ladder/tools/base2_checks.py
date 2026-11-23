@@ -29,14 +29,20 @@
 9. guarded tasks (LD-40, LD-42): runner.guarded_map, as puzzles and the arena's resume use it, on Windows: a task
    that changes the simulator is marked and its worker replaced, a hang is stopped by the clock, a worker that exits
    is that task's alone, a task stuck with no clock on is stopped by the idle watchdog (10 s here).
-10. audit (LD-40): ladder/audit.py replays every game of steps 2, 7 and 8 move by move in clean processes; the only
-   ones allowed to fail are none (the void ones are skipped).
+10. guard (LD-52): 4 keyed games in one worker, with the audit hook on Windows: a test strategy that tries to write a
+   file, read one and list a folder outside the repository and the Python installation (under RUNS), make a folder
+   there and start a process is void with each attempt named, and nothing is written; a strategy module staged
+   outside the repository crashes with its own source line in the traceback (reading the game's own module is
+   allowed); a trained pilot (its net read from the repository) against a numpy strategy, and a plain game, are not
+   void. And guarded_map: a task that tries to write is marked "blocked" and its worker replaced.
+11. audit (LD-40): ladder/audit.py replays every game of steps 2, 7, 8 and 10 move by move in clean processes; the
+   only ones allowed to fail are none (the void ones are skipped).
 
-Seeds: 93150000-93150019 (2, 3), 93150020-93150029 (8) and 93150100-93152399 (7), host measurement second segment
-(SEEDS.md); 4 replays p1b's own; 5 and 6 reuse the probe bank seeds the tests use (99001000+, 99001520-99001559), on
-purpose. A dry run elsewhere (--dry, with --key a throwaway file and --speed-games small) uses 93403000-93403029 and
-93403100 onward instead (host probe second segment).
-Writes RUNS/<commit>/keyed.jsonl, speed.jsonl, tripwire.jsonl, summary.json (one folder per commit, "-dirty" if the
+Seeds: 93150000-93150019 (2, 3), 93150020-93150029 (8), 93150030-93150033 (10) and 93150100-93152399 (7), host
+measurement second segment (SEEDS.md); 4 replays p1b's own; 5 and 6 reuse the probe bank seeds the tests use
+(99001000+, 99001520-99001559), on purpose. A dry run elsewhere (--dry, with --key a throwaway file and --speed-games
+small) uses 93403000-93403033 and 93403100 onward instead (host probe second segment).
+Writes RUNS/<commit>/keyed.jsonl, speed.jsonl, tripwire.jsonl, guard.jsonl, summary.json (one folder per commit, "-dirty" if the
 working tree differs: a second run on the same code skips the games already played, a run on new code plays its
 own) and a copy of the summary at RUNS/summary.json.
 """
@@ -70,6 +76,18 @@ DEFAULT = "bot:mcts:100+plan"
 TRIP_STRATEGIES = ["py:helpers:ChangesCards", "py:helpers:Random", "py:helpers:PatchesScripts", "py:helpers:Random",
                    "py:helpers:GrowsRegistry", "py:helpers:Random", "py:helpers:PatchesRandom", "py:helpers:Random",
                    "py:helpers:Lingers", "py:helpers:Random"]
+GUARD = 93150030                                  # step 10 (LD-52)
+DRY_GUARD = 93403030
+PILOT = "bot:mcts:30+plan+setnet=analysis/scaling/models/net-pilot-rune-bot-g3.npz+netmid+netany"
+GUARD_MODULE = """from ladder.interface import PlayerStrategy
+
+
+class Crashes(PlayerStrategy):
+    def search(self, pos):
+        if pos.state.turn >= 3:
+            raise ValueError("guard probe: this line is read for the traceback")
+        return {}
+"""
 TRIP_IDLE = 15.0                                  # the idle watchdog's limit in step 8 (LD-42; 300 s by default)
 GUARD_IDLE = 10.0                                 # and in step 9
 
@@ -319,9 +337,58 @@ def main():
         want = False
     say("guarded", {"tasks": [sorted(g or {}) for g in got], "ok": bool(want)})
 
-    # 10. every game above replayed move by move in clean processes
+    # 10. the guard: a game can't touch the computer (LD-52)
+    probe, code = runs / "guard-probe", runs / "guard-code"
+    probe.mkdir(exist_ok=True)
+    code.mkdir(exist_ok=True)
+    for left in ("written.txt", "made", "task.txt"):
+        if (probe / left).is_dir():
+            (probe / left).rmdir()
+        elif (probe / left).exists():
+            (probe / left).unlink()
+    (probe / "secret.txt").write_text("not for strategies", encoding="utf-8")
+    (code / "guardprobe.py").write_text(GUARD_MODULE, encoding="utf-8")
+    os.environ["LADDER_GUARD_PROBE"] = str(probe)
+    os.environ["LADDER_EXTRA_PATH"] = os.pathsep.join([str(code), os.environ["LADDER_EXTRA_PATH"]])
+    path = runs / "guard.jsonl"
+    g0 = DRY_GUARD if a.dry else GUARD
+    specs = [("py:helpers:TouchesFiles", "py:helpers:Random"), ("py:guardprobe:Crashes", "py:helpers:Random"),
+             (PILOT, "py:helpers:UsesNumpy"), ("py:helpers:Random", "py:helpers:Random")]
+    gjobs = [{"id": f"x-{g0 + k}", "seed": g0 + k, "first": 0, "decks": [cs[2], cs[4]], "strategies": list(pair),
+              "strategy_seeds": None, "labels": {"check": "base-2 LD-52"}} for k, pair in enumerate(specs)]
+    runner.run(gjobs, str(path), workers=1, step_limit=30.0, quiet=True, key=key)
+    rows = {g["id"]: g for g in read(path) if g["id"].startswith("x-")}
+    bad = []
+    g = rows.get(f"x-{g0}") or {}
+    err = str(g.get("error", ""))
+    if not (g.get("result") == "void" and err.startswith(runner.BLOCKED) and
+            all(w in err for w in ("written.txt", "secret.txt", "os.listdir", "os.mkdir", "subprocess.Popen"))):
+        bad.append({"id": f"x-{g0}", "why": f"{g.get('result')}: {err[:400]}"})
+    left = sorted(x.name for x in probe.iterdir())
+    if left != ["secret.txt"]:
+        bad.append({"id": f"x-{g0}", "why": f"left in the probe folder: {left}"})
+    g = rows.get(f"x-{g0 + 1}") or {}
+    if not (g.get("result") == "crash" and 'raise ValueError("guard probe' in str(g.get("error", ""))):  # the source
+        #                                                   line itself, read from the module (not the message line)
+        bad.append({"id": f"x-{g0 + 1}", "why": f"{g.get('result')}: {str(g.get('error', ''))[:400]}"})
+    for k in (2, 3):
+        g = rows.get(f"x-{g0 + k}") or {}
+        if g.get("result") not in ("normal", "draw"):
+            bad.append({"id": f"x-{g0 + k}", "why": f"{g.get('result')}: {str(g.get('error', ''))[:400]}"})
+    got = runner.guarded_map("helpers:task", ["ok", "block", "ok"], workers=1, step_limit=5.0, idle_limit=GUARD_IDLE)
+    try:
+        tasks_ok = ("task.txt" in got[1]["blocked"] and "blocked" not in got[2] and
+                    got[1]["value"]["pid"] != got[2]["value"]["pid"] and not (probe / "task.txt").exists())
+    except (KeyError, TypeError):
+        tasks_ok = False
+    if not tasks_ok:
+        bad.append({"id": "guarded_map", "why": json.dumps(got, default=str)[:400]})
+    say("guard", {"games": len(rows), "failed": bad, "ok": len(rows) == len(specs) and not bad})
+
+    # 11. every game above replayed move by move in clean processes
     from ladder import audit
-    res = audit.audit([runs / "keyed.jsonl", runs / "speed.jsonl", runs / "tripwire.jsonl"], workers=a.workers)
+    res = audit.audit([runs / "keyed.jsonl", runs / "speed.jsonl", runs / "tripwire.jsonl", runs / "guard.jsonl"],
+                      workers=a.workers)
     say("audit", {"checked": res["checked"], "skipped": res["skipped"], "failed": res["failed"][:20],
                   "ok": res["ok"] and res["checked"] >= (keyed_range[1] - keyed_range[0]) + len(speed)})
 

@@ -22,7 +22,10 @@ move) is cleaned of lone surrogates before it is kept, so it can always be writt
 applying a legal move or around it, can't be pinned on either side: the game is void. So is a worker that dies outright
 (os._exit, killed): code of either side can do that. So is a game after which the simulator in the worker is not what
 it was (ladder/watch.py, LD-40: shared card definitions, scripts, the bots' weights, classes, functions): the worker
-then ends and a new one takes its place. The 60-turn cap gives a draw (assumption A3).
+then ends and a new one takes its place. So is a game during which a strategy's code tried to touch the computer
+(write, rename or delete a file, start a process, open a connection, read a file outside the repository, the Python
+installation and the game's own strategy modules: ladder/guard.py, LD-52; refused, written down, the worker
+replaced). The 60-turn cap gives a draw (assumption A3).
 
 Limits (Salem's computer): Salem S10 (11-22 08:49Z) allows all cores ("这个项目你可以全核开跑"): at most 23 worker
 processes (+ this one = the 24 logical CPUs), below normal priority, and on Windows the affinity mask given by --mask
@@ -60,7 +63,18 @@ os.environ.setdefault("PYTHONHASHSEED", "0")
 
 # --- compute counter -----------------------------------------------------------------------------------------
 
+_COUNTER: list = []
+
+
 def _make_counter():
+    """The per-decision compute counter, made once per process (LD-52: on Windows making it loads kernel32 through
+    ctypes, which a game's audit hook refuses; the warm-up game makes it before the hook is on)."""
+    if not _COUNTER:
+        _COUNTER.append(_new_counter())
+    return _COUNTER[0]
+
+
+def _new_counter():
     if os.name == "nt":
         import ctypes
         from ctypes import wintypes
@@ -394,12 +408,28 @@ def _worker_setup(paths=(), modules=()):
     for extra in list(filter(None, os.environ.get("LADDER_EXTRA_PATH", "").split(os.pathsep))) + list(paths):
         sys.path.insert(0, extra)                     # where submissions (or test strategies) live
     os.chdir(ROOT)
-    from ladder import watch
+    from ladder import guard, watch
     watch.preload(modules)
     _warm_up()
+    guard.install()                                   # LD-52: a job can't touch the computer (on in `begin` .. `end`)
     snap = watch.snapshot()                           # LD-40/41: what later games here inherit, checked after each
     watch.reset_caches(snap)
     return watch, snap
+
+
+BLOCKED = "a strategy's code tried what a game may not do (LD-52): "
+CHANGED = "the simulator changed in this worker during the game (LD-40): "
+
+
+def _task_specs(task) -> list:
+    """The strategy specs a guarded task runs (the arena's resume: "strategies"; a puzzle answer: "spec")."""
+    if not isinstance(task, dict):
+        return []
+    return [s for s in list(task.get("strategies") or []) + [task.get("spec")] if isinstance(s, str)]
+
+
+def _said(items: list, n: int = 6) -> str:
+    return "; ".join(items[:n]) + (f"; ... {len(items) - n} more" if len(items) > n else "")
 
 
 def _check(watch, snap, beat):
@@ -423,12 +453,14 @@ def _resnap(watch, beat):
 def _worker(inq, results_q, beat, wid):
     """One job at a time from its own queue, so the parent always knows which job a worker holds."""
     watch, snap = _worker_setup()
+    from ladder import guard
     beat[0] = IDLE                                    # set up: from now on time with no clock on counts (LD-42)
     while True:
         job = inq.get()
         if job is None:
             return
         watch.reset_caches(snap)                      # nothing one game leaves in the caches reaches the next
+        guard.begin(job, beat)                        # LD-52: files, processes, the network refused from here
         try:
             res = play_job(job, beat)
         except Exception:
@@ -436,12 +468,14 @@ def _worker(inq, results_q, beat, wid):
                    "strategies": job.get("strategies"), "deal": job.get("deal"), "labels": job.get("labels", {}),
                    "result": "void", "error": "runner error:\n" + tb()}
         res["worker"] = wid
-        moved = _check(watch, snap, beat)
-        if moved:                                     # either side's code may have done it: the game is void, and
+        try:
+            moved = _check(watch, snap, beat)
+        finally:
+            blocked = guard.end()
+        if moved or blocked:                          # either side's code may have done it: the game is void, and
+            why = ([BLOCKED + _said(blocked)] if blocked else []) + ([CHANGED + _said(moved, 99)] if moved else [])
             res.update(voided_result=res.get("result"), voided_winner=res.get("winner"), result="void", winner=None,
-                       loser=None, worker_exit=True,
-                       error=clean("the simulator changed in this worker during the game (LD-40): "
-                                   + "; ".join(moved)))
+                       loser=None, worker_exit=True, error=clean(" | ".join(why)))
             results_q.put(res)                        # no later game runs here: the parent starts a new worker
             inq.get()                                 # once it has this result (so it never takes this for a crash)
             return
@@ -456,6 +490,7 @@ def _task_worker(inq, results_q, beat, wid, fn, paths):
     mod, name = fn.split(":")
     watch, snap = _worker_setup(paths, modules=(mod,))  # the task's module is loaded before the snapshot (LD-42)
     f = getattr(importlib.import_module(mod), name)
+    from ladder import guard
     beat[0] = IDLE
     while True:
         item = inq.get()
@@ -463,13 +498,20 @@ def _task_worker(inq, results_q, beat, wid, fn, paths):
             return
         i, task = item
         watch.reset_caches(snap)
+        guard.begin(None, beat, _task_specs(task))    # LD-52, as in _worker
         try:
             res = {"value": f(task, beat)}
         except Exception:
             res = {"error": "runner error:\n" + tb()}
-        moved = _check(watch, snap, beat)
-        if moved:
-            res["changed"] = clean("; ".join(moved))
+        try:
+            moved = _check(watch, snap, beat)
+        finally:
+            blocked = guard.end()
+        if moved or blocked:
+            if moved:
+                res["changed"] = clean("; ".join(moved))
+            if blocked:
+                res["blocked"] = clean(_said(blocked))
             results_q.put((wid, i, res, True))
             inq.get()
             return
@@ -483,7 +525,8 @@ def guarded_map(fn: str, tasks: list, workers: int = 4, step_limit: float = 30.0
     """`fn` ("module:function", called as fn(task, beat)) over `tasks` in this runner's kind of workers: Ctrl+C
     ignored in them, the step clock (the function sets `beat` around every strategy call, as `_play` does), the
     tripwire (LD-40). One result per task, in order: {"value": what fn returned} or {"error": runner error}, plus
-    "changed" (the simulator changed during it; the worker was replaced), or {"timeout": beat[0], ...} (killed past
+    "changed" (the simulator changed during it) and / or "blocked" (its strategy code tried what a game may not do,
+    LD-52: ladder/guard.py; the worker was replaced either way), or {"timeout": beat[0], ...} (killed past
     `step_limit`; {"timeout": IDLE, ...} past `idle_limit` with no clock on), or {"died": exit code}. For the tools
     that ask strategies outside a game log (puzzles, the arena's resume): one strategy's hang, crash or meddling
     stays in its own task."""

@@ -40,7 +40,8 @@ from svsim.core.view import observe, shuffle
 
 BASE_VERSION = "base-1"   # recorded per member and per game (§4.3); a change to the base that reaches a member is an update
 EPS = 0.05        # a guessed list's weight for a shown card it doesn't hold (as analysis/deck-inference, 10-07)
-ROOT = Path(__file__).resolve().parents[3]
+_ROOT = Path(__file__).resolve().parents[3]       # private (LD-52: as ROOT a strategy could import it, and a Path's
+#                                                    methods rename, delete, make and list files)
 
 
 def craft_of(cards) -> int:
@@ -230,7 +231,7 @@ def baseline_lists() -> dict:
     if _BASELINE is None:
         from svsim.cards.decks import from_hash
         out = {}
-        for line in (ROOT / "analysis/pilot/fields/bot-frozen7.txt").read_text(encoding="utf-8").splitlines():
+        for line in (_ROOT / "analysis/pilot/fields/bot-frozen7.txt").read_text(encoding="utf-8").splitlines():
             if line.strip() and not line.startswith("#"):
                 _, code = line.strip().split("|")
                 cards = from_hash(code)

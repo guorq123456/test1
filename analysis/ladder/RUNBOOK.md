@@ -17,7 +17,7 @@
 ## 第一次（第 1 期以前，只做一次）
 
 1. 阶段 1 验收、锁定（1.9）。base-2 的代码在锁定的版本里。
-2～3. 建密钥、重跑 base-2 的检查：Salem 双击 `tools\pc\base2-checks.cmd`（拉代码 → 没有密钥才建 `C:\claude\ladder-host\ladder.key`，只建一次，文件不进仓库、不进项目共享目录 → `tools/base2_checks.py`：密钥发牌的新局逐步、逐个决策重放，卡表顺序不从编号漏出，p1b 旧局用新代码重放，底座检查，接口复现 40 局，全核测速）。结果在 `C:\claude\ladder-runs\base2\summary.json`，只记密钥编号。全过才往下走（1.9 锁定）。之后 `py -m ladder.deal id` 应该打出同一个编号。
+2～3. 建密钥、重跑 base-2 的检查：Salem 双击 `tools\pc\base2-checks.cmd`（拉代码 → 没有密钥才建 `C:\claude\ladder-host\ladder.key`，只建一次，文件不进仓库、不进项目共享目录 → `tools/base2_checks.py`：密钥发牌的新局逐步、逐个决策重放，卡表顺序不从编号漏出，p1b 旧局用新代码重放，底座检查，接口复现 40 局，全核测速，绊线、公共题式任务、对局里的审计钩子（打法写文件、读外面的文件、起进程被拦下，正常打法不被拦），全部新局重放审计；一共十一项）。结果在 `C:\claude\ladder-runs\base2\summary.json`，只记密钥编号。全过才往下走（1.9 锁定）。之后 `py -m ladder.deal id` 应该打出同一个编号。
 4. 正式池：把 p1b 的基线池（`C:\claude\ladder-runs\p1b\baseline\pool\`）整个复制到 `C:\claude\ladder-host\pool\`，原件不动。`py -m ladder.pool advance C:\claude\ladder-host\pool` 进第 1 期（S8：巫师基线够不着，不挡；日志里记它差几局）。
 5. 建选手目录（上表），把 `analysis/ladder/public/` 复制到 `C:\claude\ladder-players\public\`。
 6. 选手先做 2.6 起点测量（计划第二节），再进第 1 期。

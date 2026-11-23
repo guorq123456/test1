@@ -152,7 +152,17 @@ BANNED_ATTRS = {
     # (LD-42) setattr / getattr by a name in a string (update_wrapper's assigned=, cached_property's attrname); a
     # class handed back as a value (a defaultdict's factory, the evaluated annotations)
     "update_wrapper", "wraps", "attrname", "default_factory", "get_type_hints",
+    # (LD-52) numpy 2's Cython functions name their insides without underscores: func_globals is a private
+    # module's namespace (numpy.random._generator: a rebound PCG64 changed every later default_rng in the worker)
+    "func_globals", "func_code", "func_closure", "func_dict", "func_defaults", "func_name", "func_doc",
 }
+DANGER_MODULES = frozenset({   # (LD-52) an object, class or function of these is refused where the reader can see it
+    "os", "posix", "nt", "pathlib", "io", "_io", "shutil", "tempfile", "glob", "fnmatch", "zipfile", "tarfile",
+    "subprocess", "socket", "ssl", "select", "selectors", "signal", "threading", "_thread", "multiprocessing",
+    "concurrent", "asyncio", "logging", "sqlite3", "ctypes", "_ctypes", "mmap", "pickle", "marshal", "shelve",
+    "importlib", "pkgutil", "runpy", "zipimport", "sys", "gc", "inspect", "traceback", "linecache", "tokenize",
+    "atexit", "webbrowser", "urllib", "http", "winreg", "_winapi", "msvcrt", "pty", "fcntl", "resource",
+    "code", "codeop", "pdb", "bdb", "faulthandler", "tracemalloc", "weakref", "_weakref"})
 BANNED_KEYWORDS = {"parallel", "par_spec"}
 
 CLEAN, HOLDS, SHARED = 0, 1, 2
@@ -242,6 +252,23 @@ def module_problem(name: str) -> str | None:
     if top in ALLOWED_TOP:
         return None
     return "不在允许的模块里"
+
+
+def danger_problem(obj) -> str | None:
+    """LD-52: why an object a module hands out (from m import x, m.x) is refused: a file path, a file, a lock, a
+    logger, a function of the os / io / sys family... anything whose class or own module is one of DANGER_MODULES
+    (ladder.base.ROOT was a pathlib.Path: its methods renamed, deleted, made and listed folders)."""
+    if isinstance(obj, types.ModuleType) or obj is _MISSING:
+        return None
+    mods = {getattr(obj, "__module__", None) if isinstance(obj, (type, types.BuiltinFunctionType, types.FunctionType))
+            else getattr(type(obj), "__module__", None)}
+    self_ = getattr(obj, "__self__", None)
+    if isinstance(self_, types.ModuleType):
+        mods.add(self_.__name__)
+    for m in mods:
+        if isinstance(m, str) and m.split(".")[0] in DANGER_MODULES:
+            return f"它是 {m} 的东西（文件、进程、线程、解释器一类，LD-52）"
+    return None
 
 
 def numpy_problem(mod: str, attr: str) -> str | None:
@@ -621,6 +648,13 @@ class Flow:
         self.stores: dict = {}            # key -> how many bindings other than a parameter
         self.assigned: dict = {}          # key -> [values of its plain `name = value` bindings] (LD-51)
         self.arg_keys: set = set()        # the keys parameters bind (LD-51)
+        self.attr_assigned: dict = {}     # attribute name -> [values of its plain `x.name = value` stores, a class
+        #                                   body's `name = value`, setattr(x, "name", value)] (LD-52)
+        self.uses: dict = {}              # key -> [its Name nodes] (LD-52)
+        self.loop_extra: dict = {}        # key -> values in `assigned` beyond one per binding (loops, LD-52)
+        self.attr_stored: set = set()     # attr_other but a class body's defs (LD-52)
+        self.attr_other: set = set()      # attribute names set any other way: x.name += .., unpacking, loops, with,
+        #                                   a class body's def or annotation (fields), del (LD-52)
         self.mods: dict = {}              # key -> module name
         self.objs: dict = {}              # key -> [(module, name, object)]
         self.imports: dict = {}           # key -> how many import statements bind it (LD-46)
@@ -662,12 +696,48 @@ class Flow:
                     self.stores[k] = self.stores.get(k, 0) + 1
                 return k
 
-            if isinstance(node, ast.Assign) and all(isinstance(t, ast.Name) for t in node.targets):
+            if isinstance(node, ast.Assign) and all(isinstance(t, (ast.Name, ast.Attribute)) for t in node.targets):
                 for t in node.targets:
-                    self.assigned.setdefault(self.key(t), []).append(node.value)
+                    if isinstance(t, ast.Attribute):
+                        self.attr_assigned.setdefault(t.attr, []).append(node.value)
+                    else:
+                        self.assigned.setdefault(self.key(t), []).append(node.value)
+                        if scope.kind == "class":
+                            self.attr_assigned.setdefault(t.id, []).append(node.value)
             elif isinstance(node, (ast.AnnAssign, ast.NamedExpr)) and isinstance(node.target, ast.Name) and \
                     node.value is not None:
                 self.assigned.setdefault(self.key(node.target), []).append(node.value)
+            elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Attribute) and \
+                    node.value is not None:
+                self.attr_assigned.setdefault(node.target.attr, []).append(node.value)
+            elif isinstance(node, (ast.For, ast.AsyncFor, ast.comprehension)) and isinstance(node.target, ast.Name) \
+                    and isinstance(node.iter, (ast.Tuple, ast.List, ast.Set)) and \
+                    not any(isinstance(e, ast.Starred) for e in node.iter.elts):
+                self.assigned.setdefault(self.key(node.target), []).extend(node.iter.elts)   # LD-52: a loop over
+                self.loop_extra[self.key(node.target)] = \
+                    self.loop_extra.get(self.key(node.target), 0) + len(node.iter.elts) - 1   # written-out values
+                #                                                     binds one of them each time
+            elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "setattr" and \
+                    len(node.args) == 3 and isinstance(node.args[1], ast.Constant) and \
+                    isinstance(node.args[1].value, str):
+                self.attr_assigned.setdefault(node.args[1].value, []).append(node.args[2])
+            if isinstance(node, ast.Attribute) and not isinstance(node.ctx, ast.Load):
+                p = self.parent.get(node)
+                if not ((isinstance(p, ast.Assign) and node in p.targets) or
+                        (isinstance(p, ast.AnnAssign) and p.target is node and p.value is not None)):
+                    self.attr_other.add(node.attr)
+                    self.attr_stored.add(node.attr)
+            elif scope.kind == "class" and isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                self.attr_other.add(node.name)
+            elif scope.kind == "class" and isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+                self.attr_other.add(node.target.id)          # a field: what builds the object gives it
+                self.attr_stored.add(node.target.id)
+            elif scope.kind == "class" and isinstance(node, ast.Name) and not isinstance(node.ctx, ast.Load) and \
+                    not (isinstance(self.parent.get(node), ast.Assign) and node in self.parent[node].targets):
+                self.attr_other.add(node.id)
+                self.attr_stored.add(node.id)
+            if isinstance(node, ast.Name):
+                self.uses.setdefault(self.key(node), []).append(node)
             if isinstance(node, ast.arg):
                 self.arg_keys.add(self.key(node))
             elif isinstance(node, ast.Name) and not isinstance(node.ctx, ast.Load):
@@ -1774,11 +1844,17 @@ class Flow:
         return i.dataclass or i.unknown or any(dataclasses.is_dataclass(o) for o in i.objs) or \
             any(self.may_be_dataclass(u, seen) for u in i.user_bases)
 
-    def surely_host(self, node, depth=0) -> bool:
-        """`node` surely isn't an object of the module's own classes (LD-51): what an import names (svsim's DEFAULT,
-        ev.THREAT), what a host class builds (Weights(...)), a replace / copy of one, either branch of `a if c else
-        b` being one, a local name every binding of which is a plain `name = one of these` (not a parameter)."""
-        if depth > 6 or node is None:
+    def surely_host(self, node, visiting=None) -> bool:
+        """`node` surely isn't an object of the module's own classes (LD-51, LD-52): what an import names (svsim's
+        DEFAULT, ev.THREAT), what a host class builds (Weights(...)), a replace / copy of one, either branch of
+        `a if c else b` being one, TABLE[k] / TABLE.get(k, one) of a module dict written out with only these as
+        values and only read, a local name every binding of which is one of these (`name = ...`, a loop over a
+        written-out tuple of them; not a parameter), an attribute self.x every store of which in the module is one
+        of these (`self.x = ...`, a class body's `x = ...`; not a field, a method, x += ..., unpacking).
+        A greatest fixed point: a name or attribute met again while it is being decided counts as one (LD-52:
+        `w = DEFAULT; w = replace(w, hp=0.8)` binds only replaces of DEFAULT)."""
+        visiting = set() if visiting is None else visiting
+        if node is None:
             return False
         if self.import_root(node) is not None:
             root = node
@@ -1787,29 +1863,196 @@ class Flow:
             k = self.key(root)             # only bound by imports (`DEFAULT = Box()` after the import isn't)
             return self.stores.get(k, 0) == self.imports.get(k, 0)
         if isinstance(node, ast.IfExp):
-            return self.surely_host(node.body, depth + 1) and self.surely_host(node.orelse, depth + 1)
+            return self.surely_host(node.body, visiting) and self.surely_host(node.orelse, visiting)
+        if isinstance(node, ast.Subscript) and isinstance(node.ctx, ast.Load):
+            return self._host_table(node.value, visiting)
         if isinstance(node, ast.Call):
-            if self.user_class(node.func):
+            fn = node.func
+            if isinstance(fn, ast.Attribute) and fn.attr == "get" and 1 <= len(node.args) <= 2 and \
+                    not node.keywords and not any(isinstance(a, ast.Starred) for a in node.args):
+                return self._host_table(fn.value, visiting) and \
+                    (len(node.args) == 2 and self.surely_host(node.args[1], visiting))
+            if isinstance(fn, ast.Attribute) and fn.attr == "weights":
+                sup = self.own_of(fn.value)        # super().weights(pos): PlayerStrategy's, DEFAULT, when no other
+                if sup is not None and sup[2]:     # class of the module has a weights a mixin could put in between
+                    return all(self._plain_class(c) for c in self.subclasses(sup[0]) + [sup[0]]) and \
+                        all(self.fn[d].cls is sup[0] for d in self.methods.get("weights", ())) and \
+                        "weights" not in self.attr_assigned and "weights" not in self.attr_stored
+            callee = self._own_callee(fn)
+            if callee is not None:                 # an own function or self.method whose every return is one
+                return self._returns_host(callee, visiting)
+            if self.user_class(fn):
                 return False
-            kn = self.known(node.func)
+            kn = self.known(fn)
             if kn is None:
                 return False
             if isinstance(kn[2], type):
                 return True
             same = _is_replacer(kn[2]) or (kn[0] == "copy" and kn[1] in ("copy", "deepcopy"))
-            return same and bool(node.args) and self.surely_host(node.args[0], depth + 1)
+            return same and bool(node.args) and self.surely_host(node.args[0], visiting)
         if isinstance(node, ast.Name):
             k = self.key(node)
+            if k is None or self.imports.get(k):
+                return False
+            if k in visiting:
+                return True
             vals = self.assigned.get(k, [])
-            return bool(vals) and k not in self.arg_keys and len(vals) == self.stores.get(k, 0) and \
-                not self.imports.get(k) and all(self.surely_host(v, depth + 1) for v in vals)
+            if len(vals) - self.loop_extra.get(k, 0) != self.stores.get(k, 0):
+                return False
+            visiting.add(k)
+            if k in self.arg_keys:                 # a module function's parameter: what every call gives it
+                if not self._host_param(k, visiting):
+                    return False
+            elif not vals:
+                return False
+            return all(self.surely_host(v, visiting) for v in vals)
+        if isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Load):
+            own = self.own_of(node.value)          # self.x / cls.x in a method of a plain class of the module
+            a = node.attr
+            if own is None or own[2] or not all(self._plain_class(c) for c in self.subclasses(own[0])) or \
+                    a in self.attr_other or a in self._own_fields() or a in OWN_FRESH or dunder(a):
+                return False
+            if ("attr", a) in visiting:
+                return True
+            visiting.add(("attr", a))         # never stored in the module: only the host sets it
+            return all(self.surely_host(v, visiting) for v in self.attr_assigned.get(a, []))
         return False
+
+    def _own_callee(self, fn):
+        """The one def a call `f(...)` (a module-level function) or `self.m(...)` (a method of a plain class of the
+        module, defined once in the module, never stored over) runs, or None (LD-52)."""
+        ok_decos = {None, "lru_cache", "cache", "staticmethod", "classmethod"}
+        if isinstance(fn, ast.Name):
+            k = self.key(fn)
+            defs = self.fdefs.get(k, ())
+            if len(defs) != 1 or self.stores.get(k, 0) != 1 or k[0] is not self.module:
+                return None
+            d = defs[0]
+        elif isinstance(fn, ast.Attribute):
+            own = self.own_of(fn.value)
+            if own is None or own[2] or dunder(fn.attr) or fn.attr in self.attr_assigned or \
+                    fn.attr in self.attr_stored or not all(self._plain_class(c) for c in self.subclasses(own[0])):
+                return None
+            defs = self.methods.get(fn.attr, ())
+            if len(defs) != 1 or self.fn[defs[0]].cls not in self.ancestors(own[0]) | {own[0]}:
+                return None
+            d = defs[0]
+        else:
+            return None
+        f = self.fn[d]
+        if f.deco_unknown or any(x not in ok_decos for x in f.decos) or d in self.revoked:
+            return None
+        return d
+
+    def _returns_host(self, d, visiting) -> bool:
+        if isinstance(d, ast.AsyncFunctionDef):
+            return False
+        if ("ret", d) in visiting:
+            return True
+        visiting.add(("ret", d))
+        rets, gen = [], False
+        for n in ast.walk(d):
+            if self.where.get(n) is None or self.where[n].node is not d:
+                continue                           # nested functions and classes are theirs
+            if isinstance(n, (ast.Yield, ast.YieldFrom, ast.Await)):
+                gen = True
+            elif isinstance(n, ast.Return):
+                rets.append(n.value)
+        return bool(rets) and not gen and all(v is not None and self.surely_host(v, visiting) for v in rets)
+
+    def _host_param(self, k, visiting) -> bool:
+        """Parameter `k` of a module-level function (not a method: the host calls methods by name) that is only
+        called directly, each call giving it (or its default) something surely the host's (LD-52)."""
+        d = k[0].node
+        f = self.fn.get(d)
+        if f is None or isinstance(d, ast.Lambda) or f.cls is not None or self.where.get(d) is not self.module or \
+                f.value_used or f.deco_unknown or f.decos or d in self.revoked:
+            return False
+        for use in self.uses.get(self.key_of_def(d), ()):    # only ever called directly: not handed to partial,
+            p = self.parent.get(use)                        # map, a default... (the reading can't see those calls)
+            if isinstance(use.ctx, ast.Load) and not (isinstance(p, ast.Call) and p.func is use):
+                return False
+        pos = [x.arg for x in f.pos]
+        if k[1] in pos:
+            i = pos.index(k[1])
+            dflt = d.args.defaults
+            default = dflt[i - (len(pos) - len(dflt))] if i >= len(pos) - len(dflt) else None
+        elif k[1] in [x.arg for x in f.kwonly]:
+            i = None
+            default = d.args.kw_defaults[[x.arg for x in f.kwonly].index(k[1])]
+        else:
+            return False                           # *args, **kw
+        if not hasattr(self, "_calls_of"):
+            self._calls_of = {}
+            for n in self.nodes:
+                if isinstance(n, ast.Call):
+                    for t, off in self.targets(n):
+                        self._calls_of.setdefault(t, []).append((n, off))
+        calls = self._calls_of.get(d, [])
+        if not calls:
+            return False
+        for call, off in calls:
+            if off or any(isinstance(a, ast.Starred) for a in call.args) or any(kw.arg is None for kw in call.keywords):
+                return False
+            given = [kw.value for kw in call.keywords if kw.arg == k[1]]
+            if i is not None and i < len(call.args):
+                given.append(call.args[i])
+            if not given:
+                given = [default]
+            if not all(self.surely_host(g, visiting) for g in given):
+                return False
+        return True
+
+    def key_of_def(self, d):
+        return (self.resolve(self.where[d], d.name), d.name)
+
+    def _plain_class(self, c) -> bool:
+        """An own class whose objects get attributes only from the module's code (or PlayerStrategy's): no Enum,
+        NamedTuple, tuple / dict / list / exception base, nothing unknown (LD-52)."""
+        i = self.cls.get(c) or self._class(c)
+        ps = _player_strategy()
+        return not (i.unknown or i.storage or i.enum) and all(o is ps for o in i.objs)
+
+    def _own_fields(self) -> set:
+        if not hasattr(self, "_fields_cache"):
+            self._fields_cache = {f for c in self.cls for f in self.all_fields(c)} | set(self.methods)
+        return self._fields_cache
+
+    def _host_table(self, node, visiting) -> bool:
+        """`node` names a module-level dict written out once with only host objects as values (surely_host) and
+        only read: TABLE[k], TABLE.get(k, ...), nothing else (LD-52)."""
+        if not isinstance(node, ast.Name):
+            return False
+        k = self.key(node)
+        if k is None or k[0] is not self.module or k in self.arg_keys or self.imports.get(k):
+            return False
+        vals = self.assigned.get(k, [])
+        if len(vals) != 1 or self.stores.get(k, 0) != 1 or self.loop_extra.get(k) or not isinstance(vals[0], ast.Dict) or \
+                any(key is None for key in vals[0].keys):
+            return False
+        for use in self.uses.get(k, ()):
+            p = self.parent.get(use)
+            if isinstance(p, ast.Subscript) and p.value is use and isinstance(p.ctx, ast.Load):
+                continue
+            if isinstance(p, ast.Attribute) and p.value is use and p.attr == "get" and \
+                    isinstance(self.parent.get(p), ast.Call) and self.parent[p].func is p:
+                continue
+            if isinstance(p, ast.Assign) or (isinstance(p, (ast.AnnAssign, ast.NamedExpr)) and p.target is use):
+                continue                                        # its own binding
+            return False
+        if ("table", k) in visiting:
+            return True
+        visiting.add(("table", k))
+        return all(self.surely_host(v, visiting) for v in vals[0].values)
 
     def _replaced_classes(self, obj) -> list:
         """The module's classes whose __init__ replace(obj, ...) may run (LD-51): those that may be dataclasses
         (an undecorated subclass or a mixin's too), but none when obj surely isn't one of them (surely_host), and
         only K's when obj is K(...)."""
-        if self.surely_host(obj):
+        memo = self.__dict__.setdefault("_host_memo", {})
+        if obj not in memo:
+            memo[obj] = self.surely_host(obj)
+        if memo[obj]:
             return []
         if isinstance(obj, ast.Call):
             own = self.user_class(obj.func)
@@ -2069,6 +2312,8 @@ def _rules(tree, flow, cls) -> list[str]:
                 origin = getattr(obj, "__module__", None)
                 if isinstance(origin, str) and any(origin == p or origin.startswith(p + ".") for p in DENIED_PREFIXES):
                     why = f"它来自 {origin}"
+                else:
+                    why = danger_problem(obj)
             if why:
                 bad(at, f"{m}.{a}（{why}）")
             if id(obj) in registrars:
@@ -2222,6 +2467,8 @@ def _rules(tree, flow, cls) -> list[str]:
                     if isinstance(origin, str) and any(origin == q or origin.startswith(q + ".")
                                                        for q in DENIED_PREFIXES):
                         bad(node, f"from {mod} import {a.name}（它来自 {origin}）")
+                    elif danger_problem(obj):
+                        bad(node, f"from {mod} import {a.name}（{danger_problem(obj)}）")
                 if mod == "random" and a.name != "Random":
                     bad(node, f"from random import {a.name}（要随机数用 self.random，不用全局的 random）")
                 if numpy_problem(mod, a.name):
@@ -2685,9 +2932,15 @@ def _name_note(flow) -> list[str]:
         names = sorted({n for v in flow.replace_lines.values() for n in v})
         out.append("提示：第 " + "、".join(map(str, sorted(flow.replace_lines))) + " 行的 replace(x, ...)：读代码看不出 x 是不是 "
                    + "、".join(names) + " 的对象；建这些类会跑自己写的 __init__（自己的或父类的），replace 也会调它，所以"
-                   "它的参数按 replace 给的东西和 x 的同名属性算，存下来的东西跟着算（LD-50、LD-51）。x 是 svsim 的东西"
-                   "（DEFAULT 这类直接 import 的、Weights(...) 建的）或者写成 K(...) 就只算对应的类；自己的对象要换字段，"
-                   "直接建新的：K(字段=值)")
+                   "它的参数按 replace 给的东西和 x 的同名属性算，存下来的东西跟着算（LD-50～LD-52）。读代码只认这些写法"
+                   "「肯定是 svsim 的东西」：直接 import 的名字（DEFAULT、ev.THREAT）；svsim 的类建的（Weights(...)）；"
+                   "这些东西的 replace / copy；a if c else b 两边都是；只这样赋过值的局部名字（w = replace(w, ...) "
+                   "也算，for w in (DEFAULT, THREAT) 也算）；self.x（模块里每处给 .x 赋的值都是这些，类体里的 x = ... "
+                   "也算）；模块顶层只写一次、值都是这些、只用 T[k] 或 T.get(k, 这些) 读的字典；模块顶层函数的参数"
+                   "（每处调用都传这些）；自己的函数或 self.方法(...)（每个 return 都是这些）；super().weights(pos)。"
+                   "别的（方法的参数、从局面或别的对象读出来的、循环普通列表……）都不算。总能过的改法：replace 那一行"
+                   "直接写 DEFAULT / Weights(...) / 模块常量；或者有自己 __init__ 的类别加 @dataclass、也别继承 dataclass；"
+                   "自己的对象要换字段，直接建新的：K(字段=值)")
     storage = sorted({c.name for c, i in flow.cls.items() if i.storage})
     if storage:
         out.append("提示：" + "、".join(storage) + " 建在 NamedTuple / namedtuple / TypedDict / dict / list / tuple / 异常"
