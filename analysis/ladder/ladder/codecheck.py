@@ -1,5 +1,5 @@
 """Reading a submission's code (item 2.3; fifth pass LD-40, sixth LD-41, seventh LD-42, eighth LD-43, ninth LD-44,
-tenth LD-45, eleventh LD-46).
+tenth LD-45, eleventh LD-46, twelfth LD-47).
 Nothing in the submitted code runs.
 The simulator's and ladder's own modules are imported here (they are the host's code) to tell a module from a class
 from a function; svsim.learn, svsim.tools, svsim.ui, svsim.build, svsim.search.parallel and ladder's other modules
@@ -8,8 +8,8 @@ never are.
 Two kinds of rules.
 
 Names. Imports only from the allowed modules, and no private names from them (of numpy only numpy, numpy.random,
-linalg, fft, polynomial, emath, exceptions, dtypes, typing, and none of its file, settings, test or global-random
-names: LD-46); a name an import binds never bound again (rebound, it would no longer be what the reading takes it
+linalg, fft, polynomial, exceptions, dtypes, typing, and none of its file, settings, test or global-random
+names: LD-46; no writing into a possibly shared array through numpy's out= or a ufunc's outputs: LD-47); a name an import binds never bound again (rebound, it would no longer be what the reading takes it
 for), nor two imports binding one name to different things (LD-46); none of the names and attributes
 that reach files, the network, other processes, frames or the interpreter; no dunder names but __init__, __name__,
 __post_init__ (and those three never assigned); other objects' private attributes no (the strategy's own `self._x`
@@ -107,14 +107,15 @@ from pathlib import Path
 ALLOWED_TOP = {"__future__", "typing", "math", "random", "collections", "itertools", "functools", "dataclasses",
                "heapq", "bisect", "statistics", "copy", "enum", "numpy", "svsim"}
 ALLOWED_LADDER = {"ladder.interface", "ladder.base"}
-NUMPY_MODULES = frozenset({"numpy", "numpy.random", "numpy.linalg", "numpy.fft", "numpy.polynomial", "numpy.emath",
+NUMPY_MODULES = frozenset({"numpy", "numpy.random", "numpy.linalg", "numpy.fft", "numpy.polynomial",
                            "numpy.exceptions", "numpy.dtypes", "numpy.typing"})    # and numpy.polynomial.*: LD-46,
-#                         not numpy.testing (builds and imports C code), numpy.lib / ma / rec / f2py (files), ...
+#                         not numpy.testing (builds and imports C code), numpy.lib / ma / rec / f2py (files), numpy.emath
+#                         (it is numpy.lib.scimath, no module of that name: LD-47), ...
 NUMPY_DENIED = frozenset({                         # numpy's own names that aren't for strategies (LD-46)
     "load", "save", "savez", "savez_compressed", "savetxt", "loadtxt", "genfromtxt", "fromfile", "fromregex", "memmap",
     "open_memmap", "DataSource", "dump", "tofile",                                                  # files
     "seterr", "seterrcall", "setbufsize", "set_printoptions", "set_string_function", "set_numeric_ops", "add_newdoc",
-    "add_docstring", "add_newdoc_ufunc",                            # the process's numpy settings: every later game in the worker
+    "add_docstring", "add_newdoc_ufunc", "set_default_printstyle",  # the process's numpy settings: every later game in the worker
     "test", "info", "source", "lookfor", "show_config", "show_runtime", "who", "get_include"})   # running, showing
 NUMPY_RANDOM_OK = frozenset({"Generator", "default_rng", "RandomState", "SeedSequence", "BitGenerator", "MT19937",
                              "PCG64", "PCG64DXSM", "Philox", "SFC64"})   # not the process's global RandomState
@@ -156,7 +157,9 @@ ADDERS = frozenset({"append", "add", "extend", "insert", "update", "appendleft",
 REPLACERS = tuple(f for f in (dataclasses.replace, getattr(_copy, "replace", None)) if f is not None)  # 3.13's too
 DC_PLAIN_KEYWORDS = frozenset({"frozen", "eq", "order", "repr", "unsafe_hash", "slots", "match_args", "weakref_slot"})
 ARG_MUTATORS = frozenset({"shuffle", "heappush", "heappop", "heapify", "heapreplace", "heappushpop", "insort",
-                          "insort_left", "insort_right"})
+                          "insort_left", "insort_right",
+                          "copyto", "place", "putmask", "fill_diagonal", "put_along_axis"})   # numpy's (LD-47)
+UFUNC_OUT_AT = {"at": 0, "reduce": 3, "accumulate": 3, "reduceat": 4}   # the argument a ufunc method writes (LD-47)
 BUILTIN_TYPES = frozenset({"set", "dict", "list", "bytearray", "frozenset", "object", "type", "tuple"})
 SCALAR_BUILTINS = frozenset({
     "len", "id", "hash", "isinstance", "issubclass", "callable", "hasattr", "bool", "int", "float", "str", "repr",
@@ -213,7 +216,7 @@ def module_problem(name: str) -> str | None:
         return "它们能载入训练好的模型、读强度表或对局记录、开进程（A12、红线）"
     top = name.split(".")[0]
     if top == "numpy" and name not in NUMPY_MODULES and not name.startswith("numpy.polynomial."):
-        return ("numpy 只许用 numpy、numpy.random、numpy.linalg、numpy.fft、numpy.polynomial、numpy.emath、"
+        return ("numpy 只许用 numpy、numpy.random、numpy.linalg、numpy.fft、numpy.polynomial、"
                 "numpy.exceptions、numpy.dtypes、numpy.typing：别的子模块能读写文件、编译载入 C 代码（LD-46）")
     if top == "ladder":
         return None if name in ALLOWED_LADDER else "ladder 里只能用 ladder.interface、ladder.base"
@@ -597,6 +600,7 @@ class Flow:
         self.objs: dict = {}              # key -> [(module, name, object)]
         self.imports: dict = {}           # key -> how many import statements bind it (LD-46)
         self.import_binds: dict = {}      # key -> {what each of them binds: a module's name, or id(the object)}
+        self.import_nodes: dict = {}      # key -> [the import statements that bind it] (LD-47)
         self.fdefs: dict = {}             # key -> [def nodes]
         self.cdefs: dict = {}             # key -> [class nodes]
         self.fn: dict = {}                # def / lambda node -> Fn
@@ -639,6 +643,7 @@ class Flow:
                 for a in node.names:
                     k = count(a.asname or a.name.split(".")[0])
                     self.imports[k] = self.imports.get(k, 0) + 1
+                    self.import_nodes.setdefault(k, []).append(node)
                     self.mods[k] = a.name if a.asname else a.name.split(".")[0]
                     self.import_binds.setdefault(k, set()).add(self.mods[k])
             elif isinstance(node, ast.ImportFrom):
@@ -647,6 +652,7 @@ class Flow:
                         continue
                     k = count(a.asname or a.name)
                     self.imports[k] = self.imports.get(k, 0) + 1
+                    self.import_nodes.setdefault(k, []).append(node)
                     obj = member(node.module, a.name) if node.module and not node.level else _MISSING
                     self.import_binds.setdefault(k, set()).add(obj.__name__ if isinstance(obj, types.ModuleType)
                                                                else (node.module, a.name) if obj is _MISSING else id(obj))
@@ -1028,8 +1034,11 @@ class Flow:
         kw_only=True come after `*`, a field a subclass annotates again keeps its first place), over a chain of
         single own bases, each a dataclass or a class with no annotations; None when that isn't plain to see (an
         annotation or a default whose kind can't be told: a string under the wrong name, a name not bound by one
-        import, a call that could hand back a Field; a dataclass base that isn't the module's own): every field then
-        gets the highest positional argument's level (LD-45), and the receipt says so (_name_note)."""
+        import, a call that could hand back a Field; a dataclass base that isn't the module's own; LD-47: a special
+        form's name whose one import doesn't come first at the module's top level, a name annotated twice or bound
+        again in the class body, `(x): int`): every field then gets the highest positional argument's level (LD-45),
+        and the receipt says so (_name_note). LD-47: a quoted annotation under lazy annotations is kept with its
+        quotes, so dataclasses reads it as a plain field."""
         chain, k = [], c
         while k is not None:
             info = self.cls[k]
@@ -1053,9 +1062,11 @@ class Flow:
             for st in k.body:
                 if not isinstance(st, ast.AnnAssign):
                     continue
-                if not isinstance(st.target, ast.Name):
-                    return None
-                kind = self._ann_kind(st.annotation)
+                if not isinstance(st.target, ast.Name) or not st.simple:
+                    return None                # `(x): int` isn't in __annotations__: no field (LD-47)
+                if self.stores.get(self.key(st.target), 0) != 1:
+                    return None                # annotated twice, or bound again in the body (LD-47)
+                kind = self._ann_kind(st.annotation, k)
                 if kind is None:
                     return None
                 if kind == "kw_only":
@@ -1098,19 +1109,24 @@ class Flow:
         obj = self.static_object(node)
         return None if obj is _MISSING else ("obj", obj)
 
-    def _ann_kind(self, ann) -> str | None:
-        """"classvar", "initvar", "kw_only" (the KW_ONLY marker) or "field", as dataclasses reads the annotation; None
-        when that can't be told."""
+    def _ann_kind(self, ann, c) -> str | None:
+        """"classvar", "initvar", "kw_only" (the KW_ONLY marker) or "field", as dataclasses reads the annotation of a
+        field of class `c`; None when that can't be told."""
         special = {id(typing.ClassVar): "classvar", id(dataclasses.InitVar): "initvar",
                    id(dataclasses.KW_ONLY): "kw_only"}
         if self.lazy or isinstance(ann, ast.Constant):
-            if isinstance(ann, ast.Constant) and not isinstance(ann.value, str):
-                return "field"
-            text = ann.value if isinstance(ann, ast.Constant) else ast.unparse(ann)
+            if isinstance(ann, ast.Constant) and isinstance(ann.value, str):
+                if self.lazy:                  # kept with its quotes ("'ClassVar[int]'"): dataclasses' reading
+                    return "field"             # matches no name (LD-47)
+                text = ann.value
+            elif isinstance(ann, ast.Constant) and not self.lazy:
+                return "field"                 # an object that isn't a string: not a special form
+            else:
+                text = ast.unparse(ann)        # what the compiler keeps for a lazy annotation (b'..' too)
             m = re.match(r"^(?:\s*(\w+)\s*\.)?\s*(\w+)", text)   # dataclasses' own reading of a string
             if m is None:                                          # annotation (dataclasses._is_type)
                 return "field"
-            first = self._module_binding(m.group(1) or m.group(2))
+            first = self._module_binding(m.group(1) or m.group(2), c)
             if first is None:
                 return None
             if first is _MISSING:                      # not a name of the module: dataclasses finds nothing
@@ -1137,20 +1153,33 @@ class Flow:
             return None
         return kind
 
-    def _module_binding(self, name):
-        """What the module-level `name` surely is (a module or an object) when one import binds it, _MISSING when the
-        module doesn't bind it or only class statements do (dataclasses' lookup then finds no special form), None
-        when it can't be told."""
+    def _module_binding(self, name, c):
+        """What the module-level `name` surely is (a module or an object) when class statement `c` runs: one import
+        binds it, at the module's top level, before the top-level statement that holds `c` (LD-47: dataclasses looks
+        the name up when the decorator runs; an import further down isn't there yet). _MISSING when the module
+        doesn't bind it or only class statements do (dataclasses' lookup then finds no special form), None when it
+        can't be told."""
         if name not in self.module.bound:
             return _MISSING
         k = (self.module, name)
         if self.cdefs.get(k) and self.stores.get(k, 0) == len(self.cdefs[k]):
             return _MISSING
-        if self.stores.get(k, 0) != 1 or self.imports.get(k, 0) != 1:
+        if self.stores.get(k, 0) != 1 or self.imports.get(k, 0) != 1 or \
+                not self._runs_before(self.import_nodes[k][0], c):
             return None
         if k in self.mods:
             return _import(self.mods[k])
         return self.objs[k][0][2] if len(self.objs.get(k, ())) == 1 and self.objs[k][0][2] is not _MISSING else None
+
+    def _runs_before(self, stmt, c) -> bool:
+        """`stmt` is a statement of the module's top level that has run whenever class statement `c` runs (LD-47)."""
+        top = c
+        while top is not None and self.parent.get(top) is not self.tree:
+            top = self.parent.get(top)
+        if top is None or self.parent.get(stmt) is not self.tree:
+            return False
+        body = [id(x) for x in self.tree.body]
+        return body.index(id(stmt)) < body.index(id(top))
 
     def _default_kind(self, v) -> dict | None:
         """{} for a field default that surely isn't a dataclasses.Field, {"init": .., "kw_only": ..} for a
@@ -1636,6 +1665,11 @@ class Flow:
         else:
             for name, a in zip(positional, args):
                 self._raise_attr(name, self.level(a))
+            extra = max((self.level(a) for a in args[len(positional):]), default=CLEAN)
+            if extra > CLEAN:                  # more than the reading says it takes: never lose one (LD-47)
+                self.dc_rough.add(args[0].lineno)
+                for name in fields:
+                    self._raise_attr(name, extra)
         for kw in keywords:
             if kw.arg is None:
                 pairs = self._literal_keys(kw.value)
@@ -1916,8 +1950,9 @@ def _rules(tree, flow, cls) -> list[str]:
             elif flow.level(base) >= SHARED:
                 shared(at, f"{how}：不许改可能共用的对象（从 svsim / ladder 拿来或读出来的东西；"
                            "要改就自己做一份：list(x)、dict(x)、dataclasses.replace(x, ...)）")
-        if ctx == "load" and a in MUTATORS:
-            kn = flow.known(base)
+        if ctx == "load" and a in MUTATORS and not (flow.modpath(base) or "").startswith("numpy"):
+            kn = flow.known(base)               # np.add, np.sort, np.subtract: numpy's functions (LD-47; np.put and
+                                                # the out= of a ufunc: _written_args)
             unbound = (isinstance(base, ast.Name) and flow.key(base) is None and base.id in BUILTIN_TYPES) or \
                 class_like(base) or (kn is not None and isinstance(kn[2], type))
             if flow.level(base) >= SHARED:
@@ -2144,6 +2179,10 @@ def _rules(tree, flow, cls) -> list[str]:
                     (isinstance(node.args[0], ast.Starred) or flow.level(node.args[0]) >= SHARED):
                 shared(node, f"{name}(...)：不许改可能共用的容器（要改就自己做一份：list(x)、dict(x)、"
                              "dataclasses.replace(x, ...)）")
+            for dest, how, top in _written_args(flow, node):          # numpy writing into an argument (LD-47)
+                if flow.import_root(dest) is not None or flow.level(dest) >= (SHARED if top else HOLDS):
+                    shared(node, f"{how}：不许往可能共用的数组里写（numpy 自己模块和类里的数组整个进程共用，"
+                                 "后面别人的对局也受影响；写进你自己建的数组，LD-47）")
         elif isinstance(node, ast.ClassDef) and isinstance(p, ast.Module):
             classes.append(node.name)
     if cls not in classes:
@@ -2151,6 +2190,59 @@ def _rules(tree, flow, cls) -> list[str]:
     if level_hit:
         problems += _name_note(flow)
     return problems
+
+
+def _written_args(flow, call) -> list:
+    """The arguments a call writes into the way numpy does (LD-47), as [(node, how, written itself)]: out= of any
+    call that isn't the module's own (out=(a, b) writes a and b; another value may hold what it writes; **{'out': x}
+    too), of a numpy call also what a *xs or another **kw holds, a known ufunc's positional outputs after its inputs
+    (np.negative(x, x)), the array of ufunc.at and the out of
+    reduce / accumulate / reduceat, the array of np.put and of copyto, place, putmask, fill_diagonal, put_along_axis
+    under another name (by their own names they are ARG_MUTATORS)."""
+    out = []
+
+    def given(v, how):
+        if isinstance(v, (ast.Tuple, ast.List)):
+            out.extend((x.value if isinstance(x, ast.Starred) else x, how, not isinstance(x, ast.Starred))
+                       for x in v.elts)
+        else:
+            out.append((v, how, False))
+
+    f = call.func
+    builtin = isinstance(f, ast.Name) and flow.key(f) is None and hasattr(builtins, f.id)   # dict(out=x) builds
+    if not flow.targets(call) and not builtin:
+        for kw in call.keywords:
+            if kw.arg == "out":
+                given(kw.value, "out=")
+            elif kw.arg is None:                       # **{'out': x}; any other ** of a numpy call: below
+                for k, v in flow._literal_keys(kw.value) or ():
+                    if k == "out":
+                        given(v, "out=")
+    ufunc = member("numpy", "ufunc")
+    if not isinstance(ufunc, type):
+        return out
+
+    def obj(node):
+        kn = flow.known(node)
+        return kn[2] if kn is not None else flow.static_object(node)
+
+    o = obj(f)
+    numpy_call = isinstance(o, ufunc) or (flow.known(f) or ("",))[0].split(".")[0] == "numpy"
+    if numpy_call:                                     # np.negative(*xs), np.add(a, b, **kw): what they hold
+        out += [(a.value, f"{ast.unparse(f)}(*...)", False) for a in call.args if isinstance(a, ast.Starred)]
+        out += [(k.value, f"{ast.unparse(f)}(**...)", False) for k in call.keywords
+                if k.arg is None and flow._literal_keys(k.value) is None]
+    kn = flow.known(f)
+    written = f.attr if isinstance(f, ast.Attribute) else f.id if isinstance(f, ast.Name) else None
+    if kn is not None and kn[0].split(".")[0] == "numpy" and written not in ARG_MUTATORS and \
+            kn[1] in ARG_MUTATORS | {"put"}:   # np.put (put is a method name too), from numpy import copyto as cp
+        out += [(a, f"{ast.unparse(f)}", True) for a in call.args[:1]]
+    if isinstance(o, ufunc):
+        out += [(a, f"{ast.unparse(f)} 的输出", True) for a in call.args[o.nin:] if not isinstance(a, ast.Starred)]
+    if isinstance(f, ast.Attribute) and f.attr in UFUNC_OUT_AT and isinstance(obj(f.value), ufunc):
+        i = UFUNC_OUT_AT[f.attr]
+        out += [(a, f"{ast.unparse(f)}", True) for a in call.args[i:i + 1]]
+    return out
 
 
 def _free_name(n: str, taken=frozenset()) -> str:

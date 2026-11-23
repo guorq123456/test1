@@ -274,6 +274,18 @@ LOAD_BLOCK_PREFIX = ("socket.", "ctypes.", "shutil.", "winreg.", "urllib.", "htt
                      "webbrowser.", "_winapi.")
 
 
+def _quote(why: str, n: int = 600) -> str:
+    """An error for a receipt: whole when short; else a traceback's first line and its tail, where the player's frame
+    and the exception are (LD-47: the head was the runner's own frames), any other text's head."""
+    why = why.strip()
+    if len(why) <= n:
+        return why
+    if "Traceback (most recent call last)" not in why:
+        return why[:n] + "…"
+    first = why.splitlines()[0][:100]
+    return f"{first} … {why[-(n - len(first) - 3):]}"
+
+
 def _load_main(argfile: str) -> int:
     """Runs in its own process: import the player's module behind an audit hook and play one short game."""
     args = json.loads(Path(argfile).read_text(encoding="utf-8"))
@@ -323,6 +335,9 @@ def _load_main(argfile: str) -> int:
         why = None
         if event == "open":
             p, mode, flags = (list(a) + [None, None, None])[:3]
+            if isinstance(p, str) and p.startswith("<") and p.endswith(">") and "/" not in p and "\\" not in p:
+                raise FileNotFoundError(2, "no such file", p)   # 3.13 formatting a traceback opens '<unknown>':
+                #                                                   no file there, and not the player's doing (LD-47)
             writing = (mode is not None and any(m in str(mode) for m in "wax+")) or \
                       (mode is None and isinstance(flags, int) and flags & (os.O_WRONLY | os.O_RDWR | os.O_CREAT))
             if writing or not allowed_read(p):
@@ -343,7 +358,8 @@ def _load_main(argfile: str) -> int:
     try:
         spec = importlib.util.spec_from_file_location("player_strategy", str(path))
         mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
+        sys.modules[spec.name] = mod                    # as an import does: dataclasses looks a class's module up
+        spec.loader.exec_module(mod)                    # there for string annotations (LD-47)
         klass = getattr(mod, args["class"], None)
         if not (isinstance(klass, type) and issubclass(klass, interface.PlayerStrategy)
                 and klass is not interface.PlayerStrategy):
@@ -637,7 +653,7 @@ def receive(d: Path, player: str, pool_dir: Path, subdir: Path, workers: int = 4
             twin = logs.get(j["id"].replace("-sub", "-default"))
             why = str(g.get("error", ""))
             if any(why.startswith(t) for t in YOUR_VOIDS) and twin is not None and twin.get("result") != "void":
-                problems.append(f"{j['id']}：这局作废了，同一局换默认打法没作废——是你的代码（LD-45、LD-46）：{why[:600]}")
+                problems.append(f"{j['id']}：这局作废了，同一局换默认打法没作废——是你的代码（LD-45、LD-46）：{_quote(why)}")
             else:
                 first = (why.strip().splitlines() or ["?"])[0][:160]
                 both = twin is not None and twin.get("result") == "void"

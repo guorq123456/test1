@@ -249,6 +249,16 @@ def test_the_load_check_plays_and_blocks(tmp_path):
                       "except Exception:\n    pass\n", encoding="utf-8")
     r = submit.load_check(sneaky, "Quick", ids, 1, seed=3, game_seed=99001449, work=tmp_path / "w3")
     assert not r["ok"] and r["blocked"], r
+    lazy = tmp_path / "lazy.py"                           # LD-47: a dataclass with string annotations loads
+    lazy.write_text("from __future__ import annotations\nimport dataclasses\nimport typing\n" + QUICK +
+                    "\n@dataclasses.dataclass\nclass Node:\n    parent: Node | None = None\n    mark: 'Node' = None\n"
+                    "    C: typing.ClassVar[float] = 1.4\n\nROOT = Node()\n", encoding="utf-8")
+    r = submit.load_check(lazy, "Quick", ids, 1, seed=3, game_seed=99001449, work=tmp_path / "w4")
+    assert r["ok"], r
+    missing = tmp_path / "missing.py"                     # LD-47: the error, not '<unknown>' (3.13's traceback)
+    missing.write_text(QUICK + "\nimport numpy.emath\n", encoding="utf-8")
+    r = submit.load_check(missing, "Quick", ids, 1, seed=3, game_seed=99001449, work=tmp_path / "w5")
+    assert not r["ok"] and r["blocked"] == [] and "ModuleNotFoundError" in r.get("error", ""), r
 
 
 # --- the peek check ---------------------------------------------------------------------------------------------
@@ -333,8 +343,15 @@ def test_smoke_games_its_own_code_voided_refuse_a_submission(tmp_path, monkeypat
     monkeypatch.setattr(ladder.runner, "run", real)
 
 
+LONG_LOAD = ("strategy failed to load:\nTraceback (most recent call last):\n" +
+             '  File "C:\\claude\\ladder\\ladder\\runner.py", line 255, in _play\n    strategies = load_strategies(job)\n' * 8
+             + '  File "C:\\subs\\planpick.py", line 9, in __init__\n    self.iters = 8 + 24 // (seed % 3)\n'
+             "ZeroDivisionError: integer division or modulo by zero")
+
+
 @pytest.mark.parametrize("error", ["strategy failed to load:\nTraceback (most recent call last):\nIndexError: list index",
-                                   "the strategies took more than 8.0s to load", "engine error outside a move: X"])
+                                   "the strategies took more than 8.0s to load", "engine error outside a move: X",
+                                   LONG_LOAD])
 def test_smoke_games_its_own_load_voided_or_all_void_refuse_a_submission(tmp_path, monkeypatch, error):
     # LD-46: a smoke game voided while loading the submission (the default twin loaded fine) is its own doing, and
     # a smoke run where every game is void checks nothing after it: both refused, the reason quoted
@@ -356,6 +373,7 @@ def test_smoke_games_its_own_load_voided_or_all_void_refuse_a_submission(tmp_pat
     monkeypatch.setattr(ladder.runner, "run", real)
     want = "全作废" if engine else "是你的代码"
     assert rec["verdict"] == "拒收" and any(want in r and error.splitlines()[0][:20] in r for r in rec["reasons"]), rec
+    assert any(error.splitlines()[-1] in r for r in rec["reasons"]), rec    # LD-47: the player's exception is quoted
 
 
 def test_an_accepted_update_goes_to_the_gate(tmp_path, monkeypatch):

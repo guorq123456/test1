@@ -385,7 +385,7 @@ def test_an_abc_registration_voids_the_game_and_numpy_used_plainly_does_not(tmp_
 def test_the_watch_sees_a_dataclass_field_and_numpys_settings():
     # LD-46: @dataclass rewrites a Field it finds as a class attribute in place (one taken from
     # dataclasses.fields(PlayCard) dropped `targets` from every later game); numpy's settings and global RandomState
-    # are the whole process's
+    # are the whole process's; LD-47: so are the arrays and plain values numpy's modules and classes hold
     import dataclasses
 
     import numpy
@@ -397,6 +397,8 @@ def test_the_watch_sees_a_dataclass_field_and_numpys_settings():
     assert watch.changes(snap) == []
     f = next(x for x in dataclasses.fields(PlayCard) if x.name == "targets")
     kept, err, state = f.type, numpy.geterr(), numpy.random.get_state()
+    window = numpy.polynomial.Polynomial.window
+    was, style = window.copy(), numpy.polynomial.Polynomial._use_unicode
     try:
         f.type = int
         assert any("__dataclass_fields__" in line and "targets" in line for line in watch.changes(snap))
@@ -406,10 +408,19 @@ def test_the_watch_sees_a_dataclass_field_and_numpys_settings():
         numpy.seterr(**err)
         numpy.random.seed(5)
         assert any("numpy.random" in line for line in watch.changes(snap))
+        numpy.random.set_state(state)
+        assert watch.changes(snap) == []
+        numpy.copyto(window, [0, 3], casting="unsafe")         # LD-47: numpy's own arrays, written through an out
+        assert any("Polynomial.window" in line for line in watch.changes(snap))
+        numpy.copyto(window, was)
+        numpy.polynomial.set_default_printstyle("ascii" if style else "unicode")
+        assert any("_use_unicode" in line for line in watch.changes(snap))
     finally:
         f.type = kept
         numpy.seterr(**err)
         numpy.random.set_state(state)
+        numpy.copyto(window, was)
+        numpy.polynomial.set_default_printstyle("unicode" if style else "ascii")
     assert watch.changes(snap) == []
 
 

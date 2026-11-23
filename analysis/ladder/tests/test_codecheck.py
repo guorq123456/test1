@@ -259,6 +259,38 @@ BAD = {
  "46-dc-kw-only-marker": "from svsim.core.script import INVOKERS\nimport dataclasses\n@dataclasses.dataclass\nclass M:\n    a: object = None\n    _: dataclasses.KW_ONLY\n    b: object = None\nM(INVOKERS).a.add(1)",
  "46-dc-initvar-pos": "from svsim.core.script import INVOKERS\nimport dataclasses\n@dataclasses.dataclass\nclass M:\n    a: object = None\n    y: dataclasses.InitVar[object] = None\n    c: object = None\n    def __post_init__(self, y):\n        pass\nM(1, 2, INVOKERS).c.add(1)",
  "46-dc-redefined": "from svsim.core.script import INVOKERS\nimport dataclasses\n@dataclasses.dataclass\nclass A:\n    a: object = None\n    b: object = None\n@dataclasses.dataclass\nclass B(A):\n    c: object = None\n    a: object = None\nB(1, INVOKERS).b.add(1)",
+ "47-dc-late-classvar": "from __future__ import annotations\nimport dataclasses\nfrom svsim.core.script import INVOKERS\n@dataclasses.dataclass\nclass Box:\n    tag: ClassVar[int] = 0\n    bag: object = None\nfrom typing import ClassVar\ndef f():\n    b = Box(0, INVOKERS)\n    b.bag.add(-7)",
+ "47-dc-late-typing": "from __future__ import annotations\nimport dataclasses\nfrom svsim.core.script import INVOKERS\n@dataclasses.dataclass\nclass Box:\n    tag: typing.ClassVar[int] = 0\n    bag: object = None\nimport typing\ndef f():\n    Box(0, INVOKERS).bag.add(-7)",
+ "47-dc-late-kwonly": "from __future__ import annotations\nimport dataclasses\nfrom svsim.core.script import INVOKERS\n@dataclasses.dataclass\nclass Box:\n    _: KW_ONLY\n    bag: object = None\nfrom dataclasses import KW_ONLY\ndef f():\n    Box(0, INVOKERS).bag.add(-7)",
+ "47-dc-late-quoted": "import dataclasses\nfrom svsim.core.script import INVOKERS\n@dataclasses.dataclass\nclass Box:\n    tag: 'ClassVar[int]' = 0\n    bag: object = None\nfrom typing import ClassVar\ndef f():\n    Box(0, INVOKERS).bag.add(-7)",
+ "47-dc-late-in-function": "from __future__ import annotations\nimport dataclasses\nfrom svsim.core.script import INVOKERS\ndef make(x):\n    @dataclasses.dataclass\n    class Box:\n        tag: ClassVar[int] = 0\n        bag: object = None\n    return Box(0, x)\nb = make(INVOKERS)\nfrom typing import ClassVar\nb.bag.add(-7)",
+ "47-dc-lazy-quoted-classvar": "from __future__ import annotations\nfrom dataclasses import dataclass, field\nfrom typing import ClassVar\nfrom svsim.core.script import INVOKERS\n@dataclass\nclass Box:\n    tag: 'ClassVar[int]' = 0\n    items: set = field(default_factory=set)\n    src: object = None\ndef f():\n    b = Box(0, INVOKERS)\n    b.items.clear()",
+ "47-dc-lazy-quoted-kwonly": "from __future__ import annotations\nfrom dataclasses import dataclass, KW_ONLY\nfrom svsim.core.script import INVOKERS\n@dataclass\nclass Box:\n    tag: int = 0\n    _: 'KW_ONLY' = 0\n    items: object = None\ndef f():\n    Box(0, 0, INVOKERS).items.clear()",
+ "47-dc-dup-annotation": "from dataclasses import dataclass, field, KW_ONLY\nfrom svsim.core.script import INVOKERS\n@dataclass\nclass Box:\n    items: set = field(default_factory=set)\n    _: KW_ONLY\n    items: set = field(default_factory=set)\n    src: object = None\ndef f():\n    Box(INVOKERS).items.clear()",
+ "47-dc-rebound-in-body": "from dataclasses import dataclass, field\nfrom svsim.core.script import INVOKERS\n@dataclass\nclass Box:\n    tag: int = 0\n    items: object = None\n    tag = field(default=0, init=False)\ndef f():\n    Box(INVOKERS).items.clear()",
+ "47-dc-not-simple": "from dataclasses import dataclass\nfrom svsim.core.script import INVOKERS\n@dataclass\nclass Box:\n    (tag): int = 0\n    items: object = None\ndef f():\n    Box(INVOKERS).items.clear()",
+ "47-dc-bytes-annotation": "from __future__ import annotations\nfrom dataclasses import dataclass\nfrom typing import ClassVar as b\nfrom svsim.core.script import INVOKERS\n@dataclass\nclass Box:\n    tag: b'x' = 0\n    items: object = None\ndef f():\n    Box(INVOKERS).items.clear()",
+ "47-dc-extra-args": "from dataclasses import dataclass\nfrom svsim.core.script import INVOKERS\n@dataclass\nclass Box:\n    items: object = None\nclass Sub(Box):\n    def __init__(self, *a):\n        pass\ndef f():\n    b = Box(0, INVOKERS)\n    b.items.clear()",
+ "47-np-copyto-window": "import numpy as np\nnp.copyto(np.polynomial.Polynomial.window, [0, 3], casting='unsafe')",
+ "47-np-out-window": "import numpy as np\nnp.multiply(np.polynomial.Polynomial.window, 2, out=np.polynomial.Polynomial.window)",
+ "47-np-out-tuple": "import numpy as np\nw = np.polynomial.Chebyshev.domain\nnp.negative(w, out=(w,))",
+ "47-np-positional-out": "import numpy as np\nnp.negative(np.polynomial.Polynomial.window, np.polynomial.Polynomial.window)",
+ "47-np-place": "import numpy as np\nnp.place(np.polynomial.Polynomial.window, [True, False], [9])",
+ "47-np-putmask": "import numpy as np\nnp.putmask(np.polynomial.Polynomial.window, [True, False], 9)",
+ "47-np-fill-diagonal": "import numpy as np\nnp.fill_diagonal(np.polynomial.Chebyshev.domain.reshape(1, 2), 9)",
+ "47-np-put-along": "import numpy as np\nnp.put_along_axis(np.polynomial.Polynomial.window, np.array([0]), 9, 0)",
+ "47-np-put": "import numpy as np\nnp.put(np.polynomial.Polynomial.window, [0], [5])",
+ "47-np-copyto-alias": "import numpy as np\nfrom numpy import copyto as cp\ncp(np.polynomial.polynomial.polyx, [1, 2])",
+ "47-np-at": "import numpy as np\nnp.add.at(np.polynomial.Polynomial.window, [0], 1)",
+ "47-np-reduce-out": "import numpy as np\nnp.add.reduce(np.ones((2, 2)), 0, None, np.polynomial.Polynomial.window)",
+ "47-np-clip-out": "import numpy as np\nnp.clip(np.ones(2), 0, 1, out=np.polynomial.Polynomial.window)",
+ "47-np-generator-out": "import numpy as np\nnp.random.default_rng(1).random(out=np.polynomial.Chebyshev.window)",
+ "47-np-printstyle": "import numpy as np\nnp.polynomial.set_default_printstyle('ascii')",
+ "47-np-out-star": "import numpy as np\nkw = {'out': np.polynomial.Polynomial.window}\nnp.add(np.ones(2), 1, **kw)",
+ "47-np-out-literal-star": "import numpy as np\nnp.add(np.ones(2), 1, **{'out': np.polynomial.Polynomial.window})",
+ "47-np-starred-out": "import numpy as np\nw = (np.polynomial.Polynomial.window, np.polynomial.Polynomial.window)\nnp.negative(*w)",
+ "47-np-emath": "import numpy as np\nx = np.emath.sqrt(-1.0)",
+ "47-np-emath-import": "import numpy.emath as em\nx = em.sqrt(-1.0)",
 }
 GOOD_LD42 = {
  "tree": "class Node:\n    def __init__(self, parent, move):\n        self.parent = parent\n        self.move = move\n        self.children = []\n        self.visits = 0\n        if parent is not None:\n            parent.children.append(self)\nclass T(PlayerStrategy):\n    def search(self, pos):\n        root = Node(None, None)\n        n = Node(Node(root, 1), 2)\n        while n is not None:\n            n.visits += 1\n            n = n.parent\n        return {}",
@@ -314,6 +346,10 @@ GOOD_LD46 = {
  "46-np-allowed": "import numpy as np\nfrom numpy.random import default_rng\nclass T(PlayerStrategy):\n    def __init__(self, seed=0):\n        super().__init__(seed)\n        self.rng = np.random.default_rng(seed)\n        self.g = default_rng(seed + 1)\n    def prior(self, state, actions):\n        p = self.rng.random(len(actions)) + 1.0\n        p = p / np.linalg.norm(p, 1)\n        return list(p)",
  "46-same-import-twice": "import svsim\nimport svsim.core\nfrom dataclasses import dataclass\nfrom dataclasses import dataclass\n@dataclass\nclass K:\n    a: int = 0",
 }
+GOOD_LD47 = {
+ "47-dc-lazy-quoted-node": "from __future__ import annotations\nimport dataclasses\nimport typing\n@dataclasses.dataclass\nclass Node:\n    state: object\n    parent: 'Node' = None\n    children: list = dataclasses.field(default_factory=list)\n    C: typing.ClassVar[float] = 1.4\nclass T(PlayerStrategy):\n    def search(self, pos):\n        root = Node(pos.state)\n        root.children.append(Node(pos.state, root))\n        return {}",
+ "47-np-functions": "import numpy as np\nclass T(PlayerStrategy):\n    def prior(self, state, actions):\n        p = np.add(np.ones(len(actions)), 1.0)\n        p = np.sort(np.subtract(p, 0.5))\n        q = np.zeros(len(actions))\n        np.multiply(p, 2.0, out=q)\n        np.copyto(q, p)\n        np.negative(q, q)\n        np.add.at(q, [0], 1.0)\n        np.put(q, [0], [1.0])\n        self.rng = np.random.default_rng(1)\n        self.rng.random(out=q)\n        np.negative(*[q, q])\n        np.add(q, 1.0, **{'out': q})\n        d = dict(out=pos.state)\n        return list(q / q.sum())",
+}
 GOOD = {
  "field-shadow": "from dataclasses import field\ndef f():\n    field = {}\n    field['a'] = 1\n    return field",
  "memo": "from ladder import base\nclass T(PlayerStrategy):\n    def __init__(self, seed=0):\n        super().__init__(seed)\n        self._memo = {}\n    def search(self, pos):\n        k = base.fingerprint(pos)\n        self._memo.setdefault(k, []).append(1)\n        self._memo[k] = [2]\n        return {}",
@@ -340,10 +376,11 @@ def test_refused(name):
 
 
 @pytest.mark.parametrize("name", sorted(GOOD) + sorted(GOOD_LD42) + sorted(GOOD_LD43) + [f"44:{k}" for k in GOOD_LD44]
-                         + sorted(GOOD_LD45) + sorted(GOOD_LD46))
+                         + sorted(GOOD_LD45) + sorted(GOOD_LD46) + sorted(GOOD_LD47))
 def test_accepted(name):
     src = textwrap.dedent(GOOD_LD44[name[3:]] if name.startswith("44:") else GOOD_LD45.get(name) or
-                          GOOD_LD46.get(name) or GOOD.get(name) or GOOD_LD42.get(name) or GOOD_LD43[name])
+                          GOOD_LD46.get(name) or GOOD_LD47.get(name) or GOOD.get(name) or GOOD_LD42.get(name) or
+                          GOOD_LD43[name])
     if "class T(" in src:
         future, _, rest = src.partition("\n") if src.startswith("from __future__") else ("", "", src)
         src = (future + "\n" if future else "") + "from ladder.interface import PlayerStrategy\n" + rest

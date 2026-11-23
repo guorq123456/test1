@@ -1,5 +1,5 @@
 """The simulator's state in a worker process, before and after a game (fifth pass LD-40, sixth LD-41, seventh LD-42;
-LD-43, LD-44, LD-45, LD-46).
+LD-43, LD-44, LD-45, LD-46, LD-47).
 
 A runner worker plays one game after another, often of different players. Strategy code runs in that process, so it
 could change things every later game there inherits: the shared card definitions (LD-40's finding: `pos.state` hands
@@ -19,7 +19,9 @@ attributes (and slots) of instances of svsim and ladder classes, such as the Car
 weights, and of the dataclasses module's (a dataclass's Field objects: LD-46, @dataclass rewrote one taken from
 dataclasses.fields(PlayCard)); set contents. And what no module global holds (_process_state, LD-46): the ABC
 registry's counter (ABCMeta.register changes isinstance for the whole process) and, numpy being loaded first
-(NUMPY_MODULES: it registers ABCs as it loads), its error, buffer and print settings and its global RandomState.
+(NUMPY_MODULES: it registers ABCs as it loads), its error, buffer and print settings and its global RandomState,
+and (LD-47) the arrays and plain values numpy's modules and their classes hold (Polynomial.window, polyx, ...: an
+array is compared by its bytes; np.copyto into one changed every later polynomial in the worker).
 Breadth first, each object once, a few levels
 deep. Objects are compared by identity (the snapshot holds them, so an id can't be reused), sets by value, and a
 dict, list or set that gained or lost an item has changed: the registries (scripts, listener sets, the card pool)
@@ -43,7 +45,7 @@ isn't listed here would show up as a void "added" — a false alarm to fix by li
 
 What it doesn't see: a change made and undone inside one game (ladder/audit.py replays every game of a period before
 it advances: it sees a change to the rules, not one to a bot's search), the inside of objects it doesn't follow
-(numpy arrays, enum members), and other processes. It is a tripwire, not a sandbox (PHASE2-DESIGN: rules, prompt,
+(numpy arrays other than numpy's own, enum members), and other processes. It is a tripwire, not a sandbox (PHASE2-DESIGN: rules, prompt,
 spot checks).
 """
 from __future__ import annotations
@@ -157,17 +159,60 @@ class Snapshot:
         self.records, self.sets, self.modules, self.held, self.lru, self.grows = [], [], {}, [], [], []
         self.relaxed = False                       # a lazy global was let through (see changes)
         self.process: dict = {}                    # the process-wide state no module global holds (LD-46)
+        self.numpy_held, self.numpy_arrays = [], []   # numpy's own arrays and plain values (LD-47)
 
 
-NUMPY_MODULES = ("numpy", "numpy.random", "numpy.linalg", "numpy.fft", "numpy.polynomial", "numpy.emath",
-                 "numpy.exceptions", "numpy.dtypes", "numpy.typing")   # what strategies may import of numpy (LD-46)
+NUMPY_MODULES = ("numpy", "numpy.random", "numpy.linalg", "numpy.fft", "numpy.polynomial", "numpy.exceptions",
+                 "numpy.dtypes", "numpy.typing")   # what strategies may import of numpy (LD-46; numpy.polynomial.* too)
 
 
-def _process_state() -> dict:
+def _plain(v) -> bool:
+    return v is None or type(v) in (bool, int, float, complex, str, bytes)
+
+
+def _numpy_held() -> list:
+    """numpy's own arrays and plain values that its modules (those strategies may use) and the classes they hold keep,
+    as [(name, holder, attribute)] (LD-47): a strategy could write into such an array through a numpy function's
+    destination argument (np.copyto(np.polynomial.Polynomial.window, ...) changed every later polynomial in the
+    worker), or a numpy function could set such a value (set_default_printstyle)."""
+    np = sys.modules.get("numpy")
+    if np is None:
+        return []
+    out, seen = [], set()
+    for m in sorted(n for n in list(sys.modules) if n in NUMPY_MODULES or n.startswith("numpy.polynomial.")):
+        mod = sys.modules.get(m)
+        if mod is None:
+            continue
+        for k, v in list(vars(mod).items()):
+            if isinstance(v, np.ndarray) or _plain(v):
+                out.append((f"{m}.{k}", mod, k))
+            elif isinstance(v, type) and str(getattr(v, "__module__", "")).startswith("numpy") and id(v) not in seen:
+                seen.add(id(v))
+                for a, w in list(vars(v).items()):
+                    if isinstance(w, np.ndarray) or _plain(w):
+                        out.append((f"{v.__module__}.{v.__qualname__}.{a}", v, a))
+    return out
+
+
+def _value(v):
+    """A held numpy value as something == compares: an array by identity, type, shape and bytes."""
+    np = sys.modules.get("numpy")
+    if np is not None and isinstance(v, np.ndarray):
+        return ("array", id(v), v.dtype.str, v.shape, v.tobytes(), v.flags.writeable)
+    return (type(v), v)
+
+
+def _process_state(held=()) -> dict:
     """What a strategy could change for the whole process without touching a followed object (LD-46): the ABC
     registry's counter (every ABCMeta.register moves it: typing.Hashable.register(list) changes isinstance for
-    every later game), and when numpy is loaded its error, buffer and print settings and its global RandomState."""
+    every later game), and when numpy is loaded its error, buffer and print settings and its global RandomState, and
+    (LD-47) the arrays and plain values its modules and classes hold (`held`, from _numpy_held)."""
     out = {"abc.register": abc.get_cache_token()}
+    for name, holder, attr in held:
+        try:
+            out[name] = _value(vars(holder).get(attr, GONE))
+        except Exception:                          # noqa: BLE001
+            out[name] = GONE
     np = sys.modules.get("numpy")
     if np is not None:
         for name in ("geterr", "geterrcall", "getbufsize", "get_printoptions"):
@@ -332,7 +377,9 @@ def snapshot() -> Snapshot:
             _record(s, obj, how, keys, path)
         sep = "[{}]" if how in ("dict", "list", "tuple", "grows") else ".{}"
         queue += [(v, path + sep.format(_short(k, 40)), depth + 1) for k, v in members]
-    s.process = _process_state()
+    s.numpy_held = _numpy_held()
+    s.numpy_arrays = [vars(h).get(a) for _, h, a in s.numpy_held]   # held: an array's id isn't reused
+    s.process = _process_state(s.numpy_held)
     return s
 
 
@@ -410,7 +457,7 @@ def changes(snap: Snapshot, limit: int = 5) -> list[str]:
         if not (fs <= obj if grow else fs == obj):
             if say(f"{path}: set changed"):
                 return out
-    now = _process_state()
+    now = _process_state(snap.numpy_held)
     for k, v in snap.process.items():
         try:
             same = now.get(k, GONE) == v
