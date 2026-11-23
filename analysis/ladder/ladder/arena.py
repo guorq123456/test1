@@ -2,8 +2,9 @@
 resuming from a position of one's own game, a game count per player and period.
 
 Host:
-    python -m ladder.arena snapshot POOLDIR --arena ARENA [--anchors ANCHORS.json]
+    python -m ladder.arena snapshot POOLDIR --arena ARENA [--anchors ANCHORS.json] --code SUBS\\code
     python -m ladder.arena open     ARENA --hours 4 --games 20000 [--workers 23]
+    python -m ladder.arena formal   ARENA --pool POOLDIR --subs SUBS --period P      # end of period P (A53)
 Players (each command is one run; what a player may read is under ARENA/players/<code>/, nothing else):
     python -m ladder.arena field    ARENA --player 甲
     python -m ladder.arena ladder   ARENA --player 甲 --version DIR [--replacing ANON] [--games 600 --tail 300 --repeats 3]
@@ -34,6 +35,12 @@ What a player gets (PHASE2-DESIGN.md 2.4, player prompt 练习场):
 Seeds: each player's own part of the tuning range (A34, SEEDS.md). Count: every game played (a continuation is one
 game) counts against the player's cap for the period; a run that would go past the cap or start after the deadline is
 refused. One run at a time on the machine (a lock file): the workers are shared (D2).
+
+The field's received strategies (members' and hall-of-fame anchors' "py:" modules) are copied at the snapshot from the
+host's received code into ARENA/host/code, where the workers import them (prompt review 11-23: from period 2 on the
+arena couldn't load them). `--same-as` and `resume` take only a run of this period's field: across periods a member's
+strategy may have been updated, and the same games played again would show which (red line: no versions). The formal
+games of a period (`formal`, host side, A53) are the run F<period>: they can be replayed, not resumed or re-played.
 """
 from __future__ import annotations
 
@@ -43,6 +50,7 @@ import json
 import math
 import os
 import random
+import re
 import secrets
 import sys
 import time
@@ -61,6 +69,7 @@ PLAYER_SEEDS = {"甲": (87400000, 87580000), "乙": (87580000, 87760000), "丙":
                 "丁": (87940000, 88120000), "戊": (88120000, 88300000)}           # A34
 PINYIN = {"甲": "jia", "乙": "yi", "丙": "bing", "丁": "ding", "戊": "wu"}
 CRAFT_BY_ZH = {"精灵": 1, "皇家护卫": 2, "巫师": 3, "龙族": 4, "梦魇": 5, "主教": 6, "超越者": 7}
+RUN_ID = re.compile(r"(R\d{4,}|F\d+)")              # a practice run, or a period's formal games
 
 
 class ArenaError(Exception):
@@ -112,12 +121,55 @@ def _append(p: Path, rec: dict):
         f.write(jsonl(rec))
 
 
+def _on_path(d: Path):
+    """Where this process and the workers it starts import strategies from (the runner's workers also read
+    LADDER_EXTRA_PATH)."""
+    d = str(Path(d))
+    if d not in sys.path:
+        sys.path.insert(0, d)
+    extra = [x for x in os.environ.get("LADDER_EXTRA_PATH", "").split(os.pathsep) if x]
+    if d not in extra:
+        os.environ["LADDER_EXTRA_PATH"] = os.pathsep.join([d] + extra)
+
+
+def _copy_code(specs, code, dest: Path) -> dict:
+    """The field's received strategies ("py:module:Class" with a plain module name: a received submission), copied
+    from the host's received code (`code`, subs\\code) into `dest` (ARENA/host/code). A module of the repository
+    (a dotted name, e.g. ladder.interface) must be importable as it is. Anything missing: refused before a file is
+    written. Returns module -> sha256 (first 16) of what was copied."""
+    import importlib.util
+    found, missing = {}, []
+    for mod in sorted({s.split(":", 2)[1] for s in specs if s.startswith("py:")}):
+        if "." in mod:
+            if importlib.util.find_spec(mod) is None:
+                missing.append(mod)
+            continue
+        f = Path(code) / f"{mod}.py" if code else None
+        if f is None or not f.is_file():
+            missing.append(mod)
+        else:
+            found[mod] = f
+    if missing:
+        raise ArenaError(f"找不到这些打法的模块：{'、'.join(missing)}（收下的打法要加 --code "
+                         "C:\\claude\\ladder-host\\subs\\code）")
+    out = {}
+    if found:
+        dest.mkdir(parents=True, exist_ok=True)
+    for mod, f in found.items():
+        b = f.read_bytes()
+        (dest / f"{mod}.py").write_bytes(b)
+        out[mod] = hashlib.sha256(b).hexdigest()[:16]
+    return out
+
+
 # --- the host's side: the frozen copy and the window -----------------------------------------------------------
 
-def snapshot(pool_dir: Path, arena: Path, anchors: Path | None = None, cr: str = "last1000") -> dict:
+def snapshot(pool_dir: Path, arena: Path, anchors: Path | None = None, cr: str = "last1000",
+             code: Path | None = None) -> dict:
     """This period's frozen copy of the pool (the evaluator's freeze, plus each member's owner, kept host side) and
     the anchors. Writes ARENA/host/field.json, ARENA/host/frozen.json (the evaluator's format) and the public
-    ARENA/public/field.json."""
+    ARENA/public/field.json; copies the received strategies of the field from `code` (subs\\code) into
+    ARENA/host/code."""
     from ladder.evaluator import freeze
     from ladder.pool import CRAFT_ZH, Pool
     pool = Pool(pool_dir)
@@ -132,12 +184,14 @@ def snapshot(pool_dir: Path, arena: Path, anchors: Path | None = None, cr: str =
         anchor_rows.append({"id": a.get("id") or f"锚点{i + 1:02d}", "name": a["name"],
                             "craft": int(base.craft_of(cards)), "deck": [c.card_id for c in cards],
                             "strategy": a["strategy"]})
+    arena = Path(arena)
+    modules = _copy_code([m["strategy"] for m in body["members"]] + [a["strategy"] for a in anchor_rows], code,
+                         arena / "host" / "code")
     host = {"version": ARENA_VERSION, "time": _iso(_now()), "pool": str(pool_dir), "period": body["period"],
-            "hash": body["hash"], "mu": mu,
+            "hash": body["hash"], "mu": mu, "code": modules,
             # in anon order: the pool's own order (mid) is the order members were admitted, by player (red line)
             "members": sorted((dict(m, owner=owners.get(m["mid"])) for m in body["members"]), key=lambda m: m["anon"]),
             "anchors": anchor_rows}
-    arena = Path(arena)
     _write(arena / "host" / "frozen.json", body)
     _write(arena / "host" / "field.json", host)
     _write(arena / "public" / "field.json", public_field(host))
@@ -187,6 +241,8 @@ class Seat:
         self.by_id = {m["anon"]: ("member", m) for m in self.host["members"]}
         self.by_id.update({a["id"]: ("anchor", a) for a in self.host["anchors"]})
         self.by_mid = {m["mid"]: m for m in self.host["members"]}
+        self.code = self.arena / "host" / "code"      # the field's received strategies (snapshot)
+        _on_path(self.code)
 
     # what the player may see of an opponent
     def opp_public(self, kind: str, row: dict) -> dict:
@@ -207,13 +263,41 @@ class Seat:
         if games > left:
             raise ArenaError(f"这一期还剩 {left} 局，这次要打 {games} 局")
 
+    def field_id(self) -> dict:
+        """What a run was played against: the frozen members (the evaluator's hash) and the anchor panel (not in that
+        hash; 11-23 review: a re-snapshot with another panel kept the hash)."""
+        panel = json.dumps([[a["id"], a["deck"], a["strategy"]] for a in self.host["anchors"]], sort_keys=True)
+        return {"field": self.host["hash"], "anchors": hashlib.sha256(panel.encode("utf-8")).hexdigest()[:16]}
+
     def new_run(self, kind: str) -> tuple[str, Path, Path]:
         runs = sorted(p.name for p in (self.pub / "runs").glob("R*")) if (self.pub / "runs").exists() else []
         rid = f"R{len(runs) + 1:04d}"
         pub, priv = self.pub / "runs" / rid, self.priv / rid
         pub.mkdir(parents=True)
         priv.mkdir(parents=True)
+        _write(priv / "run.json", {"run": rid, "kind": kind, "period": self.host["period"], **self.field_id(),
+                                    "time": _iso(_now())})
         return rid, pub, priv
+
+    def this_field(self, rid: str, what: str, kind: str | None = None) -> dict:
+        """A run whose games are played again (`--same-as`) or played on (`resume`) must be one of this period's
+        field: across periods a member's strategy may have been updated, and the same games played again would show
+        which (red line: no versions). The formal games (F<period>) are only for replaying."""
+        if not RUN_ID.fullmatch(str(rid)):
+            raise ArenaError(f"没有这个编号：{rid}")
+        if rid.startswith("F"):
+            raise ArenaError(f"{rid} 是正式对局：只能回放（replay），不能{what}")
+        mp = self.priv / rid / "run.json"
+        if not (self.priv / rid).is_dir():
+            raise ArenaError(f"没有 {rid}")
+        meta = _read(mp) if mp.exists() else {}
+        if not meta:
+            raise ArenaError(f"{rid} 没有记下它是对哪个练习场打的，不能{what}")
+        if {k: meta.get(k) for k in ("field", "anchors")} != self.field_id():
+            raise ArenaError(f"{rid} 不是这一期的练习场里打的，不能{what}：跨期对手的打法可能换过。用这一期打的局")
+        if kind and meta.get("kind") != kind:
+            raise ArenaError(f"{rid} 不是 {kind} 打出来的，不能{what}")
+        return meta
 
     def count(self, rid: str, kind: str, games: int):
         _append(self.count_path, {"run": rid, "kind": kind, "period": self.host["period"], "games": games,
@@ -316,6 +400,7 @@ def _cfg(seat: Seat) -> dict:
     """Workers and mask from the window; the arena's own deal key (base-2; made by open_window, never the formal
     pool's key). No key file (an arena opened before base-2, or a test arena): the old deal."""
     w = seat.window or {}
+    _on_path(seat.code)
     k = seat.arena / "host" / "arena.key"
     return {"workers": w.get("workers", 4), "mask": w.get("mask"), "key": str(k) if k.exists() else None}
 
@@ -327,6 +412,7 @@ def run_vs(arena: Path, player: str, version_dir: Path, games: int, opponent: st
     v = seat.version(version_dir)
     rng = random.Random(rng_seed if rng_seed is not None else secrets.randbits(64))
     if same_as:
+        seat.this_field(same_as, "拿来 --same-as", kind="vs")
         old = _read(seat.priv / same_as / "jobs.json")
         plan = [dict(p) for p in old["plan"]]
         games = len(plan)
@@ -349,6 +435,10 @@ def run_vs(arena: Path, player: str, version_dir: Path, games: int, opponent: st
             plan.append({"i": i, "seed": rng.randrange(*seat.seeds), "seat": i % 2, "kind": kind,
                          "opp": row["mid"] if kind == "member" else row["id"],
                          "sseeds": [rng.randrange(1, 2 ** 31), rng.randrange(1, 2 ** 31)]})
+    gone = sorted({p["opp"] for p in plan if (p["opp"] not in seat.by_mid if p["kind"] == "member"
+                                              else p["opp"] not in seat.by_id)})
+    if gone:
+        raise ArenaError(f"{same_as} 里的对手现在的练习场里没有了，不能重打")
     seat.check_window(games)
     rid, pub, priv = seat.new_run("vs")
     jobs = []
@@ -554,6 +644,7 @@ def run_resume(arena: Path, player: str, run_id: str, game: str, decision: int, 
     versions = [seat.version(d) for d in version_dirs]
     if not 1 <= len(versions) <= 2:
         raise ArenaError("给一个或两个版本")
+    seat.this_field(run_id, "续打")
     src = next((g for g in _jsonl(seat.priv / run_id / "games.jsonl") if g["id"] == game), None)
     if src is None or "actions" not in src:
         raise ArenaError(f"{run_id} 里没有 {game}（或那一局没有完整的走法）")
@@ -593,7 +684,7 @@ def run_resume(arena: Path, player: str, run_id: str, game: str, decision: int, 
     lock = _lock(arena)
     try:
         cfg = _cfg(seat)
-        paths = [str(ROOT), str(LADDER), str(seat.priv / "code")]
+        paths = [str(ROOT), str(LADDER), str(seat.priv / "code"), str(seat.code)]
         got = guarded_map("ladder.arena:_from_position", jobs, workers=min(cfg["workers"], len(jobs)),
                           mask=cfg["mask"], paths=paths)
         logs = [_resumed(j, g) for j, g in zip(jobs, got)]
@@ -622,6 +713,23 @@ def run_resume(arena: Path, player: str, run_id: str, game: str, decision: int, 
     return out
 
 
+def _my_seat(seat: Seat, run_id: str, g: dict) -> int:
+    """Which side of game `g` (the host's log line) was the player's: from the host's own records of the run."""
+    if "view_seat" in g:                                   # formal games (formal() writes it)
+        return g["view_seat"]
+    starts = {s["id"]: s for s in _jsonl(seat.priv / run_id / "starts.jsonl")}
+    if g["id"] in starts:                                  # ladder runs
+        return starts[g["id"]]["cand_seat"]
+    jp = seat.priv / run_id / "jobs.json"
+    if jp.exists():                                        # vs runs
+        for p in _read(jp).get("plan", []):
+            if f"{run_id}-{p['i']:05d}" == g["id"]:
+                return p["seat"]
+    if (g.get("labels") or {}).get("seat") in (0, 1):
+        return g["labels"]["seat"]
+    raise ArenaError("找不到你在那一局坐哪边")
+
+
 def replay(arena: Path, player: str, run_id: str, game: str) -> Path:
     """The player's own public view at each of their decisions in one of their games, with every move."""
     from ladder import base
@@ -629,13 +737,15 @@ def replay(arena: Path, player: str, run_id: str, game: str) -> Path:
     from svsim.core.actions import from_dict
     from svsim.core.engine import apply
     seat = Seat(arena, player)
+    if not RUN_ID.fullmatch(str(run_id)):
+        raise ArenaError(f"没有这个编号：{run_id}")
     g = next((x for x in _jsonl(seat.priv / run_id / "games.jsonl") if x["id"] == game), None)
     view = next((x for x in _jsonl(seat.pub / "runs" / run_id / "games.jsonl") if x["game"] == game), None)
     if g is None or view is None:
         raise ArenaError(f"{run_id} 里没有你的 {game}")
-    me = view["seat"]
     if "decks" not in g:
         raise ArenaError("续打出来的局不能回放（续打点之后重新洗了牌）；回放原来那一局")
+    me = _my_seat(seat, run_id, g)             # from the host's records, never the player's view file (11-23 review)
     from ladder import deal
     _, state = deal.start(g)
     tracker = base.Tracker(state)
@@ -657,6 +767,61 @@ def replay(arena: Path, player: str, run_id: str, game: str) -> Path:
     return out
 
 
+# --- the host's side, end of a period: each player's own formal games (A53) -------------------------------------
+
+def formal(arena: Path, pool_dir: Path, subs_dir: Path, period: int) -> dict:
+    """End of period `period`, host side (A53). For each player: their own members (the member name they gave ->
+    the anonymous id, the class, still in the pool or not) in ARENA/players/<代号>/members.json, and every formal
+    ladder game of the period one of those members played, the player's side only (`own_view`: the opponent's
+    anonymous id and class, its moves as a human sees them), as the run F<period>. `replay` works on it; it can't
+    be resumed or played again with --same-as (`Seat.this_field`). A game between two of the player's own members
+    gives two views. The games are renumbered F<period>-00001...: the pool's ids count every game of the pool.
+    Written again (the same) if called again; never another player's members or games."""
+    from ladder.pool import CRAFT_ZH, Pool
+    from ladder.submit import ledger
+    pool = Pool(pool_dir)
+    lines = ledger(subs_dir)
+    games = [g for g in _jsonl(Path(pool_dir) / "games.jsonl") if (g.get("labels") or {}).get("period") == period]
+    arena, rid, out = Path(arena), f"F{period}", {}
+    for player, py in PINYIN.items():
+        names = {l["mid"]: l["member"] for l in lines if l.get("ev") == "admit" and l.get("player") == player}
+        mine = {mid: m for mid, m in pool.members.items() if m.owner == player}
+        if not mine:
+            continue
+        pub_dir, priv_dir = arena / "players" / player, arena / "host" / "players" / py
+        rows = [{"member": names.get(mid), "id": m.anon, "class": CRAFT_ZH[m.craft], "in_pool": m.active}
+                for mid, m in sorted(mine.items(), key=lambda x: (x[1].craft, names.get(x[0]) or "", x[1].anon))]
+        _write(pub_dir / "members.json", {"after_period": period, "members": rows})
+        pub, priv = pub_dir / "runs" / rid, priv_dir / rid
+        for f in (pub / "games.jsonl", priv / "games.jsonl"):
+            if f.exists():
+                f.unlink()
+        k, per = 0, {}
+        for g in games:
+            lab = g["labels"]
+            for s in (0, 1):
+                if lab["members"][s] not in mine:
+                    continue
+                k += 1
+                vid = f"{rid}-{k:05d}"
+                o = lab["members"][1 - s]
+                opp = {"id": lab["anon"][1 - s], "class": CRAFT_ZH[pool.members[o].craft]}
+                line = dict(g, id=vid, pool_game=g["id"], view_seat=s)
+                view = dict(own_view(line, s, opp), member=lab["anon"][s])
+                _append(priv / "games.jsonl", line)
+                _append(pub / "games.jsonl", view)
+                c = per.setdefault(lab["anon"][s], {"games": 0, "decided": 0, "wins": 0})
+                c["games"] += 1
+                c["decided"] += view["won"] is not None
+                c["wins"] += bool(view["won"])
+        _write(priv / "run.json", {"run": rid, "kind": "formal", "period": period, "field": None,
+                                    "time": _iso(_now())})
+        summary = {"run": rid, "kind": "formal", "period": period, "games": k, "members": per}
+        _write(pub / "summary.json", summary)
+        out[player] = {"members": len(rows), "games": k}
+    return out
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="python -m ladder.arena")
     sp = ap.add_subparsers(dest="cmd", required=True)
@@ -664,6 +829,12 @@ def main(argv=None):
     a.add_argument("pool")
     a.add_argument("--arena", required=True)
     a.add_argument("--anchors")
+    a.add_argument("--code", help="the received strategies (C:\\claude\\ladder-host\\subs\\code)")
+    a = sp.add_parser("formal")
+    a.add_argument("arena")
+    a.add_argument("--pool", required=True)
+    a.add_argument("--subs", required=True)
+    a.add_argument("--period", type=int, required=True)
     a = sp.add_parser("open")
     a.add_argument("arena")
     a.add_argument("--hours", type=float, required=True)
@@ -696,7 +867,10 @@ def main(argv=None):
     args = ap.parse_args(argv)
     try:
         if args.cmd == "snapshot":
-            out = public_field(snapshot(Path(args.pool), Path(args.arena), Path(args.anchors) if args.anchors else None))
+            out = public_field(snapshot(Path(args.pool), Path(args.arena), Path(args.anchors) if args.anchors else None,
+                                        code=Path(args.code) if args.code else None))
+        elif args.cmd == "formal":
+            out = formal(Path(args.arena), Path(args.pool), Path(args.subs), args.period)
         elif args.cmd == "open":
             out = open_window(Path(args.arena), args.hours, args.games, args.workers, args.mask)
         elif args.cmd == "field":

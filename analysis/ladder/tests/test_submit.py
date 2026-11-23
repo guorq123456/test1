@@ -496,7 +496,47 @@ def test_a_strategy_over_the_compute_cap_is_refused(tmp_path):
     heavy = QUICK.replace('"iterations": 8', '"iterations": 300').replace("class Quick", "class Heavy")
     d = make_sub(tmp_path / "in", "新卡组", src=heavy, cls="Heavy", deck=CODES[4], member="重")
     rec = submit.receive(d, "甲", pool.dir, tmp_path / "subs", workers=2, rng_seed=7, smoke_games=2, seeds=SMOKE)
-    assert rec["verdict"] == "拒收" and rec["compute_ratio"] > submit.COMPUTE_CAP, rec
+    assert rec["verdict"] == "拒收" and (rec.get("compute_ratio") or 0) > submit.COMPUTE_CAP, rec["reasons"]
     assert [r for r in rec["reasons"] if r.startswith("[算力]") and "A52" in r], rec["reasons"]
     assert [c["check"] for c in rec["checks"]][-1] == "算力"            # nothing after it runs
 
+
+
+def test_deliver_puts_each_players_own_receipts_and_status_in_their_box(tmp_path):
+    # A50 (prompt review 11-23): the receipts, gate results and the period's status go into the player's own
+    # receipts folder, under the name of the directory they handed in; nothing of another player's
+    pool = _pool(tmp_path, 1)
+    subs = tmp_path / "subs"
+    recs = [{"ev": "receipt", "id": "S-0001", "player": "甲", "period": pool.period, "kind": "deck", "verdict": "收下",
+             "craft": 1, "dir": str(tmp_path / "jia" / "submit" / "精灵1"), "member": "一号", "reasons": [],
+             "warnings": [], "checks": [], "time": "t", "version": "v"},
+            {"ev": "receipt", "id": "S-0002", "player": "乙", "period": pool.period, "kind": "deck", "verdict": "拒收",
+             "craft": 2, "dir": str(tmp_path / "yi" / "submit" / "皇家1"), "member": "秘密的名字",
+             "reasons": ["[卡组] x"], "warnings": [], "checks": [], "time": "t", "version": "v"},
+            {"ev": "receipt", "id": "S-0003", "player": "甲", "period": pool.period, "kind": "deck", "verdict": "拒收",
+             "craft": 2, "dir": str(tmp_path / "jia" / "submit" / "精灵1"), "member": "二号", "reasons": ["[卡组] y"],
+             "warnings": [], "checks": [], "time": "t", "version": "v"}]
+    for r in recs:
+        submit._append(subs, r)
+        (subs / r["id"]).mkdir(parents=True)
+        (subs / r["id"] / "receipt.md").write_text(submit.receipt_text(r), encoding="utf-8")
+    submit.gate_note(subs, "S-0001", "检验过了。")
+    players = tmp_path / "players"
+    assert submit.deliver(subs, pool.dir, players) == {"甲": 2, "乙": 1}
+    box = players / "jia" / "receipts"
+    assert sorted(p.name for p in box.iterdir()) == ["状态.md", "精灵1-S-0003.md", "精灵1-检验.md", "精灵1.md"]
+    assert "S-0001" in (box / "精灵1.md").read_text(encoding="utf-8")
+    assert (box / "精灵1-检验.md").read_text(encoding="utf-8").endswith("检验过了。\n")
+    status = (box / "状态.md").read_text(encoding="utf-8")
+    assert "已经收下的职业：精灵" in status and "皇家护卫" in status       # Sword refused: still missing
+    mine = "".join(p.read_text(encoding="utf-8") for p in box.iterdir())
+    assert "秘密的名字" not in mine and "S-0002" not in mine
+    assert sorted(p.name for p in (players / "yi" / "receipts").iterdir()) == ["状态.md", "皇家1.md"]
+
+
+def test_receipt_file_names_in_the_players_folder():
+    taken = set()
+    assert submit.box_name("梦魇1", "S-0001", taken) == "梦魇1"
+    assert submit.box_name("梦魇1", "S-0002", taken) == "梦魇1-S-0002"          # used twice: the id added
+    for bad in ("状态", "X-检验", "X-没收成", "aux", "CON.txt", "a/b", "x" * 61, "trailing.", " lead", ""):
+        assert submit.box_name(bad, "S-0009", set()) == "S-0009", bad

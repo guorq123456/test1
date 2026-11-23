@@ -4,6 +4,8 @@
     python -m ladder.submit receive  DIR --player 甲 --pool POOLDIR --out SUBDIR [--workers 15] --mask 0x3FC3FC
     python -m ladder.submit admit    SUBDIR --receipt S-0001 --pool POOLDIR   # an accepted new deck enters the pool
     python -m ladder.submit status   SUBDIR --pool POOLDIR --player 甲         # classes done / missing this period
+    python -m ladder.submit deliver  SUBDIR --pool POOLDIR --players C:\\claude\\ladder-players   # receipts, gate results, status
+                                                                             # into each player's receipts\\ (A50)
 
 A submission is one directory (public/submit.md is the players' description):
     submission.json  {"type": "新卡组" | "打法更新" | "公共题", "member": the player's name for the member,
@@ -185,6 +187,44 @@ def _append(subdir: Path, rec: dict):
         f.flush()
 
 
+class _ledger_lock:
+    """One receive, admit, gate or deliver at a time on a ledger (11-23 review: a receipt id is the ledger's count +
+    1, taken at the start and written minutes later; a hand-run command next to the collector got the same id).
+    Waits for the other one to finish."""
+
+    def __init__(self, subdir: Path):
+        self.path = Path(subdir) / "ledger.lock"
+
+    def __enter__(self):
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.f = open(self.path, "a+")
+        told = False
+        while True:
+            try:
+                if os.name == "nt":
+                    import msvcrt
+                    self.f.seek(0)
+                    msvcrt.locking(self.f.fileno(), msvcrt.LK_NBLCK, 1)
+                else:
+                    import fcntl
+                    fcntl.flock(self.f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                return self
+            except OSError:
+                if not told:
+                    print("提交台账正被另一个命令用着（收提交的循环？），等它做完……", file=sys.stderr, flush=True)
+                    told = True
+                time.sleep(2)
+
+    def __exit__(self, *exc):
+        try:
+            if os.name == "nt":
+                import msvcrt
+                self.f.seek(0)
+                msvcrt.locking(self.f.fileno(), msvcrt.LK_UNLCK, 1)
+        finally:
+            self.f.close()
+
+
 def _members_of(lines: list[dict], player: str) -> dict:
     """The player's member names -> pool member ids, from the admit lines."""
     return {l["member"]: l["mid"] for l in lines if l.get("ev") == "admit" and l.get("player") == player}
@@ -262,6 +302,75 @@ def status(subdir: Path, pool_dir: Path, player: str) -> dict:
     if out["kind"] == "deck":
         out["classes_done"] = [CRAFT_ZH[c] for c in done]
         out["classes_missing"] = [CRAFT_ZH[c] for c in sorted(CRAFT_ZH) if c not in done]
+    return out
+
+
+def status_text(st: dict, lines: list[dict]) -> str:
+    """The status a player finds in their receipts folder (A50): this period's accepted and missing classes (a deck
+    period), the updates received and what their gates said."""
+    kind = {"deck": "卡组期", "strategy": "策略期"}.get(st["kind"], st["kind"])
+    out = [f"# 第 {st['period']} 期（{kind}）你的提交", ""]
+    if st["kind"] == "deck":
+        out += [f"- 新卡组已经收下的职业：{'、'.join(st['classes_done']) or '还没有'}",
+                f"- 还缺：{'、'.join(st['classes_missing']) or '不缺了'}"]
+    mine = {l["id"] for l in lines if l.get("ev") == "receipt" and l.get("player") == st["player"]
+            and l.get("period") == st["period"] and l.get("kind") == "update"}
+    gated = [l for l in lines if l.get("ev") == "gated" and l.get("receipt") in mine]
+    passed = sum(1 for l in gated if l.get("verdict") == "passed")
+    out += [f"- 打法更新：收到 {st['updates']} 份，收下（进检验）{st['updates_accepted']} 份；检验完 {len(gated)} 份，"
+            f"其中换上池子 {passed} 份。每份的结果在同名的「-检验」文件里"]
+    return "\n".join(out) + "\n"
+
+
+RESERVED = {"con", "prn", "aux", "nul", *(f"com{i}" for i in range(1, 10)), *(f"lpt{i}" for i in range(1, 10))}
+
+
+def box_name(name: str, rid: str, taken: set) -> str:
+    """The file name (without .md) a receipt gets in the player's receipts folder: the directory's name if it is a
+    plain one (letters of any script, digits, - _ . and spaces inside, at most 60), else the receipt id; never 状态,
+    never ending in -检验 or -没收成 (those are the host's), never one already taken (then the receipt id is added)."""
+    import re
+    ok = (bool(re.fullmatch(r"[\w][\w\-. ]{0,59}", name)) and not name.endswith((".", " "))
+          and name.split(".")[0].lower() not in RESERVED and name != "状态"
+          and not name.endswith(("-检验", "-没收成")))
+    base_ = name if ok else rid
+    out = base_ if base_ not in taken else f"{base_}-{rid}"
+    taken.add(out)
+    return out
+
+
+def deliver(subdir: Path, pool_dir: Path, players: Path) -> dict:
+    """What goes back to each player (A50), into PLAYERS/<拼音>/receipts/: each of their receipts under the name of the
+    directory they handed in (box_name: <name>.md), the gate result of each update (<name>-检验.md, gate_note) and
+    this period's status (状态.md). Written again on every call (the same text, so it can run after every receive and
+    gate); never another player's. A player whose folder can't be written is skipped and reported ({player: the
+    error}); the others still get theirs."""
+    from ladder.arena import PINYIN
+    subdir, players = Path(subdir), Path(players)
+    with _ledger_lock(subdir.resolve()):
+        lines = ledger(subdir)
+    out = {}
+    for player, py in PINYIN.items():
+        recs = [l for l in lines if l.get("ev") == "receipt" and l.get("player") == player]
+        if not recs:
+            continue
+        try:
+            box = players / py / "receipts"
+            box.mkdir(parents=True, exist_ok=True)
+            taken, n = set(), 0
+            for rec in recs:
+                name = box_name(Path(str(rec.get("dir") or rec["id"])).name, rec["id"], taken)
+                src = subdir / rec["id"] / "receipt.md"
+                text = src.read_text(encoding="utf-8") if src.exists() else receipt_text(rec)
+                (box / f"{name}.md").write_text(text, encoding="utf-8")
+                note = subdir / rec["id"] / "gate-note.md"
+                if note.exists():
+                    (box / f"{name}-检验.md").write_text(note.read_text(encoding="utf-8"), encoding="utf-8")
+                n += 1
+            (box / "状态.md").write_text(status_text(status(subdir, pool_dir, player), lines), encoding="utf-8")
+            out[player] = n
+        except OSError as e:
+            out[player] = f"写不进去：{type(e).__name__}: {e}"
     return out
 
 
@@ -410,6 +519,7 @@ def _stage(sub: dict, rid: str, subdir: Path) -> str:
     code.mkdir(parents=True, exist_ok=True)
     name = "sub_" + rid.replace("-", "")
     (code / f"{name}.py").write_text(sub["src"], encoding="utf-8")
+    sys.modules.pop(name, None)                           # a cut-off earlier try at this id may have imported it
     if str(code) not in sys.path:
         sys.path.insert(0, str(code))
     return f"py:{name}:{sub['meta']['class']}"
@@ -534,8 +644,15 @@ def precheck(d: Path, deck_of_member: str | None = None) -> dict:
 
 def receive(d: Path, player: str, pool_dir: Path, subdir: Path, workers: int = 4, mask=None,
             rng_seed: int | None = None, smoke_games: int = SMOKE_GAMES, step_limit: float = 30.0,
-            seeds: tuple[int, int] = SMOKE_SEEDS) -> dict:
-    """Every check; the receipt; one ledger line (accepted or refused)."""
+            seeds: tuple[int, int] = SMOKE_SEEDS, extra: dict | None = None) -> dict:
+    """Every check; the receipt; one ledger line (accepted or refused). `extra`: host fields kept in the ledger line
+    (the collector's stamp of the directory). Holds the ledger lock throughout."""
+    Path(subdir).mkdir(parents=True, exist_ok=True)
+    with _ledger_lock(Path(subdir).resolve()):
+        return _receive(d, player, pool_dir, subdir, workers, mask, rng_seed, smoke_games, step_limit, seeds, extra)
+
+
+def _receive(d, player, pool_dir, subdir, workers, mask, rng_seed, smoke_games, step_limit, seeds, extra) -> dict:
     from ladder.runner import one_core_type
     one_core_type(mask)                                   # the compute check compares games (A44)
     from ladder import base
@@ -550,13 +667,17 @@ def receive(d: Path, player: str, pool_dir: Path, subdir: Path, workers: int = 4
     rec = {"ev": "receipt", "id": rid, "player": player, "time": datetime.now(timezone.utc).isoformat(
         timespec="seconds"), "version": SUBMIT_VERSION, "interface": None, "base": base.BASE_VERSION,
            "dir": str(Path(d).resolve()), "kind": None, "member": None, "checks": [], "reasons": [],
-           "warnings": [], "verdict": None, "uses_slot": False, "smoke_seeds": []}
+           "warnings": [], "verdict": None, "uses_slot": False, "smoke_seeds": [], **(extra or {})}
     try:
         from ladder.interface import INTERFACE_VERSION
         rec["interface"] = INTERFACE_VERSION
     except Exception:
         pass
     store = subdir / rid
+    if store.exists():                                    # an earlier try at this id was cut off before its ledger line
+        aside = subdir / "_cut-off" / f"{rid}-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')}"
+        aside.parent.mkdir(parents=True, exist_ok=True)   # (11-23 review: its smoke games were taken as this one's)
+        shutil.move(str(store), str(aside))
     store.mkdir(parents=True, exist_ok=True)
 
     def check(name, problems, detail=None):
@@ -703,7 +824,11 @@ def receive(d: Path, player: str, pool_dir: Path, subdir: Path, workers: int = 4
             continue
         points = sorted(rng.sample(range(count), min(PEEK_POINTS, count)))
         for k in points:
-            r = peek_check(g, seat, k, random.Random(rng.randrange(2 ** 63)))
+            try:
+                r = peek_check(g, seat, k, random.Random(rng.randrange(2 ** 63)))
+            except (Exception, SystemExit) as e:          # noqa: BLE001 - the strategy's own error (11-23 review)
+                r = "crashed"
+                problems.append(f"{g['id']} 第 {k} 个决策：重放时你的打法报错了：{_quote(f'{type(e).__name__}: {e}', 300)}")
             tried.append([g["id"], k, r])
             if r == "differs":
                 problems.append(f"{g['id']} 第 {k} 个决策：真实局面里你看不到的东西换了，你的选择跟着变了")
@@ -741,6 +866,11 @@ def receipt_text(rec: dict) -> str:
 
 def admit(subdir: Path, rid: str, pool_dir: Path) -> str:
     """An accepted new deck enters the pool (pool.enter); the player's member name is kept here, not in the pool."""
+    with _ledger_lock(Path(subdir).resolve()):
+        return _admit(subdir, rid, pool_dir)
+
+
+def _admit(subdir: Path, rid: str, pool_dir: Path) -> str:
     from ladder.pool import Pool
     lines = ledger(subdir)
     rec = next((l for l in lines if l.get("ev") == "receipt" and l["id"] == rid), None)
@@ -761,6 +891,12 @@ def admit(subdir: Path, rid: str, pool_dir: Path) -> str:
 
 def gate_update(subdir: Path, rid: str, pool_dir: Path, frozen: Path, seeds: tuple[int, int], out_dir: Path,
                 delta: float, workers: int = 4, mask=None, rng_seed: int | None = None) -> dict:
+    with _ledger_lock(Path(subdir).resolve()):
+        return _gate_update(subdir, rid, pool_dir, frozen, seeds, out_dir, delta, workers, mask, rng_seed)
+
+
+def _gate_update(subdir: Path, rid: str, pool_dir: Path, frozen: Path, seeds: tuple[int, int], out_dir: Path,
+                 delta: float, workers: int = 4, mask=None, rng_seed: int | None = None) -> dict:
     """An accepted 打法更新 goes to the gate (§4.3: kind better, the player's change and prediction as written) and,
     if it passes, replaces the member's version in the pool (same CR, unstable for 300 games). Multi-step routes
     (A33): an intermediate step is only recorded; the last step, or the step marked "stop", is gated against the
@@ -894,6 +1030,10 @@ def main(argv=None):
     a.add_argument("--out", required=True)
     a.add_argument("--workers", type=int, default=4)
     a.add_argument("--mask", type=lambda x: int(x, 0))
+    a.add_argument("--stamp", help="the collector's stamp of the directory (ladder.collect), kept in the ledger")
+    a.add_argument("--smoke-games", type=int, default=SMOKE_GAMES, help="tests only")
+    a.add_argument("--smoke-seeds", type=int, nargs=2, default=list(SMOKE_SEEDS), help="tests only")
+    a.add_argument("--rng-seed", type=int, help="tests only")
     a = sp.add_parser("admit")
     a.add_argument("subdir")
     a.add_argument("--receipt", required=True)
@@ -912,6 +1052,10 @@ def main(argv=None):
     a.add_argument("subdir")
     a.add_argument("--pool", required=True)
     a.add_argument("--player", required=True)
+    a = sp.add_parser("deliver")
+    a.add_argument("subdir")
+    a.add_argument("--pool", required=True)
+    a.add_argument("--players", required=True)
     a = sp.add_parser("_load")
     a.add_argument("argfile")
     args = ap.parse_args(argv)
@@ -924,12 +1068,16 @@ def main(argv=None):
     if args.cmd == "receive":
         t0 = time.time()
         rec = receive(Path(args.dir), args.player, Path(args.pool), Path(args.out), workers=args.workers,
-                      mask=args.mask)
+                      mask=args.mask, rng_seed=args.rng_seed, smoke_games=args.smoke_games,
+                      seeds=tuple(args.smoke_seeds), extra={"collect_stamp": args.stamp} if args.stamp else None)
         print(receipt_text(rec))
         print(f"({time.time() - t0:.0f} s)")
         return 0
     if args.cmd == "status":
         print(json.dumps(status(Path(args.subdir), Path(args.pool), args.player), ensure_ascii=False, indent=1))
+        return 0
+    if args.cmd == "deliver":
+        print(json.dumps(deliver(Path(args.subdir), Path(args.pool), Path(args.players)), ensure_ascii=False))
         return 0
     if args.cmd == "admit":
         print(admit(Path(args.subdir), args.receipt, Path(args.pool)))
