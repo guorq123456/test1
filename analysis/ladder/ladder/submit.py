@@ -76,8 +76,9 @@ TYPES = {"新卡组": "deck", "打法更新": "update", "公共题": "puzzle"}
 FILES = ("submission.json", "strategy.py", "notes.md", "evidence.md")
 UPDATES_PER_PERIOD = None           # Salem S5 (11-22): no limit on strategy updates (the plan's 3 is gone)
 SMOKE_SEEDS = (88300000, 88400000)  # the host's part of the tuning range (SEEDS.md)
-SMOKE_GAMES = 100                   # LD-55/56/57: over 10 games the twins' compute ratio spread ~8% (an honest default-cost
-                                    # strategy refused ~12% of the time); the shadow over 100: 1.6-2.0% in the container
+SMOKE_GAMES = 50                    # LD-55..58: over 10 games the twins' compute ratio spread ~8% (an honest default-cost
+                                    # strategy refused ~12% of the time); the shadow on the PC's E-cores over 50: 0.7-1.0%
+                                    # (container: 1.6-2.0% over 100); each receipt holds the arena's lock, so not more
 PEEK_GAMES, PEEK_POINTS = 2, 3
 REPLAY_GAMES = 2
 COMPUTE_CAP = 1.08                                 # per-step compute over the default's: the cap (A52)
@@ -981,8 +982,8 @@ def _receive(d, player, pool_dir, subdir, workers, mask, rng_seed, smoke_games, 
                 "量不准，不收（A52、LD-57）"]
     elif r3 is not None and r3 > COMPUTE_REFUSE:
         over = [f"每步算力是默认打法的 {r3:.3f} 倍，超过 {COMPUTE_REFUSE}：上限是 {COMPUTE_CAP} 倍，量法有误差，量出来超过 "
-                f"{COMPUTE_REFUSE} 倍就拒收（所有成员一样，每一版都查，A52、S15）。这次量了 {len(rows)} 对，100 对上下约 2%"
-                "（LD-56、LD-57）"]
+                f"{COMPUTE_REFUSE} 倍就拒收（所有成员一样，每一版都查，A52、S15）。这次量了 {len(rows)} 对；电脑上 50 对上下约 1%"
+                "（LD-58）"]
     else:
         over = []
         if r3 is not None and r3 > COMPUTE_CAP:
