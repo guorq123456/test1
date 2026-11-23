@@ -35,6 +35,7 @@ ROOT = LADDER.parents[1]
 sys.path[:0] = [str(LADDER), str(ROOT)]
 
 REF = "mcts:100+plan"
+OK = ("normal", "draw")                   # the runner's results that count; a void or a crash drops the pair
 FROZEN7 = ROOT / "analysis/pilot/fields/bot-frozen7.txt"
 
 
@@ -105,17 +106,22 @@ def _wilson_diff(a, b):
     return round(100 * m, 2), round(100 * (m - h), 2), round(100 * (m + h), 2)
 
 
-def summarize(rows, cond):
+def summarize(rows, cond, skip=frozenset()):
+    """`skip`: (pilot, opp, game) keys left out in both conditions (a game voided in either), so both are read on
+    the same games."""
     out = {}
     pairs = {}
     for r in rows:
         lab = r["labels"]
         pairs.setdefault((lab["pilot"], lab["opp"], lab["game"]), {})[lab["who"]] = r
     by = {}
-    for (pilot, _, _), d in pairs.items():
+    for (pilot, _o, _g), d in pairs.items():
         if set(d) != {"pilot", "ref"}:
             continue
-        b = by.setdefault(pilot, {"pilot": [], "ref": [], "cpu": [0, 0], "steps": [0, 0]})
+        b = by.setdefault(pilot, {"pilot": [], "ref": [], "cpu": [0, 0], "steps": [0, 0], "dropped": 0})
+        if (pilot, _o, _g) in skip or any(r.get("result", "normal") not in OK for r in d.values()):
+            b["dropped"] += 1                     # a voided game (the runner's tripwire, an engine error) is no loss:
+            continue                              # the pair is left out and counted
         for who in ("pilot", "ref"):
             r = d[who]
             seat = r["labels"]["seat"]
@@ -125,7 +131,11 @@ def summarize(rows, cond):
     for pilot, b in by.items():
         n = len(b["pilot"])
         per = [b["cpu"][k] / b["steps"][k] if b["steps"][k] else float("nan") for k in (0, 1)]
-        out[pilot] = {"condition": cond, "games": n, "pilot_rate": round(sum(b["pilot"]) / n, 4),
+        if not n:
+            out[pilot] = {"condition": cond, "games": 0, "dropped_pairs": b["dropped"]}
+            continue
+        out[pilot] = {"condition": cond, "games": n, "dropped_pairs": b["dropped"],
+                      "pilot_rate": round(sum(b["pilot"]) / n, 4),
                       "ref_rate": round(sum(b["ref"]) / n, 4), "diff_pp": _wilson_diff(b["pilot"], b["ref"]),
                       "compute_ratio": round(per[0] / per[1], 3) if per[1] else None}
     return out
@@ -169,14 +179,17 @@ def main(argv=None):
             seat_cpu[s] += c
             seat_steps[s] += 1
         guess.append({"id": g["id"], "labels": g["labels"], "winner": g.get("winner"), "cpu": seat_cpu,
-                      "steps": seat_steps})
+                      "steps": seat_steps, "result": g.get("result"), "error": (g.get("error") or "")[:300]})
+    skip = frozenset((g["labels"]["pilot"], g["labels"]["opp"], g["labels"]["game"]) for g in guess
+                     if g["result"] not in OK)
     # the pilots' own condition
     with ProcessPoolExecutor(max_workers=a.workers, initializer=_init) as ex:
         native = list(ex.map(_native, jobs, chunksize=4))
     (out / "native.jsonl").write_text("".join(json.dumps(r) + "\n" for r in native), encoding="utf-8")
     res = {"seeds": a.seeds, "field": a.field, "games_per_opponent": a.games_per_opponent, "deal": deal.key_id(key) if key else None,
-           "seconds": round(time.time() - t0), "默认猜测": summarize(guess, "默认猜测"),
-           "原生": summarize(native, "原生")}
+           "seconds": round(time.time() - t0), "默认猜测": summarize(guess, "默认猜测", skip),
+           "原生": summarize(native, "原生", skip),
+           "voids": sorted({(g["labels"]["who"], g["error"][:160]) for g in guess if g["result"] not in OK})[:20]}
     (out / "result.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
     print(json.dumps(res, ensure_ascii=False, indent=1))
 

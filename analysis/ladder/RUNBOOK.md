@@ -19,6 +19,7 @@
 1. ~~阶段 1 验收、锁定（1.9）~~：11-23 锁在 dc2cbeb（LOCK.md）。base-2 的代码在锁定的版本里。锁定的文件不经 Salem 同意不改；每次开跑前 `python analysis/ladder/tools/check_lock.py` 应该打出「all 14 locked files as locked」。
 2～3. ~~建密钥、重跑 base-2 的检查~~（11-23 dc2cbeb 十一项全过，LD-53）：Salem 双击 `tools\pc\base2-checks.cmd`（拉代码 → 没有密钥才建 `C:\claude\ladder-host\ladder.key`，只建一次，文件不进仓库、不进项目共享目录 → `tools/base2_checks.py`：密钥发牌的新局逐步、逐个决策重放，卡表顺序不从编号漏出，p1b 旧局用新代码重放，底座检查，接口复现 40 局，全核测速，绊线、公共题式任务、对局里的审计钩子（打法写文件、读外面的文件、起进程被拦下，正常打法不被拦），全部新局重放审计；一共十一项）。结果在 `C:\claude\ladder-runs\base2\summary.json`，只记密钥编号。全过才往下走（1.9 锁定）。之后 `py -m ladder.deal id` 应该打出同一个编号。
 4. 正式池：把 p1b 的基线池（`C:\claude\ladder-runs\p1b\baseline\pool\`）整个复制到 `C:\claude\ladder-host\pool\`，原件不动。`py -m ladder.pool advance C:\claude\ladder-host\pool` 进第 1 期（S8：巫师基线够不着，不挡；日志里记它差几局）。
+   **11-23 起用 `tools\pc\prep-players.cmd` 一次做完第 4、5 步**（`tools/first_setup.py`：先核锁定文件和密钥；池子复制前后都核 p1b 原件的哈希；目标位置已经有池子时绝不覆盖：已过第 0 期就只报「已经建好」，还在第 0 期且和 p1b 一样才 advance，别的都停下；重跑什么都不改）。同一个启动文件接着跑 2.5（驾驶员两种条件，能效核）和 2.2（斩杀题库，全核）。结果在 `C:\claude\ladder-runs\prep\<提交>\`。
 5. 建选手目录（上表），把 `analysis/ladder/public/` 复制到 `C:\claude\ladder-players\public\`。
 5b. 选手进场前，电脑上空跑一期：Salem 双击 `tools\pc\arena-dry.cmd`（`tools/arena_dry.py`）。在 `C:\claude\ladder-runs\arena-dry\<提交>\` 里另建一个小池子、台账、练习场和两个假选手的目录，按本文件第 1～4 节的命令走一遍卡组期：开练习场 8 分钟、收提交的循环收四份（三份收下、一份拒收）、截止后放进来的一份不收、同时一个假选手在练习场打、天梯 150 局、重放审计、交正式对局；再在能效核上量收提交算力比的误差（LD-55、LD-56），再用不是 UTF-8 的控制台跑一遍选手的命令，最后在天梯那 150 局上试正式对局的算力抽查（LD-57）。真的池子、台账、练习场、选手目录都不碰。结果 `C:\claude\ladder-runs\arena-dry\summary.json`，十项全过再让选手进场。
 6. 选手先做 2.6 起点测量（计划第二节），再进第 1 期。
