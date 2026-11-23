@@ -481,6 +481,28 @@ def test_the_watch_follows_the_standard_modules_tables():
     assert watch.changes(snap) == []
 
 
+def test_the_watch_follows_numpys_tables_and_empties_its_caches():
+    # LD-50: numpy's own dicts, lists and sets are compared by their items (a key replaced in np.sctypeDict made every
+    # later np.array(..., dtype='float32') an int8 array), its memo caches (np.finfo, np.iinfo) emptied before a game
+    np = pytest.importorskip("numpy")
+    from ladder import watch
+    watch.preload()
+    watch.reset_caches()
+    snap = watch.snapshot()
+    np.finfo(np.float16), np.iinfo(np.int8).max, np.iinfo(np.int8).min
+    np.array([1.0], dtype="float32"), repr(np.polynomial.Polynomial([1, 2])), np.polynomial.Polynomial.fit([0, 1, 2], [1, 2, 3], 1)
+    assert watch.changes(snap) == []
+    watch.reset_caches(snap)
+    assert all(len(d) == 0 for d in watch._numpy_caches())
+    kept = np.sctypeDict["float32"]
+    try:
+        np.sctypeDict["float32"] = np.int8
+        assert any("sctypeDict" in line for line in watch.changes(snap))
+    finally:
+        np.sctypeDict["float32"] = kept
+    assert watch.changes(snap) == []
+
+
 def test_the_pilots_model_caches_may_grow():
     # LD-42: the host's pilot games load a model once per process (svsim.learn's caches gain an entry) and the net
     # memoizes and adds rows for cards it meets: neither is a change; anything else in the net is

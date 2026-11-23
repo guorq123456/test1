@@ -1,5 +1,5 @@
 """Reading a submission's code (item 2.3; fifth pass LD-40, sixth LD-41, seventh LD-42, eighth LD-43, ninth LD-44,
-tenth LD-45, eleventh LD-46, twelfth LD-47, thirteenth LD-48, fourteenth LD-49).
+tenth LD-45, eleventh LD-46, twelfth LD-47, thirteenth LD-48, fourteenth LD-49, fifteenth LD-50).
 Nothing in the submitted code runs.
 The simulator's and ladder's own modules are imported here (they are the host's code) to tell a module from a class
 from a function; svsim.learn, svsim.tools, svsim.ui, svsim.build, svsim.search.parallel and ladder's other modules
@@ -1722,33 +1722,37 @@ class Flow:
             if isinstance(x, ast.ClassDef):
                 self._raise_fields(self.all_fields(x), self.dc_positional(x), args, keywords)
 
+    def _raise_params(self, d, off, args, keywords):
+        """Raise the parameters of own def `d` (the first `off` of them taken) by the arguments a call gives it."""
+        f = self.fn[d]
+        pos = f.pos
+        named = {x.arg: x for x in pos[off:] + f.kwonly}
+        everything = pos[off:] + f.kwonly + [x for x in (f.vararg, f.kwarg) if x is not None]
+        i = off
+        for a in args:
+            if isinstance(a, ast.Starred):
+                for x in everything:
+                    self._raise(self.key(x), elem(self.level(a.value)))
+                continue
+            v = self.level(a)
+            if i < len(pos):
+                self._raise(self.key(pos[i]), v)
+            elif f.vararg is not None:
+                self._raise(self.key(f.vararg), holds(v))
+            i += 1
+        for kw in keywords:
+            v = self.level(kw.value)
+            if kw.arg is None:
+                for x in everything:
+                    self._raise(self.key(x), elem(v))
+            elif kw.arg in named:
+                self._raise(self.key(named[kw.arg]), v)
+            elif f.kwarg is not None:
+                self._raise(self.key(f.kwarg), holds(v))
+
     def _flow_call(self, call):
         for d, off in self.targets(call):
-            f = self.fn[d]
-            pos = f.pos
-            named = {x.arg: x for x in pos[off:] + f.kwonly}
-            everything = pos[off:] + f.kwonly + [x for x in (f.vararg, f.kwarg) if x is not None]
-            i = off
-            for a in call.args:
-                if isinstance(a, ast.Starred):
-                    for x in everything:
-                        self._raise(self.key(x), elem(self.level(a.value)))
-                    continue
-                v = self.level(a)
-                if i < len(pos):
-                    self._raise(self.key(pos[i]), v)
-                elif f.vararg is not None:
-                    self._raise(self.key(f.vararg), holds(v))
-                i += 1
-            for kw in call.keywords:
-                v = self.level(kw.value)
-                if kw.arg is None:
-                    for x in everything:
-                        self._raise(self.key(x), elem(v))
-                elif kw.arg in named:
-                    self._raise(self.key(named[kw.arg]), v)
-                elif f.kwarg is not None:
-                    self._raise(self.key(f.kwarg), holds(v))
+            self._raise_params(d, off, call.args, call.keywords)
         fn = call.func
         for c in self.built_by(call):          # a dataclass of the module: fields from arguments (cls(...) too, LD-44)
             self._raise_dataclass(c, call.args, call.keywords)
@@ -1762,7 +1766,25 @@ class Flow:
         if kn is not None and kn[2] in REPLACERS:  # replace(obj, field=x): every dataclass's field x
             self._raise_fields(sorted({f for c, i in self.cls.items() if i.dataclass for f in self.all_fields(c)}),
                                None, call.args[1:], call.keywords)
-        name = fn.attr if isinstance(fn, ast.Attribute) else fn.id if isinstance(fn, ast.Name) else None
+            # LD-50: replace builds the copy with obj's class, so the __init__ a dataclass of the module runs (its
+            # own, or a base's under init=False) gets the changes, and every other parameter obj's attribute of
+            # that name (obj may be of any of them)
+            obj = call.args[0] if call.args and not isinstance(call.args[0], ast.Starred) else None
+            given = {k.arg for k in call.keywords if k.arg is not None}
+            for c, i in self.cls.items():
+                if not i.dataclass:
+                    continue
+                for d in self.inits(c):
+                    f = self.fn[d]
+                    rest = [x.arg for x in f.pos[1:] + f.kwonly if x.arg not in given]
+                    kws = list(call.keywords)
+                    if obj is not None:
+                        kws += [ast.copy_location(ast.keyword(arg=a, value=ast.copy_location(
+                            ast.Attribute(value=obj, attr=a, ctx=ast.Load()), obj)), obj) for a in rest]
+                    else:                      # replace(*xs): what xs gives, into every parameter
+                        kws += [ast.keyword(arg=None, value=call.args[0].value)] if call.args else []
+                    self._raise_params(d, 1, call.args[1:], kws)
+        name = _call_name(self, fn)   # LD-50: getattr(heapq, 'heappush')(...) too
         if isinstance(fn, ast.Attribute) and fn.attr in ADDERS:
             v = max([self.level(a) for a in call.args] + [self.level(k.value) for k in call.keywords], default=0)
             if isinstance(fn.value, ast.Name) and self.key(fn.value) is None and fn.value.id in BUILTIN_TYPES:
@@ -2209,10 +2231,11 @@ def _rules(tree, flow, cls) -> list[str]:
                     bad(node, "type(名字, 基类, 字典)：不许这样造类")
                 elif not (receiver(node) or isinstance(p, ast.Compare) or isinstance_arg(node)):
                     bad(node, "type(x) 只能用来读属性（如 .__name__）、比较、isinstance")
-            name = fn.attr if isinstance(fn, ast.Attribute) else fn.id if isinstance(fn, ast.Name) else None
-            at = 1 if isinstance(fn, ast.Attribute) and isinstance(flow.static_object(fn.value), type) else 0
-            if name in ARG_MUTATORS and len(node.args) > at and (   # LD-49: Generator.shuffle(rng, x) changes x
-                    any(isinstance(a, ast.Starred) for a in node.args[:at + 1]) or flow.level(node.args[at]) >= SHARED):
+            name = _call_name(flow, fn)
+            at = _arg_at(flow, fn)                 # LD-49: Generator.shuffle(rng, x) changes x; LD-50: type(r).shuffle
+            if name in ARG_MUTATORS and (any(isinstance(a, ast.Starred) for a in node.args[:max(at) + 1]) or
+                                         any(flow.level(a) >= SHARED for a in [node.args[i] for i in at
+                                                                               if i < len(node.args)])):
                 shared(node, f"{name}(...)：不许改可能共用的容器（要改就自己做一份：list(x)、dict(x)、"
                              "dataclasses.replace(x, ...)）")
             for dest, how in _written_args(flow, node):          # numpy writing into an argument (LD-47, LD-48)
@@ -2287,6 +2310,35 @@ def _method_out() -> dict:
                         if not at:
                             del _METHOD_OUT[a]
     return _METHOD_OUT
+
+
+def _call_name(flow, fn) -> str | None:
+    """The name a call calls: `f(...)`, `x.f(...)`, `getattr(x, 'f')(...)` (LD-50)."""
+    if isinstance(fn, ast.Attribute):
+        return fn.attr
+    if isinstance(fn, ast.Name):
+        return fn.id
+    return flow._getattr_name(fn)
+
+
+def _receiver(flow, fn):
+    """What a method call is called on: `x` of `x.f(...)` and of `getattr(x, 'f')(...)`, else None."""
+    if isinstance(fn, ast.Attribute):
+        return fn.value
+    return fn.args[0] if flow._getattr_name(fn) is not None else None
+
+
+def _arg_at(flow, fn) -> tuple:
+    """Where the container a shuffle-like call changes sits: 0 for a function or a method of an instance, 1 for a
+    method called through its class (LD-49: np.random.Generator.shuffle(rng, x)); both when the receiver may be a
+    class the reading can't name (LD-50: type(r).shuffle(r, x), R = random.Random; R.shuffle(r, x), getattr)."""
+    recv = _receiver(flow, fn)
+    if recv is None or flow.modpath(recv) is not None:
+        return (0,)
+    o = flow.static_object(recv)
+    if isinstance(o, type):
+        return (1,)
+    return (0,) if o is not _MISSING else (0, 1)
 
 
 def _partial(flow, call) -> bool:
@@ -2433,11 +2485,12 @@ def _written_args(flow, call) -> list:
         if kn[1] == "ndarray":
             out += [(a, f"{name} 的 buffer") for a in call.args[2:3]]
             out += [(k.value, f"{name} 的 buffer") for k in call.keywords if k.arg == "buffer"]
-    elif isinstance(f, ast.Attribute) and flow.modpath(f.value) is None and f.attr in _method_out() and \
-            not flow.targets(call):
-        shift = 1 if isinstance(flow.static_object(f.value), type) else 0   # LD-49: T.m(obj, ...) is obj.m(...)
-        for i in sorted(_method_out()[f.attr]):
-            positional(i + shift, f".{f.attr} 的 out（按位置）")
+    elif _receiver(flow, f) is not None and flow.modpath(_receiver(flow, f)) is None and \
+            _call_name(flow, f) in _method_out() and not flow.targets(call):
+        m = _call_name(flow, f)
+        for shift in _arg_at(flow, f):              # LD-49: T.m(obj, ...) is obj.m(...); LD-50: type(x).m(x, ...)
+            for i in sorted(_method_out()[m]):
+                positional(i + shift, f".{m} 的 out（按位置）")
     if isinstance(f, ast.Attribute) and f.attr in UFUNC_OUT_AT:
         b = flow.known(f.value)
         if isinstance(b[2] if b is not None else flow.static_object(f.value), ufunc):

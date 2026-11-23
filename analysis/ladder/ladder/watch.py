@@ -1,5 +1,5 @@
 """The simulator's state in a worker process, before and after a game (fifth pass LD-40, sixth LD-41, seventh LD-42;
-LD-43, LD-44, LD-45, LD-46, LD-47, LD-49).
+LD-43, LD-44, LD-45, LD-46, LD-47, LD-49, LD-50).
 
 A runner worker plays one game after another, often of different players. Strategy code runs in that process, so it
 could change things every later game there inherits: the shared card definitions (LD-40's finding: `pos.state` hands
@@ -23,7 +23,8 @@ dataclasses.fields(PlayCard)); set contents. And what no module global holds (_p
 registry's counter (ABCMeta.register changes isinstance for the whole process) and, numpy being loaded first
 (NUMPY_MODULES: it registers ABCs as it loads), its error, buffer and print settings and its global RandomState,
 and (LD-47) the arrays and plain values numpy's modules and their classes hold (Polynomial.window, polyx, ...: an
-array is compared by its bytes; np.copyto into one changed every later polynomial in the worker).
+array is compared by its bytes; np.copyto into one changed every later polynomial in the worker) and (LD-50) their
+dicts, lists and sets by their items (np.sctypeDict), numpy's memo caches emptied before every game instead.
 Breadth first, each object once, a few levels
 deep. Objects are compared by identity (the snapshot holds them, so an id can't be reused), sets by value, and a
 dict, list or set that gained or lost an item has changed: the registries (scripts, listener sets, the card pool)
@@ -171,32 +172,70 @@ NUMPY_MODULES = ("numpy", "numpy.random", "numpy.linalg", "numpy.fft", "numpy.po
                  "numpy.dtypes", "numpy.typing")   # what strategies may import of numpy (LD-46; numpy.polynomial.* too)
 
 
+NUMPY_CACHES = (("numpy", "finfo", "_finfo_cache"), ("numpy", "iinfo", "_min_vals"), ("numpy", "iinfo", "_max_vals"))
+#   LD-50: numpy's memo dicts (np.finfo / np.iinfo fill them on first use): emptied before every game, not compared
+
+
 def _plain(v) -> bool:
     return v is None or type(v) in (bool, int, float, complex, str, bytes)
+
+
+def _table(v) -> bool:
+    """A dict, list or set numpy holds that is compared by its items (LD-50: np.sctypeDict, np.typecodes...)."""
+    return isinstance(v, (dict, list, set))
+
+
+def _numpy_caches() -> list:
+    out = []
+    for mod, cls, name in NUMPY_CACHES:
+        d = getattr(getattr(sys.modules.get(mod), cls, None), "__dict__", {}).get(name)
+        if isinstance(d, dict):
+            out.append(d)
+    return out
 
 
 def _numpy_held() -> list:
     """numpy's own arrays and plain values that its modules (those strategies may use) and the classes they hold keep,
     as [(name, holder, attribute)] (LD-47): a strategy could write into such an array through a numpy function's
     destination argument (np.copyto(np.polynomial.Polynomial.window, ...) changed every later polynomial in the
-    worker), or a numpy function could set such a value (set_default_printstyle)."""
+    worker), or a numpy function could set such a value (set_default_printstyle). LD-50: and their dicts, lists and
+    sets (np.sctypeDict: a key replaced there made every later np.array(..., dtype='float32') an int8 array), but
+    numpy's memo caches (NUMPY_CACHES, emptied before every game) and an enum class's tables."""
     np = sys.modules.get("numpy")
     if np is None:
         return []
+    caches = {id(d) for d in _numpy_caches()}
     out, seen = [], set()
     for m in sorted(n for n in list(sys.modules) if n in NUMPY_MODULES or n.startswith("numpy.polynomial.")):
         mod = sys.modules.get(m)
         if mod is None:
             continue
         for k, v in list(vars(mod).items()):
-            if isinstance(v, np.ndarray) or _plain(v):
+            if isinstance(v, np.ndarray) or _plain(v) or (_table(v) and k != "__builtins__"):
                 out.append((f"{m}.{k}", mod, k))
-            elif isinstance(v, type) and str(getattr(v, "__module__", "")).startswith("numpy") and id(v) not in seen:
+            elif isinstance(v, type) and str(getattr(v, "__module__", "")).startswith("numpy") and id(v) not in seen \
+                    and not isinstance(v, enum.EnumType):
                 seen.add(id(v))
                 for a, w in list(vars(v).items()):
-                    if isinstance(w, np.ndarray) or _plain(w):
+                    if isinstance(w, np.ndarray) or _plain(w) or (_table(w) and id(w) not in caches):
                         out.append((f"{v.__module__}.{v.__qualname__}.{a}", v, a))
     return out
+
+
+def _items(v):
+    """A dict's, list's or set's items as something == compares: keys and values by identity, and one level down
+    for the dicts, lists and tuples it holds (np.sctypes' lists)."""
+    def inner(x):
+        if isinstance(x, dict):
+            return ("dict", id(x), tuple((id(a), id(b)) for a, b in dict.items(x)))
+        if isinstance(x, (list, tuple)):
+            return (type(x).__name__, id(x), tuple(map(id, x)))
+        return id(x)
+    if isinstance(v, dict):
+        return ("dict", id(v), tuple((id(a), inner(b)) for a, b in dict.items(v)))
+    if isinstance(v, set):
+        return ("set", id(v), frozenset(map(id, v)))
+    return ("list", id(v), tuple(inner(x) for x in list.__iter__(v)))
 
 
 def _value(v):
@@ -204,6 +243,8 @@ def _value(v):
     np = sys.modules.get("numpy")
     if np is not None and isinstance(v, np.ndarray):
         return ("array", id(v), v.dtype.str, v.shape, v.tobytes(), v.flags.writeable)
+    if _table(v):
+        return _items(v)
     return (type(v), v)
 
 
@@ -403,6 +444,8 @@ def reset_caches(snap: Snapshot | None = None) -> None:
             dict.clear(d)
     for f in (snap.lru if snap is not None else ()):
         f.cache_clear()
+    for d in _numpy_caches():                      # LD-50
+        dict.clear(d)
 
 
 def _same(k, a, b) -> bool:
