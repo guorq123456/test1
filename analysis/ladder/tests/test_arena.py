@@ -145,7 +145,8 @@ def test_resumed_outcomes_become_logs():
     assert arena._resumed(j, {"died": 9})["result"] == "void"
     c = arena._resumed(j, {"value": ok, "changed": "svsim.cards.pool.POOL: x"})
     assert c["result"] == "void" and c["voided_result"] == "normal" and c["winner"] is None
-    assert arena.own_view(c, 0, {})["error"] is None              # the tripwire's text isn't the player's to see
+    # against another player's member (or unknown) the reason is not the player's to see: it may be on that side
+    assert "x" not in arena.own_view(c, 0, {})["error"] and "作废" in arena.own_view(c, 0, {})["error"]
 
 
 # --- prompt review 11-23: received strategies in the field, runs of this field only, the formal games (A53) ----------
@@ -289,3 +290,161 @@ def test_the_field_includes_the_anchors_and_replay_takes_the_seat_from_the_host(
     with pytest.raises(arena.ArenaError, match="没有记下"):
         arena.run_vs(a, "fable-ultracode", v, 0, same_as=out["run"])
     assert sorted(p.name for p in (a / "players" / "fable-ultracode" / "runs").iterdir()) == runs   # no run opened for nothing
+
+
+# --- prompt v2 evaluation 11-23: a closed arena, versions that can't be built, the run cap, a run of void games -------
+
+def test_an_arena_not_opened_says_so(tmp_path, capsys):
+    with pytest.raises(arena.ArenaError, match="还没开"):
+        arena.Seat(tmp_path / "nothing", "fable")
+    assert arena.main(["field", str(tmp_path / "nothing"), "--player", "fable"]) == 2
+    assert "这一期的练习场还没开" in capsys.readouterr().err
+
+
+def test_a_version_that_cannot_be_built_is_refused_before_any_game(field, tmp_path):
+    a, host, _ = field
+    broken = QUICK + '''
+    def __init__(self, seed=None):
+        super().__init__(seed=seed)
+        raise ValueError("my own bug")
+'''
+    v = version(tmp_path / "v", broken, CODES[6])
+    runs = a / "players" / "fable-ultracode" / "runs"
+    before = sorted(p.name for p in runs.iterdir()) if runs.exists() else []
+    with pytest.raises(arena.ArenaError, match="建不出") as e:
+        arena.run_vs(a, "fable-ultracode", v, 2, opponent=host["members"][0]["anon"])
+    assert "my own bug" in str(e.value)
+    with pytest.raises(arena.ArenaError, match="建不出"):
+        arena.run_ladder(a, "fable-ultracode", v, games=4, tail=2, repeats=2)
+    assert (sorted(p.name for p in runs.iterdir()) if runs.exists() else []) == before   # no run, no games counted
+    assert arena.Seat(a, "fable-ultracode").used() == 0
+
+
+def test_one_run_is_capped(field, tmp_path):
+    a, host, _ = field
+    v = version(tmp_path / "v", QUICK, CODES[6])
+    with pytest.raises(arena.ArenaError, match=f"一次最多 {arena.RUN_GAMES_MAX} 局"):
+        arena.run_vs(a, "fable-ultracode", v, arena.RUN_GAMES_MAX + 1, opponent=host["members"][0]["anon"])
+    with pytest.raises(arena.ArenaError, match="一次最多"):
+        arena.run_ladder(a, "fable-ultracode", v, games=700, tail=300, repeats=3)
+    assert arena.RUN_GAMES_MAX >= 600 * 3                            # the default ladder run fits
+
+
+def test_the_void_stop_counts():
+    Stopping = arena._stopping_evaluation()
+    ev = object.__new__(Stopping)
+    ev.inflight, ev.starts, ev.counts = {}, {"x": {}}, {}
+    for _ in range(40):
+        ev.on_result({"id": "x", "result": "normal", "winner": None})
+    for _ in range(arena.VOID_STOP):                                   # 30 void of 70: not most
+        ev.on_result({"id": "x", "result": "void"})
+    ev.counts = {}
+    for _ in range(arena.VOID_STOP - 1):
+        ev.on_result({"id": "x", "result": "void"})
+    with pytest.raises(arena._TooManyVoid, match="作废"):
+        ev.on_result({"id": "x", "result": "void"})
+
+
+def test_a_ladder_run_of_void_games_stops_and_counts(field, tmp_path, monkeypatch):
+    # the locked evaluator plays void games again until it has its decided ones: a version whose every game is void
+    # held the arena for hours. Here every game is made void as it comes back (the evaluator's own code is untouched)
+    a, host, _ = field
+    from ladder.evaluator import Evaluation
+    real = Evaluation.on_result
+
+    def void(self, log):
+        log["result"], log["winner"] = "void", None
+        return real(self, log)
+    monkeypatch.setattr(Evaluation, "on_result", void)
+    monkeypatch.setattr(arena, "VOID_STOP", 3)
+    v = version(tmp_path / "v", QUICK, CODES[6])
+    out = arena.run_ladder(a, "fable-ultracode", v, games=10, tail=5, repeats=2, rng_seed=12)
+    assert "练习停下了" in out["stopped"] and out["games"] >= 3 and "rel_cr" not in out
+    assert arena.Seat(a, "fable-ultracode").used() == out["games"]
+    summary = json.loads((a / "players" / "fable-ultracode" / "runs" / out["run"] / "summary.json").read_text(
+        encoding="utf-8"))
+    assert summary["stopped"] == out["stopped"]
+    monkeypatch.setattr(Evaluation, "on_result", real)
+    again = arena.run_vs(a, "fable-ultracode", v, 2, opponent=host["members"][0]["anon"], rng_seed=13)
+    assert again["games"] == 2                                       # the arena's lock was let go
+
+
+def test_the_reason_a_game_was_void_reaches_the_player_only_against_the_host():
+    log = {"id": "R0001-00000", "result": "void", "winner": None, "loser": None, "error": "strategy failed to load: X",
+           "strategies": ["py:arena_fable_1:Quick", "bot:mcts:100+plan"]}
+    assert "strategy failed to load: X" in arena.own_view(log, 0, {})["error"]
+    other = dict(log, strategies=["py:arena_fable_1:Quick", "py:sub_S0003:Theirs"])
+    assert "X" not in arena.own_view(other, 0, {})["error"]
+    assert "X" in arena.own_view(other, 0, {}, host_opp=True)["error"]
+    won = dict(log, result="normal", winner=0, loser=1, error="their crash")
+    assert arena.own_view(won, 0, {})["error"] is None                # the opponent's own error is never shown
+
+
+def test_a_version_that_breaks_on_a_large_seed_is_refused(field, tmp_path):
+    a, host, _ = field
+    big = QUICK + '''
+    def __init__(self, seed=None):
+        super().__init__(seed=seed)
+        if seed is not None and seed > 2 ** 40:
+            raise ValueError("seed too large for me")
+'''
+    v = version(tmp_path / "v", big, CODES[6])
+    with pytest.raises(arena.ArenaError, match="seed too large"):
+        arena.run_vs(a, "fable-ultracode", v, 2, opponent=host["members"][0]["anon"])
+
+
+def test_a_ladder_run_stops_at_its_budget(field, tmp_path, monkeypatch):
+    # void games below the majority rule are played again by the locked evaluator: the run stops at the games it was
+    # allowed (games x repeats and a margin), not twice that
+    a, host, _ = field
+    from ladder.evaluator import Evaluation
+    real, k = Evaluation.on_result, [0]
+
+    def some_void(self, log):
+        k[0] += 1
+        if k[0] % 5 in (1, 3):                                         # 40%
+            log["result"], log["winner"] = "void", None
+        return real(self, log)
+    monkeypatch.setattr(Evaluation, "on_result", some_void)
+    monkeypatch.setattr(arena, "VOID_STOP", 3)
+    v = version(tmp_path / "v", QUICK, CODES[6])
+    out = arena.run_ladder(a, "fable-ultracode", v, games=10, tail=5, repeats=2, rng_seed=14)
+    assert "补打" in out["stopped"] and 23 <= out["games"] <= 24 and "rel_cr" not in out
+    assert arena.Seat(a, "fable-ultracode").used() == out["games"]
+
+
+def test_a_queued_run_is_checked_again_when_its_turn_comes(field, tmp_path, monkeypatch):
+    a, host, _ = field
+    v = version(tmp_path / "v", QUICK, CODES[6])
+    seat = arena.Seat(a, "fable-ultracode")
+    real = arena._lock
+
+    def others_ran_meanwhile(path):
+        seat.count("R9999", "vs", 59)                                  # a run of the same player ahead in the queue
+        return real(path)
+    monkeypatch.setattr(arena, "_lock", others_ran_meanwhile)
+    runs = a / "players" / "fable-ultracode" / "runs"
+    with pytest.raises(arena.ArenaError, match="还剩 1 局"):
+        arena.run_vs(a, "fable-ultracode", v, 2, opponent=host["members"][0]["anon"])
+    assert not runs.exists() or not any(runs.iterdir())                # nothing opened for it
+    monkeypatch.setattr(arena, "_lock", real)
+    with pytest.raises(arena.ArenaError, match="还剩"):
+        arena.run_vs(a, "fable-ultracode", v, 2, opponent=host["members"][0]["anon"])
+
+
+def test_the_count_is_read_from_the_hosts_copy(field, tmp_path):
+    a, host, _ = field
+    v = version(tmp_path / "v", QUICK, CODES[6])
+    arena.run_vs(a, "fable-ultracode", v, 2, opponent=host["members"][0]["anon"], rng_seed=15)
+    (a / "players" / "fable-ultracode" / "count.jsonl").write_text("", encoding="utf-8")   # the player's copy
+    assert arena.Seat(a, "fable-ultracode").used() == 2
+
+
+def test_resume_refuses_negative_continuations(field, tmp_path):
+    a, host, _ = field
+    v = version(tmp_path / "v", QUICK, CODES[6])
+    out = arena.run_vs(a, "fable-ultracode", v, 2, opponent=host["members"][0]["anon"], rng_seed=16)
+    game = json.loads((a / "players" / "fable-ultracode" / "runs" / out["run"] / "games.jsonl").read_text(
+        encoding="utf-8").splitlines()[0])["game"]
+    with pytest.raises(arena.ArenaError, match="负数"):
+        arena.run_resume(a, "fable-ultracode", out["run"], game, 0, [v, v], continuations=-1)

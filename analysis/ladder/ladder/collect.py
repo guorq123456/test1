@@ -453,14 +453,37 @@ def main(argv=None):
     ap.add_argument("--gate-seeds", type=int, nargs=2, metavar=("LO", "HI"), default=(88500000, 89000000),
                     help="dry runs only: the gates' seed range (default: the formal gate segment)")
     a = ap.parse_args(argv)
+    held = _only_one(Path(a.subs))                # 11-23 review: two loops (two consoles) took the same directory twice
     extra = (["--smoke-games", str(a.smoke_games)] if a.smoke_games else []) + \
         (["--smoke-seeds", *map(str, a.smoke_seeds)] if a.smoke_seeds else [])
     c = Collector(a.players, a.pool, a.subs, a.arena, workers=a.workers, mask=a.mask, gates=a.gates,
                   frozen=a.frozen, delta=a.delta, gates_out=a.gates_out, after_deadline=a.after_deadline,
                   gate_seeds=tuple(a.gate_seeds), receive_args=extra,
                   out=lambda s: print(f"{time.strftime('%H:%M:%S')} {s}", flush=True))
-    print(json.dumps(c.run(a.every), ensure_ascii=False))
+    try:
+        print(json.dumps(c.run(a.every), ensure_ascii=False))
+    finally:
+        held.close()
     return 0
+
+
+def _only_one(subs: Path):
+    """One collection loop per ledger: an exclusive lock on SUBS/collect.lock, held for the loop's life; another loop
+    stops at once."""
+    subs.mkdir(parents=True, exist_ok=True)
+    f = open(subs / "collect.lock", "a+")
+    try:
+        if os.name == "nt":
+            import msvcrt
+            f.seek(0)
+            msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        f.close()
+        raise SystemExit("收提交的循环已经在别的窗口里跑着：这个不开")
+    return f
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 """Public puzzles (公共题; player prompt: 「主持方有时会出公共题：指定一副卡组……请每个玩家各写一套打法……分清一件事：一副牌成绩差，
-是牌不行，还是还没人会打」), and the starting measurement 2.6, which is a puzzle on a list with a trained pilot.
+是牌不行，还是还没人会打」), the starting puzzle included (the host's notes on its references are in RUNBOOK, not here: players
+read this code).
 
     python -m ladder.puzzles add SUBDIR --id P01 --deck CODE --title "..." [--note "..."] [--public PUBDIR]
     python -m ladder.puzzles run SUBDIR --id P01 --seeds LO HI --out DIR [--games-per-opponent 10]
@@ -9,8 +10,8 @@
 - add: the puzzle goes into SUBDIR/puzzles.json (the submission check reads it: a 公共题 submission must name a
   puzzle there and bring exactly its list) and, without the list's owner or anything else, into PUBDIR/puzzles.md.
 - run: every player's latest accepted 公共题 strategy for the puzzle, and the references (always the default
-  strategy; e.g. the pilot behind the base for 2.6, `--ref 驾驶员=bot:<pilot spec>`: a reference that loads a trained
-  model plays through the runner's game without the tripwire, ladder.outside, S17), play the puzzle's list against
+  strategy; more with `--ref NAME=bot:<spec>`, whose NAME is printed in the public copy as it is given: a reference
+  that loads a trained model plays through the runner's game without the tripwire, ladder.outside, S17), play the puzzle's list against
   the same field on the same games: game i against field list j has seed LO + 100 * j + i, the puzzle side in seat
   i % 2; the field plays the default strategy. Win rates, and each entry's paired difference from the default.
 - Agreement (同源度, plan 「公共题上选同一步的比例」): `--agreement K` decision points drawn from the default's own games
@@ -227,8 +228,8 @@ def run(subdir: Path, pid: str, seeds, out: Path, games: int = 10, field: str = 
     ents = [{"name": "默认打法", "spec": DEFAULT, "ref": True}]
     for r in refs or []:
         name, spec = r.split("=", 1)
-        # S17: a reference that loads a trained model (the pilot of 2.6) plays outside the tripwire (ladder.outside,
-        # LD-59); the players' entries and the default always through the runner
+        # S17: a host reference that loads a trained model plays outside the tripwire (ladder.outside, LD-59); the
+        # players' entries and the default always through the runner
         ents.append({"name": name, "spec": spec, "ref": True, "outside": outside.trained(spec)})
     ents += [dict(e, ref=False) for e in entries(subdir, pid)]
     fl = field_of(field)

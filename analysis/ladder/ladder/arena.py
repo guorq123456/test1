@@ -77,6 +77,9 @@ def module_slug(player: str) -> str:
     """The player's name as it can stand in a Python module name."""
     return re.sub(r"[^0-9A-Za-z_]", "_", FOLDER[player])
 CRAFT_BY_ZH = {"精灵": 1, "皇家护卫": 2, "巫师": 3, "龙族": 4, "梦魇": 5, "主教": 6, "超越者": 7}
+RUN_GAMES_MAX = 2000         # games in one run (11-23 review: a run holds the arena's lock; host default, Salem told)
+VOID_STOP = 30               # a ladder run stops once this many games are void and they are most of those back
+LOAD_CHECK_SECONDS = 120.0
 RUN_ID = re.compile(r"(R\d{4,}|F\d+)")              # a practice run, or a period's formal games
 
 
@@ -239,6 +242,8 @@ class Seat:
         if player not in PLAYER_SEEDS:
             raise ArenaError(f"没有选手 {player}（{'、'.join(PLAYER_SEEDS)}）")
         self.arena, self.player = Path(arena), player
+        if not (self.arena / "host" / "field.json").exists():
+            raise ArenaError("这一期的练习场还没开")
         self.host = _read(self.arena / "host" / "field.json")
         win = self.arena / "public" / "window.json"
         self.window = _read(win) if win.exists() else None
@@ -260,11 +265,15 @@ class Seat:
         return {"id": row["id"], "name": row["name"], "class": CRAFT_ZH[row["craft"]]}
 
     def used(self) -> int:
-        return sum(r["games"] for r in _jsonl(self.count_path) if r.get("period") == self.host["period"])
+        """From the host's own copy of the count (the player's copy sits where the player could edit it)."""
+        path = self.priv / "count.jsonl" if (self.priv / "count.jsonl").exists() else self.count_path
+        return sum(r["games"] for r in _jsonl(path) if r.get("period") == self.host["period"])
 
     def check_window(self, games: int):
         if self.window is None or self.window["field"] != self.host["hash"]:
             raise ArenaError("这一期的练习场还没开")
+        if games > RUN_GAMES_MAX:                      # one run holds the machine (D2): others wait behind it
+            raise ArenaError(f"一次最多 {RUN_GAMES_MAX} 局，这次要打 {games} 局：分几次打")
         if _now() > datetime.fromisoformat(self.window["deadline"]):
             raise ArenaError(f"这一期的练习时间到了（{self.window['deadline']}）")
         left = self.window["games"] - self.used()
@@ -308,8 +317,9 @@ class Seat:
         return meta
 
     def count(self, rid: str, kind: str, games: int):
-        _append(self.count_path, {"run": rid, "kind": kind, "period": self.host["period"], "games": games,
-                                  "time": _iso(_now())})
+        row = {"run": rid, "kind": kind, "period": self.host["period"], "games": games, "time": _iso(_now())}
+        _append(self.priv / "count.jsonl", row)
+        _append(self.count_path, row)
 
     def version(self, d: Path) -> dict:
         """A practice version: strategy.py + submission.json (class, deck). Staged where the workers import it."""
@@ -326,6 +336,13 @@ class Seat:
         code = self.priv / "code"
         code.mkdir(parents=True, exist_ok=True)
         (code / f"{name}.py").write_text(src, encoding="utf-8")
+        from ladder.submit import load_check
+        lc = load_check(code / f"{name}.py", meta["class"], ids, 1, seed=1, game_seed=0,
+                        work=self.priv / "loadcheck" / f"{h}-{os.getpid()}", timeout=LOAD_CHECK_SECONDS,
+                        construct_only=True, seeds=[1, 2 ** 62 - 1])   # games give seeds up to 2**62 (deal.seal)
+        if not lc.get("ok"):                           # 11-23 review: otherwise every game is void, unexplained
+            why = ("碰了不许碰的：" + "；".join(lc["blocked"])) if lc.get("blocked") else lc.get("error", "")
+            raise ArenaError("这个版本建不出你的打法类（在单独的进程里试过，没打对局、不算局数）：\n" + why)
         if str(code) not in sys.path:
             sys.path.insert(0, str(code))
         return {"spec": f"py:{name}:{meta['class']}", "deck": ids, "sha": h, "dir": str(d.resolve())}
@@ -354,6 +371,24 @@ def _lock(arena: Path):
             time.sleep(5)
 
 
+def _locked(seat: "Seat", games: int):
+    """The arena's lock, then the window checked again (11-23 review: a command queued behind others had been
+    checked against a count without the runs ahead of it, and could start after the deadline). A run is opened only
+    once this passes, so a refused command leaves nothing behind."""
+    lock = _lock(seat.arena)
+    try:
+        seat.check_window(games)
+    except BaseException:
+        _unlock(lock)
+        raise
+    return lock
+
+
+def _logged(path: Path, ids: set) -> int:
+    """Games of this run in its log (each id once)."""
+    return len({g.get("id") for g in _jsonl(path)} & set(ids)) if Path(path).exists() else 0
+
+
 def _unlock(f):
     try:
         if os.name == "nt":
@@ -366,7 +401,23 @@ def _unlock(f):
 
 # --- the player's view of a game --------------------------------------------------------------------------------
 
-def own_view(log: dict, seat: int, opp: dict) -> dict:
+def _host_side(log: dict, seat: int) -> bool:
+    """The other side of this game was a host strategy (bot:, mix:): the baseline members and the baseline anchors."""
+    specs = log.get("strategies") or []
+    return len(specs) == 2 and not str(specs[1 - seat]).startswith("py:")
+
+
+def void_reason(log: dict, seat: int, host_opp: bool | None = None) -> str:
+    """Why a game was void, as far as the player may see it (11-23 review: the reason never reached them). Against a
+    host strategy only the player's own code was a player's, so the host's text is theirs to see. Against another
+    player's member it is not: the cause may be on that side (red line), so only that it was void."""
+    host_opp = _host_side(log, seat) if host_opp is None else host_opp
+    if not host_opp:
+        return "这一局作废（对手是别的选手的成员：原因可能在任何一方，不给细节）"
+    return "这一局作废：" + (log.get("error") or "没有记下原因")
+
+
+def own_view(log: dict, seat: int, opp: dict, host_opp: bool | None = None) -> dict:
     acts = []
     for step, a in zip(log.get("steps", []), log.get("actions", [])):
         if step[0] == seat:
@@ -377,7 +428,8 @@ def own_view(log: dict, seat: int, opp: dict) -> dict:
     return {"game": log["id"], "seat": seat, "first": (log.get("first") == seat) if "first" in log else None,
             "opponent": opp, "result": log["result"], "won": won, "turns": log.get("turns"),
             "my_steps": sum(1 for s in log.get("steps", []) if s[0] == seat),
-            "error": log.get("error") if log.get("loser") == seat else None, "moves": acts}
+            "error": (log.get("error") if log.get("loser") == seat else
+                      void_reason(log, seat, host_opp) if log.get("result") == "void" else None), "moves": acts}
 
 
 def _wilson(w: int, n: int) -> tuple[float, float, float]:
@@ -442,27 +494,31 @@ def run_vs(arena: Path, player: str, version_dir: Path, games: int, opponent: st
             kind, row = pool[i % len(pool)]
             plan.append({"i": i, "seed": rng.randrange(*seat.seeds), "seat": i % 2, "kind": kind,
                          "opp": row["mid"] if kind == "member" else row["id"],
-                         "sseeds": [rng.randrange(1, 2 ** 31), rng.randrange(1, 2 ** 31)]})
+                         "sseeds": [rng.randrange(1, 2 ** 62), rng.randrange(1, 2 ** 62)]})  # as wide as a ladder
     gone = sorted({p["opp"] for p in plan if (p["opp"] not in seat.by_mid if p["kind"] == "member"
                                               else p["opp"] not in seat.by_id)})
     if gone:
         raise ArenaError(f"{same_as} 里的对手现在的练习场里没有了，不能重打")
     seat.check_window(games)
-    rid, pub, priv = seat.new_run("vs")
-    jobs = []
-    for p in plan:
-        row = seat.by_mid[p["opp"]] if p["kind"] == "member" else seat.by_id[p["opp"]][1]
-        sides = [(v["deck"], v["spec"]), (row["deck"], row["strategy"])]
-        if p["seat"] == 1:
-            sides.reverse()
-        jobs.append({"id": f"{rid}-{p['i']:05d}", "seed": p["seed"], "first": None, "decks": [d for d, _ in sides],
-                     "strategies": [s for _, s in sides], "strategy_seeds": p["sseeds"],
-                     "labels": {"run": rid, "seat": p["seat"]}})
-    _write(priv / "jobs.json", {"plan": plan, "version": v, "same_as": same_as})
-    lock = _lock(arena)
+    lock = _locked(seat, games)
     try:
-        cfg = _cfg(seat)
-        run(jobs, str(priv / "games.jsonl"), workers=cfg["workers"], mask=cfg["mask"], quiet=True, key=cfg["key"])
+        rid, pub, priv = seat.new_run("vs")
+        jobs = []
+        for p in plan:
+            row = seat.by_mid[p["opp"]] if p["kind"] == "member" else seat.by_id[p["opp"]][1]
+            sides = [(v["deck"], v["spec"]), (row["deck"], row["strategy"])]
+            if p["seat"] == 1:
+                sides.reverse()
+            jobs.append({"id": f"{rid}-{p['i']:05d}", "seed": p["seed"], "first": None,
+                         "decks": [d for d, _ in sides], "strategies": [s for _, s in sides],
+                         "strategy_seeds": p["sseeds"], "labels": {"run": rid, "seat": p["seat"]}})
+        _write(priv / "jobs.json", {"plan": plan, "version": v, "same_as": same_as})
+        try:
+            cfg = _cfg(seat)
+            run(jobs, str(priv / "games.jsonl"), workers=cfg["workers"], mask=cfg["mask"], quiet=True,
+                key=cfg["key"])
+        finally:
+            seat.count(rid, "vs", _logged(priv / "games.jsonl", {j["id"] for j in jobs}))
     finally:
         _unlock(lock)
     logs = {g["id"]: g for g in _jsonl(priv / "games.jsonl")}
@@ -476,13 +532,13 @@ def run_vs(arena: Path, player: str, version_dir: Path, games: int, opponent: st
         views.append(view)
         n += 1
         wins.append(1 if view["won"] else 0)
-    seat.count(rid, "vs", n)
     decided = [v_ for v_ in views if v_["won"] is not None]
     w = sum(1 for v_ in decided if v_["won"])
     p_, lo, hi = _wilson(w, len(decided))
     out = {"run": rid, "kind": "vs", "version": v["sha"], "games": n, "decided": len(decided), "wins": w,
            "win_rate": round(p_, 4), "lo": round(lo, 4), "hi": round(hi, 4), "same_as": same_as,
-           "errors": sum(1 for v_ in views if v_["error"])}
+           "errors": sum(1 for v_ in views if v_["error"] and v_["result"] != "void"),
+           "void": sum(1 for v_ in views if v_["result"] == "void")}
     if same_as:
         old_views = {x["game"].split("-")[1]: x for x in _jsonl(seat.pub / "runs" / same_as / "games.jsonl")}
         a, b = [], []
@@ -500,10 +556,11 @@ def run_vs(arena: Path, player: str, version_dir: Path, games: int, opponent: st
 
 def run_ladder(arena: Path, player: str, version_dir: Path, replacing: str | None = None, games: int = 600,
                tail: int = 300, repeats: int = 3, rng_seed: int | None = None) -> dict:
-    from ladder.evaluator import Candidate, Evaluation
+    from ladder.evaluator import Candidate
     seat = Seat(arena, player)
     v = seat.version(version_dir)
-    seat.check_window(games * repeats)
+    budget = games * repeats + max(VOID_STOP, games * repeats // 20)   # void and drawn games are played again
+    seat.check_window(budget)
     mid = "outside"
     if replacing:
         kind, row = seat.by_id.get(replacing, (None, None))
@@ -513,25 +570,37 @@ def run_ladder(arena: Path, player: str, version_dir: Path, replacing: str | Non
     from ladder import base
     from ladder.runner import load_deck
     cand = Candidate(mid, int(base.craft_of(load_deck(v["deck"]))), v["deck"], v["spec"])
-    rid, pub, priv = seat.new_run("ladder")
-    ev = Evaluation(seat.arena / "host" / "frozen.json", priv, cand, seat.seeds, games=games, tail=tail,
-                    repeats=repeats, rng_seed=rng_seed if rng_seed is not None else secrets.randbits(48))
-    lock = _lock(arena)
+    lock = _locked(seat, budget)
+    stopped = None
     try:
-        cfg = _cfg(seat)
-        res = ev.run(workers=cfg["workers"], mask=cfg["mask"], key=cfg["key"])
+        rid, pub, priv = seat.new_run("ladder")
+        ev = _StoppingEvaluation(seat.arena / "host" / "frozen.json", priv, cand, seat.seeds, games=games, tail=tail,
+                                 repeats=repeats, rng_seed=rng_seed if rng_seed is not None else secrets.randbits(48))
+        ev.budget, ev.approved = budget, games * repeats
+        try:
+            cfg = _cfg(seat)
+            res = ev.run(workers=cfg["workers"], mask=cfg["mask"], key=cfg["key"])
+        except _TooManyVoid as e:
+            stopped = str(e)
+        finally:
+            seat.count(rid, "ladder", _logged(priv / "games.jsonl", set(ev.starts)))
     finally:
         _unlock(lock)
     starts = {s["id"]: s for s in _jsonl(priv / "starts.jsonl")}
-    n = 0
+    n, seen = 0, set()
     for g in _jsonl(priv / "games.jsonl"):
         st = starts.get(g["id"])
-        if st is None:
+        if st is None or g["id"] in seen:
             continue
+        seen.add(g["id"])
         n += 1
         _append(pub / "games.jsonl", own_view(g, st["cand_seat"],
                                               seat.opp_public("member", seat.by_mid[st["opp"]])))
-    seat.count(rid, "ladder", n)
+    if stopped:                                        # no reading: the games played count all the same
+        out = {"run": rid, "kind": "ladder", "version": v["sha"], "replacing": replacing, "games": n,
+               "stopped": stopped + f"（这次打了 {n} 局，都算进局数）"}
+        _write(pub / "summary.json", out)
+        return out
     out = {"run": rid, "kind": "ladder", "version": v["sha"], "replacing": replacing, "games": n,
            "rel_cr": round(res["rel_cr"], 1), "lo": round(res["lo"], 1), "hi": round(res["hi"], 1),
            "repeats": res["repeats"], "values": [round(x, 1) for x in res["values"]],
@@ -539,6 +608,35 @@ def run_ladder(arena: Path, player: str, version_dir: Path, replacing: str | Non
            "note": "停住的重复（stuck）读数是界限：在顶上的至少这么高，在底下的至多这么高（S3）" if res["stuck"] else ""}
     _write(pub / "summary.json", out)
     return out
+
+
+class _TooManyVoid(Exception):
+    pass
+
+
+def _stopping_evaluation():
+    from ladder.evaluator import Evaluation
+
+    class Stopping(Evaluation):
+        """The locked evaluator plays void games again until a decided one comes (up to 50 rounds): with a version
+        whose every game is void that holds the arena for hours (11-23 review). Stop once VOID_STOP games are void
+        and they are most of those back."""
+        budget = approved = None
+
+        def on_result(self, log):
+            super().on_result(log)
+            void, total = self.counts.get("void", 0), sum(self.counts.values())
+            if void >= VOID_STOP and void * 2 > total:
+                raise _TooManyVoid(f"练习停下了：{void} 局作废，比打完的一半还多（多半是你的打法在对局里碰了不许碰的东西，"
+                                   "或者对局里出错）。用 vs 对基线成员打几局，games.jsonl 里作废的局写着原因")
+            if self.budget and total >= self.budget and not self.done():
+                raise _TooManyVoid(f"练习停下了：作废和平局的局要补打，打到 {total} 局（批的 {self.approved} 局加补打余量）"
+                                   f"还没打完（其中作废 {void} 局）。用 vs 对基线成员打几局，games.jsonl 里作废的局写着原因")
+    return Stopping
+
+
+def _StoppingEvaluation(*a, **k):
+    return _stopping_evaluation()(*a, **k)
 
 
 def _from_position(job: dict, beat=None) -> dict:
@@ -672,33 +770,36 @@ def run_resume(arena: Path, player: str, run_id: str, game: str, decision: int, 
     upto = mine[decision]
     if any(sorted(v["deck"]) != sorted(src["decks"][me]) for v in versions):
         raise ArenaError("续打的版本要用原来那副卡组")
+    if continuations < 0:
+        raise ArenaError("--continuations 不能是负数（0 = 只重打原来那一局）")
     total = (continuations + 1) * len(versions)
     seat.check_window(total)
-    rid, pub, priv = seat.new_run("resume")
     rng = random.Random(rng_seed if rng_seed is not None else secrets.randbits(64))
     conts = [None] + [rng.randrange(2 ** 62) for _ in range(continuations)]
-    sseeds = [[rng.randrange(1, 2 ** 31), rng.randrange(1, 2 ** 31)] for _ in conts]
-    jobs = []
-    for vi, v in enumerate(versions):
-        for ci, (c, ss) in enumerate(zip(conts, sseeds)):
-            strategies = list(src["strategies"])
-            strategies[me] = v["spec"]
-            jobs.append({"id": f"{rid}-v{vi}-c{ci:04d}", "decks": src["decks"], "seed": src["seed"],
-                         "deal": src.get("deal"),
-                         "first_arg": src.get("first_arg"), "prefix": src["actions"][:upto],
-                         "prefix_steps": src["steps"][:upto], "cont": c, "strategies": strategies,
-                         "strategy_seeds": ss})
-    _write(priv / "jobs.json", {"from": [run_id, game, decision, upto], "versions": versions, "conts": conts})
-    lock = _lock(arena)
+    sseeds = [[rng.randrange(1, 2 ** 62), rng.randrange(1, 2 ** 62)] for _ in conts]   # as wide as a ladder's
+    lock = _locked(seat, total)
     try:
+        rid, pub, priv = seat.new_run("resume")
+        jobs = []
+        for vi, v in enumerate(versions):
+            for ci, (c, ss) in enumerate(zip(conts, sseeds)):
+                strategies = list(src["strategies"])
+                strategies[me] = v["spec"]
+                jobs.append({"id": f"{rid}-v{vi}-c{ci:04d}", "decks": src["decks"], "seed": src["seed"],
+                             "deal": src.get("deal"),
+                             "first_arg": src.get("first_arg"), "prefix": src["actions"][:upto],
+                             "prefix_steps": src["steps"][:upto], "cont": c, "strategies": strategies,
+                             "strategy_seeds": ss})
+        _write(priv / "jobs.json", {"from": [run_id, game, decision, upto], "versions": versions, "conts": conts})
         cfg = _cfg(seat)
         paths = [str(ROOT), str(LADDER), str(seat.priv / "code"), str(seat.code)]
         got = guarded_map("ladder.arena:_from_position", jobs, workers=min(cfg["workers"], len(jobs)),
                           mask=cfg["mask"], paths=paths)
         logs = [_resumed(j, g) for j, g in zip(jobs, got)]
+        seat.count(rid, "resume", len(logs))
     finally:
         _unlock(lock)
-    seat.count(rid, "resume", len(logs))
+    host_opp = not str(src["strategies"][1 - me]).startswith("py:")
     if game in starts:
         opp_pub = seat.opp_public("member", seat.by_mid[starts[game]["opp"]])
     else:
@@ -708,7 +809,7 @@ def run_resume(arena: Path, player: str, run_id: str, game: str, decision: int, 
     results = {}
     for log in logs:
         _append(priv / "games.jsonl", log)
-        _append(pub / "games.jsonl", own_view(log, me, opp_pub))
+        _append(pub / "games.jsonl", own_view(log, me, opp_pub, host_opp))
         vi = int(log["id"].split("-v")[1].split("-")[0])
         results.setdefault(vi, []).append(1 if log.get("winner") == me else 0)
     out = {"run": rid, "kind": "resume", "from": {"run": run_id, "game": game, "decision": decision},
@@ -904,6 +1005,9 @@ def main(argv=None):
         print(f"没跑：{e}", file=sys.stderr)
         return 2
     print(json.dumps(out, ensure_ascii=False, indent=1))
+    if isinstance(out, dict) and out.get("stopped"):
+        print(f"停下了：{out['stopped']}", file=sys.stderr)
+        return 3
     return 0
 
 

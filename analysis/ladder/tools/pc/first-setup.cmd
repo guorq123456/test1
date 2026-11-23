@@ -8,7 +8,7 @@ set PYTHONHASHSEED=0
 set PYTHONUTF8=1
 set RUNS=C:\claude\ladder-runs\setup
 if not exist %RUNS% mkdir %RUNS%
-powershell -NoProfile -Command "if (Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'python.exe' -and $_.CommandLine -match 'phase1_checks|base2_checks|arena_dry|first_setup|pilot_conditions|lethal_bank|ladder\.pool|ladder\.arena|ladder\.collect|ladder\.submit' }) { exit 3 } else { exit 0 }"
+powershell -NoProfile -Command "if (Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'python.exe' -and $_.CommandLine -match 'phase1_checks|base2_checks|arena_dry|first_setup|open_period|pilot_conditions|lethal_bank|ladder\.pool|ladder\.arena|ladder\.collect|ladder\.submit' }) { exit 3 } else { exit 0 }"
 set CHECK=%errorlevel%
 if not "%CHECK%"=="0" (
   echo not started %date% %time%: running-check returned %CHECK%, 3 means a ladder run is still going >> %RUNS%\status.txt
@@ -24,6 +24,8 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
+rem compiled copies made before the 11-23 docstring changes still hold the old text (players read this folder)
+if exist analysis\ladder\ladder\__pycache__ rd /s /q analysis\ladder\ladder\__pycache__
 set PYBASE=
 for /f "usebackq delims=" %%p in (`.venv\Scripts\python.exe -c "import sys; print(sys._base_executable)"`) do set PYBASE=%%p
 set __PYVENV_LAUNCHER__=%CD%\.venv\Scripts\python.exe

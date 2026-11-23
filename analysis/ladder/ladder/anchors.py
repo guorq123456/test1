@@ -8,8 +8,7 @@ every member of the pool against every anchor, on fresh seeds (Salem's S11, 11-2
     python -m ladder.anchors report DIR --anchors ANCHORS.json [--period N]          # host only: per member
     python -m ladder.anchors classes DIR [--period N]                                 # the public figures
 
-The panel (Salem's S9, 11-22: 「基线快照 + 名人堂」; the bot's other tiers are not anchors, the trained pilots only a
-reference in the starting measurement 2.6):
+The panel (Salem's S9, 11-22: 「基线快照 + 名人堂」; the bot's other tiers are not anchors):
 - 基线快照: the seven baseline lists (bot frozen seven) with the default strategy mcts:100+plan: everyone's start.
 - 名人堂: at the end of every period, each class's first member (A41: the highest mean relative CR since its last
   change, among the members with at least 300 games since it) frozen with its list and that version's strategy, if

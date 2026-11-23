@@ -478,9 +478,15 @@ def _load_main(argfile: str) -> int:
             out["error"] = f"{args['class']} 不是 ladder.interface.PlayerStrategy 的子类"
         else:
             strat = klass(seed=args["seed"])
-            seats = [strat, S.BotStrategy(seed=args["seed"] + 1)]
-            winner, state, _ = S.play(deck, opp, seats, seed=args["game_seed"], max_turns=args.get("max_turns", 60))
-            out.update(ok=True, winner=winner, turns=state.turn)
+            if args.get("construct_only"):              # the arena's check of a practice version: built, no game
+                for s in args.get("seeds") or []:       # with every seed a game may give it (11-23 review)
+                    klass(seed=s)
+                out.update(ok=True)
+            else:
+                seats = [strat, S.BotStrategy(seed=args["seed"] + 1)]
+                winner, state, _ = S.play(deck, opp, seats, seed=args["game_seed"],
+                                          max_turns=args.get("max_turns", 60))
+                out.update(ok=True, winner=winner, turns=state.turn)
     except BaseException as e:                          # noqa: BLE001 (report anything, including SystemExit)
         import traceback
         out["error"] = "".join(traceback.format_exception(type(e), e, e.__traceback__, limit=6))[-3000:]
@@ -492,12 +498,16 @@ def _load_main(argfile: str) -> int:
 
 
 def load_check(path: Path, cls: str, deck, opp_craft: int, seed: int, game_seed: int, work: Path,
-               timeout: float = 600.0) -> dict:
+               timeout: float = 600.0, construct_only: bool = False, seeds: list | None = None) -> dict:
+    """In a process of its own, under the audit hook: import the strategy, build its class and (unless
+    `construct_only`, the arena's check) play one game against the default."""
     work = Path(work).resolve()
     work.mkdir(parents=True, exist_ok=True)
     argfile = work / "loadcheck-args.json"
     argfile.write_text(json.dumps({"path": str(Path(path).resolve()), "class": cls, "deck": deck, "opp_craft": opp_craft,
-                                   "seed": seed, "game_seed": game_seed}), encoding="utf-8")
+                                   "seed": seed, "game_seed": game_seed, "construct_only": construct_only,
+                                   "seeds": seeds}),
+                       encoding="utf-8")
     env = dict(os.environ, PYTHONPATH=os.pathsep.join([str(ROOT), str(LADDER)]), PYTHONHASHSEED="0",
                PYTHONIOENCODING="utf-8")
     try:
@@ -1196,7 +1206,8 @@ def _gate_update(subdir: Path, rid: str, pool_dir: Path, frozen: Path, seeds: tu
     if v == "passed":
         text = "检验过了，已经换上池子（CR 沿用，匿名编号不变）。"
     elif v.startswith("invalid: compute"):
-        text = "检验无效：新打法每步算力超过旧版的 1.08 倍。池子里还是原来那一版。"
+        from ladder.gate import COMPUTE_RATIO                         # S16: 1.15 (the text said 1.08, 11-23 review)
+        text = f"检验无效：新打法每步算力超过旧版的 {COMPUTE_RATIO} 倍。池子里还是原来那一版。"
     elif v.startswith("invalid"):
         text = "检验无效（作废的局太多）。池子里还是原来那一版。"
     else:

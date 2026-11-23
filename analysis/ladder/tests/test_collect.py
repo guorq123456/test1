@@ -192,3 +192,15 @@ def test_an_accepted_deck_cut_off_before_its_admit_is_admitted(tmp_path):
     adm = [l for l in submit.ledger(subs) if l.get("ev") == "admit"]
     assert [l["receipt"] for l in adm] == ["S-0001"] and Pool(tmp_path / "pool").members[adm[0]["mid"]].deck == ids
     assert c.pending_admits() == []
+
+
+def test_only_one_loop_per_ledger(tmp_path):
+    # 11-23 review: two consoles could each start a loop on the same ledger
+    from ladder import collect as C
+    held = C._only_one(tmp_path / "subs")
+    try:
+        with pytest.raises(SystemExit, match="已经在别的窗口"):
+            C._only_one(tmp_path / "subs")
+    finally:
+        held.close()
+    C._only_one(tmp_path / "subs").close()                       # let go: the next one may start

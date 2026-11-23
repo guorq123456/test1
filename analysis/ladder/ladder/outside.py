@@ -1,10 +1,9 @@
 """The referee without the tripwire, for the host's own strategies only (S17, Salem 11-23 16:44Z: the tripwire, locked in
-ladder/watch.py, is not changed; the pilots' games go around it).
+ladder/watch.py, is not changed; games of host strategies that load a trained model go around it).
 
-Why: a trained pilot's prior model (svsim.learn.setpolicy.SetPolicy) adds rows to its own table for cards it has not
-met in training. The tripwire takes that for a change to the simulator and voids the game (LD-59: 6 of 12 pilot
-games against the bot's other lists). The pilots play in 2.5 (both information conditions) and as the reference
-of the starting measurement 2.6 (ladder.puzzles), so those games are played here.
+Why: a host strategy's prior model (svsim.learn.setpolicy.SetPolicy) adds rows to its own table for cards it has not
+met in training. The tripwire takes that for a change to the simulator and voids the game (LD-59). The host's own
+measurements with such strategies (the plan's 2.5, and host references in ladder.puzzles) are played here.
 
 What is the same as ladder.runner.run: the game itself (runner.play_job: the keyed deal, base.public_position for
 each seat, the offered moves, the referee's legal-move check, the per-decision compute counter, the log line), the
