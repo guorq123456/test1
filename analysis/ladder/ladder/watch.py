@@ -1,5 +1,5 @@
 """The simulator's state in a worker process, before and after a game (fifth pass LD-40, sixth LD-41, seventh LD-42;
-LD-43, LD-44, LD-45, LD-46, LD-47).
+LD-43, LD-44, LD-45, LD-46, LD-47, LD-49).
 
 A runner worker plays one game after another, often of different players. Strategy code runs in that process, so it
 could change things every later game there inherits: the shared card definitions (LD-40's finding: `pos.state` hands
@@ -12,7 +12,9 @@ starts a new one).
 
 What is followed, from every loaded module of svsim and ladder (and builtins), and of the standard modules a
 strategy may import (STDLIB: random.Random's methods are what the deal and the search shuffle with) and of the ones
-statistics works with (FOLLOWED: fractions, numbers, decimal; LD-45): each global;
+statistics works with (FOLLOWED: fractions, numbers, decimal; LD-45) and copyreg (LD-49): each global, and of the
+standard ones their own classes and functions and (LD-49) their dicts, lists and sets but typing's caches
+(copy.dispatch_table: a key added there made every later copy of a position in the worker fail);
 the members of every class defined there, and its name, qualified name and bases; for functions, their code,
 defaults, closure cells and names, and the function an lru_cache wraps; the items of dicts, lists and tuples; the
 attributes (and slots) of instances of svsim and ladder classes, such as the CardDefs, the scripts and the bots'
@@ -80,8 +82,11 @@ GROWS = ("svsim.learn.",)                         # their module globals that ar
 STDLIB = ("random", "collections", "functools", "dataclasses", "heapq", "bisect", "statistics", "copy", "enum",
           "typing", "math", "cmath", "itertools")   # what strategies may import: its globals, and the members of the
 #                                                    classes and functions defined there (LD-42: random.Random's)
-FOLLOWED = ("fractions", "numbers", "decimal")     # not importable by strategies, but statistics works with their
-#                                                    classes (LD-45: changing fractions.Fraction broke later games)
+FOLLOWED = ("fractions", "numbers", "decimal", "copyreg")   # not importable by strategies, but statistics works
+#   with their classes (LD-45: changing fractions.Fraction broke later games); copy.dispatch_table is copyreg's (LD-49)
+STD_CACHES = (("typing", "_caches"), ("typing", "_cleanups"), ("typing", "_overload_registry"))   # LD-49: typing's
+#   own lru caches and the registry typing.overload fills: of the standard modules' dict, list and set globals the
+#   only ones not compared
 
 
 def _watched(name) -> bool:
@@ -334,10 +339,11 @@ def snapshot() -> Snapshot:
         if name.startswith(GROWS):
             grows.update(id(v) for v in dict.values(d) if type(v) in (dict, set))
         _record(s, d, "moddict", keys, name)
-        if name in STDLIB + FOLLOWED:              # its own classes and functions only (not its caches)
-            queue += [(v, f"{name}.{k}", 1) for k in keys
-                      if isinstance(v := dict.get(d, k), (type, types.FunctionType)) and
-                      getattr(v, "__module__", None) == name]
+        if name in STDLIB + FOLLOWED:              # its own classes and functions only (not its caches), and its
+            queue += [(v, f"{name}.{k}", 1) for k in keys    # dicts, lists and sets (LD-49: copy.dispatch_table)
+                      if (isinstance(v := dict.get(d, k), (type, types.FunctionType)) and
+                          getattr(v, "__module__", None) == name) or
+                      (isinstance(v, (dict, list, set)) and (name, k) not in STD_CACHES)]
         elif name != "builtins":
             queue += [(dict.get(d, k), f"{name}.{k}", 1) for k in keys]
     i = 0

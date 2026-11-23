@@ -49,7 +49,7 @@
 | 格式 | 四个文件、这一类要的字段 | 拦得住 |
 | 卡组 | 模拟器自己的 validate：40 张、同名最多 3 张、一个职业 + 中立、卡池以模拟器为准（A7）；有效果没脚本的卡拒收并列出（runner.unscripted） | 拦得住 |
 | 名额和期 | 成员数不设上限（S6）、同一卡表最多 2 个、卡组期每人每个职业一副（S5）、打法更新不限；新卡组只在卡组期、更新只在策略期 | 拦得住 |
-| 读代码 | 语法树：只许 import ladder.interface、ladder.base、svsim（svsim.learn、svsim.tools 除外：能载入训练好的模型）、math、random、collections、itertools、functools、dataclasses、heapq、bisect、statistics、copy、enum、typing、numpy（比原设计多了 bisect、statistics、copy、enum、typing：都碰不到文件和解释器；numpy 只许几个子模块，读写文件、改全局设置、全局随机数的名字不许用，LD-46；不许往可能共用的数组里写，LD-47）；禁用 open、eval、exec、compile、globals、vars 等名字，双下划线属性（`__init__`、`__name__`、`__post_init__` 除外），调用栈和帧的属性（f_back、tb_frame……），经允许的模块拿到的 sys、os、Path 等；getattr 一类的属性名要写死；不用全局 random | 拦得住直接写出来的 |
+| 读代码 | 语法树：只许 import ladder.interface、ladder.base、svsim（svsim.learn、svsim.tools 除外：能载入训练好的模型）、math、random、collections、itertools、functools、dataclasses、heapq、bisect、statistics、copy、enum、typing、numpy（比原设计多了 bisect、statistics、copy、enum、typing：都碰不到文件和解释器；numpy 只许几个子模块，读写文件、改全局设置、全局随机数的名字不许用，LD-46；不许往可能共用的数组里写，LD-47～LD-49）；禁用 open、eval、exec、compile、globals、vars 等名字，双下划线属性（`__init__`、`__name__`、`__post_init__` 除外），调用栈和帧的属性（f_back、tb_frame……），经允许的模块拿到的 sys、os、Path 等；getattr 一类的属性名要写死；不用全局 random | 拦得住直接写出来的 |
 | 载入 | 单独的进程里载入，装审计钩子（PEP 578）：只许读 Python 和模拟器自己的代码文件；写文件、读别的文件、联网、开进程、ctypes、翻垃圾回收器的对象一律报错，代码接住了报错也照样记下、拒收；再打一局 | 大部分拦得住；钩子不是安全边界 |
 | 冒烟 | 对默认打法 10 局（主持方的冒烟种子 88300000～88399999，对手基线卡表七个职业轮流，先后手各半），崩溃、非法步、超时拒收 | 拦得住 |
 | 算力 | 同样 10 局把它换成默认打法再打（同种子、同位置、同打法种子），比每步平均 CPU；超过 1.08 倍提醒（检验时超过判无效，A25） | 检验时拦得住 |

@@ -1,5 +1,5 @@
 """Reading a submission's code (item 2.3; fifth pass LD-40, sixth LD-41, seventh LD-42, eighth LD-43, ninth LD-44,
-tenth LD-45, eleventh LD-46, twelfth LD-47, thirteenth LD-48).
+tenth LD-45, eleventh LD-46, twelfth LD-47, thirteenth LD-48, fourteenth LD-49).
 Nothing in the submitted code runs.
 The simulator's and ladder's own modules are imported here (they are the host's code) to tell a module from a class
 from a function; svsim.learn, svsim.tools, svsim.ui, svsim.build, svsim.search.parallel and ladder's other modules
@@ -10,9 +10,10 @@ Two kinds of rules.
 Names. Imports only from the allowed modules, and no private names from them (of numpy only numpy, numpy.random,
 linalg, fft, polynomial, exceptions, dtypes, typing, and none of its file, settings, test or global-random
 names: LD-46; no writing into a possibly shared array through numpy's out=, by keyword or by position, a ufunc's
-outputs or numpy's first-argument writers: LD-47, LD-48; one dataclass decorator a class, its init= True or False:
-LD-48); a name an import binds never bound again (rebound, it would no longer be what the reading takes it
-for), nor two imports binding one name to different things (LD-46); none of the names and attributes
+outputs or numpy's first-argument writers: LD-47, LD-48, and the arguments numpy changes in place: LD-49; one
+dataclass decorator a class, its arguments written out by name and its init= True or False: LD-48, LD-49); a name an
+import binds never bound again (rebound, it would no longer be what the reading takes it for), nor two imports
+binding one name to different things (LD-46); none of the names and attributes
 that reach files, the network, other processes, frames or the interpreter; no dunder names but __init__, __name__,
 __post_init__ (and those three never assigned); other objects' private attributes no (the strategy's own `self._x`
 yes: `self` = the first parameter of a method of the module's own class, never rebound); `getattr` & co. only
@@ -117,8 +118,11 @@ NUMPY_DENIED = frozenset({                         # numpy's own names that aren
     "load", "save", "savez", "savez_compressed", "savetxt", "loadtxt", "genfromtxt", "fromfile", "fromregex", "memmap",
     "open_memmap", "DataSource", "dump", "tofile",                                                  # files
     "seterr", "seterrcall", "setbufsize", "set_printoptions", "set_string_function", "set_numeric_ops", "add_newdoc",
-    "add_docstring", "add_newdoc_ufunc", "set_default_printstyle",  # the process's numpy settings: every later game in the worker
+    "add_docstring", "add_newdoc_ufunc", "set_default_printstyle", "printoptions",   # the process's numpy settings:
+    #                                                                     every later game in the worker
     "test", "info", "source", "lookfor", "show_config", "show_runtime", "who", "get_include"})   # running, showing
+NUMPY_OLD = {"product": "prod", "cumproduct": "cumprod", "sometrue": "any", "alltrue": "all"}   # numpy 1.x's
+#   (*args, **kwargs) aliases: where their out sits can't be read (LD-49); numpy 2 has only the new names
 NUMPY_RANDOM_OK = frozenset({"Generator", "default_rng", "RandomState", "SeedSequence", "BitGenerator", "MT19937",
                              "PCG64", "PCG64DXSM", "Philox", "SFC64"})   # not the process's global RandomState
 DENIED_PREFIXES = ("svsim.learn", "svsim.tools",       # they load trained models (A12)
@@ -164,6 +168,15 @@ NUMPY_WRITERS = frozenset({"copyto", "place", "putmask", "fill_diagonal", "put_a
                            "nditer"})   # numpy functions that write into their first argument or alias it (LD-47,
 #                                       LD-48: known as numpy's only, an own `place` is the player's)
 UFUNC_OUT_AT = {"at": 0, "reduce": 3, "accumulate": 3, "reduceat": 4}   # the argument a ufunc method writes (LD-47)
+METHOD_OUT_FIX = {"any": {2}, "all": {2}, "conj": {0}, "conjugate": {0}, "choose": set()}   # LD-49: where these
+#   ndarray methods really take out (a.any(axis, dtype, out) goes through numpy's _any; a.conj(out) documents no
+#   parameter; a.choose(c1, c2) takes every positional as a choice), which their documented signatures don't say
+NUMPY_FLAGS = {"overwrite_input": (0, True), "copy": (0, False)}   # LD-49: a parameter that makes numpy change
+#   argument 0 in place when it is true (median / percentile / quantile and their nan versions) or, for
+#   nan_to_num only, false
+NUMPY_INPLACE_PARAMS = {"array_repr": ("max_line_width",), "array2string": ("max_line_width",), "rot90": ("k",)}
+#   LD-49: parameters numpy updates with an augmented assignment (options['linewidth'] -= ..., numpy 1.26's k %= 4):
+#   an array given there is changed in place
 BUILTIN_TYPES = frozenset({"set", "dict", "list", "bytearray", "frozenset", "object", "type", "tuple"})
 SCALAR_BUILTINS = frozenset({
     "len", "id", "hash", "isinstance", "issubclass", "callable", "hasattr", "bool", "int", "float", "str", "repr",
@@ -235,6 +248,9 @@ def numpy_problem(mod: str, attr: str) -> str | None:
         return None
     if attr in NUMPY_DENIED:
         return "numpy 的这个不许用：读写文件、改整个进程的 numpy 设置（同一进程里后面别人的对局也受影响）或运行别的东西（LD-46）"
+    if attr in NUMPY_OLD:
+        return (f"numpy.{attr} 是 numpy 1.x 的旧别名（numpy 2 没有了），改用 numpy.{NUMPY_OLD[attr]}，参数一样（读代码看不清"
+                "旧别名的参数，LD-49）")
     if mod == "numpy.random" and attr not in NUMPY_RANDOM_OK:
         return ("numpy 的全局随机数不许用（整个进程共用一个）：要随机数用 self.random，或 numpy.random.default_rng(种子) "
                 "自己建一个（LD-46）")
@@ -785,8 +801,11 @@ class Flow:
                  for k in d.keywords]
         c.dc_init = not any(k.arg == "init" and not (isinstance(k.value, ast.Constant) and k.value.value is True)
                             for k in dc_kw)    # LD-45: dataclass(init=False) runs a base's __init__
-        c.dc_odd = kinds.count("dataclass") > 1 or any(   # LD-48: read only as one decorator, init a bool literal
-            k.arg == "init" and not (isinstance(k.value, ast.Constant) and type(k.value.value) is bool) for k in dc_kw)
+        c.dc_odd = kinds.count("dataclass") > 1 or any(   # LD-48: read only as one decorator, init a bool literal;
+            d.args for d, kind in zip(node.decorator_list, kinds)   # LD-49: no **{'init': False}, nothing by position
+            if kind == "dataclass" and isinstance(d, ast.Call)) or any(
+            k.arg is None or k.arg == "init" and not (isinstance(k.value, ast.Constant) and type(k.value.value) is bool)
+            for k in dc_kw)
         c.dc_plain = all(k.arg in DC_PLAIN_KEYWORDS for k in dc_kw)
         c.deco_unknown = any(k not in ("dataclass", "total_ordering") for k in kinds)   # LD-42
         c.fields = [s.target.id for s in node.body if isinstance(s, ast.AnnAssign) and isinstance(s.target, ast.Name)]
@@ -2028,8 +2047,8 @@ def _rules(tree, flow, cls) -> list[str]:
         if isinstance(node, (ast.Import, ast.ImportFrom)) and isinstance(p, ast.ClassDef):
             bad(node, f"类 {p.name} 的类体里不许 import：写在模块顶上（LD-46）")
         if isinstance(node, ast.ClassDef) and (ci := flow.cls.get(node)) is not None and ci.dc_odd:
-            bad(node, f"类 {node.name}：只许一个 dataclass 装饰器，它的 init= 只许写 True 或 False（读代码要看清有没有"
-                      "生成的 __init__，LD-48）")
+            bad(node, f"类 {node.name}：只许一个 dataclass 装饰器，参数只许按名字写（不许 **字典、不许按位置），它的 init= "
+                      "只许写 True 或 False（读代码要看清有没有生成的 __init__，LD-48、LD-49）")
         if isinstance(node, (ast.Assign, ast.AnnAssign)) and isinstance(p, ast.ClassDef) and node.value is not None:
             v = flow.level(node.value)
             if isinstance(node, ast.Assign) and any(not isinstance(t, ast.Name) for t in node.targets):
@@ -2191,8 +2210,9 @@ def _rules(tree, flow, cls) -> list[str]:
                 elif not (receiver(node) or isinstance(p, ast.Compare) or isinstance_arg(node)):
                     bad(node, "type(x) 只能用来读属性（如 .__name__）、比较、isinstance")
             name = fn.attr if isinstance(fn, ast.Attribute) else fn.id if isinstance(fn, ast.Name) else None
-            if name in ARG_MUTATORS and node.args and \
-                    (isinstance(node.args[0], ast.Starred) or flow.level(node.args[0]) >= SHARED):
+            at = 1 if isinstance(fn, ast.Attribute) and isinstance(flow.static_object(fn.value), type) else 0
+            if name in ARG_MUTATORS and len(node.args) > at and (   # LD-49: Generator.shuffle(rng, x) changes x
+                    any(isinstance(a, ast.Starred) for a in node.args[:at + 1]) or flow.level(node.args[at]) >= SHARED):
                 shared(node, f"{name}(...)：不许改可能共用的容器（要改就自己做一份：list(x)、dict(x)、"
                              "dataclasses.replace(x, ...)）")
             for dest, how in _written_args(flow, node):          # numpy writing into an argument (LD-47, LD-48)
@@ -2262,13 +2282,32 @@ def _method_out() -> dict:
                         _METHOD_OUT.setdefault(a, set()).add(i)
                 if name == "ndarray":
                     _METHOD_OUT.setdefault("dot", set()).add(1)   # a.dot(b, out): numpy 1.26 gives it no docstring
+                    for a, at in METHOD_OUT_FIX.items():
+                        _METHOD_OUT[a] = set(at)
+                        if not at:
+                            del _METHOD_OUT[a]
     return _METHOD_OUT
+
+
+def _partial(flow, call) -> bool:
+    """`functools.partial(f, ...)` / partialmethod: what it is given goes to `f` when the result is called (LD-49)."""
+    kn = flow.known(call.func)
+    return kn is not None and kn[0] == "functools" and kn[1] in ("partial", "partialmethod") and \
+        bool(call.args) and not isinstance(call.args[0], ast.Starred)
+
+
+def _as_call(call, f, args):
+    """A call of `f` with `args` and `call`'s keywords, standing for what `call` hands on (LD-49)."""
+    return ast.copy_location(ast.Call(func=f, args=list(args), keywords=list(call.keywords)), call)
 
 
 def _may_be_numpy(flow, call) -> bool:
     """Whether a call may be numpy's, so its out= is read as numpy's (LD-48): not a class or function of the module's
-    own, not a builtin, not a function of a module other than numpy, not a method of a literal."""
+    own, not a builtin, not a function of a module other than numpy (functools.partial: what it wraps, LD-49), not a
+    method of a literal."""
     f = call.func
+    if _partial(flow, call):
+        return _may_be_numpy(flow, _as_call(call, call.args[0], call.args[1:]))
     if flow.built_by(call):
         return False
     if isinstance(f, ast.Name):
@@ -2309,8 +2348,14 @@ def _written_args(flow, call) -> list:
     ufunc's positional outputs after its inputs (np.negative(x, x)), what a *xs of a numpy call gives; the array of
     ufunc.at and the out of reduce / accumulate / reduceat; the first argument of copyto, place, putmask,
     fill_diagonal, put_along_axis, put, frombuffer, nditer and of nan_to_num(copy=False), the buffer of np.ndarray.
+    LD-49: what functools.partial hands on, read as a call of what it wraps; a method called through its class
+    (np.ndarray.sum(a, 0, None, out)) counts its positions after the object; argument 0 of median / percentile /
+    quantile (and nan versions) with overwrite_input, and of nan_to_num with copy false, by keyword or position; the
+    parameters numpy updates in place (NUMPY_INPLACE_PARAMS).
     The tripwire compares every array numpy's modules and classes hold, so what is written through a container or an
     alias the reading doesn't follow (a numpy.polynomial object's window is its class's) still voids the game."""
+    if _partial(flow, call):
+        return _written_args(flow, _as_call(call, call.args[0], call.args[1:]))
     out = []
 
     def given(v, how):
@@ -2355,16 +2400,44 @@ def _written_args(flow, call) -> list:
             positional(i, f"{name} 的 out（按位置）")
         if kn[1] in NUMPY_WRITERS:
             out += [(a, name) for a in call.args[:1]]
-        if kn[1] == "nan_to_num" and any(k.arg == "copy" and not (isinstance(k.value, ast.Constant) and k.value.value)
-                                         for k in call.keywords):
-            out += [(a, f"{name}(copy=False)") for a in call.args[:1]]
+        names = _params(o) or []
+
+        def param(p):
+            """(node given for parameter p, whether a *xs before it hides where it lands) or (None, False)."""
+            for k in call.keywords:
+                if k.arg == p:
+                    return k.value, False
+                if k.arg is None:
+                    for kk, v in flow._literal_keys(k.value) or ():
+                        if kk == p:
+                            return v, False
+            if p in names:
+                j = names.index(p)
+                for a in call.args[:j + 1]:
+                    if isinstance(a, ast.Starred):
+                        return a.value, True
+                if j < len(call.args):
+                    return call.args[j], False
+            return None, False
+
+        for p, (_, when) in NUMPY_FLAGS.items():
+            if p == "copy" and kn[1] != "nan_to_num":
+                continue
+            v, hidden = param(p)
+            if hidden or (v is not None and not (isinstance(v, ast.Constant) and bool(v.value) is not when)):
+                positional(0, f"{name}({p}={when})")
+        for p in NUMPY_INPLACE_PARAMS.get(kn[1], ()):
+            v, _ = param(p)
+            if v is not None:
+                given(v, f"{name} 的 {p}（numpy 会原地改传给它的东西；传数字就写 int(...)）")
         if kn[1] == "ndarray":
             out += [(a, f"{name} 的 buffer") for a in call.args[2:3]]
             out += [(k.value, f"{name} 的 buffer") for k in call.keywords if k.arg == "buffer"]
     elif isinstance(f, ast.Attribute) and flow.modpath(f.value) is None and f.attr in _method_out() and \
             not flow.targets(call):
+        shift = 1 if isinstance(flow.static_object(f.value), type) else 0   # LD-49: T.m(obj, ...) is obj.m(...)
         for i in sorted(_method_out()[f.attr]):
-            positional(i, f".{f.attr} 的 out（按位置）")
+            positional(i + shift, f".{f.attr} 的 out（按位置）")
     if isinstance(f, ast.Attribute) and f.attr in UFUNC_OUT_AT:
         b = flow.known(f.value)
         if isinstance(b[2] if b is not None else flow.static_object(f.value), ufunc):

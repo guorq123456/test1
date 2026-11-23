@@ -454,6 +454,33 @@ def test_the_watch_follows_the_standard_library_and_what_an_lru_cache_wraps():
     assert watch.changes(snap) == []
 
 
+def test_the_watch_follows_the_standard_modules_tables():
+    # LD-49: copy.dispatch_table (copyreg's) and the standard modules' other dicts, lists and sets are compared by
+    # their items: a key added to copy.dispatch_table made every later copy of a position in the worker fail
+    import copy
+    import dataclasses
+
+    from ladder import watch
+    from ladder.base import PublicPosition
+    watch.preload()
+    snap = watch.snapshot()
+    assert watch.changes(snap) == []
+    try:
+        copy.dispatch_table[PublicPosition] = lambda p: None
+        assert any("dispatch_table" in line for line in watch.changes(snap))
+    finally:
+        copy.dispatch_table.pop(PublicPosition, None)
+    assert watch.changes(snap) == []
+    key = next(iter(dataclasses._hash_action))
+    kept = dataclasses._hash_action[key]
+    try:
+        dataclasses._hash_action[key] = None if kept is not None else (lambda *a: None)
+        assert any("_hash_action" in line for line in watch.changes(snap))
+    finally:
+        dataclasses._hash_action[key] = kept
+    assert watch.changes(snap) == []
+
+
 def test_the_pilots_model_caches_may_grow():
     # LD-42: the host's pilot games load a model once per process (svsim.learn's caches gain an entry) and the net
     # memoizes and adds rows for cards it meets: neither is a change; anything else in the net is
