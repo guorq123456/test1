@@ -26,8 +26,8 @@ def test_report_says_nothing_about_owners_versions_or_age(tmp_path, monkeypatch)
     pool = Pool.create(tmp_path / "pool", (10 ** 12, 2 * 10 ** 12), rng_seed=5, check=True)
     strengths = {}
     for i, (d, owner, s) in enumerate([(BASE_DECKS[0], "baseline", 0.0), (BASE_DECKS[1], "baseline", 0.0),
-                                       (BASE_DECKS[2], "baseline", 0.0), (BASE_DECKS[0], "甲", 0.06),
-                                       (BASE_DECKS[1], "乙", -0.03)]):
+                                       (BASE_DECKS[2], "baseline", 0.0), (BASE_DECKS[0], "fable-ultracode", 0.06),
+                                       (BASE_DECKS[1], "fable", -0.03)]):
         strengths[pool.enter(d, "bot:greedy", owner, rng=random.Random(i))] = s
     rng = random.Random(6)
     _play(pool, 600, strengths, rng)
@@ -39,7 +39,7 @@ def test_report_says_nothing_about_owners_versions_or_age(tmp_path, monkeypatch)
     craft = {m.owner: m.craft for m in pool.active()}
     # anchors (S11): the last period's run, per class; an older period's line must not show
     (tmp_path / "anchors").mkdir()
-    lines = [(pool.period, "甲", 14, 6), (pool.period, "乙", 8, 12), (pool.period - 1, "乙", 1, 19)]
+    lines = [(pool.period, "fable-ultracode", 14, 6), (pool.period, "fable", 8, 12), (pool.period - 1, "fable", 1, 19)]
     (tmp_path / "anchors" / "anchors.jsonl").write_text("".join(
         json.dumps({"period": p, "member": mids[o], "version": ver[o], "craft": craft[o], "anchor": "A00",
                     "tier": "基线快照", "games": 20, "won": w, "lost": l, "draw": 0, "void": 0, "batch": f"b{p}"}) + "\n"
@@ -56,7 +56,7 @@ def test_report_says_nothing_about_owners_versions_or_age(tmp_path, monkeypatch)
         encoding="utf-8")
     r = R.build(pool.dir, tmp_path / "anchors", [puzzle], note="第一期")
     text = json.dumps(r, ensure_ascii=False) + R.markdown(r)
-    for word in ("甲", "乙", "owner", "version", "mid") + tuple(mids.values()):
+    for word in ("fable-ultracode", "fable", "owner", "version", "mid") + tuple(mids.values()):
         assert word not in text, word
     # the win tables count the last period only (300 games: 600 decided appearances in all)
     assert r["games_period"] == pool.period
@@ -67,8 +67,8 @@ def test_report_says_nothing_about_owners_versions_or_age(tmp_path, monkeypatch)
     # anchors (S11, A48): per class and the whole pool, rounded, no id, no counts; the older period left out: 22 of 40
     from ladder.pool import CRAFT_ZH
     assert r["anchors_period"] == pool.period
-    assert r["anchors"] == [{"craft": CRAFT_ZH[craft["甲"]], "tier": "基线快照", "rate": 70, "lo": 48, "hi": 85},
-                            {"craft": CRAFT_ZH[craft["乙"]], "tier": "基线快照", "rate": 40, "lo": 22, "hi": 61},
+    assert r["anchors"] == [{"craft": CRAFT_ZH[craft["fable-ultracode"]], "tier": "基线快照", "rate": 70, "lo": 48, "hi": 85},
+                            {"craft": CRAFT_ZH[craft["fable"]], "tier": "基线快照", "rate": 40, "lo": 22, "hi": 61},
                             {"craft": "全池", "tier": "基线快照", "rate": 55, "lo": 40, "hi": 69}]
     assert "| 全池 | 55%（40～69%） |" in R.markdown(r)
     md = R.markdown(r)

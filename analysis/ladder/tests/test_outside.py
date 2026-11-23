@@ -59,7 +59,7 @@ def test_a_trained_reference_plays_outside_in_a_puzzle(tmp_path, monkeypatch):
     monkeypatch.setattr(outside, "trained", lambda spec: spec == "bot:greedy+plan")   # stands in for a pilot
     subs = tmp_path / "subs"
     Z.add(subs, "P01", CODES[1], "皇家护卫一题")
-    submit._append(subs, {"ev": "receipt", "id": "S-0001", "player": "甲", "kind": "puzzle", "puzzle": "P01",
+    submit._append(subs, {"ev": "receipt", "id": "S-0001", "player": "fable-ultracode", "kind": "puzzle", "puzzle": "P01",
                           "verdict": "收下", "spec": "bot:greedy"})
     kf = tmp_path / "k.key"
     deal.new_key_file(kf)

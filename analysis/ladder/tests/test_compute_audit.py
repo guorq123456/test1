@@ -11,7 +11,7 @@ from ladder.submit import DEFAULT  # noqa: E402
 
 MEMBERS = {"b1": NS(owner="baseline", strategy=DEFAULT, anon="X1", craft=1),
            "b2": NS(owner="baseline", strategy=DEFAULT, anon="X2", craft=2),
-           "p1": NS(owner="甲", strategy="py:sub_S0001:A", anon="X3", craft=3)}
+           "p1": NS(owner="fable-ultracode", strategy="py:sub_S0001:A", anon="X3", craft=3)}
 
 
 def g(i, mids, period=1, result="normal", versions=(1, 1)):

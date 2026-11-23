@@ -39,7 +39,7 @@ def test_players_folders_and_the_public_copy(tmp_path):
     (pub / "rules.md").write_text("规则", encoding="utf-8")
     r = F.players_step(tmp_path / "players", pub)
     assert r["ok"] and len(r["made"]) == 10 and r["public_copied"] == ["rules.md"]
-    for py in ("jia", "yi", "bing", "ding", "wu"):
+    for py in ("fable-ultracode", "fable", "astra", "opus", "sol"):
         assert (tmp_path / "players" / py / "submit").is_dir() and (tmp_path / "players" / py / "receipts").is_dir()
     (tmp_path / "players" / "public" / "reports").mkdir()                   # the period reports stay
     (pub / "rules.md").write_text("规则 v2", encoding="utf-8")
@@ -84,3 +84,18 @@ def test_the_starting_puzzle_is_added_once(tmp_path):
         assert "another list" in str(e)
     else:
         raise AssertionError("a START on another list was taken")
+
+
+def test_the_codenames_empty_folders_go_and_names_come(tmp_path):
+    pub = tmp_path / "public-src"
+    pub.mkdir()
+    players = tmp_path / "players"
+    for old in ("jia", "yi", "bing", "ding", "wu"):                          # as made on 11-23 17:48Z
+        for sub in ("submit", "receipts"):
+            (players / old / sub).mkdir(parents=True)
+    (players / "wu" / "submit" / "x.txt").write_text("something", encoding="utf-8")
+    r = F.players_step(players, pub)
+    assert r["ok"] and r["players"] == ["fable-ultracode", "fable", "astra", "opus", "sol"]
+    assert sorted(r["old_removed"]) == sorted(str(players / o) for o in ("jia", "yi", "bing", "ding"))
+    assert r["old_kept"] == [str(players / "wu")] and (players / "wu" / "submit" / "x.txt").exists()
+    assert all((players / n / "submit").is_dir() for n in r["players"])

@@ -9,7 +9,7 @@
 - 下面这条命令列出全部对手、这一期的时限，以及你已经打了多少局：
 
 ```
-python -m ladder.arena field 练习场目录 --player 你的代号
+python -m ladder.arena field 练习场目录 --player 你的名字
 ```
 
 ## 二、一个「版本」
@@ -26,7 +26,7 @@ python -m ladder.arena field 练习场目录 --player 你的代号
 ### 1. 按池子的匹配打，估你的相对 CR
 
 ```
-python -m ladder.arena ladder 练习场目录 --player 甲 --version 版本目录 [--replacing 你的成员编号] --games 600 --tail 300 --repeats 3
+python -m ladder.arena ladder 练习场目录 --player 你的名字 --version 版本目录 [--replacing 你的成员编号] --games 600 --tail 300 --repeats 3
 ```
 
 - 你的版本当候选，按池子自己的匹配规则对冻结副本打：只和 200 分以内的对手配对，没人就重抽。这和最终评测用的是同一个工具。
@@ -37,15 +37,15 @@ python -m ladder.arena ladder 练习场目录 --player 甲 --version 版本目�
 ### 2. 指定对手或职业打 N 局
 
 ```
-python -m ladder.arena vs 练习场目录 --player 甲 --version 版本目录 --opponent 编号 --games 400
-python -m ladder.arena vs 练习场目录 --player 甲 --version 版本目录 --class 龙族 --games 400
+python -m ladder.arena vs 练习场目录 --player 你的名字 --version 版本目录 --opponent 编号 --games 400
+python -m ladder.arena vs 练习场目录 --player 你的名字 --version 版本目录 --class 龙族 --games 400
 ```
 
 - 结果：胜率和 95% 区间。先后手各一半。用 `--class` 时，这个职业的成员轮流当对手。
 - **比两个版本**：
 
   ```
-  python -m ladder.arena vs 练习场目录 --player 甲 --version 新版本 --same-as 旧的那次的编号
+  python -m ladder.arena vs 练习场目录 --player 你的名字 --version 新版本 --same-as 旧的那次的编号
   ```
 
   这会把那一次的局原样重打一遍：同样的发牌、同样的对手、同样的先后手、双方打法用同样的随机种子，只换你的版本。结果里有两版的配对差（百分点）和区间，还有「两版都赢」「都输」「只有新版赢」「只有旧版赢」各几局。真正提供信息的是结果不同的那些局。
@@ -55,7 +55,7 @@ python -m ladder.arena vs 练习场目录 --player 甲 --version 版本目录 --
 ### 3. 从你某一局的某个局面接着打
 
 ```
-python -m ladder.arena resume 练习场目录 --player 甲 --run 那一次的编号 --game 那一局的编号 --decision K --version 版本A [--version 版本B] --continuations 50
+python -m ladder.arena resume 练习场目录 --player 你的名字 --run 那一次的编号 --game 那一局的编号 --decision K --version 版本A [--version 版本B] --continuations 50
 ```
 
 - `K` 是你在那一局里做的第几个决定，从 0 数，`replay` 里有编号。
@@ -72,7 +72,7 @@ python -m ladder.arena resume 练习场目录 --player 甲 --run 那一次的编
 ### 4. 看回放
 
 ```
-python -m ladder.arena replay 练习场目录 --player 甲 --run 编号 --game 编号
+python -m ladder.arena replay 练习场目录 --player 你的名字 --run 编号 --game 编号
 ```
 
 - 给你自己那一侧在每个决定时看到的局面（和你的打法拿到的公开局面一样），加上双方的全部走法。
@@ -87,7 +87,7 @@ python -m ladder.arena replay 练习场目录 --player 甲 --run 编号 --game �
 
 ## 五、结果放在哪
 
-- 都在 `练习场目录/players/你的代号/` 下面：
+- 都在 `练习场目录/players/你的名字/` 下面：
   - `runs/编号/summary.json`：这一次的结果；
   - `runs/编号/games.jsonl`：每一局，你一侧的；
   - `runs/编号/replay-局号.json`：回放；

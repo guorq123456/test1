@@ -9,9 +9,10 @@
    is never copied over: already past period 0, the step is reported done; still at period 0 and the same as the
    p1b pool, it is advanced; anything else stops the tool.
 3. The host's folders (HOST\\subs, gates, frozen, anchors, reports, audit, puzzles).
-4. The players' folders (A50): PLAYERS\\<拼音>\\submit and receipts for 甲 乙 丙 丁 戊 (ladder.arena.PINYIN), and
+4. The players' folders (A50): PLAYERS\\<name>\\submit and receipts for each player (ladder.arena.PLAYERS, S20), and
    PLAYERS\\public: every file of analysis/ladder/public copied in (a file of the same name is replaced: the repo is
-   the source; other files there, such as the period reports, are left).
+   the source; other files there, such as the period reports, are left). The codenames' folders made before S20
+   (jia yi bing ding wu) are removed when they hold nothing but empty submit and receipts; otherwise left and listed.
 5. The starting puzzle (2.6, Salem S19 11-23 18:53Z: 主教, bot/T1-HAVEN-1): puzzle START in HOST\\subs\\puzzles.json
    and PLAYERS\\public\\puzzles.md (ladder.puzzles.add). Already there on the same list: reported done; on another
    list: the tool stops.
@@ -32,6 +33,7 @@ HERE = Path(__file__).resolve().parent
 LADDER = HERE.parent
 sys.path[:0] = [str(LADDER), str(LADDER.parents[1]), str(HERE)]
 
+OLD_FOLDERS = ("jia", "yi", "bing", "ding", "wu")
 HOST_DIRS = ("subs", "gates", "frozen", "anchors", "reports", "audit", "puzzles")
 START_PUZZLE = {"id": "START", "list": "bot/T1-HAVEN-1", "title": "起点题（第一次进场先做）：主教",
                 "note": "这副卡组，每人各写一套打法；所有人在同样的算力下打同一批对手，看大家的起点在哪。"
@@ -85,14 +87,27 @@ def pool_step(src: Path, dest: Path) -> dict:
 
 
 def players_step(players: Path, public_src: Path) -> dict:
-    from ladder.arena import PINYIN
+    from ladder.arena import FOLDER
     made = []
-    for code, py in PINYIN.items():
+    for code, py in FOLDER.items():
         for sub in ("submit", "receipts"):
             d = players / py / sub
             if not d.exists():
                 d.mkdir(parents=True)
                 made.append(str(d))
+    removed, kept = [], []
+    for old in OLD_FOLDERS:                           # the codenames' folders (11-23 17:48Z), before S20
+        d = players / old
+        if old in FOLDER.values() or not d.is_dir():
+            continue
+        inside = list(d.rglob("*"))
+        if all(q.is_dir() for q in inside) and {q.relative_to(d).as_posix() for q in inside} <= {"submit", "receipts"}:
+            for q in sorted(inside, key=lambda q: len(q.parts), reverse=True):
+                q.rmdir()
+            d.rmdir()
+            removed.append(str(d))
+        else:
+            kept.append(str(d))                       # something in it: left alone for the host to look at
     pub = players / "public"
     pub.mkdir(parents=True, exist_ok=True)
     copied, same = [], []
@@ -105,9 +120,10 @@ def players_step(players: Path, public_src: Path) -> dict:
             continue
         shutil.copy2(p, t)
         copied.append(p.name)
-    ok = all((players / py / s).is_dir() for py in PINYIN.values() for s in ("submit", "receipts")) and \
+    ok = all((players / py / s).is_dir() for py in FOLDER.values() for s in ("submit", "receipts")) and \
         all((pub / p.name).read_bytes() == p.read_bytes() for p in public_src.iterdir() if p.is_file())
-    return {"ok": ok, "players": dict(PINYIN), "made": made, "public_copied": copied, "public_same": same}
+    return {"ok": ok, "players": list(FOLDER.values()), "made": made, "public_copied": copied, "public_same": same,
+            "old_removed": removed, "old_kept": kept}
 
 
 def puzzle_step(subdir: Path, public: Path) -> dict:

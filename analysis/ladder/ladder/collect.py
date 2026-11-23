@@ -96,9 +96,9 @@ def _note(subs: Path, rec: dict):
 def listing(players: Path) -> dict:
     """Every player's submit\\ sub-directory now: {(player, resolved dir): (stamp, newest file time)}. A link out of the
     player's own submit\\ folder is not followed (11-23 review)."""
-    from ladder.arena import PINYIN
+    from ladder.arena import FOLDER
     out = {}
-    for player, py in PINYIN.items():
+    for player, py in FOLDER.items():
         box = Path(players) / py / "submit"
         try:
             if not box.is_dir():
@@ -253,11 +253,11 @@ class Collector:
             return False
 
     def _gave_up(self, player: str, d: str, st: str, why: str):
-        from ladder.arena import PINYIN
+        from ladder.arena import FOLDER
         from ladder.submit import box_name
         _note(self.subs, {"ev": "dir", "player": player, "dir": d, "stamp": st, "gave_up": why[-3000:]})
         try:
-            box = self.players / PINYIN[player] / "receipts"
+            box = self.players / FOLDER[player] / "receipts"
             box.mkdir(parents=True, exist_ok=True)
             name = box_name(Path(d).name, "没收成", set())
             (box / f"{name}-没收成.md").write_text(
@@ -373,8 +373,8 @@ class Collector:
         cands = ready
         if not cands:
             return None
-        from ladder.arena import PINYIN
-        order = list(PINYIN)
+        from ladder.arena import FOLDER
+        order = list(FOLDER)
         if self.last_player in order:
             i = order.index(self.last_player) + 1
             order = order[i:] + order[:i]

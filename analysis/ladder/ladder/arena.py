@@ -6,12 +6,12 @@ Host:
     python -m ladder.arena open     ARENA --hours 4 --games 20000 [--workers 23]
     python -m ladder.arena formal   ARENA --pool POOLDIR --subs SUBS --period P      # end of period P (A53)
 Players (each command is one run; what a player may read is under ARENA/players/<code>/, nothing else):
-    python -m ladder.arena field    ARENA --player 甲
-    python -m ladder.arena ladder   ARENA --player 甲 --version DIR [--replacing ANON] [--games 600 --tail 300 --repeats 3]
-    python -m ladder.arena vs       ARENA --player 甲 --version DIR (--opponent ID | --class 精灵) --games N [--same-as RUN]
-    python -m ladder.arena resume   ARENA --player 甲 --run RUN --game GAME --decision K --version DIR [--version DIR2]
+    python -m ladder.arena field    ARENA --player fable
+    python -m ladder.arena ladder   ARENA --player fable --version DIR [--replacing ANON] [--games 600 --tail 300 --repeats 3]
+    python -m ladder.arena vs       ARENA --player fable --version DIR (--opponent ID | --class 精灵) --games N [--same-as RUN]
+    python -m ladder.arena resume   ARENA --player fable --run RUN --game GAME --decision K --version DIR [--version DIR2]
                                     --continuations N
-    python -m ladder.arena replay   ARENA --player 甲 --run RUN --game GAME
+    python -m ladder.arena replay   ARENA --player fable --run RUN --game GAME
 
 A version is a directory with strategy.py and submission.json ({"class": ..., "deck": deck code}; the other fields of
 a submission are not needed here). Its code is read by the submission check's code reader first (submit.check_code).
@@ -65,9 +65,17 @@ for p in (str(ROOT), str(LADDER)):
         sys.path.insert(0, p)
 
 ARENA_VERSION = "arena-1"
-PLAYER_SEEDS = {"甲": (87400000, 87580000), "乙": (87580000, 87760000), "丙": (87760000, 87940000),
-                "丁": (87940000, 88120000), "戊": (88120000, 88300000)}           # A34
-PINYIN = {"甲": "jia", "乙": "yi", "丙": "bing", "丁": "ding", "戊": "wu"}
+# The players by name (Salem S20, 11-23 18:57Z: no codenames). The name is also the player's folder name
+# (C:\\claude\\ladder-players\\<name>, the arena's players\\<name>); in a module name "-" becomes "_" (module_slug).
+PLAYERS = ("fable-ultracode", "fable", "astra", "opus", "sol")
+PLAYER_SEEDS = dict(zip(PLAYERS, [(87400000, 87580000), (87580000, 87760000), (87760000, 87940000),
+                                  (87940000, 88120000), (88120000, 88300000)]))   # A34 (the ranges 甲…戊 had, in order)
+FOLDER = {p: p for p in PLAYERS}
+
+
+def module_slug(player: str) -> str:
+    """The player's name as it can stand in a Python module name."""
+    return re.sub(r"[^0-9A-Za-z_]", "_", FOLDER[player])
 CRAFT_BY_ZH = {"精灵": 1, "皇家护卫": 2, "巫师": 3, "龙族": 4, "梦魇": 5, "主教": 6, "超越者": 7}
 RUN_ID = re.compile(r"(R\d{4,}|F\d+)")              # a practice run, or a period's formal games
 
@@ -229,13 +237,13 @@ class Seat:
 
     def __init__(self, arena: Path, player: str):
         if player not in PLAYER_SEEDS:
-            raise ArenaError(f"没有代号 {player}（{'、'.join(PLAYER_SEEDS)}）")
+            raise ArenaError(f"没有选手 {player}（{'、'.join(PLAYER_SEEDS)}）")
         self.arena, self.player = Path(arena), player
         self.host = _read(self.arena / "host" / "field.json")
         win = self.arena / "public" / "window.json"
         self.window = _read(win) if win.exists() else None
         self.pub = self.arena / "players" / player
-        self.priv = self.arena / "host" / "players" / PINYIN[player]
+        self.priv = self.arena / "host" / "players" / FOLDER[player]
         self.count_path = self.pub / "count.jsonl"
         self.seeds = PLAYER_SEEDS[player]
         self.by_id = {m["anon"]: ("member", m) for m in self.host["members"]}
@@ -314,7 +322,7 @@ class Seat:
         if problems or deck_problems:
             raise ArenaError("这个版本过不了提交校验的前几条：\n" + "\n".join(problems + deck_problems))
         h = hashlib.sha256(src.encode("utf-8")).hexdigest()[:10]
-        name = f"arena_{PINYIN[self.player]}_{h}"
+        name = f"arena_{module_slug(self.player)}_{h}"
         code = self.priv / "code"
         code.mkdir(parents=True, exist_ok=True)
         (code / f"{name}.py").write_text(src, encoding="utf-8")
@@ -771,7 +779,7 @@ def replay(arena: Path, player: str, run_id: str, game: str) -> Path:
 
 def formal(arena: Path, pool_dir: Path, subs_dir: Path, period: int) -> dict:
     """End of period `period`, host side (A53). For each player: their own members (the member name they gave ->
-    the anonymous id, the class, still in the pool or not) in ARENA/players/<代号>/members.json, and every formal
+    the anonymous id, the class, still in the pool or not) in ARENA/players/<name>/members.json, and every formal
     ladder game of the period one of those members played, the player's side only (`own_view`: the opponent's
     anonymous id and class, its moves as a human sees them), as the run F<period>. `replay` works on it; it can't
     be resumed or played again with --same-as (`Seat.this_field`). A game between two of the player's own members
@@ -783,7 +791,7 @@ def formal(arena: Path, pool_dir: Path, subs_dir: Path, period: int) -> dict:
     lines = ledger(subs_dir)
     games = [g for g in _jsonl(Path(pool_dir) / "games.jsonl") if (g.get("labels") or {}).get("period") == period]
     arena, rid, out = Path(arena), f"F{period}", {}
-    for player, py in PINYIN.items():
+    for player, py in FOLDER.items():
         names = {l["mid"]: l["member"] for l in lines if l.get("ev") == "admit" and l.get("player") == player}
         mine = {mid: m for mid, m in pool.members.items() if m.owner == player}
         if not mine:

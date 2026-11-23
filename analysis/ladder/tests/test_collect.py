@@ -39,13 +39,13 @@ def test_collect_takes_what_is_there_by_the_deadline_once(tmp_path):
     # the real path: each receive in its own process; the deadline taken by the timer while a receive runs
     pool, a, deadline = _period(tmp_path, 1, 3)
     players, subs = tmp_path / "players", tmp_path / "subs"
-    make_sub(players / "jia" / "submit" / "梦魇1", "新卡组", deck=CODES[4], member="四号")
-    bad = make_sub(players / "jia" / "submit" / "坏的", "新卡组", deck=CODES[6], member="六号")
+    make_sub(players / "fable-ultracode" / "submit" / "梦魇1", "新卡组", deck=CODES[4], member="四号")
+    bad = make_sub(players / "fable-ultracode" / "submit" / "坏的", "新卡组", deck=CODES[6], member="六号")
     (bad / "notes.md").unlink()                                      # a file missing: refused on format
 
-    def late():                                                       # 乙 hands in after the deadline
+    def late():                                                       # fable hands in after the deadline
         time.sleep(max(0.0, deadline - time.time()) + 0.7)
-        make_sub(players / "yi" / "submit" / "晚了", "新卡组", deck=CODES[1], member="一号")
+        make_sub(players / "fable" / "submit" / "晚了", "新卡组", deck=CODES[1], member="一号")
     t = threading.Thread(target=late)
     t.start()
     lines = []
@@ -57,13 +57,13 @@ def test_collect_takes_what_is_there_by_the_deadline_once(tmp_path):
     assert lines[-1].startswith("这一期收完") and lines[-1].endswith("可以开天梯了")
     recs = [l for l in submit.ledger(subs) if l.get("ev") == "receipt"]
     assert sorted((r["player"], Path(r["dir"]).name, r["verdict"]) for r in recs) == [
-        ("甲", "坏的", "拒收"), ("甲", "梦魇1", "收下")]
+        ("fable-ultracode", "坏的", "拒收"), ("fable-ultracode", "梦魇1", "收下")]
     assert all(r["collect_stamp"] for r in recs)
     admitted = [l for l in submit.ledger(subs) if l.get("ev") == "admit"]
-    assert len(admitted) == 1 and Pool(tmp_path / "pool").members[admitted[0]["mid"]].owner == "甲"
-    box = players / "jia" / "receipts"
+    assert len(admitted) == 1 and Pool(tmp_path / "pool").members[admitted[0]["mid"]].owner == "fable-ultracode"
+    box = players / "fable-ultracode" / "receipts"
     assert sorted(p.name for p in box.iterdir()) == ["坏的.md", "梦魇1.md", "状态.md"]
-    assert not (players / "yi" / "receipts").exists()
+    assert not (players / "fable" / "receipts").exists()
     log = _log(subs)
     dl = [l for l in log if l["ev"] == "deadline"]
     assert len(dl) == 1 and sorted(Path(d).name for _, d, _ in dl[0]["dirs"]) == ["坏的", "梦魇1"]
@@ -76,14 +76,14 @@ def test_collect_takes_what_is_there_by_the_deadline_once(tmp_path):
 def test_turns_settle_and_links(tmp_path):
     pool, a, _ = _period(tmp_path, 1, 3600)
     players, subs = tmp_path / "players", tmp_path / "subs"
-    for who, name in (("jia", "a"), ("jia", "b"), ("yi", "a")):
+    for who, name in (("fable-ultracode", "a"), ("fable-ultracode", "b"), ("fable", "a")):
         d = players / who / "submit" / name
         d.mkdir(parents=True)
         (d / "f").write_text(name, encoding="utf-8")
     outside = tmp_path / "elsewhere"
     outside.mkdir()
     (outside / "f").write_text("x", encoding="utf-8")
-    link = players / "yi" / "submit" / "link"
+    link = players / "fable" / "submit" / "link"
     link.symlink_to(outside, target_is_directory=True)               # a link out of the submit folder: never taken
     taken = []
 
@@ -95,18 +95,18 @@ def test_turns_settle_and_links(tmp_path):
     c.settle = 0
     while (item := c.next_item()) is not None:
         c.take(*item)
-    assert taken == [("甲", "a"), ("乙", "a"), ("甲", "b")]          # in turn, not 甲's three first
-    (players / "jia" / "submit" / "a" / "f").write_text("changed", encoding="utf-8")
-    assert c.next_item()[:2] == ("甲", str((players / "jia" / "submit" / "a").resolve()))   # changed: a new one
-    s1 = collect.stamp(players / "yi" / "submit" / "a")
-    (players / "yi" / "submit" / "a" / "g").write_text("1", encoding="utf-8")
-    assert collect.stamp(players / "yi" / "submit" / "a") != s1
+    assert taken == [("fable-ultracode", "a"), ("fable", "a"), ("fable-ultracode", "b")]          # in turn, not fable-ultracode's three first
+    (players / "fable-ultracode" / "submit" / "a" / "f").write_text("changed", encoding="utf-8")
+    assert c.next_item()[:2] == ("fable-ultracode", str((players / "fable-ultracode" / "submit" / "a").resolve()))   # changed: a new one
+    s1 = collect.stamp(players / "fable" / "submit" / "a")
+    (players / "fable" / "submit" / "a" / "g").write_text("1", encoding="utf-8")
+    assert collect.stamp(players / "fable" / "submit" / "a") != s1
 
 
 def test_failures_retry_give_up_and_stop(tmp_path):
     pool, a, _ = _period(tmp_path, 1, 3600)
     players, subs = tmp_path / "players", tmp_path / "subs"
-    for who, name in (("jia", "a"), ("jia", "b"), ("yi", "c")):
+    for who, name in (("fable-ultracode", "a"), ("fable-ultracode", "b"), ("fable", "c")):
         d = players / who / "submit" / name
         d.mkdir(parents=True)
         (d / "f").write_text(name, encoding="utf-8")
@@ -118,12 +118,12 @@ def test_failures_retry_give_up_and_stop(tmp_path):
     c.take(*c.next_item())
     with pytest.raises(SystemExit, match="连着 3 份"):                 # three in a row: the loop stops
         c.take(*c.next_item())
-    assert not (players / "jia" / "receipts").exists()               # nothing given up yet: tried once each
+    assert not (players / "fable-ultracode" / "receipts").exists()               # nothing given up yet: tried once each
     again = collect.Collector(players, tmp_path / "pool", subs, a, workers=2, settle=0, receive=broken,
                               out=lambda s: None)
     item = again.next_item()
     again.take(*item)                                                 # the second failure on it: given up
-    box = players / ("jia" if item[0] == "甲" else "yi") / "receipts"
+    box = players / ("fable-ultracode" if item[0] == "fable-ultracode" else "fable") / "receipts"
     assert [p.name for p in box.iterdir()] == [f"{Path(item[1]).name}-没收成.md"]
     assert again.next_item() != item                                  # not tried a third time
     assert [l for l in _log(subs) if l.get("gave_up")][0]["dir"] == item[1]
@@ -132,7 +132,7 @@ def test_failures_retry_give_up_and_stop(tmp_path):
 def test_changed_after_the_deadline_is_not_taken(tmp_path):
     pool, a, _ = _period(tmp_path, 1, -1)
     players, subs = tmp_path / "players", tmp_path / "subs"
-    d = players / "jia" / "submit" / "x"
+    d = players / "fable-ultracode" / "submit" / "x"
     d.mkdir(parents=True)
     (d / "f").write_text("1", encoding="utf-8")
     taken = []
@@ -149,7 +149,7 @@ def test_changed_after_the_deadline_is_not_taken(tmp_path):
 def test_after_the_deadline_gates_and_admits_what_was_left(tmp_path):
     pool, a, _ = _period(tmp_path, 2, -1)                             # period 2: a strategy period
     subs = tmp_path / "subs"
-    r = lambda i, kind, verdict, period=2: {"ev": "receipt", "id": f"S-{i:04d}", "player": "甲", "period": period,
+    r = lambda i, kind, verdict, period=2: {"ev": "receipt", "id": f"S-{i:04d}", "player": "fable-ultracode", "period": period,
                                             "kind": kind, "verdict": verdict, "dir": f"/x/{i}", "time": "t",
                                             "version": "v", "reasons": [], "warnings": [], "checks": []}
     for line in (r(1, "update", "收下", period=1), r(2, "update", "收下"), r(3, "update", "拒收"),
@@ -180,7 +180,7 @@ def test_an_accepted_deck_cut_off_before_its_admit_is_admitted(tmp_path):
     pool, a, _ = _period(tmp_path, 1, -1)
     subs = tmp_path / "subs"
     ids, _ = submit.check_deck(CODES[3])
-    submit._append(subs, {"ev": "receipt", "id": "S-0001", "player": "甲", "period": 1, "kind": "deck",
+    submit._append(subs, {"ev": "receipt", "id": "S-0001", "player": "fable-ultracode", "period": 1, "kind": "deck",
                           "verdict": "收下", "dir": "/x/1", "member": "三号", "spec": "bot:mcts:8", "time": "t",
                           "version": "v", "reasons": [], "warnings": [], "checks": []})
     (subs / "S-0001").mkdir()

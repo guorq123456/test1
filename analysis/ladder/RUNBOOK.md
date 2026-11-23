@@ -8,11 +8,11 @@
 |---|---|---|
 | `C:\claude\ladder` | 仓库（只拉 claude/ladder 分支；跑着的时候不拉） | 主持方 |
 | `C:\claude\ladder-host\` | `ladder.key`（发牌密钥，base-2，A39）、`pool\`（正式池）、`subs\`（提交台账；`subs\code\` 是收下的打法）、`gates\`（检验台账）、`frozen\`（每期的冻结池）、`anchors\`、`reports\` | 只有主持方。选手不许读（规则 + 提示词，S4） |
-| `C:\claude\ladder-arena\` | 练习场：`host\`（冻结副本、谁是谁、`arena.key`、完整日志）、`public\`、`players\<代号>\`（用汉字代号，arena.py） | `host\` 只有主持方；选手只读自己那份 |
-| `C:\claude\ladder-players\<拼音>\` | 每个选手自己的工作目录：笔记本、`submit\`（交提交，一个提交一个子目录）、`receipts\`（主持方放回执）、`summary-P<期>.md`、`to-host.md`（A50） | 本人；主持方收提交、放回执、读小结 |
+| `C:\claude\ladder-arena\` | 练习场：`host\`（冻结副本、谁是谁、`arena.key`、完整日志）、`public\`、`players\<名字>\`（选手名，arena.py） | `host\` 只有主持方；选手只读自己那份 |
+| `C:\claude\ladder-players\<名字>\` | 每个选手自己的工作目录：笔记本、`submit\`（交提交，一个提交一个子目录）、`receipts\`（主持方放回执）、`summary-P<期>.md`、`to-host.md`（A50） | 本人；主持方收提交、放回执、读小结 |
 | `C:\claude\ladder-players\public\` | 公共目录副本：`analysis/ladder/public/` 全部 + 每期的环境报告 | 全部选手，只读 |
 
-拼音：甲 jia、乙 yi、丙 bing、丁 ding、戊 wu。
+选手（S20，Salem 11-23 18:57Z：不用代号，用选手名；名字就是目录名）：fable-ultracode、fable、astra、opus、sol（顺序就是 ladder.arena.PLAYERS，练习种子段按这个顺序分，A34）。
 
 ## 第一次（第 1 期以前，只做一次）
 
@@ -41,11 +41,11 @@
 ### 3. 收提交
 
 - 练习场一开，就在电脑上开着收提交的循环（PLAN 8b，A55）：`py -m ladder.collect --players C:\claude\ladder-players --pool C:\claude\ladder-host\pool --subs C:\claude\ladder-host\subs --arena C:\claude\ladder-arena --workers 15 --mask 0x3FC3FC`（策略期再加 `--gates <after 或 now> --frozen C:\claude\ladder-host\frozen\P<期>.json --delta <这一期定的> --gates-out C:\claude\ladder-host\gates`）。它做的事：每两分钟看一遍五个人的 `submit\`；新目录（文件 30 秒没动过、真在本人的 `submit\` 里，链接出去的不认）一份一份收，五个人轮流；每份在单独的进程里收（偷看检查要在主持方进程里跑选手的代码，不能让它影响后面别人的回执）；收的时候拿练习场的锁（电脑上同一时间只跑一样）；每收一份写一次 `receipts\`；卡组期收下的直接入池。截止那一刻记下当时 `submit\` 里有哪些目录（写进 `C:\claude\ladder-host\subs\collect.jsonl`，重启也认），那些截止后照收，截止后才放进来或又改过的不收、列在最后。**截止以后它不会马上停**：先收完截止时在的，再把这一期收下了却还没入池的卡组入池、收下了却还没检验的打法更新逐个检验（`--gates now` 也一样补），最后打一行「这一期收完……可以开天梯了」才退出。收一份出错（台账里没有它的回执）隔两分钟再试，第二次还错就放弃、给本人放一张「目录名-没收成.md」；连着三份出错它自己停下（多半是主持方这边的问题）。入池、检验出错只记一笔、不重试。这些都在 `collect.jsonl`，要报。截止那一刻它没在跑（停电、关了），重启会拒绝，查过文件时间确定现在看到的都算截止前的，再加 `--after-deadline`。下面几条是它做的事；要手动补救，先停掉它（手动命令和它共用一把提交台账的锁，同时跑会排队，但别指望排队替你理顺顺序）。
-- 提交目录在 `C:\claude\ladder-players\<拼音>\submit\<目录名>\`（A50）。每份：`py -m ladder.submit receive <提交目录> --player <代号> --pool C:\claude\ladder-host\pool --out C:\claude\ladder-host\subs --workers 15 --mask 0x3FC3FC`。
-- 每收一份、每检验完一份，都跑一次 `py -m ladder.submit deliver C:\claude\ladder-host\subs --pool C:\claude\ladder-host\pool --players C:\claude\ladder-players`：把每个人自己的回执（`目录名.md`）、检验结果（`目录名-检验.md`）、这一期的状态（`状态.md`：卡组期收下了哪些职业、还缺哪些，打法更新收了几份、检验完几份、换上几份）写进 `C:\claude\ladder-players\<拼音>\receipts\`。只写本人的，重跑写出来一样。
+- 提交目录在 `C:\claude\ladder-players\<名字>\submit\<目录名>\`（A50）。每份：`py -m ladder.submit receive <提交目录> --player <名字> --pool C:\claude\ladder-host\pool --out C:\claude\ladder-host\subs --workers 15 --mask 0x3FC3FC`。
+- 每收一份、每检验完一份，都跑一次 `py -m ladder.submit deliver C:\claude\ladder-host\subs --pool C:\claude\ladder-host\pool --players C:\claude\ladder-players`：把每个人自己的回执（`目录名.md`）、检验结果（`目录名-检验.md`）、这一期的状态（`状态.md`：卡组期收下了哪些职业、还缺哪些，打法更新收了几份、检验完几份、换上几份）写进 `C:\claude\ladder-players\<名字>\receipts\`。只写本人的，重跑写出来一样。
 - 卡组期：收下的新卡组 `py -m ladder.submit admit C:\claude\ladder-host\subs --receipt S-xxxx --pool C:\claude\ladder-host\pool`。
 - 策略期：收下的打法更新 `py -m ladder.submit gate C:\claude\ladder-host\subs --receipt S-xxxx --pool C:\claude\ladder-host\pool --frozen C:\claude\ladder-host\frozen\P<期>.json --seeds 88500000 89000000 --out C:\claude\ladder-host\gates --delta <这一期定的> --workers 15 --mask 0x3FC3FC`。过了自动换上；没过、中间一步都只记一笔。检验结果 `C:\claude\ladder-host\subs\S-xxxx\gate-note.md`（只有本人的回执编号）由上面的 deliver 交给本人。
-- `py -m ladder.submit status C:\claude\ladder-host\subs --pool C:\claude\ladder-host\pool --player <代号>` 看谁还缺哪个职业（主持方自己看；选手看 `receipts\状态.md`）。
+- `py -m ladder.submit status C:\claude\ladder-host\subs --pool C:\claude\ladder-host\pool --player <名字>` 看谁还缺哪个职业（主持方自己看；选手看 `receipts\状态.md`）。
 
 ### 4. 天梯
 
@@ -54,7 +54,7 @@
 - 打完 `py -m ladder.pool show C:\claude\ladder-host\pool` 看还差谁；够不着的不挡（S8）。**先做第 5 节的名人堂和锚点对战，再做下面的重放审计，再把正式对局交给选手（下面最后一条），再** `py -m ladder.pool advance C:\claude\ladder-host\pool`（锚点对战记在当前这一期）。
 - 重放审计（LD-40，advance 以前）：`py -m ladder.audit C:\claude\ladder-host\pool\games.jsonl "C:\claude\ladder-host\anchors\games-P<期>*.jsonl" --events C:\claude\ladder-host\pool\events.jsonl --workers 23 --out C:\claude\ladder-host\audit\P<期>.json --allow-empty "C:\claude\ladder-host\gates\*\games.jsonl"`（日志写在前面，`--allow-empty` 放最后：第一次把关以前把关日志一个都没有，不算错；别的通配匹配不到就退出码 2）。断行（停电写了一半的一行，或一行 NUL）跳过并列在结果的 unreadable 里。把关、锚点的日志续跑时会把没写完的那局重打；池子的不会（池子的局号不重用）：池子已经算过分、日志里却没有完整一行的局列在 unlogged 里（`--events` 拿池子的事件对照），这些局改了 CR 却没法重放，记 LEDGER、报 Salem（LD-43）。没停过电却有断行，也报 Salem。同一个日志被两个参数同时匹配到只读一次。结果里的 voids 按打法数作废局和其中「作废时它正输着」的局（LD-41）：某个成员的作废局明显多、尤其多是输着作废的，记 LEDGER、报 Salem。每一局在干净的进程里从种子、卡组、发牌按记下的走法重放（不跑任何打法代码）；走法不合法或结局对不上的局列出来。有一局对不上就先不 advance：记 LEDGER、报 Salem（可能是打法在进程里改了模拟器又改回去，也可能是记录被动过）。工作进程里的绊线（ladder/watch.py）已经把「改了没改回去」的局作废、换了进程，作废局的原因写在局里（"the simulator changed"），这类也要报；原因是 "nothing ran on any clock" 的，是空转看门狗（LD-42）作废的：工作进程拿着这局、没有任何时钟在走太久（多半是打法留下了局后还在跑的代码），也要报。
 - 正式对局上的算力抽查（A52、LD-57，advance 以前）：`py -m ladder.compute_audit C:\claude\ladder-host\pool --period <期> --workers 15 --mask 0x3FC3FC --out C:\claude\ladder-host\audit\compute-P<期>.json`。每个选手成员的每一版抽这一期最多 30 局，在它的局面上重放默认打法，用同一期基线对基线的局在同一批里校准（只跑主持方代码，不打新局）。`over` 为真（90% 区间整个在 1.08 以上）的：先不下结论，记 LEDGER、报 Salem，怎么处理由 Salem 定；退出码 1 就是有这种成员。比率只给主持方和 Salem，不给选手。
-- 交正式对局（A53，审计全过以后、advance 以前）：`py -m ladder.arena formal C:\claude\ladder-arena --pool C:\claude\ladder-host\pool --subs C:\claude\ladder-host\subs --period <期>`。给每个有成员的选手写 `C:\claude\ladder-arena\players\<代号>\members.json`（成员名 → 匿名编号、职业、在不在池子里）和 `runs\F<期>\`（这一期正式天梯里他的成员打的每一局，他那一侧；局号重编，自己对自己的局两份）。选手用 `arena replay` 看；不能续打、不能 `--same-as`。只写本人的，重跑写出来一样。
+- 交正式对局（A53，审计全过以后、advance 以前）：`py -m ladder.arena formal C:\claude\ladder-arena --pool C:\claude\ladder-host\pool --subs C:\claude\ladder-host\subs --period <期>`。给每个有成员的选手写 `C:\claude\ladder-arena\players\<名字>\members.json`（成员名 → 匿名编号、职业、在不在池子里）和 `runs\F<期>\`（这一期正式天梯里他的成员打的每一局，他那一侧；局号重编，自己对自己的局两份）。选手用 `arena replay` 看；不能续打、不能 `--same-as`。只写本人的，重跑写出来一样。
 
 ### 5. 锚点、公共题
 

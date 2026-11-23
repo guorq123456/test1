@@ -33,8 +33,8 @@ def test_induct_takes_each_class_first_with_enough_games(tmp_path):
     import random
     pool = Pool.create(tmp_path / "pool", (10 ** 12, 2 * 10 ** 12), rng_seed=3, check=True)
     strengths = {}
-    for i, (d, owner, s) in enumerate([(BASE_DECKS[0], "甲", 0.08), (BASE_DECKS[0], "乙", 0.0),
-                                       (BASE_DECKS[1], "baseline", 0.04), (BASE_DECKS[1], "丙", -0.04),
+    for i, (d, owner, s) in enumerate([(BASE_DECKS[0], "fable-ultracode", 0.08), (BASE_DECKS[0], "fable", 0.0),
+                                       (BASE_DECKS[1], "baseline", 0.04), (BASE_DECKS[1], "astra", -0.04),
                                        (BASE_DECKS[2], "baseline", 0.0), (BASE_DECKS[3], "baseline", 0.0),
                                        (BASE_DECKS[4], "baseline", 0.0)]):
         mid = pool.enter(d, "bot:greedy", owner, rng=random.Random(i))
@@ -47,7 +47,7 @@ def test_induct_takes_each_class_first_with_enough_games(tmp_path):
                      "winner": 0 if rng.random() < 0.5 + strengths[a] - strengths[b] else 1})
     hof = tmp_path / "hof.json"
     new = A.induct(pool.dir, hof, period=1)
-    forest = [m for m in Pool(pool.dir).active() if m.owner == "甲"][0]
+    forest = [m for m in Pool(pool.dir).active() if m.owner == "fable-ultracode"][0]
     assert [(h["craft"], h["mid"], h["slot"]) for h in new] == [(1, forest.mid, 7)]   # the Sword first is a baseline
     assert all(h["games"] >= A.HOF_MIN_GAMES for h in new)
     import pytest

@@ -16,7 +16,7 @@
 - Agreement (同源度, plan 「公共题上选同一步的比例」): `--agreement K` decision points drawn from the default's own games
   on the puzzle list (seeded, the same for every entry); at each one every entry is built fresh and asked once on
   the same public position (like a resume: no state carried from earlier in the game). For each pair of entries, the
-  share of points where they chose the same move. Players are shown as 甲、乙… only in the host's copy; the public
+  share of points where they chose the same move. Players are shown by name only in the host's copy; the public
   copy says "选手 1、2…" in a shuffled order.
 """
 from __future__ import annotations

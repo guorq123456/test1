@@ -58,7 +58,7 @@ def test_entry_and_mu(tmp_path):
         finish(pool, job, 0 if pool.members[job["labels"]["members"][0]].craft == 1 else 1)
     assert pool.mu == pytest.approx(1500)                # zero-sum: no removal, so mu stays
     pool.advance(force="test")                           # to the first deck period
-    mid = pool.enter(synth_deck(1, 0), "py:helpers:Random", "jia")
+    mid = pool.enter(synth_deck(1, 0), "py:helpers:Random", "fable-ultracode")
     assert pool.members[mid].cr == 1500
 
 
@@ -271,7 +271,7 @@ def test_periods_entries_updates_and_unstable(tmp_path):
     with pytest.raises(P.PoolError):
         pool.update(mid, "bot:mcts:200+plan", gate="G-x")       # not a strategy period
     with pytest.raises(P.PoolError):
-        pool.enter(synth_deck(1, 1), "py:helpers:Random", "jia")  # players start in period 1
+        pool.enter(synth_deck(1, 1), "py:helpers:Random", "fable-ultracode")  # players start in period 1
     with pytest.raises(P.PoolError):
         pool.advance()                                   # nobody has 2000 games yet
     pool.advance(force="test")
@@ -279,7 +279,7 @@ def test_periods_entries_updates_and_unstable(tmp_path):
     pool.advance(force="test")
     assert P.period_kind(pool.period) == "strategy"
     with pytest.raises(P.PoolError):
-        pool.enter(synth_deck(1, 2), "py:helpers:Random", "jia")  # no new decks in a strategy period
+        pool.enter(synth_deck(1, 2), "py:helpers:Random", "fable-ultracode")  # no new decks in a strategy period
     with pytest.raises(P.PoolError):
         pool.update(mid, "bot:mcts:200+plan", gate="")   # needs the gate that passed it
     m = pool.members[mid]
@@ -315,19 +315,19 @@ def test_period_ends_only_when_everyone_has_its_games(tmp_path):
 def test_quotas(tmp_path):
     pool = baseline_pool(tmp_path)
     pool.advance(force="test")
-    pool.enter(BASE_DECKS[0], "py:helpers:Random", "jia")             # the Forest baseline list, a second time
+    pool.enter(BASE_DECKS[0], "py:helpers:Random", "fable-ultracode")             # the Forest baseline list, a second time
     with pytest.raises(P.ListFull) as e:
-        pool.enter(BASE_DECKS[0], "py:helpers:Random", "yi")          # a third member with that list
+        pool.enter(BASE_DECKS[0], "py:helpers:Random", "fable")          # a third member with that list
     assert len(e.value.holders) == 2
-    pool.enter(synth_deck(2, 0), "py:helpers:Random", "jia")
+    pool.enter(synth_deck(2, 0), "py:helpers:Random", "fable-ultracode")
     with pytest.raises(P.PoolError, match="one per class"):
-        pool.enter(synth_deck(2, 1), "py:helpers:Random", "jia")      # S5: one new deck per class per deck period
-    pool.enter(synth_deck(4, 1), "py:helpers:Random", "jia")          # ... a third class in the same period is fine
-    pool.enter(synth_deck(2, 1), "py:helpers:Random", "yi")           # ... and another player's Sword is theirs
+        pool.enter(synth_deck(2, 1), "py:helpers:Random", "fable-ultracode")      # S5: one new deck per class per deck period
+    pool.enter(synth_deck(4, 1), "py:helpers:Random", "fable-ultracode")          # ... a third class in the same period is fine
+    pool.enter(synth_deck(2, 1), "py:helpers:Random", "fable")           # ... and another player's Sword is theirs
     for k in range(1, 7):                                             # S6: no cap on a player's members
         pool.advance(force="test"); pool.advance(force="test")
-        pool.enter(synth_deck(3, k), "py:helpers:Random", "jia")
-    assert len([m for m in pool.active() if m.owner == "jia"]) == 9
+        pool.enter(synth_deck(3, k), "py:helpers:Random", "fable-ultracode")
+    assert len([m for m in pool.active() if m.owner == "fable-ultracode"]) == 9
 
 
 def test_an_opponent_removed_mid_game(tmp_path):

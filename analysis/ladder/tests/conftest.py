@@ -1,6 +1,6 @@
 """Every test starts from the same import paths. The tools put the received code where workers import it (sys.path and
 LADDER_EXTRA_PATH: submit, gate, anchors, the arena), and in production one command is one process with one ledger,
-so a module name (sub_S0001, arena_jia_<hash>) means one file. In one pytest process many temporary ledgers reuse those
+so a module name (sub_S0001, arena_fable_ultracode_<hash>) means one file. In one pytest process many temporary ledgers reuse those
 names; without this, a later test's workers could import an earlier test's sub_S0001 (11-23: the compute-cap test got
 the previous test's class)."""
 import os

@@ -33,7 +33,7 @@
 9. ~~练习场、提交校验空跑~~：11-23 写好 tools/arena_dry.py + tools/pc/arena-dry.cmd（十项；RUNBOOK 第一次 5b），**11-23 15:35Z 电脑上十项全过（LD-58）**。
 10. 在 Salem 账户里建选手目录（公共目录副本、私有目录、练习场）。11-23：tools/first_setup.py 写好（正式池复制 p1b 基线池进第 1 期、主持方目录、五个选手的 submit\ 和 receipts\、公共目录副本），云端空跑过；练习场每期开期时建（RUNBOOK 每期 1.2）。**11-23 17:48Z 电脑上建好**：正式池 C:\claude\ladder-host\pool 进第 1 期（卡组期；巫师基线 m0003 够不着，S8 不挡），五个选手的 submit\ receipts\ 和 public\。
 
-要 Salem 给：代号丁、戊（A1）；定稿提示词 v2（名额已按 S5、S6 改进去）；开五个选手（11-23 08:15Z：Fable 5.2 max、Fable 5.2 xhigh + ultracode、Opus 5.5、GPT 6.2 A、GPT 6.2 sol）。按计划选手先做 2.6 起点测量，再进第一期。
+~~代号丁、戊（A1）~~（S20：不用代号，选手名 fable-ultracode、fable、astra、opus、sol）；要 Salem 给：定稿提示词 v2（名额已按 S5、S6 改进去）；开五个选手（11-23 08:15Z：Fable 5.2 max、Fable 5.2 xhigh + ultracode、Opus 5.5、GPT 6.2 A、GPT 6.2 sol）。按计划选手先做 2.6 起点测量，再进第一期。
 
 ## 一、我对任务的理解
 

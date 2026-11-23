@@ -1,9 +1,9 @@
 """Submissions (phase 2, item 2.3): the entry point, and the checks a submission passes before it goes anywhere.
 
     python -m ladder.submit precheck DIR [--deck-of-member CODE]      # format, deck, code; no games, counts nothing
-    python -m ladder.submit receive  DIR --player 甲 --pool POOLDIR --out SUBDIR [--workers 15] --mask 0x3FC3FC
+    python -m ladder.submit receive  DIR --player fable --pool POOLDIR --out SUBDIR [--workers 15] --mask 0x3FC3FC
     python -m ladder.submit admit    SUBDIR --receipt S-0001 --pool POOLDIR   # an accepted new deck enters the pool
-    python -m ladder.submit status   SUBDIR --pool POOLDIR --player 甲         # classes done / missing this period
+    python -m ladder.submit status   SUBDIR --pool POOLDIR --player fable         # classes done / missing this period
     python -m ladder.submit deliver  SUBDIR --pool POOLDIR --players C:\\claude\\ladder-players   # receipts, gate results, status
                                                                              # into each player's receipts\\ (A50)
 
@@ -346,17 +346,17 @@ def box_name(name: str, rid: str, taken: set) -> str:
 
 
 def deliver(subdir: Path, pool_dir: Path, players: Path) -> dict:
-    """What goes back to each player (A50), into PLAYERS/<拼音>/receipts/: each of their receipts under the name of the
+    """What goes back to each player (A50), into PLAYERS/<name>/receipts/: each of their receipts under the name of the
     directory they handed in (box_name: <name>.md), the gate result of each update (<name>-检验.md, gate_note) and
     this period's status (状态.md). Written again on every call (the same text, so it can run after every receive and
     gate); never another player's. A player whose folder can't be written is skipped and reported ({player: the
     error}); the others still get theirs."""
-    from ladder.arena import PINYIN
+    from ladder.arena import FOLDER
     subdir, players = Path(subdir), Path(players)
     with _ledger_lock(subdir.resolve()):
         lines = ledger(subdir)
     out = {}
-    for player, py in PINYIN.items():
+    for player, py in FOLDER.items():
         recs = [l for l in lines if l.get("ev") == "receipt" and l.get("player") == player]
         if not recs:
             continue
@@ -806,6 +806,9 @@ def receive(d: Path, player: str, pool_dir: Path, subdir: Path, workers: int = 4
             seeds: tuple[int, int] = SMOKE_SEEDS, extra: dict | None = None) -> dict:
     """Every check; the receipt; one ledger line (accepted or refused). `extra`: host fields kept in the ledger line
     (the collector's stamp of the directory). Holds the ledger lock throughout."""
+    from ladder.arena import PLAYERS
+    if player not in PLAYERS:                             # a typo would open a ledger for nobody (S20: names)
+        raise SystemExit(f"没有选手 {player!r}（{'、'.join(PLAYERS)}）")
     Path(subdir).mkdir(parents=True, exist_ok=True)
     with _ledger_lock(Path(subdir).resolve()):
         return _receive(d, player, pool_dir, subdir, workers, mask, rng_seed, smoke_games, step_limit, seeds, extra)

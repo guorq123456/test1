@@ -200,34 +200,34 @@ def test_slots_and_periods(tmp_path):
     pool = _pool(tmp_path, 1)
     ids, _ = submit.check_deck(CODES[1])                                  # Sword
     sub = {"kind": "deck", "meta": {"member": "二号"}, "deck_ids": ids}
-    r = lambda i, kind, **k: {"ev": "receipt", "id": f"S-{i:04d}", "player": "甲", "period": pool.period,
+    r = lambda i, kind, **k: {"ev": "receipt", "id": f"S-{i:04d}", "player": "fable-ultracode", "period": pool.period,
                               "kind": kind, **k}
-    problems, info = submit.check_slots(sub, "甲", pool, [r(1, "deck", verdict="拒收", craft=2)])
+    problems, info = submit.check_slots(sub, "fable-ultracode", pool, [r(1, "deck", verdict="拒收", craft=2)])
     assert problems == [] and info["uses_slot"] and info["craft"] == 2   # the refused one left Sword open
-    problems, _ = submit.check_slots(sub, "甲", pool, [r(1, "deck", verdict="收下", craft=2)])
+    problems, _ = submit.check_slots(sub, "fable-ultracode", pool, [r(1, "deck", verdict="收下", craft=2)])
     assert any("已经交过一副" in p for p in problems)
-    problems, _ = submit.check_slots(sub, "甲", pool, [r(i, "deck", verdict="收下", craft=c)
+    problems, _ = submit.check_slots(sub, "fable-ultracode", pool, [r(i, "deck", verdict="收下", craft=c)
                                                        for i, c in enumerate((1, 3, 4, 5, 6, 7))])
     assert problems == []                                                # six other classes don't block Sword
-    problems, _ = submit.check_slots(sub, "乙", pool, [r(1, "deck", verdict="收下", craft=2)])
+    problems, _ = submit.check_slots(sub, "fable", pool, [r(1, "deck", verdict="收下", craft=2)])
     assert problems == []                                                # another player's classes are theirs
-    mid = pool.enter(ids, "bot:mcts:100+plan", "甲")
+    mid = pool.enter(ids, "bot:mcts:100+plan", "fable-ultracode")
     pool.advance(force="test: straight to a strategy period")
-    admitted = [{"ev": "admit", "player": "甲", "member": "二号", "mid": mid}]
-    problems, _ = submit.check_slots(sub, "甲", pool, admitted)
+    admitted = [{"ev": "admit", "player": "fable-ultracode", "member": "二号", "mid": mid}]
+    problems, _ = submit.check_slots(sub, "fable-ultracode", pool, admitted)
     assert any("卡组期" in p for p in problems)
     up = {"kind": "update", "meta": {"member": "二号"}}
     many = admitted + [r(i, "update", verdict="拒收", member="二号") for i in range(1, 21)]
-    problems, info = submit.check_slots(up, "甲", pool, many)
+    problems, info = submit.check_slots(up, "fable-ultracode", pool, many)
     assert problems == [] and info["mid"] == mid and up["deck_ids"] == ids   # updates are not limited
     routed = admitted + [r(1, "update", member="二号", route={"steps": 2, "step": 1})]
     later = {"kind": "update", "meta": {"member": "二号", "route": {"steps": 2, "step": 2, "route_of": "S-0001"}}}
-    problems, _ = submit.check_slots(later, "甲", pool, routed)
+    problems, _ = submit.check_slots(later, "fable-ultracode", pool, routed)
     assert problems == []
     wrong = {"kind": "update", "meta": {"member": "二号", "route": {"steps": 3, "step": 2, "route_of": "S-0001"}}}
-    problems, _ = submit.check_slots(wrong, "甲", pool, routed)
+    problems, _ = submit.check_slots(wrong, "fable-ultracode", pool, routed)
     assert any("总步数" in p for p in problems)
-    problems, _ = submit.check_slots({"kind": "update", "meta": {"member": "三号"}}, "甲", pool, admitted)
+    problems, _ = submit.check_slots({"kind": "update", "meta": {"member": "三号"}}, "fable-ultracode", pool, admitted)
     assert any("没有叫" in p for p in problems)
 
 
@@ -324,7 +324,7 @@ def test_receive_and_admit(tmp_path):
     pool = _pool(tmp_path, 1)
     subs = tmp_path / "subs"
     d = make_sub(tmp_path / "in1", "新卡组", deck=CODES[4], member="四号")              # Abyss
-    rec = submit.receive(d, "甲", pool.dir, subs, workers=2, rng_seed=7, smoke_games=2, seeds=SMOKE)
+    rec = submit.receive(d, "fable-ultracode", pool.dir, subs, workers=2, rng_seed=7, smoke_games=2, seeds=SMOKE)
     assert rec["verdict"] == "收下", rec["reasons"]
     assert [c["check"] for c in rec["checks"]] == ["格式", "卡组", "名额和期", "代码（读）", "载入（隔离进程）", "冒烟",
                                                    "算力", "确定性", "偷看"]
@@ -333,22 +333,22 @@ def test_receive_and_admit(tmp_path):
     assert (subs / rec["id"] / "receipt.md").exists()
     mid = submit.admit(subs, rec["id"], pool.dir)
     m = Pool(pool.dir).members[mid]
-    assert m.owner == "甲" and m.strategy == rec["spec"]
+    assert m.owner == "fable-ultracode" and m.strategy == rec["spec"]
     # refused: reads a file; nothing is run; Portal stays open
     d2 = make_sub(tmp_path / "in2", "新卡组", deck=CODES[6], member="六号",
                   src=QUICK + "\nX = open('a').read()\n")
-    rec2 = submit.receive(d2, "甲", pool.dir, subs, workers=2, rng_seed=8, smoke_games=2, seeds=SMOKE)
+    rec2 = submit.receive(d2, "fable-ultracode", pool.dir, subs, workers=2, rng_seed=8, smoke_games=2, seeds=SMOKE)
     assert rec2["verdict"] == "拒收" and not rec2["uses_slot"] and rec2["smoke_seeds"] == []
     # a second Abyss deck this period: refused before any game
     d3 = make_sub(tmp_path / "in3", "新卡组", deck=CODES[4], member="四号乙")
-    rec3 = submit.receive(d3, "甲", pool.dir, subs, workers=2, rng_seed=9, smoke_games=2, seeds=SMOKE)
+    rec3 = submit.receive(d3, "fable-ultracode", pool.dir, subs, workers=2, rng_seed=9, smoke_games=2, seeds=SMOKE)
     assert rec3["verdict"] == "拒收" and any("已经交过一副" in r for r in rec3["reasons"])
     # Portal again, fixed: accepted
     d4 = make_sub(tmp_path / "in4", "新卡组", deck=CODES[6], member="六号")
-    rec4 = submit.receive(d4, "甲", pool.dir, subs, workers=2, rng_seed=10, smoke_games=2, seeds=SMOKE)
+    rec4 = submit.receive(d4, "fable-ultracode", pool.dir, subs, workers=2, rng_seed=10, smoke_games=2, seeds=SMOKE)
     assert rec4["verdict"] == "收下", rec4["reasons"]
     assert [l["id"] for l in submit.ledger(subs) if l["ev"] == "receipt"] == ["S-0001", "S-0002", "S-0003", "S-0004"]
-    st = submit.status(subs, pool.dir, "甲")
+    st = submit.status(subs, pool.dir, "fable-ultracode")
     assert st["classes_done"] == ["梦魇", "超越者"] and len(st["classes_missing"]) == 5
 
 
@@ -370,7 +370,7 @@ def test_smoke_games_its_own_code_voided_refuse_a_submission(tmp_path, monkeypat
     subs = tmp_path / "subs"
     monkeypatch.setattr(ladder.runner, "run", fake)
     d = make_sub(tmp_path / "in1", "新卡组", deck=CODES[4], member="四号")
-    rec = submit.receive(d, "甲", pool.dir, subs, workers=2, rng_seed=7, smoke_games=2, seeds=SMOKE)
+    rec = submit.receive(d, "fable-ultracode", pool.dir, subs, workers=2, rng_seed=7, smoke_games=2, seeds=SMOKE)
     assert rec["verdict"] == "拒收" and any("是你的代码" in r and "Craft: +1 members" in r for r in rec["reasons"]), rec
     monkeypatch.setattr(ladder.runner, "run", real)
 
@@ -401,7 +401,7 @@ def test_smoke_games_its_own_load_voided_or_all_void_refuse_a_submission(tmp_pat
     pool = _pool(tmp_path, 1)
     monkeypatch.setattr(ladder.runner, "run", fake)
     d = make_sub(tmp_path / "in1", "新卡组", deck=CODES[4], member="四号")
-    rec = submit.receive(d, "甲", pool.dir, tmp_path / "subs", workers=2, rng_seed=7, smoke_games=2, seeds=SMOKE)
+    rec = submit.receive(d, "fable-ultracode", pool.dir, tmp_path / "subs", workers=2, rng_seed=7, smoke_games=2, seeds=SMOKE)
     monkeypatch.setattr(ladder.runner, "run", real)
     want = "全作废" if engine else "是你的代码"
     assert rec["verdict"] == "拒收" and any(want in r and error.splitlines()[0][:20] in r for r in rec["reasons"]), rec
@@ -440,7 +440,7 @@ def test_an_accepted_update_goes_to_the_gate(tmp_path, monkeypatch):
         (subs / rid / "submission.json").write_text(json.dumps(
             {"type": "打法更新", "member": "一号", "class": "Quick", "change": change, "prediction": "+3，因为…",
              "route": route, **extra}, ensure_ascii=False), encoding="utf-8")
-        submit._append(subs, {"ev": "receipt", "id": rid, "player": "甲", "kind": "update", "verdict": "收下",
+        submit._append(subs, {"ev": "receipt", "id": rid, "player": "fable-ultracode", "kind": "update", "verdict": "收下",
                               "member": "一号", "mid": mid, "spec": spec, "route": route,
                               "was": was_ or {"strategy": pool.members[mid].strategy, "version": 1}})
     receipt("S-0001", spec="py:sub_S0001:Quick")
@@ -486,8 +486,8 @@ def test_an_accepted_update_goes_to_the_gate(tmp_path, monkeypatch):
     assert "检验" in (subs / "S-0007" / "gate-note.md").read_text(encoding="utf-8")
     # two updates received before either is gated: the first fails, the second is still gated (it could not have
     # named a failure that had not happened yet); a route may carry resubmit_of/since on its first step
-    receipt("S-0008", spec="py:sub_S0008:Quick", change="甲方案", resubmit_of="S-0007", since="甲")
-    receipt("S-0009", spec="py:sub_S0009:Quick", change="乙方案", resubmit_of="S-0007", since="乙")
+    receipt("S-0008", spec="py:sub_S0008:Quick", change="甲方案", resubmit_of="S-0007", since="fable-ultracode")
+    receipt("S-0009", spec="py:sub_S0009:Quick", change="乙方案", resubmit_of="S-0007", since="fable")
     calls_before = len(calls)
     submit.gate_update(subs, "S-0008", pool.dir, tmp_path / "f.json", (1, 2), tmp_path / "gates", delta=3)
     sib = submit.gate_update(subs, "S-0009", pool.dir, tmp_path / "f.json", (1, 2), tmp_path / "gates", delta=3)
@@ -527,7 +527,7 @@ def test_a_strategy_over_the_compute_cap_is_refused(tmp_path):
     pool = _pool(tmp_path, 1)
     heavy = QUICK.replace('"iterations": 8', '"iterations": 300').replace("class Quick", "class Heavy")
     d = make_sub(tmp_path / "in", "新卡组", src=heavy, cls="Heavy", deck=CODES[4], member="重")
-    rec = submit.receive(d, "甲", pool.dir, tmp_path / "subs", workers=2, rng_seed=7, smoke_games=2, seeds=SMOKE)
+    rec = submit.receive(d, "fable-ultracode", pool.dir, tmp_path / "subs", workers=2, rng_seed=7, smoke_games=2, seeds=SMOKE)
     assert rec["verdict"] == "拒收" and (rec.get("compute_ratio") or 0) > submit.COMPUTE_REFUSE, rec["reasons"]
     assert [r for r in rec["reasons"] if r.startswith("[算力]") and "A52" in r], rec["reasons"]
     assert [c["check"] for c in rec["checks"]][-1] == "算力"            # nothing after it runs
@@ -539,14 +539,14 @@ def test_deliver_puts_each_players_own_receipts_and_status_in_their_box(tmp_path
     # receipts folder, under the name of the directory they handed in; nothing of another player's
     pool = _pool(tmp_path, 1)
     subs = tmp_path / "subs"
-    recs = [{"ev": "receipt", "id": "S-0001", "player": "甲", "period": pool.period, "kind": "deck", "verdict": "收下",
-             "craft": 1, "dir": str(tmp_path / "jia" / "submit" / "精灵1"), "member": "一号", "reasons": [],
+    recs = [{"ev": "receipt", "id": "S-0001", "player": "fable-ultracode", "period": pool.period, "kind": "deck", "verdict": "收下",
+             "craft": 1, "dir": str(tmp_path / "fable-ultracode" / "submit" / "精灵1"), "member": "一号", "reasons": [],
              "warnings": [], "checks": [], "time": "t", "version": "v"},
-            {"ev": "receipt", "id": "S-0002", "player": "乙", "period": pool.period, "kind": "deck", "verdict": "拒收",
-             "craft": 2, "dir": str(tmp_path / "yi" / "submit" / "皇家1"), "member": "秘密的名字",
+            {"ev": "receipt", "id": "S-0002", "player": "fable", "period": pool.period, "kind": "deck", "verdict": "拒收",
+             "craft": 2, "dir": str(tmp_path / "fable" / "submit" / "皇家1"), "member": "秘密的名字",
              "reasons": ["[卡组] x"], "warnings": [], "checks": [], "time": "t", "version": "v"},
-            {"ev": "receipt", "id": "S-0003", "player": "甲", "period": pool.period, "kind": "deck", "verdict": "拒收",
-             "craft": 2, "dir": str(tmp_path / "jia" / "submit" / "精灵1"), "member": "二号", "reasons": ["[卡组] y"],
+            {"ev": "receipt", "id": "S-0003", "player": "fable-ultracode", "period": pool.period, "kind": "deck", "verdict": "拒收",
+             "craft": 2, "dir": str(tmp_path / "fable-ultracode" / "submit" / "精灵1"), "member": "二号", "reasons": ["[卡组] y"],
              "warnings": [], "checks": [], "time": "t", "version": "v"}]
     for r in recs:
         submit._append(subs, r)
@@ -554,8 +554,8 @@ def test_deliver_puts_each_players_own_receipts_and_status_in_their_box(tmp_path
         (subs / r["id"] / "receipt.md").write_text(submit.receipt_text(r), encoding="utf-8")
     submit.gate_note(subs, "S-0001", "检验过了。")
     players = tmp_path / "players"
-    assert submit.deliver(subs, pool.dir, players) == {"甲": 2, "乙": 1}
-    box = players / "jia" / "receipts"
+    assert submit.deliver(subs, pool.dir, players) == {"fable-ultracode": 2, "fable": 1}
+    box = players / "fable-ultracode" / "receipts"
     assert sorted(p.name for p in box.iterdir()) == ["状态.md", "精灵1-S-0003.md", "精灵1-检验.md", "精灵1.md"]
     assert "S-0001" in (box / "精灵1.md").read_text(encoding="utf-8")
     assert (box / "精灵1-检验.md").read_text(encoding="utf-8").endswith("检验过了。\n")
@@ -563,7 +563,7 @@ def test_deliver_puts_each_players_own_receipts_and_status_in_their_box(tmp_path
     assert "已经收下的职业：精灵" in status and "皇家护卫" in status       # Sword refused: still missing
     mine = "".join(p.read_text(encoding="utf-8") for p in box.iterdir())
     assert "秘密的名字" not in mine and "S-0002" not in mine
-    assert sorted(p.name for p in (players / "yi" / "receipts").iterdir()) == ["状态.md", "皇家1.md"]
+    assert sorted(p.name for p in (players / "fable" / "receipts").iterdir()) == ["状态.md", "皇家1.md"]
 
 
 def test_receipt_file_names_in_the_players_folder():
@@ -610,3 +610,12 @@ def test_smoke_games_look_like_pool_games_seeds_and_lists():
     jobs, _ = submit.smoke_jobs("bot:greedy", ids, "S-0002", random.Random(3), set(), games=7, seeds=SMOKE, swaps=0)
     assert [sorted(j["decks"][1 - j["labels"]["seat"]]) for j in jobs[::2]] == \
         [sorted(base.baseline_lists()[c]) for c in crafts]               # no lists given, no swaps: the baselines
+
+
+def test_receive_refuses_a_name_that_is_no_player(tmp_path):
+    # S20: players are named; a typo (or an old codename) must not open a ledger for nobody
+    import pytest
+    for who in ("甲", "opsu", "Fable"):
+        with pytest.raises(SystemExit, match="没有选手"):
+            submit.receive(tmp_path / "in", who, tmp_path / "pool", tmp_path / "subs")
+    assert not (tmp_path / "subs").exists()

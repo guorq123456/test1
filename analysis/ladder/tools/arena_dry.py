@@ -12,19 +12,19 @@ interpreter, not the venv's launcher (D5).
     with --force (they are short of 2000) to period 1 (a deck period); freeze P1.
  3. arena: snapshot --code subs\\code, open for 8 minutes (20000 games, all cores).
  4. collect: the collection loop in its own process (--every 10; 15 workers on the E-cores; smoke seeds
-    93409700-93409999). Before the deadline 甲 hands in a deck (精灵1: the default strategy's own code through the
-    interface) and a broken one (坏的: notes.md missing); 乙 a deck (龙族1: 95 search iterations, so its games go
-    their own way); 15 s before the deadline 甲 hands in 超越者1 (taken after the deadline), 3 s after it 乙 hands
-    in 晚了 (while 超越者1 is being taken: the loop lists what is late when it ends). Meanwhile 甲 practises in
+    93409700-93409999). Before the deadline fable-ultracode hands in a deck (精灵1: the default strategy's own code through the
+    interface) and a broken one (坏的: notes.md missing); fable a deck (龙族1: 95 search iterations, so its games go
+    their own way); 15 s before the deadline fable-ultracode hands in 超越者1 (taken after the deadline), 3 s after it fable hands
+    in 晚了 (while 超越者1 is being taken: the loop lists what is late when it ends). Meanwhile fable-ultracode practises in
     this process (vs, 200 games against the Forest members; then arena ladder, 100 games, 1 repeat), sharing the
-    arena's lock with the loop; 甲's practice seeds are patched to 93409400-93409699 here (never 甲's real practice
+    arena's lock with the loop; fable-ultracode's practice seeds are patched to 93409400-93409699 here (never fable-ultracode's real practice
     segment). Expected: 4 received (3 accepted, 1 refused), 晚了 late, receipts in each one's own folder only, 3
     admitted members, the final line 「这一期收完」; on the PC the compute ratio of 精灵1 and 超越者1 (the default's
     own code: the shadow replay, LD-56, recomputes exactly what they did) within 0.97-1.03. Then `submit deliver`
     again: nothing changes.
  5. ladder: 150 pool games on all cores (LADDER_EXTRA_PATH = subs\\code; the host's key).
  6. audit: every pool game replayed in clean processes; none may fail.
- 7. formal: `arena formal --period 1`: members.json and runs\\F1 for 甲 and 乙, each holding only games of their own
+ 7. formal: `arena formal --period 1`: members.json and runs\\F1 for fable-ultracode and fable, each holding only games of their own
     members; one formal game replays; resume and --same-as on F1 are refused.
  8. compute noise (A52, LD-55, LD-56, LD-57): tools/compute_noise.py on the E-cores, 40 sets of 10 pairs with the
     default on another seed, then 20 sets with tools/standins.py Adaptive (a cost that changes with the game), seeds
@@ -170,7 +170,7 @@ def main():
     args = ap.parse_args()
     seeds = SEEDS["cloud" if args.cloud else "pc"]
     # sizes: the PC's, or a small rehearsal in the container (4 cores)
-    # (乙's deck searches less than the default: 95 of 100 on the PC; 50 in the container, whose 3 smoke games on
+    # (fable's deck searches less than the default: 95 of 100 on the PC; 50 in the container, whose 3 smoke games on
     # busy vCPUs can read a 0.95 strategy as 1.3, LD-55)
     n = (dict(base=10, vs=20, lad=10, tail=5, pool=30, smoke=["--smoke-games", "3"], fewer=50, noise=2,
               noise_workers=3) if args.cloud
@@ -245,37 +245,37 @@ def main():
 
     # 4. collect, with practice alongside
     def collect():
-        for who in ("jia", "yi"):
+        for who in ("fable-ultracode", "fable"):
             (players / who / "submit").mkdir(parents=True)
         clog = open(out / "collect.log", "w", encoding="utf-8")
         loop = subprocess.Popen([*exe(), "-m", "ladder.collect", "--players", str(players), "--pool", str(pool),
                                  "--subs", str(subs), "--arena", str(arena), "--workers", "15", *mask, "--every", "10",
                                  "--smoke-seeds", *map(str, seeds["smoke"]), *n["smoke"]],
                                 cwd=str(LADDER), env=env(), stdout=clog, stderr=subprocess.STDOUT)
-        make_sub(players / "jia" / "submit" / "精灵1", L[0][1], "精灵一号", SAME)
-        make_sub(players / "jia" / "submit" / "坏的", L[6][1], "超越者一号", SAME, notes=False)
-        make_sub(players / "yi" / "submit" / "龙族1", L[3][1], "龙族一号", FEWER.format(n=n["fewer"]))
+        make_sub(players / "fable-ultracode" / "submit" / "精灵1", L[0][1], "精灵一号", SAME)
+        make_sub(players / "fable-ultracode" / "submit" / "坏的", L[6][1], "超越者一号", SAME, notes=False)
+        make_sub(players / "fable" / "submit" / "龙族1", L[3][1], "龙族一号", FEWER.format(n=n["fewer"]))
         practice = {}
 
         def late():
             # one 15 s before the deadline (in the deadline listing, not settled: taken after the deadline), then
             # 晚了 3 s after it, while that one is being taken (the loop lists the late ones when it ends)
             time.sleep(max(0.0, deadline - 15 - time.time()))
-            make_sub(players / "jia" / "submit" / "超越者1", L[6][1], "超越者一号", SAME)
+            make_sub(players / "fable-ultracode" / "submit" / "超越者1", L[6][1], "超越者一号", SAME)
             time.sleep(max(0.0, deadline + 3 - time.time()))
-            make_sub(players / "yi" / "submit" / "晚了", L[1][1], "皇家一号", SAME)
+            make_sub(players / "fable" / "submit" / "晚了", L[1][1], "皇家一号", SAME)
         t = threading.Thread(target=late)
         t.start()
         from ladder import arena as A
-        A.PLAYER_SEEDS["甲"] = seeds["practice"]                         # never 甲's real practice segment
-        mine = players / "jia" / "work" / "v1"
+        A.PLAYER_SEEDS["fable-ultracode"] = seeds["practice"]                         # never fable-ultracode's real practice segment
+        mine = players / "fable-ultracode" / "work" / "v1"
         make_sub(mine, L[0][1], "精灵一号", SAME)
         try:
             t0 = time.time()
-            practice["vs"] = A.run_vs(arena, "甲", mine, n["vs"], craft_zh="精灵", rng_seed=1)
+            practice["vs"] = A.run_vs(arena, "fable-ultracode", mine, n["vs"], craft_zh="精灵", rng_seed=1)
             practice["vs_seconds"] = round(time.time() - t0)
             t0 = time.time()
-            practice["ladder"] = A.run_ladder(arena, "甲", mine, games=n["lad"], tail=n["tail"], repeats=1,
+            practice["ladder"] = A.run_ladder(arena, "fable-ultracode", mine, games=n["lad"], tail=n["tail"], repeats=1,
                                               rng_seed=2)
             practice["ladder_seconds"] = round(time.time() - t0)
         except Exception as e:                                       # noqa: BLE001
@@ -294,13 +294,13 @@ def main():
         got = sorted((r["player"], Path(r["dir"]).name, r["verdict"]) for r in recs)
         admitted = [l for l in submit.ledger(subs) if l.get("ev") == "admit"]
         boxes = {who: sorted(p.name for p in (players / who / "receipts").iterdir())
-                 if (players / who / "receipts").exists() else [] for who in ("jia", "yi")}
+                 if (players / who / "receipts").exists() else [] for who in ("fable-ultracode", "fable")}
         before = {who: {p.name: p.read_bytes() for p in (players / who / "receipts").iterdir()}
-                  for who in ("jia", "yi") if (players / who / "receipts").exists()}
+                  for who in ("fable-ultracode", "fable") if (players / who / "receipts").exists()}
         py(["-m", "ladder.submit", "deliver", str(subs), "--pool", str(pool), "--players", str(players)], log)
         after = {who: {p.name: p.read_bytes() for p in (players / who / "receipts").iterdir()}
-                 for who in ("jia", "yi") if (players / who / "receipts").exists()}
-        want = [("乙", "龙族1", "收下"), ("甲", "坏的", "拒收"), ("甲", "精灵1", "收下"), ("甲", "超越者1", "收下")]
+                 for who in ("fable-ultracode", "fable") if (players / who / "receipts").exists()}
+        want = [("fable", "龙族1", "收下"), ("fable-ultracode", "坏的", "拒收"), ("fable-ultracode", "精灵1", "收下"), ("fable-ultracode", "超越者1", "收下")]
         noise = []
         if args.cloud:      # 3 smoke games on the container's jittery vCPUs: a refusal on compute alone is its noise
             for r in recs:
@@ -310,8 +310,8 @@ def main():
             got = [(a, b, "收下" if b in noise else c) for a, b, c in got]
         ok = (code == 0 and res == {"received": 4, "gated": 0, "gate_errors": 0, "late": ["晚了"]} and got == want
               and len(admitted) == 3 - len(noise)
-              and boxes == {"jia": ["坏的.md", "状态.md", "精灵1.md", "超越者1.md"],
-                                                   "yi": ["状态.md", "龙族1.md"]}
+              and boxes == {"fable-ultracode": ["坏的.md", "状态.md", "精灵1.md", "超越者1.md"],
+                                                   "fable": ["状态.md", "龙族1.md"]}
               and "这一期收完" in text and before == after and "error" not in practice
               and practice.get("vs", {}).get("games") == n["vs"] and practice.get("vs", {}).get("errors") == 0)
         # 精灵1 and 超越者1 are the default's own code on the default's seeds: the shadow (LD-56) recomputes exactly
@@ -359,7 +359,7 @@ def main():
         for l in _jsonl(subs / "submissions.jsonl"):
             if l.get("ev") == "admit":
                 mids.setdefault(l["player"], []).append(l["mid"])
-        for who, n in (("甲", 2), ("乙", 1)):
+        for who, n in (("fable-ultracode", 2), ("fable", 1)):
             me = arena / "players" / who
             members = json.loads((me / "members.json").read_text(encoding="utf-8"))["members"]
             views = _jsonl(me / "runs" / "F1" / "games.jsonl")
@@ -372,14 +372,14 @@ def main():
                         "expected": want, "leaks": leak[:10]}
             ok &= (len(mine) == n and len(members) == n and {m["id"] for m in members} == anon
                    and len(views) == want and not leak)
-        jia = _jsonl(arena / "players" / "甲" / "runs" / "F1" / "games.jsonl")
+        jia = _jsonl(arena / "players" / "fable-ultracode" / "runs" / "F1" / "games.jsonl")
         if jia:
-            A.replay(arena, "甲", "F1", jia[0]["game"])
+            A.replay(arena, "fable-ultracode", "F1", jia[0]["game"])
             res["replay"] = True
             refused = []
-            for fn in (lambda: A.run_resume(arena, "甲", "F1", jia[0]["game"], 0,
-                                            [players / "jia" / "work" / "v1"], 1),
-                       lambda: A.run_vs(arena, "甲", players / "jia" / "work" / "v1", 1, same_as="F1")):
+            for fn in (lambda: A.run_resume(arena, "fable-ultracode", "F1", jia[0]["game"], 0,
+                                            [players / "fable-ultracode" / "work" / "v1"], 1),
+                       lambda: A.run_vs(arena, "fable-ultracode", players / "fable-ultracode" / "work" / "v1", 1, same_as="F1")):
                 try:
                     fn()
                     refused.append(False)
@@ -417,11 +417,11 @@ def main():
         plain = {k: v for k, v in env().items() if k not in ("PYTHONUTF8", "PYTHONIOENCODING")}
         if args.cloud:
             plain["PYTHONIOENCODING"] = "cp1252"                      # what the PC's console does, in the container
-        jia = _jsonl(arena / "players" / "甲" / "runs" / "F1" / "games.jsonl")
-        cmds = {"field": ["-m", "ladder.arena", "field", str(arena), "--player", "甲"],
-                "precheck": ["-m", "ladder.submit", "precheck", str(players / "jia" / "submit" / "坏的")]}
+        jia = _jsonl(arena / "players" / "fable-ultracode" / "runs" / "F1" / "games.jsonl")
+        cmds = {"field": ["-m", "ladder.arena", "field", str(arena), "--player", "fable-ultracode"],
+                "precheck": ["-m", "ladder.submit", "precheck", str(players / "fable-ultracode" / "submit" / "坏的")]}
         if jia:
-            cmds["replay"] = ["-m", "ladder.arena", "replay", str(arena), "--player", "甲", "--run", "F1",
+            cmds["replay"] = ["-m", "ladder.arena", "replay", str(arena), "--player", "fable-ultracode", "--run", "F1",
                               "--game", jia[-1]["game"]]
         res, ok = {}, bool(jia)
         for name, c in cmds.items():
