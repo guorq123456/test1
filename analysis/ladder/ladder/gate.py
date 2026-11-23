@@ -32,8 +32,8 @@ Kinds:
 Every gate needs a prediction line before it runs (what changed, expected gap, why); a change is gated once: the same
 member and new version a second time is refused unless `--resubmit-of` names the earlier gate and says what changed
 in substance. Seeds are drawn at random from the gate range given, never one any earlier gate in this ledger used.
-The per-step compute of the member's side, new over old, is reported; above 1.08 the gate is invalid (unequal
-compute), unless compute is what the gate compares (`--compute-is-the-point`).
+The per-step compute of the member's side, new over old, is reported; above 1.15 the gate is invalid (unequal
+compute), unless compute is what the gate compares (`--compute-is-the-point`). (1.08 until S16, Salem 11-23 14:30Z.)
 
 The ledger: DIR/../gates.jsonl (one line per gate, append-only, passed or not) and a row in GATES.md.
 
@@ -65,7 +65,7 @@ from ladder.leaderboard import t975  # noqa: E402
 from ladder.pool import CRAFT_ZH, PoolError, near_by_craft, pick_opponent  # noqa: E402
 
 ALPHA = BETA = 0.05
-COMPUTE_RATIO = 1.08
+COMPUTE_RATIO = 1.15                          # S16 (Salem 11-23 14:30Z): the public allowance, as at receipt (S15)
 VOID_LIMIT = 0.02
 CAP_FACTOR = 3
 PRE_PAIRS = 200
