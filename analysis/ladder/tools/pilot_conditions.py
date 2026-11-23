@@ -11,7 +11,9 @@ The field (`--field`): "others" (default) = the bot's 12 lists outside the froze
 WGP Qualifier pro lists. Against the frozen seven the two conditions nearly coincide: the default guess IS the
 opponent's real list there (LEDGER LD-31), so the measurement uses lists the guess gets wrong.
 - 默认猜测 (the ladder's condition): both sides behind the base (`bot:<spec>`): each decision is made on a state
-  drawn from the default guess (the opponent's class baseline list), never the real state. Played by the runner.
+  drawn from the default guess (the opponent's class baseline list), never the real state. Played by the runner's
+  game (runner.play_job) without the tripwire (ladder.outside; S17: the pilots' prior models add rows for cards they
+  have not met, which the tripwire takes for a change to the simulator, LD-59). Every game here is host code.
 - 原生 (the pilots' own condition, L2): the agents act on the real state, so their sampling knows the opponent's
   real list. Played here, one process per game, the same deals (the same sealed job) and the same agent seeds.
 Game i against opponent j of the field (n lists): seed LO + 100 * (n * pilot + j) + i, the pilot's side in seat
@@ -141,6 +143,24 @@ def summarize(rows, cond, skip=frozenset()):
     return out
 
 
+def read_guess(path: Path, want: set) -> dict:
+    """The logged games of `want` in an outside.run log, id -> line. As outside._done: a torn line (power cut, closed
+    window) stays on its own and its game is played again after it; when an id is there twice the last complete line
+    counts."""
+    last = {}
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = line.strip(" \t\r\n\x00")
+        if not line:
+            continue
+        try:
+            g = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(g, dict) and g.get("id") in want:
+            last[g["id"]] = g
+    return last
+
+
 def main(argv=None):
     from svsim.ui.session import PILOT_MODELS
     ap = argparse.ArgumentParser()
@@ -170,10 +190,12 @@ def main(argv=None):
     rjobs = [{"id": j["id"], "seed": j["seed"], "first": None, "decks": j["decks"],
               "strategies": [f"bot:{s}" for s in j["specs"]], "strategy_seeds": j["strategy_seeds"],
               "deal": j.get("deal"), "labels": j["labels"]} for j in jobs]
-    runner.run(rjobs, str(out / "guess.jsonl"), workers=a.workers, mask=a.mask, quiet=True, key=key)
+    from ladder import outside
+    outside.run(rjobs, str(out / "guess.jsonl"), workers=a.workers, mask=a.mask, quiet=True, key=key)
+    want = {j["id"] for j in rjobs}
+    last = read_guess(out / "guess.jsonl", want)
     guess = []
-    for line in (out / "guess.jsonl").read_text(encoding="utf-8").splitlines():
-        g = json.loads(line)
+    for g in last.values():
         seat_cpu, seat_steps = [0, 0], [0, 0]
         for s, c, _ in g.get("steps", []):
             seat_cpu[s] += c
@@ -189,6 +211,7 @@ def main(argv=None):
     res = {"seeds": a.seeds, "field": a.field, "games_per_opponent": a.games_per_opponent, "deal": deal.key_id(key) if key else None,
            "seconds": round(time.time() - t0), "默认猜测": summarize(guess, "默认猜测", skip),
            "原生": summarize(native, "原生", skip),
+           "guess_missing": len(want - set(last)),
            "voids": sorted({(g["labels"]["who"], g["error"][:160]) for g in guess if g["result"] not in OK})[:20]}
     (out / "result.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
     print(json.dumps(res, ensure_ascii=False, indent=1))

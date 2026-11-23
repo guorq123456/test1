@@ -124,29 +124,35 @@ def main(argv=None):
         print(json.dumps(res, ensure_ascii=False, indent=1))
         return 0 if res["ok"] else 1
 
-    from check_lock import differs, recorded
-    bad = differs()
-    res["steps"]["lock"] = {"ok": not bad, "files": len(recorded()), "differs": bad}
-    if bad:
-        return finish(1)
-    if a.dry:
-        res["steps"]["key"] = {"ok": True, "note": "dry run: no key"}
-    else:
-        from ladder import deal
-        key = deal.resolve("auto")
-        res["steps"]["key"] = {"ok": key is not None, "id": deal.key_id(key) if key else None}
-        if key is None:
+    step = "lock"
+    try:                                              # whatever stops a step, summary.json says which and why
+        from check_lock import differs, recorded
+        bad = differs()
+        res["steps"]["lock"] = {"ok": not bad, "files": len(recorded()), "differs": bad}
+        if bad:
             return finish(1)
-    from ladder.pool import PoolError
-    try:
+        step = "key"
+        if a.dry:
+            res["steps"]["key"] = {"ok": True, "note": "dry run: no key"}
+        else:
+            from ladder import deal
+            key = deal.resolve("auto")
+            res["steps"]["key"] = {"ok": key is not None, "id": deal.key_id(key) if key else None}
+            if key is None:
+                return finish(1)
+        step = "pool"
         res["steps"]["pool"] = pool_step(a.p1b, a.host / "pool")
-    except (SystemExit, PoolError) as e:
-        res["steps"]["pool"] = {"ok": False, "error": str(e)}
+        for d in HOST_DIRS:
+            (a.host / d).mkdir(parents=True, exist_ok=True)
+        res["steps"]["pool"]["host_dirs"] = list(HOST_DIRS)
+        step = "players"
+        res["steps"]["players"] = players_step(a.players, LADDER / "public")
+    except (Exception, SystemExit) as e:
+        hint = ""
+        if step == "pool" and not isinstance(e, SystemExit):
+            hint = f" (a damaged or half-copied pool at {a.host / 'pool'}? look before going on)"
+        res["steps"][step] = {"ok": False, "error": f"{type(e).__name__}: {e}{hint}"}
         return finish(1)
-    for d in HOST_DIRS:
-        (a.host / d).mkdir(parents=True, exist_ok=True)
-    res["steps"]["pool"]["host_dirs"] = list(HOST_DIRS)
-    res["steps"]["players"] = players_step(a.players, LADDER / "public")
     return finish(0)
 
 

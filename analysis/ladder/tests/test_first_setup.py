@@ -48,3 +48,18 @@ def test_players_folders_and_the_public_copy(tmp_path):
     assert (tmp_path / "players" / "public" / "rules.md").read_text(encoding="utf-8") == "规则 v2"
     assert (tmp_path / "players" / "public" / "reports").is_dir()
     assert F.players_step(tmp_path / "players", pub)["public_same"] == ["rules.md"]
+
+
+def test_a_failing_step_still_writes_the_summary(tmp_path, monkeypatch):
+    import json
+    import check_lock
+    monkeypatch.setattr(check_lock, "differs", lambda: [])
+    src = baseline_pool(tmp_path, "p1b").dir
+    dest = tmp_path / "out" / "host" / "pool"
+    dest.mkdir(parents=True)
+    (dest / "events.jsonl").write_text("{torn", encoding="utf-8")      # a copy cut short
+    code = F.main(["--dry", "--p1b", str(src), "--out", str(tmp_path / "out")])
+    res = json.loads((tmp_path / "out" / "summary.json").read_text(encoding="utf-8"))
+    assert code == 1 and not res["ok"] and not res["steps"]["pool"]["ok"]
+    assert "look before going on" in res["steps"]["pool"]["error"]
+

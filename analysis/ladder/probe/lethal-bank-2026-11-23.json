@@ -1,0 +1,175 @@
+{
+ "what": "2.2 lethal bank (tools/lethal_bank.py), cloud container, 2026-11-23 (LD-60). Every line of every game is in the project share ladder/probe/lethal-bank-2026-11-23/.",
+ "ladder": {
+  "seeds": "93160000-93160014 (15 of the planned 300; the rest goes to Salem's PC)",
+  "games": 15,
+  "positions": 275,
+  "lethal": 14,
+  "no_lethal_proven": 261,
+  "undecided": 0,
+  "search_seconds_max": 146.15,
+  "planner": {
+   "found_every_try": 14,
+   "missed_some_try": 0,
+   "tries_won": 42,
+   "tries": 42
+  },
+  "exact": {
+   "found_every_try": 14,
+   "missed_some_try": 0,
+   "tries_won": 42,
+   "tries": 42
+  },
+  "in_game": {
+   "won_that_turn": 14,
+   "of": 14
+  },
+  "misses": {
+   "positions": 0,
+   "default_budget_finds_on_real_state": 0,
+   "screened": 0,
+   "sure_on_every_sample": 0,
+   "sure_on_no_sample": 0
+  }
+ },
+ "random": {
+  "source": "random",
+  "seeds": [
+   93161000,
+   93161100
+  ],
+  "tries": 3,
+  "nodes": 300000,
+  "modes": {
+   "planner": "mcts:100+plan",
+   "exact": "mcts:100"
+  },
+  "seconds": 1417,
+  "games": 100,
+  "positions": 1948,
+  "lethal": 239,
+  "no_lethal_proven": 1706,
+  "undecided": 3,
+  "search_seconds_max": 136.34,
+  "planner": {
+   "found_every_try": 229,
+   "missed_some_try": 10,
+   "tries_won": 691,
+   "tries": 717
+  },
+  "exact": {
+   "found_every_try": 226,
+   "missed_some_try": 13,
+   "tries_won": 684,
+   "tries": 717
+  },
+  "in_game": {
+   "won_that_turn": 95,
+   "of": 239
+  },
+  "misses": {
+   "positions": 13,
+   "default_budget_finds_on_real_state": 2,
+   "screened": 5,
+   "sure_on_every_sample": 13,
+   "sure_on_no_sample": 0
+  }
+ },
+ "bank": {
+  "source": "bank",
+  "seeds": null,
+  "tries": 3,
+  "nodes": 300000,
+  "modes": {
+   "planner": "mcts:100+plan",
+   "exact": "mcts:100"
+  },
+  "seconds": 13,
+  "games": 3,
+  "positions": 3,
+  "lethal": 3,
+  "no_lethal_proven": 0,
+  "undecided": 0,
+  "search_seconds_max": 2.06,
+  "planner": {
+   "found_every_try": 0,
+   "missed_some_try": 3,
+   "tries_won": 0,
+   "tries": 9
+  },
+  "exact": {
+   "found_every_try": 0,
+   "missed_some_try": 3,
+   "tries_won": 0,
+   "tries": 9
+  },
+  "misses": {
+   "positions": 3,
+   "default_budget_finds_on_real_state": 0,
+   "screened": 3,
+   "sure_on_every_sample": 3,
+   "sure_on_no_sample": 0
+  }
+ },
+ "budgets": {
+  "ladder": {
+   "seeds": "93160000-93160014",
+   "turn_starts": 275,
+   "found_by_any": 13,
+   "default": {
+    "found": 12,
+    "ms_mean": 65.1,
+    "ms_p95": 259.1,
+    "ms_max": 1360.4
+   },
+   "lethal2": {
+    "found": 13,
+    "ms_mean": 84.3,
+    "ms_p95": 525.5,
+    "ms_max": 2360.8
+   },
+   "noscreen2000": {
+    "found": 12,
+    "ms_mean": 301.1,
+    "ms_p95": 699.5,
+    "ms_max": 1358.8
+   },
+   "noscreen20000": {
+    "found": 13,
+    "ms_mean": 2481.8,
+    "ms_p95": 7256.9,
+    "ms_max": 13130.6
+   }
+  },
+  "random": {
+   "seeds": "93161000-93161039",
+   "turn_starts": 770,
+   "found_by_any": 97,
+   "default": {
+    "found": 95,
+    "ms_mean": 40.1,
+    "ms_p95": 154.7,
+    "ms_max": 753.0
+   },
+   "lethal2": {
+    "found": 95,
+    "ms_mean": 53.9,
+    "ms_p95": 145.0,
+    "ms_max": 1190.8
+   },
+   "noscreen2000": {
+    "found": 95,
+    "ms_mean": 171.8,
+    "ms_p95": 603.5,
+    "ms_max": 1059.1
+   },
+   "noscreen20000": {
+    "found": 97,
+    "ms_mean": 1077.7,
+    "ms_p95": 5792.9,
+    "ms_max": 10011.7
+   }
+  },
+  "note": "the lethal search alone on the real state at each turn start: default = (2000 nodes, screen 200, near (1000, 4)), lethal2 = (3000, 200, (2000, 4)), noscreenN = N nodes, no screen; times in a shared cloud container"
+ }
+}

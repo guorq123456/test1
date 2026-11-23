@@ -7,7 +7,7 @@ rem    C:\claude\ladder-players\<pinyin>\submit and receipts, and C:\claude\ladd
 rem    Run again, it changes nothing that is already right.
 rem 2. tools\pilot_conditions.py (2.5): the five trained pilots in the ladder's condition (default guess) and their own
 rem    (known lists), 50 games against each of the bot's 12 other lists, each game also played by the default bot
-rem    on the pilot's list; E-cores only (it compares per-step compute), 15 workers. About an hour.
+rem    on the pilot's list; E-cores only (it compares per-step compute), 15 workers. About 1 to 1.5 hours.
 rem 3. tools\lethal_bank.py (2.2): the lethal puzzle bank, 300 games of the default against itself on the public lists,
 rem    every turn start searched in full, every lethal played out by the default behind the base; all cores. About 20
 rem    minutes. Then Salem's own lethal puzzle (tests\puzzles).

@@ -27,8 +27,15 @@ Hooks (override any; the default is what the default strategy does):
   (c_prior x P x sqrt(root visits) / (1 + visits), c_prior 0.3). Default: not overridden (no prior).
 - search(pos) -> dict: the search's settings for this decision, any of iterations (default 100), c (exploration,
   0.5), scale (evaluation points per unit of the squash, 8.0), max_depth (30), c_prior (0.3). Default: {}.
-Class attribute LETHAL: "planner" (default: the exact lethal search with its planner, as +plan), "exact" (the exact
-lethal search only), "off" (no lethal search).
+Class attribute LETHAL: "planner" (default: the lethal search with its planner, as +plan), "exact" (the lethal search
+only), "off" (no lethal search).
+Class attributes LETHAL_NODES, LETHAL_SCREEN (Salem 11-23 16:53Z, S18; 2.2, LD-60: the default's lethal search has a
+budget and misses some lethals): LETHAL_NODES is the most positions it searches (default 2000, at most
+LETHAL_NODES_MAX); LETHAL_SCREEN is (n, n2, k): when a quick estimate of this turn's damage falls short of the enemy's
+defense, only n positions, or n2 when it is short by k or less (default (200, 1000, 4)); None: no estimate, always
+LETHAL_NODES. The estimate counts each card on its own, so damage that needs several cards together (Last Words,
+countdowns advanced by spells, buffs that pay off together) is beyond it. A bigger budget costs compute, which the
+per-step cap counts like any other.
 
 Randomness: a strategy that needs random numbers uses `self.random` (seeded from the game's strategy seed, separate
 from the search's and the sampler's streams), never the time or the global `random`: games are replayed.
@@ -49,6 +56,7 @@ from svsim.search.evaluate import DEFAULT
 from . import base
 
 INTERFACE_VERSION = "interface-1"
+LETHAL_NODES_MAX = 100_000
 LETHAL_SPECS = {"planner": "mcts:{n}+plan", "exact": "mcts:{n}", "off": "mcts-raw:{n}"}
 SEARCH_KNOBS = {"iterations", "c", "scale", "max_depth", "c_prior"}
 
@@ -70,6 +78,20 @@ class _Prior:
         return self.fn(state, actions)
 
 
+def _lethal_budget(nodes, screen) -> tuple:
+    """LETHAL_NODES and LETHAL_SCREEN checked: (nodes, None or (n, n2, k))."""
+    def whole(x, lo, hi):
+        return type(x) is int and lo <= x <= hi
+    if not whole(nodes, 1, LETHAL_NODES_MAX):
+        raise ValueError(f"LETHAL_NODES is a whole number from 1 to {LETHAL_NODES_MAX}")
+    if screen is None:
+        return nodes, None
+    if not (isinstance(screen, tuple) and len(screen) == 3 and whole(screen[0], 1, nodes)
+            and whole(screen[1], 1, nodes) and whole(screen[2], 0, 100)):
+        raise ValueError("LETHAL_SCREEN is None or (n, n2, k): whole numbers, n and n2 at most LETHAL_NODES")
+    return nodes, tuple(screen)
+
+
 def _overridden(obj, name: str) -> bool:
     return getattr(type(obj), name) is not getattr(PlayerStrategy, name)
 
@@ -77,6 +99,8 @@ def _overridden(obj, name: str) -> bool:
 class PlayerStrategy:
     LETHAL = "planner"
     ITERATIONS = 100            # the default search's iterations; a decision may change it through `search`
+    LETHAL_NODES = 2000         # the lethal search's budget (svsim LethalAgent's defaults; module docstring)
+    LETHAL_SCREEN = (200, 1000, 4)
 
     # --- hooks ----------------------------------------------------------------------------------------------
 
@@ -109,8 +133,13 @@ class PlayerStrategy:
             raise ValueError(f"LETHAL is one of {sorted(LETHAL_SPECS)}")
         if _overridden(self, "evaluate") and _overridden(self, "weights"):
             raise ValueError("override evaluate or weights, not both")
+        nodes, screen = _lethal_budget(self.LETHAL_NODES, self.LETHAL_SCREEN)
         self.spec = LETHAL_SPECS[self.LETHAL].format(n=int(self.ITERATIONS))
         self.agent = make_agent(self.spec, seed)                     # the same construction as the default
+        if self.LETHAL != "off":                                     # the defaults leave it exactly as built
+            ls = self.agent.search
+            ls.max_nodes = nodes
+            ls.screen, ls.near = (None, None) if screen is None else (screen[0], (screen[1], screen[2]))
         self.rng = random.Random(seed * 1_000_003 + 7)              # the sampler's own stream (as BotStrategy)
         self.random = random.Random(seed * 7_919 + 101)            # the player's own stream (replays need it)
         self.tree = self._search_object()

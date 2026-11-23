@@ -9,7 +9,8 @@
 - add: the puzzle goes into SUBDIR/puzzles.json (the submission check reads it: a 公共题 submission must name a
   puzzle there and bring exactly its list) and, without the list's owner or anything else, into PUBDIR/puzzles.md.
 - run: every player's latest accepted 公共题 strategy for the puzzle, and the references (always the default
-  strategy; e.g. the pilot behind the base for 2.6, `--ref 驾驶员=bot:<pilot spec>`), play the puzzle's list against
+  strategy; e.g. the pilot behind the base for 2.6, `--ref 驾驶员=bot:<pilot spec>`: a reference that loads a trained
+  model plays through the runner's game without the tripwire, ladder.outside, S17), play the puzzle's list against
   the same field on the same games: game i against field list j has seed LO + 100 * j + i, the puzzle side in seat
   i % 2; the field plays the default strategy. Win rates, and each entry's paired difference from the default.
 - Agreement (同源度, plan 「公共题上选同一步的比例」): `--agreement K` decision points drawn from the default's own games
@@ -206,6 +207,7 @@ def public_copy(host: dict, refs: list) -> dict:
     pub["agreement"].sort(key=lambda r: (rank(r["a"]), rank(r["b"])))
     for k in ("seeds", "deal", "aliases"):
         pub.pop(k)
+    pub.pop("outside_tripwire", None)
     pub["simulator_changed"] = len(host.get("simulator_changed") or ())
     return pub
 
@@ -221,10 +223,13 @@ def run(subdir: Path, pid: str, seeds, out: Path, games: int = 10, field: str = 
         sys.path.insert(0, str(code_dir))
     import os
     os.environ["LADDER_EXTRA_PATH"] = os.pathsep.join(x for x in (str(code_dir), os.environ.get("LADDER_EXTRA_PATH", "")) if x)
+    from ladder import outside
     ents = [{"name": "默认打法", "spec": DEFAULT, "ref": True}]
     for r in refs or []:
         name, spec = r.split("=", 1)
-        ents.append({"name": name, "spec": spec, "ref": True})
+        # S17: a reference that loads a trained model (the pilot of 2.6) plays outside the tripwire (ladder.outside,
+        # LD-59); the players' entries and the default always through the runner
+        ents.append({"name": name, "spec": spec, "ref": True, "outside": outside.trained(spec)})
     ents += [dict(e, ref=False) for e in entries(subdir, pid)]
     fl = field_of(field)
     lo, hi = seeds
@@ -249,7 +254,12 @@ def run(subdir: Path, pid: str, seeds, out: Path, games: int = 10, field: str = 
                              "decks": [d for d, _ in sides], "strategies": [s for _, s in sides],
                              "labels": {"entry": e_i, "field": oname, "game": i, "seat": seat}})
     key = deal.resolve(key)
-    runner.run(jobs, str(out / "games.jsonl"), workers=workers, mask=mask, quiet=True, key=key)
+    out_e = {e_i for e_i, e in enumerate(ents) if e.get("outside")}
+    runner.run([j for j in jobs if which[j["id"]] not in out_e], str(out / "games.jsonl"), workers=workers, mask=mask,
+               quiet=True, key=key)
+    if out_e:                                              # the same games, the same log, the same deal and seeds
+        outside.run([j for j in jobs if which[j["id"]] in out_e], str(out / "games.jsonl"), workers=workers,
+                    mask=mask, quiet=True, key=key)
     logs = []
     for x in (out / "games.jsonl").read_text(encoding="utf-8", errors="replace").splitlines():
         try:
@@ -289,8 +299,16 @@ def run(subdir: Path, pid: str, seeds, out: Path, games: int = 10, field: str = 
             points.append((g, seat, rng.randrange(mine), rng.randrange(1, 2 ** 31)))
     ask = [{"log": g, "seat": seat, "k": k, "point": n, "entry": e_i, "spec": e["spec"], "seed": s}
            for n, (g, seat, k, s) in enumerate(points) for e_i, e in enumerate(ents)]
-    answers, tripped = _answers(ask, runner.guarded_map("ladder.puzzles:_ask", ask, workers=workers, mask=mask),
-                                ents) if ask else ([], [])
+    inside = [i for i, t in enumerate(ask) if t["entry"] not in out_e]
+    away = [i for i, t in enumerate(ask) if t["entry"] in out_e]
+    got = [None] * len(ask)
+    for i, g in zip(inside, runner.guarded_map("ladder.puzzles:_ask", [ask[i] for i in inside], workers=workers,
+                                               mask=mask) if inside else []):
+        got[i] = g
+    for i, g in zip(away, outside.map_tasks("ladder.puzzles:_ask", [ask[i] for i in away], workers=workers,
+                                            mask=mask) if away else []):
+        got[i] = g
+    answers, tripped = _answers(ask, got, ents) if ask else ([], [])
     moves = {}
     for a in answers:
         moves.setdefault(a["entry"], {})[a["point"]] = json.dumps(a["move"], sort_keys=True) if a["move"] else None
@@ -309,7 +327,8 @@ def run(subdir: Path, pid: str, seeds, out: Path, games: int = 10, field: str = 
     alias = {n: f"选手 {i + 1}" for i, n in enumerate(order)}
     host = {"puzzle": pid, "title": reg[pid]["title"], "field": field, "games_per_list": games, "seeds": [lo, hi],
             "deal": sorted(d for d in deals if d) or None, "entries": table, "agreement": agree,
-            "points": len(points), "aliases": alias, "simulator_changed": tripped}
+            "points": len(points), "aliases": alias, "simulator_changed": tripped,
+            "outside_tripwire": [ents[i]["name"] for i in sorted(out_e)]}
     (out / "result-host.json").write_text(json.dumps(host, ensure_ascii=False, indent=1), encoding="utf-8")
     pub = public_copy(host, [e["name"] for e in ents if e["ref"]])
     (out / "result-public.json").write_text(json.dumps(pub, ensure_ascii=False, indent=1), encoding="utf-8")

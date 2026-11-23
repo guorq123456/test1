@@ -100,3 +100,51 @@ def test_refusals():
 
     with pytest.raises(ValueError, match="not open"):
         record(0, 3, [Knob(seed=1), BotStrategy(seed=2)], 99001504)
+
+
+def test_the_lethal_budget_settings(monkeypatch):
+    """S18 (2.2, LD-60): LETHAL_NODES / LETHAL_SCREEN set the lethal search's budget; the defaults are the bot's own
+    (the test above: the default strategy decision for decision); a bigger budget finds Salem's Pirate puzzle, whose
+    damage the quick estimate can't see (analysis/speed/LETHAL.md)."""
+    from ladder import codecheck
+    from ladder.interface import LETHAL_NODES_MAX
+    from svsim.core.engine import apply, legal_actions
+    from svsim.tools.puzzles import puzzles
+    a = PlayerStrategy(seed=1).agent.search
+    assert (a.max_nodes, a.screen, a.near) == (2000, 200, (1000, 4))
+
+    class Full(PlayerStrategy):
+        LETHAL_NODES = 20000
+        LETHAL_SCREEN = None
+
+    b = Full(seed=1).agent.search
+    assert (b.max_nodes, b.screen, b.near) == (20000, None, None)
+    for nodes, screen in [(0, None), (LETHAL_NODES_MAX + 1, None), (2000.0, None), (True, None), (2000, (200, 1000)),
+                          (2000, (3000, 1000, 4)), (2000, [200, 1000, 4])]:
+        class Bad(PlayerStrategy):
+            LETHAL_NODES = nodes
+            LETHAL_SCREEN = screen
+        with pytest.raises(ValueError):
+            Bad(seed=1)
+
+    import importlib.util                            # the bank's setups import the simulator's tests/helpers.py,
+    spec = importlib.util.spec_from_file_location("helpers", ROOT / "tests" / "helpers.py")   # not this folder's
+    helpers = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helpers)
+    monkeypatch.setitem(sys.modules, "helpers", helpers)
+    build = {n: f for n, f, _ in puzzles()}["pirate-flags-lethal"]
+
+    def turn(strat):
+        state = build(1)
+        me, tracker = state.active, base.Tracker(state)
+        while not state.over and state.active == me:
+            a = strat.act(base.public_position(state, me, tracker), legal_actions(state))
+            tracker.before(state)
+            apply(state, a)
+            tracker.after(state)
+        return state.winner == me
+    assert not turn(PlayerStrategy(seed=3)) and turn(Full(seed=3))
+    src = "from ladder.interface import PlayerStrategy\n\nclass Deep(PlayerStrategy):\n" \
+          "    LETHAL_NODES = 20000\n    LETHAL_SCREEN = None\n\n    def search(self, pos):\n" \
+          "        return {'iterations': 60 if self.LETHAL_SCREEN is None else 100}\n"
+    assert codecheck.check_code(src, "Deep") == []

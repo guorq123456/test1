@@ -217,7 +217,8 @@ CLASS_MUTATORS = (("dataclasses", "dataclass"), ("typing", "final"), ("typing", 
                   ("functools", "total_ordering"),  # they're given: decorators of the module's own only (LD-45)
                   ("typing", "abstractmethod"))     # LD-46: sets __isabstractmethod__ on what it's given
 FLOW_SECONDS = 60                                 # a module whose reading takes longer is refused (LD-42)
-OWN_FRESH = frozenset({"random", "rng", "spec", "defaults", "LETHAL", "ITERATIONS"})   # PlayerStrategy's own
+OWN_FRESH = frozenset({"random", "rng", "spec", "defaults", "LETHAL", "ITERATIONS", "LETHAL_NODES",
+                       "LETHAL_SCREEN"})   # PlayerStrategy's own
 SCALAR_ANNOTATIONS = {"float", "int", "bool", "str", "None", float, int, bool, str, None, type(None)}
 _MISSING = object()
 

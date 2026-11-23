@@ -42,3 +42,14 @@ def test_lethal_bank_counts_every_try():
     assert s["lethal"] == 1 and s["no_lethal_proven"] == 1 and s["undecided"] == 1
     assert s["planner"] == {"found_every_try": 1, "missed_some_try": 0, "tries_won": 2, "tries": 2}
     assert s["exact"]["missed_some_try"] == 1 and s["misses"]["screened"] == 1
+
+
+def test_a_torn_guess_log_is_read_on_resume(tmp_path):
+    import json
+    log = tmp_path / "guess.jsonl"
+    whole = [json.dumps({"id": i, "labels": {}, "result": "normal"}) for i in ("a", "b", "c")]
+    log.write_bytes((whole[0] + "\n" + whole[1][:9]).encode() + b"\xe4\xb8\x00\x00\n" + (whole[1] + "\n").encode()
+                    + (whole[2] + "\n\n").encode())
+    got = PC.read_guess(log, {"a", "b"})
+    assert sorted(got) == ["a", "b"] and got["b"]["result"] == "normal"
+
