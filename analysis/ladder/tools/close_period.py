@@ -3,7 +3,7 @@ has said 「这一期收完」 and stopped.
 
     python analysis/ladder/tools/close_period.py [--host DIR] [--arena DIR] [--players DIR] [--out DIR]
                                                  [--workers 23] [--e-workers 15] [--mask 0x3FC3FC]
-                                                 [--check] [--advance-anyway REASON]
+                                                 [--check] [--advance-anyway REASON --held DIGEST]
 
 Every step can be run again: a step that is done is kept (the ladder plays only what the period still needs, the
 hall of fame is inducted once a period, the anchors are played once a period, a puzzle is evaluated once), so after
@@ -45,20 +45,26 @@ a stop (a power cut, Ctrl+C, an error fixed in between) the same double-click go
    board-P<P>.json).
 12. advance: `ladder.pool advance` if nothing held it; then the public board is copied to PLAYERS/public and the
    receipts' status files are written again for the new period (`submit deliver`; a stop there is redone by the next
-   double-click). Held: nothing is advanced, the summary says why and HOST/audit/held-P<P>.json keeps the list;
-   `--advance-anyway REASON` (only after Salem decided) advances all the same, the reason kept in the summary, but
-   only if nothing is held that wasn't in that list (what Salem was shown).
+   double-click). Held: nothing is advanced; the summary says why (the first games / members by name) and gives the
+   held set's held_digest; HOST/audit/held-P<P>.json keeps every held set by its digest (games and members, not the
+   text). `--advance-anyway REASON --held DIGEST` (only after Salem decided on the summary with that held_digest)
+   advances all the same and gives the formal games, the reason kept in the summary, but only if every problem held
+   now is in that set: one that wasn't is refused (and its own set saved, widening none), to be taken to Salem.
 
-Things to report that don't hold the period (the collection's errors and late directories, void games, members short
+Things to report that don't hold the period (the collection's errors and late directories: changed after the
+deadline in report.collect.late, put in after it in steps.collected.late_new; void games, members short
 and isolated, the anchors' voids, calibration missing in the compute check) are listed under "report" in the summary.
 
-`--check`: steps 1-3 only (nothing is run, no lock is kept): exit 0 if the close could start now.
+`--check`: steps 1-3 only (nothing is run, no lock is kept; an advanced period's publish left undone is left to the
+run after the pull): exit 0 if the close could start now, 3 if it can't yet (the deadline hasn't come, the
+collection isn't finished: the PC's wrapper doesn't pull then), 1 if the check itself failed (the wrapper pulls).
 Exit codes: 0 closed and advanced (or closed earlier), 1 an error stopped it, 2 held for the host (see "held").
 Results: OUT/summary.json, every command and its output in OUT/commands.log.
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -162,27 +168,36 @@ def deadline_passed(window: dict, now: float | None = None) -> bool:
     return (time.time() if now is None else now) > datetime.fromisoformat(window["deadline"]).timestamp()
 
 
+class NotYet(SystemExit):
+    """The close can't start yet (the deadline hasn't come, or the collection loop hasn't finished the period): under
+    --check exit 3, which the PC's wrapper reads as "don't
+    pull" (any other failure of the check doesn't stop the pull: 11-24 review 3, a fix must be able to reach the PC)."""
+
+
 def collected(host: Path, arena: Path, players: Path, period: int, kind: str, mask: int | None) -> dict:
     """Whether the collection loop finished period `period` (it stopped after its line 「这一期收完」): the listing at
     the deadline is in SUBS/collect.jsonl, every directory of it is done, nothing accepted is left to admit or gate.
     Read only: nothing is written here. `mask`: the E-cores, as the loop had them (the Collector refuses none on
     Windows, 11-24 review; it only reads here)."""
-    from ladder.collect import Collector
+    from ladder.collect import Collector, listing
     subs = host / "subs"
     delta = _read(host / "gates" / f"delta-P{period}.json", {}).get("delta") if kind == "strategy" else None
     c = Collector(players, host / "pool", subs, arena, gates="after", frozen=host / "frozen" / f"P{period}.json",
                   delta=delta, gates_out=host / "gates", mask=mask, out=lambda s: None)
     if c.final is None:
-        raise SystemExit("收提交的循环截止那一刻没在跑（collect.jsonl 里没有这一期截止时的目录清单）：先照 RUNBOOK 第 3 节"
+        raise NotYet("收提交的循环截止那一刻没在跑（collect.jsonl 里没有这一期截止时的目录清单）：先照 RUNBOOK 第 3 节"
                          "查过文件时间，再用 open-period.cmd 重起收提交的循环（它会要 --after-deadline），等它打出「这一期收完」")
     done = c.done()
     left = sorted(f"{p}:{Path(d).name}" for (p, d), (st, _) in c.final.items() if (p, d, st) not in done)
     admits, gates = c.pending_admits(), c.pending_gates()
     if left or admits or gates:
-        raise SystemExit("收提交的循环还没收完：" + "；".join(x for x in (
+        raise NotYet("收提交的循环还没收完：" + "；".join(x for x in (
             f"截止时在的目录还没收 {left}" if left else "", f"收下了还没入池 {admits}" if admits else "",
             f"收下了还没检验 {gates}" if gates else "") if x) + "。双击 open-period.cmd 让它收完（窗口要等到「这一期收完」）")
-    return {"deadline_dirs": len(c.final)}
+    # put into a submit\ after the deadline: the loop only printed them (collect.log); the report lists them (review 3)
+    late_new = sorted(f"{p}:{Path(d).name}" for (p, d), (st, _) in listing(players).items()
+                      if (p, d, st) not in done and (p, d) not in c.final)
+    return {"deadline_dirs": len(c.final), "late_new": late_new}
 
 
 def collect_notes(host: Path, window: dict, period: int) -> dict:
@@ -250,6 +265,11 @@ def audit_keys(au: dict) -> dict:
             "unreadable": sorted(str(x) for x in au.get("unreadable", []))}
 
 
+def held_digest(ids) -> str:
+    """A short name for one set of held problems (what Salem is shown and decides on)."""
+    return hashlib.sha256("\n".join(sorted(ids)).encode("utf-8")).hexdigest()[:10]
+
+
 def earlier_audits(audit_dir: Path, period: int) -> dict:
     """Every problem an earlier period's audit (HOST/audit/P<k>.json, k < P) already listed: reported and decided
     then, so it doesn't hold P again (11-24 review: the audit reads every log of the pool, every period)."""
@@ -310,7 +330,11 @@ def main(argv=None):
     ap.add_argument("--games-per-anchor", type=int, default=10, help="RUNBOOK §5 (tests only change it)")
     ap.add_argument("--check", action="store_true", help="only see whether the close could start now")
     ap.add_argument("--advance-anyway", metavar="REASON", help="advance although something held it (Salem decided)")
+    ap.add_argument("--held", metavar="DIGEST", help="with --advance-anyway: the held_digest of the summary Salem was "
+                                                     "shown; only those problems are let through")
     a = ap.parse_args(argv)
+    if bool(a.advance_anyway) != bool(a.held):
+        ap.error("--advance-anyway and --held go together (the held_digest of the summary Salem saw)")
     a.out.mkdir(parents=True, exist_ok=True)
     log = a.out / "commands.log"
     res = {"started": time.strftime("%Y-%m-%d %H:%M:%S"), "check": a.check, "steps": {}, "report": {}, "held": []}
@@ -354,6 +378,9 @@ def main(argv=None):
             if (host / "reports" / f"board-P{done}.json").exists() and \
                     not (host / "reports" / f"published-P{done}.json").exists():
                 step = "publish"                  # the advance went through, the publish didn't: do it now
+                if a.check:                       # --check runs nothing: the run after the pull publishes (review 3)
+                    res["steps"]["publish"] = {"ok": True, "pending": True}
+                    return finish(0)
                 res["steps"]["publish"] = publish(host, players, subs, pool_dir, done, log)
             print(f"第 {window['period']} 期已经收尾、进了第 {period} 期：什么都不做。", flush=True)
             return finish(0)
@@ -362,7 +389,7 @@ def main(argv=None):
         from open_period import is_open
         is_open(arena, period)                    # a window of P on another field stops here
         if not deadline_passed(window):
-            raise SystemExit(f"第 {period} 期还没到截止时间（{window['deadline']}，UTC）：什么都没做")
+            raise NotYet(f"第 {period} 期还没到截止时间（{window['deadline']}，UTC）：什么都没做")
         kind = period_kind(period)
         res["steps"]["state"] = {"ok": True, "period": period, "kind": kind, "deadline": window["deadline"]}
         step = "collected"
@@ -489,12 +516,18 @@ def main(argv=None):
                                  **{name: len(keys) for name, keys in new.items()},
                                  "listed_earlier": {name: len(audit_keys(au)[name]) - len(new[name]) for name in new}}
         audit_clean = not any(new.values())
+        held_ids = [f"{name}:{k}" for name, keys in new.items() for k in keys]
+
+        def some(keys):
+            return "、".join(k.rsplit("|", 1)[-1] for k in keys[:5]) + ("……" if len(keys) > 5 else "")
         if new["failed"]:
-            res["held"].append(f"重放审计：{len(new['failed'])} 局重放不出来（{audit_out}）")
+            res["held"].append(f"重放审计：{len(new['failed'])} 局重放不出来（{some(new['failed'])}；{audit_out}）")
         if new["unlogged"]:
-            res["held"].append(f"重放审计：池子算过分、日志里没有的局 {len(new['unlogged'])} 局（{audit_out}）")
+            res["held"].append(f"重放审计：池子算过分、日志里没有的局 {len(new['unlogged'])} 局"
+                               f"（{some(new['unlogged'])}；{audit_out}）")
         if new["unreadable"]:
-            res["held"].append(f"重放审计：日志里有 {len(new['unreadable'])} 行不是完整的 JSON（{audit_out}）")
+            res["held"].append(f"重放审计：日志里有 {len(new['unreadable'])} 行不是完整的 JSON"
+                               f"（{some(new['unreadable'])}；{audit_out}）")
         if any(res["steps"]["audit"]["listed_earlier"].values()):
             res["report"]["audit_listed_earlier"] = res["steps"]["audit"]["listed_earlier"]
         if au["voids"]:
@@ -517,19 +550,33 @@ def main(argv=None):
                                    "members": len(co["members"]), "over": len(over),
                                    "calibration": co["calibration"], "problems": len(co.get("problems", []))}
         if over:
-            res["held"].append(f"算力抽查：{len(over)} 个成员 90% 区间整个在 1.15 以上（{comp_out}）：由 Salem 定")
+            held_ids += [f"compute:{m['member']}@{m['version']}" for m in over]
+            res["held"].append(f"算力抽查：{len(over)} 个成员 90% 区间整个在 1.15 以上"
+                               f"（{'、'.join(m['member'] for m in over)}；{comp_out}）：由 Salem 定")
         if co["calibration"].get("note") or co.get("problems"):
             res["report"]["compute"] = {"calibration": co["calibration"], "problems": co.get("problems", [])}
         save()
 
+        # what held this run, by identity (games, members): Salem's --advance-anyway names the set he was shown by its
+        # digest, and lets through only problems in that set; a run held again adds its own set, widening none (review 3)
+        held_file = audit_dir / f"held-P{period}.json"
+        sets = _read(held_file, {})
+        if not isinstance(sets, dict):
+            sets = {}
+        digest = held_digest(held_ids) if res["held"] else None
+        res["held_digest"] = digest
+        shown = set((sets.get(a.held) or {}).get("ids", [])) if a.held else set()
+        covered = bool(a.advance_anyway) and a.held in sets and set(held_ids) <= shown
+        save()
+
         step = "formal"
-        if audit_clean or a.advance_anyway:       # Salem's decision covers the period's games (11-24 review)
+        if audit_clean or covered:                # Salem's decision covers the period's games (11-24 review)
             _, text = run(["-m", "ladder.arena", "formal", arena, "--pool", pool_dir, "--subs", subs,
                            "--period", period], log)
             res["steps"]["formal"] = {"ok": True, "players": last_json(text)}
         else:
             res["steps"]["formal"] = {"ok": True, "skipped": "重放审计有新问题：正式对局先不给，Salem 定了照样进下一期"
-                                                         "（--advance-anyway）时一起给"}
+                                                         "（--advance-anyway … --held <held_digest>）时一起给"}
         save()
 
         step = "boards"
@@ -541,19 +588,20 @@ def main(argv=None):
         save()
 
         step = "advance"
-        held_file = audit_dir / f"held-P{period}.json"
-        before = _read(held_file, [])
-        unseen = [h for h in res["held"] if h not in before]
-        if res["held"] and (not a.advance_anyway or unseen):
-            held_file.write_text(json.dumps(sorted(set(before) | set(res["held"])), ensure_ascii=False, indent=1),
-                                 encoding="utf-8")
-            res["steps"]["advance"] = {"ok": False, "held": True,
-                                       **({"anyway_refused": "有这次才出现的问题，Salem 还没看过"} if a.advance_anyway else {})}
-            print("没进下一期，要主持方先看：\n" + "\n".join(res["held"]), flush=True)
+        if res["held"] and not covered:
+            sets.setdefault(digest, {"ids": sorted(held_ids), "held": res["held"], "out": str(a.out),
+                                     "time": time.strftime("%Y-%m-%dT%H:%M:%S")})
+            held_file.write_text(json.dumps(sets, ensure_ascii=False, indent=1), encoding="utf-8")
+            refused = {}
+            if a.advance_anyway:
+                refused = {"anyway_refused": (f"--held {a.held} 不在 {held_file.name} 里" if a.held not in sets else
+                                              "有 Salem 看过的那份清单里没有的问题：要再问 Salem")}
+            res["steps"]["advance"] = {"ok": False, "held": True, **refused}
+            print(f"没进下一期，要主持方先看（held_digest {digest}）：\n" + "\n".join(res["held"]), flush=True)
             return finish(2)
         _, text = run(["-m", "ladder.pool", "advance", pool_dir], log)
         res["steps"]["advance"] = {"ok": True, **(last_json(text) or {}),
-                                   **({"anyway": a.advance_anyway} if res["held"] else {})}
+                                   **({"anyway": a.advance_anyway, "held": a.held} if res["held"] else {})}
         save()
         step = "publish"                          # after the advance; a stop here is redone by the next double-click
         res["steps"]["publish"] = publish(host, players, subs, pool_dir, period, log)
@@ -564,7 +612,7 @@ def main(argv=None):
         return finish(1)
     except (Exception, SystemExit) as e:
         res["steps"][step] = {"ok": False, "error": f"{type(e).__name__}: {e}"}
-        return finish(1)
+        return finish(3 if a.check and isinstance(e, NotYet) else 1)
     finally:
         from ladder.arena import _unlock
         for f in reversed(keep):

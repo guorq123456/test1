@@ -47,7 +47,9 @@ class Fake:
     """Stands in for the commands: records them, does what each leaves behind."""
 
     def __init__(self, host, failed=0, over=0, deliver_fails=False):
-        self.host, self.calls, self.failed, self.over = host, [], failed, over
+        """failed: how many games don't replay (g0, g1, ...), or which; over: how many members are over (m0, ...)."""
+        self.failed = [f"g{i}" for i in range(failed)] if isinstance(failed, int) else list(failed)
+        self.host, self.calls, self.over = host, [], over
         self.deliver_fails = deliver_fails
 
     def __call__(self, args, log, extra_env=None, check=True):
@@ -83,13 +85,14 @@ class Fake:
             (o / "result-public.json").write_text("{}", encoding="utf-8")
         elif what.startswith("ladder.audit"):
             o = Path(args[args.index("--out") + 1])
-            o.write_text(json.dumps({"checked": 5, "skipped": 0, "failed": [{"id": "x"}] * self.failed,
+            o.write_text(json.dumps({"checked": 5, "skipped": 0, "failed": [{"id": g} for g in self.failed],
                                      "unlogged": [], "unreadable": [], "voids": {}, "ok": not self.failed}),
                          encoding="utf-8")
             return (1 if self.failed else 0), ""
         elif what.startswith("ladder.compute_audit"):
             o = Path(args[args.index("--out") + 1])
-            o.write_text(json.dumps({"members": [{"member": "m", "over": True}] * self.over,
+            o.write_text(json.dumps({"members": [{"member": f"m{i}", "version": 1, "over": True}
+                                                 for i in range(self.over)],
                                      "calibration": {"games": 20}}), encoding="utf-8")
             return (1 if self.over else 0), ""
         elif what == "ladder.leaderboard " + args[3] or what.startswith("ladder.leaderboard"):
@@ -147,10 +150,14 @@ def test_a_held_period_keeps_what_is_done_and_advances_only_when_told(tmp_path, 
     assert len(s["held"]) == 2 and "skipped" in s["steps"]["formal"] and not s["steps"]["advance"]["ok"]
     assert "ladder.arena formal" not in fake.calls and Pool(host / "pool").period == 1
     assert not (players / "public" / "board-P1.json").exists()
+    assert "g0、g1" in s["held"][0] and "m0" in s["held"][1]          # which games and members, for Salem
+    with pytest.raises(SystemExit):                                  # the decision names the summary Salem saw
+        C.main(argv(host, ar, players, tmp_path / "ox", "--advance-anyway", "Salem 11-24"))
     # Salem decided: advance all the same. The ladder, the anchors and the puzzle are kept (nobody was inducted, so
     # the induction is asked again: the same pool gives the same nobody)
     fake.calls.clear()
-    assert C.main(argv(host, ar, players, tmp_path / "o2", "--advance-anyway", "Salem 11-24")) == 0
+    assert C.main(argv(host, ar, players, tmp_path / "o2", "--advance-anyway", "Salem 11-24",
+                       "--held", s["held_digest"])) == 0
     assert "ladder.pool ladder" not in fake.calls
     assert "ladder.anchors run" not in fake.calls and "ladder.puzzles run" not in fake.calls
     assert fake.calls[-2:] == ["ladder.pool advance", "ladder.submit deliver"]
@@ -162,22 +169,31 @@ def test_a_held_period_keeps_what_is_done_and_advances_only_when_told(tmp_path, 
 
 def test_advance_anyway_covers_only_what_was_held_when_asked(tmp_path, monkeypatch, keyed):
     host, ar, players = setup(tmp_path)
-    monkeypatch.setattr(C, "run", Fake(host, failed=1))
+    monkeypatch.setattr(C, "run", Fake(host, failed=["a"]))
     assert C.main(argv(host, ar, players, tmp_path / "o")) == 2
-    fake = Fake(host, failed=2)                                     # something new since Salem was asked
+    shown = summary(tmp_path / "o")["held_digest"]
+    for i, failed in enumerate((["a", "b"], ["a", "b"], ["c"])):  # new since Salem was asked; again; same count
+        fake = Fake(host, failed=failed)
+        monkeypatch.setattr(C, "run", fake)
+        assert C.main(argv(host, ar, players, tmp_path / f"o{i + 2}", "--advance-anyway", "Salem",
+                           "--held", shown)) == 2
+        s = summary(tmp_path / f"o{i + 2}")
+        assert s["steps"]["advance"]["anyway_refused"] and "ladder.pool advance" not in fake.calls
+        assert "ladder.arena formal" not in fake.calls              # no formal games past what Salem saw (review 3)
+        assert s["held_digest"] != shown and Pool(host / "pool").period == 1
+    fake = Fake(host, failed=["a"])
     monkeypatch.setattr(C, "run", fake)
-    assert C.main(argv(host, ar, players, tmp_path / "o2", "--advance-anyway", "Salem")) == 2
-    s = summary(tmp_path / "o2")
-    assert s["steps"]["advance"]["anyway_refused"] and "ladder.pool advance" not in fake.calls
-    assert Pool(host / "pool").period == 1
+    assert C.main(argv(host, ar, players, tmp_path / "o9", "--advance-anyway", "Salem", "--held", "nope")) == 2
+    assert C.main(argv(host, ar, players, tmp_path / "o10", "--advance-anyway", "Salem", "--held", shown)) == 0
+    assert "ladder.arena formal" in fake.calls and Pool(host / "pool").period == 2
 
 
 def test_what_an_earlier_audit_listed_holds_no_later_period(tmp_path, monkeypatch, keyed):
     host, ar, players = setup(tmp_path)
     (host / "audit").mkdir(parents=True)
-    (host / "audit" / "P0.json").write_text(json.dumps({"failed": [{"id": "x"}], "unlogged": [], "unreadable": []}),
-                                            encoding="utf-8")
-    monkeypatch.setattr(C, "run", Fake(host, failed=2))           # the same game, listed (and decided) in period 0
+    (host / "audit" / "P0.json").write_text(json.dumps({"failed": [{"id": "g0"}, {"id": "g1"}], "unlogged": [],
+                                                        "unreadable": []}), encoding="utf-8")
+    monkeypatch.setattr(C, "run", Fake(host, failed=2))           # the same games, listed (and decided) in period 0
     assert C.main(argv(host, ar, players, tmp_path / "o")) == 0
     s = summary(tmp_path / "o")
     assert s["held"] == [] and s["steps"]["audit"]["listed_earlier"]["failed"] == 2
@@ -191,6 +207,8 @@ def test_a_publish_cut_off_after_the_advance_is_done_by_the_next_run(tmp_path, m
     assert Pool(host / "pool").period == 2 and "deliver" in summary(tmp_path / "o")["steps"]["publish"]["error"]
     fake = Fake(host)
     monkeypatch.setattr(C, "run", fake)
+    assert C.main(argv(host, ar, players, tmp_path / "oc", "--check")) == 0     # the check runs nothing (review 3)
+    assert fake.calls == [] and summary(tmp_path / "oc")["steps"]["publish"]["pending"]
     assert C.main(argv(host, ar, players, tmp_path / "o2")) == 0
     assert fake.calls == ["ladder.submit deliver"] and (players / "public" / "board-P1.json").exists()
 
@@ -219,6 +237,7 @@ def test_nothing_runs_before_the_deadline(tmp_path, monkeypatch, keyed):
     monkeypatch.setattr(C, "run", fake)
     assert C.main(argv(host, ar, players, tmp_path / "o")) == 1
     assert fake.calls == [] and "截止" in summary(tmp_path / "o")["steps"]["state"]["error"]
+    assert C.main(argv(host, ar, players, tmp_path / "oc", "--check")) == 3      # the PC's wrapper doesn't pull
 
 
 def test_nothing_runs_before_the_collection_is_done(tmp_path, monkeypatch, keyed):
@@ -227,6 +246,7 @@ def test_nothing_runs_before_the_collection_is_done(tmp_path, monkeypatch, keyed
     monkeypatch.setattr(C, "run", fake)
     assert C.main(argv(host, ar, players, tmp_path / "o")) == 1
     assert fake.calls == [] and "截止那一刻没在跑" in summary(tmp_path / "o")["steps"]["collected"]["error"]
+    assert C.main(argv(host, ar, players, tmp_path / "oc", "--check")) == 3
     # the listing names a directory nobody took
     w = json.loads((ar / "public" / "window.json").read_text(encoding="utf-8"))
     d = players / "fable" / "submit" / "x"
@@ -235,6 +255,7 @@ def test_nothing_runs_before_the_collection_is_done(tmp_path, monkeypatch, keyed
                                   "dirs": [["fable", str(d.resolve()), collect.stamp(d)]]})
     assert C.main(argv(host, ar, players, tmp_path / "o2")) == 1
     assert fake.calls == [] and "还没收" in summary(tmp_path / "o2")["steps"]["collected"]["error"]
+    assert C.main(argv(host, ar, players, tmp_path / "o2c", "--check")) == 3
     # a collection loop still running
     collect._note(host / "subs", {"ev": "dir", "player": "fable", "dir": str(d.resolve()), "stamp": collect.stamp(d),
                                   "late": "test"})
@@ -246,6 +267,17 @@ def test_nothing_runs_before_the_collection_is_done(tmp_path, monkeypatch, keyed
         held.close()
     assert C.main(argv(host, ar, players, tmp_path / "o4", "--check")) == 0 and fake.calls == []
     assert summary(tmp_path / "o4")["report"]["collect"]["late"] == ["x"]
+    # put in after the deadline: only in the listing now (the loop printed it, collect.jsonl doesn't have it)
+    (players / "sol" / "submit" / "y").mkdir(parents=True)
+    assert C.main(argv(host, ar, players, tmp_path / "o5", "--check")) == 0
+    assert summary(tmp_path / "o5")["steps"]["collected"]["late_new"] == ["sol:y"]
+
+
+def test_a_check_that_fails_for_another_reason_says_1(tmp_path, monkeypatch, keyed):
+    host, ar, players = setup(tmp_path)
+    import check_lock
+    monkeypatch.setattr(check_lock, "differs", lambda: ["ladder/rules.py"])
+    assert C.main(argv(host, ar, players, tmp_path / "o", "--check")) == 1     # the wrapper pulls then
 
 
 def test_the_next_puzzle_takes_the_seeds_after_the_last(tmp_path):

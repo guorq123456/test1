@@ -10,14 +10,14 @@ set PYTHONHASHSEED=0
 set PYTHONUTF8=1
 set RUNS=C:\claude\ladder-runs\close
 if not exist %RUNS% mkdir %RUNS%
-powershell -NoProfile -Command "if (Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'python.exe' -and $_.CommandLine -match 'phase1_checks|base2_checks|arena_dry|first_setup|open_period|close_period|pilot_conditions|lethal_bank|ladder\.pool|ladder\.collect|ladder\.submit (receive|gate|admit|deliver)|ladder\.(anchors|puzzles|audit|compute_audit|outside|leaderboard)|ladder\.arena formal' }) { exit 3 } else { exit 0 }"
+powershell -NoProfile -Command "$ErrorActionPreference = 'Stop'; try { $p = @(Get-CimInstance Win32_Process); if ($p.Count -eq 0) { exit 7 }; if ($p | Where-Object { $_.Name -eq 'python.exe' -and $_.CommandLine -match 'phase1_checks|base2_checks|arena_dry|first_setup|open_period|close_period|pilot_conditions|lethal_bank|ladder\.pool|ladder\.collect|ladder\.submit (receive|gate|admit|deliver)|ladder\.(anchors|puzzles|audit|compute_audit|outside|leaderboard)|ladder\.arena formal' }) { exit 3 } else { exit 0 } } catch { exit 7 }"
 set CHECK=%errorlevel%
 if not "%CHECK%"=="0" goto busy
 echo This closes the period: the ladder, the anchors, the audits, and then the pool goes to the next period.
 set OK=
 set /p OK=Type CLOSE and press Enter to go on:
 if not "%OK%"=="CLOSE" goto nothing
-powershell -NoProfile -Command "if (Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'python.exe' -and $_.CommandLine -match 'phase1_checks|base2_checks|arena_dry|first_setup|open_period|close_period|pilot_conditions|lethal_bank|ladder\.pool|ladder\.collect|ladder\.submit (receive|gate|admit|deliver)|ladder\.(anchors|puzzles|audit|compute_audit|outside|leaderboard)|ladder\.arena formal' }) { exit 3 } else { exit 0 }"
+powershell -NoProfile -Command "$ErrorActionPreference = 'Stop'; try { $p = @(Get-CimInstance Win32_Process); if ($p.Count -eq 0) { exit 7 }; if ($p | Where-Object { $_.Name -eq 'python.exe' -and $_.CommandLine -match 'phase1_checks|base2_checks|arena_dry|first_setup|open_period|close_period|pilot_conditions|lethal_bank|ladder\.pool|ladder\.collect|ladder\.submit (receive|gate|admit|deliver)|ladder\.(anchors|puzzles|audit|compute_audit|outside|leaderboard)|ladder\.arena formal' }) { exit 3 } else { exit 0 } } catch { exit 7 }"
 set CHECK=%errorlevel%
 if not "%CHECK%"=="0" goto busy
 set PYBASE=
