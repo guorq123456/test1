@@ -419,9 +419,9 @@ def test_a_queued_run_is_checked_again_when_its_turn_comes(field, tmp_path, monk
     seat = arena.Seat(a, "fable-ultracode")
     real = arena._lock
 
-    def others_ran_meanwhile(path):
+    def others_ran_meanwhile(path, who="host"):
         seat.count("R9999", "vs", 59)                                  # a run of the same player ahead in the queue
-        return real(path)
+        return real(path, who)
     monkeypatch.setattr(arena, "_lock", others_ran_meanwhile)
     runs = a / "players" / "fable-ultracode" / "runs"
     with pytest.raises(arena.ArenaError, match="还剩 1 局"):

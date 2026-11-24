@@ -60,6 +60,9 @@ def test_an_open_window_is_never_opened_again(tmp_path, monkeypatch):
     host, arena, players = tmp_path / "host", tmp_path / "arena", tmp_path / "players"
     for name in ("public",):
         (players / name).mkdir(parents=True)
+    (players / "public" / "arena.md").write_text("old", encoding="utf-8")       # an old guide is replaced
+    (players / "public" / "reports").mkdir()
+    (players / "public" / "puzzles.md").write_text("kept", encoding="utf-8")    # files not from the repo: left
     calls = []
     real_py = O.py
     monkeypatch.setattr(O, "py", lambda args, log: calls.append(args[1]) or real_py(args, log))
@@ -70,11 +73,17 @@ def test_an_open_window_is_never_opened_again(tmp_path, monkeypatch):
     monkeypatch.setattr("ladder.deal.key_id", lambda key: "test")
     assert O.main(argv) == 0
     assert calls == ["ladder.evaluator", "ladder.anchors", "ladder.arena", "ladder.arena", "ladder.report"]
+    s = json.loads((tmp_path / "o" / "summary.json").read_text(encoding="utf-8"))
+    assert "arena.md" in s["steps"]["public"]["updated"]
+    assert (players / "public" / "arena.md").read_bytes() == (O.LADDER / "public" / "arena.md").read_bytes()
+    assert "按选手轮流" in (players / "public" / "arena.md").read_text(encoding="utf-8")
+    assert (players / "public" / "puzzles.md").read_text(encoding="utf-8") == "kept"
     first = (arena / "public" / "window.json").read_text(encoding="utf-8")
     calls.clear()
     assert O.main(argv) == 0
     s = json.loads((tmp_path / "o" / "summary.json").read_text(encoding="utf-8"))
     assert calls == [] and s["steps"]["state"]["already_open"] and "kept" in s["steps"]["report"]
+    assert "public" not in s["steps"]                                   # mid-period: the guides are not touched
     assert (arena / "public" / "window.json").read_text(encoding="utf-8") == first
 
 

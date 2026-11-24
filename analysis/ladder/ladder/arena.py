@@ -348,34 +348,131 @@ class Seat:
         return {"spec": f"py:{name}:{meta['class']}", "deck": ids, "sha": h, "dir": str(d.resolve())}
 
 
-def _lock(arena: Path):
-    """One run at a time on the machine (the workers are shared, D2)."""
-    path = Path(arena) / "host" / "run.lock"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    f = open(path, "a+")
-    told = False
-    while True:
+QUEUE_FRESH = 30.0          # seconds: a ticket not touched for this long belongs to a waiter that is gone
+QUEUE_POLL = 2.0            # seconds between a waiter's looks
+
+
+def _ticket_who(name: str) -> str:
+    """The waiter a ticket file belongs to: <ns>-<pid>-<who>.t."""
+    parts = name[:-2].split("-", 2)
+    return parts[2] if len(parts) == 3 else ""
+
+
+def _queue_next(arena: Path, now: float | None = None) -> str | None:
+    """The ticket whose turn it is: the host's (collecting, gating, the close) first, oldest first; then the player
+    served longest ago (never served: first), that player's oldest command. Stale tickets are cleared away."""
+    qdir = Path(arena) / "host" / "queue"
+    now = time.time() if now is None else now
+    tickets = []
+    for t in (qdir.glob("*.t") if qdir.is_dir() else []):
         try:
-            if os.name == "nt":
-                import msvcrt
-                f.seek(0)
-                msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
-            else:
-                import fcntl
-                fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            return f
+            age = now - t.stat().st_mtime
         except OSError:
+            continue
+        if age > QUEUE_FRESH:
+            try:
+                t.unlink()
+            except OSError:
+                pass
+            continue
+        tickets.append(t.name)
+    tickets.sort()
+    host = [t for t in tickets if _ticket_who(t) == "host"]
+    if host:
+        return host[0]
+    oldest = {}
+    for t in tickets:
+        oldest.setdefault(_ticket_who(t), t)
+    if not oldest:
+        return None
+    try:
+        served = _read(Path(arena) / "host" / "served.json") or {}
+    except (OSError, ValueError):
+        served = {}
+    who = min(oldest, key=lambda w: (float(served.get(w, 0)), oldest[w]))
+    return oldest[who]
+
+
+def _served(arena: Path, who: str):
+    """Written by the waiter that just took the lock (so no other writer): who was served when."""
+    p = Path(arena) / "host" / "served.json"
+    try:
+        served = _read(p) or {}
+    except (OSError, ValueError):
+        served = {}
+    served[who] = time.time()
+    tmp = p.with_name(f"served.{os.getpid()}.tmp")
+    for _ in range(5):
+        try:
+            tmp.write_text(json.dumps(served), encoding="utf-8")
+            os.replace(tmp, p)
+            return
+        except OSError:                     # a reader has it open (Windows): try again; the turns only skew
+            time.sleep(0.2)
+    try:
+        tmp.unlink()
+    except OSError:
+        pass
+
+
+def _try_lock(f) -> bool:
+    try:
+        if os.name == "nt":
+            import msvcrt
+            f.seek(0)
+            msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return True
+    except OSError:
+        return False
+
+
+def _lock(arena: Path, who: str = "host"):
+    """One run at a time on the machine (the workers are shared, D2), in turns (11-24, before period 2: in period 1
+    every waiter polled the lock every 5 s, so whoever queued the most commands won the most turns, a player with
+    one command waited an hour, and collecting, which takes the same lock, gave receipts 25-40 minutes late; all
+    five players reported it). Each waiter keeps a ticket in ARENA/host/queue (touched while it waits; one left
+    untouched for QUEUE_FRESH seconds is a waiter that is gone). When the lock is free the next is: the host's own
+    (`who` "host": collecting, gating, the close), oldest first; then the player served longest ago, that player's
+    oldest command. A player's turn is one command, whatever its size (A56: at most 2000 games)."""
+    arena = Path(arena)
+    path = arena / "host" / "run.lock"
+    qdir = arena / "host" / "queue"
+    qdir.mkdir(parents=True, exist_ok=True)
+    f = open(path, "a+")
+    ticket = qdir / f"{time.time_ns():020d}-{os.getpid()}-{re.sub(r'[^a-z0-9-]', '_', who.lower())}.t"
+    told = False
+    try:
+        while True:
+            try:
+                os.utime(ticket)
+            except FileNotFoundError:             # first look, or cleared while this process was held up
+                ticket.touch()
+            nxt = _queue_next(arena)
+            if (nxt is None or nxt == ticket.name) and _try_lock(f):
+                _served(arena, _ticket_who(ticket.name))
+                return f
             if not told:
-                print("练习场正在跑别人的对局，排队等……", file=sys.stderr, flush=True)
+                print("练习场正在跑别的命令，按选手轮流排队等（主持方收提交优先）……", file=sys.stderr, flush=True)
                 told = True
-            time.sleep(5)
+            time.sleep(QUEUE_POLL)
+    except BaseException:
+        f.close()
+        raise
+    finally:
+        try:
+            ticket.unlink()
+        except OSError:
+            pass
 
 
 def _locked(seat: "Seat", games: int):
     """The arena's lock, then the window checked again (11-23 review: a command queued behind others had been
     checked against a count without the runs ahead of it, and could start after the deadline). A run is opened only
     once this passes, so a refused command leaves nothing behind."""
-    lock = _lock(seat.arena)
+    lock = _lock(seat.arena, seat.player)
     try:
         seat.check_window(games)
     except BaseException:

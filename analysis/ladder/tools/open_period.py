@@ -11,6 +11,8 @@ players' first arena command says the arena is not open and nobody collects what
    **If the arena's window is already open for this period's field, steps 3-5 are skipped**: never a second snapshot
    or window (the deadline and the field the players practise on stay as they were). A window of this period on
    another field (someone snapshot by hand after it opened) stops the tool: it never opens a second window.
+   Opening (not when the window is open already): the players' guides (analysis/ladder/public) copied into
+   PLAYERS/public, each file that differs (11-24: arena.md on the queue's turns).
 3. freeze: HOST/frozen/P<period>.json (ladder.evaluator freeze; kept if it is there already).
 4. anchors: HOST/anchors/anchors.json (ladder.anchors table: the baseline snapshot, then the hall of fame from
    HOST/anchors/hof.json if there is one).
@@ -289,6 +291,15 @@ def main(argv=None):
                 (players / "public").mkdir(parents=True, exist_ok=True)
                 shutil.copy2(ROOT / env["notes"], players / "public" / Path(env["notes"]).name)
                 res["steps"]["environment"]["notes"] = str(players / "public" / Path(env["notes"]).name)
+            step = "public"                       # the players' guides as the repository has them now (11-24:
+            pub = players / "public"              # arena.md on the turns); between periods only, like the seal
+            pub.mkdir(parents=True, exist_ok=True)
+            changed = []
+            for f in sorted((LADDER / "public").iterdir()):
+                if f.is_file() and (not (pub / f.name).exists() or (pub / f.name).read_bytes() != f.read_bytes()):
+                    shutil.copy2(f, pub / f.name)
+                    changed.append(f.name)
+            res["steps"]["public"] = {"ok": True, "updated": changed}
             step = "freeze"
             if frozen.exists():
                 res["steps"]["freeze"] = {"ok": True, "kept": str(frozen)}
