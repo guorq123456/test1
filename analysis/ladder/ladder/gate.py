@@ -21,7 +21,9 @@ Kinds:
   the new version wins: 0.5 + gap / (2 * discordant share). The discordant share is the member's last measured one,
   or (first gate) measured on a separate 200 pairs first and then fixed (A23: those 200 don't count in the test).
   The expected number of pairs under H1 is worked out before the run; at 3 times that with no decision: undecided,
-  which counts as not passed. Two versions that play alike (no discordant pair in the first 200) stop there with
+  which counts as not passed. A discordant share not above delta (in pp / 100) makes H1 impossible (winning every
+  discordant pair still gains at most the share): not passed at once, no more pairs (S31, Salem 11-24 20:48Z; it
+  used to stop with an error). Two versions that play alike (no discordant pair in the first 200) stop there with
   "no difference" instead of running to the cap.
 - noninf (refactor, speed-up, simplification whose decisions changed): the same test with H0 gap -2, H1 gap 0.
 - same (a change that should not change any decision): every decision of both versions over `--pairs` pairs
@@ -372,6 +374,12 @@ class Gate:
             self.share = max(0.05, sum(o in ("new", "old") for o in valid) / max(1, len(valid)))
             rec["share_measured_on"] = len(valid)
         h0, h1 = (0.0, self.delta) if self.kind == "better" else (-2.0, 0.0)
+        if self.kind == "better" and h1 / 100 >= self.share:   # S31: so few discordant pairs that H1 can't happen
+            rec.update(hypotheses=f"H0 {h0:+g} pp / H1 {h1:+g} pp，不同局占比 {self.share:.3f}",
+                       discordant_share=round(self.share, 4), llr=None, discordant=None, verdict="not passed")
+            rec["estimate_note"] = (f"不同局占比只有 {self.share:.3f}（结果不同的对就这么多，全赢也最多 "
+                                    f"{100 * self.share:.1f} pp），到不了 {h1:g} pp 的假设：不再打，直接判没过（S31）")
+            return
         p0, p1 = p_of_gap(h0, self.share), p_of_gap(h1, self.share)
         exp = expected_pairs(p0, p1, self.share)
         cap = math.ceil(CAP_FACTOR * exp)

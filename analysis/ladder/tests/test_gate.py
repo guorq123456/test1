@@ -132,6 +132,20 @@ def test_identical_versions_in_the_sequential_test_stop_with_no_difference(tmp_p
     assert rec["verdict"].startswith("no difference") and rec["pairs"] < rec["cap_pairs"]
 
 
+def test_a_share_too_small_for_delta_is_not_passed_at_once(tmp_path, frozen):
+    # S31 (11-24, period 2: three updates stopped with "a gap of 5.0 pp can't happen with a discordant share of 0.05")
+    fz, mid = frozen
+    rec = gate(tmp_path, fz, mid, "bot:greedy", "py:helpers:Random", "better", delta=5, share=0.05).run(workers=2)
+    assert rec["verdict"] == "not passed" and rec["pairs"] == 0 and "S31" in rec["estimate_note"]
+    assert rec["discordant_share"] == 0.05
+    rows = [json.loads(l) for l in (tmp_path / "gates.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert [r["verdict"] for r in rows] == ["not passed"]
+    assert "S31" in (tmp_path / "GATES.md").read_text(encoding="utf-8")
+    # only "better" (what S31 decided); noninf with an impossible H0 still stops with the error, as before
+    with pytest.raises(ValueError, match="can't happen"):
+        gate(tmp_path, fz, mid, "py:helpers:Random", "bot:greedy", "noninf", share=0.02, rng=3).run(workers=2)
+
+
 def test_an_interrupted_gate_is_recorded_and_the_rerun_starts_fresh(tmp_path, frozen, monkeypatch):
     # review 11-22: a re-run used to reuse the stopped attempt's folder, skip its games and end undecided
     fz, mid = frozen

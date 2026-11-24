@@ -24,7 +24,7 @@
 | ladder/pool.py | 1.4 池管理器 | 8dafca4e9e5bef6664b7e2894a52f35bfbaf46ec5391f5d997d2c3176a835df8 |
 | ladder/evaluator.py | 1.5 冻结池评测器 | 164a1378bc2b91e1b80a99ed5cb9c3b7cb4207ba86d54b92cb93fc36479bec6f |
 | ladder/leaderboard.py | 1.6 排行榜 | 439fcd4987db26a1575f74d31181a5bc9758f9bf474351f6b1097211dbaba92b |
-| ladder/gate.py | 1.7 检验工具 | 2118aabb1769d88d8cd9072205d384e90498a26c61c3a229ed5d340e98cc7584 |
+| ladder/gate.py | 1.7 检验工具 | 25baef9f6ce5415b415a46f376714f0f55a2cdbd88889d37135e8f6e14ca94bf |
 
 ## 不锁的（A49）
 
@@ -38,3 +38,4 @@
 |---|---|---|
 | 11-23 | dc2cbeb | 1.9 锁定 |
 | 11-23 | （本次提交，gate.py 一处） | S16：Salem 14:30Z 决定卡同意，把关里新旧版每步算力比的无效线 1.08 → 1.15（和收提交的 S15 一致）；只改 COMPUTE_RATIO 一行和文档串，别的锁定文件不动 |
+| 11-24 | （本次提交，gate.py 一处） | S31：Salem 20:48Z 决定卡同意（「改，3 份记成没过」）：不同局占比不超过 delta 时 H1 不可能，以前在 p_of_gap 抛错（第 2 期 3 份更新因此没结论，LD-77），改成直接判没过（只管 better；noninf 照旧）；只加这一处判断和文档串，别的锁定文件不动 |
