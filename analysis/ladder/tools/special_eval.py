@@ -22,7 +22,8 @@ against the same-class baseline member, on the pool frozen at the period's end.
    HOST/special/P<P>/result.json and result.md (with the players' names: host and Salem only); each player's own rows
    in PLAYERS/<folder>/receipts/特殊期评测-P<P>.md (never another player's).
 
-Ctrl+C stops; running it again continues. The players' strategies are imported from HOST/subs/code (the workers get it
+Each candidate is played under the arena's lock as the host (D2: one run at a time; between candidates Salem's lab,
+S30, may take a turn). Ctrl+C stops; running it again continues. The players' strategies are imported from HOST/subs/code (the workers get it
 through LADDER_EXTRA_PATH, as in the gate).
 """
 from __future__ import annotations
@@ -86,7 +87,7 @@ def welch(a: dict, b: dict) -> dict:
 
 
 def evaluate(host: Path, period: int, workers: int = 23, mask=None, only=None, games=1200, tail=600, repeats=5,
-             log=print) -> dict:
+             log=print, arena: Path | None = None) -> dict:
     from ladder.evaluator import Candidate, Evaluation, freeze, load_frozen
     from ladder.pool import Pool
     out = host / "special" / f"P{period}"
@@ -131,7 +132,15 @@ def evaluate(host: Path, period: int, workers: int = 23, mask=None, only=None, g
         seeds = (lo0 + SPAN * k, lo0 + SPAN * (k + 1))
         log(f"[{k + 1}/{len(order)}] {c['mid']}（{CRAFT_ZH[c['craft']]}，{c['owner']}）种子 {seeds[0]}～{seeds[1] - 1}")
         ev = Evaluation(fz, d, cand, seeds, games, tail, repeats)
-        results[c["mid"]] = ev.run(workers=workers, mask=mask, quiet=True)
+        lock = None
+        if arena is not None:                # one run at a time (D2): the arena's lock as the host, candidate by
+            from ladder.arena import _lock, _unlock     # candidate, so Salem's lab (S30) gets turns in between
+            lock = _lock(arena, "host")
+        try:
+            results[c["mid"]] = ev.run(workers=workers, mask=mask, quiet=True)
+        finally:
+            if lock is not None:
+                _unlock(lock)
         r = results[c["mid"]]
         log(f"    相对 CR {r['rel_cr']:+.0f}（{r['lo']:+.0f}～{r['hi']:+.0f}）" + ("，有重复够不着对手（界限）" if r["stuck"] else ""))
     return report(out, period, base, mine, results, host)
@@ -196,6 +205,7 @@ def main(argv=None) -> int:
     ap.add_argument("--period", type=int, required=True)
     ap.add_argument("--host", type=Path, default=Path(r"C:\claude\ladder-host"))
     ap.add_argument("--players", type=Path, default=Path(r"C:\claude\ladder-players"))
+    ap.add_argument("--arena", type=Path, default=Path(r"C:\claude\ladder-arena"), help="whose lock it takes")
     ap.add_argument("--workers", type=int, default=23)
     ap.add_argument("--mask", type=lambda x: int(x, 0), default=None)
     ap.add_argument("--only", nargs="*")
@@ -208,7 +218,7 @@ def main(argv=None) -> int:
         print(f"第 {a.period} 期没有登记评测种子（SEEDS）")
         return 1
     try:
-        body = evaluate(a.host, a.period, a.workers, a.mask, a.only, a.games, a.tail, a.repeats)
+        body = evaluate(a.host, a.period, a.workers, a.mask, a.only, a.games, a.tail, a.repeats, arena=a.arena)
     except EvalError as e:
         print(f"停下：{e}")
         return 1

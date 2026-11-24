@@ -21,7 +21,7 @@ powershell -NoProfile -Command "if (Get-CimInstance Win32_Process | Where-Object
 set CHECK=%errorlevel%
 if not "%CHECK%"=="0" goto busy
 if defined DRY goto go
-echo This opens the period NOW: the 4-hour window starts and the players can begin.
+echo This opens the period NOW: the window starts (12 hours from period 3) and the players can begin.
 echo If the window is already open, it only restarts the collection loop.
 set OK=
 set /p OK=Type OPEN and press Enter to go on: 

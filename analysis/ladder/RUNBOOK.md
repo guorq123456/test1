@@ -10,6 +10,7 @@
 | `C:\claude\ladder-host\` | `ladder.key`（发牌密钥，base-2，A39）、`pool\`（正式池）、`subs\`（提交台账；`subs\code\` 是收下的打法）、`gates\`（检验台账）、`frozen\`（每期的冻结池）、`anchors\`、`reports\` | 只有主持方。选手不许读（规则 + 提示词，S4） |
 | `C:\claude\ladder-arena\` | 练习场：`host\`（冻结副本、谁是谁、`arena.key`、完整日志）、`public\`、`players\<名字>\`（选手名，arena.py） | `host\` 只有主持方；选手只读自己那份 |
 | `C:\claude\ladder-players\<名字>\` | 每个选手自己的工作目录：笔记本、`submit\`（交提交，一个提交一个子目录）、`receipts\`（主持方放回执）、`summary-P<期>.md`、`to-host.md`（A50） | 本人；主持方收提交、放回执、读小结 |
+| `C:\claude\ladder-lab\` | Salem 的实验场（S30，LAB.md）：`lab.cmd`、`lab.key`（实验场自己的发牌密钥）、`runs\L<号>\`（他的对局，完整日志）、`code\` | 只有 Salem。主持方不拿来做任何事（他本人的对局记录），选手不许读（提示词） |
 | `C:\claude\ladder-players\public\` | 公共目录副本：`analysis/ladder/public/` 全部 + 每期的环境报告 | 全部选手，只读 |
 
 选手（S20，Salem 11-23 18:57Z：不用代号，用选手名；名字就是目录名）：fable-ultracode、fable、astra、opus、sol（顺序就是 ladder.arena.PLAYERS，练习种子段按这个顺序分，A34）。
@@ -36,6 +37,10 @@
 ## 每期
 
 ### 1. 开期
+
+**特殊期开期前（第 3 期，A62、A64）**：上一期关完以后双击 `C:\claude\ladder-runs\before-P3.cmd`：拉代码 → 核锁定文件 → `tools\special_check.py --period 3`（28 副合法、关期后的池子里每队还能放几个人、五个选手能不能都选到队、在副本上收一次「选队」；结果 `C:\claude\ladder-runs\before-P3\<提交>\summary.json`）→ 开期空跑。五个选手选不全（`enough` 是 false）就先报 Salem，不开期。
+
+**实验场（S30）**：Salem 的命令和选手排同一个队，开期、关期、空跑的外层启动文件看到天梯的 Python 在跑（包括实验场）就不拉代码、不开始：先等它跑完。
 
 **用启动文件一次做完（11-23）**：双击 `C:\claude\ladder-runs\open-period.cmd`（`tools\pc\open-period.cmd` → `tools/open_period.py`），要输入 OPEN 才开。它按顺序做下面第 1、2、4 步和第 3 节的收提交循环：核锁定文件和密钥 → 核模拟器是这一期的环境（`tools/environments.py`，S25、A60：不是就停）→ 新环境的第一期：封存所有对局日志（`audit\sealed.json`）、补丁说明抄进 `C:\claude\ladder-players\public\` → 冻结池（`frozen\P<期>.json`，已有就留着）→ 锚点表（`anchors\anchors.json`，有 `hof.json` 就带上）→ 练习场 snapshot（`--anchors`、`--code`）和 open（12 小时、每人 6 万局、23 个工作进程；S29 第 3 期起，前两期 4 小时、2 万局）→ 环境报告（note 自动写期号、截止时刻、局数上限；还没进过报告的公共题结果 `HOST\puzzles\*\result-public.json` 自动带上，记在 `HOST\puzzles\reported.json`；报告写不成也照样开收提交的循环，summary 里记一笔）→ 收提交的循环（能效核 15 个；策略期加 `--gates after`，delta 读 `C:\claude\ladder-host\gates\delta-P<期>.json`：第 3 步定了以后先在 `C:\claude\ladder\analysis\ladder` 下跑一次 `py tools\open_period.py --set-delta <数>`，只记下、什么都不开；以后双击就用它，再给不一样的它拒绝；没记就双击，它停下不开）。**窗口要一直开着**，到它打出「这一期收完……可以开天梯了」。练习场这一期已经开着时再双击，它不会再开一次窗口（截止时刻、冻结副本都不变），也不拉代码（选手在跑），只重新起收提交的循环；同一时间只能有一个收提交的循环（`subs\collect.lock`）；截止以后才重启，循环会拒绝（见第 3 节 `--after-deadline`）。这一期的窗口已经开过、冻结副本却换了（有人期中手动 snapshot），它停下不开。结果在 `C:\claude\ladder-runs\open\<时间>-<提交>\`（summary.json、commands.log、collect.log）。下面是它做的命令，手动补救时照着做：
 

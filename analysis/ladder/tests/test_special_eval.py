@@ -55,7 +55,10 @@ def test_one_member_against_its_baseline(tmp_path, monkeypatch):
         monkeypatch.setattr(E, "SEEDS", {1: (93409050, 93409085)})
         E.evaluate(host, 1, workers=2, only=[mid], games=2, tail=1, repeats=2, log=lambda *_: None)
     monkeypatch.setattr(E, "SEEDS", {1: (93409050, 93409090)})
-    body = E.evaluate(host, 1, workers=2, only=[mid], games=2, tail=1, repeats=2, log=lambda *_: None)
+    body = E.evaluate(host, 1, workers=2, only=[mid], games=2, tail=1, repeats=2, log=lambda *_: None,
+                      arena=tmp_path / "arena")                       # under the arena's lock, released after
+    assert list((tmp_path / "arena" / "host" / "queue").glob("*.t")) == []
+    assert "host" in json.loads((tmp_path / "arena" / "host" / "served.json").read_text(encoding="utf-8"))
     (row,) = body["members"]
     sword = next(b for b in base if b["craft"] == 2)["mid"]
     assert row["mid"] == mid and row["base_mid"] == sword and row["owner"] == "astra"
