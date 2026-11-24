@@ -60,3 +60,22 @@ def test_not_yet_in_the_period(tmp_path, monkeypatch):
     assert special_check.main(["--period", "2", "--host", str(host), "--out", str(tmp_path / "o")]) == 1
     assert json.loads((tmp_path / "o" / "summary.json").read_text(encoding="utf-8"))["pool_period"] == 1
     special.teams.cache_clear()
+
+
+def test_a_stop_in_the_claim_keeps_the_rest_and_the_mask_reaches_receive(tmp_path, monkeypatch):
+    # 11-24 before-P3 on the PC: receive stopped with SystemExit (no --mask, A44) and summary.json was never written
+    from ladder import submit
+    host, pool = host_in_period_1(tmp_path, monkeypatch)
+    seen = []
+
+    def stop(d, player, pool_dir, subdir, workers=4, mask=None, **kw):
+        seen.append(mask)
+        raise SystemExit("this run compares per-step compute: give --mask 0x3fc3fc (the E-cores; A44)")
+    monkeypatch.setattr(submit, "receive", stop)
+    out = tmp_path / "o"
+    assert special_check.main(["--period", "1", "--host", str(host), "--out", str(out)]) == 1
+    res = json.loads((out / "summary.json").read_text(encoding="utf-8"))
+    assert seen == [0x3FC3FC] and res["room_together"] == 5 and res["enough"]
+    assert res["problems"] == ["the claim end to end stopped: SystemExit: this run compares per-step compute: "
+                               "give --mask 0x3fc3fc (the E-cores; A44)"]
+    special.teams.cache_clear()

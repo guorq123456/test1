@@ -1,7 +1,7 @@
 """Before a special period opens (A62, RUNBOOK): its round on this computer, and the room each team has in the pool as
 it is now. Changes nothing: the pool is copied, the claim is received into a scratch ledger. No game, no seed.
 
-    python analysis/ladder/tools/special_check.py --period 3 --out OUT [--host C:\\claude\\ladder-host]
+    python analysis/ladder/tools/special_check.py --period 3 --out OUT [--host C:\\claude\\ladder-host] [--mask 0x3FC3FC]
 
 1. the round: special.teams(P) loads (4 teams x 7 classes), the codes' checksum (sha256 of the codes joined by
    newlines, in the file's order: LD-75 has it), every list legal by submit.check_deck;
@@ -55,7 +55,8 @@ def most_claims(teams: list, period: int, pool) -> tuple[int, list]:
     return best, how
 
 
-def check(host: Path, period: int, out: Path) -> dict:
+def check(host: Path, period: int, out: Path, mask: int | None = None) -> dict:
+    """`mask`: the E-cores (submit.receive compares compute, A44: on Windows it refuses to start without one)."""
     from ladder import special, submit
     from ladder.pool import CRAFT_ZH, Pool, list_key
     res = {"period": period, "ok": False, "problems": []}
@@ -96,20 +97,31 @@ def check(host: Path, period: int, out: Path) -> dict:
     res["enough"] = res["room_together"] >= PLAYERS_MAX
     if not res["enough"]:
         res["problems"].append(f"only {res['room_together']} of the {PLAYERS_MAX} players can get a team")
-    # 4: a claim end to end, on a copy
+    # 4: a claim end to end, on a copy (a stop in it is a problem written down, with 1-3 kept: before-P3, 11-24)
+    try:
+        _claim(host, period, out, mask, t, alone, res)
+    except (Exception, SystemExit) as e:                    # noqa: BLE001
+        res["problems"].append(f"the claim end to end stopped: {type(e).__name__}: {e}")
+    res["ok"] = not res["problems"]
+    return res
+
+
+def _claim(host: Path, period: int, out: Path, mask, t: dict, alone: dict, res: dict):
+    from ladder import submit
+    from ladder.pool import CRAFT_ZH, Pool
     with tempfile.TemporaryDirectory(dir=out) as tmp:
         tmp = Path(tmp)
         shutil.copytree(host / "pool", tmp / "pool")
         team = next((k for k in sorted(t) if alone[k] > 0), None)
         if team is None:
             res["problems"].append("no team has room")
-            return res
+            return
         d = tmp / "in" / "选队"
         d.mkdir(parents=True)
         (d / "submission.json").write_text(json.dumps({"type": "选队", "team": team}, ensure_ascii=False),
                                            encoding="utf-8")
-        first = submit.receive(d, "astra", tmp / "pool", tmp / "subs")
-        again = submit.receive(d, "astra", tmp / "pool", tmp / "subs")
+        first = submit.receive(d, "astra", tmp / "pool", tmp / "subs", mask=mask)
+        again = submit.receive(d, "astra", tmp / "pool", tmp / "subs", mask=mask)
         lines = submit.ledger(tmp / "subs")
         slots = {}
         for c, e in sorted(t[team].items()):
@@ -120,8 +132,6 @@ def check(host: Path, period: int, out: Path) -> dict:
                         "again_reasons": again["reasons"], "slots": slots, "status_team": st.get("team")}
         if first["verdict"] != "收下" or again["verdict"] != "拒收" or any(slots.values()) or st.get("team") != team:
             res["problems"].append("the claim end to end did not go as it should")
-    res["ok"] = not res["problems"]
-    return res
 
 
 def main(argv=None) -> int:
@@ -134,11 +144,13 @@ def main(argv=None) -> int:
     ap.add_argument("--period", type=int, required=True)
     ap.add_argument("--host", type=Path, default=Path(r"C:\claude\ladder-host"))
     ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--mask", default="0x3FC3FC", help="the E-cores (receiving compares compute, A44); 'none' off Windows")
     a = ap.parse_args(argv)
+    mask = None if a.mask == "none" else int(a.mask, 16)
     a.out.mkdir(parents=True, exist_ok=True)
     try:
-        res = check(a.host, a.period, a.out)
-    except Exception as e:                                  # written down, not lost in a closed window
+        res = check(a.host, a.period, a.out, mask)
+    except (Exception, SystemExit) as e:                    # written down, not lost in a closed window
         res = {"period": a.period, "ok": False, "problems": [f"{type(e).__name__}: {e}"]}
     (a.out / "summary.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
     print(json.dumps(res, ensure_ascii=False, indent=1))
