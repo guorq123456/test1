@@ -135,3 +135,24 @@ def test_a_claim_is_received_without_games(p1, tmp_path):
         submit.read_dir(bad)
     rec = submit.receive(bad, "sol", p1.dir, subs)
     assert rec["verdict"] == "拒收" and rec["kind"] == "team"
+
+
+def test_review_slips_a_name_a_neutral_deck_a_bom(p1, tmp_path):
+    # 11-24 review: a name with stray spaces or other case is the team; a claimant's all-neutral deck is refused, not
+    # a crash; a 选队 saved with a BOM says so instead of asking for strategy.py, notes.md and evidence.md
+    problems, info = special.check_claim(team_sub(" crazy  raccoon "), "astra", p1, [])
+    assert problems == [] and info["team"] == CR
+    assert special.check_claim(team_sub("CRZ"), "astra", p1, [])[0]
+    neutral = {"kind": "deck", "meta": {"member": "x"}, "deck_ids": [10501110] * 40}
+    problems, _ = submit.check_slots(neutral, "astra", p1, [claim(1, "astra", CR)])
+    assert any("不是你选的队" in p for p in problems)
+    d = tmp_path / "名字"
+    d.mkdir()
+    for name, ok in (("Crazy raccoon ", True), ("LVH", False)):
+        (d / "submission.json").write_text(json.dumps({"type": "选队", "team": name}, ensure_ascii=False),
+                                           encoding="utf-8")
+        assert submit.precheck(d)["ok"] is ok
+    (d / "submission.json").write_text(json.dumps({"type": "选队", "team": CR}, ensure_ascii=False),
+                                       encoding="utf-8-sig")
+    res = submit.precheck(d)
+    assert not res["ok"] and len(res["problems"]) == 1 and "读不了" in res["problems"][0]

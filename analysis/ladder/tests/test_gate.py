@@ -137,7 +137,9 @@ def test_a_share_too_small_for_delta_is_not_passed_at_once(tmp_path, frozen):
     fz, mid = frozen
     rec = gate(tmp_path, fz, mid, "bot:greedy", "py:helpers:Random", "better", delta=5, share=0.05).run(workers=2)
     assert rec["verdict"] == "not passed" and rec["pairs"] == 0 and "S31" in rec["estimate_note"]
-    assert rec["discordant_share"] == 0.05
+    assert rec["share_seen"] == 0.05 and "discordant_share" not in rec
+    # the next gate of this member (another change) does not take that share as its own: it measures again
+    assert gate(tmp_path, fz, mid, "py:helpers:Random", "bot:greedy", "better", delta=5, rng=4).share is None
     rows = [json.loads(l) for l in (tmp_path / "gates.jsonl").read_text(encoding="utf-8").splitlines()]
     assert [r["verdict"] for r in rows] == ["not passed"]
     assert "S31" in (tmp_path / "GATES.md").read_text(encoding="utf-8")

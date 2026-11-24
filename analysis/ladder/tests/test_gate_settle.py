@@ -88,6 +88,8 @@ def _host(tmp_path, share_a="0.05", discordant_a=4):
     _games(gates / "G-0003", "G-0003", 9)
     _w(subs / "collect.jsonl", {"ev": "gate-failed", "receipt": "S-0004", "error": ERR.format("0.05"),
                                 "time": "2026-11-24T20:15:00+00:00"})
+    with (subs / "collect.jsonl").open("a", encoding="utf-8") as f:
+        f.write('{"ev": "gate-fai\x00\x00')                               # a power cut's torn line (LD-42)
     return host, (ma, mb, mc)
 
 
@@ -109,9 +111,10 @@ def test_three_stopped_gates_are_settled_not_passed(tmp_path):
     s4, s5, s6 = gl[3:]
     assert (s4["settles"], s5["settles"], s6["settles"]) == ("G-0002", None, "G-0003")
     assert s4["member"] == ma.mid and s4["new"] == "py:sub_S0002:Mine" and s4["old"] == "py:helpers:Random"
-    assert s4["share_source"] == {"measured_on": 200, "discordant": 4} and s4["discordant_share"] == 0.05
+    assert s4["share_source"] == {"measured_on": 200, "discordant": 4} and s4["share_seen"] == 0.05
     assert s5["old"] == "py:sub_S0001:Mine" and s5["share_source"] == {"from_ledger": ["G-0001"]}
-    assert s6["share_source"] == {"measured_on": 200, "discordant": 9} and s6["discordant_share"] == 0.05
+    assert s6["share_source"] == {"measured_on": 200, "discordant": 9} and s6["share_seen"] == 0.05
+    assert not any("discordant_share" in r for r in gl[3:])      # a later gate of A or C measures its share again
     assert all(r["pairs"] == 0 and r["seeds_used"] == [] and "S31" in r["estimate_note"] for r in gl[3:])
     assert "补记（S31）" in (gates / "GATES.md").read_text(encoding="utf-8")
     gated = [l for l in map(json.loads, (subs / "submissions.jsonl").read_text(encoding="utf-8").splitlines())

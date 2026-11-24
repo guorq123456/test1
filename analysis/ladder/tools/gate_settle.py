@@ -16,7 +16,8 @@ Without --write it only reads and says what it would write (OUT/summary.json). F
 - the version it was against: the attempt's "old" and the pool's history at the time of the error must agree;
 - S <= D / 100.
 With --write, under the submissions ledger's lock, for each: a gate-ledger line (the next G- number, kind better,
-verdict "not passed", pairs 0, seeds_used [], settles = the attempt; GATES.md row by gate.append_ledger), a "gated"
+verdict "not passed", pairs 0, seeds_used [], settles = the attempt, the share as share_seen so later gates
+of the member don't take it as theirs; GATES.md row by gate.append_ledger), a "gated"
 line in the submissions ledger (as submit.gate_update writes it, plus settled S31 and the attempt), the player's
 gate note; then submit.deliver hands the notes and status to the players' receipts folders. Run it once: a receipt
 that already has a "gated" line is refused.
@@ -41,12 +42,6 @@ ERROR = re.compile(r"a gap of ([0-9.]+) pp can't happen with a discordant share 
 
 class SettleError(Exception):
     pass
-
-
-def _jsonl(p: Path) -> list[dict]:
-    if not p.exists():
-        return []
-    return [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
 
 
 def pre_share(games: Path) -> tuple[float, int, int] | None:
@@ -89,6 +84,7 @@ def plan(host: Path, rids: list[str], name_stopped: bool) -> dict:
     from ladder.submit import code_fingerprint, ledger
     subs, gates = host / "subs", host / "gates"
     lines = ledger(subs)
+    from ladder.arena import _jsonl                    # the collector's own reader: a torn line is skipped (LD-42)
     log = _jsonl(subs / "collect.jsonl")
     gl = G.read_ledger(gates)
     if name_stopped:
@@ -176,7 +172,7 @@ def plan(host: Path, rids: list[str], name_stopped: bool) -> dict:
         g = {"gate": gid, "date": time.strftime("%m-%d"), "member": mid, "anon": mem.anon, "craft": mem.craft,
              "kind": "better", "new": spec, "old": old, "change": change, "prediction": prediction,
              "resubmit_of": failed.get(meta.get("resubmit_of")), "since": str(meta.get("since") or ""),
-             "hypotheses": f"H0 +0 pp / H1 {delta:+g} pp，不同局占比 {share:.3f}", "discordant_share": round(share, 4),
+             "hypotheses": f"H0 +0 pp / H1 {delta:+g} pp，不同局占比 {share:.3f}", "share_seen": round(share, 4),
              "llr": None, "discordant": None, "verdict": "not passed",
              "estimate_note": (f"补记（S31）：{src} 在旧的检验工具里出错停了（{fail['time']}），没有结论；不同局占比只有 "
                                f"{share:.3f}，全赢也最多 {100 * share:.1f} pp，到不了 {delta:g} pp 的假设：直接判没过，不再打"),
@@ -227,11 +223,13 @@ def main(argv=None) -> int:
     (a.out / "summary.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
     for x in res["settle"]:
         print(f"{x['receipt']}（{x['player']}）→ {x['gate_line']['gate']} 没过；停下的那次 {x['gate_line']['settles']}，"
-              f"占比 {x['gate_line']['discordant_share']}")
+              f"占比 {x['gate_line']['share_seen']}")
     for p in res["problems"]:
         print("问题：" + p)
     print(("写好了" if res["written"] else "没写（" + ("有问题" if res["problems"] else "空跑，加 --write 才写") + "）")
           + f"：{a.out / 'summary.json'}")
+    if a.write and res["named_stopped"]:          # written even when a check failed: what the next gate would write
+        print(f"检验台账里补了停下的那次：{'、'.join(res['named_stopped'])}（interrupted，下一个检验也会补这一行）")
     return 0 if not res["problems"] else 1
 
 

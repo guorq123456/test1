@@ -60,6 +60,20 @@ def teams(period: int) -> dict:
     return out
 
 
+def canonical(team, names) -> object:
+    """The team name as the round writes it, for one written with stray spaces or in other letter case (11-24
+    review: a claim is first come, first served, so a slip shouldn't cost a round trip); anything else unchanged."""
+    if not isinstance(team, str):
+        return team
+    x = " ".join(team.split())
+    return next((n for n in names if n == x), None) or next((n for n in names if n.casefold() == x.casefold()), team)
+
+
+def all_team_names() -> set:
+    """Every team of every special period (precheck can't know the period)."""
+    return set().union(*(teams(p) for p in SPECIAL))
+
+
 def claims(lines: list, period: int) -> dict:
     """{player: (team, receipt id)}: the accepted 选队 receipts of the period, the first per player."""
     out = {}
@@ -99,6 +113,7 @@ def check_claim(sub: dict, player: str, pool, lines: list) -> tuple[list[str], d
     if not is_special(period):
         return [f"第 {period} 期不是特殊期，不收「选队」"], info
     t = teams(period)
+    team = info["team"] = canonical(team, t)
     if team not in t:
         return [f"没有叫 {team!r} 的队；这一期能选的是：{'、'.join(sorted(t))}（照抄这几个名字）"], info
     mine = claims(lines, period).get(player)
@@ -114,7 +129,10 @@ def check_deck(deck_ids: list, craft: int, player: str, period: int, lines: list
     if mine is None:
         return ["特殊期先交「选队」（submit.md、special-P3.md），选到队以后再交卡组"], None
     team = mine[0]
-    want = teams(period)[team][craft]["ids"]
+    entry = teams(period)[team].get(craft)                  # craft 0: all neutral, check_deck refused it already
+    if entry is None:
+        return [f"这一副不是你选的队 {team} 的任何一个职业的卡表；特殊期要交那一副原样（40 张一张不改）"], team
+    want = entry["ids"]
     if sorted(deck_ids) != want:
         return [f"这一副不是你选的队 {team} 的{CRAFT_ZH[craft]}卡表；特殊期要交那一副原样（40 张一张不改）"], team
     return [], team

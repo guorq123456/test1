@@ -164,9 +164,11 @@ def _team_dir(d: Path) -> dict | None:
     needed (other files are ignored). None if the directory is not one."""
     try:
         meta = json.loads((d / "submission.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
+    except OSError:
         return None
-    if not isinstance(meta, dict) or meta.get("type") != "选队":
+    except ValueError as e:              # a BOM, UTF-16, a JSON error: said first, not as three missing files (review)
+        raise Refused([f"submission.json 读不了：{e}（要 UTF-8、不带 BOM 的 JSON）"])
+    if not isinstance(meta, dict) or str(meta.get("type", "")).strip() != "选队":
         return None
     if not isinstance(meta.get("team"), str) or not meta["team"].strip():
         raise Refused(["选队要写 team（队名，照抄 special-P3.md 里的写法）"])
@@ -832,8 +834,13 @@ def precheck(d: Path, deck_of_member: str | None = None) -> dict:
         sub = read_dir(d)
     except Refused as e:
         return {"ok": False, "problems": list(e.args[0]), "warnings": []}
-    if sub["kind"] == "team":
-        return out                                     # whether the team has room is known only at receive
+    if sub["kind"] == "team":                          # the name, here; whether the team has room only at receive
+        from ladder import special
+        names = special.all_team_names()
+        if special.canonical(sub["meta"]["team"], names) not in names:
+            out["problems"].append(f"没有叫 {sub['meta']['team']!r} 的队；能选的是：{'、'.join(sorted(names))}（照抄）")
+        out["ok"] = not out["problems"]
+        return out
     code = sub["meta"].get("deck") if sub["kind"] in ("deck", "puzzle") else deck_of_member
     if code:
         _, problems = check_deck(code)

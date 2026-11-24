@@ -375,8 +375,10 @@ class Gate:
             rec["share_measured_on"] = len(valid)
         h0, h1 = (0.0, self.delta) if self.kind == "better" else (-2.0, 0.0)
         if self.kind == "better" and h1 / 100 >= self.share:   # S31: so few discordant pairs that H1 can't happen
+            # the share is kept as share_seen, not discordant_share: the next gate of this member (another change)
+            # must not take it as its share and stop the same way (11-24 review)
             rec.update(hypotheses=f"H0 {h0:+g} pp / H1 {h1:+g} pp，不同局占比 {self.share:.3f}",
-                       discordant_share=round(self.share, 4), llr=None, discordant=None, verdict="not passed")
+                       share_seen=round(self.share, 4), llr=None, discordant=None, verdict="not passed")
             rec["estimate_note"] = (f"不同局占比只有 {self.share:.3f}（结果不同的对就这么多，全赢也最多 "
                                     f"{100 * self.share:.1f} pp），到不了 {h1:g} pp 的假设：不再打，直接判没过（S31）")
             return
