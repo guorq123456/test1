@@ -62,7 +62,7 @@
 - 每收一份、每检验完一份，都跑一次 `py -m ladder.submit deliver C:\claude\ladder-host\subs --pool C:\claude\ladder-host\pool --players C:\claude\ladder-players`：把每个人自己的回执（`目录名.md`）、检验结果（`目录名-检验.md`）、这一期的状态（`状态.md`：卡组期收下了哪些职业、还缺哪些，打法更新收了几份、检验完几份、换上几份）写进 `C:\claude\ladder-players\<名字>\receipts\`。只写本人的，重跑写出来一样。
 - 卡组期：收下的新卡组 `py -m ladder.submit admit C:\claude\ladder-host\subs --receipt S-xxxx --pool C:\claude\ladder-host\pool`。
 - 策略期：收下的打法更新 `py -m ladder.submit gate C:\claude\ladder-host\subs --receipt S-xxxx --pool C:\claude\ladder-host\pool --frozen C:\claude\ladder-host\frozen\P<期>.json --seeds 88500000 89000000 --out C:\claude\ladder-host\gates --delta <这一期定的> --workers 15 --mask 0x3FC3FC`。过了自动换上；没过、中间一步都只记一笔。检验结果 `C:\claude\ladder-host\subs\S-xxxx\gate-note.md`（只有本人的回执编号）由上面的 deliver 交给本人。
-- 检验出错（`collect.jsonl` 里的 gate-failed）不重试，先报 Salem。第 2 期 3 份是不同局占比太小、旧的检验工具抛错（LD-77）：S31 以后检验工具直接判没过；那 3 份用 `tools\gate_settle.py` 补记（电脑上 `C:\claude\ladder-runs\settle-P2.cmd`：先空跑核对，打 WRITE 才写；不打局、不用种子；写检验台账、提交台账、本人回执）。别的错不能用它补记。
+- 检验出错（`collect.jsonl` 里的 gate-failed）不重试，先报 Salem。第 2 期 3 份是不同局占比太小、旧的检验工具抛错（LD-77）：S31 以后检验工具直接判没过；那 3 份用 `tools\gate_settle.py` 补记（电脑上 `C:\claude\ladder\analysis\ladder\tools\pc\settle-P2.cmd`，拉过代码以后才有：先空跑核对，打 WRITE 才写；不打局、不用种子；写检验台账、提交台账、本人回执）。别的错不能用它补记。
 - `py -m ladder.submit status C:\claude\ladder-host\subs --pool C:\claude\ladder-host\pool --player <名字>` 看谁还缺哪个职业（主持方自己看；选手看 `receipts\状态.md`）。
 
 ### 4. 天梯
