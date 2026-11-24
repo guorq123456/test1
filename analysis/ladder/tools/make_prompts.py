@@ -1,10 +1,11 @@
 """The five players' prompts from player-prompt-v2.md (S20: one per player, the name filled in).
 
-    python analysis/ladder/tools/make_prompts.py OUTDIR
+    python analysis/ladder/tools/make_prompts.py OUTDIR [--note NOTE.md]
 
 Drops the first line (the host's comment, `<!-- ... -->`) and the blank lines after it, puts each player's name
 (ladder.arena.PLAYERS) for {{名字}}, and stops if any `{{` or `<!--` is left. Writes OUTDIR/<name>.md (UTF-8) and
-prints each file's sha256 (first 12)."""
+prints each file's sha256 (first 12). `--note`: a period's own section (e.g. prompt-note-P3.md, the special period S27)
+put in front of 「## 每一期怎么过」, the same for every player."""
 from __future__ import annotations
 
 import hashlib
@@ -24,13 +25,21 @@ EXTRA = {   # one player's own conditions, at the end of their prompt (Salem's w
 }
 
 
-def make(src: Path, out: Path) -> dict:
+ANCHOR = "\n## 每一期怎么过\n"
+
+
+def make(src: Path, out: Path, note: Path | None = None) -> dict:
     from ladder.arena import PLAYERS
     text = src.read_bytes().decode("utf-8").replace("\r\n", "\n")      # a Windows checkout is CRLF
     first, _, rest = text.partition("\n")
     if not (first.startswith("<!--") and first.rstrip().endswith("-->")):
         raise SystemExit("the first line is not the host's comment")
     rest = rest.lstrip("\n")
+    if note is not None:
+        add = note.read_bytes().decode("utf-8").replace("\r\n", "\n").strip("\n")
+        if rest.count(ANCHOR) != 1:
+            raise SystemExit("the prompt has no single 「## 每一期怎么过」 to put the note in front of")
+        rest = rest.replace(ANCHOR, "\n" + add + "\n" + ANCHOR)
     out.mkdir(parents=True, exist_ok=True)
     got = {}
     for name in PLAYERS:
@@ -47,10 +56,13 @@ def make(src: Path, out: Path) -> dict:
 if __name__ == "__main__":
     src = LADDER / "player-prompt-v2.md"
     out = Path(sys.argv[1])
-    got = make(src, out)
+    note = Path(sys.argv[sys.argv.index("--note") + 1]) if "--note" in sys.argv else None
+    got = make(src, out, note)
     lines = ["# 五份成品提示词", "",
              f"从 analysis/ladder/player-prompt-v2.md 生成（那份的 sha256 前 12 位 "
              f"{hashlib.sha256(src.read_bytes().replace(b'\r\n', b'\n')).hexdigest()[:12]}，按 LF 算）。每个选手的会话第一条消息贴自己那份的全文。"
+             + (f"「每一期怎么过」前面加了这一期的一节：{note.name}（sha256 前 12 位 "
+                f"{hashlib.sha256(note.read_bytes().replace(b'\r\n', b'\n')).hexdigest()[:12]}）。" if note else "")
              + "".join(f"{k} 那份末尾多一节附加条件（tools/make_prompts.py 的 EXTRA）。" for k in EXTRA), "",
              "| 选手 | 文件 | sha256 前 12 位 |", "|---|---|---|"]
     lines += [f"| {k} | {k}.md | {v} |" for k, v in got.items()]

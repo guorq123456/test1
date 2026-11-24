@@ -72,7 +72,7 @@ for p in (str(ROOT), str(LADDER)):
         sys.path.insert(0, p)
 
 SUBMIT_VERSION = "submit-1"
-TYPES = {"新卡组": "deck", "打法更新": "update", "公共题": "puzzle"}
+TYPES = {"新卡组": "deck", "打法更新": "update", "公共题": "puzzle", "选队": "team"}   # 选队: a special period (S27, A62)
 FILES = ("submission.json", "strategy.py", "notes.md", "evidence.md")
 UPDATES_PER_PERIOD = None           # Salem S5 (11-22): no limit on strategy updates (the plan's 3 is gone)
 SMOKE_SEEDS = (88300000, 88400000)  # the host's part of the tuning range (SEEDS.md)
@@ -110,6 +110,9 @@ class Refused(Exception):
 def read_dir(d: Path) -> dict:
     """The submission as a dict, or Refused with every format problem."""
     d = Path(d)
+    team = _team_dir(d)
+    if team is not None:
+        return team
     problems = [f"缺文件 {f}" for f in FILES if not (d / f).is_file()]
     if problems:
         raise Refused(problems)
@@ -154,6 +157,20 @@ def read_dir(d: Path) -> dict:
     if problems:
         raise Refused(problems)
     return {"meta": meta, "kind": kind, "src": src, "dir": d}
+
+
+def _team_dir(d: Path) -> dict | None:
+    """A 选队 submission (special period, A62): submission.json {"type": "选队", "team": ...} and nothing else is
+    needed (other files are ignored). None if the directory is not one."""
+    try:
+        meta = json.loads((d / "submission.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(meta, dict) or meta.get("type") != "选队":
+        return None
+    if not isinstance(meta.get("team"), str) or not meta["team"].strip():
+        raise Refused(["选队要写 team（队名，照抄 special-P3.md 里的写法）"])
+    return {"meta": meta, "kind": "team", "src": "", "dir": d}
 
 
 def check_deck(code: str) -> tuple[list, list[str]]:
@@ -267,6 +284,10 @@ def check_slots(sub: dict, player: str, pool, lines: list[dict]) -> tuple[list[s
                      and l.get("craft") == craft]
             if len(taken) >= NEW_DECKS_PER_CLASS:
                 problems.append(f"这一期你的{CRAFT_ZH[craft]}已经交过一副、收下了（{taken[0]['id']}）；每个卡组期每个职业一副")
+            from ladder import special
+            if special.is_special(pool.period):
+                why, info["team"] = special.check_deck(sub["deck_ids"], craft, player, pool.period, lines)
+                problems += why
             key = list_key(sub["deck_ids"])
             same = [m for m in pool.active() if list_key(m.deck) == key]
             if len(same) >= MAX_PER_LIST:
@@ -312,6 +333,9 @@ def status(subdir: Path, pool_dir: Path, player: str) -> dict:
     if out["kind"] == "deck":
         out["classes_done"] = [CRAFT_ZH[c] for c in done]
         out["classes_missing"] = [CRAFT_ZH[c] for c in sorted(CRAFT_ZH) if c not in done]
+    from ladder import special
+    if special.is_special(pool.period):
+        out.update(special.status(ledger(subdir), pool.period, player))
     return out
 
 
@@ -320,6 +344,8 @@ def status_text(st: dict, lines: list[dict]) -> str:
     period), the updates received and what their gates said."""
     kind = {"deck": "卡组期", "strategy": "策略期"}.get(st["kind"], st["kind"])
     out = [f"# 第 {st['period']} 期（{kind}）你的提交", ""]
+    if st.get("special"):
+        out += [f"- 这一期是特殊期：{st['special']}。你选的队：{st['team'] or '还没选（先交「选队」）'}"]
     if st["kind"] == "deck":
         out += [f"- 新卡组已经收下的职业：{'、'.join(st['classes_done']) or '还没有'}",
                 f"- 还缺：{'、'.join(st['classes_missing']) or '不缺了'}"]
@@ -796,7 +822,7 @@ def pooled_ratio(rows) -> float | None:
 # --- receive ---------------------------------------------------------------------------------------------------
 
 def _sha(d: Path) -> dict:
-    return {f: hashlib.sha256((d / f).read_bytes()).hexdigest() for f in FILES}
+    return {f: hashlib.sha256((d / f).read_bytes()).hexdigest() for f in FILES if (d / f).is_file()}
 
 
 def precheck(d: Path, deck_of_member: str | None = None) -> dict:
@@ -806,6 +832,8 @@ def precheck(d: Path, deck_of_member: str | None = None) -> dict:
         sub = read_dir(d)
     except Refused as e:
         return {"ok": False, "problems": list(e.args[0]), "warnings": []}
+    if sub["kind"] == "team":
+        return out                                     # whether the team has room is known only at receive
     code = sub["meta"].get("deck") if sub["kind"] in ("deck", "puzzle") else deck_of_member
     if code:
         _, problems = check_deck(code)
@@ -880,10 +908,19 @@ def _receive(d, player, pool_dir, subdir, workers, mask, rng_seed, smoke_games, 
         except Exception:
             pass
         return finish()
-    for f in FILES:
+    for f in (("submission.json",) if sub["kind"] == "team" else FILES):
         shutil.copy2(Path(d) / f, store / f)
     rec["sha256"] = _sha(store)
     meta = sub["meta"]
+    if sub["kind"] == "team":                             # a special period's team claim (A62): no code, no games
+        from ladder import special
+        rec.update(kind="team", member=None)
+        check("格式", [])
+        pool = Pool(pool_dir)
+        problems, info = special.check_claim(sub, player, pool, lines)
+        rec.update(period=info["period"], team=info.get("team"))
+        check("选队", problems)
+        return finish()
     rec.update(kind=sub["kind"], member=meta["member"], route=meta.get("route"), puzzle=meta.get("puzzle"))
     check("格式", [])
     pool = Pool(pool_dir)
@@ -902,6 +939,8 @@ def _receive(d, player, pool_dir, subdir, workers, mask, rng_seed, smoke_games, 
         problems, info = check_slots(sub, player, pool, lines)
         rec.update(period=info["period"], period_kind=info["period_kind"], uses_slot=info["uses_slot"],
                    mid=info.get("mid"), craft=info.get("craft"), was=info.get("was"))
+        if info.get("team") is not None:
+            rec["team"] = info["team"]
         check("名额和期", problems)
     rec.setdefault("period", pool.period)
     code_problems = check_code(sub["src"], meta["class"])
@@ -1053,7 +1092,11 @@ def receipt_text(rec: dict) -> str:
     lines = [f"# 回执 {rec['id']}：{rec['verdict']}", "",
              f"- 选手：{rec['player']}　类型：{kind}　成员：{rec.get('member')}　第 {rec.get('period')} 期",
              f"- 收到：{rec['time']}　提交校验 {rec['version']}，接口 {rec.get('interface')}，底座 {rec.get('base')}",
-             f"- 职业：{_craft_zh(rec.get('craft'))}" + ("（这一期这个职业的新卡组就是它了）" if rec.get("uses_slot") else ""), ""]
+             f"- 职业：{_craft_zh(rec.get('craft'))}" + ("（这一期这个职业的新卡组就是它了）" if rec.get("uses_slot") else "")]
+    if rec.get("team") is not None:
+        lines.append(f"- 队：{rec['team']}" + ("（这一期你就是这个队了）" if rec.get("kind") == "team"
+                                               and rec.get("verdict") == "收下" else ""))
+    lines.append("")
     if rec["reasons"]:
         lines += ["## 拒收理由", ""] + [f"- {r}" for r in rec["reasons"]] + [""]
     if rec["warnings"]:

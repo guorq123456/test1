@@ -644,3 +644,112 @@ bot 自己构筑、自己排名（10-30 定稿），T1 在前。
   - 代码：`1.7.cR2I.cR2I.cR2I.eLN-.eLN-.eLae.er5g.er5g.fDkE.fUp-.fUp-.ftEe.ftEe.ftEe.fzqM.fzqM.f-3-.f-LA.f-LA.f-LA.gEw6.gEw6.gEw6.gF9k.gF9k.gF9k.gFCs.gFCs.gFPM.gFPM.gFPM.gFSU.gFSU.gFSU.gFe-.gFe-.gFe-.gFf8.gFf8.gFf8`
   - 巴别隆城×2、最凶恶的收容×3、理想国·涅格尔赫亚×3、诚心的尽小花×2、人偶剧场×3、人灭执事×3、尽小花·伊鞠×1、爱意天使·艾克夏丝×2、人灭富豪×3、信仰天使·迪纳梅斯×1、次元异客×3、决断的交错·亚修雷&莉缇雅×2、毁灭怪腕×2、弹哭的变貌·艾兹伊甸×3、人灭绅士×3、人灭三恶·兰佩吉×3、阿尔比昂巴哈姆特×1
 
+## 职业联赛 26-27 第 11 节后半（28 副）
+
+11/18 两场四个队赛前公布的卡表（第 3 期特殊期用的就是这 28 副，special-P3.md）。来源：shadowverse-vision.com/decks，2026-11-24 抓取。
+
+### 精灵
+
+- **ps11b/FOREST-MRG-Spicies**
+  - 代码：`1.1.e4Gg.e4Gg.e4Gg.e6x8.e6x8.e6x8.eVLe.eVLe.eVLe.etGk.etGk.etGk.etl-.etl-.etl-.etm8.fFRw.fFRw.fFRw.fGAU.fGAU.fGAU.fGAe.fds6.fds6.fds6.fe5k.fe5k.fe5k.feLM.feLM.feLM.feOU.feOU.feOU.fea-.fea-.fea-.fzqM.fzqM`
+  - 发芽组员×3、古旧天枪·萨莎妮德×3、大游戏世界×3、忧郁少女·莫埃尔×3、枝叶大姐大×3、根延潜伏者×3、永恒冰晶·蒂亚×1、爱意天使·艾克夏丝×2、绿风细剑师×3、烟管的罪人·曲千代×3、虫风花·魅禄×3、操量的安纳提玛·达斯特迪兹×3、绯岸橙醉×3、冰界鹿王×1、离合有终·赛德斯&梅希亚×3
+- **ps11b/FOREST-LVH-Era53**
+  - 代码：`1.1.e4Gg.e4Gg.e4Gg.e6x8.e6x8.e6x8.eUsO.eVLe.eVLe.eVLe.etGk.etGk.etGk.etl-.etl-.etl-.etm8.fFRw.fFRw.fFRw.fGAU.fGAU.fGAU.fds6.fds6.fds6.fe5k.fe5k.fe5k.feLM.feLM.feLM.feOU.feOU.feOU.fea-.fea-.fea-.fzqM.fzqM`
+  - 发芽组员×3、古旧天枪·萨莎妮德×3、大游戏世界×3、忧郁少女·莫埃尔×3、枝叶大姐大×3、根延潜伏者×3、爱意天使·艾克夏丝×2、绿风细剑师×3、烟管的罪人·曲千代×3、虫风花·魅禄×3、操量的安纳提玛·达斯特迪兹×3、绯岸橙醉×3、冰界鹿王×1、咆哮狼人×1、离合有终·赛德斯&梅希亚×3
+- **ps11b/FOREST-RC-あぐのむ**
+  - 代码：`1.1.e4Gg.e4Gg.e4Gg.e6x8.e6x8.e6x8.eUsO.eVLe.eVLe.eVLe.etGk.etGk.etGk.etl-.etl-.etl-.etm8.fFRw.fFRw.fFRw.fGAU.fGAU.fGAU.fds6.fds6.fds6.fe5k.fe5k.fe5k.feLM.feLM.feLM.feOU.feOU.feOU.fea-.fea-.fea-.fzqM.fzqM`
+  - 发芽组员×3、古旧天枪·萨莎妮德×3、大游戏世界×3、忧郁少女·莫埃尔×3、枝叶大姐大×3、根延潜伏者×3、爱意天使·艾克夏丝×2、绿风细剑师×3、烟管的罪人·曲千代×3、虫风花·魅禄×3、操量的安纳提玛·达斯特迪兹×3、绯岸橙醉×3、冰界鹿王×1、咆哮狼人×1、离合有终·赛德斯&梅希亚×3
+- **ps11b/FOREST-CR-空白**
+  - 代码：`1.1.e4Gg.e4Gg.e4Gg.e6x8.e6x8.e6x8.eVLe.eVLe.eVLe.etGk.etGk.etGk.etl-.etl-.etl-.etm8.fFRw.fFRw.fFRw.fGAU.fGAU.fGAU.fds6.fds6.fds6.fe5k.fe5k.fe5k.feLM.feLM.feLM.feOU.feOU.feOU.fea-.fea-.fea-.fzqM.fzqM.fzqM`
+  - 发芽组员×3、古旧天枪·萨莎妮德×3、大游戏世界×3、忧郁少女·莫埃尔×3、枝叶大姐大×3、根延潜伏者×3、爱意天使·艾克夏丝×3、绿风细剑师×3、烟管的罪人·曲千代×3、虫风花·魅禄×3、操量的安纳提玛·达斯特迪兹×3、绯岸橙醉×3、冰界鹿王×1、离合有终·赛德斯&梅希亚×3
+
+### 皇家护卫
+
+- **ps11b/SWORD-MRG-Toby**
+  - 代码：`1.2.cEZs.cEZs.cEZs.eXnk.eXnk.eXnk.eXnu.eXnu.eXnu.evi-.evi-.evi-.ewCE.ewCE.ewCE.ewCO.ewCO.ewCO.fDkE.fIck.fIck.fIck.fIcu.f-LA.f-LA.g2is.g2is.g2is.g2yU.g2yU.g2yU.g3C6.g3C6.g3C6.g3FE.g3FE.g3FE.g3Rk.g3Rk.g3Rk`
+  - 理想国·涅格尔赫亚×2、诺·莱芙的问答×3、须臾剑士×3、古旧天剑·伊德梅塔×3、听略谍报兵×3、纯真卖报人×3、俏皮设计师×3、统音的安纳提玛·吉尔达利娅×3、天命的子弹·巴妮&巴隆×3、安逸爱好家×3、惨烈的剑王·罗德诺艾尔四世×3、宽严的音帅·塞扎尔×3、焦灼炎将·玛尔斯×1、表里侦探·诺·莱芙×3、阿尔比昂巴哈姆特×1
+- **ps11b/SWORD-LVH-Era53**
+  - 代码：`1.2.cEZs.cEZs.cEZs.eXnk.eXnk.eXnu.eXnu.evi-.evi-.evi-.evyc.ewCE.ewCE.ewCE.ewCO.ewCO.ewCO.fIck.fIck.fIck.fIcu.fIcu.f-LA.f-LA.f-LA.g2is.g2is.g2is.g2yU.g2yU.g2yU.g3C6.g3C6.g3C6.g3FE.g3FE.g3FE.g3Rk.g3Rk.g3Rk`
+  - 理想国·涅格尔赫亚×3、诺·莱芙的问答×3、须臾剑士×3、古旧天剑·伊德梅塔×2、听略谍报兵×3、纯真卖报人×3、俏皮设计师×3、统音的安纳提玛·吉尔达利娅×3、响爪分队长×1、天命的子弹·巴妮&巴隆×3、安逸爱好家×3、惨烈的剑王·罗德诺艾尔四世×2、宽严的音帅·塞扎尔×3、焦灼炎将·玛尔斯×2、表里侦探·诺·莱芙×3
+- **ps11b/SWORD-RC-たばた**
+  - 代码：`1.2.cEZs.cEZs.cEZs.eXnk.eXnk.eXnk.eXnu.evi-.evi-.evi-.ewCE.ewCE.ewCE.ewCO.ewCO.ewCO.fDkE.fIck.fIck.fIck.fIcu.fh1O.f-LA.f-LA.f-LA.g2is.g2is.g2is.g2yU.g2yU.g2yU.g3C6.g3C6.g3C6.g3FE.g3FE.g3FE.g3Rk.g3Rk.g3Rk`
+  - 理想国·涅格尔赫亚×3、诺·莱芙的问答×3、须臾剑士×3、古旧天剑·伊德梅塔×1、听略谍报兵×3、纯真卖报人×3、俏皮设计师×3、统音的安纳提玛·吉尔达利娅×3、天命的子弹·巴妮&巴隆×3、安逸爱好家×3、惨烈的剑王·罗德诺艾尔四世×3、宽严的音帅·塞扎尔×3、焦灼炎将·玛尔斯×1、表里侦探·诺·莱芙×3、阿尔比昂巴哈姆特×1、武皇的变貌·贝尔铁佐×1
+- **ps11b/SWORD-CR-ふえた**
+  - 代码：`1.2.cEZs.cEZs.cEZs.e9Ak.e9Ak.e9Ak.e9NO.e9NO.eXnu.eXnu.eXnu.evi-.evi-.evi-.fIQE.fIQE.fIQE.fIcu.fIcu.fgIM.fgIM.fgIM.fgX-.fgX-.fgX-.fgb6.fgb6.fgnc.fgnc.fgnc.fgqk.fgqk.fgqk.fh1E.fh1E.fh1E.fh1O.g3Ru.g3Ru.g3Ru`
+  - 须臾剑士×3、古旧天剑·伊德梅塔×3、听略谍报兵×3、海域斥候×3、相伴相随的日常×3、千金大参谋·阿尔梅莉洁×3、漩涡炮手×3、燃尽之缘×2、荣耀的丽金花×3、黄金时代×3、丽金花·云庆×2、波涛副船长×3、逆行的罪人·巴巴洛丝×3、焦灼炎将·玛尔斯×2、武皇的变貌·贝尔铁佐×1
+
+### 巫师
+
+- **ps11b/RUNE-MRG-Toby**
+  - 代码：`1.3.cH3E.cH3E.eB7k.eB7k.eB7k.eBKO.eBKO.eBKO.eBpe.eBpe.eBpe.fDXk.fDXk.fKK6.fKK6.fKNE.fKNE.fKNE.fKZk.fKZk.fKZk.fKcs.fKcs.fKpM.fKpM.fKpM.fKsU.fKsU.fKsU.fL2-.fL2-.fL2-.fL38.fL38.fL38.fink.fink.fink.fjTe.fjTe`
+  - 智慧光辉×2、暴风破×3、过度反应×3、传承的意志×2、其乐融融的团聚×2、明越花的转变×3、森绿的恩惠·喵鲁&圆滚滚2号&吉娜×2、玛纳利亚文书官·琪可×3、钢铁的小憩×3、快乐绽花·萨米&玛莉×3、余韵俳谐师×3、恩爱的大地·坦忒拉&拉缇卡×3、灾难言灵·洋荷×3、明越花·阿罗×3、破式的变貌·菲绫×2
+- **ps11b/RUNE-LVH-rikka**
+  - 代码：`1.3.cH3E.cH3E.cH3E.cfTu.cfTu.cfTu.e4Gg.e4Gg.e4Gg.fDXk.fDXk.fDXk.fKpM.fKpM.fKpM.fKsU.fKsU.fKsU.fL2-.fL2-.fL2-.fikc.fikc.fikc.fink.fi-E.fi-E.fi-E.fj1M.fj1M.fj1M.fjDs.fjDs.fjDs.fjG-.fjG-.fjG-.fjTU.fjTU.fjTU`
+  - 大游戏世界×3、智慧光辉×3、暴风破×3、过度反应×1、传承的意志×3、沉溺的实验体×3、人性的爱×3、玛纳利亚文书官·琪可×3、钢铁的小憩×3、心醉的研究者×3、乌涅×3、陶醉的才女×3、恩爱的大地·坦忒拉&拉缇卡×3、万术的罪人·赛菲×3
+- **ps11b/RUNE-RC-拓海**
+  - 代码：`1.3.eB7k.eB7k.eB7k.eBKO.eBKO.eBKO.eBpe.eBpe.eBpe.fDXk.fKK6.fKK6.fKK6.fKNE.fKNE.fKNE.fKZk.fKZk.fKZk.fKcs.fKcs.fKcs.fKpM.fKpM.fKpM.fKsU.fKsU.fKsU.fL2-.fL2-.fL2-.fL38.fL38.fL38.fink.fink.fink.fjTe.fjTe.fjTe`
+  - 暴风破×3、过度反应×3、传承的意志×1、其乐融融的团聚×3、明越花的转变×3、森绿的恩惠·喵鲁&圆滚滚2号&吉娜×3、玛纳利亚文书官·琪可×3、钢铁的小憩×3、快乐绽花·萨米&玛莉×3、余韵俳谐师×3、恩爱的大地·坦忒拉&拉缇卡×3、灾难言灵·洋荷×3、明越花·阿罗×3、破式的变貌·菲绫×3
+- **ps11b/RUNE-CR-Atom**
+  - 代码：`1.3.cH1g.cH1g.cH1g.cH3E.cfTu.cfTu.cfTu.eBpe.eBpe.eBpe.ey9E.ey9E.ey9E.eyCM.eyCM.eyCM.fKcs.fKcs.fKcs.fKpM.fKpM.fKpM.fKsU.fKsU.fKsU.g5Ok.g5Ok.g5Ok.g5Rs.g5Rs.g5Rs.g5hU.g5hU.g5hU.g5t-.g5t-.g5t-.g5u8.g5u8.g5u8`
+  - 智慧光辉×1、暴风破×3、解谜旋律×3、魔女的炼金炉×3、其乐融融的团聚×3、暴食的零嘴×3、诺茵华薇儿的审讯×3、玛纳利亚文书官·琪可×3、迷人怪兽×3、钢铁的小憩×3、无聊顾问×3、迷歌侦探·诺茵华薇儿×3、劫焰奇美拉×3、明越花·阿罗×3
+
+### 龙族
+
+- **ps11b/DRAGON-MRG-Spicies**
+  - 代码：`1.4.e3ls.e3ls.e3ls.ebxM.ebxM.ebxM.e-M0.fDE-.fDE-.fDXk.fDXk.fDXk.flAs.flAs.flAs.flD-.flD-.flD-.flQU.flQU.flQU.flg6.flg6.flg6.fljE.fljE.fljE.flvk.flvk.flvk.g7bM.g7bM.g7bM.g7r8.g7r8.g7r8.g87k.g8KO.g8KO.g8KO`
+  - 天噬暴行者×3、幼龙闹脾气×3、挥毫的怪物×3、碎裂的盗匪×3、传承的意志×3、利牙×3、绝倒的袭击者×3、侦察龙人×3、俯瞰的目光×1、决断的龙人×3、激动的欢喜·阿尔菲德×2、载运飞龙×1、尘土的不法者×3、龙惧·吉尔沃×3、穿孔的罪人·安缇马丽亚×3
+- **ps11b/DRAGON-LVH-Era53**
+  - 代码：`1.4.cJl6.cJl6.cJl6.e4IE.eE3E.eE3E.eE3E.eEFk.eEFk.eEFk.ecgE.ecgE.ecgE.ecgO.ecgO.e_4k.e_4k.e_4k.fDkE.fDkE.fDkE.fNVO.fNVO.fNVO.flvu.flvu.flvu.fzqM.fzqM.fzqM.f-3-.f-3-.g7bM.g7bM.g7bM.g84c.g84c.g84c.g8KE.g8KE`
+  - 天噬暴行者×3、古旧天刀·波菈莱×2、懒惰的波摇花×3、爱意天使·艾克夏丝×3、信仰天使·迪纳梅斯×2、龙之启示×3、天噬抢劫犯×3、《世界》的呈现×1、断头的斩姬·相枛津×3、禁牙的变貌·诺玛格达拉×3、金银绚烂·璐米欧儿&雅尔贞特×3、焦灰的安纳提玛·班德奈特×3、阿尔比昂巴哈姆特×3、天噬三恶·莱特欧芙×2、约束的《正义》·伊兰翠×3
+- **ps11b/DRAGON-RC-たばた**
+  - 代码：`1.4.cJl6.cJl6.cJl6.e4IE.eE3E.eE3E.eE3E.eEFk.eEFk.eEFk.ecgE.ecgE.ecgE.ecgO.ecgO.ecgO.e-uE.e_4k.e_4k.e_4k.fDkE.fDkE.fNVO.fNVO.fNVO.flvu.flvu.flvu.fzqM.fzqM.fzqM.f-3-.f-3-.f-3-.g7bM.g7bM.g84c.g84c.g84c.g8KE`
+  - 天噬暴行者×2、古旧天刀·波菈莱×3、懒惰的波摇花×3、爱意天使·艾克夏丝×3、信仰天使·迪纳梅斯×3、龙之启示×3、天噬抢劫犯×3、《世界》的呈现×1、断头的斩姬·相枛津×3、禁牙的变貌·诺玛格达拉×3、黑炎的奔流×1、金银绚烂·璐米欧儿&雅尔贞特×3、焦灰的安纳提玛·班德奈特×3、阿尔比昂巴哈姆特×2、天噬三恶·莱特欧芙×1、约束的《正义》·伊兰翠×3
+- **ps11b/DRAGON-CR-ふえた**
+  - 代码：`1.4.e3ls.e3ls.e3ls.ebxM.ebxM.ebxM.e-M0.e-M0.fDE-.fDE-.fDXk.fDXk.fDXk.flAs.flAs.flAs.flD-.flD-.flD-.flQU.flQU.flQU.flg6.flg6.flg6.fljE.fljE.fljE.flvk.flvk.flvk.g7bM.g7bM.g7bM.g7r8.g7r8.g7r8.g8KO.g8KO.g8KO`
+  - 天噬暴行者×3、幼龙闹脾气×3、挥毫的怪物×3、碎裂的盗匪×3、传承的意志×3、利牙×3、绝倒的袭击者×3、侦察龙人×3、决断的龙人×3、激动的欢喜·阿尔菲德×2、载运飞龙×2、尘土的不法者×3、龙惧·吉尔沃×3、穿孔的罪人·安缇马丽亚×3
+
+### 梦魇
+
+- **ps11b/ABYSS-MRG-glory**
+  - 代码：`1.5.eFzG.eFzG.f0oG.f0oG.f0oG.f11k.f11k.f11k.f1KU.f1KU.f1KU.f1W-.f1W-.f1W-.f1X8.f1X8.f1X8.fPCm.fPCm.fPCm.fPxU.fndG.fndG.fndG.fnsk.fnsk.fnsk.foL-.foL-.foL-.foM8.foM8.foM8.f-3-.f-3-.gAmU.gAmU.gAme.gAme.gAme`
+  - 可爱恶魔·莉莉姆×3、幽冥中尉×3、恶魔鼓手·拉兹×3、末日变换·格莫瑞×3、信仰天使·迪纳梅斯×2、夜之歌的演唱会×3、红符的魂魄道士×2、猫咪走绳师×3、傍死的安纳提玛·徒姬×3、残思侦探·诺克坦×2、渊底上校×3、伊斯坦戴德 对 玛尔奇盖特×3、伽罗塔德 对 泽特×3、出发的憧憬·苇剑&武津御×1、死亡主持人·马克米朗×3
+- **ps11b/ABYSS-LVH-だーよね**
+  - 代码：`1.5.eFzG.eFzG.f0oG.f0oG.f0oG.f11k.f11k.f11k.f1KU.f1KU.f1W-.f1W-.f1W-.f1X8.f1X8.f1X8.fPCm.fPCm.fPxe.fndG.fndG.fndG.fnsk.fnsk.fnsk.foL-.foL-.foL-.foM8.foM8.foM8.f-3-.f-3-.f-3-.gAmU.gAmU.gAmU.gAme.gAme.gAme`
+  - 可爱恶魔·莉莉姆×2、幽冥中尉×3、恶魔鼓手·拉兹×3、末日变换·格莫瑞×3、信仰天使·迪纳梅斯×3、夜之歌的演唱会×2、红符的魂魄道士×2、日月的蔷薇·赛蕾丝×1、猫咪走绳师×3、傍死的安纳提玛·徒姬×3、残思侦探·诺克坦×3、渊底上校×3、伊斯坦戴德 对 玛尔奇盖特×3、伽罗塔德 对 泽特×3、死亡主持人·马克米朗×3
+- **ps11b/ABYSS-RC-たばた**
+  - 代码：`1.5.cM8E.cM8E.e3ls.e3ls.f0oG.f0oG.f11k.f11k.f11k.f1KU.f1KU.f1W-.f1W-.f1W-.f1X8.f1X8.f1X8.fPCm.fPCm.fPCm.fndG.fndG.fndG.fnsk.fnsk.foL-.foL-.foL-.foM8.foM8.foM8.f-3-.f-3-.f-3-.gA1c.gAmU.gAmU.gAme.gAme.gAme`
+  - 可爱恶魔·莉莉姆×3、挥毫的怪物×2、魅惑的魅魔·莉莉姆×2、告别入殓师×1、幽冥中尉×3、恶魔鼓手·拉兹×2、末日变换·格莫瑞×3、信仰天使·迪纳梅斯×3、夜之歌的演唱会×2、猫咪走绳师×3、傍死的安纳提玛·徒姬×3、残思侦探·诺克坦×2、渊底上校×2、伊斯坦戴德 对 玛尔奇盖特×3、伽罗塔德 对 泽特×3、死亡主持人·马克米朗×3
+- **ps11b/ABYSS-CR-空白**
+  - 代码：`1.5.eFzG.f0oG.f0oG.f0oG.f11k.f11k.f11k.f1KU.f1KU.f1W-.f1W-.f1W-.f1X8.f1X8.f1X8.fPCm.fPCm.fPCm.fPxU.fndG.fndG.fndG.fnsk.fnsk.fnsk.foL-.foL-.foL-.foM8.foM8.foM8.f-3-.f-3-.f-3-.gAmU.gAmU.gAmU.gAme.gAme.gAme`
+  - 可爱恶魔·莉莉姆×3、幽冥中尉×3、恶魔鼓手·拉兹×3、末日变换·格莫瑞×3、信仰天使·迪纳梅斯×3、夜之歌的演唱会×2、红符的魂魄道士×1、猫咪走绳师×3、傍死的安纳提玛·徒姬×3、残思侦探·诺克坦×3、渊底上校×3、伊斯坦戴德 对 玛尔奇盖特×3、伽罗塔德 对 泽特×3、出发的憧憬·苇剑&武津御×1、死亡主持人·马克米朗×3
+
+### 主教
+
+- **ps11b/HAVEN-MRG-glory**
+  - 代码：`1.6.cOMQ.cOMQ.cOMQ.cOc2.cOc2.cOc2.fRes.fRes.fRes.fRf0.fRf0.fS86.fS86.fS86.fSNu.fSNu.fSNu.fqJ8.fqJ8.fqJ8.fzqM.fzqM.fzqM.f-3-.f-3-.gCTs.gCjU.gCjU.gCmc.gCmc.gCmc.gCz6.gCz6.gCz6.gD0E.gD0E.gD0E.gDCk.gDCk.gDCk`
+  - 羽翼石像×3、图书室的魔女·莉莉尤姆×3、地害加工者×1、爱意天使·艾克夏丝×3、信仰天使·迪纳梅斯×2、圣洁驱魔人·珂蕾特×3、地害驯兽师×2、奇迹独角兔×3、徒然的证言×3、投影鸟像×3、希望的光彩·莉迪耶尔×3、荒废的繁殖×3、地害三恶·拉碧妲赫特×3、勤劳的女祭司·泰瑞莎×2、地害矫正者×3
+- **ps11b/HAVEN-LVH-rikka**
+  - 代码：`1.6.cOMQ.cOMQ.cOc2.cOc2.cOc2.fRes.fRes.fRes.fRf0.fRf0.fS86.fS86.fS86.fS9g.fSNu.fSNu.fSNu.fqJ8.fqJ8.fqJ8.fzqM.fzqM.fzqM.f-3-.f-3-.gCjU.gCjU.gCjU.gCmc.gCmc.gCmc.gCz6.gCz6.gCz6.gD0E.gD0E.gD0E.gDCk.gDCk.gDCk`
+  - 羽翼石像×3、同窗好友×1、图书室的魔女·莉莉尤姆×3、爱意天使·艾克夏丝×3、信仰天使·迪纳梅斯×2、圣洁驱魔人·珂蕾特×3、地害驯兽师×3、奇迹独角兔×3、徒然的证言×3、投影鸟像×2、希望的光彩·莉迪耶尔×3、荒废的繁殖×3、地害三恶·拉碧妲赫特×3、勤劳的女祭司·泰瑞莎×2、地害矫正者×3
+- **ps11b/HAVEN-RC-拓海**
+  - 代码：`1.6.cOMQ.cOMQ.cOMQ.cOc2.cOc2.cOc2.fRes.fRes.fRes.fRf0.fRf0.fS86.fS86.fS86.fSNu.fSNu.fSNu.fqJ8.fqJ8.fqJ8.fzqM.fzqM.f-3-.f-3-.f-3-.gCTs.gCjU.gCjU.gCmc.gCmc.gCmc.gCz6.gCz6.gCz6.gD0E.gD0E.gD0E.gDCk.gDCk.gDCk`
+  - 羽翼石像×3、图书室的魔女·莉莉尤姆×3、地害加工者×1、爱意天使·艾克夏丝×2、信仰天使·迪纳梅斯×3、圣洁驱魔人·珂蕾特×3、地害驯兽师×2、奇迹独角兔×3、徒然的证言×3、投影鸟像×3、希望的光彩·莉迪耶尔×3、荒废的繁殖×3、地害三恶·拉碧妲赫特×3、勤劳的女祭司·泰瑞莎×2、地害矫正者×3
+- **ps11b/HAVEN-CR-Atom**
+  - 代码：`1.6.cOMQ.cOMQ.cOc2.cOc2.cOc2.fRes.fRes.fRes.fRf0.fRf0.fS86.fS86.fS86.fSNu.fSNu.fSNu.fqJ8.fqJ8.fqJ8.fzqM.fzqM.fzqM.f-3-.f-3-.f-3-.gCTs.gCjU.gCjU.gCmc.gCmc.gCmc.gCz6.gCz6.gCz6.gD0E.gD0E.gD0E.gDCk.gDCk.gDCk`
+  - 羽翼石像×3、图书室的魔女·莉莉尤姆×3、地害加工者×1、爱意天使·艾克夏丝×3、信仰天使·迪纳梅斯×3、圣洁驱魔人·珂蕾特×3、地害驯兽师×2、奇迹独角兔×3、徒然的证言×3、投影鸟像×2、希望的光彩·莉迪耶尔×3、荒废的繁殖×3、地害三恶·拉碧妲赫特×3、勤劳的女祭司·泰瑞莎×2、地害矫正者×3
+
+### 超越者
+
+- **ps11b/PORTAL-MRG-glory**
+  - 代码：`1.7.cR2I.cR2I.cR2I.eLN-.eLN-.eLae.eLae.eShA.er5g.er5g.fDkE.fUp-.fUp-.ftEe.ftEe.ftEe.fzqM.f-LA.f-LA.f-LA.gEw6.gEw6.gEw6.gF9k.gF9k.gF9k.gFCs.gFCs.gFPM.gFPM.gFPM.gFSU.gFSU.gFSU.gFe-.gFe-.gFe-.gFf8.gFf8.gFf8`
+  - 巴别隆城×2、最凶恶的收容×3、理想国·涅格尔赫亚×3、诚心的尽小花×2、人偶剧场×3、人灭执事×3、尽小花·伊鞠×2、爱意天使·艾克夏丝×1、人灭富豪×3、次元异客×3、黑暗次元×1、决断的交错·亚修雷&莉缇雅×2、毁灭怪腕×2、弹哭的变貌·艾兹伊甸×3、人灭绅士×3、人灭三恶·兰佩吉×3、阿尔比昂巴哈姆特×1
+- **ps11b/PORTAL-LVH-だーよね**
+  - 代码：`1.7.cR2I.cR2I.cR2I.eLN-.eLN-.eLae.eShA.er5g.er5g.er5g.fDkE.fUp-.fUp-.ftEe.ftEe.ftEe.fzqM.f-LA.f-LA.f-LA.gEw6.gEw6.gEw6.gF9k.gF9k.gF9k.gFCs.gFCs.gFPM.gFPM.gFPM.gFSU.gFSU.gFSU.gFe-.gFe-.gFe-.gFf8.gFf8.gFf8`
+  - 巴别隆城×3、最凶恶的收容×3、理想国·涅格尔赫亚×3、诚心的尽小花×2、人偶剧场×3、人灭执事×3、尽小花·伊鞠×1、爱意天使·艾克夏丝×1、人灭富豪×3、次元异客×3、黑暗次元×1、决断的交错·亚修雷&莉缇雅×2、毁灭怪腕×2、弹哭的变貌·艾兹伊甸×3、人灭绅士×3、人灭三恶·兰佩吉×3、阿尔比昂巴哈姆特×1
+- **ps11b/PORTAL-RC-あぐのむ**
+  - 代码：`1.7.cR2I.cR2I.eLN-.eLN-.eLN-.eLae.eLae.er5g.er5g.fDkE.fUp-.fUp-.ftEe.ftEe.ftEe.fzqM.fzqM.f-LA.f-LA.f-LA.gEw6.gEw6.gEw6.gF9k.gF9k.gF9k.gFCs.gFCs.gFPM.gFPM.gFPM.gFSU.gFSU.gFSU.gFe-.gFe-.gFe-.gFf8.gFf8.gFf8`
+  - 巴别隆城×2、最凶恶的收容×3、理想国·涅格尔赫亚×3、诚心的尽小花×3、人偶剧场×2、人灭执事×3、尽小花·伊鞠×2、爱意天使·艾克夏丝×2、人灭富豪×3、次元异客×3、决断的交错·亚修雷&莉缇雅×2、毁灭怪腕×2、弹哭的变貌·艾兹伊甸×3、人灭绅士×3、人灭三恶·兰佩吉×3、阿尔比昂巴哈姆特×1
+- **ps11b/PORTAL-CR-ふえた**
+  - 代码：`1.7.cR2I.cR2I.cR2I.eLN-.eLN-.eLN-.er5g.er5g.fDkE.fUp-.ftEe.ftEe.ftEe.fzqM.fzqM.fzqM.f-3-.f-LA.f-LA.f-LA.gEw6.gEw6.gEw6.gF9k.gF9k.gF9k.gFCs.gFCs.gFPM.gFPM.gFPM.gFSU.gFSU.gFSU.gFe-.gFe-.gFe-.gFf8.gFf8.gFf8`
+  - 巴别隆城×2、最凶恶的收容×3、理想国·涅格尔赫亚×3、诚心的尽小花×3、人偶剧场×3、人灭执事×3、爱意天使·艾克夏丝×3、人灭富豪×3、信仰天使·迪纳梅斯×1、次元异客×3、决断的交错·亚修雷&莉缇雅×1、毁灭怪腕×2、弹哭的变貌·艾兹伊甸×3、人灭绅士×3、人灭三恶·兰佩吉×3、阿尔比昂巴哈姆特×1
+

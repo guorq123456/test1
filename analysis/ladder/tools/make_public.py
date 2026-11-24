@@ -3,7 +3,7 @@
     python tools/make_public.py
 
 - public/decklists.md: the deck archive — the seven baseline decks (bot frozen seven), the bot's own 19, the WGP
-  Qualifier 2026 pro lists (70) and Premier Series 26-27 rounds 10-11 (84). Each with its class, its deck code (what
+  Qualifier 2026 pro lists (70) and Premier Series 26-27 rounds 10-11 (84 + 28 of round 11 second half). Each with its class, its deck code (what
   svsim.cards.decks.from_hash reads and what a submission's "deck" takes) and the cards in Chinese. Lists the
   simulator can't play (a card it doesn't have, or one with an ability and no script) are marked.
 - public/card-glossary.md: a copy of analysis/card-glossary.md (community nicknames <-> full names, 10-07).
@@ -29,6 +29,9 @@ SOURCES = [
      "职业选手的卡表，35 人每人 2 套。来源：官方 ps.shadowverse-wb.com 的卡组链接，2026-11-15 抓取。"),
     ("职业联赛 26-27 第 10 节、第 11 节前半", LADDER / "decklists/ps1011-2026-11-11.txt",
      "各队赛前公布的卡表。来源：shadowverse-vision.com/decks，2026-11-15 抓取。"),
+    ("职业联赛 26-27 第 11 节后半", LADDER / "decklists/ps11b-2026-11-18.txt",
+     "11/18 两场四个队赛前公布的卡表（第 3 期特殊期用的就是这 28 副，special-P3.md）。来源：shadowverse-vision.com/decks，"
+     "2026-11-24 抓取。"),
 ]
 
 
