@@ -24,6 +24,13 @@ from test_pool import BASE_DECKS, finish  # noqa: E402
 SEEDS = (99001700, 99011700)       # made-up results only: these seeds only count starts, no game is played
 
 
+@pytest.fixture(autouse=True)
+def any_simulator(monkeypatch):
+    """The tree under test may be either environment's; tests/test_environments.py checks the real fingerprints."""
+    import environments
+    monkeypatch.setattr(environments, "check", lambda period, root=None: environments.env_of(period))
+
+
 def setup(tmp_path, seconds=-60.0, listing=True, puzzle=True):
     host, ar, players = tmp_path / "host", tmp_path / "arena", tmp_path / "players"
     pool = Pool.create(host / "pool", SEEDS, rng_seed=3)
@@ -84,6 +91,7 @@ class Fake:
                                                             "entries": []}), encoding="utf-8")
             (o / "result-public.json").write_text("{}", encoding="utf-8")
         elif what.startswith("ladder.audit"):
+            self.audit_args = args
             o = Path(args[args.index("--out") + 1])
             o.write_text(json.dumps({"checked": 5, "skipped": 0, "failed": [{"id": g} for g in self.failed],
                                      "unlogged": [], "unreadable": [], "voids": {}, "ok": not self.failed}),
@@ -299,3 +307,41 @@ def test_last_json_reads_what_a_command_printed_last():
     assert C.last_json('{"a": 1}') == {"a": 1}
     assert C.last_json('progress\n{"a": 1,\n "b": [2]\n}\n') == {"a": 1, "b": [2]}
     assert C.last_json("nothing") is None
+
+
+def test_after_a_seal_only_what_was_written_since_is_replayed(tmp_path, monkeypatch, keyed):
+    import environments as E
+    host, ar, players = setup(tmp_path)
+    games, events = host / "pool" / "games.jsonl", host / "pool" / "events.jsonl"
+    games.write_text('{"id": "old"}\n', encoding="utf-8")
+    monkeypatch.setattr(E, "env_of", lambda period: {"from": 1, "name": "new", "fingerprint": "x"})
+    assert E.seal(host, 1)["files"]["pool/games.jsonl"]["bytes"] == len('{"id": "old"}\n')
+    sealed_events = events.stat().st_size
+    with open(games, "a", encoding="utf-8") as f:                # a game logged since the seal
+        f.write('{"id": "new"}\n')
+    fake = Fake(host)
+    monkeypatch.setattr(C, "run", fake)
+    assert C.main(argv(host, ar, players, tmp_path / "o")) == 0, summary(tmp_path / "o")
+    logs = [Path(x) for x in fake.audit_args[2:fake.audit_args.index("--events")]]
+    assert [x.name for x in logs] == ["pool__games.jsonl"] and logs[0].parent.name == "since-seal-P1"
+    assert logs[0].read_text(encoding="utf-8") == '{"id": "new"}\n'
+    ev = Path(fake.audit_args[fake.audit_args.index("--events") + 1])
+    got = ev.read_bytes()                                          # the events since (the advance adds more later)
+    assert got and got == events.read_bytes()[sealed_events:sealed_events + len(got)]
+    assert summary(tmp_path / "o")["steps"]["audit"]["since_seal"] == "new"
+
+
+def test_a_sealed_log_changed_holds_the_period(tmp_path, monkeypatch, keyed):
+    import environments as E
+    host, ar, players = setup(tmp_path)
+    games = host / "pool" / "games.jsonl"
+    games.write_text('{"id": "old"}\n', encoding="utf-8")
+    monkeypatch.setattr(E, "env_of", lambda period: {"from": 1, "name": "new", "fingerprint": "x"})
+    E.seal(host, 1)
+    games.write_text('{"id": "odd"}\n', encoding="utf-8")          # same length, other bytes
+    fake = Fake(host)
+    monkeypatch.setattr(C, "run", fake)
+    assert C.main(argv(host, ar, players, tmp_path / "o")) == 2
+    s = summary(tmp_path / "o")
+    assert any("封存" in h and "pool/games.jsonl" in h for h in s["held"])
+    assert "ladder.arena formal" not in fake.calls and Pool(host / "pool").period == 1

@@ -10,7 +10,7 @@ hall of fame is inducted once a period, the anchors are played once a period, a 
 a stop (a power cut, Ctrl+C, an error fixed in between) the same double-click goes on from where it was.
 
 1. lock: the locked files are as locked (tools/check_lock.py); key: the formal pool's deal key is there (its id only).
-2. state: the pool's period P; the arena's window is P's, on the field it was snapshot with, and its deadline is past.
+2. state: the simulator is P's environment (tools/environments.py, S25); the pool's period P; the arena's window is P's, on the field it was snapshot with, and its deadline is past.
    A pool already in P+1 with the window still P's: P was closed (and advanced) earlier; nothing is done.
 3. collected: no collection loop is running (this holds SUBS/collect.lock to the end, so none can start), the loop
    took the listing at the deadline (SUBS/collect.jsonl) and every directory in it was taken, given up or found
@@ -32,7 +32,8 @@ a stop (a power cut, Ctrl+C, an error fixed in between) the same double-click go
    HOST/puzzles/<id>/plan.json before the first game (a run cut off goes on with the same seeds). The public result
    goes into the next period's report by tools/open_period.py.
 8. audit (LD-40): `ladder.audit` replays every game of the pool, of P's anchors, of every gate and every puzzle
-   (HOST/audit/P<P>.json). A game that doesn't replay, a game the pool counted with no line, or a line that isn't
+   (HOST/audit/P<P>.json); after a change of simulator (S25, A60) only what was written since the seal
+   (tools/environments.py), the sealed part checked byte for byte (a change holds the period). A game that doesn't replay, a game the pool counted with no line, or a line that isn't
    JSON holds the period (no formal games, no advance), unless an earlier period's audit (HOST/audit/P<k>.json)
    listed it already (reported and decided then; the audit reads every log every period): written in the summary
    for the host to take to Salem.
@@ -391,7 +392,10 @@ def main(argv=None):
         if not deadline_passed(window):
             raise NotYet(f"第 {period} 期还没到截止时间（{window['deadline']}，UTC）：什么都没做")
         kind = period_kind(period)
-        res["steps"]["state"] = {"ok": True, "period": period, "kind": kind, "deadline": window["deadline"]}
+        import environments                       # S25: closed (played, replayed) on the period's own simulator
+        env = environments.check(period)
+        res["steps"]["state"] = {"ok": True, "period": period, "kind": kind, "deadline": window["deadline"],
+                                 "env": env["name"]}
         step = "collected"
         if not a.check:
             from ladder.collect import _only_one
@@ -503,10 +507,28 @@ def main(argv=None):
         audit_dir = host / "audit"
         audit_dir.mkdir(parents=True, exist_ok=True)
         audit_out = audit_dir / f"P{period}.json"
-        rc, _ = run(["-m", "ladder.audit", pool_dir / "games.jsonl", anchors_dir / f"games-P{period}*.jsonl",
-                     "--events", pool_dir / "events.jsonl", "--workers", a.workers, "--out", audit_out,
-                     "--allow-empty", host / "gates" / "*" / "games.jsonl", host / "puzzles" / "*" / "games.jsonl"],
-                    log, check=False)
+        if not environments.seals(host):          # one environment so far: every log, whole
+            rc, _ = run(["-m", "ladder.audit", pool_dir / "games.jsonl", anchors_dir / f"games-P{period}*.jsonl",
+                         "--events", pool_dir / "events.jsonl", "--workers", a.workers, "--out", audit_out,
+                         "--allow-empty", host / "gates" / "*" / "games.jsonl", host / "puzzles" / "*" / "games.jsonl"],
+                        log, check=False)
+            sealed = None
+        else:                                     # S25: what was sealed was replayed on its own simulator already
+            logs = [pool_dir / "games.jsonl", *sorted(anchors_dir.glob(f"games-P{period}*.jsonl")),
+                    *sorted((host / "gates").glob("*/games.jsonl")), *sorted((host / "puzzles").glob("*/games.jsonl"))]
+            sealed = environments.audit_inputs(host, logs, pool_dir / "events.jsonl", audit_dir / f"since-seal-P{period}")
+            if sealed["logs"] or sealed["events"]:
+                if not sealed["logs"]:            # games counted since, none logged: all "unlogged"
+                    none = audit_dir / f"since-seal-P{period}" / "no-games.jsonl"
+                    none.write_text("", encoding="utf-8")
+                    sealed["logs"] = [none]
+                rc, _ = run(["-m", "ladder.audit", *sealed["logs"],
+                             *(["--events", sealed["events"]] if sealed["events"] else []),
+                             "--workers", a.workers, "--out", audit_out], log, check=False)
+            else:
+                rc = 0
+                audit_out.write_text(json.dumps({"checked": 0, "skipped": 0, "failed": [], "unlogged": [],
+                                                 "unreadable": [], "voids": {}, "ok": True}), encoding="utf-8")
         if rc not in (0, 1) or not audit_out.exists():
             raise RuntimeError(f"ladder.audit exit {rc}（日志找不到或读不了，见 commands.log）")
         au = _read(audit_out)
@@ -515,6 +537,10 @@ def main(argv=None):
         res["steps"]["audit"] = {"ok": True, "checked": au["checked"], "skipped": au["skipped"],
                                  **{name: len(keys) for name, keys in new.items()},
                                  "listed_earlier": {name: len(audit_keys(au)[name]) - len(new[name]) for name in new}}
+        if sealed is not None:
+            res["steps"]["audit"].update({"since_seal": sealed["sealed"], "logs": len(sealed["logs"])})
+            for rel in sealed["changed"]:
+                new.setdefault("sealed", []).append(rel)
         audit_clean = not any(new.values())
         held_ids = [f"{name}:{k}" for name, keys in new.items() for k in keys]
 
@@ -528,6 +554,8 @@ def main(argv=None):
         if new["unreadable"]:
             res["held"].append(f"重放审计：日志里有 {len(new['unreadable'])} 行不是完整的 JSON"
                                f"（{some(new['unreadable'])}；{audit_out}）")
+        if new.get("sealed"):
+            res["held"].append(f"换环境时封存的旧日志被动过：{'、'.join(new['sealed'])}（{host / 'audit' / 'sealed.json'}）")
         if any(res["steps"]["audit"]["listed_earlier"].values()):
             res["report"]["audit_listed_earlier"] = res["steps"]["audit"]["listed_earlier"]
         if au["voids"]:

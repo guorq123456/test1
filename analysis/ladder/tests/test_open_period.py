@@ -6,12 +6,21 @@ import random
 import sys
 from pathlib import Path
 
+import pytest
+
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "tools"))
 sys.path.insert(0, str(HERE))
 
 import open_period as O  # noqa: E402
 from test_pool import baseline_pool, finish  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def any_simulator(monkeypatch):
+    """The tree under test may be either environment's; tests/test_environments.py checks the real fingerprints."""
+    import environments
+    monkeypatch.setattr(environments, "check", lambda period, root=None: environments.env_of(period))
 
 
 def period_one(tmp_path):

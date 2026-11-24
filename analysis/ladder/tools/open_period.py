@@ -90,7 +90,7 @@ def dry_layout(out: Path, host: Path) -> tuple[Path, Path, Path]:
         (out / "host" / d).mkdir(parents=True, exist_ok=True)
     (out / "host" / "subs" / "code").mkdir(parents=True, exist_ok=True)
     for rel in ("anchors/hof.json", *[str(p.relative_to(host)) for p in sorted((host / "gates").glob("delta-P*.json"))],
-                "puzzles/reported.json",
+                "puzzles/reported.json", "audit/sealed.json",
                 *[str(p.relative_to(host)) for p in sorted((host / "puzzles").glob("*/result-public.json"))]):
         if (host / rel).is_file():
             (out / "host" / rel).parent.mkdir(parents=True, exist_ok=True)
@@ -154,13 +154,23 @@ def mark_reported(host: Path, files: list[Path]):
                    encoding="utf-8")
 
 
-def note_for(period: int, kind: str, window: dict) -> str:
+def note_for(period: int, kind: str, window: dict, delta: float | None = None) -> str:
     from ladder.arena import RUN_GAMES_MAX
+    from environments import env_of
     zh = {"deck": "卡组期", "strategy": "策略期"}[kind]
     text = (f"第 {period} 期（{zh}）。工作时间 {window['hours']:g} 小时，五人共用一个截止时刻：{window['deadline']}（UTC）。"
             f"练习每人这一期最多 {window['games']} 局，一次最多 {RUN_GAMES_MAX} 局。")
     if period == 1:
         text += "起点题 START 和这一期共用工作时间和练习局数。"
+    if kind == "strategy" and delta is not None:  # the prompt: 要强多少，主持方每期开始前定好
+        text += (f"这一期把关检验要新版本比池子里那一版强 {delta:g} 个百分点（检验的备择假设）；"
+                 "检验在截止以后统一跑。")
+    env = env_of(period)
+    if env["from"] == period and period > 1:     # S25: a new simulator from this period
+        text += (f"这一期起模拟器换成新环境（{env['name']}"
+                 + (f"，改了什么见公共目录里的 {Path(env['notes']).name}" if env.get("notes") else "") +
+                 "）：这一期的练习和正式对局都在新环境里打；下面上一期的成绩、胜率、锚点和公共题结果都是旧环境里打的，"
+                 "上一期发给你的正式对局（runs 里上一期那份）也是，用现在的代码重放会对不上。")
     return text
 
 
@@ -265,8 +275,20 @@ def main(argv=None):
         window = is_open(arena, period)
         res["steps"]["state"] = {"ok": True, "period": period, "kind": kind, "already_open": window is not None,
                                  **({"delta": delta} if delta is not None else {})}
+        step = "environment"                      # S25: the simulator must be this period's (tools/environments.py)
+        import environments
+        env = environments.check(period)
+        res["steps"]["environment"] = {"ok": True, "env": env["name"], "fingerprint": env["fingerprint"]}
         frozen = host / "frozen" / f"P{period}.json"
         if window is None:
+            step = "seal"                         # a new environment's first period: the old logs, as replayed
+            sealed = environments.seal(host, period)
+            if sealed:
+                res["steps"]["seal"] = {"ok": True, "env": sealed["env"], "files": len(sealed["files"])}
+            if env.get("notes") and env["from"] == period:
+                (players / "public").mkdir(parents=True, exist_ok=True)
+                shutil.copy2(ROOT / env["notes"], players / "public" / Path(env["notes"]).name)
+                res["steps"]["environment"]["notes"] = str(players / "public" / Path(env["notes"]).name)
             step = "freeze"
             if frozen.exists():
                 res["steps"]["freeze"] = {"ok": True, "kept": str(frozen)}
@@ -304,7 +326,7 @@ def main(argv=None):
             else:
                 puzzles = new_puzzles(host)
                 py(["-m", "ladder.report", pool_dir, "--out", reports, "--anchors-dir", host / "anchors",
-                    "--note", note_for(period, kind, window), *[x for p in puzzles for x in ("--puzzle", p)]], log)
+                    "--note", note_for(period, kind, window, delta), *[x for p in puzzles for x in ("--puzzle", p)]], log)
                 mark_reported(host, puzzles)
                 res["steps"]["report"] = {"ok": True, "wrote": str(reports / f"report-P{period}.md"),
                                           "puzzles": [p.parent.name for p in puzzles]}
