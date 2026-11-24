@@ -103,6 +103,8 @@ def deck_of(x: str, arch: dict | None = None) -> tuple[list, str]:
 
 class Lab:
     def __init__(self, lab: Path = LAB, arena: Path = ARENA, workers: int = WORKERS):
+        if not 1 <= workers <= WORKERS:              # 0 would hold the arena's lock and play nothing (11-24 review)
+            raise LabError(f"--workers 要在 1～{WORKERS} 之间")
         self.dir, self.arena, self.workers = Path(lab), Path(arena), workers
         fj = self.arena / "host" / "field.json"
         self.field = A._read(fj) if fj.exists() else {"members": [], "anchors": [], "hash": None, "period": None,
@@ -325,7 +327,7 @@ class Lab:
 
     def summary(self, rid: str, d: Path, plan: list, opps: list, jobs: list) -> dict:
         logs = {g["id"]: g for g in A._jsonl(d / "games.jsonl")}
-        per, seats, voids, errors = {}, {True: [0, 0], False: [0, 0]}, Counter(), Counter()
+        per, seats, voids, errors = {}, {True: [0, 0], False: [0, 0], None: [0, 0]}, Counter(), Counter()
         w = n = played = 0
         for p, j in zip(plan, jobs):
             g = logs.get(j["id"])
@@ -344,7 +346,7 @@ class Lab:
             if g.get("winner") not in (0, 1):
                 continue
             won = g["winner"] == p["seat"]
-            first = g.get("first") == p["seat"]
+            first = None if g.get("first") not in (0, 1) else g["first"] == p["seat"]   # a watchdog line has none
             n += 1
             w += won
             c["decided"] += 1
@@ -358,6 +360,7 @@ class Lab:
                 "lo": round(lo, 4), "hi": round(hi, 4),
                 "first": {"games": seats[True][1], "wins": seats[True][0]},
                 "second": {"games": seats[False][1], "wins": seats[False][0]},
+                **({"seat_unknown": {"games": seats[None][1], "wins": seats[None][0]}} if seats[None][1] else {}),
                 "by_opponent": per, "void": sum(voids.values()), "void_reasons": dict(voids.most_common(5)),
                 "my_errors": dict(errors.most_common(5))}
 
@@ -368,6 +371,8 @@ class Lab:
             raise LabError("练习场还没有冻结池（ARENA/host/frozen.json）")
         if outside.trained(me["spec"]):
             raise LabError("载入训练模型的打法用 vs（冻结池评测走带绊线的 runner，这种局会被作废，LD-59）")
+        if games < 1 or not 1 <= tail <= games or repeats < 1:     # the evaluator divides by tail (11-24 review)
+            raise LabError(f"要 games ≥ 1、1 ≤ tail ≤ games、repeats ≥ 1（这次 {games}、{tail}、{repeats}）")
         budget = games * repeats + max(A.VOID_STOP, games * repeats // 20)
         if self.window_open() and budget > LADDER_OPEN_MAX:
             raise LabError(f"期中一次冻结池评测最多 {LADDER_OPEN_MAX} 局（选手在排队），这次要 {budget}")
@@ -502,6 +507,12 @@ def main(argv=None) -> int:
                 out = {"replay": str(lab.replay(args.run, args.game, args.seat))}
     except (LabError, A.ArenaError) as e:
         print(f"没跑：{e}", file=sys.stderr)
+        return 2
+    except Exception as e:                            # noqa: BLE001
+        from ladder.outside import OutsideError
+        if not isinstance(e, OutsideError):
+            raise
+        print(f"出错停了：{e}。实验场不接着跑：已经打完的局留在这一轮的目录里，再跑一次是新的一轮", file=sys.stderr)
         return 2
     print(json.dumps(out, ensure_ascii=False, indent=1))
     if isinstance(out, dict) and out.get("stopped"):

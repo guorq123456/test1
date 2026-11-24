@@ -1,5 +1,5 @@
 """Salem's lab (S30): his own practice interface, all cores, no cap, everything visible. Seeds: the host's second
-probe bank, 93409090-93409139 (SEEDS.md; every run of these tests plays them again)."""
+probe bank, 93403200-93403249 (SEEDS.md; every run of these tests plays them again)."""
 import json
 import sys
 from pathlib import Path
@@ -39,7 +39,7 @@ def version(d: Path, src: str, deck: str) -> Path:
 
 @pytest.fixture()
 def L(tmp_path, monkeypatch):
-    monkeypatch.setattr(lab, "LAB_SEEDS", (93409090, 93409140))
+    monkeypatch.setattr(lab, "LAB_SEEDS", (93403200, 93403250))
     from ladder.runner import load_deck
     pool = Pool.create(tmp_path / "pool", seeds=(93400190, 93400200), rng_seed=3, check=True)
     for code, cr in ((CODES[1], 1450), (CODES[2], 1500)):
@@ -71,7 +71,7 @@ def test_vs_in_turns_under_the_arena_lock(L, monkeypatch):
     assert out["first"]["games"] + out["second"]["games"] == out["decided"]
     lines = [json.loads(x) for x in (L.dir / "runs" / out["run"] / "games.jsonl").read_text(encoding="utf-8")
              .splitlines()]
-    assert len(lines) == 5 and all(93409090 <= g["seed"] < 93409140 for g in lines)
+    assert len(lines) == 5 and all(93403200 <= g["seed"] < 93403250 for g in lines)
     served = json.loads((L.arena / "host" / "served.json").read_text(encoding="utf-8"))
     assert "salem" in served and list((L.arena / "host" / "queue").glob("*.t")) == []
 
@@ -126,3 +126,13 @@ def test_ladder_capped_only_while_a_window_is_open(L, monkeypatch):
     (L.arena / "public" / "window.json").unlink()                     # between periods: no cap
     out = L2.ladder(me, "m0001", 4, 2, 2)
     assert out["kind"] == "ladder" and ("rel_cr" in out or "stopped" in out)
+
+
+def test_review_settings_refused_before_anything_runs(L):
+    # 11-24 review: --workers 0 held the lock and played nothing; a tail above games gave a wrong rel_cr silently
+    with pytest.raises(lab.LabError, match="workers"):
+        lab.Lab(L.dir, L.arena, workers=0)
+    me = L.mine(None, CODES[1], FAST)
+    with pytest.raises(lab.LabError, match="tail"):
+        L.ladder(me, None, games=4, tail=5, repeats=1)
+    assert not list((L.dir / "runs").glob("L*")) if (L.dir / "runs").exists() else True

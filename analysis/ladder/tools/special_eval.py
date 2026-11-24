@@ -6,7 +6,8 @@ against the same-class baseline member, on the pool frozen at the period's end.
         [--games 1200 --tail 600 --repeats 5]
 
 1. frozen: HOST/special/P<P>/frozen.json, ladder.evaluator.freeze of HOST/pool (CR fixed at the mean of the last 1000
-   decided games, the evaluator's own rule), taken once and kept; the pool must be past period P (its close done).
+   decided games, the evaluator's own rule), taken once and kept; the pool must be in period P+1 with nothing played
+   or changed since the close's advance. A kept result.json must be of that frozen pool and these settings.
 2. candidates: each player's new decks of period P that were accepted and entered the pool (the submissions ledger:
    receipts of kind deck, period P, verdict 收下, and their admit lines), and the seven baseline members (owner
    baseline, the default strategy). A member no longer in the frozen pool (removed) is evaluated from the pool's own
@@ -20,7 +21,8 @@ against the same-class baseline member, on the pool frozen at the period's end.
    the baseline's; 95% interval from the two sets of repeats (Welch); 过关 = the interval's lower end above 0; 良好 =
    the difference 200 or more (S27). A repeat that stopped out of reach (S3: the value is a bound) is flagged.
    HOST/special/P<P>/result.json and result.md (with the players' names: host and Salem only); each player's own rows
-   in PLAYERS/<folder>/receipts/特殊期评测-P<P>.md (never another player's).
+   in PLAYERS/<folder>/receipts/特殊期评测-P<P>.md (never another player's). With --only: result-only.json and .md,
+   nothing delivered (the full report is left as it is).
 
 Each candidate is played under the arena's lock as the host (D2: one run at a time; between candidates Salem's lab,
 S30, may take a turn). Ctrl+C stops; running it again continues. The players' strategies are imported from HOST/subs/code (the workers get it
@@ -95,6 +97,7 @@ def evaluate(host: Path, period: int, workers: int = 23, mask=None, only=None, g
     fz = out / "frozen.json"
     base, mine = candidates(host, period)
     if not fz.exists():
+        at_end(host / "pool", period)
         body = freeze(host / "pool")
         fz.write_text(json.dumps(body, ensure_ascii=False, indent=1), encoding="utf-8")
         log(f"冻结池：{len(body['members'])} 个成员，哈希 {body['hash']}")
@@ -121,7 +124,12 @@ def evaluate(host: Path, period: int, workers: int = 23, mask=None, only=None, g
         d = out / c["mid"]
         done = d / "result.json"
         if done.exists():
-            results[c["mid"]] = json.loads(done.read_text(encoding="utf-8"))
+            r = json.loads(done.read_text(encoding="utf-8"))
+            have = (r.get("frozen_hash"), r.get("games"), r.get("tail"), r.get("repeats"))
+            if have != (body["hash"], games, tail, repeats):
+                raise EvalError(f"{done} 是另一次评测的（冻结池 {have[0]}、{have[1]} 局取后 {have[2]}、{have[3]} 个重复；"
+                                f"这次是 {body['hash']}、{games}、{tail}、{repeats}）：不混着用，先挪走那个目录")
+            results[c["mid"]] = r
             continue
         f = next((x for x in frozen if x.mid == c["mid"]), None)
         if f is not None:
@@ -141,12 +149,40 @@ def evaluate(host: Path, period: int, workers: int = 23, mask=None, only=None, g
         finally:
             if lock is not None:
                 _unlock(lock)
+                let_others_in(arena)
         r = results[c["mid"]]
         log(f"    相对 CR {r['rel_cr']:+.0f}（{r['lo']:+.0f}～{r['hi']:+.0f}）" + ("，有重复够不着对手（界限）" if r["stuck"] else ""))
-    return report(out, period, base, mine, results, host)
+    return report(out, period, base, mine, results, host, name="result-only" if want else "result")
 
 
-def report(out: Path, period: int, base: list, mine: list, results: dict, host: Path | None = None) -> dict:
+def at_end(pool_dir: Path, period: int):
+    """The pool as period `period` left it: advanced to the next period by the close, nothing played or changed in
+    it since (11-24 review: freezing later would evaluate on another pool)."""
+    from ladder.arena import _jsonl
+    from ladder.pool import Pool
+    pool = Pool(pool_dir)
+    if pool.period != period + 1:
+        raise EvalError(f"池子在第 {pool.period} 期，不是第 {period} 期收尾后的第 {period + 1} 期：冻结的就不是第 {period} 期收尾的池子")
+    evs = _jsonl(Path(pool_dir) / "events.jsonl")
+    k = max((i for i, e in enumerate(evs) if e.get("ev") == "period"), default=-1)
+    later = sorted({e.get("ev") for e in evs[k + 1:]} - {"exit_reason"})
+    if later:
+        raise EvalError(f"第 {period + 1} 期已经有变化了（{'、'.join(later)}）：冻结的就不是第 {period} 期收尾的池子")
+
+
+def let_others_in(arena: Path):
+    """Between candidates: if anyone else waits for the arena (Salem's lab, S30, A64), pause long enough for them to
+    see the lock free and take it (11-24 review: the next host ticket came within milliseconds and host tickets
+    always go first, so the lab never got a turn)."""
+    import time
+    from ladder.arena import QUEUE_POLL, _ticket_who
+    q = Path(arena) / "host" / "queue"
+    if q.is_dir() and any(_ticket_who(t.name) != "host" for t in q.glob("*.t")):
+        time.sleep(3 * QUEUE_POLL)
+
+
+def report(out: Path, period: int, base: list, mine: list, results: dict, host: Path | None = None,
+           name: str = "result") -> dict:
     by_craft = {b["craft"]: b for b in base}
     rows = []
     for c in mine:
@@ -158,8 +194,8 @@ def report(out: Path, period: int, base: list, mine: list, results: dict, host: 
                      "base_rel_cr": b["rel_cr"], "diff": w["diff"], "diff_lo": w["lo"], "diff_hi": w["hi"],
                      "pass": w["lo"] > 0, "good": w["diff"] >= 200, "bound": bool(r["stuck"] or b["stuck"])})
     body = {"period": period, "baselines": {b["mid"]: results.get(b["mid"]) for b in base}, "members": rows}
-    (out / "result.json").write_text(json.dumps(body, ensure_ascii=False, indent=1), encoding="utf-8")
-    (out / "result.md").write_text(table(rows, period, names=True), encoding="utf-8")
+    (out / f"{name}.json").write_text(json.dumps(body, ensure_ascii=False, indent=1), encoding="utf-8")
+    (out / f"{name}.md").write_text(table(rows, period, names=True), encoding="utf-8")
     return body
 
 
@@ -173,8 +209,8 @@ def table(rows: list, period: int, names: bool) -> str:
     for r in sorted(rows, key=lambda r: (r["owner"], r["craft"])):
         cells = ([r["owner"]] if names else []) + [
             r["team"] or "—", CRAFT_ZH[r["craft"]], r["member"] or r["mid"],
-            f"{r['rel_cr']:+.0f}（{r['lo']:+.0f}～{r['hi']:+.0f}）", f"{r['base_rel_cr']:+.0f}",
-            f"{r['diff']:+.0f}（{r['diff_lo']:+.0f}～{r['diff_hi']:+.0f}）" + ("，界限" if r["bound"] else ""),
+            f"{r['rel_cr']:+.1f}（{r['lo']:+.1f}～{r['hi']:+.1f}）", f"{r['base_rel_cr']:+.1f}",
+            f"{r['diff']:+.1f}（{r['diff_lo']:+.1f}～{r['diff_hi']:+.1f}）" + ("，界限" if r["bound"] else ""),
             "过" if r["pass"] else "没过", "是" if r["good"] else "—"]
         out.append("| " + " | ".join(cells) + " |")
     return "\n".join(out) + "\n"
@@ -224,7 +260,7 @@ def main(argv=None) -> int:
         return 1
     if not a.no_deliver and not a.only:
         print("放进选手的 receipts：", deliver(body, a.players))
-    print(f"完成：{len(body['members'])} 个成员；结果 {a.host / 'special' / f'P{a.period}' / 'result.md'}")
+    print(f"完成：{len(body['members'])} 个成员；结果 {a.host / 'special' / f'P{a.period}' / ('result-only.md' if a.only else 'result.md')}")
     return 0
 
 

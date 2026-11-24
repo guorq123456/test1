@@ -74,7 +74,35 @@ def test_one_member_against_its_baseline(tmp_path, monkeypatch):
     assert got == {"astra": 1}
     text = (tmp_path / "players" / "astra" / "receipts" / "特殊期评测-P1.md").read_text(encoding="utf-8")
     assert "Crazy Raccoon" in text and "astra" not in text.split("\n", 3)[3]   # their own rows, no names column
-    assert "astra" in (host / "special" / "P1" / "result.md").read_text(encoding="utf-8")
+    assert "astra" in (host / "special" / "P1" / "result-only.md").read_text(encoding="utf-8")
+    assert not (host / "special" / "P1" / "result.md").exists()             # --only leaves the full report alone
+    with pytest.raises(E.EvalError, match="另一次评测"):                       # a kept result of other settings
+        E.evaluate(host, 1, workers=2, only=[mid], games=2, tail=2, repeats=2, log=lambda *_: None)
+
+
+def test_frozen_only_at_the_periods_end(tmp_path):
+    host, pool, mid = _host(tmp_path)
+    pool.advance(force="test: the period closed")
+    E.at_end(host / "pool", 1)                                          # just advanced: fine
+    with pytest.raises(E.EvalError, match="池子在第 2 期"):
+        E.at_end(host / "pool", 0)
+    pool.advance(force="test: one more")
+    with pytest.raises(E.EvalError):
+        E.at_end(host / "pool", 1)
+
+
+def test_the_lab_gets_a_turn_between_candidates(tmp_path, monkeypatch):
+    import time as T
+    slept = []
+    monkeypatch.setattr(T, "sleep", slept.append)
+    q = tmp_path / "arena" / "host" / "queue"
+    q.mkdir(parents=True)
+    (q / "00000000000000000001-7-host.t").touch()
+    E.let_others_in(tmp_path / "arena")
+    assert slept == []                                                  # only the host waits: straight on
+    (q / "00000000000000000002-8-salem.t").touch()
+    E.let_others_in(tmp_path / "arena")
+    assert slept and slept[0] > 2
 
 
 def test_welch():

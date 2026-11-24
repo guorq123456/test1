@@ -17,7 +17,7 @@ set DRY=
 if /i "%~1"=="dry" set DRY=--dry
 if defined DRY (set RUNS=C:\claude\ladder-runs\open-dry) else (set RUNS=C:\claude\ladder-runs\open)
 if not exist %RUNS% mkdir %RUNS%
-powershell -NoProfile -Command "if (Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'python.exe' -and $_.CommandLine -match 'phase1_checks|base2_checks|arena_dry|first_setup|open_period|close_period|pilot_conditions|lethal_bank|ladder\.pool|ladder\.collect|ladder\.submit (receive|gate|admit|deliver)|ladder\.(anchors|puzzles|audit|compute_audit|outside)' }) { exit 3 } else { exit 0 }"
+powershell -NoProfile -Command "$ErrorActionPreference = 'Stop'; try { $p = @(Get-CimInstance Win32_Process); if ($p.Count -eq 0) { exit 7 }; if ($p | Where-Object { $_.Name -eq 'python.exe' -and $_.CommandLine -match 'phase1_checks|base2_checks|arena_dry|first_setup|open_period|close_period|pilot_conditions|lethal_bank|ladder\.pool|ladder\.collect|ladder\.submit (receive|gate|admit|deliver)|ladder\.(anchors|puzzles|audit|compute_audit|outside)' }) { exit 3 } else { exit 0 } } catch { exit 7 }"
 set CHECK=%errorlevel%
 if not "%CHECK%"=="0" goto busy
 if defined DRY goto go
@@ -26,7 +26,7 @@ echo If the window is already open, it only restarts the collection loop.
 set OK=
 set /p OK=Type OPEN and press Enter to go on: 
 if not "%OK%"=="OPEN" goto nothing
-powershell -NoProfile -Command "if (Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'python.exe' -and $_.CommandLine -match 'phase1_checks|base2_checks|arena_dry|first_setup|open_period|close_period|pilot_conditions|lethal_bank|ladder\.pool|ladder\.collect|ladder\.submit (receive|gate|admit|deliver)|ladder\.(anchors|puzzles|audit|compute_audit|outside)' }) { exit 3 } else { exit 0 }"
+powershell -NoProfile -Command "$ErrorActionPreference = 'Stop'; try { $p = @(Get-CimInstance Win32_Process); if ($p.Count -eq 0) { exit 7 }; if ($p | Where-Object { $_.Name -eq 'python.exe' -and $_.CommandLine -match 'phase1_checks|base2_checks|arena_dry|first_setup|open_period|close_period|pilot_conditions|lethal_bank|ladder\.pool|ladder\.collect|ladder\.submit (receive|gate|admit|deliver)|ladder\.(anchors|puzzles|audit|compute_audit|outside)' }) { exit 3 } else { exit 0 } } catch { exit 7 }"
 set CHECK=%errorlevel%
 if not "%CHECK%"=="0" goto busy
 :go
@@ -57,7 +57,7 @@ pause
 exit /b 1
 :busy
 echo not started %date% %time%: running-check returned %CHECK%, 3 means a host run is still going >> %RUNS%\status.txt
-echo Not started: a host run is still going, or the check could not run - code %CHECK%.
+echo Not started: a host run is still going (code 3), or the check could not run (code 7) - code %CHECK%.
 pause
 exit /b 1
 :nothing
