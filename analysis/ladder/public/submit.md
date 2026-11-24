@@ -72,7 +72,7 @@ python -m ladder.submit precheck 你的提交目录
 一条没过就拒收，回执里列出每条理由。前四条一起查；有没过的，后面要打对局的几条就不跑了。
 
 1. **格式**：四个文件都在，字段齐全。
-2. **卡组**（新卡组、公共题）：按模拟器自己的规则查：40 张，同名最多 3 张，一个职业加中立，卡池以模拟器为准。每张有效果的牌都要有脚本，没有的会按白板打，所以拒收并列出牌名。
+2. **卡组**（新卡组、公共题）：按模拟器自己的规则查：40 张，同名最多 3 张，一个职业加中立，卡池以模拟器为准（只收模拟器卡牌数据里在指定卡池的牌；衍生物、激奏或结晶这类变出来的形态不收，第 2 期起）。每张有效果的牌都要有脚本，没有的会按白板打，所以拒收并列出牌名。
 3. **名额和期**：见第四节。
 4. **读代码**（不运行）：
    - 只许 import 这些模块：`ladder.interface`、`ladder.base`、`svsim`（`svsim.learn`、`svsim.tools`、`svsim.ui`、`svsim.build`、`svsim.search.parallel` 除外：它们能载入训练好的模型、读强度表和对局记录、开进程）、`math`、`random`、`collections`、`itertools`、`functools`、`dataclasses`、`heapq`、`bisect`、`statistics`、`copy`、`enum`、`typing`、`numpy`。经别的模块拿到的模块（比如某个 svsim 模块里的 `time`）也按这张表管。私有名字（`from x import _y`）不许拿。`numpy` 只许用 `numpy` 本身和 `numpy.random`、`numpy.linalg`、`numpy.fft`、`numpy.polynomial`、`numpy.exceptions`、`numpy.dtypes`、`numpy.typing`；读写文件的（`load`、`save`、`fromregex`、`数组.dump` 等）、改整个进程设置的（`seterr`、`set_printoptions`、`printoptions`、`numpy.polynomial.set_default_printstyle`、numpy 1.x 的 `seterrobj` / `geterrobj` 等）、`test`、`info` 不许用；numpy 1.x 的旧别名 `product`、`cumproduct`、`sometrue`、`alltrue` 不许用（读代码看不清它们的参数），用 `prod`、`cumprod`、`any`、`all`；`numpy.random` 里只许用 `default_rng`、`Generator`、`RandomState`、`SeedSequence` 和几个位生成器，全局随机数（`numpy.random.seed`、`rand`、`choice` 等，整个进程共用一个）不许用。import 进来的名字不许再赋值、删除，也不许拿来定义函数或类；同一个名字 import 两次，要指同一个东西（读代码按 import 的东西认这个名字）。

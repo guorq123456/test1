@@ -166,6 +166,10 @@ def check_deck(code: str) -> tuple[list, list[str]]:
     except Exception as e:                                  # an unknown card id or a malformed code
         return [], [f"卡组代码读不了（{type(e).__name__}: {e}）：有模拟器里没有的牌，或者代码写错了"]
     problems = list(validate(deck))
+    odd = sorted({f"{c.name_zh or c.name}（{c.card_id}）" for c in deck if c.is_token or not c.rotation})
+    if odd:                                  # LD-68: validate lets in a derived form (an Accelerate card, 10901112)
+        problems.append("这些不是能放进卡组的牌（衍生物、激奏或结晶形态，模拟器卡牌数据里不在指定卡池）："
+                        + "、".join(odd))
     if craft_of(deck) == Craft.NEUTRAL:
         problems.append("要有一个职业（全中立或混了两个职业都不行）")
     missing = unscripted(deck)

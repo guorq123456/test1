@@ -188,6 +188,22 @@ def test_decks_by_the_simulators_rules():
     assert problems
 
 
+def test_a_derived_form_is_not_a_deck_card():
+    """LD-68 (astra, period 1): the Accelerate form of Jailor of Antiquity (10901112, 1 cost) passed the simulator's
+    validate; it is not in the card pool (rotation.json: no rot flag), so the deck check refuses it."""
+    from svsim.cards.decks import to_hash
+    from svsim.cards.pool import card
+    from ladder.runner import load_deck
+    deck = load_deck(CODES[2])
+    real = [card(10901110)] * 3 + deck[3:]
+    derived = [card(10901112)] * 3 + deck[3:]
+    assert not any("不是能放进卡组的牌" in p for p in submit.check_deck(to_hash(real))[1])
+    _, problems = submit.check_deck(to_hash(derived))
+    assert any("不是能放进卡组的牌" in p and "10901112" in p for p in problems)
+    for code in CODES:                                   # the seven baseline lists: nothing new refused
+        assert not any("不是能放进卡组的牌" in p for p in submit.check_deck(code)[1])
+
+
 def _pool(tmp_path, period: int):
     pool = Pool.create(tmp_path / "pool", seeds=(99001460, 99001470), rng_seed=1)
     pool.advance()                                         # period 1: a deck period
