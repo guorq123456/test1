@@ -8,7 +8,9 @@ players' member version, up to `per_member` of its games of period P (a fixed dr
 choice of the host's), replayed move for move with the default strategy asked and timed at every decision of that
 member's seat (submit._shadow: only host code runs, the member's code never), and the same for baseline-against-
 baseline games of the same period, in the same batch: those two are the very same computation, so their ratio is
-what a step cost in the pool's games against in this batch's replays (cores, load, time of day). A member's ratio is
+what a step cost in the pool's games against in this batch's replays (cores, load, time of day). The two kinds run
+shuffled together after one warm-up replay per worker (LD-68 ⑤: calibration only at a batch's start put every member
+~10% high); the report gives the calibration ratio of each half of the batch, to see the drift. A member's ratio is
 (its CPU per decision / the default's on the same positions) over that. A 90% interval from resampling its games.
 
 Nothing is decided here: a member clearly over 1.15, the refusal line (S15; the interval above it), is written in the report for the host to
@@ -75,6 +77,29 @@ def plan(games: list, members: dict, period: int, per_member: int = 30, calib: i
     return items, cal
 
 
+def run_order(items: list, cal: list, period: int, workers: int) -> tuple[list, int]:
+    """(what to replay, in order; how many at its start are warm-up). The member and calibration replays shuffled
+    together (a fixed draw: the period only), so the calibration is spread over the whole batch: LD-68 ⑤, replays later
+    in a batch ran faster, and with the calibration bunched at the start every member came out ~10% high. Before them,
+    one calibration replay per worker as warm-up (each worker's first task: runner.guarded_map hands the first
+    `workers` tasks out one each), its result dropped."""
+    every = list(items) + list(cal)
+    random.Random(f"compute-audit:{period}:order").shuffle(every)
+    warm = [(("warm", None), g, seat) for _, g, seat in cal[:max(0, workers)]]
+    return warm + every, len(warm)
+
+
+def halves(order: list, got: list) -> list:
+    """The calibration's game-over-replay ratio in the first and the second half of the batch: how much the speed
+    drifted while it ran (written in the report; the ratios use the whole batch's)."""
+    out = []
+    for part in (slice(0, len(order) // 2), slice(len(order) // 2, None)):
+        rows, _ = rows_of(order[part], got[part])
+        c = rows.get(("baseline", None), [])
+        out.append(round(sum(r[0] for r in c) / sum(r[1] for r in c), 4) if c and sum(r[1] for r in c) else None)
+    return out
+
+
 def rows_of(items, got) -> tuple[dict, list]:
     """{key: [(game CPU, shadow CPU)]} over the decisions counted (the member's seat; both seats for calibration)."""
     out, bad = {}, []
@@ -118,19 +143,16 @@ def audit(pool_dir, period: int, per_member: int = 30, calib: int = 60, workers:
     from ladder.runner import guarded_map
     pool = Pool(pool_dir)
     items, cal = plan(_jsonl(pool.games_path), pool.members, period, per_member, calib)
-    every = []                                           # members and calibration interleaved: the same conditions
-    for i in range(max(len(items), len(cal))):
-        if i < len(items):
-            every.append(items[i])
-        if i < len(cal):
-            every.append(cal[i])
-    tasks = [shadow_task(g, 0 if seat is None else seat) for _, g, seat in every]
-    got = guarded_map("ladder.submit:_shadow", tasks, workers=max(1, min(workers, len(tasks))),
-                      step_limit=step_limit, mask=mask) if tasks else []
+    workers = max(1, min(workers, len(items) + len(cal)))
+    order, warm = run_order(items, cal, period, workers) if items or cal else ([], 0)
+    tasks = [shadow_task(g, 0 if seat is None else seat) for _, g, seat in order]
+    got = guarded_map("ladder.submit:_shadow", tasks, workers=workers, step_limit=step_limit,
+                      mask=mask) if tasks else []
+    every, got = order[warm:], got[warm:]                # the warm-up replays are not counted
     rows, bad = rows_of(every, got)
     c = rows.pop(("baseline", None), [])
-    out = {"period": period, "per_member": per_member, "replayed": len(tasks), "problems": bad[:20],
-           "calibration": {"games": len(c)}, "members": []}
+    out = {"period": period, "per_member": per_member, "replayed": len(every), "warm_up": warm,
+           "problems": bad[:20], "calibration": {"games": len(c), "halves": halves(every, got)}, "members": []}
     if len(c) < 10:
         out["calibration"]["note"] = "fewer than 10 baseline-against-baseline games: no ratios"
         return out

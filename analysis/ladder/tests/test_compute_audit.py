@@ -42,3 +42,22 @@ def test_rows_count_the_members_seat_and_both_seats_for_calibration():
     assert CA.ratio(rows[("p1", 1)], 60 / 30) == 2.0
     lo, hi = CA.interval([(40, 10)] * 5, [(60, 30)] * 5)
     assert lo == hi == 2.0
+
+
+def test_the_calibration_is_spread_over_the_batch_after_a_warm_up():
+    items = [(("p1", 1), g(i, ("p1", "b1")), 0) for i in range(100)]
+    cal = [(("baseline", None), g(1000 + i, ("b1", "b2")), None) for i in range(20)]
+    order, warm = CA.run_order(items, cal, period=3, workers=4)
+    assert warm == 4 and [k for k, _, _ in order[:4]] == [("warm", None)] * 4
+    rest = order[warm:]
+    assert sorted(x["id"] for _, x, _ in rest) == sorted(x["id"] for _, x, _ in items + cal)
+    at = [i for i, (k, _, _) in enumerate(rest) if k == ("baseline", None)]
+    assert min(at) < 30 and max(at) > 90 and sum(i < 60 for i in at) not in (0, 20)    # not bunched at either end
+    again, _ = CA.run_order(items, cal, period=3, workers=4)
+    assert [x["id"] for _, x, _ in again] == [x["id"] for _, x, _ in order]           # a fixed draw
+
+
+def test_halves_show_the_drift():
+    cal = [(("baseline", None), g(i, ("b1", "b2")), None) for i in range(4)]
+    got = [{"value": {"steps": [[0, 10], [1, 20], [0, 30]]}}] * 2 + [{"value": {"steps": [[0, 5], [1, 10], [0, 15]]}}] * 2
+    assert CA.halves(cal, got) == [1.0, 2.0]
