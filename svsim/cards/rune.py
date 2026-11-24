@@ -1201,10 +1201,16 @@ class KittyCunning(CardScript):
 @register(EMPEROR_OF_ELEMENTS.card_id)
 class EmperorOfElements(CardScript):
     """Fanfare: summon 2 Guardian Golems. Whenever an allied Golem follower enters the
-    field, Earth Rite (1): evolve it."""
+    field, Earth Rite (1): evolve it. Super-Evolve: select an allied Golem follower on
+    the field and give it Storm (added by the 2026-11-26 balance patch)."""
+    super_evolve_targets = (TargetSpec(Target.ALLIED_FOLLOWER, filter=lambda state, chooser, f: E.has_trait(f, GOLEM)),)
 
     def fanfare(self, ctx):
         _summon(ctx, GUARDIAN_GOLEM, 2)
+
+    def on_super_evolve(self, ctx):
+        for f in ctx.chosen():
+            E.give_keywords(f, Keyword.STORM)
 
     def on_ally_enter(self, ctx):
         f = ctx.other

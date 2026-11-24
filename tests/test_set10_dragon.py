@@ -149,13 +149,13 @@ def test_obliviationist_mugger_ramps_only_with_a_clue():
     assert p.max_pp == 5 and count(p.hand, DIVINE_EVIDENCE) == 0
 
 
-def test_obliviationist_mugger_evolve_deals_three():
+def test_obliviationist_mugger_evolve_deals_four():
     state = start(first=0)
     unlock_evolution(state, 0)
     giant = put(state, 1, demo.GIANT)
     mugger = put(state, 0, dragon.OBLIVIATIONIST_MUGGER)
     apply(state, Evolve(mugger.uid, False, (giant.uid,)))
-    assert giant.life == 2
+    assert giant.life == 1                                  # 4 damage since the 2026-11-26 patch
 
 
 def test_birds_eye_view_summon_and_buff_leftmost_two():

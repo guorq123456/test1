@@ -808,7 +808,7 @@ def test_wolfraud_grows_with_combo_and_evolve_swaps_hands():
     shadows = p.shadows
     apply(state, Evolve(wolfraud.uid))
     assert junk not in p.hand and p.shadows == shadows + 1
-    assert [c.defn for c in p.hand] == [forest.MARLONE] * 5 and all(c.owner == 0 for c in p.hand)
+    assert [c.defn for c in p.hand] == [forest.MARLONE] * 6 and all(c.owner == 0 for c in p.hand)
     assert len(state.players[1].deck) == 36                    # copies: the deck keeps its cards
 
 

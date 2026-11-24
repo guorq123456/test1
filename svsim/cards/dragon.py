@@ -616,7 +616,8 @@ class CollectionManifest(CardScript):
 @register(OBLIVIATIONIST_MUGGER.card_id)
 class ObliviationistMugger(CardScript):
     """Fanfare: if you have a Clue amulet in your hand, discard a random Clue amulet and
-    gain 1 max play point. Evolve: select an enemy follower and deal it 3 damage."""
+    gain 1 max play point. Evolve: select an enemy follower and deal it 4 damage.
+    (2026-11-26 balance patch: 3/3 -> 4/4, Evolve damage 3 -> 4.)"""
     evolve_targets = common.ENEMY_FOLLOWER
 
     def fanfare(self, ctx):
@@ -624,7 +625,7 @@ class ObliviationistMugger(CardScript):
             E.gain_max_pp(ctx.state, ctx.controller)
 
     def on_evolve(self, ctx):
-        E.damage(ctx.state, ctx.chosen(), 3, ctx.source)
+        E.damage(ctx.state, ctx.chosen(), 4, ctx.source)
 
 
 @register(BIRDS_EYE_VIEW.card_id)
@@ -1154,7 +1155,8 @@ class Ruinbringer(CardScript):
 @register(YUBE.card_id)
 class Yube(CardScript):
     """Fanfare: summon a Majestic Megalorca. Evolve: select a card in your hand and
-    discard it; gain Crest: Yube, Crestpetal."""
+    discard it; gain 1 max play point; gain Crest: Yube, Crestpetal. (The max play point
+    was added by the 2026-11-26 balance patch.)"""
     evolve_targets = common.HAND_CARD
 
     def fanfare(self, ctx):
@@ -1162,6 +1164,7 @@ class Yube(CardScript):
 
     def on_evolve(self, ctx):
         _discard_chosen(ctx)
+        E.gain_max_pp(ctx.state, ctx.controller)
         E.add_to_leader_area(ctx.state, ctx.controller, YUBE_CREST)
 
 
