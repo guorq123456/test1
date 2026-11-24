@@ -1004,7 +1004,13 @@ class GraceOfTheSwarmpetal(CardScript):
 
 @register(WOLFRAUD.card_id)
 class Wolfraud(CardScript):
-    """Fanfare: +X/+X (X = Combo). Evolve: discard your hand; copy 5 random enemy deck cards to your hand."""
+    """Fanfare: +X/+X (X = Combo). Evolve: discard your hand; copy 6 random enemy deck
+    cards to your hand. Super-Evolve: reduce their costs by 1.
+
+    Balance patch 2026-11-26 (official notice 11-24): 5 copies -> 6, Super-Evolve added.
+    The Super-Evolve part is applied here, to the copies this evolution just added
+    ("their" in the EN text), because on_super_evolve runs as a separate step and
+    would no longer know which cards they were."""
 
     def fanfare(self, ctx):
         E.buff(ctx.state, ctx.source, ctx.me.combo, ctx.me.combo)
@@ -1012,8 +1018,10 @@ class Wolfraud(CardScript):
     def on_evolve(self, ctx):
         for c in list(ctx.me.hand):
             E.discard(ctx.state, c)
-        for c in E.random_sample(ctx.state, ctx.opponent.deck, 5):
-            E.add_copy_to_hand(ctx.state, ctx.controller, c)
+        for c in E.random_sample(ctx.state, ctx.opponent.deck, 6):
+            copy = E.add_copy_to_hand(ctx.state, ctx.controller, c)
+            if copy is not None and ctx.super_:
+                E.add_cost(copy, -1)
 
 
 @register(MIROKU.card_id)
