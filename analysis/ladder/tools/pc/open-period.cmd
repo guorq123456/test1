@@ -1,6 +1,6 @@
 @echo off
 rem Opening a period (RUNBOOK every period 1 and 3): tools\open_period.py. It checks the locked files and the key,
-rem freezes the pool, writes the anchor table, snapshots the arena and opens its window (4 hours, 20000 games),
+rem freezes the pool, writes the anchor table, snapshots the arena and opens its window (12 hours, 60000 games),
 rem writes the period's report into C:\claude\ladder-players\public\reports, then runs the collection loop until
 rem the deadline and after it until the period is collected ("zhe yi qi shou wan"). Keep this window open till then.
 rem Started again while the window is open, it never opens a second window: it goes straight to the loop.

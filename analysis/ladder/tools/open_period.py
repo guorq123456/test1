@@ -2,7 +2,7 @@
 players' first arena command says the arena is not open and nobody collects what they hand in).
 
     python analysis/ladder/tools/open_period.py [--host DIR] [--arena DIR] [--players DIR] [--out DIR]
-                                                [--hours 4] [--games 20000] [--workers 23] [--delta PP] [--dry]
+                                                [--hours 12] [--games 60000] [--workers 23] [--delta PP] [--dry]
 
 1. lock: the locked files are as locked (tools/check_lock.py); key: the formal pool's deal key is there (its id only).
 2. state: the pool's period and kind (deck or strategy). A strategy period needs its gate margin, decided per period
@@ -17,7 +17,7 @@ players' first arena command says the arena is not open and nobody collects what
 4. anchors: HOST/anchors/anchors.json (ladder.anchors table: the baseline snapshot, then the hall of fame from
    HOST/anchors/hof.json if there is one).
 5. arena: ladder.arena snapshot POOL --arena ARENA --anchors anchors.json --code HOST/subs/code, then ladder.arena open
-   --hours --games --workers (the temporary 4 hours, the plan's 20 000 games: Salem's numbers, not changed here).
+   --hours --games --workers (12 hours, 60 000 games a player: Salem's numbers, S29 from period 3; periods 1-2 had 4 hours, 20 000).
 6. report: ladder.report POOL --out PLAYERS/public/reports --anchors-dir HOST/anchors, with a note naming the period, the
    deadline (UTC) and the practice limits, and --puzzle for every HOST/puzzles/<id>/result-public.json not in an
    earlier report (HOST/puzzles/reported.json lists those that were). Kept if this period's report is there. A
@@ -209,8 +209,8 @@ def main(argv=None):
     ap.add_argument("--arena", type=Path, default=Path(r"C:\claude\ladder-arena"))
     ap.add_argument("--players", type=Path, default=Path(r"C:\claude\ladder-players"))
     ap.add_argument("--out", type=Path, default=Path(r"C:\claude\ladder-runs\open"))
-    ap.add_argument("--hours", type=float, help="default 4 (the temporary limit); 0.05 with --dry")
-    ap.add_argument("--games", type=int, default=20000)
+    ap.add_argument("--hours", type=float, help="default 12 (S29); 0.05 with --dry")
+    ap.add_argument("--games", type=int, default=60000)   # S29
     ap.add_argument("--workers", type=int, default=23, help="the arena's workers (all cores, S10)")
     ap.add_argument("--mask", default=E_CORES, help="the collection loop's E-cores (A44); 'none' off Windows")
     ap.add_argument("--delta", type=float, help="a strategy period's gate margin (percentage points)")
@@ -232,7 +232,7 @@ def main(argv=None):
             return 10 if is_open(a.arena, Pool(a.host / "pool").period) else 11
         except SystemExit:
             return 10                             # a window of this period on another field: open, all the same
-    hours = a.hours if a.hours is not None else (0.05 if a.dry else 4.0)
+    hours = a.hours if a.hours is not None else (0.05 if a.dry else 12.0)
     every = a.every if a.every is not None else (10.0 if a.dry else 120.0)
     a.out.mkdir(parents=True, exist_ok=True)
     log = a.out / "commands.log"

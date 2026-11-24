@@ -41,7 +41,7 @@ def test_a_dry_opening_runs_to_the_end_of_its_window(tmp_path):
     assert code == 0 and s["ok"], s
     assert s["steps"]["state"] == {"ok": True, "period": 1, "kind": "deck", "already_open": False}
     assert s["steps"]["anchors"]["anchors"] == 7 and not s["steps"]["anchors"]["hof"]
-    assert s["steps"]["arena"]["opponents"] == 14 and s["steps"]["arena"]["games"] == 20000
+    assert s["steps"]["arena"]["opponents"] == 14 and s["steps"]["arena"]["games"] == 60000
     report = (out / "players" / "public" / "reports" / "report-P1.md").read_text(encoding="utf-8")
     assert "起点题 START" in report and s["steps"]["arena"]["deadline"] in report
     assert "这一期收完" in (out / "collect.log").read_text(encoding="utf-8")

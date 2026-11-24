@@ -3,7 +3,7 @@ resuming from a position of one's own game, a game count per player and period.
 
 Host:
     python -m ladder.arena snapshot POOLDIR --arena ARENA [--anchors ANCHORS.json] --code SUBS\\code
-    python -m ladder.arena open     ARENA --hours 4 --games 20000 [--workers 23]
+    python -m ladder.arena open     ARENA --hours 12 --games 60000 [--workers 23]
     python -m ladder.arena formal   ARENA --pool POOLDIR --subs SUBS --period P      # end of period P (A53)
 Players (each command is one run; what a player may read is under ARENA/players/<code>/, nothing else):
     python -m ladder.arena field    ARENA --player fable
@@ -219,8 +219,8 @@ def public_field(host: dict) -> dict:
 
 
 def open_window(arena: Path, hours: float, games: int, workers: int = 11, mask: int | None = None) -> dict:
-    """The players' window for this period: the deadline and the game cap (both Salem's numbers: the temporary 4 h
-    and the plan's 20 000)."""
+    """The players' window for this period: the deadline and the game cap (both Salem's numbers: 12 h and 60 000
+    a player from period 3, S29; 4 h and 20 000 before)."""
     from ladder import deal
     host = _read(Path(arena) / "host" / "field.json")
     kf = Path(arena) / "host" / "arena.key"
