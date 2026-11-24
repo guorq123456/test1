@@ -34,6 +34,7 @@
 10. 在 Salem 账户里建选手目录（公共目录副本、私有目录、练习场）。11-23：tools/first_setup.py 写好（正式池复制 p1b 基线池进第 1 期、主持方目录、五个选手的 submit\ 和 receipts\、公共目录副本），云端空跑过；练习场每期开期时建（RUNBOOK 每期 1.2）。**11-23 17:48Z 电脑上建好**：正式池 C:\claude\ladder-host\pool 进第 1 期（卡组期；巫师基线 m0003 够不着，S8 不挡），五个选手的 submit\ receipts\ 和 public\。
 
 11. 11-23 晚上：提示词 v2 对照 v1 评估（共享目录 ladder/prompt-v2-gaps-2026-11-23.md），Salem 定了 S21～S23；修补做完（A56 练习场三处、A57 提示词三条、A58 开期启动文件 tools/open_period.py + tools/pc/open-period.cmd），一轮审查 + 一轮复核（LD-63）。五份成品提示词 tools/make_prompts.py → 共享目录 ladder/prompts/。还剩：电脑上双击 first-setup.cmd（删代号空目录、刷新公共目录；Salem 19:44Z 让主持方自己启动）、开期空跑（open-period-dry.cmd）、开期（open-period.cmd）、照 RUNBOOK 第一次 8 启动五个选手。
+12. 11-24：first-setup.cmd 在电脑上跑完（主持方经远程会话启动），开期空跑全过（Salem 02:21～02:24 本地）。期末启动文件 tools/close_period.py + tools/pc/close-period.cmd（A59；电脑上 C:\claude\ladder-runs\close-period.cmd，要输入 CLOSE）：截止后、收提交收完以后一次做完天梯、名人堂、锚点、START 评测、重放审计、算力抽查、交正式对局、排行榜、advance；云端小池子实跑和一轮独立审查（LD-64）。
 
 ~~代号丁、戊（A1）~~（S20：不用代号，选手名 fable-ultracode、fable、astra、opus、sol）；要 Salem 给：定稿提示词 v2（名额已按 S5、S6 改进去）；开五个选手（11-23 08:15Z：Fable 5.2 max、Fable 5.2 xhigh + ultracode、Opus 5.5、GPT 6.2 A、GPT 6.2 sol）。按计划选手先做 2.6 起点测量，再进第一期。
 

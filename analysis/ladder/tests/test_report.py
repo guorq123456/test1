@@ -51,7 +51,8 @@ def test_report_says_nothing_about_owners_versions_or_age(tmp_path, monkeypatch)
     puzzle = tmp_path / "result-public.json"
     puzzle.write_text(json.dumps({"puzzle": "P01", "title": "一题", "entries": [
         {"entry": "默认打法", "rate": .5, "lo": .4, "hi": .6},
-        {"entry": "选手 1", "rate": .6, "lo": .5, "hi": .7, "vs_default_pp": [10.0, 2.0, 18.0]}],
+        {"entry": "选手 1", "rate": .6, "lo": .5, "hi": .7, "vs_default_pp": [10.0, 2.0, 18.0]},
+        {"entry": "选手 2", "rate": None, "lo": None, "hi": None}],          # no decided game (11-24 review)
         "agreement": [{"a": "选手 1", "b": "默认打法", "same": .8, "points": 40}]}, ensure_ascii=False),
         encoding="utf-8")
     r = R.build(pool.dir, tmp_path / "anchors", [puzzle], note="第一期")
@@ -73,6 +74,7 @@ def test_report_says_nothing_about_owners_versions_or_age(tmp_path, monkeypatch)
     assert "| 全池 | 55%（40～69%） |" in R.markdown(r)
     md = R.markdown(r)
     assert "第一期" in md and "P01" in md and "选手 1" in md and "+10.0（+2.0～+18.0）" in md
+    assert "| 选手 2 | — | — | — |" in md
     assert {b["anon"] for b in r["board"]} <= {m.anon for m in pool.active()}
 
 

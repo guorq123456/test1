@@ -142,7 +142,10 @@ def markdown(r: dict) -> str:
                 "| 打法 | 胜率 | 区间 | 比默认打法（百分点） |", "|---|---|---|---|"]
         for e in p["entries"]:
             d = e.get("vs_default_pp")
-            out.append(f"| {e['entry']} | {100 * e['rate']:.0f}% | {100 * e['lo']:.0f}%～{100 * e['hi']:.0f}% | "
+            decided = e.get("rate") is not None and e.get("lo") is not None and e.get("hi") is not None
+            rate = f"{100 * e['rate']:.0f}%" if decided else "—"         # no decided game (11-24 review: a None
+            band = f"{100 * e['lo']:.0f}%～{100 * e['hi']:.0f}%" if decided else "—"   # broke every later report)
+            out.append(f"| {e['entry']} | {rate} | {band} | "
                        f"{f'{d[0]:+.1f}（{d[1]:+.1f}～{d[2]:+.1f}）' if d else '—'} |")
         if p.get("agreement"):
             out += ["", "同一个局面选同一步的比例：", ""]
