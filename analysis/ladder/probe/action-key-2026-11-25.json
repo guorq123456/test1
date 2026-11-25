@@ -1,0 +1,140 @@
+{
+ "what": "svsim.search.mcts.action_key keys a hand card by (card id, cost): two copies with the same cost but other stats/keywords/counters get one key; ISMCTS tries the first copy (_options, setdefault) and the root plays the last (_choose's dict). Measured with bot:mcts:100+plan on both sides; the search wrapped in memory only, read-only (same winners in 238/238 games over two passes). Comparison leaves out the 'spellboost' counter (counted on every hand card, read by no card script).",
+ "seeds": [
+  93190000,
+  93190237
+ ],
+ "machine": "cloud container",
+ "date": "2026-11-25",
+ "groups": {
+  "ps11b lists vs the 7 baseline decks": {
+   "games": 196,
+   "decisions": 9659,
+   "merged_groups": 3507,
+   "games_with_a_real_merge": 51,
+   "games_where_a_different_copy_was_played": 36,
+   "decisions_with_real_merge": 349,
+   "chosen_in_real_merge": 62,
+   "played_not_the_one_searched": 56,
+   "part:counters": 45,
+   "part:stats": 8,
+   "part:keywords": 4
+  },
+  "baseline decks vs each other": {
+   "games": 42,
+   "decisions": 2066,
+   "games_with_a_real_merge": 10,
+   "games_where_a_different_copy_was_played": 7,
+   "merged_groups": 295,
+   "decisions_with_real_merge": 59,
+   "chosen_in_real_merge": 9,
+   "played_not_the_one_searched": 8,
+   "part:keywords": 2,
+   "part:counters": 5,
+   "part:stats": 2
+  }
+ },
+ "merged_cards_decisions": {
+  "Sephie, Maven Convict": 680,
+  "Lineage, Calamity of Extinction": 501,
+  "Ecstatic Scholar": 484,
+  "Calamity in Custody": 102,
+  "Amethyst's Naptime": 57,
+  "Obsessed Test Subject": 31,
+  "Stormy Blast": 29,
+  "Tetra & Ladica, Forest BFFs": 25,
+  "Metamorphosis of the Dawnblossom": 19,
+  "Steelclad Knight": 15,
+  "Imari, Dewdrop": 11,
+  "Fairy": 5,
+  "Inquiring Mischief": 5,
+  "Placid Dilettante": 3,
+  "No Life, Dichotomous Detective": 2
+ },
+ "examples": [
+  {
+   "turn": 18,
+   "card": "Tetra & Ladica, Forest BFFs",
+   "searched": "((6, 5, 5, 5), 2, None, (False, False), \"[('x', 2)]\", None, None)",
+   "played": "((6, 5, 5, 5), 2, None, (False, False), \"[('x', 1)]\", None, None)",
+   "action": "PlayCard"
+  },
+  {
+   "turn": 7,
+   "card": "Obsessed Test Subject",
+   "searched": "((2, 2, 2, 2), 4, None, (False, False), None, None, None)",
+   "played": "((2, 3, 2, 2), 4, None, (False, False), None, None, None)",
+   "action": "PlayCard"
+  },
+  {
+   "turn": 10,
+   "card": "Sephie, Maven Convict",
+   "searched": "((7, 4, 4, 4), 0, None, (False, False), \"[('fused', [10131320, 10803310, 10834110])]\", None, None)",
+   "played": "((7, 4, 4, 4), 0, None, (False, False), None, None, None)",
+   "action": "Fuse"
+  },
+  {
+   "turn": 14,
+   "card": "Tetra & Ladica, Forest BFFs",
+   "searched": "((6, 5, 5, 5), 2, None, (False, False), \"[('x', 4)]\", None, None)",
+   "played": "((6, 5, 5, 5), 2, None, (False, False), \"[('x', 3)]\", None, None)",
+   "action": "PlayCard"
+  },
+  {
+   "turn": 11,
+   "card": "Obsessed Test Subject",
+   "searched": "((2, 3, 2, 2), 4, None, (False, False), None, None, None)",
+   "played": "((2, 2, 2, 2), 4, None, (False, False), None, None, None)",
+   "action": "PlayCard"
+  },
+  {
+   "turn": 15,
+   "card": "Tetra & Ladica, Forest BFFs",
+   "searched": "((6, 5, 5, 5), 2, None, (False, False), \"[('x', 8)]\", None, None)",
+   "played": "((6, 5, 5, 5), 2, None, (False, False), \"[('x', 5)]\", None, None)",
+   "action": "PlayCard"
+  },
+  {
+   "turn": 17,
+   "card": "Tetra & Ladica, Forest BFFs",
+   "searched": "((6, 5, 5, 5), 2, None, (False, False), \"[('x', 10)]\", None, None)",
+   "played": "((6, 5, 5, 5), 2, None, (False, False), \"[('x', 9)]\", None, None)",
+   "action": "PlayCard"
+  },
+  {
+   "turn": 17,
+   "card": "Fairy",
+   "searched": "((1, 1, 1, 1), 4, None, (False, False), None, None, None)",
+   "played": "((1, 1, 1, 1), 12, None, (False, False), \"[('kw', 8)]\", None, None)",
+   "action": "PlayCard"
+  },
+  {
+   "turn": 18,
+   "card": "Steelclad Knight",
+   "searched": "((1, 2, 2, 2), 4, None, (False, False), None, None, None)",
+   "played": "((1, 2, 2, 2), 0, None, (False, False), None, None, None)",
+   "action": "PlayCard"
+  },
+  {
+   "turn": 7,
+   "card": "Stormy Blast",
+   "searched": "((1, 0, 0, 0), 0, None, (False, False), \"[('x', 4)]\", None, None)",
+   "played": "((1, 0, 0, 0), 0, None, (False, False), \"[('x', 3)]\", None, None)",
+   "action": "PlayCard"
+  },
+  {
+   "turn": 12,
+   "card": "Lineage, Calamity of Extinction",
+   "searched": "((9, 7, 7, 7), 0, None, (False, False), \"[('fused', [90001210, 10703210])]\", None, None)",
+   "played": "((9, 7, 7, 7), 0, None, (False, False), None, None, None)",
+   "action": "Fuse"
+  },
+  {
+   "turn": 14,
+   "card": "Lineage, Calamity of Extinction",
+   "searched": "((9, 7, 7, 7), 0, None, (False, False), \"[('fused', [90001210, 10703210])]\", None, None)",
+   "played": "((9, 7, 7, 7), 0, None, (False, False), \"[('fused', [90001210])]\", None, None)",
+   "action": "Fuse"
+  }
+ ]
+}
