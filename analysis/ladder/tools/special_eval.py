@@ -17,9 +17,15 @@ against the same-class baseline member, on the pool frozen at the period's end.
    candidates in a fixed order (the baselines by id, then the players' members by id), candidate k gets
    SEEDS[P][0] + SPAN * k .. + SPAN (SEEDS.md). A candidate with a result.json is read, not run again; one cut off
    resumes where it stopped (the evaluator's own resume).
+   References (when REF_SEEDS has the period): each list a player's member of period P plays, once (two members on
+   one list share it), with the default strategy, as an outside candidate (the whole frozen pool is its field), id
+   ref<craft>-<sha1 of the list, 10>, the cards in id order; in (class, list) order, reference k gets
+   REF_SEEDS[P][0] + SPAN * k .. + SPAN, a range of its own, so the other candidates' seeds stay as they were.
 4. verdicts, for each player's member against the baseline member of its class: difference = its relative CR minus
    the baseline's; 95% interval from the two sets of repeats (Welch); 过关 = the interval's lower end above 0; 良好 =
    the difference 200 or more (S27). A repeat that stopped out of reach (S3: the value is a bound) is flagged.
+   Beside it, with a reference: the member's relative CR minus its list's with the default strategy, same interval
+   (比默认打法: the interval's lower end above 0). It is a column only: 过关 and 良好 stay against the baseline (S27).
    HOST/special/P<P>/result.json and result.md (with the players' names: host and Salem only); each player's own rows
    in PLAYERS/<folder>/receipts/特殊期评测-P<P>.md (never another player's). With --only: result-only.json and .md,
    nothing delivered (the full report is left as it is).
@@ -43,6 +49,7 @@ ROOT = LADDER.parents[1]
 sys.path[:0] = [str(LADDER), str(ROOT)]
 
 SEEDS = {3: (94610000, 94910000)}       # SEEDS.md; registered in the project's seed bank
+REF_SEEDS = {3: (96010000, 96210000)}   # the references' own range (SEEDS.md, 11-25); a period not here has none
 SPAN = 7000                             # seeds per candidate: 6000 decided games and room for draws and voids
 DEFAULT = "bot:mcts:100+plan"
 CRAFT_ZH = {1: "精灵", 2: "皇家护卫", 3: "巫师", 4: "龙族", 5: "梦魇", 6: "主教", 7: "超越者"}
@@ -50,6 +57,29 @@ CRAFT_ZH = {1: "精灵", 2: "皇家护卫", 3: "巫师", 4: "龙族", 5: "梦魇
 
 class EvalError(Exception):
     pass
+
+
+def ref_mid(craft: int, deck) -> str:
+    import hashlib
+    from ladder.pool import list_key
+    return f"ref{craft}-" + hashlib.sha1(list_key(deck).encode()).hexdigest()[:10]
+
+
+def references(mine: list, decks: dict) -> list:
+    """One reference per (class, list) the players' members play: [{"mid", "craft", "deck", "owner", "member",
+    "team", "receipt", "of"}], in (class, list) order; `decks` = {member id: its card ids}."""
+    from ladder.pool import list_key
+    refs = {}
+    for c in mine:
+        deck = sorted(decks[c["mid"]])
+        k = (c["craft"], list_key(deck))
+        r = refs.setdefault(k, {"mid": ref_mid(c["craft"], deck), "craft": c["craft"], "deck": deck,
+                                "owner": "reference", "member": None, "team": None, "receipt": None, "of": []})
+        r["of"].append(c["mid"])
+    for r in refs.values():
+        teams = sorted({c["team"] for c in mine if c["mid"] in r["of"] and c["team"]})
+        r["team"] = "、".join(teams) or None
+    return [refs[k] for k in sorted(refs)]
 
 
 def candidates(host: Path, period: int) -> tuple[list, list]:
@@ -109,16 +139,27 @@ def evaluate(host: Path, period: int, workers: int = 23, mask=None, only=None, g
         sys.path.insert(0, code)
     os.environ["LADDER_EXTRA_PATH"] = os.pathsep.join(x for x in (code, os.environ.get("LADDER_EXTRA_PATH", "")) if x)
     pool = Pool(host / "pool")
+    by_mid = {x.mid: x for x in frozen}
+    decks = {c["mid"]: list(by_mid[c["mid"]].deck) if c["mid"] in by_mid else list(pool.members[c["mid"]].deck)
+             for c in mine}
+    refs = references(mine, decks) if period in REF_SEEDS else []
     order = base + mine
     lo0 = SEEDS[period][0]
     if lo0 + SPAN * len(order) > SEEDS[period][1]:
         raise EvalError(f"{len(order)} 个候选要 {SPAN * len(order)} 个种子，登记的段不够")
+    if refs and REF_SEEDS[period][0] + SPAN * len(refs) > REF_SEEDS[period][1]:
+        raise EvalError(f"{len(refs)} 个对照要 {SPAN * len(refs)} 个种子，登记的段不够")
     want = set(only or [])
     if want:
         need = {c["craft"] for c in order if c["mid"] in want}
         want |= {b["mid"] for b in base if b["craft"] in need}       # a member's verdict needs its class's baseline
+        want |= {r["mid"] for r in refs if set(r["of"]) & want}      # and its list's reference
+    plan = [(c, (lo0 + SPAN * k, lo0 + SPAN * (k + 1))) for k, c in enumerate(order)]
+    if refs:
+        r0 = REF_SEEDS[period][0]
+        plan += [(r, (r0 + SPAN * k, r0 + SPAN * (k + 1))) for k, r in enumerate(refs)]
     results = {}
-    for k, c in enumerate(order):
+    for k, (c, seeds) in enumerate(plan):
         if want and c["mid"] not in want:
             continue
         d = out / c["mid"]
@@ -131,14 +172,15 @@ def evaluate(host: Path, period: int, workers: int = 23, mask=None, only=None, g
                                 f"这次是 {body['hash']}、{games}、{tail}、{repeats}）：不混着用，先挪走那个目录")
             results[c["mid"]] = r
             continue
-        f = next((x for x in frozen if x.mid == c["mid"]), None)
-        if f is not None:
+        f = by_mid.get(c["mid"])
+        if c["owner"] == "reference":                            # its list with the default strategy, from outside
+            cand = Candidate(c["mid"], c["craft"], list(c["deck"]), DEFAULT)
+        elif f is not None:
             cand = Candidate(f.mid, f.craft, f.deck, f.strategy)
         else:                                                    # removed by the period's end: the pool's record
             m = pool.members[c["mid"]]
             cand = Candidate(m.mid, m.craft, list(m.deck), m.strategy)
-        seeds = (lo0 + SPAN * k, lo0 + SPAN * (k + 1))
-        log(f"[{k + 1}/{len(order)}] {c['mid']}（{CRAFT_ZH[c['craft']]}，{c['owner']}）种子 {seeds[0]}～{seeds[1] - 1}")
+        log(f"[{k + 1}/{len(plan)}] {c['mid']}（{CRAFT_ZH[c['craft']]}，{c['owner']}）种子 {seeds[0]}～{seeds[1] - 1}")
         ev = Evaluation(fz, d, cand, seeds, games, tail, repeats)
         lock = None
         if arena is not None:                # one run at a time (D2): the arena's lock as the host, candidate by
@@ -152,7 +194,7 @@ def evaluate(host: Path, period: int, workers: int = 23, mask=None, only=None, g
                 let_others_in(arena)
         r = results[c["mid"]]
         log(f"    相对 CR {r['rel_cr']:+.0f}（{r['lo']:+.0f}～{r['hi']:+.0f}）" + ("，有重复够不着对手（界限）" if r["stuck"] else ""))
-    return report(out, period, base, mine, results, host, name="result-only" if want else "result")
+    return report(out, period, base, mine, results, host, name="result-only" if want else "result", refs=refs)
 
 
 def at_end(pool_dir: Path, period: int):
@@ -182,18 +224,29 @@ def let_others_in(arena: Path):
 
 
 def report(out: Path, period: int, base: list, mine: list, results: dict, host: Path | None = None,
-           name: str = "result") -> dict:
+           name: str = "result", refs: list | None = None) -> dict:
     by_craft = {b["craft"]: b for b in base}
+    ref_of = {m: r for r in refs or [] for m in r["of"]}
     rows = []
     for c in mine:
         r, b = results.get(c["mid"]), results.get(by_craft[c["craft"]]["mid"])
         if r is None or b is None:
             continue
         w = welch(r, b)
-        rows.append({**c, "rel_cr": r["rel_cr"], "lo": r["lo"], "hi": r["hi"], "base_mid": by_craft[c["craft"]]["mid"],
-                     "base_rel_cr": b["rel_cr"], "diff": w["diff"], "diff_lo": w["lo"], "diff_hi": w["hi"],
-                     "pass": w["lo"] > 0, "good": w["diff"] >= 200, "bound": bool(r["stuck"] or b["stuck"])})
+        row = {**c, "rel_cr": r["rel_cr"], "lo": r["lo"], "hi": r["hi"], "base_mid": by_craft[c["craft"]]["mid"],
+               "base_rel_cr": b["rel_cr"], "diff": w["diff"], "diff_lo": w["lo"], "diff_hi": w["hi"],
+               "pass": w["lo"] > 0, "good": w["diff"] >= 200, "bound": bool(r["stuck"] or b["stuck"])}
+        x = ref_of.get(c["mid"])
+        q = results.get(x["mid"]) if x else None
+        if q is not None:
+            v = welch(r, q)
+            row.update({"ref_mid": x["mid"], "ref_rel_cr": q["rel_cr"], "play_diff": v["diff"], "play_lo": v["lo"],
+                        "play_hi": v["hi"], "play_better": v["lo"] > 0, "ref_bound": bool(r["stuck"] or q["stuck"])})
+        rows.append(row)
     body = {"period": period, "baselines": {b["mid"]: results.get(b["mid"]) for b in base}, "members": rows}
+    if refs:
+        body["references"] = {x["mid"]: {"craft": x["craft"], "team": x["team"], "deck": x["deck"], "of": x["of"],
+                                         "result": results.get(x["mid"])} for x in refs}
     (out / f"{name}.json").write_text(json.dumps(body, ensure_ascii=False, indent=1), encoding="utf-8")
     (out / f"{name}.md").write_text(table(rows, period, names=True), encoding="utf-8")
     return body
@@ -204,7 +257,13 @@ def table(rows: list, period: int, names: bool) -> str:
             "每个成员在第 {0} 期收尾时冻结的池子上评一次（5 个重复 × 1200 局，取后 600 局），和同职业的基线成员比相对 CR。"
             "过关 = 差值的 95% 区间整个在 0 以上；良好 = 差值 200 以上。「界限」= 有重复打到够不着任何对手停下（S3），"
             "那个读数是界限。".format(period), ""]
+    ref = any("ref_mid" in r for r in rows)
+    if ref:
+        head[-1:] = ["「同卡表默认打法」= 同一副卡表配默认打法、在同一个冻结池上评的相对 CR；「比默认打法」= 成员减它，"
+                     "区间整个在 0 以上记「强」。这一列不影响过关、良好（S27 照基线判）。", ""]
     cols = (["选手"] if names else []) + ["队", "职业", "成员", "相对 CR", "基线", "差值（95% 区间）", "过关", "良好"]
+    if ref:
+        cols += ["同卡表默认打法", "比默认打法（95% 区间）"]
     out = head + ["| " + " | ".join(cols) + " |", "|" + "---|" * len(cols)]
     for r in sorted(rows, key=lambda r: (r["owner"], r["craft"])):
         cells = ([r["owner"]] if names else []) + [
@@ -212,6 +271,11 @@ def table(rows: list, period: int, names: bool) -> str:
             f"{r['rel_cr']:+.1f}（{r['lo']:+.1f}～{r['hi']:+.1f}）", f"{r['base_rel_cr']:+.1f}",
             f"{r['diff']:+.1f}（{r['diff_lo']:+.1f}～{r['diff_hi']:+.1f}）" + ("，界限" if r["bound"] else ""),
             "过" if r["pass"] else "没过", "是" if r["good"] else "—"]
+        if ref:
+            cells += ([f"{r['ref_rel_cr']:+.1f}",
+                       f"{r['play_diff']:+.1f}（{r['play_lo']:+.1f}～{r['play_hi']:+.1f}）"
+                       + ("，强" if r["play_better"] else "") + ("，界限" if r["ref_bound"] else "")]
+                      if "ref_mid" in r else ["—", "—"])
         out.append("| " + " | ".join(cells) + " |")
     return "\n".join(out) + "\n"
 

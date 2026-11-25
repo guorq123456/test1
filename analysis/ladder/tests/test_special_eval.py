@@ -110,3 +110,61 @@ def test_welch():
     b = {"rel_cr": 0.0, "se": 10.0, "repeats": 5}
     w = E.welch(a, b)
     assert w["diff"] == 100 and abs(w["df"] - 8) < 1e-9 and w["lo"] > 60 and w["hi"] < 140
+
+
+def test_references_one_per_list():
+    ids, _ = check_deck(CODES[1])
+    rune, _ = check_deck(CODES[2])
+    mine = [{"mid": "a", "craft": 2, "team": "Crazy Raccoon"}, {"mid": "b", "craft": 2, "team": "REJECT"},
+            {"mid": "c", "craft": 3, "team": "Crazy Raccoon"}]
+    refs = E.references(mine, {"a": ids, "b": list(reversed(ids)), "c": rune})   # a and b: one list, two orders
+    assert [r["craft"] for r in refs] == [2, 3] and refs[0]["of"] == ["a", "b"] and refs[1]["of"] == ["c"]
+    assert refs[0]["deck"] == sorted(ids) and refs[0]["team"] == "Crazy Raccoon、REJECT"
+    assert refs[0]["mid"] == E.ref_mid(2, ids) == E.ref_mid(2, list(reversed(ids))) != refs[1]["mid"]
+    assert all(r["owner"] == "reference" for r in refs)
+
+
+def test_a_member_against_its_lists_default_strategy(tmp_path, monkeypatch):
+    """(11-25, Salem's decision card) Beside the baseline, the member's list with the default strategy, from outside
+    the pool, on seeds of its own; 过关 and 良好 stay against the baseline."""
+    host, pool, mid = _host(tmp_path)
+    ids, _ = check_deck(CODES[1])
+    pool.advance(force="test: the period closed")
+    base, mine = E.candidates(host, 1)
+    monkeypatch.setattr(E, "SEEDS", {1: (93409050, 93409090)})
+    monkeypatch.setattr(E, "SPAN", 4)
+    monkeypatch.setattr(E, "REF_SEEDS", {1: (93403300, 93403303)})          # 1 reference needs 4: too few
+    with pytest.raises(E.EvalError, match="对照"):
+        E.evaluate(host, 1, workers=2, only=[mid], games=2, tail=1, repeats=2, log=lambda *_: None)
+    monkeypatch.setattr(E, "REF_SEEDS", {1: (93403300, 93403340)})
+    body = E.evaluate(host, 1, workers=2, only=[mid], games=2, tail=1, repeats=2, log=lambda *_: None)
+    (row,) = body["members"]
+    rid = E.ref_mid(2, ids)
+    assert row["mid"] == mid and row["ref_mid"] == rid and set(body["references"]) == {rid}
+    q = body["references"][rid]["result"]
+    assert q is not None and row["ref_rel_cr"] == q["rel_cr"]
+    assert row["play_diff"] == row["rel_cr"] - q["rel_cr"] and row["play_better"] == (row["play_lo"] > 0)
+    assert row["pass"] == (row["diff_lo"] > 0) and row["good"] == (row["diff"] >= 200)   # still the baseline's
+    meta = json.loads((host / "special" / "P1" / rid / "meta.json").read_text(encoding="utf-8"))
+    assert meta["seeds"] == [93403300, 93403304]                         # its own range, from its start
+    assert meta["candidate"]["strategy"] == E.DEFAULT and meta["candidate"]["deck"] == sorted(ids)
+    k = [c["mid"] for c in base + mine].index(mid)                       # the members' seeds as before
+    mseeds = json.loads((host / "special" / "P1" / mid / "meta.json").read_text(encoding="utf-8"))["seeds"]
+    assert mseeds == [93409050 + 4 * k, 93409050 + 4 * (k + 1)]
+    md = (host / "special" / "P1" / "result-only.md").read_text(encoding="utf-8")
+    assert "同卡表默认打法" in md and "比默认打法" in md
+    got = E.deliver(body, tmp_path / "players")
+    text = (tmp_path / "players" / "astra" / "receipts" / "特殊期评测-P1.md").read_text(encoding="utf-8")
+    assert got == {"astra": 1} and "比默认打法" in text
+    again = E.evaluate(host, 1, workers=2, only=[mid], games=2, tail=1, repeats=2, log=lambda *_: None)
+    assert again["members"] == body["members"]                          # read back, not run again
+
+def test_no_references_without_their_seeds(tmp_path, monkeypatch):
+    host, pool, mid = _host(tmp_path)
+    pool.advance(force="test: the period closed")
+    monkeypatch.setattr(E, "SEEDS", {1: (93409050, 93409090)})
+    monkeypatch.setattr(E, "SPAN", 5)
+    monkeypatch.setattr(E, "REF_SEEDS", {})
+    body = E.evaluate(host, 1, workers=2, only=[mid], games=2, tail=1, repeats=2, log=lambda *_: None)
+    assert "references" not in body and "ref_mid" not in body["members"][0]
+    assert "比默认打法" not in (host / "special" / "P1" / "result-only.md").read_text(encoding="utf-8")
