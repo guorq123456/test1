@@ -30,6 +30,8 @@ ENVS = [
      "what": "the simulator of phases 0-1 and period 1 (branch claude/forest2-pilot 75b7bc3)"},
     {"from": 2, "name": "patch-2026-11-26", "fingerprint": "84dcce58294e6e85", "notes": "docs/patch-2026-11-26.md",
      "what": "the balance patch announced 11-24 for the 11-26 maintenance: six cards (S25: from period 2)"},
+    {"from": 3, "name": "search-2026-11-25", "fingerprint": "5c3272f72c72c9c7", "notes": "docs/search-2026-11-25.md",
+     "what": "the public search keys one's own hand cards by their state too (S32, LD-82: from period 3)"},
 ]
 
 

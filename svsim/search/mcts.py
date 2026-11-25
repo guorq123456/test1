@@ -78,15 +78,58 @@ def _root_cache_ok(state: GameState, me: int) -> bool:
     return not any(c.defn.card_id in ROOT_RECOMPUTE for c in cards)
 
 
+def _frozen(v):
+    """A counter's value as something hashable (lists and dicts as tuples)."""
+    if isinstance(v, list):
+        return tuple(_frozen(x) for x in v)
+    if isinstance(v, dict):
+        return tuple(sorted(((k, _frozen(x)) for k, x in v.items()), key=lambda kv: repr(kv[0])))
+    return v
+
+
+def _hand_state(c) -> tuple | None:
+    """What sets one's own hand card apart from a fresh copy beyond its cost (in the key already): attack, defense,
+    keywords, countdown, removed abilities, its counters, granted abilities. None when nothing does.
+    Two copies with the same cost but different stats or counters (a Clue's swap in hand, Tetra & Ladica's count,
+    cards fused into it, a buff in hand) are different moves; before 11-25 (LD-81, S32) they had one key, so the
+    search tried the first copy and the root played the last. The "spellboost" counter is left out: E.spellboost
+    counts it on every card in hand and no card script reads it (a spellboost card changes its own stats or cost)."""
+    d = c.defn
+    counters = c.counters
+    if counters and (len(counters) > 1 or "spellboost" not in counters):
+        counters = tuple(sorted((k, _frozen(v)) for k, v in counters.items() if k != "spellboost"))
+    else:
+        counters = None
+    grants = c.grants
+    if grants:
+        grants = tuple((type(g.script).__name__ if g.script is not None else None, g.until_turn, g.atk, g.life,
+                        int(g.keywords)) for g in grants)
+    if (c.atk == d.atk and c.life == d.life and c.keywords == d.keywords and c.countdown == d.countdown
+            and not c.silenced and not c.no_last_words and not counters and not grants):
+        return None
+    return (c.atk, c.life, int(c.keywords), c.countdown, c.silenced, c.no_last_words, counters or None,
+            grants or None)
+
+
+def _fodder_order(loc: tuple) -> tuple:
+    """Sorts the cards of a Fuse the old way (their first four elements), then by the hand state's repr: two hand
+    states can hold None where the other holds a value, which don't compare."""
+    return loc[:4], repr(loc[4:])
+
+
 def _locator(state: GameState, me: int) -> dict:
-    """uid -> a key that identifies the card the same way in every determinization."""
+    """uid -> a key that identifies the card the same way in every determinization. One's own hand cards that
+    differ from a fresh copy carry that state as a fifth element (`_hand_state`), so copies that aren't
+    interchangeable get different keys; the opponent's hand is hidden and keeps the card id and cost."""
     where = {}
     for p in state.players:
         mine = p.index == me
         for i, c in enumerate(p.field):
             where[c.uid] = ("F", mine, i, c.defn.card_id)
         for c in p.hand:
-            where[c.uid] = ("H", mine, c.defn.card_id, c.cost)
+            extra = _hand_state(c) if mine else None
+            where[c.uid] = ("H", mine, c.defn.card_id, c.cost) if extra is None else \
+                ("H", mine, c.defn.card_id, c.cost, extra)
         for c in p.leader_area:
             where[c.uid] = ("C", mine, c.defn.card_id)
     return where
@@ -112,7 +155,8 @@ def action_key(state: GameState, action, where: dict | None = None) -> tuple:
     if isinstance(action, Engage):
         return ("G", _loc(action.uid, me, where), tuple([_loc(u, me, where) for u in action.targets]), action.modes)
     if isinstance(action, Fuse):
-        return ("U", _loc(action.uid, me, where), tuple(sorted([_loc(u, me, where) for u in action.cards])))
+        return ("U", _loc(action.uid, me, where), tuple(sorted([_loc(u, me, where) for u in action.cards],
+                                                               key=_fodder_order)))
     if isinstance(action, UseBonusPP):
         return ("B",)
     return ("T",)

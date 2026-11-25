@@ -136,5 +136,29 @@
    "played": "((9, 7, 7, 7), 0, None, (False, False), \"[('fused', [90001210])]\", None, None)",
    "action": "Fuse"
   }
- ]
+ ],
+ "after_S32": {
+  "note": "the same 238 games with the fixed search (LD-82); the remaining 'real merges' are Fuse actions whose fodder the probe compares in action order (the key sorts them; sorted, the states are equal)",
+  "groups": {
+   "ps11b lists vs the 7 baseline decks": {
+    "games": 196,
+    "decisions": 9609,
+    "merged_groups": 2087,
+    "games_where_a_different_copy_was_played": 0,
+    "decisions_with_real_merge": 69
+   },
+   "baseline decks vs each other": {
+    "games": 42,
+    "decisions": 2068,
+    "games_where_a_different_copy_was_played": 0,
+    "merged_groups": 175,
+    "decisions_with_real_merge": 1
+   }
+  },
+  "timing_80_games_cpu_s": {
+   "before": 180.8,
+   "after": 176.1,
+   "same_winners": "79/80"
+  }
+ }
 }

@@ -16,7 +16,8 @@ def test_this_tree_is_a_known_environment():
     got = E.fingerprint()
     assert got in {e["fingerprint"] for e in E.ENVS}, got
     assert E.env_of(0)["name"] == E.env_of(1)["name"] == "base-2026-11-21"
-    assert E.env_of(2)["name"] == E.env_of(9)["name"] == "patch-2026-11-26"
+    assert E.env_of(2)["name"] == "patch-2026-11-26"
+    assert E.env_of(3)["name"] == E.env_of(9)["name"] == "search-2026-11-25"          # S32
     for e in E.ENVS:
         if e.get("notes"):
             assert (E.REPO / e["notes"]).is_file()
@@ -60,8 +61,11 @@ def test_the_seal_is_taken_once_at_the_first_period_of_an_environment(tmp_path):
     s = E.seal(host, 2)
     assert s["env"] == "patch-2026-11-26" and sorted(s["files"]) == [
         "anchors/games-P1.jsonl", "pool/events.jsonl", "pool/games.jsonl", "puzzles/START/games.jsonl"]
-    assert E.seal(host, 2) is None and E.seal(host, 3) is None
+    assert E.seal(host, 2) is None and E.seal(host, 4) is None
     assert len(json.loads((host / "audit" / "sealed.json").read_text(encoding="utf-8"))) == 1
+    s3 = E.seal(host, 3)                                 # S32: the next environment seals again, once
+    assert s3["env"] == "search-2026-11-25" and E.seal(host, 3) is None
+    assert len(json.loads((host / "audit" / "sealed.json").read_text(encoding="utf-8"))) == 2
 
 
 def test_only_what_was_written_after_the_seal_is_replayed(tmp_path):
