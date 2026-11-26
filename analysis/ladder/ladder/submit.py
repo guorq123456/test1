@@ -78,6 +78,8 @@ SUBMIT_VERSION = "submit-2"         # submit-2 (11-26): merged periods from peri
 TYPES = {"新卡组": "deck", "打法更新": "update", "公共题": "puzzle", "选队": "team"}   # 选队: a special period (S27, A62)
 FILES = ("submission.json", "strategy.py", "notes.md", "evidence.md")
 PERIOD_ZH = {"baseline": "基线期", "deck": "卡组期", "strategy": "策略期", "merged": "合并期"}   # player-facing (S36)
+SAME_LIST_NOTE = ("你池子里已经有一个成员用同一张卡表；这一副如果收下，会是新成员（从 1500 起、不过把关），"
+                  "不是那个成员的打法更新")   # a new deck on a list the player already holds (A66 ⑤): accepted ones only
 UPDATES_PER_PERIOD = None           # Salem S5 (11-22): no limit on strategy updates (the plan's 3 is gone)
 SMOKE_SEEDS = (88300000, 88400000)  # the host's part of the tuning range (SEEDS.md)
 SMOKE_GAMES = 50                    # LD-55..58: over 10 games the twins' compute ratio spread ~8% (an honest default-cost
@@ -308,9 +310,8 @@ def check_slots(sub: dict, player: str, pool, lines: list[dict]) -> tuple[list[s
             problems.append(f"池子里已经有你的 {len(active)} 个成员（最多 {MAX_PER_PLAYER} 个）")
         if meta["member"] in names:
             problems.append(f"成员名 {meta['member']!r} 你已经用过了")
-        if own_list and not problems:                      # a refused deck gets no reminder about what it would be
-            info["warnings"].append("你池子里已经有一个成员用同一张卡表；这一副如果收下，会是新成员（从 1500 起、"
-                                    "不过把关），不是那个成员的打法更新")
+        if own_list and not problems:                      # a refused deck gets no reminder about what it would be:
+            info["warnings"].append(SAME_LIST_NOTE)        # not here, and finish() drops it on a later refusal
     elif kind == "update":
         route = meta.get("route")
         if not takes_updates(pool.period):
@@ -323,12 +324,14 @@ def check_slots(sub: dict, player: str, pool, lines: list[dict]) -> tuple[list[s
             elif first[0]["route"]["steps"] != route["steps"]:
                 problems.append("总步数和第 1 步说的不一样")
         mid = names.get(meta["member"])
-        new_here = (mid is not None and mid in pool.members and pool.members[mid].entry_period == pool.period) or (
-            mid is None and any(l.get("ev") == "receipt" and l.get("player") == player and l.get("kind") == "deck"
-                                and l.get("period") == pool.period and l.get("member") == meta["member"]
-                                and l.get("verdict") == "收下" for l in lines))   # accepted, its admit still to come
-        if new_here:                                       # not in the period-start frozen pool the gate plays against
+        entered_here = mid is not None and mid in pool.members and pool.members[mid].entry_period == pool.period
+        sent_here = mid is None and any(l.get("ev") == "receipt" and l.get("player") == player and l.get("kind") == "deck"
+                                        and l.get("period") == pool.period and l.get("member") == meta["member"]
+                                        and l.get("verdict") == "收下" for l in lines)   # accepted, not (yet) admitted
+        if entered_here:                                   # not in the period-start frozen pool the gate plays against
             problems.append(f"{meta['member']!r} 这个成员是这一期才入池的，这一期不能改打法，下一期起可以")
+        elif sent_here:                                    # its admit still to come, or it failed (collect.jsonl)
+            problems.append(f"{meta['member']!r} 是这一期才交的新卡组，这一期不能改打法；它入池了的话，下一期起可以")
         elif mid is None or mid not in pool.members or not pool.members[mid].active:
             problems.append(f"你在池子里没有叫 {meta['member']!r} 的成员")
         else:
@@ -922,6 +925,8 @@ def _receive(d, player, pool_dir, subdir, workers, mask, rng_seed, smoke_games, 
 
     def finish():
         rec["verdict"] = "收下" if not rec["reasons"] else "拒收"
+        if rec["reasons"]:                                # refused by a later check: no note about what it would be
+            rec["warnings"] = [w for w in rec["warnings"] if w != SAME_LIST_NOTE]
         rec["uses_slot"] = bool(rec.get("uses_slot")) and rec["verdict"] == "收下"   # a refused deck leaves its class open
         (store / "receipt.json").write_text(json.dumps(rec, ensure_ascii=False, indent=1), encoding="utf-8")
         (store / "receipt.md").write_text(receipt_text(rec), encoding="utf-8")

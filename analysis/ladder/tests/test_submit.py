@@ -281,14 +281,30 @@ def test_slots_in_a_merged_period(tmp_path):
     # the deck accepted, its admit still to come; then admitted: no update of it this period, either way
     pending = admitted + [r(2, "deck", verdict="收下", craft=1, member="一号")]
     problems, _ = submit.check_slots(up("一号"), "fable-ultracode", pool, pending)
-    assert any("这一期才入池的，这一期不能改打法，下一期起可以" in p for p in problems)
+    assert any("是这一期才交的新卡组，这一期不能改打法；它入池了的话，下一期起可以" in p for p in problems)
     new = pool.enter(forest, "bot:mcts:100+plan", "fable-ultracode")
     now = pending + [{"ev": "admit", "player": "fable-ultracode", "member": "一号", "mid": new}]
     problems, _ = submit.check_slots(up("一号"), "fable-ultracode", pool, now)
-    assert any("这一期才入池的" in p for p in problems)
+    assert any("这个成员是这一期才入池的，这一期不能改打法，下一期起可以" in p for p in problems)
     pool.advance(force="test")                                                # period 5: from now on it can
     problems, info = submit.check_slots(up("一号"), "fable-ultracode", pool, now)
     assert problems == [] and info["mid"] == new
+
+
+def test_a_deck_on_the_players_own_list_refused_later_gets_no_same_list_note(tmp_path):
+    # A66 ⑤: the note says what an accepted deck would be; a deck refused by a later check (here the code reader,
+    # before any game) does not get it, and the receipt is written without it
+    pool = _pool(tmp_path, 4)
+    sword, _ = submit.check_deck(CODES[1])
+    pool.enter(sword, "bot:mcts:100+plan", "fable-ultracode")
+    bad = "import importlib\n" + QUICK
+    d = make_sub(tmp_path / "in", "新卡组", src=bad, deck=CODES[1], member="二号乙")
+    rec = submit.receive(d, "fable-ultracode", pool.dir, tmp_path / "subs", workers=2, rng_seed=7, smoke_games=2,
+                         seeds=SMOKE)
+    assert rec["verdict"] == "拒收" and any(r.startswith("[代码（读）]") for r in rec["reasons"]), rec["reasons"]
+    assert submit.SAME_LIST_NOTE not in rec["warnings"]
+    assert "同一张卡表" not in (tmp_path / "subs" / rec["id"] / "receipt.md").read_text(encoding="utf-8")
+    assert not [c for c in rec["checks"] if c["check"] in ("载入（隔离进程）", "冒烟")]   # no game was played
 
 
 def test_status_in_a_merged_period(tmp_path):
