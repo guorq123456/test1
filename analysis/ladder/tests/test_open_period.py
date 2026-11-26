@@ -72,7 +72,9 @@ def test_an_open_window_is_never_opened_again(tmp_path, monkeypatch):
     monkeypatch.setattr("ladder.deal.resolve", lambda key: b"k" * 32)
     monkeypatch.setattr("ladder.deal.key_id", lambda key: "test")
     assert O.main(argv) == 0
-    assert calls == ["ladder.evaluator", "ladder.anchors", "ladder.arena", "ladder.arena", "ladder.report"]
+    assert calls == ["ladder.submit", "ladder.evaluator", "ladder.anchors", "ladder.arena", "ladder.arena",
+                     "ladder.report"]
+    assert "special" not in json.loads((tmp_path / "o" / "summary.json").read_text(encoding="utf-8"))["steps"]
     s = json.loads((tmp_path / "o" / "summary.json").read_text(encoding="utf-8"))
     assert "arena.md" in s["steps"]["public"]["updated"]
     assert (players / "public" / "arena.md").read_bytes() == (O.LADDER / "public" / "arena.md").read_bytes()
@@ -241,3 +243,78 @@ def test_a_dry_opening_of_a_merged_period(tmp_path):
     assert "第 4 期（合并期）" in report and "强 5 个百分点" in report
     clog = (out / "collect.log").read_text(encoding="utf-8")
     assert "--gates after --frozen" in clog and "--delta 5" in clog and "这一期收完" in clog
+    # period 3 was special: its evaluation's frozen pool is taken before the window opens, under OUT only
+    assert s["steps"]["special"] == {"ok": True, "period": 3, "wrote": str(out / "host" / "special" / "P3" / "frozen.json")}
+    assert not (host / "special").exists()
+
+
+def open_for_real(tmp_path, monkeypatch, calls=None):
+    real_py = O.py
+    monkeypatch.setattr(O, "py", lambda args, log: (calls.append(args[1]) if calls is not None else None)
+                        or real_py(args, log))
+    monkeypatch.setattr(O, "collect", lambda args, log: 0)
+    monkeypatch.setattr("ladder.deal.resolve", lambda key: b"k" * 32)
+    monkeypatch.setattr("ladder.deal.key_id", lambda key: "test")
+    O.period_delta(tmp_path / "host", 2, 5.0)
+    code = O.main(["--host", str(tmp_path / "host"), "--arena", str(tmp_path / "arena"), "--players",
+                   str(tmp_path / "players"), "--out", str(tmp_path / "o"), "--hours", "1", "--mask", "none",
+                   "--workers", "2"])
+    return code, json.loads((tmp_path / "o" / "summary.json").read_text(encoding="utf-8"))
+
+
+def test_opening_after_the_special_period_freezes_its_evaluation_pool_first(tmp_path, monkeypatch):
+    # 11-26 review: from period 4 a new deck enters on receipt; special_eval's freeze refuses a pool that changed
+    # after the close's advance, so the period-3 evaluation's pool is frozen before period 4 opens
+    import special_eval
+    from ladder import base
+    from ladder.evaluator import freeze
+    pool = period_four(tmp_path)
+    host = tmp_path / "host"
+    want = freeze(pool.dir)
+    calls = []
+    code, s = open_for_real(tmp_path, monkeypatch, calls)
+    assert code == 0 and s["ok"], s
+    fz = host / "special" / "P3" / "frozen.json"
+    assert s["steps"]["special"] == {"ok": True, "period": 3, "wrote": str(fz)}
+    assert calls[:2] == ["ladder.evaluator", "ladder.submit"]       # before the guides' status and the period's freeze
+    body = json.loads(fz.read_text(encoding="utf-8"))
+    assert body["period"] == 4 and body["hash"] == want["hash"] and body["events"] == want["events"]
+    # a deck admitted in the window: special_eval keeps the frozen pool and never freezes again
+    pool.enter(list(base.baseline_lists()[1]), "bot:mcts:100+plan", "fable")
+    with pytest.raises(special_eval.EvalError):
+        special_eval.at_end(pool.dir, 3)
+    assert json.loads(fz.read_text(encoding="utf-8")) == body
+    # opened again (the window is open): nothing more, the kept one stays
+    code, s = open_for_real(tmp_path, monkeypatch)
+    assert code == 0 and "special" not in s["steps"] and json.loads(fz.read_text(encoding="utf-8")) == body
+
+
+def test_a_special_periods_pool_that_changed_before_its_freeze_stops_the_opening(tmp_path, monkeypatch):
+    from ladder import base
+    pool = period_four(tmp_path)
+    pool.enter(list(base.baseline_lists()[1]), "bot:mcts:100+plan", "fable")
+    code, s = open_for_real(tmp_path, monkeypatch)
+    assert code == 1 and "冻结不了" in s["steps"]["special"]["error"] and "enter" in s["steps"]["special"]["error"]
+    assert not (tmp_path / "host" / "special" / "P3" / "frozen.json").exists()
+    assert not (tmp_path / "host" / "frozen" / "P4.json").exists() and not (tmp_path / "arena").exists()
+
+
+def test_opening_writes_the_players_status_for_the_new_period(tmp_path, monkeypatch):
+    # 11-26 review: period 3's close wrote 「第 4 期（策略期）」 with the code before the merge; the opening rewrites it
+    from ladder import submit
+    period_four(tmp_path)
+    subs, players = tmp_path / "host" / "subs", tmp_path / "players"
+    rec = {"ev": "receipt", "id": "S-0001", "player": "astra", "period": 3, "kind": "deck", "verdict": "收下",
+           "craft": 1, "dir": str(players / "astra" / "submit" / "精灵1"), "member": "一号", "reasons": [],
+           "warnings": [], "checks": [], "time": "t", "version": "v"}
+    submit._append(subs, rec)
+    (subs / "S-0001").mkdir(parents=True)
+    (subs / "S-0001" / "receipt.md").write_text(submit.receipt_text(rec), encoding="utf-8")
+    box = players / "astra" / "receipts"
+    box.mkdir(parents=True)
+    (box / "状态.md").write_text("# 第 4 期（策略期）你的提交\n", encoding="utf-8")
+    code, s = open_for_real(tmp_path, monkeypatch)
+    assert code == 0 and s["steps"]["status"] == {"ok": True, "players": ["astra"]}, s
+    status = (box / "状态.md").read_text(encoding="utf-8")
+    assert status.startswith("# 第 4 期（合并期）你的提交") and "还能交" in status and "还缺" not in status
+    assert (box / "精灵1.md").exists()

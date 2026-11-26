@@ -14,8 +14,19 @@ players' first arena command says the arena is not open and nobody collects what
    **If the arena's window is already open for this period's field, steps 3-5 are skipped**: never a second snapshot
    or window (the deadline and the field the players practise on stay as they were). A window of this period on
    another field (someone snapshot by hand after it opened) stops the tool: it never opens a second window.
-   Opening (not when the window is open already): the players' guides (analysis/ladder/public) copied into
-   PLAYERS/public, each file that differs (11-24: arena.md on the queue's turns).
+   Opening (not when the window is open already), before anything else:
+   - after a special period (the one before this, ladder.special): its evaluation's frozen pool
+     HOST/special/P<period-1>/frozen.json (tools/special_eval.py step 1: its at_end check, then ladder.evaluator
+     freeze), kept if it is there already. From period 4 a new deck enters the pool on receipt, and special_eval
+     refuses to freeze a pool that changed after the close's advance; so it is frozen here, before the window opens
+     (11-26 review). A pool that changed already stops the tool (the frozen pool would not be the one the special
+     period left).
+   - the players' guides (analysis/ladder/public) copied into PLAYERS/public, each file that differs (11-24:
+     arena.md on the queue's turns);
+   - the receipts' status files (状态.md) written again for this period (`ladder.submit deliver`, the same command
+     the close runs after its advance; 11-26 review: period 3's close wrote 「第 4 期（策略期）」 with the code before
+     the merge, and nothing else rewrote it before the first receipt). A player's folder that can't be written is in
+     the summary (step not ok); the window still opens.
 3. freeze: HOST/frozen/P<period>.json (ladder.evaluator freeze; kept if it is there already).
 4. anchors: HOST/anchors/anchors.json (ladder.anchors table: the baseline snapshot, then the hall of fame from
    HOST/anchors/hof.json if there is one).
@@ -31,7 +42,8 @@ players' first arena command says the arena is not open and nobody collects what
    deadline it refuses (it does not know what was there at the deadline); see RUNBOOK §3.
 
 `--dry` works under OUT only: the formal pool copied to OUT/host/pool (the original is not touched), an empty ledger
-whose code is the real HOST/subs/code (only read), the real hall of fame, kept delta and public puzzle results copied,
+whose code is the real HOST/subs/code (only read), the real hall of fame, kept delta, kept special-period frozen pools
+and public puzzle results copied,
 OUT/arena, OUT/players with the five players' folders and the public folder; the window is short (`--hours`, default
 0.05 = 3 minutes) and the loop looks every 10 seconds. It plays no game and uses no seed. Results: OUT/summary.json,
 the loop's lines in OUT/collect.log.
@@ -95,6 +107,7 @@ def dry_layout(out: Path, host: Path) -> tuple[Path, Path, Path]:
         (out / "host" / d).mkdir(parents=True, exist_ok=True)
     (out / "host" / "subs" / "code").mkdir(parents=True, exist_ok=True)
     for rel in ("anchors/hof.json", *[str(p.relative_to(host)) for p in sorted((host / "gates").glob("delta-P*.json"))],
+                *[str(p.relative_to(host)) for p in sorted((host / "special").glob("P*/frozen.json"))],
                 "puzzles/reported.json", "audit/sealed.json",
                 *[str(p.relative_to(host)) for p in sorted((host / "puzzles").glob("*/result-public.json"))]):
         if (host / rel).is_file():
@@ -160,6 +173,37 @@ def period_delta(host: Path, period: int, given: float | None, carry: bool = Fal
     f.write_text(json.dumps({**row, "delta": float(given), "time": time.strftime("%Y-%m-%d %H:%M:%S")}),
                  encoding="utf-8")
     return float(given)
+
+
+def special_freeze(host: Path, pool_dir: Path, period: int, log: Path) -> dict | None:
+    """After a special period (period - 1): its evaluation's frozen pool, HOST/special/P<period-1>/frozen.json, as
+    tools/special_eval.py's step 1 takes it (at_end, then ladder.evaluator freeze); kept if there. None otherwise."""
+    from ladder import special
+    prev = period - 1
+    if not special.is_special(prev):
+        return None
+    fz = host / "special" / f"P{prev}" / "frozen.json"
+    if fz.exists():
+        return {"ok": True, "period": prev, "kept": str(fz)}
+    from special_eval import EvalError, at_end
+    try:
+        at_end(pool_dir, prev)
+    except EvalError as e:
+        raise SystemExit(f"第 {prev} 期是特殊期，它的评测（special_eval --period {prev}）还没冻结池子，现在冻结不了：{e}。"
+                         f"不开第 {period} 期：先查清楚池子为什么变了（RUNBOOK 特殊期那一条），报 Salem") from None
+    fz.parent.mkdir(parents=True, exist_ok=True)
+    py(["-m", "ladder.evaluator", "freeze", pool_dir, "--out", fz], log)
+    return {"ok": True, "period": prev, "wrote": str(fz)}
+
+
+def last_json(text: str):
+    """The last line of a command's output that is JSON (deliver prints one), or None."""
+    for line in reversed(text.splitlines()):
+        try:
+            return json.loads(line)
+        except ValueError:
+            continue
+    return None
 
 
 def new_puzzles(host: Path) -> list[Path]:
@@ -316,6 +360,10 @@ def main(argv=None):
         res["steps"]["environment"] = {"ok": True, "env": env["name"], "fingerprint": env["fingerprint"]}
         frozen = host / "frozen" / f"P{period}.json"
         if window is None:
+            step = "special"                      # before anything changes the pool (11-26 review)
+            sp = special_freeze(host, pool_dir, period, log)
+            if sp:
+                res["steps"]["special"] = sp
             step = "seal"                         # a new environment's first period: the old logs, as replayed
             sealed = environments.seal(host, period)
             if sealed:
@@ -333,6 +381,14 @@ def main(argv=None):
                     shutil.copy2(f, pub / f.name)
                     changed.append(f.name)
             res["steps"]["public"] = {"ok": True, "updated": changed}
+            step = "status"                       # 状态.md as this period's (11-26 review); deliver writes the same
+            got = last_json(py(["-m", "ladder.submit", "deliver", host / "subs", "--pool", pool_dir,
+                                "--players", players], log)) or {}
+            bad = {k: v for k, v in got.items() if isinstance(v, str)} if isinstance(got, dict) else {}
+            res["steps"]["status"] = ({"ok": True, "players": sorted(got)} if not bad else
+                                      {"ok": False, "error": f"回执写不进去：{bad}"})
+            if bad:
+                print(f"有人的状态.md 写不进去（见 summary.json）：{bad}", flush=True)
             step = "freeze"
             if frozen.exists():
                 res["steps"]["freeze"] = {"ok": True, "kept": str(frozen)}
