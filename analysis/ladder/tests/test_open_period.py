@@ -110,7 +110,7 @@ def test_a_strategy_periods_delta_is_kept_once_given(tmp_path):
     else:
         raise AssertionError("changed a kept delta")
     try:
-        O.period_delta(host, 4, None)
+        O.period_delta(tmp_path / "other-host", 2, None)          # a strategy period (2), nothing given or kept
     except SystemExit as e:
         assert "delta" in str(e)
     else:

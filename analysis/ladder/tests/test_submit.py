@@ -275,6 +275,9 @@ def test_slots_in_a_merged_period(tmp_path):
     same = {"kind": "deck", "meta": {"member": "二号乙"}, "deck_ids": sword}  # a list the player already holds
     problems, info = submit.check_slots(same, "fable-ultracode", pool, admitted)
     assert problems == [] and any("新成员" in w for w in info["warnings"])
+    same_taken = {"kind": "deck", "meta": {"member": "二号"}, "deck_ids": sword}   # refused (name used): no reminder
+    problems, info = submit.check_slots(same_taken, "fable-ultracode", pool, admitted)
+    assert any("你已经用过了" in p for p in problems) and info["warnings"] == []
     # the deck accepted, its admit still to come; then admitted: no update of it this period, either way
     pending = admitted + [r(2, "deck", verdict="收下", craft=1, member="一号")]
     problems, _ = submit.check_slots(up("一号"), "fable-ultracode", pool, pending)
@@ -580,7 +583,7 @@ def test_an_update_passed_in_a_merged_period_goes_into_the_pool(tmp_path, monkey
     from ladder.runner import load_deck
     pool = Pool.create(tmp_path / "pool", seeds=(99001460, 99001470), rng_seed=1)
     pool.enter([x.card_id for x in load_deck(CODES[0])], "bot:greedy", "baseline")
-    while pool.period < 4:
+    while pool.period < 5:                     # 5: a deck period before S35, merged now
         pool.advance(force="test")
     mid = pool.active()[0].mid
 
@@ -600,7 +603,7 @@ def test_an_update_passed_in_a_merged_period_goes_into_the_pool(tmp_path, monkey
         {"type": "打法更新", "member": "一号", "class": "Quick", "change": "c", "prediction": "p"}, ensure_ascii=False),
         encoding="utf-8")
     submit._append(subs, {"ev": "receipt", "id": "S-0001", "player": "fable", "kind": "update", "verdict": "收下",
-                          "period": 4, "member": "一号", "mid": mid, "spec": "py:sub_S0001:Quick", "route": None,
+                          "period": 5, "member": "一号", "mid": mid, "spec": "py:sub_S0001:Quick", "route": None,
                           "was": {"strategy": "bot:greedy", "version": 1}})
     out = submit.gate_update(subs, "S-0001", pool.dir, tmp_path / "frozen.json", (1, 2), tmp_path / "gates", delta=5)
     assert out["verdict"] == "passed" and out["version"] == 2

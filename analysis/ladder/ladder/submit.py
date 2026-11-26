@@ -282,6 +282,7 @@ def check_slots(sub: dict, player: str, pool, lines: list[dict]) -> tuple[list[s
     names = _members_of(lines, player)
     if kind == "deck":
         info["uses_slot"] = True                       # if accepted, it fills its class for this period
+        own_list = False
         if not takes_decks(pool.period):
             problems.append(f"第 {pool.period} 期是{PERIOD_ZH.get(pkind, pkind)}，只有卡组期、合并期收新卡组")
         if sub.get("deck_ids"):
@@ -301,13 +302,15 @@ def check_slots(sub: dict, player: str, pool, lines: list[dict]) -> tuple[list[s
             if len(same) >= MAX_PER_LIST:
                 problems.append(f"同一张卡表池子里已经有 {len(same)} 个成员（最多 {MAX_PER_LIST} 个）")
             elif any(m.owner == player for m in same):     # allowed, as in deck periods (host reading 5, S36)
-                info["warnings"].append("你池子里已经有一个成员用同一张卡表；这一副会是新成员（从 1500 起、不过把关），"
-                                        "不是那个成员的打法更新")
+                own_list = True
         active = [m for m in pool.active() if m.owner == player]
         if MAX_PER_PLAYER is not None and len(active) >= MAX_PER_PLAYER:
             problems.append(f"池子里已经有你的 {len(active)} 个成员（最多 {MAX_PER_PLAYER} 个）")
         if meta["member"] in names:
             problems.append(f"成员名 {meta['member']!r} 你已经用过了")
+        if own_list and not problems:                      # a refused deck gets no reminder about what it would be
+            info["warnings"].append("你池子里已经有一个成员用同一张卡表；这一副如果收下，会是新成员（从 1500 起、"
+                                    "不过把关），不是那个成员的打法更新")
     elif kind == "update":
         route = meta.get("route")
         if not takes_updates(pool.period):
