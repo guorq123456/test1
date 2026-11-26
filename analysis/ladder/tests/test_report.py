@@ -86,3 +86,15 @@ def test_cli_writes_both_files(tmp_path):
     assert R.main([str(pool.dir), "--out", str(tmp_path / "pub")]) == 0
     assert (tmp_path / "pub" / f"report-P{pool.period}.md").exists()
     assert json.loads((tmp_path / "pub" / f"report-P{pool.period}.json").read_text(encoding="utf-8"))["board"] == []
+
+
+def test_a_merged_period_is_named_in_the_report(tmp_path):
+    # S35/S36: from period 4 the kind is "merged", 合并期 for the players
+    pool = Pool.create(tmp_path / "pool", (10 ** 12, 2 * 10 ** 12), rng_seed=9, check=True)
+    for i, d in enumerate(BASE_DECKS[:3]):
+        pool.enter(d, "bot:greedy", "baseline", rng=random.Random(i))
+    while pool.period < 4:
+        pool.advance(force="test")
+    assert R.main([str(pool.dir), "--out", str(tmp_path / "pub")]) == 0
+    assert json.loads((tmp_path / "pub" / "report-P4.json").read_text(encoding="utf-8"))["kind"] == "merged"
+    assert (tmp_path / "pub" / "report-P4.md").read_text(encoding="utf-8").startswith("# 环境报告 第 4 期（合并期）")

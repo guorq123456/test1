@@ -21,7 +21,7 @@
 | ladder/watch.py | 绊线（LD-40～LD-52） | 15b42a00f33bc347e2dbf786d45f2e0aaf1b770e01e6bf747824d25002855e71 |
 | ladder/guard.py | 对局里的审计钩子（LD-52） | a01c07ea904a420f122938f6fae7a8a993d63f1e63a586d45a16f0f1054bc548 |
 | ladder/audit.py | 重放审计（LD-40） | b97e1392c5162bbf56e2bc1fd62d3e195145c5d6e1cc54bcd7e15d1dfaad6704 |
-| ladder/pool.py | 1.4 池管理器 | 8dafca4e9e5bef6664b7e2894a52f35bfbaf46ec5391f5d997d2c3176a835df8 |
+| ladder/pool.py | 1.4 池管理器 | 837c50070939ee0fa07bb13f19e70d1d77badb4730ae000b12c8abcf295ff352 |
 | ladder/evaluator.py | 1.5 冻结池评测器 | 164a1378bc2b91e1b80a99ed5cb9c3b7cb4207ba86d54b92cb93fc36479bec6f |
 | ladder/leaderboard.py | 1.6 排行榜 | 439fcd4987db26a1575f74d31181a5bc9758f9bf474351f6b1097211dbaba92b |
 | ladder/gate.py | 1.7 检验工具 | f8d295c56f1c245e5cd1def8a15738e1178f8c88ce289af8bb95bf7bd3c3205c |
@@ -40,3 +40,4 @@
 | 11-23 | （本次提交，gate.py 一处） | S16：Salem 14:30Z 决定卡同意，把关里新旧版每步算力比的无效线 1.08 → 1.15（和收提交的 S15 一致）；只改 COMPUTE_RATIO 一行和文档串，别的锁定文件不动 |
 | 11-24 | 25bd4955 | S31：Salem 20:48Z 决定卡同意（「改，3 份记成没过」）：不同局占比不超过 delta 时 H1 不可能，以前在 p_of_gap 抛错（第 2 期 3 份更新因此没结论，LD-77），改成直接判没过（只管 better；noninf 照旧）；只加这一处判断和文档串，别的锁定文件不动 |
 | 11-24 | （本次提交，gate.py 同一处） | S31 的补充（11-24 审查）：直接判没过那一行把占比记成 share_seen、不记 discordant_share，免得这个成员下一次检验（别的改动）拿它当占比、也直接判没过；判法本身不变 |
+| 11-26 | （本次提交，pool.py） | S35、S36：Salem 决定卡同意，第 4 期起卡组期、策略期合并；改 period_kind、入池和改打法的放行、保护期的标记 |

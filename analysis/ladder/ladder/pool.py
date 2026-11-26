@@ -42,15 +42,17 @@ from ladder import rules  # noqa: E402
 
 CRAFTS = (1, 2, 3, 4, 5, 6, 7)    # Forest, Sword, Rune, Dragon, Abyss, Haven, Portal (svsim Craft values)
 CRAFT_ZH = {1: "精灵", 2: "皇家护卫", 3: "巫师", 4: "龙族", 5: "梦魇", 6: "主教", 7: "超越者"}
-PROTECT_GAMES = 0                 # Salem S7 (11-22): protection only until a whole strategy period (§4.5's "first
-                                  # 1000 games, or ..., whichever later" lost its games part; 0 = never by games)
+PROTECT_GAMES = 0                 # Salem S7 (11-22): protection only until a whole period that takes updates (a
+                                  # strategy period; from period 4 a merged one, S35/S36; see Member.protected); §4.5's
+                                  # "first 1000 games, or ..., whichever later" lost its games part; 0 = never by games
 FULL_PERIOD_GAMES = 100           # Salem S7 (11-22): a player period ends once every member has 100 games since its
                                   # last change (§4.5 said 2000)
 BASELINE_PERIOD_GAMES = 2000      # period 0 (the phase-1 baseline run) keeps §4.5's 2000 (A37)
 UNSTABLE_GAMES = 300              # §4.3 after a strategy update, "unstable" until 300 games
 MAX_PER_PLAYER = None             # Salem S6 (11-22): no cap on a player's members (the plan's 7 is gone)
 MAX_PER_LIST = 2                  # ... at most 2 members with the same list
-NEW_DECKS_PER_CLASS = 1           # Salem S5 (11-22): each deck period a player submits one deck for every class
+NEW_DECKS_PER_CLASS = 1           # Salem S5 (11-22): at most one new deck per class per player per period that takes
+                                  # decks; from period 4 (merged, S36) none is required
 HOST_OWNERS = ("baseline", "salem")   # members that belong to no player (§4.1)
 ANON_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 MATCHING = "S2"                   # Salem 11-22: never past 200 (class redrawn; initiator redrawn, A27). Older pools: none
@@ -75,9 +77,28 @@ class ListFull(PoolError):
         self.holders = holders
 
 
+MERGED_FROM = 4                   # Salem S35/S36 (11-26): from period 4 every period takes new decks and updates
+
+
 def period_kind(n: int) -> str:
-    """Period 0 is the phase-1 baseline run; then deck, strategy, deck, ... (§4.5: period 1 is a deck period)."""
-    return "baseline" if n == 0 else ("deck" if n % 2 == 1 else "strategy")
+    """Period 0 is the phase-1 baseline run; periods 1-3 alternated deck, strategy, deck (§4.5: period 1 is a deck
+    period); from MERGED_FROM (4) on every period is "merged" (Salem S35/S36): it takes new decks and strategy updates.
+    A pure function of n: the event replay calls it, so periods 0-3 must keep their kinds."""
+    if n == 0:
+        return "baseline"
+    if n >= MERGED_FROM:
+        return "merged"
+    return "deck" if n % 2 == 1 else "strategy"
+
+
+def takes_decks(n: int) -> bool:
+    """Players' new decks enter in period n (a deck or merged period; the baseline run has its own host-only rule)."""
+    return period_kind(n) in ("deck", "merged")
+
+
+def takes_updates(n: int) -> bool:
+    """Strategy updates (gated) take effect in period n (a strategy or merged period)."""
+    return period_kind(n) in ("strategy", "merged")
 
 
 def period_target(n: int) -> int:
@@ -107,7 +128,9 @@ class Member:
     draws: int = 0
     since_change: int = 0         # decided games since the last change (entry or strategy update)
     period_games: int = 0         # decided games in this period since its last change in this period (A14)
-    full_strategy_period: bool = False   # has been in the pool through one whole strategy period (§4.5)
+    full_strategy_period: bool = False   # has been in the pool through one whole period that takes updates (a strategy
+                                         # period, or from period 4 a merged one), present from its start (A15, S35);
+                                         # the name is kept from §4.5 because the event log carries it
     active: bool = True
     removed_at: int | None = None        # event number of the removal
     exit_reason: str | None = None       # 卡组弱 / 还不会打 (set by the host afterwards, plan 吃操作的卡组)
@@ -115,8 +138,9 @@ class Member:
 
     @property
     def protected(self) -> bool:
-        """Until it has been through a whole strategy period (Salem S7; §4.5 also had "the first 1000 games, whichever
-        is later": PROTECT_GAMES, now 0)."""
+        """Until it has been through a whole period that takes updates, present from its start (Salem S7, A15; from
+        period 4 a merged period counts, S35/S36: a member entered in period N is protected until period N+1 ends).
+        §4.5 also had "the first 1000 games, whichever is later": PROTECT_GAMES, now 0."""
         return self.games < PROTECT_GAMES or not self.full_strategy_period
 
     @property
@@ -262,7 +286,7 @@ class Pool:
             m.since_change = m.period_games = 0
             m.history.append([m.version, m.strategy, m.base_version, ev["n"], ev.get("gate")])
         elif kind == "period":
-            if period_kind(self.period) == "strategy":      # the strategy period that just ended
+            if takes_updates(self.period):     # the period that just ended took updates (strategy, or merged)
                 for mid in ev.get("through_strategy_period", []):
                     self.members[mid].full_strategy_period = True
             self.period = ev["period"]
@@ -296,13 +320,14 @@ class Pool:
 
     def enter(self, deck, strategy: str, owner: str, deck_code: str | None = None, note: str = "",
               base_version: str | None = None, rng=None, cr: int | None = None) -> str:
-        """A new member at 1500 (§4.1). Only in the baseline run or a deck period (§4.5)."""
+        """A new member at 1500 (§4.1). Only in the baseline run (host members) or a period that takes decks: a deck
+        period (§4.5, periods 1 and 3) or from period 4 a merged period (Salem S35/S36; A19 held for period 2 only)."""
         from ladder import base
         check = self.params.get("check", False)
         if cr is not None and not check:
             raise PoolError("every member enters at 1500 (§4.1); another start only in a check pool")
         kind = period_kind(self.period)
-        if kind == "strategy":
+        if kind != "baseline" and not takes_decks(self.period):
             raise PoolError("no new decks in a strategy period (§4.5)")
         if owner not in HOST_OWNERS and kind == "baseline" and not check:
             raise PoolError("players' decks enter from period 1")
@@ -338,13 +363,17 @@ class Pool:
         return mid
 
     def update(self, mid: str, strategy: str, gate: str, base_version: str | None = None) -> int:
-        """A strategy update that passed its gate (§4.3): new version, same CR, unstable for 300 games."""
+        """A strategy update that passed its gate (§4.3): new version, same CR, unstable for 300 games. Only in a
+        period that takes updates (a strategy period, or from period 4 a merged one, S35/S36), and not for a member
+        that entered in this same period: the gate plays against the period-start frozen pool, which doesn't hold it."""
         from ladder import base
-        if period_kind(self.period) != "strategy":
-            raise PoolError("strategy updates take effect only in a strategy period (§4.3)")
+        if not takes_updates(self.period):
+            raise PoolError("strategy updates take effect only in a strategy period or a merged period (§4.3, S35)")
         m = self.members.get(mid)
         if m is None or not m.active:
             raise PoolError(f"{mid} is not in the pool")
+        if m.entry_period == self.period:
+            raise PoolError(f"{mid} entered in this period ({self.period}); it can be updated from the next period")
         if not gate:
             raise PoolError("an update needs the gate record that passed it")
         self._log({"ev": "update", "member": mid, "version": m.version + 1, "strategy": strategy,
@@ -371,9 +400,10 @@ class Pool:
         short_isolated = [{"mid": m.mid, "games": m.period_games, "cr": m.cr} for m in self.short_members()
                           if m.mid in iso]
         through = []
-        if period_kind(self.period) == "strategy":
-            # nobody enters during a strategy period, so everyone in the pool now was there for all of it
-            through = [m.mid for m in self.active()]
+        if takes_updates(self.period):
+            # the members present from this period's start (A15); in a merged period (S35/S36) this period's entrants
+            # are not, so they stay protected until the next period ends. Nobody entered in strategy period 2.
+            through = [m.mid for m in self.active() if m.entry_period < self.period]
         self._log({"ev": "period", "period": self.period + 1, "kind": period_kind(self.period + 1),
                    "through_strategy_period": through, "forced": force, "short": short,
                    "short_isolated": short_isolated,                        # S8: short, but nobody within 200

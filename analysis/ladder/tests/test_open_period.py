@@ -170,3 +170,74 @@ def test_set_delta_only_records(tmp_path, monkeypatch):
     assert O.main(["--set-delta", "3", "--host", str(host)]) == 0
     assert json.loads((host / "gates" / "delta-P1.json").read_text(encoding="utf-8"))["delta"] == 3.0
     assert not (tmp_path / "arena").exists()                      # nothing opened
+
+
+# --- merged periods from period 4 (S35/S36) -------------------------------------------------------------------------
+
+def period_four(tmp_path):
+    pool = period_one(tmp_path)
+    while pool.period < 4:
+        pool.advance(force="test")
+    return pool
+
+
+def test_a_merged_period_carries_the_last_kept_delta_over(tmp_path, capsys):
+    # host reading 4 (S34's 5 pp stands until Salem changes it): kept for the period, said so
+    host = tmp_path / "host"
+    with pytest.raises(SystemExit, match="delta"):
+        O.period_delta(host, 4, None, carry=True)                 # nothing kept at all: stops as before
+    assert O.period_delta(host, 2, 5.0) == 5.0
+    assert O.period_delta(host, 4, None, carry=True) == 5.0
+    assert "沿用第 2 期的 5" in capsys.readouterr().out
+    kept = json.loads((host / "gates" / "delta-P4.json").read_text(encoding="utf-8"))
+    assert kept["delta"] == 5.0 and kept["carried_from"] == 2
+    assert O.period_delta(host, 4, None, carry=True) == 5.0        # kept now: no second carry
+    assert O.period_delta(host, 5, 3.0, carry=True) == 3.0         # given: that one, not carried
+    assert "carried_from" not in json.loads((host / "gates" / "delta-P5.json").read_text(encoding="utf-8"))
+    assert O.period_delta(host, 7, None, carry=True) == 3.0        # the most recent earlier one (5), not 2 or 4
+    assert json.loads((host / "gates" / "delta-P7.json").read_text(encoding="utf-8"))["carried_from"] == 5
+    with pytest.raises(SystemExit, match="delta"):
+        O.period_delta(tmp_path / "h2", 2, None)                    # a strategy period never carries
+
+
+def test_set_delta_in_a_merged_period(tmp_path):
+    pool = period_one(tmp_path)
+    host = tmp_path / "host"
+    pool.advance(force="test"); pool.advance(force="test")         # period 3: a deck period, no gate
+    with pytest.raises(SystemExit, match="卡组期"):
+        O.main(["--set-delta", "5", "--host", str(host)])
+    pool.advance(force="test")                                     # period 4: merged
+    assert O.main(["--set-delta", "5", "--host", str(host)]) == 0
+    assert json.loads((host / "gates" / "delta-P4.json").read_text(encoding="utf-8"))["delta"] == 5.0
+    with pytest.raises(SystemExit, match="已经定成 5"):
+        O.main(["--set-delta", "3", "--host", str(host)])
+
+
+def test_the_note_of_a_merged_period():
+    window = {"hours": 12, "deadline": "2026-11-27T12:00:00+00:00", "games": 60000}
+    four = O.note_for(4, "merged", window, 5.0)
+    assert four.startswith("第 4 期（合并期）") and "从这一期起卡组期和策略期合并" in four
+    assert "新卡组可交可不交，每个职业最多一副" in four and "下一期起可以" in four and "到下一期结束都受保护" in four
+    assert "强 5 个百分点" in four and "截止以后统一跑" in four and "开始时冻结的池子" in four
+    five = O.note_for(5, "merged", window, 5.0)
+    assert "从这一期起" not in five and "强 5 个百分点" in five
+    assert "百分点" not in O.note_for(3, "deck", window, None)
+
+
+def test_a_dry_opening_of_a_merged_period(tmp_path):
+    period_four(tmp_path)
+    host = tmp_path / "host"
+    O.period_delta(host, 2, 5.0)                                   # period 2's kept delta; none for period 4
+    out = tmp_path / "out"
+    code = O.main(["--dry", "--host", str(host), "--out", str(out), "--hours", "0.004", "--every", "1",
+                   "--mask", "none", "--workers", "2"])
+    s = json.loads((out / "summary.json").read_text(encoding="utf-8"))
+    assert code == 0 and s["ok"], s
+    assert s["steps"]["state"] == {"ok": True, "period": 4, "kind": "merged", "already_open": False, "delta": 5.0,
+                                   "delta_carried_from": 2}
+    assert not (host / "gates" / "delta-P4.json").exists()         # the dry run kept it under OUT only
+    assert json.loads((out / "host" / "gates" / "delta-P4.json").read_text(encoding="utf-8"))["carried_from"] == 2
+    report = (out / "players" / "public" / "reports" / "report-P4.md").read_text(encoding="utf-8")
+    assert "第 4 期（合并期）" in report and "强 5 个百分点" in report
+    clog = (out / "collect.log").read_text(encoding="utf-8")
+    assert "--gates after --frozen" in clog and "--delta 5" in clog and "这一期收完" in clog

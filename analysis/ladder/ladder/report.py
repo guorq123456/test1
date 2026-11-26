@@ -100,7 +100,7 @@ def _pct(w, n):
 
 def markdown(r: dict) -> str:
     from ladder.pool import CRAFT_ZH
-    kind = {"deck": "卡组期", "strategy": "策略期", "baseline": "基线"}[r["kind"]]
+    kind = {"deck": "卡组期", "strategy": "策略期", "merged": "合并期", "baseline": "基线"}[r["kind"]]   # merged: S35/S36
     out = [f"# 环境报告 第 {r['period']} 期（{kind}）", "",
            f"写于 {r['time']}（主持方）。池子里 {r['members']} 个成员：" +
            "、".join(f"{k} {v}" for k, v in r["per_class"].items()) + "。只有匿名编号，看不出是谁的、第几期进来的、第几版。", ""]

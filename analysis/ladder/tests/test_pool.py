@@ -397,3 +397,111 @@ def test_a_check_pool_allows_other_starts_and_no_quotas_but_the_real_pool_doesnt
         chk.enter(BASE_DECKS[1], f"mix:0.{k}:greedy", "check", cr=cr, rng=random.Random(k))
     assert [m.cr for m in chk.active()] == [1300, 1500, 1700]
     assert P.Pool(tmp_path / "chk").params["check"] is True
+
+
+# --- merged periods from period 4 (Salem S35/S36, 11-26) ------------------------------------------------------------
+
+@pytest.mark.parametrize("n,kind,decks,updates", [
+    (0, "baseline", False, False), (1, "deck", True, False), (2, "strategy", False, True), (3, "deck", True, False),
+    (4, "merged", True, True), (5, "merged", True, True), (6, "merged", True, True)])
+def test_period_kinds_and_what_they_take(n, kind, decks, updates):
+    # periods 0-3 keep their kinds (the event replay calls period_kind); from 4 every period is merged
+    assert P.MERGED_FROM == 4
+    assert (P.period_kind(n), P.takes_decks(n), P.takes_updates(n)) == (kind, decks, updates)
+    assert P.period_target(n) == (2000 if n == 0 else 100)
+
+
+def at_period(pool, n):
+    while pool.period < n:
+        pool.advance(force="test")
+    return pool
+
+
+def test_a_merged_period_takes_entries_and_updates(tmp_path):
+    pool = baseline_pool(tmp_path)
+    old = pool.active()[0].mid
+    at_period(pool, 1)
+    with pytest.raises(P.PoolError, match="strategy period or a merged period"):
+        pool.update(old, "bot:mcts:200+plan", gate="G-1")                    # period 1: decks only
+    at_period(pool, 3)
+    with pytest.raises(P.PoolError, match="strategy period or a merged period"):
+        pool.update(old, "bot:mcts:200+plan", gate="G-1")                    # period 3 (special, a deck period)
+    p3 = pool.enter(synth_deck(5, 0), "py:helpers:Random", "fable")
+    at_period(pool, 4)
+    new = pool.enter(synth_deck(1, 3), "py:helpers:Random", "fable-ultracode")   # a new deck ...
+    assert pool.update(old, "bot:mcts:200+plan", gate="G-0001") == 2           # ... and an update, same period
+    assert pool.update(p3, "bot:mcts:200+plan", gate="G-0002") == 2            # a period-3 member from period 4
+    with pytest.raises(P.PoolError, match="entered in this period"):
+        pool.update(new, "bot:mcts:200+plan", gate="G-0003")                 # not in the period-start frozen pool
+    assert pool.members[new].version == 1
+    with pytest.raises(P.PoolError, match="one per class"):
+        pool.enter(synth_deck(1, 4), "py:helpers:Random", "fable-ultracode")  # S5/S36: at most one per class
+    at_period(pool, 5)
+    pool.enter(synth_deck(1, 4), "py:helpers:Random", "fable-ultracode")      # the next period: another one
+    assert pool.update(new, "bot:mcts:200+plan", gate="G-0003") == 2           # and now it can be updated
+    m = pool.members[new]
+    assert (m.version, m.since_change, m.unstable) == (2, 0, True)
+
+
+def test_entries_in_consecutive_merged_periods(tmp_path):
+    # S36: at most one new deck per class per player per period, none required; counted by entry period
+    pool = at_period(baseline_pool(tmp_path), 4)
+    for n in (4, 5, 6):
+        at_period(pool, n)
+        pool.enter(synth_deck(3, n), "py:helpers:Random", "fable-ultracode")
+        with pytest.raises(P.PoolError, match="one per class"):
+            pool.enter(synth_deck(3, 10 + n), "py:helpers:Random", "fable-ultracode")
+    assert [m.entry_period for m in pool.active() if m.owner == "fable-ultracode"] == [4, 5, 6]
+
+
+def _period_events(path):
+    return [e for e in (json.loads(x) for x in (path / "events.jsonl").read_text(encoding="utf-8").splitlines())
+            if e["ev"] == "period"]
+
+
+def test_protection_across_merged_periods_and_the_replay(tmp_path):
+    """A member entered in period N is protected until period N+1 ends (A15 read for merged periods, S35/S36):
+    period-3 members lose it when period 4 ends, period-4 members when period 5 ends. Period 2 marks as before."""
+    pool = baseline_pool(tmp_path)
+    base = [m.mid for m in pool.active()]
+    at_period(pool, 1)
+    p1 = pool.enter(synth_deck(1, 1), "py:helpers:Random", "fable")
+    at_period(pool, 3)
+    assert all(pool.members[x].full_strategy_period for x in base + [p1])       # 2 -> 3, as it always was
+    p3 = pool.enter(synth_deck(2, 3), "py:helpers:Random", "fable")
+    at_period(pool, 4)
+    assert pool.members[p3].protected                                           # 3 -> 4: period 3 took no updates
+    p4 = pool.enter(synth_deck(3, 4), "py:helpers:Random", "fable")
+    at_period(pool, 5)
+    assert not pool.members[p3].protected and pool.members[p4].protected       # 4 -> 5: p3 out, p4 still in
+    p5 = pool.enter(synth_deck(4, 5), "py:helpers:Random", "fable")
+    at_period(pool, 6)
+    assert not pool.members[p4].protected and pool.members[p5].protected       # 5 -> 6: p4 out, p5 still in
+    evs = _period_events(tmp_path / "p")
+    assert [(e["period"], e["kind"]) for e in evs] == [(1, "deck"), (2, "strategy"), (3, "deck"), (4, "merged"),
+                                                        (5, "merged"), (6, "merged")]
+    assert [e["through_strategy_period"] for e in evs] == [[], [], base + [p1], [], base + [p1, p3],
+                                                            base + [p1, p3, p4]]
+    again = P.Pool(tmp_path / "p")                                              # rebuilt from events.jsonl
+    assert again.private_rows() == pool.private_rows() and again.period == 6
+    assert {m.mid: m.full_strategy_period for m in again.members.values()} == \
+           {m.mid: m.full_strategy_period for m in pool.members.values()}
+
+
+def test_the_old_3_to_4_period_line_replays_the_same(tmp_path):
+    # LD-88: the real pool's 3 -> 4 line says kind "strategy" (written before S35); no code reads that field
+    pool = baseline_pool(tmp_path)
+    at_period(pool, 3)
+    p3 = pool.enter(synth_deck(2, 3), "py:helpers:Random", "fable")
+    at_period(pool, 5)
+    path = tmp_path / "p" / "events.jsonl"
+    lines = path.read_text(encoding="utf-8").splitlines()
+    i = max(k for k, x in enumerate(lines) if json.loads(x)["ev"] == "period" and json.loads(x)["period"] == 4)
+    ev = json.loads(lines[i])
+    assert ev["kind"] == "merged" and ev["through_strategy_period"] == []
+    ev["kind"] = "strategy"
+    lines[i] = json.dumps(ev)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    again = P.Pool(tmp_path / "p")
+    assert again.private_rows() == pool.private_rows()
+    assert again.members[p3].full_strategy_period and not again.members[p3].protected

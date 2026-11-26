@@ -18,7 +18,7 @@ sys.path.insert(0, str(HERE.parents[2]))
 import close_period as C  # noqa: E402
 from ladder import arena, collect  # noqa: E402
 from ladder import anchors as A  # noqa: E402
-from ladder.pool import Pool  # noqa: E402
+from ladder.pool import Pool, period_kind, takes_updates  # noqa: E402
 from test_pool import BASE_DECKS, finish  # noqa: E402
 
 SEEDS = (99001700, 99011700)       # made-up results only: these seeds only count starts, no game is played
@@ -31,19 +31,28 @@ def any_simulator(monkeypatch):
     monkeypatch.setattr(environments, "check", lambda period, root=None: environments.env_of(period))
 
 
-def setup(tmp_path, seconds=-60.0, listing=True, puzzle=True):
+def setup(tmp_path, seconds=-60.0, listing=True, puzzle=True, period=1, gates=True):
+    """A host whose pool is in `period` (1: a deck period; 4 on: merged, which with `gates` gets its delta and frozen
+    pool as open_period leaves them)."""
     host, ar, players = tmp_path / "host", tmp_path / "arena", tmp_path / "players"
     pool = Pool.create(host / "pool", SEEDS, rng_seed=3)
     for i, d in enumerate(BASE_DECKS):
         pool.enter(d, "bot:greedy", "baseline", rng=random.Random(i))
-    pool.advance(force="test")
+    while pool.period < period:
+        pool.advance(force="test")
+    if gates and takes_updates(period):
+        (host / "gates").mkdir(parents=True)
+        (host / "gates" / f"delta-P{period}.json").write_text(json.dumps({"period": period, "delta": 5.0}),
+                                                              encoding="utf-8")
+        (host / "frozen").mkdir(parents=True)
+        (host / "frozen" / f"P{period}.json").write_text("{}", encoding="utf-8")
     arena.snapshot(host / "pool", ar, cr="current")
     w = arena.open_window(ar, hours=seconds / 3600, games=10, workers=2)
     (players / "public").mkdir(parents=True)
     (host / "subs" / "code").mkdir(parents=True)
     if listing:
-        collect._note(host / "subs", {"ev": "deadline", "period": 1, "field": w["field"], "deadline": w["deadline"],
-                                      "dirs": []})
+        collect._note(host / "subs", {"ev": "deadline", "period": period, "field": w["field"],
+                                      "deadline": w["deadline"], "dirs": []})
     if puzzle:
         (host / "subs" / "puzzles.json").write_text(json.dumps({"START": {"deck": BASE_DECKS[5], "title": "t"}}),
                                                     encoding="utf-8")
@@ -109,7 +118,7 @@ class Fake:
             raise RuntimeError("deliver exit 1")
         elif what == "ladder.pool advance":
             pool = Pool(args[3])
-            out = json.dumps({"period": pool.advance(), "kind": "strategy"})
+            out = json.dumps({"period": pool.advance(), "kind": period_kind(pool.period)})
         return 0, out
 
 
@@ -345,3 +354,27 @@ def test_a_sealed_log_changed_holds_the_period(tmp_path, monkeypatch, keyed):
     s = summary(tmp_path / "o")
     assert any("封存" in h and "pool/games.jsonl" in h for h in s["held"])
     assert "ladder.arena formal" not in fake.calls and Pool(host / "pool").period == 1
+
+
+def test_a_merged_period_is_collected_with_its_delta_and_frozen_pool(tmp_path, monkeypatch, keyed):
+    # S35/S36: from period 4 the close reads the collection as a period that takes updates (delta, frozen pool), and
+    # both a deck still to admit and an update still to gate hold it
+    host, ar, players = setup(tmp_path, period=4)
+    fake = Fake(host)
+    monkeypatch.setattr(C, "run", fake)
+    assert C.main(argv(host, ar, players, tmp_path / "o", "--check")) == 0, summary(tmp_path / "o")
+    assert summary(tmp_path / "o")["steps"]["state"]["kind"] == "merged" and fake.calls == []
+    from ladder import submit
+    for i, kind in ((1, "deck"), (2, "update")):
+        submit._append(host / "subs", {"ev": "receipt", "id": f"S-{i:04d}", "player": "fable", "period": 4,
+                                       "kind": kind, "verdict": "收下"})
+    assert C.main(argv(host, ar, players, tmp_path / "o2", "--check")) == 3
+    err = summary(tmp_path / "o2")["steps"]["collected"]["error"]
+    assert "收下了还没入池 ['S-0001']" in err and "收下了还没检验 ['S-0002']" in err
+
+
+def test_a_merged_period_without_its_delta_stops_the_close(tmp_path, monkeypatch, keyed):
+    host, ar, players = setup(tmp_path / "a", period=4, gates=False)
+    monkeypatch.setattr(C, "run", Fake(host))
+    assert C.main(argv(host, ar, players, tmp_path / "o", "--check")) == 1
+    assert "要给 --frozen" in summary(tmp_path / "o")["steps"]["collected"]["error"]

@@ -206,7 +206,8 @@ def test_a_derived_form_is_not_a_deck_card():
 
 def _pool(tmp_path, period: int):
     pool = Pool.create(tmp_path / "pool", seeds=(99001460, 99001470), rng_seed=1)
-    pool.advance()                                         # period 1: a deck period
+    while pool.period < period:                            # 1: a deck period; 4 on: merged (S35/S36)
+        pool.advance(force="test")
     return pool
 
 
@@ -245,6 +246,64 @@ def test_slots_and_periods(tmp_path):
     assert any("总步数" in p for p in problems)
     problems, _ = submit.check_slots({"kind": "update", "meta": {"member": "三号"}}, "fable-ultracode", pool, admitted)
     assert any("没有叫" in p for p in problems)
+
+
+def test_slots_in_a_merged_period(tmp_path):
+    """S35/S36: from period 4 new decks (optional, at most one per class) and updates in the same period; an update
+    for a member entered in this period is refused at receipt (it isn't in the period-start frozen pool)."""
+    pool = _pool(tmp_path, 1)
+    sword, _ = submit.check_deck(CODES[1])
+    forest, _ = submit.check_deck(CODES[0])
+    old = pool.enter(sword, "bot:mcts:100+plan", "fable-ultracode")
+    up = lambda name: {"kind": "update", "meta": {"member": name}}
+    admitted = [{"ev": "admit", "player": "fable-ultracode", "member": "二号", "mid": old}]
+    problems, _ = submit.check_slots(up("二号"), "fable-ultracode", pool, admitted)
+    assert any("只有策略期、合并期收打法更新" in p for p in problems)          # period 1: decks only
+    pool.advance(force="test"); pool.advance(force="test")                    # period 3 (special): decks only
+    problems, _ = submit.check_slots(up("二号"), "fable-ultracode", pool, admitted)
+    assert any("卡组期" in p for p in problems)
+    pool.advance(force="test")                                                # period 4: merged
+    r = lambda i, kind, **k: {"ev": "receipt", "id": f"S-{i:04d}", "player": "fable-ultracode", "period": pool.period,
+                              "kind": kind, **k}
+    deck = {"kind": "deck", "meta": {"member": "一号"}, "deck_ids": forest}
+    problems, info = submit.check_slots(deck, "fable-ultracode", pool, admitted)
+    assert problems == [] and info["uses_slot"] and info["craft"] == 1 and info["period_kind"] == "merged"
+    problems, _ = submit.check_slots(deck, "fable-ultracode", pool, admitted + [r(1, "deck", verdict="收下", craft=1)])
+    assert any("已经交过一副" in p and "每期每个职业最多一副" in p for p in problems)
+    problems, info = submit.check_slots(up("二号"), "fable-ultracode", pool, admitted)
+    assert problems == [] and info["mid"] == old                               # an update, the same period
+    same = {"kind": "deck", "meta": {"member": "二号乙"}, "deck_ids": sword}  # a list the player already holds
+    problems, info = submit.check_slots(same, "fable-ultracode", pool, admitted)
+    assert problems == [] and any("新成员" in w for w in info["warnings"])
+    # the deck accepted, its admit still to come; then admitted: no update of it this period, either way
+    pending = admitted + [r(2, "deck", verdict="收下", craft=1, member="一号")]
+    problems, _ = submit.check_slots(up("一号"), "fable-ultracode", pool, pending)
+    assert any("这一期才入池的，这一期不能改打法，下一期起可以" in p for p in problems)
+    new = pool.enter(forest, "bot:mcts:100+plan", "fable-ultracode")
+    now = pending + [{"ev": "admit", "player": "fable-ultracode", "member": "一号", "mid": new}]
+    problems, _ = submit.check_slots(up("一号"), "fable-ultracode", pool, now)
+    assert any("这一期才入池的" in p for p in problems)
+    pool.advance(force="test")                                                # period 5: from now on it can
+    problems, info = submit.check_slots(up("一号"), "fable-ultracode", pool, now)
+    assert problems == [] and info["mid"] == new
+
+
+def test_status_in_a_merged_period(tmp_path):
+    # S36: new decks optional in a merged period: the status shows what can still come, nothing "missing"
+    pool = _pool(tmp_path, 4)
+    subs = tmp_path / "subs"
+    for i, (craft, verdict) in enumerate(((1, "收下"), (2, "拒收"))):
+        submit._append(subs, {"ev": "receipt", "id": f"S-{i + 1:04d}", "player": "fable", "period": 4, "kind": "deck",
+                              "verdict": verdict, "craft": craft})
+    submit._append(subs, {"ev": "receipt", "id": "S-0003", "player": "fable", "period": 4, "kind": "update",
+                          "verdict": "收下"})
+    st = submit.status(subs, pool.dir, "fable")
+    assert st["kind"] == "merged" and st["classes_done"] == ["精灵"] and len(st["classes_open"]) == 6
+    assert "classes_missing" not in st and st["updates_accepted"] == 1
+    text = submit.status_text(st, submit.ledger(subs))
+    assert text.startswith("# 第 4 期（合并期）你的提交")
+    assert "已经收下的职业：精灵" in text and "还能交（可交可不交，每个职业最多一副）：皇家护卫" in text
+    assert "还缺" not in text and "收下（进检验）1 份" in text
 
 
 # --- the load check (its own process) ------------------------------------------------------------------------------
@@ -515,6 +574,37 @@ def test_an_accepted_update_goes_to_the_gate(tmp_path, monkeypatch):
             src="class Quick:\n    N = 11\n")
     end = submit.gate_update(subs, "S-0011", pool.dir, tmp_path / "f.json", (1, 2), tmp_path / "gates", delta=3)
     assert end["gate"] is not None and calls[-1]["since"] == "换了搜索的剪枝"
+
+
+def test_an_update_passed_in_a_merged_period_goes_into_the_pool(tmp_path, monkeypatch):
+    from ladder.runner import load_deck
+    pool = Pool.create(tmp_path / "pool", seeds=(99001460, 99001470), rng_seed=1)
+    pool.enter([x.card_id for x in load_deck(CODES[0])], "bot:greedy", "baseline")
+    while pool.period < 4:
+        pool.advance(force="test")
+    mid = pool.active()[0].mid
+
+    class FakeGate:
+        def __init__(self, *a, **kw):
+            pass
+
+        def run(self, workers=4, mask=None):
+            return {"gate": "G-0001", "verdict": "passed"}
+    import ladder.gate
+    monkeypatch.setattr(ladder.gate, "Gate", FakeGate)
+    subs = tmp_path / "subs"
+    (subs / "S-0001").mkdir(parents=True)
+    (subs / "code").mkdir(parents=True)
+    (subs / "code" / "sub_S0001.py").write_text("class Quick:\n    N = 1\n", encoding="utf-8")
+    (subs / "S-0001" / "submission.json").write_text(json.dumps(
+        {"type": "打法更新", "member": "一号", "class": "Quick", "change": "c", "prediction": "p"}, ensure_ascii=False),
+        encoding="utf-8")
+    submit._append(subs, {"ev": "receipt", "id": "S-0001", "player": "fable", "kind": "update", "verdict": "收下",
+                          "period": 4, "member": "一号", "mid": mid, "spec": "py:sub_S0001:Quick", "route": None,
+                          "was": {"strategy": "bot:greedy", "version": 1}})
+    out = submit.gate_update(subs, "S-0001", pool.dir, tmp_path / "frozen.json", (1, 2), tmp_path / "gates", delta=5)
+    assert out["verdict"] == "passed" and out["version"] == 2
+    assert Pool(pool.dir).members[mid].strategy == "py:sub_S0001:Quick"
 
 
 def test_a_route_stop_mark_is_checked(tmp_path):

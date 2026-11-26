@@ -3,7 +3,7 @@
     python -m ladder.submit precheck DIR [--deck-of-member CODE]      # format, deck, code; no games, counts nothing
     python -m ladder.submit receive  DIR --player fable --pool POOLDIR --out SUBDIR [--workers 15] --mask 0x3FC3FC
     python -m ladder.submit admit    SUBDIR --receipt S-0001 --pool POOLDIR   # an accepted new deck enters the pool
-    python -m ladder.submit status   SUBDIR --pool POOLDIR --player fable         # classes done / missing this period
+    python -m ladder.submit status   SUBDIR --pool POOLDIR --player fable         # classes done / missing (open) this period
     python -m ladder.submit deliver  SUBDIR --pool POOLDIR --players C:\\claude\\ladder-players   # receipts, gate results, status
                                                                              # into each player's receipts\\ (A50)
 
@@ -20,17 +20,20 @@ A submission is one directory (public/submit.md is the players' description):
     evidence.md      the practice-arena evidence (against whom, how many games, what came out)
 
 `receive` runs every check, writes a receipt (accepted / refused, with every reason) and appends one line to
-SUBDIR/submissions.jsonl, accepted or not. The ledger is append-only. Slots follow Salem's S5 (11-22): every deck
-period each player submits one new deck for every class (an accepted one fills its class; a refused one leaves it
-open, A35); strategy updates are not limited; a 公共题 uses no slot. A declared multi-step route is gated once, at
-its end, against the version before its first step (A33).
+SUBDIR/submissions.jsonl, accepted or not. The ledger is append-only. Slots follow Salem's S5 (11-22): in the deck
+periods 1 and 3 each player submitted one new deck for every class (an accepted one fills its class; a refused one
+leaves it open, A35); from period 4 every period is merged (S35/S36): new decks are optional, at most one per class,
+and strategy updates are taken in the same period. Strategy updates are not limited; a 公共题 uses no slot. A
+declared multi-step route is gated once, at its end, against the version before its first step (A33).
 
 The checks (PHASE2-DESIGN.md 2.3):
 - format: the four files, the fields the type needs;
 - deck (新卡组): legal by the simulator's own rules (svsim.cards.decks.validate: 40 cards, 3 of a name, one class
   plus Neutral, Rotation as the simulator has it: A7), every card scripted (runner.unscripted), one class;
-- slots: no cap on a player's members (S6), at most 2 members per list, one new deck per class per deck
-  period (S5), updates not limited; new decks only in a deck period, updates only in a strategy period;
+- slots: no cap on a player's members (S6), at most 2 members per list, at most one new deck per class per
+  period (S5; required in deck periods 1 and 3, optional from period 4, S36), updates not limited; new decks only in
+  a period that takes decks (deck, or merged from period 4), updates only in one that takes updates (strategy, or
+  merged), and not for a member that entered in this same period (it is not in the period-start frozen pool);
 - code, read (no running): imports only from the allowed modules, none of the names and attributes that reach
   files, the network, other processes, frames or the interpreter (static, by the syntax tree);
 - code, loaded in a separate process with an audit hook (PEP 578) that refuses files, sockets, processes, ctypes
@@ -71,9 +74,10 @@ for p in (str(ROOT), str(LADDER)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-SUBMIT_VERSION = "submit-1"
+SUBMIT_VERSION = "submit-2"         # submit-2 (11-26): merged periods from period 4 (S35/S36)
 TYPES = {"新卡组": "deck", "打法更新": "update", "公共题": "puzzle", "选队": "team"}   # 选队: a special period (S27, A62)
 FILES = ("submission.json", "strategy.py", "notes.md", "evidence.md")
+PERIOD_ZH = {"baseline": "基线期", "deck": "卡组期", "strategy": "策略期", "merged": "合并期"}   # player-facing (S36)
 UPDATES_PER_PERIOD = None           # Salem S5 (11-22): no limit on strategy updates (the plan's 3 is gone)
 SMOKE_SEEDS = (88300000, 88400000)  # the host's part of the tuning range (SEEDS.md)
 SMOKE_GAMES = 50                    # LD-55..58: over 10 games the twins' compute ratio spread ~8% (an honest default-cost
@@ -266,18 +270,20 @@ def _craft(ids) -> int:
 
 
 def check_slots(sub: dict, player: str, pool, lines: list[dict]) -> tuple[list[str], dict]:
-    """Slot and period problems, and what the receipt records about slots. Salem's S5 (11-22): every deck period
-    each player submits one deck for every class; strategy updates are not limited. A refused deck leaves its
-    class open for this period (A35)."""
-    from ladder.pool import CRAFT_ZH, MAX_PER_LIST, MAX_PER_PLAYER, NEW_DECKS_PER_CLASS, list_key, period_kind
+    """Slot and period problems, and what the receipt records about slots. Salem's S5 (11-22): at most one new deck
+    per class per period (in the deck periods 1 and 3 all seven were expected; from period 4, merged, none is
+    required, S36); strategy updates are not limited. A refused deck leaves its class open for this period (A35).
+    An update for a member that entered in this same period is refused (it can be updated from the next one)."""
+    from ladder.pool import (CRAFT_ZH, MAX_PER_LIST, MAX_PER_PLAYER, NEW_DECKS_PER_CLASS, list_key, period_kind,
+                             takes_decks, takes_updates)
     kind, meta = sub["kind"], sub["meta"]
     pkind = period_kind(pool.period)
-    problems, info = [], {"period": pool.period, "period_kind": pkind, "uses_slot": False}
+    problems, info = [], {"period": pool.period, "period_kind": pkind, "uses_slot": False, "warnings": []}
     names = _members_of(lines, player)
     if kind == "deck":
         info["uses_slot"] = True                       # if accepted, it fills its class for this period
-        if pkind != "deck":
-            problems.append(f"第 {pool.period} 期是{ {'strategy': '策略期', 'baseline': '基线期'}.get(pkind, pkind)}，只有卡组期收新卡组")
+        if not takes_decks(pool.period):
+            problems.append(f"第 {pool.period} 期是{PERIOD_ZH.get(pkind, pkind)}，只有卡组期、合并期收新卡组")
         if sub.get("deck_ids"):
             craft = _craft(sub["deck_ids"])
             info["craft"] = craft
@@ -285,7 +291,7 @@ def check_slots(sub: dict, player: str, pool, lines: list[dict]) -> tuple[list[s
                      and l.get("period") == pool.period and l.get("kind") == "deck" and l.get("verdict") == "收下"
                      and l.get("craft") == craft]
             if len(taken) >= NEW_DECKS_PER_CLASS:
-                problems.append(f"这一期你的{CRAFT_ZH[craft]}已经交过一副、收下了（{taken[0]['id']}）；每个卡组期每个职业一副")
+                problems.append(f"这一期你的{CRAFT_ZH[craft]}已经交过一副、收下了（{taken[0]['id']}）；每期每个职业最多一副")
             from ladder import special
             if special.is_special(pool.period):
                 why, info["team"] = special.check_deck(sub["deck_ids"], craft, player, pool.period, lines)
@@ -294,6 +300,9 @@ def check_slots(sub: dict, player: str, pool, lines: list[dict]) -> tuple[list[s
             same = [m for m in pool.active() if list_key(m.deck) == key]
             if len(same) >= MAX_PER_LIST:
                 problems.append(f"同一张卡表池子里已经有 {len(same)} 个成员（最多 {MAX_PER_LIST} 个）")
+            elif any(m.owner == player for m in same):     # allowed, as in deck periods (host reading 5, S36)
+                info["warnings"].append("你池子里已经有一个成员用同一张卡表；这一副会是新成员（从 1500 起、不过把关），"
+                                        "不是那个成员的打法更新")
         active = [m for m in pool.active() if m.owner == player]
         if MAX_PER_PLAYER is not None and len(active) >= MAX_PER_PLAYER:
             problems.append(f"池子里已经有你的 {len(active)} 个成员（最多 {MAX_PER_PLAYER} 个）")
@@ -301,8 +310,8 @@ def check_slots(sub: dict, player: str, pool, lines: list[dict]) -> tuple[list[s
             problems.append(f"成员名 {meta['member']!r} 你已经用过了")
     elif kind == "update":
         route = meta.get("route")
-        if pkind != "strategy":
-            problems.append(f"第 {pool.period} 期不是策略期，只有策略期收打法更新")
+        if not takes_updates(pool.period):
+            problems.append(f"第 {pool.period} 期是{PERIOD_ZH.get(pkind, pkind)}，只有策略期、合并期收打法更新")
         if route is not None and route["step"] > 1:
             first = [l for l in lines if l.get("ev") == "receipt" and l.get("id") == route["route_of"]]
             if not first or first[0].get("player") != player or first[0].get("member") != meta["member"] \
@@ -311,7 +320,13 @@ def check_slots(sub: dict, player: str, pool, lines: list[dict]) -> tuple[list[s
             elif first[0]["route"]["steps"] != route["steps"]:
                 problems.append("总步数和第 1 步说的不一样")
         mid = names.get(meta["member"])
-        if mid is None or mid not in pool.members or not pool.members[mid].active:
+        new_here = (mid is not None and mid in pool.members and pool.members[mid].entry_period == pool.period) or (
+            mid is None and any(l.get("ev") == "receipt" and l.get("player") == player and l.get("kind") == "deck"
+                                and l.get("period") == pool.period and l.get("member") == meta["member"]
+                                and l.get("verdict") == "收下" for l in lines))   # accepted, its admit still to come
+        if new_here:                                       # not in the period-start frozen pool the gate plays against
+            problems.append(f"{meta['member']!r} 这个成员是这一期才入池的，这一期不能改打法，下一期起可以")
+        elif mid is None or mid not in pool.members or not pool.members[mid].active:
             problems.append(f"你在池子里没有叫 {meta['member']!r} 的成员")
         else:
             info["mid"] = mid
@@ -321,8 +336,8 @@ def check_slots(sub: dict, player: str, pool, lines: list[dict]) -> tuple[list[s
 
 
 def status(subdir: Path, pool_dir: Path, player: str) -> dict:
-    """This period, for one player: the classes with an accepted new deck and the ones still missing (S5), the
-    updates received."""
+    """This period, for one player: the classes with an accepted new deck and the ones still missing (S5, a deck
+    period) or still open (a merged period: new decks optional, S36), the updates received."""
     from ladder.pool import CRAFT_ZH, Pool, period_kind
     pool = Pool(pool_dir)
     lines = [l for l in ledger(subdir) if l.get("ev") == "receipt" and l.get("player") == player
@@ -335,6 +350,9 @@ def status(subdir: Path, pool_dir: Path, player: str) -> dict:
     if out["kind"] == "deck":
         out["classes_done"] = [CRAFT_ZH[c] for c in done]
         out["classes_missing"] = [CRAFT_ZH[c] for c in sorted(CRAFT_ZH) if c not in done]
+    elif out["kind"] == "merged":                         # optional: nothing is missing, these can still come (S36)
+        out["classes_done"] = [CRAFT_ZH[c] for c in done]
+        out["classes_open"] = [CRAFT_ZH[c] for c in sorted(CRAFT_ZH) if c not in done]
     from ladder import special
     if special.is_special(pool.period):
         out.update(special.status(ledger(subdir), pool.period, player))
@@ -343,14 +361,17 @@ def status(subdir: Path, pool_dir: Path, player: str) -> dict:
 
 def status_text(st: dict, lines: list[dict]) -> str:
     """The status a player finds in their receipts folder (A50): this period's accepted and missing classes (a deck
-    period), the updates received and what their gates said."""
-    kind = {"deck": "卡组期", "strategy": "策略期"}.get(st["kind"], st["kind"])
+    period) or accepted and still open ones (a merged period), the updates received and what their gates said."""
+    kind = PERIOD_ZH.get(st["kind"], st["kind"])
     out = [f"# 第 {st['period']} 期（{kind}）你的提交", ""]
     if st.get("special"):
         out += [f"- 这一期是特殊期：{st['special']}。你选的队：{st['team'] or '还没选（先交「选队」）'}"]
     if st["kind"] == "deck":
         out += [f"- 新卡组已经收下的职业：{'、'.join(st['classes_done']) or '还没有'}",
                 f"- 还缺：{'、'.join(st['classes_missing']) or '不缺了'}"]
+    elif st["kind"] == "merged":
+        out += [f"- 新卡组已经收下的职业：{'、'.join(st['classes_done']) or '还没有'}",
+                f"- 还能交（可交可不交，每个职业最多一副）：{'、'.join(st['classes_open']) or '七个职业都交过了'}"]
     mine = {l["id"] for l in lines if l.get("ev") == "receipt" and l.get("player") == st["player"]
             and l.get("period") == st["period"] and l.get("kind") == "update"}
     gated = [l for l in lines if l.get("ev") == "gated" and l.get("receipt") in mine]
@@ -948,6 +969,7 @@ def _receive(d, player, pool_dir, subdir, workers, mask, rng_seed, smoke_games, 
                    mid=info.get("mid"), craft=info.get("craft"), was=info.get("was"))
         if info.get("team") is not None:
             rec["team"] = info["team"]
+        rec["warnings"].extend(info.get("warnings", []))
         check("名额和期", problems)
     rec.setdefault("period", pool.period)
     code_problems = check_code(sub["src"], meta["class"])

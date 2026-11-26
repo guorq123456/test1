@@ -5,9 +5,12 @@ players' first arena command says the arena is not open and nobody collects what
                                                 [--hours 12] [--games 60000] [--workers 23] [--delta PP] [--dry]
 
 1. lock: the locked files are as locked (tools/check_lock.py); key: the formal pool's deal key is there (its id only).
-2. state: the pool's period and kind (deck or strategy). A strategy period needs its gate margin, decided per period
-   (RUNBOOK §1.3): kept in HOST/gates/delta-P<period>.json, written the first time it is given (`--delta`); given
-   again it must be the same; not given and not kept, the tool stops. So the double-click needs no input.
+2. state: the pool's period and kind (deck or strategy in periods 1-3; from period 4 every period is merged: new decks
+   and strategy updates in one window, Salem S35/S36). A period that takes updates (strategy, merged) needs its gate
+   margin (RUNBOOK §1.3): kept in HOST/gates/delta-P<period>.json, written the first time it is given (`--delta`);
+   given again it must be the same. A merged period with none given and none kept carries over the most recent kept
+   delta-P<k>.json (k < period; S34's 5 pp stands until Salem changes it) and keeps it for this period, saying so; with
+   none at all (or a strategy period with none) the tool stops. So the double-click needs no input.
    **If the arena's window is already open for this period's field, steps 3-5 are skipped**: never a second snapshot
    or window (the deadline and the field the players practise on stay as they were). A window of this period on
    another field (someone snapshot by hand after it opened) stops the tool: it never opens a second window.
@@ -23,8 +26,8 @@ players' first arena command says the arena is not open and nobody collects what
    earlier report (HOST/puzzles/reported.json lists those that were). Kept if this period's report is there. A
    report that fails is written in the summary and the loop still starts (the window is open already).
 7. collect: ladder.collect until the deadline and after it until everything of the period is in (A55): 15 workers on
-   the E-cores (--mask 0x3FC3FC: receiving compares compute, A44); a strategy period adds --gates after --frozen
-   --delta --gates-out. Its last line says the period is collected and the ladder can start. Started again after the
+   the E-cores (--mask 0x3FC3FC: receiving compares compute, A44); a period that takes updates (strategy, merged)
+   adds --gates after --frozen --delta --gates-out. Its last line says the period is collected and the ladder can start. Started again after the
    deadline it refuses (it does not know what was there at the deadline); see RUNBOOK §3.
 
 `--dry` works under OUT only: the formal pool copied to OUT/host/pool (the original is not touched), an empty ledger
@@ -35,9 +38,9 @@ the loop's lines in OUT/collect.log.
 
 `--is-open` (for the launcher's wrapper, which pulls the repository only when no window is open): exit 10 if the
 arena has a window for the pool's period, 11 if not; nothing else is done.
-`--set-delta PP` (before the first double-click of a strategy period, RUNBOOK §1.3): only records the pool's period's
-gate margin in HOST/gates/delta-P<period>.json (refused if another one is kept, or if the period is a deck period);
-opens nothing.
+`--set-delta PP` (before the first double-click of a period that takes updates, RUNBOOK §1.3): only records the pool's
+period's gate margin in HOST/gates/delta-P<period>.json (refused if another one is kept, or if the period takes no
+updates: a deck period); opens nothing.
 """
 from __future__ import annotations
 
@@ -124,19 +127,37 @@ def is_open(arena: Path, period: int) -> dict | None:
                      "不再开一次窗口、不挪截止时刻。先查清楚是谁、为什么又做了 snapshot（RUNBOOK 每期第 1 节）")
 
 
-def period_delta(host: Path, period: int, given: float | None) -> float:
-    """A strategy period's gate margin: kept in HOST/gates/delta-P<period>.json once given."""
+def kept_delta_before(host: Path, period: int) -> tuple[int, float] | None:
+    """The most recent kept gate margin of an earlier period: (k, delta) from HOST/gates/delta-P<k>.json, k < period."""
+    kept = []
+    for f in (host / "gates").glob("delta-P*.json"):
+        k = f.stem[len("delta-P"):]
+        if k.isdigit() and int(k) < period:
+            kept.append((int(k), float(json.loads(f.read_text(encoding="utf-8"))["delta"])))
+    return max(kept) if kept else None
+
+
+def period_delta(host: Path, period: int, given: float | None, carry: bool = False) -> float:
+    """The gate margin of a period that takes updates: kept in HOST/gates/delta-P<period>.json once given. `carry` (a
+    merged period, S35/S36): with none given and none kept, the most recent earlier kept one is carried over and kept
+    for this period (S34's 5 pp stands until Salem changes it)."""
     f = host / "gates" / f"delta-P{period}.json"
     if f.exists():
         kept = json.loads(f.read_text(encoding="utf-8"))["delta"]
         if given is not None and float(given) != float(kept):
             raise SystemExit(f"第 {period} 期的 delta 已经定成 {kept:g}（{f}），这次给的是 {given:g}：不改")
         return float(kept)
+    row = {"period": period}
     if given is None:
-        raise SystemExit(f"第 {period} 期是策略期：要先定这一期把关的 delta（RUNBOOK 每期 1.3），"
-                         f"第一次用 --delta 给，会记进 {f}")
+        before = kept_delta_before(host, period) if carry else None
+        if before is None:
+            raise SystemExit(f"第 {period} 期收打法更新：要先定这一期把关的 delta（RUNBOOK 每期 1.3），"
+                             f"第一次用 --delta 给，会记进 {f}")
+        row["carried_from"], given = before
+        print(f"第 {period} 期没给 delta：沿用第 {before[0]} 期的 {before[1]:g}（gates\\delta-P{before[0]}.json），"
+              f"记进 {f}", flush=True)
     f.parent.mkdir(parents=True, exist_ok=True)
-    f.write_text(json.dumps({"period": period, "delta": float(given), "time": time.strftime("%Y-%m-%d %H:%M:%S")}),
+    f.write_text(json.dumps({**row, "delta": float(given), "time": time.strftime("%Y-%m-%d %H:%M:%S")}),
                  encoding="utf-8")
     return float(given)
 
@@ -159,14 +180,21 @@ def mark_reported(host: Path, files: list[Path]):
 def note_for(period: int, kind: str, window: dict, delta: float | None = None) -> str:
     from ladder.arena import RUN_GAMES_MAX
     from environments import env_of
-    zh = {"deck": "卡组期", "strategy": "策略期"}[kind]
+    from ladder.pool import MERGED_FROM
+    zh = {"deck": "卡组期", "strategy": "策略期", "merged": "合并期"}[kind]
     text = (f"第 {period} 期（{zh}）。工作时间 {window['hours']:g} 小时，五人共用一个截止时刻：{window['deadline']}（UTC）。"
             f"练习每人这一期最多 {window['games']} 局，一次最多 {RUN_GAMES_MAX} 局。")
     if period == 1:
         text += "起点题 START 和这一期共用工作时间和练习局数。"
-    if kind == "strategy" and delta is not None:  # the prompt: 要强多少，主持方每期开始前定好
+    if kind == "merged":                          # Salem S35/S36: decks and updates in one period from period 4
+        if period == MERGED_FROM:
+            text += "从这一期起卡组期和策略期合并（Salem 定的），规则见公共目录里的 rules.md 和 submit.md（这一期换了版本）。"
+        text += ("这一期新卡组和打法更新都收：新卡组可交可不交，每个职业最多一副，收下就入池；"
+                 "打法更新只给这一期开始时已经在池子里的成员，这一期才入池的成员这一期不能改打法，下一期起可以。"
+                 "保护期：这一期入池的成员到下一期结束都受保护。")
+    if kind in ("strategy", "merged") and delta is not None:  # the prompt: 要强多少，主持方每期开始前定好
         text += (f"这一期把关检验要新版本比池子里那一版强 {delta:g} 个百分点（检验的备择假设）；"
-                 "检验在截止以后统一跑。")
+                 "检验在截止以后统一跑" + ("，对手是这一期开始时冻结的池子。" if kind == "merged" else "。"))
     env = env_of(period)
     if env["from"] == period and period > 1:     # S25: a new simulator from this period
         text += (f"这一期起模拟器换成新环境（{env['name']}"
@@ -213,17 +241,19 @@ def main(argv=None):
     ap.add_argument("--games", type=int, default=60000)   # S29
     ap.add_argument("--workers", type=int, default=23, help="the arena's workers (all cores, S10)")
     ap.add_argument("--mask", default=E_CORES, help="the collection loop's E-cores (A44); 'none' off Windows")
-    ap.add_argument("--delta", type=float, help="a strategy period's gate margin (percentage points)")
+    ap.add_argument("--delta", type=float, help="the gate margin of a period that takes updates (percentage points)")
     ap.add_argument("--every", type=float, help="the loop's pause between looks (default 120 s, 10 s with --dry)")
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--is-open", action="store_true")
-    ap.add_argument("--set-delta", type=float, help="only record this strategy period's gate margin, open nothing")
+    ap.add_argument("--set-delta", type=float, help="only record this period's gate margin (a period that takes "
+                                                     "updates: strategy, merged), open nothing")
     a = ap.parse_args(argv)
     if a.set_delta is not None:
-        from ladder.pool import Pool, period_kind
+        from ladder.pool import Pool, period_kind, takes_updates
         period = Pool(a.host / "pool").period
-        if period_kind(period) != "strategy":
-            raise SystemExit(f"第 {period} 期是卡组期，没有把关，不用 delta")
+        if not takes_updates(period):
+            zh = {"baseline": "基线期", "deck": "卡组期"}.get(period_kind(period), period_kind(period))
+            raise SystemExit(f"第 {period} 期是{zh}，不收打法更新、没有把关，不用 delta")
         print(f"第 {period} 期的 delta：{period_delta(a.host, period, a.set_delta):g}（{a.host / 'gates'}）")
         return 0
     if a.is_open:
@@ -267,16 +297,19 @@ def main(argv=None):
             host, arena, players = dry_layout(a.out, a.host)
             res["steps"]["dry layout"] = {"ok": True, "host": str(host), "arena": str(arena), "players": str(players)}
         step = "state"
-        from ladder.pool import Pool, period_kind
+        from ladder.pool import Pool, period_kind, takes_updates
         pool_dir = host / "pool"
         period = Pool(pool_dir).period
         kind = period_kind(period)
         if period < 1:
             raise SystemExit(f"the pool is in period {period}: the players' periods start at 1 (RUNBOOK 第一次 4)")
-        delta = period_delta(host, period, a.delta) if kind == "strategy" else None
+        delta = period_delta(host, period, a.delta, carry=kind == "merged") if takes_updates(period) else None
         window = is_open(arena, period)
+        carried = (json.loads((host / "gates" / f"delta-P{period}.json").read_text(encoding="utf-8"))
+                   .get("carried_from") if delta is not None else None)
         res["steps"]["state"] = {"ok": True, "period": period, "kind": kind, "already_open": window is not None,
-                                 **({"delta": delta} if delta is not None else {})}
+                                 **({"delta": delta} if delta is not None else {}),
+                                 **({"delta_carried_from": carried} if carried is not None else {})}
         step = "environment"                      # S25: the simulator must be this period's (tools/environments.py)
         import environments
         env = environments.check(period)
@@ -350,7 +383,7 @@ def main(argv=None):
         step = "collect"
         mask = [] if a.mask == "none" else ["--mask", a.mask]
         gates = (["--gates", "after", "--frozen", frozen, "--delta", f"{delta:g}", "--gates-out", host / "gates"]
-                 if kind == "strategy" else [])
+                 if takes_updates(period) else [])
         rc = collect(["-m", "ladder.collect", "--players", players, "--pool", pool_dir, "--subs", host / "subs",
                       "--arena", arena, "--workers", "15", *mask, "--every", f"{every:g}", *gates],
                      a.out / "collect.log")

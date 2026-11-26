@@ -181,8 +181,10 @@ def collected(host: Path, arena: Path, players: Path, period: int, kind: str, ma
     Read only: nothing is written here. `mask`: the E-cores, as the loop had them (the Collector refuses none on
     Windows, 11-24 review; it only reads here)."""
     from ladder.collect import Collector, listing
+    from ladder.pool import takes_updates
     subs = host / "subs"
-    delta = _read(host / "gates" / f"delta-P{period}.json", {}).get("delta") if kind == "strategy" else None
+    # a period that takes updates (strategy; from period 4 merged, S35/S36) was collected with its delta and frozen pool
+    delta = _read(host / "gates" / f"delta-P{period}.json", {}).get("delta") if takes_updates(period) else None
     c = Collector(players, host / "pool", subs, arena, gates="after", frozen=host / "frozen" / f"P{period}.json",
                   delta=delta, gates_out=host / "gates", mask=mask, out=lambda s: None)
     if c.final is None:

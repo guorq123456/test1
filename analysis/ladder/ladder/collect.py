@@ -14,7 +14,7 @@ is received in a fresh process (`python -m ladder.submit receive`: the peek chec
 process, and a strategy must not be able to change the checks for the receipts after it), while holding the arena's
 lock: the machine runs one thing at a time (D2), and the compute check wants the E-cores to itself (A44). The player's
 receipts folder is written again after each (`submit.deliver`); an accepted new deck enters the pool at once
-(`submit.admit`, deck period).
+(`submit.admit`; a deck period, or from period 4 a merged period, S35/S36).
 
 The deadline: at that moment (checked before every step, and by a timer while a step is running) the listing of the
 submit folders is taken and written down (SUBS/collect.jsonl), keyed by the window's field and deadline, so a restarted
@@ -24,11 +24,14 @@ started after the deadline without that listing refuses, unless told `--after-de
 counts as there by the deadline). A collected directory whose files change before the deadline is another submission
 (it gets its own receipt).
 
-Updates (strategy period) go to the gate (`python -m ladder.submit gate`, the period's delta and frozen field):
+Updates (a strategy period, or from period 4 a merged period, which takes new decks and updates in one window, S35/
+S36) go to the gate (`python -m ladder.submit gate`, the period's delta and the field frozen at the period's open, which
+doesn't hold this period's new decks: an update for a member entered in this period is refused at receipt):
 `--gates now` right after their receipt, also under the lock (the arena waits); `--gates after` (default) all of
 them after the deadline, in receipt order. After the deadline every accepted update of the period not gated yet is
 gated in either mode, and every accepted deck of the period not admitted yet is admitted (a collector cut off between
-the two steps). The loop ends after that, with one line "这一期收完…": the pool's ladder starts only then (RUNBOOK §4).
+the two steps). The loop ends after that, with one line "这一期收完…" (with this period's admits and admit errors, if
+any): the pool's ladder starts only then (RUNBOOK §4).
 
 Failures: a directory whose receive fails (no receipt in the ledger) is tried again `retry` seconds later; after the
 second failure it is given up, written down, and the player gets "<name>-没收成.md" in their receipts folder. Three
@@ -126,7 +129,7 @@ class Collector:
                  gates_out=None, gate_seeds=(88500000, 89000000), settle=SETTLE, receive=None, gate=None,
                  receive_args=(), out=print, after_deadline=False, retry=120.0):
         from ladder.arena import _jsonl, _read
-        from ladder.pool import Pool, period_kind
+        from ladder.pool import Pool, period_kind, takes_updates
         from ladder.runner import one_core_type
         from ladder.submit import ledger
         self.players, self.pool, self.subs, self.arena = Path(players), Path(pool), Path(subs), Path(arena)
@@ -146,9 +149,9 @@ class Collector:
             raise SystemExit(f"练习场开的是第 {self.window['period']} 期，池子在第 {self.period} 期：先开这一期的练习场")
         if gates not in ("after", "now"):
             raise SystemExit("--gates 只能是 after 或 now")
-        if self.kind == "strategy" and (frozen is None or delta is None or gates_out is None
-                                        or not Path(frozen).is_file()):
-            raise SystemExit("策略期要给 --frozen（这一期的冻结池文件）、--delta、--gates-out")
+        if takes_updates(self.period) and (frozen is None or delta is None or gates_out is None
+                                           or not Path(frozen).is_file()):
+            raise SystemExit("收打法更新的一期（策略期、合并期）要给 --frozen（这一期的冻结池文件）、--delta、--gates-out")
         self.deadline = datetime.fromisoformat(self.window["deadline"]).timestamp()
         self.final = None                         # the listing taken at the deadline (kept from an earlier run)
         for l in _jsonl(_log_path(self.subs)):
@@ -423,7 +426,14 @@ class Collector:
                       if (p_, d, st) not in self.done() and (p_, d) not in self.final)
         late += sorted(Path(l["dir"]).name for l in self._log() if l.get("ev") == "dir" and l.get("late")
                        and (l["player"], l["dir"]) in self.final)
-        self.out(f"这一期收完：收 {n} 份" + (f"，检验 {g} 份" if g else "") + (f"，检验出错 {bad} 份" if bad else "") +
+        from ladder.submit import ledger
+        lines = ledger(self.subs)
+        decks = {l["id"] for l in lines if l.get("ev") == "receipt" and l.get("period") == self.period
+                 and l.get("kind") == "deck"}
+        k = len({l["receipt"] for l in lines if l.get("ev") == "admit" and l.get("receipt") in decks})
+        j = len({l["receipt"] for l in self._log() if l.get("ev") == "admit-failed" and l.get("receipt") in decks})
+        self.out(f"这一期收完：收 {n} 份" + (f"，入池 {k} 份" if k else "") + (f"，入池出错 {j} 份" if j else "") +
+                 (f"，检验 {g} 份" if g else "") + (f"，检验出错 {bad} 份" if bad else "") +
                  (f"；到点以后才放进来或又改过、没收的：{'、'.join(late)}" if late else "") + "。可以开天梯了")
         return {"received": n, "gated": g, "gate_errors": bad, "late": late}
 
