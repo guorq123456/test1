@@ -14,7 +14,8 @@ is received in a fresh process (`python -m ladder.submit receive`: the peek chec
 process, and a strategy must not be able to change the checks for the receipts after it), while holding the arena's
 lock: the machine runs one thing at a time (D2), and the compute check wants the E-cores to itself (A44). The player's
 receipts folder is written again after each (`submit.deliver`); an accepted new deck enters the pool at once
-(`submit.admit`; a deck period, or from period 4 a merged period, S35/S36).
+(`submit.admit`; a deck period, or a merged period, S35/S36), except in a special period whose decks stay out of the
+pool (period 4, Salem 11-27: ladder.special.admits): there nothing is admitted, now or after the deadline.
 
 The deadline: at that moment (checked before every step, and by a timer while a step is running) the listing of the
 submit folders is taken and written down (SUBS/collect.jsonl), keyed by the window's field and deadline, so a restarted
@@ -24,9 +25,10 @@ started after the deadline without that listing refuses, unless told `--after-de
 counts as there by the deadline). A collected directory whose files change before the deadline is another submission
 (it gets its own receipt).
 
-Updates (a strategy period, or from period 4 a merged period, which takes new decks and updates in one window, S35/
-S36) go to the gate (`python -m ladder.submit gate`, the period's delta and the field frozen at the period's open, which
-doesn't hold this period's new decks: an update for a member entered in this period is refused at receipt):
+Updates (a strategy period, or from period 5 a merged period, which takes new decks and updates in one window, S35/
+S36; period 4, special, takes none: ladder.special.takes_updates, though pool.py calls it merged) go to the gate
+(`python -m ladder.submit gate`, the period's delta and the field frozen at the period's open, which doesn't hold this
+period's new decks: an update for a member entered in this period is refused at receipt):
 `--gates now` right after their receipt, also under the lock (the arena waits); `--gates after` (default) all of
 them after the deadline, in receipt order. After the deadline every accepted update of the period not gated yet is
 gated in either mode, and every accepted deck of the period not admitted yet is admitted (a collector cut off between
@@ -129,8 +131,9 @@ class Collector:
                  gates_out=None, gate_seeds=(88500000, 89000000), settle=SETTLE, receive=None, gate=None,
                  receive_args=(), out=print, after_deadline=False, retry=120.0):
         from ladder.arena import _jsonl, _read
-        from ladder.pool import Pool, period_kind, takes_updates
+        from ladder.pool import Pool, period_kind
         from ladder.runner import one_core_type
+        from ladder.special import admits, takes_updates
         from ladder.submit import ledger
         self.players, self.pool, self.subs, self.arena = Path(players), Path(pool), Path(subs), Path(arena)
         self.workers, self.mask, self.gates, self.settle = workers, mask, gates, settle
@@ -145,6 +148,7 @@ class Collector:
         self.window = _read(self.arena / "public" / "window.json")
         self.period = Pool(self.pool).period
         self.kind = period_kind(self.period)
+        self.admits = admits(self.period)        # False in period 4: its accepted decks stay out of the pool
         if self.window["period"] != self.period:
             raise SystemExit(f"练习场开的是第 {self.window['period']} 期，池子在第 {self.period} 期：先开这一期的练习场")
         if gates not in ("after", "now"):
@@ -298,7 +302,7 @@ class Collector:
                               "verdict": rec["verdict"], "seconds": round(time.time() - t0)})
             self.out(f"{player} {Path(d).name} → {rec['id']} {rec['verdict']}")
             self._deliver()                       # the receipt first, before an admit or a gate
-            if rec["verdict"] == "收下" and rec.get("kind") == "deck":
+            if rec["verdict"] == "收下" and rec.get("kind") == "deck" and self.admits:
                 self._admit(rec["id"])
             if rec["verdict"] == "收下" and rec.get("kind") == "update" and self.gates == "now":
                 self._gate(rec["id"])
@@ -309,7 +313,10 @@ class Collector:
 
     # --- after a cut-off: what the earlier run left half done ----------------------------------------------------
     def pending_admits(self) -> list:
+        """The period's accepted decks not admitted yet (and not failed); none in a period whose decks stay out."""
         from ladder.submit import ledger
+        if not self.admits:
+            return []
         lines = ledger(self.subs)
         admitted = {l["receipt"] for l in lines if l.get("ev") == "admit"}
         failed = {l["receipt"] for l in self._log() if l.get("ev") == "admit-failed"}
@@ -432,7 +439,10 @@ class Collector:
                  and l.get("kind") == "deck"}
         k = len({l["receipt"] for l in lines if l.get("ev") == "admit" and l.get("receipt") in decks})
         j = len({l["receipt"] for l in self._log() if l.get("ev") == "admit-failed" and l.get("receipt") in decks})
+        kept = 0 if self.admits else sum(1 for l in lines if l.get("ev") == "receipt" and l.get("id") in decks
+                                              and l.get("verdict") == "收下")
         self.out(f"这一期收完：收 {n} 份" + (f"，入池 {k} 份" if k else "") + (f"，入池出错 {j} 份" if j else "") +
+                 (f"，收下新卡组 {kept} 份（特殊期，不入池）" if kept else "") +
                  (f"，检验 {g} 份" if g else "") + (f"，检验出错 {bad} 份" if bad else "") +
                  (f"；到点以后才放进来或又改过、没收的：{'、'.join(late)}" if late else "") + "。可以开天梯了")
         return {"received": n, "gated": g, "gate_errors": bad, "late": late}

@@ -1,6 +1,7 @@
 """Submissions (phase 2, item 2.3): the entry point, and the checks a submission passes before it goes anywhere.
 
-    python -m ladder.submit precheck DIR [--deck-of-member CODE]      # format, deck, code; no games, counts nothing
+    python -m ladder.submit precheck DIR [--deck-of-member CODE] [--period P]   # format, deck, code; no games,
+                                                    # counts nothing (P: a special period's own rules, e.g. 4)
     python -m ladder.submit receive  DIR --player fable --pool POOLDIR --out SUBDIR [--workers 15] --mask 0x3FC3FC
     python -m ladder.submit admit    SUBDIR --receipt S-0001 --pool POOLDIR   # an accepted new deck enters the pool
     python -m ladder.submit status   SUBDIR --pool POOLDIR --player fable         # classes done / missing (open) this period
@@ -22,18 +23,22 @@ A submission is one directory (public/submit.md is the players' description):
 `receive` runs every check, writes a receipt (accepted / refused, with every reason) and appends one line to
 SUBDIR/submissions.jsonl, accepted or not. The ledger is append-only. Slots follow Salem's S5 (11-22): in the deck
 periods 1 and 3 each player submitted one new deck for every class (an accepted one fills its class; a refused one
-leaves it open, A35); from period 4 every period is merged (S35/S36): new decks are optional, at most one per class,
-and strategy updates are taken in the same period. Strategy updates are not limited; a 公共题 uses no slot. A
-declared multi-step route is gated once, at its end, against the version before its first step (A33).
+leaves it open, A35); period 4 is special (Salem 11-27, ladder/special.py): new decks only of its three blueprints, at
+most one each, no strategy updates, the accepted decks kept out of the pool; from period 5 every period is merged
+(S35/S36): new decks are optional, at most one per class, and strategy updates are taken in the same period (pool.py,
+locked, calls period 4 merged too: the special period's rules are applied here, special.takes_updates and
+special.admits). Strategy updates are not limited; a 公共题 uses no slot. A declared multi-step route is gated once,
+at its end, against the version before its first step (A33).
 
 The checks (PHASE2-DESIGN.md 2.3):
 - format: the four files, the fields the type needs;
 - deck (新卡组): legal by the simulator's own rules (svsim.cards.decks.validate: 40 cards, 3 of a name, one class
   plus Neutral, Rotation as the simulator has it: A7), every card scripted (runner.unscripted), one class;
-- slots: no cap on a player's members (S6), at most 2 members per list, at most one new deck per class per
-  period (S5; required in deck periods 1 and 3, optional from period 4, S36), updates not limited; new decks only in
-  a period that takes decks (deck, or merged from period 4), updates only in one that takes updates (strategy, or
-  merged), and not for a member that entered in this same period (it is not in the period-start frozen pool);
+- slots: no cap on a player's members (S6), at most 2 members per list (not for a deck kept out of the pool,
+  period 4), at most one new deck per class per period (S5; required in deck periods 1 and 3, optional from period 4,
+  S36), updates not limited; new decks only in a period that takes decks (deck, merged, period 4 special), updates
+  only in one that takes updates (strategy, or merged from period 5), and not for a member that entered in this same
+  period (it is not in the period-start frozen pool); a special period's own rules (ladder/special.py);
 - code, read (no running): imports only from the allowed modules, none of the names and attributes that reach
   files, the network, other processes, frames or the interpreter (static, by the syntax tree);
 - code, loaded in a separate process with an audit hook (PEP 578) that refuses files, sockets, processes, ctypes
@@ -74,7 +79,8 @@ for p in (str(ROOT), str(LADDER)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-SUBMIT_VERSION = "submit-2"         # submit-2 (11-26): merged periods from period 4 (S35/S36)
+SUBMIT_VERSION = "submit-3"         # submit-2 (11-26): merged periods from period 4 (S35/S36); submit-3 (11-27):
+                                    # period 4 special (three blueprints, no updates, no admit), merged from 5
 TYPES = {"新卡组": "deck", "打法更新": "update", "公共题": "puzzle", "选队": "team"}   # 选队: a special period (S27, A62)
 FILES = ("submission.json", "strategy.py", "notes.md", "evidence.md")
 PERIOD_ZH = {"baseline": "基线期", "deck": "卡组期", "strategy": "策略期", "merged": "合并期"}   # player-facing (S36)
@@ -273,9 +279,12 @@ def _craft(ids) -> int:
 
 def check_slots(sub: dict, player: str, pool, lines: list[dict]) -> tuple[list[str], dict]:
     """Slot and period problems, and what the receipt records about slots. Salem's S5 (11-22): at most one new deck
-    per class per period (in the deck periods 1 and 3 all seven were expected; from period 4, merged, none is
-    required, S36); strategy updates are not limited. A refused deck leaves its class open for this period (A35).
-    An update for a member that entered in this same period is refused (it can be updated from the next one)."""
+    per class per period (in the deck periods 1 and 3 all seven were expected; from period 4 none is required, S36);
+    strategy updates are not limited. A refused deck leaves its class open for this period (A35). An update for a
+    member that entered in this same period is refused (it can be updated from the next one). A special period's own
+    rules (ladder/special.py): period 3 the claimed team's lists; period 4 the blueprints, no updates, and its decks
+    stay out of the pool, so the pool's same-list cap doesn't apply to them (their names are taken all the same)."""
+    from ladder import special
     from ladder.pool import (CRAFT_ZH, MAX_PER_LIST, MAX_PER_PLAYER, NEW_DECKS_PER_CLASS, list_key, period_kind,
                              takes_decks, takes_updates)
     kind, meta = sub["kind"], sub["meta"]
@@ -295,20 +304,25 @@ def check_slots(sub: dict, player: str, pool, lines: list[dict]) -> tuple[list[s
                      and l.get("craft") == craft]
             if len(taken) >= NEW_DECKS_PER_CLASS:
                 problems.append(f"这一期你的{CRAFT_ZH[craft]}已经交过一副、收下了（{taken[0]['id']}）；每期每个职业最多一副")
-            from ladder import special
-            if special.is_special(pool.period):
+            if special.style(pool.period) == "blueprints":     # period 4 (Salem 11-27)
+                why, info["blueprint"] = special.check_blueprint(sub["deck_ids"], craft, pool.period)
+                if sub.get("deck_bad") and info["blueprint"] is not None:   # an illegal deck (41 cards, a token):
+                    why, info["blueprint"] = [], None      # no change count, it would mislead; the class still checked
+                problems += why
+            elif special.is_special(pool.period):
                 why, info["team"] = special.check_deck(sub["deck_ids"], craft, player, pool.period, lines)
                 problems += why
-            key = list_key(sub["deck_ids"])
-            same = [m for m in pool.active() if list_key(m.deck) == key]
-            if len(same) >= MAX_PER_LIST:
-                problems.append(f"同一张卡表池子里已经有 {len(same)} 个成员（最多 {MAX_PER_LIST} 个）")
-            elif any(m.owner == player for m in same):     # allowed, as in deck periods (host reading 5, S36)
-                own_list = True
+            if special.admits(pool.period):               # a deck kept out of the pool holds no place on its list
+                key = list_key(sub["deck_ids"])
+                same = [m for m in pool.active() if list_key(m.deck) == key]
+                if len(same) >= MAX_PER_LIST:
+                    problems.append(f"同一张卡表池子里已经有 {len(same)} 个成员（最多 {MAX_PER_LIST} 个）")
+                elif any(m.owner == player for m in same):     # allowed, as in deck periods (host reading 5, S36)
+                    own_list = True
         active = [m for m in pool.active() if m.owner == player]
         if MAX_PER_PLAYER is not None and len(active) >= MAX_PER_PLAYER:
             problems.append(f"池子里已经有你的 {len(active)} 个成员（最多 {MAX_PER_PLAYER} 个）")
-        if meta["member"] in names:
+        if meta["member"] in names or meta["member"] in special.held(lines, player):   # kept-out decks' too
             problems.append(f"成员名 {meta['member']!r} 你已经用过了")
         if own_list and not problems:                      # a refused deck gets no reminder about what it would be:
             info["warnings"].append(SAME_LIST_NOTE)        # not here, and finish() drops it on a later refusal
@@ -316,6 +330,10 @@ def check_slots(sub: dict, player: str, pool, lines: list[dict]) -> tuple[list[s
         route = meta.get("route")
         if not takes_updates(pool.period):
             problems.append(f"第 {pool.period} 期是{PERIOD_ZH.get(pkind, pkind)}，只有策略期、合并期收打法更新")
+        elif not special.takes_updates(pool.period):      # period 4: pool.py (locked) still calls it merged
+            problems.append(f"第 {pool.period} 期是特殊期，不收老成员改打法，第 {special.first_merged()} 期起合并期，"
+                            f"那时再交（{special.SPECIAL[pool.period].get('guide', 'submit.md')}）")
+            return problems, info
         if route is not None and route["step"] > 1:
             first = [l for l in lines if l.get("ev") == "receipt" and l.get("id") == route["route_of"]]
             if not first or first[0].get("player") != player or first[0].get("member") != meta["member"] \
@@ -324,6 +342,7 @@ def check_slots(sub: dict, player: str, pool, lines: list[dict]) -> tuple[list[s
             elif first[0]["route"]["steps"] != route["steps"]:
                 problems.append("总步数和第 1 步说的不一样")
         mid = names.get(meta["member"])
+        kept = special.held(lines, player)                # accepted decks of period 4, never admitted
         entered_here = mid is not None and mid in pool.members and pool.members[mid].entry_period == pool.period
         sent_here = mid is None and any(l.get("ev") == "receipt" and l.get("player") == player and l.get("kind") == "deck"
                                         and l.get("period") == pool.period and l.get("member") == meta["member"]
@@ -332,6 +351,9 @@ def check_slots(sub: dict, player: str, pool, lines: list[dict]) -> tuple[list[s
             problems.append(f"{meta['member']!r} 这个成员是这一期才入池的，这一期不能改打法，下一期起可以")
         elif sent_here:                                    # its admit still to come, or it failed (collect.jsonl)
             problems.append(f"{meta['member']!r} 是这一期才交的新卡组，这一期不能改打法；它入池了的话，下一期起可以")
+        elif mid is None and meta["member"] in kept:
+            problems.append(f"{meta['member']!r} 是特殊期收下、没进池子的新卡组（{kept[meta['member']]}），"
+                            "池子里没有这个成员，不能改打法")
         elif mid is None or mid not in pool.members or not pool.members[mid].active:
             problems.append(f"你在池子里没有叫 {meta['member']!r} 的成员")
         else:
@@ -353,13 +375,15 @@ def status(subdir: Path, pool_dir: Path, player: str) -> dict:
     out = {"player": player, "period": pool.period, "kind": period_kind(pool.period),
            "updates": sum(1 for l in lines if l.get("kind") == "update"),
            "updates_accepted": sum(1 for l in lines if l.get("kind") == "update" and l.get("verdict") == "收下")}
-    if out["kind"] == "deck":
+    from ladder import special
+    if special.style(pool.period) == "blueprints":       # period 4: its three decks, special.status lists them
+        pass
+    elif out["kind"] == "deck":
         out["classes_done"] = [CRAFT_ZH[c] for c in done]
         out["classes_missing"] = [CRAFT_ZH[c] for c in sorted(CRAFT_ZH) if c not in done]
     elif out["kind"] == "merged":                         # optional: nothing is missing, these can still come (S36)
         out["classes_done"] = [CRAFT_ZH[c] for c in done]
         out["classes_open"] = [CRAFT_ZH[c] for c in sorted(CRAFT_ZH) if c not in done]
-    from ladder import special
     if special.is_special(pool.period):
         out.update(special.status(ledger(subdir), pool.period, player))
     return out
@@ -368,8 +392,21 @@ def status(subdir: Path, pool_dir: Path, player: str) -> dict:
 def status_text(st: dict, lines: list[dict]) -> str:
     """The status a player finds in their receipts folder (A50): this period's accepted and missing classes (a deck
     period) or accepted and still open ones (a merged period), the updates received and what their gates said."""
-    kind = PERIOD_ZH.get(st["kind"], st["kind"])
+    kind = st.get("kind_zh") or PERIOD_ZH.get(st["kind"], st["kind"])
     out = [f"# 第 {st['period']} 期（{kind}）你的提交", ""]
+    if st.get("special_style") == "blueprints":           # period 4 (Salem 11-27): only the player's own decks
+        from ladder.pool import CRAFT_ZH
+        done = "、".join(f"{d['name']}（{d['receipt']}，和蓝本比改了 {d['changes']} 张）"
+                         for d in st["decks"] if d["receipt"])
+        left = "、".join(f"{d['name']}（{CRAFT_ZH[d['craft']]}，最多改 {d['max_changes']} 张）"
+                         for d in st["decks"] if not d["receipt"])
+        out += [f"- 这一期是特殊期：{st['special']}，规定见公共目录里的 {st['guide']}",
+                f"- 新卡组已经收下的：{done or '还没有'}",
+                f"- 还没交的：{left or '三副都收下了'}" + ("（少交的那一副，期末评测里它该打的局全算输）" if left else ""),
+                "- 这一期收下的新卡组先不进池子，期末只和别的选手这一期的卡组互打评测",
+                f"- 打法更新：这一期不收（第 {st['merged_from']} 期起合并期）"
+                + (f"；这一期收到 {st['updates']} 份，都拒收了" if st["updates"] else "")]
+        return "\n".join(out) + "\n"
     if st.get("special"):
         out += [f"- 这一期是特殊期：{st['special']}。你选的队：{st['team'] or '还没选（先交「选队」）'}"]
     if st["kind"] == "deck":
@@ -393,11 +430,13 @@ RESERVED = {"con", "prn", "aux", "nul", *(f"com{i}" for i in range(1, 10)), *(f"
 def box_name(name: str, rid: str, taken: set) -> str:
     """The file name (without .md) a receipt gets in the player's receipts folder: the directory's name if it is a
     plain one (letters of any script, digits, - _ . and spaces inside, at most 60), else the receipt id; never 状态,
-    never ending in -检验 or -没收成 (those are the host's), never one already taken (then the receipt id is added)."""
+    never ending in -检验 or -没收成 (those are the host's), never starting with 特殊期评测 (the special period's
+    evaluation receipt, tools/special_eval.py and special_rr.py), never one already taken (then the receipt id is
+    added)."""
     import re
     ok = (bool(re.fullmatch(r"[\w][\w\-. ]{0,59}", name)) and not name.endswith((".", " "))
           and name.split(".")[0].lower() not in RESERVED and name != "状态"
-          and not name.endswith(("-检验", "-没收成")))
+          and not name.endswith(("-检验", "-没收成")) and not name.startswith("特殊期评测"))
     base_ = name if ok else rid
     out = base_ if base_ not in taken else f"{base_}-{rid}"
     taken.add(out)
@@ -854,15 +893,23 @@ def _sha(d: Path) -> dict:
     return {f: hashlib.sha256((d / f).read_bytes()).hexdigest() for f in FILES if (d / f).is_file()}
 
 
-def precheck(d: Path, deck_of_member: str | None = None) -> dict:
-    """What a player may run on their own: format, deck, the code read. No games, no ledger, no slots."""
+def precheck(d: Path, deck_of_member: str | None = None, period: int | None = None) -> dict:
+    """What a player may run on their own: format, deck, the code read. No games, no ledger, no slots. `period`: a
+    special period's own rules that need no ledger (period 4: the blueprint and its cap, no team claim, no update)."""
+    from ladder import special
     out = {"ok": True, "problems": [], "warnings": []}
     try:
         sub = read_dir(d)
     except Refused as e:
         return {"ok": False, "problems": list(e.args[0]), "warnings": []}
+    if period is not None and special.style(period) == "blueprints" and sub["kind"] in ("team", "update"):
+        out["problems"].append(f"第 {period} 期是特殊期，" + ("不选队，直接交新卡组" if sub["kind"] == "team" else
+                                                          f"不收老成员改打法，第 {special.first_merged()} 期起合并期")
+                               + f"（{special.SPECIAL[period].get('guide')}）")
+        if sub["kind"] == "team":
+            out["ok"] = False
+            return out
     if sub["kind"] == "team":                          # the name, here; whether the team has room only at receive
-        from ladder import special
         names = special.all_team_names()
         if special.canonical(sub["meta"]["team"], names) not in names:
             out["problems"].append(f"没有叫 {sub['meta']['team']!r} 的队；能选的是：{'、'.join(sorted(names))}（照抄）")
@@ -870,8 +917,15 @@ def precheck(d: Path, deck_of_member: str | None = None) -> dict:
         return out
     code = sub["meta"].get("deck") if sub["kind"] in ("deck", "puzzle") else deck_of_member
     if code:
-        _, problems = check_deck(code)
+        ids, problems = check_deck(code)
         out["problems"] += problems
+        if ids and sub["kind"] == "deck" and period is not None and special.style(period) == "blueprints":
+            why, info = special.check_blueprint(ids, _craft(ids), period)
+            if info is None:                           # not one of the blueprints' classes
+                out["problems"] += why
+            elif not problems:                         # an illegal deck: no change count (a 41st card counts 0)
+                out["problems"] += why
+                out["warnings"].append("蓝本：" + special.describe(info))       # as the receipt's line says it
     out["problems"] += check_code(sub["src"], sub["meta"]["class"])
     out["ok"] = not out["problems"]
     return out
@@ -962,7 +1016,7 @@ def _receive(d, player, pool_dir, subdir, workers, mask, rng_seed, smoke_games, 
     pool = Pool(pool_dir)
     if sub["kind"] in ("deck", "puzzle"):
         ids, problems = check_deck(meta["deck"])
-        sub["deck_ids"] = ids
+        sub["deck_ids"], sub["deck_bad"] = ids, bool(problems)
         check("卡组", problems)
     if sub["kind"] == "puzzle":
         puzzles = subdir / "puzzles.json"
@@ -977,6 +1031,8 @@ def _receive(d, player, pool_dir, subdir, workers, mask, rng_seed, smoke_games, 
                    mid=info.get("mid"), craft=info.get("craft"), was=info.get("was"))
         if info.get("team") is not None:
             rec["team"] = info["team"]
+        if info.get("blueprint") is not None:             # period 4: the blueprint, the changes, what differs
+            rec["blueprint"] = info["blueprint"]
         rec["warnings"].extend(info.get("warnings", []))
         check("名额和期", problems)
     rec.setdefault("period", pool.period)
@@ -1133,6 +1189,11 @@ def receipt_text(rec: dict) -> str:
     if rec.get("team") is not None:
         lines.append(f"- 队：{rec['team']}" + ("（这一期你就是这个队了）" if rec.get("kind") == "team"
                                                and rec.get("verdict") == "收下" else ""))
+    if rec.get("blueprint"):                              # period 4: the player's own deck against the public list
+        from ladder import special
+        lines.append(f"- 蓝本：{special.describe(rec['blueprint'])}")
+        if rec.get("verdict") == "收下" and rec.get("kind") == "deck" and not special.admits(rec.get("period")):
+            lines.append(f"- {special.NOT_IN_POOL}")
     lines.append("")
     if rec["reasons"]:
         lines += ["## 拒收理由", ""] + [f"- {r}" for r in rec["reasons"]] + [""]
@@ -1160,6 +1221,10 @@ def _admit(subdir: Path, rid: str, pool_dir: Path) -> str:
     rec = next((l for l in lines if l.get("ev") == "receipt" and l["id"] == rid), None)
     if rec is None or rec["verdict"] != "收下" or rec["kind"] != "deck":
         raise SystemExit(f"{rid} 不是收下的新卡组")
+    from ladder import special
+    if not special.admits(rec.get("period")):            # period 4 (Salem 11-27): kept out until he decides
+        raise SystemExit(f"{rid} 是第 {rec.get('period')} 期（特殊期）收下的新卡组：这一期的新卡组先不进池子，"
+                         "进不进等 Salem 看了期末结果再定")
     if any(l.get("ev") == "admit" and l.get("receipt") == rid for l in lines):
         raise SystemExit(f"{rid} 已经入池了")
     meta = json.loads((Path(subdir) / rid / "submission.json").read_text(encoding="utf-8"))
@@ -1313,6 +1378,7 @@ def main(argv=None):
     a = sp.add_parser("precheck")
     a.add_argument("dir")
     a.add_argument("--deck-of-member")
+    a.add_argument("--period", type=int, help="check a special period's own rules too (4: the blueprints)")
     a = sp.add_parser("receive")
     a.add_argument("dir")
     a.add_argument("--player", required=True)
@@ -1352,7 +1418,7 @@ def main(argv=None):
     if args.cmd == "_load":
         return _load_main(args.argfile)
     if args.cmd == "precheck":
-        out = precheck(Path(args.dir), args.deck_of_member)
+        out = precheck(Path(args.dir), args.deck_of_member, args.period)
         print(json.dumps(out, ensure_ascii=False, indent=1))
         return 0 if out["ok"] else 1
     if args.cmd == "receive":

@@ -5,9 +5,10 @@ players' first arena command says the arena is not open and nobody collects what
                                                 [--hours 12] [--games 60000] [--workers 23] [--delta PP] [--dry]
 
 1. lock: the locked files are as locked (tools/check_lock.py); key: the formal pool's deal key is there (its id only).
-2. state: the pool's period and kind (deck or strategy in periods 1-3; from period 4 every period is merged: new decks
-   and strategy updates in one window, Salem S35/S36). A period that takes updates (strategy, merged) needs its gate
-   margin (RUNBOOK §1.3): kept in HOST/gates/delta-P<period>.json, written the first time it is given (`--delta`);
+2. state: the pool's period and kind (deck or strategy in periods 1-3; from period 4 every period is merged in the
+   pool's terms: new decks and strategy updates in one window, Salem S35/S36; period 4 itself is special, Salem 11-27:
+   no updates, so no gate and no delta, ladder.special.takes_updates). A period that takes updates (strategy, merged
+   from period 5) needs its gate margin (RUNBOOK §1.3): kept in HOST/gates/delta-P<period>.json, written the first time it is given (`--delta`);
    given again it must be the same. A merged period with none given and none kept carries over the most recent kept
    delta-P<k>.json (k < period; S34's 5 pp stands until Salem changes it) and keeps it for this period, saying so; with
    none at all (or a strategy period with none) the tool stops. So the double-click needs no input.
@@ -15,12 +16,13 @@ players' first arena command says the arena is not open and nobody collects what
    or window (the deadline and the field the players practise on stay as they were). A window of this period on
    another field (someone snapshot by hand after it opened) stops the tool: it never opens a second window.
    Opening (not when the window is open already), before anything else:
-   - after a special period (the one before this, ladder.special): its evaluation's frozen pool
-     HOST/special/P<period-1>/frozen.json (tools/special_eval.py step 1: its at_end check, then ladder.evaluator
-     freeze), kept if it is there already. From period 4 a new deck enters the pool on receipt, and special_eval
-     refuses to freeze a pool that changed after the close's advance; so it is frozen here, before the window opens
-     (11-26 review). A pool that changed already stops the tool (the frozen pool would not be the one the special
-     period left).
+   - after a special period evaluated on the pool frozen at its end (the one before this; period 3,
+     ladder.special.freezes_pool; period 4's evaluation is between the players only and needs none): its evaluation's
+     frozen pool HOST/special/P<period-1>/frozen.json (tools/special_eval.py step 1: its at_end check, then
+     ladder.evaluator freeze), kept if it is there already. A merged period admits new decks on receipt, and
+     special_eval refuses to freeze a pool that changed after the close's advance; so it is frozen here, before the
+     window opens (11-26 review). A pool that changed already stops the tool (the frozen pool would not be the one the
+     special period left).
    - the players' guides (analysis/ladder/public) copied into PLAYERS/public, each file that differs (11-24:
      arena.md on the queue's turns);
    - the receipts' status files (状态.md) written again for this period (`ladder.submit deliver`, the same command
@@ -31,14 +33,15 @@ players' first arena command says the arena is not open and nobody collects what
 4. anchors: HOST/anchors/anchors.json (ladder.anchors table: the baseline snapshot, then the hall of fame from
    HOST/anchors/hof.json if there is one).
 5. arena: ladder.arena snapshot POOL --arena ARENA --anchors anchors.json --code HOST/subs/code, then ladder.arena open
-   --hours --games --workers (12 hours, 60 000 games a player: Salem's numbers, S29 from period 3; periods 1-2 had 4 hours, 20 000).
+   --hours --games --workers (12 hours, 60 000 games a player: Salem's numbers, S29 from period 3; periods 1-2 had 4
+   hours, 20 000).
 6. report: ladder.report POOL --out PLAYERS/public/reports --anchors-dir HOST/anchors, with a note naming the period, the
-   deadline (UTC) and the practice limits, and --puzzle for every HOST/puzzles/<id>/result-public.json not in an
+   deadline (UTC) and the practice limits (and a special period's own rules), and --puzzle for every HOST/puzzles/<id>/result-public.json not in an
    earlier report (HOST/puzzles/reported.json lists those that were). Kept if this period's report is there. A
    report that fails is written in the summary and the loop still starts (the window is open already).
 7. collect: ladder.collect until the deadline and after it until everything of the period is in (A55): 15 workers on
-   the E-cores (--mask 0x3FC3FC: receiving compares compute, A44); a period that takes updates (strategy, merged)
-   adds --gates after --frozen --delta --gates-out. Its last line says the period is collected and the ladder can start. Started again after the
+   the E-cores (--mask 0x3FC3FC: receiving compares compute, A44); a period that takes updates (strategy, merged
+   from period 5) adds --gates after --frozen --delta --gates-out. Its last line says the period is collected and the ladder can start. Started again after the
    deadline it refuses (it does not know what was there at the deadline); see RUNBOOK §3.
 
 `--dry` works under OUT only: the formal pool copied to OUT/host/pool (the original is not touched), an empty ledger
@@ -52,7 +55,7 @@ the loop's lines in OUT/collect.log.
 arena has a window for the pool's period, 11 if not; nothing else is done.
 `--set-delta PP` (before the first double-click of a period that takes updates, RUNBOOK §1.3): only records the pool's
 period's gate margin in HOST/gates/delta-P<period>.json (refused if another one is kept, or if the period takes no
-updates: a deck period); opens nothing.
+updates: a deck period, or special period 4); opens nothing.
 """
 from __future__ import annotations
 
@@ -176,11 +179,12 @@ def period_delta(host: Path, period: int, given: float | None, carry: bool = Fal
 
 
 def special_freeze(host: Path, pool_dir: Path, period: int, log: Path) -> dict | None:
-    """After a special period (period - 1): its evaluation's frozen pool, HOST/special/P<period-1>/frozen.json, as
-    tools/special_eval.py's step 1 takes it (at_end, then ladder.evaluator freeze); kept if there. None otherwise."""
+    """After a special period (period - 1) evaluated on a frozen pool (period 3): its evaluation's frozen pool,
+    HOST/special/P<period-1>/frozen.json, as tools/special_eval.py's step 1 takes it (at_end, then ladder.evaluator
+    freeze); kept if there. None otherwise."""
     from ladder import special
     prev = period - 1
-    if not special.is_special(prev):
+    if not special.freezes_pool(prev):                # period 4's evaluation is between the players: no frozen pool
         return None
     fz = host / "special" / f"P{prev}" / "frozen.json"
     if fz.exists():
@@ -222,21 +226,31 @@ def mark_reported(host: Path, files: list[Path]):
 
 
 def note_for(period: int, kind: str, window: dict, delta: float | None = None) -> str:
+    from ladder import special
     from ladder.arena import RUN_GAMES_MAX
     from environments import env_of
     from ladder.pool import MERGED_FROM
-    zh = {"deck": "卡组期", "strategy": "策略期", "merged": "合并期"}[kind]
+    zh = special.kind_zh(period, {"deck": "卡组期", "strategy": "策略期", "merged": "合并期"}[kind])
     text = (f"第 {period} 期（{zh}）。工作时间 {window['hours']:g} 小时，五人共用一个截止时刻：{window['deadline']}（UTC）。"
             f"练习每人这一期最多 {window['games']} 局，一次最多 {RUN_GAMES_MAX} 局。")
     if period == 1:
         text += "起点题 START 和这一期共用工作时间和练习局数。"
-    if kind == "merged":                          # Salem S35/S36: decks and updates in one period from period 4
-        if period == MERGED_FROM:
-            text += "从这一期起卡组期和策略期合并（Salem 定的），规则见公共目录里的 rules.md 和 submit.md（这一期换了版本）。"
+    if special.style(period) == "blueprints":    # period 4 (Salem 11-27): the pool calls it merged; it isn't for them
+        bps = special.blueprints(period)
+        text += (f"这一期是特殊期（Salem 定的），规定见公共目录里的 {special.SPECIAL[period]['guide']}："
+                 f"只收 {len(bps)} 副新卡组（{'、'.join(bps)}），以那里的蓝本为准，"
+                 f"分别最多改 {'、'.join(str(b['max_changes']) for b in bps.values())} 张，原样交也行；"
+                 "别的职业不收，不选队，也不收老成员的打法更新"
+                 f"（第 {special.first_merged()} 期起合并期）。收下的新卡组这一期先不进池子，期末只在选手之间互打评测。")
+    elif kind == "merged":                        # Salem S35/S36: decks and updates in one period (from period 5)
+        if period == special.first_merged():
+            text += ("从这一期起卡组期和策略期合并（Salem 定的；原定第 "
+                     f"{MERGED_FROM} 期起，第 {MERGED_FROM} 期改成了特殊期），规则见公共目录里的 rules.md 和 submit.md。")
         text += ("这一期新卡组和打法更新都收：新卡组可交可不交，每个职业最多一副，收下就入池；"
                  "打法更新只给这一期开始时已经在池子里的成员，这一期才入池的成员这一期不能改打法，下一期起可以。"
                  "保护期：这一期入池的成员到下一期结束都受保护。")
-    if kind in ("strategy", "merged") and delta is not None:  # the prompt: 要强多少，主持方每期开始前定好
+    gated = kind in ("strategy", "merged") and special.SPECIAL.get(period, {}).get("updates", True)
+    if gated and delta is not None:               # the prompt: 要强多少，主持方每期开始前定好
         text += (f"这一期把关检验要新版本比池子里那一版强 {delta:g} 个百分点（检验的备择假设）；"
                  "检验在截止以后统一跑" + ("，对手是这一期开始时冻结的池子。" if kind == "merged" else "。"))
     env = env_of(period)
@@ -293,10 +307,11 @@ def main(argv=None):
                                                      "updates: strategy, merged), open nothing")
     a = ap.parse_args(argv)
     if a.set_delta is not None:
-        from ladder.pool import Pool, period_kind, takes_updates
+        from ladder.pool import Pool, period_kind
+        from ladder.special import kind_zh, takes_updates
         period = Pool(a.host / "pool").period
-        if not takes_updates(period):
-            zh = {"baseline": "基线期", "deck": "卡组期"}.get(period_kind(period), period_kind(period))
+        if not takes_updates(period):                 # a deck period, or special period 4 (Salem 11-27)
+            zh = kind_zh(period, {"baseline": "基线期", "deck": "卡组期"}.get(period_kind(period), period_kind(period)))
             raise SystemExit(f"第 {period} 期是{zh}，不收打法更新、没有把关，不用 delta")
         print(f"第 {period} 期的 delta：{period_delta(a.host, period, a.set_delta):g}（{a.host / 'gates'}）")
         return 0
@@ -341,7 +356,8 @@ def main(argv=None):
             host, arena, players = dry_layout(a.out, a.host)
             res["steps"]["dry layout"] = {"ok": True, "host": str(host), "arena": str(arena), "players": str(players)}
         step = "state"
-        from ladder.pool import Pool, period_kind, takes_updates
+        from ladder.pool import Pool, period_kind
+        from ladder.special import takes_updates      # the pool's rule, but none in special period 4 (Salem 11-27)
         pool_dir = host / "pool"
         period = Pool(pool_dir).period
         kind = period_kind(period)

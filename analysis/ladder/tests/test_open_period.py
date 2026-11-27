@@ -174,12 +174,18 @@ def test_set_delta_only_records(tmp_path, monkeypatch):
     assert not (tmp_path / "arena").exists()                      # nothing opened
 
 
-# --- merged periods from period 4 (S35/S36) -------------------------------------------------------------------------
+# --- merged periods (S35/S36; from period 5: period 4 is special, Salem 11-27) --------------------------------------
 
 def period_four(tmp_path):
     pool = period_one(tmp_path)
     while pool.period < 4:
         pool.advance(force="test")
+    return pool
+
+
+def period_five(tmp_path):
+    pool = period_four(tmp_path)
+    pool.advance(force="test")
     return pool
 
 
@@ -208,42 +214,76 @@ def test_set_delta_in_a_merged_period(tmp_path):
     pool.advance(force="test"); pool.advance(force="test")         # period 3: a deck period, no gate
     with pytest.raises(SystemExit, match="卡组期"):
         O.main(["--set-delta", "5", "--host", str(host)])
-    pool.advance(force="test")                                     # period 4: merged
+    pool.advance(force="test")                                     # period 4: special (Salem 11-27), no gate
+    with pytest.raises(SystemExit, match="第 4 期是特殊期，不收打法更新"):
+        O.main(["--set-delta", "5", "--host", str(host)])
+    assert not (host / "gates" / "delta-P4.json").exists()
+    pool.advance(force="test")                                     # period 5: merged
     assert O.main(["--set-delta", "5", "--host", str(host)]) == 0
-    assert json.loads((host / "gates" / "delta-P4.json").read_text(encoding="utf-8"))["delta"] == 5.0
+    assert json.loads((host / "gates" / "delta-P5.json").read_text(encoding="utf-8"))["delta"] == 5.0
     with pytest.raises(SystemExit, match="已经定成 5"):
         O.main(["--set-delta", "3", "--host", str(host)])
 
 
 def test_the_note_of_a_merged_period():
     window = {"hours": 12, "deadline": "2026-11-27T12:00:00+00:00", "games": 60000}
-    four = O.note_for(4, "merged", window, 5.0)
-    assert four.startswith("第 4 期（合并期）") and "从这一期起卡组期和策略期合并" in four
-    assert "新卡组可交可不交，每个职业最多一副" in four and "下一期起可以" in four and "到下一期结束都受保护" in four
-    assert "强 5 个百分点" in four and "截止以后统一跑" in four and "开始时冻结的池子" in four
-    five = O.note_for(5, "merged", window, 5.0)
-    assert "从这一期起" not in five and "强 5 个百分点" in five
+    five = O.note_for(5, "merged", window, 5.0)                    # the first merged period (period 4 is special)
+    assert five.startswith("第 5 期（合并期）") and "从这一期起卡组期和策略期合并" in five and "第 4 期改成了特殊期" in five
+    assert "新卡组可交可不交，每个职业最多一副" in five and "下一期起可以" in five and "到下一期结束都受保护" in five
+    assert "强 5 个百分点" in five and "截止以后统一跑" in five and "开始时冻结的池子" in five
+    six = O.note_for(6, "merged", window, 5.0)
+    assert "从这一期起" not in six and "强 5 个百分点" in six
     assert "百分点" not in O.note_for(3, "deck", window, None)
 
 
+def test_the_note_of_special_period_4():
+    # Salem 11-27: the pool calls period 4 merged; the players are told the special period's rules, no gate
+    window = {"hours": 12, "deadline": "2026-11-27T12:00:00+00:00", "games": 60000}
+    four = O.note_for(4, "merged", window, 5.0)
+    assert four.startswith("第 4 期（特殊期）") and "special-P4.md" in four
+    assert "只收 3 副新卡组（快攻妖精、跳费龙、兔子教）" in four and "分别最多改 7、7、6 张" in four
+    assert "不选队，也不收老成员的打法更新（第 5 期起合并期）" in four and "先不进池子" in four
+    assert "百分点" not in four and "收下就入池" not in four
+
+
 def test_a_dry_opening_of_a_merged_period(tmp_path):
-    period_four(tmp_path)
+    period_five(tmp_path)
     host = tmp_path / "host"
-    O.period_delta(host, 2, 5.0)                                   # period 2's kept delta; none for period 4
+    O.period_delta(host, 2, 5.0)                                   # period 2's kept delta; none for period 5
     out = tmp_path / "out"
     code = O.main(["--dry", "--host", str(host), "--out", str(out), "--hours", "0.004", "--every", "1",
                    "--mask", "none", "--workers", "2"])
     s = json.loads((out / "summary.json").read_text(encoding="utf-8"))
     assert code == 0 and s["ok"], s
-    assert s["steps"]["state"] == {"ok": True, "period": 4, "kind": "merged", "already_open": False, "delta": 5.0,
+    assert s["steps"]["state"] == {"ok": True, "period": 5, "kind": "merged", "already_open": False, "delta": 5.0,
                                    "delta_carried_from": 2}
-    assert not (host / "gates" / "delta-P4.json").exists()         # the dry run kept it under OUT only
-    assert json.loads((out / "host" / "gates" / "delta-P4.json").read_text(encoding="utf-8"))["carried_from"] == 2
-    report = (out / "players" / "public" / "reports" / "report-P4.md").read_text(encoding="utf-8")
-    assert "第 4 期（合并期）" in report and "强 5 个百分点" in report
+    assert not (host / "gates" / "delta-P5.json").exists()         # the dry run kept it under OUT only
+    assert json.loads((out / "host" / "gates" / "delta-P5.json").read_text(encoding="utf-8"))["carried_from"] == 2
+    report = (out / "players" / "public" / "reports" / "report-P5.md").read_text(encoding="utf-8")
+    assert "第 5 期（合并期）" in report and "强 5 个百分点" in report
     clog = (out / "collect.log").read_text(encoding="utf-8")
     assert "--gates after --frozen" in clog and "--delta 5" in clog and "这一期收完" in clog
-    # period 3 was special: its evaluation's frozen pool is taken before the window opens, under OUT only
+    # period 4 was special, but its evaluation is between the players: no frozen pool is taken for it
+    assert "special" not in s["steps"] and not (out / "host" / "special").exists()
+
+
+def test_a_dry_opening_of_special_period_4(tmp_path):
+    # Salem 11-27: no updates in period 4, so no delta and no gate settings for the loop; period 3's evaluation
+    # pool is still frozen before the window opens; the report names the period 特殊期
+    period_four(tmp_path)
+    host = tmp_path / "host"
+    O.period_delta(host, 2, 5.0)                                   # a kept delta is not carried into period 4
+    out = tmp_path / "out"
+    code = O.main(["--dry", "--host", str(host), "--out", str(out), "--hours", "0.004", "--every", "1",
+                   "--mask", "none", "--workers", "2"])
+    s = json.loads((out / "summary.json").read_text(encoding="utf-8"))
+    assert code == 0 and s["ok"], s
+    assert s["steps"]["state"] == {"ok": True, "period": 4, "kind": "merged", "already_open": False}
+    assert not (out / "host" / "gates" / "delta-P4.json").exists()
+    report = (out / "players" / "public" / "reports" / "report-P4.md").read_text(encoding="utf-8")
+    assert report.startswith("# 环境报告 第 4 期（特殊期）") and "special-P4.md" in report and "百分点" not in report
+    clog = (out / "collect.log").read_text(encoding="utf-8")
+    assert "--gates" not in clog and "--delta" not in clog and "这一期收完" in clog
     assert s["steps"]["special"] == {"ok": True, "period": 3, "wrote": str(out / "host" / "special" / "P3" / "frozen.json")}
     assert not (host / "special").exists()
 
@@ -316,5 +356,6 @@ def test_opening_writes_the_players_status_for_the_new_period(tmp_path, monkeypa
     code, s = open_for_real(tmp_path, monkeypatch)
     assert code == 0 and s["steps"]["status"] == {"ok": True, "players": ["astra"]}, s
     status = (box / "状态.md").read_text(encoding="utf-8")
-    assert status.startswith("# 第 4 期（合并期）你的提交") and "还能交" in status and "还缺" not in status
+    assert status.startswith("# 第 4 期（特殊期）你的提交") and "还没交的：快攻妖精" in status   # Salem 11-27
+    assert "special-P4.md" in status and "打法更新：这一期不收（第 5 期起合并期）" in status
     assert (box / "精灵1.md").exists()

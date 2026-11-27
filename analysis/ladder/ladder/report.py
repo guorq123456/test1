@@ -72,6 +72,15 @@ def win_table(pool, period: int | None = None) -> tuple[dict, dict, int | None]:
     return pair, by_class, period
 
 
+KIND_ZH = {"deck": "卡组期", "strategy": "策略期", "merged": "合并期", "baseline": "基线"}   # merged: S35/S36
+
+
+def kind_zh(period: int, kind: str) -> str:
+    """What the players are told the period is (period 4: 特殊期, though the pool calls it merged)."""
+    from ladder import special
+    return special.kind_zh(period, KIND_ZH[kind])
+
+
 def build(pool_dir, anchors_dir=None, puzzles=(), note="", games_period=None, anchors_period=None) -> dict:
     from ladder import leaderboard as L
     from ladder.pool import CRAFT_ZH, period_kind
@@ -86,7 +95,9 @@ def build(pool_dir, anchors_dir=None, puzzles=(), note="", games_period=None, an
     per_class = {}
     for m in pool.active():
         per_class[CRAFT_ZH[m.craft]] = per_class.get(CRAFT_ZH[m.craft], 0) + 1
-    return {"period": pool.period, "kind": period_kind(pool.period), "time": time.strftime("%Y-%m-%dT%H:%M:%S"),
+    kind = period_kind(pool.period)
+    return {"period": pool.period, "kind": kind, "kind_zh": kind_zh(pool.period, kind),
+            "time": time.strftime("%Y-%m-%dT%H:%M:%S"),
             "members": len(pool.active()), "per_class": per_class, "note": note, "board": board,
             "games_period": counted, "anchors_period": a_period,
             "wins_vs_class": {a: v for a, v in by_class.items() if a in active},
@@ -100,7 +111,7 @@ def _pct(w, n):
 
 def markdown(r: dict) -> str:
     from ladder.pool import CRAFT_ZH
-    kind = {"deck": "卡组期", "strategy": "策略期", "merged": "合并期", "baseline": "基线"}[r["kind"]]   # merged: S35/S36
+    kind = r.get("kind_zh") or kind_zh(r["period"], r["kind"])   # period 4: 特殊期 (the pool calls it merged)
     out = [f"# 环境报告 第 {r['period']} 期（{kind}）", "",
            f"写于 {r['time']}（主持方）。池子里 {r['members']} 个成员：" +
            "、".join(f"{k} {v}" for k, v in r["per_class"].items()) + "。只有匿名编号，看不出是谁的、第几期进来的、第几版。", ""]

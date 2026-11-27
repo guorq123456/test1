@@ -177,18 +177,19 @@ def test_after_the_deadline_gates_and_admits_what_was_left(tmp_path):
 
 
 def test_a_merged_period_admits_and_gates_in_one_run(tmp_path):
-    # S35/S36: from period 4 one window takes new decks (admitted at once) and updates (gated after the deadline,
-    # S14); the loop needs the frozen pool and the delta as a strategy period did; other periods' receipts are left
-    pool, a, _ = _period(tmp_path, 4, -1)
+    # S35/S36: a merged period (from period 5) takes new decks (admitted at once) and updates (gated after the
+    # deadline, S14) in one window; the loop needs the frozen pool and the delta as a strategy period did; other
+    # periods' receipts are left
+    pool, a, _ = _period(tmp_path, 5, -1)
     subs = tmp_path / "subs"
     with pytest.raises(SystemExit, match="要给 --frozen"):
         collect.Collector(tmp_path / "players", tmp_path / "pool", subs, a, workers=2, out=lambda s: None)
-    submit._append(subs, {"ev": "receipt", "id": "S-0001", "player": "fable-ultracode", "period": 4, "kind": "deck",
+    submit._append(subs, {"ev": "receipt", "id": "S-0001", "player": "fable-ultracode", "period": 5, "kind": "deck",
                           "verdict": "收下", "dir": "/x/1", "member": "三号", "spec": "bot:mcts:8", "time": "t",
                           "version": "v", "reasons": [], "warnings": [], "checks": []})
     (subs / "S-0001").mkdir()
     (subs / "S-0001" / "submission.json").write_text(json.dumps({"deck": CODES[3]}), encoding="utf-8")
-    for i, period in ((2, 4), (3, 3), (4, 4)):
+    for i, period in ((2, 5), (3, 4), (4, 5)):
         submit._append(subs, {"ev": "receipt", "id": f"S-{i:04d}", "player": "fable", "period": period,
                               "kind": "update", "verdict": "收下", "dir": f"/x/{i}", "time": "t", "version": "v",
                               "reasons": [], "warnings": [], "checks": []})
@@ -208,6 +209,41 @@ def test_a_merged_period_admits_and_gates_in_one_run(tmp_path):
     assert order == [("gate", "S-0002", 1), ("gate", "S-0004", 1)]           # the admit first, then the gates in order
     assert lines[-1] == "这一期收完：收 0 份，入池 1 份，检验 2 份。可以开天梯了"
     assert c.pending_admits() == [] and c.pending_gates() == []
+
+
+def test_period_4_keeps_its_accepted_decks_out_of_the_pool(tmp_path):
+    # Salem 11-27: period 4 is special; the pool (pool.py, locked) calls it merged, but it takes no updates (no
+    # --frozen / --delta needed) and its accepted decks are never admitted: not on receipt, not by recover, not after
+    # the deadline; the loop still ends with its line (fake receipts, no game)
+    pool, a, _ = _period(tmp_path, 4, -1)
+    players, subs = tmp_path / "players", tmp_path / "subs"
+    before = sorted(Pool(tmp_path / "pool").members)
+    submit._append(subs, {"ev": "receipt", "id": "S-0001", "player": "fable", "period": 4, "kind": "deck",
+                          "verdict": "收下", "dir": "/x/1", "member": "妖", "spec": "bot:mcts:8", "time": "t",
+                          "version": "v", "reasons": [], "warnings": [], "checks": [], "craft": 1})
+    (subs / "S-0001").mkdir()
+    (subs / "S-0001" / "submission.json").write_text(json.dumps({"deck": CODES[0]}), encoding="utf-8")
+    d = players / "sol" / "submit" / "龙"
+    d.mkdir(parents=True)
+    (d / "f").write_text("x", encoding="utf-8")
+
+    def fake(player, d, st):
+        rec = {"ev": "receipt", "id": "S-0002", "player": player, "period": 4, "kind": "deck", "verdict": "收下",
+               "dir": d, "collect_stamp": st, "member": "龙", "spec": "bot:mcts:8", "time": "t", "version": "v",
+               "reasons": [], "warnings": [], "checks": [], "craft": 4}
+        submit._append(subs, rec)
+        return rec
+    lines = []
+    c = collect.Collector(players, tmp_path / "pool", subs, a, workers=2, settle=0, receive=fake, out=lines.append,
+                          after_deadline=True)
+    assert c.pending_admits() == [] and c.pending_gates() == []
+    out = c.run(every=0.1)
+    assert out == {"received": 1, "gated": 0, "gate_errors": 0, "late": []}, lines
+    assert lines[-1] == "这一期收完：收 1 份，收下新卡组 2 份（特殊期，不入池）。可以开天梯了"
+    assert not [l for l in submit.ledger(subs) if l.get("ev") == "admit"]
+    assert not [l for l in _log(subs) if l.get("ev") == "admit-failed"]
+    assert sorted(Pool(tmp_path / "pool").members) == before
+    assert c.pending_admits() == []
 
 
 def test_an_accepted_deck_cut_off_before_its_admit_is_admitted(tmp_path):

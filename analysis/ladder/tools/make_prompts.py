@@ -4,8 +4,10 @@
 
 Drops the first line (the host's comment, `<!-- ... -->`) and the blank lines after it, puts each player's name
 (ladder.arena.PLAYERS) for {{名字}}, and stops if any `{{` or `<!--` is left. Writes OUTDIR/<name>.md (UTF-8) and
-prints each file's sha256 (first 12). `--note`: a period's own section (e.g. prompt-note-P3.md, the special period S27)
-put in front of 「## 每一期怎么过」, the same for every player."""
+prints each file's sha256 (first 12). `--note`: a period's own section (prompt-note-P3.md, the special period S27;
+prompt-note-P4.md, special period 4's three blueprints, Salem 11-27) put in front of 「## 每一期怎么过」, the same for
+every player. Nothing else here depends on the period: the prompt itself says period 4 is special and merged periods
+start at 5."""
 from __future__ import annotations
 
 import hashlib
@@ -54,6 +56,9 @@ def make(src: Path, out: Path, note: Path | None = None) -> dict:
 
 
 if __name__ == "__main__":
+    if len(sys.argv) < 2 or sys.argv[1].startswith("-"):     # --help (or nothing): never taken for OUTDIR
+        print(__doc__)
+        sys.exit(0 if sys.argv[1:2] in (["-h"], ["--help"]) else 2)
     src = LADDER / "player-prompt-v2.md"
     out = Path(sys.argv[1])
     note = Path(sys.argv[sys.argv.index("--note") + 1]) if "--note" in sys.argv else None

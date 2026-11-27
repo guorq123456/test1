@@ -206,7 +206,7 @@ def test_a_derived_form_is_not_a_deck_card():
 
 def _pool(tmp_path, period: int):
     pool = Pool.create(tmp_path / "pool", seeds=(99001460, 99001470), rng_seed=1)
-    while pool.period < period:                            # 1: a deck period; 4 on: merged (S35/S36)
+    while pool.period < period:                            # 1: a deck period; 4: special; 5 on: merged (S35/S36)
         pool.advance(force="test")
     return pool
 
@@ -249,8 +249,9 @@ def test_slots_and_periods(tmp_path):
 
 
 def test_slots_in_a_merged_period(tmp_path):
-    """S35/S36: from period 4 new decks (optional, at most one per class) and updates in the same period; an update
-    for a member entered in this period is refused at receipt (it isn't in the period-start frozen pool)."""
+    """S35/S36: in a merged period (from period 5; period 4 is special, Salem 11-27) new decks (optional, at most one
+    per class) and updates in the same period; an update for a member entered in this period is refused at receipt
+    (it isn't in the period-start frozen pool)."""
     pool = _pool(tmp_path, 1)
     sword, _ = submit.check_deck(CODES[1])
     forest, _ = submit.check_deck(CODES[0])
@@ -262,7 +263,11 @@ def test_slots_in_a_merged_period(tmp_path):
     pool.advance(force="test"); pool.advance(force="test")                    # period 3 (special): decks only
     problems, _ = submit.check_slots(up("二号"), "fable-ultracode", pool, admitted)
     assert any("卡组期" in p for p in problems)
-    pool.advance(force="test")                                                # period 4: merged
+    pool.advance(force="test")                                                # period 4: special, no updates
+    problems, info = submit.check_slots(up("二号"), "fable-ultracode", pool, admitted)
+    assert problems == ["第 4 期是特殊期，不收老成员改打法，第 5 期起合并期，那时再交（special-P4.md）"]
+    assert "mid" not in info
+    pool.advance(force="test")                                                # period 5: merged
     r = lambda i, kind, **k: {"ev": "receipt", "id": f"S-{i:04d}", "player": "fable-ultracode", "period": pool.period,
                               "kind": kind, **k}
     deck = {"kind": "deck", "meta": {"member": "一号"}, "deck_ids": forest}
@@ -286,15 +291,15 @@ def test_slots_in_a_merged_period(tmp_path):
     now = pending + [{"ev": "admit", "player": "fable-ultracode", "member": "一号", "mid": new}]
     problems, _ = submit.check_slots(up("一号"), "fable-ultracode", pool, now)
     assert any("这个成员是这一期才入池的，这一期不能改打法，下一期起可以" in p for p in problems)
-    pool.advance(force="test")                                                # period 5: from now on it can
+    pool.advance(force="test")                                                # period 6: from now on it can
     problems, info = submit.check_slots(up("一号"), "fable-ultracode", pool, now)
     assert problems == [] and info["mid"] == new
 
 
 def test_a_deck_on_the_players_own_list_refused_later_gets_no_same_list_note(tmp_path):
     # A66 ⑤: the note says what an accepted deck would be; a deck refused by a later check (here the code reader,
-    # before any game) does not get it, and the receipt is written without it
-    pool = _pool(tmp_path, 4)
+    # before any game) does not get it, and the receipt is written without it (period 5: merged)
+    pool = _pool(tmp_path, 5)
     sword, _ = submit.check_deck(CODES[1])
     pool.enter(sword, "bot:mcts:100+plan", "fable-ultracode")
     bad = "import importlib\n" + QUICK
@@ -308,19 +313,20 @@ def test_a_deck_on_the_players_own_list_refused_later_gets_no_same_list_note(tmp
 
 
 def test_status_in_a_merged_period(tmp_path):
-    # S36: new decks optional in a merged period: the status shows what can still come, nothing "missing"
-    pool = _pool(tmp_path, 4)
+    # S36: new decks optional in a merged period (from period 5): the status shows what can still come, nothing
+    # "missing"
+    pool = _pool(tmp_path, 5)
     subs = tmp_path / "subs"
     for i, (craft, verdict) in enumerate(((1, "收下"), (2, "拒收"))):
-        submit._append(subs, {"ev": "receipt", "id": f"S-{i + 1:04d}", "player": "fable", "period": 4, "kind": "deck",
+        submit._append(subs, {"ev": "receipt", "id": f"S-{i + 1:04d}", "player": "fable", "period": 5, "kind": "deck",
                               "verdict": verdict, "craft": craft})
-    submit._append(subs, {"ev": "receipt", "id": "S-0003", "player": "fable", "period": 4, "kind": "update",
+    submit._append(subs, {"ev": "receipt", "id": "S-0003", "player": "fable", "period": 5, "kind": "update",
                           "verdict": "收下"})
     st = submit.status(subs, pool.dir, "fable")
     assert st["kind"] == "merged" and st["classes_done"] == ["精灵"] and len(st["classes_open"]) == 6
     assert "classes_missing" not in st and st["updates_accepted"] == 1
     text = submit.status_text(st, submit.ledger(subs))
-    assert text.startswith("# 第 4 期（合并期）你的提交")
+    assert text.startswith("# 第 5 期（合并期）你的提交")
     assert "已经收下的职业：精灵" in text and "还能交（可交可不交，每个职业最多一副）：皇家护卫" in text
     assert "还缺" not in text and "收下（进检验）1 份" in text
 

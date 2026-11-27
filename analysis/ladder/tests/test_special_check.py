@@ -79,3 +79,13 @@ def test_a_stop_in_the_claim_keeps_the_rest_and_the_mask_reaches_receive(tmp_pat
     assert res["problems"] == ["the claim end to end stopped: SystemExit: this run compares per-step compute: "
                                "give --mask 0x3fc3fc (the E-cores; A44)"]
     special.teams.cache_clear()
+
+
+def test_period_4_is_refused_in_words(tmp_path):
+    # period 4 is special with three blueprints and no team claim: this check has nothing to look at
+    out = tmp_path / "o"
+    assert special_check.main(["--period", "4", "--host", str(tmp_path / "nohost"), "--out", str(out)]) == 1
+    res = json.loads((out / "summary.json").read_text(encoding="utf-8"))
+    assert res["problems"] == [("第 4 期不是按队选的特殊期：这个检查只给第 3 期那种「选队」的特殊期用"
+                                "（第 4 期是三副蓝本，不选队，开期前不用跑它）")]
+    assert special_check.main(["--period", "5", "--host", str(tmp_path / "nohost"), "--out", str(out)]) == 1

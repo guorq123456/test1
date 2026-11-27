@@ -148,10 +148,16 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     mask = None if a.mask == "none" else int(a.mask, 16)
     a.out.mkdir(parents=True, exist_ok=True)
-    try:
-        res = check(a.host, a.period, a.out, mask)
-    except (Exception, SystemExit) as e:                    # written down, not lost in a closed window
-        res = {"period": a.period, "ok": False, "problems": [f"{type(e).__name__}: {e}"]}
+    from ladder import special
+    if special.style(a.period) != "teams":                 # period 4 (three blueprints, no claim): nothing to check
+        res = {"period": a.period, "ok": False, "problems": [
+            f"第 {a.period} 期不是按队选的特殊期：这个检查只给第 3 期那种「选队」的特殊期用"
+            + ("（第 4 期是三副蓝本，不选队，开期前不用跑它）" if special.style(a.period) == "blueprints" else "")]}
+    else:
+        try:
+            res = check(a.host, a.period, a.out, mask)
+        except (Exception, SystemExit) as e:                # written down, not lost in a closed window
+            res = {"period": a.period, "ok": False, "problems": [f"{type(e).__name__}: {e}"]}
     (a.out / "summary.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
     print(json.dumps(res, ensure_ascii=False, indent=1))
     return 0 if res["ok"] else 1

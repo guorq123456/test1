@@ -21,8 +21,10 @@ Hooks (override any; the default is what the default strategy does):
   class, per turn). Default: DEFAULT.
 - evaluate(state, me, me_next) -> float: replaces the whole evaluation (positive = good for `me`; `me_next`: `me`
   moves next). Override it or `weights`, not both. Default: not overridden (the evaluation with `weights`).
-- veto(state, action) -> bool: True leaves the move out of the search (at every node) and out of the lethal
-  search's lines. If it leaves every move out, all are kept. Default: not overridden (nothing left out).
+- veto(state, action) -> bool: True leaves the move out of the search (at every node). The lethal search and its
+  planner find their lines without it, but each step of a line is put to it before it is played: a step it leaves
+  out ends the line there (the steps before it are already played) and the search takes over. If it leaves every
+  move out, the search keeps all. Default: not overridden (nothing left out).
 - prior(state, actions) -> probabilities over `actions` (summing to 1), or None: a move-order bonus at the root
   (c_prior x P x sqrt(root visits) / (1 + visits), c_prior 0.3). Default: not overridden (no prior).
 - search(pos) -> dict: the search's settings for this decision, any of iterations (default 100), c (exploration,

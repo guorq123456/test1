@@ -4,7 +4,8 @@ rem freezes the pool, writes the anchor table, snapshots the arena and opens its
 rem writes the period's report into C:\claude\ladder-players\public\reports, then runs the collection loop until
 rem the deadline and after it until the period is collected ("zhe yi qi shou wan"). Keep this window open till then.
 rem Started again while the window is open, it never opens a second window: it goes straight to the loop.
-rem The gate margin of a period that takes updates (period 2; every period from 4, merged, S35/S36) is kept in
+rem The gate margin of a period that takes updates (period 2; every period from 5, merged, S35/S36; special period 4
+rem takes none, Salem 11-27) is kept in
 rem C:\claude\ladder-host\gates\delta-P<period>.json (RUNBOOK 1.3); a merged period with none carries the last one over.
 rem With "dry" as the first argument: a dry run under C:\claude\ladder-runs\open-dry\ on a copy of the pool,
 rem a 3-minute window, no game played, no seed used; the real pool, arena and player folders are not touched.

@@ -32,8 +32,8 @@ def any_simulator(monkeypatch):
 
 
 def setup(tmp_path, seconds=-60.0, listing=True, puzzle=True, period=1, gates=True):
-    """A host whose pool is in `period` (1: a deck period; 4 on: merged, which with `gates` gets its delta and frozen
-    pool as open_period leaves them)."""
+    """A host whose pool is in `period` (1: a deck period; 5 on: merged, which with `gates` gets its delta and frozen
+    pool as open_period leaves them; 4: special, Salem 11-27, the pool calls it merged)."""
     host, ar, players = tmp_path / "host", tmp_path / "arena", tmp_path / "players"
     pool = Pool.create(host / "pool", SEEDS, rng_seed=3)
     for i, d in enumerate(BASE_DECKS):
@@ -357,16 +357,16 @@ def test_a_sealed_log_changed_holds_the_period(tmp_path, monkeypatch, keyed):
 
 
 def test_a_merged_period_is_collected_with_its_delta_and_frozen_pool(tmp_path, monkeypatch, keyed):
-    # S35/S36: from period 4 the close reads the collection as a period that takes updates (delta, frozen pool), and
-    # both a deck still to admit and an update still to gate hold it
-    host, ar, players = setup(tmp_path, period=4)
+    # S35/S36: a merged period (from period 5) the close reads the collection as a period that takes updates (delta,
+    # frozen pool), and both a deck still to admit and an update still to gate hold it
+    host, ar, players = setup(tmp_path, period=5)
     fake = Fake(host)
     monkeypatch.setattr(C, "run", fake)
     assert C.main(argv(host, ar, players, tmp_path / "o", "--check")) == 0, summary(tmp_path / "o")
     assert summary(tmp_path / "o")["steps"]["state"]["kind"] == "merged" and fake.calls == []
     from ladder import submit
     for i, kind in ((1, "deck"), (2, "update")):
-        submit._append(host / "subs", {"ev": "receipt", "id": f"S-{i:04d}", "player": "fable", "period": 4,
+        submit._append(host / "subs", {"ev": "receipt", "id": f"S-{i:04d}", "player": "fable", "period": 5,
                                        "kind": kind, "verdict": "收下"})
     assert C.main(argv(host, ar, players, tmp_path / "o2", "--check")) == 3
     err = summary(tmp_path / "o2")["steps"]["collected"]["error"]
@@ -374,7 +374,23 @@ def test_a_merged_period_is_collected_with_its_delta_and_frozen_pool(tmp_path, m
 
 
 def test_a_merged_period_without_its_delta_stops_the_close(tmp_path, monkeypatch, keyed):
-    host, ar, players = setup(tmp_path / "a", period=4, gates=False)
+    host, ar, players = setup(tmp_path / "a", period=5, gates=False)
     monkeypatch.setattr(C, "run", Fake(host))
     assert C.main(argv(host, ar, players, tmp_path / "o", "--check")) == 1
     assert "要给 --frozen" in summary(tmp_path / "o")["steps"]["collected"]["error"]
+
+
+def test_special_period_4_closes_with_its_accepted_decks_kept_out(tmp_path, monkeypatch, keyed):
+    # Salem 11-27: period 4 takes no updates (no delta, no frozen pool needed to read the collection) and its accepted
+    # new decks are never admitted, so they don't hold the close as decks "still to admit"
+    host, ar, players = setup(tmp_path, period=4, gates=False)
+    fake = Fake(host)
+    monkeypatch.setattr(C, "run", fake)
+    from ladder import submit
+    submit._append(host / "subs", {"ev": "receipt", "id": "S-0001", "player": "fable", "period": 4, "kind": "deck",
+                                   "verdict": "收下", "craft": 1, "member": "妖", "blueprint": {"name": "快攻妖精"}})
+    assert C.main(argv(host, ar, players, tmp_path / "o", "--check")) == 0, summary(tmp_path / "o")
+    assert summary(tmp_path / "o")["steps"]["collected"]["ok"] and fake.calls == []
+    assert C.main(argv(host, ar, players, tmp_path / "o2")) == 0, summary(tmp_path / "o2")
+    assert Pool(host / "pool").period == 5 and not [m for m in Pool(host / "pool").members.values()
+                                                      if m.owner == "fable"]

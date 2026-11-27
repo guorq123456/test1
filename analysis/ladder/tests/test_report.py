@@ -89,12 +89,19 @@ def test_cli_writes_both_files(tmp_path):
 
 
 def test_a_merged_period_is_named_in_the_report(tmp_path):
-    # S35/S36: from period 4 the kind is "merged", 合并期 for the players
+    # S35/S36: from period 4 the pool's kind is "merged", 合并期 for the players from period 5; period 4 is special
+    # (Salem 11-27): 特殊期 in the report's title, its kind in the json the pool's
     pool = Pool.create(tmp_path / "pool", (10 ** 12, 2 * 10 ** 12), rng_seed=9, check=True)
     for i, d in enumerate(BASE_DECKS[:3]):
         pool.enter(d, "bot:greedy", "baseline", rng=random.Random(i))
     while pool.period < 4:
         pool.advance(force="test")
     assert R.main([str(pool.dir), "--out", str(tmp_path / "pub")]) == 0
-    assert json.loads((tmp_path / "pub" / "report-P4.json").read_text(encoding="utf-8"))["kind"] == "merged"
-    assert (tmp_path / "pub" / "report-P4.md").read_text(encoding="utf-8").startswith("# 环境报告 第 4 期（合并期）")
+    got = json.loads((tmp_path / "pub" / "report-P4.json").read_text(encoding="utf-8"))
+    assert got["kind"] == "merged" and got["kind_zh"] == "特殊期"          # the pool's kind, and the players' word
+    assert (tmp_path / "pub" / "report-P4.md").read_text(encoding="utf-8").startswith("# 环境报告 第 4 期（特殊期）")
+    pool.advance(force="test")
+    assert R.main([str(pool.dir), "--out", str(tmp_path / "pub")]) == 0
+    got = json.loads((tmp_path / "pub" / "report-P5.json").read_text(encoding="utf-8"))
+    assert got["kind"] == "merged" and got["kind_zh"] == "合并期"
+    assert (tmp_path / "pub" / "report-P5.md").read_text(encoding="utf-8").startswith("# 环境报告 第 5 期（合并期）")

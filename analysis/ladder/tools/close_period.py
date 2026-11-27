@@ -14,9 +14,9 @@ a stop (a power cut, Ctrl+C, an error fixed in between) the same double-click go
    A pool already in P+1 with the window still P's: P was closed (and advanced) earlier; nothing is done.
 3. collected: no collection loop is running (this holds SUBS/collect.lock to the end, so none can start), the loop
    took the listing at the deadline (SUBS/collect.jsonl) and every directory in it was taken, given up or found
-   changed after the deadline, and every accepted deck of P is admitted and every accepted update gated (or its
-   failure written down). Then the arena's lock is taken and held to the end: a practice run still going finishes
-   first, none starts.
+   changed after the deadline, and every accepted deck of P is admitted (none in period 4, whose decks stay out of
+   the pool: ladder.special.admits) and every accepted update gated (or its failure written down). Then the arena's
+   lock is taken and held to the end: a practice run still going finishes first, none starts.
 4. ladder: `ladder.pool ladder --until-period-done` on all cores with the received strategies on the path
    (LADDER_EXTRA_PATH = HOST/subs/code), again while the last run played games and members are still short (games
    still in flight can bring a member back within 200). Members short and with nobody within 200 don't hold the
@@ -181,9 +181,10 @@ def collected(host: Path, arena: Path, players: Path, period: int, kind: str, ma
     Read only: nothing is written here. `mask`: the E-cores, as the loop had them (the Collector refuses none on
     Windows, 11-24 review; it only reads here)."""
     from ladder.collect import Collector, listing
-    from ladder.pool import takes_updates
+    from ladder.special import takes_updates
     subs = host / "subs"
-    # a period that takes updates (strategy; from period 4 merged, S35/S36) was collected with its delta and frozen pool
+    # a period that takes updates (strategy; from period 5 merged, S35/S36; special period 4 takes none, Salem 11-27)
+    # was collected with its delta and frozen pool; period 4's accepted decks are never admitted (nothing left to admit)
     delta = _read(host / "gates" / f"delta-P{period}.json", {}).get("delta") if takes_updates(period) else None
     c = Collector(players, host / "pool", subs, arena, gates="after", frozen=host / "frozen" / f"P{period}.json",
                   delta=delta, gates_out=host / "gates", mask=mask, out=lambda s: None)
