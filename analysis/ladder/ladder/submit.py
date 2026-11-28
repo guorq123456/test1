@@ -111,7 +111,7 @@ COMPUTE_REFUSE = 1.15                              # refused above: the cap's pu
 # turn; every other decision keeps 1.08. A receipt passes on either rule: the old one (all steps over the default's,
 # refused above COMPUTE_REFUSE) or the turn one (the other decisions refused above COMPUTE_REFUSE and the turn starts
 # above TURN_REFUSE of their budget). TURN_K = 0 turns the turn rule off: exactly the old decision.
-TURN_K = 2                                         # pending Salem's decision card (11-27): 1, 2 or 4 default turns a
+TURN_K = 2                                         # Salem's decision card 11-28 00:41Z (S41): the default turns a
                                                    # turn start may add; defined here only, the rest import it
 TURN_REFUSE = round(COMPUTE_REFUSE / COMPUTE_CAP, 3)   # Q: the turn starts' refusal line over their budget (1.065:
                                                    # S15's relative allowance; to be set again from the PC's noise)
