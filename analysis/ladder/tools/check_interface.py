@@ -1,6 +1,8 @@
 """Item 2.1's acceptance on more games: the default strategy through the interface (ladder.interface.PlayerStrategy
 with nothing overridden, and with every hook written out) against the default strategy itself (strategy.BotStrategy),
 decision for decision, over `--games` games of the seven baseline lists (every ordered pair of classes in turn).
+interface-2 (11-28) adds two: turn_start overridden doing nothing (EmptyHook), and a turn_start that draws samples and
+two-turn rollouts from self.random and throws them away (Lookahead); both must still be the default, move for move.
 
     python tools/check_interface.py [--games 40] [--out probe/interface-check-DATE.json]
 
@@ -18,8 +20,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path[:0] = [str(HERE.parent), str(HERE.parents[2]), str(HERE.parent / "tests")]
 
-from test_interface import DECKS, LINES, Explicit, record  # noqa: E402
-from ladder.interface import PlayerStrategy  # noqa: E402
+from test_interface import DECKS, LINES, EmptyHook, Explicit, Lookahead, record  # noqa: E402
+from ladder.interface import INTERFACE_VERSION, PlayerStrategy  # noqa: E402
 from ladder.strategy import BotStrategy  # noqa: E402
 
 SEEDS = (99001520, 99001600)
@@ -38,12 +40,18 @@ def main():
         ref = record(da, db, [BotStrategy(seed=2 * seed), BotStrategy(seed=2 * seed + 1)], seed)
         plain = record(da, db, [PlayerStrategy(seed=2 * seed), PlayerStrategy(seed=2 * seed + 1)], seed)
         expl = record(da, db, [BotStrategy(seed=2 * seed), Explicit(seed=2 * seed + 1)], seed)
+        empty = record(da, db, [EmptyHook(seed=2 * seed), BotStrategy(seed=2 * seed + 1)], seed)
+        look = Lookahead(seed=2 * seed + 1)
+        ahead = record(da, db, [BotStrategy(seed=2 * seed), look], seed)
         first_diff = next((i for i, (x, y) in enumerate(zip(ref[1], plain[1])) if x != y), None)
         rows.append({"seed": seed, "decks": [LINES[da][0], LINES[db][0]], "decisions": len(ref[1]),
-                     "plain_same": plain == ref, "explicit_same": expl == ref, "first_difference": first_diff})
+                     "plain_same": plain == ref, "explicit_same": expl == ref, "empty_hook_same": empty == ref,
+                     "lookahead_same": ahead == ref, "lookahead_calls": look.calls, "first_difference": first_diff})
         print(json.dumps(rows[-1]), file=sys.stderr, flush=True)
     out = {"games": len(rows), "decisions": sum(r["decisions"] for r in rows),
            "plain_same": sum(r["plain_same"] for r in rows), "explicit_same": sum(r["explicit_same"] for r in rows),
+           "empty_hook_same": sum(r["empty_hook_same"] for r in rows),
+           "lookahead_same": sum(r["lookahead_same"] for r in rows), "interface": INTERFACE_VERSION,
            "seconds": round(time.time() - t0), "machine": "cloud container", "rows": rows}
     text = json.dumps(out, ensure_ascii=False, indent=1)
     if a.out:

@@ -10,7 +10,7 @@ import pytest
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 sys.path.insert(0, str(HERE.parents[2]))
-from ladder.codecheck import check_code
+from ladder.codecheck import A12_FUNCTIONS, check_code
 
 TAIL = "\nfrom ladder.interface import PlayerStrategy\n\nclass S(PlayerStrategy):\n    pass\n"
 
@@ -603,7 +603,7 @@ def test_ordinary_names_from_strings_alone_are_not_method_names():
     d = duck_names()
     assert {"select", "store", "normalize", "merge", "node"}.isdisjoint(d)
     assert {"update", "add", "put", "get", "act", "guess"} <= d
-    assert {"prior", "veto", "evaluate", "guess"} <= base_self_names(PlayerStrategy)
+    assert {"prior", "veto", "evaluate", "guess", "turn_start"} <= base_self_names(PlayerStrategy)
 
 
 def test_own_classes_in_annotations_need_lazy_annotations():
@@ -635,3 +635,238 @@ def test_the_documented_skeleton_is_accepted():
     doc = (HERE.parent / "public" / "base-interface.md").read_text(encoding="utf-8")
     src = doc.split("```python")[1].split("```")[0]
     assert check_code(src, "MyStrategy") == []
+
+
+def test_every_python_example_for_players_is_accepted():
+    # the turn-start hook's example (base-interface.md) as well as the skeleton
+    import re
+    doc = (HERE.parent / "public" / "base-interface.md").read_text(encoding="utf-8")
+    blocks = [b.split("```")[0] for b in doc.split("```python")[1:]]
+    named = [(b, re.search(r"^class (\w+)\(PlayerStrategy\)", b, re.M)) for b in blocks]
+    assert len(named) >= 2 and all(m for _, m in named)
+    for src, m in named:
+        assert check_code(src, m.group(1)) == [], m.group(1)
+
+
+# --- A12 by function (11-28, the turn-start hook) ------------------------------------------------------------------
+
+A12_REVIEWED = {        # svsim helpers that import a closed module or call make_agent when they run, and stay open
+    "svsim.search.mcts.ISMCTS": "choose() runs its search inside svsim.learn.handvalue.root, which only marks the "
+                                "root for a hand-value evaluation and loads nothing; svsim.search.parallel only with "
+                                "parallel > 1, refused by name (BANNED_KEYWORDS). The default strategy's own search",
+    "svsim.agents.mulligan.mulligan": "the default strategy's own opening redraw (greedy_agent.mulligan -> "
+                                      "opening_redraw -> mulligan)",
+    "svsim.agents.mulligan.opening_redraw": "reaches decide only through BY_DECK, empty, which a strategy can't "
+                                            "change (assigning into an imported module is refused)",
+    "svsim.search.race.advance": "reaches answer only with a removal model the caller gives; svsim's are in "
+                                 "svsim.learn, refused by module",
+    "svsim.search.race.answer": "imports svsim.learn.survival for own_turn only, a turn number's arithmetic; the "
+                                "module loads nothing on import (its tables load in load / from_json); with the "
+                                "caller's own removal, as advance's (11-28 review: refusing it alone kept nothing out)",
+}
+
+
+def _svsim_calls_closed_code():
+    """Read svsim's open modules (not DENIED_PREFIXES, not private): (found, refs). found: each top-level function or
+    class (module.name) -> the lines where it, when it runs, imports a closed module (DENIED_PREFIXES, relative imports
+    and import_module / __import__ with a written-out name too) or calls make_agent; refs: each top-level def -> the
+    top-level defs (module.name) it names (its own module's, or by an import, or as module.attribute)."""
+    import ast
+    import svsim
+    from ladder.codecheck import DENIED_PREFIXES
+
+    def closed(m):
+        return any(m == p or m.startswith(p + ".") for p in DENIED_PREFIXES)
+
+    root = Path(svsim.__path__[0])
+    modules = {}
+    for path in sorted(root.rglob("*.py")):
+        parts = path.relative_to(root.parent).with_suffix("").parts
+        name = ".".join(parts[:-1] if parts[-1] == "__init__" else parts)
+        if not closed(name) and not any(p.startswith("_") for p in name.split(".")):
+            modules[name] = (path, parts[-1] == "__init__")
+
+    def absolute(mod, is_pkg, node):
+        if not node.level:
+            return node.module or ""
+        base = mod.split(".") if is_pkg else mod.split(".")[:-1]
+        base = base[:len(base) - (node.level - 1)]
+        return ".".join(base + ([node.module] if node.module else []))
+
+    def bindings(nodes, mod, is_pkg):
+        out = {}
+        for n in nodes:
+            if isinstance(n, ast.Import):
+                for a in n.names:
+                    out[a.asname or a.name.split(".")[0]] = ("mod", a.name if a.asname else a.name.split(".")[0])
+            elif isinstance(n, ast.ImportFrom):
+                m = absolute(mod, is_pkg, n)
+                for a in n.names:
+                    full = f"{m}.{a.name}"
+                    out[a.asname or a.name] = ("mod", full) if full in modules or closed(full) else ("obj", full)
+        return out
+
+    found, refs = {}, {}
+    for mod, (path, is_pkg) in modules.items():
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        tops = {n.name for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))}
+        top_binds = bindings([n for n in tree.body if isinstance(n, (ast.Import, ast.ImportFrom))], mod, is_pkg)
+        for d in tree.body:
+            if not isinstance(d, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                continue
+            key, inner = f"{mod}.{d.name}", list(ast.walk(d))
+            names = {**top_binds, **bindings(inner, mod, is_pkg)}
+            hits, named = [], set()
+            for n in inner:
+                if isinstance(n, ast.Import) and any(closed(a.name) for a in n.names):
+                    hits.append(n.lineno)
+                elif isinstance(n, ast.ImportFrom) and closed(absolute(mod, is_pkg, n)):
+                    hits.append(n.lineno)
+                elif isinstance(n, ast.Call):
+                    f = n.func
+                    fname = f.id if isinstance(f, ast.Name) else f.attr if isinstance(f, ast.Attribute) else None
+                    if fname == "make_agent" or (fname in ("import_module", "__import__") and n.args and
+                                                 isinstance(n.args[0], ast.Constant) and
+                                                 closed(str(n.args[0].value))):
+                        hits.append(n.lineno)
+                if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load):
+                    b = names.get(n.id)
+                    if b and b[0] == "obj":
+                        named.add(b[1])
+                    elif n.id in tops and n.id != d.name:
+                        named.add(f"{mod}.{n.id}")
+                elif isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name):
+                    b = names.get(n.value.id)
+                    if b and b[0] == "mod":
+                        named.add(f"{b[1]}.{n.attr}")
+            if hits:
+                found[key] = sorted(hits)
+            refs[key] = named
+    return found, refs
+
+
+def test_the_a12_function_list_covers_svsim():
+    # every svsim function or class (public, top level) that, when it runs, imports svsim.learn / tools / ui / build /
+    # search.parallel or calls make_agent, itself or through a private helper of its module or another listed one, is
+    # on A12_FUNCTIONS or reviewed above (a review stops the spread to its callers); and the list holds nothing else
+    found, refs = _svsim_calls_closed_code()
+    listed, reviewed = set(A12_FUNCTIONS), set(A12_REVIEWED)
+    assert not listed & reviewed
+    assert reviewed <= set(found) | {k for k, r in refs.items() if r & set(found)}, "a review no longer needed"
+    spread = set(found) - reviewed
+    while True:
+        more = {k for k, r in refs.items() if k not in spread and k not in reviewed and r & spread}
+        if not more:
+            break
+        spread |= more
+    public = {k for k in spread if not k.rsplit(".", 1)[1].startswith("_")}
+    assert sorted(public - listed) == [], "svsim helpers that load closed code when they run: list or review them"
+    assert sorted(listed - public) == [], "listed, but the reading of svsim no longer finds them"
+
+
+TOP_IMPORTS_REVIEWED = {    # an open svsim module importing a closed one at its top: its functions reach it unseen by
+    #                          the scan above (which reads imports inside functions), so each is reviewed here
+    ("svsim.search.formula", "svsim.ui.text"): "card_name, a card's printed name for the formula's text; loads nothing",
+}
+
+
+def test_open_svsim_modules_import_no_closed_module_at_their_top_unreviewed():
+    # 11-28 review: the A12 scan reads imports inside functions; a closed module imported at an open module's top and
+    # used in its functions would pass it unseen
+    import ast
+    import svsim
+    from ladder.codecheck import DENIED_PREFIXES
+
+    def closed(m):
+        return any(m == p or m.startswith(p + ".") for p in DENIED_PREFIXES)
+    root, found = Path(svsim.__path__[0]), set()
+    for path in sorted(root.rglob("*.py")):
+        parts = path.relative_to(root.parent).with_suffix("").parts
+        mod = ".".join(parts[:-1] if parts[-1] == "__init__" else parts)
+        if closed(mod) or any(p.startswith("_") for p in mod.split(".")):
+            continue
+        pkg = mod.split(".") if parts[-1] == "__init__" else mod.split(".")[:-1]
+        for n in ast.parse(path.read_text(encoding="utf-8")).body:
+            names = [a.name for a in n.names] if isinstance(n, ast.Import) else \
+                [".".join(pkg[:len(pkg) - (n.level - 1)] + ([n.module] if n.module else [])) if n.level else
+                 n.module or ""] if isinstance(n, ast.ImportFrom) else []
+            found |= {(mod, m) for m in names if closed(m)}
+    assert sorted(found) == sorted(TOP_IMPORTS_REVIEWED), "review an open module's top-level import of closed code"
+
+
+@pytest.mark.parametrize("name", A12_FUNCTIONS)
+def test_a12_functions_are_refused_however_written(name):
+    from ladder.codecheck import A12_WHY
+    mod, attr = name.rsplit(".", 1)
+    for src in (f"from {mod} import {attr}", f"from {mod} import {attr} as other",
+                f"import {mod} as m\nx = m.{attr}", f"import {mod} as m\nx = getattr(m, '{attr}')"):
+        out = check_code(src + TAIL, "S")
+        assert any(A12_WHY in p for p in out), (src, out)
+
+
+def test_the_rest_of_those_modules_stays_open():
+    for src in ("from svsim.search.impact import reply", "from svsim.search import impact\nf = impact.reply",
+                "from svsim.search.race import advance, answer", "from svsim.search.mcts import ISMCTS, action_key",
+                "from svsim.agents.mulligan import mulligan", "from svsim.agents.greedy_agent import GreedyAgent",
+                "from svsim.agents.lethal_agent import LethalAgent", "from svsim.agents.turnpick_agent import keys_of",
+                "from svsim.search.candidates import play_turn", "from svsim.agents.mcts_agent import MCTSAgent"):
+        assert check_code(src + TAIL, "S") == [], src
+
+
+def test_the_turn_start_hook_is_read_as_a_hook():
+    # interface-2: PlayerStrategy calls self.turn_start, so its pos is the host's (no list to keep: base_self_names);
+    # the plan kept on self and the helpers' results read, not changed
+    head = "from ladder.interface import PlayerStrategy, sample_states, to_next_turn\n"
+    bad = ("class T(PlayerStrategy):\n    def turn_start(self, pos):\n        pos.state.turn = 3\n",
+           "class T(PlayerStrategy):\n    def turn_start(self, pos):\n        p = pos\n        p.extra['k'] = 1\n",
+           "class T(PlayerStrategy):\n    def turn_start(self, pos):\n"
+           "        s, info = to_next_turn(pos, self.guess(pos), self.random)\n        s.turn = 0\n",
+           "class T(PlayerStrategy):\n    def turn_start(self, pos):\n"
+           "        xs = sample_states(pos, self.guess(pos), self.random, 2)\n        xs.append(None)\n")
+    for src in bad:
+        assert check_code(head + src + TAIL, "S"), src
+    good = ("class T(PlayerStrategy):\n    def __init__(self, seed=0):\n        super().__init__(seed)\n"
+            "        self.plan = []\n    def turn_start(self, pos):\n"
+            "        s, info = to_next_turn(pos, self.guess(pos), self.random)\n"
+            "        self.plan = [pos.state.turn, info['stopped'], s.turn]\n")
+    assert check_code(head + good + TAIL, "S") == []
+
+
+
+def test_a_budget_in_time_is_refused():
+    # 11-28 (the review of the turn-start hook): svsim's searches take seconds= (by position too: ISMCTS, MCTSAgent,
+    # full_game_agent's second parameter), and their results carry a clock reading (.seconds); with no time module a
+    # budget in time must still be out of reach: it can't be replayed
+    from ladder.codecheck import TIMED_WHY
+    hook = "class T(PlayerStrategy):\n    def turn_start(self, pos):\n"
+    bad = ("from svsim.search.mcts import ISMCTS\n" + hook + "        self.t = ISMCTS(iterations=10**6, seconds=0.05)\n",
+           "from svsim.search.mcts import ISMCTS\n" + hook + "        self.t = ISMCTS(10**6, 0.05)\n",
+           "from svsim.search import mcts\n" + hook + "        self.t = mcts.ISMCTS(10**6, 0.05)\n",
+           "from svsim.search.mcts import ISMCTS\n" + hook + "        a = (10**6, 0.05)\n        self.t = ISMCTS(*a)\n",
+           "from svsim.search.mcts import ISMCTS\n" + hook + "        self.t = ISMCTS(**{'iterations': 5})\n",
+           "from svsim.agents.mcts_agent import MCTSAgent\n" + hook + "        self.t = MCTSAgent(10**6, 0.05)\n",
+           "from svsim.agents.mcts_agent import full_game_agent\n" + hook + "        self.t = full_game_agent(10**6, 0.05)\n",
+           "from svsim.search.mcts import ISMCTS\nclass Mine(ISMCTS):\n    pass\nclass Mine2(Mine):\n    pass\n" + hook +
+           "        self.t = Mine2(10**6, 0.05)\n",
+           "from svsim.search.mcts import ISMCTS\nclass Mine(ISMCTS):\n    def __init__(self, n):\n"
+           "        super().__init__(n, 0.05)\n" + hook + "        self.t = Mine(300)\n",
+           "from svsim.search.lethal import LethalSearch\n" + hook +
+           "        spent = 0.0\n        while spent < 0.05:\n            spent = spent + LethalSearch(100).solve(pos.state).seconds\n",
+           "from svsim.search.lethal import LethalSearch\n" + hook +
+           "        x = getattr(LethalSearch(100).solve(pos.state), 'seconds')\n",
+           hook + "        self.tree.seconds = 0.05\n")
+    for src in bad:
+        out = check_code("from ladder.interface import PlayerStrategy\n" + src + TAIL, "S")
+        assert any(TIMED_WHY in p for p in out), (src, out)
+    out = check_code("from ladder.interface import PlayerStrategy\nfrom svsim.agents.mcts_agent import full_game_agent\n"
+                     + hook + "        f = full_game_agent\n        self.t = f(10**6, 0.05)\n" + TAIL, "S")
+    assert out, "full_game_agent as a value hides its seconds"
+    good = ("from svsim.search.mcts import ISMCTS\n" + hook + "        self.t = ISMCTS(500, seed=3, c=0.7)\n",
+            "from svsim.agents.mcts_agent import full_game_agent\n" + hook + "        self.t = full_game_agent(200, seed=1)\n",
+            "from svsim.search.mcts import ISMCTS\nclass Mine(ISMCTS):\n    def __init__(self, n):\n"
+            "        super().__init__(n, seed=2)\n" + hook + "        self.t = Mine(300)\n",
+            "from svsim.search.lethal import LethalSearch\n" + hook +
+            "        r = LethalSearch(500, 4).solve(pos.state)\n        self.line = r.line if r.sure else []\n",
+            hook + "        seconds = 3\n        self.n = seconds + 1\n")
+    for src in good:
+        assert check_code("from ladder.interface import PlayerStrategy\n" + src + TAIL, "S") == [], src

@@ -27,10 +27,14 @@ interpreter, not the venv's launcher (D5).
  7. formal: `arena formal --period 1`: members.json and runs\\F1 for fable-ultracode and fable, each holding only games of their own
     members; one formal game replays; resume and --same-as on F1 are refused.
  8. compute noise (A52, LD-55, LD-56, LD-57): tools/compute_noise.py on the E-cores, 40 sets of 10 pairs with the
-    default on another seed, then 20 sets with tools/standins.py Adaptive (a cost that changes with the game), seeds
-    drawn from 92796000-92799999 minus every cloud run's (probe/compute-noise-used-seeds-*.txt) and the first's: the
-    spread of both ways of comparing (the twin games, and the shadow replay receive uses now, with and without the
-    twin's calibration), and what a step costs in a game against in a shadow on the E-cores.
+    default on another seed, then 20 sets with tools/standins.py Adaptive (a cost that changes with the game), then
+    20 sets with tools/standins.py Planner (A68: the turn-start budget used through turn_start, about submit.TURN_K
+    default turns a turn), seeds drawn from 92796000-92799999 minus every cloud run's
+    (probe/compute-noise-used-seeds-*.txt) and the earlier runs': the spread of both ways of comparing (the twin
+    games, and the shadow replay receive uses now, with and without the twin's calibration), what a step costs in a
+    game against in a shadow on the E-cores, and for the planner the turn rule's two numbers (in_turn, turn_start_q)
+    and which rule a receipt passes it on. A dry run, not the PC's step-0 measurement of the two pools' noise
+    (tools/compute_noise.py run on its own, with its own registered seeds).
  9. console: the players' commands (`arena field`, `arena replay`, `submit precheck`) as a player's agent runs them,
     output piped, without PYTHONUTF8 / PYTHONIOENCODING (cp1252 on Windows): UTF-8 JSON, exit 0 (precheck on 坏的:
     exit 1, ok false, notes.md named in Chinese).
@@ -393,10 +397,12 @@ def main():
     step("7 formal", formal)
 
     # 8. compute noise on the E-cores: the default with another seed (40 sets), then a stand-in whose cost changes
-    # with the game (tools/standins.py Adaptive, half as many sets; LD-57), each on seeds the other never drew
+    # with the game (tools/standins.py Adaptive, half as many sets; LD-57), then a planner through turn_start
+    # (tools/standins.py Planner, half as many; A68: the turn rule's two numbers), each on seeds the others never drew
     def noise():
         res = {}
-        for standin, sets, rs in (("seed", n["noise"], "2"), ("adaptive", max(1, n["noise"] // 2), "5")):
+        for standin, sets, rs in (("seed", n["noise"], "2"), ("adaptive", max(1, n["noise"] // 2), "5"),
+                                  ("plan", max(1, n["noise"] // 2), "7")):
             name = "compute-noise" if standin == "seed" else f"compute-noise-{standin}"
             done = sorted((LADDER / "probe").glob("compute-noise-used-seeds*.txt")) + \
                 sorted(out.glob("compute-noise*.games.jsonl"))
@@ -408,7 +414,8 @@ def main():
             if body is None:
                 return {"ok": False, "standin": standin, "said": (r.stderr or r.stdout)[-1500:]}
             res[standin] = {k: body[k] for k in ("pairs", "identical_games", "default_step", "shadow", "shadow_raw",
-                                                 "game_over_shadow", "twins", "twins_diverged")}
+                                                 "game_over_shadow", "twins", "twins_diverged", "turn",
+                                                 "calibration_parts")}
         return {"ok": True, **res}
     step("8 compute noise", noise)
 

@@ -1,5 +1,8 @@
 """Submissions (phase 2, item 2.3): the entry point and its checks. Seeds 99001410-99001469 (host probe bank,
-SEEDS.md): 99001410-99001419 the peek-check games, 99001420-99001449 the smoke and load-check games of `receive`."""
+SEEDS.md): 99001410-99001419 the peek-check games, 99001420-99001449 the smoke and load-check games of `receive`.
+The turn-start budget's tests (A68, 11-28): 96520000-96539999 (host probe third segment, SEEDS.md): 96520100-96520129
+the planner's smoke and load-check games, 96520200-96520229 the remembering stand-in's, 96520300-96520309 the extended
+peek check's games."""
 import json
 import random
 import sys
@@ -16,10 +19,63 @@ from ladder.pool import Pool  # noqa: E402
 from ladder.runner import play_job  # noqa: E402
 
 ROOT = HERE.parents[2]
+TOOLS = HERE.parent / "tools"
 LINES = [l.strip().split("|") for l in (ROOT / "analysis/pilot/fields/bot-frozen7.txt").read_text(encoding="utf-8")
          .splitlines() if l.strip() and not l.startswith("#")]
 CODES = [c for _, c in LINES]
 SMOKE = (99001420, 99001450)
+PLAN_SMOKE = (96520100, 96520130)               # the turn-start budget's (A68): the planner's receipts
+MEMORY_SMOKE = (96520200, 96520230)             # the remembering stand-in's receipt
+TURN_PEEK = (96520300, 96520310)                # the extended peek check's games
+
+PLANS = '''
+from ladder.interface import PlayerStrategy, action_key, sample_states
+from svsim.search.mcts import ISMCTS
+
+
+class Plans(PlayerStrategy):
+    """Cheap within the turn (8 iterations, the exact lethal search); at each own turn's start 16 searches of the
+    default's size on states sampled with self.random, the picks kept on self (a planner's cost, its plan unused)."""
+    LETHAL = "exact"
+
+    def __init__(self, seed=0):
+        super().__init__(seed)
+        self.planner = ISMCTS(iterations=100, seed=self.random.getrandbits(31))
+        self.picked = (None, [])
+
+    def search(self, pos):
+        return {"iterations": 8}
+
+    def turn_start(self, pos):
+        picks = []
+        for s in sample_states(pos, self.guess(pos), self.random, 16):
+            picks.append(action_key(s, self.planner.choose(s)))
+        self.picked = (pos.state.turn, picks)
+'''
+
+REMEMBERS = '''
+from ladder.interface import PlayerStrategy
+
+_BOOK = {}
+
+
+class Remembers(PlayerStrategy):
+    """Counts in a module-level book how often it started its n-th own turn in this process; its search follows the
+    count (tools/standins.py Memory): a worker's later games choose otherwise than a fresh process replaying them."""
+    LETHAL = "exact"
+
+    def __init__(self, seed=0):
+        super().__init__(seed)
+        self.extra = 0
+
+    def turn_start(self, pos):
+        n = pos.state.players[pos.me].turns_taken
+        _BOOK[n] = _BOOK.get(n, 0) + 1
+        self.extra = _BOOK[n] % 3
+
+    def search(self, pos):
+        return {"iterations": 4 + self.extra}
+'''
 
 QUICK = '''
 from ladder import base
@@ -78,7 +134,7 @@ def make_sub(d: Path, kind: str, src: str = QUICK, cls: str = "Quick", **meta) -
 def test_the_interface_skeleton_reads_clean():
     skeleton = '''
 from ladder import base
-from ladder.interface import PlayerStrategy
+from ladder.interface import PlayerStrategy, action_key, sample_states, to_next_turn
 from svsim.agents.greedy_agent import mulligan as bot_mulligan
 from svsim.search.evaluate import DEFAULT, evaluate
 import math, random, collections
@@ -92,9 +148,17 @@ class MyStrategy(PlayerStrategy):
         super().__init__(seed)
         self.table = collections.Counter()
         self.gen = random.Random(seed)
+        self.kept = (None, [])
 
     def guess(self, pos):
         return base.default_guess(pos.opp_craft)
+
+    def turn_start(self, pos):
+        states = sample_states(pos, self.guess(pos), self.random, 2)
+        end, info = to_next_turn(pos, self.guess(pos), random.Random(self.random.getrandbits(31)))
+        if info["stopped"] == "over" or not states:
+            self.table[pos.state.turn] += 1
+        self.kept = (pos.state.turn, [])
 
     def mulligan(self, state):
         return bot_mulligan(state)
@@ -104,6 +168,8 @@ class MyStrategy(PlayerStrategy):
         return evaluate(state, me, DEFAULT, player_moves_next=me_next) + 0.0 * math.sqrt(x) + float(np.zeros(1)[0])
 
     def veto(self, state, action):
+        if self.kept[0] == state.turn and action_key(state, action) in self.kept[1]:
+            return False
         return type(action).__name__ == "Evolve" and self.random.random() < 0.0
 
     def search(self, pos):
@@ -339,6 +405,9 @@ def test_the_load_check_plays_and_blocks(tmp_path):
     ok.write_text(QUICK, encoding="utf-8")
     r = submit.load_check(ok, "Quick", ids, 1, seed=3, game_seed=99001449, work=tmp_path / "w1")
     assert r["ok"], r
+    cpu = r["cpu"]                                        # A68: import and construction measured, reported only
+    assert cpu["unit"] in ("ns", "cycles") and all(isinstance(cpu[k], int) and cpu[k] >= 0
+                                                    for k in ("import", "construct", "default_construct")), cpu
     bad = tmp_path / "bad.py"
     bad.write_text(QUICK + "\nDATA = open(r'%s').read()\n" % str(ROOT / "analysis/ladder/SEEDS.md"),
                    encoding="utf-8")
@@ -416,6 +485,189 @@ def test_a_shadow_asks_the_default_at_every_logged_decision(tmp_path):
     assert out["cpu_unit"] == log["cpu_unit"] and all(c >= 0 for _, c in out["steps"])
     rows, bad = submit.shadow_rows([(log, log, 0)], [{"value": out}, {"value": out}])
     assert len(rows) == 1 and not bad
+    # A68: the engine's kinds (the shadow's) are the moves' (turn_kinds): two mulligans, then one turn start per turn
+    kinds = submit.turn_kinds(log["actions"], len(log["steps"]))
+    assert out["kinds"] == kinds and kinds[:2] == ["M", "M"] and kinds[2] == "F"
+    firsts = [s for (s, _, _), k in zip(log["steps"], kinds) if k == "F"]
+    assert firsts == [firsts[0], 1 - firsts[0]] * (len(firsts) // 2) + [firsts[0]] * (len(firsts) % 2)   # by turns
+    assert submit.checked_kinds(log, out) == kinds
+    with pytest.raises(SystemExit, match="两种认法对不上"):          # the host's rule wrong: no receipt
+        submit.checked_kinds(log, {**out, "kinds": ["M", "M", "R"] + kinds[3:]})
+    parts, bad = submit.shadow_parts([(log, log, 0)], [{"value": out}, {"value": out}])
+    p = parts[0]
+    assert not bad and p["row"] == rows[0] and p["F"] + p["R"] == rows[0][0] and p["Fd"] + p["Rd"] == rows[0][1]
+    assert p["T"] == kinds.count("F") - sum(1 for (s, _, _), k in zip(log["steps"], kinds) if k == "F" and s == 1)
+    assert p["U"] == sum(t[2] for t in p["turns"]) and len(p["turns"]) == p["T"]
+
+
+# --- compute by turns (A68, Salem 11-27): the log rule, the two rules, the extended peek check ---------------------
+
+def _moves(*names):
+    return [{"type": n} for n in names]
+
+
+def test_turn_kinds_from_the_moves():
+    # two mulligans; the first turn; the opponent's; a bonus-PP move is no new turn; the game's first decision
+    acts = _moves("Mulligan", "Mulligan", "PlayCard", "Attack", "EndTurn", "EndTurn", "UseBonusPP", "PlayCard",
+                  "EndTurn", "Attack")
+    assert submit.turn_kinds(acts) == ["M", "M", "F", "R", "R", "F", "F", "R", "R", "F"]
+    assert submit.turn_kinds(acts, len(acts)) == submit.turn_kinds(acts)
+    # a game ended on an illegal move logged one step more than moves (runner.py): that step by the move before it,
+    # a mulligan among the first two decisions
+    assert submit.turn_kinds(acts[:4], 5) == ["M", "M", "F", "R", "R"]
+    assert submit.turn_kinds(acts[:5], 6) == ["M", "M", "F", "R", "R", "F"]
+    assert submit.turn_kinds(acts[:2], 3) == ["M", "M", "F"]
+    assert submit.turn_kinds([], 1) == ["M"] and submit.turn_kinds(acts[:1], 2) == ["M", "M"]
+    # a timeout or a void game logs no step for its last move: the rule is the normal one on what is there
+    assert submit.turn_kinds(acts[:7], 7) == ["M", "M", "F", "R", "R", "F", "F"]
+    assert submit.turn_kinds([], 0) == []
+
+
+def _part(F, R, Fd, Rd, U, T=9, twin=(100, 100), opp=(50, 50), wall=200_000):
+    """A pair split by turns, as shadow_parts gives it (CPU in any unit; T turns of equal cost)."""
+    turns = [[F / T, Fd / T, U / T, wall] for _ in range(T)]
+    return {"id": "x", "row": (F + R, Fd + Rd, twin[0], twin[1]), "F": F, "R": R, "Fd": Fd, "Rd": Rd, "U": U, "T": T,
+            "turns": turns, "opp": list(opp), "twin_F": [twin[0] / 2, twin[1] / 2], "twin_R": [twin[0] / 2, twin[1] / 2],
+            "U_twin": U, "T_twin": T}
+
+
+def _verdict(parts, k):
+    b = submit.turn_budget(parts, k)
+    r3 = round(submit.pooled_ratio([p["row"] for p in parts]), 3)
+    return (r3, b) + submit.compute_verdict(r3, b, len(parts), k)
+
+
+DEFAULT_PAIR = dict(Fd=54, Rd=46, U=99)       # the default's own: 54% at the turn starts, a mulligan of 1
+
+
+def test_two_rules_one_of_which_must_hold():
+    """Salem 11-27: the turn starts get 1.08 x the default's there + K default turns, every other decision 1.08 as
+    before; the old rule (all steps) still passes what it passed."""
+    k = submit.TURN_K
+    assert k > 0 and submit.TURN_REFUSE == 1.065
+    planner = [_part(F=54 + 0.9 * k * 99, R=46, **DEFAULT_PAIR)] * 50           # within K: the turn rule
+    r3, b, over, warned, rule = _verdict(planner, k)
+    assert r3 > submit.COMPUTE_REFUSE and over == [] and rule == "turn" and warned == [], (r3, b)
+    assert abs(b["in_turn"] - 1) < 1e-9 and b["turn_start_q"] < 1 and abs(b["extra_turns"] - (0.9 * k - 0.08 * 54 / 99)) < 1e-9
+    assert b["per_turn"]["median"] == b["per_turn"]["max"] and b["u_twin_ratio"] == 1 and b["opp_seat"] == 1
+    extra = 0.9 * k * 99                                                      # the same total, over every decision
+    spread = [_part(F=54 + extra / 3.9, R=46 + extra * 2.9 / 3.9, **DEFAULT_PAIR)] * 50
+    r3, b, over, _, rule = _verdict(spread, k)
+    assert rule is None and len(over) == 2 and b["in_turn"] > 2, b
+    assert "A52" in over[0] and "按回合给算力的那条规矩也没过" in over[1] and "回合里的每一步" in over[1]
+    greedy = [_part(F=54 + 1.3 * k * 99, R=46, **DEFAULT_PAIR)] * 50          # past K
+    r3, b, over, _, rule = _verdict(greedy, k)
+    assert rule is None and b["turn_start_q"] > submit.TURN_REFUSE and f"给的是 {k} 个" in over[1]
+    # LETHAL "off", more search within the turn, all steps within 1.08: passed as before, on the old rule
+    off = [_part(F=20, R=46 * 1.6, **DEFAULT_PAIR)] * 50
+    r3, b, over, warned, rule = _verdict(off, k)
+    assert r3 <= submit.COMPUTE_CAP and b["in_turn"] > submit.COMPUTE_REFUSE and over == [] and rule == "old"
+    assert warned == []
+    # past the caps, within the allowance: a warning on the rule it passed on
+    near = [_part(F=54 + 0.9 * k * 99, R=46 * 1.1, **DEFAULT_PAIR)] * 50
+    _, _, over, warned, rule = _verdict(near, k)
+    assert over == [] and rule == "turn" and len(warned) == 1 and "按回合给算力的那条收下" in warned[0]
+    # within both: the old rule's name, no warning
+    _, _, over, warned, rule = _verdict([_part(F=54, R=46, **DEFAULT_PAIR)] * 50, k)
+    assert over == [] and warned == [] and rule == "old"
+    # K = 0, the switch: the planner refused, by the old text alone
+    r3, b, over, warned, rule = _verdict(planner, 0)
+    assert rule is None and len(over) == 1 and over[0].startswith(f"每步算力是默认打法的 {r3:.3f} 倍") and warned == []
+
+
+def _old_verdict(r3, pairs):
+    """The compute check's decision before the turn rule (submit-3), as the code had it."""
+    if r3 is not None and r3 > submit.COMPUTE_REFUSE:
+        return [f"每步算力是默认打法的 {r3:.3f} 倍，超过 {submit.COMPUTE_REFUSE}：上限是 {submit.COMPUTE_CAP} 倍，量法有误差，"
+                f"量出来超过 {submit.COMPUTE_REFUSE} 倍就拒收（所有成员一样，每一版都查，A52、S15）。这次量了 {pairs} 对；"
+                "电脑上 50 对上下约 1%（LD-58）"], []
+    warned = []
+    if r3 is not None and r3 > submit.COMPUTE_CAP:
+        warned.append(f"每步算力量出来是默认打法的 {r3:.3f} 倍，超过上限 {submit.COMPUTE_CAP}，还在容差 "
+                      f"{submit.COMPUTE_REFUSE} 以内，收下；再往上就会被拒收（S15）")
+    return [], warned
+
+
+def test_k_zero_decides_exactly_as_before():
+    """TURN_K = 0 is the switch back: the same refusals, texts and warnings as the old check, whatever the split;
+    and at any K the turn rule never refuses what the old rule passes."""
+    rng = random.Random(11)
+    for _ in range(3000):
+        parts = [_part(F=rng.uniform(1, 400), R=rng.uniform(1, 200), Fd=rng.uniform(20, 80), Rd=rng.uniform(20, 80),
+                       U=rng.uniform(60, 140), twin=(100, rng.uniform(80, 120))) for _ in range(rng.randrange(1, 6))]
+        b = submit.turn_budget(parts, 0)
+        r3 = round(submit.pooled_ratio([p["row"] for p in parts]), 3)
+        if rng.random() < 0.02:
+            r3 = None
+        over, warned, rule = submit.compute_verdict(r3, b, len(parts), 0)
+        assert (over, warned) == _old_verdict(r3, len(parts)) and rule in (None, "old")
+        for k in (1, 2, 4):
+            over_k, _, _ = submit.compute_verdict(r3, submit.turn_budget(parts, k), len(parts), k)
+            assert not over_k or _old_verdict(r3, len(parts))[0]               # refused at K: refused before too
+
+
+def test_compute_notes_warn_and_decide_nothing():
+    # the player's: the wall clock alone; u_twin and the opponent seat are the host's flags until their lines are
+    # measured (11-28 review: the default against itself came out 1.153 on the opponent seat in the container); K = 0
+    # (the switch): neither, the receipt as it was
+    c = {"K": 2, "turn_start_wall_max_s": 12.0, "u_twin_ratio": 1.4, "opp_seat": 1.2}
+    notes = submit.compute_notes(c, 30.0)
+    assert len(notes) == 1 and "12.0 秒" in notes[0] and "30 秒" in notes[0]
+    assert submit.compute_flags(c) == ["u_twin 1.40 > 1.25", "opp_seat 1.20 > 1.1"]
+    assert submit.compute_notes({**c, "K": 0}, 30.0) == [] and submit.compute_flags({**c, "K": 0}) == []
+    calm = {"K": 2, "turn_start_wall_max_s": 1.0, "u_twin_ratio": 1.1, "opp_seat": 1.0}
+    assert submit.compute_notes(calm) == [] and submit.compute_flags(calm) == []
+    assert submit.compute_notes({}) == [] and submit.compute_flags({}) == []
+    assert submit.extra_text(-0.04) == submit.extra_text(0) == "回合开头没用到另给的预算"
+    assert submit.extra_text(1.234) == "回合开头平均多花了 1.23 个默认回合"
+
+
+def test_the_receipt_at_k_zero_reads_as_before():
+    # K = 0 (the switch): the compute line as submit-3 wrote it, nothing of the turn rule
+    rec = {"id": "S-0001", "player": "p", "kind": "deck", "verdict": "收下", "reasons": [], "warnings": [],
+           "time": "2026-11-28T00:00:00Z", "version": submit.SUBMIT_VERSION,
+           "checks": [{"check": "算力", "ok": True, "detail": {"ratio": 1.01, "unit": "ns"}}], "compute_ratio": 1.01,
+           "compute": {"K": 0, "rule": "old", "in_turn": 1.0, "turn_start_q": 0.3, "extra_turns": -0.1}}
+    lines = [x for x in submit.receipt_text(rec).splitlines() if "算力" in x]
+    assert lines == ["- 算力：过（{\"ratio\": 1.01, \"unit\": \"ns\"}）", "- 每步算力 / 默认打法：1.01"], lines
+    rec["compute"]["K"] = 2
+    text = submit.receipt_text(rec)
+    assert "算力，老规矩（所有步合在一起）/ 默认打法：1.01" in text and "回合开头没用到另给的预算" in text
+    assert "按老规矩收下的" in text and "每步算力 / 默认打法" not in text
+
+
+def _tool_log(name, cls, seed):
+    """A game of tools/standins.py `cls` at seat 0 against the default (played here, in this process)."""
+    if str(TOOLS) not in sys.path:
+        sys.path.insert(0, str(TOOLS))
+    job = {"id": f"turn-{name}", "seed": seed, "first": None, "decks": [CODES[3], CODES[5]],
+           "strategies": [f"py:standins:{cls}", "bot:mcts:100+plan"], "strategy_seeds": [11, 12]}
+    return json.loads(json.dumps(play_job(job)))
+
+
+def test_the_peek_check_carried_through_a_turn():
+    """A68: a strategy that peeks only in its turn-start hook and plays by it later in the turn passes the plain
+    peek check (the turn's first decision is its plain search) and is caught by peek_turn; an honest planner that
+    acts on its plan is not."""
+    rng = random.Random(5)
+    peeky = _tool_log("peeky", "PlanPeeky", TURN_PEEK[0])
+    honest = _tool_log("honest", "PlanUses", TURN_PEEK[0] + 1)
+    assert peeky["result"] in ("normal", "draw") and honest["result"] in ("normal", "draw")
+    starts = submit.turn_points(peeky, 0)
+    assert len(starts) >= 3, starts
+    plain = [submit.peek_check(peeky, 0, k, random.Random(rng.randrange(2 ** 32))) for k in starts]
+    assert set(plain) <= {"same", "skipped"}, plain                       # the plain check misses it
+    carried = [submit.peek_turn(peeky, 0, k, random.Random(rng.randrange(2 ** 32))) for k in starts]
+    assert any(r == "differs" for r, _ in carried), carried
+    starts = submit.turn_points(honest, 0)
+    assert len(starts) >= 3, starts
+    carried = [submit.peek_turn(honest, 0, k, random.Random(rng.randrange(2 ** 32))) for k in starts]
+    assert all(r in ("same", "skipped") for r, _ in carried) and sum(n for _, n in carried) >= 1, carried
+    # from a decision within a turn: carried from there to the turn's end, the same for the honest one
+    kinds = submit.turn_kinds(honest["actions"], len(honest["steps"]))
+    mine = [k for (s, _, _), k in zip(honest["steps"], kinds) if s == 0]
+    mid = next(i for i, k in enumerate(mine) if k == "R")
+    assert mid not in starts and submit.peek_turn(honest, 0, mid, random.Random(1))[0] in ("skipped", "same")
 
 
 # --- receive, end to end ------------------------------------------------------------------------------------------
@@ -430,6 +682,12 @@ def test_receive_and_admit(tmp_path):
                                                    "算力", "确定性", "偷看"]
     assert rec["uses_slot"] and rec["craft"] == 5 and len(rec["smoke_seeds"]) == 2 and rec["compute_ratio"] is not None
     assert rec["compute"]["method"] == "shadow" and rec["compute"]["games"] >= 1, rec["compute"]
+    assert rec["compute"]["rule"] == "old" and rec["compute"]["K"] == submit.TURN_K and rec["version"] == "submit-4"
+    assert {"in_turn", "turn_start_q", "extra_turns", "per_turn", "u_twin_ratio", "opp_seat", "c_parts",
+            "turn_start_wall_max_s"} <= set(rec["compute"]) and rec["compute"]["in_turn"] is not None
+    points = next(c for c in rec["checks"] if c["check"] == "偷看")["detail"]["points"]
+    assert any(len(x) == 5 and x[3] == "turn" for x in points)
+    assert all(x[2] in ("same", "skipped") for x in points if len(x) == 5), points
     assert (subs / rec["id"] / "receipt.md").exists()
     mid = submit.admit(subs, rec["id"], pool.dir)
     m = Pool(pool.dir).members[mid]
@@ -662,6 +920,57 @@ def test_a_strategy_over_the_compute_cap_is_refused(tmp_path):
     assert rec["verdict"] == "拒收" and (rec.get("compute_ratio") or 0) > submit.COMPUTE_REFUSE, rec["reasons"]
     assert [r for r in rec["reasons"] if r.startswith("[算力]") and "A52" in r], rec["reasons"]
     assert [c["check"] for c in rec["checks"]][-1] == "算力"            # nothing after it runs
+    assert len([r for r in rec["reasons"] if r.startswith("[算力]")]) == 2    # both rules say why (TURN_K > 0)
+    assert rec["compute"]["rule"] is None and rec["compute"]["in_turn"] > submit.COMPUTE_REFUSE, rec["compute"]
+
+
+def test_a_planner_within_its_turn_budget_passes_on_the_turn_rule(tmp_path, monkeypatch):
+    """A68 (Salem 11-27): a strategy that spends its turn-start hook (16 searches of the default's size: about three
+    default turns in the container) and little within the turn is over the old rule (all steps) and within the turn
+    rule. TURN_K is set to 6 here only so that two smoke pairs of the container's noise can't carry it across a line;
+    the real one is submit.TURN_K. Its peek points at turn starts, carried through the turn, all the same. K = 0
+    (the switch) refuses the same code on the old rule alone, as before the turn rule."""
+    monkeypatch.setattr(submit, "TURN_K", 6)
+    pool = _pool(tmp_path, 1)
+    subs = tmp_path / "subs"
+    d = make_sub(tmp_path / "in1", "新卡组", src=PLANS, cls="Plans", deck=CODES[4], member="规划")
+    rec = submit.receive(d, "fable-ultracode", pool.dir, subs, workers=2, rng_seed=7, smoke_games=2, seeds=PLAN_SMOKE)
+    assert rec["verdict"] == "收下", rec["reasons"]
+    c = rec["compute"]
+    assert c["rule"] == "turn" and c["K"] == 6 and rec["compute_ratio"] > submit.COMPUTE_REFUSE, (rec["compute_ratio"], c)
+    assert c["in_turn"] < 1 and c["turn_start_q"] < 1 and c["extra_turns"] > 0.5, c
+    assert c["per_turn"]["turns"] == c["turns"] > 0 and set(c["c_parts"]) == {"F", "R"}
+    assert c["turn_start_wall_max_s"] is not None and c["opp_seat"] is not None and c["u_twin_ratio"] is not None
+    peek = next(x for x in rec["checks"] if x["check"] == "偷看")["detail"]["points"]
+    carried = [x for x in peek if len(x) == 5 and x[3] == "turn"]
+    assert carried and all(x[2] in ("same", "skipped") for x in carried) and len(peek) > len(carried), peek
+    text = (subs / rec["id"] / "receipt.md").read_text(encoding="utf-8")
+    assert "算力，按回合（回合开头另给 6 个默认回合）" in text and "「按回合给」那条规矩收下" in text
+    assert "载入时的 CPU" in text and rec["load_cpu"]["construct"] is not None
+    assert isinstance(c["flags"], list) and not any(x.startswith(("u_twin", "opp_seat")) for x in rec["warnings"])
+    monkeypatch.setattr(submit, "TURN_K", 0)
+    d = make_sub(tmp_path / "in2", "新卡组", src=PLANS, cls="Plans", deck=CODES[5], member="规划二")
+    rec = submit.receive(d, "fable-ultracode", pool.dir, subs, workers=2, rng_seed=8, smoke_games=2, seeds=PLAN_SMOKE)
+    assert rec["verdict"] == "拒收" and [x["check"] for x in rec["checks"]][-1] == "算力", rec["reasons"]
+    comp = [r for r in rec["reasons"] if r.startswith("[算力]")]
+    assert len(comp) == 1 and comp[0].startswith("[算力] 每步算力是默认打法的") and "A52" in comp[0], rec["reasons"]
+    assert rec["compute"]["K"] == 0 and rec["compute"]["rule"] is None
+    assert next(x for x in rec["checks"] if x["check"] == "算力")["detail"].keys() == {"ratio", "unit"}
+    text = (subs / rec["id"] / "receipt.md").read_text(encoding="utf-8")
+    assert "- 每步算力 / 默认打法：" in text and "按回合" not in text and "老规矩" not in text, text
+
+
+def test_memory_kept_from_game_to_game_fails_the_replay_of_late_games(tmp_path):
+    """A68: a module-level book carried from game to game (the tripwire follows svsim and ladder only) changes the
+    choices of a worker's later games; the determinism check replays the last smoke games, played after others in
+    one worker (workers=1 here), in this process that has played none: they differ. (The first two, as before, were
+    the worker's first games: replayed in order here, they repeated the same memory and passed.)"""
+    pool = _pool(tmp_path, 1)
+    d = make_sub(tmp_path / "in", "新卡组", src=REMEMBERS, cls="Remembers", deck=CODES[4], member="记性")
+    rec = submit.receive(d, "fable-ultracode", pool.dir, tmp_path / "subs", workers=1, rng_seed=7, smoke_games=3,
+                         seeds=MEMORY_SMOKE)
+    assert rec["verdict"] == "拒收" and any(r.startswith("[确定性]") for r in rec["reasons"]), rec["reasons"]
+    assert [x["check"] for x in rec["checks"]][-1] == "确定性" and rec["compute"]["rule"] == "old"
 
 
 

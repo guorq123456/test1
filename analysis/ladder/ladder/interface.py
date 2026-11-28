@@ -12,6 +12,14 @@ search with its planner). A subclass that overrides nothing plays exactly the de
 decision (tests/test_interface.py).
 
 Hooks (override any; the default is what the default strategy does):
+- turn_start(pos) -> None: once at the first decision of each own turn (phase MAIN, the first time this object is
+  asked in a global turn it hasn't seen), before that decision's guess, sample and search, so that decision already
+  plays by what it leaves on self. Not called unless the class overrides it (an instance attribute of that name is
+  not an override): a strategy that doesn't plays exactly as before, no random stream touched. For planning: look a
+  turn or two ahead on samples (the helpers below), keep the plan on self, marked with pos.state.turn and written by
+  card ids (an unseen card's uid differs from sample to sample), and carry it out through veto, prior or search.
+  Its CPU is that first decision's: the turn-start budget (Limits). An object built mid-turn (the arena's resumed
+  games, the puzzles, tools/lethal_bank.py) runs it at the first decision it is asked, which may be mid-turn.
 - guess(pos) -> [(cards, weight), ...]: the strategy's guess at the opponent's 40-card list, as weighted lists of
   card definitions. The base updates the weights by the cards the opponent has shown (base.posterior). Default:
   the opponent plays the baseline list of its class (base.default_guess).
@@ -36,28 +44,66 @@ budget and misses some lethals): LETHAL_NODES is the most positions it searches 
 LETHAL_NODES_MAX); LETHAL_SCREEN is (n, n2, k): when a quick estimate of this turn's damage falls short of the enemy's
 defense, only n positions, or n2 when it is short by k or less (default (200, 1000, 4)); None: no estimate, always
 LETHAL_NODES. The estimate counts each card on its own, so damage that needs several cards together (Last Words,
-countdowns advanced by spells, buffs that pay off together) is beyond it. A bigger budget costs compute, which the
-per-step cap counts like any other.
+countdowns advanced by spells, buffs that pay off together) is beyond it. A bigger budget costs compute at nearly
+every decision, not only a turn's first: the lethal layer searches again whenever the hidden information it sees
+changed, and each decision's fresh sample has its own deck order and RNG (2 games: 32 of 34 turn-start decisions
+searched, 102 of 104 in-turn ones). So it raises the in-turn part as much as the turn-start part, and the in-turn
+part's 1.15 is the one it passes first (Limits); K pays for none of it. A deeper lethal search on K is a turn_start
+of the strategy's own (svsim.search.lethal.LethalSearch on samples, the line kept on self, played through prior or
+veto).
+
+Helpers for turn_start (module functions; their CPU is the calling decision's):
+- sample_states(pos, guess, rng, n) -> [state, ...]: n independent full states for `pos` (base.sample each), the
+  opponent's unknown cards drawn from `guess` (pass self.guess(pos) and self.random).
+- to_next_turn(pos, guess, rng, line=(), mine=None, opponent=None, max_actions=200) -> (state, info): on a state of
+  its own drawn for `pos` (never pos.state itself: its opponent deck holds only the cards seen, a draw from it loses
+  on the spot), plays `line` (actions, stopping at the first one that isn't legal there), then `mine` finishes the
+  turn (None: end it at once), then `opponent` (default GreedyAgent(seed=rng.getrandbits(31), samples=1)) plays its
+  whole turn; it stops before the first decision of my next turn, or when the game is over, or after max_actions
+  moves. Only the engine's apply and legal_actions move the state (the next turn starts as in a game: its draw, PP,
+  countdowns, start-of-turn effects); an agent's move that isn't legal is played as EndTurn; nothing is applied once
+  the game is over. info: stopped ("next_turn", "over", "max_actions"), line (moves of `line` played), line_ok (all
+  of it), actions (moves played in all), winner (the state's, None while not over). To compare candidates on the
+  same futures, give each a random.Random made from the same seed (drawn from self.random): the same seed draws the
+  same state and the same opponent.
+- action_key(state, action) -> tuple: the action by card ids and places instead of uids (svsim.search.mcts
+  .action_key), the same in every sample: a plan's moves kept as keys are matched in veto / prior.
 
 Randomness: a strategy that needs random numbers uses `self.random` (seeded from the game's strategy seed, separate
-from the search's and the sampler's streams), never the time or the global `random`: games are replayed.
+from the search's and the sampler's streams), never the time or the global `random`: games are replayed. turn_start
+too: self.rng (the sampler's), self.agent and self.tree belong to the decisions, and using them there changes the
+default's choices; nothing that changes a choice is kept from one game to the next. A budget is a count (samples,
+positions, iterations), never a time: no time module, no search's seconds= and no result's .seconds (the reader
+refuses them: codecheck.TIMED_CALLS).
 
-Limits (checked outside this module): per-step compute at most 1.08 times the default strategy's (A5, A25; the
-gate refuses a version over it), no trained model or pilot (A12), no reading anything but what the hooks get (the
+Limits (checked outside this module, which reports nothing about the strategy: a strategy could rewrite it): compute
+is the host's measure of the logged decisions, a turn's first decision told from the log, the other decisions (the
+mulligan included) are the in-turn ones; each against the default strategy on the same positions, pooled over the
+submission's smoke games (submit.py; compute_audit.py at a period's end). Accepted when either holds: the old rule,
+all decisions together at most 1.08 times the default's (refused over 1.15: A5, A25, S15); or the turn rule, the
+in-turn decisions at most that and the turn-start decisions at most 1.08 times the default's on them plus K times
+the default's CPU over the whole of those own turns (K = submit.TURN_K; refused over 1.15 / 1.08 times that line).
+Budget not spent is gone; under the turn rule neither part lends to the other. Every decision, turn_start included,
+is on the step clock (30 s: runner). The gate compares an update's compute with its old version's (S16; gate.py).
+No trained model or pilot (A12: the reader refuses the svsim modules that load one and, by function, the svsim
+helpers that load one when called, codecheck.A12_FUNCTIONS); no reading anything but what the hooks get (the
 submission check, item 2.3).
 """
 from __future__ import annotations
 
 import random
 
+from svsim.agents.greedy_agent import GreedyAgent
 from svsim.agents.greedy_agent import mulligan as default_mulligan
-from svsim.core.engine import legal_actions
+from svsim.core.actions import EndTurn
+from svsim.core.engine import apply, legal_actions
 from svsim.core.enums import Phase
 from svsim.search.evaluate import DEFAULT
+from svsim.search.mcts import action_key as _action_key
 
 from . import base
 
-INTERFACE_VERSION = "interface-1"
+INTERFACE_VERSION = "interface-2"          # interface-2 (11-28): turn_start and its helpers, compute by the turn
 LETHAL_NODES_MAX = 100_000
 LETHAL_SPECS = {"planner": "mcts:{n}+plan", "exact": "mcts:{n}", "off": "mcts-raw:{n}"}
 SEARCH_KNOBS = {"iterations", "c", "scale", "max_depth", "c_prior"}
@@ -106,6 +152,9 @@ class PlayerStrategy:
 
     # --- hooks ----------------------------------------------------------------------------------------------
 
+    def turn_start(self, pos: base.PublicPosition) -> None:        # not called unless overridden
+        return None
+
     def guess(self, pos: base.PublicPosition):
         return base.default_guess(pos.opp_craft)
 
@@ -152,6 +201,8 @@ class PlayerStrategy:
             self.tree.veto = self.veto
         if _overridden(self, "prior"):
             self.tree.prior = _Prior(self.prior)
+        self.__hook = _overridden(self, "turn_start")               # by the class, as the hooks above
+        self.__turn = None                                          # the global turn turn_start last ran in
 
     def _search_object(self):
         agent = self.agent
@@ -172,6 +223,9 @@ class PlayerStrategy:
             self.tree.weights = self.weights(pos)
 
     def act(self, pos: base.PublicPosition, actions: list):
+        if self.__hook and pos.state.phase == Phase.MAIN and pos.state.turn != self.__turn:
+            self.__turn = pos.state.turn      # the global turn moves only at the mulligans' end and at EndTurn: once
+            self.turn_start(pos)              # per own turn, at its first decision, before anything else of it
         s, _ = base.sample(pos, self.guess(pos), self.rng)
         if s.phase != Phase.MAIN:
             choice = self.mulligan(s)
@@ -181,3 +235,60 @@ class PlayerStrategy:
         if choice not in actions:                 # a sample must never offer a move the real position lacks
             raise RuntimeError(f"sampled state offered {choice!r}, not legal in the real position")
         return choice
+
+
+# --- helpers for turn_start (module docstring) -------------------------------------------------------------------
+
+def sample_states(pos: base.PublicPosition, guess, rng: random.Random, n: int) -> list:
+    """`n` independent full states for `pos` (base.sample each, in turn from `rng`); `pos` is not changed."""
+    if type(n) is not int or n < 0:
+        raise ValueError("n is a whole number, 0 or more")
+    return [base.sample(pos, guess, rng)[0] for _ in range(n)]
+
+
+def to_next_turn(pos: base.PublicPosition, guess, rng: random.Random, line=(), mine=None, opponent=None,
+                 max_actions: int = 200) -> tuple:
+    """From `pos` (a decision of my own turn) to the first decision of my next turn, on a state of its own drawn
+    from `guess` with `rng` (module docstring). Returns (state, info); `pos` is not changed. `rng` is used for the
+    state, then (opponent None) one getrandbits(31) for the opponent's seed, whatever happens after."""
+    if pos.state.over or pos.state.phase != Phase.MAIN or pos.state.active != pos.me:
+        raise ValueError("to_next_turn starts at a decision of your own turn (phase MAIN)")
+    if type(max_actions) is not int or max_actions < 0:
+        raise ValueError("max_actions is a whole number, 0 or more")
+    me = pos.me
+    s, _ = base.sample(pos, guess, rng)
+    if opponent is None:
+        opponent = GreedyAgent(seed=rng.getrandbits(31), samples=1)
+    info = {"stopped": "max_actions", "line": 0, "line_ok": False, "actions": 0, "winner": None}
+
+    def play(action) -> None:
+        apply(s, action)
+        info["actions"] += 1
+
+    for action in line:
+        if s.over or s.active != me or info["actions"] >= max_actions or action not in legal_actions(s):
+            break
+        play(action)
+        info["line"] += 1
+    else:
+        info["line_ok"] = True
+    while not s.over and s.active == me and info["actions"] < max_actions:
+        legal = legal_actions(s)
+        action = EndTurn() if mine is None else mine.act(s, legal)
+        play(action if action in legal else EndTurn())
+    ended = s.over or s.active != me                # my turn is over (else max_actions stopped it)
+    while ended and not s.over and s.active != me and info["actions"] < max_actions:
+        legal = legal_actions(s)
+        action = opponent.act(s, legal)
+        play(action if action in legal else EndTurn())
+    if s.over:
+        info["stopped"], info["winner"] = "over", s.winner
+    elif ended and s.active == me:
+        info["stopped"] = "next_turn"
+    return s, info
+
+
+def action_key(state, action) -> tuple:
+    """`action` on `state` by card ids and places instead of uids (svsim.search.mcts.action_key): the same key for
+    the same move in every sample of a position, so a plan kept as keys can be matched in veto / prior."""
+    return _action_key(state, action)

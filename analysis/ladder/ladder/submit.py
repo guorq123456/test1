@@ -44,14 +44,21 @@ The checks (PHASE2-DESIGN.md 2.3):
 - code, loaded in a separate process with an audit hook (PEP 578) that refuses files, sockets, processes, ctypes
   and the garbage collector's object lists, and one short game against the default strategy there;
 - smoke: SMOKE_GAMES games against the default strategy, with the baseline lists; no crash, illegal move or timeout;
-- determinism: two of those games replayed decision by decision;
-- compute: per-step compute of the submission over the default strategy's on the submission's own positions (the
-  smoke games replayed with the default, calibrated by the twin game and its replay, LD-56); the cap is 1.08,
-  measured above 1.15 refused (S15), in between a warning,
-  every version (A52: new decks never go through the gate, and the gate compares new with old, A25);
+- determinism: two of those games replayed decision by decision, the last two in the list (played after others in
+  their worker: memory a strategy carries from game to game shows there, not in a worker's first game);
+- compute: the submission's compute over the default strategy's on the submission's own positions (the smoke games
+  replayed with the default, calibrated by the twin game and its replay, LD-56), every version (A52: new decks never
+  go through the gate, and the gate compares new with old, A25). Two rules, one of which must hold (Salem 11-27,
+  compute by turns): the old one, all steps together, the cap 1.08, measured above 1.15 refused (S15); or the turn
+  one, each own turn's first decision (turn_kinds: the host reads it off the moves, never the strategy's word) held
+  to 1.08 x the default's on it plus TURN_K x the default's whole turn, refused above TURN_REFUSE of that, and the
+  other decisions to 1.08, refused above 1.15. In between a warning. TURN_K = 0: the old rule alone, the receipt's
+  compute lines as they were;
 - peek: at a few decisions of two smoke games, the real state is replaced by another one the strategy can't tell
   from it (the opponent's unknown cards, both decks' order, the generator: base.vary_secrets); a strategy that only
-  reads what the hooks give makes the same choice. A different choice is refused.
+  reads what the hooks give makes the same choice. At two turn starts more the swap is carried through the rest of
+  that turn (peek_turn: what the turn-start hook read shows at the turn's later decisions). A different choice is
+  refused.
 What these can't stop: code that is determined to reach the real state in the same Python process can (the audit
 hook is not a security boundary), and under S4 the players run in Salem's own account. Spot reading of the code
 covers the rest (plan 2.3).
@@ -79,8 +86,11 @@ for p in (str(ROOT), str(LADDER)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-SUBMIT_VERSION = "submit-3"         # submit-2 (11-26): merged periods from period 4 (S35/S36); submit-3 (11-27):
-                                    # period 4 special (three blueprints, no updates, no admit), merged from 5
+SUBMIT_VERSION = "submit-4"         # submit-2 (11-26): merged periods from period 4 (S35/S36); submit-3 (11-27):
+                                    # period 4 special (three blueprints, no updates, no admit), merged from 5;
+                                    # submit-4 (11-28): compute by turns (Salem 11-27 22:51Z): the turn-start budget
+                                    # (TURN_K), two rules one of which must hold, the peek check carried through a
+                                    # turn, the determinism replay on games played late in a worker
 TYPES = {"新卡组": "deck", "打法更新": "update", "公共题": "puzzle", "选队": "team"}   # 选队: a special period (S27, A62)
 FILES = ("submission.json", "strategy.py", "notes.md", "evidence.md")
 PERIOD_ZH = {"baseline": "基线期", "deck": "卡组期", "strategy": "策略期", "merged": "合并期"}   # player-facing (S36)
@@ -96,6 +106,25 @@ REPLAY_GAMES = 2
 COMPUTE_CAP = 1.08                                 # per-step compute over the default's: the cap (A52)
 COMPUTE_REFUSE = 1.15                              # refused above: the cap's public allowance for the measurement's
                                                    # error (S15, Salem 11-23 14:10Z); 1.08-1.15 accepted with a warning
+# Compute by turns (Salem 11-27 22:51Z: "算力按回合给，不按步给"). Each own turn's first decision (the turn-start hook
+# runs there) gets, on top of 1.08 x the default's on that decision, TURN_K x what the default spends on that whole
+# turn; every other decision keeps 1.08. A receipt passes on either rule: the old one (all steps over the default's,
+# refused above COMPUTE_REFUSE) or the turn one (the other decisions refused above COMPUTE_REFUSE and the turn starts
+# above TURN_REFUSE of their budget). TURN_K = 0 turns the turn rule off: exactly the old decision.
+TURN_K = 2                                         # pending Salem's decision card (11-27): 1, 2 or 4 default turns a
+                                                   # turn start may add; defined here only, the rest import it
+TURN_REFUSE = round(COMPUTE_REFUSE / COMPUTE_CAP, 3)   # Q: the turn starts' refusal line over their budget (1.065:
+                                                   # S15's relative allowance; to be set again from the PC's noise)
+PEEK_TURN_POINTS = 2                               # turn starts (of turns with 2+ decisions) carried through the turn
+TURN_WALL_WARN_S = 10.0                            # a turn start's wall clock warned above (the step limit's third)
+U_TWIN_WARN = 1.25                                 # the default's cost a turn on the submission's positions over on
+                                                   # its twin's, warned above (it sets the budget)
+OPP_SEAT_WARN = 1.10                               # the opponent seat's game over shadow (calibrated), flagged above
+                                                   # (cost left on the opponent's clock); the three lines are first
+                                                   # values, to be measured: until then the last two are the host's
+                                                   # flags only (rec["compute"]["flags"]), not the player's warnings
+                                                   # (the default against itself came out 1.153 on the opponent seat
+                                                   # in the container: 11-28 review)
 YOUR_VOIDS = ("the simulator changed in this worker during the game",   # what the strategy's own code voids
               "a strategy's code tried what a game may not do",                # (LD-52)
               "nothing ran on any clock", "the check after the game ran past", "worker died",  # (LD-45)
@@ -511,6 +540,11 @@ def _load_main(argfile: str) -> int:
         pass
     base.baseline_lists()
     interface.PlayerStrategy(seed=1)                  # the default agent's own lazy imports, before the hook
+    from ladder.runner import _make_counter
+    counter, unit = _make_counter()                   # before the hook (on Windows it loads kernel32, LD-52)
+    c0 = counter()
+    interface.PlayerStrategy(seed=2)                  # what building the default costs, for comparison
+    cpu = {"unit": unit, "default_construct": counter() - c0, "import": None, "construct": None}
     deck = load_deck(args["deck"])
     opp = load_deck(list(base.baseline_lists()[args["opp_craft"]]))
     path = Path(args["path"]).resolve()
@@ -564,18 +598,22 @@ def _load_main(argfile: str) -> int:
     from ladder.runner import jsonl                     # before the hook: it reads files
     sys.dont_write_bytecode = True
     sys.addaudithook(hook)
-    out = {"ok": False, "blocked": seen}
+    out = {"ok": False, "blocked": seen, "cpu": cpu}
     try:
         spec = importlib.util.spec_from_file_location("player_strategy", str(path))
         mod = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = mod                    # as an import does: dataclasses looks a class's module up
+        c0 = counter()
         spec.loader.exec_module(mod)                    # there for string annotations (LD-47)
+        cpu["import"] = counter() - c0                  # off every game's clock (runner.py:265): measured, reported
         klass = getattr(mod, args["class"], None)
         if not (isinstance(klass, type) and issubclass(klass, interface.PlayerStrategy)
                 and klass is not interface.PlayerStrategy):
             out["error"] = f"{args['class']} 不是 ladder.interface.PlayerStrategy 的子类"
         else:
+            c0 = counter()
             strat = klass(seed=args["seed"])
+            cpu["construct"] = counter() - c0
             if args.get("construct_only"):              # the arena's check of a practice version: built, no game
                 for s in args.get("seeds") or []:       # with every seed a game may give it (11-23 review)
                     klass(seed=s)
@@ -793,12 +831,123 @@ def peek_check(log: dict, seat: int, k: int, rng: random.Random) -> str:
     return "skipped"
 
 
+def turn_points(log: dict, seat: int) -> list:
+    """The seat's decision numbers (counted as peek_check counts them) that start a turn of 2 or more of its
+    decisions: where peek_turn is worth running."""
+    kinds = turn_kinds(log.get("actions", []), len(log.get("steps", [])))
+    out, n, start, size = [], 0, None, 0
+    for (s, _, _), k in zip(log.get("steps", []), kinds):
+        if s != seat:
+            continue
+        if k == "F":
+            if start is not None and size >= 2:
+                out.append(start)
+            start, size = n, 0
+        if start is not None:
+            size += 1
+        n += 1
+    if start is not None and size >= 2:
+        out.append(start)
+    return out
+
+
+def peek_turn(log: dict, seat: int, k: int, rng: random.Random) -> tuple[str, int]:
+    """peek_check carried through a turn (A68: a strategy that peeks only in its turn-start hook and acts on it later
+    in the turn): the seat's k-th decision starts a turn. First the host's code alone replays the game and keeps the
+    real public fingerprint of each of the seat's decisions in that turn (only the fingerprints: the real state is
+    not kept). Then a fresh copy of the strategy replays to decision k, the real state is replaced (base.vary_secrets)
+    and dropped, and the logged moves go on on the varied state: at each decision of the turn whose public
+    fingerprint is still the real one the strategy is asked, its choice compared with the log's. It stops where the
+    fingerprints part (a card drawn from the reshuffled deck shows) or the turn ends. (result, decisions asked after
+    the swap's own): 'same', 'differs', 'diverged' (a decision before k differed) or 'skipped'."""
+    from ladder import base, deal
+    from ladder.runner import make_strategy
+    from svsim.cards.pool import collectible
+    from svsim.core.actions import from_dict, to_dict
+    from svsim.core.engine import apply, legal_actions
+    want, n, turn = {}, 0, None
+    _, state = deal.start(log)                          # the host's code only: the real fingerprints of the turn
+    tracker = base.Tracker(state)
+    for data in log["actions"]:
+        if state.active == seat:
+            if n == k:
+                turn = state.turn
+            if turn is not None:
+                if state.turn != turn:
+                    break
+                want[n] = base.fingerprint(base.public_position(state, seat, tracker))
+            n += 1
+        elif turn is not None:
+            break
+        tracker.before(state)
+        apply(state, from_dict(data))
+        tracker.after(state)
+    del state, tracker
+    if k not in want:
+        return "skipped", 0
+    strat = make_strategy(log["strategies"][seat], log["strategy_seeds"][seat])
+    _, state = deal.start(log)
+    tracker = base.Tracker(state)
+    others = [c.card_id for c in collectible(tracker.crafts[1 - seat])]
+    n, swapped, asked = 0, False, 0
+    for data in log["actions"]:
+        if state.active == seat:
+            if n == k:
+                state = base.vary_secrets(state, seat, tracker, rng, replacements=others)
+                gc.collect()                                # the real state is gone; only the varied one is left
+                swapped = True
+            if swapped:
+                if n not in want:                           # the turn is over
+                    break
+                pos = base.public_position(state, seat, tracker)
+                if base.fingerprint(pos) != want[n]:
+                    return ("skipped", 0) if n == k else ("same", asked)
+                got = json.loads(json.dumps(to_dict(strat.act(pos, legal_actions(state)))))
+                if got != data:
+                    return "differs", asked
+                asked += n > k
+                if data.get("type") == "EndTurn":
+                    break
+            else:
+                got = json.loads(json.dumps(to_dict(strat.act(base.public_position(state, seat, tracker),
+                                                              legal_actions(state)))))
+                if got != data:
+                    return "diverged", 0
+            n += 1
+        elif swapped:
+            break
+        tracker.before(state)
+        apply(state, from_dict(data))
+        tracker.after(state)
+    return ("same", asked) if swapped else ("skipped", 0)
+
+
 def _mean_step(log: dict, seat: int) -> tuple[float, int]:
     xs = [c for s, c, _ in log.get("steps", []) if s == seat]
     return (sum(xs), len(xs))
 
 
 # --- the compute check on the submission's own positions (A52, LD-56) -----------------------------------------
+
+FIRST, REST, MULLIGAN = "F", "R", "M"                    # a decision's kind (turn_kinds, the shadow's "kinds")
+
+
+def turn_kinds(actions: list, n_steps: int | None = None) -> list:
+    """The kind of each logged decision (both seats), from the moves alone (the host's rule, A68; the strategy's own
+    word is never asked): "M" a mulligan; "F" the first decision of a turn, the one the turn-start hook runs in (not
+    a mulligan, and the game's first decision or the one right after an EndTurn or a mulligan: a turn changes hands
+    only by EndTurn, engine.py:302-303, 428); "R" every other. `n_steps`: how many decisions the log timed (one more
+    than its moves when the game ended on an illegal move, runner.py: the step is logged before the move is judged):
+    that last one is "M" among the game's first two decisions, else by the move before it."""
+    n = len(actions) if n_steps is None else n_steps
+    out = []
+    for i in range(n):
+        if i < len(actions) and actions[i].get("type") == "Mulligan" or i >= len(actions) and i < 2:
+            out.append(MULLIGAN)
+            continue
+        prev = actions[i - 1].get("type") if 0 < i <= len(actions) else None
+        out.append(FIRST if i == 0 or prev in ("EndTurn", "Mulligan") else REST)
+    return out
 
 def shadow_task(log: dict, seat: int, seeds=None) -> dict:
     """What `_shadow` needs of a logged smoke game: the deal, the moves, the strategy seeds (`seeds`: others than the
@@ -823,16 +972,24 @@ def _shadow_play(task: dict, beat) -> dict:
     from ladder.runner import _make_counter, load_strategies, offer
     from svsim.core.actions import from_dict
     from svsim.core.engine import apply, legal_actions
+    from svsim.core.enums import Phase
     counter, unit = _make_counter()
     _, state = deal.start(task)
     tracker = base.Tracker(state)
     strategies = load_strategies([DEFAULT, DEFAULT], task["strategy_seeds"], beat)
-    steps = []
+    steps, kinds, seen = [], [], set()
     for data in task["actions"]:
         seat = state.active
         actions = legal_actions(state)
         offered = offer(actions)
         pos = base.public_position(state, seat, tracker)
+        if state.phase != Phase.MAIN:                     # the engine's own word on each decision's kind, to check
+            kinds.append(MULLIGAN)                        # turn_kinds' reading of the moves against (A68)
+        elif (seat, state.turn) not in seen:
+            seen.add((seat, state.turn))
+            kinds.append(FIRST)
+        else:
+            kinds.append(REST)
         if beat is not None:
             beat[0], beat[1] = seat, time.monotonic_ns()
         c0 = counter()
@@ -845,7 +1002,7 @@ def _shadow_play(task: dict, beat) -> dict:
         tracker.before(state)
         apply(state, from_dict(data))
         tracker.after(state)
-    return {"id": task["id"], "steps": steps, "cpu_unit": unit}
+    return {"id": task["id"], "steps": steps, "kinds": kinds, "cpu_unit": unit}
 
 
 def shadow_tasks(pairs) -> list:
@@ -885,6 +1042,196 @@ def pooled_ratio(rows) -> float | None:
     much more a step cost in the games than in the shadows (the twins')."""
     t = [sum(r[i] for r in rows) for i in range(4)]
     return (t[0] / t[1]) / (t[2] / t[3]) if all(t) else None
+
+
+def checked_kinds(log: dict, shadow: dict) -> list:
+    """turn_kinds of a logged game, checked against what its shadow saw in the engine (_shadow_play's "kinds";
+    a shadow without them, an old file, is not checked). They disagree: the host's rule is wrong somewhere, never the
+    player's doing; SystemExit (no receipt, the collector tries again)."""
+    kinds = turn_kinds(log.get("actions", []), len(log.get("steps", [])))
+    seen = shadow.get("kinds")
+    if seen is not None and list(seen) != kinds[:len(seen)]:
+        at = next((i for i, (a, b) in enumerate(zip(seen, kinds)) if a != b), min(len(seen), len(kinds)))
+        raise SystemExit(f"{log.get('id')}：回合开头的两种认法对不上（第 {at} 个决策：引擎 {list(seen)[at:at + 1]}，"
+                         f"按走法 {kinds[at:at + 1]}）：主持方的规则有错，先查 submit.turn_kinds（A68）")
+    return kinds
+
+
+def shadow_parts(pairs, got) -> tuple[list, list]:
+    """(parts, problems): shadow_rows' pairs (the same ones kept, the same row), each split by turns (turn_kinds,
+    checked against the shadow: checked_kinds). Of the submission's seat: F, R its CPU on the turns' first decisions
+    and on every other (mulligans with them); Fd, Rd the default's on the same positions; U the default's on all its
+    MAIN decisions (what the default spends on those turns), T its turns; turns: [F, Fd, U, wall in us] per turn.
+    Of the twin: its CPU and its shadow's on first decisions (twin_F) and the rest (twin_R), both seats (the
+    calibration's two halves), and U_twin, T_twin of the same seat in its shadow. opp: the opponent seat's CPU in
+    the game and in the shadow (the default both times: what the submission may leave on the opponent's clock)."""
+    parts, bad = [], []
+    for i, (g, ref, seat) in enumerate(pairs):
+        two = got[2 * i:2 * i + 2]
+        rows, b = shadow_rows([(g, ref, seat)], two)
+        if not rows:
+            bad += b
+            continue
+        sh, tsh = two[0]["value"], two[1]["value"]
+        st, tst = g.get("steps", []), ref.get("steps", [])
+        if len(st) != len(sh["steps"]) or len(tst) != len(tsh["steps"]) \
+                or any(a[0] != b_[0] for a, b_ in zip(st, sh["steps"])) \
+                or any(a[0] != b_[0] for a, b_ in zip(tst, tsh["steps"])):
+            bad.append(f"{g['id']}: the decisions' seats differ between the games and their shadows")
+            continue
+        kinds, tkinds = checked_kinds(g, sh), checked_kinds(ref, tsh)
+        p = {"id": g["id"], "row": rows[0], "F": 0, "R": 0, "Fd": 0, "Rd": 0, "U": 0, "T": 0, "turns": [],
+             "opp": [0, 0], "twin_F": [0, 0], "twin_R": [0, 0], "U_twin": 0, "T_twin": 0}
+        for (s, c, w), (_, d), k in zip(st, sh["steps"], kinds):
+            if s != seat:
+                p["opp"][0] += c
+                p["opp"][1] += d
+            elif k == FIRST:
+                p["F"] += c
+                p["Fd"] += d
+                p["U"] += d
+                p["T"] += 1
+                p["turns"].append([c, d, d, w])
+            else:
+                p["R"] += c
+                p["Rd"] += d
+                if k == REST:
+                    p["U"] += d
+                    if p["turns"]:
+                        p["turns"][-1][2] += d
+        for (s, c, _), (_, d), k in zip(tst, tsh["steps"], tkinds):
+            half = p["twin_F"] if k == FIRST else p["twin_R"]
+            half[0] += c
+            half[1] += d
+            if s == seat and k != MULLIGAN:
+                p["U_twin"] += d
+                p["T_twin"] += k == FIRST
+        parts.append(p)
+    return parts, bad
+
+
+def _q(xs: list, p: float):
+    xs = sorted(xs)
+    return xs[min(len(xs) - 1, int(p * len(xs)))] if xs else None
+
+
+def turn_budget(parts: list, k: int | None = None) -> dict:
+    """The three numbers of the two rules over the pairs (Salem 11-27, compute by turns; c: the twins' game over
+    shadow, the old calibration, unchanged):
+    - all = ((sum F + sum R) / (sum Fd + sum Rd)) / c: the old rule's number, pooled_ratio's, the receipt's
+      compute_ratio;
+    - in_turn = (sum R / sum Rd) / c: the decisions other than turn starts, held to 1.08 as every step was;
+    - turn_start_q = (sum F / c) / (1.08 sum Fd + k sum U): the turn starts over their budget (k: TURN_K);
+    and extra_turns = (sum F / c - 1.08 sum Fd) / sum U, the default turns the turn starts added (the budget is k of
+    them). Reported only: per_turn, each turn's extra (F / c - 1.08 Fd) in the submission's mean default turn (sum U /
+    sum T): median, 90th percentile, max (a budget is an average over all turns, unused is lost); u_twin_ratio, that
+    mean default turn over the twin's (a strategy that walks the game where the default costs more raises its own
+    budget); opp_seat, the opponent seat's game over shadow over c; c_parts, the calibration's two halves (first
+    decisions, the rest); turn_start_wall_max_s, the longest turn start's wall clock."""
+    k = TURN_K if k is None else k
+    rows = [p["row"] for p in parts]
+    tot = lambda key: sum(p[key] for p in parts)          # noqa: E731
+    tw, tws = sum(r[2] for r in rows), sum(r[3] for r in rows)
+    c = tw / tws if tw and tws else None
+    F, R, Fd, Rd, U, T = (tot(x) for x in ("F", "R", "Fd", "Rd", "U", "T"))
+    out = {"K": k, "all": pooled_ratio(rows), "in_turn": None, "turn_start_q": None, "extra_turns": None,
+           "per_turn": None, "u_twin_ratio": None, "opp_seat": None, "c_parts": None, "turn_start_wall_max_s": None,
+           "turns": T}
+    if not c:
+        return out
+    if R and Rd:
+        out["in_turn"] = (R / Rd) / c
+    budget = COMPUTE_CAP * Fd + k * U
+    if budget > 0:
+        out["turn_start_q"] = (F / c) / budget
+    if U:
+        out["extra_turns"] = (F / c - COMPUTE_CAP * Fd) / U
+    if U and T:
+        u = U / T
+        e = [(t[0] / c - COMPUTE_CAP * t[1]) / u for p in parts for t in p["turns"]]
+        out["per_turn"] = {"turns": len(e), "median": _q(e, 0.5), "p90": _q(e, 0.9), "max": max(e) if e else None}
+        ut, tt = tot("U_twin"), tot("T_twin")
+        if ut and tt:
+            out["u_twin_ratio"] = u / (ut / tt)
+    og, osh = sum(p["opp"][0] for p in parts), sum(p["opp"][1] for p in parts)
+    if og and osh:
+        out["opp_seat"] = (og / osh) / c
+    halves = {h: [sum(p[f"twin_{h}"][0] for p in parts), sum(p[f"twin_{h}"][1] for p in parts)] for h in "FR"}
+    out["c_parts"] = {h: (a / b if a and b else None) for h, (a, b) in halves.items()}
+    walls = [t[3] for p in parts for t in p["turns"]]
+    if walls:
+        out["turn_start_wall_max_s"] = max(walls) / 1e6
+    return out
+
+
+def compute_verdict(r3, b: dict | None, pairs: int, k: int | None = None) -> tuple[list, list, str | None]:
+    """(refusal reasons, warnings, the rule it passed on: "old", "turn" or None) of the compute check on `pairs`
+    pairs, two rules one of which must hold: the old one (r3, all steps: refused above COMPUTE_REFUSE) or, with k > 0,
+    the turn one (turn_budget's in_turn refused above COMPUTE_REFUSE and turn_start_q above TURN_REFUSE; rounded as
+    r3 is). The warnings are those of the rule it passed on (the old: above COMPUTE_CAP; the turn one: in_turn above
+    COMPUTE_CAP or turn_start_q above 1); passing both, the one within its caps. k = 0: the old rule alone, its texts
+    as they were before the turn rule (an explicit switch, though the turn rule at k = 0 holds both pools to 1.15
+    and so their sum anyway: the rounding aside)."""
+    k = TURN_K if k is None else k
+    r = lambda x: None if x is None else round(x, 3)      # noqa: E731
+    i3, q3 = (r(b.get("in_turn")), r(b.get("turn_start_q"))) if b else (None, None)
+    old_ok = r3 is None or r3 <= COMPUTE_REFUSE
+    turn_ok = k > 0 and i3 is not None and q3 is not None and i3 <= COMPUTE_REFUSE and q3 <= TURN_REFUSE
+    if not (old_ok or turn_ok):
+        over = [f"每步算力是默认打法的 {r3:.3f} 倍，超过 {COMPUTE_REFUSE}：上限是 {COMPUTE_CAP} 倍，量法有误差，量出来超过 "
+                f"{COMPUTE_REFUSE} 倍就拒收（所有成员一样，每一版都查，A52、S15）。这次量了 {pairs} 对；"
+                "电脑上 50 对上下约 1%（LD-58）"]
+        if k > 0:
+            x = b.get("extra_turns") if b else None
+            over.append("按回合给算力的那条规矩也没过（两条过一条就收）："
+                        + ("量不出回合里、回合开头各花了多少" if i3 is None or q3 is None else
+                           f"回合里的每一步是默认打法的 {i3:.3f} 倍（超过 {COMPUTE_REFUSE} 拒收），每个回合开头那一步是"
+                           f"可用预算的 {q3:.3f} 倍（超过 {TURN_REFUSE} 拒收；可用预算 = {COMPUTE_CAP} × 默认打法在这一步"
+                           f"的花费 + {k} × 默认打法这一整回合的花费）"
+                           + ("" if x is None else f"，{extra_text(x)}（给的是 {k} 个）")))
+        return over, [], None
+    old_clean = r3 is None or r3 <= COMPUTE_CAP
+    turn_clean = turn_ok and i3 <= COMPUTE_CAP and q3 <= 1.0
+    rule = "turn" if turn_ok and (not old_ok or (turn_clean and not old_clean)) else "old"
+    warnings = []
+    if rule == "old" and not old_clean:
+        warnings.append(f"每步算力量出来是默认打法的 {r3:.3f} 倍，超过上限 {COMPUTE_CAP}，还在容差 {COMPUTE_REFUSE} "
+                        "以内，收下；再往上就会被拒收（S15）")
+    elif rule == "turn" and not turn_clean:
+        warnings.append(f"按回合给算力的那条收下：回合里的每一步是默认打法的 {i3:.3f} 倍（上限 {COMPUTE_CAP}），回合开头"
+                        f"那一步是可用预算的 {q3:.3f} 倍（上限 1）；超了上限，还在容差以内（{COMPUTE_REFUSE}、{TURN_REFUSE}），"
+                        "收下；再往上就会被拒收")
+    return [], warnings, rule
+
+
+def extra_text(x) -> str:
+    """The receipt's words for extra_turns: what the turn starts added, in the default's turns (none for a turn start
+    that cost no more than 1.08 x the default's: the budget unused, not a negative spend)."""
+    return "回合开头没用到另给的预算" if x <= 0 else f"回合开头平均多花了 {x:.2f} 个默认回合"
+
+
+def compute_notes(c: dict, step_limit: float = 30.0) -> list:
+    """The compute check's reminders to the player that decide nothing (A68): with a turn-start budget (K > 0; K = 0
+    leaves the receipt as it was before the turn rule), a turn start's wall clock past TURN_WALL_WARN_S."""
+    w = c.get("turn_start_wall_max_s")
+    if c.get("K") and w is not None and w > TURN_WALL_WARN_S:
+        return [f"冒烟局里回合开头那一步最长用了 {w:.1f} 秒墙钟：回合开头的钩子也算在那一步里，一步超过 {step_limit:.0f} 秒"
+                "就判这一方输（池子里也一样），要留余量"]
+    return []
+
+
+def compute_flags(c: dict) -> list:
+    """The host's flags on the compute check that decide nothing and are not the player's warnings until their lines
+    are measured (11-28 review: false alarms, and a player told he left cost on the opponent's clock): with a
+    turn-start budget, the default's mean turn on the submission's positions past U_TWIN_WARN times its twin's (the
+    budget follows it); the opponent seat past OPP_SEAT_WARN."""
+    out = []
+    u, o = c.get("u_twin_ratio"), c.get("opp_seat")
+    if c.get("K") and u is not None and u > U_TWIN_WARN:
+        out.append(f"u_twin {u:.2f} > {U_TWIN_WARN}")
+    if c.get("K") and o is not None and o > OPP_SEAT_WARN:
+        out.append(f"opp_seat {o:.2f} > {OPP_SEAT_WARN}")
+    return out
 
 
 # --- receive ---------------------------------------------------------------------------------------------------
@@ -1049,6 +1396,7 @@ def _receive(d, player, pool_dir, subdir, workers, mask, rng_seed, smoke_games, 
                     game_seed=rng.randrange(*seeds), work=store)
     problems = [] if lc.get("ok") else ([f"载入后碰了不许碰的：{'；'.join(lc.get('blocked', []))}"] if lc.get("blocked")
                                        else [lc.get("error", "载入失败")])
+    rec["load_cpu"] = lc.get("cpu")                       # import and construction: off every clock, reported only
     check("载入（隔离进程）", problems, {k: lc.get(k) for k in ("winner", "turns")})
     if rec["reasons"]:
         return finish()
@@ -1115,36 +1463,49 @@ def _receive(d, player, pool_dir, subdir, workers, mask, rng_seed, smoke_games, 
     tasks = shadow_tasks(items)
     got = guarded_map("ladder.submit:_shadow", tasks, workers=max(1, min(workers, len(tasks))),
                       step_limit=step_limit, mask=mask) if tasks else []
-    rows, bad = shadow_rows(items, got)
+    parts, bad = shadow_parts(items, got)                 # shadow_rows' pairs and rows, each split by turns (A68)
+    rows = [p["row"] for p in parts]
     if items and len(rows) < max(1, len(items) // 2):    # the host's side failed: no receipt, the collector retries
         raise SystemExit(f"算力重放只回来 {len(rows)} / {len(items)} 对：{'；'.join(bad)[:1500]}")
     ratio = pooled_ratio(rows)
     r3 = None if ratio is None else round(ratio, 3)       # one number for the decision, the receipt and the message
-    rec["compute_ratio"] = r3
+    rec["compute_ratio"] = r3                             # all steps over the default's: the old rule's, as it was
+    b = turn_budget(parts, TURN_K)
+    rd = lambda x, n=3: None if x is None else round(x, n)    # noqa: E731
     rec["compute"] = {"method": "shadow", "games": len(rows), "skipped": bad[:20],
                       "twin_void": sum(1 for _, g, ref in pairs if g.get("result") in ("normal", "draw")
                                        and not (ref and ref.get("result") in ("normal", "draw"))),
-                      "twins": None if twins is None else round(twins, 3)}
+                      "twins": None if twins is None else round(twins, 3),
+                      "K": TURN_K, "rule": None, "in_turn": rd(b["in_turn"]), "turn_start_q": rd(b["turn_start_q"]),
+                      "extra_turns": rd(b["extra_turns"], 2), "turns": b["turns"],
+                      "per_turn": None if b["per_turn"] is None else
+                      {x: (v if x == "turns" else rd(v, 2)) for x, v in b["per_turn"].items()},
+                      "u_twin_ratio": rd(b["u_twin_ratio"]), "opp_seat": rd(b["opp_seat"]),
+                      "c_parts": None if b["c_parts"] is None else {h: rd(v, 4) for h, v in b["c_parts"].items()},
+                      "turn_start_wall_max_s": rd(b["turn_start_wall_max_s"], 2)}
     need = max(1, smoke_games // 2)
     if len(rows) < need:      # too few to measure (games void on both sides, or the twins void): never let it pass
         over = [f"冒烟局里能量算力的只有 {len(rows)} 对（要 {need} 对；其余是作废局，或者同一对里默认打法那局作废了），"
                 "量不准，不收（A52、LD-57）"]
-    elif r3 is not None and r3 > COMPUTE_REFUSE:
-        over = [f"每步算力是默认打法的 {r3:.3f} 倍，超过 {COMPUTE_REFUSE}：上限是 {COMPUTE_CAP} 倍，量法有误差，量出来超过 "
-                f"{COMPUTE_REFUSE} 倍就拒收（所有成员一样，每一版都查，A52、S15）。这次量了 {len(rows)} 对；电脑上 50 对上下约 1%"
-                "（LD-58）"]
-    else:
-        over = []
-        if r3 is not None and r3 > COMPUTE_CAP:
-            rec["warnings"].append(f"每步算力量出来是默认打法的 {r3:.3f} 倍，超过上限 {COMPUTE_CAP}，还在容差 {COMPUTE_REFUSE} "
-                                   "以内，收下；再往上就会被拒收（S15）")
-    check("算力", over, {"ratio": rec["compute_ratio"], "unit": pairs[0][1].get("cpu_unit") if pairs else None})
+    else:                     # two rules, one of which must hold (Salem 11-27); TURN_K = 0: the old rule alone
+        over, warned, rec["compute"]["rule"] = compute_verdict(r3, b, len(rows), TURN_K)
+        rec["warnings"] += warned + compute_notes(rec["compute"], step_limit)
+        rec["compute"]["flags"] = compute_flags(rec["compute"])
+    unit = pairs[0][1].get("cpu_unit") if pairs else None
+    check("算力", over, {"ratio": rec["compute_ratio"], "in_turn": rec["compute"]["in_turn"],
+                         "turn_start": rec["compute"]["turn_start_q"], "rule": rec["compute"]["rule"], "unit": unit}
+          if TURN_K else {"ratio": rec["compute_ratio"], "unit": unit})      # K = 0: the receipt as it was
     if rec["reasons"]:
         return finish()
 
     problems = []
     normal = [g for _, g, _ in pairs if g["result"] in ("normal", "draw")]
-    for g in normal[:REPLAY_GAMES]:
+    # the last games of the list, not the first (A68): the workers take the jobs in order, so these were played after
+    # others in their worker, where memory a strategy keeps from game to game (a module's dict, a class attribute:
+    # the tripwire follows svsim and ladder only, watch.py) changes its choices; this process has played none of the
+    # submission's games (the load check is a process of its own, the shadows run the default), so the replay starts
+    # from nothing
+    for g in normal[-REPLAY_GAMES:]:
         ok, why = replay_decisions(g)
         if not ok:
             problems.append(f"{g['id']} 重放对不上：{why}（同一种子、同一局面要做出同样的选择；随机数用 self.random）")
@@ -1168,6 +1529,24 @@ def _receive(d, player, pool_dir, subdir, workers, mask, rng_seed, smoke_games, 
             tried.append([g["id"], k, r])
             if r == "differs":
                 problems.append(f"{g['id']} 第 {k} 个决策：真实局面里你看不到的东西换了，你的选择跟着变了")
+            elif r == "diverged":
+                problems.append(f"{g['id']}：重放到第 {k} 个决策以前就对不上了（不确定）")
+    # A68: at two turn starts more (turns of 2+ decisions), the swap carried through the rest of the turn: what a
+    # turn-start hook read shows at the turn's later decisions (drawn after the points above: those stay as they were)
+    for j, g, _ in [p for p in pairs if p[1].get("result") in ("normal", "draw")][:PEEK_GAMES]:
+        seat = j["labels"]["seat"]
+        starts = turn_points(g, seat)
+        for k in sorted(rng.sample(starts, min(PEEK_TURN_POINTS, len(starts)))):
+            try:
+                r, asked = peek_turn(g, seat, k, random.Random(rng.randrange(2 ** 63)))
+            except (Exception, SystemExit) as e:          # noqa: BLE001 - the strategy's own error
+                r, asked = "crashed", 0
+                problems.append(f"{g['id']} 第 {k} 个决策（回合开头）：重放时你的打法报错了："
+                                f"{_quote(f'{type(e).__name__}: {e}', 300)}")
+            tried.append([g["id"], k, r, "turn", asked])
+            if r == "differs":
+                problems.append(f"{g['id']} 第 {k} 个决策起的这一回合：回合开头把你看不到的东西换了，这一回合里你后面的"
+                                "选择跟着变了（回合开头的钩子也只能用它拿到的公开局面）")
             elif r == "diverged":
                 problems.append(f"{g['id']}：重放到第 {k} 个决策以前就对不上了（不确定）")
     check("偷看", problems, {"points": tried})
@@ -1204,8 +1583,27 @@ def receipt_text(rec: dict) -> str:
         d = c.get("detail")
         lines.append(f"- {c['check']}：{'过' if c['ok'] else '没过'}" + (f"（{json.dumps(d, ensure_ascii=False)}）"
                                                                       if d else ""))
-    if rec.get("compute_ratio") is not None:
-        lines.append(f"- 每步算力 / 默认打法：{rec['compute_ratio']}")
+    c = rec.get("compute") or {}
+    if not c.get("K"):                    # K = 0 (or a receipt from before submit-4): the line as it was
+        if rec.get("compute_ratio") is not None:
+            lines.append(f"- 每步算力 / 默认打法：{rec['compute_ratio']}")
+    else:
+        if rec.get("compute_ratio") is not None:
+            lines.append(f"- 算力，老规矩（所有步合在一起）/ 默认打法：{rec['compute_ratio']}")
+        if c.get("in_turn") is not None and c.get("turn_start_q") is not None:
+            lines.append(f"- 算力，按回合（回合开头另给 {c['K']} 个默认回合）：回合里的每一步 / 默认打法 {c['in_turn']}；"
+                         f"回合开头那一步 / 可用预算 {c['turn_start_q']}"
+                         + ("" if c.get("extra_turns") is None else f"（{extra_text(c['extra_turns'])}）"))
+        if c.get("rule"):
+            lines.append("- 算力是按" + ("老规矩" if c["rule"] == "old" else "「按回合给」那条规矩") + "收下的（两条过一条就收）")
+    cpu = rec.get("load_cpu") or {}
+    if cpu.get("unit") == "ns" and cpu.get("construct") is not None:
+        ms = lambda x: "—" if x is None else f"{x / 1e6:.1f} 毫秒"     # noqa: E731
+        lines.append(f"- 载入时的 CPU（不在任何一步的钟上，只记下来，不判）：import 你的模块 {ms(cpu.get('import'))}，建对象 "
+                     f"{ms(cpu.get('construct'))}（默认打法建对象 {ms(cpu.get('default_construct'))}）")
+    elif cpu.get("construct") is not None:
+        lines.append(f"- 载入时的 CPU（不在任何一步的钟上，只记下来，不判）：import 你的模块 {cpu.get('import')}，建对象 "
+                     f"{cpu.get('construct')}（默认打法建对象 {cpu.get('default_construct')}；单位 {cpu.get('unit')}）")
     return "\n".join(lines) + "\n"
 
 

@@ -20,6 +20,17 @@ put a strategy whose cost against the default's changes with the position in the
 twin's seeds, as receive): the spread is then the measurement's for such a strategy (LD-57; centred on its own
 sample ratio, its true one being unknown).
 
+Compute by turns (A68, Salem 11-27): the receipt also splits each pair by turns (submit.shadow_parts) and passes a
+submission on either of two rules (submit.compute_verdict): all steps (the old rule, the ratio above) or the turn rule,
+in_turn (the decisions other than a turn's first, over the default's) and turn_start_q (the turn starts over their
+budget, 1.08 x the default's on them + K x the default's whole turn). "turn" gives, for each K of --k (default
+submit.TURN_K), the per-10 spread of in_turn, turn_start_q and extra_turns (the default turns the turn starts added),
+their bootstrap spread for n pairs, and how often a receipt of n pairs refuses the stand-in (neither rule holds) or
+passes it on which rule; "calibration_parts" the twins' game over shadow on first decisions and on the rest (a fixed
+offset between the two would want each pool calibrated on its own). The planning stand-ins (tools/standins.py:
+plan, plan_over, spread, hoarder; plan_uses, plan_peeky and memory are for the other checks, not the noise) are
+measured that way; their PLAN_SEARCHES is set from the PC's extra_turns.
+
 A measurement of the tool only: these games say nothing about strength.
 """
 from __future__ import annotations
@@ -40,10 +51,14 @@ sys.path.insert(0, str(HERE))                                   # tools/standins
 from ladder import base  # noqa: E402
 from ladder.runner import run  # noqa: E402
 from ladder.runner import guarded_map  # noqa: E402
-from ladder.submit import DEFAULT, COMPUTE_CAP, COMPUTE_REFUSE, pooled_ratio, shadow_rows, shadow_task  # noqa: E402
+from ladder.submit import (DEFAULT, COMPUTE_CAP, COMPUTE_REFUSE, TURN_K, compute_verdict,  # noqa: E402
+                           pooled_ratio, shadow_parts, shadow_rows, shadow_task, turn_budget)
 
 
-STANDINS = {"seed": None, "adaptive": "py:standins:Adaptive", "overhead": "py:standins:Overhead"}
+STANDINS = {"seed": None, "adaptive": "py:standins:Adaptive", "overhead": "py:standins:Overhead",
+            "plan": "py:standins:Planner", "plan_over": "py:standins:PlannerOver", "spread": "py:standins:Spread",
+            "hoarder": "py:standins:Hoarder", "plan_uses": "py:standins:PlanUses", "plan_peeky": "py:standins:PlanPeeky",
+            "memory": "py:standins:Memory"}
 
 
 def jobs_for(sets: int, seeds: tuple[int, int], rng: random.Random, games: int = 10, exclude=frozenset(),
@@ -117,6 +132,37 @@ def method(rows_by_set: dict) -> dict:
     return {"per_10": summary([pooled_ratio(v) for v in rows_by_set.values()]), "bootstrap": bootstrap(rows)}
 
 
+def turn_method(parts_by_set: dict, k: int, sizes=(10, 20, 30, 50, 100), draws: int = 4000, seed: int = 9) -> dict:
+    """The turn rule's numbers for turn-start budget `k` (submit.turn_budget, compute_verdict): per set of 10 pairs,
+    over all pairs, and resampling whole pairs for n pairs: the spread of in_turn and turn_start_q, and how often a
+    receipt of n pairs refuses the stand-in or passes it on the old or the turn rule (its true cost unknown: these
+    are at its own sample cost)."""
+    parts = [p for v in parts_by_set.values() for p in v]
+    if len(parts) < 2:
+        return {"k": k, "pairs": len(parts)}
+    whole = turn_budget(parts, k)
+    keep = ("all", "in_turn", "turn_start_q", "extra_turns", "per_turn", "u_twin_ratio", "opp_seat", "c_parts")
+    out = {"k": k, "pairs": len(parts), "all_pairs": {x: whole[x] for x in keep},
+           "per_10": {x: summary([turn_budget(v, k)[x] for v in parts_by_set.values()])
+                      for x in ("all", "in_turn", "turn_start_q", "extra_turns")}}
+    rng = random.Random(seed)
+    for n in sizes:
+        got = {"in_turn": [], "turn_start_q": [], "extra_turns": []}
+        rules = {"refused": 0, "old": 0, "turn": 0}
+        for _ in range(draws):
+            b = turn_budget([parts[rng.randrange(len(parts))] for _ in range(n)], k)
+            for x in got:
+                if b[x] is not None:
+                    got[x].append(b[x])
+            r3 = None if b["all"] is None else round(b["all"], 3)
+            over, _, rule = compute_verdict(r3, b, n, k)
+            rules["refused" if over else rule] += 1
+        out[n] = {x: {"sd": round(S.stdev(v), 4) if len(v) > 1 else None, "p05": round(sorted(v)[int(0.05 * len(v))], 4),
+                      "p95": round(sorted(v)[int(0.95 * len(v)) - 1], 4)} for x, v in got.items() if v}
+        out[n]["rules"] = {x: round(c / draws, 4) for x, c in rules.items()}
+    return out
+
+
 def _jsonl(p: Path) -> list:
     return [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
 
@@ -130,7 +176,10 @@ def main():
     a.add_argument("--rng-seed", type=int, default=1)
     a.add_argument("--standin", choices=sorted(STANDINS), default="seed",
                    help="seed: the default with another seed (the same cost everywhere); adaptive / overhead: "
-                        "tools/standins.py, a cost that changes with the position (LD-57)")
+                        "tools/standins.py, a cost that changes with the position (LD-57); plan / plan_over / spread "
+                        "/ hoarder: the planning stand-ins (A68)")
+    a.add_argument("--k", type=int, nargs="+", default=None,
+                   help="turn-start budgets to analyse the turn rule at (default: submit.TURN_K)")
     a.add_argument("--out", type=Path, required=True)
     a.add_argument("--analyze-only", action="store_true",
                    help="play nothing: read the games (and the shadows, if there) already there")
@@ -170,7 +219,7 @@ def main():
     got = _jsonl(shadows) if shadows.exists() else []
     if got and len(got) != 2 * len(pairs):
         raise SystemExit(f"{shadows}: {len(got)} shadows for {len(pairs)} pairs (two each): an old file? --shadow-only")
-    twins, diverged, shadow, raw, env = {}, {}, {}, {}, []
+    twins, diverged, shadow, raw, env, split = {}, {}, {}, {}, [], {}
     steps_ref, same = [], 0
     for _, seat, sub, ref in pairs:
         steps_ref += [c for s, c, _ in ref["steps"] if s == seat]
@@ -190,6 +239,8 @@ def main():
                 shadow.setdefault(st, []).append(rows[0])
                 raw.setdefault(st, []).append((rows[0][0], rows[0][1], 1, 1))
                 env.append(rows[0][2] / rows[0][3])
+                parts, _ = shadow_parts([(sub, ref, seat)], got[2 * i:2 * i + 2])
+                split.setdefault(st, []).extend(parts)
     allsh = [r for v in shadow.values() for r in v]
     unit = next(iter(logs.values())).get("cpu_unit")
     scale = 1e6 if unit == "ns" else 1
@@ -201,7 +252,9 @@ def main():
            "shadow_raw": method(raw),
            "game_over_shadow": summary(env) | {"pooled": round(sum(r[2] for r in allsh) / sum(r[3] for r in allsh), 4)
                                                if allsh else None},
-           "twins": method(twins), "twins_diverged": method(diverged)}
+           "twins": method(twins), "twins_diverged": method(diverged),
+           "turn": [turn_method(split, k) for k in (args.k or [TURN_K])],
+           "calibration_parts": turn_budget([p for v in split.values() for p in v])["c_parts"] if split else None}
     args.out.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
     print(json.dumps(out, ensure_ascii=False, indent=1))
 

@@ -4,7 +4,8 @@ sixteenth LD-51).
 Nothing in the submitted code runs.
 The simulator's and ladder's own modules are imported here (they are the host's code) to tell a module from a class
 from a function; svsim.learn, svsim.tools, svsim.ui, svsim.build, svsim.search.parallel and ladder's other modules
-never are.
+never are. Of the open svsim modules, the helpers that load a trained model, svsim.tools or svsim.ui when they run are
+refused by name (A12_FUNCTIONS, 11-28: with the turn-start hook they are ready-made planners).
 
 Two kinds of rules.
 
@@ -83,7 +84,9 @@ isn't a name written straight from a module whose object is no dataclasses.Field
 statement calls __set_name__; @dataclass rewrites a Field it finds in place: one from dataclasses.fields(PlayCard)
 dropped `targets` from every later game, LD-46), an import or := in a class body; type(x) used other than for an attribute, a comparison or
 isinstance; svsim.core.script.register; keyword arguments parallel / par_spec (ISMCTS's root-parallel processes:
-their CPU is not the strategy's process's); `x *= n` with an int on a SHARED x (a list repeats in place); a yield
+their CPU is not the strategy's process's); a budget in time (11-28: seconds= anywhere, an attribute .seconds,
+ISMCTS / MCTSAgent / full_game_agent or a class of its own built on one given a second positional argument, * or **:
+TIMED_CALLS); `x *= n` with an int on a SHARED x (a list repeats in place); a yield
 or await inside a try's body, except or else (when the generator is freed, there, off every clock, its except /
 finally run: LD-42; the runner's idle watchdog is the backstop). The reading repeats until nothing changes, for up
 to FLOW_SECONDS; a module that takes longer, or nests deeper than Python can read, is refused, not passed.
@@ -131,6 +134,28 @@ DENIED_PREFIXES = ("svsim.learn", "svsim.tools",       # they load trained model
                    "svsim.ui",                          # the levels' rating table, records of games (red lines)
                    "svsim.build",                       # runs git
                    "svsim.search.parallel")             # a process pool: compute outside the strategy's process
+A12_FUNCTIONS = (        # (11-28, the turn-start hook) svsim helpers in open modules that load a trained model,
+    #                      svsim.tools or svsim.ui when they run (A12): refused by name wherever the reader sees one
+    #                      (from m import x, m.x, getattr(m, "x")). By function, not by module: the rest of a module
+    #                      stays open (impact.reply plays the agent it is given). Kept apart from DENIED_PREFIXES,
+    #                      which the tripwire's preload reads too (watch.py, locked: LOCK.md). tests/test_codecheck.py
+    #                      reads svsim's source and fails on a function that imports those modules or calls
+    #                      make_agent when it runs and is neither here nor reviewed there.
+    "svsim.agents.crossturn_agent.CrossTurnAgent", "svsim.agents.crossturn_agent.keep_value",
+    "svsim.agents.fuel_agent.FuelAgent", "svsim.agents.fuel_agent.fuel",
+    "svsim.agents.impact_agent.ImpactAgent",
+    "svsim.agents.mulligan.MulliganMode", "svsim.agents.mulligan.decide", "svsim.agents.mulligan.opening",
+    "svsim.agents.sim_mulligan.simulated",
+    "svsim.agents.turnpick_agent.TurnPickAgent", "svsim.agents.turnpick_agent.turn_value",
+    "svsim.agents.turns_agent.TurnsAgent",
+    "svsim.search.candidates.generate", "svsim.search.candidates.main", "svsim.search.candidates.root_alternatives",
+    "svsim.search.foresight.direction_agent", "svsim.search.foresight.direction_rollout",
+    "svsim.search.foresight.next_lethal_prob",
+    "svsim.search.impact.assess",
+    "svsim.search.prices.Priced")   # not race.answer (11-28 review): svsim.learn.survival.own_turn is turn arithmetic,
+#                                    the module loads nothing on import, and race.advance(removal=...) reaches it anyway
+A12_WHY = ("这个 svsim 帮手用的时候才载入训练过的模型、svsim.tools 或 svsim.ui（A12），读代码按名字拒收；"
+           "同一个模块里别的照样能用，比如 impact.reply 只用你给的智能体")
 BANNED_NAMES = {"open", "eval", "exec", "compile", "__import__", "globals", "locals", "vars", "breakpoint",
                 "input", "memoryview", "help", "exit", "quit", "__builtins__", "__loader__", "__spec__", "__file__"}
 ATTR_FUNCS = {"getattr", "setattr", "delattr", "hasattr"}   # allowed only with a written-out, allowed name
@@ -164,6 +189,14 @@ DANGER_MODULES = frozenset({   # (LD-52) an object, class or function of these i
     "atexit", "webbrowser", "urllib", "http", "winreg", "_winapi", "msvcrt", "pty", "fcntl", "resource",
     "code", "codeop", "pdb", "bdb", "faulthandler", "tracemalloc", "weakref", "_weakref"})
 BANNED_KEYWORDS = {"parallel", "par_spec"}
+TIMED_KEYWORDS = {"seconds"}     # (11-28) a budget in time can't be replayed: ISMCTS / MCTSAgent / full_game_agent's
+#                                  seconds= stops the search on the clock; the results' .seconds is a clock reading
+#                                  (LethalSearch.solve, TurnPlanner, combo); refused as a keyword and as an attribute
+TIMED_CALLS = (("svsim.search.mcts", "ISMCTS"), ("svsim.agents.mcts_agent", "MCTSAgent"),
+               ("svsim.agents.mcts_agent", "full_game_agent"))   # seconds is their second parameter: by position too
+#                                  (and through a class of the module's own built on one of them)
+TIMED_WHY = ("按时间定预算不许：svsim 搜索的 seconds 参数按墙钟停，结果里的 .seconds 是墙钟读数，"
+             "机器一忙选择就变，重放对不上；预算按次数或局面数定。自己的参数、属性也别叫 seconds，换个名字")
 
 CLEAN, HOLDS, SHARED = 0, 1, 2
 MUTATORS = frozenset({
@@ -327,6 +360,27 @@ def _registrars() -> set:
     if reg is not _MISSING:
         out.add(id(reg))
     return out
+
+
+_A12: dict = {}
+_TIMED: list = []
+
+
+def timed_objects() -> tuple:
+    """The TIMED_CALLS objects that are there."""
+    if not _TIMED:
+        _TIMED.extend(o for o in (member(m, n) for m, n in TIMED_CALLS) if o is not _MISSING)
+    return tuple(_TIMED)
+
+
+def a12_objects() -> dict:
+    """id -> name of every A12_FUNCTIONS entry that is there (the objects are kept alive by their modules)."""
+    if not _A12:
+        for name in A12_FUNCTIONS:
+            obj = member(*name.rsplit(".", 1))
+            if obj is not _MISSING:
+                _A12[id(obj)] = name
+    return _A12
 
 
 def _player_strategy():
@@ -2171,6 +2225,9 @@ def check_code(src: str, cls: str) -> list[str]:
 def _rules(tree, flow, cls) -> list[str]:
     problems, classes = [], []
     registrars = _registrars()
+    a12 = a12_objects()
+    timed = timed_objects()
+    timed_types = tuple(o for o in timed if isinstance(o, type))
     lazy_annotations = any(isinstance(n, ast.ImportFrom) and n.module == "__future__" and
                            any(a.name == "annotations" for a in n.names) for n in tree.body)
     annotations = set()
@@ -2260,6 +2317,24 @@ def _rules(tree, flow, cls) -> list[str]:
         own = flow.own_of(node)
         return bool(flow.user_class(node)) or (own is not None and own[1] and not own[2]) or type_call(node)
 
+    def timed_class(c) -> bool:
+        """Class `c` of the module's own is built on ISMCTS or MCTSAgent (through its own bases too)."""
+        return any(isinstance(o, type) and issubclass(o, timed_types) for k in [c, *flow.ancestors(c)]
+                   for o in flow.cls[k].objs)
+
+    def timed_callee(fn) -> bool:
+        """`fn` (a call's function) is a TIMED_CALLS object, a class built on one, or super().__init__ in one."""
+        kn = flow.known(fn)
+        if kn is not None and (any(kn[2] is o for o in timed) or
+                               (isinstance(kn[2], type) and issubclass(kn[2], timed_types))):
+            return True
+        if any(timed_class(c) for c in flow.user_class(fn)):
+            return True
+        if isinstance(fn, ast.Attribute) and fn.attr == "__init__":
+            sup = flow.own_of(fn.value)
+            return bool(sup and sup[2] and timed_class(sup[0]))
+        return False
+
     level_hit = []                                 # a refusal because something may be shared (LD-43's note)
 
     def shared(node, what):
@@ -2285,6 +2360,9 @@ def _rules(tree, flow, cls) -> list[str]:
         calls it right away, or None; `how`: the text to show."""
         if a in BANNED_ATTRS or banned_dunder(a):
             bad(at, f"{how}（不许用：碰文件、别的进程、调用栈或解释器）")
+            return
+        if a in TIMED_KEYWORDS:
+            bad(at, f"{how}（{TIMED_WHY}）")
             return
         if a == "__init__":
             sup = flow.own_of(base)
@@ -2319,6 +2397,8 @@ def _rules(tree, flow, cls) -> list[str]:
                 bad(at, f"{m}.{a}（{why}）")
             if id(obj) in registrars:
                 bad(at, f"{m}.{a}（注册卡牌脚本会改模拟器）")
+            if id(obj) in a12:
+                bad(at, f"{m}.{a}（{A12_WHY}）")
         if ctx != "load":
             root = flow.import_root(base)
             if root is not None:
@@ -2478,6 +2558,8 @@ def _rules(tree, flow, cls) -> list[str]:
                     bad(node, f"from {mod} import {a.name}（这个名字不许用）")
                 if id(obj) in registrars:
                     bad(node, f"from {mod} import {a.name}（注册卡牌脚本会改模拟器）")
+                if id(obj) in a12:
+                    bad(node, f"from {mod} import {a.name}（{A12_WHY}）")
         elif isinstance(node, ast.Name):
             if node.id in BANNED_NAMES or banned_dunder(node.id):
                 bad(node, f"{node.id}（不许用：碰文件、动态执行或解释器）")
@@ -2536,6 +2618,12 @@ def _rules(tree, flow, cls) -> list[str]:
             for kw in node.keywords:
                 if kw.arg in BANNED_KEYWORDS:
                     bad(node, f"参数 {kw.arg}=（并行搜索开别的进程，不许）")
+                if kw.arg in TIMED_KEYWORDS:
+                    bad(node, f"参数 {kw.arg}=（{TIMED_WHY}）")
+            if timed_callee(fn) and (len(node.args) >= 2 or any(isinstance(a, ast.Starred) for a in node.args) or
+                                     any(kw.arg is None for kw in node.keywords)):
+                bad(node, f"{ast.unparse(fn)}(...) 的第二个位置参数是 seconds（{TIMED_WHY}）："
+                          "第一个以后的参数写成关键字（iterations=...、seed=...），也不许用 * 或 **")
             if builtin and fn.id in ATTR_FUNCS:
                 name = node.args[1] if len(node.args) >= 2 else None
                 if not (isinstance(name, ast.Constant) and isinstance(name.value, str)) or \
@@ -2703,7 +2791,10 @@ def _direct_only(flow, node) -> str | None:
         kn = flow.known(node)
         got = [kn] if kn is not None else []
     for m, n, o in got:
-        if _is_replacer(o) or (m in ("heapq", "bisect") and n in ARG_MUTATORS):
+        if _is_replacer(o) or (m in ("heapq", "bisect") and n in ARG_MUTATORS) or \
+                any(o is t for t in timed_objects() if not isinstance(t, type)):   # 11-28: full_game_agent's
+        #                                                       seconds by position must be seen (a class as a value
+        #                                                       is refused anyway, a base is fine)
             return f"{m}.{n}"
     return None
 

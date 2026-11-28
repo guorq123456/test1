@@ -38,8 +38,10 @@ a stop (a power cut, Ctrl+C, an error fixed in between) the same double-click go
    listed it already (reported and decided then; the audit reads every log every period): written in the summary
    for the host to take to Salem.
 9. compute (A52, LD-57): `ladder.compute_audit --period P` on the E-cores (HOST/audit/compute-P<P>.json; measured
-   once a period: a second measure could flip a member near the line). A member whose 90% interval is above 1.15
-   (S15) holds the advance: Salem decides (RUNBOOK §4).
+   once a period: a second measure could flip a member near the line). A member over both rules (the receipt's two,
+   either of which is enough: its whole 90% interval of all decisions above 1.15, S15, and, with a turn-start budget,
+   submit.TURN_K > 0, its in-turn interval above 1.15 or its turn-start one above submit.TURN_REFUSE) holds the
+   advance: Salem decides (RUNBOOK §4).
 10. formal (A53): `ladder.arena formal` gives each player their own members' formal games of P, if the audit held
    nothing new, or when Salem decided to advance all the same.
 11. boards (RUNBOOK §6): the private and the public leaderboard of P in HOST/reports (board-P<P>-private.json,
@@ -581,8 +583,14 @@ def main(argv=None):
                                    "members": len(co["members"]), "over": len(over),
                                    "calibration": co["calibration"], "problems": len(co.get("problems", []))}
         if over:
+            from ladder.submit import COMPUTE_REFUSE, TURN_REFUSE
             held_ids += [f"compute:{m['member']}@{m['version']}" for m in over]
-            res["held"].append(f"算力抽查：{len(over)} 个成员 90% 区间整个在 1.15 以上"
+            k, q = co.get("turn_k", 0), co.get("turn_refuse", TURN_REFUSE)   # the K the kept file was measured with
+            #                     (a file from before the turn rule has none: the old line alone, K = 0)
+            lines = (f"所有步的 90% 区间整个在 {COMPUTE_REFUSE} 以上" if not k else
+                     f"两条规矩都超：所有步的 90% 区间整个在 {COMPUTE_REFUSE} 以上，而且回合里的整个在 {COMPUTE_REFUSE} 以上"
+                     f"或回合开头的（对 {k} 个默认回合的预算）整个在 {q} 以上")
+            res["held"].append(f"算力抽查：{len(over)} 个成员{lines}"
                                f"（{'、'.join(m['member'] for m in over)}；{comp_out}）：由 Salem 定")
         if co["calibration"].get("note") or co.get("problems"):
             res["report"]["compute"] = {"calibration": co["calibration"], "problems": co.get("problems", [])}

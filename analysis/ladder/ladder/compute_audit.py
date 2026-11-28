@@ -13,9 +13,18 @@ shuffled together after one warm-up replay per worker (LD-68 ⑤: calibration on
 ~10% high); the report gives the calibration ratio of each half of the batch, to see the drift. A member's ratio is
 (its CPU per decision / the default's on the same positions) over that. A 90% interval from resampling its games.
 
-Nothing is decided here: a member clearly over 1.15, the refusal line (S15; the interval above it), is written in the report for the host to
-look into and take to Salem. The report names members (host and Salem only; never to players). Replays only: no new
-games, no seeds.
+Compute by turns (Salem 11-27; submit.py, the receipt's two rules): each decision is told from the moves as a turn's
+first one or not (submit.turn_kinds, checked against the engine in the replay), and a member also gets the turn
+rule's two numbers with their 90% intervals: in_turn, its other decisions over the default's on them, and
+turn_start_q, its turn-start decisions over their budget (1.08 x the default's on them + submit.TURN_K x the
+default's CPU over those whole turns), with extra_turns, the default turns its turn starts added.
+
+Nothing is decided here: a member clearly over both rules (the receipt's: either one passing is enough) is written in
+the report for the host to look into and take to Salem: its whole 90% interval of all decisions above 1.15, the
+refusal line (S15), and, with a turn-start budget (TURN_K > 0), its in_turn interval above 1.15 or its turn_start_q
+interval above submit.TURN_REFUSE. Those are always some of the members the old line alone would list (TURN_K = 0:
+exactly those). The report names members (host and Salem only; never to players). Replays only: no new games, no
+seeds.
 """
 from __future__ import annotations
 
@@ -29,7 +38,8 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 sys.path.insert(0, str(HERE.parents[2]))
 
-from ladder.submit import COMPUTE_REFUSE, DEFAULT, _shadow, shadow_task  # noqa: E402,F401
+from ladder.submit import (COMPUTE_CAP, COMPUTE_REFUSE, DEFAULT, FIRST, MULLIGAN, TURN_K,  # noqa: E402,F401
+                           TURN_REFUSE, _shadow, checked_kinds, shadow_task)
 
 OK = ("normal", "draw")
 
@@ -101,7 +111,11 @@ def halves(order: list, got: list) -> list:
 
 
 def rows_of(items, got) -> tuple[dict, list]:
-    """{key: [(game CPU, shadow CPU)]} over the decisions counted (the member's seat; both seats for calibration)."""
+    """{key: [(game CPU, shadow CPU, game in turn, shadow in turn, game turn starts, shadow turn starts, shadow
+    MAIN)]} over the decisions counted (the member's seat; both seats for calibration): all of them; the in-turn
+    ones (all but a turn's first, the mulligan with them); the turns' first ones (submit.turn_kinds, checked against
+    the replay: a disagreement is the host's rule's error, SystemExit); the default's CPU on every decision but the
+    mulligan (what the default spends on those turns: the turn-start budget's unit)."""
     out, bad = {}, []
     for (key, g, seat), r in zip(items, got):
         r = r or {}
@@ -113,28 +127,77 @@ def rows_of(items, got) -> tuple[dict, list]:
         if len(game) != len(sh) or not game:
             bad.append(f"{g['id']}: decisions {len(game)} / {len(sh)}")
             continue
-        out.setdefault(key, []).append((sum(game), sum(sh)))
+        if len(g["steps"]) != len(r["value"]["steps"]):
+            bad.append(f"{g['id']}: decisions {len(g['steps'])} / {len(r['value']['steps'])} (both seats)")
+            continue
+        row = [sum(game), sum(sh), 0, 0, 0, 0, 0]
+        for (s, c, _), (_, d), k in zip(g["steps"], r["value"]["steps"], checked_kinds(g, r["value"])):
+            if seat is not None and s != seat:
+                continue
+            i = 4 if k == FIRST else 2
+            row[i] += c
+            row[i + 1] += d
+            if k != MULLIGAN:
+                row[6] += d
+        out.setdefault(key, []).append(tuple(row))
     return out, bad
 
 
 def ratio(rows, factor) -> float | None:
+    """All decisions: the old rule's ratio."""
     a, b = sum(r[0] for r in rows), sum(r[1] for r in rows)
     return (a / b) / factor if a and b and factor else None
 
 
-def interval(rows, cal, draws: int = 4000, seed: int = 7) -> tuple:
-    """90% interval of the calibrated ratio, resampling the member's games and the calibration games."""
+def in_turn(rows, factor) -> float | None:
+    """The decisions other than turns' first ones, over the default's on them (held to 1.08 as every step was)."""
+    a, b = sum(r[2] for r in rows), sum(r[3] for r in rows)
+    return (a / b) / factor if a and b and factor else None
+
+
+def turn_start(rows, factor, k: int | None = None) -> float | None:
+    """The turns' first decisions over their budget: 1.08 x the default's on them + k x the default's CPU over the
+    whole turns (k: submit.TURN_K)."""
+    k = TURN_K if k is None else k
+    a, b, u = sum(r[4] for r in rows), sum(r[5] for r in rows), sum(r[6] for r in rows)
+    budget = COMPUTE_CAP * b + k * u
+    return (a / factor) / budget if factor and budget > 0 else None
+
+
+def extra_turns(rows, factor) -> float | None:
+    """The default turns the turn starts added: (their CPU / factor - 1.08 x the default's on them) / the default's
+    CPU over the whole turns."""
+    a, b, u = sum(r[4] for r in rows), sum(r[5] for r in rows), sum(r[6] for r in rows)
+    return (a / factor - COMPUTE_CAP * b) / u if factor and u else None
+
+
+def interval(rows, cal, draws: int = 4000, seed: int = 7, stat=ratio) -> tuple:
+    """90% interval of `stat(rows, factor)` (default: the calibrated ratio of all decisions), resampling the
+    member's games and the calibration games."""
     rng = random.Random(seed)
     xs = []
     for _ in range(draws):
         r = [rows[rng.randrange(len(rows))] for _ in rows]
         c = [cal[rng.randrange(len(cal))] for _ in cal]
         f = sum(x[0] for x in c) / sum(x[1] for x in c)
-        v = ratio(r, f)
+        v = stat(r, f)
         if v is not None:
             xs.append(v)
     xs.sort()
     return (round(xs[int(0.05 * len(xs))], 3), round(xs[int(0.95 * len(xs)) - 1], 3)) if xs else (None, None)
+
+
+def over_both(all90, in90, q90, k: int | None = None) -> bool:
+    """Clearly over both rules: the whole 90% interval of all decisions above COMPUTE_REFUSE, and (with a turn-start
+    budget, k > 0) the in-turn one above COMPUTE_REFUSE or the turn-start one above TURN_REFUSE. Never a member the
+    old line alone wouldn't list; k = 0: exactly the old line. A turn rule that can't be measured (no in-turn or no
+    turn-start decisions) doesn't hold: the old line decides, as at the receipt (submit.compute_verdict)."""
+    k = TURN_K if k is None else k
+    if not (all90[0] is not None and all90[0] > COMPUTE_REFUSE):
+        return False
+    if k <= 0 or in90[0] is None or q90[0] is None:
+        return True
+    return in90[0] > COMPUTE_REFUSE or q90[0] > TURN_REFUSE
 
 
 def audit(pool_dir, period: int, per_member: int = 30, calib: int = 60, workers: int = 4, mask=None,
@@ -158,13 +221,22 @@ def audit(pool_dir, period: int, per_member: int = 30, calib: int = 60, workers:
         return out
     factor = sum(r[0] for r in c) / sum(r[1] for r in c)
     out["calibration"]["game_over_replay"] = round(factor, 4)
+    halves_ = {"F": (sum(r[4] for r in c), sum(r[5] for r in c)), "R": (sum(r[2] for r in c), sum(r[3] for r in c))}
+    out["calibration"]["parts"] = {h: round(a / b, 4) if a and b else None for h, (a, b) in halves_.items()}
+    out["turn_k"], out["turn_refuse"] = TURN_K, TURN_REFUSE
+    rd = lambda x, n=3: None if x is None else round(x, n)    # noqa: E731
     for (mid, version), rs in sorted(rows.items(), key=lambda kv: str(kv[0])):
         m = pool.members[mid]
         r = ratio(rs, factor)
         lo, hi = interval(rs, c)
+        i90 = interval(rs, c, stat=in_turn)
+        q90 = interval(rs, c, stat=turn_start)
         out["members"].append({"member": mid, "anon": m.anon, "owner": m.owner, "craft": m.craft,
                                "version": version, "games": len(rs), "ratio": None if r is None else round(r, 3),
-                               "interval90": [lo, hi], "over": lo is not None and lo > COMPUTE_REFUSE})
+                               "interval90": [lo, hi], "in_turn": rd(in_turn(rs, factor)), "interval90_in": list(i90),
+                               "turn_start_q": rd(turn_start(rs, factor)), "interval90_q": list(q90),
+                               "extra_turns": rd(extra_turns(rs, factor), 2),
+                               "over": over_both((lo, hi), i90, q90)})
     return out
 
 

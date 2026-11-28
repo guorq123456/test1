@@ -62,11 +62,12 @@ def setup(tmp_path, seconds=-60.0, listing=True, puzzle=True, period=1, gates=Tr
 class Fake:
     """Stands in for the commands: records them, does what each leaves behind."""
 
-    def __init__(self, host, failed=0, over=0, deliver_fails=False):
-        """failed: how many games don't replay (g0, g1, ...), or which; over: how many members are over (m0, ...)."""
+    def __init__(self, host, failed=0, over=0, deliver_fails=False, old_file=False):
+        """failed: how many games don't replay (g0, g1, ...), or which; over: how many members are over (m0, ...);
+        old_file: the compute check's file as it was before the turn rule (no turn_k, no turn_refuse)."""
         self.failed = [f"g{i}" for i in range(failed)] if isinstance(failed, int) else list(failed)
         self.host, self.calls, self.over = host, [], over
-        self.deliver_fails = deliver_fails
+        self.deliver_fails, self.old_file = deliver_fails, old_file
 
     def __call__(self, args, log, extra_env=None, check=True):
         args = [str(x) for x in args]
@@ -108,9 +109,12 @@ class Fake:
             return (1 if self.failed else 0), ""
         elif what.startswith("ladder.compute_audit"):
             o = Path(args[args.index("--out") + 1])
-            o.write_text(json.dumps({"members": [{"member": f"m{i}", "version": 1, "over": True}
-                                                 for i in range(self.over)],
-                                     "calibration": {"games": 20}}), encoding="utf-8")
+            o.write_text(json.dumps({"members": [{"member": f"m{i}", "version": 1, "over": True,
+                                                  "interval90": [1.2, 1.4], "interval90_in": [1.18, 1.3],
+                                                  "interval90_q": [1.1, 1.5]} for i in range(self.over)],
+                                     "calibration": {"games": 20},
+                                     **({} if self.old_file else {"turn_k": 2, "turn_refuse": 1.065})}),
+                         encoding="utf-8")
             return (1 if self.over else 0), ""
         elif what == "ladder.leaderboard " + args[3] or what.startswith("ladder.leaderboard"):
             Path(args[args.index("--out") + 1]).write_text("{}", encoding="utf-8")
@@ -158,6 +162,15 @@ def test_a_closed_period_runs_every_step_once_and_advances(tmp_path, monkeypatch
     assert fake.calls == [] and summary(tmp_path / "o2")["steps"]["state"]["already_closed"]
 
 
+def test_a_compute_file_from_before_the_turn_rule_is_held_on_the_old_line(tmp_path, monkeypatch, keyed):
+    # its over was the old line's alone: the hold says so, not "both rules" with today's K (11-28 review)
+    host, ar, players = setup(tmp_path)
+    monkeypatch.setattr(C, "run", Fake(host, over=1, old_file=True))
+    assert C.main(argv(host, ar, players, tmp_path / "o")) == 2
+    held = [h for h in summary(tmp_path / "o")["held"] if h.startswith("算力抽查")]
+    assert len(held) == 1 and "所有步的 90% 区间整个在 1.15 以上" in held[0] and "两条规矩" not in held[0], held
+
+
 def test_a_held_period_keeps_what_is_done_and_advances_only_when_told(tmp_path, monkeypatch, keyed):
     host, ar, players = setup(tmp_path)
     fake = Fake(host, failed=2, over=1)
@@ -168,6 +181,7 @@ def test_a_held_period_keeps_what_is_done_and_advances_only_when_told(tmp_path, 
     assert "ladder.arena formal" not in fake.calls and Pool(host / "pool").period == 1
     assert not (players / "public" / "board-P1.json").exists()
     assert "g0、g1" in s["held"][0] and "m0" in s["held"][1]          # which games and members, for Salem
+    assert "两条规矩都超" in s["held"][1] and "2 个默认回合" in s["held"][1] and "1.065" in s["held"][1]
     with pytest.raises(SystemExit):                                  # the decision names the summary Salem saw
         C.main(argv(host, ar, players, tmp_path / "ox", "--advance-anyway", "Salem 11-24"))
     # Salem decided: advance all the same. The ladder, the anchors and the puzzle are kept (nobody was inducted, so
